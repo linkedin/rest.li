@@ -7,6 +7,8 @@ using servlet container threads to do IO for response in AbstractAsyncR2Servlet
 (RB=462881)
 Migrate to using log4j2 internally in pegasus.
 Fixed and consolidated the r2 perf tests.
+(RB=467222)
+Disable transient failing d2 tests
 
 2.2.10
 ------

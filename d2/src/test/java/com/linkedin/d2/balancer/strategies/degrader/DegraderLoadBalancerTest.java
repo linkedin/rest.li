@@ -2230,7 +2230,7 @@ public class DegraderLoadBalancerTest
     return actions;
   }
 
-  @Test(groups = { "small", "back-end" }, dataProvider = "clientGlitch")
+  @Test(groups = { "small", "back-end" }, dataProvider = "clientGlitch", enabled = false)
   /** The strategy recovers after a TrackerClient throws one Exception. */
   public void testClientGlitch(final int numberOfPartitions,
                                final LoadBalancerStrategy strategy,

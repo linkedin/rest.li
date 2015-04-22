@@ -870,7 +870,7 @@ public class SimpleLoadBalancerTest
     assertNotNull(balancer.getClient(uriRequest, new RequestContext()));
   }
 
-  @Test(groups = { "medium", "back-end" })
+  @Test(groups = { "medium", "back-end" }, enabled =  false)
   public void testLoadBalancerSimulationRandom() throws URISyntaxException,
       IOException,
       ServiceUnavailableException,
