@@ -105,13 +105,10 @@ public class AcceptEncoding implements Comparable<AcceptEncoding>
       }
 
       EncodingType type = null;
-      try
+      String encodingName = content[0].trim();
+      if (EncodingType.isSupported(encodingName))
       {
-        type = EncodingType.get(content[0].trim());
-      }
-      catch (IllegalArgumentException e)
-      {
-        // Encoding type is not supported.
+        type = EncodingType.get(encodingName);
       }
       Float quality = 1.0f;
 

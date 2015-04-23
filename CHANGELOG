@@ -1,6 +1,7 @@
 2.4.3
 ------
-
+(RB=468269)
+Remove try-catch in parseAcceptEncodingHeader().
 
 2.4.2
 ------
@@ -39,7 +40,6 @@ Fix race condition in D2 when Zookeeper is slow.
 ------
 (RB=433868)
 Handle key coercion error for CompoundKey and BatchKey to return 400.
-
 
 2.2.11
 ------
