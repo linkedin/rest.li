@@ -51,27 +51,17 @@ public class DelegatingFacilities implements Facilities
     this(directoryProvider, keyMapperProvider, clientFactoryProvider, new PartitionInfoProvider()
     {
       @Override
-      public <K> MapKeyHostPartitionResult<K> getPartitionInformation (URI serviceUri,
+      public <K> HostToKeyMapper<K> getPartitionInformation (URI serviceUri,
                                                                        Collection<K> keys,
                                                                        int limitHostPerPartition,
-                                                                       HashProvider hashProvider)
+                                                                       int hash)
           throws ServiceUnavailableException
       {
         return null;
       }
 
       @Override
-      public PartitionAccessor getPartitionAccessor (URI serviceUri)
-          throws ServiceUnavailableException
-      {
-        return null;
-      }
-
-      @Override
-      public AllPartitionsMultipleHostsResult<URI> getAllPartitionMultipleHosts(URI serviceUri,
-                                                                                    int limitHostPerPartition,
-                                                                                    HashProvider hashProvider)
-          throws ServiceUnavailableException
+      public PartitionAccessor getPartitionAccessor(URI serviceUri) throws ServiceUnavailableException
       {
         return null;
       }

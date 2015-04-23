@@ -29,11 +29,10 @@ import com.linkedin.d2.balancer.LoadBalancer;
 import com.linkedin.d2.balancer.LoadBalancerWithFacilities;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
-import com.linkedin.d2.balancer.util.AllPartitionsMultipleHostsResult;
 import com.linkedin.d2.balancer.util.ClientFactoryProvider;
 import com.linkedin.d2.balancer.util.DirectoryProvider;
+import com.linkedin.d2.balancer.util.HostToKeyMapper;
 import com.linkedin.d2.balancer.util.KeyMapperProvider;
-import com.linkedin.d2.balancer.util.MapKeyHostPartitionResult;
 import com.linkedin.d2.balancer.util.MapKeyResult;
 import com.linkedin.d2.balancer.util.TogglingLoadBalancer;
 import com.linkedin.d2.balancer.util.hashing.ConsistentHashKeyMapper;
@@ -100,25 +99,6 @@ public class ZKFSLoadBalancer
    * it has been sucessfully started, except the first time.
    */
   private volatile LoadBalancer _currentLoadBalancer;
-
-  public <K> MapKeyHostPartitionResult<K> getPartitionInformation(URI serviceUri, Collection<K> keys,
-                                                                        int limitHostPerPartition,
-                                                                        HashProvider hashProvider)
-      throws ServiceUnavailableException
-  {
-    checkPartitionInfoProvider();
-    return ((PartitionInfoProvider)_currentLoadBalancer).getPartitionInformation(serviceUri, keys,
-                                                                                  limitHostPerPartition,
-                                                                                  hashProvider);
-  }
-
-  @Override
-  public PartitionAccessor getPartitionAccessor(URI serviceUri)
-      throws ServiceUnavailableException
-  {
-    checkPartitionInfoProvider();
-    return ((PartitionInfoProvider)_currentLoadBalancer).getPartitionAccessor(serviceUri);
-  }
 
   public static interface TogglingLoadBalancerFactory
   {
@@ -407,12 +387,17 @@ public class ZKFSLoadBalancer
   }
 
   @Override
-  public AllPartitionsMultipleHostsResult<URI> getAllPartitionMultipleHosts(URI serviceUri, int numHostPerPartition,
-      HashProvider hashProvider) throws ServiceUnavailableException
+  public <K> HostToKeyMapper<K> getPartitionInformation(URI serviceUri, Collection<K> keys, int limitHostPerPartition, int hash) throws ServiceUnavailableException
   {
     checkPartitionInfoProvider();
-    return ((PartitionInfoProvider)_currentLoadBalancer).getAllPartitionMultipleHosts(serviceUri, numHostPerPartition,
-        hashProvider);
+    return ((PartitionInfoProvider)_currentLoadBalancer).getPartitionInformation(serviceUri, keys, limitHostPerPartition, hash);
+  }
+
+  @Override
+  public PartitionAccessor getPartitionAccessor(URI serviceUri) throws ServiceUnavailableException
+  {
+    checkPartitionInfoProvider();
+    return ((PartitionInfoProvider)_currentLoadBalancer).getPartitionAccessor(serviceUri);
   }
 
   public void checkLoadBalancer()

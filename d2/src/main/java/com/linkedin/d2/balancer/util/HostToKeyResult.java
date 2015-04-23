@@ -1,8 +1,10 @@
 package com.linkedin.d2.balancer.util;
 
 
+import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Map;
 
 
 /**
@@ -13,7 +15,7 @@ import java.util.Collections;
  * @author Oby Sumampouw (osumampouw@linkedin.com)
  *
  */
-public class HostToKeyResult<T, K>
+public class HostToKeyResult<K>
 {
   public static enum ErrorType
   {
@@ -68,16 +70,16 @@ public class HostToKeyResult<T, K>
     }
   }
 
-  private final Collection<KeysAndHosts<K>> _mapResult;
+  private final Map<URI, Collection<K>> _mapResult;
   private final Collection<UnmappedKey<K>> _unmappedKeys;
 
-  public HostToKeyResult(Collection<KeysAndHosts<K>> mapResult, Collection<UnmappedKey<K>> unMappedKeys)
+  public HostToKeyResult(Map<URI, Collection<K>> mapResult, Collection<UnmappedKey<K>> unMappedKeys)
   {
-    _mapResult = Collections.unmodifiableCollection(mapResult);
+    _mapResult = mapResult;
     _unmappedKeys = Collections.unmodifiableCollection(unMappedKeys);
   }
 
-  public Collection<KeysAndHosts<K>> getMapResult()
+  public Map<URI, Collection<K>> getMapResult()
   {
     return _mapResult;
   }

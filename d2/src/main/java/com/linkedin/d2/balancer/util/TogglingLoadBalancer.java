@@ -117,12 +117,17 @@ public class TogglingLoadBalancer implements LoadBalancer, HashRingProvider, Cli
   }
 
   @Override
-  public AllPartitionsMultipleHostsResult<URI> getAllPartitionMultipleHosts(URI serviceUri, int numHostPerPartition,
-      HashProvider hashProvider) throws ServiceUnavailableException
+  public <K> HostToKeyMapper<K> getPartitionInformation(URI serviceUri, Collection<K> keys, int limitHostPerPartition, int hash) throws ServiceUnavailableException
   {
     checkPartitionInfoProvider();
-    return ((PartitionInfoProvider)_balancer).getAllPartitionMultipleHosts(serviceUri, numHostPerPartition,
-        hashProvider);
+    return ((PartitionInfoProvider)_balancer).getPartitionInformation(serviceUri, keys, limitHostPerPartition, hash);
+  }
+
+  @Override
+  public PartitionAccessor getPartitionAccessor(URI serviceUri) throws ServiceUnavailableException
+  {
+    checkPartitionInfoProvider();
+    return ((PartitionInfoProvider)_balancer).getPartitionAccessor(serviceUri);
   }
 
   private void checkLoadBalancer()
@@ -157,26 +162,5 @@ public class TogglingLoadBalancer implements LoadBalancer, HashRingProvider, Cli
                                               "support obtaining client factories");
     }
     return ((ClientFactoryProvider)_balancer).getClientFactory(scheme);
-  }
-
-  @Override
-  public <K> MapKeyHostPartitionResult<K> getPartitionInformation(URI serviceUri,
-                                                                        Collection<K> keys,
-                                                                        int limitHostPerPartition,
-                                                                        HashProvider hashProvider)
-      throws ServiceUnavailableException
-  {
-    checkPartitionInfoProvider();
-    return ((PartitionInfoProvider)_balancer).getPartitionInformation(serviceUri, keys,
-                                                                                 limitHostPerPartition,
-                                                                                 hashProvider);
-  }
-
-  @Override
-  public PartitionAccessor getPartitionAccessor(URI serviceUri)
-      throws ServiceUnavailableException
-  {
-    checkPartitionInfoProvider();
-    return ((PartitionInfoProvider)_balancer).getPartitionAccessor(serviceUri);
   }
 }

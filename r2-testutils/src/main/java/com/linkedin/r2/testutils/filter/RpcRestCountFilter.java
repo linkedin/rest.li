@@ -83,8 +83,8 @@ public class RpcRestCountFilter extends MessageCountFilter implements RestFilter
 
   @Override
   public void onRestRequest(RestRequest req, RequestContext requestContext,
-                            Map<String, String> wireAttrs,
-                            NextFilter<RestRequest, RestResponse> nextFilter)
+                             Map<String, String> wireAttrs,
+                             NextFilter<RestRequest, RestResponse> nextFilter)
   {
     _restReqCount++;
     nextFilter.onRequest(req, requestContext, wireAttrs);

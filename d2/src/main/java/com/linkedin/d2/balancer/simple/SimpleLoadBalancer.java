@@ -32,11 +32,10 @@ import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
-import com.linkedin.d2.balancer.util.AllPartitionsMultipleHostsResult;
 import com.linkedin.d2.balancer.util.ClientFactoryProvider;
+import com.linkedin.d2.balancer.util.HostToKeyMapper;
 import com.linkedin.d2.balancer.util.KeysAndHosts;
 import com.linkedin.d2.balancer.util.LoadBalancerUtil;
-import com.linkedin.d2.balancer.util.MapKeyHostPartitionResult;
 import com.linkedin.d2.balancer.util.MapKeyResult;
 import com.linkedin.d2.balancer.util.hashing.HashRingProvider;
 import com.linkedin.d2.balancer.util.hashing.Ring;
@@ -264,7 +263,6 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   }
 
   @Override
-
   public TransportClientFactory getClientFactory(String scheme)
   {
     return ((ClientFactoryProvider)_state).getClientFactory(scheme);
@@ -428,145 +426,23 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   }
 
   /**
-   * returns all the partitions for the given serviceUri. For each partition, we return the number of
-   * hosts that belong to that partition.
-   * The order of the hosts for a partition is retained if the given hashProvider provided the same value
-   * In addition, if multiple hosts belong to the same set of partition S, then the hosts ordering will be identical
-   * in each partition.
+   * If given a collection of keys, the method will maps keys to partitions and
+   * return the servers that belongs to that partition up to limitHostPerPartition.
    *
-   * Example:
-   * We have a service d2://foo
-   * We have 3 servers: server1, server2, server3
-   * We have 3 partitions. 1,2,3. All the 3 servers above belong to all partitions.
-   * When we ask for getAllPartitionMultipleHosts("d2://foo", 3, someHashProvider);
-   * one theoretical possible result is
-   *
-   * {
-   *   partitionId 0 -> []
-   *   partitionId 1 -> [server1, server2, server3]
-   *   partitionId 2 -> [server2, server3, server1]
-   *   partitionId 3 -> [server2, server1, server3]
-   * }
-   *
-   * but we want to guarantee that the ordering of server for each partition will be the same because
-   * server1,2,3 all belongs to partition 1,2,3. So
-   * This is the expected result (notice the ordering of the servers are the same for partition 1,2,3)
-   *
-   * {
-   *   partitionId 0 -> []
-   *   partitionId 1 -> [server2, server3, server1]
-   *   partitionId 2 -> [server2, server3, server1]
-   *   partitionId 3 -> [server2, server3, server1]
-   * }
-   *
-   * @param serviceUri for example d2://articles
-   * @param numHostPerPartition Number of hosts to be returned for each partition
-   * @param hashProvider Hash provider to access elements of a ring
-   * @return
-   * @throws ServiceUnavailableException
-   */
-  @Override
-  public AllPartitionsMultipleHostsResult<URI> getAllPartitionMultipleHosts(URI serviceUri, int numHostPerPartition,
-      HashProvider hashProvider)
-      throws ServiceUnavailableException
-  {
-    if (numHostPerPartition <= 0)
-    {
-      throw new IllegalArgumentException("limitHostPartition cannot be 0 or less");
-    }
-    ServiceProperties service = listenToServiceAndCluster(serviceUri);
-    String serviceName = service.getServiceName();
-    String clusterName = service.getClusterName();
-    ClusterProperties cluster = getClusterProperties(serviceName, clusterName);
-
-    LoadBalancerStateItem<UriProperties> uriItem = getUriItem(serviceName, clusterName, cluster);
-    UriProperties uris = uriItem.getProperty();
-
-    List<LoadBalancerState.SchemeStrategyPair> orderedStrategies =
-        _state.getStrategiesForService(serviceName, service.getPrioritizedSchemes());
-    Map<Integer, Integer> partitionWithoutEnoughHost = new HashMap<Integer, Integer>();
-    int maxPartitionId = 0;
-
-    //get the partitionId -> host URIs list
-    Map<Integer, List<URI>> hostList = new HashMap<Integer, List<URI>>();
-    if (! orderedStrategies.isEmpty())
-    {
-      final LoadBalancerState.SchemeStrategyPair pair = orderedStrategies.get(0);
-      final PartitionAccessor accessor = getPartitionAccessor(serviceName, clusterName);
-      maxPartitionId = accessor.getMaxPartitionId();
-      int hash = hashProvider.nextHash();
-      for (int partitionId = 0; partitionId <= maxPartitionId; partitionId++)
-      {
-        Set<URI> possibleUris = uris.getUriBySchemeAndPartition(pair.getScheme(), partitionId);
-        List<TrackerClient> trackerClients = getPotentialClients(serviceName, service, possibleUris);
-        int size = trackerClients.size() <= numHostPerPartition ? trackerClients.size() : numHostPerPartition;
-        List<URI> rankedUri = new ArrayList<URI>(size);
-
-        Ring<URI> ring = pair.getStrategy().getRing(uriItem.getVersion(), partitionId, trackerClients);
-        Iterator<URI> iterator = ring.getIterator(hash);
-
-        while (iterator.hasNext() && rankedUri.size() < size)
-        {
-          URI uri = iterator.next();
-          if (!rankedUri.contains(uri))
-          {
-            rankedUri.add(uri);
-          }
-        }
-
-        hostList.put(partitionId, rankedUri);
-        if (rankedUri.size() < numHostPerPartition)
-        {
-          partitionWithoutEnoughHost.put(partitionId, numHostPerPartition - rankedUri.size());
-        }
-      }
-    }
-    else
-    {
-      throw new ServiceUnavailableException(serviceName, "Unable to find a load balancer strategy");
-    }
-    return new AllPartitionsMultipleHostsResult<URI>(hostList, maxPartitionId + 1, partitionWithoutEnoughHost);
-  }
-
-  /**
-   * maps keys to partitions and also return the servers that belongs to that partition up to limitHostPerPartition.
-   * The order of the hosts for a partition is retained if the given hashProvider provided the same value
-   * In addition, if multiple hosts belong to the same set of partition S, then the hosts ordering will be identical
-   * in each partition.
-   *
-   * Example:
-   * We have 3 servers: server1, server2, server3
-   * We have 3 partitions. 1,2,3. All the 3 servers above belong to all partitions.
-   * We have 3 data: 1,2,3. Data 1 belongs to partition 1. Data 2 belongs to partition 2, Data 3 belongs to partition 3.
-   * When we ask for partitionInfo one theoretical possible result is:
-   *
-   * {
-   *   partitionId 1 -> [data1], [server1, server2, server3]
-   *   partitionId 2 -> [data2], [server2, server3, server1]
-   *   partitionId 3 -> [data3], [server2, server1, server3]
-   * }
-   *
-   * But we want to guarantee the ordering of servers (notice the ordering of the servers are the same for partition 1,2,3)
-   *
-   * {
-   *   partitionId 1 -> [data1], [server2, server3, server1]
-   *   partitionId 2 -> [data2], [server2, server3, server1]
-   *   partitionId 3 -> [data3], [server2, server3, server1]
-   * }
+   * If no keys are specified, the method will return hosts in all partitions
    *
    * @param serviceUri for example d2://articles
    * @param keys all the keys we want to find the partition for
    * @param limitHostPerPartition the number of hosts that we should return for this partition. Must be larger than 0.
-   * @param hashProvider this will be used to help determine the host uri that we return
-   * @param <K>
-   * @return
+   * @param hash this will be used to create Iterator for the hosts in the hash ring
+   * @return Number of hosts in requested partitions. See {@link com.linkedin.d2.balancer.util.HostToKeyMapper} for more details.
    * @throws ServiceUnavailableException
    */
   @Override
-  public <K> MapKeyHostPartitionResult<K> getPartitionInformation(URI serviceUri, Collection<K> keys,
-                                                                        int limitHostPerPartition,
-                                                                        HashProvider hashProvider)
-      throws ServiceUnavailableException
+  public <K> HostToKeyMapper<K> getPartitionInformation(URI serviceUri, Collection<K> keys,
+                                                                  int limitHostPerPartition,
+                                                                  int hash)
+          throws ServiceUnavailableException
   {
     if (limitHostPerPartition <= 0)
     {
@@ -581,21 +457,68 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     UriProperties uris = uriItem.getProperty();
 
     List<LoadBalancerState.SchemeStrategyPair> orderedStrategies =
-        _state.getStrategiesForService(serviceName, service.getPrioritizedSchemes());
-    List<K> unmappedKeys = new ArrayList<K>();
+            _state.getStrategiesForService(serviceName, service.getPrioritizedSchemes());
+    Map<Integer, Integer> partitionWithoutEnoughHost = new HashMap<Integer, Integer>();
 
     if (! orderedStrategies.isEmpty())
     {
-      //DANGER we assume that the first strategy in the list has to support partitioning. If not then,
-      //this function may fail. The reason why we don't check whether the strategy support partitioning
-      //is because the downstream code will check it for us and the user will be notified about
-      //this problem. Plus it doesn't make sense for a user to have partitioning but didn't specify a
-      //strategy that supports partitioning
-      final LoadBalancerState.SchemeStrategyPair pair = orderedStrategies.get(0);
+      // get the partitionId -> keys mapping
       final PartitionAccessor accessor = getPartitionAccessor(serviceName, clusterName);
+      int maxPartitionId = accessor.getMaxPartitionId();
+      List<K> unmappedKeys = new ArrayList<K>();
+      Map<Integer, Set<K>> partitionSet = getPartitionSet(keys, accessor, unmappedKeys);
 
-      //get the partitionId -> keys mapping
-      Map<Integer, Set<K>> partitionSet = new TreeMap<Integer, Set<K>>();
+      final LoadBalancerState.SchemeStrategyPair pair = orderedStrategies.get(0);
+
+      //get the partitionId -> host URIs list
+      Map<Integer, KeysAndHosts<K>> partitionDataMap = new HashMap<Integer, KeysAndHosts<K>>();
+      for (Integer partitionId : partitionSet.keySet())
+      {
+        Set<URI> possibleUris = uris.getUriBySchemeAndPartition(pair.getScheme(), partitionId);
+        List<TrackerClient> trackerClients = getPotentialClients(serviceName, service, possibleUris);
+        int size = trackerClients.size() <= limitHostPerPartition ? trackerClients.size() : limitHostPerPartition;
+        List<URI> rankedUri = new ArrayList<URI>(size);
+
+        Ring<URI> ring = pair.getStrategy().getRing(uriItem.getVersion(), partitionId, trackerClients);
+        Iterator<URI> iterator = ring.getIterator(hash);
+
+        while (iterator.hasNext() && rankedUri.size() < size)
+        {
+          URI uri = iterator.next();
+          if (!rankedUri.contains(uri))
+          {
+            rankedUri.add(uri);
+          }
+        }
+        if (rankedUri.size() < limitHostPerPartition)
+        {
+          partitionWithoutEnoughHost.put(partitionId, limitHostPerPartition - rankedUri.size());
+        }
+
+        KeysAndHosts<K> keysAndHosts = new KeysAndHosts<K>(partitionSet.get(partitionId), rankedUri);
+        partitionDataMap.put(partitionId, keysAndHosts);
+      }
+
+      return new HostToKeyMapper<K>(unmappedKeys, partitionDataMap, limitHostPerPartition, maxPartitionId + 1, partitionWithoutEnoughHost);
+    }
+    else
+    {
+      throw new ServiceUnavailableException(serviceName, "Unable to find a load balancer strategy");
+    }
+  }
+
+  private <K> Map<Integer, Set<K>> getPartitionSet(Collection<K> keys, PartitionAccessor accessor, Collection<K> unmappedKeys)
+  {
+    Map<Integer, Set<K>> partitionSet = new TreeMap<Integer, Set<K>>();
+    if (keys == null)
+    {
+      for (int i = 0; i <= accessor.getMaxPartitionId(); i++)
+      {
+        partitionSet.put(i, new HashSet<K>());
+      }
+    }
+    else
+    {
       for (final K key : keys)
       {
         int partitionId;
@@ -617,56 +540,13 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
         }
         set.add(key);
       }
-
-      Collection<Integer> partitionWithoutEnoughHost = new HashSet<Integer>();
-
-      int hash = hashProvider.nextHash();
-
-      //get the partitionId -> host URIs list
-      Map<Integer, List<URI>> hostList = new HashMap<Integer, List<URI>>();
-      for (Integer partitionId : partitionSet.keySet())
-      {
-        Set<URI> possibleUris = uris.getUriBySchemeAndPartition(pair.getScheme(), partitionId);
-        List<TrackerClient> trackerClients = getPotentialClients(serviceName, service, possibleUris);
-        int size = trackerClients.size() <= limitHostPerPartition ? trackerClients.size() : limitHostPerPartition;
-        List<URI> rankedUri = new ArrayList<URI>(size);
-
-        Ring<URI> ring = pair.getStrategy().getRing(uriItem.getVersion(), partitionId, trackerClients);
-        Iterator<URI> iterator = ring.getIterator(hash);
-
-        while (iterator.hasNext() && rankedUri.size() < size)
-        {
-          URI uri = iterator.next();
-          if (!rankedUri.contains(uri))
-          {
-            rankedUri.add(uri);
-          }
-        }
-
-        hostList.put(partitionId, rankedUri);
-        if (rankedUri.size() < limitHostPerPartition)
-        {
-          partitionWithoutEnoughHost.add(partitionId);
-        }
-      }
-
-      Map<Integer, KeysAndHosts<K>> partitionDataMap = new HashMap<Integer, KeysAndHosts<K>>(hostList.size());
-
-      for (Integer partitionId : hostList.keySet())
-      {
-        partitionDataMap.put(partitionId, new KeysAndHosts<K>(partitionSet.get(partitionId),hostList.get(partitionId)));
-      }
-      return new MapKeyHostPartitionResult<K>(unmappedKeys, partitionDataMap, partitionWithoutEnoughHost);
     }
-    else
-    {
-      throw new ServiceUnavailableException(serviceName, "Unable to find a load balancer strategy");
-    }
+    return partitionSet;
   }
 
   @Override
   public PartitionAccessor getPartitionAccessor(URI serviceUri)
-      throws ServiceUnavailableException
+          throws ServiceUnavailableException
   {
     ServiceProperties service = listenToServiceAndCluster(serviceUri);
     String serviceName = service.getServiceName();

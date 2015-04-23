@@ -27,8 +27,6 @@ import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.clients.TrackerClientTest.TestCallback;
 import com.linkedin.d2.balancer.clients.TrackerClientTest.TestClient;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
-import com.linkedin.d2.balancer.util.AllPartitionsMultipleHostsResult;
-import com.linkedin.d2.balancer.util.AllPartitionsResult;
 import com.linkedin.d2.balancer.util.ClientFactoryProvider;
 import com.linkedin.d2.balancer.util.DelegatingFacilities;
 import com.linkedin.d2.balancer.util.DirectoryProvider;
@@ -221,33 +219,17 @@ public class DynamicClientTest
     }
 
     @Override
-    public AllPartitionsResult<URI> getAllPartitions(URI serviceUri) throws ServiceUnavailableException
+    public HostToKeyMapper<Integer> getAllPartitionsMultipleHosts(URI serviceUri, int numHostPerPartition) throws ServiceUnavailableException
     {
       return null;
     }
 
     @Override
-    public AllPartitionsResult<URI> getAllPartitions(URI serviceUri, int hashCode)
-        throws ServiceUnavailableException
+    public <S> HostToKeyMapper<Integer> getAllPartitionsMultipleHosts(URI serviceUri, int limitHostPerPartition, S stickyKey) throws ServiceUnavailableException
     {
       return null;
     }
 
-    @Override
-    public AllPartitionsMultipleHostsResult<URI> getAllPartitionsMultipleHosts(URI serviceUri, int numHostPerPartition)
-        throws ServiceUnavailableException
-    {
-      return null;
-    }
-
-    @Override
-    public <S> AllPartitionsMultipleHostsResult<URI> getAllPartitionsMultipleHosts(URI serviceUri,
-                                                                                      int limitHostPerPartition,
-                                                                                      final S stickyKey)
-        throws ServiceUnavailableException
-    {
-      return null;
-    }
   }
 
   public static class TestDirectoryProvider implements DirectoryProvider

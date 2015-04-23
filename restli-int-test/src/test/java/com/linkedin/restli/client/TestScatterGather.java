@@ -25,8 +25,7 @@ import com.linkedin.common.callback.Callback;
 import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancer;
-import com.linkedin.d2.balancer.util.AllPartitionsMultipleHostsResult;
-import com.linkedin.d2.balancer.util.MapKeyHostPartitionResult;
+import com.linkedin.d2.balancer.util.HostToKeyMapper;
 import com.linkedin.d2.balancer.util.hashing.ConsistentHashKeyMapper;
 import com.linkedin.d2.balancer.util.hashing.ConsistentHashRing;
 import com.linkedin.d2.balancer.util.hashing.Ring;
@@ -36,7 +35,6 @@ import com.linkedin.d2.balancer.util.partitions.PartitionInfoProvider;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.jersey.api.uri.UriComponent;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestException;
@@ -44,14 +42,12 @@ import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.restli.client.response.BatchKVResponse;
-import com.linkedin.restli.client.uribuilders.RestliUriBuilderUtil;
 import com.linkedin.restli.common.BatchCreateIdResponse;
 import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CollectionRequest;
 import com.linkedin.restli.common.CreateIdStatus;
 import com.linkedin.restli.common.EntityResponse;
 import com.linkedin.restli.common.ResourceProperties;
-import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.common.UpdateStatus;
 import com.linkedin.restli.examples.RestLiIntegrationTest;
@@ -99,26 +95,17 @@ public class TestScatterGather extends RestLiIntegrationTest
   private static class TestPartitionInfoProvider implements PartitionInfoProvider
   {
     @Override
-    public <K> MapKeyHostPartitionResult<K> getPartitionInformation(URI serviceUri,
+    public <K> HostToKeyMapper<K> getPartitionInformation(URI serviceUri,
                                                                     Collection<K> keys,
                                                                     int limitHostPerPartition,
-                                                                    HashProvider hashProvider)
+                                                                    int hash)
       throws ServiceUnavailableException
     {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public PartitionAccessor getPartitionAccessor(URI serviceUri)
-      throws ServiceUnavailableException
-    {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public AllPartitionsMultipleHostsResult<URI> getAllPartitionMultipleHosts(URI serviceUri, int numHostPerPartition,
-        HashProvider hashProvider)
-        throws ServiceUnavailableException
+    public PartitionAccessor getPartitionAccessor(URI serviceUri) throws ServiceUnavailableException
     {
       throw new UnsupportedOperationException();
     }
