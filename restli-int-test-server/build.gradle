@@ -7,7 +7,7 @@ dependencies {
   compile project(':restli-server-standalone') // for task startServerStandaloneLauncher
   compile project(':data')
   compile project(':pegasus-common')
-  compile project(':r2')
+  compile project(':r2-core')
   compile project(':r2-jetty')
   compile project(':data-transform')
   compile project(':restli-docgen')

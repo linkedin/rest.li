@@ -4,7 +4,7 @@ configurations {
 
 dependencies {
   compile project(':data')
-  compile project(':r2')
+  compile project(':r2-core')
   compile project(':li-jersey-uri')
   compile project(':restli-common')
   compile project(':restli-server')

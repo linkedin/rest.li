@@ -1,0 +1,14 @@
+dependencies {
+  compile project(':data')
+  compile project(':pegasus-common')
+  compile externalDependency.servletApi
+  compile externalDependency.mina
+  compile externalDependency.mail
+  compile externalDependency.commonsIo
+  compile externalDependency.commonsCompress
+  compile externalDependency.snappy
+  compile externalDependency.commonsLang
+  testCompile project(':r2-testutils')
+  testCompile externalDependency.testng
+}
+

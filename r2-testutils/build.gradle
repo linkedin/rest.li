@@ -1,7 +1,7 @@
 apply plugin: 'java'
 
 dependencies {
-  compile project(path: ':r2')
+  compile project(path: ':r2-core')
 }
 
 //This module supports only adding test classes (i.e only a test compile of this project should happen anywhere its being referenced).

@@ -3,7 +3,7 @@ dependencies {
   compile project(':data-transform')
   compile project(':li-jersey-uri')
   compile project(':pegasus-common')
-  compile project(':r2')
+  compile project(':r2-core')
   compile externalDependency.jacksonCore
   testCompile project(path: ':data', configuration: 'testArtifacts')
   testCompile project(path: ':generator-test', configuration: 'testArtifacts')

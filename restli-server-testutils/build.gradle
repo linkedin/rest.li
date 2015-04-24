@@ -2,7 +2,7 @@ apply plugin: 'pegasus'
 
 dependencies {
   compile project (':restli-docgen')
-  compile project (':r2')
+  compile project (':r2-core')
   compile project (':r2-jetty')
   compile project (':restli-server')
   compile externalDependency.parseq

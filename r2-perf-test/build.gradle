@@ -1,8 +1,9 @@
 dependencies {
   compile project (':data')
-  compile project (':r2')
+  compile project (':r2-core')
   compile project (':r2-jetty')
-  compile project (':r2-sample') 
+  compile project (':r2-netty')
+  compile project (':r2-sample')
   compile project (':pegasus-common')
   compile project (':test-util')
   testRuntime externalDependency.disruptor

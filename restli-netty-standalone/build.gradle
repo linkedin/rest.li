@@ -1,6 +1,7 @@
 dependencies {
   compile project (':restli-server')
   compile project (':restli-docgen')
-  compile project (':r2')
+  compile project (':r2-core')
+  compile project (':r2-netty')
   compile externalDependency.parseq
 }

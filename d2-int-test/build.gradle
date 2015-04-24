@@ -2,7 +2,7 @@
 dependencies {
   compile project(':d2')
   compile project(':degrader')
-  compile project(':r2')
+  compile project(':r2-core')
   compile project(':data')
   compile project(':pegasus-common')
   compile project(':li-jersey-uri')

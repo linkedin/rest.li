@@ -1,7 +1,7 @@
 dependencies {
-    compile project (':r2')
+    compile project (':r2-core')
     compile project (':r2-sample')
     compile project (':test-util')
-    testCompile project(path: ':r2', configuration: 'testArtifacts')
+    testCompile project(path: ':r2-core', configuration: 'testArtifacts')
     testCompile externalDependency.testng
 }

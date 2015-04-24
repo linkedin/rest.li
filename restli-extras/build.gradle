@@ -3,7 +3,7 @@ dependencies {
   compile project(':restli-common')
   compile project(':data')
   compile project(':d2')
-  compile project(':r2')
+  compile project(':r2-core')
   compile project(':pegasus-common')
   testCompile project(':restli-int-test-api')
   testCompile externalDependency.testng

@@ -1,7 +1,7 @@
 dependencies {
   compile project (':data')
   compile project (':pegasus-common')
-  compile project (':r2')
+  compile project (':r2-core')
   compile project (':restli-client')
   compile project (':restli-common')
 

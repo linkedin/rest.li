@@ -1,6 +1,6 @@
 dependencies {
   compile project(':data')
-  compile project(':r2')
+  compile project(':r2-core')
   compile project(':pegasus-common')
   compile externalDependency.commonsIo
   compile externalDependency.codemodel

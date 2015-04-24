@@ -3,7 +3,7 @@ apply plugin: 'pegasus'
 dependencies {
   compile project(path: ':restli-example-api', configuration: 'dataTemplate')
   compile project(':data')
-  compile project(':r2')
+  compile project(':r2-core')
   compile project(':r2-jetty')
   compile project(':d2')
   compile project(':data-transform')

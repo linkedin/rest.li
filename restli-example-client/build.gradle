@@ -3,7 +3,8 @@ apply plugin: 'pegasus'
 dependencies {
   compile project(path: ':restli-example-api', configuration: 'restClient')
   compile project(':pegasus-common')
-  compile project(':r2')
+  compile project(':r2-core')
+  compile project(':r2-netty')
   compile project(':d2')
   compile project(':restli-client')
   compile project(':data')

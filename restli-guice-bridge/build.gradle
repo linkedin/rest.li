@@ -1,6 +1,6 @@
 dependencies {
   compile project (':restli-server')
-  compile project (':r2')
+  compile project (':r2-core')
   compile externalDependency.servletApi
   compile externalDependency.parseq
   compile externalDependency.guice

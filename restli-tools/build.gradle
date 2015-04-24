@@ -1,6 +1,6 @@
 dependencies {
   compile project(':data')
-  compile project(':r2')
+  compile project(':r2-core')
   compile project(':li-jersey-uri')
   compile project(':generator')
   compile project(':pegasus-common')
