@@ -27,6 +27,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URI;
 import java.nio.charset.Charset;
+import java.util.Arrays;
 import java.util.StringTokenizer;
 import java.util.concurrent.CountDownLatch;
 
@@ -132,6 +133,16 @@ public class TestServer
     return URI.create("http://localhost:" + getPort() + "/?responseSize="+size);
   }
 
+  public URI getResponseWithHeaderSizeURI(int size)
+  {
+    return URI.create("http://localhost:" + getPort() + "/?headerSize=" + size);
+  }
+
+  public URI getBadHeaderURI()
+  {
+    return URI.create("http://localhost:" + getPort() + "/?badheader");
+  }
+
   /**
    * Resets the latch and returns a URI.  Requests directed to the URI will
    * not be answered until {@link #releaseResponseLatch()} is called count times.
@@ -184,7 +195,7 @@ public class TestServer
       {
         return null;
       }
-      if (q != null && q.startsWith("responseSize"))
+      else if (q != null && q.startsWith("responseSize"))
       {
         int size = Integer.parseInt(q.replace("responseSize=", ""));
         String longString = "This is a semi-long string that is being used to test the response " +
@@ -201,7 +212,7 @@ public class TestServer
                 "\r\n" +
                 sb.substring(0,size);
       }
-      if (q != null && q.equals("latch"))
+      else if (q != null && q.equals("latch"))
       {
         try
         {
@@ -214,8 +225,29 @@ public class TestServer
         return "HTTP/1.0 200 OK\r\n" +
                 "\r\n";
       }
-      return "HTTP/1.0 200 OK\r\n" +
-             "\r\n";
+      else if (q != null && q.startsWith("headerSize"))
+      {
+        final String headerName = "X-Long-Header:";
+        int size = Integer.parseInt(q.replace("headerSize=", ""));
+        int valueSize = size - headerName.length();
+
+        char[] headerValue = new char[valueSize];
+        Arrays.fill(headerValue, 'a');
+
+        return "HTTP/1.0 200 OK\r\n" +
+               headerName + new String(headerValue) + "\r\n" +
+               "\r\n";
+      }
+      else if (q != null && "badheader".equals(q))
+      {
+        return "HTTP/1.0 200 OK\r\n" +
+               "@@: an illegal header\r\n" +
+               "\r\n";
+      }
+      else
+      {
+        return "HTTP/1.0 200 OK\r\n\r\n";
+      }
     }
     catch (RuntimeException e)
     {

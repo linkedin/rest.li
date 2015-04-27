@@ -23,7 +23,7 @@ package com.linkedin.r2.transport.http.client;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.r2.util.Cancellable;
 import com.linkedin.common.util.None;
-import org.jboss.netty.channel.Channel;
+import io.netty.channel.Channel;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 

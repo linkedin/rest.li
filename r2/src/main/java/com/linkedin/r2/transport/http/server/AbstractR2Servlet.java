@@ -42,6 +42,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.mail.MessagingException;
 import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -184,30 +185,27 @@ public abstract class AbstractR2Servlet extends HttpServlet
 
     for (Enumeration<String> headerNames = req.getHeaderNames(); headerNames.hasMoreElements();)
     {
-      // TODO multi-valued headers
       String headerName = headerNames.nextElement();
-      String headerValue = req.getHeader(headerName);
       if (headerName.equalsIgnoreCase(HttpConstants.REQUEST_COOKIE_HEADER_NAME))
       {
-        rb.addCookie(headerValue);
+        for (Enumeration<String> cookies = req.getHeaders(headerName); cookies.hasMoreElements();)
+        {
+          rb.addCookie(cookies.nextElement());
+        }
       }
       else
       {
-        rb.setHeader(headerName, headerValue);
+        for (Enumeration<String> headerValues = req.getHeaders(headerName); headerValues.hasMoreElements();)
+        {
+          rb.addHeaderValue(headerName, headerValues.nextElement());
+        }
       }
     }
 
     int length = req.getContentLength();
     if (length >= 0)
     {
-      InputStream in = req.getInputStream();
-      byte[] buf = new byte[length];
-      int offset = 0;
-      for (int r; offset < length && (r = in.read(buf, offset, length - offset)) != -1; offset += r)
-      {
-      }
-
-      rb.setEntity(buf);
+      rb.setEntity(ByteString.read(req.getInputStream(), length));
     }
     return rb.build();
   }

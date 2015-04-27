@@ -20,30 +20,6 @@
 
 package com.linkedin.r2.transport.http.server;
 
-import java.net.InetSocketAddress;
-import java.util.Collections;
-import java.util.concurrent.Executors;
-
-import org.jboss.netty.bootstrap.ServerBootstrap;
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelFactory;
-import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.channel.ChannelPipeline;
-import org.jboss.netty.channel.ChannelPipelineFactory;
-import org.jboss.netty.channel.ChannelStateEvent;
-import org.jboss.netty.channel.Channels;
-import org.jboss.netty.channel.ExceptionEvent;
-import org.jboss.netty.channel.MessageEvent;
-import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
-import org.jboss.netty.channel.group.ChannelGroup;
-import org.jboss.netty.channel.group.ChannelGroupFuture;
-import org.jboss.netty.channel.group.DefaultChannelGroup;
-import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
-import org.jboss.netty.handler.codec.http.HttpChunkAggregator;
-import org.jboss.netty.handler.codec.http.HttpRequestDecoder;
-import org.jboss.netty.handler.codec.http.HttpResponseEncoder;
-import org.jboss.netty.handler.execution.ExecutionHandler;
-import org.jboss.netty.handler.execution.OrderedMemoryAwareThreadPoolExecutor;
 
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
@@ -54,26 +30,45 @@ import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponse;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
 
+import com.linkedin.r2.util.NamedThreadFactory;
+import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.http.HttpObjectAggregator;
+import io.netty.handler.codec.http.HttpRequestDecoder;
+import io.netty.handler.codec.http.HttpResponseEncoder;
+import io.netty.util.concurrent.DefaultEventExecutorGroup;
+import io.netty.util.concurrent.EventExecutorGroup;
+import java.net.InetSocketAddress;
+import java.util.Collections;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+
 /**
  * TODO: Do we still need this?
  *
- * TODO: for now we use com.linkedin.r2.api.message for requests and responses. We may want
- * constructs specific to this transport.
- *
  * @author Steven Ihde
+ * @author Ang Xu
  * @version $Revision: $
  */
 
 /* package private */ class HttpNettyServer implements HttpServer
 {
-  private ServerBootstrap _bootstrap;
-  private final ChannelGroup _allChannels = new DefaultChannelGroup("RAP server channels");
-
-  private final ExecutionHandler _executionHandler = new ExecutionHandler(new OrderedMemoryAwareThreadPoolExecutor(256, 0, 0));
+  private static final Logger LOG = LoggerFactory.getLogger(HttpNettyServer.class);
 
   private final int _port;
   private final int _threadPoolSize;
   private final HttpDispatcher _dispatcher;
+
+  private NioEventLoopGroup _bossGroup;
+  private NioEventLoopGroup _workerGroup;
+  private EventExecutorGroup _eventExecutors;
 
   public HttpNettyServer(int port, int threadPoolSize, HttpDispatcher dispatcher)
   {
@@ -85,57 +80,53 @@ import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
   @Override
   public void start()
   {
-    ChannelFactory factory =
-          new NioServerSocketChannelFactory(
-                  Executors.newCachedThreadPool(),
-                  Executors.newFixedThreadPool(_threadPoolSize)
-//                  Executors.newCachedThreadPool()
-          );
+    _eventExecutors = new DefaultEventExecutorGroup(_threadPoolSize);
+    _bossGroup = new NioEventLoopGroup(1, new NamedThreadFactory("R2 Nio Boss"));
+    _workerGroup = new NioEventLoopGroup(0, new NamedThreadFactory("R2 Nio Worker"));
 
-    _bootstrap = new ServerBootstrap(factory);
-    _bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
-      @Override
-      public ChannelPipeline getPipeline() throws Exception
-      {
-        ChannelPipeline pipeline = Channels.pipeline();
-        pipeline.addLast("decoder", new HttpRequestDecoder());
-        pipeline.addLast("aggregator", new HttpChunkAggregator(1048576));
-        pipeline.addLast("encoder", new HttpResponseEncoder());
-        pipeline.addLast("rapi", new RAPServerCodec());
-        pipeline.addLast("execution", _executionHandler);
-        pipeline.addLast("handler", new Handler());
-        return pipeline;
-      }
-    });
-    _bootstrap.bind(new InetSocketAddress(_port));
+    ServerBootstrap bootstrap = new ServerBootstrap()
+                                      .group(_bossGroup, _workerGroup)
+                                      .channel(NioServerSocketChannel.class)
+                                      .childHandler(new ChannelInitializer<NioSocketChannel>()
+                                      {
+                                        @Override
+                                        protected void initChannel(NioSocketChannel ch)
+                                            throws Exception
+                                        {
+                                          ch.pipeline().addLast("decoder", new HttpRequestDecoder());
+                                          ch.pipeline().addLast("aggregator", new HttpObjectAggregator(1048576));
+                                          ch.pipeline().addLast("encoder", new HttpResponseEncoder());
+                                          ch.pipeline().addLast("rapi", new RAPServerCodec());
+                                          ch.pipeline().addLast(_eventExecutors, "handler", new Handler());
+                                        }
+                                      });
+
+    bootstrap.bind(new InetSocketAddress(_port));
   }
 
-  // TODO: can we make shutdown asynchronous?
   @Override
   public void stop()
   {
     System.out.println("Shutting down");
-    ChannelGroupFuture shutdown = _allChannels.disconnect();
-    shutdown.awaitUninterruptibly();
-    _bootstrap.releaseExternalResources();
-    _executionHandler.releaseExternalResources();
+    // shut down Netty thread pool and close all channels associated with.
+    _bossGroup.shutdownGracefully();
+    _workerGroup.shutdownGracefully();
   }
 
   @Override
   public void waitForStop() throws InterruptedException
   {
-    // Cheat and delegate to stop for now
-    stop();
+    _bossGroup.terminationFuture().await();
+    _workerGroup.terminationFuture().await();
+
   }
 
-  private class Handler extends SimpleChannelUpstreamHandler
+  private class Handler extends SimpleChannelInboundHandler<RestRequest>
   {
-    // By virtue of being upstream  from the ExecutionHandler, all events in this handler will
-    // be handled on a separate thread so it is safe to block, etc.
     @Override
-    public void messageReceived(final ChannelHandlerContext ctx, final MessageEvent e) throws Exception
+    protected void channelRead0(ChannelHandlerContext ctx, RestRequest request) throws Exception
     {
-      final Channel ch = e.getChannel();
+      final Channel ch = ctx.channel();
       TransportCallback<RestResponse> writeResponseCallback = new TransportCallback<RestResponse>()
       {
         @Override
@@ -162,38 +153,24 @@ import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
             .unsafeOverwriteHeaders(WireAttributeHelper.toWireAttributes(response.getWireAttributes()))
             .build();
 
-          ch.write(responseBuilder.build());
+          ch.writeAndFlush(responseBuilder.build());
         }
       };
-      RestRequest request = (RestRequest) e.getMessage();
       try
       {
         _dispatcher.handleRequest(request, writeResponseCallback);
       }
       catch (Exception ex)
       {
-        writeResponseCallback.onResponse(TransportResponseImpl.<RestResponse> error(ex,
-                                                                                    Collections.<String, String> emptyMap()));
+        writeResponseCallback.onResponse(TransportResponseImpl.<RestResponse> error(ex, Collections.<String, String> emptyMap()));
       }
     }
 
     @Override
-    public void channelOpen(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception
     {
-      _allChannels.add(ctx.getChannel());
-    }
-
-    @Override
-    public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception
-    {
-      _allChannels.remove(ctx.getChannel());
-    }
-
-    @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception
-    {
-      // TODO close channel, etc.
-      e.getCause().printStackTrace();
+      LOG.error("Exception caught on channel: " + ctx.channel().remoteAddress(), cause);
+      ctx.close();
     }
   }
 

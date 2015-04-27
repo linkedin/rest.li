@@ -36,6 +36,20 @@ import com.linkedin.r2.transport.http.common.HttpBridge;
 import com.linkedin.r2.util.Cancellable;
 import com.linkedin.r2.util.TimeoutRunnable;
 
+import io.netty.bootstrap.Bootstrap;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.group.ChannelGroup;
+import io.netty.channel.group.ChannelGroupFuture;
+import io.netty.channel.group.ChannelGroupFutureListener;
+import io.netty.channel.group.DefaultChannelGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.http.HttpClientCodec;
+import io.netty.handler.codec.http.HttpObjectAggregator;
+import io.netty.util.concurrent.DefaultEventExecutorGroup;
+import io.netty.util.concurrent.GlobalEventExecutor;
+import java.util.concurrent.ExecutorService;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLParameters;
@@ -46,30 +60,17 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.jboss.netty.bootstrap.ClientBootstrap;
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.channel.ChannelPipeline;
-import org.jboss.netty.channel.ChannelPipelineFactory;
-import org.jboss.netty.channel.Channels;
-import org.jboss.netty.channel.group.ChannelGroup;
-import org.jboss.netty.channel.group.ChannelGroupFuture;
-import org.jboss.netty.channel.group.ChannelGroupFutureListener;
-import org.jboss.netty.channel.group.DefaultChannelGroup;
-import org.jboss.netty.channel.socket.ClientSocketChannelFactory;
-import org.jboss.netty.handler.codec.http.HttpChunkAggregator;
-import org.jboss.netty.handler.codec.http.HttpClientCodec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * @author Steven Ihde
+ * @author Ang Xu
  * @version $Revision: $
  */
 
@@ -80,7 +81,7 @@ import org.slf4j.LoggerFactory;
   private static final int HTTPS_DEFAULT_PORT = 443;
 
   private final ChannelPoolManager _channelPoolManager;
-  private final ChannelGroup _allChannels = new DefaultChannelGroup("R2 client channels");
+  private final ChannelGroup _allChannels;
 
   private final ChannelPoolHandler _handler = new ChannelPoolHandler();
   private final RAPResponseHandler _responseHandler = new RAPResponseHandler();
@@ -89,180 +90,86 @@ import org.slf4j.LoggerFactory;
   private enum State { RUNNING, SHUTTING_DOWN, REQUESTS_STOPPING, SHUTDOWN }
 
   private final ScheduledExecutorService _scheduler;
-  private final ExecutorService _callbackExecutor;
+  private final ExecutorService _callbackExecutors;
 
-  private final int _requestTimeout;
-  private final int _shutdownTimeout;
+  private final long _requestTimeout;
+  private final long _shutdownTimeout;
   private final int _maxResponseSize;
+  private final int _maxHeaderSize;
+  private final int _maxChunkSize;
 
   private final String _requestTimeoutMessage;
   private final AbstractJmxManager _jmxManager;
-  private final String _name;
-
-  /**
-   * Creates a new HttpNettyClient with some default parameters
-   *
-   * @see #HttpNettyClient(ClientSocketChannelFactory,ScheduledExecutorService,int,int,int,int,int,SSLContext,SSLParameters,int,ExecutorService,int)
-   */
-  public HttpNettyClient(ClientSocketChannelFactory factory,
-                         ScheduledExecutorService executor,
-                         int poolSize,
-                         int requestTimeout,
-                         int idleTimeout,
-                         int shutdownTimeout,
-                         int maxResponseSize)
-  {
-    this(factory,
-         executor,
-         poolSize,
-         requestTimeout,
-         idleTimeout,
-         shutdownTimeout,
-         maxResponseSize,
-         null,
-         null,
-         executor,
-         Integer.MAX_VALUE);
-  }
 
   /**
    * Creates a new HttpNettyClient
    *
-   * @param factory The ClientSocketChannelFactory; it is the caller's responsibility to
-   *          shut it down
-   * @param executor an executor; it is the caller's responsibility to shut it down
-   * @param poolSize Maximum size of the underlying HTTP connection pool
-   * @param requestTimeout timeout, in ms, to get a connection from the pool or create one
-   * @param idleTimeout interval after which idle connections will be automatically closed
-   * @param shutdownTimeout timeout, in ms, the client should wait after shutdown is
-   *          initiated before terminating outstanding requests
-   * @param maxResponseSize
-   * @param sslContext {@link SSLContext}
-   * @param sslParameters {@link SSLParameters}with overloaded construct
-   * @param callbackExecutor an optional executor to invoke user callback
-   * @param poolWaiterSize Maximum waiters waiting on the HTTP connection pool
+   * @param eventLoopGroup      The NioEventLoopGroup; it is the caller's responsibility to
+   *                            shut it down
+   * @param executor            An executor; it is the caller's responsibility to shut it down
+   * @param poolSize            Maximum size of the underlying HTTP connection pool
+   * @param requestTimeout      Timeout, in ms, to get a connection from the pool or create one
+   * @param idleTimeout         Interval after which idle connections will be automatically closed
+   * @param shutdownTimeout     Timeout, in ms, the client should wait after shutdown is
+   *                            initiated before terminating outstanding requests
+   * @param maxResponseSize     Maximum size of a HTTP response
+   * @param sslContext          {@link SSLContext}
+   * @param sslParameters       {@link SSLParameters}with overloaded construct
+   * @param callbackExecutors   An optional EventExecutorGroup to invoke user callback
+   * @param poolWaiterSize      Maximum waiters waiting on the HTTP connection pool
+   * @param name                Name of the {@link HttpNettyClient}
+   * @param jmxManager          A management class that is aware of the creation/shutdown event
+   *                            of the underlying {@link ChannelPoolManager}
+   * @param strategy            The strategy used to return pool objects.
+   * @param minPoolSize         Minimum number of objects in the pool. Set to zero for no minimum.
+   * @param maxHeaderSize       Maximum size of all HTTP headers
+   * @param maxChunkSize        Maximum size of a HTTP chunk
    */
-  public HttpNettyClient(ClientSocketChannelFactory factory,
+  public HttpNettyClient(NioEventLoopGroup eventLoopGroup,
                          ScheduledExecutorService executor,
                          int poolSize,
-                         int requestTimeout,
-                         int idleTimeout,
-                         int shutdownTimeout,
+                         long requestTimeout,
+                         long idleTimeout,
+                         long shutdownTimeout,
                          int maxResponseSize,
                          SSLContext sslContext,
                          SSLParameters sslParameters,
-                         ExecutorService callbackExecutor,
-                         int poolWaiterSize)
-  {
-    this(factory,
-        executor,
-        poolSize,
-        requestTimeout,
-        idleTimeout,
-        shutdownTimeout,
-        maxResponseSize,
-        sslContext,
-        sslParameters,
-        callbackExecutor,
-        poolWaiterSize,
-        HttpClientFactory.DEFAULT_CLIENT_NAME,
-        HttpClientFactory.NULL_JMX_MANAGER);
-  }
-
-  /**
-   * legacy constructor for backward-compatibility purpose.
-   */
-  public HttpNettyClient(ClientSocketChannelFactory factory,
-                         ScheduledExecutorService executor,
-                         int poolSize,
-                         int requestTimeout,
-                         int idleTimeout,
-                         int shutdownTimeout,
-                         int maxResponseSize,
-                         SSLContext sslContext,
-                         SSLParameters sslParameters,
-                         ExecutorService callbackExecutor,
-                         int poolWaiterSize,
-                         String name,
-                         AbstractJmxManager jmxManager)
-  {
-    this(factory,
-         executor,
-         poolSize,
-         requestTimeout,
-         idleTimeout,
-         shutdownTimeout,
-         maxResponseSize,
-         sslContext,
-         sslParameters,
-         callbackExecutor,
-         poolWaiterSize,
-         name,
-         jmxManager,
-         AsyncPoolImpl.Strategy.MRU,
-         0);
-  }
-
-  /**
-   * Creates a new HttpNettyClient
-   *
-   * @param factory The ClientSocketChannelFactory; it is the caller's responsibility to
-   *          shut it down
-   * @param executor an executor; it is the caller's responsibility to shut it down
-   * @param poolSize Maximum size of the underlying HTTP connection pool
-   * @param requestTimeout timeout, in ms, to get a connection from the pool or create one
-   * @param idleTimeout interval after which idle connections will be automatically closed
-   * @param shutdownTimeout timeout, in ms, the client should wait after shutdown is
-   *          initiated before terminating outstanding requests
-   * @param maxResponseSize
-   * @param sslContext {@link SSLContext}
-   * @param sslParameters {@link SSLParameters}with overloaded construct
-   * @param callbackExecutor an optional executor to invoke user callback
-   * @param poolWaiterSize Maximum waiters waiting on the HTTP connection pool
-   * @param name Name of the {@link HttpNettyClient}
-   * @param jmxManager A management class that is aware of the creation/shutdown event
-   *          of the underlying {@link ChannelPoolManager}
-   * @param strategy The strategy used to return pool objects.
-   * @param minPoolSize Minimum number of objects in the pool. Set to zero for
-   *                no minimum.
-   */
-  public HttpNettyClient(ClientSocketChannelFactory factory,
-                         ScheduledExecutorService executor,
-                         int poolSize,
-                         int requestTimeout,
-                         int idleTimeout,
-                         int shutdownTimeout,
-                         int maxResponseSize,
-                         SSLContext sslContext,
-                         SSLParameters sslParameters,
-                         ExecutorService callbackExecutor,
+                         ExecutorService callbackExecutors,
                          int poolWaiterSize,
                          String name,
                          AbstractJmxManager jmxManager,
                          AsyncPoolImpl.Strategy strategy,
-                         int minPoolSize)
+                         int minPoolSize,
+                         int maxHeaderSize,
+                         int maxChunkSize)
   {
-    _maxResponseSize = maxResponseSize;
-    _name = name;
-    _channelPoolManager =
-        new ChannelPoolManager(new ChannelPoolFactoryImpl(new ClientBootstrap(factory),
+    Bootstrap bootstrap = new Bootstrap().group(eventLoopGroup)
+                                .channel(NioSocketChannel.class)
+                                .handler(new HttpClientPipelineInitializer(sslContext, sslParameters));
+
+    _channelPoolManager = new ChannelPoolManager(
+        new ChannelPoolFactoryImpl(bootstrap,
             poolSize,
             idleTimeout,
-            sslContext,
-            sslParameters,
             poolWaiterSize,
             strategy,
             minPoolSize),
-            name + ChannelPoolManager.BASE_NAME);
+        name + ChannelPoolManager.BASE_NAME);
+
+    _maxResponseSize = maxResponseSize;
+    _maxHeaderSize = maxHeaderSize;
+    _maxChunkSize = maxChunkSize;
     _scheduler = executor;
-    _callbackExecutor = callbackExecutor;
+    _callbackExecutors = callbackExecutors == null ? eventLoopGroup : callbackExecutors;
     _requestTimeout = requestTimeout;
     _shutdownTimeout = shutdownTimeout;
     _requestTimeoutMessage = "Exceeded request timeout of " + _requestTimeout + "ms";
     _jmxManager = jmxManager;
+    _allChannels = new DefaultChannelGroup("R2 client channels", eventLoopGroup.next());
     _jmxManager.onProviderCreate(_channelPoolManager);
   }
 
+  /* Constructor for test purpose ONLY. */
   HttpNettyClient(ChannelPoolFactory factory,
                   ScheduledExecutorService executor,
                   int requestTimeout,
@@ -272,13 +179,15 @@ import org.slf4j.LoggerFactory;
     _maxResponseSize = maxResponseSize;
     _channelPoolManager = new ChannelPoolManager(factory);
     _scheduler = executor;
-    _callbackExecutor = executor;
+    _callbackExecutors = new DefaultEventExecutorGroup(1);
     _requestTimeout = requestTimeout;
     _shutdownTimeout = shutdownTimeout;
     _requestTimeoutMessage = "Exceeded request timeout of " + _requestTimeout + "ms";
-    _name = HttpClientFactory.DEFAULT_CLIENT_NAME;
-    _jmxManager = HttpClientFactory.NULL_JMX_MANAGER;
+    _jmxManager = AbstractJmxManager.NULL_JMX_MANAGER;
     _jmxManager.onProviderCreate(_channelPoolManager);
+    _maxHeaderSize = 8192;
+    _maxChunkSize = 8192;
+    _allChannels = new DefaultChannelGroup("R2 client channels", GlobalEventExecutor.INSTANCE);
   }
 
   @Override
@@ -317,12 +226,10 @@ import org.slf4j.LoggerFactory;
           // Timeout any requests still pending response
           for (Channel c : _allChannels)
           {
-            @SuppressWarnings("unchecked")
-            TransportCallback<RestResponse> callback = c.getPipeline().get(RAPResponseHandler.class).removeAttachment(c.getPipeline().getContext(RAPResponseHandler.class));
+            TransportCallback<RestResponse> callback = c.attr(RAPResponseHandler.CALLBACK_ATTR_KEY).getAndRemove();
             if (callback != null)
             {
-              errorResponse(callback,
-                            new TimeoutException("Operation did not complete before shutdown"));
+              errorResponse(callback, new TimeoutException("Operation did not complete before shutdown"));
             }
           }
 
@@ -338,13 +245,12 @@ import org.slf4j.LoggerFactory;
                       callback.onSuccess(None.none());
                     }
                   }, "Timed out waiting for channels to close, continuing shutdown");
-          ChannelGroupFuture future = _allChannels.close();
-          future.addListener(new ChannelGroupFutureListener()
+          _allChannels.close().addListener(new ChannelGroupFutureListener()
           {
             @Override
             public void operationComplete(ChannelGroupFuture channelGroupFuture) throws Exception
             {
-              if (!channelGroupFuture.isCompleteSuccess())
+              if (!channelGroupFuture.isSuccess())
               {
                 LOG.warn("Failed to close some connections, ignoring");
               }
@@ -370,21 +276,25 @@ import org.slf4j.LoggerFactory;
       _channelPoolManager.shutdown(closeChannels);
       _jmxManager.onProviderShutdown(_channelPoolManager);
     }
+    else
+    {
+      callback.onError(new IllegalStateException("Shutdown has already been requested."));
+    }
   }
 
   private void writeRequestWithTimeout(RestRequest request, RequestContext requestContext, Map<String, String> wireAttrs,
                                        TransportCallback<RestResponse> callback)
   {
+    ExecutionCallback<RestResponse> executionCallback = new ExecutionCallback<RestResponse>(_callbackExecutors, callback);
     // By wrapping the callback in a Timeout callback before passing it along, we deny the rest
     // of the code access to the unwrapped callback.  This ensures two things:
     // 1. The user callback will always be invoked, since the Timeout will eventually expire
     // 2. The user callback is never invoked more than once
     TimeoutTransportCallback<RestResponse> timeoutCallback =
         new TimeoutTransportCallback<RestResponse>(_scheduler,
-                                                   _callbackExecutor,
                                                    _requestTimeout,
                                                    TimeUnit.MILLISECONDS,
-                                                   callback,
+                                                   executionCallback,
                                                    _requestTimeoutMessage);
     writeRequest(request, requestContext, wireAttrs, timeoutCallback);
   }
@@ -400,7 +310,7 @@ import org.slf4j.LoggerFactory;
     }
     URI uri = request.getURI();
     String scheme = uri.getScheme();
-    if (!scheme.equalsIgnoreCase("http") && !scheme.equalsIgnoreCase("https"))
+    if (!"http".equalsIgnoreCase(scheme) && !"https".equalsIgnoreCase(scheme))
     {
       errorResponse(callback, new IllegalArgumentException("Unknown scheme: " + scheme
           + " (only http/https is supported)"));
@@ -409,7 +319,7 @@ import org.slf4j.LoggerFactory;
     String host = uri.getHost();
     int port = uri.getPort();
     if (port == -1) {
-      port = scheme.equalsIgnoreCase("http") ? HTTP_DEFAULT_PORT : HTTPS_DEFAULT_PORT;
+      port = "http".equalsIgnoreCase(scheme) ? HTTP_DEFAULT_PORT : HTTPS_DEFAULT_PORT;
     }
 
     final RestRequest newRequest = new RestRequestBuilder(request)
@@ -436,15 +346,13 @@ import org.slf4j.LoggerFactory;
       {
         // This handler ensures the channel is returned to the pool at the end of the
         // Netty pipeline.
-        final ChannelPoolHandler channelPoolHandler = channel.getPipeline().get(ChannelPoolHandler.class);
-        final ChannelHandlerContext channelPoolHandlerContext = channel.getPipeline().getContext(ChannelPoolHandler.class);
-        channelPoolHandler.setAttachment(channelPoolHandlerContext, pool);
+        channel.attr(ChannelPoolHandler.CHANNEL_POOL_ATTR_KEY).set(pool);
         callback.addTimeoutTask(new Runnable()
         {
           @Override
           public void run()
           {
-            AsyncPool<Channel> pool = channelPoolHandler.removeAttachment(channelPoolHandlerContext);
+            AsyncPool<Channel> pool = channel.attr(ChannelPoolHandler.CHANNEL_POOL_ATTR_KEY).getAndRemove();
             if (pool != null)
             {
               pool.dispose(channel);
@@ -453,9 +361,7 @@ import org.slf4j.LoggerFactory;
         });
 
         // This handler invokes the callback with the response once it arrives.
-        channel.getPipeline().get(RAPResponseHandler.class).setAttachment(
-                                                              channel.getPipeline().getContext(RAPResponseHandler.class),
-                                                              callback);
+        channel.attr(RAPResponseHandler.CALLBACK_ATTR_KEY).set(callback);
 
         final State state = _state.get();
         if (state == State.REQUESTS_STOPPING || state == State.SHUTDOWN)
@@ -470,7 +376,7 @@ import org.slf4j.LoggerFactory;
           return;
         }
 
-        channel.write(newRequest);
+        channel.writeAndFlush(newRequest);
       }
 
       @Override
@@ -507,7 +413,7 @@ import org.slf4j.LoggerFactory;
     return new Exception("Wrapped Throwable", t);
   }
 
-  private class HttpClientPipelineFactory implements ChannelPipelineFactory
+  private class HttpClientPipelineInitializer extends ChannelInitializer<NioSocketChannel>
   {
     private final SSLContext    _sslContext;
     private final SSLParameters _sslParameters;
@@ -522,7 +428,7 @@ import org.slf4j.LoggerFactory;
      *          exceedingly difficult to configure, so we can't pass all desired
      *          configuration in sslContext.
      */
-    public HttpClientPipelineFactory(SSLContext sslContext, SSLParameters sslParameters)
+    public HttpClientPipelineInitializer(SSLContext sslContext, SSLParameters sslParameters)
     {
       // Check if requested parameters are present in the supported params of the context.
       // Log warning for those not present. Throw an exception if none present.
@@ -587,50 +493,37 @@ import org.slf4j.LoggerFactory;
     }
 
     @Override
-    public ChannelPipeline getPipeline() throws Exception
+    protected void initChannel(NioSocketChannel ch) throws Exception
     {
-      ChannelPipeline pipeline = Channels.pipeline();
-
-      pipeline.addLast("codec", new HttpClientCodec());
-      pipeline.addLast("dechunker", new HttpChunkAggregator(_maxResponseSize));
-      pipeline.addLast("rapiCodec", new RAPClientCodec());
-      // Could introduce an ExecutionHandler here (before RAPResponseHandler)
-      // to execute the response handling on a different thread.
-      pipeline.addLast("responseHandler", _responseHandler);
-      // Add handler to dynamically configure SSL-related handlers depending on
-      // the SSL configuration and request URI.
+      ch.pipeline().addLast("codec", new HttpClientCodec(4096, _maxHeaderSize, _maxChunkSize));
+      ch.pipeline().addLast("dechunker", new HttpObjectAggregator(_maxResponseSize));
+      ch.pipeline().addLast("rapiCodec", new RAPClientCodec());
+      ch.pipeline().addLast("responseHandler", _responseHandler);
       if (_sslContext != null)
       {
-        pipeline.addLast("sslRequestHandler", new SslRequestHandler(_sslContext,
-                                                                    _sslParameters));
+        ch.pipeline().addLast("sslRequestHandler", new SslRequestHandler(_sslContext, _sslParameters));
       }
-      pipeline.addLast("channelManager", _handler);
-
-      return pipeline;
+      ch.pipeline().addLast("channelManager", _handler);
     }
   }
 
   private class ChannelPoolFactoryImpl implements ChannelPoolFactory
   {
-    private final ClientBootstrap _bootstrap;
+    private final Bootstrap _bootstrap;
     private final int _maxPoolSize;
-    private final int _idleTimeout;
+    private final long _idleTimeout;
     private final int _maxPoolWaiterSize;
     private final AsyncPoolImpl.Strategy _strategy;
     private final int _minPoolSize;
 
-    private ChannelPoolFactoryImpl(ClientBootstrap bootstrap,
+    private ChannelPoolFactoryImpl(Bootstrap bootstrap,
                                    int maxPoolSize,
-                                   int idleTimeout,
-                                   SSLContext sslContext,
-                                   SSLParameters sslParameters,
+                                   long idleTimeout,
                                    int maxPoolWaiterSize,
                                    AsyncPoolImpl.Strategy strategy,
                                    int minPoolSize)
     {
       _bootstrap = bootstrap;
-      _bootstrap.setPipelineFactory(new HttpClientPipelineFactory(sslContext,
-                                                                  sslParameters));
       _maxPoolSize = maxPoolSize;
       _idleTimeout = idleTimeout;
       _maxPoolWaiterSize = maxPoolWaiterSize;
@@ -648,7 +541,6 @@ import org.slf4j.LoggerFactory;
                                         _maxPoolSize,
                                         _idleTimeout,
                                         _scheduler,
-                                        _callbackExecutor,
                                         _maxPoolWaiterSize,
                                         _strategy,
                                         _minPoolSize,
@@ -673,17 +565,17 @@ import org.slf4j.LoggerFactory;
 
   // Test support
 
-  public int getRequestTimeout()
+  public long getRequestTimeout()
   {
     return _requestTimeout;
   }
 
-  public int getShutdownTimeout()
+  public long getShutdownTimeout()
   {
     return _shutdownTimeout;
   }
 
-  public int getMaxResponseSize()
+  public long getMaxResponseSize()
   {
     return _maxResponseSize;
   }

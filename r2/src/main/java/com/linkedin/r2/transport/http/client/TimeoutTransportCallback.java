@@ -56,7 +56,6 @@ public class TimeoutTransportCallback<T> implements TransportCallback<T>, Timeou
    *                       timeout occurs.
    */
   public TimeoutTransportCallback(ScheduledExecutorService scheduler,
-                                  final ExecutorService callbackExecutor,
                                   long timeout,
                                   TimeUnit timeoutUnit,
                                   final TransportCallback<T> callback,
@@ -68,14 +67,7 @@ public class TimeoutTransportCallback<T> implements TransportCallback<T>, Timeou
       @Override
       public void run()
       {
-        callbackExecutor.submit(new Runnable()
-        {
-          @Override
-          public void run()
-          {
-            callback.onResponse(TransportResponseImpl.<T>error(new TimeoutException(timeoutMessage)));
-          }
-        });
+        callback.onResponse(TransportResponseImpl.<T>error(new TimeoutException(timeoutMessage)));
       }
     });
   }

@@ -23,7 +23,7 @@ package com.linkedin.r2.transport.http.client;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.Callbacks;
 import com.linkedin.common.util.None;
-import org.jboss.netty.channel.Channel;
+import io.netty.channel.Channel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

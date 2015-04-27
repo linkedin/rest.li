@@ -27,4 +27,16 @@ package com.linkedin.r2.transport.http.client;
  */
 public abstract class AbstractJmxManager implements PoolStatsProviderAware
 {
+  public static final AbstractJmxManager NULL_JMX_MANAGER = new AbstractJmxManager()
+  {
+    @Override
+    public void onProviderCreate(PoolStatsProvider provider)
+    {
+    }
+
+    @Override
+    public void onProviderShutdown(PoolStatsProvider provider)
+    {
+    }
+  };
 }

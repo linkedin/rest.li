@@ -88,7 +88,7 @@ import java.util.Map;
   public String toString()
   {
     StringBuilder builder = new StringBuilder();
-    builder.append("RestRequest[headers=")
+    builder.append("RestResponse[headers=")
         .append(getHeaders())
         .append("cookies=")
         .append(getCookies())

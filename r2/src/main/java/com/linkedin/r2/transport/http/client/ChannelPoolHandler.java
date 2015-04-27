@@ -20,11 +20,13 @@
 
 package com.linkedin.r2.transport.http.client;
 
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.channel.ChannelStateEvent;
-import org.jboss.netty.channel.ExceptionEvent;
-import org.jboss.netty.channel.MessageEvent;
+
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.util.AttributeKey;
+
 
 /**
  * Listens for upstream events affecting the state of the channel as it relates to the pool.
@@ -35,47 +37,43 @@ import org.jboss.netty.channel.MessageEvent;
  * Basically, the handler's job is to return the channel to the pool, or ask the pool to
  * dispose of the channel, after the response is received or after an error occurs.
  *
- * The handler operates as a singleton (it can be a member of multiple pipelines).  The handler
- * expects that its {@link ChannelHandlerContext} will be an object of type
- * AsyncPool&lt;Channel&gt;.
+ * The handler operates as a singleton (it can be a member of multiple pipelines). It expects
+ * that the channel's attachment will be an AsyncPool&lt;Channel&gt; to which the channel belongs.
  */
-class ChannelPoolHandler extends UpstreamHandlerWithAttachment<AsyncPool<Channel>>
+@ChannelHandler.Sharable
+class ChannelPoolHandler extends ChannelInboundHandlerAdapter
 {
-  /**
-   * Construct a new instance.
-   */
-  public ChannelPoolHandler()
-  {
-  }
+  public static final AttributeKey<AsyncPool<Channel>> CHANNEL_POOL_ATTR_KEY
+      = AttributeKey.valueOf("ChannelPool");
 
   @Override
-  public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception
+  public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception
   {
-    AsyncPool<Channel> pool = removeAttachment(ctx);
+    AsyncPool<Channel> pool = ctx.channel().attr(CHANNEL_POOL_ATTR_KEY).getAndRemove();
     if (pool != null)
     {
-      pool.put(e.getChannel());
+      pool.put(ctx.channel());
     }
   }
 
   @Override
-  public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception
+  public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception
   {
-    AsyncPool<Channel> pool = removeAttachment(ctx);
+    AsyncPool<Channel> pool = ctx.channel().attr(CHANNEL_POOL_ATTR_KEY).getAndRemove();
     if (pool != null)
     {
       // TODO do all exceptions mean we should get rid of the channel?
-      pool.dispose(e.getChannel());
+      pool.dispose(ctx.channel());
     }
   }
 
   @Override
-  public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception
+  public void channelInactive(ChannelHandlerContext ctx) throws Exception
   {
-    AsyncPool<Channel> pool = removeAttachment(ctx);
+    AsyncPool<Channel> pool = ctx.channel().attr(CHANNEL_POOL_ATTR_KEY).getAndRemove();
     if (pool != null)
     {
-      pool.dispose(e.getChannel());
+      pool.dispose(ctx.channel());
     }
   }
 }

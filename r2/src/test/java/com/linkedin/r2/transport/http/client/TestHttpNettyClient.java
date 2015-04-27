@@ -20,12 +20,14 @@
 
 package com.linkedin.r2.transport.http.client;
 
+import io.netty.channel.Channel;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.handler.codec.TooLongFrameException;
 import java.io.IOException;
 import java.net.SocketAddress;
 import java.net.URI;
 import java.nio.channels.UnresolvedAddressException;
 import java.security.NoSuchAlgorithmException;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
@@ -37,9 +39,6 @@ import java.util.concurrent.CountDownLatch;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
 
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
-import org.jboss.netty.handler.codec.frame.TooLongFrameException;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -54,20 +53,21 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.transport.common.bridge.client.TransportCallbackAdapter;
-import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 
 /**
  * @author Steven Ihde
+ * @author Ang Xu
  * @version $Revision: $
  */
 
 public class TestHttpNettyClient
 {
-  private NioClientSocketChannelFactory _factory;
+  private NioEventLoopGroup _eventLoop;
   private ScheduledExecutorService _scheduler;
 
   private static final int TEST_MAX_RESPONSE_SIZE = 500000;
+  private static final int TEST_MAX_HEADER_SIZE = 50000;
 
   private static final int RESPONSE_OK = 1;
   private static final int TOO_LARGE = 2;
@@ -75,28 +75,27 @@ public class TestHttpNettyClient
   @BeforeClass
   public void setup()
   {
-    _factory = new NioClientSocketChannelFactory(
-            Executors.newCachedThreadPool(),
-            Executors.newCachedThreadPool());
+    _eventLoop = new NioEventLoopGroup();
     _scheduler = Executors.newSingleThreadScheduledExecutor();
   }
 
   @AfterClass
   public void tearDown()
   {
-    _factory.releaseExternalResources();
     _scheduler.shutdown();
+    _eventLoop.shutdownGracefully();
   }
 
   @Test
-  public void testNoChannelTimeout() throws InterruptedException
+  public void testNoChannelTimeout()
+      throws InterruptedException
   {
-    HttpNettyClient client = new HttpNettyClient(new NoCreations(_scheduler), _scheduler, 500, 500, 1024*1024*2);
+    HttpNettyClient client = new HttpNettyClient(new NoCreations(_scheduler), _scheduler, 500, 500, 1024 * 1024 * 2);
 
     RestRequest r = new RestRequestBuilder(URI.create("http://localhost/")).build();
     FutureCallback<RestResponse> cb = new FutureCallback<RestResponse>();
     TransportCallback<RestResponse> callback = new TransportCallbackAdapter<RestResponse>(cb);
-    client.restRequest(r, new RequestContext(), new HashMap<String,String>(), callback);
+    client.restRequest(r, new RequestContext(), new HashMap<String, String>(), callback);
     try
     {
       // This timeout needs to be significantly larger than the getTimeout of the netty client;
@@ -118,11 +117,13 @@ public class TestHttpNettyClient
   }
 
   @Test
-  public void testNoResponseTimeout() throws InterruptedException, IOException
+  public void testNoResponseTimeout()
+      throws InterruptedException, IOException
   {
     TestServer testServer = new TestServer();
 
-    HttpNettyClient client = new HttpNettyClient(_factory, _scheduler, 1, 500, 10000, 500, 1024*1024*2);
+    HttpNettyClient client = new HttpClientBuilder(_eventLoop, _scheduler).setRequestTimeout(500).setIdleTimeout(10000)
+        .setShutdownTimeout(500).build();
 
     RestRequest r = new RestRequestBuilder(testServer.getNoResponseURI()).build();
     FutureCallback<RestResponse> cb = new FutureCallback<RestResponse>();
@@ -153,12 +154,16 @@ public class TestHttpNettyClient
   @Test
   public void testBadAddress() throws InterruptedException, IOException, TimeoutException
   {
-    HttpNettyClient client = new HttpNettyClient(_factory, _scheduler, 1, 30000, 10000, 500,1024*1024*2);
+    HttpNettyClient client = new HttpClientBuilder(_eventLoop, _scheduler)
+                                  .setRequestTimeout(30000)
+                                  .setIdleTimeout(10000)
+                                  .setShutdownTimeout(500)
+                                  .build();
 
     RestRequest r = new RestRequestBuilder(URI.create("http://this.host.does.not.exist.linkedin.com")).build();
     FutureCallback<RestResponse> cb = new FutureCallback<RestResponse>();
     TransportCallback<RestResponse> callback = new TransportCallbackAdapter<RestResponse>(cb);
-    client.restRequest(r, new RequestContext(), new HashMap<String,String>(), callback);
+    client.restRequest(r, new RequestContext(), new HashMap<String, String>(), callback);
     try
     {
       cb.get(30, TimeUnit.SECONDS);
@@ -171,21 +176,24 @@ public class TestHttpNettyClient
   }
 
   @Test
-  public void testMaxResponseSize() throws InterruptedException, IOException, TimeoutException
+  public void testMaxResponseSize()
+      throws InterruptedException, IOException, TimeoutException
   {
-    testResponseSize(TEST_MAX_RESPONSE_SIZE-1, RESPONSE_OK);
+    testResponseSize(TEST_MAX_RESPONSE_SIZE - 1, RESPONSE_OK);
 
     testResponseSize(TEST_MAX_RESPONSE_SIZE, RESPONSE_OK);
 
-    testResponseSize(TEST_MAX_RESPONSE_SIZE+1, TOO_LARGE);
+    testResponseSize(TEST_MAX_RESPONSE_SIZE + 1, TOO_LARGE);
   }
 
-
-  public void testResponseSize(int responseSize, int expectedResult) throws InterruptedException, IOException, TimeoutException
+  public void testResponseSize(int responseSize, int expectedResult)
+      throws InterruptedException, IOException, TimeoutException
   {
     TestServer testServer = new TestServer();
 
-    HttpNettyClient client = new HttpNettyClient(_factory, _scheduler, 1, 50000, 10000, 500, TEST_MAX_RESPONSE_SIZE);
+    HttpNettyClient client =
+        new HttpClientBuilder(_eventLoop, _scheduler).setRequestTimeout(50000).setIdleTimeout(10000)
+            .setShutdownTimeout(500).setMaxResponseSize(TEST_MAX_RESPONSE_SIZE).build();
 
     RestRequest r = new RestRequestBuilder(testServer.getResponseOfSizeURI(responseSize)).build();
     FutureCallback<RestResponse> cb = new FutureCallback<RestResponse>();
@@ -195,19 +203,91 @@ public class TestHttpNettyClient
     try
     {
       cb.get(30, TimeUnit.SECONDS);
-      if(expectedResult == TOO_LARGE)
+      if (expectedResult == TOO_LARGE)
       {
         Assert.fail("Max response size exceeded, expected exception. ");
       }
     }
     catch (ExecutionException e)
     {
-      if(expectedResult == RESPONSE_OK)
+      if (expectedResult == RESPONSE_OK)
       {
         Assert.fail("Unexpected ExecutionException, response was <= max response size.");
       }
       verifyCauseChain(e, RemoteInvocationException.class, TooLongFrameException.class);
+    }
+    testServer.shutdown();
+  }
 
+  @Test
+  public void testMaxHeaderSize() throws InterruptedException, IOException, TimeoutException
+  {
+    testHeaderSize(TEST_MAX_HEADER_SIZE - 1, RESPONSE_OK);
+
+    testHeaderSize(TEST_MAX_HEADER_SIZE, RESPONSE_OK);
+
+    testHeaderSize(TEST_MAX_HEADER_SIZE + 1, TOO_LARGE);
+  }
+
+  public void testHeaderSize(int headerSize, int expectedResult)
+      throws InterruptedException, IOException, TimeoutException
+  {
+    TestServer testServer = new TestServer();
+
+    HttpNettyClient client =
+        new HttpClientBuilder(_eventLoop, _scheduler).setRequestTimeout(5000000).setIdleTimeout(10000)
+            .setShutdownTimeout(500).setMaxHeaderSize(TEST_MAX_HEADER_SIZE).build();
+
+    RestRequest r = new RestRequestBuilder(testServer.getResponseWithHeaderSizeURI(headerSize)).build();
+    FutureCallback<RestResponse> cb = new FutureCallback<RestResponse>();
+    TransportCallback<RestResponse> callback = new TransportCallbackAdapter<RestResponse>(cb);
+    client.restRequest(r, new RequestContext(), new HashMap<String, String>(), callback);
+
+    try
+    {
+      RestResponse response = cb.get(300, TimeUnit.SECONDS);
+      if (expectedResult == TOO_LARGE)
+      {
+        Assert.fail("Max header size exceeded, expected exception. ");
+      }
+    }
+    catch (ExecutionException e)
+    {
+      if (expectedResult == RESPONSE_OK)
+      {
+        Assert.fail("Unexpected ExecutionException, header was <= max header size.");
+      }
+      verifyCauseChain(e, RemoteInvocationException.class, TooLongFrameException.class);
+    }
+    testServer.shutdown();
+  }
+
+  @Test
+  public void testBadHeader() throws InterruptedException, IOException
+  {
+    TestServer testServer = new TestServer();
+    HttpNettyClient client = new HttpClientBuilder(_eventLoop, _scheduler)
+                                  .setRequestTimeout(10000)
+                                  .setIdleTimeout(10000)
+                                  .setShutdownTimeout(500).build();
+
+    RestRequest r = new RestRequestBuilder(testServer.getBadHeaderURI()).build();
+    FutureCallback<RestResponse> cb = new FutureCallback<RestResponse>();
+    TransportCallback<RestResponse> callback = new TransportCallbackAdapter<RestResponse>(cb);
+    client.restRequest(r, new RequestContext(), new HashMap<String, String>(), callback);
+
+    try
+    {
+      cb.get(30, TimeUnit.SECONDS);
+      Assert.fail("Get was supposed to fail");
+    }
+    catch (TimeoutException e)
+    {
+      Assert.fail("Unexpected TimeoutException, should have been ExecutionException", e);
+    }
+    catch (ExecutionException e)
+    {
+      verifyCauseChain(e, RemoteInvocationException.class, IllegalArgumentException.class);
     }
     testServer.shutdown();
   }
@@ -215,8 +295,11 @@ public class TestHttpNettyClient
   @Test
   public void testShutdown() throws ExecutionException, TimeoutException, InterruptedException
   {
-    TransportClient client = new HttpClientFactory().getClient(
-            Collections.<String, String>emptyMap());
+    HttpNettyClient client = new HttpClientBuilder(_eventLoop, _scheduler)
+                                  .setRequestTimeout(500)
+                                  .setIdleTimeout(10000)
+                                  .setShutdownTimeout(500)
+                                  .build();
 
     FutureCallback<None> shutdownCallback = new FutureCallback<None>();
     client.shutdown(shutdownCallback);
@@ -225,7 +308,7 @@ public class TestHttpNettyClient
     // Now verify a new request will also fail
     RestRequest r = new RestRequestBuilder(URI.create("http://no.such.host.linkedin.com")).build();
     FutureCallback<RestResponse> callback = new FutureCallback<RestResponse>();
-    client.restRequest(r, new RequestContext(), new HashMap<String,String>(), new TransportCallbackAdapter<RestResponse>(callback));
+    client.restRequest(r, new RequestContext(), new HashMap<String, String>(), new TransportCallbackAdapter<RestResponse>(callback));
     try
     {
       callback.get(30, TimeUnit.SECONDS);
@@ -234,14 +317,15 @@ public class TestHttpNettyClient
     {
       // Expected
     }
-
   }
+
   @Test
-  private void testShutdownStuckInPool() throws InterruptedException, ExecutionException, TimeoutException
+  public void testShutdownStuckInPool()
+      throws InterruptedException, ExecutionException, TimeoutException
 
   {
     // Test that shutdown works when the outstanding request is stuck in the pool waiting for a channel
-    HttpNettyClient client = new HttpNettyClient(new NoCreations(_scheduler), _scheduler, 60000, 1,1024*1024*2);
+    HttpNettyClient client = new HttpNettyClient(new NoCreations(_scheduler), _scheduler, 60000, 1, 1024 * 1024 * 2);
 
     RestRequest r = new RestRequestBuilder(URI.create("http://some.host/")).build();
     FutureCallback<RestResponse> futureCallback = new FutureCallback<RestResponse>();
@@ -265,40 +349,35 @@ public class TestHttpNettyClient
 
   @Test
   public void testShutdownRequestOutstanding()
-          throws IOException, ExecutionException, TimeoutException, InterruptedException
+      throws IOException, ExecutionException, TimeoutException, InterruptedException
   {
     // Test that it works when the shutdown kills the outstanding request...
-    testShutdownRequestOutstanding(500, 60000,
-                                   RemoteInvocationException.class,
-                                   TimeoutException.class);
+    testShutdownRequestOutstanding(500, 60000, RemoteInvocationException.class, TimeoutException.class);
   }
 
   @Test
   public void testShutdownRequestOutstanding2()
-          throws IOException, ExecutionException, TimeoutException, InterruptedException
+      throws IOException, ExecutionException, TimeoutException, InterruptedException
   {
     // Test that it works when the request timeout kills the outstanding request...
-    testShutdownRequestOutstanding(60000, 500,
-                                   RemoteInvocationException.class,
-                                   // sometimes the test fails with ChannelClosedException
-                                   // TimeoutException.class
-                                   Exception.class
-                                   );
-
+    testShutdownRequestOutstanding(60000, 500, RemoteInvocationException.class,
+        // sometimes the test fails with ChannelClosedException
+        // TimeoutException.class
+        Exception.class);
   }
 
-  private void testShutdownRequestOutstanding(int shutdownTimeout, int requestTimeout,
-                                              Class<?>... causeChain)
-          throws InterruptedException, IOException, ExecutionException, TimeoutException
+  private void testShutdownRequestOutstanding(int shutdownTimeout, int requestTimeout, Class<?>... causeChain)
+      throws InterruptedException, IOException, ExecutionException, TimeoutException
   {
     TestServer testServer = new TestServer();
 
-    HttpNettyClient client = new HttpNettyClient(_factory, _scheduler, 1, requestTimeout, 10000, shutdownTimeout, 1024*1024*2);
+    HttpNettyClient client = new HttpClientBuilder(_eventLoop, _scheduler).setRequestTimeout(requestTimeout)
+        .setShutdownTimeout(shutdownTimeout).build();
 
     RestRequest r = new RestRequestBuilder(testServer.getNoResponseURI()).build();
     FutureCallback<RestResponse> cb = new FutureCallback<RestResponse>();
     TransportCallback<RestResponse> callback = new TransportCallbackAdapter<RestResponse>(cb);
-    client.restRequest(r, new RequestContext(), new HashMap<String,String>(), callback);
+    client.restRequest(r, new RequestContext(), new HashMap<String, String>(), callback);
 
     FutureCallback<None> shutdownCallback = new FutureCallback<None>();
     client.shutdown(shutdownCallback);
@@ -341,24 +420,25 @@ public class TestHttpNettyClient
       }
       t = cause;
     }
-
   }
 
   // Test that cannot pass pass SSLParameters without SSLContext.
   // This in fact tests HttpClientPipelineFactory constructor through HttpNettyClient
   // constructor.
   @Test
-  public void testClientPipelineFactory1() throws NoSuchAlgorithmException
+  public void testClientPipelineFactory1()
+      throws NoSuchAlgorithmException
   {
     try
     {
-      new HttpNettyClient(_factory, _scheduler, 1, 1, 1, 1, 1, null, new SSLParameters(), _scheduler, Integer.MAX_VALUE);
+      new HttpClientBuilder(_eventLoop, _scheduler)
+          .setSSLParameters(new SSLParameters())
+          .build();
     }
     catch (IllegalArgumentException e)
     {
       // Check exception message to make sure it's the expected one.
-      Assert.assertEquals(e.getMessage(),
-                          "SSLParameters passed with no SSLContext");
+      Assert.assertEquals(e.getMessage(), "SSLParameters passed with no SSLContext");
     }
   }
 
@@ -367,30 +447,23 @@ public class TestHttpNettyClient
   // This in fact tests HttpClientPipelineFactory constructor through HttpNettyClient
   // constructor.
   @Test
-  public void testClientPipelineFactory2Fail() throws NoSuchAlgorithmException
+  public void testClientPipelineFactory2Fail()
+      throws NoSuchAlgorithmException
   {
-    String[] requestedCipherSuites = { "Unsupported" };
+    String[] requestedCipherSuites = {"Unsupported"};
     SSLParameters sslParameters = new SSLParameters();
     sslParameters.setCipherSuites(requestedCipherSuites);
     try
     {
-      new HttpNettyClient(_factory,
-                          _scheduler,
-                          1,
-                          1,
-                          1,
-                          1,
-                          1,
-                          SSLContext.getDefault(),
-                          sslParameters,
-                          _scheduler,
-                          Integer.MAX_VALUE);
+      new HttpClientBuilder(_eventLoop, _scheduler)
+          .setSSLContext(SSLContext.getDefault())
+          .setSSLParameters(sslParameters)
+          .build();
     }
     catch (IllegalArgumentException e)
     {
       // Check exception message to make sure it's the expected one.
-      Assert.assertEquals(e.getMessage(),
-                          "None of the requested cipher suites: [Unsupported] are found in SSLContext");
+      Assert.assertEquals(e.getMessage(), "None of the requested cipher suites: [Unsupported] are found in SSLContext");
     }
   }
 
@@ -399,22 +472,16 @@ public class TestHttpNettyClient
   // This in fact tests HttpClientPipelineFactory constructor through HttpNettyClient
   // constructor.
   @Test
-  public void testClientPipelineFactory2Pass() throws NoSuchAlgorithmException
+  public void testClientPipelineFactory2Pass()
+      throws NoSuchAlgorithmException
   {
-    String[] requestedCipherSuites = { "Unsupported", "SSL_RSA_WITH_RC4_128_SHA" };
+    String[] requestedCipherSuites = {"Unsupported", "SSL_RSA_WITH_RC4_128_SHA"};
     SSLParameters sslParameters = new SSLParameters();
     sslParameters.setCipherSuites(requestedCipherSuites);
-    new HttpNettyClient(_factory,
-                        _scheduler,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        SSLContext.getDefault(),
-                        sslParameters,
-                        _scheduler,
-                        Integer.MAX_VALUE);
+    new HttpClientBuilder(_eventLoop, _scheduler)
+        .setSSLContext(SSLContext.getDefault())
+        .setSSLParameters(sslParameters)
+        .build();
   }
 
   // Test that cannot set protocols in SSLParameters that don't have any match in
@@ -422,30 +489,23 @@ public class TestHttpNettyClient
   // This in fact tests HttpClientPipelineFactory constructor through HttpNettyClient
   // constructor.
   @Test
-  public void testClientPipelineFactory3Fail() throws NoSuchAlgorithmException
+  public void testClientPipelineFactory3Fail()
+      throws NoSuchAlgorithmException
   {
-    String[] requestedProtocols = { "Unsupported" };
+    String[] requestedProtocols = {"Unsupported"};
     SSLParameters sslParameters = new SSLParameters();
     sslParameters.setProtocols(requestedProtocols);
     try
     {
-      new HttpNettyClient(_factory,
-                          _scheduler,
-                          1,
-                          1,
-                          1,
-                          1,
-                          1,
-                          SSLContext.getDefault(),
-                          sslParameters,
-                          _scheduler,
-                          Integer.MAX_VALUE);
+      new HttpClientBuilder(_eventLoop, _scheduler)
+          .setSSLContext(SSLContext.getDefault())
+          .setSSLParameters(sslParameters)
+          .build();
     }
     catch (IllegalArgumentException e)
     {
       // Check exception message to make sure it's the expected one.
-      Assert.assertEquals(e.getMessage(),
-                          "None of the requested protocols: [Unsupported] are found in SSLContext");
+      Assert.assertEquals(e.getMessage(), "None of the requested protocols: [Unsupported] are found in SSLContext");
     }
   }
 
@@ -454,26 +514,22 @@ public class TestHttpNettyClient
   // This in fact tests HttpClientPipelineFactory constructor through HttpNettyClient
   // constructor.
   @Test
-  public void testClientPipelineFactory3Pass() throws NoSuchAlgorithmException
+  public void testClientPipelineFactory3Pass()
+      throws NoSuchAlgorithmException
   {
-    String[] requestedProtocols = { "Unsupported", "TLSv1" };
+    String[] requestedProtocols = {"Unsupported", "TLSv1"};
     SSLParameters sslParameters = new SSLParameters();
     sslParameters.setProtocols(requestedProtocols);
-    new HttpNettyClient(_factory,
-                        _scheduler,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        SSLContext.getDefault(),
-                        sslParameters,
-                        _scheduler,
-                        Integer.MAX_VALUE);
+
+    new HttpClientBuilder(_eventLoop, _scheduler)
+        .setSSLContext(SSLContext.getDefault())
+        .setSSLParameters(sslParameters)
+        .build();
   }
 
   @Test
-  public void testPoolStatsProviderManager() throws InterruptedException, ExecutionException, TimeoutException
+  public void testPoolStatsProviderManager()
+      throws InterruptedException, ExecutionException, TimeoutException
   {
     final CountDownLatch setLatch = new CountDownLatch(1);
     final CountDownLatch removeLatch = new CountDownLatch(1);
@@ -492,19 +548,10 @@ public class TestHttpNettyClient
       }
     };
 
-    HttpNettyClient client = new HttpNettyClient(_factory,
-                                                  _scheduler,
-                                                  1,
-                                                  1,
-                                                  1,
-                                                  1000,
-                                                  1,
-                                                  null,
-                                                  null,
-                                                  _scheduler,
-                                                  Integer.MAX_VALUE,
-                                                  HttpClientFactory.DEFAULT_CLIENT_NAME,
-                                                  manager);
+    HttpNettyClient client =
+        new HttpClientBuilder(_eventLoop, _scheduler)
+            .setJmxManager(manager)
+            .build();
     // test setPoolStatsProvider
     try
     {
@@ -528,49 +575,25 @@ public class TestHttpNettyClient
     shutdownCallback.get(30, TimeUnit.SECONDS);
   }
 
-  /*
-  //@Test
-  public void testFullPoolTimeout()
+  @Test (enabled = false)
+  public void testMakingOutboundHttpsRequest()
+      throws NoSuchAlgorithmException, InterruptedException, ExecutionException, TimeoutException
   {
-    AsyncPool<Object> pool = new AsyncPoolImpl<Object>("object pool",
-                                                       new TestAsyncPool.SynchronousLifecycle(),
-                                                       1,
-                                                       100,
-                                                       _executor
-                                                       );
-    pool.start();
-    FutureCallback<Object> cb1 = new FutureCallback<Object>();
-    pool.get(cb1);
-    try
-    {
-      Object o = cb1.getRaw();
-      Assert.assertNotNull(o);
-    }
-    catch (Exception e)
-    {
-      Assert.fail("getResponse failed unexpectedly", e);
-    }
+    SSLContext context = SSLContext.getDefault();
+    SSLParameters sslParameters = context.getDefaultSSLParameters();
 
-    FutureCallback<Object> cb2 = new FutureCallback<Object>();
-    // This get should fail since pool size is one and previous object not returned
-    pool.get(cb2);
+    HttpNettyClient client = new HttpClientBuilder(_eventLoop, _scheduler)
+          .setSSLContext(context)
+          .setSSLParameters(sslParameters)
+          .build();
 
-    try
-    {
-      Object o = cb2.getRaw();
-      Assert.fail("Get was supposed to time out");
-    }
-    catch (TimeoutException e)
-    {
-      // correct
-    }
-    catch (Exception e)
-    {
-      Assert.fail("Failed with unexpected exception instead of TimeoutException", e);
-    }
-
+    RestRequest r = new RestRequestBuilder(URI.create("https://www.howsmyssl.com/a/check")).build();
+    FutureCallback<RestResponse> cb = new FutureCallback<RestResponse>();
+    TransportCallback<RestResponse> callback = new TransportCallbackAdapter<RestResponse>(cb);
+    client.restRequest(r, new RequestContext(), new HashMap<String, String>(), callback);
+    cb.get(30, TimeUnit.SECONDS);
   }
-*/
+
   private static class NoCreations implements ChannelPoolFactory
   {
     private final ScheduledExecutorService _scheduler;

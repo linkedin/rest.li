@@ -62,7 +62,6 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
   private final int _maxWaiters;
   private final long _idleTimeout;
   private final ScheduledExecutorService _timeoutExecutor;
-  private final ExecutorService _callbackExecutor;
   private final int _minSize;
   private volatile ScheduledFuture<?> _objectTimeoutFuture;
   private final RateLimiter _rateLimiter;
@@ -151,7 +150,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
                        int minSize)
   {
     this(name, lifecycle, maxSize, idleTimeout, timeoutExecutor,
-        callbackExecutor, maxWaiters, strategy, minSize, new NoopRateLimiter());
+        maxWaiters, strategy, minSize, new NoopRateLimiter());
   }
 
   /**
@@ -188,7 +187,6 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
       int maxSize,
       long idleTimeout,
       ScheduledExecutorService timeoutExecutor,
-      ExecutorService callbackExecutor,
       int maxWaiters,
       Strategy strategy,
       int minSize,
@@ -196,7 +194,6 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
   {
     ArgumentUtil.notNull(lifecycle, "lifecycle");
     ArgumentUtil.notNull(timeoutExecutor, "timeoutExecutor");
-    ArgumentUtil.notNull(callbackExecutor, "callbackExecutor");
     ArgumentUtil.notNull(strategy, "strategy");
     ArgumentUtil.notNull(rateLimiter, "rateLimiter");
 
@@ -205,7 +202,6 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
     _maxSize = maxSize;
     _idleTimeout = idleTimeout;
     _timeoutExecutor = timeoutExecutor;
-    _callbackExecutor = callbackExecutor;
     _maxWaiters = maxWaiters;
     _strategy = strategy;
     _minSize = minSize;
@@ -589,13 +585,18 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
   private void create()
   {
     trc("initiating object creation");
-    _rateLimiter.submit(new Task() {
+    _rateLimiter.submit(new Task()
+    {
       @Override
-      public void run(final SimpleCallback callback) {
-        _lifecycle.create(new Callback<T>() {
+      public void run(final SimpleCallback callback)
+      {
+        _lifecycle.create(new Callback<T>()
+        {
           @Override
-          public void onSuccess(T t) {
-            synchronized (_lock) {
+          public void onSuccess(T t)
+          {
+            synchronized (_lock)
+            {
               _totalCreated++;
               _lastCreateError = null;
             }
@@ -604,7 +605,8 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
           }
 
           @Override
-          public void onError(final Throwable e) {
+          public void onError(final Throwable e)
+          {
             _rateLimiter.incrementPeriod();
             // Note we drain all waiters and cancel all pending creates if a create fails.
             // When a create fails, rate-limiting logic will be applied.  In this case,
@@ -615,27 +617,26 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
             final Collection<Callback<T>> waitersDenied;
             final Collection<Task> cancelledCreate = _rateLimiter.cancelPendingTasks();
             boolean create;
-            synchronized (_lock) {
+            synchronized (_lock)
+            {
               _totalCreateErrors++;
               _lastCreateError = e;
               create = objectDestroyed(1 + cancelledCreate.size());
-              if (!_waiters.isEmpty()) {
+              if (!_waiters.isEmpty())
+              {
                 waitersDenied = cancelWaiters();
-              } else {
+              }
+              else
+              {
                 waitersDenied = Collections.<Callback<T>>emptyList();
               }
             }
-            // Note this callback is invoked by Netty boss thread. We hand the actual callback
-            // task to a separate thread since we don't want to block the boss thread
-            _callbackExecutor.submit(new Runnable() {
-              @Override
-              public void run() {
-                for (Callback<T> denied : waitersDenied) {
-                  denied.onError(e);
-                }
-              }
-            });
-            if (create) {
+            for (Callback<T> denied : waitersDenied)
+            {
+              denied.onError(e);
+            }
+            if (create)
+            {
               create();
             }
             LOG.error(_poolName + ": object creation failed", e);

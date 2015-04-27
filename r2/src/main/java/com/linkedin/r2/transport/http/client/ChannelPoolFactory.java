@@ -20,8 +20,8 @@
 
 package com.linkedin.r2.transport.http.client;
 
-import org.jboss.netty.channel.Channel;
 
+import io.netty.channel.Channel;
 import java.net.SocketAddress;
 
 /**

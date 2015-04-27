@@ -23,14 +23,14 @@ package com.linkedin.r2.transport.http.client;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.stats.LongStats;
 import com.linkedin.common.stats.LongTracking;
-import org.jboss.netty.bootstrap.ClientBootstrap;
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelFuture;
-import org.jboss.netty.channel.ChannelFutureListener;
-import org.jboss.netty.channel.group.ChannelGroup;
 
+import io.netty.bootstrap.Bootstrap;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.group.ChannelGroup;
 import java.net.SocketAddress;
-import java.util.concurrent.ScheduledExecutorService;
+
 
 /**
 * @author Steven Ihde
@@ -39,12 +39,12 @@ import java.util.concurrent.ScheduledExecutorService;
 class ChannelPoolLifecycle implements AsyncPool.Lifecycle<Channel>
 {
   private final SocketAddress _remoteAddress;
-  private final ClientBootstrap _bootstrap;
+  private final Bootstrap _bootstrap;
   private final ChannelGroup _channelGroup;
   private final LongTracking _createTimeTracker = new LongTracking();
 
 
-  public ChannelPoolLifecycle(SocketAddress address, ClientBootstrap bootstrap, ChannelGroup channelGroup)
+  public ChannelPoolLifecycle(SocketAddress address, Bootstrap bootstrap, ChannelGroup channelGroup)
   {
     _remoteAddress = address;
     _bootstrap = bootstrap;
@@ -57,6 +57,7 @@ class ChannelPoolLifecycle implements AsyncPool.Lifecycle<Channel>
     final long start = System.currentTimeMillis();
     _bootstrap.connect(_remoteAddress).addListener(new ChannelFutureListener()
     {
+      @Override
       public void operationComplete(ChannelFuture channelFuture) throws Exception
       {
         if (channelFuture.isSuccess())
@@ -65,13 +66,13 @@ class ChannelPoolLifecycle implements AsyncPool.Lifecycle<Channel>
           {
             _createTimeTracker.addValue(System.currentTimeMillis() - start);
           }
-          Channel c = channelFuture.getChannel();
+          Channel c = channelFuture.channel();
           _channelGroup.add(c);
           channelCallback.onSuccess(c);
         }
         else
         {
-          channelCallback.onError(HttpNettyClient.toException(channelFuture.getCause()));
+          channelCallback.onError(HttpNettyClient.toException(channelFuture.cause()));
         }
       }
     });
@@ -80,13 +81,13 @@ class ChannelPoolLifecycle implements AsyncPool.Lifecycle<Channel>
   @Override
   public boolean validateGet(Channel c)
   {
-    return c.isConnected();
+    return c.isActive();
   }
 
   @Override
   public boolean validatePut(Channel c)
   {
-    return c.isConnected();
+    return c.isActive();
   }
 
   @Override
@@ -101,11 +102,11 @@ class ChannelPoolLifecycle implements AsyncPool.Lifecycle<Channel>
         {
           if (channelFuture.isSuccess())
           {
-            channelCallback.onSuccess(channelFuture.getChannel());
+            channelCallback.onSuccess(channelFuture.channel());
           }
           else
           {
-            channelCallback.onError(HttpNettyClient.toException(channelFuture.getCause()));
+            channelCallback.onError(HttpNettyClient.toException(channelFuture.cause()));
           }
         }
       });

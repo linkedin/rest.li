@@ -36,6 +36,8 @@ import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.util.ConfigValueExtractor;
 import com.linkedin.r2.util.NamedThreadFactory;
 
+import io.netty.channel.nio.NioEventLoopGroup;
+import java.util.concurrent.ExecutorService;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
 import java.util.ArrayList;
@@ -43,7 +45,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -51,8 +52,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.lang.StringUtils;
-import org.jboss.netty.channel.socket.ClientSocketChannelFactory;
-import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,7 +59,7 @@ import org.slf4j.LoggerFactory;
  * A factory for HttpNettyClient instances.
  *
  * All clients created by the factory will share the same resources, in particular the
- * {@link ClientSocketChannelFactory} and {@link ScheduledExecutorService}.
+ * {@link io.netty.channel.nio.NioEventLoopGroup} and {@link ScheduledExecutorService}.
  *
  * In order to shutdown cleanly, all clients issued by the factory should be shutdown via
  * {@link TransportClient#shutdown(com.linkedin.common.callback.Callback)} and the factory
@@ -97,6 +96,8 @@ public class HttpClientFactory implements TransportClientFactory
   public static final String HTTP_SERVICE_NAME = "http.serviceName";
   public static final String HTTP_POOL_STRATEGY = "http.poolStrategy";
   public static final String HTTP_POOL_MIN_SIZE = "http.poolMinSize";
+  public static final String HTTP_MAX_HEADER_SIZE = "http.maxHeaderSize";
+  public static final String HTTP_MAX_CHUNK_SIZE = "http.maxChunkSize";
 
   public static final int DEFAULT_POOL_WAITER_SIZE = Integer.MAX_VALUE;
   public static final int DEFAULT_POOL_SIZE = 200;
@@ -107,24 +108,15 @@ public class HttpClientFactory implements TransportClientFactory
   public static final String DEFAULT_CLIENT_NAME = "noNameSpecifiedClient";
   public static final AsyncPoolImpl.Strategy DEFAULT_POOL_STRATEGY = AsyncPoolImpl.Strategy.MRU;
   public static final int DEFAULT_POOL_MIN_SIZE = 0;
-  public static final AbstractJmxManager NULL_JMX_MANAGER = new AbstractJmxManager()
-  {
-    @Override
-    public void onProviderCreate(PoolStatsProvider provider)
-    {
-    }
+  public static final int DEFAULT_MAX_HEADER_SIZE = 8 * 1024;
+  public static final int DEFAULT_MAX_CHUNK_SIZE = 8 * 1024;
 
-    @Override
-    public void onProviderShutdown(PoolStatsProvider provider)
-    {
-    }
-  };
 
   private static final String LIST_SEPARATOR = ",";
 
-  private final ClientSocketChannelFactory _channelFactory;
+  private final NioEventLoopGroup          _eventLoopGroup;
   private final ScheduledExecutorService   _executor;
-  private final ExecutorService            _callbackExecutor;
+  private final ExecutorService            _callbackExecutorGroup;
   private final boolean                    _shutdownFactory;
   private final boolean                    _shutdownExecutor;
   private final boolean                    _shutdownCallbackExecutor;
@@ -166,9 +158,7 @@ public class HttpClientFactory implements TransportClientFactory
                            boolean shutdownCallbackExecutor)
   {
     this(FilterChains.empty(),
-         new NioClientSocketChannelFactory(
-            Executors.newCachedThreadPool(new NamedThreadFactory("R2 Netty IO Boss")),
-            Executors.newCachedThreadPool(new NamedThreadFactory("R2 Netty IO Worker"))),
+         new NioEventLoopGroup(0 /* use default settings */, new NamedThreadFactory("R2 Nio Event Loop")),
          true,
          Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("R2 Netty Scheduler")),
          true,
@@ -186,9 +176,7 @@ public class HttpClientFactory implements TransportClientFactory
     // TODO Disable Netty's thread renaming so that the names below are the ones that actually
     // show up in log messages; need to coordinate with Espresso team (who also have netty threads)
     this(filters,
-         new NioClientSocketChannelFactory(
-            Executors.newCachedThreadPool(new NamedThreadFactory("R2 Netty IO Boss")),
-            Executors.newCachedThreadPool(new NamedThreadFactory("R2 Netty IO Worker"))),
+         new NioEventLoopGroup(0 /* use default settings */, new NamedThreadFactory("R2 Nio Event Loop")),
          true,
          Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("R2 Netty Scheduler")),
          true);
@@ -198,7 +186,7 @@ public class HttpClientFactory implements TransportClientFactory
    * Creates a new HttpClientFactory.
    *
    * @param filters the filter chain shared by all Clients created by this factory
-   * @param channelFactory the ClientSocketChannelFactory that all Clients created by this
+   * @param eventLoopGroup the {@link NioEventLoopGroup} that all Clients created by this
    *          factory will share
    * @param shutdownFactory if true, the channelFactory will be shut down when this
    *          factory is shut down
@@ -208,17 +196,17 @@ public class HttpClientFactory implements TransportClientFactory
    *          shut down
    */
   public HttpClientFactory(FilterChain filters,
-                           ClientSocketChannelFactory channelFactory,
+                           NioEventLoopGroup eventLoopGroup,
                            boolean shutdownFactory,
                            ScheduledExecutorService executor,
                            boolean shutdownExecutor)
   {
     this(filters,
-         channelFactory,
+         eventLoopGroup,
          shutdownFactory,
          executor,
          shutdownExecutor,
-         executor,
+         null,
          false);
   }
 
@@ -226,7 +214,7 @@ public class HttpClientFactory implements TransportClientFactory
    * Creates a new HttpClientFactory.
    *
    * @param filters the filter chain shared by all Clients created by this factory
-   * @param channelFactory the ClientSocketChannelFactory that all Clients created by this
+   * @param eventLoopGroup the {@link NioEventLoopGroup} that all Clients created by this
    *          factory will share
    * @param shutdownFactory if true, the channelFactory will be shut down when this
    *          factory is shut down
@@ -234,64 +222,64 @@ public class HttpClientFactory implements TransportClientFactory
    *          tasks
    * @param shutdownExecutor if true, the executor will be shut down when this factory is
    *          shut down
-   * @param callbackExecutor an optional executor to invoke user callbacks that otherwise
-   *          will be invoked by scheduler executor.
+   * @param callbackExecutorGroup an optional executor group to execute user callbacks that otherwise
+   *          will be executed by eventLoopGroup.
    * @param shutdownCallbackExecutor if true, the callback executor will be shut down when
    *          this factory is shut down
    */
   public HttpClientFactory(FilterChain filters,
-                           ClientSocketChannelFactory channelFactory,
+                           NioEventLoopGroup eventLoopGroup,
                            boolean shutdownFactory,
                            ScheduledExecutorService executor,
                            boolean shutdownExecutor,
-                           ExecutorService callbackExecutor,
+                           ExecutorService callbackExecutorGroup,
                            boolean shutdownCallbackExecutor)
   {
     this(filters,
-         channelFactory,
+         eventLoopGroup,
          shutdownFactory,
          executor,
          shutdownExecutor,
-         callbackExecutor,
+         callbackExecutorGroup,
          shutdownCallbackExecutor,
-         NULL_JMX_MANAGER);
+         AbstractJmxManager.NULL_JMX_MANAGER);
   }
 
   public HttpClientFactory(FilterChain filters,
-                           ClientSocketChannelFactory channelFactory,
+                           NioEventLoopGroup eventLoopGroup,
                            boolean shutdownFactory,
                            ScheduledExecutorService executor,
                            boolean shutdownExecutor,
-                           ExecutorService callbackExecutor,
+                           ExecutorService callbackExecutorGroup,
                            boolean shutdownCallbackExecutor,
                            AbstractJmxManager jmxManager)
   {
-    this(filters, channelFactory, shutdownFactory, executor, shutdownExecutor, callbackExecutor,
+    this(filters, eventLoopGroup, shutdownFactory, executor, shutdownExecutor, callbackExecutorGroup,
         shutdownCallbackExecutor, jmxManager, Integer.MAX_VALUE, Collections.<String, CompressionConfig>emptyMap());
   }
 
   public HttpClientFactory(FilterChain filters,
-                           ClientSocketChannelFactory channelFactory,
+                           NioEventLoopGroup eventLoopGroup,
                            boolean shutdownFactory,
                            ScheduledExecutorService executor,
                            boolean shutdownExecutor,
-                           ExecutorService callbackExecutor,
+                           ExecutorService callbackExecutorGroup,
                            boolean shutdownCallbackExecutor,
                            AbstractJmxManager jmxManager,
                            int requestCompressionThresholdDefault,
                            Map<String, CompressionConfig> requestCompressionConfigs)
   {
-    this(filters, channelFactory, shutdownFactory, executor, shutdownExecutor, callbackExecutor,
+    this(filters, eventLoopGroup, shutdownFactory, executor, shutdownExecutor, callbackExecutorGroup,
         shutdownCallbackExecutor, jmxManager, requestCompressionThresholdDefault, requestCompressionConfigs,
         true);
   }
 
   public HttpClientFactory(FilterChain filters,
-                           ClientSocketChannelFactory channelFactory,
+                           NioEventLoopGroup eventLoopGroup,
                            boolean shutdownFactory,
                            ScheduledExecutorService executor,
                            boolean shutdownExecutor,
-                           ExecutorService callbackExecutor,
+                           ExecutorService callbackExecutorGroup,
                            boolean shutdownCallbackExecutor,
                            AbstractJmxManager jmxManager,
                            int requestCompressionThresholdDefault,
@@ -299,11 +287,11 @@ public class HttpClientFactory implements TransportClientFactory
                            boolean useClientCompression)
   {
     _filters = filters;
-    _channelFactory = channelFactory;
+    _eventLoopGroup = eventLoopGroup;
     _shutdownFactory = shutdownFactory;
     _executor = executor;
     _shutdownExecutor = shutdownExecutor;
-    _callbackExecutor = callbackExecutor;
+    _callbackExecutorGroup = callbackExecutorGroup;
     _shutdownCallbackExecutor = shutdownCallbackExecutor;
     _jmxManager = jmxManager;
     if (requestCompressionThresholdDefault < 0)
@@ -538,8 +526,10 @@ public class HttpClientFactory implements TransportClientFactory
     clientName = chooseNewOverDefault(clientName, DEFAULT_CLIENT_NAME);
     AsyncPoolImpl.Strategy strategy = chooseNewOverDefault(getStrategy(properties), DEFAULT_POOL_STRATEGY);
     Integer poolMinSize = chooseNewOverDefault(getIntValue(properties, HTTP_POOL_MIN_SIZE), DEFAULT_POOL_MIN_SIZE);
+    Integer maxHeaderSize = chooseNewOverDefault(getIntValue(properties, HTTP_MAX_HEADER_SIZE), DEFAULT_MAX_HEADER_SIZE);
+    Integer maxChunkSize = chooseNewOverDefault(getIntValue(properties, HTTP_MAX_CHUNK_SIZE), DEFAULT_MAX_CHUNK_SIZE);
 
-    return new HttpNettyClient(_channelFactory,
+    return new HttpNettyClient(_eventLoopGroup,
                                _executor,
                                poolSize,
                                requestTimeout,
@@ -548,12 +538,14 @@ public class HttpClientFactory implements TransportClientFactory
                                maxResponseSize,
                                sslContext,
                                sslParameters,
-                               _callbackExecutor,
+                               _callbackExecutorGroup,
                                poolWaiterSize,
                                clientName,
                                _jmxManager,
                                strategy,
-                               poolMinSize);
+                               poolMinSize,
+                               maxHeaderSize,
+                               maxChunkSize);
   }
 
   /**
@@ -646,50 +638,39 @@ public class HttpClientFactory implements TransportClientFactory
       _shutdownTimeoutTask.cancel(false);
     }
 
-    // Under some circumstances, this method will be executed on a Netty IO thread.  For example,
-    // as the factory waits for clients to shutdown, if the final client shuts down due an IO
-    // event (receives response, connection refused, etc.).  In that case, the call to
-    // releaseExternalResources() below will throw an exception -- because
-    // releaseExternalResources() blocks until all threads are shut down, it refuses to run
-    // if called from one of its own threads.  Therefore, schedule this task to run on
-    // a different thread pool.  That does mean _executor will be shut down from one of its
-    // own threads, but since this call doesn't await termination it's OK.
-    _executor.execute(new Runnable()
+    if (_shutdownFactory)
     {
-      @Override
-      public void run()
-      {
-        if (_shutdownFactory)
-        {
-          _channelFactory.releaseExternalResources();
-          LOG.info("ChannelFactory shutdown complete");
-        }
-        if (_shutdownExecutor)
-        {
-          // Due to a bug in ScheduledThreadPoolExecutor, shutdownNow() returns cancelled
-          // tasks as though they were still pending execution.  If the executor has a large
-          // number of cancelled tasks, shutdownNow() could take a long time to copy the array
-          // of tasks.  Calling shutdown() first will purge the cancelled tasks.  Bug filed with
-          // Oracle; will provide bug number when available.  May be fixed in JDK7 already.
-          _executor.shutdown();
-          _executor.shutdownNow();
-          LOG.info("Scheduler shutdown complete");
-        }
-        if (_shutdownCallbackExecutor)
-        {
-          _callbackExecutor.shutdown();
-          _callbackExecutor.shutdownNow();
-          LOG.info("Callback Executor shutdown complete");
-        }
-        final Callback<None> callback;
-        synchronized (_mutex)
-        {
-          callback = _factoryShutdownCallback;
-        }
-        LOG.info("Shutdown complete");
-        callback.onSuccess(None.none());
-      }
-    });
+      LOG.info("Shutdown Netty Event Loop");
+      _eventLoopGroup.shutdownGracefully(0, 0, TimeUnit.SECONDS);
+    }
+
+    if (_shutdownExecutor)
+    {
+      // Due to a bug in ScheduledThreadPoolExecutor, shutdownNow() returns cancelled
+      // tasks as though they were still pending execution.  If the executor has a large
+      // number of cancelled tasks, shutdownNow() could take a long time to copy the array
+      // of tasks.  Calling shutdown() first will purge the cancelled tasks.  Bug filed with
+      // Oracle; will provide bug number when available.  May be fixed in JDK7 already.
+      _executor.shutdown();
+      _executor.shutdownNow();
+      LOG.info("Scheduler shutdown complete");
+    }
+
+    if (_shutdownCallbackExecutor)
+    {
+      LOG.info("Shutdown callback executor");
+      _callbackExecutorGroup.shutdown();
+      _callbackExecutorGroup.shutdownNow();
+    }
+
+    final Callback<None> callback;
+    synchronized (_mutex)
+    {
+      callback = _factoryShutdownCallback;
+    }
+
+    LOG.info("Shutdown complete");
+    callback.onSuccess(None.none());
   }
 
   private void clientShutdown()

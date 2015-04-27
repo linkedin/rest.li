@@ -26,59 +26,62 @@ import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.transport.http.common.HttpConstants;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufInputStream;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.ChannelDuplexHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelPromise;
+import io.netty.handler.codec.MessageToMessageDecoder;
+import io.netty.handler.codec.MessageToMessageEncoder;
+import io.netty.handler.codec.http.DefaultFullHttpResponse;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.HttpResponse;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpVersion;
 import java.net.URI;
-import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.Map;
-
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelDownstreamHandler;
-import org.jboss.netty.channel.ChannelEvent;
-import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.channel.ChannelUpstreamHandler;
-import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
-import org.jboss.netty.handler.codec.http.HttpHeaders;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponse;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.jboss.netty.handler.codec.http.HttpVersion;
-import org.jboss.netty.handler.codec.oneone.OneToOneDecoder;
-import org.jboss.netty.handler.codec.oneone.OneToOneEncoder;
 
 
 /**
 * @author Steven Ihde
 * @version $Revision: $
 */
-class RAPServerCodec implements ChannelUpstreamHandler, ChannelDownstreamHandler
+class RAPServerCodec extends ChannelDuplexHandler
 {
   private final RAPResponseEncoder _encoder = new RAPResponseEncoder();
   private final RAPRequestDecoder _decoder = new RAPRequestDecoder();
 
   @Override
-  public void handleDownstream(ChannelHandlerContext ctx, ChannelEvent e) throws Exception
+  public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception
   {
-    _encoder.handleDownstream(ctx, e);
+    _decoder.channelRead(ctx, msg);
   }
 
   @Override
-  public void handleUpstream(ChannelHandlerContext ctx, ChannelEvent e) throws Exception
+  public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception
   {
-    _decoder.handleUpstream(ctx, e);
+    _encoder.write(ctx, msg, promise);
   }
 
-  private class RAPRequestDecoder extends OneToOneDecoder
+  private class RAPRequestDecoder extends MessageToMessageDecoder<FullHttpRequest>
   {
     @Override
-    protected Object decode(ChannelHandlerContext ctx, Channel channel, Object msg)
-            throws Exception
+    protected void decode(ChannelHandlerContext ctx, FullHttpRequest nettyRequest, List<Object> out)
+        throws Exception
     {
-      HttpRequest nettyRequest = (HttpRequest) msg;
+      if (nettyRequest.getDecoderResult().isFailure())
+      {
+        ctx.fireExceptionCaught(nettyRequest.getDecoderResult().cause());
+        return;
+      }
+
       URI uri = new URI(nettyRequest.getUri());
       RestRequestBuilder builder = new RestRequestBuilder(uri);
-      builder.setMethod(nettyRequest.getMethod().getName());
-      for (Map.Entry<String, String> e : nettyRequest.getHeaders())
+      builder.setMethod(nettyRequest.getMethod().name());
+      for (Map.Entry<String, String> e : nettyRequest.headers())
       {
         if (e.getKey().equalsIgnoreCase(HttpConstants.REQUEST_COOKIE_HEADER_NAME))
         {
@@ -89,51 +92,36 @@ class RAPServerCodec implements ChannelUpstreamHandler, ChannelDownstreamHandler
           builder.unsafeAddHeaderValue(e.getKey(), e.getValue());
         }
       }
-      ChannelBuffer buf = nettyRequest.getContent();
+      ByteBuf buf = nettyRequest.content();
       if (buf != null)
       {
-        byte[] bufBytes;
-        long contentLengthFromHeader = HttpHeaders.getContentLength(nettyRequest, -1);
-        if (buf.hasArray() && buf.arrayOffset() == 0 && buf.array().length == contentLengthFromHeader)
-        {
-          builder.setEntity(buf.array());
-        }
-        else
-        {
-          // Get readable portion of the underlying backing array.
-          ByteBuffer byteBuffer = buf.toByteBuffer(buf.readerIndex(), buf.readableBytes());
-          builder.setEntity(ByteString.copy(byteBuffer));
-        }
+        ByteString entity = ByteString.read(new ByteBufInputStream(buf), buf.readableBytes());
+        builder.setEntity(entity);
       }
-      return builder.build();
+      out.add(builder.build());
     }
   }
 
-  private class RAPResponseEncoder extends OneToOneEncoder
+  private class RAPResponseEncoder extends MessageToMessageEncoder<RestResponse>
   {
-    @Override
-    protected Object encode(ChannelHandlerContext ctx, Channel channel, Object msg)
-            throws Exception
+    protected void encode(ChannelHandlerContext ctx, RestResponse response, List<Object> out)
+        throws Exception
     {
-      RestResponse response = (RestResponse) msg;
+      final ByteString entity = response.getEntity();
+      ByteBuf content = Unpooled.wrappedBuffer(entity.asByteBuffer());
 
       HttpResponse nettyResponse =
-          new DefaultHttpResponse(HttpVersion.HTTP_1_1,
-                                  HttpResponseStatus.valueOf(response.getStatus()));
+          new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.valueOf(response.getStatus()), content);
 
       for (Map.Entry<String, String> e : response.getHeaders().entrySet())
       {
-        nettyResponse.setHeader(e.getKey(), e.getValue());
+        nettyResponse.headers().set(e.getKey(), e.getValue());
       }
 
-      nettyResponse.setHeader(HttpConstants.RESPONSE_COOKIE_HEADER_NAME, response.getCookies());
+      nettyResponse.headers().set(HttpConstants.RESPONSE_COOKIE_HEADER_NAME, response.getCookies());
+      nettyResponse.headers().set(HttpHeaders.Names.CONTENT_LENGTH, entity.length());
 
-      final ByteString entity = response.getEntity();
-      ChannelBuffer buf = ChannelBuffers.wrappedBuffer(entity.asByteBuffer());
-      nettyResponse.setContent(buf);
-      nettyResponse.setHeader(HttpHeaders.Names.CONTENT_LENGTH, entity.length());
-
-      return nettyResponse;
+      out.add(nettyResponse);
     }
   }
 }

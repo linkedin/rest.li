@@ -101,12 +101,6 @@ public class Timeout<T> implements TimeoutExecutor
     if (item != null)
     {
       _future.cancel(false);
-
-      // Drain the queue of timeout tasks.  This is a defensive maneuver because, in spite
-      // of the fact the future was cancelled above, the scheduler may still retain a reference
-      // to this Timeout object for some period.  Note the timeout tasks may hold
-      // references to significant amounts of memory, e.g., a user callback.
-      _queue.close();
     }
     return item;
   }

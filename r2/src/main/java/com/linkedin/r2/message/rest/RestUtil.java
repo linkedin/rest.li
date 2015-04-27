@@ -25,7 +25,7 @@ import java.util.regex.Pattern;
  * @author Chris Pettitt
  * @version $Revision$
  */
-/* package private */ class RestUtil
+public class RestUtil
 {
 
   private static final Pattern COMMA_PATTERN = Pattern.compile(Pattern.quote(","));

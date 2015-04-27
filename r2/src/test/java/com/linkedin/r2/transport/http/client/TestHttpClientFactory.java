@@ -20,6 +20,7 @@
 
 package com.linkedin.r2.transport.http.client;
 
+import io.netty.channel.nio.NioEventLoopGroup;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -27,15 +28,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.jboss.netty.channel.socket.ClientSocketChannelFactory;
-import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -81,11 +79,9 @@ public class TestHttpClientFactory
   @Test
   public void testShutdownAfterClients() throws ExecutionException, TimeoutException, InterruptedException
   {
-    ExecutorService boss = Executors.newCachedThreadPool();
-    ExecutorService worker = Executors.newCachedThreadPool();
+    NioEventLoopGroup eventLoop = new NioEventLoopGroup();
     ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-    ClientSocketChannelFactory channelFactory = new NioClientSocketChannelFactory(boss, worker);
-    HttpClientFactory factory = new HttpClientFactory(FilterChains.empty(), channelFactory, true, scheduler, true);
+    HttpClientFactory factory = new HttpClientFactory(FilterChains.empty(), eventLoop, true, scheduler, true);
 
     List<Client> clients = new ArrayList<Client>();
     for (int i = 0; i < 100; i++)
@@ -110,19 +106,16 @@ public class TestHttpClientFactory
     factory.shutdown(factoryShutdown);
     factoryShutdown.get(30, TimeUnit.SECONDS);
 
-    Assert.assertTrue(boss.awaitTermination(30, TimeUnit.SECONDS), "Failed to shut down boss");
-    Assert.assertTrue(worker.awaitTermination(30, TimeUnit.SECONDS), "Failed to shut down worker");
+    Assert.assertTrue(eventLoop.awaitTermination(30, TimeUnit.SECONDS), "Failed to shut down event-loop");
     Assert.assertTrue(scheduler.awaitTermination(30, TimeUnit.SECONDS), "Failed to shut down scheduler");
   }
 
   @Test
   public void testShutdownBeforeClients() throws ExecutionException, TimeoutException, InterruptedException
   {
-    ExecutorService boss = Executors.newCachedThreadPool();
-    ExecutorService worker = Executors.newCachedThreadPool();
+    NioEventLoopGroup eventLoop = new NioEventLoopGroup();
     ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-    ClientSocketChannelFactory channelFactory = new NioClientSocketChannelFactory(boss, worker);
-    HttpClientFactory factory = new HttpClientFactory(FilterChains.empty(), channelFactory, true, scheduler, true);
+    HttpClientFactory factory = new HttpClientFactory(FilterChains.empty(), eventLoop, true, scheduler, true);
 
     List<Client> clients = new ArrayList<Client>();
     for (int i = 0; i < 100; i++)
@@ -148,19 +141,16 @@ public class TestHttpClientFactory
 
     factoryShutdown.get(30, TimeUnit.SECONDS);
 
-    Assert.assertTrue(boss.awaitTermination(30, TimeUnit.SECONDS), "Failed to shut down boss");
-    Assert.assertTrue(worker.awaitTermination(30, TimeUnit.SECONDS), "Failed to shut down worker");
+    Assert.assertTrue(eventLoop.awaitTermination(30, TimeUnit.SECONDS), "Failed to shut down event-loop");
     Assert.assertTrue(scheduler.awaitTermination(30, TimeUnit.SECONDS), "Failed to shut down scheduler");
   }
 
   @Test
   public void testGetRawClient()
   {
-    ExecutorService boss = Executors.newCachedThreadPool();
-    ExecutorService worker = Executors.newCachedThreadPool();
+    NioEventLoopGroup eventLoop = new NioEventLoopGroup();
     ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-    ClientSocketChannelFactory channelFactory = new NioClientSocketChannelFactory(boss, worker);
-    HttpClientFactory factory = new HttpClientFactory(FilterChains.empty(), channelFactory, true, scheduler, true);
+    HttpClientFactory factory = new HttpClientFactory(FilterChains.empty(), eventLoop, true, scheduler, true);
 
     Map<String, String> properties = new HashMap<String, String>();
 
@@ -237,11 +227,9 @@ public class TestHttpClientFactory
   @Test
   public void testShutdownTimeout() throws ExecutionException, TimeoutException, InterruptedException
   {
-    ExecutorService boss = Executors.newCachedThreadPool();
-    ExecutorService worker = Executors.newCachedThreadPool();
+    NioEventLoopGroup eventLoop = new NioEventLoopGroup();
     ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-    ClientSocketChannelFactory channelFactory = new NioClientSocketChannelFactory(boss, worker);
-    HttpClientFactory factory = new HttpClientFactory(FilterChains.empty(), channelFactory, true, scheduler, true);
+    HttpClientFactory factory = new HttpClientFactory(FilterChains.empty(), eventLoop, true, scheduler, true);
 
     List<Client> clients = new ArrayList<Client>();
     for (int i = 0; i < 100; i++)
@@ -260,19 +248,16 @@ public class TestHttpClientFactory
 
     factoryShutdown.get(30, TimeUnit.SECONDS);
 
-    Assert.assertTrue(boss.awaitTermination(30, TimeUnit.SECONDS), "Failed to shut down boss");
-    Assert.assertTrue(worker.awaitTermination(30, TimeUnit.SECONDS), "Failed to shut down worker");
+    Assert.assertTrue(eventLoop.awaitTermination(30, TimeUnit.SECONDS), "Failed to shut down event-loop");
     Assert.assertTrue(scheduler.awaitTermination(30, TimeUnit.SECONDS), "Failed to shut down scheduler");
   }
 
   @Test
   public void testShutdownNoTimeout() throws ExecutionException, TimeoutException, InterruptedException
   {
-    ExecutorService boss = Executors.newCachedThreadPool();
-    ExecutorService worker = Executors.newCachedThreadPool();
+    NioEventLoopGroup eventLoop = new NioEventLoopGroup();
     ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-    ClientSocketChannelFactory channelFactory = new NioClientSocketChannelFactory(boss, worker);
-    HttpClientFactory factory = new HttpClientFactory(FilterChains.empty(), channelFactory, true, scheduler, true);
+    HttpClientFactory factory = new HttpClientFactory(FilterChains.empty(), eventLoop, true, scheduler, true);
 
     List<Client> clients = new ArrayList<Client>();
     for (int i = 0; i < 100; i++)
@@ -299,19 +284,16 @@ public class TestHttpClientFactory
       // Expected
     }
 
-    Assert.assertFalse(boss.isShutdown(), "Boss should not be shut down");
-    Assert.assertFalse(worker.isShutdown(), "Worker should not be shut down");
+    Assert.assertFalse(eventLoop.isShutdown(), "Boss should not be shut down");
     Assert.assertFalse(scheduler.isShutdown(), "Scheduler should not be shut down");
   }
 
   @Test
   public void testShutdownIOThread() throws ExecutionException, TimeoutException, InterruptedException
   {
-    ExecutorService boss = Executors.newCachedThreadPool();
-    ExecutorService worker = Executors.newCachedThreadPool();
+    NioEventLoopGroup eventLoop = new NioEventLoopGroup();
     ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-    ClientSocketChannelFactory channelFactory = new NioClientSocketChannelFactory(boss, worker);
-    HttpClientFactory factory = new HttpClientFactory(FilterChains.empty(), channelFactory, true, scheduler, true);
+    HttpClientFactory factory = new HttpClientFactory(FilterChains.empty(), eventLoop, true, scheduler, true);
 
     Client client = new TransportClientAdapter(factory.getClient(
             Collections.<String, Object>emptyMap()));
@@ -334,9 +316,8 @@ public class TestHttpClientFactory
     clientShutdown.get(60, TimeUnit.SECONDS);
     factoryShutdown.get(60, TimeUnit.SECONDS);
 
-    Assert.assertTrue(boss.awaitTermination(60, TimeUnit.SECONDS));
-    Assert.assertTrue(worker.awaitTermination(60, TimeUnit.SECONDS));
-    Assert.assertTrue(scheduler.awaitTermination(60, TimeUnit.SECONDS));
+    Assert.assertTrue(eventLoop.awaitTermination(30, TimeUnit.SECONDS), "Failed to shut down event-loop");
+    Assert.assertTrue(scheduler.awaitTermination(60, TimeUnit.SECONDS), "Failed to shut down scheduler");
   }
 
   /**
@@ -350,20 +331,17 @@ public class TestHttpClientFactory
   public void testShutdownTimeoutDoesNotOccupyExecutors()
           throws InterruptedException, ExecutionException, TimeoutException
   {
-    ExecutorService boss = Executors.newCachedThreadPool();
-    ExecutorService worker = Executors.newCachedThreadPool();
+    NioEventLoopGroup eventLoop = new NioEventLoopGroup();
     ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-    ClientSocketChannelFactory channelFactory = new NioClientSocketChannelFactory(boss, worker);
-    HttpClientFactory factory = new HttpClientFactory(FilterChains.empty(), channelFactory, false, scheduler, false);
+    HttpClientFactory factory = new HttpClientFactory(FilterChains.empty(), eventLoop, false, scheduler, false);
 
     FutureCallback<None> callback = new FutureCallback<None>();
     factory.shutdown(callback, 60, TimeUnit.MINUTES);
     callback.get(60, TimeUnit.SECONDS);
     scheduler.shutdown();
-    channelFactory.releaseExternalResources();
+    eventLoop.shutdownGracefully();
     Assert.assertTrue(scheduler.awaitTermination(60, TimeUnit.SECONDS));
-    Assert.assertTrue(boss.awaitTermination(60, TimeUnit.SECONDS));
-    Assert.assertTrue(worker.awaitTermination(60, TimeUnit.SECONDS));
+    Assert.assertTrue(eventLoop.awaitTermination(60, TimeUnit.SECONDS));
   }
 
   @Test

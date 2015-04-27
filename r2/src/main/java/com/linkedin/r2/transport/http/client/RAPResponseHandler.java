@@ -24,102 +24,101 @@ import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestResponseBuilder;
 import com.linkedin.r2.transport.common.WireAttributeHelper;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
+import com.linkedin.r2.transport.common.bridge.common.TransportResponse;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
-import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.channel.ChannelStateEvent;
-import org.jboss.netty.channel.ExceptionEvent;
-import org.jboss.netty.channel.MessageEvent;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.SimpleChannelInboundHandler;
 
+import io.netty.util.AttributeKey;
 import java.nio.channels.ClosedChannelException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-
-import static com.linkedin.r2.transport.http.client.HttpNettyClient.LOG;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
  * Netty pipeline handler which takes a complete received message and invokes the
  * user-specified callback.
  *
+ * Note that an instance of this class needs to be stateless, since a single instance is used
+ * in multiple ChannelPipelines simultaneously. The per-channel state is stored in Channel's
+ * attachment and can be retrieved via {@code CALLBACK_ATTR_KEY}.
+ *
  * @author Steven Ihde
  * @version $Revision: $
  */
-
-class RAPResponseHandler extends UpstreamHandlerWithAttachment<TransportCallback<RestResponse>>
+@ChannelHandler.Sharable
+class RAPResponseHandler extends SimpleChannelInboundHandler<RestResponse>
 {
-  // Note that an instance of this class needs to be stateless, since a single instance is used
-  // in multiple ChannelPipelines simultaneously.  The per-channel state is stored in the
-  // ChannelHandlerContext attachment.
+  private static Logger LOG = LoggerFactory.getLogger(RAPResponseHandler.class);
 
-  // Access to the attachment is not synchronized; Netty's threading model for upstream events
-  // means that only one thread ever sends upstream events on a particular channel.  Since this
-  // is an upstream-only handler, we don't need to worry about downstream events.
+  public static final AttributeKey<TransportCallback<RestResponse>> CALLBACK_ATTR_KEY
+      = AttributeKey.valueOf("Callback");
 
   @Override
-  public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception
+  protected void channelRead0(ChannelHandlerContext ctx, RestResponse response) throws Exception
   {
-    RestResponse response = (RestResponse)e.getMessage();
+    final Map<String, String> headers = new HashMap<String, String>(response.getHeaders());
+    final Map<String, String> wireAttrs =
+      new HashMap<String, String>(WireAttributeHelper.removeWireAttributes(headers));
 
+    final RestResponse newResponse = new RestResponseBuilder(response)
+                                          .unsafeSetHeaders(headers)
+                                          .build();
     // In general there should always be a callback to handle a received message,
     // but it could have been removed due to a previous exception or closure on the
     // channel
-    TransportCallback<RestResponse> callback = removeAttachment(ctx);
+    TransportCallback<RestResponse> callback = ctx.channel().attr(CALLBACK_ATTR_KEY).getAndRemove();
     if (callback != null)
     {
-      LOG.debug("{}: handling a response", e.getChannel().getRemoteAddress());
-      final Map<String, String> headers = new HashMap<String, String>(response.getHeaders());
-      final Map<String, String> wireAttrs =
-            new HashMap<String, String>(WireAttributeHelper.removeWireAttributes(headers));
-
-      final RestResponse newResponse = new RestResponseBuilder(response)
-              .unsafeSetHeaders(headers)
-              .build();
-
+      LOG.debug("{}: handling a response", ctx.channel().remoteAddress());
       callback.onResponse(TransportResponseImpl.success(newResponse, wireAttrs));
     }
     else
     {
-      LOG.debug("{}: dropped a response", e.getChannel().getRemoteAddress());
+      LOG.debug("{}: dropped a response", ctx.channel().remoteAddress());
     }
-    super.messageReceived(ctx, e);
+    ctx.fireChannelRead(response);
   }
 
   @Override
-  public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception
+  public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception
   {
-    TransportCallback<RestResponse> callback = removeAttachment(ctx);
+    TransportCallback<RestResponse> callback = ctx.channel().attr(CALLBACK_ATTR_KEY).getAndRemove();
     if (callback != null)
     {
-      LOG.debug(e.getChannel().getRemoteAddress() + ": exception on active channel", e.getCause());
+      LOG.debug(ctx.channel().remoteAddress() + ": exception on active channel", cause);
       callback.onResponse(TransportResponseImpl.<RestResponse>error(
-              HttpNettyClient.toException(e.getCause()), Collections.<String,String>emptyMap()));
+              HttpNettyClient.toException(cause), Collections.<String,String>emptyMap()));
     }
     else
     {
-      LOG.error(e.getChannel().getRemoteAddress() + ": exception on idle channel or during handling of response", e.getCause());
+      LOG.debug(ctx.channel().remoteAddress() + ": exception on idle channel", cause);
     }
-    super.exceptionCaught(ctx, e);
+    ctx.fireExceptionCaught(cause);
   }
 
   @Override
-  public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception
+  public void channelInactive(ChannelHandlerContext ctx) throws Exception
   {
     // XXX this seems a bit odd, but if the channel closed before downstream layers received a response, we
     // have to deal with that ourselves (it does not get turned into an exception by downstream
     // layers, even though some other protocol errors do)
 
-    TransportCallback<RestResponse> callback = removeAttachment(ctx);
+    TransportCallback<RestResponse> callback = ctx.channel().attr(CALLBACK_ATTR_KEY).getAndRemove();
     if (callback != null)
     {
-      LOG.debug("{}: active channel closed", e.getChannel().getRemoteAddress());
+      LOG.debug("{}: active channel closed", ctx.channel().remoteAddress());
       callback.onResponse(TransportResponseImpl.<RestResponse>error(new ClosedChannelException(),
                                                                     Collections.<String, String>emptyMap()));
     }
     else
     {
-      LOG.debug("{}: idle channel closed", e.getChannel().getRemoteAddress());
+      LOG.debug("{}: idle channel closed", ctx.channel().remoteAddress());
     }
-    super.channelClosed(ctx, e);
+    ctx.fireChannelInactive();
   }
 }
