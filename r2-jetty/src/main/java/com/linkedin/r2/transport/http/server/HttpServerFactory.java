@@ -85,4 +85,65 @@ public class HttpServerFactory
                                useAsyncServletApi,
                                asyncTimeOut);
   }
+
+  public HttpServer createHttpsServer(int port,
+      int sslPort,
+      String keyStore,
+      String keyStorePassword,
+      TransportDispatcher transportDispatcher)
+  {
+    return createHttpsServer(port,
+                             sslPort,
+                             keyStore,
+                             keyStorePassword,
+                             DEFAULT_CONTEXT_PATH,
+                             DEFAULT_THREAD_POOL_SIZE,
+                             transportDispatcher,
+                             DEFAULT_USE_ASYNC_SERVLET_API,
+                             DEFAULT_ASYNC_TIMEOUT);
+  }
+
+  public HttpServer createServer(int port,
+                                 int sslPort,
+                                 String keyStore,
+                                 String keyStorePassword,
+                                 String contextPath,
+                                 int threadPoolSize,
+                                 TransportDispatcher transportDispatcher)
+  {
+    return createHttpsServer(port,
+                             sslPort,
+                             keyStore,
+                             keyStorePassword,
+                             contextPath,
+                             threadPoolSize,
+                             transportDispatcher,
+                             DEFAULT_USE_ASYNC_SERVLET_API,
+                             DEFAULT_ASYNC_TIMEOUT);
+  }
+
+  public HttpServer createHttpsServer(int port,
+                                      int sslPort,
+                                      String keyStore,
+                                      String keyStorePassword,
+                                      String contextPath,
+                                      int threadPoolSize,
+                                      TransportDispatcher transportDispatcher,
+                                      boolean useAsyncServletApi,
+                                      int asyncTimeOut)
+  {
+    final TransportDispatcher filterDispatcher =
+      new FilterChainDispatcher(transportDispatcher, _filters);
+    final HttpDispatcher dispatcher = new HttpDispatcher(filterDispatcher);
+    return new HttpsJettyServer(port,
+                                sslPort,
+                                keyStore,
+                                keyStorePassword,
+                                contextPath,
+                                threadPoolSize,
+                                dispatcher,
+                                useAsyncServletApi,
+                                asyncTimeOut);
+  }
+
 }

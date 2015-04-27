@@ -24,7 +24,6 @@ import com.linkedin.r2.sample.Bootstrap;
 import com.linkedin.r2.sample.echo.EchoService;
 import com.linkedin.r2.sample.echo.rest.RestEchoClient;
 import com.linkedin.r2.transport.common.Client;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.net.URI;
@@ -34,15 +33,9 @@ import java.net.URI;
  * @version $Revision: $
  */
 
+@Test
 public class TestHttpRestEcho extends AbstractHttpEchoServiceTest
 {
-  // TODO: Pseudo-test to get gradle working with TestNG
-  @Test
-  public void psuedoTest()
-  {
-    Assert.assertTrue(true);
-  }
-
   @Override
   protected EchoService getEchoClient(Client client, URI uri)
   {

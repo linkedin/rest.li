@@ -81,9 +81,7 @@ public class HttpJettyServer implements HttpServer
   public void start() throws IOException
   {
     _server = new Server();
-    SelectChannelConnector connector = new SelectChannelConnector();
-    connector.setPort(_port);
-    _server.setConnectors(new Connector[] { connector });
+    _server.setConnectors(getConnectors());
     _server.setThreadPool(new QueuedThreadPool(_threadPoolSize));
     ServletContextHandler root =
         new ServletContextHandler(_server, _contextPath, ServletContextHandler.SESSIONS);
@@ -120,5 +118,13 @@ public class HttpJettyServer implements HttpServer
   public void waitForStop() throws InterruptedException
   {
     _server.join();
+  }
+
+
+  protected Connector[] getConnectors()
+  {
+    SelectChannelConnector connector = new SelectChannelConnector();
+    connector.setPort(_port);
+    return new Connector[] { connector };
   }
 }

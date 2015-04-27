@@ -32,9 +32,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import java.util.concurrent.atomic.AtomicReference;
 import org.testng.Assert;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
@@ -133,29 +137,14 @@ public class TestHttpClient
     assertEquals(response.getStatus(), 200);
 
     final Integer iterations = 5;
-    final CountDownLatch latch = new CountDownLatch(iterations);
     //Test that sending multiple requests with the same request context works correctly, without
     //modifying the original request context.
     for (int i=0; i<iterations; ++i)
     {
-      client.restRequest(request, context, new Callback<RestResponse>()
-      {
-        @Override
-        public void onError(Throwable e)
-        {
-          Assert.fail("Expected success, received: " + e);
-          latch.countDown();
-        }
-
-        @Override
-        public void onSuccess(RestResponse result)
-        {
-          Assert.assertEquals(result.getStatus(), 200);
-          latch.countDown();
-        }
-      });
+      FutureCallback<RestResponse> callback = new FutureCallback<RestResponse>();
+      client.restRequest(request, context, callback);
+      callback.get(REQUEST_TIMEOUT, TimeUnit.MILLISECONDS);
     }
-    latch.await(REQUEST_TIMEOUT, TimeUnit.MILLISECONDS);
 
     Assert.assertTrue(context.getLocalAttrs().isEmpty());
 
@@ -167,7 +156,7 @@ public class TestHttpClient
   // Disabled this test for now because due to VMWare/Solaris x86 bugs, ScheduledExecutor
   // does not work correctly on the hudson builds.  Reenable it when we move our Hudson jobs
   // to a correctly functioning operating system.
-  @Test(enabled=false)
+  @Test
   public void testFailBackoff() throws Exception
   {
     final int WARM_UP = 10;
@@ -182,7 +171,10 @@ public class TestHttpClient
 
     final ServerSocket ss = new ServerSocket();
     ss.bind(null);
-    final CountDownLatch latch = new CountDownLatch(N + WARM_UP);
+    final CountDownLatch warmUpLatch = new CountDownLatch(WARM_UP);
+    final CountDownLatch latch = new CountDownLatch(N);
+    final AtomicReference<Boolean> isShutdown = new AtomicReference<Boolean>(false);
+
     Thread t = new Thread(new Runnable()
     {
       @Override
@@ -190,12 +182,19 @@ public class TestHttpClient
       {
         try
         {
-          for (;;)
+          while(!isShutdown.get())
           {
-          Socket s = ss.accept();
-          s.close();
-          latch.countDown();
-          System.err.println("!!! Got a connect, " + latch.getCount() + " to go!");
+            Socket s = ss.accept();
+            s.close();
+            if (warmUpLatch.getCount() > 0)
+            {
+              warmUpLatch.countDown();
+            }
+            else
+            {
+              latch.countDown();
+            }
+            System.err.println("!!! Got a connect, " + latch.getCount() + " to go!");
           }
         }
         catch (IOException e)
@@ -206,47 +205,44 @@ public class TestHttpClient
     });
     t.start();
 
-
-    RestRequest r = new RestRequestBuilder(URI.create("http://localhost:" + ss.getLocalPort() + "/")).setMethod("GET").build();
+    final RestRequest r = new RestRequestBuilder(URI.create("http://localhost:" + ss.getLocalPort() + "/")).setMethod("GET").build();
+    final ExecutorService executor = Executors.newSingleThreadExecutor();
+    executor.execute(new Runnable()
+    {
+      @Override
+      public void run()
+      {
+        while (!isShutdown.get())
+        {
+          try
+          {
+            FutureCallback<RestResponse> callback = new FutureCallback<RestResponse>();
+            client.restRequest(r, callback);
+            callback.get();
+          }
+          catch (Exception e)
+          {
+            // ignore
+          }
+        }
+      }
+    });
 
     // First ensure a bunch fail to get the rate limiting going
-    List<FutureCallback<RestResponse>> callbacks = dispatchRequests(client, r, WARM_UP);
-    for (FutureCallback<RestResponse> callback : callbacks)
-    {
-      try
-      {
-        callback.get();
-      }
-      catch (Exception e)
-      {
-        // ignore
-      }
-    }
-
+    warmUpLatch.await(120, TimeUnit.SECONDS);
     // Now we should be rate limited
-
-
     long start = System.currentTimeMillis();
     System.err.println("Starting at " + start);
-    dispatchRequests(client, r, N);
     long lowTolerance = N * REQUEST_TIMEOUT / 2 * 4 / 5;
     long highTolerance = N * REQUEST_TIMEOUT / 2 * 5 / 4;
     Assert.assertTrue(latch.await(highTolerance, TimeUnit.MILLISECONDS), "Should have finished within " + highTolerance + "ms");
     long elapsed = System.currentTimeMillis() - start;
     Assert.assertTrue(elapsed > lowTolerance, "Should have finished after " + lowTolerance + "ms (took " + elapsed +")");
+    // shutdown everything
+    isShutdown.set(true);
+    executor.shutdown();
   }
 
-  private List<FutureCallback<RestResponse>> dispatchRequests(Client client, RestRequest r, int n)
-  {
-    List<FutureCallback<RestResponse>> callbacks = new ArrayList<FutureCallback<RestResponse>>(n);
-    for (int i = 0; i < n; i++)
-    {
-      FutureCallback<RestResponse> callback = new FutureCallback<RestResponse>();
-      callbacks.add(callback);
-      client.restRequest(r, callback);
-    }
-    return callbacks;
-  }
 
   @Test
   public void testSimpleURI() throws Exception

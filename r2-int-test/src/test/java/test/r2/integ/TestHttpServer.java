@@ -26,11 +26,15 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestResponseBuilder;
 import com.linkedin.r2.message.rest.RestStatus;
+import com.linkedin.r2.message.rest.RestUtil;
 import com.linkedin.r2.transport.common.RestRequestHandler;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcherBuilder;
+import com.linkedin.r2.transport.http.common.HttpConstants;
 import com.linkedin.r2.transport.http.server.HttpServer;
 import com.linkedin.r2.transport.http.server.HttpServerFactory;
+import java.util.Arrays;
+import java.util.List;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
@@ -43,6 +47,8 @@ import java.net.URI;
 import java.net.URL;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+
 
 /**
  * @author Steven Ihde
@@ -61,6 +67,7 @@ public class TestHttpServer
     final TransportDispatcher dispatcher = new TransportDispatcherBuilder()
             .addRestHandler(URI.create("/error"), new ErrorHandler())
             .addRestHandler(URI.create("/foobar"), new FoobarHandler())
+            .addRestHandler(URI.create("/headerEcho"), new HeaderEchoHandler())
             .build();
 
     _server = new HttpServerFactory().createServer(PORT, dispatcher);
@@ -78,7 +85,6 @@ public class TestHttpServer
   @Test
   public void testSuccess() throws Exception
   {
-
     HttpURLConnection c = (HttpURLConnection)new URL("http://localhost:" + PORT + "/foobar").openConnection();
     assertEquals(c.getResponseCode(), RestStatus.OK);
     InputStream in = c.getInputStream();
@@ -94,14 +100,65 @@ public class TestHttpServer
   @Test
   public void testException() throws Exception
   {
-
     HttpURLConnection c2 = (HttpURLConnection)new URL("http://localhost:" + PORT + "/error").openConnection();
     assertEquals(c2.getResponseCode(), RestStatus.INTERNAL_SERVER_ERROR);
   }
 
+  @Test
+  public void testHeaderEcho() throws Exception
+  {
+    HttpURLConnection c = (HttpURLConnection)new URL("http://localhost:" + PORT + "/headerEcho").openConnection();
+    c.setRequestProperty("Header1", "foo");
+    c.setRequestProperty("Header2", "bar");
+    assertEquals(c.getHeaderField("header1"), "foo");
+    assertEquals(c.getHeaderField("header2"), "bar");
+  }
+
+  @Test
+  public void testMultiValuedHeaderEcho() throws Exception
+  {
+    final String header = "MultiValuedHeader";
+    final List<String> values = Arrays.asList(new String[]{ "foo", "bar", "baz", "qux" });
+    HttpURLConnection c = (HttpURLConnection)new URL("http://localhost:" + PORT + "/headerEcho").openConnection();
+    for (String v : values)
+    {
+      c.addRequestProperty(header, v);
+    }
+    // we know the headers are going to be folded into one line its way back.
+    List<String> echoValues = RestUtil.getHeaderValues(c.getHeaderField(header));
+    assertEquals(echoValues.size(), values.size());
+    assertTrue(echoValues.containsAll(values));
+  }
+
+  @Test
+  public void testCookieEcho() throws Exception
+  {
+    String cookie = "sdsc=1%3A1SZM1shxDNbLt36wZwCgPgvN58iw%3D; Path=/; Domain=.linkedin.com; HTTPOnly";
+    HttpURLConnection c = (HttpURLConnection)new URL("http://localhost:" + PORT + "/headerEcho").openConnection();
+    c.setRequestProperty(HttpConstants.REQUEST_COOKIE_HEADER_NAME, cookie);
+    assertEquals(c.getHeaderField(HttpConstants.RESPONSE_COOKIE_HEADER_NAME), cookie);
+  }
+
+  @Test
+  public void testMultipleCookiesEcho() throws Exception
+  {
+    final List<String> cookies = Arrays.asList(new String[]
+      {
+        "_lipt=deleteMe; Expires=Thu, 01-Jan-1970 00:00:10 GMT; Path=/",
+        "lang=\"v=2&lang=en-us&c=\"; Version=1; Domain=linkedin.com; Path=/"
+      });
+    HttpURLConnection c = (HttpURLConnection)new URL("http://localhost:" + PORT + "/headerEcho").openConnection();
+    for (String cookie : cookies)
+    {
+      c.addRequestProperty(HttpConstants.REQUEST_COOKIE_HEADER_NAME, cookie);
+    }
+    List<String> cookiesEcho = c.getHeaderFields().get(HttpConstants.RESPONSE_COOKIE_HEADER_NAME);
+    assertEquals(cookiesEcho.size(), cookies.size());
+    assertTrue(cookiesEcho.containsAll(cookies));
+  }
+
   private static class ErrorHandler implements RestRequestHandler
   {
-
     @Override
     public void handleRequest(RestRequest request, RequestContext requestContext, Callback<RestResponse> callback)
     {
@@ -118,6 +175,21 @@ public class TestHttpServer
       builder.setStatus(RestStatus.OK);
       builder.setEntity("Hello, world!".getBytes());
       RestResponse response = builder.build();
+      callback.onSuccess(response);
+    }
+  }
+
+  private static class HeaderEchoHandler implements RestRequestHandler
+  {
+    @Override
+    public void handleRequest(RestRequest request, RequestContext requestContext, Callback<RestResponse> callback)
+    {
+      final RestResponse response = new RestResponseBuilder()
+        .setStatus(RestStatus.OK)
+        .setEntity("Hello World".getBytes())
+        .setHeaders(request.getHeaders())
+        .setCookies(request.getCookies())
+        .build();
       callback.onSuccess(response);
     }
   }

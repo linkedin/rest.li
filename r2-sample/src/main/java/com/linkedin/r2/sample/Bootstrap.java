@@ -42,6 +42,7 @@ import java.util.Collections;
 public class Bootstrap
 {
   private static final int HTTP_PORT = 8877;
+  private static final int HTTPS_PORT = 8443;
 
   private static final URI ECHO_URI = URI.create("/echo");
   private static final URI ON_EXCEPTION_ECHO_URI = URI.create("/on-exception-echo");
@@ -56,6 +57,17 @@ public class Bootstrap
   {
     return new HttpServerFactory(filters)
             .createServer(port, createDispatcher());
+  }
+
+  public static Server createHttpsServer(String keyStore, String keyStorePassword, FilterChain filters)
+  {
+    return createHttpsServer(HTTPS_PORT, keyStore, keyStorePassword, filters);
+  }
+
+  public static Server createHttpsServer(int sslPort, String keyStore, String keyStorePassword, FilterChain filters)
+  {
+    return new HttpServerFactory(filters)
+        .createHttpsServer(HTTP_PORT, sslPort, keyStore, keyStorePassword, createDispatcher());
   }
 
   public static Client createHttpClient(FilterChain filters)
@@ -73,6 +85,16 @@ public class Bootstrap
   public static URI createHttpURI(int port, URI relativeURI)
   {
     return URI.create("http://localhost:" + port + relativeURI);
+  }
+
+  public static URI createHttpsURI(URI relativeURI)
+  {
+    return createHttpsURI(HTTPS_PORT, relativeURI);
+  }
+
+  public static URI createHttpsURI(int port, URI relativeURI)
+  {
+    return URI.create("https://localhost:" + port + relativeURI);
   }
 
   public static URI getEchoURI()
