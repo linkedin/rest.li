@@ -21,15 +21,11 @@ import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
 import com.linkedin.data.schema.validation.ValidationOptions;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.RemoteInvocationException;
-import com.linkedin.r2.transport.common.Client;
-import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
-import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.restli.client.CreateIdRequest;
 import com.linkedin.restli.client.CreateIdRequestBuilder;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.ResponseFuture;
-import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.client.response.CreateResponse;
 import com.linkedin.restli.common.EmptyRecord;
@@ -95,10 +91,6 @@ import static org.testng.Assert.fail;
  */
 public class TestFilters extends RestLiIntegrationTest
 {
-  private static final Client CLIENT =
-      new TransportClientAdapter(new HttpClientFactory().getClient(Collections.<String, String> emptyMap()));
-  private static final String URI_PREFIX = "http://localhost:1338/";
-  private static final RestClient REST_CLIENT = new RestClient(CLIENT, URI_PREFIX);
   private static final String REQ_FILTER_ERROR_MESSAGE = "You are forbidden from creating an insulting greeting.";
   private static final HttpStatus REQ_FILTER_ERROR_STATUS = HttpStatus.S_403_FORBIDDEN;
   private static final String RESP_FILTER_ERROR_MESSAGE = "Thou shall not insult other";
@@ -203,7 +195,7 @@ public class TestFilters extends RestLiIntegrationTest
     }
     greeting.setId(createdId);
     Request<Greeting> getRequest = builders.get().id(createdId).build();
-    Greeting getReturnedGreeting = REST_CLIENT.sendRequest(getRequest).getResponse().getEntity();
+    Greeting getReturnedGreeting = getClient().sendRequest(getRequest).getResponse().getEntity();
     ValidateDataAgainstSchema.validate(getReturnedGreeting.data(), getReturnedGreeting.schema(),
                                        new ValidationOptions());
     assertEquals(getReturnedGreeting, greeting);
@@ -219,7 +211,7 @@ public class TestFilters extends RestLiIntegrationTest
   private void deleteAndVerifyTestData(RootBuilderWrapper<Long, Greeting> builders, Long id) throws RemoteInvocationException
   {
     Request<EmptyRecord> request = builders.delete().id(id).build();
-    ResponseFuture<EmptyRecord> future = REST_CLIENT.sendRequest(request);
+    ResponseFuture<EmptyRecord> future = getClient().sendRequest(request);
     Response<EmptyRecord> response = future.getResponse();
     assertEquals(response.getStatus(), HttpStatus.S_204_NO_CONTENT.getCode());
   }
@@ -235,13 +227,13 @@ public class TestFilters extends RestLiIntegrationTest
       CreateIdRequestBuilder<Long, Greeting> createIdRequestBuilder =
           (CreateIdRequestBuilder<Long, Greeting>) objBuilder;
       CreateIdRequest<Long, Greeting> request = createIdRequestBuilder.input(greeting).build();
-      Response<IdResponse<Long>> response = REST_CLIENT.sendRequest(request).getResponse();
+      Response<IdResponse<Long>> response = getClient().sendRequest(request).getResponse();
       createdId = response.getEntity().getId();
     }
     else
     {
       Request<EmptyRecord> request = createBuilderWrapper.input(greeting).build();
-      Response<EmptyRecord> response = REST_CLIENT.sendRequest(request).getResponse();
+      Response<EmptyRecord> response = getClient().sendRequest(request).getResponse();
       @SuppressWarnings("unchecked")
       CreateResponse<Long> createResponse = (CreateResponse<Long>) response.getEntity();
       createdId = createResponse.getId();

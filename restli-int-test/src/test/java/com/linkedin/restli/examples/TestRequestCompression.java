@@ -17,11 +17,14 @@
 package com.linkedin.restli.examples;
 
 
+import com.linkedin.common.callback.FutureCallback;
+import com.linkedin.common.util.None;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.filter.FilterChains;
 import com.linkedin.r2.filter.CompressionConfig;
 import com.linkedin.r2.filter.CompressionOption;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
+import com.linkedin.r2.transport.http.client.AbstractJmxManager;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.transport.http.common.HttpConstants;
 import com.linkedin.r2.util.NamedThreadFactory;
@@ -41,7 +44,10 @@ import com.linkedin.restli.server.filter.FilterRequestContext;
 import com.linkedin.restli.server.filter.RequestFilter;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
-import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
+import io.netty.channel.nio.NioEventLoopGroup;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -179,7 +185,8 @@ public class TestRequestCompression extends RestLiIntegrationTest
                          RestliRequestOptions restliRequestOptions,
                          int messageLength,
                          String testHelpHeader)
-      throws RemoteInvocationException, CloneNotSupportedException
+    throws RemoteInvocationException, CloneNotSupportedException, InterruptedException, ExecutionException,
+           TimeoutException
   {
     ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("R2 Netty Scheduler"));
     Map<String, CompressionConfig> requestCompressionConfigs = new HashMap<String, CompressionConfig>();
@@ -188,15 +195,13 @@ public class TestRequestCompression extends RestLiIntegrationTest
       requestCompressionConfigs.put(SERVICE_NAME, requestCompressionConfig);
     }
     HttpClientFactory httpClientFactory = new HttpClientFactory(FilterChains.empty(),
-        new NioClientSocketChannelFactory(
-            Executors.newCachedThreadPool(new NamedThreadFactory("R2 Netty IO Boss")),
-            Executors.newCachedThreadPool(new NamedThreadFactory("R2 Netty IO Worker"))),
+        new NioEventLoopGroup(),
         true,
         executor,
         true,
-        executor,
+        null,
         false,
-        HttpClientFactory.NULL_JMX_MANAGER,
+        AbstractJmxManager.NULL_JMX_MANAGER,
         500, // The default compression threshold is between small and large.
         requestCompressionConfigs);
     Map<String, String> properties = new HashMap<String, String>();
@@ -230,5 +235,13 @@ public class TestRequestCompression extends RestLiIntegrationTest
     String response2 = future2.getResponse().getEntity().getMessage();
 
     Assert.assertEquals(response2, message);
+
+    FutureCallback<None> callback1 = new FutureCallback<None>();
+    client.shutdown(callback1);
+    callback1.get(30, TimeUnit.SECONDS);
+
+    FutureCallback<None> callback2 = new FutureCallback<None>();
+    httpClientFactory.shutdown(callback2);
+    callback2.get(30, TimeUnit.SECONDS);
   }
 }

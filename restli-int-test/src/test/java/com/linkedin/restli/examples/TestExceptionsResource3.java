@@ -18,15 +18,10 @@ package com.linkedin.restli.examples;
 
 
 import com.linkedin.r2.RemoteInvocationException;
-import com.linkedin.r2.transport.common.Client;
-import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
-import com.linkedin.r2.transport.http.client.HttpClientFactory;
-import com.linkedin.r2.transport.http.common.HttpConstants;
 import com.linkedin.restli.client.ErrorHandlingBehavior;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.ResponseFuture;
-import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.HttpStatus;
@@ -41,7 +36,6 @@ import com.linkedin.restli.server.filter.RequestFilter;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Map;
 
 import org.testng.Assert;
@@ -53,10 +47,6 @@ import org.testng.annotations.Test;
 
 public class TestExceptionsResource3 extends RestLiIntegrationTest
 {
-  private static final Client CLIENT = new TransportClientAdapter(new HttpClientFactory().getClient(Collections.<String, String>emptyMap()));
-  private static final String URI_PREFIX = "http://localhost:1338/";
-  private static final RestClient REST_CLIENT = new RestClient(CLIENT, URI_PREFIX);
-
   @BeforeClass
   public void initClass() throws Exception
   {
@@ -99,7 +89,7 @@ public class TestExceptionsResource3 extends RestLiIntegrationTest
   {
     Greeting greeting = new Greeting().setId(1L).setMessage("Hello").setTone(Tone.FRIENDLY);
     Request<IdResponse<Long>> createRequest = new Exceptions3RequestBuilders().create().input(greeting).build();
-    Response<IdResponse<Long>> response = REST_CLIENT.sendRequest(createRequest).getResponse();
+    Response<IdResponse<Long>> response = getClient().sendRequest(createRequest).getResponse();
     Assert.assertEquals(response.getStatus(), HttpStatus.S_201_CREATED.getCode());
   }
 
@@ -116,11 +106,11 @@ public class TestExceptionsResource3 extends RestLiIntegrationTest
 
       if (explicit)
       {
-        future = REST_CLIENT.sendRequest(readRequest, errorHandlingBehavior);
+        future = getClient().sendRequest(readRequest, errorHandlingBehavior);
       }
       else
       {
-        future = REST_CLIENT.sendRequest(readRequest);
+        future = getClient().sendRequest(readRequest);
       }
 
       response = future.getResponse();
@@ -171,11 +161,11 @@ public class TestExceptionsResource3 extends RestLiIntegrationTest
 
       if (explicit)
       {
-        future = REST_CLIENT.sendRequest(request, errorHandlingBehavior);
+        future = getClient().sendRequest(request, errorHandlingBehavior);
       }
       else
       {
-        future = REST_CLIENT.sendRequest(request);
+        future = getClient().sendRequest(request);
       }
 
       response = future.getResponse();

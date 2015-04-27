@@ -18,11 +18,7 @@ package com.linkedin.restli.examples;
 
 
 import com.linkedin.r2.RemoteInvocationException;
-import com.linkedin.r2.transport.common.Client;
-import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
-import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.restli.client.Request;
-import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.Tone;
@@ -30,7 +26,6 @@ import com.linkedin.restli.examples.greetings.client.WithContextBuilders;
 import com.linkedin.restli.examples.greetings.client.WithContextRequestBuilders;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
-import java.util.Collections;
 import java.util.List;
 
 import org.testng.Assert;
@@ -46,11 +41,6 @@ import org.testng.annotations.Test;
 
 public class TestContexts extends RestLiIntegrationTest
 {
-
-  private static final Client CLIENT = new TransportClientAdapter(new HttpClientFactory().getClient(Collections.<String, String>emptyMap()));
-  private static final String URI_PREFIX = "http://localhost:1338/";
-  private static final RestClient REST_CLIENT = new RestClient(CLIENT, URI_PREFIX);
-
   private static final String PROJECTION_MESSAGE = "Projection!";
   private static final String NO_PROJECTION_MESSAGE = "No Projection!";
   private static final String HEADER_MESSAGE = "Header!";
@@ -75,12 +65,12 @@ public class TestContexts extends RestLiIntegrationTest
   {
     Request<Greeting> requestWithProjection =
       builders.get().id(5L).fields(Greeting.fields().message(), Greeting.fields().tone()).build();
-    Greeting projectionGreeting = REST_CLIENT.sendRequest(requestWithProjection).getResponse().getEntity();
+    Greeting projectionGreeting = getClient().sendRequest(requestWithProjection).getResponse().getEntity();
     Assert.assertEquals(projectionGreeting.getMessage(), PROJECTION_MESSAGE);
     Assert.assertEquals(projectionGreeting.getTone(), HAS_KEYS);
 
     Request<Greeting> requestNoProjection = builders.get().id(5L).build();
-    Greeting greeting = REST_CLIENT.sendRequest(requestNoProjection).getResponse().getEntity();
+    Greeting greeting = getClient().sendRequest(requestNoProjection).getResponse().getEntity();
     Assert.assertEquals(greeting.getMessage(), NO_PROJECTION_MESSAGE);
     Assert.assertEquals(greeting.getTone(), HAS_KEYS);
   }
@@ -93,7 +83,7 @@ public class TestContexts extends RestLiIntegrationTest
         .fields(Greeting.fields().message(), Greeting.fields().tone())
         .setHeader("Expected-Header", HEADER_MESSAGE)
         .build();
-    List<Greeting> projectionGreetings = REST_CLIENT.sendRequest(requestWithProjection).getResponse().getEntity().getElements();
+    List<Greeting> projectionGreetings = getClient().sendRequest(requestWithProjection).getResponse().getEntity().getElements();
 
     // test projection and keys
     Greeting projectionGreeting = projectionGreetings.get(0);
@@ -105,7 +95,7 @@ public class TestContexts extends RestLiIntegrationTest
     Assert.assertEquals(headerGreeting.getMessage(), HEADER_MESSAGE);
 
     Request<CollectionResponse<Greeting>> requestNoProjection = builders.findBy("Finder").build();
-    List<Greeting> noProjectionGreetings = REST_CLIENT.sendRequest(requestNoProjection).getResponse().getEntity().getElements();
+    List<Greeting> noProjectionGreetings = getClient().sendRequest(requestNoProjection).getResponse().getEntity().getElements();
 
     // test projection and keys
     Greeting noProjectionGreeting = noProjectionGreetings.get(0);

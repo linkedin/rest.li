@@ -23,14 +23,10 @@ import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
-import com.linkedin.r2.transport.common.Client;
-import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
-import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.restli.client.CreateIdRequest;
 import com.linkedin.restli.client.CreateIdRequestBuilder;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
-import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.client.response.CreateResponse;
 import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.common.EmptyRecord;
@@ -46,7 +42,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -60,9 +55,6 @@ import org.testng.annotations.Test;
 
 public class TestDebugRequestHandlers extends RestLiIntegrationTest
 {
-  private static final Client CLIENT = new TransportClientAdapter(new HttpClientFactory().getClient(Collections.<String, String>emptyMap()));
-  private static final String URI_PREFIX = "http://localhost:1338/";
-  private static final RestClient REST_CLIENT = new RestClient(CLIENT, URI_PREFIX);
   private static final String HEADER_VALUE_TEXT_HTML = "text/html";
   private static final String HEADER_VALUE_APPLICATION_JSON = "application/json";
 
@@ -199,7 +191,7 @@ public class TestDebugRequestHandlers extends RestLiIntegrationTest
   private void sendRequestAndVerifyParseqTraceRaw(RestRequest request)
       throws InterruptedException, ExecutionException
   {
-    Future<RestResponse> restResponseFuture = CLIENT.restRequest(request);
+    Future<RestResponse> restResponseFuture = getDefaultTransportClient().restRequest(request);
 
     RestResponse restResponse = restResponseFuture.get();
     Assert.assertEquals(restResponse.getStatus(), 200);
@@ -232,7 +224,7 @@ public class TestDebugRequestHandlers extends RestLiIntegrationTest
   private void sendRequestAndVerifyParseqTracevisResponse(RestRequest request)
       throws InterruptedException, ExecutionException
   {
-    Future<RestResponse> restResponseFuture = CLIENT.restRequest(request);
+    Future<RestResponse> restResponseFuture = getDefaultTransportClient().restRequest(request);
 
     RestResponse restResponse = restResponseFuture.get();
     Assert.assertEquals(restResponse.getStatus(), 200);
@@ -252,13 +244,13 @@ public class TestDebugRequestHandlers extends RestLiIntegrationTest
       @SuppressWarnings("unchecked")
       CreateIdRequestBuilder<Long, Greeting> createIdRequestBuilder = (CreateIdRequestBuilder<Long, Greeting>) objBuilder;
       CreateIdRequest<Long, Greeting> request = createIdRequestBuilder.input(newGreeting).build();
-      Response<IdResponse<Long>> response = REST_CLIENT.sendRequest(request).getResponse();
+      Response<IdResponse<Long>> response = getClient().sendRequest(request).getResponse();
       createdId = response.getEntity().getId();
     }
     else
     {
       Request<EmptyRecord> request = createBuilderWrapper.input(newGreeting).build();
-      Response<EmptyRecord> response = REST_CLIENT.sendRequest(request).getResponse();
+      Response<EmptyRecord> response = getClient().sendRequest(request).getResponse();
       @SuppressWarnings("unchecked")
       CreateResponse<Long> createResponse = (CreateResponse<Long>) response.getEntity();
       createdId= createResponse.getId();

@@ -20,14 +20,23 @@
 
 package com.linkedin.restli.examples;
 
+import com.linkedin.common.callback.FutureCallback;
+import com.linkedin.common.util.None;
 import com.linkedin.parseq.Engine;
 import com.linkedin.parseq.EngineBuilder;
+import com.linkedin.r2.transport.common.Client;
+import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
+import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.transport.http.server.HttpServer;
+import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.server.filter.RequestFilter;
 import com.linkedin.restli.server.filter.ResponseFilter;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -39,6 +48,8 @@ import java.util.concurrent.ScheduledExecutorService;
 
 public class RestLiIntegrationTest
 {
+  protected static final String URI_PREFIX = "http://localhost:1338/";
+
   private final int numCores = Runtime.getRuntime().availableProcessors();
 
   private ScheduledExecutorService _scheduler;
@@ -46,6 +57,10 @@ public class RestLiIntegrationTest
   private HttpServer               _server;
   private HttpServer               _serverWithoutCompression;
   private HttpServer               _serverWithFilters;
+
+  private HttpClientFactory        _clientFactory;
+  private List<Client>             _transportClients;
+  private RestClient               _restClient;
 
   // By default start a single synchronous server with compression.
   public void init() throws Exception
@@ -89,6 +104,11 @@ public class RestLiIntegrationTest
                                            asyncTimeout);
       _serverWithoutCompression.start();
     }
+
+    _clientFactory = new HttpClientFactory();
+    _transportClients = new ArrayList<Client>();
+    Client client = newTransportClient(Collections.<String, String>emptyMap());
+    _restClient = new RestClient(client, URI_PREFIX);
   }
 
 
@@ -106,6 +126,11 @@ public class RestLiIntegrationTest
                                          requestFilters,
                                          responseFilters);
     _serverWithFilters.start();
+
+    _clientFactory = new HttpClientFactory();
+    _transportClients = new ArrayList<Client>();
+    Client client = newTransportClient(Collections.<String, String>emptyMap());
+    _restClient = new RestClient(client, URI_PREFIX);
   }
 
   public void shutdown() throws Exception
@@ -130,5 +155,52 @@ public class RestLiIntegrationTest
     {
       _scheduler.shutdownNow();
     }
+    for (Client client : _transportClients)
+    {
+      FutureCallback<None> callback = new FutureCallback<None>();
+      client.shutdown(callback);
+      callback.get();
+    }
+    if (_clientFactory != null)
+    {
+      FutureCallback<None> callback = new FutureCallback<None>();
+      _clientFactory.shutdown(callback);
+      callback.get();
+    }
+  }
+
+  protected RestClient getClient()
+  {
+    return _restClient;
+  }
+
+  /**
+   * Returns a default {@link com.linkedin.r2.transport.common.bridge.client.TransportClient}
+   * with no extra property applied.
+   */
+  protected Client getDefaultTransportClient()
+  {
+    if (_transportClients.size() > 0)
+    {
+      return _transportClients.get(0);
+    }
+    else
+    {
+      return null;
+    }
+  }
+
+  /**
+   * Creates a {@link com.linkedin.r2.transport.common.bridge.client.TransportClient}
+   * with the given properties. The lifecycle of this client is governed by
+   * {@link RestLiIntegrationTest}.
+   *
+   * @param properties Transport client properties.
+   */
+  protected Client newTransportClient(Map<String, ? extends Object> properties)
+  {
+    Client client = new TransportClientAdapter(_clientFactory.getClient(properties));
+    _transportClients.add(client);
+    return client;
   }
 }

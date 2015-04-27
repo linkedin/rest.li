@@ -19,9 +19,6 @@ package com.linkedin.restli.examples;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.r2.RemoteInvocationException;
-import com.linkedin.r2.transport.common.Client;
-import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
-import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.restli.client.ErrorHandlingBehavior;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
@@ -35,8 +32,6 @@ import com.linkedin.restli.examples.greetings.client.Exceptions2RequestBuilders;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
-import java.util.Collections;
-
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -46,10 +41,6 @@ import org.testng.annotations.Test;
 
 public class TestExceptionsResource2 extends RestLiIntegrationTest
 {
-  private static final Client CLIENT = new TransportClientAdapter(new HttpClientFactory().getClient(Collections.<String, String>emptyMap()));
-  private static final String URI_PREFIX = "http://localhost:1338/";
-  private static final RestClient REST_CLIENT = new RestClient(CLIENT, URI_PREFIX);
-
   @BeforeClass
   public void initClass() throws Exception
   {
@@ -75,11 +66,11 @@ public class TestExceptionsResource2 extends RestLiIntegrationTest
 
       if (explicit)
       {
-       future = REST_CLIENT.sendRequest(req, errorHandlingBehavior);
+       future = getClient().sendRequest(req, errorHandlingBehavior);
       }
       else
       {
-        future = REST_CLIENT.sendRequest(req);
+        future = getClient().sendRequest(req);
       }
 
       response = future.getResponse();
@@ -131,11 +122,11 @@ public class TestExceptionsResource2 extends RestLiIntegrationTest
 
       if (explicit)
       {
-        future = REST_CLIENT.sendRequest(req, errorHandlingBehavior);
+        future = getClient().sendRequest(req, errorHandlingBehavior);
       }
       else
       {
-        future = REST_CLIENT.sendRequest(req);
+        future = getClient().sendRequest(req);
       }
 
       response = future.getResponse();
@@ -187,11 +178,11 @@ public class TestExceptionsResource2 extends RestLiIntegrationTest
 
       if (explicit)
       {
-        future = REST_CLIENT.sendRequest(req, errorHandlingBehavior);
+        future = getClient().sendRequest(req, errorHandlingBehavior);
       }
       else
       {
-        future = REST_CLIENT.sendRequest(req);
+        future = getClient().sendRequest(req);
       }
 
       response = future.getResponse();
@@ -231,7 +222,7 @@ public class TestExceptionsResource2 extends RestLiIntegrationTest
   public void testNonRestException(boolean explicit, ErrorHandlingBehavior errorHandlingBehavior, RootBuilderWrapper<Long, Greeting> builders)
   {
     Response<Greeting> response = null;
-    RestClient brokenClient = new RestClient(CLIENT, "http://localhost:8888/");
+    RestClient brokenClient = new RestClient(getDefaultTransportClient(), "http://localhost:8888/");
     try
     {
       final Request<Greeting> req = builders.get().id(1L).build();

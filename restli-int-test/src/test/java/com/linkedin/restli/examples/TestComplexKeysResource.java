@@ -22,9 +22,6 @@ import com.linkedin.data.DataMap;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestResponse;
-import com.linkedin.r2.transport.common.Client;
-import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
-import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.restli.client.BatchCreateIdRequest;
 import com.linkedin.restli.client.BatchCreateIdRequestBuilder;
 import com.linkedin.restli.client.BatchCreateRequestBuilder;
@@ -38,7 +35,6 @@ import com.linkedin.restli.client.GetRequestBuilder;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.ResponseFuture;
-import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.client.response.BatchKVResponse;
 import com.linkedin.restli.client.response.CreateResponse;
@@ -82,10 +78,6 @@ import org.testng.annotations.Test;
 
 public class TestComplexKeysResource extends RestLiIntegrationTest
 {
-  private static final Client CLIENT = new TransportClientAdapter(new HttpClientFactory().getClient(Collections.<String, String>emptyMap()));
-  private static final String URI_PREFIX = "http://localhost:1338/";
-  private static final RestClient REST_CLIENT = new RestClient(CLIENT, URI_PREFIX);
-
   @BeforeClass
   public void initClass() throws Exception
   {
@@ -115,7 +107,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
     param.setMinor("d");
     ComplexResourceKey<TwoPartKey, TwoPartKey> complexKey = new ComplexResourceKey<TwoPartKey, TwoPartKey>(key, param);
     Request<TwoPartKey> request = builders.get().setPathKey("keys", complexKey).id("stringKey").build();
-    TwoPartKey response = REST_CLIENT.sendRequest(request).get().getEntity();
+    TwoPartKey response = getClient().sendRequest(request).get().getEntity();
     Assert.assertEquals(response.getMajor(), "aANDc");
     Assert.assertEquals(response.getMinor(), "bANDd");
   }
@@ -131,7 +123,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
     param.setMinor("d&4");
     ComplexResourceKey<TwoPartKey, TwoPartKey> complexKey = new ComplexResourceKey<TwoPartKey, TwoPartKey>(key, param);
     Request<TwoPartKey> request = builders.get().setPathKey("keys", complexKey).id("stringKey").build();
-    TwoPartKey response = REST_CLIENT.sendRequest(request).get().getEntity();
+    TwoPartKey response = getClient().sendRequest(request).get().getEntity();
     Assert.assertEquals(response.getMajor(), "a&1ANDc&3");
     Assert.assertEquals(response.getMinor(), "b&2ANDd&4");
   }
@@ -282,7 +274,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
   {
     ComplexResourceKey<TwoPartKey, TwoPartKey> key = getComplexKey("major", "minor");
     Request<Object> actionRequest = builders.action("entityAction").id(key).build();
-    Integer entity = (Integer)REST_CLIENT.sendRequest(actionRequest).getResponse().getEntity();
+    Integer entity = (Integer)getClient().sendRequest(actionRequest).getResponse().getEntity();
     Assert.assertEquals(entity.longValue(), 1L);
   }
 
@@ -290,7 +282,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
   {
     Request<Message> request = requestBuilder.id(getComplexKey(
         StringTestKeys.SIMPLEKEY, StringTestKeys.SIMPLEKEY2)).build();
-    ResponseFuture<Message> future = REST_CLIENT.sendRequest(request);
+    ResponseFuture<Message> future = getClient().sendRequest(request);
     Response<Message> response = future.getResponse();
 
     Assert.assertEquals(response.getEntity().getMessage(), StringTestKeys.SIMPLEKEY + " " + StringTestKeys.SIMPLEKEY2);
@@ -304,7 +296,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
     message.setMessage(messageText);
 
     Request<EmptyRecord> request = createRequestBuilder.input(message).build();
-    ResponseFuture<EmptyRecord> future = REST_CLIENT.sendRequest(request);
+    ResponseFuture<EmptyRecord> future = getClient().sendRequest(request);
     Response<EmptyRecord> response = future.getResponse();
     Assert.assertEquals(response.getStatus(), 201);
     ComplexResourceKey<TwoPartKey, TwoPartKey> expectedComplexKey = getComplexKey(messageText, messageText);
@@ -325,7 +317,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
     // attempt to get the record you just created
     @SuppressWarnings("unchecked")
     Request<Message> getRequest = getRequestBuilder.id(expectedComplexKey).build();
-    ResponseFuture<Message> getFuture = REST_CLIENT.sendRequest(getRequest);
+    ResponseFuture<Message> getFuture = getClient().sendRequest(getRequest);
     Response<Message> getResponse = getFuture.getResponse();
 
     Assert.assertEquals(getResponse.getEntity().getMessage(), messageText);
@@ -340,7 +332,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
     message.setMessage(messageText);
 
     Request<IdResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>>> request = createRequestBuilder.input(message).build();
-    ResponseFuture<IdResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>>> future = REST_CLIENT.sendRequest(request);
+    ResponseFuture<IdResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>>> future = getClient().sendRequest(request);
     Response<IdResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>>> response = future.getResponse();
     try
     {
@@ -360,7 +352,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
     // attempt to get the record you just created
     @SuppressWarnings("unchecked")
     Request<Message> getRequest = getRequestBuilder.id(id).build();
-    ResponseFuture<Message> getFuture = REST_CLIENT.sendRequest(getRequest);
+    ResponseFuture<Message> getFuture = getClient().sendRequest(getRequest);
     Response<Message> getResponse = getFuture.getResponse();
 
     Assert.assertEquals(getResponse.getEntity().getMessage(), messageText);
@@ -385,7 +377,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
 
     // test build
     Request<CollectionResponse<CreateStatus>> request = batchCreateRequestBuilder.inputs(messages).build();
-    ResponseFuture<CollectionResponse<CreateStatus>> future = REST_CLIENT.sendRequest(request);
+    ResponseFuture<CollectionResponse<CreateStatus>> future = getClient().sendRequest(request);
     Response<CollectionResponse<CreateStatus>> response = future.getResponse();
     Assert.assertEquals(response.getStatus(), 200);
     Set<ComplexResourceKey<TwoPartKey, TwoPartKey>> expectedComplexKeys = new HashSet<ComplexResourceKey<TwoPartKey, TwoPartKey>>(2);
@@ -418,7 +410,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
     createdKeys.add(expectedComplexKey1);
     createdKeys.add(expectedComplexKey2);
     BatchGetKVRequest<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> getRequest = batchGetRequestBuilder.ids(createdKeys).buildKV();
-    ResponseFuture<BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>> getFuture = REST_CLIENT.sendRequest(getRequest);
+    ResponseFuture<BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>> getFuture = getClient().sendRequest(getRequest);
     Response<BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>> getResponse = getFuture.getResponse();
     Map<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> getResults = getResponse.getEntity().getResults();
     Assert.assertEquals(getResults.get(expectedComplexKey1), message1);
@@ -445,7 +437,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
 
     // test build
     BatchCreateIdRequest<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> request = batchCreateRequestBuilder.inputs(messages).build();
-    Response<BatchCreateIdResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>>> response = REST_CLIENT.sendRequest(request).getResponse();
+    Response<BatchCreateIdResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>>> response = getClient().sendRequest(request).getResponse();
     Assert.assertEquals(response.getStatus(), 200);
     Set<ComplexResourceKey<TwoPartKey, TwoPartKey>> expectedComplexKeys = new HashSet<ComplexResourceKey<TwoPartKey, TwoPartKey>>(2);
     expectedComplexKeys.add(expectedComplexKey1);
@@ -475,7 +467,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
     createdKeys.add(expectedComplexKey1);
     createdKeys.add(expectedComplexKey2);
     Request<BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, EntityResponse<Message>>> getRequest = batchGetRequestBuilder.ids(createdKeys).build();
-    ResponseFuture<BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, EntityResponse<Message>>> getFuture = REST_CLIENT.sendRequest(getRequest);
+    ResponseFuture<BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, EntityResponse<Message>>> getFuture = getClient().sendRequest(getRequest);
     Response<BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, EntityResponse<Message>>> getResponse = getFuture.getResponse();
     Map<ComplexResourceKey<TwoPartKey, TwoPartKey>, EntityResponse<Message>> getResults = getResponse.getEntity().getResults();
     Assert.assertEquals(getResults.get(expectedComplexKey1).getEntity(), message1);
@@ -493,7 +485,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
 
     @SuppressWarnings("unchecked")
     Request<Message> getRequest = getRequestBuilder.id(key).build();
-    ResponseFuture<Message> getFuture = REST_CLIENT.sendRequest(getRequest);
+    ResponseFuture<Message> getFuture = getClient().sendRequest(getRequest);
     Response<Message> getResponse = getFuture.getResponse();
 
     Assert.assertEquals(getResponse.getEntity().getMessage(), newMessage);
@@ -511,7 +503,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
 
     PatchRequest<Message> patch = PatchGenerator.diffEmpty(message);
     Request<EmptyRecord> request = updateRequestBuilder.id(key).input(patch).build();
-    ResponseFuture<EmptyRecord> future = REST_CLIENT.sendRequest(request);
+    ResponseFuture<EmptyRecord> future = getClient().sendRequest(request);
     Response<EmptyRecord> response = future.getResponse();
     Assert.assertEquals(response.getStatus(), 204);
     return key;
@@ -521,7 +513,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
       RootBuilderWrapper.MethodBuilderWrapper<ComplexResourceKey<TwoPartKey, TwoPartKey> , Message, CollectionResponse<Message>> requestBuilder)  throws RemoteInvocationException
   {
     Request<CollectionResponse<Message>> request = requestBuilder.build();
-    ResponseFuture<CollectionResponse<Message>> future = REST_CLIENT.sendRequest(request);
+    ResponseFuture<CollectionResponse<Message>> future = getClient().sendRequest(request);
     CollectionResponse<Message> response = future.getResponse().getEntity();
 
     List<Message> results = response.getElements();
@@ -534,7 +526,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
     List<ComplexResourceKey<TwoPartKey, TwoPartKey>> ids = getBatchComplexKeys();
     Request<BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>> request = builder.ids(ids).buildKV();
     ResponseFuture<BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>> future =
-      REST_CLIENT.sendRequest(request);
+      getClient().sendRequest(request);
     BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> response =
       future.getResponse().getEntity();
 
@@ -549,7 +541,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
     List<ComplexResourceKey<TwoPartKey, TwoPartKey>> ids = getBatchComplexKeys();
     Request<BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, EntityResponse<Message>>> request = builder.ids(ids).build();
     ResponseFuture<BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, EntityResponse<Message>>> future =
-      REST_CLIENT.sendRequest(request);
+      getClient().sendRequest(request);
     BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, EntityResponse<Message>> response =
       future.getResponse().getEntity();
 
@@ -564,7 +556,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
   {
     final Request<BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, EntityResponse<Message>>> request = builder.build();
     final FutureCallback<RestResponse> callback = new FutureCallback<RestResponse>();
-    REST_CLIENT.sendRestRequest(request, new RequestContext(), callback);
+    getClient().sendRestRequest(request, new RequestContext(), callback);
     final RestResponse result = callback.get();
 
     final DataMap responseMap = DataMapUtils.readMap(result);
@@ -599,7 +591,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
     final Request<BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, UpdateStatus>> request =
         requestBuilder.inputs(inputs).build();
     final ResponseFuture<BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, UpdateStatus>> future =
-        REST_CLIENT.sendRequest(request);
+        getClient().sendRequest(request);
     final BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, UpdateStatus> response =
         future.getResponse().getEntity();
 
@@ -629,7 +621,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
     BatchGetEntityRequest<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> batchGetRequest =
         batchGetRequestBuilder.ids(ids).build();
     ResponseFuture<BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, EntityResponse<Message>>> batchGetFuture =
-        REST_CLIENT.sendRequest(batchGetRequest);
+        getClient().sendRequest(batchGetRequest);
     BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, EntityResponse<Message>> batchGetResponse =
         batchGetFuture.getResponse().getEntity();
 
@@ -657,7 +649,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
         requestBuilder.patchInputs(inputs).build();
 
     final ResponseFuture<BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, UpdateStatus>> future =
-        REST_CLIENT.sendRequest(request);
+        getClient().sendRequest(request);
     final BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, UpdateStatus> response =
         future.getResponse().getEntity();
 
@@ -678,7 +670,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
     Request<BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, EntityResponse<Message>>> batchGetRequest =
         batchGetRequestBuilder.ids(ids).build();
     ResponseFuture<BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, EntityResponse<Message>>> batchGetFuture =
-        REST_CLIENT.sendRequest(batchGetRequest);
+        getClient().sendRequest(batchGetRequest);
     BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, EntityResponse<Message>> batchGetResponse =
         batchGetFuture.getResponse().getEntity();
 
@@ -697,7 +689,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
     message.setMessage(messageText);
 
     Request<EmptyRecord> createRequest = createRequestBuilder.input(message).build();
-    ResponseFuture<EmptyRecord> createFuture = REST_CLIENT.sendRequest(createRequest);
+    ResponseFuture<EmptyRecord> createFuture = getClient().sendRequest(createRequest);
     Response<EmptyRecord> createResponse = createFuture.getResponse();
     Assert.assertEquals(createResponse.getStatus(), 201);
 
@@ -705,7 +697,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
     message.setMessage(messageText2);
 
     createRequest = createRequestBuilder.input(message).build();
-    createFuture = REST_CLIENT.sendRequest(createRequest);
+    createFuture = getClient().sendRequest(createRequest);
     createResponse = createFuture.getResponse();
     Assert.assertEquals(createResponse.getStatus(), 201);
 
@@ -719,7 +711,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
         requestBuilder.ids(ids).build();
 
     final ResponseFuture<BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, UpdateStatus>> future =
-        REST_CLIENT.sendRequest(request);
+        getClient().sendRequest(request);
     final BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, UpdateStatus> response =
         future.getResponse().getEntity();
 
@@ -734,7 +726,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
     Request<BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, EntityResponse<Message>>> batchGetRequest =
         batchGetRequestBuilder.ids(ids).build();
     ResponseFuture<BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, EntityResponse<Message>>> batchGetFuture =
-        REST_CLIENT.sendRequest(batchGetRequest);
+        getClient().sendRequest(batchGetRequest);
     BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, EntityResponse<Message>> batchGetResponse =
         batchGetFuture.getResponse().getEntity();
 

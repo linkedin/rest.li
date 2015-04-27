@@ -109,10 +109,6 @@ import org.testng.annotations.Test;
  */
 public class TestGreetingsClient extends RestLiIntegrationTest
 {
-  private static final Client CLIENT = new TransportClientAdapter(new HttpClientFactory().getClient(Collections.<String, String>emptyMap()));
-  private static final String URI_PREFIX = "http://localhost:1338/";
-  private static final RestClient REST_CLIENT = new RestClient(CLIENT, URI_PREFIX);
-
   @BeforeClass
   public void initClass() throws Exception
   {
@@ -151,7 +147,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
   public void testIntAction(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     Request<Integer> request = builders.<Integer>action("Purge").build();
-    ResponseFuture<Integer> responseFuture = REST_CLIENT.sendRequest(request);
+    ResponseFuture<Integer> responseFuture = getClient().sendRequest(request);
     Assert.assertEquals(responseFuture.getResponse().getStatus(), 200);
     Assert.assertEquals(responseFuture.getResponse().getEntity().intValue(), 100);
   }
@@ -167,7 +163,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
             .setActionParam("D", new TransferOwnershipRequest())
             .setActionParam("E", 3)
             .build();
-    ResponseFuture<Greeting> responseFuture = REST_CLIENT.sendRequest(request);
+    ResponseFuture<Greeting> responseFuture = getClient().sendRequest(request);
     Assert.assertEquals(responseFuture.getResponse().getStatus(), 200);
     Assert.assertNotNull(responseFuture.getResponse().getEntity());
   }
@@ -180,7 +176,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
             .setActionParam("NewTone", Tone.SINCERE)
             .setActionParam("DelOld", false)
             .build();
-    ResponseFuture<Greeting> responseFuture = REST_CLIENT.sendRequest(request);
+    ResponseFuture<Greeting> responseFuture = getClient().sendRequest(request);
     Assert.assertEquals(responseFuture.getResponse().getStatus(), 200);
     final Greeting newGreeting = responseFuture.getResponse().getEntity();
     Assert.assertNotNull(newGreeting);
@@ -195,7 +191,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
   {
     // GET
     Request<Greeting> request = builders.get().id(1L).build();
-    ResponseFuture<Greeting> future = REST_CLIENT.sendRequest(request);
+    ResponseFuture<Greeting> future = getClient().sendRequest(request);
     Response<Greeting> greetingResponse = future.getResponse();
 
     String response1 = greetingResponse.getEntity().getMessage();
@@ -206,11 +202,11 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     greeting.setMessage(response1 + "Again");
 
     Request<EmptyRecord> writeRequest = builders.update().id(1L).input(greeting).build();
-    REST_CLIENT.sendRequest(writeRequest).getResponse();
+    getClient().sendRequest(writeRequest).getResponse();
 
     // GET again, to verify that our POST worked.
     Request<Greeting> request2 = builders.get().id(1L).build();
-    ResponseFuture<Greeting> future2 = REST_CLIENT.sendRequest(request2);
+    ResponseFuture<Greeting> future2 = getClient().sendRequest(request2);
     String response2 = future2.getResponse().getEntity().getMessage();
 
     Assert.assertEquals(response2, response1 + "Again");
@@ -221,7 +217,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
   {
     // GET
     Request<Greeting> request = builders.get().id(1L).build();
-    ResponseFuture<Greeting> future = REST_CLIENT.sendRequest(request);
+    ResponseFuture<Greeting> future = getClient().sendRequest(request);
     Response<Greeting> greetingResponse = future.getResponse();
 
     Greeting original = greetingResponse.getEntity();
@@ -233,12 +229,12 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     PatchRequest<Greeting> patch = PatchGenerator.diff(original, greeting);
 
     Request<EmptyRecord> writeRequest = builders.partialUpdate().id(1L).input(patch).build();
-    int status = REST_CLIENT.sendRequest(writeRequest).getResponse().getStatus();
+    int status = getClient().sendRequest(writeRequest).getResponse().getStatus();
     Assert.assertEquals(status, HttpStatus.S_204_NO_CONTENT.getCode());
 
     // GET again, to verify that our POST worked.
     Request<Greeting> request2 = builders.get().id(1L).build();
-    ResponseFuture<Greeting> future2 = REST_CLIENT.sendRequest(request2);
+    ResponseFuture<Greeting> future2 = getClient().sendRequest(request2);
     String response2 = future2.getResponse().getEntity().getMessage();
 
     Assert.assertEquals(response2, greeting.getMessage());
@@ -287,7 +283,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     // GET
     final BatchGetRequestBuilder<Long, Greeting> batchGetBuilder = builders.batchGet();
     Request<BatchResponse<Greeting>> request = batchGetBuilder.ids(1L).build();
-    ResponseFuture<BatchResponse<Greeting>> future = REST_CLIENT.sendRequest(request);
+    ResponseFuture<BatchResponse<Greeting>> future = getClient().sendRequest(request);
     Response<BatchResponse<Greeting>> greetingResponse = future.getResponse();
 
     // PUT
@@ -295,18 +291,18 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     greeting.setMessage("This is a new message!");
 
     Request<BatchKVResponse<Long, UpdateStatus>> writeRequest = builders.batchUpdate().input(1L, greeting).build();
-    REST_CLIENT.sendRequest(writeRequest).getResponse();
+    getClient().sendRequest(writeRequest).getResponse();
 
     // GET again, to verify that our POST worked.
     Request<BatchResponse<Greeting>> request2 = builders.batchGet().ids(1L).build();
-    ResponseFuture<BatchResponse<Greeting>> future2 = REST_CLIENT.sendRequest(request2);
+    ResponseFuture<BatchResponse<Greeting>> future2 = getClient().sendRequest(request2);
     greetingResponse = future2.get();
 
     Greeting repeatedGreeting = new Greeting();
     repeatedGreeting.setMessage("Hello Hello");
     repeatedGreeting.setTone(Tone.SINCERE);
     Request<CollectionResponse<CreateStatus>> request3 = builders.batchCreate().inputs(Arrays.asList(repeatedGreeting, repeatedGreeting)).build();
-    CollectionResponse<CreateStatus> statuses = REST_CLIENT.sendRequest(request3).getResponse().getEntity();
+    CollectionResponse<CreateStatus> statuses = getClient().sendRequest(request3).getResponse().getEntity();
     for (CreateStatus status : statuses.getElements())
     {
       Assert.assertEquals(status.getStatus().intValue(), HttpStatus.S_201_CREATED.getCode());
@@ -324,7 +320,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     // GET
     final BatchGetEntityRequestBuilder<Long, Greeting> batchGetBuilder = builders.batchGet();
     Request<BatchKVResponse<Long, EntityResponse<Greeting>>> request = batchGetBuilder.ids(1L).build();
-    ResponseFuture<BatchKVResponse<Long, EntityResponse<Greeting>>> future = REST_CLIENT.sendRequest(request);
+    ResponseFuture<BatchKVResponse<Long, EntityResponse<Greeting>>> future = getClient().sendRequest(request);
     Response<BatchKVResponse<Long, EntityResponse<Greeting>>> greetingResponse = future.getResponse();
 
     // PUT
@@ -332,11 +328,11 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     greeting.setMessage("This is a new message!");
 
     Request<BatchKVResponse<Long, UpdateStatus>> writeRequest = builders.batchUpdate().input(1L, greeting).build();
-    REST_CLIENT.sendRequest(writeRequest).getResponse();
+    getClient().sendRequest(writeRequest).getResponse();
 
     // GET again, to verify that our POST worked.
     Request<BatchKVResponse<Long, EntityResponse<Greeting>>> request2 = builders.batchGet().ids(1L).build();
-    ResponseFuture<BatchKVResponse<Long, EntityResponse<Greeting>>> future2 = REST_CLIENT.sendRequest(request2);
+    ResponseFuture<BatchKVResponse<Long, EntityResponse<Greeting>>> future2 = getClient().sendRequest(request2);
     greetingResponse = future2.get();
 
     Greeting repeatedGreeting = new Greeting();
@@ -345,7 +341,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     List<Greeting> entities = Arrays.asList(repeatedGreeting, repeatedGreeting);
 
     Request<BatchCreateIdResponse<Long>> request3 = builders.batchCreate().inputs(entities).build();
-    BatchCreateIdResponse<Long> statuses = REST_CLIENT.sendRequest(request3).getResponse().getEntity();
+    BatchCreateIdResponse<Long> statuses = getClient().sendRequest(request3).getResponse().getEntity();
     for (CreateIdStatus<Long> status : statuses.getElements())
     {
       Assert.assertEquals(status.getStatus().intValue(), HttpStatus.S_201_CREATED.getCode());
@@ -360,7 +356,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
   public void testSearch(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     Request<CollectionResponse<Greeting>> findRequest = builders.findBy("Search").setQueryParam("tone", Tone.FRIENDLY).build();
-    List<Greeting> greetings = REST_CLIENT.sendRequest(findRequest).getResponse().getEntity().getElements();
+    List<Greeting> greetings = getClient().sendRequest(findRequest).getResponse().getEntity().getElements();
     for (Greeting g : greetings)
     {
       Assert.assertEquals(g.getTone(), Tone.FRIENDLY);
@@ -373,7 +369,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
       ProtocolVersion protocolVersion) throws RemoteInvocationException
   {
     Request<CollectionResponse<Greeting>> findRequest = builders.findBy("SearchWithPostFilter").paginate(0, 5).build();
-    CollectionResponse<Greeting> entity = REST_CLIENT.sendRequest(findRequest).getResponse().getEntity();
+    CollectionResponse<Greeting> entity = getClient().sendRequest(findRequest).getResponse().getEntity();
     CollectionMetadata paging = entity.getPaging();
     Assert.assertEquals(paging.getStart().intValue(), 0);
     Assert.assertEquals(paging.getCount().intValue(), 5);
@@ -398,14 +394,14 @@ public class TestGreetingsClient extends RestLiIntegrationTest
   public void TestPagination(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     Request<CollectionResponse<Greeting>> findRequest = builders.findBy("SearchWithPostFilter").paginateStart(1).build();
-    CollectionResponse<Greeting> entity = REST_CLIENT.sendRequest(findRequest).getResponse().getEntity();
+    CollectionResponse<Greeting> entity = getClient().sendRequest(findRequest).getResponse().getEntity();
     CollectionMetadata paging = entity.getPaging();
     Assert.assertEquals(paging.getStart().intValue(), 1);
     Assert.assertEquals(paging.getCount().intValue(), 10);
     Assert.assertEquals(entity.getElements().size(), 9); // expected to be 9 instead of 10 because of post filter
 
     findRequest = builders.findBy("SearchWithPostFilter").paginateCount(5).build();
-    entity = REST_CLIENT.sendRequest(findRequest).getResponse().getEntity();
+    entity = getClient().sendRequest(findRequest).getResponse().getEntity();
     paging = entity.getPaging();
     Assert.assertEquals(paging.getStart().intValue(), 0);
     Assert.assertEquals(paging.getCount().intValue(), 5);
@@ -417,7 +413,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
   {
     Request<CollectionResponse<Greeting>> req =
         builders.findBy("SearchWithTones").setQueryParam("tones", Arrays.asList(Tone.SINCERE, Tone.INSULTING)).build();
-    ResponseFuture<CollectionResponse<Greeting>> future = REST_CLIENT.sendRequest(req);
+    ResponseFuture<CollectionResponse<Greeting>> future = getClient().sendRequest(req);
     Response<CollectionResponse<Greeting>> response = future.getResponse();
     List<Greeting> greetings = response.getEntity().getElements();
     for (Greeting greeting : greetings)
@@ -432,7 +428,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
   public void testSearchFacets(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     Request<CollectionResponse<Greeting>> req = builders.findBy("SearchWithFacets").setQueryParam("tone", Tone.SINCERE).build();
-    ResponseFuture<CollectionResponse<Greeting>> future = REST_CLIENT.sendRequest(req);
+    ResponseFuture<CollectionResponse<Greeting>> future = getClient().sendRequest(req);
     Response<CollectionResponse<Greeting>> response = future.getResponse();
     SearchMetadata metadata = new SearchMetadata(response.getEntity().getMetadataRaw());
     Assert.assertTrue(metadata.getFacets().size() > 0);
@@ -445,7 +441,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
                            int expectedSuccessSize) throws RemoteInvocationException
   {
     Request<BatchResponse<Greeting>> request = builder.ids(ids).fields(Greeting.fields().id(), Greeting.fields().message()).build();
-    BatchResponse<Greeting> response = REST_CLIENT.sendRequest(request).getResponse().getEntity();
+    BatchResponse<Greeting> response = getClient().sendRequest(request).getResponse().getEntity();
     Assert.assertEquals(response.getResults().size(), expectedSuccessSize);
   }
 
@@ -455,7 +451,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
                              int expectedSuccessSize) throws RemoteInvocationException
   {
     Request<BatchKVResponse<Long, Greeting>> request = builder.ids(ids).fields(Greeting.fields().id(), Greeting.fields().message()).buildKV();
-    BatchKVResponse<Long, Greeting> response = REST_CLIENT.sendRequest(request).getResponse().getEntity();
+    BatchKVResponse<Long, Greeting> response = getClient().sendRequest(request).getResponse().getEntity();
     Assert.assertEquals(response.getResults().size(), expectedSuccessSize);
 
     for (Map.Entry<Long, Greeting> entry : response.getResults().entrySet())
@@ -470,7 +466,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
                                  int expectedSuccessSize) throws RemoteInvocationException
   {
     Request<BatchKVResponse<Long, EntityResponse<Greeting>>> request = builder.ids(ids).fields(Greeting.fields().id(), Greeting.fields().message()).build();
-    BatchKVResponse<Long, EntityResponse<Greeting>> response = REST_CLIENT.sendRequest(request).getResponse().getEntity();
+    BatchKVResponse<Long, EntityResponse<Greeting>> response = getClient().sendRequest(request).getResponse().getEntity();
     Assert.assertEquals(response.getResults().size() - response.getErrors().size(), expectedSuccessSize);
 
     for (Map.Entry<Long, EntityResponse<Greeting>> entry : response.getResults().entrySet())
@@ -515,7 +511,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     for (Long id: ids)
     {
       Request<EmptyRecord> request = builders.delete().id(id).build();
-      ResponseFuture<EmptyRecord> future = REST_CLIENT.sendRequest(request);
+      ResponseFuture<EmptyRecord> future = getClient().sendRequest(request);
       Response<EmptyRecord> response = future.getResponse();
 
       Assert.assertEquals(response.getStatus(), HttpStatus.S_204_NO_CONTENT.getCode());
@@ -540,7 +536,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
       {
         Long id = idsToGet.get(i);
         Request<Greeting> request = builders.get().id(id).build();
-        ResponseFuture<Greeting> future = REST_CLIENT.sendRequest(request);
+        ResponseFuture<Greeting> future = getClient().sendRequest(request);
         Response<Greeting> greetingResponse = future.getResponse();
 
         Greeting fetchedGreeting = greetingResponse.getEntity();
@@ -651,13 +647,13 @@ public class TestGreetingsClient extends RestLiIntegrationTest
         @SuppressWarnings("unchecked")
         CreateIdRequestBuilder<Long, Greeting> createIdRequestBuilder = (CreateIdRequestBuilder<Long, Greeting>) objBuilder;
         CreateIdRequest<Long, Greeting> request = createIdRequestBuilder.input(greeting).build();
-        Response<IdResponse<Long>> response = REST_CLIENT.sendRequest(request).getResponse();
+        Response<IdResponse<Long>> response = getClient().sendRequest(request).getResponse();
         createdId = response.getEntity().getId();
       }
       else
       {
         Request<EmptyRecord> request = createBuilder.input(greeting).build();
-        Response<EmptyRecord> response = REST_CLIENT.sendRequest(request).getResponse();
+        Response<EmptyRecord> response = getClient().sendRequest(request).getResponse();
         @SuppressWarnings("unchecked")
         CreateResponse<Long> createResponse = (CreateResponse<Long>)response.getEntity();
         createdId = createResponse.getId();
@@ -689,7 +685,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
   {
     List<Greeting> greetings = generateBatchTestData(3, "BatchCreate", Tone.FRIENDLY);
 
-    List<CreateIdStatus<Long>> statuses = BatchCreateHelper.batchCreate(REST_CLIENT, builders, greetings);
+    List<CreateIdStatus<Long>> statuses = BatchCreateHelper.batchCreate(getClient(), builders, greetings);
     List<Long> createdIds = new ArrayList<Long>(statuses.size());
 
     for (CreateIdStatus<Long> status: statuses)
@@ -716,7 +712,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     // Batch delete the created Greetings
     Request<BatchKVResponse<Long, UpdateStatus>> deleteRequest =
         builders.batchDelete().ids(createdIds).build();
-    BatchKVResponse<Long, UpdateStatus> responses = REST_CLIENT.sendRequest(deleteRequest).getResponse().getEntity();
+    BatchKVResponse<Long, UpdateStatus> responses = getClient().sendRequest(deleteRequest).getResponse().getEntity();
 
     Assert.assertEquals(responses.getResults().size(), createdIds.size()); // we deleted the Messages we created
     for (UpdateStatus status: responses.getResults().values())
@@ -758,7 +754,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     Request<BatchKVResponse<Long, UpdateStatus>> batchUpdateRequest =
         builders.batchUpdate().inputs(updateGreetingsRequestMap).build();
     Map<Long, UpdateStatus> results =
-        REST_CLIENT.sendRequest(batchUpdateRequest).getResponse().getEntity().getResults();
+        getClient().sendRequest(batchUpdateRequest).getResponse().getEntity().getResults();
 
     Assert.assertEquals(results.size(), updatedGreetings.size());
     for (UpdateStatus status: results.values())
@@ -796,7 +792,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     Request<BatchKVResponse<Long, UpdateStatus>> batchUpdateRequest =
         builders.batchPartialUpdate().patchInputs(patchedGreetingsDiffs).build();
     Map<Long, UpdateStatus> results =
-        REST_CLIENT.sendRequest(batchUpdateRequest).getResponse().getEntity().getResults();
+        getClient().sendRequest(batchUpdateRequest).getResponse().getEntity().getResults();
 
     Assert.assertEquals(results.size(), patchedGreetingsDiffs.size());
     for (UpdateStatus status: results.values())
@@ -818,7 +814,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     addIdsToGeneratedGreetings(createdIds, greetings);
 
     Request<CollectionResponse<Greeting>> getAllRequest = builders.getAll().build();
-    List<Greeting> getAllReturnedGreetings = REST_CLIENT.
+    List<Greeting> getAllReturnedGreetings = getClient().
         sendRequest(getAllRequest).getResponse().getEntity().getElements();
 
     // the current implementation of getAll should return all those Greetings with the String "GetAll"
@@ -852,7 +848,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     try
     {
       Request<CollectionResponse<Greeting>> request = builders.findBy("Search").name("search").setParam("count", count).build();
-      REST_CLIENT.sendRequest(request).getResponse();
+      getClient().sendRequest(request).getResponse();
       Assert.fail("expected exception");
     }
     catch (RestException e)
@@ -867,7 +863,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     try
     {
       Request<Void> request = builders.<Void>action("ExceptionTest").build();
-      REST_CLIENT.sendRequest(request).getResponse().getEntity();
+      getClient().sendRequest(request).getResponse().getEntity();
       Assert.fail("expected exception");
     }
     catch (RestLiResponseException e)
@@ -881,7 +877,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
   public void test404(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     Request<Greeting> request = builders.get().id(999L).build();
-    ResponseFuture<Greeting> future = REST_CLIENT.sendRequest(request);
+    ResponseFuture<Greeting> future = getClient().sendRequest(request);
     try
     {
       future.getResponse();
@@ -898,7 +894,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
   {
     final CountDownLatch countDownLatch = new CountDownLatch(1);
     final Request<Greeting> request = builders.get().id(999L).build();
-    REST_CLIENT.sendRequest(request, new Callback<Response<Greeting>>()
+    getClient().sendRequest(request, new Callback<Response<Greeting>>()
     {
       @Override
       public void onError(Throwable e)
@@ -922,7 +918,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
       throws RemoteInvocationException, URISyntaxException, IOException
   {
     Request<OptionsResponse> optionsRequest = builders.options().build();
-    OptionsResponse optionsResponse = REST_CLIENT.sendRequest(optionsRequest).getResponse().getEntity();
+    OptionsResponse optionsResponse = getClient().sendRequest(optionsRequest).getResponse().getEntity();
     Map<String, ResourceSchema> resources = optionsResponse.getResourceSchemas();
     Assert.assertEquals(resources.size(), 1);
     ResourceSchema resourceSchema = resources.get("com.linkedin.restli.examples.greetings.client." + resourceName);
@@ -936,7 +932,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
       throws RemoteInvocationException, URISyntaxException, IOException
   {
     Request<OptionsResponse> optionsRequest = request.build();
-    OptionsResponse optionsResponse = REST_CLIENT.sendRequest(optionsRequest).getResponse().getEntity();
+    OptionsResponse optionsResponse = getClient().sendRequest(optionsRequest).getResponse().getEntity();
     Map<String, DataSchema> rawDataSchemas = optionsResponse.getDataSchemas();
 
     for(NamedDataSchema dataSchema: schemas)
@@ -955,7 +951,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
                                            .input(new Greeting().setId(1L).setMessage("foo"))
                                            .setQueryParam("isNullId", true)
                                            .build();
-    Response<EmptyRecord> response = REST_CLIENT.sendRequest(request).getResponse();
+    Response<EmptyRecord> response = getClient().sendRequest(request).getResponse();
     Assert.assertNull(response.getId());
   }
 

@@ -18,12 +18,8 @@ package com.linkedin.restli.examples;
 
 
 import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.r2.transport.common.Client;
-import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
-import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
-import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.client.response.BatchKVResponse;
 import com.linkedin.restli.common.BatchResponse;
@@ -43,10 +39,8 @@ import com.linkedin.restli.examples.greetings.client.StringKeysBuilders;
 import com.linkedin.restli.examples.greetings.client.StringKeysRequestBuilders;
 import com.linkedin.restli.examples.greetings.client.StringKeysSubBuilders;
 import com.linkedin.restli.examples.greetings.client.StringKeysSubRequestBuilders;
-import com.linkedin.restli.internal.client.response.BatchEntityResponse;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -68,11 +62,6 @@ import org.testng.annotations.Test;
  */
 public class TestEscapeCharsInStringKeys extends RestLiIntegrationTest
 {
-  private static final Client            CLIENT      = new TransportClientAdapter(new HttpClientFactory().getClient(Collections.<String, String> emptyMap()));
-  private static final String            URI_PREFIX  = "http://localhost:1338/";
-  private static final RestClient        REST_CLIENT = new RestClient(CLIENT, URI_PREFIX);
-
-
   private final boolean useStringsRequiringEscaping = true;
 
   @BeforeClass
@@ -106,12 +95,12 @@ public class TestEscapeCharsInStringKeys extends RestLiIntegrationTest
   public void testGetWithSimpleKey(RootBuilderWrapper<String, Message> builders) throws Exception
   {
     Request<Message> req = builders.get().id(key1()).build();
-    Response<Message> response = REST_CLIENT.sendRequest(req).get();
+    Response<Message> response = getClient().sendRequest(req).get();
 
     Assert.assertEquals(response.getEntity().getMessage(), key1(), "Message should match key for key1");
 
     Request<Message> req2 = builders.get().id(StringTestKeys.COMPLICATED_KEY).build();
-    Response<Message> response2 = REST_CLIENT.sendRequest(req2).get();
+    Response<Message> response2 = getClient().sendRequest(req2).get();
 
     Assert.assertEquals(response2.getEntity().getMessage(), StringTestKeys.COMPLICATED_KEY, "Message should match key for COMPLICATED_KEY");
   }
@@ -123,7 +112,7 @@ public class TestEscapeCharsInStringKeys extends RestLiIntegrationTest
     keys.add(key1());
     keys.add(key2());
     Request<BatchResponse<Message>> req = new StringKeysBuilders(requestOptions).batchGet().ids(keys).build();
-    BatchResponse<Message> response = REST_CLIENT.sendRequest(req).get().getEntity();
+    BatchResponse<Message> response = getClient().sendRequest(req).get().getEntity();
     Map<String, Message> results = response.getResults();
     Assert.assertEquals(results.get(key1()).getMessage(), key1(), "Message should match key for key1");
     Assert.assertEquals(results.get(key2()).getMessage(), key2(), "Message should match key for key2");
@@ -136,7 +125,7 @@ public class TestEscapeCharsInStringKeys extends RestLiIntegrationTest
     keys.add(key1());
     keys.add(key2());
     Request<BatchKVResponse<String, Message>> req = new StringKeysBuilders(requestOptions).batchGet().ids(keys).buildKV();
-    BatchKVResponse<String,Message> response = REST_CLIENT.sendRequest(req).get().getEntity();
+    BatchKVResponse<String,Message> response = getClient().sendRequest(req).get().getEntity();
     Map<String, Message> results = response.getResults();
     Assert.assertEquals(results.get(key1()).getMessage(), key1(), "Message should match key for key1");
     Assert.assertEquals(results.get(key2()).getMessage(), key2(), "Message should match key for key2");
@@ -149,7 +138,7 @@ public class TestEscapeCharsInStringKeys extends RestLiIntegrationTest
     keys.add(key1());
     keys.add(key2());
     Request<BatchKVResponse<String, EntityResponse<Message>>> req = new StringKeysRequestBuilders(requestOptions).batchGet().ids(keys).build();
-    BatchKVResponse<String, EntityResponse<Message>> response = REST_CLIENT.sendRequest(req).get().getEntity();
+    BatchKVResponse<String, EntityResponse<Message>> response = getClient().sendRequest(req).get().getEntity();
     Map<String, EntityResponse<Message>> results = response.getResults();
     Assert.assertEquals(results.get(key1()).getEntity().getMessage(), key1(), "Message should match key for key1");
     Assert.assertEquals(results.get(key2()).getEntity().getMessage(), key2(), "Message should match key for key2");
@@ -163,7 +152,7 @@ public class TestEscapeCharsInStringKeys extends RestLiIntegrationTest
     key.append("dest", key2());
 
     Request<Message> request = builders.get().id(key).build();
-    Message response = REST_CLIENT.sendRequest(request).get().getEntity();
+    Message response = getClient().sendRequest(request).get().getEntity();
     Assert.assertNotNull(response);
     Assert.assertEquals(response.getId(), key.getPart("src") + " " + key.getPart("dest"), "Message should be key1 + ' ' + key2 for associationKey(key1,key2)");
   }
@@ -181,7 +170,7 @@ public class TestEscapeCharsInStringKeys extends RestLiIntegrationTest
 
     ComplexResourceKey<TwoPartKey, TwoPartKey> complexKey = new ComplexResourceKey<TwoPartKey, TwoPartKey>(key, params);
     Request<Message> request = builders.get().id(complexKey).build();
-    Message response = REST_CLIENT.sendRequest(request).get().getEntity();
+    Message response = getClient().sendRequest(request).get().getEntity();
     Assert.assertNotNull(response);
     Assert.assertEquals(response.getId(), key.getMajor() + " " + key.getMinor(), "Message should be key1 + ' ' + key2 for complexKey(key1,key2)");
   }
@@ -193,7 +182,7 @@ public class TestEscapeCharsInStringKeys extends RestLiIntegrationTest
     String subKey = key2();
 
     Request<Message> request = builders.get().setPathKey("parentKey", parentKey).id(subKey).build();
-    Message response = REST_CLIENT.sendRequest(request).get().getEntity();
+    Message response = getClient().sendRequest(request).get().getEntity();
     Assert.assertNotNull(response);
     Assert.assertEquals(response.getId(), parentKey + " " + subKey, "Message should be key1 + ' ' + key2 for subResourceKey(key1,key2)");
   }
@@ -202,7 +191,7 @@ public class TestEscapeCharsInStringKeys extends RestLiIntegrationTest
   public void testActionWithStringParam(RootBuilderWrapper<?, ?> builders) throws Exception
   {
     Request<String> request = builders.<String>action("Echo").setActionParam("Input", key1()).build();
-    String echo = REST_CLIENT.sendRequest(request).get().getEntity();
+    String echo = getClient().sendRequest(request).get().getEntity();
     Assert.assertEquals(echo, key1(), "Echo response should be key1");
   }
 
@@ -210,7 +199,7 @@ public class TestEscapeCharsInStringKeys extends RestLiIntegrationTest
   public void testFinderWithStringParam(RootBuilderWrapper<String, Message> builders) throws Exception
   {
     Request<CollectionResponse<Message>> request = builders.findBy("Search").setQueryParam("keyword", key1()).build();
-    CollectionResponse<Message> response = REST_CLIENT.sendRequest(request).get().getEntity();
+    CollectionResponse<Message> response = getClient().sendRequest(request).get().getEntity();
     List<Message> hits = response.getElements();
     Assert.assertEquals(hits.size(), 1);
     Message hit = hits.get(0);

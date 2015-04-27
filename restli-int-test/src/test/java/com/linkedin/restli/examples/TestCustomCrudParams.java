@@ -17,21 +17,15 @@
 package com.linkedin.restli.examples;
 
 
-import com.linkedin.r2.transport.common.Client;
-import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
-import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.ResponseFuture;
-import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.client.GreetingsAuthBuilders;
 import com.linkedin.restli.examples.greetings.client.GreetingsAuthRequestBuilders;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
-
-import java.util.Collections;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -42,10 +36,6 @@ import org.testng.annotations.Test;
 
 public class TestCustomCrudParams extends RestLiIntegrationTest
 {
-  private static final Client CLIENT = new TransportClientAdapter(new HttpClientFactory().getClient(Collections.<String, String>emptyMap()));
-  private static final String URI_PREFIX = "http://localhost:1338/";
-  private static final RestClient REST_CLIENT = new RestClient(CLIENT, URI_PREFIX);
-
   @BeforeClass
   public void initClass() throws Exception
   {
@@ -59,12 +49,12 @@ public class TestCustomCrudParams extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public static void testCookbookCrudParams(RootBuilderWrapper<Long, Greeting> builders) throws Exception
+  public void testCookbookCrudParams(RootBuilderWrapper<Long, Greeting> builders) throws Exception
   {
     try
     {
       Request<Greeting> request = builders.get().id(1L).build();
-      ResponseFuture<Greeting> future = REST_CLIENT.sendRequest(request);
+      ResponseFuture<Greeting> future = getClient().sendRequest(request);
       @SuppressWarnings("unused")
       Response<Greeting> greetingResponse = future.getResponse();
       Assert.fail("expected response exception");
@@ -76,7 +66,7 @@ public class TestCustomCrudParams extends RestLiIntegrationTest
 
     // GET
     Request<Greeting> request = builders.get().id(1L).setQueryParam("auth", "PLEASE").build();
-    ResponseFuture<Greeting> future = REST_CLIENT.sendRequest(request);
+    ResponseFuture<Greeting> future = getClient().sendRequest(request);
     Response<Greeting> greetingResponse = future.getResponse();
 
     // POST
@@ -85,11 +75,11 @@ public class TestCustomCrudParams extends RestLiIntegrationTest
 
     Request<EmptyRecord>  writeRequest = builders.update().id(1L).input(greeting)
       .setQueryParam("auth", "PLEASE").build();
-    REST_CLIENT.sendRequest(writeRequest).getResponse();
+    getClient().sendRequest(writeRequest).getResponse();
 
     // GET again, to verify that our POST worked.
     Request<Greeting> request2 = builders.get().id(1L).setQueryParam("auth", "PLEASE").build();
-    ResponseFuture<Greeting> future2 = REST_CLIENT.sendRequest(request2);
+    ResponseFuture<Greeting> future2 = getClient().sendRequest(request2);
     greetingResponse = future2.get();
     Assert.assertEquals(greetingResponse.getEntity().getMessage(), "This is a new message!");
   }

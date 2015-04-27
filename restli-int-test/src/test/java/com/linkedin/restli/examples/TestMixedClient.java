@@ -18,12 +18,8 @@ package com.linkedin.restli.examples;
 
 
 import com.linkedin.r2.RemoteInvocationException;
-import com.linkedin.r2.transport.common.Client;
-import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
-import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.ResponseFuture;
-import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.examples.greetings.api.Greeting;
@@ -31,7 +27,6 @@ import com.linkedin.restli.examples.greetings.client.MixedBuilders;
 import com.linkedin.restli.examples.greetings.client.MixedRequestBuilders;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -49,10 +44,6 @@ import org.testng.annotations.Test;
  */
 public class TestMixedClient extends RestLiIntegrationTest
 {
-  private static final Client        CLIENT      = new TransportClientAdapter(new HttpClientFactory().getClient(Collections.<String, String> emptyMap()));
-  private static final String        URI_PREFIX  = "http://localhost:1338/";
-  private static final RestClient    REST_CLIENT = new RestClient(CLIENT, URI_PREFIX);
-
   @BeforeClass
   public void initClass() throws Exception
   {
@@ -70,7 +61,7 @@ public class TestMixedClient extends RestLiIntegrationTest
       ExecutionException
   {
     Request<Greeting> req = builders.get().id(42L).build();
-    ResponseFuture<Greeting> response = REST_CLIENT.sendRequest(req);
+    ResponseFuture<Greeting> response = getClient().sendRequest(req);
     String g = response.get().getEntity().getMessage();
     Assert.assertEquals(g, "42");
   }
@@ -81,7 +72,7 @@ public class TestMixedClient extends RestLiIntegrationTest
       ExecutionException
   {
     Request<EmptyRecord> req = builders.create().input(new Greeting()).build();
-    ResponseFuture<EmptyRecord> response = REST_CLIENT.sendRequest(req);
+    ResponseFuture<EmptyRecord> response = getClient().sendRequest(req);
     response.getResponse().getHeaders();
     response.get().getEntity();
   }
@@ -92,7 +83,7 @@ public class TestMixedClient extends RestLiIntegrationTest
       ExecutionException
   {
     Request<EmptyRecord> req = builders.update().id(1L).input(new Greeting()).build();
-    ResponseFuture<EmptyRecord> response = REST_CLIENT.sendRequest(req);
+    ResponseFuture<EmptyRecord> response = getClient().sendRequest(req);
     response.getResponse().getHeaders();
     response.get().getEntity();
   }
@@ -103,7 +94,7 @@ public class TestMixedClient extends RestLiIntegrationTest
       RemoteInvocationException
   {
     Request<EmptyRecord> req = builders.delete().id(1L).build();
-    ResponseFuture<EmptyRecord> response = REST_CLIENT.sendRequest(req);
+    ResponseFuture<EmptyRecord> response = getClient().sendRequest(req);
     response.getResponse().getHeaders();
     response.get().getEntity();
   }
@@ -113,7 +104,7 @@ public class TestMixedClient extends RestLiIntegrationTest
       ExecutionException
   {
     Request<CollectionResponse<Greeting>> req = builders.findBy("Search").setQueryParam("what", "yay").build();
-    ResponseFuture<CollectionResponse<Greeting>> response = REST_CLIENT.sendRequest(req);
+    ResponseFuture<CollectionResponse<Greeting>> response = getClient().sendRequest(req);
     List<Greeting> elems = response.get().getEntity().getElements();
     Assert.assertEquals(elems.size(), 1);
     String g = elems.get(0).getMessage();

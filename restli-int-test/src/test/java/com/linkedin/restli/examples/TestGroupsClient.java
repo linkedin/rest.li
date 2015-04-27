@@ -19,17 +19,12 @@ package com.linkedin.restli.examples;
 
 import com.linkedin.data.template.IntegerArray;
 import com.linkedin.r2.RemoteInvocationException;
-import com.linkedin.r2.transport.common.Client;
-import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
-import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.ResponseFuture;
-import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.client.response.BatchKVResponse;
-import com.linkedin.restli.client.response.CreateResponse;
 import com.linkedin.restli.client.util.PatchGenerator;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.ComplexResourceKey;
@@ -102,10 +97,6 @@ import org.testng.annotations.Test;
  */
 public class TestGroupsClient extends RestLiIntegrationTest
 {
-  private static final Client CLIENT = new TransportClientAdapter(new HttpClientFactory().getClient(Collections.<String, String>emptyMap()));
-  private static final String URI_PREFIX = "http://localhost:1338/";
-  private static final RestClient REST_CLIENT = new RestClient(CLIENT, URI_PREFIX);
-
   @BeforeClass
   public void initClass() throws Exception
   {
@@ -136,7 +127,7 @@ public class TestGroupsClient extends RestLiIntegrationTest
     final GroupMembershipsRequestBuilders membershipBuilders = new GroupMembershipsRequestBuilders(requestOptions);
 
     // Create
-    Response<IdResponse<Integer>> response = REST_CLIENT.sendRequest(groupBuilders.create()
+    Response<IdResponse<Integer>> response = getClient().sendRequest(groupBuilders.create()
                                                                .input(group)
                                                                .build()).getResponse();
     Assert.assertEquals(response.getStatus(), 201);
@@ -149,7 +140,7 @@ public class TestGroupsClient extends RestLiIntegrationTest
 
     // Get newly created group and verify name
     Integer createdId = createResponse.getId();
-    Assert.assertEquals(REST_CLIENT.sendRequest(groupBuilders.get()
+    Assert.assertEquals(getClient().sendRequest(groupBuilders.get()
                                                   .id(createResponse.getId())
                                                   .build())
                           .getResponse()
@@ -161,14 +152,14 @@ public class TestGroupsClient extends RestLiIntegrationTest
     String newName = "new name";
     group.setName(newName);
     PatchRequest<Group> patch = PatchGenerator.diffEmpty(group);
-    ResponseFuture<EmptyRecord> responseFuture = REST_CLIENT.sendRequest(groupBuilders.partialUpdate()
+    ResponseFuture<EmptyRecord> responseFuture = getClient().sendRequest(groupBuilders.partialUpdate()
                                                                            .id(createdId)
                                                                            .input(patch)
                                                                            .build());
     Assert.assertEquals(204, responseFuture.getResponse().getStatus());
 
     // Get updated group and verify name
-    Assert.assertEquals(REST_CLIENT.sendRequest(groupBuilders.get()
+    Assert.assertEquals(getClient().sendRequest(groupBuilders.get()
                                                                .id(createdId)
                                                                .build())
                                    .getResponse()
@@ -177,13 +168,13 @@ public class TestGroupsClient extends RestLiIntegrationTest
                         newName);
 
     // Delete
-    responseFuture = REST_CLIENT.sendRequest(groupBuilders.delete().id(createdId).build());
+    responseFuture = getClient().sendRequest(groupBuilders.delete().id(createdId).build());
     Assert.assertEquals(204, responseFuture.getResponse().getStatus());
 
     // Verify deleted
     try
     {
-      REST_CLIENT.sendRequest(groupBuilders.get().id(createdId).build()).getResponse();
+      getClient().sendRequest(groupBuilders.get().id(createdId).build()).getResponse();
       Assert.fail("Expected RestLiResponseException");
     }
     catch (RestLiResponseException e)
@@ -193,7 +184,7 @@ public class TestGroupsClient extends RestLiIntegrationTest
 
     // Cleanup - delete the owner's membership that was created along with the group
     responseFuture =
-        REST_CLIENT.sendRequest(membershipBuilders.delete()
+        getClient().sendRequest(membershipBuilders.delete()
                                   .id(buildCompoundKey(memberID, createdId))
                                   .build());
     Assert.assertEquals(204, responseFuture.getResponse().getStatus());
@@ -217,7 +208,7 @@ public class TestGroupsClient extends RestLiIntegrationTest
     final GroupMembershipsRequestBuilders membershipBuilders = new GroupMembershipsRequestBuilders(requestOptions);
 
     // Create
-    Response<IdResponse<Integer>> response = REST_CLIENT.sendRequest(groupBuilders.create()
+    Response<IdResponse<Integer>> response = getClient().sendRequest(groupBuilders.create()
                                                                  .input(group)
                                                                  .build()).getResponse();
     Assert.assertEquals(response.getStatus(), 201);
@@ -229,7 +220,7 @@ public class TestGroupsClient extends RestLiIntegrationTest
 
     // Get newly created group and verify name
 
-    Assert.assertEquals(REST_CLIENT.sendRequest(groupBuilders.get()
+    Assert.assertEquals(getClient().sendRequest(groupBuilders.get()
                                                   .id(createdId)
                                                   .build())
                           .getResponse()
@@ -241,14 +232,14 @@ public class TestGroupsClient extends RestLiIntegrationTest
     String newName = "new name";
     group.setName(newName);
     PatchRequest<Group> patch = PatchGenerator.diffEmpty(group);
-    ResponseFuture<EmptyRecord> responseFuture = REST_CLIENT.sendRequest(groupBuilders.partialUpdate()
+    ResponseFuture<EmptyRecord> responseFuture = getClient().sendRequest(groupBuilders.partialUpdate()
                                                                            .id(createdId)
                                                                            .input(patch)
                                                                            .build());
     Assert.assertEquals(204, responseFuture.getResponse().getStatus());
 
     // Get updated group and verify name
-    Assert.assertEquals(REST_CLIENT.sendRequest(groupBuilders.get()
+    Assert.assertEquals(getClient().sendRequest(groupBuilders.get()
                                                   .id(createdId)
                                                   .build())
                           .getResponse()
@@ -257,13 +248,13 @@ public class TestGroupsClient extends RestLiIntegrationTest
                         newName);
 
     // Delete
-    responseFuture = REST_CLIENT.sendRequest(groupBuilders.delete().id(createdId).build());
+    responseFuture = getClient().sendRequest(groupBuilders.delete().id(createdId).build());
     Assert.assertEquals(204, responseFuture.getResponse().getStatus());
 
     // Verify deleted
     try
     {
-      REST_CLIENT.sendRequest(groupBuilders.get().id(createdId).build()).getResponse();
+      getClient().sendRequest(groupBuilders.get().id(createdId).build()).getResponse();
       Assert.fail("Expected RestLiResponseException");
     }
     catch (RestLiResponseException e)
@@ -273,7 +264,7 @@ public class TestGroupsClient extends RestLiIntegrationTest
 
     // Cleanup - delete the owner's membership that was created along with the group
     responseFuture =
-      REST_CLIENT.sendRequest(membershipBuilders.delete()
+      getClient().sendRequest(membershipBuilders.delete()
                                 .id(buildCompoundKey(memberID, createdId))
                                 .build());
     Assert.assertEquals(204, responseFuture.getResponse().getStatus());
@@ -339,7 +330,7 @@ public class TestGroupsClient extends RestLiIntegrationTest
         buildGroupMembership(null, "alfred@test.linkedin.com", "Alfred", "Hitchcock");
     GroupMembership groupMembership2 =
         buildGroupMembership(null, "bruce@test.linkedin.com", "Bruce", "Willis");
-    Map<CompoundKey, UpdateStatus> results = REST_CLIENT.sendRequest(membershipBuilders.batchUpdate()
+    Map<CompoundKey, UpdateStatus> results = getClient().sendRequest(membershipBuilders.batchUpdate()
                                                       .input(key1, groupMembership1)
                                                       .input(key2, groupMembership2)
                                                       .build()).getResponse().getEntity().getResults();
@@ -353,7 +344,7 @@ public class TestGroupsClient extends RestLiIntegrationTest
                                   .fields(GroupMembership.fields().contactEmail())
                                   .build();
     Map<CompoundKey, EntityResponse<GroupMembership>> groupMemberships =
-        REST_CLIENT.sendRequest(request).getResponse().getEntity().getResults();
+        getClient().sendRequest(request).getResponse().getEntity().getResults();
     Assert.assertTrue(groupMemberships.containsKey(key1));
     Assert.assertEquals(groupMemberships.get(key1).getEntity().getContactEmail(), "alfred@test.linkedin.com");
     Assert.assertTrue(groupMemberships.containsKey(key2));
@@ -367,7 +358,7 @@ public class TestGroupsClient extends RestLiIntegrationTest
     patchInputs.put(key1, PatchGenerator.diff(groupMembership1, patchedGroupMembership1));
     patchInputs.put(key2, PatchGenerator.diff(groupMembership2, patchedGroupMembership2));
 
-    Map<CompoundKey, UpdateStatus> patchResults = REST_CLIENT.sendRequest(membershipBuilders
+    Map<CompoundKey, UpdateStatus> patchResults = getClient().sendRequest(membershipBuilders
                                                                             .batchPartialUpdate()
                                                                             .patchInputs(patchInputs)
                                                                             .build())
@@ -382,7 +373,7 @@ public class TestGroupsClient extends RestLiIntegrationTest
             .fields(GroupMembership.fields().contactEmail(), GroupMembership.fields().firstName())
             .build();
     BatchKVResponse<CompoundKey, EntityResponse<GroupMembership>> entity =
-        REST_CLIENT.sendRequest(batchGetRequest).getResponse().getEntity();
+        getClient().sendRequest(batchGetRequest).getResponse().getEntity();
     Assert.assertEquals(entity.getErrors().size(), 0);
     Assert.assertEquals(entity.getResults().size(), 2);
     Assert.assertEquals(entity.getResults().get(key1).getEntity().getContactEmail(), "ALFRED@test.linkedin.com");
@@ -395,12 +386,12 @@ public class TestGroupsClient extends RestLiIntegrationTest
                                   .fields(GroupMembership.fields().contactEmail())
                                   .build();
     List<GroupMembership> elements =
-        REST_CLIENT.sendRequest(getAllRequest).getResponse().getEntity().getElements();
+        getClient().sendRequest(getAllRequest).getResponse().getEntity().getElements();
     Assert.assertEquals(elements.size(), 1);
 
     // Delete the newly created group memberships
     Map<CompoundKey, UpdateStatus> deleteResult =
-        REST_CLIENT.sendRequest(membershipBuilders.batchDelete()
+        getClient().sendRequest(membershipBuilders.batchDelete()
                                                           .ids(key1, key2)
                                                           .build())
                    .getResponse()
@@ -410,7 +401,7 @@ public class TestGroupsClient extends RestLiIntegrationTest
     Assert.assertEquals(deleteResult.get(key2).getStatus().intValue(), 204);
 
     // Make sure they are gone
-    BatchKVResponse<CompoundKey, EntityResponse<GroupMembership>> getResponse = REST_CLIENT.sendRequest(request).getResponse().getEntity();
+    BatchKVResponse<CompoundKey, EntityResponse<GroupMembership>> getResponse = getClient().sendRequest(request).getResponse().getEntity();
     Assert.assertEquals(getResponse.getResults().size(), getResponse.getErrors().size());
     Assert.assertTrue(getResponse.getErrors().containsKey(key1));
     Assert.assertTrue(getResponse.getErrors().containsKey(key2));
@@ -427,7 +418,7 @@ public class TestGroupsClient extends RestLiIntegrationTest
     GroupMembership groupMembership1 =
         buildGroupMembership(null, "alfred@test.linkedin.com", "Alfred", "Hitchcock");
 
-    Response<EmptyRecord> response = REST_CLIENT.sendRequest(membershipBuilders.update().id(key1)
+    Response<EmptyRecord> response = getClient().sendRequest(membershipBuilders.update().id(key1)
                                                       .input(groupMembership1)
                                                       .build()).getResponse();
     Assert.assertEquals(response.getStatus(), 204);
@@ -437,17 +428,17 @@ public class TestGroupsClient extends RestLiIntegrationTest
                                   .id(key1)
                                   .fields(GroupMembership.fields().contactEmail())
                                   .build();
-    GroupMembership groupMembership = REST_CLIENT.sendRequest(getRequest).getResponse().getEntity();
+    GroupMembership groupMembership = getClient().sendRequest(getRequest).getResponse().getEntity();
     Assert.assertEquals(groupMembership.getContactEmail(), "alfred@test.linkedin.com");
 
     // Delete the newly created group membership
-    Response<EmptyRecord> deleteResponse = REST_CLIENT.sendRequest(membershipBuilders.delete().id(key1).build()).getResponse();
+    Response<EmptyRecord> deleteResponse = getClient().sendRequest(membershipBuilders.delete().id(key1).build()).getResponse();
     Assert.assertEquals(deleteResponse.getStatus(), 204);
 
     // Make sure it is gone
     try
     {
-      REST_CLIENT.sendRequest(getRequest).getResponse();
+      getClient().sendRequest(getRequest).getResponse();
     }
     catch (RestLiResponseException e)
     {
@@ -470,7 +461,7 @@ public class TestGroupsClient extends RestLiIntegrationTest
                                        "hitchcock");
 
     Request<EmptyRecord> createRequest = builders.create().input(groupMembership).build();
-    Response<EmptyRecord> createResponse = REST_CLIENT.sendRequest(createRequest).getResponse();
+    Response<EmptyRecord> createResponse = getClient().sendRequest(createRequest).getResponse();
     Assert.assertEquals(createResponse.getStatus(), 201);
 
     GroupMembershipParam param = new GroupMembershipParam();
@@ -491,32 +482,32 @@ public class TestGroupsClient extends RestLiIntegrationTest
                                           .setQueryParam("testParam", param)
                                           .setQueryParam("testParamArray", queryParamArray)
                                           .build();
-    ComplexKeyGroupMembership groupMembership1 = REST_CLIENT.sendRequest(request).getResponse().getEntity();
+    ComplexKeyGroupMembership groupMembership1 = getClient().sendRequest(request).getResponse().getEntity();
     Assert.assertNotNull(groupMembership1);
     Assert.assertEquals(groupMembership1.getContactEmail(), "alfred@test.linkedin.com");
 
     // Test the same with optional complex parameters
     request = builders.get().id(complexKey).fields(GroupMembership.fields().contactEmail()).build();
-    groupMembership1 = REST_CLIENT.sendRequest(request).getResponse().getEntity();
+    groupMembership1 = getClient().sendRequest(request).getResponse().getEntity();
     Assert.assertNotNull(groupMembership1);
     Assert.assertEquals(groupMembership1.getContactEmail(), "alfred@test.linkedin.com");
 
     // Update contact email and verify
     groupMembership.setContactEmail("alphred@test.linkedin.com");
     Request<EmptyRecord> updateRequest = builders.update().id(complexKey).input(groupMembership).build();
-    Response<EmptyRecord> updateResponse = REST_CLIENT.sendRequest(updateRequest).getResponse();
+    Response<EmptyRecord> updateResponse = getClient().sendRequest(updateRequest).getResponse();
     Assert.assertEquals(updateResponse.getStatus(), 204);
 
-    groupMembership1 = REST_CLIENT.sendRequest(request).getResponse().getEntity();
+    groupMembership1 = getClient().sendRequest(request).getResponse().getEntity();
     Assert.assertEquals(groupMembership1.getContactEmail(), "alphred@test.linkedin.com");
 
     // Delete and verify
     Request<EmptyRecord> deleteRequest = builders.delete().id(complexKey).build();
-    Response<EmptyRecord> deleteResponse = REST_CLIENT.sendRequest(deleteRequest).getResponse();
+    Response<EmptyRecord> deleteResponse = getClient().sendRequest(deleteRequest).getResponse();
     Assert.assertEquals(deleteResponse.getStatus(), 204);
     try
     {
-      REST_CLIENT.sendRequest(request).getResponse().getEntity();
+      getClient().sendRequest(request).getResponse().getEntity();
     }
     catch (RestLiResponseException e)
     {
@@ -551,7 +542,7 @@ public class TestGroupsClient extends RestLiIntegrationTest
                                           .input(groupMembership3)
                                           .build();
     Response<CollectionResponse<CreateStatus>> createResponse =
-        REST_CLIENT.sendRequest(createRequest).getResponse();
+        getClient().sendRequest(createRequest).getResponse();
     Assert.assertEquals(createResponse.getStatus(), 200);
 
     final RestliRequestOptions requestOptions = builders.getRequestOptions();
@@ -562,7 +553,7 @@ public class TestGroupsClient extends RestLiIntegrationTest
         .fields(GroupMembership.fields().contactEmail())
         .build();
     BatchKVResponse<ComplexResourceKey<GroupMembershipKey, GroupMembershipParam>, EntityResponse<ComplexKeyGroupMembership>> groupMemberships =
-        REST_CLIENT.sendRequest(request).getResponse().getEntity();
+        getClient().sendRequest(request).getResponse().getEntity();
     Map<ComplexResourceKey<GroupMembershipKey, GroupMembershipParam>, EntityResponse<ComplexKeyGroupMembership>> results = groupMemberships.getResults();
     ComplexKeyGroupMembership groupMembership1_ = results.get(complexKey1).getEntity();
     ComplexKeyGroupMembership groupMembership2_ = results.get(complexKey2).getEntity();
@@ -583,7 +574,7 @@ public class TestGroupsClient extends RestLiIntegrationTest
                                           .input(complexKey2, groupMembership2)
                                           .input(complexKey3, groupMembership3)
                                           .build();
-    int status = REST_CLIENT.sendRequest(updateRequest).getResponse().getStatus();
+    int status = getClient().sendRequest(updateRequest).getResponse().getStatus();
     Assert.assertEquals(status, 200);
   }
 
@@ -599,7 +590,7 @@ public class TestGroupsClient extends RestLiIntegrationTest
                     .ids(key1, key2)
                     .fields(GroupMembership.fields().contactEmail())
                     .buildKV();
-    BatchKVResponse<CompoundKey, GroupMembership> groupMemberships = REST_CLIENT.sendRequest(request).getResponse().getEntity();
+    BatchKVResponse<CompoundKey, GroupMembership> groupMemberships = getClient().sendRequest(request).getResponse().getEntity();
 
     Assert.assertTrue(allRequestedKeys.containsAll(groupMemberships.getResults().keySet()));
     Assert.assertTrue(allRequestedKeys.containsAll(groupMemberships.getErrors().keySet()));
@@ -620,7 +611,7 @@ public class TestGroupsClient extends RestLiIntegrationTest
       .ids(key1, key2)
       .fields(GroupMembership.fields().contactEmail())
       .build();
-    BatchKVResponse<CompoundKey, EntityResponse<GroupMembership>> groupMemberships = REST_CLIENT.sendRequest(request).getResponse().getEntity();
+    BatchKVResponse<CompoundKey, EntityResponse<GroupMembership>> groupMemberships = getClient().sendRequest(request).getResponse().getEntity();
 
     Assert.assertTrue(allRequestedKeys.containsAll(groupMemberships.getResults().keySet()));
     Assert.assertTrue(allRequestedKeys.containsAll(groupMemberships.getErrors().keySet()));
@@ -634,7 +625,7 @@ public class TestGroupsClient extends RestLiIntegrationTest
     throws RemoteInvocationException
   {
     // use server side default value for the RecordTemplate
-    REST_CLIENT.sendRequest(groupBuilders.findBy("ComplexCircuit").build()).getResponse();
+    getClient().sendRequest(groupBuilders.findBy("ComplexCircuit").build()).getResponse();
 
     try
     {
@@ -642,7 +633,7 @@ public class TestGroupsClient extends RestLiIntegrationTest
       final GroupMembershipParam newValue = new GroupMembershipParam();
       newValue.setIntParameter(0);
       newValue.setStringParameter("fail");
-      REST_CLIENT.sendRequest(groupBuilders.findBy("ComplexCircuit").setQueryParam("record", newValue).build()).getResponse();
+      getClient().sendRequest(groupBuilders.findBy("ComplexCircuit").setQueryParam("record", newValue).build()).getResponse();
       Assert.fail("Expect exception when specifying the \"record\" query parameter different from the default");
     }
     catch (RestLiResponseException e)
@@ -658,8 +649,8 @@ public class TestGroupsClient extends RestLiIntegrationTest
     final Collection<Integer> coll = Arrays.asList(1, 2, 3);
     final IntegerArray array = new IntegerArray(coll);
 
-    REST_CLIENT.sendRequest(groupBuilders.findBy("ComplexCircuit").setQueryParam("coercedArray", coll).build()).getResponse();
-    REST_CLIENT.sendRequest(groupBuilders.findBy("ComplexCircuit").setQueryParam("coercedArray", array).build()).getResponse();
+    getClient().sendRequest(groupBuilders.findBy("ComplexCircuit").setQueryParam("coercedArray", coll).build()).getResponse();
+    getClient().sendRequest(groupBuilders.findBy("ComplexCircuit").setQueryParam("coercedArray", array).build()).getResponse();
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestGroupsBuilderDataProvider")
@@ -672,12 +663,12 @@ public class TestGroupsClient extends RestLiIntegrationTest
 
     final Collection<GroupMembershipParam> array = Arrays.asList(elem, elem);
 
-    REST_CLIENT.sendRequest(groupBuilders.findBy("ComplexCircuit").setQueryParam("records", Arrays.asList(elem)).build()).getResponse();
-    REST_CLIENT.sendRequest(groupBuilders.findBy("ComplexCircuit").setQueryParam("records", array).build()).getResponse();
-    REST_CLIENT.sendRequest(groupBuilders.findBy("ComplexCircuit").setQueryParam("records", new GroupMembershipParamArray(array)).build()).getResponse();
+    getClient().sendRequest(groupBuilders.findBy("ComplexCircuit").setQueryParam("records", Arrays.asList(elem)).build()).getResponse();
+    getClient().sendRequest(groupBuilders.findBy("ComplexCircuit").setQueryParam("records", array).build()).getResponse();
+    getClient().sendRequest(groupBuilders.findBy("ComplexCircuit").setQueryParam("records", new GroupMembershipParamArray(array)).build()).getResponse();
 
-    REST_CLIENT.sendRequest(groupBuilders.findBy("ComplexCircuit").addQueryParam("Records", elem).build()).getResponse();
-    REST_CLIENT.sendRequest(groupBuilders.findBy("ComplexCircuit").addQueryParam("Records", elem).addQueryParam("Records", elem).build()).getResponse();
+    getClient().sendRequest(groupBuilders.findBy("ComplexCircuit").addQueryParam("Records", elem).build()).getResponse();
+    getClient().sendRequest(groupBuilders.findBy("ComplexCircuit").addQueryParam("Records", elem).addQueryParam("Records", elem).build()).getResponse();
   }
 
   private static ComplexResourceKey<GroupMembershipKey, GroupMembershipParam> buildComplexKey(int memberID,

@@ -17,14 +17,10 @@ package com.linkedin.restli.examples;
 
 
 import com.linkedin.r2.RemoteInvocationException;
-import com.linkedin.r2.transport.common.Client;
-import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
-import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.RequestBuilder;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.ResponseFuture;
-import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.client.response.BatchKVResponse;
@@ -42,7 +38,6 @@ import com.linkedin.restli.examples.greetings.client.AssociationsSubBuilders;
 import com.linkedin.restli.examples.greetings.client.AssociationsSubRequestBuilders;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -60,10 +55,6 @@ import static com.linkedin.restli.examples.AssociationResourceHelpers.URL_COMPOU
 
 public class TestAssociationsResource extends RestLiIntegrationTest
 {
-  private static final Client            CLIENT      = new TransportClientAdapter(new HttpClientFactory().getClient(Collections.<String, String>emptyMap()));
-  private static final String            URI_PREFIX  = "http://localhost:1338/";
-  private static final RestClient        REST_CLIENT = new RestClient(CLIENT, URI_PREFIX);
-
   @BeforeClass
   public void initClass() throws Exception
   {
@@ -83,7 +74,7 @@ public class TestAssociationsResource extends RestLiIntegrationTest
     // Associations should never support create operations. This is a bug in Rest.li that will be fixed. For now we want
     // to make sure that creating and then calling getId() on the response throws an exception.
     Request<EmptyRecord> request = builders.create().input(new Message().setMessage("foo")).build();
-    REST_CLIENT.sendRequest(request).getResponse().getId();
+    getClient().sendRequest(request).getResponse().getId();
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
@@ -91,11 +82,11 @@ public class TestAssociationsResource extends RestLiIntegrationTest
   {
     // optional and present
     RequestBuilder<? extends Request<CollectionResponse<Message>>> finder = builders.findBy("AssocKeyFinderOpt").assocKey("src", "KEY1").getBuilder();
-    Assert.assertEquals(200, REST_CLIENT.sendRequest(finder).getResponse().getStatus());
+    Assert.assertEquals(200, getClient().sendRequest(finder).getResponse().getStatus());
 
     // optional and not present
     RequestBuilder<? extends Request<CollectionResponse<Message>>> finderNoAssocKey = builders.findBy("AssocKeyFinderOpt").getBuilder();
-    Assert.assertEquals(200, REST_CLIENT.sendRequest(finderNoAssocKey).getResponse().getStatus());
+    Assert.assertEquals(200, getClient().sendRequest(finderNoAssocKey).getResponse().getStatus());
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
@@ -103,13 +94,13 @@ public class TestAssociationsResource extends RestLiIntegrationTest
   {
     // required and present
     RequestBuilder<? extends Request<CollectionResponse<Message>>> finder = builders.findBy("AssocKeyFinder").assocKey("src", "KEY1").getBuilder();
-    Assert.assertEquals(200, REST_CLIENT.sendRequest(finder).getResponse().getStatus());
+    Assert.assertEquals(200, getClient().sendRequest(finder).getResponse().getStatus());
 
     // required and not present
     RequestBuilder<? extends Request<CollectionResponse<Message>>> finderNoAssocKey = builders.findBy("AssocKeyFinder").getBuilder();
     try
     {
-      REST_CLIENT.sendRequest(finderNoAssocKey).getResponse();
+      getClient().sendRequest(finderNoAssocKey).getResponse();
       Assert.fail("Calling a finder without a required association key should throw RestLiResponseException with status code 400");
     }
     catch (RestLiResponseException e)
@@ -122,7 +113,7 @@ public class TestAssociationsResource extends RestLiIntegrationTest
   public void testBatchGet(RestliRequestOptions requestOptions) throws RemoteInvocationException
   {
     Request<BatchKVResponse<CompoundKey, Message>> request = new AssociationsBuilders(requestOptions).batchGet().ids(DB.keySet()).buildKV();
-    ResponseFuture<BatchKVResponse<CompoundKey, Message>> responseFuture = REST_CLIENT.sendRequest(request);
+    ResponseFuture<BatchKVResponse<CompoundKey, Message>> responseFuture = getClient().sendRequest(request);
     Response<BatchKVResponse<CompoundKey, Message>> response = responseFuture.getResponse();
 
     BatchKVResponse<CompoundKey, Message> entity = response.getEntity();
@@ -140,7 +131,7 @@ public class TestAssociationsResource extends RestLiIntegrationTest
   public void testBatchGetEntity(RestliRequestOptions requestOptions) throws RemoteInvocationException
   {
     Request<BatchKVResponse<CompoundKey, EntityResponse<Message>>> request = new AssociationsRequestBuilders(requestOptions).batchGet().ids(DB.keySet()).build();
-    ResponseFuture<BatchKVResponse<CompoundKey, EntityResponse<Message>>> responseFuture = REST_CLIENT.sendRequest(request);
+    ResponseFuture<BatchKVResponse<CompoundKey, EntityResponse<Message>>> responseFuture = getClient().sendRequest(request);
     Response<BatchKVResponse<CompoundKey, EntityResponse<Message>>> response = responseFuture.getResponse();
 
     BatchKVResponse<CompoundKey, EntityResponse<Message>> entityResponse = response.getEntity();
@@ -159,7 +150,7 @@ public class TestAssociationsResource extends RestLiIntegrationTest
   public void testSubresourceGet(RootBuilderWrapper<String, Message> builders) throws RemoteInvocationException
   {
     Request<Message> request = builders.get().setPathKey("dest", "dest").setPathKey("src", "src").id("id").build();
-    Message message = REST_CLIENT.sendRequest(request).getResponse().getEntity();
+    Message message = getClient().sendRequest(request).getResponse().getEntity();
     Assert.assertEquals(message.getId(), "src");
     Assert.assertEquals(message.getMessage(), "dest");
   }
@@ -168,7 +159,7 @@ public class TestAssociationsResource extends RestLiIntegrationTest
   public void testSubresourceGetForbiddenCharacters(RootBuilderWrapper<String, Message> builders) throws RemoteInvocationException
   {
     Request<Message> request = builders.get().setPathKey("dest", "d&est").setPathKey("src", "s&rc").id("id").build();
-    Message message = REST_CLIENT.sendRequest(request).getResponse().getEntity();
+    Message message = getClient().sendRequest(request).getResponse().getEntity();
     Assert.assertEquals(message.getId(), "s&rc");
     Assert.assertEquals(message.getMessage(), "d&est");
   }
@@ -177,7 +168,7 @@ public class TestAssociationsResource extends RestLiIntegrationTest
   public void testSubresourceFinder(RootBuilderWrapper<String, Message> builders) throws RemoteInvocationException
   {
     Request<CollectionResponse<Message>> request = builders.findBy("Tone").setPathKey("dest", "dest").setPathKey("src", "src").setQueryParam("tone", Tone.FRIENDLY).build();
-    List<Message> messages = REST_CLIENT.sendRequest(request).getResponse().getEntity().getElements();
+    List<Message> messages = getClient().sendRequest(request).getResponse().getEntity().getElements();
 
     for (Message message : messages)
     {
@@ -189,7 +180,7 @@ public class TestAssociationsResource extends RestLiIntegrationTest
   public void testSubresourceAction(RootBuilderWrapper<CompoundKey, Message> builders) throws RemoteInvocationException
   {
     Request<Integer> request = builders.<Integer>action("Action").setPathKey("dest", "dest").setPathKey("src", "src").build();
-    Integer integer = REST_CLIENT.sendRequest(request).getResponse().getEntity();
+    Integer integer = getClient().sendRequest(request).getResponse().getEntity();
 
     Assert.assertEquals(integer, new Integer(1));
   }
@@ -198,7 +189,7 @@ public class TestAssociationsResource extends RestLiIntegrationTest
   public void testSubresourcePathKeyAction(RootBuilderWrapper<CompoundKey, Message> builders) throws RemoteInvocationException
   {
     Request<String> request = builders.<String>action("GetSource").setPathKey("dest", "dest").setPathKey("src", "src").build();
-    String source = REST_CLIENT.sendRequest(request).getResponse().getEntity();
+    String source = getClient().sendRequest(request).getResponse().getEntity();
 
     Assert.assertEquals(source, "src");
   }
@@ -210,7 +201,7 @@ public class TestAssociationsResource extends RestLiIntegrationTest
     Request<BatchKVResponse<CompoundKey, UpdateStatus>> request = builders.batchUpdate().inputs(DB).build();
 
     BatchKVResponse<CompoundKey, UpdateStatus> entities =
-        REST_CLIENT.sendRequest(request).getResponse().getEntity();
+        getClient().sendRequest(request).getResponse().getEntity();
     runAssertions(entities);
   }
 
@@ -225,7 +216,7 @@ public class TestAssociationsResource extends RestLiIntegrationTest
     Request<BatchKVResponse<CompoundKey, UpdateStatus>> request = builders.batchPartialUpdate().inputs(patches).build();
 
     BatchKVResponse<CompoundKey, UpdateStatus> entities =
-        REST_CLIENT.sendRequest(request).getResponse().getEntity();
+        getClient().sendRequest(request).getResponse().getEntity();
     runAssertions(entities);
   }
 

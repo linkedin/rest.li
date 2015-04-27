@@ -18,15 +18,11 @@ package com.linkedin.restli.examples;
 
 
 import com.linkedin.r2.RemoteInvocationException;
-import com.linkedin.r2.transport.common.Client;
-import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
-import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.restli.client.BatchCreateIdRequest;
 import com.linkedin.restli.client.ErrorHandlingBehavior;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.ResponseFuture;
-import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.common.BatchCreateIdResponse;
@@ -45,7 +41,6 @@ import com.linkedin.restli.examples.greetings.client.ExceptionsRequestBuilders;
 import com.linkedin.restli.internal.common.ProtocolVersionUtil;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
-import java.util.Collections;
 import java.util.List;
 
 import org.testng.Assert;
@@ -57,10 +52,6 @@ import org.testng.annotations.Test;
 
 public class TestExceptionsResource extends RestLiIntegrationTest
 {
-  private static final Client CLIENT = new TransportClientAdapter(new HttpClientFactory().getClient(Collections.<String, String>emptyMap()));
-  private static final String URI_PREFIX = "http://localhost:1338/";
-  private static final RestClient REST_CLIENT = new RestClient(CLIENT, URI_PREFIX);
-
   @BeforeClass
   public void initClass() throws Exception
   {
@@ -86,11 +77,11 @@ public class TestExceptionsResource extends RestLiIntegrationTest
 
       if (explicit)
       {
-        future = REST_CLIENT.sendRequest(readRequest, errorHandlingBehavior);
+        future = getClient().sendRequest(readRequest, errorHandlingBehavior);
       }
       else
       {
-        future = REST_CLIENT.sendRequest(readRequest);
+        future = getClient().sendRequest(readRequest);
       }
 
       response = future.getResponse();
@@ -144,11 +135,11 @@ public class TestExceptionsResource extends RestLiIntegrationTest
 
       if (explicit)
       {
-        future = REST_CLIENT.sendRequest(createRequest, errorHandlingBehavior);
+        future = getClient().sendRequest(createRequest, errorHandlingBehavior);
       }
       else
       {
-        future = REST_CLIENT.sendRequest(createRequest);
+        future = getClient().sendRequest(createRequest);
       }
 
       response = future.getResponse();
@@ -200,7 +191,7 @@ public class TestExceptionsResource extends RestLiIntegrationTest
       .input(new Greeting().setId(11L).setMessage("@#$%@!$%").setTone(Tone.INSULTING))
       .build();
 
-    Response<CollectionResponse<CreateStatus>> response = REST_CLIENT.sendRequest(batchCreateRequest).getResponse();
+    Response<CollectionResponse<CreateStatus>> response = getClient().sendRequest(batchCreateRequest).getResponse();
     List<CreateStatus> createStatuses = response.getEntity().getElements();
     Assert.assertEquals(createStatuses.size(), 2);
 
@@ -238,7 +229,7 @@ public class TestExceptionsResource extends RestLiIntegrationTest
       .input(new Greeting().setId(11L).setMessage("@#$%@!$%").setTone(Tone.INSULTING))
       .build();
 
-    Response<BatchCreateIdResponse<Long>> response = REST_CLIENT.sendRequest(batchCreateRequest).getResponse();
+    Response<BatchCreateIdResponse<Long>> response = getClient().sendRequest(batchCreateRequest).getResponse();
     List<CreateIdStatus<Long>> createStatuses = response.getEntity().getElements();
     Assert.assertEquals(createStatuses.size(), 2);
 

@@ -18,12 +18,8 @@ package com.linkedin.restli.examples;
 
 
 import com.linkedin.r2.RemoteInvocationException;
-import com.linkedin.r2.transport.common.Client;
-import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
-import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
-import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.common.CollectionMetadata;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.examples.greetings.api.Greeting;
@@ -31,7 +27,6 @@ import com.linkedin.restli.examples.greetings.client.CustomMetadataProjectionsBu
 import com.linkedin.restli.examples.groups.api.Group;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
-import java.util.Collections;
 import java.util.List;
 
 import org.testng.Assert;
@@ -46,11 +41,6 @@ import org.testng.annotations.Test;
  */
 public class TestCustomMetadataProjection extends RestLiIntegrationTest
 {
-  private static final Client CLIENT =
-      new TransportClientAdapter(new HttpClientFactory().getClient(Collections.<String, String>emptyMap()));
-  private static final String URI_PREFIX = "http://localhost:1338/";
-  private static final RestClient REST_CLIENT = new RestClient(CLIENT, URI_PREFIX);
-
   @BeforeClass
   public void initClass() throws Exception
   {
@@ -78,7 +68,7 @@ public class TestCustomMetadataProjection extends RestLiIntegrationTest
             .metadataFields(Greeting.fields().message())
             .build();
 
-    final Response<CollectionResponse<Greeting>> response = REST_CLIENT.sendRequest(request).getResponse();
+    final Response<CollectionResponse<Greeting>> response = getClient().sendRequest(request).getResponse();
     assertEntityElements(response.getEntity().getElements(), true /*hasTone*/, false /*hasMessage*/ , false /*hasID*/);
     final Greeting metadataGreeting = new Greeting(response.getEntity().getMetadataRaw());
     assertCustomMetadata(metadataGreeting, false /*hasTone*/, true /*hasMessage*/, false /*hasID*/);
@@ -96,7 +86,7 @@ public class TestCustomMetadataProjection extends RestLiIntegrationTest
     final Request<CollectionResponse<Greeting>> findRequest = builders.findBy("rootAutomaticMetadataAutomatic")
         .build();
 
-    final Response<CollectionResponse<Greeting>> response = REST_CLIENT.sendRequest(findRequest).getResponse();
+    final Response<CollectionResponse<Greeting>> response = getClient().sendRequest(findRequest).getResponse();
     assertEntityElements(response.getEntity().getElements(), true /*hasTone*/, true /*hasMessage*/, true /*hasID*/);
     final Greeting metadataGreeting = new Greeting(response.getEntity().getMetadataRaw());
     assertCustomMetadata(metadataGreeting, true /*hasTone*/, true /*hasMessage*/, true /*hasID*/);
@@ -117,7 +107,7 @@ public class TestCustomMetadataProjection extends RestLiIntegrationTest
         .metadataFields(Greeting.fields().tone(), Greeting.fields().id(), Greeting.fields().message())
         .build();
 
-    final Response<CollectionResponse<Greeting>> response = REST_CLIENT.sendRequest(findRequest).getResponse();
+    final Response<CollectionResponse<Greeting>> response = getClient().sendRequest(findRequest).getResponse();
     assertEntityElements(response.getEntity().getElements(), true /*hasTone*/, false /*hasMessage*/, false /*hasID*/);
     final Greeting metadataGreeting = new Greeting(response.getEntity().getMetadataRaw());
     assertCustomMetadata(metadataGreeting, true /*hasTone*/, true /*hasMessage*/, true /*hasID*/);
@@ -138,7 +128,7 @@ public class TestCustomMetadataProjection extends RestLiIntegrationTest
         .metadataFields()
         .build();
 
-    final Response<CollectionResponse<Greeting>> response = REST_CLIENT.sendRequest(request).getResponse();
+    final Response<CollectionResponse<Greeting>> response = getClient().sendRequest(request).getResponse();
     assertEntityElements(response.getEntity().getElements(), true /*hasTone*/, false /*hasMessage*/, false /*hasID*/);
     final Greeting metadataGreeting = new Greeting(response.getEntity().getMetadataRaw());
     //Nothing should be sent back here
@@ -163,7 +153,7 @@ public class TestCustomMetadataProjection extends RestLiIntegrationTest
         .metadataFields(Greeting.fields().message())
         .build();
 
-    final Response<CollectionResponse<Greeting>> response = REST_CLIENT.sendRequest(request).getResponse();
+    final Response<CollectionResponse<Greeting>> response = getClient().sendRequest(request).getResponse();
     assertEntityElements(response.getEntity().getElements(), true /*hasTone*/, false /*hasMessage*/, false /*hasID*/);
     final Greeting metadataGreeting = new Greeting(response.getEntity().getMetadataRaw());
     //Note that the server here will intentionally leave the tone in the greeting
@@ -182,7 +172,7 @@ public class TestCustomMetadataProjection extends RestLiIntegrationTest
     final Request<CollectionResponse<Greeting>> findRequest = builders.findBy("rootAutomaticMetadataManual")
         .build();
 
-    final Response<CollectionResponse<Greeting>> response = REST_CLIENT.sendRequest(findRequest).getResponse();
+    final Response<CollectionResponse<Greeting>> response = getClient().sendRequest(findRequest).getResponse();
     assertEntityElements(response.getEntity().getElements(), true /*hasTone*/, true /*hasMessage*/, true /*hasID*/);
     final Greeting metadataGreeting = new Greeting(response.getEntity().getMetadataRaw());
     //Note here the resource method is doing manual projection, but not removing anything, so we should get all
@@ -205,7 +195,7 @@ public class TestCustomMetadataProjection extends RestLiIntegrationTest
         .metadataFields(Greeting.fields().tone(), Greeting.fields().id(), Greeting.fields().message())
         .build();
 
-    final Response<CollectionResponse<Greeting>> response = REST_CLIENT.sendRequest(findRequest).getResponse();
+    final Response<CollectionResponse<Greeting>> response = getClient().sendRequest(findRequest).getResponse();
     assertEntityElements(response.getEntity().getElements(), true /*hasTone*/, false /*hasMessage*/, false /*hasID*/);
     final Greeting metadataGreeting = new Greeting(response.getEntity().getMetadataRaw());
     //Note here the resource method is doing manual projection, but not removing anything, so we should get all
@@ -227,7 +217,7 @@ public class TestCustomMetadataProjection extends RestLiIntegrationTest
         .metadataFields(Group.fields().description()) //Note the use of Group here instead of Greeting
         .build();
 
-    final Response<CollectionResponse<Greeting>> response = REST_CLIENT.sendRequest(request).getResponse();
+    final Response<CollectionResponse<Greeting>> response = getClient().sendRequest(request).getResponse();
     assertEntityElements(response.getEntity().getElements(), true /*hasTone*/, true /*hasMessage*/, true /*hasID*/);
     final Greeting metadataGreeting = new Greeting(response.getEntity().getMetadataRaw());
     //Note that we are performing a manual projection in the resource method, but not removing anything because
@@ -253,7 +243,7 @@ public class TestCustomMetadataProjection extends RestLiIntegrationTest
         .metadataFields(Greeting.fields().message())
         .build();
 
-    final Response<CollectionResponse<Greeting>> response = REST_CLIENT.sendRequest(request).getResponse();
+    final Response<CollectionResponse<Greeting>> response = getClient().sendRequest(request).getResponse();
     //Note the server behavior here is to preserve the tone and the message even though the projection only specified
     //message
     assertEntityElements(response.getEntity().getElements(), true /*hasTone*/, true /*hasMessage*/, false /*hasID*/);
@@ -273,7 +263,7 @@ public class TestCustomMetadataProjection extends RestLiIntegrationTest
     final Request<CollectionResponse<Greeting>> findRequest = builders.findBy("rootManualMetadataAutomatic")
         .build();
 
-    final Response<CollectionResponse<Greeting>> response = REST_CLIENT.sendRequest(findRequest).getResponse();
+    final Response<CollectionResponse<Greeting>> response = getClient().sendRequest(findRequest).getResponse();
     assertEntityElements(response.getEntity().getElements(), true /*hasTone*/, true /*hasMessage*/, true /*hasID*/);
     final Greeting metadataGreeting = new Greeting(response.getEntity().getMetadataRaw());
     assertCustomMetadata(metadataGreeting, true /*hasTone*/, true /*hasMessage*/, true /*hasID*/);
@@ -294,7 +284,7 @@ public class TestCustomMetadataProjection extends RestLiIntegrationTest
         .metadataFields(Greeting.fields().tone(), Greeting.fields().id(), Greeting.fields().message())
         .build();
 
-    final Response<CollectionResponse<Greeting>> response = REST_CLIENT.sendRequest(findRequest).getResponse();
+    final Response<CollectionResponse<Greeting>> response = getClient().sendRequest(findRequest).getResponse();
     //Manual projection on the resource method only works if it sees the message field in the projection
     assertEntityElements(response.getEntity().getElements(), true /*hasTone*/, true /*hasMessage*/, true /*hasID*/);
     final Greeting metadataGreeting = new Greeting(response.getEntity().getMetadataRaw());
@@ -319,7 +309,7 @@ public class TestCustomMetadataProjection extends RestLiIntegrationTest
         .metadataFields(Greeting.fields().message())
         .build();
 
-    final Response<CollectionResponse<Greeting>> response = REST_CLIENT.sendRequest(request).getResponse();
+    final Response<CollectionResponse<Greeting>> response = getClient().sendRequest(request).getResponse();
     //Note the following for the resulting entity elements and metadata:
     //The resource method should ideally only preserve only the message, but we intentionally also preserve
     //the tone to verify that it is the resource method who performs the projection and not restli
@@ -340,7 +330,7 @@ public class TestCustomMetadataProjection extends RestLiIntegrationTest
     final Request<CollectionResponse<Greeting>> findRequest = builders.findBy("rootManualMetadataManual")
         .build();
 
-    final Response<CollectionResponse<Greeting>> response = REST_CLIENT.sendRequest(findRequest).getResponse();
+    final Response<CollectionResponse<Greeting>> response = getClient().sendRequest(findRequest).getResponse();
     assertEntityElements(response.getEntity().getElements(), true /*hasTone*/, true /*hasMessage*/, true /*hasID*/);
     final Greeting metadataGreeting = new Greeting(response.getEntity().getMetadataRaw());
     assertCustomMetadata(metadataGreeting, true /*hasTone*/, true /*hasMessage*/, true /*hasID*/);
@@ -361,7 +351,7 @@ public class TestCustomMetadataProjection extends RestLiIntegrationTest
         .metadataFields(Greeting.fields().tone(), Greeting.fields().id(), Greeting.fields().message())
         .build();
 
-    final Response<CollectionResponse<Greeting>> response = REST_CLIENT.sendRequest(findRequest).getResponse();
+    final Response<CollectionResponse<Greeting>> response = getClient().sendRequest(findRequest).getResponse();
     //Manual projection on the resource method only works if it sees the message field in the projection
     assertEntityElements(response.getEntity().getElements(), true /*hasTone*/, true /*hasMessage*/, true /*hasID*/);
     final Greeting metadataGreeting = new Greeting(response.getEntity().getMetadataRaw());
@@ -387,7 +377,7 @@ public class TestCustomMetadataProjection extends RestLiIntegrationTest
         .metadataFields(Greeting.fields().message())
         .build();
 
-    final Response<CollectionResponse<Greeting>> response = REST_CLIENT.sendRequest(request).getResponse();
+    final Response<CollectionResponse<Greeting>> response = getClient().sendRequest(request).getResponse();
     //Since restli does the projection here for the root entity records, only the message field will exist
     assertEntityElements(response.getEntity().getElements(), false /*hasTone*/, true /*hasMessage*/, false /*hasID*/);
     final Greeting metadataGreeting = new Greeting(response.getEntity().getMetadataRaw());
@@ -412,7 +402,7 @@ public class TestCustomMetadataProjection extends RestLiIntegrationTest
         .metadataFields(Greeting.fields().message())
         .build();
 
-    final Response<CollectionResponse<Greeting>> response = REST_CLIENT.sendRequest(request).getResponse();
+    final Response<CollectionResponse<Greeting>> response = getClient().sendRequest(request).getResponse();
     assertEntityElements(response.getEntity().getElements(), false /*hasTone*/, true /*hasMessage*/, false /*hasID*/);
     Assert.assertNull(response.getEntity().getMetadataRaw());
     Assert.assertTrue(response.getEntity().hasPaging(), "We must have paging!");

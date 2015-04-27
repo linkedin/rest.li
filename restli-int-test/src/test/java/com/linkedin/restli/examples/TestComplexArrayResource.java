@@ -23,15 +23,10 @@ package com.linkedin.restli.examples;
 
 import com.linkedin.data.template.LongArray;
 import com.linkedin.r2.RemoteInvocationException;
-import com.linkedin.r2.transport.common.Client;
-import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
-import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
-import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.client.response.BatchKVResponse;
-import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.EntityResponse;
@@ -44,7 +39,6 @@ import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -65,10 +59,6 @@ import org.testng.annotations.Test;
 @Test(groups = { "async" })
 public class TestComplexArrayResource extends RestLiIntegrationTest
 {
-  private static final Client CLIENT = new TransportClientAdapter(new HttpClientFactory().getClient(Collections.<String, String>emptyMap()));
-  private static final String URI_PREFIX = "http://localhost:1338/";
-  private static final RestClient REST_CLIENT = new RestClient(CLIENT, URI_PREFIX);
-
   @BeforeClass(alwaysRun=true)
   public void initClass(ITestContext ctx) throws Exception
   {
@@ -97,7 +87,7 @@ public class TestComplexArrayResource extends RestLiIntegrationTest
 
     Request<Greeting> request = builders.get().id(complexKey).build();
 
-    REST_CLIENT.sendRequest(request).getResponse().getEntity();
+    getClient().sendRequest(request).getResponse().getEntity();
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "versionWithRequestOptionsDataProvider")
@@ -111,7 +101,7 @@ public class TestComplexArrayResource extends RestLiIntegrationTest
         builders.batchGet().ids(complexKeys).buildKV();
 
     Response<BatchKVResponse<ComplexResourceKey<ComplexArray, ComplexArray>, Greeting>> response =
-        REST_CLIENT.sendRequest(request).getResponse();
+        getClient().sendRequest(request).getResponse();
 
     Greeting greeting1 = response.getEntity().getResults().get(complexKeys.get(0));
     Assert.assertNotNull(greeting1);
@@ -131,7 +121,7 @@ public class TestComplexArrayResource extends RestLiIntegrationTest
       builders.batchGet().ids(complexKeys).buildKV();
 
     Response<BatchKVResponse<ComplexResourceKey<ComplexArray, ComplexArray>, Greeting>> response2 =
-      REST_CLIENT.sendRequest(request2).getResponse();
+      getClient().sendRequest(request2).getResponse();
 
     Greeting greeting1 = response2.getEntity().getResults().get(complexKeys.get(0));
     Assert.assertNotNull(greeting1);
@@ -151,7 +141,7 @@ public class TestComplexArrayResource extends RestLiIntegrationTest
       builders.batchGet().ids(complexKeys).build();
 
     Response<BatchKVResponse<ComplexResourceKey<ComplexArray, ComplexArray>, EntityResponse<Greeting>>> response2 =
-      REST_CLIENT.sendRequest(request2).getResponse();
+      getClient().sendRequest(request2).getResponse();
 
     EntityResponse<Greeting> greeting1 = response2.getEntity().getResults().get(complexKeys.get(0));
     Assert.assertNotNull(greeting1);
@@ -168,7 +158,7 @@ public class TestComplexArrayResource extends RestLiIntegrationTest
     ComplexArray array = new ComplexArray().setArray(singleton).setNext(next);
 
     Request<CollectionResponse<Greeting>> request = builders.findBy("Finder").setQueryParam("array", array).build();
-    REST_CLIENT.sendRequest(request).getResponse().getEntity();
+    getClient().sendRequest(request).getResponse().getEntity();
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
@@ -180,7 +170,7 @@ public class TestComplexArrayResource extends RestLiIntegrationTest
     ComplexArray array = new ComplexArray().setArray(singleton).setNext(next);
 
     Request<Integer> request = builders.<Integer>action("Action").setActionParam("Array", array).build();
-    REST_CLIENT.sendRequest(request).getResponse().getEntity();
+    getClient().sendRequest(request).getResponse().getEntity();
   }
 
   private static List<ComplexResourceKey<ComplexArray, ComplexArray>> getBatchCompleKeys()

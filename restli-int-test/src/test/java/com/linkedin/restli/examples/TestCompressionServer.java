@@ -33,6 +33,7 @@ import com.linkedin.r2.filter.compression.GzipCompressor;
 import com.linkedin.r2.filter.compression.SnappyCompressor;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestException;
+import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.transport.http.common.HttpConstants;
@@ -133,8 +134,7 @@ public class TestCompressionServer extends RestLiIntegrationTest
     {
       Map<String, String> clientProperties = new HashMap<String, String>();
       clientProperties.put(HttpClientFactory.HTTP_RESPONSE_COMPRESSION_OPERATIONS, operation);
-      TransportClientAdapter clientAdapter = new TransportClientAdapter(new HttpClientFactory(FilterChains.empty()).getClient(clientProperties));
-      RestClient client = new RestClient(clientAdapter, URI_PREFIX);
+      RestClient client = new RestClient(newTransportClient(clientProperties), URI_PREFIX);
       result[index--] = new Object[]{ client, operation, RestliRequestOptions.DEFAULT_OPTIONS, Arrays.asList(1000L, 2000L), 0 };
       result[index--] = new Object[]{ client, operation, TestConstants.FORCE_USE_NEXT_OPTIONS, Arrays.asList(1000L, 2000L), 0 };
       result[index--] = new Object[]{ client, operation, RestliRequestOptions.DEFAULT_OPTIONS, Arrays.asList(1L, 2L, 3L, 4L), 4 };
@@ -163,8 +163,7 @@ public class TestCompressionServer extends RestLiIntegrationTest
     {
       Map<String, String> clientProperties = new HashMap<String, String>();
       clientProperties.put(HttpClientFactory.HTTP_RESPONSE_COMPRESSION_OPERATIONS, operation);
-      TransportClientAdapter clientAdapter = new TransportClientAdapter(new HttpClientFactory(FilterChains.empty()).getClient(clientProperties));
-      RestClient client = new RestClient(clientAdapter, URI_PREFIX);
+      RestClient client = new RestClient(newTransportClient(clientProperties), URI_PREFIX);
       result[index--] = new Object[]{ client, operation, new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()),
           AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion()};
       result[index--] = new Object[]{ client, operation, new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)),
@@ -183,15 +182,10 @@ public class TestCompressionServer extends RestLiIntegrationTest
   @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "clientsCookbookDataProvider")
   public Object[][] clientsCookbookDataProvider()
   {
-    // need separate TransportClientAdapter for shutdown test
-    TransportClientAdapter clientAdapter1 = new TransportClientAdapter(new HttpClientFactory(FilterChains.empty()).
-      getClient(Collections.<String, String>emptyMap()));
-    TransportClientAdapter clientAdapter2 = new TransportClientAdapter(new HttpClientFactory(FilterChains.empty()).
-      getClient(Collections.<String, String>emptyMap()));
     return new Object[][]
       {
-        { new RestClient(clientAdapter1, URI_PREFIX), RestliRequestOptions.DEFAULT_OPTIONS },
-        { new RestClient(clientAdapter2, URI_PREFIX), TestConstants.FORCE_USE_NEXT_OPTIONS },
+        { new RestClient(getDefaultTransportClient(), URI_PREFIX), RestliRequestOptions.DEFAULT_OPTIONS },
+        { new RestClient(getDefaultTransportClient(), URI_PREFIX), TestConstants.FORCE_USE_NEXT_OPTIONS },
       };
   }
 
@@ -201,21 +195,12 @@ public class TestCompressionServer extends RestLiIntegrationTest
   @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "clientsNoCompressedResponsesDataProvider")
   public Object[][] clientsNoCompressedResponsesDataProvider()
   {
-    // need separate TransportClientAdapter for shutdown test
-    TransportClientAdapter clientAdapter1 = new TransportClientAdapter(new HttpClientFactory(FilterChains.empty()).
-        getClient(Collections.<String, String>emptyMap()));
-    TransportClientAdapter clientAdapter2 = new TransportClientAdapter(new HttpClientFactory(FilterChains.empty()).
-      getClient(Collections.<String, String>emptyMap()));
-    TransportClientAdapter clientAdapter3 = new TransportClientAdapter(new HttpClientFactory(FilterChains.empty()).
-      getClient(Collections.<String, String>emptyMap()));
-    TransportClientAdapter clientAdapter4 = new TransportClientAdapter(new HttpClientFactory(FilterChains.empty()).
-      getClient(Collections.<String, String>emptyMap()));
     return new Object[][]
       {
-        { new RestClient(clientAdapter1, URI_PREFIX), new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()) },
-        { new RestClient(clientAdapter2, URI_PREFIX), new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
-        { new RestClient(clientAdapter3, URI_PREFIX), new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()) },
-        { new RestClient(clientAdapter4, URI_PREFIX), new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
+        { new RestClient(getDefaultTransportClient(), URI_PREFIX), new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()) },
+        { new RestClient(getDefaultTransportClient(), URI_PREFIX), new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
+        { new RestClient(getDefaultTransportClient(), URI_PREFIX), new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()) },
+        { new RestClient(getDefaultTransportClient(), URI_PREFIX), new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
       };
   }
 
@@ -600,11 +585,6 @@ public class TestCompressionServer extends RestLiIntegrationTest
 
     Assert.assertEquals(greetingResponse.getEntity().getMessage(), NEW_MESSAGE);
     checkContentEncodingHeaderIsAbsent(greetingResponse);
-
-    // shut down client
-    FutureCallback<None> futureCallback = new FutureCallback<None>();
-    restClient.shutdown(futureCallback);
-    futureCallback.get();
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "clientsCookbookDataProvider")

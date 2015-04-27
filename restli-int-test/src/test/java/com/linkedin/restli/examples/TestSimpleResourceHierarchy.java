@@ -18,14 +18,10 @@ package com.linkedin.restli.examples;
 
 
 import com.linkedin.r2.RemoteInvocationException;
-import com.linkedin.r2.transport.common.Client;
-import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
-import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.restli.client.CreateIdRequest;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.ResponseFuture;
-import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.client.response.BatchKVResponse;
@@ -54,7 +50,6 @@ import com.linkedin.restli.test.util.RootBuilderWrapper;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import org.testng.Assert;
@@ -70,10 +65,6 @@ import org.testng.annotations.Test;
  */
 public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
 {
-  private static final Client CLIENT = new TransportClientAdapter(new HttpClientFactory().getClient(Collections.<String, String>emptyMap()));
-  private static final String URI_PREFIX = "http://localhost:1338/";
-  private static final RestClient REST_CLIENT = new RestClient(CLIENT, URI_PREFIX);
-
   @BeforeClass
   public void initClass() throws Exception
   {
@@ -90,7 +81,7 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
   public void testRootSimpleResourceGet(RootBuilderWrapper<Void, Greeting> builders) throws RemoteInvocationException
   {
     Request<Greeting> request = builders.get().build();
-    Response<Greeting> response = REST_CLIENT.sendRequest(request).getResponse();
+    Response<Greeting> response = getClient().sendRequest(request).getResponse();
     Greeting greeting = response.getEntity();
     Assert.assertEquals(greeting.getId().longValue(), 12345L);
   }
@@ -105,11 +96,11 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
 
     // PUT
     Request<EmptyRecord> writeRequest = builders.update().input(greeting).build();
-    REST_CLIENT.sendRequest(writeRequest).getResponse();
+    getClient().sendRequest(writeRequest).getResponse();
 
     // GET again, to verify that our PUT worked.
     Request<Greeting> request = builders.get().build();
-    Response<Greeting> response = REST_CLIENT.sendRequest(request).getResponse();
+    Response<Greeting> response = getClient().sendRequest(request).getResponse();
     greeting = response.getEntity();
 
     Assert.assertEquals(greeting.getTone(), Tone.INSULTING);
@@ -126,11 +117,11 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
 
     // PUT
     Request<EmptyRecord> writeRequest = builders.partialUpdate().input(patch).build();
-    REST_CLIENT.sendRequest(writeRequest).getResponse();
+    getClient().sendRequest(writeRequest).getResponse();
 
     // GET again, to verify that our PUT worked.
     Request<Greeting> request = builders.get().build();
-    Response<Greeting> response = REST_CLIENT.sendRequest(request).getResponse();
+    Response<Greeting> response = getClient().sendRequest(request).getResponse();
     greeting = response.getEntity();
 
     Assert.assertEquals(greeting.getTone(), Tone.SINCERE);
@@ -141,13 +132,13 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
   {
     // DELETE
     Request<EmptyRecord> writeRequest = builders.delete().build();
-    REST_CLIENT.sendRequest(writeRequest).getResponse();
+    getClient().sendRequest(writeRequest).getResponse();
 
     // GET again, to verify that our DELETE worked.
     try
     {
       Request<Greeting> request = builders.get().build();
-      Response<Greeting> response = REST_CLIENT.sendRequest(request).getResponse();
+      Response<Greeting> response = getClient().sendRequest(request).getResponse();
       Greeting greeting = response.getEntity();
       Assert.fail("Entity should have been removed.");
     }
@@ -164,7 +155,7 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
   public void testRootSimpleResourceIntAction(RootBuilderWrapper<Void, Greeting> builders) throws RemoteInvocationException
   {
     Request<Integer> request = builders.<Integer>action("ExampleAction").setActionParam("Param1", 1).build();
-    ResponseFuture<Integer> responseFuture = REST_CLIENT.sendRequest(request);
+    ResponseFuture<Integer> responseFuture = getClient().sendRequest(request);
     Assert.assertEquals(responseFuture.getResponse().getStatus(), 200);
     Assert.assertEquals(responseFuture.getResponse().getEntity().intValue(), 10);
   }
@@ -175,7 +166,7 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
     try
     {
       Request<Void> request = builders.<Void>action("ExceptionTest").build();
-      REST_CLIENT.sendRequest(request).getResponse().getEntity();
+      getClient().sendRequest(request).getResponse().getEntity();
       Assert.fail("expected exception");
     }
     catch (RestLiResponseException e)
@@ -189,7 +180,7 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
   public void testSubCollectionGet(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     Request<Greeting> request = builders.get().id(1L).build();
-    Response<Greeting> response = REST_CLIENT.sendRequest(request).getResponse();
+    Response<Greeting> response = getClient().sendRequest(request).getResponse();
     Greeting greeting = response.getEntity();
     Assert.assertEquals(greeting.getId().longValue(), 1L);
   }
@@ -200,7 +191,7 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
     List<Long> ids = Arrays.asList(1L, 2L, 3L, 4L);
     Request<BatchResponse<Greeting>> request = new SubgreetingsBuilders(requestOptions).batchGet().ids(ids).build();
 
-    Response<BatchResponse<Greeting>> response = REST_CLIENT.sendRequest(request).getResponse();
+    Response<BatchResponse<Greeting>> response = getClient().sendRequest(request).getResponse();
     BatchResponse<Greeting> batchResponse = response.getEntity();
     Assert.assertEquals(batchResponse.getResults().size(), ids.size());
   }
@@ -211,7 +202,7 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
     List<Long> ids = Arrays.asList(1L, 2L, 3L, 4L);
     Request<BatchKVResponse<Long, Greeting>> request = new SubgreetingsBuilders(requestOptions).batchGet().ids(ids).buildKV();
 
-    Response<BatchKVResponse<Long, Greeting>> response = REST_CLIENT.sendRequest(request).getResponse();
+    Response<BatchKVResponse<Long, Greeting>> response = getClient().sendRequest(request).getResponse();
     BatchKVResponse<Long, Greeting> batchResponse = response.getEntity();
     Assert.assertEquals(batchResponse.getResults().size(), ids.size());
   }
@@ -222,7 +213,7 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
     List<Long> ids = Arrays.asList(1L, 2L, 3L, 4L);
     Request<BatchKVResponse<Long, EntityResponse<Greeting>>> request = new SubgreetingsRequestBuilders(requestOptions).batchGet().ids(ids).build();
 
-    Response<BatchKVResponse<Long, EntityResponse<Greeting>>> response = REST_CLIENT.sendRequest(request).getResponse();
+    Response<BatchKVResponse<Long, EntityResponse<Greeting>>> response = getClient().sendRequest(request).getResponse();
     BatchKVResponse<Long, EntityResponse<Greeting>> batchResponse = response.getEntity();
     Assert.assertEquals(batchResponse.getResults().size(), ids.size());
   }
@@ -232,7 +223,7 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
   {
     Request<CollectionResponse<Greeting>> request = builders.findBy("Search").setQueryParam("tone", Tone.SINCERE).paginate(1, 2).build();
 
-    Response<CollectionResponse<Greeting>> response = REST_CLIENT.sendRequest(request).getResponse();
+    Response<CollectionResponse<Greeting>> response = getClient().sendRequest(request).getResponse();
 
     CollectionResponse<Greeting> collectionResponse = response.getEntity();
     List<Greeting> greetings = collectionResponse.getElements();
@@ -249,7 +240,7 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
   {
     // GET
     Request<Greeting> request = builders.get().id(1L).build();
-    ResponseFuture<Greeting> future = REST_CLIENT.sendRequest(request);
+    ResponseFuture<Greeting> future = getClient().sendRequest(request);
     Response<Greeting> greetingResponse = future.getResponse();
 
     String response1 = greetingResponse.getEntity().getMessage();
@@ -260,11 +251,11 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
     greeting.setMessage(response1 + "Again");
 
     Request<EmptyRecord> writeRequest = builders.update().id(1L).input(greeting).build();
-    REST_CLIENT.sendRequest(writeRequest).getResponse();
+    getClient().sendRequest(writeRequest).getResponse();
 
     // GET again, to verify that our POST worked.
     Request<Greeting> request2 = builders.get().id(1L).build();
-    ResponseFuture<Greeting> future2 = REST_CLIENT.sendRequest(request2);
+    ResponseFuture<Greeting> future2 = getClient().sendRequest(request2);
     String response2 = future2.getResponse().getEntity().getMessage();
 
     Assert.assertEquals(response2, response1 + "Again");
@@ -276,7 +267,7 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
   {
     // GET
     Request<Greeting> request = builders.get().id(1L).build();
-    ResponseFuture<Greeting> future = REST_CLIENT.sendRequest(request);
+    ResponseFuture<Greeting> future = getClient().sendRequest(request);
     Response<Greeting> greetingResponse = future.getResponse();
 
     Greeting original = greetingResponse.getEntity();
@@ -288,12 +279,12 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
     PatchRequest<Greeting> patch = PatchGenerator.diff(original, greeting);
 
     Request<EmptyRecord> writeRequest = builders.partialUpdate().id(1L).input(patch).build();
-    int status = REST_CLIENT.sendRequest(writeRequest).getResponse().getStatus();
+    int status = getClient().sendRequest(writeRequest).getResponse().getStatus();
     Assert.assertEquals(status, HttpStatus.S_204_NO_CONTENT.getCode());
 
     // GET again, to verify that our PUT worked.
     Request<Greeting> request2 = builders.get().id(1L).build();
-    ResponseFuture<Greeting> future2 = REST_CLIENT.sendRequest(request2);
+    ResponseFuture<Greeting> future2 = getClient().sendRequest(request2);
     String response2 = future2.getResponse().getEntity().getMessage();
 
     Assert.assertEquals(response2, greeting.getMessage());
@@ -310,7 +301,7 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
 
     //POST
     Request<EmptyRecord> createRequest = builders.create().input(greeting).build();
-    Response<EmptyRecord> response = REST_CLIENT.sendRequest(createRequest).getResponse();
+    Response<EmptyRecord> response = getClient().sendRequest(createRequest).getResponse();
     Assert.assertNull(response.getHeader(RestConstants.HEADER_CONTENT_TYPE));
     @SuppressWarnings("unchecked")
     CreateResponse<Long> createResponse = (CreateResponse<Long>)response.getEntity();
@@ -321,7 +312,7 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
 
     //GET again to verify that the create has worked.
     Request<Greeting> getRequest = builders.get().id(id).build();
-    Response<Greeting> getResponse = REST_CLIENT.sendRequest(getRequest).getResponse();
+    Response<Greeting> getResponse = getClient().sendRequest(getRequest).getResponse();
     Greeting responseGreeting = getResponse.getEntity();
 
     Assert.assertEquals(responseGreeting.getMessage(), greeting.getMessage());
@@ -339,7 +330,7 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
 
     //POST
     CreateIdRequest<Long, Greeting> createRequest = builders.create().input(greeting).build();
-    Response<IdResponse<Long>> response = REST_CLIENT.sendRequest(createRequest).getResponse();
+    Response<IdResponse<Long>> response = getClient().sendRequest(createRequest).getResponse();
     Assert.assertNull(response.getHeader(RestConstants.HEADER_CONTENT_TYPE));
     long id = response.getEntity().getId();
     @SuppressWarnings("deprecation")
@@ -348,7 +339,7 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
 
     //GET again to verify that the create has worked.
     Request<Greeting> getRequest = builders.get().id(id).build();
-    Response<Greeting> getResponse = REST_CLIENT.sendRequest(getRequest).getResponse();
+    Response<Greeting> getResponse = getClient().sendRequest(getRequest).getResponse();
     Greeting responseGreeting = getResponse.getEntity();
 
     Assert.assertEquals(responseGreeting.getMessage(), greeting.getMessage());
@@ -371,7 +362,7 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
     greetings.add(greeting2);
 
     //POST
-    List<CreateIdStatus<Long>> statuses = BatchCreateHelper.batchCreate(REST_CLIENT, builders, greetings);
+    List<CreateIdStatus<Long>> statuses = BatchCreateHelper.batchCreate(getClient(), builders, greetings);
 
     ArrayList<Long> ids = new ArrayList<Long>();
 
@@ -387,7 +378,7 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
     final RestliRequestOptions requestOptions = builders.getRequestOptions();
     Request<BatchKVResponse<Long, EntityResponse<Greeting>>> request = new SubgreetingsRequestBuilders(requestOptions).batchGet().ids(ids).build();
 
-    Response<BatchKVResponse<Long, EntityResponse<Greeting>>> response = REST_CLIENT.sendRequest(request).getResponse();
+    Response<BatchKVResponse<Long, EntityResponse<Greeting>>> response = getClient().sendRequest(request).getResponse();
     BatchKVResponse<Long, EntityResponse<Greeting>> batchResponse = response.getEntity();
     Assert.assertEquals(batchResponse.getResults().size(), ids.size());
   }
@@ -398,7 +389,7 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
     try
     {
       Request<Void> request = builders.<Void>action("ExceptionTest").build();
-      REST_CLIENT.sendRequest(request).getResponse().getEntity();
+      getClient().sendRequest(request).getResponse().getEntity();
       Assert.fail("expected exception");
     }
     catch (RestLiResponseException e)
@@ -412,7 +403,7 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
   public void testSubCollectionIntAction(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     Request<Integer> request = builders.<Integer>action("Purge").build();
-    ResponseFuture<Integer> responseFuture = REST_CLIENT.sendRequest(request);
+    ResponseFuture<Integer> responseFuture = getClient().sendRequest(request);
     Assert.assertEquals(responseFuture.getResponse().getStatus(), 200);
     Assert.assertEquals(responseFuture.getResponse().getEntity().intValue(), 100);
   }
@@ -421,7 +412,7 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
   public void testSubsubsimpleResourceGet(RootBuilderWrapper<Void, Greeting> builders) throws RemoteInvocationException
   {
     Request<Greeting> request = builders.get().setPathKey("subgreetingsId", 1L).build();
-    Response<Greeting> response = REST_CLIENT.sendRequest(request).getResponse();
+    Response<Greeting> response = getClient().sendRequest(request).getResponse();
     Greeting greeting = response.getEntity();
     Assert.assertEquals(greeting.getId().longValue(), 10L);
   }
@@ -436,11 +427,11 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
 
     // PUT
     Request<EmptyRecord> writeRequest = builders.update().setPathKey("subgreetingsId", 1L).input(greeting).build();
-    REST_CLIENT.sendRequest(writeRequest).getResponse();
+    getClient().sendRequest(writeRequest).getResponse();
 
     // GET again, to verify that our POST worked.
     Request<Greeting> request = builders.get().setPathKey("subgreetingsId", 1L).build();
-    Response<Greeting> response = REST_CLIENT.sendRequest(request).getResponse();
+    Response<Greeting> response = getClient().sendRequest(request).getResponse();
     greeting = response.getEntity();
 
     Assert.assertEquals(greeting.getTone(), Tone.INSULTING);
@@ -458,11 +449,11 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
     // PUT
     Request<EmptyRecord> writeRequest =
         builders.partialUpdate().setPathKey("subgreetingsId", 1L).input(patch).build();
-    REST_CLIENT.sendRequest(writeRequest).getResponse();
+    getClient().sendRequest(writeRequest).getResponse();
 
     // GET again, to verify that our POST worked.
     Request<Greeting> request = builders.get().setPathKey("subgreetingsId", 1L).build();
-    Response<Greeting> response = REST_CLIENT.sendRequest(request).getResponse();
+    Response<Greeting> response = getClient().sendRequest(request).getResponse();
     greeting = response.getEntity();
 
     Assert.assertEquals(greeting.getTone(), Tone.SINCERE);
@@ -473,13 +464,13 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
   {
     // DELETE
     Request<EmptyRecord> writeRequest = builders.delete().setPathKey("subgreetingsId", 1L).build();
-    REST_CLIENT.sendRequest(writeRequest).getResponse();
+    getClient().sendRequest(writeRequest).getResponse();
 
     // GET again, to verify that our DELETE worked.
     try
     {
       Request<Greeting> request = builders.get().setPathKey("subgreetingsId", 1L).build();
-      Response<Greeting> response = REST_CLIENT.sendRequest(request).getResponse();
+      Response<Greeting> response = getClient().sendRequest(request).getResponse();
       Greeting greeting = response.getEntity();
       Assert.fail("Entity should have been removed.");
     }
@@ -500,7 +491,7 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
                                        .setActionParam("Param1", 1)
                                        .build();
 
-    ResponseFuture<Integer> responseFuture = REST_CLIENT.sendRequest(request);
+    ResponseFuture<Integer> responseFuture = getClient().sendRequest(request);
     Assert.assertEquals(responseFuture.getResponse().getStatus(), 200);
     Assert.assertEquals(responseFuture.getResponse().getEntity().intValue(), 10);
   }
@@ -511,7 +502,7 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
     try
     {
       Request<Void> request = builders.<Void>action("ExceptionTest").setPathKey("subgreetingsId", 1L).build();
-      REST_CLIENT.sendRequest(request).getResponse().getEntity();
+      getClient().sendRequest(request).getResponse().getEntity();
       Assert.fail("expected exception");
     }
     catch (RestLiResponseException e)

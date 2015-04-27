@@ -19,19 +19,13 @@ package com.linkedin.restli.examples;
 
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.r2.RemoteInvocationException;
-import com.linkedin.r2.transport.common.Client;
-import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
-import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
-import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.common.CollectionMetadata;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.client.PagingMetadataProjectionsBuilders;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
-
-import java.util.Collections;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -45,11 +39,6 @@ import org.testng.annotations.Test;
  */
 public class TestPagingProjection extends RestLiIntegrationTest
 {
-  private static final Client CLIENT =
-      new TransportClientAdapter(new HttpClientFactory().getClient(Collections.<String, String>emptyMap()));
-  private static final String URI_PREFIX = "http://localhost:1338/";
-  private static final RestClient REST_CLIENT = new RestClient(CLIENT, URI_PREFIX);
-
   @BeforeClass
   public void initClass() throws Exception
   {
@@ -77,7 +66,7 @@ public class TestPagingProjection extends RestLiIntegrationTest
         .pagingFields(CollectionMetadata.fields().count())
         .build();
 
-    final Response<CollectionResponse<Greeting>> response = REST_CLIENT.sendRequest(request).getResponse();
+    final Response<CollectionResponse<Greeting>> response = getClient().sendRequest(request).getResponse();
     final Greeting metadataGreeting = new Greeting(response.getEntity().getMetadataRaw());
     assertGreeting(metadataGreeting, false /*hasTone*/, true /*hasMessage*/, false /*hasID*/);
     Assert.assertTrue(response.getEntity().hasPaging(), "We must have paging!");
@@ -97,7 +86,7 @@ public class TestPagingProjection extends RestLiIntegrationTest
         .pagingFields(CollectionMetadata.fields().total())
         .build();
 
-    final Response<CollectionResponse<Greeting>> response = REST_CLIENT.sendRequest(request).getResponse();
+    final Response<CollectionResponse<Greeting>> response = getClient().sendRequest(request).getResponse();
     final Greeting metadataGreeting = new Greeting(response.getEntity().getMetadataRaw());
     assertGreeting(metadataGreeting, false /*hasTone*/, true /*hasMessage*/, false /*hasID*/);
     Assert.assertTrue(response.getEntity().hasPaging(), "We must have paging!");
@@ -119,7 +108,7 @@ public class TestPagingProjection extends RestLiIntegrationTest
         .pagingFields(CollectionMetadata.fields().total(), CollectionMetadata.fields().links())
         .build();
 
-    final Response<CollectionResponse<Greeting>> response = REST_CLIENT.sendRequest(request).getResponse();
+    final Response<CollectionResponse<Greeting>> response = getClient().sendRequest(request).getResponse();
     final Greeting metadataGreeting = new Greeting(response.getEntity().getMetadataRaw());
     assertGreeting(metadataGreeting, false /*hasTone*/, true /*hasMessage*/, false /*hasID*/);
     Assert.assertTrue(response.getEntity().hasPaging(), "We must have paging!");
@@ -140,7 +129,7 @@ public class TestPagingProjection extends RestLiIntegrationTest
         .pagingFields()
         .build();
 
-    final Response<CollectionResponse<Greeting>> response = REST_CLIENT.sendRequest(request).getResponse();
+    final Response<CollectionResponse<Greeting>> response = getClient().sendRequest(request).getResponse();
     //nothing should be sent back for both below
     final Greeting metadataGreeting = new Greeting(response.getEntity().getMetadataRaw());
     assertGreeting(metadataGreeting, false /*hasTone*/, false /*hasMessage*/, false /*hasID*/);
@@ -163,7 +152,7 @@ public class TestPagingProjection extends RestLiIntegrationTest
         .pagingFields(CollectionMetadata.fields().count())
         .build();
 
-    final Response<CollectionResponse<Greeting>> response = REST_CLIENT.sendRequest(request).getResponse();
+    final Response<CollectionResponse<Greeting>> response = getClient().sendRequest(request).getResponse();
     final Greeting metadataGreeting = new Greeting(response.getEntity().getMetadataRaw());
     assertGreeting(metadataGreeting, false /*hasTone*/, true /*hasMessage*/, false /*hasID*/);
     Assert.assertTrue(response.getEntity().hasPaging(), "We must have paging!");
@@ -183,7 +172,7 @@ public class TestPagingProjection extends RestLiIntegrationTest
         .pagingFields(CollectionMetadata.fields().total())
         .build();
 
-    final Response<CollectionResponse<Greeting>> response = REST_CLIENT.sendRequest(request).getResponse();
+    final Response<CollectionResponse<Greeting>> response = getClient().sendRequest(request).getResponse();
     final Greeting metadataGreeting = new Greeting(response.getEntity().getMetadataRaw());
     assertGreeting(metadataGreeting, false /*hasTone*/, true /*hasMessage*/, false /*hasID*/);
     Assert.assertTrue(response.getEntity().hasPaging(), "We must have paging!");
@@ -205,7 +194,7 @@ public class TestPagingProjection extends RestLiIntegrationTest
         .pagingFields(CollectionMetadata.fields().total(), CollectionMetadata.fields().links())
         .build();
 
-    final Response<CollectionResponse<Greeting>> response = REST_CLIENT.sendRequest(request).getResponse();
+    final Response<CollectionResponse<Greeting>> response = getClient().sendRequest(request).getResponse();
     final Greeting metadataGreeting = new Greeting(response.getEntity().getMetadataRaw());
     assertGreeting(metadataGreeting, false /*hasTone*/, true /*hasMessage*/, false /*hasID*/);
     Assert.assertTrue(response.getEntity().hasPaging(), "We must have paging!");
@@ -226,7 +215,7 @@ public class TestPagingProjection extends RestLiIntegrationTest
         .pagingFields()
         .build();
 
-    final Response<CollectionResponse<Greeting>> response = REST_CLIENT.sendRequest(request).getResponse();
+    final Response<CollectionResponse<Greeting>> response = getClient().sendRequest(request).getResponse();
     final Greeting metadataGreeting = new Greeting(response.getEntity().getMetadataRaw());
     //nothing should be sent back for both below
     assertGreeting(metadataGreeting, false /*hasTone*/, false /*hasMessage*/, false /*hasID*/);
@@ -249,7 +238,7 @@ public class TestPagingProjection extends RestLiIntegrationTest
         .pagingFields(CollectionMetadata.fields().count())
         .build();
 
-    final Response<CollectionResponse<Greeting>> response = REST_CLIENT.sendRequest(request).getResponse();
+    final Response<CollectionResponse<Greeting>> response = getClient().sendRequest(request).getResponse();
     final Greeting metadataGreeting = new Greeting(response.getEntity().getMetadataRaw());
     assertGreeting(metadataGreeting, false /*hasTone*/, true /*hasMessage*/, false /*hasID*/);
     Assert.assertTrue(response.getEntity().hasPaging(), "We must have paging!");
@@ -269,7 +258,7 @@ public class TestPagingProjection extends RestLiIntegrationTest
         .pagingFields(CollectionMetadata.fields().total())
         .build();
 
-    final Response<CollectionResponse<Greeting>> response = REST_CLIENT.sendRequest(request).getResponse();
+    final Response<CollectionResponse<Greeting>> response = getClient().sendRequest(request).getResponse();
     final Greeting metadataGreeting = new Greeting(response.getEntity().getMetadataRaw());
     assertGreeting(metadataGreeting, false /*hasTone*/, true /*hasMessage*/, false /*hasID*/);
     Assert.assertTrue(response.getEntity().hasPaging(), "We must have paging!");
@@ -293,7 +282,7 @@ public class TestPagingProjection extends RestLiIntegrationTest
         .pagingFields(CollectionMetadata.fields().total(), CollectionMetadata.fields().links())
         .build();
 
-    final Response<CollectionResponse<Greeting>> response = REST_CLIENT.sendRequest(request).getResponse();
+    final Response<CollectionResponse<Greeting>> response = getClient().sendRequest(request).getResponse();
     final Greeting metadataGreeting = new Greeting(response.getEntity().getMetadataRaw());
     assertGreeting(metadataGreeting, false /*hasTone*/, true /*hasMessage*/, false /*hasID*/);
     Assert.assertTrue(response.getEntity().hasPaging(), "We must have paging!");
@@ -312,7 +301,7 @@ public class TestPagingProjection extends RestLiIntegrationTest
         .pagingFields()
         .build();
 
-    final Response<CollectionResponse<Greeting>> response = REST_CLIENT.sendRequest(request).getResponse();
+    final Response<CollectionResponse<Greeting>> response = getClient().sendRequest(request).getResponse();
     final Greeting metadataGreeting = new Greeting(response.getEntity().getMetadataRaw());
     //nothing should be sent back for both below
     assertGreeting(metadataGreeting, false /*hasTone*/, false /*hasMessage*/, false /*hasID*/);
@@ -335,7 +324,7 @@ public class TestPagingProjection extends RestLiIntegrationTest
         .pagingFields(CollectionMetadata.fields().count())
         .build();
 
-    final Response<CollectionResponse<Greeting>> response = REST_CLIENT.sendRequest(request).getResponse();
+    final Response<CollectionResponse<Greeting>> response = getClient().sendRequest(request).getResponse();
     final Greeting metadataGreeting = new Greeting(response.getEntity().getMetadataRaw());
     //We should ideally only get back the message field in our metadata, but the resource method here intentionally
     //sends back the message and the ID to verify that restli doesn't interfere with a manual metadata projection.
@@ -357,7 +346,7 @@ public class TestPagingProjection extends RestLiIntegrationTest
         .pagingFields(CollectionMetadata.fields().total())
         .build();
 
-    final Response<CollectionResponse<Greeting>> response = REST_CLIENT.sendRequest(request).getResponse();
+    final Response<CollectionResponse<Greeting>> response = getClient().sendRequest(request).getResponse();
     final Greeting metadataGreeting = new Greeting(response.getEntity().getMetadataRaw());
     //We should ideally only get back the message field in our metadata, but the resource method here intentionally
     //sends back the message and the ID to verify that restli doesn't interfere with a manual metadata projection.
@@ -381,7 +370,7 @@ public class TestPagingProjection extends RestLiIntegrationTest
         .pagingFields(CollectionMetadata.fields().total(), CollectionMetadata.fields().links())
         .build();
 
-    final Response<CollectionResponse<Greeting>> response = REST_CLIENT.sendRequest(request).getResponse();
+    final Response<CollectionResponse<Greeting>> response = getClient().sendRequest(request).getResponse();
     final Greeting metadataGreeting = new Greeting(response.getEntity().getMetadataRaw());
     //We should ideally only get back the message field in our metadata, but the resource method here intentionally
     //sends back the message and the ID to verify that restli doesn't interfere with a manual metadata projection.
@@ -404,7 +393,7 @@ public class TestPagingProjection extends RestLiIntegrationTest
         .pagingFields()
         .build();
 
-    final Response<CollectionResponse<Greeting>> response = REST_CLIENT.sendRequest(request).getResponse();
+    final Response<CollectionResponse<Greeting>> response = getClient().sendRequest(request).getResponse();
     final Greeting metadataGreeting = new Greeting(response.getEntity().getMetadataRaw());
     //This is manual on the server, so everything should be there
     assertGreeting(metadataGreeting, true /*hasTone*/, true /*hasMessage*/, true /*hasID*/);
@@ -427,7 +416,7 @@ public class TestPagingProjection extends RestLiIntegrationTest
         .pagingFields(CollectionMetadata.fields().count())
         .build();
 
-    final Response<CollectionResponse<Greeting>> response = REST_CLIENT.sendRequest(request).getResponse();
+    final Response<CollectionResponse<Greeting>> response = getClient().sendRequest(request).getResponse();
     final Greeting metadataGreeting = new Greeting(response.getEntity().getMetadataRaw());
     //We should ideally only get back the message field in our metadata, but the resource method here intentionally
     //sends back the message and the ID to verify that restli doesn't interfere with a manual metadata projection.
@@ -449,7 +438,7 @@ public class TestPagingProjection extends RestLiIntegrationTest
         .pagingFields(CollectionMetadata.fields().total())
         .build();
 
-    final Response<CollectionResponse<Greeting>> response = REST_CLIENT.sendRequest(request).getResponse();
+    final Response<CollectionResponse<Greeting>> response = getClient().sendRequest(request).getResponse();
     final Greeting metadataGreeting = new Greeting(response.getEntity().getMetadataRaw());
     //We should ideally only get back the message field in our metadata, but the resource method here intentionally
     //sends back the message and the ID to verify that restli doesn't interfere with a manual metadata projection.
@@ -473,7 +462,7 @@ public class TestPagingProjection extends RestLiIntegrationTest
         .pagingFields(CollectionMetadata.fields().total(), CollectionMetadata.fields().links())
         .build();
 
-    final Response<CollectionResponse<Greeting>> response = REST_CLIENT.sendRequest(request).getResponse();
+    final Response<CollectionResponse<Greeting>> response = getClient().sendRequest(request).getResponse();
     final Greeting metadataGreeting = new Greeting(response.getEntity().getMetadataRaw());
     assertGreeting(metadataGreeting, false /*hasTone*/, true /*hasMessage*/, true /*hasID*/);
     Assert.assertTrue(response.getEntity().hasPaging(), "We must have paging!");
@@ -494,7 +483,7 @@ public class TestPagingProjection extends RestLiIntegrationTest
         .pagingFields()
         .build();
 
-    final Response<CollectionResponse<Greeting>> response = REST_CLIENT.sendRequest(request).getResponse();
+    final Response<CollectionResponse<Greeting>> response = getClient().sendRequest(request).getResponse();
     final Greeting metadataGreeting = new Greeting(response.getEntity().getMetadataRaw());
     //Manual projection forces everything to be present in the metadata
     assertGreeting(metadataGreeting, true /*hasTone*/, true /*hasMessage*/, true /*hasID*/);
@@ -511,7 +500,7 @@ public class TestPagingProjection extends RestLiIntegrationTest
     final Request<CollectionResponse<Greeting>> request = builders.findBy("metadataManualPagingAutomaticPartialNull")
         .build();
 
-    final Response<CollectionResponse<Greeting>> response = REST_CLIENT.sendRequest(request).getResponse();
+    final Response<CollectionResponse<Greeting>> response = getClient().sendRequest(request).getResponse();
     final Greeting metadataGreeting = new Greeting(response.getEntity().getMetadataRaw());
     assertGreeting(metadataGreeting, true /*hasTone*/, true /*hasMessage*/, true /*hasID*/);
     //Resource method returned null here for total, so only the total is missing
@@ -536,7 +525,7 @@ public class TestPagingProjection extends RestLiIntegrationTest
                       CollectionMetadata.fields().links())
         .build();
 
-    final Response<CollectionResponse<Greeting>> response = REST_CLIENT.sendRequest(request).getResponse();
+    final Response<CollectionResponse<Greeting>> response = getClient().sendRequest(request).getResponse();
     final Greeting metadataGreeting = new Greeting(response.getEntity().getMetadataRaw());
     assertGreeting(metadataGreeting, false /*hasTone*/, true /*hasMessage*/, true /*hasID*/);
     Assert.assertTrue(response.getEntity().hasPaging(), "We must have paging!");
@@ -553,7 +542,7 @@ public class TestPagingProjection extends RestLiIntegrationTest
         .pagingFields(CollectionMetadata.fields().count(), new PathSpec("links", PathSpec.WILDCARD, "rel"))
         .build();
 
-    final Response<CollectionResponse<Greeting>> response = REST_CLIENT.sendRequest(request).getResponse();
+    final Response<CollectionResponse<Greeting>> response = getClient().sendRequest(request).getResponse();
     //Assert that no metadata was sent back
     Assert.assertNull(response.getEntity().getMetadataRaw(), "We should get no metadata back");
     assertPaging(response.getEntity().getPaging(), false /*hasTotal*/, false /*hasStart*/, true /*hasCount*/, true /*hasLinks*/);

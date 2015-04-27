@@ -68,11 +68,8 @@ import com.linkedin.restli.examples.greetings.api.Tone;
 * @author Zhenkai Zhu
 * @version $Revision: $
 */
-public class TestAllPartitionsRequestBuilder extends RestLiIntegrationTest {
-  private static final Client CLIENT = new TransportClientAdapter(new HttpClientFactory().
-      getClient(Collections.<String, String>emptyMap()));
-  private static final String URI_PREFIX = "http://localhost:1338/";
-  private static final RestClient REST_CLIENT = new RestClient(CLIENT, URI_PREFIX);
+public class TestAllPartitionsRequestBuilder extends RestLiIntegrationTest
+{
   private static final String TEST_URI = "greetings";
   private static final ResourceSpec _COLL_SPEC      =
       new ResourceSpecImpl(EnumSet.allOf(ResourceMethod.class),
@@ -139,7 +136,7 @@ public class TestAllPartitionsRequestBuilder extends RestLiIntegrationTest {
       }
     };
 
-    HostSet hostsResult = searchRB.sendRequests(REST_CLIENT, request, new RequestContext(), cb);
+    HostSet hostsResult = searchRB.sendRequests(getClient(), request, new RequestContext(), cb);
 
     List<URI> uris = hostsResult.getAllHosts();
     Assert.assertTrue(uris.containsAll(expectedUris));
