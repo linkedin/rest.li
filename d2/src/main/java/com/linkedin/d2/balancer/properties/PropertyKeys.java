@@ -81,6 +81,9 @@ public class PropertyKeys
   public static final String HTTP_LB_CLUSTER_MIN_CALL_COUNT_HIGH_WATER_MARK = "http.loadBalancer.clusterMinCallCount.highWaterMark";
   public static final String HTTP_LB_CLUSTER_MIN_CALL_COUNT_LOW_WATER_MARK = "http.loadBalancer.clusterMinCallCount.lowWaterMark";
 
+  //used by service metadata properties
+  public static final String SERVICE_FOLLOW_REDIRECTION_MAX_HOP = "followRedirection.maxHop";
+
   //used by cluster properties
   public static final String CLUSTER_NAME = "clusterName";
   public static final String PARTITION_PROPERTIES = "partitionProperties";

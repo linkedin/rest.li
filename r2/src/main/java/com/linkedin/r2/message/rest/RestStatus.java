@@ -33,6 +33,10 @@ public class RestStatus
   private static final Charset UTF8 = Charset.forName("UTF-8");
 
   public static int OK = 200;
+  public static int MOVED_PERMANENTLY = 301;
+  public static int FOUND = 302;
+  public static int SEE_OTHER = 303;
+  public static int TEMPORARY_REDIRECT = 307;
   public static int BAD_REQUEST = 400;
   public static int NOT_FOUND = 404;
   public static int INTERNAL_SERVER_ERROR = 500;
