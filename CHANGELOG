@@ -1,5 +1,11 @@
-2.3.1
+2.4.0
 ------
+(RB=444062)
+Migrate r2 to netty4.
+(RB=444153)
+Add more r2 integration tests.
+(RB=444082)
+Refactor restli-int-test to properly shutdown R2 client/clientFactory
 
 2.3.0
 ------
