@@ -1,5 +1,4 @@
 dependencies {
-  compile externalDependency.json
   compile externalDependency.jacksonCore
   testCompile externalDependency.testng
 }

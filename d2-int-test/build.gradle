@@ -10,7 +10,6 @@ dependencies {
   compile externalDependency.commonsCodec
   compile externalDependency.commonsIo
   compile externalDependency.commonsHttpClient
-  compile externalDependency.json
   compile externalDependency.zookeeper
   compile externalDependency.jdkTools
   compile externalDependency.netty
