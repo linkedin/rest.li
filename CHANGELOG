@@ -1,3 +1,9 @@
+2.4.1
+------
+(RB=471298)
+Fix a bug in HttpClientFactory where _clientsOutstanding can go negative if client#shutdown 
+is called multiple times on the same client and thus preventing clientFactory to be shutdown.
+
 2.4.0
 ------
 (RB=444062)

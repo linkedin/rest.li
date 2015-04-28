@@ -698,6 +698,7 @@ public class HttpClientFactory implements TransportClientFactory
   private class FactoryClient implements TransportClient
   {
     private final TransportClient _client;
+    private final AtomicBoolean _shutdown = new AtomicBoolean(false);
 
     private FactoryClient(TransportClient client)
     {
@@ -715,34 +716,41 @@ public class HttpClientFactory implements TransportClientFactory
     @Override
     public void shutdown(final Callback<None> callback)
     {
-      _client.shutdown(new Callback<None>()
+      if (_shutdown.compareAndSet(false, true))
       {
-        @Override
-        public void onSuccess(None none)
+        _client.shutdown(new Callback<None>()
         {
-          try
+          @Override
+          public void onSuccess(None none)
           {
-            callback.onSuccess(none);
+            try
+            {
+              callback.onSuccess(none);
+            }
+            finally
+            {
+              clientShutdown();
+            }
           }
-          finally
-          {
-            clientShutdown();
-          }
-        }
 
-        @Override
-        public void onError(Throwable e)
-        {
-          try
+          @Override
+          public void onError(Throwable e)
           {
-            callback.onError(e);
+            try
+            {
+              callback.onError(e);
+            }
+            finally
+            {
+              clientShutdown();
+            }
           }
-          finally
-          {
-            clientShutdown();
-          }
-        }
-      });
+        });
+      }
+      else
+      {
+        callback.onError(new IllegalStateException("shutdown has already been requested."));
+      }
     }
   }
 }

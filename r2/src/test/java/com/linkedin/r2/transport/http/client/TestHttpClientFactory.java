@@ -20,6 +20,7 @@
 
 package com.linkedin.r2.transport.http.client;
 
+import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import io.netty.channel.nio.NioEventLoopGroup;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -368,6 +369,34 @@ public class TestHttpClientFactory
       factory.shutdown(Callbacks.<None>empty());
     }
 
+  }
+
+  @Test
+  public void testClientShutdownBeingCalledMultipleTimes()
+      throws InterruptedException, ExecutionException, TimeoutException
+  {
+    HttpClientFactory factory = new HttpClientFactory();
+    TransportClient client = factory.getClient(Collections.<String, Object>emptyMap());
+    // first shutdown call
+    FutureCallback<None> clientShutdown = new FutureCallback<None>();
+    client.shutdown(clientShutdown);
+    clientShutdown.get(30, TimeUnit.SECONDS);
+    // second shutdown call
+    clientShutdown = new FutureCallback<None>();
+    client.shutdown(clientShutdown);
+    try
+    {
+      clientShutdown.get(30, TimeUnit.SECONDS);
+      Assert.fail("should have thrown exception on the second shutdown call.");
+    }
+    catch (ExecutionException ex)
+    {
+      Assert.assertTrue(ex.getCause() instanceof IllegalStateException);
+    }
+
+    FutureCallback<None> shutdownCallback = new FutureCallback<None>();
+    factory.shutdown(shutdownCallback);
+    shutdownCallback.get(30, TimeUnit.SECONDS);
   }
 
   @DataProvider(name = "compressionConfigsData")
