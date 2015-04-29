@@ -7,6 +7,9 @@ Add new status code constants for redirection and added new property key for red
 Fix a bug in HttpClientFactory where _clientsOutstanding can go negative if client#shutdown 
 is called multiple times on the same client and thus preventing clientFactory to be shutdown.
 
+(RB=472316)
+bug fix in ConfigRunner of d2 quick-start example
+
 2.4.0
 ------
 (RB=444062)

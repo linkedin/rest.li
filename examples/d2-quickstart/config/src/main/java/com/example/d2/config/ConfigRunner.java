@@ -60,6 +60,8 @@ public class ConfigRunner
     //this contains the topology of our system
     Map<String,Object> clusterServiceConfigurations =
         (Map<String, Object>)json.get("d2Clusters");
+    // 'comment' has no special meaning in json...
+    clusterServiceConfigurations.remove("comment");
 
     System.out.println("Populating zookeeper with d2 configuration");
 
