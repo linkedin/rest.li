@@ -1,5 +1,8 @@
 2.4.1
 ------
+(RB=453114)
+Add new status code constants for redirection and added new property key for redirection hops.
+
 (RB=471298)
 Fix a bug in HttpClientFactory where _clientsOutstanding can go negative if client#shutdown 
 is called multiple times on the same client and thus preventing clientFactory to be shutdown.
