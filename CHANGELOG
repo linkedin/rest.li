@@ -1,3 +1,12 @@
+2.4.3
+------
+
+
+2.4.2
+------
+(RB=473188)
+Add back log4j.xml in generator and data-avor-generator module.
+
 2.4.1
 ------
 (RB=453114)
