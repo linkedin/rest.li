@@ -1,12 +1,19 @@
+2.4.4
+------
+
+
 2.4.3
 ------
 (RB=468269)
 Remove try-catch in parseAcceptEncodingHeader().
 
+(RB=475642)
+Removing unused title field from the Link.pdsc.
+
 2.4.2
 ------
 (RB=473188)
-Add back log4j.xml in generator and data-avor-generator module.
+Add back log4j.xml in generator and data-avro-generator module.
 
 2.4.1
 ------

@@ -18,11 +18,6 @@
       "name": "type",
       "type": "string",
       "doc": "The type (media type) of the resource"
-    },
-    {
-      "name": "title",
-      "type": "string",
-      "doc": "The title of the link"
     }
   ]
 }

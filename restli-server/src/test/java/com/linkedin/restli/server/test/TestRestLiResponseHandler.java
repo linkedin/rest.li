@@ -1368,7 +1368,6 @@ public class TestRestLiResponseHandler
   private static void checkLink(Link link, String rel, URIDetails expectedURIDetails, String type)
   {
     assertEquals(link.getRel(), rel);
-    assertFalse(link.hasTitle());
     assertEquals(link.getType(), type);
     URIDetails.testUriGeneration(link.getHref(), expectedURIDetails);
   }

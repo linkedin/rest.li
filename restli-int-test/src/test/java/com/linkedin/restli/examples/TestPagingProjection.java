@@ -550,7 +550,6 @@ public class TestPagingProjection extends RestLiIntegrationTest
     Assert.assertEquals(paging.getLinks().size(), 1, "We should only have one links field");
     Assert.assertFalse(paging.getLinks().get(0).hasHref(), "We should NOT have href in our link!");
     Assert.assertTrue(paging.getLinks().get(0).hasRel(), "We should have rel in our link!");
-    Assert.assertFalse(paging.getLinks().get(0).hasTitle(), "We should NOT have title in our link!");
     Assert.assertFalse(paging.getLinks().get(0).hasType(), "We should NOT have type in our link!");
   }
 
