@@ -35,7 +35,6 @@ import com.linkedin.restli.client.response.BatchKVResponse;
 import com.linkedin.restli.client.test.TestRecord;
 import com.linkedin.restli.client.uribuilders.RestliUriBuilderUtil;
 import com.linkedin.restli.client.util.PatchGenerator;
-import com.linkedin.restli.client.util.PatchRequestRecorder;
 import com.linkedin.restli.common.BatchRequest;
 import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CollectionRequest;
@@ -1445,23 +1444,6 @@ public class TestClientBuilders
                       ResourceMethod.PARTIAL_UPDATE,
                       patch,
                       Collections.<String, String>emptyMap());
-  }
-
-  @Test
-  public void testPatchGenerateAndPatchRequestRecorderGenerateIdenticalPatches()
-      throws CloneNotSupportedException
-  {
-    TestRecord t1 = new TestRecord();
-    TestRecord t2 = new TestRecord(t1.data().copy());
-    t2.setId(1L);
-    t2.setMessage("Foo Bar Baz");
-    PatchRequest<TestRecord> patchFromGenerator = PatchGenerator.diff(t1, t2);
-
-    PatchRequestRecorder<TestRecord> patchRecorder = new PatchRequestRecorder<TestRecord>(TestRecord.class);
-    patchRecorder.getRecordingProxy().setId(1L).setMessage("Foo Bar Baz");
-    PatchRequest<TestRecord> patchFromRecorder = patchRecorder.generatePatchRequest();
-
-    Assert.assertEquals(patchFromRecorder.getPatchDocument(), patchFromGenerator.getPatchDocument());
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "singleEntity")

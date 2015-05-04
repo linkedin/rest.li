@@ -18,7 +18,6 @@ package com.linkedin.restli.client.util;
 
 
 import com.linkedin.data.template.DataTemplate;
-import com.linkedin.data.transform.patch.recorder.PatchTreeRecorder;
 import com.linkedin.restli.common.PatchRequest;
 
 

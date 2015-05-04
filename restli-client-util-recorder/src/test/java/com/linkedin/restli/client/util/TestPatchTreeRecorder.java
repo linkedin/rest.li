@@ -14,7 +14,7 @@
    limitations under the License.
 */
 
-package com.linkedin.data.transform.patch.recorder;
+package com.linkedin.restli.client.util;
 
 
 import com.linkedin.data.ByteString;
@@ -27,10 +27,11 @@ import com.linkedin.data.transform.patch.request.PatchCreator;
 import com.linkedin.data.transform.patch.request.PatchTree;
 import com.linkedin.data.transform.patch.request.RemoveFieldOp;
 import com.linkedin.data.transform.patch.request.SetFieldOp;
-import com.linkedin.data.transform.test.FooEnum;
-import com.linkedin.data.transform.test.FooRecordTemplate;
-import com.linkedin.data.transform.test.PatchTreeTestModel;
 import com.linkedin.pegasus.generator.test.CustomPointRecord;
+import com.linkedin.restli.client.util.test.FooEnum;
+import com.linkedin.restli.client.util.test.FooRecordTemplate;
+import com.linkedin.restli.client.util.test.PatchTreeTestModel;
+
 import org.testng.Assert;
 import org.testng.annotations.Test;
 

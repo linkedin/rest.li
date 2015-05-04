@@ -21,7 +21,6 @@ dependencies {
   testCompile externalDependency.easymock
   testCompile externalDependency.mockito
   testCompile externalDependency.commonsHttpClient
-  testRuntime externalDependency.cglib
   testRuntime externalDependency.objenesis
 }
 

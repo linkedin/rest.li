@@ -1,5 +1,7 @@
 2.5.2
 ------
+(RB=475062)
+Factor out PatchRequestRecorder and related classes into a new module (restli-client-util-recorder).
 
 2.5.1
 ------

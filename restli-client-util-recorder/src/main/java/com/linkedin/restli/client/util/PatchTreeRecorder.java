@@ -14,7 +14,7 @@
    limitations under the License.
 */
 
-package com.linkedin.data.transform.patch.recorder;
+package com.linkedin.restli.client.util;
 
 
 import com.linkedin.data.schema.PathSpec;

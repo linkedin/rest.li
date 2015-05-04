@@ -17,5 +17,4 @@ dependencies {
   testCompile externalDependency.guava
   testCompile externalDependency.testng
   testCompile externalDependency.commonsHttpClient
-  testRuntime externalDependency.cglib
 }

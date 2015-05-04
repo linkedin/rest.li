@@ -1,0 +1,14 @@
+apply plugin: 'pegasus'
+
+dependencies {
+  compile project (':data')
+  compile project (':data-transform')
+  compile project (':restli-common')
+  compile project (':restli-client')
+  compile externalDependency.cglib
+
+  testCompile project(path: ':data', configuration: 'testArtifacts')
+  testCompile project(path: ':generator-test', configuration: 'testArtifacts')
+  testCompile project(path: ':restli-client', configuration: 'testArtifacts')
+  testCompile externalDependency.testng
+}

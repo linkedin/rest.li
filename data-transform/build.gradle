@@ -1,6 +1,5 @@
 dependencies {
   compile project (':data')
-  compile externalDependency.cglib
   testCompile externalDependency.testng
   testCompile project(path: ':data', configuration: 'testArtifacts')
   testCompile project(path: ':generator-test', configuration: 'testArtifacts')
