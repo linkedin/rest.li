@@ -21,6 +21,7 @@
 package com.linkedin.r2.transport.http.client;
 
 
+import com.linkedin.r2.message.rest.RestResponse;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -52,7 +53,16 @@ class ChannelPoolHandler extends ChannelInboundHandlerAdapter
     AsyncPool<Channel> pool = ctx.channel().attr(CHANNEL_POOL_ATTR_KEY).getAndRemove();
     if (pool != null)
     {
-      pool.put(ctx.channel());
+      RestResponse restResponse = (RestResponse) msg;
+      String connection = restResponse.getHeader("connection");
+      if ("close".equalsIgnoreCase(connection))
+      {
+        pool.dispose(ctx.channel());
+      }
+      else
+      {
+        pool.put(ctx.channel());
+      }
     }
   }
 

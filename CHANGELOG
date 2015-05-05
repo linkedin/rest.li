@@ -1,5 +1,8 @@
 2.4.4
 ------
+(RB=475440)
+Fix a bug in ChannelPoolHandler where it should NOT put a channel back to the pool if
+there is a "connection:close" header in the response.
 
 
 2.4.3
