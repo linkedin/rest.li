@@ -17,7 +17,6 @@
 package com.linkedin.restli.server.filter;
 
 
-import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.server.RestLiResponseData;
 
 import java.util.Map;
@@ -36,26 +35,4 @@ public interface FilterResponseContext
    * @return {@link RestLiResponseData}
    */
   RestLiResponseData getResponseData();
-
-  /**
-   * Obtain the HTTP status.
-   *
-   * @return HTTP Status.
-   */
-  HttpStatus getHttpStatus();
-
-  /**
-   * Set the HTTP status.
-   *
-   * @param status
-   *          HTTP status.
-   */
-  void setHttpStatus(HttpStatus status);
-
-  /**
-   * Get a mutable map of response headers.
-   *
-   * @return Response headers.
-   */
-  Map<String, String> getResponseHeaders();
 }

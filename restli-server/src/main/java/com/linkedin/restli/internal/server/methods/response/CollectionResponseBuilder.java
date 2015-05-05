@@ -24,9 +24,10 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.CollectionMetadata;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.HttpStatus;
-import com.linkedin.restli.internal.server.AugmentedRestLiResponseData;
+import com.linkedin.restli.internal.server.RestLiResponseEnvelope;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.methods.AnyRecord;
+import com.linkedin.restli.internal.server.response.CollectionResponseEnvelope;
 import com.linkedin.restli.internal.server.util.RestUtils;
 import com.linkedin.restli.server.CollectionResult;
 import com.linkedin.restli.server.CollectionResult.PageIncrement;
@@ -42,26 +43,27 @@ import java.util.Map;
 public class CollectionResponseBuilder implements RestLiResponseBuilder
 {
   @Override
-  public PartialRestResponse buildResponse(RoutingResult routingResult, AugmentedRestLiResponseData responseData)
+  public PartialRestResponse buildResponse(RoutingResult routingResult, RestLiResponseEnvelope responseData)
   {
+    CollectionResponseEnvelope response = responseData.getCollectionResponseEnvelope();
     PartialRestResponse.Builder builder = new PartialRestResponse.Builder();
     CollectionResponse<AnyRecord> collectionResponse = new CollectionResponse<AnyRecord>(AnyRecord.class);
-    collectionResponse.setPaging(responseData.getCollectionResponsePaging());
+    collectionResponse.setPaging(response.getCollectionResponsePaging());
     DataList elementsMap = (DataList) collectionResponse.data().get(CollectionResponse.ELEMENTS);
-    for (RecordTemplate entry : responseData.getCollectionResponse())
+    for (RecordTemplate entry : response.getCollectionResponse())
     {
       CheckedUtil.addWithoutChecking(elementsMap, entry.data());
     }
-    if (responseData.getCollectionResponseCustomMetadata() != null)
+    if (response.getCollectionResponseCustomMetadata() != null)
     {
-      collectionResponse.setMetadataRaw(responseData.getCollectionResponseCustomMetadata().data());
+      collectionResponse.setMetadataRaw(response.getCollectionResponseCustomMetadata().data());
     }
     builder.entity(collectionResponse);
     return builder.headers(responseData.getHeaders()).build();
   }
 
   @Override
-  public AugmentedRestLiResponseData buildRestLiResponseData(RestRequest request, RoutingResult routingResult,
+  public RestLiResponseEnvelope buildRestLiResponseData(RestRequest request, RoutingResult routingResult,
                                                              Object object, Map<String, String> headers)
   {
     if (object instanceof List)
@@ -93,7 +95,7 @@ public class CollectionResponseBuilder implements RestLiResponseBuilder
     }
   }
 
-  private static AugmentedRestLiResponseData buildRestLiResponseData(final RestRequest request,
+  private static RestLiResponseEnvelope buildRestLiResponseData(final RestRequest request,
                                                                      final RoutingResult routingResult,
                                                                      final List<? extends RecordTemplate> elements,
                                                                      final PageIncrement pageIncrement,
@@ -154,9 +156,9 @@ public class CollectionResponseBuilder implements RestLiResponseBuilder
       projectedCustomMetadata = null;
     }
 
-    return new AugmentedRestLiResponseData.Builder(routingResult.getResourceMethod().getMethodType()).headers(headers)
-        .collectionEntities(processedElements)
-        .collectionResponsePaging(projectedPaging)
-        .collectionCustomMetadata(projectedCustomMetadata).build();
+    return new CollectionResponseEnvelope(processedElements,
+                                          projectedPaging,
+                                          projectedCustomMetadata,
+                                          headers);
   }
 }

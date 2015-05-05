@@ -21,15 +21,15 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.collections.CheckedUtil;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.SetMode;
-import com.linkedin.internal.common.util.CollectionUtils;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.EntityResponse;
-import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.internal.common.URIParamUtils;
-import com.linkedin.restli.internal.server.AugmentedRestLiResponseData;
+import com.linkedin.restli.internal.server.RestLiResponseEnvelope;
+import com.linkedin.restli.internal.server.response.BatchResponseEnvelope;
+import com.linkedin.restli.internal.server.response.BatchResponseEnvelope.BatchResponseEntry;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.internal.server.methods.AnyRecord;
@@ -39,9 +39,7 @@ import com.linkedin.restli.server.RestLiServiceException;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 
 public class BatchGetResponseBuilder implements RestLiResponseBuilder
@@ -54,21 +52,79 @@ public class BatchGetResponseBuilder implements RestLiResponseBuilder
   }
 
   @Override
-  public PartialRestResponse buildResponse(RoutingResult routingResult, AugmentedRestLiResponseData responseData)
+  @SuppressWarnings("unchecked")
+  public PartialRestResponse buildResponse(RoutingResult routingResult, RestLiResponseEnvelope responseData)
   {
+    final Map<Object, BatchResponseEntry> responses = (Map<Object, BatchResponseEntry>) responseData.getBatchResponseEnvelope().getBatchResponseMap();
+
+    // Build the EntityResponse for each key from the merged map with mask from routingResult.
+    Map<Object, EntityResponse<RecordTemplate>> entityBatchResponse = buildEntityResponse(routingResult, responses);
+
     PartialRestResponse.Builder builder = new PartialRestResponse.Builder();
-    final ProtocolVersion protocolVersion =
-        ((ServerResourceContext) routingResult.getContext()).getRestliProtocolVersion();
+    final ProtocolVersion protocolVersion = ((ServerResourceContext) routingResult.getContext()).getRestliProtocolVersion();
+
     @SuppressWarnings("unchecked")
-    final BatchResponse<AnyRecord> response =
-        toBatchResponse((Map<Object, EntityResponse<RecordTemplate>>) responseData.getBatchResponseMap(),
-                        protocolVersion);
+    final BatchResponse<AnyRecord> response = toBatchResponse(entityBatchResponse, protocolVersion);
     builder.entity(response);
     return builder.headers(responseData.getHeaders()).build();
   }
 
+  // Transforms results into the corresponding
+  // typed entity responses with status and ErrorResponse populated.
+  private Map<Object, EntityResponse<RecordTemplate>> buildEntityResponse(RoutingResult routingResult,
+                                                                          Map<Object, BatchResponseEntry> mergedResponse)
+  {
+    Map<Object, EntityResponse<RecordTemplate>> entityBatchResponse = new HashMap<Object, EntityResponse<RecordTemplate>>(mergedResponse.size());
+
+    for (Map.Entry<Object, BatchResponseEntry> entry : mergedResponse.entrySet())
+    {
+      @SuppressWarnings("unchecked")
+      final EntityResponse<RecordTemplate> entityResponse = entry.getValue().hasException() ?
+                                                              createEntityResponse(null, routingResult) :
+                                                              createEntityResponse(entry.getValue().getRecord(), routingResult);
+
+      if (entry.getKey() == null)
+      {
+        throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
+            "Unexpected null encountered. Null errors Map found inside of the result returned by the resource method: "
+                + routingResult.getResourceMethod());
+      }
+
+      entityResponse.setStatus(entry.getValue().getStatus(), SetMode.IGNORE_NULL);
+      if (entry.getValue().hasException())
+      {
+        entityResponse.setError(_errorResponseBuilder.buildErrorResponse(entry.getValue().getException()));
+      }
+      entityBatchResponse.put(entry.getKey(), entityResponse);
+    }
+
+    return entityBatchResponse;
+  }
+
+  private static EntityResponse<RecordTemplate> createEntityResponse(RecordTemplate entityTemplate, RoutingResult routingResult)
+  {
+    final EntityResponse<RecordTemplate> entityResponse;
+    if (entityTemplate == null)
+    {
+      entityResponse = new EntityResponse<RecordTemplate>(null);
+    }
+    else
+    {
+      @SuppressWarnings("unchecked")
+      final Class<RecordTemplate> entityClass = (Class<RecordTemplate>) entityTemplate.getClass();
+      entityResponse = new EntityResponse<RecordTemplate>(entityClass);
+
+      final DataMap projectedData = RestUtils.projectFields(entityTemplate.data(),
+                                                            routingResult.getContext().getProjectionMode(),
+                                                            routingResult.getContext().getProjectionMask());
+      CheckedUtil.putWithoutChecking(entityResponse.data(), EntityResponse.ENTITY, projectedData);
+    }
+
+    return entityResponse;
+  }
+
   @Override
-  public AugmentedRestLiResponseData buildRestLiResponseData(RestRequest request, RoutingResult routingResult,
+  public RestLiResponseEnvelope buildRestLiResponseData(RestRequest request, RoutingResult routingResult,
                                                              Object result, Map<String, String> headers)
   {
     @SuppressWarnings({ "unchecked" })
@@ -86,56 +142,52 @@ public class BatchGetResponseBuilder implements RestLiResponseBuilder
       serviceErrors = batchResult.getErrors();
     }
 
-    final ServerResourceContext context = (ServerResourceContext) routingResult.getContext();
-    //Note that populateErrors below will check the serviceErrors for the existence of any null keys/values.
-    final Map<Object, ErrorResponse> errors =
-        BatchResponseUtil.populateErrors(serviceErrors, routingResult, _errorResponseBuilder);
-
-    final Set<Object> mergedKeys = new HashSet<Object>(entities.keySet());
-    mergedKeys.addAll(statuses.keySet());
-    //Verify that there is no null key inside the entities or status maps. If so, this is a developer error. Note that we wait
-    //until this point to check for the existence of a null key since we can't check directly on the entities or status
-    //maps since certain Map implementations, such as java.util.concurrent.ConcurrentHashMap, throw an NPE if containsKey(null) is called.
-    if (mergedKeys.contains(null))
+    try
     {
-      throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
-          "Unexpected null encountered. Null key inside of a Map returned by the resource method: " + routingResult
-              .getResourceMethod());
+      if (statuses.containsKey(null))
+      {
+        throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
+            "Unexpected null encountered. Null key inside of a Map returned by the resource method: " + routingResult
+                .getResourceMethod());
+      }
+    }
+    catch (NullPointerException e)
+    {
+      // Some map implementations will throw an NPE if they do not support null keys.
+      // In this case it is OK to swallow this exception and proceed.
     }
 
-    mergedKeys.addAll(errors.keySet());
-
-    final Map<Object, EntityResponse<RecordTemplate>> results =
-        new HashMap<Object, EntityResponse<RecordTemplate>>(
-            CollectionUtils.getMapInitialCapacity(mergedKeys.size(), 0.75f), 0.75f);
-
-    for (Object key : mergedKeys)
+    Map<Object, BatchResponseEntry> batchResult = new HashMap<Object, BatchResponseEntry>(entities.size() + serviceErrors.size());
+    for (Map.Entry<Object, RecordTemplate> entity : entities.entrySet())
     {
-      final EntityResponse<RecordTemplate> entityResponse;
-
-      final RecordTemplate entityTemplate = entities.get(key);
-      if (entityTemplate == null)
+      if (entity.getKey() == null)
       {
-        entityResponse = new EntityResponse<RecordTemplate>(null);
-      }
-      else
-      {
-        @SuppressWarnings("unchecked")
-        final Class<RecordTemplate> entityClass = (Class<RecordTemplate>) entityTemplate.getClass();
-        entityResponse = new EntityResponse<RecordTemplate>(entityClass);
-
-        final DataMap projectedData =
-            RestUtils.projectFields(entityTemplate.data(), context.getProjectionMode(), context.getProjectionMask());
-        CheckedUtil.putWithoutChecking(entityResponse.data(), EntityResponse.ENTITY, projectedData);
+        throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
+            "Unexpected null encountered. Null key inside of a Map returned by the resource method: " + routingResult
+                .getResourceMethod());
       }
 
-      entityResponse.setStatus(statuses.get(key), SetMode.IGNORE_NULL);
-      entityResponse.setError(errors.get(key), SetMode.IGNORE_NULL);
-      results.put(key, entityResponse);
+      batchResult.put(entity.getKey(), new BatchResponseEntry(statuses.get(entity.getKey()), entity.getValue()));
     }
-    return new AugmentedRestLiResponseData.Builder(routingResult.getResourceMethod().getMethodType()).batchKeyEntityMap(results)
-                                                                                                     .headers(headers)
-                                                                                                     .build();
+
+    for (Map.Entry<Object, RestLiServiceException> entity : serviceErrors.entrySet())
+    {
+      if (entity.getKey() == null || entity.getValue() == null)
+      {
+        throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
+            "Unexpected null encountered. Null key inside of a Map returned by the resource method: " + routingResult
+                .getResourceMethod());
+      }
+      batchResult.put(entity.getKey(), new BatchResponseEntry(statuses.get(entity.getKey()), entity.getValue()));
+    }
+
+    final Map<Object, RestLiServiceException> contextErrors = ((ServerResourceContext) routingResult.getContext()).getBatchKeyErrors();
+    for (Map.Entry<Object, RestLiServiceException> entry : contextErrors.entrySet())
+    {
+      batchResult.put(entry.getKey(), new BatchResponseEntry(statuses.get(entry.getKey()), entry.getValue()));
+    }
+
+    return new BatchResponseEnvelope(batchResult, headers);
   }
 
   private static <K, V extends RecordTemplate> BatchResponse<AnyRecord> toBatchResponse(Map<K, EntityResponse<V>> entities,

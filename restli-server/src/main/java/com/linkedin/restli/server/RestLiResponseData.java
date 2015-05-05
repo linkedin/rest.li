@@ -17,64 +17,37 @@
 package com.linkedin.restli.server;
 
 
-import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.restli.common.CollectionMetadata;
-
-import java.util.List;
+import com.linkedin.restli.common.HttpStatus;
+import com.linkedin.restli.internal.server.response.BatchResponseEnvelope;
+import com.linkedin.restli.internal.server.response.CreateCollectionResponseEnvelope;
+import com.linkedin.restli.internal.server.response.CollectionResponseEnvelope;
+import com.linkedin.restli.internal.server.response.EmptyResponseEnvelope;
+import com.linkedin.restli.internal.server.response.RecordResponseEnvelope;
+import com.linkedin.restli.internal.server.ResponseType;
 import java.util.Map;
 
 
 /**
  * An abstraction that encapsulates outgoing response data.
+ * This abstraction provides a number of response level getters
+ * as well as a series of "Formatted" getters. Each one of these
+ * getters will return an enveloped object representing the response.
+ *
+ * Calling the wrong getter method will generally invoke an
+ * UnsupportedMethodException.
  *
  * @author nshankar
+ * @author erli
  *
  */
 public interface RestLiResponseData
 {
-  /**
-   * Determine if the response is an entity response or not.
-   *
-   * @return true if the response is a RecordTemplate; else false.
-   */
-  boolean isEntityResponse();
-
-  /**
-   * Determine if the response is collection response or not.
-   *
-   * @return true if the response corresponds to a collection request; else false.
-   */
-  boolean isCollectionResponse();
-
-  /**
-   * Determine if the data corresponds to a batch response.
-   *
-   * @return true if the response is a batch response; else false.
-   */
-  boolean isBatchResponse();
-
   /**
    * Determine if the data corresponds to an error response.
    *
    * @return true if the response is an error response; else false.
    */
   boolean isErrorResponse();
-
-  /**
-   * Obtain the entity response.
-   *
-   * @return the entity if one exists; else null.
-   */
-  RecordTemplate getEntityResponse();
-
-  /**
-   * Set the response entity. This is permitted only for GET, ACTION, and CREATE method types.
-   *
-   * @param  entity new value of the entity.
-   * @throws RestLiResponseDataException if this method is invoked for any method types other than the
-   *         aforementioned ones.
-   */
-  void setEntityResponse(RecordTemplate entity) throws RestLiResponseDataException;
 
   /**
    * Obtain the RestLiServiceException associated with the response data when the data is an error response.
@@ -84,70 +57,68 @@ public interface RestLiResponseData
   RestLiServiceException getServiceException();
 
   /**
-   * Obtain a mutable {@link List} of response entities.
+   * Gets the status of the request.
    *
-   * @return list of response entities if they exists; else null.
+   * @return the http status.
    */
-  List<? extends RecordTemplate> getCollectionResponse();
+  HttpStatus getStatus();
 
   /**
-   * Set collection response entities. This is permitted only for FINDER, GET_ALL, and BATCH_CREATE
-   * method types.
+   * Returns the response type of this response.
    *
-   * @param  responseEntities new value of collection response entities.
-   * @throws RestLiResponseDataException if this method is invoked for any method types other than the
-   *         aforementioned ones.
+   * @return the return type associated with this RestLiResponseData object.
    */
-  void setCollectionResponse(List<? extends RecordTemplate> responseEntities) throws RestLiResponseDataException;
+  ResponseType getResponseType();
 
   /**
-   * Get pagination info associated with collection response.
+   * Returns the enveloped view of this response as a RecordResponseEnvelope.
    *
-   * @return {@link CollectionMetadata}
+   * @throws UnsupportedOperationException if this method is invoked for the wrong ResponseType.
+   *
+   * @return the enveloped response for GET, ACTION, and CREATE resource methods.
    */
-  CollectionMetadata getCollectionResponsePaging();
+  RecordResponseEnvelope getRecordResponseEnvelope();
 
   /**
-   * Set pagination info associated with collection response. This is permitted only for FINDER and
-   * GET_ALL method types.
+   * Returns the enveloped view of this response as a CollectionResponseEnvelope.
    *
-   * @param  paging {@link CollectionMetadata}
-   * @throws RestLiResponseDataException if this method is invoked for any method types other than the
-   *         aforementioned ones.
+   * @throws UnsupportedOperationException if this method is invoked for the wrong ResponseType.
+   *
+   * @return the enveloped response for GET_ALL and FINDER resource methods.
    */
-  void setCollectionResponsePaging(CollectionMetadata paging) throws RestLiResponseDataException;
+  CollectionResponseEnvelope getCollectionResponseEnvelope();
 
   /**
-   * Get custom metadata associated with collection response.
+   * Returns the enveloped view of this response as a CreateCollectionResponseEnvelope.
    *
-   * @return Custom metadata associated with the collection response.
+   * @throws UnsupportedOperationException if this method is invoked for the wrong ResponseType.
+   *
+   * @return the enveloped response for BATCH_CREATE resource methods.
    */
-  RecordTemplate getCollectionResponseCustomMetadata();
+  CreateCollectionResponseEnvelope getCreateCollectionResponseEnvelope();
 
   /**
-   * Set custom metadata to be associated with the collection response. This is permitted only for
-   * FINDER and GET_ALL method types.
+   * Returns the enveloped view of this response as a BatchResponseEnvelope.
    *
-   * @param  metadata custom metadata associated with the collection response.
-   * @throws RestLiResponseDataException if this method is invoked for any method types other than the
-   *         aforementioned ones.
+   * @throws UnsupportedOperationException if this method is invoked for the wrong ResponseType.
+   *
+   * @return the enveloped response for BATCH_GET, BATCH_UPDATE, BATCH_PARTIAL_UPDATE and BATCH_DELETE resource methods.
    */
-  void setCollectionResponseCustomMetadata(RecordTemplate metadata) throws RestLiResponseDataException;
+  BatchResponseEnvelope getBatchResponseEnvelope();
 
   /**
-   * Obtain a mutable key response entity map. This map is populated primarily for batch responses.
+   * Returns the enveloped view of this response as an EmptyResponseEnvelope.
    *
-   * @return mutable key entity map.
+   * @throws UnsupportedOperationException if this method is invoked for the wrong ResponseType.
+   *
+   * @return the enveloped response for PARTIAL_UPDATE, UPDATE, DELETE and OPTIONS resource methods.
    */
-  Map<?, ? extends RecordTemplate> getBatchResponseMap();
+  EmptyResponseEnvelope getEmptyResponseEnvelope();
 
   /**
-   * Set batch response entities. This is permitted only for BATCH_GET, BATCH_UPDATE,
-   * BATCH_PARTIAL_UPDATE, and BATCH_DELETE method types.
+   * Gets a mutable map of the headers of this response.
    *
-   * @param  batchEntityMap new value of batch response entities.
-   * @throws RestLiResponseDataException if this method is invoked for any method types other than the
-   *         aforementioned ones.
+   * @return a mutable map of string values that indicates the headers of this response.
    */
-  void setBatchKeyResponseMap(Map<?, ? extends RecordTemplate> batchEntityMap) throws RestLiResponseDataException;
+  Map<String, String> getHeaders();
 }

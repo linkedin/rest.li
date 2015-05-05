@@ -25,7 +25,8 @@ import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.URIParamUtils;
-import com.linkedin.restli.internal.server.AugmentedRestLiResponseData;
+import com.linkedin.restli.internal.server.RestLiResponseEnvelope;
+import com.linkedin.restli.internal.server.response.RecordResponseEnvelope;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.server.CreateResponse;
@@ -37,15 +38,15 @@ import java.util.Map;
 public class CreateResponseBuilder implements RestLiResponseBuilder
 {
   @Override
-  public PartialRestResponse buildResponse(RoutingResult routingResult, AugmentedRestLiResponseData responseData)
+  public PartialRestResponse buildResponse(RoutingResult routingResult, RestLiResponseEnvelope responseData)
   {
-    return new PartialRestResponse.Builder().entity(responseData.getEntityResponse())
+    return new PartialRestResponse.Builder().entity(responseData.getRecordResponseEnvelope().getRecord())
                                             .headers(responseData.getHeaders()).status(responseData.getStatus())
                                             .build();
   }
 
   @Override
-  public AugmentedRestLiResponseData buildRestLiResponseData(RestRequest request, RoutingResult routingResult,
+  public RestLiResponseEnvelope buildRestLiResponseData(RestRequest request, RoutingResult routingResult,
                                                              Object result, Map<String, String> headers)
   {
     CreateResponse createResponse = (CreateResponse) result;
@@ -67,9 +68,6 @@ public class CreateResponseBuilder implements RestLiResponseBuilder
               + routingResult.getResourceMethod());
     }
 
-    return new AugmentedRestLiResponseData.Builder(routingResult.getResourceMethod().getMethodType()).entity(idResponse)
-                                                                                                     .headers(headers)
-                                                                                                     .status(createResponse.getStatus())
-                                                                                                     .build();
+    return new RecordResponseEnvelope(createResponse.getStatus(), idResponse, headers);
   }
 }

@@ -27,20 +27,20 @@ import com.linkedin.restli.common.CollectionMetadata;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.LinkArray;
 import com.linkedin.restli.common.ResourceMethod;
-import com.linkedin.restli.internal.server.AugmentedRestLiResponseData;
+import com.linkedin.restli.internal.server.RestLiResponseEnvelope;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.model.Parameter;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.server.CollectionResult;
 import com.linkedin.restli.server.ProjectionMode;
 import com.linkedin.restli.server.ResourceContext;
+import com.linkedin.restli.server.RestLiResponseDataException;
 import com.linkedin.restli.server.RestLiServiceException;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -176,8 +176,7 @@ public class TestCollectionResponseBuilder
                           MaskTree metaDataMaskTree,
                           MaskTree pagingMaskTree,
                           ProjectionMode dataProjectionMode,
-                          ProjectionMode metadataProjectionMode)
-      throws URISyntaxException
+                          ProjectionMode metadataProjectionMode) throws URISyntaxException
   {
     Map<String, String> headers = ResponseBuilderUtil.getHeaders();
 
@@ -190,7 +189,7 @@ public class TestCollectionResponseBuilder
     RoutingResult routingResult = new RoutingResult(mockContext, mockDescriptor);
 
     CollectionResponseBuilder responseBuilder = new CollectionResponseBuilder();
-    AugmentedRestLiResponseData responseData = responseBuilder.buildRestLiResponseData(getRestRequest(),
+    RestLiResponseEnvelope responseData = responseBuilder.buildRestLiResponseData(getRestRequest(),
                                                                                        routingResult,
                                                                                        results,
                                                                                        headers);
@@ -268,7 +267,6 @@ public class TestCollectionResponseBuilder
   private static ResourceMethodDescriptor getMockResourceMethodDescriptor()
   {
     ResourceMethodDescriptor mockDescriptor = EasyMock.createMock(ResourceMethodDescriptor.class);
-    EasyMock.expect(mockDescriptor.getMethodType()).andReturn(ResourceMethod.FINDER).once();
     EasyMock.expect(mockDescriptor.getParametersWithType(EasyMock.<Parameter.ParamType>anyObject())).andReturn(Collections.<Parameter<?>>emptyList()).once();
     EasyMock.replay(mockDescriptor);
     return mockDescriptor;

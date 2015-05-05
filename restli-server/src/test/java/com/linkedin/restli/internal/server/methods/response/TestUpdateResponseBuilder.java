@@ -18,15 +18,13 @@
 package com.linkedin.restli.internal.server.methods.response;
 
 
-import com.linkedin.r2.message.Response;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ResourceMethod;
-import com.linkedin.restli.internal.server.AugmentedRestLiResponseData;
+import com.linkedin.restli.internal.server.RestLiResponseEnvelope;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.UpdateResponse;
-import java.util.HashMap;
 import java.util.Map;
 import org.easymock.EasyMock;
 import org.testng.Assert;
@@ -49,7 +47,7 @@ public class TestUpdateResponseBuilder
     RoutingResult routingResult = new RoutingResult(null, mockDescriptor);
 
     UpdateResponseBuilder updateResponseBuilder = new UpdateResponseBuilder();
-    AugmentedRestLiResponseData responseData = updateResponseBuilder.buildRestLiResponseData(null,
+    RestLiResponseEnvelope responseData = updateResponseBuilder.buildRestLiResponseData(null,
                                                                                              routingResult,
                                                                                              updateResponse,
                                                                                              headers);
@@ -84,7 +82,6 @@ public class TestUpdateResponseBuilder
   private static ResourceMethodDescriptor getMockResourceMethodDescriptor()
   {
     ResourceMethodDescriptor mockDescriptor = EasyMock.createMock(ResourceMethodDescriptor.class);
-    EasyMock.expect(mockDescriptor.getMethodType()).andReturn(ResourceMethod.UPDATE).once();
     EasyMock.replay(mockDescriptor);
     return mockDescriptor;
   }

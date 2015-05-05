@@ -19,7 +19,8 @@ package com.linkedin.restli.internal.server.methods.response;
 
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.HttpStatus;
-import com.linkedin.restli.internal.server.AugmentedRestLiResponseData;
+import com.linkedin.restli.internal.server.RestLiResponseEnvelope;
+import com.linkedin.restli.internal.server.response.EmptyResponseEnvelope;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.UpdateResponse;
@@ -30,14 +31,15 @@ import java.util.Map;
 public class UpdateResponseBuilder implements RestLiResponseBuilder
 {
   @Override
-  public PartialRestResponse buildResponse(RoutingResult routingResult, AugmentedRestLiResponseData responseData)
+  public PartialRestResponse buildResponse(RoutingResult routingResult, RestLiResponseEnvelope responseData)
   {
-    return new PartialRestResponse.Builder().headers(responseData.getHeaders()).status(responseData.getStatus())
+    return new PartialRestResponse.Builder().headers(responseData.getHeaders())
+                                            .status(responseData.getStatus())
                                             .build();
   }
 
   @Override
-  public AugmentedRestLiResponseData buildRestLiResponseData(RestRequest request, RoutingResult routingResult,
+  public RestLiResponseEnvelope buildRestLiResponseData(RestRequest request, RoutingResult routingResult,
                                                              Object result, Map<String, String> headers)
   {
     UpdateResponse updateResponse = (UpdateResponse) result;
@@ -48,8 +50,7 @@ public class UpdateResponseBuilder implements RestLiResponseBuilder
           "Unexpected null encountered. HttpStatus is null inside of a UpdateResponse returned by the resource method: "
               + routingResult.getResourceMethod());
     }
-    return new AugmentedRestLiResponseData.Builder(routingResult.getResourceMethod().getMethodType()).headers(headers)
-                                                                                                     .status(updateResponse.getStatus())
-                                                                                                     .build();
+
+    return new EmptyResponseEnvelope(updateResponse.getStatus(), headers);
   }
 }

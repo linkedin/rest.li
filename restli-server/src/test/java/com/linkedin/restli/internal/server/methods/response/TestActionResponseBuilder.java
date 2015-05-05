@@ -21,13 +21,13 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.template.FieldDef;
 import com.linkedin.restli.common.ActionResponse;
 import com.linkedin.restli.common.HttpStatus;
-import com.linkedin.restli.common.ResourceMethod;
-import com.linkedin.restli.internal.server.AugmentedRestLiResponseData;
+import com.linkedin.restli.internal.server.RestLiResponseEnvelope;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.server.ActionResult;
-import java.util.HashMap;
+
 import java.util.Map;
+
 import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
@@ -59,7 +59,7 @@ public class TestActionResponseBuilder
     RoutingResult routingResult = new RoutingResult(null, mockDescriptor);
 
     ActionResponseBuilder actionResponseBuilder = new ActionResponseBuilder();
-    AugmentedRestLiResponseData responseData = actionResponseBuilder.buildRestLiResponseData(null,
+    RestLiResponseEnvelope responseData = actionResponseBuilder.buildRestLiResponseData(null,
                                                                                              routingResult,
                                                                                              result,
                                                                                              headers);
@@ -78,7 +78,6 @@ public class TestActionResponseBuilder
 
     EasyMock.expect(mockDescriptor.getActionReturnRecordDataSchema()).andReturn(LONG_RETURN.getField().getRecord()).once();
     EasyMock.expect(((FieldDef<Long>)mockDescriptor.getActionReturnFieldDef())).andReturn(LONG_RETURN).once();
-    EasyMock.expect(mockDescriptor.getMethodType()).andReturn(ResourceMethod.ACTION).once();
     EasyMock.replay(mockDescriptor);
     return mockDescriptor;
   }

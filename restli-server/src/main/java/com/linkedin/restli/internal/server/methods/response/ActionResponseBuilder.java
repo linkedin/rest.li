@@ -22,7 +22,8 @@ import com.linkedin.data.template.FieldDef;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.ActionResponse;
 import com.linkedin.restli.common.HttpStatus;
-import com.linkedin.restli.internal.server.AugmentedRestLiResponseData;
+import com.linkedin.restli.internal.server.RestLiResponseEnvelope;
+import com.linkedin.restli.internal.server.response.RecordResponseEnvelope;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.server.ActionResult;
 import com.linkedin.restli.server.RestLiServiceException;
@@ -34,16 +35,16 @@ public class ActionResponseBuilder implements RestLiResponseBuilder
 
   @Override
   public PartialRestResponse buildResponse(RoutingResult routingResult,
-                                           AugmentedRestLiResponseData responseData)
+                                           RestLiResponseEnvelope responseData)
   {
     return new PartialRestResponse.Builder().status(responseData.getStatus())
-                                            .entity(responseData.getEntityResponse())
+                                            .entity(responseData.getRecordResponseEnvelope().getRecord())
                                             .headers(responseData.getHeaders())
                                             .build();
   }
 
   @Override
-  public AugmentedRestLiResponseData buildRestLiResponseData(RestRequest request,
+  public RestLiResponseEnvelope buildRestLiResponseData(RestRequest request,
                                                             RoutingResult routingResult,
                                                             Object result,
                                                             Map<String, String> headers)
@@ -73,6 +74,6 @@ public class ActionResponseBuilder implements RestLiResponseBuilder
         (FieldDef<Object>) routingResult.getResourceMethod().getActionReturnFieldDef();
     final ActionResponse<?> actionResponse =
         new ActionResponse<Object>(value, actionReturnFieldDef, actionReturnRecordDataSchema);
-    return new AugmentedRestLiResponseData.Builder(routingResult.getResourceMethod().getMethodType()).status(status).entity(actionResponse).headers(headers).build();
+    return new RecordResponseEnvelope(status, actionResponse, headers);
   }
 }

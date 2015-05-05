@@ -28,9 +28,10 @@ public class RestLiServiceException extends RuntimeException
 {
   private static final long serialVersionUID = 1L;
 
-  private final HttpStatus  _status;
-  private Integer           _serviceErrorCode;
-  private DataMap           _errorDetails;
+  private final HttpStatus    _status;
+  private Integer             _serviceErrorCode;
+  private DataMap             _errorDetails;
+  private ErrorResponseFormat _errorResponseFormat;
 
   public RestLiServiceException(final HttpStatus status)
   {
@@ -111,5 +112,31 @@ public class RestLiServiceException extends RuntimeException
       sb.append(": ").append(message);
     }
     return sb.toString();
+  }
+
+  /**
+   * Sets an error response format that will be used instead of the default server wide
+   * error response format.
+   *
+   * @param errorResponseFormat the overriding ErrorResponseFormat this service exception should be built with.
+   */
+  public void setOverridingFormat(ErrorResponseFormat errorResponseFormat)
+  {
+    _errorResponseFormat = errorResponseFormat;
+  }
+
+  /**
+   * Returns whether this exception has an overriding error format.
+   *
+   * @return true if this exception has an overriding error response format set.
+   */
+  public boolean hasOverridingErrorResponseFormat()
+  {
+    return _errorResponseFormat != null;
+  }
+
+  public ErrorResponseFormat getOverridingFormat()
+  {
+    return _errorResponseFormat;
   }
 }

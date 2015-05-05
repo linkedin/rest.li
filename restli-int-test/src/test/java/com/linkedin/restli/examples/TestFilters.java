@@ -53,9 +53,7 @@ import com.linkedin.restli.server.filter.ResponseFilter;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -304,19 +302,32 @@ public class TestFilters extends RestLiIntegrationTest
           FilterResponseContext responseContext = (FilterResponseContext) args[1];
           // Verify the scratch pad value.
           assertTrue(requestContext.getFilterScratchpad().get(spKey) == spValue);
-          RecordTemplate entity = responseContext.getResponseData().getEntityResponse();
+          RecordTemplate entity;
+
+          switch (responseContext.getResponseData().getResponseType())
+          {
+            case SINGLE_ENTITY:
+              entity = responseContext.getResponseData().getRecordResponseEnvelope().getRecord();
+              break;
+            case STATUS_ONLY:
+              entity = null;
+              break;
+            default:
+              throw new RuntimeException("Unexpected resolver type.");
+          }
           if (entity != null && requestContext.getMethodType() == ResourceMethod.GET
-              && responseContext.getHttpStatus() == HttpStatus.S_200_OK)
+              && responseContext.getResponseData().getStatus() == HttpStatus.S_200_OK)
           {
             Greeting greeting = new Greeting(entity.data());
             if (greeting.hasTone())
             {
               greeting.setTone(mapToneForOutgoingResponse(greeting.getTone()));
-              responseContext.getResponseData().setEntityResponse(greeting);
+              responseContext.getResponseData().getRecordResponseEnvelope().setRecord(greeting, HttpStatus.S_200_OK);
             }
           }
-          if (responseContext.getResponseData().isErrorResponse() && requestContext.getMethodType() == ResourceMethod.CREATE
-              && responseContext.getHttpStatus() == REQ_FILTER_ERROR_STATUS)
+          if (responseContext.getResponseData().isErrorResponse()
+              && requestContext.getMethodType() == ResourceMethod.CREATE
+              && responseContext.getResponseData().getStatus() == REQ_FILTER_ERROR_STATUS)
           {
             throw responseFilterException;
           }

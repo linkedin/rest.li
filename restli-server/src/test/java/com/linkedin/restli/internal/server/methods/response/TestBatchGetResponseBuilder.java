@@ -24,13 +24,13 @@ import com.linkedin.pegasus.generator.examples.Foo;
 import com.linkedin.pegasus.generator.examples.Fruits;
 import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CompoundKey;
+import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ProtocolVersion;
-import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.TestConstants;
-import com.linkedin.restli.internal.server.AugmentedRestLiResponseData;
+import com.linkedin.restli.internal.server.RestLiResponseEnvelope;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
@@ -152,7 +152,7 @@ public class TestBatchGetResponseBuilder
     Map<String, String> headers = ResponseBuilderUtil.getHeaders();
 
     BatchGetResponseBuilder responseBuilder = new BatchGetResponseBuilder(new ErrorResponseBuilder());
-    AugmentedRestLiResponseData responseData = responseBuilder.buildRestLiResponseData(null,
+    RestLiResponseEnvelope responseData = responseBuilder.buildRestLiResponseData(null,
                                                                                        routingResult,
                                                                                        results,
                                                                                        headers);
@@ -184,6 +184,26 @@ public class TestBatchGetResponseBuilder
       ErrorResponse value = entry.getValue();
       Assert.assertEquals(value.getStatus(), expectedErrors.get(key).getStatus());
     }
+  }
+
+  @Test
+  public void testContextErrors()
+  {
+    BatchGetResponseBuilder builder = new BatchGetResponseBuilder(new ErrorResponseBuilder());
+    ServerResourceContext context = EasyMock.createMock(ServerResourceContext.class);
+    Map<Object,RestLiServiceException> errors = new HashMap<Object, RestLiServiceException>();
+    RestLiServiceException exception = new RestLiServiceException(HttpStatus.S_402_PAYMENT_REQUIRED);
+    errors.put("foo", exception);
+    EasyMock.expect(context.getBatchKeyErrors()).andReturn(errors);
+    EasyMock.replay(context);
+    RoutingResult routingResult = new RoutingResult(context, null);
+    RestLiResponseEnvelope envelope = builder.buildRestLiResponseData(null,
+                                                                      routingResult,
+                                                                      new BatchResult<Object, EmptyRecord>(Collections.<Object, EmptyRecord>emptyMap(), Collections.<Object, RestLiServiceException>emptyMap()),
+                                                                      Collections.<String, String>emptyMap());
+    Assert.assertEquals(envelope.getBatchResponseEnvelope().getBatchResponseMap().get("foo").getException(),
+        exception);
+    Assert.assertEquals(envelope.getBatchResponseEnvelope().getBatchResponseMap().size(), 1);
   }
 
   @DataProvider(name = "exceptionTestData")
@@ -279,7 +299,7 @@ public class TestBatchGetResponseBuilder
     Map<String, String> headers = ResponseBuilderUtil.getHeaders();
 
     BatchGetResponseBuilder responseBuilder = new BatchGetResponseBuilder(new ErrorResponseBuilder());
-    AugmentedRestLiResponseData responseData = responseBuilder.buildRestLiResponseData(null,
+    RestLiResponseEnvelope responseData = responseBuilder.buildRestLiResponseData(null,
         routingResult,
         results,
         headers);
@@ -322,7 +342,6 @@ public class TestBatchGetResponseBuilder
   private static ResourceMethodDescriptor getMockResourceMethodDescriptor()
   {
     ResourceMethodDescriptor mockDescriptor = EasyMock.createMock(ResourceMethodDescriptor.class);
-    EasyMock.expect(mockDescriptor.getMethodType()).andReturn(ResourceMethod.BATCH_GET).once();
     EasyMock.replay(mockDescriptor);
     return mockDescriptor;
   }

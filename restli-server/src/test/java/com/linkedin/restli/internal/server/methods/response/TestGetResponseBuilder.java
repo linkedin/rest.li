@@ -23,15 +23,13 @@ import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.pegasus.generator.examples.Foo;
 import com.linkedin.pegasus.generator.examples.Fruits;
 import com.linkedin.restli.common.HttpStatus;
-import com.linkedin.restli.common.ResourceMethod;
-import com.linkedin.restli.internal.server.AugmentedRestLiResponseData;
+import com.linkedin.restli.internal.server.RestLiResponseEnvelope;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.server.GetResult;
 import com.linkedin.restli.server.ProjectionMode;
 import com.linkedin.restli.server.ResourceContext;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import org.easymock.EasyMock;
@@ -90,7 +88,7 @@ public class TestGetResponseBuilder
 
     GetResponseBuilder getResponseBuilder = new GetResponseBuilder();
 
-    AugmentedRestLiResponseData responseData = getResponseBuilder.buildRestLiResponseData(null,
+    RestLiResponseEnvelope responseData = getResponseBuilder.buildRestLiResponseData(null,
                                                                                           routingResult,
                                                                                           record,
                                                                                           headers);
@@ -113,7 +111,6 @@ public class TestGetResponseBuilder
   private static ResourceMethodDescriptor getMockResourceMethodDescriptor()
   {
     ResourceMethodDescriptor mockDescriptor = EasyMock.createMock(ResourceMethodDescriptor.class);
-    EasyMock.expect(mockDescriptor.getMethodType()).andReturn(ResourceMethod.GET).once();
     EasyMock.replay(mockDescriptor);
     return mockDescriptor;
   }

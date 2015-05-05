@@ -24,10 +24,9 @@ import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.common.ProtocolVersion;
-import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
-import com.linkedin.restli.internal.server.AugmentedRestLiResponseData;
+import com.linkedin.restli.internal.server.RestLiResponseEnvelope;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
@@ -60,8 +59,7 @@ public class TestCreateResponseBuilder
   }
 
   @Test(dataProvider = "testData")
-  public void testBuilder(ProtocolVersion protocolVersion, String location, String id)
-      throws URISyntaxException
+  public void testBuilder(ProtocolVersion protocolVersion, String location, String id) throws URISyntaxException
   {
     CompoundKey compoundKey = new CompoundKey().append("a", "a").append("b", 1);
     CreateResponse createResponse = new CreateResponse(compoundKey);
@@ -77,7 +75,7 @@ public class TestCreateResponseBuilder
     RoutingResult routingResult = new RoutingResult(mockContext, mockDescriptor);
 
     CreateResponseBuilder createResponseBuilder = new CreateResponseBuilder();
-    AugmentedRestLiResponseData responseData = createResponseBuilder.buildRestLiResponseData(restRequest,
+    RestLiResponseEnvelope responseData = createResponseBuilder.buildRestLiResponseData(restRequest,
                                                                                              routingResult,
                                                                                              createResponse,
                                                                                              headers);
@@ -130,7 +128,6 @@ public class TestCreateResponseBuilder
   private static ResourceMethodDescriptor getMockResourceMethodDescriptor()
   {
     ResourceMethodDescriptor mockDescriptor = EasyMock.createMock(ResourceMethodDescriptor.class);
-    EasyMock.expect(mockDescriptor.getMethodType()).andReturn(ResourceMethod.CREATE).once();
     EasyMock.replay(mockDescriptor);
     return mockDescriptor;
   }

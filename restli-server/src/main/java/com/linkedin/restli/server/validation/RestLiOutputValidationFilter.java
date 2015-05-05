@@ -23,13 +23,16 @@ import com.linkedin.restli.common.EntityResponse;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.validation.RestLiDataValidator;
+import com.linkedin.restli.internal.server.response.BatchResponseEnvelope;
 import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.filter.FilterRequestContext;
 import com.linkedin.restli.server.filter.FilterResponseContext;
 import com.linkedin.restli.server.filter.ResponseFilter;
 
+import java.util.List;
 import java.util.Map;
+
 
 /**
  * Rest.li validation filter that validates outgoing data automatically,
@@ -52,16 +55,20 @@ public class RestLiOutputValidationFilter implements ResponseFilter
     }
     if (method == ResourceMethod.GET)
     {
-      ValidationResult result = validator.validate(responseData.getEntityResponse());
+      ValidationResult result = validator.validate(responseData.getRecordResponseEnvelope().getRecord());
       if (!result.isValid())
       {
         throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, result.getMessages().toString());
       }
+
     }
     else if (method == ResourceMethod.GET_ALL || method == ResourceMethod.FINDER)
     {
+      List<? extends RecordTemplate> entities;
+      entities = responseData.getCollectionResponseEnvelope().getCollectionResponse();
+
       StringBuilder sb = new StringBuilder();
-      for (RecordTemplate entity : responseData.getCollectionResponse())
+      for (RecordTemplate entity : entities)
       {
         ValidationResult result = validator.validate(entity);
         if (!result.isValid())
@@ -69,6 +76,7 @@ public class RestLiOutputValidationFilter implements ResponseFilter
           sb.append(result.getMessages().toString());
         }
       }
+
       if (sb.length() > 0)
       {
         throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, sb.toString());
@@ -77,14 +85,13 @@ public class RestLiOutputValidationFilter implements ResponseFilter
     else if (method == ResourceMethod.BATCH_GET)
     {
       StringBuilder sb = new StringBuilder();
-      for (Map.Entry<?, ? extends RecordTemplate> entry : responseData.getBatchResponseMap().entrySet())
+      for (Map.Entry<?, ? extends BatchResponseEnvelope.BatchResponseEntry> entry : responseData.getBatchResponseEnvelope().getBatchResponseMap().entrySet())
       {
-        EntityResponse<? extends RecordTemplate> entityResponse = (EntityResponse) entry.getValue();
-        if (entityResponse.hasError())
+        if (entry.getValue().hasException())
         {
           continue;
         }
-        ValidationResult result = validator.validate(entityResponse.getEntity());
+        ValidationResult result = validator.validate(entry.getValue().getRecord());
         if (!result.isValid())
         {
           sb.append("Key: ");
@@ -93,6 +100,7 @@ public class RestLiOutputValidationFilter implements ResponseFilter
           sb.append(result.getMessages().toString());
         }
       }
+
       if (sb.length() > 0)
       {
         throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, sb.toString());

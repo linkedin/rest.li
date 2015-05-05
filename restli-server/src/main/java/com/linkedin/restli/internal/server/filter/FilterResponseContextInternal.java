@@ -17,7 +17,7 @@
 package com.linkedin.restli.internal.server.filter;
 
 
-import com.linkedin.restli.internal.server.AugmentedRestLiResponseData;
+import com.linkedin.restli.internal.server.RestLiResponseEnvelope;
 import com.linkedin.restli.server.filter.FilterResponseContext;
 
 
@@ -31,12 +31,12 @@ public interface FilterResponseContextInternal extends FilterResponseContext
    *
    * @return Request data.
    */
-  void setAugmentedRestLiResponseData(AugmentedRestLiResponseData data);
+  void setRestLiResponseEnvelope(RestLiResponseEnvelope data);
 
   /**
    * Get a reference to underlying {@link RestLiResponseDataInternal}.
    *
    * @return {@link RestLiResponseDataInternal}
    */
-  AugmentedRestLiResponseData getAugmentedRestLiResponseData();
+  RestLiResponseEnvelope getRestLiResponseEnvelope();
 }

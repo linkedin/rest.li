@@ -19,15 +19,16 @@ package com.linkedin.restli.internal.server.methods.response;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.collections.CheckedUtil;
-import com.linkedin.internal.common.util.CollectionUtils;
+import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.BatchResponse;
-import com.linkedin.restli.common.ErrorResponse;
+import com.linkedin.restli.internal.server.response.BatchResponseEnvelope;
+import com.linkedin.restli.internal.server.response.BatchResponseEnvelope.BatchResponseEntry;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.UpdateStatus;
 import com.linkedin.restli.internal.common.URIParamUtils;
-import com.linkedin.restli.internal.server.AugmentedRestLiResponseData;
+import com.linkedin.restli.internal.server.RestLiResponseEnvelope;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.internal.server.methods.AnyRecord;
@@ -36,9 +37,7 @@ import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.UpdateResponse;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * @author Josh Walker
@@ -54,27 +53,54 @@ public final class BatchUpdateResponseBuilder implements RestLiResponseBuilder
   }
 
   @Override
-  public PartialRestResponse buildResponse(RoutingResult routingResult, AugmentedRestLiResponseData responseData)
+  @SuppressWarnings("unchecked")
+  public PartialRestResponse buildResponse(RoutingResult routingResult, RestLiResponseEnvelope responseData)
   {
+    Map<Object, UpdateStatus> mergedResults = new HashMap<Object, UpdateStatus>();
+
+    final Map<Object, BatchResponseEntry> responses = (Map<Object, BatchResponseEntry>) responseData.getBatchResponseEnvelope().getBatchResponseMap();
+    generateResultEntityResponse(routingResult, responses, mergedResults);
+
     PartialRestResponse.Builder builder = new PartialRestResponse.Builder();
     final ProtocolVersion protocolVersion =
         ((ServerResourceContext) routingResult.getContext()).getRestliProtocolVersion();
+
     @SuppressWarnings("unchecked")
-    final BatchResponse<AnyRecord> response =
-        toBatchResponse((Map<Object, UpdateStatus>) responseData.getBatchResponseMap(), protocolVersion);
-    builder.entity(response);
-    return builder.headers(responseData.getHeaders()).build();
+    final BatchResponse<AnyRecord> response = toBatchResponse(mergedResults, protocolVersion);
+    return builder.entity(response).headers(responseData.getHeaders()).build();
+  }
+
+  // Updates the merged results with context errors and build map of UpdateStatus.
+  private void generateResultEntityResponse(RoutingResult routingResult, Map<Object, BatchResponseEntry> responses , Map<Object, UpdateStatus> mergedResults)
+  {
+    for (Map.Entry<?, BatchResponseEntry> entry : responses.entrySet())
+    {
+      if (entry.getKey() == null || entry.getValue() == null)
+      {
+        throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
+            "Unexpected null encountered. Null errors Map found inside of the result returned by the resource method: "
+                + routingResult.getResourceMethod());
+      }
+
+      UpdateStatus status = new UpdateStatus();
+      status.setStatus(entry.getValue().getStatus().getCode());
+      if (entry.getValue().hasException())
+      {
+        status.setError(_errorResponseBuilder.buildErrorResponse(entry.getValue().getException()));
+      }
+      mergedResults.put(entry.getKey(), status);
+    }
   }
 
   @Override
-  public AugmentedRestLiResponseData buildRestLiResponseData(RestRequest request, RoutingResult routingResult,
+  public RestLiResponseEnvelope buildRestLiResponseData(RestRequest request, RoutingResult routingResult,
                                                              Object result, Map<String, String> headers)
   {
     @SuppressWarnings({ "unchecked" })
     /** constrained by signature of {@link com.linkedin.restli.server.resources.CollectionResource#batchUpdate(java.util.Map)} */
     final BatchUpdateResult<Object, ?> updateResult = (BatchUpdateResult<Object, ?>) result;
-
     final Map<Object, UpdateResponse> results = updateResult.getResults();
+
     //Verify the map is not null. If so, this is a developer error.
     if (results == null)
     {
@@ -84,9 +110,6 @@ public final class BatchUpdateResponseBuilder implements RestLiResponseBuilder
     }
 
     final Map<Object, RestLiServiceException> serviceErrors = updateResult.getErrors();
-    //Verify the errors map is not null. If so, this is a developer error.
-    //Note that we don't have to check the errors map for nulls, because its taken care
-    //of in populateErrors below.
     if (serviceErrors == null)
     {
       throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
@@ -94,51 +117,39 @@ public final class BatchUpdateResponseBuilder implements RestLiResponseBuilder
               + routingResult.getResourceMethod());
     }
 
-    final Map<Object, ErrorResponse> errors =
-        BatchResponseUtil.populateErrors(serviceErrors, routingResult, _errorResponseBuilder);
-
-    final Set<Object> mergedKeys = new HashSet<Object>(results.keySet());
-    //Verify that there is no null key in the UpdateResponse map. If so, this is a developer error. Note that we wait
-    //until this point to check for the existence of a null key since we can't check directly on the updates map
-    //since certain Map implementations, such as java.util.concurrent.ConcurrentHashMap, throw an NPE if containsKey(null) is called.
-    if (mergedKeys.contains(null))
+    Map<Object, BatchResponseEntry> batchResponseMap = new HashMap<Object, BatchResponseEntry>();
+    for (Map.Entry<Object, UpdateResponse> entry : results.entrySet())
     {
-      throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
-          "Unexpected null encountered. Null key inside of the Map returned inside of the BatchUpdateResult returned by the resource method: "
-              + routingResult.getResourceMethod());
-    }
-
-    mergedKeys.addAll(errors.keySet());
-
-    final Map<Object, UpdateStatus> mergedResults =
-        new HashMap<Object, UpdateStatus>(
-            CollectionUtils.getMapInitialCapacity(mergedKeys.size(), 0.75f), 0.75f);
-
-    for (Object key : mergedKeys)
-    {
-      final UpdateStatus mergedResult = new UpdateStatus();
-
-      final UpdateResponse update = results.get(key);
-      if (update != null)
+      if (entry.getKey() == null)
       {
-        mergedResult.setStatus(update.getStatus().getCode());
+        throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
+            "Unexpected null encountered. Null key inside of the Map returned inside of the BatchUpdateResult returned by the resource method: "
+                + routingResult.getResourceMethod());
       }
 
-      final ErrorResponse error = errors.get(key);
-      if (error != null)
+      if (!serviceErrors.containsKey(entry.getKey()))
       {
-        // The status from RestLiServiceException/ErrorResponse overwrites the one in UpdateResponse,
-        // if both are provided for the same key.
-        mergedResult.setStatus(error.getStatus());
-        mergedResult.setError(error);
+        batchResponseMap.put(entry.getKey(), new BatchResponseEntry(entry.getValue().getStatus(), (RecordTemplate) null));
       }
-
-      mergedResults.put(key, mergedResult);
     }
 
-    return new AugmentedRestLiResponseData.Builder(routingResult.getResourceMethod().getMethodType()).batchKeyEntityMap(mergedResults)
-                                                                                                     .headers(headers)
-                                                                                                     .build();
+    for (Map.Entry<Object, RestLiServiceException> entry : serviceErrors.entrySet())
+    {
+      if (entry.getKey() == null || entry.getValue() == null)
+      {
+        throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
+            "Unexpected null encountered. Null key or value inside of the Map returned inside of the BatchUpdateResult returned by the resource method: "
+          + routingResult.getResourceMethod());
+      }
+      batchResponseMap.put(entry.getKey(), new BatchResponseEntry(entry.getValue().getStatus(), entry.getValue()));
+    }
+
+    for (Map.Entry<Object, RestLiServiceException> entry : ((ServerResourceContext) routingResult.getContext()).getBatchKeyErrors().entrySet())
+    {
+      batchResponseMap.put(entry.getKey(), new BatchResponseEntry(entry.getValue().getStatus(), entry.getValue()));
+    }
+
+    return new BatchResponseEnvelope(batchResponseMap, headers);
   }
 
   private static <K> BatchResponse<AnyRecord> toBatchResponse(Map<K, UpdateStatus> statuses,

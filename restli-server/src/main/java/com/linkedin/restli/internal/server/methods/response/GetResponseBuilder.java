@@ -25,7 +25,8 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.HttpStatus;
-import com.linkedin.restli.internal.server.AugmentedRestLiResponseData;
+import com.linkedin.restli.internal.server.RestLiResponseEnvelope;
+import com.linkedin.restli.internal.server.response.RecordResponseEnvelope;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.methods.AnyRecord;
 import com.linkedin.restli.internal.server.util.RestUtils;
@@ -38,14 +39,14 @@ import java.util.Map;
 public class GetResponseBuilder implements RestLiResponseBuilder
 {
   @Override
-  public PartialRestResponse buildResponse(RoutingResult routingResult, AugmentedRestLiResponseData responseData)
+  public PartialRestResponse buildResponse(RoutingResult routingResult, RestLiResponseEnvelope responseData)
   {
     return new PartialRestResponse.Builder().headers(responseData.getHeaders()).status(responseData.getStatus())
-                                            .entity(responseData.getEntityResponse()).build();
+                                            .entity(responseData.getRecordResponseEnvelope().getRecord()).build();
   }
 
   @Override
-  public AugmentedRestLiResponseData buildRestLiResponseData(RestRequest request, RoutingResult routingResult,
+  public RestLiResponseEnvelope buildRestLiResponseData(RestRequest request, RoutingResult routingResult,
                                                              Object result, Map<String, String> headers)
   {
     final RecordTemplate record;
@@ -64,9 +65,7 @@ public class GetResponseBuilder implements RestLiResponseBuilder
     final ResourceContext resourceContext = routingResult.getContext();
     final DataMap data = RestUtils.projectFields(record.data(), resourceContext.getProjectionMode(),
         resourceContext.getProjectionMask());
-    return new AugmentedRestLiResponseData.Builder(routingResult.getResourceMethod().getMethodType()).headers(headers)
-                                                                                                     .status(status)
-                                                                                                     .entity(new AnyRecord(data))
-                                                                                                     .build();
+
+    return new RecordResponseEnvelope(status, new AnyRecord((data)), headers);
   }
 }

@@ -23,10 +23,9 @@ import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ProtocolVersion;
-import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.UpdateStatus;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
-import com.linkedin.restli.internal.server.AugmentedRestLiResponseData;
+import com.linkedin.restli.internal.server.RestLiResponseEnvelope;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
@@ -112,7 +111,7 @@ public class TestBatchUpdateResponseBuilder
     Map<String, String> headers = ResponseBuilderUtil.getHeaders();
 
     BatchUpdateResponseBuilder batchUpdateResponseBuilder = new BatchUpdateResponseBuilder(new ErrorResponseBuilder());
-    AugmentedRestLiResponseData responseData = batchUpdateResponseBuilder.buildRestLiResponseData(null,
+    RestLiResponseEnvelope responseData = batchUpdateResponseBuilder.buildRestLiResponseData(null,
                                                                                                   routingResult,
                                                                                                   results,
                                                                                                   headers);
@@ -129,6 +128,26 @@ public class TestBatchUpdateResponseBuilder
       ErrorResponse value = entry.getValue();
       Assert.assertEquals(value.getStatus(), expectedErrors.get(key).getStatus());
     }
+  }
+
+  @Test
+  public void testContextErrors()
+  {
+    BatchUpdateResponseBuilder builder = new BatchUpdateResponseBuilder(new ErrorResponseBuilder());
+    ServerResourceContext context = EasyMock.createMock(ServerResourceContext.class);
+    Map<Object,RestLiServiceException> errors = new HashMap<Object, RestLiServiceException>();
+    RestLiServiceException exception = new RestLiServiceException(HttpStatus.S_402_PAYMENT_REQUIRED);
+    errors.put("foo", exception);
+    EasyMock.expect(context.getBatchKeyErrors()).andReturn(errors);
+    EasyMock.replay(context);
+    RoutingResult routingResult = new RoutingResult(context, null);
+    RestLiResponseEnvelope envelope = builder.buildRestLiResponseData(null,
+                                                                      routingResult,
+                                                                      new BatchUpdateResult<Object, Integer>(Collections.<Object, UpdateResponse>emptyMap()),
+                                                                      Collections.<String, String>emptyMap());
+    Assert.assertEquals(envelope.getBatchResponseEnvelope().getBatchResponseMap().get("foo").getException(),
+                        exception);
+    Assert.assertEquals(envelope.getBatchResponseEnvelope().getBatchResponseMap().size(), 1);
   }
 
   @DataProvider(name = "unsupportedNullKeyMapData")
@@ -171,7 +190,7 @@ public class TestBatchUpdateResponseBuilder
     Map<String, String> headers = ResponseBuilderUtil.getHeaders();
 
     BatchUpdateResponseBuilder batchUpdateResponseBuilder = new BatchUpdateResponseBuilder(new ErrorResponseBuilder());
-    AugmentedRestLiResponseData responseData = batchUpdateResponseBuilder.buildRestLiResponseData(null,
+    RestLiResponseEnvelope responseData = batchUpdateResponseBuilder.buildRestLiResponseData(null,
         routingResult,
         results,
         headers);
@@ -196,7 +215,6 @@ public class TestBatchUpdateResponseBuilder
   {
     ResourceMethodDescriptor mockDescriptor = EasyMock.createMock(ResourceMethodDescriptor.class);
 
-    EasyMock.expect(mockDescriptor.getMethodType()).andReturn(ResourceMethod.BATCH_UPDATE).once();
     EasyMock.replay(mockDescriptor);
     return mockDescriptor;
   }

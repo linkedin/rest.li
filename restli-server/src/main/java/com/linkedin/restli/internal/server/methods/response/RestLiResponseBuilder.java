@@ -22,7 +22,7 @@ package com.linkedin.restli.internal.server.methods.response;
 
 
 import com.linkedin.r2.message.rest.RestRequest;
-import com.linkedin.restli.internal.server.AugmentedRestLiResponseData;
+import com.linkedin.restli.internal.server.RestLiResponseEnvelope;
 import com.linkedin.restli.internal.server.RoutingResult;
 
 import java.util.Map;
@@ -37,10 +37,10 @@ import java.util.Map;
 public interface RestLiResponseBuilder
 {
   PartialRestResponse buildResponse(RoutingResult routingResult,
-                                    AugmentedRestLiResponseData responseData);
+                                    RestLiResponseEnvelope responseData);
 
-  AugmentedRestLiResponseData buildRestLiResponseData(RestRequest request,
-                                                     RoutingResult routingResult,
-                                                     Object result,
-                                                     Map<String, String> headers);
+  RestLiResponseEnvelope buildRestLiResponseData(RestRequest request,
+                                                 RoutingResult routingResult,
+                                                 Object result,
+                                                 Map<String, String> headers);
 }

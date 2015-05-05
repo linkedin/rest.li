@@ -29,7 +29,13 @@ import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.HeaderUtil;
 import com.linkedin.restli.internal.common.ProtocolVersionUtil;
-import com.linkedin.restli.internal.server.AugmentedRestLiResponseData;
+import com.linkedin.restli.internal.server.RestLiResponseEnvelope;
+import com.linkedin.restli.internal.server.response.BatchResponseEnvelope;
+import com.linkedin.restli.internal.server.response.CreateCollectionResponseEnvelope;
+import com.linkedin.restli.internal.server.response.CollectionResponseEnvelope;
+import com.linkedin.restli.internal.server.response.EmptyResponseEnvelope;
+import com.linkedin.restli.internal.server.response.RecordResponseEnvelope;
+import com.linkedin.restli.internal.server.ResponseType;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.server.ErrorResponseFormat;
 import com.linkedin.restli.server.RestLiServiceException;
@@ -72,26 +78,31 @@ public final class ErrorResponseBuilder implements RestLiResponseBuilder
 
   public ErrorResponse buildErrorResponse(RestLiServiceException result)
   {
+    return buildErrorResponse(result, result.hasOverridingErrorResponseFormat() ? result.getOverridingFormat() : _errorResponseFormat);
+  }
+
+  private ErrorResponse buildErrorResponse(RestLiServiceException result, ErrorResponseFormat errorResponseFormat)
+  {
     ErrorResponse er = new ErrorResponse();
-    if (_errorResponseFormat.showStatusCodeInBody())
+    if (errorResponseFormat.showStatusCodeInBody())
     {
       er.setStatus(result.getStatus().getCode());
     }
 
-    if (_errorResponseFormat.showMessage() && result.getMessage() != null)
+    if (errorResponseFormat.showMessage() && result.getMessage() != null)
     {
       er.setMessage(result.getMessage());
     }
-    if (_errorResponseFormat.showServiceErrorCode() && result.hasServiceErrorCode())
+    if (errorResponseFormat.showServiceErrorCode() && result.hasServiceErrorCode())
     {
       er.setServiceErrorCode(result.getServiceErrorCode());
     }
-    if (_errorResponseFormat.showDetails() && result.hasErrorDetails())
+    if (errorResponseFormat.showDetails() && result.hasErrorDetails())
     {
       er.setErrorDetails(new ErrorDetails(result.getErrorDetails()));
     }
 
-    if (_errorResponseFormat.showStacktrace())
+    if (errorResponseFormat.showStacktrace())
     {
       StringWriter sw = new StringWriter();
       PrintWriter pw = new PrintWriter(sw);
@@ -105,7 +116,7 @@ public final class ErrorResponseBuilder implements RestLiResponseBuilder
   }
 
   @Override
-  public PartialRestResponse buildResponse(RoutingResult routingResult, AugmentedRestLiResponseData responseData)
+  public PartialRestResponse buildResponse(RoutingResult routingResult, RestLiResponseEnvelope responseData)
   {
     ErrorResponse errorResponse = buildErrorResponse(responseData.getServiceException());
     return new PartialRestResponse.Builder().headers(responseData.getHeaders()).status(responseData.getStatus())
@@ -113,7 +124,7 @@ public final class ErrorResponseBuilder implements RestLiResponseBuilder
   }
 
   @Override
-  public AugmentedRestLiResponseData buildRestLiResponseData(RestRequest request, RoutingResult routingResult,
+  public RestLiResponseEnvelope buildRestLiResponseData(RestRequest request, RoutingResult routingResult,
                                                              Object object, Map<String, String> headers)
   {
     RestLiServiceException exceptionResult = (RestLiServiceException) object;
@@ -131,7 +142,21 @@ public final class ErrorResponseBuilder implements RestLiResponseBuilder
     {
       type = null;
     }
-    return new AugmentedRestLiResponseData.Builder(type).headers(headers).status(exceptionResult.getStatus()).serviceException(exceptionResult)
-        .build();
+
+    switch (ResponseType.fromMethodType(type))
+    {
+      case SINGLE_ENTITY:
+        return new RecordResponseEnvelope(exceptionResult, headers);
+      case GET_COLLECTION:
+        return new CollectionResponseEnvelope(exceptionResult, headers);
+      case CREATE_COLLECTION:
+        return new CreateCollectionResponseEnvelope(exceptionResult, headers);
+      case BATCH_ENTITIES:
+        return new BatchResponseEnvelope(exceptionResult, headers);
+      case STATUS_ONLY:
+        return new EmptyResponseEnvelope(exceptionResult, headers);
+      default:
+        throw new IllegalArgumentException();
+    }
   }
 }

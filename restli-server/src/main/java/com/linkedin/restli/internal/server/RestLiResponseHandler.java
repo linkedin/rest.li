@@ -14,7 +14,6 @@
    limitations under the License.
 */
 
-
 package com.linkedin.restli.internal.server;
 
 import com.linkedin.data.DataMap;
@@ -27,12 +26,12 @@ import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.RestConstants;
-import com.linkedin.restli.internal.common.ProtocolVersionUtil;
 import com.linkedin.restli.internal.server.methods.MethodAdapterRegistry;
 import com.linkedin.restli.internal.server.methods.response.ErrorResponseBuilder;
 import com.linkedin.restli.internal.server.methods.response.PartialRestResponse;
 import com.linkedin.restli.internal.server.methods.response.RestLiResponseBuilder;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
+import com.linkedin.restli.internal.server.response.RecordResponseEnvelope;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.server.CollectionResult;
 import com.linkedin.restli.server.CreateResponse;
@@ -168,11 +167,12 @@ public class RestLiResponseHandler
    *           if cannot build response
    */
   public PartialRestResponse buildPartialResponse(final RoutingResult routingResult,
-                                                  final AugmentedRestLiResponseData responseData)
+                                                  final RestLiResponseEnvelope responseData)
   {
     if (responseData.isErrorResponse()){
       return _errorResponseBuilder.buildResponse(routingResult, responseData);
     }
+
     return chooseResponseBuilder(null, routingResult).buildResponse(routingResult, responseData);
   }
 
@@ -185,11 +185,11 @@ public class RestLiResponseHandler
    *          {@link RoutingResult}
    * @param responseObject
    *          response value
-   * @return {@link AugmentedRestLiResponseData}
+   * @return {@link RestLiResponseEnvelope}
    * @throws IOException
    *           if cannot build response
    */
-  public AugmentedRestLiResponseData buildRestLiResponseData(final RestRequest request,
+  public RestLiResponseEnvelope buildRestLiResponseData(final RestRequest request,
                                                             final RoutingResult routingResult,
                                                             final Object responseObject) throws IOException
   {
@@ -204,8 +204,7 @@ public class RestLiResponseHandler
       //If we have a null result, we have to assign the correct response status
       if (routingResult.getResourceMethod().getType().equals(ResourceMethod.ACTION))
       {
-        return new AugmentedRestLiResponseData.Builder(routingResult.getResourceMethod().getMethodType())
-            .status(HttpStatus.S_200_OK).headers(responseHeaders).build();
+        return new RecordResponseEnvelope(HttpStatus.S_200_OK, null, responseHeaders);
       }
       else if (routingResult.getResourceMethod().getType().equals(ResourceMethod.GET))
       {
@@ -235,7 +234,7 @@ public class RestLiResponseHandler
     return responseBuilder.buildRestLiResponseData(request, routingResult, responseObject, responseHeaders);
   }
 
-  public AugmentedRestLiResponseData buildExceptionResponseData(final RestRequest request,
+  public RestLiResponseEnvelope buildExceptionResponseData(final RestRequest request,
                                                                 final RoutingResult routingResult,
                                                                 final Object object,
                                                                 final Map<String, String> headers)

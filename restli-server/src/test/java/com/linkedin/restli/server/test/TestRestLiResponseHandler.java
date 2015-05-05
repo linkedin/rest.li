@@ -45,7 +45,7 @@ import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.common.UpdateStatus;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.TestConstants;
-import com.linkedin.restli.internal.server.AugmentedRestLiResponseData;
+import com.linkedin.restli.internal.server.RestLiResponseEnvelope;
 import com.linkedin.restli.internal.server.PathKeysImpl;
 import com.linkedin.restli.internal.server.ResourceContextImpl;
 import com.linkedin.restli.internal.server.RestLiResponseHandler;
@@ -650,12 +650,12 @@ public class TestRestLiResponseHandler
                                       String errorResponseHeaderName) throws Exception
   {
     final RestRequest request = buildRequest(acceptTypeData.acceptHeaders, protocolVersion);
-    AugmentedRestLiResponseData responseData;
+    RestLiResponseEnvelope responseData;
     RoutingResult routingResult1 = buildRoutingResultAction(Status.class, request, acceptTypeData.acceptHeaders);
     // #1 simple record template
     responseData = _responseHandler.buildRestLiResponseData(request, routingResult1, buildStatusRecord());
     checkResponseData(responseData, HttpStatus.S_200_OK, 1, false, true, errorResponseHeaderName);
-    assertEquals(responseData.getEntityResponse().toString(), response1);
+    assertEquals(responseData.getRecordResponseEnvelope().getRecord().toString(), response1);
     // #2 DataTemplate response
     StringMap map = new StringMap();
     map.put("key1", "value1");
@@ -667,7 +667,7 @@ public class TestRestLiResponseHandler
     //Obtain the maps necessary for comparison
     final DataMap actualMap;
     final DataMap expectedMap;
-    actualMap = responseData.getEntityResponse().data();
+    actualMap = responseData.getRecordResponseEnvelope().getRecord().data();
     expectedMap = JACKSON_DATA_CODEC.stringToMap(response2);
     assertEquals(actualMap, expectedMap);
 
@@ -676,7 +676,7 @@ public class TestRestLiResponseHandler
     responseData =
     _responseHandler.buildRestLiResponseData(request, routingResult3, null);
     checkResponseData(responseData, HttpStatus.S_200_OK, 1, false, false, errorResponseHeaderName);
-    assertEquals(responseData.getEntityResponse(), null);
+    assertEquals(responseData.getRecordResponseEnvelope().getRecord(), null);
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "basicData")
@@ -1208,7 +1208,7 @@ public class TestRestLiResponseHandler
     assertEquals(response.getEntity() != null, hasEntity);
   }
 
-  private void checkResponseData(AugmentedRestLiResponseData responseData, HttpStatus status, int numHeaders,
+  private void checkResponseData(RestLiResponseEnvelope responseData, HttpStatus status, int numHeaders,
                                  boolean hasError, boolean hasEntity, String errorResponseHeaderName)
   {
     assertEquals(responseData.getStatus(), status);
@@ -1222,7 +1222,7 @@ public class TestRestLiResponseHandler
       assertNull(responseData.getHeaders().get(errorResponseHeaderName));
     }
 
-    assertEquals(responseData.getEntityResponse() != null, hasEntity);
+    assertEquals(responseData.getRecordResponseEnvelope().getRecord() != null, hasEntity);
   }
 
   private void checkResponse(RestResponse response,

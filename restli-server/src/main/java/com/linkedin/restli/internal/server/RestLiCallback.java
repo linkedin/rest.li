@@ -17,6 +17,7 @@
 
 package com.linkedin.restli.internal.server;
 
+
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
@@ -77,9 +78,9 @@ public class RestLiCallback<T> implements RequestExecutionCallback<T>
     try
     {
       // Convert the object returned by the resource to response data.
-      final AugmentedRestLiResponseData responseData = _responseHandler.buildRestLiResponseData(_request, _method, result);
+      final RestLiResponseEnvelope responseData = _responseHandler.buildRestLiResponseData(_request, _method, result);
       // Invoke the response filters.
-      if (_responseFilters != null && !_responseFilters.isEmpty())
+      if (!_responseFilters.isEmpty())
       {
         invokeFiltersAndProcessResults(executionReport, responseData, null);
       }
@@ -103,9 +104,9 @@ public class RestLiCallback<T> implements RequestExecutionCallback<T>
   @Override
   public void onError(final Throwable e, RequestExecutionReport executionReport)
   {
-    final AugmentedRestLiResponseData responseData = convertExceptionToRestLiResponseData(e);
+    final RestLiResponseEnvelope responseData = convertExceptionToRestLiResponseData(e);
     // Invoke the response filters.
-    if (_responseFilters != null && !_responseFilters.isEmpty())
+    if (!_responseFilters.isEmpty())
     {
       invokeFiltersAndProcessResults(executionReport, responseData, e);
     }
@@ -119,7 +120,7 @@ public class RestLiCallback<T> implements RequestExecutionCallback<T>
   }
 
   private void invokeFiltersAndProcessResults(RequestExecutionReport executionReport,
-                                              final AugmentedRestLiResponseData responseData,
+                                              final RestLiResponseEnvelope responseData,
                                               final Throwable appEx)
   {
     // Construct the filter response context from the partial response.
@@ -130,7 +131,7 @@ public class RestLiCallback<T> implements RequestExecutionCallback<T>
       // Invoke onSuccess on the R2 callback since the response from the resource was
       // successfully processed by the filters.
       // Convert response data to partial rest response.
-      final PartialRestResponse response = _responseHandler.buildPartialResponse(_method, responseContext.getAugmentedRestLiResponseData());
+      final PartialRestResponse response = _responseHandler.buildPartialResponse(_method, responseContext.getRestLiResponseEnvelope());
       // Invoke the callback.
       _callback.onSuccess(_responseHandler.buildResponse(_method, response), executionReport);
     }
@@ -139,20 +140,13 @@ public class RestLiCallback<T> implements RequestExecutionCallback<T>
       // Invoke onError on the R2 callback since we received an exception from the filters.
       _callback.onError(_responseHandler.buildRestException(e,
                                                             _responseHandler.buildPartialResponse(_method,
-                                                                                                  responseContext.getAugmentedRestLiResponseData())),
+                                                                                                  responseContext.getRestLiResponseEnvelope())),
                         executionReport);
     }
   }
 
-  private RestException toRestException(final Throwable e)
-  {
-    PartialRestResponse partialResponse =
-        _responseHandler.buildPartialResponse(_method, convertExceptionToRestLiResponseData(e));
-    return _responseHandler.buildRestException(e, partialResponse);
-  }
-
   /* Package private for testing purposes */
-  AugmentedRestLiResponseData convertExceptionToRestLiResponseData(Throwable e)
+  RestLiResponseEnvelope convertExceptionToRestLiResponseData(Throwable e)
   {
     RestLiServiceException restLiServiceException;
     if (e instanceof RestLiServiceException)
@@ -190,7 +184,7 @@ public class RestLiCallback<T> implements RequestExecutionCallback<T>
         filter.onResponse(_filterRequestContext, responseContext);
         // Check whether this filter successfully handled the last exception. If yes, clear the
         // last exception.
-        if (!responseContext.getAugmentedRestLiResponseData().isErrorResponse())
+        if (!responseContext.getRestLiResponseEnvelope().isErrorResponse())
         {
           lastException = null;
         }
@@ -199,7 +193,7 @@ public class RestLiCallback<T> implements RequestExecutionCallback<T>
       {
         // Save the latest exception that's thrown from the filter.
         lastException = ex;
-        responseContext.setAugmentedRestLiResponseData(convertExceptionToRestLiResponseData(ex));
+        responseContext.setRestLiResponseEnvelope(convertExceptionToRestLiResponseData(ex));
       }
     }
     // Rethrow the lastException if it's not null.
@@ -212,28 +206,10 @@ public class RestLiCallback<T> implements RequestExecutionCallback<T>
   /* Package private for testing purposes */
   static class FilterResponseContextAdapter implements FilterResponseContextInternal
   {
-    private AugmentedRestLiResponseData _responseData;
-    public FilterResponseContextAdapter(final AugmentedRestLiResponseData response)
+    private RestLiResponseEnvelope _responseData;
+    public FilterResponseContextAdapter(final RestLiResponseEnvelope response)
     {
       _responseData = response;
-    }
-
-    @Override
-    public void setHttpStatus(HttpStatus status)
-    {
-      _responseData.setStatus(status);
-    }
-
-    @Override
-    public Map<String, String> getResponseHeaders()
-    {
-      return _responseData.getHeaders();
-    }
-
-    @Override
-    public HttpStatus getHttpStatus()
-    {
-      return _responseData.getStatus();
     }
 
     @Override
@@ -243,13 +219,13 @@ public class RestLiCallback<T> implements RequestExecutionCallback<T>
     }
 
     @Override
-    public void setAugmentedRestLiResponseData(AugmentedRestLiResponseData data)
+    public void setRestLiResponseEnvelope(RestLiResponseEnvelope data)
     {
       _responseData = data;
     }
 
     @Override
-    public AugmentedRestLiResponseData getAugmentedRestLiResponseData()
+    public RestLiResponseEnvelope getRestLiResponseEnvelope()
     {
       return _responseData;
     }

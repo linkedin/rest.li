@@ -18,19 +18,25 @@ public enum ErrorResponseFormat
   FULL(EnumSet.allOf(ErrorResponsePart.class)),
 
   /**
-   * Only the error message and explicitly provided error details or service error code are included in responses.
+   * Only the error message and explicitly provided error details or service error code are included in responses and headers.
    */
-  MESSAGE_AND_DETAILS(EnumSet.of(ErrorResponsePart.MESSAGE, ErrorResponsePart.DETAILS)),
+  MESSAGE_AND_DETAILS(EnumSet.of(ErrorResponsePart.MESSAGE, ErrorResponsePart.DETAILS, ErrorResponsePart.HEADERS)),
 
   /**
-   * Only the error message.
+   * Only the error message, service error code, and headers.
    */
-  MESSAGE_ONLY(EnumSet.of(ErrorResponsePart.MESSAGE)),
+  MESSAGE_AND_SERVICECODE(EnumSet.of(ErrorResponsePart.MESSAGE, ErrorResponsePart.SERVICE_ERROR_CODE, ErrorResponsePart.HEADERS)),
 
   /**
-   * Clients only get back a HTTP Status code and RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE header, nothing else.
+   * Only the error message and headers.
    */
-  MINIMAL(EnumSet.noneOf(ErrorResponsePart.class));
+  MESSAGE_ONLY(EnumSet.of(ErrorResponsePart.MESSAGE, ErrorResponsePart.HEADERS)),
+
+  /**
+   * Clients only get back a HTTP Status code and {@link com.linkedin.restli.common.RestConstants#HEADER_RESTLI_ERROR_RESPONSE }
+   * (or the deprecated {@link com.linkedin.restli.common.RestConstants#HEADER_LINKEDIN_ERROR_RESPONSE }) header, and nothing else.
+   */
+  MINIMAL(EnumSet.of(ErrorResponsePart.HEADERS));
 
   private static enum ErrorResponsePart
   {

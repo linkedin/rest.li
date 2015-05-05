@@ -19,20 +19,22 @@ package com.linkedin.restli.internal.server.methods.response;
 
 
 import com.linkedin.pegasus.generator.examples.Foo;
-import com.linkedin.r2.message.Response;
 import com.linkedin.restli.common.BatchCreateIdResponse;
+import com.linkedin.restli.common.CreateIdStatus;
 import com.linkedin.restli.common.HttpStatus;
-import com.linkedin.restli.common.ResourceMethod;
-import com.linkedin.restli.internal.server.AugmentedRestLiResponseData;
+import com.linkedin.restli.internal.server.RestLiResponseEnvelope;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
+import com.linkedin.restli.internal.server.response.CreateCollectionResponseEnvelope;
 import com.linkedin.restli.server.BatchCreateResult;
 import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.RestLiServiceException;
+
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
@@ -57,7 +59,7 @@ public class TestBatchCreateResponseBuilder
     RoutingResult routingResult = new RoutingResult(null, mockDescriptor);
 
     BatchCreateResponseBuilder responseBuilder = new BatchCreateResponseBuilder(null);
-    AugmentedRestLiResponseData responseData = responseBuilder.buildRestLiResponseData(null,
+    RestLiResponseEnvelope responseData = responseBuilder.buildRestLiResponseData(null,
                                                                                        routingResult,
                                                                                        results,
                                                                                        headers);
@@ -65,15 +67,21 @@ public class TestBatchCreateResponseBuilder
 
     EasyMock.verify(mockDescriptor);
     ResponseBuilderUtil.validateHeaders(restResponse, headers);
+
+    List<com.linkedin.restli.common.CreateIdStatus<Long>> items = new ArrayList<CreateIdStatus<Long>>();
+    for (CreateCollectionResponseEnvelope.CollectionCreateResponseItem item : responseData.getCreateCollectionResponseEnvelope().getCreateResponses())
+    {
+      items.add((CreateIdStatus<Long>) item.getRecord());
+    }
+
     Assert.assertEquals(restResponse.getEntity(),
-                        new BatchCreateIdResponse<Long>((List<com.linkedin.restli.common.CreateIdStatus<Long>>) responseData.getCollectionResponse()));
+                        new BatchCreateIdResponse<Long>(items));
     Assert.assertEquals(restResponse.getStatus(), HttpStatus.S_200_OK);
   }
 
   private static ResourceMethodDescriptor getMockResourceMethodDescriptor()
   {
     ResourceMethodDescriptor mockDescriptor = EasyMock.createMock(ResourceMethodDescriptor.class);
-    EasyMock.expect(mockDescriptor.getMethodType()).andReturn(ResourceMethod.BATCH_CREATE).once();
     EasyMock.replay(mockDescriptor);
     return mockDescriptor;
   }

@@ -74,7 +74,7 @@ public class TestNullGreetingsClient extends RestLiIntegrationTest
       public void onResponse(FilterRequestContext requestContext, FilterResponseContext responseContext) {
         //Add a custom header to the response to make sure that 404s/500s returned by
         //nulls in resource methods are also given a chance to experience the filter
-        responseContext.getResponseHeaders().put("X-Null-Greetings-Filter", "Ack");
+        responseContext.getResponseData().getHeaders().put("X-Null-Greetings-Filter", "Ack");
       }
     }));
   }

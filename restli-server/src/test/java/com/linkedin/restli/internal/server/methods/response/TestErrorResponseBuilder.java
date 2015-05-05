@@ -18,6 +18,7 @@
 package com.linkedin.restli.internal.server.methods.response;
 
 
+import com.linkedin.data.DataMap;
 import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ProtocolVersion;
@@ -25,9 +26,10 @@ import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.HeaderUtil;
-import com.linkedin.restli.internal.server.AugmentedRestLiResponseData;
+import com.linkedin.restli.internal.server.RestLiResponseEnvelope;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
+import com.linkedin.restli.server.ErrorResponseFormat;
 import com.linkedin.restli.server.RestLiServiceException;
 import java.util.HashMap;
 import java.util.Map;
@@ -67,7 +69,7 @@ public class TestErrorResponseBuilder
                                                                          runtimeException);
 
     ErrorResponseBuilder errorResponseBuilder = new ErrorResponseBuilder();
-    AugmentedRestLiResponseData responseData = errorResponseBuilder.buildRestLiResponseData(null,
+    RestLiResponseEnvelope responseData = errorResponseBuilder.buildRestLiResponseData(null,
                                                                                             routingResult,
                                                                                             serviceException,
                                                                                             headers);
@@ -85,5 +87,31 @@ public class TestErrorResponseBuilder
     EasyMock.expect(mockDescriptor.getMethodType()).andReturn(ResourceMethod.GET);
     EasyMock.replay(mockDescriptor);
     return mockDescriptor;
+  }
+
+  @Test
+  public void testOverride()
+  {
+    RestLiServiceException exception = new RestLiServiceException(HttpStatus.S_200_OK, "Some message", new IllegalStateException("Some other message"));
+    exception.setServiceErrorCode(123);
+    exception.setErrorDetails(new DataMap());
+    ErrorResponseBuilder builder = new ErrorResponseBuilder(ErrorResponseFormat.FULL);
+
+    ErrorResponse errorResponse = builder.buildErrorResponse(exception);
+    Assert.assertTrue(errorResponse.hasErrorDetails());
+    Assert.assertTrue(errorResponse.hasExceptionClass());
+    Assert.assertTrue(errorResponse.hasStatus());
+    Assert.assertTrue(errorResponse.hasMessage());
+    Assert.assertTrue(errorResponse.hasServiceErrorCode());
+    Assert.assertTrue(errorResponse.hasStackTrace());
+
+    exception.setOverridingFormat(ErrorResponseFormat.MESSAGE_AND_SERVICECODE);
+    errorResponse = builder.buildErrorResponse(exception);
+    Assert.assertFalse(errorResponse.hasErrorDetails());
+    Assert.assertFalse(errorResponse.hasExceptionClass());
+    Assert.assertFalse(errorResponse.hasStatus());
+    Assert.assertTrue(errorResponse.hasMessage());
+    Assert.assertTrue(errorResponse.hasServiceErrorCode());
+    Assert.assertFalse(errorResponse.hasStackTrace());
   }
 }
