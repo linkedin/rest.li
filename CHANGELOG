@@ -1,6 +1,7 @@
 2.4.5
 ------
-
+(RB=475440 cont')
+Make ChannelPoolHander iterate through all connection tokens.
 
 2.4.4
 ------

@@ -28,6 +28,8 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.util.AttributeKey;
 
+import java.util.List;
+
 
 /**
  * Listens for upstream events affecting the state of the channel as it relates to the pool.
@@ -54,15 +56,19 @@ class ChannelPoolHandler extends ChannelInboundHandlerAdapter
     if (pool != null)
     {
       RestResponse restResponse = (RestResponse) msg;
-      String connection = restResponse.getHeader("connection");
-      if ("close".equalsIgnoreCase(connection))
+      List<String> connectionTokens = restResponse.getHeaderValues("connection");
+      if (connectionTokens != null)
       {
-        pool.dispose(ctx.channel());
+        for (String token: connectionTokens)
+        {
+          if ("close".equalsIgnoreCase(token))
+          {
+            pool.dispose(ctx.channel());
+            return;
+          }
+        }
       }
-      else
-      {
-        pool.put(ctx.channel());
-      }
+      pool.put(ctx.channel());
     }
   }
 
