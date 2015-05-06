@@ -1,0 +1,11 @@
+dependencies {
+  compile project(':pegasus-common')
+  compile project(':r2-core')
+  compile project(':restli-client')
+  compile project(':restli-common')
+  compile externalDependency.parseq
+  testCompile project(path: ':data')
+  testCompile project(path: ':restli-client', configuration: 'testArtifacts')
+  testCompile project(path: ':restli-common', configuration: 'testArtifacts')
+  testCompile externalDependency.testng
+}

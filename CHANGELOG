@@ -3,6 +3,9 @@
 (RB=475062)
 Factor out PatchRequestRecorder and related classes into a new module (restli-client-util-recorder).
 
+(RB=476293)
+Take out ParSeqRestClient into a separate module (restli-client-parseq).
+
 2.5.1
 ------
 (RB=478810)

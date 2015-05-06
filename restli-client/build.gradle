@@ -7,7 +7,6 @@ dependencies {
   compile project(':li-jersey-uri')
   compile externalDependency.mail
   compile externalDependency.commonsLang
-  compile externalDependency.parseq
   testCompile project(path: ':restli-common', configuration: 'testArtifacts')
   testCompile project(path: ':restli-internal-testutils', configuration: 'testArtifacts')
   testCompile externalDependency.guava
