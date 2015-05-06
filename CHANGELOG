@@ -1,3 +1,7 @@
+2.4.5
+------
+
+
 2.4.4
 ------
 (RB=475440)
@@ -34,6 +38,8 @@ bug fix in ConfigRunner of d2 quick-start example
 
 2.4.0
 ------
+(RB=462831)
+Fix race condition in D2 when Zookeeper is slow.
 (RB=444062)
 Migrate r2 to netty4.
 (RB=444153)
@@ -43,15 +49,10 @@ Refactor restli-int-test to properly shutdown R2 client/clientFactory
 
 2.3.0
 ------
-(RB=426274)
-Rewrite KeyMapper API
-(RB=462831)
-Fix race condition in D2 when Zookeeper is slow.
-
-2.2.12
-------
 (RB=433868)
 Handle key coercion error for CompoundKey and BatchKey to return 400.
+(RB=426274)
+Rewrite KeyMapper API
 
 2.2.11
 ------
