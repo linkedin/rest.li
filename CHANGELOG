@@ -1,6 +1,7 @@
 2.6.1
 ------
-
+(RB=477748)
+Remove unused dependency to mina-core.
 
 2.6.0
 ------
