@@ -1,0 +1,56 @@
+{
+  "models" : [ {
+    "type" : "enum",
+    "name" : "Tone",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "symbols" : [ "FRIENDLY", "SINCERE", "INSULTING" ]
+  }, {
+    "type" : "record",
+    "name" : "Message",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "doc" : "A message",
+    "fields" : [ {
+      "name" : "id",
+      "type" : "string"
+    }, {
+      "name" : "message",
+      "type" : "string"
+    }, {
+      "name" : "tone",
+      "type" : "Tone",
+      "doc" : "tone"
+    } ]
+  }, {
+    "type" : "typeref",
+    "name" : "CustomLongRef",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "ref" : "long",
+    "java" : {
+      "class" : "com.linkedin.restli.examples.custom.types.CustomLong"
+    }
+  } ],
+  "schema" : {
+    "name" : "typerefCustomDoubleAssociationKeyResource",
+    "namespace" : "com.linkedin.restli.examples.greetings.client",
+    "path" : "/typerefCustomDoubleAssociationKeyResource",
+    "schema" : "com.linkedin.restli.examples.greetings.api.Message",
+    "doc" : "generated from: com.linkedin.restli.examples.greetings.server.TyperefCustomDoubleAssociationKeyResource",
+    "association" : {
+      "identifier" : "typerefCustomDoubleAssociationKeyResourceId",
+      "assocKeys" : [ {
+        "name" : "dest",
+        "type" : "com.linkedin.restli.examples.typeref.api.CustomLongRef"
+      }, {
+        "name" : "src",
+        "type" : "com.linkedin.restli.examples.typeref.api.CustomLongRef"
+      } ],
+      "supports" : [ "get" ],
+      "methods" : [ {
+        "method" : "get"
+      } ],
+      "entity" : {
+        "path" : "/typerefCustomDoubleAssociationKeyResource/{typerefCustomDoubleAssociationKeyResourceId}"
+      }
+    }
+  }
+}

@@ -21,6 +21,7 @@ import com.linkedin.common.callback.Callback;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.schema.DataSchemaUtil;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.template.Custom;
@@ -58,6 +59,7 @@ import com.linkedin.restli.server.NoMetadata;
 import com.linkedin.restli.server.PagingContext;
 import com.linkedin.restli.server.PathKeys;
 import com.linkedin.restli.server.ResourceConfigException;
+import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.annotations.Action;
 import com.linkedin.restli.server.annotations.ActionParam;
@@ -87,16 +89,12 @@ import com.linkedin.restli.server.annotations.RestLiSimpleResource;
 import com.linkedin.restli.server.annotations.RestLiTemplate;
 import com.linkedin.restli.server.annotations.RestMethod;
 import com.linkedin.restli.server.annotations.ValidatorParam;
-import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.resources.ComplexKeyResource;
 import com.linkedin.restli.server.resources.ComplexKeyResourceAsync;
 import com.linkedin.restli.server.resources.ComplexKeyResourcePromise;
 import com.linkedin.restli.server.resources.ComplexKeyResourceTask;
 import com.linkedin.restli.server.resources.KeyValueResource;
 import com.linkedin.restli.server.resources.SingleObjectResource;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
@@ -113,6 +111,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -1137,8 +1138,17 @@ public final class RestLiAnnotationReader
   {
     try
     {
+      // If the key is a non-primitive custom type, initialize the keyType class so that the corresponding coercer is
+      // loaded into memory such that the coercer would have been registered when we process an incoming request for
+      // this resource.
+      if (typerefInfoClass != RestAnnotations.NULL_TYPEREF_INFO.class && DataSchemaUtil.classToPrimitiveDataSchema(
+          keyType) == null)
+      {
+        Custom.initializeCustomClass(keyType);
+      }
       return new Key(keyName, keyType, getDataSchema(keyType, getSchemaFromTyperefInfo(typerefInfoClass)));
     }
+
     catch (TemplateRuntimeException e)
     {
       throw new ResourceConfigException("DataSchema for key '" + keyName + "' of type " + keyType + " on resource "
