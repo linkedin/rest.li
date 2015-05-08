@@ -33,7 +33,9 @@ import com.linkedin.data.schema.validation.ValidationResult;
 import com.linkedin.data.schema.validator.DataSchemaAnnotationValidator;
 import com.linkedin.data.schema.validator.ValidatorContext;
 import com.linkedin.data.template.DataTemplate;
+import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.data.template.TemplateRuntimeException;
 import com.linkedin.data.transform.DataComplexProcessor;
 import com.linkedin.data.transform.DataProcessingException;
 import com.linkedin.data.transform.patch.Patch;
@@ -113,6 +115,7 @@ public class RestLiDataValidator
 
   private static final String INSTANTIATION_ERROR = "InstantiationException while trying to instantiate the record template class";
   private static final String ILLEGAL_ACCESS_ERROR = "IllegalAccessException while trying to instantiate the record template class";
+  private static final String TEMPLATE_RUNTIME_ERROR = "TemplateRuntimeException while trying to find the schema class";
 
   /**
    * Constructor.
@@ -353,19 +356,23 @@ public class RestLiDataValidator
 
   private ValidationResult validateOutputEntity(DataTemplate<?> entity)
   {
-    // The output entity is an AnyRecord and does not have the schema information.
     try
     {
-      RecordTemplate record = _valueClass.newInstance();
-      return ValidateDataAgainstSchema.validate(entity.data(), record.schema(), new ValidationOptions(), new DataSchemaAnnotationValidator(record.schema()));
+      DataSchema schema;
+      if (_resourceMethod == ResourceMethod.BATCH_GET)
+      {
+        schema = entity.schema();
+      }
+      else
+      {
+        // The output entity is an AnyRecord and does not have the schema information.
+        schema = DataTemplateUtil.getSchema(_valueClass);
+      }
+      return ValidateDataAgainstSchema.validate(entity.data(), schema, new ValidationOptions(), new DataSchemaAnnotationValidator(schema));
     }
-    catch (InstantiationException e)
+    catch (TemplateRuntimeException e)
     {
-      return validationResultWithErrorMessage(INSTANTIATION_ERROR);
-    }
-    catch (IllegalAccessException e)
-    {
-      return validationResultWithErrorMessage(ILLEGAL_ACCESS_ERROR);
+      return validationResultWithErrorMessage(TEMPLATE_RUNTIME_ERROR);
     }
   }
 

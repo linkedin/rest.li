@@ -62,7 +62,6 @@ import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -637,34 +636,33 @@ public class TestRestLiValidation extends RestLiIntegrationTest
   @Test
   public void testBatchGetAuto() throws RemoteInvocationException
   {
-    final String errorMessage = "Key: 1, ERROR :: /stringA :: field is required but not found and has no default value\n" +
-        "ERROR :: /stringB :: field is required but not found and has no default value\n" +
-        "ERROR :: /UnionFieldWithInlineRecord :: field is required but not found and has no default value\n" +
-        "Key: 2, ERROR :: /stringA :: field is required but not found and has no default value\n" +
-        "ERROR :: /stringB :: field is required but not found and has no default value\n" +
-        "ERROR :: /UnionFieldWithInlineRecord :: field is required but not found and has no default value\n" +
-        "Key: 3, ERROR :: /stringA :: field is required but not found and has no default value\n" +
-        "ERROR :: /stringB :: field is required but not found and has no default value\n" +
-        "ERROR :: /UnionFieldWithInlineRecord :: field is required but not found and has no default value\n";
+    final List<Integer> ids = Arrays.asList(11, 22, 33);
+    final String errorMessage = ", ERROR :: /UnionFieldWithInlineRecord/com.linkedin.restli.examples.greetings.api.myRecord/foo1 :: field is required but not found and has no default value\n";
     try
     {
-      BatchGetRequest<ValidationDemo> request = new AutoValidationDemosBuilders().batchGet().ids(1, 2, 3).build();
+      BatchGetRequest<ValidationDemo> request = new AutoValidationDemosBuilders().batchGet().ids(ids).build();
       _restClientAuto.sendRequest(request).getResponse();
       Assert.fail("Expected RestLiResponseException");
     }
     catch (RestLiResponseException e)
     {
-      Assert.assertEquals(e.getServiceErrorMessage(), errorMessage);
+      for (Integer id : ids)
+      {
+        Assert.assertTrue(e.getServiceErrorMessage().contains("Key: " + id.toString() + errorMessage));
+      }
     }
     try
     {
-      BatchGetEntityRequest<Integer, ValidationDemo> request2 = new AutoValidationDemosRequestBuilders().batchGet().ids(1, 2, 3).build();
+      BatchGetEntityRequest<Integer, ValidationDemo> request2 = new AutoValidationDemosRequestBuilders().batchGet().ids(ids).build();
       _restClientAuto.sendRequest(request2).getResponse();
       Assert.fail("Expected RestLiResponseException");
     }
     catch (RestLiResponseException e)
     {
-      Assert.assertEquals(e.getServiceErrorMessage(), errorMessage);
+      for (Integer id : ids)
+      {
+        Assert.assertTrue(e.getServiceErrorMessage().contains("Key: " + id.toString() + errorMessage));
+      }
     }
   }
 
@@ -700,6 +698,57 @@ public class TestRestLiValidation extends RestLiIntegrationTest
       Assert.assertEquals(e.getServiceErrorMessage(), "ERROR :: /stringB :: field is required but not found and has no default value\n" +
           "ERROR :: /stringB :: field is required but not found and has no default value\n" +
           "ERROR :: /stringB :: field is required but not found and has no default value\n");
+    }
+  }
+
+  // Tests for output validation filter handling exceptions from the resource
+  @Test(dataProvider = "autoBuilders")
+  public void testGetAutoWithException(Object builder) throws RemoteInvocationException
+  {
+    try
+    {
+      Request<ValidationDemo> request = new RootBuilderWrapper<Integer, ValidationDemo>(builder).get().id(0).build();
+      _restClientAuto.sendRequest(request).getResponse();
+      Assert.fail("Expected RestLiResponseException");
+    }
+    catch (RestLiResponseException e)
+    {
+      Assert.assertEquals(e.getStatus(), HttpStatus.S_400_BAD_REQUEST.getCode());
+    }
+  }
+
+  @Test
+  public void testBatchGetAutoWithException() throws RemoteInvocationException
+  {
+    // The resource returns an error for id=0 but a normal result for id=1
+    ValidationDemo.UnionFieldWithInlineRecord union = new ValidationDemo.UnionFieldWithInlineRecord();
+    union.setMyRecord(new myRecord().setFoo1(100).setFoo2(200));
+    ValidationDemo expectedResult = new ValidationDemo().setStringA("a").setStringB("b").setUnionFieldWithInlineRecord(union);
+
+    BatchGetRequest<ValidationDemo> request = new AutoValidationDemosBuilders().batchGet().ids(0, 1).build();
+    Response<BatchResponse<ValidationDemo>> response = _restClientAuto.sendRequest(request).getResponse();
+    Assert.assertEquals(response.getStatus(), HttpStatus.S_200_OK.getCode());
+    Assert.assertEquals((int) response.getEntity().getErrors().get("0").getStatus(), HttpStatus.S_400_BAD_REQUEST.getCode());
+    Assert.assertEquals(response.getEntity().getResults().get("1"), expectedResult);
+    BatchGetEntityRequest<Integer, ValidationDemo> request2 = new AutoValidationDemosRequestBuilders().batchGet().ids(0, 1).build();
+    Response<BatchKVResponse<Integer, EntityResponse<ValidationDemo>>> response2 =_restClientAuto.sendRequest(request2).getResponse();
+    Assert.assertEquals(response2.getStatus(), HttpStatus.S_200_OK.getCode());
+    Assert.assertEquals((int) response2.getEntity().getErrors().get(0).getStatus(), HttpStatus.S_400_BAD_REQUEST.getCode());
+    Assert.assertEquals(response2.getEntity().getResults().get(1).getEntity(), expectedResult);
+  }
+
+  @Test(dataProvider = "autoBuilders")
+  public void testFinderWithException(Object builder) throws RemoteInvocationException
+  {
+    try
+    {
+      Request<CollectionResponse<ValidationDemo>> request = new RootBuilderWrapper<Integer, ValidationDemo>(builder).findBy("search").setQueryParam("intA", 0).build();
+      _restClientAuto.sendRequest(request).getResponse();
+      Assert.fail("Expected RestLiResponseException");
+    }
+    catch (RestLiResponseException e)
+    {
+      Assert.assertEquals(e.getStatus(), HttpStatus.S_400_BAD_REQUEST.getCode());
     }
   }
 }

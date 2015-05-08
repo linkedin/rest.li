@@ -1,6 +1,7 @@
 2.5.1
 ------
-
+(RB=478809)
+Handle error responses and batch results correctly in output validation filter.
 
 2.5.0
 ------
