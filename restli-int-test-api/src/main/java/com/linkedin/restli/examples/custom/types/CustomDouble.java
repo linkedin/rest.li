@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2012 LinkedIn Corp.
+   Copyright (c) 2015 LinkedIn Corp.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -12,10 +12,6 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
- */
-
-/**
- * $Id: $
  */
 
 package com.linkedin.restli.examples.custom.types;
@@ -49,26 +45,6 @@ public class CustomDouble
     return _d;
   }
 
-  public static class CustomDoubleCoercer implements DirectCoercer<CustomDouble>
-  {
-    @Override
-    public Object coerceInput(CustomDouble object) throws ClassCastException
-    {
-      return object.toDouble();
-    }
-
-    @Override
-    public CustomDouble coerceOutput(Object object) throws TemplateOutputCastException
-    {
-      if (!(object instanceof Double) && !(object instanceof Integer))
-      {
-        throw new TemplateOutputCastException("Output " + object
-            + " is not a Double or integer, and cannot be coerced to " + CustomDouble.class.getName());
-      }
-      return new CustomDouble(((Number) object).doubleValue());
-    }
-  }
-
   @Override
   public boolean equals(Object obj)
   {
@@ -90,5 +66,25 @@ public class CustomDouble
   public String toString()
   {
     return "CustomDouble:" + _d.toString();
+  }
+
+  public static class CustomDoubleCoercer implements DirectCoercer<CustomDouble>
+  {
+    @Override
+    public Object coerceInput(CustomDouble object) throws ClassCastException
+    {
+      return object.toDouble();
+    }
+
+    @Override
+    public CustomDouble coerceOutput(Object object) throws TemplateOutputCastException
+    {
+      if (!(object instanceof Double) && !(object instanceof Integer))
+      {
+        throw new TemplateOutputCastException("Output " + object + " is not a Double or integer, and cannot be coerced to " + CustomDouble.class
+            .getName());
+      }
+      return new CustomDouble(((Number) object).doubleValue());
+    }
   }
 }
