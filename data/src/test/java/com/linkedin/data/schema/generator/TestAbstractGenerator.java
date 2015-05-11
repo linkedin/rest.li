@@ -23,7 +23,7 @@ import com.linkedin.data.TestUtil;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.template.DataTemplateUtil;
-import org.testng.annotations.Test;
+import com.linkedin.util.FileUtil;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -38,7 +38,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static com.linkedin.data.TestUtil.*;
+import org.testng.annotations.Test;
+
+import static com.linkedin.data.TestUtil.asMap;
+import static com.linkedin.data.TestUtil.computePathFromRelativePaths;
+import static com.linkedin.data.TestUtil.createJarsFromRelativePaths;
+import static com.linkedin.data.TestUtil.dataMapFromString;
+import static com.linkedin.data.TestUtil.ensureEmptyOutputDir;
+import static com.linkedin.data.TestUtil.out;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
@@ -97,7 +104,7 @@ public class TestAbstractGenerator
       File targetDirectory = new File(targetDirectoryPath);
       List<File> targetFiles = targetFiles(targetDirectory);
 
-      if (upToDate(sourceFiles, targetFiles))
+      if (FileUtil.upToDate(sourceFiles, targetFiles))
       {
         if (_debug) out.println("Avro schemas are up-to-date: " + Arrays.toString(sources));
         return;

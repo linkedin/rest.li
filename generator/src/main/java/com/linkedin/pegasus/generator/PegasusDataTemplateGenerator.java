@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2012 LinkedIn Corp.
+   Copyright (c) 2015 LinkedIn Corp.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -17,108 +17,151 @@
 package com.linkedin.pegasus.generator;
 
 
+import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.schema.DataSchemaLocation;
+import com.linkedin.data.schema.generator.AbstractGenerator;
 import com.linkedin.data.schema.resolver.FileDataSchemaLocation;
-import com.sun.codemodel.writer.FileCodeWriter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.linkedin.pegasus.generator.spec.ClassTemplateSpec;
+import com.linkedin.util.FileUtil;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
+
+import com.sun.codemodel.JCodeModel;
+import com.sun.codemodel.JDefinedClass;
+import com.sun.codemodel.JPackage;
+import com.sun.codemodel.writer.FileCodeWriter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
- * Generates Java data templates from Pegasus Data Model schemas.
+ * Generate Java data template files from Pegasus Data Model schema files.
  *
  * @author Eran Leshem
  */
-public class PegasusDataTemplateGenerator extends DataTemplateGenerator
+public class PegasusDataTemplateGenerator
 {
-  private static final Logger log = LoggerFactory.getLogger(PegasusDataTemplateGenerator.class);
+  /**
+   * The system property that specifies whether to generate classes for externally resolved schemas
+   */
+  public static final String GENERATOR_GENERATE_IMPORTED = "generator.generate.imported";
 
-  private final Config _config;
+  private static final Logger _log = LoggerFactory.getLogger(PegasusDataTemplateGenerator.class);
 
-  public static void main(String[] args) throws IOException
+  public static void main(String[] args)
+      throws IOException
   {
     if (args.length < 2)
     {
-      log.error("Usage: PegasusDataTemplateGenerator targetDirectoryPath [sourceFile or sourceDirectory or schemaName]+");
+      _log.error("Usage: PegasusDataTemplateGenerator targetDirectoryPath [sourceFile or sourceDirectory or schemaName]+");
       System.exit(1);
     }
 
-    final String generateImported = System.getProperty(GENERATOR_GENERATE_IMPORTED);
-    run(System.getProperty(GENERATOR_RESOLVER_PATH),
-        System.getProperty(GENERATOR_DEFAULT_PACKAGE),
-        generateImported == null ? null : Boolean.parseBoolean(generateImported),
-        args[0],
-        Arrays.copyOfRange(args, 1, args.length));
+    final String generateImportedProperty = System.getProperty(PegasusDataTemplateGenerator.GENERATOR_GENERATE_IMPORTED);
+    final boolean generateImported = generateImportedProperty == null ? true : Boolean.parseBoolean(generateImportedProperty);
+    PegasusDataTemplateGenerator.run(System.getProperty(AbstractGenerator.GENERATOR_RESOLVER_PATH),
+                                     System.getProperty(JavaCodeGeneratorBase.GENERATOR_DEFAULT_PACKAGE),
+                                     generateImported,
+                                     args[0],
+                                     Arrays.copyOfRange(args, 1, args.length));
   }
 
-  public static GeneratorResult run(String resolverPath,
-                                    String defaultPackage,
-                                    Boolean generateImported,
-                                    String targetDirectoryPath,
-                                    String[] sources) throws IOException
+  public static GeneratorResult run(String resolverPath, String defaultPackage, final boolean generateImported, String targetDirectoryPath, String[] sources)
+      throws IOException
   {
-    final Config config = new Config(resolverPath, defaultPackage, generateImported);
-    final PegasusDataTemplateGenerator generator = new PegasusDataTemplateGenerator(config);
+    final DataSchemaParser schemaParser = new DataSchemaParser(resolverPath);
+    final TemplateSpecGenerator specGenerator = new TemplateSpecGenerator(schemaParser.getSchemaResolver());
+    final JavaDataTemplateGenerator dataTemplateGenerator = new JavaDataTemplateGenerator(defaultPackage);
 
-    return generator.generate(targetDirectoryPath, sources);
-  }
+    for (DataSchema predefinedSchema : JavaDataTemplateGenerator.PredefinedJavaClasses.keySet())
+    {
+      specGenerator.registerDefinedSchema(predefinedSchema);
+    }
 
-  public PegasusDataTemplateGenerator(Config config)
-  {
-    super();
-    _config = config;
-  }
+    final DataSchemaParser.ParseResult parseResult = schemaParser.parseSources(sources);
 
-  /**
-   * Parses data schema files and generates stubs for them.
-   * @param sources provides the paths to schema files and/or fully qualified schema names.
-   * @param targetDirectoryPath path to target root java source directory
-   * @return a result that includes collection of files accessed, would have generated and actually modified.
-   * @throws IOException if there are problems opening or deleting files.
-   */
-  private GeneratorResult generate(String targetDirectoryPath, String[] sources) throws IOException
-  {
-    initializeDefaultPackage();
-    initSchemaResolver();
+    for (CodeUtil.Pair<DataSchema, File> pair : parseResult.getSchemaAndFiles())
+    {
+      final DataSchemaLocation location = new FileDataSchemaLocation(pair.second);
+      specGenerator.generate(pair.first, location);
+    }
+    for (CodeUtil.Pair<DataSchema, String> pair : parseResult.getSchemaAndNames())
+    {
+      specGenerator.generate(pair.first);
+    }
+    for (ClassTemplateSpec spec : specGenerator.getGeneratedSpecs())
+    {
+      dataTemplateGenerator.generate(spec);
+    }
 
-    List<File> sourceFiles = parseSources(sources);
+    final JavaCodeUtil.PersistentClassChecker checker = new JavaCodeUtil.PersistentClassChecker()
+    {
+      @Override
+      public boolean isPersistent(JDefinedClass clazz)
+      {
+        if (generateImported)
+        {
+          return true;
+        }
+        else
+        {
+          return isClassPersistent(clazz, specGenerator, dataTemplateGenerator, parseResult.getSourceFiles());
+        }
+      }
+    };
 
-    File targetDirectory = new File(targetDirectoryPath);
-    List<File> targetFiles = targetFiles(targetDirectory);
+    final File targetDirectory = new File(targetDirectoryPath);
+    final List<File> targetFiles = JavaCodeUtil.targetFiles(targetDirectory, dataTemplateGenerator.getCodeModel(), JavaCodeUtil.classLoaderFromResolverPath(schemaParser.getResolverPath()), checker);
 
-    List<File> modifiedFiles;
-    if (upToDate(sourceFiles, targetFiles))
+    final List<File> modifiedFiles;
+    if (FileUtil.upToDate(parseResult.getSourceFiles(), targetFiles))
     {
       modifiedFiles = Collections.emptyList();
-      log.info("Target files are up-to-date: " + targetFiles);
+      _log.info("Target files are up-to-date: " + targetFiles);
     }
     else
     {
       modifiedFiles = targetFiles;
-      log.info("Generating " + targetFiles.size() + " files: " + targetFiles);
-      validateDefinedClassRegistration();
-      getCodeModel().build(new FileCodeWriter(targetDirectory, true));
+      _log.info("Generating " + targetFiles.size() + " files: " + targetFiles);
+      validateDefinedClassRegistration(dataTemplateGenerator.getCodeModel(), dataTemplateGenerator.getGeneratedClasses().keySet());
+      dataTemplateGenerator.getCodeModel().build(new FileCodeWriter(targetDirectory, true));
     }
-    return new Result(sourceFiles, targetFiles, modifiedFiles);
+    return new DefaultGeneratorResult(parseResult.getSourceFiles(), targetFiles, modifiedFiles);
   }
 
-  @Override
-  protected Config getConfig()
+  /**
+   * Determine if a {@link JDefinedClass} should be written to file.
+   */
+  public static boolean isClassPersistent(JDefinedClass clazz, TemplateSpecGenerator specGenerator, JavaDataTemplateGenerator dataTemplateGenerator, Collection<File> sourceFiles)
   {
-    return _config;
+    final ClassTemplateSpec spec = dataTemplateGenerator.getGeneratedClasses().get(clazz);
+    final DataSchemaLocation location = specGenerator.getClassLocation(spec);
+    return location == null  // assume local
+        || sourceFiles.contains(location.getSourceFile());
   }
 
-  @Override
-  protected void parseFile(File schemaSourceFile) throws IOException
+  /**
+   * Validates that all JDefinedClass instances in the code model have been properly registered. See {@link TemplateSpecGenerator#registerClassTemplateSpec}.
+   */
+  private static void validateDefinedClassRegistration(JCodeModel codeModel, Collection<JDefinedClass> classes)
   {
-    FileDataSchemaLocation schemaLocation = new FileDataSchemaLocation(schemaSourceFile);
-    pushCurrentLocation(schemaLocation);
-    super.parseFile(schemaSourceFile);
-    popCurrentLocation();
+    for (Iterator<JPackage> packageIterator = codeModel.packages(); packageIterator.hasNext(); )
+    {
+      final JPackage currentPackage = packageIterator.next();
+      for (Iterator<JDefinedClass> classIterator = currentPackage.classes(); classIterator.hasNext(); )
+      {
+        final JDefinedClass currentClass = classIterator.next();
+        if (!classes.contains(currentClass))
+        {
+          throw new IllegalStateException("Attempting to generate unregistered class: '" + currentClass.fullName() + "'");
+        }
+      }
+    }
   }
 }

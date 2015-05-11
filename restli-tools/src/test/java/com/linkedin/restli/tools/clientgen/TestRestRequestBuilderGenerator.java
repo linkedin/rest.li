@@ -45,7 +45,7 @@ public class TestRestRequestBuilderGenerator
     final String outPath = outdir.getPath();
     RestRequestBuilderGenerator.run(pegasusDir,
                                     null,
-                                    null,
+                                    true,
                                     false,
                                     version,
                                     null,
@@ -53,7 +53,7 @@ public class TestRestRequestBuilderGenerator
                                     new String[] { moduleDir + FS + RESOURCES_DIR + FS + "idls" + FS + "arrayDuplicateA.restspec.json" });
     RestRequestBuilderGenerator.run(pegasusDir,
                                     null,
-                                    null,
+                                    true,
                                     false,
                                     version,
                                     null,
@@ -73,7 +73,7 @@ public class TestRestRequestBuilderGenerator
     final String outPath = outdir.getPath();
     RestRequestBuilderGenerator.run(pegasusDir,
                                     null,
-                                    null,
+                                    true,
                                     false,
                                     RestliVersion.RESTLI_1_0_0,
                                     RestliVersion.RESTLI_2_0_0,
@@ -96,7 +96,7 @@ public class TestRestRequestBuilderGenerator
     final String outPath2 = outdir2.getPath();
     RestRequestBuilderGenerator.run(pegasusDir,
                                     null,
-                                    null,
+                                    true,
                                     false,
                                     version,
                                     null,
@@ -104,7 +104,7 @@ public class TestRestRequestBuilderGenerator
                                     new String[] { moduleDir + FS + RESOURCES_DIR + FS + "idls" + FS + "oldStyleAssocKeysPath.restspec.json" });
     RestRequestBuilderGenerator.run(pegasusDir,
                                     null,
-                                    null,
+                                    true,
                                     false,
                                     version,
                                     null,

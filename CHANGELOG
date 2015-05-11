@@ -1,10 +1,17 @@
-2.4.5
+2.5.1
+------
+
+
+2.5.0
 ------
 (RB=475440 cont')
 Make ChannelPoolHander iterate through all connection tokens.
 
 (RB=438141)
 Modify content-encoding and content-length headers when decompressing body.
+
+(RB=445269)
+New finer-grain data template and request builder generator classes and structure.
 
 2.4.4
 ------

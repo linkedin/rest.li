@@ -29,6 +29,7 @@ import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.generator.AbstractGenerator;
 import com.linkedin.data.schema.resolver.FileDataSchemaLocation;
+import com.linkedin.util.FileUtil;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -164,7 +165,7 @@ public class AvroSchemaGenerator extends AbstractGenerator
     File targetDirectory = new File(targetDirectoryPath);
     List<File> targetFiles = targetFiles(targetDirectory);
 
-    if (upToDate(sourceFiles, targetFiles))
+    if (FileUtil.upToDate(sourceFiles, targetFiles))
     {
       _log.info("Target files are up-to-date: " + targetFiles);
       return;
