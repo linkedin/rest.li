@@ -19,11 +19,12 @@ package com.linkedin.pegasus.generator.test;
 
 import com.linkedin.data.TestUtil;
 import com.linkedin.pegasus.generator.PegasusDataTemplateGenerator;
-import org.testng.annotations.Test;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
+
+import org.testng.annotations.Test;
 
 import static com.linkedin.data.TestUtil.asMap;
 import static com.linkedin.data.TestUtil.ensureEmptyOutputDir;
@@ -70,7 +71,7 @@ public class TestBadSchemas
           "}"
         ),
         IllegalArgumentException.class,
-        "Java class name conflict detected, class name: com.linkedin.pegasus.generator.test.XArray, class already bound to schema: { \"type\" : \"array\", \"items\" : { \"type\" : \"enum\", \"name\" : \"X\", \"namespace\" : \"com.linkedin.pegasus.generator.test\", \"symbols\" : [ \"X\" ] } }, attempting to rebind to schema: { \"type\" : \"enum\", \"name\" : \"XArray\", \"namespace\" : \"com.linkedin.pegasus.generator.test\", \"symbols\" : [ \"Y\" ] }"
+        "Class name conflict detected, class name: com.linkedin.pegasus.generator.test.XArray, class already bound to schema: { \"type\" : \"array\", \"items\" : { \"type\" : \"enum\", \"name\" : \"X\", \"namespace\" : \"com.linkedin.pegasus.generator.test\", \"symbols\" : [ \"X\" ] } }, attempting to rebind to schema: { \"type\" : \"enum\", \"name\" : \"XArray\", \"namespace\" : \"com.linkedin.pegasus.generator.test\", \"symbols\" : [ \"Y\" ] }"
       },
       {
         asMap(

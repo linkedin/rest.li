@@ -21,7 +21,6 @@
 package com.linkedin.restli.restspec;
 
 
-import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.JacksonDataCodec;
@@ -36,6 +35,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Map;
+
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 
 
 /**
@@ -58,15 +59,15 @@ public class RestSpecCodec
   private static final String METHODS_KEY = "methods";
   private static final String SUPPORTS_KEY = "supports";
 
-  private final JacksonDataCodec _data_codec = new JacksonDataCodec();
-  private final JacksonDataTemplateCodec _template_codec = new JacksonDataTemplateCodec();
+  private final JacksonDataCodec _dataCodec = new JacksonDataCodec();
+  private final JacksonDataTemplateCodec _templateCodec = new JacksonDataTemplateCodec();
 
   /**
    * Initialize a default RestSpecCodec.
    */
   public RestSpecCodec()
   {
-    _template_codec.setPrettyPrinter(new DefaultPrettyPrinter());
+    _templateCodec.setPrettyPrinter(new DefaultPrettyPrinter());
   }
 
   /**
@@ -79,7 +80,7 @@ public class RestSpecCodec
   public ResourceSchema readResourceSchema(InputStream inputStream)
           throws IOException
   {
-    DataMap data = _data_codec.readMap(inputStream);
+    final DataMap data = _dataCodec.readMap(inputStream);
     fixupLegacyRestspec(data);
     return new ResourceSchema(data);
   }
@@ -94,7 +95,7 @@ public class RestSpecCodec
   public void writeResourceSchema(ResourceSchema schema, OutputStream outputStream)
           throws IOException
   {
-    _template_codec.writeDataTemplate(schema, outputStream, true);
+    _templateCodec.writeDataTemplate(schema, outputStream, true);
   }
 
   /**
@@ -178,11 +179,11 @@ public class RestSpecCodec
   {
     for (Map.Entry<String, Object> entry : data.entrySet())
     {
-      PathSpec currentElement = new PathSpec(path.getPathComponents(), entry.getKey());
+      final PathSpec currentElement = new PathSpec(path.getPathComponents(), entry.getKey());
       if (isPegasusTypeField(currentElement) &&
               entry.getValue() instanceof DataMap)
       {
-        String value = new String(_data_codec.mapToBytes((DataMap)entry.getValue()), RestConstants.DEFAULT_CHARSET);
+        final String value = new String(_dataCodec.mapToBytes((DataMap)entry.getValue()), RestConstants.DEFAULT_CHARSET);
         data.put(entry.getKey(), value);
       }
       else if (entry.getValue() instanceof DataMap)

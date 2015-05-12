@@ -28,6 +28,7 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.transport.http.common.HttpConstants;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -300,7 +301,10 @@ public class ClientCompressionFilter implements Filter, RestFilter
             throw new CompressionException(CompressionConstants.SERVER_ENCODING_ERROR + compressionHeader);
           }
           byte[] inflated = encoding.getCompressor().inflate(res.getEntity().asInputStream());
-          res = res.builder().setEntity(inflated).build();
+          Map<String, String> headers = new HashMap<String, String>(res.getHeaders());
+          headers.remove(HttpConstants.CONTENT_ENCODING);
+          headers.put(HttpConstants.CONTENT_LENGTH, Integer.toString(inflated.length));
+          res = res.builder().setEntity(inflated).setHeaders(headers).build();
         }
       }
       catch (CompressionException e)

@@ -31,7 +31,7 @@ project.sourceSets.all { SourceSet sourceSet ->
   }
 }
 
-// This module tests that deprecated types and fields in "deprecated.pdsc",
+// This module tests that deprecated types and fields in "Deprecated.pdsc",
 // result in correctly generated classes and methods that are also marked as deprecated.
 // Since the classes are generated, they cannot be marked with @SuppressWarnings("deprecated"), we must disable the 'deprecation' compiler warnings.
 // For example, see: Deprecated.getSampleEnum()

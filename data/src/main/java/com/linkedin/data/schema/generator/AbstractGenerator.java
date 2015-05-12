@@ -23,7 +23,6 @@ import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.SchemaParser;
 import com.linkedin.data.schema.SchemaParserFactory;
-
 import com.linkedin.data.schema.resolver.DefaultDataSchemaResolver;
 import com.linkedin.data.schema.resolver.FileDataSchemaLocation;
 import com.linkedin.data.schema.resolver.FileDataSchemaResolver;
@@ -210,7 +209,7 @@ public abstract class AbstractGenerator
       NamedDataSchema namedDataSchema = (NamedDataSchema)schema;
       String namespace = namedDataSchema.getNamespace();
 
-      if(!removeFileExtension(schemaSourceFile.getName()).equalsIgnoreCase(namedDataSchema.getName()))
+      if(!FileUtil.removeFileExtension(schemaSourceFile.getName()).equalsIgnoreCase(namedDataSchema.getName()))
       {
         throw new IllegalArgumentException(namedDataSchema.getFullName() + " has name that does not match filename '" +
                 schemaSourceFile.getAbsolutePath() + "'");
@@ -222,19 +221,6 @@ public abstract class AbstractGenerator
         throw new IllegalArgumentException(namedDataSchema.getFullName() + " has namespace that does not match " +
                 "file path '" + schemaSourceFile.getAbsolutePath() + "'");
       }
-    }
-  }
-
-  private String removeFileExtension(String filename)
-  {
-    int idx = filename.lastIndexOf('.');
-    if(idx == 0)
-    {
-      return filename;
-    }
-    else
-    {
-      return filename.substring(0, idx);
     }
   }
 
@@ -316,61 +302,5 @@ public abstract class AbstractGenerator
         sourceFiles.add(sourceFile);
       }
     }
-  }
-
-  /**
-   * Compute the most recent last modified time of the provided files.
-   *
-   * @param files to compute most recent modified time from.
-   * @return the most resent last modified of the provided files.
-   */
-  protected long mostRecentLastModified(List<File> files)
-  {
-    long mostRecent = 0L;
-    for (File file : files)
-    {
-      long fileLastModified = file.lastModified();
-      if (mostRecent < fileLastModified)
-      {
-        mostRecent = fileLastModified;
-      }
-    }
-    return mostRecent;
-  }
-
-  /**
-   * Determine whether the provided files has been modified more recently than the provided time.
-   *
-   * @param files whose last modified times will be compared to provided time.
-   * @param time to compare the files' last modified times to.
-   * @return true if the provided files has been modified more recently than the provided time.
-   */
-  protected boolean filesLastModifiedMoreRecentThan(List<File> files, long time)
-  {
-    for (File file : files)
-    {
-      if (! file.exists() || time >= file.lastModified())
-      {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  /**
-   * Whether the files that would be generated into the specified target directory
-   * are more recent than the most recent source files.
-   *
-   * This used to check if the output file is already up-to-date and need not be
-   * overwritten with generated output.
-   *
-   * @param sourceFiles provides the source files that were parsed.
-   * @param targetFiles provides the files that would have been generated.
-   * @return true if the files that would be generated are more recent than the most recent source files.
-   */
-  protected boolean upToDate(List<File> sourceFiles, List<File> targetFiles)
-  {
-    long sourceLastModified = mostRecentLastModified(sourceFiles);
-    return filesLastModifiedMoreRecentThan(targetFiles, sourceLastModified);
   }
 }

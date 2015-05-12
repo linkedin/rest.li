@@ -17,6 +17,7 @@
 package com.linkedin.r2.filter.compression;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -113,7 +114,10 @@ public class ServerCompressionFilter implements Filter, RestFilter
         if (encoding.hasCompressor())
         {
           byte[] decompressedContent = encoding.getCompressor().inflate(req.getEntity().asInputStream());
-          req = req.builder().setEntity(decompressedContent).build();
+          Map<String, String> headers = new HashMap<String, String>(req.getHeaders());
+          headers.remove(HttpConstants.CONTENT_ENCODING);
+          headers.put(HttpConstants.CONTENT_LENGTH, Integer.toString(decompressedContent.length));
+          req = req.builder().setEntity(decompressedContent).setHeaders(headers).build();
         }
       }
 

@@ -22,8 +22,7 @@ import java.util.Collection;
 
 
 /**
- * Result from running the generator, it is used to return data about the files accessed, would have been modified, and
- * actually modified.
+ * Result from running the generator, it is used to return data about the files accessed, would have been modified, and actually modified.
  */
 public interface GeneratorResult
 {
@@ -40,6 +39,7 @@ public interface GeneratorResult
    * @return the target files that would have been generated if they did not exist or were stale.
    */
   public Collection<File> getTargetFiles();
+
   /**
    * Return the files that have been modified or written during this run.
    *

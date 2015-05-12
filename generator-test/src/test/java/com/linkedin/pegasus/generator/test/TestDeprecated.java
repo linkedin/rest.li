@@ -18,12 +18,13 @@ package com.linkedin.pegasus.generator.test;
 
 import java.util.HashMap;
 import java.util.Map;
+
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 
 /**
- * Verify that deprecated annotations in "deprecated.pdsc" are correctly represented as @Deprecated
+ * Verify that deprecated annotations in "Deprecated.pdsc" are correctly represented as @Deprecated
  * annotations on the generated java data templates.
  */
 public class TestDeprecated

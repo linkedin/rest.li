@@ -19,6 +19,7 @@ package com.linkedin.restli.server.validation;
 
 import com.linkedin.data.schema.validation.ValidationResult;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.restli.common.EntityResponse;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.validation.RestLiDataValidator;
@@ -45,6 +46,10 @@ public class RestLiOutputValidationFilter implements ResponseFilter
     ResourceMethod method = requestContext.getMethodType();
     RestLiDataValidator validator = new RestLiDataValidator(resourceClass.getAnnotations(), requestContext.getFilterResourceModel().getValueClass(), method);
     RestLiResponseData responseData = responseContext.getResponseData();
+    if (responseData.isErrorResponse())
+    {
+      return;
+    }
     if (method == ResourceMethod.GET)
     {
       ValidationResult result = validator.validate(responseData.getEntityResponse());
@@ -74,7 +79,12 @@ public class RestLiOutputValidationFilter implements ResponseFilter
       StringBuilder sb = new StringBuilder();
       for (Map.Entry<?, ? extends RecordTemplate> entry : responseData.getBatchResponseMap().entrySet())
       {
-        ValidationResult result = validator.validate(entry.getValue());
+        EntityResponse<? extends RecordTemplate> entityResponse = (EntityResponse) entry.getValue();
+        if (entityResponse.hasError())
+        {
+          continue;
+        }
+        ValidationResult result = validator.validate(entityResponse.getEntity());
         if (!result.isValid())
         {
           sb.append("Key: ");

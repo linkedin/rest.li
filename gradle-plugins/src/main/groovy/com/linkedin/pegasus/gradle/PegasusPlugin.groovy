@@ -15,29 +15,23 @@
 */
 
 package com.linkedin.pegasus.gradle
+
+
 import org.gradle.BuildResult
-import org.gradle.api.DefaultTask
-import org.gradle.api.GradleException
-import org.gradle.api.Plugin
-import org.gradle.api.Project
-import org.gradle.api.Task
+import org.gradle.api.*
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.file.FileCollection
 import org.gradle.api.file.FileTree
 import org.gradle.api.invocation.Gradle
 import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.plugins.JavaPlugin
-import org.gradle.api.tasks.Copy
-import org.gradle.api.tasks.InputDirectory
-import org.gradle.api.tasks.InputFiles
-import org.gradle.api.tasks.OutputDirectory
-import org.gradle.api.tasks.SourceSet
-import org.gradle.api.tasks.StopExecutionException
-import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.*
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.javadoc.Javadoc
 import org.gradle.plugins.ide.eclipse.EclipsePlugin
 import org.gradle.plugins.ide.idea.IdeaPlugin
+
+
 /**
  * Pegasus code generation plugin.
  * The supported project layout for this plugin is as follows:
@@ -1664,7 +1658,7 @@ class PegasusPlugin implements Plugin<Project>
 
       final String resolverPathStr = (resolverPath + project.files(inputDir)).collect { it.path }.join(File.pathSeparator)
       final Class<?> dataTemplateGenerator = project.property(GENERATOR_CLASSLOADER_NAME).loadClass('com.linkedin.pegasus.generator.PegasusDataTemplateGenerator')
-      dataTemplateGenerator.run(resolverPathStr, null, null, destinationDir.path, inputDataSchemaFilenames)
+      dataTemplateGenerator.run(resolverPathStr, null, true, destinationDir.path, inputDataSchemaFilenames)
     }
   }
 

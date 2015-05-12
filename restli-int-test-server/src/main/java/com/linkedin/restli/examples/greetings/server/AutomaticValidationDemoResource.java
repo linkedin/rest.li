@@ -24,9 +24,11 @@ import com.linkedin.restli.common.validation.ReadOnly;
 import com.linkedin.restli.examples.greetings.api.ValidationDemo;
 import com.linkedin.restli.examples.greetings.api.myEnum;
 import com.linkedin.restli.examples.greetings.api.myRecord;
+import com.linkedin.restli.server.BasicCollectionResult;
 import com.linkedin.restli.server.BatchCreateRequest;
 import com.linkedin.restli.server.BatchCreateResult;
 import com.linkedin.restli.server.BatchPatchRequest;
+import com.linkedin.restli.server.BatchResult;
 import com.linkedin.restli.server.BatchUpdateRequest;
 import com.linkedin.restli.server.BatchUpdateResult;
 import com.linkedin.restli.server.CreateResponse;
@@ -120,6 +122,10 @@ public class AutomaticValidationDemoResource implements KeyValueResource<Integer
   @RestMethod.Get
   public ValidationDemo get(final Integer key)
   {
+    if (key == 0)
+    {
+      throw new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST);
+    }
     // Generate an entity that does not conform to the data schema
     ValidationDemo.UnionFieldWithInlineRecord union = new ValidationDemo.UnionFieldWithInlineRecord();
     union.setMyEnum(myEnum.BARBAR);
@@ -128,18 +134,32 @@ public class AutomaticValidationDemoResource implements KeyValueResource<Integer
   }
 
   @RestMethod.BatchGet
-  public Map<Integer, ValidationDemo> batchGet(Set<Integer> ids)
+  public BatchResult<Integer, ValidationDemo> batchGet(Set<Integer> ids)
   {
     Map<Integer, ValidationDemo> resultMap = new HashMap<Integer, ValidationDemo>();
+    Map<Integer, RestLiServiceException> errorMap = new HashMap<Integer, RestLiServiceException>();
     // Generate entities that are missing a required field
     for (Integer id : ids)
     {
-      ValidationDemo.UnionFieldWithInlineRecord union = new ValidationDemo.UnionFieldWithInlineRecord();
-      union.setMyRecord(new myRecord());
-      ValidationDemo validationDemo = new ValidationDemo().setStringA("a").setStringB("b").setUnionFieldWithInlineRecord(union);
-      resultMap.put(id, validationDemo);
+      if (id == 0)
+      {
+        errorMap.put(id, new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST));
+      }
+      else if (id == 1)
+      {
+        ValidationDemo.UnionFieldWithInlineRecord union = new ValidationDemo.UnionFieldWithInlineRecord();
+        union.setMyRecord(new myRecord().setFoo1(100).setFoo2(200));
+        resultMap.put(id, new ValidationDemo().setStringA("a").setStringB("b").setUnionFieldWithInlineRecord(union));
+      }
+      else
+      {
+        ValidationDemo.UnionFieldWithInlineRecord union = new ValidationDemo.UnionFieldWithInlineRecord();
+        union.setMyRecord(new myRecord());
+        ValidationDemo validationDemo = new ValidationDemo().setStringA("a").setStringB("b").setUnionFieldWithInlineRecord(union);
+        resultMap.put(id, validationDemo);
+      }
     };
-    return resultMap;
+    return new BatchResult<Integer, ValidationDemo>(resultMap, errorMap);
   }
 
   @RestMethod.GetAll
@@ -160,6 +180,10 @@ public class AutomaticValidationDemoResource implements KeyValueResource<Integer
   @Finder("search")
   public List<ValidationDemo> search(@QueryParam("intA") Integer intA)
   {
+    if (intA == 0)
+    {
+      throw new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST);
+    }
     List<ValidationDemo> validationDemos = new ArrayList<ValidationDemo>();
     // Generate entities that are missing stringB fields
     for (int i = 0; i < 3; i++)
