@@ -1,9 +1,0 @@
-{
-  "type" : "typeref",
-  "name" : "CustomDoubleRef",
-  "namespace" : "com.linkedin.restli.examples.typeref.api",
-  "ref" : "double",
-  "java" : {
-    "class" : "com.linkedin.restli.examples.custom.types.CustomDouble"
-  }
-}
