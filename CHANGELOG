@@ -7,6 +7,9 @@ Handle error responses and batch results correctly in output validation filter.
 Broke down r2 into r2-core and r2-netty.
 Removed dependency on json and jackson core from some modules.
 
+(RB=481030)
+Fix bug that request builder generator may generate duplicate data template class.
+
 2.5.0
 ------
 (RB=475440 cont')

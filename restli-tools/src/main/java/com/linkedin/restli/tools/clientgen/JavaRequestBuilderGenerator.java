@@ -163,7 +163,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
   private final HashSet<JClass> _generatedArrayClasses = new HashSet<JClass>();
   private final DataSchemaResolver _schemaResolver;
   private final TemplateSpecGenerator _specGenerator;
-  private final JavaDataTemplateGenerator _javaGenerator;
+  private final JavaDataTemplateGenerator _javaDataTemplateGenerator;
   private final boolean _generateDataTemplates;
   private final RestliVersion _version;
   private final RestliVersion _deprecatedByVersion;
@@ -187,7 +187,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
     super(defaultPackage);
     _schemaResolver = CodeUtil.createSchemaResolver(resolverPath);
     _specGenerator = new TemplateSpecGenerator(_schemaResolver);
-    _javaGenerator = new JavaDataTemplateGenerator(defaultPackage);
+    _javaDataTemplateGenerator = new JavaDataTemplateGenerator(defaultPackage);
     _generateDataTemplates = generateDataTemplates;
     _version = version;
     _deprecatedByVersion = deprecatedByVersion;
@@ -203,9 +203,9 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
     return _specGenerator;
   }
 
-  public JavaDataTemplateGenerator getJavaGenerator()
+  public JavaDataTemplateGenerator getJavaDataTemplateGenerator()
   {
-    return _javaGenerator;
+    return _javaDataTemplateGenerator;
   }
 
   public JDefinedClass generate(ResourceSchema resource, File sourceFile)
@@ -1461,7 +1461,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
     if (_generateDataTemplates || schema instanceof ArrayDataSchema)
     {
       final ClassTemplateSpec classSpec = generateClassSpec(schema, parentClass);
-      binding.schemaClass = _javaGenerator.generate(classSpec);
+      binding.schemaClass = _javaDataTemplateGenerator.generate(classSpec);
       {
         _generatedArrayClasses.add(binding.schemaClass);
       }
@@ -1515,7 +1515,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
     else if (schema instanceof PrimitiveDataSchema)
     {
       final ClassTemplateSpec classSpec = generateClassSpec(schema, parentClass);
-      return _javaGenerator.generate(classSpec);
+      return _javaDataTemplateGenerator.generate(classSpec);
     }
     else
     {

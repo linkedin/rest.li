@@ -35,6 +35,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import com.sun.codemodel.JCodeModel;
 import com.sun.codemodel.JDefinedClass;
 import com.sun.codemodel.writer.FileCodeWriter;
 import org.slf4j.Logger;
@@ -119,6 +120,11 @@ public class RestRequestBuilderGenerator
       throw new IOException(message.toString());
     }
 
+    final PegasusDataTemplateGenerator.DataTemplatePersistentClassChecker dataTemplateChecker =
+        new PegasusDataTemplateGenerator.DataTemplatePersistentClassChecker(generateImported,
+                                                                            generator.getSpecGenerator(),
+                                                                            generator.getJavaDataTemplateGenerator(),
+                                                                            Collections.<File>emptySet());
     final JavaCodeUtil.PersistentClassChecker checker = new JavaCodeUtil.PersistentClassChecker()
     {
       @Override
@@ -136,19 +142,16 @@ public class RestRequestBuilderGenerator
           }
         }
 
-        if (generateImported)
-        {
-          return true;
-        }
-        else
-        {
-          return PegasusDataTemplateGenerator.isClassPersistent(clazz, generator.getSpecGenerator(), generator.getJavaGenerator(), Collections.<File>emptySet());
-        }
+        return dataTemplateChecker.isPersistent(clazz);
       }
     };
 
+    final JCodeModel requestBuilderCodeModel = generator.getCodeModel();
+    final JCodeModel dataTemplateCodeModel = generator.getJavaDataTemplateGenerator().getCodeModel();
+
     final File targetDirectory = new File(targetDirectoryPath);
-    final List<File> targetFiles = JavaCodeUtil.targetFiles(targetDirectory, generator.getCodeModel(), classLoader, checker);
+    final List<File> targetFiles = JavaCodeUtil.targetFiles(targetDirectory, requestBuilderCodeModel, classLoader, checker);
+    targetFiles.addAll(JavaCodeUtil.targetFiles(targetDirectory, dataTemplateCodeModel, classLoader, checker));
 
     final List<File> modifiedFiles;
     if (FileUtil.upToDate(parseResult.getSourceFiles(), targetFiles))
@@ -160,8 +163,8 @@ public class RestRequestBuilderGenerator
     {
       modifiedFiles = targetFiles;
       _log.info("Generating " + targetFiles.size() + " files: " + targetFiles);
-      generator.getCodeModel().build(new FileCodeWriter(targetDirectory, true));
-      generator.getJavaGenerator().getCodeModel().build(new FileCodeWriter(targetDirectory, true));
+      requestBuilderCodeModel.build(new FileCodeWriter(targetDirectory, true));
+      dataTemplateCodeModel.build(new FileCodeWriter(targetDirectory, true));
     }
     return new DefaultGeneratorResult(parseResult.getSourceFiles(), targetFiles, modifiedFiles);
   }

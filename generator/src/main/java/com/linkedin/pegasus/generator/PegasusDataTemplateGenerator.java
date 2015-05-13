@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import com.sun.codemodel.JCodeModel;
 import com.sun.codemodel.JDefinedClass;
@@ -53,6 +54,41 @@ public class PegasusDataTemplateGenerator
   public static final String GENERATOR_GENERATE_IMPORTED = "generator.generate.imported";
 
   private static final Logger _log = LoggerFactory.getLogger(PegasusDataTemplateGenerator.class);
+
+  public static class DataTemplatePersistentClassChecker implements JavaCodeUtil.PersistentClassChecker
+  {
+    private final boolean _generateImported;
+    private final TemplateSpecGenerator _specGenerator;
+    private final JavaDataTemplateGenerator _dataTemplateGenerator;
+    private final Set<File> _sourceFiles;
+
+    public DataTemplatePersistentClassChecker(boolean generateImported,
+                                              TemplateSpecGenerator specGenerator,
+                                              JavaDataTemplateGenerator dataTemplateGenerator,
+                                              Set<File> sourceFiles)
+    {
+      _generateImported = generateImported;
+      _specGenerator = specGenerator;
+      _dataTemplateGenerator = dataTemplateGenerator;
+      _sourceFiles = sourceFiles;
+    }
+
+    @Override
+    public boolean isPersistent(JDefinedClass clazz)
+    {
+      if (_generateImported)
+      {
+        return true;
+      }
+      else
+      {
+        final ClassTemplateSpec spec = _dataTemplateGenerator.getGeneratedClasses().get(clazz);
+        final DataSchemaLocation location = _specGenerator.getClassLocation(spec);
+        return location == null  // assume local
+            || _sourceFiles.contains(location.getSourceFile());
+      }
+    }
+  }
 
   public static void main(String[] args)
       throws IOException
@@ -100,21 +136,7 @@ public class PegasusDataTemplateGenerator
       dataTemplateGenerator.generate(spec);
     }
 
-    final JavaCodeUtil.PersistentClassChecker checker = new JavaCodeUtil.PersistentClassChecker()
-    {
-      @Override
-      public boolean isPersistent(JDefinedClass clazz)
-      {
-        if (generateImported)
-        {
-          return true;
-        }
-        else
-        {
-          return isClassPersistent(clazz, specGenerator, dataTemplateGenerator, parseResult.getSourceFiles());
-        }
-      }
-    };
+    final JavaCodeUtil.PersistentClassChecker checker = new DataTemplatePersistentClassChecker(generateImported, specGenerator, dataTemplateGenerator, parseResult.getSourceFiles());
 
     final File targetDirectory = new File(targetDirectoryPath);
     final List<File> targetFiles = JavaCodeUtil.targetFiles(targetDirectory, dataTemplateGenerator.getCodeModel(), JavaCodeUtil.classLoaderFromResolverPath(schemaParser.getResolverPath()), checker);
@@ -133,17 +155,6 @@ public class PegasusDataTemplateGenerator
       dataTemplateGenerator.getCodeModel().build(new FileCodeWriter(targetDirectory, true));
     }
     return new DefaultGeneratorResult(parseResult.getSourceFiles(), targetFiles, modifiedFiles);
-  }
-
-  /**
-   * Determine if a {@link JDefinedClass} should be written to file.
-   */
-  public static boolean isClassPersistent(JDefinedClass clazz, TemplateSpecGenerator specGenerator, JavaDataTemplateGenerator dataTemplateGenerator, Collection<File> sourceFiles)
-  {
-    final ClassTemplateSpec spec = dataTemplateGenerator.getGeneratedClasses().get(clazz);
-    final DataSchemaLocation location = specGenerator.getClassLocation(spec);
-    return location == null  // assume local
-        || sourceFiles.contains(location.getSourceFile());
   }
 
   /**
