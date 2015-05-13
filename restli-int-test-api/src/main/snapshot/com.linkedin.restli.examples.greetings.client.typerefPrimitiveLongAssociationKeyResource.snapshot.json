@@ -1,0 +1,53 @@
+{
+  "models" : [ {
+    "type" : "enum",
+    "name" : "Tone",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "symbols" : [ "FRIENDLY", "SINCERE", "INSULTING" ]
+  }, {
+    "type" : "record",
+    "name" : "Message",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "doc" : "A message",
+    "fields" : [ {
+      "name" : "id",
+      "type" : "string"
+    }, {
+      "name" : "message",
+      "type" : "string"
+    }, {
+      "name" : "tone",
+      "type" : "Tone",
+      "doc" : "tone"
+    } ]
+  }, {
+    "type" : "typeref",
+    "name" : "LongRef",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "ref" : "long"
+  } ],
+  "schema" : {
+    "name" : "typerefPrimitiveLongAssociationKeyResource",
+    "namespace" : "com.linkedin.restli.examples.greetings.client",
+    "path" : "/typerefPrimitiveLongAssociationKeyResource",
+    "schema" : "com.linkedin.restli.examples.greetings.api.Message",
+    "doc" : "generated from: com.linkedin.restli.examples.greetings.server.TyperefPrimitiveLongAssociationKeyResource",
+    "association" : {
+      "identifier" : "typerefPrimitiveLongAssociationKeyResourceId",
+      "assocKeys" : [ {
+        "name" : "dest",
+        "type" : "com.linkedin.restli.examples.typeref.api.LongRef"
+      }, {
+        "name" : "src",
+        "type" : "com.linkedin.restli.examples.typeref.api.LongRef"
+      } ],
+      "supports" : [ "get" ],
+      "methods" : [ {
+        "method" : "get"
+      } ],
+      "entity" : {
+        "path" : "/typerefPrimitiveLongAssociationKeyResource/{typerefPrimitiveLongAssociationKeyResourceId}"
+      }
+    }
+  }
+}

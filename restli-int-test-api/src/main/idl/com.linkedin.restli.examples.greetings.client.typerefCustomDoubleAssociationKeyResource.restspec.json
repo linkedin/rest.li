@@ -1,0 +1,24 @@
+{
+  "name" : "typerefCustomDoubleAssociationKeyResource",
+  "namespace" : "com.linkedin.restli.examples.greetings.client",
+  "path" : "/typerefCustomDoubleAssociationKeyResource",
+  "schema" : "com.linkedin.restli.examples.greetings.api.Message",
+  "doc" : "generated from: com.linkedin.restli.examples.greetings.server.TyperefCustomDoubleAssociationKeyResource",
+  "association" : {
+    "identifier" : "typerefCustomDoubleAssociationKeyResourceId",
+    "assocKeys" : [ {
+      "name" : "dest",
+      "type" : "com.linkedin.restli.examples.typeref.api.CustomDoubleRef"
+    }, {
+      "name" : "src",
+      "type" : "com.linkedin.restli.examples.typeref.api.CustomDoubleRef"
+    } ],
+    "supports" : [ "get" ],
+    "methods" : [ {
+      "method" : "get"
+    } ],
+    "entity" : {
+      "path" : "/typerefCustomDoubleAssociationKeyResource/{typerefCustomDoubleAssociationKeyResourceId}"
+    }
+  }
+}

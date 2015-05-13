@@ -87,6 +87,10 @@ public class TestResourceSchemaCollection
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.finders", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.greeting", ResourceType.SIMPLE);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.greeting.subgreetings", ResourceType.COLLECTION);
+    expectedTypes.put("com.linkedin.restli.examples.greetings.client.typerefPrimitiveLongAssociationKeyResource",
+                      ResourceType.ASSOCIATION);
+    expectedTypes.put("com.linkedin.restli.examples.greetings.client.typerefCustomDoubleAssociationKeyResource",
+                      ResourceType.ASSOCIATION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.greeting.subgreetings.subsubgreeting",
                       ResourceType.SIMPLE);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.validationDemos", ResourceType.COLLECTION);
