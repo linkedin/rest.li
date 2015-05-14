@@ -1,5 +1,11 @@
+2.5.2
+------
+
 2.5.1
 ------
+(RB=478810)
+Fixed a bug in processing of custom types in association resource keys.
+
 (RB=478809)
 Handle error responses and batch results correctly in output validation filter.
 
