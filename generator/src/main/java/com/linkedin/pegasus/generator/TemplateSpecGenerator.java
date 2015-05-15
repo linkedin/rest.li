@@ -665,6 +665,8 @@ public class TemplateSpecGenerator
 
   private UnionTemplateSpec generateUnion(UnionDataSchema schema, UnionTemplateSpec unionClass)
   {
+    final Map<CustomInfoSpec, Object> customInfoMap = new IdentityHashMap<CustomInfoSpec, Object>(schema.getTypes().size() * 2);
+
     for (DataSchema memberType : schema.getTypes())
     {
       final UnionTemplateSpec.Member newMember = new UnionTemplateSpec.Member();
@@ -676,6 +678,12 @@ public class TemplateSpecGenerator
       {
         newMember.setClassTemplateSpec(processSchema(memberType, unionClass, memberType.getUnionMemberKey()));
         newMember.setDataClass(determineDataClass(memberType, unionClass, memberType.getUnionMemberKey()));
+        final CustomInfoSpec customInfo = getImmediateCustomInfo(memberType);
+        if (customInfo != null && !customInfoMap.containsKey(customInfo))
+        {
+          customInfoMap.put(customInfo, null);
+          newMember.setCustomInfo(customInfo);
+        }
       }
     }
 

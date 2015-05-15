@@ -41,6 +41,43 @@ import static org.testng.Assert.assertTrue;
 
 public class TestCustom
 {
+  public static class CustomNumber
+  {
+    private int _num;
+
+    public CustomNumber(int n)
+    {
+      _num = n * 100;
+    }
+
+    public int getNum()
+    {
+      return _num;
+    }
+
+    public static class CustomNumberCoercer implements DirectCoercer<CustomNumber>
+    {
+      public Object coerceInput(CustomNumber object) throws ClassCastException
+      {
+        return object.getNum() / 100;
+      }
+
+      public CustomNumber coerceOutput(Object object) throws TemplateOutputCastException
+      {
+        if (object instanceof Integer == false)
+        {
+          throw new TemplateOutputCastException("Output " + object + " is not a integer, and cannot be coerced to " + CustomNumber.class.getName());
+        }
+        return new CustomNumber((Integer) object);
+      }
+    }
+
+    static
+    {
+      Custom.registerCoercer(new CustomNumberCoercer(), CustomNumber.class);
+    }
+  }
+
   public static class CustomPoint
   {
     private int _x;

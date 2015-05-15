@@ -1,0 +1,9 @@
+{
+  "type" : "typeref",
+  "name" : "CustomNumber",
+  "namespace" : "com.linkedin.pegasus.generator.test",
+  "ref"  : "int",
+  "java" : {
+    "class" : "com.linkedin.data.template.TestCustom.CustomNumber"
+  }
+}

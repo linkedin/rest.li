@@ -20,6 +20,7 @@ package com.linkedin.pegasus.generator.test;
 import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.HasTyperefInfo;
+import com.linkedin.data.template.TestCustom;
 import com.linkedin.data.template.TestRecordAndUnionTemplate;
 import com.linkedin.data.template.TyperefInfo;
 import org.testng.annotations.Test;
@@ -58,5 +59,13 @@ public class TestTyperefUnion
 
     TestRecordAndUnionTemplate.Foo.Union union = new TestRecordAndUnionTemplate.Foo.Union();
     assertFalse(union instanceof HasTyperefInfo);
+  }
+
+  @Test
+  public void testRegisterCustomCoercer()
+  {
+    assertFalse(DataTemplateUtil.hasCoercer(TestCustom.CustomNumber.class));
+    new UnionTyperef2();
+    assertTrue(DataTemplateUtil.hasCoercer(TestCustom.CustomNumber.class));
   }
 }

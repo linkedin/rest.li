@@ -64,6 +64,7 @@ public class UnionTemplateSpec extends ClassTemplateSpec
     private DataSchema _schema;
     private ClassTemplateSpec _classTemplateSpec;
     private ClassTemplateSpec _dataClass;
+    private CustomInfoSpec _customInfo;
 
     public DataSchema getSchema()
     {
@@ -93,6 +94,16 @@ public class UnionTemplateSpec extends ClassTemplateSpec
     public void setDataClass(ClassTemplateSpec dataClass)
     {
       _dataClass = dataClass;
+    }
+
+    public CustomInfoSpec getCustomInfo()
+    {
+      return _customInfo;
+    }
+
+    public void setCustomInfo(CustomInfoSpec customInfo)
+    {
+      _customInfo = customInfo;
     }
   }
 }

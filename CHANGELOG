@@ -1,6 +1,7 @@
 2.10.4
 -----
-
+(RB=471956)
+Register custom coercers in union templates.
 
 2.10.3
 -----

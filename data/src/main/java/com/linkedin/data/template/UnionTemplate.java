@@ -273,6 +273,32 @@ public class UnionTemplate implements DataTemplate<Object>
   }
 
   /**
+   * Set a new value into the union whose type needs to be coerced by {@link DirectCoercer}.
+   *
+   * @param memberSchema provides the {@link DataSchema} of the new value.
+   * @param memberClass provides the expected class of the value.
+   * @param dataClass provides the class stored in the underlying {@link DataMap}.
+   * @param key provides the key that identifies the type of the value.
+   * @param value provides the value to set.
+   * @param <T> type of the value.
+   * @throws ClassCastException if the input value does not match the
+   *                            expected class and the value cannot be coerced to the
+   *                            expected class.
+   * @throws NullUnionUnsupportedOperationException if the union is a null union.
+   */
+  protected <T> void selectCustomType(DataSchema memberSchema, Class<T> memberClass, Class<?> dataClass, String key, T value)
+      throws ClassCastException, NullUnionUnsupportedOperationException
+  {
+    checkNotNull();
+    DataSchema memberType = _schema.getType(key);
+    assert(memberType != null); // something is wrong with the generated code if this occurs.
+    Object object = DataTemplateUtil.coerceInput(value, memberClass, dataClass);
+    _map.clear();
+    _map.put(key, object);
+    _customTypeCache = value;
+  }
+
+  /**
    * Set a new value into the union.
    *
    * This is a wrapping method. The value is a {@link DataTemplate}.
@@ -297,6 +323,7 @@ public class UnionTemplate implements DataTemplate<Object>
     }
     _map.clear();
     _map.put(key, value.data());
+    _cache = value;
   }
 
   /**
@@ -330,6 +357,43 @@ public class UnionTemplate implements DataTemplate<Object>
       return null;
     }
     return DataTemplateUtil.coerceOutput(found, memberClass);
+  }
+
+  /**
+   * Get the value of a specified type which needs to be coerced by {@link DirectCoercer}.
+   *
+   * @param memberSchema provides the {@link DataSchema} of the value.
+   * @param memberClass provides the expected class of the value.
+   * @param key provides the key that identifies the type of the value.
+   * @param <T> type of the value.
+   * @return the value if the type of the current value is identified
+   *         by the specified key, else return null.
+   * @throws NullUnionUnsupportedOperationException if the union is a null union.
+   * @throws TemplateOutputCastException if the value identified by the
+   *                                     key is not the expected class and the value
+   *                                     cannot be coerced to the expected class.
+   */
+  protected <T> T obtainCustomType(DataSchema memberSchema, Class<T> memberClass, String key)
+      throws NullUnionUnsupportedOperationException, TemplateOutputCastException
+  {
+    checkNotNull();
+    T coerced;
+    Object found = _map.get(key);
+    if (found == null)
+    {
+      return null;
+    }
+    // the underlying data type of the custom typed field should be immutable, thus checking class equality suffices
+    else if (_customTypeCache != null && _customTypeCache.getClass() == memberClass)
+    {
+      coerced = memberClass.cast(_customTypeCache);
+    }
+    else
+    {
+      coerced = DataTemplateUtil.coerceOutput(found, memberClass);
+      _customTypeCache = coerced;
+    }
+    return coerced;
   }
 
   /**
@@ -379,4 +443,5 @@ public class UnionTemplate implements DataTemplate<Object>
   protected DataMap _map;
   protected final UnionDataSchema _schema;
   protected DataTemplate<?> _cache;
+  protected Object _customTypeCache;
 }

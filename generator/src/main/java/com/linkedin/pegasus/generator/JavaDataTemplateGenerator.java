@@ -813,7 +813,12 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     {
       if (member.getClassTemplateSpec() != null)
       {
-        generateUnionMemberAccessors(unionClass, member.getSchema(), generate(member.getClassTemplateSpec()), generate(member.getDataClass()), schemaField);
+        generateUnionMemberAccessors(unionClass, member, generate(member.getClassTemplateSpec()), generate(member.getDataClass()), schemaField);
+      }
+
+      if (member.getCustomInfo() != null)
+      {
+        generateCustomClassInitialization(unionClass, member.getCustomInfo());
       }
     }
 
@@ -847,10 +852,19 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     unionClass._extends(_unionBaseClass);
   }
 
-  private void generateUnionMemberAccessors(JDefinedClass unionClass, DataSchema memberType, JClass memberClass, JClass dataClass, JVar schemaField)
+  private void generateUnionMemberAccessors(JDefinedClass unionClass, UnionTemplateSpec.Member member, JClass memberClass, JClass dataClass, JVar schemaField)
   {
+    final DataSchema memberType = member.getSchema();
     final boolean isDirect = CodeUtil.isDirectType(memberType);
-    final String wrappedOrDirect = isDirect ? "Direct" : "Wrapped";
+    final String wrappedOrDirect;
+    if (isDirect)
+    {
+      wrappedOrDirect = (member.getCustomInfo() == null ? "Direct" : "CustomType");
+    }
+    else
+    {
+      wrappedOrDirect = "Wrapped";
+    }
     final String memberKey = memberType.getUnionMemberKey();
     final String capitalizedName = CodeUtil.getUnionMemberName(memberType);
 
