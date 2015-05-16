@@ -38,7 +38,7 @@ import java.util.Set;
 public class ClassTemplateSpec
 {
   private DataSchema _schema;
-  private ClassTemplateSpec _parentClass;
+  private ClassTemplateSpec _enclosingClass;
   private String _namespace;
   private String _className;
   private Set<ModifierSpec> _modifiers;
@@ -94,14 +94,14 @@ public class ClassTemplateSpec
     _schema = schema;
   }
 
-  public ClassTemplateSpec getParentClass()
+  public ClassTemplateSpec getEnclosingClass()
   {
-    return _parentClass;
+    return _enclosingClass;
   }
 
-  public void setParentClass(ClassTemplateSpec parentClass)
+  public void setEnclosingClass(ClassTemplateSpec enclosingClass)
   {
-    _parentClass = parentClass;
+    _enclosingClass = enclosingClass;
   }
 
   public String getNamespace()

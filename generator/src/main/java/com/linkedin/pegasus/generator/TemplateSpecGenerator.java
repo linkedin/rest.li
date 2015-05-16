@@ -212,24 +212,24 @@ public class TemplateSpecGenerator
   /*
    * Return exception for trying to use null type outside of a union.
    */
-  private static IllegalArgumentException nullTypeNotAllowed(ClassTemplateSpec parentClass, String memberName)
+  private static IllegalArgumentException nullTypeNotAllowed(ClassTemplateSpec enclosingClass, String memberName)
   {
-    return new IllegalArgumentException("The null type can only be used in unions, null found" + parentClassAndMemberNameToString(parentClass, memberName));
+    return new IllegalArgumentException("The null type can only be used in unions, null found" + enclosingClassAndMemberNameToString(enclosingClass, memberName));
   }
 
   /*
    * Return exception for unrecognized schema type.
    */
-  private static IllegalStateException unrecognizedSchemaType(ClassTemplateSpec parentClass, String memberName, DataSchema schema)
+  private static IllegalStateException unrecognizedSchemaType(ClassTemplateSpec enclosingClass, String memberName, DataSchema schema)
   {
     return new IllegalStateException("Unrecognized schema: " + schema +
-                                         parentClassAndMemberNameToString(parentClass, memberName));
+                                         enclosingClassAndMemberNameToString(enclosingClass, memberName));
   }
 
   /*
-   * Generate human consumable representation of parent class and field name.
+   * Generate human consumable representation of enclosing class and field name.
    */
-  private static String parentClassAndMemberNameToString(ClassTemplateSpec parentClass, String memberName)
+  private static String enclosingClassAndMemberNameToString(ClassTemplateSpec enclosingClass, String memberName)
   {
     final StringBuilder sb = new StringBuilder();
     if (memberName != null)
@@ -237,10 +237,10 @@ public class TemplateSpecGenerator
       sb.append(" in ");
       sb.append(memberName);
     }
-    if (parentClass != null)
+    if (enclosingClass != null)
     {
       sb.append(" in ");
-      sb.append(parentClass.getFullName());
+      sb.append(enclosingClass.getFullName());
     }
     return sb.toString();
   }
@@ -332,7 +332,7 @@ public class TemplateSpecGenerator
     _classTemplateSpecs.add(classTemplateSpec);
   }
 
-  private ClassTemplateSpec processSchema(DataSchema schema, ClassTemplateSpec parentClass, String memberName)
+  private ClassTemplateSpec processSchema(DataSchema schema, ClassTemplateSpec enclosingClass, String memberName)
   {
     ClassTemplateSpec result = null;
 
@@ -374,7 +374,7 @@ public class TemplateSpecGenerator
           }
           else
           {
-            result = generateUnnamedComplexSchema(schema, parentClass, memberName);
+            result = generateUnnamedComplexSchema(schema, enclosingClass, memberName);
           }
         }
         else
@@ -389,13 +389,13 @@ public class TemplateSpecGenerator
       }
       else if (schema instanceof PrimitiveDataSchema)
       {
-        result = (customInfo != null) ? customInfo.getCustomClass() : getPrimitiveClassForSchema((PrimitiveDataSchema) schema, parentClass, memberName);
+        result = (customInfo != null) ? customInfo.getCustomClass() : getPrimitiveClassForSchema((PrimitiveDataSchema) schema, enclosingClass, memberName);
       }
     }
 
     if (result == null)
     {
-      throw unrecognizedSchemaType(parentClass, memberName, schema);
+      throw unrecognizedSchemaType(enclosingClass, memberName, schema);
     }
 
     return result;
@@ -486,7 +486,7 @@ public class TemplateSpecGenerator
     return immediate;
   }
 
-  private ClassTemplateSpec getPrimitiveClassForSchema(PrimitiveDataSchema schema, ClassTemplateSpec parentClass, String memberName)
+  private ClassTemplateSpec getPrimitiveClassForSchema(PrimitiveDataSchema schema, ClassTemplateSpec enclosingClass, String memberName)
   {
     switch (schema.getType())
     {
@@ -499,9 +499,9 @@ public class TemplateSpecGenerator
       case BYTES:
         return PrimitiveTemplateSpec.getInstance(schema.getType());
       case NULL:
-        throw nullTypeNotAllowed(parentClass, memberName);
+        throw nullTypeNotAllowed(enclosingClass, memberName);
     }
-    throw unrecognizedSchemaType(parentClass, memberName, schema);
+    throw unrecognizedSchemaType(enclosingClass, memberName, schema);
   }
 
   private ClassTemplateSpec generateNamedSchema(NamedDataSchema schema)
@@ -532,27 +532,27 @@ public class TemplateSpecGenerator
     return templateClass;
   }
 
-  private ClassTemplateSpec generateUnnamedComplexSchema(DataSchema schema, ClassTemplateSpec parentClass, String memberName)
+  private ClassTemplateSpec generateUnnamedComplexSchema(DataSchema schema, ClassTemplateSpec enclosingClass, String memberName)
   {
     if (schema instanceof ArrayDataSchema)
     {
-      return generateArray((ArrayDataSchema) schema, parentClass, memberName);
+      return generateArray((ArrayDataSchema) schema, enclosingClass, memberName);
     }
     else if (schema instanceof MapDataSchema)
     {
-      return generateMap((MapDataSchema) schema, parentClass, memberName);
+      return generateMap((MapDataSchema) schema, enclosingClass, memberName);
     }
     else if (schema instanceof UnionDataSchema)
     {
-      return generateUnion((UnionDataSchema) schema, parentClass, memberName);
+      return generateUnion((UnionDataSchema) schema, enclosingClass, memberName);
     }
     else
     {
-      throw unrecognizedSchemaType(parentClass, memberName, schema);
+      throw unrecognizedSchemaType(enclosingClass, memberName, schema);
     }
   }
 
-  private ClassTemplateSpec determineDataClass(DataSchema schema, ClassTemplateSpec parentClass, String memberName)
+  private ClassTemplateSpec determineDataClass(DataSchema schema, ClassTemplateSpec enclosingClass, String memberName)
   {
     final ClassTemplateSpec result;
     final DataSchema dereferencedSchema = schema.getDereferencedDataSchema();
@@ -562,7 +562,7 @@ public class TemplateSpecGenerator
     }
     else if (CodeUtil.isDirectType(dereferencedSchema))
     {
-      result = getPrimitiveClassForSchema((PrimitiveDataSchema) dereferencedSchema, parentClass, memberName);
+      result = getPrimitiveClassForSchema((PrimitiveDataSchema) dereferencedSchema, enclosingClass, memberName);
     }
     else
     {
@@ -571,11 +571,11 @@ public class TemplateSpecGenerator
     return result;
   }
 
-  private ArrayTemplateSpec generateArray(ArrayDataSchema schema, ClassTemplateSpec parentClass, String memberName)
+  private ArrayTemplateSpec generateArray(ArrayDataSchema schema, ClassTemplateSpec enclosingClass, String memberName)
   {
     final DataSchema itemSchema = schema.getItems();
 
-    final ClassInfo classInfo = classInfoForUnnamed(parentClass, memberName, schema);
+    final ClassInfo classInfo = classInfoForUnnamed(enclosingClass, memberName, schema);
     if (classInfo.existingClass != null)
     {
       /* When type refs are used as item types inside some unnamed complex schemas like map and array,
@@ -584,7 +584,7 @@ public class TemplateSpecGenerator
        * schema processing is necessary in order to processSchema the data template classes for those type
        * refs.
        */
-      processSchema(itemSchema, parentClass, memberName);
+      processSchema(itemSchema, enclosingClass, memberName);
 
       return (ArrayTemplateSpec) classInfo.existingClass;
     }
@@ -592,8 +592,8 @@ public class TemplateSpecGenerator
     final ArrayTemplateSpec arrayClass = (ArrayTemplateSpec) classInfo.definedClass;
     registerClassTemplateSpec(schema, arrayClass);
 
-    arrayClass.setItemClass(processSchema(itemSchema, parentClass, memberName));
-    arrayClass.setItemDataClass(determineDataClass(itemSchema, parentClass, memberName));
+    arrayClass.setItemClass(processSchema(itemSchema, enclosingClass, memberName));
+    arrayClass.setItemDataClass(determineDataClass(itemSchema, enclosingClass, memberName));
 
     final CustomInfoSpec customInfo = getImmediateCustomInfo(itemSchema);
     arrayClass.setCustomInfo(customInfo);
@@ -601,11 +601,11 @@ public class TemplateSpecGenerator
     return arrayClass;
   }
 
-  private MapTemplateSpec generateMap(MapDataSchema schema, ClassTemplateSpec parentClass, String memberName)
+  private MapTemplateSpec generateMap(MapDataSchema schema, ClassTemplateSpec enclosingClass, String memberName)
   {
     final DataSchema valueSchema = schema.getValues();
 
-    final ClassInfo classInfo = classInfoForUnnamed(parentClass, memberName, schema);
+    final ClassInfo classInfo = classInfoForUnnamed(enclosingClass, memberName, schema);
     if (classInfo.existingClass != null)
     {
       /* When type refs are used as item types inside some unnamed complex schemas like map and array,
@@ -614,7 +614,7 @@ public class TemplateSpecGenerator
        * schema processing is necessary in order to processSchema the data template classes for those type
        * refs.
        */
-      processSchema(valueSchema, parentClass, memberName);
+      processSchema(valueSchema, enclosingClass, memberName);
 
       return (MapTemplateSpec) classInfo.existingClass;
     }
@@ -622,8 +622,8 @@ public class TemplateSpecGenerator
     final MapTemplateSpec mapClass = (MapTemplateSpec) classInfo.definedClass;
     registerClassTemplateSpec(schema, mapClass);
 
-    mapClass.setValueClass(processSchema(valueSchema, parentClass, memberName));
-    mapClass.setValueDataClass(determineDataClass(valueSchema, parentClass, memberName));
+    mapClass.setValueClass(processSchema(valueSchema, enclosingClass, memberName));
+    mapClass.setValueDataClass(determineDataClass(valueSchema, enclosingClass, memberName));
 
     final CustomInfoSpec customInfo = getImmediateCustomInfo(valueSchema);
     mapClass.setCustomInfo(customInfo);
@@ -631,13 +631,13 @@ public class TemplateSpecGenerator
     return mapClass;
   }
 
-  private UnionTemplateSpec generateUnion(UnionDataSchema schema, ClassTemplateSpec parentClass, String memberName)
+  private UnionTemplateSpec generateUnion(UnionDataSchema schema, ClassTemplateSpec enclosingClass, String memberName)
   {
-    if (parentClass == null || memberName == null)
+    if (enclosingClass == null || memberName == null)
     {
       throw new IllegalArgumentException("Cannot processSchema template for top level union: " + schema);
     }
-    final ClassInfo classInfo = classInfoForUnnamed(parentClass, memberName, schema);
+    final ClassInfo classInfo = classInfoForUnnamed(enclosingClass, memberName, schema);
     if (classInfo.existingClass != null)
     {
       return (UnionTemplateSpec) classInfo.existingClass;
@@ -660,7 +660,7 @@ public class TemplateSpecGenerator
     registerClassTemplateSpec(typerefDataSchema, unionClass);
 
     final TyperefTemplateSpec typerefInfoClass = new TyperefTemplateSpec(typerefDataSchema);
-    typerefInfoClass.setParentClass(unionClass);
+    typerefInfoClass.setEnclosingClass(unionClass);
     typerefInfoClass.setClassName("UnionTyperefInfo");
     typerefInfoClass.setModifiers(ModifierSpec.PRIVATE, ModifierSpec.STATIC, ModifierSpec.FINAL);
 
@@ -763,12 +763,12 @@ public class TemplateSpecGenerator
   /*
    * Determine name and class for unnamed types.
    */
-  private ClassInfo classInfoForUnnamed(ClassTemplateSpec parentClass, String name, DataSchema schema)
+  private ClassInfo classInfoForUnnamed(ClassTemplateSpec enclosingClass, String name, DataSchema schema)
   {
     assert !(schema instanceof NamedDataSchema);
     assert !(schema instanceof PrimitiveDataSchema);
 
-    final ClassInfo classInfo = classNameForUnnamedTraverse(parentClass, name, schema);
+    final ClassInfo classInfo = classNameForUnnamedTraverse(enclosingClass, name, schema);
     final String className = classInfo.fullName();
 
     final DataSchema schemaFromClassName = _classNameToSchemaMap.get(className);
@@ -776,9 +776,9 @@ public class TemplateSpecGenerator
     {
       final ClassTemplateSpec classTemplateSpec = ClassTemplateSpec.createFromDataSchema(schema);
 
-      if (parentClass != null && classInfo.namespace.equals(parentClass.getFullName()))
+      if (enclosingClass != null && classInfo.namespace.equals(enclosingClass.getFullName()))
       {
-        classTemplateSpec.setParentClass(parentClass);
+        classTemplateSpec.setEnclosingClass(enclosingClass);
         classTemplateSpec.setClassName(classInfo.name);
         classTemplateSpec.setModifiers(ModifierSpec.PUBLIC, ModifierSpec.STATIC, ModifierSpec.FINAL);
       }
@@ -799,7 +799,7 @@ public class TemplateSpecGenerator
     return classInfo;
   }
 
-  private ClassInfo classNameForUnnamedTraverse(ClassTemplateSpec parentClass, String memberName, DataSchema schema)
+  private ClassInfo classNameForUnnamedTraverse(ClassTemplateSpec enclosingClass, String memberName, DataSchema schema)
   {
     final DataSchema dereferencedDataSchema = schema.getDereferencedDataSchema();
     switch (dereferencedDataSchema.getType())
@@ -813,7 +813,7 @@ public class TemplateSpecGenerator
         }
         else
         {
-          final ClassInfo classInfo = classNameForUnnamedTraverse(parentClass, memberName, arraySchema.getItems());
+          final ClassInfo classInfo = classNameForUnnamedTraverse(enclosingClass, memberName, arraySchema.getItems());
           classInfo.name += ARRAY_SUFFIX;
           return classInfo;
         }
@@ -826,7 +826,7 @@ public class TemplateSpecGenerator
         }
         else
         {
-          final ClassInfo classInfo = classNameForUnnamedTraverse(parentClass, memberName, mapSchema.getValues());
+          final ClassInfo classInfo = classNameForUnnamedTraverse(enclosingClass, memberName, mapSchema.getValues());
           classInfo.name += MAP_SUFFIX;
           return classInfo;
         }
@@ -844,7 +844,7 @@ public class TemplateSpecGenerator
         }
         else
         {
-          return new ClassInfo(parentClass.getFullName(), CodeUtil.capitalize(memberName));
+          return new ClassInfo(enclosingClass.getFullName(), CodeUtil.capitalize(memberName));
         }
 
       case FIXED:
@@ -875,10 +875,10 @@ public class TemplateSpecGenerator
         return new ClassInfo(_templatePackageName, "ByteString");
 
       case NULL:
-        throw nullTypeNotAllowed(parentClass, memberName);
+        throw nullTypeNotAllowed(enclosingClass, memberName);
 
       default:
-        throw unrecognizedSchemaType(parentClass, memberName, dereferencedDataSchema);
+        throw unrecognizedSchemaType(enclosingClass, memberName, dereferencedDataSchema);
     }
   }
 

@@ -369,13 +369,13 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     {
       final int jmodValue = getJModValue(classTemplateSpec.getModifiers());
       final JClassContainer container;
-      if (classTemplateSpec.getParentClass() == null)
+      if (classTemplateSpec.getEnclosingClass() == null)
       {
         container = getPackage(classTemplateSpec.getNamespace());
       }
       else
       {
-        container = defineClass(classTemplateSpec.getParentClass());
+        container = defineClass(classTemplateSpec.getEnclosingClass());
       }
 
       if (classTemplateSpec instanceof ArrayTemplateSpec ||

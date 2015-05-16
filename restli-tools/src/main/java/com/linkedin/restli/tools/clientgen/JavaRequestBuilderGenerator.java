@@ -449,7 +449,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
 
     if (clazz.outer() instanceof JDefinedClass)
     {
-      classSpec.setParentClass(classSpecFromJavaClass((JDefinedClass) clazz.outer()));
+      classSpec.setEnclosingClass(classSpecFromJavaClass((JDefinedClass) clazz.outer()));
     }
 
     return classSpec;
@@ -915,13 +915,13 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
    *
    * @param name   the fieldDef name
    * @param type   the fieldDef type
-   * @param parent the class the FieldDef is being created in
+   * @param enclosingClass the class the FieldDef is being created in
    *
    * @return JInvocation of the creation of the FieldDef
    */
-  private JInvocation createFieldDef(String name, String type, JDefinedClass parent)
+  private JInvocation createFieldDef(String name, String type, JDefinedClass enclosingClass)
   {
-    final JavaBinding binding = getJavaBindingType(type, parent);
+    final JavaBinding binding = getJavaBindingType(type, enclosingClass);
     final JExpression schema = getCodeModel().ref(DataTemplateUtil.class).staticInvoke("getSchema").arg(binding.schemaClass.dotclass());
     final JInvocation fieldDefInvocation = JExpr._new(getCodeModel().ref(FieldDef.class).narrow(binding.valueClass)).arg(name).arg(binding.valueClass.dotclass()).arg(schema);
     return fieldDefInvocation;
@@ -1430,7 +1430,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
       assocKeyTypeInfos.put(name, new AssocKeyTypeInfo(clazz, declaredClass));
     }
 
-    //default constructor
+    // default constructor
     typesafeKeyClass.constructor(JMod.PUBLIC);
     return assocKeyTypeInfos;
   }
@@ -1449,26 +1449,26 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
     return returnType;
   }
 
-  private JavaBinding getJavaBindingType(String typeSchema, JDefinedClass parentClass)
+  private JavaBinding getJavaBindingType(String typeSchema, JDefinedClass enclosingClass)
   {
-    return getJavaBindingType(RestSpecCodec.textToSchema(typeSchema, _schemaResolver), parentClass);
+    return getJavaBindingType(RestSpecCodec.textToSchema(typeSchema, _schemaResolver), enclosingClass);
   }
 
-  private JavaBinding getJavaBindingType(DataSchema schema, JDefinedClass parentClass)
+  private JavaBinding getJavaBindingType(DataSchema schema, JDefinedClass enclosingClass)
   {
     final JavaBinding binding = new JavaBinding();
 
     if (_generateDataTemplates || schema instanceof ArrayDataSchema)
     {
-      final ClassTemplateSpec classSpec = generateClassSpec(schema, parentClass);
+      final ClassTemplateSpec classSpec = generateClassSpec(schema, enclosingClass);
       binding.schemaClass = _javaDataTemplateGenerator.generate(classSpec);
       {
         _generatedArrayClasses.add(binding.schemaClass);
       }
     }
 
-    binding.schemaClass = getClassRefForSchema(schema, parentClass);
-    binding.valueClass = getClassRefForSchema(schema, parentClass);
+    binding.schemaClass = getClassRefForSchema(schema, enclosingClass);
+    binding.valueClass = getClassRefForSchema(schema, enclosingClass);
 
     if (schema instanceof TyperefDataSchema)
     {
@@ -1482,7 +1482,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
         }
         else
         {
-          binding.valueClass = getJavaBindingType(typerefDataSchema.getRef(), parentClass).valueClass;
+          binding.valueClass = getJavaBindingType(typerefDataSchema.getRef(), enclosingClass).valueClass;
         }
       }
     }
@@ -1495,17 +1495,17 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
    * This is a hack, assuming only the identity of the class is interested.
    *
    * @param schema
-   * @param parentClass
+   * @param enclosingClass
    * @return
    */
-  private ClassTemplateSpec generateClassSpec(DataSchema schema, JDefinedClass parentClass)
+  private ClassTemplateSpec generateClassSpec(DataSchema schema, JDefinedClass enclosingClass)
   {
-    final ClassTemplateSpec parentClassSpec = classSpecFromJavaClass(parentClass);
+    final ClassTemplateSpec enclosingClassSpec = classSpecFromJavaClass(enclosingClass);
     final DataSchemaLocation location = new FileDataSchemaLocation(_currentSourceFile);
     return _specGenerator.generate(schema, location);
   }
 
-  private JClass getClassRefForSchema(DataSchema schema, JDefinedClass parentClass)
+  private JClass getClassRefForSchema(DataSchema schema, JDefinedClass enclosingClass)
   {
     if (schema instanceof NamedDataSchema)
     {
@@ -1514,12 +1514,12 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
     }
     else if (schema instanceof PrimitiveDataSchema)
     {
-      final ClassTemplateSpec classSpec = generateClassSpec(schema, parentClass);
+      final ClassTemplateSpec classSpec = generateClassSpec(schema, enclosingClass);
       return _javaDataTemplateGenerator.generate(classSpec);
     }
     else
     {
-      final ClassTemplateSpec classSpec = generateClassSpec(schema, parentClass);
+      final ClassTemplateSpec classSpec = generateClassSpec(schema, enclosingClass);
       return getCodeModel().ref(classSpec.getFullName());
     }
   }
