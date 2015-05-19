@@ -20,7 +20,8 @@ import com.linkedin.data.ByteString;
 import com.linkedin.data.Data;
 import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.RequestContext;
-import org.apache.commons.io.IOUtils;
+import com.linkedin.r2.util.IOUtil;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -255,7 +256,7 @@ public class QueryTunnelUtil
         if (part.isMimeType(FORM_URL_ENCODED) && query == null)
         {
           // Assume the first segment we come to that is urlencoded is the tunneled query params
-          query = IOUtils.toString((InputStream) part.getContent(), UTF8);
+          query = IOUtil.toString((InputStream) part.getContent(), UTF8);
         }
         else if (entity.length <= 0)
         {
@@ -269,7 +270,7 @@ public class QueryTunnelUtil
           }
           else
           {
-            entity = IOUtils.toByteArray((InputStream) content);
+            entity = IOUtil.toByteArray((InputStream) content);
           }
           h.put(CONTENT_LENGTH, Integer.toString(entity.length));
           h.put(HEADER_CONTENT_TYPE, part.getContentType());

@@ -10,6 +10,9 @@ Factor out compression filter implementations to a new module (r2-filter-compres
 Remove unnecessary generator dependency from modules that generates data template.
 Remove unnecessary data-avro-generator dependency from modules that generates avro schema.
 
+(RB=484897)
+Create IOUtil class to remove r2-core's dependency on commons-io.
+
 2.6.0
 ------
 (RB=475062)

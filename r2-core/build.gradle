@@ -3,8 +3,6 @@ dependencies {
   compile project(':pegasus-common')
   compile externalDependency.servletApi
   compile externalDependency.mail
-  compile externalDependency.commonsIo
   testCompile project(':r2-testutils')
   testCompile externalDependency.testng
 }
-

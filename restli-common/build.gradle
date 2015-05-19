@@ -8,6 +8,7 @@ dependencies {
   testCompile project(path: ':data', configuration: 'testArtifacts')
   testCompile project(path: ':generator-test', configuration: 'testArtifacts')
   testCompile project(':li-jersey-uri')
+  testCompile externalDependency.commonsIo
   testCompile externalDependency.testng
 }
 
