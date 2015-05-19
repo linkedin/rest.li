@@ -19,12 +19,18 @@ package com.linkedin.restli.examples.greetings.server;
 
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.examples.custom.types.CustomDouble;
+import com.linkedin.restli.examples.custom.types.CustomString;
 import com.linkedin.restli.examples.greetings.api.Message;
 import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.typeref.api.CustomDoubleRef;
+import com.linkedin.restli.examples.typeref.api.CustomStringRef;
 import com.linkedin.restli.server.annotations.Key;
+import com.linkedin.restli.server.annotations.QueryParam;
 import com.linkedin.restli.server.annotations.RestLiAssociation;
+import com.linkedin.restli.server.annotations.RestMethod;
 import com.linkedin.restli.server.resources.AssociationResourceTemplate;
+
+import java.util.Arrays;
 
 
 /**
@@ -36,10 +42,13 @@ import com.linkedin.restli.server.resources.AssociationResourceTemplate;
                        @Key(name = "dest", type = CustomDouble.class, typeref = CustomDoubleRef.class)})
 public class TyperefCustomDoubleAssociationKeyResource extends AssociationResourceTemplate<Message>
 {
-  @Override
-  public Message get(final CompoundKey key)
+  @RestMethod.Get
+  public Message get(final CompoundKey key, @QueryParam(value = "array",
+                                                        typeref = CustomStringRef.class) final CustomString[] stringArray)
   {
     return new Message().setId(((CustomDouble) key.getPart("src")).toDouble() + "->" + ((CustomDouble) key.getPart(
-        "dest")).toDouble()).setMessage("I need some $20").setTone(Tone.SINCERE);
+        "dest")).toDouble())
+                        .setMessage(String.format("I need some $20. Array contents %s.", Arrays.asList(stringArray)))
+                        .setTone(Tone.SINCERE);
   }
 }

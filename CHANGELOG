@@ -1,6 +1,7 @@
 2.6.2
 -----
-
+(RB=484780)
+Fixed a bug in typeref processing in request params.
 
 2.6.1
 ------

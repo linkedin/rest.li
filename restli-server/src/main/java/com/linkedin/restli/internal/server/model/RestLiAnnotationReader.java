@@ -1479,8 +1479,29 @@ public final class RestLiAnnotationReader
         + method.getDeclaringClass().getName() + '\'';
   }
 
+  private static void registerCoercerForPrimitiveTypeRefArray(ArrayDataSchema schema)
+  {
+    DataSchema elementSchema = schema.getItems();
+    if (elementSchema instanceof TyperefDataSchema)
+    {
+      TyperefDataSchema typerefSchema = (TyperefDataSchema) elementSchema;
+      if (RestModelConstants.PRIMITIVE_DATA_SCHEMA_TYPE_ALLOWED_TYPES.containsKey(typerefSchema.getDereferencedType()))
+      {
+        if (TyperefUtils.getJavaClassNameFromSchema(typerefSchema) != null)
+        {
+          registerCoercer(typerefSchema);
+        }
+      }
+    }
+  }
+
   private static String checkTyperefSchema(final Class<?> type, final DataSchema dataSchema)
   {
+    if (type.isArray() && dataSchema instanceof ArrayDataSchema)
+    {
+      registerCoercerForPrimitiveTypeRefArray((ArrayDataSchema) dataSchema);
+    }
+
     if (!(dataSchema instanceof TyperefDataSchema))
     {
       return null;

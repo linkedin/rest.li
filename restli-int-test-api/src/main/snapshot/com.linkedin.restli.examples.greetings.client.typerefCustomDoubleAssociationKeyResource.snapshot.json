@@ -28,6 +28,14 @@
     "java" : {
       "class" : "com.linkedin.restli.examples.custom.types.CustomDouble"
     }
+  }, {
+    "type" : "typeref",
+    "name" : "CustomStringRef",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "ref" : "string",
+    "java" : {
+      "class" : "com.linkedin.restli.examples.custom.types.CustomString"
+    }
   } ],
   "schema" : {
     "name" : "typerefCustomDoubleAssociationKeyResource",
@@ -46,7 +54,11 @@
       } ],
       "supports" : [ "get" ],
       "methods" : [ {
-        "method" : "get"
+        "method" : "get",
+        "parameters" : [ {
+          "name" : "array",
+          "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.typeref.api.CustomStringRef\" }"
+        } ]
       } ],
       "entity" : {
         "path" : "/typerefCustomDoubleAssociationKeyResource/{typerefCustomDoubleAssociationKeyResourceId}"

@@ -15,7 +15,11 @@
     } ],
     "supports" : [ "get" ],
     "methods" : [ {
-      "method" : "get"
+      "method" : "get",
+      "parameters" : [ {
+        "name" : "array",
+        "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.typeref.api.CustomStringRef\" }"
+      } ]
     } ],
     "entity" : {
       "path" : "/typerefCustomDoubleAssociationKeyResource/{typerefCustomDoubleAssociationKeyResourceId}"

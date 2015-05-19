@@ -33,6 +33,7 @@ import com.linkedin.restli.common.ResourceSpecImpl;
 import com.linkedin.restli.examples.greetings.api.Message;
 import com.linkedin.restli.internal.common.TestConstants;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -91,10 +92,14 @@ public class TestTyperefCustomDoubleAssociationKeyResource extends RestLiIntegra
                              keyParts),
         requestOptions);
 
-    GetRequest<Message> req = getBuilder.id(new CompoundKey().append("src", 100.0).append("dest", 200.0)).build();
+    final String[] stringArray = {"foo"};
+    GetRequest<Message> req = getBuilder.id(new CompoundKey().append("src", 100.0).append("dest", 200.0))
+                                        .setReqParam("array", stringArray)
+                                        .build();
     Response<Message> resp = REST_CLIENT.sendRequest(req).getResponse();
     Message result = resp.getEntity();
     Assert.assertEquals(result.getId(), "100.0->200.0");
-    Assert.assertEquals(result.getMessage(), "I need some $20");
+    Assert.assertEquals(result.getMessage(),
+                        String.format("I need some $20. Array contents %s.", Arrays.asList(stringArray)));
   }
 }
