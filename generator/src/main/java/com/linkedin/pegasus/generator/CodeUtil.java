@@ -83,7 +83,14 @@ public class CodeUtil
    */
   public static String capitalize(String name)
   {
-    return Character.toUpperCase(name.charAt(0)) + name.substring(1);
+    if (name == null || name.isEmpty())
+    {
+      return name;
+    }
+    else
+    {
+      return Character.toUpperCase(name.charAt(0)) + name.substring(1);
+    }
   }
 
   /**

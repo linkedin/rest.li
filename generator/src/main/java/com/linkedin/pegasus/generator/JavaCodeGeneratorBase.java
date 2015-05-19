@@ -58,7 +58,7 @@ public class JavaCodeGeneratorBase
   protected static final String SUPER = "super";
   protected static final String THIS = "this";
 
-  private static Set<String> _reserved = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
+  private static final Set<String> _reserved = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
       "abstract", "assert", "boolean", "break", "byte", "case", "catch", "char", "class",
       "const", "continue", "default", "do", "double", "else", "enum", "extends", "final",
       "finally", "float", "for", "goto", "if", "implements", "import", "instanceof", "int",
