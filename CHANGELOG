@@ -1,4 +1,8 @@
-2.5.2
+2.6.1
+------
+
+
+2.6.0
 ------
 (RB=475062)
 Factor out PatchRequestRecorder and related classes into a new module (restli-client-util-recorder).
