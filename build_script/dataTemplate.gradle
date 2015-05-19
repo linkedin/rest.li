@@ -14,10 +14,9 @@
    limitations under the License.
 */
 
-final Configuration generatorConfig = project(':generator').configurations.default
-final Set<File> pluginResourcesDirs = project(':generator').sourceSets.main.resources.srcDirs
-
-project.dependencies.add('compile', project(':generator'))
+// use Project.evaluationDependsOn() to force configuring the target project even with org.gradle.configureondemand == true
+final Project generatorProject = project.evaluationDependsOn(':generator')
+final FileCollection generatorConfig = generatorProject.configurations.default + generatorProject.sourceSets.main.output
 
 project.sourceSets.all { SourceSet sourceSet ->
   final String inputDataSchemaParentDirPath = "src${File.separatorChar}${sourceSet.name}"
@@ -34,8 +33,7 @@ project.sourceSets.all { SourceSet sourceSet ->
 
   rootProject.ext.build.dataTemplateGenerateTasks[sourceSet] = project.task(sourceSet.name + 'GenerateDataTemplate', type: JavaExec) {
     main = 'com.linkedin.pegasus.generator.PegasusDataTemplateGenerator'
-    classpath generatorConfig + generatorConfig.allArtifacts.files
-    classpath pluginResourcesDirs
+    classpath generatorConfig
     args outputDirPath
     args inputDataSchemaFiles
     systemProperties(['generator.resolver.path': inputDataSchemaDirPath])

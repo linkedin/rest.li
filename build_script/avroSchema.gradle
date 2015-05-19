@@ -14,11 +14,8 @@
    limitations under the License.
 */
 
-final Configuration dataAvroGeneratorConfig = project(':data-avro-generator').configurations.default
-final Configuration dataConfig = project(':data').configurations.default
-final Set<File> pluginResourcesDirs = project(':data-avro-generator').sourceSets.main.resources.srcDirs
-
-project.dependencies.add('compile', project(':data-avro-generator'))
+final Project generatorProject = project.evaluationDependsOn(':data-avro-generator')
+final FileCollection dataAvroGeneratorConfig = generatorProject.configurations.default + generatorProject.sourceSets.main.output
 
 project.sourceSets.all { SourceSet sourceSet ->
   final inputDataSchemaDirPath = "src${File.separatorChar}${sourceSet.name}${File.separatorChar}pegasus"
@@ -31,8 +28,7 @@ project.sourceSets.all { SourceSet sourceSet ->
   final String outputDirPath = rootProject.ext.build.getAvroSchemaOutDirPath(project, sourceSet)
   rootProject.ext.build.avroSchemaTasks[sourceSet] = project.task(sourceSet.name + 'GenerateAvroSchema', type: JavaExec) {
     main = 'com.linkedin.data.avro.generator.AvroSchemaGenerator'
-    classpath dataAvroGeneratorConfig + dataAvroGeneratorConfig.allArtifacts.files + dataConfig + dataConfig.allArtifacts.files
-    classpath pluginResourcesDirs
+    classpath dataAvroGeneratorConfig
     args outputDirPath
     args inputDataSchemaFiles
     systemProperties(['generator.resolver.path': inputDataSchemaDirPath])

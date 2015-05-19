@@ -6,6 +6,10 @@ Remove unused dependency to mina-core.
 (RB=484311)
 Factor out compression filter implementations to a new module (r2-filter-compression).
 
+(RB=484411)
+Remove unnecessary generator dependency from modules that generates data template.
+Remove unnecessary data-avro-generator dependency from modules that generates avro schema.
+
 2.6.0
 ------
 (RB=475062)
