@@ -14,7 +14,7 @@
    limitations under the License.
 */
 
-package test.r2.filter;
+package com.linkedin.r2.filter.compression;
 
 import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.filter.NextFilter;

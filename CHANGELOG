@@ -3,6 +3,9 @@
 (RB=477748)
 Remove unused dependency to mina-core.
 
+(RB=484311)
+Factor out compression filter implementations to a new module (r2-filter-compression).
+
 2.6.0
 ------
 (RB=475062)
