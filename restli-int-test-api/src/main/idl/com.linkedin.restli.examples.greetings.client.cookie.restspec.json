@@ -1,0 +1,22 @@
+{
+  "name" : "cookie",
+  "namespace" : "com.linkedin.restli.examples.greetings.client",
+  "path" : "/cookie",
+  "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
+  "doc" : "generated from: com.linkedin.restli.examples.greetings.server.CookieResource",
+  "collection" : {
+    "identifier" : {
+      "name" : "cookieId",
+      "type" : "long"
+    },
+    "supports" : [ "batch_get", "get" ],
+    "methods" : [ {
+      "method" : "get"
+    }, {
+      "method" : "batch_get"
+    } ],
+    "entity" : {
+      "path" : "/cookie/{cookieId}"
+    }
+  }
+}

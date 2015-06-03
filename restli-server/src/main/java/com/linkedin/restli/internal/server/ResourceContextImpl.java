@@ -42,11 +42,7 @@ import com.linkedin.restli.server.ProjectionMode;
 import com.linkedin.restli.server.RestLiServiceException;
 
 import java.net.URI;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 
 /**
@@ -61,6 +57,8 @@ public class ResourceContextImpl implements ServerResourceContext
   private final DataMap                             _parameters;
   private final Map<String, String>                 _requestHeaders;
   private final Map<String, String>                 _responseHeaders;
+  private final List<String>                        _requestCookies;
+  private final List<String>                        _responseCookies;
   private final Map<Object, RestLiServiceException> _batchKeyErrors;
   private final RequestContext                      _requestContext;
   private final ProtocolVersion                     _protocolVersion;
@@ -113,6 +111,8 @@ public class ResourceContextImpl implements ServerResourceContext
     _requestHeaders = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
     _requestHeaders.putAll(request.getHeaders());
     _responseHeaders = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+    _requestCookies = new ArrayList<String>(_request.getCookies());
+    _responseCookies = new ArrayList<String>(); // set default responseCookies
     _requestContext = requestContext;
 
     _protocolVersion = ProtocolVersionUtil.extractProtocolVersion(request.getHeaders());
@@ -189,7 +189,7 @@ public class ResourceContextImpl implements ServerResourceContext
   public String getRequestActionName()
   {
     return ArgumentUtils.argumentAsString(getParameter(RestConstants.ACTION_PARAM),
-                                          RestConstants.ACTION_PARAM);
+            RestConstants.ACTION_PARAM);
   }
 
   @Override
@@ -393,4 +393,18 @@ public class ResourceContextImpl implements ServerResourceContext
   {
     return _mimeType;
   }
+
+  public List<String> getRequestCookies()
+  {
+    return _requestCookies;
+  }
+
+  public void addResponseCookie(String cookie){
+    _responseCookies.add(cookie);
+  }
+
+  public List<String> getResponseCookies(){
+    return _responseCookies;
+  }
+
 }

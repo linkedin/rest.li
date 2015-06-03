@@ -27,6 +27,7 @@ import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiServiceException;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -91,4 +92,11 @@ public interface ServerResourceContext extends ResourceContext
    * @return response MIME type.
    */
   String getResponseMimeType();
+
+  /**
+   * function to retrive the response cookie
+   * @return response cookies
+   */
+  List<String> getResponseCookies();
+
 }
