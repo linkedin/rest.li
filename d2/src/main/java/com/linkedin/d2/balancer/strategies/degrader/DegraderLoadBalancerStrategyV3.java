@@ -33,6 +33,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -107,6 +108,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
 
     // only one thread will be allowed to enter updatePartitionState for any partition
     checkUpdatePartitionState(clusterGenerationId, partitionId, trackerClients);
+    Ring<URI> ring =  _state.getRing(partitionId);
 
     URI targetHostUri = KeyMapper.TargetHostHints.getRequestContextTargetHost(requestContext);
     URI hostHeaderUri = targetHostUri;
@@ -119,7 +121,6 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
 
       // we operate only on URIs to ensure that we never hold on to an old tracker client
       // that the cluster manager has removed
-      Ring<URI> ring = _state.getRing(partitionId);
       targetHostUri = (ring == null) ? null : ring.get(hashCode);
     }
     else
@@ -133,12 +134,22 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     {
       // These are the clients that were passed in, NOT necessarily the clients that make up the
       // consistent hash ring! Therefore, this linear scan is the best we can do.
-      for (TrackerClient trackerClient : trackerClients)
-      {
-        if (trackerClient.getUri().equals(targetHostUri))
+      client = searchClientFromUri(targetHostUri, trackerClients);
+
+      if (client == null && hostHeaderUri == null) {
+        // The consistent hash ring might not be updated as quickly as the trackerclients,
+        // so there could be an inconsistent situation where the trackerclient is already deleted
+        // while the uri still exists in the hash ring.
+        //
+        // When this happens, instead of failing the search, we simply return the next uri in the ring
+        // that is available in the trackerclient list.
+        debug(_log, "Degrader load balancer state is inconsistent with cluster manager (URI " + targetHostUri +
+                " does not exist), iterating through the hash ring for the next available host");
+        Iterator<URI> iter = ring.getIterator(_hashFunction.hash(request));
+        while (client == null && iter.hasNext())
         {
-          client = trackerClient;
-          break;
+          targetHostUri = iter.next();
+          client = searchClientFromUri(targetHostUri, trackerClients);
         }
       }
 
@@ -217,6 +228,11 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     else if(shouldUpdatePartition(clusterGenerationId, partition.getState(), config, _updateEnabled))
     {
       // threads attempt to update the state would return immediately if some thread is already in the updating process
+      // NOTE: possible racing condition -- if tryLock() fails and the current updating process does not pick up the
+      // new clusterGenerationId (ie current updating is still processing the previous request), it will causes the
+      // inconsistency between trackerClients and the hash ring, because hash ring does not get updated to match the
+      // new trackerClients. We need either to lock/wait here (for bad performance) or to fix the errors caused by
+      // the inconsistency later on. The decision is to handle the errors later.
       if(lock.tryLock())
       {
         try
@@ -234,6 +250,16 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
         }
       }
     }
+  }
+
+  private TrackerClient searchClientFromUri(URI uri, List<TrackerClient> trackerClients)
+  {
+    for (TrackerClient trackerClient : trackerClients) {
+      if (trackerClient.getUri().equals(uri)) {
+        return trackerClient;
+      }
+    }
+    return null;
   }
 
   private void updatePartitionState(long clusterGenerationId, Partition partition, List<TrackerClient> trackerClients, DegraderLoadBalancerStrategyConfig config)
@@ -728,13 +754,13 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
    */
   public static void overrideClusterDropRate(int partitionId, double override, List<TrackerClientUpdater> trackerClientUpdaters)
   {
-    warn(_log,
-         "partitionId=",
-         partitionId,
-         "overriding degrader drop rate to ",
-         override,
-         " for clients: ",
-         trackerClientUpdaters);
+    debug(_log,
+            "partitionId=",
+            partitionId,
+            "overriding degrader drop rate to ",
+            override,
+            " for clients: ",
+            trackerClientUpdaters);
 
     for (TrackerClientUpdater clientUpdater : trackerClientUpdaters)
     {

@@ -3723,7 +3723,35 @@ public class DegraderLoadBalancerTest
             "client1 drop rate not less than 1.");
   }
 
-  public static DegraderLoadBalancerStrategyV3 getStrategy()
+  @Test(groups = { "small", "back-end" })
+    public void testInconsistentHashAndTrackerclients() throws URISyntaxException,
+                                                               InterruptedException
+  {
+    // check if the inconsistent Hash ring and trackerlients can be handled
+    TestClock clock = new TestClock();
+    Map<String, Object> myMap = new HashMap<String, Object>();
+    myMap.put(PropertyKeys.CLOCK, clock);
+    DegraderLoadBalancerStrategyConfig config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(myMap);
+    DegraderLoadBalancerStrategyV3 strategy = new DegraderLoadBalancerStrategyV3(config, "DegraderLoadBalancerTest",
+                                                                                 null);
+
+    List<TrackerClient> clients = new ArrayList<TrackerClient>();
+
+    clients.add(getClient(URI.create("http://test.linkedin.com:3242/fdsaf"), clock));
+    clients.add(getClient(URI.create("http://test.linkedin.com:3243/fdsaf"), clock));
+
+    TrackerClient chosen = getTrackerClient(strategy, null, new RequestContext(), 0, clients);
+
+    assertNotNull(chosen);
+
+    // remove the client from the list, now the ring and the trackerClient list are inconsistent
+    clients.remove(chosen);
+    assertNotNull(getTrackerClient(strategy, null, new RequestContext(), 0, clients));
+    // update the hash ring we should get the results as well
+    assertNotNull(getTrackerClient(strategy, null, new RequestContext(), 1, clients));
+  }
+
+    public static DegraderLoadBalancerStrategyV3 getStrategy()
   {
     return new DegraderLoadBalancerStrategyV3(new DegraderLoadBalancerStrategyConfig(5000),
             "DegraderLoadBalancerTest",

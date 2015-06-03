@@ -13,6 +13,9 @@ Remove unnecessary data-avro-generator dependency from modules that generates av
 (RB=484897)
 Create IOUtil class to remove r2-core's dependency on commons-io.
 
+(RB=490213)
+Fix trackerclient deleting racing problem.
+
 2.6.0
 ------
 (RB=475062)
