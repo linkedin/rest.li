@@ -69,7 +69,12 @@
     },
     {
       "name" : "intRefArray",
-      "type" : { "type" : "array", "items"  : "IntRef" }
+      "type" : { "type" : "array", "items" : "IntRef" }
+    },
+    {
+      "name" : "RecordArray",
+      "type" : { "type" : "array", "items" : "RecordBar" },
+      "optional" : true
     },
     {
       "name" : "intMap",

@@ -1,6 +1,9 @@
 package com.linkedin.data.collections;
 
 
+import java.util.Map;
+
+
 /**
  * @author Keren Jin
  */
@@ -48,5 +51,10 @@ public class CheckedUtil
   public static <K, V> V putWithoutChecking(CheckedMap<K, V> map, K key, V value)
   {
     return map.putWithAssertedChecking(key, value);
+  }
+
+  public static <K, V> void putAllWithoutChecking(CheckedMap<K, V> dest, Map<K, V> src)
+  {
+    dest.putAllWithAssertedChecking(src);
   }
 }

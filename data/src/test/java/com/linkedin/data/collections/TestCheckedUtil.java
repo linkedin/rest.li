@@ -19,10 +19,12 @@ package com.linkedin.data.collections;
 
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
+
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 
 
@@ -131,6 +133,22 @@ public class TestCheckedUtil
   public void testPutCycleWithoutChecking()
   {
     testPutCycleWithAssertChecking();
+  }
+
+  @Test(expectedExceptions = AssertionError.class)
+  public void testPutAllCycleWithAssertChecking()
+  {
+    final DataMap map = new DataMap();
+    final Map<String, Object> cycleMap = new HashMap<String, Object>();
+    cycleMap.put("cycle", map);
+
+    CheckedUtil.putAllWithoutChecking(map, cycleMap);
+  }
+
+  @Test(groups = "withoutAssertion")
+  public void testPutAllCycleWithoutChecking()
+  {
+    testPutAllCycleWithAssertChecking();
   }
 
   private void mutateMap(Map<String, String> map)

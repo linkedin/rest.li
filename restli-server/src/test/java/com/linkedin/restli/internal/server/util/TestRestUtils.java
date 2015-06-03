@@ -16,11 +16,22 @@
 
 package com.linkedin.restli.internal.server.util;
 
-import static org.testng.Assert.fail;
-
+import com.linkedin.data.DataList;
+import com.linkedin.data.DataMap;
+import com.linkedin.data.schema.PathSpec;
+import com.linkedin.data.template.LongMap;
+import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.data.transform.filter.request.MaskOperation;
+import com.linkedin.data.transform.filter.request.MaskTree;
+import com.linkedin.pegasus.generator.test.RecordBar;
+import com.linkedin.pegasus.generator.test.RecordBarArray;
+import com.linkedin.pegasus.generator.test.RecordBarMap;
+import com.linkedin.pegasus.generator.test.TyperefTest;
+import com.linkedin.pegasus.generator.test.UnionTest;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.internal.server.ResourceContextImpl;
 import com.linkedin.restli.internal.server.ServerResourceContext;
+import com.linkedin.restli.server.LinkedListNode;
 import com.linkedin.restli.server.RestLiServiceException;
 
 import java.util.HashMap;
@@ -92,7 +103,7 @@ public class TestRestUtils
     try
     {
       RestUtils.pickBestEncoding(header);
-      fail();
+      Assert.fail();
     }
     catch (RestLiServiceException e)
     {
@@ -110,7 +121,7 @@ public class TestRestUtils
     try
     {
       RestUtils.validateRequestHeadersAndUpdateResourceContext(headers, resourceContext);
-      fail();
+      Assert.fail();
     }
     catch (RestLiServiceException e)
     {
@@ -129,5 +140,251 @@ public class TestRestUtils
     ServerResourceContext resourceContext = new ResourceContextImpl();
     RestUtils.validateRequestHeadersAndUpdateResourceContext(headers, resourceContext);
     Assert.assertEquals(resourceContext.getResponseMimeType(), "application/json");
+  }
+
+  @Test
+  public void testTrimmerWithPrimitivesRecordsUnionsMix() throws CloneNotSupportedException
+  {
+    TyperefTest recordTemplate = new TyperefTest();
+    recordTemplate.setBoolean(true);
+
+    RecordBar foo = new RecordBar();
+    foo.setLocation("foo");
+    recordTemplate.setBar1(foo);
+
+    TyperefTest.Union5 union = new TyperefTest.Union5();
+    union.setIntRef(5);
+    recordTemplate.setUnion5(union);
+
+    RecordTemplate expected = recordTemplate.copy();
+
+    // Introduce bad elements
+    recordTemplate.getBar1().data().put("troublemaker", "foo");
+    ((DataMap)recordTemplate.getUnion5().data()).put("troublemaker", "foo");
+    recordTemplate.data().put("foo", "bar");
+
+    DataList list = new DataList();
+    list.add(1);
+    DataMap map = new DataMap();
+    map.put("foo", 666);
+    recordTemplate.data().put("keyFoo", list);
+    recordTemplate.data().put("keyBar", map);
+
+    // Pre filtering
+    Assert.assertEquals(recordTemplate.data().size(), 6);
+    Assert.assertEquals(recordTemplate.getBar1().data().size(), 2);
+
+    RecordTemplate result = RestUtils.trimRecordTemplate(recordTemplate);
+
+    // Post filtering
+    Assert.assertEquals(result, expected);
+  }
+
+  @Test
+  public void testRecord() throws CloneNotSupportedException
+  {
+    RecordBar bar = new RecordBar();
+    bar.setLocation("mountain view");
+    RecordBar expected = bar.copy();
+
+    // Introduce bad elements
+    bar.data().put("SF", "CA");
+
+    Assert.assertEquals(bar.data().size(), 2);
+    Assert.assertEquals(RestUtils.trimRecordTemplate(bar), expected);
+  }
+
+  @Test
+  public void testRefTrim() throws CloneNotSupportedException
+  {
+    TyperefTest test = new TyperefTest();
+    test.setImportRef(1.0);
+    test.setImportRef2(2.0);
+
+    RecordTemplate expected = test.copy();
+
+    // Introduce bad elements
+    test.data().put("troublemaker", "boo");
+    Assert.assertEquals(test.data().size(), 3);
+    Assert.assertEquals(RestUtils.trimRecordTemplate(test), expected);
+  }
+
+  @Test
+  public void testMapTrim() throws CloneNotSupportedException
+  {
+    TyperefTest test = new TyperefTest();
+
+    RecordBarMap map = new RecordBarMap();
+    RecordBar recordBar = new RecordBar();
+    recordBar.setLocation("foo");
+    map.put("map", recordBar);
+    test.setBarRefMap(map);
+
+    TyperefTest expected = test.copy();
+    test.getBarRefMap().get("map").data().put("troublemaker", "data filth");
+
+    Assert.assertEquals(recordBar.data().size(), 2);
+    Assert.assertEquals(test.getBarRefMap().get("map").data().size(), 2);
+    Assert.assertEquals(expected, RestUtils.trimRecordTemplate(test));
+  }
+
+  @Test
+  public void testArrayTrim() throws CloneNotSupportedException
+  {
+    TyperefTest test = new TyperefTest();
+    RecordBarArray array = new RecordBarArray();
+
+    RecordBar recordBar = new RecordBar();
+    recordBar.setLocation("mountain view");
+    array.add(recordBar);
+
+    RecordBar recordBar2 = new RecordBar();
+    recordBar2.setLocation("palo alto");
+    array.add(recordBar2);
+
+    test.setRecordArray(array);
+
+    // Generate expected copy.
+    TyperefTest expected = test.copy();
+
+    // Introduce bad elements.
+    test.getRecordArray().get(0).data().put("troublemaker", "foo");
+    test.getRecordArray().get(0).data().put("troublemaker2", "foo");
+    test.getRecordArray().get(1).data().put("troublemaker", "foo");
+    test.getRecordArray().get(1).data().put("troublemaker2", "foo");
+
+    Assert.assertEquals(test.getRecordArray().get(0).data().size(), 3);
+    Assert.assertEquals(test.getRecordArray().get(1).data().size(), 3);
+    Assert.assertEquals(RestUtils.trimRecordTemplate(test), expected);
+  }
+
+  @Test
+  public void testOverrideMask()
+  {
+    RecordBar bar = new RecordBar();
+    bar.setLocation("mountain view");
+    bar.data().put("SF", "CA");
+
+    MaskTree maskTree = new MaskTree();
+    maskTree.addOperation(new PathSpec("SF"), MaskOperation.POSITIVE_MASK_OP);
+
+    Assert.assertEquals(RestUtils.trimRecordTemplate(bar, maskTree), bar);
+  }
+
+  @Test
+  public void testOverrideMaskNestedRecord()
+  {
+    LinkedListNode node1 = new LinkedListNode();
+    node1.setIntField(1);
+
+    LinkedListNode node2 = new LinkedListNode();
+    node2.setIntField(2);
+    node1.setNext(node2);
+
+    node2.data().put("keep me", "foo");
+    MaskTree maskTree = new MaskTree();
+    maskTree.addOperation(new PathSpec("next", "keep me"), MaskOperation.POSITIVE_MASK_OP);
+    maskTree.addOperation(new PathSpec("next", "intField"), MaskOperation.POSITIVE_MASK_OP);
+
+    Assert.assertEquals(RestUtils.trimRecordTemplate(node1, maskTree), node1);
+  }
+
+  @Test
+  public void testOverrideMaskNestedWithMap()
+  {
+    TyperefTest test = new TyperefTest();
+    RecordBar bar = new RecordBar();
+    bar.setLocation("foo");
+    bar.data().put("bar", "keep me");
+    test.setBarRefMap(new RecordBarMap());
+    test.getBarRefMap().put("foo", bar);
+
+    MaskTree maskTree = new MaskTree();
+    maskTree.addOperation(new PathSpec("barRefMap", PathSpec.WILDCARD, "location"), MaskOperation.POSITIVE_MASK_OP);
+    maskTree.addOperation(new PathSpec("barRefMap", PathSpec.WILDCARD, "bar"), MaskOperation.POSITIVE_MASK_OP);
+
+    TyperefTest result = RestUtils.trimRecordTemplate(test, maskTree);
+    Assert.assertEquals(result.getBarRefMap().get("foo"), bar);
+  }
+
+  @Test
+  public void testRecursiveBasic() throws CloneNotSupportedException
+  {
+    LinkedListNode node1 = new LinkedListNode();
+    node1.setIntField(1);
+
+    LinkedListNode node2 = new LinkedListNode();
+    node2.setIntField(2);
+    node1.setNext(node2);
+
+    RecordTemplate expected = node1.copy();
+
+    // Introduce bad elements.
+    node1.data().put("foo", "bar");
+    node2.data().put("foo", "bar");
+
+    Assert.assertEquals(node1.getIntField().intValue(), 1);
+    Assert.assertEquals(node1.getNext(), node2);
+    Assert.assertEquals(node1.data().size(), 3);
+
+    Assert.assertEquals(node2.getIntField().intValue(), 2);
+    Assert.assertEquals(node2.getNext(), null);
+    Assert.assertEquals(node2.data().size(), 2);
+
+    Assert.assertEquals(RestUtils.trimRecordTemplate(node1), expected);
+  }
+
+  @Test
+  public void testUnionDataMap() throws CloneNotSupportedException
+  {
+    UnionTest foo = new UnionTest();
+    foo.setUnionEmpty(new UnionTest.UnionEmpty());
+
+    UnionTest expected = foo.copy();
+    ((DataMap) foo.getUnionEmpty().data()).put("foo", "bar");
+
+    Assert.assertEquals(RestUtils.trimRecordTemplate(foo), expected);
+
+    // Primitive case
+    foo = new UnionTest();
+    UnionTest.UnionWithNull bar = new UnionTest.UnionWithNull();
+    bar.setBoolean(true);
+    foo.setUnionWithNull(bar);
+    expected = foo.copy();
+
+    ((DataMap)foo.getUnionWithNull().data()).put("foo", "bar");
+    Assert.assertEquals(((DataMap) foo.getUnionWithNull().data()).size(), 2);
+    Assert.assertEquals(RestUtils.trimRecordTemplate(foo), expected);
+
+    // Complex case
+    foo = new UnionTest();
+    bar = new UnionTest.UnionWithNull();
+    bar.setMap(new LongMap());
+    foo.setUnionWithNull(bar);
+    expected = foo.copy();
+    expected.getUnionWithNull().getMap().put("foo", 1L);
+
+    foo.getUnionWithNull().getMap().data().put("foo", 1L);
+    foo.data().put("foo", "bar");
+    Assert.assertEquals(((DataMap) foo.getUnionWithNull().data()).size(), 1);
+    Assert.assertEquals(RestUtils.trimRecordTemplate(foo), expected);
+  }
+
+  @Test
+  public void testReadOnly()
+  {
+    UnionTest foo = new UnionTest();
+    foo.data().makeReadOnly();
+
+    RecordTemplate bar = RestUtils.trimRecordTemplate(foo);
+    if (!bar.data().isReadOnly())
+    {
+      Assert.fail("Trimmed data did not preserve read only");
+    }
+
+    if (RestUtils.trimRecordTemplate(new UnionTest()).data().isReadOnly())
+    {
+      Assert.fail("Unexpected readonly.");
+    }
   }
 }

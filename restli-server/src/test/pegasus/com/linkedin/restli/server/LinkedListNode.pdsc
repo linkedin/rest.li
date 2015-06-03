@@ -1,0 +1,16 @@
+{
+  "type" : "record",
+  "name" : "LinkedListNode",
+  "namespace" : "com.linkedin.restli.server",
+  "fields" : [
+    {
+      "name" : "intField",
+      "type" : "int"
+    },
+    {
+      "name" : "next",
+      "type" : "LinkedListNode",
+      "optional" : true
+    }
+  ]
+}

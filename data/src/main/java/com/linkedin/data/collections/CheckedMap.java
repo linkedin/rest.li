@@ -342,6 +342,23 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
   }
 
   /**
+   * Copies the content of another checkedMap without further checking, use with caution.
+   *
+   * @param src source map that should be copied to this map.
+   */
+  protected void putAllWithoutChecking(Map<? extends K, ? extends V> src)
+  {
+    checkMutability();
+    _map.putAll(src);
+  }
+
+  void putAllWithAssertedChecking(Map<? extends K, ? extends V> src)
+  {
+    assert(assertCheckMap(src)) : "Check is failed";
+    putAllWithoutChecking(src);
+  }
+
+  /**
    * Unit test use only.
    *
    * @return underlying map.
@@ -356,6 +373,19 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
     try
     {
       checkKeyValue(key, value);
+      return true;
+    }
+    catch (IllegalArgumentException e)
+    {
+      return false;
+    }
+  }
+
+  private boolean assertCheckMap(Map<? extends K, ? extends V> map)
+  {
+    try
+    {
+      checkAll(map);
       return true;
     }
     catch (IllegalArgumentException e)
