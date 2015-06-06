@@ -42,6 +42,8 @@ import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor.Interf
 import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.internal.server.model.RestLiApiBuilder;
 import com.linkedin.restli.server.filter.ResponseFilter;
+import com.linkedin.restli.server.multiplexer.MultiplexedRequestHandler;
+import com.linkedin.restli.server.multiplexer.MultiplexedRequestHandlerImpl;
 import com.linkedin.restli.server.resources.PrototypeResourceFactory;
 import com.linkedin.restli.server.resources.ResourceFactory;
 
@@ -73,6 +75,7 @@ public class RestLiServer extends BaseRestServer
   private final RestLiMethodInvoker _methodInvoker;
   private final RestLiResponseHandler _responseHandler;
   private final RestLiDocumentationRequestHandler _docRequestHandler;
+  private final MultiplexedRequestHandler _multiplexedRequestHandler;
   private final ErrorResponseBuilder _errorResponseBuilder;
   private final Map<String, RestLiDebugRequestHandler> _debugHandlers;
   private final List<ResponseFilter> _responseFilters;
@@ -127,6 +130,7 @@ public class RestLiServer extends BaseRestServer
       _debugHandlers.put(debugHandler.getHandlerId(), debugHandler);
     }
 
+    _multiplexedRequestHandler = new MultiplexedRequestHandlerImpl(this, engine);
     // verify that if there are resources using the engine, then the engine is not null
     if (engine == null)
     {
@@ -164,7 +168,15 @@ public class RestLiServer extends BaseRestServer
                                  final RequestContext requestContext,
                                  final Callback<RestResponse> callback)
   {
-    if (_docRequestHandler == null || !_docRequestHandler.isDocumentationRequest(request))
+    if (isDocumentationRequest(request))
+    {
+      handleDocumentationRequest(request, callback);
+    }
+    else if (isMultiplexedRequest(request))
+    {
+      handleMultiplexedRequest(request, requestContext, callback);
+    }
+    else
     {
       RestLiDebugRequestHandler debugHandlerForRequest = findDebugRequestHandler(request);
 
@@ -179,10 +191,6 @@ public class RestLiServer extends BaseRestServer
                               new RequestExecutionCallbackAdapter<RestResponse>(callback),
                               false);
       }
-    }
-    else
-    {
-      handleDocumentationRequest(request, callback);
     }
   }
 
@@ -333,6 +341,19 @@ public class RestLiServer extends BaseRestServer
     }
 
     return originalCallback;
+  }
+
+
+  private boolean isMultiplexedRequest(RestRequest request) {
+    return _multiplexedRequestHandler.isMultiplexedRequest(request);
+  }
+
+  private void handleMultiplexedRequest(RestRequest request, RequestContext requestContext, Callback<RestResponse> callback) {
+    _multiplexedRequestHandler.handleRequest(request, requestContext, callback);
+  }
+
+  private boolean isDocumentationRequest(RestRequest request) {
+    return _docRequestHandler != null && _docRequestHandler.isDocumentationRequest(request);
   }
 
   private void handleDocumentationRequest(final RestRequest request, final Callback<RestResponse> callback)

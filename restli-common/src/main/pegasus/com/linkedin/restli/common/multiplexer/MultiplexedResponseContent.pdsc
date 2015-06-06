@@ -1,0 +1,16 @@
+{
+  "type": "record",
+  "name": "MultiplexedResponseContent",
+  "namespace": "com.linkedin.restli.common.multiplexer",
+  "doc": "Represents multiple HTTP responses to send as a single multiplexed HTTP response",
+  "fields": [
+    {
+      "name": "responses",
+      "type": {
+        "type": "array",
+        "items": "IndividualResponse"
+      },
+      "doc": "Individual HTTP responses"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "type": "record",
+  "name": "MultiplexedRequestContent",
+  "namespace": "com.linkedin.restli.common.multiplexer",
+  "doc": "Represents multiple HTTP requests to send as a single multiplexed HTTP request",
+  "fields": [
+    {
+      "name": "requests",
+      "type": {
+        "type": "array",
+        "items": "IndividualRequest"
+      },
+      "doc": "Individual HTTP requests executed in parallel"
+    }
+  ]
+}

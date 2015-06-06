@@ -19,6 +19,7 @@ package com.linkedin.restli.client;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.CallbackAdapter;
+import com.linkedin.common.callback.Callbacks;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
 import com.linkedin.data.DataMap;
@@ -32,6 +33,10 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.transport.common.Client;
+import com.linkedin.restli.client.multiplexer.MultiplexedCallback;
+import com.linkedin.restli.client.multiplexer.MultiplexedRequest;
+import com.linkedin.restli.client.multiplexer.MultiplexedResponse;
+import com.linkedin.restli.client.uribuilders.MultiplexerUriBuilder;
 import com.linkedin.restli.client.uribuilders.RestliUriBuilderUtil;
 import com.linkedin.restli.common.HttpMethod;
 import com.linkedin.restli.common.OperationNameGenerator;
@@ -583,6 +588,51 @@ public class RestClient
   }
 
   /**
+   * Sends a multiplexed request. Responses are provided to individual requests' callbacks.
+   *
+   * The request is sent using the protocol version 2.0.
+   *
+   * @param multiplexedRequest the request to send.
+   */
+  public void sendRequest(MultiplexedRequest multiplexedRequest)
+  {
+    sendRequest(multiplexedRequest, Callbacks.<MultiplexedResponse>empty());
+  }
+
+  /**
+   * Sends a multiplexed request. Responses are provided to individual requests' callbacks. After all responses are
+   * received the given aggregated callback is invoked.
+   *
+   * The request is sent using the protocol version 2.0.
+   *
+   * @param multiplexedRequest  the multiplexed request to send.
+   * @param callback the aggregated response callback.
+   */
+  public void sendRequest(MultiplexedRequest multiplexedRequest, Callback<MultiplexedResponse> callback)
+  {
+    MultiplexedCallback muxCallback = new MultiplexedCallback(multiplexedRequest.getCallbacks(), callback);
+    try
+    {
+      RestRequest restRequest = buildMultiplexedRequest(multiplexedRequest);
+      RequestContext requestContext = new RequestContext();
+      _client.restRequest(restRequest, requestContext, muxCallback);
+    }
+    catch (Exception e)
+    {
+      muxCallback.onError(e);
+    }
+  }
+
+  private RestRequest buildMultiplexedRequest(MultiplexedRequest multiplexedRequest) throws IOException
+  {
+    URI requestUri = new MultiplexerUriBuilder(_uriPrefix).build();
+    RestRequestBuilder requestBuilder = new RestRequestBuilder(requestUri).setMethod(HttpMethod.POST.toString());
+    addAcceptHeaders(requestBuilder, Collections.singletonList(AcceptType.JSON));
+    addEntityAndContentTypeHeaders(requestBuilder, multiplexedRequest.getContent().data(), ContentType.JSON);
+    return requestBuilder.build();
+  }
+
+  /**
    * Sends an untyped REST request using a callback.
    *
    * @param requestContext context for the request
@@ -698,26 +748,4 @@ public class RestClient
     }
   }
 
-  private static class RestLiCallbackAdapter<T> extends CallbackAdapter<Response<T>, RestResponse>
-  {
-    private final RestResponseDecoder<T> _decoder;
-
-    private RestLiCallbackAdapter(RestResponseDecoder<T> decoder, Callback<Response<T>> callback)
-    {
-      super(callback);
-      _decoder = decoder;
-    }
-
-    @Override
-    protected Response<T> convertResponse(RestResponse response) throws Exception
-    {
-      return _decoder.decodeResponse(response);
-    }
-
-    @Override
-    protected Throwable convertError(Throwable error)
-    {
-      return ExceptionUtil.exceptionForThrowable(error, _decoder);
-    }
-  }
 }

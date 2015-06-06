@@ -227,6 +227,15 @@ public final class ByteString
   }
 
   /**
+   * Checks whether this {@link ByteString} is empty or not.
+   * @return true for an empty {@link ByteString}, false otherwise
+   */
+  public boolean isEmpty()
+  {
+    return _length == 0;
+  }
+
+  /**
    * Returns a copy of the bytes in this {@link ByteString}. Changes to the returned byte[] will not be
    * reflected in this {@link ByteString}.<p>
    *

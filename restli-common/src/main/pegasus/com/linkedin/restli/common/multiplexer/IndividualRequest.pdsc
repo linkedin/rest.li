@@ -1,0 +1,56 @@
+{
+  "type": "record",
+  "name": "IndividualRequest",
+  "namespace": "com.linkedin.restli.common.multiplexer",
+  "doc": "Individual HTTP request within a multiplexed request",
+  "fields": [
+    {
+      "name": "id",
+      "type": "int",
+      "doc": "Id of the request used to correlate responses with requests. Should unique within the multiplexed request"
+    },
+    {
+      "name": "method",
+      "type": "string",
+      "doc": "HTTP method name"
+    },
+    {
+      "name": "headers",
+      "type": {
+        "type": "map",
+        "values": "string"
+      },
+      "default": {},
+      "doc": "HTTP headers"
+    },
+    {
+      "name": "cookies",
+      "type": {
+        "type": "array",
+        "items": "string"
+      },
+      "default": [],
+      "doc": "HTTP cookies (please note, they are passed separately from headers)"
+    },
+    {
+      "name": "relativeUrl",
+      "type": "string",
+      "doc": "Relative URL of the request"
+    },
+    {
+      "name": "body",
+      "type": "bytes",
+      "default": "",
+      "doc": "Request body"
+    },
+    {
+      "name": "dependentRequests",
+      "type": {
+        "type": "array",
+        "items": "IndividualRequest"
+      },
+      "default": [],
+      "doc": "Requests that should be executed after the current request is processed (sequential ordering). Dependent requests are executed in parallel."
+    }
+  ]
+}
