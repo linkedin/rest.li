@@ -9,9 +9,13 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestResponseBuilder;
+import com.linkedin.r2.message.stream.StreamRequest;
+import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.RestRequestHandler;
 import com.linkedin.r2.transport.common.Server;
+import com.linkedin.r2.transport.common.StreamRequestHandler;
+import com.linkedin.r2.transport.common.StreamRequestHandlerAdapter;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
@@ -19,10 +23,13 @@ import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.server.TransportCallbackAdapter;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
+import com.linkedin.r2.transport.http.server.HttpJettyServer;
 import com.linkedin.r2.transport.http.server.HttpServerFactory;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 import java.net.URI;
@@ -43,6 +50,35 @@ public class TestQueryTunnel
   private Server _server;
   private TransportClientFactory _clientFactory;
 
+  private final boolean _clientROS;
+  private final boolean _serverROS;
+  private final HttpJettyServer.ServletType _servletType;
+  private final int _port;
+
+  @Factory(dataProvider = "configs")
+  public TestQueryTunnel(boolean clientROS, boolean serverROS, HttpJettyServer.ServletType servletType, int port)
+  {
+    _clientROS = clientROS;
+    _serverROS = serverROS;
+    _servletType = servletType;
+    _port = port;
+  }
+
+  @DataProvider
+  public static Object[][] configs()
+  {
+    return new Object[][] {
+        {true, true, HttpJettyServer.ServletType.RAP, PORT},
+        {true, false, HttpJettyServer.ServletType.RAP, PORT + 1},
+        {false, true, HttpJettyServer.ServletType.RAP, PORT + 2},
+        {false, false, HttpJettyServer.ServletType.RAP, PORT + 3},
+        {true, true, HttpJettyServer.ServletType.ASYNC_EVENT, PORT + 4},
+        {true, false, HttpJettyServer.ServletType.ASYNC_EVENT, PORT + 5},
+        {false, true, HttpJettyServer.ServletType.ASYNC_EVENT, PORT + 6},
+        {false, false, HttpJettyServer.ServletType.ASYNC_EVENT, PORT + 7}
+    };
+  }
+
   @BeforeClass
   protected void setUp() throws Exception
   {
@@ -52,20 +88,28 @@ public class TestQueryTunnel
     final TransportClient transportClient = _clientFactory
         .getClient(clientProperties);
 
-    _client = new TransportClientAdapter(transportClient);
+    _client = new TransportClientAdapter(transportClient, _clientROS);
 
-    final RestRequestHandler handler = new CheckQueryTunnelHandler();
+    final RestRequestHandler restHandler = new CheckQueryTunnelHandler();
+    final StreamRequestHandler streamHandler = new StreamRequestHandlerAdapter(restHandler);
 
     TransportDispatcher dispatcher = new TransportDispatcher()
     {
       @Override
-      public void handleRestRequest(RestRequest req, Map<String, String> wireAttrs,
-                             RequestContext requestContext, TransportCallback<RestResponse> callback)
+      public void handleRestRequest(RestRequest req, Map<String, String> wireAttrs, RequestContext requestContext,
+                                    TransportCallback<RestResponse> callback)
       {
-        handler.handleRequest(req, requestContext, new TransportCallbackAdapter<RestResponse>(callback));
+        restHandler.handleRequest(req, requestContext, new TransportCallbackAdapter<RestResponse>(callback));
+      }
+
+      @Override
+      public void handleStreamRequest(StreamRequest req, Map<String, String> wireAttrs,
+                             RequestContext requestContext, TransportCallback<StreamResponse> callback)
+      {
+        streamHandler.handleRequest(req, requestContext, new TransportCallbackAdapter<StreamResponse>(callback));
       }
     };
-    _server = new HttpServerFactory().createServer(PORT, dispatcher);
+    _server = new HttpServerFactory(_servletType).createServer(_port, dispatcher, _serverROS);
     _server.start();
   }
 
@@ -111,7 +155,7 @@ public class TestQueryTunnel
 
   private RestResponse getResponse(String query, RequestContext requestContext) throws Exception
   {
-    URI uri = URI.create("http://localhost:" + PORT + "/checkQuery?" + query);
+    URI uri = URI.create("http://localhost:" + _port + "/checkQuery?" + query);
     RestRequestBuilder builder = new RestRequestBuilder(uri);
     return  _client.restRequest(builder.build(), requestContext).get(5000, TimeUnit.MILLISECONDS);
   }

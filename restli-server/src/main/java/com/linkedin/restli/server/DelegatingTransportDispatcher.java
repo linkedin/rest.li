@@ -22,7 +22,11 @@ import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestStatus;
+import com.linkedin.r2.message.stream.StreamRequest;
+import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.transport.common.RestRequestHandler;
+import com.linkedin.r2.transport.common.StreamRequestHandler;
+import com.linkedin.r2.transport.common.StreamRequestHandlerAdapter;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
 import com.linkedin.r2.transport.common.bridge.server.TransportCallbackAdapter;
@@ -37,27 +41,45 @@ import java.util.Map;
  */
 public class DelegatingTransportDispatcher implements TransportDispatcher
 {
-  private final RestRequestHandler _handler;
+  // for the streaming & rest-over-stream code path
+  private final StreamRequestHandler _streamHandler;
+  // for the legacy code path
+  private final RestRequestHandler _restHandler;
 
   public DelegatingTransportDispatcher(final RestRequestHandler handler)
   {
-    _handler = handler;
+    _streamHandler = new StreamRequestHandlerAdapter(handler);
+    _restHandler = handler;
   }
 
   @Override
-  public void handleRestRequest(final RestRequest req,
-                                final Map<String, String> wireAttrs,
-                                final RequestContext requestContext,
-                                final TransportCallback<RestResponse> callback)
+  public void handleRestRequest(RestRequest req, Map<String, String> wireAttrs,
+                                  RequestContext requestContext, TransportCallback<RestResponse> callback)
   {
     try
     {
-      _handler.handleRequest(req, requestContext, new TransportCallbackAdapter<RestResponse>(callback));
+      _restHandler.handleRequest(req, requestContext, new TransportCallbackAdapter<RestResponse>(callback));
+    }
+    catch (Exception e)
+    {
+      callback.onResponse(TransportResponseImpl.<RestResponse>error(RestException.forError(RestStatus.INTERNAL_SERVER_ERROR, e)));
+    }
+  }
+
+  @Override
+  public void handleStreamRequest(final StreamRequest req,
+                                final Map<String, String> wireAttrs,
+                                final RequestContext requestContext,
+                                final TransportCallback<StreamResponse> callback)
+  {
+    try
+    {
+      _streamHandler.handleRequest(req, requestContext, new TransportCallbackAdapter<StreamResponse>(callback));
     }
     catch (Exception e)
     {
       final Exception ex = RestException.forError(RestStatus.INTERNAL_SERVER_ERROR, e);
-      callback.onResponse(TransportResponseImpl.<RestResponse>error(ex));
+      callback.onResponse(TransportResponseImpl.<StreamResponse>error(ex));
     }
   }
 }

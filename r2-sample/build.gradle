@@ -5,4 +5,5 @@ dependencies {
   compile project(':data')
   compile project(':r2-jetty')
   compile externalDependency.netty
+  compile externalDependency.servletApi
 }

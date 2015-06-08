@@ -11,9 +11,10 @@ import java.util.Map;
  * A convenient base stream filter class in case the subclass only wants to process request or only wants to process
  * response.
  *
+ * Use {@code StreamFilter} instead.
+ *
  * @auther Zhenkai Zhu
  */
-
 public class BaseStreamFilter implements StreamFilter
 {
   @Override

@@ -23,12 +23,15 @@ import com.linkedin.common.util.None;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
+import com.linkedin.r2.message.stream.StreamRequest;
+import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 
 import java.util.Map;
 
 /**
  * @author Chris Pettitt
+ * @author Zhenkai Zhu
  * @version $Revision$
  */
 public interface TransportClient
@@ -43,9 +46,28 @@ public interface TransportClient
    * @param callback the callback to invoke with the response
    */
   void restRequest(RestRequest request,
+                     RequestContext requestContext,
+                     Map<String, String> wireAttrs,
+                     TransportCallback<RestResponse> callback);
+
+  /**
+   * Asynchronously issues the given request. The given callback is invoked when the response is
+   * received.
+   *
+   * Any implementation that wants to support streaming MUST override this method.
+   *
+   * @param request the request to issue
+   * @param requestContext context for the request
+   * @param wireAttrs attributes that should be sent over the wire to the server
+   * @param callback the callback to invoke with the response
+   */
+  default void streamRequest(StreamRequest request,
                    RequestContext requestContext,
                    Map<String, String> wireAttrs,
-                   TransportCallback<RestResponse> callback);
+                   TransportCallback<StreamResponse> callback)
+  {
+    throw new UnsupportedOperationException("Please use an implementation that supports streaming.");
+  }
 
   /**
    * Starts asynchronous shutdown of the client. This method should block minimally, if at all.

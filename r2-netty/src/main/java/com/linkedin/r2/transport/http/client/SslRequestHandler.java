@@ -16,7 +16,7 @@
 
 package com.linkedin.r2.transport.http.client;
 
-import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.Request;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOutboundHandlerAdapter;
@@ -76,29 +76,31 @@ public class SslRequestHandler extends ChannelOutboundHandlerAdapter
   @Override
   public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception
   {
-    RestRequest restRequest = (RestRequest) msg;
-    URI uri = restRequest.getURI();
-    String scheme = uri.getScheme();
-    if (_firstTimeScheme == null)
+    if (msg instanceof Request)
     {
-      // If this channel is configured for TLS AND this is an HTTPS request, add SSL
-      // handler to the channel pipeline
-      if (scheme.equalsIgnoreCase(HTTPS_SCHEME))
+      Request request = (Request) msg;
+      URI uri = request.getURI();
+      String scheme = uri.getScheme();
+      if (_firstTimeScheme == null)
       {
-        if (_sslHandler == null)
+        // If this channel is configured for TLS AND this is an HTTPS request, add SSL
+        // handler to the channel pipeline
+        if (scheme.equalsIgnoreCase(HTTPS_SCHEME))
         {
-          throw new IllegalStateException("The client hasn't been configured with SSLContext "
-              + "- cannot make an https request to " + uri);
+          if (_sslHandler == null)
+          {
+            throw new IllegalStateException("The client hasn't been configured with SSLContext "
+                + "- cannot make an https request to " + uri);
+          }
+          /** Note: {@link SslHandler} will initiate a handshake upon being added to the pipeline. */
+          ctx.pipeline().addFirst(SSL_HANDLER, _sslHandler);
         }
-        /** Note: {@link SslHandler} will initiate a handshake upon being added to the pipeline. */
-        ctx.pipeline().addFirst(SSL_HANDLER, _sslHandler);
-      }
-      _firstTimeScheme = scheme;
-    }
-    else if (!scheme.equalsIgnoreCase(_firstTimeScheme))
-    {
+        _firstTimeScheme = scheme;
+      } else if (!scheme.equalsIgnoreCase(_firstTimeScheme))
+      {
         throw new IllegalStateException(String.format("Cannot switch scheme from %s to %s for %s",
             _firstTimeScheme, scheme, ctx.channel().remoteAddress()));
+      }
     }
 
     ctx.write(msg, promise);

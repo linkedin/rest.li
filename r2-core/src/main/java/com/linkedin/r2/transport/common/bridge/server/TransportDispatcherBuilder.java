@@ -17,71 +17,90 @@
 /* $Id$ */
 package com.linkedin.r2.transport.common.bridge.server;
 
-
 import com.linkedin.r2.transport.common.RestRequestHandler;
+import com.linkedin.r2.transport.common.StreamRequestHandler;
+import com.linkedin.r2.transport.common.StreamRequestHandlerAdapter;
 
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Builder for {@link TransportDispatcher} instances.
- *
- * @author Chris Pettitt
- * @version $Revision$
+ * @author Zhenkai Zhu
  */
 public class TransportDispatcherBuilder
 {
-  private final Map<URI, RestRequestHandler> _restHandlers = new HashMap<URI, RestRequestHandler>();
+  private final Map<URI, StreamRequestHandler> _streamHandlers;
+  private final Map<URI, RestRequestHandler> _restHandlers;
+  private final Map<URI, StreamRequestHandler> _adaptedHandlers;
+  private final boolean _restOverStream;
 
-  /**
-   * Add a {@link RestRequestHandler} at the specified URI.
-   *
-   * @param uri the URI at which the handler is bound.
-   * @param handler the handler to bind to the specified URI.
-   * @return the current Builder object (fluent interface pattern).
-   */
+  public TransportDispatcherBuilder()
+  {
+    /**
+     *  mostly for testing, so set restOverStream to true regardless of {@link com.linkedin.r2.filter.R2Constants.DEFAULT_REST_OVER_STREAM}
+     */
+    this(true);
+  }
+
+  public TransportDispatcherBuilder(boolean restOverStream)
+  {
+    this(new HashMap<URI, RestRequestHandler>(), new HashMap<URI, StreamRequestHandler>(), restOverStream);
+  }
+
+  public TransportDispatcherBuilder(Map<URI, RestRequestHandler> restHandlers, Map<URI, StreamRequestHandler> streamHandlers, boolean restOverStream)
+  {
+    _restHandlers = new HashMap<URI, RestRequestHandler>(restHandlers);
+    _streamHandlers = new HashMap<URI, StreamRequestHandler>(streamHandlers);
+    _adaptedHandlers = new HashMap<URI, StreamRequestHandler>();
+    _restOverStream = restOverStream;
+  }
+
   public TransportDispatcherBuilder addRestHandler(URI uri, RestRequestHandler handler)
   {
     _restHandlers.put(uri, handler);
+    if (_restOverStream)
+    {
+      _adaptedHandlers.put(uri, new StreamRequestHandlerAdapter(handler));
+    }
     return this;
   }
 
-  /**
-   * Remove any {@link RestRequestHandler} bound to the specified URI.
-   *
-   * @param uri the URI for which the handler should be removed.
-   * @return the {@link RestRequestHandler} which was removed, or null if no handler
-   *         exists.
-   */
   public RestRequestHandler removeRestHandler(URI uri)
   {
-    return _restHandlers.remove(uri);
+    RestRequestHandler handler = _restHandlers.remove(uri);
+    if (_restOverStream)
+    {
+      _adaptedHandlers.remove(uri);
+    }
+    return handler;
   }
 
-  /**
-   * Reset the state of this builder to its initial state.
-   *
-   * @return the current builder object (fluent interface pattern).
-   */
+  public TransportDispatcherBuilder addStreamHandler(URI uri, StreamRequestHandler handler)
+  {
+    _streamHandlers.put(uri, handler);
+    return this;
+  }
+
+  public StreamRequestHandler removeStreamHandler(URI uri)
+  {
+    return _streamHandlers.remove(uri);
+  }
+
+
   public TransportDispatcherBuilder reset()
   {
     _restHandlers.clear();
+    _adaptedHandlers.clear();
+    _streamHandlers.clear();
     return this;
   }
 
-  /**
-   * Build a new {@link TransportDispatcher} using the settings of this builder.
-   *
-   * @return a new {@link TransportDispatcher} using the settings of this builder.
-   */
   public TransportDispatcher build()
   {
-    return new TransportDispatcherImpl(copy(_restHandlers));
+    Map<URI, StreamRequestHandler> mergedStreamHandlers = new HashMap<URI, StreamRequestHandler>(_adaptedHandlers);
+    mergedStreamHandlers.putAll(_streamHandlers);
+    return new TransportDispatcherImpl(_restHandlers, mergedStreamHandlers);
   }
 
-  private <T> Map<URI, T> copy(Map<URI, T> handlers)
-  {
-    return new HashMap<URI, T>(handlers);
-  }
 }

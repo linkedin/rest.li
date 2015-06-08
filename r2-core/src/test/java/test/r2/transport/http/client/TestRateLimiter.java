@@ -4,7 +4,7 @@ import com.linkedin.common.callback.SimpleCallback;
 import com.linkedin.r2.transport.http.client.ExponentialBackOffRateLimiter;
 import com.linkedin.r2.transport.http.client.RateLimiter;
 import com.linkedin.r2.transport.http.client.RateLimiter.Task;
-import com.linkedin.r2.transport.http.client.ExponentialBackOffRateLimiter;
+
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;

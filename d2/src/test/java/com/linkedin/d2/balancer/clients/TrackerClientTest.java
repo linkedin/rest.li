@@ -21,11 +21,21 @@ import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
+import com.linkedin.data.ByteString;
 import com.linkedin.r2.message.RequestContext;
+import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestResponseBuilder;
+import com.linkedin.r2.message.stream.StreamException;
+import com.linkedin.r2.message.stream.StreamRequest;
+import com.linkedin.r2.message.stream.StreamRequestBuilder;
+import com.linkedin.r2.message.stream.StreamResponse;
+import com.linkedin.r2.message.stream.StreamResponseBuilder;
+import com.linkedin.r2.message.stream.entitystream.ByteStringWriter;
+import com.linkedin.r2.message.stream.entitystream.DrainReader;
+import com.linkedin.r2.message.stream.entitystream.EntityStreams;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponse;
@@ -37,16 +47,50 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import com.linkedin.util.clock.Time;
+import com.linkedin.util.degrader.CallTracker;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertSame;
 
 public class TrackerClientTest
 {
   @Test(groups = { "small", "back-end" })
-  public void testClient() throws URISyntaxException
+  public void testClientStreamRequest() throws URISyntaxException
+  {
+    URI uri = URI.create("http://test.qa.com:1234/foo");
+    double weight = 3d;
+    TestClient wrappedClient = new TestClient(true);
+    Clock clock = new SettableClock();
+    Map<Integer, PartitionData> partitionDataMap = new HashMap<Integer, PartitionData>(2);
+    partitionDataMap.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(3d));
+    TrackerClient client = new TrackerClient(uri, partitionDataMap, wrappedClient, clock, null);
+
+    assertEquals(client.getUri(), uri);
+    Double clientWeight = client.getPartitionWeight(DefaultPartitionAccessor.DEFAULT_PARTITION_ID);
+    assertEquals(clientWeight, weight);
+    assertEquals(client.getWrappedClient(), wrappedClient);
+
+    StreamRequest streamRequest = new StreamRequestBuilder(uri).build(EntityStreams.emptyStream());
+    Map<String, String> restWireAttrs = new HashMap<String, String>();
+    TestTransportCallback<StreamResponse> restCallback =
+        new TestTransportCallback<StreamResponse>();
+
+    client.streamRequest(streamRequest, new RequestContext(), restWireAttrs, restCallback);
+
+    assertFalse(restCallback.response.hasError());
+    assertSame(wrappedClient.streamRequest, streamRequest);
+    assertEquals(wrappedClient.restWireAttrs, restWireAttrs);
+  }
+
+  @Test(groups = { "small", "back-end" })
+  public void testClientRestRequest() throws URISyntaxException
   {
     URI uri = URI.create("http://test.qa.com:1234/foo");
     double weight = 3d;
@@ -73,27 +117,184 @@ public class TrackerClientTest
     assertEquals(wrappedClient.restWireAttrs, restWireAttrs);
   }
 
+  @Test
+  public void testCallTrackingRestRequest() throws Exception
+  {
+    URI uri = URI.create("http://test.qa.com:1234/foo");
+    SettableClock clock = new SettableClock();
+    AtomicInteger action = new AtomicInteger(0);
+    TransportClient tc = new TransportClient() {
+      @Override
+      public void restRequest(RestRequest request, RequestContext requestContext, Map<String, String> wireAttrs, TransportCallback<RestResponse> callback) {
+          clock.addDuration(5);
+          switch (action.get())
+          {
+            // success
+            case 0: callback.onResponse(TransportResponseImpl.success(RestResponse.NO_RESPONSE));
+                    break;
+            // fail with rest exception
+            case 1: callback.onResponse(TransportResponseImpl.error(RestException.forError(400, "rest exception")));
+                    break;
+            // fail with other exception
+            default: callback.onResponse(TransportResponseImpl.error(new RuntimeException()));
+                    break;
+          }
+      }
+
+      @Override
+      public void shutdown(Callback<None> callback) {}
+    };
+
+    TrackerClient client = createTrackerClient(tc, clock, uri);
+    CallTracker callTracker = client.getCallTracker();
+    long startTime = clock.currentTimeMillis();
+    client.restRequest(new RestRequestBuilder(uri).build(), new RequestContext(), new HashMap<>(), new TestTransportCallback<>());
+    clock.addDuration(5);
+    Assert.assertEquals(callTracker.getCurrentCallCountTotal(), 1);
+    Assert.assertEquals(callTracker.getCurrentErrorCountTotal(), 0);
+    action.set(1);
+    client.restRequest(new RestRequestBuilder(uri).build(), new RequestContext(), new HashMap<>(), new TestTransportCallback<>());
+    clock.addDuration(5);
+    Assert.assertEquals(callTracker.getCurrentCallCountTotal(), 2);
+    Assert.assertEquals(callTracker.getCurrentErrorCountTotal(), 1);
+    action.set(2);
+    client.restRequest(new RestRequestBuilder(uri).build(), new RequestContext(), new HashMap<>(), new TestTransportCallback<>());
+    clock.addDuration(5);
+    Assert.assertEquals(callTracker.getCurrentCallCountTotal(), 3);
+    Assert.assertEquals(callTracker.getCurrentErrorCountTotal(), 2);
+  }
+
+  @Test
+  public void testCallTrackingStreamRequest() throws Exception
+  {
+    URI uri = URI.create("http://test.qa.com:1234/foo");
+    SettableClock clock = new SettableClock();
+    AtomicInteger action = new AtomicInteger(0);
+    TransportClient tc = new TransportClient() {
+      @Override
+      public void restRequest(RestRequest request, RequestContext requestContext, Map<String, String> wireAttrs, TransportCallback<RestResponse> callback) {
+      }
+
+      @Override
+      public void streamRequest(StreamRequest request,
+                                RequestContext requestContext,
+                                Map<String, String> wireAttrs,
+                                TransportCallback<StreamResponse> callback) {
+        clock.addDuration(5);
+        switch (action.get())
+        {
+          // success
+          case 0: callback.onResponse(TransportResponseImpl.success(new StreamResponseBuilder().build(EntityStreams.emptyStream())));
+            break;
+          // fail with stream exception
+          case 1: callback.onResponse(TransportResponseImpl.error(
+              new StreamException(new StreamResponseBuilder().setStatus(400).build(EntityStreams.emptyStream()))));
+            break;
+          // fail with other exception
+          default: callback.onResponse(TransportResponseImpl.error(new RuntimeException()));
+            break;
+        }
+      }
+
+      @Override
+      public void shutdown(Callback<None> callback) {}
+    };
+
+    TrackerClient client = createTrackerClient(tc, clock, uri);
+    CallTracker callTracker = client.getCallTracker();
+    long startTime = clock.currentTimeMillis();
+    DelayConsumeCallback delayConsumeCallback = new DelayConsumeCallback();
+    client.streamRequest(new StreamRequestBuilder(uri).build(EntityStreams.emptyStream()), new RequestContext(), new HashMap<>(), delayConsumeCallback);
+    clock.addDuration(5);
+    // we only recorded the time when stream response arrives, but callcompletion.endcall hasn't been called yet.
+    Assert.assertEquals(callTracker.getCurrentCallCountTotal(), 0);
+    Assert.assertEquals(callTracker.getCurrentErrorCountTotal(), 0);
+
+    // delay
+    clock.addDuration(100);
+    delayConsumeCallback.consume();
+    clock.addDuration(5);
+    // now that we consumed the entity stream, callcompletion.endcall has been called.
+    Assert.assertEquals(callTracker.getCurrentCallCountTotal(), 1);
+    Assert.assertEquals(callTracker.getCurrentErrorCountTotal(), 0);
+
+    action.set(1);
+    client.streamRequest(new StreamRequestBuilder(uri).build(EntityStreams.emptyStream()), new RequestContext(), new HashMap<>(), delayConsumeCallback);
+    clock.addDuration(5);
+    // we endcall with error immediately for stream exception, even before the entity is consumed
+    Assert.assertEquals(callTracker.getCurrentCallCountTotal(), 2);
+    Assert.assertEquals(callTracker.getCurrentErrorCountTotal(), 1);
+    delayConsumeCallback.consume();
+    clock.addDuration(5);
+    // no change in tracking after entity is consumed
+    Assert.assertEquals(callTracker.getCurrentCallCountTotal(), 2);
+    Assert.assertEquals(callTracker.getCurrentErrorCountTotal(), 1);
+
+    action.set(2);
+    client.streamRequest(new StreamRequestBuilder(uri).build(EntityStreams.emptyStream()), new RequestContext(), new HashMap<>(), new TestTransportCallback<>());
+    clock.addDuration(5);
+    Assert.assertEquals(callTracker.getCurrentCallCountTotal(), 3);
+    Assert.assertEquals(callTracker.getCurrentErrorCountTotal(), 2);
+  }
+
+  private TrackerClient createTrackerClient(TransportClient tc, Clock clock, URI uri)
+  {
+    double weight = 3d;
+    Map<Integer, PartitionData> partitionDataMap = new HashMap<Integer, PartitionData>(2);
+    partitionDataMap.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(3d));
+    return new TrackerClient(uri, partitionDataMap, tc, clock, null);
+  }
+
   public static class TestClient implements TransportClient
   {
+    public StreamRequest                   streamRequest;
     public RestRequest                     restRequest;
     public RequestContext                  restRequestContext;
     public Map<String, String>             restWireAttrs;
-    public TransportCallback<RestResponse> restCallback;
+    public TransportCallback<StreamResponse> streamCallback;
+    public TransportCallback<RestResponse>   restCallback;
 
     public boolean                         shutdownCalled;
+    private final boolean _emptyResponse;
+
+    public TestClient() { this(true);}
+
+    public TestClient(boolean emptyResponse)
+    {
+      _emptyResponse = emptyResponse;
+    }
 
     @Override
     public void restRequest(RestRequest request,
-                            RequestContext requestContext,
-                            Map<String, String> wireAttrs,
-                            TransportCallback<RestResponse> callback)
+                     RequestContext requestContext,
+                     Map<String, String> wireAttrs,
+                     TransportCallback<RestResponse> callback)
     {
       restRequest = request;
       restRequestContext = requestContext;
       restWireAttrs = wireAttrs;
       restCallback = callback;
+      RestResponseBuilder builder = new RestResponseBuilder();
+      RestResponse response = _emptyResponse ? builder.build() :
+          builder.setEntity("This is not empty".getBytes()).build();
+      callback.onResponse(TransportResponseImpl.success(response));
+    }
 
-      callback.onResponse(TransportResponseImpl.<RestResponse> success(new RestResponseBuilder().build(), wireAttrs));
+    @Override
+    public void streamRequest(StreamRequest request,
+                            RequestContext requestContext,
+                            Map<String, String> wireAttrs,
+                            TransportCallback<StreamResponse> callback)
+    {
+      streamRequest = request;
+      restRequestContext = requestContext;
+      restWireAttrs = wireAttrs;
+      streamCallback = callback;
+
+      StreamResponseBuilder builder = new StreamResponseBuilder();
+      StreamResponse response = _emptyResponse ? builder.build(EntityStreams.emptyStream())
+          : builder.build(EntityStreams.newEntityStream(new ByteStringWriter(ByteString.copy("This is not empty".getBytes()))));
+      callback.onResponse(TransportResponseImpl.success(response, wireAttrs));
     }
 
     @Override
@@ -133,4 +334,23 @@ public class TrackerClientTest
       this.t = t;
     }
   }
+
+  private static class DelayConsumeCallback implements TransportCallback<StreamResponse> {
+    StreamResponse _response;
+    @Override
+    public void onResponse(TransportResponse<StreamResponse> response) {
+      if (response.hasError() && response.getError() instanceof StreamException) {
+        _response = ((StreamException) response.getError()).getResponse();
+      } else {
+        _response = response.getResponse();
+      }
+    }
+
+    public void consume()
+    {
+      if (_response != null) {
+        _response.getEntityStream().setReader(new DrainReader());
+      }
+    }
+  };
 }

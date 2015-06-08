@@ -25,7 +25,6 @@ import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.r2.transport.http.client.AsyncPool;
 import com.linkedin.r2.transport.http.client.AsyncPoolImpl;
 import com.linkedin.common.util.None;
-import com.linkedin.r2.transport.http.client.AsyncPoolStats;
 import com.linkedin.r2.transport.http.client.PoolStats;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;

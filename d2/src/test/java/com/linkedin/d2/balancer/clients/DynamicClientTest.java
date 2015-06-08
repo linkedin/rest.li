@@ -49,6 +49,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertFalse;
@@ -60,16 +61,16 @@ import static org.testng.Assert.fail;
 
 public class DynamicClientTest
 {
-  @Test(groups = { "small", "back-end" })
+  @Test(groups = { "small", "back-end" }, dataProvider = "restOverStreamSwitch")
   @SuppressWarnings("deprecation")
-  public void testClient() throws URISyntaxException
+  public void testClient(boolean restOverStream) throws URISyntaxException
   {
     TestLoadBalancer balancer = new TestLoadBalancer(false);
     DirectoryProvider dirProvider = new TestDirectoryProvider();
     KeyMapperProvider keyMapperProvider = new TestKeyMapperProvider();
     ClientFactoryProvider clientFactoryProvider = new TestClientFactoryProvider();
     Facilities facilities = new DelegatingFacilities(dirProvider, keyMapperProvider, clientFactoryProvider);
-    DynamicClient client = new DynamicClient(balancer, facilities);
+    DynamicClient client = new DynamicClient(balancer, facilities, restOverStream);
     URI uri = URI.create("d2://test");
     RestRequest restRequest = new RestRequestBuilder(uri).build();
     TestCallback<RestResponse> restCallback = new TestCallback<RestResponse>();
@@ -83,11 +84,11 @@ public class DynamicClientTest
     assertNotNull(facilities, "facilities should not be null");
   }
 
-  @Test(groups = { "small", "back-end" })
-  public void testUnavailable() throws URISyntaxException
+  @Test(groups = { "small", "back-end" }, dataProvider = "restOverStreamSwitch")
+  public void testUnavailable(boolean restOverStream) throws URISyntaxException
   {
     TestLoadBalancer balancer = new TestLoadBalancer(true);
-    DynamicClient client = new DynamicClient(balancer, null);
+    DynamicClient client = new DynamicClient(balancer, null, restOverStream);
     URI uri = URI.create("d2://test");
     RestRequest restRequest = new RestRequestBuilder(uri).build();
     TestCallback<RestResponse> restCallback = new TestCallback<RestResponse>();
@@ -107,7 +108,7 @@ public class DynamicClientTest
       InterruptedException
   {
     TestLoadBalancer balancer = new TestLoadBalancer(true);
-    DynamicClient client = new DynamicClient(balancer, null);
+    DynamicClient client = new DynamicClient(balancer, null, true);
     final CountDownLatch latch = new CountDownLatch(1);
 
     assertFalse(balancer.shutdown);
@@ -260,4 +261,11 @@ public class DynamicClientTest
       return null;
     }
   }
+
+  @DataProvider(name="restOverStreamSwitch")
+  public static Object[][] restOverStreamSwitch()
+  {
+    return new Object[][] {{true}, {false}};
+  }
+
 }

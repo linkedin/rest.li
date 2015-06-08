@@ -24,6 +24,8 @@ import com.linkedin.r2.sample.Bootstrap;
 import com.linkedin.r2.sample.echo.EchoService;
 import com.linkedin.r2.sample.echo.rest.RestEchoClient;
 import com.linkedin.r2.transport.common.Client;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 import java.net.URI;
@@ -36,9 +38,31 @@ import java.net.URI;
 @Test
 public class TestHttpRestEcho extends AbstractHttpEchoServiceTest
 {
+  private static final int PORT = 11996;
+
+  private final int _port;
+
+  @Factory(dataProvider = "configs")
+  public TestHttpRestEcho(boolean clientRestOverStream, boolean serverRestOverStream, int port)
+  {
+    super(clientRestOverStream, serverRestOverStream, port);
+    _port = port;
+  }
+
+  @DataProvider
+  public static Object[][] configs()
+  {
+    return new Object[][] {
+        {true, true, PORT},
+        {true, false, PORT + 1},
+        {false, true, PORT + 2},
+        {false, false, PORT + 3}
+    };
+  }
+
   @Override
   protected EchoService getEchoClient(Client client, URI uri)
   {
-    return new RestEchoClient(Bootstrap.createHttpURI(uri), client);
+    return new RestEchoClient(Bootstrap.createHttpURI(_port, uri), client);
   }
 }

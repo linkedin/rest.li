@@ -19,6 +19,7 @@ package com.linkedin.r2.sample;
 
 
 import com.linkedin.r2.filter.FilterChain;
+import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.sample.echo.EchoServiceImpl;
 import com.linkedin.r2.sample.echo.OnExceptionEchoService;
 import com.linkedin.r2.sample.echo.ThrowingEchoService;
@@ -55,8 +56,13 @@ public class Bootstrap
 
   public static Server createHttpServer(int port, FilterChain filters)
   {
+    return createHttpServer(port, filters, R2Constants.DEFAULT_REST_OVER_STREAM);
+  }
+
+  public static Server createHttpServer(int port, FilterChain filters, boolean restOverStream)
+  {
     return new HttpServerFactory(filters)
-            .createServer(port, createDispatcher());
+        .createServer(port, createDispatcher(), restOverStream);
   }
 
   public static Server createHttpsServer(String keyStore, String keyStorePassword, FilterChain filters)
@@ -66,15 +72,28 @@ public class Bootstrap
 
   public static Server createHttpsServer(int sslPort, String keyStore, String keyStorePassword, FilterChain filters)
   {
+    return createHttpsServer(sslPort, keyStore, keyStorePassword, filters, R2Constants.DEFAULT_REST_OVER_STREAM);
+  }
+
+  public static Server createHttpsServer(int sslPort, String keyStore, String keyStorePassword, FilterChain filters, boolean restOverStream)
+  {
     return new HttpServerFactory(filters)
-        .createHttpsServer(HTTP_PORT, sslPort, keyStore, keyStorePassword, createDispatcher());
+        .createHttpsServer(HTTP_PORT, sslPort, keyStore, keyStorePassword, createDispatcher(),
+            HttpServerFactory.DEFAULT_SERVLET_TYPE, restOverStream);
+  }
+
+  public static Client createHttpClient(FilterChain filters, boolean restOverStream)
+  {
+    final TransportClient client = new HttpClientFactory.Builder()
+        .setFilterChain(filters)
+        .build()
+        .getClient(Collections.<String, String>emptyMap());
+    return new TransportClientAdapter(client, restOverStream);
   }
 
   public static Client createHttpClient(FilterChain filters)
   {
-    final TransportClient client = new HttpClientFactory(filters)
-            .getClient(Collections.<String, String>emptyMap());
-    return new TransportClientAdapter(client);
+    return createHttpClient(filters, R2Constants.DEFAULT_REST_OVER_STREAM);
   }
 
   public static URI createHttpURI(URI relativeURI)

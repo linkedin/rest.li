@@ -68,8 +68,8 @@ class RAPResponseHandler extends SimpleChannelInboundHandler<RestResponse>
     wireAttrs.putAll(WireAttributeHelper.removeWireAttributes(headers));
 
     final RestResponse newResponse = new RestResponseBuilder(response)
-                                          .unsafeSetHeaders(headers)
-                                          .build();
+        .unsafeSetHeaders(headers)
+        .build();
     // In general there should always be a callback to handle a received message,
     // but it could have been removed due to a previous exception or closure on the
     // channel
@@ -94,7 +94,7 @@ class RAPResponseHandler extends SimpleChannelInboundHandler<RestResponse>
     {
       LOG.debug(ctx.channel().remoteAddress() + ": exception on active channel", cause);
       callback.onResponse(TransportResponseImpl.<RestResponse>error(
-              HttpNettyClient.toException(cause), Collections.<String,String>emptyMap()));
+          HttpNettyClient.toException(cause), Collections.<String,String>emptyMap()));
     }
     else
     {
@@ -115,7 +115,7 @@ class RAPResponseHandler extends SimpleChannelInboundHandler<RestResponse>
     {
       LOG.debug("{}: active channel closed", ctx.channel().remoteAddress());
       callback.onResponse(TransportResponseImpl.<RestResponse>error(new ClosedChannelException(),
-                                                                    Collections.<String, String>emptyMap()));
+          Collections.<String, String>emptyMap()));
     }
     else
     {

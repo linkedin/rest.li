@@ -19,18 +19,23 @@ package com.linkedin.r2.transport.http.client;
 
 
 import com.linkedin.common.callback.Callback;
+import com.linkedin.common.callback.MultiCallback;
 import com.linkedin.common.util.None;
 import com.linkedin.r2.filter.FilterChain;
 import com.linkedin.r2.filter.FilterChains;
 import com.linkedin.r2.filter.CompressionConfig;
 import com.linkedin.r2.filter.compression.ClientCompressionFilter;
 import com.linkedin.r2.filter.compression.ClientCompressionHelper;
+import com.linkedin.r2.filter.compression.ClientStreamCompressionFilter;
 import com.linkedin.r2.filter.compression.EncodingType;
+import com.linkedin.r2.filter.compression.streaming.StreamEncodingType;
 import com.linkedin.r2.filter.transport.ClientQueryTunnelFilter;
 import com.linkedin.r2.filter.transport.FilterChainClient;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
+import com.linkedin.r2.message.stream.StreamRequest;
+import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
@@ -40,6 +45,7 @@ import com.linkedin.r2.util.NamedThreadFactory;
 import io.netty.channel.nio.NioEventLoopGroup;
 
 import java.util.ArrayList;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
@@ -108,7 +114,7 @@ public class HttpClientFactory implements TransportClientFactory
   public static final int DEFAULT_REQUEST_TIMEOUT = 10000;
   public static final int DEFAULT_IDLE_TIMEOUT = 25000;
   public static final int DEFAULT_SHUTDOWN_TIMEOUT = 5000;
-  public static final int DEFAULT_MAX_RESPONSE_SIZE = 1024 * 1024 * 2;
+  public static final long DEFAULT_MAX_RESPONSE_SIZE = 1024 * 1024 * 2;
   public static final String DEFAULT_CLIENT_NAME = "noNameSpecifiedClient";
   public static final AsyncPoolImpl.Strategy DEFAULT_POOL_STRATEGY = AsyncPoolImpl.Strategy.MRU;
   public static final int DEFAULT_POOL_MIN_SIZE = 0;
@@ -116,6 +122,12 @@ public class HttpClientFactory implements TransportClientFactory
   public static final int DEFAULT_MAX_CHUNK_SIZE = 8 * 1024;
   public static final EncodingType[] DEFAULT_RESPONSE_CONTENT_ENCODINGS
       = {EncodingType.GZIP, EncodingType.SNAPPY, EncodingType.DEFLATE, EncodingType.BZIP2};
+
+  public static final StreamEncodingType[] DEFAULT_STREAM_RESPONSE_CONTENT_ENCODINGS
+      = {StreamEncodingType.GZIP,
+      StreamEncodingType.SNAPPY_FRAMED,
+      StreamEncodingType.DEFLATE,
+      StreamEncodingType.BZIP2};
 
 
   private static final String LIST_SEPARATOR = ",";
@@ -127,6 +139,7 @@ public class HttpClientFactory implements TransportClientFactory
   private final boolean                    _shutdownExecutor;
   private final boolean                    _shutdownCallbackExecutor;
   private final FilterChain                _filters;
+  private final Executor                   _compressionExecutor;
 
   private final AtomicBoolean              _finishingShutdown = new AtomicBoolean(false);
   private volatile ScheduledFuture<?>      _shutdownTimeoutTask;
@@ -140,6 +153,8 @@ public class HttpClientFactory implements TransportClientFactory
   private final Map<String, CompressionConfig> _responseCompressionConfigs;
   /** If set to false, ClientCompressionFilter is never used to compress requests or decompress responses. */
   private final boolean                    _useClientCompression;
+  // flag to enable/disable Nagle's algorithm
+  private final boolean                    _tcpNoDelay;
 
   // All fields below protected by _mutex
   private final Object                     _mutex               = new Object();
@@ -264,7 +279,7 @@ public class HttpClientFactory implements TransportClientFactory
                            AbstractJmxManager jmxManager)
   {
     this(filters, eventLoopGroup, shutdownFactory, executor, shutdownExecutor, callbackExecutorGroup,
-        shutdownCallbackExecutor, jmxManager, Integer.MAX_VALUE, Collections.<String, CompressionConfig>emptyMap());
+        shutdownCallbackExecutor, jmxManager, true);
   }
 
   public HttpClientFactory(FilterChain filters,
@@ -313,6 +328,58 @@ public class HttpClientFactory implements TransportClientFactory
                            final Map<String, CompressionConfig> responseCompressionConfigs,
                            boolean useClientCompression)
   {
+      this(filters, eventLoopGroup, shutdownFactory, executor, shutdownExecutor, callbackExecutorGroup,
+          shutdownCallbackExecutor, jmxManager, requestCompressionThresholdDefault,
+          requestCompressionConfigs, responseCompressionConfigs, false,
+          useClientCompression ? Executors.newCachedThreadPool() : null);
+  }
+
+  public HttpClientFactory(FilterChain filters,
+                           NioEventLoopGroup eventLoopGroup,
+                           boolean shutdownFactory,
+                           ScheduledExecutorService executor,
+                           boolean shutdownExecutor,
+                           ExecutorService callbackExecutorGroup,
+                           boolean shutdownCallbackExecutor,
+                           AbstractJmxManager jmxManager,
+                           boolean tcpNoDelay)
+  {
+    this(filters, eventLoopGroup, shutdownFactory, executor, shutdownExecutor, callbackExecutorGroup, shutdownCallbackExecutor,
+        jmxManager, tcpNoDelay, Integer.MAX_VALUE, Collections.<String, CompressionConfig>emptyMap(), Executors.newCachedThreadPool());
+  }
+
+  public HttpClientFactory(FilterChain filters,
+                           NioEventLoopGroup eventLoopGroup,
+                           boolean shutdownFactory,
+                           ScheduledExecutorService executor,
+                           boolean shutdownExecutor,
+                           ExecutorService callbackExecutorGroup,
+                           boolean shutdownCallbackExecutor,
+                           AbstractJmxManager jmxManager,
+                           boolean tcpNoDelay,
+                           int requestCompressionThresholdDefault,
+                           Map<String, CompressionConfig> requestCompressionConfigs,
+                           Executor compressionExecutor)
+  {
+    this(filters, eventLoopGroup, shutdownFactory, executor, shutdownExecutor, callbackExecutorGroup,
+        shutdownCallbackExecutor, jmxManager, requestCompressionThresholdDefault, requestCompressionConfigs,
+        Collections.<String, CompressionConfig>emptyMap(), tcpNoDelay, compressionExecutor);
+  }
+
+  public HttpClientFactory(FilterChain filters,
+                           NioEventLoopGroup eventLoopGroup,
+                           boolean shutdownFactory,
+                           ScheduledExecutorService executor,
+                           boolean shutdownExecutor,
+                           ExecutorService callbackExecutorGroup,
+                           boolean shutdownCallbackExecutor,
+                           AbstractJmxManager jmxManager,
+                           final int requestCompressionThresholdDefault,
+                           final Map<String, CompressionConfig> requestCompressionConfigs,
+                           final Map<String, CompressionConfig> responseCompressionConfigs,
+                           boolean tcpNoDelay,
+                           Executor compressionExecutor)
+  {
     _filters = filters;
     _eventLoopGroup = eventLoopGroup;
     _shutdownFactory = shutdownFactory;
@@ -332,7 +399,118 @@ public class HttpClientFactory implements TransportClientFactory
       throw new IllegalArgumentException("responseCompressionConfigs should not be null.");
     }
     _responseCompressionConfigs = Collections.unmodifiableMap(responseCompressionConfigs);
-    _useClientCompression = useClientCompression;
+    _tcpNoDelay = tcpNoDelay;
+    _compressionExecutor = compressionExecutor;
+    _useClientCompression = _compressionExecutor != null;
+  }
+
+  public static class Builder
+  {
+    private NioEventLoopGroup          _eventLoopGroup = null;
+    private ScheduledExecutorService   _executor = null;
+    private ExecutorService            _callbackExecutorGroup = null;
+    private boolean                    _shutdownFactory = true;
+    private boolean                    _shutdownExecutor = true;
+    private boolean                    _shutdownCallbackExecutor = false;
+    private FilterChain                _filters = FilterChains.empty();
+    private Executor                   _compressionExecutor = null;
+    private AbstractJmxManager         _jmxManager = AbstractJmxManager.NULL_JMX_MANAGER;
+
+    private int                        _requestCompressionThresholdDefault = Integer.MAX_VALUE;
+    private Map<String, CompressionConfig> _requestCompressionConfigs = Collections.<String, CompressionConfig>emptyMap();
+    private Map<String, CompressionConfig> _responseCompressionConfigs = Collections.<String, CompressionConfig>emptyMap();
+    private boolean                    _tcpNoDelay = true;
+
+    public Builder setNioEventLoopGroup(NioEventLoopGroup nioEventLoopGroup)
+    {
+      _eventLoopGroup = nioEventLoopGroup;
+      return this;
+    }
+
+    public Builder setScheduleExecutorService(ScheduledExecutorService scheduleExecutorService)
+    {
+      _executor = scheduleExecutorService;
+      return this;
+    }
+
+    public Builder setCallbackExecutor(ExecutorService callbackExecutor)
+    {
+      _callbackExecutorGroup = callbackExecutor;
+      return this;
+    }
+
+    public Builder setShutDownFactory(boolean shutDownFactory)
+    {
+      _shutdownFactory = shutDownFactory;
+      return this;
+    }
+
+    public Builder setShutdownScheduledExecutorService(boolean shutdown)
+    {
+      _shutdownExecutor = shutdown;
+      return this;
+    }
+
+    public Builder setShutdownCallbackExecutor(boolean shutdown)
+    {
+      _shutdownCallbackExecutor = shutdown;
+      return this;
+    }
+
+    public Builder setFilterChain(FilterChain filterChain)
+    {
+      _filters = filterChain;
+      return this;
+    }
+
+    public Builder setCompressionExecutor(Executor executor)
+    {
+      _compressionExecutor = executor;
+      return this;
+    }
+
+    public Builder setJmxManager(AbstractJmxManager jmxManager)
+    {
+      _jmxManager = jmxManager;
+      return this;
+    }
+
+    public Builder setRequestCompressionThresholdDefault(int thresholdDefault)
+    {
+      _requestCompressionThresholdDefault = thresholdDefault;
+      return this;
+    }
+
+    public Builder setRequestCompressionConfigs(Map<String, CompressionConfig> configs)
+    {
+      _requestCompressionConfigs = configs;
+      return this;
+    }
+
+    public Builder setResponseCompressionConfigs(Map<String, CompressionConfig> configs)
+    {
+      _responseCompressionConfigs = configs;
+      return this;
+    }
+
+    public Builder setTcpNoDelay(boolean tcpNoDelay)
+    {
+      _tcpNoDelay = tcpNoDelay;
+      return this;
+    }
+
+    public HttpClientFactory build()
+    {
+      NioEventLoopGroup eventLoopGroup = _eventLoopGroup != null ? _eventLoopGroup
+          : new NioEventLoopGroup(0 /* use default settings */, new NamedThreadFactory("R2 Nio Event Loop"));
+      ScheduledExecutorService scheduledExecutorService = _executor != null ? _executor
+          : Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("R2 Netty Scheduler"));
+
+      return new HttpClientFactory(_filters, eventLoopGroup, _shutdownFactory, scheduledExecutorService,
+          _shutdownExecutor, _callbackExecutorGroup, _shutdownCallbackExecutor, _jmxManager,
+          _requestCompressionThresholdDefault, _requestCompressionConfigs, _responseCompressionConfigs, _tcpNoDelay,
+          _compressionExecutor);
+    }
   }
 
   @Override
@@ -349,7 +527,7 @@ public class HttpClientFactory implements TransportClientFactory
     return getClient(properties, sslContext, sslParameters);
   }
 
-  HttpNettyClient getRawClient(Map<String, String> properties)
+  TransportClient getRawClient(Map<String, String> properties)
   {
     return getRawClient(properties, null, null);
   }
@@ -374,11 +552,29 @@ public class HttpClientFactory implements TransportClientFactory
     return valueClass.cast(value);
   }
 
-  /* package private */ CompressionConfig getRequestCompressionConfig(String httpServiceName, EncodingType requestContentEncoding)
+  /* package private */ CompressionConfig getRestRequestCompressionConfig(String httpServiceName, EncodingType requestContentEncoding)
   {
     if (_requestCompressionConfigs.containsKey(httpServiceName))
     {
       if (requestContentEncoding == EncodingType.IDENTITY)
+      {
+        // This will likely happen when the service doesn't allow any request content encodings for compression,
+        // but the client specified a compression config for the service.
+        // The client probably has a misunderstanding (thinks the service supports request compression when it actually does not).
+        // Note that it is okay to pass in any compression config to ClientCompressionFilter when there isn't an available algorithm
+        // because ClientCompressionFilter will not compress requests when encoding type is IDENTITY.
+        LOG.warn("No request compression algorithm available but compression config specified for service {}", httpServiceName);
+      }
+      return _requestCompressionConfigs.get(httpServiceName);
+    }
+    return _defaultRequestCompressionConfig;
+  }
+
+  /* package private */ CompressionConfig getStreamRequestCompressionConfig(String httpServiceName,  StreamEncodingType requestContentEncoding)
+  {
+    if (_requestCompressionConfigs.containsKey(httpServiceName))
+    {
+      if (requestContentEncoding == StreamEncodingType.IDENTITY)
       {
         // This will likely happen when the service doesn't allow any request content encodings for compression,
         // but the client specified a compression config for the service.
@@ -426,29 +622,46 @@ public class HttpClientFactory implements TransportClientFactory
       httpResponseCompressionOperations.add(ClientCompressionHelper.COMPRESS_ALL_RESPONSES_INDICATOR);
     }
 
-    FilterChain filters;
-    String httpServiceName = (String) properties.get(HTTP_SERVICE_NAME);
-    EncodingType requestContentEncoding = getRequestContentEncoding(httpRequestServerSupportedEncodings);
-    if (_useClientCompression && (requestContentEncoding != EncodingType.IDENTITY || !httpResponseCompressionOperations.isEmpty()))
+    FilterChain filters = _filters;
+
+    if (_useClientCompression)
     {
       List<String> responseEncodings = null;
       if (properties.containsKey(HTTP_RESPONSE_CONTENT_ENCODINGS))
       {
         responseEncodings = ConfigValueExtractor.buildList(properties.remove(HTTP_RESPONSE_CONTENT_ENCODINGS), LIST_SEPARATOR);
       }
-      filters = _filters.addLastRest(new ClientCompressionFilter(requestContentEncoding,
-          getRequestCompressionConfig(httpServiceName, requestContentEncoding),
-          buildAcceptEncodingSchemas(responseEncodings),
-          _responseCompressionConfigs.get(httpServiceName),
-          httpResponseCompressionOperations));
-    }
-    else
-    {
-      filters = _filters;
+
+      String httpServiceName = (String) properties.get(HTTP_SERVICE_NAME);
+      EncodingType restRequestContentEncoding = getRestRequestContentEncoding(httpRequestServerSupportedEncodings);
+      StreamEncodingType streamRequestContentEncoding =
+          getStreamRequestContentEncoding(httpRequestServerSupportedEncodings);
+
+      if (restRequestContentEncoding != EncodingType.IDENTITY || !httpResponseCompressionOperations.isEmpty())
+      {
+        filters = filters.addLastRest(new ClientCompressionFilter(restRequestContentEncoding,
+            getRestRequestCompressionConfig(httpServiceName, restRequestContentEncoding),
+            buildRestAcceptEncodingSchemaNames(responseEncodings),
+            _responseCompressionConfigs.get(httpServiceName),
+            httpResponseCompressionOperations));
+      }
+
+      if (streamRequestContentEncoding != StreamEncodingType.IDENTITY || !httpResponseCompressionOperations.isEmpty())
+      {
+        CompressionConfig compressionConfig = getStreamRequestCompressionConfig(httpServiceName, streamRequestContentEncoding);
+        filters = filters.addLast(new ClientStreamCompressionFilter(streamRequestContentEncoding,
+            compressionConfig,
+            buildStreamAcceptEncodingSchemas(responseEncodings),
+            _responseCompressionConfigs.get(httpServiceName),
+            httpResponseCompressionOperations,
+            _compressionExecutor));
+      }
     }
 
     Integer queryPostThreshold = chooseNewOverDefault(getIntValue(properties, HTTP_QUERY_POST_THRESHOLD), Integer.MAX_VALUE);
-    filters = filters.addLastRest(new ClientQueryTunnelFilter(queryPostThreshold));
+    ClientQueryTunnelFilter clientQueryTunnelFilter = new ClientQueryTunnelFilter(queryPostThreshold);
+    filters = filters.addLastRest(clientQueryTunnelFilter);
+    filters = filters.addLast(clientQueryTunnelFilter);
 
     client = new FilterChainClient(client, filters);
     client = new FactoryClient(client);
@@ -470,7 +683,26 @@ public class HttpClientFactory implements TransportClientFactory
    * @param serverSupportedEncodings list of compression encodings the server supports.
    * @return the encoding that should be used to compress requests.
    */
-  private static EncodingType getRequestContentEncoding(List<String> serverSupportedEncodings)
+  private static StreamEncodingType getStreamRequestContentEncoding(List<String> serverSupportedEncodings)
+  {
+    for (String encoding: serverSupportedEncodings)
+    {
+      if (StreamEncodingType.isSupported(encoding))
+      {
+        return StreamEncodingType.get(encoding);
+      }
+    }
+    return StreamEncodingType.IDENTITY;
+  }
+
+  /**
+   * Chooses the first encoding in the given list of supported encodings that the client can compress with.
+   * This assumes that the service listed the encodings in order of preference.
+   *
+   * @param serverSupportedEncodings list of compression encodings the server supports.
+   * @return the encoding name that should be used to compress requests.
+   */
+  private static EncodingType getRestRequestContentEncoding(List<String> serverSupportedEncodings)
   {
     for (String encoding: serverSupportedEncodings)
     {
@@ -488,7 +720,27 @@ public class HttpClientFactory implements TransportClientFactory
    * @param encodings list of encodings in order of preference
    * @return the compression schemas that the client will support for response compression
    */
-  private EncodingType[] buildAcceptEncodingSchemas(List<String> encodings)
+  private StreamEncodingType[] buildStreamAcceptEncodingSchemas(List<String> encodings)
+  {
+    if (encodings != null)
+    {
+      List<StreamEncodingType> encodingTypes = new ArrayList<StreamEncodingType>();
+      for (String encoding : encodings)
+      {
+        if (StreamEncodingType.isSupported(encoding))
+        {
+          encodingTypes.add(StreamEncodingType.get(encoding));
+        }
+      }
+      return encodingTypes.toArray(new StreamEncodingType[encodingTypes.size()]);
+    }
+    return DEFAULT_STREAM_RESPONSE_CONTENT_ENCODINGS;
+  }
+
+  /**
+   * @return the compression schemas that the client will support for response compression
+   */
+  private EncodingType[] buildRestAcceptEncodingSchemaNames(List<String> encodings)
   {
     if (encodings != null)
     {
@@ -522,7 +774,32 @@ public class HttpClientFactory implements TransportClientFactory
     {
       // These properties can be safely cast to String before converting them to Integers as we expect Integer values
       // for all these properties.
-      return Integer.parseInt((String)properties.get(propertyKey));
+      return Integer.parseInt((String) properties.get(propertyKey));
+    }
+    else
+    {
+      return null;
+    }
+  }
+
+  /**
+   * helper method to get value from properties as well as to print log warning if the key is old
+   * @param properties
+   * @param propertyKey
+   * @return null if property key can't be found, integer otherwise
+   */
+  private Long getLongValue(Map<String, ? extends Object> properties, String propertyKey)
+  {
+    if (properties == null)
+    {
+      LOG.warn("passed a null raw client properties");
+      return null;
+    }
+    if (properties.containsKey(propertyKey))
+    {
+      // These properties can be safely cast to String before converting them to Integers as we expect Integer values
+      // for all these properties.
+      return Long.parseLong((String)properties.get(propertyKey));
     }
     else
     {
@@ -556,20 +833,20 @@ public class HttpClientFactory implements TransportClientFactory
   /**
    * Testing aid.
    */
-  HttpNettyClient getRawClient(Map<String, ? extends Object> properties,
+  TransportClient getRawClient(Map<String, ? extends Object> properties,
                                SSLContext sslContext,
                                SSLParameters sslParameters)
   {
     Integer poolSize = chooseNewOverDefault(getIntValue(properties, HTTP_POOL_SIZE), DEFAULT_POOL_SIZE);
     Integer idleTimeout = chooseNewOverDefault(getIntValue(properties, HTTP_IDLE_TIMEOUT), DEFAULT_IDLE_TIMEOUT);
     Integer shutdownTimeout = chooseNewOverDefault(getIntValue(properties, HTTP_SHUTDOWN_TIMEOUT), DEFAULT_SHUTDOWN_TIMEOUT);
-    Integer maxResponseSize = chooseNewOverDefault(getIntValue(properties, HTTP_MAX_RESPONSE_SIZE), DEFAULT_MAX_RESPONSE_SIZE);
+    long maxResponseSize = chooseNewOverDefault(getLongValue(properties, HTTP_MAX_RESPONSE_SIZE), DEFAULT_MAX_RESPONSE_SIZE);
     Integer requestTimeout = chooseNewOverDefault(getIntValue(properties, HTTP_REQUEST_TIMEOUT), DEFAULT_REQUEST_TIMEOUT);
     Integer poolWaiterSize = chooseNewOverDefault(getIntValue(properties, HTTP_POOL_WAITER_SIZE), DEFAULT_POOL_WAITER_SIZE);
     String clientName = null;
     if (properties != null && properties.containsKey(HTTP_SERVICE_NAME))
     {
-      clientName = (String)properties.get(HTTP_SERVICE_NAME) + "Client";
+      clientName = properties.get(HTTP_SERVICE_NAME) + "Client";
     }
     clientName = chooseNewOverDefault(clientName, DEFAULT_CLIENT_NAME);
     AsyncPoolImpl.Strategy strategy = chooseNewOverDefault(getStrategy(properties), DEFAULT_POOL_STRATEGY);
@@ -578,24 +855,46 @@ public class HttpClientFactory implements TransportClientFactory
     Integer maxChunkSize = chooseNewOverDefault(getIntValue(properties, HTTP_MAX_CHUNK_SIZE), DEFAULT_MAX_CHUNK_SIZE);
     Integer maxConcurrentConnections = chooseNewOverDefault(getIntValue(properties, HTTP_MAX_CONCURRENT_CONNECTIONS), Integer.MAX_VALUE);
 
-    return new HttpNettyClient(_eventLoopGroup,
-                               _executor,
-                               poolSize,
-                               requestTimeout,
-                               idleTimeout,
-                               shutdownTimeout,
-                               maxResponseSize,
-                               sslContext,
-                               sslParameters,
-                               _callbackExecutorGroup,
-                               poolWaiterSize,
-                               clientName,
-                               _jmxManager,
-                               strategy,
-                               poolMinSize,
-                               maxHeaderSize,
-                               maxChunkSize,
-                               maxConcurrentConnections);
+    HttpNettyStreamClient streamClient = new HttpNettyStreamClient(_eventLoopGroup,
+      _executor,
+      poolSize,
+      requestTimeout,
+      idleTimeout,
+      shutdownTimeout,
+      maxResponseSize,
+      sslContext,
+      sslParameters,
+      _callbackExecutorGroup,
+      poolWaiterSize,
+      clientName + "-Stream",  // to distinguish channel pool metrics from rest client during transition period
+      _jmxManager,
+      strategy,
+      poolMinSize,
+      maxHeaderSize,
+      maxChunkSize,
+      maxConcurrentConnections,
+      _tcpNoDelay);
+
+    HttpNettyClient legacyClient = new HttpNettyClient(_eventLoopGroup,
+        _executor,
+        poolSize,
+        requestTimeout,
+        idleTimeout,
+        shutdownTimeout,
+        (int)maxResponseSize,
+        sslContext,
+        sslParameters,
+        _callbackExecutorGroup,
+        poolWaiterSize,
+        clientName,
+        _jmxManager,
+        strategy,
+        poolMinSize,
+        maxHeaderSize,
+        maxChunkSize,
+        maxConcurrentConnections);
+
+    return new MixedClient(legacyClient, streamClient);
   }
 
   /**
@@ -756,11 +1055,20 @@ public class HttpClientFactory implements TransportClientFactory
     }
 
     @Override
-    public void restRequest(RestRequest request, RequestContext requestContext,
-                            Map<String, String> wireAttrs,
-                            TransportCallback<RestResponse> callback)
+    public  void restRequest(RestRequest request,
+                              RequestContext requestContext,
+                              Map<String, String> wireAttrs,
+                              TransportCallback<RestResponse> callback)
     {
       _client.restRequest(request, requestContext, wireAttrs, callback);
+    }
+
+    @Override
+    public void streamRequest(StreamRequest request, RequestContext requestContext,
+                            Map<String, String> wireAttrs,
+                            TransportCallback<StreamResponse> callback)
+    {
+      _client.streamRequest(request, requestContext, wireAttrs, callback);
     }
 
     @Override
@@ -801,6 +1109,67 @@ public class HttpClientFactory implements TransportClientFactory
       {
         callback.onError(new IllegalStateException("shutdown has already been requested."));
       }
+    }
+  }
+
+  /**
+   * This TransportClient handles restRequest using legacy client that exercises old code path
+   * and handles streamRequest using new stream client.
+   *
+   * When using streaming or running in rest-over-stream configuration, only the new stream client is used.
+   * When rest-over-stream configuration is false, the legacy client is used to handle restRequest.
+   */
+  static class MixedClient implements TransportClient
+  {
+    private final TransportClient _legacyClient;
+    private final TransportClient _streamClient;
+
+    MixedClient(HttpNettyClient legacyClient, HttpNettyStreamClient streamClient)
+    {
+      _legacyClient = legacyClient;
+      _streamClient = streamClient;
+    }
+
+    @Override
+    public void restRequest(RestRequest request,
+                            RequestContext requestContext,
+                            Map<String, String> wireAttrs,
+                            TransportCallback<RestResponse> callback)
+    {
+      _legacyClient.restRequest(request, requestContext, wireAttrs, callback);
+    }
+
+    @Override
+    public void streamRequest(StreamRequest request,
+                       RequestContext requestContext,
+                       Map<String, String> wireAttrs,
+                       TransportCallback<StreamResponse> callback)
+    {
+      _streamClient.streamRequest(request, requestContext, wireAttrs, callback);
+    }
+
+    @Override
+    public void shutdown(final Callback<None> callback)
+    {
+      Callback<None> multiCallback = new MultiCallback(callback, 2);
+      _legacyClient.shutdown(multiCallback);
+      _streamClient.shutdown(multiCallback);
+    }
+
+
+    long getRequestTimeout()
+    {
+      return ((HttpNettyStreamClient)_streamClient).getRequestTimeout();
+    }
+
+    long getShutdownTimeout()
+    {
+      return ((HttpNettyStreamClient)_streamClient).getShutdownTimeout();
+    }
+
+    long getMaxResponseSize()
+    {
+      return ((HttpNettyStreamClient)_streamClient).getMaxResponseSize();
     }
   }
 }

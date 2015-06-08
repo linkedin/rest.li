@@ -25,6 +25,8 @@ import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
+import com.linkedin.r2.message.stream.StreamRequest;
+import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 
@@ -250,6 +252,18 @@ public class D2ClientBuilder
     public void restRequest(RestRequest request, RequestContext requestContext, Callback<RestResponse> callback)
     {
       _d2Client.restRequest(request, requestContext, callback);
+    }
+
+    @Override
+    public void streamRequest(StreamRequest request, Callback<StreamResponse> callback)
+    {
+      _d2Client.streamRequest(request, callback);
+    }
+
+    @Override
+    public void streamRequest(StreamRequest request, RequestContext requestContext, Callback<StreamResponse> callback)
+    {
+      _d2Client.streamRequest(request, requestContext, callback);
     }
 
     @Override

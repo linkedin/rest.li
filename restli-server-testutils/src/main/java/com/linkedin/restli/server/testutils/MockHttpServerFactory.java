@@ -24,6 +24,7 @@ import com.linkedin.r2.filter.FilterChain;
 import com.linkedin.r2.filter.FilterChains;
 import com.linkedin.r2.filter.logging.SimpleLoggingFilter;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
+import com.linkedin.r2.transport.http.server.HttpJettyServer;
 import com.linkedin.r2.transport.http.server.HttpServer;
 import com.linkedin.r2.transport.http.server.HttpServerFactory;
 import com.linkedin.restli.docgen.DefaultDocumentationRequestHandler;
@@ -33,6 +34,7 @@ import com.linkedin.restli.server.RestLiServer;
 import com.linkedin.restli.server.mock.InjectMockResourceFactory;
 import com.linkedin.restli.server.mock.SimpleBeanProvider;
 import com.linkedin.restli.server.resources.ResourceFactory;
+
 import java.io.IOException;
 import java.net.URI;
 import java.util.HashSet;
@@ -186,7 +188,8 @@ public class MockHttpServerFactory
                                                                HttpServerFactory.DEFAULT_CONTEXT_PATH,
                                                                NUM_THREADS,
                                                                dispatcher,
-                                                               enableAsync,
+                                                               enableAsync ? HttpJettyServer.ServletType.ASYNC_EVENT
+                                                                   : HttpJettyServer.ServletType.RAP,
                                                                enableAsync ? ASYNC_TIMEOUT : -1);
     return new HttpServer()
     {

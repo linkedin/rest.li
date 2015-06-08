@@ -42,10 +42,13 @@ public interface RestFilter
    *                   {@link com.linkedin.r2.filter.NextFilter#onRequest} to continue the filter chain.
    */
 
-  void onRestRequest(RestRequest req,
+  default void onRestRequest(RestRequest req,
                      RequestContext requestContext,
                      Map<String, String> wireAttrs,
-                     NextFilter<RestRequest, RestResponse> nextFilter);
+                     NextFilter<RestRequest, RestResponse> nextFilter)
+  {
+    nextFilter.onRequest(req, requestContext, wireAttrs);
+  }
 
   /**
    * Method to be invoked for each {@link RestResponse} message.
@@ -56,10 +59,13 @@ public interface RestFilter
    * @param nextFilter the next filter in the chain.  Concrete implementations should invoke
    *                   {@link NextFilter#onResponse} to continue the filter chain.
    */
-  void onRestResponse(RestResponse res,
+  default void onRestResponse(RestResponse res,
                       RequestContext requestContext,
                       Map<String, String> wireAttrs,
-                      NextFilter<RestRequest, RestResponse> nextFilter);
+                      NextFilter<RestRequest, RestResponse> nextFilter)
+  {
+    nextFilter.onResponse(res, requestContext, wireAttrs);
+  }
 
   /**
    * Method to be invoked when an error is encountered.
@@ -70,8 +76,11 @@ public interface RestFilter
    * @param nextFilter the next filter in the chain.  Concrete implementations should invoke
    *                   {@link NextFilter#onError} to continue the filter chain.
    */
-  void onRestError(Throwable ex,
+  default void onRestError(Throwable ex,
                    RequestContext requestContext,
                    Map<String, String> wireAttrs,
-                   NextFilter<RestRequest, RestResponse> nextFilter);
+                   NextFilter<RestRequest, RestResponse> nextFilter)
+  {
+    nextFilter.onError(ex, requestContext, wireAttrs);
+  }
 }

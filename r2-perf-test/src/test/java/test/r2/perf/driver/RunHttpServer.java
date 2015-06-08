@@ -38,8 +38,16 @@ public class RunHttpServer
     final int port = PerfConfig.getHttpPort();
     final URI relativeUri = PerfConfig.getRelativeUri();
     final int msgSize = PerfConfig.getServerMessageSize();
+    final boolean pureStreaming = PerfConfig.isServerPureStreaming();
 
-    SERVER = new HttpPerfServerFactory().create(port, relativeUri, msgSize);
+    if (pureStreaming)
+    {
+      SERVER = new HttpPerfServerFactory().createPureStreamServer(port, relativeUri, msgSize);
+    }
+    else
+    {
+      SERVER = new HttpPerfServerFactory().create(port, relativeUri, msgSize);
+    }
     SERVER.start();
   }
 

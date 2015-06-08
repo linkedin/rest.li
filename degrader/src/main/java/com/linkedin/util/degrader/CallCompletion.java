@@ -25,6 +25,12 @@ package com.linkedin.util.degrader;
 public interface CallCompletion
 {
   /**
+   * record the time but do not end the call. if record is called before endCall, the recorded time would be used as
+   * end time of the call
+   */
+  void record();
+
+  /**
    * Used to indicate that a call completed successfully.
    */
   void endCall();

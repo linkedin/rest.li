@@ -13,12 +13,10 @@ import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
 import com.linkedin.d2.discovery.event.PropertyEventThread;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.util.clock.SettableClock;
-import com.linkedin.util.clock.SystemClock;
 
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

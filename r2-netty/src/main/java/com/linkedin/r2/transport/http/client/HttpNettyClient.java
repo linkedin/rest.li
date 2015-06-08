@@ -27,6 +27,8 @@ import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
+import com.linkedin.r2.message.stream.StreamRequest;
+import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.transport.common.MessageType;
 import com.linkedin.r2.transport.common.WireAttributeHelper;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
@@ -151,8 +153,8 @@ import org.slf4j.LoggerFactory;
                          int maxConcurrentConnections)
   {
     Bootstrap bootstrap = new Bootstrap().group(eventLoopGroup)
-                                .channel(NioSocketChannel.class)
-                                .handler(new HttpClientPipelineInitializer(sslContext, sslParameters));
+        .channel(NioSocketChannel.class)
+        .handler(new HttpClientPipelineInitializer(sslContext, sslParameters));
 
     _channelPoolManager = new ChannelPoolManager(
         new ChannelPoolFactoryImpl(bootstrap,
@@ -210,6 +212,16 @@ import org.slf4j.LoggerFactory;
   }
 
   @Override
+  public void streamRequest(StreamRequest request,
+                            RequestContext requestContext,
+                            Map<String, String> wireAttrs,
+                            TransportCallback<StreamResponse> callback)
+  {
+    // this method will not be exercised as long as the TransportClient is created via HttpClientFactory
+    throw new UnsupportedOperationException("stream is not supported.");
+  }
+
+  @Override
   public void shutdown(final Callback<None> callback)
   {
     LOG.info("Shutdown requested");
@@ -219,32 +231,32 @@ import org.slf4j.LoggerFactory;
       final long deadline = System.currentTimeMillis() + _shutdownTimeout;
       TimeoutCallback<None> closeChannels =
           new TimeoutCallback<None>(_scheduler,
-                                    _shutdownTimeout,
-                                    TimeUnit.MILLISECONDS,
-                                    new Callback<None>()
-                                    {
-        private void finishShutdown()
-        {
-          _state.set(State.REQUESTS_STOPPING);
-          // Timeout any waiters which haven't received a Channel yet
-          for (Callback<Channel> callback : _channelPoolManager.cancelWaiters())
-          {
-            callback.onError(new TimeoutException("Operation did not complete before shutdown"));
-          }
+              _shutdownTimeout,
+              TimeUnit.MILLISECONDS,
+              new Callback<None>()
+              {
+                private void finishShutdown()
+                {
+                  _state.set(State.REQUESTS_STOPPING);
+                  // Timeout any waiters which haven't received a Channel yet
+                  for (Callback<Channel> callback : _channelPoolManager.cancelWaiters())
+                  {
+                    callback.onError(new TimeoutException("Operation did not complete before shutdown"));
+                  }
 
-          // Timeout any requests still pending response
-          for (Channel c : _allChannels)
-          {
-            TransportCallback<RestResponse> callback = c.attr(RAPResponseHandler.CALLBACK_ATTR_KEY).getAndRemove();
-            if (callback != null)
-            {
-              errorResponse(callback, new TimeoutException("Operation did not complete before shutdown"));
-            }
-          }
+                  // Timeout any requests still pending response
+                  for (Channel c : _allChannels)
+                  {
+                    TransportCallback<RestResponse> callback = c.attr(RAPResponseHandler.CALLBACK_ATTR_KEY).getAndRemove();
+                    if (callback != null)
+                    {
+                      errorResponse(callback, new TimeoutException("Operation did not complete before shutdown"));
+                    }
+                  }
 
-          // Close all active and idle Channels
-          final TimeoutRunnable afterClose = new TimeoutRunnable(
-                  _scheduler, deadline - System.currentTimeMillis(), TimeUnit.MILLISECONDS, new Runnable()
+                  // Close all active and idle Channels
+                  final TimeoutRunnable afterClose = new TimeoutRunnable(
+                      _scheduler, deadline - System.currentTimeMillis(), TimeUnit.MILLISECONDS, new Runnable()
                   {
                     @Override
                     public void run()
@@ -254,34 +266,34 @@ import org.slf4j.LoggerFactory;
                       callback.onSuccess(None.none());
                     }
                   }, "Timed out waiting for channels to close, continuing shutdown");
-          _allChannels.close().addListener(new ChannelGroupFutureListener()
-          {
-            @Override
-            public void operationComplete(ChannelGroupFuture channelGroupFuture) throws Exception
-            {
-              if (!channelGroupFuture.isSuccess())
-              {
-                LOG.warn("Failed to close some connections, ignoring");
-              }
-              afterClose.run();
-            }
-          });
-        }
+                  _allChannels.close().addListener(new ChannelGroupFutureListener()
+                  {
+                    @Override
+                    public void operationComplete(ChannelGroupFuture channelGroupFuture) throws Exception
+                    {
+                      if (!channelGroupFuture.isSuccess())
+                      {
+                        LOG.warn("Failed to close some connections, ignoring");
+                      }
+                      afterClose.run();
+                    }
+                  });
+                }
 
-        @Override
-        public void onSuccess(None none)
-        {
-          LOG.info("All connection pools shut down, closing all channels");
-          finishShutdown();
-        }
+                @Override
+                public void onSuccess(None none)
+                {
+                  LOG.info("All connection pools shut down, closing all channels");
+                  finishShutdown();
+                }
 
-        @Override
-        public void onError(Throwable e)
-        {
-          LOG.warn("Error shutting down HTTP connection pools, ignoring and continuing shutdown", e);
-          finishShutdown();
-        }
-      }, "Connection pool shutdown timeout exceeded (" + _shutdownTimeout + "ms)");
+                @Override
+                public void onError(Throwable e)
+                {
+                  LOG.warn("Error shutting down HTTP connection pools, ignoring and continuing shutdown", e);
+                  finishShutdown();
+                }
+              }, "Connection pool shutdown timeout exceeded (" + _shutdownTimeout + "ms)");
       _channelPoolManager.shutdown(closeChannels);
       _jmxManager.onProviderShutdown(_channelPoolManager);
     }
@@ -301,10 +313,10 @@ import org.slf4j.LoggerFactory;
     // 2. The user callback is never invoked more than once
     TimeoutTransportCallback<RestResponse> timeoutCallback =
         new TimeoutTransportCallback<RestResponse>(_scheduler,
-                                                   _requestTimeout,
-                                                   TimeUnit.MILLISECONDS,
-                                                   executionCallback,
-                                                   _requestTimeoutMessage);
+            _requestTimeout,
+            TimeUnit.MILLISECONDS,
+            executionCallback,
+            _requestTimeoutMessage);
     writeRequest(request, requestContext, wireAttrs, timeoutCallback);
   }
 
@@ -392,7 +404,7 @@ import org.slf4j.LoggerFactory;
           // attachment.  The TimeoutTransportCallback ensures the user callback in never
           // invoked more than once, so it is safe to invoke it unconditionally.
           errorResponse(callback,
-                        new TimeoutException("Operation did not complete before shutdown"));
+              new TimeoutException("Operation did not complete before shutdown"));
           return;
         }
 
@@ -466,15 +478,15 @@ import org.slf4j.LoggerFactory;
         if (sslParameters.getCipherSuites() != null)
         {
           checkContained(supportedSSLParameters.getCipherSuites(),
-                         sslParameters.getCipherSuites(),
-                         "cipher suite");
+              sslParameters.getCipherSuites(),
+              "cipher suite");
         }
 
         if (sslParameters.getProtocols() != null)
         {
           checkContained(supportedSSLParameters.getProtocols(),
-                         sslParameters.getProtocols(),
-                         "protocol");
+              sslParameters.getProtocols(),
+              "protocol");
         }
       }
       _sslContext = sslContext;
@@ -502,7 +514,7 @@ import org.slf4j.LoggerFactory;
       if (!changed)
       {
         throw new IllegalArgumentException("None of the requested " + valueName
-                                           + "s: " + containedSet + " are found in SSLContext");
+            + "s: " + containedSet + " are found in SSLContext");
       }
 
       if (!containedSet.isEmpty())
@@ -557,21 +569,22 @@ import org.slf4j.LoggerFactory;
     public AsyncPool<Channel> getPool(SocketAddress address)
     {
       return new AsyncPoolImpl<Channel>(address.toString() + " HTTP connection pool",
-                                        new ChannelPoolLifecycle(address,
-                                                                 _bootstrap,
-                                                                 _allChannels),
-                                        _maxPoolSize,
-                                        _idleTimeout,
-                                        _scheduler,
-                                        _maxPoolWaiterSize,
-                                        _strategy,
-                                        _minPoolSize,
-                                        new ExponentialBackOffRateLimiter(0,
-                                                            _requestTimeout / 2,
-                                                            Math.max(10, _requestTimeout / 32),
-                                                            _scheduler,
-                                                            _maxConcurrentConnections)
-                                        );
+          new ChannelPoolLifecycle(address,
+              _bootstrap,
+              _allChannels,
+              false),
+          _maxPoolSize,
+          _idleTimeout,
+          _scheduler,
+          _maxPoolWaiterSize,
+          _strategy,
+          _minPoolSize,
+          new ExponentialBackOffRateLimiter(0,
+              _requestTimeout / 2,
+              Math.max(10, _requestTimeout / 32),
+              _scheduler,
+              _maxConcurrentConnections)
+      );
     }
   }
 

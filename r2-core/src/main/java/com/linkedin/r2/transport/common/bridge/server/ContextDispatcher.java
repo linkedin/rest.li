@@ -19,16 +19,23 @@ package com.linkedin.r2.transport.common.bridge.server;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.r2.message.RequestContext;
+import com.linkedin.r2.message.Messages;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestStatus;
+import com.linkedin.r2.message.stream.StreamRequest;
+import com.linkedin.r2.message.stream.StreamResponse;
+import com.linkedin.r2.message.stream.entitystream.DrainReader;
 import com.linkedin.r2.transport.common.RestRequestHandler;
+import com.linkedin.r2.transport.common.StreamRequestHandler;
+import com.linkedin.r2.transport.common.StreamRequestHandlerAdapter;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
 import com.linkedin.r2.util.URIUtil;
 
 import java.net.URI;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -40,16 +47,27 @@ import java.util.Map;
  */
 public class ContextDispatcher implements TransportDispatcher
 {
-  private static final RestRequestHandler DEFAULT_REST_HANDLER = new RestRequestHandler() {
+  private static final StreamRequestHandler DEFAULT_STREAM_HANDLER = new StreamRequestHandler() {
     @Override
-    public void handleRequest(RestRequest req, RequestContext requestContext, Callback<RestResponse> callback)
+    public void handleRequest(StreamRequest req, RequestContext requestContext, Callback<StreamResponse> callback)
     {
       final RestResponse response =
               RestStatus.responseForStatus(RestStatus.NOT_FOUND, "No resource for URI: " + req.getURI());
-      callback.onSuccess(response);
+      callback.onSuccess(Messages.toStreamResponse(response));
+      req.getEntityStream().setReader(new DrainReader());
     }
   };
 
+  private static final RestRequestHandler DEFAULT_REST_HANDLER = new RestRequestHandler()
+  {
+    @Override
+    public void handleRequest(RestRequest request, RequestContext requestContext, Callback<RestResponse> callback)
+    {
+      callback.onSuccess(RestStatus.responseForStatus(RestStatus.NOT_FOUND, "No resource for URI: " + request.getURI()));
+    }
+  };
+
+  private final Map<String, StreamRequestHandler> _streamHandlers;
   private final Map<String, RestRequestHandler> _restHandlers;
 
   /**
@@ -61,25 +79,46 @@ public class ContextDispatcher implements TransportDispatcher
    */
   public ContextDispatcher(Map<String, RestRequestHandler> restDispatcher)
   {
-    _restHandlers = restDispatcher;
+    _streamHandlers = new HashMap<String, StreamRequestHandler>();
+    for (Map.Entry<String, RestRequestHandler> entry : restDispatcher.entrySet())
+    {
+      _streamHandlers.put(entry.getKey(), new StreamRequestHandlerAdapter(entry.getValue()));
+    }
+
+    _restHandlers = new HashMap<String, RestRequestHandler>(restDispatcher);
   }
 
   @Override
   public void handleRestRequest(RestRequest req, Map<String, String> wireAttrs,
-                                RequestContext requestContext,
-                                TransportCallback<RestResponse> callback)
+                                  RequestContext requestContext, TransportCallback<RestResponse> callback)
   {
-    final RestRequestHandler handler = getHandler(req.getURI(), _restHandlers,
-            DEFAULT_REST_HANDLER);
-
+    final RestRequestHandler handler = getHandler(req.getURI(), _restHandlers, DEFAULT_REST_HANDLER);
     try
     {
       handler.handleRequest(req, requestContext, new TransportCallbackAdapter<RestResponse>(callback));
     }
     catch (Exception e)
     {
+      callback.onResponse(TransportResponseImpl.<RestResponse>error(RestException.forError(RestStatus.INTERNAL_SERVER_ERROR, e)));
+    }
+  }
+
+  @Override
+  public void handleStreamRequest(StreamRequest req, Map<String, String> wireAttrs,
+                                RequestContext requestContext,
+                                TransportCallback<StreamResponse> callback)
+  {
+    final StreamRequestHandler handler = getHandler(req.getURI(), _streamHandlers,
+        DEFAULT_STREAM_HANDLER);
+
+    try
+    {
+      handler.handleRequest(req, requestContext, new TransportCallbackAdapter<StreamResponse>(callback));
+    }
+    catch (Exception e)
+    {
       final Exception ex = RestException.forError(RestStatus.INTERNAL_SERVER_ERROR, e);
-      callback.onResponse(TransportResponseImpl.<RestResponse>error(ex));
+      callback.onResponse(TransportResponseImpl.<StreamResponse>error(ex));
     }
   }
 

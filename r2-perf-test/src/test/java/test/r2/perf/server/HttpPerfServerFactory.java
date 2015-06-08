@@ -28,8 +28,8 @@ import com.linkedin.r2.transport.http.server.HttpServerFactory;
 public class HttpPerfServerFactory extends AbstractPerfServerFactory
 {
   @Override
-  protected Server createServer(int port, TransportDispatcher dispatcher)
+  protected Server createServer(int port, TransportDispatcher dispatcher, boolean restOverStream)
   {
-    return new HttpServerFactory().createServer(port, dispatcher);
+    return new HttpServerFactory().createServer(port, dispatcher, restOverStream);
   }
 }

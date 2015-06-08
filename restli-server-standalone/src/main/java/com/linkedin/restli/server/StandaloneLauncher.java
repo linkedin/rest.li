@@ -25,6 +25,7 @@ import com.linkedin.parseq.Engine;
 import com.linkedin.parseq.EngineBuilder;
 import com.linkedin.r2.filter.FilterChains;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
+import com.linkedin.r2.transport.http.server.HttpJettyServer;
 import com.linkedin.r2.transport.http.server.HttpServer;
 import com.linkedin.r2.transport.http.server.HttpServerFactory;
 import com.linkedin.restli.docgen.DefaultDocumentationRequestHandler;
@@ -59,7 +60,7 @@ public class StandaloneLauncher
          HttpServerFactory.DEFAULT_CONTEXT_PATH,
          HttpServerFactory.DEFAULT_THREAD_POOL_SIZE,
          getDefaultParseqThreadPoolSize(),
-         HttpServerFactory.DEFAULT_USE_ASYNC_SERVLET_API,
+         HttpServerFactory.DEFAULT_SERVLET_TYPE,
          HttpServerFactory.DEFAULT_ASYNC_TIMEOUT,
          packages);
   }
@@ -83,7 +84,7 @@ public class StandaloneLauncher
           contextPath,
           threadPoolSize,
           parseqThreadPoolSize,
-          HttpServerFactory.DEFAULT_USE_ASYNC_SERVLET_API,
+          HttpServerFactory.DEFAULT_SERVLET_TYPE,
           HttpServerFactory.DEFAULT_ASYNC_TIMEOUT);
   }
 
@@ -91,7 +92,7 @@ public class StandaloneLauncher
                             String contextPath,
                             int threadPoolSize,
                             int parseqThreadPoolSize,
-                            boolean useAsyncserverApi,
+                            HttpJettyServer.ServletType servletType,
                             int asyncTimeout,
                             final String... packages)
   {
@@ -121,7 +122,7 @@ public class StandaloneLauncher
                                                                  _contextPath,
                                                                  _threadPoolSize,
                                                                  dispatcher,
-                                                                 useAsyncserverApi,
+                                                                 servletType,
                                                                  asyncTimeout);
   }
 
@@ -216,7 +217,7 @@ public class StandaloneLauncher
     String contextPath = HttpServerFactory.DEFAULT_CONTEXT_PATH;
     int threadPoolSize = HttpServerFactory.DEFAULT_THREAD_POOL_SIZE;
     int parseqThreadPoolSize = getDefaultParseqThreadPoolSize();
-    boolean useAsyncServletApi = HttpServerFactory.DEFAULT_USE_ASYNC_SERVLET_API;
+    HttpJettyServer.ServletType servletType = HttpServerFactory.DEFAULT_SERVLET_TYPE;
     int asyncTimeout = HttpServerFactory.DEFAULT_ASYNC_TIMEOUT;
 
     for (int i = 0; i < args.length; i++)
@@ -309,11 +310,12 @@ public class StandaloneLauncher
       {
         if (hasValueArg)
         {
-          useAsyncServletApi = Boolean.parseBoolean(args[i + 1]);
+          servletType = Boolean.parseBoolean(args[i + 1]) ? HttpJettyServer.ServletType.ASYNC_EVENT
+              : HttpServerFactory.DEFAULT_SERVLET_TYPE;
         }
         else
         {
-          useAsyncServletApi = true;
+          servletType = HttpJettyServer.ServletType.ASYNC_EVENT;
         }
       }
       else if (args[i].equals("-asyncTimeout"))
@@ -347,7 +349,7 @@ public class StandaloneLauncher
                                   contextPath,
                                   threadPoolSize,
                                   parseqThreadPoolSize,
-                                  useAsyncServletApi,
+                                  servletType,
                                   asyncTimeout,
                                   packages);
   }

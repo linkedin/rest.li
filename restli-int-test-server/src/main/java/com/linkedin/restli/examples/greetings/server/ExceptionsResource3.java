@@ -17,7 +17,6 @@
 package com.linkedin.restli.examples.greetings.server;
 
 
-import com.linkedin.r2.transport.http.common.HttpConstants;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.server.CreateResponse;

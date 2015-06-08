@@ -43,7 +43,7 @@ public class RestFilterTest
     @BeforeMethod
     public void setUp() throws Exception
     {
-        _filter = new BaseRestFilter();
+        _filter = new RestFilter() {};
         _beforeFilter = new RestCountFilter();
         _afterFilter = new RestCountFilter();
         _fc = FilterChains.createRestChain(_beforeFilter, _filter, _afterFilter);

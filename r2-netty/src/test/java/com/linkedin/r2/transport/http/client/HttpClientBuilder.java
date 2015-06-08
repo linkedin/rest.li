@@ -17,7 +17,7 @@
 package com.linkedin.r2.transport.http.client;
 
 import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.util.concurrent.EventExecutorGroup;
+
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.net.ssl.SSLContext;
@@ -25,7 +25,7 @@ import javax.net.ssl.SSLParameters;
 
 
 /**
- * Convenient class for building {@link HttpNettyClient} with reasonable default configs.
+ * Convenient class for building {@link HttpNettyStreamClient} with reasonable default configs.
  *
  * @author Ang Xu
  * @version $Revision: $
@@ -51,6 +51,7 @@ class HttpClientBuilder
   private int _poolWaiterSize = Integer.MAX_VALUE;
   private AsyncPoolImpl.Strategy _strategy = AsyncPoolImpl.Strategy.MRU;
   private AbstractJmxManager _jmxManager = AbstractJmxManager.NULL_JMX_MANAGER;
+  private boolean _tcpNoDelay = true;
 
 
   public HttpClientBuilder(NioEventLoopGroup eventLoopGroup, ScheduledExecutorService scheduler)
@@ -153,9 +154,15 @@ class HttpClientBuilder
     return this;
   }
 
-  public HttpNettyClient build()
+  public HttpClientBuilder setTcpNoDelay(boolean tcpNoDelay)
   {
-    return new HttpNettyClient(_eventLoopGroup,
+    _tcpNoDelay = tcpNoDelay;
+    return this;
+  }
+
+  public HttpNettyStreamClient buildStream()
+  {
+    return new HttpNettyStreamClient(_eventLoopGroup,
                                _scheduler,
                                _maxPoolSize,
                                _requestTimeout,
@@ -172,7 +179,31 @@ class HttpClientBuilder
                                _minPoolSize,
                                _maxHeaderSize,
                                _maxChunkSize,
-                               _maxConcurrentConnections);
+                               _maxConcurrentConnections,
+                               _tcpNoDelay);
+
+  }
+
+  public HttpNettyClient buildRest()
+  {
+    return new HttpNettyClient(_eventLoopGroup,
+        _scheduler,
+        _maxPoolSize,
+        _requestTimeout,
+        _idleTimeout,
+        _shutdownTimeout,
+        _maxResponseSize,
+        _sslContext,
+        _sslParameters,
+        _callbackExecutors,
+        _poolWaiterSize,
+        _name,
+        _jmxManager,
+        _strategy,
+        _minPoolSize,
+        _maxHeaderSize,
+        _maxChunkSize,
+        _maxConcurrentConnections);
 
   }
 

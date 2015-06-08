@@ -60,47 +60,47 @@ public class TestRAPClientCodec
   public Object[][] createRequests()
   {
     return new Object[][]
-      {
-        { // the point is to make sure absolute path "/" will be added
-          // even when the request uri is empty.
-          "/",
-          new RestRequestBuilder(createURI(""))
-                .setMethod("GET")
-                .build()},
         {
-          "/",
-          new RestRequestBuilder(createURI("/"))
-                .setMethod("PUT")
-                .setEntity(ByteString.copyString("entity", CHARSET))
-                .build()
-        },
-        {
-          "/foo?q=1",
-          new RestRequestBuilder(createURI("/foo?q=1"))
-                .setMethod("POST")
-                .setEntity(ByteString.copyString("{\"foo\":\"bar\"}", CHARSET))
-                .setHeader("Content-Type", "application/json")
-                .setHeader("Content-Length", "13")
-                .build()
-        },
-        {
-          "/bar/1",
-          new RestRequestBuilder(createURI("/bar/1"))
-                .setMethod("GET")
-                .addHeaderValue("Header", "1")
-                .addHeaderValue("Header", "2")
-                .addHeaderValue("Header", "3")
-                .build()
-        },
-        {
-          "/baz",
-          new RestRequestBuilder(createURI("/baz"))
-                .setMethod("GET")
-                .addCookie("cookie1=value1; path=/baz")
-                .addCookie("cookie2=value2")
-                .build()
-        },
-      };
+            { // the point is to make sure absolute path "/" will be added
+                // even when the request uri is empty.
+                "/",
+                new RestRequestBuilder(createURI(""))
+                    .setMethod("GET")
+                    .build()},
+            {
+                "/",
+                new RestRequestBuilder(createURI("/"))
+                    .setMethod("PUT")
+                    .setEntity(ByteString.copyString("entity", CHARSET))
+                    .build()
+            },
+            {
+                "/foo?q=1",
+                new RestRequestBuilder(createURI("/foo?q=1"))
+                    .setMethod("POST")
+                    .setEntity(ByteString.copyString("{\"foo\":\"bar\"}", CHARSET))
+                    .setHeader("Content-Type", "application/json")
+                    .setHeader("Content-Length", "13")
+                    .build()
+            },
+            {
+                "/bar/1",
+                new RestRequestBuilder(createURI("/bar/1"))
+                    .setMethod("GET")
+                    .addHeaderValue("Header", "1")
+                    .addHeaderValue("Header", "2")
+                    .addHeaderValue("Header", "3")
+                    .build()
+            },
+            {
+                "/baz",
+                new RestRequestBuilder(createURI("/baz"))
+                    .setMethod("GET")
+                    .addCookie("cookie1=value1; path=/baz")
+                    .addCookie("cookie2=value2")
+                    .build()
+            },
+        };
   }
 
   @Test(dataProvider = "restRequest")
@@ -129,31 +129,31 @@ public class TestRAPClientCodec
   public Object[][] createResponseData()
   {
     return new Object[][]
-      {
         {
-          200, "OK",
-          new DefaultHttpHeaders(),
-          new String[0]
-        },
-        {
-          404, "Not Found",
-          new DefaultHttpHeaders().add("Content-Type", "text/plain"),
-          new String[]{ "cookie1=value1" }
-        },
-        {
-          500, "Internal Server Error",
-          new DefaultHttpHeaders()
-                .add("Content-Type", "text/plain")
-                .add("Header", "1")
-                .add("Header", "2")
-                .add("Header", "3"),
-          new String[]
             {
-              "cookie1=value1; path=/; expires=Saturday, 14-Feb-15 13:14:00 GMT",
-              "cookie2=value2; path=/foo",
+                200, "OK",
+                new DefaultHttpHeaders(),
+                new String[0]
+            },
+            {
+                404, "Not Found",
+                new DefaultHttpHeaders().add("Content-Type", "text/plain"),
+                new String[]{ "cookie1=value1" }
+            },
+            {
+                500, "Internal Server Error",
+                new DefaultHttpHeaders()
+                    .add("Content-Type", "text/plain")
+                    .add("Header", "1")
+                    .add("Header", "2")
+                    .add("Header", "3"),
+                new String[]
+                    {
+                        "cookie1=value1; path=/; expires=Saturday, 14-Feb-15 13:14:00 GMT",
+                        "cookie2=value2; path=/foo",
+                    }
             }
-        }
-      };
+        };
   }
 
 
@@ -197,7 +197,7 @@ public class TestRAPClientCodec
   public void testDecodeException()
   {
     final EmbeddedChannel ch =
-      new EmbeddedChannel(new HttpClientCodec(), new HttpObjectAggregator(65536), new RAPClientCodec());
+        new EmbeddedChannel(new HttpClientCodec(), new HttpObjectAggregator(65536), new RAPClientCodec());
 
     // When we received an invalid message, a decode exception should be thrown out of the
     // end of netty pipeline.

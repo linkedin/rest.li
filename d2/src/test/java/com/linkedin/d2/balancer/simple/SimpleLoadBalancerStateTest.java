@@ -44,6 +44,9 @@ import com.linkedin.d2.discovery.stores.mock.MockStore;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
+import com.linkedin.r2.message.stream.StreamRequestBuilder;
+import com.linkedin.r2.message.stream.StreamResponse;
+import com.linkedin.r2.message.stream.entitystream.EntityStreams;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportCallbackAdapter;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
@@ -795,7 +798,136 @@ public class SimpleLoadBalancerStateTest
   }
 
   @Test(groups = { "small", "back-end" })
-  public void testClientsShutdownAfterPropertyUpdates() throws URISyntaxException, InterruptedException
+  public void testClientsShutdownAfterPropertyUpdatesRestRequest() throws URISyntaxException, InterruptedException
+  {
+    reset();
+
+    URI uri = URI.create("http://cluster-1/test");
+    List<String> schemes = new ArrayList<String>();
+
+    Map<Integer, PartitionData> partitionData = new HashMap<Integer, PartitionData>(1);
+    partitionData.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
+    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<URI, Map<Integer, PartitionData>>();
+    uriData.put(uri, partitionData);
+    schemes.add("http");
+
+    // set up state
+    _state.listenToService("service-1", new NullStateListenerCallback());
+    _state.listenToCluster("cluster-1", new NullStateListenerCallback());
+    _state.setDelayedExecution(0);
+    _serviceRegistry.put("service-1", new ServiceProperties("service-1",
+        "cluster-1",
+        "/test",
+        Arrays.asList("random"),
+        Collections.<String, Object>emptyMap(),
+        Collections.<String, Object>emptyMap(),
+        Collections.<String, String>emptyMap(),
+        schemes,
+        Collections.<URI>emptySet()));
+
+    _clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1"));
+
+
+    _uriRegistry.put("cluster-1", new UriProperties("cluster-1", uriData));
+
+    URI uri1 = URI.create("http://partition-cluster-1/test1");
+    URI uri2 = URI.create("http://partition-cluster-1/test2");
+
+    _state.listenToCluster("partition-cluster-1", new NullStateListenerCallback());
+    _clusterRegistry.put("partition-cluster-1", new ClusterProperties("partition-cluster-1", null,
+        new HashMap<String, String>(), new HashSet<URI>(), new RangeBasedPartitionProperties("id=(\\d+)", 0, 100, 2)));
+
+    _state.listenToService("partition-service-1", new NullStateListenerCallback());
+    _serviceRegistry.put("partition-service-1",
+        new ServiceProperties("partition-service-1",
+            "partition-cluster-1", "/partition-test", Arrays.asList("degraderV3"), Collections.<String, Object>emptyMap(),
+            Collections.<String, Object>emptyMap(),
+            Collections.<String, String>emptyMap(),
+            schemes,
+            Collections.<URI>emptySet()));
+
+    Map<Integer, PartitionData> partitionWeight = new HashMap<Integer, PartitionData>();
+    partitionWeight.put(0, new PartitionData(1d));
+    partitionWeight.put(1, new PartitionData(2d));
+
+    Map<URI, Map<Integer, PartitionData>> partitionDesc =
+        new HashMap<URI, Map<Integer, PartitionData>>();
+    partitionDesc.put(uri1, partitionWeight);
+
+    partitionWeight.remove(0);
+    partitionWeight.put(2, new PartitionData(1d));
+    partitionDesc.put(uri2, partitionWeight);
+
+
+    _uriRegistry.put("partition-cluster-1", new UriProperties("partition-cluster-1", partitionDesc));
+    TrackerClient client1 = _state.getClient("partition-service-1", uri1);
+    TrackerClient client2 = _state.getClient("partition-service-1", uri2);
+    assertEquals(client2.getPartitionWeight(1), 2d);
+    assertEquals(client2.getPartitionWeight(2), 1d);
+    assertEquals(client1.getPartitionWeight(1), 2d);
+
+
+    // Get client, then refresh cluster
+    TrackerClient client = _state.getClient("service-1", uri);
+    client.restRequest(new RestRequestBuilder(URI.create("d2://service-1/foo")).build(),
+        new RequestContext(),
+        Collections.<String, String>emptyMap(),
+        new TransportCallbackAdapter<RestResponse>(Callbacks.<RestResponse>empty()));
+
+    // now force a refresh by adding cluster
+    _clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1"));
+
+    // Get client, then refresh service
+    client = _state.getClient("service-1", uri);
+    client.restRequest(new RestRequestBuilder(URI.create("d2://service-1/foo")).build(),
+        new RequestContext(),
+        Collections.<String, String>emptyMap(),
+        new TransportCallbackAdapter<RestResponse>(Callbacks.<RestResponse>empty()));
+
+    // refresh by adding service
+    _serviceRegistry.put("service-1", new ServiceProperties("service-1",
+        "cluster-1",
+        "/test",
+        Arrays.asList("random"),
+        Collections.<String, Object>emptyMap(),
+        null,
+        null,
+        schemes,
+        null));
+
+    // Get client, then mark server up/down
+    client = _state.getClient("service-1", uri);
+    client.restRequest(new RestRequestBuilder(URI.create("d2://service-1/foo")).build(),
+        new RequestContext(),
+        Collections.<String, String>emptyMap(),
+        new TransportCallbackAdapter<RestResponse>(Callbacks.<RestResponse>empty()));
+
+    _uriRegistry.put("cluster-1", new UriProperties("cluster-1", Collections.<URI, Map<Integer, PartitionData>>emptyMap()));
+
+    _uriRegistry.put("cluster-1", new UriProperties("cluster-1", uriData));
+
+    // Get the client one last time
+    client = _state.getClient("service-1", uri);
+    client.restRequest(new RestRequestBuilder(URI.create("d2://service-1/foo")).build(),
+        new RequestContext(),
+        Collections.<String, String>emptyMap(),
+        new TransportCallbackAdapter<RestResponse>(Callbacks.<RestResponse>empty()));
+
+
+
+    TestShutdownCallback callback = new TestShutdownCallback();
+    _state.shutdown(callback);
+    assertTrue(callback.await(10, TimeUnit.SECONDS), "Failed to shut down state");
+
+    for (TransportClientFactory factory : _clientFactories.values())
+    {
+      SimpleLoadBalancerTest.DoNothingClientFactory f = (SimpleLoadBalancerTest.DoNothingClientFactory)factory;
+      assertEquals(f.getRunningClientCount(), 0, "not all clients were shut down");
+    }
+  }
+
+  @Test(groups = { "small", "back-end" })
+  public void testClientsShutdownAfterPropertyUpdatesStreamRequest() throws URISyntaxException, InterruptedException
   {
     reset();
 
@@ -866,20 +998,20 @@ public class SimpleLoadBalancerStateTest
 
     // Get client, then refresh cluster
     TrackerClient client = _state.getClient("service-1", uri);
-    client.restRequest(new RestRequestBuilder(URI.create("d2://service-1/foo")).build(),
-                       new RequestContext(),
-                       Collections.<String, String>emptyMap(),
-                       new TransportCallbackAdapter<RestResponse>(Callbacks.<RestResponse>empty()));
+    client.streamRequest(new StreamRequestBuilder(URI.create("d2://service-1/foo")).build(EntityStreams.emptyStream()),
+        new RequestContext(),
+        Collections.<String, String>emptyMap(),
+        new TransportCallbackAdapter<StreamResponse>(Callbacks.<StreamResponse>empty()));
 
     // now force a refresh by adding cluster
     _clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1"));
 
     // Get client, then refresh service
     client = _state.getClient("service-1", uri);
-    client.restRequest(new RestRequestBuilder(URI.create("d2://service-1/foo")).build(),
-                       new RequestContext(),
-                       Collections.<String, String>emptyMap(),
-                       new TransportCallbackAdapter<RestResponse>(Callbacks.<RestResponse>empty()));
+    client.streamRequest(new StreamRequestBuilder(URI.create("d2://service-1/foo")).build(EntityStreams.emptyStream()),
+        new RequestContext(),
+        Collections.<String, String>emptyMap(),
+        new TransportCallbackAdapter<StreamResponse>(Callbacks.<StreamResponse>empty()));
 
     // refresh by adding service
     _serviceRegistry.put("service-1", new ServiceProperties("service-1",
@@ -894,10 +1026,10 @@ public class SimpleLoadBalancerStateTest
 
     // Get client, then mark server up/down
     client = _state.getClient("service-1", uri);
-    client.restRequest(new RestRequestBuilder(URI.create("d2://service-1/foo")).build(),
-                       new RequestContext(),
-                       Collections.<String, String>emptyMap(),
-                       new TransportCallbackAdapter<RestResponse>(Callbacks.<RestResponse>empty()));
+    client.streamRequest(new StreamRequestBuilder(URI.create("d2://service-1/foo")).build(EntityStreams.emptyStream()),
+        new RequestContext(),
+        Collections.<String, String>emptyMap(),
+        new TransportCallbackAdapter<StreamResponse>(Callbacks.<StreamResponse>empty()));
 
     _uriRegistry.put("cluster-1", new UriProperties("cluster-1", Collections.<URI, Map<Integer, PartitionData>>emptyMap()));
 
@@ -905,10 +1037,10 @@ public class SimpleLoadBalancerStateTest
 
     // Get the client one last time
     client = _state.getClient("service-1", uri);
-    client.restRequest(new RestRequestBuilder(URI.create("d2://service-1/foo")).build(),
-                       new RequestContext(),
-                       Collections.<String, String>emptyMap(),
-                       new TransportCallbackAdapter<RestResponse>(Callbacks.<RestResponse>empty()));
+    client.streamRequest(new StreamRequestBuilder(URI.create("d2://service-1/foo")).build(EntityStreams.emptyStream()),
+        new RequestContext(),
+        Collections.<String, String>emptyMap(),
+        new TransportCallbackAdapter<StreamResponse>(Callbacks.<StreamResponse>empty()));
 
 
 

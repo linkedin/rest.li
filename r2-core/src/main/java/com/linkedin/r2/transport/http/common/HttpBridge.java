@@ -24,6 +24,9 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestStatus;
+import com.linkedin.r2.message.stream.StreamException;
+import com.linkedin.r2.message.stream.StreamRequest;
+import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponse;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
@@ -46,7 +49,7 @@ public class HttpBridge
    * @return the callback to receive the incoming HTTP response
    */
   public static TransportCallback<RestResponse> restToHttpCallback(final TransportCallback<RestResponse> callback,
-                                                        RestRequest request)
+                                                                   RestRequest request)
   {
     final URI uri = request.getURI();
     return new TransportCallback<RestResponse>()
@@ -58,20 +61,20 @@ public class HttpBridge
         {
           response =
               TransportResponseImpl.error(new RemoteInvocationException("Failed to get response from server for URI "
-                                                                            + uri,
-                                                                        response.getError()),
-                                          response.getWireAttributes());
+                      + uri,
+                      response.getError()),
+                  response.getWireAttributes());
         }
         else if (!RestStatus.isOK(response.getResponse().getStatus()))
         {
           response =
               TransportResponseImpl.error(new RestException(response.getResponse(),
-                                                            "Received error "
-                                                                + response.getResponse()
-                                                                          .getStatus()
-                                                                + " from server for URI "
-                                                                + uri),
-                                          response.getWireAttributes());
+                      "Received error "
+                          + response.getResponse()
+                          .getStatus()
+                          + " from server for URI "
+                          + uri),
+                  response.getWireAttributes());
         }
 
         callback.onResponse(response);
@@ -91,8 +94,8 @@ public class HttpBridge
   public static RestRequest toRestRequest(RestRequest request, Map<String, String> headers)
   {
     return new RestRequestBuilder(request)
-            .unsafeSetHeaders(headers)
-            .build();
+        .unsafeSetHeaders(headers)
+        .build();
   }
 
   /**
@@ -115,6 +118,85 @@ public class HttpBridge
           if (ex instanceof RestException)
           {
             callback.onResponse(TransportResponseImpl.success(((RestException) ex).getResponse(),
+                response.getWireAttributes()));
+            return;
+          }
+        }
+
+        callback.onResponse(response);
+      }
+    };
+  }
+
+  /**
+   * Wrap application callback for incoming StreamResponse with a "generic" HTTP callback.
+   *
+   * @param callback the callback to receive the incoming RestResponse
+   * @param request the request, used only to provide useful context in case an error
+   *          occurs
+   * @return the callback to receive the incoming HTTP response
+   */
+  public static TransportCallback<StreamResponse> streamToHttpCallback(final TransportCallback<StreamResponse> callback,
+                                                        StreamRequest request)
+  {
+    final URI uri = request.getURI();
+    return new TransportCallback<StreamResponse>()
+    {
+      @Override
+      public void onResponse(TransportResponse<StreamResponse> response)
+      {
+        if (response.hasError())
+        {
+          response =
+              TransportResponseImpl.error(new RemoteInvocationException("Failed to get response from server for URI "
+                                                                            + uri,
+                                                                        response.getError()),
+                                          response.getWireAttributes());
+        }
+        else if (!RestStatus.isOK(response.getResponse().getStatus()))
+        {
+          response =
+              TransportResponseImpl.error(new StreamException(response.getResponse(),
+                                                            "Received error "
+                                                                + response.getResponse()
+                                                                          .getStatus()
+                                                                + " from server for URI "
+                                                                + uri),
+                                          response.getWireAttributes());
+        }
+
+        callback.onResponse(response);
+      }
+    };
+  }
+
+  public static StreamRequest toStreamRequest(StreamRequest request, Map<String, String> headers)
+  {
+    return request.builder()
+        .unsafeSetHeaders(headers)
+        .build(request.getEntityStream());
+  }
+
+  /**
+   * Wrap transport callback for outgoing "generic" http response with a callback to pass
+   * to the application REST server.
+   *
+   * @param callback the callback to receive the outgoing HTTP response
+   * @return the callback to receive the outgoing REST response
+   */
+  public static TransportCallback<StreamResponse> httpToStreamCallback(final TransportCallback<StreamResponse> callback)
+  {
+    return new TransportCallback<StreamResponse>()
+    {
+      @Override
+      public void onResponse(TransportResponse<StreamResponse> response)
+      {
+        if (response.hasError())
+        {
+          final Throwable ex = response.getError();
+          if (ex instanceof StreamException)
+          {
+            callback.onResponse(TransportResponseImpl.success(((StreamException) ex).getResponse(),
                                                               response.getWireAttributes()));
             return;
           }

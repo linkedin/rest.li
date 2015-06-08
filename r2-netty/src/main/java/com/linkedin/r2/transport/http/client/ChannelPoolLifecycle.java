@@ -28,6 +28,7 @@ import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelOption;
 import io.netty.channel.group.ChannelGroup;
 import java.net.SocketAddress;
 
@@ -41,14 +42,16 @@ class ChannelPoolLifecycle implements AsyncPool.Lifecycle<Channel>
   private final SocketAddress _remoteAddress;
   private final Bootstrap _bootstrap;
   private final ChannelGroup _channelGroup;
+  private final boolean _tcpNoDelay;
   private final LongTracking _createTimeTracker = new LongTracking();
 
 
-  public ChannelPoolLifecycle(SocketAddress address, Bootstrap bootstrap, ChannelGroup channelGroup)
+  public ChannelPoolLifecycle(SocketAddress address, Bootstrap bootstrap, ChannelGroup channelGroup, boolean tcpNoDelay)
   {
     _remoteAddress = address;
     _bootstrap = bootstrap;
     _channelGroup = channelGroup;
+    _tcpNoDelay = tcpNoDelay;
   }
 
   @Override
@@ -67,12 +70,16 @@ class ChannelPoolLifecycle implements AsyncPool.Lifecycle<Channel>
             _createTimeTracker.addValue(System.currentTimeMillis() - start);
           }
           Channel c = channelFuture.channel();
+          if (_tcpNoDelay)
+          {
+            c.config().setOption(ChannelOption.TCP_NODELAY, true);
+          }
           _channelGroup.add(c);
           channelCallback.onSuccess(c);
         }
         else
         {
-          channelCallback.onError(HttpNettyClient.toException(channelFuture.cause()));
+          channelCallback.onError(HttpNettyStreamClient.toException(channelFuture.cause()));
         }
       }
     });
@@ -106,7 +113,7 @@ class ChannelPoolLifecycle implements AsyncPool.Lifecycle<Channel>
           }
           else
           {
-            channelCallback.onError(HttpNettyClient.toException(channelFuture.cause()));
+            channelCallback.onError(HttpNettyStreamClient.toException(channelFuture.cause()));
           }
         }
       });

@@ -64,6 +64,8 @@ import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
+import com.linkedin.r2.message.stream.StreamRequest;
+import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
@@ -992,10 +994,18 @@ public class SimpleLoadBalancerTest
     private class DoNothingClient implements TransportClient
     {
       @Override
-      public void restRequest(RestRequest request,
+      public void streamRequest(StreamRequest request,
                               RequestContext requestContext,
                               Map<String, String> wireAttrs,
-                              TransportCallback<RestResponse> callback)
+                              TransportCallback<StreamResponse> callback)
+      {
+      }
+
+      @Override
+      public void restRequest(RestRequest request,
+                       RequestContext requestContext,
+                       Map<String, String> wireAttrs,
+                       TransportCallback<RestResponse> callback)
       {
       }
 

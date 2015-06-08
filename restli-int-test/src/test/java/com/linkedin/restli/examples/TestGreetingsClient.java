@@ -18,8 +18,6 @@ package com.linkedin.restli.examples;
 
 
 import com.linkedin.common.callback.Callback;
-import com.linkedin.common.callback.FutureCallback;
-import com.linkedin.common.util.None;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.NamedDataSchema;
@@ -30,9 +28,6 @@ import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.StringMap;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.message.rest.RestException;
-import com.linkedin.r2.transport.common.Client;
-import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
-import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.restli.client.BatchGetEntityRequestBuilder;
 import com.linkedin.restli.client.BatchGetRequestBuilder;
 import com.linkedin.restli.client.CreateIdRequest;
@@ -41,7 +36,6 @@ import com.linkedin.restli.client.OptionsRequestBuilder;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.ResponseFuture;
-import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.client.response.BatchKVResponse;
@@ -90,7 +84,6 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -260,12 +253,9 @@ public class TestGreetingsClient extends RestLiIntegrationTest
   //test cookbook example from quickstart wiki
   public void testCookbook(RootBuilderWrapper<Long, Greeting> builders) throws Exception
   {
-    Client r2Client = new TransportClientAdapter(new HttpClientFactory().getClient(Collections.<String, String>emptyMap()));
-    RestClient restClient = new RestClient(r2Client, "http://localhost:1338/");
-
     // GET
     Request<Greeting> request = builders.get().id(1L).build();
-    ResponseFuture<Greeting> future = restClient.sendRequest(request);
+    ResponseFuture<Greeting> future = getClient().sendRequest(request);
     Response<Greeting> greetingResponse = future.getResponse();
 
     Assert.assertNotNull(greetingResponse.getEntity().getMessage());
@@ -276,19 +266,14 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     greeting.setMessage(NEW_MESSAGE);
 
     Request<EmptyRecord> writeRequest = builders.update().id(1L).input(greeting).build();
-    restClient.sendRequest(writeRequest).getResponse();
+    getClient().sendRequest(writeRequest).getResponse();
 
     // GET again, to verify that our POST worked.
     Request<Greeting> request2 = builders.get().id(1L).build();
-    ResponseFuture<Greeting> future2 = restClient.sendRequest(request2);
+    ResponseFuture<Greeting> future2 = getClient().sendRequest(request2);
     greetingResponse = future2.get();
 
     Assert.assertEquals(greetingResponse.getEntity().getMessage(), NEW_MESSAGE);
-
-    // shut down client
-    FutureCallback<None> futureCallback = new FutureCallback<None>();
-    r2Client.shutdown(futureCallback);
-    futureCallback.get();
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestOptionsDataProvider")

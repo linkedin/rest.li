@@ -24,6 +24,7 @@ import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.filter.FilterChain;
 import com.linkedin.r2.filter.FilterChains;
+import com.linkedin.r2.filter.message.stream.StreamFilterAdapters;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestStatus;
 import com.linkedin.r2.sample.Bootstrap;
@@ -59,6 +60,8 @@ public abstract class AbstractEchoServiceTest
 
   private CaptureWireAttributesFilter _serverCaptureFilter;
   private CaptureWireAttributesFilter _clientCaptureFilter;
+  private LogEntityLengthFilter _serverLengthFilter;
+  private LogEntityLengthFilter _clientLengthFilter;
 
   @BeforeClass
   protected void setUp() throws Exception
@@ -66,13 +69,29 @@ public abstract class AbstractEchoServiceTest
     _serverCaptureFilter = new CaptureWireAttributesFilter();
     _clientCaptureFilter = new CaptureWireAttributesFilter();
 
+    _serverLengthFilter = new LogEntityLengthFilter();
+    _clientLengthFilter = new LogEntityLengthFilter();
+
+    SendWireAttributeFilter serverWireFilter = new SendWireAttributeFilter(_toClientKey, _toClientValue, false);
+    SendWireAttributeFilter clientWireFilter = new SendWireAttributeFilter(_toServerKey, _toServerValue, true);
+
     final FilterChain serverFilters = FilterChains.empty()
             .addFirstRest(_serverCaptureFilter)
-            .addLastRest(new SendWireAttributeFilter(_toClientKey, _toClientValue, false));
+            .addLastRest(_serverLengthFilter)
+            .addLastRest(serverWireFilter)
+            .addFirst(_serverCaptureFilter)
+            // test adapted rest filter works fine in rest over stream setting
+            .addLast(StreamFilterAdapters.adaptRestFilter(_serverLengthFilter))
+            .addLast(serverWireFilter);
 
     final FilterChain clientFilters = FilterChains.empty()
             .addFirstRest(_clientCaptureFilter)
-            .addLastRest(new SendWireAttributeFilter(_toServerKey, _toServerValue, true));
+            .addLastRest(_clientLengthFilter)
+            .addLastRest(clientWireFilter)
+            .addFirst(_clientCaptureFilter)
+            // test adapted rest filter works fine in rest over stream setting
+            .addLast(StreamFilterAdapters.adaptRestFilter(_clientLengthFilter))
+            .addLast(clientWireFilter);
 
     _client = createClient(clientFilters);
 
@@ -109,7 +128,13 @@ public abstract class AbstractEchoServiceTest
     final FutureCallback<String> callback = new FutureCallback<String>();
     client.echo(msg, callback);
 
-    Assert.assertEquals(callback.get(), msg);
+    String actual = callback.get();
+    Assert.assertEquals(actual, msg);
+    Assert.assertEquals(_clientLengthFilter.getRequestEntityLength(), msg.length());
+    Assert.assertEquals(_clientLengthFilter.getResponseEntityLength(), msg.length());
+    Assert.assertEquals(_serverLengthFilter.getRequestEntityLength(), msg.length());
+    Assert.assertEquals(_serverLengthFilter.getResponseEntityLength(), msg.length());
+
   }
 
   @Test
@@ -212,6 +237,8 @@ public abstract class AbstractEchoServiceTest
 
     // Make sure the server got its wire attribute
     Assert.assertEquals(_serverCaptureFilter.getRequest().get(_toServerKey), _toServerValue);
+
+    Assert.assertEquals(_serverCaptureFilter.getResponse().get(_toClientKey), _toClientValue);
 
     // Make sure the client got its wire attribute, but not the server's wire attribute
     Assert.assertEquals(_clientCaptureFilter.getResponse().get(_toClientKey), _toClientValue);

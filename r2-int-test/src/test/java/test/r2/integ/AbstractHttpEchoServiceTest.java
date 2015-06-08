@@ -28,15 +28,26 @@ import com.linkedin.r2.transport.common.Server;
  */
 public abstract class AbstractHttpEchoServiceTest extends AbstractEchoServiceTest
 {
+  private final boolean _clientROS;
+  private final boolean _serverROS;
+  private final int _port;
+
+  protected AbstractHttpEchoServiceTest(boolean clientROS, boolean serverROS, int port)
+  {
+    _clientROS = clientROS;
+    _serverROS = serverROS;
+    _port = port;
+  }
+
   @Override
   protected Client createClient(FilterChain filters)
   {
-    return Bootstrap.createHttpClient(filters);
+    return Bootstrap.createHttpClient(filters, _clientROS);
   }
 
   @Override
   protected Server createServer(FilterChain filters)
   {
-    return Bootstrap.createHttpServer(filters);
+    return Bootstrap.createHttpServer(_port, filters, _serverROS);
   }
 }

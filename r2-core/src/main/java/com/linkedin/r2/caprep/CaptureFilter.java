@@ -80,7 +80,7 @@ public class CaptureFilter implements RestFilter
   {
     if (ex instanceof RestException)
     {
-      saveResponse(((RestException)ex).getResponse(), requestContext);
+      saveResponse(((RestException) ex).getResponse(), requestContext);
     }
 
     nextFilter.onError(ex, requestContext, wireAttrs);

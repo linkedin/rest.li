@@ -22,6 +22,8 @@ import com.linkedin.common.util.None;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
+import com.linkedin.r2.message.stream.StreamRequest;
+import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
@@ -37,7 +39,7 @@ import static org.testng.Assert.assertNull;
 public class LazyClientTest
 {
   @Test(groups = { "small", "back-end" })
-  public void testClient()
+  public void testClientRest()
   {
     LazyClientTestFactory factory = new LazyClientTestFactory();
     Map<String, String> properties = new HashMap<String, String>();
@@ -56,7 +58,41 @@ public class LazyClientTest
     client.restRequest(null, new RequestContext(), null, null);
 
     assertEquals(factory.getClientCount, 1);
-    assertEquals(factory.restRequestCount, 2);
+    assertEquals(factory.requestCount, 2);
+    assertEquals(factory.shutdownCount, 0);
+
+    client.shutdown(null);
+
+    assertEquals(factory.shutdownCount, 1);
+  }
+
+  @Test(groups = { "small", "back-end" })
+  public void testClientStream()
+  {
+    LazyClientTestFactory factory = new LazyClientTestFactory();
+    Map<String, String> properties = new HashMap<String, String>();
+    LazyClient client = new LazyClient(properties, factory);
+
+    properties.put("test", "exists");
+
+    assertEquals(factory.getClientCount, 0);
+    assertNull(factory.properties);
+
+    client.streamRequest(null, new RequestContext(), null, null);
+
+    assertEquals(factory.getClientCount, 1);
+    assertEquals(factory.properties, properties);
+
+    client.streamRequest(null, new RequestContext(), null, null);
+
+    assertEquals(factory.getClientCount, 1);
+    assertEquals(factory.requestCount, 2);
+    assertEquals(factory.shutdownCount, 0);
+
+    client.restRequest(null, new RequestContext(), null, null);
+
+    assertEquals(factory.getClientCount, 1);
+    assertEquals(factory.requestCount, 3);
     assertEquals(factory.shutdownCount, 0);
 
     client.shutdown(null);
@@ -67,7 +103,7 @@ public class LazyClientTest
   public static class LazyClientTestFactory implements TransportClientFactory
   {
     public int                 getClientCount   = 0;
-    public int                 restRequestCount = 0;
+    public int                 requestCount = 0;
     public int                 shutdownCount    = 0;
     public Map<String, ? extends Object> properties;
 
@@ -81,12 +117,21 @@ public class LazyClientTest
       {
 
         @Override
-        public void restRequest(RestRequest request,
+        public void streamRequest(StreamRequest request,
                                 RequestContext requestContext,
                                 Map<String, String> wireAttrs,
-                                TransportCallback<RestResponse> callback)
+                                TransportCallback<StreamResponse> callback)
         {
-          ++restRequestCount;
+          ++requestCount;
+        }
+
+        @Override
+        public void restRequest(RestRequest request,
+                                  RequestContext requestContext,
+                                  Map<String, String> wireAttrs,
+                                  TransportCallback<RestResponse> callback)
+        {
+          ++requestCount;
         }
 
         @Override

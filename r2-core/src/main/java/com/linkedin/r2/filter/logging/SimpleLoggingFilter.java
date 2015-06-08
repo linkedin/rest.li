@@ -16,6 +16,8 @@
 package com.linkedin.r2.filter.logging;
 
 
+import com.linkedin.common.callback.Callback;
+import com.linkedin.data.ByteString;
 import com.linkedin.r2.filter.NextFilter;
 import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.filter.message.rest.RestFilter;
@@ -23,11 +25,18 @@ import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
+import com.linkedin.r2.filter.message.stream.StreamFilter;
+import com.linkedin.r2.message.Request;
+import com.linkedin.r2.message.Response;
 
 import java.net.URI;
 import java.util.Iterator;
 import java.util.Map;
 
+import com.linkedin.r2.message.stream.StreamException;
+import com.linkedin.r2.message.stream.StreamRequest;
+import com.linkedin.r2.message.stream.StreamResponse;
+import com.linkedin.r2.message.stream.entitystream.Observer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,7 +49,7 @@ import org.slf4j.LoggerFactory;
  * @author Chris Pettitt
  * @author Joe Betz
  */
-public class SimpleLoggingFilter implements RestFilter
+public class SimpleLoggingFilter implements StreamFilter, RestFilter
 {
   // _log is not static because we need to be able to set it during test.
   private final Logger _log;
@@ -62,7 +71,7 @@ public class SimpleLoggingFilter implements RestFilter
 
   @Override
   public void onRestRequest(RestRequest req, RequestContext requestContext, Map<String, String> wireAttrs,
-                            NextFilter<RestRequest, RestResponse> nextFilter)
+                              NextFilter<RestRequest, RestResponse> nextFilter)
   {
     trace("onRestRequest", req, wireAttrs, requestContext);
     requestContext.putLocalAttr(REQUEST_URI, req.getURI());
@@ -72,7 +81,7 @@ public class SimpleLoggingFilter implements RestFilter
 
   @Override
   public void onRestResponse(RestResponse res, RequestContext requestContext, Map<String, String> wireAttrs,
-                             NextFilter<RestRequest, RestResponse> nextFilter)
+                               NextFilter<RestRequest, RestResponse> nextFilter)
   {
     trace("onRestResponse", res, wireAttrs, requestContext);
     nextFilter.onResponse(res, requestContext, wireAttrs);
@@ -80,22 +89,94 @@ public class SimpleLoggingFilter implements RestFilter
 
   @Override
   public void onRestError(Throwable ex, RequestContext requestContext, Map<String, String> wireAttrs,
-                          NextFilter<RestRequest, RestResponse> nextFilter)
+                            NextFilter<RestRequest, RestResponse> nextFilter)
   {
     warn("onRestError", ex, wireAttrs, requestContext);
     nextFilter.onError(ex, requestContext, wireAttrs);
   }
 
-  private void trace(String method, RestRequest request, Map<String, String> wireAttrs, RequestContext requestContext)
+  @Override
+  public void onStreamRequest(StreamRequest req, RequestContext requestContext, Map<String, String> wireAttrs,
+                            NextFilter<StreamRequest, StreamResponse> nextFilter)
   {
-    _log.debug(buildLogMessage(method, "request", formatRequest(request), wireAttrs, requestContext));
+    trace("onStreamRequest", req, wireAttrs, requestContext);
+    requestContext.putLocalAttr(REQUEST_URI, req.getURI());
+    requestContext.putLocalAttr(REQUEST_METHOD, req.getMethod());
+    nextFilter.onRequest(req, requestContext, wireAttrs);
   }
 
-  private void trace(String method, RestResponse response, Map<String, String> wireAttrs, RequestContext requestContext)
+  @Override
+  public void onStreamResponse(StreamResponse res, RequestContext requestContext, Map<String, String> wireAttrs,
+                             NextFilter<StreamRequest, StreamResponse> nextFilter)
   {
-    URI requestUri = (URI)requestContext.getLocalAttr(REQUEST_URI);
-    String requestMethod = (String)requestContext.getLocalAttr(REQUEST_METHOD);
-    _log.debug(buildLogMessage(method, "response", formatResponse(response, requestUri, requestMethod), wireAttrs, requestContext));
+    trace("onStreamResponse", res, wireAttrs, requestContext);
+    nextFilter.onResponse(res, requestContext, wireAttrs);
+  }
+
+  @Override
+  public void onStreamError(Throwable ex, RequestContext requestContext, Map<String, String> wireAttrs,
+                          NextFilter<StreamRequest, StreamResponse> nextFilter)
+  {
+    warn("onStreamError", ex, wireAttrs, requestContext);
+    nextFilter.onError(ex, requestContext, wireAttrs);
+  }
+
+  private void trace(final String method, final RestRequest request,
+                     final Map<String, String> wireAttrs, final RequestContext requestContext)
+  {
+    _log.debug(buildLogMessage(method, "request", formatRequest(request, request.getEntity().length()), wireAttrs, requestContext));
+  }
+
+  private void trace(final String method, final RestResponse response, final Map<String, String> wireAttrs,
+                     final RequestContext requestContext)
+  {
+    final URI requestUri = (URI)requestContext.getLocalAttr(REQUEST_URI);
+    final String requestMethod = (String)requestContext.getLocalAttr(REQUEST_METHOD);
+    _log.debug(buildLogMessage(method, "response", formatResponse(response, response.getEntity().length(), requestUri, requestMethod), wireAttrs, requestContext));
+  }
+
+  private void trace(final String method, final StreamRequest request,
+                     final Map<String, String> wireAttrs, final RequestContext requestContext)
+  {
+    Callback<Integer> callback = new Callback<Integer>()
+    {
+      @Override
+      public void onError(Throwable e)
+      {
+        _log.warn("Cannot get the length of the request", e);
+      }
+
+      @Override
+      public void onSuccess(Integer result)
+      {
+        _log.debug(buildLogMessage(method, "request", formatRequest(request, result), wireAttrs, requestContext));
+      }
+    };
+    request.getEntityStream().addObserver(new LengthObserver(callback));
+  }
+
+  private void trace(final String method, final StreamResponse response, final Map<String, String> wireAttrs,
+                     final RequestContext requestContext)
+  {
+    final URI requestUri = (URI)requestContext.getLocalAttr(REQUEST_URI);
+    final String requestMethod = (String)requestContext.getLocalAttr(REQUEST_METHOD);
+
+    Callback<Integer> callback = new Callback<Integer>()
+    {
+      @Override
+      public void onError(Throwable e)
+      {
+        _log.warn("Cannot get the length of the response", e);
+      }
+
+      @Override
+      public void onSuccess(Integer result)
+      {
+        _log.debug(buildLogMessage(method, "response", formatResponse(response, result, requestUri, requestMethod), wireAttrs, requestContext));
+      }
+    };
+
+    response.getEntityStream().addObserver(new LengthObserver(callback));
   }
 
   private void warn(String method, Throwable ex, Map<String, String> wireAttrs, RequestContext requestContext)
@@ -115,14 +196,16 @@ public class SimpleLoggingFilter implements RestFilter
 
   private boolean ignoreLog(Throwable ex)
   {
+    if (ex instanceof StreamException)
+    {
+      StreamException streamException = (StreamException)ex;
+      return streamException.getResponse() != null;
+    }
+
     if (ex instanceof RestException)
     {
       RestException restException = (RestException)ex;
-      if (restException.getResponse() != null)
-      {
-        return true;
-      }
-      return false;
+      return restException.getResponse() != null;
     }
 
     return false;
@@ -130,14 +213,16 @@ public class SimpleLoggingFilter implements RestFilter
 
   private boolean logFullException(Throwable ex)
   {
+    if (ex instanceof StreamException)
+    {
+      StreamException streamException = (StreamException)ex;
+      return streamException.getResponse() != null;
+    }
+
     if (ex instanceof RestException)
     {
       RestException restException = (RestException)ex;
-      if (restException.getResponse() != null)
-      {
-        return true;
-      }
-      return false;
+      return restException.getResponse() != null;
     }
 
     return true;
@@ -172,18 +257,17 @@ public class SimpleLoggingFilter implements RestFilter
     return ex.getClass().getName() + " (" + msg + ")";
   }
 
-  public String formatRequest(RestRequest request)
+  public String formatRequest(Request request, int reqLen)
   {
     StringBuilder builder = new StringBuilder();
     builder.append("\"").append(request.getMethod());
     builder.append(" ").append(formatRequestURI(request)).append("\"");
     builder.append(" headers=[").append(formatHeaders(request.getHeaders())).append("]");
-
-    builder.append(" entityLength=").append(request.getEntity().length());
+    builder.append(" entityLength=").append(reqLen);
     return builder.toString();
   }
 
-  public String formatResponse(RestResponse response, URI requestUri, String requestMethod)
+  public String formatResponse(Response response, int resLen, URI requestUri, String requestMethod)
   {
     StringBuilder builder = new StringBuilder();
     builder.append("\"").append(requestMethod);
@@ -193,11 +277,12 @@ public class SimpleLoggingFilter implements RestFilter
     }
     builder.append(" ").append(response.getStatus()).append("\"");
     builder.append(" headers=[").append(formatHeaders(response.getHeaders())).append("]");
-    builder.append(" entityLength=").append(response.getEntity().length());
+
+    builder.append(" entityLength=").append(resLen);
     return builder.toString();
   }
 
-  public String formatRequestURI(RestRequest request)
+  public String formatRequestURI(Request request)
   {
     // We want the ascii representation without the query string
     String uriText = request.getURI().toASCIIString();
@@ -226,5 +311,34 @@ public class SimpleLoggingFilter implements RestFilter
       }
     }
     return builder.toString();
+  }
+
+  private static class LengthObserver implements Observer
+  {
+    private int _len = 0;
+    private final Callback<Integer> _callback;
+
+    LengthObserver(Callback<Integer> callback)
+    {
+      _callback = callback;
+    }
+
+    @Override
+    public void onDataAvailable(ByteString data)
+    {
+      _len += data.length();
+    }
+
+    @Override
+    public void onError(Throwable e)
+    {
+      _callback.onError(e);
+    }
+
+    @Override
+    public void onDone()
+    {
+      _callback.onSuccess(_len);
+    }
   }
 }

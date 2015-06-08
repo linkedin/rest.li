@@ -27,10 +27,13 @@ public interface StreamFilter
    *                   {@link com.linkedin.r2.filter.NextFilter#onRequest} to continue the filter chain.
    */
 
-  void onStreamRequest(StreamRequest req,
+  default void onStreamRequest(StreamRequest req,
                        RequestContext requestContext,
                        Map<String, String> wireAttrs,
-                       NextFilter<StreamRequest, StreamResponse> nextFilter);
+                       NextFilter<StreamRequest, StreamResponse> nextFilter)
+  {
+    nextFilter.onRequest(req, requestContext, wireAttrs);
+  }
 
   /**
    * Method to be invoked for each {@link StreamResponse} message.
@@ -41,10 +44,13 @@ public interface StreamFilter
    * @param nextFilter the next filter in the chain.  Concrete implementations should invoke
    *                   {@link NextFilter#onResponse} to continue the filter chain.
    */
-  void onStreamResponse(StreamResponse res,
+  default void onStreamResponse(StreamResponse res,
                         RequestContext requestContext,
                         Map<String, String> wireAttrs,
-                        NextFilter<StreamRequest, StreamResponse> nextFilter);
+                        NextFilter<StreamRequest, StreamResponse> nextFilter)
+  {
+    nextFilter.onResponse(res, requestContext, wireAttrs);
+  }
 
   /**
    * Method to be invoked when an error is encountered.
@@ -55,8 +61,11 @@ public interface StreamFilter
    * @param nextFilter the next filter in the chain.  Concrete implementations should invoke
    *                   {@link NextFilter#onError} to continue the filter chain.
    */
-  void onStreamError(Throwable ex,
+  default void onStreamError(Throwable ex,
                      RequestContext requestContext,
                      Map<String, String> wireAttrs,
-                     NextFilter<StreamRequest, StreamResponse> nextFilter);
+                     NextFilter<StreamRequest, StreamResponse> nextFilter)
+  {
+    nextFilter.onError(ex, requestContext, wireAttrs);
+  }
 }

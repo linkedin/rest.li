@@ -39,6 +39,8 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 import org.testng.Assert;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 
@@ -51,10 +53,36 @@ public class TestHttpsEcho extends AbstractEchoServiceTest
   private final String keyStore = getClass().getClassLoader().getResource("keystore").getPath();
   private final String keyStorePassword = "password";
 
+  private static final int PORT = 11990;
+
+  private final int _port;
+  private final boolean _clientROS;
+  private final boolean _serverROS;
+
+  @Factory(dataProvider = "configs")
+  public TestHttpsEcho(boolean clientROS, boolean serverROS, int port)
+  {
+    _port = port;
+    _clientROS = clientROS;
+    _serverROS = serverROS;
+  }
+
+  @DataProvider
+  public static Object[][] configs()
+  {
+    return new Object[][] {
+        {true, true, PORT},
+        {true, false, PORT + 1},
+        {false, true, PORT + 2},
+        {false, false, PORT + 3}
+    };
+  }
+
+
   @Override
   protected EchoService getEchoClient(Client client, URI uri)
   {
-    return new RestEchoClient(Bootstrap.createHttpsURI(uri), client);
+    return new RestEchoClient(Bootstrap.createHttpsURI(_port, uri), client);
   }
 
   @Override
@@ -81,14 +109,17 @@ public class TestHttpsEcho extends AbstractEchoServiceTest
     properties.put(HttpClientFactory.HTTP_SSL_CONTEXT, context);
     properties.put(HttpClientFactory.HTTP_SSL_PARAMS, context.getDefaultSSLParameters());
 
-    final TransportClient client = new HttpClientFactory(filters).getClient(properties);
-    return new TransportClientAdapter(client);
+    final TransportClient client = new HttpClientFactory.Builder()
+        .setFilterChain(filters)
+        .build()
+        .getClient(properties);
+    return new TransportClientAdapter(client, _clientROS);
   }
 
   @Override
   protected Server createServer(FilterChain filters)
   {
-    return Bootstrap.createHttpsServer(keyStore, keyStorePassword, filters);
+    return Bootstrap.createHttpsServer(_port, keyStore, keyStorePassword, filters, _serverROS);
   }
 
   /**

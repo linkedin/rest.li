@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 import com.linkedin.common.stats.LongStats;
 import com.linkedin.common.stats.LongTracking;
@@ -299,10 +300,17 @@ public class CallTrackerImpl implements CallTracker
   {
     private final AtomicBoolean _done = new AtomicBoolean();
     private final long _start;
+    private final AtomicLong _endTime = new AtomicLong(0);
 
     private CallCompletionImpl(long currentTime)
     {
       _start = currentTime;
+    }
+
+    @Override
+    public void record()
+    {
+      _endTime.compareAndSet(0, _clock.currentTimeMillis());
     }
 
     @Override
@@ -330,12 +338,12 @@ public class CallTrackerImpl implements CallTracker
         Pending pending;
         synchronized (_lock)
         {
-          long currentTime = _clock.currentTimeMillis();
-          long duration = currentTime - _start;
+          _endTime.compareAndSet(0, _clock.currentTimeMillis());
+          long duration = _endTime.get() - _start;
 
           if (_start >= _lastResetTime)
           {
-            addCallData(duration, hasError, currentTime, errorType);
+            addCallData(duration, hasError, _endTime.get(), errorType);
           }
 
           // Concurrency is not reset

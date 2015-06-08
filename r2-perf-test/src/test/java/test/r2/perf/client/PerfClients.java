@@ -20,7 +20,9 @@ package test.r2.perf.client;
 
 import com.linkedin.common.callback.Callbacks;
 import com.linkedin.common.util.None;
+import com.linkedin.r2.filter.FilterChains;
 import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
@@ -29,7 +31,12 @@ import com.linkedin.r2.transport.http.client.HttpClientFactory;
 
 import java.net.URI;
 import java.util.Collections;
+import java.util.concurrent.Executors;
+
+import com.linkedin.r2.util.NamedThreadFactory;
+import io.netty.channel.nio.NioEventLoopGroup;
 import test.r2.perf.Generator;
+import test.r2.perf.PerfConfig;
 
 
 /**
@@ -38,15 +45,33 @@ import test.r2.perf.Generator;
  */
 public class PerfClients
 {
-  private static final TransportClientFactory FACTORY = new HttpClientFactory();
+  private static final TransportClientFactory FACTORY = new HttpClientFactory.Builder()
+      .setNioEventLoopGroup(new NioEventLoopGroup(0 /* use default settings */, new NamedThreadFactory("R2 Nio Event Loop")))
+      .setShutDownFactory(true)
+      .setScheduleExecutorService(Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("R2 Netty Scheduler")))
+      .setShutdownScheduledExecutorService(true)
+      .setCallbackExecutor(Executors.newFixedThreadPool(24))
+      .setShutdownCallbackExecutor(true)
+      .build();
+
   private static int NUM_CLIENTS = 0;
 
   public static PerfClient httpRest(URI uri, int numThreads, int numMsgs, int msgSize)
   {
     final TransportClient transportClient = FACTORY.getClient(Collections.<String, String>emptyMap());
-    final Client client = new TransportClientAdapter(transportClient);
+    final Client client = new TransportClientAdapter(transportClient, PerfConfig.clientRestOverStream());
     final Generator<RestRequest> reqGen = new RestRequestGenerator(uri, numMsgs, msgSize);
     final ClientRunnableFactory crf = new RestClientRunnableFactory(client, reqGen);
+
+    return new FactoryClient(crf, numThreads);
+  }
+
+  public static PerfClient httpPureStream(URI uri, int numThreads, int numMsgs, int msgSize)
+  {
+    final TransportClient transportClient = FACTORY.getClient(Collections.<String, String>emptyMap());
+    final Client client = new TransportClientAdapter(transportClient, true);
+    final Generator<StreamRequest> reqGen = new StreamRequestGenerator(uri, numMsgs, msgSize);
+    final ClientRunnableFactory crf = new StreamClientRunnableFactory(client, reqGen);
 
     return new FactoryClient(crf, numThreads);
   }

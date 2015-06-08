@@ -11,9 +11,10 @@ import java.util.Map;
  * A convenient base rest filter class in case the subclass only wants to process request or only wants to process
  * response.
  *
+ * Use {@code RestFilter} instead.
+ *
  * @auther Zhenkai Zhu
  */
-
 public class BaseRestFilter implements RestFilter
 {
   @Override

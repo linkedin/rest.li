@@ -23,6 +23,8 @@ import com.linkedin.common.util.None;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
+import com.linkedin.r2.message.stream.StreamRequest;
+import com.linkedin.r2.message.stream.StreamResponse;
 
 import java.net.URI;
 import java.util.Map;
@@ -30,6 +32,7 @@ import java.util.concurrent.Future;
 
 /**
  * @author Chris Pettitt
+ * @author Zhenkai Zhu
  * @version $Revision$
  */
 public interface Client
@@ -76,6 +79,35 @@ public interface Client
    */
   void restRequest(RestRequest request, RequestContext requestContext,
                    Callback<RestResponse> callback);
+
+  /**
+   * Asynchronously issues the given request. The given callback is invoked when the response is
+   * received.
+   *
+   * Any implementation that wants to support streaming MUST override this method.
+   *
+   * @param request the request to issue
+   * @param callback the callback to invoke with the response
+   */
+  default void streamRequest(StreamRequest request, Callback<StreamResponse> callback)
+  {
+    throw new UnsupportedOperationException("Please use an implementation that supports streaming.");
+  }
+
+  /**
+   * Asynchronously issues the given request. The given callback is invoked when the response is
+   * received.
+   *
+   * Any implementation that wants to support streaming MUST override this method.
+   *
+   * @param request the request to issue
+   * @param requestContext context for the request
+   * @param callback the callback to invoke with the response
+   */
+  default void streamRequest(StreamRequest request, RequestContext requestContext, Callback<StreamResponse> callback)
+  {
+    throw new UnsupportedOperationException("Please use an implementation that supports streaming.");
+  }
 
   /**
    * Initiates asynchronous shutdown of the client. This method should block minimally, if at all.

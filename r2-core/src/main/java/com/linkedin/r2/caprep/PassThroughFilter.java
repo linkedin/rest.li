@@ -17,7 +17,7 @@
 /* $Id$ */
 package com.linkedin.r2.caprep;
 
-import com.linkedin.r2.filter.message.rest.BaseRestFilter;
+import com.linkedin.r2.filter.message.rest.RestFilter;
 
 /**
  * A filter that does nothing with any requests or responses.
@@ -26,6 +26,6 @@ import com.linkedin.r2.filter.message.rest.BaseRestFilter;
  * @author Zhenkai Zhu
  * @version $Revision$
  */
-public class PassThroughFilter extends BaseRestFilter
+public class PassThroughFilter implements RestFilter
 {
 }

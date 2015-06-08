@@ -26,9 +26,13 @@ import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.util.LoadBalancerUtil;
 import com.linkedin.d2.discovery.event.PropertyEventThread.PropertyEventShutdownCallback;
+import com.linkedin.r2.filter.R2Constants;
+import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
+import com.linkedin.r2.message.stream.StreamRequest;
+import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.transport.common.AbstractClient;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
@@ -53,11 +57,18 @@ public class DynamicClient extends AbstractClient implements D2Client
 
   private final LoadBalancer  _balancer;
   private final Facilities    _facilities;
+  private final boolean       _restOverStream;
 
   public DynamicClient(LoadBalancer balancer, Facilities facilities)
   {
+    this(balancer, facilities, R2Constants.DEFAULT_REST_OVER_STREAM);
+  }
+
+  public DynamicClient(LoadBalancer balancer, Facilities facilities, boolean restOverStream)
+  {
     _balancer = balancer;
     _facilities = facilities;
+    _restOverStream = restOverStream;
     debug(_log, "created dynamic client: ", this);
   }
 
@@ -66,31 +77,44 @@ public class DynamicClient extends AbstractClient implements D2Client
                           RequestContext requestContext,
                           final Callback<RestResponse> callback)
   {
-    Callback<RestResponse> transportCallback;
-    if (_log.isTraceEnabled())
+    if (!_restOverStream)
     {
-      trace(_log, "rest request: ", request);
-      transportCallback = new Callback<RestResponse>()
-      {
-        @Override
-        public void onError(Throwable e)
-        {
-          callback.onError(e);
-          trace(_log, "rest response error: ", e);
-        }
+      Callback<RestResponse> transportCallback = decorateCallback(callback, request, "rest");
 
-        @Override
-        public void onSuccess(RestResponse result)
+      try
+      {
+        TransportClient client = _balancer.getClient(request, requestContext);
+
+        if (client != null)
         {
-          callback.onSuccess(result);
-          trace(_log, "rest response success: ", result);
+          new TransportClientAdapter(client, false).restRequest(request, requestContext, transportCallback);
         }
-      };
+        else
+        {
+          throw new ServiceUnavailableException("unknown: " + request.getURI(),
+              "got null client from load balancer");
+        }
+      }
+      catch (ServiceUnavailableException e)
+      {
+        callback.onError(e);
+
+        warn(_log, "unable to find service for: ", extractLogInfo(request));
+      }
     }
     else
     {
-      transportCallback = callback;
+      super.restRequest(request, requestContext, callback);
     }
+  }
+
+
+  @Override
+  public void streamRequest(StreamRequest request,
+                          RequestContext requestContext,
+                          final Callback<StreamResponse> callback)
+  {
+    Callback<StreamResponse> transportCallback = decorateCallback(callback, request, "stream");
 
     try
     {
@@ -98,7 +122,7 @@ public class DynamicClient extends AbstractClient implements D2Client
 
       if (client != null)
       {
-        new TransportClientAdapter(client).restRequest(request, requestContext, transportCallback);
+        new TransportClientAdapter(client, true).streamRequest(request, requestContext, transportCallback);
       }
       else
       {
@@ -166,9 +190,35 @@ public class DynamicClient extends AbstractClient implements D2Client
     return Collections.emptyMap();
   }
 
-  private static String extractLogInfo(RestRequest request)
+  private static <T> Callback<T> decorateCallback(final Callback<T> callback, Request request, final String type)
   {
-    return "Rest Request: [" +
+    if (_log.isTraceEnabled())
+    {
+      trace(_log, type + " request: ", request);
+      return new Callback<T>()
+      {
+        @Override
+        public void onError(Throwable e)
+        {
+          callback.onError(e);
+          trace(_log, type + " response error: ", e);
+        }
+
+        @Override
+        public void onSuccess(final T result)
+        {
+          callback.onSuccess(result);
+          trace(_log, type + " response success: ", result);
+        }
+      };
+    }
+
+    return callback;
+  }
+
+  private static String extractLogInfo(Request request)
+  {
+    return request.getClass().getName() + ": [" +
         "Service: " + LoadBalancerUtil.getServiceNameFromUri(request.getURI()) + ", " +
         "Method: " + request.getMethod() +
         "]";

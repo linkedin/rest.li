@@ -28,6 +28,7 @@ import org.testng.annotations.BeforeMethod;
 
 import com.linkedin.util.clock.SettableClock;
 import com.linkedin.util.clock.Time;
+import org.testng.annotations.Test;
 
 /**
  * @author Dave Messink
@@ -319,6 +320,47 @@ public class TestCallTracker
     endCall(dones3, 3);
 
     Assert.assertEquals(listener.getRecords().size(), 4, "Interval notification count is incorrect");
+  }
+
+  @Test
+  public void testRecord()
+  {
+    long jitter = 500;
+    long now = _clock.currentTimeMillis();
+    long startTime = now;
+    Listener listener = new Listener();
+    _callTracker.addStatsRolloverEventListener(listener);
+
+    _clock.addDuration(FIVE_MS);
+
+    List<CallCompletion> dones = startCall(_callTracker, 3);
+
+    _clock.addDuration(FIVE_MS);
+
+    for (CallCompletion callCompletion : dones)
+    {
+      callCompletion.record();
+    }
+
+    _clock.addDuration(FIVE_MS);
+    _clock.addDuration(FIVE_MS);
+
+    Assert.assertEquals(_callTracker.getTimeSinceLastCallStart(), 15,
+        "Time since last call is incorrect");
+    Assert.assertEquals(_callTracker.getCurrentConcurrency(), 3, "Concurrency is incorrect");
+
+    endCall(dones, 3);
+
+    Assert.assertEquals(_callTracker.getCurrentConcurrency(), 0, "Concurrency is incorrect");
+
+    Assert.assertEquals(_callTracker.getCurrentCallCountTotal(), 3,
+        "Current call count total is incorrect");
+    Assert.assertEquals(_callTracker.getCurrentErrorCountTotal(), 0,
+        "Current error count total is incorrect");
+
+    _clock.setCurrentTimeMillis(INTERVAL + startTime + jitter);
+    Assert.assertEquals(_callTracker.getCallStats().getCallTimeStats().getAverage(), 5.0,
+        "Interval average call time is incorrect");
   }
 
   @org.testng.annotations.Test public void testOutstanding()

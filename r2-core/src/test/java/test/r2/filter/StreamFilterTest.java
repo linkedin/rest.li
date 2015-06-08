@@ -2,7 +2,7 @@ package test.r2.filter;
 
 import com.linkedin.r2.filter.FilterChain;
 import com.linkedin.r2.filter.FilterChains;
-import com.linkedin.r2.filter.message.stream.BaseStreamFilter;
+import com.linkedin.r2.filter.NextFilter;
 import com.linkedin.r2.filter.message.stream.StreamFilter;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.stream.StreamRequest;
@@ -31,7 +31,7 @@ public class StreamFilterTest
   @BeforeMethod
   public void setUp() throws Exception
   {
-    _filter = new BaseStreamFilter();
+    _filter = new StreamFilter() {};
     _beforeFilter = new StreamCountFilter();
     _afterFilter = new StreamCountFilter();
     _fc = FilterChains.createStreamChain(_beforeFilter, _filter, _afterFilter);

@@ -54,7 +54,7 @@ public class R2D2Client
 
   public R2D2Client(String hostPort) throws Exception
   {
-    _client = new DynamicClient(LoadBalancerEchoClient.getLoadBalancer(hostPort), null);
+    _client = new DynamicClient(LoadBalancerEchoClient.getLoadBalancer(hostPort), null, true);
     _random = new Random();
 
   }

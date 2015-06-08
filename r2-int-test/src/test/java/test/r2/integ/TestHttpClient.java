@@ -27,12 +27,9 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -40,11 +37,14 @@ import java.util.concurrent.TimeUnit;
 
 import java.util.concurrent.atomic.AtomicReference;
 import org.testng.Assert;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterSuite;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
-import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
 import com.linkedin.data.ByteString;
@@ -68,14 +68,30 @@ public class TestHttpClient
   private HttpClientFactory _clientFactory;
   private TestServer _testServer;
 
-  @BeforeSuite
+  private final boolean _restOverStream;
+
+  @Factory(dataProvider = "configs")
+  public TestHttpClient(boolean restOverStream)
+  {
+    _restOverStream = restOverStream;
+  }
+
+  @DataProvider
+  public static Object[][] configs()
+  {
+    return new Object[][] {
+        {true}, {false}
+    };
+  }
+
+  @BeforeClass
   private void init() throws Exception
   {
     _testServer = new TestServer();
     _clientFactory = new HttpClientFactory();
   }
 
-  @AfterSuite
+  @AfterClass
   private void cleanup() throws Exception
   {
     final FutureCallback<None> callback = new FutureCallback<None>();
@@ -89,7 +105,7 @@ public class TestHttpClient
   public void testClient() throws Exception
   {
     final TransportClient transportClient = _clientFactory.getClient(new HashMap<String, String>());
-    final Client client = new TransportClientAdapter(transportClient);
+    final Client client = new TransportClientAdapter(transportClient, _restOverStream);
 
     RestRequestBuilder rb = new RestRequestBuilder(_testServer.getRequestURI());
     rb.setMethod("GET");
@@ -119,7 +135,7 @@ public class TestHttpClient
     final TransportClient transportClient =
         _clientFactory.getClient(Collections.singletonMap(HttpClientFactory.HTTP_REQUEST_TIMEOUT,
                                                           Integer.toString(REQUEST_TIMEOUT)));
-    final Client client = new TransportClientAdapter(transportClient);
+    final Client client = new TransportClientAdapter(transportClient, _restOverStream);
 
     RestRequestBuilder rb = new RestRequestBuilder(_testServer.getRequestURI());
     rb.setMethod("GET");
@@ -166,8 +182,8 @@ public class TestHttpClient
     // Specify the get timeout; we know the max rate will be half the get timeout
     final TransportClient transportClient =
         new HttpClientFactory().getClient(Collections.singletonMap(HttpClientFactory.HTTP_REQUEST_TIMEOUT,
-                                                                   Integer.toString(REQUEST_TIMEOUT)));
-    final Client client = new TransportClientAdapter(transportClient);
+            Integer.toString(REQUEST_TIMEOUT)));
+    final Client client = new TransportClientAdapter(transportClient, _restOverStream);
 
     final ServerSocket ss = new ServerSocket();
     ss.bind(null);
@@ -248,7 +264,7 @@ public class TestHttpClient
   public void testSimpleURI() throws Exception
   {
     final TransportClient transportClient = _clientFactory.getClient(new HashMap<String, String>());
-    final Client client = new TransportClientAdapter(transportClient);
+    final Client client = new TransportClientAdapter(transportClient, _restOverStream);
 
     // Note no trailing slash; the point of the test is to ensure this URI will
     // send a Request-URI of "/".
