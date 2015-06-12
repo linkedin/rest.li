@@ -3,6 +3,9 @@
 (RB=484780)
 Fixed a bug in typeref processing in request params.
 
+(RB=490692)
+Prepare data template generator for extension.
+
 2.6.1
 ------
 (RB=477748)

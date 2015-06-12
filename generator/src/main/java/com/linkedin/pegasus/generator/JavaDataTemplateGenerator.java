@@ -41,11 +41,9 @@ import com.linkedin.data.template.IntegerArray;
 import com.linkedin.data.template.IntegerMap;
 import com.linkedin.data.template.LongArray;
 import com.linkedin.data.template.LongMap;
-import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.StringArray;
 import com.linkedin.data.template.StringMap;
 import com.linkedin.data.template.TyperefInfo;
-import com.linkedin.data.template.UnionTemplate;
 import com.linkedin.pegasus.generator.spec.ArrayTemplateSpec;
 import com.linkedin.pegasus.generator.spec.ClassTemplateSpec;
 import com.linkedin.pegasus.generator.spec.CustomInfoSpec;
@@ -134,12 +132,28 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
   private final Map<ClassTemplateSpec, JDefinedClass> _definedClasses = new HashMap<ClassTemplateSpec, JDefinedClass>();
   private final Map<JDefinedClass, ClassTemplateSpec> _generatedClasses = new HashMap<JDefinedClass, ClassTemplateSpec>();
 
+  private final boolean _recordFieldAccessorWithMode;
+
+  private JavaDataTemplateGenerator(String defaultPackage,
+                                    boolean recordFieldAccessorWithMode)
+  {
+    super(defaultPackage);
+
+    _recordFieldAccessorWithMode = recordFieldAccessorWithMode;
+  }
+
+  public JavaDataTemplateGenerator(Config config)
+  {
+    this(config.getDefaultPackage(),
+         config.getRecordFieldAccessorWithMode());
+  }
+
   /**
    * @param defaultPackage package to be used when a {@link NamedDataSchema} does not specify a namespace
    */
   public JavaDataTemplateGenerator(String defaultPackage)
   {
-    super(defaultPackage);
+    this(defaultPackage, true);
   }
 
   public Map<JDefinedClass, ClassTemplateSpec> getGeneratedClasses()
@@ -402,7 +416,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     return result;
   }
 
-  private void generateArray(JDefinedClass arrayClass, ArrayTemplateSpec arrayDataTemplateSpec)
+  protected void generateArray(JDefinedClass arrayClass, ArrayTemplateSpec arrayDataTemplateSpec)
       throws JClassAlreadyExistsException
   {
     final JClass itemJClass = generate(arrayDataTemplateSpec.getItemClass());
@@ -433,7 +447,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     generateCopierMethods(arrayClass);
   }
 
-  private void generateEnum(JDefinedClass enumClass, EnumTemplateSpec enumSpec)
+  protected void generateEnum(JDefinedClass enumClass, EnumTemplateSpec enumSpec)
   {
     enumClass.javadoc().append(enumSpec.getSchema().getDoc());
 
@@ -462,7 +476,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     enumClass.enumConstant(DataTemplateUtil.UNKNOWN_ENUM);
   }
 
-  private void generateFixed(JDefinedClass fixedClass, FixedTemplateSpec fixedSpec)
+  protected void generateFixed(JDefinedClass fixedClass, FixedTemplateSpec fixedSpec)
   {
     fixedClass.javadoc().append(fixedSpec.getSchema().getDoc());
 
@@ -481,7 +495,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     generateCopierMethods(fixedClass);
   }
 
-  private void generateMap(JDefinedClass mapClass, MapTemplateSpec mapSpec)
+  protected void generateMap(JDefinedClass mapClass, MapTemplateSpec mapSpec)
       throws JClassAlreadyExistsException
   {
     final JClass valueJClass = generate(mapSpec.getValueClass());
@@ -542,14 +556,14 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     }
   }
 
-  private void generateRecord(JDefinedClass templateClass, RecordTemplateSpec recordSpec)
+  protected void generateRecord(JDefinedClass templateClass, RecordTemplateSpec recordSpec)
       throws JClassAlreadyExistsException
   {
     templateClass.javadoc().append(recordSpec.getSchema().getDoc());
 
     setDeprecatedAnnotationAndJavadoc(recordSpec.getSchema(), templateClass);
 
-    templateClass._extends(RecordTemplate.class);
+    templateClass._extends(_recordClass);
 
     generatePathSpecMethodsForRecord(recordSpec.getFields(), templateClass);
 
@@ -634,43 +648,51 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     final JBlock removeBody = remove.body();
     removeBody.invoke("remove").arg(fieldField);
 
-    // Getter method with mode.
     final String getterName = JavaCodeUtil.getGetterName(getCodeModel(), type, capitalizedName);
-    final JMethod getterWithMode = templateClass.method(JMod.PUBLIC, type, getterName);
-    addAccessorDoc(getterWithMode, schemaField, "Getter");
-    setDeprecatedAnnotationAndJavadoc(getterWithMode, schemaField);
-    JVar modeParam = getterWithMode.param(_getModeClass, "mode");
-    final JBlock getterWithModeBody = getterWithMode.body();
-    res = JExpr.invoke("obtain" + wrappedOrDirect).arg(fieldField).arg(JExpr.dotclass(type)).arg(modeParam);
-    getterWithModeBody._return(res);
+
+    if (_recordFieldAccessorWithMode)
+    {
+      // Getter method with mode.
+      final JMethod getterWithMode = templateClass.method(JMod.PUBLIC, type, getterName);
+      addAccessorDoc(getterWithMode, schemaField, "Getter");
+      setDeprecatedAnnotationAndJavadoc(getterWithMode, schemaField);
+      JVar modeParam = getterWithMode.param(_getModeClass, "mode");
+      final JBlock getterWithModeBody = getterWithMode.body();
+      res = JExpr.invoke("obtain" + wrappedOrDirect).arg(fieldField).arg(JExpr.dotclass(type)).arg(modeParam);
+      getterWithModeBody._return(res);
+    }
 
     // Getter method without mode.
     final JMethod getterWithoutMode = templateClass.method(JMod.PUBLIC, type, getterName);
     addAccessorDoc(getterWithoutMode, schemaField, "Getter");
     setDeprecatedAnnotationAndJavadoc(getterWithoutMode, schemaField);
-    res = JExpr.invoke(getterName).arg(_strictGetMode);
-    getterWithoutMode.body()._return(res);
+    final JBlock getterWithoutModeBody = getterWithoutMode.body();
+    res = JExpr.invoke("obtain" + wrappedOrDirect).arg(fieldField).arg(JExpr.dotclass(type)).arg(_strictGetMode);
+    getterWithoutModeBody._return(res);
 
     // Determine dataClass
     final JClass dataClass = generate(field.getDataClass());
-
-    // Setter method with mode
     final String setterName = "set" + capitalizedName;
-    final JMethod setterWithMode = templateClass.method(JMod.PUBLIC, templateClass, setterName);
-    addAccessorDoc(setterWithMode, schemaField, "Setter");
-    setDeprecatedAnnotationAndJavadoc(setterWithMode, schemaField);
-    JVar param = setterWithMode.param(type, "value");
-    modeParam = setterWithMode.param(_setModeClass, "mode");
-    JInvocation inv = setterWithMode.body().invoke("put" + wrappedOrDirect).arg(fieldField).arg(JExpr.dotclass(type));
-    dataClassArg(inv, dataClass).arg(param).arg(modeParam);
-    setterWithMode.body()._return(JExpr._this());
+
+    if (_recordFieldAccessorWithMode)
+    {
+      // Setter method with mode
+      final JMethod setterWithMode = templateClass.method(JMod.PUBLIC, templateClass, setterName);
+      addAccessorDoc(setterWithMode, schemaField, "Setter");
+      setDeprecatedAnnotationAndJavadoc(setterWithMode, schemaField);
+      JVar param = setterWithMode.param(type, "value");
+      JVar modeParam = setterWithMode.param(_setModeClass, "mode");
+      JInvocation inv = setterWithMode.body().invoke("put" + wrappedOrDirect).arg(fieldField).arg(JExpr.dotclass(type));
+      dataClassArg(inv, dataClass).arg(param).arg(modeParam);
+      setterWithMode.body()._return(JExpr._this());
+    }
 
     // Setter method without mode
     final JMethod setter = templateClass.method(JMod.PUBLIC, templateClass, setterName);
     addAccessorDoc(setter, schemaField, "Setter");
     setDeprecatedAnnotationAndJavadoc(setter, schemaField);
-    param = setter.param(type, "value");
-    inv = setter.body().invoke("put" + wrappedOrDirect).arg(fieldField).arg(JExpr.dotclass(type));
+    JVar param = setter.param(type, "value");
+    JInvocation inv = setter.body().invoke("put" + wrappedOrDirect).arg(fieldField).arg(JExpr.dotclass(type));
     dataClassArg(inv, dataClass).arg(param).arg(_disallowNullSetMode);
     setter.body()._return(JExpr._this());
 
@@ -687,7 +709,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     }
   }
 
-  private void generateTyperef(JDefinedClass typerefClass, TyperefTemplateSpec typerefSpec)
+  protected void generateTyperef(JDefinedClass typerefClass, TyperefTemplateSpec typerefSpec)
   {
     typerefClass.javadoc().append(typerefSpec.getSchema().getDoc());
 
@@ -701,10 +723,10 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     constructor.body().invoke(SUPER).arg(schemaField);
   }
 
-  private void generateUnion(JDefinedClass unionClass, UnionTemplateSpec unionSpec)
+  protected void generateUnion(JDefinedClass unionClass, UnionTemplateSpec unionSpec)
       throws JClassAlreadyExistsException
   {
-    unionClass._extends(UnionTemplate.class);
+    unionClass._extends(getUnionClass());
 
     final JVar schemaField = generateSchemaField(unionClass, unionSpec.getSchema());
 
@@ -949,5 +971,37 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     final JVar m = argConstructor.param(_mapClass.narrow(_stringClass, valueClass), "m");
     argConstructor.body().invoke(THIS).arg(JExpr.invoke("newDataMapOfSize").arg(m.invoke("size")));
     argConstructor.body().invoke("putAll").arg(m);
+  }
+
+  public static class Config
+  {
+    private String _defaultPackage;
+    private boolean _recordFieldAccessorWithMode;
+
+    public Config()
+    {
+      _defaultPackage = null;
+      _recordFieldAccessorWithMode = true;
+    }
+
+    public void setDefaultPackage(String defaultPackage)
+    {
+      _defaultPackage = defaultPackage;
+    }
+
+    public String getDefaultPackage()
+    {
+      return _defaultPackage;
+    }
+
+    public void setRecordFieldAccessorWithMode(boolean recordFieldAccessorWithMode)
+    {
+      _recordFieldAccessorWithMode = recordFieldAccessorWithMode;
+    }
+
+    public boolean getRecordFieldAccessorWithMode()
+    {
+      return _recordFieldAccessorWithMode;
+    }
   }
 }
