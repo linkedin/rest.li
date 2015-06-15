@@ -31,6 +31,8 @@ import com.linkedin.data.template.BooleanMap;
 import com.linkedin.data.template.BytesArray;
 import com.linkedin.data.template.BytesMap;
 import com.linkedin.data.template.DataTemplateUtil;
+import com.linkedin.data.template.DirectArrayTemplate;
+import com.linkedin.data.template.DirectMapTemplate;
 import com.linkedin.data.template.DoubleArray;
 import com.linkedin.data.template.DoubleMap;
 import com.linkedin.data.template.FixedTemplate;
@@ -41,9 +43,13 @@ import com.linkedin.data.template.IntegerArray;
 import com.linkedin.data.template.IntegerMap;
 import com.linkedin.data.template.LongArray;
 import com.linkedin.data.template.LongMap;
+import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.StringArray;
 import com.linkedin.data.template.StringMap;
 import com.linkedin.data.template.TyperefInfo;
+import com.linkedin.data.template.UnionTemplate;
+import com.linkedin.data.template.WrappingArrayTemplate;
+import com.linkedin.data.template.WrappingMapTemplate;
 import com.linkedin.pegasus.generator.spec.ArrayTemplateSpec;
 import com.linkedin.pegasus.generator.spec.ClassTemplateSpec;
 import com.linkedin.pegasus.generator.spec.CustomInfoSpec;
@@ -77,6 +83,7 @@ import com.sun.codemodel.JInvocation;
 import com.sun.codemodel.JMethod;
 import com.sun.codemodel.JMod;
 import com.sun.codemodel.JVar;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -132,20 +139,46 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
   private final Map<ClassTemplateSpec, JDefinedClass> _definedClasses = new HashMap<ClassTemplateSpec, JDefinedClass>();
   private final Map<JDefinedClass, ClassTemplateSpec> _generatedClasses = new HashMap<JDefinedClass, ClassTemplateSpec>();
 
+  private final JClass _recordBaseClass;
+  private final JClass _unionBaseClass;
+  private final JClass _wrappingArrayBaseClass;
+  private final JClass _wrappingMapBaseClass;
+  private final JClass _directArrayBaseClass;
+  private final JClass _directMapBaseClass;
+
   private final boolean _recordFieldAccessorWithMode;
+  private final boolean _recordFieldRemove;
+  private final boolean _pathSpecMethods;
+  private final boolean _copierMethods;
 
   private JavaDataTemplateGenerator(String defaultPackage,
-                                    boolean recordFieldAccessorWithMode)
+                                    boolean recordFieldAccessorWithMode,
+                                    boolean recordFieldRemove,
+                                    boolean pathSpecMethods,
+                                    boolean copierMethods)
   {
     super(defaultPackage);
 
+    _recordBaseClass = getCodeModel().ref(RecordTemplate.class);
+    _unionBaseClass = getCodeModel().ref(UnionTemplate.class);
+    _wrappingArrayBaseClass = getCodeModel().ref(WrappingArrayTemplate.class);
+    _wrappingMapBaseClass = getCodeModel().ref(WrappingMapTemplate.class);
+    _directArrayBaseClass = getCodeModel().ref(DirectArrayTemplate.class);
+    _directMapBaseClass = getCodeModel().ref(DirectMapTemplate.class);
+
     _recordFieldAccessorWithMode = recordFieldAccessorWithMode;
+    _recordFieldRemove = recordFieldRemove;
+    _pathSpecMethods = pathSpecMethods;
+    _copierMethods = copierMethods;
   }
 
   public JavaDataTemplateGenerator(Config config)
   {
     this(config.getDefaultPackage(),
-         config.getRecordFieldAccessorWithMode());
+         config.getRecordFieldAccessorWithMode(),
+         config.getRecordFieldRemove(),
+         config.getPathSpecMethods(),
+         config.getCopierMethods());
   }
 
   /**
@@ -153,7 +186,11 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
    */
   public JavaDataTemplateGenerator(String defaultPackage)
   {
-    this(defaultPackage, true);
+    this(defaultPackage,
+         true,
+         true,
+         true,
+         true);
   }
 
   public Map<JDefinedClass, ClassTemplateSpec> getGeneratedClasses()
@@ -424,11 +461,11 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
 
     if (CodeUtil.isDirectType(arrayDataTemplateSpec.getSchema().getItems()))
     {
-      arrayClass._extends(_directArrayClass.narrow(itemJClass));
+      arrayClass._extends(_directArrayBaseClass.narrow(itemJClass));
     }
     else
     {
-      arrayClass._extends(_wrappingArrayClass.narrow(itemJClass));
+      extendWrappingArrayBaseClass(itemJClass, arrayClass);
     }
 
     /** see {@link #schemaForArrayItemsOrMapValues} */
@@ -440,11 +477,22 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     generateConstructorWithCollection(arrayClass, itemJClass);
     generateConstructorWithArg(arrayClass, schemaField, _dataListClass, itemJClass, dataJClass);
 
-    generatePathSpecMethodsForCollection(arrayClass, arrayDataTemplateSpec.getSchema(), itemJClass, "items");
+    if (_pathSpecMethods)
+    {
+      generatePathSpecMethodsForCollection(arrayClass, arrayDataTemplateSpec.getSchema(), itemJClass, "items");
+    }
 
     generateCustomClassInitialization(arrayClass, arrayDataTemplateSpec.getCustomInfo());
 
-    generateCopierMethods(arrayClass);
+    if (_copierMethods)
+    {
+      generateCopierMethods(arrayClass);
+    }
+  }
+
+  protected void extendWrappingArrayBaseClass(JClass itemJClass, JDefinedClass arrayClass)
+  {
+    arrayClass._extends(_wrappingArrayBaseClass.narrow(itemJClass));
   }
 
   protected void generateEnum(JDefinedClass enumClass, EnumTemplateSpec enumSpec)
@@ -492,7 +540,10 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
 
     generateConstructorWithObjectArg(fixedClass, schemaField);
 
-    generateCopierMethods(fixedClass);
+    if (_copierMethods)
+    {
+      generateCopierMethods(fixedClass);
+    }
   }
 
   protected void generateMap(JDefinedClass mapClass, MapTemplateSpec mapSpec)
@@ -503,11 +554,11 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
 
     if (CodeUtil.isDirectType(mapSpec.getSchema().getValues()))
     {
-      mapClass._extends(_directMapClass.narrow(valueJClass));
+      mapClass._extends(_directMapBaseClass.narrow(valueJClass));
     }
     else
     {
-      mapClass._extends(_wrappingMapClass.narrow(valueJClass));
+      extendWrappingMapBaseClass(valueJClass, mapClass);
     }
 
     final DataSchema bareSchema = new MapDataSchema(schemaForArrayItemsOrMapValues(mapSpec.getCustomInfo(), mapSpec.getSchema().getValues()));
@@ -519,11 +570,22 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     generateConstructorWithMap(mapClass, valueJClass);
     generateConstructorWithArg(mapClass, schemaField, _dataMapClass, valueJClass, dataJClass);
 
-    generatePathSpecMethodsForCollection(mapClass, mapSpec.getSchema(), valueJClass, "values");
+    if (_pathSpecMethods)
+    {
+      generatePathSpecMethodsForCollection(mapClass, mapSpec.getSchema(), valueJClass, "values");
+    }
 
     generateCustomClassInitialization(mapClass, mapSpec.getCustomInfo());
 
-    generateCopierMethods(mapClass);
+    if (_copierMethods)
+    {
+      generateCopierMethods(mapClass);
+    }
+  }
+
+  protected void extendWrappingMapBaseClass(JClass valueJClass, JDefinedClass mapClass)
+  {
+    mapClass._extends(_wrappingMapBaseClass.narrow(valueJClass));
   }
 
   private JClass generatePrimitive(PrimitiveTemplateSpec primitiveSpec)
@@ -563,9 +625,12 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
 
     setDeprecatedAnnotationAndJavadoc(recordSpec.getSchema(), templateClass);
 
-    templateClass._extends(_recordClass);
+    extendRecordBaseClass(templateClass);
 
-    generatePathSpecMethodsForRecord(recordSpec.getFields(), templateClass);
+    if (_pathSpecMethods)
+    {
+      generatePathSpecMethodsForRecord(recordSpec.getFields(), templateClass);
+    }
 
     final JFieldVar schemaFieldVar = generateSchemaField(templateClass, recordSpec.getSchema());
     generateConstructorWithNoArg(templateClass, schemaFieldVar, _dataMapClass);
@@ -581,7 +646,15 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
       }
     }
 
-    generateCopierMethods(templateClass);
+    if (_copierMethods)
+    {
+      generateCopierMethods(templateClass);
+    }
+  }
+
+  protected void extendRecordBaseClass(JDefinedClass templateClass)
+  {
+    templateClass._extends(_recordBaseClass);
   }
 
   private void generatePathSpecMethodsForRecord(List<RecordTemplateSpec.Field> fieldSpecs, JDefinedClass templateClass)
@@ -640,13 +713,16 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     JExpression res = JExpr.invoke("contains").arg(fieldField);
     hasBody._return(res);
 
-    // Generate remove method.
-    final String removeName = "remove" + capitalizedName;
-    final JMethod remove = templateClass.method(JMod.PUBLIC, getCodeModel().VOID, removeName);
-    addAccessorDoc(remove, schemaField, "Remover");
-    setDeprecatedAnnotationAndJavadoc(remove, schemaField);
-    final JBlock removeBody = remove.body();
-    removeBody.invoke("remove").arg(fieldField);
+    if (_recordFieldRemove)
+    {
+      // Generate remove method.
+      final String removeName = "remove" + capitalizedName;
+      final JMethod remove = templateClass.method(JMod.PUBLIC, getCodeModel().VOID, removeName);
+      addAccessorDoc(remove, schemaField, "Remover");
+      setDeprecatedAnnotationAndJavadoc(remove, schemaField);
+      final JBlock removeBody = remove.body();
+      removeBody.invoke("remove").arg(fieldField);
+    }
 
     final String getterName = JavaCodeUtil.getGetterName(getCodeModel(), type, capitalizedName);
 
@@ -726,7 +802,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
   protected void generateUnion(JDefinedClass unionClass, UnionTemplateSpec unionSpec)
       throws JClassAlreadyExistsException
   {
-    unionClass._extends(getUnionClass());
+    extendUnionBaseClass(unionClass);
 
     final JVar schemaField = generateSchemaField(unionClass, unionSpec.getSchema());
 
@@ -741,9 +817,15 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
       }
     }
 
-    generatePathSpecMethodsForUnion(unionSpec, unionClass);
+    if (_pathSpecMethods)
+    {
+      generatePathSpecMethodsForUnion(unionSpec, unionClass);
+    }
 
-    generateCopierMethods(unionClass);
+    if (_copierMethods)
+    {
+      generateCopierMethods(unionClass);
+    }
 
     if (unionSpec.getTyperefClass() != null)
     {
@@ -758,6 +840,11 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
       final JMethod typerefInfoMethod = unionClass.method(JMod.PUBLIC, TyperefInfo.class, "typerefInfo");
       typerefInfoMethod.body()._return(typerefInfoField);
     }
+  }
+
+  protected void extendUnionBaseClass(JDefinedClass unionClass)
+  {
+    unionClass._extends(_unionBaseClass);
   }
 
   private void generateUnionMemberAccessors(JDefinedClass unionClass, DataSchema memberType, JClass memberClass, JClass dataClass, JVar schemaField)
@@ -977,11 +1064,17 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
   {
     private String _defaultPackage;
     private boolean _recordFieldAccessorWithMode;
+    private boolean _recordFieldRemove;
+    private boolean _pathSpecMethods;
+    private boolean _copierMethods;
 
     public Config()
     {
       _defaultPackage = null;
       _recordFieldAccessorWithMode = true;
+      _recordFieldRemove = true;
+      _pathSpecMethods = true;
+      _copierMethods = true;
     }
 
     public void setDefaultPackage(String defaultPackage)
@@ -1002,6 +1095,36 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     public boolean getRecordFieldAccessorWithMode()
     {
       return _recordFieldAccessorWithMode;
+    }
+
+    public void setRecordFieldRemove(boolean recordFieldRemove)
+    {
+      _recordFieldRemove = recordFieldRemove;
+    }
+
+    public boolean getRecordFieldRemove()
+    {
+      return _recordFieldRemove;
+    }
+
+    public void setPathSpecMethods(boolean pathSpecMethods)
+    {
+      _pathSpecMethods = pathSpecMethods;
+    }
+
+    public boolean getPathSpecMethods()
+    {
+      return _pathSpecMethods;
+    }
+
+    public void setCopierMethods(boolean copierMethods)
+    {
+      _copierMethods = copierMethods;
+    }
+
+    public boolean getCopierMethods()
+    {
+      return _copierMethods;
     }
   }
 }

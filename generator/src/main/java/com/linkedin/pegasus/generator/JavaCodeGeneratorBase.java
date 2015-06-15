@@ -23,14 +23,8 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.Custom;
 import com.linkedin.data.template.DataTemplateUtil;
-import com.linkedin.data.template.DirectArrayTemplate;
-import com.linkedin.data.template.DirectMapTemplate;
 import com.linkedin.data.template.GetMode;
-import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.SetMode;
-import com.linkedin.data.template.UnionTemplate;
-import com.linkedin.data.template.WrappingArrayTemplate;
-import com.linkedin.data.template.WrappingMapTemplate;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -78,19 +72,12 @@ public class JavaCodeGeneratorBase
   protected final JClass _dataListClass;
   protected final JClass _dataMapClass;
   protected final JClass _dataTemplateUtilClass;
-  protected final JClass _directArrayClass;
-  protected final JClass _directMapClass;
   protected final JClass _getModeClass;
   protected final JClass _mapClass;
   protected final JClass _pathSpecClass;
   protected final JClass _setModeClass;
   protected final JClass _stringBuilderClass;
   protected final JClass _stringClass;
-
-  protected final JClass _recordClass;
-  protected final JClass _unionClass;
-  protected final JClass _wrappingArrayClass;
-  protected final JClass _wrappingMapClass;
 
   protected final JFieldRef _disallowNullSetMode;
   protected final JFieldRef _strictGetMode;
@@ -111,8 +98,6 @@ public class JavaCodeGeneratorBase
     _dataListClass = getCodeModel().ref(DataList.class);
     _dataMapClass = getCodeModel().ref(DataMap.class);
     _dataTemplateUtilClass = getCodeModel().ref(DataTemplateUtil.class);
-    _directArrayClass = getCodeModel().ref(DirectArrayTemplate.class);
-    _directMapClass = getCodeModel().ref(DirectMapTemplate.class);
     _getModeClass = getCodeModel().ref(GetMode.class);
     _mapClass = getCodeModel().ref(Map.class);
     _pathSpecClass = getCodeModel().ref(PathSpec.class);
@@ -120,35 +105,10 @@ public class JavaCodeGeneratorBase
     _stringBuilderClass = getCodeModel().ref(StringBuilder.class);
     _stringClass = getCodeModel().ref(String.class);
 
-    _recordClass = getRecordClass();
-    _unionClass = getUnionClass();
-    _wrappingArrayClass = getWrappingArrayClass();
-    _wrappingMapClass = getWrappingMapClass();
-
     _disallowNullSetMode = getCodeModel().ref(SetMode.class).staticRef("DISALLOW_NULL");
     _strictGetMode = getCodeModel().ref(GetMode.class).staticRef("STRICT");
 
     _package = getCodeModel()._package(defaultPackage == null ? "" : defaultPackage);
-  }
-
-  protected JClass getRecordClass()
-  {
-    return getCodeModel().ref(RecordTemplate.class);
-  }
-
-  protected JClass getUnionClass()
-  {
-    return getCodeModel().ref(UnionTemplate.class);
-  }
-
-  protected JClass getWrappingArrayClass()
-  {
-    return getCodeModel().ref(WrappingArrayTemplate.class);
-  }
-
-  protected JClass getWrappingMapClass()
-  {
-    return getCodeModel().ref(WrappingMapTemplate.class);
   }
 
   protected static boolean isReserved(String name)

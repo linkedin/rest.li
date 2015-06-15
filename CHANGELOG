@@ -1,6 +1,8 @@
 2.6.3
 -----
-
+(RB=501374)
+Made generation of path spec methods, copier methods and record remove method in data template
+configurable.
 
 2.6.2
 -----
@@ -90,7 +92,7 @@ Add back log4j.xml in generator and data-avro-generator module.
 Add new status code constants for redirection and added new property key for redirection hops.
 
 (RB=471298)
-Fix a bug in HttpClientFactory where _clientsOutstanding can go negative if client#shutdown 
+Fix a bug in HttpClientFactory where _clientsOutstanding can go negative if client#shutdown
 is called multiple times on the same client and thus preventing clientFactory to be shutdown.
 
 (RB=472316)
