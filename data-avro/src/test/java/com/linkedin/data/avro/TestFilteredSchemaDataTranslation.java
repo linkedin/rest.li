@@ -27,7 +27,9 @@ import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.SchemaParser;
 import com.linkedin.data.schema.util.Filters;
+
 import java.io.IOException;
+
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.testng.annotations.Test;

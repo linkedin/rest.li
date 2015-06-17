@@ -222,7 +222,7 @@ public class TestUtil
     // create test files
     for (Map.Entry<String,String> entry : fileToSchemaMap.entrySet())
     {
-      String filename = (testDir.getCanonicalPath() + entry.getKey()).replace('/', File.separatorChar);
+      String filename = (testDir.getCanonicalPath() + File.separator + entry.getKey()).replace('/', File.separatorChar);
       File file = new File(filename);
       if (debug) out.println("creating " + file);
       File parentFile = file.getParentFile();

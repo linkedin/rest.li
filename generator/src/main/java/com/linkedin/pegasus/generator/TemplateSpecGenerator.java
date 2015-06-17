@@ -139,20 +139,12 @@ public class TemplateSpecGenerator
   }
 
   /**
-   * Generate {@link ClassTemplateSpec} from the specified {@link DataSchema} without knowing the location.
-   */
-  public ClassTemplateSpec generate(DataSchema schema)
-  {
-    return processSchema(schema, null, null);
-  }
-
-  /**
    * Generate {@link ClassTemplateSpec} from the specified {@link DataSchema} and its location.
    */
   public ClassTemplateSpec generate(DataSchema schema, DataSchemaLocation location)
   {
     pushCurrentLocation(location);
-    final ClassTemplateSpec result = generate(schema);
+    final ClassTemplateSpec result = processSchema(schema, null, null);
     popCurrentLocation();
     return result;
   }
@@ -734,7 +726,7 @@ public class TemplateSpecGenerator
     final List<NamedDataSchema> includes = schema.getInclude();
     for (NamedDataSchema includedSchema : includes)
     {
-      generate(includedSchema);
+      processSchema(includedSchema, null, null);
     }
 
     final Map<CustomInfoSpec, Object> customInfoMap = new IdentityHashMap<CustomInfoSpec, Object>(schema.getFields().size() * 2);

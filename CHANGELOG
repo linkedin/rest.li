@@ -1,6 +1,7 @@
 2.10.3
 -----
-
+(RB=513446)
+Better template spec generator interface.
 
 2.10.2
 -----
@@ -10,7 +11,7 @@ Fix build.gradle signing process to enable mavin release.
 2.10.1
 -----
 (RB=523443)
-Fix a bug in FileStore where IllegalArgumentException may throw if temp file 
+Fix a bug in FileStore where IllegalArgumentException may throw if temp file
 prefix contains fewer than three characters
 
 2.10.0

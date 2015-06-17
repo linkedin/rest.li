@@ -1656,7 +1656,7 @@ class PegasusPlugin implements Plugin<Project>
       project.logger.lifecycle("There are ${inputDataSchemaFilenames.length} data schema input files. Using input root folder: ${inputDir}")
       destinationDir.mkdirs()
 
-      final String resolverPathStr = (resolverPath + project.files(inputDir)).collect { it.path }.join(File.pathSeparator)
+      final String resolverPathStr = (resolverPath + project.files(inputDir)).asPath
       final Class<?> dataTemplateGenerator = project.property(GENERATOR_CLASSLOADER_NAME).loadClass('com.linkedin.pegasus.generator.PegasusDataTemplateGenerator')
       dataTemplateGenerator.run(resolverPathStr, null, true, destinationDir.path, inputDataSchemaFilenames)
     }
@@ -1702,7 +1702,7 @@ class PegasusPlugin implements Plugin<Project>
       project.logger.lifecycle("There are ${inputDataSchemaFilenames.length} data schema input files. Using input root folder: ${inputDir}")
       destinationDir.mkdirs()
 
-      final String resolverPathStr = (resolverPath + project.files(inputDir)).collect { it.path }.join(File.pathSeparator)
+      final String resolverPathStr = (resolverPath + project.files(inputDir)).asPath
       final Class<?> avroSchemaGenerator = project.property(GENERATOR_CLASSLOADER_NAME).loadClass('com.linkedin.data.avro.generator.AvroSchemaGenerator')
 
       final String avroTranslateOptionalDefault
@@ -1774,7 +1774,7 @@ class PegasusPlugin implements Plugin<Project>
       final snapshotGenerator = generatorClassLoader.loadClass('com.linkedin.restli.tools.snapshot.gen.RestLiSnapshotExporter').newInstance()
       final idlGenerator = generatorClassLoader.loadClass('com.linkedin.restli.tools.idlgen.RestLiResourceModelExporter').newInstance()
 
-      final String resolverPathStr = resolverPath.collect { it.path }.join(File.pathSeparator)
+      final String resolverPathStr = resolverPath.asPath
       snapshotGenerator.setResolverPath(resolverPathStr)
 
       final docProviders = loadAdditionalDocProviders(project, runtimeClassloader)
@@ -1866,7 +1866,7 @@ class PegasusPlugin implements Plugin<Project>
 
     final ClassLoader generatorClassLoader = (ClassLoader) project.property(GENERATOR_CLASSLOADER_NAME)
     final Class<?> idlCheckerClass = generatorClassLoader.loadClass('com.linkedin.restli.tools.idlcheck.RestLiResourceModelCompatibilityChecker')
-    final String resolverPathStr = resolverPath.collect { it.path }.join(File.pathSeparator)
+    final String resolverPathStr = resolverPath.asPath
     final idlCompatibilityChecker = idlCheckerClass.newInstance()
     idlCompatibilityChecker.setResolverPath(resolverPathStr)
 
@@ -2240,7 +2240,7 @@ class PegasusPlugin implements Plugin<Project>
       final ClassLoader generatorClassLoader = (ClassLoader) project.property(GENERATOR_CLASSLOADER_NAME)
       final Class<?> idlCheckerClass = generatorClassLoader.loadClass('com.linkedin.restli.tools.idlcheck.RestLiResourceModelCompatibilityChecker')
       final idlCompatibilityChecker = idlCheckerClass.newInstance()
-      final String resolverPathStr = resolverPath.collect { it.path }.join(File.pathSeparator)
+      final String resolverPathStr = resolverPath.asPath
       idlCompatibilityChecker.setResolverPath(resolverPathStr)
 
       final CompatibilityResult countResult = checkFileCount(project,
@@ -2374,7 +2374,7 @@ class PegasusPlugin implements Plugin<Project>
       final ClassLoader generatorClassLoader = (ClassLoader) project.property(GENERATOR_CLASSLOADER_NAME)
       Thread.currentThread().contextClassLoader = new URLClassLoader(classpathUrls, generatorClassLoader)
 
-      final String resolverPathStr = resolverPath.collect { it.path }.join(File.pathSeparator)
+      final String resolverPathStr = resolverPath.asPath
       final Class<?> stubGenerator = generatorClassLoader.loadClass('com.linkedin.restli.tools.clientgen.RestRequestBuilderGenerator')
       destinationDir.mkdirs()
 

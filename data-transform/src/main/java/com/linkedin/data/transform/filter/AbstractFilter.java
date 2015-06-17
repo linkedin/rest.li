@@ -349,7 +349,7 @@ public abstract class AbstractFilter
             }
             else
             {
-              onError(name, "data is of primitve value: %1$s, but filter: %2$s is complex",
+              onError(name, "data is of primitive value: %1$s, but filter: %2$s is complex",
                       childValue,
                       opChild);
             }

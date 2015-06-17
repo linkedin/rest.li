@@ -117,7 +117,8 @@ public class DataSchemaParser
           }
           if (schema != null)
           {
-            result.getSchemaAndNames().add(new CodeUtil.Pair<DataSchema, String>(schema, source));
+            final DataSchemaLocation location = _schemaResolver.nameToDataSchemaLocations().get(source);
+            result.getSchemaAndLocations().add(new CodeUtil.Pair<DataSchema, DataSchemaLocation>(schema, location));
           }
         }
       }
@@ -270,7 +271,7 @@ public class DataSchemaParser
   {
     // use collections to maintain order
     private final Collection<CodeUtil.Pair<DataSchema, File>> _schemaAndFiles = new ArrayList<CodeUtil.Pair<DataSchema, File>>();
-    private final Collection<CodeUtil.Pair<DataSchema, String>> _schemaAndNames = new ArrayList<CodeUtil.Pair<DataSchema, String>>();
+    private final Collection<CodeUtil.Pair<DataSchema, DataSchemaLocation>> _schemaAndLocations = new ArrayList<CodeUtil.Pair<DataSchema, DataSchemaLocation>>();
     private final Set<File> _sourceFiles = new HashSet<File>();
     private final StringBuilder _message = new StringBuilder();
 
@@ -283,11 +284,11 @@ public class DataSchemaParser
     }
 
     /**
-     * @return pairs of schema and its corresponding name for those schemas passed with their name to the parser
+     * @return pairs of schema and its corresponding location for those schemas passed with their location to the parser
      */
-    public Collection<CodeUtil.Pair<DataSchema, String>> getSchemaAndNames()
+    public Collection<CodeUtil.Pair<DataSchema, DataSchemaLocation>> getSchemaAndLocations()
     {
-      return _schemaAndNames;
+      return _schemaAndLocations;
     }
 
     /**

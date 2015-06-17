@@ -127,9 +127,9 @@ public class PegasusDataTemplateGenerator
       final DataSchemaLocation location = new FileDataSchemaLocation(pair.second);
       specGenerator.generate(pair.first, location);
     }
-    for (CodeUtil.Pair<DataSchema, String> pair : parseResult.getSchemaAndNames())
+    for (CodeUtil.Pair<DataSchema, DataSchemaLocation> pair : parseResult.getSchemaAndLocations())
     {
-      specGenerator.generate(pair.first);
+      specGenerator.generate(pair.first, pair.second);
     }
     for (ClassTemplateSpec spec : specGenerator.getGeneratedSpecs())
     {
