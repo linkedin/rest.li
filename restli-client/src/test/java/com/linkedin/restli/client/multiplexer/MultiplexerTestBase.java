@@ -94,7 +94,7 @@ public class MultiplexerTestBase
   protected Response<TestRecord> fakeResponse(int id)
   {
     TestRecord record = fakeEntity(id);
-    return new ResponseImpl<TestRecord>(HttpStatus.S_200_OK.getCode(), HEADERS, Collections.<String>emptyList(), record, null);
+    return new ResponseImpl<TestRecord>(HttpStatus.S_200_OK.getCode(), HEADERS, record, null);
   }
 
   protected TestRecord fakeEntity(int id)

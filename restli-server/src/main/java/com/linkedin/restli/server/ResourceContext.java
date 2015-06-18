@@ -160,17 +160,4 @@ public interface ResourceContext
    * @param mode Projection mode for the response body for the CollectionResult metadata.
    */
   void setMetadataProjectionMode(ProjectionMode mode);
-
-  /**
-   * retrieve the cookies from the underlying RestRequest
-   * @return the request cookie field
-   */
-  List<String> getRequestCookies();
-
-  /**
-   * pass the cookie to the underlying RestResponse through RestResponseBuilder
-   * @param cookie the cookie string to be processed
-   */
-  void addResponseCookie(String cookie);
-
 }
