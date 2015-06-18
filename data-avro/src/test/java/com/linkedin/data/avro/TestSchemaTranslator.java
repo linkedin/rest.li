@@ -16,7 +16,6 @@
 
 package com.linkedin.data.avro;
 
-
 import com.linkedin.data.Data;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.TestUtil;
@@ -25,10 +24,11 @@ import com.linkedin.data.schema.JsonBuilder;
 import com.linkedin.data.schema.SchemaParser;
 import com.linkedin.data.schema.SchemaToJsonEncoder;
 import com.linkedin.data.schema.validation.ValidationOptions;
-
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.Arrays;
-
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;
@@ -46,6 +46,8 @@ import static org.testng.Assert.assertTrue;
 
 public class TestSchemaTranslator
 {
+
+  private static final String FS = File.separator;
 
   static public GenericRecord genericRecordFromString(String jsonString, Schema writerSchema, Schema readerSchema) throws IOException
   {
@@ -1582,7 +1584,73 @@ public class TestSchemaTranslator
       parser.parse(readerSchemaText);
       if (debug) System.out.println(parser.errorMessage());
       assertFalse(parser.hasError());
-
     }
+  }
+
+  @Test
+  public void testAvroUnionModeChaining() throws IOException
+  {
+    String expectedSchema = "{ " +
+        "  \"type\" : \"record\", " +
+        "  \"name\" : \"A\", " +
+        "  \"namespace\" : \"com.linkedin.pegasus.test\", " +
+        "  \"fields\" : [ " +
+        "    { " +
+        "      \"name\" : \"someBorC\", " +
+        "      \"type\" : [ " +
+        "        { " +
+        "          \"type\" : \"record\", " +
+        "          \"name\" : \"B\", " +
+        "          \"fields\" : [ " +
+        "            { " +
+        "              \"name\" : \"someAorC\", " +
+        "              \"type\" : [ " +
+        "                \"A\", " +
+        "                { " +
+        "                  \"type\" : \"record\", " +
+        "                  \"name\" : \"C\", " +
+        "                  \"fields\" : [ " +
+        "                    { " +
+        "                      \"name\" : \"something\", " +
+        "                      \"type\" : \"int\", " +
+        "                      \"optional\" : true, " +
+        "                      \"default\" : 42" +
+        "                    } " +
+        "                  ] " +
+        "                } " +
+        "              ] " +
+        "            } " +
+        "          ] " +
+        "        }, " +
+        "        \"C\" " +
+        "      ] " +
+        "    } " +
+        "  ]" +
+        "}";
+
+    String avroRootUrl = getClass().getClassLoader().getResource("avro").getFile();
+    String avroRootDir = new File(avroRootUrl).getAbsolutePath();
+    String avroFilePath =  avroRootDir + FS + "com" + FS + "linkedin" + FS + "pegasus" + FS + "test" + FS + "A.avsc";
+    File avroFile = new File(avroFilePath);
+
+    String schema = readFile(avroFile);
+    AvroToDataSchemaTranslationOptions options =
+        new AvroToDataSchemaTranslationOptions(AvroToDataSchemaTranslationMode.TRANSLATE).setFileResolutionPaths(avroRootDir);
+    DataSchema pdscSchema = SchemaTranslator.avroToDataSchema(schema, options);
+    DataMap actual = TestUtil.dataMapFromString(pdscSchema.toString());
+    DataMap expected = TestUtil.dataMapFromString(expectedSchema);
+    assertEquals(actual, expected);
+  }
+
+  private static String readFile(File file) throws IOException
+  {
+    BufferedReader br = new BufferedReader(new FileReader(file));
+    StringBuilder sb = new StringBuilder();
+    String line;
+    while((line = br.readLine()) != null)
+    {
+      sb.append(line + "\n");
+    }
+    return sb.toString();
   }
 }

@@ -121,7 +121,7 @@ public final class ValidationOptions
 
   /**
    * Set the required mode that indicates how required fields should be handled during validation.
-   * 
+   *
    * @param requiredMode specifies the required mode.
    */
   public void setRequiredMode(RequiredMode requiredMode)
@@ -132,10 +132,10 @@ public final class ValidationOptions
 
   /**
    * Set Avro union mode.
-   * 
+   *
    * If Avro union mode is enabled, a union uses the name (instead of full name) of the
    * member type as the key to specify the type of the value in the union.
-   * 
+   *
    * @param value set to true to enable Avro union mode.
    */
   public void setAvroUnionMode(boolean value)

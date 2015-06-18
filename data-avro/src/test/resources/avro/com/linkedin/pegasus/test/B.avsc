@@ -1,0 +1,9 @@
+{
+  "type" : "record",
+  "name" : "B",
+  "namespace" : "com.linkedin.pegasus.test",
+  "fields" : [ {
+    "name" : "someAorC",
+    "type" : ["A", "C"]
+  } ]
+}

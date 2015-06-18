@@ -1151,6 +1151,11 @@ public class SchemaParser extends AbstractDataParser
     return _dataLocationMap;
   }
 
+  public static final ValidationOptions getDefaultSchemaParserValidationOptions()
+  {
+    return new ValidationOptions(RequiredMode.CAN_BE_ABSENT_IF_HAS_DEFAULT, CoercionMode.NORMAL);
+  }
+
   /**
    * Current namespace, used to determine full name from unqualified name.
    */
@@ -1160,5 +1165,5 @@ public class SchemaParser extends AbstractDataParser
   private final DataSchemaResolver _resolver;
   private final Map<Object, DataLocation> _dataLocationMap = new IdentityHashMap<Object, DataLocation>();
   private StringBuilder _errorMessageBuilder = new StringBuilder();
-  private ValidationOptions _validationOptions = new ValidationOptions(RequiredMode.CAN_BE_ABSENT_IF_HAS_DEFAULT, CoercionMode.NORMAL);
+  private ValidationOptions _validationOptions = getDefaultSchemaParserValidationOptions();
 }

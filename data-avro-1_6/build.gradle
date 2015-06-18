@@ -21,3 +21,8 @@ idea.module.iml.whenMerged { module ->
   }
   module.dependencies = jarDeps + module.dependencies
 }
+
+sourceSets.test.resources {
+  final dataAvroProject = project.evaluationDependsOn(':data-avro')
+  it.source(dataAvroProject.sourceSets.test.resources)
+}

@@ -25,6 +25,7 @@ import com.linkedin.data.message.Message;
 import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaConstants;
+import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.DataSchemaTraverse;
 import com.linkedin.data.schema.EnumDataSchema;
 import com.linkedin.data.schema.FixedDataSchema;
@@ -33,6 +34,9 @@ import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.SchemaParser;
 import com.linkedin.data.schema.SchemaParserFactory;
 import com.linkedin.data.schema.UnionDataSchema;
+import com.linkedin.data.schema.resolver.DefaultDataSchemaResolver;
+import com.linkedin.data.schema.resolver.FileDataSchemaResolver;
+import com.linkedin.data.schema.validation.ValidationOptions;
 import com.linkedin.data.template.DataTemplateUtil;
 
 import java.util.ArrayList;
@@ -58,6 +62,7 @@ public class SchemaTranslator
   public static final String DATA_PROPERTY = "com.linkedin.data";
   public static final String SCHEMA_PROPERTY = "schema";
   public static final String OPTIONAL_DEFAULT_MODE_PROPERTY = "optionalDefaultMode";
+  public static final String AVRO_FILE_EXTENSION = ".avsc";
 
   private SchemaTranslator()
   {
@@ -114,8 +119,13 @@ public class SchemaTranslator
   public static DataSchema avroToDataSchema(String avroSchemaInJson, AvroToDataSchemaTranslationOptions options)
     throws IllegalArgumentException
   {
-    SchemaParser parser = SchemaParserFactory.instance().create(null);
-    parser.getValidationOptions().setAvroUnionMode(true);
+    ValidationOptions validationOptions = SchemaParser.getDefaultSchemaParserValidationOptions();
+    validationOptions.setAvroUnionMode(true);
+
+    SchemaParserFactory parserFactory = SchemaParserFactory.instance(validationOptions);
+
+    DataSchemaResolver resolver = getResolver(parserFactory, options);
+    SchemaParser parser = parserFactory.create(resolver);
     parser.parse(avroSchemaInJson);
     if (parser.hasError())
     {
@@ -312,6 +322,24 @@ public class SchemaTranslator
     // convert schema
     String schemaJson = SchemaToAvroJsonEncoder.schemaToAvro(dataSchema, defaultConverter.fieldDefaultValueProvider(), options);
     return schemaJson;
+  }
+
+  /**
+   * Allows caller to specify a file path for schema resolution.
+   */
+  private static DataSchemaResolver getResolver(SchemaParserFactory parserFactory, AvroToDataSchemaTranslationOptions options)
+  {
+    String resolverPath = options.getFileResolutionPaths();
+    if (resolverPath != null)
+    {
+      FileDataSchemaResolver resolver = new FileDataSchemaResolver(parserFactory, resolverPath);
+      resolver.setExtension(AVRO_FILE_EXTENSION);
+      return resolver;
+    }
+    else
+    {
+      return new DefaultDataSchemaResolver(parserFactory);
+    }
   }
 
   interface FieldDefaultValueProvider

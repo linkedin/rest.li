@@ -1,0 +1,10 @@
+{
+  "type" : "record",
+  "name" : "C",
+  "namespace" : "com.linkedin.pegasus.test",
+  "fields" : [ {
+    "name" : "something",
+    "type" : ["int", "null"],
+    "default" : 42
+  } ]
+}

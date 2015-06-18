@@ -60,5 +60,23 @@ public class AvroToDataSchemaTranslationOptions
     return _translationMode;
   }
 
+  /**
+   * Set the Avro schema search paths, delimited by the default path separator.
+   */
+  public AvroToDataSchemaTranslationOptions setFileResolutionPaths(String schemaResolverPaths)
+  {
+    _schemaResolverPaths = schemaResolverPaths;
+    return this;
+  }
+
+  /**
+   * Returns the Avro schema search paths, delimited by the default path separator.
+   */
+  public String getFileResolutionPaths()
+  {
+    return _schemaResolverPaths;
+  }
+
   private AvroToDataSchemaTranslationMode _translationMode;
+  private String _schemaResolverPaths = null;
 }

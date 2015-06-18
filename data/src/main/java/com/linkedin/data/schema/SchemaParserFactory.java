@@ -16,27 +16,53 @@
 
 package com.linkedin.data.schema;
 
+import com.linkedin.data.schema.validation.ValidationOptions;
+import java.util.HashMap;
+import java.util.Map;
+
 public class SchemaParserFactory
 {
   /**
-   * Create a new parser that will use the specified resolver.
+   * Create a new parser that will use the specified resolver and validation options.
    *
    * @param resolver to be provided to the parser.
    * @return a new parser.
    */
   public SchemaParser create(DataSchemaResolver resolver)
   {
-    return new SchemaParser(resolver);
+    SchemaParser parser = new SchemaParser(resolver);
+    if (_validationOptions != null)
+    {
+      parser.setValidationOptions(_validationOptions);
+    }
+    return parser;
   }
 
-  protected SchemaParserFactory()
+  protected SchemaParserFactory(ValidationOptions validationOptions)
   {
+    _validationOptions = validationOptions;
   }
 
   static public final SchemaParserFactory instance()
   {
-    return _instance;
+    return instance(null);
   }
 
-  static private final SchemaParserFactory _instance = new SchemaParserFactory();
+  static public final SchemaParserFactory instance(ValidationOptions validationOptions)
+  {
+    if (factoryMap.containsKey(validationOptions))
+    {
+      return factoryMap.get(validationOptions);
+    }
+    else
+    {
+      SchemaParserFactory factory = new SchemaParserFactory(validationOptions);
+      factoryMap.put(validationOptions, factory);
+      return factory;
+    }
+  }
+
+  static private final Map<ValidationOptions, SchemaParserFactory> factoryMap =
+      new HashMap<ValidationOptions, SchemaParserFactory>();
+  private final ValidationOptions _validationOptions;
 }
