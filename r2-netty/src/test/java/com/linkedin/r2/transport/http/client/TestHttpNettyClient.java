@@ -26,6 +26,7 @@ import io.netty.handler.codec.TooLongFrameException;
 import java.io.IOException;
 import java.net.SocketAddress;
 import java.net.URI;
+import java.net.UnknownHostException;
 import java.nio.channels.UnresolvedAddressException;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
@@ -171,7 +172,7 @@ public class TestHttpNettyClient
     }
     catch (ExecutionException e)
     {
-      verifyCauseChain(e, RemoteInvocationException.class, UnresolvedAddressException.class);
+      verifyCauseChain(e, RemoteInvocationException.class, UnknownHostException.class);
     }
   }
 

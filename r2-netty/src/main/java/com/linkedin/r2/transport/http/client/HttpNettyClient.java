@@ -49,6 +49,8 @@ import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.util.concurrent.DefaultEventExecutorGroup;
 import io.netty.util.concurrent.GlobalEventExecutor;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.concurrent.ExecutorService;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
@@ -326,8 +328,19 @@ import org.slf4j.LoggerFactory;
         .overwriteHeaders(WireAttributeHelper.toWireAttributes(wireAttrs))
         .build();
 
-    // TODO investigate DNS resolution and timing
-    SocketAddress address = new InetSocketAddress(host, port);
+    final SocketAddress address;
+    try
+    {
+      // TODO investigate DNS resolution and timing
+      InetAddress inetAddress = InetAddress.getByName(host);
+      address = new InetSocketAddress(inetAddress, port);
+    }
+    catch (UnknownHostException e)
+    {
+      errorResponse(callback, e);
+      return;
+    }
+
     final AsyncPool<Channel> pool;
     try
     {

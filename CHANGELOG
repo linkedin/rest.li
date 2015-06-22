@@ -7,6 +7,9 @@
 (RB=504603)
 Enable file resolution for SchemaTranslator and propagate validation options to all parsers spawned during schema translation.
 
+(RB=506427)
+Fail faster for bad requests with unknown hostname in HttpNettyClient.
+
 2.6.3
 -----
 (RB=501374)
