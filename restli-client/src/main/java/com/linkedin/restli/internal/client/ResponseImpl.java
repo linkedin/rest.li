@@ -25,6 +25,7 @@ import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.common.IdEntityResponse;
 import com.linkedin.restli.internal.common.ProtocolVersionUtil;
 import com.linkedin.restli.internal.common.URIParamUtils;
 
@@ -134,7 +135,7 @@ public class ResponseImpl<T> implements Response<T>
   @Deprecated
   public String getId()
   {
-    if (_entity != null && (_entity instanceof CreateResponse<?> || _entity instanceof IdResponse<?>))
+    if (_entity instanceof CreateResponse<?> || _entity instanceof IdResponse<?> || _entity instanceof IdEntityResponse<?, ?>)
     {
       final Object id = checkAndReturnId();
       final ProtocolVersion protocolVersion = ProtocolVersionUtil.extractProtocolVersion(_headers);
@@ -161,6 +162,12 @@ public class ResponseImpl<T> implements Response<T>
       CreateResponse<?> createResponse = (CreateResponse<?>)_entity;
       id = createResponse.getId();
       castMessage = "CreateResponse";
+    }
+    else if (_entity instanceof IdEntityResponse)
+    {
+      IdEntityResponse<?, ?> idEntityResponse = (IdEntityResponse<?, ?>)_entity;
+      id = idEntityResponse.getId();
+      castMessage = "IdEntityResponse";
     }
     else
     {

@@ -26,6 +26,7 @@ import com.linkedin.restli.client.BatchGetKVRequest;
 import com.linkedin.restli.client.BatchGetRequest;
 import com.linkedin.restli.client.BatchPartialUpdateRequest;
 import com.linkedin.restli.client.BatchUpdateRequest;
+import com.linkedin.restli.client.CreateIdEntityRequest;
 import com.linkedin.restli.client.CreateIdRequest;
 import com.linkedin.restli.client.CreateRequest;
 import com.linkedin.restli.client.DeleteRequest;
@@ -91,6 +92,10 @@ public class RestliUriBuilderUtil
         else if (request instanceof CreateIdRequest)
         {
           return new CreateIdRequestUriBuilder((CreateIdRequest)request, uriPrefix, version);
+        }
+        else if (request instanceof CreateIdEntityRequest)
+        {
+          return new CreateIdEntityRequestUriBuilder((CreateIdEntityRequest)request, uriPrefix, version);
         }
         else
         {

@@ -59,6 +59,7 @@ import com.linkedin.restli.client.base.GetAllRequestBuilderBase;
 import com.linkedin.restli.client.base.GetRequestBuilderBase;
 import com.linkedin.restli.client.base.PartialUpdateRequestBuilderBase;
 import com.linkedin.restli.client.base.UpdateRequestBuilderBase;
+import com.linkedin.restli.client.base.CreateIdEntityRequestBuilderBase;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.CompoundKey.TypeInfo;
@@ -1375,35 +1376,92 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
     for (Map.Entry<ResourceMethod, Class<?>> entry : crudBuilderClasses.entrySet())
     {
       final ResourceMethod method = entry.getKey();
+      final Class<?> refModel = entry.getValue();
       if (supportedMethods.contains(method))
       {
         final String methodName = RestLiToolsUtils.normalizeUnderscores(method.toString());
-
-        final JClass builderClass = getCodeModel().ref(entry.getValue()).narrow(keyClass, valueClass);
-        JDefinedClass derivedBuilder = generateDerivedBuilder(builderClass,
-                                                              valueClass,
-                                                              null,
-                                                              resourceName + RestLiToolsUtils.nameCapsCase(methodName) +
-                                                                  METHOD_BUILDER_SUFFIX.get(_version),
-                                                              facadeClass.getPackage(),
-                                                              method,
-                                                              annotations);
-        generatePathKeyBindingMethods(pathKeys, derivedBuilder, pathKeyTypes, assocKeyTypes, pathToAssocKeys);
-
-        final JMethod factoryMethod = facadeClass.method(JMod.PUBLIC, derivedBuilder, RestLiToolsUtils.nameCamelCase(methodName));
-        factoryMethod.body()._return(JExpr._new(derivedBuilder).arg(baseUriExpr).arg(resourceSpecField).arg(requestOptionsExpr));
-
         final RestMethodSchema schema = schemaMap.get(method);
-        if (schema != null)
+
+        generateDerivedBuilderAndJavaDoc(facadeClass,
+                                         baseUriExpr,
+                                         keyClass,
+                                         valueClass,
+                                         resourceSpecField,
+                                         resourceName,
+                                         pathKeys,
+                                         pathKeyTypes,
+                                         assocKeyTypes,
+                                         pathToAssocKeys,
+                                         requestOptionsExpr,
+                                         annotations,
+                                         method,
+                                         refModel,
+                                         methodName,
+                                         schema);
+        if (methodName.equals("create") && schema != null && schema.getAnnotations() != null && schema.getAnnotations().containsKey("returnEntity"))
         {
-          if (schema.hasParameters())
-          {
-            generateQueryParamBindingMethods(facadeClass, schema.getParameters(), derivedBuilder);
-          }
-          generateClassJavadoc(derivedBuilder, schema);
-          generateFactoryMethodJavadoc(factoryMethod, schema);
+          generateDerivedBuilderAndJavaDoc(facadeClass,
+                                           baseUriExpr,
+                                           keyClass,
+                                           valueClass,
+                                           resourceSpecField,
+                                           resourceName,
+                                           pathKeys,
+                                           pathKeyTypes,
+                                           assocKeyTypes,
+                                           pathToAssocKeys,
+                                           requestOptionsExpr,
+                                           annotations,
+                                           method,
+                                           CreateIdEntityRequestBuilderBase.class,
+                                           "createAndGet",
+                                           schema);
         }
       }
+    }
+  }
+
+  private void generateDerivedBuilderAndJavaDoc(JDefinedClass facadeClass,
+                                                JExpression baseUriExpr,
+                                                JClass keyClass,
+                                                JClass valueClass,
+                                                JVar resourceSpecField,
+                                                String resourceName,
+                                                List<String> pathKeys,
+                                                Map<String, JClass> pathKeyTypes,
+                                                Map<String, JClass> assocKeyTypes,
+                                                Map<String, List<String>> pathToAssocKeys,
+                                                JExpression requestOptionsExpr,
+                                                DataMap annotations,
+                                                ResourceMethod method,
+                                                Class<?> refModel,
+                                                String methodName,
+                                                RestMethodSchema schema) throws JClassAlreadyExistsException
+  {
+    final JClass builderClass = getCodeModel().ref(refModel).narrow(keyClass, valueClass);
+    JDefinedClass derivedBuilder = generateDerivedBuilder(builderClass,
+                                                          valueClass,
+                                                          null,
+                                                          resourceName + RestLiToolsUtils.nameCapsCase(methodName) +
+                                                              METHOD_BUILDER_SUFFIX.get(_version),
+                                                          facadeClass.getPackage(),
+                                                          method,
+                                                          annotations);
+    generatePathKeyBindingMethods(pathKeys, derivedBuilder, pathKeyTypes, assocKeyTypes, pathToAssocKeys);
+
+    final JMethod factoryMethod = facadeClass.method(JMod.PUBLIC,
+                                                     derivedBuilder,
+                                                     RestLiToolsUtils.nameCamelCase(methodName));
+    factoryMethod.body()._return(JExpr._new(derivedBuilder).arg(baseUriExpr).arg(resourceSpecField).arg(requestOptionsExpr));
+
+    if (schema != null)
+    {
+      if (schema.hasParameters())
+      {
+        generateQueryParamBindingMethods(facadeClass, schema.getParameters(), derivedBuilder);
+      }
+      generateClassJavadoc(derivedBuilder, schema);
+      generateFactoryMethodJavadoc(factoryMethod, schema);
     }
   }
 

@@ -17,6 +17,7 @@
 package com.linkedin.restli.internal.server.methods.response;
 
 
+import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.jersey.api.uri.UriComponent;
 import com.linkedin.r2.message.rest.RestRequest;
@@ -24,11 +25,14 @@ import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.internal.common.HeaderUtil;
 import com.linkedin.restli.internal.common.URIParamUtils;
 import com.linkedin.restli.internal.server.RestLiResponseEnvelope;
 import com.linkedin.restli.internal.server.response.RecordResponseEnvelope;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.ServerResourceContext;
+import com.linkedin.restli.internal.server.methods.AnyRecord;
+import com.linkedin.restli.server.CreateKVResponse;
 import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.RestLiServiceException;
 
@@ -57,9 +61,19 @@ public class CreateResponseBuilder implements RestLiResponseBuilder
       UriBuilder uribuilder = UriBuilder.fromUri(request.getURI());
       uribuilder.path(stringKey);
       headers.put(RestConstants.HEADER_LOCATION, uribuilder.build((Object) null).toString());
+      headers.put(HeaderUtil.getIdHeaderName(protocolVersion), URIParamUtils.encodeKeyForHeader(createResponse.getId(), protocolVersion));
     }
-    IdResponse<?> idResponse = new IdResponse<Object>(createResponse.getId());
-
+    RecordTemplate resultEntity;
+    if (createResponse instanceof CreateKVResponse)
+    {
+      //Get the datamap generated from the value inside KV response, and encode it into the return response data
+      resultEntity = new AnyRecord(((CreateKVResponse)createResponse).getEntity().data());
+    }
+    else //Instance of idResponse
+    {
+      IdResponse<?> idResponse = new IdResponse<Object>(createResponse.getId());
+      resultEntity = idResponse;
+    }
     //Verify that a null status was not passed into the CreateResponse. If so, this is a developer error.
     if (createResponse.getStatus() == null)
     {
@@ -68,6 +82,6 @@ public class CreateResponseBuilder implements RestLiResponseBuilder
               + routingResult.getResourceMethod());
     }
 
-    return new RecordResponseEnvelope(createResponse.getStatus(), idResponse, headers);
+    return new RecordResponseEnvelope(createResponse.getStatus(), resultEntity, headers);
   }
 }

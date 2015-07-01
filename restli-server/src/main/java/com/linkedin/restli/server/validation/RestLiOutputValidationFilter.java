@@ -47,6 +47,12 @@ public class RestLiOutputValidationFilter implements ResponseFilter
   {
     Class<?> resourceClass = requestContext.getFilterResourceModel().getResourceClass();
     ResourceMethod method = requestContext.getMethodType();
+
+    //If this is createAndGet function, we need to validate the output like we are dealing with a get method
+    if (method == ResourceMethod.CREATE && requestContext.getCustomAnnotations().get("returnEntity") != null)
+    {
+      method = ResourceMethod.GET;
+    }
     RestLiDataValidator validator = new RestLiDataValidator(resourceClass.getAnnotations(), requestContext.getFilterResourceModel().getValueClass(), method);
     RestLiResponseData responseData = responseContext.getResponseData();
     if (responseData.isErrorResponse())
