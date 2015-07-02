@@ -47,12 +47,11 @@ import java.util.concurrent.Future;
  */
 public abstract class AbstractClient implements Client
 {
-  private static final RequestContext _EMPTY_CONTEXT = new RequestContext();
 
   @Override
   public Future<RestResponse> restRequest(RestRequest request)
   {
-    return restRequest(request, _EMPTY_CONTEXT);
+    return restRequest(request, new RequestContext());
   }
 
   @Override
@@ -66,7 +65,7 @@ public abstract class AbstractClient implements Client
   @Override
   public void restRequest(RestRequest request, Callback<RestResponse> callback)
   {
-    restRequest(request, _EMPTY_CONTEXT, callback);
+    restRequest(request, new RequestContext(), callback);
   }
 
   @Override

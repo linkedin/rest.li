@@ -10,6 +10,9 @@ Enable file resolution for SchemaTranslator and propagate validation options to 
 (RB=506427)
 Fail faster for bad requests with unknown hostname in HttpNettyClient.
 
+(RB=514364)
+Fix AbstarctClient to NOT share RequestContext across multiple requests.
+
 2.6.3
 -----
 (RB=501374)
