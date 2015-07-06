@@ -5,6 +5,7 @@ public interface HttpConstants
   public static final String ACCEPT_ENCODING = "Accept-Encoding";
   public static final String CONTENT_ENCODING = "Content-Encoding";
   public static final String CONTENT_LENGTH = "Content-Length";
+  public static final String TRANSFER_ENCODING = "Transfer-Encoding";
 
   /**
    * HTTP Cookie header name. See RFC 2109.

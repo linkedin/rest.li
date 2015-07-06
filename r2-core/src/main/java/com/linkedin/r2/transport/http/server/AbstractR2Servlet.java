@@ -202,10 +202,18 @@ public abstract class AbstractR2Servlet extends HttpServlet
       }
     }
 
-    int length = req.getContentLength();
-    if (length >= 0)
+
+    if (hasTransferEncoding(req))
     {
-      rb.setEntity(ByteString.read(req.getInputStream(), length));
+      rb.setEntity(ByteString.read(req.getInputStream()));
+    }
+    else
+    {
+      int length = req.getContentLength();
+      if (length >= 0)
+      {
+        rb.setEntity(ByteString.read(req.getInputStream(), length));
+      }
     }
     return rb.build();
   }
@@ -295,5 +303,10 @@ public abstract class AbstractR2Servlet extends HttpServlet
     }
 
     return pathInfo;
+  }
+
+  private static boolean hasTransferEncoding(HttpServletRequest req)
+  {
+    return req.getHeaders(HttpConstants.TRANSFER_ENCODING).hasMoreElements();
   }
 }

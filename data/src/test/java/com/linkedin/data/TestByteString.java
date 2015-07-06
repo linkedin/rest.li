@@ -87,7 +87,18 @@ public class TestByteString
   }
 
   @Test
-  public void testRead() throws IOException, InterruptedException, TimeoutException, ExecutionException
+  public void testReadKnownLength() throws IOException, InterruptedException, TimeoutException, ExecutionException
+  {
+    testRead(true);
+  }
+
+  @Test
+  public void testReadUnknownLength() throws IOException, InterruptedException, TimeoutException, ExecutionException
+  {
+    testRead(false);
+  }
+
+  private void testRead(final boolean knownLength) throws IOException, InterruptedException, TimeoutException, ExecutionException
   {
     final int pipeBufSize = 1024;
     final PipedOutputStream pos = new PipedOutputStream();
@@ -98,6 +109,10 @@ public class TestByteString
     // because that the reader would effectively fall behind and pos.write(bytes)
     // would block.
     final byte[] bytes = new byte[2 * pipeBufSize];
+    for (int i = 0; i < bytes.length; i++)
+    {
+      bytes[i] = (byte) (i % 256);
+    }
 
     final ExecutorService exec = Executors.newSingleThreadExecutor();
     try
@@ -107,12 +122,12 @@ public class TestByteString
         @Override
         public ByteString call() throws Exception
         {
-          return ByteString.read(pis, bytes.length);
+          return knownLength ? ByteString.read(pis, bytes.length) : ByteString.read(pis);
         }
       });
 
       pos.write(bytes);
-      pos.flush();
+      pos.close();
 
       Assert.assertEquals(result.get(60, TimeUnit.SECONDS).copyBytes(), bytes);
     }

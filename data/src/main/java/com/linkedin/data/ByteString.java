@@ -20,6 +20,7 @@ package com.linkedin.data;
 
 import com.linkedin.util.ArgumentUtil;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -184,7 +185,7 @@ public final class ByteString
 
     int bytesRead, bufIdx = 0;
     while (bufIdx < size &&
-           (bytesRead = inputStream.read(buf, bufIdx, size - bufIdx)) != -1)
+        (bytesRead = inputStream.read(buf, bufIdx, size - bufIdx)) != -1)
     {
       bufIdx += bytesRead;
     }
@@ -195,6 +196,25 @@ public final class ByteString
     }
 
     return new ByteString(buf);
+  }
+
+  /**
+   * Returns a new {@link ByteString} with bytes read from an {@link InputStream} with unknown size.
+   *
+   * @param inputStream that will provide the bytes.
+   * @return a ByteString that contains the read bytes.
+   */
+  public static ByteString read(InputStream inputStream) throws IOException
+  {
+    NoCopyByteArrayOutputStream bos = new NoCopyByteArrayOutputStream();
+    byte[] buf = new byte[4096];
+    int bytesRead;
+    while((bytesRead = inputStream.read(buf, 0, buf.length)) != -1)
+    {
+      bos.write(buf, 0, bytesRead);
+    }
+
+    return new ByteString(bos.getBytes(), 0, bos.getBytesCount());
   }
 
   private ByteString(byte[] bytes)
@@ -443,5 +463,23 @@ public final class ByteString
     }
     sb.append(")");
     return sb.toString();
+  }
+
+  /**
+   * This class is intended for internal use only. The output stream should not be passed around after
+   * the construction; otherwise the internal representation of the ByteString would change, voiding the
+   * immutability guarantee.
+   */
+  private static class NoCopyByteArrayOutputStream extends ByteArrayOutputStream
+  {
+    byte[] getBytes()
+    {
+      return super.buf;
+    }
+
+    int getBytesCount()
+    {
+      return super.count;
+    }
   }
 }
