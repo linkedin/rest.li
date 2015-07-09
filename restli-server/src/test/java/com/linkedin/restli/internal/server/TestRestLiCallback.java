@@ -142,19 +142,6 @@ public class TestRestLiCallback
     verifyNoMoreInteractions(_responseHandler, _callback);
   }
 
-  @Test
-  public void testOnErrorRestExceptionNoFilters() throws Exception
-  {
-    RestException ex = new RestException(new RestResponseBuilder().build());
-    RequestExecutionReport executionReport = new RequestExecutionReportBuilder().build();
-    // Invoke.
-    _noFilterRestLiCallback.onError(ex, executionReport);
-    // Verify.
-    verify(_callback).onError(ex, executionReport);
-    verifyZeroInteractions(_responseHandler, _restRequest, _routingResult);
-    verifyNoMoreInteractions(_callback);
-  }
-
   @SuppressWarnings("unchecked")
   @Test
   public void testOnErrorRestLiServiceExceptionNoFilters() throws Exception
@@ -210,6 +197,7 @@ public class TestRestLiCallback
   {
     return new Object[][] { { new RuntimeException("Test runtime exception") },
         { new RoutingException("Test routing exception", 404) },
+        { new RestException(new RestResponseBuilder().setStatus(404).build()) },
         { new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST, "Test service exception") },
         { new RestLiServiceException(HttpStatus.S_403_FORBIDDEN, "Wrapped runtime exception with custom status",
             new RuntimeException("Original cause")) } };

@@ -241,7 +241,7 @@ public class RestLiMethodInvoker
           @Override
           public void onError(Throwable e)
           {
-            callback.onError(e, executionReport);
+            callback.onError(e instanceof RestLiServiceException ? e : new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, e), executionReport);
           }
 
           @Override
@@ -309,6 +309,8 @@ public class RestLiMethodInvoker
     }
     catch (InvocationTargetException e)
     {
+      // Method runtime exceptions ar expected to fail with a top level
+      // InvocationTargetException wrapped around the root cause.
       if (RestLiServiceException.class.isAssignableFrom(e.getCause().getClass()))
       {
         RestLiServiceException restLiServiceException =
@@ -399,7 +401,16 @@ public class RestLiMethodInvoker
       }
       catch (Throwable t)
       {
-        return Promises.error(t);
+        // Method runtime exceptions ar expected to fail with a top level
+        // InvocationTargetException wrapped around the root cause.
+        if (t instanceof InvocationTargetException && t.getCause() != null)
+        {
+          // Unbury the exception thrown from the resource method if it's there.
+          return Promises.error(t.getCause() instanceof RestLiServiceException ?
+                                  t.getCause() : new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, t.getCause()));
+        }
+
+        return Promises.error(t instanceof RestLiServiceException ? t : new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, t));
       }
     }
   }
@@ -436,7 +447,9 @@ public class RestLiMethodInvoker
 
       if (promise.isFailed())
       {
-        _callback.onError(promise.getError(), executionReport);
+        _callback.onError(promise.getError() instanceof RestLiServiceException ?
+                            promise.getError() : new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, promise.getError()),
+                          executionReport);
       }
       else
       {

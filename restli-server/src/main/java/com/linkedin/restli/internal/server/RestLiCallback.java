@@ -103,15 +103,6 @@ public class RestLiCallback<T> implements RequestExecutionCallback<T>
   @Override
   public void onError(final Throwable e, RequestExecutionReport executionReport)
   {
-    if (e instanceof RestException)
-    {
-      // assuming we don't need to do anything...
-      // NOTE: If we receive a rest exception, the exception is handed off to the underlying
-      // callback without invoking any of the response filters!
-      _callback.onError(e, executionReport);
-      return;
-    }
-
     final AugmentedRestLiResponseData responseData = convertExceptionToRestLiResponseData(e);
     // Invoke the response filters.
     if (_responseFilters != null && !_responseFilters.isEmpty())

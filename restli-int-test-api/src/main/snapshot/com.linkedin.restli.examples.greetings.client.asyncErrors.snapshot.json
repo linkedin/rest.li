@@ -1,0 +1,54 @@
+{
+  "models" : [ {
+    "type" : "enum",
+    "name" : "Tone",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "symbols" : [ "FRIENDLY", "SINCERE", "INSULTING" ]
+  }, {
+    "type" : "record",
+    "name" : "Greeting",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "doc" : "A greeting",
+    "fields" : [ {
+      "name" : "id",
+      "type" : "long"
+    }, {
+      "name" : "message",
+      "type" : "string"
+    }, {
+      "name" : "tone",
+      "type" : "Tone",
+      "doc" : "tone"
+    } ]
+  } ],
+  "schema" : {
+    "name" : "asyncErrors",
+    "namespace" : "com.linkedin.restli.examples.greetings.client",
+    "path" : "/asyncErrors",
+    "doc" : "generated from: com.linkedin.restli.examples.greetings.server.AsyncErrorResource",
+    "actionsSet" : {
+      "actions" : [ {
+        "name" : "callback",
+        "parameters" : [ {
+          "name" : "id",
+          "type" : "string"
+        } ],
+        "returns" : "com.linkedin.restli.examples.greetings.api.Greeting"
+      }, {
+        "name" : "promise",
+        "parameters" : [ {
+          "name" : "id",
+          "type" : "string"
+        } ],
+        "returns" : "com.linkedin.restli.examples.greetings.api.Greeting"
+      }, {
+        "name" : "task",
+        "parameters" : [ {
+          "name" : "id",
+          "type" : "string"
+        } ],
+        "returns" : "com.linkedin.restli.examples.greetings.api.Greeting"
+      } ]
+    }
+  }
+}
