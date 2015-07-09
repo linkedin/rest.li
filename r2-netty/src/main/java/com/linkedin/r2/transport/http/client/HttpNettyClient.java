@@ -99,6 +99,7 @@ import org.slf4j.LoggerFactory;
   private final int _maxResponseSize;
   private final int _maxHeaderSize;
   private final int _maxChunkSize;
+  private final int _maxConcurrentConnections;
 
   private final String _requestTimeoutMessage;
   private final AbstractJmxManager _jmxManager;
@@ -106,26 +107,28 @@ import org.slf4j.LoggerFactory;
   /**
    * Creates a new HttpNettyClient
    *
-   * @param eventLoopGroup      The NioEventLoopGroup; it is the caller's responsibility to
-   *                            shut it down
-   * @param executor            An executor; it is the caller's responsibility to shut it down
-   * @param poolSize            Maximum size of the underlying HTTP connection pool
-   * @param requestTimeout      Timeout, in ms, to get a connection from the pool or create one
-   * @param idleTimeout         Interval after which idle connections will be automatically closed
-   * @param shutdownTimeout     Timeout, in ms, the client should wait after shutdown is
-   *                            initiated before terminating outstanding requests
-   * @param maxResponseSize     Maximum size of a HTTP response
-   * @param sslContext          {@link SSLContext}
-   * @param sslParameters       {@link SSLParameters}with overloaded construct
-   * @param callbackExecutors   An optional EventExecutorGroup to invoke user callback
-   * @param poolWaiterSize      Maximum waiters waiting on the HTTP connection pool
-   * @param name                Name of the {@link HttpNettyClient}
-   * @param jmxManager          A management class that is aware of the creation/shutdown event
-   *                            of the underlying {@link ChannelPoolManager}
-   * @param strategy            The strategy used to return pool objects.
-   * @param minPoolSize         Minimum number of objects in the pool. Set to zero for no minimum.
-   * @param maxHeaderSize       Maximum size of all HTTP headers
-   * @param maxChunkSize        Maximum size of a HTTP chunk
+   * @param eventLoopGroup            The NioEventLoopGroup; it is the caller's responsibility to
+   *                                  shut it down
+   * @param executor                  An executor; it is the caller's responsibility to shut it down
+   * @param poolSize                  Maximum size of the underlying HTTP connection pool
+   * @param requestTimeout            Timeout, in ms, to get a connection from the pool or create one
+   * @param idleTimeout               Interval after which idle connections will be automatically closed
+   * @param shutdownTimeout           Timeout, in ms, the client should wait after shutdown is
+   *                                  initiated before terminating outstanding requests
+   * @param maxResponseSize           Maximum size of a HTTP response
+   * @param sslContext                {@link SSLContext}
+   * @param sslParameters             {@link SSLParameters}with overloaded construct
+   * @param callbackExecutors         An optional EventExecutorGroup to invoke user callback
+   * @param poolWaiterSize            Maximum waiters waiting on the HTTP connection pool
+   * @param name                      Name of the {@link HttpNettyClient}
+   * @param jmxManager                A management class that is aware of the creation/shutdown event
+   *                                  of the underlying {@link ChannelPoolManager}
+   * @param strategy                  The strategy used to return pool objects.
+   * @param minPoolSize               Minimum number of objects in the pool. Set to zero for no minimum.
+   * @param maxHeaderSize             Maximum size of all HTTP headers
+   * @param maxChunkSize              Maximum size of a HTTP chunk
+   * @param maxConcurrentConnections  Maximum number of concurrent connection attempts the HTTP
+   *                                  connection pool can make.
    */
   public HttpNettyClient(NioEventLoopGroup eventLoopGroup,
                          ScheduledExecutorService executor,
@@ -143,7 +146,8 @@ import org.slf4j.LoggerFactory;
                          AsyncPoolImpl.Strategy strategy,
                          int minPoolSize,
                          int maxHeaderSize,
-                         int maxChunkSize)
+                         int maxChunkSize,
+                         int maxConcurrentConnections)
   {
     Bootstrap bootstrap = new Bootstrap().group(eventLoopGroup)
                                 .channel(NioSocketChannel.class)
@@ -161,6 +165,7 @@ import org.slf4j.LoggerFactory;
     _maxResponseSize = maxResponseSize;
     _maxHeaderSize = maxHeaderSize;
     _maxChunkSize = maxChunkSize;
+    _maxConcurrentConnections = maxConcurrentConnections;
     _scheduler = executor;
     _callbackExecutors = callbackExecutors == null ? eventLoopGroup : callbackExecutors;
     _requestTimeout = requestTimeout;
@@ -189,6 +194,7 @@ import org.slf4j.LoggerFactory;
     _jmxManager.onProviderCreate(_channelPoolManager);
     _maxHeaderSize = 8192;
     _maxChunkSize = 8192;
+    _maxConcurrentConnections = Integer.MAX_VALUE;
     _allChannels = new DefaultChannelGroup("R2 client channels", GlobalEventExecutor.INSTANCE);
   }
 
@@ -560,7 +566,8 @@ import org.slf4j.LoggerFactory;
                                         new ExponentialBackOffRateLimiter(0,
                                                             _requestTimeout / 2,
                                                             Math.max(10, _requestTimeout / 32),
-                                                            _scheduler)
+                                                            _scheduler,
+                                                            _maxConcurrentConnections)
                                         );
     }
   }

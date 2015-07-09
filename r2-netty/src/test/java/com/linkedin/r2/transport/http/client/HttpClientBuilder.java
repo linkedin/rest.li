@@ -47,6 +47,7 @@ class HttpClientBuilder
   private String _name = "noNameSpecifiedClient";
   private int _maxPoolSize = 200;
   private int _minPoolSize = 0;
+  private int _maxConcurrentConnections = Integer.MAX_VALUE;
   private int _poolWaiterSize = Integer.MAX_VALUE;
   private AsyncPoolImpl.Strategy _strategy = AsyncPoolImpl.Strategy.MRU;
   private AbstractJmxManager _jmxManager = AbstractJmxManager.NULL_JMX_MANAGER;
@@ -130,6 +131,10 @@ class HttpClientBuilder
     return this;
   }
 
+  public void setMaxConcurrentConnections(int maxConcurrentConnections) {
+    _maxConcurrentConnections = maxConcurrentConnections;
+  }
+
   public HttpClientBuilder setPoolWaiterSize(int poolWaiterSize)
   {
     _poolWaiterSize = poolWaiterSize;
@@ -166,7 +171,8 @@ class HttpClientBuilder
                                _strategy,
                                _minPoolSize,
                                _maxHeaderSize,
-                               _maxChunkSize);
+                               _maxChunkSize,
+                               _maxConcurrentConnections);
 
   }
 

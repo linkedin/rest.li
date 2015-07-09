@@ -1,6 +1,7 @@
 2.9.1
 -----
-
+(RB=518092)
+Add configuration for maximum number of R2 concurrent connection attempts
 
 2.9.0
 -----

@@ -98,6 +98,7 @@ public class HttpClientFactory implements TransportClientFactory
   public static final String HTTP_POOL_MIN_SIZE = "http.poolMinSize";
   public static final String HTTP_MAX_HEADER_SIZE = "http.maxHeaderSize";
   public static final String HTTP_MAX_CHUNK_SIZE = "http.maxChunkSize";
+  public static final String HTTP_MAX_CONCURRENT_CONNECTIONS = "http.maxConcurrentConnections";
 
   public static final int DEFAULT_POOL_WAITER_SIZE = Integer.MAX_VALUE;
   public static final int DEFAULT_POOL_SIZE = 200;
@@ -528,6 +529,7 @@ public class HttpClientFactory implements TransportClientFactory
     Integer poolMinSize = chooseNewOverDefault(getIntValue(properties, HTTP_POOL_MIN_SIZE), DEFAULT_POOL_MIN_SIZE);
     Integer maxHeaderSize = chooseNewOverDefault(getIntValue(properties, HTTP_MAX_HEADER_SIZE), DEFAULT_MAX_HEADER_SIZE);
     Integer maxChunkSize = chooseNewOverDefault(getIntValue(properties, HTTP_MAX_CHUNK_SIZE), DEFAULT_MAX_CHUNK_SIZE);
+    Integer maxConcurrentConnections = chooseNewOverDefault(getIntValue(properties, HTTP_MAX_CONCURRENT_CONNECTIONS), Integer.MAX_VALUE);
 
     return new HttpNettyClient(_eventLoopGroup,
                                _executor,
@@ -545,7 +547,8 @@ public class HttpClientFactory implements TransportClientFactory
                                strategy,
                                poolMinSize,
                                maxHeaderSize,
-                               maxChunkSize);
+                               maxChunkSize,
+                               maxConcurrentConnections);
   }
 
   /**
