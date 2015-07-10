@@ -1,6 +1,8 @@
 2.10.6
 -----
-
+(RB=521169)
+Added required vs optional validation for partial updates.
+Changed validation path formats to match PathSpec.
 
 2.10.5
 -----

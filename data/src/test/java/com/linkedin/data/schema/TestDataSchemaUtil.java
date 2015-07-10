@@ -14,10 +14,9 @@
    limitations under the License.
 */
 
-package com.linkedin.restli.common.validation;
+package com.linkedin.data.schema;
 
 
-import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.template.DataTemplateUtil;
 import org.apache.commons.io.IOUtils;
 import org.testng.Assert;
@@ -28,11 +27,11 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * Unit tests for ValidationUtil.
+ * Unit tests for DataSchemaUtil.
  *
  * @author Soojung Ha
  */
-public class TestValidationUtil
+public class TestDataSchemaUtil
 {
   @DataProvider
   public Object[][] pathData()
@@ -43,23 +42,23 @@ public class TestValidationUtil
         {"stringB", true},
         {"intB", true},
         {"UnionFieldWithInlineRecord", true},
-        {"UnionFieldWithInlineRecord/com.linkedin.restli.common.validation.myRecord/foo1", true},
+        {"UnionFieldWithInlineRecord/com.linkedin.data.schema.myRecord/foo1", true},
         {"ArrayWithInlineRecord", true},
-        {"ArrayWithInlineRecord/bar1", true},
-        {"ArrayWithInlineRecord/bar2", true},
+        {"ArrayWithInlineRecord/*/bar1", true},
+        {"ArrayWithInlineRecord/*/bar2", true},
         {"MapWithTyperefs", true},
-        {"MapWithTyperefs/id", true},
+        {"MapWithTyperefs/*/id", true},
         {"validationDemoNext/stringB", true},
         {"validationDemoNext/UnionFieldWithInlineRecord", true},
         {"validationDemoNext/validationDemoNext/validationDemoNext", true},
         // nonexistent field
         {"stringA1", false},
         {"stringA/abc", false},
-        {"ArrayWithInlineRecord/bar3", false},
+        {"ArrayWithInlineRecord/*/bar3", false},
         // valid path but not a field of a record
-        {"UnionFieldWithInlineRecord/com.linkedin.restli.common.validation.myRecord", false},
-        {"UnionFieldWithInlineRecord/com.linkedin.restli.common.validation.myEnum", false},
-        {"UnionFieldWithInlineRecord/com.linkedin.restli.common.validation.myEnum/FOOFOO", false}
+        {"UnionFieldWithInlineRecord/com.linkedin.data.schema.myRecord", false},
+        {"UnionFieldWithInlineRecord/com.linkedin.data.schema.myEnum", false},
+        {"UnionFieldWithInlineRecord/com.linkedin.data.schema.myEnum/FOOFOO", false}
     };
   }
 
@@ -67,7 +66,7 @@ public class TestValidationUtil
   public void testContainsPath(String path, boolean expected) throws IOException
   {
     DataSchema validationDemoSchema = pdscToDataSchema(DATA_SCHEMA_PATH);
-    Assert.assertEquals(ValidationUtil.containsPath(validationDemoSchema, path), expected);
+    Assert.assertEquals(DataSchemaUtil.containsPath(validationDemoSchema, path), expected);
   }
 
   private DataSchema pdscToDataSchema(String path) throws IOException
@@ -76,5 +75,5 @@ public class TestValidationUtil
     return DataTemplateUtil.parseSchema(IOUtils.toString(pdscStream));
   }
 
-  private static final String DATA_SCHEMA_PATH = "pegasus/com/linkedin/restli/common/validation/ValidationDemo.pdsc";
+  private static final String DATA_SCHEMA_PATH = "pegasus/com/linkedin/data/schema/ValidationDemo.pdsc";
 }

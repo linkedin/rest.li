@@ -596,10 +596,10 @@ public class TestRestLiResourceModels
   {
     expectConfigException(InvalidResources.DataAnnotationOnNonexistentField.class, "CreateOnly annotation asdf is not a valid path for TestRecord");
     expectConfigException(InvalidResources.DuplicateDataAnnotation.class, "mapA is marked as ReadOnly multiple times");
-    expectConfigException(InvalidResources.RedundantDataAnnotation1.class, "mapA/intField is marked as CreateOnly, but is contained in a CreateOnly field mapA");
+    expectConfigException(InvalidResources.RedundantDataAnnotation1.class, "mapA/*/intField is marked as CreateOnly, but is contained in a CreateOnly field mapA");
     expectConfigException(InvalidResources.RedundantDataAnnotation2.class, "mapA is marked as both ReadOnly and CreateOnly");
-    expectConfigException(InvalidResources.RedundantDataAnnotation3.class, "mapA/doubleField is marked as CreateOnly, but is contained in a ReadOnly field mapA");
-    expectConfigException(InvalidResources.RedundantDataAnnotation4.class, "mapA/doubleField is marked as ReadOnly, but is contained in a CreateOnly field mapA");
+    expectConfigException(InvalidResources.RedundantDataAnnotation3.class, "mapA/*/doubleField is marked as CreateOnly, but is contained in a ReadOnly field mapA");
+    expectConfigException(InvalidResources.RedundantDataAnnotation4.class, "mapA/*/doubleField is marked as ReadOnly, but is contained in a CreateOnly field mapA");
   }
 
   // ************************

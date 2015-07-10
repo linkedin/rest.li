@@ -42,7 +42,6 @@ import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.common.validation.CreateOnly;
 import com.linkedin.restli.common.validation.ReadOnly;
 import com.linkedin.restli.common.validation.RestLiDataValidator;
-import com.linkedin.restli.common.validation.ValidationUtil;
 import com.linkedin.restli.internal.common.ReflectionUtils;
 import com.linkedin.restli.internal.common.TyperefUtils;
 import com.linkedin.restli.internal.server.PathKeysImpl;
@@ -247,7 +246,7 @@ public final class RestLiAnnotationReader
   {
     for (String path : paths)
     {
-      if (!ValidationUtil.containsPath(dataSchema, path))
+      if (!DataSchemaUtil.containsPath(dataSchema, path))
       {
         throw new ResourceConfigException("In resource class '" + resourceClassName + "', "
                                               + annotationName + " annotation " + path + " is not a valid path for "

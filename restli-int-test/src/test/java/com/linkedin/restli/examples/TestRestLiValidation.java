@@ -399,6 +399,18 @@ public class TestRestLiValidation extends RestLiIntegrationTest
   {
     return new String[][]
         {
+            // Required fields cannot be missing in a new record
+            {"{\"patch\": {\"validationDemoNext\": {\"$set\": {\"MapWithTyperefs\": {\"key1\": {\"id\": 1234, \"message\": \"msg\"}}}}}}",
+                "ERROR :: /validationDemoNext/MapWithTyperefs/key1/tone :: field is required but not found and has no default value\n"},
+            {"{\"patch\": {\"validationDemoNext\": {\"MapWithTyperefs\": {\"$set\": {\"key1\": {\"id\": 1234, \"message\": \"msg\"}}}}}}",
+                "ERROR :: /validationDemoNext/MapWithTyperefs/key1/tone :: field is required but not found and has no default value\n"},
+            // Cannot delete required fields
+            {"{\"patch\": {\"$delete\": [\"UnionFieldWithInlineRecord\"]}}",
+                "ERROR :: /UnionFieldWithInlineRecord :: cannot delete a required field\n"},
+            {"{\"patch\": {\"validationDemoNext\": {\"$delete\": [\"stringA\"]}}}",
+                "ERROR :: /validationDemoNext/stringA :: cannot delete a required field\n"},
+            {"{\"patch\": {\"MapWithTyperefs\": {\"key1\": {\"$delete\": [\"message\"]}}}}",
+                "ERROR :: /MapWithTyperefs/key1/message :: cannot delete a required field\n"},
             // Cannot set ReadOnly or CreateOnly fields in a partial update request
             {"{\"patch\": {\"$set\": {\"stringA\": \"abc\"}}}",
                 "ERROR :: /stringA :: ReadOnly field present in a partial_update request\n"},
@@ -406,7 +418,9 @@ public class TestRestLiValidation extends RestLiIntegrationTest
                 "ERROR :: /intA :: ReadOnly field present in a partial_update request\n"},
             {"{\"patch\": {\"UnionFieldWithInlineRecord\": {\"com.linkedin.restli.examples.greetings.api.myRecord\": {\"$set\": {\"foo1\": 1234}}}}}",
                 "ERROR :: /UnionFieldWithInlineRecord/com.linkedin.restli.examples.greetings.api.myRecord/foo1 :: ReadOnly field present in a partial_update request\n"},
-            {"{\"patch\": {\"$set\": {\"ArrayWithInlineRecord\": [{\"bar1\": \"bbb\"}]}}}",
+            {"{\"patch\": {\"$set\": {\"UnionFieldWithInlineRecord\": {\"com.linkedin.restli.examples.greetings.api.myRecord\": {\"foo1\": 1234}}}}}",
+                "ERROR :: /UnionFieldWithInlineRecord/com.linkedin.restli.examples.greetings.api.myRecord/foo1 :: ReadOnly field present in a partial_update request\n"},
+            {"{\"patch\": {\"$set\": {\"ArrayWithInlineRecord\": [{\"bar1\": \"bbb\", \"bar2\": \"barbar\"}]}}}",
                 "ERROR :: /ArrayWithInlineRecord/0/bar1 :: ReadOnly field present in a partial_update request\n"},
             {"{\"patch\": {\"validationDemoNext\": {\"$set\": {\"stringB\": \"abc\"}}}}",
                 "ERROR :: /validationDemoNext/stringB :: ReadOnly field present in a partial_update request\n"},
@@ -424,24 +438,15 @@ public class TestRestLiValidation extends RestLiIntegrationTest
             {"{\"patch\": {\"validationDemoNext\": {\"UnionFieldWithInlineRecord\": {\"com.linkedin.restli.examples.greetings.api.myRecord\": {\"$set\": {\"foo1\": 1234}}}}}}",
                 "ERROR :: /validationDemoNext/UnionFieldWithInlineRecord :: ReadOnly field present in a partial_update request\n"},
             // Cannot delete ReadOnly or CreateOnly fields in a partial update request
-            {"{\"patch\": {\"$delete\": [\"stringA\"]}}",
-                "ERROR :: /stringA :: delete operation on a ReadOnly field is forbidden\n"},
             {"{\"patch\": {\"$delete\": [\"intA\"]}}",
-                "ERROR :: /intA :: delete operation on a ReadOnly field is forbidden\n"},
-            {"{\"patch\": {\"UnionFieldWithInlineRecord\": {\"com.linkedin.restli.examples.greetings.api.myRecord\": {\"$delete\": [\"foo1\"]}}}}",
-                "ERROR :: /UnionFieldWithInlineRecord/com.linkedin.restli.examples.greetings.api.myRecord/foo1 :: delete operation on a ReadOnly field is forbidden\n"},
-            {"{\"patch\": {\"validationDemoNext\": {\"$delete\": [\"stringB\"]}}}",
-                "ERROR :: /validationDemoNext/stringB :: delete operation on a ReadOnly field is forbidden\n"},
-            {"{\"patch\": {\"validationDemoNext\": {\"$delete\": [\"UnionFieldWithInlineRecord\"]}}}}",
-                "ERROR :: /validationDemoNext/UnionFieldWithInlineRecord :: delete operation on a ReadOnly field is forbidden\n"},
-            {"{\"patch\": {\"$delete\": [\"stringB\"]}}",
-                "ERROR :: /stringB :: delete operation on a CreateOnly field is forbidden\n"},
+                "ERROR :: /intA :: cannot delete a ReadOnly field or its descendants\n"},
             {"{\"patch\": {\"$delete\": [\"intB\"]}}",
-                "ERROR :: /intB :: delete operation on a CreateOnly field is forbidden\n"},
+                "ERROR :: /intB :: cannot delete a CreateOnly field or its descendants\n"},
             {"{\"patch\": {\"UnionFieldWithInlineRecord\": {\"com.linkedin.restli.examples.greetings.api.myRecord\": {\"$delete\": [\"foo2\"]}}}}",
-                "ERROR :: /UnionFieldWithInlineRecord/com.linkedin.restli.examples.greetings.api.myRecord/foo2 :: delete operation on a CreateOnly field is forbidden\n"},
-            {"{\"patch\": {\"MapWithTyperefs\": {\"key1\": {\"$delete\": [\"id\"]}}}}",
-                "ERROR :: /MapWithTyperefs/id :: delete operation on a CreateOnly field is forbidden\n"}
+                "ERROR :: /UnionFieldWithInlineRecord/com.linkedin.restli.examples.greetings.api.myRecord/foo2 :: cannot delete a CreateOnly field or its descendants\n"},
+            // Cannot delete child (descendant) of ReadOnly or CreateOnly fields in a partial update request
+            {"{\"patch\": {\"validationDemoNext\": {\"UnionFieldWithInlineRecord\": {\"com.linkedin.restli.examples.greetings.api.myRecord\": {\"$delete\": [\"foo2\"]}}}}}",
+                "ERROR :: /validationDemoNext/UnionFieldWithInlineRecord/com.linkedin.restli.examples.greetings.api.myRecord/foo2 :: cannot delete a ReadOnly field or its descendants\n"},
         };
   }
 
@@ -474,16 +479,15 @@ public class TestRestLiValidation extends RestLiIntegrationTest
         {
             // Partial updates are valid if they don't contain ReadOnly or CreateOnly fields
             "{\"patch\": {\"UnionFieldWithInlineRecord\": {\"$set\": {\"com.linkedin.restli.examples.greetings.api.myEnum\": \"FOOFOO\"}}," +
-                "\"$set\": {\"ArrayWithInlineRecord\": [{\"bar2\": \"bbb\"}]}," +
                 "\"MapWithTyperefs\": {\"key1\": {\"$set\": {\"tone\": \"SINCERE\"}}}," +
                 "\"validationDemoNext\": {\"$set\": {\"stringA\": \"AAA\"}}}}",
-            // Okay to set a field (validationDemoNext) containing a ReadOnly field (validationDemoNext/stringB), as long as the ReadOnly field is not specified
-            "{\"patch\": {\"$set\": {\"validationDemoNext\": {\"stringA\": \"some value\"}}}}",
-            // Okay to set a field (MapWithTyperefs/key1) containing a CreateOnly field (MapWithTyperefs/key1/id), as long as the CreateOnly field is not specified
+            // A field (validationDemoNext) containing a ReadOnly field (validationDemoNext/stringB) has to be partially set
+            "{\"patch\": {\"validationDemoNext\": {\"$set\": {\"stringA\": \"some value\"}}}}",
+            // A field (MapWithTyperefs/key1) containing a CreateOnly field (MapWithTyperefs/key1/id) has to be partially set
             "{\"patch\": {\"MapWithTyperefs\": {\"key1\": {\"$set\": {\"message\": \"some message\", \"tone\": \"SINCERE\"}}}}}",
-            // Okay to delete fields containing a ReadOnly field
-            "{\"patch\": {\"$delete\": [\"ArrayWithInlineRecord\", \"UnionFieldWithInlineRecord\"]}}",
-            // Okay to delete field containing a CreateOnly field
+            // Okay to delete a field containing a ReadOnly field
+            "{\"patch\": {\"$delete\": [\"ArrayWithInlineRecord\"]}}",
+            // Okay to delete a field containing a CreateOnly field
             "{\"patch\": {\"MapWithTyperefs\": {\"$delete\": [\"key1\"]}}}"
         };
   }

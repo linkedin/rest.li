@@ -294,11 +294,7 @@ public final class ValidateDataAgainstSchema
       {
         return true;
       }
-      StringBuilder sb = new StringBuilder();
-      sb.append(DataElementUtil.pathWithoutKeysAsString(element));
-      sb.append(DataElement.SEPARATOR);
-      sb.append(field.getName());
-      return _options.getOptionalFields().contains(sb.substring(1));
+      return _options.getTreatOptional().evaluate(new SimpleDataElement(null, field.getName(), field.getType(), element));
     }
 
     protected Object validateRecord(DataElement element, RecordDataSchema schema, Object object)

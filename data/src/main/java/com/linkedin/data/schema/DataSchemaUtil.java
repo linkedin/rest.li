@@ -17,6 +17,8 @@
 package com.linkedin.data.schema;
 
 import com.linkedin.data.ByteString;
+import com.linkedin.data.element.DataElement;
+
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
@@ -49,6 +51,68 @@ public class DataSchemaUtil
   public static DataSchema.Type typeStringToComplexDataSchemaType(String type)
   {
     return _TYPE_STRING_TO_COMPLEX_DATA_SCHEMA_TYPE_MAP.get(type);
+  }
+
+  /**
+   * Determines whether a path is valid according to the given data schema.
+   * The path must be a field of a record, and not an enum constant, a member of a union, etc.
+   * Wild card (*) for array indices and map keys are accepted.
+   */
+  public static boolean containsPath(DataSchema schema, String path)
+  {
+    return getField(schema, path) != null;
+  }
+
+  /**
+   * Same as {@link #getField(DataSchema, Object[])}, but with the path as string.
+   */
+  public static RecordDataSchema.Field getField(DataSchema schema, String path)
+  {
+    // Discard the initial / character if present
+    if (path.length() > 0 && path.charAt(0) == DataElement.SEPARATOR)
+    {
+      path = path.substring(1);
+    }
+    return getField(schema, path.split(DataElement.SEPARATOR.toString()));
+  }
+
+  /**
+   * Finds the {@link RecordDataSchema.Field} corresponding to the specified path by
+   * following the path starting from the provided {@link DataSchema} as the root.
+   *
+   * @return field object, or null if the field is not found
+   */
+  public static RecordDataSchema.Field getField(DataSchema schema, Object[] path)
+  {
+    RecordDataSchema.Field field = null;
+    DataSchema dataSchema = schema;
+    for (int i = 0; i < path.length; i++)
+    {
+      dataSchema = dataSchema.getDereferencedDataSchema();
+      switch (dataSchema.getType())
+      {
+        case MAP:
+          dataSchema = ((MapDataSchema) dataSchema).getValues();
+          break;
+        case ARRAY:
+          dataSchema = ((ArrayDataSchema) dataSchema).getItems();
+          break;
+        case RECORD:
+          field = ((RecordDataSchema) dataSchema).getField(path[i].toString());
+          if (i == path.length - 1) return field;
+          if (field == null) return null;
+          dataSchema = field.getType();
+          break;
+        case UNION:
+          dataSchema = ((UnionDataSchema) dataSchema).getType(path[i].toString());
+          if (dataSchema == null) return null;
+          break;
+        default:
+          // Parent schema cannot be a primitive
+          return null;
+      }
+    }
+    return null;
   }
 
   private DataSchemaUtil() {}

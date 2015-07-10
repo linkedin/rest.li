@@ -55,17 +55,17 @@ public class Patch implements Interpreter
   private IdentityHashMap<DataMap, Boolean> _hasDeletesOnly       =
                                                                       new IdentityHashMap<DataMap, Boolean>();
 
-  // On $delete operations, log the path as an info message in the interpreter context
-  private final boolean _logDeletes;
+  // On $set and $delete operations, log the path as an info message in the interpreter context
+  private final boolean _logOperations;
 
   public Patch()
   {
     this(false);
   }
 
-  public Patch(boolean logDeletes)
+  public Patch(boolean logOperations)
   {
-    _logDeletes = logDeletes;
+    _logOperations = logOperations;
   }
 
   /**
@@ -135,7 +135,7 @@ public class Patch implements Interpreter
           // and if patch's branch contains only deletes operations, then it is
           // not necessary to create nodes on the data object and process that branch,
           // unless we have to log all delete operations
-          if (!hasDeletesOnly(opChildDataMap) || _logDeletes)
+          if (!hasDeletesOnly(opChildDataMap) || _logOperations)
           {
 
             // if patch does data manipulations other than deletes, then we need to
@@ -198,7 +198,7 @@ public class Patch implements Interpreter
         {
           usedFields.put(key.toString(), DELETE_COMMAND);
           dataDataMap.remove(key);
-          if (_logDeletes)
+          if (_logOperations)
           {
             instrCtx.addInfoMessage(key.toString());
           }
@@ -238,6 +238,10 @@ public class Patch implements Interpreter
         {
           usedFields.put(key.toString(), SET_COMMAND);
           dataDataMap.put(key, entry.getValue());
+          if (_logOperations)
+          {
+            instrCtx.addInfoMessage(key);
+          }
         }
       }
     }

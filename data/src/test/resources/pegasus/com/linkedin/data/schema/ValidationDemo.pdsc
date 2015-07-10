@@ -1,7 +1,7 @@
 {
   "type" : "record",
   "name" : "ValidationDemo",
-  "namespace" : "com.linkedin.restli.common.validation",
+  "namespace" : "com.linkedin.data.schema",
   "fields" : [
     {
       "name": "stringA",

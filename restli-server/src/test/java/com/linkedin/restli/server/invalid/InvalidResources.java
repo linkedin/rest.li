@@ -234,7 +234,7 @@ public class InvalidResources
   {
   }
 
-  @CreateOnly({"mapA", "mapA/intField"})
+  @CreateOnly({"mapA", "mapA/*/intField"})
   @RestLiSimpleResource(name="foo")
   public class RedundantDataAnnotation1 extends SimpleResourceTemplate<MapWithTestRecord>
   {
@@ -248,13 +248,13 @@ public class InvalidResources
   }
 
   @ReadOnly("mapA")
-  @CreateOnly("mapA/doubleField")
+  @CreateOnly("mapA/*/doubleField")
   @RestLiSimpleResource(name="foo")
   public class RedundantDataAnnotation3 extends SimpleResourceTemplate<MapWithTestRecord>
   {
   }
 
-  @ReadOnly("mapA/doubleField")
+  @ReadOnly("mapA/*/doubleField")
   @CreateOnly("mapA")
   @RestLiSimpleResource(name="foo")
   public class RedundantDataAnnotation4 extends SimpleResourceTemplate<MapWithTestRecord>

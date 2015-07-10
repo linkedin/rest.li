@@ -17,12 +17,13 @@
 package com.linkedin.data.schema.validation;
 
 
+import com.linkedin.data.it.Predicate;
+import com.linkedin.data.it.Predicates;
 import com.linkedin.util.ArgumentUtil;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 
 /**
@@ -171,24 +172,25 @@ public final class ValidationOptions
   }
 
   /**
-   * Set optional fields.
-   * The fields corresponding to the paths will be treated as optional, even if they are required.
+   * Option to treat certain required fields as optional.
+   * A required field whose corresponding data element satisfies the given {@link Predicate}
+   * will be treated as optional.
    *
-   * @param optionalFields
+   * @param treatOptional
    */
-  public void setOptionalFields(Set<String> optionalFields)
+  public void setTreatOptional(Predicate treatOptional)
   {
-    _optionalFields = Collections.unmodifiableSet(optionalFields);
+    _treatOptional = treatOptional;
   }
 
   /**
-   * Return which paths should be treated as optional.
+   * Return the predicate for treating certain fields as optional.
    *
-   * @return paths for optional fields
+   * @return predicate
    */
-  public Set<String> getOptionalFields()
+  public Predicate getTreatOptional()
   {
-    return _optionalFields;
+    return _treatOptional;
   }
 
   /**
@@ -251,7 +253,8 @@ public final class ValidationOptions
   private RequiredMode _requiredMode;
   private boolean      _avroUnionMode = false;
   private Map<String,Object> _validatorParameters = NO_VALIDATOR_PARAMETERS;
-  private Set<String> _optionalFields = Collections.emptySet();
+  // Treat required fields as optional if the corresponding data element satisfies this predicate
+  private Predicate _treatOptional = Predicates.alwaysFalse();
 
   private static final Map<String,Object> NO_VALIDATOR_PARAMETERS = Collections.emptyMap();
 }

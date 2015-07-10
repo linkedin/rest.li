@@ -1,5 +1,6 @@
 dependencies {
   compile externalDependency.jacksonCore
+  testCompile externalDependency.commonsIo
   testCompile externalDependency.testng
 }
 
