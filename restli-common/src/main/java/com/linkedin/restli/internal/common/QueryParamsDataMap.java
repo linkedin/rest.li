@@ -476,7 +476,9 @@ public class QueryParamsDataMap
     RecordTemplate key = complexResourceKey.getKey();
     DataMap dataMap = key.data();
 
-    for (RecordDataSchema.Field f : key.schema().getFields())
+    List<RecordDataSchema.Field> fields = key.schema() == null ? Collections.<RecordDataSchema.Field>emptyList() : key.schema().getFields();
+
+    for (RecordDataSchema.Field f : fields)
     {
       DataSchema.Type type = f.getType().getType();
       String fieldName = f.getName();

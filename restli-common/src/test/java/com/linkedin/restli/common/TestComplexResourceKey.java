@@ -129,11 +129,7 @@ public class TestComplexResourceKey
   @Test
   public void testKeySchema()
   {
-    RecordDataSchema schema = (RecordDataSchema) DataTemplateUtil.parseSchema
-        (
-            "{ \"type\" : \"record\", \"name\" : \"omni\", \"fields\" : [ { \"name\" : \"int\", \"type\" : \"int\" } ] }"
-        );
-
+    RecordDataSchema schema = OmniRecord.schema;
     TypeSpec<OmniRecord> keyType = new TypeSpec<OmniRecord>(OmniRecord.class, schema);
     TypeSpec<OmniRecord> paramsType = new TypeSpec<OmniRecord>(OmniRecord.class, schema);
     ComplexKeySpec<OmniRecord, OmniRecord> keySpec = new ComplexKeySpec<OmniRecord, OmniRecord>(keyType, paramsType);
@@ -148,7 +144,10 @@ public class TestComplexResourceKey
   }
 
   public static class OmniRecord extends RecordTemplate {
-    public OmniRecord(DataMap map, RecordDataSchema schema)
+    private static RecordDataSchema schema =
+            (RecordDataSchema) DataTemplateUtil.parseSchema("{ \"type\" : \"record\", \"name\" : \"omni\", \"fields\" : [ { \"name\" : \"int\", \"type\" : \"int\" } ] }");
+
+    public OmniRecord(DataMap map)
     {
       super(map, schema);
     }

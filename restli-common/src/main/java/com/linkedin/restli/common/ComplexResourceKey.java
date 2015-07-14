@@ -335,29 +335,6 @@ public final class ComplexResourceKey<K extends RecordTemplate, P extends Record
   private static RecordTemplate wrapWithSchema(DataMap dataMap, TypeSpec<? extends RecordTemplate> spec)
   {
     Class<? extends RecordTemplate> clazz = spec.getType();
-    DataSchema schema = spec.getSchema();
-
-    if (schema.getDereferencedType() == DataSchema.Type.RECORD)
-    {
-      try
-      {
-        Constructor<? extends RecordTemplate> constructor = clazz.getConstructor(DataMap.class, RecordDataSchema.class);
-        return constructor.newInstance(dataMap, (RecordDataSchema) schema);
-      }
-      catch (NoSuchMethodException ignored)
-      {
-      }
-      catch (InstantiationException ignored)
-      {
-      }
-      catch (IllegalAccessException ignored)
-      {
-      }
-      catch (InvocationTargetException ignored)
-      {
-      }
-    }
-
     return DataTemplateUtil.wrap(dataMap, clazz);
   }
 

@@ -1,6 +1,7 @@
 2.10.18
 -------
-
+(RB=521359)
+Fix for expensive ComplexResourceKey creation.
 
 2.10.17
 -------
