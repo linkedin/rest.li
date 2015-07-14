@@ -1,3 +1,15 @@
+2.10.0
+-----
+(RB=496345)
+Add schema based autoprojection utility methods.
+
+(RB=489544)
+Restructured API for exposing response data to rest.li filters.
+Exposed per-exception ErrorResponse formatter for RestLiServiceException.
+
+(RB=516008)
+Fixed inconsistency with exception handling for async resources.
+
 2.9.1
 -----
 (RB=518092)
