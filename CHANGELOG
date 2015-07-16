@@ -1,3 +1,9 @@
+2.10.1
+-----
+(RB=523443)
+Fix a bug in FileStore where IllegalArgumentException may throw if temp file 
+prefix contains fewer than three characters
+
 2.10.0
 -----
 (RB=496345)

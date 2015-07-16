@@ -42,6 +42,7 @@ import com.linkedin.d2.discovery.util.Stats;
 public class FileStore<T> implements PropertyStore<T>, PropertyEventSubscriber<T>
 {
   private static final Logger         _log = LoggerFactory.getLogger(FileStore.class);
+  private static final String         TMP_FILE_PREFIX = "d2-";
 
   private final String                _path;
   private final String                _extension;
@@ -207,7 +208,7 @@ public class FileStore<T> implements PropertyStore<T>, PropertyEventSubscriber<T
 
   private File getTempFile(String listenTo) throws IOException
   {
-    return File.createTempFile(listenTo, "tmp", new File(_path));
+    return File.createTempFile(TMP_FILE_PREFIX+listenTo, "tmp", new File(_path));
   }
 
   @Override
