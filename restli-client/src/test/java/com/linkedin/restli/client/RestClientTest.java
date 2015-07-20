@@ -667,6 +667,7 @@ public class RestClientTest
                              clazz,
                              null,
                              new DataMap(),
+                             Collections.<String, Class<?>>emptyMap(),
                              new ResourceSpecImpl(),
                              "/foo",
                              Collections.<String, Object>emptyMap(),

@@ -121,6 +121,7 @@ public class CreateRequestBuilder<K, V extends RecordTemplate>
                                 createResponseDecoder,
                                 _resourceSpec,
                                 buildReadOnlyQueryParameters(),
+                                getQueryParamClasses(),
                                 getBaseUriTemplate(),
                                 buildReadOnlyPathKeys(),
                                 getRequestOptions());

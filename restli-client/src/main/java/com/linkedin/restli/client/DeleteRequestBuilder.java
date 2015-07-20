@@ -111,6 +111,7 @@ public class DeleteRequestBuilder<K, V extends RecordTemplate>
     return new DeleteRequest<V>(buildReadOnlyHeaders(),
                                 _resourceSpec,
                                 buildReadOnlyQueryParameters(),
+                                getQueryParamClasses(),
                                 getBaseUriTemplate(),
                                 buildReadOnlyPathKeys(),
                                 getRequestOptions(),

@@ -19,10 +19,12 @@ package com.linkedin.restli.examples;
 
 
 import com.linkedin.r2.RemoteInvocationException;
+import com.linkedin.restli.client.ActionRequest;
 import com.linkedin.restli.client.BatchCreateIdRequest;
 import com.linkedin.restli.client.BatchCreateRequest;
 import com.linkedin.restli.client.CreateIdRequest;
 import com.linkedin.restli.client.CreateRequest;
+import com.linkedin.restli.client.FindRequest;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.RequestBuilder;
 import com.linkedin.restli.client.Response;
@@ -54,12 +56,15 @@ import com.linkedin.restli.examples.greetings.client.CustomTypes4Builders;
 import com.linkedin.restli.examples.greetings.client.CustomTypes4RequestBuilders;
 import com.linkedin.restli.examples.greetings.client.CustomTypesBuilders;
 import com.linkedin.restli.examples.greetings.client.CustomTypesRequestBuilders;
+import com.linkedin.restli.examples.typeref.api.CalendarRefArray;
 import com.linkedin.restli.examples.typeref.api.CustomLongRefArray;
 import com.linkedin.restli.internal.common.ProtocolVersionUtil;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -89,6 +94,42 @@ public class TestCustomTypesClient extends RestLiIntegrationTest
   public void shutDown() throws Exception
   {
     super.shutdown();
+  }
+
+  @Test
+  public void testCalendarRefQueryParam() throws RemoteInvocationException
+  {
+    FindRequest<Greeting> findRequest = new CustomTypesRequestBuilders().findByCalendar().calendarParam(new GregorianCalendar()).build();
+    Response<CollectionResponse<Greeting>> response = getClient().sendRequest(findRequest).getResponse();
+    Assert.assertEquals(response.getEntity().getElements().size(), 0);
+  }
+
+  @Test
+  public void testCalendarRefActionParam() throws RemoteInvocationException
+  {
+    ActionRequest<Integer> actionRequest = new CustomTypesRequestBuilders().actionCalendarAction().calendarParam(new GregorianCalendar()).build();
+    Response<Integer> response = getClient().sendRequest(actionRequest).getResponse();
+    Assert.assertEquals(response.getEntity().intValue(), Calendar.getInstance().get(Calendar.YEAR));
+  }
+
+  @Test
+  public void testCalendarRefArrayQueryParam() throws RemoteInvocationException
+  {
+    FindRequest<Greeting> findRequest = new CustomTypesRequestBuilders().findByCalendars().addCalendarsParam(new GregorianCalendar()).build();
+    Response<CollectionResponse<Greeting>> response = getClient().sendRequest(findRequest).getResponse();
+    Assert.assertEquals(response.getEntity().getElements().size(), 0);
+
+    CalendarRefArray calendarRefArray = new CalendarRefArray();
+    calendarRefArray.add(new GregorianCalendar());
+    findRequest = new CustomTypesRequestBuilders().findByCalendars().calendarsParam(calendarRefArray).build();
+    response = getClient().sendRequest(findRequest).getResponse();
+    Assert.assertEquals(response.getEntity().getElements().size(), 0);
+
+    List<Calendar> calendars = new ArrayList<Calendar>();
+    calendars.add(new GregorianCalendar());
+    findRequest = new CustomTypesRequestBuilders().findByCalendars().calendarsParam(calendars).build();
+    response = getClient().sendRequest(findRequest).getResponse();
+    Assert.assertEquals(response.getEntity().getElements().size(), 0);
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")

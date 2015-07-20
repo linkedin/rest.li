@@ -96,6 +96,7 @@ abstract class AbstractRestliRequestUriBuilder<R extends Request<?>> implements 
   protected void appendQueryParams(UriBuilder b)
   {
     DataMap params = QueryParamsUtil.convertToDataMap(_request.getQueryParamsObjects(),
+                                                      _request.getQueryParamClasses(),
                                                       _version);
     if (_version.compareTo(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()) >= 0)
     {

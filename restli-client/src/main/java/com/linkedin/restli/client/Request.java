@@ -54,6 +54,7 @@ public class Request<T>
   private final ResourceSpec           _resourceSpec;
   private final ResourceProperties     _resourceProperties;
   private final Map<String, Object>    _queryParams;
+  private final Map<String, Class<?>>  _queryParamClasses; // Used for coercing query params. In case of collection or iterable, contains the type parameter class.
   private final String                 _methodName; // needed to identify finders and actions. null for everything else
   private final String                 _baseUriTemplate;
   private final Map<String, Object>    _pathKeys;
@@ -65,6 +66,7 @@ public class Request<T>
           RestResponseDecoder<T> decoder,
           ResourceSpec resourceSpec,
           Map<String, Object> queryParams,
+          Map<String, Class<?>> queryParamClasses,
           String methodName,
           String baseUriTemplate,
           Map<String, Object> pathKeys,
@@ -90,6 +92,7 @@ public class Request<T>
     }
 
     _queryParams = queryParams;
+    _queryParamClasses = queryParamClasses;
     _methodName = methodName;
     _baseUriTemplate = baseUriTemplate;
     _pathKeys = pathKeys;
@@ -209,6 +212,11 @@ public class Request<T>
   public Map<String, Object> getQueryParamsObjects()
   {
     return _queryParams;
+  }
+
+  public Map<String, Class<?>> getQueryParamClasses()
+  {
+    return _queryParamClasses;
   }
 
   public RestliRequestOptions getRequestOptions()

@@ -40,6 +40,7 @@ public class BatchCreateIdRequest<K,T extends RecordTemplate> extends Request<Ba
                        CollectionRequest<T> input,
                        ResourceSpec resourceSpec,
                        Map<String, Object> queryParams,
+                       Map<String, Class<?>> queryParamClasses,
                        String baseUriTemplate,
                        Map<String, Object> pathKeys,
                        RestliRequestOptions requestOptions)
@@ -50,6 +51,7 @@ public class BatchCreateIdRequest<K,T extends RecordTemplate> extends Request<Ba
           decoder,
           resourceSpec,
           queryParams,
+          queryParamClasses,
           null,
           baseUriTemplate,
           pathKeys,

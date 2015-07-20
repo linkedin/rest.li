@@ -160,6 +160,7 @@ public class FindRequestBuilder<K, V extends RecordTemplate> extends
                               _elementClass,
                               _resourceSpec,
                               buildReadOnlyQueryParameters(),
+                              getQueryParamClasses(),
                               _name,
                               getBaseUriTemplate(),
                               buildReadOnlyPathKeys(),

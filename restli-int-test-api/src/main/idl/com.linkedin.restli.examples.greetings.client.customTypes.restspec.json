@@ -11,6 +11,18 @@
     },
     "supports" : [ ],
     "finders" : [ {
+      "name" : "calendar",
+      "parameters" : [ {
+        "name" : "calendar",
+        "type" : "com.linkedin.restli.examples.typeref.api.CalendarRef"
+      } ]
+    }, {
+      "name" : "calendars",
+      "parameters" : [ {
+        "name" : "calendars",
+        "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.typeref.api.CalendarRef\" }"
+      } ]
+    }, {
       "name" : "customLong",
       "parameters" : [ {
         "name" : "l",
@@ -43,6 +55,13 @@
         "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.typeref.api.CustomLongRef\" }"
       } ],
       "returns" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.typeref.api.CustomLongRef\" }"
+    }, {
+      "name" : "calendarAction",
+      "parameters" : [ {
+        "name" : "calendar",
+        "type" : "com.linkedin.restli.examples.typeref.api.CalendarRef"
+      } ],
+      "returns" : "int"
     } ],
     "entity" : {
       "path" : "/customTypes/{customTypesId}"

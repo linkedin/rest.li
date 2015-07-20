@@ -3,6 +3,9 @@
 (RB=513446)
 Better template spec generator interface.
 
+(RB=526314)
+Coerce child classes correctly for query parameters.
+
 2.10.2
 -----
 (RB=496878)

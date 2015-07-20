@@ -44,6 +44,7 @@ public class BatchCreateRequest<T extends RecordTemplate> extends Request<Collec
                      CollectionRequest<T> input,
                      ResourceSpec resourceSpec,
                      Map<String, Object> queryParams,
+                     Map<String, Class<?>> queryParamClasses,
                      String baseUriTemplate,
                      Map<String, Object> pathKeys,
                      RestliRequestOptions requestOptions)
@@ -54,6 +55,7 @@ public class BatchCreateRequest<T extends RecordTemplate> extends Request<Collec
           decoder,
           resourceSpec,
           queryParams,
+          queryParamClasses,
           null,
           baseUriTemplate,
           pathKeys,

@@ -49,6 +49,7 @@ public class BatchUpdateRequest<K, V extends RecordTemplate>
   BatchUpdateRequest(Map<String, String> headers,
                      CollectionRequest<KeyValueRecord<K, V>> entities,
                      Map<String, Object> queryParams,
+                     Map<String, Class<?>> queryParamClasses,
                      ResourceSpec resourceSpec,
                      String baseUriTemplate,
                      Map<String, Object> pathKeys,
@@ -63,6 +64,7 @@ public class BatchUpdateRequest<K, V extends RecordTemplate>
                                             resourceSpec.getComplexKeyType()),
           resourceSpec,
           queryParams,
+          queryParamClasses,
           baseUriTemplate,
           pathKeys,
           requestOptions);

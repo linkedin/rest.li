@@ -41,6 +41,7 @@ public class BatchDeleteRequest<K, V extends RecordTemplate> extends BatchReques
   @SuppressWarnings("unchecked")
   BatchDeleteRequest(Map<String, String> headers,
                      Map<String, Object> queryParams,
+                     Map<String, Class<?>> queryParamClasses,
                      ResourceSpec resourceSpec,
                      String baseUriTemplate,
                      Map<String, Object> pathKeys,
@@ -54,6 +55,7 @@ public class BatchDeleteRequest<K, V extends RecordTemplate> extends BatchReques
                                             resourceSpec.getComplexKeyType()),
           resourceSpec,
           queryParams,
+          queryParamClasses,
           baseUriTemplate,
           pathKeys,
           requestOptions);

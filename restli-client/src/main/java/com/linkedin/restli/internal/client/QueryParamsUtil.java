@@ -33,6 +33,7 @@ import com.linkedin.restli.internal.common.URIParamUtils;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -44,16 +45,17 @@ public class QueryParamsUtil
 {
   public static DataMap convertToDataMap(Map<String, Object> queryParams)
   {
-    return convertToDataMap(queryParams, AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion());
+    return convertToDataMap(queryParams, Collections.<String, Class<?>>emptyMap(), AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion());
   }
 
   /**
    * Converts a String -> Object based representation of query params into a {@link DataMap}
    * @param queryParams
+   * @param queryParamClasses
    * @param version
    * @return
    */
-  public static DataMap convertToDataMap(Map<String, Object> queryParams, ProtocolVersion version)
+  public static DataMap convertToDataMap(Map<String, Object> queryParams, Map<String, Class<?>> queryParamClasses, ProtocolVersion version)
   {
     DataMap result = new DataMap(queryParams.size());
     for (Map.Entry<String, Object> entry: queryParams.entrySet())
@@ -69,14 +71,14 @@ public class QueryParamsUtil
       }
       else
       {
-        result.put(key, paramToDataObject(value, version));
+        result.put(key, paramToDataObject(value, queryParamClasses.get(key), version));
       }
     }
     result.makeReadOnly();
     return result;
   }
 
-  private static Object paramToDataObject(Object param, ProtocolVersion version)
+  private static Object paramToDataObject(Object param, Class<?> paramClass, ProtocolVersion version)
   {
     if (param == null)
     {
@@ -103,11 +105,11 @@ public class QueryParamsUtil
     }
     else if (param instanceof List)
     {
-      return coerceList((List) param, version);
+      return coerceList((List) param, paramClass, version);
     }
     else
     {
-      return DataTemplateUtil.stringify(param);
+      return DataTemplateUtil.stringify(param, paramClass);
     }
   }
 
@@ -115,7 +117,7 @@ public class QueryParamsUtil
    * given a list of objects returns the objects either in a DataList, or, if
    * they are PathSpecs (projections), encode them and return a String.
    */
-  private static Object coerceList(List<?> values, ProtocolVersion version)
+  private static Object coerceList(List<?> values, Class<?> elementClass, ProtocolVersion version)
   {
     assert values != null;
     DataList dataList = new DataList();
@@ -123,7 +125,7 @@ public class QueryParamsUtil
     {
       if (value != null)
       {
-        dataList.add(paramToDataObject(value, version));
+        dataList.add(paramToDataObject(value, elementClass, version));
       }
     }
     return dataList;

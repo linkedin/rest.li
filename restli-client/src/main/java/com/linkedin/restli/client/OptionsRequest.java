@@ -32,6 +32,7 @@ public class OptionsRequest extends Request<OptionsResponse>
 {
   public OptionsRequest(Map<String, String> headers,
                         Map<String, Object> queryParams,
+                        Map<String, Class<?>> queryParamClasses,
                         ResourceSpec resourceSpec,
                         String baseUriTemplate,
                         Map<String, Object> pathKeys,
@@ -43,6 +44,7 @@ public class OptionsRequest extends Request<OptionsResponse>
           new OptionsResponseDecoder(),
           resourceSpec,
           queryParams,
+          queryParamClasses,
           null,
           baseUriTemplate,
           pathKeys,

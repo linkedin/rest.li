@@ -147,6 +147,7 @@ public class BatchUpdateRequestBuilder<K, V extends RecordTemplate> extends
     return new BatchUpdateRequest<K, V>(buildReadOnlyHeaders(),
                                         readOnlyInput,
                                         buildReadOnlyQueryParameters(),
+                                        getQueryParamClasses(),
                                         _resourceSpec,
                                         getBaseUriTemplate(),
                                         buildReadOnlyPathKeys(),

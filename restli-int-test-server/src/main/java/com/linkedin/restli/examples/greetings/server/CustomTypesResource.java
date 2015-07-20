@@ -19,17 +19,17 @@ package com.linkedin.restli.examples.greetings.server;
 
 import com.linkedin.restli.examples.custom.types.CustomLong;
 import com.linkedin.restli.examples.greetings.api.Greeting;
+import com.linkedin.restli.examples.typeref.api.CalendarRef;
 import com.linkedin.restli.examples.typeref.api.CustomLongRef;
 import com.linkedin.restli.examples.typeref.api.DateRef;
 import com.linkedin.restli.server.annotations.Action;
 import com.linkedin.restli.server.annotations.ActionParam;
 import com.linkedin.restli.server.annotations.Finder;
-import com.linkedin.restli.server.annotations.Optional;
 import com.linkedin.restli.server.annotations.QueryParam;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.resources.CollectionResourceTemplate;
 
-import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -57,6 +57,24 @@ public class CustomTypesResource extends CollectionResourceTemplate<Long, Greeti
 
   @Finder("date")
   public List<Greeting> date(@QueryParam(value="d", typeref= DateRef.class) Date d)
+  {
+    return Collections.emptyList();
+  }
+
+  @Finder("calendar")
+  public List<Greeting> calendar(@QueryParam(value="calendar", typeref=CalendarRef.class) Calendar calendar)
+  {
+    return Collections.emptyList();
+  }
+
+  @Action(name="calendarAction")
+  public int calendarAction(@ActionParam(value="calendar", typeref=CalendarRef.class) Calendar calendar)
+  {
+    return calendar.get(Calendar.YEAR);
+  }
+
+  @Finder("calendars")
+  public List<Greeting> calendars(@QueryParam(value="calendars", typeref=CalendarRef.class) Calendar[] calendars)
   {
     return Collections.emptyList();
   }

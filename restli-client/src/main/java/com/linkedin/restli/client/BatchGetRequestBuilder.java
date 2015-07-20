@@ -32,6 +32,7 @@ import com.linkedin.restli.internal.client.RestResponseDecoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -114,6 +115,7 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
     return new BatchGetRequest<RT>(getReadOnlyHeaders(firstRequest.getHeaders()),
                                    firstRequest.getResponseDecoder(),
                                    batchQueryParams,
+                                   firstRequest.getQueryParamClasses(),
                                    firstResourceSpec,
                                    firstRequest.getBaseUriTemplate(),
                                    getReadOnlyPathKeys(firstRequest.getPathKeys()),
@@ -182,6 +184,7 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
                                    getReadOnlyHeaders(firstRequest.getHeaders()),
                                    firstRequest.getResponseDecoder(),
                                    batchQueryParams,
+                                   Collections.<String, Class<?>>emptyMap(),
                                    firstResourceSpec,
                                    firstRequest.getBaseUriTemplate(),
                                    getReadOnlyPathKeys(firstRequest.getPathKeys()),
@@ -229,6 +232,7 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
                                                     getParamsType().
                                                     getType()),
                                         getReadOnlyQueryParameters(queryParams),
+                                        request.getQueryParamClasses(),
                                         request.getResourceSpec(),
                                         request.getBaseUriTemplate(),
                                         getReadOnlyPathKeys(request.getPathKeys()),
@@ -263,6 +267,7 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
     return new BatchGetRequest<RT>(getReadOnlyHeaders(request.getHeaders()),
                                    new BatchResponseDecoder<RT>(request.getEntityClass()),
                                    getReadOnlyQueryParameters(queryParams),
+                                   Collections.<String, Class<?>>emptyMap(),
                                    request.getResourceSpec(),
                                    request.getBaseUriTemplate(),
                                    getReadOnlyPathKeys(request.getPathKeys()),
@@ -371,6 +376,7 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
     return new BatchGetRequest<V>(buildReadOnlyHeaders(),
                                   _decoder,
                                   buildReadOnlyQueryParameters(),
+                                  Collections.<String, Class<?>>emptyMap(),
                                   _resourceSpec,
                                   getBaseUriTemplate(),
                                   buildReadOnlyPathKeys(),
@@ -392,6 +398,7 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
     return new BatchGetKVRequest<K, V>(buildReadOnlyHeaders(),
                                       decoder,
                                       buildReadOnlyQueryParameters(),
+                                      getQueryParamClasses(),
                                       _resourceSpec,
                                       getBaseUriTemplate(),
                                       buildReadOnlyPathKeys(),

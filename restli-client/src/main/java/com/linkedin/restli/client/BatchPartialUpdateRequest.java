@@ -47,6 +47,7 @@ public class BatchPartialUpdateRequest<K, V extends RecordTemplate> extends
   BatchPartialUpdateRequest(Map<String, String> headers,
                             CollectionRequest<KeyValueRecord<K, PatchRequest<V>>> entities,
                             Map<String, Object> queryParams,
+                            Map<String, Class<?>> queryParamClasses,
                             ResourceSpec resourceSpec,
                             String baseUriTemplate,
                             Map<String, Object> pathKeys,
@@ -60,6 +61,7 @@ public class BatchPartialUpdateRequest<K, V extends RecordTemplate> extends
                                             resourceSpec.getComplexKeyType()),
           resourceSpec,
           queryParams,
+          queryParamClasses,
           baseUriTemplate,
           pathKeys,
           requestOptions);

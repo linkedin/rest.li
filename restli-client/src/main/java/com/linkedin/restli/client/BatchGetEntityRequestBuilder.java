@@ -28,6 +28,7 @@ import com.linkedin.restli.internal.client.RestResponseDecoder;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -104,6 +105,7 @@ public class BatchGetEntityRequestBuilder<K, V extends RecordTemplate> extends
     return new BatchGetEntityRequest<K, V>(firstRequest.getHeaders(),
                                            firstRequest.getResponseDecoder(),
                                            batchQueryParams,
+                                           firstRequest.getQueryParamClasses(),
                                            firstResourceSpec,
                                            firstRequest.getBaseUriTemplate(),
                                            firstRequest.getPathKeys(),
@@ -215,6 +217,7 @@ public class BatchGetEntityRequestBuilder<K, V extends RecordTemplate> extends
     return new BatchGetEntityRequest<K, V>(buildReadOnlyHeaders(),
                                            _decoder,
                                            buildReadOnlyQueryParameters(),
+                                           getQueryParamClasses(),
                                            _resourceSpec,
                                            getBaseUriTemplate(),
                                            buildReadOnlyPathKeys(),

@@ -120,6 +120,7 @@ public class BatchDeleteRequestBuilder<K, V extends RecordTemplate> extends
 
     return new BatchDeleteRequest<K, V>(buildReadOnlyHeaders(),
                                         buildReadOnlyQueryParameters(),
+                                        getQueryParamClasses(),
                                         _resourceSpec,
                                         getBaseUriTemplate(),
                                         buildReadOnlyPathKeys(),

@@ -92,6 +92,7 @@ public class RestliRequestUriSignature
   private final Map<String, Object> _pathKeys;
   private final Object _id;
   private final Map<String, Object> _queryParams;
+  private final Map<String, Class<?>> _queryParamClasses;
 
   public RestliRequestUriSignature(Request<?> request, Set<SignatureField> maskFields)
   {
@@ -165,6 +166,7 @@ public class RestliRequestUriSignature
       if (rawQueryParams == null)
       {
         _queryParams = null;
+        _queryParamClasses = null;
       }
       else
       {
@@ -180,11 +182,13 @@ public class RestliRequestUriSignature
             _queryParams.put(entry.getKey(), entry.getValue());
           }
         }
+        _queryParamClasses = request.getQueryParamClasses();
       }
     }
     else
     {
       _queryParams = null;
+      _queryParamClasses = null;
     }
   }
 
@@ -243,7 +247,7 @@ public class RestliRequestUriSignature
   {
     final ProtocolVersion protocolVersion = AllProtocolVersions.LATEST_PROTOCOL_VERSION;
     final DataMap pathKeysMap = new DataMap(URIParamUtils.encodePathKeysForUri(_pathKeys, protocolVersion));
-    final DataMap queryParamsMap = QueryParamsUtil.convertToDataMap(_queryParams, protocolVersion);
+    final DataMap queryParamsMap = QueryParamsUtil.convertToDataMap(_queryParams, _queryParamClasses, protocolVersion);
 
     final ToStringBuilder builder = new ToStringBuilder(null, ToStringStyle.SHORT_PREFIX_STYLE)
         .append("baseUriTemplate", _baseUriTemplate)

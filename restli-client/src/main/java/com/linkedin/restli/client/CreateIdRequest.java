@@ -38,6 +38,7 @@ public class CreateIdRequest<K, T extends RecordTemplate> extends Request<IdResp
                   RestResponseDecoder<IdResponse<K>> decoder,
                   ResourceSpec resourceSpec,
                   Map<String, Object> queryParams,
+                  Map<String, Class<?>> queryParamClasses,
                   String baseUriTemplate,
                   Map<String, Object> pathKeys,
                   RestliRequestOptions requestOptions)
@@ -48,6 +49,7 @@ public class CreateIdRequest<K, T extends RecordTemplate> extends Request<IdResp
           decoder,
           resourceSpec,
           queryParams,
+          queryParamClasses,
           null,
           baseUriTemplate,
           pathKeys,

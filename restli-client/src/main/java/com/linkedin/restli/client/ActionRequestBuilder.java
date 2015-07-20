@@ -198,6 +198,7 @@ public class ActionRequestBuilder<K, V> extends AbstractRequestBuilder<K, V, Act
                                 actionResponseDecoder,
                                 _resourceSpec,
                                 buildReadOnlyQueryParameters(),
+                                getQueryParamClasses(),
                                 _name,
                                 getBaseUriTemplate(),
                                 buildReadOnlyPathKeys(),

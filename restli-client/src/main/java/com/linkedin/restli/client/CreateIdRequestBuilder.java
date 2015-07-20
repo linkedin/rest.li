@@ -115,6 +115,7 @@ public class CreateIdRequestBuilder<K, V extends RecordTemplate>
                                      idResponseDecoder,
                                      _resourceSpec,
                                      buildReadOnlyQueryParameters(),
+                                     getQueryParamClasses(),
                                      getBaseUriTemplate(),
                                      buildReadOnlyPathKeys(),
                                      getRequestOptions());

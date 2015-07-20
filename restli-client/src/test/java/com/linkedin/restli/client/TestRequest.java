@@ -167,6 +167,7 @@ public class TestRequest
                                                           new EntityResponseDecoder<TestRecord>(TestRecord.class),
                                                           expectedResourceSpec,
                                                           Collections.<String, Object>emptyMap(),
+                                                          Collections.<String, Class<?>>emptyMap(),
                                                           null,
                                                           "testRecord",
                                                           pathKeys,

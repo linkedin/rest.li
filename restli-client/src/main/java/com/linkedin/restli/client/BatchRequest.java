@@ -45,11 +45,12 @@ public class BatchRequest<T> extends Request<T>
                       RestResponseDecoder<T> decoder,
                       ResourceSpec resourceSpec,
                       Map<String, Object> queryParams,
+                      Map<String, Class<?>> queryParamClasses,
                       String baseUriTemplate,
                       Map<String, Object> pathKeys,
                       RestliRequestOptions requestOptions)
   {
-    super(method, input, headers, decoder, resourceSpec, queryParams, null, baseUriTemplate, pathKeys, requestOptions);
+    super(method, input, headers, decoder, resourceSpec, queryParams, queryParamClasses, null, baseUriTemplate, pathKeys, requestOptions);
   }
 
   /**

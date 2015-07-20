@@ -111,6 +111,7 @@ public class UpdateRequestBuilder<K, V extends RecordTemplate> extends
                                 buildReadOnlyHeaders(),
                                 _resourceSpec,
                                 buildReadOnlyQueryParameters(),
+                                getQueryParamClasses(),
                                 getBaseUriTemplate(),
                                 buildReadOnlyPathKeys(),
                                 getRequestOptions(),

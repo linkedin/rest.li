@@ -141,6 +141,7 @@ public class BatchPartialUpdateRequestBuilder<K, V extends RecordTemplate> exten
     return new BatchPartialUpdateRequest<K, V>(buildReadOnlyHeaders(),
                                                buildReadOnlyInput(),
                                                buildReadOnlyQueryParameters(),
+                                               getQueryParamClasses(),
                                                _resourceSpec,
                                                getBaseUriTemplate(),
                                                buildReadOnlyPathKeys(),

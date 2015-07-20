@@ -41,6 +41,7 @@ public class CreateRequest<T extends RecordTemplate>
                 CreateResponseDecoder<?> decoder,
                 ResourceSpec resourceSpec,
                 Map<String, Object> queryParams,
+                Map<String, Class<?>> queryParamClasses,
                 String baseUriTemplate,
                 Map<String, Object> pathKeys,
                 RestliRequestOptions requestOptions)
@@ -51,6 +52,7 @@ public class CreateRequest<T extends RecordTemplate>
           decoder,
           resourceSpec,
           queryParams,
+          queryParamClasses,
           null,
           baseUriTemplate,
           pathKeys,

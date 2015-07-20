@@ -715,6 +715,11 @@ public class DataTemplateUtil
     }
   }
 
+  public static String stringify(Object object)
+  {
+    return stringify(object, object.getClass());
+  }
+
   /**
    * Convert an input value to its string representation. Valid input type includes
    * <ul>
@@ -724,16 +729,20 @@ public class DataTemplateUtil
    * </ul>
    *
    * @param object provides the input value to be coerced.
+   * @param fromClass class to be coerced from
    * @return string representation of the input object.
    */
-  public static String stringify(Object object)
+  public static String stringify(Object object, Class<?> fromClass)
   {
-    final Class<?> valueClass = object.getClass();
-    if (DataTemplateUtil.hasCoercer(valueClass))
+    if (fromClass == null)
+    {
+      fromClass = object.getClass();
+    }
+    if (DataTemplateUtil.hasCoercer(fromClass))
     {
       @SuppressWarnings("unchecked")
-      final Class<Object> fromClass = (Class<Object>) object.getClass();
-      return DataTemplateUtil.coerceInput(object, fromClass, Object.class).toString();
+      final Class<Object> clazz = (Class<Object>) fromClass;
+      return DataTemplateUtil.coerceInput(object, clazz, Object.class).toString();
     }
     return object.toString();
   }

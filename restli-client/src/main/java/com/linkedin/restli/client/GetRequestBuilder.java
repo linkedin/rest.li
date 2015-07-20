@@ -115,6 +115,7 @@ public class GetRequestBuilder<K, V extends RecordTemplate> extends
                              getValueClass(),
                              buildReadOnlyId(),
                              buildReadOnlyQueryParameters(),
+                             getQueryParamClasses(),
                              _resourceSpec,
                              getBaseUriTemplate(),
                              buildReadOnlyPathKeys(),

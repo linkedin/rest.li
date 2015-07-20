@@ -57,6 +57,7 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> extends
 
   private Map<String, String>       _headers     = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
   private final Map<String, Object> _queryParams = new HashMap<String, Object>();
+  private final Map<String, Class<?>> _queryParamClasses = new HashMap<String, Class<?>>();
   private final Map<String, Object> _pathKeys    = new HashMap<String, Object>();
   private final CompoundKey         _assocKey    = new CompoundKey();
 
@@ -129,13 +130,29 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> extends
     return setParam(key, value);
   }
 
+  public AbstractRequestBuilder<K, V, R> setReqParam(String key, Object value, Class<?> clazz)
+  {
+    ArgumentUtil.notNull(value, "value");
+    return setParam(key, value, clazz);
+  }
+
   public AbstractRequestBuilder<K, V, R> setParam(String key, Object value)
   {
     if (value == null)
     {
       return this;
     }
+    return setParam(key, value, value.getClass());
+  }
+
+  public AbstractRequestBuilder<K, V, R> setParam(String key, Object value, Class<?> clazz)
+  {
+    if (value == null)
+    {
+      return this;
+    }
     _queryParams.put(key, value);
+    _queryParamClasses.put(key, clazz);
     return this;
   }
 
@@ -145,8 +162,23 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> extends
     return addParam(key, value);
   }
 
-  @SuppressWarnings("unchecked")
+  public AbstractRequestBuilder<K, V, R> addReqParam(String key, Object value, Class<?> clazz)
+  {
+    ArgumentUtil.notNull(value, "value");
+    return addParam(key, value, clazz);
+  }
+
   public AbstractRequestBuilder<K, V, R> addParam(String key, Object value)
+  {
+    if (value == null)
+    {
+      return this;
+    }
+    return addParam(key, value, value.getClass());
+  }
+
+  @SuppressWarnings("unchecked")
+  public AbstractRequestBuilder<K, V, R> addParam(String key, Object value, Class<?> clazz)
   {
     if (value == null)
     {
@@ -178,6 +210,7 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> extends
     {
       throw new IllegalStateException("Query parameter is already set to non-iterable value. Reset with null value then add new query parameter.");
     }
+    _queryParamClasses.put(key, clazz);
 
     return this;
   }
@@ -318,6 +351,11 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> extends
     {
       throw new IllegalArgumentException("Query parameters cannot be cloned.", cloneException);
     }
+  }
+
+  protected Map<String, Class<?>> getQueryParamClasses()
+  {
+    return _queryParamClasses;
   }
 
   /**

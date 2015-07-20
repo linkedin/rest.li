@@ -20,6 +20,7 @@ import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.DataSchemaUtil;
 import com.linkedin.data.schema.EnumDataSchema;
+import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.template.DataTemplate;
 import com.linkedin.data.template.DynamicRecordMetadata;
 import com.linkedin.data.template.FieldDef;
@@ -32,6 +33,7 @@ import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.ResourceSpecImpl;
 import com.linkedin.restli.common.TypeSpec;
+import com.linkedin.restli.internal.common.TyperefUtils;
 import com.linkedin.restli.restspec.ActionSchema;
 import com.linkedin.restli.restspec.ActionSchemaArray;
 import com.linkedin.restli.restspec.ActionsSetSchema;
@@ -361,6 +363,11 @@ public class ResourceSchemaToResourceSpecTranslator
 
   public Class<?> toType(DataSchema schema)
   {
+    if (schema.getType() == DataSchema.Type.TYPEREF)
+    {
+      Class<?> javaClass = TyperefUtils.getJavaClassForSchema((TyperefDataSchema) schema);
+      if (javaClass != null) return javaClass;
+    }
     DataSchema.Type dereferencedType = schema.getDereferencedType();
     DataSchema dereferencedDataSchema = schema.getDereferencedDataSchema();
     if(dereferencedDataSchema.isPrimitive())

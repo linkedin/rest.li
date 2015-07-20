@@ -134,6 +134,7 @@ public class BatchCreateRequestBuilder<K, V extends RecordTemplate> extends
                                      buildReadOnlyInput(),
                                      _resourceSpec,
                                      buildReadOnlyQueryParameters(),
+                                     getQueryParamClasses(),
                                      getBaseUriTemplate(),
                                      buildReadOnlyPathKeys(),
                                      getRequestOptions());

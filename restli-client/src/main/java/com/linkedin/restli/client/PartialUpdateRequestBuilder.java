@@ -122,6 +122,7 @@ public class PartialUpdateRequestBuilder<K, V extends RecordTemplate> extends
                                        buildReadOnlyHeaders(),
                                        _resourceSpec,
                                        buildReadOnlyQueryParameters(),
+                                       getQueryParamClasses(),
                                        getBaseUriTemplate(),
                                        buildReadOnlyPathKeys(),
                                        getRequestOptions(),

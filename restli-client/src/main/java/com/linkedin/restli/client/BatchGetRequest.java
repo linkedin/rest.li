@@ -42,6 +42,7 @@ public class BatchGetRequest<T extends RecordTemplate> extends BatchRequest<Batc
   BatchGetRequest(Map<String, String> headers,
                   RestResponseDecoder<BatchResponse<T>> decoder,
                   Map<String, Object> queryParams,
+                  Map<String, Class<?>> queryParamClasses,
                   ResourceSpec resourceSpec,
                   String baseUriTemplate,
                   Map<String, Object> pathKeys,
@@ -53,6 +54,7 @@ public class BatchGetRequest<T extends RecordTemplate> extends BatchRequest<Batc
           decoder,
           resourceSpec,
           queryParams,
+          queryParamClasses,
           baseUriTemplate,
           pathKeys,
           requestOptions);

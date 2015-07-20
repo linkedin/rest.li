@@ -289,7 +289,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
     return fixOldStylePathKeys(template.getTemplateVariables(), basePath, pathToAssocKeys);
   }
 
-  private static void generateQueryParamSetMethod(JDefinedClass derivedBuilderClass, ParameterSchema param, JClass paramClass)
+  private static void generateQueryParamSetMethod(JDefinedClass derivedBuilderClass, ParameterSchema param, JClass paramClass, JClass paramItemsClass)
   {
     final String paramName = param.getName();
     final boolean isOptional = param.isOptional() == null ? false : param.isOptional();
@@ -297,7 +297,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
     final String methodName = RestLiToolsUtils.nameCamelCase(paramName + "Param");
     final JMethod setMethod = derivedBuilderClass.method(JMod.PUBLIC, derivedBuilderClass, methodName);
     final JVar setMethodParam = setMethod.param(paramClass, "value");
-    setMethod.body().add(JExpr._super().invoke(isOptional ? "setParam" : "setReqParam").arg(paramName).arg(setMethodParam));
+    setMethod.body().add(JExpr._super().invoke(isOptional ? "setParam" : "setReqParam").arg(paramName).arg(setMethodParam).arg(paramItemsClass.dotclass()));
     setMethod.body()._return(JExpr._this());
 
     generateParamJavadoc(setMethod, setMethodParam, param);
@@ -311,7 +311,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
     final String methodName = RestLiToolsUtils.nameCamelCase("add" + RestLiToolsUtils.normalizeCaps(paramName) + "Param");
     final JMethod addMethod = derivedBuilderClass.method(JMod.PUBLIC, derivedBuilderClass, methodName);
     final JVar addMethodParam = addMethod.param(paramClass, "value");
-    addMethod.body().add(JExpr._super().invoke(isOptional ? "addParam" : "addReqParam").arg(paramName).arg(addMethodParam));
+    addMethod.body().add(JExpr._super().invoke(isOptional ? "addParam" : "addReqParam").arg(paramName).arg(addMethodParam).arg(paramClass.dotclass()));
     addMethod.body()._return(JExpr._this());
 
     generateParamJavadoc(addMethod, addMethodParam, param);
@@ -1053,14 +1053,14 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
       {
         final JClass paramItemsClass = getJavaBindingType(param.getItems(), facadeClass).valueClass;
         final JClass paramClass = getCodeModel().ref(Iterable.class).narrow(paramItemsClass);
-        generateQueryParamSetMethod(derivedBuilderClass, param, paramClass);
+        generateQueryParamSetMethod(derivedBuilderClass, param, paramClass, paramItemsClass);
         generateQueryParamAddMethod(derivedBuilderClass, param, paramItemsClass);
       }
       else
       {
         final DataSchema typeSchema = RestSpecCodec.textToSchema(param.getType(), _schemaResolver);
         final JClass paramClass = getJavaBindingType(typeSchema, facadeClass).valueClass;
-        generateQueryParamSetMethod(derivedBuilderClass, param, paramClass);
+        generateQueryParamSetMethod(derivedBuilderClass, param, paramClass, paramClass);
 
         // we deprecate the "items" field from ParameterSchema, which generates Iterable<Foo> in the builder
         // instead, we use the standard way to represent arrays, which generates FooArray
@@ -1070,7 +1070,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
           final DataSchema itemsSchema = ((ArrayDataSchema) typeSchema).getItems();
           final JClass paramItemsClass = getJavaBindingType(itemsSchema, facadeClass).valueClass;
           final JClass iterableItemsClass = getCodeModel().ref(Iterable.class).narrow(paramItemsClass);
-          generateQueryParamSetMethod(derivedBuilderClass, param, iterableItemsClass);
+          generateQueryParamSetMethod(derivedBuilderClass, param, iterableItemsClass, paramItemsClass);
           generateQueryParamAddMethod(derivedBuilderClass, param, paramItemsClass);
         }
       }
