@@ -25,6 +25,7 @@ import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.MapDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.UnionDataSchema;
+import com.linkedin.data.template.DynamicRecordTemplate;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.transform.filter.CopyFilter;
 import com.linkedin.data.transform.filter.request.MaskTree;
@@ -329,6 +330,10 @@ public class RestUtils
       {
         result = (V) new CreateIdStatus(new DataMap(), ((CreateIdStatus) recordTemplate).getKey());
         result.data().clear();
+      }
+      else if (recordTemplate instanceof DynamicRecordTemplate)
+      {
+        result = (V) new DynamicRecordTemplate(new DataMap(), recordTemplate.schema());
       }
       else
       {
