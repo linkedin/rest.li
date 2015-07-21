@@ -1,6 +1,11 @@
-2.10.2
+2.10.3
 -----
 
+
+2.10.2
+-----
+(RB=496878)
+Fix build.gradle signing process to enable mavin release.
 
 2.10.1
 -----
