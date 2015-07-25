@@ -83,8 +83,8 @@ public class MultiplexedCallback implements Callback<RestResponse>
 
   private void notifyIndividualCallbacks(Response<MultiplexedResponseContent> muxResponse)
   {
-    List<IndividualResponse> indResponses = muxResponse.getEntity().getResponses();
-    for (IndividualResponse individualResponse : indResponses)
+    List<IndividualResponse> individualResponses = muxResponse.getEntity().getResponses();
+    for (IndividualResponse individualResponse : individualResponses)
     {
       Callback<RestResponse> callback = _callbacks.get(individualResponse.getId());
       RestResponse individualRestResponse = buildIndividualRestResponse(individualResponse);
@@ -100,7 +100,7 @@ public class MultiplexedCallback implements Callback<RestResponse>
     }
   }
 
-  private RestResponse buildIndividualRestResponse(IndividualResponse individualResponse)
+  private static RestResponse buildIndividualRestResponse(IndividualResponse individualResponse)
   {
     return new RestResponseBuilder()
         .setStatus(individualResponse.getStatus())

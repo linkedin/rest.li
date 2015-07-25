@@ -41,9 +41,7 @@ import com.linkedin.restli.common.HttpStatus;
 /* package private */ class RequestHandlingTask extends BaseTask<RestResponse>
 {
   private final RestRequestHandler _requestHandler;
-
   private final RestRequest _request;
-
   private final RequestContext _requestContext;
 
   /* package private */ RequestHandlingTask(RestRequestHandler requestHandler, RestRequest request, RequestContext requestContext)
@@ -83,7 +81,7 @@ import com.linkedin.restli.common.HttpStatus;
     return promise;
   }
 
-  private RestResponse toErrorResponse(Throwable e)
+  private static RestResponse toErrorResponse(Throwable e)
   {
     // It is assumed that the handler always returns RestException. It happens because the original callback passed into
     // the handler is wrapped into com.linkedin.restli.internal.server.RestLiCallback.

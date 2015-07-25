@@ -48,7 +48,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -61,6 +60,11 @@ import static org.testng.Assert.*;
 public class TestMultiplexedRequestHandlerImpl
 {
   private static final JacksonDataCodec CODEC = new JacksonDataCodec();
+
+  /**
+   * The maximum number of requests allowed in the multiplexer under test.
+   */
+  private static final int MAXIMUM_REQUESTS_NUMBER = 2;
 
   private static final String FOO_URL = "/foo";
   private static final String BAR_URL = "/bar";
@@ -81,7 +85,6 @@ public class TestMultiplexedRequestHandlerImpl
   public void testIsNotMultiplexedRequest() throws Exception
   {
     MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(null);
-
     RestRequest request = new RestRequestBuilder(new URI("/somethingElse")).setMethod(HttpMethod.POST.name()).build();
     assertFalse(multiplexer.isMultiplexedRequest(request));
   }
@@ -90,31 +93,43 @@ public class TestMultiplexedRequestHandlerImpl
   public void testHandleWrongMethod() throws Exception
   {
     MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(null);
-
     RestRequest request = new RestRequestBuilder(new URI("/mux")).setMethod(HttpMethod.PUT.name()).build();
-
     FutureCallback<RestResponse> callback = new FutureCallback<RestResponse>();
-
     multiplexer.handleRequest(request, new RequestContext(), callback);
-
-    RestLiServiceException methodNotAllowedException = (RestLiServiceException) getError(callback);
-    assertEquals(methodNotAllowedException.getStatus(), HttpStatus.S_405_METHOD_NOT_ALLOWED);
+    assertEquals(getError(callback).getStatus(), HttpStatus.S_405_METHOD_NOT_ALLOWED);
   }
 
   @Test
   public void testHandleEmptyRequest() throws Exception
   {
     MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(null);
-
     RestRequest request = fakeMuxRestRequest();
-
     FutureCallback<RestResponse> callback = new FutureCallback<RestResponse>();
-
     multiplexer.handleRequest(request, new RequestContext(), callback);
+    assertEquals(getError(callback).getStatus(), HttpStatus.S_400_BAD_REQUEST);
+  }
 
-    RestLiServiceException badRequestException = (RestLiServiceException) getError(callback);
+  @Test
+  public void testHandleTooManyParallelRequests() throws Exception
+  {
+    // MultiplexedRequestHandlerImpl is create with the request limit set to 2
+    MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(null);
+    RestRequest request = fakeMuxRestRequest(fakeIndRequest(0, FOO_URL), fakeIndRequest(1, FOO_URL), fakeIndRequest(2, FOO_URL));
+    FutureCallback<RestResponse> callback = new FutureCallback<RestResponse>();
+    multiplexer.handleRequest(request, new RequestContext(), callback);
+    assertEquals(getError(callback).getStatus(), HttpStatus.S_400_BAD_REQUEST);
+  }
 
-    assertEquals(badRequestException.getStatus(), HttpStatus.S_400_BAD_REQUEST);
+
+  @Test
+  public void testHandleTooManySequentialRequests() throws Exception
+  {
+    // MultiplexedRequestHandlerImpl is create with the request limit set to 2
+    MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(null);
+    RestRequest request = fakeMuxRestRequest(fakeIndRequest(0, FOO_URL, fakeIndRequest(1, FOO_URL, fakeIndRequest(2, FOO_URL))));
+    FutureCallback<RestResponse> callback = new FutureCallback<RestResponse>();
+    multiplexer.handleRequest(request, new RequestContext(), callback);
+    assertEquals(getError(callback).getStatus(), HttpStatus.S_400_BAD_REQUEST);
   }
 
   @Test
@@ -181,9 +196,8 @@ public class TestMultiplexedRequestHandlerImpl
     MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(mockHandler);
     RequestContext requestContext = new RequestContext();
 
-    IndividualRequest indRequest0 = fakeIndRequest(0, FOO_URL);
     IndividualRequest indRequest1 = fakeIndRequest(1, BAR_URL);
-    indRequest0.setDependentRequests(new IndividualRequestArray(Collections.singleton(indRequest1)));
+    IndividualRequest indRequest0 = fakeIndRequest(0, FOO_URL, indRequest1);
     RestRequest request = fakeMuxRestRequest(indRequest0);
 
     // set expectations
@@ -233,7 +247,7 @@ public class TestMultiplexedRequestHandlerImpl
     verify(mockHandler);
   }
 
-  private Throwable getError(FutureCallback<RestResponse> future) throws InterruptedException
+  private RestLiServiceException getError(FutureCallback<RestResponse> future) throws InterruptedException
   {
     try
     {
@@ -242,7 +256,7 @@ public class TestMultiplexedRequestHandlerImpl
     }
     catch (ExecutionException e)
     {
-      return e.getCause();
+      return (RestLiServiceException) e.getCause();
     }
   }
 
@@ -263,15 +277,16 @@ public class TestMultiplexedRequestHandlerImpl
         .setTimerScheduler(timerScheduler)
         .build();
 
-    return new MultiplexedRequestHandlerImpl(requestHandler, engine);
+    return new MultiplexedRequestHandlerImpl(requestHandler, engine, MAXIMUM_REQUESTS_NUMBER);
   }
 
-  private IndividualRequest fakeIndRequest(int id, String url)
+  private IndividualRequest fakeIndRequest(int id, String url, IndividualRequest... dependentRequests)
   {
     IndividualRequest individualRequest = new IndividualRequest();
     individualRequest.setId(id);
     individualRequest.setMethod(HttpMethod.GET.name());
     individualRequest.setRelativeUrl(url);
+    individualRequest.setDependentRequests(new IndividualRequestArray(Arrays.asList(dependentRequests)));
     return individualRequest;
   }
 

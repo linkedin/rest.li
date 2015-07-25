@@ -125,12 +125,12 @@ public class MultiplexedRequestBuilder
   {
     Map<Integer, Callback<RestResponse>> callbacks = new HashMap<Integer, Callback<RestResponse>>(_requestsWithCallbacks.size());
     List<IndividualRequest> individualRequests = new ArrayList<IndividualRequest>(_requestsWithCallbacks.size());
-    // Dependant requests list is always empty
-    List<IndividualRequest> dependantRequests = Collections.emptyList();
+    // Dependent requests list is always empty
+    List<IndividualRequest> dependentRequests = Collections.emptyList();
     for (int i = 0; i < _requestsWithCallbacks.size(); i++)
     {
       RequestWithCallback<?> requestWithCallback = _requestsWithCallbacks.get(i);
-      IndividualRequest individualRequest = toIndividualRequest(i, requestWithCallback.getRequest(), dependantRequests);
+      IndividualRequest individualRequest = toIndividualRequest(i, requestWithCallback.getRequest(), dependentRequests);
       individualRequests.add(individualRequest);
       callbacks.put(i, wrapCallback(requestWithCallback));
     }
@@ -141,26 +141,26 @@ public class MultiplexedRequestBuilder
   {
     Map<Integer, Callback<RestResponse>> callbacks = new HashMap<Integer, Callback<RestResponse>>(_requestsWithCallbacks.size());
     // Dependent requests - requests which are dependent on the current request (executed after the current request)
-    List<IndividualRequest> dependantRequests = Collections.emptyList();
+    List<IndividualRequest> dependentRequests = Collections.emptyList();
     // We start with the last request in the list and proceed backwards because sequential ordering is built using reverse dependencies
     for (int i = _requestsWithCallbacks.size() - 1; i >= 0; i--)
     {
       RequestWithCallback<?> requestWithCallback = _requestsWithCallbacks.get(i);
-      IndividualRequest individualRequest = toIndividualRequest(i, requestWithCallback.getRequest(), dependantRequests);
-      dependantRequests = Collections.singletonList(individualRequest);
+      IndividualRequest individualRequest = toIndividualRequest(i, requestWithCallback.getRequest(), dependentRequests);
+      dependentRequests = Collections.singletonList(individualRequest);
       callbacks.put(i, wrapCallback(requestWithCallback));
     }
-    return toMultiplexedRequest(dependantRequests, callbacks);
+    return toMultiplexedRequest(dependentRequests, callbacks);
   }
 
   @SuppressWarnings({"rawtypes", "unchecked"})
-  private Callback<RestResponse> wrapCallback(RequestWithCallback<?> requestWithCallback)
+  private static Callback<RestResponse> wrapCallback(RequestWithCallback<?> requestWithCallback)
   {
     return new RestLiCallbackAdapter(requestWithCallback.getRequest().getResponseDecoder(),
                                      requestWithCallback.getCallback());
   }
 
-  private IndividualRequest toIndividualRequest(int id, Request<?> request, List<IndividualRequest> dependantRequests) throws RestLiEncodingException
+  private static IndividualRequest toIndividualRequest(int id, Request<?> request, List<IndividualRequest> dependantRequests) throws RestLiEncodingException
   {
     IndividualRequest individualRequest = new IndividualRequest();
     individualRequest.setId(id);
@@ -172,7 +172,7 @@ public class MultiplexedRequestBuilder
     return individualRequest;
   }
 
-  private String getRelativeUrl(Request<?> request)
+  private static String getRelativeUrl(Request<?> request)
   {
     URI requestUri = RestliUriBuilderUtil.createUriBuilder(request, "", AllProtocolVersions.LATEST_PROTOCOL_VERSION).build();
     return requestUri.toString();
@@ -181,7 +181,7 @@ public class MultiplexedRequestBuilder
   /**
    * Tries to extract the body of the given request and serialize it. If there is no body returns null.
    */
-  private ByteString getBody(Request<?> request) throws RestLiEncodingException
+  private static ByteString getBody(Request<?> request) throws RestLiEncodingException
   {
     RecordTemplate record = request.getInputRecord();
     if (record == null)
@@ -202,7 +202,7 @@ public class MultiplexedRequestBuilder
     }
   }
 
-  private MultiplexedRequest toMultiplexedRequest(List<IndividualRequest> individualRequests, Map<Integer, Callback<RestResponse>> callbacks)
+  private static MultiplexedRequest toMultiplexedRequest(List<IndividualRequest> individualRequests, Map<Integer, Callback<RestResponse>> callbacks)
   {
     MultiplexedRequestContent multiplexedRequestContent = new MultiplexedRequestContent();
     multiplexedRequestContent.setRequests(new IndividualRequestArray(individualRequests));

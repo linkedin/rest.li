@@ -39,6 +39,12 @@ import java.util.Set;
  */
 public class RestLiConfig
 {
+
+  /**
+   * Default value for the maximum number of individual requests allowed in a multiplexed request.
+   */
+  private static final int DEFAULT_MAX_REQUESTS_MULTIPLEXED = 20;
+
   /**
    * @deprecated There is no longer a notion of strict v.s. relaxed checking. The only check is that the version used
    * by the client is between {@link com.linkedin.restli.internal.common.AllProtocolVersions#OLDEST_SUPPORTED_PROTOCOL_VERSION}
@@ -72,6 +78,7 @@ public class RestLiConfig
   private List<RestLiDebugRequestHandler> _debugRequestHandlers;
   private final List<RequestFilter> _requestFilters = new ArrayList<RequestFilter>();
   private final List<ResponseFilter> _responseFilters = new ArrayList<ResponseFilter>();
+  private int _maxRequestsMultiplexed = DEFAULT_MAX_REQUESTS_MULTIPLEXED;
 
   /**
    * Constructor.
@@ -339,5 +346,25 @@ public class RestLiConfig
       _responseFilters.clear();
       _responseFilters.addAll(responseFilters);
     }
+  }
+
+  /**
+   * Get the maximum number of individual requests allowed in a multiplexed request.
+   *
+   * @return the maximum number of requests
+   */
+  public int getMaxRequestsMultiplexed()
+  {
+    return _maxRequestsMultiplexed;
+  }
+
+  /**
+   * Sets the maximum number of individual requests allowed in a multiplexed request.
+   *
+   * @param maxRequestsMultiplexed the maximum number of requests
+   */
+  public void setMaxRequestsMultiplexed(int maxRequestsMultiplexed)
+  {
+    _maxRequestsMultiplexed = maxRequestsMultiplexed;
   }
 }

@@ -65,21 +65,24 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
   private final Logger _log = LoggerFactory.getLogger(MultiplexedRequestHandlerImpl.class);
   private final RestRequestHandler _requestHandler;
   private final Engine _engine;
+  private final int _maximumRequestsNumber;
 
   /**
-   * @param requestHandler the handler that will take care of individual requests
-   * @param engine         ParSeq engine to run request handling on
+   * @param requestHandler        the handler that will take care of individual requests
+   * @param engine                ParSeq engine to run request handling on
+   * @param maximumRequestsNumber the maximum number of individual requests allowed in a multiplexed request
    */
-  public MultiplexedRequestHandlerImpl(RestRequestHandler requestHandler, Engine engine)
+  public MultiplexedRequestHandlerImpl(RestRequestHandler requestHandler, Engine engine, int maximumRequestsNumber)
   {
     _requestHandler = requestHandler;
     _engine = engine;
+    _maximumRequestsNumber = maximumRequestsNumber;
   }
 
   @Override
   public boolean isMultiplexedRequest(RestRequest request)
   {
-    // we don't check the method here because we want to return 405 if it anything but POST
+    // we don't check the method here because we want to return 405 if it is anything but POST
     return MUX_URI_PATH.equals(request.getURI().getPath());
   }
 
@@ -130,14 +133,30 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
     DataMap data = DataMapUtils.readMap(restRequest);
     MultiplexedRequestContent multiplexedRequestContent = DataTemplateUtil.wrap(data, MultiplexedRequestContent.class);
     List<IndividualRequest> individualRequests = multiplexedRequestContent.getRequests();
-    if (individualRequests.isEmpty())
+    int totalCount = totalRequestCount(individualRequests);
+    if (totalCount == 0)
     {
       throw new IllegalArgumentException("No individual requests to process");
+    }
+    if (totalCount > _maximumRequestsNumber)
+    {
+      throw new IllegalArgumentException("The server is configured to serve up to " + _maximumRequestsNumber +
+                                         " requests, but received " + individualRequests.size());
     }
     return individualRequests;
   }
 
-  private void validateHeaders(RestRequest request)
+  private int totalRequestCount(List<IndividualRequest> individualRequests)
+  {
+    int count = individualRequests.size();
+    for (IndividualRequest individualRequest : individualRequests)
+    {
+      count += totalRequestCount(individualRequest.getDependentRequests());
+    }
+    return count;
+  }
+
+  private static void validateHeaders(RestRequest request)
   {
     String contentType = request.getHeader(RestConstants.HEADER_CONTENT_TYPE);
     boolean valid = contentType != null && RestConstants.HEADER_VALUE_APPLICATION_JSON.equals(contentType);
@@ -172,7 +191,7 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
     return toVoid(Tasks.par(tasks));
   }
 
-  private Task<Void> createRequestHandlingTask(RequestContext requestContext,
+  private  Task<Void> createRequestHandlingTask(RequestContext requestContext,
                                                final IndividualRequest individualRequest,
                                                final List<IndividualResponse> individualResponses)
   {
@@ -190,7 +209,7 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
     return Tasks.seq(responseTask, addResponseTask);
   }
 
-  private RestRequest createSyntheticRequest(IndividualRequest individualRequest)
+  private static RestRequest createSyntheticRequest(IndividualRequest individualRequest)
   {
     URI uri = URI.create(individualRequest.getRelativeUrl());
     RestRequestBuilder builder = new RestRequestBuilder(uri);
@@ -201,7 +220,7 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
     return builder.build();
   }
 
-  private ByteString getEntity(IndividualRequest individualRequest)
+  private static ByteString getEntity(IndividualRequest individualRequest)
   {
     ByteString body = individualRequest.getBody(GetMode.NULL);
     if (body == null)
@@ -214,7 +233,7 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
     }
   }
 
-  private IndividualResponse toIndividualResponse(int id, RestResponse restResponse)
+  private static IndividualResponse toIndividualResponse(int id, RestResponse restResponse)
   {
     IndividualResponse individualResponse = new IndividualResponse();
     individualResponse.setId(id);
@@ -225,7 +244,7 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
     return individualResponse;
   }
 
-  private ByteString getBody(RestResponse restResponse)
+  private static ByteString getBody(RestResponse restResponse)
   {
     ByteString data = restResponse.getEntity();
     if (data.isEmpty())
@@ -238,7 +257,7 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
     }
   }
 
-  private RestResponse aggregateResponses(List<IndividualResponse> responses)
+  private static RestResponse aggregateResponses(List<IndividualResponse> responses)
   {
     MultiplexedResponseContent aggregatedResponseContent = new MultiplexedResponseContent();
     aggregatedResponseContent.setResponses(new IndividualResponseArray(responses));
@@ -253,7 +272,7 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
    * Converts a Task<List<Void>> into a Task<Void>. That is a hack to make the type system happy.
    * This method adds an unneeded empty task to the execution plan.
    */
-  private Task<Void> toVoid(Task<List<Void>> task)
+  private static Task<Void> toVoid(Task<List<Void>> task)
   {
     Task<Void> doNothingTask = Tasks.action("do nothing", new Runnable()
     {
