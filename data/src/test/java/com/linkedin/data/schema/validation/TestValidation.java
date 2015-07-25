@@ -85,6 +85,22 @@ public class TestValidation
     return options;
   }
 
+  public static ValidationOptions disallowUnrecognizedFieldOption()
+  {
+    ValidationOptions options = new ValidationOptions();
+    assertSame(options.getUnrecognizedFieldMode(), UnrecognizedFieldMode.IGNORE);
+    options.setUnrecognizedFieldMode(UnrecognizedFieldMode.DISALLOW);
+    return options;
+  }
+
+  public static ValidationOptions trimUnrecognizedFieldOption()
+  {
+    ValidationOptions options = new ValidationOptions();
+    assertSame(options.getUnrecognizedFieldMode(), UnrecognizedFieldMode.IGNORE);
+    options.setUnrecognizedFieldMode(UnrecognizedFieldMode.TRIM);
+    return options;
+  }
+
   // For CoercionMode.STRING_TO_PRIMITIVE we want to coerce Strings into the correct datatype
   // also
   private static void assertAllowedClass(CoercionMode coercionMode, Class<?> clazz)
@@ -517,7 +533,7 @@ public class TestValidation
             { new Double(1), new Long(1) }
         };
 
-    
+
     Object badObjects[] =
         {
             new Boolean(true),
@@ -2079,6 +2095,126 @@ public class TestValidation
       {
         assertFalse(message.contains(notExpected), message + " contains " + notExpected);
       }
+    }
+  }
+
+  @Test
+  public void testUnrecognizedFieldValidation() throws IOException
+  {
+    String schemaText =
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : " +
+            "[ { \"name\" : \"bar\", \"type\" : \"string\" } ] }";
+
+    Object goodObjects[] =
+        {
+            "a valid string"
+        };
+
+    Object badObjects[] =
+        {
+        };
+
+    // There is no coercion for this type.
+    // Test with all coercion modes, result should be the same for all cases.
+    testCoercionValidation(schemaText, "bar", goodObjects, badObjects, disallowUnrecognizedFieldOption());
+    testCoercionValidation(schemaText, "bar", goodObjects, badObjects, trimUnrecognizedFieldOption());
+
+    Object allowedForUnrecognizedField[] =
+        {
+        };
+
+    Object disallowedForUnrecognizedField[] =
+        {
+            "a string",
+            new Boolean(false),
+            new Integer(1),
+            new Long(1),
+            new Float(1),
+            new Double(1),
+            ByteString.copyAvroString("bytes", false),
+            new DataMap(),
+            new DataList()
+        };
+
+    testCoercionValidation(schemaText, "unrecognized", allowedForUnrecognizedField, disallowedForUnrecognizedField, disallowUnrecognizedFieldOption());
+  }
+
+  @Test
+  public void testUnrecognizedFieldTrimming() throws IOException
+  {
+    ValidationOptions options = new ValidationOptions(
+        RequiredMode.CAN_BE_ABSENT_IF_HAS_DEFAULT,
+        CoercionMode.NORMAL,
+        UnrecognizedFieldMode.TRIM);
+
+    String schemaText =
+        "{\n" +
+            "  \"name\" : \"Foo\",\n" +
+            "  \"type\" : \"record\",\n" +
+            "  \"fields\" : [\n" +
+            "    { \"name\" : \"primitive\", \"type\" : \"int\", \"optional\" : true },\n" +
+            "    { \"name\" : \"arrayField\", \"type\" : { \"type\" : \"array\", \"items\" : \"Foo\" }, \"optional\" : true },\n" +
+            "    { \"name\" : \"mapField\", \"type\" : { \"type\" : \"map\", \"values\" : \"Foo\" }, \"optional\" : true },\n" +
+            "    { \"name\" : \"unionField\", \"type\" : [ \"int\", \"string\", \"Foo\" ], \"optional\" : true },\n" +
+            "    { \"name\" : \"recordField\", \"type\" : \"Foo\", \"optional\" : true }\n" +
+            "  ]\n" +
+            "}\n";
+
+    DataSchema schema = dataSchemaFromString(schemaText);
+
+    String dataString =
+        "{\n" +
+        "  \"primitive\" : 1,\n" +
+        "  \"unrecognizedPrimitive\": -1,\n" +
+        "  \"arrayField\" : [ { \"primitive\": 2, \"unrecognizedInArray\": -2 } ],\n" +
+        "  \"mapField\" : { \"key\": { \"primitive\": 3, \"unrecognizedInMap\": -3 } },\n" +
+        "  \"unionField\" : { \"Foo\": { \"primitive\": 4, \"unrecognizedInMap\": -4 } },\n" +
+        "  \"recordField\" : {\n" +
+        "    \"primitive\" : 5,\n" +
+        "    \"unrecognizedPrimitive\": -5\n" +
+        "  },\n" +
+        "  \"unrecognizedMap\": { \"key\": -100},\n" +
+        "  \"unrecognizedArray\": [ -101 ]\n" +
+        "}";
+
+    String trimmedDataString =
+        "{\n" +
+        "  \"primitive\" : 1,\n" +
+        "  \"arrayField\" : [ { \"primitive\": 2 } ],\n" +
+        "  \"mapField\" : { \"key\": { \"primitive\": 3 } },\n" +
+        "  \"unionField\" : { \"Foo\": { \"primitive\": 4 } },\n" +
+        "  \"recordField\" : {\n" +
+        "    \"primitive\" : 5\n" +
+        "  }\n" +
+        "}";
+
+    // mutable
+    DataMap toValidate = dataMapFromString(dataString);
+    ValidationResult result = validate(toValidate, schema, options);
+    assertTrue(result.isValid());
+    assertEquals(result.getFixed(), dataMapFromString(trimmedDataString));
+    assertSame(toValidate, result.getFixed());
+
+    // read-only
+    DataMap readOnlyToValidate = dataMapFromString(dataString);
+    readOnlyToValidate.makeReadOnly();
+    ValidationResult readOnlyResult = validate(readOnlyToValidate, schema, options);
+    assertTrue(readOnlyResult.hasFixupReadOnlyError());
+    String message = readOnlyResult.getMessages().toString();
+    assertTrue(readOnlyResult.getMessages().size() == 8);
+    String[] expectedStrings = new String[] {
+        "/unrecognizedMap/key",
+        "/unrecognizedMap",
+        "/unrecognizedArray",
+        "/recordField/unrecognizedPrimitive",
+        "/unionField/Foo/unrecognizedInMap",
+        "/unrecognizedPrimitive",
+        "/arrayField/0/unrecognizedInArray",
+        "/mapField/key/unrecognizedInMap"
+    };
+    for (String expected : expectedStrings)
+    {
+      assertTrue(message.contains(expected), message + " does not contain " + expected);
     }
   }
 }

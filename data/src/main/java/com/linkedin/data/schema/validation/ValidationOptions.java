@@ -61,6 +61,7 @@ public final class ValidationOptions
   {
     _coercionMode = CoercionMode.NORMAL;
     _requiredMode = RequiredMode.CAN_BE_ABSENT_IF_HAS_DEFAULT;
+    _unrecognizedFieldMode = UnrecognizedFieldMode.IGNORE;
   }
 
   /**
@@ -74,6 +75,7 @@ public final class ValidationOptions
   {
     _coercionMode = CoercionMode.NORMAL;
     _requiredMode = requiredMode;
+    _unrecognizedFieldMode = UnrecognizedFieldMode.IGNORE;
   }
 
   /**
@@ -86,6 +88,21 @@ public final class ValidationOptions
   {
     _coercionMode = coercionMode;
     _requiredMode = requiredMode;
+    _unrecognizedFieldMode = UnrecognizedFieldMode.IGNORE;
+  }
+
+  /**
+   * Constructor.
+   *
+   * @param requiredMode specifies the required mode.
+   * @param coercionMode specifies the coercion mode.
+   * @param unrecognizedFieldMode specifies the unrecognized field mode.
+   */
+  public ValidationOptions(RequiredMode requiredMode, CoercionMode coercionMode, UnrecognizedFieldMode unrecognizedFieldMode)
+  {
+    _coercionMode = coercionMode;
+    _requiredMode = requiredMode;
+    _unrecognizedFieldMode = unrecognizedFieldMode;
   }
 
   /**
@@ -128,6 +145,26 @@ public final class ValidationOptions
   {
     ArgumentUtil.notNull(requiredMode, "RequiredMode");
     _requiredMode = requiredMode;
+  }
+
+  /**
+   * Returns how unrecognized fields are handled during validation.
+   *
+   * @return the unrecognized field mode.
+   */
+  public UnrecognizedFieldMode getUnrecognizedFieldMode()
+  {
+    return _unrecognizedFieldMode;
+  }
+
+  /**
+   * Set how unrecognized fields are handled during validation.
+   *
+   * @param unrecognizedFieldMode provides unrecognized field mode.
+   */
+  public void setUnrecognizedFieldMode(UnrecognizedFieldMode unrecognizedFieldMode)
+  {
+    _unrecognizedFieldMode = unrecognizedFieldMode;
   }
 
   /**
@@ -249,6 +286,7 @@ public final class ValidationOptions
 
   private CoercionMode _coercionMode;
   private RequiredMode _requiredMode;
+  private UnrecognizedFieldMode _unrecognizedFieldMode;
   private boolean      _avroUnionMode = false;
   private Map<String,Object> _validatorParameters = NO_VALIDATOR_PARAMETERS;
   private Set<String> _optionalFields = Collections.emptySet();

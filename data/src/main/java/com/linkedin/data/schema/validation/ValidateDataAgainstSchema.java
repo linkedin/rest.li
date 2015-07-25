@@ -21,6 +21,7 @@ import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -124,6 +125,7 @@ public final class ValidateDataAgainstSchema
     private Object _fixed = null;
     private boolean _valid = true;
     private final Context _context;
+    private List<ToTrim> _toTrim = new ArrayList<ToTrim>(0);
 
     private State(ValidationOptions options, Validator validator)
     {
@@ -142,6 +144,53 @@ public final class ValidateDataAgainstSchema
       {
         validateIterative(element);
       }
+
+      if (_toTrim.size() > 0) {
+        for (ToTrim toTrim: _toTrim) {
+          toTrim.trim();
+        }
+      }
+    }
+
+    /**
+     * Holds a data elements for later removal.
+     *
+     * This is a specialized version of {@link com.linkedin.data.it.Remover.ToRemove} which is and
+     * should remain private, so could not be used here.
+     */
+    private class ToTrim
+    {
+      private ToTrim(DataElement element)
+      {
+        DataElement parentElement = element.getParent();
+        _path = element.path();
+        _parent = parentElement == null ? null : parentElement.getValue();
+        _name = element.getName();
+      }
+
+      private void trim()
+      {
+        if (_parent != null) {
+          Class<?> nameClass = _name.getClass();
+          Class<?> parentClass = _parent.getClass();
+          if (nameClass == String.class) {
+            assert (parentClass == DataMap.class);
+            DataMap map = (DataMap) _parent;
+            if (map.isReadOnly())
+            {
+              _hasFixupReadOnlyError = true;
+              addMessage(_path, "unrecognized field cannot be trimmed because DataMap backing it is read-only");
+            }
+            else {
+              map.remove(_name);
+            }
+          }
+        }
+      }
+
+      private Object[] _path;
+      private Object _parent;
+      private Object _name;
     }
 
     protected void validateRecursive(DataElement element)
@@ -154,6 +203,7 @@ public final class ValidateDataAgainstSchema
     {
       _recursive = false;
       _fixed = element.getValue();
+      UnrecognizedFieldMode unrecognizedFieldMode = _options.getUnrecognizedFieldMode();
       ObjectIterator it = new ObjectIterator(element, IterationOrder.POST_ORDER);
       DataElement nextElement;
       while ((nextElement = it.next()) != null)
@@ -162,6 +212,18 @@ public final class ValidateDataAgainstSchema
         if (nextElementSchema != null)
         {
           validate(nextElement, nextElementSchema, nextElement.getValue());
+        }
+        else if (unrecognizedFieldMode != UnrecognizedFieldMode.IGNORE)
+        {
+          switch (unrecognizedFieldMode)
+          {
+            case DISALLOW:
+              addMessage(nextElement, "unrecognized field found but not allowed");
+              break;
+            case TRIM:
+              _toTrim.add(new ToTrim(nextElement));
+              break;
+          }
         }
       }
     }
@@ -682,10 +744,16 @@ public final class ValidateDataAgainstSchema
         return object;
       }
     }
-    
+
     protected void addMessage(DataElement element, String format, Object... args)
     {
       _messages.add(new Message(element.path(), format, args));
+      _valid = false;
+    }
+
+    protected void addMessage(Object[] path, String format, Object... args)
+    {
+      _messages.add(new Message(path, format, args));
       _valid = false;
     }
 
