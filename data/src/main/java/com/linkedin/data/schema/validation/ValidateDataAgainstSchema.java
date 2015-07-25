@@ -163,6 +163,10 @@ public final class ValidateDataAgainstSchema
         {
           validate(nextElement, nextElementSchema, nextElement.getValue());
         }
+        else if (_options.getUnrecognizedFieldMode() == UnrecognizedFieldMode.DISALLOW)
+        {
+          addMessage(element, "unrecognized field found but not allowed");
+        }
       }
     }
 
@@ -682,7 +686,7 @@ public final class ValidateDataAgainstSchema
         return object;
       }
     }
-    
+
     protected void addMessage(DataElement element, String format, Object... args)
     {
       _messages.add(new Message(element.path(), format, args));

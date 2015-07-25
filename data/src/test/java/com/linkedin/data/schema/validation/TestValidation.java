@@ -85,6 +85,14 @@ public class TestValidation
     return options;
   }
 
+  public static ValidationOptions disallowUnrecognizedFieldOption()
+  {
+    ValidationOptions options = new ValidationOptions();
+    assertSame(options.getUnrecognizedFieldMode(), UnrecognizedFieldMode.IGNORE);
+    options.setUnrecognizedFieldMode(UnrecognizedFieldMode.DISALLOW);
+    return options;
+  }
+
   // For CoercionMode.STRING_TO_PRIMITIVE we want to coerce Strings into the correct datatype
   // also
   private static void assertAllowedClass(CoercionMode coercionMode, Class<?> clazz)
@@ -517,7 +525,7 @@ public class TestValidation
             { new Double(1), new Long(1) }
         };
 
-    
+
     Object badObjects[] =
         {
             new Boolean(true),
@@ -2080,5 +2088,45 @@ public class TestValidation
         assertFalse(message.contains(notExpected), message + " contains " + notExpected);
       }
     }
+  }
+
+  @Test
+  public void testDisallowUnrecognizedFieldValidation() throws IOException
+  {
+    String schemaText =
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : " +
+            "[ { \"name\" : \"bar\", \"type\" : \"string\" } ] }";
+
+    Object goodObjects[] =
+        {
+            "a valid string"
+        };
+
+    Object badObjects[] =
+        {
+        };
+
+    // There is no coercion for this type.
+    // Test with all coercion modes, result should be the same for all cases.
+    testCoercionValidation(schemaText, "bar", goodObjects, badObjects, disallowUnrecognizedFieldOption());
+
+    Object goodObjectsForUnrecognizedField[] =
+        {
+        };
+
+    Object badObjectsForUnrecognizedField[] =
+        {
+            "a string",
+            new Boolean(false),
+            new Integer(1),
+            new Long(1),
+            new Float(1),
+            new Double(1),
+            ByteString.copyAvroString("bytes", false),
+            new DataMap(),
+            new DataList()
+        };
+
+    testCoercionValidation(schemaText, "unrecognized", goodObjectsForUnrecognizedField, goodObjectsForUnrecognizedField, disallowUnrecognizedFieldOption());
   }
 }
