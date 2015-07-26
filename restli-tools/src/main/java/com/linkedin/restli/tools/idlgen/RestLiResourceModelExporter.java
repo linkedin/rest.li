@@ -184,7 +184,7 @@ public class RestLiResourceModelExporter
     DocsProvider javadocProvider = new DocletDocsProvider(apiName, classpath, sourcePaths, resourcePackages);
 
     DocsProvider docsProvider;
-    if(additionalDocProviders == null || additionalDocProviders.isEmpty())
+    if (additionalDocProviders == null || additionalDocProviders.isEmpty())
     {
       docsProvider = javadocProvider;
     }

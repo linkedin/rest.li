@@ -8,12 +8,12 @@ then
     branch=$2
 fi
 
-version=`cat $(dirname $0)/version`
+version=`awk 'BEGIN { FS = "=" }; $1 == "version" { print $2 }' gradle.properties`
 echo "Attempting to publish: $version"
 echo
 
-DIRTY="`git status --porcelain --untracked-files=no 2>&1 || echo FAIL`"
-if test -n "$DIRTY"
+DIRTY=`git status --porcelain --untracked-files=no 2>&1 || echo FAIL`
+if [ -n "$DIRTY" ]
 then
     echo "Dirty index or working tree. Use git status to check."
     echo "After resolution, run this command again."
@@ -21,15 +21,15 @@ then
 fi
 
 LATEST_RELEASED_VERSION=$(git tag | tail -n 1)
-DIFF="`git diff --quiet $remote/$branch $LATEST_RELEASED_VERSION >/dev/null 2>&1 ; echo $?`"
-if [ $DIFF = 0 ]
+DIFF=`git diff --quiet $remote/$branch $LATEST_RELEASED_VERSION >/dev/null 2>&1 ; echo $?`
+if [ $DIFF -eq 0 ]
 then
     echo "No commit between latest released version $LATEST_RELEASED_VERSION and $remote/$branch."
     exit 1
 fi
 
-INCONSISTENT="`git diff --quiet $remote/$branch >/dev/null 2>&1 ; echo $?`"
-if [ $INCONSISTENT != 0 ]
+INCONSISTENT=`git diff --quiet $remote/$branch >/dev/null 2>&1 ; echo $?`
+if [ $INCONSISTENT -eq 0 ]
 then
     echo "$remote/$branch and current branch are inconsistent."
     echo "Use git diff $remote/$branch to see changes."
@@ -37,8 +37,8 @@ then
     exit 1
 fi
 
-CHANGELOG="`grep $version CHANGELOG >/dev/null 2>&1 ; echo $?`"
-if [ $CHANGELOG != 0 ]
+CHANGELOG=`grep $version CHANGELOG >/dev/null 2>&1 ; echo $?`
+if [ $CHANGELOG -ne 0 ]
 then
     echo "No entry in the CHANGELOG for version $version."
     echo "To get a list of changes, use git log previous_tag.."
