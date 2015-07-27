@@ -3,6 +3,10 @@
 (RB=623465)
 ByteString API changes to support multipart mime streaming
 
+(RB=529863)
+Introduce async multipart mime support
+
+
 5.0.4
 -----
 (RB=636416)
