@@ -17,9 +17,12 @@
 package com.linkedin.restli.internal.server.methods.response;
 
 
+import com.linkedin.data.DataMap;
+import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.pegasus.generator.examples.Foo;
 import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CompoundKey;
+import com.linkedin.restli.common.EntityResponse;
 import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ProtocolVersion;
@@ -28,7 +31,9 @@ import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.server.RestLiResponseEnvelope;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.ServerResourceContext;
+import com.linkedin.restli.internal.server.methods.AnyRecord;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
+import com.linkedin.restli.internal.server.response.BatchResponseEnvelope;
 import com.linkedin.restli.server.BatchUpdateResult;
 import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiServiceException;
@@ -203,6 +208,47 @@ public class TestBatchUpdateResponseBuilder
     EasyMock.verify(mockContext, mockDescriptor);
     ResponseBuilderUtil.validateHeaders(restResponse, headers);
     Assert.assertEquals(batchResponse.getResults(), expectedResults);
+  }
+
+  @Test(dataProvider = "updateStatusInstantiation")
+  public void testUpdateStatusInstantiation(RestLiResponseEnvelope responseData, UpdateStatus expectedResult)
+  {
+    ResourceContext mockContext = getMockResourceContext(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion());
+    ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor();
+    RoutingResult routingResult = new RoutingResult(mockContext, mockDescriptor);
+
+    PartialRestResponse response = new BatchUpdateResponseBuilder(new ErrorResponseBuilder())
+        .buildResponse(routingResult, responseData);
+    Assert.assertEquals(((BatchResponse) response.getEntity()).getResults().get("key"), expectedResult);
+  }
+
+  @DataProvider(name = "updateStatusInstantiation")
+  public Object[][] updateStatusInstantiation()
+  {
+    Map<String, BatchResponseEnvelope.BatchResponseEntry> normal = new HashMap<String, BatchResponseEnvelope.BatchResponseEntry>();
+    UpdateStatus foo = new UpdateStatus();
+    foo.setStatus(500); // should be overwritten
+    foo.data().put("foo", "bar"); //should be preserved
+    normal.put("key", new BatchResponseEnvelope.BatchResponseEntry(HttpStatus.S_200_OK, foo));
+    UpdateStatus normalStatus = new UpdateStatus();
+    normalStatus.setStatus(200);
+    normalStatus.data().put("foo", "bar");
+
+    Map<String, BatchResponseEnvelope.BatchResponseEntry> missing = new HashMap<String, BatchResponseEnvelope.BatchResponseEntry>();
+    missing.put("key", new BatchResponseEnvelope.BatchResponseEntry(HttpStatus.S_200_OK, (RecordTemplate) null));
+    UpdateStatus missingStatus = new UpdateStatus();
+    missingStatus.setStatus(200);
+
+    Map<String, BatchResponseEnvelope.BatchResponseEntry> mismatch = new HashMap<String, BatchResponseEnvelope.BatchResponseEntry>();
+    mismatch.put("key", new BatchResponseEnvelope.BatchResponseEntry(HttpStatus.S_200_OK, new AnyRecord(new DataMap())));
+    UpdateStatus mismatchedStatus = new UpdateStatus();
+    mismatchedStatus.setStatus(200);
+
+    return new Object[][] {
+        { new BatchResponseEnvelope(normal, Collections.<String, String>emptyMap(), Collections.<HttpCookie>emptyList()), normalStatus },
+        { new BatchResponseEnvelope(missing, Collections.<String, String>emptyMap(), Collections.<HttpCookie>emptyList()), missingStatus },
+        { new BatchResponseEnvelope(mismatch, Collections.<String, String>emptyMap(), Collections.<HttpCookie>emptyList()), mismatchedStatus }
+    };
   }
 
   private static ResourceContext getMockResourceContext(ProtocolVersion protocolVersion)

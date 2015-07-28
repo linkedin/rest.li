@@ -19,7 +19,6 @@ package com.linkedin.restli.internal.server.methods.response;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.collections.CheckedUtil;
-import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.internal.server.response.BatchResponseEnvelope;
@@ -85,7 +84,8 @@ public final class BatchUpdateResponseBuilder implements RestLiResponseBuilder
                 + routingResult.getResourceMethod());
       }
 
-      UpdateStatus status = new UpdateStatus();
+      UpdateStatus status = entry.getValue().getRecord() instanceof UpdateStatus ?
+                              (UpdateStatus) entry.getValue().getRecord() : new UpdateStatus();
       status.setStatus(entry.getValue().getStatus().getCode());
       if (entry.getValue().hasException())
       {
@@ -135,7 +135,7 @@ public final class BatchUpdateResponseBuilder implements RestLiResponseBuilder
 
       if (!serviceErrors.containsKey(entry.getKey()))
       {
-        batchResponseMap.put(entry.getKey(), new BatchResponseEntry(entry.getValue().getStatus(), (RecordTemplate) null));
+        batchResponseMap.put(entry.getKey(), new BatchResponseEntry(entry.getValue().getStatus(), new UpdateStatus()));
       }
     }
 

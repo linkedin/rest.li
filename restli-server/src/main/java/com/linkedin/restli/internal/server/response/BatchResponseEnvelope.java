@@ -115,7 +115,20 @@ public final class BatchResponseEnvelope extends RestLiResponseEnvelope
   {
     // The following sets of variables should be disjoint, e.g.
     // if one group is set the other group should all be null.
+
     // For valid responses:
+    // Invariant: this record template must match the type of the
+    // response it is meant to encapsulate.
+    // For BatchGet, it must be whichever RecordTemplate the
+    // resource method returns for each key. All items in the
+    // underlying data map will be preserved.
+    // For BatchUpdate, it must be an instanceof UpdateStatus;
+    // otherwise, the content will be overwritten upon building
+    // the PartialRestResponse. The instance of UpdateStatus
+    // will not actually honor the status code or error response
+    // fields since there are corresponding sources of truth in
+    // this class, but any other items in the underlying data map
+    // will be preserved.
     private RecordTemplate _recordTemplate;
 
     // For exception responses:
