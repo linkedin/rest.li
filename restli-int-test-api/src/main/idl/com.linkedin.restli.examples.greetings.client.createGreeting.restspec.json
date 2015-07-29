@@ -1,0 +1,23 @@
+{
+  "name" : "createGreeting",
+  "namespace" : "com.linkedin.restli.examples.greetings.client",
+  "path" : "/createGreeting",
+  "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
+  "doc" : "Class for testing the CREATE method that returns the entity.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.CreateGreetingResource",
+  "collection" : {
+    "identifier" : {
+      "name" : "key",
+      "type" : "long"
+    },
+    "supports" : [ "create" ],
+    "methods" : [ {
+      "annotations" : {
+        "returnEntity" : { }
+      },
+      "method" : "create"
+    } ],
+    "entity" : {
+      "path" : "/createGreeting/{key}"
+    }
+  }
+}
