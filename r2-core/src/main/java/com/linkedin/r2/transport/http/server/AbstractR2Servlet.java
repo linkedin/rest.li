@@ -111,12 +111,10 @@ public abstract class AbstractR2Servlet extends HttpServlet
   }
 
   protected void writeToServletResponse(TransportResponse<RestResponse> response,
-                                        HttpServletResponse resp)
-      throws IOException
+                                        HttpServletResponse resp) throws IOException
   {
     Map<String, String> wireAttrs = response.getWireAttributes();
-    for (Map.Entry<String, String> e : WireAttributeHelper.toWireAttributes(wireAttrs)
-        .entrySet())
+    for (Map.Entry<String, String> e : WireAttributeHelper.toWireAttributes(wireAttrs).entrySet())
     {
       resp.setHeader(e.getKey(), e.getValue());
     }

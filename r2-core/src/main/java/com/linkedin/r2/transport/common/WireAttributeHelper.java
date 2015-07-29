@@ -20,6 +20,8 @@ package com.linkedin.r2.transport.common;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.TreeMap;
+
 
 /**
  * @author Chris Pettitt
@@ -30,20 +32,22 @@ public class WireAttributeHelper
   private static final String WIRE_ATTR_PREFIX = "X-LI-R2-W-";
 
   /**
-   * Remove the wire attributes from the specified map of message attributes (headers).
+   * Removes the wire attributes from the specified map of message attributes (headers)
+   * and returns a case insensitive map of wire attributes with prefix removed.
    *
    * @param map the map containing wire attributes to be removed.
-   * @return the wire attributes from the input map, with any key prefixes removed.
+   * @return a case insensitive map of the wire attributes from the input map,
+   *         with any key prefixes removed.
    */
   public static Map<String, String> removeWireAttributes(Map<String, String> map)
   {
-    final Map<String, String> wireAttrs = new HashMap<String, String>();
+    final Map<String, String> wireAttrs = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
 
     for (Iterator<Map.Entry<String, String>> it = map.entrySet().iterator(); it.hasNext();)
     {
       final Map.Entry<String, String> entry = it.next();
       final String key = entry.getKey();
-      if (key.startsWith(WIRE_ATTR_PREFIX))
+      if (key.toUpperCase().startsWith(WIRE_ATTR_PREFIX))
       {
         final String value = entry.getValue();
         final String newKey = key.substring(WIRE_ATTR_PREFIX.length());
@@ -56,15 +60,15 @@ public class WireAttributeHelper
   }
 
   /**
-   * Convert the specified map of wire attributes to message attribute format (by adding a
-   * namespacing prefix).
+   * Convert the specified map of wire attributes to a case insensitive map of wire attributes of
+   * message attribute format (by adding a namespace prefix).
    *
    * @param attrs wire attributes to be converted.
-   * @return map of message attributes constructed from specified wire attributes.
+   * @return a case insensitive map of message attributes constructed from specified wire attributes.
    */
   public static Map<String, String> toWireAttributes(Map<String, String> attrs)
   {
-    final Map<String, String> wireAttrs = new HashMap<String, String>();
+    final Map<String, String> wireAttrs = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
 
     for (Map.Entry<String, String> entry : attrs.entrySet())
     {

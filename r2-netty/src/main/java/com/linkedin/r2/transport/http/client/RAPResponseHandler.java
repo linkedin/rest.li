@@ -35,6 +35,7 @@ import java.nio.channels.ClosedChannelException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,9 +62,10 @@ class RAPResponseHandler extends SimpleChannelInboundHandler<RestResponse>
   @Override
   protected void channelRead0(ChannelHandlerContext ctx, RestResponse response) throws Exception
   {
-    final Map<String, String> headers = new HashMap<String, String>(response.getHeaders());
-    final Map<String, String> wireAttrs =
-      new HashMap<String, String>(WireAttributeHelper.removeWireAttributes(headers));
+    final Map<String, String> headers = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+    final Map<String, String> wireAttrs = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+    headers.putAll(response.getHeaders());
+    wireAttrs.putAll(WireAttributeHelper.removeWireAttributes(headers));
 
     final RestResponse newResponse = new RestResponseBuilder(response)
                                           .unsafeSetHeaders(headers)

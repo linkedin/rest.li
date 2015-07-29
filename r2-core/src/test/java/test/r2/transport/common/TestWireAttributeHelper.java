@@ -43,4 +43,77 @@ public class TestWireAttributeHelper
             WireAttributeHelper.removeWireAttributes(WireAttributeHelper.toWireAttributes(copy));
     Assert.assertEquals(actual, attrs);
   }
+
+  @Test
+  public void testRemoveWireAttributes()
+  {
+    final Map<String, String> headers = new HashMap<String, String>();
+    headers.put("key1", "val1");
+    headers.put("X-LI-R2-W-key2", "val2");
+
+    final Map<String, String> attributes = WireAttributeHelper.removeWireAttributes(headers);
+
+    // verifies headers with wire attribute prefix are removed
+    Assert.assertNotNull(headers, "Original header map should not be null after invocation.");
+    Assert.assertEquals(headers.size(), 1, "Incorrect number of headers returned.");
+    Assert.assertEquals(headers.get("key1"), "val1", "Headers contain wrong contents.");
+
+    // verifies wire attributes have prefix removed and put into a case insensitive map
+    Assert.assertNotNull(attributes, "Parsed wire attribute map should not be null.");
+    Assert.assertEquals(attributes.size(), 1, "Incorrect number of wire attributes returned.");
+    Assert.assertEquals(attributes.get("key2"), "val2", "Wire attribute key key2 is incorrect.");
+  }
+
+  @Test
+  public void testRemoveWireAttributesCaseInsensitive()
+  {
+    final Map<String, String> headers = new HashMap<String, String>();
+    headers.put("X-LI-R2-W-key2", "val2");
+    headers.put("x-li-r2-w-key3", "val3");
+    headers.put("x-li-r2-w-kEY4", "val4");
+
+    final Map<String, String> attributes = WireAttributeHelper.removeWireAttributes(headers);
+
+    // verifies wire attributes have prefix removed and put into a case insensitive map
+    Assert.assertNotNull(attributes, "Parsed wire attribute map should not be null.");
+    Assert.assertEquals(attributes.size(), 3, "Incorrect number of wire attributes returned.");
+    Assert.assertEquals(attributes.get("key2"), "val2", "Wire attribute key key2 is incorrect.");
+    Assert.assertEquals(attributes.get("KEY2"), "val2", "Wire attribute key KEY2 is incorrect.");
+    Assert.assertEquals(attributes.get("key3"), "val3", "Wire attribute key key3 is incorrect.");
+    Assert.assertEquals(attributes.get("KEY3"), "val3", "Wire attribute key KEY3 is incorrect.");
+    Assert.assertEquals(attributes.get("key4"), "val4", "Wire attribute key key4 is incorrect.");
+    Assert.assertEquals(attributes.get("KEY4"), "val4", "Wire attribute key KEY4 is incorrect.");
+  }
+
+  @Test
+  public void testToWireAttributes()
+  {
+    final Map<String, String> headers = new HashMap<String, String>();
+    headers.put("key1", "val1");
+    headers.put("key2", "val2");
+
+    final Map<String, String> attributes = WireAttributeHelper.toWireAttributes(headers);
+
+    // verifies wire attributes have prefix added and put into a case insensitive map
+    Assert.assertNotNull(attributes, "Parsed wire attributes should not be null.");
+    Assert.assertEquals(attributes.size(), 2, "Incorrect number of wire attributes returned.");
+    Assert.assertEquals(attributes.get("X-LI-R2-W-key1"), "val1", "Wire attribute X-LI-R2-W-KEY1 is incorrect.");
+    Assert.assertEquals(attributes.get("X-LI-R2-W-key2"), "val2", "Wire attribute X-LI-R2-W-KEY2 is incorrect.");
+  }
+
+  @Test
+  public void testToWireAttributesCaseInsensitive()
+  {
+    final Map<String, String> headers = new HashMap<String, String>();
+    headers.put("key1", "val1");
+    headers.put("key2", "val2");
+
+    final Map<String, String> attributes = WireAttributeHelper.toWireAttributes(headers);
+
+    // verifies wire attributes have prefix added and put into a case insensitive map
+    Assert.assertNotNull(attributes, "Parsed wire attributes should not be null.");
+    Assert.assertEquals(attributes.size(), 2, "Incorrect number of wire attributes returned.");
+    Assert.assertEquals(attributes.get("x-li-r2-w-key1"), "val1", "Wire attribute X-LI-R2-W-KEY1 is incorrect.");
+    Assert.assertEquals(attributes.get("x-li-r2-w-key2"), "val2", "Wire attribute X-LI-R2-W-KEY2 is incorrect.");
+  }
 }

@@ -17,7 +17,6 @@
 /* $Id$ */
 package com.linkedin.r2.transport.http.server;
 
-
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
