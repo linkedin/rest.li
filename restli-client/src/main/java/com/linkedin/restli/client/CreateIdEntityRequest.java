@@ -36,6 +36,7 @@ public class CreateIdEntityRequest<K, V extends RecordTemplate> extends Request<
                         RestResponseDecoder<IdEntityResponse<K, V>> decoder,
                         ResourceSpec resourceSpec,
                         Map<String, Object> queryParams,
+                        Map<String, Class<?>> queryParamClasses,
                         String baseUriTemplate,
                         Map<String, Object> pathKeys,
                         RestliRequestOptions requestOptions)
@@ -46,6 +47,7 @@ public class CreateIdEntityRequest<K, V extends RecordTemplate> extends Request<
           decoder,
           resourceSpec,
           queryParams,
+          queryParamClasses,
           null,
           baseUriTemplate,
           pathKeys,

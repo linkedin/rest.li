@@ -112,6 +112,7 @@ public class CreateIdEntityRequestBuilder<K, V extends RecordTemplate> extends S
                                            idEntityResponseDecoder,
                                            _resourceSpec,
                                            buildReadOnlyQueryParameters(),
+                                           getQueryParamClasses(),
                                            getBaseUriTemplate(),
                                            buildReadOnlyPathKeys(),
                                            getRequestOptions());
