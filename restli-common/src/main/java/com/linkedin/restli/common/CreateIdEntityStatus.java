@@ -26,8 +26,33 @@ import com.linkedin.data.template.RecordTemplate;
  */
 public class CreateIdEntityStatus<K, V extends RecordTemplate> extends CreateIdStatus<K>
 {
-  public CreateIdEntityStatus(DataMap dataMap, K key)
+  private final V _entity;
+
+  public CreateIdEntityStatus(DataMap dataMap, K key, V entity)
   {
     super(dataMap, key);
+    _entity = entity;
+  }
+
+  public CreateIdEntityStatus(int status, K key, V entity, ErrorResponse error, ProtocolVersion version)
+  {
+    super(createDataMap(status, key, entity, error, version), key);
+    _entity = entity;
+  }
+
+
+  private static DataMap createDataMap(int status, Object key, RecordTemplate entity, ErrorResponse error, ProtocolVersion version)
+  {
+    DataMap idStatusMap = CreateIdStatus.createDataMap(status, key, error, version);
+    if (entity != null)
+    {
+      idStatusMap.put("entity", entity.data());
+    }
+    return idStatusMap;
+  }
+
+  public V getEntity()
+  {
+    return _entity;
   }
 }

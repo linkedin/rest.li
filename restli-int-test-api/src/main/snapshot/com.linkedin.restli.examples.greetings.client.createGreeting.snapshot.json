@@ -32,12 +32,17 @@
         "name" : "key",
         "type" : "long"
       },
-      "supports" : [ "create" ],
+      "supports" : [ "batch_create", "create" ],
       "methods" : [ {
         "annotations" : {
           "returnEntity" : { }
         },
         "method" : "create"
+      }, {
+        "annotations" : {
+          "returnEntity" : { }
+        },
+        "method" : "batch_create"
       } ],
       "entity" : {
         "path" : "/createGreeting/{key}"

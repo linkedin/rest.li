@@ -12,32 +12,33 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-*/
+ */
 
 package com.linkedin.restli.client.base;
 
+
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.restli.client.CreateIdEntityRequestBuilder;
+import com.linkedin.restli.client.BatchCreateIdEntityRequestBuilder;
 import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.common.ResourceSpec;
 
+import java.util.List;
+
+
 /**
- * Base class for create id entity request builders.
+ * The Base Builder for BatchCreateIdEntity...RequestBuilder builders.
  *
  * @author Boyang Chen
  */
-public class CreateIdEntityRequestBuilderBase<K,
-    V extends RecordTemplate,
-    RB extends CreateIdEntityRequestBuilderBase<K, V, RB>>
-    extends CreateIdEntityRequestBuilder<K, V>
+public class BatchCreateIdEntityRequestBuilderBase<K, V extends RecordTemplate, RB extends BatchCreateIdEntityRequestBuilderBase<K, V, RB>> extends BatchCreateIdEntityRequestBuilder<K, V>
 {
-  public CreateIdEntityRequestBuilderBase(String baseURITemplate,
-                                          Class<V> valueClass,
-                                          ResourceSpec resourceSpec,
-                                          RestliRequestOptions requestOptions)
+  public BatchCreateIdEntityRequestBuilderBase(String baseUriTemplate,
+                                               Class<V> valueClass,
+                                               ResourceSpec resourceSpec,
+                                               RestliRequestOptions requestOptions)
   {
-    super(baseURITemplate, valueClass, resourceSpec, requestOptions);
+    super(baseUriTemplate, valueClass, resourceSpec, requestOptions);
   }
 
   @SuppressWarnings({"unchecked"})
@@ -49,16 +50,16 @@ public class CreateIdEntityRequestBuilderBase<K,
 
   @SuppressWarnings({"unchecked"})
   @Override
-  public RB setHeader(String key, String value)
+  public RB inputs(List<V> entities)
   {
-    return (RB) super.setHeader(key, value);
+    return (RB) super.inputs(entities);
   }
 
   @SuppressWarnings({"unchecked"})
   @Override
-  public RB pathKey(String name, Object value)
+  public RB setHeader(String key, String value)
   {
-    return (RB) super.pathKey(name, value);
+    return (RB) super.setHeader(key, value);
   }
 
   @SuppressWarnings({"unchecked"})
@@ -91,8 +92,15 @@ public class CreateIdEntityRequestBuilderBase<K,
 
   @SuppressWarnings({"unchecked"})
   @Override
+  public RB pathKey(String name, Object value)
+  {
+    return (RB) super.pathKey(name, value);
+  }
+
+  @SuppressWarnings({"unchecked"})
+  @Override
   public RB fields(PathSpec... fieldPaths)
   {
-      return (RB) super.fields(fieldPaths);
+    return (RB) super.fields(fieldPaths);
   }
 }

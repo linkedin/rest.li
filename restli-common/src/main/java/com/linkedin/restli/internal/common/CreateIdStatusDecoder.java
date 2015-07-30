@@ -24,6 +24,7 @@ import com.linkedin.restli.common.CreateIdStatus;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.TypeSpec;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 
 
@@ -50,7 +51,7 @@ public class CreateIdStatusDecoder<K>
   }
 
   @SuppressWarnings("unchecked")
-  public CreateIdStatus<K> makeValue(DataMap dataMap)
+  public CreateIdStatus<K> makeValue(DataMap dataMap) throws NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
   {
     K key;
     String id = dataMap.getString("id");

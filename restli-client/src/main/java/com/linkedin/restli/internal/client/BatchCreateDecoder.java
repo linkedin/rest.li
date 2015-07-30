@@ -25,6 +25,8 @@ import com.linkedin.restli.common.CreateStatus;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.TypeSpec;
 import com.linkedin.restli.internal.common.CreateIdStatusDecoder;
+
+import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 
 
@@ -53,6 +55,7 @@ public class BatchCreateDecoder<K> extends CollectionResponseDecoder<CreateStatu
 
   @Override
   protected BatchCreateResponse<K> wrapResponse(DataMap dataMap, Map<String, String> headers, ProtocolVersion version)
+      throws NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
   {
     CreateIdStatusDecoder<K> decoder = new CreateIdStatusDecoder<K>(_keyType, _keyParts, _complexKeyType, version);
     return dataMap == null ? null : new BatchCreateResponse<K>(dataMap, decoder);

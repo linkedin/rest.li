@@ -16,6 +16,7 @@
 
 package com.linkedin.restli.client;
 
+import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.TypeSpec;
@@ -96,6 +97,12 @@ public class CreateIdEntityRequestBuilder<K, V extends RecordTemplate> extends S
   public CreateIdEntityRequestBuilder<K, V> pathKey(String name, Object value)
   {
     super.pathKey(name, value);
+    return this;
+  }
+
+  public CreateIdEntityRequestBuilder<K, V> fields(PathSpec... fieldPaths)
+  {
+    addFields(fieldPaths);
     return this;
   }
 

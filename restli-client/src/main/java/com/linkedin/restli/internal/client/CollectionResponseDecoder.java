@@ -26,6 +26,7 @@ import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 
 
@@ -52,6 +53,7 @@ public class CollectionResponseDecoder<T extends RecordTemplate> extends RestRes
 
   @Override
   protected CollectionResponse<T> wrapResponse(DataMap dataMap, Map<String, String> headers, ProtocolVersion version)
+      throws NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
   {
     return dataMap == null ? null : new CollectionResponse<T>(dataMap, _elementClass);
   }

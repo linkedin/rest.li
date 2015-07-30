@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2014 LinkedIn Corp.
+   Copyright (c) 2015 LinkedIn Corp.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package com.linkedin.restli.common;
 
-
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.collections.CheckedUtil;
@@ -24,34 +23,34 @@ import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.Name;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.restli.internal.common.CreateIdStatusDecoder;
+import com.linkedin.restli.internal.common.CreateIdEntityStatusDecoder;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-
 /**
- * Response for Batch Create Requests that contain strongly typed keys as first-class citizens.
+ * Response for Batch Create id entity Requests that contain strongly typed keys and values.
  *
- * @author Moira Tagle
+ * @author Boyang Chen
  */
-public class BatchCreateIdResponse<K> extends RecordTemplate
+public class BatchCreateIdEntityResponse<K, V extends RecordTemplate> extends RecordTemplate
 {
-  private final List<CreateIdStatus<K>> _collection;
+  private final List<CreateIdEntityStatus<K, V>> _collection;
 
-  public BatchCreateIdResponse(DataMap map, CreateIdStatusDecoder<K> entityDecoder)
+  public BatchCreateIdEntityResponse(DataMap map, CreateIdEntityStatusDecoder<K, V> idEntityDecoder)
       throws NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
   {
     super(map, generateSchema());
-    _collection = createCollectionFromDecoder(entityDecoder);
+    _collection = createCollectionFromDecoder(idEntityDecoder);
   }
 
-  public BatchCreateIdResponse(List<CreateIdStatus<K>> elements)
+  public BatchCreateIdEntityResponse(List<CreateIdEntityStatus<K, V>> elements)
   {
     super(generateDataMap(elements), generateSchema());
     _collection = elements;
+
   }
 
   private static DataMap generateDataMap(List<? extends RecordTemplate> elements)
@@ -60,7 +59,8 @@ public class BatchCreateIdResponse<K> extends RecordTemplate
     DataList listElements = new DataList();
     for (RecordTemplate recordTemplate : elements)
     {
-      CheckedUtil.addWithoutChecking(listElements, recordTemplate.data());
+      CreateIdEntityStatus<?, ?> status = (CreateIdEntityStatus) recordTemplate;
+      CheckedUtil.addWithoutChecking(listElements, status.data());
     }
     dataMap.put(CollectionResponse.ELEMENTS, listElements);
 
@@ -73,31 +73,32 @@ public class BatchCreateIdResponse<K> extends RecordTemplate
     ArrayDataSchema arraySchema = new ArrayDataSchema(new RecordDataSchema(new Name(CreateStatus.class.getSimpleName()), RecordDataSchema.RecordType.RECORD));
     RecordDataSchema.Field arrayField = new RecordDataSchema.Field(arraySchema);
     arrayField.setName(CollectionResponse.ELEMENTS, errorMessageBuilder);
-    RecordDataSchema schema = new RecordDataSchema(new Name(BatchCreateIdResponse.class.getSimpleName()), RecordDataSchema.RecordType.RECORD);
+    RecordDataSchema schema = new RecordDataSchema(new Name(BatchCreateIdEntityResponse.class.getSimpleName()), RecordDataSchema.RecordType.RECORD);
     schema.setFields(Arrays.asList(arrayField), errorMessageBuilder);
     return schema;
   }
 
-  private CreateIdStatus<K> decodeValue(DataMap dataMap, CreateIdStatusDecoder<K> decoder)
+  private List<CreateIdEntityStatus<K, V>> createCollectionFromDecoder(CreateIdEntityStatusDecoder<K, V> decoder)
+      throws NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
+  {
+    DataList elements = this.data().getDataList(CollectionResponse.ELEMENTS);
+    List<CreateIdEntityStatus<K, V>> collection = new ArrayList<CreateIdEntityStatus<K, V>>(elements.size());
+    for (Object obj : elements)
+    {
+      DataMap dataMap = (DataMap) obj;
+      CreateIdEntityStatus<K, V> status = decodeValue(dataMap, decoder);
+      collection.add(status);
+    }
+    return collection;
+  }
+
+  private CreateIdEntityStatus<K, V> decodeValue(DataMap dataMap, CreateIdEntityStatusDecoder<K, V> decoder)
       throws NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
   {
     return decoder.makeValue(dataMap);
   }
 
-  private List<CreateIdStatus<K>> createCollectionFromDecoder(CreateIdStatusDecoder<K> decoder)
-      throws NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
-  {
-    DataList elements = this.data().getDataList(CollectionResponse.ELEMENTS);
-    List<CreateIdStatus<K>> collection = new ArrayList<CreateIdStatus<K>>(elements.size());
-    for (Object obj : elements)
-    {
-      DataMap dataMap = (DataMap) obj;
-      collection.add(decodeValue(dataMap, decoder));
-    }
-    return collection;
-  }
-
-  public List<CreateIdStatus<K>> getElements()
+  public List<CreateIdEntityStatus<K, V>> getElements()
   {
     return _collection;
   }

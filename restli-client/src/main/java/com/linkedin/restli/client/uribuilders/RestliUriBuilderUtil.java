@@ -19,6 +19,7 @@ package com.linkedin.restli.client.uribuilders;
 
 import com.linkedin.restli.client.ActionRequest;
 import com.linkedin.restli.client.BatchCreateIdRequest;
+import com.linkedin.restli.client.BatchCreateIdEntityRequest;
 import com.linkedin.restli.client.BatchCreateRequest;
 import com.linkedin.restli.client.BatchDeleteRequest;
 import com.linkedin.restli.client.BatchGetEntityRequest;
@@ -109,6 +110,10 @@ public class RestliUriBuilderUtil
         else if (request instanceof BatchCreateIdRequest)
         {
           return new BatchCreateIdRequestUriBuilder((BatchCreateIdRequest)request, uriPrefix, version);
+        }
+        else if (request instanceof BatchCreateIdEntityRequest)
+        {
+          return new BatchCreateIdEntityRequestUriBuilder((BatchCreateIdEntityRequest)request, uriPrefix, version);
         }
         else
         {

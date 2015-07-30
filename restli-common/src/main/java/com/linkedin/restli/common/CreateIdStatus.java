@@ -64,7 +64,7 @@ public class CreateIdStatus<K> extends CreateStatus
    * @param version the the {@link com.linkedin.restli.common.ProtocolVersion}, used to serialize the key
    * @return a {@link com.linkedin.data.DataMap} containing the given data
    */
-  private static DataMap createDataMap(int status, Object key, ErrorResponse error, ProtocolVersion version)
+  protected static DataMap createDataMap(int status, Object key, ErrorResponse error, ProtocolVersion version)
   {
     CreateStatus createStatus = new CreateStatus();
     createStatus.setStatus(status);

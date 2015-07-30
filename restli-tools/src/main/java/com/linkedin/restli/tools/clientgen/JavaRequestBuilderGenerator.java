@@ -47,6 +47,7 @@ import com.linkedin.restli.client.OptionsRequestBuilder;
 import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.client.base.ActionRequestBuilderBase;
 import com.linkedin.restli.client.base.BatchCreateIdRequestBuilderBase;
+import com.linkedin.restli.client.base.BatchCreateIdEntityRequestBuilderBase;
 import com.linkedin.restli.client.base.BatchDeleteRequestBuilderBase;
 import com.linkedin.restli.client.base.BatchGetEntityRequestBuilderBase;
 import com.linkedin.restli.client.base.BatchPartialUpdateRequestBuilderBase;
@@ -470,7 +471,10 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
       final String deprecatedBuilderName = clazz.name();
       final String replacementBuilderName = deprecatedBuilderName.substring(0, deprecatedBuilderName.length() - suffixMap.get(_version).length());
       clazz.javadoc().addDeprecated().append("This format of request builder is obsolete. Please use {@link " +
-                                                 getBuilderClassNameByVersion(_deprecatedByVersion, clazz.getPackage().name(), replacementBuilderName, isRootBuilders) +
+                                                 getBuilderClassNameByVersion(_deprecatedByVersion,
+                                                                              clazz.getPackage().name(),
+                                                                              replacementBuilderName,
+                                                                              isRootBuilders) +
                                                  "} instead.");
       return true;
     }
@@ -883,8 +887,10 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
   {
     // CreateMetadata (only for actions right now)
     final JClass MetadataMapClass = getCodeModel().ref(HashMap.class).narrow(_stringClass, getCodeModel().ref(DynamicRecordMetadata.class));
-    final JVar requestMetadataMap = staticInit.decl(MetadataMapClass, "requestMetadataMap").init(JExpr._new(MetadataMapClass));
-    final JClass fieldDefListClass = getCodeModel().ref(ArrayList.class).narrow(getCodeModel().ref(FieldDef.class).narrow(getCodeModel().ref(Object.class).wildcard()));
+    final JVar requestMetadataMap = staticInit.decl(MetadataMapClass, "requestMetadataMap").init(JExpr._new(
+        MetadataMapClass));
+    final JClass fieldDefListClass = getCodeModel().ref(ArrayList.class).narrow(getCodeModel().ref(FieldDef.class).narrow(
+        getCodeModel().ref(Object.class).wildcard()));
 
     // get all actions into a single ActionSchemaArray
     final int resourceActionsSize = resourceActions == null ? 0 : resourceActions.size();
@@ -1398,8 +1404,10 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
                                          refModel,
                                          methodName,
                                          schema);
-        if (methodName.equals("create") && schema != null && schema.getAnnotations() != null && schema.getAnnotations().containsKey("returnEntity"))
+        if ((method == ResourceMethod.CREATE || method == ResourceMethod.BATCH_CREATE) && schema != null && schema.getAnnotations() != null && schema.getAnnotations().containsKey("returnEntity"))
         {
+          Class<?> newBuildClass = methodName.equals("create") ? CreateIdEntityRequestBuilderBase.class : BatchCreateIdEntityRequestBuilderBase.class;
+          String requestName = methodName.equals("create") ? "createAndGet" : "batchCreateAndGet";
           generateDerivedBuilderAndJavaDoc(facadeClass,
                                            baseUriExpr,
                                            keyClass,
@@ -1413,8 +1421,8 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
                                            requestOptionsExpr,
                                            annotations,
                                            method,
-                                           CreateIdEntityRequestBuilderBase.class,
-                                           "createAndGet",
+                                           newBuildClass,
+                                           requestName,
                                            schema);
         }
       }
@@ -1452,7 +1460,8 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
     final JMethod factoryMethod = facadeClass.method(JMod.PUBLIC,
                                                      derivedBuilder,
                                                      RestLiToolsUtils.nameCamelCase(methodName));
-    factoryMethod.body()._return(JExpr._new(derivedBuilder).arg(baseUriExpr).arg(resourceSpecField).arg(requestOptionsExpr));
+    factoryMethod.body()._return(JExpr._new(derivedBuilder).arg(baseUriExpr).arg(resourceSpecField).arg(
+        requestOptionsExpr));
 
     if (schema != null)
     {

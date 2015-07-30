@@ -27,7 +27,6 @@ import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.client.response.BatchKVResponse;
 import com.linkedin.restli.client.response.CreateResponse;
-import com.linkedin.restli.client.CreateIdEntityRequest;
 import com.linkedin.restli.common.BatchCreateIdResponse;
 import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CollectionResponse;
@@ -39,7 +38,6 @@ import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.UpdateStatus;
-import com.linkedin.restli.common.IdEntityResponse;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.GreetingMap;
 import com.linkedin.restli.examples.greetings.api.MyItemArray;
@@ -52,8 +50,6 @@ import com.linkedin.restli.examples.greetings.client.AutoValidationDemosBuilders
 import com.linkedin.restli.examples.greetings.client.AutoValidationDemosRequestBuilders;
 import com.linkedin.restli.examples.greetings.client.ValidationDemosBuilders;
 import com.linkedin.restli.examples.greetings.client.ValidationDemosRequestBuilders;
-import com.linkedin.restli.examples.greetings.client.CreateGreetingRequestBuilders;
-import com.linkedin.restli.examples.greetings.client.ValidationCreateAndGetBuilders;
 import com.linkedin.restli.server.validation.RestLiInputValidationFilter;
 import com.linkedin.restli.server.validation.RestLiOutputValidationFilter;
 import com.linkedin.restli.test.util.PatchBuilder;
@@ -228,57 +224,6 @@ public class TestRestLiValidation extends RestLiIntegrationTest
     }
   }
 
-  @Test
-  public void testCreateAndGetInputFailure() throws RemoteInvocationException
-  {
-    try
-    {
-      Greeting greeting = new Greeting();
-      greeting.setMessage("come for validation");
-      greeting.setId(2L);
-      // Now set the tone and test should fail
-      greeting.setTone(Tone.INSULTING);
-
-      ValidationCreateAndGetBuilders builders = new ValidationCreateAndGetBuilders();
-      CreateIdEntityRequest<Long, Greeting> createIdEntityRequest = builders.createAndGet().input(greeting).build();
-      Response<IdEntityResponse<Long, Greeting>> response = _restClientAuto.sendRequest(createIdEntityRequest).getResponse();
-      Assert.fail("Expected RestLiResponseException");
-    }
-    catch (RestLiResponseException e)
-    {
-      String errorMessage = "/tone :: ReadOnly field present in a create request";
-      Assert.assertEquals(e.getStatus(), HttpStatus.S_422_UNPROCESSABLE_ENTITY.getCode());
-      Assert.assertTrue(e.getServiceErrorMessage().contains(errorMessage));
-    }
-  }
-
-  @Test
-  public void testCreateAndGetOutputFailure() throws RemoteInvocationException
-  {
-    try
-    {
-      Greeting greeting = new Greeting();
-      greeting.setMessage("come for validation");
-      greeting.setId(2L);
-      greeting.setTone(Tone.INSULTING);
-
-      CreateGreetingRequestBuilders builders = new CreateGreetingRequestBuilders();
-      CreateIdEntityRequest<Long, Greeting> createIdEntityRequest = builders.createAndGet().input(greeting).build();
-      Response<IdEntityResponse<Long, Greeting>> response = _restClientAuto.sendRequest(createIdEntityRequest).getResponse();
-
-      Assert.fail("Expected RestLiResponseException");
-    }
-    catch (RestLiResponseException e)
-    {
-      String errorMissingMessage = "/message :: field is required but not found and has no default value";
-      String errorMissingTone = "ERROR :: /tone :: field is required but not found and has no default value";
-
-      Assert.assertEquals(e.getStatus(), HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode());
-      Assert.assertTrue(e.getServiceErrorMessage().contains(errorMissingMessage));
-      Assert.assertTrue(e.getServiceErrorMessage().contains(errorMissingTone));
-    }
-  }
-
   @DataProvider
   public static Object[][] batchCreateFailureData()
   {
@@ -378,21 +323,6 @@ public class TestRestLiValidation extends RestLiIntegrationTest
     {
       Assert.assertEquals(((IdResponse<Integer>)(Object)response.getEntity()).getId(), new Integer(1234));
     }
-  }
-
-  @Test
-  public void testCreateAndGetSuccess() throws RemoteInvocationException
-  {
-    Greeting greeting = new Greeting();
-    greeting.setMessage("come for validation");
-    greeting.setTone(Tone.FRIENDLY);
-    greeting.setId(2L);
-
-    CreateGreetingRequestBuilders builders = new CreateGreetingRequestBuilders();
-    CreateIdEntityRequest<Long, Greeting> createIdEntityRequest = builders.createAndGet().input(greeting).build();
-    Response<IdEntityResponse<Long, Greeting>> response = _restClientAuto.sendRequest(createIdEntityRequest).getResponse();
-
-    Assert.assertEquals(response.getStatus(), 201);
   }
 
   public static String[][] partialUpdateFailures()

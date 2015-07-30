@@ -22,6 +22,7 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.internal.common.CreateIdStatusDecoder;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,11 +39,13 @@ public class BatchCreateResponse<K> extends CollectionResponse<CreateStatus>
   private final List<CreateStatus> _collection;
 
   public BatchCreateResponse()
+      throws NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
   {
     this(null, null);
   }
 
   public BatchCreateResponse(DataMap data, CreateIdStatusDecoder<K> entityDecoder)
+      throws NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
   {
     super(data, CreateStatus.class);
     _collection = createCollectionFromDecoder(entityDecoder);
@@ -71,11 +74,13 @@ public class BatchCreateResponse<K> extends CollectionResponse<CreateStatus>
   }
 
   private CreateStatus decodeValue(DataMap dataMap, CreateIdStatusDecoder<K> entityDecoder)
+      throws NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
   {
     return entityDecoder.makeValue(dataMap);
   }
 
   private List<CreateStatus> createCollectionFromDecoder(CreateIdStatusDecoder<K> entityDecoder)
+      throws NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
   {
     DataList elements = this.data().getDataList(CollectionResponse.ELEMENTS);
     List<CreateStatus> collection = new ArrayList<CreateStatus>(elements.size());

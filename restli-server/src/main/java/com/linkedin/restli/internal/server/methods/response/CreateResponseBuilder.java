@@ -17,6 +17,7 @@
 package com.linkedin.restli.internal.server.methods.response;
 
 
+import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.jersey.api.uri.UriComponent;
@@ -32,8 +33,10 @@ import com.linkedin.restli.internal.server.response.RecordResponseEnvelope;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.internal.server.methods.AnyRecord;
+import com.linkedin.restli.internal.server.util.RestUtils;
 import com.linkedin.restli.server.CreateKVResponse;
 import com.linkedin.restli.server.CreateResponse;
+import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiServiceException;
 
 import java.util.Map;
@@ -66,8 +69,10 @@ public class CreateResponseBuilder implements RestLiResponseBuilder
     RecordTemplate resultEntity;
     if (createResponse instanceof CreateKVResponse)
     {
-      //Get the datamap generated from the value inside KV response, and encode it into the return response data
-      resultEntity = new AnyRecord(((CreateKVResponse)createResponse).getEntity().data());
+      final ResourceContext resourceContext = routingResult.getContext();
+      DataMap entityData = ((CreateKVResponse)createResponse).getEntity().data();
+      final DataMap data = RestUtils.projectFields(entityData, resourceContext.getProjectionMode(), resourceContext.getProjectionMask());
+      resultEntity = new AnyRecord(data);
     }
     else //Instance of idResponse
     {
