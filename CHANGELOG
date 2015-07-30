@@ -1,3 +1,7 @@
+2.10.4
+-----
+
+
 2.10.3
 -----
 (RB=513446)
@@ -5,6 +9,9 @@ Better template spec generator interface.
 
 (RB=526314)
 Coerce child classes correctly for query parameters.
+
+(RB=519063)
+Support returning entity for the create method.
 
 2.10.2
 -----
