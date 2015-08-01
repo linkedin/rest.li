@@ -190,7 +190,7 @@ public final class ValidateDataAgainstSchema
 
           if (map.isReadOnly()) {
             _hasFixupReadOnlyError = true;
-            addMessage(element.path(), "unrecognized field cannot be trimmed because DataMap backing it is read-only");
+            addMessage(element, "unrecognized field cannot be trimmed because DataMap backing it is read-only");
           } else {
             _toTrim.add(new FieldToTrim(map, fieldName));
           }
@@ -759,12 +759,6 @@ public final class ValidateDataAgainstSchema
     protected void addMessage(DataElement element, String format, Object... args)
     {
       _messages.add(new Message(element.path(), format, args));
-      _valid = false;
-    }
-
-    protected void addMessage(Object[] path, String format, Object... args)
-    {
-      _messages.add(new Message(path, format, args));
       _valid = false;
     }
 
