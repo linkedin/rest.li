@@ -18,6 +18,7 @@ package com.linkedin.data.schema.resolver;
 
 
 import com.linkedin.data.schema.DataSchemaLocation;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -46,13 +47,13 @@ public class InJarFileDataSchemaLocation implements DataSchemaLocation, InputStr
     if (o instanceof InJarFileDataSchemaLocation == false)
       return false;
     InJarFileDataSchemaLocation other = (InJarFileDataSchemaLocation) o;
-    return (_jarFile.equals(other._jarFile) && _pathInJar.equals(other._pathInJar));
+    return (_jarFile.getName().equals(other._jarFile.getName()) && _pathInJar.equals(other._pathInJar));
   }
 
   @Override
   public int hashCode()
   {
-    return _jarFile.hashCode() ^ _pathInJar.hashCode();
+    return _jarFile.getName().hashCode() ^ _pathInJar.hashCode();
   }
 
   @Override

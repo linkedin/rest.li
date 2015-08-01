@@ -1,7 +1,14 @@
+2.10.6
+-----
+
+
 2.10.5
 -----
 (RB=419425)
 Align response compression with request compression.
+
+(RB=529431)
+Updated DataSchemaParser to include non-top-level schemas and schemas in jar file.
 
 2.10.4
 -----

@@ -19,8 +19,8 @@ package com.linkedin.pegasus.generator;
 
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaLocation;
+import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.generator.AbstractGenerator;
-import com.linkedin.data.schema.resolver.FileDataSchemaLocation;
 import com.linkedin.pegasus.generator.spec.ClassTemplateSpec;
 import com.linkedin.util.FileUtil;
 
@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.sun.codemodel.JCodeModel;
@@ -122,14 +123,9 @@ public class PegasusDataTemplateGenerator
 
     final DataSchemaParser.ParseResult parseResult = schemaParser.parseSources(sources);
 
-    for (CodeUtil.Pair<DataSchema, File> pair : parseResult.getSchemaAndFiles())
+    for (Map.Entry<NamedDataSchema, DataSchemaLocation> entry : parseResult.getSchemaAndLocations().entrySet())
     {
-      final DataSchemaLocation location = new FileDataSchemaLocation(pair.second);
-      specGenerator.generate(pair.first, location);
-    }
-    for (CodeUtil.Pair<DataSchema, DataSchemaLocation> pair : parseResult.getSchemaAndLocations())
-    {
-      specGenerator.generate(pair.first, pair.second);
+      specGenerator.generate(entry.getKey(), entry.getValue());
     }
     for (ClassTemplateSpec spec : specGenerator.getGeneratedSpecs())
     {

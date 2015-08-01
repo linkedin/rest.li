@@ -146,7 +146,7 @@ public class ClassTemplateSpec
 
   public String getFullName()
   {
-    return _namespace + "." + _className;
+    return (_namespace == null ? "" : _namespace + ".") + _className;
   }
 
   public void setFullName(String fullName)
