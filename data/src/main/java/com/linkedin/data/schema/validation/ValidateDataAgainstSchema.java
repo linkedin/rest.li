@@ -18,12 +18,7 @@ package com.linkedin.data.schema.validation;
 
 
 import java.math.BigDecimal;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import com.linkedin.data.ByteString;
 import com.linkedin.data.Data;
@@ -125,7 +120,7 @@ public final class ValidateDataAgainstSchema
     private Object _fixed = null;
     private boolean _valid = true;
     private final Context _context;
-    private List<ToTrim> _toTrim = new ArrayList<ToTrim>(0);
+    private List<FieldToTrim> _toTrim = new ArrayList<FieldToTrim>(0);
 
     private State(ValidationOptions options, Validator validator)
     {
@@ -146,51 +141,62 @@ public final class ValidateDataAgainstSchema
       }
 
       if (_toTrim.size() > 0) {
-        for (ToTrim toTrim: _toTrim) {
-          toTrim.trim();
+        for (FieldToTrim fieldToTrim : _toTrim) {
+          fieldToTrim.trim();
         }
       }
     }
 
     /**
-     * Holds a data elements for later removal.
+     * Holds a the element of a {@link com.linkedin.data.DataMap} field for later removal.
      *
      * This is a specialized version of {@link com.linkedin.data.it.Remover.ToRemove} which is and
      * should remain private, so could not be used here.
      */
-    private class ToTrim
+    private class FieldToTrim
     {
-      private ToTrim(DataElement element)
+      private FieldToTrim(DataMap parent, String fieldName)
       {
-        DataElement parentElement = element.getParent();
-        _path = element.path();
-        _parent = parentElement == null ? null : parentElement.getValue();
-        _name = element.getName();
+        _parent = parent;
+        _fieldName = fieldName;
       }
 
       private void trim()
       {
         if (_parent != null) {
-          Class<?> nameClass = _name.getClass();
-          Class<?> parentClass = _parent.getClass();
-          if (nameClass == String.class) {
-            assert (parentClass == DataMap.class);
-            DataMap map = (DataMap) _parent;
-            if (map.isReadOnly())
-            {
-              _hasFixupReadOnlyError = true;
-              addMessage(_path, "unrecognized field cannot be trimmed because DataMap backing it is read-only");
-            }
-            else {
-              map.remove(_name);
-            }
+          if (_parent.isReadOnly())
+          {
+            throw new ConcurrentModificationException("Map marked as read-only during validation.");
+          }
+          else {
+            _parent.remove(_fieldName);
           }
         }
       }
 
-      private Object[] _path;
-      private Object _parent;
-      private Object _name;
+      private DataMap _parent;
+      private String _fieldName;
+    }
+
+    private void trimUnrecognizedField(DataElement element)
+    {
+      DataElement parentElement = element.getParent();
+      Object parent = parentElement == null ? null : parentElement.getValue();
+      if (parent != null) {
+        if (parent.getClass() == DataMap.class) {
+          DataMap map = (DataMap) parent;
+          Object name = element.getName();
+          assert (name instanceof String);
+          String fieldName = (String) name;
+
+          if (map.isReadOnly()) {
+            _hasFixupReadOnlyError = true;
+            addMessage(element.path(), "unrecognized field cannot be trimmed because DataMap backing it is read-only");
+          } else {
+            _toTrim.add(new FieldToTrim(map, fieldName));
+          }
+        }
+      }
     }
 
     protected void validateRecursive(DataElement element)
@@ -215,14 +221,20 @@ public final class ValidateDataAgainstSchema
         }
         else if (unrecognizedFieldMode != UnrecognizedFieldMode.IGNORE)
         {
-          switch (unrecognizedFieldMode)
+          DataElement parentElement = nextElement.getParent();
+          // We only need to trim elements where the parent type is recognized but the element
+          // is not.
+          if (parentElement != null && parentElement.getSchema() != null)
           {
-            case DISALLOW:
-              addMessage(nextElement, "unrecognized field found but not allowed");
-              break;
-            case TRIM:
-              _toTrim.add(new ToTrim(nextElement));
-              break;
+            switch (unrecognizedFieldMode)
+            {
+              case DISALLOW:
+                addMessage(nextElement, "unrecognized field found but not allowed");
+                break;
+              case TRIM:
+                trimUnrecognizedField(nextElement);
+                break;
+            }
           }
         }
       }

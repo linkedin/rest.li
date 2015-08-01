@@ -2201,9 +2201,8 @@ public class TestValidation
     ValidationResult readOnlyResult = validate(readOnlyToValidate, schema, options);
     assertTrue(readOnlyResult.hasFixupReadOnlyError());
     String message = readOnlyResult.getMessages().toString();
-    assertTrue(readOnlyResult.getMessages().size() == 8);
+    assertTrue(readOnlyResult.getMessages().size() == 7);
     String[] expectedStrings = new String[] {
-        "/unrecognizedMap/key",
         "/unrecognizedMap",
         "/unrecognizedArray",
         "/recordField/unrecognizedPrimitive",
