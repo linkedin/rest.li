@@ -153,24 +153,23 @@ public final class ValidateDataAgainstSchema
      * This is a specialized version of {@link com.linkedin.data.it.Remover.ToRemove} which is and
      * should remain private, so could not be used here.
      */
-    private class FieldToTrim
+    private static class FieldToTrim
     {
       private FieldToTrim(DataMap parent, String fieldName)
       {
+        assert(!parent.isReadOnly());
         _parent = parent;
         _fieldName = fieldName;
       }
 
       private void trim()
       {
-        if (_parent != null) {
-          if (_parent.isReadOnly())
-          {
-            throw new ConcurrentModificationException("Map marked as read-only during validation.");
-          }
-          else {
-            _parent.remove(_fieldName);
-          }
+        if (_parent.isReadOnly())
+        {
+          throw new ConcurrentModificationException("Map marked as read-only during validation.");
+        }
+        else {
+          _parent.remove(_fieldName);
         }
       }
 
