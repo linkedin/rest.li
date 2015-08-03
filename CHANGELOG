@@ -1,7 +1,13 @@
+2.10.5
+-----
+
 2.10.4
 -----
 (RB=471956)
 Register custom coercers in union templates.
+
+(RB=532090)
+Fix WireAttributeHelper not treating headers as case insensitive.
 
 2.10.3
 -----
