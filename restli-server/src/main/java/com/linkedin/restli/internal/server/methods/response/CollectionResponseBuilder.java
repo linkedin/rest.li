@@ -35,7 +35,9 @@ import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.ProjectionMode;
 import com.linkedin.restli.server.ResourceContext;
 
+import java.net.HttpCookie;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -59,12 +61,15 @@ public class CollectionResponseBuilder implements RestLiResponseBuilder
       collectionResponse.setMetadataRaw(response.getCollectionResponseCustomMetadata().data());
     }
     builder.entity(collectionResponse);
-    return builder.headers(responseData.getHeaders()).build();
+    return builder.headers(responseData.getHeaders()).cookies(responseData.getCookies()).build();
   }
 
   @Override
-  public RestLiResponseEnvelope buildRestLiResponseData(RestRequest request, RoutingResult routingResult,
-                                                             Object object, Map<String, String> headers)
+  public RestLiResponseEnvelope buildRestLiResponseData(RestRequest request,
+                                                            RoutingResult routingResult,
+                                                            Object object,
+                                                            Map<String, String> headers,
+                                                            List<HttpCookie> cookies)
   {
     if (object instanceof List)
     {
@@ -72,7 +77,7 @@ public class CollectionResponseBuilder implements RestLiResponseBuilder
       /** constrained by {@link com.linkedin.restli.internal.server.model.RestLiAnnotationReader#validateFinderMethod(com.linkedin.restli.internal.server.model.ResourceMethodDescriptor, com.linkedin.restli.internal.server.model.ResourceModel)} */
       List<? extends RecordTemplate> result = (List<? extends RecordTemplate>) object;
 
-      return buildRestLiResponseData(request, routingResult, result, PageIncrement.RELATIVE, null, null, headers);
+      return buildRestLiResponseData(request, routingResult, result, PageIncrement.RELATIVE, null, null, headers, cookies);
     }
     else
     {
@@ -91,7 +96,7 @@ public class CollectionResponseBuilder implements RestLiResponseBuilder
 
       return buildRestLiResponseData(request, routingResult, collectionResult.getElements(),
                                      collectionResult.getPageIncrement(), collectionResult.getMetadata(),
-                                     collectionResult.getTotal(), headers);
+                                     collectionResult.getTotal(), headers, cookies);
     }
   }
 
@@ -101,7 +106,8 @@ public class CollectionResponseBuilder implements RestLiResponseBuilder
                                                                      final PageIncrement pageIncrement,
                                                                      final RecordTemplate customMetadata,
                                                                      final Integer totalResults,
-                                                                     final Map<String, String> headers)
+                                                                     final Map<String, String> headers,
+                                                                     final List<HttpCookie> cookies)
   {
     //Extract the resource context that contains projection information for root object entities, metadata and paging.
     final ResourceContext resourceContext = routingResult.getContext();
@@ -159,6 +165,6 @@ public class CollectionResponseBuilder implements RestLiResponseBuilder
     return new CollectionResponseEnvelope(processedElements,
                                           projectedPaging,
                                           projectedCustomMetadata,
-                                          headers);
+                                          headers, cookies);
   }
 }

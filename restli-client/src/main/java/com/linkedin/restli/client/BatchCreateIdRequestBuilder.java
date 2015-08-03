@@ -125,6 +125,7 @@ public class BatchCreateIdRequestBuilder<K, V extends RecordTemplate> extends Re
                                                                   _resourceSpec.getComplexKeyType());
 
     return new BatchCreateIdRequest<K, V>(buildReadOnlyHeaders(),
+                                          buildReadOnlyCookies(),
                                           decoder,
                                           buildReadOnlyInput(),
                                           _resourceSpec,

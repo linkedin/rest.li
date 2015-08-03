@@ -22,7 +22,10 @@ import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.ResponseFuture;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.internal.client.ResponseFutureImpl;
+import com.linkedin.restli.internal.common.CookieUtil;
 
+import java.net.HttpCookie;
+import java.util.List;
 import java.util.Map;
 
 
@@ -92,6 +95,13 @@ public class MockSuccessfulResponseFutureBuilder<K, V extends RecordTemplate> ex
     return this;
   }
 
+  @Override
+  public MockSuccessfulResponseFutureBuilder<K, V> setCookies(List<HttpCookie> cookies)
+  {
+    super.setCookies(cookies);
+    return this;
+  }
+
   /**
    * Set the {@link ProtocolVersion}
    *
@@ -119,6 +129,7 @@ public class MockSuccessfulResponseFutureBuilder<K, V extends RecordTemplate> ex
         .setEntity(getEntity())
         .setStatus(getStatus())
         .setHeaders(getHeaders())
+        .setCookies(getCookies())
         .setProtocolVersion(getProtocolVersion())
         .build();
 

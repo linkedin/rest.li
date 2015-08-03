@@ -20,6 +20,10 @@ import com.linkedin.restli.common.OptionsResponse;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.internal.client.OptionsResponseDecoder;
+
+import java.net.HttpCookie;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 
@@ -31,6 +35,7 @@ import java.util.Map;
 public class OptionsRequest extends Request<OptionsResponse>
 {
   public OptionsRequest(Map<String, String> headers,
+                        List<HttpCookie> cookies,
                         Map<String, Object> queryParams,
                         Map<String, Class<?>> queryParamClasses,
                         ResourceSpec resourceSpec,
@@ -41,6 +46,7 @@ public class OptionsRequest extends Request<OptionsResponse>
     super(ResourceMethod.OPTIONS,
           null,
           headers,
+          cookies,
           new OptionsResponseDecoder(),
           resourceSpec,
           queryParams,

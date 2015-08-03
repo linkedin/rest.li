@@ -30,9 +30,11 @@ import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.internal.common.CookieUtil;
 import com.linkedin.util.ArgumentUtil;
 
 import java.lang.reflect.Array;
+import java.net.HttpCookie;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -56,6 +58,7 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> extends
   protected final ResourceSpec        _resourceSpec;
 
   private Map<String, String>       _headers     = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+  private List<HttpCookie>          _cookies     = new ArrayList<HttpCookie>();
   private final Map<String, Object> _queryParams = new HashMap<String, Object>();
   private final Map<String, Class<?>> _queryParamClasses = new HashMap<String, Class<?>>();
   private final Map<String, Object> _pathKeys    = new HashMap<String, Object>();
@@ -122,6 +125,51 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> extends
     _headers = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
     _headers.putAll(headers);
     return this;
+  }
+
+  /**
+   * Base class method for adding the cookies
+   * @return a new builder reference with new cookie added
+   * @param cookie
+   */
+  public AbstractRequestBuilder<K, V, R> addCookie(HttpCookie cookie)
+  {
+    if (cookie != null)
+      _cookies.add(cookie);
+    return this;
+  }
+
+  /**
+   * Base class method for setting the cookies
+   * @return a new builder reference with newly set cookie
+   * @param cookies
+   */
+  public AbstractRequestBuilder<K, V, R> setCookies(List<HttpCookie> cookies)
+  {
+    for (HttpCookie cookie : cookies)
+    {
+      addCookie(cookie);
+    }
+    return this;
+  }
+
+  /**
+   * Base class method for removing the cookies
+   * @return a new builder reference with empty cookie
+   */
+  public AbstractRequestBuilder<K, V, R> clearCookies()
+  {
+    _cookies = new ArrayList<HttpCookie>();
+    return this;
+  }
+
+  /**
+   * Retrieve the cookies in the request
+   * @return cookies
+   */
+  protected List<HttpCookie> getCookies()
+  {
+    return _cookies;
   }
 
   public AbstractRequestBuilder<K, V, R> setReqParam(String key, Object value)
@@ -522,11 +570,21 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> extends
     return getReadOnlyHeaders(_headers);
   }
 
+  protected List<HttpCookie> buildReadOnlyCookies()
+  {
+    return getReadOnlyCookies(_cookies);
+  }
+
   static protected Map<String, String> getReadOnlyHeaders(Map<String, String> headers)
   {
     Map<String, String> copyHeaders = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
     copyHeaders.putAll(headers);
     return Collections.unmodifiableMap(copyHeaders);
+  }
+
+  static protected List<HttpCookie> getReadOnlyCookies(List<HttpCookie> cookies)
+  {
+    return Collections.unmodifiableList(cookies);
   }
 
   @Override

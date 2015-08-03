@@ -25,6 +25,7 @@ import com.linkedin.restli.internal.server.response.EmptyResponseEnvelope;
 import com.linkedin.restli.internal.server.response.RecordResponseEnvelope;
 import com.linkedin.restli.server.RestLiServiceException;
 
+import java.net.HttpCookie;
 import java.util.Collections;
 
 import org.testng.Assert;
@@ -38,11 +39,11 @@ public class TestRestLiResponseEnvelopeExceptions
   public Object[][] provideRestLiResponseEnvelope()
   {
     RestLiServiceException exception = new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR);
-    RecordResponseEnvelope recordResponse = new RecordResponseEnvelope(exception, Collections.<String, String>emptyMap());
-    CollectionResponseEnvelope collectionResponse = new CollectionResponseEnvelope(exception, Collections.<String, String>emptyMap());
-    CreateCollectionResponseEnvelope collectionCreateResponse = new CreateCollectionResponseEnvelope(exception, Collections.<String, String>emptyMap());
-    BatchResponseEnvelope batchResponse = new BatchResponseEnvelope(exception, Collections.<String, String>emptyMap());
-    EmptyResponseEnvelope emptyResponse = new EmptyResponseEnvelope(exception, Collections.<String, String>emptyMap());
+    RecordResponseEnvelope recordResponse = new RecordResponseEnvelope(exception, Collections.<String, String>emptyMap(), Collections.<HttpCookie>emptyList());
+    CollectionResponseEnvelope collectionResponse = new CollectionResponseEnvelope(exception, Collections.<String, String>emptyMap(), Collections.<HttpCookie>emptyList());
+    CreateCollectionResponseEnvelope collectionCreateResponse = new CreateCollectionResponseEnvelope(exception, Collections.<String, String>emptyMap(), Collections.<HttpCookie>emptyList());
+    BatchResponseEnvelope batchResponse = new BatchResponseEnvelope(exception, Collections.<String, String>emptyMap(), Collections.<HttpCookie>emptyList());
+    EmptyResponseEnvelope emptyResponse = new EmptyResponseEnvelope(exception, Collections.<String, String>emptyMap(), Collections.<HttpCookie>emptyList());
 
     return new Object[][]{
         {recordResponse},

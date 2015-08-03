@@ -119,6 +119,7 @@ public class BatchDeleteRequestBuilder<K, V extends RecordTemplate> extends
     ensureBatchKeys();
 
     return new BatchDeleteRequest<K, V>(buildReadOnlyHeaders(),
+                                        buildReadOnlyCookies(),
                                         buildReadOnlyQueryParameters(),
                                         getQueryParamClasses(),
                                         _resourceSpec,

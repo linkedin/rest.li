@@ -30,9 +30,12 @@ import com.linkedin.restli.internal.common.HeaderUtil;
 import com.linkedin.restli.internal.common.ProtocolVersionUtil;
 import com.linkedin.restli.internal.common.URIParamUtils;
 
-import java.util.HashMap;
+import java.net.HttpCookie;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+
 
 
 /**
@@ -45,6 +48,7 @@ public class PartialRestResponse
   private final HttpStatus _status;
   private final RecordTemplate _record;
   private final Map<String, String> _headers;
+  private final List<HttpCookie> _cookies;
 
   /**
    * Constructor is made private intentionally. Use builder to construct a new object of
@@ -56,11 +60,13 @@ public class PartialRestResponse
    *          response data
    * @param headers
    *          Response headers.
+   * @param cookies
    */
-  private PartialRestResponse(final HttpStatus status, final RecordTemplate record, final Map<String, String> headers)
+  private PartialRestResponse(final HttpStatus status, final RecordTemplate record, final Map<String, String> headers, final List<HttpCookie> cookies)
   {
     _record = record;
     _status = status;
+    _cookies = cookies == null ? new ArrayList<HttpCookie>() : cookies;
     if (headers != null)
     {
       _headers = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
@@ -80,6 +86,16 @@ public class PartialRestResponse
   public Map<String, String> getHeaders()
   {
     return _headers;
+  }
+
+  /**
+   * Obtain a mutable reference to the response cookies.
+   *
+   * @return a cookie reference
+   */
+  public List<HttpCookie> getCookies()
+  {
+    return _cookies;
   }
 
   /**
@@ -139,6 +155,7 @@ public class PartialRestResponse
     private HttpStatus _status = HttpStatus.S_200_OK;
     private RecordTemplate _record;
     private Map<String, String> _headers;
+    private List<HttpCookie> _cookies;
 
     /**
      * Build with status.
@@ -162,6 +179,17 @@ public class PartialRestResponse
     public Builder entity(RecordTemplate record)
     {
       _record = record;
+      return this;
+    }
+
+    /** Build with cookies
+     *
+     * @param cookies in the form of a string list
+     * @return Reference to this object.
+     */
+    public Builder cookies(List<HttpCookie> cookies)
+    {
+      _cookies = cookies;
       return this;
     }
 
@@ -196,7 +224,7 @@ public class PartialRestResponse
         }
       }
 
-      return new PartialRestResponse(_status, _record, _headers);
+      return new PartialRestResponse(_status, _record, _headers, _cookies);
     }
   }
 }

@@ -24,6 +24,8 @@ import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
 
+import java.net.HttpCookie;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -40,6 +42,7 @@ import java.util.Set;
 public class BatchGetRequest<T extends RecordTemplate> extends BatchRequest<BatchResponse<T>>
 {
   BatchGetRequest(Map<String, String> headers,
+                  List<HttpCookie> cookies,
                   RestResponseDecoder<BatchResponse<T>> decoder,
                   Map<String, Object> queryParams,
                   Map<String, Class<?>> queryParamClasses,
@@ -51,6 +54,7 @@ public class BatchGetRequest<T extends RecordTemplate> extends BatchRequest<Batc
     super(ResourceMethod.BATCH_GET,
           null,
           headers,
+          cookies,
           decoder,
           resourceSpec,
           queryParams,

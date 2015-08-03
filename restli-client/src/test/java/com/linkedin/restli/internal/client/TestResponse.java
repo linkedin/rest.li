@@ -19,6 +19,8 @@ package com.linkedin.restli.internal.client;
 
 import com.linkedin.restli.client.Response;
 
+import java.net.HttpCookie;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import org.testng.Assert;
@@ -36,7 +38,7 @@ public class TestResponse
     int status = 200;
     Map<String, String> headers = new HashMap<String, String>();
     headers.put("header", "value");
-    Response<Long> response = new ResponseImpl<Long>(status, headers);
+    Response<Long> response = new ResponseImpl<Long>(status, headers, Collections.<HttpCookie>emptyList());
     Assert.assertEquals(response.getHeader("HEADER"), "value");
   }
 
@@ -47,7 +49,7 @@ public class TestResponse
     Map<String, String> headers = new HashMap<String, String>();
     headers.put("header", "value");
     headers.put("HEADER", "value");
-    Response<Long> response = new ResponseImpl<Long>(status, headers);
+    Response<Long> response = new ResponseImpl<Long>(status, headers, Collections.<HttpCookie>emptyList());
     Assert.assertEquals(response.getHeaders().size(), 1);
     Assert.assertEquals(response.getHeader("HEADER"), "value");
   }

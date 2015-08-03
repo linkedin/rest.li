@@ -24,6 +24,8 @@ import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
 
+import java.net.HttpCookie;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -39,6 +41,7 @@ import java.util.Set;
 public class BatchGetKVRequest<K, V extends RecordTemplate> extends BatchRequest<BatchKVResponse<K, V>>
 {
   BatchGetKVRequest(Map<String, String> headers,
+                    List<HttpCookie> cookies,
                     RestResponseDecoder<BatchKVResponse<K, V>> decoder,
                     Map<String, Object> queryParams,
                     Map<String, Class<?>> queryParamClasses,
@@ -47,7 +50,7 @@ public class BatchGetKVRequest<K, V extends RecordTemplate> extends BatchRequest
                     Map<String, Object> pathKeys,
                     RestliRequestOptions requestOptions)
   {
-    super(ResourceMethod.BATCH_GET, null, headers, decoder, resourceSpec, queryParams, queryParamClasses, baseUriTemplate, pathKeys, requestOptions);
+    super(ResourceMethod.BATCH_GET, null, headers, cookies, decoder, resourceSpec, queryParams, queryParamClasses, baseUriTemplate, pathKeys, requestOptions);
   }
 
   @Override

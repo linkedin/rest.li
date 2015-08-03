@@ -26,7 +26,6 @@ import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.restli.common.CollectionMetadata;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.LinkArray;
-import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.internal.server.RestLiResponseEnvelope;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.model.Parameter;
@@ -34,9 +33,9 @@ import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.server.CollectionResult;
 import com.linkedin.restli.server.ProjectionMode;
 import com.linkedin.restli.server.ResourceContext;
-import com.linkedin.restli.server.RestLiResponseDataException;
 import com.linkedin.restli.server.RestLiServiceException;
 
+import java.net.HttpCookie;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
@@ -192,7 +191,8 @@ public class TestCollectionResponseBuilder
     RestLiResponseEnvelope responseData = responseBuilder.buildRestLiResponseData(getRestRequest(),
                                                                                        routingResult,
                                                                                        results,
-                                                                                       headers);
+                                                                                       headers,
+                                                                                       Collections.<HttpCookie>emptyList());
     PartialRestResponse restResponse = responseBuilder.buildResponse(routingResult, responseData);
 
     EasyMock.verify(mockContext, mockDescriptor);
@@ -228,7 +228,7 @@ public class TestCollectionResponseBuilder
     CollectionResponseBuilder responseBuilder = new CollectionResponseBuilder();
     try
     {
-      responseBuilder.buildRestLiResponseData(getRestRequest(), routingResult, results, headers);
+      responseBuilder.buildRestLiResponseData(getRestRequest(), routingResult, results, headers, Collections.<HttpCookie>emptyList());
       Assert.fail("An exception should have been thrown because of null elements!");
     }
     catch (RestLiServiceException e)

@@ -24,6 +24,7 @@ import com.linkedin.restli.internal.server.RestLiResponseEnvelope;
 import com.linkedin.restli.internal.server.ResponseType;
 import com.linkedin.restli.server.RestLiServiceException;
 
+import java.net.HttpCookie;
 import java.util.List;
 import java.util.Map;
 
@@ -47,31 +48,31 @@ public final class CollectionResponseEnvelope extends RestLiResponseEnvelope
 
   /**
    * Sets a collection response without triggered exception.
-   *
-   * @param collectionResponse The entities of the request.
+   *  @param collectionResponse The entities of the request.
    * @param collectionResponsePaging Paging for the collection response.
    * @param collectionResponseCustomMetadata the custom metadata used for this collection response.
    * @param headers of the response.
+   * @param cookies
    */
   public CollectionResponseEnvelope(List<? extends RecordTemplate> collectionResponse,
                                     CollectionMetadata collectionResponsePaging,
                                     RecordTemplate collectionResponseCustomMetadata,
-                                    Map<String, String> headers)
+                                    Map<String, String> headers, List<HttpCookie> cookies)
   {
-    super(HttpStatus.S_200_OK, headers);
+    super(HttpStatus.S_200_OK, headers, cookies);
     setCollectionResponse(HttpStatus.S_200_OK, collectionResponse, collectionResponsePaging, collectionResponseCustomMetadata);
   }
 
   /**
    * Sets a failed collection response with an exception.
-   *
-   * @param exception caused the response failure.
+   *  @param exception caused the response failure.
    * @param headers of the response.
+   * @param cookies
    */
   public CollectionResponseEnvelope(RestLiServiceException exception,
-                                    Map<String, String> headers)
+                                    Map<String, String> headers, List<HttpCookie> cookies)
   {
-    super(exception, headers);
+    super(exception, headers, cookies);
     _collectionResponse = null;
     _collectionResponseCustomMetadata = null;
     _collectionResponsePaging = null;

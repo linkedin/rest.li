@@ -28,6 +28,7 @@ import com.linkedin.restli.common.ResourceSpecImpl;
 import com.linkedin.restli.internal.client.EntityResponseDecoder;
 import com.linkedin.restli.internal.common.ResourcePropertiesImpl;
 
+import java.net.HttpCookie;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -166,6 +167,7 @@ public class TestRequest
     Request<TestRecord> request = new Request<TestRecord>(ResourceMethod.GET,
                                                           null,
                                                           Collections.<String, String>emptyMap(),
+                                                          Collections.<HttpCookie>emptyList(),
                                                           new EntityResponseDecoder<TestRecord>(TestRecord.class),
                                                           expectedResourceSpec,
                                                           Collections.<String, Object>emptyMap(),

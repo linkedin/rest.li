@@ -31,7 +31,6 @@ import com.linkedin.restli.common.TypeSpec;
 import com.linkedin.restli.internal.common.HeaderUtil;
 import com.linkedin.restli.internal.common.ResponseUtils;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -86,7 +85,7 @@ public class CreateResponseDecoder<K> extends EmptyResponseDecoder
     modifiableHeaders.remove(RestConstants.HEADER_ID);
     modifiableHeaders.remove(RestConstants.HEADER_RESTLI_ID);
 
-    return new ResponseImpl<EmptyRecord>(rawResponse.getStatus(), modifiableHeaders, rawResponse.getEntity(), rawResponse.getError());
+    return new ResponseImpl<EmptyRecord>(rawResponse.getStatus(), modifiableHeaders, rawResponse.getCookies(), rawResponse.getEntity(), rawResponse.getError());
   }
 
   @Override

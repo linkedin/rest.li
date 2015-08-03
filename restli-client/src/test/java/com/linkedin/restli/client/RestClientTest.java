@@ -46,6 +46,7 @@ import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.TestConstants;
 
 import java.io.IOException;
+import java.net.HttpCookie;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -665,6 +666,7 @@ public class RestClientTest
   private <T extends RecordTemplate> Request<T> mockRequest(Class<T> clazz, ProtocolVersionOption versionOption)
   {
     return new GetRequest<T>(Collections.<String, String> emptyMap(),
+                             Collections.<HttpCookie>emptyList(),
                              clazz,
                              null,
                              new DataMap(),

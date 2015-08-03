@@ -116,6 +116,7 @@ public class CreateIdEntityRequestBuilder<K, V extends RecordTemplate> extends S
                                                                                               getValueClass());
     return new CreateIdEntityRequest<K, V>(buildReadOnlyInput(),
                                            buildReadOnlyHeaders(),
+                                           buildReadOnlyCookies(),
                                            idEntityResponseDecoder,
                                            _resourceSpec,
                                            buildReadOnlyQueryParameters(),

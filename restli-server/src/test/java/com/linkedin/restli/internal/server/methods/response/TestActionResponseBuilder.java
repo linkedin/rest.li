@@ -26,6 +26,8 @@ import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.server.ActionResult;
 
+import java.net.HttpCookie;
+import java.util.Collections;
 import java.util.Map;
 
 import org.easymock.EasyMock;
@@ -62,7 +64,8 @@ public class TestActionResponseBuilder
     RestLiResponseEnvelope responseData = actionResponseBuilder.buildRestLiResponseData(null,
                                                                                              routingResult,
                                                                                              result,
-                                                                                             headers);
+                                                                                             headers,
+                                                                                             Collections.<HttpCookie>emptyList());
     PartialRestResponse restResponse = actionResponseBuilder.buildResponse(routingResult, responseData);
 
     EasyMock.verify(mockDescriptor);

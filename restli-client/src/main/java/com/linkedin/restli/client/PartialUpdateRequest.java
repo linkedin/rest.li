@@ -26,6 +26,10 @@ import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.internal.client.EmptyResponseDecoder;
+
+import java.net.HttpCookie;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -40,6 +44,7 @@ public class PartialUpdateRequest<T>
 
   PartialUpdateRequest(PatchRequest<T> input,
                        Map<String, String> headers,
+                       List<HttpCookie> cookies,
                        ResourceSpec resourceSpec,
                        Map<String, Object> queryParams,
                        Map<String, Class<?>> queryParamClasses,
@@ -51,6 +56,7 @@ public class PartialUpdateRequest<T>
     super(ResourceMethod.PARTIAL_UPDATE,
           input,
           headers,
+          cookies,
           new EmptyResponseDecoder(),
           resourceSpec,
           queryParams,

@@ -36,7 +36,10 @@ import com.linkedin.restli.server.BatchUpdateResult;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.UpdateResponse;
 
+import java.net.HttpCookie;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -67,7 +70,7 @@ public final class BatchUpdateResponseBuilder implements RestLiResponseBuilder
 
     @SuppressWarnings("unchecked")
     final BatchResponse<AnyRecord> response = toBatchResponse(mergedResults, protocolVersion);
-    return builder.entity(response).headers(responseData.getHeaders()).build();
+    return builder.entity(response).headers(responseData.getHeaders()).cookies(responseData.getCookies()).build();
   }
 
   // Updates the merged results with context errors and build map of UpdateStatus.
@@ -93,8 +96,11 @@ public final class BatchUpdateResponseBuilder implements RestLiResponseBuilder
   }
 
   @Override
-  public RestLiResponseEnvelope buildRestLiResponseData(RestRequest request, RoutingResult routingResult,
-                                                             Object result, Map<String, String> headers)
+  public RestLiResponseEnvelope buildRestLiResponseData(RestRequest request,
+                                                            RoutingResult routingResult,
+                                                            Object result,
+                                                            Map<String, String> headers,
+                                                            List<HttpCookie> cookies)
   {
     @SuppressWarnings({ "unchecked" })
     /** constrained by signature of {@link com.linkedin.restli.server.resources.CollectionResource#batchUpdate(java.util.Map)} */
@@ -149,7 +155,7 @@ public final class BatchUpdateResponseBuilder implements RestLiResponseBuilder
       batchResponseMap.put(entry.getKey(), new BatchResponseEntry(entry.getValue().getStatus(), entry.getValue()));
     }
 
-    return new BatchResponseEnvelope(batchResponseMap, headers);
+    return new BatchResponseEnvelope(batchResponseMap, headers, cookies);
   }
 
   private static <K> BatchResponse<AnyRecord> toBatchResponse(Map<K, UpdateStatus> statuses,

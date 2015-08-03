@@ -30,8 +30,10 @@ import com.linkedin.restli.server.BatchCreateResult;
 import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.RestLiServiceException;
 
+import java.net.HttpCookie;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -62,7 +64,8 @@ public class TestBatchCreateResponseBuilder
     RestLiResponseEnvelope responseData = responseBuilder.buildRestLiResponseData(null,
                                                                                        routingResult,
                                                                                        results,
-                                                                                       headers);
+                                                                                       headers,
+                                                                                       Collections.<HttpCookie>emptyList());
     PartialRestResponse restResponse = responseBuilder.buildResponse(routingResult, responseData);
 
     EasyMock.verify(mockDescriptor);
@@ -107,7 +110,7 @@ public class TestBatchCreateResponseBuilder
     BatchCreateResponseBuilder responseBuilder = new BatchCreateResponseBuilder(null);
     try
     {
-      responseBuilder.buildRestLiResponseData(null, routingResult, result, headers);
+      responseBuilder.buildRestLiResponseData(null, routingResult, result, headers, Collections.<HttpCookie>emptyList());
       Assert.fail("buildRestLiResponseData should have thrown an exception because of null elements");
     }
     catch (RestLiServiceException e)

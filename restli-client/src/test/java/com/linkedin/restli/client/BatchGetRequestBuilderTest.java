@@ -37,6 +37,7 @@ import com.linkedin.restli.internal.common.PathSegment.PathSegmentSyntaxExceptio
 import com.linkedin.restli.internal.common.QueryParamsDataMap;
 import com.linkedin.restli.internal.common.URIElementParser;
 
+import java.net.HttpCookie;
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -237,6 +238,7 @@ public class BatchGetRequestBuilderTest
     queryParams.put("ids", Arrays.asList((Object)complexKey1));
     BatchGetRequest<TestRecord> request3 = new BatchGetRequest<TestRecord>(
         Collections.<String, String>emptyMap(),
+        Collections.<HttpCookie>emptyList(),
         new BatchResponseDecoder<TestRecord>(TestRecord.class),
         queryParams,
         Collections.<String, Class<?>>emptyMap(),
@@ -285,6 +287,7 @@ public class BatchGetRequestBuilderTest
     queryParams.put("ids", Arrays.asList((Object)key));
     BatchGetRequest<TestRecord> request4 = new BatchGetRequest<TestRecord>(
         Collections.<String, String>emptyMap(),
+        Collections.<HttpCookie>emptyList(),
         new BatchResponseDecoder<TestRecord>(TestRecord.class),
         queryParams,
         Collections.<String, Class<?>>emptyMap(),

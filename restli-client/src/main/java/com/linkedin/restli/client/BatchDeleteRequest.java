@@ -29,6 +29,8 @@ import com.linkedin.restli.common.TypeSpec;
 import com.linkedin.restli.common.UpdateStatus;
 import com.linkedin.restli.internal.client.BatchUpdateResponseDecoder;
 
+import java.net.HttpCookie;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -40,6 +42,7 @@ public class BatchDeleteRequest<K, V extends RecordTemplate> extends BatchReques
 {
   @SuppressWarnings("unchecked")
   BatchDeleteRequest(Map<String, String> headers,
+                     List<HttpCookie> cookies,
                      Map<String, Object> queryParams,
                      Map<String, Class<?>> queryParamClasses,
                      ResourceSpec resourceSpec,
@@ -50,6 +53,7 @@ public class BatchDeleteRequest<K, V extends RecordTemplate> extends BatchReques
     super(ResourceMethod.BATCH_DELETE,
           null,
           headers,
+          cookies,
           new BatchUpdateResponseDecoder<K>((TypeSpec<K>) resourceSpec.getKeyType(),
                                             resourceSpec.getKeyParts(),
                                             resourceSpec.getComplexKeyType()),

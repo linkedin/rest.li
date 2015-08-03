@@ -23,6 +23,9 @@ import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.internal.client.CollectionResponseDecoder;
+
+import java.net.HttpCookie;
+import java.util.List;
 import java.util.Map;
 
 public class GetAllRequest<T extends RecordTemplate> extends
@@ -31,6 +34,7 @@ public class GetAllRequest<T extends RecordTemplate> extends
   private final CompoundKey _assocKey;
 
   GetAllRequest(Map<String, String> headers,
+                List<HttpCookie> cookies,
                 Class<T> templateClass,
                 ResourceSpec resourceSpec,
                 Map<String, Object> queryParams,
@@ -43,6 +47,7 @@ public class GetAllRequest<T extends RecordTemplate> extends
     super(ResourceMethod.GET_ALL,
           null,
           headers,
+          cookies,
           new CollectionResponseDecoder<T>(templateClass),
           resourceSpec,
           queryParams,

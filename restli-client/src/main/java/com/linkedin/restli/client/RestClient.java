@@ -48,9 +48,11 @@ import com.linkedin.restli.internal.client.RequestBodyTransformer;
 import com.linkedin.restli.internal.client.ResponseFutureImpl;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
+import com.linkedin.restli.internal.common.CookieUtil;
 
 import javax.mail.internet.ParseException;
 import java.io.IOException;
+import java.net.HttpCookie;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
@@ -261,6 +263,7 @@ public class RestClient
                     request.getMethod(),
                     input != null ? RequestBodyTransformer.transform(request, protocolVersion) : null,
                     request.getHeaders(),
+                    CookieUtil.encodeCookies(request.getCookies()),
                     request.getMethodName(),
                     protocolVersion,
                     request.getRequestOptions(),
@@ -649,6 +652,7 @@ public class RestClient
                                ResourceMethod method,
                                DataMap dataMap,
                                Map<String, String> headers,
+                               List<String> cookies,
                                String methodName,
                                ProtocolVersion protocolVersion,
                                RestliRequestOptions requestOptions,
@@ -656,7 +660,7 @@ public class RestClient
   {
     try
     {
-      RestRequest request = buildRequest(uri, method, dataMap, headers, protocolVersion, requestOptions.getContentType(), requestOptions.getAcceptTypes());
+      RestRequest request = buildRequest(uri, method, dataMap, headers, cookies, protocolVersion, requestOptions.getContentType(), requestOptions.getAcceptTypes());
       String operation = OperationNameGenerator.generate(method, methodName);
       requestContext.putLocalAttr(R2Constants.OPERATION, operation);
       requestContext.putLocalAttr(R2Constants.REQUEST_COMPRESSION_OVERRIDE, requestOptions.getRequestCompressionOverride());
@@ -676,6 +680,7 @@ public class RestClient
                                    ResourceMethod method,
                                    DataMap dataMap,
                                    Map<String, String> headers,
+                                   List<String> cookies,
                                    ProtocolVersion protocolVersion,
                                    ContentType contentType,
                                    List<AcceptType> acceptTypes) throws Exception
@@ -684,6 +689,7 @@ public class RestClient
             method.getHttpMethod().toString());
 
     requestBuilder.setHeaders(headers);
+    requestBuilder.setCookies(cookies);
     addAcceptHeaders(requestBuilder, acceptTypes);
     addEntityAndContentTypeHeaders(requestBuilder, dataMap, contentType);
     addProtocolVersionHeader(requestBuilder, protocolVersion);

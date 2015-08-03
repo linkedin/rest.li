@@ -23,6 +23,8 @@ import com.linkedin.restli.internal.server.RestLiResponseEnvelope;
 import com.linkedin.restli.internal.server.ResponseType;
 import com.linkedin.restli.server.RestLiServiceException;
 
+import java.net.HttpCookie;
+import java.util.List;
 import java.util.Map;
 
 
@@ -42,25 +44,27 @@ public final class BatchResponseEnvelope extends RestLiResponseEnvelope
 
   /**
    * Sets a batch response without triggered exception.
-   *
-   * @param batchResponseMap map with entities of the response.
+   *  @param batchResponseMap map with entities of the response.
    * @param headers of the response.
+   * @param cookies
    */
-  public BatchResponseEnvelope(Map<?, BatchResponseEntry> batchResponseMap, Map<String, String> headers)
+  public BatchResponseEnvelope(Map<?, BatchResponseEntry> batchResponseMap,
+                               Map<String, String> headers,
+                               List<HttpCookie> cookies)
   {
-    super(HttpStatus.S_200_OK, headers);
+    super(HttpStatus.S_200_OK, headers, cookies);
     _batchResponseMap = batchResponseMap;
   }
 
   /**
    * Sets a failed top level batch response with exception indicate the entire response failed.
-   *
-   * @param exception caused the failed response.
+   *  @param exception caused the failed response.
    * @param headers of the response.
+   * @param cookies
    */
-  public BatchResponseEnvelope(RestLiServiceException exception, Map<String, String> headers)
+  public BatchResponseEnvelope(RestLiServiceException exception, Map<String, String> headers, List<HttpCookie> cookies)
   {
-    super(exception, headers);
+    super(exception, headers, cookies);
     _batchResponseMap = null;
   }
 

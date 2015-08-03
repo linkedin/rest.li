@@ -24,6 +24,8 @@ import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.internal.client.BatchCreateIdDecoder;
 
+import java.net.HttpCookie;
+import java.util.List;
 import java.util.Map;
 
 
@@ -36,6 +38,7 @@ import java.util.Map;
 public class BatchCreateIdRequest<K,T extends RecordTemplate> extends Request<BatchCreateIdResponse<K>>
 {
   BatchCreateIdRequest(Map<String, String> headers,
+                       List<HttpCookie> cookies,
                        BatchCreateIdDecoder<K> decoder,
                        CollectionRequest<T> input,
                        ResourceSpec resourceSpec,
@@ -48,6 +51,7 @@ public class BatchCreateIdRequest<K,T extends RecordTemplate> extends Request<Ba
     super(ResourceMethod.BATCH_CREATE,
           input,
           headers,
+          cookies,
           decoder,
           resourceSpec,
           queryParams,

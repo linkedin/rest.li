@@ -46,6 +46,7 @@ import com.linkedin.restli.common.multiplexer.IndividualResponse;
 import com.linkedin.restli.internal.client.ResponseImpl;
 
 import java.io.IOException;
+import java.net.HttpCookie;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -94,7 +95,7 @@ public class MultiplexerTestBase
   protected Response<TestRecord> fakeResponse(int id)
   {
     TestRecord record = fakeEntity(id);
-    return new ResponseImpl<TestRecord>(HttpStatus.S_200_OK.getCode(), HEADERS, record, null);
+    return new ResponseImpl<TestRecord>(HttpStatus.S_200_OK.getCode(), HEADERS, Collections.<HttpCookie>emptyList(), record, null);
   }
 
   protected TestRecord fakeEntity(int id)

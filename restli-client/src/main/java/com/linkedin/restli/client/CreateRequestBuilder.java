@@ -118,6 +118,7 @@ public class CreateRequestBuilder<K, V extends RecordTemplate>
                                                                                   _resourceSpec.getComplexKeyType());
     return new CreateRequest<V>(buildReadOnlyInput(),
                                 buildReadOnlyHeaders(),
+                                buildReadOnlyCookies(),
                                 createResponseDecoder,
                                 _resourceSpec,
                                 buildReadOnlyQueryParameters(),

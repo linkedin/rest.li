@@ -26,6 +26,7 @@ import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 
+import java.net.HttpCookie;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -56,6 +57,7 @@ public class TestMockResponseBuilder
     mockResponseBuilder
         .setEntity(greeting)
         .setHeaders(headers)
+        .setCookies(Collections.singletonList(new HttpCookie("cookie", "value")))
         .setStatus(200)
         .setRestLiResponseException(restLiResponseException);
 
@@ -67,6 +69,7 @@ public class TestMockResponseBuilder
 
     Assert.assertEquals(response.getEntity(), greeting);
     Assert.assertEquals(response.getHeaders(), builtHeaders);
+    Assert.assertEquals(response.getCookies(), Collections.singletonList(new HttpCookie("cookie", "value")));
     Assert.assertEquals(response.getStatus(), 200);
     Assert.assertEquals(response.getError().getErrorSource(), "foo");
   }

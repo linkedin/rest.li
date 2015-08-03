@@ -133,6 +133,7 @@ public class BatchCreateIdEntityRequestBuilder<K, V extends RecordTemplate> exte
                                                                                     _resourceSpec.getComplexKeyType());
 
     return new BatchCreateIdEntityRequest<K, V>(buildReadOnlyHeaders(),
+                                                buildReadOnlyCookies(),
                                                 decoder,
                                                 buildReadOnlyInput(),
                                                 _resourceSpec,

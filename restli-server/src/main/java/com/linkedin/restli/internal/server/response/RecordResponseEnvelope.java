@@ -23,6 +23,8 @@ import com.linkedin.restli.internal.server.RestLiResponseEnvelope;
 import com.linkedin.restli.internal.server.ResponseType;
 import com.linkedin.restli.server.RestLiServiceException;
 
+import java.net.HttpCookie;
+import java.util.List;
 import java.util.Map;
 
 
@@ -45,10 +47,11 @@ public final class RecordResponseEnvelope extends RestLiResponseEnvelope
    * @param httpStatus http status of the response.
    * @param response entity of the response.
    * @param headers headers of the response.
+   * @param cookies
    */
-  public RecordResponseEnvelope(HttpStatus httpStatus, RecordTemplate response, Map<String, String> headers)
+  public RecordResponseEnvelope(HttpStatus httpStatus, RecordTemplate response, Map<String, String> headers, List<HttpCookie> cookies)
   {
-    super(httpStatus, headers);
+    super(httpStatus, headers, cookies);
     _recordResponse = response;
   }
 
@@ -57,10 +60,11 @@ public final class RecordResponseEnvelope extends RestLiResponseEnvelope
    *
    * @param exception caused the response failure.
    * @param headers headers of the response.
+   * @param cookies
    */
-  public RecordResponseEnvelope(RestLiServiceException exception, Map<String, String> headers)
+  public RecordResponseEnvelope(RestLiServiceException exception, Map<String, String> headers, List<HttpCookie> cookies)
   {
-    super(exception, headers);
+    super(exception, headers, cookies);
   }
 
   /**

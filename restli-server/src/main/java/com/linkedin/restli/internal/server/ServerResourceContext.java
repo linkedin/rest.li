@@ -26,7 +26,9 @@ import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiServiceException;
 
+import java.net.HttpCookie;
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -65,6 +67,13 @@ public interface ServerResourceContext extends ResourceContext
    * @return response headers
    */
   Map<String, String> getResponseHeaders();
+
+  /**
+   * function to retrive the response cookie
+   *
+   * @return response cookies
+   */
+  List<HttpCookie> getResponseCookies();
 
   /**
    * @return map of {@link RestLiServiceException}s keyed by batch key values

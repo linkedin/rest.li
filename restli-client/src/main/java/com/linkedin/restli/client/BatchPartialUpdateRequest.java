@@ -32,6 +32,8 @@ import com.linkedin.restli.common.TypeSpec;
 import com.linkedin.restli.common.UpdateStatus;
 import com.linkedin.restli.internal.client.BatchUpdateResponseDecoder;
 
+import java.net.HttpCookie;
+import java.util.List;
 import java.util.Map;
 
 
@@ -45,6 +47,7 @@ public class BatchPartialUpdateRequest<K, V extends RecordTemplate> extends
 {
   @SuppressWarnings("unchecked")
   BatchPartialUpdateRequest(Map<String, String> headers,
+                            List<HttpCookie> cookies,
                             CollectionRequest<KeyValueRecord<K, PatchRequest<V>>> entities,
                             Map<String, Object> queryParams,
                             Map<String, Class<?>> queryParamClasses,
@@ -56,6 +59,7 @@ public class BatchPartialUpdateRequest<K, V extends RecordTemplate> extends
     super(ResourceMethod.BATCH_PARTIAL_UPDATE,
           entities,
           headers,
+          cookies,
           new BatchUpdateResponseDecoder<K>((TypeSpec<K>) resourceSpec.getKeyType(),
                                             resourceSpec.getKeyParts(),
                                             resourceSpec.getComplexKeyType()),

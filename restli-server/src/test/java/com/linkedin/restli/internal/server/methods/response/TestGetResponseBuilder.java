@@ -30,6 +30,8 @@ import com.linkedin.restli.server.GetResult;
 import com.linkedin.restli.server.ProjectionMode;
 import com.linkedin.restli.server.ResourceContext;
 
+import java.net.HttpCookie;
+import java.util.Collections;
 import java.util.Map;
 
 import org.easymock.EasyMock;
@@ -91,7 +93,8 @@ public class TestGetResponseBuilder
     RestLiResponseEnvelope responseData = getResponseBuilder.buildRestLiResponseData(null,
                                                                                           routingResult,
                                                                                           record,
-                                                                                          headers);
+                                                                                          headers,
+                                                                                          Collections.<HttpCookie>emptyList());
 
     PartialRestResponse partialRestResponse = getResponseBuilder.buildResponse(null, responseData);
 

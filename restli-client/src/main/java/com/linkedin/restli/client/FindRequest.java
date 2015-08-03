@@ -24,6 +24,9 @@ import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.internal.client.CollectionResponseDecoder;
 
+import java.net.HttpCookie;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 
@@ -40,6 +43,7 @@ public class FindRequest<T extends RecordTemplate>
   private final CompoundKey _assocKey;
 
   FindRequest(Map<String, String> headers,
+              List<HttpCookie> cookies,
               Class<T> templateClass,
               ResourceSpec resourceSpec,
               Map<String, Object> queryParams,
@@ -53,6 +57,7 @@ public class FindRequest<T extends RecordTemplate>
     super(ResourceMethod.FINDER,
           null,
           headers,
+          cookies,
           new CollectionResponseDecoder<T>(templateClass),
           resourceSpec,
           queryParams,

@@ -19,12 +19,14 @@ package com.linkedin.restli.internal.server.methods.response;
 
 
 import com.linkedin.restli.common.HttpStatus;
-import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.internal.server.RestLiResponseEnvelope;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.UpdateResponse;
+
+import java.net.HttpCookie;
+import java.util.Collections;
 import java.util.Map;
 import org.easymock.EasyMock;
 import org.testng.Assert;
@@ -50,7 +52,8 @@ public class TestUpdateResponseBuilder
     RestLiResponseEnvelope responseData = updateResponseBuilder.buildRestLiResponseData(null,
                                                                                              routingResult,
                                                                                              updateResponse,
-                                                                                             headers);
+                                                                                             headers,
+                                                                                             Collections.<HttpCookie>emptyList());
     PartialRestResponse partialRestResponse = updateResponseBuilder.buildResponse(routingResult, responseData);
 
     EasyMock.verify(mockDescriptor);
@@ -70,7 +73,7 @@ public class TestUpdateResponseBuilder
 
     try
     {
-      updateResponseBuilder.buildRestLiResponseData(null, routingResult, updateResponse, headers);
+      updateResponseBuilder.buildRestLiResponseData(null, routingResult, updateResponse, headers, Collections.<HttpCookie>emptyList());
       Assert.fail("buildRestLiResponseData should have failed because of a null HTTP status!");
     }
     catch (RestLiServiceException e)

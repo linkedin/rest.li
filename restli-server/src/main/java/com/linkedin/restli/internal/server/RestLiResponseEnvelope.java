@@ -22,9 +22,10 @@ import com.linkedin.restli.internal.common.HeaderUtil;
 import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
 
+import java.net.HttpCookie;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-
 
 /**
  * Concrete implementation of {@link RestLiResponseData}.
@@ -51,11 +52,13 @@ public abstract class RestLiResponseEnvelope implements RestLiResponseData
   private HttpStatus _status;
   private RestLiServiceException _exception;
   private Map<String, String> _headers;
+  private List<HttpCookie> _cookies;
 
   // Private constructor used to instantiate all shared common objects used.
-  private RestLiResponseEnvelope(Map<String, String> headers)
+  private RestLiResponseEnvelope(Map<String, String> headers, List<HttpCookie> cookies)
   {
     _headers = new TreeMap<String, String>(headers);
+    _cookies = cookies;
   }
 
   /**
@@ -63,10 +66,11 @@ public abstract class RestLiResponseEnvelope implements RestLiResponseData
    *
    * @param httpStatus Status of the response.
    * @param headers of the response.
+   * @param cookies
    */
-  protected RestLiResponseEnvelope(HttpStatus httpStatus, Map<String, String> headers)
+  protected RestLiResponseEnvelope(HttpStatus httpStatus, Map<String, String> headers, List<HttpCookie> cookies)
   {
-    this(headers);
+    this(headers, cookies);
     setStatus(httpStatus);
   }
 
@@ -75,10 +79,13 @@ public abstract class RestLiResponseEnvelope implements RestLiResponseData
    *
    * @param exception exception thrown.
    * @param headers of the response.
+   * @param cookies
    */
-  protected RestLiResponseEnvelope(RestLiServiceException exception, Map<String, String> headers)
+  protected RestLiResponseEnvelope(RestLiServiceException exception,
+                                   Map<String, String> headers,
+                                   List<HttpCookie> cookies)
   {
-    this(headers);
+    this(headers, cookies);
     setException(exception);
   }
 
@@ -152,5 +159,10 @@ public abstract class RestLiResponseEnvelope implements RestLiResponseData
   public Map<String, String> getHeaders()
   {
     return _headers;
+  }
+
+  public List<HttpCookie> getCookies()
+  {
+    return _cookies;
   }
 }

@@ -120,6 +120,7 @@ public class PartialUpdateRequestBuilder<K, V extends RecordTemplate> extends
   {
     return new PartialUpdateRequest<V>(buildReadOnlyInput(),
                                        buildReadOnlyHeaders(),
+                                       buildReadOnlyCookies(),
                                        _resourceSpec,
                                        buildReadOnlyQueryParameters(),
                                        getQueryParamClasses(),

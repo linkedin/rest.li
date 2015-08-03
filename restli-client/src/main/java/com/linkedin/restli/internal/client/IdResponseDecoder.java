@@ -31,7 +31,6 @@ import com.linkedin.restli.internal.common.ResponseUtils;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -74,7 +73,7 @@ public class IdResponseDecoder<K> extends RestResponseDecoder<IdResponse<K>>
     modifiableHeaders.remove(RestConstants.HEADER_ID);
     modifiableHeaders.remove(RestConstants.HEADER_RESTLI_ID);
 
-    return new ResponseImpl<IdResponse<K>>(rawResponse.getStatus(), modifiableHeaders, rawResponse.getEntity(), rawResponse.getError());
+    return new ResponseImpl<IdResponse<K>>(rawResponse.getStatus(), modifiableHeaders, rawResponse.getCookies(), rawResponse.getEntity(), rawResponse.getError());
   }
 
   @Override

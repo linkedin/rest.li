@@ -33,8 +33,11 @@ import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiServiceException;
+
+import java.net.HttpCookie;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import org.easymock.EasyMock;
@@ -78,7 +81,8 @@ public class TestCreateResponseBuilder
     RestLiResponseEnvelope responseData = createResponseBuilder.buildRestLiResponseData(restRequest,
                                                                                              routingResult,
                                                                                              createResponse,
-                                                                                             headers);
+                                                                                             headers,
+                                                                                             Collections.<HttpCookie>emptyList());
     PartialRestResponse partialRestResponse = createResponseBuilder.buildResponse(routingResult, responseData);
 
     expectedHeaders.put(RestConstants.HEADER_LOCATION, location);
@@ -115,7 +119,7 @@ public class TestCreateResponseBuilder
     CreateResponseBuilder createResponseBuilder = new CreateResponseBuilder();
     try
     {
-      createResponseBuilder.buildRestLiResponseData(restRequest, routingResult, createResponse, headers);
+      createResponseBuilder.buildRestLiResponseData(restRequest, routingResult, createResponse, headers, Collections.<HttpCookie>emptyList());
       Assert.fail("buildRestLiResponseData should have thrown an exception because the status is null!");
     }
     catch (RestLiServiceException e)

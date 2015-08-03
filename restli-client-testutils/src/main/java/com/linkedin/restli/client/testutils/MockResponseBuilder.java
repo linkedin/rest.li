@@ -28,9 +28,11 @@ import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.HeaderUtil;
 import com.linkedin.restli.internal.common.URIParamUtils;
 
-import java.util.HashMap;
+import java.net.HttpCookie;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.Collections;
 
 
 /**
@@ -47,6 +49,7 @@ public class MockResponseBuilder<K, V>
   private V _entity;
   private int _status;
   private Map<String, String> _headers;
+  private List<HttpCookie> _cookies;
   private RestLiResponseException _restLiResponseException;
   private ProtocolVersion _protocolVersion;
 
@@ -91,6 +94,12 @@ public class MockResponseBuilder<K, V>
     }
 
     _headers = headers;
+    return this;
+  }
+
+  public MockResponseBuilder<K, V> setCookies(List<HttpCookie> cookies)
+  {
+    _cookies = cookies == null ? Collections.<HttpCookie>emptyList(): cookies;
     return this;
   }
 
@@ -154,7 +163,8 @@ public class MockResponseBuilder<K, V>
       }
       headers.put(HeaderUtil.getIdHeaderName(protocolVersion), URIParamUtils.encodeKeyForBody(id, false, protocolVersion));
     }
+    List<HttpCookie> cookies = _cookies == null ? Collections.<HttpCookie>emptyList() : _cookies;
 
-    return new ResponseImpl<V>(status, headers, _entity, _restLiResponseException);
+    return new ResponseImpl<V>(status, headers, cookies, _entity, _restLiResponseException);
   }
 }

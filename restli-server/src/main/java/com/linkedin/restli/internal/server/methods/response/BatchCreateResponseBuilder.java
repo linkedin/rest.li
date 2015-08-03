@@ -43,7 +43,9 @@ import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.ResourceContext;
 
 
+import java.net.HttpCookie;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -98,12 +100,15 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder
 
     PartialRestResponse.Builder builder = new PartialRestResponse.Builder();
     BatchCreateIdResponse<Object> batchCreateIdResponse = new BatchCreateIdResponse<Object>(formattedResponses);
-    return builder.headers(responseData.getHeaders()).entity(batchCreateIdResponse).build();
+    return builder.headers(responseData.getHeaders()).cookies(responseData.getCookies()).entity(batchCreateIdResponse).build();
   }
 
   @Override
-  public RestLiResponseEnvelope buildRestLiResponseData(RestRequest request, RoutingResult routingResult,
-                                                        Object result, Map<String, String> headers)
+  public RestLiResponseEnvelope buildRestLiResponseData(RestRequest request,
+                                                            RoutingResult routingResult,
+                                                            Object result,
+                                                            Map<String, String> headers,
+                                                            List<HttpCookie> cookies)
   {
     if (result instanceof BatchCreateKVResult)
     {
@@ -134,7 +139,7 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder
           collectionCreateList.add(new CreateCollectionResponseEnvelope.CollectionCreateResponseItem(e.getError(), e.getId()));
         }
       }
-      return new CreateCollectionResponseEnvelope(collectionCreateList, headers);
+      return new CreateCollectionResponseEnvelope(collectionCreateList, headers, cookies);
     }
     else
     {
@@ -170,7 +175,7 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder
         }
       }
 
-      return new CreateCollectionResponseEnvelope(collectionCreateList, headers);
+      return new CreateCollectionResponseEnvelope(collectionCreateList, headers, cookies);
     }
   }
 }

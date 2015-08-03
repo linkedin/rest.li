@@ -23,6 +23,8 @@ import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
 
+import java.net.HttpCookie;
+import java.util.List;
 import java.util.Map;
 
 
@@ -35,6 +37,7 @@ public class CreateIdRequest<K, T extends RecordTemplate> extends Request<IdResp
 {
   CreateIdRequest(T input,
                   Map<String, String> headers,
+                  List<HttpCookie> cookies,
                   RestResponseDecoder<IdResponse<K>> decoder,
                   ResourceSpec resourceSpec,
                   Map<String, Object> queryParams,
@@ -46,6 +49,7 @@ public class CreateIdRequest<K, T extends RecordTemplate> extends Request<IdResp
     super(ResourceMethod.CREATE,
           input,
           headers,
+          cookies,
           decoder,
           resourceSpec,
           queryParams,

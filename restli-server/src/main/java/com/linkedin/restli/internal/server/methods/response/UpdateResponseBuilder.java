@@ -25,6 +25,8 @@ import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.UpdateResponse;
 
+import java.net.HttpCookie;
+import java.util.List;
 import java.util.Map;
 
 
@@ -34,13 +36,15 @@ public class UpdateResponseBuilder implements RestLiResponseBuilder
   public PartialRestResponse buildResponse(RoutingResult routingResult, RestLiResponseEnvelope responseData)
   {
     return new PartialRestResponse.Builder().headers(responseData.getHeaders())
+                                            .cookies(responseData.getCookies())
                                             .status(responseData.getStatus())
                                             .build();
   }
 
   @Override
   public RestLiResponseEnvelope buildRestLiResponseData(RestRequest request, RoutingResult routingResult,
-                                                             Object result, Map<String, String> headers)
+                                                             Object result, Map<String, String> headers,
+                                                             List<HttpCookie> cookies)
   {
     UpdateResponse updateResponse = (UpdateResponse) result;
     //Verify that the status in the UpdateResponse is not null. If so, this is a developer error.
@@ -51,6 +55,6 @@ public class UpdateResponseBuilder implements RestLiResponseBuilder
               + routingResult.getResourceMethod());
     }
 
-    return new EmptyResponseEnvelope(updateResponse.getStatus(), headers);
+    return new EmptyResponseEnvelope(updateResponse.getStatus(), headers, cookies);
   }
 }

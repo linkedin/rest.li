@@ -37,8 +37,10 @@ import com.linkedin.restli.internal.server.util.RestUtils;
 import com.linkedin.restli.server.BatchResult;
 import com.linkedin.restli.server.RestLiServiceException;
 
+import java.net.HttpCookie;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 
@@ -66,7 +68,7 @@ public class BatchGetResponseBuilder implements RestLiResponseBuilder
     @SuppressWarnings("unchecked")
     final BatchResponse<AnyRecord> response = toBatchResponse(entityBatchResponse, protocolVersion);
     builder.entity(response);
-    return builder.headers(responseData.getHeaders()).build();
+    return builder.headers(responseData.getHeaders()).cookies(responseData.getCookies()).build();
   }
 
   // Transforms results into the corresponding
@@ -124,8 +126,11 @@ public class BatchGetResponseBuilder implements RestLiResponseBuilder
   }
 
   @Override
-  public RestLiResponseEnvelope buildRestLiResponseData(RestRequest request, RoutingResult routingResult,
-                                                             Object result, Map<String, String> headers)
+  public RestLiResponseEnvelope buildRestLiResponseData(RestRequest request,
+                                                        RoutingResult routingResult,
+                                                        Object result,
+                                                        Map<String, String> headers,
+                                                        List<HttpCookie> cookies)
   {
     @SuppressWarnings({ "unchecked" })
     /** constrained by signature of {@link com.linkedin.restli.server.resources.CollectionResource#batchGet(java.util.Set)} */
@@ -187,7 +192,7 @@ public class BatchGetResponseBuilder implements RestLiResponseBuilder
       batchResult.put(entry.getKey(), new BatchResponseEntry(statuses.get(entry.getKey()), entry.getValue()));
     }
 
-    return new BatchResponseEnvelope(batchResult, headers);
+    return new BatchResponseEnvelope(batchResult, headers, cookies);
   }
 
   private static <K, V extends RecordTemplate> BatchResponse<AnyRecord> toBatchResponse(Map<K, EntityResponse<V>> entities,

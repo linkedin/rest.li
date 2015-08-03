@@ -44,6 +44,7 @@ import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.common.UpdateStatus;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
+import com.linkedin.restli.internal.common.CookieUtil;
 import com.linkedin.restli.internal.common.TestConstants;
 import com.linkedin.restli.internal.server.RestLiResponseEnvelope;
 import com.linkedin.restli.internal.server.PathKeysImpl;
@@ -78,14 +79,17 @@ import com.linkedin.restli.server.twitter.TwitterTestDataModels.Status;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
+import java.net.HttpCookie;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
@@ -269,7 +273,14 @@ public class TestRestLiResponseHandler
     map.put(2L, buildStatusRecord());
     map.put(3L, buildStatusRecord());
     response = invokeResponseHandler("/test", map, ResourceMethod.BATCH_GET, acceptTypeData.acceptHeaders, protocolVersion);
-    checkResponse(response, 200, 2, acceptTypeData.responseContentType, BatchResponse.class.getName(), Status.class.getName(), true, errorResponseHeaderName);
+    checkResponse(response,
+                  200,
+                  2,
+                  acceptTypeData.responseContentType,
+                  BatchResponse.class.getName(),
+                  Status.class.getName(),
+                  true,
+                  errorResponseHeaderName);
 
     Map<Long, UpdateResponse> updateStatusMap = new HashMap<Long, UpdateResponse>();
     updateStatusMap.put(1L, new UpdateResponse(HttpStatus.S_204_NO_CONTENT));
@@ -283,7 +294,14 @@ public class TestRestLiResponseHandler
     checkResponse(response, 200, 2, acceptTypeData.responseContentType, BatchResponse.class.getName(), UpdateStatus.class.getName(), true, errorResponseHeaderName);
 
     response = invokeResponseHandler("/test", batchUpdateResult, ResourceMethod.BATCH_DELETE, acceptTypeData.acceptHeaders, protocolVersion);
-    checkResponse(response, 200, 2, acceptTypeData.responseContentType, BatchResponse.class.getName(), UpdateStatus.class.getName(), true, errorResponseHeaderName);
+    checkResponse(response,
+                  200,
+                  2,
+                  acceptTypeData.responseContentType,
+                  BatchResponse.class.getName(),
+                  UpdateStatus.class.getName(),
+                  true,
+                  errorResponseHeaderName);
 
     List<CreateResponse> createResponses = new ArrayList<CreateResponse>();
     createResponses.add(new CreateResponse("42", HttpStatus.S_204_NO_CONTENT));
@@ -694,7 +712,15 @@ public class TestRestLiResponseHandler
                                               buildRoutingResult(request, acceptTypeData.acceptHeaders),
                                               ex);
 
-    checkResponse(response, 400, 3, acceptTypeData.responseContentType, ErrorResponse.class.getName(), null, true, true, errorResponseHeaderName);
+    checkResponse(response,
+                  400,
+                  3,
+                  acceptTypeData.responseContentType,
+                  ErrorResponse.class.getName(),
+                  null,
+                  true,
+                  true,
+                  errorResponseHeaderName);
     DataMap dataMap = acceptTypeData.dataCodec.readMap(response.getEntity().asInputStream());
 
     assertEquals(dataMap.getInteger("status"), Integer.valueOf(400));
@@ -706,7 +732,15 @@ public class TestRestLiResponseHandler
                                               buildRoutingResult(request, acceptTypeData.acceptHeaders),
                                               ex);
 
-    checkResponse(response, 400, 3, acceptTypeData.responseContentType, ErrorResponse.class.getName(), null, true, true, errorResponseHeaderName);
+    checkResponse(response,
+                  400,
+                  3,
+                  acceptTypeData.responseContentType,
+                  ErrorResponse.class.getName(),
+                  null,
+                  true,
+                  true,
+                  errorResponseHeaderName);
     dataMap = acceptTypeData.dataCodec.readMap(response.getEntity().asInputStream());
 
     assertEquals(dataMap.getInteger("status"), Integer.valueOf(400));
@@ -739,8 +773,15 @@ public class TestRestLiResponseHandler
                                               status);
     assertTrue(status.data().containsKey("f2"));
 
-    checkResponse(response, 200, 2, acceptTypeData.responseContentType, Status.class.getName(), null, true, errorResponseHeaderName);
-    checkProjectedFields(response, new String[] {"f1", "f3"}, new String[] {"f2"});
+    checkResponse(response,
+                  200,
+                  2,
+                  acceptTypeData.responseContentType,
+                  Status.class.getName(),
+                  null,
+                  true,
+                  errorResponseHeaderName);
+    checkProjectedFields(response, new String[]{"f1", "f3"}, new String[] {"f2"});
 
     // #3 no fields
     RestRequest request3 = buildRequest("/test?fields=", acceptTypeData.acceptHeaders, protocolVersion);
@@ -800,7 +841,7 @@ public class TestRestLiResponseHandler
     assertTrue(status.data().containsKey("f2"));
 
     checkResponse(response, 200, 2, acceptTypeData.responseContentType, Status.class.getName(), null, true, errorResponseHeaderName);
-    checkProjectedFields(response, new String[] {"f1", "f2", "f3"}, new String[] {"f4"});
+    checkProjectedFields(response, new String[]{"f1", "f2", "f3"}, new String[] {"f4"});
 
     // #3 no fields
     RestRequest request3 = buildRequest("/test?fields=", acceptTypeData.acceptHeaders, protocolVersion);
@@ -808,7 +849,14 @@ public class TestRestLiResponseHandler
                                               buildRoutingResult(request3, acceptTypeData.acceptHeaders),
                                               status);
 
-    checkResponse(response, 200, 2, acceptTypeData.responseContentType, Status.class.getName(), null, true, errorResponseHeaderName);
+    checkResponse(response,
+                  200,
+                  2,
+                  acceptTypeData.responseContentType,
+                  Status.class.getName(),
+                  null,
+                  true,
+                  errorResponseHeaderName);
     checkProjectedFields(response, new String[]{}, new String[]{"f1", "f2", "f3", "f4"});
     assertTrue(status.data().containsKey("f1"));
     assertTrue(status.data().containsKey("f2"));
@@ -819,8 +867,15 @@ public class TestRestLiResponseHandler
                                               buildRoutingResult(request4, acceptTypeData.acceptHeaders),
                                               status);
 
-    checkResponse(response, 200, 2, acceptTypeData.responseContentType, Status.class.getName(), null, true, errorResponseHeaderName);
-    checkProjectedFields(response, new String[] {"f2"}, new String[] {"f1", "f3", "f99"});
+    checkResponse(response,
+                  200,
+                  2,
+                  acceptTypeData.responseContentType,
+                  Status.class.getName(),
+                  null,
+                  true,
+                  errorResponseHeaderName);
+    checkProjectedFields(response, new String[]{"f2"}, new String[]{"f1", "f3", "f99"});
     assertTrue(status.data().containsKey("f2"));
   }
 
@@ -1046,7 +1101,14 @@ public class TestRestLiResponseHandler
 
     final GetResult<Status> getResult = new GetResult<Status>(status, HttpStatus.S_500_INTERNAL_SERVER_ERROR);
     response = invokeResponseHandler("/test", getResult, ResourceMethod.GET, acceptTypeData.acceptHeaders, protocolVersion);
-    checkResponse(response, HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode(), 2, acceptTypeData.responseContentType, Status.class.getName(), null, true, errorResponseHeaderName);
+    checkResponse(response,
+                  HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode(),
+                  2,
+                  acceptTypeData.responseContentType,
+                  Status.class.getName(),
+                  null,
+                  true,
+                  errorResponseHeaderName);
     assertEquals(response.getEntity().asAvroString(), expectedStatus);
 
     final RestRequest request = buildRequest(acceptTypeData.acceptHeaders, protocolVersion);
@@ -1065,6 +1127,41 @@ public class TestRestLiResponseHandler
     assertEquals(response.getEntity().asAvroString(), expectedActionStatus);
   }
 
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "basicData")
+  public void testSetResponseCookies(AcceptTypeData acceptTypeData, ProtocolVersion protocolVersion, String errorResponseHeaderName) throws Exception
+  {
+    String testHeaderName = "XXX";
+    String testHeaderValue = "head";
+
+    ResourceModel resourceModel = buildResourceModel(StatusCollectionResource.class);
+    ResourceMethodDescriptor methodDescriptor = resourceModel.findNamedMethod("search");
+    ResourceContextImpl context = new ResourceContextImpl();
+    context.setResponseHeader(testHeaderName, testHeaderValue);
+    context.addResponseCookie(new HttpCookie("cook1", "value1"));
+    context.addResponseCookie(new HttpCookie("cook2","value2"));
+    RestUtils.validateRequestHeadersAndUpdateResourceContext(acceptTypeData.acceptHeaders, context);
+    RoutingResult routingResult = new RoutingResult(context, methodDescriptor);
+
+    RestResponse response = _responseHandler.buildResponse(buildRequest(acceptTypeData.acceptHeaders, protocolVersion), routingResult, buildStatusList(1)); // this is a valid response
+
+    List<HttpCookie> cookies = Arrays.asList(new HttpCookie("cook1", "value1"), new HttpCookie("cook2", "value2"));
+    Assert.assertEquals(CookieUtil.decodeSetCookies(response.getCookies()), cookies);
+
+    response = _responseHandler.buildResponse(buildRequest(acceptTypeData.acceptHeaders, protocolVersion), routingResult,
+                                                     new RestLiServiceException(HttpStatus.S_404_NOT_FOUND)); // this is an invalid response
+    Assert.assertEquals(CookieUtil.decodeSetCookies(response.getCookies()), cookies);//but the cookie should still be valid
+  }
+
+  @Test
+  public void testGetRequestCookies() throws URISyntaxException, RestLiSyntaxException
+  {
+    List<HttpCookie> cookies = Arrays.asList(new HttpCookie("cook1", "value1"), new HttpCookie("cook2", "value2"));
+    RestRequest request = new RestRequestBuilder(new URI("http://www.abc.org/")).setMethod("DONT_CARE")
+        .setHeaders(new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER))
+        .setCookies(CookieUtil.encodeCookies(cookies)).build();
+    ServerResourceContext resourceContext = new ResourceContextImpl(new PathKeysImpl(), request, new RequestContext());
+    Assert.assertEquals(resourceContext.getRequestCookies(), cookies );
+  }
   // *****************
   // Helper methods
   // *****************

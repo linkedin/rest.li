@@ -26,6 +26,7 @@ import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.internal.common.CookieUtil;
 import com.linkedin.restli.internal.server.methods.MethodAdapterRegistry;
 import com.linkedin.restli.internal.server.methods.response.ErrorResponseBuilder;
 import com.linkedin.restli.internal.server.methods.response.PartialRestResponse;
@@ -42,6 +43,9 @@ import com.linkedin.restli.server.resources.CollectionResource;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.HttpCookie;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -143,9 +147,10 @@ public class RestLiResponseHandler
   public RestResponse buildResponse(final RoutingResult routingResult,
                                      PartialRestResponse partialResponse)
   {
+    List<String> cookies = CookieUtil.encodeSetCookies(partialResponse.getCookies());
     RestResponseBuilder builder =
-        new RestResponseBuilder().setHeaders(partialResponse.getHeaders()).setStatus(partialResponse.getStatus()
-                                                                                                    .getCode());
+        new RestResponseBuilder().setHeaders(partialResponse.getHeaders()).setCookies(cookies).setStatus(partialResponse.getStatus()
+                                                     .getCode());
     if (partialResponse.hasData())
     {
       DataMap dataMap = partialResponse.getDataMap();
@@ -198,13 +203,15 @@ public class RestLiResponseHandler
     Map<String, String> responseHeaders = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
     responseHeaders.putAll(context.getResponseHeaders());
     responseHeaders.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, protocolVersion.toString());
+    List<HttpCookie> responseCookies = context.getResponseCookies();
+
 
     if (responseObject == null)
     {
       //If we have a null result, we have to assign the correct response status
       if (routingResult.getResourceMethod().getType().equals(ResourceMethod.ACTION))
       {
-        return new RecordResponseEnvelope(HttpStatus.S_200_OK, null, responseHeaders);
+        return new RecordResponseEnvelope(HttpStatus.S_200_OK, null, responseHeaders, responseCookies);
       }
       else if (routingResult.getResourceMethod().getType().equals(ResourceMethod.GET))
       {
@@ -231,22 +238,24 @@ public class RestLiResponseHandler
       throw new RestLiInternalException("Invalid return type '" + responseObject.getClass() + " from method '"
           + fqMethodName + '\'');
     }
-    return responseBuilder.buildRestLiResponseData(request, routingResult, responseObject, responseHeaders);
+    return responseBuilder.buildRestLiResponseData(request, routingResult, responseObject, responseHeaders, responseCookies);
   }
 
   public RestLiResponseEnvelope buildExceptionResponseData(final RestRequest request,
                                                                 final RoutingResult routingResult,
                                                                 final Object object,
-                                                                final Map<String, String> headers)
+                                                                final Map<String, String> headers,
+                                                                final List<HttpCookie> cookies)
   {
-    return _errorResponseBuilder.buildRestLiResponseData(request, routingResult, object, headers);
+    return _errorResponseBuilder.buildRestLiResponseData(request, routingResult, object, headers, cookies);
   }
 
   public RestException buildRestException(final Throwable e, PartialRestResponse partialResponse)
   {
+    List<String> cookies = CookieUtil.encodeSetCookies(partialResponse.getCookies());
     RestResponseBuilder builder =
-        new RestResponseBuilder().setHeaders(partialResponse.getHeaders()).setStatus(partialResponse.getStatus()
-                                                                                                    .getCode());
+        new RestResponseBuilder().setHeaders(partialResponse.getHeaders()).setCookies(cookies).setStatus(partialResponse.getStatus()
+                .getCode());
     if (partialResponse.hasData())
     {
       DataMap dataMap = partialResponse.getDataMap();

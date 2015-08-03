@@ -29,10 +29,13 @@ import com.linkedin.restli.common.IdEntityResponse;
 import com.linkedin.restli.internal.common.ProtocolVersionUtil;
 import com.linkedin.restli.internal.common.URIParamUtils;
 
+import java.net.HttpCookie;
 import java.net.URI;
 import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.List;
+import java.util.ArrayList;
 
 
 /**
@@ -47,6 +50,7 @@ public class ResponseImpl<T> implements Response<T>
 {
   private int _status = 102;  // SC_PROCESSING
   private final Map<String, String> _headers;
+  private final List<HttpCookie> _cookies;
   private T _entity;
   private RestLiResponseException _error;
 
@@ -56,33 +60,34 @@ public class ResponseImpl<T> implements Response<T>
     _error = error;
   }
 
-  ResponseImpl(int status, Map<String, String> headers, RestLiResponseException error)
+  ResponseImpl(int status,
+               Map<String, String> headers,
+               List<HttpCookie> cookies,
+               RestLiResponseException error)
   {
-    this(status, headers);
+    this(status, headers, cookies);
     _error = error;
   }
 
   public ResponseImpl(Response<?> origin, T entity)
   {
-    this(origin.getStatus(), origin.getHeaders());
+    this(origin.getStatus(), origin.getHeaders(), origin.getCookies());
     _entity = entity;
   }
 
-  public ResponseImpl(int status,
-                      Map<String, String> headers,
-                      T entity,
-                      RestLiResponseException error)
+  public ResponseImpl(int status, Map<String, String> headers, List<HttpCookie> cookies, T entity, RestLiResponseException error)
   {
-    this(status, headers);
+    this(status, headers, cookies);
     _entity = entity;
     _error = error;
   }
 
-  ResponseImpl(int status, Map<String, String> headers)
+  ResponseImpl(int status, Map<String, String> headers, List<HttpCookie> cookies)
   {
     _status = status;
     _headers = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
     _headers.putAll(headers);
+    _cookies = new ArrayList<HttpCookie>(cookies);
   }
 
   /**
@@ -120,6 +125,12 @@ public class ResponseImpl<T> implements Response<T>
   public Map<String, String> getHeaders()
   {
     return Collections.unmodifiableMap(_headers);
+  }
+
+  @Override
+  public List<HttpCookie> getCookies()
+  {
+    return Collections.unmodifiableList(_cookies);
   }
 
   /**

@@ -32,6 +32,7 @@ import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
+import com.linkedin.restli.internal.common.CookieUtil;
 import com.linkedin.restli.internal.common.PathSegment.PathSegmentSyntaxException;
 import com.linkedin.restli.internal.common.ProtocolVersionUtil;
 import com.linkedin.restli.internal.common.QueryParamsDataMap;
@@ -41,12 +42,14 @@ import com.linkedin.restli.internal.server.util.RestLiSyntaxException;
 import com.linkedin.restli.server.ProjectionMode;
 import com.linkedin.restli.server.RestLiServiceException;
 
+import java.net.HttpCookie;
 import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.ArrayList;
 
 
 /**
@@ -61,6 +64,8 @@ public class ResourceContextImpl implements ServerResourceContext
   private final DataMap                             _parameters;
   private final Map<String, String>                 _requestHeaders;
   private final Map<String, String>                 _responseHeaders;
+  private final List<HttpCookie>                    _requestCookies;
+  private final List<HttpCookie>                    _responseCookies;
   private final Map<Object, RestLiServiceException> _batchKeyErrors;
   private final RequestContext                      _requestContext;
   private final ProtocolVersion                     _protocolVersion;
@@ -113,6 +118,8 @@ public class ResourceContextImpl implements ServerResourceContext
     _requestHeaders = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
     _requestHeaders.putAll(request.getHeaders());
     _responseHeaders = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+    _requestCookies = new ArrayList<HttpCookie>(CookieUtil.decodeCookies(_request.getCookies()));
+    _responseCookies = new ArrayList<HttpCookie>();
     _requestContext = requestContext;
 
     _protocolVersion = ProtocolVersionUtil.extractProtocolVersion(request.getHeaders());
@@ -299,6 +306,12 @@ public class ResourceContextImpl implements ServerResourceContext
     return _requestHeaders;
   }
 
+  @Override
+  public List<HttpCookie> getRequestCookies()
+  {
+    return _requestCookies;
+  }
+
   /**
    * @throws IllegalArgumentException when trying to set {@link RestConstants#HEADER_ID} or {@link RestConstants#HEADER_RESTLI_ID}.
    */
@@ -328,6 +341,13 @@ public class ResourceContextImpl implements ServerResourceContext
   }
 
   @Override
+  public void addResponseCookie(HttpCookie cookie)
+  {
+    if (cookie != null)
+      _responseCookies.add(cookie);
+  }
+
+  @Override
   public RequestContext getRawRequestContext()
   {
     return _requestContext;
@@ -337,6 +357,12 @@ public class ResourceContextImpl implements ServerResourceContext
   public Map<String, String> getResponseHeaders()
   {
     return Collections.unmodifiableMap(_responseHeaders);
+  }
+
+  @Override
+  public List<HttpCookie> getResponseCookies()
+  {
+    return _responseCookies;
   }
 
   @Override

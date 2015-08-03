@@ -157,6 +157,7 @@ public class FindRequestBuilder<K, V extends RecordTemplate> extends
   public FindRequest<V> build()
   {
     return new FindRequest<V>(buildReadOnlyHeaders(),
+                              buildReadOnlyCookies(),
                               _elementClass,
                               _resourceSpec,
                               buildReadOnlyQueryParameters(),

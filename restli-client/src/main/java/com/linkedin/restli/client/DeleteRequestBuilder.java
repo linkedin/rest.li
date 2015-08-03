@@ -109,6 +109,7 @@ public class DeleteRequestBuilder<K, V extends RecordTemplate>
   public DeleteRequest<V> build()
   {
     return new DeleteRequest<V>(buildReadOnlyHeaders(),
+                                buildReadOnlyCookies(),
                                 _resourceSpec,
                                 buildReadOnlyQueryParameters(),
                                 getQueryParamClasses(),

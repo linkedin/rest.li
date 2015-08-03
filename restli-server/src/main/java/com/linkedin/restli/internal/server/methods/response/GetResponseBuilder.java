@@ -33,6 +33,9 @@ import com.linkedin.restli.internal.server.util.RestUtils;
 import com.linkedin.restli.server.GetResult;
 import com.linkedin.restli.server.ResourceContext;
 
+import java.net.HttpCookie;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 
@@ -41,13 +44,16 @@ public class GetResponseBuilder implements RestLiResponseBuilder
   @Override
   public PartialRestResponse buildResponse(RoutingResult routingResult, RestLiResponseEnvelope responseData)
   {
-    return new PartialRestResponse.Builder().headers(responseData.getHeaders()).status(responseData.getStatus())
+    return new PartialRestResponse.Builder().headers(responseData.getHeaders()).cookies(responseData.getCookies()).status(responseData.getStatus())
                                             .entity(responseData.getRecordResponseEnvelope().getRecord()).build();
   }
 
   @Override
-  public RestLiResponseEnvelope buildRestLiResponseData(RestRequest request, RoutingResult routingResult,
-                                                             Object result, Map<String, String> headers)
+  public RestLiResponseEnvelope buildRestLiResponseData(RestRequest request,
+                                                        RoutingResult routingResult,
+                                                        Object result,
+                                                        Map<String, String> headers,
+                                                        List<HttpCookie> cookies)
   {
     final RecordTemplate record;
     final HttpStatus status;
@@ -66,6 +72,6 @@ public class GetResponseBuilder implements RestLiResponseBuilder
     final DataMap data = RestUtils.projectFields(record.data(), resourceContext.getProjectionMode(),
         resourceContext.getProjectionMask());
 
-    return new RecordResponseEnvelope(status, new AnyRecord((data)), headers);
+    return new RecordResponseEnvelope(status, new AnyRecord((data)), headers, cookies);
   }
 }

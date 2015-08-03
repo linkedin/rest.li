@@ -39,6 +39,9 @@ import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiServiceException;
 
+import java.net.HttpCookie;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 
@@ -48,14 +51,19 @@ public class CreateResponseBuilder implements RestLiResponseBuilder
   public PartialRestResponse buildResponse(RoutingResult routingResult, RestLiResponseEnvelope responseData)
   {
     return new PartialRestResponse.Builder().entity(responseData.getRecordResponseEnvelope().getRecord())
-                                            .headers(responseData.getHeaders()).status(responseData.getStatus())
+                                            .headers(responseData.getHeaders())
+                                            .cookies(responseData.getCookies())
+                                            .status(responseData.getStatus())
                                             .build();
   }
 
   @Override
-  public RestLiResponseEnvelope buildRestLiResponseData(RestRequest request, RoutingResult routingResult,
-                                                             Object result, Map<String, String> headers)
-  {
+  public RestLiResponseEnvelope buildRestLiResponseData(RestRequest request,
+                                                        RoutingResult routingResult,
+                                                        Object result,
+                                                        Map<String, String> headers,
+                                                        List<HttpCookie> cookies)
+{
     CreateResponse createResponse = (CreateResponse) result;
     if (createResponse.hasId())
     {
@@ -87,6 +95,6 @@ public class CreateResponseBuilder implements RestLiResponseBuilder
               + routingResult.getResourceMethod());
     }
 
-    return new RecordResponseEnvelope(createResponse.getStatus(), resultEntity, headers);
+    return new RecordResponseEnvelope(createResponse.getStatus(), resultEntity, headers, cookies);
   }
 }

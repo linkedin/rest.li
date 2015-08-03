@@ -24,6 +24,9 @@ import com.linkedin.restli.internal.server.response.CollectionResponseEnvelope;
 import com.linkedin.restli.internal.server.response.EmptyResponseEnvelope;
 import com.linkedin.restli.internal.server.response.RecordResponseEnvelope;
 import com.linkedin.restli.internal.server.ResponseType;
+
+import java.net.HttpCookie;
+import java.util.List;
 import java.util.Map;
 
 
@@ -121,4 +124,11 @@ public interface RestLiResponseData
    * @return a mutable map of string values that indicates the headers of this response.
    */
   Map<String, String> getHeaders();
+
+  /**
+   * Gets a mutable list of cookies from this response.
+   *
+   * @return a mutable list of httpCookie objects from this response.
+   */
+  List<HttpCookie> getCookies();
 }

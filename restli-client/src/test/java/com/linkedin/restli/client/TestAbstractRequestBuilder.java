@@ -24,6 +24,7 @@ import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.RestConstants;
 
+import java.net.HttpCookie;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -31,6 +32,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Collections;
 
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
@@ -117,6 +119,74 @@ public class TestAbstractRequestBuilder
     builder.setHeaders(newHeaders);
     Assert.assertEquals(builder.getHeader("a"), "b");
     Assert.assertNull(builder.getHeader("c"));
+  }
+
+  @Test
+  public void testAddCookieWithNonNullValue()
+  {
+    final AbstractRequestBuilder<?, ?, ?> builder = new DummyAbstractRequestBuilder();
+    List<HttpCookie> cookies = new ArrayList<HttpCookie>(Arrays.asList(new HttpCookie("X", "1"),
+                                                                       new HttpCookie("Y", "2"),
+                                                                       new HttpCookie("Z", "3")));
+
+    Assert.assertSame(builder.addCookie(new HttpCookie("X", "1")), builder);
+    Assert.assertSame(builder.addCookie(new HttpCookie("Y", "2")), builder);
+    Assert.assertSame(builder.addCookie(new HttpCookie("Z", "3")), builder);
+    Assert.assertEquals(builder.getCookies(), cookies);
+  }
+
+  @Test
+  public void testAddCookieWithNullValue()
+  {
+    final AbstractRequestBuilder<?, ?, ?> builder = new DummyAbstractRequestBuilder();
+
+    Assert.assertSame(builder.addCookie(new HttpCookie("X", "1")), builder);
+    Assert.assertSame(builder.addCookie(null), builder);
+    Assert.assertSame(builder.addCookie(new HttpCookie("Z", "3")), builder);
+
+    List<HttpCookie> cookies = new ArrayList<HttpCookie>(Arrays.asList(new HttpCookie("X", "1"),
+                                                                       new HttpCookie("Z", "3")));
+
+    Assert.assertEquals(builder.getCookies(), cookies);
+  }
+
+  @Test
+  public void testSetCookiesWithNonNullValue()
+  {
+    final AbstractRequestBuilder<?, ?, ?> builder = new DummyAbstractRequestBuilder();
+    List<HttpCookie> cookies = new ArrayList<HttpCookie>(Arrays.asList(new HttpCookie("X", "1"),
+                                                                       new HttpCookie("Y", "2"),
+                                                                       new HttpCookie("Z", "3")));
+
+    Assert.assertSame(builder.setCookies(cookies), builder);
+    Assert.assertEquals(builder.getCookies(), cookies);
+  }
+
+  @Test
+  public void testSetCookiesWithNullValue()
+  {
+    final AbstractRequestBuilder<?, ?, ?> builder = new DummyAbstractRequestBuilder();
+    List<HttpCookie> cookies = new ArrayList<HttpCookie>(Arrays.asList(new HttpCookie("X", "1"),
+                                                                       null,
+                                                                       new HttpCookie("Z", "3")));
+   // Null element will not be passed
+    Assert.assertSame(builder.setCookies(cookies), builder);
+    List<HttpCookie> resultCookies = new ArrayList<HttpCookie>(Arrays.asList(new HttpCookie("X", "1"),
+                                                                       new HttpCookie("Z", "3")));
+    Assert.assertEquals(builder.getCookies(), resultCookies);
+  }
+
+  @Test
+  public void testClearCookie()
+  {
+    final AbstractRequestBuilder<?, ?, ?> builder = new DummyAbstractRequestBuilder();
+    List<HttpCookie> cookies = new ArrayList<HttpCookie>(Arrays.asList(new HttpCookie("X", "1"),
+                                                                       new HttpCookie("Y", "2"),
+                                                                       new HttpCookie("Z", "3")));
+
+    Assert.assertSame(builder.setCookies(cookies), builder);
+    Assert.assertSame(builder.clearCookies(), builder);
+    Assert.assertEquals(builder.getCookies(), Collections.emptyList());
   }
 
   @Test
@@ -450,6 +520,24 @@ public class TestAbstractRequestBuilder
     builder.setHeader("abc", "def");
 
     Assert.assertEquals(headers.get("abc"), "abc");
+  }
+
+  @Test
+  public void testCookiesAreReadOnly()
+  {
+    final AbstractRequestBuilder<Object, ?, ?> builder = new DummyAbstractRequestBuilder();
+    builder.setCookies(Arrays.asList(new HttpCookie("a", "b"), new HttpCookie("c", "d")));
+    List<HttpCookie> cookies = builder.buildReadOnlyCookies();
+
+    try
+    {
+      cookies.add(new HttpCookie("ac", "bb"));
+      Assert.fail("The generated cookies should be read-only.");
+    }
+    catch (Exception e)
+    {
+
+    }
   }
 
   @Test

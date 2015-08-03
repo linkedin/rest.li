@@ -142,6 +142,7 @@ public class GetAllRequestBuilder<K, V extends RecordTemplate> extends
   public GetAllRequest<V> build()
   {
     return new GetAllRequest<V>(buildReadOnlyHeaders(),
+                                buildReadOnlyCookies(),
                                 _elementClass,
                                 _resourceSpec,
                                 buildReadOnlyQueryParameters(),

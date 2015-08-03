@@ -25,6 +25,9 @@ import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.internal.client.ActionResponseDecoder;
+
+import java.net.HttpCookie;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -40,6 +43,7 @@ public class ActionRequest<T> extends Request<T>
 
   ActionRequest(RecordTemplate input,
                 Map<String, String> headers,
+                List<HttpCookie> cookies,
                 ActionResponseDecoder<T> decoder,
                 ResourceSpec resourceSpec,
                 Map<String, Object> queryParams,
@@ -53,6 +57,7 @@ public class ActionRequest<T> extends Request<T>
     super(ResourceMethod.ACTION,
           input,
           headers,
+          cookies,
           decoder,
           resourceSpec,
           queryParams,

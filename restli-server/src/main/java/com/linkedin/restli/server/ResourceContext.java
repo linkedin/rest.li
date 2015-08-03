@@ -17,6 +17,7 @@
 package com.linkedin.restli.server;
 
 
+import java.net.HttpCookie;
 import java.util.List;
 import java.util.Map;
 
@@ -129,6 +130,20 @@ public interface ResourceContext
    * @param value - the value of the header
    */
   void setResponseHeader(String name, String value);
+
+  /**
+   * Retrieve the cookies from the underlying RestRequest
+   *
+   * @return the request cookie field
+   */
+  List<HttpCookie> getRequestCookies();
+
+  /**
+   * Pass the cookie to the underlying RestResponse through RestResponseBuilder
+   *
+   * @param cookie the cookie string to be processed
+   */
+  void addResponseCookie(HttpCookie cookie);
 
   /**
    * get the RequestContext associated with this request.

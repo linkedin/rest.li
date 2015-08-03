@@ -31,6 +31,9 @@ import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.server.ErrorResponseFormat;
 import com.linkedin.restli.server.RestLiServiceException;
+
+import java.net.HttpCookie;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import org.easymock.EasyMock;
@@ -72,7 +75,8 @@ public class TestErrorResponseBuilder
     RestLiResponseEnvelope responseData = errorResponseBuilder.buildRestLiResponseData(null,
                                                                                             routingResult,
                                                                                             serviceException,
-                                                                                            headers);
+                                                                                            headers,
+                                                                                            Collections.<HttpCookie>emptyList());
     PartialRestResponse restResponse = errorResponseBuilder.buildResponse(routingResult, responseData);
 
     EasyMock.verify(mockDescriptor);

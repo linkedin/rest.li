@@ -109,6 +109,7 @@ public class UpdateRequestBuilder<K, V extends RecordTemplate> extends
   {
     return new UpdateRequest<V>(buildReadOnlyInput(),
                                 buildReadOnlyHeaders(),
+                                buildReadOnlyCookies(),
                                 _resourceSpec,
                                 buildReadOnlyQueryParameters(),
                                 getQueryParamClasses(),

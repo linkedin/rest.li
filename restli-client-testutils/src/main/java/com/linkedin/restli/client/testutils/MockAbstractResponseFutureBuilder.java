@@ -25,6 +25,9 @@ import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
 
+import java.net.HttpCookie;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -45,6 +48,7 @@ public abstract class MockAbstractResponseFutureBuilder<K, V extends RecordTempl
   private V _entity;
   private int _status;
   private Map<String, String> _headers;
+  private List<HttpCookie> _cookies;
   private ProtocolVersion _protocolVersion;
 
   protected V getEntity()
@@ -80,6 +84,11 @@ public abstract class MockAbstractResponseFutureBuilder<K, V extends RecordTempl
   protected Map<String, String> getHeaders()
   {
     return _headers;
+  }
+
+  protected List<HttpCookie> getCookies()
+  {
+    return _cookies;
   }
 
   protected ProtocolVersion getProtocolVersion()
@@ -143,6 +152,12 @@ public abstract class MockAbstractResponseFutureBuilder<K, V extends RecordTempl
     }
 
     _headers = headers;
+    return this;
+  }
+
+  public MockAbstractResponseFutureBuilder<K, V> setCookies(List<HttpCookie> cookies)
+  {
+    _cookies = cookies == null ? Collections.<HttpCookie>emptyList() : cookies;
     return this;
   }
 

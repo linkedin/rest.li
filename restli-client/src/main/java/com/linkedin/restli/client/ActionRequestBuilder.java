@@ -195,6 +195,7 @@ public class ActionRequestBuilder<K, V> extends AbstractRequestBuilder<K, V, Act
     inputParameters.data().setReadOnly();
     return new ActionRequest<V>(inputParameters,
                                 buildReadOnlyHeaders(),
+                                buildReadOnlyCookies(),
                                 actionResponseDecoder,
                                 _resourceSpec,
                                 buildReadOnlyQueryParameters(),

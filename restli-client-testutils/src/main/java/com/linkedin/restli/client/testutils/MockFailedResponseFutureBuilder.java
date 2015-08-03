@@ -31,10 +31,13 @@ import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.client.ResponseFutureImpl;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
+import com.linkedin.restli.internal.common.CookieUtil;
 
 import java.io.IOException;
+import java.net.HttpCookie;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -181,6 +184,13 @@ public class MockFailedResponseFutureBuilder<K, V extends RecordTemplate> extend
     return this;
   }
 
+  @Override
+  public MockFailedResponseFutureBuilder<K, V> setCookies(List<HttpCookie> cookies)
+  {
+    super.setCookies(cookies);
+    return this;
+  }
+
   /**
    * Sets the {@link ProtocolVersion}
    *
@@ -279,11 +289,13 @@ public class MockFailedResponseFutureBuilder<K, V extends RecordTemplate> extend
     }
     headers.put(errorHeaderName, "true");
     headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, protocolVersion.toString());
+    List<HttpCookie> cookies = getCookies() == null ? Collections.<HttpCookie>emptyList() : getCookies();
 
     RestResponse restResponse = new RestResponseBuilder()
         .setEntity(entity)
         .setStatus(status)
         .setHeaders(Collections.unmodifiableMap(headers))
+        .setCookies(Collections.unmodifiableList(CookieUtil.encodeCookies(cookies)))
         .build();
 
     // create a RestLiResponseException and wrap it in an ExecutionException that will be thrown by the ResponseFuture
@@ -303,6 +315,7 @@ public class MockFailedResponseFutureBuilder<K, V extends RecordTemplate> extend
         .setEntity(getEntity())
         .setStatus(status)
         .setHeaders(getHeaders())
+        .setCookies(getCookies())
         .setProtocolVersion(getProtocolVersion())
         .build();
 
@@ -310,6 +323,7 @@ public class MockFailedResponseFutureBuilder<K, V extends RecordTemplate> extend
         .setEntity(entity)
         .setStatus(status)
         .setHeaders(decodedResponse.getHeaders())
+        .setCookies(CookieUtil.encodeCookies(decodedResponse.getCookies()))
         .build();
 
     RestLiResponseException restLiResponseException = new RestLiResponseException(restResponse,

@@ -113,6 +113,7 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
         getReadOnlyQueryParameters(BatchGetRequestUtil.getBatchQueryParam(requests, batchFields));
 
     return new BatchGetRequest<RT>(getReadOnlyHeaders(firstRequest.getHeaders()),
+                                   getReadOnlyCookies(firstRequest.getCookies()),
                                    firstRequest.getResponseDecoder(),
                                    batchQueryParams,
                                    firstRequest.getQueryParamClasses(),
@@ -182,6 +183,7 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
 
     return new BatchGetKVRequest<K, RT>(
                                    getReadOnlyHeaders(firstRequest.getHeaders()),
+                                   getReadOnlyCookies(firstRequest.getCookies()),
                                    firstRequest.getResponseDecoder(),
                                    batchQueryParams,
                                    Collections.<String, Class<?>>emptyMap(),
@@ -213,6 +215,7 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
                     new ArrayList<Object>(Arrays.asList(id)));
 
     return new BatchGetKVRequest<K, RT>(getReadOnlyHeaders(request.getHeaders()),
+                                        getReadOnlyCookies(request.getCookies()),
                                         new BatchKVResponseDecoder<K, RT>(
                                             request.getEntityClass(),
                                             (Class<K>)request.getResourceProperties().getKeyType().getType(),
@@ -265,6 +268,7 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
                     new ArrayList<Object>(Arrays.asList(id)));
 
     return new BatchGetRequest<RT>(getReadOnlyHeaders(request.getHeaders()),
+                                   getReadOnlyCookies(request.getCookies()),
                                    new BatchResponseDecoder<RT>(request.getEntityClass()),
                                    getReadOnlyQueryParameters(queryParams),
                                    Collections.<String, Class<?>>emptyMap(),
@@ -374,6 +378,7 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
     throwIfClassCompoundOrComplex(keyClass, "build", "buildKV");
 
     return new BatchGetRequest<V>(buildReadOnlyHeaders(),
+                                  buildReadOnlyCookies(),
                                   _decoder,
                                   buildReadOnlyQueryParameters(),
                                   Collections.<String, Class<?>>emptyMap(),
@@ -396,6 +401,7 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
                                          _resourceSpec.getComplexKeyType());
 
     return new BatchGetKVRequest<K, V>(buildReadOnlyHeaders(),
+                                       buildReadOnlyCookies(),
                                       decoder,
                                       buildReadOnlyQueryParameters(),
                                       getQueryParamClasses(),

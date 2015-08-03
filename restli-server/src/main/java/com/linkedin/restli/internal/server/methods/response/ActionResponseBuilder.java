@@ -27,6 +27,10 @@ import com.linkedin.restli.internal.server.response.RecordResponseEnvelope;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.server.ActionResult;
 import com.linkedin.restli.server.RestLiServiceException;
+
+import java.net.HttpCookie;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 
@@ -40,6 +44,7 @@ public class ActionResponseBuilder implements RestLiResponseBuilder
     return new PartialRestResponse.Builder().status(responseData.getStatus())
                                             .entity(responseData.getRecordResponseEnvelope().getRecord())
                                             .headers(responseData.getHeaders())
+                                            .cookies(responseData.getCookies())
                                             .build();
   }
 
@@ -47,7 +52,8 @@ public class ActionResponseBuilder implements RestLiResponseBuilder
   public RestLiResponseEnvelope buildRestLiResponseData(RestRequest request,
                                                             RoutingResult routingResult,
                                                             Object result,
-                                                            Map<String, String> headers)
+                                                            Map<String, String> headers,
+                                                            List<HttpCookie> cookies)
   {
     final Object value;
     final HttpStatus status;
@@ -74,6 +80,6 @@ public class ActionResponseBuilder implements RestLiResponseBuilder
         (FieldDef<Object>) routingResult.getResourceMethod().getActionReturnFieldDef();
     final ActionResponse<?> actionResponse =
         new ActionResponse<Object>(value, actionReturnFieldDef, actionReturnRecordDataSchema);
-    return new RecordResponseEnvelope(status, actionResponse, headers);
+    return new RecordResponseEnvelope(status, actionResponse, headers, cookies);
   }
 }

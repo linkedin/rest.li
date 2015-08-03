@@ -23,6 +23,7 @@ package com.linkedin.restli.internal.client;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
+import java.net.HttpCookie;
 import java.util.Collections;
 import java.util.Map;
 
@@ -36,6 +37,7 @@ import com.linkedin.restli.client.RestLiDecodingException;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
+import com.linkedin.restli.internal.common.CookieUtil;
 import com.linkedin.restli.internal.common.ProtocolVersionUtil;
 
 /**
@@ -52,7 +54,7 @@ public abstract class RestResponseDecoder<T>
 
   public Response<T> decodeResponse(RestResponse restResponse) throws RestLiDecodingException
   {
-    ResponseImpl<T> response = new ResponseImpl<T>(restResponse.getStatus(), restResponse.getHeaders());
+    ResponseImpl<T> response = new ResponseImpl<T>(restResponse.getStatus(), restResponse.getHeaders(), CookieUtil.decodeSetCookies(restResponse.getCookies()));
 
     ByteString entity = restResponse.builder().getEntity();
 

@@ -112,6 +112,7 @@ public class CreateIdRequestBuilder<K, V extends RecordTemplate>
                                                                        _resourceSpec.getComplexKeyType());
     return new CreateIdRequest<K, V>(buildReadOnlyInput(),
                                      buildReadOnlyHeaders(),
+                                     buildReadOnlyCookies(),
                                      idResponseDecoder,
                                      _resourceSpec,
                                      buildReadOnlyQueryParameters(),

@@ -34,6 +34,7 @@ import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.UpdateResponse;
 
+import java.net.HttpCookie;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -114,7 +115,8 @@ public class TestBatchUpdateResponseBuilder
     RestLiResponseEnvelope responseData = batchUpdateResponseBuilder.buildRestLiResponseData(null,
                                                                                                   routingResult,
                                                                                                   results,
-                                                                                                  headers);
+                                                                                                  headers,
+                                                                                                  Collections.<HttpCookie>emptyList());
     PartialRestResponse restResponse = batchUpdateResponseBuilder.buildResponse(routingResult, responseData);
 
     BatchResponse<UpdateStatus> batchResponse = (BatchResponse<UpdateStatus>) restResponse.getEntity();
@@ -144,7 +146,8 @@ public class TestBatchUpdateResponseBuilder
     RestLiResponseEnvelope envelope = builder.buildRestLiResponseData(null,
                                                                       routingResult,
                                                                       new BatchUpdateResult<Object, Integer>(Collections.<Object, UpdateResponse>emptyMap()),
-                                                                      Collections.<String, String>emptyMap());
+                                                                      Collections.<String, String>emptyMap(),
+                                                                      Collections.<HttpCookie>emptyList());
     Assert.assertEquals(envelope.getBatchResponseEnvelope().getBatchResponseMap().get("foo").getException(),
                         exception);
     Assert.assertEquals(envelope.getBatchResponseEnvelope().getBatchResponseMap().size(), 1);
@@ -193,7 +196,7 @@ public class TestBatchUpdateResponseBuilder
     RestLiResponseEnvelope responseData = batchUpdateResponseBuilder.buildRestLiResponseData(null,
         routingResult,
         results,
-        headers);
+        headers, Collections.<HttpCookie>emptyList());
     PartialRestResponse restResponse = batchUpdateResponseBuilder.buildResponse(routingResult, responseData);
 
     BatchResponse<UpdateStatus> batchResponse = (BatchResponse<UpdateStatus>) restResponse.getEntity();

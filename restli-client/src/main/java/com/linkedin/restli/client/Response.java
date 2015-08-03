@@ -24,7 +24,9 @@ package com.linkedin.restli.client;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.message.RequestContext;
 
+import java.net.HttpCookie;
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 
 
@@ -40,6 +42,8 @@ public interface Response<T>
   T getEntity();
 
   String getHeader(String name);
+
+  List<HttpCookie> getCookies();
 
   Map<String, String> getHeaders();
 

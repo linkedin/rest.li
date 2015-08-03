@@ -28,6 +28,7 @@ import com.linkedin.restli.internal.client.RestResponseDecoder;
 import com.linkedin.restli.internal.common.ResourcePropertiesImpl;
 import com.linkedin.restli.internal.common.URIParamUtils;
 
+import java.net.HttpCookie;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -51,6 +52,7 @@ public class Request<T>
   private final RecordTemplate         _inputRecord;
   private final RestResponseDecoder<T> _decoder;
   private final Map<String, String>    _headers;
+  private final List<HttpCookie>       _cookies;
   private final ResourceSpec           _resourceSpec;
   private final ResourceProperties     _resourceProperties;
   private final Map<String, Object>    _queryParams;
@@ -63,6 +65,7 @@ public class Request<T>
   Request(ResourceMethod method,
           RecordTemplate inputRecord,
           Map<String, String> headers,
+          List<HttpCookie> cookies,
           RestResponseDecoder<T> decoder,
           ResourceSpec resourceSpec,
           Map<String, Object> queryParams,
@@ -76,6 +79,7 @@ public class Request<T>
     _inputRecord = inputRecord;
     _decoder = decoder;
     _headers = headers;
+    _cookies = cookies;
     _resourceSpec = resourceSpec;
 
     if (resourceSpec != null)
@@ -156,6 +160,16 @@ public class Request<T>
   public Map<String, String> getHeaders()
   {
     return _headers;
+  }
+
+  /**
+   * Get cookie straightly from the request
+   *
+   * @return cookies
+   */
+  public List<HttpCookie> getCookies()
+  {
+    return _cookies;
   }
 
   public RecordTemplate getInputRecord()

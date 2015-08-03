@@ -35,6 +35,7 @@ public class OptionsRequestBuilder extends AbstractRequestBuilder<Void, OptionsR
   public OptionsRequest build()
   {
     return new OptionsRequest(buildReadOnlyHeaders(),
+                              buildReadOnlyCookies(),
                               buildReadOnlyQueryParameters(),
                               getQueryParamClasses(),
                               _resourceSpec,

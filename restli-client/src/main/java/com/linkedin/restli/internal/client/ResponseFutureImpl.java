@@ -17,7 +17,9 @@
 package com.linkedin.restli.internal.client;
 
 import com.linkedin.restli.client.ErrorHandlingBehavior;
-import com.linkedin.restli.client.RestClient;
+
+import java.net.HttpCookie;
+import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -27,6 +29,7 @@ import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.ResponseFuture;
 import com.linkedin.restli.client.RestLiResponseException;
+import com.linkedin.restli.internal.common.CookieUtil;
 
 
 /**
@@ -157,6 +160,7 @@ public class ResponseFutureImpl<T> implements ResponseFuture<T>
       response = new ResponseImpl<T>(
           restLiResponseException.getStatus(),
           restLiResponseException.getResponse().getHeaders(),
+          CookieUtil.decodeSetCookies(restLiResponseException.getResponse().getCookies()),
           restLiResponseException);
     }
 

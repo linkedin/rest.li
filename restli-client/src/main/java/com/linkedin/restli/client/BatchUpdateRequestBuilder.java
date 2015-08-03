@@ -145,6 +145,7 @@ public class BatchUpdateRequestBuilder<K, V extends RecordTemplate> extends
     CollectionRequest<KeyValueRecord<K, V>> readOnlyInput = buildReadOnlyBatchUpdateInput(readOnlyUpdateInputMap);
 
     return new BatchUpdateRequest<K, V>(buildReadOnlyHeaders(),
+                                        buildReadOnlyCookies(),
                                         readOnlyInput,
                                         buildReadOnlyQueryParameters(),
                                         getQueryParamClasses(),

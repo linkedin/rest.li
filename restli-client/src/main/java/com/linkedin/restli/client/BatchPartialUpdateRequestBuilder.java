@@ -139,6 +139,7 @@ public class BatchPartialUpdateRequestBuilder<K, V extends RecordTemplate> exten
     ensureBatchKeys();
 
     return new BatchPartialUpdateRequest<K, V>(buildReadOnlyHeaders(),
+                                               buildReadOnlyCookies(),
                                                buildReadOnlyInput(),
                                                buildReadOnlyQueryParameters(),
                                                getQueryParamClasses(),

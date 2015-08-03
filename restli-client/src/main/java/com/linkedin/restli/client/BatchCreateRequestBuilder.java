@@ -130,6 +130,7 @@ public class BatchCreateRequestBuilder<K, V extends RecordTemplate> extends
                                                               _resourceSpec.getComplexKeyType());
 
     return new BatchCreateRequest<V>(buildReadOnlyHeaders(),
+                                     buildReadOnlyCookies(),
                                      decoder,
                                      buildReadOnlyInput(),
                                      _resourceSpec,

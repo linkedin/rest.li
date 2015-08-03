@@ -31,7 +31,9 @@ import com.linkedin.restli.common.TypeSpec;
 import com.linkedin.restli.common.UpdateStatus;
 import com.linkedin.restli.internal.client.BatchUpdateResponseDecoder;
 
+import java.net.HttpCookie;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 
@@ -47,6 +49,7 @@ public class BatchUpdateRequest<K, V extends RecordTemplate>
 
   @SuppressWarnings("unchecked")
   BatchUpdateRequest(Map<String, String> headers,
+                     List<HttpCookie> cookies,
                      CollectionRequest<KeyValueRecord<K, V>> entities,
                      Map<String, Object> queryParams,
                      Map<String, Class<?>> queryParamClasses,
@@ -59,6 +62,7 @@ public class BatchUpdateRequest<K, V extends RecordTemplate>
     super(ResourceMethod.BATCH_UPDATE,
           entities,
           headers,
+          cookies,
           new BatchUpdateResponseDecoder<K>((TypeSpec<K>) resourceSpec.getKeyType(),
                                             resourceSpec.getKeyParts(),
                                             resourceSpec.getComplexKeyType()),

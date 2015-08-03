@@ -42,6 +42,9 @@ import com.linkedin.restli.server.RestLiServiceException;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.net.HttpCookie;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 
@@ -119,13 +122,16 @@ public final class ErrorResponseBuilder implements RestLiResponseBuilder
   public PartialRestResponse buildResponse(RoutingResult routingResult, RestLiResponseEnvelope responseData)
   {
     ErrorResponse errorResponse = buildErrorResponse(responseData.getServiceException());
-    return new PartialRestResponse.Builder().headers(responseData.getHeaders()).status(responseData.getStatus())
+    return new PartialRestResponse.Builder().headers(responseData.getHeaders()).cookies(responseData.getCookies()).status(responseData.getStatus())
                                             .entity(errorResponse).build();
   }
 
   @Override
-  public RestLiResponseEnvelope buildRestLiResponseData(RestRequest request, RoutingResult routingResult,
-                                                             Object object, Map<String, String> headers)
+  public RestLiResponseEnvelope buildRestLiResponseData(RestRequest request,
+                                                        RoutingResult routingResult,
+                                                        Object object,
+                                                        Map<String, String> headers,
+                                                        List<HttpCookie> cookies)
   {
     RestLiServiceException exceptionResult = (RestLiServiceException) object;
     if (_errorResponseFormat.showHeaders())
@@ -146,15 +152,15 @@ public final class ErrorResponseBuilder implements RestLiResponseBuilder
     switch (ResponseType.fromMethodType(type))
     {
       case SINGLE_ENTITY:
-        return new RecordResponseEnvelope(exceptionResult, headers);
+        return new RecordResponseEnvelope(exceptionResult, headers, cookies);
       case GET_COLLECTION:
-        return new CollectionResponseEnvelope(exceptionResult, headers);
+        return new CollectionResponseEnvelope(exceptionResult, headers, cookies);
       case CREATE_COLLECTION:
-        return new CreateCollectionResponseEnvelope(exceptionResult, headers);
+        return new CreateCollectionResponseEnvelope(exceptionResult, headers, cookies);
       case BATCH_ENTITIES:
-        return new BatchResponseEnvelope(exceptionResult, headers);
+        return new BatchResponseEnvelope(exceptionResult, headers, cookies);
       case STATUS_ONLY:
-        return new EmptyResponseEnvelope(exceptionResult, headers);
+        return new EmptyResponseEnvelope(exceptionResult, headers, cookies);
       default:
         throw new IllegalArgumentException();
     }

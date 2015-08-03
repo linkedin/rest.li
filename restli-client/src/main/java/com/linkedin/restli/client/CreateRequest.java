@@ -23,6 +23,8 @@ import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.internal.client.CreateResponseDecoder;
 
+import java.net.HttpCookie;
+import java.util.List;
 import java.util.Map;
 
 
@@ -38,6 +40,7 @@ public class CreateRequest<T extends RecordTemplate>
 {
   CreateRequest(T input,
                 Map<String, String> headers,
+                List<HttpCookie> cookies,
                 CreateResponseDecoder<?> decoder,
                 ResourceSpec resourceSpec,
                 Map<String, Object> queryParams,
@@ -49,6 +52,7 @@ public class CreateRequest<T extends RecordTemplate>
     super(ResourceMethod.CREATE,
           input,
           headers,
+          cookies,
           decoder,
           resourceSpec,
           queryParams,

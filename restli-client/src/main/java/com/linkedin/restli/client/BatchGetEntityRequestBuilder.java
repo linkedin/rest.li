@@ -103,6 +103,7 @@ public class BatchGetEntityRequestBuilder<K, V extends RecordTemplate> extends
         getReadOnlyQueryParameters(BatchGetRequestUtil.getBatchQueryParam(requests, batchFields));
 
     return new BatchGetEntityRequest<K, V>(firstRequest.getHeaders(),
+                                           firstRequest.getCookies(),
                                            firstRequest.getResponseDecoder(),
                                            batchQueryParams,
                                            firstRequest.getQueryParamClasses(),
@@ -215,6 +216,7 @@ public class BatchGetEntityRequestBuilder<K, V extends RecordTemplate> extends
     ensureBatchKeys();
 
     return new BatchGetEntityRequest<K, V>(buildReadOnlyHeaders(),
+                                           buildReadOnlyCookies(),
                                            _decoder,
                                            buildReadOnlyQueryParameters(),
                                            getQueryParamClasses(),

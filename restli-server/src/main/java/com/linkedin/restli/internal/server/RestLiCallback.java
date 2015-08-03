@@ -18,7 +18,6 @@
 package com.linkedin.restli.internal.server;
 
 
-import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.restli.common.HttpStatus;
@@ -35,7 +34,9 @@ import com.linkedin.restli.server.RoutingException;
 import com.linkedin.restli.server.filter.FilterRequestContext;
 import com.linkedin.restli.server.filter.ResponseFilter;
 
+import java.net.HttpCookie;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -172,7 +173,7 @@ public class RestLiCallback<T> implements RequestExecutionCallback<T>
     headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION,
                 ProtocolVersionUtil.extractProtocolVersion(requestHeaders).toString());
     headers.put(HeaderUtil.getErrorResponseHeaderName(requestHeaders), RestConstants.HEADER_VALUE_ERROR);
-    return _responseHandler.buildExceptionResponseData(_request, _method, restLiServiceException, headers);
+    return _responseHandler.buildExceptionResponseData(_request, _method, restLiServiceException, headers, Collections.<HttpCookie>emptyList());
   }
 
   private void invokeResponseFilters(final FilterResponseContextInternal responseContext, Throwable lastException) throws Throwable

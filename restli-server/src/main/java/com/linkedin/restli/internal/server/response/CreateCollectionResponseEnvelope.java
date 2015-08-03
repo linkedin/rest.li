@@ -17,13 +17,13 @@
 package com.linkedin.restli.internal.server.response;
 
 
-import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.CreateIdStatus;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.internal.server.RestLiResponseEnvelope;
 import com.linkedin.restli.internal.server.ResponseType;
 import com.linkedin.restli.server.RestLiServiceException;
 
+import java.net.HttpCookie;
 import java.util.List;
 import java.util.Map;
 
@@ -44,13 +44,13 @@ public final class CreateCollectionResponseEnvelope extends RestLiResponseEnvelo
 
   /**
    * Sets a batch create response with no triggered exception.
-   *
-   * @param createResponse List of responses for each key.
+   *  @param createResponse List of responses for each key.
    * @param headers of the response.
+   * @param cookies
    */
-  public CreateCollectionResponseEnvelope(List<CollectionCreateResponseItem> createResponse, Map<String, String> headers)
+  public CreateCollectionResponseEnvelope(List<CollectionCreateResponseItem> createResponse, Map<String, String> headers, List<HttpCookie> cookies)
   {
-    super(HttpStatus.S_200_OK, headers);
+    super(HttpStatus.S_200_OK, headers, cookies);
     _createResponses = createResponse;
   }
 
@@ -58,10 +58,11 @@ public final class CreateCollectionResponseEnvelope extends RestLiResponseEnvelo
    * Sets a failed top level response with an exception indicating the entire request failed.
    *
    * @param exception caused the response failure.
+   * @param cookies
    */
-  public CreateCollectionResponseEnvelope(RestLiServiceException exception, Map<String, String> headers)
+  public CreateCollectionResponseEnvelope(RestLiServiceException exception, Map<String, String> headers, List<HttpCookie> cookies)
   {
-    super(exception, headers);
+    super(exception, headers, cookies);
     _createResponses = null;
   }
 

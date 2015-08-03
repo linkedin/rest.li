@@ -14,6 +14,7 @@ import com.linkedin.restli.internal.server.response.EmptyResponseEnvelope;
 import com.linkedin.restli.internal.server.response.RecordResponseEnvelope;
 import com.linkedin.restli.server.RestLiServiceException;
 
+import java.net.HttpCookie;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -73,24 +74,24 @@ public class TestRestLiResponseEnvelope
     RestLiServiceException exception = new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR);
     return new Object[][]
     {
-      {new RecordResponseEnvelope(exception, Collections.<String, String>emptyMap())},
-      {new BatchResponseEnvelope(exception, Collections.<String, String>emptyMap())},
-      {new CreateCollectionResponseEnvelope(exception, Collections.<String, String>emptyMap())},
-      {new CollectionResponseEnvelope(exception, Collections.<String, String>emptyMap())},
-      {new EmptyResponseEnvelope(exception, Collections.<String, String>emptyMap())},
+      {new RecordResponseEnvelope(exception, Collections.<String, String>emptyMap(), Collections.<HttpCookie>emptyList())},
+      {new BatchResponseEnvelope(exception, Collections.<String, String>emptyMap(), Collections.<HttpCookie>emptyList())},
+      {new CreateCollectionResponseEnvelope(exception, Collections.<String, String>emptyMap(), Collections.<HttpCookie>emptyList())},
+      {new CollectionResponseEnvelope(exception, Collections.<String, String>emptyMap(), Collections.<HttpCookie>emptyList())},
+      {new EmptyResponseEnvelope(exception, Collections.<String, String>emptyMap(), Collections.<HttpCookie>emptyList())},
 
-      {new RecordResponseEnvelope(HttpStatus.S_200_OK, new EmptyRecord(), Collections.<String, String>emptyMap())},
-      {new BatchResponseEnvelope(Collections.<Object, BatchResponseEnvelope.BatchResponseEntry>emptyMap(), Collections.<String, String>emptyMap())},
-      {new CreateCollectionResponseEnvelope(Collections.<CreateCollectionResponseEnvelope.CollectionCreateResponseItem>emptyList(), Collections.<String, String>emptyMap())},
-      {new CollectionResponseEnvelope(Collections.<EmptyRecord>emptyList(), new CollectionMetadata(), null, Collections.<String, String>emptyMap())},
-      {new EmptyResponseEnvelope(HttpStatus.S_200_OK, Collections.<String, String>emptyMap())}
+      {new RecordResponseEnvelope(HttpStatus.S_200_OK, new EmptyRecord(), Collections.<String, String>emptyMap(), Collections.<HttpCookie>emptyList())},
+      {new BatchResponseEnvelope(Collections.<Object, BatchResponseEnvelope.BatchResponseEntry>emptyMap(), Collections.<String, String>emptyMap(), Collections.<HttpCookie>emptyList())},
+      {new CreateCollectionResponseEnvelope(Collections.<CreateCollectionResponseEnvelope.CollectionCreateResponseItem>emptyList(), Collections.<String, String>emptyMap(), Collections.<HttpCookie>emptyList())},
+      {new CollectionResponseEnvelope(Collections.<EmptyRecord>emptyList(), new CollectionMetadata(), null, Collections.<String, String>emptyMap(), Collections.<HttpCookie>emptyList())},
+      {new EmptyResponseEnvelope(HttpStatus.S_200_OK, Collections.<String, String>emptyMap(), Collections.<HttpCookie>emptyList())}
     };
   }
 
   @Test
   public void testRecordResponseEnvelopeUpdates()
   {
-    RecordResponseEnvelope record = new RecordResponseEnvelope(HttpStatus.S_200_OK, new EmptyRecord(), Collections.<String, String>emptyMap());
+    RecordResponseEnvelope record = new RecordResponseEnvelope(HttpStatus.S_200_OK, new EmptyRecord(), Collections.<String, String>emptyMap(), Collections.<HttpCookie>emptyList());
     Assert.assertFalse(record.isErrorResponse());
     Assert.assertEquals(record.getRecord(), new EmptyRecord());
 
@@ -101,7 +102,8 @@ public class TestRestLiResponseEnvelope
     Assert.assertEquals(record.getServiceException(), exception500);
 
     // Swap back
-    record = new RecordResponseEnvelope(HttpStatus.S_200_OK, new EmptyRecord(), Collections.<String, String>emptyMap());
+    record = new RecordResponseEnvelope(HttpStatus.S_200_OK, new EmptyRecord(), Collections.<String, String>emptyMap(),
+                                        Collections.<HttpCookie>emptyList());
     Assert.assertFalse(record.isErrorResponse());
     Assert.assertEquals(record.getRecord(), new EmptyRecord());
   }
@@ -113,7 +115,8 @@ public class TestRestLiResponseEnvelope
     CollectionResponseEnvelope response = new CollectionResponseEnvelope(Collections.<EmptyRecord>emptyList(),
                                                                          new CollectionMetadata(),
                                                                          new EmptyRecord(),
-                                                                         Collections.<String, String>emptyMap());
+                                                                         Collections.<String, String>emptyMap(),
+                                                                         Collections.<HttpCookie>emptyList());
     Assert.assertFalse(response.isErrorResponse());
     Assert.assertEquals(response.getCollectionResponse(), Collections.<EmptyRecord>emptyList());
     Assert.assertEquals(response.getCollectionResponsePaging(), new CollectionMetadata());
@@ -147,7 +150,8 @@ public class TestRestLiResponseEnvelope
   public void testCreateCollectionResponseEnvelopeUpdates()
   {
     CreateCollectionResponseEnvelope response = new CreateCollectionResponseEnvelope(Collections.<CreateCollectionResponseEnvelope.CollectionCreateResponseItem>emptyList(),
-                                                                                     Collections.<String, String>emptyMap());
+                                                                                     Collections.<String, String>emptyMap(),
+                                                                                     Collections.<HttpCookie>emptyList());
     Assert.assertNull(response.getServiceException());
     Assert.assertEquals(response.getCreateResponses(), Collections.emptyList());
     Assert.assertFalse(response.isErrorResponse());
@@ -167,7 +171,8 @@ public class TestRestLiResponseEnvelope
   @Test
   public void testBatchResponseEnvelopeUpdates()
   {
-    BatchResponseEnvelope response = new BatchResponseEnvelope(Collections.<Object, BatchResponseEnvelope.BatchResponseEntry>emptyMap(), Collections.<String, String>emptyMap());
+    BatchResponseEnvelope response = new BatchResponseEnvelope(Collections.<Object, BatchResponseEnvelope.BatchResponseEntry>emptyMap(), Collections.<String, String>emptyMap(),
+                                                               Collections.<HttpCookie>emptyList());
     Assert.assertFalse(response.isErrorResponse());
     Assert.assertNull(response.getServiceException());
 

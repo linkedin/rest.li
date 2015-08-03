@@ -22,6 +22,8 @@ import com.linkedin.restli.internal.server.RestLiResponseEnvelope;
 import com.linkedin.restli.internal.server.ResponseType;
 import com.linkedin.restli.server.RestLiServiceException;
 
+import java.net.HttpCookie;
+import java.util.List;
 import java.util.Map;
 
 
@@ -37,10 +39,11 @@ public final class EmptyResponseEnvelope extends RestLiResponseEnvelope
    *
    * @param httpStatus of the response.
    * @param headers of the response.
+   * @param cookies
    */
-  public EmptyResponseEnvelope(HttpStatus httpStatus, Map<String, String> headers)
+  public EmptyResponseEnvelope(HttpStatus httpStatus, Map<String, String> headers, List<HttpCookie> cookies)
   {
-    super(httpStatus, headers);
+    super(httpStatus, headers, cookies);
   }
 
   /**
@@ -48,10 +51,11 @@ public final class EmptyResponseEnvelope extends RestLiResponseEnvelope
    *
    * @param exception that triggered the failure.
    * @param headers of the response.
+   * @param cookies
    */
-  public EmptyResponseEnvelope(RestLiServiceException exception, Map<String, String> headers)
+  public EmptyResponseEnvelope(RestLiServiceException exception, Map<String, String> headers, List<HttpCookie> cookies)
   {
-    super(exception, headers);
+    super(exception, headers, cookies);
   }
 
   @Override

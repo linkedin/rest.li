@@ -26,6 +26,9 @@ import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.internal.client.EmptyResponseDecoder;
+
+import java.net.HttpCookie;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -39,6 +42,7 @@ public class DeleteRequest<T extends RecordTemplate>
   private final Object _id;
 
   DeleteRequest(Map<String, String> headers,
+                List<HttpCookie> cookies,
                 ResourceSpec resourceSpec,
                 Map<String, Object> queryParams,
                 Map<String, Class<?>> queryParamClasses,
@@ -50,6 +54,7 @@ public class DeleteRequest<T extends RecordTemplate>
     super(ResourceMethod.DELETE,
           null,
           headers,
+          cookies,
           new EmptyResponseDecoder(),
           resourceSpec,
           queryParams,

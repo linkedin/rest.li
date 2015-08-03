@@ -39,6 +39,7 @@ import com.linkedin.restli.server.ProjectionMode;
 import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiServiceException;
 
+import java.net.HttpCookie;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -155,7 +156,8 @@ public class TestBatchGetResponseBuilder
     RestLiResponseEnvelope responseData = responseBuilder.buildRestLiResponseData(null,
                                                                                        routingResult,
                                                                                        results,
-                                                                                       headers);
+                                                                                       headers,
+                                                                                       Collections.<HttpCookie>emptyList());
     PartialRestResponse restResponse = responseBuilder.buildResponse(routingResult, responseData);
 
     EasyMock.verify(mockContext, mockDescriptor);
@@ -200,7 +202,7 @@ public class TestBatchGetResponseBuilder
     RestLiResponseEnvelope envelope = builder.buildRestLiResponseData(null,
                                                                       routingResult,
                                                                       new BatchResult<Object, EmptyRecord>(Collections.<Object, EmptyRecord>emptyMap(), Collections.<Object, RestLiServiceException>emptyMap()),
-                                                                      Collections.<String, String>emptyMap());
+                                                                      Collections.<String, String>emptyMap(), Collections.<HttpCookie>emptyList());
     Assert.assertEquals(envelope.getBatchResponseEnvelope().getBatchResponseMap().get("foo").getException(),
         exception);
     Assert.assertEquals(envelope.getBatchResponseEnvelope().getBatchResponseMap().size(), 1);
@@ -240,7 +242,8 @@ public class TestBatchGetResponseBuilder
     BatchGetResponseBuilder responseBuilder = new BatchGetResponseBuilder(new ErrorResponseBuilder());
     try
     {
-      responseBuilder.buildRestLiResponseData(null, routingResult, results, headers);
+      responseBuilder.buildRestLiResponseData(null, routingResult, results, headers,
+                                              Collections.<HttpCookie>emptyList());
       Assert.fail("buildRestLiResponseData should have failed because of null elements!");
     }
     catch (RestLiServiceException e)
@@ -302,7 +305,8 @@ public class TestBatchGetResponseBuilder
     RestLiResponseEnvelope responseData = responseBuilder.buildRestLiResponseData(null,
         routingResult,
         results,
-        headers);
+        headers,
+        Collections.<HttpCookie>emptyList());
     PartialRestResponse restResponse = responseBuilder.buildResponse(routingResult, responseData);
 
     ResponseBuilderUtil.validateHeaders(restResponse, headers);
