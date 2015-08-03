@@ -20,6 +20,10 @@ package com.linkedin.restli.internal.server.util;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.collections.CheckedUtil;
+import com.linkedin.data.element.DataElement;
+import com.linkedin.data.it.Builder;
+import com.linkedin.data.it.IterationOrder;
+import com.linkedin.data.it.Predicate;
 import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.MapDataSchema;
@@ -312,187 +316,46 @@ public class RestUtils
    * projection generated from the schema unless whitelisted by the
    * override parameter.
    *
+   * RecordTemplates with readonly datamaps should not invoke this.
+   * An exception will be thrown if this is done.
+   *
    * @param recordTemplate represents the RecordTemplate that will be trimmed.
    * @param override represents the MaskTree that defines how fields outside the schema should be preserved.
-   * @return a trimmed deep copy of the record template.
+   * @param failOnMismatch true if an exception should be thrown if there is a data-schema mismatch.
    */
-  public static <V extends RecordTemplate> V trimRecordTemplate(V recordTemplate, MaskTree override)
+  public static void trimRecordTemplate(RecordTemplate recordTemplate, MaskTree override, final boolean failOnMismatch)
   {
+    if (recordTemplate.schema() == null) {
+      return;
+    }
+
     DataMap overrideResults = RestUtils.projectFields(recordTemplate.data(), ProjectionMode.AUTOMATIC, override);
-    DataMap trimmed = (DataMap) filterDataBySchema(recordTemplate.schema(), recordTemplate.data());
+    Builder.create(recordTemplate.data(), recordTemplate.schema(), IterationOrder.PRE_ORDER).filterBy(new Predicate() {
+      @Override
+      public boolean evaluate(DataElement element) {
+        if (failOnMismatch && element.getSchema() == null) {
+          throw new IllegalArgumentException();
+        }
 
-    try
-    {
-      V result;
-      // Because CreateIdStatus breaks the RecordTemplate constructor convention and occurs
-      // frequently enough, a special case is needed to work around it.
-      if (recordTemplate instanceof CreateIdStatus)
-      {
-        result = (V) new CreateIdStatus(new DataMap(), ((CreateIdStatus) recordTemplate).getKey());
-        result.data().clear();
+        return element.getSchema() == null;
       }
-      else if (recordTemplate instanceof DynamicRecordTemplate)
-      {
-        result = (V) new DynamicRecordTemplate(new DataMap(), recordTemplate.schema());
-      }
-      else
-      {
-        result = (V) recordTemplate.getClass().getConstructor(DataMap.class).newInstance(new DataMap());
-      }
-      CheckedUtil.putAllWithoutChecking(result.data(), trimmed);
-      CheckedUtil.putAllWithoutChecking(result.data(), overrideResults);
+    }).remove();
 
-      if (recordTemplate.data().isReadOnly())
-      {
-        result.data().makeReadOnly();
-      }
-
-      return result;
-    }
-    catch (InvocationTargetException e)
-    {
-      throw new UnsupportedOperationException(e);
-    }
-    catch (NoSuchMethodException e)
-    {
-      throw new UnsupportedOperationException(e);
-    }
-    catch (InstantiationException e)
-    {
-      throw new UnsupportedOperationException(e);
-    }
-    catch (IllegalAccessException e)
-    {
-      throw new UnsupportedOperationException(e);
-    }
+    CheckedUtil.putAllWithoutChecking(recordTemplate.data(), overrideResults);
   }
 
   /**
    * This method recursively removes all values from RecordTemplate
    * that do not match some field in the schema.
+   *
+   * RecordTemplates with readonly datamaps should not invoke this.
+   * An exception will be thrown if this is done.
+   *
    * @param recordTemplate represents the RecordTemplate that will be trimmed.
+   * @param failOnMismatch true if an exception should be thrown if there is a data-schema mismatch.
    */
-  public static <V extends RecordTemplate> V trimRecordTemplate(V recordTemplate)
+  public static void trimRecordTemplate(RecordTemplate recordTemplate, final boolean failOnMismatch)
   {
-    return trimRecordTemplate(recordTemplate, new MaskTree());
-  }
-
-  /**
-   * Filters a data object based on schema.
-   * @param schema of the corresponding data object. If null, return object as is.
-   * @param data object that needs to be cleaned.
-   * @return a cleaned copy of the data object.
-   */
-  private static Object filterDataBySchema(DataSchema schema, Object data)
-  {
-    // Because AnyRecord-esque RecordTemplates does not contain a schema.
-    if (schema == null)
-    {
-      return data;
-    }
-
-    DataSchema dereferencedSchema = schema.getDereferencedDataSchema();
-    switch (dereferencedSchema.getType())
-    {
-      case BOOLEAN:
-      case INT:
-      case LONG:
-      case FLOAT:
-      case DOUBLE:
-      case BYTES:
-      case STRING:
-      case NULL:
-      case FIXED:
-      case ENUM:
-        return data;
-      case ARRAY:
-        return filterDataList((ArrayDataSchema) dereferencedSchema, (DataList) data);
-      case RECORD:
-        return filterRecord((RecordDataSchema) dereferencedSchema, (DataMap) data);
-      case MAP:
-        return filterDataMap((MapDataSchema) dereferencedSchema, (DataMap) data);
-      case UNION:
-        return filterUnion((UnionDataSchema) dereferencedSchema, (DataMap) data);
-      default:
-        // Typeref cannot exist here since it's deref'ed.
-        throw new IllegalStateException("Unknown schema type found: " + dereferencedSchema.getType().name());
-    }
-  }
-
-  /**
-   * Filters a data map of UNION type.
-   * @param unionDataSchema of the data that needs to be cleaned.
-   * @param data intended to be cleaned.
-   * @return a cleaned copy of the data object.
-   */
-  private static DataMap filterUnion(UnionDataSchema unionDataSchema, DataMap data)
-  {
-    DataMap trimmed = new DataMap();
-    for (DataSchema subschema : unionDataSchema.getTypes())
-    {
-      String keyName = subschema.getUnionMemberKey();
-      if (data.containsKey(keyName))
-      {
-        CheckedUtil.putWithoutChecking(trimmed, keyName, filterDataBySchema(subschema, data.get(keyName)));
-      }
-    }
-    return trimmed;
-  }
-
-  /**
-   * Filters a data map of MAP type
-   * on the schema.
-   * @param mapDataSchema matching the data object.
-   * @param data intended to be cleaned.
-   * @return a cleaned copy of the data object.
-   */
-  private static DataMap filterDataMap(MapDataSchema mapDataSchema, DataMap data)
-  {
-    DataMap trimmed = new DataMap();
-    for (Map.Entry<String, Object> entry : data.entrySet())
-    {
-      CheckedUtil.putWithoutChecking(trimmed, entry.getKey(), filterDataBySchema(mapDataSchema.getValues(), entry.getValue()));
-    }
-
-    return trimmed;
-  }
-
-  /**
-   * Filters a data map of RECORD type
-   * on the schema.
-   * @param recordDataSchema matching the data object.
-   * @param data intended to be cleaned.
-   * @return a cleaned copy of the data object.
-   */
-  private static DataMap filterRecord(RecordDataSchema recordDataSchema, DataMap data)
-  {
-    DataMap trimmed = new DataMap();
-    for (RecordDataSchema.Field field : recordDataSchema.getFields())
-    {
-      if (data.containsKey(field.getName()))
-      {
-        CheckedUtil.putWithoutChecking(trimmed, field.getName(), filterDataBySchema(field.getType(), data.get(field.getName())));
-      }
-    }
-
-    return trimmed;
-  }
-
-  /**
-   * Filters a data map of ARRAY type
-   * on the schema.
-   * @param schema matching the data object.
-   * @param data array intended to be cleaned.
-   * @return a cleaned copy of the array.
-   */
-  private static DataList filterDataList(ArrayDataSchema schema, DataList data)
-  {
-    DataList trimmed = new DataList();
-    for (Object item : data)
-    {
-      CheckedUtil.addWithoutChecking(trimmed, filterDataBySchema(schema.getItems().getDereferencedDataSchema(), item));
-    }
-
-    return trimmed;
+    trimRecordTemplate(recordTemplate, new MaskTree(), failOnMismatch);
   }
 }

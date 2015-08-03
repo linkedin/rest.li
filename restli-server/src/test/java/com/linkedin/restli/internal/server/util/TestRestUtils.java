@@ -174,10 +174,9 @@ public class TestRestUtils
     Assert.assertEquals(recordTemplate.data().size(), 6);
     Assert.assertEquals(recordTemplate.getBar1().data().size(), 2);
 
-    RecordTemplate result = RestUtils.trimRecordTemplate(recordTemplate);
-
+    RestUtils.trimRecordTemplate(recordTemplate, false);
     // Post filtering
-    Assert.assertEquals(result, expected);
+    Assert.assertEquals(recordTemplate, expected);
   }
 
   @Test
@@ -191,7 +190,8 @@ public class TestRestUtils
     bar.data().put("SF", "CA");
 
     Assert.assertEquals(bar.data().size(), 2);
-    Assert.assertEquals(RestUtils.trimRecordTemplate(bar), expected);
+    RestUtils.trimRecordTemplate(bar, false);
+    Assert.assertEquals(bar, expected);
   }
 
   @Test
@@ -206,7 +206,8 @@ public class TestRestUtils
     // Introduce bad elements
     test.data().put("troublemaker", "boo");
     Assert.assertEquals(test.data().size(), 3);
-    Assert.assertEquals(RestUtils.trimRecordTemplate(test), expected);
+    RestUtils.trimRecordTemplate(test, false);
+    Assert.assertEquals(test, expected);
   }
 
   @Test
@@ -225,7 +226,8 @@ public class TestRestUtils
 
     Assert.assertEquals(recordBar.data().size(), 2);
     Assert.assertEquals(test.getBarRefMap().get("map").data().size(), 2);
-    Assert.assertEquals(expected, RestUtils.trimRecordTemplate(test));
+    RestUtils.trimRecordTemplate(test, false);
+    Assert.assertEquals(expected, test);
   }
 
   @Test
@@ -255,24 +257,27 @@ public class TestRestUtils
 
     Assert.assertEquals(test.getRecordArray().get(0).data().size(), 3);
     Assert.assertEquals(test.getRecordArray().get(1).data().size(), 3);
-    Assert.assertEquals(RestUtils.trimRecordTemplate(test), expected);
+    RestUtils.trimRecordTemplate(test, false);
+    Assert.assertEquals(test, expected);
   }
 
   @Test
-  public void testOverrideMask()
+  public void testOverrideMask() throws CloneNotSupportedException
   {
     RecordBar bar = new RecordBar();
     bar.setLocation("mountain view");
     bar.data().put("SF", "CA");
+    RecordBar expected = bar.clone();
 
     MaskTree maskTree = new MaskTree();
     maskTree.addOperation(new PathSpec("SF"), MaskOperation.POSITIVE_MASK_OP);
 
-    Assert.assertEquals(RestUtils.trimRecordTemplate(bar, maskTree), bar);
+    RestUtils.trimRecordTemplate(bar, maskTree, false);
+    Assert.assertEquals(bar, expected);
   }
 
   @Test
-  public void testOverrideMaskNestedRecord()
+  public void testOverrideMaskNestedRecord() throws CloneNotSupportedException
   {
     LinkedListNode node1 = new LinkedListNode();
     node1.setIntField(1);
@@ -280,22 +285,26 @@ public class TestRestUtils
     LinkedListNode node2 = new LinkedListNode();
     node2.setIntField(2);
     node1.setNext(node2);
-
     node2.data().put("keep me", "foo");
+
     MaskTree maskTree = new MaskTree();
     maskTree.addOperation(new PathSpec("next", "keep me"), MaskOperation.POSITIVE_MASK_OP);
     maskTree.addOperation(new PathSpec("next", "intField"), MaskOperation.POSITIVE_MASK_OP);
 
-    Assert.assertEquals(RestUtils.trimRecordTemplate(node1, maskTree), node1);
+    LinkedListNode expected = node2.clone();
+    RestUtils.trimRecordTemplate(node1, maskTree, false);
+    Assert.assertEquals(node1.getNext(), expected);
   }
 
   @Test
-  public void testOverrideMaskNestedWithMap()
+  public void testOverrideMaskNestedWithMap() throws CloneNotSupportedException
   {
     TyperefTest test = new TyperefTest();
     RecordBar bar = new RecordBar();
     bar.setLocation("foo");
     bar.data().put("bar", "keep me");
+    RecordBar expected = bar.clone();
+
     test.setBarRefMap(new RecordBarMap());
     test.getBarRefMap().put("foo", bar);
 
@@ -303,8 +312,8 @@ public class TestRestUtils
     maskTree.addOperation(new PathSpec("barRefMap", PathSpec.WILDCARD, "location"), MaskOperation.POSITIVE_MASK_OP);
     maskTree.addOperation(new PathSpec("barRefMap", PathSpec.WILDCARD, "bar"), MaskOperation.POSITIVE_MASK_OP);
 
-    TyperefTest result = RestUtils.trimRecordTemplate(test, maskTree);
-    Assert.assertEquals(result.getBarRefMap().get("foo"), bar);
+    RestUtils.trimRecordTemplate(test, maskTree, false);
+    Assert.assertEquals(test.getBarRefMap().get("foo"), expected);
   }
 
   @Test
@@ -331,7 +340,8 @@ public class TestRestUtils
     Assert.assertEquals(node2.getNext(), null);
     Assert.assertEquals(node2.data().size(), 2);
 
-    Assert.assertEquals(RestUtils.trimRecordTemplate(node1), expected);
+    RestUtils.trimRecordTemplate(node1, false);
+    Assert.assertEquals(node1, expected);
   }
 
   @Test
@@ -343,7 +353,8 @@ public class TestRestUtils
     UnionTest expected = foo.copy();
     ((DataMap) foo.getUnionEmpty().data()).put("foo", "bar");
 
-    Assert.assertEquals(RestUtils.trimRecordTemplate(foo), expected);
+    RestUtils.trimRecordTemplate(foo, false);
+    Assert.assertEquals(foo, expected);
 
     // Primitive case
     foo = new UnionTest();
@@ -354,7 +365,8 @@ public class TestRestUtils
 
     ((DataMap)foo.getUnionWithNull().data()).put("foo", "bar");
     Assert.assertEquals(((DataMap) foo.getUnionWithNull().data()).size(), 2);
-    Assert.assertEquals(RestUtils.trimRecordTemplate(foo), expected);
+    RestUtils.trimRecordTemplate(foo, false);
+    Assert.assertEquals(foo, expected);
 
     // Complex case
     foo = new UnionTest();
@@ -367,24 +379,28 @@ public class TestRestUtils
     foo.getUnionWithNull().getMap().data().put("foo", 1L);
     foo.data().put("foo", "bar");
     Assert.assertEquals(((DataMap) foo.getUnionWithNull().data()).size(), 1);
-    Assert.assertEquals(RestUtils.trimRecordTemplate(foo), expected);
+    RestUtils.trimRecordTemplate(foo, false);
+    Assert.assertEquals(foo, expected);
   }
 
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void testFailFast()
+  {
+    RecordBar bar = new RecordBar();
+    bar.setLocation("mountain view");
+    bar.data().put("SF", "CA");
+
+    RestUtils.trimRecordTemplate(bar, true);
+  }
+
+  @Test (expectedExceptions = UnsupportedOperationException.class)
   public void testReadOnly()
   {
-    UnionTest foo = new UnionTest();
-    foo.data().makeReadOnly();
+    RecordBar bar = new RecordBar();
+    bar.setLocation("mountain view");
+    bar.data().put("SF", "CA");
+    bar.data().makeReadOnly();
 
-    RecordTemplate bar = RestUtils.trimRecordTemplate(foo);
-    if (!bar.data().isReadOnly())
-    {
-      Assert.fail("Trimmed data did not preserve read only");
-    }
-
-    if (RestUtils.trimRecordTemplate(new UnionTest()).data().isReadOnly())
-    {
-      Assert.fail("Unexpected readonly.");
-    }
+    RestUtils.trimRecordTemplate(bar, false);
   }
 }
