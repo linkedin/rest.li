@@ -74,7 +74,7 @@ public class BatchEntityResponseDecoder<K, V extends RecordTemplate> extends Res
   }
 
   @Override
-  protected BatchKVResponse<K, EntityResponse<V>> wrapResponse(DataMap dataMap, Map<String, String> headers, ProtocolVersion version)
+  public BatchKVResponse<K, EntityResponse<V>> wrapResponse(DataMap dataMap, Map<String, String> headers, ProtocolVersion version)
     throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, IOException
   {
     final DataMap mergedResults = new DataMap();

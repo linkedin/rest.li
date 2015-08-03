@@ -52,7 +52,7 @@ public class CollectionResponseDecoder<T extends RecordTemplate> extends RestRes
   }
 
   @Override
-  protected CollectionResponse<T> wrapResponse(DataMap dataMap, Map<String, String> headers, ProtocolVersion version)
+  public CollectionResponse<T> wrapResponse(DataMap dataMap, Map<String, String> headers, ProtocolVersion version)
       throws NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
   {
     return dataMap == null ? null : new CollectionResponse<T>(dataMap, _elementClass);

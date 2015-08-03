@@ -42,7 +42,7 @@ public class OptionsResponseDecoder extends RestResponseDecoder<OptionsResponse>
   private static final JacksonDataCodec CODEC = new JacksonDataCodec();
 
   @Override
-  protected OptionsResponse wrapResponse(DataMap dataMap, Map<String, String> headers, ProtocolVersion version)
+  public OptionsResponse wrapResponse(DataMap dataMap, Map<String, String> headers, ProtocolVersion version)
     throws IOException
   {
     if (dataMap == null)

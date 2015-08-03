@@ -78,7 +78,7 @@ public class IdResponseDecoder<K> extends RestResponseDecoder<IdResponse<K>>
 
   @Override
   @SuppressWarnings("unchecked")
-  protected IdResponse<K> wrapResponse(DataMap dataMap, Map<String, String> headers, ProtocolVersion version)
+  public IdResponse<K> wrapResponse(DataMap dataMap, Map<String, String> headers, ProtocolVersion version)
           throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, IOException
   {
     String id = HeaderUtil.getIdHeaderValue(headers);

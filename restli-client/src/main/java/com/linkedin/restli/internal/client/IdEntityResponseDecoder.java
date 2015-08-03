@@ -79,7 +79,7 @@ public class IdEntityResponseDecoder<K, V extends RecordTemplate> extends RestRe
 
   @Override
   @SuppressWarnings("unchecked")
-  protected IdEntityResponse<K, V> wrapResponse(DataMap dataMap, Map<String, String> headers, ProtocolVersion version)
+  public IdEntityResponse<K, V> wrapResponse(DataMap dataMap, Map<String, String> headers, ProtocolVersion version)
       throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException
   {
     String id = HeaderUtil.getIdHeaderValue(headers);

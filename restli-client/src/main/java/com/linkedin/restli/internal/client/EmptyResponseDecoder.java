@@ -41,7 +41,7 @@ public class EmptyResponseDecoder extends RestResponseDecoder<EmptyRecord>
   }
 
   @Override
-  protected EmptyRecord wrapResponse(DataMap dataMap, Map<String, String> headers, ProtocolVersion version)
+  public EmptyRecord wrapResponse(DataMap dataMap, Map<String, String> headers, ProtocolVersion version)
   {
     return null;
   }

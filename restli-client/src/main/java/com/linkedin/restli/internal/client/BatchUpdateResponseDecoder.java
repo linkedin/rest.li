@@ -68,7 +68,7 @@ public class BatchUpdateResponseDecoder<K> extends RestResponseDecoder<BatchKVRe
   }
 
   @Override
-  protected BatchKVResponse<K, UpdateStatus> wrapResponse(DataMap dataMap, Map<String, String> headers, ProtocolVersion version)
+  public BatchKVResponse<K, UpdateStatus> wrapResponse(DataMap dataMap, Map<String, String> headers, ProtocolVersion version)
     throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, IOException
   {
     final DataMap mergedResults = new DataMap();

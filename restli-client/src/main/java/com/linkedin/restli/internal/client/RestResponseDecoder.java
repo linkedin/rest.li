@@ -116,6 +116,23 @@ public abstract class RestResponseDecoder<T>
     return wrapResponse(dataMap, Collections.<String, String>emptyMap(), AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion());
   }
 
-  protected abstract T wrapResponse(DataMap dataMap, Map<String, String> headers, ProtocolVersion version)
+  /**
+   * This method is public to accommodate a small number of external users.  However, to make these use cases more
+   * stable we plan on eventually removing this method or disallowing public access. Therefore, external users should
+   * preferably not depend on this method.
+   *
+   * Wraps the given DataMap into its proper response type using the protocol version specified.
+   *
+   * @param dataMap the json body of the response
+   * @param headers the response headers
+   * @param version the protocol version
+   * @return the response
+   * @throws InstantiationException
+   * @throws IllegalAccessException
+   * @throws InvocationTargetException
+   * @throws NoSuchMethodException
+   * @throws IOException
+   */
+  public abstract T wrapResponse(DataMap dataMap, Map<String, String> headers, ProtocolVersion version)
                   throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, IOException;
 }

@@ -1,5 +1,12 @@
+2.10.9
+-----
+
+
 2.10.8
 -----
+(RB=534988)
+Changed RestResponseDecoder.wrapResponse to be public to account for a small number of
+external users.
 
 2.10.7
 -----
