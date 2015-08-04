@@ -779,7 +779,7 @@ public class TemplateSpecGenerator
       if (enclosingClass != null && classInfo.namespace.equals(enclosingClass.getFullName()))
       {
         classTemplateSpec.setEnclosingClass(enclosingClass);
-        classTemplateSpec.setNamespace(enclosingClass.getNamespace());
+        //classTemplateSpec.setNamespace(enclosingClass.getNamespace());
         classTemplateSpec.setClassName(classInfo.name);
         classTemplateSpec.setModifiers(ModifierSpec.PUBLIC, ModifierSpec.STATIC, ModifierSpec.FINAL);
       }
