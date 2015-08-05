@@ -249,6 +249,16 @@ public class RestLiDataValidator
     }
   }
 
+  /**
+   * Validate Rest.li data (single entity or patch).
+   * Does not accept batch data.
+   *
+   * @deprecated This method only validates the input for create / batch create methods.
+   * Use {@link #validateInput(RecordTemplate)}, {@link #validateInput(PatchRequest)} or {@link #validateOutput(RecordTemplate)} instead.
+   * @param dataTemplate data to validate
+   * @return validation result
+   */
+  @Deprecated
   public ValidationResult validate(DataTemplate<?> dataTemplate)
   {
     switch (_resourceMethod)
@@ -260,14 +270,74 @@ public class RestLiDataValidator
       case BATCH_CREATE:
       case UPDATE:
       case BATCH_UPDATE:
+        return validateInputEntity((RecordTemplate) dataTemplate);
+      case GET:
+      case BATCH_GET:
+      case FINDER:
+      case GET_ALL:
+        return validateOutputEntity((RecordTemplate) dataTemplate);
+      default:
+        throw new IllegalArgumentException("Cannot perform Rest.li validation for " + _resourceMethod.toString());
+    }
+  }
+
+  /**
+   * Validate Rest.li input data (single entity).
+   *
+   * @param dataTemplate data to validate
+   * @return validation result
+   */
+  public ValidationResult validateInput(RecordTemplate dataTemplate)
+  {
+    switch (_resourceMethod)
+    {
+      case CREATE:
+      case BATCH_CREATE:
+      case UPDATE:
+      case BATCH_UPDATE:
         return validateInputEntity(dataTemplate);
+      default:
+        throw new IllegalArgumentException("Cannot perform Rest.li input (entity) validation for " + _resourceMethod.toString());
+    }
+  }
+
+  /**
+   * Validate Rest.li input data (single patch).
+   *
+   * @param patchRequest patch to validate
+   * @return validation result
+   */
+  public ValidationResult validateInput(PatchRequest<?> patchRequest)
+  {
+    switch (_resourceMethod)
+    {
+      case PARTIAL_UPDATE:
+      case BATCH_PARTIAL_UPDATE:
+        return validatePatch(patchRequest);
+      default:
+        throw new IllegalArgumentException("Cannot perform Rest.li input (patch) validation for " + _resourceMethod.toString());
+    }
+  }
+
+  /**
+   * Validate Rest.li output data (single entity).
+   *
+   * @param dataTemplate data to validate
+   * @return validation result
+   */
+  public ValidationResult validateOutput(RecordTemplate dataTemplate)
+  {
+    switch (_resourceMethod)
+    {
+      case CREATE:
+      case BATCH_CREATE:
       case GET:
       case BATCH_GET:
       case FINDER:
       case GET_ALL:
         return validateOutputEntity(dataTemplate);
       default:
-        throw new IllegalArgumentException("Cannot perform Rest.li validation for " + _resourceMethod.toString());
+        throw new IllegalArgumentException("Cannot perform Rest.li output validation for " + _resourceMethod.toString());
     }
   }
 
@@ -400,7 +470,7 @@ public class RestLiDataValidator
     }
   }
 
-  private ValidationResult validateInputEntity(DataTemplate<?> entity)
+  private ValidationResult validateInputEntity(RecordTemplate entity)
   {
     ValidationOptions validationOptions = new ValidationOptions();
     if (readOnlyOptional.contains(_resourceMethod))
@@ -412,7 +482,7 @@ public class RestLiDataValidator
     return result;
   }
 
-  private ValidationResult validateOutputEntity(DataTemplate<?> entity)
+  private ValidationResult validateOutputEntity(RecordTemplate entity)
   {
     try
     {

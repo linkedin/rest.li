@@ -65,7 +65,7 @@ public class ValidationDemoResource implements KeyValueResource<Integer, Validat
   @RestMethod.Create
   public CreateResponse create(final ValidationDemo entity, @ValidatorParam RestLiDataValidator validator)
   {
-    ValidationResult result = validator.validate(entity);
+    ValidationResult result = validator.validateInput(entity);
     if (!result.isValid())
     {
       throw new RestLiServiceException(HttpStatus.S_422_UNPROCESSABLE_ENTITY, result.getMessages().toString());
@@ -81,7 +81,7 @@ public class ValidationDemoResource implements KeyValueResource<Integer, Validat
     int id = 0;
     for (ValidationDemo entity : entities.getInput())
     {
-      ValidationResult result = validator.validate(entity);
+      ValidationResult result = validator.validateInput(entity);
       if (result.isValid())
       {
         results.add(new CreateResponse(id));
@@ -98,7 +98,7 @@ public class ValidationDemoResource implements KeyValueResource<Integer, Validat
   @RestMethod.Update
   public UpdateResponse update(final Integer key, final ValidationDemo entity, @ValidatorParam RestLiDataValidator validator)
   {
-    ValidationResult result = validator.validate(entity);
+    ValidationResult result = validator.validateInput(entity);
     if (!result.isValid())
     {
       throw new RestLiServiceException(HttpStatus.S_422_UNPROCESSABLE_ENTITY, result.getMessages().toString());
@@ -116,7 +116,7 @@ public class ValidationDemoResource implements KeyValueResource<Integer, Validat
     {
       Integer key = entry.getKey();
       ValidationDemo entity = entry.getValue();
-      ValidationResult result = validator.validate(entity);
+      ValidationResult result = validator.validateInput(entity);
       if (result.isValid())
       {
         results.put(key, new UpdateResponse(HttpStatus.S_204_NO_CONTENT));
@@ -133,7 +133,7 @@ public class ValidationDemoResource implements KeyValueResource<Integer, Validat
   public UpdateResponse update(final Integer key, final PatchRequest<ValidationDemo> patch,
                                @ValidatorParam RestLiDataValidator validator)
   {
-    ValidationResult result = validator.validate(patch);
+    ValidationResult result = validator.validateInput(patch);
     if (!result.isValid())
     {
       for (Message message : result.getMessages())
@@ -155,7 +155,7 @@ public class ValidationDemoResource implements KeyValueResource<Integer, Validat
     {
       Integer key = entry.getKey();
       PatchRequest<ValidationDemo> patch = entry.getValue();
-      ValidationResult result = validator.validate(patch);
+      ValidationResult result = validator.validateInput(patch);
       if (result.isValid())
       {
         results.put(key, new UpdateResponse(HttpStatus.S_204_NO_CONTENT));
@@ -185,7 +185,7 @@ public class ValidationDemoResource implements KeyValueResource<Integer, Validat
     ValidationDemo validationDemo = new ValidationDemo().setStringA("stringA is readOnly").setUnionFieldWithInlineRecord(union);
 
     // Validate the entity
-    ValidationResult result = validator.validate(validationDemo);
+    ValidationResult result = validator.validateOutput(validationDemo);
     check(!result.isValid());
     String errorMessages = result.getMessages().toString();
     check(errorMessages.contains("/stringA :: length of \"stringA is readOnly\" is out of range 1...10"));
@@ -195,7 +195,7 @@ public class ValidationDemoResource implements KeyValueResource<Integer, Validat
     validationDemo.setStringA("abcd").setStringB("stringB");
 
     // Validate the entity again
-    result = validator.validate(validationDemo);
+    result = validator.validateOutput(validationDemo);
     check(result.isValid());
 
     return validationDemo;
@@ -218,7 +218,7 @@ public class ValidationDemoResource implements KeyValueResource<Integer, Validat
     // Validate outgoing data
     for (ValidationDemo entity : resultMap.values())
     {
-      ValidationResult result = validator.validate(entity);
+      ValidationResult result = validator.validateOutput(entity);
       check(!result.isValid());
       check(result.getMessages().toString().contains("/UnionFieldWithInlineRecord/com.linkedin.restli.examples.greetings.api.myRecord/foo1 :: field is required but not found"));
     }
@@ -232,7 +232,7 @@ public class ValidationDemoResource implements KeyValueResource<Integer, Validat
     // Validate again
     for (ValidationDemo entity : resultMap.values())
     {
-      ValidationResult result = validator.validate(entity);
+      ValidationResult result = validator.validateOutput(entity);
       check(result.isValid());
     }
 
@@ -256,7 +256,7 @@ public class ValidationDemoResource implements KeyValueResource<Integer, Validat
     // Validate outgoing data
     for (ValidationDemo entity : validationDemos)
     {
-      ValidationResult result = validator.validate(entity);
+      ValidationResult result = validator.validateOutput(entity);
       check(!result.isValid());
       check(result.getMessages().toString().contains("/stringA :: length of \"This string is too long to pass validation.\" is out of range 1...10"));
     }
@@ -270,7 +270,7 @@ public class ValidationDemoResource implements KeyValueResource<Integer, Validat
     // Validate again
     for (ValidationDemo entity : validationDemos)
     {
-      ValidationResult result = validator.validate(entity);
+      ValidationResult result = validator.validateOutput(entity);
       check(result.isValid());
     }
 
@@ -293,7 +293,7 @@ public class ValidationDemoResource implements KeyValueResource<Integer, Validat
     // Validate outgoing data
     for (ValidationDemo entity : validationDemos)
     {
-      ValidationResult result = validator.validate(entity);
+      ValidationResult result = validator.validateOutput(entity);
       check(!result.isValid());
       check(result.getMessages().toString().contains("/stringB :: field is required but not found"));
     }
@@ -307,7 +307,7 @@ public class ValidationDemoResource implements KeyValueResource<Integer, Validat
     // Validate again
     for (ValidationDemo entity : validationDemos)
     {
-      ValidationResult result = validator.validate(entity);
+      ValidationResult result = validator.validateOutput(entity);
       check(result.isValid());
     }
 

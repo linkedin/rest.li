@@ -55,12 +55,11 @@ public class RestLiOutputValidationFilter implements ResponseFilter
     }
     if (method == ResourceMethod.GET)
     {
-      ValidationResult result = validator.validate(responseData.getRecordResponseEnvelope().getRecord());
+      ValidationResult result = validator.validateOutput(responseData.getRecordResponseEnvelope().getRecord());
       if (!result.isValid())
       {
         throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, result.getMessages().toString());
       }
-
     }
     else if (method == ResourceMethod.GET_ALL || method == ResourceMethod.FINDER)
     {
@@ -70,7 +69,7 @@ public class RestLiOutputValidationFilter implements ResponseFilter
       StringBuilder sb = new StringBuilder();
       for (RecordTemplate entity : entities)
       {
-        ValidationResult result = validator.validate(entity);
+        ValidationResult result = validator.validateOutput(entity);
         if (!result.isValid())
         {
           sb.append(result.getMessages().toString());
@@ -91,7 +90,7 @@ public class RestLiOutputValidationFilter implements ResponseFilter
         {
           continue;
         }
-        ValidationResult result = validator.validate(entry.getValue().getRecord());
+        ValidationResult result = validator.validateOutput(entry.getValue().getRecord());
         if (!result.isValid())
         {
           sb.append("Key: ");

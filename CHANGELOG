@@ -1,3 +1,8 @@
+2.10.12
+-------
+(RB=537449)
+Change Rest.li validator API to expose validateInput() and validateOutput() instead of a single validate() method.
+
 2.10.11
 -------
 

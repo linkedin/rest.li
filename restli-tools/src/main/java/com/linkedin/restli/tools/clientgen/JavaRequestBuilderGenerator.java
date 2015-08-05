@@ -1152,7 +1152,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
                                                                         .arg(annotationMap)
                                                                         .arg(valueClass.dotclass())
                                                                         .arg(getCodeModel().ref(ResourceMethod.class).staticRef(resourceMethod.name())));
-      block._return(validator.invoke("validate").arg(inputParam));
+      block._return(validator.invoke("validateInput").arg(inputParam));
     }
 
     return derivedBuilderClass;

@@ -20,6 +20,7 @@ package com.linkedin.restli.server.validation;
 import com.linkedin.data.schema.validation.ValidationResult;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.HttpStatus;
+import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.validation.RestLiDataValidator;
 import com.linkedin.restli.server.RestLiRequestData;
@@ -44,9 +45,17 @@ public class RestLiInputValidationFilter implements RequestFilter
     ResourceMethod method = requestContext.getMethodType();
     RestLiDataValidator validator = new RestLiDataValidator(resourceClass.getAnnotations(), requestContext.getFilterResourceModel().getValueClass(), method);
     RestLiRequestData requestData = requestContext.getRequestData();
-    if (method == ResourceMethod.CREATE || method == ResourceMethod.UPDATE || method == ResourceMethod.PARTIAL_UPDATE)
+    if (method == ResourceMethod.CREATE || method == ResourceMethod.UPDATE)
     {
-      ValidationResult result = validator.validate(requestData.getEntity());
+      ValidationResult result = validator.validateInput(requestData.getEntity());
+      if (!result.isValid())
+      {
+        throw new RestLiServiceException(HttpStatus.S_422_UNPROCESSABLE_ENTITY, result.getMessages().toString());
+      }
+    }
+    else if (method == ResourceMethod.PARTIAL_UPDATE)
+    {
+      ValidationResult result = validator.validateInput((PatchRequest) requestData.getEntity());
       if (!result.isValid())
       {
         throw new RestLiServiceException(HttpStatus.S_422_UNPROCESSABLE_ENTITY, result.getMessages().toString());
@@ -57,7 +66,7 @@ public class RestLiInputValidationFilter implements RequestFilter
       StringBuilder sb = new StringBuilder();
       for (RecordTemplate entity : requestData.getBatchEntities())
       {
-        ValidationResult result = validator.validate(entity);
+        ValidationResult result = validator.validateInput(entity);
         if (!result.isValid())
         {
           sb.append(result.getMessages().toString());
@@ -73,7 +82,15 @@ public class RestLiInputValidationFilter implements RequestFilter
       StringBuilder sb = new StringBuilder();
       for (Map.Entry<?, ? extends RecordTemplate> entry : requestData.getBatchKeyEntityMap().entrySet())
       {
-        ValidationResult result = validator.validate(entry.getValue());
+        ValidationResult result;
+        if (method == ResourceMethod.BATCH_UPDATE)
+        {
+          result = validator.validateInput(entry.getValue());
+        }
+        else
+        {
+          result = validator.validateInput((PatchRequest) entry.getValue());
+        }
         if (!result.isValid())
         {
           sb.append("Key: ");
