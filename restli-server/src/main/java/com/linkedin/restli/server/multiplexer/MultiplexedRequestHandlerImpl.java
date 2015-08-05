@@ -48,6 +48,9 @@ import com.linkedin.restli.server.RestLiServiceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.mail.internet.ContentType;
+import javax.mail.internet.ParseException;
+
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
@@ -99,6 +102,12 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
     try
     {
       individualRequests = extractIndividualRequests(request);
+    }
+    catch (RestLiServiceException e)
+    {
+      _log.error("Invalid multiplexed request", e);
+      callback.onError(e);
+      return;
     }
     catch (Exception e)
     {
@@ -158,12 +167,36 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
 
   private static void validateHeaders(RestRequest request)
   {
-    String contentType = request.getHeader(RestConstants.HEADER_CONTENT_TYPE);
-    boolean valid = contentType != null && RestConstants.HEADER_VALUE_APPLICATION_JSON.equals(contentType);
+    String contentType = getContentType(request);
+    boolean valid = RestConstants.HEADER_VALUE_APPLICATION_JSON.equals(contentType);
     if (!valid)
     {
-      throw new IllegalArgumentException("Invalid headers");
+      throw new RestLiServiceException(HttpStatus.S_415_UNSUPPORTED_MEDIA_TYPE, "Unsupported content type");
     }
+  }
+
+  /*
+   * Returns the base content type (without parameters) of the given request. If there is no content type specified in
+   * the header "application/json" is returned.
+   */
+  /* package private */ static String getContentType(RestRequest request)
+  {
+    String contentTypeHeader = request.getHeader(RestConstants.HEADER_CONTENT_TYPE);
+    // fallback to JSON if there is no content type specified
+    if (contentTypeHeader == null)
+    {
+      return RestConstants.HEADER_VALUE_APPLICATION_JSON;
+    }
+    ContentType contentType;
+    try
+    {
+      contentType = new ContentType(contentTypeHeader);
+    }
+    catch (ParseException e)
+    {
+      throw new RestLiServiceException(HttpStatus.S_415_UNSUPPORTED_MEDIA_TYPE, "Invalid content type");
+    }
+    return contentType.getBaseType();
   }
 
   private Task<Void> createParallelRequestsTask(RequestContext requestContext,

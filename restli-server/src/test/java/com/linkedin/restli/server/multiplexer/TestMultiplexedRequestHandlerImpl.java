@@ -76,7 +76,6 @@ public class TestMultiplexedRequestHandlerImpl
   public void testIsMultiplexedRequest() throws Exception
   {
     MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(null);
-
     RestRequest request = fakeMuxRestRequest();
     assertTrue(multiplexer.isMultiplexedRequest(request));
   }
@@ -93,10 +92,43 @@ public class TestMultiplexedRequestHandlerImpl
   public void testHandleWrongMethod() throws Exception
   {
     MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(null);
-    RestRequest request = new RestRequestBuilder(new URI("/mux")).setMethod(HttpMethod.PUT.name()).build();
+    RestRequest request = muxRequestBuilder().setMethod(HttpMethod.PUT.name()).build();
     FutureCallback<RestResponse> callback = new FutureCallback<RestResponse>();
     multiplexer.handleRequest(request, new RequestContext(), callback);
     assertEquals(getError(callback).getStatus(), HttpStatus.S_405_METHOD_NOT_ALLOWED);
+  }
+
+  @Test
+  public void testHandleWrongContentType() throws Exception
+  {
+    MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(null);
+    RestRequest request = muxRequestBuilder()
+        .setMethod(HttpMethod.POST.name())
+        .setHeader(RestConstants.HEADER_CONTENT_TYPE, RestConstants.HEADER_VALUE_APPLICATION_PSON)
+        .build();
+    FutureCallback<RestResponse> callback = new FutureCallback<RestResponse>();
+    multiplexer.handleRequest(request, new RequestContext(), callback);
+    assertEquals(getError(callback).getStatus(), HttpStatus.S_415_UNSUPPORTED_MEDIA_TYPE);
+  }
+
+  @Test
+  public void testGetContentTypeDefault() throws Exception
+  {
+    MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(null);
+    RestRequest request = muxRequestBuilder().build();
+    String contentType = multiplexer.getContentType(request);
+    assertEquals(contentType, RestConstants.HEADER_VALUE_APPLICATION_JSON);
+  }
+
+  @Test
+  public void testGetContentTypeWithParameters() throws Exception
+  {
+    MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(null);
+    RestRequest request = muxRequestBuilder()
+        .setHeader(RestConstants.HEADER_CONTENT_TYPE, "application/json; charset=utf-8")
+        .build();
+    String contentType = multiplexer.getContentType(request);
+    assertEquals(contentType, RestConstants.HEADER_VALUE_APPLICATION_JSON);
   }
 
   @Test
@@ -247,6 +279,11 @@ public class TestMultiplexedRequestHandlerImpl
     verify(mockHandler);
   }
 
+  private RestRequestBuilder muxRequestBuilder() throws URISyntaxException
+  {
+    return new RestRequestBuilder(new URI("/mux"));
+  }
+
   private RestLiServiceException getError(FutureCallback<RestResponse> future) throws InterruptedException
   {
     try
@@ -330,7 +367,7 @@ public class TestMultiplexedRequestHandlerImpl
   {
     MultiplexedRequestContent content = new MultiplexedRequestContent();
     content.setRequests(new IndividualRequestArray(Arrays.asList(requests)));
-    return new RestRequestBuilder(new URI("/mux"))
+    return muxRequestBuilder()
         .setMethod(HttpMethod.POST.name())
         .setEntity(CODEC.mapToBytes(content.data()))
         .setHeader(RestConstants.HEADER_CONTENT_TYPE, RestConstants.HEADER_VALUE_APPLICATION_JSON)
