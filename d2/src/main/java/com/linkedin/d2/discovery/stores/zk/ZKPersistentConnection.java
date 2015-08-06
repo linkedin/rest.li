@@ -20,6 +20,8 @@
 
 package com.linkedin.d2.discovery.stores.zk;
 
+import java.util.Collections;
+import java.util.concurrent.ScheduledExecutorService;
 import org.apache.zookeeper.Watcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,8 +52,14 @@ public class ZKPersistentConnection
   private final ZKConnection _zkConnection;
 
   private final Object _mutex = new Object();
-  private final Set<EventListener> _listeners;
-  private boolean _started = false;
+  private Set<EventListener> _listeners;
+  private State _state = State.INIT;
+
+  private enum State {
+    INIT,
+    STARTED,
+    STOPPED
+  }
 
   public enum Event {
     /**
@@ -117,18 +125,27 @@ public class ZKPersistentConnection
   {
     synchronized (_mutex)
     {
-      if (_started)
+      if (_state != State.INIT)
       {
-        throw new IllegalStateException("Already started");
+        throw new IllegalStateException("Can not start ZKConnection when " + _state);
       }
-      _started = true;
+      _state = State.STARTED;
+      _listeners = Collections.unmodifiableSet(_listeners);
+      _zkConnection.start();
     }
-    _zkConnection.start();
   }
 
   public void shutdown() throws InterruptedException
   {
-    _zkConnection.shutdown();
+    synchronized (_mutex)
+    {
+      if (_state != State.STARTED)
+      {
+        throw new IllegalStateException("Can not shutdown ZKConnection when " + _state);
+      }
+      _state = State.STOPPED;
+      _zkConnection.shutdown();
+    }
   }
 
   public ZooKeeper getZooKeeper()
@@ -160,17 +177,6 @@ public class ZKPersistentConnection
           _sessionId = sessionId;
         }
       }
-      else if (state == Watcher.Event.KeeperState.Expired)
-      {
-        try
-        {
-          _zkConnection.shutdown();
-        }
-        catch (InterruptedException e)
-        {
-          LOG.error("Unexpected interrupt while shutting down ZKConnection", e);
-        }
-      }
 
       switch (state)
       {
@@ -189,7 +195,18 @@ public class ZKPersistentConnection
       {
         try
         {
-          _zkConnection.start();
+          synchronized (_mutex)
+          {
+            if (_state == State.STARTED)
+            {
+              _zkConnection.shutdown();
+              _zkConnection.start();
+            }
+          }
+        }
+        catch (InterruptedException e)
+        {
+          LOG.error("Failed to shutdown ZKConnection after expiration", e);
         }
         catch (IOException e)
         {

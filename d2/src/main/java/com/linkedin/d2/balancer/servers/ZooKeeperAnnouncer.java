@@ -29,9 +29,13 @@ import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
 import com.linkedin.util.ArgumentUtil;
 
 import java.net.URI;
+import java.util.ArrayDeque;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
+import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,22 +55,59 @@ public class ZooKeeperAnnouncer
   private String _cluster;
   private URI _uri;
   private Map<Integer, PartitionData> _partitionDataMap;
-  private boolean _isServerMarkedDownThroughOverride;
   private Map<String, Object> _uriSpecificProperties;
+
+  private boolean _isUp;
+  private final Deque<Callback<None>> _pendingMarkDown;
+  private final Deque<Callback<None>> _pendingMarkUp;
+
 
   public ZooKeeperAnnouncer(ZooKeeperServer server)
   {
     _server = server;
+    /* the initial state of announcer is up */
+    _isUp = true;
+    _pendingMarkDown = new ArrayDeque<Callback<None>>();
+    _pendingMarkUp = new ArrayDeque<Callback<None>>();
   }
 
-  public void start(Callback<None> callback)
+  /**
+   * Start the announcer. Needs to be called whenever there is
+   * a new zk session established.
+   */
+  public synchronized void start(Callback<None> callback)
   {
-    _server.start(callback);
+    if (_isUp)
+    {
+      markUp(callback);
+    }
+    // No need to manually markDown since we are getting a brand new session
   }
 
-  public void shutdown(Callback<None> callback)
+  /**
+   * Retry last failed markUp or markDown operation if there is any. This method needs
+   * to be called whenever the zookeeper connection is lost and then back again(zk session
+   * is still valid).
+   */
+  /* package private */synchronized void retry(Callback<None> callback)
   {
-    _server.shutdown(callback);
+    // If we have pending operations failed because of a connection loss,
+    // retry the last one.
+    // Note that we use _isUp to record the last requested operation, so changing
+    // its value should be the first operation done in #markUp and #markDown.
+    if (!_pendingMarkDown.isEmpty() || !_pendingMarkUp.isEmpty())
+    {
+      if (_isUp)
+      {
+        markUp(callback);
+      }
+      else
+      {
+        markDown(callback);
+      }
+    }
+    // No need to retry the successful operation because the ephemeral node
+    // will not go away if we were marked up.
   }
 
   public void setStore(ZooKeeperEphemeralStore<UriProperties> store)
@@ -92,42 +133,104 @@ public class ZooKeeperAnnouncer
     });
   }
 
-  public synchronized boolean isServerMarkedDownThroughOverride()
+  public synchronized void markUp(final Callback<None> callback)
   {
-    return _isServerMarkedDownThroughOverride;
+    _isUp = true;
+    _server.markUp(_cluster, _uri, _partitionDataMap, _uriSpecificProperties, new Callback<None>()
+    {
+      @Override
+      public void onError(Throwable e)
+      {
+        if (e instanceof KeeperException.ConnectionLossException)
+        {
+          synchronized (ZooKeeperAnnouncer.this)
+          {
+            _pendingMarkUp.add(callback);
+          }
+          _log.warn("failed to mark up uri {} due to ConnectionLossException.", _uri);
+        }
+        else
+        {
+          callback.onError(e);
+        }
+      }
+
+      @Override
+      public void onSuccess(None result)
+      {
+        _log.info("markUp for uri = {} succeeded.", _uri);
+        callback.onSuccess(result);
+        // Note that the pending callbacks we see at this point are
+        // from the requests that are filed before us because zookeeper
+        // guarantees the ordering of callback being invoked.
+        synchronized (ZooKeeperAnnouncer.this)
+        {
+          // drain _pendingMarkDown with CancellationException.
+          drain(_pendingMarkDown, new CancellationException("Cancelled because a more recent markUp request succeeded."));
+          // drain _pendingMarkUp with successful result.
+          drain(_pendingMarkUp, null);
+        }
+      }
+    });
+    _log.info("overrideMarkUp is called for uri = " + _uri);
+
   }
 
-  public synchronized void overrideMarkUp(Callback<None> callback)
+  public synchronized void markDown(final Callback<None> callback)
   {
-    _server.markUp(_cluster, _uri, _partitionDataMap, _uriSpecificProperties, callback);
-    _isServerMarkedDownThroughOverride = false;
-    _log.info("overrideMarkUp is called for uri = " + _uri );
-  }
+    _isUp = false;
+    _server.markDown(_cluster, _uri, new Callback<None>()
+    {
+      @Override
+      public void onError(Throwable e)
+      {
+        if (e instanceof KeeperException.ConnectionLossException)
+        {
+          synchronized (ZooKeeperAnnouncer.this)
+          {
+            _pendingMarkDown.add(callback);
+          }
+          _log.warn("failed to mark down uri {} due to ConnectionLossException.", _uri);
+        }
+        else
+        {
+          callback.onError(e);
+        }
+      }
 
-  public synchronized void overrideMarkDown(Callback<None> callback)
-  {
-    _server.markDown(_cluster, _uri, callback);
-    _isServerMarkedDownThroughOverride = true;
+      @Override
+      public void onSuccess(None result)
+      {
+        _log.info("markDown for uri = {} succeeded.", _uri);
+        callback.onSuccess(result);
+        // Note that the pending callbacks we see at this point are
+        // from the requests that are filed before us because zookeeper
+        // guarantees the ordering of callback being invoked.
+        synchronized (ZooKeeperAnnouncer.this)
+        {
+          // drain _pendingMarkUp with CancellationException.
+          drain(_pendingMarkUp, new CancellationException("Cancelled because a more recent markDown request succeeded."));
+          // drain _pendingMarkDown with successful result.
+          drain(_pendingMarkDown, null);
+        }
+      }
+    });
     _log.info("overrideMarkDown is called for uri = " + _uri );
   }
 
-  public synchronized void markUp(Callback<None> callback)
+  private void drain(Deque<Callback<None>> callbacks, Throwable t)
   {
-    if (!_isServerMarkedDownThroughOverride)
+    for (;!callbacks.isEmpty();)
     {
-      _server.markUp(_cluster, _uri, _partitionDataMap, _uriSpecificProperties, callback);
+      if (t != null)
+      {
+        callbacks.poll().onError(t);
+      }
+      else
+      {
+        callbacks.poll().onSuccess(None.none());
+      }
     }
-    else
-    {
-      callback.onSuccess(None.none());
-      _log.warn("{} is not marked up because the server is manually marked-down through override", _uri);
-    }
-  }
-
-  public synchronized void markDown(Callback<None> callback)
-  {
-    //it doesn't matter if the server is already marked down (through override or not) because this is commutative
-    _server.markDown(_cluster, _uri, callback);
   }
 
   public String getCluster()

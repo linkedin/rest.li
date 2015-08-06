@@ -65,7 +65,7 @@ public class ZooKeeperAnnouncerJmx implements ZooKeeperAnnouncerJmxMBean
   public void markUp() throws PropertyStoreException
   {
     FutureCallback<None> callback = new FutureCallback<None>();
-    _announcer.overrideMarkUp(callback);
+    _announcer.markUp(callback);
     try
     {
       callback.get(10, TimeUnit.SECONDS);
@@ -80,7 +80,7 @@ public class ZooKeeperAnnouncerJmx implements ZooKeeperAnnouncerJmxMBean
   public void markDown() throws PropertyStoreException
   {
     FutureCallback<None> callback = new FutureCallback<None>();
-    _announcer.overrideMarkDown(callback);
+    _announcer.markDown(callback);
     try
     {
       callback.get(10, TimeUnit.SECONDS);

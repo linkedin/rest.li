@@ -36,10 +36,11 @@ import org.apache.zookeeper.server.ZooKeeperServer;
 
 public class ZKServer
 {
-  private final ZooKeeperServer _zk;
-  private final NIOServerCnxn.Factory _factory;
+  private volatile ZooKeeperServer _zk;
+  private volatile NIOServerCnxn.Factory _factory;
   private final File _dataDir;
   private final File _logDir;
+  private final int _port;
   private final boolean _erase;
 
   private final CountDownLatch  _latch = new CountDownLatch(1);
@@ -77,6 +78,7 @@ public class ZKServer
   {
     _dataDir = dataDir;
     _logDir = logDir;
+    _port = port;
     _zk = new ZooKeeperServer(dataDir, logDir, 5000);
     _factory = new NIOServerCnxn.Factory(new InetSocketAddress(port));
     _erase = erase;
@@ -122,6 +124,17 @@ public class ZKServer
       FileUtils.deleteDirectory(_dataDir);
       FileUtils.deleteDirectory(_logDir);
     }
+  }
+
+  public void restart()
+      throws IOException, InterruptedException
+  {
+    shutdown(false);
+
+    _zk = new ZooKeeperServer(_dataDir, _logDir, 5000);
+    _factory = new NIOServerCnxn.Factory(new InetSocketAddress(_port));
+
+    startup();
   }
 
   private static void ensureDir(File dir) throws IOException

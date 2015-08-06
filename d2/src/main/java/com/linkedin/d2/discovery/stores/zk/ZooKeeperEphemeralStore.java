@@ -165,6 +165,11 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
         {
           _zkConn.removeNodeUnsafe(path + "/" + delete.toString(), callback);
         }
+        else
+        {
+          // node was already deleted.
+          callback.onSuccess(None.none());
+        }
       }
       @Override
       public void onError(Throwable e)
@@ -498,6 +503,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
           {
             _callback.onSuccess(_properties);
           }
+          _log.error("NoNode exception! count={}", _count);
           break;
 
         default:
