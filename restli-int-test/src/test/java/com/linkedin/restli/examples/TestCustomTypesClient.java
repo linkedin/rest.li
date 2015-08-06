@@ -18,6 +18,7 @@
 package com.linkedin.restli.examples;
 
 
+import com.linkedin.data.ByteString;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.restli.client.ActionRequest;
 import com.linkedin.restli.client.BatchCreateIdRequest;
@@ -61,6 +62,8 @@ import com.linkedin.restli.examples.typeref.api.CustomLongRefArray;
 import com.linkedin.restli.internal.common.ProtocolVersionUtil;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
+import java.net.Inet4Address;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -94,6 +97,16 @@ public class TestCustomTypesClient extends RestLiIntegrationTest
   public void shutDown() throws Exception
   {
     super.shutdown();
+  }
+
+  // This tests that a typeref that refers to bytes with a custom coercer is serialized correctly when used as a query parameter.
+  // (See IPAddressSimple.pdsc)
+  @Test
+  public void testIPAddressQueryParam() throws RemoteInvocationException, UnknownHostException
+  {
+    FindRequest<Greeting> findRequest = new CustomTypesRequestBuilders().findByIp().ipParam(Inet4Address.getByName("linkedin.com")).build();
+    Response<CollectionResponse<Greeting>> response = getClient().sendRequest(findRequest).getResponse();
+    Assert.assertEquals(response.getEntity().getElements().size(), 0);
   }
 
   @Test

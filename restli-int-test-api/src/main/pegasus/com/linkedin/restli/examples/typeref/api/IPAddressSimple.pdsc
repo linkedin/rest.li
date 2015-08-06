@@ -1,0 +1,10 @@
+{
+  "type" : "typeref",
+  "name" : "IPAddressSimple",
+  "namespace" : "com.linkedin.restli.examples.typeref.api",
+  "ref" : "bytes",
+  "java" : {
+    "class" : "java.net.InetAddress",
+    "coercerClass" : "com.linkedin.restli.examples.custom.types.IPAddressSimpleCoercer"
+  }
+}

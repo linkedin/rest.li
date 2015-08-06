@@ -46,6 +46,15 @@
       "coercerClass" : "com.linkedin.restli.examples.custom.types.DateCoercer",
       "class" : "java.util.Date"
     }
+  }, {
+    "type" : "typeref",
+    "name" : "IPAddressSimple",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "ref" : "bytes",
+    "java" : {
+      "coercerClass" : "com.linkedin.restli.examples.custom.types.IPAddressSimpleCoercer",
+      "class" : "java.net.InetAddress"
+    }
   } ],
   "schema" : {
     "name" : "customTypes",
@@ -88,6 +97,12 @@
         "parameters" : [ {
           "name" : "d",
           "type" : "com.linkedin.restli.examples.typeref.api.DateRef"
+        } ]
+      }, {
+        "name" : "ip",
+        "parameters" : [ {
+          "name" : "ip",
+          "type" : "com.linkedin.restli.examples.typeref.api.IPAddressSimple"
         } ]
       } ],
       "actions" : [ {

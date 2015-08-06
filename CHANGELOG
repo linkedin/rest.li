@@ -8,6 +8,9 @@ Changed validation path formats to match PathSpec.
 Added batch create with entity back. 
 Enabled projection for createAndGet/BatchCreateAndGet.
 
+(RB=538447)
+Serialize query parameter with custom coercer and uses bytes as underlying type correctly.
+
 2.10.5
 -----
 (RB=419425)

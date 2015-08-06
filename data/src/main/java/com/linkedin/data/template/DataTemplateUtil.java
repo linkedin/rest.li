@@ -18,6 +18,7 @@ package com.linkedin.data.template;
 
 
 import com.linkedin.data.ByteString;
+import com.linkedin.data.Data;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.DataSchema;
@@ -742,7 +743,15 @@ public class DataTemplateUtil
     {
       @SuppressWarnings("unchecked")
       final Class<Object> clazz = (Class<Object>) fromClass;
-      return DataTemplateUtil.coerceInput(object, clazz, Object.class).toString();
+      Object coerced = DataTemplateUtil.coerceInput(object, clazz, Object.class);
+      if (coerced instanceof ByteString)
+      {
+        return Data.bytesToString(((ByteString) coerced).copyBytes());
+      }
+      else
+      {
+        return coerced.toString();
+      }
     }
     return object.toString();
   }

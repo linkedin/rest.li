@@ -40,6 +40,12 @@
         "name" : "d",
         "type" : "com.linkedin.restli.examples.typeref.api.DateRef"
       } ]
+    }, {
+      "name" : "ip",
+      "parameters" : [ {
+        "name" : "ip",
+        "type" : "com.linkedin.restli.examples.typeref.api.IPAddressSimple"
+      } ]
     } ],
     "actions" : [ {
       "name" : "action",
