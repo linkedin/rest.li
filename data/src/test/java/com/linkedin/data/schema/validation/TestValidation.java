@@ -2117,15 +2117,8 @@ public class TestValidation
 
     // There is no coercion for this type.
     // Test with all coercion modes, result should be the same for all cases.
-    ValidationOptions disallowOptions = disallowUnrecognizedFieldOption();
-    testCoercionValidation(schemaText, "bar", goodObjects, badObjects, disallowOptions);
-    disallowOptions.setAvroUnionMode(true);
-    testCoercionValidation(schemaText, "bar", goodObjects, badObjects, disallowOptions);
-
-    ValidationOptions trimOptions = trimUnrecognizedFieldOption();
-    testCoercionValidation(schemaText, "bar", goodObjects, badObjects, trimOptions);
-    trimOptions.setAvroUnionMode(true);
-    testCoercionValidation(schemaText, "bar", goodObjects, badObjects, trimOptions);
+    testCoercionValidation(schemaText, "bar", goodObjects, badObjects, disallowUnrecognizedFieldOption());
+    testCoercionValidation(schemaText, "bar", goodObjects, badObjects, trimUnrecognizedFieldOption());
 
     Object allowedForUnrecognizedField[] =
         {
@@ -2154,16 +2147,6 @@ public class TestValidation
         RequiredMode.CAN_BE_ABSENT_IF_HAS_DEFAULT,
         CoercionMode.NORMAL,
         UnrecognizedFieldMode.TRIM);
-    testUnrecognizedFieldTrimming(options);
-
-    options.setAvroUnionMode(true);
-
-    testUnrecognizedFieldTrimming(options);
-  }
-
-  public void testUnrecognizedFieldTrimming(ValidationOptions options) throws IOException
-  {
-
 
     String schemaText =
         "{\n" +
@@ -2233,5 +2216,43 @@ public class TestValidation
     {
       assertTrue(message.contains(expected), message + " does not contain " + expected);
     }
+  }
+
+  @Test
+  public void testUnrecognizedFieldsWithAvroUnionDefault() throws IOException
+  {
+    ValidationOptions options = new ValidationOptions(
+        RequiredMode.CAN_BE_ABSENT_IF_HAS_DEFAULT,
+        CoercionMode.NORMAL,
+        UnrecognizedFieldMode.TRIM);
+    options.setAvroUnionMode(true);
+
+    String schemaText =
+        "{\n" +
+        "  \"name\" : \"Foo\",\n" +
+        "  \"type\" : \"record\",\n" +
+        "  \"fields\" : [\n" +
+        "    { \"name\" : \"primitive\", \"type\" : \"int\", \"optional\" : true },\n" +
+        "    { \"name\" : \"unionField\", \"type\" : [ \"Foo\", \"int\", \"string\" ], \"optional\" : true }\n" +
+        "  ]\n" +
+        "}\n";
+
+    DataSchema schema = dataSchemaFromString(schemaText);
+
+    String dataString =
+        "{\n" +
+        "  \"unionField\" : { \"primitive\": 4, \"unrecognizedInMap\": -4 }\n" +
+        "}";
+
+    String trimmedDataString =
+        "{\n" +
+        "  \"unionField\" : { \"primitive\": 4 }\n" +
+        "}";
+
+    DataMap toValidate = dataMapFromString(dataString);
+    ValidationResult result = validate(toValidate, schema, options);
+    assertTrue(result.isValid(), MessageUtil.messagesToString(result.getMessages()));
+    assertEquals(result.getFixed(), dataMapFromString(trimmedDataString));
+    assertSame(toValidate, result.getFixed());
   }
 }

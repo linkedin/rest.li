@@ -168,19 +168,6 @@ public final class ValidationOptions
   }
 
   /**
-   * Set Avro union mode.
-   *
-   * If Avro union mode is enabled, a union uses the name (instead of full name) of the
-   * member type as the key to specify the type of the value in the union.
-   *
-   * @param value set to true to enable Avro union mode.
-   */
-  public void setAvroUnionMode(boolean value)
-  {
-    _avroUnionMode = value;
-  }
-
-  /**
    * Set a parameter intended to be passed to a {@link com.linkedin.data.schema.validator.Validator}.
    *
    * @param key to identify option.
@@ -229,12 +216,42 @@ public final class ValidationOptions
   }
 
   /**
+   * Set Avro union mode.
+   *
+   * If Avro union mode is enabled, validate union default values according to Avro's rules.
+   *
+   * For default values  of unions in Avro, the discriminator is not present to prevent verbose
+   * syntax like:
+   *
+   * <pre>
+   * { "type" : [ "int", null ], "default" : { "int" : 5 } }
+   * </pre>
+   *
+   *
+   * Avro default value of union is always the 1st type.
+   *
+   * <pre>
+   * { "type" : [ "int", null ], "default" : 5 }
+   * </pre>
+   *
+   * This is why it always uses the 1st type of the union and because they is no key in the data.
+   *
+   * This applies transitively even to default values of embedded unions.
+   *
+   * @param value set to true to enable Avro union mode.
+   */
+  public void setAvroUnionMode(boolean value)
+  {
+    _avroUnionMode = value;
+  }
+
+  /**
    * Return whether Avro union mode is enabled.
    *
-   * If Avro union mode is enabled, a union uses the name (instead of full name) of the
-   * member type as the key to specify the type of the value in the union.
+   * If Avro union mode is enabled, validate union default values according to Avro's rules.
    *
    * @return true if Avro union mode is enabled.
+   * @see {@link #setAvroUnionMode(boolean)}
    */
   public boolean isAvroUnionMode()
   {

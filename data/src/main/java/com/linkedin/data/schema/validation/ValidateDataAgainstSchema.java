@@ -462,6 +462,21 @@ public final class ValidateDataAgainstSchema
           addMessage(element, "null is not a member type of union %1$s", schema);
         }
       }
+      else if (_options.isAvroUnionMode())
+      {
+        // Avro union default value does not include member type discriminator
+        List<DataSchema> memberTypes = schema.getTypes();
+        if (memberTypes.isEmpty())
+        {
+          addMessage(element, "value %1$s is not valid for empty union", object.toString());
+        }
+        else
+        {
+          DataSchema memberSchema = memberTypes.get(0);
+          assert(_recursive);
+          validate(element, memberSchema, object);
+        }
+      }
       else if (object instanceof DataMap)
       {
         // Pegasus mode
@@ -474,17 +489,7 @@ public final class ValidateDataAgainstSchema
         {
           Map.Entry<String, Object> entry = map.entrySet().iterator().next();
           String key = entry.getKey();
-
-          DataSchema memberSchema;
-          if (_options.isAvroUnionMode())
-          {
-            memberSchema = schema.getTypeByName(key);
-          }
-          else
-          {
-            memberSchema = schema.getType(key);
-          }
-
+          DataSchema memberSchema = schema.getType(key);
           if (memberSchema == null)
           {
             addMessage(element, "\"%1$s\" is not a member type of union %2$s", key, schema);
