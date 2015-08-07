@@ -2117,8 +2117,15 @@ public class TestValidation
 
     // There is no coercion for this type.
     // Test with all coercion modes, result should be the same for all cases.
-    testCoercionValidation(schemaText, "bar", goodObjects, badObjects, disallowUnrecognizedFieldOption());
-    testCoercionValidation(schemaText, "bar", goodObjects, badObjects, trimUnrecognizedFieldOption());
+    ValidationOptions disallowOptions = disallowUnrecognizedFieldOption();
+    testCoercionValidation(schemaText, "bar", goodObjects, badObjects, disallowOptions);
+    disallowOptions.setAvroUnionMode(true);
+    testCoercionValidation(schemaText, "bar", goodObjects, badObjects, disallowOptions);
+
+    ValidationOptions trimOptions = trimUnrecognizedFieldOption();
+    testCoercionValidation(schemaText, "bar", goodObjects, badObjects, trimOptions);
+    trimOptions.setAvroUnionMode(true);
+    testCoercionValidation(schemaText, "bar", goodObjects, badObjects, trimOptions);
 
     Object allowedForUnrecognizedField[] =
         {
@@ -2147,6 +2154,16 @@ public class TestValidation
         RequiredMode.CAN_BE_ABSENT_IF_HAS_DEFAULT,
         CoercionMode.NORMAL,
         UnrecognizedFieldMode.TRIM);
+    testUnrecognizedFieldTrimming(options);
+
+    options.setAvroUnionMode(true);
+
+    testUnrecognizedFieldTrimming(options);
+  }
+
+  public void testUnrecognizedFieldTrimming(ValidationOptions options) throws IOException
+  {
+
 
     String schemaText =
         "{\n" +
