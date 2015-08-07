@@ -22,6 +22,7 @@ import java.io.PrintStream;
 import java.util.Collection;
 import java.util.Collections;
 
+import com.linkedin.data.message.MessageUtil;
 import org.testng.annotations.Test;
 
 import com.linkedin.data.ByteString;
@@ -2191,7 +2192,7 @@ public class TestValidation
     // mutable
     DataMap toValidate = dataMapFromString(dataString);
     ValidationResult result = validate(toValidate, schema, options);
-    assertTrue(result.isValid());
+    assertTrue(result.isValid(), MessageUtil.messagesToString(result.getMessages()));
     assertEquals(result.getFixed(), dataMapFromString(trimmedDataString));
     assertSame(toValidate, result.getFixed());
 
