@@ -4,6 +4,10 @@
 Added required vs optional validation for partial updates.
 Changed validation path formats to match PathSpec.
 
+(RB=533820)
+Added batch create with entity back. 
+Enabled projection for createAndGet/BatchCreateAndGet.
+
 2.10.5
 -----
 (RB=419425)
