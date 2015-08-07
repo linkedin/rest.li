@@ -218,25 +218,22 @@ public final class ValidationOptions
   /**
    * Set Avro union mode.
    *
-   * If Avro union mode is enabled, validate union default values according to Avro's rules.
+   * When set, data is validated as a Avro schema default value, which has a different data format
+   * than other data.
    *
-   * For default values  of unions in Avro, the discriminator is not present to prevent verbose
-   * syntax like:
+   * This mode should be used exclusively to validate Avro default values.
    *
-   * <pre>
-   * { "type" : [ "int", null ], "default" : { "int" : 5 } }
-   * </pre>
-   *
-   *
-   * Avro default value of union is always the 1st type.
+   * For default values of unions in Avro, the discriminator is not present and the default
+   * value always applies to the first member type of the union. E.g.:
    *
    * <pre>
    * { "type" : [ "int", null ], "default" : 5 }
    * </pre>
    *
-   * This is why it always uses the 1st type of the union and because they is no key in the data.
-   *
    * This applies transitively even to default values of embedded unions.
+   *
+   * For additional details, see the comments about union default values here:
+   * https://avro.apache.org/docs/1.7.7/spec.html#Unions
    *
    * @param value set to true to enable Avro union mode.
    */
