@@ -25,6 +25,7 @@ import com.linkedin.r2.filter.FilterChains;
 import com.linkedin.r2.filter.compression.EncodingType;
 import com.linkedin.r2.filter.compression.ServerCompressionFilter;
 import com.linkedin.r2.filter.logging.SimpleLoggingFilter;
+import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.AbstractJmxManager;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
@@ -70,8 +71,8 @@ public class TestResponseCompression extends RestLiIntegrationTest
 {
   // Headers for sending test information to the server.
   private static final String EXPECTED_ACCEPT_ENCODING = "Expected-Accept-Encoding";
-  private static final String SHOULD_BE_PRESENT = "Should-Be-Present";
-  private static final String SHOULD_NOT_BE_PRESENT = "Should-Not-Be-Present";
+  private static final String DEFAULT_ACCEPT_ENCODING = "gzip;q=1.00,snappy;q=0.80,deflate;q=0.60,bzip2;q=0.40";
+  private static final String NONE = "None";
   private static final String EXPECTED_COMPRESSION_THRESHOLD = "Expected-Response-Compression-Threshold";
   private static final String SERVICE_NAME = "service1";
 
@@ -84,25 +85,31 @@ public class TestResponseCompression extends RestLiIntegrationTest
       public void onRequest(FilterRequestContext requestContext)
       {
         Map<String, String> requestHeaders = requestContext.getRequestHeaders();
-        if (requestHeaders.get(EXPECTED_ACCEPT_ENCODING) == SHOULD_BE_PRESENT)
+        if (requestHeaders.containsKey(EXPECTED_ACCEPT_ENCODING))
         {
-          if (!requestHeaders.containsKey(HttpConstants.ACCEPT_ENCODING))
+          String expected = requestHeaders.get(EXPECTED_ACCEPT_ENCODING);
+          if (expected.equals(NONE))
           {
-            throw new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST, "Accept-Encoding header should be present.");
+            if (requestHeaders.containsKey(HttpConstants.ACCEPT_ENCODING))
+            {
+              throw new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST, "Accept-Encoding header should not be present.");
+            }
           }
-        }
-        else if (requestHeaders.get(EXPECTED_ACCEPT_ENCODING) == SHOULD_NOT_BE_PRESENT)
-        {
-          if (requestHeaders.containsKey(HttpConstants.ACCEPT_ENCODING))
+          else
           {
-            throw new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST, "Accept-Encoding header should not be present.");
+            if (!expected.equals(requestHeaders.get(HttpConstants.ACCEPT_ENCODING)))
+            {
+              throw new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST, "Accept-Encoding header should be " + expected
+                  + ", but received " + requestHeaders.get(HttpConstants.ACCEPT_ENCODING));
+            }
           }
         }
         if (requestHeaders.containsKey(EXPECTED_COMPRESSION_THRESHOLD))
         {
           if (!requestHeaders.get(EXPECTED_COMPRESSION_THRESHOLD).equals(requestHeaders.get(HttpConstants.HEADER_RESPONSE_COMPRESSION_THRESHOLD)))
           {
-            throw new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST, "Expected Response-Compression-Threshold " + requestHeaders.get(EXPECTED_COMPRESSION_THRESHOLD)
+            throw new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST, "Expected " + HttpConstants.HEADER_RESPONSE_COMPRESSION_THRESHOLD
+                + " " + requestHeaders.get(EXPECTED_COMPRESSION_THRESHOLD)
                 + ", but received " + requestHeaders.get(HttpConstants.HEADER_RESPONSE_COMPRESSION_THRESHOLD));
           }
         }
@@ -110,7 +117,7 @@ public class TestResponseCompression extends RestLiIntegrationTest
     }
     // The default compression threshold is between tiny and huge threshold.
     final FilterChain fc = FilterChains.empty().addLast(new TestCompressionServer.SaveContentEncodingHeaderFilter())
-        .addLast(new ServerCompressionFilter("snappy,gzip", new CompressionConfig(10000)))
+        .addLast(new ServerCompressionFilter("snappy,gzip,deflate", new CompressionConfig(10000)))
         .addLast(new SimpleLoggingFilter());
     super.init(Arrays.asList(new TestHelperFilter()), null, fc, false);
   }
@@ -139,41 +146,41 @@ public class TestResponseCompression extends RestLiIntegrationTest
 
     return new Object[][] {
         // Large responses are compressed
-        {true, null, RestliRequestOptions.DEFAULT_OPTIONS, largeIdCount, SHOULD_BE_PRESENT, null, true},
-        {true, null, RestliRequestOptions.DEFAULT_OPTIONS, smallIdCount, SHOULD_BE_PRESENT, null, false},
+        {true, null, RestliRequestOptions.DEFAULT_OPTIONS, largeIdCount, DEFAULT_ACCEPT_ENCODING, null, true},
+        {true, null, RestliRequestOptions.DEFAULT_OPTIONS, smallIdCount, DEFAULT_ACCEPT_ENCODING, null, false},
 
         // Override the default threshold and cause small responses to be compressed
-        {true, new CompressionConfig(tiny), RestliRequestOptions.DEFAULT_OPTIONS, largeIdCount, SHOULD_BE_PRESENT, tiny.toString(), true},
-        {true, new CompressionConfig(tiny), RestliRequestOptions.DEFAULT_OPTIONS, smallIdCount, SHOULD_BE_PRESENT, tiny.toString(), true},
+        {true, new CompressionConfig(tiny), RestliRequestOptions.DEFAULT_OPTIONS, largeIdCount, DEFAULT_ACCEPT_ENCODING, tiny.toString(), true},
+        {true, new CompressionConfig(tiny), RestliRequestOptions.DEFAULT_OPTIONS, smallIdCount, DEFAULT_ACCEPT_ENCODING, tiny.toString(), true},
 
         // Override the default threshold and cause large responses to be NOT compressed
-        {true, new CompressionConfig(huge), RestliRequestOptions.DEFAULT_OPTIONS, largeIdCount, SHOULD_BE_PRESENT, huge.toString(), false},
-        {true, new CompressionConfig(huge), RestliRequestOptions.DEFAULT_OPTIONS, smallIdCount, SHOULD_BE_PRESENT, huge.toString(), false},
+        {true, new CompressionConfig(huge), RestliRequestOptions.DEFAULT_OPTIONS, largeIdCount, DEFAULT_ACCEPT_ENCODING, huge.toString(), false},
+        {true, new CompressionConfig(huge), RestliRequestOptions.DEFAULT_OPTIONS, smallIdCount, DEFAULT_ACCEPT_ENCODING, huge.toString(), false},
 
         // Force on/off using RestliRequestOptions
-        {true, null, forceOnOption, largeIdCount, SHOULD_BE_PRESENT, zero.toString(), true},
-        {true, null, forceOnOption, smallIdCount, SHOULD_BE_PRESENT, zero.toString(), true},
-        {true, new CompressionConfig(huge), forceOnOption, smallIdCount, SHOULD_BE_PRESENT, zero.toString(), true},
-        {true, null, forceOffOption, largeIdCount, SHOULD_NOT_BE_PRESENT, null, false},
-        {true, null, forceOffOption, smallIdCount, SHOULD_NOT_BE_PRESENT, null, false},
-        {true, new CompressionConfig(huge), forceOffOption, largeIdCount, SHOULD_NOT_BE_PRESENT, null, false},
+        {true, null, forceOnOption, largeIdCount, DEFAULT_ACCEPT_ENCODING, zero.toString(), true},
+        {true, null, forceOnOption, smallIdCount, DEFAULT_ACCEPT_ENCODING, zero.toString(), true},
+        {true, new CompressionConfig(huge), forceOnOption, smallIdCount, DEFAULT_ACCEPT_ENCODING, zero.toString(), true},
+        {true, null, forceOffOption, largeIdCount, NONE, null, false},
+        {true, null, forceOffOption, smallIdCount, NONE, null, false},
+        {true, new CompressionConfig(huge), forceOffOption, largeIdCount, NONE, null, false},
 
         // Force on/off using ResponseCompressionConfig
-        {true, new CompressionConfig(0), RestliRequestOptions.DEFAULT_OPTIONS, largeIdCount, SHOULD_BE_PRESENT, zero.toString(), true},
-        {true, new CompressionConfig(0), RestliRequestOptions.DEFAULT_OPTIONS, smallIdCount, SHOULD_BE_PRESENT, zero.toString(), true},
-        {true, new CompressionConfig(Integer.MAX_VALUE), RestliRequestOptions.DEFAULT_OPTIONS, largeIdCount, SHOULD_BE_PRESENT, max.toString(), false},
-        {true, new CompressionConfig(Integer.MAX_VALUE), RestliRequestOptions.DEFAULT_OPTIONS, smallIdCount, SHOULD_BE_PRESENT, max.toString(), false},
+        {true, new CompressionConfig(0), RestliRequestOptions.DEFAULT_OPTIONS, largeIdCount, DEFAULT_ACCEPT_ENCODING, zero.toString(), true},
+        {true, new CompressionConfig(0), RestliRequestOptions.DEFAULT_OPTIONS, smallIdCount, DEFAULT_ACCEPT_ENCODING, zero.toString(), true},
+        {true, new CompressionConfig(Integer.MAX_VALUE), RestliRequestOptions.DEFAULT_OPTIONS, largeIdCount, DEFAULT_ACCEPT_ENCODING, max.toString(), false},
+        {true, new CompressionConfig(Integer.MAX_VALUE), RestliRequestOptions.DEFAULT_OPTIONS, smallIdCount, DEFAULT_ACCEPT_ENCODING, max.toString(), false},
 
         // RestliRequestOptions takes precedence over ResponseCompressionConfig
-        {true, new CompressionConfig(0), forceOffOption, largeIdCount, SHOULD_NOT_BE_PRESENT, null, false},
-        {true, new CompressionConfig(Integer.MAX_VALUE), forceOnOption, smallIdCount, SHOULD_BE_PRESENT, zero.toString(), true},
+        {true, new CompressionConfig(0), forceOffOption, largeIdCount, NONE, null, false},
+        {true, new CompressionConfig(Integer.MAX_VALUE), forceOnOption, smallIdCount, DEFAULT_ACCEPT_ENCODING, zero.toString(), true},
 
         // If http.useResponseCompression is false or null, Accept-Encoding header is not sent and response is not compressed
-        {false, null, RestliRequestOptions.DEFAULT_OPTIONS, largeIdCount, SHOULD_NOT_BE_PRESENT, null, false},
-        {false, new CompressionConfig(tiny), RestliRequestOptions.DEFAULT_OPTIONS, largeIdCount, SHOULD_NOT_BE_PRESENT, null, false},
-        {false, null, forceOnOption, largeIdCount, SHOULD_NOT_BE_PRESENT, null, false},
-        {null, new CompressionConfig(0), RestliRequestOptions.DEFAULT_OPTIONS, largeIdCount, SHOULD_NOT_BE_PRESENT, null, false},
-        {null, new CompressionConfig(Integer.MAX_VALUE), forceOnOption, smallIdCount, SHOULD_NOT_BE_PRESENT, null, false}
+        {false, null, RestliRequestOptions.DEFAULT_OPTIONS, largeIdCount, NONE, null, false},
+        {false, new CompressionConfig(tiny), RestliRequestOptions.DEFAULT_OPTIONS, largeIdCount, NONE, null, false},
+        {false, null, forceOnOption, largeIdCount, NONE, null, false},
+        {null, new CompressionConfig(0), RestliRequestOptions.DEFAULT_OPTIONS, largeIdCount, NONE, null, false},
+        {null, new CompressionConfig(Integer.MAX_VALUE), forceOnOption, smallIdCount, NONE, null, false}
     };
   }
 
@@ -231,5 +238,37 @@ public class TestResponseCompression extends RestLiIntegrationTest
     {
       Assert.assertNull(response.getHeader(TestCompressionServer.CONTENT_ENCODING_SAVED));
     }
+  }
+
+  @DataProvider(name = "encodingsData")
+  private Object[][] encodingsData()
+  {
+    return new Object[][]
+        {
+            {"snappy,gzip", "snappy;q=1.00,gzip;q=0.67", "snappy"},
+            {"gzip,snappy", "gzip;q=1.00,snappy;q=0.67", "gzip"},
+            {"deflate,gzip,snappy", "deflate;q=1.00,gzip;q=0.75,snappy;q=0.50", "deflate"},
+            {"sdch,gzip,snappy", "gzip;q=1.00,snappy;q=0.67", "gzip"}, // client doesn't support sdch
+            {"bzip2,snappy", "bzip2;q=1.00,snappy;q=0.67", "snappy"} // server doesn't support bzip2
+        };
+  }
+
+  @Test(dataProvider = "encodingsData")
+  public void testAcceptEncodingConfiguration(String responseContentEncodings, String expectedAcceptEncoding, String expectedContentEncoding) throws RemoteInvocationException
+  {
+    Map<String, Object> properties = new HashMap<String, Object>();
+    properties.put(HttpClientFactory.HTTP_RESPONSE_CONTENT_ENCODINGS, responseContentEncodings);
+    properties.put(HttpClientFactory.HTTP_USE_RESPONSE_COMPRESSION, "true");
+    Client client = newTransportClient(properties);
+    Long[] ids = new Long[100];
+    for (int i = 0; i < ids.length; i++)
+    {
+      ids[i] = (long) i;
+    }
+    Request<BatchResponse<Greeting>> request = new GreetingsBuilders().batchGet().ids(Arrays.asList(ids))
+        .setHeader(EXPECTED_ACCEPT_ENCODING, expectedAcceptEncoding).build();
+    RestClient restClient = new RestClient(client, FILTERS_URI_PREFIX);
+    Response<BatchResponse<Greeting>> response = restClient.sendRequest(request).getResponse();
+    Assert.assertEquals(response.getHeader(TestCompressionServer.CONTENT_ENCODING_SAVED), expectedContentEncoding);
   }
 }

@@ -55,6 +55,14 @@
       "optional": true
     },
     {
+      "name": "responseContentEncodings",
+      "type": {
+        "type": "array", "items": "string"
+      },
+      "doc": "preferred content encodings for responses, used to construct Accept-Encoding header",
+      "optional": true
+    },
+    {
       "name": "requestContentEncodings",
       "type": {
         "type": "array", "items": "string"

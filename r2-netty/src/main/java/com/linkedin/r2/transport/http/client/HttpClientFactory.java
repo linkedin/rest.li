@@ -37,6 +37,9 @@ import com.linkedin.r2.util.ConfigValueExtractor;
 import com.linkedin.r2.util.NamedThreadFactory;
 
 import io.netty.channel.nio.NioEventLoopGroup;
+
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
@@ -90,6 +93,7 @@ public class HttpClientFactory implements TransportClientFactory
   public static final String HTTP_SSL_CONTEXT = "http.sslContext";
   public static final String HTTP_SSL_PARAMS = "http.sslParams";
   public static final String HTTP_RESPONSE_COMPRESSION_OPERATIONS = "http.responseCompressionOperations";
+  public static final String HTTP_RESPONSE_CONTENT_ENCODINGS = "http.responseContentEncodings";
   public static final String HTTP_REQUEST_CONTENT_ENCODINGS = "http.requestContentEncodings";
   public static final String HTTP_USE_RESPONSE_COMPRESSION = "http.useResponseCompression";
   public static final String HTTP_SERVICE_NAME = "http.serviceName";
@@ -110,6 +114,8 @@ public class HttpClientFactory implements TransportClientFactory
   public static final int DEFAULT_POOL_MIN_SIZE = 0;
   public static final int DEFAULT_MAX_HEADER_SIZE = 8 * 1024;
   public static final int DEFAULT_MAX_CHUNK_SIZE = 8 * 1024;
+  public static final EncodingType[] DEFAULT_RESPONSE_CONTENT_ENCODINGS
+      = {EncodingType.GZIP, EncodingType.SNAPPY, EncodingType.DEFLATE, EncodingType.BZIP2};
 
 
   private static final String LIST_SEPARATOR = ",";
@@ -425,9 +431,14 @@ public class HttpClientFactory implements TransportClientFactory
     EncodingType requestContentEncoding = getRequestContentEncoding(httpRequestServerSupportedEncodings);
     if (_useClientCompression && (requestContentEncoding != EncodingType.IDENTITY || !httpResponseCompressionOperations.isEmpty()))
     {
+      List<String> responseEncodings = null;
+      if (properties.containsKey(HTTP_RESPONSE_CONTENT_ENCODINGS))
+      {
+        responseEncodings = ConfigValueExtractor.buildList(properties.remove(HTTP_RESPONSE_CONTENT_ENCODINGS), LIST_SEPARATOR);
+      }
       filters = _filters.addLast(new ClientCompressionFilter(requestContentEncoding,
                                                              getRequestCompressionConfig(httpServiceName, requestContentEncoding),
-                                                             buildAcceptEncodingSchemas(),
+                                                             buildAcceptEncodingSchemas(responseEncodings),
                                                              _responseCompressionConfigs.get(httpServiceName),
                                                              httpResponseCompressionOperations));
     }
@@ -472,20 +483,26 @@ public class HttpClientFactory implements TransportClientFactory
   }
 
   /**
+   * Build array of encoding types that will be listed in the Accept-Encoding header.
+   *
+   * @param encodings list of encodings in order of preference
    * @return the compression schemas that the client will support for response compression
    */
-  private EncodingType[] buildAcceptEncodingSchemas()
+  private EncodingType[] buildAcceptEncodingSchemas(List<String> encodings)
   {
-    EncodingType[] schemas = new EncodingType[EncodingType.values().length - 2];
-    int i = 0;
-    for (EncodingType type : EncodingType.values())
+    if (encodings != null)
     {
-      if (!type.equals(EncodingType.IDENTITY) && !type.equals(EncodingType.ANY))
+      List<EncodingType> encodingTypes = new ArrayList<EncodingType>();
+      for (String encoding : encodings)
       {
-        schemas[i++] = type;
+        if (EncodingType.isSupported(encoding))
+        {
+          encodingTypes.add(EncodingType.get(encoding));
+        }
       }
+      return encodingTypes.toArray(new EncodingType[encodingTypes.size()]);
     }
-    return schemas;
+    return DEFAULT_RESPONSE_CONTENT_ENCODINGS;
   }
 
   /**

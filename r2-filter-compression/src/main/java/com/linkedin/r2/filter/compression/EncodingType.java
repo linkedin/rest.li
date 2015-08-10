@@ -26,7 +26,6 @@ import java.util.Map;
  * */
 public enum EncodingType
 {
-  //NOTE: declaration order implicitly defines preference order
   GZIP(new GzipCompressor()),
   DEFLATE(new DeflateCompressor()),
   BZIP2(new Bzip2Compressor()),

@@ -109,6 +109,7 @@ public class PropertyKeys
   public static final String HTTP_SSL_CONTEXT = HttpClientFactory.HTTP_SSL_CONTEXT;
   public static final String HTTP_SSL_PARAMS = HttpClientFactory.HTTP_SSL_PARAMS;
   public static final String HTTP_RESPONSE_COMPRESSION_OPERATIONS = HttpClientFactory.HTTP_RESPONSE_COMPRESSION_OPERATIONS;
+  public static final String HTTP_RESPONSE_CONTENT_ENCODINGS = HttpClientFactory.HTTP_RESPONSE_CONTENT_ENCODINGS;
   public static final String HTTP_REQUEST_CONTENT_ENCODINGS = HttpClientFactory.HTTP_REQUEST_CONTENT_ENCODINGS;
   public static final String HTTP_USE_RESPONSE_COMPRESSION = HttpClientFactory.HTTP_USE_RESPONSE_COMPRESSION;
   public static final String HTTP_QUERY_POST_THRESHOLD = HttpClientFactory.HTTP_QUERY_POST_THRESHOLD;
