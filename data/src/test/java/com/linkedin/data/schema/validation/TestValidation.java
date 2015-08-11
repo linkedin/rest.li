@@ -2114,9 +2114,6 @@ public class TestValidation
     Object badObjects[] =
         {
         };
-
-    // There is no coercion for this type.
-    // Test with all coercion modes, result should be the same for all cases.
     testCoercionValidation(schemaText, "bar", goodObjects, badObjects, disallowUnrecognizedFieldOption());
     testCoercionValidation(schemaText, "bar", goodObjects, badObjects, trimUnrecognizedFieldOption());
 
@@ -2202,7 +2199,7 @@ public class TestValidation
     ValidationResult readOnlyResult = validate(readOnlyToValidate, schema, options);
     assertTrue(readOnlyResult.hasFixupReadOnlyError());
     String message = readOnlyResult.getMessages().toString();
-    assertTrue(readOnlyResult.getMessages().size() == 7);
+    assertEquals(readOnlyResult.getMessages().size(), 7);
     String[] expectedStrings = new String[] {
         "/unrecognizedMap",
         "/unrecognizedArray",
@@ -2219,7 +2216,7 @@ public class TestValidation
   }
 
   @Test
-  public void testUnrecognizedFieldsWithAvroUnionDefault() throws IOException
+  public void testTrimUnrecognizedFieldsWithAvroUnionDefault() throws IOException
   {
     ValidationOptions options = new ValidationOptions(
         RequiredMode.CAN_BE_ABSENT_IF_HAS_DEFAULT,
@@ -2254,5 +2251,54 @@ public class TestValidation
     assertTrue(result.isValid(), MessageUtil.messagesToString(result.getMessages()));
     assertEquals(result.getFixed(), dataMapFromString(trimmedDataString));
     assertSame(toValidate, result.getFixed());
+  }
+
+  @Test
+  public void testDisallowUnrecognizedFieldsWithAvroUnionDefault() throws IOException
+  {
+    ValidationOptions options = new ValidationOptions(
+        RequiredMode.CAN_BE_ABSENT_IF_HAS_DEFAULT,
+        CoercionMode.NORMAL,
+        UnrecognizedFieldMode.DISALLOW);
+    options.setAvroUnionMode(true);
+
+    String schemaText =
+        "{\n" +
+        "  \"name\" : \"Foo\",\n" +
+        "  \"type\" : \"record\",\n" +
+        "  \"fields\" : [\n" +
+        "    { \"name\" : \"primitive\", \"type\" : \"int\", \"optional\" : true },\n" +
+        "    { \"name\" : \"unionField\", \"type\" : [ \"Foo\", \"int\", \"string\" ], \"optional\" : true },\n" +
+        "    { \"name\" : \"arrayField\", \"type\" : { \"type\" : \"array\", \"items\" : \"Foo\" }, \"optional\" : true },\n" +
+        "    { \"name\" : \"mapField\", \"type\" : { \"type\" : \"map\", \"values\" : \"Foo\" }, \"optional\" : true },\n" +
+        "    { \"name\" : \"recordField\", \"type\" : \"Foo\", \"optional\" : true }\n" +
+        "  ]\n" +
+        "}\n";
+
+    DataSchema schema = dataSchemaFromString(schemaText);
+
+    String dataString =
+        "{\n" +
+        "  \"unionField\" : { \"primitive\": 1, \"unrecognizedInMap\": -1 },\n" +
+        "  \"arrayField\" : [ { \"unrecognizedInArray\": -2 }],\n" +
+        "  \"mapField\" : { \"key1\": { \"unrecognizedInMap\": -3 }},\n" +
+        "  \"recordField\" : { \"unrecognizedInRecord\": -4 }\n" +
+        "}";
+
+    DataMap toValidate = dataMapFromString(dataString);
+    ValidationResult result = validate(toValidate, schema, options);
+    assertFalse(result.isValid());
+    String message = result.getMessages().toString();
+    assertEquals(result.getMessages().size(), 4);
+    String[] expectedStrings = new String[] {
+        "/unionField/unrecognizedInMap :: unrecognized field found",
+        "/arrayField/0/unrecognizedInArray :: unrecognized field found",
+        "/mapField/key1/unrecognizedInMap :: unrecognized field found",
+        "/recordField/unrecognizedInRecord :: unrecognized field found"
+    };
+    for (String expected : expectedStrings)
+    {
+      assertTrue(message.contains(expected), message + " does not contain " + expected);
+    }
   }
 }
