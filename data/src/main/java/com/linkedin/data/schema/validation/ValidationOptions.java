@@ -62,6 +62,7 @@ public final class ValidationOptions
   {
     _coercionMode = CoercionMode.NORMAL;
     _requiredMode = RequiredMode.CAN_BE_ABSENT_IF_HAS_DEFAULT;
+    _unrecognizedFieldMode = UnrecognizedFieldMode.IGNORE;
   }
 
   /**
@@ -75,6 +76,7 @@ public final class ValidationOptions
   {
     _coercionMode = CoercionMode.NORMAL;
     _requiredMode = requiredMode;
+    _unrecognizedFieldMode = UnrecognizedFieldMode.IGNORE;
   }
 
   /**
@@ -87,6 +89,21 @@ public final class ValidationOptions
   {
     _coercionMode = coercionMode;
     _requiredMode = requiredMode;
+    _unrecognizedFieldMode = UnrecognizedFieldMode.IGNORE;
+  }
+
+  /**
+   * Constructor.
+   *
+   * @param requiredMode specifies the required mode.
+   * @param coercionMode specifies the coercion mode.
+   * @param unrecognizedFieldMode specifies the unrecognized field mode.
+   */
+  public ValidationOptions(RequiredMode requiredMode, CoercionMode coercionMode, UnrecognizedFieldMode unrecognizedFieldMode)
+  {
+    _coercionMode = coercionMode;
+    _requiredMode = requiredMode;
+    _unrecognizedFieldMode = unrecognizedFieldMode;
   }
 
   /**
@@ -132,16 +149,23 @@ public final class ValidationOptions
   }
 
   /**
-   * Set Avro union mode.
+   * Returns how unrecognized fields are handled during validation.
    *
-   * If Avro union mode is enabled, a union uses the name (instead of full name) of the
-   * member type as the key to specify the type of the value in the union.
-   *
-   * @param value set to true to enable Avro union mode.
+   * @return the unrecognized field mode.
    */
-  public void setAvroUnionMode(boolean value)
+  public UnrecognizedFieldMode getUnrecognizedFieldMode()
   {
-    _avroUnionMode = value;
+    return _unrecognizedFieldMode;
+  }
+
+  /**
+   * Set how unrecognized fields are handled during validation.
+   *
+   * @param unrecognizedFieldMode provides unrecognized field mode.
+   */
+  public void setUnrecognizedFieldMode(UnrecognizedFieldMode unrecognizedFieldMode)
+  {
+    _unrecognizedFieldMode = unrecognizedFieldMode;
   }
 
   /**
@@ -194,12 +218,39 @@ public final class ValidationOptions
   }
 
   /**
+   * Set Avro union mode.
+   *
+   * When set, data is validated as a Avro schema default value, which has a different data format
+   * than other data.
+   *
+   * This mode should be used exclusively to validate Avro default values.
+   *
+   * For default values of unions in Avro, the discriminator is not present and the default
+   * value always applies to the first member type of the union. E.g.:
+   *
+   * <pre>
+   * { "type" : [ "int", null ], "default" : 5 }
+   * </pre>
+   *
+   * This applies transitively even to default values of embedded unions.
+   *
+   * For additional details, see the comments about union default values here:
+   * https://avro.apache.org/docs/1.7.7/spec.html#Unions
+   *
+   * @param value set to true to enable Avro union mode.
+   */
+  public void setAvroUnionMode(boolean value)
+  {
+    _avroUnionMode = value;
+  }
+
+  /**
    * Return whether Avro union mode is enabled.
    *
-   * If Avro union mode is enabled, a union uses the name (instead of full name) of the
-   * member type as the key to specify the type of the value in the union.
+   * If Avro union mode is enabled, validate union default values according to Avro's rules.
    *
    * @return true if Avro union mode is enabled.
+   * @see {@link #setAvroUnionMode(boolean)}
    */
   public boolean isAvroUnionMode()
   {
@@ -216,6 +267,7 @@ public final class ValidationOptions
     ValidationOptions otherOptions = (ValidationOptions) other;
     return (otherOptions._coercionMode == _coercionMode
         && otherOptions._requiredMode == _requiredMode
+        && otherOptions._unrecognizedFieldMode == _unrecognizedFieldMode
         && otherOptions._avroUnionMode == _avroUnionMode
         && otherOptions._validatorParameters.equals(_validatorParameters));
   }
@@ -226,6 +278,7 @@ public final class ValidationOptions
     int code = 17;
     code = code * 31 + (_requiredMode == null ? 0 : _requiredMode.hashCode());
     code = code * 31 + (_coercionMode == null ? 0 : _coercionMode.hashCode());
+    code = code * 31 + (_unrecognizedFieldMode == null ? 0 : _unrecognizedFieldMode.hashCode());
     code = code * 31 + (_avroUnionMode ? 0 : 53);
     code = code * 31 + (_validatorParameters.hashCode());
     return code;
@@ -239,6 +292,8 @@ public final class ValidationOptions
       .append(_requiredMode)
       .append(", FixupMode=")
       .append(_coercionMode)
+      .append(", UnrecognizedFieldMode=")
+      .append(_unrecognizedFieldMode)
       .append(", AvroUnionMode=")
       .append(_avroUnionMode);
     if (_validatorParameters != NO_VALIDATOR_PARAMETERS)
@@ -251,6 +306,7 @@ public final class ValidationOptions
 
   private CoercionMode _coercionMode;
   private RequiredMode _requiredMode;
+  private UnrecognizedFieldMode _unrecognizedFieldMode;
   private boolean      _avroUnionMode = false;
   private Map<String,Object> _validatorParameters = NO_VALIDATOR_PARAMETERS;
   // Treat required fields as optional if the corresponding data element satisfies this predicate

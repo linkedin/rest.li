@@ -22,8 +22,6 @@ import java.io.PrintStream;
 import java.util.Collection;
 import java.util.Collections;
 
-import org.testng.annotations.Test;
-
 import com.linkedin.data.ByteString;
 import com.linkedin.data.Data;
 import com.linkedin.data.DataComplex;
@@ -32,12 +30,18 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.element.DataElement;
 import com.linkedin.data.element.DataElementUtil;
 import com.linkedin.data.message.Message;
+import com.linkedin.data.message.MessageUtil;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.validator.VisitedTrackingValidator;
 
-import static com.linkedin.data.TestUtil.*;
-import static org.testng.Assert.*;
+import org.testng.Assert;
+import org.testng.annotations.Test;
+
+import static com.linkedin.data.TestUtil.asList;
+import static com.linkedin.data.TestUtil.asMap;
+import static com.linkedin.data.TestUtil.dataMapFromString;
+import static com.linkedin.data.TestUtil.dataSchemaFromString;
 
 
 /**
@@ -49,7 +53,7 @@ public class TestValidation
   {
     VisitedTrackingValidator visitedTrackingValidator = new VisitedTrackingValidator(null);
     ValidationResult result = ValidateDataAgainstSchema.validate(map, schema, options, visitedTrackingValidator);
-    assertEquals(visitedTrackingValidator.getVisitedMoreThanOnce(), Collections.EMPTY_SET);
+    Assert.assertEquals(visitedTrackingValidator.getVisitedMoreThanOnce(), Collections.EMPTY_SET);
     return result;
   }
 
@@ -57,14 +61,14 @@ public class TestValidation
   {
     VisitedTrackingValidator visitedTrackingValidator = new VisitedTrackingValidator(null);
     ValidationResult result = ValidateDataAgainstSchema.validate(element, options, visitedTrackingValidator);
-    assertEquals(visitedTrackingValidator.getVisitedMoreThanOnce(), Collections.EMPTY_SET);
+    Assert.assertEquals(visitedTrackingValidator.getVisitedMoreThanOnce(), Collections.EMPTY_SET);
     return result;
   }
 
   public static ValidationOptions noCoercionValidationOption()
   {
     ValidationOptions options = new ValidationOptions();
-    assertSame(options.getRequiredMode(), RequiredMode.CAN_BE_ABSENT_IF_HAS_DEFAULT);
+    Assert.assertSame(options.getRequiredMode(), RequiredMode.CAN_BE_ABSENT_IF_HAS_DEFAULT);
     options.setCoercionMode(CoercionMode.OFF);
     return options;
   }
@@ -72,16 +76,32 @@ public class TestValidation
   public static ValidationOptions normalCoercionValidationOption()
   {
     ValidationOptions options = new ValidationOptions();
-    assertSame(options.getRequiredMode(), RequiredMode.CAN_BE_ABSENT_IF_HAS_DEFAULT);
-    assertEquals(options.getCoercionMode(), CoercionMode.NORMAL);
+    Assert.assertSame(options.getRequiredMode(), RequiredMode.CAN_BE_ABSENT_IF_HAS_DEFAULT);
+    Assert.assertEquals(options.getCoercionMode(), CoercionMode.NORMAL);
     return options;
   }
 
   public static ValidationOptions stringToPrimitiveCoercionValidationOption()
   {
     ValidationOptions options = new ValidationOptions();
-    assertSame(options.getRequiredMode(), RequiredMode.CAN_BE_ABSENT_IF_HAS_DEFAULT);
+    Assert.assertSame(options.getRequiredMode(), RequiredMode.CAN_BE_ABSENT_IF_HAS_DEFAULT);
     options.setCoercionMode(CoercionMode.STRING_TO_PRIMITIVE);
+    return options;
+  }
+
+  public static ValidationOptions disallowUnrecognizedFieldOption()
+  {
+    ValidationOptions options = new ValidationOptions();
+    Assert.assertSame(options.getUnrecognizedFieldMode(), UnrecognizedFieldMode.IGNORE);
+    options.setUnrecognizedFieldMode(UnrecognizedFieldMode.DISALLOW);
+    return options;
+  }
+
+  public static ValidationOptions trimUnrecognizedFieldOption()
+  {
+    ValidationOptions options = new ValidationOptions();
+    Assert.assertSame(options.getUnrecognizedFieldMode(), UnrecognizedFieldMode.IGNORE);
+    options.setUnrecognizedFieldMode(UnrecognizedFieldMode.TRIM);
     return options;
   }
 
@@ -89,11 +109,11 @@ public class TestValidation
   // also
   private static void assertAllowedClass(CoercionMode coercionMode, Class<?> clazz)
   {
-    assertTrue(clazz == Integer.class ||
-               clazz == Long.class ||
-               clazz == Float.class ||
-               clazz == Double.class ||
-               (coercionMode == CoercionMode.STRING_TO_PRIMITIVE && clazz == String.class));
+    Assert.assertTrue(clazz == Integer.class ||
+                      clazz == Long.class ||
+                      clazz == Float.class ||
+                      clazz == Double.class ||
+                      (coercionMode == CoercionMode.STRING_TO_PRIMITIVE && clazz == String.class));
   }
 
   public void testCoercionValidation(String schemaText,
@@ -103,101 +123,92 @@ public class TestValidation
                                      CoercionMode coercionMode)
       throws IOException
   {
-    assertTrue(coercionMode != CoercionMode.OFF);
-    final boolean debug = false;
+    Assert.assertTrue(coercionMode != CoercionMode.OFF);
     ValidationOptions options = normalCoercionValidationOption();
     options.setCoercionMode(coercionMode);
 
-    if (debug) out.println("--------------\nschemaText: " + schemaText);
-
     RecordDataSchema schema = (RecordDataSchema) dataSchemaFromString(schemaText);
-    if (debug) out.println("schema: " + schema);
-    assertTrue(schema != null);
+    Assert.assertTrue(schema != null);
 
     DataMap map = new DataMap();
     for (Object[] row : inputs)
     {
-      if (debug) out.println("input: " + row[0] + " expected output: " + row[1]);
       map.put(key, row[0]);
       ValidationResult result = validate(map, schema, options);
-      if (debug) out.println("result: " + result);
-      assertTrue(result.isValid());
+      Assert.assertTrue(result.isValid());
       if (result.hasFix())
       {
         DataMap fixedMap = (DataMap) result.getFixed();
-        assertSame(fixedMap.getClass(), DataMap.class);
+        Assert.assertSame(fixedMap.getClass(), DataMap.class);
         Object fixed = fixedMap.get(key);
-        assertTrue(fixed != null);
+        Assert.assertTrue(fixed != null);
         Class<?> fixedClass = fixed.getClass();
         Class<?> goodClass = row[0].getClass();
-        if (debug) out.println(goodClass + " " + fixedClass);
         switch (schema.getField(key).getType().getDereferencedType())
         {
           case BYTES:
           case FIXED:
             // String to ByteString conversion check
-            assertNotSame(goodClass, fixedClass);
-            assertSame(goodClass, String.class);
-            assertSame(fixedClass, ByteString.class);
-            assertEquals(((ByteString) fixed).asAvroString(), row[0]);
+            Assert.assertNotSame(goodClass, fixedClass);
+            Assert.assertSame(goodClass, String.class);
+            Assert.assertSame(fixedClass, ByteString.class);
+            Assert.assertEquals(((ByteString) fixed).asAvroString(), row[0]);
             break;
           case INT:
             // convert numbers to Integer
-            assertNotSame(goodClass, fixedClass);
+            Assert.assertNotSame(goodClass, fixedClass);
             assertAllowedClass(coercionMode, goodClass);
-            assertSame(fixedClass, Integer.class);
+            Assert.assertSame(fixedClass, Integer.class);
             break;
           case LONG:
             // convert numbers to Long
-            assertNotSame(goodClass, fixedClass);
+            Assert.assertNotSame(goodClass, fixedClass);
             assertAllowedClass(coercionMode, goodClass);
-            assertSame(fixedClass, Long.class);
+            Assert.assertSame(fixedClass, Long.class);
             break;
           case FLOAT:
             // convert numbers to Float
-            assertNotSame(goodClass, fixedClass);
+            Assert.assertNotSame(goodClass, fixedClass);
             assertAllowedClass(coercionMode, goodClass);
-            assertSame(fixedClass, Float.class);
+            Assert.assertSame(fixedClass, Float.class);
             break;
           case DOUBLE:
             // convert numbers to Double
-            assertNotSame(goodClass, fixedClass);
+            Assert.assertNotSame(goodClass, fixedClass);
             assertAllowedClass(coercionMode, goodClass);
-            assertSame(fixedClass, Double.class);
+            Assert.assertSame(fixedClass, Double.class);
             break;
           case BOOLEAN:
             if(coercionMode == CoercionMode.STRING_TO_PRIMITIVE)
             {
-              assertNotSame(goodClass, fixedClass);
-              assertTrue(goodClass == String.class);
-              assertSame(fixedClass, Boolean.class);
+              Assert.assertNotSame(goodClass, fixedClass);
+              Assert.assertTrue(goodClass == String.class);
+              Assert.assertSame(fixedClass, Boolean.class);
             }
             break;
           case RECORD:
           case ARRAY:
           case MAP:
           case UNION:
-            assertSame(goodClass, fixedClass);
+            Assert.assertSame(goodClass, fixedClass);
             break;
           default:
             throw new IllegalStateException("unknown conversion");
         }
-        assertEquals(fixed, row[1]);
+        Assert.assertEquals(fixed, row[1]);
       }
       else
       {
-        assertSame(map, result.getFixed());
+        Assert.assertSame(map, result.getFixed());
       }
     }
 
     for (Object bad : badObjects)
     {
-      if (debug) out.println("bad: " + bad);
       map.put(key, bad);
       ValidationResult result = validate(map, schema, options);
-      if (debug) out.println(result);
-      assertFalse(result.isValid());
-      assertSame(map, result.getFixed());
+      Assert.assertFalse(result.isValid());
+      Assert.assertSame(map, result.getFixed());
     }
   }
 
@@ -225,34 +236,25 @@ public class TestValidation
                                      Object[] badObjects,
                                      ValidationOptions options) throws IOException
   {
-    final boolean debug = false;
-
-    if (debug) out.println("--------------\nschemaText: " + schemaText);
-
     RecordDataSchema schema = (RecordDataSchema) dataSchemaFromString(schemaText);
-    if (debug) out.println("schema: " + schema);
-    assertTrue(schema != null);
+    Assert.assertTrue(schema != null);
 
     DataMap map = new DataMap();
     for (Object good : goodObjects)
     {
-      if (debug) out.println("good: " + good);
       map.put(key, good);
       ValidationResult result = validate(map, schema, options);
-      if (debug) out.println("result: " + result);
-      assertTrue(result.isValid());
-      assertFalse(result.hasFix());
-      assertSame(map, result.getFixed());
+      Assert.assertTrue(result.isValid());
+      Assert.assertFalse(result.hasFix());
+      Assert.assertSame(map, result.getFixed());
     }
 
     for (Object bad : badObjects)
     {
-      if (debug) out.println("bad: " + bad);
       map.put(key, bad);
       ValidationResult result = validate(map, schema, options);
-      if (debug) out.println(result);
-      assertFalse(result.isValid());
-      assertSame(map, result.getFixed());
+      Assert.assertFalse(result.isValid());
+      Assert.assertSame(map, result.getFixed());
     }
   }
 
@@ -517,7 +519,7 @@ public class TestValidation
             { new Double(1), new Long(1) }
         };
 
-    
+
     Object badObjects[] =
         {
             new Boolean(true),
@@ -1531,15 +1533,10 @@ public class TestValidation
                                                            Object[][][] goodInput,
                                                            Object[][][] badInput) throws IOException
   {
-    final boolean debug = false;
-    final boolean printExpectedOutput = false;
     final String[][] emptyErrorPaths = {};
 
-    if (debug) out.println("--------------\nschemaText: " + schemaText);
-
     DataSchema schema = dataSchemaFromString(schemaText);
-    if (debug) out.println("schema: " + schema);
-    assertTrue(schema != null);
+    Assert.assertTrue(schema != null);
 
     DataMap map = new DataMap();
     for (Object[][] rows : goodInput)
@@ -1551,13 +1548,12 @@ public class TestValidation
         ValidationOptions validationOptions = (ValidationOptions) mode;
         for (Object dataObject : dataObjects)
         {
-          if (debug) out.println("good " + mode + ": " + dataObject);
           map.put(key, dataObject);
           ValidationResult result = validate(map, schema, validationOptions);
-          assertTrue(result.isValid());
+          Assert.assertTrue(result.isValid());
           if (result.hasFix() == false)
           {
-            assertSame(map, result.getFixed());
+            Assert.assertSame(map, result.getFixed());
           }
         }
       }
@@ -1575,31 +1571,26 @@ public class TestValidation
         int index = 0;
         for (Object dataObject : dataObjects)
         {
-          if (debug) out.println("bad " + mode + ": " + dataObject);
           map.put(key, dataObject);
           ValidationResult result = validate(map, schema, validationOptions);
-          if (debug) out.println(result.getMessages());
-          assertFalse(result.isValid());
-          assertSame(map, result.getFixed());
-          checkMessages(debug, result.getMessages(), expectedString);
-          if (printExpectedOutput) printErrorPaths(out, result.getMessages());
+          Assert.assertFalse(result.isValid());
+          Assert.assertSame(map, result.getFixed());
+          checkMessages(result.getMessages(), expectedString);
           if (index < errorPaths.length)
           {
             checkMessagesErrorPath(result.getMessages(), errorPaths[index]);
           }
           index++;
         }
-        if (printExpectedOutput) out.println();
       }
     }
   }
 
-  private void checkMessages(boolean debug, Collection<Message> messages, String expectedString)
+  private void checkMessages(Collection<Message> messages, String expectedString)
   {
     for (Message m : messages)
     {
-      if (debug) out.println(m.getFormat() + " --- " + expectedString);
-      assertTrue(m.getFormat().contains(expectedString));
+      Assert.assertTrue(m.getFormat().contains(expectedString));
     }
   }
 
@@ -1613,7 +1604,7 @@ public class TestValidation
         break;
       }
       String path = pathAsString(m.getPath());
-      assertEquals(path, errorPaths[index]);
+      Assert.assertEquals(path, errorPaths[index]);
       index++;
     }
   }
@@ -1811,7 +1802,7 @@ public class TestValidation
 
     String key = "bar";
     DataSchema schema = dataSchemaFromString(schemaText);
-    assertTrue(schema != null);
+    Assert.assertTrue(schema != null);
 
     Object input[][][] =
     {
@@ -1863,23 +1854,23 @@ public class TestValidation
           DataMap foo = new DataMap();
           foo.put(key, pair[0]);
           foo.makeReadOnly();
-          assertTrue(foo.isReadOnly());
-          assertTrue(((DataComplex) pair[0]).isReadOnly());
-          assertSame(foo.get(key), pair[0]);
+          Assert.assertTrue(foo.isReadOnly());
+          Assert.assertTrue(((DataComplex) pair[0]).isReadOnly());
+          Assert.assertSame(foo.get(key), pair[0]);
           ValidationResult result = ValidateDataAgainstSchema.validate(foo, schema, validationOptions);
      System.out.println(result);
-          assertFalse(result.isValid());
-          assertTrue(result.hasFix());
-          assertTrue(result.hasFixupReadOnlyError());
-          assertTrue(foo.isReadOnly());
-          assertTrue(((DataComplex) pair[0]).isReadOnly());
+          Assert.assertFalse(result.isValid());
+          Assert.assertTrue(result.hasFix());
+          Assert.assertTrue(result.hasFixupReadOnlyError());
+          Assert.assertTrue(foo.isReadOnly());
+          Assert.assertTrue(((DataComplex) pair[0]).isReadOnly());
           DataMap fooFixed = (DataMap) result.getFixed();
           Object barFixed = fooFixed.get(key);
-          assertEquals(pair[0], barFixed); // not changed
-          assertSame(fooFixed, foo);
-          assertTrue(fooFixed.isReadOnly());
-          assertTrue(((DataComplex) barFixed).isReadOnly());
-          assertSame(barFixed, pair[0]);
+          Assert.assertEquals(pair[0], barFixed); // not changed
+          Assert.assertSame(fooFixed, foo);
+          Assert.assertTrue(fooFixed.isReadOnly());
+          Assert.assertTrue(((DataComplex) barFixed).isReadOnly());
+          Assert.assertSame(barFixed, pair[0]);
         }
 
         // Data object is read-write
@@ -1887,21 +1878,21 @@ public class TestValidation
         {
           DataMap foo = new DataMap();
           DataMap pair0 = ((DataMap) pair[0]).copy(); // get read-write clone
-          assertFalse(pair0.isReadOnly());
+          Assert.assertFalse(pair0.isReadOnly());
           foo.put(key, pair0);
           ValidationResult result = validate(foo, schema, validationOptions);
-          assertTrue(result.isValid());
+          Assert.assertTrue(result.isValid());
           DataMap fooFixed = (DataMap) result.getFixed();
           Object barFixed = fooFixed.get(key);
-          assertTrue(result.isValid());
-          assertTrue(result.hasFix());
-          assertFalse(result.hasFixupReadOnlyError());
-          assertFalse(foo.isReadOnly());
-          assertFalse(pair0.isReadOnly());
-          assertEquals(pair[1], barFixed);
-          assertSame(result.getFixed(), foo); // modify in place
-          assertFalse(((DataComplex) barFixed).isReadOnly());
-          assertSame(barFixed, pair0); // modify in place
+          Assert.assertTrue(result.isValid());
+          Assert.assertTrue(result.hasFix());
+          Assert.assertFalse(result.hasFixupReadOnlyError());
+          Assert.assertFalse(foo.isReadOnly());
+          Assert.assertFalse(pair0.isReadOnly());
+          Assert.assertEquals(pair[1], barFixed);
+          Assert.assertSame(result.getFixed(), foo); // modify in place
+          Assert.assertFalse(((DataComplex) barFixed).isReadOnly());
+          Assert.assertSame(barFixed, pair0); // modify in place
         }
       }
     }
@@ -1971,12 +1962,12 @@ public class TestValidation
         ValidationResult result = ValidateDataAgainstSchema.validate(dataMap, schema, options);
         if (expectedResult == null)
         {
-          assertTrue(result.isValid());
-          assertEquals(result.getMessages().size(), 0);
+          Assert.assertTrue(result.isValid());
+          Assert.assertEquals(result.getMessages().size(), 0);
         }
         else
         {
-          assertTrue(result.toString().contains(expectedResult));
+          Assert.assertTrue(result.toString().contains(expectedResult));
         }
       }
     }
@@ -2068,17 +2059,220 @@ public class TestValidation
       String[] notExpectedStrings = (String[]) row[3];
       DataMap map = dataMapFromString(dataString);
       DataElement startElement = DataElementUtil.element(map, schema, startPath);
-      assertNotSame(startElement, null);
+      Assert.assertNotSame(startElement, null);
       ValidationResult result = validate(startElement, new ValidationOptions());
       String message = result.getMessages().toString();
       for (String expected : expectedStrings)
       {
-        assertTrue(message.contains(expected), message + " does not contain " + expected);
+        Assert.assertTrue(message.contains(expected), message + " does not contain " + expected);
       }
       for (String notExpected : notExpectedStrings)
       {
-        assertFalse(message.contains(notExpected), message + " contains " + notExpected);
+        Assert.assertFalse(message.contains(notExpected), message + " contains " + notExpected);
       }
+    }
+  }
+
+  @Test
+  public void testUnrecognizedFieldValidation() throws IOException
+  {
+    String schemaText =
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : " +
+            "[ { \"name\" : \"bar\", \"type\" : \"string\" } ] }";
+
+    Object goodObjects[] =
+        {
+            "a valid string"
+        };
+
+    Object badObjects[] =
+        {
+        };
+    testCoercionValidation(schemaText, "bar", goodObjects, badObjects, disallowUnrecognizedFieldOption());
+    testCoercionValidation(schemaText, "bar", goodObjects, badObjects, trimUnrecognizedFieldOption());
+
+    Object allowedForUnrecognizedField[] =
+        {
+        };
+
+    Object disallowedForUnrecognizedField[] =
+        {
+            "a string",
+            new Boolean(false),
+            new Integer(1),
+            new Long(1),
+            new Float(1),
+            new Double(1),
+            ByteString.copyAvroString("bytes", false),
+            new DataMap(),
+            new DataList()
+        };
+
+    testCoercionValidation(schemaText, "unrecognized", allowedForUnrecognizedField, disallowedForUnrecognizedField, disallowUnrecognizedFieldOption());
+  }
+
+  @Test
+  public void testUnrecognizedFieldTrimming() throws IOException
+  {
+    ValidationOptions options = new ValidationOptions(
+        RequiredMode.CAN_BE_ABSENT_IF_HAS_DEFAULT,
+        CoercionMode.NORMAL,
+        UnrecognizedFieldMode.TRIM);
+
+    String schemaText =
+        "{\n" +
+            "  \"name\" : \"Foo\",\n" +
+            "  \"type\" : \"record\",\n" +
+            "  \"fields\" : [\n" +
+            "    { \"name\" : \"primitive\", \"type\" : \"int\", \"optional\" : true },\n" +
+            "    { \"name\" : \"arrayField\", \"type\" : { \"type\" : \"array\", \"items\" : \"Foo\" }, \"optional\" : true },\n" +
+            "    { \"name\" : \"mapField\", \"type\" : { \"type\" : \"map\", \"values\" : \"Foo\" }, \"optional\" : true },\n" +
+            "    { \"name\" : \"unionField\", \"type\" : [ \"int\", \"string\", \"Foo\" ], \"optional\" : true },\n" +
+            "    { \"name\" : \"recordField\", \"type\" : \"Foo\", \"optional\" : true }\n" +
+            "  ]\n" +
+            "}\n";
+
+    DataSchema schema = dataSchemaFromString(schemaText);
+
+    String dataString =
+        "{\n" +
+        "  \"primitive\" : 1,\n" +
+        "  \"unrecognizedPrimitive\": -1,\n" +
+        "  \"arrayField\" : [ { \"primitive\": 2, \"unrecognizedInArray\": -2 } ],\n" +
+        "  \"mapField\" : { \"key\": { \"primitive\": 3, \"unrecognizedInMap\": -3 } },\n" +
+        "  \"unionField\" : { \"Foo\": { \"primitive\": 4, \"unrecognizedInMap\": -4 } },\n" +
+        "  \"recordField\" : {\n" +
+        "    \"primitive\" : 5,\n" +
+        "    \"unrecognizedPrimitive\": -5\n" +
+        "  },\n" +
+        "  \"unrecognizedMap\": { \"key\": -100},\n" +
+        "  \"unrecognizedArray\": [ -101 ]\n" +
+        "}";
+
+    String trimmedDataString =
+        "{\n" +
+        "  \"primitive\" : 1,\n" +
+        "  \"arrayField\" : [ { \"primitive\": 2 } ],\n" +
+        "  \"mapField\" : { \"key\": { \"primitive\": 3 } },\n" +
+        "  \"unionField\" : { \"Foo\": { \"primitive\": 4 } },\n" +
+        "  \"recordField\" : {\n" +
+        "    \"primitive\" : 5\n" +
+        "  }\n" +
+        "}";
+
+    // mutable
+    DataMap toValidate = dataMapFromString(dataString);
+    ValidationResult result = validate(toValidate, schema, options);
+    Assert.assertTrue(result.isValid(), MessageUtil.messagesToString(result.getMessages()));
+    Assert.assertEquals(result.getFixed(), dataMapFromString(trimmedDataString));
+    Assert.assertSame(toValidate, result.getFixed());
+
+    // read-only
+    DataMap readOnlyToValidate = dataMapFromString(dataString);
+    readOnlyToValidate.makeReadOnly();
+    ValidationResult readOnlyResult = validate(readOnlyToValidate, schema, options);
+    Assert.assertTrue(readOnlyResult.hasFixupReadOnlyError());
+    String message = readOnlyResult.getMessages().toString();
+    Assert.assertEquals(readOnlyResult.getMessages().size(), 7);
+    String[] expectedStrings = new String[] {
+        "/unrecognizedMap",
+        "/unrecognizedArray",
+        "/recordField/unrecognizedPrimitive",
+        "/unionField/Foo/unrecognizedInMap",
+        "/unrecognizedPrimitive",
+        "/arrayField/0/unrecognizedInArray",
+        "/mapField/key/unrecognizedInMap"
+    };
+    for (String expected : expectedStrings)
+    {
+      Assert.assertTrue(message.contains(expected), message + " does not contain " + expected);
+    }
+  }
+
+  @Test
+  public void testTrimUnrecognizedFieldsWithAvroUnionDefault() throws IOException
+  {
+    ValidationOptions options = new ValidationOptions(
+        RequiredMode.CAN_BE_ABSENT_IF_HAS_DEFAULT,
+        CoercionMode.NORMAL,
+        UnrecognizedFieldMode.TRIM);
+    options.setAvroUnionMode(true);
+
+    String schemaText =
+        "{\n" +
+        "  \"name\" : \"Foo\",\n" +
+        "  \"type\" : \"record\",\n" +
+        "  \"fields\" : [\n" +
+        "    { \"name\" : \"primitive\", \"type\" : \"int\", \"optional\" : true },\n" +
+        "    { \"name\" : \"unionField\", \"type\" : [ \"Foo\", \"int\", \"string\" ], \"optional\" : true }\n" +
+        "  ]\n" +
+        "}\n";
+
+    DataSchema schema = dataSchemaFromString(schemaText);
+
+    String dataString =
+        "{\n" +
+        "  \"unionField\" : { \"primitive\": 4, \"unrecognizedInMap\": -4 }\n" +
+        "}";
+
+    String trimmedDataString =
+        "{\n" +
+        "  \"unionField\" : { \"primitive\": 4 }\n" +
+        "}";
+
+    DataMap toValidate = dataMapFromString(dataString);
+    ValidationResult result = validate(toValidate, schema, options);
+    Assert.assertTrue(result.isValid(), MessageUtil.messagesToString(result.getMessages()));
+    Assert.assertEquals(result.getFixed(), dataMapFromString(trimmedDataString));
+    Assert.assertSame(toValidate, result.getFixed());
+  }
+
+  @Test
+  public void testDisallowUnrecognizedFieldsWithAvroUnionDefault() throws IOException
+  {
+    ValidationOptions options = new ValidationOptions(
+        RequiredMode.CAN_BE_ABSENT_IF_HAS_DEFAULT,
+        CoercionMode.NORMAL,
+        UnrecognizedFieldMode.DISALLOW);
+    options.setAvroUnionMode(true);
+
+    String schemaText =
+        "{\n" +
+        "  \"name\" : \"Foo\",\n" +
+        "  \"type\" : \"record\",\n" +
+        "  \"fields\" : [\n" +
+        "    { \"name\" : \"primitive\", \"type\" : \"int\", \"optional\" : true },\n" +
+        "    { \"name\" : \"unionField\", \"type\" : [ \"Foo\", \"int\", \"string\" ], \"optional\" : true },\n" +
+        "    { \"name\" : \"arrayField\", \"type\" : { \"type\" : \"array\", \"items\" : \"Foo\" }, \"optional\" : true },\n" +
+        "    { \"name\" : \"mapField\", \"type\" : { \"type\" : \"map\", \"values\" : \"Foo\" }, \"optional\" : true },\n" +
+        "    { \"name\" : \"recordField\", \"type\" : \"Foo\", \"optional\" : true }\n" +
+        "  ]\n" +
+        "}\n";
+
+    DataSchema schema = dataSchemaFromString(schemaText);
+
+    String dataString =
+        "{\n" +
+        "  \"unionField\" : { \"primitive\": 1, \"unrecognizedInMap\": -1 },\n" +
+        "  \"arrayField\" : [ { \"unrecognizedInArray\": -2 }],\n" +
+        "  \"mapField\" : { \"key1\": { \"unrecognizedInMap\": -3 }},\n" +
+        "  \"recordField\" : { \"unrecognizedInRecord\": -4 }\n" +
+        "}";
+
+    DataMap toValidate = dataMapFromString(dataString);
+    ValidationResult result = validate(toValidate, schema, options);
+    Assert.assertFalse(result.isValid());
+    String message = result.getMessages().toString();
+    Assert.assertEquals(result.getMessages().size(), 4);
+    String[] expectedStrings = new String[] {
+        "/unionField/unrecognizedInMap :: unrecognized field found",
+        "/arrayField/0/unrecognizedInArray :: unrecognized field found",
+        "/mapField/key1/unrecognizedInMap :: unrecognized field found",
+        "/recordField/unrecognizedInRecord :: unrecognized field found"
+    };
+    for (String expected : expectedStrings)
+    {
+      Assert.assertTrue(message.contains(expected), message + " does not contain " + expected);
     }
   }
 }
