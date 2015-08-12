@@ -1,12 +1,13 @@
+2.10.8
+-----
+
 2.10.7
 -----
-<<<<<<< HEAD
 (RB=540475)
 Create d2 configuration to change Accept-Encoding header.
-=======
+
 (RB=496051)
 Added cookie support for restli.
->>>>>>> fix response impl
 
 2.10.6
 -----
