@@ -147,8 +147,7 @@ public class TestBadSchemas
         for (int j = 2; j < row.length; j++)
         {
           String expectedString = (String) row[j];
-          // TODO: voyager
-          //assertTrue(message.contains(expectedString), message + " does not contain " + expectedString);
+          assertTrue(message.contains(expectedString), message + " does not contain " + expectedString);
         }
       }
     }
