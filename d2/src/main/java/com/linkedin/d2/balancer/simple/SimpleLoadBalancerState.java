@@ -674,6 +674,12 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
       List<SchemeStrategyPair> orderedStrategies = new ArrayList<SchemeStrategyPair>(prioritizedSchemes.size());
       for (String scheme : prioritizedSchemes)
       {
+        // if this scheme is not supported (ie https not enabled) don't add it to the list
+        if ("https".equals(scheme) && !_isSSLEnabled)
+        {
+          continue;
+        }
+
         // get the strategy for this service and scheme
         LoadBalancerStrategy strategy = getStrategy(serviceName, scheme);
 
@@ -946,8 +952,8 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
       else
       {
         // uri properties was null, we'll just log the event and continues.
-        // The reasoning is we might receive a null event when there's a problem
-        // writing/reading cache file.
+        // The reasoning is we might receive a null event when there's a problem writing/reading
+        // cache file, or we just started listening to a cluster without any uris yet.
         warn(_log, "received a null uri properties for cluster: ", listenTo);
       }
     }
@@ -1139,8 +1145,11 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     TransportClient client = clientsByScheme.get(uri.getScheme().toLowerCase());
     if (client == null)
     {
-      _log.error("getTrackerClient: invalid scheme for service {}, URI {} and partitionDataMap {}",
-          new Object[]{ serviceName, uri, partitionDataMap });
+      // logging this at debug because there may be situations where a service may want some of its
+      // clients talking https while others are ok using http.
+      debug(_log, "No TransportClient for scheme {}, service {}, URI {} and partitionDataMap {}. " +
+                  "This client may not be configured to handle URIs in this scheme.",
+            new Object[]{uri.getScheme(), serviceName, uri, partitionDataMap });
       return null;
     }
     TrackerClient trackerClient = new TrackerClient(uri, partitionDataMap, client, SystemClock.instance(), config,

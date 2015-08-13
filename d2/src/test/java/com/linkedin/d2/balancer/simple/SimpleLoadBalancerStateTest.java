@@ -19,6 +19,7 @@ package com.linkedin.d2.balancer.simple;
 import com.linkedin.common.callback.Callbacks;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
+import com.linkedin.d2.balancer.LoadBalancerState;
 import com.linkedin.d2.balancer.LoadBalancerState.LoadBalancerStateListenerCallback;
 import com.linkedin.d2.balancer.LoadBalancerState.NullStateListenerCallback;
 import com.linkedin.d2.balancer.clients.TrackerClient;
@@ -1030,6 +1031,70 @@ public class SimpleLoadBalancerStateTest
 
     assertNotNull(client);
     assertEquals(client.getUri(), uri);
+  }
+
+  @Test(groups = { "small", "back-end" })
+  public void testSSLDisabledWithHttpsInstances() throws URISyntaxException
+  {
+    reset();
+
+    URI uri = URI.create("http://cluster-1/test");
+    URI httpsUri = URI.create("https://cluster-1/test");
+    List<String> schemes = new ArrayList<String>();
+    Map<Integer, PartitionData> partitionData = new HashMap<Integer, PartitionData>(1);
+    partitionData.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
+    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<URI, Map<Integer, PartitionData>>();
+    uriData.put(uri, partitionData);
+    uriData.put(httpsUri, partitionData);
+
+    schemes.add("https");
+    schemes.add("http");
+
+
+    assertNull(_state.getClient("service-1", uri));
+
+    // set up state
+    _state.listenToCluster("cluster-1", new NullStateListenerCallback());
+
+    assertNull(_state.getClient("service-1", uri));
+
+    _state.listenToService("service-1", new NullStateListenerCallback());
+
+    assertNull(_state.getClient("service-1", uri));
+
+    Map<String,Object> transportClientProperties = new HashMap<String,Object>();
+    transportClientProperties.put(HttpClientFactory.HTTP_SSL_CONTEXT, _sslContext);
+    transportClientProperties.put(HttpClientFactory.HTTP_SSL_PARAMS, _sslParameters);
+    transportClientProperties = Collections.unmodifiableMap(transportClientProperties);
+
+    ServiceProperties serviceProperties = new ServiceProperties("service-1", "cluster-1",
+                                                                "/test", Arrays.asList("random"),
+                                                                Collections.<String, Object>emptyMap(),
+                                                                transportClientProperties, null, schemes, null);
+    _serviceRegistry.put("service-1", serviceProperties);
+
+    assertNull(_state.getClient("service-1", uri));
+
+    _uriRegistry.put("cluster-1", new UriProperties("cluster-1", uriData));
+
+    List<LoadBalancerState.SchemeStrategyPair> schemeStrategyPairs = _state.getStrategiesForService("service-1", schemes);
+
+    for (LoadBalancerState.SchemeStrategyPair pair : schemeStrategyPairs)
+    {
+      assertFalse("https".equalsIgnoreCase(pair.getScheme()), "https shouldn't be in any schemeStrategyPair");
+    }
+
+    TrackerClient client = _state.getClient("service-1", uri);
+
+    assertNotNull(client);
+    assertEquals(client.getUri(), uri);
+
+    // Unfortunately, I don't know a good way to intercept the logs
+    client = _state.getClient("service-1", httpsUri);
+    assertNull(client, "shouldn't pick an https uri");
+
+    _state.refreshTransportClientsPerService(serviceProperties);
+
   }
 
   @Test(groups = { "small", "back-end" })

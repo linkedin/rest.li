@@ -1,6 +1,10 @@
+2.10.11
+-------
+
 2.10.10
 -----
-
+(RB=540665)
+Avoid logging error when there are https uris but the client is not ssl enabled.
 
 2.10.9
 -----
