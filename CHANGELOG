@@ -1,5 +1,12 @@
+2.10.15
+-------
+
 2.10.14
 -------
+(RB=550595)
+Move request builder spec code from restli-swift repo to pegasus repo so that Android Rest.li client
+can use it too. Currently this has not been used by Pegasus RestRequestBuilderGenerator yet.
+
 (RB=443539)
 Allow Resources to designate alternative keys with the @AlternativeKey and @AlternativeKeys annotation.
 Only client side work has been done.  Resources can be called with alternative keys but builders have

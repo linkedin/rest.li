@@ -1,0 +1,11 @@
+{
+  "type": "enum",
+  "name": "TestEnum",
+  "namespace": "com.linkedin.restli.tools.test",
+  "doc": "Doc for the enum",
+  "symbols": [ "SYMBOL_1", "SYMBOL_2", "SYMBOL_3" ],
+  "symbolDocs": {
+    "SYMBOL_1": "Doc for 1",
+    "SYMBOL_3": "Doc for 3"
+  }
+}
