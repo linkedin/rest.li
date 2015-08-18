@@ -54,7 +54,7 @@ import java.util.Map;
  */
 public final class ErrorResponseBuilder implements RestLiResponseBuilder
 {
-  public static final String DEFAULT_INTERNAL_ERROR_MESSAGE = "Error in application code";
+  public static final String DEFAULT_INTERNAL_ERROR_MESSAGE = "INTERNAL SERVER ERROR";
   private final ErrorResponseFormat _errorResponseFormat;
   private final String _internalErrorMessage;
 

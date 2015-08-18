@@ -38,6 +38,7 @@ import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.client.NullGreetingBuilders;
 import com.linkedin.restli.examples.greetings.client.NullGreetingRequestBuilders;
+import com.linkedin.restli.internal.server.methods.response.ErrorResponseBuilder;
 import com.linkedin.restli.server.filter.FilterRequestContext;
 import com.linkedin.restli.server.filter.FilterResponseContext;
 import com.linkedin.restli.server.filter.RequestFilter;
@@ -508,7 +509,7 @@ public class TestNullGreetingsClient extends RestLiIntegrationTest
     catch (RestLiResponseException responseException)
     {
       Assert.assertEquals(responseException.getStatus(), 500, "We should have gotten a 500 back");
-      Assert.assertTrue(responseException.getMessage().contains("Error in application code"), "The error message should be correct");
+      Assert.assertTrue(responseException.getMessage().contains(ErrorResponseBuilder.DEFAULT_INTERNAL_ERROR_MESSAGE), "The error message should be correct");
     }
   }
 
