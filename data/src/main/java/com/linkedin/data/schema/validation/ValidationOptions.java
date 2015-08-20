@@ -265,6 +265,7 @@ public final class ValidationOptions
     ValidationOptions otherOptions = (ValidationOptions) other;
     return (otherOptions._coercionMode == _coercionMode
         && otherOptions._requiredMode == _requiredMode
+        && otherOptions._unrecognizedFieldMode == _unrecognizedFieldMode
         && otherOptions._avroUnionMode == _avroUnionMode
         && otherOptions._validatorParameters.equals(_validatorParameters));
   }
@@ -275,6 +276,7 @@ public final class ValidationOptions
     int code = 17;
     code = code * 31 + (_requiredMode == null ? 0 : _requiredMode.hashCode());
     code = code * 31 + (_coercionMode == null ? 0 : _coercionMode.hashCode());
+    code = code * 31 + (_unrecognizedFieldMode == null ? 0 : _unrecognizedFieldMode.hashCode());
     code = code * 31 + (_avroUnionMode ? 0 : 53);
     code = code * 31 + (_validatorParameters.hashCode());
     return code;
@@ -288,6 +290,8 @@ public final class ValidationOptions
       .append(_requiredMode)
       .append(", FixupMode=")
       .append(_coercionMode)
+      .append(", UnrecognizedFieldMode=")
+      .append(_unrecognizedFieldMode)
       .append(", AvroUnionMode=")
       .append(_avroUnionMode);
     if (_validatorParameters != NO_VALIDATOR_PARAMETERS)
