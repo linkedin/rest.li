@@ -17,9 +17,6 @@
 package com.linkedin.restli.client.multiplexer;
 
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.r2.message.rest.RestException;
@@ -31,6 +28,8 @@ import com.linkedin.restli.common.multiplexer.IndividualResponse;
 import com.linkedin.restli.common.multiplexer.IndividualResponseArray;
 import com.linkedin.restli.common.multiplexer.MultiplexedResponseContent;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 

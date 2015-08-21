@@ -18,25 +18,29 @@ package com.linkedin.restli.client.multiplexer;
 
 
 import com.google.common.collect.ImmutableList;
-
 import com.linkedin.common.callback.Callback;
-import com.linkedin.data.ByteString;
 import com.linkedin.data.template.StringMap;
 import com.linkedin.restli.client.CreateRequest;
+import com.linkedin.restli.client.GetRequestBuilder;
+import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.RestLiCallbackAdapter;
 import com.linkedin.restli.client.RestLiEncodingException;
+import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.client.test.TestRecord;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.HttpMethod;
+import com.linkedin.restli.common.multiplexer.IndividualBody;
 import com.linkedin.restli.common.multiplexer.IndividualRequest;
 import com.linkedin.restli.common.multiplexer.IndividualRequestArray;
 import com.linkedin.restli.common.multiplexer.MultiplexedRequestContent;
-
+import com.linkedin.restli.internal.common.CookieUtil;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.net.HttpCookie;
+import java.util.Collection;
 import java.util.Collections;
 
 
@@ -92,6 +96,30 @@ public class TestMultiplexedRequestBuilder extends MultiplexerTestBase
   }
 
   @Test
+  public void testCookies() throws RestLiEncodingException
+  {
+    final HttpCookie cookie1 = new HttpCookie("testCookie1", "testCookieValue1");
+    final HttpCookie cookie2 = new HttpCookie("testCookie2", "testCookieValue2");
+    // create a request with two cookies
+    Request<TestRecord> requestWithCookie = new GetRequestBuilder<Integer, TestRecord>(BASE_URI, TestRecord.class, RESOURCE_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
+      .id(ID1)
+      .setHeaders(HEADERS)
+      .addCookie(cookie1)
+      .addCookie(cookie2)
+      .build();
+
+    MultiplexedRequest multiplexedRequest = MultiplexedRequestBuilder
+      .createSequentialRequest()
+      .addRequest(requestWithCookie, callback2)
+      .build();
+    IndividualRequest ir = multiplexedRequest.getContent().getRequests().get(0);
+    Collection<HttpCookie> cookies = CookieUtil.decodeCookies(ir.getCookies());
+    final String errorMessageTemplate = "Unable to find cookie '%s' from cookie list in IndividualRequest: " + cookies.toString();
+    Assert.assertTrue(cookies.contains(cookie1), String.format(errorMessageTemplate, cookie1));
+    Assert.assertTrue(cookies.contains(cookie2), String.format(errorMessageTemplate, cookie2));
+  }
+
+  @Test
   public void testBody() throws IOException
   {
     TestRecord entity = fakeEntity(0);
@@ -108,7 +136,7 @@ public class TestMultiplexedRequestBuilder extends MultiplexerTestBase
         .setMethod(HttpMethod.POST.name())
         .setHeaders(new StringMap(HEADERS))
         .setRelativeUrl(BASE_URI)
-        .setBody(ByteString.copy(getBytes(entity)))
+        .setBody(new IndividualBody(entity.data()))
         .setDependentRequests(new IndividualRequestArray());
     MultiplexedRequestContent expectedRequests = new MultiplexedRequestContent();
     expectedRequests.setRequests(new IndividualRequestArray(ImmutableList.of(individualRequest)));

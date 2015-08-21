@@ -18,11 +18,6 @@ package com.linkedin.restli.client.multiplexer;
 
 
 import com.google.common.collect.ImmutableMap;
-
-import com.linkedin.data.ByteString;
-import com.linkedin.data.schema.validation.RequiredMode;
-import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
-import com.linkedin.data.schema.validation.ValidationOptions;
 import com.linkedin.data.template.JacksonDataTemplateCodec;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.StringMap;
@@ -40,6 +35,7 @@ import com.linkedin.restli.common.HttpMethod;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpecImpl;
+import com.linkedin.restli.common.multiplexer.IndividualBody;
 import com.linkedin.restli.common.multiplexer.IndividualRequest;
 import com.linkedin.restli.common.multiplexer.IndividualRequestArray;
 import com.linkedin.restli.common.multiplexer.IndividualResponse;
@@ -50,8 +46,6 @@ import java.net.HttpCookie;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
-import org.testng.Assert;
 
 
 /**
@@ -123,12 +117,11 @@ public class MultiplexerTestBase
 
   protected IndividualResponse fakeIndividualResponse(int id, RecordTemplate record) throws IOException
   {
-    ByteString entity = ByteString.copy(getBytes(record));
     return new IndividualResponse()
         .setId(id)
         .setStatus(HttpStatus.S_200_OK.getCode())
         .setHeaders(new StringMap(HEADERS))
-        .setBody(entity);
+        .setBody(new IndividualBody(record.data()));
   }
 
   protected IndividualResponse fakeIndividualErrorResponse(int id) throws IOException
@@ -160,17 +153,5 @@ public class MultiplexerTestBase
   protected byte[] getBytes(RecordTemplate entity) throws IOException
   {
     return CODEC.dataTemplateToBytes(entity, true);
-  }
-
-  protected void fixUpRecord(RecordTemplate record)
-  {
-    ValidationOptions validationOptions = new ValidationOptions(RequiredMode.FIXUP_ABSENT_WITH_DEFAULT);
-    ValidateDataAgainstSchema.validate(record.data(), record.schema(), validationOptions);
-  }
-
-  protected void assertEquals(RecordTemplate actual, RecordTemplate expected)
-  {
-    fixUpRecord(actual);
-    Assert.assertEquals(actual, expected);
   }
 }

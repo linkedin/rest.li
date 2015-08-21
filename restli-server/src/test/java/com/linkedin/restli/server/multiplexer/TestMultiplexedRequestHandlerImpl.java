@@ -16,8 +16,6 @@
 
 package com.linkedin.restli.server.multiplexer;
 
-
-import com.google.common.collect.ImmutableMap;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.DataMap;
@@ -35,12 +33,15 @@ import com.linkedin.r2.transport.common.RestRequestHandler;
 import com.linkedin.restli.common.HttpMethod;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.common.multiplexer.IndividualBody;
 import com.linkedin.restli.common.multiplexer.IndividualRequest;
 import com.linkedin.restli.common.multiplexer.IndividualRequestArray;
 import com.linkedin.restli.common.multiplexer.IndividualResponse;
 import com.linkedin.restli.common.multiplexer.IndividualResponseArray;
 import com.linkedin.restli.common.multiplexer.MultiplexedRequestContent;
 import com.linkedin.restli.common.multiplexer.MultiplexedResponseContent;
+import com.linkedin.restli.internal.common.ContentTypeUtil;
+import com.linkedin.restli.internal.common.ContentTypeUtil.ContentType;
 import com.linkedin.restli.server.RestLiServiceException;
 import org.testng.annotations.Test;
 
@@ -48,6 +49,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -69,8 +71,10 @@ public class TestMultiplexedRequestHandlerImpl
   private static final String FOO_URL = "/foo";
   private static final String BAR_URL = "/bar";
 
-  private static final ByteString FOO_ENTITY = fakeEntity("foo");
-  private static final ByteString BAR_ENTITY = fakeEntity("bar");
+  private static final IndividualBody FOO_JSON_BODY = fakeIndividualBody("foo");
+  private static final IndividualBody BAR_JSON_BODY = fakeIndividualBody("bar");
+  private static final ByteString FOO_ENTITY = jsonBodyToByteString(FOO_JSON_BODY);
+  private static final ByteString BAR_ENTITY = jsonBodyToByteString(BAR_JSON_BODY);
 
   @Test
   public void testIsMultiplexedRequest() throws Exception
@@ -116,8 +120,8 @@ public class TestMultiplexedRequestHandlerImpl
   {
     MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(null);
     RestRequest request = muxRequestBuilder().build();
-    String contentType = multiplexer.getContentType(request);
-    assertEquals(contentType, RestConstants.HEADER_VALUE_APPLICATION_JSON);
+    ContentType contentType = ContentTypeUtil.getContentType(request.getHeader(RestConstants.HEADER_CONTENT_TYPE));
+    assertEquals(contentType, ContentType.JSON);
   }
 
   @Test
@@ -127,8 +131,8 @@ public class TestMultiplexedRequestHandlerImpl
     RestRequest request = muxRequestBuilder()
         .setHeader(RestConstants.HEADER_CONTENT_TYPE, "application/json; charset=utf-8")
         .build();
-    String contentType = multiplexer.getContentType(request);
-    assertEquals(contentType, RestConstants.HEADER_VALUE_APPLICATION_JSON);
+    ContentType contentType = ContentTypeUtil.getContentType(request.getHeader(RestConstants.HEADER_CONTENT_TYPE));
+    assertEquals(contentType, ContentType.JSON);
   }
 
   @Test
@@ -186,7 +190,7 @@ public class TestMultiplexedRequestHandlerImpl
     multiplexer.handleRequest(request, requestContext, callback);
 
     RestResponse muxRestResponse = callback.get();
-    RestResponse expectedMuxRestResponse = fakeMuxRestResponse(fakeIndResponse(0, FOO_ENTITY));
+    RestResponse expectedMuxRestResponse = fakeMuxRestResponse(fakeIndResponse(0, FOO_JSON_BODY));
 
     assertEquals(muxRestResponse, expectedMuxRestResponse);
 
@@ -214,7 +218,7 @@ public class TestMultiplexedRequestHandlerImpl
     multiplexer.handleRequest(request, requestContext, callback);
 
     RestResponse muxRestResponse = callback.get();
-    RestResponse expectedMuxRestResponse = fakeMuxRestResponse(fakeIndResponse(0, FOO_ENTITY), fakeIndResponse(1, BAR_ENTITY));
+    RestResponse expectedMuxRestResponse = fakeMuxRestResponse(fakeIndResponse(0, FOO_JSON_BODY), fakeIndResponse(1, BAR_JSON_BODY));
 
     assertEquals(muxRestResponse, expectedMuxRestResponse);
 
@@ -244,7 +248,7 @@ public class TestMultiplexedRequestHandlerImpl
     multiplexer.handleRequest(request, requestContext, callback);
 
     RestResponse muxRestResponse = callback.get();
-    RestResponse expectedMuxRestResponse = fakeMuxRestResponse(fakeIndResponse(0, FOO_ENTITY), fakeIndResponse(1, BAR_ENTITY));
+    RestResponse expectedMuxRestResponse = fakeMuxRestResponse(fakeIndResponse(0, FOO_JSON_BODY), fakeIndResponse(1, BAR_JSON_BODY));
 
     assertEquals(muxRestResponse, expectedMuxRestResponse);
 
@@ -272,7 +276,7 @@ public class TestMultiplexedRequestHandlerImpl
     multiplexer.handleRequest(request, requestContext, callback);
 
     RestResponse muxRestResponse = callback.get();
-    RestResponse expectedMuxRestResponse = fakeMuxRestResponse(fakeIndResponse(0, FOO_ENTITY), errorIndResponse(1));
+    RestResponse expectedMuxRestResponse = fakeMuxRestResponse(fakeIndResponse(0, FOO_JSON_BODY), errorIndResponse(1));
 
     assertEquals(muxRestResponse, expectedMuxRestResponse);
 
@@ -327,7 +331,7 @@ public class TestMultiplexedRequestHandlerImpl
     return individualRequest;
   }
 
-  private IndividualResponse fakeIndResponse(int id, ByteString entity)
+  private IndividualResponse fakeIndResponse(int id, IndividualBody entity)
   {
     IndividualResponse individualResponse = new IndividualResponse();
     individualResponse.setId(id);
@@ -384,12 +388,16 @@ public class TestMultiplexedRequestHandlerImpl
         .build();
   }
 
-  private static ByteString fakeEntity(String value)
+  private static IndividualBody fakeIndividualBody(String value)
+  {
+    return new IndividualBody(new DataMap(Collections.singletonMap("value", value)));
+  }
+
+  private static ByteString jsonBodyToByteString(IndividualBody jsonBody)
   {
     try
     {
-      ImmutableMap<String, String> data = ImmutableMap.of("value", value);
-      byte[] bytes = CODEC.mapToBytes(new DataMap(data));
+      byte[] bytes = CODEC.mapToBytes(jsonBody.data());
       return ByteString.copy(bytes);
     }
     catch (IOException e)

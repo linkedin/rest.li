@@ -20,12 +20,6 @@
 
 package com.linkedin.restli.internal.client;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.net.HttpCookie;
-import java.util.Collections;
-import java.util.Map;
 
 import com.linkedin.data.ByteString;
 import com.linkedin.data.DataMap;
@@ -35,10 +29,16 @@ import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.RestLiDecodingException;
 import com.linkedin.restli.common.ProtocolVersion;
-import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.CookieUtil;
+import com.linkedin.restli.internal.common.DataMapConverter;
 import com.linkedin.restli.internal.common.ProtocolVersionUtil;
+import javax.activation.MimeTypeParseException;
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.util.Collections;
+import java.util.Map;
+
 
 /**
  * Converts a raw RestResponse into a type-bound response.  The class is abstract
@@ -46,7 +46,6 @@ import com.linkedin.restli.internal.common.ProtocolVersionUtil;
  * @author Steven Ihde
  * @version $Revision: $
  */
-
 public abstract class RestResponseDecoder<T>
 {
   private static final JacksonDataCodec JACKSON_DATA_CODEC = new JacksonDataCodec();
@@ -60,27 +59,13 @@ public abstract class RestResponseDecoder<T>
 
     try
     {
-      DataMap dataMap;
-      if (entity.length() == 0)
-      {
-        dataMap = null;
-      }
-      else
-      {
-        InputStream inputStream = entity.asInputStream();
-        if ((RestConstants.HEADER_VALUE_APPLICATION_PSON)
-                .equalsIgnoreCase(restResponse.getHeader(RestConstants.HEADER_CONTENT_TYPE)))
-        {
-          dataMap = PSON_DATA_CODEC.readMap(inputStream);
-        }
-        else
-        {
-          dataMap = JACKSON_DATA_CODEC.readMap(inputStream);
-        }
-        inputStream.close();
-      }
+      DataMap dataMap = (entity.isEmpty()) ? null : DataMapConverter.bytesToDataMap(restResponse.getHeaders(), entity);
       response.setEntity(wrapResponse(dataMap, restResponse.getHeaders(), ProtocolVersionUtil.extractProtocolVersion(response.getHeaders())));
       return response;
+    }
+    catch (MimeTypeParseException e)
+    {
+      throw new RestLiDecodingException("Could not decode REST response", e);
     }
     catch (IOException e)
     {

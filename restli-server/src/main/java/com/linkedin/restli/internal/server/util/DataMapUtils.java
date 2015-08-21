@@ -31,18 +31,16 @@ import com.linkedin.r2.message.rest.RestMessage;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.internal.common.DataMapConverter;
 import com.linkedin.restli.internal.server.RestLiInternalException;
 import com.linkedin.restli.server.RoutingException;
-
-import javax.mail.internet.ContentType;
-import javax.mail.internet.ParseException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import javax.activation.MimeTypeParseException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class DataMapUtils
 {
@@ -114,33 +112,13 @@ public class DataMapUtils
    */
   private static DataMap readMapWithExceptions(final RestMessage message) throws IOException
   {
-    String header = message.getHeader(RestConstants.HEADER_CONTENT_TYPE);
-    if (header == null)
-    {
-      return CODEC.readMap(message.getEntity().asInputStream());
-    }
-
-    ContentType contentType;
     try
     {
-      contentType = new ContentType(header);
+      return DataMapConverter.bytesToDataMap(message.getHeader(RestConstants.HEADER_CONTENT_TYPE), message.getEntity());
     }
-    catch (ParseException e)
+    catch (MimeTypeParseException e)
     {
-      throw new RoutingException("Unable to parse Content-Type: " + header, HttpStatus.S_400_BAD_REQUEST.getCode(), e);
-    }
-
-    if (contentType.getBaseType().equalsIgnoreCase(RestConstants.HEADER_VALUE_APPLICATION_JSON))
-    {
-      return CODEC.readMap(message.getEntity().asInputStream());
-    }
-    else if (contentType.getBaseType().equalsIgnoreCase(RestConstants.HEADER_VALUE_APPLICATION_PSON))
-    {
-      return PSON_DATA_CODEC.readMap(message.getEntity().asInputStream());
-    }
-    else
-    {
-      throw new RoutingException("Unknown Content-Type: " + contentType.toString(), HttpStatus.S_415_UNSUPPORTED_MEDIA_TYPE.getCode());
+      throw new RoutingException(e.getMessage(), HttpStatus.S_400_BAD_REQUEST.getCode(), e);
     }
   }
 

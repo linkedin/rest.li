@@ -39,8 +39,8 @@
     },
     {
       "name": "body",
-      "type": "bytes",
-      "default": "",
+      "type": "IndividualBody",
+      "optional": true,
       "doc": "Request body"
     },
     {

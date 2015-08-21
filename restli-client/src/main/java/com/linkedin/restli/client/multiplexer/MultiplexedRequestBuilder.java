@@ -18,10 +18,10 @@ package com.linkedin.restli.client.multiplexer;
 
 
 import com.linkedin.common.callback.Callback;
-import com.linkedin.data.ByteString;
 import com.linkedin.data.template.JacksonDataTemplateCodec;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.SetMode;
+import com.linkedin.data.template.StringArray;
 import com.linkedin.data.template.StringMap;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.restli.client.Request;
@@ -29,12 +29,13 @@ import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.RestLiCallbackAdapter;
 import com.linkedin.restli.client.RestLiEncodingException;
 import com.linkedin.restli.client.uribuilders.RestliUriBuilderUtil;
+import com.linkedin.restli.common.multiplexer.IndividualBody;
 import com.linkedin.restli.common.multiplexer.IndividualRequest;
 import com.linkedin.restli.common.multiplexer.IndividualRequestArray;
 import com.linkedin.restli.common.multiplexer.MultiplexedRequestContent;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
+import com.linkedin.restli.internal.common.CookieUtil;
 
-import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -167,6 +168,11 @@ public class MultiplexedRequestBuilder
     individualRequest.setRelativeUrl(getRelativeUrl(request));
     individualRequest.setMethod(request.getMethod().getHttpMethod().name());
     individualRequest.setHeaders(new StringMap(request.getHeaders()));
+    List<String> cookies = CookieUtil.encodeCookies(request.getCookies());
+    if (!cookies.isEmpty())
+    {
+      individualRequest.setCookies(new StringArray(cookies));
+    }
     individualRequest.setBody(getBody(request), SetMode.IGNORE_NULL);
     individualRequest.setDependentRequests(new IndividualRequestArray(dependantRequests));
     return individualRequest;
@@ -181,7 +187,7 @@ public class MultiplexedRequestBuilder
   /**
    * Tries to extract the body of the given request and serialize it. If there is no body returns null.
    */
-  private static ByteString getBody(Request<?> request) throws RestLiEncodingException
+  private static IndividualBody getBody(Request<?> request) throws RestLiEncodingException
   {
     RecordTemplate record = request.getInputRecord();
     if (record == null)
@@ -190,15 +196,7 @@ public class MultiplexedRequestBuilder
     }
     else
     {
-      try
-      {
-        byte[] bytes = TEMPLATE_CODEC.dataTemplateToBytes(record, true);
-        return ByteString.copy(bytes);
-      }
-      catch (IOException e)
-      {
-        throw new RestLiEncodingException("Can't serialize a data map", e);
-      }
+      return new IndividualBody(record.data());
     }
   }
 

@@ -22,7 +22,6 @@ import com.linkedin.data.ByteString;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.GetMode;
-import com.linkedin.data.template.SetMode;
 import com.linkedin.data.template.StringArray;
 import com.linkedin.data.template.StringMap;
 import com.linkedin.parseq.Engine;
@@ -37,20 +36,22 @@ import com.linkedin.r2.transport.common.RestRequestHandler;
 import com.linkedin.restli.common.HttpMethod;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.common.multiplexer.IndividualBody;
 import com.linkedin.restli.common.multiplexer.IndividualRequest;
 import com.linkedin.restli.common.multiplexer.IndividualResponse;
 import com.linkedin.restli.common.multiplexer.IndividualResponseArray;
 import com.linkedin.restli.common.multiplexer.MultiplexedRequestContent;
 import com.linkedin.restli.common.multiplexer.MultiplexedResponseContent;
+import com.linkedin.restli.internal.common.ContentTypeUtil;
+import com.linkedin.restli.internal.common.ContentTypeUtil.ContentType;
+import com.linkedin.restli.internal.common.DataMapConverter;
+import com.linkedin.restli.internal.server.RestLiInternalException;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.server.RestLiServiceException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.mail.internet.ContentType;
-import javax.mail.internet.ParseException;
-
+import javax.activation.MimeTypeParseException;
+import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
@@ -167,37 +168,22 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
 
   private static void validateHeaders(RestRequest request)
   {
-    String contentType = getContentType(request);
-    boolean valid = RestConstants.HEADER_VALUE_APPLICATION_JSON.equals(contentType);
-    if (!valid)
+    boolean supported;
+    try
+    {
+      supported = (ContentType.JSON == ContentTypeUtil.getContentType(request.getHeader(RestConstants.HEADER_CONTENT_TYPE)));
+    }
+    catch (MimeTypeParseException e)
+    {
+      throw new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST, "Invalid content type");
+    }
+
+    if (!supported)
     {
       throw new RestLiServiceException(HttpStatus.S_415_UNSUPPORTED_MEDIA_TYPE, "Unsupported content type");
     }
   }
 
-  /*
-   * Returns the base content type (without parameters) of the given request. If there is no content type specified in
-   * the header "application/json" is returned.
-   */
-  /* package private */ static String getContentType(RestRequest request)
-  {
-    String contentTypeHeader = request.getHeader(RestConstants.HEADER_CONTENT_TYPE);
-    // fallback to JSON if there is no content type specified
-    if (contentTypeHeader == null)
-    {
-      return RestConstants.HEADER_VALUE_APPLICATION_JSON;
-    }
-    ContentType contentType;
-    try
-    {
-      contentType = new ContentType(contentTypeHeader);
-    }
-    catch (ParseException e)
-    {
-      throw new RestLiServiceException(HttpStatus.S_415_UNSUPPORTED_MEDIA_TYPE, "Invalid content type");
-    }
-    return contentType.getBaseType();
-  }
 
   private Task<Void> createParallelRequestsTask(RequestContext requestContext,
                                                 List<IndividualRequest> individualRequests,
@@ -245,25 +231,36 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
   private static RestRequest createSyntheticRequest(IndividualRequest individualRequest)
   {
     URI uri = URI.create(individualRequest.getRelativeUrl());
-    RestRequestBuilder builder = new RestRequestBuilder(uri);
-    builder.setMethod(individualRequest.getMethod());
-    builder.setHeaders(individualRequest.getHeaders());
-    builder.setCookies(individualRequest.getCookies());
-    builder.setEntity(getEntity(individualRequest));
-    return builder.build();
+    ByteString entity = getBodyAsByteString(individualRequest);
+    return new RestRequestBuilder(uri)
+      .setMethod(individualRequest.getMethod())
+      .setHeaders(individualRequest.getHeaders())
+      .setCookies(individualRequest.getCookies())
+      .setEntity(entity)
+      .build();
   }
 
-  private static ByteString getEntity(IndividualRequest individualRequest)
+  private static ByteString getBodyAsByteString(IndividualRequest individualRequest)
   {
-    ByteString body = individualRequest.getBody(GetMode.NULL);
-    if (body == null)
+    IndividualBody body = individualRequest.getBody(GetMode.NULL);
+
+    ByteString entity = ByteString.empty();
+    try
     {
-      return ByteString.empty();
+      if (body != null)
+      {
+        entity = DataMapConverter.dataMapToByteString(individualRequest.getHeaders(), body.data());
+      }
     }
-    else
+    catch (MimeTypeParseException e)
     {
-      return body;
+      throw new RestLiServiceException(HttpStatus.S_415_UNSUPPORTED_MEDIA_TYPE, "Unsupported media type for request id=" + individualRequest.getId(), e);
     }
+    catch (IOException e)
+    {
+      throw new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST, "Invalid request body for request id=" + individualRequest.getId(), e);
+    }
+    return entity;
   }
 
   private static IndividualResponse toIndividualResponse(int id, RestResponse restResponse)
@@ -273,21 +270,23 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
     individualResponse.setStatus(restResponse.getStatus());
     individualResponse.setHeaders(new StringMap(restResponse.getHeaders()));
     individualResponse.setCookies(new StringArray(restResponse.getCookies()));
-    individualResponse.setBody(getBody(restResponse), SetMode.IGNORE_NULL);
+    ByteString entity = restResponse.getEntity();
+    if (!entity.isEmpty())
+    {
+      try
+      {
+        individualResponse.setBody(new IndividualBody(DataMapConverter.bytesToDataMap(restResponse.getHeaders(), entity)));
+      }
+      catch (MimeTypeParseException e)
+      {
+        throw new RestLiInternalException("Invalid content type for individual response: " + id, e);
+      }
+      catch (IOException e)
+      {
+        throw new RestLiInternalException("Unable to set body for individual response: " + id, e);
+      }
+    }
     return individualResponse;
-  }
-
-  private static ByteString getBody(RestResponse restResponse)
-  {
-    ByteString data = restResponse.getEntity();
-    if (data.isEmpty())
-    {
-      return null;
-    }
-    else
-    {
-      return data;
-    }
   }
 
   private static RestResponse aggregateResponses(List<IndividualResponse> responses)

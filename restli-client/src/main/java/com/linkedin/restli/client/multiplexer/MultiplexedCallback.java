@@ -18,16 +18,21 @@ package com.linkedin.restli.client.multiplexer;
 
 
 import com.linkedin.common.callback.Callback;
+import com.linkedin.data.ByteString;
+import com.linkedin.data.template.GetMode;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestResponseBuilder;
 import com.linkedin.r2.message.rest.RestStatus;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.RestLiDecodingException;
+import com.linkedin.restli.common.multiplexer.IndividualBody;
 import com.linkedin.restli.common.multiplexer.IndividualResponse;
 import com.linkedin.restli.common.multiplexer.MultiplexedResponseContent;
 import com.linkedin.restli.internal.client.EntityResponseDecoder;
-
+import com.linkedin.restli.internal.common.DataMapConverter;
+import javax.activation.MimeTypeParseException;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -87,7 +92,22 @@ public class MultiplexedCallback implements Callback<RestResponse>
     for (IndividualResponse individualResponse : individualResponses)
     {
       Callback<RestResponse> callback = _callbacks.get(individualResponse.getId());
-      RestResponse individualRestResponse = buildIndividualRestResponse(individualResponse);
+      RestResponse individualRestResponse;
+      try
+      {
+        individualRestResponse = buildIndividualRestResponse(individualResponse);
+      }
+      catch (MimeTypeParseException e)
+      {
+        callback.onError(new RestLiDecodingException("Could not convert individual response to individual rest response due to content type is invalid, id=" + individualResponse.getId(), e));
+        return;
+      }
+      catch (IOException e)
+      {
+        callback.onError(new RestLiDecodingException("Could not convert individual response to individual rest response, id=" + individualResponse.getId(), e));
+        return;
+      }
+
       if (RestStatus.isOK(individualResponse.getStatus()))
       {
         callback.onSuccess(individualRestResponse);
@@ -100,14 +120,16 @@ public class MultiplexedCallback implements Callback<RestResponse>
     }
   }
 
-  private static RestResponse buildIndividualRestResponse(IndividualResponse individualResponse)
+  private static RestResponse buildIndividualRestResponse(IndividualResponse individualResponse) throws IOException, MimeTypeParseException
   {
+    IndividualBody body = individualResponse.getBody(GetMode.NULL);
+    ByteString entity = (body != null) ? DataMapConverter.dataMapToByteString(individualResponse.getHeaders(), body.data()) : ByteString.empty();
     return new RestResponseBuilder()
-        .setStatus(individualResponse.getStatus())
-        .setHeaders(individualResponse.getHeaders())
-        .setCookies(individualResponse.getCookies())
-        .setEntity(individualResponse.getBody())
-        .build();
+      .setStatus(individualResponse.getStatus())
+      .setHeaders(individualResponse.getHeaders())
+      .setCookies(individualResponse.getCookies())
+      .setEntity(entity)
+      .build();
   }
 
   private void notifyAggregatedCallback(Response<MultiplexedResponseContent> response)
