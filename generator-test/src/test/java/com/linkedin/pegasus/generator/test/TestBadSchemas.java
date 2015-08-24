@@ -71,7 +71,7 @@ public class TestBadSchemas
           "}"
         ),
         IllegalArgumentException.class,
-        "Class name conflict detected, class name: com.linkedin.pegasus.generator.test.XArray, class already bound to schema: { \"type\" : \"array\", \"items\" : { \"type\" : \"enum\", \"name\" : \"X\", \"namespace\" : \"com.linkedin.pegasus.generator.test\", \"symbols\" : [ \"X\" ] } }, attempting to rebind to schema: { \"type\" : \"enum\", \"name\" : \"XArray\", \"namespace\" : \"com.linkedin.pegasus.generator.test\", \"symbols\" : [ \"Y\" ] }"
+        "Class name conflict detected, class name: com.linkedin.pegasus.generator.test.XArray"
       },
       {
         asMap(
@@ -147,9 +147,7 @@ public class TestBadSchemas
         for (int j = 2; j < row.length; j++)
         {
           String expectedString = (String) row[j];
-          //TODO Comment out for now.  Need to fix this as the fields are loadded into a map and can be processed in unpredicable order
-          // As the result, "ArrayNameDuplicateTest" case failed intermittently depending on which field get generated first.
-          //assertTrue(message.contains(expectedString), message + " does not contain " + expectedString);
+          assertTrue(message.contains(expectedString), message + " does not contain " + expectedString);
         }
       }
     }
