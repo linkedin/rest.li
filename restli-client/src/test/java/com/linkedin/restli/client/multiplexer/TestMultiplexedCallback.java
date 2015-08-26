@@ -30,10 +30,11 @@ import com.linkedin.restli.common.multiplexer.MultiplexedResponseContent;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import org.testng.Assert;
-import org.testng.annotations.Test;
 
 import java.util.concurrent.ExecutionException;
+
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
 
 public class TestMultiplexedCallback extends MultiplexerTestBase
@@ -58,8 +59,8 @@ public class TestMultiplexedCallback extends MultiplexerTestBase
     MultiplexedCallback multiplexedCallback = new MultiplexedCallback(individualCallbacks, aggregatedCallback);
     multiplexedCallback.onSuccess(fakeRestResponse(responseContent));
 
-    Assert.assertEquals(callback1.get(), fakeRestResponse(entity1));
-    Assert.assertEquals(callback2.get(), fakeRestResponse(entity2));
+    assertRestResponseEquals(callback1.get(), fakeRestResponse(entity1));
+    assertRestResponseEquals(callback2.get(), fakeRestResponse(entity2));
 
     MultiplexedResponse multiplexedResponse = aggregatedCallback.get();
     Assert.assertEquals(multiplexedResponse.getStatus(), HttpStatus.S_200_OK.getCode());
@@ -103,10 +104,10 @@ public class TestMultiplexedCallback extends MultiplexerTestBase
     MultiplexedCallback multiplexedCallback = new MultiplexedCallback(individualCallbacks, aggregatedCallback);
     multiplexedCallback.onSuccess(fakeRestResponse(responseContent));
 
-    Assert.assertEquals(callback1.get(), fakeRestResponse(entity1));
+    assertRestResponseEquals(callback1.get(), fakeRestResponse(entity1));
 
     RestException actualError = (RestException) getError(callback2);
-    Assert.assertEquals(actualError.getResponse(), fakeRestErrorResponse());
+    assertRestResponseEquals(actualError.getResponse(), fakeRestErrorResponse());
 
     MultiplexedResponse multiplexedResponse = aggregatedCallback.get();
     Assert.assertEquals(multiplexedResponse.getStatus(), HttpStatus.S_200_OK.getCode());

@@ -17,7 +17,8 @@
 package com.linkedin.restli.client.multiplexer;
 
 
-import com.google.common.collect.ImmutableMap;
+import com.linkedin.data.ByteString;
+import com.linkedin.data.DataMap;
 import com.linkedin.data.template.JacksonDataTemplateCodec;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.StringMap;
@@ -40,12 +41,19 @@ import com.linkedin.restli.common.multiplexer.IndividualRequest;
 import com.linkedin.restli.common.multiplexer.IndividualRequestArray;
 import com.linkedin.restli.common.multiplexer.IndividualResponse;
 import com.linkedin.restli.internal.client.ResponseImpl;
+import com.linkedin.restli.internal.common.DataMapConverter;
+
+import com.google.common.collect.ImmutableMap;
 
 import java.io.IOException;
 import java.net.HttpCookie;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
+import javax.activation.MimeTypeParseException;
+
+import org.testng.Assert;
 
 
 /**
@@ -130,6 +138,29 @@ public class MultiplexerTestBase
         .setId(id)
         .setStatus(HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode())
         .setHeaders(new StringMap(HEADERS));
+  }
+
+  protected void assertRestResponseEquals(RestResponse actual, RestResponse expected) throws MimeTypeParseException, IOException
+  {
+    // After the IndividualBody is serialized into an entity byte array, it can no longer guarantee the order of its fields.
+    // So, to compare entity, we should de-serialize the entity back to a DataMap in order to perform the equal assertion.
+    ByteString actualEntity = actual.getEntity();
+    ByteString expectedEntity = expected.getEntity();
+
+    if (actualEntity.isEmpty() || expectedEntity.isEmpty())
+    {
+      Assert.assertEquals(actual, expected);
+    }
+    else
+    {
+      DataMap actualDataMap = DataMapConverter.bytesToDataMap(actual.getHeaders(), actualEntity);
+      DataMap expectedDataMap = DataMapConverter.bytesToDataMap(expected.getHeaders(), expectedEntity);
+      Assert.assertEquals(actualDataMap, expectedDataMap);
+      // Compare the rest of RestResponse (excluding the entity)
+      RestResponse actualRestResponseWithoutEntity = actual.builder().setEntity(ByteString.empty()).build();
+      RestResponse expectedRestResponseWithoutEntity = expected.builder().setEntity(ByteString.empty()).build();
+      Assert.assertEquals(actualRestResponseWithoutEntity, expectedRestResponseWithoutEntity);
+    }
   }
 
   protected RestResponse fakeRestResponse(RecordTemplate entity) throws IOException
