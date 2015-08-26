@@ -18,11 +18,7 @@ package com.linkedin.data.schema.validation;
 
 
 import java.math.BigDecimal;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import com.linkedin.data.ByteString;
 import com.linkedin.data.Data;
@@ -124,6 +120,7 @@ public final class ValidateDataAgainstSchema
     private Object _fixed = null;
     private boolean _valid = true;
     private final Context _context;
+    private List<FieldToTrim> _toTrim = new ArrayList<FieldToTrim>(0);
 
     private State(ValidationOptions options, Validator validator)
     {
@@ -142,6 +139,12 @@ public final class ValidateDataAgainstSchema
       {
         validateIterative(element);
       }
+
+      if (_toTrim.size() > 0) {
+        for (FieldToTrim fieldToTrim : _toTrim) {
+          fieldToTrim.trim();
+        }
+      }
     }
 
     protected void validateRecursive(DataElement element)
@@ -154,6 +157,7 @@ public final class ValidateDataAgainstSchema
     {
       _recursive = false;
       _fixed = element.getValue();
+      UnrecognizedFieldMode unrecognizedFieldMode = _options.getUnrecognizedFieldMode();
       ObjectIterator it = new ObjectIterator(element, IterationOrder.POST_ORDER);
       DataElement nextElement;
       while ((nextElement = it.next()) != null)
@@ -162,6 +166,16 @@ public final class ValidateDataAgainstSchema
         if (nextElementSchema != null)
         {
           validate(nextElement, nextElementSchema, nextElement.getValue());
+        }
+        else if (unrecognizedFieldMode != UnrecognizedFieldMode.IGNORE)
+        {
+          DataElement parentElement = nextElement.getParent();
+          // We only need to trim elements where the parent type is recognized but the element
+          // is not.
+          if (parentElement != null && parentElement.getSchema() != null)
+          {
+            handleUnrecognizedField(nextElement);
+          }
         }
       }
     }
@@ -278,13 +292,82 @@ public final class ValidateDataAgainstSchema
       {
         String key = entry.getKey();
         RecordDataSchema.Field field = schema.getField(key);
+        Object value = entry.getValue();
         if (field != null)
         {
-          Object value = entry.getValue();
           DataSchema childSchema = field.getType();
           childElement.setValueNameSchema(value, key, childSchema);
           validate(childElement, childSchema, value);
         }
+        else
+        {
+          childElement.setValueNameSchema(value, key, null);
+          handleUnrecognizedField(childElement);
+        }
+      }
+    }
+
+    /**
+     * Holds a the element of a {@link com.linkedin.data.DataMap} field for later removal.
+     *
+     * This is a specialized version of {@link com.linkedin.data.it.Remover.ToRemove} which is and
+     * should remain private, so could not be used here.
+     */
+    private static class FieldToTrim
+    {
+      private FieldToTrim(DataMap parent, String fieldName)
+      {
+        assert(!parent.isReadOnly());
+        _parent = parent;
+        _fieldName = fieldName;
+      }
+
+      private void trim()
+      {
+        if (_parent.isReadOnly())
+        {
+          throw new ConcurrentModificationException("Map marked as read-only during validation.");
+        }
+        else {
+          _parent.remove(_fieldName);
+        }
+      }
+
+      private DataMap _parent;
+      private String _fieldName;
+    }
+
+    private void trimUnrecognizedField(DataElement element)
+    {
+      DataElement parentElement = element.getParent();
+      Object parent = parentElement.getValue();
+      if (parent != null) {
+        if (parent.getClass() == DataMap.class) {
+          DataMap map = (DataMap) parent;
+          Object name = element.getName();
+          assert (name instanceof String);
+          String fieldName = (String) name;
+
+          if (map.isReadOnly()) {
+            _hasFixupReadOnlyError = true;
+            addMessage(element, "unrecognized field cannot be trimmed because DataMap backing it is read-only");
+          } else {
+            _toTrim.add(new FieldToTrim(map, fieldName));
+          }
+        }
+      }
+    }
+
+    private void handleUnrecognizedField(DataElement element) {
+      switch (_options.getUnrecognizedFieldMode()) {
+        case IGNORE:
+          break;
+        case DISALLOW:
+          addMessage(element, "unrecognized field found but not allowed");
+          break;
+        case TRIM:
+          trimUnrecognizedField(element);
+          break;
       }
     }
 
@@ -678,7 +761,7 @@ public final class ValidateDataAgainstSchema
         return object;
       }
     }
-    
+
     protected void addMessage(DataElement element, String format, Object... args)
     {
       _messages.add(new Message(element.path(), format, args));
