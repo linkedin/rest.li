@@ -29,7 +29,7 @@ then
 fi
 
 INCONSISTENT=`git diff --quiet $remote/$branch >/dev/null 2>&1 ; echo $?`
-if [ $INCONSISTENT -eq 0 ]
+if [ $INCONSISTENT -ne 0 ]
 then
     echo "$remote/$branch and current branch are inconsistent."
     echo "Use git diff $remote/$branch to see changes."
