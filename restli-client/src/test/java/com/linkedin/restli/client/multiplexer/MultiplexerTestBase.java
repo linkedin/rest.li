@@ -38,8 +38,9 @@ import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpecImpl;
 import com.linkedin.restli.common.multiplexer.IndividualBody;
 import com.linkedin.restli.common.multiplexer.IndividualRequest;
-import com.linkedin.restli.common.multiplexer.IndividualRequestArray;
+import com.linkedin.restli.common.multiplexer.IndividualRequestMap;
 import com.linkedin.restli.common.multiplexer.IndividualResponse;
+import com.linkedin.restli.common.multiplexer.MultiplexedRequestContent;
 import com.linkedin.restli.internal.client.ResponseImpl;
 import com.linkedin.restli.internal.common.DataMapConverter;
 
@@ -48,7 +49,6 @@ import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.net.HttpCookie;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 
 import javax.activation.MimeTypeParseException;
@@ -78,7 +78,7 @@ public class MultiplexerTestBase
   protected final Response<TestRecord> response1 = fakeResponse(ID1);
   protected final Response<TestRecord> response2 = fakeResponse(ID2);
 
-  protected GetRequest<TestRecord> fakeGetRequest(int id)
+  protected static GetRequest<TestRecord> fakeGetRequest(int id)
   {
     return new GetRequestBuilder<Integer, TestRecord>(BASE_URI, TestRecord.class, RESOURCE_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
         .id(id)
@@ -86,7 +86,7 @@ public class MultiplexerTestBase
         .build();
   }
 
-  protected CreateRequest<TestRecord> fakeCreateRequest(TestRecord entity)
+  protected static CreateRequest<TestRecord> fakeCreateRequest(TestRecord entity)
   {
     return new CreateRequestBuilder<Integer, TestRecord>(BASE_URI, TestRecord.class, RESOURCE_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
         .input(entity)
@@ -94,53 +94,55 @@ public class MultiplexerTestBase
         .build();
   }
 
-  protected Response<TestRecord> fakeResponse(int id)
+  protected static Response<TestRecord> fakeResponse(int id)
   {
     TestRecord record = fakeEntity(id);
     return new ResponseImpl<TestRecord>(HttpStatus.S_200_OK.getCode(), HEADERS, Collections.<HttpCookie>emptyList(), record, null);
   }
 
-  protected TestRecord fakeEntity(int id)
+  protected static TestRecord fakeEntity(int id)
   {
     return new TestRecord()
         .setId(id)
         .setMessage("message" + id);
   }
 
-  protected String getUri(int id)
+  protected static String getUri(int id)
   {
     return BASE_URI + "/" + id;
   }
 
-  protected IndividualRequest fakeIndividualRequest(int id, String url, List<IndividualRequest> dependentCalls)
+  protected static IndividualRequest fakeIndividualRequest(String url)
+  {
+    return fakeIndividualRequest(url, Collections.<String, IndividualRequest>emptyMap());
+  }
+
+  protected static IndividualRequest fakeIndividualRequest(String url, Map<String, IndividualRequest> dependentCalls)
   {
     IndividualRequest request = new IndividualRequest();
-    request.setId(id);
     request.setMethod(HttpMethod.GET.name());
     request.setHeaders(new StringMap(HEADERS));
     request.setRelativeUrl(url);
-    request.setDependentRequests(new IndividualRequestArray(dependentCalls));
+    request.setDependentRequests(new IndividualRequestMap(dependentCalls));
     return request;
   }
 
-  protected IndividualResponse fakeIndividualResponse(int id, RecordTemplate record) throws IOException
+  protected static IndividualResponse fakeIndividualResponse(RecordTemplate record) throws IOException
   {
     return new IndividualResponse()
-        .setId(id)
         .setStatus(HttpStatus.S_200_OK.getCode())
         .setHeaders(new StringMap(HEADERS))
         .setBody(new IndividualBody(record.data()));
   }
 
-  protected IndividualResponse fakeIndividualErrorResponse(int id) throws IOException
+  protected static IndividualResponse fakeIndividualErrorResponse() throws IOException
   {
     return new IndividualResponse()
-        .setId(id)
         .setStatus(HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode())
         .setHeaders(new StringMap(HEADERS));
   }
 
-  protected void assertRestResponseEquals(RestResponse actual, RestResponse expected) throws MimeTypeParseException, IOException
+  protected static void assertRestResponseEquals(RestResponse actual, RestResponse expected) throws MimeTypeParseException, IOException
   {
     // After the IndividualBody is serialized into an entity byte array, it can no longer guarantee the order of its fields.
     // So, to compare entity, we should de-serialize the entity back to a DataMap in order to perform the equal assertion.
@@ -163,7 +165,7 @@ public class MultiplexerTestBase
     }
   }
 
-  protected RestResponse fakeRestResponse(RecordTemplate entity) throws IOException
+  protected static RestResponse fakeRestResponse(RecordTemplate entity) throws IOException
   {
     byte[] bytes = getBytes(entity);
     return new RestResponseBuilder()
@@ -173,7 +175,7 @@ public class MultiplexerTestBase
         .build();
   }
 
-  protected RestResponse fakeRestErrorResponse() throws IOException
+  protected static RestResponse fakeRestErrorResponse() throws IOException
   {
     return new RestResponseBuilder()
         .setStatus(HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode())
@@ -181,7 +183,29 @@ public class MultiplexerTestBase
         .build();
   }
 
-  protected byte[] getBytes(RecordTemplate entity) throws IOException
+  protected static void assertIndividualRequestEquals(IndividualRequest actual, IndividualRequest expected)
+  {
+    Assert.assertNotNull(actual);
+    Assert.assertEquals(actual.getMethod(), expected.getMethod());
+    Assert.assertEquals(actual.getRelativeUrl(), expected.getRelativeUrl());
+    Assert.assertEquals(actual.getHeaders(), expected.getHeaders());
+    Assert.assertEquals(actual.getCookies(), expected.getCookies());
+    Assert.assertEquals(actual.getBody(), expected.getBody());
+    Assert.assertEquals(actual.getDependentRequests(), expected.getDependentRequests());
+  }
+
+  protected static void assertMultiplexedRequestContentEquals(MultiplexedRequestContent actual, MultiplexedRequestContent expected)
+  {
+    IndividualRequestMap actualRequests = actual.getRequests();
+    IndividualRequestMap expectedRequests = expected.getRequests();
+    Assert.assertEquals(actualRequests.size(), expectedRequests.size());
+    for (String id : expectedRequests.keySet())
+    {
+      assertIndividualRequestEquals(actualRequests.get(id), expectedRequests.get(id));
+    }
+  }
+
+  protected static byte[] getBytes(RecordTemplate entity) throws IOException
   {
     return CODEC.dataTemplateToBytes(entity, true);
   }

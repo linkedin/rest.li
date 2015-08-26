@@ -31,14 +31,13 @@ import com.linkedin.restli.client.RestLiEncodingException;
 import com.linkedin.restli.client.uribuilders.RestliUriBuilderUtil;
 import com.linkedin.restli.common.multiplexer.IndividualBody;
 import com.linkedin.restli.common.multiplexer.IndividualRequest;
-import com.linkedin.restli.common.multiplexer.IndividualRequestArray;
+import com.linkedin.restli.common.multiplexer.IndividualRequestMap;
 import com.linkedin.restli.common.multiplexer.MultiplexedRequestContent;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.CookieUtil;
 
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -125,14 +124,14 @@ public class MultiplexedRequestBuilder
   private MultiplexedRequest buildParallel() throws RestLiEncodingException
   {
     Map<Integer, Callback<RestResponse>> callbacks = new HashMap<Integer, Callback<RestResponse>>(_requestsWithCallbacks.size());
-    List<IndividualRequest> individualRequests = new ArrayList<IndividualRequest>(_requestsWithCallbacks.size());
-    // Dependent requests list is always empty
-    List<IndividualRequest> dependentRequests = Collections.emptyList();
+    IndividualRequestMap individualRequests = new IndividualRequestMap(_requestsWithCallbacks.size());
+    // Dependent requests map is always empty
+    IndividualRequestMap dependentRequests = new IndividualRequestMap();
     for (int i = 0; i < _requestsWithCallbacks.size(); i++)
     {
       RequestWithCallback<?> requestWithCallback = _requestsWithCallbacks.get(i);
-      IndividualRequest individualRequest = toIndividualRequest(i, requestWithCallback.getRequest(), dependentRequests);
-      individualRequests.add(individualRequest);
+      IndividualRequest individualRequest = toIndividualRequest(requestWithCallback.getRequest(), dependentRequests);
+      individualRequests.put(Integer.toString(i), individualRequest);
       callbacks.put(i, wrapCallback(requestWithCallback));
     }
     return toMultiplexedRequest(individualRequests, callbacks);
@@ -142,13 +141,14 @@ public class MultiplexedRequestBuilder
   {
     Map<Integer, Callback<RestResponse>> callbacks = new HashMap<Integer, Callback<RestResponse>>(_requestsWithCallbacks.size());
     // Dependent requests - requests which are dependent on the current request (executed after the current request)
-    List<IndividualRequest> dependentRequests = Collections.emptyList();
+    IndividualRequestMap dependentRequests = new IndividualRequestMap();
     // We start with the last request in the list and proceed backwards because sequential ordering is built using reverse dependencies
     for (int i = _requestsWithCallbacks.size() - 1; i >= 0; i--)
     {
       RequestWithCallback<?> requestWithCallback = _requestsWithCallbacks.get(i);
-      IndividualRequest individualRequest = toIndividualRequest(i, requestWithCallback.getRequest(), dependentRequests);
-      dependentRequests = Collections.singletonList(individualRequest);
+      IndividualRequest individualRequest = toIndividualRequest(requestWithCallback.getRequest(), dependentRequests);
+      dependentRequests = new IndividualRequestMap();
+      dependentRequests.put(Integer.toString(i), individualRequest);
       callbacks.put(i, wrapCallback(requestWithCallback));
     }
     return toMultiplexedRequest(dependentRequests, callbacks);
@@ -161,10 +161,9 @@ public class MultiplexedRequestBuilder
                                      requestWithCallback.getCallback());
   }
 
-  private static IndividualRequest toIndividualRequest(int id, Request<?> request, List<IndividualRequest> dependantRequests) throws RestLiEncodingException
+  private static IndividualRequest toIndividualRequest(Request<?> request, IndividualRequestMap dependantRequests) throws RestLiEncodingException
   {
     IndividualRequest individualRequest = new IndividualRequest();
-    individualRequest.setId(id);
     individualRequest.setRelativeUrl(getRelativeUrl(request));
     individualRequest.setMethod(request.getMethod().getHttpMethod().name());
     individualRequest.setHeaders(new StringMap(request.getHeaders()));
@@ -174,7 +173,7 @@ public class MultiplexedRequestBuilder
       individualRequest.setCookies(new StringArray(cookies));
     }
     individualRequest.setBody(getBody(request), SetMode.IGNORE_NULL);
-    individualRequest.setDependentRequests(new IndividualRequestArray(dependantRequests));
+    individualRequest.setDependentRequests(dependantRequests);
     return individualRequest;
   }
 
@@ -200,10 +199,10 @@ public class MultiplexedRequestBuilder
     }
   }
 
-  private static MultiplexedRequest toMultiplexedRequest(List<IndividualRequest> individualRequests, Map<Integer, Callback<RestResponse>> callbacks)
+  private static MultiplexedRequest toMultiplexedRequest(IndividualRequestMap individualRequests, Map<Integer, Callback<RestResponse>> callbacks)
   {
     MultiplexedRequestContent multiplexedRequestContent = new MultiplexedRequestContent();
-    multiplexedRequestContent.setRequests(new IndividualRequestArray(individualRequests));
+    multiplexedRequestContent.setRequests(individualRequests);
     return new MultiplexedRequest(multiplexedRequestContent, callbacks);
   }
 }

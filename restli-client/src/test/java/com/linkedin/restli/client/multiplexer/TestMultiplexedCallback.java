@@ -25,10 +25,9 @@ import com.linkedin.restli.client.RestLiDecodingException;
 import com.linkedin.restli.client.test.TestRecord;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.multiplexer.IndividualResponse;
-import com.linkedin.restli.common.multiplexer.IndividualResponseArray;
+import com.linkedin.restli.common.multiplexer.IndividualResponseMap;
 import com.linkedin.restli.common.multiplexer.MultiplexedResponseContent;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.concurrent.ExecutionException;
@@ -49,12 +48,12 @@ public class TestMultiplexedCallback extends MultiplexerTestBase
     FutureCallback<MultiplexedResponse> aggregatedCallback = new FutureCallback<MultiplexedResponse>();
 
     TestRecord entity1 = fakeEntity(ID1);
-    IndividualResponse ir1 = fakeIndividualResponse(ID1, entity1);
+    IndividualResponse ir1 = fakeIndividualResponse(entity1);
     TestRecord entity2 = fakeEntity(ID2);
-    IndividualResponse ir2 = fakeIndividualResponse(ID2, entity2);
+    IndividualResponse ir2 = fakeIndividualResponse(entity2);
 
     MultiplexedResponseContent responseContent = new MultiplexedResponseContent()
-        .setResponses(new IndividualResponseArray(ImmutableList.of(ir1, ir2)));
+        .setResponses(new IndividualResponseMap(ImmutableMap.of(Integer.toString(ID1), ir1, Integer.toString(ID2), ir2)));
 
     MultiplexedCallback multiplexedCallback = new MultiplexedCallback(individualCallbacks, aggregatedCallback);
     multiplexedCallback.onSuccess(fakeRestResponse(responseContent));
@@ -95,11 +94,11 @@ public class TestMultiplexedCallback extends MultiplexerTestBase
     FutureCallback<MultiplexedResponse> aggregatedCallback = new FutureCallback<MultiplexedResponse>();
 
     TestRecord entity1 = fakeEntity(ID1);
-    IndividualResponse ir1 = fakeIndividualResponse(ID1, entity1);
-    IndividualResponse ir2 = fakeIndividualErrorResponse(ID2);
+    IndividualResponse ir1 = fakeIndividualResponse(entity1);
+    IndividualResponse ir2 = fakeIndividualErrorResponse();
 
     MultiplexedResponseContent responseContent = new MultiplexedResponseContent()
-        .setResponses(new IndividualResponseArray(ImmutableList.of(ir1, ir2)));
+        .setResponses(new IndividualResponseMap(ImmutableMap.of(Integer.toString(ID1), ir1, Integer.toString(ID2), ir2)));
 
     MultiplexedCallback multiplexedCallback = new MultiplexedCallback(individualCallbacks, aggregatedCallback);
     multiplexedCallback.onSuccess(fakeRestResponse(responseContent));

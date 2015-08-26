@@ -28,13 +28,15 @@ import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.RestLiDecodingException;
 import com.linkedin.restli.common.multiplexer.IndividualBody;
 import com.linkedin.restli.common.multiplexer.IndividualResponse;
+import com.linkedin.restli.common.multiplexer.IndividualResponseMap;
 import com.linkedin.restli.common.multiplexer.MultiplexedResponseContent;
 import com.linkedin.restli.internal.client.EntityResponseDecoder;
 import com.linkedin.restli.internal.common.DataMapConverter;
-import javax.activation.MimeTypeParseException;
+
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
+
+import javax.activation.MimeTypeParseException;
 
 
 /**
@@ -88,10 +90,12 @@ public class MultiplexedCallback implements Callback<RestResponse>
 
   private void notifyIndividualCallbacks(Response<MultiplexedResponseContent> muxResponse)
   {
-    List<IndividualResponse> individualResponses = muxResponse.getEntity().getResponses();
-    for (IndividualResponse individualResponse : individualResponses)
+    IndividualResponseMap individualResponses = muxResponse.getEntity().getResponses();
+    for (IndividualResponseMap.Entry<String, IndividualResponse> individualResponseMapEntry : individualResponses.entrySet())
     {
-      Callback<RestResponse> callback = _callbacks.get(individualResponse.getId());
+      Integer id = Integer.valueOf(individualResponseMapEntry.getKey());
+      IndividualResponse individualResponse = individualResponseMapEntry.getValue();
+      Callback<RestResponse> callback = _callbacks.get(id);
       RestResponse individualRestResponse;
       try
       {
@@ -99,12 +103,12 @@ public class MultiplexedCallback implements Callback<RestResponse>
       }
       catch (MimeTypeParseException e)
       {
-        callback.onError(new RestLiDecodingException("Could not convert individual response to individual rest response due to content type is invalid, id=" + individualResponse.getId(), e));
+        callback.onError(new RestLiDecodingException("Could not convert IndividualResponse to individual RestRestponse due to an invalid content type, id=" + id, e));
         return;
       }
       catch (IOException e)
       {
-        callback.onError(new RestLiDecodingException("Could not convert individual response to individual rest response, id=" + individualResponse.getId(), e));
+        callback.onError(new RestLiDecodingException("Could not convert IndividualResponse to individual RestRestponse, id=" + id, e));
         return;
       }
 

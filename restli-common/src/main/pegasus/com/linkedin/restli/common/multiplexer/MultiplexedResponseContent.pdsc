@@ -7,10 +7,10 @@
     {
       "name": "responses",
       "type": {
-        "type": "array",
-        "items": "IndividualResponse"
+        "type": "map",
+        "values": "IndividualResponse"
       },
-      "doc": "Individual HTTP responses"
+      "doc": "Individual HTTP responses, where the key is Id of the corresponding individual request."
     }
   ]
 }

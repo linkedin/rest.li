@@ -38,8 +38,9 @@ import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.common.multiplexer.IndividualBody;
 import com.linkedin.restli.common.multiplexer.IndividualRequest;
+import com.linkedin.restli.common.multiplexer.IndividualRequestMap;
 import com.linkedin.restli.common.multiplexer.IndividualResponse;
-import com.linkedin.restli.common.multiplexer.IndividualResponseArray;
+import com.linkedin.restli.common.multiplexer.IndividualResponseMap;
 import com.linkedin.restli.common.multiplexer.MultiplexedRequestContent;
 import com.linkedin.restli.common.multiplexer.MultiplexedResponseContent;
 import com.linkedin.restli.internal.common.ContentTypeUtil;
@@ -48,13 +49,16 @@ import com.linkedin.restli.internal.common.DataMapConverter;
 import com.linkedin.restli.internal.server.RestLiInternalException;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.server.RestLiServiceException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import javax.activation.MimeTypeParseException;
+
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.activation.MimeTypeParseException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -99,7 +103,7 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
       callback.onError(new RestLiServiceException(HttpStatus.S_405_METHOD_NOT_ALLOWED));
       return;
     }
-    List<IndividualRequest> individualRequests;
+    IndividualRequestMap individualRequests;
     try
     {
       individualRequests = extractIndividualRequests(request);
@@ -116,8 +120,8 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
       callback.onError(new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST));
       return;
     }
-    // prepare the list of individual responses to be collected
-    final List<IndividualResponse> individualResponses = new ArrayList<IndividualResponse>(individualRequests.size());
+    // prepare the map of individual responses to be collected
+    final IndividualResponseMap individualResponses = new IndividualResponseMap(individualRequests.size());
     // all tasks are Void and side effect based, that will be useful when we add streaming
     Task<Void> requestProcessingTask = createParallelRequestsTask(requestContext, individualRequests, individualResponses);
     Task<Void> responseAggregationTask = Tasks.action("send aggregated response", new Runnable()
@@ -135,14 +139,14 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
   /**
    * Extracts individual requests from the given REST request.
    *
-   * @return a non-empty list of individual requests
+   * @return a non-empty map of individual requests
    */
-  private List<IndividualRequest> extractIndividualRequests(RestRequest restRequest)
+  private IndividualRequestMap extractIndividualRequests(RestRequest restRequest)
   {
     validateHeaders(restRequest);
     DataMap data = DataMapUtils.readMap(restRequest);
     MultiplexedRequestContent multiplexedRequestContent = DataTemplateUtil.wrap(data, MultiplexedRequestContent.class);
-    List<IndividualRequest> individualRequests = multiplexedRequestContent.getRequests();
+    IndividualRequestMap individualRequests = multiplexedRequestContent.getRequests();
     int totalCount = totalRequestCount(individualRequests);
     if (totalCount == 0)
     {
@@ -151,15 +155,15 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
     if (totalCount > _maximumRequestsNumber)
     {
       throw new IllegalArgumentException("The server is configured to serve up to " + _maximumRequestsNumber +
-                                         " requests, but received " + individualRequests.size());
+                                         " requests, but received " + totalCount);
     }
     return individualRequests;
   }
 
-  private int totalRequestCount(List<IndividualRequest> individualRequests)
+  private int totalRequestCount(IndividualRequestMap individualRequests)
   {
     int count = individualRequests.size();
-    for (IndividualRequest individualRequest : individualRequests)
+    for (IndividualRequest individualRequest : individualRequests.values())
     {
       count += totalRequestCount(individualRequest.getDependentRequests());
     }
@@ -186,15 +190,17 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
 
 
   private Task<Void> createParallelRequestsTask(RequestContext requestContext,
-                                                List<IndividualRequest> individualRequests,
-                                                List<IndividualResponse> individualResponses)
+                                                IndividualRequestMap individualRequests,
+                                                IndividualResponseMap individualResponses)
   {
     List<Task<Void>> tasks = new ArrayList<Task<Void>>(individualRequests.size());
-    for (IndividualRequest individualRequest : individualRequests)
+    for (IndividualRequestMap.Entry<String, IndividualRequest> individualRequestMapEntry : individualRequests.entrySet())
     {
+      String id = individualRequestMapEntry.getKey();
+      IndividualRequest individualRequest = individualRequestMapEntry.getValue();
       // create a task for the current request
-      Task<Void> individualRequestTask = createRequestHandlingTask(requestContext, individualRequest, individualResponses);
-      List<IndividualRequest> dependentRequests = individualRequest.getDependentRequests();
+      Task<Void> individualRequestTask = createRequestHandlingTask(id, requestContext, individualRequest, individualResponses);
+      IndividualRequestMap dependentRequests = individualRequest.getDependentRequests();
       if (dependentRequests.isEmpty())
       {
         tasks.add(individualRequestTask);
@@ -210,28 +216,29 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
     return toVoid(Tasks.par(tasks));
   }
 
-  private  Task<Void> createRequestHandlingTask(RequestContext requestContext,
-                                               final IndividualRequest individualRequest,
-                                               final List<IndividualResponse> individualResponses)
+  private  Task<Void> createRequestHandlingTask(final String id,
+                                                RequestContext requestContext,
+                                                final IndividualRequest individualRequest,
+                                                final IndividualResponseMap individualResponses)
   {
-    RestRequest individualRestRequest = createSyntheticRequest(individualRequest);
+    RestRequest individualRestRequest = createSyntheticRequest(id, individualRequest);
     final RequestHandlingTask responseTask = new RequestHandlingTask(_requestHandler, individualRestRequest, requestContext);
     Task<Void> addResponseTask = Tasks.action("add response", new Runnable()
     {
       @Override
       public void run()
       {
-        IndividualResponse individualResponse = toIndividualResponse(individualRequest.getId(), responseTask.get());
-        individualResponses.add(individualResponse);
+        IndividualResponse individualResponse = toIndividualResponse(id, responseTask.get());
+        individualResponses.put(id, individualResponse);
       }
     });
     return Tasks.seq(responseTask, addResponseTask);
   }
 
-  private static RestRequest createSyntheticRequest(IndividualRequest individualRequest)
+  private static RestRequest createSyntheticRequest(String id, IndividualRequest individualRequest)
   {
     URI uri = URI.create(individualRequest.getRelativeUrl());
-    ByteString entity = getBodyAsByteString(individualRequest);
+    ByteString entity = getBodyAsByteString(id, individualRequest);
     return new RestRequestBuilder(uri)
       .setMethod(individualRequest.getMethod())
       .setHeaders(individualRequest.getHeaders())
@@ -240,7 +247,7 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
       .build();
   }
 
-  private static ByteString getBodyAsByteString(IndividualRequest individualRequest)
+  private static ByteString getBodyAsByteString(String id, IndividualRequest individualRequest)
   {
     IndividualBody body = individualRequest.getBody(GetMode.NULL);
 
@@ -254,19 +261,18 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
     }
     catch (MimeTypeParseException e)
     {
-      throw new RestLiServiceException(HttpStatus.S_415_UNSUPPORTED_MEDIA_TYPE, "Unsupported media type for request id=" + individualRequest.getId(), e);
+      throw new RestLiServiceException(HttpStatus.S_415_UNSUPPORTED_MEDIA_TYPE, "Unsupported media type for request id=" + id, e);
     }
     catch (IOException e)
     {
-      throw new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST, "Invalid request body for request id=" + individualRequest.getId(), e);
+      throw new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST, "Invalid request body for request id=" + id, e);
     }
     return entity;
   }
 
-  private static IndividualResponse toIndividualResponse(int id, RestResponse restResponse)
+  private static IndividualResponse toIndividualResponse(String id, RestResponse restResponse)
   {
     IndividualResponse individualResponse = new IndividualResponse();
-    individualResponse.setId(id);
     individualResponse.setStatus(restResponse.getStatus());
     individualResponse.setHeaders(new StringMap(restResponse.getHeaders()));
     individualResponse.setCookies(new StringArray(restResponse.getCookies()));
@@ -289,10 +295,10 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
     return individualResponse;
   }
 
-  private static RestResponse aggregateResponses(List<IndividualResponse> responses)
+  private static RestResponse aggregateResponses(IndividualResponseMap responses)
   {
     MultiplexedResponseContent aggregatedResponseContent = new MultiplexedResponseContent();
-    aggregatedResponseContent.setResponses(new IndividualResponseArray(responses));
+    aggregatedResponseContent.setResponses(responses);
     byte[] aggregatedResponseData = DataMapUtils.mapToBytes(aggregatedResponseContent.data());
     return new RestResponseBuilder()
         .setStatus(HttpStatus.S_200_OK.getCode())

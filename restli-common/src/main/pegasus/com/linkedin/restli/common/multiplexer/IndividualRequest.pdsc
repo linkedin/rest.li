@@ -5,11 +5,6 @@
   "doc": "Individual HTTP request within a multiplexed request",
   "fields": [
     {
-      "name": "id",
-      "type": "int",
-      "doc": "Id of the request used to correlate responses with requests. Should unique within the multiplexed request"
-    },
-    {
       "name": "method",
       "type": "string",
       "doc": "HTTP method name"
@@ -46,11 +41,11 @@
     {
       "name": "dependentRequests",
       "type": {
-        "type": "array",
-        "items": "IndividualRequest"
+        "type": "map",
+        "values": "IndividualRequest"
       },
-      "default": [],
-      "doc": "Requests that should be executed after the current request is processed (sequential ordering). Dependent requests are executed in parallel."
+      "default": {},
+      "doc": "Requests that should be executed after the current request is processed (sequential ordering). Dependent requests are executed in parallel.  Keys of the dependent requests are used to correlate responses with requests. They should be unique within the multiplexed request"
     }
   ]
 }

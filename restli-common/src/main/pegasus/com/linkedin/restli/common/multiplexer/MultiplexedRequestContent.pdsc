@@ -7,10 +7,10 @@
     {
       "name": "requests",
       "type": {
-        "type": "array",
-        "items": "IndividualRequest"
+        "type": "map",
+        "values": "IndividualRequest"
       },
-      "doc": "Individual HTTP requests executed in parallel"
+      "doc": "Individual HTTP requests executed in parallel.  Keys of the requests are used to correlate responses with requests. They should be unique within the multiplexed request"
     }
   ]
 }

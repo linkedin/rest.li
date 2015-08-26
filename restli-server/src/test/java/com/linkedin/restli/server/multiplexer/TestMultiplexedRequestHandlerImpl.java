@@ -16,6 +16,7 @@
 
 package com.linkedin.restli.server.multiplexer;
 
+
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.DataMap;
@@ -35,28 +36,36 @@ import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.common.multiplexer.IndividualBody;
 import com.linkedin.restli.common.multiplexer.IndividualRequest;
-import com.linkedin.restli.common.multiplexer.IndividualRequestArray;
+import com.linkedin.restli.common.multiplexer.IndividualRequestMap;
 import com.linkedin.restli.common.multiplexer.IndividualResponse;
-import com.linkedin.restli.common.multiplexer.IndividualResponseArray;
+import com.linkedin.restli.common.multiplexer.IndividualResponseMap;
 import com.linkedin.restli.common.multiplexer.MultiplexedRequestContent;
 import com.linkedin.restli.common.multiplexer.MultiplexedResponseContent;
 import com.linkedin.restli.internal.common.ContentTypeUtil;
 import com.linkedin.restli.internal.common.ContentTypeUtil.ContentType;
 import com.linkedin.restli.server.RestLiServiceException;
-import org.testng.annotations.Test;
+
+import com.google.common.collect.ImmutableMap;
 
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Arrays;
 import java.util.Collections;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
-import static org.easymock.EasyMock.*;
-import static org.testng.Assert.*;
+import org.testng.annotations.Test;
+
+import static org.easymock.EasyMock.createMockBuilder;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.verify;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
 
 
 public class TestMultiplexedRequestHandlerImpl
@@ -148,9 +157,11 @@ public class TestMultiplexedRequestHandlerImpl
   @Test
   public void testHandleTooManyParallelRequests() throws Exception
   {
-    // MultiplexedRequestHandlerImpl is create with the request limit set to 2
+    // MultiplexedRequestHandlerImpl is created with the request limit set to 2
     MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(null);
-    RestRequest request = fakeMuxRestRequest(fakeIndRequest(0, FOO_URL), fakeIndRequest(1, FOO_URL), fakeIndRequest(2, FOO_URL));
+    RestRequest request = fakeMuxRestRequest(ImmutableMap.of("0", fakeIndRequest(FOO_URL),
+                                                             "1", fakeIndRequest(FOO_URL),
+                                                             "2", fakeIndRequest(FOO_URL)));
     FutureCallback<RestResponse> callback = new FutureCallback<RestResponse>();
     multiplexer.handleRequest(request, new RequestContext(), callback);
     assertEquals(getError(callback).getStatus(), HttpStatus.S_400_BAD_REQUEST);
@@ -160,9 +171,12 @@ public class TestMultiplexedRequestHandlerImpl
   @Test
   public void testHandleTooManySequentialRequests() throws Exception
   {
-    // MultiplexedRequestHandlerImpl is create with the request limit set to 2
+    // MultiplexedRequestHandlerImpl is created with the request limit set to 2
     MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(null);
-    RestRequest request = fakeMuxRestRequest(fakeIndRequest(0, FOO_URL, fakeIndRequest(1, FOO_URL, fakeIndRequest(2, FOO_URL))));
+    IndividualRequest ir2 = fakeIndRequest(FOO_URL);
+    IndividualRequest ir1 = fakeIndRequest(FOO_URL, ImmutableMap.of("2", ir2));
+    IndividualRequest ir0 = fakeIndRequest(FOO_URL, ImmutableMap.of("1", ir1));
+    RestRequest request = fakeMuxRestRequest(ImmutableMap.of("0", ir0));
     FutureCallback<RestResponse> callback = new FutureCallback<RestResponse>();
     multiplexer.handleRequest(request, new RequestContext(), callback);
     assertEquals(getError(callback).getStatus(), HttpStatus.S_400_BAD_REQUEST);
@@ -175,7 +189,7 @@ public class TestMultiplexedRequestHandlerImpl
     MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(mockHandler);
     RequestContext requestContext = new RequestContext();
 
-    RestRequest request = fakeMuxRestRequest(fakeIndRequest(0, FOO_URL));
+    RestRequest request = fakeMuxRestRequest(ImmutableMap.of("0",fakeIndRequest(FOO_URL)));
 
     // set expectations
     RestRequest individualRestRequest = fakeIndRestRequest(FOO_URL);
@@ -190,7 +204,7 @@ public class TestMultiplexedRequestHandlerImpl
     multiplexer.handleRequest(request, requestContext, callback);
 
     RestResponse muxRestResponse = callback.get();
-    RestResponse expectedMuxRestResponse = fakeMuxRestResponse(fakeIndResponse(0, FOO_JSON_BODY));
+    RestResponse expectedMuxRestResponse = fakeMuxRestResponse(ImmutableMap.of(0, fakeIndResponse(FOO_JSON_BODY)));
 
     assertEquals(muxRestResponse, expectedMuxRestResponse);
 
@@ -204,7 +218,7 @@ public class TestMultiplexedRequestHandlerImpl
     MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(mockHandler);
     RequestContext requestContext = new RequestContext();
 
-    RestRequest request = fakeMuxRestRequest(fakeIndRequest(0, FOO_URL), fakeIndRequest(1, BAR_URL));
+    RestRequest request = fakeMuxRestRequest(ImmutableMap.of("0", fakeIndRequest(FOO_URL), "1", fakeIndRequest(BAR_URL)));
 
     // set expectations
     expect(mockHandler.handleRequestSync(fakeIndRestRequest(FOO_URL), requestContext)).andReturn(fakeIndRestResponse(FOO_ENTITY));
@@ -218,7 +232,7 @@ public class TestMultiplexedRequestHandlerImpl
     multiplexer.handleRequest(request, requestContext, callback);
 
     RestResponse muxRestResponse = callback.get();
-    RestResponse expectedMuxRestResponse = fakeMuxRestResponse(fakeIndResponse(0, FOO_JSON_BODY), fakeIndResponse(1, BAR_JSON_BODY));
+    RestResponse expectedMuxRestResponse = fakeMuxRestResponse(ImmutableMap.of(0, fakeIndResponse(FOO_JSON_BODY), 1, fakeIndResponse(BAR_JSON_BODY)));
 
     assertEquals(muxRestResponse, expectedMuxRestResponse);
 
@@ -232,9 +246,9 @@ public class TestMultiplexedRequestHandlerImpl
     MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(mockHandler);
     RequestContext requestContext = new RequestContext();
 
-    IndividualRequest indRequest1 = fakeIndRequest(1, BAR_URL);
-    IndividualRequest indRequest0 = fakeIndRequest(0, FOO_URL, indRequest1);
-    RestRequest request = fakeMuxRestRequest(indRequest0);
+    IndividualRequest indRequest1 = fakeIndRequest(BAR_URL);
+    IndividualRequest indRequest0 = fakeIndRequest(FOO_URL, ImmutableMap.of("1", indRequest1));
+    RestRequest request = fakeMuxRestRequest(ImmutableMap.of("0", indRequest0));
 
     // set expectations
     expect(mockHandler.handleRequestSync(fakeIndRestRequest(FOO_URL), requestContext)).andReturn(fakeIndRestResponse(FOO_ENTITY));
@@ -248,7 +262,7 @@ public class TestMultiplexedRequestHandlerImpl
     multiplexer.handleRequest(request, requestContext, callback);
 
     RestResponse muxRestResponse = callback.get();
-    RestResponse expectedMuxRestResponse = fakeMuxRestResponse(fakeIndResponse(0, FOO_JSON_BODY), fakeIndResponse(1, BAR_JSON_BODY));
+    RestResponse expectedMuxRestResponse = fakeMuxRestResponse(ImmutableMap.of(0, fakeIndResponse(FOO_JSON_BODY), 1, fakeIndResponse(BAR_JSON_BODY)));
 
     assertEquals(muxRestResponse, expectedMuxRestResponse);
 
@@ -262,7 +276,7 @@ public class TestMultiplexedRequestHandlerImpl
     MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(mockHandler);
     RequestContext requestContext = new RequestContext();
 
-    RestRequest request = fakeMuxRestRequest(fakeIndRequest(0, FOO_URL), fakeIndRequest(1, BAR_URL));
+    RestRequest request = fakeMuxRestRequest(ImmutableMap.of("0", fakeIndRequest(FOO_URL), "1", fakeIndRequest(BAR_URL)));
 
     // set expectations
     expect(mockHandler.handleRequestSync(fakeIndRestRequest(FOO_URL), requestContext)).andReturn(fakeIndRestResponse(FOO_ENTITY));
@@ -276,19 +290,19 @@ public class TestMultiplexedRequestHandlerImpl
     multiplexer.handleRequest(request, requestContext, callback);
 
     RestResponse muxRestResponse = callback.get();
-    RestResponse expectedMuxRestResponse = fakeMuxRestResponse(fakeIndResponse(0, FOO_JSON_BODY), errorIndResponse(1));
+    RestResponse expectedMuxRestResponse = fakeMuxRestResponse(ImmutableMap.of(0, fakeIndResponse(FOO_JSON_BODY), 1, errorIndResponse()));
 
     assertEquals(muxRestResponse, expectedMuxRestResponse);
 
     verify(mockHandler);
   }
 
-  private RestRequestBuilder muxRequestBuilder() throws URISyntaxException
+  private static RestRequestBuilder muxRequestBuilder() throws URISyntaxException
   {
     return new RestRequestBuilder(new URI("/mux"));
   }
 
-  private RestLiServiceException getError(FutureCallback<RestResponse> future) throws InterruptedException
+  private static RestLiServiceException getError(FutureCallback<RestResponse> future) throws InterruptedException
   {
     try
     {
@@ -301,7 +315,7 @@ public class TestMultiplexedRequestHandlerImpl
     }
   }
 
-  private SynchronousRequestHandler createMockHandler()
+  private static SynchronousRequestHandler createMockHandler()
   {
     return createMockBuilder(SynchronousRequestHandler.class)
         .withConstructor()
@@ -309,7 +323,7 @@ public class TestMultiplexedRequestHandlerImpl
         .createMock();
   }
 
-  private MultiplexedRequestHandlerImpl createMultiplexer(RestRequestHandler requestHandler)
+  private static MultiplexedRequestHandlerImpl createMultiplexer(RestRequestHandler requestHandler)
   {
     ExecutorService taskScheduler = Executors.newFixedThreadPool(1);
     ScheduledExecutorService timerScheduler = Executors.newSingleThreadScheduledExecutor();
@@ -321,20 +335,24 @@ public class TestMultiplexedRequestHandlerImpl
     return new MultiplexedRequestHandlerImpl(requestHandler, engine, MAXIMUM_REQUESTS_NUMBER);
   }
 
-  private IndividualRequest fakeIndRequest(int id, String url, IndividualRequest... dependentRequests)
+  private static IndividualRequest fakeIndRequest(String url)
   {
+    return fakeIndRequest(url, Collections.<String, IndividualRequest>emptyMap());
+  }
+
+  private static IndividualRequest fakeIndRequest(String url, Map<String, IndividualRequest> dependentRequests)
+  {
+
     IndividualRequest individualRequest = new IndividualRequest();
-    individualRequest.setId(id);
     individualRequest.setMethod(HttpMethod.GET.name());
     individualRequest.setRelativeUrl(url);
-    individualRequest.setDependentRequests(new IndividualRequestArray(Arrays.asList(dependentRequests)));
+    individualRequest.setDependentRequests(new IndividualRequestMap(dependentRequests));
     return individualRequest;
   }
 
-  private IndividualResponse fakeIndResponse(int id, IndividualBody entity)
+  private static IndividualResponse fakeIndResponse(IndividualBody entity)
   {
     IndividualResponse individualResponse = new IndividualResponse();
-    individualResponse.setId(id);
     individualResponse.setStatus(HttpStatus.S_200_OK.getCode());
     individualResponse.setCookies(new StringArray());
     individualResponse.setHeaders(new StringMap());
@@ -342,24 +360,23 @@ public class TestMultiplexedRequestHandlerImpl
     return individualResponse;
   }
 
-  private IndividualResponse errorIndResponse(int id)
+  private static IndividualResponse errorIndResponse()
   {
     IndividualResponse individualResponse = new IndividualResponse();
-    individualResponse.setId(id);
     individualResponse.setStatus(HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode());
     individualResponse.setCookies(new StringArray());
     individualResponse.setHeaders(new StringMap());
     return individualResponse;
   }
 
-  private RestRequest fakeIndRestRequest(String url) throws URISyntaxException
+  private static RestRequest fakeIndRestRequest(String url) throws URISyntaxException
   {
     return new RestRequestBuilder(new URI(url))
         .setMethod(HttpMethod.GET.name())
         .build();
   }
 
-  private RestResponse fakeIndRestResponse(ByteString entity) throws URISyntaxException
+  private static RestResponse fakeIndRestResponse(ByteString entity) throws URISyntaxException
   {
     return new RestResponseBuilder()
         .setStatus(HttpStatus.S_200_OK.getCode())
@@ -367,10 +384,15 @@ public class TestMultiplexedRequestHandlerImpl
         .build();
   }
 
-  private RestRequest fakeMuxRestRequest(IndividualRequest... requests) throws URISyntaxException, IOException
+  private static RestRequest fakeMuxRestRequest() throws URISyntaxException, IOException
+  {
+    return fakeMuxRestRequest(Collections.<String, IndividualRequest>emptyMap());
+  }
+
+  private static RestRequest fakeMuxRestRequest(Map<String, IndividualRequest> requests) throws URISyntaxException, IOException
   {
     MultiplexedRequestContent content = new MultiplexedRequestContent();
-    content.setRequests(new IndividualRequestArray(Arrays.asList(requests)));
+    content.setRequests(new IndividualRequestMap(requests));
     return muxRequestBuilder()
         .setMethod(HttpMethod.POST.name())
         .setEntity(CODEC.mapToBytes(content.data()))
@@ -378,10 +400,15 @@ public class TestMultiplexedRequestHandlerImpl
         .build();
   }
 
-  private RestResponse fakeMuxRestResponse(IndividualResponse... responses) throws IOException
+  private static RestResponse fakeMuxRestResponse(Map<Integer, IndividualResponse> responses) throws IOException
   {
+    IndividualResponseMap individualResponseMap = new IndividualResponseMap();
+    for (Map.Entry<Integer, IndividualResponse> responseMapEntry : responses.entrySet())
+    {
+      individualResponseMap.put(Integer.toString(responseMapEntry.getKey()), responseMapEntry.getValue());
+    }
     MultiplexedResponseContent content = new MultiplexedResponseContent();
-    content.setResponses(new IndividualResponseArray(Arrays.asList(responses)));
+    content.setResponses(individualResponseMap);
     return new RestResponseBuilder()
         .setStatus(HttpStatus.S_200_OK.getCode())
         .setEntity(CODEC.mapToBytes(content.data()))

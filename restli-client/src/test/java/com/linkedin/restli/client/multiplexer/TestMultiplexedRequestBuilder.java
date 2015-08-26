@@ -17,7 +17,6 @@
 package com.linkedin.restli.client.multiplexer;
 
 
-import com.google.common.collect.ImmutableList;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.data.template.StringMap;
 import com.linkedin.restli.client.CreateRequest;
@@ -32,16 +31,18 @@ import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.HttpMethod;
 import com.linkedin.restli.common.multiplexer.IndividualBody;
 import com.linkedin.restli.common.multiplexer.IndividualRequest;
-import com.linkedin.restli.common.multiplexer.IndividualRequestArray;
+import com.linkedin.restli.common.multiplexer.IndividualRequestMap;
 import com.linkedin.restli.common.multiplexer.MultiplexedRequestContent;
 import com.linkedin.restli.internal.common.CookieUtil;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+
+import com.google.common.collect.ImmutableMap;
 
 import java.io.IOException;
 import java.net.HttpCookie;
 import java.util.Collection;
-import java.util.Collections;
+
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
 
 public class TestMultiplexedRequestBuilder extends MultiplexerTestBase
@@ -67,12 +68,12 @@ public class TestMultiplexedRequestBuilder extends MultiplexerTestBase
         .build();
 
     //verify requests
-    IndividualRequest ir1 = fakeIndividualRequest(0, getUri(ID1), Collections.<IndividualRequest>emptyList());
-    IndividualRequest ir2 = fakeIndividualRequest(1, getUri(ID2), Collections.<IndividualRequest>emptyList());
+    IndividualRequest ir1 = fakeIndividualRequest(getUri(ID1));
+    IndividualRequest ir2 = fakeIndividualRequest(getUri(ID2));
     MultiplexedRequestContent expectedRequests = new MultiplexedRequestContent();
-    expectedRequests.setRequests(new IndividualRequestArray(ImmutableList.of(ir1, ir2)));
+    expectedRequests.setRequests(new IndividualRequestMap(ImmutableMap.of("0", ir1, "1", ir2)));
 
-    Assert.assertEquals(multiplexedRequest.getContent(), expectedRequests);
+    assertMultiplexedRequestContentEquals(multiplexedRequest.getContent(), expectedRequests);
     verifyCallbacks(multiplexedRequest);
   }
 
@@ -86,12 +87,12 @@ public class TestMultiplexedRequestBuilder extends MultiplexerTestBase
         .build();
 
     //verify requests
-    IndividualRequest ir2 = fakeIndividualRequest(1, getUri(ID2), Collections.<IndividualRequest>emptyList());
-    IndividualRequest ir1 = fakeIndividualRequest(0, getUri(ID1), Collections.singletonList(ir2));
+    IndividualRequest ir2 = fakeIndividualRequest(getUri(ID2));
+    IndividualRequest ir1 = fakeIndividualRequest(getUri(ID1), ImmutableMap.of("1", ir2));
     MultiplexedRequestContent expectedRequests = new MultiplexedRequestContent();
-    expectedRequests.setRequests(new IndividualRequestArray(ImmutableList.of(ir1)));
+    expectedRequests.setRequests(new IndividualRequestMap(ImmutableMap.of("0", ir1)));
 
-    Assert.assertEquals(multiplexedRequest.getContent(), expectedRequests);
+    assertMultiplexedRequestContentEquals(multiplexedRequest.getContent(), expectedRequests);
     verifyCallbacks(multiplexedRequest);
   }
 
@@ -112,7 +113,7 @@ public class TestMultiplexedRequestBuilder extends MultiplexerTestBase
       .createSequentialRequest()
       .addRequest(requestWithCookie, callback2)
       .build();
-    IndividualRequest ir = multiplexedRequest.getContent().getRequests().get(0);
+    IndividualRequest ir = multiplexedRequest.getContent().getRequests().get("0");
     Collection<HttpCookie> cookies = CookieUtil.decodeCookies(ir.getCookies());
     final String errorMessageTemplate = "Unable to find cookie '%s' from cookie list in IndividualRequest: " + cookies.toString();
     Assert.assertTrue(cookies.contains(cookie1), String.format(errorMessageTemplate, cookie1));
@@ -132,16 +133,14 @@ public class TestMultiplexedRequestBuilder extends MultiplexerTestBase
         .build();
 
     IndividualRequest individualRequest = new IndividualRequest()
-        .setId(0)
-        .setMethod(HttpMethod.POST.name())
-        .setHeaders(new StringMap(HEADERS))
-        .setRelativeUrl(BASE_URI)
-        .setBody(new IndividualBody(entity.data()))
-        .setDependentRequests(new IndividualRequestArray());
+      .setMethod(HttpMethod.POST.name())
+      .setHeaders(new StringMap(HEADERS))
+      .setRelativeUrl(BASE_URI)
+      .setBody(new IndividualBody(entity.data()));
     MultiplexedRequestContent expectedRequests = new MultiplexedRequestContent();
-    expectedRequests.setRequests(new IndividualRequestArray(ImmutableList.of(individualRequest)));
+    expectedRequests.setRequests(new IndividualRequestMap(ImmutableMap.of("0", individualRequest)));
 
-    Assert.assertEquals(multiplexedRequest.getContent(), expectedRequests);
+    assertMultiplexedRequestContentEquals(multiplexedRequest.getContent(), expectedRequests);
   }
 
   private void verifyCallbacks(MultiplexedRequest request)

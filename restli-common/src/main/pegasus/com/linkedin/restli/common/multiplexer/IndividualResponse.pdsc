@@ -5,11 +5,6 @@
   "doc": "Individual HTTP response within a multiplexed response",
   "fields": [
     {
-      "name": "id",
-      "type": "int",
-      "doc": "Id of the corresponding request"
-    },
-    {
       "name": "status",
       "type": "int",
       "doc": "HTTP status code"
