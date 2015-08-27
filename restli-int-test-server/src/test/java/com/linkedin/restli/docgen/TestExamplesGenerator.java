@@ -235,10 +235,10 @@ public class TestExamplesGenerator
 
     capture = subgreetingsGenerator.finder("search");
     queryString = capture.getRequest().getURI().getQuery();
-    Assert.assertTrue(queryString.contains("q=search"));
-    Assert.assertTrue(queryString.contains("complexQueryParam.id="));
-    Assert.assertTrue(queryString.contains("complexQueryParam.message="));
-    Assert.assertTrue(queryString.contains("complexQueryParam.tone="));
+    Assert.assertTrue(queryString.contains("q=search"), queryString);
+    Assert.assertTrue(queryString.contains("id:"), queryString);
+    Assert.assertTrue(queryString.contains("message:"), queryString);
+    Assert.assertTrue(queryString.contains("tone:"), queryString);
 
     capture = actionsGenerator.action("echoMessageArray", ResourceLevel.COLLECTION);
     final DataMap echoMessageArrayResponse = DataMapUtils.readMap(capture.getResponse());

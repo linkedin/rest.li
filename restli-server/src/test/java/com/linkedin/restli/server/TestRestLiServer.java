@@ -210,6 +210,7 @@ public class TestRestLiServer
             { _server, AllProtocolVersions.BASELINE_PROTOCOL_VERSION, RestConstants.HEADER_RESTLI_PROTOCOL_VERSION },
             { _server, AllProtocolVersions.LATEST_PROTOCOL_VERSION, RestConstants.HEADER_RESTLI_PROTOCOL_VERSION },
             { _server, AllProtocolVersions.NEXT_PROTOCOL_VERSION, RestConstants.HEADER_RESTLI_PROTOCOL_VERSION },
+            { _server, AllProtocolVersions.PREVIOUS_PROTOCOL_VERSION, RestConstants.HEADER_RESTLI_PROTOCOL_VERSION },
         };
   }
 

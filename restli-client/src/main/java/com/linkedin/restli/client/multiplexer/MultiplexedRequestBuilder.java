@@ -29,6 +29,7 @@ import com.linkedin.restli.client.RestLiCallbackAdapter;
 import com.linkedin.restli.client.RestLiEncodingException;
 import com.linkedin.restli.client.uribuilders.RestliUriBuilderUtil;
 import com.linkedin.restli.common.ProtocolVersion;
+import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.common.multiplexer.IndividualBody;
 import com.linkedin.restli.common.multiplexer.IndividualRequest;
 import com.linkedin.restli.common.multiplexer.IndividualRequestMap;

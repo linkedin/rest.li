@@ -18,6 +18,7 @@ package com.linkedin.restli.client;
 
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.internal.common.AllProtocolVersions;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -31,26 +32,29 @@ import java.util.Map;
  */
 public class TestVersionNegotiation
 {
-  private static final ProtocolVersion _BASELINE_VERSION = new ProtocolVersion(1, 0, 0);
-  private static final ProtocolVersion _LATEST_VERSION = new ProtocolVersion(2, 0, 0);
+  private static final ProtocolVersion _BASELINE_VERSION = AllProtocolVersions.BASELINE_PROTOCOL_VERSION;
+  private static final ProtocolVersion _PREV_VERSION = AllProtocolVersions.PREVIOUS_PROTOCOL_VERSION;
+  private static final ProtocolVersion _LATEST_VERSION = new ProtocolVersion(3, 0, 0);
   private static final ProtocolVersion _NEXT_VERSION = new ProtocolVersion(3, 0, 0);
-  
+
   @DataProvider(name = "data")
   public Object[][] getProtocolVersionClient()
   {
     ProtocolVersion lessThanDefaultVersion = new ProtocolVersion(0, 5, 0);
-    ProtocolVersion betweenDefaultAndLatestVersion = new ProtocolVersion(1, 5, 0);
-    ProtocolVersion greaterThanLatestVersion = new ProtocolVersion(2, 5, 0);
+    ProtocolVersion betweenDefaultAndLatestVersion = new ProtocolVersion(2, 5, 0);
+    ProtocolVersion greaterThanLatestVersion = new ProtocolVersion(3, 5, 0);
     ProtocolVersion greaterThanNextVersion = new ProtocolVersion(3, 5, 0);
 
     /*
     Generate data to test the following function:
       getProtocolVersion(ProtocolVersion defaultVersion,
+                         ProtocolVersion previousVersion,
                          ProtocolVersion latestVersion,
                          ProtocolVersion nextVersion,
                          ProtocolVersion announcedVersion,
                          ProtocolVersionOption versionOption)
     */
+
     return new Object[][]
         {
             // baseline protocol "advertised" + graceful option => baseline protocol version
@@ -97,7 +101,22 @@ public class TestVersionNegotiation
             { betweenDefaultAndLatestVersion, ProtocolVersionOption.FORCE_USE_NEXT, _NEXT_VERSION },
 
             // version greater than latest "advertised" + force next => next
-            { greaterThanLatestVersion, ProtocolVersionOption.FORCE_USE_NEXT, _NEXT_VERSION }
+            { greaterThanLatestVersion, ProtocolVersionOption.FORCE_USE_NEXT, _NEXT_VERSION },
+
+            // default version "advertised" + force next => next
+            {_BASELINE_VERSION, ProtocolVersionOption.FORCE_USE_PREVIOUS, _PREV_VERSION },
+
+            // latest version "advertised" + force next => next
+            { _LATEST_VERSION, ProtocolVersionOption.FORCE_USE_PREVIOUS, _PREV_VERSION },
+
+            // next "advertised" + force next => next
+            { _NEXT_VERSION, ProtocolVersionOption.FORCE_USE_PREVIOUS, _PREV_VERSION },
+
+            // version between default and latest "advertised" + force next => next
+            { betweenDefaultAndLatestVersion, ProtocolVersionOption.FORCE_USE_PREVIOUS, _PREV_VERSION },
+
+            // version greater than latest "advertised" + force next => next
+            { greaterThanLatestVersion, ProtocolVersionOption.FORCE_USE_PREVIOUS, _PREV_VERSION }
         };
   }
 
@@ -135,6 +154,7 @@ public class TestVersionNegotiation
                                              ProtocolVersion expectedProtocolVersion)
   {
     Assert.assertEquals(RestClient.getProtocolVersion(_BASELINE_VERSION,
+                                                      _PREV_VERSION,
                                                       _LATEST_VERSION,
                                                       _NEXT_VERSION,
                                                       announcedVersion,
@@ -149,6 +169,7 @@ public class TestVersionNegotiation
     try
     {
       RestClient.getProtocolVersion(_BASELINE_VERSION,
+                                    _PREV_VERSION,
                                     _LATEST_VERSION,
                                     _NEXT_VERSION,
                                     new ProtocolVersion(0, 0, 0),
@@ -171,21 +192,23 @@ public class TestVersionNegotiation
       properties.put(RestConstants.RESTLI_PROTOCOL_VERSION_PROPERTY, versionInput);
       properties.put(RestConstants.RESTLI_PROTOCOL_VERSION_PERCENTAGE_PROPERTY, versionPercentageInput);
       ProtocolVersion announcedVersion = RestClient.getAnnouncedVersion(properties);
-      Assert.assertEquals(expectedAnnouncedVersion, announcedVersion);
+      Assert.assertEquals(announcedVersion, expectedAnnouncedVersion);
   }
 
   @DataProvider(name = "testForceUseNextVersionOverrideData")
-  public Object[][] testForceUseNextVersionOverrideData()
+  public Object[][] testForceUseVersionOverrideData()
   {
     return new Object[][]
         {
             {ProtocolVersionOption.FORCE_USE_NEXT, _NEXT_VERSION, true},
+            {ProtocolVersionOption.FORCE_USE_PREVIOUS, _NEXT_VERSION, true},
             {ProtocolVersionOption.FORCE_USE_LATEST, _NEXT_VERSION, true},
             {ProtocolVersionOption.USE_LATEST_IF_AVAILABLE, _NEXT_VERSION, true},
 
+            {ProtocolVersionOption.FORCE_USE_PREVIOUS, _PREV_VERSION, false},
             {ProtocolVersionOption.FORCE_USE_NEXT, _NEXT_VERSION, false},
             {ProtocolVersionOption.FORCE_USE_LATEST, _LATEST_VERSION, false},
-            {ProtocolVersionOption.USE_LATEST_IF_AVAILABLE, _LATEST_VERSION, false},
+            {ProtocolVersionOption.USE_LATEST_IF_AVAILABLE, _BASELINE_VERSION, false},
         };
   }
 
@@ -196,6 +219,7 @@ public class TestVersionNegotiation
   {
     ProtocolVersion announcedVersion = new ProtocolVersion("2.0.0");
     ProtocolVersion actualProtocolVersion = RestClient.getProtocolVersion(_BASELINE_VERSION,
+                                                                          _PREV_VERSION,
                                                                           _LATEST_VERSION,
                                                                           _NEXT_VERSION,
                                                                           announcedVersion,

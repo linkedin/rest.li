@@ -120,7 +120,7 @@ public class TestMultiplexerIntegration extends RestLiIntegrationTest
     assertEqualResponses(muxCallback2, directCallback2);
   }
 
-  @ Test
+  @Test
   public void twoParallelCallsWithOneError() throws Exception
   {
     GetRequest<Greeting> request1 = new GreetingsCallbackBuilders().get().id(1L).build();
@@ -202,7 +202,7 @@ public class TestMultiplexerIntegration extends RestLiIntegrationTest
     Assert.assertEquals(muxResponse.getStatus(), directResponse.getStatus());
     Assert.assertEquals(muxResponse.getEntity(), directResponse.getEntity());
     // multiplexed response headers is a subset of direct response headers (direct response has more due to transport level headers)
-    Assert.assertTrue(directResponse.getHeaders().entrySet().containsAll(muxResponse.getHeaders().entrySet()));
+    Assert.assertTrue(directResponse.getHeaders().entrySet().containsAll(muxResponse.getHeaders().entrySet()), directResponse.getHeaders().toString() + ":" + muxResponse.getHeaders().toString());
   }
 
   private Response<Greeting> getResult(FutureCallback<Response<Greeting>> callback) throws InterruptedException, ExecutionException, TimeoutException

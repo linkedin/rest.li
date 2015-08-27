@@ -496,6 +496,9 @@ public class ExampleRequestResponseGenerator
       case FORCE_USE_NEXT:
         protocolVersion = AllProtocolVersions.NEXT_PROTOCOL_VERSION;
         break;
+      case FORCE_USE_PREVIOUS:
+        protocolVersion = AllProtocolVersions.PREVIOUS_PROTOCOL_VERSION;
+        break;
       default:
         throw new IllegalArgumentException("Unsupported enum value: " + _requestOptions.getProtocolVersionOption());
     }

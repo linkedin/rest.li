@@ -70,7 +70,7 @@ public class RestliRequestOptionsBuilder
 
   public RestliRequestOptionsBuilder setAcceptTypes(List<RestClient.AcceptType> acceptTypes)
   {
-    _acceptTypes = Collections.unmodifiableList(acceptTypes);
+    _acceptTypes = acceptTypes == null ? null : Collections.unmodifiableList(acceptTypes);
     return this;
   }
 

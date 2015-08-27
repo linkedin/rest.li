@@ -209,7 +209,7 @@ public class MockBatchEntityResponseFactory
     DataMap rawErrorData = new DataMap();
     for (Map.Entry<K, ErrorResponse> errorResponse : errorResponses.entrySet())
     {
-      rawErrorData.put(String.valueOf(errorResponse.getKey()), errorResponse.getValue().data());
+      rawErrorData.put(URIParamUtils.encodeKeyForBody(errorResponse.getKey(), false, version), errorResponse.getValue().data());
     }
     batchResponseDataMap.put(BatchResponse.ERRORS, rawErrorData);
     return batchResponseDataMap;

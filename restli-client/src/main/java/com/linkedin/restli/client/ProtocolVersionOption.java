@@ -39,6 +39,15 @@ public enum ProtocolVersionOption
   FORCE_USE_LATEST,
 
   /**
+   * Use the previous version of the Rest.li protocol to encode requests, regardless of the version running on the server.
+   * The prev version of the Rest.li protocol is the deprecated version. This option should typically NOT be used for
+   * production services.
+   * CAUTION: this can cause requests to fail if the server does not understand the prev version of the protocol.
+   * "Next version" is defined as {@link com.linkedin.restli.internal.common.AllProtocolVersions#PREVIOUS_PROTOCOL_VERSION}.
+   */
+  FORCE_USE_PREVIOUS,
+
+  /**
    * Use the latest version of the Rest.li protocol if the server supports it.
    * If the server version is less than the baseline Rest.li protocol version then fail the request.
    * If the server version is greater than the next Rest.li protocol version then fail the request.

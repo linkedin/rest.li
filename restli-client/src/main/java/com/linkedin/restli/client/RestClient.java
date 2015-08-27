@@ -27,7 +27,6 @@ import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.codec.PsonDataCodec;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.filter.R2Constants;
-import com.linkedin.r2.filter.CompressionOption;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
@@ -50,7 +49,6 @@ import com.linkedin.restli.internal.common.CookieUtil;
 
 import javax.mail.internet.ParseException;
 import java.io.IOException;
-import java.net.HttpCookie;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
@@ -276,6 +274,7 @@ public class RestClient
     try
     {
       return getProtocolVersion(AllProtocolVersions.BASELINE_PROTOCOL_VERSION,
+                                AllProtocolVersions.PREVIOUS_PROTOCOL_VERSION,
                                 AllProtocolVersions.LATEST_PROTOCOL_VERSION,
                                 AllProtocolVersions.NEXT_PROTOCOL_VERSION,
                                 getAnnouncedVersion(_client.getMetadata(new URI(_uriPrefix + request.getServiceName()))),
@@ -335,6 +334,7 @@ public class RestClient
    * @return the {@link ProtocolVersion} that should be used to build the request
    */
   /*package private*/static ProtocolVersion getProtocolVersion(ProtocolVersion baselineProtocolVersion,
+                                                               ProtocolVersion previousVersion,
                                                                ProtocolVersion latestVersion,
                                                                ProtocolVersion nextVersion,
                                                                ProtocolVersion announcedVersion,
@@ -355,6 +355,8 @@ public class RestClient
         return nextVersion;
       case FORCE_USE_LATEST:
         return latestVersion;
+      case FORCE_USE_PREVIOUS:
+        return previousVersion;
       case USE_LATEST_IF_AVAILABLE:
         if (announcedVersion.compareTo(baselineProtocolVersion) == -1)
         {
@@ -628,6 +630,8 @@ public class RestClient
     RestRequestBuilder requestBuilder = new RestRequestBuilder(requestUri).setMethod(HttpMethod.POST.toString());
     addAcceptHeaders(requestBuilder, Collections.singletonList(AcceptType.JSON));
     addEntityAndContentTypeHeaders(requestBuilder, multiplexedRequest.getContent().data(), ContentType.JSON);
+    //TODO: change this once multiplexer supports dynamic versioning.
+    requestBuilder.setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion().toString());
     return requestBuilder.build();
   }
 

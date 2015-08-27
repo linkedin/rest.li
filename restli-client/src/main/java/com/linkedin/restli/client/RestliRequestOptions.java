@@ -41,6 +41,9 @@ public class RestliRequestOptions
   public static final RestliRequestOptions FORCE_USE_NEXT_OPTION =
       new RestliRequestOptions(ProtocolVersionOption.FORCE_USE_NEXT, null, null, null, null);
 
+  public static final RestliRequestOptions FORCE_USE_PREV_OPTION =
+      new RestliRequestOptions(ProtocolVersionOption.FORCE_USE_PREVIOUS, null, null, null, null);
+
   /**
    * Content type and accept types (if not null) passed in this constructor will take precedence over the corresponding configuration set
    * at {@link RestClient}. Note that this form of configuration at {@link RestClient} is deprecated, therefore please consider using
@@ -131,7 +134,7 @@ public class RestliRequestOptions
   @Override
   public int hashCode()
   {
-    int result = _protocolVersionOption != null ? _protocolVersionOption.hashCode() : 0;
+    int result = _protocolVersionOption.hashCode();
     result = 31 * result + (_requestCompressionOverride != null ? _requestCompressionOverride.hashCode() : 0);
     result = 31 * result + (_responseCompressionOverride != null ? _responseCompressionOverride.hashCode() : 0);
     result = 31 * result + (_contentType != null ? _contentType.hashCode() : 0);

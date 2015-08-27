@@ -28,9 +28,19 @@ public enum AllProtocolVersions
   RESTLI_PROTOCOL_1_0_0(new ProtocolVersion(1, 0, 0)),
   RESTLI_PROTOCOL_2_0_0(new ProtocolVersion(2, 0, 0));
 
+  /** Used by the server to determine the oldest supported version */
   public static final ProtocolVersion OLDEST_SUPPORTED_PROTOCOL_VERSION = RESTLI_PROTOCOL_1_0_0.getProtocolVersion();
-  public static final ProtocolVersion BASELINE_PROTOCOL_VERSION = RESTLI_PROTOCOL_1_0_0.getProtocolVersion();
+
+  /** Used by the client to force use a request to use the deprecated protocol. */
+  public static final ProtocolVersion PREVIOUS_PROTOCOL_VERSION = RESTLI_PROTOCOL_1_0_0.getProtocolVersion();
+
+  /** Used by the client to use default protocol version. */
+  public static final ProtocolVersion BASELINE_PROTOCOL_VERSION = RESTLI_PROTOCOL_2_0_0.getProtocolVersion();
+
+  /** Used by the server and client to use latest supported protocol. */
   public static final ProtocolVersion LATEST_PROTOCOL_VERSION = RESTLI_PROTOCOL_2_0_0.getProtocolVersion();
+
+  /** Used by the server and client to use development protocol. */
   public static final ProtocolVersion NEXT_PROTOCOL_VERSION = RESTLI_PROTOCOL_2_0_0.getProtocolVersion();
 
   private final ProtocolVersion _protocolVersion;
