@@ -337,9 +337,10 @@ public class CompatibilityChecker
 
     if (newerOptionalRemoved.isEmpty() == false)
     {
-      appendMessage(CompatibilityMessage.Impact.NEW_READER_IGNORES_DATA,
-                    "new record removed optional fields %s",
-                    newerOptionalRemoved);
+      appendMessage(CompatibilityMessage.Impact.BREAKS_NEW_AND_OLD_READERS,
+          "new record removed optional fields %s, this allows a new field to be added " +
+          "with the same name but different type in the future.",
+          newerOptionalRemoved);
     }
 
     for (RecordDataSchema.Field newerField : commonFields)
