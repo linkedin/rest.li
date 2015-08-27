@@ -1,10 +1,18 @@
-2.10.13
+2.10.14
 -------
+(RB=554203)
+Corrected CHANGELOG to correctly reflect changes made in 2.10.13.
 
-2.10.12
+2.10.13
 -------
 (RB=537449)
 Change Rest.li validator API to expose validateInput() and validateOutput() instead of a single validate() method.
+
+(RB=546217)
+Changed multiplexer payload for IndividualRequest and IndividualResponse to use a real dictionary instead of a string.
+
+(RB=550981)
+Replaced requests in MultiplexedRequestContent and responses in MultiplexedResponseContent from array to map.
 
 2.10.11
 -------
