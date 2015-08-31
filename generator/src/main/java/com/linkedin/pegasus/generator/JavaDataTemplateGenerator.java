@@ -406,10 +406,10 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     }
   }
 
-  private static void addAccessorDoc(JMethod method, RecordDataSchema.Field field, String prefix)
+  private static void addAccessorDoc(JClass clazz, JMethod method, RecordDataSchema.Field field, String prefix)
   {
     method.javadoc().append(prefix + " for " + field.getName());
-    method.javadoc().addXdoclet("see Fields#" + escapeReserved(field.getName()));
+    method.javadoc().addXdoclet("see " + clazz.name() + ".Fields#" + escapeReserved(field.getName()));
   }
 
   private JDefinedClass defineClass(ClassTemplateSpec classTemplateSpec)
@@ -707,7 +707,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
 
     // Generate has method.
     final JMethod has = templateClass.method(JMod.PUBLIC, getCodeModel().BOOLEAN, "has" + capitalizedName);
-    addAccessorDoc(has, schemaField, "Existence checker");
+    addAccessorDoc(templateClass, has, schemaField, "Existence checker");
     setDeprecatedAnnotationAndJavadoc(has, schemaField);
     final JBlock hasBody = has.body();
     JExpression res = JExpr.invoke("contains").arg(fieldField);
@@ -718,7 +718,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
       // Generate remove method.
       final String removeName = "remove" + capitalizedName;
       final JMethod remove = templateClass.method(JMod.PUBLIC, getCodeModel().VOID, removeName);
-      addAccessorDoc(remove, schemaField, "Remover");
+      addAccessorDoc(templateClass, remove, schemaField, "Remover");
       setDeprecatedAnnotationAndJavadoc(remove, schemaField);
       final JBlock removeBody = remove.body();
       removeBody.invoke("remove").arg(fieldField);
@@ -730,7 +730,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     {
       // Getter method with mode.
       final JMethod getterWithMode = templateClass.method(JMod.PUBLIC, type, getterName);
-      addAccessorDoc(getterWithMode, schemaField, "Getter");
+      addAccessorDoc(templateClass, getterWithMode, schemaField, "Getter");
       setDeprecatedAnnotationAndJavadoc(getterWithMode, schemaField);
       JVar modeParam = getterWithMode.param(_getModeClass, "mode");
       final JBlock getterWithModeBody = getterWithMode.body();
@@ -740,7 +740,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
 
     // Getter method without mode.
     final JMethod getterWithoutMode = templateClass.method(JMod.PUBLIC, type, getterName);
-    addAccessorDoc(getterWithoutMode, schemaField, "Getter");
+    addAccessorDoc(templateClass, getterWithoutMode, schemaField, "Getter");
     setDeprecatedAnnotationAndJavadoc(getterWithoutMode, schemaField);
     final JBlock getterWithoutModeBody = getterWithoutMode.body();
     res = JExpr.invoke("obtain" + wrappedOrDirect).arg(fieldField).arg(JExpr.dotclass(type)).arg(_strictGetMode);
@@ -754,7 +754,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     {
       // Setter method with mode
       final JMethod setterWithMode = templateClass.method(JMod.PUBLIC, templateClass, setterName);
-      addAccessorDoc(setterWithMode, schemaField, "Setter");
+      addAccessorDoc(templateClass, setterWithMode, schemaField, "Setter");
       setDeprecatedAnnotationAndJavadoc(setterWithMode, schemaField);
       JVar param = setterWithMode.param(type, "value");
       JVar modeParam = setterWithMode.param(_setModeClass, "mode");
@@ -765,7 +765,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
 
     // Setter method without mode
     final JMethod setter = templateClass.method(JMod.PUBLIC, templateClass, setterName);
-    addAccessorDoc(setter, schemaField, "Setter");
+    addAccessorDoc(templateClass, setter, schemaField, "Setter");
     setDeprecatedAnnotationAndJavadoc(setter, schemaField);
     JVar param = setter.param(type, "value");
     JInvocation inv = setter.body().invoke("put" + wrappedOrDirect).arg(fieldField).arg(JExpr.dotclass(type));
@@ -776,7 +776,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     if (!type.unboxify().equals(type))
     {
       final JMethod unboxifySetter = templateClass.method(JMod.PUBLIC, templateClass, setterName);
-      addAccessorDoc(unboxifySetter, schemaField, "Setter");
+      addAccessorDoc(templateClass, unboxifySetter, schemaField, "Setter");
       setDeprecatedAnnotationAndJavadoc(unboxifySetter, schemaField);
       param = unboxifySetter.param(type.unboxify(), "value");
       inv = unboxifySetter.body().invoke("put" + wrappedOrDirect).arg(fieldField).arg(JExpr.dotclass(type));
