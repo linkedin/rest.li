@@ -42,7 +42,6 @@ import com.linkedin.restli.restspec.ActionSchemaArray;
 import com.linkedin.restli.restspec.ActionsSetSchema;
 import com.linkedin.restli.restspec.AlternativeKeySchema;
 import com.linkedin.restli.restspec.AlternativeKeySchemaArray;
-import com.linkedin.restli.restspec.AlternativeKeySetSchema;
 import com.linkedin.restli.restspec.AssocKeySchema;
 import com.linkedin.restli.restspec.AssocKeySchemaArray;
 import com.linkedin.restli.restspec.AssociationSchema;
