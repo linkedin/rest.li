@@ -39,7 +39,9 @@ public class CreateResponse
 
   /**
    * @param id the newly created resource id
-   * @param status HTTP response status
+   * @param status HTTP response status.
+   *               Should not be an error status code; passing a status >= 400 will not appear as an exception
+   *
    */
   public CreateResponse(final Object id, final HttpStatus status)
   {
@@ -49,7 +51,8 @@ public class CreateResponse
   }
 
   /**
-   * @param status HTTP response status
+   * @param status HTTP response status.
+   *               Should not be an error status code; passing a status >= 400 will not appear as an exception
    */
   public CreateResponse(final HttpStatus status)
   {

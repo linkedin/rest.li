@@ -64,9 +64,12 @@ public class CreateResponseBuilder implements RestLiResponseBuilder
                                                         List<HttpCookie> cookies)
 {
     CreateResponse createResponse = (CreateResponse) result;
+    if (createResponse.hasError())
+    {
+      return new RecordResponseEnvelope(createResponse.getError(), headers, cookies);
+    }
 
     Object id = null;
-
     if (createResponse.hasId())
     {
       id = ResponseUtils.translateCanonicalKeyToAlternativeKeyIfNeeded(createResponse.getId(), routingResult);

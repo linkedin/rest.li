@@ -117,6 +117,21 @@ public class TestCreateResponseBuilder
   }
 
   @Test
+  public void testCreateResponseException() throws URISyntaxException
+  {
+    CreateResponse createResponse = new CreateResponse(new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST));
+    RestRequest restRequest = new RestRequestBuilder(new URI("/foo")).build();
+    RestLiResponseEnvelope envelope = new CreateResponseBuilder()
+                                        .buildRestLiResponseData(restRequest,
+                                                                 null,
+                                                                 createResponse,
+                                                                 Collections.<String, String>emptyMap(),
+                                                                 Collections.<HttpCookie>emptyList());
+
+    Assert.assertTrue(envelope.isErrorResponse());
+  }
+
+  @Test
   public void testBuilderException()
       throws URISyntaxException
   {
