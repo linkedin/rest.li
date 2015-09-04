@@ -231,6 +231,9 @@ public class ActionRequestBuilder<K, V> extends AbstractRequestBuilder<K, V, Act
 
   private Object getReadOnlyActionParameter(Object original) throws CloneNotSupportedException
   {
+    if (original == null){
+      return null;
+    }
     Object result = original;
 
     if (original.getClass().isArray())

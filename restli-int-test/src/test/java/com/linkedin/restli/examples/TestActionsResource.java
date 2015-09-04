@@ -17,6 +17,7 @@
 package com.linkedin.restli.examples;
 
 
+
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.StringArray;
 import com.linkedin.r2.RemoteInvocationException;
@@ -200,6 +201,32 @@ public class TestActionsResource extends RestLiIntegrationTest
     // this version gives a Task that RestLi runs
     Request<String> req = builders.<String>action("NullTask").build();
     getClient().sendRequest(req).getResponse();
+  }
+
+
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
+  public void testNullOptionalParams(RootBuilderWrapper<?, ?> builders) throws RemoteInvocationException
+  {
+    //variant of testing primitive return types, except with null optional parameters
+
+    Request<Integer> intRequest = builders.<Integer>action("ReturnIntOptionalParam").setActionParam("param",
+        new Integer(1)).build();
+    Integer integer = getClient().sendRequest(intRequest).getResponse().getEntity();
+    Assert.assertEquals(1, integer.intValue());
+
+    Request<Integer> intRequestNull = builders.<Integer>action("ReturnIntOptionalParam").setParam("param", null).build();
+    Integer integerNull = getClient().sendRequest(intRequestNull).getResponse().getEntity();
+    Assert.assertEquals(0, integerNull.intValue());
+
+    Request<Boolean> boolRequest = builders.<Boolean>action("ReturnBoolOptionalParam").setActionParam("param",
+        new Boolean(false)).build();
+    Boolean bool = getClient().sendRequest(boolRequest).getResponse().getEntity();
+    Assert.assertTrue(!bool.booleanValue());
+
+    Request<Boolean> boolRequestNull = builders.<Boolean>action("ReturnBoolOptionalParam").setParam("param",
+        null).build();
+    Boolean boolNull = getClient().sendRequest(boolRequestNull).getResponse().getEntity();
+    Assert.assertTrue(boolNull.booleanValue());
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProviderForParseqActions")

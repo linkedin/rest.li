@@ -104,7 +104,23 @@
       "name" : "returnBool",
       "returns" : "boolean"
     }, {
+      "name" : "returnBoolOptionalParam",
+      "parameters" : [ {
+        "name" : "param",
+        "type" : "boolean",
+        "optional" : true
+      } ],
+      "returns" : "boolean"
+    }, {
       "name" : "returnInt",
+      "returns" : "int"
+    }, {
+      "name" : "returnIntOptionalParam",
+      "parameters" : [ {
+        "name" : "param",
+        "type" : "int",
+        "optional" : true
+      } ],
       "returns" : "int"
     }, {
       "name" : "timeout"

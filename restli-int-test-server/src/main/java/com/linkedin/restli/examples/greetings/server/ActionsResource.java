@@ -21,6 +21,7 @@
 package com.linkedin.restli.examples.greetings.server;
 
 
+import com.linkedin.restli.server.annotations.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -115,6 +116,18 @@ public class ActionsResource
   {
     return Promises.settable();
     // do nothing
+  }
+
+  @Action(name="returnIntOptionalParam")
+  public int returnIntOptionalParam(@Optional @ActionParam ("param") final Integer param)
+  {
+    return (param == null? 0 : param);
+  }
+
+  @Action(name="returnBoolOptionalParam")
+  public boolean returnBoolOptionalParam(@Optional @ActionParam("param") final Boolean param)
+  {
+    return (param == null? Boolean.TRUE : param);
   }
 
   private static Task<String> makeTaskA(final int a) {

@@ -203,7 +203,33 @@ public class TestClientBuilders
     Assert.assertEquals(request.getResponseDecoder().getEntityClass(), Void.class);
   }
 
-  @Test
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "action")
+  public void testActionRequestNullOptionalParams(URIDetails expectedURIDetails) {
+    FieldDef<String> pParam = new FieldDef<String>("p", String.class, DataTemplateUtil.getSchema(String.class));
+    Map<String, DynamicRecordMetadata> requestMetadataMap = new HashMap<String, DynamicRecordMetadata>();
+    DynamicRecordMetadata requestMetadata = new DynamicRecordMetadata("action", Collections.<FieldDef<?>>singleton(pParam));
+    requestMetadataMap.put("action", requestMetadata);
+    DynamicRecordMetadata responseMetadata = new DynamicRecordMetadata("action", Collections.<FieldDef<?>>emptyList());
+    Map<String, DynamicRecordMetadata> responseMetadataMap = new HashMap<String, DynamicRecordMetadata>();
+    responseMetadataMap.put("action", responseMetadata);
+
+    ResourceSpec resourceSpec =
+        new ResourceSpecImpl(Collections.<ResourceMethod>emptySet(), requestMetadataMap, responseMetadataMap, Long.class,
+            TestRecord.class, Collections.<String, CompoundKey.TypeInfo>emptyMap());
+
+    ActionRequestBuilder<Long, TestRecord> builder =
+        new ActionRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS);
+
+    pParam.getField().setOptional(true);
+    ActionRequest<TestRecord> requestNullOptionalValue = builder.name("action").setParam(pParam, null).id(2L).build();
+    Assert.assertEquals(requestNullOptionalValue.getMethod(), ResourceMethod.ACTION);
+    Assert.assertEquals(requestNullOptionalValue.getHeaders(), Collections.<String, String>emptyMap());
+    Assert.assertEquals(requestNullOptionalValue.isSafe(), false);
+    Assert.assertEquals(requestNullOptionalValue.isIdempotent(), false);
+    Assert.assertEquals(requestNullOptionalValue.getResponseDecoder().getEntityClass(), Void.class);
+  }
+
+    @Test
   @SuppressWarnings("unchecked")
   public void testActionRequestInputIsReadOnly()
   {

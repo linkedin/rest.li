@@ -138,7 +138,11 @@ public class DynamicRecordTemplate extends RecordTemplate
     }
     else
     {
-      putDirect(field, (Class<Object>) fieldDef.getType(), fieldDef.getDataClass(), value, SetMode.DISALLOW_NULL);
+      putDirect(field,
+                (Class<Object>) fieldDef.getType(),
+                fieldDef.getDataClass(),
+                value,
+                fieldDef.getField().getOptional()? SetMode.IGNORE_NULL : SetMode.DISALLOW_NULL);
     }
   }
 
