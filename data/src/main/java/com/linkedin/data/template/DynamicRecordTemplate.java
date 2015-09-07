@@ -87,6 +87,9 @@ public class DynamicRecordTemplate extends RecordTemplate
   @SuppressWarnings({"unchecked"})
   public <T> T getValue(FieldDef<T> fieldDef)
   {
+    if (fieldDef == null){
+      return null;
+    }
     RecordDataSchema.Field field = fieldDef.getField();
 
     if (!fieldDefInRecord(fieldDef))
@@ -119,6 +122,9 @@ public class DynamicRecordTemplate extends RecordTemplate
   @SuppressWarnings({"unchecked"})
   public final <T> void setValue(FieldDef<T> fieldDef, T value)
   {
+    if (fieldDef == null){
+      return;
+    }
     RecordDataSchema.Field field = fieldDef.getField();
 
     if (!fieldDefInRecord(fieldDef))

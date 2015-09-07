@@ -214,7 +214,7 @@ public class TestExceptionsResource2 extends RestLiIntegrationTest
     }
 
     Assert.assertNotNull(exception);
-    Assert.assertFalse(exception.hasDecodedResponse());
+    Assert.assertTrue(exception.hasDecodedResponse());
     Assert.assertEquals(exception.getStatus(), HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode());
   }
 

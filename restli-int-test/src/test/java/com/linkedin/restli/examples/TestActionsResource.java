@@ -22,6 +22,7 @@ import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.StringArray;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.restli.client.Request;
+import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.examples.greetings.api.Message;
@@ -203,7 +204,6 @@ public class TestActionsResource extends RestLiIntegrationTest
     getClient().sendRequest(req).getResponse();
   }
 
-
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testNullOptionalParams(RootBuilderWrapper<?, ?> builders) throws RemoteInvocationException
   {
@@ -227,6 +227,17 @@ public class TestActionsResource extends RestLiIntegrationTest
         null).build();
     Boolean boolNull = getClient().sendRequest(boolRequestNull).getResponse().getEntity();
     Assert.assertTrue(boolNull.booleanValue());
+  }
+
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
+  public void testActionResponseVoid(RootBuilderWrapper<?, ?> builders) throws RemoteInvocationException
+  {
+    Request<Void> req = builders.<Void>action("ReturnVoid").build();
+    Response<Void> response = getClient().sendRequest(req).getResponse();
+    Assert.assertNotNull(response);
+    Assert.assertFalse(response.hasError());
+    Assert.assertEquals(response.getStatus(), HttpStatus.S_200_OK.getCode());
+    Assert.assertNull(response.getEntity());
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProviderForParseqActions")

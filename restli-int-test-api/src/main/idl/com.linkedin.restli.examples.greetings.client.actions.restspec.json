@@ -123,6 +123,8 @@
       } ],
       "returns" : "int"
     }, {
+      "name" : "returnVoid"
+    }, {
       "name" : "timeout"
     }, {
       "name" : "timeoutCallback"

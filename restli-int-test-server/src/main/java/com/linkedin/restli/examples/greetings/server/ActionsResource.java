@@ -22,6 +22,8 @@ package com.linkedin.restli.examples.greetings.server;
 
 
 import com.linkedin.restli.server.annotations.Optional;
+import com.linkedin.restli.common.HttpStatus;
+import com.linkedin.restli.server.ActionResult;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -56,6 +58,12 @@ public class ActionsResource
 {
   private final static ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
   private final static int                      DELAY     = 100;
+
+  @Action(name="returnVoid")
+  public ActionResult<Void> returnVoid()
+  {
+    return new ActionResult<Void>(HttpStatus.S_200_OK);
+  }
 
   @Action(name="returnInt")
   public int returnPrimitive()

@@ -25,7 +25,9 @@ import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
 import com.linkedin.data.schema.validation.ValidationOptions;
+import com.linkedin.data.template.BooleanArray;
 import com.linkedin.data.template.DataTemplateUtil;
+import com.linkedin.data.template.StringMap;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.transport.common.Client;
@@ -166,6 +168,20 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     ResponseFuture<Greeting> responseFuture = getClient().sendRequest(request);
     Assert.assertEquals(responseFuture.getResponse().getStatus(), 200);
     Assert.assertNotNull(responseFuture.getResponse().getEntity());
+  }
+
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
+  public void testRecordActionVoidReturn(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
+  {
+    Request<Void> requestVoid = builders.<Void>action("AnotherAction")
+        .setActionParam("bitfield", new BooleanArray())
+        .setActionParam("request", new TransferOwnershipRequest())
+        .setActionParam("someString", new String(""))
+        .setActionParam("stringMap", new StringMap())
+        .build();
+    ResponseFuture<Void> responseFutureVoid = getClient().sendRequest(requestVoid);
+    Assert.assertEquals(responseFutureVoid.getResponse().getStatus(), 200);
+    Assert.assertNull(responseFutureVoid.getResponse().getEntity());
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
