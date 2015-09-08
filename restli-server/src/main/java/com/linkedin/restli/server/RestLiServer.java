@@ -16,6 +16,7 @@
 
 package com.linkedin.restli.server;
 
+
 import com.linkedin.common.callback.Callback;
 import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.parseq.Engine;
@@ -55,6 +56,7 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 
 /**
  * @author dellamag
@@ -130,7 +132,11 @@ public class RestLiServer extends BaseRestServer
       _debugHandlers.put(debugHandler.getHandlerId(), debugHandler);
     }
 
-    _multiplexedRequestHandler = new MultiplexedRequestHandlerImpl(this, engine, config.getMaxRequestsMultiplexed());
+    _multiplexedRequestHandler = new MultiplexedRequestHandlerImpl(this,
+                                                                   engine,
+                                                                   config.getMaxRequestsMultiplexed(),
+                                                                   config.getMultiplexerSingletonFilter());
+
     // verify that if there are resources using the engine, then the engine is not null
     if (engine == null)
     {

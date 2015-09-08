@@ -57,6 +57,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
+import org.easymock.EasyMock;
 import org.testng.annotations.Test;
 
 import static org.easymock.EasyMock.createMockBuilder;
@@ -180,6 +181,49 @@ public class TestMultiplexedRequestHandlerImpl
     FutureCallback<RestResponse> callback = new FutureCallback<RestResponse>();
     multiplexer.handleRequest(request, new RequestContext(), callback);
     assertEquals(getError(callback).getStatus(), HttpStatus.S_400_BAD_REQUEST);
+  }
+
+  @Test
+  public void testCustomMultiplexedSingletonFilter() throws Exception
+  {
+    SynchronousRequestHandler mockHandler = createMockHandler();
+    MultiplexerSingletonFilter mockMuxFilter = EasyMock.createMock(MultiplexerSingletonFilter.class);
+
+    MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(mockHandler, mockMuxFilter);
+    RequestContext requestContext = new RequestContext();
+
+    // Create multiplexer request with 1 individual request
+    RestRequest request = fakeMuxRestRequest(ImmutableMap.of("0", fakeIndRequest("/urlNeedToBeRemapped")));
+
+    // Set mock for request handler.
+    // Mock handler will take a FOO_URL request and return the corresponding FOO_ENTITY in the response
+    RestRequest individualRestRequest = fakeIndRestRequest(FOO_URL);
+    RestResponse individualRestResponse = fakeIndRestResponse(FOO_ENTITY);
+    expect(mockHandler.handleRequestSync(individualRestRequest, requestContext)).andReturn(individualRestResponse);
+
+    // Set mock/expectation for multiplexer filter
+    // Map request from /urlNeedToBeRemapped to FOO_URL so that mock handler will be able to handle the request.
+    // Map response's body from FOO_ENTITY to BAR_JSON_BODY to simulate filtering on response
+    expect(mockMuxFilter.filterIndividualRequest(EasyMock.anyObject(IndividualRequest.class)))
+                        .andReturn(fakeIndRequest(FOO_URL))
+                        .once();
+    expect(mockMuxFilter.filterIndividualResponse(EasyMock.anyObject(IndividualResponse.class)))
+                        .andReturn(fakeIndResponse(BAR_JSON_BODY))
+                        .once();
+
+    // Switch into replay mode
+    replay(mockHandler);
+    replay(mockMuxFilter);
+
+    FutureCallback<RestResponse> callback = new FutureCallback<RestResponse>();
+
+    multiplexer.handleRequest(request, requestContext, callback);
+
+    RestResponse muxRestResponse = callback.get();
+    RestResponse expectedMuxRestResponse = fakeMuxRestResponse(ImmutableMap.of(0, fakeIndResponse(BAR_JSON_BODY)));
+
+    assertEquals(muxRestResponse, expectedMuxRestResponse);
+    verify(mockMuxFilter);
   }
 
   @Test
@@ -325,6 +369,11 @@ public class TestMultiplexedRequestHandlerImpl
 
   private static MultiplexedRequestHandlerImpl createMultiplexer(RestRequestHandler requestHandler)
   {
+    return createMultiplexer(requestHandler, null);
+  }
+
+  private static MultiplexedRequestHandlerImpl createMultiplexer(RestRequestHandler requestHandler, MultiplexerSingletonFilter multiplexerSingletonFilter)
+  {
     ExecutorService taskScheduler = Executors.newFixedThreadPool(1);
     ScheduledExecutorService timerScheduler = Executors.newSingleThreadScheduledExecutor();
     Engine engine = new EngineBuilder()
@@ -332,7 +381,7 @@ public class TestMultiplexedRequestHandlerImpl
         .setTimerScheduler(timerScheduler)
         .build();
 
-    return new MultiplexedRequestHandlerImpl(requestHandler, engine, MAXIMUM_REQUESTS_NUMBER);
+    return new MultiplexedRequestHandlerImpl(requestHandler, engine, MAXIMUM_REQUESTS_NUMBER, multiplexerSingletonFilter);
   }
 
   private static IndividualRequest fakeIndRequest(String url)
