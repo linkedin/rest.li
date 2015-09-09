@@ -80,7 +80,7 @@ import org.slf4j.LoggerFactory;
 /**
  * This class will parse the resource spec IDL to generate request builder specifications containing all the meta
  * information defined in the restspec.json IDL file.
- * 
+ *
  * @author Min Chen
  */
 public class RequestBuilderSpecGenerator
@@ -117,10 +117,24 @@ public class RequestBuilderSpecGenerator
                                      RestliVersion version,
                                      Map<ResourceMethod, String> builderBaseMap)
   {
+    this(schemaResolver, templateSpecGenerator, version, builderBaseMap, null);
+  }
+
+  public RequestBuilderSpecGenerator(DataSchemaResolver schemaResolver,
+                                     TemplateSpecGenerator templateSpecGenerator,
+                                     RestliVersion version,
+                                     Map<ResourceMethod, String> builderBaseMap,
+                                     String customMethodBuilderSuffix)
+  {
     _schemaResolver = schemaResolver;
     _templateSpecGenerator = templateSpecGenerator;
     _version = version;
     _builderBaseMap = builderBaseMap;
+    if (customMethodBuilderSuffix != null)
+    {
+      METHOD_BUILDER_SUFFIX.put(RestliVersion.RESTLI_1_0_0, customMethodBuilderSuffix);
+      METHOD_BUILDER_SUFFIX.put(RestliVersion.RESTLI_2_0_0, customMethodBuilderSuffix);
+    }
   }
 
   public String getBuilderBase(ResourceMethod method)

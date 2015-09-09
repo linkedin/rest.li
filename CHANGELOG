@@ -1,6 +1,7 @@
 2.10.17
 -------
-
+(RB=563406)
+Allow custom method builder suffix in RequestBuilderSpecGenerator.
 
 2.10.16
 -------
