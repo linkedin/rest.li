@@ -20,6 +20,7 @@ package com.linkedin.restli.server;
 import com.linkedin.restli.internal.server.methods.response.ErrorResponseBuilder;
 import com.linkedin.restli.server.filter.RequestFilter;
 import com.linkedin.restli.server.filter.ResponseFilter;
+import com.linkedin.restli.server.multiplexer.MultiplexerSingletonFilter;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -79,6 +80,7 @@ public class RestLiConfig
   private final List<RequestFilter> _requestFilters = new ArrayList<RequestFilter>();
   private final List<ResponseFilter> _responseFilters = new ArrayList<ResponseFilter>();
   private int _maxRequestsMultiplexed = DEFAULT_MAX_REQUESTS_MULTIPLEXED;
+  private MultiplexerSingletonFilter _multiplexerSingletonFilter;
 
   /**
    * Constructor.
@@ -229,6 +231,24 @@ public class RestLiConfig
   public void setDebugRequestHandlers(final List<RestLiDebugRequestHandler> handlers)
   {
     _debugRequestHandlers = new ArrayList<RestLiDebugRequestHandler>(handlers);
+  }
+
+  /**
+   * Get the multiplexer singleton filter
+   * @return a multiplexer singletson filter
+   */
+  public MultiplexerSingletonFilter getMultiplexerSingletonFilter()
+  {
+    return _multiplexerSingletonFilter;
+  }
+
+  /**
+   * Set the multiplexer singleton filter.
+   * @param multiplexerSingletonFilter the multiplexer singleton filter to set
+   */
+  public void setMultiplexerSingletonFilter(final MultiplexerSingletonFilter multiplexerSingletonFilter)
+  {
+    _multiplexerSingletonFilter = multiplexerSingletonFilter;
   }
 
   public ErrorResponseFormat getErrorResponseFormat()

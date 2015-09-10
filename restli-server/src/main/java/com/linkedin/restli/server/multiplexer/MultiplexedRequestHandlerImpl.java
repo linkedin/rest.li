@@ -74,17 +74,24 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
   private final RestRequestHandler _requestHandler;
   private final Engine _engine;
   private final int _maximumRequestsNumber;
+  private final MultiplexerSingletonFilter _multiplexerSingletonFilter;
 
   /**
    * @param requestHandler        the handler that will take care of individual requests
    * @param engine                ParSeq engine to run request handling on
    * @param maximumRequestsNumber the maximum number of individual requests allowed in a multiplexed request
+   * @param multiplexerSingletonFilter the singleton filter that is used by multiplexer to pre-process individual request and
+   *                                   post-process individual response. Pass in null if no pre-processing or post-processing are required.
    */
-  public MultiplexedRequestHandlerImpl(RestRequestHandler requestHandler, Engine engine, int maximumRequestsNumber)
+  public MultiplexedRequestHandlerImpl(RestRequestHandler requestHandler,
+                                       Engine engine,
+                                       int maximumRequestsNumber,
+                                       MultiplexerSingletonFilter multiplexerSingletonFilter)
   {
     _requestHandler = requestHandler;
     _engine = engine;
     _maximumRequestsNumber = maximumRequestsNumber;
+    _multiplexerSingletonFilter = multiplexerSingletonFilter;
   }
 
   @Override
@@ -235,8 +242,12 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
     return Tasks.seq(responseTask, addResponseTask);
   }
 
-  private static RestRequest createSyntheticRequest(String id, IndividualRequest individualRequest)
+  private RestRequest createSyntheticRequest(String id, IndividualRequest individualRequest)
   {
+    if (_multiplexerSingletonFilter != null)
+    {
+      individualRequest = _multiplexerSingletonFilter.filterIndividualRequest(individualRequest);
+    }
     URI uri = URI.create(individualRequest.getRelativeUrl());
     ByteString entity = getBodyAsByteString(id, individualRequest);
     return new RestRequestBuilder(uri)
@@ -270,7 +281,7 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
     return entity;
   }
 
-  private static IndividualResponse toIndividualResponse(String id, RestResponse restResponse)
+  private IndividualResponse toIndividualResponse(String id, RestResponse restResponse)
   {
     IndividualResponse individualResponse = new IndividualResponse();
     individualResponse.setStatus(restResponse.getStatus());
@@ -291,6 +302,10 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
       {
         throw new RestLiInternalException("Unable to set body for individual response: " + id, e);
       }
+    }
+    if (_multiplexerSingletonFilter != null)
+    {
+      individualResponse = _multiplexerSingletonFilter.filterIndividualResponse(individualResponse);
     }
     return individualResponse;
   }

@@ -1,7 +1,15 @@
+2.10.17
+-------
+
+
 2.10.16
 -------
 (RB=551668)
 Data generator generates unambiguous @see link.
+
+(RB=556232)
+Enable application to do additional processing on IndividualRequest and IndividualResponse by using
+MultiplexerSingletonFilter.
 
 2.10.15
 -------
