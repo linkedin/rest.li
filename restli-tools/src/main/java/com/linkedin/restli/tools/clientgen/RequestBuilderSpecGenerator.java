@@ -89,6 +89,7 @@ public class RequestBuilderSpecGenerator
 
   private static final Map<RestliVersion, String> ROOT_BUILDERS_SUFFIX;
   private static final Map<RestliVersion, String> METHOD_BUILDER_SUFFIX;
+  private final String _customMethodBuilderSuffix;
 
   // use LinkedHashSet to keep insertion order to avoid randomness in generated code in giant root builder case.
   protected final Set<BuilderSpec> _builderSpecs = new LinkedHashSet<BuilderSpec>();
@@ -130,11 +131,7 @@ public class RequestBuilderSpecGenerator
     _templateSpecGenerator = templateSpecGenerator;
     _version = version;
     _builderBaseMap = builderBaseMap;
-    if (customMethodBuilderSuffix != null)
-    {
-      METHOD_BUILDER_SUFFIX.put(RestliVersion.RESTLI_1_0_0, customMethodBuilderSuffix);
-      METHOD_BUILDER_SUFFIX.put(RestliVersion.RESTLI_2_0_0, customMethodBuilderSuffix);
-    }
+    _customMethodBuilderSuffix = customMethodBuilderSuffix;
   }
 
   public String getBuilderBase(ResourceMethod method)
@@ -443,8 +440,7 @@ public class RequestBuilderSpecGenerator
         String finderName = finder.getName();
 
         String builderName =
-            CodeUtil.capitalize(resourceName) + "FindBy" + CodeUtil.capitalize(finderName) + METHOD_BUILDER_SUFFIX
-                .get(_version);
+            CodeUtil.capitalize(resourceName) + "FindBy" + CodeUtil.capitalize(finderName) + getMethodBuilderSuffix();
         FinderBuilderSpec finderBuilderClass =
             generateFinderRequestBuilder(baseBuilderClass, keyClass, valueClass, builderName,
                                          rootBuilderSpec.getNamespace(), finderName);
@@ -558,8 +554,7 @@ public class RequestBuilderSpecGenerator
     String actionName = action.getName();
     String returnType = action.getReturns();
     String actionBuilderClassName =
-        CodeUtil.capitalize(resourceName) + "Do" + CodeUtil.capitalize(actionName) + METHOD_BUILDER_SUFFIX
-            .get(_version);
+        CodeUtil.capitalize(resourceName) + "Do" + CodeUtil.capitalize(actionName) + getMethodBuilderSuffix();
     ActionBuilderSpec actionBuilderClass =
         generateActionRequestBuilder(getBuilderBase(ResourceMethod.ACTION), keyClass, returnType,
                                      actionBuilderClassName, rootBuilderSpec.getNamespace(), action);
@@ -605,7 +600,7 @@ public class RequestBuilderSpecGenerator
 
         final RestMethodSchema schema = schemaMap.get(method);
         RestMethodBuilderSpec requestBuilder = generateRestMethodRequestBuilder(entry.getValue(), keyClass, valueClass,
-                                                                                resourceName + RestLiToolsUtils.nameCapsCase(methodName) + METHOD_BUILDER_SUFFIX.get(_version),
+                                                                                resourceName + RestLiToolsUtils.nameCapsCase(methodName) + getMethodBuilderSuffix(),
                                                                                 rootBuilderSpec.getNamespace(), schema);
         generatePathKeyBindingMethods(pathKeys, requestBuilder, pathKeyTypes);
 
@@ -724,5 +719,10 @@ public class RequestBuilderSpecGenerator
   {
     // convert from DataSchema to ClassTemplateSpec
     return _templateSpecGenerator.generate(dataSchema, _currentSchemaLocation);
+  }
+
+  private String getMethodBuilderSuffix()
+  {
+    return _customMethodBuilderSuffix == null ? METHOD_BUILDER_SUFFIX.get(_version) : _customMethodBuilderSuffix;
   }
 }
