@@ -503,7 +503,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
           {
             _callback.onSuccess(_properties);
           }
-          _log.error("NoNode exception! count={}", _count);
+          _log.debug("{} doesn't exist, count={}", s, _count);
           break;
 
         default:
