@@ -290,11 +290,17 @@ public class DataTranslator implements DataTranslatorContext
           {
             String fieldName = field.getName();
             Object fieldValue = record.get(fieldName);
-            boolean isOptional = field.getOptional();
-            if (isOptional && fieldValue == null)
+            // fieldValue could be null if the Avro schema does not contain the named field or
+            // the field is present with a null value. In either case we do not add a value
+            // to the translated DataMap. We do not consider optional/required/default here
+            // either (i.e. it is not an error if a required field is missing); the user can
+            // later call ValidateDataAgainstSchema with various
+            // settings for RequiredMode to obtain the desired behaviour.
+            if (fieldValue == null)
             {
               continue;
             }
+            boolean isOptional = field.getOptional();
             DataSchema fieldDataSchema = field.getType();
             Schema fieldAvroSchema = avroSchema.getField(fieldName).schema();
             if (isOptional && (fieldDataSchema.getDereferencedType() != DataSchema.Type.UNION))

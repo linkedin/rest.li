@@ -28,6 +28,8 @@ import com.linkedin.data.schema.validation.ValidationResult;
 import java.io.FileDescriptor;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
+
+import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
 import org.testng.annotations.Test;
 
@@ -905,5 +907,25 @@ public class TestDataTranslator
       }
     }
   }
+
+  @Test
+  public void testAvroSchemaMissingFields() throws IOException
+  {
+    final String P_SCHEMA =
+            "{" +
+            "  \"type\" : \"record\",\n" +
+            "  \"name\" : \"Foo\",\n" +
+            "  \"fields\" : [\n" +
+                    "{ \"name\": \"field1\", \"type\": \"int\" }," +
+                    "{ \"name\": \"field2\", \"type\": \"int\", \"optional\": true }," +
+                    "{ \"name\": \"field3\", \"type\": \"int\", \"optional\": true, \"default\": 42 }," +
+                    "{ \"name\": \"field4\", \"type\": \"int\", \"default\": 42 }," +
+                    "{ \"name\": \"field5\", \"type\": \"null\" }" +
+              "] }";
+    Schema avroSchema = Schema.parse("{ \"name\": \"foo\", \"type\": \"record\", \"fields\":[]}");
+    DataMap map = DataTranslator.genericRecordToDataMap(new GenericData.Record(avroSchema), (RecordDataSchema)TestUtil.dataSchemaFromString(P_SCHEMA), avroSchema);
+    assertEquals(map.size(), 0);
+  }
+
 }
 

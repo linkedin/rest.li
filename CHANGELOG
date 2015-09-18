@@ -9,6 +9,19 @@ Address Multiplexer security concerns.
 2. Only whitelisted headers are allowed to be specified in the individual requests.
 3. Cookies set by each of individual responses will be aggregated at the envelope level.
 
+(RB=570902)
+Fix NPE when translating from an Avro GenericRecord with a null value
+for field that is non-optional in the Pegasus schema.
+
+Previously, if a source Avro GenericRecord returned a null value
+(either because the field did not exist in the writer schema, or the
+field has a null value) for a field mapping to a Pegasus field that
+was not explicitly marked optional, the translator would throw an
+uninformative NPE (i.e., it would crash).
+
+Now, the translator no longer crashes and instead adds no mapping to
+the Pegasus DataMap for the field.
+
 2.12.2
 ------
 (RB=600375)
