@@ -22,6 +22,7 @@ package com.linkedin.restli.internal.server.methods.response;
 
 
 import com.linkedin.data.DataMap;
+import com.linkedin.data.collections.CheckedUtil;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.BatchCreateIdResponse;
@@ -62,7 +63,8 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder
   @SuppressWarnings("unchecked")
   public PartialRestResponse buildResponse(RoutingResult routingResult, RestLiResponseData responseData)
   {
-    List<CreateCollectionResponseEnvelope.CollectionCreateResponseItem> collectionCreateResponses = responseData.getCreateCollectionResponseEnvelope().getCreateResponses();
+    List<CreateCollectionResponseEnvelope.CollectionCreateResponseItem> collectionCreateResponses =
+                                                responseData.getCreateCollectionResponseEnvelope().getCreateResponses();
     List<CreateIdStatus<Object>> formattedResponses = new ArrayList<CreateIdStatus<Object>>(collectionCreateResponses.size());
 
     // Iterate through the responses and generate the ErrorResponse with the appropriate override for exceptions.
@@ -79,25 +81,7 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder
       }
       else
       {
-        if (response.getRecord() instanceof CreateIdEntityStatus)
-        {
-          CreateIdEntityStatus<?, ?> currentStatus = (CreateIdEntityStatus<?, ?>)response.getRecord();
-          final ResourceContext resourceContext = routingResult.getContext();
-          DataMap entityData = currentStatus.getEntity() != null ? currentStatus.getEntity().data() : null;
-          final DataMap data = RestUtils.projectFields(entityData,
-                                                       resourceContext.getProjectionMode(),
-                                                       resourceContext.getProjectionMask());
-          CreateIdEntityStatus<?, ?> projectedStatus = new CreateIdEntityStatus(currentStatus.getStatus(),
-                                                                                currentStatus.getKey(),
-                                                                                new AnyRecord(data),
-                                                                                currentStatus.getError(),
-                                                                                ProtocolVersionUtil.extractProtocolVersion(resourceContext.getRequestHeaders()));
-          formattedResponses.add((CreateIdStatus<Object>) projectedStatus);
-        }
-        else
-        {
-          formattedResponses.add((CreateIdStatus<Object>) response.getRecord());
-        }
+        formattedResponses.add((CreateIdStatus<Object>) response.getRecord());
       }
     }
 
@@ -108,10 +92,10 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder
 
   @Override
   public RestLiResponseEnvelope buildRestLiResponseData(RestRequest request,
-                                                            RoutingResult routingResult,
-                                                            Object result,
-                                                            Map<String, String> headers,
-                                                            List<HttpCookie> cookies)
+                                                        RoutingResult routingResult,
+                                                        Object result,
+                                                        Map<String, String> headers,
+                                                        List<HttpCookie> cookies)
   {
     if (result instanceof BatchCreateKVResult)
     {
@@ -137,8 +121,19 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder
           Object id = ResponseUtils.translateCanonicalKeyToAlternativeKeyIfNeeded(e.getId(), routingResult);
           if (e.getError() == null)
           {
-            CreateIdEntityStatus<Object, RecordTemplate> entry = new CreateIdEntityStatus<Object, RecordTemplate>(e.getStatus().getCode(), id, e.getEntity(), null, ProtocolVersionUtil.extractProtocolVersion(headers));
+            final ResourceContext resourceContext = routingResult.getContext();
+            DataMap entityData = e.getEntity() != null ? e.getEntity().data() : null;
+            final DataMap data = RestUtils.projectFields(entityData,
+                                                         resourceContext.getProjectionMode(),
+                                                         resourceContext.getProjectionMask());
+
+            CreateIdEntityStatus<Object, RecordTemplate> entry = new CreateIdEntityStatus<Object, RecordTemplate>(e.getStatus().getCode(),
+                                                                                                                  id,
+                                                                                                                  new AnyRecord(data),
+                                                                                                                  null,
+                                                                                                                  ProtocolVersionUtil.extractProtocolVersion(headers));
             collectionCreateList.add(new CreateCollectionResponseEnvelope.CollectionCreateResponseItem(entry));
+
           }
           else
           {

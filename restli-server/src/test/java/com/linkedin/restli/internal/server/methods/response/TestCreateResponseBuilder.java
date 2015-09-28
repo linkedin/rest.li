@@ -18,9 +18,15 @@
 package com.linkedin.restli.internal.server.methods.response;
 
 
+import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.schema.StringDataSchema;
 import com.linkedin.data.template.InvalidAlternativeKeyException;
 import com.linkedin.data.template.KeyCoercer;
+import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.data.transform.filter.request.MaskOperation;
+import com.linkedin.data.transform.filter.request.MaskTree;
+import com.linkedin.pegasus.generator.examples.Foo;
+import com.linkedin.pegasus.generator.examples.Fruits;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.restli.common.CompoundKey;
@@ -35,7 +41,9 @@ import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.server.AlternativeKey;
+import com.linkedin.restli.server.CreateKVResponse;
 import com.linkedin.restli.server.CreateResponse;
+import com.linkedin.restli.server.ProjectionMode;
 import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiServiceException;
 
@@ -156,6 +164,33 @@ public class TestCreateResponseBuilder
     {
       Assert.assertTrue(e.getMessage().contains("Unexpected null encountered. HttpStatus is null inside of a CreateResponse from the resource method: "));
     }
+  }
+
+
+  @Test
+  public void testProjectionInBuildRestliResponseData() throws URISyntaxException {
+    MaskTree maskTree = new MaskTree();
+    maskTree.addOperation(new PathSpec("fruitsField"), MaskOperation.POSITIVE_MASK_OP);
+
+    ServerResourceContext mockContext = EasyMock.createMock(ServerResourceContext.class);
+    EasyMock.expect(mockContext.getProjectionMask()).andReturn(maskTree);
+    EasyMock.expect(mockContext.getProjectionMode()).andReturn(ProjectionMode.AUTOMATIC);
+    EasyMock.replay(mockContext);
+    RoutingResult routingResult = new RoutingResult(mockContext, null);
+
+    Foo value = new Foo().setStringField("value").setFruitsField(Fruits.APPLE);
+    CreateKVResponse<Integer, Foo> values = new CreateKVResponse<Integer, Foo>(null, value);
+
+    CreateResponseBuilder responseBuilder = new CreateResponseBuilder();
+    RestLiResponseEnvelope envelope = responseBuilder.buildRestLiResponseData(new RestRequestBuilder(new URI("/foo")).build(),
+                                                                              routingResult, values,
+                                                                              Collections.<String, String>emptyMap(),
+                                                                              Collections.<HttpCookie>emptyList());
+    RecordTemplate record = envelope.getRecordResponseEnvelope().getRecord();
+    Assert.assertEquals(record.data().size(), 1);
+    Assert.assertEquals(record.data().get("fruitsField"), Fruits.APPLE.toString());
+
+    EasyMock.verify(mockContext);
   }
 
   private static ResourceContext getMockResourceContext(ProtocolVersion protocolVersion,

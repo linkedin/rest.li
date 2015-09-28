@@ -514,16 +514,9 @@ public class RestLiDataValidator
   {
     try
     {
-      DataSchema schema;
-      if (_resourceMethod == ResourceMethod.BATCH_GET)
-      {
-        schema = entity.schema();
-      }
-      else
-      {
-        // The output entity is an AnyRecord and does not have the schema information.
-        schema = DataTemplateUtil.getSchema(_valueClass);
-      }
+      // Value class from resource model is the only source of truth for record schema.
+      // Schema from the record template itself should not be used.
+      DataSchema schema = DataTemplateUtil.getSchema(_valueClass);
       return ValidateDataAgainstSchema.validate(entity.data(), schema, new ValidationOptions(), new DataSchemaAnnotationValidator(schema));
     }
     catch (TemplateRuntimeException e)

@@ -18,9 +18,11 @@ package com.linkedin.restli.internal.server.methods.response;
 
 
 import com.linkedin.data.DataMap;
+import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.schema.StringDataSchema;
 import com.linkedin.data.template.InvalidAlternativeKeyException;
 import com.linkedin.data.template.KeyCoercer;
+import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.transform.filter.request.MaskOperation;
 import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.pegasus.generator.examples.Foo;
@@ -281,7 +283,7 @@ public class TestBatchGetResponseBuilder
   {
     // Protocol version doesn't matter here
     ResourceContext mockContext = getMockResourceContext(null, Collections.<Object, RestLiServiceException>emptyMap(),
-            null, null, null);
+        null, null, null);
     ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor(null);
     RoutingResult routingResult = new RoutingResult(mockContext, mockDescriptor);
 
@@ -375,6 +377,39 @@ public class TestBatchGetResponseBuilder
       // if the resource returns a Map we don't have a separate status map in the BatchResponse
       Assert.assertEquals(entity.getStatuses(), Collections.emptyMap());
     }
+  }
+
+  @Test
+  public void testProjectionInBuildRestliResponseData()
+  {
+    MaskTree maskTree = new MaskTree();
+    maskTree.addOperation(new PathSpec("fruitsField"), MaskOperation.POSITIVE_MASK_OP);
+
+    ServerResourceContext mockContext = EasyMock.createMock(ServerResourceContext.class);
+    EasyMock.expect(mockContext.hasParameter(RestConstants.ALT_KEY_PARAM)).andReturn(false);
+    EasyMock.expect(mockContext.getProjectionMode()).andReturn(ProjectionMode.AUTOMATIC);
+    EasyMock.expect(mockContext.getProjectionMask()).andReturn(maskTree);
+    EasyMock.expect(mockContext.getBatchKeyErrors()).andReturn(Collections.<Object, RestLiServiceException>emptyMap()).once();
+    EasyMock.replay(mockContext);
+
+    ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor(null);
+    RoutingResult routingResult = new RoutingResult(mockContext, mockDescriptor);
+
+    Map<Integer, Foo> results = new HashMap<Integer, Foo>();
+    Foo value = new Foo().setStringField("value").setFruitsField(Fruits.APPLE);
+    results.put(1, value);
+
+    BatchGetResponseBuilder responseBuilder = new BatchGetResponseBuilder(new ErrorResponseBuilder());
+    RestLiResponseEnvelope envelope = responseBuilder.buildRestLiResponseData(null,
+                                                                              routingResult,
+                                                                              results,
+                                                                              Collections.<String, String>emptyMap(),
+                                                                              Collections.<HttpCookie>emptyList());
+    RecordTemplate record = envelope.getBatchResponseEnvelope().getBatchResponseMap().get(1).getRecord();
+    Assert.assertEquals(record.data().size(), 1);
+    Assert.assertEquals(record.data().get("fruitsField"), Fruits.APPLE.toString());
+
+    EasyMock.verify(mockContext);
   }
 
   private static ResourceContext getMockResourceContext(ProtocolVersion protocolVersion,

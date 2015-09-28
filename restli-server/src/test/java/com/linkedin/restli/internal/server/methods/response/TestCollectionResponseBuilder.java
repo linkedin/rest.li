@@ -18,9 +18,12 @@ package com.linkedin.restli.internal.server.methods.response;
 
 
 import com.linkedin.data.DataMap;
+import com.linkedin.data.schema.PathSpec;
+import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.transform.filter.request.MaskOperation;
 import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.pegasus.generator.examples.Foo;
+import com.linkedin.pegasus.generator.examples.Fruits;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.restli.common.CollectionMetadata;
@@ -38,6 +41,7 @@ import com.linkedin.restli.server.RestLiServiceException;
 import java.net.HttpCookie;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -201,6 +205,8 @@ public class TestCollectionResponseBuilder
     Assert.assertEquals(actualResults.getElements(), expectedElements);
     Assert.assertEquals(actualResults.getMetadataRaw(), expectedMetadata);
     Assert.assertEquals(actualResults.getPaging(), expectedPaging);
+
+    EasyMock.verify(mockContext);
   }
 
   @DataProvider(name = "exceptionTestData")
@@ -236,6 +242,28 @@ public class TestCollectionResponseBuilder
       Assert.assertTrue(e.getMessage().contains(expectedErrorMessage));
     }
   }
+
+  @Test
+  public void testProjectionInBuildRestliResponseData() throws URISyntaxException {
+    MaskTree maskTree = new MaskTree();
+    maskTree.addOperation(new PathSpec("fruitsField"), MaskOperation.POSITIVE_MASK_OP);
+
+    ResourceContext mockContext = getMockResourceContext(maskTree, null, null, ProjectionMode.AUTOMATIC, ProjectionMode.AUTOMATIC);
+    RoutingResult routingResult = new RoutingResult(mockContext, getMockResourceMethodDescriptor());
+
+    List<RecordTemplate> values = new ArrayList<RecordTemplate>();
+    Foo value = new Foo().setStringField("value").setFruitsField(Fruits.APPLE);
+    values.add(value);
+
+    CollectionResponseBuilder responseBuilder = new CollectionResponseBuilder();
+    RestLiResponseEnvelope envelope = responseBuilder.buildRestLiResponseData(getRestRequest(), routingResult, values,
+                                                                              Collections.<String, String>emptyMap(),
+                                                                              Collections.<HttpCookie>emptyList());
+    RecordTemplate record = envelope.getCollectionResponseEnvelope().getCollectionResponse().get(0);
+    Assert.assertEquals(record.data().size(), 1);
+    Assert.assertEquals(record.data().get("fruitsField"), Fruits.APPLE.toString());
+  }
+
 
   private static ResourceContext getMockResourceContext(MaskTree dataMaskTree,
                                                         MaskTree metadataMaskTree,

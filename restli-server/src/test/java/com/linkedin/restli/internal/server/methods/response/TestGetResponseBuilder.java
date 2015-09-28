@@ -18,20 +18,26 @@ package com.linkedin.restli.internal.server.methods.response;
 
 
 import com.linkedin.data.DataMap;
+import com.linkedin.data.schema.PathSpec;
+import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.transform.filter.request.MaskOperation;
 import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.pegasus.generator.examples.Foo;
 import com.linkedin.pegasus.generator.examples.Fruits;
 import com.linkedin.restli.common.HttpStatus;
+import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.server.RestLiResponseEnvelope;
 import com.linkedin.restli.internal.server.RoutingResult;
+import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.server.GetResult;
 import com.linkedin.restli.server.ProjectionMode;
 import com.linkedin.restli.server.ResourceContext;
 
+import com.linkedin.restli.server.RestLiServiceException;
 import java.net.HttpCookie;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.easymock.EasyMock;
@@ -109,6 +115,27 @@ public class TestGetResponseBuilder
     {
       Assert.assertEquals(partialRestResponse.getEntity(), getProjectedRecord());
     }
+  }
+
+  @Test
+  public void testProjectionInBuildRestliResponseData()
+  {
+    MaskTree maskTree = new MaskTree();
+    maskTree.addOperation(new PathSpec("fruitsField"), MaskOperation.POSITIVE_MASK_OP);
+
+    ResourceContext mockContext = getMockResourceContext(maskTree, ProjectionMode.AUTOMATIC);
+    RoutingResult routingResult = new RoutingResult(mockContext, getMockResourceMethodDescriptor());
+
+    Foo value = new Foo().setStringField("value").setFruitsField(Fruits.APPLE);
+
+    GetResponseBuilder responseBuilder = new GetResponseBuilder();
+    RestLiResponseEnvelope envelope = responseBuilder.buildRestLiResponseData(null, routingResult, value,
+        Collections.<String, String>emptyMap(), Collections.<HttpCookie>emptyList());
+    RecordTemplate record = envelope.getRecordResponseEnvelope().getRecord();
+    Assert.assertEquals(record.data().size(), 1);
+    Assert.assertEquals(record.data().get("fruitsField"), Fruits.APPLE.toString());
+
+    EasyMock.verify(mockContext);
   }
 
   private static ResourceMethodDescriptor getMockResourceMethodDescriptor()

@@ -18,11 +18,15 @@
 package com.linkedin.restli.internal.server.methods.response;
 
 
+import com.linkedin.data.DataMap;
+import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.schema.StringDataSchema;
 import com.linkedin.data.template.InvalidAlternativeKeyException;
 import com.linkedin.data.template.KeyCoercer;
+import com.linkedin.data.transform.filter.request.MaskOperation;
 import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.pegasus.generator.examples.Foo;
+import com.linkedin.pegasus.generator.examples.Fruits;
 import com.linkedin.restli.common.BatchCreateIdResponse;
 import com.linkedin.restli.common.CreateIdEntityStatus;
 import com.linkedin.restli.common.CreateIdStatus;
@@ -116,8 +120,7 @@ public class TestBatchCreateResponseBuilder
       items.add((CreateIdStatus<Object>) item.getRecord());
     }
 
-    Assert.assertEquals(restResponse.getEntity(),
-            new BatchCreateIdResponse<Object>(items));
+    Assert.assertEquals(restResponse.getEntity(), new BatchCreateIdResponse<Object>(items));
     Assert.assertEquals(expectedStatuses, items);
     Assert.assertEquals(restResponse.getStatus(), HttpStatus.S_200_OK);
   }
@@ -135,11 +138,14 @@ public class TestBatchCreateResponseBuilder
 
     List<CreateIdEntityStatus<Long, Foo>> expectedResponses = new ArrayList<CreateIdEntityStatus<Long, Foo>>(2);
     expectedResponses.add(new CreateIdEntityStatus<Long, Foo>(201, 1L, foo1, null, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()));
-    expectedResponses.add(new CreateIdEntityStatus<Long, Foo>(201, 2L, foo2, null, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()));
+    expectedResponses.add(new CreateIdEntityStatus<Long, Foo>(201, 2L, foo2, null,
+        AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()));
 
     List<CreateIdEntityStatus<String, Foo>> expectedAltResponses = new ArrayList<CreateIdEntityStatus<String, Foo>>(2);
-    expectedAltResponses.add(new CreateIdEntityStatus<String, Foo>(201, "Alt1", foo1, null, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()));
-    expectedAltResponses.add(new CreateIdEntityStatus<String, Foo>(201, "Alt2", foo2, null, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()));
+    expectedAltResponses.add(new CreateIdEntityStatus<String, Foo>(201, "Alt1", foo1, null,
+        AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()));
+    expectedAltResponses.add(new CreateIdEntityStatus<String, Foo>(201, "Alt2", foo2, null,
+        AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()));
 
     return new Object[][]
             {
@@ -171,10 +177,10 @@ public class TestBatchCreateResponseBuilder
 
     BatchCreateResponseBuilder responseBuilder = new BatchCreateResponseBuilder(null);
     RestLiResponseEnvelope responseData = responseBuilder.buildRestLiResponseData(null,
-            routingResult,
-            results,
-            headers,
-            Collections.<HttpCookie>emptyList());
+                                                                                  routingResult,
+                                                                                  results,
+                                                                                  headers,
+                                                                                  Collections.<HttpCookie>emptyList());
     PartialRestResponse restResponse = responseBuilder.buildResponse(routingResult, responseData);
 
     EasyMock.verify(mockDescriptor);
@@ -223,6 +229,41 @@ public class TestBatchCreateResponseBuilder
     }
   }
 
+  @Test
+  public void testProjectionInBuildRestLiResponseData()
+  {
+    MaskTree maskTree = new MaskTree();
+    maskTree.addOperation(new PathSpec("fruitsField"), MaskOperation.POSITIVE_MASK_OP);
+
+    ServerResourceContext mockContext = EasyMock.createMock(ServerResourceContext.class);
+    EasyMock.expect(mockContext.hasParameter(RestConstants.ALT_KEY_PARAM)).andReturn(false);
+    EasyMock.expect(mockContext.getProjectionMode()).andReturn(ProjectionMode.AUTOMATIC);
+    EasyMock.expect(mockContext.getProjectionMask()).andReturn(maskTree);
+    EasyMock.replay(mockContext);
+
+    ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor(null);
+    RoutingResult routingResult = new RoutingResult(mockContext, mockDescriptor);
+
+    List<CreateKVResponse<Long, Foo>> createKVResponses = new ArrayList<CreateKVResponse<Long, Foo>>();
+    Foo foo = new Foo();
+    foo.setStringField("foo1");
+    foo.setFruitsField(Fruits.APPLE);
+    createKVResponses.add(new CreateKVResponse<Long, Foo>(1L, foo));
+    BatchCreateKVResult<Long, Foo> results = new BatchCreateKVResult<Long, Foo>(createKVResponses);
+
+    BatchCreateResponseBuilder responseBuilder = new BatchCreateResponseBuilder(new ErrorResponseBuilder());
+    RestLiResponseEnvelope envelope = responseBuilder.buildRestLiResponseData(null,
+                                                                              routingResult,
+                                                                              results,
+                                                                              Collections.<String, String>emptyMap(),
+                                                                              Collections.<HttpCookie>emptyList());
+    DataMap dataMap = envelope.getCreateCollectionResponseEnvelope().getCreateResponses().get(0).getRecord().data().getDataMap("entity");
+    Assert.assertEquals(dataMap.size(), 1);
+    Assert.assertEquals(dataMap.get("fruitsField"), Fruits.APPLE.toString());
+
+    EasyMock.verify(mockContext);
+  }
+
   private static ResourceMethodDescriptor getMockResourceMethodDescriptor(Map<String, AlternativeKey<?, ?>> alternativeKeyMap)
   {
     ResourceMethodDescriptor mockDescriptor = EasyMock.createMock(ResourceMethodDescriptor.class);
@@ -265,7 +306,7 @@ public class TestBatchCreateResponseBuilder
 
     // not testing the diversity of options here.
     EasyMock.expect(mockContext.getProjectionMode()).andReturn(ProjectionMode.getDefault()).atLeastOnce();
-    EasyMock.expect(mockContext.getProjectionMask()).andReturn(new MaskTree()).atLeastOnce();
+    EasyMock.expect(mockContext.getProjectionMask()).andReturn(null).atLeastOnce();
     Map<String, String> protocolVersionOnlyHeaders = Collections.singletonMap(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion().toString());
     EasyMock.expect(mockContext.getRequestHeaders()).andReturn(protocolVersionOnlyHeaders).atLeastOnce();
 

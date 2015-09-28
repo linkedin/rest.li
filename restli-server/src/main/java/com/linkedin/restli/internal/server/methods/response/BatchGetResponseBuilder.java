@@ -83,8 +83,8 @@ public class BatchGetResponseBuilder implements RestLiResponseBuilder
     {
       @SuppressWarnings("unchecked")
       final EntityResponse<RecordTemplate> entityResponse = entry.getValue().hasException() ?
-                                                              createEntityResponse(null, routingResult) :
-                                                              createEntityResponse(entry.getValue().getRecord(), routingResult);
+                                                              createEntityResponse(null) :
+                                                              createEntityResponse(entry.getValue().getRecord());
 
       if (entry.getKey() == null)
       {
@@ -104,7 +104,7 @@ public class BatchGetResponseBuilder implements RestLiResponseBuilder
     return entityBatchResponse;
   }
 
-  private static EntityResponse<RecordTemplate> createEntityResponse(RecordTemplate entityTemplate, RoutingResult routingResult)
+  private static EntityResponse<RecordTemplate> createEntityResponse(RecordTemplate entityTemplate)
   {
     final EntityResponse<RecordTemplate> entityResponse;
     if (entityTemplate == null)
@@ -116,11 +116,7 @@ public class BatchGetResponseBuilder implements RestLiResponseBuilder
       @SuppressWarnings("unchecked")
       final Class<RecordTemplate> entityClass = (Class<RecordTemplate>) entityTemplate.getClass();
       entityResponse = new EntityResponse<RecordTemplate>(entityClass);
-
-      final DataMap projectedData = RestUtils.projectFields(entityTemplate.data(),
-                                                            routingResult.getContext().getProjectionMode(),
-                                                            routingResult.getContext().getProjectionMask());
-      CheckedUtil.putWithoutChecking(entityResponse.data(), EntityResponse.ENTITY, projectedData);
+      CheckedUtil.putWithoutChecking(entityResponse.data(), EntityResponse.ENTITY, entityTemplate.data());
     }
 
     return entityResponse;
@@ -173,7 +169,12 @@ public class BatchGetResponseBuilder implements RestLiResponseBuilder
                 .getResourceMethod());
       }
       Object finalKey = ResponseUtils.translateCanonicalKeyToAlternativeKeyIfNeeded(entity.getKey(), routingResult);
-      batchResult.put(finalKey, new BatchResponseEntry(statuses.get(entity.getKey()), entity.getValue()));
+
+      final DataMap projectedData = RestUtils.projectFields(entity.getValue().data(),
+                                                            routingResult.getContext().getProjectionMode(),
+                                                            routingResult.getContext().getProjectionMask());
+      AnyRecord anyRecord = new AnyRecord(projectedData);
+      batchResult.put(finalKey, new BatchResponseEntry(statuses.get(entity.getKey()), anyRecord));
     }
 
     for (Map.Entry<Object, RestLiServiceException> entity : serviceErrors.entrySet())
