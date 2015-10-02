@@ -1,7 +1,16 @@
+2.10.19
+-------
+
 2.10.18
 -------
 (RB=521359)
 Fix for expensive ComplexResourceKey creation.
+
+(RB=578223)
+Add additional methods to filter resource model to expose additional schema information.
+
+(RB=558570)
+Fix createResponse error handling.
 
 2.10.17
 -------
