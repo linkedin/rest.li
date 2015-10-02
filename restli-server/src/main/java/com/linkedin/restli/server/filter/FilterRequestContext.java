@@ -18,6 +18,7 @@ package com.linkedin.restli.server.filter;
 
 
 import com.linkedin.data.DataMap;
+import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.ResourceMethod;
@@ -147,6 +148,27 @@ public interface FilterRequestContext
    * @return ResourceModel corresponding to the resource.
    */
   FilterResourceModel getFilterResourceModel();
+
+  /**
+   * Obtain the collection metadata schema of finders corresponding to the resource.
+   *
+   * @return Metadata schema for the resource.
+   */
+  RecordDataSchema getCollectionCustomMetadataSchema();
+
+  /**
+   * Obtain the schema of the action request object.
+   *
+   * @return record template of the request object.
+   */
+  RecordDataSchema getActionRequestSchema();
+
+  /**
+   * Obtain the schema of the action response object.
+   *
+   * @return record template of the response object.
+   */
+  RecordDataSchema getActionResponseSchema();
 
   /**
    * Get {@link Method} that's being invoked on the resource.

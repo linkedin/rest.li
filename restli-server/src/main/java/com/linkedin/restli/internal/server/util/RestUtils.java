@@ -325,23 +325,56 @@ public class RestUtils
    */
   public static void trimRecordTemplate(RecordTemplate recordTemplate, MaskTree override, final boolean failOnMismatch)
   {
-    if (recordTemplate.schema() == null) {
+    trimRecordTemplate(recordTemplate.data(), recordTemplate.schema(), override, failOnMismatch);
+  }
+
+  /**
+   * This method recursively removes all values from a DataMap
+   * that do not match some field in the schema via an all positive
+   * projection generated from the schema unless whitelisted by the
+   * override parameter.
+   *
+   * Readonly datamaps should not invoke this.
+   * An exception will be thrown if this is done.
+   *
+   * @param dataMap represents the DataMap that will be trimmed.
+   * @param schema represents the schema that the datamap should match.
+   * @param override represents the MaskTree that defines how fields outside the schema should be preserved.
+   * @param failOnMismatch true if an exception should be thrown if there is a data-schema mismatch.
+   */
+  public static void trimRecordTemplate(DataMap dataMap, RecordDataSchema schema, MaskTree override, final boolean failOnMismatch)
+  {
+    if (dataMap == null || schema == null) {
       return;
     }
 
-    DataMap overrideResults = RestUtils.projectFields(recordTemplate.data(), ProjectionMode.AUTOMATIC, override);
-    Builder.create(recordTemplate.data(), recordTemplate.schema(), IterationOrder.PRE_ORDER).filterBy(new Predicate() {
+    DataMap overrideResults = RestUtils.projectFields(dataMap, ProjectionMode.AUTOMATIC, override);
+    Builder.create(dataMap, schema, IterationOrder.PRE_ORDER).filterBy(new Predicate() {
       @Override
       public boolean evaluate(DataElement element) {
         if (failOnMismatch && element.getSchema() == null) {
-          throw new IllegalArgumentException();
+          throw new IllegalArgumentException("Schema validation did not succeed: " + element.getValue().toString());
         }
 
         return element.getSchema() == null;
       }
     }).remove();
 
-    CheckedUtil.putAllWithoutChecking(recordTemplate.data(), overrideResults);
+    CheckedUtil.putAllWithoutChecking(dataMap, overrideResults);
+  }
+
+  /**
+    * This method recursively removes all values from RecordTemplate
+    * that do not match some field in the schema.
+    *
+    * Readonly datamaps should not invoke this.
+    * An exception will be thrown if this is done.
+    *
+    * @param dataMap represents the dataMap that will be trimmed.
+    * @param failOnMismatch true if an exception should be thrown if there is a data-schema mismatch.
+    */
+  public static void trimRecordTemplate(DataMap dataMap, RecordDataSchema schema, final boolean failOnMismatch) {
+    trimRecordTemplate(dataMap, schema, new MaskTree(), failOnMismatch);
   }
 
   /**
@@ -356,6 +389,10 @@ public class RestUtils
    */
   public static void trimRecordTemplate(RecordTemplate recordTemplate, final boolean failOnMismatch)
   {
-    trimRecordTemplate(recordTemplate, new MaskTree(), failOnMismatch);
+    if (recordTemplate == null)
+    {
+      return;
+    }
+    trimRecordTemplate(recordTemplate.data(), recordTemplate.schema(), failOnMismatch);
   }
 }

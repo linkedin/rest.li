@@ -139,6 +139,7 @@ public class TestFilterRequestContextInternalImpl
     verify(context).getRequestURI();
     verify(context).getRestliProtocolVersion();
     verify(context).getParameters();
+    verify(resourceMethod).getFinderMetadataType();
     verifyNoMoreInteractions(context, resourceMethod, resourceModel);
   }
 }

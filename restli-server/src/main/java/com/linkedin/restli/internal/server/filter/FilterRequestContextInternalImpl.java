@@ -18,6 +18,8 @@ package com.linkedin.restli.internal.server.filter;
 
 
 import com.linkedin.data.DataMap;
+import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.ResourceMethod;
@@ -45,6 +47,9 @@ public class FilterRequestContextInternalImpl implements FilterRequestContextInt
   private final Map<String, Object> _scratchPad;
   private final FilterResourceModel _resourceModel;
 
+  // Collection specific
+  private final RecordDataSchema _collectionCustomTypeSchema;
+
   public FilterRequestContextInternalImpl(final ServerResourceContext context,
                                           final ResourceMethodDescriptor resourceMethod)
   {
@@ -52,6 +57,7 @@ public class FilterRequestContextInternalImpl implements FilterRequestContextInt
     _resourceMethod = resourceMethod;
     _scratchPad = new HashMap<String, Object>();
     _resourceModel = new FilterResourceModelImpl(resourceMethod.getResourceModel());
+    _collectionCustomTypeSchema = resourceMethod.getFinderMetadataType() == null ? null : (RecordDataSchema) DataTemplateUtil.getSchema(resourceMethod.getFinderMetadataType());
   }
 
   @Override
@@ -154,6 +160,24 @@ public class FilterRequestContextInternalImpl implements FilterRequestContextInt
   public FilterResourceModel getFilterResourceModel()
   {
     return _resourceModel;
+  }
+
+  @Override
+  public RecordDataSchema getCollectionCustomMetadataSchema()
+  {
+    return _collectionCustomTypeSchema;
+  }
+
+  @Override
+  public RecordDataSchema getActionRequestSchema()
+  {
+    return _resourceMethod.getRequestDataSchema();
+  }
+
+  @Override
+  public RecordDataSchema getActionResponseSchema()
+  {
+    return _resourceMethod.getActionReturnRecordDataSchema();
   }
 
   @Override
