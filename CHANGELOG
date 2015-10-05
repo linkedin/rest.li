@@ -12,6 +12,9 @@ Add additional methods to filter resource model to expose additional schema info
 (RB=558570)
 Fix createResponse error handling.
 
+(RB=575906)
+Add a load balancer strategy config to control whether only updating partition state at the end of each internal.
+
 2.10.17
 -------
 (RB=561481)

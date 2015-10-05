@@ -360,7 +360,7 @@ public class DegraderLoadBalancerTest
             name, null,
             clusterCallCount);
 
-    assertFalse(DegraderLoadBalancerStrategyV3.isOldStateTheSameAsNewState(oldStateV3, newStateV3));
+    assertTrue(DegraderLoadBalancerStrategyV3.isOldStateTheSameAsNewState(oldStateV3, newStateV3));
 
     newStateV3 = new DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState(clusterGenerationId,
             lastUpdated + 300,
@@ -509,6 +509,7 @@ public class DegraderLoadBalancerTest
     public MockDegraderLoadBalancerStrategyConfig(DegraderLoadBalancerStrategyConfig config)
     {
       super(config.getUpdateIntervalMs(),
+              config.isUpdateOnlyAtInterval(),
               config.getPointsPerWeight(),
               config.getHashMethod(),
               config.getHashConfig(),
@@ -1805,6 +1806,53 @@ public class DegraderLoadBalancerTest
   }
 
   @Test(groups = { "small", "back-end" })
+  public void testshouldUpdatePartitionOnlyAtInterval() throws URISyntaxException
+  {
+    Map<String,Object> myConfig = new HashMap<String,Object>();
+    TestClock testClock = new TestClock();
+    myConfig.put(PropertyKeys.CLOCK, testClock);
+    myConfig.put(PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS, 5000L);
+    myConfig.put(PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_MAX_CLUSTER_LATENCY_WITHOUT_DEGRADING, 100d);
+    myConfig.put(PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_UPDATE_ONLY_AT_INTERVAL, true);
+    DegraderLoadBalancerStrategyV3 strategy = getStrategy(myConfig);
+    List<TrackerClient> clients = new ArrayList<TrackerClient>();
+    long clusterCallCount = 15;
+
+    clients.add(getClient(URI.create("http://test.linkedin.com:3242/fdsaf")));
+    clients.add(getClient(URI.create("http://test.linkedin.com:3243/fdsaf")));
+
+    // state is default initialized, new cluster generation
+    assertFalse(DegraderLoadBalancerStrategyV3.shouldUpdatePartition(0,
+            strategy.getState().getPartitionState(DEFAULT_PARTITION_ID), strategy.getConfig(), true));
+
+
+    // state is not null, but we're on the same cluster generation id, and 5 seconds
+    // haven't gone by
+    testClock.addMs(1);
+    assertFalse(DegraderLoadBalancerStrategyV3.shouldUpdatePartition(0,
+            strategy.getState().getPartitionState(DEFAULT_PARTITION_ID), strategy.getConfig(), true));
+
+    testClock.addMs(5000);
+    assertTrue(DegraderLoadBalancerStrategyV3.shouldUpdatePartition(1,
+            strategy.getState().getPartitionState(DEFAULT_PARTITION_ID), strategy.getConfig(), true));
+
+    DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState current =
+            strategy.getState().getPartitionState(DEFAULT_PARTITION_ID);
+    current = new DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState(1,
+            testClock._currentTimeMillis,
+            true,
+            new HashMap<URI, Integer>(),
+            DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState.Strategy.LOAD_BALANCE,
+            0.0,
+            -1,
+            new HashMap<TrackerClient, Double>(),
+            "Test",
+            current.getDegraderProperties(),
+            clusterCallCount);
+    strategy.getState().setPartitionState(DEFAULT_PARTITION_ID, current);
+  }
+
+  @Test(groups = { "small", "back-end" })
   public void testOverrideClusterDropRate() throws URISyntaxException
   {
     DegraderLoadBalancerStrategyV3 strategy = getStrategy();
@@ -1857,7 +1905,7 @@ public class DegraderLoadBalancerTest
 
     DegraderLoadBalancerStrategyV3 strategy = new DegraderLoadBalancerStrategyV3(
             new DegraderLoadBalancerStrategyConfig(
-                    5000, 100, DegraderLoadBalancerStrategyV3.HASH_METHOD_URI_REGEX,
+                    5000, true, 100, DegraderLoadBalancerStrategyV3.HASH_METHOD_URI_REGEX,
                     Collections.<String,Object>singletonMap(URIRegexHash.KEY_REGEXES,
                             Collections.singletonList("(.*)")), SystemClock.instance(),
                     DegraderLoadBalancerStrategyConfig.DEFAULT_INITIAL_RECOVERY_LEVEL,

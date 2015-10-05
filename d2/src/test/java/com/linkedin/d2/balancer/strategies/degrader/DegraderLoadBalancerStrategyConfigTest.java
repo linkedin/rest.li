@@ -29,6 +29,7 @@ public class DegraderLoadBalancerStrategyConfigTest
     Map<String,Object> properties = new HashMap<String, Object>();
 
     long httpUpdateIntervalMs = 5231;
+    boolean updateOnlyAtInterval = false;
     double httpMaxClusterLatencyWithoutDegrading = 139.6;
     double httpDefaultSuccessfulTransmissionWeight = 0.88;
     int httpPointsPerWeight = 202;
@@ -47,6 +48,8 @@ public class DegraderLoadBalancerStrategyConfigTest
     properties.put(PropertyKeys.HTTP_LB_HASH_CONFIG, httpHashConfig);
     properties.put(PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS,
                    httpUpdateIntervalMs);
+    properties.put(PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_UPDATE_ONLY_AT_INTERVAL,
+                   updateOnlyAtInterval);
     properties.put(PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_MAX_CLUSTER_LATENCY_WITHOUT_DEGRADING,
                    httpMaxClusterLatencyWithoutDegrading);
     properties.put(PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_DEFAULT_SUCCESSFUL_TRANSMISSION_WEIGHT,
@@ -65,6 +68,7 @@ public class DegraderLoadBalancerStrategyConfigTest
     DegraderLoadBalancerStrategyConfig config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(properties);
 
     assertEquals(config.getUpdateIntervalMs(), httpUpdateIntervalMs);
+    assertEquals(config.isUpdateOnlyAtInterval(), updateOnlyAtInterval);
     assertEquals(config.getPointsPerWeight(), httpPointsPerWeight);
     assertEquals(config.getHashMethod(), httpHashMethod);
     assertEquals(config.getInitialRecoveryLevel(), httpInitialRecoveryLevel);
@@ -79,6 +83,7 @@ public class DegraderLoadBalancerStrategyConfigTest
     properties.clear();
     config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(properties);
     assertEquals(config.getUpdateIntervalMs(), DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS);
+    assertEquals(config.isUpdateOnlyAtInterval(), DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_ONLY_AT_INTERVAL);
     assertEquals(config.getPointsPerWeight(),
                  DegraderLoadBalancerStrategyConfig.DEFAULT_POINTS_PER_WEIGHT);
     assertNull(config.getHashMethod());

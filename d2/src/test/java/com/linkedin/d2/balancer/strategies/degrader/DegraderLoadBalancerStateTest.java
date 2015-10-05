@@ -41,7 +41,7 @@ public class DegraderLoadBalancerStateTest
     final PauseClock clock = new PauseClock();
     final DegraderLoadBalancerState subject
         = new DegraderLoadBalancerStrategyV3
-            (new DegraderLoadBalancerStrategyConfig(5000, 1, null, Collections.<String, Object>emptyMap(),
+            (new DegraderLoadBalancerStrategyConfig(5000, true, 1, null, Collections.<String, Object>emptyMap(),
                                                     clock, 1, 1, 1, 1, 1, 1, 1, 1),
              SERVICE_NAME, null).getState();
     Thread getPartition1 = new Thread()

@@ -30,6 +30,8 @@ import org.slf4j.LoggerFactory;
 public class DegraderLoadBalancerStrategyConfig
 {
   private final long   _updateIntervalMs;
+  // The partition state will only be updated when an interval is elapsed if this is set to true
+  private final boolean _updateOnlyAtInterval;
   private final int    _pointsPerWeight;
   private final String _hashMethod;
   private final Map<String,Object> _hashConfig;
@@ -64,6 +66,7 @@ public class DegraderLoadBalancerStrategyConfig
   public static final double DEFAULT_INITIAL_RECOVERY_LEVEL = 0.01;
   public static final double DEFAULT_RAMP_FACTOR = 1.0;
   public static final long DEFAULT_UPDATE_INTERVAL_MS = 5000L;
+  public static final boolean DEFAULT_UPDATE_ONLY_AT_INTERVAL = false;
   public static final int DEFAULT_POINTS_PER_WEIGHT = 100;
   // I think that these two will require tuning, based upon the service SLA.
   // Using degrader's defaults.
@@ -79,7 +82,7 @@ public class DegraderLoadBalancerStrategyConfig
 
   public DegraderLoadBalancerStrategyConfig(long updateIntervalMs)
   {
-    this(updateIntervalMs, 100, null, Collections.<String, Object>emptyMap(),
+    this(updateIntervalMs, DEFAULT_UPDATE_ONLY_AT_INTERVAL, 100, null, Collections.<String, Object>emptyMap(),
          DEFAULT_CLOCK, DEFAULT_INITIAL_RECOVERY_LEVEL, DEFAULT_RAMP_FACTOR, DEFAULT_HIGH_WATER_MARK, DEFAULT_LOW_WATER_MARK,
          DEFAULT_GLOBAL_STEP_UP, DEFAULT_GLOBAL_STEP_DOWN,
          DEFAULT_CLUSTER_MIN_CALL_COUNT_HIGH_WATER_MARK,
@@ -89,6 +92,7 @@ public class DegraderLoadBalancerStrategyConfig
   public DegraderLoadBalancerStrategyConfig(DegraderLoadBalancerStrategyConfig config)
   {
     this(config.getUpdateIntervalMs(),
+         config.isUpdateOnlyAtInterval(),
          config.getPointsPerWeight(),
          config.getHashMethod(),
          config.getHashConfig(),
@@ -104,6 +108,7 @@ public class DegraderLoadBalancerStrategyConfig
   }
 
   public DegraderLoadBalancerStrategyConfig(long updateIntervalMs,
+                                            boolean updateOnlyAtInterval,
                                             int pointsPerWeight,
                                             String hashMethod,
                                             Map<String,Object> hashConfig,
@@ -118,6 +123,7 @@ public class DegraderLoadBalancerStrategyConfig
                                             long minCallCountLowWaterMark)
   {
     _updateIntervalMs = updateIntervalMs;
+    _updateOnlyAtInterval = updateOnlyAtInterval;
     _pointsPerWeight = pointsPerWeight;
     _hashMethod = hashMethod;
     _hashConfig = Collections.unmodifiableMap(hashConfig);
@@ -159,6 +165,9 @@ public class DegraderLoadBalancerStrategyConfig
                        PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS,
                        DEFAULT_UPDATE_INTERVAL_MS, Long.class);
 
+    Boolean updateOnlyAtInterval = MapUtil.getWithDefault(map, PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_UPDATE_ONLY_AT_INTERVAL,
+            DEFAULT_UPDATE_ONLY_AT_INTERVAL, Boolean.class);
+
     Integer pointsPerWeight = MapUtil.getWithDefault(map, PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_POINTS_PER_WEIGHT,
                        DEFAULT_POINTS_PER_WEIGHT, Integer.class);
 
@@ -195,7 +204,7 @@ public class DegraderLoadBalancerStrategyConfig
     Map<String,Object> hashConfig = (Map<String,Object>)obj;
 
     return new DegraderLoadBalancerStrategyConfig(
-        updateIntervalMs, pointsPerWeight, hashMethod, hashConfig,
+        updateIntervalMs, updateOnlyAtInterval, pointsPerWeight, hashMethod, hashConfig,
         clock, initialRecoveryLevel, ringRampFactor, highWaterMark, lowWaterMark,
         globalStepUp, globalStepDown, minClusterCallCountHighWaterMark,
         minClusterCallCountLowWaterMark);
@@ -270,6 +279,11 @@ public class DegraderLoadBalancerStrategyConfig
   public double getGlobalStepDown()
   {
     return _globalStepDown;
+  }
+
+  public boolean isUpdateOnlyAtInterval()
+  {
+    return _updateOnlyAtInterval;
   }
 
   @Override

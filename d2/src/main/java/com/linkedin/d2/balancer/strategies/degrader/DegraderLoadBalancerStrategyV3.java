@@ -312,8 +312,10 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
   static boolean isOldStateTheSameAsNewState(PartitionDegraderLoadBalancerState oldState,
                                                      PartitionDegraderLoadBalancerState newState)
   {
-    return oldState.getClusterGenerationId() == newState.getClusterGenerationId() &&
-        oldState.getCurrentOverrideDropRate() == newState.getCurrentOverrideDropRate() &&
+    // clusterGenerationId check is removed from here. Reasons:
+    // 1. Points map will be probably different when clusterGenerationId is different
+    // 2. When points map and recovery map both remain the same, we probably don't want to log it here.
+    return oldState.getCurrentOverrideDropRate() == newState.getCurrentOverrideDropRate() &&
         oldState.getPointsMap().equals(newState.getPointsMap()) &&
         oldState.getRecoveryMap().equals(newState.getRecoveryMap());
   }
@@ -809,8 +811,12 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
 
   /**
    * We should update if we have no prior state, or the state's generation id is older
-   * than the current cluster generation, or the state was last updated more than
-   * _updateIntervalMs ago.
+   * than the current cluster generation if we don't want to update it only at interval,
+   * or the state was last updated more than _updateIntervalMs ago.
+   *
+   * isUpdateOnlyAtInterval is used to determine whether want the update only happening
+   * at the end of each interval. Updating partition state is expensive because of the reconstruction
+   * of hash ring, so enabling this config may save some time for clusters changed very frequently.
    *
    * Now requiring shouldUpdatePartition to take a DegraderLoadBalancerState because we must have a
    * static view of the state, and we don't want the state to change between checking if we should
@@ -832,7 +838,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
   {
     return  updateEnabled
         && (
-            partitionState.getClusterGenerationId() != clusterGenerationId ||
+            !config.isUpdateOnlyAtInterval() && partitionState.getClusterGenerationId() != clusterGenerationId ||
             config.getClock().currentTimeMillis() - partitionState.getLastUpdated() >= config.getUpdateIntervalMs());
   }
 

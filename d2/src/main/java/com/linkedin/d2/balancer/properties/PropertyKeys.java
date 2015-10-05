@@ -69,6 +69,7 @@ public class PropertyKeys
   public static final String HTTP_LB_HASH_METHOD = "http.loadBalancer.hashMethod";
   public static final String HTTP_LB_HASH_CONFIG = "http.loadBalancer.hashConfig";
   public static final String HTTP_LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS = "http.loadBalancer.updateIntervalMs";
+  public static final String HTTP_LB_STRATEGY_PROPERTIES_UPDATE_ONLY_AT_INTERVAL = "http.loadBalancer.updateOnlyAtInterval";
   public static final String HTTP_LB_STRATEGY_PROPERTIES_MAX_CLUSTER_LATENCY_WITHOUT_DEGRADING = "http.loadBalancer.maxClusterLatencyWithoutDegrading";
   public static final String HTTP_LB_STRATEGY_PROPERTIES_DEFAULT_SUCCESSFUL_TRANSMISSION_WEIGHT = "http.loadBalancer.defaultSuccessfulTransmissionWeight";
   public static final String HTTP_LB_STRATEGY_PROPERTIES_POINTS_PER_WEIGHT = "http.loadBalancer.pointsPerWeight";
