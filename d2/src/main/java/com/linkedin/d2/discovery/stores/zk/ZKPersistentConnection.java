@@ -49,9 +49,13 @@ public class ZKPersistentConnection
 {
   private static final Logger LOG = LoggerFactory.getLogger(ZKPersistentConnection.class);
 
-  private final ZKConnection _zkConnection;
+  private final String _connectionString;
+  private final int _sessionTimeout;
+  private final boolean _shutdownAsynchronously;
+  private final boolean _isSymlinkAware;
 
   private final Object _mutex = new Object();
+  private ZKConnection _zkConnection;
   private Set<EventListener> _listeners;
   private State _state = State.INIT;
 
@@ -106,6 +110,10 @@ public class ZKPersistentConnection
   public ZKPersistentConnection(String connect, int timeout, Collection<? extends EventListener> listeners,
                                 boolean shutdownAsynchronously, boolean isSymlinkAware)
   {
+    _connectionString = connect;
+    _sessionTimeout = timeout;
+    _shutdownAsynchronously = shutdownAsynchronously;
+    _isSymlinkAware = isSymlinkAware;
     _zkConnection = new ZKConnection(connect, timeout, shutdownAsynchronously, isSymlinkAware);
     _zkConnection.addStateListener(new Listener());
     _listeners = new HashSet<EventListener>(listeners);
@@ -150,12 +158,18 @@ public class ZKPersistentConnection
 
   public ZooKeeper getZooKeeper()
   {
-    return _zkConnection.getZooKeeper();
+    synchronized (_mutex)
+    {
+      return _zkConnection.getZooKeeper();
+    }
   }
 
   public ZKConnection getZKConnection()
   {
-    return _zkConnection;
+    synchronized (_mutex)
+    {
+      return _zkConnection;
+    }
   }
 
   private class Listener implements ZKConnection.StateListener
@@ -200,6 +214,9 @@ public class ZKPersistentConnection
             if (_state == State.STARTED)
             {
               _zkConnection.shutdown();
+              _zkConnection =
+                  new ZKConnection(_connectionString, _sessionTimeout, _shutdownAsynchronously, _isSymlinkAware);
+              _zkConnection.addStateListener(new Listener());
               _zkConnection.start();
             }
           }
