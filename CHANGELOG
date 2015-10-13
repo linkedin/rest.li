@@ -1,7 +1,14 @@
-2.10.20
--------
+2.11.1
+------
+
+
+2.11.0
+------
 (RB=587999)
 Make the resource information available to non-root request builder specs.
+
+(RB=590162)
+Disallow @ActionParam on non-action methods.
 
 2.10.19
 -------
