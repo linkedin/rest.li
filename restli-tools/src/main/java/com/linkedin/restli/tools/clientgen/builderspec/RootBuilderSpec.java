@@ -32,7 +32,6 @@ import java.util.Map;
  */
 public abstract class RootBuilderSpec extends BuilderSpec
 {
-  protected ResourceSchema _resource;
   protected String _sourceIdlName;
   protected String _resourcePath;
   protected List<String> _pathKeys;
@@ -47,18 +46,7 @@ public abstract class RootBuilderSpec extends BuilderSpec
 
   public RootBuilderSpec(String packageName, String className, String baseClassName, ResourceSchema resource)
   {
-    super(packageName, className, baseClassName);
-    _resource = resource;
-  }
-
-  public ResourceSchema getResource()
-  {
-    return _resource;
-  }
-
-  public void setResource(ResourceSchema resource)
-  {
-    _resource = resource;
+    super(packageName, className, baseClassName, resource);
   }
 
   public String getNamespace()

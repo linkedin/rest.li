@@ -20,6 +20,7 @@ package com.linkedin.restli.tools.clientgen.builderspec;
 import com.linkedin.pegasus.generator.spec.ClassTemplateSpec;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.restspec.FinderSchema;
+import com.linkedin.restli.restspec.ResourceSchema;
 
 
 /**
@@ -36,9 +37,9 @@ public class FinderBuilderSpec extends RequestBuilderSpec
   {
   }
 
-  public FinderBuilderSpec(String packageName, String className, String baseClassName)
+  public FinderBuilderSpec(String packageName, String className, String baseClassName, ResourceSchema resource)
   {
-    super(packageName, className, baseClassName);
+    super(packageName, className, baseClassName, resource);
   }
 
   @Override

@@ -19,6 +19,7 @@ package com.linkedin.restli.tools.clientgen.builderspec;
 
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.restspec.ActionSchema;
+import com.linkedin.restli.restspec.ResourceSchema;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,9 +40,9 @@ public class ActionBuilderSpec extends RequestBuilderSpec
     _actionName = actionName;
   }
 
-  public ActionBuilderSpec(String packageName, String className, String baseClassName, String actionName)
+  public ActionBuilderSpec(String packageName, String className, String baseClassName, ResourceSchema resource, String actionName)
   {
-    super(packageName, className, baseClassName);
+    super(packageName, className, baseClassName, resource);
     _actionName = actionName;
   }
 

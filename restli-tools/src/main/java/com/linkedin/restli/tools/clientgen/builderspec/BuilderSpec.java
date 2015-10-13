@@ -17,6 +17,8 @@
 package com.linkedin.restli.tools.clientgen.builderspec;
 
 
+import com.linkedin.restli.restspec.ResourceSchema;
+
 /**
  * Base class for request builder metadata specification, including root request builder and individual request builder.
  *
@@ -27,16 +29,18 @@ public abstract class BuilderSpec
   protected String _namespace;
   protected String _className;
   protected String _baseClassName;
+  protected ResourceSchema _resource;
 
   public BuilderSpec()
   {
   }
 
-  public BuilderSpec(String packageName, String className, String baseClassName)
+  public BuilderSpec(String packageName, String className, String baseClassName, ResourceSchema resource)
   {
     _namespace = packageName;
     _className = className;
     _baseClassName = baseClassName;
+    _resource = resource;
   }
 
   public String getNamespace()
@@ -67,5 +71,15 @@ public abstract class BuilderSpec
   public void setBaseClassName(String baseClassName)
   {
     _baseClassName = baseClassName;
+  }
+
+  public ResourceSchema getResource()
+  {
+    return _resource;
+  }
+
+  public void setResource(ResourceSchema resource)
+  {
+    _resource = resource;
   }
 }

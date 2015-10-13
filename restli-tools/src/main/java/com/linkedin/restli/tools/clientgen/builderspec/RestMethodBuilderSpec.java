@@ -18,6 +18,7 @@ package com.linkedin.restli.tools.clientgen.builderspec;
 
 
 import com.linkedin.restli.common.ResourceMethod;
+import com.linkedin.restli.restspec.ResourceSchema;
 import com.linkedin.restli.restspec.RestMethodSchema;
 
 
@@ -35,9 +36,9 @@ public class RestMethodBuilderSpec extends RequestBuilderSpec
     _method = ResourceMethod.fromString(method);
   }
 
-  public RestMethodBuilderSpec(String packageName, String className, String baseClassName, String method)
+  public RestMethodBuilderSpec(String packageName, String className, String baseClassName, ResourceSchema resource, String method)
   {
-    super(packageName, className, baseClassName);
+    super(packageName, className, baseClassName, resource);
     _method = ResourceMethod.fromString(method);
   }
 

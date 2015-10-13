@@ -19,6 +19,7 @@ package com.linkedin.restli.tools.clientgen.builderspec;
 
 import com.linkedin.pegasus.generator.spec.ClassTemplateSpec;
 import com.linkedin.restli.common.ResourceMethod;
+import com.linkedin.restli.restspec.ResourceSchema;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,9 +44,9 @@ public abstract class RequestBuilderSpec extends BuilderSpec
   {
   }
 
-  public RequestBuilderSpec(String packageName, String className, String baseClassName)
+  public RequestBuilderSpec(String packageName, String className, String baseClassName, ResourceSchema resourceSchema)
   {
-    super(packageName, className, baseClassName);
+    super(packageName, className, baseClassName, resourceSchema);
   }
 
   public List<String> getPathKeys()

@@ -1,6 +1,7 @@
 2.10.20
 -------
-
+(RB=587999)
+Make the resource information available to non-root request builder specs.
 
 2.10.19
 -------
