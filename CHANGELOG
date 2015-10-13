@@ -1,5 +1,12 @@
+2.10.20
+-------
+
+
 2.10.19
 -------
+(RB=587506)
+Fix a bug in ZKPersistentConnection where a ZKConnection shouldn't be reused 
+after session expiration.
 
 2.10.18
 -------
