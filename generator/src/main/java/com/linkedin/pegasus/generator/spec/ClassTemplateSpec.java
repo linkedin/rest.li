@@ -38,6 +38,7 @@ import java.util.Set;
 public class ClassTemplateSpec
 {
   private DataSchema _schema;
+  private TyperefDataSchema _originalTyperefSchema;
   private ClassTemplateSpec _enclosingClass;
   private String _namespace;
   private String _className;
@@ -92,6 +93,16 @@ public class ClassTemplateSpec
   public void setSchema(DataSchema schema)
   {
     _schema = schema;
+  }
+
+  public TyperefDataSchema getOriginalTyperefSchema()
+  {
+    return _originalTyperefSchema;
+  }
+
+  public void setOriginalTyperefSchema(TyperefDataSchema originalTyperefSchema)
+  {
+    _originalTyperefSchema = originalTyperefSchema;
   }
 
   public ClassTemplateSpec getEnclosingClass()

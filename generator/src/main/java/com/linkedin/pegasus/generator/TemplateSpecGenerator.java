@@ -326,35 +326,43 @@ public class TemplateSpecGenerator
 
   private ClassTemplateSpec processSchema(DataSchema schema, ClassTemplateSpec enclosingClass, String memberName)
   {
-    ClassTemplateSpec result = null;
-
     final CustomInfoSpec customInfo = getImmediateCustomInfo(schema);
+    ClassTemplateSpec result = null;
+    TyperefDataSchema originalTyperefSchema = null;
+
     while (schema.getType() == DataSchema.Type.TYPEREF)
     {
       final TyperefDataSchema typerefSchema = (TyperefDataSchema) schema;
+      if (originalTyperefSchema == null)
+      {
+        originalTyperefSchema = typerefSchema;
+      }
+
       final ClassTemplateSpec found = _schemaToClassMap.get(schema);
+      schema = typerefSchema.getRef();
       if (found == null)
       {
-        if (typerefSchema.getRef().getType() == DataSchema.Type.UNION)
+        if (schema.getType() == DataSchema.Type.UNION)
         {
-          result = generateUnion((UnionDataSchema) typerefSchema.getRef(), typerefSchema);
+          result = generateUnion((UnionDataSchema) schema, typerefSchema);
           break;
         }
         else
         {
-          generateTyperef(typerefSchema);
+          generateTyperef(typerefSchema, originalTyperefSchema);
         }
       }
-      else if (typerefSchema.getRef().getType() == DataSchema.Type.UNION)
+      else if (schema.getType() == DataSchema.Type.UNION)
       {
         result = found;
         break;
       }
-      schema = typerefSchema.getRef();
     }
+
     if (result == null)
     {
       assert schema == schema.getDereferencedDataSchema();
+
       if (schema instanceof ComplexDataSchema)
       {
         final ClassTemplateSpec found = _schemaToClassMap.get(schema);
@@ -390,6 +398,7 @@ public class TemplateSpecGenerator
       throw unrecognizedSchemaType(enclosingClass, memberName, schema);
     }
 
+    result.setOriginalTyperefSchema(originalTyperefSchema);
     return result;
   }
 
@@ -711,9 +720,10 @@ public class TemplateSpecGenerator
     return fixedClass;
   }
 
-  private TyperefTemplateSpec generateTyperef(TyperefDataSchema schema)
+  private TyperefTemplateSpec generateTyperef(TyperefDataSchema schema, TyperefDataSchema originalTyperefSchema)
   {
     final TyperefTemplateSpec typerefClass = new TyperefTemplateSpec(schema);
+    typerefClass.setOriginalTyperefSchema(originalTyperefSchema);
     typerefClass.setNamespace(schema.getNamespace());
     typerefClass.setClassName(schema.getName());
     typerefClass.setModifiers(ModifierSpec.PUBLIC);
