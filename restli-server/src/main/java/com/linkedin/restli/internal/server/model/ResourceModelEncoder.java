@@ -62,7 +62,6 @@ import com.linkedin.restli.restspec.SimpleSchema;
 import com.linkedin.restli.server.AlternativeKey;
 import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.ResourceLevel;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
@@ -265,7 +264,7 @@ public class ResourceModelEncoder
    */
   public ResourceSchema loadOrBuildResourceSchema(final ResourceModel resourceModel)
   {
-    StringBuilder resourceFilePath = new StringBuilder(File.separator);
+    StringBuilder resourceFilePath = new StringBuilder();
     if (resourceModel.getNamespace() != null)
     {
       resourceFilePath.append(resourceModel.getNamespace());
