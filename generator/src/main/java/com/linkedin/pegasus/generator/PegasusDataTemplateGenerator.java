@@ -123,7 +123,7 @@ public class PegasusDataTemplateGenerator
 
     final DataSchemaParser.ParseResult parseResult = schemaParser.parseSources(sources);
 
-    for (Map.Entry<NamedDataSchema, DataSchemaLocation> entry : parseResult.getSchemaAndLocations().entrySet())
+    for (Map.Entry<DataSchema, DataSchemaLocation> entry : parseResult.getSchemaAndLocations().entrySet())
     {
       specGenerator.generate(entry.getKey(), entry.getValue());
     }

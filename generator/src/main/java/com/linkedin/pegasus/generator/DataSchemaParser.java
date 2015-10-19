@@ -79,10 +79,9 @@ public class DataSchemaParser
    * @return {@link ParseResult} for what were read.
    * @throws IOException if there are problems opening or deleting files.
    */
-  public ParseResult parseSources(String sources[])
-      throws IOException
+  public ParseResult parseSources(String sources[]) throws IOException
   {
-    final StringBuilder messageBuilder = new StringBuilder();
+    final ParseResult result = new ParseResult();
 
     try
     {
@@ -97,25 +96,31 @@ public class DataSchemaParser
             final List<File> sourceFilesInDirectory = FileUtil.listFiles(sourceFile, filter);
             for (File f : sourceFilesInDirectory)
             {
-              parseFile(f, messageBuilder);
-            }
-          }
-          else if (sourceFile.getName().endsWith(".jar"))
-          {
-            final JarFile jarFile = new JarFile(sourceFile);
-            final Enumeration<JarEntry> entries = jarFile.entries();
-            while (entries.hasMoreElements())
-            {
-              final JarEntry entry = entries.nextElement();
-              if (!entry.isDirectory() && entry.getName().endsWith(FileDataSchemaResolver.DEFAULT_EXTENSION))
-              {
-                parseJarEntry(jarFile, entry, messageBuilder);
-              }
+              parseFile(f, result);
+              result._sourceFiles.add(f);
             }
           }
           else
           {
-            parseFile(sourceFile, messageBuilder);
+            if (sourceFile.getName().endsWith(".jar"))
+            {
+              final JarFile jarFile = new JarFile(sourceFile);
+              final Enumeration<JarEntry> entries = jarFile.entries();
+              while (entries.hasMoreElements())
+              {
+                final JarEntry entry = entries.nextElement();
+                if (!entry.isDirectory() && entry.getName().endsWith(FileDataSchemaResolver.DEFAULT_EXTENSION))
+                {
+                  parseJarEntry(jarFile, entry, result);
+                }
+              }
+            }
+            else
+            {
+              parseFile(sourceFile, result);
+            }
+
+            result._sourceFiles.add(sourceFile);
           }
         }
         else
@@ -124,29 +129,34 @@ public class DataSchemaParser
           final DataSchema schema = _schemaResolver.findDataSchema(source, errorMessage);
           if (schema == null)
           {
-            messageBuilder.append("File cannot be opened or schema name cannot be resolved: ").append(source).append("\n");
+            result._messageBuilder.append("File cannot be opened or schema name cannot be resolved: ").append(source).append("\n");
           }
           if (errorMessage.length() > 0)
           {
-            messageBuilder.append(errorMessage.toString());
+            result._messageBuilder.append(errorMessage.toString());
           }
         }
       }
 
-      if (messageBuilder.length() > 0)
+      if (result._messageBuilder.length() > 0)
       {
-        throw new IOException(messageBuilder.toString());
+        throw new IOException(result.getMessage());
       }
 
-      return new ParseResult(messageBuilder.toString());
+      for (Map.Entry<String, DataSchemaLocation> entry : _schemaResolver.nameToDataSchemaLocations().entrySet()) {
+        final DataSchema schema = _schemaResolver.bindings().get(entry.getKey());
+        result._schemaAndLocations.put(schema, entry.getValue());
+      }
+
+      return result;
     }
     catch (RuntimeException e)
     {
-      if (messageBuilder.length() > 0)
+      if (result._messageBuilder.length() > 0)
       {
         e = new RuntimeException("Unexpected " + e.getClass().getSimpleName() + " encountered.\n" +
                                      "This may be caused by the following parsing or processing errors:\n" +
-                                     messageBuilder, e);
+                                     result.getMessage(), e);
       }
       throw e;
     }
@@ -159,26 +169,31 @@ public class DataSchemaParser
    * @param messageBuilder {@link StringBuilder} to update message.
    * @throws IOException if there is a file access error.
    */
-  private void parseFile(File schemaSourceFile, StringBuilder messageBuilder)
+  private void parseFile(File schemaSourceFile, ParseResult result)
       throws IOException
   {
     final DataSchemaLocation location = getSchemaLocation(schemaSourceFile);
-    // Whether a source file has already been resolved to data schemas
+    // if a the data schema has been resolved before, must skip parsing again, because one name can't be bound to two data schemas
     if (_schemaResolver.locationResolved(location))
     {
       return;
     }
 
     final InputStream inputStream = new SchemaFileInputStream(schemaSourceFile);
-    final List<DataSchema> schemas = parseSchemaStream(inputStream, location, messageBuilder);
+    final List<DataSchema> schemas = parseSchemaStream(inputStream, location, result);
 
     for (DataSchema schema : schemas)
     {
-      validateSchemaWithPath(schemaSourceFile.getAbsolutePath(), schema);
+      if (schema instanceof NamedDataSchema)
+      {
+        validateSchemaWithPath(schemaSourceFile.getAbsolutePath(), (NamedDataSchema) schema);
+      }
+
+      result._schemaAndLocations.put(schema, location);
     }
   }
 
-  private void parseJarEntry(JarFile schemaJarFile, JarEntry jarEntry, StringBuilder messageBuilder)
+  private void parseJarEntry(JarFile schemaJarFile, JarEntry jarEntry, ParseResult result)
       throws IOException
   {
     final DataSchemaLocation location = getSchemaLocation(schemaJarFile, jarEntry.getName());
@@ -188,11 +203,16 @@ public class DataSchemaParser
     }
 
     final InputStream jarStream = schemaJarFile.getInputStream(jarEntry);
-    final List<DataSchema> schemas = parseSchemaStream(jarStream, location, messageBuilder);
+    final List<DataSchema> schemas = parseSchemaStream(jarStream, location, result);
 
     for (DataSchema schema : schemas)
     {
-      validateSchemaWithPath(location.toString(), schema);
+      if (schema instanceof NamedDataSchema)
+      {
+        validateSchemaWithPath(location.toString(), (NamedDataSchema) schema);
+      }
+
+      result._schemaAndLocations.put(schema, location);
     }
   }
 
@@ -209,37 +229,35 @@ public class DataSchemaParser
   /**
    * Checks that the schema name and namespace match the file name and path.  These must match for FileDataSchemaResolver to find a schema pdscs by fully qualified name.
    */
-  private void validateSchemaWithPath(String path, DataSchema schema)
+  private void validateSchemaWithPath(String path, NamedDataSchema namedDataSchema)
   {
-    if (schema instanceof NamedDataSchema)
+    final String namespace = namedDataSchema.getNamespace();
+
+    if (!FileUtil.removeFileExtension(path.substring(path.lastIndexOf(File.separator) + 1)).equalsIgnoreCase(namedDataSchema.getName()))
     {
-      final NamedDataSchema namedDataSchema = (NamedDataSchema) schema;
-      final String namespace = namedDataSchema.getNamespace();
+      throw new IllegalArgumentException(namedDataSchema.getFullName() + " has name that does not match path '" +
+                                             path + "'");
+    }
 
-      if (!FileUtil.removeFileExtension(path.substring(path.lastIndexOf(File.separator) + 1)).equalsIgnoreCase(namedDataSchema.getName()))
-      {
-        throw new IllegalArgumentException(namedDataSchema.getFullName() + " has name that does not match path '" +
-                                               path + "'");
-      }
-
-      final String parent = path.substring(0, path.lastIndexOf(File.separator));
-      if (!parent.endsWith(namespace.replace('.', File.separatorChar)))
-      {
-        throw new IllegalArgumentException(namedDataSchema.getFullName() + " has namespace that does not match " +
-                                               "parent path '" + parent + "'");
-      }
+    final String parent = path.substring(0, path.lastIndexOf(File.separator));
+    if (!parent.endsWith(namespace.replace('.', File.separatorChar)))
+    {
+      throw new IllegalArgumentException(namedDataSchema.getFullName() + " has namespace that does not match " +
+                                             "parent path '" + parent + "'");
     }
   }
 
   /**
    * Parse a source file to obtain the data schemas contained within.
+   * This method will cause the {@link DataSchemaResolver} to resolve any referenced named and unnamed schemas,
+   * as well as registering named schemas in its bindings.
    *
    * @param schemaInputStream provides the source data.
    * @param messageBuilder {@link StringBuilder} to update message.
-   * @return the data schemas within the source file.
+   * @return the top-level data schemas within the source file.
    * @throws IOException if there is a file access error.
    */
-  private List<DataSchema> parseSchemaStream(InputStream schemaInputStream, DataSchemaLocation schemaLocation, StringBuilder messageBuilder)
+  private List<DataSchema> parseSchemaStream(InputStream schemaInputStream, DataSchemaLocation schemaLocation, ParseResult result)
       throws IOException
   {
     final SchemaParser parser = new SchemaParser(_schemaResolver);
@@ -258,8 +276,7 @@ public class DataSchemaParser
       schemaInputStream.close();
       if (parser.hasError())
       {
-        messageBuilder.append(schemaLocation.toString())
-            .append(",").append(parser.errorMessage());
+        result._messageBuilder.append(schemaLocation.toString()).append(",").append(parser.errorMessage());
       }
     }
   }
@@ -267,25 +284,17 @@ public class DataSchemaParser
   /**
    * Represent the result of schema parsing. Consist of two parts: schema from file path and from schema name, based on user input.
    * The two parts are mutually exclusive, and the union of two consists of all schema resolved.
+   *
+   * The result contains all resolved data schemas, both directly defined by the source files, or transitively referenced by the former.
+   * Both top-level and embedded named schemas are included. Only top-level unnamed schemas are included.
    */
-  public class ParseResult
+  public static class ParseResult
   {
-    private final Map<NamedDataSchema, DataSchemaLocation> _schemaAndLocations = new HashMap<NamedDataSchema, DataSchemaLocation>();
+    private final Map<DataSchema, DataSchemaLocation> _schemaAndLocations = new HashMap<DataSchema, DataSchemaLocation>();
     private final Set<File> _sourceFiles = new HashSet<File>();
-    private final String _message;
+    private final StringBuilder _messageBuilder = new StringBuilder();
 
-    public ParseResult(String message)
-    {
-      for (Map.Entry<String, DataSchemaLocation> entry : _schemaResolver.nameToDataSchemaLocations().entrySet()) {
-        final NamedDataSchema schema = _schemaResolver.bindings().get(entry.getKey());
-        _schemaAndLocations.put(schema, entry.getValue());
-        _sourceFiles.add(entry.getValue().getSourceFile());
-      }
-
-      _message = message;
-    }
-
-    public Map<NamedDataSchema, DataSchemaLocation> getSchemaAndLocations()
+    public Map<DataSchema, DataSchemaLocation> getSchemaAndLocations()
     {
       return _schemaAndLocations;
     }
@@ -297,7 +306,7 @@ public class DataSchemaParser
 
     public String getMessage()
     {
-      return _message;
+      return _messageBuilder.toString();
     }
   }
 

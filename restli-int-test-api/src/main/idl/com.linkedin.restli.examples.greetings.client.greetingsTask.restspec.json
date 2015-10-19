@@ -39,6 +39,15 @@
       "method" : "get_all"
     } ],
     "finders" : [ {
+      "name" : "empty",
+      "parameters" : [ {
+        "name" : "array",
+        "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.greetings.api.Empty\" }"
+      }, {
+        "name" : "map",
+        "type" : "{ \"type\" : \"map\", \"values\" : \"com.linkedin.restli.examples.greetings.api.Empty\" }"
+      } ]
+    }, {
       "name" : "search",
       "parameters" : [ {
         "name" : "tone",

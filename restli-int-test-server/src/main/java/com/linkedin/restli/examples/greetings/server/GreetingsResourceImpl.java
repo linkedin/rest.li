@@ -23,6 +23,8 @@ import com.linkedin.data.transform.DataProcessingException;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.examples.greetings.api.Empty;
+import com.linkedin.restli.examples.greetings.api.EmptyArray;
+import com.linkedin.restli.examples.greetings.api.EmptyMap;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.SearchMetadata;
 import com.linkedin.restli.examples.greetings.api.Tone;
@@ -53,6 +55,7 @@ import com.linkedin.restli.server.annotations.RestMethod;
 import com.linkedin.restli.server.resources.BaseResource;
 import com.linkedin.restli.server.resources.KeyValueResource;
 import com.linkedin.restli.server.util.PatchApplier;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -367,6 +370,15 @@ class GreetingsResourceImpl implements KeyValueResource<Long,Greeting>
     }
 
     return new CollectionResult<Greeting, SearchMetadata>(greetings, null, metadata);
+  }
+
+  // test if @{link EmptyArray} is generated from ArrayOfEmptys.pdsc
+  // test if @{link EmptyMap} is generated from MapOfEmptys.pdsc
+  @Finder("empty")
+  public List<Greeting> emptyFinder(@QueryParam("array") EmptyArray array,
+                                    @QueryParam("map") EmptyMap map)
+  {
+    return Collections.emptyList();
   }
 
   private Greeting createGreeting()

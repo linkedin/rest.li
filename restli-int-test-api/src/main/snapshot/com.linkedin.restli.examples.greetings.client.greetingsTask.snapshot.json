@@ -22,6 +22,11 @@
     } ]
   }, {
     "type" : "record",
+    "name" : "Empty",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "fields" : [ ]
+  }, {
+    "type" : "record",
     "name" : "ToneFacet",
     "namespace" : "com.linkedin.restli.examples.greetings.api",
     "doc" : "metadata for greetings search results",
@@ -44,11 +49,6 @@
         "items" : "ToneFacet"
       }
     } ]
-  }, {
-    "type" : "record",
-    "name" : "Empty",
-    "namespace" : "com.linkedin.restli.examples.greetings.api",
-    "fields" : [ ]
   }, {
     "type" : "record",
     "name" : "TransferOwnershipRequest",
@@ -105,6 +105,15 @@
         "method" : "get_all"
       } ],
       "finders" : [ {
+        "name" : "empty",
+        "parameters" : [ {
+          "name" : "array",
+          "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.greetings.api.Empty\" }"
+        }, {
+          "name" : "map",
+          "type" : "{ \"type\" : \"map\", \"values\" : \"com.linkedin.restli.examples.greetings.api.Empty\" }"
+        } ]
+      }, {
         "name" : "search",
         "parameters" : [ {
           "name" : "tone",
