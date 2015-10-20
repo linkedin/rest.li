@@ -1,7 +1,13 @@
+2.11.2
+------
+
 2.11.1
 ------
 (RB=591323)
 Add original typeref data schema to template spec.
+
+(RB=589622)
+Updated RestLi filters so that they can be executed asynchronously.
 
 2.11.0
 ------
