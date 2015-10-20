@@ -2420,7 +2420,79 @@ public class TestRestLiRouting
     expectRoutingExceptionWithStatus(uri, version, httpMethod, restliMethod, HttpStatus.S_400_BAD_REQUEST);
   }
 
-  @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "nKeyAssociationRouting")
+  @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "invalidList")
+  public Object[][] invalidList()
+  {
+    return new Object[][]
+        {
+            {
+                "/statuses?ids=1&ids=2&ids=3",
+                AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+                "GET",
+                "CREATE"
+            },
+            {
+                "/statuses?ids=1",
+                AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+                "GET",
+                "CREATE"
+            },
+            {
+                "/statuses?ids=1&ids=2",
+                AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+                "PUT",
+                "CREATE"
+            },
+            {
+                "/statuses?ids=1",
+                AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+                "PUT",
+                "CREATE"
+            },
+            {
+                "/statuses?ids=1&ids=2",
+                AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+                "POST",
+                "CREATE"
+            },
+            {
+                "/statuses?ids=1",
+                AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+                "POST",
+                "CREATE"
+            },
+            {
+                "/statuses?ids=1&ids=2",
+                AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+                "DELETE",
+                "CREATE"
+            },
+            {
+                "/statuses?ids=1",
+                AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+                "DELETE",
+                "CREATE"
+            },
+        };
+  }
+
+
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "invalidList")
+  public void testRestliInvalidList(String uri, ProtocolVersion version, String httpMethod, String restliMethod) throws Exception
+  {
+    Map<String, ResourceModel> pathRootResourceMap =
+        buildResourceModels(StatusCollectionResource.class,
+            FollowsAssociativeResource.class,
+            RepliesCollectionResource.class);
+
+    _router = new RestLiRouter(pathRootResourceMap);
+
+    expectRoutingExceptionWithStatus(uri, version, httpMethod, restliMethod, HttpStatus.S_400_BAD_REQUEST);
+  }
+
+
+
+    @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "nKeyAssociationRouting")
   public Object[][] nKeyAssociationRouting()
   {
     return new Object[][]

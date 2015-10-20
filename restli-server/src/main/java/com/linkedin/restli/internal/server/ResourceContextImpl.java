@@ -29,6 +29,7 @@ import com.linkedin.jersey.api.uri.UriComponent;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
+import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
@@ -42,6 +43,7 @@ import com.linkedin.restli.internal.server.util.RestLiSyntaxException;
 import com.linkedin.restli.server.ProjectionMode;
 import com.linkedin.restli.server.RestLiServiceException;
 
+import com.linkedin.restli.server.RoutingException;
 import java.net.HttpCookie;
 import java.net.URI;
 import java.util.Collections;
@@ -281,14 +283,14 @@ public class ResourceContextImpl implements ServerResourceContext
       return null;
     }
 
-    if (paramObject instanceof String)
+    if (paramObject instanceof String && _protocolVersion.compareTo(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion()) == 0)
     {
       return Collections.singletonList((String) paramObject);
     }
 
     if (!(paramObject instanceof DataList))
     {
-      throw new RestLiInternalException("Invalid value type for parameter " + key);
+      throw new RoutingException("Invalid value type for parameter " + key,  HttpStatus.S_400_BAD_REQUEST.getCode());
     }
 
     return new StringArray((DataList) paramObject);
