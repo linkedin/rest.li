@@ -36,6 +36,8 @@ import com.linkedin.restli.internal.server.methods.response.ErrorResponseBuilder
 import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.server.filter.FilterRequestContext;
 import com.linkedin.restli.server.filter.FilterResponseContext;
+import com.linkedin.restli.server.filter.NextRequestFilter;
+import com.linkedin.restli.server.filter.NextResponseFilter;
 import com.linkedin.restli.server.filter.RequestFilter;
 import com.linkedin.restli.server.filter.ResponseFilter;
 import com.linkedin.restli.server.resources.BaseResource;
@@ -165,8 +167,6 @@ public class TestRestLiServer
     };
 
     config.addDebugRequestHandlers(debugRequestHandlerA, debugRequestHandlerB);
-    config.addRequestFilter(_mockRequestFilter);
-    config.addResponseFilter(_mockResponseFilter);
     _server = new RestLiServer(config, _resourceFactory, engine);
   }
 
@@ -264,11 +264,31 @@ public class TestRestLiServer
     EasyMock.expect(statusResource.get(eq(1L))).andReturn(buildStatusRecord()).once();
     if (filters)
     {
-      _mockRequestFilter.onRequest(EasyMock.anyObject(FilterRequestContext.class));
-      EasyMock.expectLastCall().times(1);
+      _mockRequestFilter.onRequest(EasyMock.anyObject(FilterRequestContext.class),
+                                   EasyMock.anyObject(NextRequestFilter.class));
+      EasyMock.expectLastCall().andAnswer(new IAnswer<Object>()
+      {
+        @Override
+        public Object answer() throws Throwable
+        {
+          ((NextRequestFilter) EasyMock.getCurrentArguments()[1]).onRequest((FilterRequestContext) EasyMock.getCurrentArguments()[0]);
+          return null;
+        }
+      }).times(1);
+
       _mockResponseFilter.onResponse(EasyMock.anyObject(FilterRequestContext.class),
-                                     EasyMock.anyObject(FilterResponseContext.class));
-      EasyMock.expectLastCall().times(1);
+                                     EasyMock.anyObject(FilterResponseContext.class),
+                                     EasyMock.anyObject(NextResponseFilter.class));
+      EasyMock.expectLastCall().andAnswer(new IAnswer<Object>()
+      {
+        @Override
+        public Object answer() throws Throwable
+        {
+          ((NextResponseFilter) EasyMock.getCurrentArguments()[2]).onResponse((FilterRequestContext) EasyMock.getCurrentArguments()[0],
+                                                                              (FilterResponseContext) EasyMock.getCurrentArguments()[1]);
+          return null;
+        }
+      }).times(1);
       EasyMock.replay(_mockRequestFilter, _mockResponseFilter);
     }
     EasyMock.replay(statusResource);

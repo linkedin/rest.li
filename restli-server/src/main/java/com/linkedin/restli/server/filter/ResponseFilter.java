@@ -21,18 +21,18 @@ package com.linkedin.restli.server.filter;
  * A filter that processes outgoing responses from RestLi resources.
  *
  * @author nshankar
- *
  */
 public interface ResponseFilter
 {
   /**
    * Response filter method to be invoked on a execution of the resource.
    *
-   * @param requestContext
-   *          Reference to {@link FilterRequestContext}.
-   * @param responseContext
-   *          Reference to {@link FilterResponseContext}.
-   *
+   * @param requestContext     Reference to {@link FilterRequestContext}.
+   * @param responseContext    Reference to {@link FilterResponseContext}.
+   * @param nextResponseFilter The next filter in the chain.  Concrete implementations should invoke {@link
+   *                           NextResponseFilter#onResponse} to continue the filter chain.
    */
-  void onResponse(final FilterRequestContext requestContext, final FilterResponseContext responseContext);
+  void onResponse(final FilterRequestContext requestContext,
+                  final FilterResponseContext responseContext,
+                  final NextResponseFilter nextResponseFilter);
 }

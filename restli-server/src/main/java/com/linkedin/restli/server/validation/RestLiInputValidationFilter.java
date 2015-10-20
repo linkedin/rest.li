@@ -26,6 +26,7 @@ import com.linkedin.restli.common.validation.RestLiDataValidator;
 import com.linkedin.restli.server.RestLiRequestData;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.filter.FilterRequestContext;
+import com.linkedin.restli.server.filter.NextRequestFilter;
 import com.linkedin.restli.server.filter.RequestFilter;
 
 import java.util.Map;
@@ -39,7 +40,7 @@ import java.util.Map;
 public class RestLiInputValidationFilter implements RequestFilter
 {
   @Override
-  public void onRequest(final FilterRequestContext requestContext)
+  public void onRequest(final FilterRequestContext requestContext, final NextRequestFilter nextRequestFilter)
   {
     Class<?> resourceClass = requestContext.getFilterResourceModel().getResourceClass();
     ResourceMethod method = requestContext.getMethodType();
@@ -104,5 +105,6 @@ public class RestLiInputValidationFilter implements RequestFilter
         throw new RestLiServiceException(HttpStatus.S_422_UNPROCESSABLE_ENTITY, sb.toString());
       }
     }
+    nextRequestFilter.onRequest(requestContext);
   }
 }

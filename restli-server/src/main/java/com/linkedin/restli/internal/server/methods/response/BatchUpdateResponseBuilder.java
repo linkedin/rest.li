@@ -32,6 +32,7 @@ import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.internal.server.methods.AnyRecord;
 import com.linkedin.restli.server.BatchUpdateResult;
+import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.UpdateResponse;
 
@@ -55,7 +56,7 @@ public final class BatchUpdateResponseBuilder implements RestLiResponseBuilder
 
   @Override
   @SuppressWarnings("unchecked")
-  public PartialRestResponse buildResponse(RoutingResult routingResult, RestLiResponseEnvelope responseData)
+  public PartialRestResponse buildResponse(RoutingResult routingResult, RestLiResponseData responseData)
   {
     Map<Object, UpdateStatus> mergedResults = new HashMap<Object, UpdateStatus>();
 

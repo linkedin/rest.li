@@ -37,6 +37,7 @@ import com.linkedin.restli.internal.server.util.RestUtils;
 import com.linkedin.restli.server.CreateKVResponse;
 import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.ResourceContext;
+import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
 
 import java.net.HttpCookie;
@@ -47,7 +48,7 @@ import java.util.Map;
 public class CreateResponseBuilder implements RestLiResponseBuilder
 {
   @Override
-  public PartialRestResponse buildResponse(RoutingResult routingResult, RestLiResponseEnvelope responseData)
+  public PartialRestResponse buildResponse(RoutingResult routingResult, RestLiResponseData responseData)
   {
     return new PartialRestResponse.Builder().entity(responseData.getRecordResponseEnvelope().getRecord())
                                             .headers(responseData.getHeaders())

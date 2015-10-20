@@ -32,6 +32,7 @@ import com.linkedin.restli.examples.greetings.client.Exceptions3Builders;
 import com.linkedin.restli.examples.greetings.client.Exceptions3RequestBuilders;
 import com.linkedin.restli.examples.greetings.server.ExceptionsResource3;
 import com.linkedin.restli.server.filter.FilterRequestContext;
+import com.linkedin.restli.server.filter.NextRequestFilter;
 import com.linkedin.restli.server.filter.RequestFilter;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
@@ -53,25 +54,27 @@ public class TestExceptionsResource3 extends RestLiIntegrationTest
     class ChangeHeaderFilter1 implements RequestFilter
     {
       @Override
-      public void onRequest(FilterRequestContext requestContext)
+      public void onRequest(FilterRequestContext requestContext, NextRequestFilter nextRequestFilter)
       {
         Map<String, String> headers = requestContext.getRequestHeaders();
         // Add new headers
         headers.put(ExceptionsResource3.TEST1_HEADER, ExceptionsResource3.TEST1_VALUE);
         headers.put(ExceptionsResource3.TEST2_HEADER, ExceptionsResource3.TEST1_VALUE);
+        nextRequestFilter.onRequest(requestContext);
       }
     }
 
     class ChangeHeaderFilter2 implements RequestFilter
     {
       @Override
-      public void onRequest(FilterRequestContext requestContext)
+      public void onRequest(FilterRequestContext requestContext, NextRequestFilter nextRequestFilter)
       {
         Map<String, String> headers = requestContext.getRequestHeaders();
         Assert.assertEquals(headers.get(ExceptionsResource3.TEST1_HEADER), ExceptionsResource3.TEST1_VALUE);
         Assert.assertEquals(headers.get(ExceptionsResource3.TEST2_HEADER), ExceptionsResource3.TEST1_VALUE);
         // Modify existing header
         headers.put(ExceptionsResource3.TEST2_HEADER, ExceptionsResource3.TEST2_VALUE);
+        nextRequestFilter.onRequest(requestContext);
       }
     }
     super.init(Arrays.asList(new ChangeHeaderFilter1(), new ChangeHeaderFilter2()), null);

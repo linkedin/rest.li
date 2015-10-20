@@ -38,6 +38,7 @@ import com.linkedin.restli.server.BatchCreateKVResult;
 import com.linkedin.restli.server.BatchCreateResult;
 import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.CreateKVResponse;
+import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.ResourceContext;
 
@@ -59,7 +60,7 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder
 
   @Override
   @SuppressWarnings("unchecked")
-  public PartialRestResponse buildResponse(RoutingResult routingResult, RestLiResponseEnvelope responseData)
+  public PartialRestResponse buildResponse(RoutingResult routingResult, RestLiResponseData responseData)
   {
     List<CreateCollectionResponseEnvelope.CollectionCreateResponseItem> collectionCreateResponses = responseData.getCreateCollectionResponseEnvelope().getCreateResponses();
     List<CreateIdStatus<Object>> formattedResponses = new ArrayList<CreateIdStatus<Object>>(collectionCreateResponses.size());

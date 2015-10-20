@@ -35,6 +35,7 @@ import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.internal.server.methods.AnyRecord;
 import com.linkedin.restli.internal.server.util.RestUtils;
 import com.linkedin.restli.server.BatchResult;
+import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
 
 import java.net.HttpCookie;
@@ -55,7 +56,7 @@ public class BatchGetResponseBuilder implements RestLiResponseBuilder
 
   @Override
   @SuppressWarnings("unchecked")
-  public PartialRestResponse buildResponse(RoutingResult routingResult, RestLiResponseEnvelope responseData)
+  public PartialRestResponse buildResponse(RoutingResult routingResult, RestLiResponseData responseData)
   {
     final Map<Object, BatchResponseEntry> responses = (Map<Object, BatchResponseEntry>) responseData.getBatchResponseEnvelope().getBatchResponseMap();
 

@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2014 LinkedIn Corp.
+   Copyright (c) 2015 LinkedIn Corp.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -12,24 +12,17 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
- */
+*/
 
 package com.linkedin.restli.server.filter;
 
 
 /**
- * A filter that processes incoming requests to RestLi resources.
+ * Abstraction for the next request filter in a chain of {@link com.linkedin.restli.server.filter.ResponseFilter}s.
  *
  * @author nshankar
  */
-public interface RequestFilter
+public interface NextResponseFilter
 {
-  /**
-   * Request filter method to be invoked before the execution of the resource.
-   *
-   * @param requestContext    Reference to {@link FilterRequestContext}.
-   * @param nextRequestFilter The next filter in the chain.  Concrete implementations should invoke {@link
-   *                          NextRequestFilter#onRequest to continue the filter chain.
-   */
-  void onRequest(final FilterRequestContext requestContext, final NextRequestFilter nextRequestFilter);
+  void onResponse(final FilterRequestContext requestContext, final FilterResponseContext responseContext);
 }

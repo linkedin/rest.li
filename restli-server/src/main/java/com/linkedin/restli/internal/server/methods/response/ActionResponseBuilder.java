@@ -26,10 +26,10 @@ import com.linkedin.restli.internal.server.RestLiResponseEnvelope;
 import com.linkedin.restli.internal.server.response.RecordResponseEnvelope;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.server.ActionResult;
+import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
 
 import java.net.HttpCookie;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -39,7 +39,7 @@ public class ActionResponseBuilder implements RestLiResponseBuilder
 
   @Override
   public PartialRestResponse buildResponse(RoutingResult routingResult,
-                                           RestLiResponseEnvelope responseData)
+                                           RestLiResponseData responseData)
   {
     return new PartialRestResponse.Builder().status(responseData.getStatus())
                                             .entity(responseData.getRecordResponseEnvelope().getRecord())

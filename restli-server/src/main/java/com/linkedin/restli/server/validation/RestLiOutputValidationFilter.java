@@ -19,7 +19,6 @@ package com.linkedin.restli.server.validation;
 
 import com.linkedin.data.schema.validation.ValidationResult;
 import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.restli.common.EntityResponse;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.validation.RestLiDataValidator;
@@ -28,6 +27,7 @@ import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.filter.FilterRequestContext;
 import com.linkedin.restli.server.filter.FilterResponseContext;
+import com.linkedin.restli.server.filter.NextResponseFilter;
 import com.linkedin.restli.server.filter.ResponseFilter;
 
 import java.util.List;
@@ -43,7 +43,7 @@ import java.util.Map;
 public class RestLiOutputValidationFilter implements ResponseFilter
 {
   @Override
-  public void onResponse(final FilterRequestContext requestContext, final FilterResponseContext responseContext)
+  public void onResponse(final FilterRequestContext requestContext, final FilterResponseContext responseContext, final NextResponseFilter nextResponseFilter)
   {
     Class<?> resourceClass = requestContext.getFilterResourceModel().getResourceClass();
     ResourceMethod method = requestContext.getMethodType();
@@ -51,6 +51,7 @@ public class RestLiOutputValidationFilter implements ResponseFilter
     RestLiResponseData responseData = responseContext.getResponseData();
     if (responseData.isErrorResponse())
     {
+      nextResponseFilter.onResponse(requestContext, responseContext);
       return;
     }
     if (method == ResourceMethod.GET)
@@ -105,5 +106,6 @@ public class RestLiOutputValidationFilter implements ResponseFilter
         throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, sb.toString());
       }
     }
+    nextResponseFilter.onResponse(requestContext, responseContext);
   }
 }

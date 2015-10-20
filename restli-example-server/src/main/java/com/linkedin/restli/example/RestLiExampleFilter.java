@@ -20,6 +20,8 @@ package com.linkedin.restli.example;
 import com.linkedin.restli.server.filter.Filter;
 import com.linkedin.restli.server.filter.FilterRequestContext;
 import com.linkedin.restli.server.filter.FilterResponseContext;
+import com.linkedin.restli.server.filter.NextRequestFilter;
+import com.linkedin.restli.server.filter.NextResponseFilter;
 
 
 /**
@@ -29,18 +31,22 @@ import com.linkedin.restli.server.filter.FilterResponseContext;
  */
 public class RestLiExampleFilter implements Filter
 {
-  private static final String START_TIME = "StartTime";
+  private static final String START_TIME = RestLiExampleFilter.class.getName() + ".StartTime";
 
   @Override
-  public void onRequest(FilterRequestContext requestContext)
+  public void onRequest(FilterRequestContext requestContext, NextRequestFilter nextRequestFilter)
   {
     requestContext.getFilterScratchpad().put(START_TIME, System.nanoTime());
+    nextRequestFilter.onRequest(requestContext);
   }
 
   @Override
-  public void onResponse(FilterRequestContext requestContext, FilterResponseContext responseContext)
+  public void onResponse(FilterRequestContext requestContext,
+                         FilterResponseContext responseContext,
+                         NextResponseFilter nextResponseFilter)
   {
     final Long startTime = (Long) requestContext.getFilterScratchpad().get(START_TIME);
     System.out.println(String.format("Request processing time: %d us", (System.nanoTime() - startTime) / 1000));
+    nextResponseFilter.onResponse(requestContext, responseContext);
   }
 }

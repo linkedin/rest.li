@@ -31,13 +31,13 @@ import com.linkedin.restli.internal.server.response.CollectionResponseEnvelope;
 import com.linkedin.restli.internal.server.util.RestUtils;
 import com.linkedin.restli.server.CollectionResult;
 import com.linkedin.restli.server.CollectionResult.PageIncrement;
+import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.ProjectionMode;
 import com.linkedin.restli.server.ResourceContext;
 
 import java.net.HttpCookie;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -45,7 +45,7 @@ import java.util.Map;
 public class CollectionResponseBuilder implements RestLiResponseBuilder
 {
   @Override
-  public PartialRestResponse buildResponse(RoutingResult routingResult, RestLiResponseEnvelope responseData)
+  public PartialRestResponse buildResponse(RoutingResult routingResult, RestLiResponseData responseData)
   {
     CollectionResponseEnvelope response = responseData.getCollectionResponseEnvelope();
     PartialRestResponse.Builder builder = new PartialRestResponse.Builder();

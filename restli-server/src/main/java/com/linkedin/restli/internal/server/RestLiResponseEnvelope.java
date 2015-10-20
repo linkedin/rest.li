@@ -151,16 +151,13 @@ public abstract class RestLiResponseEnvelope implements RestLiResponseData
     _headers.remove(HeaderUtil.getErrorResponseHeaderName(_headers));
   }
 
-  /**
-   * Gets a mutable map of the headers of this response.
-   *
-   * @return a mutable map of string values that indicates the headers of this response.
-   */
+  @Override
   public Map<String, String> getHeaders()
   {
     return _headers;
   }
 
+  @Override
   public List<HttpCookie> getCookies()
   {
     return _cookies;

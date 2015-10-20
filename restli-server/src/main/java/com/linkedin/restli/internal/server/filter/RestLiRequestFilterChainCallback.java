@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2014 LinkedIn Corp.
+   Copyright (c) 2015 LinkedIn Corp.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -12,31 +12,33 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
- */
+*/
 
 package com.linkedin.restli.internal.server.filter;
 
 
-import com.linkedin.restli.internal.server.RestLiResponseEnvelope;
-import com.linkedin.restli.server.filter.FilterResponseContext;
+import com.linkedin.restli.server.RestLiRequestData;
 
 
 /**
+ * Callback interface used by {@link RestLiRequestFilterChain} to indicate the result of invoking the request
+ * filters.
+ *
  * @author nshankar
  */
-public interface FilterResponseContextInternal extends FilterResponseContext
+public interface RestLiRequestFilterChainCallback
 {
   /**
-   * Set request data.
+   * Indicates the successful execution of all request filters.
    *
-   * @return Request data.
+   * @param requestData {@link RestLiRequestData} that was returned from invoking the filters.
    */
-  void setRestLiResponseEnvelope(RestLiResponseEnvelope data);
+  void onSuccess(RestLiRequestData requestData);
 
   /**
-   * Get a reference to underlying {@link RestLiResponseDataInternal}.
+   * Indicates unsuccessful execution of request filters.
    *
-   * @return {@link RestLiResponseDataInternal}
+   * @param throwable {@link Throwable} error that was encountered while invoking the request filter.
    */
-  RestLiResponseEnvelope getRestLiResponseEnvelope();
+  void onError(Throwable throwable);
 }

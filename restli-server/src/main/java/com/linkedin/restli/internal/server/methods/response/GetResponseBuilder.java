@@ -32,9 +32,9 @@ import com.linkedin.restli.internal.server.methods.AnyRecord;
 import com.linkedin.restli.internal.server.util.RestUtils;
 import com.linkedin.restli.server.GetResult;
 import com.linkedin.restli.server.ResourceContext;
+import com.linkedin.restli.server.RestLiResponseData;
 
 import java.net.HttpCookie;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -42,7 +42,7 @@ import java.util.Map;
 public class GetResponseBuilder implements RestLiResponseBuilder
 {
   @Override
-  public PartialRestResponse buildResponse(RoutingResult routingResult, RestLiResponseEnvelope responseData)
+  public PartialRestResponse buildResponse(RoutingResult routingResult, RestLiResponseData responseData)
   {
     return new PartialRestResponse.Builder().headers(responseData.getHeaders()).cookies(responseData.getCookies()).status(responseData.getStatus())
                                             .entity(responseData.getRecordResponseEnvelope().getRecord()).build();

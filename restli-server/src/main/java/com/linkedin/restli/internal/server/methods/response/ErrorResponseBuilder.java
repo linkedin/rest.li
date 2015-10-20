@@ -38,12 +38,12 @@ import com.linkedin.restli.internal.server.response.RecordResponseEnvelope;
 import com.linkedin.restli.internal.server.ResponseType;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.server.ErrorResponseFormat;
+import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.HttpCookie;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -119,7 +119,7 @@ public final class ErrorResponseBuilder implements RestLiResponseBuilder
   }
 
   @Override
-  public PartialRestResponse buildResponse(RoutingResult routingResult, RestLiResponseEnvelope responseData)
+  public PartialRestResponse buildResponse(RoutingResult routingResult, RestLiResponseData responseData)
   {
     ErrorResponse errorResponse = buildErrorResponse(responseData.getServiceException());
     return new PartialRestResponse.Builder().headers(responseData.getHeaders()).cookies(responseData.getCookies()).status(responseData.getStatus())

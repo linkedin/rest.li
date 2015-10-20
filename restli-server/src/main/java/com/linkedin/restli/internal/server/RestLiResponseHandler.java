@@ -36,6 +36,7 @@ import com.linkedin.restli.internal.server.response.RecordResponseEnvelope;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.server.CollectionResult;
 import com.linkedin.restli.server.CreateResponse;
+import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.RoutingException;
 import com.linkedin.restli.server.UpdateResponse;
@@ -172,7 +173,7 @@ public class RestLiResponseHandler
    *           if cannot build response
    */
   public PartialRestResponse buildPartialResponse(final RoutingResult routingResult,
-                                                  final RestLiResponseEnvelope responseData)
+                                                  final RestLiResponseData responseData)
   {
     if (responseData.isErrorResponse()){
       return _errorResponseBuilder.buildResponse(routingResult, responseData);

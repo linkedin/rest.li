@@ -41,6 +41,7 @@ import com.linkedin.restli.examples.greetings.client.NullGreetingRequestBuilders
 import com.linkedin.restli.internal.server.methods.response.ErrorResponseBuilder;
 import com.linkedin.restli.server.filter.FilterRequestContext;
 import com.linkedin.restli.server.filter.FilterResponseContext;
+import com.linkedin.restli.server.filter.NextResponseFilter;
 import com.linkedin.restli.server.filter.RequestFilter;
 import com.linkedin.restli.server.filter.ResponseFilter;
 import com.linkedin.restli.test.util.BatchCreateHelper;
@@ -72,10 +73,11 @@ public class TestNullGreetingsClient extends RestLiIntegrationTest
   {
     super.init(Collections.<RequestFilter>emptyList(), ImmutableList.of(new ResponseFilter() {
       @Override
-      public void onResponse(FilterRequestContext requestContext, FilterResponseContext responseContext) {
+      public void onResponse(FilterRequestContext requestContext, FilterResponseContext responseContext, NextResponseFilter nextResponseFilter) {
         //Add a custom header to the response to make sure that 404s/500s returned by
         //nulls in resource methods are also given a chance to experience the filter
         responseContext.getResponseData().getHeaders().put("X-Null-Greetings-Filter", "Ack");
+        nextResponseFilter.onResponse(requestContext, responseContext);
       }
     }));
   }

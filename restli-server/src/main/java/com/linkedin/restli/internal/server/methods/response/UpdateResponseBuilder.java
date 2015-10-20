@@ -22,6 +22,7 @@ import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.internal.server.RestLiResponseEnvelope;
 import com.linkedin.restli.internal.server.response.EmptyResponseEnvelope;
 import com.linkedin.restli.internal.server.RoutingResult;
+import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.UpdateResponse;
 
@@ -33,7 +34,7 @@ import java.util.Map;
 public class UpdateResponseBuilder implements RestLiResponseBuilder
 {
   @Override
-  public PartialRestResponse buildResponse(RoutingResult routingResult, RestLiResponseEnvelope responseData)
+  public PartialRestResponse buildResponse(RoutingResult routingResult, RestLiResponseData responseData)
   {
     return new PartialRestResponse.Builder().headers(responseData.getHeaders())
                                             .cookies(responseData.getCookies())

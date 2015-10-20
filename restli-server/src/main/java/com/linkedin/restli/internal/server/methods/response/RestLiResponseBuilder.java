@@ -24,6 +24,7 @@ package com.linkedin.restli.internal.server.methods.response;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.internal.server.RestLiResponseEnvelope;
 import com.linkedin.restli.internal.server.RoutingResult;
+import com.linkedin.restli.server.RestLiResponseData;
 
 import java.net.HttpCookie;
 import java.util.List;
@@ -39,7 +40,7 @@ import java.util.Map;
 public interface RestLiResponseBuilder
 {
   PartialRestResponse buildResponse(RoutingResult routingResult,
-                                    RestLiResponseEnvelope responseData);
+                                    RestLiResponseData responseData);
 
   RestLiResponseEnvelope buildRestLiResponseData(RestRequest request,
                                                  RoutingResult routingResult,

@@ -28,6 +28,7 @@ import com.linkedin.parseq.promise.Promises;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.internal.server.filter.FilterRequestContextInternal;
+import com.linkedin.restli.internal.server.filter.RestLiRequestFilterChain;
 import com.linkedin.restli.internal.server.methods.MethodAdapterRegistry;
 import com.linkedin.restli.internal.server.methods.arguments.RestLiArgumentBuilder;
 import com.linkedin.restli.internal.server.methods.response.ErrorResponseBuilder;
@@ -40,6 +41,7 @@ import com.linkedin.restli.server.RequestExecutionReportBuilder;
 import com.linkedin.restli.server.RestLiRequestData;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.filter.RequestFilter;
+import com.linkedin.restli.internal.server.filter.RestLiRequestFilterChainCallback;
 import com.linkedin.restli.server.resources.BaseResource;
 import com.linkedin.restli.server.resources.ResourceFactory;
 
@@ -165,18 +167,9 @@ public class RestLiMethodInvoker
       callback.onError(e, getRequestExecutionReport(requestExecutionReportBuilder));
       return;
     }
-    // Request headers are valid. Proceed with the invocation....
+    // Request headers are valid. Proceed with the invocation of the filters and eventually the resource.
     ResourceMethodDescriptor resourceMethodDescriptor =
         invocableMethod.getResourceMethod();
-
-    Object resource =
-        _resourceFactory.create(resourceMethodDescriptor.getResourceModel()
-                                                        .getResourceClass());
-
-    if (BaseResource.class.isAssignableFrom(resource.getClass()))
-    {
-      ((BaseResource) resource).setContext(invocableMethod.getContext());
-    }
 
     RestLiArgumentBuilder adapter =
         _methodAdapterRegistry.getArgumentBuilder(resourceMethodDescriptor.getType());
@@ -185,37 +178,15 @@ public class RestLiMethodInvoker
       throw new IllegalArgumentException("Unsupported method type: "
           + resourceMethodDescriptor.getType());
     }
-
     RestLiRequestData requestData = adapter.extractRequestData(invocableMethod, request);
-
-    // First invoke all request filters.
-    if (!_requestFilters.isEmpty())
-    {
-      try
-      {
-        filterContext.setRequestData(requestData);
-        for (RequestFilter filter : _requestFilters)
-        {
-          filter.onRequest(filterContext);
-        }
-        requestData = filterContext.getRequestData();
-      }
-      catch (Exception e)
-      {
-        callback.onError(e, getRequestExecutionReport(requestExecutionReportBuilder));
-        return;
-      }
-    }
-    Object[] args = adapter.buildArguments(requestData, invocableMethod);
-    // Now invoke the resource implementation.
-    try
-    {
-      doInvoke(resourceMethodDescriptor, callback, requestExecutionReportBuilder, resource, args);
-    }
-    catch (IllegalAccessException e)
-    {
-      throw new RuntimeException(e);
-    }
+    filterContext.setRequestData(requestData);
+    // Kick off the request filter iterator, which finally would invoke the resource.
+    RestLiRequestFilterChainCallback restLiRequestFilterChainCallback = new RestLiRequestFilterChainCallbackImpl(
+        invocableMethod,
+        adapter,
+        callback,
+        requestExecutionReportBuilder);
+    new RestLiRequestFilterChain(_requestFilters, restLiRequestFilterChainCallback).onRequest(filterContext);
   }
 
   @SuppressWarnings("deprecation")
@@ -355,6 +326,56 @@ public class RestLiMethodInvoker
       RequestExecutionReportBuilder requestExecutionReportBuilder)
   {
     return requestExecutionReportBuilder == null ? null : requestExecutionReportBuilder.build();
+  }
+
+  /**
+   * A concrete implementation of {@link RestLiRequestFilterChainCallback}.
+   */
+  private class RestLiRequestFilterChainCallbackImpl implements RestLiRequestFilterChainCallback
+  {
+    private RoutingResult _invocableMethod;
+    private RestLiArgumentBuilder _restLiArgumentBuilder;
+    private RequestExecutionCallback<Object> _callback;
+    private RequestExecutionReportBuilder _requestExecutionReportBuilder;
+
+    public RestLiRequestFilterChainCallbackImpl(final RoutingResult invocableMethod,
+                                                final RestLiArgumentBuilder restLiArgumentBuilder,
+                                                final RequestExecutionCallback<Object> callback,
+                                                final RequestExecutionReportBuilder requestExecutionReportBuilder)
+    {
+      _invocableMethod = invocableMethod;
+      _restLiArgumentBuilder = restLiArgumentBuilder;
+      _callback = callback;
+      _requestExecutionReportBuilder = requestExecutionReportBuilder;
+    }
+
+    @Override
+    public void onError(Throwable throwable)
+    {
+      _callback.onError(throwable,
+                        _requestExecutionReportBuilder == null ? null : _requestExecutionReportBuilder.build());
+    }
+
+    @Override
+    public void onSuccess(RestLiRequestData requestData)
+    {
+      try
+      {
+        ResourceMethodDescriptor resourceMethodDescriptor = _invocableMethod.getResourceMethod();
+        Object resource = _resourceFactory.create(resourceMethodDescriptor.getResourceModel().getResourceClass());
+        if (BaseResource.class.isAssignableFrom(resource.getClass()))
+        {
+          ((BaseResource) resource).setContext(_invocableMethod.getContext());
+        }
+        Object[] args = _restLiArgumentBuilder.buildArguments(requestData, _invocableMethod);
+        // Now invoke the resource implementation.
+        doInvoke(resourceMethodDescriptor, _callback, _requestExecutionReportBuilder, resource, args);
+      }
+      catch (Exception e)
+      {
+        _callback.onError(e, _requestExecutionReportBuilder == null ? null : _requestExecutionReportBuilder.build());
+      }
+    }
   }
 
   /**

@@ -48,6 +48,8 @@ import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.RoutingException;
 import com.linkedin.restli.server.filter.FilterRequestContext;
 import com.linkedin.restli.server.filter.FilterResponseContext;
+import com.linkedin.restli.server.filter.NextRequestFilter;
+import com.linkedin.restli.server.filter.NextResponseFilter;
 import com.linkedin.restli.server.filter.RequestFilter;
 import com.linkedin.restli.server.filter.ResponseFilter;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
@@ -243,12 +245,13 @@ public class TestFilters extends RestLiIntegrationTest
   private void verifyFilters(Tone tone, boolean respFilter)
   {
     int count = tone == Tone.INSULTING ? 1 : 3;
-    verify(_requestFilter, times(count)).onRequest(any(FilterRequestContext.class));
+    verify(_requestFilter, times(count)).onRequest(any(FilterRequestContext.class), any(NextRequestFilter.class));
     verifyNoMoreInteractions(_requestFilter);
     if (respFilter)
     {
       verify(_responseFilter, times(count)).onResponse(any(FilterRequestContext.class),
-                                                       any(FilterResponseContext.class));
+                                                       any(FilterResponseContext.class),
+                                                       any(NextResponseFilter.class));
       verifyNoMoreInteractions(_responseFilter);
     }
   }
@@ -265,6 +268,7 @@ public class TestFilters extends RestLiIntegrationTest
       {
         Object[] args = invocation.getArguments();
         FilterRequestContext requestContext = (FilterRequestContext) args[0];
+        NextRequestFilter nextRequestFilter = (NextRequestFilter) args[1];
         requestContext.getFilterScratchpad().put(spKey, spValue);
         if (requestContext.getMethodType() == ResourceMethod.CREATE)
         {
@@ -283,9 +287,10 @@ public class TestFilters extends RestLiIntegrationTest
             }
           }
         }
+        nextRequestFilter.onRequest(requestContext);
         return null;
       }
-    }).when(_requestFilter).onRequest(any(FilterRequestContext.class));
+    }).when(_requestFilter).onRequest(any(FilterRequestContext.class), any(NextRequestFilter.class));
     List<RequestFilter> reqFilters = Arrays.asList(_requestFilter);
 
     List<ResponseFilter> respFilters = null;
@@ -300,6 +305,7 @@ public class TestFilters extends RestLiIntegrationTest
           Object[] args = invocation.getArguments();
           FilterRequestContext requestContext = (FilterRequestContext) args[0];
           FilterResponseContext responseContext = (FilterResponseContext) args[1];
+          NextResponseFilter nextResponseFilter = (NextResponseFilter) args[2];
           // Verify the scratch pad value.
           assertTrue(requestContext.getFilterScratchpad().get(spKey) == spValue);
           RecordTemplate entity;
@@ -331,9 +337,11 @@ public class TestFilters extends RestLiIntegrationTest
           {
             throw responseFilterException;
           }
+          nextResponseFilter.onResponse(requestContext, responseContext);
           return null;
         }
-      }).when(_responseFilter).onResponse(any(FilterRequestContext.class), any(FilterResponseContext.class));
+      }).when(_responseFilter)
+          .onResponse(any(FilterRequestContext.class), any(FilterResponseContext.class), any(NextResponseFilter.class));
       respFilters = Arrays.asList(_responseFilter);
     }
     init(reqFilters, respFilters);

@@ -29,11 +29,10 @@ import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.HeaderUtil;
-import com.linkedin.restli.internal.server.filter.FilterResponseContextInternal;
 import com.linkedin.restli.internal.server.methods.response.PartialRestResponse;
 import com.linkedin.restli.internal.server.response.BatchResponseEnvelope;
-import com.linkedin.restli.internal.server.response.CreateCollectionResponseEnvelope;
 import com.linkedin.restli.internal.server.response.CollectionResponseEnvelope;
+import com.linkedin.restli.internal.server.response.CreateCollectionResponseEnvelope;
 import com.linkedin.restli.internal.server.response.EmptyResponseEnvelope;
 import com.linkedin.restli.internal.server.response.RecordResponseEnvelope;
 import com.linkedin.restli.server.RequestExecutionCallback;
@@ -43,6 +42,7 @@ import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.RoutingException;
 import com.linkedin.restli.server.filter.FilterRequestContext;
 import com.linkedin.restli.server.filter.FilterResponseContext;
+import com.linkedin.restli.server.filter.NextResponseFilter;
 import com.linkedin.restli.server.filter.ResponseFilter;
 
 import java.net.HttpCookie;
@@ -65,8 +65,8 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.anyList;
+import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
@@ -76,7 +76,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 
 /**
@@ -174,8 +179,7 @@ public class TestRestLiCallback
     RestException restException = new RestException(new RestResponseBuilder().build());
     // Set up.
     when(_restRequest.getHeaders()).thenReturn(inputHeaders);
-    when(
-         _responseHandler.buildExceptionResponseData(eq(_restRequest), eq(_routingResult), eq(ex),
+    when(_responseHandler.buildExceptionResponseData(eq(_restRequest), eq(_routingResult), eq(ex),
              augErrorHeadersCapture.capture(), anyList())).thenReturn(responseData);
     when(_responseHandler.buildPartialResponse(_routingResult, responseData)).thenReturn(partialResponse);
     when(_responseHandler.buildRestException(ex, partialResponse)).thenReturn(restException);
@@ -221,19 +225,21 @@ public class TestRestLiCallback
     ArgumentCaptor<RestLiServiceException> exCapture = ArgumentCaptor.forClass(RestLiServiceException.class);
     RequestExecutionReport executionReport = new RequestExecutionReportBuilder().build();
     PartialRestResponse partialResponse = new PartialRestResponse.Builder().build();
-    RestLiResponseEnvelope responseData = new RecordResponseEnvelope(HttpStatus.S_200_OK, null, Collections.<String, String>emptyMap(),
+    RestLiServiceException wrappedEx = new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST, ex);
+    RestLiResponseEnvelope responseData = new RecordResponseEnvelope(wrappedEx,
+                                                                     Collections.<String, String>emptyMap(),
                                                                      Collections.<HttpCookie>emptyList());
+
     RestException restException = new RestException(new RestResponseBuilder().build());
     Map<String, String> inputHeaders = Maps.newHashMap();
     inputHeaders.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, "2.0.0");
 
     // Set up.
     when(_restRequest.getHeaders()).thenReturn(inputHeaders);
-    when(
-         _responseHandler.buildExceptionResponseData(eq(_restRequest), eq(_routingResult), exCapture.capture(),
+    when(_responseHandler.buildExceptionResponseData(eq(_restRequest), eq(_routingResult), exCapture.capture(),
              anyMap(), anyList())).thenReturn(responseData);
     when(_responseHandler.buildPartialResponse(_routingResult, responseData)).thenReturn(partialResponse);
-    when(_responseHandler.buildRestException(ex, partialResponse)).thenReturn(restException);
+    when(_responseHandler.buildRestException(wrappedEx, partialResponse)).thenReturn(restException);
 
     // Invoke.
     _noFilterRestLiCallback.onError(ex, executionReport);
@@ -242,7 +248,7 @@ public class TestRestLiCallback
     verify(_responseHandler).buildExceptionResponseData(eq(_restRequest), eq(_routingResult),
         exCapture.capture(), anyMap(), anyList());
     verify(_responseHandler).buildPartialResponse(_routingResult, responseData);
-    verify(_responseHandler).buildRestException(ex, partialResponse);
+    verify(_responseHandler).buildRestException(wrappedEx, partialResponse);
     verify(_callback).onError(restException, executionReport);
     verify(_restRequest, times(1)).getHeaders();
     verifyZeroInteractions(_routingResult);
@@ -272,6 +278,45 @@ public class TestRestLiCallback
     }
   }
 
+  @SuppressWarnings("unchecked")
+  @Test
+  public void testOnSuccessWithExceptionBuildingResponseNoFilters() throws Exception
+  {
+    String result = "foo";
+    RequestExecutionReport executionReport = new RequestExecutionReportBuilder().build();
+    RestLiServiceException ex = new RestLiServiceException(HttpStatus.S_422_UNPROCESSABLE_ENTITY);
+    Map<String, String> inputHeaders = Maps.newHashMap();
+    inputHeaders.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION,
+                     AllProtocolVersions.BASELINE_PROTOCOL_VERSION.toString());
+    RestLiResponseEnvelope responseData = new RecordResponseEnvelope(ex,
+                                                                     new HashMap<String, String>(),
+                                                                     Collections.<HttpCookie>emptyList());
+    PartialRestResponse partialResponse = new PartialRestResponse.Builder().build();
+    RestException restException = new RestException(new RestResponseBuilder().build());
+    // Set up.
+    // Throw an exception when we try to build the response data.
+    when(_responseHandler.buildRestLiResponseData(_restRequest, _routingResult, result)).thenThrow(ex);
+    when(_restRequest.getHeaders()).thenReturn(inputHeaders);
+    when(_responseHandler.buildExceptionResponseData(eq(_restRequest), eq(_routingResult), eq(ex),
+                                                     anyMap(), anyList())).thenReturn(responseData);
+    when(_responseHandler.buildPartialResponse(_routingResult, responseData)).thenReturn(partialResponse);
+    when(_responseHandler.buildRestException(ex, partialResponse)).thenReturn(restException);
+
+    // Invoke.
+    _noFilterRestLiCallback.onSuccess(result, executionReport);
+
+    // Verify.
+    verify(_responseHandler).buildRestLiResponseData(_restRequest, _routingResult, result);
+    verify(_responseHandler).buildRestException(ex, partialResponse);
+    verify(_responseHandler).buildExceptionResponseData(eq(_restRequest), eq(_routingResult), eq(ex),
+                                                        anyMap(), anyList());
+    verify(_responseHandler).buildPartialResponse(_routingResult, responseData);
+    verify(_callback).onError(restException, executionReport);
+    verify(_restRequest).getHeaders();
+    verifyZeroInteractions(_routingResult);
+    verifyNoMoreInteractions(_restRequest, _responseHandler, _callback);
+  }
+
   @Test
   public void testOnSuccessWithFiltersSuccessful() throws Exception
   {
@@ -298,16 +343,19 @@ public class TestRestLiCallback
       public Object answer(InvocationOnMock invocation) throws Throwable
       {
         Object[] args = invocation.getArguments();
-        FilterResponseContext context = (FilterResponseContext) args[1];
+        FilterRequestContext requestContext = (FilterRequestContext) args[0];
+        FilterResponseContext responseContext = (FilterResponseContext) args[1];
+        NextResponseFilter nextResponseFilter = (NextResponseFilter) args[2];
         // Verify incoming data.
-        assertEquals(HttpStatus.S_200_OK, context.getResponseData().getStatus());
-        assertEquals(headersFromApp, context.getResponseData().getHeaders());
-        assertEquals(entityFromApp, context.getResponseData().getRecordResponseEnvelope().getRecord());
+        assertEquals(HttpStatus.S_200_OK, responseContext.getResponseData().getStatus());
+        assertEquals(headersFromApp, responseContext.getResponseData().getHeaders());
+        assertEquals(entityFromApp, responseContext.getResponseData().getRecordResponseEnvelope().getRecord());
         // Modify data in filter.
-        setStatus(context, HttpStatus.S_400_BAD_REQUEST);
-        context.getResponseData().getRecordResponseEnvelope().setRecord(entityFromFilter1,
+        setStatus(responseContext, HttpStatus.S_400_BAD_REQUEST);
+        responseContext.getResponseData().getRecordResponseEnvelope().setRecord(entityFromFilter1,
             HttpStatus.S_400_BAD_REQUEST);
-        context.getResponseData().getHeaders().clear();
+        responseContext.getResponseData().getHeaders().clear();
+        nextResponseFilter.onResponse(requestContext, responseContext);
         return null;
       }
     }).doAnswer(new Answer<Object>()
@@ -317,18 +365,21 @@ public class TestRestLiCallback
       public Object answer(InvocationOnMock invocation) throws Throwable
       {
         Object[] args = invocation.getArguments();
-        FilterResponseContext context = (FilterResponseContext) args[1];
+        FilterRequestContext requestContext = (FilterRequestContext) args[0];
+        FilterResponseContext responseContext = (FilterResponseContext) args[1];
+        NextResponseFilter nextResponseFilter = (NextResponseFilter) args[2];
         // Verify incoming data.
-        assertEquals(HttpStatus.S_400_BAD_REQUEST, context.getResponseData().getStatus());
-        assertTrue(context.getResponseData().getHeaders().isEmpty());
-        assertEquals(context.getResponseData().getRecordResponseEnvelope().getRecord(), entityFromFilter1);
+        assertEquals(HttpStatus.S_400_BAD_REQUEST, responseContext.getResponseData().getStatus());
+        assertTrue(responseContext.getResponseData().getHeaders().isEmpty());
+        assertEquals(responseContext.getResponseData().getRecordResponseEnvelope().getRecord(), entityFromFilter1);
         // Modify data in filter.
-        setStatus(context, HttpStatus.S_403_FORBIDDEN);
-        context.getResponseData().getRecordResponseEnvelope().setRecord(entityFromFilter2, HttpStatus.S_403_FORBIDDEN);
-        context.getResponseData().getHeaders().putAll(headersFromFilters);
+        setStatus(responseContext, HttpStatus.S_403_FORBIDDEN);
+        responseContext.getResponseData().getRecordResponseEnvelope().setRecord(entityFromFilter2, HttpStatus.S_403_FORBIDDEN);
+        responseContext.getResponseData().getHeaders().putAll(headersFromFilters);
+        nextResponseFilter.onResponse(requestContext, responseContext);
         return null;
       }
-    }).when(_filter).onResponse(eq(_filterRequestContext), any(FilterResponseContext.class));
+    }).when(_filter).onResponse(eq(_filterRequestContext), any(FilterResponseContext.class), any(NextResponseFilter.class));
 
     RestResponse restResponse = new RestResponseBuilder().build();
     when(_responseHandler.buildResponse(_routingResult, partialResponse)).thenReturn(restResponse);
@@ -387,23 +438,27 @@ public class TestRestLiCallback
       public Object answer(InvocationOnMock invocation) throws Throwable
       {
         Object[] args = invocation.getArguments();
-        FilterResponseContext context = (FilterResponseContext) args[1];
+        FilterRequestContext requestContext = (FilterRequestContext) args[0];
+        FilterResponseContext responseContext = (FilterResponseContext) args[1];
+        NextResponseFilter nextResponseFilter = (NextResponseFilter) args[2];
+
         // The second filter should be invoked with details of the exception thrown by the first
         // filter.
-        assertEquals(context.getResponseData().getStatus(), HttpStatus.S_500_INTERNAL_SERVER_ERROR);
-        assertNull(context.getResponseData().getRecordResponseEnvelope().getRecord());
-        assertEquals(context.getResponseData().getHeaders(), headersFromFilter);
-        assertEquals(context.getResponseData().getServiceException(), exceptionFromFilter);
+        assertEquals(responseContext.getResponseData().getStatus(), HttpStatus.S_500_INTERNAL_SERVER_ERROR);
+        assertNull(responseContext.getResponseData().getRecordResponseEnvelope().getRecord());
+        assertEquals(responseContext.getResponseData().getHeaders(), headersFromFilter);
+        assertEquals(responseContext.getResponseData().getServiceException(), exceptionFromFilter);
 
         // Modify data.
-        setStatus(context, HttpStatus.S_402_PAYMENT_REQUIRED);
+        setStatus(responseContext, HttpStatus.S_402_PAYMENT_REQUIRED);
         // The second filter handles the exception thrown by the first filter (i.e.) sets an entity
         // response in the response data.
-        context.getResponseData().getRecordResponseEnvelope().setRecord(entityFromFilter,
+        responseContext.getResponseData().getRecordResponseEnvelope().setRecord(entityFromFilter,
             HttpStatus.S_402_PAYMENT_REQUIRED);
+        nextResponseFilter.onResponse(requestContext, responseContext);
         return null;
       }
-    }).when(_filter).onResponse(eq(_filterRequestContext), any(FilterResponseContext.class));
+    }).when(_filter).onResponse(eq(_filterRequestContext), any(FilterResponseContext.class), any(NextResponseFilter.class));
 
     // Invoke.
     _twoFilterRestLiCallback.onSuccess(entityFromApp, executionReport);
@@ -469,20 +524,24 @@ public class TestRestLiCallback
       public Object answer(InvocationOnMock invocation) throws Throwable
       {
         Object[] args = invocation.getArguments();
-        FilterResponseContext context = (FilterResponseContext) args[1];
+        FilterRequestContext requestContext = (FilterRequestContext) args[0];
+        FilterResponseContext responseContext = (FilterResponseContext) args[1];
+        NextResponseFilter nextResponseFilter = (NextResponseFilter) args[2];
+
         // The second filter should be invoked with details of the exception thrown by the first
         // filter.
-        assertEquals(context.getResponseData().getStatus(), HttpStatus.S_500_INTERNAL_SERVER_ERROR);
-        assertNull(context.getResponseData().getRecordResponseEnvelope().getRecord());
-        assertEquals(context.getResponseData().getHeaders(), headersFromFilter);
+        assertEquals(responseContext.getResponseData().getStatus(), HttpStatus.S_500_INTERNAL_SERVER_ERROR);
+        assertNull(responseContext.getResponseData().getRecordResponseEnvelope().getRecord());
+        assertEquals(responseContext.getResponseData().getHeaders(), headersFromFilter);
 
         // Modify data.
-        setStatus(context, HttpStatus.S_402_PAYMENT_REQUIRED);
+        setStatus(responseContext, HttpStatus.S_402_PAYMENT_REQUIRED);
         // The second filter handles the exception thrown by the first filter (i.e.) does not throw
         // another exception.
+        nextResponseFilter.onResponse(requestContext, responseContext);
         return null;
       }
-    }).when(_filter).onResponse(eq(_filterRequestContext), any(FilterResponseContext.class));
+    }).when(_filter).onResponse(eq(_filterRequestContext), any(FilterResponseContext.class), any(NextResponseFilter.class));
 
     // Invoke.
     _twoFilterRestLiCallback.onSuccess(entityFromApp, executionReport);
@@ -543,7 +602,8 @@ public class TestRestLiCallback
     when(_responseHandler.buildRestException(any(RestLiServiceException.class), eq(partialFilterErrorResponse))).thenReturn(
         finalRestException);
     // Mock filter behavior.
-    doThrow(throwableFromFilter).when(_filter).onResponse(eq(_filterRequestContext), any(FilterResponseContext.class));
+    doThrow(throwableFromFilter).when(_filter)
+        .onResponse(eq(_filterRequestContext), any(FilterResponseContext.class), any(NextResponseFilter.class));
 
     // Invoke.
     _oneFilterRestLiCallback.onSuccess(entityFromApp, executionReport);
@@ -611,17 +671,22 @@ public class TestRestLiCallback
       public Object answer(InvocationOnMock invocation) throws Throwable
       {
         Object[] args = invocation.getArguments();
-        FilterResponseContext context = (FilterResponseContext) args[1];
+        FilterRequestContext requestContext = (FilterRequestContext) args[0];
+        FilterResponseContext responseContext = (FilterResponseContext) args[1];
+        NextResponseFilter nextResponseFilter = (NextResponseFilter) args[2];
         // The second filter should be invoked with details of the exception thrown by the first
         // filter. Verify incoming data.
-        assertEquals(context.getResponseData().getStatus(), HttpStatus.S_200_OK);
-        assertNull(context.getResponseData().getRecordResponseEnvelope().getRecord());
-        assertTrue(context.getResponseData().getHeaders().isEmpty());
+        assertEquals(responseContext.getResponseData().getStatus(), HttpStatus.S_200_OK);
+        assertNull(responseContext.getResponseData().getRecordResponseEnvelope().getRecord());
+        assertTrue(responseContext.getResponseData().getHeaders().isEmpty());
         // Modify data.
-        setStatus(context, HttpStatus.S_402_PAYMENT_REQUIRED);
+        setStatus(responseContext, HttpStatus.S_402_PAYMENT_REQUIRED);
+        nextResponseFilter.onResponse(requestContext, responseContext);
         return null;
       }
-    }).doThrow(exFromFilter).when(_filter).onResponse(eq(_filterRequestContext), any(FilterResponseContext.class));
+    }).doThrow(exFromFilter)
+        .when(_filter)
+        .onResponse(eq(_filterRequestContext), any(FilterResponseContext.class), any(NextResponseFilter.class));
 
     // Invoke.
     _twoFilterRestLiCallback.onSuccess(result, executionReport);
@@ -679,14 +744,18 @@ public class TestRestLiCallback
       public Object answer(InvocationOnMock invocation) throws Throwable
       {
         Object[] args = invocation.getArguments();
-        FilterResponseContext context = (FilterResponseContext) args[1];
+        FilterRequestContext requestContext = (FilterRequestContext) args[0];
+        FilterResponseContext responseContext = (FilterResponseContext) args[1];
+        NextResponseFilter nextResponseFilter = (NextResponseFilter) args[2];
+
         // Verify incoming data.
-        assertEquals(HttpStatus.S_404_NOT_FOUND, context.getResponseData().getStatus());
-        assertEquals(headersFromApp, context.getResponseData().getHeaders());
-        assertNull(context.getResponseData().getRecordResponseEnvelope().getRecord());
+        assertEquals(HttpStatus.S_404_NOT_FOUND, responseContext.getResponseData().getStatus());
+        assertEquals(headersFromApp, responseContext.getResponseData().getHeaders());
+        assertNull(responseContext.getResponseData().getRecordResponseEnvelope().getRecord());
         // Modify data in filter.
-        setStatus(context, HttpStatus.S_400_BAD_REQUEST);
-        context.getResponseData().getHeaders().clear();
+        setStatus(responseContext, HttpStatus.S_400_BAD_REQUEST);
+        responseContext.getResponseData().getHeaders().clear();
+        nextResponseFilter.onResponse(requestContext, responseContext);
         return null;
       }
     }).doAnswer(new Answer<Object>()
@@ -696,17 +765,23 @@ public class TestRestLiCallback
       public Object answer(InvocationOnMock invocation) throws Throwable
       {
         Object[] args = invocation.getArguments();
-        FilterResponseContext context = (FilterResponseContext) args[1];
+        FilterRequestContext requestContext = (FilterRequestContext) args[0];
+        FilterResponseContext responseContext = (FilterResponseContext) args[1];
+        NextResponseFilter nextResponseFilter = (NextResponseFilter) args[2];
+
         // Verify incoming data.
-        assertEquals(HttpStatus.S_400_BAD_REQUEST, context.getResponseData().getStatus());
-        assertTrue(context.getResponseData().getHeaders().isEmpty());
-        assertNull(context.getResponseData().getRecordResponseEnvelope().getRecord());
+        assertEquals(HttpStatus.S_400_BAD_REQUEST, responseContext.getResponseData().getStatus());
+        assertTrue(responseContext.getResponseData().getHeaders().isEmpty());
+        assertNull(responseContext.getResponseData().getRecordResponseEnvelope().getRecord());
         // Modify data in filter.
-        setStatus(context, HttpStatus.S_403_FORBIDDEN);
-        context.getResponseData().getHeaders().putAll(headersFromFilter);
+        setStatus(responseContext, HttpStatus.S_403_FORBIDDEN);
+        responseContext.getResponseData().getHeaders().putAll(headersFromFilter);
+        nextResponseFilter.onResponse(requestContext, responseContext);
         return null;
       }
-    }).when(_filter).onResponse(eq(_filterRequestContext), any(FilterResponseContext.class));
+    }).when(_filter).onResponse(eq(_filterRequestContext),
+                                any(FilterResponseContext.class),
+                                any(NextResponseFilter.class));
     RestException restException = new RestException(new RestResponseBuilder().build());
     when(_responseHandler.buildRestException(any(RestLiServiceException.class), eq(partialResponse))).thenReturn(
         restException);
@@ -743,6 +818,7 @@ public class TestRestLiCallback
     assertEquals(HttpStatus.S_403_FORBIDDEN, restliEx2.getStatus());
   }
 
+
   @SuppressWarnings("unchecked")
   @Test
   public void testOnErrorWithFiltersSuccessfulyHandlingAppEx() throws Exception
@@ -773,14 +849,18 @@ public class TestRestLiCallback
       public Object answer(InvocationOnMock invocation) throws Throwable
       {
         Object[] args = invocation.getArguments();
-        FilterResponseContext context = (FilterResponseContext) args[1];
+        FilterRequestContext requestContext = (FilterRequestContext) args[0];
+        FilterResponseContext responseContext = (FilterResponseContext) args[1];
+        NextResponseFilter nextResponseFilter = (NextResponseFilter) args[2];
+
         // Verify incoming data.
-        assertEquals(HttpStatus.S_404_NOT_FOUND, context.getResponseData().getStatus());
-        assertEquals(headersFromApp, context.getResponseData().getHeaders());
-        assertNull(context.getResponseData().getRecordResponseEnvelope().getRecord());
+        assertEquals(HttpStatus.S_404_NOT_FOUND, responseContext.getResponseData().getStatus());
+        assertEquals(headersFromApp, responseContext.getResponseData().getHeaders());
+        assertNull(responseContext.getResponseData().getRecordResponseEnvelope().getRecord());
         // Modify data in filter.
-        setStatus(context, HttpStatus.S_400_BAD_REQUEST);
-        context.getResponseData().getHeaders().clear();
+        setStatus(responseContext, HttpStatus.S_400_BAD_REQUEST);
+        responseContext.getResponseData().getHeaders().clear();
+        nextResponseFilter.onResponse(requestContext, responseContext);
         return null;
       }
     }).doAnswer(new Answer<Object>()
@@ -790,18 +870,22 @@ public class TestRestLiCallback
       public Object answer(InvocationOnMock invocation) throws Throwable
       {
         Object[] args = invocation.getArguments();
-        FilterResponseContext context = (FilterResponseContext) args[1];
+        FilterRequestContext requestContext = (FilterRequestContext) args[0];
+        FilterResponseContext responseContext = (FilterResponseContext) args[1];
+        NextResponseFilter nextResponseFilter = (NextResponseFilter) args[2];
+
         // Verify incoming data.
-        assertEquals(HttpStatus.S_400_BAD_REQUEST, context.getResponseData().getStatus());
-        assertTrue(context.getResponseData().getHeaders().isEmpty());
-        assertNull(context.getResponseData().getRecordResponseEnvelope().getRecord());
+        assertEquals(HttpStatus.S_400_BAD_REQUEST, responseContext.getResponseData().getStatus());
+        assertTrue(responseContext.getResponseData().getHeaders().isEmpty());
+        assertNull(responseContext.getResponseData().getRecordResponseEnvelope().getRecord());
         // Modify data in filter.
-        setStatus(context, HttpStatus.S_403_FORBIDDEN);
-        context.getResponseData().getRecordResponseEnvelope().setRecord(entityFromFilter, HttpStatus.S_403_FORBIDDEN);
-        context.getResponseData().getHeaders().putAll(headersFromFilter);
+        setStatus(responseContext, HttpStatus.S_403_FORBIDDEN);
+        responseContext.getResponseData().getRecordResponseEnvelope().setRecord(entityFromFilter, HttpStatus.S_403_FORBIDDEN);
+        responseContext.getResponseData().getHeaders().putAll(headersFromFilter);
+        nextResponseFilter.onResponse(requestContext, responseContext);
         return null;
       }
-    }).when(_filter).onResponse(eq(_filterRequestContext), any(FilterResponseContext.class));
+    }).when(_filter).onResponse(eq(_filterRequestContext), any(FilterResponseContext.class), any(NextResponseFilter.class));
 
     RestResponse restResponse = new RestResponseBuilder().build();
     when(_responseHandler.buildResponse(_routingResult, partialResponse)).thenReturn(restResponse);
@@ -863,22 +947,26 @@ public class TestRestLiCallback
       public Object answer(InvocationOnMock invocation) throws Throwable
       {
         Object[] args = invocation.getArguments();
-        FilterResponseContext context = (FilterResponseContext) args[1];
+        FilterRequestContext requestContext = (FilterRequestContext) args[0];
+        FilterResponseContext responseContext = (FilterResponseContext) args[1];
+        NextResponseFilter nextResponseFilter = (NextResponseFilter) args[2];
+
         // The second filter should be invoked with details of the exception thrown by the first
         // filter. Verify incoming data.
-        assertEquals(context.getResponseData().getStatus(), HttpStatus.S_500_INTERNAL_SERVER_ERROR);
-        assertNull(context.getResponseData().getRecordResponseEnvelope().getRecord());
-        assertTrue(context.getResponseData().getHeaders().isEmpty());
-        assertTrue(context.getResponseData().isErrorResponse());
+        assertEquals(responseContext.getResponseData().getStatus(), HttpStatus.S_500_INTERNAL_SERVER_ERROR);
+        assertNull(responseContext.getResponseData().getRecordResponseEnvelope().getRecord());
+        assertTrue(responseContext.getResponseData().getHeaders().isEmpty());
+        assertTrue(responseContext.getResponseData().isErrorResponse());
 
         // Modify data.
-        setStatus(context, HttpStatus.S_402_PAYMENT_REQUIRED);
+        setStatus(responseContext, HttpStatus.S_402_PAYMENT_REQUIRED);
         // The second filter does not handle the exception thrown by the first filter (i.e.) the
         // response data still has the error response corresponding to the exception from the first
         // filter.
+        nextResponseFilter.onResponse(requestContext, responseContext);
         return null;
       }
-    }).when(_filter).onResponse(eq(_filterRequestContext), any(FilterResponseContext.class));
+    }).when(_filter).onResponse(eq(_filterRequestContext), any(FilterResponseContext.class), any(NextResponseFilter.class));
 
     // Invoke.
     _twoFilterRestLiCallback.onError(exFromApp, executionReport);
@@ -1002,10 +1090,12 @@ public class TestRestLiCallback
     final String customHeaderValue = "CustomValue";
 
     // Setup.
-    when(
-         _responseHandler.buildExceptionResponseData(eq(_restRequest), eq(_routingResult),
-             wrappedExCapture.capture(), anyMap(), anyList())).thenReturn(responseAppData)
-                                                                                       .thenReturn(responseFilterData);
+    when(_responseHandler.buildExceptionResponseData(eq(_restRequest),
+                                                     eq(_routingResult),
+                                                     wrappedExCapture.capture(),
+                                                     anyMap(),
+                                                     anyList())).thenReturn(responseAppData)
+        .thenReturn(responseFilterData);
     when(_responseHandler.buildPartialResponse(_routingResult, responseFilterData)).thenReturn(partialResponse);
     when(_responseHandler.buildResponse(_routingResult, partialResponse)).thenReturn(restResponse);
     when(_restRequest.getHeaders()).thenReturn(null);
@@ -1017,46 +1107,49 @@ public class TestRestLiCallback
       public Object answer(InvocationOnMock invocation) throws Throwable
       {
         Object[] args = invocation.getArguments();
-        FilterResponseContext context = (FilterResponseContext) args[1];
+        FilterRequestContext requestContext = (FilterRequestContext) args[0];
+        FilterResponseContext responseContext = (FilterResponseContext) args[1];
+        NextResponseFilter nextResponseFilter = (NextResponseFilter) args[2];
+
         // The second filter should be invoked with details of the exception thrown by the first
         // filter. Verify incoming data.
-        assertEquals(context.getResponseData().getStatus(), HttpStatus.S_500_INTERNAL_SERVER_ERROR);
+        assertEquals(responseContext.getResponseData().getStatus(), HttpStatus.S_500_INTERNAL_SERVER_ERROR);
 
         switch (ResponseType.fromMethodType(resourceMethod))
         {
           case SINGLE_ENTITY:
-            assertNull(context.getResponseData().getRecordResponseEnvelope().getRecord());
+            assertNull(responseContext.getResponseData().getRecordResponseEnvelope().getRecord());
             break;
           case GET_COLLECTION:
-            assertNull(context.getResponseData().getCollectionResponseEnvelope().getCollectionResponse());
+            assertNull(responseContext.getResponseData().getCollectionResponseEnvelope().getCollectionResponse());
             break;
           case CREATE_COLLECTION:
-            assertNull(context.getResponseData().getCreateCollectionResponseEnvelope().getCreateResponses());
+            assertNull(responseContext.getResponseData().getCreateCollectionResponseEnvelope().getCreateResponses());
             break;
           case BATCH_ENTITIES:
-            assertNull(context.getResponseData().getBatchResponseEnvelope().getBatchResponseMap());
+            assertNull(responseContext.getResponseData().getBatchResponseEnvelope().getBatchResponseMap());
             break;
           case STATUS_ONLY:
             break;
         }
 
-        assertEquals(context.getResponseData().getHeaders(), headersFromFilter);
-        assertTrue(context.getResponseData().isErrorResponse());
+        assertEquals(responseContext.getResponseData().getHeaders(), headersFromFilter);
+        assertTrue(responseContext.getResponseData().isErrorResponse());
 
         // Modify data.
-        context.getResponseData().getHeaders().put(customHeader, customHeaderValue);
-        setStatus(context, HttpStatus.S_402_PAYMENT_REQUIRED);
+        responseContext.getResponseData().getHeaders().put(customHeader, customHeaderValue);
+        setStatus(responseContext, HttpStatus.S_402_PAYMENT_REQUIRED);
         // The second filter does handles the exception thrown by the first filter (i.e.) clears the
         // error response corresponding to the exception from the first
         // filter.
         if (entityFromFilter2 instanceof RecordTemplate)
         {
-          context.getResponseData().getRecordResponseEnvelope().setRecord((RecordTemplate) entityFromFilter2,
+          responseContext.getResponseData().getRecordResponseEnvelope().setRecord((RecordTemplate) entityFromFilter2,
               HttpStatus.S_402_PAYMENT_REQUIRED);
         }
         else if (entityFromFilter2 instanceof List)
         {
-          context.getResponseData().getCollectionResponseEnvelope().setCollectionResponse(HttpStatus.S_402_PAYMENT_REQUIRED,
+          responseContext.getResponseData().getCollectionResponseEnvelope().setCollectionResponse(HttpStatus.S_402_PAYMENT_REQUIRED,
                                                                                           (List<? extends RecordTemplate>) entityFromFilter2,
                                                                                           new CollectionMetadata(),
                                                                                           null);
@@ -1069,12 +1162,13 @@ public class TestRestLiCallback
             responseMap.put(entry.getKey(), new BatchResponseEnvelope.BatchResponseEntry(HttpStatus.S_200_OK, entry.getValue()));
           }
 
-          context.getResponseData().getBatchResponseEnvelope().setBatchResponseMap(HttpStatus.S_402_PAYMENT_REQUIRED,
+          responseContext.getResponseData().getBatchResponseEnvelope().setBatchResponseMap(HttpStatus.S_402_PAYMENT_REQUIRED,
               responseMap);
         }
+        nextResponseFilter.onResponse(requestContext, responseContext);
         return null;
       }
-    }).when(_filter).onResponse(eq(_filterRequestContext), any(FilterResponseContext.class));
+    }).when(_filter).onResponse(eq(_filterRequestContext), any(FilterResponseContext.class), any(NextResponseFilter.class));
 
     // Invoke.
     _twoFilterRestLiCallback.onError(exFromApp, executionReport);
@@ -1167,17 +1261,22 @@ public class TestRestLiCallback
       public Object answer(InvocationOnMock invocation) throws Throwable
       {
         Object[] args = invocation.getArguments();
-        FilterResponseContext context = (FilterResponseContext) args[1];
-        assertEquals(context.getResponseData().getStatus(), HttpStatus.S_404_NOT_FOUND);
-        assertNull(context.getResponseData().getRecordResponseEnvelope().getRecord());
-        assertTrue(context.getResponseData().getHeaders().isEmpty());
+        FilterRequestContext requestContext = (FilterRequestContext) args[0];
+        FilterResponseContext responseContext = (FilterResponseContext) args[1];
+        NextResponseFilter nextResponseFilter = (NextResponseFilter) args[2];
+
+        assertEquals(responseContext.getResponseData().getStatus(), HttpStatus.S_404_NOT_FOUND);
+        assertNull(responseContext.getResponseData().getRecordResponseEnvelope().getRecord());
+        assertTrue(responseContext.getResponseData().getHeaders().isEmpty());
 
         // Modify data.
-        setStatus(context, HttpStatus.S_402_PAYMENT_REQUIRED);
+        setStatus(responseContext, HttpStatus.S_402_PAYMENT_REQUIRED);
+        nextResponseFilter.onResponse(requestContext, responseContext);
         return null;
       }
-    }).doThrow(exFromSecondFilter).when(_filter)
-      .onResponse(eq(_filterRequestContext), any(FilterResponseContext.class));
+    }).doThrow(exFromSecondFilter)
+        .when(_filter)
+        .onResponse(eq(_filterRequestContext), any(FilterResponseContext.class), any(NextResponseFilter.class));
 
     // Invoke.
     _twoFilterRestLiCallback.onError(exFromApp, executionReport);
@@ -1208,90 +1307,6 @@ public class TestRestLiCallback
 
     final RestLiServiceException restliEx3 = wrappedExCapture.getAllValues().get(2);
     assertEquals(responseFilterData.getServiceException(), restliEx3);
-  }
-
-  @Test
-  public void testFilterResponseContextAdapter()
-  {
-    DataMap dataMap = new DataMap();
-    dataMap.put("foo", "bar");
-    Map<String, String> headers = Maps.newHashMap();
-    headers.put("x", "y");
-    RecordTemplate entity1 = new Foo(dataMap);
-    RestLiResponseEnvelope responseData = new RecordResponseEnvelope(HttpStatus.S_200_OK, entity1, headers,
-                                                                     Collections.<HttpCookie>emptyList());
-    RestLiResponseEnvelope updatedResponseData = new EmptyResponseEnvelope(HttpStatus.S_200_OK, Collections.<String, String>emptyMap(),
-                                                                           Collections.<HttpCookie>emptyList());
-    FilterResponseContext context = new RestLiCallback.FilterResponseContextAdapter(responseData);
-    assertEquals(headers, context.getResponseData().getHeaders());
-    assertEquals(entity1, context.getResponseData().getRecordResponseEnvelope().getRecord());
-    assertEquals(HttpStatus.S_200_OK, context.getResponseData().getStatus());
-
-    Foo entity2 = Foo.createFoo("boo", "bar");
-    context.getResponseData().getRecordResponseEnvelope().setRecord(entity2, HttpStatus.S_404_NOT_FOUND);
-    assertEquals(context.getResponseData().getRecordResponseEnvelope().getRecord(), entity2);
-    assertEquals(HttpStatus.S_404_NOT_FOUND, context.getResponseData().getStatus());
-    assertEquals(HttpStatus.S_404_NOT_FOUND, responseData.getStatus());
-    assertEquals(responseData, context.getResponseData());
-    assertEquals(responseData, ((FilterResponseContextInternal) context).getRestLiResponseEnvelope());
-    ((FilterResponseContextInternal) context).setRestLiResponseEnvelope(updatedResponseData);
-    assertEquals(updatedResponseData, ((FilterResponseContextInternal) context).getRestLiResponseEnvelope());
-  }
-
-  @DataProvider(name = "provideExceptionsAndStatuses")
-  private Object[][] provideExceptionsAndStatuses()
-  {
-    return new Object[][] {
-        { new RuntimeException("Test runtime exception"), HttpStatus.S_500_INTERNAL_SERVER_ERROR },
-        { new RoutingException("Test routing exception", 404), HttpStatus.S_404_NOT_FOUND},
-        { new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST, "Test service exception"), HttpStatus.S_400_BAD_REQUEST },
-        { new RestLiServiceException(HttpStatus.S_403_FORBIDDEN, "Wrapped runtime exception with custom status",
-            new RuntimeException("Original cause")), HttpStatus.S_403_FORBIDDEN }
-    };
-  }
-
-  @SuppressWarnings("unchecked")
-  @Test(dataProvider = "provideExceptionsAndStatuses")
-  public void testConvertExceptionToRestLiResponseData(Exception e, HttpStatus status)
-  {
-    RestLiServiceException serviceException;
-    if (e instanceof RestLiServiceException)
-    {
-      serviceException = (RestLiServiceException) e;
-    }
-    else
-    {
-      serviceException = new RestLiServiceException(status, e);
-    }
-    RestLiResponseEnvelope responseData = new RecordResponseEnvelope(serviceException, Collections.<String, String>emptyMap(),
-                                                                     Collections.<HttpCookie>emptyList());
-    ArgumentCaptor<RestLiServiceException> exceptionArgumentCaptor = ArgumentCaptor.forClass(RestLiServiceException.class);
-
-    // Setup.
-    when(_responseHandler.buildExceptionResponseData(eq(_restRequest),
-                                                     eq(_routingResult),
-                                                     exceptionArgumentCaptor.capture(),
-                                                     anyMap(),
-                                                     anyList())).thenReturn(responseData);
-    when(_restRequest.getHeaders()).thenReturn(null);
-
-    // Invoke.
-    RestLiResponseEnvelope resultData = _noFilterRestLiCallback.convertExceptionToRestLiResponseData(e);
-
-    // Verify.
-    verify(_responseHandler).buildExceptionResponseData(eq(_restRequest), eq(_routingResult), exceptionArgumentCaptor.capture(),
-        anyMap(), anyList());
-    verify(_restRequest).getHeaders();
-    verifyNoMoreInteractions(_responseHandler, _restRequest);
-    verifyZeroInteractions(_routingResult, _callback);
-    // RestLiCallback should pass the original exception to the response handler.
-    RestLiServiceException exceptionArgument = exceptionArgumentCaptor.getValue();
-    assertTrue(exceptionArgument.equals(e) || exceptionArgument.getCause().equals(e));
-    assertEquals(exceptionArgument.getStatus(), status);
-    // The end result should also contain the original exception.
-    assertTrue(resultData.isErrorResponse());
-    assertTrue(resultData.getServiceException().equals(e) || resultData.getServiceException().getCause().equals(e));
-    assertEquals(resultData.getServiceException().getStatus(), status);
   }
 
   private static class Foo extends RecordTemplate
