@@ -19,7 +19,7 @@ package test.r2.caprep;
 
 import com.linkedin.r2.caprep.CaptureFilter;
 import com.linkedin.r2.caprep.db.TransientDb;
-import com.linkedin.r2.filter.Filter;
+import com.linkedin.r2.filter.message.rest.RestFilter;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.Response;
 import org.testng.Assert;
@@ -88,7 +88,7 @@ public abstract class AbstractCaptureFilterTest extends AbstractCapRepTest
   }
 
   @Override
-  protected Filter createFilter(TransientDb db)
+  protected RestFilter createFilter(TransientDb db)
   {
     return new CaptureFilter(db);
   }

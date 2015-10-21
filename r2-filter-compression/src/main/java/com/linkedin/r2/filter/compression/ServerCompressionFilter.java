@@ -27,7 +27,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.linkedin.r2.filter.CompressionConfig;
-import com.linkedin.r2.filter.Filter;
 import com.linkedin.r2.filter.NextFilter;
 import com.linkedin.r2.filter.message.rest.RestFilter;
 import com.linkedin.r2.message.RequestContext;
@@ -44,7 +43,7 @@ import com.linkedin.r2.transport.http.common.HttpConstants;
  * @author erli
  *
  */
-public class ServerCompressionFilter implements Filter, RestFilter
+public class ServerCompressionFilter implements RestFilter
 {
   private static final Logger LOG = LoggerFactory.getLogger(ServerCompressionFilter.class);
 

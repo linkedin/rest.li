@@ -18,10 +18,10 @@
 package test.r2.integ;
 
 import com.linkedin.r2.filter.NextFilter;
-import com.linkedin.r2.filter.message.MessageFilter;
-import com.linkedin.r2.message.Request;
+import com.linkedin.r2.filter.message.rest.RestFilter;
 import com.linkedin.r2.message.RequestContext;
-import com.linkedin.r2.message.Response;
+import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.rest.RestResponse;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -30,7 +30,7 @@ import java.util.Map;
  * @author Chris Pettitt
  * @version $Revision$
  */
-public class CaptureWireAttributesFilter implements MessageFilter
+public class CaptureWireAttributesFilter implements RestFilter
 {
   private volatile Map<String, String> _request;
   private volatile Map<String, String> _response;
@@ -46,24 +46,24 @@ public class CaptureWireAttributesFilter implements MessageFilter
   }
 
   @Override
-  public void onRequest(Request req, RequestContext requestContext, Map<String, String> wireAttrs,
-                        NextFilter<Request, Response> nextFilter)
+  public void onRestRequest(RestRequest req, RequestContext requestContext, Map<String, String> wireAttrs,
+                        NextFilter<RestRequest, RestResponse> nextFilter)
   {
     _request = new HashMap<String, String>(wireAttrs);
     nextFilter.onRequest(req, requestContext, wireAttrs);
   }
 
   @Override
-  public void onResponse(Response res, RequestContext requestContext, Map<String, String> wireAttrs,
-                         NextFilter<Request, Response> nextFilter)
+  public void onRestResponse(RestResponse res, RequestContext requestContext, Map<String, String> wireAttrs,
+                         NextFilter<RestRequest, RestResponse> nextFilter)
   {
     _response = new HashMap<String, String>(wireAttrs);
     nextFilter.onResponse(res, requestContext, wireAttrs);
   }
 
   @Override
-  public void onError(Throwable ex, RequestContext requestContext, Map<String, String> wireAttrs,
-                      NextFilter<Request, Response> nextFilter)
+  public void onRestError(Throwable ex, RequestContext requestContext, Map<String, String> wireAttrs,
+                      NextFilter<RestRequest, RestResponse> nextFilter)
   {
     _response = new HashMap<String, String>(wireAttrs);
     nextFilter.onError(ex, requestContext, wireAttrs);

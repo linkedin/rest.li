@@ -30,33 +30,11 @@ import java.util.Map;
 * @author Chris Pettitt
 * @version $Revision$
 */
-// This class subclasses MessageCountFilter. Because this class implements RpcFilter and RestFilter
-// the base class methods (onRequest, onResponse, onError) should not be invoked.
-
-public class RpcRestCountFilter extends MessageCountFilter implements RestFilter
+public class RestCountFilter implements RestFilter
 {
-  private int _rpcReqCount;
-  private int _rpcResCount;
-  private int _rpcErrCount;
-
   private int _restReqCount;
   private int _restResCount;
   private int _restErrCount;
-
-  public int getRpcReqCount()
-  {
-    return _rpcReqCount;
-  }
-
-  public int getRpcResCount()
-  {
-    return _rpcResCount;
-  }
-
-  public int getRpcErrCount()
-  {
-    return _rpcErrCount;
-  }
 
   public int getRestReqCount()
   {
@@ -73,11 +51,8 @@ public class RpcRestCountFilter extends MessageCountFilter implements RestFilter
     return _restErrCount;
   }
 
-  @Override
   public void reset()
   {
-    super.reset();
-    _rpcReqCount = _rpcResCount = _rpcErrCount = 0;
     _restReqCount = _restResCount = _restErrCount = 0;
   }
 

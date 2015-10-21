@@ -17,13 +17,12 @@
 /* $Id$ */
 package test.r2.filter;
 
-
-import com.linkedin.r2.filter.Filter;
 import com.linkedin.r2.filter.FilterChain;
 import com.linkedin.r2.filter.FilterChains;
-import com.linkedin.r2.testutils.filter.BaseFilterTest;
+import com.linkedin.r2.filter.message.rest.BaseRestFilter;
+import com.linkedin.r2.filter.message.rest.RestFilter;
 import com.linkedin.r2.testutils.filter.FilterUtil;
-import com.linkedin.r2.testutils.filter.RpcRestCountFilter;
+import com.linkedin.r2.testutils.filter.RestCountFilter;
 
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
@@ -34,27 +33,20 @@ import org.testng.annotations.Test;
  * @version $Revision$
  */
 
-public class RpcRestFilterTest extends BaseFilterTest
+public class RestFilterTest
 {
-    private Filter _filter;
-    private RpcRestCountFilter _beforeFilter;
-    private RpcRestCountFilter _afterFilter;
+    private RestFilter _filter;
+    private RestCountFilter _beforeFilter;
+    private RestCountFilter _afterFilter;
     private FilterChain _fc;
 
-    @Override
     @BeforeMethod
     public void setUp() throws Exception
     {
-        _filter = getFilter();
-        _beforeFilter = new RpcRestCountFilter();
-        _afterFilter = new RpcRestCountFilter();
-        _fc = FilterChains.create(_beforeFilter, _filter, _afterFilter);
-    }
-
-    @Override
-    protected Filter getFilter()
-    {
-        return _filter;
+        _filter = new BaseRestFilter();
+        _beforeFilter = new RestCountFilter();
+        _afterFilter = new RestCountFilter();
+        _fc = FilterChains.createRestChain(_beforeFilter, _filter, _afterFilter);
     }
 
     @Test

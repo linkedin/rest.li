@@ -18,10 +18,10 @@
 package test.r2.integ;
 
 import com.linkedin.r2.filter.NextFilter;
-import com.linkedin.r2.filter.message.MessageFilter;
-import com.linkedin.r2.message.Request;
+import com.linkedin.r2.filter.message.rest.RestFilter;
 import com.linkedin.r2.message.RequestContext;
-import com.linkedin.r2.message.Response;
+import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.rest.RestResponse;
 
 import java.util.Map;
 
@@ -29,7 +29,7 @@ import java.util.Map;
  * @author Chris Pettitt
  * @version $Revision$
  */
-public class SendWireAttributeFilter implements MessageFilter
+public class SendWireAttributeFilter implements RestFilter
 {
   private final String _key;
   private final String _value;
@@ -43,9 +43,9 @@ public class SendWireAttributeFilter implements MessageFilter
   }
 
   @Override
-  public void onRequest(Request req,
+  public void onRestRequest(RestRequest req,
                         RequestContext requestContext, Map<String, String> wireAttrs,
-                        NextFilter<Request, Response> nextFilter)
+                        NextFilter<RestRequest, RestResponse> nextFilter)
   {
     if (_onRequest)
     {
@@ -55,9 +55,9 @@ public class SendWireAttributeFilter implements MessageFilter
   }
 
   @Override
-  public void onResponse(Response res,
+  public void onRestResponse(RestResponse res,
                          RequestContext requestContext, Map<String, String> wireAttrs,
-                         NextFilter<Request, Response> nextFilter)
+                         NextFilter<RestRequest, RestResponse> nextFilter)
   {
     if (!_onRequest)
     {
@@ -67,8 +67,8 @@ public class SendWireAttributeFilter implements MessageFilter
   }
 
   @Override
-  public void onError(Throwable ex, RequestContext requestContext, Map<String, String> wireAttrs,
-                      NextFilter<Request, Response> nextFilter)
+  public void onRestError(Throwable ex, RequestContext requestContext, Map<String, String> wireAttrs,
+                      NextFilter<RestRequest, RestResponse> nextFilter)
   {
     if (!_onRequest)
     {

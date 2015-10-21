@@ -5,4 +5,5 @@ dependencies {
   compile externalDependency.mail
   testCompile project(':r2-testutils')
   testCompile externalDependency.testng
+  testCompile externalDependency.easymock
 }

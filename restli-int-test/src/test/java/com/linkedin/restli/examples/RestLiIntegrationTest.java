@@ -91,8 +91,8 @@ public class RestLiIntegrationTest
 
   public void init(List<? extends RequestFilter> requestFilters, List<? extends ResponseFilter> responseFilters) throws IOException
   {
-    final FilterChain fc = FilterChains.empty().addLast(new ServerCompressionFilter(RestLiIntTestServer.supportedCompression, new CompressionConfig(0)))
-        .addLast(new SimpleLoggingFilter());
+    final FilterChain fc = FilterChains.empty().addLastRest(new ServerCompressionFilter(RestLiIntTestServer.supportedCompression, new CompressionConfig(0)))
+        .addLastRest(new SimpleLoggingFilter());
     init(requestFilters, responseFilters, fc, false);
   }
 

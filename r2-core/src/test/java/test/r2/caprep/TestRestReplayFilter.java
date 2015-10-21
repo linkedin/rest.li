@@ -42,7 +42,7 @@ public class TestRestReplayFilter extends AbstractReplayFilterTest
     final RestResponse res = new RestResponseBuilder().setStatus(RestStatus.NOT_FOUND).build();
 
     final CaptureLastCallFilter captureFilter = new CaptureLastCallFilter();
-    final FilterChain fc = getFilterChain().addFirst(captureFilter);
+    final FilterChain fc = getFilterChain().addFirstRest(captureFilter);
 
     // Record a response for the request we will fire
     getDb().record(req, res);

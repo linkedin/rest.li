@@ -20,10 +20,8 @@ package com.linkedin.r2.caprep;
 
 import com.linkedin.r2.caprep.db.DbSource;
 import com.linkedin.r2.filter.NextFilter;
-import com.linkedin.r2.filter.message.rest.RestRequestFilter;
-import com.linkedin.r2.message.Request;
+import com.linkedin.r2.filter.message.rest.BaseRestFilter;
 import com.linkedin.r2.message.RequestContext;
-import com.linkedin.r2.message.Response;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
@@ -42,7 +40,7 @@ import org.slf4j.LoggerFactory;
  * @author Chris Pettitt
  * @version $Revision$
  */
-public class ReplayFilter implements RestRequestFilter
+public class ReplayFilter extends BaseRestFilter
 {
   private static final Logger _log = LoggerFactory.getLogger(ReplayFilter.class);
 
@@ -69,11 +67,10 @@ public class ReplayFilter implements RestRequestFilter
     }
   }
 
-  private <RES extends Response> boolean replayResponse(Request req, RequestContext requestContext,
-                              NextFilter<? extends Request, RES> nextFilter)
+  private boolean replayResponse(RestRequest req, RequestContext requestContext,
+                              NextFilter<RestRequest, RestResponse> nextFilter)
   {
-    @SuppressWarnings("unchecked")
-    final RES res = (RES)_db.replay(req);
+    final RestResponse res = _db.replay(req);
     if (res != null)
     {
       _log.debug("Using cached response for request: " + req.getURI());
@@ -84,9 +81,9 @@ public class ReplayFilter implements RestRequestFilter
 
       // For symmetry with CaptureFilter - if the REST response is "not OK" then we treat it as an
       // exception.
-      if (res instanceof RestResponse && !RestStatus.isOK(((RestResponse)res).getStatus()))
+      if (!RestStatus.isOK(res.getStatus()))
       {
-        nextFilter.onError(new RestException((RestResponse)res), requestContext, wireAttrs);
+        nextFilter.onError(new RestException(res), requestContext, wireAttrs);
       }
       else
       {

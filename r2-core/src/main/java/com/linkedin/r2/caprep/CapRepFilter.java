@@ -21,7 +21,6 @@ package com.linkedin.r2.caprep;
 import com.linkedin.r2.caprep.db.DefaultMessageSerializer;
 import com.linkedin.r2.caprep.db.DirectoryDbSink;
 import com.linkedin.r2.caprep.db.DirectoryDbSource;
-import com.linkedin.r2.filter.Filter;
 import com.linkedin.r2.filter.NextFilter;
 import com.linkedin.r2.filter.message.rest.RestFilter;
 import com.linkedin.r2.message.RequestContext;
@@ -42,7 +41,7 @@ public class CapRepFilter implements RestFilter, CapRepAdmin
 {
   private static final Logger _log = LoggerFactory.getLogger(CapRepFilter.class);
 
-  private static final Filter PASS_THROUGH_FILTER = new PassThroughFilter();
+  private static final RestFilter PASS_THROUGH_FILTER = new PassThroughFilter();
 
   private final ReplaceableFilter _filter = new ReplaceableFilter(PASS_THROUGH_FILTER);
 

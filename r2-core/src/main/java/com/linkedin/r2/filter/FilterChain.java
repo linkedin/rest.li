@@ -16,15 +16,20 @@
 
 package com.linkedin.r2.filter;
 
+import com.linkedin.r2.filter.message.rest.RestFilter;
+import com.linkedin.r2.filter.message.stream.StreamFilter;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
+import com.linkedin.r2.message.stream.StreamRequest;
+import com.linkedin.r2.message.stream.StreamResponse;
 
 import java.util.Map;
 
 /**
- * A chain of {@link Filter}s that get a chance to process or modify the request, wire attributes,
- * and local attributes.<p/>
+ * A chain of {@link RestFilter}s and {@link StreamFilter}s that get a chance to process or modify the request/response,
+ * wire attributes, and local attributes. The {@link RestFilter}s would only be applied to rest request/response. The
+ * {@link StreamFilter}s would only be applied to stream request/response. <p/>
  *
  * <dl>
  *  <dt>Immutability</dt>
@@ -46,14 +51,6 @@ import java.util.Map;
  *      request or the response.
  *  </dd>
  *
- *  <dt>Filter Priority</dt>
- *  <dd>
- *      It is possible to implement a generic message filter and a message filter specific to a
- *      request type (RPC or REST). In general, this should be avoided. If a filter implements both
- *      types of interfaces then the more specific one is invoked and the less specific one is
- *      ignored.
- *  </dd>
- *
  *  <dt>Wire Attributes</dt>
  *  <dd>
  *      Wire attributes provide a mechanism for sending request or response metadata to the remote
@@ -71,6 +68,7 @@ import java.util.Map;
  * </dl>
  *
  * @author Chris Pettitt
+ * @author Zhenkai Zhu
  */
 public interface FilterChain
 {
@@ -81,7 +79,7 @@ public interface FilterChain
    * @param filter the filter to insert
    * @return the new filter chain
    */
-  FilterChain addFirst(Filter filter);
+  FilterChain addFirstRest(RestFilter filter);
 
   /**
    * Returns a copy of this filter chain with the supplied filter inserted at the end of the filter
@@ -90,7 +88,25 @@ public interface FilterChain
    * @param filter the filter to insert
    * @return the new filter chain
    */
-  FilterChain addLast(Filter filter);
+  FilterChain addLastRest(RestFilter filter);
+
+  /**
+   * Returns a copy of this filter chain with the supplied filter inserted at the beginning of the
+   * chain.
+   *
+   * @param filter the filter to insert
+   * @return the new filter chain
+   */
+  FilterChain addFirst(StreamFilter filter);
+
+  /**
+   * Returns a copy of this filter chain with the supplied filter inserted at the end of the filter
+   * chain.
+   *
+   * @param filter the filter to insert
+   * @return the new filter chain
+   */
+  FilterChain addLast(StreamFilter filter);
 
   /**
    * Runs the request through the filter chain with the supplied wire attributes and local
@@ -128,6 +144,45 @@ public interface FilterChain
    * @param wireAttrs the initial set of wire attributes
    */
   void onRestError(Exception ex,
+                   RequestContext requestContext,
+                   Map<String, String> wireAttrs);
+
+  /**
+   * Runs the request through the filter chain with the supplied wire attributes and local
+   * attributes. See interface-level documentation for details about wire attributes and local
+   * attributes.
+   *
+   * @param req the request to send through the filter chain
+   * @param requestContext context for the request
+   * @param wireAttrs the initial set of wire attributes
+   */
+  void onStreamRequest(StreamRequest req,
+                     RequestContext requestContext,
+                     Map<String, String> wireAttrs);
+
+  /**
+   * Runs the response through the filter chain with the supplied wire attributes and local
+   * attributes. See interface-level documentation for details about wire attributes and local
+   * attributes.
+   *
+   * @param res the response to send through the filter chain
+   * @param requestContext context for the request
+   * @param wireAttrs the initial set of wire attributes
+   */
+  void onStreamResponse(StreamResponse res,
+                      RequestContext requestContext,
+                      Map<String, String> wireAttrs);
+
+  /**
+   * Runs the error through the filter chain with the supplied wire attributes and local
+   * attributes. See interface-level documentation for details about wire attributes and local
+   * attributes.
+   *
+   * @param ex the error to send through the filter chain
+   * @param requestContext context for the request
+   * @param wireAttrs the initial set of wire attributes
+   */
+  void onStreamError(Exception ex,
                    RequestContext requestContext,
                    Map<String, String> wireAttrs);
 }

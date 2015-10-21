@@ -19,8 +19,8 @@ package test.r2.caprep;
 
 import com.linkedin.r2.caprep.ReplayFilter;
 import com.linkedin.r2.caprep.db.TransientDb;
-import com.linkedin.r2.filter.Filter;
 import com.linkedin.r2.filter.FilterChain;
+import com.linkedin.r2.filter.message.rest.RestFilter;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.Response;
 import org.testng.Assert;
@@ -41,7 +41,7 @@ public abstract class AbstractReplayFilterTest extends AbstractCapRepTest
     final Response res = response();
     final CaptureLastCallFilter captureFilter = new CaptureLastCallFilter();
     final FilterChain fc = getFilterChain()
-            .addFirst(captureFilter);
+            .addFirstRest(captureFilter);
 
     FilterUtil.fireUntypedRequestResponse(fc, req, res);
 
@@ -54,7 +54,7 @@ public abstract class AbstractReplayFilterTest extends AbstractCapRepTest
     final Request req = request();
     final Response res = response();
     final CaptureLastCallFilter captureFilter = new CaptureLastCallFilter();
-    final FilterChain fc = getFilterChain().addFirst(captureFilter);
+    final FilterChain fc = getFilterChain().addFirstRest(captureFilter);
 
     // Record a response for the request we will fire
     getDb().record(req, res);
@@ -66,7 +66,7 @@ public abstract class AbstractReplayFilterTest extends AbstractCapRepTest
   }
 
   @Override
-  protected Filter createFilter(TransientDb db)
+  protected RestFilter createFilter(TransientDb db)
   {
     return new ReplayFilter(db);
   }

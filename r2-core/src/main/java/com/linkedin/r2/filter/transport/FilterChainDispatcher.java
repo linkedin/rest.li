@@ -49,9 +49,9 @@ public class FilterChainDispatcher implements TransportDispatcher
                                FilterChain filters)
   {
     _filters = filters
-            .addFirst(new ServerQueryTunnelFilter())
-            .addFirst(new ResponseFilter())
-            .addLast(new DispatcherRequestFilter(dispatcher));
+            .addFirstRest(new ServerQueryTunnelFilter())
+            .addFirstRest(new ResponseFilter())
+            .addLastRest(new DispatcherRequestFilter(dispatcher));
   }
 
   @Override

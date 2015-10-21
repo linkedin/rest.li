@@ -17,6 +17,11 @@
 /* $Id$ */
 package com.linkedin.r2.filter;
 
+import com.linkedin.r2.filter.message.rest.RestFilter;
+import com.linkedin.r2.filter.message.stream.StreamFilter;
+
+import java.util.List;
+
 /**
  * Factory methods for creating new {@link FilterChain}s.
  *
@@ -37,19 +42,49 @@ public class FilterChains
   }
 
   /**
-   * Returns a {@link FilterChain} constructed with the filters inserted in the order they appear
+   * Returns a {@link FilterChain} constructed with the rest filters inserted in the order they appear
    * in the supplied list.
    *
-   * @param filters the filters to use to create a new filter chain
+   * @param filters the rest filters to use to create a new filter chain
    * @return the new filter chain
    */
-  public static FilterChain create(Filter... filters)
+  public static FilterChain createRestChain(RestFilter... filters)
   {
     FilterChain fc = empty();
-    for (Filter filter : filters)
+    for (RestFilter filter : filters)
+    {
+      fc = fc.addLastRest(filter);
+    }
+    return fc;
+  }
+
+  /**
+   * Returns a {@link FilterChain} constructed with the steram filters inserted in the order they appear
+   * in the supplied list.
+   *
+   * @param filters the stream filters to use to create a new filter chain
+   * @return the new filter chain
+   */
+  public static FilterChain createStreamChain(StreamFilter... filters)
+  {
+    FilterChain fc = empty();
+    for (StreamFilter filter : filters)
     {
       fc = fc.addLast(filter);
     }
     return fc;
+  }
+
+  /**
+   * Returns a {@link FilterChain} constructed with the rest filters and stream filters inserted in the order they appear
+   * in the supplied list.
+   *
+   * @param restFilters the rest filters to use to construct the filter chain
+   * @param streamFilters the stream filters to use to construct the filter chain
+   * @return the new filter chain
+   */
+  public static FilterChain create(List<RestFilter> restFilters, List<StreamFilter> streamFilters)
+  {
+    return new FilterChainImpl(restFilters, streamFilters);
   }
 }

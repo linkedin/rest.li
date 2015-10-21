@@ -18,10 +18,12 @@
 package com.linkedin.r2.testutils.filter;
 
 import com.linkedin.r2.filter.NextFilter;
-import com.linkedin.r2.filter.message.MessageFilter;
+import com.linkedin.r2.filter.message.rest.RestFilter;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.Response;
+import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.rest.RestResponse;
 
 import java.util.Map;
 
@@ -29,31 +31,31 @@ import java.util.Map;
  * @author Chris Pettitt
  * @version $Revision$
  */
-public class CaptureLastCallFilter implements MessageFilter
+public class CaptureLastCallFilter implements RestFilter
 {
-  private volatile Request _lastReq;
-  private volatile Response _lastRes;
+  private volatile RestRequest _lastReq;
+  private volatile RestResponse _lastRes;
   private volatile Throwable _lastErr;
 
   @Override
-  public void onRequest(Request req, RequestContext requestContext, Map<String, String> wireAttrs,
-                        NextFilter<Request, Response> nextFilter)
+  public void onRestRequest(RestRequest req, RequestContext requestContext, Map<String, String> wireAttrs,
+                        NextFilter<RestRequest, RestResponse> nextFilter)
   {
     _lastReq = req;
     nextFilter.onRequest(req, requestContext, wireAttrs);
   }
 
   @Override
-  public void onResponse(Response res, RequestContext requestContext, Map<String, String> wireAttrs,
-                         NextFilter<Request, Response> nextFilter)
+  public void onRestResponse(RestResponse res, RequestContext requestContext, Map<String, String> wireAttrs,
+                         NextFilter<RestRequest, RestResponse> nextFilter)
   {
     _lastRes = res;
     nextFilter.onResponse(res, requestContext, wireAttrs);
   }
 
   @Override
-  public void onError(Throwable ex, RequestContext requestContext, Map<String, String> wireAttrs,
-                      NextFilter<Request, Response> nextFilter)
+  public void onRestError(Throwable ex, RequestContext requestContext, Map<String, String> wireAttrs,
+                      NextFilter<RestRequest, RestResponse> nextFilter)
   {
     _lastErr = ex;
     nextFilter.onError(ex, requestContext, wireAttrs);

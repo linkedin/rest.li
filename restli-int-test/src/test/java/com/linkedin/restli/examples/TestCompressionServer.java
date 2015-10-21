@@ -29,7 +29,7 @@ import com.linkedin.r2.filter.compression.GzipCompressor;
 import com.linkedin.r2.filter.compression.ServerCompressionFilter;
 import com.linkedin.r2.filter.compression.SnappyCompressor;
 import com.linkedin.r2.filter.logging.SimpleLoggingFilter;
-import com.linkedin.r2.filter.message.rest.RestResponseFilter;
+import com.linkedin.r2.filter.message.rest.BaseRestFilter;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
@@ -104,7 +104,7 @@ public class TestCompressionServer extends RestLiIntegrationTest
   public static final String CONTENT_ENCODING_SAVED = "Content-Encoding-Saved";
   // Because the Content-Encoding header is removed when content is decompressed,
   // we need to save the value to another header to check whether the response was compressed or not.
-  public static class SaveContentEncodingHeaderFilter implements RestResponseFilter
+  public static class SaveContentEncodingHeaderFilter extends BaseRestFilter
   {
     @Override
     public void onRestResponse(RestResponse res,
@@ -280,9 +280,9 @@ public class TestCompressionServer extends RestLiIntegrationTest
   {
     super.init(Collections.<RequestFilter>emptyList(),
                Collections.<ResponseFilter>emptyList(),
-               FilterChains.empty().addLast(new SaveContentEncodingHeaderFilter())
-                   .addLast(new ServerCompressionFilter(RestLiIntTestServer.supportedCompression, new CompressionConfig(0)))
-                   .addLast(new SimpleLoggingFilter()),
+               FilterChains.empty().addLastRest(new SaveContentEncodingHeaderFilter())
+                   .addLastRest(new ServerCompressionFilter(RestLiIntTestServer.supportedCompression, new CompressionConfig(0)))
+                   .addLastRest(new SimpleLoggingFilter()),
                true);
   }
 

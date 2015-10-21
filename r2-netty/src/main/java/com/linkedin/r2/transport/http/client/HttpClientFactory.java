@@ -39,7 +39,6 @@ import com.linkedin.r2.util.NamedThreadFactory;
 import io.netty.channel.nio.NioEventLoopGroup;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
@@ -436,11 +435,11 @@ public class HttpClientFactory implements TransportClientFactory
       {
         responseEncodings = ConfigValueExtractor.buildList(properties.remove(HTTP_RESPONSE_CONTENT_ENCODINGS), LIST_SEPARATOR);
       }
-      filters = _filters.addLast(new ClientCompressionFilter(requestContentEncoding,
-                                                             getRequestCompressionConfig(httpServiceName, requestContentEncoding),
-                                                             buildAcceptEncodingSchemas(responseEncodings),
-                                                             _responseCompressionConfigs.get(httpServiceName),
-                                                             httpResponseCompressionOperations));
+      filters = _filters.addLastRest(new ClientCompressionFilter(requestContentEncoding,
+          getRequestCompressionConfig(httpServiceName, requestContentEncoding),
+          buildAcceptEncodingSchemas(responseEncodings),
+          _responseCompressionConfigs.get(httpServiceName),
+          httpResponseCompressionOperations));
     }
     else
     {
@@ -448,7 +447,7 @@ public class HttpClientFactory implements TransportClientFactory
     }
 
     Integer queryPostThreshold = chooseNewOverDefault(getIntValue(properties, HTTP_QUERY_POST_THRESHOLD), Integer.MAX_VALUE);
-    filters = filters.addLast(new ClientQueryTunnelFilter(queryPostThreshold));
+    filters = filters.addLastRest(new ClientQueryTunnelFilter(queryPostThreshold));
 
     client = new FilterChainClient(client, filters);
     client = new FactoryClient(client);

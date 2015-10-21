@@ -19,7 +19,7 @@ package test.r2.caprep;
 
 import com.linkedin.r2.caprep.PassThroughFilter;
 import com.linkedin.r2.caprep.ReplaceableFilter;
-import com.linkedin.r2.filter.Filter;
+import com.linkedin.r2.filter.message.rest.RestFilter;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import com.linkedin.r2.testutils.filter.BaseFilterTest;
@@ -47,7 +47,7 @@ public class TestReplaceableFilter extends BaseFilterTest
   public void testSetAndGet()
   {
     final ReplaceableFilter filter = getFilter();
-    final Filter newFilter = new PassThroughFilter();
+    final RestFilter newFilter = new PassThroughFilter();
 
     Assert.assertTrue(!filter.getFilter().equals(newFilter));
     filter.setFilter(newFilter);

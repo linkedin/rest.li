@@ -119,9 +119,9 @@ public class TestResponseCompression extends RestLiIntegrationTest
       }
     }
     // The default compression threshold is between tiny and huge threshold.
-    final FilterChain fc = FilterChains.empty().addLast(new TestCompressionServer.SaveContentEncodingHeaderFilter())
-        .addLast(new ServerCompressionFilter("snappy,gzip,deflate", new CompressionConfig(10000)))
-        .addLast(new SimpleLoggingFilter());
+    final FilterChain fc = FilterChains.empty().addLastRest(new TestCompressionServer.SaveContentEncodingHeaderFilter())
+        .addLastRest(new ServerCompressionFilter("snappy,gzip,deflate", new CompressionConfig(10000)))
+        .addLastRest(new SimpleLoggingFilter());
     super.init(Arrays.asList(new TestHelperFilter()), null, fc, false);
   }
 

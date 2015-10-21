@@ -18,7 +18,7 @@
 package com.linkedin.r2.filter.transport;
 
 import com.linkedin.r2.filter.NextFilter;
-import com.linkedin.r2.filter.message.rest.RestRequestFilter;
+import com.linkedin.r2.filter.message.rest.BaseRestFilter;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.Response;
@@ -37,7 +37,7 @@ import java.util.Map;
  * @author Chris Pettitt
  * @version $Revision$
  */
-public class ClientRequestFilter implements RestRequestFilter
+public class ClientRequestFilter extends BaseRestFilter
 {
   private final TransportClient _client;
 

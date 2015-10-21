@@ -181,7 +181,7 @@ public class MockHttpServerFactory
                                                                                         resourceFactory,
                                                                                         engine));
 
-    final FilterChain fc = FilterChains.empty().addLast(new SimpleLoggingFilter());
+    final FilterChain fc = FilterChains.empty().addLastRest(new SimpleLoggingFilter());
     final HttpServer server = new HttpServerFactory(fc).createServer(port,
                                                                HttpServerFactory.DEFAULT_CONTEXT_PATH,
                                                                NUM_THREADS,

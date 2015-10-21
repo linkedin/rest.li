@@ -34,11 +34,7 @@ import com.linkedin.r2.transport.common.Server;
 import com.linkedin.common.util.None;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import java.net.URI;
@@ -71,12 +67,12 @@ public abstract class AbstractEchoServiceTest
     _clientCaptureFilter = new CaptureWireAttributesFilter();
 
     final FilterChain serverFilters = FilterChains.empty()
-            .addFirst(_serverCaptureFilter)
-            .addLast(new SendWireAttributeFilter(_toClientKey, _toClientValue, false));
+            .addFirstRest(_serverCaptureFilter)
+            .addLastRest(new SendWireAttributeFilter(_toClientKey, _toClientValue, false));
 
     final FilterChain clientFilters = FilterChains.empty()
-            .addFirst(_clientCaptureFilter)
-            .addLast(new SendWireAttributeFilter(_toServerKey, _toServerValue, true));
+            .addFirstRest(_clientCaptureFilter)
+            .addLastRest(new SendWireAttributeFilter(_toServerKey, _toServerValue, true));
 
     _client = createClient(clientFilters);
 

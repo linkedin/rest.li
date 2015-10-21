@@ -94,8 +94,8 @@ public class RestLiIntTestServer
                                         boolean useAsyncServletApi,
                                         int asyncTimeOut)
   {
-    final FilterChain fc = FilterChains.empty().addLast(new ServerCompressionFilter(supportedCompression, new CompressionConfig(0)))
-        .addLast(new SimpleLoggingFilter());
+    final FilterChain fc = FilterChains.empty().addLastRest(new ServerCompressionFilter(supportedCompression, new CompressionConfig(0)))
+        .addLastRest(new SimpleLoggingFilter());
     return createServer(engine, port, useAsyncServletApi, asyncTimeOut, null, null, fc);
   }
 

@@ -18,7 +18,7 @@
 package test.r2.caprep;
 
 import com.linkedin.r2.caprep.db.TransientDb;
-import com.linkedin.r2.filter.Filter;
+import com.linkedin.r2.filter.message.rest.RestFilter;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.Response;
 import org.testng.annotations.BeforeMethod;
@@ -31,7 +31,7 @@ import com.linkedin.r2.testutils.filter.BaseFilterTest;
 public abstract class AbstractCapRepTest extends BaseFilterTest
 {
   private TransientDb _db;
-  private Filter _filter;
+  private RestFilter _filter;
 
   @BeforeMethod
   public void setUp() throws Exception
@@ -47,12 +47,12 @@ public abstract class AbstractCapRepTest extends BaseFilterTest
   }
 
   @Override
-  protected Filter getFilter()
+  protected RestFilter getFilter()
   {
     return _filter;
   }
 
-  protected abstract Filter createFilter(TransientDb db);
+  protected abstract RestFilter createFilter(TransientDb db);
 
   protected abstract Request request();
 

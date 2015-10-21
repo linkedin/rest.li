@@ -17,37 +17,44 @@
 /* $Id$ */
 package com.linkedin.r2.filter;
 
-import com.linkedin.r2.filter.message.MessageFilter;
+import com.linkedin.r2.filter.message.rest.RestFilter;
+import com.linkedin.r2.filter.message.stream.StreamFilter;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.Response;
+import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.rest.RestResponse;
+import com.linkedin.r2.message.stream.StreamRequest;
+import com.linkedin.r2.message.stream.StreamResponse;
 
 import java.util.List;
 import java.util.Map;
 
 /**
 * @author Chris Pettitt
+* @author Zhenkai Zhu
 * @version $Revision$
 */
-/* package private */ final class FilterChainIterator<REQ extends Request, RES extends Response>
+/* package private */ abstract class FilterChainIterator<F, REQ extends Request, RES extends Response>
         implements NextFilter<REQ, RES>
 {
-  private final List<MessageFilter> _filters;
+  private final List<F> _filters;
   private int _cursor;
 
-  public FilterChainIterator(List<MessageFilter> filters, int cursor)
+  protected FilterChainIterator(List<F> filters, int cursor)
   {
     _filters = filters;
     _cursor = cursor;
   }
 
+  @Override
   public void onRequest(REQ req, RequestContext requestContext, Map<String, String> wireAttrs)
   {
     if (_cursor < _filters.size())
     {
       try
       {
-        _filters.get(_cursor++).onRequest(req, requestContext, wireAttrs, adaptNextFilter(this));
+        doOnRequest(_filters.get(_cursor++), req, requestContext, wireAttrs, this);
       }
       catch (RuntimeException e)
       {
@@ -56,13 +63,14 @@ import java.util.Map;
     }
   }
 
+  @Override
   public void onResponse(RES res, RequestContext requestContext, Map<String, String> wireAttrs)
   {
     if (_cursor > 0)
     {
       try
       {
-        _filters.get(--_cursor).onResponse(res, requestContext, wireAttrs, adaptNextFilter(this));
+        doOnResponse(_filters.get(--_cursor), res, requestContext, wireAttrs, this);
       }
       catch (RuntimeException e)
       {
@@ -78,7 +86,7 @@ import java.util.Map;
     {
       try
       {
-        _filters.get(--_cursor).onError(ex, requestContext, wireAttrs, adaptNextFilter(this));
+        doOnError(_filters.get(--_cursor), ex, requestContext, wireAttrs, this);
       }
       catch (RuntimeException e)
       {
@@ -87,9 +95,99 @@ import java.util.Map;
     }
   }
 
-  @SuppressWarnings("unchecked")
-  private NextFilter<Request, Response> adaptNextFilter(FilterChainIterator<?, ?> nextFilter)
+  protected abstract void doOnRequest(F filter,
+                                      REQ req,
+                                      RequestContext requestContext,
+                                      Map<String, String> wireAttrs,
+                                      NextFilter<REQ, RES> nextFilter);
+
+  protected abstract void doOnResponse(F filter,
+                                       RES res,
+                                       RequestContext requestContext,
+                                       Map<String, String> wireAttrs,
+                                       NextFilter<REQ, RES> nextFilter);
+
+  protected abstract void doOnError(F filter,
+                                    Throwable ex,
+                                    RequestContext requestContext,
+                                    Map<String, String> wireAttrs,
+                                    NextFilter<REQ, RES> nextFilter);
+
+
+  /* package private */static class FilterChainRestIterator extends FilterChainIterator<RestFilter, RestRequest, RestResponse>
   {
-    return (NextFilter<Request, Response>)nextFilter;
+    public FilterChainRestIterator(List<RestFilter> filters, int cursor)
+    {
+      super(filters, cursor);
+    }
+
+    @Override
+    protected void doOnRequest(RestFilter filter,
+                               RestRequest req,
+                               RequestContext requestContext,
+                               Map<String, String> wireAttrs,
+                               NextFilter<RestRequest, RestResponse> nextFilter)
+    {
+      filter.onRestRequest(req, requestContext, wireAttrs, nextFilter);
+    }
+
+    @Override
+    protected void doOnResponse(RestFilter filter,
+                                RestResponse res,
+                                RequestContext requestContext,
+                                Map<String, String> wireAttrs,
+                                NextFilter<RestRequest, RestResponse> nextFilter)
+    {
+      filter.onRestResponse(res, requestContext, wireAttrs, nextFilter);
+    }
+
+    @Override
+    protected void doOnError(RestFilter filter,
+                             Throwable ex,
+                             RequestContext requestContext,
+                             Map<String, String> wireAttrs,
+                             NextFilter<RestRequest, RestResponse> nextFilter)
+    {
+      filter.onRestError(ex, requestContext, wireAttrs, nextFilter);
+    }
   }
+
+  /*package private */static class FilterChainStreamIterator extends FilterChainIterator<StreamFilter, StreamRequest, StreamResponse>
+  {
+    public FilterChainStreamIterator(List<StreamFilter> filters, int cursor)
+    {
+      super(filters, cursor);
+    }
+
+    @Override
+    protected void doOnRequest(StreamFilter filter,
+                               StreamRequest req,
+                               RequestContext requestContext,
+                               Map<String, String> wireAttrs,
+                               NextFilter<StreamRequest, StreamResponse> nextFilter)
+    {
+      filter.onStreamRequest(req, requestContext, wireAttrs, nextFilter);
+    }
+
+    @Override
+    protected void doOnResponse(StreamFilter filter,
+                                StreamResponse res,
+                                RequestContext requestContext,
+                                Map<String, String> wireAttrs,
+                                NextFilter<StreamRequest, StreamResponse> nextFilter)
+    {
+      filter.onStreamResponse(res, requestContext, wireAttrs, nextFilter);
+    }
+
+    @Override
+    protected void doOnError(StreamFilter filter,
+                             Throwable ex,
+                             RequestContext requestContext,
+                             Map<String, String> wireAttrs,
+                             NextFilter<StreamRequest, StreamResponse> nextFilter)
+    {
+      filter.onStreamError(ex, requestContext, wireAttrs, nextFilter);
+    }
+  }
+
 }

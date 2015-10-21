@@ -20,8 +20,7 @@ package com.linkedin.r2.caprep;
 
 import com.linkedin.r2.caprep.db.DbSink;
 import com.linkedin.r2.filter.NextFilter;
-import com.linkedin.r2.filter.message.RequestFilter;
-import com.linkedin.r2.filter.message.rest.RestResponseFilter;
+import com.linkedin.r2.filter.message.rest.RestFilter;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.Response;
@@ -39,7 +38,7 @@ import org.slf4j.LoggerFactory;
  * @author Chris Pettitt
  * @version $Revision$
  */
-public class CaptureFilter implements RequestFilter, RestResponseFilter
+public class CaptureFilter implements RestFilter
 {
   private static final Logger _log = LoggerFactory.getLogger(CaptureFilter.class);
 
@@ -58,8 +57,8 @@ public class CaptureFilter implements RequestFilter, RestResponseFilter
   }
 
   @Override
-  public void onRequest(Request req, RequestContext requestContext, Map<String, String> wireAttrs,
-                        NextFilter<Request, Response> nextFilter)
+  public void onRestRequest(RestRequest req, RequestContext requestContext, Map<String, String> wireAttrs,
+                        NextFilter<RestRequest, RestResponse> nextFilter)
   {
     // Save request so that it can be associated with the response
     requestContext.putLocalAttr(REQ_ATTR, req);

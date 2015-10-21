@@ -17,9 +17,9 @@
 /* $Id$ */
 package com.linkedin.r2.testutils.filter;
 
-import com.linkedin.r2.filter.Filter;
 import com.linkedin.r2.filter.FilterChain;
 import com.linkedin.r2.filter.FilterChains;
+import com.linkedin.r2.filter.message.rest.RestFilter;
 
 /**
  * @author Chris Pettitt
@@ -27,17 +27,17 @@ import com.linkedin.r2.filter.FilterChains;
  */
 public abstract class BaseFilterTest
 {
-    private Filter _filter;
-    private RpcRestCountFilter _beforeFilter;
-    private RpcRestCountFilter _afterFilter;
+    private RestFilter _filter;
+    private RestCountFilter _beforeFilter;
+    private RestCountFilter _afterFilter;
     private FilterChain _fc;
 
     public void setUp() throws Exception
     {
         _filter = getFilter();
-        _beforeFilter = new RpcRestCountFilter();
-        _afterFilter = new RpcRestCountFilter();
-        _fc = FilterChains.create(_beforeFilter, _filter, _afterFilter);
+        _beforeFilter = new RestCountFilter();
+        _afterFilter = new RestCountFilter();
+        _fc = FilterChains.createRestChain(_beforeFilter, _filter, _afterFilter);
     }
 
     protected FilterChain getFilterChain()
@@ -45,15 +45,15 @@ public abstract class BaseFilterTest
         return _fc;
     }
 
-    protected RpcRestCountFilter getBeforeFilter()
+    protected RestCountFilter getBeforeFilter()
     {
         return _beforeFilter;
     }
 
-    protected RpcRestCountFilter getAfterFilter()
+    protected RestCountFilter getAfterFilter()
     {
         return _afterFilter;
     }
 
-    protected abstract Filter getFilter();
+    protected abstract RestFilter getFilter();
 }

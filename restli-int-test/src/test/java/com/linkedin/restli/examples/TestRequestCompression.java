@@ -27,7 +27,7 @@ import com.linkedin.r2.filter.CompressionOption;
 import com.linkedin.r2.filter.NextFilter;
 import com.linkedin.r2.filter.compression.ServerCompressionFilter;
 import com.linkedin.r2.filter.logging.SimpleLoggingFilter;
-import com.linkedin.r2.filter.message.rest.RestRequestFilter;
+import com.linkedin.r2.filter.message.rest.BaseRestFilter;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
@@ -85,7 +85,7 @@ public class TestRequestCompression extends RestLiIntegrationTest
   @BeforeClass
   public void initClass() throws Exception
   {
-    class CheckRequestCompressionFilter implements RestRequestFilter
+    class CheckRequestCompressionFilter extends BaseRestFilter
     {
       @Override
       public void onRestRequest(RestRequest req,
@@ -124,7 +124,7 @@ public class TestRequestCompression extends RestLiIntegrationTest
     }
 
     // Check that Content-Encoding and Content-Length headers are set correctly by ServerCompressionFilter.
-    class CheckHeadersFilter implements RestRequestFilter
+    class CheckHeadersFilter extends BaseRestFilter
     {
       @Override
       public void onRestRequest(RestRequest req,
@@ -144,10 +144,10 @@ public class TestRequestCompression extends RestLiIntegrationTest
       }
     }
 
-    final FilterChain fc = FilterChains.empty().addLast(new CheckRequestCompressionFilter())
-        .addLast(new ServerCompressionFilter(RestLiIntTestServer.supportedCompression))
-        .addLast(new CheckHeadersFilter())
-        .addLast(new SimpleLoggingFilter());
+    final FilterChain fc = FilterChains.empty().addLastRest(new CheckRequestCompressionFilter())
+        .addLastRest(new ServerCompressionFilter(RestLiIntTestServer.supportedCompression))
+        .addLastRest(new CheckHeadersFilter())
+        .addLastRest(new SimpleLoggingFilter());
     super.init(null, null, fc, false);
   }
 

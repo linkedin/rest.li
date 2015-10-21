@@ -56,8 +56,8 @@ public class FilterChainClient implements TransportClient
     final ClientRequestFilter requestFilter = new ClientRequestFilter(_client);
 
     _filters = filters
-            .addFirst(responseFilter)
-            .addLast(requestFilter);
+            .addFirstRest(responseFilter)
+            .addLastRest(requestFilter);
   }
 
   @Override

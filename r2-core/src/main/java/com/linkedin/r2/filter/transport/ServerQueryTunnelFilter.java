@@ -1,7 +1,7 @@
 package com.linkedin.r2.filter.transport;
 
 import com.linkedin.r2.filter.NextFilter;
-import com.linkedin.r2.filter.message.rest.RestRequestFilter;
+import com.linkedin.r2.filter.message.rest.BaseRestFilter;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.QueryTunnelUtil;
 import com.linkedin.r2.message.rest.RestRequest;
@@ -15,7 +15,7 @@ import java.util.Map;
 /**
  * @author Zhenkai Zhu
  */
-public class ServerQueryTunnelFilter implements RestRequestFilter
+public class ServerQueryTunnelFilter extends BaseRestFilter
 {
   @Override
   public void onRestRequest(RestRequest req,
