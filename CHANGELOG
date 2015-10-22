@@ -1,6 +1,10 @@
-2.11.3
+2.11.4
 ------
 
+2.11.3
+------
+(RB=562943)
+Fix for single item list query parameter in HTTP request for 2.0
 
 2.11.2
 ------
