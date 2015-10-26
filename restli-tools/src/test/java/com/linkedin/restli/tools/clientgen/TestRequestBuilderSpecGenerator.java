@@ -25,6 +25,8 @@ import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.internal.common.RestliVersion;
 import com.linkedin.restli.restspec.ResourceSchema;
 import com.linkedin.restli.tools.clientgen.builderspec.ActionBuilderSpec;
+import com.linkedin.restli.tools.clientgen.builderspec.ActionParamBindingMethodSpec;
+import com.linkedin.restli.tools.clientgen.builderspec.ActionSetRootBuilderSpec;
 import com.linkedin.restli.tools.clientgen.builderspec.BuilderSpec;
 import com.linkedin.restli.tools.clientgen.builderspec.CollectionRootBuilderSpec;
 import com.linkedin.restli.tools.clientgen.builderspec.FinderBuilderSpec;
@@ -41,6 +43,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -291,5 +294,80 @@ public class TestRequestBuilderSpecGenerator
         Assert.assertEquals(pathKeyMethod.getArgType().getSchema().getType(), DataSchema.Type.LONG);
       }
     }
+  }
+
+  @Test
+  public void testActionResource() throws Exception
+  {
+    String idl = moduleDir + FS + IDLS_DIR + FS + "testAction.restspec.json";
+    Set<BuilderSpec> builderSpecs = generateBuilderSpec(new String[] {idl});
+    Assert.assertNotNull(builderSpecs);
+    Assert.assertEquals(builderSpecs.size(), 27);
+
+    ActionSetRootBuilderSpec rootBuilder = null;
+    List<ActionBuilderSpec> actionBuilders = new ArrayList<ActionBuilderSpec>();
+
+    for (BuilderSpec spec : builderSpecs)
+    {
+      if (spec instanceof RootBuilderSpec)
+      {
+        Assert.assertTrue(spec instanceof ActionSetRootBuilderSpec);
+        rootBuilder = (ActionSetRootBuilderSpec) spec;
+      }
+      else if (spec instanceof ActionBuilderSpec)
+      {
+        actionBuilders.add((ActionBuilderSpec) spec);
+      }
+      else
+      {
+        Assert.fail("There should not be any other builder spec generated!");
+      }
+    }
+    Assert.assertNotNull(rootBuilder);
+    Assert.assertEquals(rootBuilder.getSourceIdlName(), idl);
+    Assert.assertEquals(rootBuilder.getResourcePath(), "testAction");
+
+    Assert.assertNotNull(rootBuilder.getResourceActions());
+    Assert.assertEquals(rootBuilder.getResourceActions().size(), 26);
+
+    Assert.assertNotNull(actionBuilders);
+    Assert.assertEquals(actionBuilders.size(), 26);
+    Set<String> actionNames = new HashSet<String>(Arrays.asList("arrayPromise", "echo", "echoRecord", "echoRecordArray", "echoStringArray",
+                                                                "echoEnumArray", "failCallbackCall", "failCallbackThrow", "failPromiseCall", "failPromiseThrow",
+                                                                "failTaskCall", "failTaskThrow", "failThrowInTask", "get", "nullPromise",
+                                                                "nullTask", "parseq", "parseq3", "returnBool", "returnBoolOptionalParam",
+                                                                "returnInt", "returnIntOptionalParam", "returnVoid", "timeout", "timeoutCallback",
+                                                                "ultimateAnswer"));
+    for (ActionBuilderSpec spec : actionBuilders)
+    {
+      Assert.assertTrue(actionNames.contains(spec.getActionName()));
+      actionNames.remove(spec.getActionName());
+      if (spec.getActionName().equals("parseq"))
+      {
+        List<ActionParamBindingMethodSpec> params = spec.getActionParamMethods();
+        for (ActionParamBindingMethodSpec param : params)
+        {
+          if (param.getParamName().equals("a"))
+          {
+            Assert.assertEquals(param.getArgType().getSchema().getType(), DataSchema.Type.INT);
+          }
+          else if (param.getParamName().equals("b"))
+          {
+            Assert.assertEquals(param.getArgType().getSchema().getType(), DataSchema.Type.STRING);
+          }
+          else if (param.getParamName().equals("c"))
+          {
+            Assert.assertEquals(param.getArgType().getSchema().getType(), DataSchema.Type.BOOLEAN);
+          }
+          else
+          {
+            Assert.fail("There should not be any other param method spec generated!");
+          }
+        }
+        Assert.assertEquals(spec.getValueClass().getSchema().getType(), DataSchema.Type.STRING);
+      }
+    }
+
+    Assert.assertTrue(actionNames.isEmpty());
   }
 }

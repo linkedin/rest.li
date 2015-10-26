@@ -66,6 +66,7 @@ import com.linkedin.restli.tools.clientgen.builderspec.SimpleRootBuilderSpec;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -697,6 +698,10 @@ public class RequestBuilderSpecGenerator
 
   private static Set<ResourceMethod> getSupportedMethods(StringArray supportsList)
   {
+    if (supportsList == null)
+    {
+      return Collections.emptySet();
+    }
     Set<ResourceMethod> supportedMethods = EnumSet.noneOf(ResourceMethod.class);
     for (String methodEntry : supportsList)
     {

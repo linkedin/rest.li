@@ -1,5 +1,7 @@
 2.12.1
 ------
+(RB=597858)
+Only process supported methods for non action resources in RequestBuilderSpecGenerator.
 
 2.12.0
 ------
