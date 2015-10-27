@@ -293,6 +293,13 @@ public class TestRequestBuilderSpecGenerator
         Assert.assertEquals(pathKeyMethod.getMethodName(), "testCollectionIdKey");
         Assert.assertEquals(pathKeyMethod.getArgType().getSchema().getType(), DataSchema.Type.LONG);
       }
+      else if (spec.getResourceMethod() == ResourceMethod.CREATE)
+      {
+        Assert.assertEquals(spec.getQueryParamMethods().size(), 1);
+        QueryParamBindingMethodSpec queryParam = spec.getQueryParamMethods().get(0);
+        Assert.assertEquals(queryParam.getParamName(), "isNullId");
+        Assert.assertEquals(queryParam.isOptional(), true);
+      }
     }
   }
 

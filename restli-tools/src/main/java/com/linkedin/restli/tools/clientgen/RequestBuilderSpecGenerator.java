@@ -643,7 +643,7 @@ public class RequestBuilderSpecGenerator
       final String paramName = param.getName();
       final DataSchema typeSchema = RestSpecCodec.textToSchema(param.getType(), _schemaResolver);
       final ClassTemplateSpec typeClassSpec = schemaToTemplateSpec(typeSchema);
-      final boolean isOptional = param.isOptional() == null ? false : param.isOptional();
+      final boolean isOptional = RestLiToolsUtils.isParameterOptional(param);
       final String setMethodName = RestLiToolsUtils.nameCamelCase(paramName + "Param");
       final QueryParamBindingMethodSpec spec = new QueryParamBindingMethodSpec(setMethodName);
       spec.setParamName(paramName);
@@ -676,7 +676,7 @@ public class RequestBuilderSpecGenerator
     {
       final String paramName = param.getName();
       final ClassTemplateSpec typeClassSpec = classToTemplateSpec(param.getType());
-      final boolean isOptional = param.isOptional() == null ? false : param.isOptional();
+      final boolean isOptional = RestLiToolsUtils.isParameterOptional(param);
       final String setMethodName = RestLiToolsUtils.nameCamelCase(paramName + "Param");
       ActionParamBindingMethodSpec spec = new ActionParamBindingMethodSpec(setMethodName);
       spec.setParamName(paramName);

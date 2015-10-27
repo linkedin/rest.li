@@ -294,7 +294,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
   private static void generateQueryParamSetMethod(JDefinedClass derivedBuilderClass, ParameterSchema param, JClass paramClass, JClass paramItemsClass)
   {
     final String paramName = param.getName();
-    final boolean isOptional = param.isOptional() == null ? false : param.isOptional();
+    final boolean isOptional = RestLiToolsUtils.isParameterOptional(param);
 
     final String methodName = RestLiToolsUtils.nameCamelCase(paramName + "Param");
     final JMethod setMethod = derivedBuilderClass.method(JMod.PUBLIC, derivedBuilderClass, methodName);
@@ -308,7 +308,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
   private static void generateQueryParamAddMethod(JDefinedClass derivedBuilderClass, ParameterSchema param, JClass paramClass)
   {
     final String paramName = param.getName();
-    final boolean isOptional = param.isOptional() == null ? false : param.isOptional();
+    final boolean isOptional = RestLiToolsUtils.isParameterOptional(param);
 
     final String methodName = RestLiToolsUtils.nameCamelCase("add" + RestLiToolsUtils.normalizeCaps(paramName) + "Param");
     final JMethod addMethod = derivedBuilderClass.method(JMod.PUBLIC, derivedBuilderClass, methodName);
@@ -1287,7 +1287,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
       for (ParameterSchema param : action.getParameters())
       {
         final String paramName = param.getName();
-        final boolean isOptional = param.isOptional() == null ? false : param.isOptional();
+        final boolean isOptional = RestLiToolsUtils.isParameterOptional(param);
         final JavaBinding binding = getJavaBindingType(param.getType(), facadeClass);
 
         final JMethod typesafeMethod = _version == RestliVersion.RESTLI_2_0_0 ? actionBuilderClass.method(JMod.PUBLIC,

@@ -17,6 +17,9 @@
 package com.linkedin.restli.internal.tools;
 
 
+import com.linkedin.restli.restspec.ParameterSchema;
+
+
 public class RestLiToolsUtils
 {
   public static String normalizeUnderscores(String name)
@@ -96,5 +99,11 @@ public class RestLiToolsUtils
   public static String nameCapsCase(String name)
   {
     return normalizeName(name).toString();
+  }
+
+  public static boolean isParameterOptional(ParameterSchema param)
+  {
+    boolean optional = param.isOptional() == null ? false : param.isOptional();
+    return optional || param.hasDefault();
   }
 }
