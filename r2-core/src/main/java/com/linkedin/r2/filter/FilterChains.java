@@ -85,6 +85,21 @@ public class FilterChains
    */
   public static FilterChain create(List<RestFilter> restFilters, List<StreamFilter> streamFilters)
   {
-    return new FilterChainImpl(restFilters, streamFilters);
+    FilterChain fc = empty();
+    if (restFilters != null) {
+      for (RestFilter filter: restFilters)
+      {
+        fc = fc.addLastRest(filter);
+      }
+    }
+
+    if (streamFilters != null) {
+      for (StreamFilter filter: streamFilters)
+      {
+        fc = fc.addLast(filter);
+      }
+    }
+
+    return fc;
   }
 }

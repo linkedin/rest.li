@@ -78,6 +78,7 @@ public interface FilterChain
    *
    * @param filter the filter to insert
    * @return the new filter chain
+   * @throws java.lang.IllegalArgumentException if filter is null
    */
   FilterChain addFirstRest(RestFilter filter);
 
@@ -87,6 +88,7 @@ public interface FilterChain
    *
    * @param filter the filter to insert
    * @return the new filter chain
+   * @throws java.lang.IllegalArgumentException if filter is null
    */
   FilterChain addLastRest(RestFilter filter);
 
@@ -96,6 +98,7 @@ public interface FilterChain
    *
    * @param filter the filter to insert
    * @return the new filter chain
+   * @throws java.lang.IllegalArgumentException if filter is null
    */
   FilterChain addFirst(StreamFilter filter);
 
@@ -105,6 +108,7 @@ public interface FilterChain
    *
    * @param filter the filter to insert
    * @return the new filter chain
+   * @throws java.lang.IllegalArgumentException if filter is null
    */
   FilterChain addLast(StreamFilter filter);
 

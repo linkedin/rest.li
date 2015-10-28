@@ -44,7 +44,7 @@ import java.util.Map;
     _streamFilters = Collections.emptyList();
   }
 
-  /*package private*/ FilterChainImpl(List<RestFilter> restFilters, List<StreamFilter> streamFilters)
+  private FilterChainImpl(List<RestFilter> restFilters, List<StreamFilter> streamFilters)
   {
     _restFilters = Collections.unmodifiableList(new ArrayList<RestFilter>(restFilters));
     _streamFilters = Collections.unmodifiableList(new ArrayList<StreamFilter>(streamFilters));
@@ -53,24 +53,28 @@ import java.util.Map;
   @Override
   public FilterChain addFirstRest(RestFilter filter)
   {
+    notNull(filter, "filter");
     return new FilterChainImpl(doAddFirst(_restFilters, filter), _streamFilters);
   }
 
   @Override
   public FilterChain addLastRest(RestFilter filter)
   {
+    notNull(filter, "filter");
     return new FilterChainImpl(doAddLast(_restFilters, filter), _streamFilters);
   }
 
   @Override
   public FilterChain addFirst(StreamFilter filter)
   {
+    notNull(filter, "filter");
     return new FilterChainImpl(_restFilters, doAddFirst(_streamFilters, filter));
   }
 
   @Override
   public FilterChain addLast(StreamFilter filter)
   {
+    notNull(filter, "filter");
     return new FilterChainImpl(_restFilters, doAddLast(_streamFilters, filter));
   }
 
@@ -139,5 +143,13 @@ import java.util.Map;
     newFilters.addAll(list);
     newFilters.add(obj);
     return newFilters;
+  }
+
+  private static void notNull(Object obj, String name)
+  {
+    if (obj == null)
+    {
+      throw new IllegalArgumentException(name + " is null");
+    }
   }
 }

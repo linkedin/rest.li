@@ -1,7 +1,13 @@
+2.12.2
+------
+
 2.12.1
 ------
 (RB=597858)
 Only process supported methods for non action resources in RequestBuilderSpecGenerator.
+
+(RB=599872)
+Add a check for null R2 filter
 
 2.12.0
 ------

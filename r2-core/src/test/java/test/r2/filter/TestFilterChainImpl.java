@@ -20,16 +20,25 @@ package test.r2.filter;
 
 import com.linkedin.r2.filter.FilterChain;
 import com.linkedin.r2.filter.FilterChains;
+import com.linkedin.r2.filter.NextFilter;
+import com.linkedin.r2.filter.message.rest.RestFilter;
+import com.linkedin.r2.filter.message.stream.StreamFilter;
 import com.linkedin.r2.message.RequestContext;
+import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
+import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestResponseBuilder;
 import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.testutils.filter.RestCountFilter;
 
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.linkedin.r2.testutils.filter.StreamCountFilter;
 import org.easymock.EasyMock;
@@ -211,6 +220,113 @@ public class TestFilterChainImpl
     assertStreamCounts(0, 0, 1, filter3);
   }
 
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void testNullRestFilter()
+  {
+    FilterChains.createRestChain(new RestCountFilter(), null);
+  }
+
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void testNullStreamFilter()
+  {
+    FilterChains.createStreamChain(new StreamCountFilter(), null);
+  }
+
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void testNullFilterInList()
+  {
+    List<RestFilter> restFilters = new ArrayList<RestFilter>();
+    restFilters.add(new RestCountFilter());
+    restFilters.add(null);
+
+    FilterChains.create(restFilters, Collections.<StreamFilter>emptyList());
+  }
+
+  @Test
+  public void testFilterOrderRestChain()
+  {
+    AtomicInteger count = new AtomicInteger(0);
+    CheckOrderFilter filter1 = new CheckOrderFilter(count);
+    CheckOrderFilter filter2 = new CheckOrderFilter(count);
+    final FilterChain fc = FilterChains.createRestChain(filter1, filter2);
+
+    fireRestRequest(fc);
+    Assert.assertEquals(filter1.getOrder(), 1);
+    Assert.assertEquals(filter2.getOrder(), 2);
+
+    fireRestResponse(fc);
+    Assert.assertEquals(filter1.getOrder(), 4);
+    Assert.assertEquals(filter2.getOrder(), 3);
+
+    fireRestError(fc);
+    Assert.assertEquals(filter1.getOrder(), 6);
+    Assert.assertEquals(filter2.getOrder(), 5);
+  }
+
+  @Test
+  public void testFilterOrderStreamChain()
+  {
+    AtomicInteger count = new AtomicInteger(0);
+    CheckOrderFilter filter1 = new CheckOrderFilter(count);
+    CheckOrderFilter filter2 = new CheckOrderFilter(count);
+    final FilterChain fc = FilterChains.createStreamChain(filter1, filter2);
+
+    fireStreamRequest(fc);
+    Assert.assertEquals(filter1.getOrder(), 1);
+    Assert.assertEquals(filter2.getOrder(), 2);
+
+    fireStreamResponse(fc);
+    Assert.assertEquals(filter1.getOrder(), 4);
+    Assert.assertEquals(filter2.getOrder(), 3);
+
+    fireStreamError(fc);
+    Assert.assertEquals(filter1.getOrder(), 6);
+    Assert.assertEquals(filter2.getOrder(), 5);
+  }
+
+  @Test
+  public void testFilterOrderTwoChains()
+  {
+    AtomicInteger count = new AtomicInteger(0);
+    CheckOrderFilter filter1 = new CheckOrderFilter(count);
+    CheckOrderFilter filter2 = new CheckOrderFilter(count);
+    List<RestFilter> restFilters = new ArrayList<RestFilter>();
+    restFilters.add(filter1);
+    restFilters.add(filter2);
+
+    List<StreamFilter> streamFilters = new ArrayList<StreamFilter>();
+    streamFilters.add(filter1);
+    streamFilters.add(filter2);
+
+    final FilterChain fc = FilterChains.create(restFilters, streamFilters);
+
+    fireRestRequest(fc);
+    Assert.assertEquals(filter1.getOrder(), 1);
+    Assert.assertEquals(filter2.getOrder(), 2);
+
+    fireRestResponse(fc);
+    Assert.assertEquals(filter1.getOrder(), 4);
+    Assert.assertEquals(filter2.getOrder(), 3);
+
+    fireRestError(fc);
+    Assert.assertEquals(filter1.getOrder(), 6);
+    Assert.assertEquals(filter2.getOrder(), 5);
+
+    count.set(0);
+
+    fireStreamRequest(fc);
+    Assert.assertEquals(filter1.getOrder(), 1);
+    Assert.assertEquals(filter2.getOrder(), 2);
+
+    fireStreamResponse(fc);
+    Assert.assertEquals(filter1.getOrder(), 4);
+    Assert.assertEquals(filter2.getOrder(), 3);
+
+    fireStreamError(fc);
+    Assert.assertEquals(filter1.getOrder(), 6);
+    Assert.assertEquals(filter2.getOrder(), 5);
+  }
+
   private void fireRestRequest(FilterChain fc)
   {
     fc.onRestRequest(new RestRequestBuilder(URI.create("test")).build(),
@@ -275,6 +391,76 @@ public class TestFilterChainImpl
     Assert.assertEquals(req, filter.getRestReqCount());
     Assert.assertEquals(res, filter.getRestResCount());
     Assert.assertEquals(err, filter.getRestErrCount());
+  }
+
+  private static class CheckOrderFilter implements RestFilter, StreamFilter
+  {
+    private final AtomicInteger _globalOrder;
+    private int _recordedOrder;
+
+    CheckOrderFilter(AtomicInteger globalOrder)
+    {
+      _globalOrder = globalOrder;
+    }
+
+    @Override
+    public void onRestRequest(RestRequest req, RequestContext requestContext,
+                              Map<String, String> wireAttrs,
+                              NextFilter<RestRequest, RestResponse> nextFilter)
+    {
+      _recordedOrder = _globalOrder.incrementAndGet();
+      nextFilter.onRequest(req, requestContext, wireAttrs);
+    }
+
+    @Override
+    public void onRestResponse(RestResponse res, RequestContext requestContext,
+                               Map<String, String> wireAttrs,
+                               NextFilter<RestRequest, RestResponse> nextFilter)
+    {
+      _recordedOrder = _globalOrder.incrementAndGet();
+      nextFilter.onResponse(res, requestContext, wireAttrs);
+    }
+
+    @Override
+    public void onRestError(Throwable ex, RequestContext requestContext,
+                            Map<String, String> wireAttrs,
+                            NextFilter<RestRequest, RestResponse> nextFilter)
+    {
+      _recordedOrder = _globalOrder.incrementAndGet();
+      nextFilter.onError(ex, requestContext, wireAttrs);
+    }
+
+    @Override
+    public void onStreamRequest(StreamRequest req, RequestContext requestContext,
+                                Map<String, String> wireAttrs,
+                                NextFilter<StreamRequest, StreamResponse> nextFilter)
+    {
+      _recordedOrder = _globalOrder.incrementAndGet();
+      nextFilter.onRequest(req, requestContext, wireAttrs);
+    }
+
+    @Override
+    public void onStreamResponse(StreamResponse res, RequestContext requestContext,
+                                 Map<String, String> wireAttrs,
+                                 NextFilter<StreamRequest, StreamResponse> nextFilter)
+    {
+      _recordedOrder = _globalOrder.incrementAndGet();
+      nextFilter.onResponse(res, requestContext, wireAttrs);
+    }
+
+    @Override
+    public void onStreamError(Throwable ex, RequestContext requestContext,
+                              Map<String, String> wireAttrs,
+                              NextFilter<StreamRequest, StreamResponse> nextFilter)
+    {
+      _recordedOrder = _globalOrder.incrementAndGet();
+      nextFilter.onError(ex, requestContext, wireAttrs);
+    }
+
+    public int getOrder()
+    {
+      return _recordedOrder;
+    }
   }
 
 }
