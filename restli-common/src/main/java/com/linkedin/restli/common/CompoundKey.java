@@ -20,6 +20,7 @@ package com.linkedin.restli.common;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaUtil;
+import com.linkedin.data.schema.EnumDataSchema;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.restli.internal.common.ValueConverter;
 
@@ -108,32 +109,52 @@ public class CompoundKey
     for (Map.Entry<String, Object> entry : fieldValues.entrySet())
     {
       Object fieldType = fieldTypes.get(entry.getKey());
-      TypeInfo typeInfo = (TypeInfo)fieldType;
-      DataSchema schema = typeInfo._declaredType.getSchema();
-      DataSchema.Type dereferencedType = schema.getDereferencedType();
-      if (!schema.getDereferencedDataSchema().isPrimitive())
+      TypeInfo typeInfo = (TypeInfo) fieldType;
+      DataSchema declaredSchema = typeInfo.getDeclared().getSchema();
+      Class<?> declaredType;
+      if (declaredSchema.getType() == DataSchema.Type.TYPEREF)
       {
-        throw new IllegalArgumentException("Compound key type must dereference to a primitive type.");
+        if (declaredSchema.getDereferencedDataSchema().isPrimitive())
+        {
+          declaredType = DataSchemaUtil.dataSchemaTypeToPrimitiveDataSchemaClass(declaredSchema.getDereferencedType());
+        }
+        else if (declaredSchema.getDereferencedType() == DataSchema.Type.ENUM)
+        {
+          try
+          {
+            // there is no direct way to access the dereferenced class from TyperefInfo
+            declaredType = Class.forName(((EnumDataSchema) declaredSchema.getDereferencedDataSchema()).getFullName());
+          }
+          catch (ClassNotFoundException e)
+          {
+            throw new RuntimeException(e);
+          }
+        }
+        else
+        {
+          throw new IllegalArgumentException("Compound key type must dereference to a primitive type or enum.");
+        }
+      }
+      else
+      {
+        declaredType = typeInfo.getDeclaredType();
       }
 
       Object value = entry.getValue();
-      Class<?> dereferencedClass = DataSchemaUtil.dataSchemaTypeToPrimitiveDataSchemaClass(dereferencedType);
-
-      if (!value.getClass().equals(dereferencedClass))
+      if (!value.getClass().equals(declaredType))
       {
         if (value.getClass().equals(String.class))
         {
           // we coerce Strings to the dereferenced class
-          value = ValueConverter.coerceString((String)value,
-                                              DataSchemaUtil.dataSchemaTypeToPrimitiveDataSchemaClass(dereferencedType));
+          value = ValueConverter.coerceString((String) value, declaredType);
         }
         else
         {
           throw new IllegalArgumentException("Value " + value + " is not a String or an object of " +
-                                                 dereferencedClass.getSimpleName());
+                                                 declaredType.getSimpleName());
         }
       }
-      value = DataTemplateUtil.coerceOutput(value, typeInfo._bindingType.getType());
+      value = DataTemplateUtil.coerceOutput(value, typeInfo.getBindingType());
       result.append(entry.getKey(), value);
     }
     return result;

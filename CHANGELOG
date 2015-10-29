@@ -1,5 +1,11 @@
+2.12.3
+------
+
+
 2.12.2
 ------
+(RB=600375)
+Support enum in compound key for batch update and batch partial update cases.
 
 2.12.1
 ------
