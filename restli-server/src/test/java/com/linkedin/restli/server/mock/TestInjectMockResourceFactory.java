@@ -23,9 +23,7 @@ package com.linkedin.restli.server.mock;
 
 import com.linkedin.data.ByteString;
 import com.linkedin.common.callback.Callback;
-import com.linkedin.r2.message.RequestBuilder;
 import com.linkedin.r2.message.RequestContext;
-import com.linkedin.r2.message.rest.RestMessageBuilder;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
@@ -130,12 +128,6 @@ public class TestInjectMockResourceFactory
     }
 
     @Override
-    public RequestBuilder<? extends RequestBuilder<?>> requestBuilder()
-    {
-      return null;
-    }
-
-    @Override
     public String getHeader(String name)
     {
       return null;
@@ -157,12 +149,6 @@ public class TestInjectMockResourceFactory
     public List<String> getCookies()
     {
       return Collections.emptyList();
-    }
-
-    @Override
-    public RestMessageBuilder<? extends RestMessageBuilder<?>> restBuilder()
-    {
-      return null;
     }
 
     @Override

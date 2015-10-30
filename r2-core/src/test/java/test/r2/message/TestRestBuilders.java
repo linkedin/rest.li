@@ -18,17 +18,12 @@
 package test.r2.message;
 
 
-import com.linkedin.r2.message.rest.RestMessage;
-import com.linkedin.r2.message.rest.RestRequest;
-import com.linkedin.r2.message.rest.RestRequestBuilder;
+import com.linkedin.r2.message.MessageHeaders;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestResponseBuilder;
-import java.net.URI;
-import java.net.URISyntaxException;
+
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import org.testng.Assert;
@@ -142,7 +137,7 @@ public class TestRestBuilders
     final String headerVal2 = "value2";
     final String headerValue = headerVal1 + ',' + headerVal2;
 
-    final RestMessage msg = new RestResponseBuilder()
+    final MessageHeaders msg = new RestResponseBuilder()
             .setHeader(headerName, headerValue)
             .build();
 
@@ -158,7 +153,7 @@ public class TestRestBuilders
     final String headerVal2 = "value2";
     final String headerValue = headerVal1 + ',' + headerVal2;
 
-    final RestMessage msg = new RestResponseBuilder()
+    final MessageHeaders msg = new RestResponseBuilder()
             .addHeaderValue(headerName, headerVal1)
             .addHeaderValue(headerName, headerVal2)
             .build();
@@ -177,7 +172,7 @@ public class TestRestBuilders
     final String headerVal2 = "value2";
     final String headerValue = headerVal1 + ',' + headerVal2;
 
-    final RestMessage msg = new RestResponseBuilder()
+    final MessageHeaders msg = new RestResponseBuilder()
             .addHeaderValue(headerName, headerVal1)
             .addHeaderValue(headerName, headerVal2)
             .build();
@@ -194,7 +189,7 @@ public class TestRestBuilders
     final String headerVal2 = "value2";
     final String headerValue = headerVal1 + ", ," + headerVal2;
 
-    final RestMessage msg = new RestResponseBuilder()
+    final MessageHeaders msg = new RestResponseBuilder()
             .addHeaderValue(headerName, headerValue)
             .build();
 

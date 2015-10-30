@@ -18,9 +18,6 @@
 package com.linkedin.r2.caprep.db;
 
 
-import com.linkedin.r2.message.Request;
-import com.linkedin.r2.message.Response;
-
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
@@ -30,6 +27,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.rest.RestResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 /**
@@ -42,7 +41,7 @@ public class DirectoryDbSource implements DbSource
 {
   private static final Logger _log = LoggerFactory.getLogger(DirectoryDbSource.class);
 
-  private final Map<Request, Response> _db;
+  private final Map<RestRequest, RestResponse> _db;
   private final MessageSerializer _serializer;
 
   /**
@@ -71,12 +70,11 @@ public class DirectoryDbSource implements DbSource
   }
 
   @Override
-  @SuppressWarnings("unchecked")
-  public <T extends Response> T replay(Request req)
+  public RestResponse replay(RestRequest req)
   {
     try
     {
-      return (T)_db.get(canonicalize(req));
+      return _db.get(canonicalize(req));
     }
     catch (Exception e)
     {
@@ -85,9 +83,9 @@ public class DirectoryDbSource implements DbSource
     }
   }
 
-  private Map<Request, Response> loadDb(File dir, MessageSerializer serializer) throws IOException
+  private Map<RestRequest, RestResponse> loadDb(File dir, MessageSerializer serializer) throws IOException
   {
-    final Map<Request, Response> db = new HashMap<Request, Response>();
+    final Map<RestRequest, RestResponse> db = new HashMap<RestRequest, RestResponse>();
 
     final String[] ids = DirectoryDbUtil.listRequestIds(dir);
     Arrays.sort(ids);
@@ -99,10 +97,10 @@ public class DirectoryDbSource implements DbSource
       try
       {
         reqIn = new FileInputStream(DirectoryDbUtil.requestFileName(dir, id));
-        final Request req = serializer.readRestRequest(reqIn);
+        final RestRequest req = serializer.readRestRequest(reqIn);
 
         resIn = new FileInputStream(DirectoryDbUtil.responseFileName(dir, id));
-        final Response res = serializer.readRestResponse(resIn);
+        final RestResponse res = serializer.readRestResponse(resIn);
 
         db.put(canonicalize(req), res);
       }
@@ -120,9 +118,9 @@ public class DirectoryDbSource implements DbSource
     return db;
   }
 
-  private Request canonicalize(Request req)
+  private RestRequest canonicalize(RestRequest req)
   {
-    return req.requestBuilder().buildCanonical();
+    return req.builder().buildCanonical();
   }
 
   private void closeSilently(Closeable closeable)

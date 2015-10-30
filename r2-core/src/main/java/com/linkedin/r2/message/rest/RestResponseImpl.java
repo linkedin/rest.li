@@ -17,43 +17,38 @@
 /* $Id$ */
 package com.linkedin.r2.message.rest;
 
-
 import com.linkedin.data.ByteString;
+import com.linkedin.r2.message.BaseResponse;
+import com.linkedin.util.ArgumentUtil;
 
 import java.util.List;
 import java.util.Map;
 
-
 /**
  * @author Chris Pettitt
- * @version $Revision$
+ * @author Zhenkai Zhu
  */
-/* package private */ final class RestResponseImpl extends BaseRestMessage implements RestResponse
+/* package private */ final class RestResponseImpl extends BaseResponse implements RestResponse
 {
-  private final int _status;
+  private final ByteString _entity;
 
-  /* package private */ RestResponseImpl(
-      ByteString entity, Map<String, String> headers, List<String> cookies, int status)
+  /* package private */ RestResponseImpl(ByteString entity, Map<String, String> headers, List<String> cookies, int status)
   {
-    super(entity, headers, cookies);
-    _status = status;
+    super(headers, cookies, status);
+    ArgumentUtil.notNull(entity, "entity");
+    _entity = entity;
   }
 
-  public int getStatus()
+  @Override
+  public ByteString getEntity()
   {
-    return _status;
+    return _entity;
   }
 
   @Override
   public RestResponseBuilder builder()
   {
     return new RestResponseBuilder(this);
-  }
-
-  @Override
-  public RestResponseBuilder responseBuilder()
-  {
-    return builder();
   }
 
   @Override
@@ -73,14 +68,14 @@ import java.util.Map;
     }
 
     RestResponseImpl that = (RestResponseImpl) o;
-    return _status == that._status;
+    return _entity.equals(that._entity);
   }
 
   @Override
   public int hashCode()
   {
     int result = super.hashCode();
-    result = 31 * result + _status;
+    result = 31 * result + _entity.hashCode();
     return result;
   }
 
@@ -93,9 +88,9 @@ import java.util.Map;
         .append("cookies=")
         .append(getCookies())
         .append(",status=")
-        .append(_status)
+        .append(getStatus())
         .append(",entityLength=")
-        .append(getEntity().length())
+        .append(_entity.length())
         .append("]");
     return builder.toString();
   }

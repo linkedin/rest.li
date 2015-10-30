@@ -13,86 +13,62 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 */
-
-/* $Id$ */
 package com.linkedin.r2.message.rest;
 
-import com.linkedin.r2.message.ResponseBuilder;
-import com.linkedin.r2.transport.http.common.HttpConstants;
-
+import com.linkedin.data.ByteString;
+import com.linkedin.r2.message.BaseResponseBuilder;
+import com.linkedin.r2.message.stream.StreamResponse;
+import com.linkedin.util.ArgumentUtil;
 
 /**
  * @author Chris Pettitt
- * @version $Revision$
+ * @author Zhenkai Zhu
  */
-public final class RestResponseBuilder
-        extends BaseRestMessageBuilder<RestResponseBuilder>
-        implements ResponseBuilder<RestResponseBuilder>, RestMessageBuilder<RestResponseBuilder>
+public final class RestResponseBuilder extends BaseResponseBuilder<RestResponseBuilder> implements RestMessageBuilder<RestResponseBuilder>
 {
-  private int _status = RestStatus.OK;
+  private ByteString _entity = ByteString.empty();
 
-  /**
-   * Constructs a new builder with no initial values.
-   */
   public RestResponseBuilder() {}
 
-  /**
-   * Copies the values from the supplied response. Changes to this builder will not be reflected
-   * in the original message.
-   *
-   * @param response the response to copy
-   */
   public RestResponseBuilder(RestResponse response)
   {
     super(response);
-    setStatus(response.getStatus());
+    _entity = response.getEntity();
   }
 
-  /**
-   * Sets the status for this response.
-   *
-   * @param status the status code to set
-   * @return this builder
-   * @see com.linkedin.r2.message.rest.RestStatus
-   */
-  public RestResponseBuilder setStatus(int status)
+  public RestResponseBuilder(StreamResponse response)
   {
-    _status = status;
+    super(response);
+  }
+
+  public RestResponseBuilder setEntity(ByteString entity)
+  {
+    ArgumentUtil.notNull(entity, "entity");
+
+    _entity = entity;
     return this;
   }
 
-  /**
-   * Returns the status for this response.
-   *
-   * @return the status for this response
-   * @see com.linkedin.r2.message.rest.RestStatus
-   */
-  public int getStatus()
+  public RestResponseBuilder setEntity(byte[] entity)
   {
-    return _status;
+    ArgumentUtil.notNull(entity, "entity");
+
+    _entity = ByteString.copy(entity);
+    return this;
   }
 
-  @Override
+  public ByteString getEntity()
+  {
+    return _entity;
+  }
+
   public RestResponse build()
   {
-    return new RestResponseImpl(getEntity(), getHeaders(), getCookies(), getStatus());
+    return new RestResponseImpl(_entity, getHeaders(), getCookies(), getStatus());
   }
 
-  @Override
   public RestResponse buildCanonical()
   {
-    return new RestResponseImpl(getEntity(), getCanonicalHeaders(), getCanonicalCookies(), getStatus());
-  }
-
-  @Override
-  protected void validateCookieHeader(String name)
-  {
-    if (name.equalsIgnoreCase(HttpConstants.RESPONSE_COOKIE_HEADER_NAME))
-    {
-      String message = String.format(
-          "Header %s are not allowed to be added as a response header.",
-          HttpConstants.RESPONSE_COOKIE_HEADER_NAME);
-      throw new IllegalArgumentException(message);
-    }
+    return new RestResponseImpl(_entity, getCanonicalHeaders(), getCanonicalCookies(), getStatus());
   }
 }

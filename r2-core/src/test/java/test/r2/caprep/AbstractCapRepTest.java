@@ -19,8 +19,8 @@ package test.r2.caprep;
 
 import com.linkedin.r2.caprep.db.TransientDb;
 import com.linkedin.r2.filter.message.rest.RestFilter;
-import com.linkedin.r2.message.Request;
-import com.linkedin.r2.message.Response;
+import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.rest.RestResponse;
 import org.testng.annotations.BeforeMethod;
 import com.linkedin.r2.testutils.filter.BaseFilterTest;
 
@@ -54,7 +54,7 @@ public abstract class AbstractCapRepTest extends BaseFilterTest
 
   protected abstract RestFilter createFilter(TransientDb db);
 
-  protected abstract Request request();
+  protected abstract RestRequest request();
 
-  protected abstract Response response();
+  protected abstract RestResponse response();
 }

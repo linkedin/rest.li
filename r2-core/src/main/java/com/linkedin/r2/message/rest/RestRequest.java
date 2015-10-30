@@ -13,39 +13,31 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 */
-
-/* $Id$ */
 package com.linkedin.r2.message.rest;
 
 import com.linkedin.r2.message.Request;
 
 /**
- * An object that contains details of a REST request.<p/>
+ * An object that contains details of a REST request.
  *
  * Instances of RestRequest are immutable and thread-safe. New instances can be created using the
  * {@link RestRequestBuilder}. An existing RestRequest can be used as a prototype for
  * building a new RestRequest using the {@link #builder()} method.
  *
+ * RestRequest is a request with full entity.
+ *
  * @author Chris Pettitt
- * @version $Revision$
+ * @author Zhenkai Zhu
  */
-public interface RestRequest extends RestMessage, Request
+public interface RestRequest extends Request, RestMessage
 {
-  /**
-   * Returns the REST method for this request.
-   *
-   * @return the REST method for this request
-   * @see com.linkedin.r2.message.rest.RestMethod
-   */
-  String getMethod();
-
-  /**
-   * Returns a {@link RestRequestBuilder}, which provides a means of constructing a new request using
-   * this request as a starting point. Changes made with the builder are not reflected by this
-   * request instance.
-   *
-   * @return a builder for this request
-   */
-  @Override
+   /**
+    * Returns a {@link RestRequestBuilder}, which provides a means of constructing a new request using
+    * this request as a starting point. Changes made with the builder are not reflected by this
+    * request instance.
+    *
+    * @return a builder for this request
+    */
+   @Override
   RestRequestBuilder builder();
 }

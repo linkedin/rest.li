@@ -39,7 +39,6 @@ import com.linkedin.data.template.JacksonDataTemplateCodec;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.TemplateOutputCastException;
 import com.linkedin.data.template.UnionTemplate;
-import com.linkedin.r2.message.MessageBuilder;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
@@ -525,7 +524,7 @@ public class ExampleRequestResponseGenerator
     return requestBuilder.build();
   }
 
-  private static void writeEntity(Request<?> request, ProtocolVersion protocolVersion, MessageBuilder<?> messageBuilder)
+  private static void writeEntity(Request<?> request, ProtocolVersion protocolVersion, RestRequestBuilder messageBuilder)
   {
     try
     {

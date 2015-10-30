@@ -28,7 +28,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * An immutable sequence of bytes.
@@ -489,6 +491,53 @@ public final class ByteString
     }
     sb.append(")");
     return sb.toString();
+  }
+
+  /**
+   * A builder to assemble multiple ByteStrings into one ByteString.
+   *
+   * This class is not thread safe
+   */
+  public static class Builder
+  {
+    private final List<ByteString> _chunks;
+    private int _bytesNum;
+
+    public Builder()
+    {
+      _chunks = new ArrayList<ByteString>();
+      _bytesNum = 0;
+    }
+
+    public Builder append(ByteString dataChunk)
+    {
+      _chunks.add(dataChunk);
+      _bytesNum += dataChunk.length();
+      return this;
+    }
+
+    public ByteString build()
+    {
+      if (_chunks.isEmpty())
+      {
+        return empty();
+      }
+      else if (_chunks.size() == 1)
+      {
+        return _chunks.get(0);
+      }
+      else
+      {
+        byte[] bytes = new byte[_bytesNum];
+        int offset = 0;
+        for (ByteString chunk : _chunks)
+        {
+          System.arraycopy(chunk._bytes, chunk._offset, bytes, offset, chunk.length());
+          offset += chunk.length();
+        }
+        return new ByteString(bytes);
+      }
+    }
   }
 
   /**

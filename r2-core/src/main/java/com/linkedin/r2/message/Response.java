@@ -18,18 +18,22 @@
 package com.linkedin.r2.message;
 
 /**
+ * This interface represents the basic contract for response.
+ *
+ * @see com.linkedin.r2.message.rest.RestResponse
+ * @see com.linkedin.r2.message.stream.StreamResponse
+ *
  * @author Chris Pettitt
- * @version $Revision$
+ * @author Zhenkai Zhu
  */
-public interface Response extends Message
+public interface Response extends MessageHeaders
 {
+
   /**
-   * Returns a {@link ResponseBuilder}, which provides a means of constructing a new response using
-   * this response as a starting point. Changes made with the builder are not reflected by this
-   * response instance. The concrete type (for example {@link com.linkedin.r2.message.rpc.RpcResponse})
-   * is preserved when building the new response.
+   * Returns the status for this response.
    *
-   * @return a builder for this response
+   * @return the status for this response
+   * @see com.linkedin.r2.message.rest.RestStatus
    */
-  ResponseBuilder<? extends ResponseBuilder<?>> responseBuilder();
+  int getStatus();
 }

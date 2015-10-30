@@ -13,60 +13,40 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 */
-
-/* $Id$ */
 package com.linkedin.r2.message.rest;
 
-
 import com.linkedin.data.ByteString;
+import com.linkedin.r2.message.BaseRequest;
 
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
-
 /**
  * @author Chris Pettitt
- * @version $Revision$
+ * @author Zhenkai Zhu
  */
-/* package private */ final class RestRequestImpl extends BaseRestMessage implements RestRequest
+/* package private */ final class RestRequestImpl extends BaseRequest implements RestRequest
 {
-  private final URI _uri;
+  private final ByteString _entity;
 
-  private final String _method;
-
-  /* package private */ RestRequestImpl(
-      ByteString entity, Map<String, String> headers, List<String> cookies, URI uri, String method)
+  /* package private */ RestRequestImpl(ByteString entity, Map<String, String> headers,
+                                        List<String> cookies, URI uri, String method)
   {
-    super(entity, headers, cookies);
-
-    assert uri != null;
-    assert method != null;
-
-    _uri = uri;
-    _method = method;
+    super(headers, cookies, uri, method);
+    _entity = entity;
   }
 
-  public URI getURI()
+  @Override
+  public ByteString getEntity()
   {
-    return _uri;
+    return _entity;
   }
 
   @Override
   public RestRequestBuilder builder()
   {
     return new RestRequestBuilder(this);
-  }
-
-  @Override
-  public RestRequestBuilder requestBuilder()
-  {
-    return builder();
-  }
-
-  public String getMethod()
-  {
-    return _method;
   }
 
   @Override
@@ -86,15 +66,14 @@ import java.util.Map;
     }
 
     RestRequestImpl that = (RestRequestImpl) o;
-    return _method.equals(that._method) && _uri.equals(that._uri);
+    return _entity.equals(that._entity);
   }
 
   @Override
   public int hashCode()
   {
     int result = super.hashCode();
-    result = 31 * result + _uri.hashCode();
-    result = 31 * result + _method.hashCode();
+    result = result * 31 +  _entity.hashCode();
     return result;
   }
 
@@ -107,12 +86,13 @@ import java.util.Map;
         .append("cookies=")
         .append(getCookies())
         .append(",uri=")
-        .append(_uri)
+        .append(getURI())
         .append(",method=")
-        .append(_method)
+        .append(getMethod())
         .append(",entityLength=")
-        .append(getEntity().length())
+        .append(_entity.length())
         .append("]");
     return builder.toString();
   }
+
 }

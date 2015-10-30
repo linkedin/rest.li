@@ -17,8 +17,9 @@
 package com.linkedin.r2.caprep.db;
 
 
-import com.linkedin.r2.message.Request;
-import com.linkedin.r2.message.Response;
+import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.rest.RestResponse;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -43,13 +44,13 @@ public class FixedFileDbSink implements DbSink
   }
 
   @Override
-  public void record(Request req, Response res) throws IOException
+  public void record(RestRequest req, RestResponse res) throws IOException
   {
     writeRequest(req, _requestFile);
     writeResponse(res, _responseFile);
   }
 
-  private void writeRequest(Request req, File file) throws IOException
+  private void writeRequest(RestRequest req, File file) throws IOException
   {
     final FileOutputStream out = new FileOutputStream(file);
     try
@@ -62,7 +63,7 @@ public class FixedFileDbSink implements DbSink
     }
   }
 
-  private void writeResponse(Response res, File file) throws IOException
+  private void writeResponse(RestResponse res, File file) throws IOException
   {
     final FileOutputStream out = new FileOutputStream(file);
     try

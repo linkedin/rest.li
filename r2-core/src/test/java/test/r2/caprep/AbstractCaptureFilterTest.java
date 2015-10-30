@@ -22,6 +22,8 @@ import com.linkedin.r2.caprep.db.TransientDb;
 import com.linkedin.r2.filter.message.rest.RestFilter;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.Response;
+import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.rest.RestResponse;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import com.linkedin.r2.testutils.filter.FilterUtil;
@@ -35,8 +37,8 @@ public abstract class AbstractCaptureFilterTest extends AbstractCapRepTest
   @Test
   public void testInitialCapture()
   {
-    final Request req = request();
-    final Response res = response();
+    final RestRequest req = request();
+    final RestResponse res = response();
 
     Assert.assertNull(getDb().replay(req));
 
@@ -48,10 +50,10 @@ public abstract class AbstractCaptureFilterTest extends AbstractCapRepTest
   @Test
   public void testTwoDifferentRequests()
   {
-    final Request req1 = request();
-    final Request req2 = req1.requestBuilder().setEntity("This is a different request".getBytes()).build();
-    final Response res1 = response();
-    final Response res2 = res1.responseBuilder().setEntity("This is a different response".getBytes()).build();
+    final RestRequest req1 = request();
+    final RestRequest req2 = req1.builder().setEntity("This is a different request".getBytes()).build();
+    final RestResponse res1 = response();
+    final RestResponse res2 = res1.builder().setEntity("This is a different response".getBytes()).build();
 
     FilterUtil.fireUntypedRequestResponse(getFilterChain(), req1, res1);
     FilterUtil.fireUntypedRequestResponse(getFilterChain(), req2, res2);
@@ -64,9 +66,9 @@ public abstract class AbstractCaptureFilterTest extends AbstractCapRepTest
   @Test
   public void testSameRequestDifferentResponses()
   {
-    final Request req = request();
-    final Response res1 = response();
-    final Response res2 = res1.responseBuilder().setEntity("This is a different response".getBytes()).build();
+    final RestRequest req = request();
+    final RestResponse res1 = response();
+    final RestResponse res2 = res1.builder().setEntity("This is a different response".getBytes()).build();
 
     FilterUtil.fireUntypedRequestResponse(getFilterChain(), req, res1);
     FilterUtil.fireUntypedRequestResponse(getFilterChain(), req, res2);
@@ -78,7 +80,7 @@ public abstract class AbstractCaptureFilterTest extends AbstractCapRepTest
   @Test
   public void testException()
   {
-    final Request req = request();
+    final RestRequest req = request();
     final Exception ex = new Exception();
 
     FilterUtil.fireUntypedRequestError(getFilterChain(), req, ex);

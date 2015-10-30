@@ -41,7 +41,7 @@ public interface MessageSerializer
    * @param req the request to be serialized.
    * @throws IOException
    */
-  void writeRequest(OutputStream out, Request req) throws IOException;
+  void writeRequest(OutputStream out, RestRequest req) throws IOException;
 
   /**
    * Serialize a {@link Response} to an {@link OutputStream}.
@@ -50,7 +50,7 @@ public interface MessageSerializer
    * @param res the response to be serialized.
    * @throws IOException
    */
-  void writeResponse(OutputStream out, Response res) throws IOException;
+  void writeResponse(OutputStream out, RestResponse res) throws IOException;
 
   /**
    * Read a {@link RestRequest} from an {@link InputStream}.

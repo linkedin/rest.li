@@ -17,8 +17,8 @@
 /* $Id$ */
 package com.linkedin.r2.caprep.db;
 
-import com.linkedin.r2.message.Request;
-import com.linkedin.r2.message.Response;
+import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.rest.RestResponse;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -75,14 +75,14 @@ public class DirectoryDbSink implements DbSink
   }
 
   @Override
-  public void record(Request req, Response res) throws IOException
+  public void record(RestRequest req, RestResponse res) throws IOException
   {
     final int id = _count.getAndIncrement();
     writeRequest(req, id);
     writeResponse(res, id);
   }
 
-  private void writeRequest(Request req, int id) throws IOException
+  private void writeRequest(RestRequest req, int id) throws IOException
   {
     final File file = DirectoryDbUtil.restRequestFileName(_dir, id);
     final FileOutputStream out = new FileOutputStream(file);
@@ -96,7 +96,7 @@ public class DirectoryDbSink implements DbSink
     }
   }
 
-  private void writeResponse(Response res, int id) throws IOException
+  private void writeResponse(RestResponse res, int id) throws IOException
   {
     final File file = DirectoryDbUtil.restResponseFileName(_dir, id);
     final FileOutputStream out = new FileOutputStream(file);

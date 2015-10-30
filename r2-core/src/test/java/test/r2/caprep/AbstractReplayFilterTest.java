@@ -21,8 +21,8 @@ import com.linkedin.r2.caprep.ReplayFilter;
 import com.linkedin.r2.caprep.db.TransientDb;
 import com.linkedin.r2.filter.FilterChain;
 import com.linkedin.r2.filter.message.rest.RestFilter;
-import com.linkedin.r2.message.Request;
-import com.linkedin.r2.message.Response;
+import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.rest.RestResponse;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import com.linkedin.r2.testutils.filter.CaptureLastCallFilter;
@@ -37,8 +37,8 @@ public abstract class AbstractReplayFilterTest extends AbstractCapRepTest
   @Test
   public void testReplayWithNoMatch()
   {
-    final Request req = request();
-    final Response res = response();
+    final RestRequest req = request();
+    final RestResponse res = response();
     final CaptureLastCallFilter captureFilter = new CaptureLastCallFilter();
     final FilterChain fc = getFilterChain()
             .addFirstRest(captureFilter);
@@ -51,8 +51,8 @@ public abstract class AbstractReplayFilterTest extends AbstractCapRepTest
   @Test
   public void testReplayWithMatch()
   {
-    final Request req = request();
-    final Response res = response();
+    final RestRequest req = request();
+    final RestResponse res = response();
     final CaptureLastCallFilter captureFilter = new CaptureLastCallFilter();
     final FilterChain fc = getFilterChain().addFirstRest(captureFilter);
 

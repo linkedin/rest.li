@@ -74,10 +74,9 @@ public class RewriteClient implements LoadBalancerClient
     return _wrappedClient;
   }
 
-  @SuppressWarnings("unchecked")
-  private <M extends Request> M rewriteRequest(M req)
+  private RestRequest rewriteRequest(RestRequest req)
   {
-    return (M)req.requestBuilder().setURI(rewriteUri(req.getURI())).build();
+    return req.builder().setURI(rewriteUri(req.getURI())).build();
   }
 
   private URI rewriteUri(URI uri)

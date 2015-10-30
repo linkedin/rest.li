@@ -19,9 +19,7 @@ package com.linkedin.r2.filter.logging;
 import com.linkedin.r2.filter.NextFilter;
 import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.filter.message.rest.RestFilter;
-import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
-import com.linkedin.r2.message.Response;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
@@ -88,12 +86,12 @@ public class SimpleLoggingFilter implements RestFilter
     nextFilter.onError(ex, requestContext, wireAttrs);
   }
 
-  private void trace(String method, Request request, Map<String, String> wireAttrs, RequestContext requestContext)
+  private void trace(String method, RestRequest request, Map<String, String> wireAttrs, RequestContext requestContext)
   {
     _log.debug(buildLogMessage(method, "request", formatRequest(request), wireAttrs, requestContext));
   }
 
-  private void trace(String method, Response response, Map<String, String> wireAttrs, RequestContext requestContext)
+  private void trace(String method, RestResponse response, Map<String, String> wireAttrs, RequestContext requestContext)
   {
     URI requestUri = (URI)requestContext.getLocalAttr(REQUEST_URI);
     String requestMethod = (String)requestContext.getLocalAttr(REQUEST_METHOD);
@@ -174,39 +172,32 @@ public class SimpleLoggingFilter implements RestFilter
     return ex.getClass().getName() + " (" + msg + ")";
   }
 
-  public String formatRequest(Request request)
+  public String formatRequest(RestRequest request)
   {
     StringBuilder builder = new StringBuilder();
-    if (request instanceof RestRequest)
-    {
-      RestRequest restRequest = (RestRequest) request;
-      builder.append("\"").append(restRequest.getMethod());
-      builder.append(" ").append(formatRequestURI(restRequest)).append("\"");
-      builder.append(" headers=[").append(formatHeaders(restRequest.getHeaders())).append("]");
-    }
+    builder.append("\"").append(request.getMethod());
+    builder.append(" ").append(formatRequestURI(request)).append("\"");
+    builder.append(" headers=[").append(formatHeaders(request.getHeaders())).append("]");
+
     builder.append(" entityLength=").append(request.getEntity().length());
     return builder.toString();
   }
 
-  public String formatResponse(Response response, URI requestUri, String requestMethod)
+  public String formatResponse(RestResponse response, URI requestUri, String requestMethod)
   {
     StringBuilder builder = new StringBuilder();
-    if (response instanceof RestResponse)
+    builder.append("\"").append(requestMethod);
+    if(requestUri != null)
     {
-      RestResponse restResponse = (RestResponse) response;
-      builder.append("\"").append(requestMethod);
-      if(requestUri != null)
-      {
-        builder.append(" ").append(extractURI(requestUri.toString()));
-      }
-      builder.append(" ").append(restResponse.getStatus()).append("\"");
-      builder.append(" headers=[").append(formatHeaders(restResponse.getHeaders())).append("]");
+      builder.append(" ").append(extractURI(requestUri.toString()));
     }
+    builder.append(" ").append(response.getStatus()).append("\"");
+    builder.append(" headers=[").append(formatHeaders(response.getHeaders())).append("]");
     builder.append(" entityLength=").append(response.getEntity().length());
     return builder.toString();
   }
 
-  public String formatRequestURI(Request request)
+  public String formatRequestURI(RestRequest request)
   {
     // We want the ascii representation without the query string
     String uriText = request.getURI().toASCIIString();

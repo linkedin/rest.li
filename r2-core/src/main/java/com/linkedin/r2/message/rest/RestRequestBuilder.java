@@ -13,117 +13,67 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 */
-
-/* $Id$ */
 package com.linkedin.r2.message.rest;
 
-
-import com.linkedin.r2.message.RequestBuilder;
-import com.linkedin.r2.transport.http.common.HttpConstants;
+import com.linkedin.data.ByteString;
+import com.linkedin.r2.message.BaseRequestBuilder;
+import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.util.ArgumentUtil;
 
 import java.net.URI;
 
-
 /**
  * @author Chris Pettitt
- * @version $Revision$
+ * @author Zhenkai Zhu
  */
-public final class RestRequestBuilder
-        extends BaseRestMessageBuilder<RestRequestBuilder>
-        implements RequestBuilder<RestRequestBuilder>, RestMessageBuilder<RestRequestBuilder>
+public final class RestRequestBuilder extends BaseRequestBuilder<RestRequestBuilder> implements RestMessageBuilder<RestRequestBuilder>
 {
-  private URI _uri;
+  private ByteString _entity = ByteString.empty();
 
-  private String _method = RestMethod.GET;
-
-  /**
-   * Constructs a new builder using the given uri.
-   *
-   * @param uri the URI for the resource involved in the request
-   */
   public RestRequestBuilder(URI uri)
   {
-    setURI(uri);
+    super(uri);
   }
 
-  /**
-   * Copies the values from the supplied request. Changes to this builder will not be reflected
-   * in the original message.
-   *
-   * @param request the request to copy
-   */
   public RestRequestBuilder(RestRequest request)
   {
     super(request);
-
-    setURI(request.getURI());
-    setMethod(request.getMethod());
+    _entity = request.getEntity();
   }
 
-  @Override
-  public URI getURI()
+  public RestRequestBuilder(StreamRequest request)
   {
-    return _uri;
+    super(request);
   }
 
-  @Override
-  public RestRequestBuilder setURI(URI uri)
+  public RestRequestBuilder setEntity(ByteString entity)
   {
-    ArgumentUtil.notNull(uri, "uri");
+    ArgumentUtil.notNull(entity, "entity");
 
-    _uri = uri;
+    _entity = entity;
     return this;
   }
 
-  /**
-   * Sets the REST method for this request.
-   *
-   * @param method the REST method to set
-   * @return this builder
-   * @see com.linkedin.r2.message.rest.RestMethod
-   */
-  public RestRequestBuilder setMethod(String method)
+  public RestRequestBuilder setEntity(byte[] entity)
   {
-    ArgumentUtil.notNull(method, "method");
+    ArgumentUtil.notNull(entity, "entity");
 
-    _method = method;
+    _entity = ByteString.copy(entity);
     return this;
   }
 
-  /**
-   * Returns the REST method for this request.
-   *
-   * @return the REST method for this request
-   * @see com.linkedin.r2.message.rest.RestMethod
-   */
-  public String getMethod()
+  public ByteString getEntity()
   {
-    return _method;
+    return _entity;
   }
 
-  @Override
   public RestRequest build()
   {
-    return new RestRequestImpl(getEntity(), getHeaders(), getCookies(), getURI(), getMethod());
+    return new RestRequestImpl(_entity, getHeaders(), getCookies(), getURI(), getMethod());
   }
 
-  @Override
   public RestRequest buildCanonical()
   {
-    return new RestRequestImpl(
-        getEntity(), getCanonicalHeaders(), getCanonicalCookies(), getURI().normalize(), getMethod());
-  }
-
-  @Override
-  protected void validateCookieHeader(String name)
-  {
-    if (name.equalsIgnoreCase(HttpConstants.REQUEST_COOKIE_HEADER_NAME))
-    {
-      String message = String.format(
-          "Header %s are not allowed to be added as a request header.",
-          HttpConstants.REQUEST_COOKIE_HEADER_NAME);
-      throw new IllegalArgumentException(message);
-    }
+    return new RestRequestImpl(_entity, getCanonicalHeaders(), getCanonicalCookies(), getURI(), getMethod());
   }
 }

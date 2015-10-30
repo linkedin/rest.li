@@ -18,34 +18,64 @@
 package com.linkedin.r2.message;
 
 
-import com.linkedin.data.ByteString;
+import com.linkedin.r2.message.rest.RestUtil;
+import com.linkedin.util.ArgumentUtil;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 
 /**
- * Abstract implementation of the {@link Message} interface.
- *
  * @author Chris Pettitt
+ * @author Zhenkai Zhu
  * @version $Revision$
  */
-public abstract class BaseMessage implements Message
+public abstract class BaseMessage implements MessageHeaders
 {
-  private final ByteString _body;
+  private final Map<String, String> _headers;
 
-  /**
-   * Construct a new instance with the specified body (entity).
-   *
-   * @param body the {@link ByteString} body to be used as the entity for this message.
-   */
-  public BaseMessage(ByteString body)
+  private final List<String> _cookies;
+
+  protected BaseMessage(Map<String, String> headers, List<String> cookies)
   {
-    assert body != null;
-    _body = body;
+    ArgumentUtil.notNull(headers, "headers");
+    ArgumentUtil.notNull(cookies, "cookies");
+    Map<String, String> tmpHeaders = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+    tmpHeaders.putAll(headers);
+    _headers = Collections.unmodifiableMap(tmpHeaders);
+    _cookies = Collections.unmodifiableList(new ArrayList<String>(cookies));
   }
 
   @Override
-  public ByteString getEntity()
+  public String getHeader(String name)
   {
-    return _body;
+    return _headers.get(name);
+  }
+
+  @Override
+  public List<String> getHeaderValues(String name)
+  {
+    final String headerVal = getHeader(name);
+    if (headerVal == null)
+    {
+      return null;
+    }
+    return RestUtil.getHeaderValues(headerVal);
+  }
+
+  @Override
+  public Map<String, String> getHeaders()
+  {
+    return _headers;
+  }
+
+  @Override
+  public List<String> getCookies()
+  {
+    return _cookies;
   }
 
   @Override
@@ -55,19 +85,19 @@ public abstract class BaseMessage implements Message
     {
       return true;
     }
-
     if (!(o instanceof BaseMessage))
     {
       return false;
     }
 
     BaseMessage that = (BaseMessage) o;
-    return _body.equals(that._body);
+    return _headers.equals(that._headers) && _cookies.equals(that._cookies);
   }
 
   @Override
   public int hashCode()
   {
-    return _body.hashCode();
+    int result = _headers.hashCode();
+    return 31 * result + _cookies.hashCode();
   }
 }

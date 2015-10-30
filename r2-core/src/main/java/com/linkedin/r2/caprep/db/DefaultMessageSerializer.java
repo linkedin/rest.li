@@ -18,14 +18,11 @@
 package com.linkedin.r2.caprep.db;
 
 import com.linkedin.data.ByteString;
-import com.linkedin.r2.message.Message;
-import com.linkedin.r2.message.MessageBuilder;
+import com.linkedin.r2.message.MessageHeaders;
 import com.linkedin.r2.message.Request;
-import com.linkedin.r2.message.RequestBuilder;
 import com.linkedin.r2.message.Response;
-import com.linkedin.r2.message.ResponseBuilder;
+import com.linkedin.r2.message.MessageHeadersBuilder;
 import com.linkedin.r2.message.rest.RestMessage;
-import com.linkedin.r2.message.rest.RestMessageBuilder;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
@@ -89,32 +86,22 @@ public class DefaultMessageSerializer implements MessageSerializer
   private static final String STATUS_200 = "200";
 
   @Override
-  public void writeRequest(OutputStream out, Request req) throws IOException
+  public void writeRequest(OutputStream out, RestRequest req) throws IOException
   {
     writeReqLine(out, req);
-    if (req instanceof RestRequest)
-    {
-      writeHeaders(out, (RestRequest)req, HttpConstants.REQUEST_COOKIE_HEADER_NAME);
-    }
-    else
-    {
-      write(out, CRLF);
-    }
+
+    writeHeaders(out, req, HttpConstants.REQUEST_COOKIE_HEADER_NAME);
+
     writeEntity(out, req);
   }
 
   @Override
-  public void writeResponse(OutputStream out, Response res) throws IOException
+  public void writeResponse(OutputStream out, RestResponse res) throws IOException
   {
     writeResLine(out, res);
-    if (res instanceof RestResponse)
-    {
-      writeHeaders(out, (RestResponse)res, HttpConstants.RESPONSE_COOKIE_HEADER_NAME);
-    }
-    else
-    {
-      write(out, CRLF);
-    }
+
+    writeHeaders(out, res, HttpConstants.RESPONSE_COOKIE_HEADER_NAME);
+
     writeEntity(out, res);
   }
 
@@ -124,7 +111,8 @@ public class DefaultMessageSerializer implements MessageSerializer
     final RestRequestBuilder builder = new RestRequestBuilder(URI.create(""));
     readReqLine(builder, in);
     readHeaders(builder, in, HttpConstants.REQUEST_COOKIE_HEADER_NAME);
-    readEntity(builder, in);
+    builder.setEntity(readEntity(in));
+
     return builder.build();
   }
 
@@ -134,52 +122,35 @@ public class DefaultMessageSerializer implements MessageSerializer
     final RestResponseBuilder builder = new RestResponseBuilder();
     readResLine(builder, in);
     readHeaders(builder, in, HttpConstants.RESPONSE_COOKIE_HEADER_NAME);
-    readEntity(builder, in);
+    builder.setEntity(readEntity(in));
     return builder.build();
   }
 
-  private void readReqLine(RequestBuilder<?> builder, InputStream in) throws IOException
+  private void readReqLine(RestRequestBuilder builder, InputStream in) throws IOException
   {
-    if (builder instanceof RestRequestBuilder)
-    {
-      ((RestRequestBuilder) builder).setMethod(readUntil(SP_CHAR, in));
-    }
-    else
-    {
-      readIgnore(POST, in);
-      readIgnore(SP, in);
-    }
-
+    builder.setMethod(readUntil(SP_CHAR, in));
     builder.setURI(URI.create(readUntil(SP_CHAR, in)));
     readIgnore(HTTP_1_1, in);
     readIgnoreNewLine(in);
   }
 
-  private void readResLine(ResponseBuilder<?> builder, InputStream in) throws IOException
+  private void readResLine(RestResponseBuilder builder, InputStream in) throws IOException
   {
     readIgnore(HTTP_1_1, in);
     readIgnore(SP, in);
-    if (builder instanceof RestResponseBuilder)
+    try
     {
       final String statusStr = readUntil(SP_CHAR, in);
-      try
-      {
-        ((RestResponseBuilder)builder).setStatus(Integer.parseInt(statusStr));
-      }
-      catch (NumberFormatException e)
-      {
-        throw new IOException("Failed to parse HTTP status code", e);
-      }
+      builder.setStatus(Integer.parseInt(statusStr));
     }
-    else
+    catch (NumberFormatException e)
     {
-      readIgnore(STATUS_200, in);
-      readIgnore(SP, in);
+      throw new IOException("Failed to parse HTTP status code", e);
     }
     readIgnoreLine(in);
   }
 
-  private void readHeaders(RestMessageBuilder<?> builder, InputStream in, String cookieHeader) throws IOException
+  private void readHeaders(MessageHeadersBuilder<?> builder, InputStream in, String cookieHeader) throws IOException
   {
     String line = readLine(in);
     while (!line.isEmpty())
@@ -206,7 +177,7 @@ public class DefaultMessageSerializer implements MessageSerializer
     }
   }
 
-  private void readEntity(MessageBuilder<?> builder, InputStream in) throws IOException
+  private ByteString readEntity(InputStream in) throws IOException
   {
     final ByteArrayOutputStream out = new ByteArrayOutputStream();
     final byte[] buf = new byte[1024];
@@ -229,7 +200,7 @@ public class DefaultMessageSerializer implements MessageSerializer
       entity = ByteString.copy(eb);
     }
 
-    builder.setEntity(entity);
+    return entity;
   }
 
   private void writeReqLine(OutputStream out, Request req) throws IOException
@@ -324,7 +295,7 @@ public class DefaultMessageSerializer implements MessageSerializer
     }
   }
 
-  private void writeHeaders(OutputStream out, RestMessage msg, String cookieHeader) throws IOException
+  private void writeHeaders(OutputStream out, MessageHeaders msg, String cookieHeader) throws IOException
   {
     for (Map.Entry<String, String> hdr : msg.getHeaders().entrySet())
     {
@@ -414,7 +385,7 @@ public class DefaultMessageSerializer implements MessageSerializer
     return readUntil(LF_CHAR, in).replaceAll(CR, "");
   }
 
-  private void writeEntity(OutputStream out, Message res) throws IOException
+  private void writeEntity(OutputStream out, RestMessage res) throws IOException
   {
     res.getEntity().write(out);
 

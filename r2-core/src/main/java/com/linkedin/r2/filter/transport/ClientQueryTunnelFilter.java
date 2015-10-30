@@ -3,7 +3,7 @@ package com.linkedin.r2.filter.transport;
 import com.linkedin.r2.filter.NextFilter;
 import com.linkedin.r2.filter.message.rest.BaseRestFilter;
 import com.linkedin.r2.message.RequestContext;
-import com.linkedin.r2.message.rest.QueryTunnelUtil;
+import com.linkedin.r2.message.QueryTunnelUtil;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 

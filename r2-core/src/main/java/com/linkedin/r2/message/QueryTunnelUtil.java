@@ -14,12 +14,16 @@
    limitations under the License.
 */
 
-package com.linkedin.r2.message.rest;
+package com.linkedin.r2.message;
 
+import com.linkedin.common.callback.Callback;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.Data;
 import com.linkedin.r2.filter.R2Constants;
-import com.linkedin.r2.message.RequestContext;
+import com.linkedin.r2.message.rest.RestMethod;
+import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.rest.RestRequestBuilder;
+import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.util.IOUtil;
 
 import org.slf4j.Logger;
@@ -62,7 +66,14 @@ import java.util.Map;
  *                Content-Type: application/json\r\n\r\n{"foo":"bar"}\r\n--xyz--'
  *              http://localhost
  *
-
+ *
+ * Note that if QueryTunnelUtil need to do actual encoding or decoding, the request would be fully buffered first,
+ * even if it's streaming.
+ * We believe QueryTunnelUtil is almost exclusively for GET requests, practically no use case would require
+ * excessively long query for POST & PUT, and we'd be surprised if anyone is using QueryTunnelUtil for PUT & GET.
+ * Hence, fully buffering request that has to be encoded/decoded is practically not a problem and gives up the best
+ * return for the investment of our efforts.
+ *
  */
 public class QueryTunnelUtil
 {
@@ -126,29 +137,36 @@ public class QueryTunnelUtil
       return request;
     }
 
-    RestRequestBuilder requestBuilder = new RestRequestBuilder(request);
+    return doEncode(request);
+  }
 
+  private static RestRequest doEncode(final RestRequest request)
+      throws URISyntaxException, MessagingException, IOException
+  {
+
+    RestRequestBuilder requestBuilder = new RestRequestBuilder(request);
+    URI uri = request.getURI();
     // reconstruct URI without query
-    uri = new URI(uri.getScheme(),
-                  uri.getUserInfo(),
-                  uri.getHost(),
-                  uri.getPort(),
-                  uri.getPath(),
-                  null,
-                  uri.getFragment());
+    URI newUri = new URI(uri.getScheme(),
+        uri.getUserInfo(),
+        uri.getHost(),
+        uri.getPort(),
+        uri.getPath(),
+        null,
+        uri.getFragment());
 
     // If there's no existing body, just pass the request as x-www-form-urlencoded
     ByteString entity = request.getEntity();
     if (entity == null || entity.length() == 0)
     {
       requestBuilder.setHeader(HEADER_CONTENT_TYPE, FORM_URL_ENCODED);
-      requestBuilder.setEntity(ByteString.copyString(query, Data.UTF_8_CHARSET));
+      requestBuilder.setEntity(ByteString.copyString(uri.getRawQuery(), Data.UTF_8_CHARSET));
     }
     else
     {
       // If we have a body, we must preserve it, so use multipart/mixed encoding
 
-      MimeMultipart multi = createMultiPartEntity(entity, request.getHeader(HEADER_CONTENT_TYPE), query);
+      MimeMultipart multi = createMultiPartEntity(entity, request.getHeader(HEADER_CONTENT_TYPE), uri.getRawQuery());
       requestBuilder.setHeader(HEADER_CONTENT_TYPE, multi.getContentType());
       ByteArrayOutputStream os = new ByteArrayOutputStream();
       multi.writeTo(os);
@@ -156,11 +174,79 @@ public class QueryTunnelUtil
     }
 
     // Set the base uri, supply the original method in the override header, and change method to POST
-    requestBuilder.setURI(uri);
+    requestBuilder.setURI(newUri);
     requestBuilder.setHeader(HEADER_METHOD_OVERRIDE, requestBuilder.getMethod());
     requestBuilder.setMethod(RestMethod.POST);
 
     return requestBuilder.build();
+  }
+
+  /**
+   * @param request   a StreamRequest object to be encoded as a tunneled POST
+   * @param threshold the size of the query params above which the request will be encoded
+   * @param callback the callback to be executed with the encoded request
+   *
+   */
+  public static void encode(final StreamRequest request, int threshold, Callback<StreamRequest> callback)
+  {
+    encode(request, new RequestContext(), threshold, callback);
+  }
+
+  /**
+   * @param request   a StreamRequest object to be encoded as a tunneled POST
+   * @param requestContext a RequestContext object associated with the request
+   * @param threshold the size of the query params above which the request will be encoded
+   * @param callback the callback to be executed with the encoded request
+   */
+  public static void encode(final StreamRequest request, RequestContext requestContext, int threshold, final Callback<StreamRequest> callback)
+  {
+    URI uri = request.getURI();
+
+    // Check to see if we should tunnel this request by testing the length of the query
+    // if the query is NULL, we won't bother to encode.
+    // 0 length is a special case that could occur with a url like http://www.foo.com?
+    // which we don't want to encode, because we'll lose the "?" in the process
+    // Otherwise only encode queries whose length is greater than or equal to the
+    // threshold value.
+
+    String query = uri.getRawQuery();
+
+    boolean forceQueryTunnel = requestContext.getLocalAttr(R2Constants.FORCE_QUERY_TUNNEL) != null
+        && (Boolean) requestContext.getLocalAttr(R2Constants.FORCE_QUERY_TUNNEL);
+
+    if (query == null
+        || query.length() == 0
+        || (query.length() < threshold && !forceQueryTunnel))
+    {
+      callback.onSuccess(request);
+    }
+    else
+    {
+      // If we need to encode, we'll fully buffer the request first. See class doc for the reasoning.
+      Messages.toRestRequest(request, new Callback<RestRequest>()
+      {
+        @Override
+        public void onError(Throwable e)
+        {
+          callback.onError(e);
+        }
+
+        @Override
+        public void onSuccess(RestRequest result)
+        {
+          RestRequest encodedRequest;
+          try
+          {
+            encodedRequest = doEncode(result);
+          } catch (Exception ex)
+          {
+            callback.onError(ex);
+            return;
+          }
+          callback.onSuccess(Messages.toStreamRequest(encodedRequest));
+        }
+      });
+    }
   }
 
   /**
@@ -194,6 +280,13 @@ public class QueryTunnelUtil
       // Not a tunnelled request, just pass thru
       return request;
     }
+
+    return doDecode(request, requestContext);
+  }
+
+  private static RestRequest doDecode(final RestRequest request, RequestContext requestContext)
+      throws MessagingException, IOException, URISyntaxException
+  {
 
     String query = null;
     byte[] entity = new byte[0];
@@ -315,6 +408,65 @@ public class QueryTunnelUtil
     requestContext.putLocalAttr(R2Constants.IS_QUERY_TUNNELED, true);
 
     return requestBuilder.build();
+  }
+
+
+    /**
+     * Takes a Request object that has been encoded for tunnelling as a POST with an X-HTTP-Override-Method header and
+     * creates a new request that represents the intended original request
+     *
+     * @param request the request to be decoded
+     * @param callback the callback to be executed with the decoded request
+     */
+  public static void decode(final StreamRequest request, Callback<StreamRequest> callback)
+  {
+    decode(request, new RequestContext(), callback);
+  }
+
+  /**
+   * Takes a Request object that has been encoded for tunnelling as a POST with an X-HTTP-Override-Method header and
+   * creates a new request that represents the intended original request
+   *
+   * @param request the request to be decoded
+   * @param requestContext a RequestContext object associated with the request
+   * @param callback the callback to be executed with the decoded request
+   *
+   */
+  public static void decode(final StreamRequest request, final RequestContext requestContext, final Callback<StreamRequest>  callback)
+  {
+    if (request.getHeader(HEADER_METHOD_OVERRIDE) == null)
+    {
+      // Not a tunnelled request, just pass thru
+      callback.onSuccess(request);
+    }
+    else
+    {
+      // If we need to decode, we'll fully buffer the request first. See class doc for the reasoning.
+      Messages.toRestRequest(request, new Callback<RestRequest>()
+      {
+        @Override
+        public void onError(Throwable e)
+        {
+          callback.onError(e);
+        }
+
+        @Override
+        public void onSuccess(RestRequest result)
+        {
+          RestRequest decodedRequest;
+          try
+          {
+            decodedRequest = doDecode(result, requestContext);
+          }
+          catch (Exception ex)
+          {
+            callback.onError(ex);
+            return;
+          }
+          callback.onSuccess(Messages.toStreamRequest(decodedRequest));
+        }
+      });
+    }
   }
 
   /**

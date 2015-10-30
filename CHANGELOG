@@ -1,5 +1,10 @@
-2.12.8
+3.0.1
 ------
+
+3.0.0
+------
+Refactor R2 message hierarchy
+(RB=601892)
 
 2.12.7
 ------
@@ -49,10 +54,14 @@ uninformative NPE (i.e., it would crash).
 Now, the translator no longer crashes and instead adds no mapping to
 the Pegasus DataMap for the field.
 
-2.12.2
 ------
 (RB=600375)
 Support enum in compound key for batch update and batch partial update cases.
+
+3.0.0
+------
+Refactor R2 message hierarhcy
+(RB=601892)
 
 2.12.1
 ------

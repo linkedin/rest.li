@@ -20,12 +20,11 @@
 
 package com.linkedin.d2.balancer.util;
 
-import com.linkedin.data.ByteString;
-import com.linkedin.r2.message.MessageBuilder;
 import com.linkedin.r2.message.Request;
-import com.linkedin.r2.message.RequestBuilder;
 
 import java.net.URI;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Intended for use when the only significant aspect of the request is the URI.
@@ -53,20 +52,27 @@ public class URIRequest implements Request
     return _uri;
   }
 
-  @Override
-  public RequestBuilder<? extends RequestBuilder<?>> requestBuilder()
+  public String getMethod()
   {
     throw new UnsupportedOperationException();
   }
 
-  @Override
-  public ByteString getEntity()
+  public String getHeader(String name)
   {
     throw new UnsupportedOperationException();
   }
 
-  @Override
-  public MessageBuilder<? extends MessageBuilder<?>> builder()
+  public List<String> getHeaderValues(String name)
+  {
+    throw new UnsupportedOperationException();
+  }
+
+  public List<String> getCookies()
+  {
+    throw new UnsupportedOperationException();
+  }
+
+  public Map<String, String> getHeaders()
   {
     throw new UnsupportedOperationException();
   }

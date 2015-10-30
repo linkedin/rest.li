@@ -21,8 +21,6 @@
 package test.r2.transport.http.common;
 
 import java.net.URI;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -31,10 +29,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import com.linkedin.common.callback.FutureCallback;
-import com.linkedin.data.ByteString;
-import com.linkedin.r2.message.ResponseBuilder;
 import com.linkedin.r2.message.rest.RestException;
-import com.linkedin.r2.message.rest.RestMessageBuilder;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;

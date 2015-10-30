@@ -13,39 +13,29 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 */
-
-/* $Id$ */
 package com.linkedin.r2.message.rest;
-
-
-import java.util.Collections;
 
 import com.linkedin.data.ByteString;
 import com.linkedin.r2.message.Response;
 
+import java.util.Collections;
 
 /**
- * An object that contains details of a REST response.<p/>
+ * An object that contains details of a REST response.
  *
  * Instances of RestResponse are immutable and thread-safe. New instances can be created using the
  * {@link RestResponseBuilder}. An existing RestResponse can be used as a prototype for
  * building a new RestResponse using the {@link #builder()} method.
  *
+ * RestResponse is a response with full entity.
+ *
  * @author Chris Pettitt
- * @version $Revision$
+ * @author Zhenkai Zhu
  */
-public interface RestResponse extends RestMessage, Response
+public interface RestResponse extends Response, RestMessage
 {
   RestResponse NO_RESPONSE = new RestResponseImpl(
       ByteString.empty(), Collections.<String, String>emptyMap(), Collections.<String>emptyList(), 0);
-
-  /**
-   * Returns the status for this response.
-   *
-   * @return the status for this response
-   * @see com.linkedin.r2.message.rest.RestStatus
-   */
-  int getStatus();
 
   /**
    * Returns a {@link RestResponseBuilder}, which provides a means of constructing a new
@@ -54,6 +44,5 @@ public interface RestResponse extends RestMessage, Response
    *
    * @return a builder for this response
    */
-  @Override
   RestResponseBuilder builder();
 }
