@@ -31,7 +31,9 @@ import com.linkedin.restli.common.multiplexer.IndividualResponse;
 import com.linkedin.restli.common.multiplexer.IndividualResponseMap;
 import com.linkedin.restli.common.multiplexer.MultiplexedResponseContent;
 import com.linkedin.restli.internal.client.EntityResponseDecoder;
+import com.linkedin.restli.internal.common.CookieUtil;
 import com.linkedin.restli.internal.common.DataMapConverter;
+import com.linkedin.restli.internal.common.HeaderUtil;
 
 import java.io.IOException;
 import java.util.Map;
@@ -47,7 +49,6 @@ import javax.activation.MimeTypeParseException;
 public class MultiplexedCallback implements Callback<RestResponse>
 {
   private final EntityResponseDecoder<MultiplexedResponseContent> _decoder = new EntityResponseDecoder<MultiplexedResponseContent>(MultiplexedResponseContent.class);
-
   private final Map<Integer, Callback<RestResponse>> _callbacks;
   private final Callback<MultiplexedResponse> _aggregatedCallback;
 
@@ -99,7 +100,7 @@ public class MultiplexedCallback implements Callback<RestResponse>
       RestResponse individualRestResponse;
       try
       {
-        individualRestResponse = buildIndividualRestResponse(individualResponse);
+        individualRestResponse = buildIndividualRestResponse(muxResponse, individualResponse);
       }
       catch (MimeTypeParseException e)
       {
@@ -124,16 +125,23 @@ public class MultiplexedCallback implements Callback<RestResponse>
     }
   }
 
-  private static RestResponse buildIndividualRestResponse(IndividualResponse individualResponse) throws IOException, MimeTypeParseException
+  private static RestResponse buildIndividualRestResponse(Response<?> envelopeResponse, IndividualResponse individualResponse) throws IOException, MimeTypeParseException
   {
     IndividualBody body = individualResponse.getBody(GetMode.NULL);
     ByteString entity = (body != null) ? DataMapConverter.dataMapToByteString(individualResponse.getHeaders(), body.data()) : ByteString.empty();
+
     return new RestResponseBuilder()
       .setStatus(individualResponse.getStatus())
-      .setHeaders(individualResponse.getHeaders())
-      .setCookies(individualResponse.getCookies())
+      .setHeaders(inheritHeaders(individualResponse, envelopeResponse))
+      .setCookies(CookieUtil.encodeSetCookies(envelopeResponse.getCookies()))
       .setEntity(entity)
       .build();
+  }
+
+  private static Map<String, String> inheritHeaders(IndividualResponse individualResponse, Response<?> envelopeResponse)
+  {
+    Map<String, String> envelopeHeaders = HeaderUtil.removeHeaders(envelopeResponse.getHeaders(), HeaderUtil.NONINHERITABLE_RESPONSE_HEADERS);
+    return HeaderUtil.mergeHeaders(envelopeHeaders, individualResponse.getHeaders());
   }
 
   private void notifyAggregatedCallback(Response<MultiplexedResponseContent> response)

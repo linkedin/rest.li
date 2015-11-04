@@ -42,13 +42,17 @@ import com.linkedin.restli.common.multiplexer.IndividualRequestMap;
 import com.linkedin.restli.common.multiplexer.IndividualResponse;
 import com.linkedin.restli.common.multiplexer.MultiplexedRequestContent;
 import com.linkedin.restli.internal.client.ResponseImpl;
+import com.linkedin.restli.internal.common.CookieUtil;
 import com.linkedin.restli.internal.common.DataMapConverter;
 
 import com.google.common.collect.ImmutableMap;
 
 import java.io.IOException;
 import java.net.HttpCookie;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.activation.MimeTypeParseException;
@@ -72,6 +76,7 @@ public class MultiplexerTestBase
   protected static final int ID2 = 2;
   protected static final String BASE_URI = "/some/uri";
   protected static final Map<String, String> HEADERS = ImmutableMap.of("foo", "bar");
+  protected static final List<String> COOKIES = Arrays.asList(CookieUtil.encodeSetCookie(new HttpCookie("fooCookie", "barCookie")));
 
   protected final Request<TestRecord> request1 = fakeGetRequest(ID1);
   protected final Request<TestRecord> request2 = fakeGetRequest(ID2);
@@ -131,19 +136,42 @@ public class MultiplexerTestBase
   {
     return new IndividualResponse()
         .setStatus(HttpStatus.S_200_OK.getCode())
-        .setHeaders(new StringMap(HEADERS))
         .setBody(new IndividualBody(record.data()));
   }
 
   protected static IndividualResponse fakeIndividualErrorResponse() throws IOException
   {
     return new IndividualResponse()
-        .setStatus(HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode())
-        .setHeaders(new StringMap(HEADERS));
+        .setStatus(HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode());
+  }
+
+  private static Map<String, String> normalizeHeaderName(Map<String, String> headers)
+  {
+    Map<String, String> normalizedHeaders = new HashMap<String, String>();
+    for (Map.Entry<String, String> header : headers.entrySet())
+    {
+      // make all header names lower case
+      normalizedHeaders.put(header.getKey().toLowerCase(), header.getValue());
+    }
+    return normalizedHeaders;
+  }
+
+  private static Map<String, String> normalizeSetCookies(List<String> cookies)
+  {
+    Map<String, String> normalizedSetCookies = new HashMap<String, String>();
+    for(HttpCookie cookie : CookieUtil.decodeSetCookies(cookies))
+    {
+      normalizedSetCookies.put(cookie.getName(), cookie.toString());
+    }
+    return normalizedSetCookies;
   }
 
   protected static void assertRestResponseEquals(RestResponse actual, RestResponse expected) throws MimeTypeParseException, IOException
   {
+    // validate headers & cookies
+    Assert.assertEquals(normalizeHeaderName(actual.getHeaders()), normalizeHeaderName(expected.getHeaders()));
+    Assert.assertEquals(normalizeSetCookies(actual.getCookies()), normalizeSetCookies(expected.getCookies()));
+
     // After the IndividualBody is serialized into an entity byte array, it can no longer guarantee the order of its fields.
     // So, to compare entity, we should de-serialize the entity back to a DataMap in order to perform the equal assertion.
     ByteString actualEntity = actual.getEntity();
@@ -168,9 +196,11 @@ public class MultiplexerTestBase
   protected static RestResponse fakeRestResponse(RecordTemplate entity) throws IOException
   {
     byte[] bytes = getBytes(entity);
+
     return new RestResponseBuilder()
         .setStatus(HttpStatus.S_200_OK.getCode())
         .setHeaders(HEADERS)
+        .setCookies(COOKIES)
         .setEntity(bytes)
         .build();
   }
@@ -180,6 +210,7 @@ public class MultiplexerTestBase
     return new RestResponseBuilder()
         .setStatus(HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode())
         .setHeaders(HEADERS)
+        .setCookies(COOKIES)
         .build();
   }
 
@@ -189,7 +220,6 @@ public class MultiplexerTestBase
     Assert.assertEquals(actual.getMethod(), expected.getMethod());
     Assert.assertEquals(actual.getRelativeUrl(), expected.getRelativeUrl());
     Assert.assertEquals(actual.getHeaders(), expected.getHeaders());
-    Assert.assertEquals(actual.getCookies(), expected.getCookies());
     Assert.assertEquals(actual.getBody(), expected.getBody());
     Assert.assertEquals(actual.getDependentRequests(), expected.getDependentRequests());
   }

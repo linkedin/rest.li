@@ -199,8 +199,10 @@ public class CookieUtil
 
     sb.append(";MaxAge=\"").append(Long.toString(cookie.getMaxAge())).append('"');
     sb.append(";Version=\"").append(Integer.toString(cookie.getVersion())).append('"');
-    sb.append(";Disgard=\"").append(cookie.getDiscard()).append('"');
-    sb.append(";Secure=\"").append(cookie.getSecure()).append('"');
+    if (cookie.getDiscard())
+      sb.append(";Discard");
+    if (cookie.getSecure())
+      sb.append(";Secure");
 
     if (cookie.getComment() != null)
       sb.append(";Comment=\"").append(cookie.getComment()).append('"');

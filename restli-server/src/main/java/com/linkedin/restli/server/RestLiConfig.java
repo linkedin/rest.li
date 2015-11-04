@@ -80,6 +80,7 @@ public class RestLiConfig
   private final List<RequestFilter> _requestFilters = new ArrayList<RequestFilter>();
   private final List<ResponseFilter> _responseFilters = new ArrayList<ResponseFilter>();
   private int _maxRequestsMultiplexed = DEFAULT_MAX_REQUESTS_MULTIPLEXED;
+  private Set<String> _individualRequestHeaderWhitelist = Collections.emptySet();
   private MultiplexerSingletonFilter _multiplexerSingletonFilter;
 
   /**
@@ -386,5 +387,23 @@ public class RestLiConfig
   public void setMaxRequestsMultiplexed(int maxRequestsMultiplexed)
   {
     _maxRequestsMultiplexed = maxRequestsMultiplexed;
+  }
+
+  /**
+   * Get the set of request header names that are allowed to be used in an IndividualRequest of a multiplexed request.
+   * @return a set of request header names
+   */
+  public Set<String> getMultiplexedIndividualRequestHeaderWhitelist()
+  {
+    return _individualRequestHeaderWhitelist;
+  }
+
+  /**
+   * Set the set of request header names that are allowed to be used in an IndividualRequest of a multiplexed request.
+   * @param headerNames a set of request header names
+   */
+  public void setMultiplexedIndividualRequestHeaderWhitelist(Set<String> headerNames)
+  {
+    _individualRequestHeaderWhitelist = (headerNames != null) ? headerNames : Collections.<String>emptySet();
   }
 }

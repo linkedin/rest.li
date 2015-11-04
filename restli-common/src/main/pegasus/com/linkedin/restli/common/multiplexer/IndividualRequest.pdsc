@@ -2,7 +2,7 @@
   "type": "record",
   "name": "IndividualRequest",
   "namespace": "com.linkedin.restli.common.multiplexer",
-  "doc": "Individual HTTP request within a multiplexed request",
+  "doc": "Individual HTTP request within a multiplexed request. For security reasons, cookies are not allowed to be specified in the IndividualRequest. Instead, it MUST be specified in the top level envelope request.",
   "fields": [
     {
       "name": "method",
@@ -16,16 +16,7 @@
         "values": "string"
       },
       "default": {},
-      "doc": "HTTP headers"
-    },
-    {
-      "name": "cookies",
-      "type": {
-        "type": "array",
-        "items": "string"
-      },
-      "default": [],
-      "doc": "HTTP cookies (please note, they are passed separately from headers)"
+      "doc": "HTTP headers specific to the individual request. All common headers should be specified in the top level envelope request. If IndividualRequest headers contain a header that is also specified in the top level envelope request, the header in the IndividualRequest will be used. In additions, for security reasons, headers in IndividualRequest are whitelisted. Only headers within the whitelist can be specified here."
     },
     {
       "name": "relativeUrl",
@@ -45,7 +36,7 @@
         "values": "IndividualRequest"
       },
       "default": {},
-      "doc": "Requests that should be executed after the current request is processed (sequential ordering). Dependent requests are executed in parallel.  Keys of the dependent requests are used to correlate responses with requests. They should be unique within the multiplexed request"
+      "doc": "Requests that should be executed after the current request is processed (sequential ordering). Dependent requests are executed in parallel. Keys of the dependent requests are used to correlate responses with requests. They should be unique within the multiplexed request"
     }
   ]
 }

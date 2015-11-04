@@ -21,7 +21,6 @@ import com.linkedin.common.callback.Callback;
 import com.linkedin.data.template.JacksonDataTemplateCodec;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.SetMode;
-import com.linkedin.data.template.StringArray;
 import com.linkedin.data.template.StringMap;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.restli.client.Request;
@@ -29,13 +28,15 @@ import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.RestLiCallbackAdapter;
 import com.linkedin.restli.client.RestLiEncodingException;
 import com.linkedin.restli.client.uribuilders.RestliUriBuilderUtil;
+import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.multiplexer.IndividualBody;
 import com.linkedin.restli.common.multiplexer.IndividualRequest;
 import com.linkedin.restli.common.multiplexer.IndividualRequestMap;
 import com.linkedin.restli.common.multiplexer.MultiplexedRequestContent;
+import com.linkedin.restli.internal.client.RequestBodyTransformer;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
-import com.linkedin.restli.internal.common.CookieUtil;
 
+import java.net.HttpCookie;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -163,30 +164,34 @@ public class MultiplexedRequestBuilder
 
   private static IndividualRequest toIndividualRequest(Request<?> request, IndividualRequestMap dependantRequests) throws RestLiEncodingException
   {
+    //TODO: Hardcoding RESTLI_PROTOCOL_2_0_0 for now. We need to refactor this code later to get protocol version using the mechanism similar to
+    // RestClient.getProtocolVersionForService()
+    ProtocolVersion protocolVersion = AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion();
+    String relativeUrl = getRelativeUrl(request, protocolVersion);
     IndividualRequest individualRequest = new IndividualRequest();
-    individualRequest.setRelativeUrl(getRelativeUrl(request));
+    individualRequest.setRelativeUrl(relativeUrl);
     individualRequest.setMethod(request.getMethod().getHttpMethod().name());
     individualRequest.setHeaders(new StringMap(request.getHeaders()));
-    List<String> cookies = CookieUtil.encodeCookies(request.getCookies());
-    if (!cookies.isEmpty())
+    List<HttpCookie> cookies = request.getCookies();
+    if (cookies != null && !cookies.isEmpty())
     {
-      individualRequest.setCookies(new StringArray(cookies));
+      throw new IllegalArgumentException(String.format("Cookies for individual request '%s' MUST be added at the envelope request level", relativeUrl));
     }
-    individualRequest.setBody(getBody(request), SetMode.IGNORE_NULL);
+    individualRequest.setBody(getBody(request, protocolVersion), SetMode.IGNORE_NULL);
     individualRequest.setDependentRequests(dependantRequests);
     return individualRequest;
   }
 
-  private static String getRelativeUrl(Request<?> request)
+  private static String getRelativeUrl(Request<?> request, ProtocolVersion protocolVersion)
   {
-    URI requestUri = RestliUriBuilderUtil.createUriBuilder(request, "", AllProtocolVersions.LATEST_PROTOCOL_VERSION).build();
+    URI requestUri = RestliUriBuilderUtil.createUriBuilder(request, "", protocolVersion).build();
     return requestUri.toString();
   }
 
   /**
    * Tries to extract the body of the given request and serialize it. If there is no body returns null.
    */
-  private static IndividualBody getBody(Request<?> request) throws RestLiEncodingException
+  private static IndividualBody getBody(Request<?> request, ProtocolVersion protocolVersion) throws RestLiEncodingException
   {
     RecordTemplate record = request.getInputRecord();
     if (record == null)
@@ -195,7 +200,7 @@ public class MultiplexedRequestBuilder
     }
     else
     {
-      return new IndividualBody(record.data());
+      return new IndividualBody(RequestBodyTransformer.transform(request, protocolVersion));
     }
   }
 

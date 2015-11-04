@@ -18,43 +18,38 @@ package com.linkedin.restli.server.multiplexer;
 
 
 import com.linkedin.common.callback.Callback;
-import com.linkedin.data.ByteString;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.DataTemplateUtil;
-import com.linkedin.data.template.GetMode;
-import com.linkedin.data.template.StringArray;
-import com.linkedin.data.template.StringMap;
 import com.linkedin.parseq.Engine;
 import com.linkedin.parseq.Task;
 import com.linkedin.parseq.Tasks;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
-import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestResponseBuilder;
 import com.linkedin.r2.transport.common.RestRequestHandler;
 import com.linkedin.restli.common.HttpMethod;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.RestConstants;
-import com.linkedin.restli.common.multiplexer.IndividualBody;
 import com.linkedin.restli.common.multiplexer.IndividualRequest;
 import com.linkedin.restli.common.multiplexer.IndividualRequestMap;
-import com.linkedin.restli.common.multiplexer.IndividualResponse;
 import com.linkedin.restli.common.multiplexer.IndividualResponseMap;
 import com.linkedin.restli.common.multiplexer.MultiplexedRequestContent;
 import com.linkedin.restli.common.multiplexer.MultiplexedResponseContent;
 import com.linkedin.restli.internal.common.ContentTypeUtil;
 import com.linkedin.restli.internal.common.ContentTypeUtil.ContentType;
-import com.linkedin.restli.internal.common.DataMapConverter;
-import com.linkedin.restli.internal.server.RestLiInternalException;
+import com.linkedin.restli.internal.common.CookieUtil;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.server.RestLiServiceException;
 
-import java.io.IOException;
-import java.net.URI;
+import java.net.HttpCookie;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import javax.activation.MimeTypeParseException;
 
 import org.slf4j.Logger;
@@ -75,22 +70,30 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
   private final Engine _engine;
   private final int _maximumRequestsNumber;
   private final MultiplexerSingletonFilter _multiplexerSingletonFilter;
+  private final Set<String> _individualRequestHeaderWhitelist;
 
   /**
    * @param requestHandler        the handler that will take care of individual requests
    * @param engine                ParSeq engine to run request handling on
    * @param maximumRequestsNumber the maximum number of individual requests allowed in a multiplexed request
+   * @param individualRequestHeaderWhitelist a set of request header names to allow if specified in the individual request
    * @param multiplexerSingletonFilter the singleton filter that is used by multiplexer to pre-process individual request and
    *                                   post-process individual response. Pass in null if no pre-processing or post-processing are required.
    */
   public MultiplexedRequestHandlerImpl(RestRequestHandler requestHandler,
                                        Engine engine,
                                        int maximumRequestsNumber,
+                                       Set<String> individualRequestHeaderWhitelist,
                                        MultiplexerSingletonFilter multiplexerSingletonFilter)
   {
     _requestHandler = requestHandler;
     _engine = engine;
     _maximumRequestsNumber = maximumRequestsNumber;
+    _individualRequestHeaderWhitelist = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
+    if (individualRequestHeaderWhitelist != null)
+    {
+      _individualRequestHeaderWhitelist.addAll(individualRequestHeaderWhitelist);
+    }
     _multiplexerSingletonFilter = multiplexerSingletonFilter;
   }
 
@@ -129,14 +132,15 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
     }
     // prepare the map of individual responses to be collected
     final IndividualResponseMap individualResponses = new IndividualResponseMap(individualRequests.size());
+    final Map<String, HttpCookie> responseCookies = new HashMap<String, HttpCookie>();
     // all tasks are Void and side effect based, that will be useful when we add streaming
-    Task<Void> requestProcessingTask = createParallelRequestsTask(requestContext, individualRequests, individualResponses);
+    Task<Void> requestProcessingTask = createParallelRequestsTask(request, requestContext, individualRequests, individualResponses, responseCookies);
     Task<Void> responseAggregationTask = Tasks.action("send aggregated response", new Runnable()
     {
       @Override
       public void run()
       {
-        RestResponse aggregatedResponse = aggregateResponses(individualResponses);
+        RestResponse aggregatedResponse = aggregateResponses(individualResponses, responseCookies);
         callback.onSuccess(aggregatedResponse);
       }
     });
@@ -195,10 +199,11 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
     }
   }
 
-
-  private Task<Void> createParallelRequestsTask(RequestContext requestContext,
+  private Task<Void> createParallelRequestsTask(RestRequest envelopeRequest,
+                                                RequestContext requestContext,
                                                 IndividualRequestMap individualRequests,
-                                                IndividualResponseMap individualResponses)
+                                                IndividualResponseMap individualResponses,
+                                                Map<String, HttpCookie> responseCookies)
   {
     List<Task<Void>> tasks = new ArrayList<Task<Void>>(individualRequests.size());
     for (IndividualRequestMap.Entry<String, IndividualRequest> individualRequestMapEntry : individualRequests.entrySet())
@@ -206,7 +211,7 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
       String id = individualRequestMapEntry.getKey();
       IndividualRequest individualRequest = individualRequestMapEntry.getValue();
       // create a task for the current request
-      Task<Void> individualRequestTask = createRequestHandlingTask(id, requestContext, individualRequest, individualResponses);
+      Task<Void> individualRequestTask = createRequestHandlingTask(id, envelopeRequest, requestContext, individualRequest, individualResponses, responseCookies);
       IndividualRequestMap dependentRequests = individualRequest.getDependentRequests();
       if (dependentRequests.isEmpty())
       {
@@ -215,7 +220,7 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
       else
       {
         // recursively process dependent requests
-        Task<Void> dependentRequestsTask = createParallelRequestsTask(requestContext, dependentRequests, individualResponses);
+        Task<Void> dependentRequestsTask = createParallelRequestsTask(envelopeRequest, requestContext, dependentRequests, individualResponses, responseCookies);
         // tasks for dependant requests are executed after the current request's task
         tasks.add(Tasks.seq(individualRequestTask, dependentRequestsTask));
       }
@@ -223,94 +228,56 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
     return toVoid(Tasks.par(tasks));
   }
 
-  private  Task<Void> createRequestHandlingTask(final String id,
-                                                RequestContext requestContext,
-                                                final IndividualRequest individualRequest,
-                                                final IndividualResponseMap individualResponses)
+  private Task<Void> createRequestHandlingTask(final String id,
+                                               final RestRequest envelopeRequest,
+                                               final RequestContext requestContext,
+                                               final IndividualRequest individualRequest,
+                                               final IndividualResponseMap individualResponses,
+                                               final Map<String, HttpCookie> responseCookies)
   {
-    RestRequest individualRestRequest = createSyntheticRequest(id, individualRequest);
-    final RequestHandlingTask responseTask = new RequestHandlingTask(_requestHandler, individualRestRequest, requestContext);
-    Task<Void> addResponseTask = Tasks.action("add response", new Runnable()
+    final RequestSanitizationTask requestSanitizationTask = new RequestSanitizationTask(individualRequest, _individualRequestHeaderWhitelist);
+    final InheritEnvelopeRequestTask inheritEnvelopeRequestTask = new InheritEnvelopeRequestTask(envelopeRequest, requestSanitizationTask);
+    final RequestFilterTask requestFilterTask = new RequestFilterTask(_multiplexerSingletonFilter, inheritEnvelopeRequestTask);
+    final SyntheticRequestCreationTask syntheticRequestCreationTask = new SyntheticRequestCreationTask(id, envelopeRequest, requestFilterTask);
+    final RequestHandlingTask requestHandlingTask = new RequestHandlingTask(_requestHandler, syntheticRequestCreationTask, requestContext);
+    final IndividualResponseConversionTask toIndividualResponseTask = new IndividualResponseConversionTask(id, requestHandlingTask);
+    final ResponseFilterTask responseFilterTask = new ResponseFilterTask(_multiplexerSingletonFilter, toIndividualResponseTask);
+    final Task<Void> addResponseTask = Tasks.action("add response", new Runnable()
     {
       @Override
       public void run()
       {
-        IndividualResponse individualResponse = toIndividualResponse(id, responseTask.get());
-        individualResponses.put(id, individualResponse);
+        IndividualResponseWithCookies individualResponseWithCookies = responseFilterTask.get();
+        individualResponses.put(id, individualResponseWithCookies.getIndividualResponse());
+        addResponseCookies(responseCookies, individualResponseWithCookies.getCookies());
       }
     });
-    return Tasks.seq(responseTask, addResponseTask);
+    return Tasks.seq(
+      requestSanitizationTask,
+      inheritEnvelopeRequestTask,
+      requestFilterTask,
+      syntheticRequestCreationTask,
+      requestHandlingTask,
+      toIndividualResponseTask,
+      responseFilterTask,
+      addResponseTask);
   }
 
-  private RestRequest createSyntheticRequest(String id, IndividualRequest individualRequest)
+  private static void addResponseCookies(Map<String, HttpCookie> responseCookies, List<String> setCookieHeaders)
   {
-    if (_multiplexerSingletonFilter != null)
+    List<HttpCookie> newCookies = CookieUtil.decodeSetCookies(setCookieHeaders);
+
+    for (HttpCookie newCookie: newCookies)
     {
-      individualRequest = _multiplexerSingletonFilter.filterIndividualRequest(individualRequest);
+      // Two cookies are the same if its name, path, and domain are identical.
+      String key = newCookie.getName() + ";"
+                   + ((newCookie.getDomain() != null) ? newCookie.getDomain().toLowerCase() : "") + ";"
+                   + ((newCookie.getPath() != null) ? newCookie.getPath() : "");
+      responseCookies.put(key, newCookie);
     }
-    URI uri = URI.create(individualRequest.getRelativeUrl());
-    ByteString entity = getBodyAsByteString(id, individualRequest);
-    return new RestRequestBuilder(uri)
-      .setMethod(individualRequest.getMethod())
-      .setHeaders(individualRequest.getHeaders())
-      .setCookies(individualRequest.getCookies())
-      .setEntity(entity)
-      .build();
   }
 
-  private static ByteString getBodyAsByteString(String id, IndividualRequest individualRequest)
-  {
-    IndividualBody body = individualRequest.getBody(GetMode.NULL);
-
-    ByteString entity = ByteString.empty();
-    try
-    {
-      if (body != null)
-      {
-        entity = DataMapConverter.dataMapToByteString(individualRequest.getHeaders(), body.data());
-      }
-    }
-    catch (MimeTypeParseException e)
-    {
-      throw new RestLiServiceException(HttpStatus.S_415_UNSUPPORTED_MEDIA_TYPE, "Unsupported media type for request id=" + id, e);
-    }
-    catch (IOException e)
-    {
-      throw new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST, "Invalid request body for request id=" + id, e);
-    }
-    return entity;
-  }
-
-  private IndividualResponse toIndividualResponse(String id, RestResponse restResponse)
-  {
-    IndividualResponse individualResponse = new IndividualResponse();
-    individualResponse.setStatus(restResponse.getStatus());
-    individualResponse.setHeaders(new StringMap(restResponse.getHeaders()));
-    individualResponse.setCookies(new StringArray(restResponse.getCookies()));
-    ByteString entity = restResponse.getEntity();
-    if (!entity.isEmpty())
-    {
-      try
-      {
-        individualResponse.setBody(new IndividualBody(DataMapConverter.bytesToDataMap(restResponse.getHeaders(), entity)));
-      }
-      catch (MimeTypeParseException e)
-      {
-        throw new RestLiInternalException("Invalid content type for individual response: " + id, e);
-      }
-      catch (IOException e)
-      {
-        throw new RestLiInternalException("Unable to set body for individual response: " + id, e);
-      }
-    }
-    if (_multiplexerSingletonFilter != null)
-    {
-      individualResponse = _multiplexerSingletonFilter.filterIndividualResponse(individualResponse);
-    }
-    return individualResponse;
-  }
-
-  private static RestResponse aggregateResponses(IndividualResponseMap responses)
+  private static RestResponse aggregateResponses(IndividualResponseMap responses, Map<String, HttpCookie> responseCookies)
   {
     MultiplexedResponseContent aggregatedResponseContent = new MultiplexedResponseContent();
     aggregatedResponseContent.setResponses(responses);
@@ -318,7 +285,8 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
     return new RestResponseBuilder()
         .setStatus(HttpStatus.S_200_OK.getCode())
         .setEntity(aggregatedResponseData)
-        .build();
+        .setCookies(CookieUtil.encodeSetCookies(new ArrayList(responseCookies.values())))
+      .build();
   }
 
   /**

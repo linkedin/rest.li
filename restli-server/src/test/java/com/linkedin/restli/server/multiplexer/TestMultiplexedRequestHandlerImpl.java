@@ -21,7 +21,6 @@ import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.JacksonDataCodec;
-import com.linkedin.data.template.StringArray;
 import com.linkedin.data.template.StringMap;
 import com.linkedin.parseq.Engine;
 import com.linkedin.parseq.EngineBuilder;
@@ -43,15 +42,24 @@ import com.linkedin.restli.common.multiplexer.MultiplexedRequestContent;
 import com.linkedin.restli.common.multiplexer.MultiplexedResponseContent;
 import com.linkedin.restli.internal.common.ContentTypeUtil;
 import com.linkedin.restli.internal.common.ContentTypeUtil.ContentType;
+import com.linkedin.restli.internal.common.CookieUtil;
+import com.linkedin.restli.internal.common.DataMapConverter;
 import com.linkedin.restli.server.RestLiServiceException;
 
 import com.google.common.collect.ImmutableMap;
 
 import java.io.IOException;
+import java.net.HttpCookie;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -67,6 +75,7 @@ import static org.easymock.EasyMock.verify;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 
 public class TestMultiplexedRequestHandlerImpl
@@ -161,8 +170,8 @@ public class TestMultiplexedRequestHandlerImpl
     // MultiplexedRequestHandlerImpl is created with the request limit set to 2
     MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(null);
     RestRequest request = fakeMuxRestRequest(ImmutableMap.of("0", fakeIndRequest(FOO_URL),
-                                                             "1", fakeIndRequest(FOO_URL),
-                                                             "2", fakeIndRequest(FOO_URL)));
+      "1", fakeIndRequest(FOO_URL),
+      "2", fakeIndRequest(FOO_URL)));
     FutureCallback<RestResponse> callback = new FutureCallback<RestResponse>();
     multiplexer.handleRequest(request, new RequestContext(), callback);
     assertEquals(getError(callback).getStatus(), HttpStatus.S_400_BAD_REQUEST);
@@ -227,13 +236,427 @@ public class TestMultiplexedRequestHandlerImpl
   }
 
   @Test
+  public void testIndividualRequestInheritHeadersAndCookiesFromEnvelopeRequest() throws Exception
+  {
+    // When some request headers/cookies are passed in the envelope, we need to ensure
+    // they are properly included in each of the individual requests sent to
+    // MultiplexerSingletonFilter and request handler. In the high level, the expected behavior should be:
+
+    // 1. IndividualRequest that is passed to MultiplexerSingletonFilter should already have headers inherited from the
+    //    envelope request.
+    // 2. RestRequest that is passed to the request handler should have both headers and cookies inherited from the
+    //    envelope request.
+
+    // Create a mockHandler. Captures all headers and cookies found in the request.
+    final Map<String, String> headers = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+    final Map<String, String> cookies = new HashMap<String, String>();
+
+    SynchronousRequestHandler mockHandler = new SynchronousRequestHandler() {
+      @Override
+      public RestResponse handleRequestSync(RestRequest request, RequestContext requestContext)
+      {
+        try
+        {
+          headers.putAll(request.getHeaders());
+          for(HttpCookie cookie : CookieUtil.decodeCookies(request.getCookies()))
+          {
+            cookies.put(cookie.getName(), cookie.getValue());
+          }
+          return fakeIndRestResponse(jsonBodyToByteString(new IndividualBody()));
+        }
+        catch (Exception e)
+        {
+          throw new RuntimeException(e);
+        }
+      }
+    };
+
+    // Create a mock MultiplexerSingletonFilter to put request headers inside another headers so
+    // we can do assertion on it later.
+    final Map<String, String> headersSeenInMuxFilter = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+    MultiplexerSingletonFilter muxFilterWithSimulatedFailures = new MultiplexerSingletonFilter() {
+      @Override
+      public IndividualRequest filterIndividualRequest(IndividualRequest request)
+      {
+        headersSeenInMuxFilter.putAll(request.getHeaders());
+        return request;
+      }
+
+      @Override
+      public IndividualResponse filterIndividualResponse(IndividualResponse response)
+      {
+        return response;
+      }
+    };
+
+    // Prepare request to mux handler
+    FutureCallback<RestResponse> callback = new FutureCallback<RestResponse>();
+    RequestContext requestContext = new RequestContext();
+    Map<String, IndividualRequest> individualRequests = ImmutableMap.of(
+      "0", fakeIndRequest("/request",
+                          ImmutableMap.of("X-IndividualHeader", "individualHeader",
+                                          "X-OverridableHeader", "overrideHeader"),
+                          Collections.<String, IndividualRequest>emptyMap()));
+
+    Set<String> headerWhiteList = new HashSet<String>();
+    headerWhiteList.add("X-IndividualHeader");
+    headerWhiteList.add("X-OverridableHeader");
+
+    // Prepare mux request with cookie
+    RestRequest muxRequest = new RestRequestBuilder(fakeMuxRestRequest(individualRequests))
+      .addCookie("cookie1=cookie1Value; cookie2=cookie2Value")
+      .addHeaderValue("X-overridableheader", "originalHeader")
+      .addHeaderValue("X-Envelope", "envelopeHeaderValue")
+      .build();
+
+    // Create mux handler instance
+    MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(mockHandler, muxFilterWithSimulatedFailures, headerWhiteList, individualRequests.size());
+
+    try
+    {
+      multiplexer.handleRequest(muxRequest, requestContext, callback);
+    }
+    catch (Exception e)
+    {
+      fail("Multiplexer should not throw exception", e);
+    }
+
+    RestResponse muxRestResponse = callback.get();
+    // Assert multiplexed request should return a 200 status code
+    assertEquals(muxRestResponse.getStatus(), 200, "Multiplexer should return 200");
+    MultiplexedResponseContent muxResponseContent = new MultiplexedResponseContent(DataMapConverter.bytesToDataMap(muxRestResponse.getHeaders(), muxRestResponse.getEntity()));
+
+    IndividualResponse response = muxResponseContent.getResponses().get("0");
+    assertEquals(response.getStatus().intValue(), 200, "Individual request should not fail. Response body is: " + response.getBody().toString());
+
+    Map<String, String> expectedHeaders = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+    expectedHeaders.putAll(ImmutableMap.of(
+      RestConstants.HEADER_CONTENT_TYPE, RestConstants.HEADER_VALUE_APPLICATION_JSON,
+      "X-IndividualHeader", "individualHeader",
+      "X-OverridableHeader", "overrideHeader",
+      "X-Envelope", "envelopeHeaderValue"));
+
+    Map<String, String> expectedCookies = ImmutableMap.of(
+      "cookie1", "cookie1Value",
+      "cookie2", "cookie2Value");
+
+    assertEquals(headers.size(), expectedHeaders.size(), "Incorrect numnber of headers, found:" + headers.toString());
+    assertEquals(cookies.size(), expectedCookies.size(), "Incorrect numnber of cookies, found:" + cookies.toString());
+    assertEquals(headersSeenInMuxFilter.size(), expectedHeaders.size(), "Incorrect numnber of headers seen by Mux filter, found:" + headers.toString());
+
+    for(Map.Entry<String, String> header : headers.entrySet())
+    {
+      assertEquals(header.getValue(), expectedHeaders.get(header.getKey()), "Incorrect header value for header: " + header.getKey());
+    }
+
+    for(Map.Entry<String, String> cookie : cookies.entrySet())
+    {
+      assertEquals(cookie.getValue(), expectedCookies.get(cookie.getKey()), "Incorrect cookie value for cookie: " + cookie.getKey());
+    }
+
+    for(Map.Entry<String, String> header : headersSeenInMuxFilter.entrySet())
+    {
+      assertEquals(header.getValue(), expectedHeaders.get(header.getKey()), "Incorrect header value for header seen by Mux Filter: " + header.getKey());
+    }
+  }
+
+  @Test
+  public void testRequestHeaderWhiteListing() throws Exception
+  {
+    // Validating request header white listing logic
+
+    // Create a mockHandler.  Make it return different cookies based on the request
+    SynchronousRequestHandler mockHandler = new SynchronousRequestHandler() {
+      @Override
+      public RestResponse handleRequestSync(RestRequest request, RequestContext requestContext)
+      {
+        try
+        {
+          return fakeIndRestResponse(jsonBodyToByteString(fakeIndividualBody("foobar")));
+        }
+        catch (Exception e)
+        {
+          throw new RuntimeException(e);
+        }
+      }
+    };
+    // Prepare request to mux handler
+    FutureCallback<RestResponse> callback = new FutureCallback<RestResponse>();
+    RequestContext requestContext = new RequestContext();
+    Map<String, IndividualRequest> individualRequests = ImmutableMap.of(
+      "0", fakeIndRequest("/request1",
+                          ImmutableMap.of("x-I-am-a-good-Header", "headerValue"),
+                          Collections.<String, IndividualRequest>emptyMap()),
+      "1", fakeIndRequest("/request2",
+                          ImmutableMap.of("X-Malicious-Header", "evilHeader"),
+                          Collections.<String, IndividualRequest>emptyMap()));
+
+    Set<String> headerWhiteList = new HashSet<String>();
+    headerWhiteList.add("X-I-AM-A-GOOD-HEADER");
+
+    // Create mux handler instance
+    MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(mockHandler, null, headerWhiteList, individualRequests.size());
+
+    try
+    {
+      multiplexer.handleRequest(fakeMuxRestRequest(individualRequests), requestContext, callback);
+    }
+    catch (Exception e)
+    {
+      fail("Multiplexer should not throw exception", e);
+    }
+
+    RestResponse muxRestResponse = callback.get();
+    // Assert multiplexed request should return a 200 status code
+    assertEquals(muxRestResponse.getStatus(), 200, "Multiplexer should return 200");
+    MultiplexedResponseContent muxResponseContent = new MultiplexedResponseContent(DataMapConverter.bytesToDataMap(muxRestResponse.getHeaders(), muxRestResponse.getEntity()));
+    assertEquals(muxResponseContent.getResponses().get("0").getStatus().intValue(), 200, "Request with whitelisted request header should complete successfully");
+    assertEquals(muxResponseContent.getResponses().get("1").getStatus().intValue(), 400, "Request with non-whitelisted request header should receive a 400 bad request error");
+  }
+
+  @Test
+  public void testResponseCookiesAggregated() throws Exception
+  {
+    // Per security review: We should not make cookies for each individual responses visible to the client (especially if the cookie is HttpOnly).
+    // Therefore all cookies returned by individual responses will be aggregated at the envelope response level.
+
+    // Create a mockHandler. Make it return different cookies based on the request
+    SynchronousRequestHandler mockHandler = new SynchronousRequestHandler() {
+      @Override
+      public RestResponse handleRequestSync(RestRequest request, RequestContext requestContext)
+      {
+        try
+        {
+          URI uri = request.getURI();
+          RestResponseBuilder restResponseBuilder = new RestResponseBuilder();
+          restResponseBuilder.setStatus(HttpStatus.S_200_OK.getCode());
+          restResponseBuilder.setEntity(jsonBodyToByteString(fakeIndividualBody("don't care")));
+          List<HttpCookie> cookies = new ArrayList<HttpCookie>();
+          if (uri.getPath().contains("req1"))
+          {
+            HttpCookie cookie = new HttpCookie("cookie1", "cookie1Value");
+            cookie.setDomain(".www.linkedin.com");
+            cookie.setSecure(false);
+            cookies.add(cookie);
+
+            HttpCookie commonCookie = new HttpCookie("commonCookie", "commonCookieValue");
+            commonCookie.setDomain(".WWW.linkedin.com");
+            commonCookie.setPath("/foo");
+            commonCookie.setSecure(false);
+            cookies.add(commonCookie);
+          }
+          else if (uri.getPath().contains("req2"))
+          {
+            HttpCookie cookie = new HttpCookie("cookie2", "cookie2Value");
+            cookie.setDomain("www.linkedin.com");
+            cookie.setSecure(false);
+            cookies.add(cookie);
+
+            cookie = new HttpCookie("cookie3", "cookie3Value");
+            cookies.add(cookie);
+
+            HttpCookie commonCookie = new HttpCookie("commonCookie", "commonCookieValue");
+            commonCookie.setDomain(".www.linkedin.com");
+            commonCookie.setPath("/foo");
+            commonCookie.setSecure(true);
+            cookies.add(commonCookie);
+          }
+          else
+          {
+            HttpCookie cookie = new HttpCookie("cookie2", "newCookie2Value");
+            cookie.setDomain("www.linkedin.com");
+            cookie.setSecure(true);
+            cookies.add(cookie);
+          }
+          return restResponseBuilder.setCookies(CookieUtil.encodeSetCookies(cookies)).build();
+        }
+        catch (Exception e)
+        {
+          throw new RuntimeException(e);
+        }
+      }
+    };
+
+    // Prepare request to mux handler
+    FutureCallback<RestResponse> callback = new FutureCallback<RestResponse>();
+    RequestContext requestContext = new RequestContext();
+    Map<String, IndividualRequest> individualRequests = ImmutableMap.of(
+      "0", fakeIndRequest("/req1"),
+      "1", fakeIndRequest("/req2", ImmutableMap.of("2", fakeIndRequest("/req3"))));
+
+    // Create mux handler instance
+    MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(mockHandler, null, Collections.<String>emptySet(), 3);
+
+    try
+    {
+      multiplexer.handleRequest(fakeMuxRestRequest(individualRequests), requestContext, callback);
+    }
+    catch (Exception e)
+    {
+      fail("Multiplexer should not throw exception", e);
+    }
+
+    RestResponse muxRestResponse = callback.get();
+    // assert multiplexed request should return a 200 status code
+    assertEquals(muxRestResponse.getStatus(), 200, "Multiplexer should return 200");
+    MultiplexedResponseContent muxResponseContent = new MultiplexedResponseContent(DataMapConverter.bytesToDataMap(muxRestResponse.getHeaders(), muxRestResponse.getEntity()));
+
+    // individual response should not have set-cookie headers
+    IndividualResponseMap responses = muxResponseContent.getResponses();
+    for(IndividualResponse res : responses.values())
+    {
+      for(String headerName : res.getHeaders().keySet())
+      {
+        assertTrue(headerName.equalsIgnoreCase("set-cookie"), "Individual response header should not container set-cookie header: " + responses.toString());
+      }
+    }
+
+    // Ensure cookies are aggregated at envelope level
+    List<HttpCookie> cookies = CookieUtil.decodeSetCookies(muxRestResponse.getCookies());
+    assertEquals(cookies.size(), 4);
+    for(HttpCookie cookie: cookies)
+    {
+      if ("cookie1".equals(cookie.getName()))
+      {
+        assertEquals(cookie.getValue(), "cookie1Value");
+        assertEquals(cookie.getDomain(), ".www.linkedin.com");
+        assertEquals(cookie.getSecure(), false);
+      }
+      else if ("cookie2".equals(cookie.getName()))
+      {
+        assertEquals(cookie.getValue(), "newCookie2Value");
+        assertEquals(cookie.getDomain(), "www.linkedin.com");
+        assertEquals(cookie.getSecure(), true);
+      }
+      else if ("cookie3".equals(cookie.getName()))
+      {
+        assertEquals(cookie.getValue(), "cookie3Value");
+      }
+      else if ("commonCookie".equals(cookie.getName()))
+      {
+        assertEquals(cookie.getValue(), "commonCookieValue");
+        assertEquals(cookie.getDomain().toLowerCase(), ".www.linkedin.com");
+        assertEquals(cookie.getPath(), "/foo");
+        // Since request0 and request1 are executed in parallel, depending on which request is completed first,
+        // we don't know what will be its final 'secure' attribute value.
+      }
+      else
+      {
+        fail("Unknown cookie name: " + cookie.getName());
+      }
+    }
+  }
+
+  @Test
+  public void testMultiplexedSingletonFilterFailures() throws Exception
+  {
+    // This test validates when a failure occurred in MultiplexedSingletonFilter for an individual request, only the individual
+    // request should fail. The multiplexed request should still be completed successfully with a 200 status code.
+
+    // Setup mock request handler: make handler return a json that contains the request uri
+    // We are using this uri in our mock MultiplexerSingletonFilter.filterIndividualResponse function so that
+    // we can simulate different response based on the request.
+    SynchronousRequestHandler mockHandler = new SynchronousRequestHandler() {
+      @Override
+      public RestResponse handleRequestSync(RestRequest request, RequestContext requestContext)
+      {
+        try
+        {
+          return fakeIndRestResponse(jsonBodyToByteString(fakeIndividualBody(request.getURI().toString())));
+        }
+        catch (Exception e)
+        {
+          throw new RuntimeException(e);
+        }
+      }
+    };
+
+    // Create a mock MultiplexerSingletonFilter to it simulate different type of failures.
+    // Failure is simulated are base on the request uri.
+    MultiplexerSingletonFilter muxFilterWithSimulatedFailures = new MultiplexerSingletonFilter() {
+      @Override
+      public IndividualRequest filterIndividualRequest(IndividualRequest request)
+      {
+        if (request.getRelativeUrl().contains("bad_request"))
+        {
+          throw new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST, "not found");
+        }
+        else if (request.getRelativeUrl().contains("error_request"))
+        {
+          throw new IllegalArgumentException("Something really bad happened in filterIndividualRequest");
+        }
+        return request;
+      }
+
+      @Override
+      public IndividualResponse filterIndividualResponse(IndividualResponse response)
+      {
+        if (response.getStatus() == HttpStatus.S_200_OK.getCode())
+        {
+          if (response.getBody().data().getString("value").contains("notfound_response"))
+          {
+            throw new RestLiServiceException(HttpStatus.S_404_NOT_FOUND, "not found");
+          }
+          else if (response.getBody().data().getString("value").contains("error_response"))
+          {
+            // simulate an unexpected exception
+            throw new UnsupportedOperationException("Something really bad happened in filterIndividualResponse");
+          }
+        }
+        return response;
+      }
+    };
+
+    // Prepare request to mux handler
+    FutureCallback<RestResponse> callback = new FutureCallback<RestResponse>();
+    RequestContext requestContext = new RequestContext();
+    Map<String, IndividualRequest> individualRequests = new HashMap<String, IndividualRequest>();
+    individualRequests.put("0", fakeIndRequest("/good_request"));
+    individualRequests.put("1", fakeIndRequest("/bad_request"));
+    individualRequests.put("2", fakeIndRequest("/error_request"));
+    individualRequests.put("3", fakeIndRequest("/notfound_response"));
+    individualRequests.put("4", fakeIndRequest("/error_response"));
+    individualRequests.put("5", fakeIndRequest("/good_request", ImmutableMap.of("6", fakeIndRequest("/bad_request"))));
+
+
+    RestRequest request = fakeMuxRestRequest(individualRequests);
+
+    // Create mux handler instance
+    MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(mockHandler, muxFilterWithSimulatedFailures, Collections.<String>emptySet(), 10);
+
+    try
+    {
+      multiplexer.handleRequest(request, requestContext, callback);
+    }
+    catch (Exception e)
+    {
+      fail("Multiplexer should not blow up because one of the individual requests failed", e);
+    }
+
+    RestResponse muxRestResponse = callback.get();
+    // Assert multiplexed request should return a 200 status code
+    assertEquals(muxRestResponse.getStatus(), 200, "Failure in indivudal request should not cause the entire multliplexed request to fail");
+    MultiplexedResponseContent muxResponseContent = new MultiplexedResponseContent(DataMapConverter.bytesToDataMap(muxRestResponse.getHeaders(), muxRestResponse.getEntity()));
+
+    IndividualResponseMap responses = muxResponseContent.getResponses();
+    // Validate the status code for each of the response
+    assertEquals(responses.get("0").getStatus().intValue(), 200, "Mux response body is: " +  responses.toString());
+    assertEquals(responses.get("1").getStatus().intValue(), 400, "Mux response body is: " + responses.toString());
+    assertEquals(responses.get("2").getStatus().intValue(), 500, "Mux response body is: " +  responses.toString());
+    assertEquals(responses.get("3").getStatus().intValue(), 404, "Mux response body is: " +  responses.toString());
+    assertEquals(responses.get("4").getStatus().intValue(), 500, "Mux response body is: " + responses.toString());
+    assertEquals(responses.get("5").getStatus().intValue(), 200, "Mux response body is: " + responses.toString());
+    assertEquals(responses.get("6").getStatus().intValue(), 400, "Mux response body is: " + responses.toString());
+  }
+
+  @Test
   public void testHandleSingleRequest() throws Exception
   {
     SynchronousRequestHandler mockHandler = createMockHandler();
     MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(mockHandler);
     RequestContext requestContext = new RequestContext();
 
-    RestRequest request = fakeMuxRestRequest(ImmutableMap.of("0",fakeIndRequest(FOO_URL)));
+    RestRequest request = fakeMuxRestRequest(ImmutableMap.of("0", fakeIndRequest(FOO_URL)));
 
     // set expectations
     RestRequest individualRestRequest = fakeIndRestRequest(FOO_URL);
@@ -367,21 +790,29 @@ public class TestMultiplexedRequestHandlerImpl
         .createMock();
   }
 
-  private static MultiplexedRequestHandlerImpl createMultiplexer(RestRequestHandler requestHandler)
+  private static MultiplexedRequestHandlerImpl createMultiplexer(RestRequestHandler requestHandler, MultiplexerSingletonFilter multiplexerSingletonFilter)
   {
-    return createMultiplexer(requestHandler, null);
+    return createMultiplexer(requestHandler, multiplexerSingletonFilter, Collections.<String>emptySet(), MAXIMUM_REQUESTS_NUMBER);
   }
 
-  private static MultiplexedRequestHandlerImpl createMultiplexer(RestRequestHandler requestHandler, MultiplexerSingletonFilter multiplexerSingletonFilter)
+  private static MultiplexedRequestHandlerImpl createMultiplexer(RestRequestHandler requestHandler,
+                                                                 MultiplexerSingletonFilter multiplexerSingletonFilter,
+                                                                 Set<String> individualRequestHeaderWhitelist,
+                                                                 int maxRequestCount)
   {
     ExecutorService taskScheduler = Executors.newFixedThreadPool(1);
     ScheduledExecutorService timerScheduler = Executors.newSingleThreadScheduledExecutor();
     Engine engine = new EngineBuilder()
-        .setTaskExecutor(taskScheduler)
-        .setTimerScheduler(timerScheduler)
-        .build();
+      .setTaskExecutor(taskScheduler)
+      .setTimerScheduler(timerScheduler)
+      .build();
 
-    return new MultiplexedRequestHandlerImpl(requestHandler, engine, MAXIMUM_REQUESTS_NUMBER, multiplexerSingletonFilter);
+    return new MultiplexedRequestHandlerImpl(requestHandler, engine, maxRequestCount, individualRequestHeaderWhitelist, multiplexerSingletonFilter);
+  }
+
+  private static MultiplexedRequestHandlerImpl createMultiplexer(RestRequestHandler requestHandler)
+  {
+    return createMultiplexer(requestHandler, null);
   }
 
   private static IndividualRequest fakeIndRequest(String url)
@@ -389,12 +820,21 @@ public class TestMultiplexedRequestHandlerImpl
     return fakeIndRequest(url, Collections.<String, IndividualRequest>emptyMap());
   }
 
+
   private static IndividualRequest fakeIndRequest(String url, Map<String, IndividualRequest> dependentRequests)
   {
+    return fakeIndRequest(url, null, dependentRequests);
+  }
 
+  private static IndividualRequest fakeIndRequest(String url, Map<String, String> headers, Map<String, IndividualRequest> dependentRequests)
+  {
     IndividualRequest individualRequest = new IndividualRequest();
     individualRequest.setMethod(HttpMethod.GET.name());
     individualRequest.setRelativeUrl(url);
+    if (headers != null && headers.size() > 0)
+    {
+      individualRequest.setHeaders(new StringMap(headers));
+    }
     individualRequest.setDependentRequests(new IndividualRequestMap(dependentRequests));
     return individualRequest;
   }
@@ -403,7 +843,6 @@ public class TestMultiplexedRequestHandlerImpl
   {
     IndividualResponse individualResponse = new IndividualResponse();
     individualResponse.setStatus(HttpStatus.S_200_OK.getCode());
-    individualResponse.setCookies(new StringArray());
     individualResponse.setHeaders(new StringMap());
     individualResponse.setBody(entity);
     return individualResponse;
@@ -413,8 +852,6 @@ public class TestMultiplexedRequestHandlerImpl
   {
     IndividualResponse individualResponse = new IndividualResponse();
     individualResponse.setStatus(HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode());
-    individualResponse.setCookies(new StringArray());
-    individualResponse.setHeaders(new StringMap());
     return individualResponse;
   }
 
@@ -422,6 +859,7 @@ public class TestMultiplexedRequestHandlerImpl
   {
     return new RestRequestBuilder(new URI(url))
         .setMethod(HttpMethod.GET.name())
+        .setHeader(RestConstants.HEADER_CONTENT_TYPE, RestConstants.HEADER_VALUE_APPLICATION_JSON)
         .build();
   }
 

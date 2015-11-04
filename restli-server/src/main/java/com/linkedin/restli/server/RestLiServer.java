@@ -135,6 +135,7 @@ public class RestLiServer extends BaseRestServer
     _multiplexedRequestHandler = new MultiplexedRequestHandlerImpl(this,
                                                                    engine,
                                                                    config.getMaxRequestsMultiplexed(),
+                                                                   config.getMultiplexedIndividualRequestHeaderWhitelist(),
                                                                    config.getMultiplexerSingletonFilter());
 
     // verify that if there are resources using the engine, then the engine is not null

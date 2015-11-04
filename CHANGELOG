@@ -3,6 +3,12 @@
 (RB=599052)
 Treat query/action parameters with default values as optional in client builders.
 
+(RB=591044)
+Address Multiplexer security concerns.
+1. Disallow cookies to be passed in the individual requests.
+2. Only whitelisted headers are allowed to be specified in the individual requests.
+3. Cookies set by each of individual responses will be aggregated at the envelope level.
+
 2.12.2
 ------
 (RB=600375)

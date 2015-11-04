@@ -33,13 +33,11 @@ import com.linkedin.restli.common.multiplexer.IndividualBody;
 import com.linkedin.restli.common.multiplexer.IndividualRequest;
 import com.linkedin.restli.common.multiplexer.IndividualRequestMap;
 import com.linkedin.restli.common.multiplexer.MultiplexedRequestContent;
-import com.linkedin.restli.internal.common.CookieUtil;
 
 import com.google.common.collect.ImmutableMap;
 
 import java.io.IOException;
 import java.net.HttpCookie;
-import java.util.Collection;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -96,7 +94,7 @@ public class TestMultiplexedRequestBuilder extends MultiplexerTestBase
     verifyCallbacks(multiplexedRequest);
   }
 
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class)
   public void testCookies() throws RestLiEncodingException
   {
     final HttpCookie cookie1 = new HttpCookie("testCookie1", "testCookieValue1");
@@ -109,15 +107,9 @@ public class TestMultiplexedRequestBuilder extends MultiplexerTestBase
       .addCookie(cookie2)
       .build();
 
-    MultiplexedRequest multiplexedRequest = MultiplexedRequestBuilder
-      .createSequentialRequest()
-      .addRequest(requestWithCookie, callback2)
-      .build();
-    IndividualRequest ir = multiplexedRequest.getContent().getRequests().get("0");
-    Collection<HttpCookie> cookies = CookieUtil.decodeCookies(ir.getCookies());
-    final String errorMessageTemplate = "Unable to find cookie '%s' from cookie list in IndividualRequest: " + cookies.toString();
-    Assert.assertTrue(cookies.contains(cookie1), String.format(errorMessageTemplate, cookie1));
-    Assert.assertTrue(cookies.contains(cookie2), String.format(errorMessageTemplate, cookie2));
+    // Adding cookies to individual request should cause builder to throw an IllegalArgumentException exception.
+    // For security reason, cookies should be passed in the envelope request.
+    MultiplexedRequestBuilder.createSequentialRequest().addRequest(requestWithCookie, callback2).build();
   }
 
   @Test

@@ -27,24 +27,25 @@ import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
-import com.linkedin.r2.message.rest.RestResponseBuilder;
 import com.linkedin.r2.transport.common.RestRequestHandler;
-import com.linkedin.restli.common.HttpStatus;
 
 
 /**
  * A task responsible for executing individual requests. It converts callback based interface of {@link RestRequestHandler}
- * into a promise based interface. The task never fails, but it may return an error response.
+ * into a promise based interface.
+ *
+ * If request handling failed with a RestException, it will not fail the request.  Instead, it will just returned the encapsulated RestResponse object.
+ * The task can fail immediately if the previous task failed. Any other unexpected exception can also cause the task to fail.
  *
  * @author Dmitriy Yefremov
  */
-/* package private */ class RequestHandlingTask extends BaseTask<RestResponse>
+/* package private */ final class RequestHandlingTask extends BaseTask<RestResponse>
 {
   private final RestRequestHandler _requestHandler;
-  private final RestRequest _request;
+  private final BaseTask<RestRequest> _request;
   private final RequestContext _requestContext;
 
-  /* package private */ RequestHandlingTask(RestRequestHandler requestHandler, RestRequest request, RequestContext requestContext)
+  /* package private */ RequestHandlingTask(RestRequestHandler requestHandler, BaseTask<RestRequest> request, RequestContext requestContext)
   {
     _requestHandler = requestHandler;
     _request = request;
@@ -60,8 +61,19 @@ import com.linkedin.restli.common.HttpStatus;
       @Override
       public void onError(Throwable e)
       {
-        RestResponse result = toErrorResponse(e);
-        promise.done(result);
+        // It is assumed that the handler always returns RestException. It happens because the original callback passed into
+        // the handler is wrapped into com.linkedin.restli.internal.server.RestLiCallback.
+        // It is possible the callback is not wrapped and other exceptions are returned
+        // (e.g. com.linkedin.restli.server.RestLiServiceException). This is considered either a programmers mistake or a
+        // runtime exception.
+        if (e instanceof RestException)
+        {
+          promise.done(((RestException) e).getResponse());
+        }
+        else
+        {
+          promise.fail(e);
+        }
       }
 
       @Override
@@ -70,30 +82,23 @@ import com.linkedin.restli.common.HttpStatus;
         promise.done(result);
       }
     };
-    // try invoking the handler
-    try {
-      _requestHandler.handleRequest(_request, _requestContext, callback);
-    }
-    catch (Exception e)
+
+    if (_request.isFailed())
     {
-      callback.onError(e);
+      callback.onError(_request.getError());
+    }
+    else
+    {
+      // try invoking the handler
+      try
+      {
+        _requestHandler.handleRequest(_request.get(), _requestContext, callback);
+      }
+      catch (Exception e)
+      {
+        callback.onError(e);
+      }
     }
     return promise;
-  }
-
-  private static RestResponse toErrorResponse(Throwable e)
-  {
-    // It is assumed that the handler always returns RestException. It happens because the original callback passed into
-    // the handler is wrapped into com.linkedin.restli.internal.server.RestLiCallback.
-    // It is possible the callback is not wrapped and other exceptions are returned
-    // (e.g. com.linkedin.restli.server.RestLiServiceException). This is considered either a programmers mistake or a
-    // runtime exception.
-    if (e instanceof RestException)
-    {
-      return ((RestException) e).getResponse();
-    }
-    return new RestResponseBuilder()
-        .setStatus(HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode())
-        .build();
   }
 }
