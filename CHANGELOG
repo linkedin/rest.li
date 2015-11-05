@@ -1,5 +1,12 @@
+2.12.5
+------
+
+
 2.12.4
 ------
+(RB=606234)
+Fix a bug in ZooKeeperConnectionManager where we didn't retry when
+EphemeralStore failed to start.
 
 2.12.3
 ------

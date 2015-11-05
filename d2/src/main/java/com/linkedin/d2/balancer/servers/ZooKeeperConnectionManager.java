@@ -204,6 +204,11 @@ public class ZooKeeperConnectionManager
 
   private class Listener implements ZKPersistentConnection.EventListener
   {
+    /**
+     * a boolean flag to indicate whether _store is successfully started or not
+     */
+    private volatile boolean _storeStarted = false;
+
     @Override
     public void notifyEvent(ZKPersistentConnection.Event event)
     {
@@ -212,56 +217,28 @@ public class ZooKeeperConnectionManager
       {
         case SESSION_ESTABLISHED:
         {
-          Callback<None> callback = _startupCallback.getAndSet(null);
-          final Callback<None> multiCallback = callback != null ? Callbacks.countDown(callback, _servers.length) :
-                                                                  Callbacks.<None>empty();
           _store = _factory.createStore(_zkConnection.getZKConnection(), ZKFSUtil.uriPath(_zkBasePath));
-          _store.start(new Callback<None>()
-          {
-            @Override
-            public void onError(Throwable e)
-            {
-              LOG.error("Failed to start ZooKeeperEphemeralStore", e);
-            }
-
-            @Override
-            public void onSuccess(None result)
-            {
-              for (ZooKeeperAnnouncer server : _servers)
-              {
-                server.setStore(_store);
-                server.start(new Callback<None>()
-                {
-                  @Override
-                  public void onError(Throwable e)
-                  {
-                    LOG.error("Failed to start server", e);
-                    multiCallback.onError(e);
-                  }
-
-                  @Override
-                  public void onSuccess(None result)
-                  {
-                    LOG.info("Started an announcer");
-                    multiCallback.onSuccess(result);
-                  }
-                });
-              }
-              LOG.info("Started {} announcers", (_servers.length));
-            }
-          });
+          startStore();
           break;
         }
         case SESSION_EXPIRED:
         {
           _store.shutdown(Callbacks.<None>empty());
+          _storeStarted = false;
           break;
         }
         case CONNECTED:
         {
-          for (ZooKeeperAnnouncer server : _servers)
+          if (!_storeStarted)
           {
-            server.retry(Callbacks.<None>empty());
+            startStore();
+          }
+          else
+          {
+            for (ZooKeeperAnnouncer server : _servers)
+            {
+              server.retry(Callbacks.<None>empty());
+            }
           }
           break;
         }
@@ -269,6 +246,54 @@ public class ZooKeeperConnectionManager
           // do nothing
           break;
       }
+    }
+
+    private void startStore()
+    {
+      final Callback<None> callback = _startupCallback.getAndSet(null);
+      final Callback<None> multiCallback = callback != null ?
+          Callbacks.countDown(callback, _servers.length) :
+          Callbacks.<None>empty();
+      _store.start(new Callback<None>()
+      {
+        @Override
+        public void onError(Throwable e)
+        {
+          LOG.error("Failed to start ZooKeeperEphemeralStore", e);
+          if (callback != null)
+          {
+            callback.onError(e);
+          }
+        }
+
+        @Override
+        public void onSuccess(None result)
+        {
+          /* mark store as started */
+          _storeStarted = true;
+          for (ZooKeeperAnnouncer server : _servers)
+          {
+            server.setStore(_store);
+            server.start(new Callback<None>()
+            {
+              @Override
+              public void onError(Throwable e)
+              {
+                LOG.error("Failed to start server", e);
+                multiCallback.onError(e);
+              }
+
+              @Override
+              public void onSuccess(None result)
+              {
+                LOG.info("Started an announcer");
+                multiCallback.onSuccess(result);
+              }
+            });
+          }
+          LOG.info("Starting {} announcers", (_servers.length));
+        }
+      });
     }
   }
 
