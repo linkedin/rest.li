@@ -163,6 +163,8 @@ public class D2Config
     int status;
     // temporary mapping from cluster name to the list of colo variants it has.
     Map<String,List<String>> variantToVariantsMapping = new HashMap<String, List<String>>();
+    // temporary mapping of colo updated cluster -> service -> serviceConfig
+    Map<String, Map<String, Map<String, Object>>> updatedClusterServiceConfig = new HashMap<String, Map<String, Map<String,Object>>>();
 
     _log.info("basePath: " + _basePath);
     _log.info("clusterDefaults: " + _clusterDefaults);
@@ -385,6 +387,7 @@ public class D2Config
         } // end for each service
 
         status = addServicesToServicesMap(coloServicesConfigs, services, coloClusterName);
+        updatedClusterServiceConfig.put(coloClusterName, coloServicesConfigs);
         if (status != NO_ERROR_EXIT_CODE)
         {
           return status;
@@ -392,7 +395,7 @@ public class D2Config
         // Now that we've created colo-specific service to colo-specific cluster mappings, we now need
         // to actually create those colo-specific clusters.
         Map<String,Object> coloClusterConfig = clusterConfig;
-        if (clusterName != coloClusterName)
+        if (!clusterName.equals(coloClusterName))
         {
           coloClusterConfig = new HashMap<String,Object>(clusterConfig);
           coloClusterConfig.put(PropertyKeys.CLUSTER_NAME, coloClusterName);
@@ -451,33 +454,48 @@ public class D2Config
           List<String> coloClusterVariantList = variantToVariantsMapping.get(clusterItem);
           if (coloClusterVariantList == null)
           {
-            // the service group had an unknown cluster!
-            _log.error("Unknown cluster specified: " + clusterItem);
-            return EXCEPTION_EXIT_CODE;
-          }
-
-          // we need to iterate through the coloVariants of this clusterVariant, and add the services
-          // in those coloVariants to this service group's list of services.
-          for (String coloClusterVariant : coloClusterVariantList)
-          {
-            Map<String,Map<String,Object>> candidateServices = clusterToServiceMapping.get(coloClusterVariant);
-
-            if (candidateServices == null)
+            Map<String, Map<String, Object>> serviceCfgs = updatedClusterServiceConfig.get(clusterItem);
+            if (PropertyKeys.FULL_CLUSTER_LIST.equals(type) && serviceCfgs != null)
+            {
+              // For full_cluster_list type, it is allowed to specify real cluster name, not
+              // necessarily always clusterVariant. Save the service configuration here for the cluster
+              for (Map.Entry<String, Map<String, Object>> entry : serviceCfgs.entrySet())
+              {
+                if (servicesGroupConfig.put(entry.getKey(), entry.getValue()) != null)
+                {
+                  _log.error("Service group " + serviceGroup + " has duplicate service " + entry.getKey());
+                  return EXCEPTION_EXIT_CODE;
+                }
+              }
+            }
+            else
             {
               // the service group had an unknown cluster!
-              _log.error("Unknown cluster specified: " + coloClusterVariant);
+              _log.error("Unknown cluster specified: " + clusterItem);
               return EXCEPTION_EXIT_CODE;
             }
+          }
+          else
+          {
+            // we need to iterate through the coloVariants of this clusterVariant, and add the services
+            // in those coloVariants to this service group's list of services.
+            for (String coloClusterVariant : coloClusterVariantList) {
+              Map<String, Map<String, Object>> candidateServices = clusterToServiceMapping.get(coloClusterVariant);
 
-            for (Map.Entry<String,Map<String,Object>> mapEntry :candidateServices.entrySet())
-            {
-              Object testValue = servicesGroupConfig.put(mapEntry.getKey(), mapEntry.getValue());
-              if (testValue != null)
-              {
-                // We shouldn't have had conflicting services, two variants of the same cluster
-                // were probably specified in the same service group.
-                _log.error("Service group has variants of the same cluster: " + serviceGroup );
+              if (candidateServices == null) {
+                // the service group had an unknown cluster!
+                _log.error("Unknown cluster specified: " + coloClusterVariant);
                 return EXCEPTION_EXIT_CODE;
+              }
+
+              for (Map.Entry<String, Map<String, Object>> mapEntry : candidateServices.entrySet()) {
+                Object testValue = servicesGroupConfig.put(mapEntry.getKey(), mapEntry.getValue());
+                if (testValue != null) {
+                  // We shouldn't have had conflicting services, two variants of the same cluster
+                  // were probably specified in the same service group.
+                  _log.error("Service group has variants of the same cluster: " + serviceGroup);
+                  return EXCEPTION_EXIT_CODE;
+                }
               }
             }
           }

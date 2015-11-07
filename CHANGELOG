@@ -10,6 +10,9 @@ EphemeralStore failed to start.
 
 2.12.3
 ------
+(RB=607852)
+Allow non-clusterVariant in ServiceGroup in d2.src.
+
 (RB=599052)
 Treat query/action parameters with default values as optional in client builders.
 

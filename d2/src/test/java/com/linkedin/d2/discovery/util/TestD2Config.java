@@ -1752,6 +1752,44 @@ public class TestD2Config
     verifyServiceProperties(D2Utils.getSymlinkNameForMaster(clusterVariantName), service2, "/"+service2, serviceGroupName);
   }
 
+  @Test
+  public static void testWithDefaultClusterInFullListMode() throws IOException, InterruptedException, URISyntaxException, Exception
+  {
+    Map<String, Object> clusterServiceConfigurations = new HashMap<String, Object>();
+    Map<String, Object> serviceVariants = new HashMap<String, Object>();
+
+    //Cluster Service Configurations
+    // Services With Variants
+    Map<String,Object> services = new HashMap<String,Object>();
+    services.put("services",D2ConfigTestUtil.generateServicesMap(1, "service", "testService"));
+
+    // We omit adding cluster variants to the cluster.
+
+    // Services Clusters
+    clusterServiceConfigurations.put("zServices", services);
+
+    // Cluster variants
+    // serviceGroup1
+    @SuppressWarnings("serial")
+    Map<String,Object> serviceGroup1 = new HashMap<String,Object>()
+    {{
+        put("type", "fullClusterList");
+        put("clusterList", Arrays.asList(new String[]{"zServices"}));
+      }};
+
+    serviceVariants.put("ServiceGroup1", serviceGroup1);
+
+    D2ConfigTestUtil d2Conf = new D2ConfigTestUtil();
+    d2Conf.setDefaults();
+    d2Conf.setClusterServiceConfigurations(clusterServiceConfigurations);
+    d2Conf.setServiceVariants(serviceVariants);
+
+    assertEquals(d2Conf.runDiscovery(_zkHosts), 0);
+
+    verifyServiceProperties("zServices", "service_1", "/testService", "ServiceGroup1");
+
+  }
+
   private static void verifyColoClusterAndServices(Map<String,List<String>> clustersData,
                                                    Map<String,List<String>> peerColoList,
                                                    Map<String,String> masterColoList, String defaultColo)
