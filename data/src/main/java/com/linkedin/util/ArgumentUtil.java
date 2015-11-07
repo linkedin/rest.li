@@ -56,6 +56,21 @@ public class ArgumentUtil
     }
   }
 
+  /**
+   * Verifies that the given argument is not {@code null}. If it is {@code null}, then a
+   * {@link NullPointerException} is raised.
+   *
+   * @param obj the object to test for null
+   * @param name the name of the argument that is being tested (used if an NPE is thrown).
+   * @return obj if obj is not null
+   * @throws NullPointerException if {@code obj == null}
+   */
+  public static <T> T ensureNotNull(T obj, String name)
+  {
+    notNull(obj, name);
+    return obj;
+  }
+
   public static void checkBounds(int arrayLength, int offset, int length)
   {
     if (offset < 0)

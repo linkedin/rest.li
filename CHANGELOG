@@ -1,5 +1,7 @@
 3.0.2
 ------
+Refactor ByteString to avoid extra copy in certain cases
+(RB=607805)
 
 3.0.1
 ------

@@ -58,6 +58,9 @@ public class TestByteString
     Assert.assertEquals(0, byteBuffer.remaining());
     Assert.assertEquals(0, byteBuffer.capacity());
     Assert.assertTrue(byteBuffer.isReadOnly());
+
+    ByteString twoEmpties = cons(ByteString.empty(), ByteString.empty());
+    Assert.assertSame(twoEmpties, ByteString.empty());
   }
 
   @Test
@@ -145,6 +148,9 @@ public class TestByteString
     Assert.assertEquals("test string", bs.asString(Data.UTF_8_CHARSET));
     Assert.assertEquals("test", bs.slice(0, 4).asString(Data.UTF_8_CHARSET));
     Assert.assertEquals("string", bs.copySlice(5, 6).asString(Data.UTF_8_CHARSET));
+
+    ByteString twoBs = cons(bs, bs);
+    Assert.assertEquals("test stringtest string", twoBs.asString(Data.UTF_8_CHARSET));
   }
 
   @Test(dataProvider = "byteStrings")
@@ -194,6 +200,8 @@ public class TestByteString
     Assert.assertEquals(bs, bs.slice(0, 4));
     Assert.assertEquals(bs, bs.copySlice(0, 4));
     Assert.assertEquals(bs.slice(1, 2), bs.copySlice(1, 2));
+
+    Assert.assertEquals(ByteString.copy(new byte[] {1,2,3,4,1,2,3,4}), cons(bs, bs));
   }
 
   @Test
@@ -208,6 +216,9 @@ public class TestByteString
     Assert.assertEquals(bs.hashCode(), bs.slice(0, 4).hashCode());
     Assert.assertEquals(bs.hashCode(), bs.copySlice(0, 4).hashCode());
     Assert.assertEquals(bs.slice(1, 2).hashCode(), bs.copySlice(1, 2).hashCode());
+
+    Assert.assertEquals(ByteString.copy(new byte[] {1,2,3,4,1,2,3,4}).hashCode(), cons(bs, bs).hashCode());
+
   }
 
   @Test
@@ -272,7 +283,12 @@ public class TestByteString
         sb.append(String.format("%02x", j));
       }
 
-      Assert.assertTrue(ByteString.copy(bytes).toString().contains("bytes=" + sb.toString()));
+      ByteString bs = ByteString.copy(bytes);
+      Assert.assertTrue(bs.toString().contains("bytes=" + sb.toString()));
+      if (i == 8)
+      {
+        Assert.assertTrue(cons(bs.slice(0, 4), bs.slice(4, 4)).toString().contains("bytes=" + sb.toString()));
+      }
     }
   }
 
@@ -342,6 +358,40 @@ public class TestByteString
     }
   }
 
+  @Test
+  public void complexSlice()
+  {
+    byte[] bytes = new byte[]{1,2,3};
+    ByteString bs = ByteString.copy(bytes);
+    ByteString twoBs = cons(bs, bs);
+    ByteString threeBs = cons(bs, twoBs);
+
+    byte[] threeBytes = new byte[] {1,2,3,1,2,3,1,2,3};
+
+    ByteString slice = threeBs.slice(1, 7);
+    ByteString expected = ByteString.copy(Arrays.copyOfRange(threeBytes, 1, 8));
+    Assert.assertEquals(slice, expected);
+    Assert.assertEquals(slice.hashCode(), expected.hashCode());
+
+    ByteString slice2 = slice.slice(1, 5);
+    ByteString expected2 = ByteString.copy(Arrays.copyOfRange(threeBytes, 2, 7));
+    Assert.assertEquals(slice2, expected2);
+    Assert.assertEquals(slice2.hashCode(), expected2.hashCode());
+
+    try
+    {
+      // try to access the invisible portion of the backing array
+      slice2.slice(0, 6);
+      Assert.fail("Should have failed due to IndexOutOfBound");
+    }
+    catch (IndexOutOfBoundsException ex)
+    {
+      // expected
+    }
+
+    Assert.assertEquals(twoBs.slice(2, 2), slice2.slice(0, 2));
+  }
+
   @Test(dataProvider = "byteStrings")
   public void testCopySlice(byte[] bytes, ByteString bs)
   {
@@ -350,16 +400,85 @@ public class TestByteString
     Assert.assertEquals(substr.copyBytes(), Arrays.copyOfRange(bytes, 2, 3));
   }
 
+  @Test
+  public void testBuilder()
+  {
+    ByteString.Builder builder = new ByteString.Builder();
+
+    Assert.assertEquals(builder.build(), ByteString.empty());
+
+    final byte[] bytes = new byte[1000];
+    for (int i = 0; i < 1000; i++)
+    {
+      bytes[i] = (byte)i;
+    }
+
+    ByteString bs = ByteString.copy(bytes);
+
+    builder.append(bs);
+
+    Assert.assertSame(builder.build(), bs);
+
+    builder.append(bs);
+    builder.append(bs);
+    ByteString newBs = builder.build();
+
+    final byte[] expectedBytes = new byte[3000];
+    System.arraycopy(bytes, 0, expectedBytes, 0, 1000);
+    System.arraycopy(bytes, 0, expectedBytes, 1000, 1000);
+    System.arraycopy(bytes, 0, expectedBytes, 2000, 1000);
+
+    Assert.assertEquals(newBs.copyBytes(), expectedBytes);
+
+    builder.append(newBs);
+    builder.append(bs);
+    ByteString newerBs = builder.build();
+
+    final byte[] expectedNewerBytes = new byte[7000];
+    System.arraycopy(expectedBytes, 0, expectedNewerBytes, 0, 3000);
+    System.arraycopy(expectedBytes, 0, expectedNewerBytes, 3000, 3000);
+    System.arraycopy(bytes, 0, expectedNewerBytes, 6000, 1000);
+
+    Assert.assertEquals(newerBs.copyBytes(), expectedNewerBytes);
+  }
+
+  @Test
+  public void testNullCheckOnBuilder()
+  {
+    ByteString.Builder builder = new ByteString.Builder();
+    try
+    {
+      builder.append(null);
+      Assert.fail();
+    } catch (NullPointerException ex) {
+      Assert.assertEquals(ex.getMessage(), "dataChunk is null");
+    }
+  }
+
   @DataProvider
   public Object[][] byteStrings()
   {
     final byte[] bytes = new byte[] {1,2,3,4,5};
     final ByteString bs = ByteString.copy(bytes);
+    final ByteString twoBs = cons(bs, bs);
+    final ByteString threeBs = cons(bs, twoBs);
+    final byte[] twoBsBytes = new byte[] {1,2,3,4,5,1,2,3,4,5};
+    final byte[] threeBsBytes = new byte[] {1,2,3,4,5,1,2,3,4,5,1,2,3,4,5};
+
     return new Object[][]{
         {bytes, bs},
         {Arrays.copyOfRange(bytes, 1, 4), ByteString.copy(bytes, 1, 3)},
-        {Arrays.copyOfRange(bytes, 1, 5), bs.slice(1, 4)},
-        {Arrays.copyOfRange(bytes, 1, 4), bs.copySlice(1, 3)}
+        {Arrays.copyOfRange(bytes, 1, 5), bs.slice(1, 4)},  // slice of simple byte string
+        {Arrays.copyOfRange(bytes, 1, 4), bs.copySlice(1, 3)}, // copy slice of simple byte string
+        {twoBsBytes, twoBs}, // composite byte string with two backing byte arrays built with two simple byte strings
+        {threeBsBytes, threeBs}, // composite byte string with three backing byte arrays built with a simple byte string and a composite byte string
+        {Arrays.copyOfRange(threeBsBytes, 1, 12), threeBs.slice(1, 11)} // slice of composite byte string
     };
+  }
+
+  ByteString cons(ByteString bs1, ByteString bs2)
+  {
+    ByteString.Builder builder = new ByteString.Builder();
+    return builder.append(bs1).append(bs2).build();
   }
 }
