@@ -222,13 +222,20 @@ public class ZooKeeperAnnouncer
   {
     for (;!callbacks.isEmpty();)
     {
-      if (t != null)
+      try
       {
-        callbacks.poll().onError(t);
+        if (t != null)
+        {
+          callbacks.poll().onError(t);
+        }
+        else
+        {
+          callbacks.poll().onSuccess(None.none());
+        }
       }
-      else
+      catch (Throwable throwable)
       {
-        callbacks.poll().onSuccess(None.none());
+        _log.error("Unexpected throwable from markUp/markDown callback.", throwable);
       }
     }
   }
