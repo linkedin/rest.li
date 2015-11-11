@@ -17,20 +17,27 @@
 package com.linkedin.restli.examples;
 
 
+import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.validation.ValidationResult;
 import com.linkedin.data.transform.DataProcessingException;
 import com.linkedin.restli.common.PatchRequest;
+import com.linkedin.restli.common.ResourceMethod;
+import com.linkedin.restli.common.validation.RestLiDataValidator;
 import com.linkedin.restli.examples.greetings.api.ValidationDemo;
 import com.linkedin.restli.examples.greetings.client.AutoValidationDemosBuilders;
 import com.linkedin.restli.examples.greetings.client.AutoValidationDemosRequestBuilders;
 import com.linkedin.restli.examples.greetings.client.ValidationDemosBuilders;
+import com.linkedin.restli.examples.greetings.client.ValidationDemosCreateRequestBuilder;
+import com.linkedin.restli.examples.greetings.client.ValidationDemosPartialUpdateRequestBuilder;
 import com.linkedin.restli.examples.greetings.client.ValidationDemosRequestBuilders;
+import com.linkedin.restli.internal.server.methods.AnyRecord;
 import com.linkedin.restli.test.util.PatchBuilder;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -199,6 +206,84 @@ public class TestRestLiValidationFromClient
         Assert.assertEquals(result.isValid(), false);
         Assert.assertEquals(result.getMessages().toString(), expected);
       }
+    }
+  }
+
+  @Test
+  public void testInvalidInputEntityValidation()
+  {
+    try
+    {
+      ValidationDemosCreateRequestBuilder.validateInput(null);
+      Assert.fail("Expected IllegalArgumentException.");
+    }
+    catch (IllegalArgumentException e)
+    {
+      Assert.assertEquals(e.getMessage(), "Record template is null.");
+    }
+    try
+    {
+      ValidationDemosCreateRequestBuilder.validateInput(new ValidationDemo(null));
+      Assert.fail("Expected IllegalArgumentException.");
+    }
+    catch (IllegalArgumentException e)
+    {
+      Assert.assertEquals(e.getMessage(), "Record template does not have data.");
+    }
+    try
+    {
+      RestLiDataValidator anyRecordValidator = new RestLiDataValidator(Collections.<String, List<String>>emptyMap(), AnyRecord.class, ResourceMethod.CREATE);
+      anyRecordValidator.validateInput(new AnyRecord(new DataMap()));
+      Assert.fail("Expected IllegalArgumentException.");
+    }
+    catch (IllegalArgumentException e)
+    {
+      Assert.assertEquals(e.getMessage(), "Record template does not have a schema.");
+    }
+  }
+
+  @Test
+  public void testInvalidPatchValidation()
+  {
+    try
+    {
+      ValidationDemosPartialUpdateRequestBuilder.validateInput(null);
+      Assert.fail("Expected IllegalArgumentException.");
+    }
+    catch (IllegalArgumentException e)
+    {
+      Assert.assertEquals(e.getMessage(), "Patch request is null.");
+    }
+    try
+    {
+      ValidationDemosPartialUpdateRequestBuilder.validateInput(new PatchRequest<ValidationDemo>(new DataMap()));
+      Assert.fail("Expected IllegalArgumentException.");
+    }
+    catch (IllegalArgumentException e)
+    {
+      Assert.assertEquals(e.getMessage(), "Patch request does not have a patch document.");
+    }
+  }
+
+  @Test
+  public void testInvalidOutputEntityValidation()
+  {
+    RestLiDataValidator validator = new RestLiDataValidator(Collections.<String, List<String>>emptyMap(), ValidationDemo.class, ResourceMethod.GET);
+    try
+    {
+      validator.validateOutput(null);
+      Assert.fail("Expected IllegalArgumentException.");
+    } catch (IllegalArgumentException e)
+    {
+      Assert.assertEquals(e.getMessage(), "Record template is null.");
+    }
+    try
+    {
+      validator.validateOutput(new ValidationDemo(null));
+      Assert.fail("Expected IllegalArgumentException.");
+    } catch (IllegalArgumentException e)
+    {
+      Assert.assertEquals(e.getMessage(), "Record template does not have data.");
     }
   }
 }

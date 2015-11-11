@@ -3,6 +3,9 @@
 (RB=617238)
 Made multiplexer returns correct HTTP status code (by throwing the right type of Exception) when encounter errors.
 
+(RB=610914)
+Prevent possible NPEs in RestLiDataValidator.
+
 3.1.3
 -----
 (RB=619857)

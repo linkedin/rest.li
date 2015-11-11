@@ -289,6 +289,18 @@ public class RestLiDataValidator
    */
   public ValidationResult validateInput(RecordTemplate dataTemplate)
   {
+    if (dataTemplate == null)
+    {
+      throw new IllegalArgumentException("Record template is null.");
+    }
+    if (dataTemplate.data() == null)
+    {
+      throw new IllegalArgumentException("Record template does not have data.");
+    }
+    if (dataTemplate.schema() == null)
+    {
+      throw new IllegalArgumentException("Record template does not have a schema.");
+    }
     switch (_resourceMethod)
     {
       case CREATE:
@@ -309,6 +321,14 @@ public class RestLiDataValidator
    */
   public ValidationResult validateInput(PatchRequest<?> patchRequest)
   {
+    if (patchRequest == null)
+    {
+      throw new IllegalArgumentException("Patch request is null.");
+    }
+    if (patchRequest.getPatchDocument() == null)
+    {
+      throw new IllegalArgumentException("Patch request does not have a patch document.");
+    }
     switch (_resourceMethod)
     {
       case PARTIAL_UPDATE:
@@ -327,6 +347,14 @@ public class RestLiDataValidator
    */
   public ValidationResult validateOutput(RecordTemplate dataTemplate)
   {
+    if (dataTemplate == null)
+    {
+      throw new IllegalArgumentException("Record template is null.");
+    }
+    if (dataTemplate.data() == null)
+    {
+      throw new IllegalArgumentException("Record template does not have data.");
+    }
     switch (_resourceMethod)
     {
       case CREATE:
