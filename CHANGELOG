@@ -1,6 +1,11 @@
-2.12.6
+2.12.7
 ------
 
+
+2.12.6
+------
+(RB=611772)
+Dummy version bump up to work around release issue.
 
 2.12.5
 ------
