@@ -24,9 +24,11 @@ import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.RequestBuilder;
 import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.client.response.BatchKVResponse;
+import com.linkedin.restli.common.BatchCreateIdEntityResponse;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.CreateStatus;
 import com.linkedin.restli.common.EmptyRecord;
+import com.linkedin.restli.common.IdEntityResponse;
 import com.linkedin.restli.common.OptionsResponse;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.UpdateStatus;
@@ -357,6 +359,11 @@ public class RootBuilderWrapper<K, V extends RecordTemplate>
     return invoke("create");
   }
 
+  public MethodBuilderWrapper<K, V, IdEntityResponse<K, V>> createAndGet()
+  {
+    return invoke("createAndGet");
+  }
+
   public MethodBuilderWrapper<K, V, EmptyRecord> update()
   {
     return invoke("update");
@@ -375,6 +382,11 @@ public class RootBuilderWrapper<K, V extends RecordTemplate>
   public MethodBuilderWrapper<K, V, CollectionResponse<CreateStatus>> batchCreate()
   {
     return invoke("batchCreate");
+  }
+
+  public MethodBuilderWrapper<K, V, BatchCreateIdEntityResponse<K, V>> batchCreateAndGet()
+  {
+    return invoke("batchCreateAndGet");
   }
 
   public MethodBuilderWrapper<K, V, BatchKVResponse<K, UpdateStatus>> batchPartialUpdate()

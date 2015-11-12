@@ -121,6 +121,9 @@
       },
       "supports" : [ "batch_create", "batch_get", "batch_partial_update", "batch_update", "create", "get", "get_all", "partial_update", "update" ],
       "methods" : [ {
+        "annotations" : {
+          "returnEntity" : { }
+        },
         "method" : "create"
       }, {
         "method" : "get"
@@ -129,6 +132,9 @@
       }, {
         "method" : "partial_update"
       }, {
+        "annotations" : {
+          "returnEntity" : { }
+        },
         "method" : "batch_create"
       }, {
         "method" : "batch_get"

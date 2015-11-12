@@ -42,6 +42,7 @@ import com.linkedin.restli.common.CreateStatus;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.EntityResponse;
 import com.linkedin.restli.common.HttpStatus;
+import com.linkedin.restli.common.IdEntityResponse;
 import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ResourceMethod;
@@ -74,6 +75,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 
 /**
  * Integration tests for Rest.li data validation.
@@ -195,20 +197,32 @@ public class TestRestLiValidation extends RestLiIntegrationTest
     return new Object[][]
         {
             // ReadOnly fields should not be specified in a create request, whether they are required or optional
-            {new ValidationDemo().setStringA("aaa"), "/stringA :: ReadOnly field present in a create request"},
-            {new ValidationDemo().setIntA(1234), "/intA :: ReadOnly field present in a create request"},
-            {new ValidationDemo().setUnionFieldWithInlineRecord(unionField), "/UnionFieldWithInlineRecord/com.linkedin.restli.examples.greetings.api.myRecord/foo1 :: ReadOnly field present in a create request"},
-            {new ValidationDemo().setArrayWithInlineRecord(myItems), "/ArrayWithInlineRecord/0/bar1 :: ReadOnly field present in a create request"},
-            {new ValidationDemo().setValidationDemoNext(new ValidationDemo().setStringB("stringB")), "/validationDemoNext/stringB :: ReadOnly field present in a create request"},
-            {new ValidationDemo().setValidationDemoNext(new ValidationDemo().setUnionFieldWithInlineRecord(unionField)), "/validationDemoNext/UnionFieldWithInlineRecord :: ReadOnly field present in a create request"},
+            {new ValidationDemo().setStringA("aaa"),
+                "/stringA :: ReadOnly field present in a create request"},
+            {new ValidationDemo().setIntA(1234),
+                "/intA :: ReadOnly field present in a create request"},
+            {new ValidationDemo().setUnionFieldWithInlineRecord(unionField),
+                "/UnionFieldWithInlineRecord/com.linkedin.restli.examples.greetings.api.myRecord/foo1 :: ReadOnly field present in a create request"},
+            {new ValidationDemo().setArrayWithInlineRecord(myItems),
+                "/ArrayWithInlineRecord/0/bar1 :: ReadOnly field present in a create request"},
+            {new ValidationDemo().setValidationDemoNext(new ValidationDemo().setStringB("stringB")),
+                "/validationDemoNext/stringB :: ReadOnly field present in a create request"},
+            {new ValidationDemo().setValidationDemoNext(new ValidationDemo().setUnionFieldWithInlineRecord(unionField)),
+                "/validationDemoNext/UnionFieldWithInlineRecord :: ReadOnly field present in a create request"},
             // A field that is CreateOnly and required has to be present in a create request
-            {new ValidationDemo(), "/stringB :: field is required but not found and has no default value"},
-            {new ValidationDemo().setStringB("bbb"), "/UnionFieldWithInlineRecord :: field is required but not found and has no default value"},
+            {new ValidationDemo(),
+                "/stringB :: field is required but not found and has no default value"},
+            {new ValidationDemo().setStringB("bbb"),
+                "/UnionFieldWithInlineRecord :: field is required but not found and has no default value"},
             // Required fields without Rest.li data annotations should be present in a create request
-            {new ValidationDemo().setArrayWithInlineRecord(myItems), "/ArrayWithInlineRecord/0/bar2 :: field is required but not found and has no default value"},
-            {new ValidationDemo().setMapWithTyperefs(greetingMap), "/MapWithTyperefs/key1/id :: field is required but not found and has no default value"},
-            {new ValidationDemo().setValidationDemoNext(new ValidationDemo()), "/validationDemoNext/stringA :: field is required but not found and has no default value"},
-            {new ValidationDemo(), "/UnionFieldWithInlineRecord :: field is required but not found and has no default value"}
+            {new ValidationDemo().setArrayWithInlineRecord(myItems),
+                "/ArrayWithInlineRecord/0/bar2 :: field is required but not found and has no default value"},
+            {new ValidationDemo().setMapWithTyperefs(greetingMap),
+                "/MapWithTyperefs/key1/id :: field is required but not found and has no default value"},
+            {new ValidationDemo().setValidationDemoNext(new ValidationDemo()),
+                "/validationDemoNext/stringA :: field is required but not found and has no default value"},
+            {new ValidationDemo(),
+                "/UnionFieldWithInlineRecord :: field is required but not found and has no default value"}
         };
   }
 
@@ -219,7 +233,8 @@ public class TestRestLiValidation extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = "provideCreateFailureData")
-  public void testCreateFailure(RestClient restClient, Object builder, ValidationDemo validationDemo, String errorMessage) throws RemoteInvocationException
+  public void testCreateFailure(RestClient restClient, Object builder, ValidationDemo validationDemo,
+                                String errorMessage) throws RemoteInvocationException
   {
     try
     {
@@ -250,9 +265,12 @@ public class TestRestLiValidation extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = "batchCreateFailureData")
-  public void testBatchCreateManualFailure(List<ValidationDemo> validationDemos, List<String> errorMessages) throws RemoteInvocationException
+  public void testBatchCreateManualFailure(List<ValidationDemo> validationDemos, List<String> errorMessages)
+      throws RemoteInvocationException
   {
-    Response<CollectionResponse<CreateStatus>> response = _restClientManual.sendRequest(new RootBuilderWrapper<Integer, ValidationDemo>(new ValidationDemosBuilders()).batchCreate().inputs(validationDemos).build()).getResponse();
+    Response<CollectionResponse<CreateStatus>> response = _restClientManual.sendRequest(
+        new RootBuilderWrapper<Integer, ValidationDemo>(new ValidationDemosBuilders()).batchCreate().inputs(validationDemos).build())
+        .getResponse();
     List<CreateStatus> results = response.getEntity().getElements();
     int i = 0;
     for (CreateStatus result : results)
@@ -260,7 +278,8 @@ public class TestRestLiValidation extends RestLiIntegrationTest
       Assert.assertEquals((int) result.getStatus(), HttpStatus.S_422_UNPROCESSABLE_ENTITY.getCode());
       Assert.assertTrue(result.getError().getMessage().contains(errorMessages.get(i++)));
     }
-    response = _restClientManual.sendRequest(new RootBuilderWrapper<Integer, ValidationDemo>(new ValidationDemosRequestBuilders()).batchCreate().inputs(validationDemos).build()).getResponse();
+    response = _restClientManual.sendRequest(new RootBuilderWrapper<Integer, ValidationDemo>(
+        new ValidationDemosRequestBuilders()).batchCreate().inputs(validationDemos).build()).getResponse();
     @SuppressWarnings("unchecked")
     List<CreateIdStatus<Integer>> results2 = ((BatchCreateIdResponse<Integer>) (Object) response.getEntity()).getElements();
     i = 0;
@@ -278,7 +297,8 @@ public class TestRestLiValidation extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = "provideBatchCreateAutoFailureData")
-  public void testBatchCreateAutoFailure(RestClient restClient, Object builder, List<ValidationDemo> validationDemos, List<String> errorMessages) throws RemoteInvocationException
+  public void testBatchCreateAutoFailure(RestClient restClient, Object builder, List<ValidationDemo> validationDemos,
+                                         List<String> errorMessages) throws RemoteInvocationException
   {
     try
     {
@@ -288,6 +308,63 @@ public class TestRestLiValidation extends RestLiIntegrationTest
     catch (RestLiResponseException e)
     {
       Assert.assertEquals(e.getStatus(), HttpStatus.S_422_UNPROCESSABLE_ENTITY.getCode());
+      for (String message : errorMessages)
+      {
+        Assert.assertTrue(e.getServiceErrorMessage().contains(message));
+      }
+    }
+  }
+
+  private static Object[][] batchCreateAndGetFailures()
+  {
+    ValidationDemo.UnionFieldWithInlineRecord unionField = new ValidationDemo.UnionFieldWithInlineRecord();
+    unionField.setMyEnum(myEnum.FOOFOO);
+    return new Object[][]
+        {
+            {new ValidationDemo().setStringB("b1").setUnionFieldWithInlineRecord(unionField),
+                "ERROR :: /UnionFieldWithInlineRecord :: field is required but not found and has no default value"},
+            {new ValidationDemo().setStringB("b2").setUnionFieldWithInlineRecord(unionField),
+                "ERROR :: /UnionFieldWithInlineRecord/com.linkedin.restli.examples.greetings.api.myRecord/foo1 " +
+                    ":: field is required but not found and has no default value"}
+        };
+  }
+
+  @DataProvider
+  public static Object[][] batchCreateAndGetFailureData()
+  {
+    List<ValidationDemo> validationDemos = new ArrayList<ValidationDemo>();
+    List<String> errorMessages = new ArrayList<String>();
+    Object[][] cases = batchCreateAndGetFailures();
+    for (int i = 0; i < cases.length; i++)
+    {
+      validationDemos.add((ValidationDemo) cases[i][0]);
+      errorMessages.add(((String) cases[i][1]).replaceFirst("create", "batch_create"));
+    }
+    return new Object[][]
+        {
+            {validationDemos, errorMessages}
+        };
+  }
+
+  @DataProvider
+  private Object[][] provideBatchCreateAndGetAutoFailureData()
+  {
+    return wrapFailureCases(batchCreateAndGetFailureData(), autoClientsAndBuilders());
+  }
+
+  @Test(dataProvider = "provideBatchCreateAndGetAutoFailureData")
+  public void testBatchCreateAndGetAutoFailure(RestClient restClient, Object builder, List<ValidationDemo> validationDemos,
+                                               List<String> errorMessages) throws RemoteInvocationException
+  {
+    // Batch create succeeds, but batch get fails.
+    try
+    {
+      restClient.sendRequest(new RootBuilderWrapper<Integer, ValidationDemo>(builder).batchCreate().inputs(validationDemos).build()).getResponse();
+      Assert.fail("Expected RestLiResponseException");
+    }
+    catch (RestLiResponseException e)
+    {
+      Assert.assertEquals(e.getStatus(), HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode());
       for (String message : errorMessages)
       {
         Assert.assertTrue(e.getServiceErrorMessage().contains(message));
@@ -314,7 +391,7 @@ public class TestRestLiValidation extends RestLiIntegrationTest
   @DataProvider
   public Object[][] provideCreateSuccessData()
   {
-    return wrapSuccessCases(createSuccessData(), clientsAndBuilders());
+    return wrapSuccessCases(createSuccessData(), manualClientsAndBuilders());
   }
 
   @Test(dataProvider = "provideCreateSuccessData")
@@ -331,6 +408,62 @@ public class TestRestLiValidation extends RestLiIntegrationTest
     else
     {
       Assert.assertEquals(((IdResponse<Integer>)(Object)response.getEntity()).getId(), new Integer(1234));
+    }
+  }
+
+  @DataProvider
+  public Object[][] provideCreateAndGetSuccessData()
+  {
+    return wrapSuccessCases(createSuccessData(), autoClientsAndBuilders());
+  }
+
+  @Test(dataProvider = "provideCreateAndGetSuccessData")
+  @SuppressWarnings("unchecked")
+  public void testCreateAndGetAutoSuccess(RestClient restClient, Object builder, ValidationDemo validationDemo) throws RemoteInvocationException
+  {
+    Request<IdEntityResponse<Integer, ValidationDemo>> createRequest = new RootBuilderWrapper<Integer, ValidationDemo>(builder)
+        .createAndGet().input(validationDemo).build();
+    Response<IdEntityResponse<Integer, ValidationDemo>> response = restClient.sendRequest(createRequest).getResponse();
+
+    ValidationDemo.UnionFieldWithInlineRecord unionField = new ValidationDemo.UnionFieldWithInlineRecord();
+    unionField.setMyEnum(myEnum.FOOFOO);
+    ValidationDemo expected = new ValidationDemo().setStringA("a").setStringB("b").setUnionFieldWithInlineRecord(unionField);
+    Assert.assertEquals(response.getStatus(), HttpStatus.S_201_CREATED.getCode());
+    Assert.assertEquals(response.getEntity().getEntity(), expected);
+  }
+
+  public static Object[][] createAndGetFailureData()
+  {
+    ValidationDemo.UnionFieldWithInlineRecord unionField = new ValidationDemo.UnionFieldWithInlineRecord();
+    unionField.setMyEnum(myEnum.BARBAR);
+    ValidationDemo validationDemo = new ValidationDemo().setStringB("some string").setUnionFieldWithInlineRecord(unionField);
+    return new Object[][]
+        {{validationDemo, "ERROR :: /stringA :: field is required but not found and has no default value\n"}};
+  }
+
+  @DataProvider
+  public Object[][] provideCreateAndGetFailureData()
+  {
+    return wrapFailureCases(createAndGetFailureData(), autoClientsAndBuilders());
+  }
+
+  @Test(dataProvider = "provideCreateAndGetFailureData")
+  @SuppressWarnings("unchecked")
+  public void testCreateAndGetAutoFailure(RestClient restClient, Object builder, ValidationDemo validationDemo,
+                                          String errorMessage) throws RemoteInvocationException
+  {
+    // Create succeeds, but get fails.
+    Request<IdEntityResponse<Integer, ValidationDemo>> createRequest = new RootBuilderWrapper<Integer, ValidationDemo>(builder)
+        .createAndGet().input(validationDemo).build();
+    try
+    {
+      restClient.sendRequest(createRequest).getResponse();
+      Assert.fail("Expected RestLiResponseException");
+    }
+    catch (RestLiResponseException e)
+    {
+      Assert.assertEquals(e.getStatus(), HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode());
+      Assert.assertEquals(e.getServiceErrorMessage(), errorMessage);
     }
   }
 
@@ -396,7 +529,8 @@ public class TestRestLiValidation extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = "providePartialUpdateFailureData")
-  public void testPartialUpdateFailure(RestClient restClient, Object builder, String patch, String errorMessage) throws RemoteInvocationException, DataProcessingException
+  public void testPartialUpdateFailure(RestClient restClient, Object builder, String patch, String errorMessage)
+      throws RemoteInvocationException, DataProcessingException
   {
     PatchRequest<ValidationDemo> patchRequest = PatchBuilder.buildPatchFromString(patch);
     Request<EmptyRecord> request = new RootBuilderWrapper<Integer, ValidationDemo>(builder).partialUpdate().id(1).input(patchRequest).build();
@@ -473,9 +607,11 @@ public class TestRestLiValidation extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = "provideBatchPartialUpdateManualData")
-  public void testBatchPartialUpdateManual(RestClient restClient, Object builder, Map<Integer, PatchRequest<ValidationDemo>> inputs, Map<Integer, String> errorMessages) throws RemoteInvocationException
+  public void testBatchPartialUpdateManual(RestClient restClient, Object builder, Map<Integer, PatchRequest<ValidationDemo>> inputs,
+                                           Map<Integer, String> errorMessages) throws RemoteInvocationException
   {
-    Request<BatchKVResponse<Integer, UpdateStatus>> request = new RootBuilderWrapper<Integer, ValidationDemo>(builder).batchPartialUpdate().patchInputs(inputs).build();
+    Request<BatchKVResponse<Integer, UpdateStatus>> request = new RootBuilderWrapper<Integer, ValidationDemo>(builder)
+        .batchPartialUpdate().patchInputs(inputs).build();
     Response<BatchKVResponse<Integer, UpdateStatus>> response = restClient.sendRequest(request).getResponse();
     for (Map.Entry<Integer, UpdateStatus> entry : response.getEntity().getResults().entrySet())
     {
@@ -499,11 +635,13 @@ public class TestRestLiValidation extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = "provideBatchPartialUpdateAutoData")
-  public void testBatchPartialUpdate(RestClient restClient, Object builder, Map<Integer, PatchRequest<ValidationDemo>> inputs, Map<Integer, String> errorMessages) throws RemoteInvocationException
+  public void testBatchPartialUpdate(RestClient restClient, Object builder, Map<Integer, PatchRequest<ValidationDemo>> inputs,
+                                     Map<Integer, String> errorMessages) throws RemoteInvocationException
   {
     try
     {
-      Request<BatchKVResponse<Integer, UpdateStatus>> request = new RootBuilderWrapper<Integer, ValidationDemo>(builder).batchPartialUpdate().patchInputs(inputs).build();
+      Request<BatchKVResponse<Integer, UpdateStatus>> request = new RootBuilderWrapper<Integer, ValidationDemo>(builder)
+          .batchPartialUpdate().patchInputs(inputs).build();
       restClient.sendRequest(request).getResponse();
       Assert.fail("Expected RestLiResponseException");
     }
@@ -526,12 +664,17 @@ public class TestRestLiValidation extends RestLiIntegrationTest
     return new Object[][]
         {
             // Required fields should be present in an update request
-            {new ValidationDemo().setArrayWithInlineRecord(myItems), "/ArrayWithInlineRecord/0/bar2 :: field is required but not found and has no default value"},
-            {new ValidationDemo().setMapWithTyperefs(greetingMap), "/MapWithTyperefs/key1/message :: field is required but not found and has no default value"},
-            {new ValidationDemo().setValidationDemoNext(new ValidationDemo()), "/validationDemoNext/stringA :: field is required but not found and has no default value"},
-            {new ValidationDemo(), "/UnionFieldWithInlineRecord :: field is required but not found and has no default value"},
+            {new ValidationDemo().setArrayWithInlineRecord(myItems),
+                "/ArrayWithInlineRecord/0/bar2 :: field is required but not found and has no default value"},
+            {new ValidationDemo().setMapWithTyperefs(greetingMap),
+                "/MapWithTyperefs/key1/message :: field is required but not found and has no default value"},
+            {new ValidationDemo().setValidationDemoNext(new ValidationDemo()),
+                "/validationDemoNext/stringA :: field is required but not found and has no default value"},
+            {new ValidationDemo(),
+                "/UnionFieldWithInlineRecord :: field is required but not found and has no default value"},
             // Data schema annotations such as strlen are validated
-            {new ValidationDemo().setStringA("012345678901234"), "/stringA :: length of \"012345678901234\" is out of range 1...10"}
+            {new ValidationDemo().setStringA("012345678901234"),
+                "/stringA :: length of \"012345678901234\" is out of range 1...10"}
         };
   }
 
@@ -544,7 +687,8 @@ public class TestRestLiValidation extends RestLiIntegrationTest
   // For update operations, only data schema annotations are validated.
   // Rest.li annotations such as ReadOnly and CreateOnly have no effect.
   @Test(dataProvider = "provideUpdateFailureData")
-  public void testUpdateFailure(RestClient restClient, Object builder, ValidationDemo validationDemo, String errorMessage) throws RemoteInvocationException
+  public void testUpdateFailure(RestClient restClient, Object builder, ValidationDemo validationDemo,
+                                String errorMessage) throws RemoteInvocationException
   {
     Request<EmptyRecord> request = new RootBuilderWrapper<Integer, ValidationDemo>(builder).update().id(1).input(validationDemo).build();
     try
@@ -625,7 +769,8 @@ public class TestRestLiValidation extends RestLiIntegrationTest
   @Test(dataProvider = "manualBuilders")
   public void testFinder(Object builder) throws RemoteInvocationException
   {
-    Request<CollectionResponse<ValidationDemo>> request = new RootBuilderWrapper<Integer, ValidationDemo>(builder).findBy("search").setQueryParam("intA", 1234).build();
+    Request<CollectionResponse<ValidationDemo>> request = new RootBuilderWrapper<Integer, ValidationDemo>(builder)
+        .findBy("search").setQueryParam("intA", 1234).build();
     Response<CollectionResponse<ValidationDemo>> response = _restClientManual.sendRequest(request).getResponse();
     Assert.assertEquals(response.getStatus(), HttpStatus.S_200_OK.getCode());
   }
@@ -650,7 +795,8 @@ public class TestRestLiValidation extends RestLiIntegrationTest
   public void testBatchGetAuto() throws RemoteInvocationException
   {
     final List<Integer> ids = Arrays.asList(11, 22, 33);
-    final String errorMessage = ", ERROR :: /UnionFieldWithInlineRecord/com.linkedin.restli.examples.greetings.api.myRecord/foo1 :: field is required but not found and has no default value\n";
+    final String errorMessage = ", ERROR :: /UnionFieldWithInlineRecord/com.linkedin.restli.examples.greetings.api.myRecord/foo1 " +
+        ":: field is required but not found and has no default value\n";
     try
     {
       BatchGetRequest<ValidationDemo> request = new AutoValidationDemosBuilders().batchGet().ids(ids).build();
@@ -702,7 +848,8 @@ public class TestRestLiValidation extends RestLiIntegrationTest
   {
     try
     {
-      Request<CollectionResponse<ValidationDemo>> request = new RootBuilderWrapper<Integer, ValidationDemo>(builder).findBy("search").setQueryParam("intA", 1234).build();
+      Request<CollectionResponse<ValidationDemo>> request = new RootBuilderWrapper<Integer, ValidationDemo>(builder)
+          .findBy("search").setQueryParam("intA", 1234).build();
       _restClientAuto.sendRequest(request).getResponse();
       Assert.fail("Expected RestLiResponseException");
     }
@@ -755,7 +902,8 @@ public class TestRestLiValidation extends RestLiIntegrationTest
   {
     try
     {
-      Request<CollectionResponse<ValidationDemo>> request = new RootBuilderWrapper<Integer, ValidationDemo>(builder).findBy("search").setQueryParam("intA", 0).build();
+      Request<CollectionResponse<ValidationDemo>> request = new RootBuilderWrapper<Integer, ValidationDemo>(builder)
+          .findBy("search").setQueryParam("intA", 0).build();
       _restClientAuto.sendRequest(request).getResponse();
       Assert.fail("Expected RestLiResponseException");
     }

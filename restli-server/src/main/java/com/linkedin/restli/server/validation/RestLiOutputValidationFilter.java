@@ -19,10 +19,12 @@ package com.linkedin.restli.server.validation;
 
 import com.linkedin.data.schema.validation.ValidationResult;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.restli.common.CreateIdEntityStatus;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.validation.RestLiDataValidator;
 import com.linkedin.restli.internal.server.response.BatchResponseEnvelope;
+import com.linkedin.restli.internal.server.response.CreateCollectionResponseEnvelope;
 import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.filter.FilterRequestContext;
@@ -54,58 +56,102 @@ public class RestLiOutputValidationFilter implements ResponseFilter
       nextResponseFilter.onResponse(requestContext, responseContext);
       return;
     }
-    if (method == ResourceMethod.GET)
+    switch (method)
     {
-      ValidationResult result = validator.validateOutput(responseData.getRecordResponseEnvelope().getRecord());
-      if (!result.isValid())
-      {
-        throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, result.getMessages().toString());
-      }
-    }
-    else if (method == ResourceMethod.GET_ALL || method == ResourceMethod.FINDER)
-    {
-      List<? extends RecordTemplate> entities;
-      entities = responseData.getCollectionResponseEnvelope().getCollectionResponse();
-
-      StringBuilder sb = new StringBuilder();
-      for (RecordTemplate entity : entities)
-      {
-        ValidationResult result = validator.validateOutput(entity);
-        if (!result.isValid())
+      case GET:
+        validateSingleResponse(validator, responseData.getRecordResponseEnvelope().getRecord());
+        break;
+      case CREATE:
+        if (requestContext.getCustomAnnotations().containsKey("returnEntity"))
         {
-          sb.append(result.getMessages().toString());
+          validateSingleResponse(validator, responseData.getRecordResponseEnvelope().getRecord());
         }
-      }
-
-      if (sb.length() > 0)
-      {
-        throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, sb.toString());
-      }
-    }
-    else if (method == ResourceMethod.BATCH_GET)
-    {
-      StringBuilder sb = new StringBuilder();
-      for (Map.Entry<?, ? extends BatchResponseEnvelope.BatchResponseEntry> entry : responseData.getBatchResponseEnvelope().getBatchResponseMap().entrySet())
-      {
-        if (entry.getValue().hasException())
+        break;
+      case GET_ALL:
+      case FINDER:
+        validateCollectionResponse(validator, responseData.getCollectionResponseEnvelope().getCollectionResponse());
+        break;
+      case BATCH_GET:
+        validateBatchResponse(validator, responseData.getBatchResponseEnvelope().getBatchResponseMap());
+        break;
+      case BATCH_CREATE:
+        if (requestContext.getCustomAnnotations().containsKey("returnEntity"))
         {
-          continue;
+          validateCreateCollectionResponse(validator, responseData.getCreateCollectionResponseEnvelope().getCreateResponses());
         }
-        ValidationResult result = validator.validateOutput(entry.getValue().getRecord());
-        if (!result.isValid())
-        {
-          sb.append("Key: ");
-          sb.append(entry.getKey());
-          sb.append(", ");
-          sb.append(result.getMessages().toString());
-        }
-      }
-
-      if (sb.length() > 0)
-      {
-        throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, sb.toString());
-      }
+        break;
     }
     nextResponseFilter.onResponse(requestContext, responseContext);
+  }
+
+  private void validateSingleResponse(RestLiDataValidator validator, RecordTemplate entity)
+  {
+    ValidationResult result = validator.validateOutput(entity);
+    if (!result.isValid())
+    {
+      throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, result.getMessages().toString());
+    }
+  }
+
+  private void validateCollectionResponse(RestLiDataValidator validator, List<? extends RecordTemplate> entities)
+  {
+    StringBuilder sb = new StringBuilder();
+    for (RecordTemplate entity : entities)
+    {
+      ValidationResult result = validator.validateOutput(entity);
+      if (!result.isValid())
+      {
+        sb.append(result.getMessages().toString());
+      }
+    }
+    if (sb.length() > 0)
+    {
+      throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, sb.toString());
+    }
+  }
+
+  private void validateBatchResponse(RestLiDataValidator validator, Map<?, BatchResponseEnvelope.BatchResponseEntry> batchResponseMap)
+  {
+    StringBuilder sb = new StringBuilder();
+    for (Map.Entry<?, ? extends BatchResponseEnvelope.BatchResponseEntry> entry : batchResponseMap.entrySet())
+    {
+      if (entry.getValue().hasException())
+      {
+        continue;
+      }
+      ValidationResult result = validator.validateOutput(entry.getValue().getRecord());
+      if (!result.isValid())
+      {
+        sb.append("Key: ");
+        sb.append(entry.getKey());
+        sb.append(", ");
+        sb.append(result.getMessages().toString());
+      }
+    }
+    if (sb.length() > 0)
+    {
+      throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, sb.toString());
+    }
+  }
+
+  private void validateCreateCollectionResponse(RestLiDataValidator validator, List<CreateCollectionResponseEnvelope.CollectionCreateResponseItem> responses)
+  {
+    StringBuilder sb = new StringBuilder();
+    for (CreateCollectionResponseEnvelope.CollectionCreateResponseItem item : responses)
+    {
+      if (item.isErrorResponse())
+      {
+        continue;
+      }
+      ValidationResult result = validator.validateOutput(((CreateIdEntityStatus)item.getRecord()).getEntity());
+      if (!result.isValid())
+      {
+        sb.append(result.getMessages().toString());
+      }
+    }
+    if (sb.length() > 0)
+    {
+      throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, sb.toString());
+    }
   }
 }

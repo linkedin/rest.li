@@ -24,20 +24,20 @@ import com.linkedin.restli.common.validation.ReadOnly;
 import com.linkedin.restli.examples.greetings.api.ValidationDemo;
 import com.linkedin.restli.examples.greetings.api.myEnum;
 import com.linkedin.restli.examples.greetings.api.myRecord;
-import com.linkedin.restli.server.BasicCollectionResult;
+import com.linkedin.restli.server.BatchCreateKVResult;
 import com.linkedin.restli.server.BatchCreateRequest;
-import com.linkedin.restli.server.BatchCreateResult;
 import com.linkedin.restli.server.BatchPatchRequest;
 import com.linkedin.restli.server.BatchResult;
 import com.linkedin.restli.server.BatchUpdateRequest;
 import com.linkedin.restli.server.BatchUpdateResult;
-import com.linkedin.restli.server.CreateResponse;
+import com.linkedin.restli.server.CreateKVResponse;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.UpdateResponse;
 import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.QueryParam;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.annotations.RestMethod;
+import com.linkedin.restli.server.annotations.ReturnEntity;
 import com.linkedin.restli.server.resources.KeyValueResource;
 
 import java.util.ArrayList;
@@ -60,23 +60,63 @@ import java.util.Set;
              "MapWithTyperefs/*/id"})
 public class AutomaticValidationDemoResource implements KeyValueResource<Integer, ValidationDemo>
 {
-  @RestMethod.Create
-  public CreateResponse create(final ValidationDemo entity)
+  private static ValidationDemo _validReturnEntity;
+
+  static
   {
-    return new CreateResponse(1234);
+    ValidationDemo.UnionFieldWithInlineRecord unionField = new ValidationDemo.UnionFieldWithInlineRecord();
+    unionField.setMyEnum(myEnum.FOOFOO);
+    _validReturnEntity = new ValidationDemo().setStringA("a").setStringB("b").setUnionFieldWithInlineRecord(unionField);
+  }
+
+  @RestMethod.Create
+  @ReturnEntity
+  public CreateKVResponse<Integer, ValidationDemo> create(final ValidationDemo entity) throws CloneNotSupportedException
+  {
+    ValidationDemo returnedEntity;
+    if (entity.getUnionFieldWithInlineRecord().isMyEnum()
+        && entity.getUnionFieldWithInlineRecord().getMyEnum() == myEnum.BARBAR)
+    {
+      // Return invalid entity (missing stringA)
+      returnedEntity = entity;
+    }
+    else
+    {
+      // Return valid entity
+      returnedEntity = _validReturnEntity;
+    }
+    return new CreateKVResponse<Integer, ValidationDemo>(1234, returnedEntity);
   }
 
   @RestMethod.BatchCreate
-  public BatchCreateResult<Integer, ValidationDemo> batchCreate(final BatchCreateRequest<Integer, ValidationDemo> entities)
+  @ReturnEntity
+  public BatchCreateKVResult<Integer, ValidationDemo> batchCreate(final BatchCreateRequest<Integer, ValidationDemo> entities)
   {
-    List<CreateResponse> results = new ArrayList<CreateResponse>();
+    List<CreateKVResponse<Integer, ValidationDemo>> results = new ArrayList<CreateKVResponse<Integer, ValidationDemo>>();
     int id = 0;
     for (ValidationDemo entity : entities.getInput())
     {
-      results.add(new CreateResponse(id));
+      ValidationDemo returnEntity;
+      if (entity.getStringB().equals("b1"))
+      {
+        // Missing union field.
+        returnEntity = new ValidationDemo().setStringA("a").setStringB("b");
+      }
+      else if (entity.getStringB().equals("b2"))
+      {
+        // Missing foo1 in myRecord.
+        ValidationDemo.UnionFieldWithInlineRecord unionField = new ValidationDemo.UnionFieldWithInlineRecord();
+        unionField.setMyRecord(new myRecord().setFoo2(2));
+        returnEntity = new ValidationDemo().setStringA("a").setStringB("b").setUnionFieldWithInlineRecord(unionField);
+      }
+      else
+      {
+        returnEntity = _validReturnEntity;
+      }
+      results.add(new CreateKVResponse<Integer, ValidationDemo>(id, returnEntity));
       id++;
     }
-    return new BatchCreateResult<Integer, ValidationDemo>(results);
+    return new BatchCreateKVResult<Integer, ValidationDemo>(results);
   }
 
   @RestMethod.Update
