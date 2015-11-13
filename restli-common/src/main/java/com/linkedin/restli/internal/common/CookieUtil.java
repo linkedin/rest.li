@@ -134,7 +134,7 @@ public class CookieUtil
             }
             cookieToBeAdd = new HttpCookie(name, value);
           }
-          else
+          else if (cookieToBeAdd != null)
           {
             if (name.equals("$Path"))
             {

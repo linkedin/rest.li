@@ -83,6 +83,16 @@ public class TestCookieUtil
   }
 
   @Test
+  public void testInvalidCookieFromClient()
+  {
+    cookieA.setComment("nothing important");
+    List<String> encodeStrs = Collections.singletonList("$Domain=.linkedin.com");
+    List<HttpCookie> cookieList = CookieUtil.decodeCookies(encodeStrs);
+
+    Assert.assertEquals(0, cookieList.size());
+  }
+
+  @Test
   public void testEvilComment() throws URISyntaxException
   {
     cookieA.setComment("http://google.com/;ses=source/");
