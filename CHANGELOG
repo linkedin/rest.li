@@ -1,6 +1,10 @@
-3.1.1
+3.1.2
 ------
 
+3.1.1
+------
+(RB=613684)
+Improve Rest.li client error message in handling non-JSON RestException.
 
 3.1.0
 ------

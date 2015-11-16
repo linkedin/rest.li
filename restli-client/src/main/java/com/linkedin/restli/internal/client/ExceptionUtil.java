@@ -52,13 +52,35 @@ public class ExceptionUtil
       final RestResponse response = re.getResponse();
       final ErrorResponse errorResponse;
 
+      // There are three cases where client will receive RestException.
+      // 1) Request has reached Rest.li server and Rest.li server throws RestliServiceException. In this case,
+      // HEADER_RESTLI_ERROR_RESPONSE header will be set, and response body should be in JSON format representing
+      // an ErrorResponse. Rest.li client should return RestliResponseException for this case with its errorResponse
+      // field populated with decoded ErrorResponse.
+      // 2) An action request has reached Rest.li server and Rest.li server returns an ActionResult<Value, StatusCode> where
+      // StatusCode < 200 or StatusCode >= 300. In this case, after HttpBridge, Rest.li client will receive a
+      // RestException with no HEADER_RESTLI_ERROR_RESPONSE header set, but response body can be valid action return
+      // value in proper JSON format. Rest.li client will also return RestliResponseException for this case with its
+      // decodedResponse populated with the action return value.
+      // 3) Request has reached servlet container but haven't reached Rest.li server. RestException is thrown from Servlet
+      // container or r2 request filters. In this case, no HEADER_RESTLI_ERROR_RESPONSE header is set, and the body can
+      // be of any format (plain, html, etc) and cannot be guaranteed to be JSON at all. We should just treat such cases
+      // as another type of RemoteInvocationException and wrap RestException as its cause so that client can check its
+      // status and detailed error message.
+      //
+      // TODO: We should understand case #2 better to see if there is really an application need for such an ActionResult
+      // behavior that cannot be achieved through throwing RestliServiceException. Currently for ActionResult with a
+      // non-ok status code, client side will treat this as an error case anyway, application onError callback will be
+      // invoked and most likely application error handler will not dig into RestliResponseException.decodedResponse to
+      // get the action return value. If this use case ends up not realistic, we can simplify our logic below to only
+      // decode the response body when HEADER_RESTLI_ERROR_RESPONSE header is set.
       try
       {
         errorResponse = getErrorResponse(response);
       }
       catch (RestLiDecodingException decodingException)
       {
-        return new RemoteInvocationException(decodingException);
+        return new RemoteInvocationException(e.getMessage(), decodingException);
       }
 
       Response<?> decodedResponse = null;
@@ -66,13 +88,14 @@ public class ExceptionUtil
 
       if (header == null)
       {
+        // This is purely to handle case #2 commented above.
         try
         {
           decodedResponse = responseDecoder.decodeResponse(response);
         }
         catch (RestLiDecodingException decodingException)
         {
-          return new RemoteInvocationException(decodingException);
+          return new RemoteInvocationException(e.getMessage(), e);
         }
       }
 

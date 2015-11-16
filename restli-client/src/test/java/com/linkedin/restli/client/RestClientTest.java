@@ -46,6 +46,7 @@ import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.TestConstants;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpCookie;
 import java.util.Collections;
 import java.util.HashMap;
@@ -372,7 +373,8 @@ public class RestClientTest
     final int HTTP_CODE = 400;
     final int APP_CODE = 666;
 
-    RestClient client = mockClient(ERR_KEY, ERR_VALUE, ERR_MSG, HTTP_CODE, APP_CODE, protocolVersion, errorResponseHeaderName);
+    RestClient client = mockClient(ERR_KEY, ERR_VALUE, ERR_MSG, HTTP_CODE, APP_CODE, protocolVersion,
+                                   errorResponseHeaderName);
     Request<EmptyRecord> request = mockRequest(EmptyRecord.class, versionOption);
     RequestBuilder<Request<EmptyRecord>> requestBuilder = mockRequestBuilder(request);
 
@@ -448,6 +450,45 @@ public class RestClientTest
       Assert.assertEquals(APP_CODE, er.getServiceErrorCode().intValue());
       Assert.assertEquals(ERR_MSG, er.getMessage());
       verifyResponseHeader(option, re.getResponse().getHeaders());
+    }
+  }
+
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "sendRequestOptions")
+  public void testRestLiRemoteInvocationException(SendRequestOption option,
+                                                  TimeoutOption timeoutOption,
+                                                  ProtocolVersionOption versionOption,
+                                                  ProtocolVersion protocolVersion,
+                                                  String errorResponseHeaderName)
+      throws ExecutionException, TimeoutException, InterruptedException, RestLiDecodingException
+  {
+    final int HTTP_CODE = 404;
+    final String ERR_MSG = "WHOOPS!";
+
+    RestClient client = mockClient(HTTP_CODE, ERR_MSG, protocolVersion);
+    Request<EmptyRecord> request = mockRequest(EmptyRecord.class, versionOption);
+    RequestBuilder<Request<EmptyRecord>> requestBuilder = mockRequestBuilder(request);
+
+    FutureCallback<Response<EmptyRecord>> callback = new FutureCallback<Response<EmptyRecord>>();
+    try
+    {
+      sendRequest(option, client, request, requestBuilder, callback);
+      Long l = timeoutOption._l;
+      TimeUnit timeUnit = timeoutOption._timeUnit;
+      Response<EmptyRecord> response = l == null ? callback.get() : callback.get(l, timeUnit);
+      Assert.fail("Should have thrown");
+    }
+    catch (ExecutionException e)
+    {
+      Throwable cause = e.getCause();
+      Assert.assertTrue(cause instanceof RemoteInvocationException,
+                        "Expected RemoteInvocationException not " + cause.getClass().getName());
+      RemoteInvocationException rlre = (RemoteInvocationException)cause;
+      Assert.assertTrue(rlre.getMessage().startsWith("Received error " + HTTP_CODE + " from server"));
+      Throwable rlCause = rlre.getCause();
+      Assert.assertTrue(rlCause instanceof RestException, "Excepted RestException not " + rlCause.getClass().getName());
+      RestException rle = (RestException)rlCause;
+      Assert.assertEquals(ERR_MSG, rle.getResponse().getEntity().asString("UTF-8"));
+      Assert.assertEquals(HTTP_CODE, rle.getResponse().getStatus());
     }
   }
 
@@ -735,6 +776,24 @@ public class RestClientTest
     Map<String,String> headers = new HashMap<String,String>();
     headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, protocolVersion.toString());
     headers.put(errorResponseHeaderName, RestConstants.HEADER_VALUE_ERROR);
+
+    return new RestClient(new MyMockClient(httpCode, headers, mapBytes), "http://localhost");
+  }
+
+  private RestClient mockClient(int httpCode, String errDetails, ProtocolVersion protocolVersion)
+  {
+    byte[] mapBytes;
+    try
+    {
+      mapBytes = errDetails.getBytes("UTF8");
+    }
+    catch (UnsupportedEncodingException e)
+    {
+      throw new RuntimeException(e);
+    }
+
+    Map<String,String> headers = new HashMap<String,String>();
+    headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, protocolVersion.toString());
 
     return new RestClient(new MyMockClient(httpCode, headers, mapBytes), "http://localhost");
   }
