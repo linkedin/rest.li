@@ -463,6 +463,7 @@ public class RequestBuilderSpecGenerator
         String finderMethod = "findBy" + CodeUtil.capitalize(finderName);
         RootBuilderMethodSpec methodSpec =
             new RootBuilderMethodSpec(finderMethod, finder.getDoc(), finderBuilderClass, rootBuilderSpec);
+        finderBuilderClass.setRootBuilderMethod(methodSpec);
         finderSpecList.add(methodSpec);
       }
     }
@@ -572,6 +573,7 @@ public class RequestBuilderSpecGenerator
     String actionMethodName = "action" + CodeUtil.capitalize(actionName);
     RootBuilderMethodSpec actionMethod =
         new RootBuilderMethodSpec(actionMethodName, action.getDoc(), actionBuilderClass, rootBuilderSpec);
+    actionBuilderClass.setRootBuilderMethod(actionMethod);
     return actionMethod;
   }
 
@@ -615,6 +617,7 @@ public class RequestBuilderSpecGenerator
 
         RootBuilderMethodSpec methodSpec =
             new RootBuilderMethodSpec(RestLiToolsUtils.nameCamelCase(methodName), schema.getDoc(), requestBuilder, rootBuilderSpec);
+        requestBuilder.setRootBuilderMethod(methodSpec);
         methodSpecList.add(methodSpec);
       }
     }

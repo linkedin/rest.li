@@ -1,17 +1,20 @@
 3.0.2
 ------
-Refactor ByteString to avoid extra copy in certain cases
 (RB=607805)
+Refactor ByteString to avoid extra copy in certain cases
+
+(RB=615213)
+Make root builder method spec available to request builder specs.
 
 3.0.1
 ------
-Allow ServiceGroup to specify clusters with coloVariants.
 (RB=614300)
+Allow ServiceGroup to specify clusters with coloVariants.
 
 3.0.0
 ------
-Refactor R2 message hierarchy
 (RB=601892)
+Refactor R2 message hierarchy
 
 2.12.7
 ------

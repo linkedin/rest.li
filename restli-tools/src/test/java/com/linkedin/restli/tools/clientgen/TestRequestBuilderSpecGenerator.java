@@ -147,6 +147,7 @@ public class TestRequestBuilderSpecGenerator
           for (RootBuilderMethodSpec method : restMethods)
           {
             Assert.assertTrue(method.getReturn() instanceof RestMethodBuilderSpec);
+            Assert.assertEquals(method.getReturn().getRootBuilderMethod(), method);
             Assert.assertTrue(methodMap.containsKey(method.getName()));
             Assert.assertEquals(methodMap.get(method.getName()), method.getDoc());
           }
@@ -228,6 +229,7 @@ public class TestRequestBuilderSpecGenerator
     for (RootBuilderMethodSpec method : rootBuilder.getRestMethods())
     {
       actualMethods.add(method.getName());
+      Assert.assertEquals(method.getReturn().getRootBuilderMethod(), method);
     }
     Assert.assertNotNull(rootBuilder.getFinders());
     Assert.assertTrue(rootBuilder.getFinders().size() == 1);
@@ -336,6 +338,12 @@ public class TestRequestBuilderSpecGenerator
 
     Assert.assertNotNull(rootBuilder.getResourceActions());
     Assert.assertEquals(rootBuilder.getResourceActions().size(), 26);
+
+    for (RootBuilderMethodSpec methodSpec : rootBuilder.getMethods())
+    {
+      Assert.assertTrue(methodSpec.getReturn() instanceof ActionBuilderSpec);
+      Assert.assertEquals(methodSpec.getReturn().getRootBuilderMethod(), methodSpec);
+    }
 
     Assert.assertNotNull(actionBuilders);
     Assert.assertEquals(actionBuilders.size(), 26);

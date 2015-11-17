@@ -33,6 +33,7 @@ import java.util.Map;
  */
 public abstract class RequestBuilderSpec extends BuilderSpec
 {
+  private RootBuilderMethodSpec _rootBuilderMethod;
   protected List<String> _pathKeys;
   protected Map<String, String> _keyPathTypes;
   protected ClassTemplateSpec _keyClass;
@@ -47,6 +48,16 @@ public abstract class RequestBuilderSpec extends BuilderSpec
   public RequestBuilderSpec(String packageName, String className, String baseClassName, ResourceSchema resourceSchema)
   {
     super(packageName, className, baseClassName, resourceSchema);
+  }
+
+  public void setRootBuilderMethod(RootBuilderMethodSpec rootBuilderMethod)
+  {
+    _rootBuilderMethod = rootBuilderMethod;
+  }
+
+  public RootBuilderMethodSpec getRootBuilderMethod()
+  {
+    return _rootBuilderMethod;
   }
 
   public List<String> getPathKeys()
