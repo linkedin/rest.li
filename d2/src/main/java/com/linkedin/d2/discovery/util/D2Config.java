@@ -387,7 +387,17 @@ public class D2Config
         } // end for each service
 
         status = addServicesToServicesMap(coloServicesConfigs, services, coloClusterName);
-        updatedClusterServiceConfig.put(coloClusterName, coloServicesConfigs);
+        // merge all the serviceConfigs for different colos
+        Map<String, Map<String, Object>> prevServicesConfigs = updatedClusterServiceConfig.get(clusterName);
+        if (prevServicesConfigs == null)
+        {
+          prevServicesConfigs = new HashMap<String, Map<String, Object>>(coloServicesConfigs);
+        }
+        else
+        {
+          prevServicesConfigs.putAll(coloServicesConfigs);
+        }
+        updatedClusterServiceConfig.put(clusterName, prevServicesConfigs);
         if (status != NO_ERROR_EXIT_CODE)
         {
           return status;

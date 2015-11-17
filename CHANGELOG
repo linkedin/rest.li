@@ -1,5 +1,10 @@
+3.0.2
+------
+
 3.0.1
 ------
+Allow ServiceGroup to specify clusters with coloVariants.
+(RB=614300)
 
 3.0.0
 ------
