@@ -17,6 +17,8 @@
 package com.linkedin.restli.internal.common;
 
 
+import com.linkedin.data.ByteString;
+import com.linkedin.data.Data;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -178,7 +180,17 @@ public class QueryParamsDataMap
         {
           // If the current key designates a location in a datamap - the key should be unique - create a new
           // list containing the value and put it in the map.
-          result.put(escapedKeyPrefix, Collections.singletonList(object.toString()));
+          String objStr;
+          if (object instanceof ByteString)
+          {
+            objStr = Data.bytesToString(((ByteString) object).copyBytes());
+          }
+          else
+          {
+            objStr = object.toString();
+          }
+
+          result.put(escapedKeyPrefix, Collections.singletonList(objStr));
         }
       }
     }

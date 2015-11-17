@@ -1,0 +1,193 @@
+{
+  "models" : [ {
+    "type" : "typeref",
+    "name" : "IntRef",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "ref" : "int"
+  }, {
+    "type" : "typeref",
+    "name" : "LongRef",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "ref" : "long"
+  }, {
+    "type" : "typeref",
+    "name" : "FloatRef",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "ref" : "float"
+  }, {
+    "type" : "typeref",
+    "name" : "DoubleRef",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "ref" : "double"
+  }, {
+    "type" : "typeref",
+    "name" : "BooleanRef",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "ref" : "boolean"
+  }, {
+    "type" : "typeref",
+    "name" : "StringRef",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "ref" : "string"
+  }, {
+    "type" : "typeref",
+    "name" : "BytesRef",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "ref" : "bytes"
+  }, {
+    "type" : "typeref",
+    "name" : "IntArrayRef",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "ref" : {
+      "type" : "array",
+      "items" : "int"
+    }
+  }, {
+    "type" : "typeref",
+    "name" : "IntMapRef",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "ref" : {
+      "type" : "map",
+      "values" : "int"
+    }
+  }, {
+    "type" : "fixed",
+    "name" : "Fixed16",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "size" : 16
+  }, {
+    "type" : "typeref",
+    "name" : "Fixed16Ref",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "ref" : "Fixed16"
+  }, {
+    "type" : "enum",
+    "name" : "Fruits",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "symbols" : [ "APPLE", "ORANGE" ]
+  }, {
+    "type" : "typeref",
+    "name" : "FruitsRef",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "ref" : "Fruits"
+  }, {
+    "type" : "typeref",
+    "name" : "Union",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "ref" : [ "int", "string" ]
+  }, {
+    "type" : "typeref",
+    "name" : "UnionRef",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "ref" : "Union"
+  }, {
+    "type" : "record",
+    "name" : "Point",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "fields" : [ {
+      "name" : "x",
+      "type" : "double"
+    }, {
+      "name" : "y",
+      "type" : "double"
+    } ]
+  }, {
+    "type" : "typeref",
+    "name" : "PointRef",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "ref" : "Point"
+  }, {
+    "type" : "record",
+    "name" : "TyperefRecord",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "fields" : [ {
+      "name" : "int",
+      "type" : "IntRef",
+      "optional" : true
+    }, {
+      "name" : "long",
+      "type" : "LongRef",
+      "optional" : true
+    }, {
+      "name" : "float",
+      "type" : "FloatRef",
+      "optional" : true
+    }, {
+      "name" : "double",
+      "type" : "DoubleRef",
+      "optional" : true
+    }, {
+      "name" : "boolean",
+      "type" : "BooleanRef",
+      "optional" : true
+    }, {
+      "name" : "string",
+      "type" : "StringRef",
+      "optional" : true
+    }, {
+      "name" : "bytes",
+      "type" : "BytesRef",
+      "optional" : true
+    }, {
+      "name" : "intArray",
+      "type" : "IntArrayRef",
+      "optional" : true
+    }, {
+      "name" : "intMap",
+      "type" : "IntMapRef",
+      "optional" : true
+    }, {
+      "name" : "fixed16",
+      "type" : "Fixed16Ref",
+      "optional" : true
+    }, {
+      "name" : "fruits",
+      "type" : "FruitsRef",
+      "optional" : true
+    }, {
+      "name" : "union",
+      "type" : "Union",
+      "optional" : true
+    }, {
+      "name" : "union2",
+      "type" : "UnionRef",
+      "optional" : true
+    }, {
+      "name" : "point",
+      "type" : "PointRef",
+      "optional" : true
+    } ]
+  }, {
+    "type" : "record",
+    "name" : "TwoPartKey",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "fields" : [ {
+      "name" : "major",
+      "type" : "string"
+    }, {
+      "name" : "minor",
+      "type" : "string"
+    } ]
+  } ],
+  "schema" : {
+    "name" : "complexByteKeys",
+    "namespace" : "com.linkedin.restli.examples.greetings.client",
+    "path" : "/complexByteKeys",
+    "schema" : "com.linkedin.restli.examples.typeref.api.TyperefRecord",
+    "doc" : "Demonstrates a resource with a complex key that consists of a field of Bytes typeref.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.ComplexByteKeysResource",
+    "collection" : {
+      "identifier" : {
+        "name" : "keys",
+        "type" : "com.linkedin.restli.examples.typeref.api.TyperefRecord",
+        "params" : "com.linkedin.restli.examples.greetings.api.TwoPartKey"
+      },
+      "supports" : [ "get" ],
+      "methods" : [ {
+        "method" : "get"
+      } ],
+      "entity" : {
+        "path" : "/complexByteKeys/{keys}"
+      }
+    }
+  }
+}

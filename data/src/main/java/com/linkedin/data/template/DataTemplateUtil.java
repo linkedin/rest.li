@@ -739,6 +739,10 @@ public class DataTemplateUtil
     {
       fromClass = object.getClass();
     }
+    if (object instanceof ByteString)
+    {
+      return ((ByteString) object).asAvroString();
+    }
     if (DataTemplateUtil.hasCoercer(fromClass))
     {
       @SuppressWarnings("unchecked")
@@ -746,7 +750,7 @@ public class DataTemplateUtil
       Object coerced = DataTemplateUtil.coerceInput(object, clazz, Object.class);
       if (coerced instanceof ByteString)
       {
-        return Data.bytesToString(((ByteString) coerced).copyBytes());
+        return ((ByteString) coerced).asAvroString();
       }
       else
       {

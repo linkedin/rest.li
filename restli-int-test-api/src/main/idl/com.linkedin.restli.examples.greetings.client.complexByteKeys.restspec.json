@@ -1,0 +1,21 @@
+{
+  "name" : "complexByteKeys",
+  "namespace" : "com.linkedin.restli.examples.greetings.client",
+  "path" : "/complexByteKeys",
+  "schema" : "com.linkedin.restli.examples.typeref.api.TyperefRecord",
+  "doc" : "Demonstrates a resource with a complex key that consists of a field of Bytes typeref.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.ComplexByteKeysResource",
+  "collection" : {
+    "identifier" : {
+      "name" : "keys",
+      "type" : "com.linkedin.restli.examples.typeref.api.TyperefRecord",
+      "params" : "com.linkedin.restli.examples.greetings.api.TwoPartKey"
+    },
+    "supports" : [ "get" ],
+    "methods" : [ {
+      "method" : "get"
+    } ],
+    "entity" : {
+      "path" : "/complexByteKeys/{keys}"
+    }
+  }
+}

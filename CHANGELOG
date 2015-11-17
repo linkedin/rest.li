@@ -6,6 +6,9 @@ Refactor ByteString to avoid extra copy in certain cases
 (RB=615213)
 Make root builder method spec available to request builder specs.
 
+(RB=614365)
+Correctly serialize typerefed ByteString in URI.
+
 3.0.1
 ------
 (RB=614300)

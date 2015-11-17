@@ -86,6 +86,7 @@ public class TestResourceSchemaCollection
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.complexArray", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.complexKeys", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.complexKeys.complexKeysSub", ResourceType.COLLECTION);
+    expectedTypes.put("com.linkedin.restli.examples.greetings.client.complexByteKeys", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.associations", ResourceType.ASSOCIATION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.associations.associationsSub", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.finders", ResourceType.COLLECTION);
