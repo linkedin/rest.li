@@ -24,6 +24,7 @@ import com.linkedin.r2.filter.FilterChain;
 import com.linkedin.r2.filter.FilterChains;
 import com.linkedin.r2.filter.CompressionConfig;
 import com.linkedin.r2.filter.compression.ClientCompressionFilter;
+import com.linkedin.r2.filter.compression.ClientCompressionHelper;
 import com.linkedin.r2.filter.compression.EncodingType;
 import com.linkedin.r2.filter.transport.ClientQueryTunnelFilter;
 import com.linkedin.r2.filter.transport.FilterChainClient;
@@ -422,7 +423,7 @@ public class HttpClientFactory implements TransportClientFactory
     String useResponseCompressionProperty = (String) properties.get(HTTP_USE_RESPONSE_COMPRESSION);
     if (useResponseCompressionProperty != null && Boolean.parseBoolean(useResponseCompressionProperty))
     {
-      httpResponseCompressionOperations.add(ClientCompressionFilter.COMPRESS_ALL_RESPONSES_INDICATOR);
+      httpResponseCompressionOperations.add(ClientCompressionHelper.COMPRESS_ALL_RESPONSES_INDICATOR);
     }
 
     FilterChain filters;

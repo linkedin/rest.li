@@ -1,7 +1,18 @@
-3.0.3
+3.1.1
 ------
+
+
+3.1.0
+------
+(RB=615156)
+Add streaming compressor and streaming compression filter. Note that
+"snappy" encoding is no longer supported in streaming scenario because 
+it requires full data in memory before encoding/decoding. Instead, we 
+will be using "snappy-framed" encoding.
+
 (RB=616718)
 Backport timeout to AbstractR2Servlet
+
 (RB=616123)
 Invoke user callback immediately if netty write fails
 

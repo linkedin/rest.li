@@ -791,7 +791,7 @@ public class TestEntityStream
 
     prepareLatch.await();
     startLatch.countDown();
-    Assert.assertTrue(finishLatch.await(100, TimeUnit.MILLISECONDS));
+    Assert.assertTrue(finishLatch.await(1000, TimeUnit.MILLISECONDS));
 
     // if error wins the race
     if (reader.errorTimes() > 0)

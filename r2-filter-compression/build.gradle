@@ -1,6 +1,7 @@
 dependencies {
   compile project(':data')
   compile project(':r2-core')
+  compile project(':pegasus-common')
   compile externalDependency.commonsCompress
   compile externalDependency.commonsIo
   compile externalDependency.snappy

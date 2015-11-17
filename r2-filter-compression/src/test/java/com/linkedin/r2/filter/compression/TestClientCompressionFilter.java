@@ -175,7 +175,7 @@ public class TestClientCompressionFilter
                                                                                   new CompressionConfig(Integer.MAX_VALUE),
                                                                                   ACCEPT_COMPRESSIONS,
                                                                                   responseCompressionConfig,
-                                                                                  Arrays.asList(ClientCompressionFilter.COMPRESS_ALL_RESPONSES_INDICATOR));
+                                                                                  Arrays.asList(ClientCompressionHelper.COMPRESS_ALL_RESPONSES_INDICATOR));
     RestRequest restRequest = new RestRequestBuilder(new URI(URI)).build();
     RequestContext context = new RequestContext();
     context.putLocalAttr(R2Constants.OPERATION, "get");

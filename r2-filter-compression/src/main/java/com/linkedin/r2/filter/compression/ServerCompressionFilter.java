@@ -48,7 +48,7 @@ public class ServerCompressionFilter implements RestFilter
   private static final Logger LOG = LoggerFactory.getLogger(ServerCompressionFilter.class);
 
   private final Set<EncodingType> _supportedEncoding;
-  private final CompressionConfig _defaultResponseCompressionConfig;
+  private final ServerCompressionHelper _serverCompressionHelper;
 
   private static final String EMPTY = "";
 
@@ -88,7 +88,7 @@ public class ServerCompressionFilter implements RestFilter
     _supportedEncoding = new HashSet<EncodingType>(Arrays.asList(supportedEncoding));
     _supportedEncoding.add(EncodingType.IDENTITY);
     _supportedEncoding.add(EncodingType.ANY);
-    _defaultResponseCompressionConfig = defaultResponseCompressionConfig;
+    _serverCompressionHelper = new ServerCompressionHelper(defaultResponseCompressionConfig);
   }
 
   /**
@@ -144,7 +144,8 @@ public class ServerCompressionFilter implements RestFilter
 
       if (!responseAcceptedEncodings.isEmpty())
       {
-        requestContext.putLocalAttr(HttpConstants.HEADER_RESPONSE_COMPRESSION_THRESHOLD, getResponseCompressionThreshold(req));
+        requestContext.putLocalAttr(HttpConstants.HEADER_RESPONSE_COMPRESSION_THRESHOLD,
+            _serverCompressionHelper.getResponseCompressionThreshold(req));
       }
       nextFilter.onRequest(req, requestContext, wireAttrs);
     }
@@ -155,24 +156,6 @@ public class ServerCompressionFilter implements RestFilter
       RestResponse restResponse = new RestResponseBuilder().setStatus(HttpConstants.UNSUPPORTED_MEDIA_TYPE).build();
       nextFilter.onError(new RestException(restResponse, e), requestContext, wireAttrs);
     }
-  }
-
-  private int getResponseCompressionThreshold(RestRequest request) throws CompressionException
-  {
-    String responseCompressionThreshold = request.getHeader(HttpConstants.HEADER_RESPONSE_COMPRESSION_THRESHOLD);
-    // If Response-Compression-Threshold header is present, use that value. If not, use the value in _defaultResponseCompressionConfig.
-    if (responseCompressionThreshold != null)
-    {
-      try
-      {
-        return Integer.parseInt(responseCompressionThreshold);
-      }
-      catch (NumberFormatException e)
-      {
-        throw new CompressionException(CompressionConstants.INVALID_THRESHOLD + responseCompressionThreshold);
-      }
-    }
-    return _defaultResponseCompressionConfig.getCompressionThreshold();
   }
 
   /**
