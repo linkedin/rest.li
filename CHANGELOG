@@ -2,6 +2,8 @@
 ------
 (RB=616718)
 Backport timeout to AbstractR2Servlet
+(RB=616123)
+Invoke user callback immediately if netty write fails
 
 3.0.2
 ------

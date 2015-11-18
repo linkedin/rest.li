@@ -38,6 +38,7 @@ import com.linkedin.r2.util.TimeoutRunnable;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.ChannelGroupFuture;
@@ -395,7 +396,9 @@ import org.slf4j.LoggerFactory;
           return;
         }
 
-        channel.writeAndFlush(newRequest);
+        // here we want the exception in outbound operations to be passed back through pipeline so that
+        // the user callback would be invoked with the exception and the channel can be put back into the pool
+        channel.writeAndFlush(newRequest).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
       }
 
       @Override

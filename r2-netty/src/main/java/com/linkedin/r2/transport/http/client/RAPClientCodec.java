@@ -63,7 +63,7 @@ class RAPClientCodec extends ChannelDuplexHandler
   }
 
   @Override
-  public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception
+  public void write(final ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception
   {
     _encoder.write(ctx, msg, promise);
   }

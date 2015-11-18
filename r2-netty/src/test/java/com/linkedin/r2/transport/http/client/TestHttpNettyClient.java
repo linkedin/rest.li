@@ -20,8 +20,12 @@
 
 package com.linkedin.r2.transport.http.client;
 
+import com.linkedin.r2.transport.common.Client;
+import com.linkedin.r2.transport.common.bridge.client.TransportClient;
+import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import io.netty.channel.Channel;
 import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.handler.codec.EncoderException;
 import io.netty.handler.codec.TooLongFrameException;
 import java.io.IOException;
 import java.net.SocketAddress;
@@ -29,6 +33,7 @@ import java.net.URI;
 import java.net.UnknownHostException;
 import java.nio.channels.UnresolvedAddressException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
@@ -264,7 +269,7 @@ public class TestHttpNettyClient
   }
 
   @Test
-  public void testBadHeader() throws InterruptedException, IOException
+  public void testReceiveBadHeader() throws InterruptedException, IOException
   {
     TestServer testServer = new TestServer();
     HttpNettyClient client = new HttpClientBuilder(_eventLoop, _scheduler)
@@ -289,6 +294,41 @@ public class TestHttpNettyClient
     catch (ExecutionException e)
     {
       verifyCauseChain(e, RemoteInvocationException.class, IllegalArgumentException.class);
+    }
+    testServer.shutdown();
+  }
+
+  @Test
+  public void testSendBadHeader() throws Exception
+  {
+
+    TestServer testServer = new TestServer();
+    HttpNettyClient client = new HttpClientBuilder(_eventLoop, _scheduler)
+        .setRequestTimeout(10000)
+        .setIdleTimeout(10000)
+        .setShutdownTimeout(500).build();
+
+
+    RestRequestBuilder rb = new RestRequestBuilder(testServer.getRequestURI());
+
+    rb.setHeader("x", "makenettyunhappy\u000Bblah");
+    RestRequest request = rb.build();
+    FutureCallback<RestResponse> cb = new FutureCallback<RestResponse>();
+    TransportCallback<RestResponse> callback = new TransportCallbackAdapter<RestResponse>(cb);
+    client.restRequest(request, new RequestContext(), new HashMap<String, String>(), callback);
+
+    try
+    {
+      cb.get(30, TimeUnit.SECONDS);
+      Assert.fail("Should fail sending request");
+    }
+    catch (TimeoutException ex)
+    {
+      Assert.fail("Unexpected TimeoutException, should have been ExecutionException", ex);
+    }
+    catch (ExecutionException ex)
+    {
+      verifyCauseChain(ex, RemoteInvocationException.class, EncoderException.class, IllegalArgumentException.class);
     }
     testServer.shutdown();
   }
