@@ -33,16 +33,14 @@ import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
 import com.linkedin.r2.transport.http.common.HttpConstants;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Enumeration;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.mail.MessagingException;
 import javax.servlet.ServletException;
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -62,7 +60,15 @@ public abstract class AbstractR2Servlet extends HttpServlet
   private static final Logger _log = LoggerFactory.getLogger(AbstractR2Servlet.class);
   private static final long   serialVersionUID = 0L;
 
+  // servlet timeout in ms.
+  protected final long _timeout;
+
   protected abstract HttpDispatcher getDispatcher();
+
+  public AbstractR2Servlet(long timeout)
+  {
+    _timeout = timeout;
+  }
 
   @Override
   protected void service(final HttpServletRequest req, final HttpServletResponse resp)
@@ -100,14 +106,21 @@ public abstract class AbstractR2Servlet extends HttpServlet
 
     try
     {
-      latch.await();
+      if (latch.await(_timeout, TimeUnit.MILLISECONDS))
+      {
+        writeToServletResponse(result.get(), resp);
+      }
+      else
+      {
+        writeToServletError(resp, RestStatus.INTERNAL_SERVER_ERROR,
+            "Server Timeout after " + _timeout + "ms.");
+      }
     }
     catch (InterruptedException e)
     {
       throw new ServletException("Interrupted!", e);
     }
 
-    writeToServletResponse(result.get(), resp);
   }
 
   protected void writeToServletResponse(TransportResponse<RestResponse> response,

@@ -1,5 +1,7 @@
 3.0.3
 ------
+(RB=616718)
+Backport timeout to AbstractR2Servlet
 
 3.0.2
 ------

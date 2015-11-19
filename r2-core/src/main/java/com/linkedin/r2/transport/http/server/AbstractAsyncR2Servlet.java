@@ -48,8 +48,6 @@ public abstract class AbstractAsyncR2Servlet extends AbstractR2Servlet
 {
   private static final String TRANSPORT_CALLBACK_IOEXCEPTION = "TransportCallbackIOException";
 
-  // servlet async context timeout in ms.
-  private final long _timeout;
 
   /**
    * Initialize the servlet, optionally using servlet-api-3.0 async API, if supported
@@ -57,7 +55,7 @@ public abstract class AbstractAsyncR2Servlet extends AbstractR2Servlet
    */
   public AbstractAsyncR2Servlet(long timeout)
   {
-    _timeout = timeout;
+    super(timeout);
   }
 
   @Override

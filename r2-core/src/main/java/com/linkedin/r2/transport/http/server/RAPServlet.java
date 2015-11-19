@@ -21,6 +21,8 @@
 package com.linkedin.r2.transport.http.server;
 
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
+import java.util.concurrent.TimeUnit;
+
 
 /**
  * @author Steven Ihde
@@ -35,6 +37,7 @@ public class RAPServlet extends AbstractR2Servlet
 
   public RAPServlet(HttpDispatcher dispatcher)
   {
+    super(Long.MAX_VALUE);
     _dispatcher = dispatcher;
   }
 
@@ -52,6 +55,7 @@ public class RAPServlet extends AbstractR2Servlet
                     int timeOut,
                     int timeOutDelta)
   {
+    super(timeOut);
     _dispatcher = dispatcher;
   }
 
