@@ -1790,6 +1790,58 @@ public class TestD2Config
 
   }
 
+  @Test
+  public static void testDefaultClusterWithColoInFullListMode() throws IOException, InterruptedException, URISyntaxException, Exception
+  {
+    // Map<String, Object> clusterServiceConfigurations = new HashMap<String, Object>();
+    Map<String, Object> serviceVariants = new HashMap<String, Object>();
+    final String clusterName = "zServices";
+
+    //Cluster Service Configurations
+    // Services With Variants
+    @SuppressWarnings("serial")
+    Map<String,List<String>> clustersData = new HashMap<String,List<String>>()
+    {{
+        put(clusterName, Arrays.asList(new String[]{"service-1"}));
+      }};
+
+    // Colo configs
+    Map<String,Object> clusterProperties = new HashMap<String,Object>();
+    List<String> peerColos = new ArrayList<String>();
+    peerColos.add("WestCoast");
+    peerColos.add("EastCoast");
+    clusterProperties.put("coloVariants", peerColos);
+    String masterColo = "WestCoast";
+    clusterProperties.put("masterColo", masterColo);
+    Map<String,Map<String,Object>> clustersProperties = new HashMap<String,Map<String,Object>>();
+    clustersProperties.put(clusterName, clusterProperties);
+    String defaultColo = "EastCoast";
+    // We omit adding cluster variants to the cluster.
+
+    // Cluster variants
+    // serviceGroup1
+    @SuppressWarnings("serial")
+
+    Map<String,Object> serviceGroup1 = new HashMap<String,Object>()
+    {{
+        put("type", "fullClusterList");
+        put("clusterList", Arrays.asList(new String[]{"zServices"}));
+      }};
+
+    serviceVariants.put("ServiceGroup1", serviceGroup1);
+
+    D2ConfigTestUtil d2Conf = new D2ConfigTestUtil(clustersData, defaultColo, clustersProperties);
+    d2Conf.setServiceVariants(serviceVariants);
+
+    assertEquals(d2Conf.runDiscovery(_zkHosts), 0);
+
+    verifyServiceProperties("zServices-EastCoast", "service-1", "/service-1", "ServiceGroup1");
+    verifyServiceProperties("zServices-EastCoast", "service-1-EastCoast", "/service-1", "ServiceGroup1");
+    verifyServiceProperties("zServices-WestCoast", "service-1-WestCoast", "/service-1", "ServiceGroup1");
+    verifyServiceProperties("zServices-WestCoast", "service-1Master", "/service-1", "ServiceGroup1");
+
+  }
+
   private static void verifyColoClusterAndServices(Map<String,List<String>> clustersData,
                                                    Map<String,List<String>> peerColoList,
                                                    Map<String,String> masterColoList, String defaultColo)

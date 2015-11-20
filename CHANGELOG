@@ -6,6 +6,9 @@
 (RB=619857)
 Add HTTP status code in response body for ErrorResponse in certain formats.
 
+(RB=618755)
+Refactoring the d2config code for serviceGroup
+
 3.1.2
 ------
 (RB=618172)
