@@ -94,6 +94,23 @@ public class TestErrorResponseBuilder
   }
 
   @Test
+  public void testExceptionClass()
+  {
+    ErrorResponseBuilder builder = new ErrorResponseBuilder();
+    RestLiServiceException exception = new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST, "foobar", new IllegalStateException("foo"));
+    exception.setServiceErrorCode(123);
+    exception.setOverridingFormat(ErrorResponseFormat.MESSAGE_AND_SERVICECODE_AND_EXCEPTIONCLASS);
+
+    ErrorResponse errorResponse = builder.buildErrorResponse(exception);
+    Assert.assertFalse(errorResponse.hasErrorDetails());
+    Assert.assertTrue(errorResponse.hasExceptionClass());
+    Assert.assertFalse(errorResponse.hasStatus());
+    Assert.assertTrue(errorResponse.hasMessage());
+    Assert.assertTrue(errorResponse.hasServiceErrorCode());
+    Assert.assertFalse(errorResponse.hasStackTrace());
+  }
+
+  @Test
   public void testOverride()
   {
     RestLiServiceException exception = new RestLiServiceException(HttpStatus.S_200_OK, "Some message", new IllegalStateException("Some other message"));

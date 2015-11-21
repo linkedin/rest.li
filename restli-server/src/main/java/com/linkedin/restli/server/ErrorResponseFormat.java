@@ -28,6 +28,11 @@ public enum ErrorResponseFormat
   MESSAGE_AND_SERVICECODE(EnumSet.of(ErrorResponsePart.MESSAGE, ErrorResponsePart.SERVICE_ERROR_CODE, ErrorResponsePart.HEADERS)),
 
   /**
+   * Only the error message, service error code, exception class, and headers.
+   */
+  MESSAGE_AND_SERVICECODE_AND_EXCEPTIONCLASS(EnumSet.of(ErrorResponsePart.MESSAGE, ErrorResponsePart.SERVICE_ERROR_CODE, ErrorResponsePart.EXCEPTION_CLASS, ErrorResponsePart.HEADERS)),
+
+  /**
    * Only the error message and headers.
    */
   MESSAGE_ONLY(EnumSet.of(ErrorResponsePart.MESSAGE, ErrorResponsePart.HEADERS)),
@@ -43,6 +48,7 @@ public enum ErrorResponseFormat
     HEADERS,
     STATUS_CODE_IN_BODY,
     STACKTRACE,
+    EXCEPTION_CLASS,
     MESSAGE,
     SERVICE_ERROR_CODE,
     DETAILS
@@ -73,6 +79,11 @@ public enum ErrorResponseFormat
   public boolean showStacktrace()
   {
     return _errorPartsToShow.contains(ErrorResponsePart.STACKTRACE);
+  }
+
+  public boolean showExceptionClass()
+  {
+    return _errorPartsToShow.contains(ErrorResponsePart.EXCEPTION_CLASS);
   }
 
   public boolean showMessage()

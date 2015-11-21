@@ -115,6 +115,11 @@ public final class ErrorResponseBuilder implements RestLiResponseBuilder
       er.setExceptionClass(result.getClass().getName());
     }
 
+    if (errorResponseFormat.showExceptionClass())
+    {
+      er.setExceptionClass(result.getClass().getName());
+    }
+
     return er;
   }
 
