@@ -1,5 +1,7 @@
 3.1.2
 ------
+(RB=618172)
+Provide decouping of class exception and stack trace for certain client use cases.
 
 3.1.1
 ------
