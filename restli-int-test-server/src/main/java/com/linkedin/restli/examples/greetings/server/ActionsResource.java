@@ -138,63 +138,38 @@ public class ActionsResource
     return (param == null? Boolean.TRUE : param);
   }
 
-  private static Task<String> makeTaskA(final int a) {
-    return new BaseTask<String>("geta")
+  private static <T> Task<T> delayedTask(String name, final long delay, final T result)
+  {
+    return new BaseTask<T>(name)
     {
       @Override
-      protected Promise<? extends String> run(final Context context) throws Exception
+      protected Promise<T> run(Context context)
       {
-        final SettablePromise<String> result = Promises.settable();
+        final SettablePromise<T> promise = Promises.settable();
         Runnable requestHandler = new Runnable()
         {
           public void run()
           {
-            result.done(Integer.toBinaryString(a));
+            promise.done(result);
           }
         };
-        scheduler.schedule(requestHandler, DELAY, TimeUnit.MILLISECONDS);
-        return result;
+        scheduler.schedule(requestHandler, delay, TimeUnit.MILLISECONDS);
+        return promise;
       }
     };
   }
+
+  private static Task<String> makeTaskA(final int a) {
+    return delayedTask("geta", DELAY, Integer.toBinaryString(a));
+  }
+
   private static Task<String> makeTaskB(final String b) {
-    return new BaseTask<String>("getb")
-    {
-      @Override
-      protected Promise<? extends String> run(final Context context) throws Exception
-      {
-        final SettablePromise<String> result = Promises.settable();
-        Runnable requestHandler = new Runnable()
-        {
-          public void run()
-          {
-            result.done(b.toUpperCase());
-          }
-        };
-        scheduler.schedule(requestHandler, DELAY, TimeUnit.MILLISECONDS);
-        return result;
-      }
-    };
+    return delayedTask("getb", DELAY, b.toUpperCase());
   }
   private static Task<String> makeTaskC(final boolean c) {
-    return new BaseTask<String>("getc")
-    {
-      @Override
-      protected Promise<? extends String> run(final Context context) throws Exception
-      {
-        final SettablePromise<String> result = Promises.settable();
-        Runnable requestHandler = new Runnable()
-        {
-          public void run()
-          {
-            result.done(Boolean.toString(c));
-          }
-        };
-        scheduler.schedule(requestHandler, DELAY, TimeUnit.MILLISECONDS);
-        return result;
-      }
-    };
+    return delayedTask("getc", DELAY, Boolean.toString(c));
   }
+
   private static Task<String> makeConcatTask(final Task<?>... tasks) {
     return Tasks.callable("concat", new Callable<String>()
     {
@@ -401,5 +376,31 @@ public class ActionsResource
   public Promise<Integer[]> arrayPromise()
   {
     return null;
+  }
+
+  /**
+   * Simulates a delay in an asynchronous resource caused by ParSeq execution plan creation. The delay is simulated as
+   * {@link Thread#sleep(long)} because execution plan creation is a synchronous operation.
+   * @param delayMillis the number of milliseconds it will take this resource to create an execution plan
+   * @return nothing
+   */
+  @Action(name = "taskCreationDelay")
+  public Task<Void> taskCreationDelay(@ActionParam("delay") int delayMillis) throws InterruptedException
+  {
+    // simulate a long running blocking computation representing time taken for plan creation
+    Thread.sleep(delayMillis);
+    return delayedTask("taskCreationDelayTask", 0, null);
+  }
+
+  /**
+   * Simulates a delay in an asynchronous resource. The delay is simulated using a scheduled task (asynchronously).
+   * That is how a typical async resource looks like in terms of delays.
+   * @param delayMillis the number of milliseconds it will take this resource to create an execution plan
+   * @return nothing
+   */
+  @Action(name = "taskExecutionDelay")
+  public Task<Void> taskExecutionDelay(@ActionParam("delay") final int delayMillis)
+  {
+    return delayedTask("taskExecutionDelayTask", delayMillis, null);
   }
 }
