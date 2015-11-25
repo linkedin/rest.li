@@ -295,6 +295,7 @@ public class TrackerClient implements LoadBalancerClient
       sb.append("{_partitionData = ");
       sb.append(_partitionData);
       sb.append("_degrader = " + _degrader);
+      sb.append("degraderMinCallCount = " + _degraderControl.getMinCallCount());
       sb.append("}");
       return sb.toString();
     }

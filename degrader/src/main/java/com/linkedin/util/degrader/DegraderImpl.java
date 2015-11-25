@@ -359,7 +359,6 @@ public class DegraderImpl implements Degrader
                  ", ErrorRate=" + stats.getErrorRate() +
                  ", OutstandingLatency=" + _outstandingLatency +
                  ", OutstandingCount=" + stats.getOutstandingCount() +
-                 ", CountTotal=" + countTotal +
                  ", NoOverrideDropCountTotal=" + noOverrideDropCountTotal +
                  ", DroppedCountTotal=" + droppedCountTotal +
                  ", LastIntervalDroppedRate=" + lastIntervalDroppedRate);
@@ -511,12 +510,8 @@ public class DegraderImpl implements Degrader
     builder.append(" dropRate = " + _dropRate + ",");
     builder.append(" latency = " + _latency + ",");
     builder.append(" outstandingLatency = " + _outstandingLatency + ",");
-    builder.append(" lastIntervalCountTotal = " + _lastIntervalCountTotal + ",");
-    builder.append(" lastIntervalDroppedCountTotal = " + _lastIntervalDroppedCountTotal + ",");
     builder.append(" lastIntervalDroppedRate = " + _lastIntervalDroppedRate + ",");
-    builder.append(" lastNotDroppedTime = " + _lastNotDroppedTime + ",");
-    builder.append(" countTotal = " + _countTotal + ",");
-    builder.append(" noOverrideDropCountTotal = " + _noOverrideDropCountTotal + ",");
+    builder.append(" callCount = " + _callTrackerStats.getCallCount() + ",");
     builder.append(" droppedCountTotal = " + _droppedCountTotal + "]");
     return builder.toString();
   }
