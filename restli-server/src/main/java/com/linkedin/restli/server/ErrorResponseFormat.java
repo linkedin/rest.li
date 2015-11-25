@@ -23,14 +23,14 @@ public enum ErrorResponseFormat
   MESSAGE_AND_DETAILS(EnumSet.of(ErrorResponsePart.MESSAGE, ErrorResponsePart.DETAILS, ErrorResponsePart.HEADERS)),
 
   /**
-   * Only the error message, service error code, and headers.
+   * Only the status code, error message, service error code, and headers.
    */
-  MESSAGE_AND_SERVICECODE(EnumSet.of(ErrorResponsePart.MESSAGE, ErrorResponsePart.SERVICE_ERROR_CODE, ErrorResponsePart.HEADERS)),
+  MESSAGE_AND_SERVICECODE(EnumSet.of(ErrorResponsePart.STATUS_CODE_IN_BODY, ErrorResponsePart.MESSAGE, ErrorResponsePart.SERVICE_ERROR_CODE, ErrorResponsePart.HEADERS)),
 
   /**
-   * Only the error message, service error code, exception class, and headers.
+   * Only the status code, error message, service error code, exception class, and headers.
    */
-  MESSAGE_AND_SERVICECODE_AND_EXCEPTIONCLASS(EnumSet.of(ErrorResponsePart.MESSAGE, ErrorResponsePart.SERVICE_ERROR_CODE, ErrorResponsePart.EXCEPTION_CLASS, ErrorResponsePart.HEADERS)),
+  MESSAGE_AND_SERVICECODE_AND_EXCEPTIONCLASS(EnumSet.of(ErrorResponsePart.STATUS_CODE_IN_BODY, ErrorResponsePart.MESSAGE, ErrorResponsePart.SERVICE_ERROR_CODE, ErrorResponsePart.EXCEPTION_CLASS, ErrorResponsePart.HEADERS)),
 
   /**
    * Only the error message and headers.

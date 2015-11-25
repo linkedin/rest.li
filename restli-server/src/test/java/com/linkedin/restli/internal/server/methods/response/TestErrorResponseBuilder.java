@@ -104,7 +104,7 @@ public class TestErrorResponseBuilder
     ErrorResponse errorResponse = builder.buildErrorResponse(exception);
     Assert.assertFalse(errorResponse.hasErrorDetails());
     Assert.assertTrue(errorResponse.hasExceptionClass());
-    Assert.assertFalse(errorResponse.hasStatus());
+    Assert.assertTrue(errorResponse.hasStatus());
     Assert.assertTrue(errorResponse.hasMessage());
     Assert.assertTrue(errorResponse.hasServiceErrorCode());
     Assert.assertFalse(errorResponse.hasStackTrace());
@@ -130,7 +130,7 @@ public class TestErrorResponseBuilder
     errorResponse = builder.buildErrorResponse(exception);
     Assert.assertFalse(errorResponse.hasErrorDetails());
     Assert.assertFalse(errorResponse.hasExceptionClass());
-    Assert.assertFalse(errorResponse.hasStatus());
+    Assert.assertTrue(errorResponse.hasStatus());
     Assert.assertTrue(errorResponse.hasMessage());
     Assert.assertTrue(errorResponse.hasServiceErrorCode());
     Assert.assertFalse(errorResponse.hasStackTrace());
