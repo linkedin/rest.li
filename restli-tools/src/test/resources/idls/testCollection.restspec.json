@@ -11,6 +11,9 @@
     },
     "supports" : [ "batch_get", "create", "delete", "get", "get_all", "partial_update", "update" ],
     "methods" : [ {
+      "annotations" : {
+        "someOtherAnnotation" : { }
+      },
       "method" : "create",
       "parameters" : [ {
         "name" : "isNullId",
@@ -18,6 +21,9 @@
         "default" : "false"
       } ]
     }, {
+      "annotations" : {
+        "someAnnotation" : { }
+      },
       "method" : "get",
       "parameters" : [ {
           "name": "message",

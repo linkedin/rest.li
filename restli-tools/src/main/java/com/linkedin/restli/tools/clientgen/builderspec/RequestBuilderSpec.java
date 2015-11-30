@@ -17,6 +17,7 @@
 package com.linkedin.restli.tools.clientgen.builderspec;
 
 
+import com.linkedin.data.DataMap;
 import com.linkedin.pegasus.generator.spec.ClassTemplateSpec;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.restspec.ResourceSchema;
@@ -40,6 +41,7 @@ public abstract class RequestBuilderSpec extends BuilderSpec
   protected ClassTemplateSpec _valueClass;
   protected List<PathKeyBindingMethodSpec> _pathKeyMethods = new ArrayList<PathKeyBindingMethodSpec>();
   private List<QueryParamBindingMethodSpec> _queryParamMethods = new ArrayList<QueryParamBindingMethodSpec>();
+  private DataMap _annotations;
 
   public RequestBuilderSpec()
   {
@@ -130,5 +132,15 @@ public abstract class RequestBuilderSpec extends BuilderSpec
   public void addQueryParamMethod(QueryParamBindingMethodSpec queryParamMethod)
   {
     _queryParamMethods.add(queryParamMethod);
+  }
+
+  public DataMap getAnnotations()
+  {
+    return _annotations;
+  }
+
+  public void setAnnotations(DataMap annotations)
+  {
+    this._annotations = annotations;
   }
 }

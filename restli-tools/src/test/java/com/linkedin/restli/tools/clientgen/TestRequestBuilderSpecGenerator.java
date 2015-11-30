@@ -17,6 +17,7 @@
 package com.linkedin.restli.tools.clientgen;
 
 
+import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.pegasus.generator.CodeUtil;
 import com.linkedin.pegasus.generator.DataSchemaParser;
@@ -283,6 +284,12 @@ public class TestRequestBuilderSpecGenerator
         Assert.assertEquals(getQuery.getArgType().getSchema().getType(), DataSchema.Type.STRING);
         Assert.assertFalse(getQuery.isNeedAddParamMethod());
         Assert.assertTrue(getQuery.isOptional());
+        if (spec.getResource().getName().equals("testCollection"))
+        {
+          DataMap expected = new DataMap();
+          expected.put("someAnnotation", new DataMap());
+          Assert.assertEquals(spec.getAnnotations(), expected);
+        }
       }
       else if (spec.getResourceMethod() == ResourceMethod.DELETE && spec.getClassName().startsWith("TestCollectionSub"))
       {
@@ -301,6 +308,9 @@ public class TestRequestBuilderSpecGenerator
         QueryParamBindingMethodSpec queryParam = spec.getQueryParamMethods().get(0);
         Assert.assertEquals(queryParam.getParamName(), "isNullId");
         Assert.assertEquals(queryParam.isOptional(), true);
+        DataMap expected = new DataMap();
+        expected.put("someOtherAnnotation", new DataMap());
+        Assert.assertEquals(spec.getAnnotations(), expected);
       }
     }
   }

@@ -444,7 +444,7 @@ public class RequestBuilderSpecGenerator
             CodeUtil.capitalize(resourceName) + "FindBy" + CodeUtil.capitalize(finderName) + getMethodBuilderSuffix();
         FinderBuilderSpec finderBuilderClass =
             generateFinderRequestBuilder(rootBuilderSpec.getResource(), baseBuilderClass, keyClass, valueClass, builderName,
-                                         rootBuilderSpec.getNamespace(), finderName);
+                                         rootBuilderSpec.getNamespace(), finderName, finder);
 
         generatePathKeyBindingMethods(pathKeys, finderBuilderClass, pathKeyTypes);
 
@@ -481,6 +481,7 @@ public class RequestBuilderSpecGenerator
     // this method applies to REST methods
     RestMethodBuilderSpec restMethodBuilderClass =
         new RestMethodBuilderSpec(clientPackage, requestBuilderName, baseBuilderClass, resource, schema.getMethod());
+    restMethodBuilderClass.setAnnotations(schema.getAnnotations() == null ? null : schema.getAnnotations().data());
     final ClassTemplateSpec keyClassSpec = classToTemplateSpec(keyClass);
     restMethodBuilderClass.setKeyClass(keyClassSpec);
     final ClassTemplateSpec valueClassSpec = classToTemplateSpec(valueClass);
@@ -496,10 +497,12 @@ public class RequestBuilderSpecGenerator
                                                          String valueClass,
                                                          String requestBuilderName,
                                                          String clientPackage,
-                                                         String finderName)
+                                                         String finderName,
+                                                         FinderSchema schema)
   {
     // this method applies to finder
     FinderBuilderSpec finderBuilderClass = new FinderBuilderSpec(clientPackage, requestBuilderName, baseBuilderClass, resource);
+    finderBuilderClass.setAnnotations(schema.getAnnotations() == null ? null : schema.getAnnotations().data());
     final ClassTemplateSpec keyClassSpec = classToTemplateSpec(keyClass);
     finderBuilderClass.setKeyClass(keyClassSpec);
     final ClassTemplateSpec valueClassSpec = classToTemplateSpec(valueClass);
@@ -520,6 +523,7 @@ public class RequestBuilderSpecGenerator
   {
     ActionBuilderSpec actionBuilderClass =
         new ActionBuilderSpec(clientPackage, requestBuilderName, baseBuilderClass, resource, schema.getName());
+    actionBuilderClass.setAnnotations(schema.getAnnotations() == null ? null : schema.getAnnotations().data());
     final ClassTemplateSpec keyClassSpec = classToTemplateSpec(keyClass);
     actionBuilderClass.setKeyClass(keyClassSpec);
     final ClassTemplateSpec returnClassSpec = classToTemplateSpec(returnType);
