@@ -25,6 +25,7 @@ import com.linkedin.data.template.StringMap;
 import com.linkedin.parseq.Engine;
 import com.linkedin.parseq.EngineBuilder;
 import com.linkedin.r2.message.RequestContext;
+import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
@@ -118,7 +119,7 @@ public class TestMultiplexedRequestHandlerImpl
     RestRequest request = muxRequestBuilder().setMethod(HttpMethod.PUT.name()).build();
     FutureCallback<RestResponse> callback = new FutureCallback<RestResponse>();
     multiplexer.handleRequest(request, new RequestContext(), callback);
-    assertEquals(getError(callback).getStatus(), HttpStatus.S_405_METHOD_NOT_ALLOWED);
+    assertEquals(getErrorStatus(callback), HttpStatus.S_405_METHOD_NOT_ALLOWED);
   }
 
   @Test
@@ -131,7 +132,7 @@ public class TestMultiplexedRequestHandlerImpl
         .build();
     FutureCallback<RestResponse> callback = new FutureCallback<RestResponse>();
     multiplexer.handleRequest(request, new RequestContext(), callback);
-    assertEquals(getError(callback).getStatus(), HttpStatus.S_415_UNSUPPORTED_MEDIA_TYPE);
+    assertEquals(getErrorStatus(callback), HttpStatus.S_415_UNSUPPORTED_MEDIA_TYPE);
   }
 
   @Test
@@ -161,7 +162,7 @@ public class TestMultiplexedRequestHandlerImpl
     RestRequest request = fakeMuxRestRequest();
     FutureCallback<RestResponse> callback = new FutureCallback<RestResponse>();
     multiplexer.handleRequest(request, new RequestContext(), callback);
-    assertEquals(getError(callback).getStatus(), HttpStatus.S_400_BAD_REQUEST);
+    assertEquals(getErrorStatus(callback), HttpStatus.S_400_BAD_REQUEST);
   }
 
   @Test
@@ -174,7 +175,7 @@ public class TestMultiplexedRequestHandlerImpl
       "2", fakeIndRequest(FOO_URL)));
     FutureCallback<RestResponse> callback = new FutureCallback<RestResponse>();
     multiplexer.handleRequest(request, new RequestContext(), callback);
-    assertEquals(getError(callback).getStatus(), HttpStatus.S_400_BAD_REQUEST);
+    assertEquals(getErrorStatus(callback), HttpStatus.S_400_BAD_REQUEST);
   }
 
 
@@ -189,7 +190,7 @@ public class TestMultiplexedRequestHandlerImpl
     RestRequest request = fakeMuxRestRequest(ImmutableMap.of("0", ir0));
     FutureCallback<RestResponse> callback = new FutureCallback<RestResponse>();
     multiplexer.handleRequest(request, new RequestContext(), callback);
-    assertEquals(getError(callback).getStatus(), HttpStatus.S_400_BAD_REQUEST);
+    assertEquals(getErrorStatus(callback), HttpStatus.S_400_BAD_REQUEST);
   }
 
   @Test
@@ -769,16 +770,17 @@ public class TestMultiplexedRequestHandlerImpl
     return new RestRequestBuilder(new URI("/mux"));
   }
 
-  private static RestLiServiceException getError(FutureCallback<RestResponse> future) throws InterruptedException
+  private static HttpStatus getErrorStatus(FutureCallback<RestResponse> future) throws InterruptedException
   {
     try
     {
       future.get();
-      throw new IllegalStateException("An error is expected");
+      fail("An error is expected");
+      return null;
     }
     catch (ExecutionException e)
     {
-      return (RestLiServiceException) e.getCause();
+      return HttpStatus.fromCode(((RestException) e.getCause()).getResponse().getStatus());
     }
   }
 

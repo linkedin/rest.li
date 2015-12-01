@@ -24,6 +24,7 @@ import com.linkedin.parseq.Engine;
 import com.linkedin.parseq.Task;
 import com.linkedin.parseq.Tasks;
 import com.linkedin.r2.message.RequestContext;
+import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestResponseBuilder;
@@ -40,7 +41,6 @@ import com.linkedin.restli.internal.common.ContentTypeUtil;
 import com.linkedin.restli.internal.common.ContentTypeUtil.ContentType;
 import com.linkedin.restli.internal.common.CookieUtil;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
-import com.linkedin.restli.server.RestLiServiceException;
 
 import java.net.HttpCookie;
 import java.util.ArrayList;
@@ -110,7 +110,7 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
     if (HttpMethod.POST != HttpMethod.valueOf(request.getMethod()))
     {
       _log.error("POST is expected, but " + request.getMethod() + " received");
-      callback.onError(new RestLiServiceException(HttpStatus.S_405_METHOD_NOT_ALLOWED));
+      callback.onError(RestException.forError(HttpStatus.S_405_METHOD_NOT_ALLOWED.getCode(), "Invalid method"));
       return;
     }
     IndividualRequestMap individualRequests;
@@ -118,7 +118,7 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
     {
       individualRequests = extractIndividualRequests(request);
     }
-    catch (RestLiServiceException e)
+    catch (RestException e)
     {
       _log.error("Invalid multiplexed request", e);
       callback.onError(e);
@@ -127,7 +127,7 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
     catch (Exception e)
     {
       _log.error("Invalid multiplexed request", e);
-      callback.onError(new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST));
+      callback.onError(RestException.forError(HttpStatus.S_400_BAD_REQUEST.getCode(), e));
       return;
     }
     // prepare the map of individual responses to be collected
@@ -151,8 +151,10 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
    * Extracts individual requests from the given REST request.
    *
    * @return a non-empty map of individual requests
+   * @throws RestException if the payload of the RestRequest is ill-formed, contains no individual requests, or contains
+   *         more than allowable individual requests.
    */
-  private IndividualRequestMap extractIndividualRequests(RestRequest restRequest)
+  private IndividualRequestMap extractIndividualRequests(RestRequest restRequest) throws RestException
   {
     validateHeaders(restRequest);
     DataMap data = DataMapUtils.readMap(restRequest);
@@ -161,12 +163,12 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
     int totalCount = totalRequestCount(individualRequests);
     if (totalCount == 0)
     {
-      throw new IllegalArgumentException("No individual requests to process");
+      throw RestException.forError(HttpStatus.S_400_BAD_REQUEST.getCode(), "No individual requests to process");
     }
     if (totalCount > _maximumRequestsNumber)
     {
-      throw new IllegalArgumentException("The server is configured to serve up to " + _maximumRequestsNumber +
-                                         " requests, but received " + totalCount);
+      throw RestException.forError(HttpStatus.S_400_BAD_REQUEST.getCode(),
+          "The server is configured to serve up to " + _maximumRequestsNumber + " requests, but received " + totalCount);
     }
     return individualRequests;
   }
@@ -181,7 +183,7 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
     return count;
   }
 
-  private static void validateHeaders(RestRequest request)
+  private static void validateHeaders(RestRequest request) throws RestException
   {
     boolean supported;
     try
@@ -190,12 +192,12 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
     }
     catch (MimeTypeParseException e)
     {
-      throw new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST, "Invalid content type");
+      throw RestException.forError(HttpStatus.S_400_BAD_REQUEST.getCode(), "Invalid content type");
     }
 
     if (!supported)
     {
-      throw new RestLiServiceException(HttpStatus.S_415_UNSUPPORTED_MEDIA_TYPE, "Unsupported content type");
+      throw RestException.forError(HttpStatus.S_415_UNSUPPORTED_MEDIA_TYPE.getCode(), "Unsupported content type");
     }
   }
 
