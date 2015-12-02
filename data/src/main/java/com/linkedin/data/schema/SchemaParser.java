@@ -1151,6 +1151,10 @@ public class SchemaParser extends AbstractDataParser
     return _dataLocationMap;
   }
 
+  protected void addTopLevelSchema(DataSchema schema) {
+    _topLevelDataSchemas.add(schema);
+  }
+
   public static final ValidationOptions getDefaultSchemaParserValidationOptions()
   {
     return new ValidationOptions(RequiredMode.CAN_BE_ABSENT_IF_HAS_DEFAULT, CoercionMode.NORMAL);
