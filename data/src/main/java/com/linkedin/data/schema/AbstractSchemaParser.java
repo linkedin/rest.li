@@ -17,22 +17,13 @@
 package com.linkedin.data.schema;
 
 
-import com.linkedin.data.Data;
-import com.linkedin.data.DataList;
-import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.DataLocation;
-import com.linkedin.data.codec.JacksonDataCodec;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
 
 /**
  * Common base class for parsers that parse Schema objects.
