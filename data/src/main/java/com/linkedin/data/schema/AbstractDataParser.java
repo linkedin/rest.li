@@ -22,11 +22,14 @@ import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.DataLocation;
 import com.linkedin.data.codec.JacksonDataCodec;
+import com.linkedin.data.schema.resolver.DefaultDataSchemaResolver;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
