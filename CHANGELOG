@@ -9,6 +9,9 @@ Notify listeners when SimpleLoadBalancerState shutdown
 (RB=648493)
 Compare ReadOnly and CreateOnly paths properly in RestLiAnnotationReader.
 
+(RB=650205)
+Add support for alternate schema parsers by introducing PegasusSchemaParser and DataSchemaParserFactory interface.
+
 5.0.7
 -----
 (RB=635961)

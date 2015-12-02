@@ -18,15 +18,14 @@ package com.linkedin.data.template;
 
 
 import com.linkedin.data.ByteString;
-import com.linkedin.data.Data;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.DataSchemaUtil;
 import com.linkedin.data.schema.NamedDataSchema;
-import com.linkedin.data.schema.SchemaParser;
 import com.linkedin.data.schema.SchemaParserFactory;
+import com.linkedin.data.schema.PegasusSchemaParser;
 
 import java.io.FileDescriptor;
 import java.io.FileOutputStream;
@@ -294,7 +293,7 @@ public class DataTemplateUtil
    */
   public static DataSchema parseSchema(String schemaText, DataSchemaResolver schemaResolver) throws IllegalArgumentException
   {
-    SchemaParser parser = SchemaParserFactory.instance().create(schemaResolver);
+    PegasusSchemaParser parser = SchemaParserFactory.instance().create(schemaResolver);
     parser.parse(schemaText);
     if (parser.hasError())
     {

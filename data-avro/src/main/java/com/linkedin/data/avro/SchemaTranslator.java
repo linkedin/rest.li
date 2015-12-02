@@ -33,6 +33,7 @@ import com.linkedin.data.schema.MapDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.SchemaParser;
 import com.linkedin.data.schema.SchemaParserFactory;
+import com.linkedin.data.schema.PegasusSchemaParser;
 import com.linkedin.data.schema.UnionDataSchema;
 import com.linkedin.data.schema.resolver.DefaultDataSchemaResolver;
 import com.linkedin.data.schema.resolver.FileDataSchemaResolver;
@@ -125,7 +126,7 @@ public class SchemaTranslator
     SchemaParserFactory parserFactory = SchemaParserFactory.instance(validationOptions);
 
     DataSchemaResolver resolver = getResolver(parserFactory, options);
-    SchemaParser parser = parserFactory.create(resolver);
+    PegasusSchemaParser parser = parserFactory.create(resolver);
     parser.parse(avroSchemaInJson);
     if (parser.hasError())
     {

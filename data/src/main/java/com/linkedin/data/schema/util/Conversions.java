@@ -17,12 +17,13 @@
 package com.linkedin.data.schema.util;
 
 
-import com.linkedin.data.Data;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.SchemaParser;
+import com.linkedin.data.schema.PegasusSchemaParser;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -72,7 +73,7 @@ class Conversions
    * @return a {@link DataSchema} for the provided {@link DataMap} or null if the map does not represent a valid schema,
    *         parse errors can be obtained from the provided {@link SchemaParser}.
    */
-  public static DataSchema dataMapToDataSchema(DataMap map, SchemaParser parser)
+  public static DataSchema dataMapToDataSchema(DataMap map, PegasusSchemaParser parser)
   {
     // Convert DataMap into DataSchema
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();

@@ -19,11 +19,12 @@ package com.linkedin.data.schema.resolver;
 
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaLocation;
+import com.linkedin.data.schema.DataSchemaParserFactory;
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.Name;
 import com.linkedin.data.schema.NamedDataSchema;
-import com.linkedin.data.schema.SchemaParser;
-import com.linkedin.data.schema.SchemaParserFactory;
+import com.linkedin.data.schema.PegasusSchemaParser;
+
 import java.io.FileDescriptor;
 import java.io.FileOutputStream;
 import java.io.FilterInputStream;
@@ -159,7 +160,7 @@ public abstract class AbstractDataSchemaResolver implements DataSchemaResolver
    *
    * @param parserFactory that will be used by the resolver to parse schemas.
    */
-  protected AbstractDataSchemaResolver(SchemaParserFactory parserFactory)
+  protected AbstractDataSchemaResolver(DataSchemaParserFactory parserFactory)
   {
     _parserFactory = parserFactory;
   }
@@ -289,7 +290,7 @@ public abstract class AbstractDataSchemaResolver implements DataSchemaResolver
   protected NamedDataSchema parse(InputStream inputStream, final DataSchemaLocation location, String name, StringBuilder errorMessageBuilder)
   {
     NamedDataSchema schema = null;
-    SchemaParser parser = _parserFactory.create(this);
+    PegasusSchemaParser parser = _parserFactory.create(this);
     parser.setLocation(location);
     //out.println("start parsing " + location);
 
@@ -333,7 +334,7 @@ public abstract class AbstractDataSchemaResolver implements DataSchemaResolver
 
   private final Map<String, NamedDataSchema> _nameToDataSchema = new HashMap<String, NamedDataSchema>();
   private final Map<String, DataSchemaLocation> _nameToDataSchemaLocations = new HashMap<String, DataSchemaLocation>();
-  private final SchemaParserFactory _parserFactory;
+  private final DataSchemaParserFactory _parserFactory;
   private final Set<DataSchemaLocation> _badLocations = new HashSet<DataSchemaLocation>();
   private final Set<DataSchemaLocation> _resolvedLocations = new HashSet<DataSchemaLocation>();
 

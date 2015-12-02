@@ -20,7 +20,7 @@ import com.linkedin.data.schema.validation.ValidationOptions;
 import java.util.HashMap;
 import java.util.Map;
 
-public class SchemaParserFactory
+public class SchemaParserFactory implements DataSchemaParserFactory
 {
   /**
    * Create a new parser that will use the specified resolver and validation options.
