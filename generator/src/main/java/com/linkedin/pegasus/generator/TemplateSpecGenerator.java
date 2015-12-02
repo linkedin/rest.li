@@ -43,6 +43,8 @@ import com.linkedin.pegasus.generator.spec.PrimitiveTemplateSpec;
 import com.linkedin.pegasus.generator.spec.RecordTemplateSpec;
 import com.linkedin.pegasus.generator.spec.TyperefTemplateSpec;
 import com.linkedin.pegasus.generator.spec.UnionTemplateSpec;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayDeque;
 import java.util.Collection;
@@ -52,9 +54,6 @@ import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 
 /**
@@ -70,7 +69,13 @@ public class TemplateSpecGenerator
   private static final String JAVA_PROPERTY = "java";
   private static final String COERCER_CLASS_PROPERTY = "coercerClass";
   private static final String ARRAY_SUFFIX = "Array";
+
+  // Far maps keyed by 'string', the class name format is '{ValueType}MAP_SUFFIX'.
   private static final String MAP_SUFFIX = "Map";
+
+  // For maps keyed by any type except 'string', the class name format is
+  // '{KeyType}TYPED_MAP_KEY_DELIMITER{ValueType}MAP_SUFFIX'.
+  private static final String TYPED_MAP_KEY_DELIMITER = "To";
   private static final String[] SPECIAL_SUFFIXES = {ARRAY_SUFFIX, MAP_SUFFIX};
   private static final String _templatePackageName = DataTemplate.class.getPackage().getName();
 
@@ -604,9 +609,11 @@ public class TemplateSpecGenerator
 
   private MapTemplateSpec generateMap(MapDataSchema schema, ClassTemplateSpec enclosingClass, String memberName)
   {
+    final DataSchema keySchema = schema.getKeys();
     final DataSchema valueSchema = schema.getValues();
 
     final ClassInfo classInfo = classInfoForUnnamed(enclosingClass, memberName, schema);
+
     if (classInfo.existingClass != null)
     {
       /* When type refs are used as item types inside some unnamed complex schemas like map and array,
@@ -616,6 +623,15 @@ public class TemplateSpecGenerator
        * refs.
        */
       processSchema(valueSchema, enclosingClass, memberName);
+
+      // If there is a schema for the map key, traverse it.
+      if (keySchema != null)
+      {
+        if (classInfo.existingClass != null)
+        {
+          processSchema(keySchema, enclosingClass, memberName);
+        }
+      }
 
       return (MapTemplateSpec) classInfo.existingClass;
     }
@@ -628,6 +644,14 @@ public class TemplateSpecGenerator
 
     final CustomInfoSpec customInfo = getImmediateCustomInfo(valueSchema);
     mapClass.setCustomInfo(customInfo);
+
+    if (keySchema != null)
+    {
+      mapClass.setKeyClass(processSchema(keySchema, enclosingClass, memberName));
+      mapClass.setKeyDataClass(determineDataClass(keySchema, enclosingClass, memberName));
+      final CustomInfoSpec keyCustomInfo = getImmediateCustomInfo(keySchema);
+      mapClass.setKeyCustomInfo(keyCustomInfo);
+    }
 
     return mapClass;
   }
@@ -829,17 +853,37 @@ public class TemplateSpecGenerator
         }
       case MAP:
         final MapDataSchema mapSchema = (MapDataSchema) dereferencedDataSchema;
-        customInfo = getImmediateCustomInfo(mapSchema.getValues());
-        if (customInfo != null)
+
+        // If the schema has a key type, add the name of the type to the generated
+        // class name.
+        ClassAndSchema keyClassInfo = getMapKeyName(mapSchema, enclosingClass, memberName);
+        ClassAndSchema valueClassInfo = getMapValueName(mapSchema, enclosingClass, memberName);
+
+        String className;
+        if (keyClassInfo != null)
         {
-          return new ClassInfo(customInfo.getCustomSchema().getNamespace(), customInfo.getCustomSchema().getName() + MAP_SUFFIX);
+          className = keyClassInfo.classInfo.name + TYPED_MAP_KEY_DELIMITER + valueClassInfo.classInfo.name + MAP_SUFFIX;
+        } else {
+          className = valueClassInfo.classInfo.name + MAP_SUFFIX;
+        }
+
+        String namespace;
+        if (valueClassInfo.schema instanceof PrimitiveDataSchema)
+        {
+          if (keyClassInfo != null && !(keyClassInfo.schema instanceof PrimitiveDataSchema))
+          {
+            namespace = keyClassInfo.classInfo.namespace;
+          }
+          else
+          {
+            namespace = _templatePackageName;
+          }
         }
         else
         {
-          final ClassInfo classInfo = classNameForUnnamedTraverse(enclosingClass, memberName, mapSchema.getValues());
-          classInfo.name += MAP_SUFFIX;
-          return classInfo;
+          namespace = valueClassInfo.classInfo.namespace;
         }
+        return new ClassInfo(namespace, className);
 
       case UNION:
         if (schema.getType() == DataSchema.Type.TYPEREF)
@@ -892,10 +936,61 @@ public class TemplateSpecGenerator
     }
   }
 
-  private static class CustomClasses
+  private ClassAndSchema getMapKeyName(MapDataSchema mapSchema, ClassTemplateSpec enclosingClass, String memberName)
   {
-    private ClassTemplateSpec customClass;
-    private ClassTemplateSpec customCoercerClass;
+    DataSchema keySchema = mapSchema.getKeys();
+    if (keySchema == null) return null;
+    final ClassInfo keyClassInfo = classNameForUnnamedTraverse(enclosingClass, memberName, keySchema);
+    final CustomInfoSpec keyCustomInfo = getImmediateCustomInfo(mapSchema.getKeys());
+
+    if (keyCustomInfo != null)
+    {
+      NamedDataSchema customSchema = keyCustomInfo.getCustomSchema();
+      return new ClassAndSchema(new ClassInfo(customSchema.getNamespace(), customSchema.getName()), customSchema);
+    }
+    else
+    {
+      if (keyClassInfo.name.equals(String.class.getName()))
+      {
+        return null;
+      }
+      else
+      {
+        return new ClassAndSchema(keyClassInfo, keySchema);
+      }
+    }
+  }
+
+  private ClassAndSchema getMapValueName(MapDataSchema mapSchema, ClassTemplateSpec enclosingClass, String memberName)
+  {
+    CustomInfoSpec customInfo = getImmediateCustomInfo(mapSchema.getValues());
+    if (customInfo != null)
+    {
+      ClassInfo classInfo = new ClassInfo(customInfo.getCustomSchema().getNamespace(), customInfo.getCustomSchema().getName());
+      return new ClassAndSchema(classInfo, customInfo.getCustomSchema());
+    }
+    else
+    {
+      ClassInfo classInfo = classNameForUnnamedTraverse(enclosingClass, memberName, mapSchema.getValues());
+      return new ClassAndSchema(classInfo, mapSchema.getValues());
+    }
+  }
+
+  private static class ClassAndSchema {
+    private ClassInfo classInfo;
+    private DataSchema schema;
+
+    private ClassAndSchema(ClassInfo classInfo, DataSchema schema)
+    {
+      this.classInfo = classInfo;
+      this.schema = schema;
+    }
+  }
+
+  public static class CustomClasses
+  {
+    public ClassTemplateSpec customClass;
+    public ClassTemplateSpec customCoercerClass;
   }
 
   private static class ClassInfo

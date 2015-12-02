@@ -27,7 +27,11 @@ public class MapTemplateSpec extends ClassTemplateSpec
 {
   private ClassTemplateSpec _valueClass;
   private ClassTemplateSpec _valueDataClass;
-  private CustomInfoSpec _customInfo;
+  private CustomInfoSpec _valueCustomInfo;
+
+  private ClassTemplateSpec _keyClass;
+  private ClassTemplateSpec _keyDataClass;
+  private CustomInfoSpec _keyCustomInfo;
 
   public MapTemplateSpec(MapDataSchema schema)
   {
@@ -60,13 +64,59 @@ public class MapTemplateSpec extends ClassTemplateSpec
     _valueDataClass = valueDataClass;
   }
 
-  public CustomInfoSpec getCustomInfo()
+  public CustomInfoSpec getValueCustomInfo()
   {
-    return _customInfo;
+    return _valueCustomInfo;
   }
 
-  public void setCustomInfo(CustomInfoSpec customInfo)
+  public void setValueCustomInfo(CustomInfoSpec customInfo)
   {
-    _customInfo = customInfo;
+    _valueCustomInfo = customInfo;
+  }
+
+  /**
+   * Same as {#link getValueCustomInfo}. Provided for backward compatibility.
+   */
+  public CustomInfoSpec getCustomInfo()
+  {
+    return getValueCustomInfo();
+  }
+
+  /**
+   * Same as {#link setValueCustomInfo}. Provided for backward compatibility.
+   */
+  public void setCustomInfo(CustomInfoSpec valueCustomInfo)
+  {
+    setValueCustomInfo(valueCustomInfo);
+  }
+
+  public ClassTemplateSpec getKeyClass()
+  {
+    return _keyClass;
+  }
+
+  public void setKeyClass(ClassTemplateSpec keyClass)
+  {
+    _keyClass = keyClass;
+  }
+
+  public ClassTemplateSpec getKeyDataClass()
+  {
+    return _keyDataClass;
+  }
+
+  public void setKeyDataClass(ClassTemplateSpec keyDataClass)
+  {
+    _keyDataClass = keyDataClass;
+  }
+
+  public CustomInfoSpec getKeyCustomInfo()
+  {
+    return _keyCustomInfo;
+  }
+
+  public void setKeyCustomInfo(CustomInfoSpec keyCustomInfo)
+  {
+    _keyCustomInfo = keyCustomInfo;
   }
 }
