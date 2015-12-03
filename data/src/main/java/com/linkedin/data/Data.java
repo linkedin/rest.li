@@ -50,7 +50,7 @@ import java.util.Map;
  * Null is not a valid Data object.
  * <p>
  *
- * Two are two ways to copy a complex object, one is
+ * There are two ways to copy a complex object, one is
  * shallow copy and the other is a deep copy. A shallow copy only
  * copies the internal state of the complex object. For a {@link DataMap},
  * it logically copies the entries that relates keys to values,
