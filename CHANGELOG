@@ -1,6 +1,7 @@
 5.0.5
 -----
-
+(RB=623465)
+ByteString API changes to support multipart mime streaming
 
 5.0.4
 -----

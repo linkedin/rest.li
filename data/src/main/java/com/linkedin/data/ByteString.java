@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+
 /**
  * An immutable sequence of bytes.
  *
@@ -63,6 +64,23 @@ public final class ByteString
   public static ByteString empty()
   {
     return EMPTY;
+  }
+
+  /**
+   * Returns a new {@link ByteString} that wraps the supplied bytes. Changes to the supplied bytes will be reflected
+   * in the returned {@link ByteString}.
+   *
+   * WARNING: Please exercise caution when using this. Care must be taken to ensure that bytes are not changed
+   * after construction.
+   *
+   * @param bytes the bytes to back the ByteString.
+   * @return a {@link ByteString} that wraps the supplied bytes.
+   * @throws NullPointerException if {@code bytes} is {@code null}.
+   */
+  public static ByteString unsafeWrap(byte[] bytes)
+  {
+    ArgumentUtil.notNull(bytes, "bytes");
+    return bytes.length == 0 ? empty() : new ByteString(bytes);
   }
 
   /**
@@ -420,6 +438,32 @@ public final class ByteString
   }
 
   /**
+   * Decomposes this ByteString into a {@link java.util.List} of the original underlying ByteString(s).
+   *
+   * If this ByteString was constructed using multiple ByteStrings, then those ByteStrings are returned in a
+   * {@link java.util.List}. If this ByteString was constructed as a result of a copy, i.e {@link #copySlice} or
+   * {@link #copy}, then a {@link java.util.List} is returned with a single ByteString.
+   *
+   * If this ByteString is empty, then a {@link java.util.List} is returned with an empty ByteString.
+   *
+   * @return a {@link java.util.List} of 1 or more ByteStrings that compose this ByteString.
+   */
+  public List<ByteString> decompose()
+  {
+    final List<ByteString> decomposedList = new ArrayList<ByteString>();
+
+    //Note that if this is the empty ByteString, there is still one byte array that exists.
+    for (int i = 0; i < _byteArrays.getArraySize(); i++)
+    {
+      final ByteArray[] byteArrays = new ByteArray[1];
+      byteArrays[0] = _byteArrays.get(i);
+      decomposedList.add(new ByteString(new ByteArrayVector(byteArrays)));
+    }
+
+    return decomposedList;
+  }
+
+  /**
    * Returns a slice of ByteString.
    * This create a "view" of this ByteString, which holds the entire content of the original ByteString. If your code
    * only needs a small portion of a large ByteString and is not interested in the rest of that ByteString, it is better
@@ -452,6 +496,176 @@ public final class ByteString
   {
     ArgumentUtil.checkBounds(_byteArrays.getBytesNum(), offset, length);
     return new ByteString(slice(offset, length).copyBytes());
+  }
+
+  /**
+   * Tests if this ByteString starts with the specified byte array prefix.
+   *
+   * @param   prefixBytes the byte array prefix.
+   * @return  <code>true</code> if the byte array sequence represented by the argument is a prefix of the byte sequence
+   *          represented by this ByteString; <code>false</code> otherwise.
+   *          Note also that <code>true</code> will be returned if the argument is an empty byte array or is equal to this
+   *          ByteString object as determined by the {@link #equals(Object)} method.
+   */
+  public boolean startsWith(byte[] prefixBytes)
+  {
+    if (prefixBytes.length == 0)
+    {
+      return true;
+    }
+
+    if (prefixBytes.length > _byteArrays._totalLength)
+    {
+      return false;
+    }
+
+    return slice(0, prefixBytes.length).equals(new ByteString(prefixBytes));
+  }
+
+  //Private class to abstract away iteration over bytes in a compound ByteString. Note that we don't implement
+  //the Iterator interface so that we can avoid autoboxing.
+  private class ByteIterator
+  {
+    private int _currentByteArray;
+    private int _currentByteIndex;
+    private boolean _finished;
+
+    private ByteIterator()
+    {
+      _currentByteArray = 0;
+      _currentByteIndex = 0;
+      _finished = false;
+
+      //Note that there is no need to skip any empty ByteArrays at the beginning (or even while traversing) since the
+      //builder in ByteString skips empty ByteStrings upon construction. This means that we can be sure that each and
+      //every ByteString inside of this (potentially) compound ByteString is non-empty.
+    }
+
+    private ByteIterator(final ByteIterator byteIterator)
+    {
+      _currentByteArray = byteIterator._currentByteArray;
+      _currentByteIndex = byteIterator._currentByteIndex;
+      _finished = byteIterator._finished;
+    }
+
+    private ByteIterator copy()
+    {
+      return new ByteIterator(this);
+    }
+
+    private void next()
+    {
+      //Shift the internal pointer to the next byte.
+      _currentByteIndex++;
+      if(_currentByteIndex == _byteArrays.get(_currentByteArray)._length)
+      {
+        //Check to see if we are finished.
+        if(_currentByteArray + 1 == _byteArrays.getArraySize())
+        {
+          _finished = true;
+          return;
+        }
+
+        //Move to the next ByteArray.
+        _currentByteArray++;
+        _currentByteIndex = 0;
+      }
+    }
+
+    private byte getCurrentByte()
+    {
+      return _byteArrays.get(_currentByteArray).get(_currentByteIndex);
+    }
+
+    private boolean isFinished()
+    {
+      return _finished;
+    }
+
+    private int currentIndex()
+    {
+      int totalLengthCovered = 0;
+      for (int m = 0; m < _currentByteArray; m++)
+      {
+        totalLengthCovered += _byteArrays.get(m)._length;
+      }
+      totalLengthCovered += _currentByteIndex;
+      return totalLengthCovered;
+    }
+  }
+
+  /**
+   * Returns the starting position (index) of the first occurrence of the specified target byte array within this ByteString or
+   * -1 if there is no such occurrence. If the targetBytes are larger then this ByteString, -1 is returned. If the
+   * targetBytes are empty, then 0 is returned.
+   *
+   * @param targetBytes the byte array to search for as a sub array within this ByteString.
+   * @return the starting position of the first occurrence of the specified target byte array within this ByteString,
+   *         or -1 if there is no such occurrence.
+   */
+  public int indexOfBytes(byte[] targetBytes)
+  {
+    if (targetBytes.length == 0)
+    {
+      return 0;
+    }
+
+    if (targetBytes.length > _byteArrays._totalLength)
+    {
+      return -1;
+    }
+
+    //Used to abstract away the iteration of all the bytes represented by this compound ByteString.
+    ByteIterator byteIterator = new ByteIterator();
+
+    //This is a reference on where to resume in case we get a mismatch.
+    ByteIterator resumeByteIterator = byteIterator.copy();
+
+    //We skip the first since byteIterator will begin there.
+    resumeByteIterator.next();
+
+    for (int i = 0; i < targetBytes.length;)
+    {
+      //If we have exhausted everything in the ByteString, then we return -1.
+      if (byteIterator.isFinished())
+      {
+        return -1;
+      }
+
+      final byte b = byteIterator.getCurrentByte();
+      if (b != targetBytes[i])
+      {
+        //There was a mismatch so we reset i and prepare to start over.
+        i = 0;
+        //Update byteIterator to point to the next byte where our comparison will begin.
+        byteIterator = resumeByteIterator;
+        //Keep track of where to resume in the future.
+        resumeByteIterator = resumeByteIterator.copy();
+        //Skip the next since byteIterator will begin there.
+        resumeByteIterator.next();
+        continue;
+      }
+
+      i++;
+      byteIterator.next();
+    }
+
+    //We found a match. Calculate where it started.
+    return byteIterator.currentIndex() - targetBytes.length;
+  }
+
+  /**
+   * Returns the byte located at the specified offset within this ByteString. This is a constant time operation.
+   *
+   * If this ByteString is a compound ByteString, meaning it was composed of multiple ByteStrings, then this operation
+   * becomes log(n) where n is the number of ByteStrings in the compound ByteString.
+   *
+   * @param offset the index specifying the target byte's location
+   * @return the resulting byte
+   */
+  public byte getByte(int offset)
+  {
+    return _byteArrays.getByte(offset);
   }
 
   @Override
@@ -996,5 +1210,4 @@ public final class ByteString
       return numBytes;
     }
   }
-
 }
