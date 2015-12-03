@@ -169,6 +169,13 @@ public class SchemaToJsonEncoder
       case MAP:
         _builder.writeStartObject();
         _builder.writeStringField(TYPE_KEY, MAP_TYPE, true);
+
+        DataSchema keysSchema = ((MapDataSchema) schema).getKeys();
+        if (keysSchema != null) {
+          _builder.writeFieldName(KEYS_KEY);
+          encode(keysSchema);
+        }
+
         _builder.writeFieldName(VALUES_KEY);
         encode(((MapDataSchema) schema).getValues());
         encodeProperties(schema);
