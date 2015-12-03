@@ -26,12 +26,12 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Common base class for parsers that parse Schema objects.
+ * Common base class for schema parsers.
  *
  * @author slim
  * @author jbetz
  */
-abstract public class AbstractSchemaParser extends AbstractDataParser
+abstract public class AbstractSchemaParser extends AbstractDataParser implements DataSchemaParser
 {
   /**
    * Constructor with resolver.
@@ -133,12 +133,120 @@ abstract public class AbstractSchemaParser extends AbstractDataParser
     return ok;
   }
 
+  /**
+   * Look for {@link DataSchema} with the specified name.
+   *
+   * @param fullName to lookup.
+   * @return the {@link DataSchema} if lookup was successful else return null.
+   */
+  public DataSchema lookupName(String fullName)
+  {
+    DataSchema schema = DataSchemaUtil.typeStringToPrimitiveDataSchema(fullName);
+    if (schema == null)
+    {
+      schema = getResolver().findDataSchema(fullName, errorMessageBuilder());
+    }
+    return schema;
+  }
+
+  /**
+   * Lookup a name to obtain a {@link DataSchema}.
+   *
+   * The name may identify a {@link NamedDataSchema} obtained or a primitive type.
+   *
+   * @param name to lookup.
+   * @return the {@link DataSchema} of a primitive or named type
+   *         if the name can be resolved, else return null.
+   */
+  protected DataSchema stringToDataSchema(String name)
+  {
+    DataSchema schema = null;
+    // Either primitive or name
+    String fullName = computeFullName(name);
+    DataSchema found = lookupName(fullName);
+    if (found == null && !name.equals(fullName))
+    {
+      found = lookupName(name);
+    }
+    if (found == null)
+    {
+      StringBuilder sb = startErrorMessage(name).append("\"").append(name).append("\"");
+      if (!name.equals(fullName))
+      {
+        sb.append(" or \"").append(fullName).append("\"");
+      }
+      sb.append(" cannot be resolved.\n");
+    }
+    else
+    {
+      schema = found;
+    }
+    return schema;
+  }
+
+  /**
+   * Compute the full name from a name.
+   *
+   * If the name identifies a primitive type, return the name.
+   * If the name is unqualified, the full name is computed by
+   * pre-pending the current namespace and "." to the input name.
+   * If the name is a full name, i.e. it contains a ".", then
+   * return the name.
+   *
+   * @param name as input to compute the full name.
+   * @return the computed full name.
+   */
+  public String computeFullName(String name)
+  {
+    String fullname;
+    DataSchema schema = DataSchemaUtil.typeStringToPrimitiveDataSchema(name);
+    if (schema != null)
+    {
+      fullname = name;
+    }
+    else if (Name.isFullName(name) || getCurrentNamespace().isEmpty())
+    {
+      fullname = name;
+    }
+    else
+    {
+      fullname = getCurrentNamespace() + "." + name;
+    }
+    return fullname;
+  }
+
+  /**
+   * Set the current namespace.
+   *
+   * Current namespace is used to compute the full name from an unqualified name.
+   *
+   * @param namespace to set as current namespace.
+   */
+  public void setCurrentNamespace(String namespace)
+  {
+    _currentNamespace = namespace;
+  }
+
+  /**
+   * Get the current namespace.
+   *
+   * @return the current namespace.
+   */
+  public String getCurrentNamespace()
+  {
+    return _currentNamespace;
+  }
+
   protected void addTopLevelSchema(DataSchema schema) {
     _topLevelDataSchemas.add(schema);
   }
 
+  /**
+   * Current namespace, used to determine full name from unqualified name.
+   */
+  private String _currentNamespace = "";
+
   private final Map<Object, DataLocation> _dataLocationMap = new IdentityHashMap<Object, DataLocation>();
   private final List<DataSchema> _topLevelDataSchemas = new ArrayList<DataSchema>();
   private final DataSchemaResolver _resolver;
-
 }

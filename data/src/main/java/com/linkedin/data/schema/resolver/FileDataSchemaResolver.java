@@ -18,9 +18,10 @@ package com.linkedin.data.schema.resolver;
 
 
 import com.linkedin.data.schema.DataSchemaLocation;
+import com.linkedin.data.schema.DataSchemaParserFactory;
 import com.linkedin.data.schema.DataSchemaResolver;
+import com.linkedin.data.schema.SchemaParser;
 import com.linkedin.data.schema.NamedDataSchema;
-import com.linkedin.data.schema.SchemaParserFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -69,9 +70,9 @@ public class FileDataSchemaResolver extends AbstractDataSchemaResolver
   /**
    * Constructor.
    *
-   * @param parserFactory to be used to construct {@link com.linkedin.data.schema.SchemaParser}'s to parse located files.
+   * @param parserFactory to be used to construct {@link SchemaParser}'s to parse located files.
    */
-  public FileDataSchemaResolver(SchemaParserFactory parserFactory)
+  public FileDataSchemaResolver(DataSchemaParserFactory parserFactory)
   {
     super(parserFactory);
   }
@@ -79,10 +80,10 @@ public class FileDataSchemaResolver extends AbstractDataSchemaResolver
   /**
    * Constructor.
    *
-   * @param parserFactory to be used to construct {@link com.linkedin.data.schema.SchemaParser}'s to parse located files.
+   * @param parserFactory to be used to construct {@link SchemaParser}'s to parse located files.
    * @param paths is the search paths delimited by the default path separator.
    */
-  public FileDataSchemaResolver(SchemaParserFactory parserFactory, String paths)
+  public FileDataSchemaResolver(DataSchemaParserFactory parserFactory, String paths)
   {
     this(parserFactory);
     setPaths(paths);
@@ -91,10 +92,10 @@ public class FileDataSchemaResolver extends AbstractDataSchemaResolver
   /**
    * Constructor.
    *
-   * @param parserFactory to be used to construct {@link com.linkedin.data.schema.SchemaParser}'s to parse located files.
+   * @param parserFactory to be used to construct {@link SchemaParser}'s to parse located files.
    * @param paths is a list of search paths.
    */
-  public FileDataSchemaResolver(SchemaParserFactory parserFactory, List<String> paths)
+  public FileDataSchemaResolver(DataSchemaParserFactory parserFactory, List<String> paths)
   {
     this(parserFactory);
     setPaths(paths);

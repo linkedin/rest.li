@@ -589,13 +589,13 @@ public class TestDataSchema
 
     for (String[] test : testData)
     {
-      SchemaParser parser = schemaParserFromString(test[0]);
+      DataSchemaParser parser = schemaParserFromString(test[0]);
       String result = (parser.hasError() ? "ERROR: " + parser.errorMessage() : parser.schemasToString());
       if (test[1] != null)
       {
         assertEquals(result, test[1]);
         // test equals and hashCode
-        SchemaParser parser2 = schemaParserFromString(test[0]);
+        DataSchemaParser parser2 = schemaParserFromString(test[0]);
         for (int i = 0; i < parser.topLevelDataSchemas().size(); ++i)
         {
           assertEquals(parser.topLevelDataSchemas().get(i), parser2.topLevelDataSchemas().get(i));
@@ -1249,11 +1249,11 @@ public class TestDataSchema
   private void testIncludeForSchemaText(String schemaText, String[] expectedFields) throws IOException
   {
     // test schema with DataLocation
-    SchemaParser parser = schemaParserFromString(schemaText);
+    DataSchemaParser parser = schemaParserFromString(schemaText);
     RecordDataSchema recordDataSchema = testIncludeWithSchemaParserOutputForExpectedFields(parser, expectedFields);
 
     // test schema without DataLocation
-    SchemaParser dataMapSchemaParser = schemaParserFromObjectsString(schemaText); // no location information
+    DataSchemaParser dataMapSchemaParser = schemaParserFromObjectsString(schemaText); // no location information
     RecordDataSchema recordDataSchemaFromDataMap = testIncludeWithSchemaParserOutputForExpectedFields(
       dataMapSchemaParser,
       expectedFields);
@@ -1261,7 +1261,7 @@ public class TestDataSchema
     assertEquals(recordDataSchemaFromDataMap, recordDataSchema);
   }
 
-  private RecordDataSchema testIncludeWithSchemaParserOutputForExpectedFields(SchemaParser parser,
+  private RecordDataSchema testIncludeWithSchemaParserOutputForExpectedFields(DataSchemaParser parser,
                                                                               String[] expectedFields) throws IOException
   {
     if (parser.hasError())
@@ -1333,7 +1333,7 @@ public class TestDataSchema
     if (debug) out.println(schemaText);
 
     // test schema with DataLocation
-    SchemaParser parser = schemaParserFromString(schemaText);
+    DataSchemaParser parser = schemaParserFromString(schemaText);
     String message = parser.errorMessage();
     if (debug) { out.println(parser.schemasToString()) ; out.println(message); }
     assertTrue(parser.hasError());
@@ -1406,7 +1406,7 @@ public class TestDataSchema
 
     for (Object[] input : testData)
     {
-      SchemaParser parser = schemaParserFromString(schemaText);
+      DataSchemaParser parser = schemaParserFromString(schemaText);
       String result;
       if (parser.hasError())
       {
@@ -1661,7 +1661,7 @@ public class TestDataSchema
     {
       String schema = input[0];
       if (debug) out.println(schema);
-      SchemaParser parser = schemaParserFromString(schema);
+      DataSchemaParser parser = schemaParserFromString(schema);
       if (debug) out.println(parser.errorMessage());
       assertFalse(parser.hasError());
       for (int i = 1; i < input.length; ++i)
@@ -1733,7 +1733,7 @@ public class TestDataSchema
     {
       String schema = (String) input[0];
       if (debug) out.println(schema);
-      SchemaParser parser = schemaParserFromString(schema);
+      DataSchemaParser parser = schemaParserFromString(schema);
       if (debug) out.println(parser.errorMessage());
       assertFalse(parser.hasError());
       Object expected = input[1];
@@ -2257,7 +2257,7 @@ public class TestDataSchema
   public void testEnumDataSchema() throws Exception
   {
     final String schemaString = "{ \"type\" : \"enum\", \"name\" : \"numbers\", \"symbols\" : [ \"ONE\", \"TWO\", \"THREE\", \"FOUR\", \"FIVE\"], \"symbolDocs\" : { \"FIVE\" : \"DOC_FIVE\", \"ONE\" : \"DOC_ONE\" } }";
-    SchemaParser parser = schemaParserFromString(schemaString);
+    DataSchemaParser parser = schemaParserFromString(schemaString);
     EnumDataSchema schema = (EnumDataSchema)parser.topLevelDataSchemas().get(0);
 
     String[] orderedSymbols = {"ONE", "TWO", "THREE", "FOUR", "FIVE" };
@@ -2343,7 +2343,7 @@ public class TestDataSchema
     {
       int i = 0;
       String schemaText = row[i++];
-      SchemaParser parser = schemaParserFromString(schemaText);
+      DataSchemaParser parser = schemaParserFromString(schemaText);
       assertFalse(parser.hasError(), parser.errorMessage());
       List<DataSchema> topLevelSchemas = parser.topLevelDataSchemas();
       for (DataSchema schema : topLevelSchemas)

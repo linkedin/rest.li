@@ -24,6 +24,7 @@ import com.linkedin.data.it.Predicate;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.SchemaParser;
+import com.linkedin.data.schema.DataSchemaParser;
 
 import static com.linkedin.data.schema.util.Conversions.dataMapToDataSchema;
 import static com.linkedin.data.schema.util.Conversions.dataSchemaToDataMap;
@@ -57,7 +58,7 @@ public class Filters
    * @param parser provides the {@link SchemaParser} to be used to parse the filtered {@link DataMap}.
    * @return a filtered {@link NamedDataSchema} if the filtered schema is valid, else return null.
    */
-  public static NamedDataSchema removeByPredicate(NamedDataSchema schema, Predicate predicate, SchemaParser parser)
+  public static NamedDataSchema removeByPredicate(NamedDataSchema schema, Predicate predicate, DataSchemaParser parser)
   {
     DataMap schemaAsDataMap = dataSchemaToDataMap(schema);
 
