@@ -851,6 +851,10 @@ public class SchemaParser extends AbstractDataParser
           parseObject(items);
           break;
         case MAP:
+          Object keys = map.get(KEYS_KEY);
+          if (keys != null) {
+            parseObject(keys);
+          }
           Object values = map.get(VALUES_KEY);
           parseObject(values);
           break;
