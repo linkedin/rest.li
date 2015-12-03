@@ -98,9 +98,9 @@ allprojects {
 
   tasks.withType(JavaCompile).all { JavaCompile compile ->
 
-    if(!project.sourceCompatibility.isJava6Compatible()) // lower bound of java versions we support.
+    if(!project.sourceCompatibility.isJava8Compatible()) // lower bound of java versions we support.
     {
-      throw new GradleScriptException("Pegasus required Java 6 or later to build, current version: ${JavaVersion.current()}", null)
+      throw new GradleScriptException("Pegasus required Java 8 or later to build, current version: ${JavaVersion.current()}", null)
     }
     // for all supported versions that we test build, fail the build if any compilation warnings are reported
     compile.options.compilerArgs = ['-Xlint', '-Xlint:-path', '-Xlint:-static', '-Werror']
@@ -117,8 +117,14 @@ allprojects {
   }
 }
 
+idea {
+  project {
+    languageLevel = '1.8'
+  }
+}
+
 task wrapper(type: Wrapper) {
-  gradleVersion = '2.1'
+  gradleVersion = '2.4'
 }
 
 subprojects {
