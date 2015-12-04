@@ -6,6 +6,8 @@
 (RB=620254)
 Add streaming code path on client side & server side
 The default is to use the existing code path.
+(RB=624779)
+Increase timeout values in some tests
 
 4.0.0
 -----
