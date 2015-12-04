@@ -96,7 +96,7 @@ public class TestJetty404
       }
     });
 
-    latch.await(500, TimeUnit.MILLISECONDS);
+    latch.await(5000, TimeUnit.MILLISECONDS);
     Assert.assertTrue(writer.isDone());
     Throwable ex = exRef.get();
     Assert.assertTrue(ex instanceof StreamException);

@@ -412,7 +412,7 @@ public class TestEntityStream
       writer.write();
     }
 
-    Assert.assertTrue(latch.await(100, TimeUnit.MILLISECONDS));
+    Assert.assertTrue(latch.await(1000, TimeUnit.MILLISECONDS));
     Assert.assertEquals(writer.abortedTimes(), 1);
     Assert.assertEquals(observer.getChunkCount(), 10);
     Assert.assertEquals(observer.doneTimes(), 0);
@@ -480,7 +480,7 @@ public class TestEntityStream
 
     prepareLatch.await();
     startLatch.countDown();
-    Assert.assertTrue(finishLatch.await(100, TimeUnit.MILLISECONDS));
+    Assert.assertTrue(finishLatch.await(1000, TimeUnit.MILLISECONDS));
 
     // in any case, reader shouldn't fail
     Assert.assertEquals(reader.errorTimes(), 0);
@@ -530,7 +530,7 @@ public class TestEntityStream
       }
     });
 
-    Assert.assertTrue(latch.await(100, TimeUnit.MILLISECONDS));
+    Assert.assertTrue(latch.await(1000, TimeUnit.MILLISECONDS));
     Assert.assertEquals(reader.errorTimes(), 1);
     Assert.assertEquals(observer.errorTimes(), 1);
     Assert.assertEquals(writer.abortedTimes(), 1);
@@ -564,7 +564,7 @@ public class TestEntityStream
       }
     });
 
-    Assert.assertTrue(latch.await(100, TimeUnit.MILLISECONDS));
+    Assert.assertTrue(latch.await(1000, TimeUnit.MILLISECONDS));
     Assert.assertEquals(reader.errorTimes(), 1);
     Assert.assertEquals(reader.getChunkCount(), 0);
     Assert.assertEquals(observer.errorTimes(), 1);
@@ -607,7 +607,7 @@ public class TestEntityStream
       }
     });
 
-    Assert.assertTrue(latch.await(100, TimeUnit.MILLISECONDS));
+    Assert.assertTrue(latch.await(1000, TimeUnit.MILLISECONDS));
     Assert.assertEquals(reader.errorTimes(), 1);
     Assert.assertEquals(reader.getChunkCount(), 0);
     Assert.assertEquals(observer.errorTimes(), 1);
@@ -659,7 +659,7 @@ public class TestEntityStream
       }
     });
 
-    Assert.assertTrue(latch.await(100, TimeUnit.MILLISECONDS));
+    Assert.assertTrue(latch.await(1000, TimeUnit.MILLISECONDS));
     Assert.assertEquals(reader.errorTimes(), 1);
     Assert.assertEquals(reader.getChunkCount(), 1);
     Assert.assertEquals(observer.errorTimes(), 1);
@@ -712,7 +712,7 @@ public class TestEntityStream
 
     prepareLatch.await();
     startLatch.countDown();
-    Assert.assertTrue(finishLatch.await(100, TimeUnit.MILLISECONDS));
+    Assert.assertTrue(finishLatch.await(1000, TimeUnit.MILLISECONDS));
 
     // in any case, reader shouldn't fail
     Assert.assertEquals(reader.errorTimes(), 0);
@@ -883,7 +883,7 @@ public class TestEntityStream
 
     prepareLatch.await();
     startLatch.countDown();
-    Assert.assertTrue(finishLatch.await(100, TimeUnit.MILLISECONDS));
+    Assert.assertTrue(finishLatch.await(1000, TimeUnit.MILLISECONDS));
 
     // we should always fail because cancel on reader side wouldn't cause cancel action if
     // writer is already in the writing process

@@ -62,7 +62,7 @@ public class TestServerTimeoutAsyncEvent
   private static final URI THROW_BUT_SHOULD_NOT_TIMEOUT_URI = URI.create("/throw-but-should-not-timeout");
   private static final URI BUGGY_FILTER_URI = URI.create("/buggy-filter");
   private static final URI STREAM_EXCEPTION_FILTER_URI = URI.create("/stream-exception-filter");
-  private static final int ASYNC_EVENT_TIMEOUT = 1000;
+  private static final int ASYNC_EVENT_TIMEOUT = 2000;
   private static final int RESPONSE_SIZE_WRITTEN_SO_FAR = 50 * 1024;
   private HttpClientFactory _clientFactory;
   private Client _client;

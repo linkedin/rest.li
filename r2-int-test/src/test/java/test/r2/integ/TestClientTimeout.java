@@ -58,7 +58,7 @@ public class TestClientTimeout extends AbstractStreamTest
   protected Map<String, String> getClientProperties()
   {
     Map<String, String> clientProperties = new HashMap<String, String>();
-    clientProperties.put(HttpClientFactory.HTTP_REQUEST_TIMEOUT, "500");
+    clientProperties.put(HttpClientFactory.HTTP_REQUEST_TIMEOUT, "3000");
     return clientProperties;
   }
 
@@ -69,7 +69,7 @@ public class TestClientTimeout extends AbstractStreamTest
         new RestRequestBuilder(Bootstrap.createHttpURI(PORT, TIMEOUT_BEFORE_RESPONSE_URI)).build());
     try
     {
-      future.get(1000, TimeUnit.MILLISECONDS);
+      future.get(5000, TimeUnit.MILLISECONDS);
       Assert.fail("should have timed out");
     }
     catch (ExecutionException ex)
@@ -77,7 +77,7 @@ public class TestClientTimeout extends AbstractStreamTest
       Throwable throwable = ExceptionUtils.getRootCause(ex);
       Assert.assertTrue(throwable instanceof TimeoutException);
       // should fail with not getting a response
-      Assert.assertEquals(throwable.getMessage(), "Exceeded request timeout of 500ms");
+      Assert.assertEquals(throwable.getMessage(), "Exceeded request timeout of 3000ms");
     }
   }
 
@@ -88,7 +88,7 @@ public class TestClientTimeout extends AbstractStreamTest
         new RestRequestBuilder(Bootstrap.createHttpURI(PORT, TIMEOUT_DURING_RESPONSE_URI)).build());
     try
     {
-      RestResponse res = future.get(1000, TimeUnit.MILLISECONDS);
+      RestResponse res = future.get(5000, TimeUnit.MILLISECONDS);
       Assert.fail("should have timed out");
     }
     catch (ExecutionException ex)
@@ -121,11 +121,11 @@ public class TestClientTimeout extends AbstractStreamTest
         latch.countDown();
       }
     });
-    latch.await(500, TimeUnit.MILLISECONDS);
+    latch.await(5000, TimeUnit.MILLISECONDS);
     Assert.assertNotNull(response.get());
 
     // let it timeout before we read
-    Thread.sleep(600);
+    Thread.sleep(5000);
 
     final AtomicReference<Throwable> throwable = new AtomicReference<Throwable>();
     final CountDownLatch errorLatch = new CountDownLatch(1);
@@ -139,7 +139,7 @@ public class TestClientTimeout extends AbstractStreamTest
       }
     };
     response.get().getEntityStream().setReader(reader);
-    errorLatch.await(500, TimeUnit.MILLISECONDS);
+    errorLatch.await(5000, TimeUnit.MILLISECONDS);
     Assert.assertNotNull(throwable.get());
     Throwable rootCause = ExceptionUtils.getRootCause(throwable.get());
     Assert.assertTrue(rootCause instanceof TimeoutException);
@@ -159,7 +159,7 @@ public class TestClientTimeout extends AbstractStreamTest
         {
           callback.onSuccess(new StreamResponseBuilder().build(EntityStreams.emptyStream()));
         }
-      }, 600, TimeUnit.MILLISECONDS);
+      }, 3500, TimeUnit.MILLISECONDS);
     }
   }
 
@@ -180,7 +180,7 @@ public class TestClientTimeout extends AbstractStreamTest
           {
             try
             {
-              Thread.sleep(600);
+              Thread.sleep(3500);
             }
             catch (Exception ex)
             {
