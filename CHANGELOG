@@ -7,6 +7,12 @@
 (RB=623469)
 Gradle changes for Java 8
 
+(RB=622730,622181)
+Refactor ErrorResponse formatting so that it is more flexible
+
+(RB=577075)
+Two bug fixes: rest.li batch projection in response builder, restli validation schema source.
+
 3.1.4
 -----
 (RB=617238)
