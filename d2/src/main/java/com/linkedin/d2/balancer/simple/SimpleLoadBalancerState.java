@@ -889,9 +889,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
 
                 if (client != null)
                 {
-                  info(_log,
-                       "adding new tracker client from updated uri properties: ",
-                       client);
+                  debug(_log, "adding new tracker client from updated uri properties: ", client);
 
                   // notify listeners of the added client
                   for (SimpleLoadBalancerStateListener listener : _listeners)
@@ -934,7 +932,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
                 {
                   TrackerClient client = trackerClients.remove(uri);
 
-                  info(_log, "removing dead tracker client: ", client);
+                  debug(_log, "removing dead tracker client: ", client);
 
                   // notify listeners of the removed client
                   for (SimpleLoadBalancerStateListener listener : _listeners)

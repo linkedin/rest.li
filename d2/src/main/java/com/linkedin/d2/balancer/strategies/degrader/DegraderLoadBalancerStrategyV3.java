@@ -1237,8 +1237,8 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
           + ", _currentAvgClusterLatency=" + _currentAvgClusterLatency
           + ", _currentOverrideDropRate=" + _currentOverrideDropRate
           + ", _clusterGenerationId=" + _clusterGenerationId
-          + ", _lastUpdated=" + _lastUpdated
           + ", _strategy=" + _strategy
+          + ", _numHostsInCluster=" + _pointsMap.size() + _recoveryMap.size()
           + ", _recoveryMap=" + _recoveryMap
           + "]";
     }
