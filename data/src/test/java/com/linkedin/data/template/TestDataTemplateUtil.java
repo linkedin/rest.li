@@ -16,15 +16,18 @@
 
 package com.linkedin.data.template;
 
-
-import com.linkedin.data.TestUtil;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.schema.RecordDataSchema;
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
 
+import org.testng.annotations.Test;
+
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
 
@@ -128,6 +131,31 @@ public class TestDataTemplateUtil
     catch (InvocationTargetException exc)
     {
       fail("Unexpected exception", exc);
+    }
+  }
+
+  @Test
+  public static void testCoerceExceptions()
+  {
+    try
+    {
+      assertTrue(DataTemplateUtil.hasCoercer(Boolean.TYPE));
+      DataTemplateUtil.coerceOutput("false", Boolean.TYPE);
+      fail("Expected Exception");
+    }
+    catch (TemplateOutputCastException e)
+    {
+      assertEquals(e.getMessage(), "Output false has type java.lang.String, but expected type is java.lang.Boolean");
+    }
+    try
+    {
+      assertFalse(DataTemplateUtil.hasCoercer(Character.class));
+      DataTemplateUtil.coerceOutput("string", Character.class);
+      fail("Expected Exception");
+    }
+    catch (TemplateOutputCastException e)
+    {
+      assertEquals(e.getMessage(), "Output string has type java.lang.String, but does not have a registered coercer and cannot be coerced to type java.lang.Character");
     }
   }
 }

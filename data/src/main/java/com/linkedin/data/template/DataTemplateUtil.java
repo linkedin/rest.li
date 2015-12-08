@@ -66,6 +66,7 @@ public class DataTemplateUtil
   public static <T extends DataTemplate<?>> Constructor<T> templateConstructor(Class<T> templateClass)
       throws TemplateOutputCastException
   {
+    Class<?> classArg = DataMap.class;
     try
     {
       if (RecordTemplate.class.isAssignableFrom(templateClass) ||
@@ -75,25 +76,27 @@ public class DataTemplateUtil
       }
       else if (AbstractArrayTemplate.class.isAssignableFrom(templateClass))
       {
+        classArg = DataList.class;
         return templateClass.getConstructor(DataList.class);
       }
       else if (FixedTemplate.class.isAssignableFrom(templateClass) ||
                UnionTemplate.class.isAssignableFrom(templateClass))
       {
+        classArg = Object.class;
         return templateClass.getConstructor(Object.class);
       }
       else
       {
-        throw new TemplateOutputCastException("No DataTemplate for " + templateClass.getName());
+        throw new TemplateOutputCastException("Could not get constructor: " + templateClass.getName() + " does not match any DataTemplate classes");
       }
     }
     catch (SecurityException e)
     {
-      throw new TemplateOutputCastException(templateClass.getName() + " get constructor failed", e);
+      throw new TemplateOutputCastException("getConstructor failed for class " + templateClass.getName() + " with argument " + classArg.getName() + ": the security manager denies access to the constructor, or the caller's class loader differs from the class loader for the current class and the security manager denies access to the package of this class.", e);
     }
     catch (NoSuchMethodException e)
     {
-      throw new TemplateOutputCastException(templateClass.getName() + " does not have required constructor", e);
+      throw new TemplateOutputCastException("getConstructor failed for class " + templateClass.getName() + " with argument " + classArg.getName() + ": no matching method was found.", e);
     }
   }
 
@@ -117,23 +120,23 @@ public class DataTemplateUtil
     }
     catch (IllegalArgumentException e)
     {
-      throw new TemplateOutputCastException("Cannot create wrapper: " + wrapperClass.getName(), e);
+      throw new TemplateOutputCastException("Could not create new instance of " + wrapperClass.getName() + " with argument " + object, e);
     }
     catch (InstantiationException e)
     {
-      throw new TemplateOutputCastException("Cannot create wrapper: " + wrapperClass.getName(), e);
+      throw new TemplateOutputCastException("Could not create new instance of " + wrapperClass.getName() + ": cannot initialize an abstract class", e);
     }
     catch (IllegalAccessException e)
     {
-      throw new TemplateOutputCastException("Cannot create wrapper: " + wrapperClass.getName(), e);
+      throw new TemplateOutputCastException("Could not create new instance of " + wrapperClass.getName() + ": access control denies access to constructor", e);
     }
     catch (InvocationTargetException e)
     {
-      throw new TemplateOutputCastException("Cannot create wrapper: " + wrapperClass.getName(), e);
+      throw new TemplateOutputCastException("Could not create new instance of " + wrapperClass.getName() + ": constructor throws an exception", e);
     }
     catch (ClassCastException e)
     {
-      throw new TemplateOutputCastException("Cannot create wrapper: " + wrapperClass.getName(), e);
+      throw new TemplateOutputCastException("Could not create new instance of " + wrapperClass.getName() + " with argument " + object, e);
     }
   }
 
@@ -158,6 +161,7 @@ public class DataTemplateUtil
   public static <T extends DataTemplate<?>> Constructor<T> templateConstructor(Class<T> templateClass, DataSchema schema)
       throws TemplateOutputCastException
   {
+    Class<?> classArg = DataMap.class;
     try
     {
       switch (schema.getDereferencedType())
@@ -166,21 +170,23 @@ public class DataTemplateUtil
         case RECORD:
           return templateClass.getConstructor(DataMap.class);
         case ARRAY:
+          classArg = DataList.class;
           return templateClass.getConstructor(DataList.class);
         case FIXED:
         case UNION:
+          classArg = Object.class;
           return templateClass.getConstructor(Object.class);
         default:
-          throw new TemplateOutputCastException("No DataTemplate for " + templateClass.getName());
+          throw new TemplateOutputCastException("Could not get constructor for schema: " + schema.getDereferencedType().name() + " does not match any DataTemplate classes");
       }
     }
     catch (SecurityException e)
     {
-      throw new TemplateOutputCastException(templateClass.getName() + " get constructor failed", e);
+      throw new TemplateOutputCastException("getConstructor failed for class " + templateClass.getName() + " with argument " + classArg.getName() + ": the security manager denies access to the constructor, or the caller's class loader differs from the class loader for the current class and the security manager denies access to the package of this class.", e);
     }
     catch (NoSuchMethodException e)
     {
-      throw new TemplateOutputCastException(templateClass.getName() + " does not have required constructor", e);
+      throw new TemplateOutputCastException("getConstructor failed for class " + templateClass.getName() + " with argument " + classArg.getName() + ": no matching method was found.", e);
     }
   }
 
@@ -205,23 +211,23 @@ public class DataTemplateUtil
     }
     catch (IllegalArgumentException e)
     {
-      throw new TemplateOutputCastException("Cannot create wrapper: " + wrapperClass.getName(), e);
+      throw new TemplateOutputCastException("Could not create new instance of " + wrapperClass.getName() + " with argument " + object, e);
     }
     catch (InstantiationException e)
     {
-      throw new TemplateOutputCastException("Cannot create wrapper: " + wrapperClass.getName(), e);
+      throw new TemplateOutputCastException("Could not create new instance of " + wrapperClass.getName() + ": cannot initialize an abstract class", e);
     }
     catch (IllegalAccessException e)
     {
-      throw new TemplateOutputCastException("Cannot create wrapper: " + wrapperClass.getName(), e);
+      throw new TemplateOutputCastException("Could not create new instance of " + wrapperClass.getName() + ": access control denies access to constructor", e);
     }
     catch (InvocationTargetException e)
     {
-      throw new TemplateOutputCastException("Cannot create wrapper: " + wrapperClass.getName(), e);
+      throw new TemplateOutputCastException("Could not create new instance of " + wrapperClass.getName() + ": constructor throws an exception", e);
     }
     catch (ClassCastException e)
     {
-      throw new TemplateOutputCastException("Cannot create wrapper: " + wrapperClass.getName(), e);
+      throw new TemplateOutputCastException("Could not create new instance of " + wrapperClass.getName() + " with argument " + object, e);
     }
   }
 
@@ -244,23 +250,23 @@ public class DataTemplateUtil
     }
     catch (IllegalArgumentException e)
     {
-      throw new TemplateOutputCastException("Cannot create wrapper with " + constructor, e);
+      throw new TemplateOutputCastException("Could not create new instance of " + constructor.getClass().getName() + " using constructor " + constructor.getName() + " with argument " + object, e);
     }
     catch (InstantiationException e)
     {
-      throw new TemplateOutputCastException("Cannot create wrapper with " + constructor, e);
+      throw new TemplateOutputCastException("Could not create new instance of " + constructor.getClass().getName() + " using constructor " + constructor.getName() + ": cannot initialize an abstract class", e);
     }
     catch (IllegalAccessException e)
     {
-      throw new TemplateOutputCastException("Cannot create wrapper with " + constructor, e);
+      throw new TemplateOutputCastException("Could not create new instance of " + constructor.getClass().getName() + " using constructor " + constructor.getName() + ": access control denies access to constructor", e);
     }
     catch (InvocationTargetException e)
     {
-      throw new TemplateOutputCastException("Cannot create wrapper with " + constructor, e);
+      throw new TemplateOutputCastException("Could not create new instance of " + constructor.getClass().getName() + " using constructor " + constructor.getName() + ": constructor throws an exception", e);
     }
     catch (ClassCastException e)
     {
-      throw new TemplateOutputCastException("Cannot create wrapper with " + constructor, e);
+      throw new TemplateOutputCastException("Could not create new instance of " + constructor.getClass().getName() + " using constructor " + constructor.getName() + " with argument " + object, e);
     }
   }
 
@@ -365,18 +371,18 @@ public class DataTemplateUtil
       DataSchema schema = (DataSchema) schemaField.get(null);
       if (schema == null)
       {
-        throw new TemplateRuntimeException("Class missing schema: " + type.getName());
+        throw new TemplateRuntimeException("Schema field is not set in class: " + type.getName());
       }
 
       return schema;
     }
     catch (IllegalAccessException e)
     {
-      throw new TemplateRuntimeException("Error evaluating schema name for class: " + type.getName(), e);
+      throw new TemplateRuntimeException("Error accessing schema field in class: " + type.getName(), e);
     }
     catch (NoSuchFieldException e)
     {
-      throw new TemplateRuntimeException("Class missing schema field: " + type.getName(), e);
+      throw new TemplateRuntimeException("Error accessing schema field in class: " + type.getName(), e);
     }
   }
 
@@ -389,7 +395,7 @@ public class DataTemplateUtil
     DataSchema schema = getSchema(type);
     if (! (schema instanceof NamedDataSchema))
     {
-      throw new TemplateRuntimeException("Class' schema is unnamed: " + type.getName());
+      throw new TemplateRuntimeException("Schema is unnamed in class: " + type.getName());
     }
 
     return ((NamedDataSchema) schema).getFullName();
@@ -409,7 +415,7 @@ public class DataTemplateUtil
     {
       // this code should never be called unless the client is using raw types
       // that bypass compile time checks.
-      throw new ClassCastException("Input " + object + " is not a " + _targetClass.getName());
+      throw new ClassCastException("Input " + object + " has type " + object.getClass().getName() + " but expected type is " + _targetClass.getName());
     }
   }
 
@@ -431,7 +437,7 @@ public class DataTemplateUtil
       }
       else
       {
-        throw new ClassCastException("Input " + object + " is a not a Number or a " + _targetClass.getName());
+        throw new ClassCastException("Input " + object + " has type " + object.getClass().getName() + ", but expected type is " + Number.class.getName());
       }
     }
 
@@ -444,7 +450,7 @@ public class DataTemplateUtil
       }
       else
       {
-        throw new TemplateOutputCastException("Output " + object + " is a not a Number or a " + _targetClass.getName());
+        throw new TemplateOutputCastException("Output " + object + " has type " + object.getClass().getName() + ", but expected type is " + Number.class.getName());
       }
     }
 
@@ -469,7 +475,7 @@ public class DataTemplateUtil
         return (Boolean) object;
       }
 
-      throw new TemplateOutputCastException("Output " + object + " is a not a " + _targetClass.getName());
+      throw new TemplateOutputCastException("Output " + object + " has type " + object.getClass().getName() + ", but expected type is " + Boolean.class.getName());
     }
   }
 
@@ -500,7 +506,7 @@ public class DataTemplateUtil
       }
       else
       {
-        throw new TemplateOutputCastException("Output " + object + " is not a valid string.");
+        throw new TemplateOutputCastException("Output " + object + " has type " + object.getClass().getName() + ", but expected type is " + String.class.getName());
       }
     }
   }
@@ -527,7 +533,7 @@ public class DataTemplateUtil
       }
       else
       {
-        throw new TemplateOutputCastException("Output " + object + " is a not a " + String.class.getName() + " or " + _targetClass.getName());
+        throw new TemplateOutputCastException("Output " + object + " has type " + object.getClass().getName() + ", but expected type is " + String.class.getName());
       }
     }
   }
@@ -708,7 +714,7 @@ public class DataTemplateUtil
     @SuppressWarnings("unchecked") DirectCoercer<T> coercer = (DirectCoercer<T>) _classToCoercerMap.get(fromClass);
     if (coercer == null)
     {
-      throw new ClassCastException("Input " + object + " cannot be coerced from " + fromClass.getName());
+      throw new ClassCastException("Input " + object + " has type " + fromClass.getName() + ", but does not have a registered coercer");
     }
     else
     {
@@ -776,7 +782,7 @@ public class DataTemplateUtil
       }
       catch (IllegalArgumentException exc)
       {
-        throw new TemplateOutputCastException("Enum " + targetClass.getName() + " does not have " + value + " as member", exc);
+        throw new TemplateOutputCastException("Enum " + targetClass.getName() + " does not have a member with the name " + value, exc);
       }
     }
   }
@@ -815,12 +821,12 @@ public class DataTemplateUtil
       {
         return (T) stringToEnum(targetClass, (String) object);
       }
-      throw new TemplateOutputCastException("Output " + object + " cannot be coerced to enum " + targetClass.getName());
+      throw new TemplateOutputCastException("Output " + object + " has type " + object.getClass().getName() + ", and cannot be coerced to enum type " + targetClass.getName());
     }
     DirectCoercer<?> coercer = _classToCoercerMap.get(targetClass);
     if (coercer == null)
     {
-      throw new TemplateOutputCastException("Output " + object + " is not a and cannot be coerced to " + targetClass.getName());
+      throw new TemplateOutputCastException("Output " + object + " has type " + object.getClass().getName() + ", but does not have a registered coercer and cannot be coerced to type " + targetClass.getName());
     }
     else
     {
@@ -853,7 +859,7 @@ public class DataTemplateUtil
         final Class<?> componentType = arrayItemType.getComponentType();
         if (!(valueItem instanceof DataList))
         {
-          throw new TemplateOutputCastException("Cannot coerce item with type " + valueItem.getClass().getName() + " to array of " + componentType.getName());
+          throw new TemplateOutputCastException("Cannot coerce item " + valueItem + " with type " + valueItem.getClass().getName() + " to array of " + componentType.getName() + ": Expected type is " + DataList.class.getName());
         }
         arrayItem = convertDataListToArray((DataList) valueItem, componentType);
       }
