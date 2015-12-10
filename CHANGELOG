@@ -1,5 +1,7 @@
 5.0.2
 -----
+(RB=628388)
+Add restOverStream switch to D2ClientBuilder
 
 
 5.0.1
