@@ -46,6 +46,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class D2ClientBuilder
 {
+  private boolean _restOverStream = false;
+
   /**
    * @return {@link D2Client} that is not started yet. Call start(Callback) to start it.
    */
@@ -80,7 +82,7 @@ public class D2ClientBuilder
 
     final LoadBalancerWithFacilities loadBalancer = loadBalancerFactory.create(cfg);
 
-    D2Client d2Client = new DynamicClient(loadBalancer, loadBalancer);
+    D2Client d2Client = new DynamicClient(loadBalancer, loadBalancer, _restOverStream);
 
     /**
      * If we created default transport client factories, we need to shut them down when d2Client
@@ -198,6 +200,12 @@ public class D2ClientBuilder
   public D2ClientBuilder setLoadBalancerWithFacilitiesFactory(LoadBalancerWithFacilitiesFactory lbWithFacilitiesFactory)
   {
     _config.lbWithFacilitiesFactory = lbWithFacilitiesFactory;
+    return this;
+  }
+
+  public D2ClientBuilder setRestOverStream(boolean restOverStream)
+  {
+    _restOverStream = restOverStream;
     return this;
   }
 
