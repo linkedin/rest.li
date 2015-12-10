@@ -1,5 +1,11 @@
+4.1.2
+-----
+
+
 4.1.1
 -----
+(RB=RB=555314)
+Change rest.li client request default protocol version.
 
 4.1.0
 -----
@@ -8,6 +14,7 @@ Add streaming code path on client side & server side
 The default is to use the existing code path.
 (RB=624779)
 Increase timeout values in some tests
+
 
 4.0.0
 -----
