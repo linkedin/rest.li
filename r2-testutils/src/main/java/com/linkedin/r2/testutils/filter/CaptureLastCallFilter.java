@@ -59,6 +59,13 @@ public class CaptureLastCallFilter implements RestFilter
     nextFilter.onError(ex, requestContext, wireAttrs);
   }
 
+  public void reset()
+  {
+    _lastReq = null;
+    _lastRes = null;
+    _lastErr = null;
+  }
+
   public RestRequest getLastReq()
   {
     return _lastReq;

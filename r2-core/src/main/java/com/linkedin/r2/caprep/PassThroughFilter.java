@@ -18,6 +18,7 @@
 package com.linkedin.r2.caprep;
 
 import com.linkedin.r2.filter.message.rest.RestFilter;
+import com.linkedin.r2.filter.message.stream.StreamFilter;
 
 /**
  * A filter that does nothing with any requests or responses.
@@ -26,6 +27,6 @@ import com.linkedin.r2.filter.message.rest.RestFilter;
  * @author Zhenkai Zhu
  * @version $Revision$
  */
-public class PassThroughFilter implements RestFilter
+public class PassThroughFilter implements RestFilter, StreamFilter
 {
 }

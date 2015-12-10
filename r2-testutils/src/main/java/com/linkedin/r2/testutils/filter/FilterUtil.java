@@ -113,6 +113,21 @@ public class FilterUtil
     wrapFilterChain(fc).onStreamRequest(req, emptyRequestContext(), wireAttrs);
   }
 
+  public static void fireStreamRequest(FilterChain fc, StreamRequest req, RequestContext requestContext, Map<String, String> wireAttrs)
+  {
+    wrapFilterChain(fc).onStreamRequest(req, requestContext, wireAttrs);
+  }
+
+  public static void fireStreamResponse(FilterChain fc, StreamResponse res, RequestContext requestContext, Map<String, String> wireAttrs)
+  {
+    wrapFilterChain(fc).onStreamResponse(res, requestContext, wireAttrs);
+  }
+
+  public static void fireStreamError(FilterChain fc, Exception ex, RequestContext requestContext, Map<String, String> wireAttrs)
+  {
+    wrapFilterChain(fc).onStreamError(ex, requestContext, wireAttrs);
+  }
+
   public static void fireSimpleRestRequest(FilterChain fc)
   {
     fireRestRequest(fc, simpleRestRequest());

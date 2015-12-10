@@ -23,6 +23,7 @@ import com.linkedin.r2.caprep.db.DirectoryDbSink;
 import com.linkedin.r2.caprep.db.DirectoryDbSource;
 import com.linkedin.r2.filter.NextFilter;
 import com.linkedin.r2.filter.message.rest.RestFilter;
+import com.linkedin.r2.filter.message.stream.StreamFilter;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
@@ -30,6 +31,8 @@ import com.linkedin.r2.message.rest.RestResponse;
 import java.io.IOException;
 import java.util.Map;
 
+import com.linkedin.r2.message.stream.StreamRequest;
+import com.linkedin.r2.message.stream.StreamResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +40,7 @@ import org.slf4j.LoggerFactory;
  * @author Chris Pettitt
  * @version $Revision$
  */
-public class CapRepFilter implements RestFilter, CapRepAdmin
+public class CapRepFilter implements RestFilter, StreamFilter, CapRepAdmin
 {
   private static final Logger _log = LoggerFactory.getLogger(CapRepFilter.class);
 
@@ -124,5 +127,29 @@ public class CapRepFilter implements RestFilter, CapRepAdmin
                           NextFilter<RestRequest, RestResponse> nextFilter)
   {
     _filter.onRestError(ex, requestContext, wireAttrs, nextFilter);
+  }
+
+  @Override
+  public void onStreamRequest(StreamRequest req, RequestContext requestContext,
+                            Map<String, String> wireAttrs,
+                            NextFilter<StreamRequest, StreamResponse> nextFilter)
+  {
+    _filter.onStreamRequest(req, requestContext, wireAttrs, nextFilter);
+  }
+
+  @Override
+  public void onStreamResponse(StreamResponse res, RequestContext requestContext,
+                             Map<String, String> wireAttrs,
+                             NextFilter<StreamRequest, StreamResponse> nextFilter)
+  {
+    _filter.onStreamResponse(res, requestContext, wireAttrs, nextFilter);
+  }
+
+  @Override
+  public void onStreamError(Throwable ex, RequestContext requestContext,
+                          Map<String, String> wireAttrs,
+                          NextFilter<StreamRequest, StreamResponse> nextFilter)
+  {
+    _filter.onStreamError(ex, requestContext, wireAttrs, nextFilter);
   }
 }

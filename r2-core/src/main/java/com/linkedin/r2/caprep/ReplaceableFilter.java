@@ -19,9 +19,13 @@ package com.linkedin.r2.caprep;
 
 import com.linkedin.r2.filter.NextFilter;
 import com.linkedin.r2.filter.message.rest.RestFilter;
+import com.linkedin.r2.filter.message.stream.StreamFilter;
+import com.linkedin.r2.filter.message.stream.StreamFilterAdapters;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
+import com.linkedin.r2.message.stream.StreamRequest;
+import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.util.ArgumentUtil;
 
 import java.util.Map;
@@ -34,9 +38,10 @@ import java.util.Map;
  * @author Zhenkai Zhu
  * @version $Revision$
  */
-public class ReplaceableFilter implements RestFilter
+public class ReplaceableFilter implements RestFilter, StreamFilter
 {
   private volatile RestFilter _filter;
+  private volatile StreamFilter _adaptedFilter;
 
   /**
    * Construct a new instance with the specified filter.
@@ -57,6 +62,7 @@ public class ReplaceableFilter implements RestFilter
   {
     ArgumentUtil.notNull(filter, "filter");
     _filter = filter;
+    _adaptedFilter = StreamFilterAdapters.adaptRestFilter(_filter);
   }
 
   /**
@@ -94,5 +100,29 @@ public class ReplaceableFilter implements RestFilter
                           NextFilter<RestRequest, RestResponse> nextFilter)
   {
     _filter.onRestError(ex, requestContext, wireAttrs, nextFilter);
+  }
+
+  @Override
+  public void onStreamRequest(StreamRequest req, RequestContext requestContext,
+                              Map<String, String> wireAttrs,
+                              NextFilter<StreamRequest, StreamResponse> nextFilter)
+  {
+    _adaptedFilter.onStreamRequest(req, requestContext, wireAttrs, nextFilter);
+  }
+
+  @Override
+  public void onStreamResponse(StreamResponse res, RequestContext requestContext,
+                               Map<String, String> wireAttrs,
+                               NextFilter<StreamRequest, StreamResponse> nextFilter)
+  {
+    _adaptedFilter.onStreamResponse(res, requestContext, wireAttrs, nextFilter);
+  }
+
+  @Override
+  public void onStreamError(Throwable ex, RequestContext requestContext,
+                            Map<String, String> wireAttrs,
+                            NextFilter<StreamRequest, StreamResponse> nextFilter)
+  {
+    _adaptedFilter.onStreamError(ex, requestContext, wireAttrs, nextFilter);
   }
 }
