@@ -1,10 +1,9 @@
-4.1.2
+5.0.1
 -----
 
-
-4.1.1
+5.0.0
 -----
-(RB=RB=555314)
+(RB=555314)
 Change rest.li client request default protocol version.
 
 4.1.0
