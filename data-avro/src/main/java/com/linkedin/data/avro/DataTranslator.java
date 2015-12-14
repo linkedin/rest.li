@@ -547,7 +547,7 @@ public class DataTranslator implements DataTranslatorContext
               Object defaultValue = field.getDefault();
               if (defaultValue != null)
               {
-                Object fieldAvroValue = translate(field.getDefault(), fieldDataSchema, fieldAvroSchema);
+                Object fieldAvroValue = translate(defaultValue, fieldDataSchema, fieldAvroSchema);
                 avroRecord.put(fieldName, fieldAvroValue);
               }
               else

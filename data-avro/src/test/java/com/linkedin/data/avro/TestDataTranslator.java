@@ -32,7 +32,6 @@ import java.io.PrintStream;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
@@ -971,9 +970,8 @@ public class TestDataTranslator
     DataMap dataMap = new DataMap();
     dataMap.put("field1", "test");
     GenericRecord record = DataTranslator.dataMapToGenericRecord(dataMap, pegasusSchema, avroShema);
-    Assert.assertEquals(record.get("field2"),  new GenericData.Array<>(0, Schema.createArray(
+    assertEquals(record.get("field2"),  new GenericData.Array<>(0, Schema.createArray(
         Schema.create(Schema.Type.STRING))));
   }
-
 }
 
