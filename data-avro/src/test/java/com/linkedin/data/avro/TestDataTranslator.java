@@ -27,19 +27,17 @@ import com.linkedin.data.schema.validation.ValidationOptions;
 import com.linkedin.data.schema.validation.ValidationResult;
 import java.io.FileDescriptor;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
-
+import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
+import org.testng.Assert;
 import org.testng.annotations.Test;
-
-import java.io.IOException;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
-
-import org.apache.avro.Schema;
 
 public class TestDataTranslator
 {
@@ -925,6 +923,56 @@ public class TestDataTranslator
     Schema avroSchema = Schema.parse("{ \"name\": \"foo\", \"type\": \"record\", \"fields\":[]}");
     DataMap map = DataTranslator.genericRecordToDataMap(new GenericData.Record(avroSchema), (RecordDataSchema)TestUtil.dataSchemaFromString(P_SCHEMA), avroSchema);
     assertEquals(map.size(), 0);
+  }
+
+  @Test
+  public void testMissingDefaultFieldsOnDataMap() throws IOException
+  {
+    final String P_SCHEMA =
+        "{" +
+            "   \"type\":\"record\"," +
+            "   \"name\":\"Foo\"," +
+            "   \"fields\":[" +
+            "      {" +
+            "         \"name\":\"field1\"," +
+            "         \"type\":\"string\"" +
+            "      }," +
+            "      {" +
+            "         \"name\":\"field2\"," +
+            "         \"type\":{" +
+            "            \"type\":\"array\"," +
+            "            \"items\":\"string\"" +
+            "         }," +
+            "         \"default\":[ ]" +
+            "      }" +
+            "   ]" +
+            "}";
+    final String A_SCHEMA =
+        "{" +
+            "   \"type\":\"record\"," +
+            "   \"name\":\"Foo\"," +
+            "   \"fields\":[" +
+            "      {\n" +
+            "         \"name\":\"field1\"," +
+            "         \"type\":\"string\"" +
+            "      },\n" +
+            "      {\n" +
+            "         \"name\":\"field2\"," +
+            "         \"type\":{\n" +
+            "            \"type\":\"array\"," +
+            "            \"items\":\"string\"" +
+            "         }," +
+            "         \"default\":[ ]" +
+            "      }" +
+            "   ]" +
+            "}";
+    RecordDataSchema pegasusSchema = (RecordDataSchema)TestUtil.dataSchemaFromString(P_SCHEMA);
+    Schema avroShema = Schema.parse(A_SCHEMA);
+    DataMap dataMap = new DataMap();
+    dataMap.put("field1", "test");
+    GenericRecord record = DataTranslator.dataMapToGenericRecord(dataMap, pegasusSchema, avroShema);
+    Assert.assertEquals(record.get("field2"),  new GenericData.Array<>(0, Schema.createArray(
+        Schema.create(Schema.Type.STRING))));
   }
 
 }

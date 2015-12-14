@@ -542,14 +542,20 @@ public class DataTranslator implements DataTranslatorContext
                 }
               }
             }
-            else
+            else if (fieldValue == null)
             {
-              if (fieldValue == null)
+              Object defaultValue = field.getDefault();
+              if (defaultValue != null)
+              {
+                Object fieldAvroValue = translate(field.getDefault(), fieldDataSchema, fieldAvroSchema);
+                avroRecord.put(fieldName, fieldAvroValue);
+              }
+              else
               {
                 appendMessage("required field is absent");
                 _path.removeLast();
-                continue;
               }
+              continue;
             }
             Object fieldAvroValue = translate(fieldValue, fieldDataSchema, fieldAvroSchema);
             avroRecord.put(fieldName, fieldAvroValue);
