@@ -1,8 +1,13 @@
+5.0.7
+-----
+
 5.0.6
 -----
 (RB=637091)
 Modify multipart mime streaming test to avoid transient failures
 
+(RB=631279)
+Add option to specify a validator class map in RestLiDataValidator
 
 5.0.5
 -----

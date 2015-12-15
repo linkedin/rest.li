@@ -35,6 +35,7 @@ import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
 import com.linkedin.data.schema.validation.ValidationOptions;
 import com.linkedin.data.schema.validation.ValidationResult;
 import com.linkedin.data.schema.validator.DataSchemaAnnotationValidator;
+import com.linkedin.data.schema.validator.Validator;
 import com.linkedin.data.schema.validator.ValidatorContext;
 import com.linkedin.data.template.DataTemplate;
 import com.linkedin.data.template.DataTemplateUtil;
@@ -52,6 +53,7 @@ import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -112,6 +114,8 @@ public class RestLiDataValidator
   private final Predicate _createOnlyDescendantPredicate;
   private final Class<? extends RecordTemplate> _valueClass;
   private final ResourceMethod _resourceMethod;
+  // To be passed into DataSchemaAnnotationValidator.
+  private final Map<String, Class<? extends Validator>> _validatorClassMap;
 
   private static final String INSTANTIATION_ERROR = "InstantiationException while trying to instantiate the record template class";
   private static final String ILLEGAL_ACCESS_ERROR = "IllegalAccessException while trying to instantiate the record template class";
@@ -177,7 +181,23 @@ public class RestLiDataValidator
    */
   public RestLiDataValidator(Annotation[] annotations, Class<? extends RecordTemplate> valueClass, ResourceMethod resourceMethod)
   {
-    this(annotationsToMap(annotations), valueClass, resourceMethod);
+    this(annotations, valueClass, resourceMethod, Collections.emptyMap());
+  }
+
+  /**
+   * Constructor.
+   *
+   * @param annotations annotations on the resource class
+   * @param valueClass class of the record template
+   * @param resourceMethod resource method type
+   * @param validatorClassMap custom validator class map (see {@link #RestLiDataValidator(Map, Class, ResourceMethod, Map)} for explanation)
+   */
+  public RestLiDataValidator(Annotation[] annotations,
+                             Class<? extends RecordTemplate> valueClass,
+                             ResourceMethod resourceMethod,
+                             Map<String, Class<? extends Validator>> validatorClassMap)
+  {
+    this(annotationsToMap(annotations), valueClass, resourceMethod, validatorClassMap);
   }
 
   /**
@@ -187,7 +207,27 @@ public class RestLiDataValidator
    * @param valueClass class of the record template
    * @param resourceMethod resource method type
    */
-  public RestLiDataValidator(Map<String, List<String>> annotations, Class<? extends RecordTemplate> valueClass, ResourceMethod resourceMethod)
+  public RestLiDataValidator(Map<String, List<String>> annotations,
+                             Class<? extends RecordTemplate> valueClass,
+                             ResourceMethod resourceMethod)
+  {
+    this(annotations, valueClass, resourceMethod, Collections.emptyMap());
+  }
+
+  /**
+   * Constructor.
+   *
+   * @param annotations map from annotation name to annotation values
+   * @param valueClass class of the record template
+   * @param resourceMethod resource method type
+   * @param validatorClassMap custom validator class map, with keys as "validate" property keys
+   *                          (See {@link DataSchemaAnnotationValidator}) and values as validator class types
+   *                          (e.g. "strlen" as key and StrlenValidator.class as value)
+   */
+  public RestLiDataValidator(Map<String, List<String>> annotations,
+                             Class<? extends RecordTemplate> valueClass,
+                             ResourceMethod resourceMethod,
+                             Map<String, Class<? extends Validator>> validatorClassMap)
   {
     List<Predicate> readOnly = new ArrayList<Predicate>();
     List<Predicate> createOnly = new ArrayList<Predicate>();
@@ -224,13 +264,14 @@ public class RestLiDataValidator
     _createOnlyDescendantPredicate = Predicates.or(createOnlyDescendant);
     _valueClass = valueClass;
     _resourceMethod = resourceMethod;
+    _validatorClassMap = Collections.unmodifiableMap(validatorClassMap);
   }
 
   private class DataValidator extends DataSchemaAnnotationValidator
   {
     private DataValidator(DataSchema schema)
     {
-      super(schema);
+      super(schema, _validatorClassMap);
     }
 
     @Override

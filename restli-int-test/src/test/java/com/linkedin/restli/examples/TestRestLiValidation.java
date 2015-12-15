@@ -17,6 +17,13 @@
 package com.linkedin.restli.examples;
 
 
+import com.linkedin.data.DataMap;
+import com.linkedin.data.element.DataElement;
+import com.linkedin.data.message.Message;
+import com.linkedin.data.schema.validation.ValidationResult;
+import com.linkedin.data.schema.validator.AbstractValidator;
+import com.linkedin.data.schema.validator.Validator;
+import com.linkedin.data.schema.validator.ValidatorContext;
 import com.linkedin.data.transform.DataProcessingException;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.restli.client.BatchGetEntityRequest;
@@ -37,7 +44,9 @@ import com.linkedin.restli.common.EntityResponse;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.common.PatchRequest;
+import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.UpdateStatus;
+import com.linkedin.restli.common.validation.RestLiDataValidator;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.GreetingMap;
 import com.linkedin.restli.examples.greetings.api.MyItemArray;
@@ -753,6 +762,56 @@ public class TestRestLiValidation extends RestLiIntegrationTest
     catch (RestLiResponseException e)
     {
       Assert.assertEquals(e.getStatus(), HttpStatus.S_400_BAD_REQUEST.getCode());
+    }
+  }
+
+  @Test
+  public void testCustomValidatorMap()
+  {
+    // Provide Rest.li annotations manually since the validator is not called from the server or through generated request builders.
+    Map<String, List<String>> annotations = new HashMap<>();
+    annotations.put("createOnly", Arrays.asList("stringB", "intB", "UnionFieldWithInlineRecord/com.linkedin.restli.examples.greetings.api.myRecord/foo2", "MapWithTyperefs/*/id"));
+    annotations.put("readOnly", Arrays.asList("stringA", "intA", "UnionFieldWithInlineRecord/com.linkedin.restli.examples.greetings.api.myRecord/foo1", "ArrayWithInlineRecord/*/bar1", "validationDemoNext/stringB", "validationDemoNext/UnionFieldWithInlineRecord"));
+
+    // Invalid entity, because intB is not a multiple of seven.
+    ValidationDemo.UnionFieldWithInlineRecord unionField1 = new ValidationDemo.UnionFieldWithInlineRecord();
+    unionField1.setMyEnum(myEnum.FOOFOO);
+    ValidationDemo entity = new ValidationDemo().setIntB(24).setStringB("some string").setUnionFieldWithInlineRecord(unionField1);
+
+    // Validate without the class map
+    RestLiDataValidator validator = new RestLiDataValidator(annotations, ValidationDemo.class, ResourceMethod.CREATE);
+    ValidationResult result = validator.validateInput(entity);
+    Assert.assertTrue(result.isValid());
+
+    // Validate with the class map
+    Map<String, Class<? extends Validator>> validatorClassMap = new HashMap<>();
+    validatorClassMap.put("seven", SevenValidator.class);
+    validator = new RestLiDataValidator(annotations, ValidationDemo.class, ResourceMethod.CREATE, validatorClassMap);
+    result = validator.validateInput(entity);
+    Assert.assertFalse(result.isValid());
+    Assert.assertEquals(result.getMessages().size(), 1);
+    for (Message message : result.getMessages())
+    {
+      Assert.assertTrue(message.toString().contains("24 is not a multiple of seven"));
+    }
+  }
+
+  public static class SevenValidator extends AbstractValidator
+  {
+    public SevenValidator(DataMap config)
+    {
+      super(config);
+    }
+
+    @Override
+    public void validate(ValidatorContext context)
+    {
+      DataElement element = context.dataElement();
+      Integer value = (Integer) element.getValue();
+      if (value % 7 != 0)
+      {
+        context.addResult(new Message(element.path(), "%d is not a multiple of seven", value));
+      }
     }
   }
 }

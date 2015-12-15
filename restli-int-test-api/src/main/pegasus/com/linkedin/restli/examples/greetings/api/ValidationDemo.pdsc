@@ -25,7 +25,10 @@
     {
       "name": "intB",
       "type": "int",
-      "optional": true
+      "optional": true,
+      "validate": {
+        "seven": {}
+      }
     },
     {
       "name": "UnionFieldWithInlineRecord",
