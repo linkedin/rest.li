@@ -358,16 +358,16 @@ public class RestClient
       case FORCE_USE_PREVIOUS:
         return previousVersion;
       case USE_LATEST_IF_AVAILABLE:
-        if (announcedVersion.compareTo(baselineProtocolVersion) == -1)
+        if (announcedVersion.compareTo(previousVersion) == -1)
         {
-          // throw an exception as the announced version is less than the default version
-          throw new RuntimeException("Announced version is less than the default version!" +
-            "Announced version: " + announcedVersion + ", default version: " + baselineProtocolVersion);
+          // throw an exception as the announced version is less than the earliest supported version
+          throw new RuntimeException("Announced version is less than the earliest supported version!" +
+            "Announced version: " + announcedVersion + ", earliest supported version: " + previousVersion);
         }
-        else if (announcedVersion.compareTo(baselineProtocolVersion) == 0)
+        else if (announcedVersion.compareTo(previousVersion) == 0)
         {
-          // server is running the default version
-          return baselineProtocolVersion;
+          // server is running the earliest supported version
+          return previousVersion;
         }
         else if (announcedVersion.compareTo(latestVersion) == -1)
         {
