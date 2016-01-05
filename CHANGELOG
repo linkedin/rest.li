@@ -1,6 +1,12 @@
-5.0.4
+5.0.5
 -----
 
+
+5.0.4
+-----
+(RB=636416)
+Fix bug in ReplaceableFilter so that it won't buffer request/response
+when not active.
 
 5.0.3
 -----
