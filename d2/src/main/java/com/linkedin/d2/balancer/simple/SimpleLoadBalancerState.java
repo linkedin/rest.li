@@ -408,6 +408,30 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
         {
           transportClient.shutdown(trackerCallback);
         }
+
+        // When SimpleLoadBalancerState is shutdown, all the strategies and clients are effectively removed,
+        // so it is needed to notify all the listeners
+        for (SimpleLoadBalancerStateListener listener : _listeners)
+        {
+          // Notify the strategy removal
+          for (Map.Entry<String, Map<String, LoadBalancerStrategy>> serviceStrategy : _serviceStrategies.entrySet())
+          {
+            for (Map.Entry<String, LoadBalancerStrategy> strategyEntry : serviceStrategy.getValue().entrySet())
+            {
+              listener.onStrategyRemoved(serviceStrategy.getKey(), strategyEntry.getKey(), strategyEntry.getValue());
+            }
+
+            // Also notify the client removal
+            Map<URI, TrackerClient> trackerClients = _trackerClients.get(serviceStrategy.getKey());
+            if (trackerClients != null)
+            {
+              for (TrackerClient client : trackerClients.values())
+              {
+                listener.onClientRemoved(serviceStrategy.getKey(), client);
+              }
+            }
+          }
+        }
       }
     });
   }

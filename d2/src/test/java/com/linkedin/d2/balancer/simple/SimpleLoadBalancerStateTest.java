@@ -338,6 +338,64 @@ public class SimpleLoadBalancerStateTest
   }
 
   @Test(groups = { "small", "back-end" })
+  public void testShutdownWithListener() throws URISyntaxException,
+                                                InterruptedException
+  {
+    reset();
+
+    URI uri = URI.create("http://cluster-1/test");
+    TestListener listener = new TestListener();
+    List<String> schemes = new ArrayList<String>();
+    Map<Integer, PartitionData> partitionData = new HashMap<Integer, PartitionData>(1);
+    partitionData.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
+    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<URI, Map<Integer, PartitionData>>();
+    uriData.put(uri, partitionData);
+    schemes.add("http");
+    _state.register(listener);
+
+    assertNull(listener.scheme);
+    assertNull(listener.strategy);
+    assertNull(listener.serviceName);
+
+    // set up state
+    _state.listenToCluster("cluster-1", new NullStateListenerCallback());
+    _state.listenToService("service-1", new NullStateListenerCallback());
+    List<String> strategyList = Arrays.asList("degraderV3");
+
+    _state.refreshServiceStrategies(
+        new ServiceProperties("service-1", "cluster-1", "/test", strategyList, Collections.<String, Object>emptyMap(),
+            Collections.<String, Object>emptyMap(),
+        Collections.<String, String>emptyMap(),
+        schemes,
+        Collections.<URI>emptySet()));
+
+    assertEquals(listener.scheme, "http");
+    assertNotNull(listener.strategy);
+    assertEquals(listener.serviceName, "service-1");
+
+    TrackerClient client = _state.getClient("cluster-1", uri);
+
+    TestShutdownCallback callback = new TestShutdownCallback();
+
+    _state.shutdown(callback);
+
+    if (!callback.await(10, TimeUnit.SECONDS))
+    {
+      fail("unable to shut down state");
+    }
+
+    for (TransportClientFactory factory : _clientFactories.values())
+    {
+      SimpleLoadBalancerTest.DoNothingClientFactory f = (SimpleLoadBalancerTest.DoNothingClientFactory)factory;
+      assertEquals(f.getRunningClientCount(), 0, "Not all clients were shut down");
+    }
+
+    assertNull(listener.scheme);
+    assertNull(listener.strategy);
+    assertNull(listener.serviceName);
+  }
+
+  @Test(groups = { "small", "back-end" })
   public void testListenToService() throws InterruptedException
   {
     reset();

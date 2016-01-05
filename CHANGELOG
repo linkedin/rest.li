@@ -3,6 +3,9 @@
 (RB=611897)
 Validate data returned from create and get.
 
+(RB=636452)
+Notify listeners when SimpleLoadBalancerState shutdown
+
 5.0.7
 -----
 (RB=635961)
