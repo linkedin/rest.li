@@ -1,5 +1,7 @@
 5.0.7
 -----
+(RB=635961)
+OPTIONS response now includes named schemas from association keys.
 
 5.0.6
 -----
@@ -103,8 +105,8 @@ Improve Rest.li client error message in handling non-JSON RestException.
 ------
 (RB=615156)
 Add streaming compressor and streaming compression filter. Note that
-"snappy" encoding is no longer supported in streaming scenario because 
-it requires full data in memory before encoding/decoding. Instead, we 
+"snappy" encoding is no longer supported in streaming scenario because
+it requires full data in memory before encoding/decoding. Instead, we
 will be using "snappy-framed" encoding.
 
 (RB=616718)

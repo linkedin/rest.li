@@ -29,6 +29,8 @@ import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.StringArray;
 import com.linkedin.restli.restspec.ActionSchema;
+import com.linkedin.restli.restspec.AssocKeySchema;
+import com.linkedin.restli.restspec.AssociationSchema;
 import com.linkedin.restli.restspec.CollectionSchema;
 import com.linkedin.restli.restspec.FinderSchema;
 import com.linkedin.restli.restspec.IdentifierSchema;
@@ -36,6 +38,7 @@ import com.linkedin.restli.restspec.MetadataSchema;
 import com.linkedin.restli.restspec.ParameterSchema;
 import com.linkedin.restli.restspec.ResourceSchema;
 import com.linkedin.restli.server.ResourceLevel;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -173,6 +176,20 @@ public class RestLiResourceRelationship
           if (paramsSchema != null)
           {
             connectSchemaToResource(visitContext, paramsSchema);
+          }
+        }
+      }
+
+      @Override
+      public void visitAssociationResource(VisitContext visitContext,
+                                           AssociationSchema associationSchema)
+      {
+        for (AssocKeySchema key : associationSchema.getAssocKeys())
+        {
+          final NamedDataSchema keyTypeSchema = extractSchema(key.getType());
+          if (keyTypeSchema != null)
+          {
+            connectSchemaToResource(visitContext, keyTypeSchema);
           }
         }
       }
