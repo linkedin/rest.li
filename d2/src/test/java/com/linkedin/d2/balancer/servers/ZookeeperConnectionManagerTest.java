@@ -26,6 +26,7 @@ import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
 import static org.testng.Assert.fail;
 
 
@@ -86,6 +87,43 @@ public class ZookeeperConnectionManagerTest
         properties.getPartitionDataMap(URI.create(uri)).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(),
         weight);
     assertEquals(properties.Uris().size(), 1);
+  }
+
+  @Test
+  public void testDelayMarkUp()
+          throws IOException, ExecutionException, InterruptedException, PropertyStoreException
+  {
+    final String uri = "http://cluster-1/test";
+    final String cluster = "cluster-1";
+    final double weight = 0.5d;
+
+    ZooKeeperAnnouncer announcer = new ZooKeeperAnnouncer(new ZooKeeperServer(), false);
+    announcer.setCluster(cluster);
+    announcer.setUri(uri);
+    Map<Integer, PartitionData> partitionWeight = new HashMap<Integer, PartitionData>();
+    partitionWeight.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(weight));
+    announcer.setPartitionData(partitionWeight);
+
+    ZooKeeperConnectionManager manager = createManager(announcer);
+
+    FutureCallback<None> managerStartCallback = new FutureCallback<None>();
+    manager.start(managerStartCallback);
+    managerStartCallback.get();
+
+    ZooKeeperEphemeralStore<UriProperties> store = createAndStartUriStore();
+    UriProperties properties = store.get(cluster);
+    assertNull(properties);
+
+    FutureCallback<None> markUpCallback = new FutureCallback<None>();
+    announcer.markUp(markUpCallback);
+    markUpCallback.get();
+
+    UriProperties propertiesAfterMarkUp = store.get(cluster);
+    assertNotNull(propertiesAfterMarkUp);
+    assertEquals(
+            propertiesAfterMarkUp.getPartitionDataMap(URI.create(uri)).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(),
+            weight);
+    assertEquals(propertiesAfterMarkUp.Uris().size(), 1);
   }
 
   @Test

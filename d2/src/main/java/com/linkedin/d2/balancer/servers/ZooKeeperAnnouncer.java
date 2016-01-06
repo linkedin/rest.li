@@ -61,12 +61,16 @@ public class ZooKeeperAnnouncer
   private final Deque<Callback<None>> _pendingMarkDown;
   private final Deque<Callback<None>> _pendingMarkUp;
 
-
   public ZooKeeperAnnouncer(ZooKeeperServer server)
   {
+    this(server, true);
+  }
+
+  public ZooKeeperAnnouncer(ZooKeeperServer server, boolean initialIsUp)
+  {
     _server = server;
-    /* the initial state of announcer is up */
-    _isUp = true;
+    // initialIsUp is used for delay mark up. If it's false, there won't be markup when the announcer is started.
+    _isUp = initialIsUp;
     _pendingMarkDown = new ArrayDeque<Callback<None>>();
     _pendingMarkUp = new ArrayDeque<Callback<None>>();
   }
@@ -80,6 +84,10 @@ public class ZooKeeperAnnouncer
     if (_isUp)
     {
       markUp(callback);
+    }
+    else
+    {
+      callback.onSuccess(None.none());
     }
     // No need to manually markDown since we are getting a brand new session
   }
