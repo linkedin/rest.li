@@ -1,5 +1,8 @@
 5.0.6
 -----
+(RB=637091)
+Modify multipart mime streaming test to avoid transient failures
+
 
 5.0.5
 -----

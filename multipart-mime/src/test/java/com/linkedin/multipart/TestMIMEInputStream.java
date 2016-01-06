@@ -20,14 +20,6 @@ package com.linkedin.multipart;
 import com.linkedin.data.ByteString;
 import com.linkedin.r2.message.stream.entitystream.WriteHandle;
 
-import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-import org.mockito.stubbing.OngoingStubbing;
-import org.testng.Assert;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -38,8 +30,23 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.testng.Assert;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
+
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+import org.mockito.stubbing.OngoingStubbing;
+
 import static org.mockito.Matchers.isA;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 
 /**
@@ -121,6 +128,39 @@ public class TestMIMEInputStream extends AbstractMIMEUnitTest
       {
         Assert.fail();
       }
+      return super.read(b);
+    }
+  }
+
+  //Simulates an input stream that times out after a specified number of reads.
+  private static class TimeoutByteArrayInputStream extends StrictByteArrayInputStream
+  {
+    private int _numberOfReadsBeforeTimeout;
+    private final CountDownLatch _latch;
+
+    private TimeoutByteArrayInputStream(final byte[] bytes, final int numberOfReadsBeforeTimeout,
+                                        final CountDownLatch latchToWaitOnTimeout)
+    {
+      super(bytes);
+      _numberOfReadsBeforeTimeout = numberOfReadsBeforeTimeout;
+      _latch = latchToWaitOnTimeout;
+    }
+
+    @Override
+    public int read(byte[] b) throws IOException
+    {
+      try
+      {
+        if (_numberOfReadsBeforeTimeout == 0)
+        {
+          _latch.await();
+        }
+      }
+      catch (InterruptedException interruptException)
+      {
+        Assert.fail();
+      }
+      _numberOfReadsBeforeTimeout--;
       return super.read(b);
     }
   }
@@ -394,7 +434,7 @@ public class TestMIMEInputStream extends AbstractMIMEUnitTest
 
   ///////////////////////////////////////////////////////////////////////////////////////
 
-  //This test will verify that timeouts on reads are handled properly
+  //This test will verify that timeouts on reads are handled properly.
   @DataProvider(name = "timeoutDataSources")
   public Object[][] timeoutDataSources() throws Exception
   {
@@ -409,35 +449,41 @@ public class TestMIMEInputStream extends AbstractMIMEUnitTest
     }
 
     final byte[] largeInputData = builder.toString().getBytes();
-    final SlowByteArrayInputStream timeoutFirst = new SlowByteArrayInputStream(largeInputData, 500, 0);
-    final SlowByteArrayInputStream timeoutSubsequently = new SlowByteArrayInputStream(largeInputData, 0, 10);
+    final CountDownLatch timeoutFirstLatch = new CountDownLatch(1);
+    final CountDownLatch timeoutSubsequentlyLatch = new CountDownLatch(1);
+    final TimeoutByteArrayInputStream timeoutFirst = new TimeoutByteArrayInputStream(largeInputData, 0, timeoutFirstLatch);
+    final TimeoutByteArrayInputStream timeoutSubsequently = new TimeoutByteArrayInputStream(largeInputData, 5, timeoutSubsequentlyLatch);
 
     //TEST_CHUNK_SIZE * 5 writes should be how much data was copied over
     final byte[] largeInputDataPartial = Arrays.copyOf(largeInputData, TEST_CHUNK_SIZE * 5);
 
     return new Object[][]
         {
-          //Timeout on first read. Nothing should have been read. One call on writeHandle.remaining() should have been seen.
-          {timeoutFirst, 0, 1, new byte[0]},
-          //Timeout on the 6th read. We should expect 5 writes. Six calls on writeHandle.remaining() should have been seen.
-          {timeoutSubsequently, 5, 6, largeInputDataPartial}
+            //Timeout on first read. Nothing should have been read. One call on writeHandle.remaining() should have been seen.
+            {timeoutFirst, 0, 1, new byte[0], timeoutFirstLatch},
+            //Timeout on the 6th read. We should expect 5 writes. Six calls on writeHandle.remaining() should have been seen.
+            {timeoutSubsequently, 5, 6, largeInputDataPartial, timeoutSubsequentlyLatch}
         };
   }
 
   @Test(dataProvider = "timeoutDataSources")
-  public void testTimeoutDataSources(final SlowByteArrayInputStream slowByteArrayInputStream,
-      final int expectedTotalWrites, final int expectedWriteHandleRemainingCalls, final byte[] expectedDataWritten)
+  public void testTimeoutDataSources(final TimeoutByteArrayInputStream timeoutByteArrayInputStream,
+                                     final int expectedTotalWrites, final int expectedWriteHandleRemainingCalls,
+                                     final byte[] expectedDataWritten, final CountDownLatch latch)
   {
-    //Setup:
+    //Setup
     final WriteHandle writeHandle = Mockito.mock(WriteHandle.class);
+    //For the maximum blocking time, we choose some value that isn't too short for a read to occur from the in memory
+    //InputStream, but also not too long to prevent the test from taking a while to finish (due to waiting for the timeout
+    //to occur).
     final MultiPartMIMEInputStream multiPartMIMEInputStream =
-        new MultiPartMIMEInputStream.Builder(slowByteArrayInputStream, _scheduledExecutorService,
+        new MultiPartMIMEInputStream.Builder(timeoutByteArrayInputStream, _scheduledExecutorService,
                                              Collections.<String, String>emptyMap()).withWriteChunkSize(TEST_CHUNK_SIZE)
-            .withMaximumBlockingTime(45)
+            .withMaximumBlockingTime(100)
             .build();
 
     //Doesn't matter what we return here as long as its constant and above 0.
-    when(writeHandle.remaining()).thenReturn(500);
+    when(writeHandle.remaining()).thenReturn(1);
 
     final ByteArrayOutputStream byteArrayOutputStream = setupMockWriteHandleToOutputStream(writeHandle);
 
@@ -464,6 +510,10 @@ public class TestMIMEInputStream extends AbstractMIMEUnitTest
     try
     {
       boolean successful = errorLatch.await(_testTimeout, TimeUnit.MILLISECONDS);
+
+      //Unblock the thread in the thread pool.
+      latch.countDown();;
+
       if (!successful)
       {
         Assert.fail("Timeout when waiting for input stream to completely transfer");
@@ -478,7 +528,7 @@ public class TestMIMEInputStream extends AbstractMIMEUnitTest
     //Assert
     Assert.assertEquals(byteArrayOutputStream.toByteArray(), expectedDataWritten,
                         "Partial data should have been transferred in the case of a timeout");
-    Assert.assertEquals(slowByteArrayInputStream.isClosed(), true);
+    Assert.assertEquals(timeoutByteArrayInputStream.isClosed(), true);
 
     //Mock verifies:
     verify(writeHandle, times(expectedTotalWrites)).write(isA(ByteString.class));
