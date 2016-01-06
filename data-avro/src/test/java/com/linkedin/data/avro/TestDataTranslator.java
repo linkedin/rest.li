@@ -954,5 +954,38 @@ public class TestDataTranslator
     assertEquals(record.get("field2"),  new GenericData.Array<>(0, Schema.createArray(
         Schema.create(Schema.Type.STRING))));
   }
+
+  @Test
+  public void testMissingDefaultOptionalFieldsOnDataMap() throws IOException
+  {
+    final String PEGASUS_SCHEMA =
+        "{" +
+            "   \"type\":\"record\"," +
+            "   \"name\":\"Foo\"," +
+            "   \"fields\":[" +
+            "      {" +
+            "         \"name\":\"field1\"," +
+            "         \"type\":\"string\"" +
+            "      }," +
+            "      {" +
+            "         \"name\":\"field2\"," +
+            "         \"type\":{" +
+            "            \"type\":\"array\"," +
+            "            \"items\":\"string\"" +
+            "         }," +
+            "         \"optional\": true," +
+            "         \"default\":[ ]" +
+            "      }" +
+            "   ]" +
+            "}";
+
+    RecordDataSchema pegasusSchema = (RecordDataSchema)TestUtil.dataSchemaFromString(PEGASUS_SCHEMA);
+    Schema avroShema = SchemaTranslator.dataToAvroSchema(pegasusSchema);
+    DataMap dataMap = new DataMap();
+    dataMap.put("field1", "test");
+    GenericRecord record = DataTranslator.dataMapToGenericRecord(dataMap, pegasusSchema, avroShema);
+    assertEquals(record.get("field2"),  new GenericData.Array<>(0, Schema.createArray(
+        Schema.create(Schema.Type.STRING))));
+  }
 }
 
