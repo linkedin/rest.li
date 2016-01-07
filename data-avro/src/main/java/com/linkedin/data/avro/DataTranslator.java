@@ -553,8 +553,8 @@ public class DataTranslator implements DataTranslatorContext
               else
               {
                 appendMessage("required field is absent");
-                _path.removeLast();
               }
+              _path.removeLast();
               continue;
             }
             Object fieldAvroValue = translate(fieldValue, fieldDataSchema, fieldAvroSchema);

@@ -927,7 +927,7 @@ public class TestDataTranslator
   @Test
   public void testMissingDefaultFieldsOnDataMap() throws IOException
   {
-    final String P_SCHEMA =
+    final String SCHEMA =
         "{" +
             "   \"type\":\"record\"," +
             "   \"name\":\"Foo\"," +
@@ -946,27 +946,8 @@ public class TestDataTranslator
             "      }" +
             "   ]" +
             "}";
-    final String A_SCHEMA =
-        "{" +
-            "   \"type\":\"record\"," +
-            "   \"name\":\"Foo\"," +
-            "   \"fields\":[" +
-            "      {\n" +
-            "         \"name\":\"field1\"," +
-            "         \"type\":\"string\"" +
-            "      },\n" +
-            "      {\n" +
-            "         \"name\":\"field2\"," +
-            "         \"type\":{\n" +
-            "            \"type\":\"array\"," +
-            "            \"items\":\"string\"" +
-            "         }," +
-            "         \"default\":[ ]" +
-            "      }" +
-            "   ]" +
-            "}";
-    RecordDataSchema pegasusSchema = (RecordDataSchema)TestUtil.dataSchemaFromString(P_SCHEMA);
-    Schema avroShema = Schema.parse(A_SCHEMA);
+    RecordDataSchema pegasusSchema = (RecordDataSchema)TestUtil.dataSchemaFromString(SCHEMA);
+    Schema avroShema = Schema.parse(SCHEMA);
     DataMap dataMap = new DataMap();
     dataMap.put("field1", "test");
     GenericRecord record = DataTranslator.dataMapToGenericRecord(dataMap, pegasusSchema, avroShema);
