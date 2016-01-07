@@ -164,7 +164,7 @@ public class TestVersionNegotiation
   }
 
   @Test
-  public void testAnnouncedVersionLessThanBaseline()
+  public void testAnnouncedVersionLessThanPrev()
   {
     try
     {
@@ -175,11 +175,11 @@ public class TestVersionNegotiation
                                     new ProtocolVersion(0, 0, 0),
                                     ProtocolVersionOption.USE_LATEST_IF_AVAILABLE,
                                     false);
-      Assert.fail("Expected a RuntimeException as the announced version is less than the default!");
+      Assert.fail("Expected a RuntimeException as the announced version is less than the earliest supported version!");
     }
     catch (RuntimeException e)
     {
-      Assert.assertTrue(e.getMessage().contains("Announced version is less than the default version!"));
+      Assert.assertTrue(e.getMessage().contains("Announced version is less than the earliest supported version!"));
     }
   }
 

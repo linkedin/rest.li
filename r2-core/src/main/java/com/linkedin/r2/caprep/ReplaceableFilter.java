@@ -62,7 +62,14 @@ public class ReplaceableFilter implements RestFilter, StreamFilter
   {
     ArgumentUtil.notNull(filter, "filter");
     _filter = filter;
-    _adaptedFilter = StreamFilterAdapters.adaptRestFilter(_filter);
+    if (filter instanceof StreamFilter)
+    {
+      _adaptedFilter = (StreamFilter) filter;
+    }
+    else
+    {
+      _adaptedFilter = StreamFilterAdapters.adaptRestFilter(_filter);
+    }
   }
 
   /**

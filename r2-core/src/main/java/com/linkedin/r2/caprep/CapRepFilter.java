@@ -44,7 +44,7 @@ public class CapRepFilter implements RestFilter, StreamFilter, CapRepAdmin
 {
   private static final Logger _log = LoggerFactory.getLogger(CapRepFilter.class);
 
-  private static final RestFilter PASS_THROUGH_FILTER = new PassThroughFilter();
+  private static final PassThroughFilter PASS_THROUGH_FILTER = new PassThroughFilter();
 
   private final ReplaceableFilter _filter = new ReplaceableFilter(PASS_THROUGH_FILTER);
 

@@ -50,6 +50,7 @@ include 'restli-server-testutils'
 include 'restli-common-testutils'
 include 'restli-client-testutils'
 include 'restli-internal-testutils'
+include 'multipart-mime'
 
 // see restli-tools-scala/build.gradle for more information about this rename:
 project(':restli-tools-scala').name = 'restli-tools-scala_2.10'
