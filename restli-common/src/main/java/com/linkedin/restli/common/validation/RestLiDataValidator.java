@@ -416,7 +416,8 @@ public class RestLiDataValidator
    * (1) Checks that required/ReadOnly/CreateOnly fields are not deleted.
    * (2) Checks that new values for record templates contain all required fields.
    * (3) Applies the patch to an empty entity and validates the entity for custom validation rules
-   * and Rest.li annotations.
+   * and Rest.li annotations (Allows required fields to be absent by using {@link RequiredMode#IGNORE},
+   * because a patch does not necessarily contain all fields).
    *
    * NOTE: Updating a part of an array is not supported. So if the array contains a required field that is
    * readonly or createonly, the field cannot be present (no partial updates on readonly/createonly)
