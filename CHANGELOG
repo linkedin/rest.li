@@ -3,6 +3,9 @@
 (RB=635961)
 OPTIONS response now includes named schemas from association keys.
 
+(RB=641926)
+Change PhotoResource in restli-example-server to allow dummy ID and URN values in CREATE and UPDATE
+
 5.0.6
 -----
 (RB=637091)
