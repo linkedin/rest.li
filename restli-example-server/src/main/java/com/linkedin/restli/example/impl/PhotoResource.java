@@ -69,8 +69,8 @@ public class PhotoResource extends CollectionResourceTemplate<Long, Photo>
   public CreateResponse create(Photo entity)
   {
     final Long newId = _db.getCurrentId();
-
-    if (entity.hasId() || entity.hasUrn())
+    //ID and URN are required fields, so use a dummy value to denote "empty" fields
+    if ((entity.hasId() && entity.getId() != -1) || (entity.hasUrn() && !entity.getUrn().equals("")))
     {
       throw new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST,
                                        "Photo ID is not acceptable in request");
@@ -123,9 +123,9 @@ public class PhotoResource extends CollectionResourceTemplate<Long, Photo>
     {
       return new UpdateResponse(HttpStatus.S_404_NOT_FOUND);
     }
-
-    // disallow changing entity ID and URN
-    if (entity.hasId() || entity.hasUrn())
+    //Disallow changing entity ID and URN
+    //ID and URN are required fields, so use a dummy value to denote "empty" fields
+    if ((entity.hasId() && entity.getId() != -1) || (entity.hasUrn() && !entity.getUrn().equals("")))
     {
       throw new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST,
                                        "Photo ID is not acceptable in request");
