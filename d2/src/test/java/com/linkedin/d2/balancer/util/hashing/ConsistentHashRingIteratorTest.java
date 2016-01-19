@@ -16,6 +16,8 @@
 
 package com.linkedin.d2.balancer.util.hashing;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
@@ -23,10 +25,18 @@ import static org.testng.Assert.assertTrue;
 
 public class ConsistentHashRingIteratorTest
 {
+  public List<ConsistentHashRing.Point<Integer>> generatePoints(int num) {
+    final List<ConsistentHashRing.Point<Integer>> points = new ArrayList<>();
+    for (int i = 1; i <= num; ++i) {
+      points.add(new ConsistentHashRing.Point<Integer>(i, i));
+    }
+    return points;
+  }
+
   @Test
   public void testIterationFromBeginning()
   {
-    final Integer[] objects = new Integer[]{1, 2, 3, 4, 5, 6};
+    final List<ConsistentHashRing.Point<Integer>> objects = generatePoints(6);
     ConsistentHashRingIterator<Integer> iterator = new ConsistentHashRingIterator<Integer>(objects, 0);
 
     verifyIterator(iterator, objects, 0);
@@ -35,7 +45,7 @@ public class ConsistentHashRingIteratorTest
   @Test
   public void testIterationFromMiddle()
   {
-    final Integer[] objects = new Integer[]{1, 2, 3, 4, 5, 6};
+    final List<ConsistentHashRing.Point<Integer>> objects = generatePoints(6);
     ConsistentHashRingIterator<Integer> iterator = new ConsistentHashRingIterator<Integer>(objects, 3);
 
     verifyIterator(iterator, objects, 3);
@@ -44,7 +54,7 @@ public class ConsistentHashRingIteratorTest
   @Test
   public void testIterationFromEnd()
   {
-    final Integer[] objects = new Integer[]{1, 2, 3, 4, 5, 6};
+    final List<ConsistentHashRing.Point<Integer>> objects = generatePoints(6);
     ConsistentHashRingIterator<Integer> iterator = new ConsistentHashRingIterator<Integer>(objects, 5);
 
     verifyIterator(iterator, objects, 5);
@@ -53,20 +63,21 @@ public class ConsistentHashRingIteratorTest
   @Test
   public void testEmptyIterator()
   {
-    final Integer[] objects = new Integer[]{};
+    final List<ConsistentHashRing.Point<Integer>> objects = new ArrayList<>();
     ConsistentHashRingIterator<Integer> iterator = new ConsistentHashRingIterator<Integer>(objects, 0);
 
     verifyIterator(iterator, objects, 0);
   }
 
-  public void verifyIterator(ConsistentHashRingIterator<Integer> iterator, Integer[] objects, int from)
+  public void verifyIterator(ConsistentHashRingIterator<Integer> iterator,
+      List<ConsistentHashRing.Point<Integer>> objects, int from)
   {
     int current = from;
-    for (int i = 0; i < objects.length; i++)
+    for (int i = 0; i < objects.size(); i++)
     {
       Integer item = iterator.next();
-      assertEquals(objects[current], item);
-      current = (current + 1) % objects.length;
+      assertEquals(objects.get(current).getT(), item);
+      current = (current + 1) % objects.size();
     }
 
     assertTrue(!iterator.hasNext());

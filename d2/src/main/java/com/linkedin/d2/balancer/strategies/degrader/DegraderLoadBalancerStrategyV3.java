@@ -44,6 +44,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static com.linkedin.d2.discovery.util.LogUtil.error;
 import static com.linkedin.d2.discovery.util.LogUtil.debug;
 import static com.linkedin.d2.discovery.util.LogUtil.warn;
 
@@ -653,14 +654,18 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       // atomic overwrite
       // try Call Dropping next time we updatePartitionState.
       newState =
-          new PartitionDegraderLoadBalancerState(clusterGenerationId, config.getClock().currentTimeMillis(), true, points,
-                                        PartitionDegraderLoadBalancerState.Strategy.CALL_DROPPING,
-                                        currentOverrideDropRate,
-                                        newCurrentAvgClusterLatency,
-                                        newRecoveryMap,
-                                        oldState.getServiceName(),
-                                        oldState.getDegraderProperties(),
-                                        totalClusterCallCount);
+          new PartitionDegraderLoadBalancerState(clusterGenerationId,
+              config.getClock().currentTimeMillis(),
+              true,
+              oldState.getRingFactory(),
+              points,
+              PartitionDegraderLoadBalancerState.Strategy.CALL_DROPPING,
+              currentOverrideDropRate,
+              newCurrentAvgClusterLatency,
+              newRecoveryMap,
+              oldState.getServiceName(),
+              oldState.getDegraderProperties(),
+              totalClusterCallCount);
 
       logState(oldState, newState, partitionId, config, trackerClientUpdaters);
     }
@@ -727,8 +732,10 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
 
       // don't change the points map or the recoveryMap, but try load balancing strategy next time.
       newState =
-              new PartitionDegraderLoadBalancerState(clusterGenerationId, config.getClock().currentTimeMillis(), true, oldPointsMap,
-                                           PartitionDegraderLoadBalancerState.Strategy.LOAD_BALANCE,
+              new PartitionDegraderLoadBalancerState(clusterGenerationId, config.getClock().currentTimeMillis(), true,
+                                            oldState.getRingFactory(),
+                                            oldPointsMap,
+                                            PartitionDegraderLoadBalancerState.Strategy.LOAD_BALANCE,
                                             newDropLevel,
                                             newCurrentAvgClusterLatency,
                                             oldRecoveryMap,
@@ -922,6 +929,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     PartitionDegraderLoadBalancerState oldState = partition.getState();
     PartitionDegraderLoadBalancerState newState =
         new PartitionDegraderLoadBalancerState(oldState.getClusterGenerationId(), oldState.getLastUpdated(), oldState.isInitialized(),
+                                             oldState.getRingFactory(),
                                              oldState.getPointsMap(),
                                              strategy,
                                              oldState.getCurrentOverrideDropRate(),
@@ -1016,6 +1024,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
                                            new ReentrantLock(),
                                            new PartitionDegraderLoadBalancerState
                                                                   (-1, _config.getClock().currentTimeMillis(), false,
+                                                                   new DegraderRingFactory<>(),
                                                                    new HashMap<URI, Integer>(),
                                                                    PartitionDegraderLoadBalancerState.Strategy.
                                                                        LOAD_BALANCE,
@@ -1081,6 +1090,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       CALL_DROPPING
     }
 
+    private final RingFactory<URI> _ringFactory;
     private final Ring<URI> _ring;
     private final long _clusterGenerationId;
     private final String    _serviceName;
@@ -1117,6 +1127,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
                                                   long lastUpdated)
     {
       _clusterGenerationId = clusterGenerationId;
+      _ringFactory = state._ringFactory;
       _ring = state._ring;
       _pointsMap = state._pointsMap;
       _strategy = state._strategy;
@@ -1134,6 +1145,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     public PartitionDegraderLoadBalancerState(long clusterGenerationId,
                                          long lastUpdated,
                                          boolean initState,
+                                         RingFactory<URI> ringFactory,
                                          Map<URI,Integer> pointsMap,
                                          Strategy strategy,
                                          double currentOverrideDropRate,
@@ -1144,7 +1156,8 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
                                          long currentClusterCallCount)
     {
       _clusterGenerationId = clusterGenerationId;
-      _ring = new ConsistentHashRing<URI>(pointsMap);
+      _ringFactory = ringFactory;
+      _ring = ringFactory.createRing(pointsMap);
       _pointsMap = (pointsMap != null) ?
             Collections.unmodifiableMap(new HashMap<URI,Integer>(pointsMap)) :
             Collections.<URI,Integer>emptyMap();
@@ -1227,6 +1240,10 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     public boolean isInitialized()
     {
       return _initialized;
+    }
+
+    public RingFactory<URI> getRingFactory() {
+      return _ringFactory;
     }
 
     @Override

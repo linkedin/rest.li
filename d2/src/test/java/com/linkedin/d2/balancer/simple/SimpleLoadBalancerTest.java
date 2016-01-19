@@ -79,6 +79,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -320,9 +321,14 @@ public class SimpleLoadBalancerTest
     Assert.assertTrue(keysAndHosts3.getKeys().iterator().next() == 3);
     List<URI> ordering3 = keysAndHosts3.getHosts();
 
-    Assert.assertEquals(ordering1.get(0), server2);
-    Assert.assertEquals(ordering1.get(1), server3);
-    Assert.assertEquals(ordering1.get(2), server1);
+    // Just compare the size and contents of the list, not the ordering.
+    Assert.assertTrue(ordering1.size() == 3);
+    List<URI> allServers = new ArrayList<>();
+    allServers.add(server1);
+    allServers.add(server2);
+    allServers.add(server3);
+    Assert.assertTrue(ordering1.containsAll(allServers));
+    Assert.assertTrue(ordering2.containsAll(allServers));
     Assert.assertEquals(ordering1, ordering2);
     Assert.assertEquals(ordering3.get(0), server1);
 
@@ -390,9 +396,15 @@ public class SimpleLoadBalancerTest
     Assert.assertTrue(result.getPartitionInfoMap().get(0).getHosts().isEmpty());
     // partition 1 should have server1, server2 and server3.
     List<URI> ordering1 = result.getPartitionInfoMap().get(1).getHosts();
-    Assert.assertEquals(ordering1.get(0), server2);
-    Assert.assertEquals(ordering1.get(1), server3);
-    Assert.assertEquals(ordering1.get(2), server1);
+
+    List<URI> allServers = new ArrayList<>();
+    allServers.add(server1);
+    allServers.add(server2);
+    allServers.add(server3);
+
+    Assert.assertTrue(ordering1.size() == 3);
+    Assert.assertTrue(ordering1.containsAll(allServers));
+
     // partition 2 should be the same as partition 1
     List<URI> ordering2 = result.getPartitionInfoMap().get(2).getHosts();
     Assert.assertEquals(ordering1, ordering2);
@@ -516,7 +528,7 @@ public class SimpleLoadBalancerTest
         Map<Integer, Ring<URI>> ringMap = loadBalancer.getRings(URI.create("d2://foo"));
         assertEquals(ringMap.size(), 4);
         // the ring for partition 2 should be empty
-        assertEquals(ringMap.get(2).toString(), new ConsistentHashRing<URI>(new HashMap<URI, Integer>()).toString());
+        assertEquals(ringMap.get(2).toString(), new ConsistentHashRing<URI>(Collections.emptyList()).toString());
         continue;
       }
 

@@ -16,7 +16,9 @@ limitations under the License.
 
 package com.linkedin.d2.balancer.util.hashing;
 
+import com.linkedin.d2.balancer.util.hashing.ConsistentHashRing.Point;
 import java.util.Iterator;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 /**
@@ -28,7 +30,7 @@ import java.util.NoSuchElementException;
 public class ConsistentHashRingIterator<T> implements Iterator<T>
 {
 
-  private final T[] _objects;
+  private final List<Point<T>> _points;
 
   private int _iterated;
 
@@ -39,9 +41,9 @@ public class ConsistentHashRingIterator<T> implements Iterator<T>
    * @param from It's guaranteed to be less than the length of objects since it
    *             will be only called in ConsistentHashRing
    */
-  public ConsistentHashRingIterator(T[] objects, int from)
+  public ConsistentHashRingIterator(List<Point<T>> objects, int from)
   {
-    _objects = objects;
+    _points = objects;
     _iterated = 0;
     _index = from;
   }
@@ -49,7 +51,7 @@ public class ConsistentHashRingIterator<T> implements Iterator<T>
   @Override
   public boolean hasNext()
   {
-    return (_iterated < _objects.length);
+    return (_iterated < _points.size());
   }
 
   @Override
@@ -60,8 +62,8 @@ public class ConsistentHashRingIterator<T> implements Iterator<T>
       throw new NoSuchElementException();
     }
 
-    T result = _objects[_index];
-    _index = (_index + 1) % _objects.length;
+    T result = _points.get(_index).getT();
+    _index = (_index + 1) % _points.size();
     _iterated++;
 
     return result;

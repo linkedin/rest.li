@@ -23,13 +23,12 @@ import static com.linkedin.d2.discovery.util.LogUtil.warn;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
 import java.util.Map.Entry;
 
 import org.slf4j.Logger;
@@ -50,14 +49,37 @@ public class ConsistentHashRing<T> implements Ring<T>
   private static final Charset UTF8 = Charset.forName("UTF-8");
 
   private final MessageDigest  _md;
-  private final SortedSet<Point<T>> _points;
+  private final List<Point<T>> _points;
 
-  private T[]                  _objects;
-  private int[]                _ring;
+  /**
+   * Create a consistent hash ring with given points
+   * @param points: Point list;
+   *
+   * Note: ConsistentHashRing takes over the ownership fo points and assume no
+   *       changes to the list from outside.
+   *
+   */
+  public ConsistentHashRing(List<Point<T>> points)
+  {
+    _md = null;   // not used
+    _points = points;
 
+    if (points == null)
+    {
+      throw new RuntimeException("Building consistent hash ring without points");
+    }
+
+    // Sort the points
+    Collections.sort(points);
+
+    debug(_log, "Initializing consistent hash ring with {} items: ", points.size());
+  }
+
+  // Next two constructors and add() function are only used by DegraderLoadBalancerStrategyV2 and V2_1,
+  // which are obsoleted already. When those strategies are removed, this three functions should be removed too.
   public ConsistentHashRing(Map<T, Integer> pointMap)
   {
-    _points = new TreeSet<Point<T>>();
+    _points = new ArrayList<Point<T>>();
 
     try
     {
@@ -75,7 +97,7 @@ public class ConsistentHashRing<T> implements Ring<T>
 
   public ConsistentHashRing(Map<T, Integer> pointMap, MessageDigest md)
   {
-    _points = new TreeSet<Point<T>>();
+    _points = new ArrayList<Point<T>>();
     _md = md;
 
     add(pointMap);
@@ -127,27 +149,16 @@ public class ConsistentHashRing<T> implements Ring<T>
         _points.add(new Point<T>(t, hashInt));
       }
     }
+    Collections.sort(_points);
 
-    _objects = (T[]) new Object[_points.size()];
-    _ring = new int[_points.size()];
-
-    int i = 0;
-
-    for (Point<T> point : _points)
-    {
-      _objects[i] = point.getT();
-      _ring[i] = point.getHash();
-      ++i;
-    }
-
-    debug(_log, "re-initializing consistent hash ring with items: ", _objects);
+    debug(_log, "re-initializing consistent hash ring with items: ", _points);
   }
 
   private int getIndex(int key)
   {
-    debug(_log, "searching for hash in ring of size ", _ring.length, " using hash: ", key);
+    debug(_log, "searching for hash in ring of size ", _points.size(), " using hash: ", key);
 
-    int index = Arrays.binarySearch(_ring, key);
+    int index = Collections.binarySearch(_points, new Point<T>(null, key));
 
     // if the index is negative, then no exact match was found, and the search function is
     // returning (-(insertionPoint) - 1).
@@ -156,7 +167,7 @@ public class ConsistentHashRing<T> implements Ring<T>
       index = Math.abs(index + 1);
     }
 
-    index = index % _objects.length;
+    index = index % _points.size();
 
     return index;
   }
@@ -167,7 +178,7 @@ public class ConsistentHashRing<T> implements Ring<T>
    */
   public T get(int key)
   {
-    if (_objects.length <= 0)
+    if (_points.isEmpty())
     {
       debug(_log, "get called on a hash ring with nothing in it");
 
@@ -176,7 +187,7 @@ public class ConsistentHashRing<T> implements Ring<T>
 
     int index = getIndex(key);
 
-    return _objects[index];
+    return _points.get(index).getT();
   }
 
   /**
@@ -188,68 +199,98 @@ public class ConsistentHashRing<T> implements Ring<T>
   @Override
   public Iterator<T> getIterator(int key)
   {
-    if (_objects.length <= 0)
+    if (_points.isEmpty())
     {
       debug(_log, "get called on a hash ring with nothing in it");
 
-      return new ConsistentHashRingIterator<T>(_objects, 0);
+      return new ConsistentHashRingIterator<T>(_points, 0);
     }
 
     int from = getIndex(key);
 
-    return new ConsistentHashRingIterator<T>(_objects, from);
+    return new ConsistentHashRingIterator<T>(_points, from);
   }
 
-  public Set<Point<T>> getPoints()
+  public List<Point<T>> getPoints()
   {
     return _points;
   }
 
-  public Object[] getObjects()
+  public double getHighLowDiffOfAreaRing()
   {
-    return _objects;
+    if (!_points.isEmpty())
+    {
+      double percentage;
+
+      Map<T, Double> coverageMap = getCoverageMap();
+      Double sizeOfInt = new Double(Integer.MAX_VALUE) - new Double(Integer.MIN_VALUE);
+      double maxPercentage = Double.MIN_VALUE;
+      double minPercentage = Double.MAX_VALUE;
+      for (Map.Entry<T, Double> entry : coverageMap.entrySet())
+      {
+        double value = entry.getValue();
+        percentage = value * 100 / sizeOfInt;
+        if (percentage > maxPercentage)
+        {
+          maxPercentage = percentage;
+        }
+        if (percentage < minPercentage)
+        {
+          minPercentage = percentage;
+        }
+      }
+      return (maxPercentage - minPercentage);
+    }
+    return -1.0;
   }
 
-  public int[] getRing()
+  Map<T, Double> getCoverageMap()
   {
-    return _ring;
+    if (_points.isEmpty())
+    {
+      return null;
+    }
+
+    Map<T, Double> coverageMap = new HashMap<T, Double>();
+    Double curr = new Double(Integer.MIN_VALUE);
+    T firstElement = null;
+    //we know points are sortedSet and the iterator is iterating from low to high
+    for (Point<T> point : _points)
+    {
+      if (firstElement == null)
+      {
+        firstElement = point.getT();
+      }
+      Double currentCoverage = point.getHash() - curr;
+      curr = new Double(point.getHash());
+      Double area = coverageMap.get(point.getT());
+      if (area == null)
+      {
+        area = 0.0;
+      }
+      area += currentCoverage;
+      coverageMap.put(point.getT(), area);
+    }
+    //don't forget to take into account the last chunk of area
+    Double remainingArea = new Double(Integer.MAX_VALUE - curr);
+    Double area = coverageMap.get(firstElement);
+    area += remainingArea;
+    coverageMap.put(firstElement, area);
+    return coverageMap;
   }
 
   String printRingArea()
   {
-    if (_points != null && !_points.isEmpty())
+    Map<T, Double> coverageMap = getCoverageMap();
+
+    if (coverageMap != null)
     {
-      Map<T, Double> coverageMap = new HashMap<T, Double>();
-      Double curr = new Double(Integer.MIN_VALUE);
-      T firstElement = null;
-      //we know points are sortedSet and the iterator is iterating from low to high
-      for (Point<T> point : _points)
-      {
-        if (firstElement == null)
-        {
-          firstElement = point.getT();
-        }
-        Double currentCoverage = point.getHash() - curr;
-        curr = new Double(point.getHash());
-        Double area = coverageMap.get(point.getT());
-        if (area == null)
-        {
-          area = 0.0;
-        }
-        area += currentCoverage;
-        coverageMap.put(point.getT(), area);
-      }
-      //don't forget to take into account the last chunk of area
-      Double remainingArea = new Double(Integer.MAX_VALUE - curr);
-      Double area = coverageMap.get(firstElement);
-      area += remainingArea;
-      coverageMap.put(firstElement, area);
       StringBuilder builder = new StringBuilder();
       builder.append("Area percentage in the hash ring is [");
-      Double sizeOfInt = new Double(Integer.MAX_VALUE) - new Double(Integer.MIN_VALUE);
+      double sizeOfInt = (double) Integer.MAX_VALUE -Integer.MIN_VALUE;
       for (Map.Entry<T, Double> entry : coverageMap.entrySet())
       {
-        Double percentage = entry.getValue() * 100 / sizeOfInt;
+        double percentage = entry.getValue() * 100 / sizeOfInt;
         builder.append(String.format("%s=%.2f%%, ",entry.getKey(), percentage));
       }
       builder.append("]");
@@ -261,7 +302,14 @@ public class ConsistentHashRing<T> implements Ring<T>
   @Override
   public String toString()
   {
-    return "ConsistentHashRing [_md=" + _md + printRingArea() + "]";
+    if (_md != null)
+    {
+      return "ConsistentHashRing [_md=" + _md + printRingArea() + "]";
+    }
+    else
+    {
+      return "ConsistentHashRing [" + printRingArea() + "]";
+    }
   }
 
   /**
@@ -330,17 +378,12 @@ public class ConsistentHashRing<T> implements Ring<T>
       return false;
     }
     ConsistentHashRing<T> ring = (ConsistentHashRing<T>) o;
-    return this._points.equals(ring._points) &&
-        Arrays.equals(_objects, ring._objects) &&
-        Arrays.equals(_ring, ring._ring);
+    return this._points.equals(ring._points);
   }
 
   @Override
   public int hashCode()
   {
-    int hashCode = _points == null ? 1 : _points.hashCode() * 31;
-    hashCode = 31 * hashCode * (_objects == null ? 1 : _objects.hashCode());
-    hashCode = 31 * hashCode * (_ring == null ? 1 : _ring.hashCode());
-    return hashCode;
+    return _points == null ? 1 : _points.hashCode();
   }
 }

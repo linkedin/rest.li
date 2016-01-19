@@ -148,6 +148,7 @@ public class DegraderLoadBalancerTest
     points.put(uri1, 100);
     points.put(uri2, 50);
     points.put(uri3, 120);
+    RingFactory<URI> ringFactory = new DegraderRingFactory<>();
     TestClock clock = new TestClock();
 
     List<TrackerClient> clients = createTrackerClient(3, clock, null);
@@ -329,6 +330,7 @@ public class DegraderLoadBalancerTest
             DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState(clusterGenerationId,
             lastUpdated,
             initialized,
+            ringFactory,
             points,
             strategyV3,
             currentOverrideDropRate,
@@ -341,6 +343,7 @@ public class DegraderLoadBalancerTest
             DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState(clusterGenerationId,
             lastUpdated,
             initialized,
+            ringFactory,
             points,
             strategyV3,
             currentOverrideDropRate,
@@ -354,6 +357,7 @@ public class DegraderLoadBalancerTest
     newStateV3 = new DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState(clusterGenerationId + 1,
             lastUpdated,
             initialized,
+            ringFactory,
             points,
             strategyV3,
             currentOverrideDropRate,
@@ -367,6 +371,7 @@ public class DegraderLoadBalancerTest
     newStateV3 = new DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState(clusterGenerationId,
             lastUpdated + 300,
             initialized,
+            ringFactory,
             points,
             strategyV3,
             currentOverrideDropRate,
@@ -380,6 +385,7 @@ public class DegraderLoadBalancerTest
     newStateV3 = new DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState(clusterGenerationId,
             lastUpdated,
             initialized,
+            ringFactory,
             points,
             strategyV3,
             currentOverrideDropRate,
@@ -394,6 +400,7 @@ public class DegraderLoadBalancerTest
     newStateV3 = new DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState(clusterGenerationId,
             lastUpdated,
             initialized,
+            ringFactory,
             points,
             strategyV3,
             currentOverrideDropRate + 0.4,
@@ -405,6 +412,7 @@ public class DegraderLoadBalancerTest
     newStateV3 = new DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState(clusterGenerationId,
             lastUpdated,
             initialized,
+            ringFactory,
             points,
             strategyV3,
             currentOverrideDropRate,
@@ -422,6 +430,7 @@ public class DegraderLoadBalancerTest
     newStateV3 = new DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState(clusterGenerationId,
             lastUpdated,
             initialized,
+            ringFactory,
             points,
             strategyV3,
             currentOverrideDropRate,
@@ -438,6 +447,7 @@ public class DegraderLoadBalancerTest
     newStateV3 = new DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState(clusterGenerationId,
             lastUpdated,
             initialized,
+            ringFactory,
             points,
             strategyV3,
             currentOverrideDropRate,
@@ -455,6 +465,7 @@ public class DegraderLoadBalancerTest
     newStateV3 = new DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState(clusterGenerationId,
             lastUpdated,
             initialized,
+            ringFactory,
             points,
             strategyV3,
             currentOverrideDropRate,
@@ -468,6 +479,7 @@ public class DegraderLoadBalancerTest
     newStateV3 = new DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState(clusterGenerationId,
             lastUpdated,
             initialized,
+            ringFactory,
             points,
             strategyV3,
             currentOverrideDropRate,
@@ -1708,6 +1720,104 @@ public class DegraderLoadBalancerTest
     assertTrue(Math.abs((client2Count / calls) - (48 / 148d)) < tolerance);
   }
 
+  @Test(groups = { "small", "back-end"})
+  public void TestRandomIncreaseReduceTrackerClients()
+  {
+    final DegraderLoadBalancerStrategyV3 strategy = getStrategy();
+    TestClock testClock = new TestClock();
+    String baseUri = "http://linkedin.com:9999";
+    int numberOfClients = 100;
+    int loopNumber = 100;
+    Map<String, String> degraderProperties = new HashMap<String,String>();
+    degraderProperties.put(PropertyKeys.DEGRADER_HIGH_ERROR_RATE, "0.5");
+    degraderProperties.put(PropertyKeys.DEGRADER_LOW_ERROR_RATE, "0.2");
+    DegraderImpl.Config degraderConfig = DegraderConfigFactory.toDegraderConfig(degraderProperties);
+    RequestContext requestContext = new RequestContext();
+    Random random = new Random();
+    final List<TrackerClient> clients = new ArrayList<TrackerClient>();
+
+    random.setSeed(123456789L);
+    for (int i = 0; i < loopNumber; ++i) {
+      int currentSize = clients.size();
+      if (currentSize > numberOfClients) {
+        // need to remove some clients
+        clients.subList(numberOfClients, currentSize).clear();
+      } else {
+        // add more clients
+        for (int j = currentSize; j < numberOfClients; j++) {
+          URI uri = URI.create(baseUri + j);
+          TrackerClient client =
+              new TrackerClient(uri, getDefaultPartitionData(1, 1), new TestLoadBalancerClient(uri), testClock,
+                  degraderConfig);
+          clients.add(client);
+        }
+      }
+
+      TrackerClient client =
+          strategy.getTrackerClient(null, requestContext, i, DefaultPartitionAccessor.DEFAULT_PARTITION_ID, clients);
+      assertNotNull(client);
+
+      ConsistentHashRing<URI> ring =
+          (ConsistentHashRing<URI>) strategy.getState().getPartitionState(DEFAULT_PARTITION_ID).getRing();
+      assertEquals(ring.getPoints().size(), numberOfClients * 100);
+
+      // update the client number
+      if (random.nextBoolean()) {
+        numberOfClients += random.nextInt(numberOfClients / 5);
+      } else {
+        numberOfClients -= random.nextInt(numberOfClients / 5);
+      }
+    }
+  }
+
+  // Performance test, disabled by default
+  @Test(groups = { "small", "back-end"}, enabled = false)
+  public void TestGetTrackerClients()
+  {
+    final DegraderLoadBalancerStrategyV3 strategy = getStrategy();
+    TestClock testClock = new TestClock();
+    String baseUri = "http://linkedin.com:9999";
+    int numberOfClients = 100;
+    int loopNumber = 100000;
+    Map<String, String> degraderProperties = new HashMap<String,String>();
+    degraderProperties.put(PropertyKeys.DEGRADER_HIGH_ERROR_RATE, "0.5");
+    degraderProperties.put(PropertyKeys.DEGRADER_LOW_ERROR_RATE, "0.2");
+    DegraderImpl.Config degraderConfig = DegraderConfigFactory.toDegraderConfig(degraderProperties);
+    RequestContext requestContext = new RequestContext();
+    Random random = new Random();
+    final List<TrackerClient> clients = new ArrayList<TrackerClient>(numberOfClients);
+    Map<TrackerClient, Integer> clientCount = new HashMap<>();
+
+    // create trackerclients
+    for (int i = 0; i < numberOfClients; i++) {
+      URI uri = URI.create(baseUri + i);
+      TrackerClient client =
+          new TrackerClient(uri, getDefaultPartitionData(1, 1), new TestLoadBalancerClient(uri), testClock,
+              degraderConfig);
+      clients.add(client);
+    }
+    for (int i = 0; i < loopNumber; ++i) {
+      TrackerClient client =
+          strategy.getTrackerClient(null, requestContext, 1, DefaultPartitionAccessor.DEFAULT_PARTITION_ID, clients);
+      assertNotNull(client);
+      Integer count = clientCount.get(client);
+      if (count == null) {
+        clientCount.put(client, 1);
+      } else {
+        clientCount.put(client, count + 1);
+      }
+    }
+
+    int i = 0;
+    int avg_count = (loopNumber * 5) / (numberOfClients * 10);
+    for (Integer count : clientCount.values()) {
+      assertTrue(count >= avg_count );
+      i++;
+    }
+    assertTrue(i == numberOfClients);
+  }
+
+
   @Test(groups = { "small", "back-end" })
   public void testshouldUpdatePartition() throws URISyntaxException
   {
@@ -1719,6 +1829,7 @@ public class DegraderLoadBalancerTest
     DegraderLoadBalancerStrategyV3 strategy = getStrategy(myConfig);
     List<TrackerClient> clients = new ArrayList<TrackerClient>();
     long clusterCallCount = 15;
+    RingFactory<URI> ringFactory = new DegraderRingFactory<>();
 
     clients.add(getClient(URI.create("http://test.linkedin.com:3242/fdsaf")));
     clients.add(getClient(URI.create("http://test.linkedin.com:3243/fdsaf")));
@@ -1734,6 +1845,7 @@ public class DegraderLoadBalancerTest
     current = new DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState(0,
             testClock._currentTimeMillis,
             true,
+            ringFactory,
             new HashMap<URI, Integer>(),
             DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState.Strategy.LOAD_BALANCE,
             0.0,
@@ -1754,6 +1866,7 @@ public class DegraderLoadBalancerTest
     current = new DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState(1,
             testClock._currentTimeMillis,
             true,
+            ringFactory,
             new HashMap<URI, Integer>(),
             DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState.Strategy.LOAD_BALANCE,
             0.0,
@@ -1773,6 +1886,7 @@ public class DegraderLoadBalancerTest
     current = new DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState(1,
             testClock._currentTimeMillis,
             true,
+            ringFactory,
             new HashMap<URI, Integer>(),
             DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState.Strategy.LOAD_BALANCE,
             0.0,
@@ -1791,6 +1905,7 @@ public class DegraderLoadBalancerTest
     current = new DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState(1,
             testClock._currentTimeMillis,
             true,
+            ringFactory,
             new HashMap<URI, Integer>(),
             DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState.Strategy.LOAD_BALANCE,
             0.0,
@@ -1843,6 +1958,7 @@ public class DegraderLoadBalancerTest
     current = new DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState(1,
             testClock._currentTimeMillis,
             true,
+            new DegraderRingFactory<URI>(),
             new HashMap<URI, Integer>(),
             DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState.Strategy.LOAD_BALANCE,
             0.0,

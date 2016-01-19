@@ -101,7 +101,7 @@ public class DegraderLoadBalancerStateTest
   private static PartitionDegraderLoadBalancerState newPartitionState(long generationID, long lastUpdated)
   {
     return new PartitionDegraderLoadBalancerState(generationID, lastUpdated,
-                                                  false, Collections.<URI, Integer>emptyMap(),
+                                                  false, new DegraderRingFactory<>(), Collections.<URI, Integer>emptyMap(),
                                                   PartitionDegraderLoadBalancerState.Strategy.LOAD_BALANCE,
                                                   0, 0, Collections.<TrackerClient, Double>emptyMap(),
                                                   SERVICE_NAME, Collections.<String, String>emptyMap(), 0);

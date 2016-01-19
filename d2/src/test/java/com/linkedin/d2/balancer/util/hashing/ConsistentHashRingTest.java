@@ -21,9 +21,11 @@ import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
+import com.linkedin.d2.balancer.strategies.degrader.DegraderRingFactory;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -63,7 +65,7 @@ public class ConsistentHashRingTest
     // will generate ring:
     // [-2138377917, .., 2112547902]
     assertEquals(test.get(0), "test");
-    int[] ring = test.getRing();
+    List<ConsistentHashRing.Point<String>> points = test.getPoints();
 
     // test low
     assertEquals(test.get(-2138377918), "test");
@@ -78,9 +80,9 @@ public class ConsistentHashRingTest
     assertEquals(test.get(-2080272130), "test");
 
     // test ring is sorted
-    for (int i = 1; i < ring.length; ++i)
+    for (int i = 1; i < points.size(); ++i)
     {
-      assertTrue(ring[i - 1] < ring[i]);
+      assertTrue(points.get(i - 1).getHash() < points.get(i).getHash());
     }
   }
 
@@ -96,22 +98,26 @@ public class ConsistentHashRingTest
       counts.put("test" + i, new AtomicInteger());
     }
 
-    ConsistentHashRing<String> test = new ConsistentHashRing<String>(many);
+    DegraderRingFactory<String> ringFactory = new DegraderRingFactory<>();
+    ConsistentHashRing<String> test = (ConsistentHashRing<String>)ringFactory.createRing(many);
 
     assertNotNull(test.get(0));
 
     // verify that each test item has 10 points on the ring
-    Object[] objects = test.getObjects();
+    List<ConsistentHashRing.Point<String>> points = test.getPoints();
 
-    for (int i = 0; i < objects.length; ++i)
+    for (int i = 0; i < points.size(); ++i)
     {
-      counts.get(objects[i].toString()).incrementAndGet();
+      counts.get(points.get(i).getT()).incrementAndGet();
     }
 
     for (Entry<String, AtomicInteger> count : counts.entrySet())
     {
       assertEquals(count.getValue().get(), 10);
     }
+
+    double highLowDiff = test.getHighLowDiffOfAreaRing();
+    assertTrue(highLowDiff < 1.54, "Hash Ring area diff is greater than it should be, saw diff of: " + highLowDiff);
   }
 
   @Test(groups = { "small", "back-end" })
@@ -131,11 +137,11 @@ public class ConsistentHashRingTest
     assertNotNull(test.get(0));
 
     // verify that each test item has proper points on the ring
-    Object[] objects = test.getObjects();
+    List<ConsistentHashRing.Point<Integer>> points = test.getPoints();
 
-    for (int i = 0; i < objects.length; ++i)
+    for (int i = 0; i < points.size(); ++i)
     {
-      counts.get(objects[i]).incrementAndGet();
+      counts.get(points.get(i).getT()).incrementAndGet();
     }
 
     for (Entry<Integer, AtomicInteger> count : counts.entrySet())
