@@ -23,8 +23,12 @@
         {
           "type" : "enum",
           "name" : "loadBalancerStrategyType",
-          "doc" : "There are 3 types of strategy: DEGRADERV2, DEGRADERV3, RANDOM",
-          "symbols" : [ "DEGRADERV2","DEGRADERV3", "RANDOM" ]
+          "doc" : "There are 2 types of strategy: DEGRADER, RANDOM",
+          "symbols" : [ "DEGRADER", "RANDOM" ],
+          "symbolDocs": {
+            "DEGRADER": "This strategy will choose an endpoint based on multiple hints like latency, error rate and other call statistics",
+            "RANDOM": "This strategy will choose an endpoint randomly."
+          }
         }
       },
       "doc": "Prioritized order of strategy that this service should use."

@@ -13,19 +13,31 @@
     {
       "name": "requestTimeout",
       "type": "long",
-      "doc": "Timeout in ms for this transport client",
+      "doc": "Timeout in ms for this transport client. Defaults to 10s.",
       "optional": true
     },
     {
       "name": "maxResponseSize",
       "type": "long",
-      "doc": "Max payload that this transport client can carry in bytes",
+      "doc": "Max payload that this transport client can carry in bytes. Defaults to 2MB.",
       "optional": true
+    },
+    {
+      "name": "maxHeaderSize",
+      "type": "int",
+      "doc": "Maximum size, in bytes, of all headers for a single HTTP request/response. Defaults to 8KB.",
+      "optional": true
+    },
+    {
+      "name": "maxChunkSize",
+      "type": "int",
+       "doc": "Maximum chunk size, in bytes, of HTTP chunked encoding. Defaults to 8KB.",
+       "optional": true
     },
     {
       "name": "poolSize",
       "type": "int",
-      "doc": "Maximum size of the underlying HTTP connection pool",
+      "doc": "Maximum size of the underlying HTTP connection pool. Defaults to 200.",
       "optional": true
     },
     {
@@ -35,15 +47,44 @@
       "optional": true
     },
     {
+      "name": "poolStrategy",
+      "type": {
+        "type": "enum",
+        "name": "poolStrategyType",
+        "symbols" : [
+          "MRU",
+          "LRU"
+        ],
+        "symbolDocs": {
+          "MRU": "Select most recently used connection",
+          "LRU": "Select least recently used connection"
+        }
+      },
+      "doc": "The strategy HTTP connection pool uses to select connections. Defaults to MRU.",
+      "optional": true
+    },
+    {
+      "name": "minPoolSize",
+      "type": "int",
+      "doc": "Minimum size of the HTTP connection pool",
+      "optional": true
+    },
+    {
+      "name": "maxConcurrentConnections",
+      "type": "int",
+      "doc": "Maximum connection requests this transport client can send to an endpoint concurrently.",
+      "optional": true
+    },
+    {
       "name": "idleTimeout",
       "type": "long",
-      "doc": "interval after which idle connections will be automatically closed.",
+      "doc": "interval after which idle connections will be automatically closed. Defaults to 25s.",
       "optional": true
     },
     {
       "name": "shutdownTimeout",
       "type": "long",
-      "doc": "timeout, in ms, the client should wait after shutdown is initiated before terminating outstanding requests.",
+      "doc": "timeout, in ms, the client should wait after shutdown is initiated before terminating outstanding requests. Defaults to 5s",
       "optional": true
     },
     {
@@ -74,7 +115,7 @@
       "name": "useResponseCompression",
       "type": "boolean",
       "doc": "whether to enable response compression or not",
-      "optional": true
+      "default": false
     }
   ]
 }

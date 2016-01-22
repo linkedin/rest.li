@@ -92,4 +92,43 @@ public class PropertyUtil
       throw new IllegalArgumentException(key + "is not a double", e);
     }
   }
+
+  @SuppressWarnings({"unchecked"})
+  public static <T> T coerce (Object value, Class<T> clazz)
+  {
+    if (clazz.isAssignableFrom(value.getClass()))
+    {
+      return (T) value;
+    }
+    if (value instanceof String)
+    {
+      String str = (String) value;
+      if (clazz.equals(Double.class))
+      {
+        return (T) Double.valueOf(Double.parseDouble(str));
+      }
+      if (clazz.equals(Float.class))
+      {
+        return (T) Float.valueOf(Float.parseFloat(str));
+      }
+      if (clazz.equals(Long.class))
+      {
+        return (T) Long.valueOf(Long.parseLong(str));
+      }
+      if (clazz.equals(Integer.class))
+      {
+        return (T) Integer.valueOf(Integer.parseInt(str));
+      }
+      if (clazz.equals(Boolean.class))
+      {
+        return (T) Boolean.valueOf(Boolean.parseBoolean(str));
+      }
+    }
+    else
+    {
+      throw new IllegalArgumentException("Cannot convert value of " + value.getClass() +
+          " to class = " + clazz.getName());
+    }
+    return (T) value;
+  }
 }

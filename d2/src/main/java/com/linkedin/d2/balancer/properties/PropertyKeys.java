@@ -29,6 +29,8 @@ public class PropertyKeys
 {
   //==========================================//
   //new constants
+  //NOTE: make sure to change d2-schemas and PropertiesConverters accordingly
+  //when you edit this file.
   //used by degrader properties
   public static final String DEGRADER_PROPERTIES = "degraderProperties";
   public static final String DEGRADER_NAME = "degrader.name";
@@ -99,6 +101,7 @@ public class PropertyKeys
   public static final String CLUSTER_LIST = "clusterList";
   public static final String CLUSTER_VARIANTS_LIST = "clusterVariantsList";
   public static final String FULL_CLUSTER_LIST = "fullClusterList";
+  public static final String CLUSTER_PROPERTIES = "properties";
 
   //used by transport client creation
   public static final String HTTP_POOL_WAITER_SIZE = HttpClientFactory.HTTP_POOL_WAITER_SIZE;
@@ -116,6 +119,9 @@ public class PropertyKeys
   public static final String HTTP_QUERY_POST_THRESHOLD = HttpClientFactory.HTTP_QUERY_POST_THRESHOLD;
   public static final String HTTP_POOL_STRATEGY = HttpClientFactory.HTTP_POOL_STRATEGY;
   public static final String HTTP_POOL_MIN_SIZE = HttpClientFactory.HTTP_POOL_MIN_SIZE;
+  public static final String HTTP_MAX_HEADER_SIZE = HttpClientFactory.HTTP_MAX_HEADER_SIZE;
+  public static final String HTTP_MAX_CHUNK_SIZE = HttpClientFactory.HTTP_MAX_CHUNK_SIZE;
+  public static final String HTTP_MAX_CONCURRENT_CONNECTIONS = HttpClientFactory.HTTP_MAX_CONCURRENT_CONNECTIONS;
 
   //used for multi colo
   public static final String DEFAULT_COLO = "defaultColo";
@@ -128,5 +134,6 @@ public class PropertyKeys
   // service metadata properties
   public static final String IS_DEFAULT_SERVICE = "isDefaultService";
   public static final String ENABLE_SYMLINK = "enableSymlink";
+  public static final String DEFAULT_ROUTING_TO_MASTER = "defaultRoutingToMaster";
 
 }
