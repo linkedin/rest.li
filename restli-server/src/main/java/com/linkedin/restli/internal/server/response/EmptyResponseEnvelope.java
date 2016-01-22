@@ -64,6 +64,16 @@ public final class EmptyResponseEnvelope extends RestLiResponseEnvelope
     return ResponseType.STATUS_ONLY;
   }
 
+  public void setStatus(HttpStatus status)
+  {
+    super.setStatus(status);
+  }
+
+  public void setException(RestLiServiceException exception)
+  {
+    super.setException(exception);
+  }
+
   @Override
   public RecordResponseEnvelope getRecordResponseEnvelope()
   {

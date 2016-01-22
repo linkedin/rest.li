@@ -159,12 +159,14 @@ public class TestRestLiResponseEnvelope
     response.setException(exception500);
     Assert.assertNull(response.getCreateResponses());
 
-    response.setCreateResponse(HttpStatus.S_200_OK, new ArrayList<CreateCollectionResponseEnvelope.CollectionCreateResponseItem>());
+    response.setCreateResponse(HttpStatus.S_200_OK,
+        new ArrayList<CreateCollectionResponseEnvelope.CollectionCreateResponseItem>());
     Assert.assertNull(response.getServiceException());
 
     Assert.assertEquals(response.getCreateResponses().size(), 0);
     response.getCreateResponses().add(new CreateCollectionResponseEnvelope.CollectionCreateResponseItem(new CreateIdStatus<Object>(new DataMap(), new Object())));
-    response.getCreateResponses().add(new CreateCollectionResponseEnvelope.CollectionCreateResponseItem(exception500, 2));
+    response.getCreateResponses().add(
+        new CreateCollectionResponseEnvelope.CollectionCreateResponseItem(exception500, 2));
     Assert.assertEquals(response.getCreateResponses().size(), 2);
   }
 
@@ -185,5 +187,20 @@ public class TestRestLiResponseEnvelope
     targetMap.put("key", new BatchResponseEnvelope.BatchResponseEntry(null, new EmptyRecord()));
     Assert.assertEquals(response.getBatchResponseMap().size(), 1);
     Assert.assertEquals(response.getBatchResponseMap().get("key").getRecord(), new EmptyRecord());
+  }
+
+  @Test
+  public void testEmptyResponseEnvelopeUpdates()
+  {
+    EmptyResponseEnvelope envelope = new EmptyResponseEnvelope(HttpStatus.S_200_OK, Collections.<String, String>emptyMap(), Collections.<HttpCookie>emptyList());
+    Assert.assertFalse(envelope.isErrorResponse());
+
+    envelope.setException(new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR));
+    Assert.assertTrue(envelope.isErrorResponse());
+    Assert.assertEquals(envelope.getStatus(), HttpStatus.S_500_INTERNAL_SERVER_ERROR);
+
+    envelope.setStatus(HttpStatus.S_200_OK);
+    Assert.assertFalse(envelope.isErrorResponse());
+    Assert.assertEquals(envelope.getStatus(), HttpStatus.S_200_OK);
   }
 }
