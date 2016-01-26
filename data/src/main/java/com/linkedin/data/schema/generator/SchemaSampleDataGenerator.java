@@ -29,7 +29,7 @@ import com.linkedin.data.schema.SchemaParser;
 import com.linkedin.data.schema.MapDataSchema;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
-import com.linkedin.data.schema.DataSchemaParser;
+import com.linkedin.data.schema.PegasusSchemaParser;
 import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.schema.UnionDataSchema;
 
@@ -412,7 +412,7 @@ public class SchemaSampleDataGenerator implements DataGenerator
   }
 
   private final DataGenerationOptions _spec;
-  private final DataSchemaParser _schemaParser;
+  private final PegasusSchemaParser _schemaParser;
 
   // TODO this Main function will be used in offline documentation generation, which is not ready yet
   /*

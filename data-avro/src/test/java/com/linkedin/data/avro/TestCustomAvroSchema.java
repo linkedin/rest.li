@@ -25,7 +25,7 @@ import com.linkedin.data.schema.RecordDataSchema;
 
 import java.io.IOException;
 
-import com.linkedin.data.schema.DataSchemaParser;
+import com.linkedin.data.schema.PegasusSchemaParser;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.testng.annotations.Test;
@@ -300,7 +300,7 @@ public class TestCustomAvroSchema
         .replace("##ANYRECORD_NAME", ANYRECORD_AVRO_FULL_NAME);
     String fullAvroSchemaJson = AVRO_SCHEMA_JSON_TEMPLATE.replace("##FIELDS", avroSchemaFieldsJsonAfterVariableExpansion);
 
-    DataSchemaParser parser = TestUtil.schemaParserFromString(fullSchemaJson);
+    PegasusSchemaParser parser = TestUtil.schemaParserFromString(fullSchemaJson);
     assertFalse(parser.hasError(), parser.errorMessage());
     RecordDataSchema schema = (RecordDataSchema) parser.topLevelDataSchemas().get(2);
 

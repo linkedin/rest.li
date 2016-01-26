@@ -22,7 +22,7 @@ import com.linkedin.data.TestUtil;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.JsonBuilder;
 import com.linkedin.data.schema.SchemaParser;
-import com.linkedin.data.schema.DataSchemaParser;
+import com.linkedin.data.schema.PegasusSchemaParser;
 import com.linkedin.data.schema.SchemaToJsonEncoder;
 import com.linkedin.data.schema.validation.ValidationOptions;
 import java.io.BufferedReader;
@@ -1113,7 +1113,7 @@ public class TestSchemaTranslator
               assertTrue(schemaProperty instanceof DataMap);
 
               // make sure embedded schema is same as the original schema
-              DataSchemaParser schemaParser = TestUtil.schemaParserFromObjects(Arrays.asList(schemaProperty));
+              PegasusSchemaParser schemaParser = TestUtil.schemaParserFromObjects(Arrays.asList(schemaProperty));
               DataSchema embeddedSchema = schemaParser.topLevelDataSchemas().get(0);
               assertEquals(embeddedSchema, schema.getDereferencedDataSchema());
 

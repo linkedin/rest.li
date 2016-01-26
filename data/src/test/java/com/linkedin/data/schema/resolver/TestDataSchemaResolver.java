@@ -27,7 +27,7 @@ import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.SchemaParser;
 import com.linkedin.data.schema.SchemaParserFactory;
-import com.linkedin.data.schema.DataSchemaParser;
+import com.linkedin.data.schema.PegasusSchemaParser;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
 import java.io.ByteArrayInputStream;
@@ -291,7 +291,7 @@ public class TestDataSchemaResolver
   public void testClassNameDataSchemaResolver()
   {
     final ClassNameDataSchemaResolver resolver = new ClassNameDataSchemaResolver();
-    final DataSchemaParser parser = new SchemaParser(resolver);
+    final PegasusSchemaParser parser = new SchemaParser(resolver);
 
     final Class<? extends RecordTemplate> testClass = ClassNameFooRecord.class;
     final String nonExistSchemaName = "Non-Existing Schema";
@@ -310,7 +310,7 @@ public class TestDataSchemaResolver
 
   public void lookup(DataSchemaResolver resolver, String[][] lookups, char separator, boolean debug)
   {
-    DataSchemaParser parser = new SchemaParser(resolver);
+    PegasusSchemaParser parser = new SchemaParser(resolver);
 
     for (String[] entry : lookups)
     {

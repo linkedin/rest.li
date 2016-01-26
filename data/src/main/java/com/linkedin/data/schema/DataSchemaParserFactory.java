@@ -8,5 +8,5 @@ public interface DataSchemaParserFactory {
    * @param resolver to be provided to the parser.
    * @return a new parser.
    */
-  DataSchemaParser create(DataSchemaResolver resolver);
+  PegasusSchemaParser create(DataSchemaResolver resolver);
 }

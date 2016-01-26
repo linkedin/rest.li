@@ -22,7 +22,7 @@ import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
-import com.linkedin.data.schema.DataSchemaParser;
+import com.linkedin.data.schema.PegasusSchemaParser;
 import com.linkedin.data.schema.resolver.DefaultDataSchemaResolver;
 import com.linkedin.data.schema.validation.CoercionMode;
 import com.linkedin.data.schema.validation.RequiredMode;
@@ -69,7 +69,7 @@ public class TestAnyRecordValidator
   {
     try
     {
-      DataSchemaParser parser = TestUtil.schemaParserFromString(DATA_SCHEMA_JSON);
+      PegasusSchemaParser parser = TestUtil.schemaParserFromString(DATA_SCHEMA_JSON);
       List<DataSchema> schemas = parser.topLevelDataSchemas();
       ANYRECORD_SCHEMA = (RecordDataSchema) schemas.get(0);
       ANYRECORDCLIENT_SCHEMA = (RecordDataSchema) schemas.get(1);

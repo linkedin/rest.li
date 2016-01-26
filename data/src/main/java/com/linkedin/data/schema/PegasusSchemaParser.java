@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * A schema parser is used to parse data schemas for a particular source representation.
  */
-public interface DataSchemaParser {
+public interface PegasusSchemaParser {
 
   /**
    * Parse a source representation of a schema from an {@link InputStream}.

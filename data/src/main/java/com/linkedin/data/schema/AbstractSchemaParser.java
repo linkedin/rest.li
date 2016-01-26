@@ -31,7 +31,7 @@ import java.util.Map;
  * @author slim
  * @author jbetz
  */
-abstract public class AbstractSchemaParser extends AbstractDataParser implements DataSchemaParser
+abstract public class AbstractSchemaParser extends AbstractDataParser implements PegasusSchemaParser
 {
   /**
    * Constructor with resolver.

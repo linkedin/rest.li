@@ -24,7 +24,7 @@ import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.SchemaParser;
 import java.io.IOException;
 
-import com.linkedin.data.schema.DataSchemaParser;
+import com.linkedin.data.schema.PegasusSchemaParser;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
@@ -71,7 +71,7 @@ public class TestConversions
       NamedDataSchema dataSchema = (NamedDataSchema) TestUtil.dataSchemaFromString(good);
 
       DataMap mapFromString = TestUtil.dataMapFromString(good);
-      DataSchemaParser parser = new SchemaParser();
+      PegasusSchemaParser parser = new SchemaParser();
       DataSchema schemaFromMap = Conversions.dataMapToDataSchema(mapFromString, parser);
 
       assertEquals(schemaFromMap, dataSchema);
@@ -80,7 +80,7 @@ public class TestConversions
     for (String bad : badInputs)
     {
       DataMap mapFromString = TestUtil.dataMapFromString(bad);
-      DataSchemaParser parser = new SchemaParser();
+      PegasusSchemaParser parser = new SchemaParser();
       DataSchema schemaFromMap = Conversions.dataMapToDataSchema(mapFromString, parser);
       assertNull(schemaFromMap);
       assertTrue(parser.hasError());

@@ -24,7 +24,7 @@ import com.linkedin.data.schema.DataSchemaTraverse;
 import com.linkedin.data.schema.MapDataSchema;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
-import com.linkedin.data.schema.DataSchemaParser;
+import com.linkedin.data.schema.PegasusSchemaParser;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.StringArray;
@@ -71,7 +71,7 @@ public class RestLiResourceRelationship
    * @param schemaParser parser that parses text into {@link DataSchema}
    */
   public RestLiResourceRelationship(ResourceSchemaCollection resourceSchemas,
-                                    DataSchemaParser schemaParser)
+                                    PegasusSchemaParser schemaParser)
   {
     _resourceSchemas = resourceSchemas;
     _schemaResolver = null;
@@ -338,7 +338,7 @@ public class RestLiResourceRelationship
 
   private final ResourceSchemaCollection _resourceSchemas;
   private final DataSchemaResolver _schemaResolver;
-  private final DataSchemaParser _schemaParser;
+  private final PegasusSchemaParser _schemaParser;
   private final SortedMap<String, NamedDataSchema> _dataModels = new TreeMap<String, NamedDataSchema>();
   private final Graph _relationships = new Graph();
 }

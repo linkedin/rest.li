@@ -21,6 +21,7 @@ import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaLocation;
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.NamedDataSchema;
+import com.linkedin.data.schema.PegasusSchemaParser;
 import com.linkedin.data.schema.SchemaParserFactory;
 import com.linkedin.data.schema.resolver.FileDataSchemaLocation;
 import com.linkedin.data.schema.resolver.FileDataSchemaResolver;
@@ -267,7 +268,7 @@ public class DataSchemaParser
   private List<DataSchema> parseSchemaStream(InputStream schemaInputStream, DataSchemaLocation schemaLocation, ParseResult result)
       throws IOException
   {
-    com.linkedin.data.schema.DataSchemaParser parser = _schemaParserFactory.create(_schemaResolver);
+    PegasusSchemaParser parser = _schemaParserFactory.create(_schemaResolver);
     try
     {
       parser.setLocation(schemaLocation);

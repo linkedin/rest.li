@@ -23,8 +23,7 @@ import com.linkedin.data.schema.DataSchemaParserFactory;
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.Name;
 import com.linkedin.data.schema.NamedDataSchema;
-import com.linkedin.data.schema.SchemaParserFactory;
-import com.linkedin.data.schema.DataSchemaParser;
+import com.linkedin.data.schema.PegasusSchemaParser;
 
 import java.io.FileDescriptor;
 import java.io.FileOutputStream;
@@ -291,7 +290,7 @@ public abstract class AbstractDataSchemaResolver implements DataSchemaResolver
   protected NamedDataSchema parse(InputStream inputStream, final DataSchemaLocation location, String name, StringBuilder errorMessageBuilder)
   {
     NamedDataSchema schema = null;
-    DataSchemaParser parser = _parserFactory.create(this);
+    PegasusSchemaParser parser = _parserFactory.create(this);
     parser.setLocation(location);
     //out.println("start parsing " + location);
 
