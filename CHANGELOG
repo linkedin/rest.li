@@ -1,5 +1,7 @@
 5.0.8
 -----
+(RB=611897)
+Validate data returned from create and get.
 
 5.0.7
 -----
