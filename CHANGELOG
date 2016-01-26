@@ -1,6 +1,11 @@
+5.0.10
+------
+
+
 5.0.9
 -----
-
+(RB=647541)
+Allow array of union be resource method parameter.
 
 5.0.8
 -----

@@ -16,10 +16,14 @@
 
 package com.linkedin.data.schema.resolver;
 
+
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaLocation;
 import com.linkedin.data.schema.NamedDataSchema;
+import com.linkedin.data.template.DataTemplate;
 import com.linkedin.data.template.DataTemplateUtil;
+import com.linkedin.data.template.TyperefInfo;
+
 
 /**
  * Resolve Java class name into data schema, assuming the class is loaded using the {@link ClassLoader}.
@@ -71,6 +75,17 @@ public class ClassNameDataSchemaResolver extends DefaultDataSchemaResolver
     if (schema instanceof NamedDataSchema)
     {
       return (NamedDataSchema) schema;
+    }
+
+    if (DataTemplate.class.isAssignableFrom(clazz))
+    {
+      @SuppressWarnings("unchecked")
+      final Class<? extends DataTemplate<?>> clazzWithTyperef = (Class<? extends DataTemplate<?>>) clazz;
+      final TyperefInfo typerefInfo = DataTemplateUtil.getTyperefInfo(clazzWithTyperef);
+      if (typerefInfo != null)
+      {
+        return typerefInfo.getSchema();
+      }
     }
 
     addBadLocation(location);

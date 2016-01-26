@@ -26,9 +26,11 @@ import com.linkedin.data.schema.DataSchemaUtil;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.template.Custom;
+import com.linkedin.data.template.DataTemplate;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.DynamicRecordMetadata;
 import com.linkedin.data.template.FieldDef;
+import com.linkedin.data.template.HasTyperefInfo;
 import com.linkedin.data.template.KeyCoercer;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.TemplateRuntimeException;
@@ -1533,7 +1535,15 @@ public final class RestLiAnnotationReader
     }
     else if (type.isArray())
     {
-      DataSchema itemSchema = DataTemplateUtil.getSchema(type.getComponentType());
+      DataSchema itemSchema;
+      if (HasTyperefInfo.class.isAssignableFrom(type.getComponentType()))
+      {
+        itemSchema = DataTemplateUtil.getTyperefInfo(type.getComponentType().asSubclass(DataTemplate.class)).getSchema();
+      }
+      else
+      {
+        itemSchema = DataTemplateUtil.getSchema(type.getComponentType());
+      }
       return new ArrayDataSchema(itemSchema);
     }
     return DataTemplateUtil.getSchema(type);

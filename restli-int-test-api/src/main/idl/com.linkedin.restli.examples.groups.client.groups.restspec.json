@@ -53,6 +53,10 @@
         "type" : "\"com.linkedin.restli.examples.typeref.api.Union\"",
         "default" : "{\"string\": \"I'm String\"}"
       }, {
+        "name" : "unionArray",
+        "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.typeref.api.Union\" }",
+        "default" : "[{\"int\": 123}]"
+      }, {
         "name" : "record",
         "type" : "com.linkedin.restli.examples.groups.api.GroupMembershipParam",
         "default" : "{\"intParameter\": 7, \"stringParameter\": \"success\"}"

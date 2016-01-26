@@ -24,6 +24,7 @@ import com.linkedin.data.template.IntegerMap;
 import com.linkedin.data.transform.DataProcessingException;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.PatchRequest;
+import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.groups.api.Group;
 import com.linkedin.restli.examples.groups.api.GroupMembershipParam;
 import com.linkedin.restli.examples.groups.api.TransferOwnershipRequest;
@@ -46,6 +47,7 @@ import com.linkedin.restli.server.resources.CollectionResourceTemplate;
 import com.linkedin.restli.server.util.PatchApplier;
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -132,6 +134,7 @@ public class GroupsResource2 extends CollectionResourceTemplate<Integer, Group>
                                                                    "\u0009\n\u000B\u000C" +
                                                                    "\r\u000E\u000F\u0010") Fixed16 fixed,
                                     @QueryParam("union") @Optional("{\"string\": \"I'm String\"}") Union union,
+                                    @QueryParam("unionArray") @Optional("[{\"int\": 123}]") Union[] unionArray,
                                     @QueryParam("record") @Optional("{\"intParameter\": 7, \"stringParameter\": \"success\"}") GroupMembershipParam record,
                                     @QueryParam("records") @Optional("[{\"intParameter\": 7, \"stringParameter\": \"success\"}]") GroupMembershipParam[] records)
   {
@@ -147,6 +150,7 @@ public class GroupsResource2 extends CollectionResourceTemplate<Integer, Group>
                                              "\u0009\n\u000B\u000C" +
                                              "\r\u000E\u000F\u0010") ||
         !"I'm String".equals(union.getString()) ||
+        unionArray[0].getInt() != 123 ||
         record.getIntParameter() != 7 || !record.getStringParameter().equals("success"))
     {
       throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR);
