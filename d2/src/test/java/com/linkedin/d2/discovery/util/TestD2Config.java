@@ -35,7 +35,6 @@ import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessorFactory;
 import com.linkedin.d2.balancer.zkfs.ZKFSUtil;
 import com.linkedin.d2.discovery.stores.PropertyStoreException;
-import com.linkedin.d2.discovery.stores.zk.SymlinkAwareZooKeeper;
 import com.linkedin.d2.discovery.stores.zk.ZKConnection;
 import com.linkedin.d2.discovery.stores.zk.ZKServer;
 import com.linkedin.d2.discovery.stores.zk.ZKTestUtil;
@@ -48,8 +47,8 @@ import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.Assert;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -91,7 +90,7 @@ public class TestD2Config
     _zkUriString = "zk://"+_zkHosts;
   }
 
-  @BeforeTest
+  @BeforeMethod
   public void testSetup() throws IOException, Exception
   {
     // Startup zookeeper server
@@ -118,7 +117,7 @@ public class TestD2Config
     }
   }
 
-  @AfterTest
+  @AfterMethod
   public void teardown() throws IOException, InterruptedException
   {
     for (LoadBalancerEchoServer echoServer : _echoServerList)
@@ -179,6 +178,8 @@ public class TestD2Config
     verifyClusterProperties("cluster-1");
     verifyServiceProperties("cluster-1", "service-1_1", "/service-1_1", null);
     verifyServiceProperties("cluster-1", "service-1_2", "/service-1_2", null);
+    verifyServiceAsChildOfCluster("cluster-1", "service-1_1");
+    verifyServiceAsChildOfCluster("cluster-1", "service-1_2");
 
     @SuppressWarnings("serial")
     Map<URI, Double> urisWeights = new HashMap<URI, Double>()
@@ -345,6 +346,12 @@ public class TestD2Config
       put("ServiceGroup3", "Cluster3");
     }};
 
+    @SuppressWarnings("serial")
+    Map<String, Object> clusterProperties = new HashMap<String, Object>()
+    {{
+      put(PropertyKeys.CLUSTER_VARIANTS, Arrays.asList(new String[]{"Cluster1", "Cluster2", "Cluster3"}));
+    }};
+
     D2ConfigTestUtil d2Conf = new D2ConfigTestUtil("TestServices", servicesData, serviceGroupsData);
 
     assertEquals(d2Conf.runDiscovery(_zkHosts), 0);
@@ -354,11 +361,16 @@ public class TestD2Config
     _echoServerList.add(startEchoServer(echoServerPort2, "someCluster1"));
     _echoServerList.add(startEchoServer(echoServerPort3, "someCluster3"));
 
-    verifyClusterProperties("TestServices");
+    verifyClusterProperties("TestServices", clusterProperties);
     verifyServiceProperties("TestServices", "service1", "/testService", null);
     verifyServiceProperties("TestServices", "service2", "/testService", null);
     verifyServiceProperties("TestServices", "service3", "/testService", null);
     verifyServiceProperties("TestServices", "service4", "/testService", null);
+
+    verifyServiceAsChildOfCluster("TestServices", "service1");
+    verifyServiceAsChildOfCluster("TestServices", "service2");
+    verifyServiceAsChildOfCluster("TestServices", "service3");
+    verifyServiceAsChildOfCluster("TestServices", "service4");
 
     verifyClusterProperties("Cluster1");
     verifyServiceProperties("Cluster1", "service1", "/testService", "ServiceGroup1");
@@ -850,6 +862,35 @@ public class TestD2Config
     assertEquals(clusterprops.getBanned(), new TreeSet<URI>());
   }
 
+  @SuppressWarnings("unchecked")
+  public static void verifyClusterProperties(String cluster, Map<String, Object> propertiesMap) throws PropertyStoreException, IOException, URISyntaxException
+  {
+    ClusterProperties clusterProperties = getClusterProperties(_zkclient, cluster);
+
+    if (propertiesMap.get(PropertyKeys.COLO_VARIANTS) != null)
+    {
+      String coloVariantsString = clusterProperties.getProperties().get(PropertyKeys.COLO_VARIANTS);
+      List<String> coloVariants = Arrays.asList(coloVariantsString.split(D2Config.LIST_SEPARATOR));
+      List<String> expectedColoVariants = (List<String>) propertiesMap.get(PropertyKeys.COLO_VARIANTS);
+      Assert.assertTrue(coloVariants.containsAll(expectedColoVariants));
+      Assert.assertTrue(expectedColoVariants.containsAll(coloVariants));
+    }
+    if (propertiesMap.get(PropertyKeys.MASTER_COLO) != null)
+    {
+      String masterColo = clusterProperties.getProperties().get(PropertyKeys.MASTER_COLO);
+      String expectedMasterColo = (String) propertiesMap.get(PropertyKeys.MASTER_COLO);
+      Assert.assertEquals(masterColo, expectedMasterColo);
+    }
+    if (propertiesMap.get(PropertyKeys.CLUSTER_VARIANTS) != null)
+    {
+      String clusterVariantsString = clusterProperties.getProperties().get(PropertyKeys.CLUSTER_VARIANTS);
+      List<String> clusterVariants = Arrays.asList(clusterVariantsString.split(D2Config.LIST_SEPARATOR));
+      List<String> expectedClusterVariants = (List<String>) propertiesMap.get(PropertyKeys.CLUSTER_VARIANTS);
+      Assert.assertTrue(clusterVariants.containsAll(expectedClusterVariants));
+      Assert.assertTrue(expectedClusterVariants.containsAll(clusterVariants));
+    }
+  }
+
   public static void verifyPartitionProperties(String cluster, Map<String, Object>propertiesMap) throws IOException, URISyntaxException, PropertyStoreException
   {
     final ClusterProperties clusterprops = getClusterProperties(_zkclient, cluster);
@@ -895,6 +936,11 @@ public class TestD2Config
 
   public static void verifyServiceProperties(String cluster, String service, String path, String serviceGroup) throws IOException, URISyntaxException, PropertyStoreException
   {
+    verifyServiceProperties(cluster, service, path, serviceGroup, false);
+  }
+
+  public static void verifyServiceProperties(String cluster, String service, String path, String serviceGroup, boolean defaultRoutingToMaster) throws IOException, URISyntaxException, PropertyStoreException
+  {
     ServiceProperties serviceprops = getServiceProperties(_zkclient, service, serviceGroup);
 
     assertEquals(serviceprops.getClusterName(), cluster);
@@ -906,6 +952,19 @@ public class TestD2Config
     assertEquals(serviceprops.getLoadBalancerStrategyProperties().get("updateIntervalsMs"), String.valueOf(5000));
     assertEquals(serviceprops.getLoadBalancerStrategyProperties().get("defaultSuccessfulTransmissionWeight"), String.valueOf(1.0));
     assertEquals(serviceprops.getLoadBalancerStrategyProperties().get("pointsPerWeight"), String.valueOf(100));
+
+    if (defaultRoutingToMaster)
+    {
+      String defaultRouting = (String)serviceprops.getServiceMetadataProperties().get(PropertyKeys.DEFAULT_ROUTING_TO_MASTER);
+      Assert.assertTrue(Boolean.valueOf(defaultRouting));
+    }
+  }
+
+  public static void verifyServiceAsChildOfCluster(String cluster, String service)
+      throws KeeperException, InterruptedException
+  {
+    Stat stat = _zkclient.getZooKeeper().exists(D2Utils.getServicePathAsChildOfCluster(cluster, service), false);
+    Assert.assertNotNull(stat);
   }
 
   public static void verifyUriProperties(String cluster, Map<URI, Double> urisWeights)
@@ -1247,6 +1306,9 @@ public class TestD2Config
     verifyServiceProperties("cluster1Bar-WestCoast", "service-1_2Master", "/service-1_2", "ServiceGroup2");
     verifyServiceProperties("cluster1Bar-WestCoast", "service-1_2-WestCoast", "/service-1_2", "ServiceGroup2");
     verifyServiceProperties("cluster1Bar-EastCoast", "service-1_2-EastCoast", "/service-1_2", "ServiceGroup2");
+
+    verifyServiceAsChildOfCluster("cluster-1", "service-1_1");
+    verifyServiceAsChildOfCluster("cluster-1", "service-1_2");
   }
 
   @Test
@@ -1328,6 +1390,9 @@ public class TestD2Config
     verifyServiceProperties("cluster1Bar-EastCoast", "service-1_2Master", "/service-1_2", "ServiceGroup2");
     verifyServiceProperties("cluster1Bar-WestCoast", "service-1_2-WestCoast", "/service-1_2", "ServiceGroup2");
     verifyServiceProperties("cluster1Bar-EastCoast", "service-1_2-EastCoast", "/service-1_2", "ServiceGroup2");
+
+    verifyServiceAsChildOfCluster("cluster-1", "service-1_1");
+    verifyServiceAsChildOfCluster("cluster-1", "service-1_2");
   }
 
   // flip the order of the peerColos to make sure there's no order dependency
@@ -1410,6 +1475,9 @@ public class TestD2Config
     verifyServiceProperties("cluster1Bar-EastCoast", "service-1_2Master", "/service-1_2", "ServiceGroup2");
     verifyServiceProperties("cluster1Bar-WestCoast", "service-1_2-WestCoast", "/service-1_2", "ServiceGroup2");
     verifyServiceProperties("cluster1Bar-EastCoast", "service-1_2-EastCoast", "/service-1_2", "ServiceGroup2");
+
+    verifyServiceAsChildOfCluster("cluster-1", "service-1_1");
+    verifyServiceAsChildOfCluster("cluster-1", "service-1_2");
   }
 
   @Test
@@ -1589,7 +1657,7 @@ public class TestD2Config
 
     // Verify default routing
     verifyServiceProperties("cluster1-EastCoast", "service1", "/service1", null);
-    verifyServiceProperties("cluster1-WestCoast", "service2", "/service2", null);
+    verifyServiceProperties("cluster1-WestCoast", "service2", "/service2", null, true);
 
     // Verify explicit routing
     verifyServiceProperties("cluster1-EastCoast", "service1-EastCoast", "/service1", null);
@@ -1598,6 +1666,9 @@ public class TestD2Config
     verifyServiceProperties("cluster1-EastCoast", "service2-EastCoast", "/service2", null);
     verifyServiceProperties("cluster1-WestCoast", "service2-WestCoast", "/service2", null);
     verifyServiceProperties("cluster1-WestCoast", "service2Master", "/service2", null);
+
+    verifyServiceAsChildOfCluster("cluster1", "service1");
+    verifyServiceAsChildOfCluster("cluster1", "service2");
   }
 
 
@@ -1692,7 +1763,7 @@ public class TestD2Config
     verifyServiceProperties(D2Utils.getSymlinkNameForMaster(clusterName), D2Utils.addMasterToBaseName(service2), "/"+service2, null);
     // verify default routing
     verifyServiceProperties(D2Utils.addSuffixToBaseName(clusterName, defaultColo), service1, "/"+service1, null);
-    verifyServiceProperties(D2Utils.getSymlinkNameForMaster(clusterName), service2, "/"+service2, null);
+    verifyServiceProperties(D2Utils.getSymlinkNameForMaster(clusterName), service2, "/"+service2, null, true);
   }
 
   @Test
@@ -1749,7 +1820,7 @@ public class TestD2Config
     verifyServiceProperties(D2Utils.getSymlinkNameForMaster(clusterVariantName), D2Utils.addMasterToBaseName(service2), "/"+service2, serviceGroupName);
     // verify default routing
     verifyServiceProperties(D2Utils.addSuffixToBaseName(clusterVariantName, defaultColo), service1, "/"+service1, serviceGroupName);
-    verifyServiceProperties(D2Utils.getSymlinkNameForMaster(clusterVariantName), service2, "/"+service2, serviceGroupName);
+    verifyServiceProperties(D2Utils.getSymlinkNameForMaster(clusterVariantName), service2, "/"+service2, serviceGroupName, true);
   }
 
   @Test
@@ -1787,7 +1858,7 @@ public class TestD2Config
     assertEquals(d2Conf.runDiscovery(_zkHosts), 0);
 
     verifyServiceProperties("zServices", "service_1", "/testService", "ServiceGroup1");
-
+    verifyServiceAsChildOfCluster("zServices", "service_1");
   }
 
   @Test
@@ -1839,13 +1910,14 @@ public class TestD2Config
     verifyServiceProperties("zServices-EastCoast", "service-1-EastCoast", "/service-1", "ServiceGroup1");
     verifyServiceProperties("zServices-WestCoast", "service-1-WestCoast", "/service-1", "ServiceGroup1");
     verifyServiceProperties("zServices-WestCoast", "service-1Master", "/service-1", "ServiceGroup1");
+    verifyServiceAsChildOfCluster("zServices", "service-1");
 
   }
 
   private static void verifyColoClusterAndServices(Map<String,List<String>> clustersData,
                                                    Map<String,List<String>> peerColoList,
                                                    Map<String,String> masterColoList, String defaultColo)
-    throws IOException, InterruptedException, URISyntaxException, PropertyStoreException
+      throws IOException, InterruptedException, URISyntaxException, PropertyStoreException, KeeperException
   {
     verifyColoClusterAndServices(clustersData, peerColoList, masterColoList, defaultColo, null);
   }
@@ -1854,14 +1926,19 @@ public class TestD2Config
                                             Map<String,List<String>> peerColoList,
                                             Map<String,String> masterColoList, String defaultColo,
                                             Map<String,List<String>> clusterVariantsMap)
-    throws IOException, InterruptedException, URISyntaxException, PropertyStoreException
+      throws IOException, InterruptedException, URISyntaxException, PropertyStoreException, KeeperException
   {
     for (Map.Entry<String,List<String>> entry : clustersData.entrySet())
     {
       String clusterName = entry.getKey();
+      Map<String, Object> clusterProperties = new HashMap<>();
       List<String> serviceList = entry.getValue();
       List<String> peerColos;
       peerColos = getOrCreatePeerList(clusterName, peerColoList);
+      if (!(peerColos.size() == 1 && peerColos.contains("")))
+      {
+        clusterProperties.put(PropertyKeys.COLO_VARIANTS, peerColos);
+      }
 
       String masterColo;
       if( masterColoList != null)
@@ -1872,9 +1949,23 @@ public class TestD2Config
       {
         masterColo = null;
       }
+      if (masterColo != null)
+      {
+        clusterProperties.put(PropertyKeys.MASTER_COLO, masterColo);
+      }
+
+      List<String> clusterVariants = null;
+      if (clusterVariantsMap != null)
+      {
+        clusterVariants = clusterVariantsMap.get(clusterName);
+        clusterProperties.put(PropertyKeys.CLUSTER_VARIANTS, clusterVariants);
+      }
+
+      verifyClusterProperties(clusterName, clusterProperties);
       for (String colo : peerColos)
       {
         String coloClusterName = D2Utils.addSuffixToBaseName(clusterName, colo);
+        verifyClusterProperties(coloClusterName);
 
         for (String serviceName : serviceList)
         {
@@ -1883,15 +1974,14 @@ public class TestD2Config
           String masterClusterName = D2Utils.addSuffixToBaseName(clusterName, ("".matches(colo) ? null :masterColo));
           String masterServiceName = D2Utils.addSuffixToBaseName(serviceName, ("".matches(colo) ? null :masterColo));
           String defaultClusterName = D2Utils.addSuffixToBaseName(clusterName, ("".matches(colo) ? null : defaultColo));
-          verifyClusterProperties(coloClusterName);
           verifyServiceProperties(coloClusterName, coloServiceName, "/" + serviceName, null);
           verifyServiceProperties(masterClusterName, masterServiceName, "/" + serviceName, null);
           verifyServiceProperties(defaultClusterName, serviceName, "/" + serviceName, null);
+          verifyServiceAsChildOfCluster(clusterName, serviceName);
         }
 
-        if (clusterVariantsMap != null)
+        if (clusterVariants != null)
         {
-          List<String> clusterVariants = clusterVariantsMap.get(clusterName);
           for(String varName : clusterVariants)
           {
             String coloVarName = D2Utils.addSuffixToBaseName(varName, colo);

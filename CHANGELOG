@@ -1,6 +1,11 @@
-5.0.10
+5.0.11
 ------
 
+
+5.0.10
+------
+(RB=653970)
+Write missing d2 configurations into zookeeper.
 
 5.0.9
 -----

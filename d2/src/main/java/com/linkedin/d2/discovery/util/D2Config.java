@@ -21,6 +21,8 @@
 package com.linkedin.d2.discovery.util;
 
 
+import com.linkedin.common.callback.FutureCallback;
+import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.config.ConfigWriter;
 import com.linkedin.d2.balancer.properties.ClusterPropertiesJsonSerializer;
 import com.linkedin.d2.balancer.properties.HashBasedPartitionProperties;
@@ -34,6 +36,9 @@ import com.linkedin.d2.discovery.PropertySerializer;
 import com.linkedin.d2.discovery.stores.zk.DeltaWriteZooKeeperPermanentStore;
 import com.linkedin.d2.discovery.stores.zk.ZKConnection;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperPermanentStore;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -98,6 +103,7 @@ public class D2Config
   public static final int CMD_LINE_ERROR_EXIT_CODE = 1;
   public static final int EXCEPTION_EXIT_CODE = 2;
   public static final int PARTITION_CONFIG_ERROR_EXIT_CODE = 3;
+  public static final String LIST_SEPARATOR = ",";
 
   private final ZKConnection _zkConnection;
   private final String _basePath;
@@ -165,6 +171,9 @@ public class D2Config
     Map<String,List<String>> variantToVariantsMapping = new HashMap<String, List<String>>();
     // temporary mapping from cluster name to coloVariant ClusterNames list.
     Map<String, List<String>> clusterToColoClustersMapping = new HashMap<String, List<String>>();
+    // mapping from regular cluster name to the list of containing services
+    // which will be added as children of the regular cluster znode.
+    Map<String, List<String>> regularClusterToServicesMapping = new HashMap<>();
 
     _log.info("basePath: " + _basePath);
     _log.info("clusterDefaults: " + _clusterDefaults);
@@ -227,6 +236,8 @@ public class D2Config
       final String enableSymlinkString = (String)clusterConfig.remove(PropertyKeys.ENABLE_SYMLINK);
       final boolean enableSymlink;
 
+      regularClusterToServicesMapping.put(clusterName, servicesConfigs.keySet().stream().collect(Collectors.toList()));
+
       if (enableSymlinkString != null && "true".equalsIgnoreCase(enableSymlinkString))
       {
         enableSymlink = true;
@@ -249,6 +260,21 @@ public class D2Config
           return status;
         }
       }
+
+      Map<String, String> clusterProperties = new HashMap<>();
+      if (coloVariants != null && coloVariants.size() > 0)
+      {
+        clusterProperties.put(PropertyKeys.COLO_VARIANTS, String.join(LIST_SEPARATOR, coloVariants));
+      }
+      if (masterColo != null && !masterColo.equals(""))
+      {
+        clusterProperties.put(PropertyKeys.MASTER_COLO, masterColo);
+      }
+      if (clusterVariantConfig != null && clusterVariantConfig.size() > 0)
+      {
+        clusterProperties.put(PropertyKeys.CLUSTER_VARIANTS, String.join(LIST_SEPARATOR, clusterVariantConfig.keySet()));
+      }
+      clusterConfig.put(PropertyKeys.CLUSTER_PROPERTIES, clusterProperties);
 
       // rather than handling the coloVariant case separately from the regular cluster case, we will
       // treat regular clusters as having an empty-string coloVariant list. This allows us to have a
@@ -360,6 +386,10 @@ public class D2Config
             {
               // we set isDefaultService flag only if it is a multi-colo aware service.
               regularServiceConfig.put(PropertyKeys.IS_DEFAULT_SERVICE, "true");
+              if (defaultRoutingToMasterColo)
+              {
+                regularServiceConfig.put(PropertyKeys.DEFAULT_ROUTING_TO_MASTER, "true");
+              }
             }
 
             final String defaultColoClusterName = clusterNameWithRouting(clusterName,
@@ -398,6 +428,10 @@ public class D2Config
         {
           coloClusterConfig = new HashMap<String,Object>(clusterConfig);
           coloClusterConfig.put(PropertyKeys.CLUSTER_NAME, coloClusterName);
+          if (createDefaultServices)
+          {
+            clusters.put(clusterName, clusterConfig);
+          }
         }
         clusters.put(coloClusterName, coloClusterConfig);
 
@@ -536,6 +570,9 @@ public class D2Config
                   new ServicePropertiesJsonSerializer(), services, _serviceDefaults);
       _log.info("Wrote service configuration");
 
+      writeChildren(regularClusterToServicesMapping);
+      _log.info("Wrote service children nodes under clusters");
+
       if (!serviceVariants.isEmpty())
       {
         for (Map.Entry<String,Map<String,Map<String,Object>>> entry : serviceVariants.entrySet())
@@ -617,6 +654,22 @@ public class D2Config
     ConfigWriter<T> writer = new ConfigWriter<T>(store, builder, properties, propertyDefaults, _timeout,
             TimeUnit.MILLISECONDS, _maxOutstandingWrites);
     writer.writeConfig();
+  }
+
+  private void writeChildren(Map<String, List<String>> clusterToServices)
+      throws InterruptedException, ExecutionException, TimeoutException {
+    for (Map.Entry<String, List<String>> entry : clusterToServices.entrySet())
+    {
+      String clusterName = entry.getKey();
+      List<String> services = entry.getValue();
+
+      for (String serviceName : services)
+      {
+        FutureCallback<None> callback = new FutureCallback<>();
+        _zkConnection.ensurePersistentNodeExists(D2Utils.getServicePathAsChildOfCluster(clusterName, serviceName), callback);
+        callback.get(_timeout, TimeUnit.MILLISECONDS);
+      }
+    }
   }
 
   private Map<String,Object> merge(List<Map<String,Object>> maps)
@@ -904,4 +957,5 @@ public class D2Config
     }
     return false;
   }
+
 }
