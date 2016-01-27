@@ -1,0 +1,19 @@
+{
+  "type" : "record",
+  "name" : "TestPathRecord",
+  "namespace" : "com.linkedin.restli.server",
+  "fields" : [
+    {
+      "name" : "intField",
+      "type" : "int"
+    },
+    {
+      "name": "intField2",
+      "type": "int"
+    },
+    {
+      "name" : "longField",
+      "type" : "long"
+    }
+  ]
+}

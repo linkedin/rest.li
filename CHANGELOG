@@ -6,6 +6,9 @@ Validate data returned from create and get.
 (RB=636452)
 Notify listeners when SimpleLoadBalancerState shutdown
 
+(RB=648493)
+Compare ReadOnly and CreateOnly paths properly in RestLiAnnotationReader.
+
 5.0.7
 -----
 (RB=635961)

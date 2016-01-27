@@ -36,6 +36,7 @@ import com.linkedin.restli.server.BatchUpdateResult;
 import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.MapWithTestRecord;
 import com.linkedin.restli.server.PagingContext;
+import com.linkedin.restli.server.TestPathRecord;
 import com.linkedin.restli.server.TestRecord;
 import com.linkedin.restli.server.UpdateResponse;
 import com.linkedin.restli.server.annotations.Action;
@@ -76,8 +77,8 @@ public class CombinedResources
       return null;
     }
   }
-  
-  
+
+
   @RestLiCollection(name="complexKeyCollection")
   public static class CombinedComplexKeyResource extends ComplexKeyResourceTemplate<DummyKeyPart, DummyParamsPart, Foo>
   {
@@ -551,9 +552,9 @@ public class CombinedResources
   }
 
   @ReadOnly({"intField", "longField"})
-  @CreateOnly("floatField")
+  @CreateOnly({"intField2"})
   @RestLiSimpleResource(name="foo")
-  public class DataAnnotationTestResource extends SimpleResourceTemplate<TestRecord>
+  public class DataAnnotationTestResource extends SimpleResourceTemplate<TestPathRecord>
   {
   }
 }

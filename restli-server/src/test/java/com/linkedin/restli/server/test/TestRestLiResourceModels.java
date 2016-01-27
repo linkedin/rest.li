@@ -588,7 +588,7 @@ public class TestRestLiResourceModels
     ResourceModel resourceModel = buildResourceModel(CombinedResources.DataAnnotationTestResource.class);
     DataMap annotations = resourceModel.getCustomAnnotationData();
     Assert.assertEquals(((DataMap) annotations.get("readOnly")).get("value"), new DataList(Arrays.asList("intField", "longField")));
-    Assert.assertEquals(((DataMap) annotations.get("createOnly")).get("value"), new DataList(Arrays.asList("floatField")));
+    Assert.assertEquals(((DataMap) annotations.get("createOnly")).get("value"), new DataList(Arrays.asList("intField2")));
   }
 
   @Test

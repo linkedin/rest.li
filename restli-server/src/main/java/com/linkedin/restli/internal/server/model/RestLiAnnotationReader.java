@@ -19,6 +19,7 @@ package com.linkedin.restli.internal.server.model;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.element.DataElement;
 import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaUtil;
@@ -393,13 +394,16 @@ public final class RestLiAnnotationReader
         {
           String existingPath = existingEntry.getKey();
           existingAnnotationName = existingEntry.getValue();
-          if (existingPath.startsWith(path))
+          // Avoid marking 'field' and 'field1' as overlapping paths
+          String existingPathWithSeparator = existingPath + DataElement.SEPARATOR;
+          String pathWithSeparator = path + DataElement.SEPARATOR;
+          if (existingPathWithSeparator.startsWith(pathWithSeparator))
           {
             throw new ResourceConfigException("In resource class '" + resourceClassName + "', " + existingPath
                                                   + " is marked as " + existingAnnotationName + ", but is contained in a "
                                                   + annotationName + " field " + path + ".");
           }
-          else if (path.startsWith(existingPath))
+          else if (pathWithSeparator.startsWith(existingPathWithSeparator))
           {
             throw new ResourceConfigException("In resource class '" + resourceClassName + "', " + path
                                                   + " is marked as " + annotationName + ", but is contained in a "
