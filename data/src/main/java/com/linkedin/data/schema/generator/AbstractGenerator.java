@@ -23,6 +23,7 @@ import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.SchemaParser;
 import com.linkedin.data.schema.SchemaParserFactory;
+import com.linkedin.data.schema.PegasusSchemaParser;
 import com.linkedin.data.schema.resolver.DefaultDataSchemaResolver;
 import com.linkedin.data.schema.resolver.FileDataSchemaLocation;
 import com.linkedin.data.schema.resolver.FileDataSchemaResolver;
@@ -263,7 +264,7 @@ public abstract class AbstractGenerator
    */
   protected List<DataSchema> parseSchema(final File schemaSourceFile) throws IOException
   {
-    SchemaParser parser = new SchemaParser(getSchemaResolver());
+    PegasusSchemaParser parser = new SchemaParser(getSchemaResolver());
     FileInputStream schemaStream = new SchemaFileInputStream(schemaSourceFile);
     try
     {

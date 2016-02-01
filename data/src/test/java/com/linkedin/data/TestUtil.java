@@ -20,6 +20,8 @@ import com.linkedin.data.codec.DataLocation;
 import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.SchemaParser;
+import com.linkedin.data.schema.PegasusSchemaParser;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -113,21 +115,21 @@ public class TestUtil
     return bais;
   }
 
-  static public SchemaParser schemaParserFromString(String s) throws UnsupportedEncodingException, IOException
+  static public PegasusSchemaParser schemaParserFromString(String s) throws UnsupportedEncodingException, IOException
   {
-    SchemaParser parser = new SchemaParser();
+    PegasusSchemaParser parser = new SchemaParser();
     parser.parse(inputStreamFromString(s));
     return parser;
   }
 
-  static public SchemaParser schemaParserFromObjects(List<Object> objects) throws IOException
+  static public PegasusSchemaParser schemaParserFromObjects(List<Object> objects) throws IOException
   {
     SchemaParser parser = new SchemaParser();
     parser.parse(objects);
     return parser;
   }
 
-  static public SchemaParser schemaParserFromObjectsString(String stringOfObjects) throws IOException
+  static public PegasusSchemaParser schemaParserFromObjectsString(String stringOfObjects) throws IOException
   {
     List<Object> objects = objectsFromString(stringOfObjects);
     return schemaParserFromObjects(objects);
@@ -135,7 +137,7 @@ public class TestUtil
 
   static public DataSchema dataSchemaFromString(String s) throws IOException
   {
-    SchemaParser parser = schemaParserFromString(s);
+    PegasusSchemaParser parser = schemaParserFromString(s);
     if (parser.hasError())
     {
       out.println("ERROR: " + parser.errorMessage());

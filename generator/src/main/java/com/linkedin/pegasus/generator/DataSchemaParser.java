@@ -21,7 +21,8 @@ import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaLocation;
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.NamedDataSchema;
-import com.linkedin.data.schema.SchemaParser;
+import com.linkedin.data.schema.PegasusSchemaParser;
+import com.linkedin.data.schema.SchemaParserFactory;
 import com.linkedin.data.schema.resolver.FileDataSchemaLocation;
 import com.linkedin.data.schema.resolver.FileDataSchemaResolver;
 import com.linkedin.data.schema.resolver.InJarFileDataSchemaLocation;
@@ -52,14 +53,15 @@ public class DataSchemaParser
 {
   private final String _resolverPath;
   private final DataSchemaResolver _schemaResolver;
+  private final SchemaParserFactory _schemaParserFactory;
+  private final String _fileExtension;
 
   /**
    * Initialize my {@link DataSchemaResolver} with the resolver path.
    */
   public DataSchemaParser(String resolverPath)
   {
-    _resolverPath = resolverPath;
-    _schemaResolver = CodeUtil.createSchemaResolver(resolverPath);
+    this(resolverPath, CodeUtil.createSchemaResolver(resolverPath), SchemaParserFactory.instance(), FileDataSchemaResolver.DEFAULT_EXTENSION);
   }
 
   public String getResolverPath()
@@ -70,6 +72,14 @@ public class DataSchemaParser
   public DataSchemaResolver getSchemaResolver()
   {
     return _schemaResolver;
+  }
+
+  public DataSchemaParser(String resolverPath, DataSchemaResolver schemaResolver, SchemaParserFactory schemaParserFactory, String fileExtension)
+  {
+    _resolverPath = resolverPath;
+    _schemaResolver = schemaResolver;
+    _schemaParserFactory = schemaParserFactory;
+    _fileExtension = fileExtension;
   }
 
   /**
@@ -92,7 +102,7 @@ public class DataSchemaParser
         {
           if (sourceFile.isDirectory())
           {
-            final FileUtil.FileExtensionFilter filter = new FileUtil.FileExtensionFilter(FileDataSchemaResolver.DEFAULT_EXTENSION);
+            final FileUtil.FileExtensionFilter filter = new FileUtil.FileExtensionFilter(_fileExtension);
             final List<File> sourceFilesInDirectory = FileUtil.listFiles(sourceFile, filter);
             for (File f : sourceFilesInDirectory)
             {
@@ -166,7 +176,6 @@ public class DataSchemaParser
    * Parse a source that specifies a file (not a fully qualified schema name).
    *
    * @param schemaSourceFile provides the source file.
-   * @param messageBuilder {@link StringBuilder} to update message.
    * @throws IOException if there is a file access error.
    */
   private void parseFile(File schemaSourceFile, ParseResult result)
@@ -253,14 +262,13 @@ public class DataSchemaParser
    * as well as registering named schemas in its bindings.
    *
    * @param schemaInputStream provides the source data.
-   * @param messageBuilder {@link StringBuilder} to update message.
    * @return the top-level data schemas within the source file.
    * @throws IOException if there is a file access error.
    */
   private List<DataSchema> parseSchemaStream(InputStream schemaInputStream, DataSchemaLocation schemaLocation, ParseResult result)
       throws IOException
   {
-    final SchemaParser parser = new SchemaParser(_schemaResolver);
+    PegasusSchemaParser parser = _schemaParserFactory.create(_schemaResolver);
     try
     {
       parser.setLocation(schemaLocation);

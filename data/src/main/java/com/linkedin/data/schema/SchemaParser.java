@@ -34,7 +34,6 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -55,7 +54,7 @@ import static com.linkedin.data.schema.DataSchemaConstants.*;
  *
  * @author slim
  */
-public class SchemaParser extends AbstractDataParser
+public class SchemaParser extends AbstractSchemaParser
 {
   /**
    * Constructor.
@@ -72,7 +71,7 @@ public class SchemaParser extends AbstractDataParser
    */
   public SchemaParser(DataSchemaResolver resolver)
   {
-    _resolver = (resolver == null ? new DefaultDataSchemaResolver() : resolver);
+    super(resolver == null ? new DefaultDataSchemaResolver() : resolver);
   }
 
   /**
@@ -96,38 +95,13 @@ public class SchemaParser extends AbstractDataParser
   }
 
   /**
-   * Get the {@link DataSchemaResolver}.
-   *
-   * @return the resolver to used to find {@link DataSchema}'s, may be null
-   *         if no resolver has been provided to parser.
-   */
-  public DataSchemaResolver getResolver()
-  {
-    return _resolver;
-  }
-
-  /**
-   * Return the top level {@link DataSchema}'s.
-   *
-   * The top level DataSchema's represent the types
-   * that are not defined within other types.
-   *
-   * @return the list of top level {@link DataSchema}'s in the
-   *         order that are defined.
-   */
-  public List<DataSchema> topLevelDataSchemas()
-  {
-    return Collections.unmodifiableList(_topLevelDataSchemas);
-  }
-
-  /**
    * Dump the top level schemas.
    *
    * @return a textual dump of the top level schemas.
    */
   public String schemasToString()
   {
-    return SchemaToJsonEncoder.schemasToJson(_topLevelDataSchemas, JsonBuilder.Pretty.SPACES);
+    return SchemaToJsonEncoder.schemasToJson(topLevelDataSchemas(), JsonBuilder.Pretty.SPACES);
   }
 
   /**
@@ -193,7 +167,7 @@ public class SchemaParser extends AbstractDataParser
       DataSchema schema = parseObject(o);
       if (schema != null)
       {
-        _topLevelDataSchemas.add(schema);
+        addTopLevelSchema(schema);
       }
     }
   }
@@ -328,57 +302,6 @@ public class SchemaParser extends AbstractDataParser
   public UnionDataSchema parseUnion(DataList list)
   {
     return dataListToDataSchema(list);
-  }
-
-  /**
-   * Look for {@link DataSchema} with the specified name.
-   *
-   * @param fullName to lookup.
-   * @return the {@link DataSchema} if lookup was successful else return null.
-   */
-  public DataSchema lookupName(String fullName)
-  {
-    DataSchema schema = DataSchemaUtil.typeStringToPrimitiveDataSchema(fullName);
-    if (schema == null)
-    {
-      schema = _resolver.findDataSchema(fullName, errorMessageBuilder());
-    }
-    return schema;
-  }
-
-  /**
-   * Lookup a name to obtain a {@link DataSchema}.
-   *
-   * The name may identify a {@link NamedDataSchema} obtained or a primitive type.
-   *
-   * @param name to lookup.
-   * @return the {@link DataSchema} of a primitive or named type
-   *         if the name can be resolved, else return null.
-   */
-  protected DataSchema stringToDataSchema(String name)
-  {
-    DataSchema schema = null;
-    // Either primitive or name
-    String fullName = computeFullName(name);
-    DataSchema found = lookupName(fullName);
-    if (found == null && !name.equals(fullName))
-    {
-      found = lookupName(name);
-    }
-    if (found == null)
-    {
-      StringBuilder sb = startErrorMessage(name).append("\"").append(name).append("\"");
-      if (!name.equals(fullName))
-      {
-        sb.append(" or \"").append(fullName).append("\"");
-      }
-      sb.append(" cannot be resolved.\n");
-    }
-    else
-    {
-      schema = found;
-    }
-    return schema;
   }
 
   /**
@@ -925,64 +848,6 @@ public class SchemaParser extends AbstractDataParser
   }
 
   /**
-   * Bind name and aliases to {@link NamedDataSchema}.
-   *
-   * @param name to bind.
-   * @param aliasNames to bind.
-   * @param schema to be bound to the name.
-   * @return true if all names are bound to the specified {@link NamedDataSchema}.
-   */
-  protected boolean bindNameToSchema(Name name, List<Name> aliasNames, NamedDataSchema schema)
-  {
-    boolean ok = true;
-    ok &= bindNameToSchema(name, schema);
-    if (aliasNames != null)
-    {
-      for (Name aliasName : aliasNames)
-      {
-       ok &= bindNameToSchema(aliasName, schema);
-      }
-    }
-    return ok;
-  }
-
-  /**
-   * Bind a name to {@link NamedDataSchema}.
-   *
-   * @param name to bind.
-   * @param schema to be bound to the name.
-   * @return true if name is bound to the specified {@link NamedDataSchema}.
-   */
-  public boolean bindNameToSchema(Name name, NamedDataSchema schema)
-  {
-    boolean ok = true;
-    String fullName = name.getFullName();
-    if (name.isEmpty())
-    {
-      ok = false;
-    }
-    if (ok && DataSchemaUtil.typeStringToPrimitiveDataSchema(fullName) != null)
-    {
-      startErrorMessage(name).append("\"").append(fullName).append("\" is a pre-defined type and cannot be redefined.\n");
-      ok = false;
-    }
-    if (ok)
-    {
-      DataSchema found = _resolver.existingDataSchema(name.getFullName());
-      if (found != null)
-      {
-        startErrorMessage(name).append("\"").append(name.getFullName()).append("\" already defined as " + found + ".\n");
-        ok = false;
-      }
-      else
-      {
-        _resolver.bindNameToSchema(name, schema, getLocation());
-      }
-    }
-    return ok;
-  }
-
-  /**
    * Parse a {@link DataMap} to obtain aliases.
    *
    * @param map to parse.
@@ -1086,69 +951,10 @@ public class SchemaParser extends AbstractDataParser
     return type;
   }
 
-  /**
-   * Set the current namespace.
-   *
-   * Current namespace is used to compute the full name from an unqualified name.
-   *
-   * @param namespace to set as current namespace.
-   */
-  public void setCurrentNamespace(String namespace)
-  {
-    _currentNamespace = namespace;
-  }
-
-  /**
-   * Get the current namespace.
-   *
-   * @return the current namespace.
-   */
-  public String getCurrentNamespace()
-  {
-    return _currentNamespace;
-  }
-
-  /**
-   * Compute the full name from a name.
-   *
-   * If the name identifies a primitive type, return the name.
-   * If the name is unqualified, the full name is computed by
-   * pre-pending the current namespace and "." to the input name.
-   * If the name is a full name, i.e. it contains a ".", then
-   * return the name.
-   *
-   * @param name as input to compute the full name.
-   * @return the computed full name.
-   */
-  public String computeFullName(String name)
-  {
-    String fullname;
-    DataSchema schema = DataSchemaUtil.typeStringToPrimitiveDataSchema(name);
-    if (schema != null)
-    {
-      fullname = name;
-    }
-    else if (Name.isFullName(name) || getCurrentNamespace().isEmpty())
-    {
-      fullname = name;
-    }
-    else
-    {
-      fullname = getCurrentNamespace() + "." + name;
-    }
-    return fullname;
-  }
-
   @Override
   public StringBuilder errorMessageBuilder()
   {
     return _errorMessageBuilder;
-  }
-
-  @Override
-  public Map<Object, DataLocation> dataLocationMap()
-  {
-    return _dataLocationMap;
   }
 
   public static final ValidationOptions getDefaultSchemaParserValidationOptions()
@@ -1156,14 +962,6 @@ public class SchemaParser extends AbstractDataParser
     return new ValidationOptions(RequiredMode.CAN_BE_ABSENT_IF_HAS_DEFAULT, CoercionMode.NORMAL);
   }
 
-  /**
-   * Current namespace, used to determine full name from unqualified name.
-   */
-  private String _currentNamespace = "";
-
-  private final List<DataSchema> _topLevelDataSchemas = new ArrayList<DataSchema>();
-  private final DataSchemaResolver _resolver;
-  private final Map<Object, DataLocation> _dataLocationMap = new IdentityHashMap<Object, DataLocation>();
-  private StringBuilder _errorMessageBuilder = new StringBuilder();
   private ValidationOptions _validationOptions = getDefaultSchemaParserValidationOptions();
+  private StringBuilder _errorMessageBuilder = new StringBuilder();
 }

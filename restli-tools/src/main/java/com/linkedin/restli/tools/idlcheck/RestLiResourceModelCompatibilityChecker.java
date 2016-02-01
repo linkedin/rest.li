@@ -142,7 +142,7 @@ public class RestLiResourceModelCompatibilityChecker
   {
     _prevRestspecPath = prevRestspecPath;
     _currRestspecPath = currRestspecPath;
-    
+
     Stack<Object> path = new Stack<Object>();
     path.push("");
 

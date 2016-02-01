@@ -72,7 +72,6 @@ public class TemplateSpecGenerator
   private static final String ARRAY_SUFFIX = "Array";
   private static final String MAP_SUFFIX = "Map";
   private static final String[] SPECIAL_SUFFIXES = {ARRAY_SUFFIX, MAP_SUFFIX};
-  private static final String _templatePackageName = DataTemplate.class.getPackage().getName();
 
   private final Collection<ClassTemplateSpec> _classTemplateSpecs = new HashSet<ClassTemplateSpec>();
   /**
@@ -94,6 +93,8 @@ public class TemplateSpecGenerator
   private final Map<DataSchema, CustomInfoSpec> _immediateCustomMap = new IdentityHashMap<DataSchema, CustomInfoSpec>();
 
   private final DataSchemaResolver _schemaResolver;
+  private final String _customTypeLanguage;
+  private final String _templatePackageName;
 
   /**
    * Return Java class name for a {@link NamedDataSchema}.
@@ -117,9 +118,15 @@ public class TemplateSpecGenerator
 
   public TemplateSpecGenerator(DataSchemaResolver schemaResolver)
   {
-    _schemaResolver = schemaResolver;
+    this(schemaResolver, JAVA_PROPERTY, DataTemplate.class.getPackage().getName());
   }
 
+  public TemplateSpecGenerator(DataSchemaResolver schemaResolver, String customTypeLanguage, String templatePackageName)
+  {
+    _schemaResolver = schemaResolver;
+    _customTypeLanguage = customTypeLanguage;
+    _templatePackageName = templatePackageName;
+  }
   /**
    * @return location of the {@link ClassTemplateSpec} is originated, most likely the pdsc file that defines it
    */
@@ -418,47 +425,46 @@ public class TemplateSpecGenerator
    */
   private CustomClasses getCustomClasses(DataSchema schema)
   {
+    return getCustomClasses(schema, _customTypeLanguage);
+  }
+
+  public static CustomClasses getCustomClasses(DataSchema schema, String customTypeLanguage)
+  {
     CustomClasses customClasses = null;
     final Map<String, Object> properties = schema.getProperties();
-    final Object java = properties.get(JAVA_PROPERTY);
-    if (java != null)
-    {
-      if (java.getClass() != DataMap.class)
-      {
-        throw new IllegalArgumentException(schema + " has \"java\" property that is not a DataMap");
-      }
-      final DataMap map = (DataMap) java;
-      final Object custom = map.get(CLASS_PROPERTY);
-      if (custom != null)
-      {
-        if (custom.getClass() != String.class)
-        {
-          throw new IllegalArgumentException(schema + " has \"java\" property with \"class\" that is not a string");
+    if (customTypeLanguage != null) {
+      final Object java = properties.get(customTypeLanguage);
+      if (java != null) {
+        if (java.getClass() != DataMap.class) {
+          throw new IllegalArgumentException(schema + " has \"" + customTypeLanguage + "\" property that is not a DataMap");
         }
-        // a custom class specification has been found
-        customClasses = new CustomClasses();
-        customClasses.customClass = new ClassTemplateSpec();
-        customClasses.customClass.setFullName((String) custom);
-        if (!allowCustomClass(schema))
-        {
-          throw new IllegalArgumentException(schema + " cannot have custom class binding");
+        final DataMap map = (DataMap) java;
+        final Object custom = map.get(CLASS_PROPERTY);
+        if (custom != null) {
+          if (custom.getClass() != String.class) {
+            throw new IllegalArgumentException(schema + " has \"" + customTypeLanguage + "\" property with \"class\" that is not a string");
+          }
+          // a custom class specification has been found
+          customClasses = new CustomClasses();
+          customClasses.customClass = new ClassTemplateSpec();
+          customClasses.customClass.setFullName((String) custom);
+          if (!allowCustomClass(schema)) {
+            throw new IllegalArgumentException(schema + " cannot have custom class binding");
+          }
         }
-      }
-      // check for coercer class
-      final Object coercerClass = map.get(COERCER_CLASS_PROPERTY);
-      if (coercerClass != null)
-      {
-        if (coercerClass.getClass() != String.class)
-        {
-          throw new IllegalArgumentException(schema + " has \"java\" property with \"coercerClass\" that is not a string");
+        // check for coercer class
+        final Object coercerClass = map.get(COERCER_CLASS_PROPERTY);
+        if (coercerClass != null) {
+          if (coercerClass.getClass() != String.class) {
+            throw new IllegalArgumentException(schema + " has \"" + customTypeLanguage + "\" property with \"coercerClass\" that is not a string");
+          }
+          if (customClasses == null) {
+            throw new IllegalArgumentException(schema + " has \"" + customTypeLanguage + "\" property with \"coercerClass\" but does not have \"class\" property");
+          }
+          // a custom class specification has been found
+          customClasses.customCoercerClass = new ClassTemplateSpec();
+          customClasses.customCoercerClass.setFullName((String) coercerClass);
         }
-        if (customClasses == null)
-        {
-          throw new IllegalArgumentException(schema + " has \"java\" property with \"coercerClass\" but does not have \"class\" property");
-        }
-        // a custom class specification has been found
-        customClasses.customCoercerClass = new ClassTemplateSpec();
-        customClasses.customCoercerClass.setFullName((String) coercerClass);
       }
     }
     return customClasses;
