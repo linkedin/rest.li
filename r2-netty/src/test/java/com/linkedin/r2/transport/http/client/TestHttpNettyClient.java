@@ -34,6 +34,8 @@ import io.netty.channel.Channel;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.handler.codec.EncoderException;
 import io.netty.handler.codec.TooLongFrameException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicReference;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -626,6 +628,105 @@ public class TestHttpNettyClient
     TransportCallback<RestResponse> callback = new TransportCallbackAdapter<RestResponse>(cb);
     client.restRequest(r, new RequestContext(), new HashMap<String, String>(), callback);
     cb.get(30, TimeUnit.SECONDS);
+  }
+
+  @Test
+  public void testFailBackoff() throws Exception
+  {
+    final int WARM_UP = 10;
+    final int N = 5;
+    final int MAX_RATE_LIMITING_PERIOD = 500;
+
+    final CountDownLatch warmUpLatch = new CountDownLatch(WARM_UP);
+    final CountDownLatch latch = new CountDownLatch(N);
+    final AtomicReference<Boolean> isShutdown = new AtomicReference<>(false);
+
+    AsyncPool<Channel> testPool = new AsyncPoolImpl<>("test pool",
+        new AsyncPool.Lifecycle<Channel>()
+        {
+          @Override
+          public void create(Callback<Channel> callback)
+          {
+            if (warmUpLatch.getCount() > 0)
+            {
+              warmUpLatch.countDown();
+            }
+            else
+            {
+              latch.countDown();
+            }
+            callback.onError(new Throwable("Oops..."));
+          }
+
+          @Override
+          public boolean validateGet(Channel obj)
+          {
+            return false;
+          }
+
+          @Override
+          public boolean validatePut(Channel obj)
+          {
+            return false;
+          }
+
+          @Override
+          public void destroy(Channel obj, boolean error, Callback<Channel> callback)
+          {
+
+          }
+
+          @Override
+          public PoolStats.LifecycleStats getStats()
+          {
+            return null;
+          }
+        },
+        200,
+        30000,
+        _scheduler,
+        Integer.MAX_VALUE,
+        AsyncPoolImpl.Strategy.MRU,
+        0,
+        new ExponentialBackOffRateLimiter(0,
+            MAX_RATE_LIMITING_PERIOD,
+            Math.max(10, MAX_RATE_LIMITING_PERIOD / 32),
+            _scheduler)
+     );
+    HttpNettyClient client = new HttpNettyClient(address -> testPool, _scheduler, 500, 500, 1024 * 1024 * 2);
+
+    final RestRequest r = new RestRequestBuilder(URI.create("http://localhost:8080/")).setMethod("GET").build();
+    final ExecutorService executor = Executors.newSingleThreadExecutor();
+    executor.execute(() ->
+    {
+      while (!isShutdown.get())
+      {
+        try
+        {
+          FutureCallback<RestResponse> callback = new FutureCallback<>();
+          client.restRequest(r, new RequestContext(), new HashMap<>(), new TransportCallbackAdapter<RestResponse>(callback));
+          callback.get();
+        }
+        catch (Exception e)
+        {
+          // ignore
+        }
+      }
+    });
+
+    // First ensure a bunch fail to get the rate limiting going
+    warmUpLatch.await(120, TimeUnit.SECONDS);
+    // Now we should be rate limited
+    long start = System.currentTimeMillis();
+    System.err.println("Starting at " + start);
+    long lowTolerance = N * MAX_RATE_LIMITING_PERIOD * 4 / 5;
+    long highTolerance = N * MAX_RATE_LIMITING_PERIOD * 5 / 4;
+    Assert.assertTrue(latch.await(highTolerance, TimeUnit.MILLISECONDS), "Should have finished within " + highTolerance + "ms");
+    long elapsed = System.currentTimeMillis() - start;
+    Assert.assertTrue(elapsed > lowTolerance, "Should have finished after " + lowTolerance + "ms (took " + elapsed +")");
+    // shutdown everything
+    isShutdown.set(true);
+    executor.shutdown();
   }
 
   private static class NoCreations implements ChannelPoolFactory

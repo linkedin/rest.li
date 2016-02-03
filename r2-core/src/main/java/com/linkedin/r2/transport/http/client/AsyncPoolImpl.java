@@ -482,7 +482,6 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
   {
     if(bad)
     {
-      _rateLimiter.incrementPeriod();
       synchronized(_lock)
       {
         _totalBadDestroyed++;

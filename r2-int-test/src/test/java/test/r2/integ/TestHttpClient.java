@@ -23,24 +23,15 @@ package test.r2.integ;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
-import java.io.IOException;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import java.util.concurrent.atomic.AtomicReference;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
@@ -168,97 +159,6 @@ public class TestHttpClient
     client.shutdown(callback);
     callback.get();
   }
-
-  // Disabled this test for now because due to VMWare/Solaris x86 bugs, ScheduledExecutor
-  // does not work correctly on the hudson builds.  Reenable it when we move our Hudson jobs
-  // to a correctly functioning operating system.
-  @Test
-  public void testFailBackoff() throws Exception
-  {
-    final int WARM_UP = 10;
-    final int N = 5;
-    final int REQUEST_TIMEOUT = 1000;
-
-    // Specify the get timeout; we know the max rate will be half the get timeout
-    final TransportClient transportClient =
-        new HttpClientFactory().getClient(Collections.singletonMap(HttpClientFactory.HTTP_REQUEST_TIMEOUT,
-            Integer.toString(REQUEST_TIMEOUT)));
-    final Client client = new TransportClientAdapter(transportClient, _restOverStream);
-
-    final ServerSocket ss = new ServerSocket();
-    ss.bind(null);
-    final CountDownLatch warmUpLatch = new CountDownLatch(WARM_UP);
-    final CountDownLatch latch = new CountDownLatch(N);
-    final AtomicReference<Boolean> isShutdown = new AtomicReference<Boolean>(false);
-
-    Thread t = new Thread(new Runnable()
-    {
-      @Override
-      public void run()
-      {
-        try
-        {
-          while(!isShutdown.get())
-          {
-            Socket s = ss.accept();
-            s.close();
-            if (warmUpLatch.getCount() > 0)
-            {
-              warmUpLatch.countDown();
-            }
-            else
-            {
-              latch.countDown();
-            }
-            System.err.println("!!! Got a connect, " + latch.getCount() + " to go!");
-          }
-        }
-        catch (IOException e)
-        {
-          e.printStackTrace();
-        }
-      }
-    });
-    t.start();
-
-    final RestRequest r = new RestRequestBuilder(URI.create("http://localhost:" + ss.getLocalPort() + "/")).setMethod("GET").build();
-    final ExecutorService executor = Executors.newSingleThreadExecutor();
-    executor.execute(new Runnable()
-    {
-      @Override
-      public void run()
-      {
-        while (!isShutdown.get())
-        {
-          try
-          {
-            FutureCallback<RestResponse> callback = new FutureCallback<RestResponse>();
-            client.restRequest(r, callback);
-            callback.get();
-          }
-          catch (Exception e)
-          {
-            // ignore
-          }
-        }
-      }
-    });
-
-    // First ensure a bunch fail to get the rate limiting going
-    warmUpLatch.await(120, TimeUnit.SECONDS);
-    // Now we should be rate limited
-    long start = System.currentTimeMillis();
-    System.err.println("Starting at " + start);
-    long lowTolerance = N * REQUEST_TIMEOUT / 2 * 4 / 5;
-    long highTolerance = N * REQUEST_TIMEOUT / 2 * 5 / 4;
-    Assert.assertTrue(latch.await(highTolerance, TimeUnit.MILLISECONDS), "Should have finished within " + highTolerance + "ms");
-    long elapsed = System.currentTimeMillis() - start;
-    Assert.assertTrue(elapsed > lowTolerance, "Should have finished after " + lowTolerance + "ms (took " + elapsed +")");
-    // shutdown everything
-    isShutdown.set(true);
-    executor.shutdown();
-  }
-
 
   @Test
   public void testSimpleURI() throws Exception
