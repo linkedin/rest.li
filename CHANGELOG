@@ -1,3 +1,7 @@
+5.0.9
+-----
+
+
 5.0.8
 -----
 (RB=611897)
@@ -11,6 +15,10 @@ Compare ReadOnly and CreateOnly paths properly in RestLiAnnotationReader.
 
 (RB=650205)
 Add support for alternate schema parsers by introducing PegasusSchemaParser and DataSchemaParserFactory interface.
+
+(RB=653619)
+Fix a bug in R2 client where a valid connection close can lead to
+rate-limiting logic being applied to subsequent connection attempts.
 
 5.0.7
 -----
