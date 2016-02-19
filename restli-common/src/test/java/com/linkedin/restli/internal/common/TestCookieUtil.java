@@ -86,7 +86,7 @@ public class TestCookieUtil
   public void testInvalidCookieFromClient()
   {
     cookieA.setComment("nothing important");
-    List<String> encodeStrs = Collections.singletonList("$Domain=.linkedin.com");
+    List<String> encodeStrs = Collections.singletonList("$Domain=.linkedin.com; $Port=80;  $Path=/; $Version=0;");
     List<HttpCookie> cookieList = CookieUtil.decodeCookies(encodeStrs);
 
     Assert.assertEquals(0, cookieList.size());

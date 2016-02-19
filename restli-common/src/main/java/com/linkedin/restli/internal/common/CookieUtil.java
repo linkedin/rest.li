@@ -126,7 +126,7 @@ public class CookieUtil
         {
           String name = nameValuePair.substring(0, index).trim();
           String value = stripOffSurrounding(nameValuePair.substring(index + 1).trim());
-          if (nameValuePair.charAt(0) != '$')
+          if (name.charAt(0) != '$')
           {
             if (cookieToBeAdd != null)
             {
