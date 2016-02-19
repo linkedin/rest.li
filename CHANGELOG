@@ -11,6 +11,8 @@ Fix a bug when detecting cookies name with $ sign at the beginning. Check $ sign
 ------
 (RB=653970)
 Write missing d2 configurations into zookeeper.
+(RB=665296)
+Relax the SSL Context/Parameter checking for d2.
 
 5.0.9
 -----
