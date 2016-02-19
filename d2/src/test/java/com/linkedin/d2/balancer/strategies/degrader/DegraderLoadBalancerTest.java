@@ -148,7 +148,7 @@ public class DegraderLoadBalancerTest
     points.put(uri1, 100);
     points.put(uri2, 50);
     points.put(uri3, 120);
-    RingFactory<URI> ringFactory = new DegraderRingFactory<>();
+    RingFactory<URI> ringFactory = new DegraderRingFactory<>(config);
     TestClock clock = new TestClock();
 
     List<TrackerClient> clients = createTrackerClient(3, clock, null);
@@ -535,7 +535,8 @@ public class DegraderLoadBalancerTest
               config.getGlobalStepUp(),
               config.getGlobalStepDown(),
               config.getMinClusterCallCountHighWaterMark(),
-              config.getMinClusterCallCountLowWaterMark());
+              config.getMinClusterCallCountLowWaterMark(),
+              config.getHashRingPointCleanUpRate());
     }
 
     @Override
@@ -1829,7 +1830,7 @@ public class DegraderLoadBalancerTest
     DegraderLoadBalancerStrategyV3 strategy = getStrategy(myConfig);
     List<TrackerClient> clients = new ArrayList<TrackerClient>();
     long clusterCallCount = 15;
-    RingFactory<URI> ringFactory = new DegraderRingFactory<>();
+    RingFactory<URI> ringFactory = new DegraderRingFactory<>(new DegraderLoadBalancerStrategyConfig(1L));
 
     clients.add(getClient(URI.create("http://test.linkedin.com:3242/fdsaf")));
     clients.add(getClient(URI.create("http://test.linkedin.com:3243/fdsaf")));
@@ -1958,7 +1959,7 @@ public class DegraderLoadBalancerTest
     current = new DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState(1,
             testClock._currentTimeMillis,
             true,
-            new DegraderRingFactory<URI>(),
+            new DegraderRingFactory<URI>(new DegraderLoadBalancerStrategyConfig(1L)),
             new HashMap<URI, Integer>(),
             DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState.Strategy.LOAD_BALANCE,
             0.0,
@@ -2033,7 +2034,8 @@ public class DegraderLoadBalancerTest
                     DegraderLoadBalancerStrategyConfig.DEFAULT_GLOBAL_STEP_UP,
                     DegraderLoadBalancerStrategyConfig.DEFAULT_GLOBAL_STEP_DOWN,
                     DegraderLoadBalancerStrategyConfig.DEFAULT_CLUSTER_MIN_CALL_COUNT_HIGH_WATER_MARK,
-                    DegraderLoadBalancerStrategyConfig.DEFAULT_CLUSTER_MIN_CALL_COUNT_LOW_WATER_MARK),
+                    DegraderLoadBalancerStrategyConfig.DEFAULT_CLUSTER_MIN_CALL_COUNT_LOW_WATER_MARK,
+                    DegraderLoadBalancerStrategyConfig.DEFAULT_HASHRING_POINT_CLEANUP_RATE),
             "DegraderLoadBalancerTest", null);
     List<TrackerClient> clients = new ArrayList<TrackerClient>(NUM_SERVERS);
 

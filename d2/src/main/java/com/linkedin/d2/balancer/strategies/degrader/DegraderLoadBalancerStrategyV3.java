@@ -1024,7 +1024,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
                                            new ReentrantLock(),
                                            new PartitionDegraderLoadBalancerState
                                                                   (-1, _config.getClock().currentTimeMillis(), false,
-                                                                   new DegraderRingFactory<>(),
+                                                                   new DegraderRingFactory<>(_config),
                                                                    new HashMap<URI, Integer>(),
                                                                    PartitionDegraderLoadBalancerState.Strategy.
                                                                        LOAD_BALANCE,

@@ -61,9 +61,9 @@ public class DegraderRingFactoryTest
   public void testPointsCleanUp()
           throws URISyntaxException
   {
-    Map<String, Integer> pointsMp = buildPointsMap(5);
+    Map<String, Integer> pointsMp = buildPointsMap(6);
 
-    DegraderRingFactory<String> ringFactory = new DegraderRingFactory<>();
+    DegraderRingFactory<String> ringFactory = new DegraderRingFactory<>(new DegraderLoadBalancerStrategyConfig(1L));
     Ring<String>  ring = ringFactory.createRing(pointsMp);
     assertNotNull(ring.get(1000));
 
@@ -72,15 +72,16 @@ public class DegraderRingFactoryTest
 
     ring = ringFactory.createRing(pointsMp);
     assertNotNull(ring.get(1000));
-    // factory should keep all the points
+    // factory should keep all the points -- the default MinUnusedEntry = 3
     Map<String, List<Point<String>>> pointsMap = ringFactory.getPointsMap();
-    assertEquals(pointsMap.size(), 5);
+    assertEquals(pointsMap.size(), 6);
 
     pointsMp.remove("http://test.linkedin.com:10004");
+    pointsMp.remove("http://test.linkedin.com:10005");
     ring = ringFactory.createRing(pointsMp);
     assertNotNull(ring.get(1000));
 
-    // factory should clean up and build new points
+    // factory should clean up and build new points because unused entry == 3
     pointsMap = ringFactory.getPointsMap();
     assertEquals(pointsMap.size(), 2);
   }
@@ -91,7 +92,7 @@ public class DegraderRingFactoryTest
   {
     Map<String, Integer> pointsMp = buildPointsMap(19);
 
-    DegraderRingFactory<String> ringFactory = new DegraderRingFactory<>();
+    DegraderRingFactory<String> ringFactory = new DegraderRingFactory<>(new DegraderLoadBalancerStrategyConfig(1L));
     Ring<String>  ring = ringFactory.createRing(pointsMp);
     assertNotNull(ring.get(1000));
 

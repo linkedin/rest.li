@@ -100,6 +100,12 @@
       "type": "boolean",
       "doc": "Whether to update load balancer strategy state only at each update interval.",
       "default": false
+    },
+    {
+      "name": "hashRingPointCleanupRate",
+      "type": "double",
+      "doc": "The highest ratio of unused entries over the total entries of the Ring points that d2 maintains.",
+      "optional": true
     }
   ]
 }

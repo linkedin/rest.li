@@ -21,6 +21,7 @@ import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
+import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyConfig;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderRingFactory;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -98,7 +99,7 @@ public class ConsistentHashRingTest
       counts.put("test" + i, new AtomicInteger());
     }
 
-    DegraderRingFactory<String> ringFactory = new DegraderRingFactory<>();
+    DegraderRingFactory<String> ringFactory = new DegraderRingFactory<>(new DegraderLoadBalancerStrategyConfig(1L));
     ConsistentHashRing<String> test = (ConsistentHashRing<String>)ringFactory.createRing(many);
 
     assertNotNull(test.get(0));

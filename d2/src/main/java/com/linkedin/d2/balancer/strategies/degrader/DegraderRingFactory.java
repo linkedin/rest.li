@@ -50,16 +50,18 @@ public class DegraderRingFactory<T> implements RingFactory<T>
   private static final Charset UTF8 = Charset.forName("UTF-8");
   private static final Logger _log = LoggerFactory.getLogger(DegraderRingFactory.class);
 
-  private Map<T, List<Point<T>>> _points;
+  private Map<T, List<Point<T>>> _ringPoints; // map from object t --> list of points for this object
   private Map<T, byte[]> _hashCodes;  // saved hashing keys
   private final MessageDigest _md;
   // threshold to clean up old factory points. See clearPoints function
-  private final double POINTS_CLEANUP_RATE = 0.2;
+  private final DegraderLoadBalancerStrategyConfig _config;
+  private final int POINTS_CLEANUP_MIN_UNUSED_ENTRY = 3;
 
-  public DegraderRingFactory()
+  public DegraderRingFactory(final DegraderLoadBalancerStrategyConfig config)
   {
-    _points = new HashMap<T, List<Point<T>>>();
+    _ringPoints = new HashMap<T, List<Point<T>>>();
     _hashCodes = new HashMap<T, byte[]>();
+    _config = config;
 
     try {
       _md = MessageDigest.getInstance("MD5");
@@ -93,7 +95,7 @@ public class DegraderRingFactory<T> implements RingFactory<T>
 
   public Map<T, List<Point<T>>> getPointsMap()
   {
-    return _points;
+    return _ringPoints;
   }
 
   /**
@@ -104,34 +106,23 @@ public class DegraderRingFactory<T> implements RingFactory<T>
    * follow individual URI changes as well because: 1. it is costly. 2. when a service is bounced, the URI
    * is gone and comes back again, so it makes sense if the URI can be kept around for some time.
    *
-   * The following heuristic will be used to decide if the Points need to recycled all together:
-   * 1. If entry number <= 15, 3 unused entries lead to a recycle.
-   * 2. If entry number > 15, 20% or up to 20 of the entry difference trigger a recycle.
+   * We decided to use the number of unused entries as the criteria -- the more unused entries, the higher
+   * probability some of them are dead. When the unused entry number reaches up to the given threshold,
+   * it's time to do the cleanup. For simplicity, all points will be purged and re-generated.
+   *
+   * HTTP_LB_HASHRING_POINT_CLEANUP_RATE defines the ratio of unused entries against the total entries. It
+   * is configurable from cfg2. Also POINTS_CLEANUP_MIN_UNUSED_ENTRY is used to make sure we do not waste
+   * time on clean up when the total host number is small.
    *
    * @param size: the size of new URI list
    */
   private void clearPoints(int size)
   {
-    boolean doClear = false;
-    int unusedEntries = _points.size() - size;
-    if (_points.size() <= 15)
+    int unusedEntries = _ringPoints.size() - size;
+    int unusedEntryThreshold = (int)(_ringPoints.size() * _config.getHashRingPointCleanUpRate());
+    if (unusedEntries > Math.max(unusedEntryThreshold, POINTS_CLEANUP_MIN_UNUSED_ENTRY))
     {
-      if (unusedEntries >= 3)
-      {
-        doClear = true;
-      }
-    }
-    else
-    {
-      if (unusedEntries > _points.size() * POINTS_CLEANUP_RATE || unusedEntries >= 20)
-      {
-        doClear = true;
-      }
-    }
-
-    if (doClear)
-    {
-      _points.clear();
+      _ringPoints.clear();
     }
   }
 
@@ -143,14 +134,14 @@ public class DegraderRingFactory<T> implements RingFactory<T>
    */
   private List<Point<T>> getPointList(T t, int numDesiredPoints)
   {
-    List<Point<T>> pointList = _points.get(t);
+    List<Point<T>> pointList = _ringPoints.get(t);
     // extend the point number to the times of 4
     numDesiredPoints = ((numDesiredPoints + 3) / 4) * 4;
 
     if (pointList == null)
     {
       pointList = new ArrayList<>(numDesiredPoints);
-      _points.put(t, pointList);
+      _ringPoints.put(t, pointList);
     }
     else if (numDesiredPoints <= pointList.size())
     {

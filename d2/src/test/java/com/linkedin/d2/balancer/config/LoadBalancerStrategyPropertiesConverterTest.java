@@ -51,6 +51,7 @@ public class LoadBalancerStrategyPropertiesConverterTest
     final hashMethodEnum hashMethod = hashMethodEnum.URI_REGEX;
     final hashConfigType hashConfig = new hashConfigType();
     final StringArray regexes = new StringArray();
+    final Double hashringPointCleanupRate = 0.2;
     regexes.add("+231{w+)");
     hashConfig.setUriRegexes(regexes);
     Map<String, Object> loadBalancerStrategyProperties = new HashMap<>();
@@ -66,6 +67,7 @@ public class LoadBalancerStrategyPropertiesConverterTest
     loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_CLUSTER_MIN_CALL_COUNT_HIGH_WATER_MARK, minCallCountHighWaterMark.toString());
     loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_CLUSTER_MIN_CALL_COUNT_LOW_WATER_MARK, minCallCountLowWaterMark.toString());
     loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_HASH_METHOD, DegraderLoadBalancerStrategyV3.HASH_METHOD_URI_REGEX);
+    loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_HASHRING_POINT_CLEANUP_RATE, hashringPointCleanupRate.toString());
     Map<String, Object> hashConfigMap = new HashMap<>();
     hashConfigMap.put(URIRegexHash.KEY_REGEXES, regexes.stream().collect(Collectors.toList()));
     loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_HASH_CONFIG, hashConfigMap);
@@ -83,7 +85,8 @@ public class LoadBalancerStrategyPropertiesConverterTest
             .setMinCallCountHighWaterMark(minCallCountHighWaterMark)
             .setMinCallCountLowWaterMark(minCallCountLowWaterMark)
             .setHashMethod(hashMethod)
-            .setHashConfig(hashConfig);
+            .setHashConfig(hashConfig)
+            .setHashRingPointCleanupRate(hashringPointCleanupRate);
 
 
     Assert.assertEquals(LoadBalancerStrategyPropertiesConverter.toProperties(d2LoadBalancerStrategyProperties), loadBalancerStrategyProperties);

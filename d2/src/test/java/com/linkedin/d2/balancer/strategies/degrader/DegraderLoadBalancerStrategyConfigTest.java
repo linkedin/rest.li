@@ -40,6 +40,7 @@ public class DegraderLoadBalancerStrategyConfigTest
     double httpLowWaterMark = 555.5;
     double httpGlobalStepUp = 0.17;
     double httpGlobalStepDown = 0.21;
+    double hashRingPointCleanUpRate = 0.1;
     Map<String,Object> httpHashConfig = new HashMap<String,Object>();
     List<String> httpRegexes = new LinkedList<String>();
     httpRegexes.add("httphashToken=(\\d+)");
@@ -63,6 +64,7 @@ public class DegraderLoadBalancerStrategyConfigTest
     properties.put(PropertyKeys.HTTP_LB_LOW_WATER_MARK, httpLowWaterMark);
     properties.put(PropertyKeys.HTTP_LB_GLOBAL_STEP_DOWN, httpGlobalStepDown);
     properties.put(PropertyKeys.HTTP_LB_GLOBAL_STEP_UP, httpGlobalStepUp);
+    properties.put(PropertyKeys.HTTP_LB_HASHRING_POINT_CLEANUP_RATE, hashRingPointCleanUpRate);
 
     //now test if there's http, then http config should take more priority
     DegraderLoadBalancerStrategyConfig config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(properties);
@@ -78,14 +80,14 @@ public class DegraderLoadBalancerStrategyConfigTest
     assertEquals(config.getGlobalStepDown(), httpGlobalStepDown);
     assertEquals(config.getGlobalStepUp(), httpGlobalStepUp);
     assertEquals(config.getHashConfig(), httpHashConfig);
+    assertEquals(config.getHashRingPointCleanUpRate(), hashRingPointCleanUpRate);
 
     //test if there's no config, will the default config value set
     properties.clear();
     config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(properties);
     assertEquals(config.getUpdateIntervalMs(), DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS);
     assertEquals(config.isUpdateOnlyAtInterval(), DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_ONLY_AT_INTERVAL);
-    assertEquals(config.getPointsPerWeight(),
-                 DegraderLoadBalancerStrategyConfig.DEFAULT_POINTS_PER_WEIGHT);
+    assertEquals(config.getPointsPerWeight(), DegraderLoadBalancerStrategyConfig.DEFAULT_POINTS_PER_WEIGHT);
     assertNull(config.getHashMethod());
     assertEquals(config.getInitialRecoveryLevel(), DegraderLoadBalancerStrategyConfig.DEFAULT_INITIAL_RECOVERY_LEVEL);
     assertEquals(config.getRingRampFactor(), DegraderLoadBalancerStrategyConfig.DEFAULT_RAMP_FACTOR);
@@ -94,5 +96,6 @@ public class DegraderLoadBalancerStrategyConfigTest
     assertEquals(config.getGlobalStepDown(), DegraderLoadBalancerStrategyConfig.DEFAULT_GLOBAL_STEP_DOWN);
     assertEquals(config.getGlobalStepUp(), DegraderLoadBalancerStrategyConfig.DEFAULT_GLOBAL_STEP_UP);
     assertEquals(config.getHashConfig(), Collections.emptyMap());
+    assertEquals(config.getHashRingPointCleanUpRate(), DegraderLoadBalancerStrategyConfig.DEFAULT_HASHRING_POINT_CLEANUP_RATE);
   }
 }

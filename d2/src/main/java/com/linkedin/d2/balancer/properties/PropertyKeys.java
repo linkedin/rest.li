@@ -83,6 +83,7 @@ public class PropertyKeys
   public static final String HTTP_LB_GLOBAL_STEP_DOWN = "http.loadBalancer.globalStepDown";
   public static final String HTTP_LB_CLUSTER_MIN_CALL_COUNT_HIGH_WATER_MARK = "http.loadBalancer.clusterMinCallCount.highWaterMark";
   public static final String HTTP_LB_CLUSTER_MIN_CALL_COUNT_LOW_WATER_MARK = "http.loadBalancer.clusterMinCallCount.lowWaterMark";
+  public static final String HTTP_LB_HASHRING_POINT_CLEANUP_RATE = "http.loadBalancer.hashRingPointCleanupRate";
 
   //used by service metadata properties
   public static final String SERVICE_FOLLOW_REDIRECTION_MAX_HOP = "followRedirection.maxHop";

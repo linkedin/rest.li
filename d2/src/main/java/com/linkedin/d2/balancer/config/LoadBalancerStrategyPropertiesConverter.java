@@ -83,6 +83,10 @@ public class LoadBalancerStrategyPropertiesConverter
     {
       map.put(PropertyKeys.HTTP_LB_CLUSTER_MIN_CALL_COUNT_HIGH_WATER_MARK, config.getMinCallCountHighWaterMark().toString());
     }
+    if (config.hasHashRingPointCleanupRate())
+    {
+      map.put(PropertyKeys.HTTP_LB_HASHRING_POINT_CLEANUP_RATE, config.getHashRingPointCleanupRate().toString());
+    }
     if (config.hasMinCallCountLowWaterMark())
     {
       map.put(PropertyKeys.HTTP_LB_CLUSTER_MIN_CALL_COUNT_LOW_WATER_MARK, config.getMinCallCountLowWaterMark().toString());
@@ -166,6 +170,11 @@ public class LoadBalancerStrategyPropertiesConverter
     {
       config.setMinCallCountLowWaterMark(
           coerce(properties.get(PropertyKeys.HTTP_LB_CLUSTER_MIN_CALL_COUNT_LOW_WATER_MARK), Long.class));
+    }
+    if (properties.containsKey(PropertyKeys.HTTP_LB_HASHRING_POINT_CLEANUP_RATE))
+    {
+      config.setHashRingPointCleanupRate(
+          coerce(properties.get(PropertyKeys.HTTP_LB_HASHRING_POINT_CLEANUP_RATE), Double.class));
     }
     if (properties.containsKey(PropertyKeys.HTTP_LB_HASH_METHOD))
     {
