@@ -1,6 +1,11 @@
-5.0.11
+5.0.12
 ------
 
+
+5.0.11
+------
+(RB=664750)
+Fix a bug when detecting cookies name with $ sign at the beginning. Check $ sign in the trimed name.
 
 5.0.10
 ------
