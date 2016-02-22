@@ -1246,6 +1246,8 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
                 throw new IllegalStateException(
                     "SSL enabled but required SSLContext and SSLParameters" + "were not both present.");
               }
+              // Do not create the transport client for https.
+              continue;
             }
           }
           else

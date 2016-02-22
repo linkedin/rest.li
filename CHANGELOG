@@ -1,6 +1,7 @@
 5.0.12
 ------
-
+(RB=665715)
+Do not create https transport client if SSL context is not available
 
 5.0.11
 ------
