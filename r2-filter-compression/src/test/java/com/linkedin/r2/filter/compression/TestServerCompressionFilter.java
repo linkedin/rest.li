@@ -39,7 +39,7 @@ import java.util.Map;
  */
 public class TestServerCompressionFilter
 {
-  private static final String ACCEPT_COMPRESSIONS = "gzip, deflate, bzip2, snappy";
+  private static final String ACCEPT_COMPRESSIONS = "gzip, deflate, bzip2, snappy, x-snappy-framed";
 
   class HeaderCaptureFilter implements NextFilter<RestRequest, RestResponse>
   {
@@ -100,7 +100,8 @@ public class TestServerCompressionFilter
         {"unknown;q=1.00,bzip2;q=0.70", 0, EncodingType.BZIP2},
         {"gzip;q=1.00,deflate;q=0.80,bzip2;q=0.60,snappy;q=0.40", 1000, null},
         {"snappy", 1000, null},
-        {"unknown;q=1.00,bzip2;q=0.70", 1000, null}
+        {"unknown;q=1.00,bzip2;q=0.70", 1000, null},
+        {"x-snappy-framed", 0, EncodingType.SNAPPY_FRAMED}
     };
   }
 

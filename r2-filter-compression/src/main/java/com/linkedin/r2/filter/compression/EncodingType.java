@@ -30,6 +30,7 @@ public enum EncodingType
   DEFLATE(new DeflateCompressor()),
   BZIP2(new Bzip2Compressor()),
   SNAPPY(new SnappyCompressor()),
+  SNAPPY_FRAMED(new SnappyFramedCompressor()),
   IDENTITY("identity"),
   ANY("*");
 

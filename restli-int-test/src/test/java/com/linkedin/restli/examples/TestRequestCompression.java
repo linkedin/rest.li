@@ -103,12 +103,12 @@ public class TestRequestCompression extends RestLiIntegrationTest
             {
               throw new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST, "Request is not compressed when it should be.");
             }
-            else if (!contentEncodingHeader.equals("snappy"))
+            else if (!contentEncodingHeader.equals("x-snappy-framed"))
             {
               // Request should be compressed with the first encoding the client can compress with,
               // which is always snappy in this test.
               throw new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST,
-                  "Request is compressed with " + contentEncodingHeader + " instead of snappy.");
+                  "Request is compressed with " + contentEncodingHeader + " instead of x-snappy-framed.");
             }
           }
           else
@@ -168,7 +168,7 @@ public class TestRequestCompression extends RestLiIntegrationTest
     CompressionConfig tinyThresholdConfig = new CompressionConfig(tiny);
     CompressionConfig hugeThresholdConfig = new CompressionConfig(huge);
 
-    String encodings = "unsupportedEncoding, snappy, gzip";
+    String encodings = "unsupportedEncoding, x-snappy-framed, snappy, gzip";
 
     RestliRequestOptions forceOnOption = new RestliRequestOptionsBuilder().setProtocolVersionOption(ProtocolVersionOption.USE_LATEST_IF_AVAILABLE)
         .setRequestCompressionOverride(CompressionOption.FORCE_ON).build();

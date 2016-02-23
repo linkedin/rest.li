@@ -121,7 +121,7 @@ public class HttpClientFactory implements TransportClientFactory
   public static final int DEFAULT_MAX_HEADER_SIZE = 8 * 1024;
   public static final int DEFAULT_MAX_CHUNK_SIZE = 8 * 1024;
   public static final EncodingType[] DEFAULT_RESPONSE_CONTENT_ENCODINGS
-      = {EncodingType.GZIP, EncodingType.SNAPPY, EncodingType.DEFLATE, EncodingType.BZIP2};
+      = {EncodingType.GZIP, EncodingType.SNAPPY, EncodingType.SNAPPY_FRAMED, EncodingType.DEFLATE, EncodingType.BZIP2};
 
   public static final StreamEncodingType[] DEFAULT_STREAM_RESPONSE_CONTENT_ENCODINGS
       = {StreamEncodingType.GZIP,

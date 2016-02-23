@@ -73,7 +73,7 @@ public class TestResponseCompression extends RestLiIntegrationTest
 {
   // Headers for sending test information to the server.
   private static final String EXPECTED_ACCEPT_ENCODING = "Expected-Accept-Encoding";
-  private static final String DEFAULT_ACCEPT_ENCODING = "gzip;q=1.00,snappy;q=0.80,deflate;q=0.60,bzip2;q=0.40";
+  private static final String DEFAULT_ACCEPT_ENCODING = "gzip;q=1.00,snappy;q=0.83,x-snappy-framed;q=0.67,deflate;q=0.50,bzip2;q=0.33";
   private static final String NONE = "None";
   private static final String EXPECTED_COMPRESSION_THRESHOLD = "Expected-Response-Compression-Threshold";
   private static final String SERVICE_NAME = "service1";
@@ -120,7 +120,7 @@ public class TestResponseCompression extends RestLiIntegrationTest
     }
     // The default compression threshold is between tiny and huge threshold.
     final FilterChain fc = FilterChains.empty().addLastRest(new TestCompressionServer.SaveContentEncodingHeaderFilter())
-        .addLastRest(new ServerCompressionFilter("snappy,gzip,deflate", new CompressionConfig(10000)))
+        .addLastRest(new ServerCompressionFilter("x-snappy-framed,snappy,gzip,deflate", new CompressionConfig(10000)))
         .addLastRest(new SimpleLoggingFilter());
     super.init(Arrays.asList(new TestHelperFilter()), null, fc, false);
   }
@@ -252,7 +252,8 @@ public class TestResponseCompression extends RestLiIntegrationTest
             {"gzip,snappy", "gzip;q=1.00,snappy;q=0.67", "gzip"},
             {"deflate,gzip,snappy", "deflate;q=1.00,gzip;q=0.75,snappy;q=0.50", "deflate"},
             {"sdch,gzip,snappy", "gzip;q=1.00,snappy;q=0.67", "gzip"}, // client doesn't support sdch
-            {"bzip2,snappy", "bzip2;q=1.00,snappy;q=0.67", "snappy"} // server doesn't support bzip2
+            {"bzip2,snappy", "bzip2;q=1.00,snappy;q=0.67", "snappy"}, // server doesn't support bzip2
+            {"bzip2,x-snappy-framed", "bzip2;q=1.00,x-snappy-framed;q=0.67", "x-snappy-framed"} // server doesn't support bzip2
         };
   }
 

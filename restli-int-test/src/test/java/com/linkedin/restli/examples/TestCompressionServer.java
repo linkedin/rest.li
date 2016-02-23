@@ -28,6 +28,7 @@ import com.linkedin.r2.filter.compression.DeflateCompressor;
 import com.linkedin.r2.filter.compression.GzipCompressor;
 import com.linkedin.r2.filter.compression.ServerCompressionFilter;
 import com.linkedin.r2.filter.compression.SnappyCompressor;
+import com.linkedin.r2.filter.compression.SnappyFramedCompressor;
 import com.linkedin.r2.filter.logging.SimpleLoggingFilter;
 import com.linkedin.r2.filter.message.rest.RestFilter;
 import com.linkedin.r2.message.RequestContext;
@@ -136,6 +137,7 @@ public class TestCompressionServer extends RestLiIntegrationTest
     return new Object[][]
       {
         { new SnappyCompressor() },
+        { new SnappyFramedCompressor() },
         { new Bzip2Compressor() },
         { new GzipCompressor() },
         { new DeflateCompressor()}
@@ -241,6 +243,7 @@ public class TestCompressionServer extends RestLiIntegrationTest
         {"gzip", "gzip"},
         {"deflate", "deflate"},
         {"snappy", "snappy"},
+        {"x-snappy-framed", "x-snappy-framed"},
         {"bzip2", "bzip2"},
         {"deflate, nonexistentcompression", "deflate"},
         {"blablabla, dEflate", "deflate"},
