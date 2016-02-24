@@ -120,14 +120,7 @@ public class StreamExecutionCallback implements TransportCallback<StreamResponse
         wrappedResponse = TransportResponseImpl.success(newResponse, response.getWireAttributes());
       }
 
-      trySchedule(new Runnable()
-      {
-        @Override
-        public void run()
-        {
-          callback.onResponse(wrappedResponse);
-        }
-      });
+      trySchedule(() -> callback.onResponse(wrappedResponse));
     }
     else
     {
@@ -140,7 +133,7 @@ public class StreamExecutionCallback implements TransportCallback<StreamResponse
   {
     private WriteHandle _wh;
     private ReadHandle _rh;
-    private volatile int _outstanding;
+    private int _outstanding;
     private volatile boolean _aborted;
 
     private final EntityStream _underlying;
@@ -171,10 +164,7 @@ public class StreamExecutionCallback implements TransportCallback<StreamResponse
     {
       if (!_aborted)
       {
-        trySchedule(new Runnable()
-        {
-          @Override
-          public void run()
+        trySchedule(() ->
           {
             _outstanding--;
             _wh.write(data);
@@ -185,41 +175,30 @@ public class StreamExecutionCallback implements TransportCallback<StreamResponse
               _outstanding += diff;
             }
           }
-        });
+        );
       }
     }
 
     @Override
     public void onDone()
     {
-      trySchedule(new Runnable()
-      {
-        @Override
-        public void run()
-        {
-          _wh.done();
-        }
-      });
+      trySchedule(_wh::done);
     }
 
     @Override
     public void onError(final Throwable e)
     {
-      trySchedule(new Runnable()
-      {
-        @Override
-        public void run()
-        {
-          _wh.error(e);
-        }
-      });
+      trySchedule(() -> _wh.error(e));
     }
 
     @Override
     public void onWritePossible()
     {
-      _outstanding = _wh.remaining();
-      _rh.request(_outstanding);
+      trySchedule(() ->
+        {
+          _outstanding = _wh.remaining();
+          _rh.request(_outstanding);
+        });
     }
 
     @Override
