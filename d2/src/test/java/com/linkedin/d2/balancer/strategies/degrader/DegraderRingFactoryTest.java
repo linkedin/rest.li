@@ -22,10 +22,12 @@ import com.linkedin.d2.balancer.util.hashing.Ring;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import java.util.Random;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
@@ -113,6 +115,45 @@ public class DegraderRingFactoryTest
     // factory should clean up and build new points
     pointsMap = ringFactory.getPointsMap();
     assertEquals(pointsMap.size(), 15);
+  }
+
+  @Test(groups = { "small", "back-end" })
+  public void testRandomChangePoints()
+      throws URISyntaxException
+  {
+    int pointNum = 5;
+    int loopNum = 100;
+    Map<String, Integer> pointsMp = buildPointsMap(pointNum);
+    Map<String, Integer> maxPoints = new HashMap<>(pointNum);
+    Random random = new Random();
+
+    for (String uri : pointsMp.keySet()) {
+      maxPoints.put(uri, 100);
+    }
+
+    DegraderRingFactory<String> ringFactory = new DegraderRingFactory<>(new DegraderLoadBalancerStrategyConfig(1L));
+    Ring<String>  ring = ringFactory.createRing(pointsMp);
+    assertNotNull(ring.get(1000));
+
+    for (int i = 0; i < loopNum; ++i) {
+      // new point list
+      for (String uri : pointsMp.keySet()) {
+        int newPoints = random.nextInt(200);
+        if (newPoints == 0) {
+          continue;
+        }
+        pointsMp.put(uri, newPoints);
+        if (newPoints > maxPoints.get(uri)) {
+          maxPoints.put(uri, ((newPoints + 3) / 4) * 4);
+        }
+      }
+      ring = ringFactory.createRing(pointsMp);
+      assertNotNull(ring.get(1000));
+      Map<String, List<Point<String>>> pointList = ringFactory.getPointsMap();
+      for (String uri : pointsMp.keySet()) {
+        assertEquals ((int)maxPoints.get(uri), pointList.get(uri).size());
+      }
+    }
   }
 }
 

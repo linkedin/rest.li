@@ -1,5 +1,7 @@
 5.0.18
 ------
+(RB=649172)
+Improve memory and performance efficiency for LoadBalancerState and fix the dirty bits in the hasing in ConsistentHashRing
 
 5.0.17
 ------
