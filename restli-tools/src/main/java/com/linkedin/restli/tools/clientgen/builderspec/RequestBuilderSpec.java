@@ -35,11 +35,11 @@ import java.util.Map;
 public abstract class RequestBuilderSpec extends BuilderSpec
 {
   private RootBuilderMethodSpec _rootBuilderMethod;
-  protected List<String> _pathKeys;
-  protected Map<String, String> _keyPathTypes;
-  protected ClassTemplateSpec _keyClass;
-  protected ClassTemplateSpec _valueClass;
-  protected List<PathKeyBindingMethodSpec> _pathKeyMethods = new ArrayList<PathKeyBindingMethodSpec>();
+  private List<String> _pathKeys;
+  private Map<String, String> _keyPathTypes;
+  private ClassTemplateSpec _keyClass;
+  private ClassTemplateSpec _valueClass;
+  private List<PathKeyBindingMethodSpec> _pathKeyMethods = new ArrayList<PathKeyBindingMethodSpec>();
   private List<QueryParamBindingMethodSpec> _queryParamMethods = new ArrayList<QueryParamBindingMethodSpec>();
   private DataMap _annotations;
 
@@ -109,11 +109,6 @@ public abstract class RequestBuilderSpec extends BuilderSpec
     return _pathKeyMethods;
   }
 
-  public void setPathKeyMethods(List<PathKeyBindingMethodSpec> pathKeyMethods)
-  {
-    _pathKeyMethods = pathKeyMethods;
-  }
-
   public void addPathKeyMethod(PathKeyBindingMethodSpec pathKeyMethod)
   {
     _pathKeyMethods.add(pathKeyMethod);
@@ -122,11 +117,6 @@ public abstract class RequestBuilderSpec extends BuilderSpec
   public List<QueryParamBindingMethodSpec> getQueryParamMethods()
   {
     return _queryParamMethods;
-  }
-
-  public void setQueryParamMethods(List<QueryParamBindingMethodSpec> queryParamMethods)
-  {
-    this._queryParamMethods = queryParamMethods;
   }
 
   public void addQueryParamMethod(QueryParamBindingMethodSpec queryParamMethod)
@@ -142,5 +132,10 @@ public abstract class RequestBuilderSpec extends BuilderSpec
   public void setAnnotations(DataMap annotations)
   {
     this._annotations = annotations;
+  }
+
+  public boolean hasBindingMethods()
+  {
+    return !_pathKeyMethods.isEmpty() || !_queryParamMethods.isEmpty();
   }
 }

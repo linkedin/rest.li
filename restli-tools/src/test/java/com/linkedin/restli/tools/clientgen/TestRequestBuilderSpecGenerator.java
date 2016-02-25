@@ -156,8 +156,10 @@ public class TestRequestBuilderSpecGenerator
       }
       else if (spec instanceof RestMethodBuilderSpec)
       {
-        ResourceMethod method = ((RestMethodBuilderSpec) spec).getResourceMethod();
+        RestMethodBuilderSpec builderSpec = (RestMethodBuilderSpec) spec;
+        ResourceMethod method = builderSpec.getResourceMethod();
         Assert.assertTrue(methodMap.containsKey(method.toString()));
+        Assert.assertFalse(builderSpec.hasBindingMethods());
       }
     }
   }
@@ -251,6 +253,7 @@ public class TestRequestBuilderSpecGenerator
     Assert.assertNotNull(finderBuilder);
     Assert.assertEquals("search", finderBuilder.getFinderName());
     Assert.assertNotNull(finderBuilder.getQueryParamMethods());
+    Assert.assertTrue(finderBuilder.hasBindingMethods());
     Assert.assertEquals(finderBuilder.getMetadataType().getFullName(),
                         "com.linkedin.restli.tools.test.TestRecord");
     Assert.assertTrue(finderBuilder.getQueryParamMethods().size() == 1);
@@ -267,6 +270,14 @@ public class TestRequestBuilderSpecGenerator
     for (ActionBuilderSpec spec : actionBuilders)
     {
       Assert.assertTrue(spec.getActionName().equals("someAction") || spec.getActionName().equals("anotherAction") || spec.getActionName().equals("voidAction"));
+      if (spec.getActionName().equals("voidAction"))
+      {
+        Assert.assertFalse(spec.hasBindingMethods());
+      }
+      else
+      {
+        Assert.assertTrue(spec.hasBindingMethods());
+      }
     }
 
     // assert get method builder query method
@@ -278,6 +289,7 @@ public class TestRequestBuilderSpecGenerator
       {
         Assert.assertNotNull(spec.getQueryParamMethods());
         Assert.assertTrue(spec.getQueryParamMethods().size() == 1);
+        Assert.assertTrue(spec.hasBindingMethods());
         QueryParamBindingMethodSpec getQuery = spec.getQueryParamMethods().get(0);
         Assert.assertEquals(getQuery.getParamName(), "message");
         Assert.assertEquals(getQuery.getMethodName(), "messageParam");
@@ -297,6 +309,7 @@ public class TestRequestBuilderSpecGenerator
         List<PathKeyBindingMethodSpec> pathKeys = spec.getPathKeyMethods();
         Assert.assertNotNull(pathKeys);
         Assert.assertTrue(pathKeys.size() == 1);
+        Assert.assertTrue(spec.hasBindingMethods());
         PathKeyBindingMethodSpec pathKeyMethod = pathKeys.get(0);
         Assert.assertEquals(pathKeyMethod.getPathKey(), "testCollectionId");
         Assert.assertEquals(pathKeyMethod.getMethodName(), "testCollectionIdKey");
@@ -305,6 +318,7 @@ public class TestRequestBuilderSpecGenerator
       else if (spec.getResourceMethod() == ResourceMethod.CREATE)
       {
         Assert.assertEquals(spec.getQueryParamMethods().size(), 1);
+        Assert.assertTrue(spec.hasBindingMethods());
         QueryParamBindingMethodSpec queryParam = spec.getQueryParamMethods().get(0);
         Assert.assertEquals(queryParam.getParamName(), "isNullId");
         Assert.assertEquals(queryParam.isOptional(), true);

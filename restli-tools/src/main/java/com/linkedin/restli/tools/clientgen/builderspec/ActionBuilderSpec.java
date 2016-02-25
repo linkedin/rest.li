@@ -66,4 +66,10 @@ public class ActionBuilderSpec extends RequestBuilderSpec
   {
     _actionParamMethods.add(actionParamMethod);
   }
+
+  @Override
+  public boolean hasBindingMethods()
+  {
+    return super.hasBindingMethods() || !_actionParamMethods.isEmpty();
+  }
 }
