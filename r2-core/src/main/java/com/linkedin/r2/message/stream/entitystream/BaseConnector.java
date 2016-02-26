@@ -10,10 +10,11 @@ import com.linkedin.data.ByteString;
  */
 public class BaseConnector implements Reader, Writer
 {
-  private WriteHandle _wh;
-  private ReadHandle _rh;
+  private volatile WriteHandle _wh;
+  private volatile ReadHandle _rh;
   private int _outstanding;
   private volatile boolean _aborted;
+  private volatile Throwable _error;
 
   public BaseConnector()
   {
@@ -59,14 +60,28 @@ public class BaseConnector implements Reader, Writer
   @Override
   public void onError(Throwable e)
   {
-    _wh.error(e);
+    if (_wh != null)
+    {
+      _wh.error(e);
+    }
+    else
+    {
+      _error = e;
+    }
   }
 
   @Override
   public void onWritePossible()
   {
-    _outstanding = _wh.remaining();
-    _rh.request(_outstanding);
+    if (_error == null)
+    {
+      _outstanding = _wh.remaining();
+      _rh.request(_outstanding);
+    }
+    else
+    {
+      _wh.error(_error);
+    }
   }
 
   @Override
