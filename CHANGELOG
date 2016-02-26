@@ -1,6 +1,11 @@
-5.0.15
+5.0.16
 ------
 
+
+5.0.15
+------
+(RB=670021)
+check for writehandle not null in connector
 
 5.0.14
 ------
