@@ -385,14 +385,14 @@ public class CompatibilityChecker
 
     if (newerAdded.isEmpty() == false)
     {
-      appendMessage(CompatibilityMessage.Impact.BREAKS_NEW_READER,
+      appendMessage(CompatibilityMessage.Impact.BREAKS_OLD_READER,
                     "new union added members %s",
                     newerAdded);
     }
 
     if (olderAdded.isEmpty() == false)
     {
-      appendMessage(CompatibilityMessage.Impact.BREAKS_OLD_READER,
+      appendMessage(CompatibilityMessage.Impact.BREAKS_NEW_READER,
                     "new union removed members %s",
                     olderAdded);
     }

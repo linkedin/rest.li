@@ -1,7 +1,7 @@
 5.0.17
 ------
-
-
+(RB=670945)
+Fix compatibility impact for added/removed fields in union
 
 5.0.16
 ------

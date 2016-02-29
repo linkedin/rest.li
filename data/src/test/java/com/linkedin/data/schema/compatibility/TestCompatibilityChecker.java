@@ -409,36 +409,36 @@ public class TestCompatibilityChecker
         "[ \"string\" ]",
         _dataAndSchema,
         true,
-        "ERROR :: BREAKS_OLD_READER :: /union :: new union removed members int, float"
+        "ERROR :: BREAKS_NEW_READER :: /union :: new union removed members int, float"
       },
       {
         "[ \"string\" ]",
         "[ \"int\", \"string\", \"float\" ]",
         _dataAndSchema,
         true,
-        "ERROR :: BREAKS_NEW_READER :: /union :: new union added members int, float"
+        "ERROR :: BREAKS_OLD_READER :: /union :: new union added members int, float"
       },
       {
         "[ ]",
         "[ \"int\" ]",
         _dataAndSchema,
         true,
-        "ERROR :: BREAKS_NEW_READER :: /union :: new union added members int"
+        "ERROR :: BREAKS_OLD_READER :: /union :: new union added members int"
       },
       {
         "[ \"int\" ]",
         "[ ]",
         _dataAndSchema,
         true,
-        "ERROR :: BREAKS_OLD_READER :: /union :: new union removed members int"
+        "ERROR :: BREAKS_NEW_READER :: /union :: new union removed members int"
       },
       {
         "[ \"string\", \"double\" ]",
         "[ \"int\", \"string\", \"float\" ]",
         _dataAndSchema,
         true,
-        "ERROR :: BREAKS_OLD_READER :: /union :: new union removed members double",
-        "ERROR :: BREAKS_NEW_READER :: /union :: new union added members int, float"
+        "ERROR :: BREAKS_NEW_READER :: /union :: new union removed members double",
+        "ERROR :: BREAKS_OLD_READER :: /union :: new union added members int, float"
       },
       {
         "[ { \"type\" : \"enum\", \"name\" : \"a.b.Enum\", \"symbols\" : [ \"A\", \"B\", \"C\", \"D\" ] } ]",
@@ -474,14 +474,14 @@ public class TestCompatibilityChecker
         "{ \"type\" : \"typeref\", \"name\" : \"a.b.Union\", \"ref\" : [ \"string\" ] }",
         _dataAndSchema,
         true,
-        "ERROR :: BREAKS_OLD_READER :: /a.b.Union/ref/union :: new union removed members int, float"
+        "ERROR :: BREAKS_NEW_READER :: /a.b.Union/ref/union :: new union removed members int, float"
       },
       {
         "{ \"type\" : \"typeref\", \"name\" : \"a.b.Union\", \"ref\" : [ \"string\", \"float\" ] }",
         "{ \"type\" : \"typeref\", \"name\" : \"a.b.Union\", \"ref\" : [ \"int\", \"string\", \"float\" ] }",
         _dataAndSchema,
         true,
-        "ERROR :: BREAKS_NEW_READER :: /a.b.Union/ref/union :: new union added members int"
+        "ERROR :: BREAKS_OLD_READER :: /a.b.Union/ref/union :: new union added members int"
       }
     };
 
