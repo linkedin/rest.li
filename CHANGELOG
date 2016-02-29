@@ -1,6 +1,12 @@
-5.0.16
+5.0.17
 ------
 
+
+
+5.0.16
+------
+(RB=668458)
+Add hasBindingMethods to RequestBuilderSpec to support generating request builders based on type binding information.
 
 5.0.15
 ------
