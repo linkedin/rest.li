@@ -17,6 +17,8 @@
 package com.linkedin.data.codec;
 
 import com.linkedin.data.Data;
+
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -96,5 +98,53 @@ public class TestBufferChain
         assertEquals(stringGetWithLength, value);
       }
     }
+  }
+
+  @Test
+  public void testOffsetZero()
+  {
+    BufferChain buffer = new BufferChain();
+    assertEquals(buffer.offset(buffer.position(), buffer.position()), 0);
+  }
+
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void testOffsetNegative()
+  {
+    BufferChain buffer = new BufferChain();
+    BufferChain.Position startPosition = buffer.position();
+    // advance the buffer
+    buffer.putInt(0);
+    BufferChain.Position endPosition = buffer.position();
+    buffer.offset(endPosition, startPosition);
+  }
+
+  @Test
+  public void testPositiveOffset()
+  {
+    BufferChain buffer = new BufferChain();
+    BufferChain.Position startPosition = buffer.position();
+    // advance the buffer
+    buffer.putInt(0);
+    BufferChain.Position endPosition = buffer.position();
+    assertEquals(buffer.offset(startPosition, endPosition), Integer.BYTES);
+  }
+
+  @Test
+  public void testPositiveOffsetAcrossBuffers()
+  {
+    BufferChain buffer = new BufferChain(ByteOrder.nativeOrder(), Integer.BYTES * 4);
+    BufferChain.Position startPosition = buffer.position();
+
+    int numIntsToWrite = 5;
+    // advance the buffer, exhausting the first buffer in the chain
+    for (int index = 0; index < numIntsToWrite; ++index)
+    {
+      buffer.putInt(0);
+    }
+
+    BufferChain.Position endPosition = buffer.position();
+
+    assertEquals(endPosition._index, 1);
+    assertEquals(buffer.offset(startPosition, endPosition), Integer.BYTES * numIntsToWrite);
   }
 }

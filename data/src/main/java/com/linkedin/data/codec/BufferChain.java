@@ -287,16 +287,17 @@ public class BufferChain
       throw new IllegalArgumentException("Position does not apply to this BufferChain");
     }
     if ((startPos._index > endPos._index) ||
-        (startPos._index == endPos._index && startPos._position >= endPos._position))
+        (startPos._index == endPos._index && startPos._position > endPos._position))
     {
-      throw new IllegalArgumentException("Start position is not less than end position");
+      throw new IllegalArgumentException("Start position is greater than end position");
     }
     int sum;
     if (startPos._index == endPos._index)
     {
       sum = (endPos._position - startPos._position);
     }
-    else {
+    else
+    {
       int index = startPos._index;
       sum = _bufferList.get(index).limit() - startPos._position;
       index++;

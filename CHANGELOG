@@ -2,6 +2,8 @@
 ------
 (RB=670945)
 Fix compatibility impact for added/removed fields in union
+(RB=671103)
+Offset method in buffer chain should return 0 if start and end are the same
 
 5.0.16
 ------
