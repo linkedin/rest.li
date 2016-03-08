@@ -32,6 +32,7 @@ import com.linkedin.restli.server.filter.FilterResourceModel;
 
 import java.lang.reflect.Method;
 import java.net.URI;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -184,5 +185,11 @@ public class FilterRequestContextInternalImpl implements FilterRequestContextInt
   public Method getMethod()
   {
     return _resourceMethod.getMethod();
+  }
+
+  @Override
+  public Map<String, Object> getRequestContextLocalAttrs()
+  {
+    return Collections.unmodifiableMap(_context.getRawRequestContext().getLocalAttrs());
   }
 }

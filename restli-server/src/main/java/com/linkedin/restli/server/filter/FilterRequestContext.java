@@ -20,6 +20,7 @@ package com.linkedin.restli.server.filter;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.transform.filter.request.MaskTree;
+import com.linkedin.r2.message.RequestContext;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.server.PathKeys;
@@ -176,4 +177,12 @@ public interface FilterRequestContext
    * @return {@link Method}
    */
   Method getMethod();
+
+  /**
+   * Return the attributes from R2 RequestContext.
+   *
+   * @see RequestContext#getLocalAttrs()
+   * @return the attributes contained by RequestContext.
+   */
+  Map<String, Object> getRequestContextLocalAttrs();
 }

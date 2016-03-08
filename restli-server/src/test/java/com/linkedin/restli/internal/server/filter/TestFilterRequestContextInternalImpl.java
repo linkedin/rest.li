@@ -19,6 +19,7 @@ package com.linkedin.restli.internal.server.filter;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.transform.filter.request.MaskTree;
+import com.linkedin.r2.message.RequestContext;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
@@ -80,6 +81,10 @@ public class TestFilterRequestContextInternalImpl
     final ProtocolVersion protoVersion = AllProtocolVersions.BASELINE_PROTOCOL_VERSION;
     final DataMap queryParams = new DataMap();
     queryParams.put("Param1", "Val1");
+    final Map<String, Object> localAttrs = new HashMap<>();
+    localAttrs.put("Key1", "Val1");
+    final RequestContext r2RequestContext = new RequestContext();
+    r2RequestContext.putLocalAttr("Key1", "Val1");
 
     final String finderName = UUID.randomUUID().toString();
     final String actionName = UUID.randomUUID().toString();
@@ -100,6 +105,7 @@ public class TestFilterRequestContextInternalImpl
     when(context.getRequestURI()).thenReturn(requestUri);
     when(context.getRestliProtocolVersion()).thenReturn(protoVersion);
     when(context.getParameters()).thenReturn(queryParams);
+    when(context.getRawRequestContext()).thenReturn(r2RequestContext);
 
     FilterRequestContextInternalImpl filterContext = new FilterRequestContextInternalImpl(context, resourceMethod);
     Object spValue = new Object();
@@ -119,6 +125,7 @@ public class TestFilterRequestContextInternalImpl
     assertEquals(filterContext.getQueryParameters(), queryParams);
     assertEquals(filterContext.getActionName(), actionName);
     assertEquals(filterContext.getFinderName(), finderName);
+    assertEquals(filterContext.getRequestContextLocalAttrs(), localAttrs);
     assertNull(filterContext.getMethod());
     assertTrue(filterContext.getFilterScratchpad().get(spKey) == spValue);
     filterContext.getRequestHeaders().put("header2", "value2");
@@ -139,6 +146,7 @@ public class TestFilterRequestContextInternalImpl
     verify(context).getRequestURI();
     verify(context).getRestliProtocolVersion();
     verify(context).getParameters();
+    verify(context).getRawRequestContext();
     verify(resourceMethod).getFinderMetadataType();
     verifyNoMoreInteractions(context, resourceMethod, resourceModel);
   }
