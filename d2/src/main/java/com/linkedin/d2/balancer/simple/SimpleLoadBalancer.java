@@ -330,6 +330,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
       }
       catch (InterruptedException e)
       {
+        _log.error("got interrupt while waiting for a service to be registered", e);
         die(serviceName, "got interrupt while waiting for a service to be registered");
       }
     }
