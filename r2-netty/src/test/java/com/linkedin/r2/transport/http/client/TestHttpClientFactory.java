@@ -29,6 +29,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -308,7 +310,8 @@ public class TestHttpClientFactory
   {
     NioEventLoopGroup eventLoop = new NioEventLoopGroup();
     ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-    HttpClientFactory factory = getHttpClientFactory(eventLoop, true, scheduler, true);
+    ExecutorService callbackExecutor = Executors.newFixedThreadPool(1);
+    HttpClientFactory factory = getHttpClientFactory(eventLoop, true, scheduler, true, callbackExecutor, false);
 
     Client client = new TransportClientAdapter(factory.getClient(
             Collections.<String, Object>emptyMap()), restOverStream);
@@ -333,6 +336,7 @@ public class TestHttpClientFactory
 
     Assert.assertTrue(eventLoop.awaitTermination(30, TimeUnit.SECONDS), "Failed to shut down event-loop");
     Assert.assertTrue(scheduler.awaitTermination(60, TimeUnit.SECONDS), "Failed to shut down scheduler");
+    callbackExecutor.shutdown();
   }
 
   /**
@@ -447,11 +451,24 @@ public class TestHttpClientFactory
                                                         ScheduledExecutorService scheduler,
                                                         boolean shutdownScheduler)
   {
+    return getHttpClientFactory(eventLoopGroup, shutdownFactory, scheduler, shutdownScheduler,
+        Executors.newFixedThreadPool(1), true);
+  }
+
+  private static HttpClientFactory getHttpClientFactory(NioEventLoopGroup eventLoopGroup,
+                                                        boolean shutdownFactory,
+                                                        ScheduledExecutorService scheduler,
+                                                        boolean shutdownScheduler,
+                                                        ExecutorService callbackExecutor,
+                                                        boolean shutdownCallbackExecutor)
+  {
     return new HttpClientFactory.Builder()
         .setNioEventLoopGroup(eventLoopGroup)
         .setShutDownFactory(shutdownFactory)
         .setScheduleExecutorService(scheduler)
         .setShutdownScheduledExecutorService(shutdownScheduler)
+        .setCallbackExecutor(callbackExecutor)
+        .setShutdownCallbackExecutor(shutdownCallbackExecutor)
         .build();
   }
 }

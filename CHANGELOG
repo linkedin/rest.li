@@ -5,6 +5,9 @@
 ------
 (RB=649172)
 Improve memory and performance efficiency for LoadBalancerState and fix the dirty bits in the hasing in ConsistentHashRing
+(RB=684462)
+Fix a flaky r2 test where the callback executor is shutdown before entity
+stream of the response is read
 
 5.0.17
 ------
