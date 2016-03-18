@@ -173,9 +173,11 @@ public class QueryTunnelUtil
       requestBuilder.setEntity(ByteString.copy(os.toByteArray()));
     }
 
-    // Set the base uri, supply the original method in the override header, and change method to POST
+    // Set the base uri, supply the original method in the override header, set/update content length
+    // header to the new entity length, and change method to POST
     requestBuilder.setURI(newUri);
     requestBuilder.setHeader(HEADER_METHOD_OVERRIDE, requestBuilder.getMethod());
+    requestBuilder.setHeader(CONTENT_LENGTH, Integer.toString(requestBuilder.getEntity().length()));
     requestBuilder.setMethod(RestMethod.POST);
 
     return requestBuilder.build();

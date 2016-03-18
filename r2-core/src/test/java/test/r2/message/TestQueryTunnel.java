@@ -135,6 +135,35 @@ public class TestQueryTunnel
     Assert.assertEquals(encoded.getURI().toString(), "http://localhost:7279");
     Assert.assertTrue(encoded.getEntity().length() > 0);
     Assert.assertTrue(encoded.getHeader("Content-Type").startsWith("multipart/mixed"));
+    Assert.assertEquals(encoded.getHeader("Content-Length"), Integer.toString(encoded.getEntity().length()));
+
+    // Decode, and we should get the original request back
+    RequestContext requestContext = new RequestContext();
+    RestRequest decoded = decode(encoded, requestContext);
+    Assert.assertEquals(request.getURI(), decoded.getURI());
+    Assert.assertEquals(request.getMethod(), decoded.getMethod());
+    Assert.assertEquals(request.getEntity(), decoded.getEntity());
+    Assert.assertEquals(request.getHeader("Content-Type"), decoded.getHeader("Content-Type"));
+    Assert.assertTrue((Boolean) requestContext.getLocalAttr(R2Constants.IS_QUERY_TUNNELED));
+  }
+
+  @Test
+  public void testPostWithEntityAndContentLength() throws Exception
+  {
+    // Test a request with an entity and a query string, to be encoded as multipart/mixed
+    RestRequest request = new RestRequestBuilder(new URI("http://localhost:7279?q=one&x=10&y=15"))
+        .setMethod("POST")
+        .setEntity(new String("{\name\":\"value\"}").getBytes())
+        .setHeader("Content-Length", "15")
+        .setHeader("Content-Type", "application/json").build();
+
+    // Test Conversion, should have a multipart body
+    RestRequest encoded = encode(request, 0);
+    Assert.assertEquals(encoded.getMethod(), "POST");
+    Assert.assertEquals(encoded.getURI().toString(), "http://localhost:7279");
+    Assert.assertTrue(encoded.getEntity().length() > 0);
+    Assert.assertTrue(encoded.getHeader("Content-Type").startsWith("multipart/mixed"));
+    Assert.assertEquals(encoded.getHeader("Content-Length"), Integer.toString(encoded.getEntity().length()));
 
     // Decode, and we should get the original request back
     RequestContext requestContext = new RequestContext();
@@ -178,6 +207,7 @@ public class TestQueryTunnel
     Assert.assertEquals(request.getMethod(), tunneled.getMethod());
     Assert.assertEquals(request.getEntity(), tunneled.getEntity());
     Assert.assertEquals(request.getHeader("Content-Type"), tunneled.getHeader("Content-Type"));
+    Assert.assertEquals(request.getEntity().length(), Integer.parseInt(tunneled.getHeader("Content-Length")));
     Assert.assertTrue((Boolean) requestContext.getLocalAttr(R2Constants.IS_QUERY_TUNNELED));
   }
 
@@ -254,6 +284,7 @@ public class TestQueryTunnel
     Assert.assertEquals(encoded.getURI().toString(), "http://localhost:7279");
     Assert.assertTrue(encoded.getEntity().length() > 0);
     Assert.assertTrue(encoded.getHeader("Content-Type").startsWith("multipart/mixed"));
+    Assert.assertEquals(encoded.getHeader("Content-Length"), Integer.toString(encoded.getEntity().length()));
 
     // Decode and make sure we have the original request back
     RequestContext requestContext = new RequestContext();
@@ -263,6 +294,7 @@ public class TestQueryTunnel
     Assert.assertEquals(decoded.getEntity(), request.getEntity());
     Assert.assertTrue(encoded.getHeader("Content-Type").startsWith("multipart/mixed"));
     Assert.assertTrue((Boolean) requestContext.getLocalAttr(R2Constants.IS_QUERY_TUNNELED));
+    Assert.assertEquals(decoded.getHeader("Content-Length"), Integer.toString(request.getEntity().length()));
   }
 
   @Test
@@ -282,6 +314,7 @@ public class TestQueryTunnel
     Assert.assertEquals(encoded.getURI().toString(), "http://localhost:7279");
     Assert.assertTrue(encoded.getEntity().length() == query.length());
     Assert.assertEquals(encoded.getHeader("Content-Type"), "application/x-www-form-urlencoded");
+    Assert.assertEquals(encoded.getHeader("Content-Length"), Integer.toString(encoded.getEntity().length()));
 
     RequestContext requestContext = new RequestContext();
     RestRequest decoded = decode(encoded, requestContext);

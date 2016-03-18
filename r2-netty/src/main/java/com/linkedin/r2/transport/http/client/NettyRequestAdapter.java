@@ -16,7 +16,6 @@
 
 package com.linkedin.r2.transport.http.client;
 
-import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.transport.http.common.HttpConstants;
@@ -97,6 +96,14 @@ import java.util.Map;
 
     for (Map.Entry<String, String> entry : request.getHeaders().entrySet())
     {
+      // RFC 7230, section 3.3.2
+      //   A sender MUST NOT send a Content-Length header field in any message
+      //   that contains a Transfer-Encoding header field.
+      if (entry.getKey().equalsIgnoreCase(HttpHeaders.Names.CONTENT_LENGTH))
+      {
+        continue;
+      }
+
       nettyRequest.headers().set(entry.getKey(), entry.getValue());
     }
     nettyRequest.headers().set(HttpHeaders.Names.HOST, url.getAuthority());
