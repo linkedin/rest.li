@@ -27,8 +27,8 @@ import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.ResponseFuture;
 import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.common.ErrorResponse;
+import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ProtocolVersion;
-import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.client.ResponseFutureImpl;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.CookieUtil;
@@ -268,40 +268,16 @@ public class MockFailedResponseFutureBuilder<K, V extends RecordTemplate> extend
   private ResponseFuture<V> buildWithErrorResponse(ProtocolVersion protocolVersion)
   {
     int status = (_errorResponse.hasStatus()) ? _errorResponse.getStatus() : DEFAULT_HTTP_STATUS;
-    byte[] entity = mapToBytes(_errorResponse.data());
-
-    // The header indicating that this RestResponse is an ErrorResponse depends on the version of the Rest.li
-    // protocol being used.
-    String errorHeaderName;
-    if (protocolVersion.equals(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion()))
-    {
-      errorHeaderName = RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE;
-    }
-    else
-    {
-      errorHeaderName = RestConstants.HEADER_RESTLI_ERROR_RESPONSE;
-    }
-
-    Map<String, String> headers = new HashMap<String, String>();
-    if (getHeaders() != null)
-    {
-      headers.putAll(getHeaders());
-    }
-    headers.put(errorHeaderName, "true");
-    headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, protocolVersion.toString());
-    List<HttpCookie> cookies = getCookies() == null ? Collections.<HttpCookie>emptyList() : getCookies();
-
-    RestResponse restResponse = new RestResponseBuilder()
-        .setEntity(entity)
-        .setStatus(status)
-        .setHeaders(Collections.unmodifiableMap(headers))
-        .setCookies(Collections.unmodifiableList(CookieUtil.encodeCookies(cookies)))
-        .build();
 
     // create a RestLiResponseException and wrap it in an ExecutionException that will be thrown by the ResponseFuture
-    RestLiResponseException restLiResponseException = new RestLiResponseException(restResponse, null, _errorResponse);
-    ExecutionException executionException = new ExecutionException(restLiResponseException);
+    RestLiResponseException restLiResponseException = new MockRestliResponseExceptionBuilder()
+        .setErrorResponse(_errorResponse)
+        .setStatus(HttpStatus.fromCode(status))
+        .setCookies(getCookies() == null ? Collections.emptyList() : getCookies())
+        .setHeaders(getHeaders() == null ? new HashMap<>() : getHeaders())
+        .build();
 
+    ExecutionException executionException = new ExecutionException(restLiResponseException);
     Future<Response<V>> responseFuture = buildFuture(null, executionException);
     return new ResponseFutureImpl<V>(responseFuture, _errorHandlingBehavior);
   }
