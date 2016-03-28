@@ -26,6 +26,7 @@ import java.net.InetSocketAddress;
 import java.util.concurrent.CountDownLatch;
 import org.apache.commons.io.FileUtils;
 import org.apache.zookeeper.server.NIOServerCnxn;
+import org.apache.zookeeper.server.NIOServerCnxnFactory;
 import org.apache.zookeeper.server.ZooKeeperServer;
 
 /**
@@ -37,7 +38,7 @@ import org.apache.zookeeper.server.ZooKeeperServer;
 public class ZKServer
 {
   private volatile ZooKeeperServer _zk;
-  private volatile NIOServerCnxn.Factory _factory;
+  private volatile NIOServerCnxnFactory _factory;
   private final File _dataDir;
   private final File _logDir;
   private final int _port;
@@ -80,7 +81,8 @@ public class ZKServer
     _logDir = logDir;
     _port = port;
     _zk = new ZooKeeperServer(dataDir, logDir, 5000);
-    _factory = new NIOServerCnxn.Factory(new InetSocketAddress(port));
+    _factory = new NIOServerCnxnFactory();
+    _factory.configure(new InetSocketAddress(port), 60 /* default maximum client sockets */);
     _erase = erase;
 
   }
@@ -94,7 +96,6 @@ public class ZKServer
   {
     ensureDir(_dataDir);
     ensureDir(_logDir);
-    _zk.startup();
     _factory.startup(_zk);
   }
 
@@ -132,7 +133,8 @@ public class ZKServer
     shutdown(false);
 
     _zk = new ZooKeeperServer(_dataDir, _logDir, 5000);
-    _factory = new NIOServerCnxn.Factory(new InetSocketAddress(_port));
+    _factory = new NIOServerCnxnFactory();
+    _factory.configure(new InetSocketAddress(_port), 60);
 
     startup();
   }

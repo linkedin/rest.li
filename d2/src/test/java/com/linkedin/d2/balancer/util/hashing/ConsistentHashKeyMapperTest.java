@@ -40,6 +40,7 @@ import com.linkedin.d2.balancer.util.partitions.PartitionInfoProvider;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -258,13 +259,8 @@ public class ConsistentHashKeyMapperTest
       futures.add(executor.submit(runnables.get(i)));
     }
 
-    // wait for threads to finish
-    Thread.sleep(3000);
-
-    // every thread should have finished, otherwise there is a deadlock
-    for (int i = 0; i < numPartitions; i++)
-    {
-      Assert.assertTrue(futures.get(i).isDone());
+    for (Future future : futures) {
+      future.get(30, TimeUnit.SECONDS);
     }
   }
 

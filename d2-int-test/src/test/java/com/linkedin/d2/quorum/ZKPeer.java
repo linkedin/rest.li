@@ -27,10 +27,11 @@ import java.net.Socket;
 import java.nio.channels.ServerSocketChannel;
 import java.util.Map;
 
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.commons.io.FileUtils;
-import org.apache.zookeeper.server.NIOServerCnxn;
+import org.apache.zookeeper.server.NIOServerCnxnFactory;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
@@ -94,8 +95,8 @@ public class ZKPeer
                             Map<Long, QuorumServer> peersView,
                             FileTxnSnapLog fts) throws IOException
   {
-    NIOServerCnxn.Factory cnxnFactory =
-          new NIOServerCnxn.Factory(new InetSocketAddress("127.0.0.1", _clientPort), _maxClientCnxns);
+    NIOServerCnxnFactory cnxnFactory = new NIOServerCnxnFactory();
+    cnxnFactory.configure(new InetSocketAddress("127.0.0.1", _clientPort), _maxClientCnxns);
 
     _peer = new QuorumPeer();
     _peer.setClientPortAddress(new InetSocketAddress("127.0.0.1", _clientPort));
@@ -333,8 +334,8 @@ public class ZKPeer
 
         Field cnxnFactoryField = QuorumPeer.class.getDeclaredField("cnxnFactory");
         cnxnFactoryField.setAccessible(true);
-        NIOServerCnxn.Factory cnxnFactory =
-            (NIOServerCnxn.Factory) cnxnFactoryField.get(_peer);
+        NIOServerCnxnFactory cnxnFactory =
+            (NIOServerCnxnFactory) cnxnFactoryField.get(_peer);
         cnxnFactory.shutdown();
 
         Field ssField = cnxnFactory.getClass().getDeclaredField("ss");
@@ -360,8 +361,8 @@ public class ZKPeer
       Field cnxnFactoryField = ZooKeeperServer.class.getDeclaredField("serverCnxnFactory");
       cnxnFactoryField.setAccessible(true);
 
-      NIOServerCnxn.Factory cnxnFactory =
-          (NIOServerCnxn.Factory) cnxnFactoryField.get(zserver);
+      NIOServerCnxnFactory cnxnFactory =
+          (NIOServerCnxnFactory) cnxnFactoryField.get(zserver);
       cnxnFactory.shutdown();
 
       Field ssField = cnxnFactory.getClass().getDeclaredField("ss");
