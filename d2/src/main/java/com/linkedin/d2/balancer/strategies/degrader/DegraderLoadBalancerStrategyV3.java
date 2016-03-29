@@ -741,7 +741,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
                                             oldRecoveryMap,
                                             oldState.getServiceName(),
                                             oldState.getDegraderProperties(),
-                                            oldState.getCurrentClusterCallCount());
+                                            totalClusterCallCount);
 
       logState(oldState, newState, partitionId, config, trackerClientUpdaters);
 

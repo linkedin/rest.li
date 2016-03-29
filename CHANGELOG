@@ -1,5 +1,7 @@
 5.0.20
 ------
+(RB=692255)
+Fix a minor d2 update bug that affects the printout values in the logfile.
 
 5.0.19
 ------
