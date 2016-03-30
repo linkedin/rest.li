@@ -3,6 +3,10 @@
 (RB=692255)
 Fix a minor d2 update bug that affects the printout values in the logfile.
 
+(RB=693693)
+Save resolved ip address into request context keyed by REMOTE_SERVER_ADDR in HttpNettyClient. It enables container to implement IPv6CallTracker+Sensor to track outbound traffic
+Disable transient TestMIMEIntegrationReaderWriter suggested by the test case owner
+
 5.0.19
 ------
 (RB=684343)

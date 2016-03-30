@@ -161,7 +161,7 @@ public class TestMIMEIntegrationReaderWriter extends AbstractMIMEIntegrationStre
         };
   }
 
-  @Test(dataProvider = "eachSingleBodyDataSource")
+  @Test(dataProvider = "eachSingleBodyDataSource", enabled = false)
   public void testEachSingleBodyDataSource(final int chunkSize, final MIMEDataPart bodyPart) throws Exception
   {
     final MultiPartMIMEInputStream inputStreamDataSource =
@@ -173,7 +173,7 @@ public class TestMIMEIntegrationReaderWriter extends AbstractMIMEIntegrationStre
     executeRequestAndAssert(writer, ImmutableList.of(bodyPart));
   }
 
-  @Test(dataProvider = "eachSingleBodyDataSource")
+  @Test(dataProvider = "eachSingleBodyDataSource", enabled = false)
   public void testEachSingleBodyDataSourceMultipleTimes(final int chunkSize, final MIMEDataPart bodyPart)
       throws Exception
   {

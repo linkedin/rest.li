@@ -27,17 +27,14 @@ import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.Messages;
 import com.linkedin.r2.message.Request;
-import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
-import com.linkedin.r2.message.stream.StreamException;
 import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.transport.common.MessageType;
 import com.linkedin.r2.transport.common.WireAttributeHelper;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
-import com.linkedin.r2.transport.common.bridge.common.TransportResponse;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
 import com.linkedin.r2.transport.http.common.HttpBridge;
 import com.linkedin.r2.util.Cancellable;
@@ -347,17 +344,17 @@ import org.slf4j.LoggerFactory;
         @Override
         public void onSuccess(RestRequest restRequest)
         {
-          writeRequest(restRequest, timeoutCallback);
+          writeRequest(restRequest, requestContext, timeoutCallback);
         }
       });
     }
     else
     {
-      writeRequest(requestWithWireAttrHeaders, timeoutCallback);
+      writeRequest(requestWithWireAttrHeaders, requestContext, timeoutCallback);
     }
   }
 
-  private void writeRequest(final Request request, final TimeoutTransportCallback<StreamResponse> callback)
+  private void writeRequest(final Request request, final RequestContext requestContext, final TimeoutTransportCallback<StreamResponse> callback)
   {
     State state = _state.get();
     if (state != State.RUNNING)
@@ -385,6 +382,7 @@ import org.slf4j.LoggerFactory;
       // TODO investigate DNS resolution and timing
       InetAddress inetAddress = InetAddress.getByName(host);
       address = new InetSocketAddress(inetAddress, port);
+      requestContext.putLocalAttr(R2Constants.REMOTE_SERVER_ADDR, inetAddress.getHostAddress());
     }
     catch (UnknownHostException e)
     {

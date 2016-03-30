@@ -23,6 +23,7 @@ package com.linkedin.r2.transport.http.client;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
+import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
@@ -353,6 +354,7 @@ import org.slf4j.LoggerFactory;
       // TODO investigate DNS resolution and timing
       InetAddress inetAddress = InetAddress.getByName(host);
       address = new InetSocketAddress(inetAddress, port);
+      requestContext.putLocalAttr(R2Constants.REMOTE_SERVER_ADDR, inetAddress.getHostAddress());
     }
     catch (UnknownHostException e)
     {

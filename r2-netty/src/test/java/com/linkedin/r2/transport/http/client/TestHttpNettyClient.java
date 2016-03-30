@@ -24,6 +24,7 @@ import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
 import com.linkedin.r2.RemoteInvocationException;
+import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
@@ -175,6 +176,27 @@ public class TestHttpNettyClient
       verifyCauseChain(e, RemoteInvocationException.class, UnknownHostException.class);
     }
   }
+
+  @Test
+  public void testRemoteClientAddress()
+      throws InterruptedException, IOException, TimeoutException
+  {
+    HttpNettyClient client = new HttpClientBuilder(_eventLoop, _scheduler).buildRest();
+
+    RestRequest r = new RestRequestBuilder(URI.create("http://localhost")).build();
+
+    FutureCallback<RestResponse> cb = new FutureCallback<>();
+    TransportCallback<RestResponse> callback = new TransportCallbackAdapter<>(cb);
+    RequestContext requestContext = new RequestContext();
+
+    client.restRequest(r, requestContext, new HashMap<>(), callback);
+
+    final String actualRemoteAddress = (String) requestContext.getLocalAttr(R2Constants.REMOTE_SERVER_ADDR);
+    Assert.assertTrue("127.0.0.1".equals(actualRemoteAddress) || "0:0:0:0:0:0:0:1".equals(actualRemoteAddress),
+                      "Actual remote client address is not expected. " +
+                          "The local attribute field must be IP address in string type");
+  }
+
 
   @Test
   public void testMaxResponseSize()

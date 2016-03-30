@@ -23,7 +23,20 @@ package com.linkedin.r2.filter;
 public class R2Constants
 {
   public static final String OPERATION = "OPERATION";
+
+  /**
+   * The address of the remote client or last proxy that sent the http request.
+   * Typically this value is set by servlets and accessible
+   * for server side code
+   * */
   public static final String REMOTE_ADDR = "REMOTE_ADDR";
+
+  /**
+   * The address of the remote server that received the http request.
+   * Typically this value is set by transport client and accessible for
+   * client side code after the request is sent
+   * */
+  public static final String REMOTE_SERVER_ADDR = "REMOTE_SERVER_ADDR";
   public static final String IS_SECURE = "IS_SECURE";
   public static final String CLIENT_CERT = "CLIENT_CERT";
   public static final String REQUEST_COMPRESSION_OVERRIDE = "REQUEST_COMPRESSION_OVERRIDE";

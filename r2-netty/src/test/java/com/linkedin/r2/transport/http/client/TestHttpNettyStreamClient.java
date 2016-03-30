@@ -20,6 +20,7 @@
 
 package com.linkedin.r2.transport.http.client;
 
+import com.linkedin.r2.filter.R2Constants;
 import io.netty.channel.Channel;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.handler.codec.TooLongFrameException;
@@ -171,7 +172,7 @@ public class TestHttpNettyStreamClient
     RestRequest r = new RestRequestBuilder(URI.create("http://this.host.does.not.exist.linkedin.com")).build();
     FutureCallback<StreamResponse> cb = new FutureCallback<StreamResponse>();
     TransportCallback<StreamResponse> callback = new TransportCallbackAdapter<StreamResponse>(cb);
-    client.streamRequest(Messages.toStreamRequest(r), new RequestContext(), new HashMap<String,String>(), callback);
+    client.streamRequest(Messages.toStreamRequest(r), new RequestContext(), new HashMap<String, String>(), callback);
     try
     {
       cb.get(30, TimeUnit.SECONDS);
@@ -181,6 +182,26 @@ public class TestHttpNettyStreamClient
     {
       verifyCauseChain(e, RemoteInvocationException.class, UnknownHostException.class);
     }
+  }
+
+  @Test
+  public void testRemoteClientAddress()
+      throws InterruptedException, IOException, TimeoutException
+  {
+    HttpNettyStreamClient client = new HttpClientBuilder(_eventLoop, _scheduler).buildStream();
+
+    RestRequest r = new RestRequestBuilder(URI.create("http://localhost")).build();
+
+    FutureCallback<StreamResponse> cb = new FutureCallback<>();
+    TransportCallback<StreamResponse> callback = new TransportCallbackAdapter<>(cb);
+    RequestContext requestContext = new RequestContext();
+
+    client.streamRequest(Messages.toStreamRequest(r), requestContext, new HashMap<>(), callback);
+
+    final String actualRemoteAddress = (String) requestContext.getLocalAttr(R2Constants.REMOTE_SERVER_ADDR);
+    Assert.assertTrue("127.0.0.1".equals(actualRemoteAddress) || "0:0:0:0:0:0:0:1".equals(actualRemoteAddress),
+                      "Actual remote client address is not expected. " +
+                          "The local attribute field must be IP address in string type");
   }
 
   @Test
