@@ -193,7 +193,7 @@ public class LoadBalancerStrategyPropertiesConverter
       Map<String, Object> hashConfigProperties = (Map<String, Object>)properties.get(PropertyKeys.HTTP_LB_HASH_CONFIG);
       if (hashConfigProperties.containsKey(URIRegexHash.KEY_REGEXES))
       {
-        List<String> uriRegexes = (List<String>)hashConfigProperties.remove(URIRegexHash.KEY_REGEXES);
+        List<String> uriRegexes = (List<String>)hashConfigProperties.get(URIRegexHash.KEY_REGEXES);
         hashConfig.setUriRegexes(new StringArray(uriRegexes));
       }
       config.setHashConfig(hashConfig);

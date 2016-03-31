@@ -92,7 +92,7 @@ public class TransportClientPropertiesConverterTest
             .setMinPoolSize(minPoolSize)
             .setMaxConcurrentConnections(maxConcurrentConnections);
 
-    Assert.assertEquals(TransportClientPropertiesConverter.toProperties(d2TransportClientProperties), transportClientProperties);
     Assert.assertEquals(TransportClientPropertiesConverter.toConfig(transportClientProperties), d2TransportClientProperties);
+    Assert.assertEquals(TransportClientPropertiesConverter.toProperties(d2TransportClientProperties), transportClientProperties);
   }
 }

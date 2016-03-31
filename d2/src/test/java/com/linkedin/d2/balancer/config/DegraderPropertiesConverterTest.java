@@ -81,7 +81,7 @@ public class DegraderPropertiesConverterTest
         .setMaxDropDuration(maxDropDuration)
         .setLatencyToUse(latencyToUse);
 
-    Assert.assertEquals(DegraderPropertiesConverter.toProperties(d2DegraderProperties), degraderProperties);
     Assert.assertEquals(DegraderPropertiesConverter.toConfig(degraderProperties), d2DegraderProperties);
+    Assert.assertEquals(DegraderPropertiesConverter.toProperties(d2DegraderProperties), degraderProperties);
   }
 }

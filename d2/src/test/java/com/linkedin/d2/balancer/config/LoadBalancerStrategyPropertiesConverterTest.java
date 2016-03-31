@@ -88,8 +88,7 @@ public class LoadBalancerStrategyPropertiesConverterTest
             .setHashConfig(hashConfig)
             .setHashRingPointCleanupRate(hashringPointCleanupRate);
 
-
-    Assert.assertEquals(LoadBalancerStrategyPropertiesConverter.toProperties(d2LoadBalancerStrategyProperties), loadBalancerStrategyProperties);
     Assert.assertEquals(LoadBalancerStrategyPropertiesConverter.toConfig(loadBalancerStrategyProperties), d2LoadBalancerStrategyProperties);
+    Assert.assertEquals(LoadBalancerStrategyPropertiesConverter.toProperties(d2LoadBalancerStrategyProperties), loadBalancerStrategyProperties);
   }
 }

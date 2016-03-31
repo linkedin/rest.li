@@ -120,8 +120,7 @@ public class PartitionPropertiesConverterTest
             .setPartitionCount(partitionCount)
             .setPartitionTypeSpecificData(data);
 
-
-    Assert.assertEquals(PartitionPropertiesConverter.toProperties(partitionConfig), partitionProperties);
     Assert.assertEquals(PartitionPropertiesConverter.toConfig(partitionProperties), partitionConfig);
+    Assert.assertEquals(PartitionPropertiesConverter.toProperties(partitionConfig), partitionProperties);
   }
 }
