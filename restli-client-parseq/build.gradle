@@ -4,6 +4,7 @@ dependencies {
   compile project(':restli-client')
   compile project(':restli-common')
   compile externalDependency.parseq
+  compile externalDependency.parseq_restClient
   testCompile project(path: ':data')
   testCompile project(path: ':restli-client', configuration: 'testArtifacts')
   testCompile project(path: ':restli-common', configuration: 'testArtifacts')

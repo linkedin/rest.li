@@ -82,6 +82,7 @@ public class TestParSeqRestClient extends RestLiIntegrationTest
   {
     final Request<String> req =
         builders.<String>action("Parseq").setActionParam("A", 5).setActionParam("B", "yay").setActionParam("C", false).build();
+    @SuppressWarnings("deprecation")
     final Promise<Response<String>> promise = _restClient.sendRequest(req);
     promise.await();
     Assert.assertFalse(promise.isFailed());
@@ -123,6 +124,7 @@ public class TestParSeqRestClient extends RestLiIntegrationTest
         builders.<String>action("Parseq").setActionParam("A", 7).setActionParam("B", "rawr").setActionParam("C", false).build();
     final Task<Response<String>> task3 = _restClient.createTask(req3);
 
+    @SuppressWarnings("deprecation")
     final Task<?> master = Tasks.par(task1, task2, task3);
     _engine.run(master);
     master.await();
@@ -140,6 +142,7 @@ public class TestParSeqRestClient extends RestLiIntegrationTest
   public void testFailPromise(RootBuilderWrapper<?, ?> builders) throws InterruptedException
   {
     final Request<Void> req = builders.<Void>action("FailPromiseCall").build();
+    @SuppressWarnings("deprecation")
     final Promise<Response<Void>> promise = _restClient.sendRequest(req);
     promise.await();
     Assert.assertTrue(promise.isFailed());

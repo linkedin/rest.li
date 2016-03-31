@@ -206,8 +206,6 @@ public class TestDebugRequestHandlers extends RestLiIntegrationTest
     {
       Trace trace = codec.decode(traceRawStream);
       Assert.assertNotNull(trace);
-      Assert.assertNotNull(trace.getValue());
-      Assert.assertNotEquals(trace.getValue(), "");
     }
     catch (IOException exc)
     {

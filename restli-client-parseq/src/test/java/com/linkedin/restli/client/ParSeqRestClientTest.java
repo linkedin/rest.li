@@ -90,6 +90,7 @@ public class ParSeqRestClientTest
     final ParSeqRestClient client = mockClient(id, httpCode, protocolVersion);
     final Request<TestRecord> req = mockRequest(TestRecord.class, versionOption);
 
+    @SuppressWarnings("deprecation")
     final Promise<Response<TestRecord>> promise = client.sendRequest(req);
     promise.await();
     Assert.assertFalse(promise.isFailed());
@@ -138,6 +139,7 @@ public class ParSeqRestClientTest
     final ParSeqRestClient client = mockClient(ERR_KEY, ERR_VALUE, ERR_MSG, HTTP_CODE, APP_CODE, protocolVersion, errorResponseHeaderName);
     final Request<EmptyRecord> req = mockRequest(EmptyRecord.class, versionOption);
 
+    @SuppressWarnings("deprecation")
     final Promise<Response<EmptyRecord>> promise = client.sendRequest(req);
     promise.await();
     Assert.assertTrue(promise.isFailed());
