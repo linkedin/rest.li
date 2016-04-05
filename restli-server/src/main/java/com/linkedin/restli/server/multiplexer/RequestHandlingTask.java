@@ -28,6 +28,7 @@ import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.transport.common.RestRequestHandler;
+import com.linkedin.restli.internal.server.RestLiMethodInvoker;
 
 
 /**
@@ -44,12 +45,15 @@ import com.linkedin.r2.transport.common.RestRequestHandler;
   private final RestRequestHandler _requestHandler;
   private final BaseTask<RestRequest> _request;
   private final RequestContext _requestContext;
+  private final MultiplexerRunMode _multiplexerRunMode;
 
-  /* package private */ RequestHandlingTask(RestRequestHandler requestHandler, BaseTask<RestRequest> request, RequestContext requestContext)
+  /* package private */ RequestHandlingTask(RestRequestHandler requestHandler, BaseTask<RestRequest> request, RequestContext requestContext,
+      MultiplexerRunMode multiplexerRunMode)
   {
     _requestHandler = requestHandler;
     _request = request;
     _requestContext = requestContext;
+    _multiplexerRunMode = multiplexerRunMode;
   }
 
   @Override
@@ -92,11 +96,22 @@ import com.linkedin.r2.transport.common.RestRequestHandler;
       // try invoking the handler
       try
       {
+        if (_multiplexerRunMode == MultiplexerRunMode.SINGLE_PLAN)
+        {
+          RestLiMethodInvoker.TASK_CONTEXT.set(context);
+        }
         _requestHandler.handleRequest(_request.get(), _requestContext, callback);
       }
       catch (Exception e)
       {
         callback.onError(e);
+      }
+      finally
+      {
+        if (_multiplexerRunMode == MultiplexerRunMode.SINGLE_PLAN)
+        {
+          RestLiMethodInvoker.TASK_CONTEXT.set(null);
+        }
       }
     }
     return promise;

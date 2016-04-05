@@ -20,6 +20,7 @@ package com.linkedin.restli.server;
 import com.linkedin.restli.internal.server.methods.response.ErrorResponseBuilder;
 import com.linkedin.restli.server.filter.RequestFilter;
 import com.linkedin.restli.server.filter.ResponseFilter;
+import com.linkedin.restli.server.multiplexer.MultiplexerRunMode;
 import com.linkedin.restli.server.multiplexer.MultiplexerSingletonFilter;
 
 import java.net.URI;
@@ -82,6 +83,7 @@ public class RestLiConfig
   private int _maxRequestsMultiplexed = DEFAULT_MAX_REQUESTS_MULTIPLEXED;
   private Set<String> _individualRequestHeaderWhitelist = Collections.emptySet();
   private MultiplexerSingletonFilter _multiplexerSingletonFilter;
+  private MultiplexerRunMode _multiplexerRunMode = MultiplexerRunMode.MULTIPLE_PLANS;
 
   /**
    * Constructor.
@@ -405,5 +407,24 @@ public class RestLiConfig
   public void setMultiplexedIndividualRequestHeaderWhitelist(Set<String> headerNames)
   {
     _individualRequestHeaderWhitelist = (headerNames != null) ? headerNames : Collections.<String>emptySet();
+  }
+
+  public MultiplexerRunMode getMultiplexerRunMode()
+  {
+    return _multiplexerRunMode;
+  }
+
+  /**
+   * Set the MultiplexedRequest run mode. MultiplexerRunMode specifies if all requests belonging to the
+   * {@link MultiplexedRequest} will be executed as a single ParSeq plan ({@link #SINGLE_PLAN}) or if each request
+   * that belongs to the {@code MultiplexedRequest} will be executed as a separate ParSeq plan ({@link #MULTIPLE_PLANS}).
+   * {@link #SINGLE_PLAN} allows optimizations such as batching but it means that all tasks will be
+   * executed in sequence. {@link #MULTIPLE_PLANS} can potentially speed up execution because requests
+   * can execute physically in parallel but some ParSeq optimization will not work across different plans.
+   * @param multiplexerRunMode
+   */
+  public void setMultiplexerRunMode(MultiplexerRunMode multiplexerRunMode)
+  {
+    _multiplexerRunMode = multiplexerRunMode;
   }
 }

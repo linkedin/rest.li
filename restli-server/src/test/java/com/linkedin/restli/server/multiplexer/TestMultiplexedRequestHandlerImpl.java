@@ -67,6 +67,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
 import org.easymock.EasyMock;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import static org.easymock.EasyMock.createMockBuilder;
@@ -81,6 +82,16 @@ import static org.testng.Assert.fail;
 
 public class TestMultiplexedRequestHandlerImpl
 {
+  @DataProvider(name = "multiplexerConfigurations")
+  public Object[][] multiplexerConfigurations()
+  {
+   return new Object[][]
+   {
+     { MultiplexerRunMode.MULTIPLE_PLANS },
+     { MultiplexerRunMode.SINGLE_PLAN }
+   };
+  }
+
   private static final JacksonDataCodec CODEC = new JacksonDataCodec();
 
   /**
@@ -96,36 +107,36 @@ public class TestMultiplexedRequestHandlerImpl
   private static final ByteString FOO_ENTITY = jsonBodyToByteString(FOO_JSON_BODY);
   private static final ByteString BAR_ENTITY = jsonBodyToByteString(BAR_JSON_BODY);
 
-  @Test
-  public void testIsMultiplexedRequest() throws Exception
+  @Test(dataProvider = "multiplexerConfigurations")
+  public void testIsMultiplexedRequest(MultiplexerRunMode multiplexerRunMode) throws Exception
   {
-    MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(null);
+    MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(null, multiplexerRunMode);
     RestRequest request = fakeMuxRestRequest();
     assertTrue(multiplexer.isMultiplexedRequest(request));
   }
 
-  @Test
-  public void testIsNotMultiplexedRequest() throws Exception
+  @Test(dataProvider = "multiplexerConfigurations")
+  public void testIsNotMultiplexedRequest(MultiplexerRunMode multiplexerRunMode) throws Exception
   {
-    MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(null);
+    MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(null, multiplexerRunMode);
     RestRequest request = new RestRequestBuilder(new URI("/somethingElse")).setMethod(HttpMethod.POST.name()).build();
     assertFalse(multiplexer.isMultiplexedRequest(request));
   }
 
-  @Test
-  public void testHandleWrongMethod() throws Exception
+  @Test(dataProvider = "multiplexerConfigurations")
+  public void testHandleWrongMethod(MultiplexerRunMode multiplexerRunMode) throws Exception
   {
-    MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(null);
+    MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(null, multiplexerRunMode);
     RestRequest request = muxRequestBuilder().setMethod(HttpMethod.PUT.name()).build();
     FutureCallback<RestResponse> callback = new FutureCallback<RestResponse>();
     multiplexer.handleRequest(request, new RequestContext(), callback);
     assertEquals(getErrorStatus(callback), HttpStatus.S_405_METHOD_NOT_ALLOWED);
   }
 
-  @Test
-  public void testHandleWrongContentType() throws Exception
+  @Test(dataProvider = "multiplexerConfigurations")
+  public void testHandleWrongContentType(MultiplexerRunMode multiplexerRunMode) throws Exception
   {
-    MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(null);
+    MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(null, multiplexerRunMode);
     RestRequest request = muxRequestBuilder()
         .setMethod(HttpMethod.POST.name())
         .setHeader(RestConstants.HEADER_CONTENT_TYPE, RestConstants.HEADER_VALUE_APPLICATION_PSON)
@@ -135,19 +146,19 @@ public class TestMultiplexedRequestHandlerImpl
     assertEquals(getErrorStatus(callback), HttpStatus.S_415_UNSUPPORTED_MEDIA_TYPE);
   }
 
-  @Test
-  public void testGetContentTypeDefault() throws Exception
+  @Test(dataProvider = "multiplexerConfigurations")
+  public void testGetContentTypeDefault(MultiplexerRunMode multiplexerRunMode) throws Exception
   {
-    MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(null);
+    createMultiplexer(null, multiplexerRunMode);
     RestRequest request = muxRequestBuilder().build();
     ContentType contentType = ContentTypeUtil.getContentType(request.getHeader(RestConstants.HEADER_CONTENT_TYPE));
     assertEquals(contentType, ContentType.JSON);
   }
 
-  @Test
-  public void testGetContentTypeWithParameters() throws Exception
+  @Test(dataProvider = "multiplexerConfigurations")
+  public void testGetContentTypeWithParameters(MultiplexerRunMode multiplexerRunMode) throws Exception
   {
-    MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(null);
+    createMultiplexer(null, multiplexerRunMode);
     RestRequest request = muxRequestBuilder()
         .setHeader(RestConstants.HEADER_CONTENT_TYPE, "application/json; charset=utf-8")
         .build();
@@ -155,21 +166,21 @@ public class TestMultiplexedRequestHandlerImpl
     assertEquals(contentType, ContentType.JSON);
   }
 
-  @Test
-  public void testHandleEmptyRequest() throws Exception
+  @Test(dataProvider = "multiplexerConfigurations")
+  public void testHandleEmptyRequest(MultiplexerRunMode multiplexerRunMode) throws Exception
   {
-    MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(null);
+    MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(null, multiplexerRunMode);
     RestRequest request = fakeMuxRestRequest();
     FutureCallback<RestResponse> callback = new FutureCallback<RestResponse>();
     multiplexer.handleRequest(request, new RequestContext(), callback);
     assertEquals(getErrorStatus(callback), HttpStatus.S_400_BAD_REQUEST);
   }
 
-  @Test
-  public void testHandleTooManyParallelRequests() throws Exception
+  @Test(dataProvider = "multiplexerConfigurations")
+  public void testHandleTooManyParallelRequests(MultiplexerRunMode multiplexerRunMode) throws Exception
   {
     // MultiplexedRequestHandlerImpl is created with the request limit set to 2
-    MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(null);
+    MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(null, multiplexerRunMode);
     RestRequest request = fakeMuxRestRequest(ImmutableMap.of("0", fakeIndRequest(FOO_URL),
       "1", fakeIndRequest(FOO_URL),
       "2", fakeIndRequest(FOO_URL)));
@@ -179,11 +190,11 @@ public class TestMultiplexedRequestHandlerImpl
   }
 
 
-  @Test
-  public void testHandleTooManySequentialRequests() throws Exception
+  @Test(dataProvider = "multiplexerConfigurations")
+  public void testHandleTooManySequentialRequests(MultiplexerRunMode multiplexerRunMode) throws Exception
   {
     // MultiplexedRequestHandlerImpl is created with the request limit set to 2
-    MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(null);
+    MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(null, multiplexerRunMode);
     IndividualRequest ir2 = fakeIndRequest(FOO_URL);
     IndividualRequest ir1 = fakeIndRequest(FOO_URL, ImmutableMap.of("2", ir2));
     IndividualRequest ir0 = fakeIndRequest(FOO_URL, ImmutableMap.of("1", ir1));
@@ -193,13 +204,13 @@ public class TestMultiplexedRequestHandlerImpl
     assertEquals(getErrorStatus(callback), HttpStatus.S_400_BAD_REQUEST);
   }
 
-  @Test
-  public void testCustomMultiplexedSingletonFilter() throws Exception
+  @Test(dataProvider = "multiplexerConfigurations")
+  public void testCustomMultiplexedSingletonFilter(MultiplexerRunMode multiplexerRunMode) throws Exception
   {
     SynchronousRequestHandler mockHandler = createMockHandler();
     MultiplexerSingletonFilter mockMuxFilter = EasyMock.createMock(MultiplexerSingletonFilter.class);
 
-    MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(mockHandler, mockMuxFilter);
+    MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(mockHandler, mockMuxFilter, multiplexerRunMode);
     RequestContext requestContext = new RequestContext();
 
     // Create multiplexer request with 1 individual request
@@ -236,8 +247,8 @@ public class TestMultiplexedRequestHandlerImpl
     verify(mockMuxFilter);
   }
 
-  @Test
-  public void testIndividualRequestInheritHeadersAndCookiesFromEnvelopeRequest() throws Exception
+  @Test(dataProvider = "multiplexerConfigurations")
+  public void testIndividualRequestInheritHeadersAndCookiesFromEnvelopeRequest(MultiplexerRunMode multiplexerRunMode) throws Exception
   {
     // When some request headers/cookies are passed in the envelope, we need to ensure
     // they are properly included in each of the individual requests sent to
@@ -311,7 +322,7 @@ public class TestMultiplexedRequestHandlerImpl
       .build();
 
     // Create mux handler instance
-    MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(mockHandler, muxFilterWithSimulatedFailures, headerWhiteList, individualRequests.size());
+    MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(mockHandler, muxFilterWithSimulatedFailures, headerWhiteList, individualRequests.size(), multiplexerRunMode);
 
     try
     {
@@ -361,8 +372,8 @@ public class TestMultiplexedRequestHandlerImpl
     }
   }
 
-  @Test
-  public void testRequestHeaderWhiteListing() throws Exception
+  @Test(dataProvider = "multiplexerConfigurations")
+  public void testRequestHeaderWhiteListing(MultiplexerRunMode multiplexerRunMode) throws Exception
   {
     // Validating request header white listing logic
 
@@ -396,7 +407,7 @@ public class TestMultiplexedRequestHandlerImpl
     headerWhiteList.add("X-I-AM-A-GOOD-HEADER");
 
     // Create mux handler instance
-    MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(mockHandler, null, headerWhiteList, individualRequests.size());
+    MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(mockHandler, null, headerWhiteList, individualRequests.size(), multiplexerRunMode);
 
     try
     {
@@ -415,8 +426,8 @@ public class TestMultiplexedRequestHandlerImpl
     assertEquals(muxResponseContent.getResponses().get("1").getStatus().intValue(), 400, "Request with non-whitelisted request header should receive a 400 bad request error");
   }
 
-  @Test
-  public void testResponseCookiesAggregated() throws Exception
+  @Test(dataProvider = "multiplexerConfigurations")
+  public void testResponseCookiesAggregated(MultiplexerRunMode multiplexerRunMode) throws Exception
   {
     // Per security review: We should not make cookies for each individual responses visible to the client (especially if the cookie is HttpOnly).
     // Therefore all cookies returned by individual responses will be aggregated at the envelope response level.
@@ -486,7 +497,7 @@ public class TestMultiplexedRequestHandlerImpl
       "1", fakeIndRequest("/req2", ImmutableMap.of("2", fakeIndRequest("/req3"))));
 
     // Create mux handler instance
-    MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(mockHandler, null, Collections.<String>emptySet(), 3);
+    MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(mockHandler, null, Collections.<String>emptySet(), 3, multiplexerRunMode);
 
     try
     {
@@ -548,8 +559,8 @@ public class TestMultiplexedRequestHandlerImpl
     }
   }
 
-  @Test
-  public void testMultiplexedSingletonFilterFailures() throws Exception
+  @Test(dataProvider = "multiplexerConfigurations")
+  public void testMultiplexedSingletonFilterFailures(MultiplexerRunMode multiplexerRunMode) throws Exception
   {
     // This test validates when a failure occurred in MultiplexedSingletonFilter for an individual request, only the individual
     // request should fail. The multiplexed request should still be completed successfully with a 200 status code.
@@ -623,7 +634,7 @@ public class TestMultiplexedRequestHandlerImpl
     RestRequest request = fakeMuxRestRequest(individualRequests);
 
     // Create mux handler instance
-    MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(mockHandler, muxFilterWithSimulatedFailures, Collections.<String>emptySet(), 10);
+    MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(mockHandler, muxFilterWithSimulatedFailures, Collections.<String>emptySet(), 10, multiplexerRunMode);
 
     try
     {
@@ -650,11 +661,11 @@ public class TestMultiplexedRequestHandlerImpl
     assertEquals(responses.get("6").getStatus().intValue(), 400, "Mux response body is: " + responses.toString());
   }
 
-  @Test
-  public void testHandleSingleRequest() throws Exception
+  @Test(dataProvider = "multiplexerConfigurations")
+  public void testHandleSingleRequest(MultiplexerRunMode multiplexerRunMode) throws Exception
   {
     SynchronousRequestHandler mockHandler = createMockHandler();
-    MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(mockHandler);
+    MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(mockHandler, multiplexerRunMode);
     RequestContext requestContext = new RequestContext();
 
     RestRequest request = fakeMuxRestRequest(ImmutableMap.of("0", fakeIndRequest(FOO_URL)));
@@ -679,11 +690,11 @@ public class TestMultiplexedRequestHandlerImpl
     verify(mockHandler);
   }
 
-  @Test
-  public void testHandleParallelRequests() throws Exception
+  @Test(dataProvider = "multiplexerConfigurations")
+  public void testHandleParallelRequests(MultiplexerRunMode multiplexerRunMode) throws Exception
   {
     SynchronousRequestHandler mockHandler = createMockHandler();
-    MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(mockHandler);
+    MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(mockHandler, multiplexerRunMode);
     RequestContext requestContext = new RequestContext();
 
     RestRequest request = fakeMuxRestRequest(ImmutableMap.of("0", fakeIndRequest(FOO_URL), "1", fakeIndRequest(BAR_URL)));
@@ -707,11 +718,11 @@ public class TestMultiplexedRequestHandlerImpl
     verify(mockHandler);
   }
 
-  @Test
-  public void testHandleSequentialRequests() throws Exception
+  @Test(dataProvider = "multiplexerConfigurations")
+  public void testHandleSequentialRequests(MultiplexerRunMode multiplexerRunMode) throws Exception
   {
     SynchronousRequestHandler mockHandler = createMockHandler();
-    MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(mockHandler);
+    MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(mockHandler, multiplexerRunMode);
     RequestContext requestContext = new RequestContext();
 
     IndividualRequest indRequest1 = fakeIndRequest(BAR_URL);
@@ -737,11 +748,11 @@ public class TestMultiplexedRequestHandlerImpl
     verify(mockHandler);
   }
 
-  @Test
-  public void testHandleError() throws Exception
+  @Test(dataProvider = "multiplexerConfigurations")
+  public void testHandleError(MultiplexerRunMode multiplexerRunMode) throws Exception
   {
     SynchronousRequestHandler mockHandler = createMockHandler();
-    MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(mockHandler);
+    MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(mockHandler, multiplexerRunMode);
     RequestContext requestContext = new RequestContext();
 
     RestRequest request = fakeMuxRestRequest(ImmutableMap.of("0", fakeIndRequest(FOO_URL), "1", fakeIndRequest(BAR_URL)));
@@ -792,15 +803,17 @@ public class TestMultiplexedRequestHandlerImpl
         .createMock();
   }
 
-  private static MultiplexedRequestHandlerImpl createMultiplexer(RestRequestHandler requestHandler, MultiplexerSingletonFilter multiplexerSingletonFilter)
+  private static MultiplexedRequestHandlerImpl createMultiplexer(RestRequestHandler requestHandler, MultiplexerSingletonFilter multiplexerSingletonFilter,
+      MultiplexerRunMode multiplexerRunMode)
   {
-    return createMultiplexer(requestHandler, multiplexerSingletonFilter, Collections.<String>emptySet(), MAXIMUM_REQUESTS_NUMBER);
+    return createMultiplexer(requestHandler, multiplexerSingletonFilter, Collections.<String>emptySet(), MAXIMUM_REQUESTS_NUMBER, multiplexerRunMode);
   }
 
   private static MultiplexedRequestHandlerImpl createMultiplexer(RestRequestHandler requestHandler,
                                                                  MultiplexerSingletonFilter multiplexerSingletonFilter,
                                                                  Set<String> individualRequestHeaderWhitelist,
-                                                                 int maxRequestCount)
+                                                                 int maxRequestCount,
+                                                                 MultiplexerRunMode multiplexerRunMode)
   {
     ExecutorService taskScheduler = Executors.newFixedThreadPool(1);
     ScheduledExecutorService timerScheduler = Executors.newSingleThreadScheduledExecutor();
@@ -809,12 +822,13 @@ public class TestMultiplexedRequestHandlerImpl
       .setTimerScheduler(timerScheduler)
       .build();
 
-    return new MultiplexedRequestHandlerImpl(requestHandler, engine, maxRequestCount, individualRequestHeaderWhitelist, multiplexerSingletonFilter);
+    return new MultiplexedRequestHandlerImpl(requestHandler, engine, maxRequestCount, individualRequestHeaderWhitelist, multiplexerSingletonFilter,
+        multiplexerRunMode);
   }
 
-  private static MultiplexedRequestHandlerImpl createMultiplexer(RestRequestHandler requestHandler)
+  private static MultiplexedRequestHandlerImpl createMultiplexer(RestRequestHandler requestHandler, MultiplexerRunMode multiplexerRunMode)
   {
-    return createMultiplexer(requestHandler, null);
+    return createMultiplexer(requestHandler, null, multiplexerRunMode);
   }
 
   private static IndividualRequest fakeIndRequest(String url)

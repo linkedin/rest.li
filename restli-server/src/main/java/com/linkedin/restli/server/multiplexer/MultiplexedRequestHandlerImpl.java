@@ -72,6 +72,7 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
   private final int _maximumRequestsNumber;
   private final MultiplexerSingletonFilter _multiplexerSingletonFilter;
   private final Set<String> _individualRequestHeaderWhitelist;
+  private final MultiplexerRunMode _multiplexerRunMode;
 
   /**
    * @param requestHandler        the handler that will take care of individual requests
@@ -80,12 +81,14 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
    * @param individualRequestHeaderWhitelist a set of request header names to allow if specified in the individual request
    * @param multiplexerSingletonFilter the singleton filter that is used by multiplexer to pre-process individual request and
    *                                   post-process individual response. Pass in null if no pre-processing or post-processing are required.
+   * @param multiplexerRunMode    MultiplexedRequest run mode, see {@link MultiplexerRunMode}
    */
   public MultiplexedRequestHandlerImpl(RestRequestHandler requestHandler,
                                        Engine engine,
                                        int maximumRequestsNumber,
                                        Set<String> individualRequestHeaderWhitelist,
-                                       MultiplexerSingletonFilter multiplexerSingletonFilter)
+                                       MultiplexerSingletonFilter multiplexerSingletonFilter,
+                                       MultiplexerRunMode multiplexerRunMode)
   {
     _requestHandler = requestHandler;
     _engine = engine;
@@ -96,6 +99,7 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
       _individualRequestHeaderWhitelist.addAll(individualRequestHeaderWhitelist);
     }
     _multiplexerSingletonFilter = multiplexerSingletonFilter;
+    _multiplexerRunMode = multiplexerRunMode;
   }
 
   @Override
@@ -242,7 +246,7 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
     final InheritEnvelopeRequestTask inheritEnvelopeRequestTask = new InheritEnvelopeRequestTask(envelopeRequest, requestSanitizationTask);
     final RequestFilterTask requestFilterTask = new RequestFilterTask(_multiplexerSingletonFilter, inheritEnvelopeRequestTask);
     final SyntheticRequestCreationTask syntheticRequestCreationTask = new SyntheticRequestCreationTask(id, envelopeRequest, requestFilterTask);
-    final RequestHandlingTask requestHandlingTask = new RequestHandlingTask(_requestHandler, syntheticRequestCreationTask, requestContext);
+    final RequestHandlingTask requestHandlingTask = new RequestHandlingTask(_requestHandler, syntheticRequestCreationTask, requestContext, _multiplexerRunMode);
     final IndividualResponseConversionTask toIndividualResponseTask = new IndividualResponseConversionTask(id, requestHandlingTask);
     final ResponseFilterTask responseFilterTask = new ResponseFilterTask(_multiplexerSingletonFilter, toIndividualResponseTask);
     final Task<Void> addResponseTask = Tasks.action("add response", new Runnable()

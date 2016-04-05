@@ -158,7 +158,8 @@ public class RestLiServer extends BaseRestServer
                                                                    engine,
                                                                    config.getMaxRequestsMultiplexed(),
                                                                    config.getMultiplexedIndividualRequestHeaderWhitelist(),
-                                                                   config.getMultiplexerSingletonFilter());
+                                                                   config.getMultiplexerSingletonFilter(),
+                                                                   config.getMultiplexerRunMode());
 
     // verify that if there are resources using the engine, then the engine is not null
     if (engine == null)

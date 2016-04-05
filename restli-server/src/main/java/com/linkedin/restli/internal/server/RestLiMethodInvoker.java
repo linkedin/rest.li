@@ -67,6 +67,13 @@ public class RestLiMethodInvoker
   private final MethodAdapterRegistry _methodAdapterRegistry;
   private final List<RequestFilter> _requestFilters;
 
+  // This ThreadLocal stores Context of task that is currently being executed.
+  // When it is set, new tasks do not start new plans but instead are scheduled
+  // with the Context.
+  // This mechanism is used to process a MultiplexedRequest within single plan and
+  // allow optimizations e.g. automatic batching.
+  public static final ThreadLocal<Context> TASK_CONTEXT = new ThreadLocal<>();
+
   /**
    * Constructor.
    *
@@ -257,7 +264,7 @@ public class RestLiMethodInvoker
         restliTask.addListener(new CallbackPromiseAdapter<>(callback, restliTask, requestExecutionReportBuilder,
                                                             resourceContext.getRequestAttachmentReader(),
                                                             resourceContext.getResponseAttachments()));
-        _engine.run(restliTask);
+        runTask(restliTask);
         break;
 
       case TASK:
@@ -282,7 +289,7 @@ public class RestLiMethodInvoker
           task.addListener(new CallbackPromiseAdapter<>(callback, task, requestExecutionReportBuilder,
                                                         resourceContext.getRequestAttachmentReader(),
                                                         resourceContext.getResponseAttachments()));
-          _engine.run(task);
+          runTask(task);
         }
         break;
 
@@ -312,6 +319,19 @@ public class RestLiMethodInvoker
                             resourceContext.getRequestAttachmentReader(),
                             resourceContext.getResponseAttachments());
       }
+    }
+  }
+
+  private void runTask(Task<Object> task)
+  {
+    Context taskContext = TASK_CONTEXT.get();
+    if (taskContext == null)
+    {
+      _engine.run(task);
+    }
+    else
+    {
+      taskContext.run(task);
     }
   }
 
