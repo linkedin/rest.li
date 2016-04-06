@@ -26,10 +26,10 @@ package com.linkedin.multipart;
 public interface MultiPartMIMEDataSourceIterator
 {
   /**
-   * Invoked when all the potential data sources that this MultiPartMIMEDataSourceIterator represents need to be aborted
+   * Invoked when all the potential data sources that this MultiPartMIMEDataSourceIterator represents need to be abandoned
    * since they will not give given a chance to produce data.
    */
-  public void abortAllDataSources();
+  public void abandonAllDataSources();
 
   /**
    * Invoked as the first step to walk through all potential data sources represented by this MultiPartMIMEDataSourceIterator.

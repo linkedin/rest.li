@@ -57,7 +57,7 @@ final class MultiPartMIMEChainReaderWriter implements Writer
       _multiPartMIMEChainReaderCallback =
           new MultiPartMIMEChainReaderCallback(_writeHandle, _normalEncapsulationBoundary);
       //Since this is not a MultiPartMIMEDataSourceWriter we can't use the regular mechanism for reading data.
-      //Instead of create a new callback that will use to write to the writeHandle using the SinglePartMIMEReader.
+      //Instead, create a new callback that will be used to write to the writeHandle using the SinglePartMIMEReader.
 
       _multiPartMIMEDataSourceIterator.registerDataSourceReaderCallback(_multiPartMIMEChainReaderCallback);
       //Note that by registering here, this will eventually lead to onNewDataSource() which will then requestPartData()
@@ -85,6 +85,6 @@ final class MultiPartMIMEChainReaderWriter implements Writer
 
     //Regardless of how it was called we need to completely drain and drop all bytes to the ground. We can't
     //leave these bytes in the MultiPartMIMEDataSourceIterator untouched.
-    _multiPartMIMEDataSourceIterator.abortAllDataSources();
+    _multiPartMIMEDataSourceIterator.abandonAllDataSources();
   }
 }

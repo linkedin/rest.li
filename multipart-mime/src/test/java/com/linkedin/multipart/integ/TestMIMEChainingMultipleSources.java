@@ -278,7 +278,7 @@ public class TestMIMEChainingMultipleSources
     }
 
     @Override
-    public void onAbandoned()
+    public void onDrainComplete()
     {
       Assert.fail();
     }
@@ -448,7 +448,7 @@ public class TestMIMEChainingMultipleSources
     }
 
     @Override
-    public void onAbandoned()
+    public void onDrainComplete()
     {
       Assert.fail();
     }

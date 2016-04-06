@@ -44,7 +44,7 @@ public interface MultiPartMIMEDataSourceIteratorCallback
    * Invoked when all data sources represented by this {@link com.linkedin.multipart.MultiPartMIMEDataSourceIterator}
    * have finished being abandoned.
    */
-  public void onAbandoned();
+  public void onAbandonComplete();
 
   /**
    * Invoked when there was a problem producing the next data source.

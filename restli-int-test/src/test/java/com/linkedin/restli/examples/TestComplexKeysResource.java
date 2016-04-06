@@ -550,6 +550,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
     Assert.assertNotNull(response.getResults().get(ids.get(2)).getError());
   }
 
+  @SuppressWarnings("deprecation")
   public void testBatchGetEntityEmpty(BatchGetEntityRequestBuilder<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> builder)
     throws Exception
   {

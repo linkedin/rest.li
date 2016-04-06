@@ -32,6 +32,7 @@ import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.CookieUtil;
 import com.linkedin.restli.internal.common.PathSegment.PathSegmentSyntaxException;
@@ -41,24 +42,24 @@ import com.linkedin.restli.internal.common.URIParamUtils;
 import com.linkedin.restli.internal.server.util.ArgumentUtils;
 import com.linkedin.restli.internal.server.util.RestLiSyntaxException;
 import com.linkedin.restli.server.ProjectionMode;
+import com.linkedin.restli.server.RestLiResponseAttachments;
 import com.linkedin.restli.server.RestLiServiceException;
-
 import com.linkedin.restli.server.RoutingException;
+
 import java.net.HttpCookie;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.ArrayList;
 
 
 /**
  * @author Josh Walker
  * @version $Revision: $
  */
-
 public class ResourceContextImpl implements ServerResourceContext
 {
   private final MutablePathKeys                     _pathKeys;
@@ -87,6 +88,10 @@ public class ResourceContextImpl implements ServerResourceContext
   //The paging projection mask is still available to both parties (the resource method and restli).
   private final MaskTree                            _pagingProjectionMask;
 
+  //For streaming attachments
+  private final RestLiAttachmentReader              _requestAttachmentReader;
+  private final boolean                             _responseAttachmentsAllowed;
+  private RestLiResponseAttachments                 _responseStreamingAttachments;
 
   /**
    * Default constructor.
@@ -115,6 +120,15 @@ public class ResourceContextImpl implements ServerResourceContext
                              final RestRequest request,
                              final RequestContext requestContext) throws RestLiSyntaxException
   {
+    this(pathKeys, request, requestContext, false, null);
+  }
+
+  public ResourceContextImpl(final MutablePathKeys pathKeys,
+                             final RestRequest request,
+                             final RequestContext requestContext,
+                             final boolean responseAttachmentsAllowed,
+                             final RestLiAttachmentReader restLiAttachmentReader) throws RestLiSyntaxException
+  {
     _pathKeys = pathKeys;
     _request = request;
     _requestHeaders = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
@@ -123,6 +137,8 @@ public class ResourceContextImpl implements ServerResourceContext
     _requestCookies = new ArrayList<HttpCookie>(CookieUtil.decodeCookies(_request.getCookies()));
     _responseCookies = new ArrayList<HttpCookie>();
     _requestContext = requestContext;
+    _responseAttachmentsAllowed = responseAttachmentsAllowed;
+    _requestAttachmentReader = restLiAttachmentReader;
 
     _protocolVersion = ProtocolVersionUtil.extractProtocolVersion(request.getHeaders());
 
@@ -197,8 +213,7 @@ public class ResourceContextImpl implements ServerResourceContext
   @Override
   public String getRequestActionName()
   {
-    return ArgumentUtils.argumentAsString(getParameter(RestConstants.ACTION_PARAM),
-                                          RestConstants.ACTION_PARAM);
+    return ArgumentUtils.argumentAsString(getParameter(RestConstants.ACTION_PARAM), RestConstants.ACTION_PARAM);
   }
 
   @Override
@@ -221,6 +236,7 @@ public class ResourceContextImpl implements ServerResourceContext
   }
 
   @Override
+  @Deprecated
   public RestRequest getRawRequest()
   {
     return _request;
@@ -420,5 +436,33 @@ public class ResourceContextImpl implements ServerResourceContext
   public String getResponseMimeType()
   {
     return _mimeType;
+  }
+
+  @Override
+  public boolean responseAttachmentsSupported()
+  {
+    return _responseAttachmentsAllowed;
+  }
+
+  @Override
+  public RestLiAttachmentReader getRequestAttachmentReader()
+  {
+    return _requestAttachmentReader;
+  }
+
+  @Override
+  public void setResponseAttachments(final RestLiResponseAttachments responseAttachments) throws IllegalStateException
+  {
+    if (!_responseAttachmentsAllowed)
+    {
+      throw new IllegalStateException("Response attachments can only be set if the client request indicates permissibility");
+    }
+    _responseStreamingAttachments = responseAttachments;
+  }
+
+  @Override
+  public RestLiResponseAttachments getResponseAttachments()
+  {
+    return _responseStreamingAttachments;
   }
 }

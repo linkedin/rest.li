@@ -16,12 +16,13 @@
 
 package com.linkedin.restli.docgen;
 
+
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.resolver.ClassNameDataSchemaResolver;
 import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.jersey.api.uri.UriComponent;
 import com.linkedin.jersey.core.util.MultivaluedMap;
-import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestResponseBuilder;
 import com.linkedin.restli.common.HttpMethod;
@@ -36,6 +37,7 @@ import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+
 
 /**
  * Default {@link RestLiDocumentationRequestHandler} that serves both HTML and JSON documentation.
@@ -59,7 +61,7 @@ public class DefaultDocumentationRequestHandler implements RestLiDocumentationRe
   }
 
   @Override
-  public boolean isDocumentationRequest(RestRequest request)
+  public boolean isDocumentationRequest(Request request)
   {
     final String path = request.getURI().getRawPath();
     final List<UriComponent.PathSegment> pathSegments = UriComponent.decodePath(path, true);
@@ -71,7 +73,7 @@ public class DefaultDocumentationRequestHandler implements RestLiDocumentationRe
 
   @Override
   @SuppressWarnings("fallthrough")
-  public RestResponse processDocumentationRequest(RestRequest request)
+  public RestResponse processDocumentationRequest(Request request)
   {
     final String path = request.getURI().getRawPath();
     final List<UriComponent.PathSegment> pathSegments = UriComponent.decodePath(path, true);

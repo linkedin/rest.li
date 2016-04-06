@@ -20,6 +20,7 @@
 
 package com.linkedin.restli.client;
 
+
 import com.linkedin.data.DataList;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.template.DataTemplate;
@@ -30,13 +31,17 @@ import com.linkedin.restli.common.ActionResponse;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.common.TypeSpec;
+import com.linkedin.restli.common.attachments.RestLiAttachmentDataSourceWriter;
+import com.linkedin.restli.common.attachments.RestLiDataSourceIterator;
 import com.linkedin.restli.internal.client.ActionResponseDecoder;
 import com.linkedin.util.ArgumentUtil;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 
@@ -44,13 +49,13 @@ import java.util.Map;
  * @author Josh Walker
  * @version $Revision: $
  */
-
 public class ActionRequestBuilder<K, V> extends AbstractRequestBuilder<K, V, ActionRequest<V>>
 {
   private final TypeSpec<V>              _elementType;
   private K                              _id;
   private String                         _name;
   private final Map<FieldDef<?>, Object> _actionParams = new HashMap<FieldDef<?>, Object>();
+  private List<Object>                   _streamingAttachments; //We initialize only when we need to.
 
   public ActionRequestBuilder(String baseUriTemplate, Class<V> elementClass, ResourceSpec resourceSpec, RestliRequestOptions requestOptions)
   {
@@ -73,6 +78,28 @@ public class ActionRequestBuilder<K, V> extends AbstractRequestBuilder<K, V, Act
   public ActionRequestBuilder<K, V> id(K id)
   {
     _id = id;
+    return this;
+  }
+
+  public ActionRequestBuilder<K, V> appendSingleAttachment(final RestLiAttachmentDataSourceWriter streamingAttachment)
+  {
+    if (_streamingAttachments == null)
+    {
+      _streamingAttachments = new ArrayList<>();
+    }
+
+    _streamingAttachments.add(streamingAttachment);
+    return this;
+  }
+
+  public ActionRequestBuilder<K, V> appendMultipleAttachments(final RestLiDataSourceIterator dataSourceIterator)
+  {
+    if (_streamingAttachments == null)
+    {
+      _streamingAttachments = new ArrayList<>();
+    }
+
+    _streamingAttachments.add(dataSourceIterator);
     return this;
   }
 
@@ -204,7 +231,8 @@ public class ActionRequestBuilder<K, V> extends AbstractRequestBuilder<K, V, Act
                                 getBaseUriTemplate(),
                                 buildReadOnlyPathKeys(),
                                 getRequestOptions(),
-                                buildReadOnlyId());
+                                buildReadOnlyId(),
+                                _streamingAttachments == null ? null : Collections.unmodifiableList(_streamingAttachments));
 
   }
 

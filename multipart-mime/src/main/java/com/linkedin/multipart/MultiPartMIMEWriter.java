@@ -23,6 +23,7 @@ import com.linkedin.r2.message.stream.entitystream.CompositeWriter;
 import com.linkedin.r2.message.stream.entitystream.EntityStream;
 import com.linkedin.r2.message.stream.entitystream.EntityStreams;
 import com.linkedin.r2.message.stream.entitystream.Writer;
+import com.linkedin.util.ArgumentUtil;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -51,6 +52,7 @@ public final class MultiPartMIMEWriter
     private List<Writer> _allDataSources = new ArrayList<Writer>();
     private final String _preamble;
     private final String _epilogue;
+    private int _dataSourceCount = 0;
 
     //Generate the boundary
     private final String _rawBoundary = MultiPartMIMEUtils.generateBoundary();
@@ -64,12 +66,16 @@ public final class MultiPartMIMEWriter
     /**
      * Create a MultiPartMIMEWriter Builder using the specified preamble and epilogue.
      *
-     * @param preamble to be placed before the multipart mime envelope according to the RFC.
-     * @param epilogue to be placed after the multipart mime enveloped according to the RFC.
+     * Only non-null values are permitted here. Empty strings are used to signify missing values.
+     *
+     * @param preamble non-null String to be placed before the multipart mime envelope according to the RFC.
+     * @param epilogue non-null String to be placed after the multipart mime enveloped according to the RFC.
      * @return the builder to continue building.
      */
     public Builder(final String preamble, final String epilogue)
     {
+      ArgumentUtil.notNull(preamble, "preamble");
+      ArgumentUtil.notNull(epilogue, "epilogue");
       _preamble = preamble;
       _epilogue = epilogue;
       //Append data source for preamble
@@ -112,6 +118,7 @@ public final class MultiPartMIMEWriter
       final Writer boundaryHeaderWriter = new ByteStringWriter(serializedBoundaryAndHeaders);
       _allDataSources.add(boundaryHeaderWriter);
       _allDataSources.add(dataSource);
+      _dataSourceCount++;
       return this;
     }
 
@@ -119,11 +126,11 @@ public final class MultiPartMIMEWriter
      * Append a {@link MultiPartMIMEDataSourceIterator} to be used as a non-nested data source
      * within the multipart mime envelope.
      *
-     * All the individual parts read using the {@link MultiPartMIMEDataSourceIterator}
-     * will be placed one by one into this new envelope with boundaries replaced.
+     * All the individual parts read using the {@link MultiPartMIMEDataSourceIterator} will be placed one by one into
+     * this new envelope with boundaries replaced.
      *
      * @param multiPartMIMEDataSourceIterator the {@link MultiPartMIMEDataSourceIterator} that will be used
-     *                                        to produce multiple parts to append.
+     *                                        to produce multiple parts.
      * @return the builder to continue building.
      */
     public Builder appendDataSourceIterator(final MultiPartMIMEDataSourceIterator multiPartMIMEDataSourceIterator)
@@ -131,6 +138,7 @@ public final class MultiPartMIMEWriter
       final Writer multiPartMIMEReaderWriter =
           new MultiPartMIMEChainReaderWriter(multiPartMIMEDataSourceIterator, _normalEncapsulationBoundary);
       _allDataSources.add(multiPartMIMEReaderWriter);
+      _dataSourceCount++;
       return this;
     }
 
@@ -145,8 +153,61 @@ public final class MultiPartMIMEWriter
       for (final MultiPartMIMEDataSourceWriter dataSource : dataSources)
       {
         appendDataSource(dataSource);
+        //No need to increase data source count since appendDataSource() will do this.
       }
       return this;
+    }
+
+    /**
+     * Prepend a {@link MultiPartMIMEDataSourceWriter} to be placed in the multipart mime envelope. This data source
+     * will be placed at the beginning of the envelope and all existing data sources provided to this builder
+     * thus far will shift forward by 1.
+     *
+     * @param dataSource the data source to be added at the beginning of the envelope.
+     * @return the builder to continue building.
+     */
+    public Builder prependDataSource(final MultiPartMIMEDataSourceWriter dataSource)
+    {
+      ByteString serializedBoundaryAndHeaders = null;
+      try
+      {
+        serializedBoundaryAndHeaders =
+            MultiPartMIMEUtils.serializeBoundaryAndHeaders(_normalEncapsulationBoundary, dataSource);
+      }
+      catch (IOException ioException)
+      {
+        //Should never happen
+        throw new IllegalStateException("Serious error when constructing local byte buffer for the boundary and headers!");
+      }
+
+      final Writer boundaryHeaderWriter = new ByteStringWriter(serializedBoundaryAndHeaders);
+
+      //Care must be taken to make sure that we leave the preamble at the beginning.
+      if (!_preamble.equalsIgnoreCase(""))
+      {
+        _allDataSources.add(1, dataSource);
+        _allDataSources.add(1, boundaryHeaderWriter);
+      }
+      else
+      {
+        //No preamble so we can insert at the beginning
+        _allDataSources.add(0, dataSource);
+        _allDataSources.add(0, boundaryHeaderWriter);
+      }
+      _dataSourceCount++;
+
+      return this;
+    }
+
+    /**
+     * Returns the number of {@link com.linkedin.multipart.MultiPartMIMEDataSourceWriter}s and
+     * {@link com.linkedin.multipart.MultiPartMIMEDataSourceIterator}s that have been added thus far.
+     *
+     * @return the total count of data sources added thus far.
+     */
+    public int getCurrentSize()
+    {
+      return _dataSourceCount;
     }
 
     /**
@@ -205,7 +266,7 @@ public final class MultiPartMIMEWriter
    * will be able to see the Throwable that is passed into this method.
    *
    * 2. If the data source passed in is a {@link MultiPartMIMEDataSourceIterator}, then all data sources
-   * represented by this MultiPartMIMEPartIterator will be read and abandoned. See {@link MultiPartMIMEDataSourceIterator#abortAllDataSources()}.
+   * represented by this MultiPartMIMEPartIterator will be read and abandoned. See {@link MultiPartMIMEDataSourceIterator#abandonAllDataSources()}.
    * In this case the Throwable that is passed into this method will not be used.
    *
    * @param throwable the Throwable that caused the abandonment to happen.
@@ -234,7 +295,12 @@ public final class MultiPartMIMEWriter
     return _entityStream;
   }
 
-  String getBoundary()
+  /**
+   * Returns the boundary that will be used by this writer between each part.
+   *
+   * @return a String representing the boundary.
+   */
+  public String getBoundary()
   {
     return _rawBoundary;
   }

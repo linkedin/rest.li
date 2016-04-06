@@ -19,16 +19,19 @@ package com.linkedin.restli.internal.server;
 
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
+import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
 import com.linkedin.restli.internal.server.filter.RestLiResponseFilterChain;
+import com.linkedin.restli.internal.server.filter.RestLiResponseFilterChainCallback;
+import com.linkedin.restli.internal.server.filter.RestLiResponseFilterContextFactory;
 import com.linkedin.restli.internal.server.methods.response.PartialRestResponse;
 import com.linkedin.restli.server.RequestExecutionCallback;
 import com.linkedin.restli.server.RequestExecutionReport;
+import com.linkedin.restli.server.RestLiResponseAttachments;
 import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.filter.FilterRequestContext;
 import com.linkedin.restli.server.filter.FilterResponseContext;
 import com.linkedin.restli.server.filter.ResponseFilter;
-import com.linkedin.restli.internal.server.filter.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +39,7 @@ import java.util.List;
 
 public class RestLiCallback<T> implements RequestExecutionCallback<T>
 {
-  private final RoutingResult _method;
+  private final RoutingResult _routingResult;
   private final RestLiResponseHandler _responseHandler;
   private final RequestExecutionCallback<RestResponse> _callback;
   private final RestRequest _request;
@@ -45,17 +48,17 @@ public class RestLiCallback<T> implements RequestExecutionCallback<T>
   private final RestLiResponseFilterContextFactory _responseFilterContextFactory;
 
   public RestLiCallback(final RestRequest request,
-                        final RoutingResult method,
+                        final RoutingResult routingResult,
                         final RestLiResponseHandler responseHandler,
                         final RequestExecutionCallback<RestResponse> callback,
                         final List<ResponseFilter> responseFilters,
                         final FilterRequestContext filterRequestContext)
   {
     _request = request;
-    _method = method;
+    _routingResult = routingResult;
     _responseHandler = responseHandler;
     _callback = callback;
-    _responseFilterContextFactory = new RestLiResponseFilterContextFactory(_request, _method, _responseHandler);
+    _responseFilterContextFactory = new RestLiResponseFilterContextFactory(_request, routingResult, _responseHandler);
     if (responseFilters != null)
     {
       _responseFilters = responseFilters;
@@ -68,7 +71,7 @@ public class RestLiCallback<T> implements RequestExecutionCallback<T>
   }
 
   @Override
-  public void onSuccess(final T result, RequestExecutionReport executionReport)
+  public void onSuccess(final T result, RequestExecutionReport executionReport, final RestLiResponseAttachments responseAttachments)
   {
     final FilterResponseContext responseContext;
     try
@@ -78,26 +81,34 @@ public class RestLiCallback<T> implements RequestExecutionCallback<T>
     catch (Exception e)
     {
       // Invoke the onError method if we run into any exception while creating the response context from result.
-      onError(e, executionReport);
+      // Note that due to the fact we are in onSuccess(), we assume the application code has absorbed, or is in the
+      // process of absorbing any request attachments present.
+      onError(e, executionReport, null, responseAttachments);
       return;
     }
-    // Now kick off the response filters.
+    // Now kick off the response filters. Same note as above; we assume that the application code has absorbed
+    // any request attachments present in the request.
     RestLiResponseFilterChain restLiResponseFilterChain = new RestLiResponseFilterChain(_responseFilters,
                                                                                         _responseFilterContextFactory,
                                                                                         new RestLiResponseFilterChainCallbackImpl(
-                                                                                            executionReport));
+                                                                                            executionReport), null,
+                                                                                        responseAttachments);
     restLiResponseFilterChain.onResponse(_filterRequestContext, responseContext);
   }
 
   @Override
-  public void onError(final Throwable e, RequestExecutionReport executionReport)
+  public void onError(final Throwable e, final RequestExecutionReport executionReport,
+                      final RestLiAttachmentReader requestAttachmentReader,
+                      final RestLiResponseAttachments responseAttachments)
   {
     final FilterResponseContext responseContext = _responseFilterContextFactory.fromThrowable(e);
+
     // Now kick off the response filters.
     RestLiResponseFilterChain restLiResponseFilterChain = new RestLiResponseFilterChain(_responseFilters,
                                                                                         _responseFilterContextFactory,
                                                                                         new RestLiResponseFilterChainCallbackImpl(
-                                                                                            executionReport));
+                                                                                            executionReport), requestAttachmentReader,
+                                                                                        responseAttachments);
     restLiResponseFilterChain.onResponse(_filterRequestContext, responseContext);
   }
 
@@ -114,20 +125,21 @@ public class RestLiCallback<T> implements RequestExecutionCallback<T>
     }
 
     @Override
-    public void onCompletion(final RestLiResponseData responseData)
+    public void onCompletion(final RestLiResponseData responseData, final RestLiAttachmentReader requestAttachmentReader,
+                             final RestLiResponseAttachments responseAttachments)
     {
-      final PartialRestResponse response = _responseHandler.buildPartialResponse(_method, responseData);
+      final PartialRestResponse response = _responseHandler.buildPartialResponse(_routingResult, responseData);
       if (responseData.isErrorResponse())
       {
         // If the updated response from the filter is an error response, then call onError on the underlying callback.
         RestLiServiceException e = responseData.getServiceException();
         // Invoke onError on the R2 callback since we received an exception from the filters.
-        _callback.onError(_responseHandler.buildRestException(e, response), _executionReport);
+        _callback.onError(_responseHandler.buildRestException(e, response), _executionReport, requestAttachmentReader, responseAttachments);
       }
       else
       {
         // Invoke onSuccess on the underlying callback.
-        _callback.onSuccess(_responseHandler.buildResponse(_method, response), _executionReport);
+        _callback.onSuccess(_responseHandler.buildResponse(_routingResult, response), _executionReport, responseAttachments);
       }
     }
   }

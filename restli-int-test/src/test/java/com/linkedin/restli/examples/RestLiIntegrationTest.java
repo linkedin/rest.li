@@ -107,7 +107,8 @@ public class RestLiIntegrationTest
                                          -1,
                                          requestFilters,
                                          responseFilters,
-                                         filterChain);
+                                         filterChain,
+                                         !forceUseStreamServer());
     _serverWithFilters.start();
     // If requested, also start no compression server
     if (includeNoCompression)
@@ -204,5 +205,17 @@ public class RestLiIntegrationTest
     Client client = new TransportClientAdapter(_clientFactory.getClient(properties));
     _transportClients.add(client);
     return client;
+  }
+
+  /**
+   * This flag sets whether or not the server that is deployed is a {@link com.linkedin.r2.transport.common.StreamRequestHandler}
+   * or a {@link com.linkedin.r2.transport.common.RestRequestHandler}.
+   *
+   * Subclasses may return true for creating a server that uses {@link com.linkedin.r2.transport.common.StreamRequestHandler}.
+   * The default of false here will create a server that uses {@link com.linkedin.r2.transport.common.RestRequestHandler}.
+   */
+  protected boolean forceUseStreamServer()
+  {
+    return false;
   }
 }

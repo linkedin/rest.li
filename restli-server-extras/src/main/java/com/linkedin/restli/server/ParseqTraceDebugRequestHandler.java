@@ -17,7 +17,6 @@
 package com.linkedin.restli.server;
 
 
-import com.linkedin.common.callback.Callback;
 import com.linkedin.parseq.trace.Trace;
 import com.linkedin.parseq.trace.codec.json.JsonTraceCodec;
 import com.linkedin.r2.message.RequestContext;
@@ -26,6 +25,8 @@ import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestResponseBuilder;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
+import com.linkedin.restli.common.attachments.RestLiAttachmentReaderException;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -84,7 +85,8 @@ public class ParseqTraceDebugRequestHandler implements RestLiDebugRequestHandler
   public void handleRequest(final RestRequest request,
                             final RequestContext context,
                             final ResourceDebugRequestHandler resourceDebugRequestHandler,
-                            final Callback<RestResponse> callback)
+                            final RestLiAttachmentReader attachmentReader,
+                            final RequestExecutionCallback<RestResponse> callback)
   {
     //Find out the path coming after the "__debug" path segment
     String fullPath = request.getURI().getPath();
@@ -95,25 +97,70 @@ public class ParseqTraceDebugRequestHandler implements RestLiDebugRequestHandler
     assert (debugHandlerPath.startsWith(HANDLER_ID));
 
     //Decide whether this is a user issued debug request or a follow up static content request for tracevis html.
-    if (debugHandlerPath.equals(TRACEVIS_PATH) ||
-        debugHandlerPath.equals(RAW_PATH))
+    if (debugHandlerPath.equals(TRACEVIS_PATH) || debugHandlerPath.equals(RAW_PATH))
     {
-      //Execute the request as if it was a regular Rest.li request through resource debug request handler.
+      //Execute the request as if it was a regular rest.li request through resource debug request handler.
       //By using the returned execution report shape the response accordingly.
+      //Since we are executing the request as though its a normal rest.li request, we don't have to
+      //drain the incoming request attachments. Our concerns are only the scenarios listed in the onError() and onSuccess()
+      //in the callback.
       resourceDebugRequestHandler.handleRequest(request, context,
-                                           new RequestExecutionCallback<RestResponse>(){
-
+                                           new RequestExecutionCallback<RestResponse>()
+                                           {
                                              @Override
-                                             public void onError(Throwable e,
-                                                                 RequestExecutionReport executionReport)
+                                             public void onError(Throwable e, RequestExecutionReport executionReport,
+                                                                 RestLiAttachmentReader requestAttachmentReader,
+                                                                 RestLiResponseAttachments responseAttachments)
                                              {
+                                               //Since this is eventually sent back as a success, we need to
+                                               //drain any request attachments as well as any response attachments.
+                                               //Normally this is done by StreamResponseCallbackAdaptor's onError, but
+                                               //this is sent back as a success so we handle it here instead.
+                                               if (requestAttachmentReader != null && !requestAttachmentReader.haveAllAttachmentsFinished())
+                                               {
+                                                 try
+                                                 {
+                                                   //Here we simply call drainAllAttachments. At this point the current callback assigned is likely the
+                                                   //TopLevelReaderCallback in RestLiServer. When this callback is notified that draining is completed (via
+                                                   //onDrainComplete()), then no action is taken (which is what is desired).
+                                                   //
+                                                   //We can go ahead and send the error back to the client while we continue to drain the
+                                                   //bytes in the background. Note that it could be the case that even though there is an exception thrown,
+                                                   //that application code could still be reading these attachments. In such a case we would not be able to call
+                                                   //drainAllAttachments() successfully. Therefore we handle this exception and swallow.
+                                                   requestAttachmentReader.drainAllAttachments();
+                                                 }
+                                                 catch (RestLiAttachmentReaderException readerException)
+                                                 {
+                                                   //Swallow here.
+                                                   //It could be the case that the application code is still absorbing attachments.
+                                                   //We back off and send the original response to the client. If the application code is not doing this,
+                                                   //there is a chance for a resource leak. In such a case the framework can do nothing else.
+                                                 }
+                                               }
+
+                                               //Drop all attachments to send back on the ground as well.
+                                               if (responseAttachments != null)
+                                               {
+                                                 responseAttachments.getResponseAttachmentsBuilder().build().abortAllDataSources(e);
+                                               }
+
                                                sendDebugResponse(callback, executionReport, debugHandlerPath);
                                              }
 
                                              @Override
-                                             public void onSuccess(RestResponse result,
-                                                                   RequestExecutionReport executionReport)
+                                             public void onSuccess(RestResponse result, RequestExecutionReport executionReport,
+                                                                   RestLiResponseAttachments responseAttachments)
                                              {
+                                               //Since we aren't going to send any response attachments back, we need
+                                               //to drain them here.
+                                               if (responseAttachments != null)
+                                               {
+                                                 responseAttachments.getResponseAttachmentsBuilder().build()
+                                                         .abortAllDataSources(new UnsupportedOperationException("Response attachments " +
+                                                                 "may not be sent back for parseq trace debugging"));
+                                               }
+
                                                sendDebugResponse(callback, executionReport, debugHandlerPath);
                                              }
                                            });
@@ -139,7 +186,7 @@ public class ParseqTraceDebugRequestHandler implements RestLiDebugRequestHandler
       // If the requested file type is not supported by this debug request handler, return 404.
       if (mediaType == null)
       {
-        callback.onError(new RestLiServiceException(HttpStatus.S_404_NOT_FOUND));
+        callback.onError(new RestLiServiceException(HttpStatus.S_404_NOT_FOUND), null, null, null);
       }
 
       try
@@ -148,7 +195,7 @@ public class ParseqTraceDebugRequestHandler implements RestLiDebugRequestHandler
       }
       catch (IOException exception)
       {
-        callback.onError(new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, exception));
+        callback.onError(new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, exception), null, null, null);
       }
     }
   }
@@ -159,9 +206,9 @@ public class ParseqTraceDebugRequestHandler implements RestLiDebugRequestHandler
     return HANDLER_ID;
   }
 
-  private void sendDebugResponse(Callback<RestResponse> callback,
-                                 RequestExecutionReport executionReport,
-                                 String path)
+  private void sendDebugResponse(final RequestExecutionCallback<RestResponse> callback,
+                                 final RequestExecutionReport executionReport,
+                                 final String path)
   {
     if (path.equals(TRACEVIS_PATH))
     {
@@ -173,8 +220,8 @@ public class ParseqTraceDebugRequestHandler implements RestLiDebugRequestHandler
     }
   }
 
-  private void sendTraceRawAsResponse(Callback<RestResponse> callback,
-                                       RequestExecutionReport executionReport)
+  private void sendTraceRawAsResponse(final RequestExecutionCallback<RestResponse> callback,
+                                      final RequestExecutionReport executionReport)
   {
     String mediaType = HEADER_VALUE_APPLICATION_JSON;
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -192,14 +239,14 @@ public class ParseqTraceDebugRequestHandler implements RestLiDebugRequestHandler
     }
     catch (IOException exception)
     {
-      callback.onError(new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, exception));
+      callback.onError(new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, exception), null, null, null);
     }
 
     sendByteArrayAsResponse(callback, outputStream.toByteArray(), mediaType);
   }
 
-  private void sendTracevisEntryPageAsResponse(Callback<RestResponse> callback,
-                                               RequestExecutionReport executionReport)
+  private void sendTracevisEntryPageAsResponse(final RequestExecutionCallback<RestResponse> callback,
+                                               final RequestExecutionReport executionReport)
   {
     String mediaType = HEADER_VALUE_TEXT_HTML;
 
@@ -226,22 +273,22 @@ public class ParseqTraceDebugRequestHandler implements RestLiDebugRequestHandler
     }
     catch (IOException exception)
     {
-      callback.onError(new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, exception));
+      callback.onError(new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, exception), null, null, null);
     }
 
     sendByteArrayAsResponse(callback, outputStream.toByteArray(), mediaType);
   }
 
-  private void sendByteArrayAsResponse(Callback<RestResponse> callback,
-                                    byte[] responseBytes,
-                                    String mediaType)
+  private void sendByteArrayAsResponse(final RequestExecutionCallback<RestResponse> callback,
+                                       final byte[] responseBytes,
+                                       final String mediaType)
   {
     RestResponse staticContentResponse = new RestResponseBuilder().
                                           setStatus(HttpStatus.S_200_OK.getCode()).
                                           setHeader(RestConstants.HEADER_CONTENT_TYPE, mediaType).
                                           setEntity(responseBytes).
                                           build();
-    callback.onSuccess(staticContentResponse);
+    callback.onSuccess(staticContentResponse, null, null);
   }
 
   private static String determineMediaType(String path)

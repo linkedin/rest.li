@@ -17,13 +17,13 @@
 package com.linkedin.restli.server;
 
 
-import java.net.HttpCookie;
-import java.util.List;
-import java.util.Map;
-
 import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
+
+import java.net.HttpCookie;
+import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -34,42 +34,43 @@ import com.linkedin.r2.message.rest.RestRequest;
 public interface ResourceContext
 {
   /**
-   * get the RestRequest which caused the current context to be created.
+   * Get the RestRequest which caused the current context to be created.
    *
    * @return RestRequest for the current context
    */
+  @Deprecated
   RestRequest getRawRequest();
 
   /**
-   * get the HTTP request method for the current context.
+   * Get the HTTP request method for the current context.
    *
    * @return String representation of HTTP request method, per RFC 2616
    */
   String getRequestMethod();
 
   /**
-   * get the PathKeys parsed from the URI path.
+   * Get the PathKeys parsed from the URI path.
    *
    * @return PathKeys for this context.
    */
   PathKeys getPathKeys();
 
   /**
-   * get the projection mask parsed from the query for root object entities.
+   * Get the projection mask parsed from the query for root object entities.
    *
    * @return MaskTree parsed from query, or null if no root object projection mask was requested.
    */
   MaskTree getProjectionMask();
 
   /**
-   * get the projection mask parsed from the query for CollectionResult metadata
+   * Get the projection mask parsed from the query for CollectionResult metadata
    *
    * @return MaskTree parsed from query, or null if no metadata projection mask was requested.
    */
   MaskTree getMetadataProjectionMask();
 
   /**
-   * get the projection mask parsed from the query for paging (CollectionMetadata)
+   * Get the projection mask parsed from the query for paging (CollectionMetadata)
    *
    * Note that there is no get/set projection mode for paging because paging is fully automatic. Clients can choose
    * whether or not to pass a non-null total in the CollectionResult based on their paging MaskTree, but restli will
@@ -80,7 +81,7 @@ public interface ResourceContext
   MaskTree getPagingProjectionMask();
 
   /**
-   * check whether a given query parameter was present in the request.
+   * Check whether a given query parameter was present in the request.
    *
    * @param key - the name of the parameter
    * @return true if the request contains the specified parameter
@@ -88,7 +89,7 @@ public interface ResourceContext
   boolean hasParameter(String key);
 
   /**
-   * get the value of a given query parameter from the request. If multiple values were
+   * Get the value of a given query parameter from the request. If multiple values were
    * specified in the request, only the first will be returned.
    *
    * @param key - the name of the query parameter
@@ -108,7 +109,7 @@ public interface ResourceContext
   Object getStructuredParameter(String key);
 
   /**
-   * get all values for a given query parameter from the request.
+   * Get all values for a given query parameter from the request.
    *
    * @param key - the name of the query parameter
    * @return list of values for the query parameter in the request, or null if the query parameter was
@@ -117,14 +118,14 @@ public interface ResourceContext
   List<String> getParameterValues(String key);
 
   /**
-   * get all headers from the request.
+   * Get all headers from the request.
    *
    * @return a map of header name -> header value
    */
   Map<String, String> getRequestHeaders();
 
   /**
-   * set a header to be sent in the response message.
+   * Set a header to be sent in the response message.
    *
    * @param name - the name of the header
    * @param value - the value of the header
@@ -146,7 +147,7 @@ public interface ResourceContext
   void addResponseCookie(HttpCookie cookie);
 
   /**
-   * get the RequestContext associated with this request.
+   * Get the RequestContext associated with this request.
    *
    * @return RequestContext for the current context
    */
@@ -175,4 +176,30 @@ public interface ResourceContext
    * @param mode Projection mode for the response body for the CollectionResult metadata.
    */
   void setMetadataProjectionMode(ProjectionMode mode);
+
+  /**
+   * Returns whether or not attachments are permissible to send back in the response to the client. This is based on
+   * whether or not the client specified they could handle attachments in the Accept-Type header of their request. Users
+   * of this API should first check this, and if this returns true, continue by using
+   * {@link ResourceContext#setResponseAttachments(com.linkedin.restli.server.RestLiResponseAttachments)}.
+   *
+   * @return true if response attachments are permissible and false if they are not.
+   */
+  boolean responseAttachmentsSupported();
+
+  /**
+   * Sets the {@link com.linkedin.restli.server.RestLiResponseAttachments} to be attached and sent back in the response
+   * to the client's request. Note that this can only be used if {@link ResourceContext#responseAttachmentsSupported()}
+   * returns true. Failure to follow this will result in an  {@link java.lang.IllegalStateException}.
+   *
+   * @param responseAttachments the {@link com.linkedin.restli.server.RestLiResponseAttachments} to send back in the response.
+   */
+  void setResponseAttachments(final RestLiResponseAttachments responseAttachments) throws IllegalStateException;
+
+  /**
+   * Get the {@link com.linkedin.restli.server.RestLiResponseAttachments} which will be sent back in the response.
+   *
+   * @return the {@link com.linkedin.restli.server.RestLiResponseAttachments}.
+   */
+  RestLiResponseAttachments getResponseAttachments();
 }

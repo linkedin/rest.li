@@ -905,7 +905,7 @@ public class BatchGetRequestBuilderTest
 
     for (final Map.Entry<String, List<String>> entry : actualQueryParamMap.entrySet())
     {
-      if(!entry.getKey().equalsIgnoreCase(RestConstants.FIELDS_PARAM))
+      if (!entry.getKey().equalsIgnoreCase(RestConstants.FIELDS_PARAM))
       {
         Assert.assertNotNull(entry.getValue(), "We should not have a null list of params for key: " + entry.getKey());
         Assert.assertEquals(entry.getValue(), expectedQueryParamMap.get(entry.getKey()),

@@ -102,7 +102,7 @@ public class TestMIMEReaderClientCallbackExceptions extends AbstractMIMEUnitTest
 
     try
     {
-      _currentMultiPartMIMEReaderCallback.getReader().abandonAllParts();
+      _currentMultiPartMIMEReaderCallback.getReader().drainAllParts();
       Assert.fail();
     }
     catch (MultiPartReaderFinishedException multiPartReaderFinishedException)
@@ -139,7 +139,7 @@ public class TestMIMEReaderClientCallbackExceptions extends AbstractMIMEUnitTest
     //Verify this is unusable.
     try
     {
-      _currentMultiPartMIMEReaderCallback.getReader().abandonAllParts();
+      _currentMultiPartMIMEReaderCallback.getReader().drainAllParts();
       Assert.fail();
     }
     catch (MultiPartReaderFinishedException multiPartReaderFinishedException)
@@ -167,8 +167,8 @@ public class TestMIMEReaderClientCallbackExceptions extends AbstractMIMEUnitTest
   }
 
   @Test(dataProvider = "allTypesOfBodiesDataSource")
-  public void testMultiPartMIMEReaderCallbackExceptionOnAbandoned(final int chunkSize,
-                                                                  final List<MimeBodyPart> bodyPartList) throws Exception
+  public void testMultiPartMIMEReaderCallbackExceptionOnDrainComplete(final int chunkSize,
+                                                                      final List<MimeBodyPart> bodyPartList) throws Exception
   {
     MimeMultipart multiPartMimeBody = new MimeMultipart();
 
@@ -184,7 +184,7 @@ public class TestMIMEReaderClientCallbackExceptions extends AbstractMIMEUnitTest
 
     final CountDownLatch countDownLatch =
         executeRequestPartialReadWithException(requestPayload, chunkSize, multiPartMimeBody.getContentType(),
-                                               MultiPartMIMEThrowOnFlag.THROW_ON_ABANDONED,
+                                               MultiPartMIMEThrowOnFlag.THROW_ON_DRAIN_COMPLETE,
                                                SinglePartMIMEThrowOnFlag.NO_THROW);
 
     countDownLatch.await(_testTimeout, TimeUnit.MILLISECONDS);
@@ -195,7 +195,7 @@ public class TestMIMEReaderClientCallbackExceptions extends AbstractMIMEUnitTest
     //Verify this is unusable.
     try
     {
-      _currentMultiPartMIMEReaderCallback.getReader().abandonAllParts();
+      _currentMultiPartMIMEReaderCallback.getReader().drainAllParts();
       Assert.fail();
     }
     catch (MultiPartReaderFinishedException multiPartReaderFinishedException)
@@ -234,7 +234,7 @@ public class TestMIMEReaderClientCallbackExceptions extends AbstractMIMEUnitTest
     //Verify this is unusable.
     try
     {
-      _currentMultiPartMIMEReaderCallback.getReader().abandonAllParts();
+      _currentMultiPartMIMEReaderCallback.getReader().drainAllParts();
       Assert.fail();
     }
     catch (MultiPartReaderFinishedException multiPartReaderFinishedException)
@@ -282,7 +282,7 @@ public class TestMIMEReaderClientCallbackExceptions extends AbstractMIMEUnitTest
     //Verify this is unusable.
     try
     {
-      _currentMultiPartMIMEReaderCallback.getReader().abandonAllParts();
+      _currentMultiPartMIMEReaderCallback.getReader().drainAllParts();
       Assert.fail();
     }
     catch (MultiPartReaderFinishedException multiPartReaderFinishedException)
@@ -304,8 +304,8 @@ public class TestMIMEReaderClientCallbackExceptions extends AbstractMIMEUnitTest
   }
 
   @Test(dataProvider = "allTypesOfBodiesDataSource")
-  public void testSinglePartMIMEReaderCallbackExceptionOnAbandoned(final int chunkSize,
-                                                                   final List<MimeBodyPart> bodyPartList) throws Exception
+  public void testSinglePartMIMEReaderCallbackExceptionOnDrainComplete(final int chunkSize,
+                                                                       final List<MimeBodyPart> bodyPartList) throws Exception
   {
     MimeMultipart multiPartMimeBody = new MimeMultipart();
 
@@ -322,7 +322,7 @@ public class TestMIMEReaderClientCallbackExceptions extends AbstractMIMEUnitTest
     final CountDownLatch countDownLatch =
         executeRequestPartialReadWithException(requestPayload, chunkSize, multiPartMimeBody.getContentType(),
                                                MultiPartMIMEThrowOnFlag.NO_THROW,
-                                               SinglePartMIMEThrowOnFlag.THROW_ON_ABANDONED);
+                                               SinglePartMIMEThrowOnFlag.THROW_ON_DRAIN_COMPLETE);
 
     countDownLatch.await(_testTimeout, TimeUnit.MILLISECONDS);
 
@@ -330,7 +330,7 @@ public class TestMIMEReaderClientCallbackExceptions extends AbstractMIMEUnitTest
     //Verify these are unusable.
     try
     {
-      _currentMultiPartMIMEReaderCallback.getReader().abandonAllParts();
+      _currentMultiPartMIMEReaderCallback.getReader().drainAllParts();
       Assert.fail();
     }
     catch (MultiPartReaderFinishedException multiPartReaderFinishedException)
@@ -373,7 +373,7 @@ public class TestMIMEReaderClientCallbackExceptions extends AbstractMIMEUnitTest
   {
     THROW_ON_PART_DATA_AVAILABLE,
     THROW_ON_FINISHED,
-    THROW_ON_ABANDONED,
+    THROW_ON_DRAIN_COMPLETE,
     NO_THROW;
   }
 
@@ -410,9 +410,9 @@ public class TestMIMEReaderClientCallbackExceptions extends AbstractMIMEUnitTest
       {
         throw new IllegalMonitorStateException();
       }
-      else if (_singlePartMIMEThrowOnFlag == SinglePartMIMEThrowOnFlag.THROW_ON_ABANDONED)
+      else if (_singlePartMIMEThrowOnFlag == SinglePartMIMEThrowOnFlag.THROW_ON_DRAIN_COMPLETE)
       {
-        _singlePartMIMEReader.abandonPart();
+        _singlePartMIMEReader.drainPart();
         return;
       }
       else
@@ -431,9 +431,9 @@ public class TestMIMEReaderClientCallbackExceptions extends AbstractMIMEUnitTest
     }
 
     @Override
-    public void onAbandoned()
+    public void onDrainComplete()
     {
-      //We only reached here due to the presence of throwOnAbandoned == true
+      //We only reached here due to the presence of THROW_ON_DRAIN_COMPLETE
       throw new IllegalMonitorStateException();
     }
 
@@ -448,7 +448,7 @@ public class TestMIMEReaderClientCallbackExceptions extends AbstractMIMEUnitTest
   {
     THROW_ON_NEW_PART,
     THROW_ON_FINISHED,
-    THROW_ON_ABANDONED,
+    THROW_ON_DRAIN_COMPLETE,
     NO_THROW;
   }
 
@@ -495,9 +495,9 @@ public class TestMIMEReaderClientCallbackExceptions extends AbstractMIMEUnitTest
         throw new IllegalMonitorStateException();
       }
 
-      if (_multiPartMIMEThrowOnFlag == MultiPartMIMEThrowOnFlag.THROW_ON_ABANDONED)
+      if (_multiPartMIMEThrowOnFlag == MultiPartMIMEThrowOnFlag.THROW_ON_DRAIN_COMPLETE)
       {
-        _reader.abandonAllParts();
+        _reader.drainAllParts();
         return;
       }
 
@@ -519,9 +519,9 @@ public class TestMIMEReaderClientCallbackExceptions extends AbstractMIMEUnitTest
     }
 
     @Override
-    public void onAbandoned()
+    public void onDrainComplete()
     {
-      //We only reached here due to the presence of throwOnAbandoned == true
+      //We only reached here due to the presence of THROW_ON_DRAIN_COMPLETE == true
       throw new IllegalMonitorStateException();
     }
 

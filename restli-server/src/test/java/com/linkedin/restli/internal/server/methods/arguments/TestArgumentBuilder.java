@@ -1,3 +1,19 @@
+/*
+   Copyright (c) 2016 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
 package com.linkedin.restli.internal.server.methods.arguments;
 
 
@@ -11,32 +27,38 @@ import com.linkedin.data.template.DynamicRecordTemplate;
 import com.linkedin.data.template.StringArray;
 import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.parseq.Context;
+import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
+import com.linkedin.restli.internal.server.MutablePathKeys;
+import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.internal.server.model.AnnotationSet;
+import com.linkedin.restli.internal.server.model.Parameter;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.server.PagingContext;
 import com.linkedin.restli.server.PathKeys;
 import com.linkedin.restli.server.ResourceContext;
+import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.RoutingException;
+import com.linkedin.restli.server.TestRecord;
+import com.linkedin.restli.server.TestRecordArray;
 import com.linkedin.restli.server.annotations.HeaderParam;
+
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-
-import com.linkedin.restli.server.TestRecord;
-import com.linkedin.restli.server.TestRecordArray;
 import java.util.Map;
 import java.util.Set;
-import org.easymock.Capture;
-import org.easymock.EasyMock;
+
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import com.linkedin.restli.internal.server.model.Parameter;
+import org.easymock.Capture;
+import org.easymock.EasyMock;
 
 
 /**
@@ -149,8 +171,9 @@ public class TestArgumentBuilder
     Capture<String> param5Capture = new Capture<String>();
     Capture<String> param6Capture = new Capture<String>();
 
-    ResourceContext mockResourceContext = EasyMock.createMock(ResourceContext.class);
-    PathKeys mockPathKeys = EasyMock.createMock(PathKeys.class);
+    ServerResourceContext mockResourceContext = EasyMock.createMock(ServerResourceContext.class);
+    EasyMock.expect(mockResourceContext.getRequestAttachmentReader()).andReturn(null);
+    MutablePathKeys mockPathKeys = EasyMock.createMock(MutablePathKeys.class);
     ResourceMethodDescriptor mockResourceMethodDescriptor = getMockResourceMethod(parameters);
 
     //easy mock for processing param1
@@ -192,7 +215,7 @@ public class TestArgumentBuilder
     String testParamKey = "testParam";
     String expectedTestParamValue = "testParamValue";
 
-    ResourceContext mockResourceContext = EasyMock.createMock(ResourceContext.class);
+    ServerResourceContext mockResourceContext = EasyMock.createMock(ServerResourceContext.class);
     HeaderParam annotation = EasyMock.createMock(HeaderParam.class);
     EasyMock.expect(annotation.value()).andReturn(testParamKey);
     AnnotationSet annotationSet = EasyMock.createMock(AnnotationSet.class);
@@ -201,6 +224,7 @@ public class TestArgumentBuilder
     Map<String, String> headers = new HashMap<String, String>();
     headers.put(testParamKey, expectedTestParamValue);
     EasyMock.expect(mockResourceContext.getRequestHeaders()).andReturn(headers);
+    EasyMock.expect(mockResourceContext.getRequestAttachmentReader()).andReturn(null);
     EasyMock.replay(mockResourceContext, annotation, annotationSet);
 
     Parameter<String> param = new Parameter<String>(testParamKey, String.class, DataSchemaConstants.STRING_DATA_SCHEMA,
@@ -237,7 +261,7 @@ public class TestArgumentBuilder
   {
     String paramKey = "testParam";
 
-    ResourceContext mockResourceContext = EasyMock.createMock(ResourceContext.class);
+    ServerResourceContext mockResourceContext = EasyMock.createMock(ServerResourceContext.class);
 
     @SuppressWarnings({"unchecked","rawtypes"})
     Parameter<?> param = new Parameter(paramKey, dataType, null, false, null, paramType,
@@ -275,7 +299,7 @@ public class TestArgumentBuilder
   {
     String testParamKey = "testParam";
 
-    ResourceContext mockResourceContext = EasyMock.createMock(ResourceContext.class);
+    ServerResourceContext mockResourceContext = EasyMock.createMock(ServerResourceContext.class);
     MaskTree mockMask = EasyMock.createMock(MaskTree.class);
     if (paramType == Parameter.ParamType.PROJECTION_PARAM || paramType == Parameter.ParamType.PROJECTION)
     {
@@ -289,6 +313,7 @@ public class TestArgumentBuilder
     {
       EasyMock.expect(mockResourceContext.getPagingProjectionMask()).andReturn(mockMask);
     }
+    EasyMock.expect(mockResourceContext.getRequestAttachmentReader()).andReturn(null);
     EasyMock.replay(mockResourceContext);
 
     Parameter<MaskTree> param = new Parameter<MaskTree>(testParamKey, MaskTree.class, null, false, null, paramType,
@@ -305,10 +330,11 @@ public class TestArgumentBuilder
   {
     String testParamKey = "testParam";
 
-    ResourceContext mockResourceContext = EasyMock.createMock(ResourceContext.class);
+    ServerResourceContext mockResourceContext = EasyMock.createMock(ServerResourceContext.class);
     PagingContext pagingContext = new PagingContext(RestConstants.DEFAULT_START, RestConstants.DEFAULT_COUNT, false, false);
     EasyMock.expect(mockResourceContext.getParameter(RestConstants.START_PARAM)).andReturn(null).anyTimes();
     EasyMock.expect(mockResourceContext.getParameter(RestConstants.COUNT_PARAM)).andReturn(null).anyTimes();
+    EasyMock.expect(mockResourceContext.getRequestAttachmentReader()).andReturn(null);
     EasyMock.replay(mockResourceContext);
 
     List<Parameter<?>> parameters = new ArrayList<Parameter<?>>();
@@ -325,6 +351,76 @@ public class TestArgumentBuilder
   }
 
   @Test
+  public void testRestLiAttachmentsParam()
+  {
+    ServerResourceContext mockResourceContext = EasyMock.createMock(ServerResourceContext.class);
+
+    final RestLiAttachmentReader restLiAttachmentReader = new RestLiAttachmentReader(null);
+
+    EasyMock.expect(mockResourceContext.getRequestAttachmentReader()).andReturn(restLiAttachmentReader);
+    EasyMock.replay(mockResourceContext);
+
+    @SuppressWarnings({"unchecked","rawtypes"})
+    final Parameter<RestLiAttachmentReader> param = new Parameter("RestLi Attachment Reader",
+                                                                  RestLiAttachmentReader.class, null, false, null,
+                                                                  Parameter.ParamType.RESTLI_ATTACHMENTS_PARAM, false,
+                                                                  AnnotationSet.EMPTY);
+
+    List<Parameter<?>> parameters = Collections.<Parameter<?>>singletonList(param);
+
+    Object[] results = ArgumentBuilder.buildArgs(new Object[0], getMockResourceMethod(parameters), mockResourceContext, null);
+    Assert.assertEquals(results[0], restLiAttachmentReader);
+  }
+
+  @Test
+  public void testRestLiAttachmentsParamResourceExpectNotPresent()
+  {
+    //This test makes sure that a resource method that expects attachments, but none are present in the request,
+    //is given a null for the RestLiAttachmentReader.
+    ServerResourceContext mockResourceContext = EasyMock.createMock(ServerResourceContext.class);
+
+    EasyMock.expect(mockResourceContext.getRequestAttachmentReader()).andReturn(null);
+    EasyMock.replay(mockResourceContext);
+
+    @SuppressWarnings({"unchecked","rawtypes"})
+    final Parameter<RestLiAttachmentReader> param = new Parameter("RestLi Attachment Reader",
+                                                                  RestLiAttachmentReader.class, null, false, null,
+                                                                  Parameter.ParamType.RESTLI_ATTACHMENTS_PARAM, false,
+                                                                  AnnotationSet.EMPTY);
+
+    List<Parameter<?>> parameters = Collections.<Parameter<?>>singletonList(param);
+
+    Object[] results = ArgumentBuilder.buildArgs(new Object[0], getMockResourceMethod(parameters), mockResourceContext, null);
+    Assert.assertEquals(results[0], null);
+  }
+
+  @Test
+  public void testRestLiAttachmentsParamResourceNotExpect()
+  {
+    //This test makes sure that if the resource method did not expect attachments but there were attachments present
+    //in the request, that an exception is thrown.
+    ServerResourceContext mockResourceContext = EasyMock.createMock(ServerResourceContext.class);
+
+    final RestLiAttachmentReader restLiAttachmentReader = new RestLiAttachmentReader(null);
+
+    EasyMock.expect(mockResourceContext.getRequestAttachmentReader()).andReturn(restLiAttachmentReader);
+    EasyMock.replay(mockResourceContext);
+
+    List<Parameter<?>> parameters = Collections.<Parameter<?>>emptyList();
+
+    try
+    {
+      ArgumentBuilder.buildArgs(new Object[0], getMockResourceMethod(parameters), mockResourceContext, null);
+      Assert.fail();
+    }
+    catch (RestLiServiceException restLiServiceException)
+    {
+      Assert.assertEquals(restLiServiceException.getStatus(), HttpStatus.S_400_BAD_REQUEST);
+      Assert.assertEquals(restLiServiceException.getMessage(), "Resource method endpoint invoked does not accept any request attachments.");
+    }
+  }
+
+  @Test
   @SuppressWarnings("deprecation")
   public void testPathKeyParameterType()
   {
@@ -332,10 +428,11 @@ public class TestArgumentBuilder
     String expectedTestParamValue = "testParamValue";
 
     // mock setup
-    ResourceContext mockResourceContext = EasyMock.createMock(ResourceContext.class);
-    PathKeys mockPathKeys = EasyMock.createMock(PathKeys.class);
+    ServerResourceContext mockResourceContext = EasyMock.createMock(ServerResourceContext.class);
+    MutablePathKeys mockPathKeys = EasyMock.createMock(MutablePathKeys.class);
     EasyMock.expect(mockPathKeys.get(testParamKey)).andReturn(expectedTestParamValue).anyTimes();
     EasyMock.expect(mockResourceContext.getPathKeys()).andReturn(mockPathKeys).anyTimes();
+    EasyMock.expect(mockResourceContext.getRequestAttachmentReader()).andReturn(null);
     EasyMock.replay(mockResourceContext, mockPathKeys);
 
     List<Parameter<?>> parameters = new ArrayList<Parameter<?>>();
@@ -365,7 +462,7 @@ public class TestArgumentBuilder
   {
     String testParamKey = "testParam";
 
-    ResourceContext mockResourceContext = EasyMock.createMock(ResourceContext.class);
+    ServerResourceContext mockResourceContext = EasyMock.createMock(ServerResourceContext.class);
 
     List<Parameter<?>> parameters = new ArrayList<Parameter<?>>();
     Parameter<ResourceContext> param1 = new Parameter<ResourceContext>(testParamKey, ResourceContext.class, null,
@@ -375,6 +472,7 @@ public class TestArgumentBuilder
     parameters.add(param1);
     parameters.add(param2);
 
+    EasyMock.expect(mockResourceContext.getRequestAttachmentReader()).andReturn(null);
     Object[] results = ArgumentBuilder.buildArgs(new Object[0], getMockResourceMethod(parameters), mockResourceContext, null);
     Assert.assertEquals(results[0], mockResourceContext);
     Assert.assertEquals(results[1], mockResourceContext);
@@ -386,7 +484,7 @@ public class TestArgumentBuilder
     String testParamKey = "testParam";
     String expectedTestParamValue = "testParamValue";
 
-    ResourceContext mockResourceContext = EasyMock.createMock(ResourceContext.class);
+    ServerResourceContext mockResourceContext = EasyMock.createMock(ServerResourceContext.class);
     DataMap entityBody = new DataMap();
     entityBody.put(testParamKey, expectedTestParamValue);
     DynamicRecordTemplate template = new DynamicRecordTemplate(entityBody, null);
@@ -395,6 +493,7 @@ public class TestArgumentBuilder
         false, null, Parameter.ParamType.POST, false, AnnotationSet.EMPTY);
     List<Parameter<?>> parameters = Collections.<Parameter<?>>singletonList(param);
 
+    EasyMock.expect(mockResourceContext.getRequestAttachmentReader()).andReturn(null);
     Object[] results = ArgumentBuilder.buildArgs(new Object[0], getMockResourceMethod(parameters), mockResourceContext, template);
     Assert.assertEquals(results[0], expectedTestParamValue);
   }
@@ -405,8 +504,9 @@ public class TestArgumentBuilder
     String testParamKey = "testParam";
     String expectedTestParamValue = "testParamValue";
 
-    ResourceContext mockResourceContext = EasyMock.createMock(ResourceContext.class);
+    ServerResourceContext mockResourceContext = EasyMock.createMock(ServerResourceContext.class);
     EasyMock.expect(mockResourceContext.getParameter(testParamKey)).andReturn(expectedTestParamValue).anyTimes();
+    EasyMock.expect(mockResourceContext.getRequestAttachmentReader()).andReturn(null);
     EasyMock.replay(mockResourceContext);
 
     Parameter<String> param = new Parameter<String>(testParamKey, String.class, DataSchemaConstants.STRING_DATA_SCHEMA,
@@ -457,7 +557,7 @@ public class TestArgumentBuilder
     Parameter.ParamType paramType = param.getParamType();
 
     // mock resource context
-    ResourceContext mockResourceContext = EasyMock.createMock(ResourceContext.class);
+    ServerResourceContext mockResourceContext = EasyMock.createMock(ServerResourceContext.class);
     DynamicRecordTemplate template = null;
     if (paramType == Parameter.ParamType.POST)
     {
@@ -465,9 +565,10 @@ public class TestArgumentBuilder
     }
     else
     {
-      PathKeys mockPathKeys = EasyMock.createMock(PathKeys.class);
+      MutablePathKeys mockPathKeys = EasyMock.createMock(MutablePathKeys.class);
       EasyMock.expect(mockPathKeys.get(paramKey)).andReturn(null);
       EasyMock.expect(mockResourceContext.getPathKeys()).andReturn(mockPathKeys);
+      EasyMock.expect(mockResourceContext.getRequestAttachmentReader()).andReturn(null);
       if (DataTemplate.class.isAssignableFrom(dataType))
       {
         EasyMock.expect(mockResourceContext.getStructuredParameter(paramKey)).andReturn(null);

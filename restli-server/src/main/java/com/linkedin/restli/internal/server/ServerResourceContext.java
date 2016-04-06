@@ -23,6 +23,7 @@ package com.linkedin.restli.internal.server;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.restli.common.ProtocolVersion;
+import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
 import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiServiceException;
 
@@ -31,13 +32,13 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
+
 /**
- * Richer resource context used inside server framework
+ * Richer resource context used inside server framework.
  *
  * @author Josh Walker
  * @version $Revision: $
  */
-
 public interface ServerResourceContext extends ResourceContext
 {
   /**
@@ -100,4 +101,14 @@ public interface ServerResourceContext extends ResourceContext
    * @return response MIME type.
    */
   String getResponseMimeType();
+
+  /**
+   * Returns a {@link com.linkedin.restli.common.attachments.RestLiAttachmentReader} if there are attachments
+   * available to asynchronously walk through in the incoming request. If no attachments are present in the incoming
+   * request, null is returned.
+   *
+   * @return the {@link com.linkedin.restli.common.attachments.RestLiAttachmentReader} to walk through all possible attachments
+   * in the request if any exist, or null otherwise.
+   */
+  RestLiAttachmentReader getRequestAttachmentReader();
 }

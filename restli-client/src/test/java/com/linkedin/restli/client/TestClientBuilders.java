@@ -31,6 +31,7 @@ import com.linkedin.data.template.FieldDef;
 import com.linkedin.data.template.IntegerArray;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.filter.CompressionOption;
+import com.linkedin.r2.message.stream.entitystream.WriteHandle;
 import com.linkedin.restli.client.response.BatchKVResponse;
 import com.linkedin.restli.client.test.TestRecord;
 import com.linkedin.restli.client.uribuilders.RestliUriBuilderUtil;
@@ -53,12 +54,19 @@ import com.linkedin.restli.common.ResourceSpecImpl;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.common.TypeSpec;
 import com.linkedin.restli.common.UpdateStatus;
+import com.linkedin.restli.common.attachments.RestLiAttachmentDataSourceWriter;
+import com.linkedin.restli.common.attachments.RestLiDataSourceIterator;
+import com.linkedin.restli.common.attachments.RestLiDataSourceIteratorCallback;
 import com.linkedin.restli.internal.client.CollectionRequestUtil;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.TestConstants;
 import com.linkedin.restli.internal.common.URIParamUtils;
 import com.linkedin.restli.internal.common.URLEscaper;
+import com.linkedin.restli.internal.testutils.RestLiTestAttachmentDataSource;
 import com.linkedin.restli.internal.testutils.URIDetails;
+
+import com.google.common.collect.HashMultiset;
+import com.google.common.collect.Multiset;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -72,9 +80,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.google.common.collect.HashMultiset;
-import com.google.common.collect.Multiset;
-
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -84,7 +89,6 @@ import org.testng.annotations.Test;
  * @author Josh Walker
  * @version $Revision: $
  */
-
 public class TestClientBuilders
 {
   public static final String TEST_URI = "test";
@@ -136,6 +140,11 @@ public class TestClientBuilders
                                                                              TestRecord.class,
                                                                              Collections.<String, Class<?>> emptyMap());
 
+  private static final RestLiAttachmentDataSourceWriter _dataSourceWriterA = new TestRestLiAttachmentDataSource("dataSourceA");
+  private static final RestLiAttachmentDataSourceWriter _dataSourceWriterB = new TestRestLiAttachmentDataSource("dataSourceB");
+  private static final RestLiDataSourceIterator _dataSourceIterator = new TestRestLiDataSourceIterator();
+  private static final List<Object> _streamingDataSources = new ArrayList<>(Arrays.asList(_dataSourceWriterA, _dataSourceIterator, _dataSourceWriterB));
+
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "action")
   public Object[][] action()
   {
@@ -180,7 +189,11 @@ public class TestClientBuilders
                                                                                  resourceSpec,
                                                                                  RestliRequestOptions.DEFAULT_OPTIONS);
 
-    ActionRequest<TestRecord> request = builder.name("action").setParam(pParam, "42").id(1L).build();
+    ActionRequest<TestRecord> request = builder.name("action").setParam(pParam, "42").id(1L)
+        .appendSingleAttachment(_dataSourceWriterA)
+        .appendMultipleAttachments(_dataSourceIterator)
+        .appendSingleAttachment(_dataSourceWriterB)
+        .build();
 
     DataMap d = new DataMap();
     d.put("p", "42");
@@ -200,6 +213,16 @@ public class TestClientBuilders
     Assert.assertEquals(request.getInputRecord(), expectedRecordTemplate);
     Assert.assertEquals(request.isSafe(), false);
     Assert.assertEquals(request.isIdempotent(), false);
+    Assert.assertEquals(request.getStreamingAttachments(), _streamingDataSources);
+    try
+    {
+      request.getStreamingAttachments().add(new RestLiTestAttachmentDataSource("1", ByteString.empty()));
+      Assert.fail("Should not be able to add to an immutable list");
+    }
+    catch (Exception e)
+    {
+      Assert.assertTrue(e instanceof UnsupportedOperationException);
+    }
     Assert.assertEquals(request.getResponseDecoder().getEntityClass(), Void.class);
   }
 
@@ -229,7 +252,7 @@ public class TestClientBuilders
     Assert.assertEquals(requestNullOptionalValue.getResponseDecoder().getEntityClass(), Void.class);
   }
 
-    @Test
+  @Test
   @SuppressWarnings("unchecked")
   public void testActionRequestInputIsReadOnly()
   {
@@ -332,7 +355,7 @@ public class TestClientBuilders
     Assert.assertEquals(request.isSafe(), true);
     Assert.assertEquals(request.isIdempotent(), true);
 
-    checkBasicRequest(request, expectedURIDetails, ResourceMethod.BATCH_GET, null, Collections.<String, String>emptyMap());
+    checkBasicRequest(request, expectedURIDetails, ResourceMethod.BATCH_GET, null, Collections.<String, String>emptyMap(), null);
   }
 
   @Test
@@ -471,7 +494,8 @@ public class TestClientBuilders
                       expectedURIDetails,
                       ResourceMethod.BATCH_GET,
                       null,
-                      Collections.<String, String>emptyMap());
+                      Collections.<String, String>emptyMap(),
+                      null);
   }
 
   private CompoundKey buildCompoundKey()
@@ -524,7 +548,8 @@ public class TestClientBuilders
                       expectedURIDetails,
                       ResourceMethod.GET,
                       null,
-                      Collections.<String, String>emptyMap());
+                      Collections.<String, String>emptyMap(),
+                      null);
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "noEntity")
@@ -560,7 +585,7 @@ public class TestClientBuilders
     Assert.assertEquals(request.isIdempotent(), false);
 
     testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
-    checkBasicRequest(request, expectedURIDetails, ResourceMethod.CREATE, record, Collections.<String, String>emptyMap());
+    checkBasicRequest(request, expectedURIDetails, ResourceMethod.CREATE, record, Collections.<String, String>emptyMap(), null);
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "compoundKey")
@@ -579,7 +604,7 @@ public class TestClientBuilders
                       expectedURIDetails,
                       ResourceMethod.UPDATE,
                       record,
-                      Collections.<String, String>emptyMap());
+                      Collections.<String, String>emptyMap(), null);
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "compoundKey")
@@ -601,7 +626,7 @@ public class TestClientBuilders
     Assert.assertEquals(request.isIdempotent(), false);
 
     testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
-    checkBasicRequest(request, expectedURIDetails, ResourceMethod.PARTIAL_UPDATE, patch, Collections.<String, String>emptyMap());
+    checkBasicRequest(request, expectedURIDetails, ResourceMethod.PARTIAL_UPDATE, patch, Collections.<String, String>emptyMap(), null);
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchCompoundKey")
@@ -679,7 +704,8 @@ public class TestClientBuilders
                       ResourceMethod.BATCH_UPDATE,
                       collectionRequest,
                       expectedRequest,
-                      Collections.<String, String>emptyMap());
+                      Collections.<String, String>emptyMap(),
+                      null);
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchCompoundKey")
@@ -728,7 +754,8 @@ public class TestClientBuilders
                       ResourceMethod.BATCH_PARTIAL_UPDATE,
                       collectionRequest,
                       expectedRequest,
-                      Collections.<String, String>emptyMap());
+                      Collections.<String, String>emptyMap(),
+                      null);
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchGetWithProjections")
@@ -747,7 +774,7 @@ public class TestClientBuilders
     Assert.assertEquals(request.isSafe(), true);
     Assert.assertEquals(request.isIdempotent(), true);
 
-    checkBasicRequest(request, expectedURIDetails, ResourceMethod.BATCH_GET, null, Collections.<String, String>emptyMap());
+    checkBasicRequest(request, expectedURIDetails, ResourceMethod.BATCH_GET, null, Collections.<String, String>emptyMap(), null);
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batch")
@@ -783,7 +810,11 @@ public class TestClientBuilders
     updates.put(1L, new TestRecord());
     updates.put(2L, new TestRecord());
     updates.put(3L, new TestRecord());
-    BatchUpdateRequest<Long, TestRecord> request = builder.inputs(updates).build();
+    BatchUpdateRequest<Long, TestRecord> request = builder.inputs(updates)
+        .appendSingleAttachment(_dataSourceWriterA)
+        .appendMultipleAttachments(_dataSourceIterator)
+        .appendSingleAttachment(_dataSourceWriterB)
+        .build();
     testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
     Assert.assertEquals(request.getObjectIds(), new HashSet<Long>(Arrays.asList(1L, 2L, 3L)));
     Assert.assertEquals(request.isSafe(), false);
@@ -812,7 +843,8 @@ public class TestClientBuilders
                       ResourceMethod.BATCH_UPDATE,
                       collectionRequest,
                       expectedRequest,
-                      Collections.<String, String>emptyMap());
+                      Collections.<String, String>emptyMap(),
+                      _streamingDataSources);
   }
 
   // need suppress on the method because the more specific suppress isn't being obeyed.
@@ -826,7 +858,11 @@ public class TestClientBuilders
     builder.input(1L, new PatchRequest<TestRecord>());
     builder.input(2L, new PatchRequest<TestRecord>());
     builder.input(3L, new PatchRequest<TestRecord>());
-    BatchPartialUpdateRequest<Long, TestRecord> request = builder.build();
+    BatchPartialUpdateRequest<Long, TestRecord> request = builder
+        .appendSingleAttachment(_dataSourceWriterA)
+        .appendMultipleAttachments(_dataSourceIterator)
+        .appendSingleAttachment(_dataSourceWriterB)
+        .build();
     testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
     Assert.assertEquals(request.getObjectIds(), new HashSet<Long>(Arrays.asList(1L, 2L, 3L)));
     Assert.assertEquals(request.isSafe(), false);
@@ -854,7 +890,8 @@ public class TestClientBuilders
                       ResourceMethod.BATCH_PARTIAL_UPDATE,
                       collectionRequest,
                       expectedRequest,
-                      Collections.<String, String>emptyMap());
+                      Collections.<String, String>emptyMap(),
+                      _streamingDataSources);
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batch")
@@ -868,7 +905,7 @@ public class TestClientBuilders
     Assert.assertEquals(request.isSafe(), false);
     Assert.assertEquals(request.isIdempotent(), true);
 
-    checkBasicRequest(request, expectedURIDetails, ResourceMethod.BATCH_DELETE, null, Collections.<String, String>emptyMap());
+    checkBasicRequest(request, expectedURIDetails, ResourceMethod.BATCH_DELETE, null, Collections.<String, String>emptyMap(), null);
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "noEntity")
@@ -877,16 +914,35 @@ public class TestClientBuilders
     BatchCreateRequestBuilder<Long, TestRecord> builder =
             new BatchCreateRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
     List<TestRecord> newRecords = Arrays.asList(new TestRecord(), new TestRecord(), new TestRecord());
-    BatchCreateRequest<TestRecord> request = builder.inputs(newRecords).build();
+    BatchCreateRequest<TestRecord> request = builder.inputs(newRecords)
+        .appendSingleAttachment(_dataSourceWriterA)
+        .appendMultipleAttachments(_dataSourceIterator)
+        .appendSingleAttachment(_dataSourceWriterB)
+        .build();
+
     testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
     Assert.assertEquals(request.isSafe(), false);
     Assert.assertEquals(request.isIdempotent(), false);
 
+    Assert.assertEquals(request.getStreamingAttachments(), _streamingDataSources);
+    try
+    {
+      request.getStreamingAttachments().add(new RestLiTestAttachmentDataSource("1", ByteString.empty()));
+      Assert.fail("Should not be able to add to an immutable list");
+    }
+    catch (Exception e)
+    {
+      Assert.assertTrue(e instanceof UnsupportedOperationException);
+    }
+
     CollectionRequest<TestRecord> expectedRequest = new CollectionRequest<TestRecord>(new DataMap(), TestRecord.class);
     expectedRequest.getElements().addAll(newRecords);
-    checkBasicRequest(request, expectedURIDetails, ResourceMethod.BATCH_CREATE,
+    checkBasicRequest(request,
+                      expectedURIDetails,
+                      ResourceMethod.BATCH_CREATE,
                       expectedRequest,
-                      Collections.<String, String>emptyMap());
+                      Collections.<String, String>emptyMap(),
+                      _streamingDataSources);
   }
 
   @Test
@@ -942,11 +998,29 @@ public class TestClientBuilders
                                                                                                 TestRecord.class,
                                                                                                 _COLL_SPEC,
                                                                                                 RestliRequestOptions.DEFAULT_OPTIONS);
-    CreateRequest<TestRecord> request = builder.input(new TestRecord()).build();
+    CreateRequest<TestRecord> request = builder.input(new TestRecord())
+        .appendSingleAttachment(_dataSourceWriterA)
+        .appendMultipleAttachments(_dataSourceIterator)
+        .appendSingleAttachment(_dataSourceWriterB)
+        .build();
     Assert.assertEquals(request.isSafe(), false);
     Assert.assertEquals(request.isIdempotent(), false);
-
-    checkBasicRequest(request, expectedURIDetails, ResourceMethod.CREATE, new TestRecord(), Collections.<String, String>emptyMap());
+    Assert.assertEquals(request.getStreamingAttachments(), _streamingDataSources);
+    try
+    {
+      request.getStreamingAttachments().add(new RestLiTestAttachmentDataSource("1", ByteString.empty()));
+      Assert.fail("Should not be able to add to an immutable list");
+    }
+    catch (Exception e)
+    {
+      Assert.assertTrue(e instanceof UnsupportedOperationException);
+    }
+    checkBasicRequest(request,
+                      expectedURIDetails,
+                      ResourceMethod.CREATE,
+                      new TestRecord(),
+                      Collections.<String, String>emptyMap(),
+                      _streamingDataSources);
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "singleEntity")
@@ -979,7 +1053,12 @@ public class TestClientBuilders
     Assert.assertEquals(request.isSafe(), false);
     Assert.assertEquals(request.isIdempotent(), true);
 
-    checkBasicRequest(request, expectedURIDetails, ResourceMethod.DELETE, null, Collections.<String, String>emptyMap());
+    checkBasicRequest(request,
+                      expectedURIDetails,
+                      ResourceMethod.DELETE,
+                      null,
+                      Collections.<String, String>emptyMap(),
+                      null);
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "noEntity")
@@ -991,7 +1070,12 @@ public class TestClientBuilders
     Assert.assertEquals(request.isSafe(), false);
     Assert.assertEquals(request.isIdempotent(), true);
 
-    checkBasicRequest(request, expectedURIDetails, ResourceMethod.DELETE, null, Collections.<String, String>emptyMap());
+    checkBasicRequest(request,
+                      expectedURIDetails,
+                      ResourceMethod.DELETE,
+                      null,
+                      Collections.<String, String>emptyMap(),
+                      null);
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "search1")
@@ -1044,7 +1128,8 @@ public class TestClientBuilders
                       expectedURIDetails,
                       ResourceMethod.FINDER,
                       null,
-                      Collections.<String, String>emptyMap());
+                      Collections.<String, String>emptyMap(),
+                      null);
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "search2")
@@ -1090,7 +1175,8 @@ public class TestClientBuilders
                       expectedURIDetails,
                       ResourceMethod.FINDER,
                       null,
-                      Collections.<String, String>emptyMap());
+                      Collections.<String, String>emptyMap(),
+                      null);
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "search3")
@@ -1136,7 +1222,8 @@ public class TestClientBuilders
                       expectedURIDetails,
                       ResourceMethod.FINDER,
                       null,
-                      Collections.<String, String>emptyMap());
+                      Collections.<String, String>emptyMap(),
+                      null);
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "getAll1")
@@ -1182,7 +1269,8 @@ public class TestClientBuilders
                       expectedURIDetails,
                       ResourceMethod.GET_ALL,
                       null,
-                      Collections.<String, String>emptyMap());
+                      Collections.<String, String>emptyMap(),
+                      null);
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "getAll2")
@@ -1220,7 +1308,8 @@ public class TestClientBuilders
                       expectedURIDetails,
                       ResourceMethod.GET_ALL,
                       null,
-                      Collections.<String, String>emptyMap());
+                      Collections.<String, String>emptyMap(),
+                      null);
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "getAll3")
@@ -1258,7 +1347,8 @@ public class TestClientBuilders
                       expectedURIDetails,
                       ResourceMethod.GET_ALL,
                       null,
-                      Collections.<String, String>emptyMap());
+                      Collections.<String, String>emptyMap(),
+                      null);
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "getWithProjection")
@@ -1295,7 +1385,12 @@ public class TestClientBuilders
     Assert.assertEquals(request.isSafe(), true);
     Assert.assertEquals(request.isIdempotent(), true);
 
-    checkBasicRequest(request, expectedURIDetails, ResourceMethod.GET, null, Collections.<String, String>emptyMap());
+    checkBasicRequest(request,
+                      expectedURIDetails,
+                      ResourceMethod.GET,
+                      null,
+                      Collections.<String, String>emptyMap(),
+                      null);
   }
 
   @Test
@@ -1372,7 +1467,12 @@ public class TestClientBuilders
     Assert.assertEquals(request.isSafe(), true);
     Assert.assertEquals(request.isIdempotent(), true);
 
-    checkBasicRequest(request, expectedURIDetails, ResourceMethod.GET, null, Collections.<String, String>emptyMap());
+    checkBasicRequest(request,
+                      expectedURIDetails,
+                      ResourceMethod.GET,
+                      null,
+                      Collections.<String, String>emptyMap(),
+                      null);
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "builderParam")
@@ -1438,7 +1538,10 @@ public class TestClientBuilders
     t2.setId(1L);
     t2.setMessage("Foo Bar Baz");
     PatchRequest<TestRecord> patch = PatchGenerator.diff(t1, t2);
-    PartialUpdateRequest<TestRecord> request = builder.id(1L).input(patch).build();
+    PartialUpdateRequest<TestRecord> request = builder.id(1L).input(patch).appendSingleAttachment(_dataSourceWriterA)
+        .appendMultipleAttachments(_dataSourceIterator)
+        .appendSingleAttachment(_dataSourceWriterB)
+        .build();
     Assert.assertEquals(request.isSafe(), false);
     Assert.assertEquals(request.isIdempotent(), false);
 
@@ -1446,7 +1549,8 @@ public class TestClientBuilders
                       expectedURIDetails,
                       ResourceMethod.PARTIAL_UPDATE,
                       patch,
-                      Collections.<String, String>emptyMap());
+                      Collections.<String, String>emptyMap(),
+                      _streamingDataSources);
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "noEntity")
@@ -1469,7 +1573,8 @@ public class TestClientBuilders
                       expectedURIDetails,
                       ResourceMethod.PARTIAL_UPDATE,
                       patch,
-                      Collections.<String, String>emptyMap());
+                      Collections.<String, String>emptyMap(),
+                      null);
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "singleEntity")
@@ -1479,7 +1584,11 @@ public class TestClientBuilders
                                                                                                 TestRecord.class,
                                                                                                 _COLL_SPEC,
                                                                                                 RestliRequestOptions.DEFAULT_OPTIONS);
-    UpdateRequest<TestRecord> request = builder.id(1L).input(new TestRecord()).build();
+    UpdateRequest<TestRecord> request = builder.id(1L).input(new TestRecord())
+        .appendSingleAttachment(_dataSourceWriterA)
+        .appendMultipleAttachments(_dataSourceIterator)
+        .appendSingleAttachment(_dataSourceWriterB)
+        .build();
     Assert.assertEquals(request.isSafe(), false);
     Assert.assertEquals(request.isIdempotent(), true);
 
@@ -1487,7 +1596,8 @@ public class TestClientBuilders
                       expectedURIDetails,
                       ResourceMethod.UPDATE,
                       new TestRecord(),
-                      Collections.<String, String>emptyMap());
+                      Collections.<String, String>emptyMap(),
+                      _streamingDataSources);
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "noEntity")
@@ -1505,7 +1615,8 @@ public class TestClientBuilders
                       expectedURIDetails,
                       ResourceMethod.UPDATE,
                       new TestRecord(),
-                      Collections.<String, String>emptyMap());
+                      Collections.<String, String>emptyMap(),
+                      null);
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "complexKeyAndParam")
@@ -1552,7 +1663,8 @@ public class TestClientBuilders
                       expectedURIDetails,
                       ResourceMethod.GET,
                       null,
-                      Collections.<String, String> emptyMap());
+                      Collections.<String, String> emptyMap(),
+                      null);
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "complexKeyAndParam")
@@ -1574,7 +1686,8 @@ public class TestClientBuilders
                       expectedURIDetails,
                       ResourceMethod.DELETE,
                       null,
-                      Collections.<String, String> emptyMap());
+                      Collections.<String, String> emptyMap(),
+                      null);
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchComplexKeyAndParam")
@@ -1643,7 +1756,8 @@ public class TestClientBuilders
                       expectedURIDetails,
                       ResourceMethod.BATCH_GET,
                       null,
-                      Collections.<String, String>emptyMap());
+                      Collections.<String, String>emptyMap(),
+                      null);
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchComplexKeyAndParam")
@@ -1691,7 +1805,8 @@ public class TestClientBuilders
                       ResourceMethod.BATCH_UPDATE,
                       collectionRequest,
                       expectedRequest,
-                      Collections.<String, String>emptyMap());
+                      Collections.<String, String>emptyMap(),
+                      null);
   }
 
   @Test
@@ -1893,7 +2008,8 @@ public class TestClientBuilders
                       expectedURIDetails,
                       ResourceMethod.UPDATE,
                       new TestRecord(),
-                      Collections.<String, String> emptyMap());
+                      Collections.<String, String> emptyMap(),
+                      null);
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "noEntity")
@@ -1913,7 +2029,8 @@ public class TestClientBuilders
                       expectedURIDetails,
                       ResourceMethod.CREATE,
                       new TestRecord(),
-                      Collections.<String, String> emptyMap());
+                      Collections.<String, String> emptyMap(),
+                      null);
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchComplexKey")
@@ -1999,8 +2116,13 @@ public class TestClientBuilders
                                                                                  new ComplexResourceKey[]{key1, key2},
                                                                                  new PatchRequest[]{patch1, patch2});
 
-    checkBasicRequest(request, expectedURIDetails, ResourceMethod.BATCH_PARTIAL_UPDATE, collectionRequest, batchRequest,
-        Collections.<String, String>emptyMap());
+    checkBasicRequest(request,
+                      expectedURIDetails,
+                      ResourceMethod.BATCH_PARTIAL_UPDATE,
+                      collectionRequest,
+                      batchRequest,
+                      Collections.<String, String>emptyMap(),
+                      null);
   }
 
   @Test
@@ -3090,10 +3212,11 @@ public class TestClientBuilders
                                  ResourceMethod expectedMethod,
                                  CollectionRequest<?> expectedInput,
                                  BatchRequest<?> expectedBatchInput,
-                                 Map<String, String> expectedHeaders)
+                                 Map<String, String> expectedHeaders,
+                                 List<Object> expectedStreamingDataSources)
   {
     final ProtocolVersion version = expectedURIDetails.getProtocolVersion();
-    checkBasicRequest(request, expectedURIDetails, expectedMethod, expectedInput, expectedHeaders);
+    checkBasicRequest(request, expectedURIDetails, expectedMethod, expectedInput, expectedHeaders, expectedStreamingDataSources);
     if (request.getMethod() == ResourceMethod.BATCH_UPDATE ||
         request.getMethod() == ResourceMethod.BATCH_PARTIAL_UPDATE)
     {
@@ -3106,14 +3229,15 @@ public class TestClientBuilders
                                  URIDetails expectedURIDetails,
                                  ResourceMethod expectedMethod,
                                  RecordTemplate expectedInput,
-                                 Map<String, String> expectedHeaders)
+                                 Map<String, String> expectedHeaders,
+                                 List<Object> expectedStreamingDataSources)
   {
     URIDetails.testUriGeneration(request, expectedURIDetails);
     checkRequestIsReadOnly(request);
     Assert.assertEquals(request.getMethod(), expectedMethod);
     Assert.assertEquals(request.getHeaders(), expectedHeaders);
 
-    if(expectedInput != null && (expectedMethod == ResourceMethod.BATCH_UPDATE ||
+    if (expectedInput != null && (expectedMethod == ResourceMethod.BATCH_UPDATE ||
         expectedMethod == ResourceMethod.BATCH_PARTIAL_UPDATE || expectedMethod == ResourceMethod.BATCH_CREATE))
     {
       //The list of elements will need to be compared order independently because CollectionRequest has a list
@@ -3128,6 +3252,24 @@ public class TestClientBuilders
     else
     {
       Assert.assertEquals(request.getInputRecord(), expectedInput);
+    }
+
+    if (expectedStreamingDataSources != null)
+    {
+      Assert.assertEquals(request.getStreamingAttachments(), expectedStreamingDataSources);
+      try
+      {
+        request.getStreamingAttachments().add(new RestLiTestAttachmentDataSource("1", ByteString.empty()));
+        Assert.fail("Should not be able to add to an immutable list");
+      }
+      catch (Exception e)
+      {
+        Assert.assertTrue(e instanceof UnsupportedOperationException);
+      }
+    }
+    else
+    {
+      Assert.assertNull(request.getStreamingAttachments());
     }
   }
 
@@ -3375,5 +3517,54 @@ public class TestClientBuilders
   private static String toEntityKey(Object key, ProtocolVersion version)
   {
     return URIParamUtils.keyToString(key, URLEscaper.Escaping.NO_ESCAPING, null, true, version);
+  }
+
+  private static class TestRestLiAttachmentDataSource implements RestLiAttachmentDataSourceWriter
+  {
+    private final String _attachmentId;
+
+    private TestRestLiAttachmentDataSource(final String attachmentID)
+    {
+      _attachmentId = attachmentID;
+    }
+
+    @Override
+    public String getAttachmentID()
+    {
+      return _attachmentId;
+    }
+
+    @Override
+    public void onInit(WriteHandle wh)
+    {
+      Assert.fail("Should never be called");
+    }
+
+    @Override
+    public void onWritePossible()
+    {
+      Assert.fail("Should never be called");
+    }
+
+    @Override
+    public void onAbort(Throwable e)
+    {
+      Assert.fail("Should never be called");
+    }
+  }
+
+  private static class TestRestLiDataSourceIterator implements RestLiDataSourceIterator
+  {
+    @Override
+    public void abandonAllDataSources()
+    {
+      Assert.fail("Should never be called");
+    }
+
+    @Override
+    public void registerDataSourceReaderCallback(RestLiDataSourceIteratorCallback callback)
+    {
+      Assert.fail("Should never be called");
+    }
   }
 }

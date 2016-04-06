@@ -30,7 +30,6 @@ import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.RestConstants;
-import com.linkedin.restli.internal.common.CookieUtil;
 import com.linkedin.util.ArgumentUtil;
 
 import java.lang.reflect.Array;
@@ -53,16 +52,16 @@ import java.util.TreeMap;
 
 public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> extends BuilderBase implements RequestBuilder<R>
 {
-  protected static final char HEADER_DELIMITER = ',';
+  protected static final char         HEADER_DELIMITER = ',';
 
   protected final ResourceSpec        _resourceSpec;
 
-  private Map<String, String>       _headers     = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
-  private List<HttpCookie>          _cookies     = new ArrayList<HttpCookie>();
-  private final Map<String, Object> _queryParams = new HashMap<String, Object>();
+  private Map<String, String>         _headers     = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+  private List<HttpCookie>            _cookies     = new ArrayList<HttpCookie>();
+  private final Map<String, Object>   _queryParams = new HashMap<String, Object>();
   private final Map<String, Class<?>> _queryParamClasses = new HashMap<String, Class<?>>();
-  private final Map<String, Object> _pathKeys    = new HashMap<String, Object>();
-  private final CompoundKey         _assocKey    = new CompoundKey();
+  private final Map<String, Object>   _pathKeys    = new HashMap<String, Object>();
+  private final CompoundKey           _assocKey    = new CompoundKey();
 
   protected AbstractRequestBuilder(String baseUriTemplate, ResourceSpec resourceSpec, RestliRequestOptions requestOptions)
   {

@@ -24,6 +24,17 @@ import com.linkedin.r2.filter.FilterChain;
 import com.linkedin.r2.filter.FilterChains;
 import com.linkedin.r2.filter.compression.ServerCompressionFilter;
 import com.linkedin.r2.filter.logging.SimpleLoggingFilter;
+import com.linkedin.r2.message.RequestContext;
+import com.linkedin.r2.message.rest.RestException;
+import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.rest.RestResponse;
+import com.linkedin.r2.message.rest.RestStatus;
+import com.linkedin.r2.message.stream.StreamRequest;
+import com.linkedin.r2.message.stream.StreamResponse;
+import com.linkedin.r2.transport.common.StreamRequestHandler;
+import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
+import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
+import com.linkedin.r2.transport.common.bridge.server.TransportCallbackAdapter;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
 import com.linkedin.r2.transport.http.server.HttpJettyServer;
 import com.linkedin.r2.transport.http.server.HttpServer;
@@ -47,6 +58,7 @@ import com.linkedin.restli.server.resources.ResourceFactory;
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -97,7 +109,7 @@ public class RestLiIntTestServer
   {
     final FilterChain fc = FilterChains.empty().addLastRest(new ServerCompressionFilter(supportedCompression, new CompressionConfig(0)))
         .addLastRest(new SimpleLoggingFilter());
-    return createServer(engine, port, useAsyncServletApi, asyncTimeOut, null, null, fc);
+    return createServer(engine, port, useAsyncServletApi, asyncTimeOut, null, null, fc, false);
   }
 
   public static HttpServer createServer(final Engine engine,
@@ -106,7 +118,8 @@ public class RestLiIntTestServer
                                         int asyncTimeOut,
                                         List<? extends RequestFilter> requestFilters,
                                         List<? extends ResponseFilter> responseFilters,
-                                        final FilterChain filterChain)
+                                        final FilterChain filterChain,
+                                        final boolean forceUseRestServer)
   {
     RestLiConfig config = new RestLiConfig();
     config.addResourcePackageNames(RESOURCE_PACKAGE_NAMES);
@@ -124,7 +137,40 @@ public class RestLiIntTestServer
     //using InjectMockResourceFactory to keep examples spring-free
     ResourceFactory factory = new InjectMockResourceFactory(beanProvider);
 
-    TransportDispatcher dispatcher = new DelegatingTransportDispatcher(new RestLiServer(config, factory, engine));
+    //Todo this will have to change further to accomodate streaming tests - this is temporary
+    final TransportDispatcher dispatcher;
+    if (forceUseRestServer)
+    {
+      dispatcher = new DelegatingTransportDispatcher(new RestLiServer(config, factory, engine));
+    }
+    else
+    {
+      final StreamRequestHandler streamRequestHandler = new RestLiServer(config, factory, engine);
+      dispatcher = new TransportDispatcher()
+      {
+        @Override
+        public void handleRestRequest(RestRequest req, Map<String, String> wireAttrs, RequestContext requestContext,
+                                      TransportCallback<RestResponse> callback)
+        {
+          throw new UnsupportedOperationException("This server only accepts streaming");
+        }
+
+        @Override
+        public void handleStreamRequest(StreamRequest req, Map<String, String> wireAttrs, RequestContext requestContext,
+                                        TransportCallback<StreamResponse> callback)
+        {
+          try
+          {
+            streamRequestHandler.handleRequest(req, requestContext, new TransportCallbackAdapter<>(callback));
+          }
+          catch (Exception e)
+          {
+            final Exception ex = RestException.forError(RestStatus.INTERNAL_SERVER_ERROR, e);
+            callback.onResponse(TransportResponseImpl.<StreamResponse>error(ex));
+          }
+        }
+      };
+    }
 
     return new HttpServerFactory(filterChain).createServer(port,
                                                            HttpServerFactory.DEFAULT_CONTEXT_PATH,
@@ -133,6 +179,6 @@ public class RestLiIntTestServer
                                                            useAsyncServletApi ?
                                                                HttpJettyServer.ServletType.ASYNC_EVENT :
                                                                HttpJettyServer.ServletType.RAP,
-                                                           asyncTimeOut, false);
+                                                           asyncTimeOut, !forceUseRestServer);
   }
 }

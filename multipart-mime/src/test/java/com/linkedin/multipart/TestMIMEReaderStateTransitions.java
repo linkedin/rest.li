@@ -86,7 +86,7 @@ public class TestMIMEReaderStateTransitions
     {
     }
 
-    reader.setState(MultiPartMIMEReader.MultiPartReaderState.ABANDONING);
+    reader.setState(MultiPartMIMEReader.MultiPartReaderState.DRAINING);
     try
     {
       reader.registerReaderCallback(EMPTY_MULTI_PART_MIME_READER_CALLBACK);
@@ -111,7 +111,7 @@ public class TestMIMEReaderStateTransitions
   }
 
   @Test
-  public void testAbandonAllPartsMultiPartMIMEReader()
+  public void testDrainAllPartsMultiPartMIMEReader()
   {
     final EntityStream entityStream = mock(EntityStream.class);
     final StreamRequest streamRequest = mock(StreamRequest.class);
@@ -124,7 +124,7 @@ public class TestMIMEReaderStateTransitions
     reader.setState(MultiPartMIMEReader.MultiPartReaderState.FINISHED);
     try
     {
-      reader.abandonAllParts();
+      reader.drainAllParts();
       Assert.fail();
     }
     catch (MultiPartReaderFinishedException multiPartReaderFinishedException)
@@ -134,7 +134,7 @@ public class TestMIMEReaderStateTransitions
     reader.setState(MultiPartMIMEReader.MultiPartReaderState.READING_EPILOGUE);
     try
     {
-      reader.abandonAllParts();
+      reader.drainAllParts();
       Assert.fail();
     }
     catch (MultiPartReaderFinishedException multiPartReaderFinishedException)
@@ -144,17 +144,17 @@ public class TestMIMEReaderStateTransitions
     reader.setState(MultiPartMIMEReader.MultiPartReaderState.CALLBACK_BOUND_AND_READING_PREAMBLE);
     try
     {
-      reader.abandonAllParts();
+      reader.drainAllParts();
       Assert.fail();
     }
     catch (StreamBusyException streamBusyException)
     {
     }
 
-    reader.setState(MultiPartMIMEReader.MultiPartReaderState.ABANDONING);
+    reader.setState(MultiPartMIMEReader.MultiPartReaderState.DRAINING);
     try
     {
-      reader.abandonAllParts();
+      reader.drainAllParts();
       Assert.fail();
     }
     catch (StreamBusyException streamBusyException)
@@ -167,7 +167,7 @@ public class TestMIMEReaderStateTransitions
     reader.setCurrentSinglePartMIMEReader(singlePartMIMEReader);
     try
     {
-      reader.abandonAllParts();
+      reader.drainAllParts();
       Assert.fail();
     }
     catch (StreamBusyException streamBusyException)
@@ -205,7 +205,7 @@ public class TestMIMEReaderStateTransitions
   @Test
   public void testSinglePartMIMEReaderVerifyState()
   {
-    //This will cover abandonPart() and most of requestPartData().
+    //This will cover drainPart() and most of requestPartData().
     //The caveat is that requestPartData() requires a callback to be registered. This
     //will be covered in the next test.
 
@@ -239,7 +239,7 @@ public class TestMIMEReaderStateTransitions
     {
     }
 
-    singlePartMIMEReader.setState(MultiPartMIMEReader.SingleReaderState.REQUESTED_ABANDON);
+    singlePartMIMEReader.setState(MultiPartMIMEReader.SingleReaderState.REQUESTED_DRAIN);
     try
     {
       singlePartMIMEReader.verifyUsableState();
@@ -285,7 +285,7 @@ public class TestMIMEReaderStateTransitions
     }
 
     @Override
-    public void onAbandoned()
+    public void onDrainComplete()
     {
     }
 
@@ -308,7 +308,7 @@ public class TestMIMEReaderStateTransitions
     }
 
     @Override
-    public void onAbandoned()
+    public void onDrainComplete()
     {
     }
 

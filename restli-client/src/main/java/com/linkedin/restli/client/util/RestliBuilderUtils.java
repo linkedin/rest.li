@@ -17,17 +17,9 @@
 package com.linkedin.restli.client.util;
 
 
-import com.linkedin.data.template.DataTemplateUtil;
-import com.linkedin.restli.common.ComplexResourceKey;
-import com.linkedin.restli.common.CompoundKey;
-import com.linkedin.restli.common.ProtocolVersion;
-import com.linkedin.restli.common.RestConstants;
-import com.linkedin.restli.internal.common.AllProtocolVersions;
-import com.linkedin.restli.internal.common.URIParamUtils;
-import com.linkedin.restli.internal.common.URLEscaper;
-
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+
 
 /**
  * This class holds methods useful when manipulating Client Builders.
@@ -35,7 +27,6 @@ import java.lang.reflect.Method;
  * @author David Hoa
  * @version $Revision: $
  */
-
 public class RestliBuilderUtils
 {
   /**

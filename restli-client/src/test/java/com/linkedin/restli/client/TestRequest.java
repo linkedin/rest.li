@@ -64,9 +64,10 @@ public class TestRequest
 
     Assert.assertEquals(
         request.toSecureString(),
-        "com.linkedin.restli.client.GetRequest{_method=get, _baseUriTemplate=abc, _methodName=null, " +
-            "_requestOptions={_protocolVersionOption: USE_LATEST_IF_AVAILABLE, _requestCompressionOverride: null, _responseCompressionOverride: null, " +
-            "_contentType: null, _acceptTypes: null}}");
+        "com.linkedin.restli.client.GetRequest{_method=get, _baseUriTemplate=abc, _methodName=null, "
+            + "_requestOptions=RestliRequestOptions{_protocolVersionOption=USE_LATEST_IF_AVAILABLE, "
+            + "_requestCompressionOverride=null, _responseCompressionOverride=null, _contentType=null, "
+            + "_acceptTypes=null, _acceptResponseAttachments=false}}");
   }
 
   @Test
@@ -164,18 +165,13 @@ public class TestRequest
     pathKeys.put("id", new ComplexResourceKey<TestRecord, TestRecord>(new TestRecord(), new TestRecord()));
 
 
-    Request<TestRecord> request = new Request<TestRecord>(ResourceMethod.GET,
-                                                          null,
+    Request<TestRecord> request = new Request<TestRecord>(ResourceMethod.GET, null,
                                                           Collections.<String, String>emptyMap(),
                                                           Collections.<HttpCookie>emptyList(),
                                                           new EntityResponseDecoder<TestRecord>(TestRecord.class),
-                                                          expectedResourceSpec,
-                                                          Collections.<String, Object>emptyMap(),
-                                                          Collections.<String, Class<?>>emptyMap(),
-                                                          null,
-                                                          "testRecord",
-                                                          pathKeys,
-                                                          RestliRequestOptions.DEFAULT_OPTIONS);
+                                                          expectedResourceSpec, Collections.<String, Object>emptyMap(),
+                                                          Collections.<String, Class<?>>emptyMap(), null, "testRecord",
+                                                          pathKeys, RestliRequestOptions.DEFAULT_OPTIONS, null);
 
     ResourceProperties expectedResourceProperties =
         new ResourcePropertiesImpl(expectedResourceSpec.getSupportedMethods(),

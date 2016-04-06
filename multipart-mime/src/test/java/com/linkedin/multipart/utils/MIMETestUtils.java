@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 
 import javax.mail.internet.ContentType;
@@ -53,32 +54,32 @@ public final class MIMETestUtils
   public static final String TEXT_PLAIN_CONTENT_TYPE = "text/plain";
   public static final String BINARY_CONTENT_TYPE = "application/octet-stream";
 
-  //For the abandoning tests:
-  public static final String ABANDON_HEADER = "AbandonMe";
+  //For the draining tests:
+  public static final String DRAIN_HEADER = "DrainMe";
 
   //Header values for different server side behavior:
 
-  //Top level abandon all after registering a callback with the MultiPartMIMEReader. This abandon call will happen
+  //Top level drain all after registering a callback with the MultiPartMIMEReader. This drain call will happen
   //upon the first invocation on onNewPart():
   public static final String TOP_ALL_WITH_CALLBACK = "TOP_ALL_WITH_CALLBACK";
 
-  //Top level abandon without registering a callback with the MultipartMIMEReader:
+  //Top level drain without registering a callback with the MultipartMIMEReader:
   public static final String TOP_ALL_NO_CALLBACK = "TOP_ALL_NO_CALLBACK";
 
-  //Single part abandons all individually but doesn't use a callback:
+  //Single part drain all individually but doesn't use a callback:
   public static final String SINGLE_ALL_NO_CALLBACK = "SINGLE_ALL_NO_CALLBACK";
 
-  //Single part abandons the first 6 (using registered callbacks) and then the top level abandons all of remaining:
+  //Single part drains the first 6 (using registered callbacks) and then the top level drains all of remaining:
   public static final String SINGLE_PARTIAL_TOP_REMAINING = "SINGLE_PARTIAL_TOP_REMAINING";
 
-  //Single part alternates between consumption and abandoning the first 6 parts (using registered callbacks), then top
-  //level abandons all of remaining. This means that parts 0, 2, 4 will be consumed and parts 1, 3, 5 will be abandoned.
+  //Single part alternates between consumption and draining the first 6 parts (using registered callbacks), then top
+  //level drains all of remaining. This means that parts 0, 2, 4 will be consumed and parts 1, 3, 5 will be drained.
   public static final String SINGLE_ALTERNATE_TOP_REMAINING = "SINGLE_ALTERNATE_TOP_REMAINING";
 
-  //Single part abandons all individually (using registered callbacks):
+  //Single part drains all individually (using registered callbacks):
   public static final String SINGLE_ALL = "SINGLE_ALL";
 
-  //Single part alternates between consumption and abandoning all the way through (using registered callbacks):
+  //Single part alternates between consumption and draining all the way through (using registered callbacks):
   public static final String SINGLE_ALTERNATE = "SINGLE_ALTERNATE";
 
   ///////////////////////////////////////////////////////////////////////////////////////
@@ -431,7 +432,7 @@ public final class MIMETestUtils
     }
 
     @Override
-    public void onAbandoned()
+    public void onDrainComplete()
     {
       Assert.fail();
     }
@@ -445,10 +446,17 @@ public final class MIMETestUtils
 
   public static class MultiPartMIMEFullReaderCallback implements MultiPartMIMEReaderCallback
   {
-    final List<SinglePartMIMEFullReaderCallback> _singlePartMIMEReaderCallbacks = new ArrayList<SinglePartMIMEFullReaderCallback>();
+    private final List<SinglePartMIMEFullReaderCallback> _singlePartMIMEReaderCallbacks = new ArrayList<SinglePartMIMEFullReaderCallback>();
+    private final CountDownLatch _finishCountDownLatch;
 
     public MultiPartMIMEFullReaderCallback()
     {
+      _finishCountDownLatch = null;
+    }
+
+    public MultiPartMIMEFullReaderCallback(final CountDownLatch finishCountDownLatch)
+    {
+      _finishCountDownLatch = finishCountDownLatch;
     }
 
     public List<SinglePartMIMEFullReaderCallback> getSinglePartMIMEReaderCallbacks()
@@ -468,11 +476,15 @@ public final class MIMETestUtils
     @Override
     public void onFinished()
     {
-      //We don't have to do anything here.
+      //If there was a latch given to us we count that down, otherwise do nothing.
+      if (_finishCountDownLatch != null)
+      {
+        _finishCountDownLatch.countDown();
+      }
     }
 
     @Override
-    public void onAbandoned()
+    public void onDrainComplete()
     {
       Assert.fail();
     }

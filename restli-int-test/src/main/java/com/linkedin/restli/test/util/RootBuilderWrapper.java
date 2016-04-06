@@ -32,6 +32,8 @@ import com.linkedin.restli.common.IdEntityResponse;
 import com.linkedin.restli.common.OptionsResponse;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.UpdateStatus;
+import com.linkedin.restli.common.attachments.RestLiAttachmentDataSourceWriter;
+import com.linkedin.restli.common.attachments.RestLiDataSourceIterator;
 import com.linkedin.restli.internal.tools.RestLiToolsUtils;
 
 import java.lang.reflect.InvocationTargetException;
@@ -193,6 +195,16 @@ public class RootBuilderWrapper<K, V extends RecordTemplate>
     public MethodBuilderWrapper<K, V, R> setHeader(String name, String value)
     {
       return invoke(getMethod("setHeader", String.class, String.class), name, value);
+    }
+
+    public MethodBuilderWrapper<K, V, R> appendSingleAttachment(final RestLiAttachmentDataSourceWriter streamingAttachment)
+    {
+      return invoke(getMethod("appendSingleAttachment", RestLiAttachmentDataSourceWriter.class), streamingAttachment);
+    }
+
+    public MethodBuilderWrapper<K, V, R> appendMultipleAttachments(final RestLiDataSourceIterator dataSourceIterator)
+    {
+      return invoke(getMethod("appendMultipleAttachments", RestLiDataSourceIterator.class), dataSourceIterator);
     }
 
     public MethodBuilderWrapper<K, V, R> setParam(String name, Object value)

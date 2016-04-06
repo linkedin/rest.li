@@ -32,12 +32,13 @@ import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiRequestData;
 import com.linkedin.restli.server.RoutingException;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 import static org.easymock.EasyMock.verify;
 import static org.testng.Assert.assertEquals;
@@ -148,7 +149,7 @@ public class TestUpdateArgumentBuilder
     {
       descriptor = RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor(model, 2, params);
     }
-    ResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(keyName, keyValue, null);
+    ResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(keyName, keyValue, null, true);
     RoutingResult routingResult;
     if (key != null)
     {

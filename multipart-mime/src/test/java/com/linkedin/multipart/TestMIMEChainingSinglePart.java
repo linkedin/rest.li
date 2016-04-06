@@ -165,7 +165,7 @@ public class TestMIMEChainingSinglePart extends AbstractMIMEUnitTest
     }
 
     @Override
-    public void onAbandoned()
+    public void onDrainComplete()
     {
       Assert.fail();
     }

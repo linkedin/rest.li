@@ -26,14 +26,16 @@ import com.linkedin.restli.client.BatchPartialUpdateRequestBuilder;
 import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ResourceSpec;
+import com.linkedin.restli.common.attachments.RestLiAttachmentDataSourceWriter;
+import com.linkedin.restli.common.attachments.RestLiDataSourceIterator;
 
 import java.util.Map;
+
 
 /**
  * @author Josh Walker
  * @version $Revision: $
  */
-
 public class BatchPartialUpdateRequestBuilderBase<
         K,
         V extends RecordTemplate,
@@ -60,6 +62,20 @@ public class BatchPartialUpdateRequestBuilderBase<
   public RB inputs(Map<K, PatchRequest<V>> entities)
   {
     return (RB) super.inputs(entities);
+  }
+
+  @SuppressWarnings({"unchecked"})
+  @Override
+  public RB appendSingleAttachment(final RestLiAttachmentDataSourceWriter streamingAttachment)
+  {
+    return (RB) super.appendSingleAttachment(streamingAttachment);
+  }
+
+  @SuppressWarnings({"unchecked"})
+  @Override
+  public RB appendMultipleAttachments(final RestLiDataSourceIterator dataSourceIterator)
+  {
+    return (RB) super.appendMultipleAttachments(dataSourceIterator);
   }
 
   @SuppressWarnings({"unchecked"})

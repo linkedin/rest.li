@@ -20,8 +20,13 @@ package com.linkedin.restli.client;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.TypeSpec;
+import com.linkedin.restli.common.attachments.RestLiAttachmentDataSourceWriter;
+import com.linkedin.restli.common.attachments.RestLiDataSourceIterator;
 import com.linkedin.restli.internal.client.IdResponseDecoder;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 
@@ -32,6 +37,8 @@ import java.util.Map;
 public class CreateIdRequestBuilder<K, V extends RecordTemplate>
   extends SingleEntityRequestBuilder<K, V, CreateIdRequest<K, V>>
 {
+  private List<Object> _streamingAttachments; //We initialize only when we need to.
+
   protected CreateIdRequestBuilder(String baseURITemplate,
                                    Class<V> valueClass,
                                    ResourceSpec resourceSpec,
@@ -44,6 +51,28 @@ public class CreateIdRequestBuilder<K, V extends RecordTemplate>
   public CreateIdRequestBuilder<K, V> input(V entity)
   {
     super.input(entity);
+    return this;
+  }
+
+  public CreateIdRequestBuilder<K, V> appendSingleAttachment(final RestLiAttachmentDataSourceWriter streamingAttachment)
+  {
+    if (_streamingAttachments == null)
+    {
+      _streamingAttachments = new ArrayList<>();
+    }
+
+    _streamingAttachments.add(streamingAttachment);
+    return this;
+  }
+
+  public CreateIdRequestBuilder<K, V> appendMultipleAttachments(final RestLiDataSourceIterator dataSourceIterator)
+  {
+    if (_streamingAttachments == null)
+    {
+      _streamingAttachments = new ArrayList<>();
+    }
+
+    _streamingAttachments.add(dataSourceIterator);
     return this;
   }
 
@@ -119,6 +148,7 @@ public class CreateIdRequestBuilder<K, V extends RecordTemplate>
                                      getQueryParamClasses(),
                                      getBaseUriTemplate(),
                                      buildReadOnlyPathKeys(),
-                                     getRequestOptions());
+                                     getRequestOptions(),
+                                     _streamingAttachments == null ? null : Collections.unmodifiableList(_streamingAttachments));
   }
 }

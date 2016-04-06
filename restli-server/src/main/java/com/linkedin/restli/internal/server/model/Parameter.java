@@ -79,7 +79,8 @@ public class Parameter<T> extends FieldDef<T>
     HEADER,                       // @HeaderParam
     METADATA_PROJECTION_PARAM,    // @MetadataProjectionParam
     PAGING_PROJECTION_PARAM,      // @PagingProjectionParam
-    VALIDATOR_PARAM               // @ValidatorParam
+    VALIDATOR_PARAM,              // @ValidatorParam
+    RESTLI_ATTACHMENTS_PARAM      // @RestLiAttachmentsParam
   }
 
   private final boolean _optional;

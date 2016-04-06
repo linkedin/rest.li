@@ -25,6 +25,8 @@ import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.client.BatchUpdateRequestBuilder;
 import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.common.ResourceSpec;
+import com.linkedin.restli.common.attachments.RestLiAttachmentDataSourceWriter;
+import com.linkedin.restli.common.attachments.RestLiDataSourceIterator;
 
 import java.util.Map;
 
@@ -32,7 +34,6 @@ import java.util.Map;
  * @author Josh Walker
  * @version $Revision: $
  */
-
 public class BatchUpdateRequestBuilderBase<
         K,
         V extends RecordTemplate,
@@ -59,6 +60,20 @@ public class BatchUpdateRequestBuilderBase<
   public RB inputs(Map<K, V> entities)
   {
     return (RB) super.inputs(entities);
+  }
+
+  @SuppressWarnings({"unchecked"})
+  @Override
+  public RB appendSingleAttachment(final RestLiAttachmentDataSourceWriter streamingAttachment)
+  {
+    return (RB) super.appendSingleAttachment(streamingAttachment);
+  }
+
+  @SuppressWarnings({"unchecked"})
+  @Override
+  public RB appendMultipleAttachments(final RestLiDataSourceIterator dataSourceIterator)
+  {
+    return (RB) super.appendMultipleAttachments(dataSourceIterator);
   }
 
   @SuppressWarnings({"unchecked"})

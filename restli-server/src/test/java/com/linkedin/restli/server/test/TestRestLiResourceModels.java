@@ -301,7 +301,7 @@ public class TestRestLiResourceModels
     ResourceModel collectionModel = buildResourceModel(StatusCollectionResource.class);
     assertEquals(collectionModel.getResourceType(), ResourceType.COLLECTION);
 
-    assertEquals(0, countActions(collectionModel, ResourceLevel.COLLECTION));
+    assertEquals(1, countActions(collectionModel, ResourceLevel.COLLECTION));
     assertEquals(1, countActions(collectionModel, ResourceLevel.ENTITY));
     assertNotNull(collectionModel.findActionMethod("forward", ResourceLevel.ENTITY));
   }

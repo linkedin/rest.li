@@ -36,7 +36,6 @@ public abstract class SingleEntityRequestBuilder<K, V extends RecordTemplate, R 
 
   public SingleEntityRequestBuilder(String baseUriTemplate,
                                     Class<V> valueClass,
-
                                     ResourceSpec resourceSpec,
                                     RestliRequestOptions requestOptions)
   {

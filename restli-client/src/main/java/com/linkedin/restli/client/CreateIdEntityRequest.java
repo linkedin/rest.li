@@ -16,6 +16,7 @@
 
 package com.linkedin.restli.client;
 
+
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.IdEntityResponse;
 import com.linkedin.restli.common.ResourceMethod;
@@ -25,6 +26,7 @@ import com.linkedin.restli.internal.client.RestResponseDecoder;
 import java.net.HttpCookie;
 import java.util.List;
 import java.util.Map;
+
 
 /**
  * Create Request that keeps track of Resource's Key and Value.
@@ -42,7 +44,8 @@ public class CreateIdEntityRequest<K, V extends RecordTemplate> extends Request<
                         Map<String, Class<?>> queryParamClasses,
                         String baseUriTemplate,
                         Map<String, Object> pathKeys,
-                        RestliRequestOptions requestOptions)
+                        RestliRequestOptions requestOptions,
+                        List<Object> streamingAttachments)
   {
     super(ResourceMethod.CREATE,
           input,
@@ -55,6 +58,7 @@ public class CreateIdEntityRequest<K, V extends RecordTemplate> extends Request<
           null,
           baseUriTemplate,
           pathKeys,
-          requestOptions);
+          requestOptions,
+          streamingAttachments);
   }
 }

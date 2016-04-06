@@ -56,10 +56,10 @@ public class TestMIMEWriterAbandonDataSources extends AbstractMIMEUnitTest
     writer.abortAllDataSources(throwable);
 
     //The MultiPartMIMEReader should have been abandoned.
-    verify(multiPartMIMEReader, times(1)).abortAllDataSources();
+    verify(multiPartMIMEReader, times(1)).abandonAllDataSources();
 
-    //The SinglePartMIMEReader should also have its part abandoned.
-    verify(singlePartMIMEReader, times(1)).abandonPart();
+    //The SinglePartMIMEReader should also have its part drained.
+    verify(singlePartMIMEReader, times(1)).drainPart();
     verify(singlePartMIMEReader, times(1)).onAbort(throwable);
     verify(singlePartMIMEReader, times(1)).dataSourceHeaders();
 

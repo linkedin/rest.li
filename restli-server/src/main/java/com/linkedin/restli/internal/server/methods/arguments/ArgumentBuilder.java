@@ -44,6 +44,7 @@ import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.TypeSpec;
 import com.linkedin.restli.internal.common.QueryParamsDataMap;
 import com.linkedin.restli.internal.common.URIParamUtils;
+import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.internal.server.model.Parameter;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.util.ArgumentUtils;
@@ -70,10 +71,8 @@ import java.util.Set;
  * @author Josh Walker
  * @version $Revision: $
  */
-
 public class ArgumentBuilder
 {
-
   /**
    * Build arguments for resource method invocation. Combines various types of arguments
    * into a single array.
@@ -96,6 +95,7 @@ public class ArgumentBuilder
 
     fixUpComplexKeySingletonArraysInArguments(arguments);
 
+    boolean attachmentsDesired = false;
     for (int i = positionalArguments.length; i < parameters.size(); ++i)
     {
       Parameter<?> param = parameters.get(i);
@@ -163,6 +163,12 @@ public class ArgumentBuilder
           RestLiDataValidator validator = new RestLiDataValidator(resourceMethod.getResourceModel().getResourceClass().getAnnotations(),
                                                                   resourceMethod.getResourceModel().getValueClass(), resourceMethod.getMethodType());
           arguments[i] = validator;
+          continue;
+        }
+        else if (param.getParamType() == Parameter.ParamType.RESTLI_ATTACHMENTS_PARAM)
+        {
+          arguments[i] = ((ServerResourceContext)context).getRequestAttachmentReader();
+          attachmentsDesired = true;
           continue;
         }
         else if (param.getParamType() == Parameter.ParamType.POST)
@@ -239,6 +245,16 @@ public class ArgumentBuilder
         throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
             "Parameter '" + param.getName() + "' default value is invalid", e);
       }
+    }
+
+    //Verify that if the resource method did not expect attachments, and attachments were present, that we drain all
+    //incoming attachments and send back a bad request. We must take precaution here since simply ignoring the request
+    //attachments is not correct behavior here. Ignoring other request level constructs such as headers or query parameters
+    //that were not needed is safe, but not for request attachments.
+    if (!attachmentsDesired && ((ServerResourceContext)context).getRequestAttachmentReader() != null)
+    {
+      throw new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST,
+                                       "Resource method endpoint invoked does not accept any request attachments.");
     }
     return arguments;
   }

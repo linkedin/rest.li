@@ -14,8 +14,8 @@
    limitations under the License.
 */
 
-
 package com.linkedin.restli.server.test;
+
 
 import com.linkedin.data.ByteString;
 import com.linkedin.data.DataList;
@@ -27,15 +27,18 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.TestConstants;
 import com.linkedin.restli.internal.server.PathKeysImpl;
 import com.linkedin.restli.internal.server.ResourceContextImpl;
 import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.server.ResourceContext;
+import com.linkedin.restli.server.RestLiResponseAttachments;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,7 +53,6 @@ import org.testng.annotations.Test;
  * @author Josh Walker
  * @version $Revision: $
  */
-
 public class TestResourceContext
 {
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "projectionMask")
@@ -293,6 +295,45 @@ public class TestResourceContext
     Assert.assertEquals(parameters, expectedParameters);
   }
 
+  @Test
+  public void testStreamingDataResourceContext() throws Exception
+  {
+    ServerResourceContext fullyStreamingResourceContext = new ResourceContextImpl(new PathKeysImpl(),
+                                                                   new MockRequest(URI.create("foobar"), Collections.emptyMap()),
+                                                                   new RequestContext(), true, new RestLiAttachmentReader(null));
+    Assert.assertTrue(fullyStreamingResourceContext.responseAttachmentsSupported());
+    Assert.assertNotNull(fullyStreamingResourceContext.getRequestAttachmentReader());
+    //Now set and get response attachments
+    final RestLiResponseAttachments restLiResponseAttachments = new RestLiResponseAttachments.Builder().build();
+    fullyStreamingResourceContext.setResponseAttachments(restLiResponseAttachments);
+    Assert.assertEquals(fullyStreamingResourceContext.getResponseAttachments(), restLiResponseAttachments);
+
+    ServerResourceContext responseAllowedNoRequestAttachmentsPresent = new ResourceContextImpl(new PathKeysImpl(),
+                                                                                        new MockRequest(URI.create("foobar"), Collections.emptyMap()),
+                                                                                        new RequestContext(), true, null);
+    Assert.assertTrue(responseAllowedNoRequestAttachmentsPresent.responseAttachmentsSupported());
+    Assert.assertNull(responseAllowedNoRequestAttachmentsPresent.getRequestAttachmentReader());
+    //Now set and get response attachments
+    responseAllowedNoRequestAttachmentsPresent.setResponseAttachments(restLiResponseAttachments);
+    Assert.assertEquals(responseAllowedNoRequestAttachmentsPresent.getResponseAttachments(), restLiResponseAttachments);
+
+    ServerResourceContext noResponseAllowedRequestAttachmentsPresent = new ResourceContextImpl(new PathKeysImpl(),
+                                                                                               new MockRequest(URI.create("foobar"), Collections.emptyMap()),
+                                                                                               new RequestContext(), false, new RestLiAttachmentReader(null));
+    Assert.assertFalse(noResponseAllowedRequestAttachmentsPresent.responseAttachmentsSupported());
+    Assert.assertNotNull(noResponseAllowedRequestAttachmentsPresent.getRequestAttachmentReader());
+    //Now try to set and make sure we fail
+    try
+    {
+      noResponseAllowedRequestAttachmentsPresent.setResponseAttachments(restLiResponseAttachments);
+      Assert.fail();
+    }
+    catch (IllegalStateException illegalStateException)
+    {
+      //pass
+    }
+  }
+
   public static class MockRequest implements RestRequest
   {
     private final URI _uri;
@@ -361,5 +402,4 @@ public class TestResourceContext
       return _uri;
     }
   }
-
 }

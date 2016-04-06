@@ -26,6 +26,7 @@ import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.common.IdEntityResponse;
+import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
 import com.linkedin.restli.internal.common.ProtocolVersionUtil;
 import com.linkedin.restli.internal.common.URIParamUtils;
 
@@ -53,6 +54,7 @@ public class ResponseImpl<T> implements Response<T>
   private final List<HttpCookie> _cookies;
   private T _entity;
   private RestLiResponseException _error;
+  private RestLiAttachmentReader  _attachmentReader;
 
   ResponseImpl(Response<T> origin, RestLiResponseException error)
   {
@@ -214,5 +216,22 @@ public class ResponseImpl<T> implements Response<T>
   public boolean hasError()
   {
     return _error != null;
+  }
+
+  @Override
+  public boolean hasAttachments()
+  {
+    return _attachmentReader != null;
+  }
+
+  @Override
+  public RestLiAttachmentReader getAttachmentReader()
+  {
+    return _attachmentReader;
+  }
+
+  public void setAttachmentReader(RestLiAttachmentReader attachmentReader)
+  {
+    _attachmentReader = attachmentReader;
   }
 }

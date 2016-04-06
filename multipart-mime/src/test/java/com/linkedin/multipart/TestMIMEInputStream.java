@@ -512,7 +512,7 @@ public class TestMIMEInputStream extends AbstractMIMEUnitTest
       boolean successful = errorLatch.await(_testTimeout, TimeUnit.MILLISECONDS);
 
       //Unblock the thread in the thread pool.
-      latch.countDown();;
+      latch.countDown();
 
       if (!successful)
       {

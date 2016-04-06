@@ -16,6 +16,7 @@
 
 package com.linkedin.restli.internal.server.methods.arguments;
 
+
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.test.MyComplexKey;
 import com.linkedin.restli.internal.server.RestLiInternalException;
@@ -27,11 +28,12 @@ import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.server.BatchCreateRequest;
 import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiRequestData;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
 
 import java.lang.annotation.Annotation;
 import java.util.List;
+
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 import static org.easymock.EasyMock.verify;
 import static org.testng.Assert.assertEquals;
@@ -59,7 +61,7 @@ public class TestBatchCreateArgumentBuilder
         false,
         new AnnotationSet(new Annotation[]{}));
     ResourceMethodDescriptor descriptor = RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor(model, param);
-    ResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(null, null, null);
+    ResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(null, null, null, true);
     RoutingResult routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(descriptor, 2, context, 1);
 
     RestLiArgumentBuilder argumentBuilder = new BatchCreateArgumentBuilder();

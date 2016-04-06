@@ -25,7 +25,6 @@ import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.internal.client.CollectionResponseDecoder;
 
 import java.net.HttpCookie;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -65,7 +64,8 @@ public class FindRequest<T extends RecordTemplate>
           name,
           baseUriTemplate,
           pathKeys,
-          requestOptions);
+          requestOptions,
+          null);
     _assocKey = assocKey;
   }
 

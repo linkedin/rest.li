@@ -23,6 +23,7 @@ package com.linkedin.restli.client;
 
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.message.RequestContext;
+import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
 
 import java.net.HttpCookie;
 import java.net.URI;
@@ -90,4 +91,16 @@ public interface Response<T>
    * Otherwise, a {@link RemoteInvocationException} is thrown from {@link ResponseFuture#getResponse()} on error.
    */
   boolean hasError();
+
+  /**
+   * Indicates if the response has attachments that can be read using {@link com.linkedin.restli.common.attachments.RestLiAttachmentReader}
+   * @return whether or not attachments exist in the response.
+   */
+  boolean hasAttachments();
+
+  /**
+   * Returns the RestLiAttachmentReader that can be used to walk through the response attachments.
+   * @return the {@link com.linkedin.restli.common.attachments.RestLiAttachmentReader} to read the attachments.
+   */
+  RestLiAttachmentReader getAttachmentReader();
 }

@@ -17,6 +17,8 @@
 package com.linkedin.restli.internal.server.filter;
 
 
+import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
+import com.linkedin.restli.server.RestLiResponseAttachments;
 import com.linkedin.restli.server.filter.FilterRequestContext;
 import com.linkedin.restli.server.filter.FilterResponseContext;
 import com.linkedin.restli.server.filter.NextResponseFilter;
@@ -42,16 +44,22 @@ public final class RestLiResponseFilterChain implements NextResponseFilter
   private final List<ResponseFilter> _filters;
   private final RestLiResponseFilterContextFactory _responseFilterContextFactory;
   private final RestLiResponseFilterChainCallback _restLiResponseFilterChainCallback;
+  private final RestLiAttachmentReader _requestAttachmentReader;
+  private final RestLiResponseAttachments _restLiResponseAttachments;
   private int _cursor;
 
   public RestLiResponseFilterChain(List<ResponseFilter> filters,
                                    final RestLiResponseFilterContextFactory responseFilterContextFactory,
-                                   final RestLiResponseFilterChainCallback restLiResponseFilterChainCallback)
+                                   final RestLiResponseFilterChainCallback restLiResponseFilterChainCallback,
+                                   final RestLiAttachmentReader requestAttachmentReader,
+                                   final RestLiResponseAttachments responseAttachments)
   {
     _filters = filters == null ? Collections.<ResponseFilter>emptyList() : filters;
     _cursor = 0;
     _restLiResponseFilterChainCallback = restLiResponseFilterChainCallback;
     _responseFilterContextFactory = responseFilterContextFactory;
+    _requestAttachmentReader = requestAttachmentReader;
+    _restLiResponseAttachments = responseAttachments;
   }
 
   @Override
@@ -72,7 +80,8 @@ public final class RestLiResponseFilterChain implements NextResponseFilter
     else
     {
       // Now that we are done invoking all the filters, invoke the the response filter callback.
-      _restLiResponseFilterChainCallback.onCompletion(responseContext.getResponseData());
+      _restLiResponseFilterChainCallback.onCompletion(responseContext.getResponseData(),
+              _requestAttachmentReader, _restLiResponseAttachments);
     }
   }
 }

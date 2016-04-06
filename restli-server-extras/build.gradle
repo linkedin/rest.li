@@ -9,9 +9,11 @@ dependencies {
   compile project(':restli-common')
   compile project(':restli-server')
   compile project(':pegasus-common')
+  compile project(':multipart-mime')
   compile externalDependency.commonsLang
   compile externalDependency.commonsIo
   compile externalDependency.parseq
+  testCompile project(path: ':restli-internal-testutils', configuration: 'testArtifacts')
   testCompile externalDependency.testng
   testCompile externalDependency.easymock
   testRuntime project(':restli-server-extras')

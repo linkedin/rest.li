@@ -22,7 +22,6 @@ import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.internal.client.OptionsResponseDecoder;
 
 import java.net.HttpCookie;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -54,6 +53,7 @@ public class OptionsRequest extends Request<OptionsResponse>
           null,
           baseUriTemplate,
           pathKeys,
-          requestOptions);
+          requestOptions,
+          null);
   }
 }

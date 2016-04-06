@@ -428,10 +428,10 @@ public class TestMIMEIntegrationReader extends AbstractMIMEIntegrationStreamTest
 
     //Delegate to the top level for now for these two
     @Override
-    public void onAbandoned()
+    public void onDrainComplete()
     {
       //This will end up failing the test.
-      _topLevelCallback.onAbandoned();
+      _topLevelCallback.onDrainComplete();
     }
 
     @Override
@@ -470,7 +470,7 @@ public class TestMIMEIntegrationReader extends AbstractMIMEIntegrationStreamTest
     }
 
     @Override
-    public void onAbandoned()
+    public void onDrainComplete()
     {
       RestException restException = new RestException(RestStatus.responseForStatus(406, "Not Acceptable"));
       _r2callback.onError(restException);

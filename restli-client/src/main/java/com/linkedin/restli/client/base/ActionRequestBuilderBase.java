@@ -20,17 +20,19 @@
 
 package com.linkedin.restli.client.base;
 
+
 import com.linkedin.data.template.FieldDef;
 import com.linkedin.restli.client.ActionRequestBuilder;
 import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.common.ResourceSpec;
+import com.linkedin.restli.common.attachments.RestLiAttachmentDataSourceWriter;
+import com.linkedin.restli.common.attachments.RestLiDataSourceIterator;
 
 
 /**
  * @author Josh Walker
  * @version $Revision: $
  */
-
 public abstract class ActionRequestBuilderBase<K, V, RB extends ActionRequestBuilderBase<K, V, RB>>
         extends ActionRequestBuilder<K, V>
 {
@@ -54,6 +56,20 @@ public abstract class ActionRequestBuilderBase<K, V, RB extends ActionRequestBui
   public RB id(K id)
   {
     return (RB) super.id(id);
+  }
+
+  @SuppressWarnings({"unchecked"})
+  @Override
+  public RB appendSingleAttachment(final RestLiAttachmentDataSourceWriter streamingAttachment)
+  {
+    return (RB) super.appendSingleAttachment(streamingAttachment);
+  }
+
+  @SuppressWarnings({"unchecked"})
+  @Override
+  public RB appendMultipleAttachments(final RestLiDataSourceIterator dataSourceIterator)
+  {
+    return (RB) super.appendMultipleAttachments(dataSourceIterator);
   }
 
   @SuppressWarnings({"unchecked"})

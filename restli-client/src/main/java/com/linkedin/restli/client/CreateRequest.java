@@ -35,8 +35,7 @@ import java.util.Map;
  *
  * @author Eran Leshem
  */
-public class CreateRequest<T extends RecordTemplate>
-        extends Request<EmptyRecord>
+public class CreateRequest<T extends RecordTemplate> extends Request<EmptyRecord>
 {
   CreateRequest(T input,
                 Map<String, String> headers,
@@ -47,7 +46,8 @@ public class CreateRequest<T extends RecordTemplate>
                 Map<String, Class<?>> queryParamClasses,
                 String baseUriTemplate,
                 Map<String, Object> pathKeys,
-                RestliRequestOptions requestOptions)
+                RestliRequestOptions requestOptions,
+                List<Object> streamingAttachments)
   {
     super(ResourceMethod.CREATE,
           input,
@@ -60,7 +60,7 @@ public class CreateRequest<T extends RecordTemplate>
           null,
           baseUriTemplate,
           pathKeys,
-          requestOptions);
-
+          requestOptions,
+          streamingAttachments);
   }
 }

@@ -16,6 +16,7 @@
 
 package com.linkedin.restli.internal.server;
 
+
 import com.linkedin.data.DataMap;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
@@ -45,7 +46,6 @@ import com.linkedin.restli.server.resources.CollectionResource;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.HttpCookie;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -196,8 +196,8 @@ public class RestLiResponseHandler
    *           if cannot build response
    */
   public RestLiResponseEnvelope buildRestLiResponseData(final RestRequest request,
-                                                            final RoutingResult routingResult,
-                                                            final Object responseObject) throws IOException
+                                                        final RoutingResult routingResult,
+                                                        final Object responseObject) throws IOException
   {
     ServerResourceContext context = (ServerResourceContext) routingResult.getContext();
     final ProtocolVersion protocolVersion = context.getRestliProtocolVersion();

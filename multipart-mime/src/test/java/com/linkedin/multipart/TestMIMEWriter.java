@@ -23,6 +23,8 @@ import com.linkedin.multipart.utils.MIMEDataPart;
 import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.entitystream.FullEntityReader;
 
+import com.google.common.collect.ImmutableList;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -197,8 +199,12 @@ public class TestMIMEWriter extends AbstractMIMEUnitTest
                                                                     _scheduledExecutorService,
                                                                     _bodyLessHeaders).build());
 
-    final MultiPartMIMEWriter multiPartMIMEWriter =
-        new MultiPartMIMEWriter.Builder("preamble", "epilogue").appendDataSources(inputStreamDataSources).build();
+    final MultiPartMIMEWriter.Builder multiPartMIMEWriterBuilder =
+        new MultiPartMIMEWriter.Builder("preamble", "epilogue").appendDataSources(inputStreamDataSources);
+
+    Assert.assertEquals(multiPartMIMEWriterBuilder.getCurrentSize(), inputStreamDataSources.size());
+
+    final MultiPartMIMEWriter multiPartMIMEWriter = multiPartMIMEWriterBuilder.build();
 
     final FutureCallback<ByteString> futureCallback = new FutureCallback<ByteString>();
     final FullEntityReader fullEntityReader = new FullEntityReader(futureCallback);
@@ -227,6 +233,103 @@ public class TestMIMEWriter extends AbstractMIMEUnitTest
     Assert.assertEquals(javaxMailMultiPartMIMEReader._preamble.trim(), "preamble");
   }
 
+  @DataProvider(name = "prependDataSources")
+  public Object[][] prependDataSources() throws Exception
+  {
+    final List<MIMEDataPart> expectedParts = new ArrayList<MIMEDataPart>();
+    expectedParts.add(_normalBody);
+    expectedParts.add(_headerLessBody);
+    expectedParts.add(_purelyEmptyBody);
+
+    //We will perform two requests here. One without a preamble and one with a preamble to ensure that we prepend
+    //in the correct location. Note we need to create multiple writers because each of these requests will drain the
+    //writers.
+
+    //With preamble:
+    final MultiPartMIMEDataSourceWriter normalWriterPreamble =
+        new MultiPartMIMEInputStream.Builder(new ByteArrayInputStream(_normalBodyData), _scheduledExecutorService,
+                                             _normalBodyHeaders).build();
+
+    final MultiPartMIMEDataSourceWriter headerLessBodyWriterPreamble =
+        new MultiPartMIMEInputStream.Builder(new ByteArrayInputStream(_headerLessBodyData), _scheduledExecutorService,
+                                             Collections.<String, String>emptyMap()).build();
+
+    final MultiPartMIMEDataSourceWriter purelyEmptyBodyWriterPreamble =
+        new MultiPartMIMEInputStream.Builder(new ByteArrayInputStream(new byte[0]), _scheduledExecutorService,
+                                             Collections.<String, String>emptyMap()).build();
+
+    final List<MultiPartMIMEDataSourceWriter> withPreambleDataSourceWriterList =
+        ImmutableList.of(purelyEmptyBodyWriterPreamble, headerLessBodyWriterPreamble, normalWriterPreamble);
+
+    final MultiPartMIMEWriter.Builder multiPartMIMEWriterWithPreamble = new MultiPartMIMEWriter.Builder("preamble", "epilogue");
+
+    //Without preamble:
+    final MultiPartMIMEDataSourceWriter normalWriterNoPreamble =
+        new MultiPartMIMEInputStream.Builder(new ByteArrayInputStream(_normalBodyData), _scheduledExecutorService,
+                                             _normalBodyHeaders).build();
+
+    final MultiPartMIMEDataSourceWriter headerLessBodyWriterNoPreamble =
+        new MultiPartMIMEInputStream.Builder(new ByteArrayInputStream(_headerLessBodyData), _scheduledExecutorService,
+                                             Collections.<String, String>emptyMap()).build();
+
+    final MultiPartMIMEDataSourceWriter purelyEmptyBodyWriterNoPreamble =
+        new MultiPartMIMEInputStream.Builder(new ByteArrayInputStream(new byte[0]), _scheduledExecutorService,
+                                             Collections.<String, String>emptyMap()).build();
+
+    final List<MultiPartMIMEDataSourceWriter> withoutPreambleDataSourceWriterList =
+        ImmutableList.of(purelyEmptyBodyWriterNoPreamble, headerLessBodyWriterNoPreamble, normalWriterNoPreamble);
+
+    final MultiPartMIMEWriter.Builder multiPartMIMEWriterWithoutPreamble = new MultiPartMIMEWriter.Builder("", "epilogue");
+
+    return new Object[][]
+        {
+            {multiPartMIMEWriterWithPreamble, withPreambleDataSourceWriterList, expectedParts, "preamble", 3},
+            {multiPartMIMEWriterWithoutPreamble, withoutPreambleDataSourceWriterList, expectedParts, null, 3}
+        };
+  }
+
+  @Test(dataProvider = "prependDataSources")
+  public void testPrependDataSources(final MultiPartMIMEWriter.Builder builder,
+                                     final List<MultiPartMIMEDataSourceWriter> prependDataSources,
+                                     final List<MIMEDataPart> expectedParts,
+                                     final String expectedPreamble, final int expectedSize) throws Exception
+  {
+    for (final MultiPartMIMEDataSourceWriter dataSourceWriter : prependDataSources)
+    {
+      builder.prependDataSource(dataSourceWriter);
+    }
+
+    Assert.assertEquals(builder.getCurrentSize(), expectedSize);
+
+    final MultiPartMIMEWriter writer = builder.build();
+    final FutureCallback<ByteString> futureCallback = new FutureCallback<ByteString>();
+    final FullEntityReader fullEntityReader = new FullEntityReader(futureCallback);
+    writer.getEntityStream().setReader(fullEntityReader);
+    futureCallback.get(_testTimeout, TimeUnit.MILLISECONDS);
+
+    final StreamRequest multiPartMIMEStreamRequest =
+        MultiPartMIMEStreamRequestFactory
+            .generateMultiPartMIMEStreamRequest(URI.create("localhost"), "mixed", writer,
+                                                Collections.<String, String>emptyMap());
+
+    final JavaxMailMultiPartMIMEReader javaxMailMultiPartMIMEReader =
+        new JavaxMailMultiPartMIMEReader(multiPartMIMEStreamRequest.getHeader(MultiPartMIMEUtils.CONTENT_TYPE_HEADER),
+                                         futureCallback.get());
+    javaxMailMultiPartMIMEReader.parseRequestIntoParts();
+
+    List<MIMEDataPart> dataSourceList = javaxMailMultiPartMIMEReader._dataSourceList;
+
+    Assert.assertEquals(dataSourceList.size(), 3);
+    for (int i = 0; i < dataSourceList.size(); i++)
+    {
+      Assert.assertEquals(dataSourceList.get(i), expectedParts.get(i));
+    }
+
+    //Javax mail incorrectly adds the CRLF for the first boundary to the end of the preamble, so we trim
+    Assert.assertEquals(javaxMailMultiPartMIMEReader._preamble != null ? javaxMailMultiPartMIMEReader._preamble.trim() : null,
+                        expectedPreamble);
+  }
+
   private static class JavaxMailMultiPartMIMEReader
   {
     final String _contentTypeHeaderValue;
@@ -234,10 +337,10 @@ public class TestMIMEWriter extends AbstractMIMEUnitTest
     String _preamble; //javax mail only supports reading the preamble
     final List<MIMEDataPart> _dataSourceList = new ArrayList<MIMEDataPart>();
 
-    private JavaxMailMultiPartMIMEReader(final String contentTypeHeaderValue, final ByteString paylaod)
+    private JavaxMailMultiPartMIMEReader(final String contentTypeHeaderValue, final ByteString payload)
     {
       _contentTypeHeaderValue = contentTypeHeaderValue;
-      _payload = paylaod;
+      _payload = payload;
     }
 
     @SuppressWarnings("rawtypes")

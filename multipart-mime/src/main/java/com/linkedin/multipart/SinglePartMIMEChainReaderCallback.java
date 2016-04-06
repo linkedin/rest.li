@@ -49,10 +49,10 @@ final class SinglePartMIMEChainReaderCallback implements SinglePartMIMEReaderCal
   }
 
   @Override
-  public void onAbandoned()
+  public void onDrainComplete()
   {
     //This can happen if the SinglePartMIMEReader this callback was registered with was used as a data source and it was
-    //told to abandon and the abandon finished.
+    //told to abandon which then led to a full drain of the entire part. Once the drain completed this method was invoked.
     //We don't need to take any action here.
   }
 

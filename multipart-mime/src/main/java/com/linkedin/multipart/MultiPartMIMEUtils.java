@@ -88,8 +88,8 @@ public final class MultiPartMIMEUtils
     return buffer.toString();
   }
 
-  static String buildMIMEContentTypeHeader(final String mimeType, final String boundary,
-      final Map<String, String> contentTypeParameters)
+  public static String buildMIMEContentTypeHeader(final String mimeType, final String boundary,
+                                                  final Map<String, String> contentTypeParameters)
   {
     final StringBuilder contentTypeBuilder = new StringBuilder();
     contentTypeBuilder.append(MULTIPART_PREFIX).append(mimeType);

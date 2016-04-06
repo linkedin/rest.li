@@ -16,6 +16,7 @@
 
 package com.linkedin.restli.client;
 
+
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.jersey.api.uri.UriTemplate;
@@ -48,19 +49,20 @@ public class Request<T>
 {
   private static final Pattern SLASH_PATTERN = Pattern.compile("/");
 
-  private final ResourceMethod         _method;
-  private final RecordTemplate         _inputRecord;
-  private final RestResponseDecoder<T> _decoder;
-  private final Map<String, String>    _headers;
-  private final List<HttpCookie>       _cookies;
-  private final ResourceSpec           _resourceSpec;
-  private final ResourceProperties     _resourceProperties;
-  private final Map<String, Object>    _queryParams;
-  private final Map<String, Class<?>>  _queryParamClasses; // Used for coercing query params. In case of collection or iterable, contains the type parameter class.
-  private final String                 _methodName; // needed to identify finders and actions. null for everything else
-  private final String                 _baseUriTemplate;
-  private final Map<String, Object>    _pathKeys;
-  private final RestliRequestOptions   _requestOptions;
+  private final ResourceMethod              _method;
+  private final RecordTemplate              _inputRecord;
+  private final RestResponseDecoder<T>      _decoder;
+  private final Map<String, String>         _headers;
+  private final List<HttpCookie>            _cookies;
+  private final ResourceSpec                _resourceSpec;
+  private final ResourceProperties          _resourceProperties;
+  private final Map<String, Object>         _queryParams;
+  private final Map<String, Class<?>>       _queryParamClasses; // Used for coercing query params. In case of collection or iterable, contains the type parameter class.
+  private final String                      _methodName; // needed to identify finders and actions. null for everything else
+  private final String                      _baseUriTemplate;
+  private final Map<String, Object>         _pathKeys;
+  private final RestliRequestOptions        _requestOptions;
+  private final List<Object>                _streamingAttachments; //Usually null since streaming is rare. Creating an empty List is wasteful.
 
   Request(ResourceMethod method,
           RecordTemplate inputRecord,
@@ -73,7 +75,8 @@ public class Request<T>
           String methodName,
           String baseUriTemplate,
           Map<String, Object> pathKeys,
-          RestliRequestOptions requestOptions)
+          RestliRequestOptions requestOptions,
+          List<Object> streamingAttachments)
   {
     _method = method;
     _inputRecord = inputRecord;
@@ -107,6 +110,7 @@ public class Request<T>
     }
 
     _requestOptions = (requestOptions == null) ? RestliRequestOptions.DEFAULT_OPTIONS : requestOptions;
+    _streamingAttachments = streamingAttachments;
   }
 
   /**
@@ -238,6 +242,11 @@ public class Request<T>
     return _requestOptions;
   }
 
+  List<Object> getStreamingAttachments()
+  {
+    return _streamingAttachments;
+  }
+
   /**
    * This method is to be exposed in the extending classes when appropriate
    */
@@ -289,11 +298,11 @@ public class Request<T>
    */
   private boolean areOldFieldsEqual(Request<?> other)
   {
-    if (_headers != null? !_headers.equals(other._headers) : other._headers != null)
+    if (_headers != null ? !_headers.equals(other._headers) : other._headers != null)
     {
       return false;
     }
-    if (_inputRecord != null? !_inputRecord.equals(other._inputRecord) : other._inputRecord != null)
+    if (_inputRecord != null ? !_inputRecord.equals(other._inputRecord) : other._inputRecord != null)
     {
       return false;
     }
@@ -316,27 +325,31 @@ public class Request<T>
     {
       return false;
     }
-    if (_baseUriTemplate != null? !_baseUriTemplate.equals(other._baseUriTemplate) : other._baseUriTemplate != null)
+    if (_baseUriTemplate != null ? !_baseUriTemplate.equals(other._baseUriTemplate) : other._baseUriTemplate != null)
     {
       return false;
     }
-    if (_pathKeys != null? !_pathKeys.equals(other._pathKeys) : other._pathKeys != null)
+    if (_pathKeys != null ? !_pathKeys.equals(other._pathKeys) : other._pathKeys != null)
     {
       return false;
     }
-    if (_resourceSpec != null? !_resourceSpec.equals(other._resourceSpec) : other._resourceSpec != null)
+    if (_resourceSpec != null ? !_resourceSpec.equals(other._resourceSpec) : other._resourceSpec != null)
     {
       return false;
     }
-    if (_queryParams != null? !_queryParams.equals(other._queryParams) : other._queryParams != null)
+    if (_queryParams != null ? !_queryParams.equals(other._queryParams) : other._queryParams != null)
     {
       return false;
     }
-    if (_methodName != null? !_methodName.equals(other._methodName) : other._methodName != null)
+    if (_methodName != null ? !_methodName.equals(other._methodName) : other._methodName != null)
     {
       return false;
     }
-    if (_requestOptions != null? !_requestOptions.equals(other._requestOptions) : other._requestOptions != null)
+    if (_requestOptions != null ? !_requestOptions.equals(other._requestOptions) : other._requestOptions != null)
+    {
+      return false;
+    }
+    if (_streamingAttachments != null ? !_streamingAttachments.equals(other._streamingAttachments) : other._streamingAttachments != null)
     {
       return false;
     }
@@ -352,14 +365,15 @@ public class Request<T>
   public int hashCode()
   {
     int hashCode = _method.hashCode();
-    hashCode = 31 * hashCode + (_inputRecord != null? _inputRecord.hashCode() : 0);
-    hashCode = 31 * hashCode + (_headers != null? _headers.hashCode() : 0);
-    hashCode = 31 * hashCode + (_baseUriTemplate != null? _baseUriTemplate.hashCode() : 0);
-    hashCode = 31 * hashCode + (_pathKeys != null? _pathKeys.hashCode() : 0);
+    hashCode = 31 * hashCode + (_inputRecord != null ? _inputRecord.hashCode() : 0);
+    hashCode = 31 * hashCode + (_headers != null ? _headers.hashCode() : 0);
+    hashCode = 31 * hashCode + (_baseUriTemplate != null ? _baseUriTemplate.hashCode() : 0);
+    hashCode = 31 * hashCode + (_pathKeys != null ? _pathKeys.hashCode() : 0);
     hashCode = 31 * hashCode + (_resourceSpec != null ? _resourceSpec.hashCode() : 0);
     hashCode = 31 * hashCode + (_queryParams != null ? _queryParams.hashCode() : 0);
     hashCode = 31 * hashCode + (_methodName != null ? _methodName.hashCode() : 0);
     hashCode = 31 * hashCode + (_requestOptions != null ? _requestOptions.hashCode() : 0);
+    hashCode = 31 * hashCode + (_streamingAttachments != null ? _streamingAttachments.hashCode() : 0);
     return hashCode;
   }
 
@@ -376,6 +390,11 @@ public class Request<T>
     sb.append(", _pathKeys=").append(_pathKeys);
     sb.append(", _queryParams=").append(_queryParams);
     sb.append(", _requestOptions=").append(_requestOptions);
+    if (_streamingAttachments != null)
+    {
+      sb.append(", _streamingDataSources=");
+      sb.append("(size=").append(_streamingAttachments.size()).append(")");
+    }
     sb.append('}');
     return sb.toString();
   }

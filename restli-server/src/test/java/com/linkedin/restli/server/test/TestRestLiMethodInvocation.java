@@ -27,11 +27,14 @@ import com.linkedin.data.template.StringArray;
 import com.linkedin.data.template.StringMap;
 import com.linkedin.data.transform.patch.request.PatchOpFactory;
 import com.linkedin.data.transform.patch.request.PatchTree;
+import com.linkedin.parseq.BaseTask;
+import com.linkedin.parseq.Context;
 import com.linkedin.parseq.Engine;
 import com.linkedin.parseq.EngineBuilder;
 import com.linkedin.parseq.Tasks;
 import com.linkedin.parseq.promise.Promise;
 import com.linkedin.parseq.promise.Promises;
+import com.linkedin.parseq.promise.SettablePromise;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
@@ -44,6 +47,7 @@ import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.PathSegment;
 import com.linkedin.restli.internal.common.TestConstants;
@@ -79,6 +83,8 @@ import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.RestLiRequestData;
 import com.linkedin.restli.server.RestLiRequestDataImpl;
+import com.linkedin.restli.server.RestLiResponseAttachments;
+import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.RoutingException;
 import com.linkedin.restli.server.TestRecord;
 import com.linkedin.restli.server.UpdateResponse;
@@ -117,6 +123,9 @@ import com.linkedin.restli.server.twitter.TwitterTestDataModels.Location;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.Status;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.StatusType;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
@@ -128,21 +137,29 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-import org.easymock.Capture;
-import org.easymock.EasyMock;
-import org.easymock.IAnswer;
 import org.testng.Assert;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import org.easymock.Capture;
+import org.easymock.EasyMock;
+import org.easymock.IAnswer;
+
 import static com.linkedin.restli.server.test.RestLiTestHelper.buildResourceModel;
 import static com.linkedin.restli.server.test.RestLiTestHelper.buildResourceModels;
-import static org.easymock.EasyMock.*;
+import static org.easymock.EasyMock.anyObject;
+import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.eq;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.expectLastCall;
+import static org.easymock.EasyMock.getCurrentArguments;
+import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.reset;
+import static org.easymock.EasyMock.verify;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.fail;
@@ -229,7 +246,8 @@ public class TestRestLiMethodInvocation
     {
       mockFilter.onRequest(eq(mockFilterContext), EasyMock.anyObject(NextRequestFilter.class));
       expectLastCall().andThrow(exFromFilter);
-      mockCallback.onError(eq(exFromFilter), anyObject(RequestExecutionReport.class));
+      mockCallback.onError(eq(exFromFilter), anyObject(RequestExecutionReport.class),
+                           EasyMock.isNull(RestLiAttachmentReader.class), EasyMock.isNull(RestLiResponseAttachments.class));
     }
     else
     {
@@ -271,7 +289,7 @@ public class TestRestLiMethodInvocation
       Long[] argsArray = { 1L };
       expect(mockBuilder.buildArguments(requestData, routingResult)).andReturn(argsArray);
       expect(resource.get(eq(1L))).andReturn(null).once();
-      mockCallback.onSuccess(eq(null), anyObject(RequestExecutionReport.class));
+      mockCallback.onSuccess(eq(null), anyObject(RequestExecutionReport.class), anyObject(RestLiResponseAttachments.class));
     }
     replay(resource, mockRegistry, mockBuilder, mockFilterContext, mockFilter, mockCallback);
     invokerWithFilters.invoke(routingResult, request, mockCallback, false, mockFilterContext);
@@ -3188,13 +3206,17 @@ public class TestRestLiMethodInvocation
                     {
                       //A 404 is considered an error by rest.li
                       @Override
-                      public void onError(final Throwable e, RequestExecutionReport executionReport)
+                      public void onError(Throwable e, RequestExecutionReport executionReport,
+                                          RestLiAttachmentReader requestAttachmentReader,
+                                          RestLiResponseAttachments responseAttachments)
                       {
                         Assert.assertNull(executionReport.getParseqTrace(), "There should be no parseq trace!");
                       }
 
                       @Override
-                      public void onSuccess(final RestResponse result, RequestExecutionReport executionReport)
+                      public void onSuccess(RestResponse result,
+                                            RequestExecutionReport executionReport,
+                                            RestLiResponseAttachments responseAttachments)
                       {
                         Assert.fail("Request failed unexpectedly.");
                       }
@@ -3243,13 +3265,17 @@ public class TestRestLiMethodInvocation
                     {
                       //A 404 is considered an error by rest.li
                       @Override
-                      public void onError(Throwable e, RequestExecutionReport executionReport)
+                      public void onError(Throwable e, RequestExecutionReport executionReport,
+                                          RestLiAttachmentReader requestAttachmentReader,
+                                          RestLiResponseAttachments responseAttachments)
                       {
                         Assert.assertNotNull(executionReport.getParseqTrace(), "There should be a valid parseq trace!");
                       }
 
                       @Override
-                      public void onSuccess(RestResponse result, RequestExecutionReport executionReport)
+                      public void onSuccess(RestResponse result,
+                                            RequestExecutionReport executionReport,
+                                            RestLiResponseAttachments responseAttachments)
                       {
                         Assert.fail("Request failed unexpectedly.");
                       }
@@ -3281,14 +3307,17 @@ public class TestRestLiMethodInvocation
                     new RequestExecutionCallback<RestResponse>()
                     {
                       @Override
-                      public void onError(Throwable e, RequestExecutionReport executionReport)
+                      public void onError(Throwable e, RequestExecutionReport executionReport,
+                                          RestLiAttachmentReader requestAttachmentReader,
+                                          RestLiResponseAttachments responseAttachments)
                       {
                         Assert.fail("Request failed unexpectedly.");
                       }
 
                       @Override
                       public void onSuccess(RestResponse result,
-                                            RequestExecutionReport executionReport)
+                                            RequestExecutionReport executionReport,
+                                            RestLiResponseAttachments responseAttachments)
                       {
                         Assert.assertNotNull(executionReport.getParseqTrace());
                       }
@@ -4107,6 +4136,7 @@ public class TestRestLiMethodInvocation
         .addHeaderValue("Accept", "text/plain")
         .setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, version.toString());
     RestRequest request = builder.build();
+    final RestLiAttachmentReader attachmentReader = new RestLiAttachmentReader(null);
     final CountDownLatch latch = new CountDownLatch(1);
     final RestLiCallback<Object> callback =
         new RestLiCallback<Object>(request,
@@ -4115,21 +4145,33 @@ public class TestRestLiMethodInvocation
                                    new RequestExecutionCallback<RestResponse>()
                                    {
                                      @Override
-                                     public void onError(final Throwable e, RequestExecutionReport executionReport)
+                                     public void onError(Throwable e, RequestExecutionReport executionReport,
+                                                         RestLiAttachmentReader requestAttachmentReader,
+                                                         RestLiResponseAttachments responseAttachments)
                                      {
                                        latch.countDown();
                                        Assert.assertTrue(e instanceof RestException);
                                        RestException ex = (RestException) e;
                                        Assert.assertEquals(ex.getResponse().getStatus(),
                                                            HttpStatus.S_406_NOT_ACCEPTABLE.getCode());
+                                       Assert.assertEquals(requestAttachmentReader, attachmentReader);
+                                       Assert.assertNull(responseAttachments);
                                      }
                                      @Override
-                                     public void onSuccess(RestResponse result, RequestExecutionReport executionReport)
+                                     public void onSuccess(RestResponse result,
+                                                           RequestExecutionReport executionReport,
+                                                           RestLiResponseAttachments responseAttachments)
                                      {
+                                       Assert.fail();
                                      }
                                    }, null, null);
-    ServerResourceContext context = new ResourceContextImpl();
-    _invoker.invoke(new RoutingResult(context, null), request, callback, false, null);
+    ServerResourceContext resourceContext = new ResourceContextImpl(new PathKeysImpl(),
+                                                                      new RestRequestBuilder(URI.create(""))
+                                                                          .setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, AllProtocolVersions.LATEST_PROTOCOL_VERSION.toString())
+                                                                          .build(),
+                                                                      new RequestContext(),
+                                                                      false, attachmentReader);
+    _invoker.invoke(new RoutingResult(resourceContext, null), request, callback, false, null);
     try
     {
       latch.await();
@@ -4138,7 +4180,7 @@ public class TestRestLiMethodInvocation
     {
       // Ignore
     }
-    Assert.assertNull(context.getResponseMimeType());
+    Assert.assertNull(resourceContext.getResponseMimeType());
   }
 
   @Test
@@ -4156,7 +4198,9 @@ public class TestRestLiMethodInvocation
                                    new RequestExecutionCallback<RestResponse>()
                                    {
                                      @Override
-                                     public void onError(final Throwable e, RequestExecutionReport executionReport)
+                                     public void onError(Throwable e, RequestExecutionReport executionReport,
+                                                         RestLiAttachmentReader requestAttachmentReader,
+                                                         RestLiResponseAttachments responseAttachments)
                                      {
                                        latch.countDown();
                                        Assert.assertTrue(e instanceof RestException);
@@ -4165,7 +4209,9 @@ public class TestRestLiMethodInvocation
                                                            HttpStatus.S_400_BAD_REQUEST.getCode());
                                      }
                                      @Override
-                                     public void onSuccess(RestResponse result, RequestExecutionReport executionReport)
+                                     public void onSuccess(RestResponse result,
+                                                           RequestExecutionReport executionReport,
+                                                           RestLiResponseAttachments responseAttachments)
                                      {
                                      }
                                    }, null, null);
@@ -4215,6 +4261,374 @@ public class TestRestLiMethodInvocation
                          version,
                          "/asyncdiscovereditems",
                          buildBatchPathKeys());
+  }
+
+  @Test
+  public void testStreaming() throws RestLiSyntaxException, URISyntaxException
+  {
+    Map<String, ResourceModel> resourceModelMap = buildResourceModels(
+        StatusCollectionResource.class,
+        AsyncStatusCollectionResource.class,
+        PromiseStatusCollectionResource.class,
+        TaskStatusCollectionResource.class);
+
+    final String payload = "{\"metadata\": \"someMetadata\"}";
+    ResourceModel statusResourceModel = resourceModelMap.get("/statuses");
+    ResourceModel asyncStatusResourceModel = resourceModelMap.get("/asyncstatuses");
+    ResourceModel promiseStatusResourceModel = resourceModelMap.get("/promisestatuses");
+    ResourceModel taskStatusResourceModel = resourceModelMap.get("/taskstatuses");
+
+    ResourceMethodDescriptor methodDescriptor;
+    StatusCollectionResource statusResource;
+    AsyncStatusCollectionResource asyncStatusResource;
+    PromiseStatusCollectionResource promiseStatusResource;
+    TaskStatusCollectionResource taskStatusResource;
+
+    //Sync Method Execution - Successful scenario
+    methodDescriptor = statusResourceModel.findActionMethod("streamingAction", ResourceLevel.COLLECTION);
+    statusResource = getMockResource(StatusCollectionResource.class);
+    EasyMock.expect(statusResource.streamingAction(EasyMock.<String>anyObject(), EasyMock.<RestLiAttachmentReader>anyObject()))
+                        .andReturn(1234l).once();
+    checkInvocation(statusResource,
+                    methodDescriptor,
+                    "POST",
+                    version,
+                    "/statuses/?action=streamingAction",
+                    payload,
+                    null,
+                    new RequestExecutionCallback<RestResponse>()
+                    {
+                      @Override
+                      public void onError(Throwable e, RequestExecutionReport executionReport,
+                                          RestLiAttachmentReader requestAttachmentReader,
+                                          RestLiResponseAttachments responseAttachments)
+                      {
+                        Assert.fail("Request failed unexpectedly.");
+                      }
+
+                      @Override
+                      public void onSuccess(RestResponse result,
+                                            RequestExecutionReport executionReport,
+                                            RestLiResponseAttachments responseAttachments)
+                      {
+                      }
+                    },
+                    false,
+                    false,
+                    new RestLiAttachmentReader(null),
+                    new RestLiResponseAttachments.Builder().build());
+
+    //Sync Method Execution - Error scenario
+    statusResource = getMockResource(StatusCollectionResource.class);
+    EasyMock.expect(statusResource.streamingAction(EasyMock.<String>anyObject(), EasyMock.<RestLiAttachmentReader>anyObject()))
+        .andThrow(new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR)).once();
+    checkInvocation(statusResource,
+                    methodDescriptor,
+                    "POST",
+                    version,
+                    "/statuses/?action=streamingAction",
+                    payload,
+                    null,
+                    new RequestExecutionCallback<RestResponse>()
+                    {
+                      @Override
+                      public void onError(Throwable e, RequestExecutionReport executionReport,
+                                          RestLiAttachmentReader requestAttachmentReader,
+                                          RestLiResponseAttachments responseAttachments)
+                      {
+                      }
+
+                      @Override
+                      public void onSuccess(RestResponse result,
+                                            RequestExecutionReport executionReport,
+                                            RestLiResponseAttachments responseAttachments)
+                      {
+                        Assert.fail("Request passed unexpectedly.");
+                      }
+                    },
+                    false,
+                    false,
+                    new RestLiAttachmentReader(null),
+                    new RestLiResponseAttachments.Builder().build());
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //Callback Method Execution - Successful scenario
+    methodDescriptor = asyncStatusResourceModel.findMethod(ResourceMethod.ACTION);
+    asyncStatusResource = getMockResource(AsyncStatusCollectionResource.class);
+    asyncStatusResource.streamingAction(EasyMock.<String>anyObject(), EasyMock.<RestLiAttachmentReader>anyObject(),
+                                        EasyMock.<Callback<Long>>anyObject());
+    EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
+      @Override
+      public Object answer() throws Throwable {
+        @SuppressWarnings("unchecked")
+        Callback<Long> callback = (Callback<Long>) EasyMock.getCurrentArguments()[2];
+        callback.onSuccess(1234l);
+        return null;
+      }
+    });
+    checkInvocation(asyncStatusResource,
+                    methodDescriptor,
+                    "POST",
+                    version,
+                    "/asyncstatuses/?action=streamingAction",
+                    payload,
+                    null,
+                    new RequestExecutionCallback<RestResponse>()
+                    {
+                      @Override
+                      public void onError(Throwable e, RequestExecutionReport executionReport,
+                                          RestLiAttachmentReader requestAttachmentReader,
+                                          RestLiResponseAttachments responseAttachments)
+                      {
+                        Assert.fail("Request failed unexpectedly.");
+                      }
+
+                      @Override
+                      public void onSuccess(RestResponse result,
+                                            RequestExecutionReport executionReport,
+                                            RestLiResponseAttachments responseAttachments)
+                      {
+                      }
+                    },
+                    false,
+                    false,
+                    new RestLiAttachmentReader(null),
+                    new RestLiResponseAttachments.Builder().build());
+
+    //Callback Method Execution - Error scenario
+    asyncStatusResource = getMockResource(AsyncStatusCollectionResource.class);
+    asyncStatusResource.streamingAction(EasyMock.<String>anyObject(), EasyMock.<RestLiAttachmentReader>anyObject(),
+                                        EasyMock.<Callback<Long>>anyObject());
+    EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
+      @Override
+      public Object answer() throws Throwable {
+        @SuppressWarnings("unchecked")
+        Callback<Long> callback = (Callback<Long>) EasyMock.getCurrentArguments()[2];
+        callback.onError(new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR));
+        return null;
+      }
+    });
+    checkInvocation(asyncStatusResource,
+                    methodDescriptor,
+                    "POST",
+                    version,
+                    "/asyncstatuses/?action=streamingAction",
+                    payload,
+                    null,
+                    new RequestExecutionCallback<RestResponse>()
+                    {
+                      @Override
+                      public void onError(Throwable e, RequestExecutionReport executionReport,
+                                          RestLiAttachmentReader requestAttachmentReader,
+                                          RestLiResponseAttachments responseAttachments)
+                      {
+                      }
+
+                      @Override
+                      public void onSuccess(RestResponse result,
+                                            RequestExecutionReport executionReport,
+                                            RestLiResponseAttachments responseAttachments)
+                      {
+                        Assert.fail("Request passed unexpectedly.");
+                      }
+                    },
+                    false,
+                    false,
+                    new RestLiAttachmentReader(null),
+                    new RestLiResponseAttachments.Builder().build());
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //Promise Method Execution - Successful scenario
+    methodDescriptor = promiseStatusResourceModel.findActionMethod("streamingAction", ResourceLevel.COLLECTION);
+    promiseStatusResource = getMockResource(PromiseStatusCollectionResource.class);
+    promiseStatusResource.streamingAction(EasyMock.<String>anyObject(), EasyMock.<RestLiAttachmentReader>anyObject());
+    EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
+      @Override
+      public Object answer() throws Throwable {
+        final SettablePromise<Long> result = Promises.settable();
+        final Runnable requestHandler = new Runnable()
+        {
+          public void run ()
+          {
+            try
+            {
+              result.done(1234l);
+            }
+            catch (final Throwable throwable)
+            {
+              result.fail(throwable);
+            }
+          }
+        };
+        _scheduler.schedule(requestHandler, 0, TimeUnit.MILLISECONDS);
+        return result;
+      }
+    });
+    checkInvocation(promiseStatusResource,
+                    methodDescriptor,
+                    "POST",
+                    version,
+                    "/promisestatuses/?action=streamingAction",
+                    payload,
+                    null,
+                    new RequestExecutionCallback<RestResponse>()
+                    {
+                      @Override
+                      public void onError(Throwable e, RequestExecutionReport executionReport,
+                                          RestLiAttachmentReader requestAttachmentReader,
+                                          RestLiResponseAttachments responseAttachments)
+                      {
+                        Assert.fail("Request failed unexpectedly.");
+                      }
+
+                      @Override
+                      public void onSuccess(RestResponse result,
+                                            RequestExecutionReport executionReport,
+                                            RestLiResponseAttachments responseAttachments)
+                      {
+                      }
+                    },
+                    false,
+                    false,
+                    new RestLiAttachmentReader(null),
+                    new RestLiResponseAttachments.Builder().build());
+
+    //Promise Method Execution - Error scenario
+    promiseStatusResource = getMockResource(PromiseStatusCollectionResource.class);
+    promiseStatusResource.streamingAction(EasyMock.<String>anyObject(), EasyMock.<RestLiAttachmentReader>anyObject());
+    EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
+      @Override
+      public Object answer() throws Throwable {
+        final SettablePromise<Long> result = Promises.settable();
+        final Runnable requestHandler = new Runnable()
+        {
+          public void run ()
+          {
+            result.fail(new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR));
+          }
+        };
+        _scheduler.schedule(requestHandler, 0, TimeUnit.MILLISECONDS);
+        return result;
+      }
+    });
+    checkInvocation(promiseStatusResource,
+                    methodDescriptor,
+                    "POST",
+                    version,
+                    "/promisestatuses/?action=streamingAction",
+                    payload,
+                    null,
+                    new RequestExecutionCallback<RestResponse>()
+                    {
+                      @Override
+                      public void onError(Throwable e, RequestExecutionReport executionReport,
+                                          RestLiAttachmentReader requestAttachmentReader,
+                                          RestLiResponseAttachments responseAttachments)
+                      {
+                      }
+
+                      @Override
+                      public void onSuccess(RestResponse result,
+                                            RequestExecutionReport executionReport,
+                                            RestLiResponseAttachments responseAttachments)
+                      {
+                        Assert.fail("Request passed unexpectedly.");
+                      }
+                    },
+                    false,
+                    false,
+                    new RestLiAttachmentReader(null),
+                    new RestLiResponseAttachments.Builder().build());
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //Task Method Execution - Successful scenario
+    methodDescriptor = taskStatusResourceModel.findMethod(ResourceMethod.ACTION);
+    taskStatusResource = getMockResource(TaskStatusCollectionResource.class);
+    taskStatusResource.streamingAction(EasyMock.<String>anyObject(), EasyMock.<RestLiAttachmentReader>anyObject());
+    EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
+      @Override
+      public Object answer() throws Throwable {
+        return new BaseTask<Long>()
+        {
+          protected Promise<Long> run(final Context context) throws Exception
+          {
+            return Promises.value(1234l);
+          }
+        };
+      }
+    });
+    checkInvocation(taskStatusResource,
+                    methodDescriptor,
+                    "POST",
+                    version,
+                    "/taskstatuses/?action=streamingAction",
+                    payload,
+                    null,
+                    new RequestExecutionCallback<RestResponse>()
+                    {
+                      @Override
+                      public void onError(Throwable e, RequestExecutionReport executionReport,
+                                          RestLiAttachmentReader requestAttachmentReader,
+                                          RestLiResponseAttachments responseAttachments)
+                      {
+                        Assert.fail("Request failed unexpectedly.");
+                      }
+
+                      @Override
+                      public void onSuccess(RestResponse result,
+                                            RequestExecutionReport executionReport,
+                                            RestLiResponseAttachments responseAttachments)
+                      {
+                      }
+                    },
+                    false,
+                    false,
+                    new RestLiAttachmentReader(null),
+                    new RestLiResponseAttachments.Builder().build());
+
+    //Task Method Execution - Error scenario
+    taskStatusResource = getMockResource(TaskStatusCollectionResource.class);
+    taskStatusResource.streamingAction(EasyMock.<String>anyObject(), EasyMock.<RestLiAttachmentReader>anyObject());
+    EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
+      @Override
+      public Object answer() throws Throwable {
+        return new BaseTask<Long>()
+        {
+          protected Promise<Long> run(final Context context) throws Exception
+          {
+            return Promises.error(new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR));
+          }
+        };
+      }
+    });
+    checkInvocation(taskStatusResource,
+                    methodDescriptor,
+                    "POST",
+                    version,
+                    "/taskstatuses/?action=streamingAction",
+                    payload,
+                    null,
+                    new RequestExecutionCallback<RestResponse>()
+                    {
+                      @Override
+                      public void onError(Throwable e, RequestExecutionReport executionReport,
+                                          RestLiAttachmentReader requestAttachmentReader,
+                                          RestLiResponseAttachments responseAttachments)
+                      {
+                      }
+
+                      @Override
+                      public void onSuccess(RestResponse result,
+                                            RequestExecutionReport executionReport,
+                                            RestLiResponseAttachments responseAttachments)
+                      {
+                        Assert.fail("Request passed unexpectedly.");
+                      }
+                    },
+                    false,
+                    false,
+                    new RestLiAttachmentReader(null),
+                    new RestLiResponseAttachments.Builder().build());
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "statusPagingContextDefault")
@@ -4481,6 +4895,24 @@ public class TestRestLiMethodInvocation
                                final boolean expectRoutingException)
       throws URISyntaxException, RestLiSyntaxException
   {
+    checkInvocation(resource, resourceMethodDescriptor, httpMethod, version,
+                    uri, entityBody, pathkeys, callback, isDebugMode, expectRoutingException, null, null);
+  }
+
+  private void checkInvocation(Object resource,
+                               ResourceMethodDescriptor resourceMethodDescriptor,
+                               String httpMethod,
+                               ProtocolVersion version,
+                               String uri,
+                               String entityBody,
+                               MutablePathKeys pathkeys,
+                               final RequestExecutionCallback<RestResponse> callback,
+                               final boolean isDebugMode,
+                               final boolean expectRoutingException,
+                               final RestLiAttachmentReader expectedRequestAttachments,
+                               final RestLiResponseAttachments expectedResponseAttachments)
+      throws URISyntaxException, RestLiSyntaxException
+  {
     assertNotNull(resource);
     assertNotNull(resourceMethodDescriptor);
 
@@ -4495,8 +4927,11 @@ public class TestRestLiMethodInvocation
         builder.setEntity(entityBody.getBytes(Data.UTF_8_CHARSET));
       }
       RestRequest request = builder.build();
-      RoutingResult routingResult = new RoutingResult(new ResourceContextImpl(pathkeys, request,
-                                                                              new RequestContext()), resourceMethodDescriptor);
+      final ResourceContext resourceContext = new ResourceContextImpl(pathkeys, request,
+                                                                      new RequestContext(),
+                                                                      true, expectedRequestAttachments);
+      resourceContext.setResponseAttachments(expectedResponseAttachments);
+      RoutingResult routingResult = new RoutingResult(resourceContext, resourceMethodDescriptor);
       FilterRequestContextInternal filterContext = new FilterRequestContextInternalImpl((ServerResourceContext) routingResult
           .getContext(), resourceMethodDescriptor);
       final CountDownLatch latch = new CountDownLatch(1);
@@ -4507,7 +4942,9 @@ public class TestRestLiMethodInvocation
                                                                     new RequestExecutionCallback<RestResponse>()
       {
         @Override
-        public void onError(final Throwable e, RequestExecutionReport executionReport)
+        public void onError(Throwable e, RequestExecutionReport executionReport,
+                            RestLiAttachmentReader requestAttachmentReader,
+                            RestLiResponseAttachments responseAttachments)
         {
           if (isDebugMode)
           {
@@ -4525,14 +4962,18 @@ public class TestRestLiMethodInvocation
 
           if (callback != null)
           {
-            callback.onError(e, executionReport);
+            callback.onError(e, executionReport, null, null);
           }
 
+          Assert.assertEquals(requestAttachmentReader, expectedRequestAttachments);
+          Assert.assertEquals(responseAttachments, expectedResponseAttachments);
           latch.countDown();
         }
 
         @Override
-        public void onSuccess(final RestResponse result, RequestExecutionReport executionReport)
+        public void onSuccess(final RestResponse result,
+                              RequestExecutionReport executionReport,
+                              RestLiResponseAttachments responseAttachments)
         {
           if (isDebugMode)
           {
@@ -4545,9 +4986,10 @@ public class TestRestLiMethodInvocation
 
           if (callback != null)
           {
-            callback.onSuccess(result, executionReport);
+            callback.onSuccess(result, executionReport, null);
           }
 
+          Assert.assertEquals(responseAttachments, expectedResponseAttachments);
           latch.countDown();
         }
       }, null, null);
@@ -4577,7 +5019,7 @@ public class TestRestLiMethodInvocation
       EasyMock.reset(resource);
       EasyMock.makeThreadSafe(resource, true);
     }
-}
+  }
 
   private RestLiCallback<Object> getCallback()
   {
@@ -4588,7 +5030,7 @@ public class TestRestLiMethodInvocation
   {
     @SuppressWarnings("unchecked")
     RestLiCallback<Object> callback = EasyMock.createMock(RestLiCallback.class);
-    callback.onSuccess(EasyMock.anyObject(), EasyMock.capture(requestExecutionReport));
+    callback.onSuccess(EasyMock.anyObject(), EasyMock.capture(requestExecutionReport), EasyMock.anyObject(RestLiResponseAttachments.class));
     EasyMock.expectLastCall().once();
     EasyMock.replay(callback);
     return callback;
@@ -4681,7 +5123,7 @@ public class TestRestLiMethodInvocation
       callback.onSuccess(EasyMock.anyObject(),
                          isDebugMode ?
                              EasyMock.isA(RequestExecutionReport.class) :
-                             EasyMock.<RequestExecutionReport>isNull());
+                             EasyMock.<RequestExecutionReport>isNull(), EasyMock.anyObject(RestLiResponseAttachments.class));
       EasyMock.expectLastCall().once();
       EasyMock.replay(callback);
     }

@@ -17,6 +17,9 @@
 package com.linkedin.restli.server;
 
 
+import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
+
+
 /**
  * The callback interface to be invoked at the end of a Rest.li request execution.
  * @param <T>
@@ -29,8 +32,13 @@ public interface RequestExecutionCallback<T>
    * @param e the error
    * @param executionReport contains data about the request execution process. This parameter will contain a value
    *                        only if the request was a debug request.
+   * @param requestAttachmentReader contains any request level streaming attachments. These will need to be drained as
+   *                                part of the error handling process.
+   * @param responseAttachments contains any response level streaming attachments provided by the resource methods. These
+   *                            will need to be drained as part of the error handling process.
    */
-  void onError(Throwable e, RequestExecutionReport executionReport);
+  void onError(Throwable e, RequestExecutionReport executionReport, RestLiAttachmentReader requestAttachmentReader,
+               RestLiResponseAttachments responseAttachments);
 
   /**
    * Called if the asynchronous operation completed with a successful result.
@@ -38,6 +46,7 @@ public interface RequestExecutionCallback<T>
    * @param result the result of the asynchronous operation
    * @param executionReport contains data about the request execution process. This parameter will contain a value
    *                        only if the request was a debug request.
+   * @param responseAttachments any application developer specified attachments that need to be streamed back to the client.
    */
-  void onSuccess(T result, RequestExecutionReport executionReport);
+  void onSuccess(T result, RequestExecutionReport executionReport, RestLiResponseAttachments responseAttachments);
 }

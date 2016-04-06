@@ -21,6 +21,8 @@ import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.client.CreateIdRequestBuilder;
 import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.common.ResourceSpec;
+import com.linkedin.restli.common.attachments.RestLiAttachmentDataSourceWriter;
+import com.linkedin.restli.common.attachments.RestLiDataSourceIterator;
 
 
 /**
@@ -38,6 +40,20 @@ public class CreateIdRequestBuilderBase<K,
                                        RestliRequestOptions requestOptions)
   {
     super(baseURITemplate, valueClass, resourceSpec, requestOptions);
+  }
+
+  @SuppressWarnings({"unchecked"})
+  @Override
+  public RB appendSingleAttachment(final RestLiAttachmentDataSourceWriter streamingAttachment)
+  {
+    return (RB) super.appendSingleAttachment(streamingAttachment);
+  }
+
+  @SuppressWarnings({"unchecked"})
+  @Override
+  public RB appendMultipleAttachments(final RestLiDataSourceIterator dataSourceIterator)
+  {
+    return (RB) super.appendMultipleAttachments(dataSourceIterator);
   }
 
   @SuppressWarnings({"unchecked"})

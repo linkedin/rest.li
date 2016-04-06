@@ -28,10 +28,13 @@ import com.linkedin.restli.common.CollectionRequest;
 import com.linkedin.restli.common.KeyValueRecord;
 import com.linkedin.restli.common.KeyValueRecordFactory;
 import com.linkedin.restli.common.ResourceSpec;
+import com.linkedin.restli.common.attachments.RestLiAttachmentDataSourceWriter;
+import com.linkedin.restli.common.attachments.RestLiDataSourceIterator;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 
@@ -39,12 +42,12 @@ import java.util.Map;
  * @author Josh Walker
  * @version $Revision: $
  */
-
 public class BatchUpdateRequestBuilder<K, V extends RecordTemplate> extends
     BatchKVRequestBuilder<K, V, BatchUpdateRequest<K, V>>
 {
   private final KeyValueRecordFactory<K, V> _keyValueRecordFactory;
   private final Map<K, V> _updateInputMap;
+  private List<Object> _streamingAttachments; //We initialize only when we need to.
 
   @SuppressWarnings({"unchecked", "rawtypes"})
   public BatchUpdateRequestBuilder(String baseUriTemplate,
@@ -77,6 +80,28 @@ public class BatchUpdateRequestBuilder<K, V extends RecordTemplate> extends
       V value = entry.getValue();
       _updateInputMap.put(key, value);
     }
+    return this;
+  }
+
+  public BatchUpdateRequestBuilder<K, V> appendSingleAttachment(final RestLiAttachmentDataSourceWriter streamingAttachment)
+  {
+    if (_streamingAttachments == null)
+    {
+      _streamingAttachments = new ArrayList<>();
+    }
+
+    _streamingAttachments.add(streamingAttachment);
+    return this;
+  }
+
+  public BatchUpdateRequestBuilder<K, V> appendMultipleAttachments(final RestLiDataSourceIterator dataSourceIterator)
+  {
+    if (_streamingAttachments == null)
+    {
+      _streamingAttachments = new ArrayList<>();
+    }
+
+    _streamingAttachments.add(dataSourceIterator);
     return this;
   }
 
@@ -153,7 +178,8 @@ public class BatchUpdateRequestBuilder<K, V extends RecordTemplate> extends
                                         getBaseUriTemplate(),
                                         buildReadOnlyPathKeys(),
                                         getRequestOptions(),
-                                        Collections.unmodifiableMap(readOnlyUpdateInputMap));
+                                        Collections.unmodifiableMap(readOnlyUpdateInputMap),
+                                        _streamingAttachments == null ? null : Collections.unmodifiableList(_streamingAttachments));
   }
 
   private CollectionRequest<KeyValueRecord<K, V>> buildReadOnlyBatchUpdateInput(Map<K, V> readOnlyInputEntities)

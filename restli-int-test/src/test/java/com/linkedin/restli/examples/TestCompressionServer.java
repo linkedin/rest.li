@@ -82,17 +82,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
+
 import org.apache.http.HttpException;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
 
 
 /**
@@ -103,6 +104,7 @@ public class TestCompressionServer extends RestLiIntegrationTest
   private static final String URI_PREFIX = RestLiIntegrationTest.FILTERS_URI_PREFIX;
   private static final String URI_PREFIX_WITHOUT_COMPRESSION = RestLiIntegrationTest.NO_COMPRESSION_PREFIX; //This server does no compression
   public static final String CONTENT_ENCODING_SAVED = "Content-Encoding-Saved";
+
   // Because the Content-Encoding header is removed when content is decompressed,
   // we need to save the value to another header to check whether the response was compressed or not.
   public static class SaveContentEncodingHeaderFilter implements RestFilter

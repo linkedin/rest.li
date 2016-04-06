@@ -30,6 +30,7 @@ import java.net.HttpCookie;
 import java.util.List;
 import java.util.Map;
 
+
 /**
  * A request to perform an action.
  *
@@ -52,7 +53,8 @@ public class ActionRequest<T> extends Request<T>
                 String baseUriTemplate,
                 Map<String, Object> pathKeys,
                 RestliRequestOptions requestOptions,
-                Object id)
+                Object id,
+                List<Object> streamingAttachments)
   {
     super(ResourceMethod.ACTION,
           input,
@@ -65,7 +67,8 @@ public class ActionRequest<T> extends Request<T>
           name,
           baseUriTemplate,
           pathKeys,
-          requestOptions);
+          requestOptions,
+          streamingAttachments);
     _id = id;
   }
 

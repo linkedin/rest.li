@@ -18,6 +18,10 @@ package com.linkedin.restli.server.twitter;
 
 
 import com.linkedin.parseq.Task;
+import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
+import com.linkedin.restli.server.annotations.Action;
+import com.linkedin.restli.server.annotations.ActionParam;
+import com.linkedin.restli.server.annotations.RestLiAttachmentsParam;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.annotations.RestMethod;
 import com.linkedin.restli.server.resources.KeyValueResource;
@@ -34,6 +38,13 @@ public class TaskStatusCollectionResource implements KeyValueResource<Long, Twit
    */
   @RestMethod.Get
   public Task<TwitterTestDataModels.Status> get(Long key)
+  {
+    throw new AssertionError("should be mocked");
+  }
+
+  @Action(name="streamingAction")
+  public Task<Long> streamingAction(@ActionParam("metadata") String metadata,
+                              @RestLiAttachmentsParam RestLiAttachmentReader attachmentReader)
   {
     throw new AssertionError("should be mocked");
   }

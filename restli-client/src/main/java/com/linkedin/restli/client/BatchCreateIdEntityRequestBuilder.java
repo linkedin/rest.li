@@ -23,9 +23,12 @@ import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.CollectionRequest;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.TypeSpec;
+import com.linkedin.restli.common.attachments.RestLiAttachmentDataSourceWriter;
+import com.linkedin.restli.common.attachments.RestLiDataSourceIterator;
 import com.linkedin.restli.internal.client.BatchCreateIdEntityDecoder;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -39,6 +42,7 @@ public class BatchCreateIdEntityRequestBuilder<K, V extends RecordTemplate> exte
 {
   private final List<V> _entities = new ArrayList<V>();
   private final Class<V> _valueClass;
+  private List<Object> _streamingAttachments; //We initialize only when we need to.
 
   protected BatchCreateIdEntityRequestBuilder(String baseURITemplate,
                                               Class<V> valueClass,
@@ -58,6 +62,28 @@ public class BatchCreateIdEntityRequestBuilder<K, V extends RecordTemplate> exte
   public BatchCreateIdEntityRequestBuilder<K, V> inputs(List<V> entities)
   {
     _entities.addAll(entities);
+    return this;
+  }
+
+  public BatchCreateIdEntityRequestBuilder<K, V> appendSingleAttachment(final RestLiAttachmentDataSourceWriter streamingAttachment)
+  {
+    if (_streamingAttachments == null)
+    {
+      _streamingAttachments = new ArrayList<>();
+    }
+
+    _streamingAttachments.add(streamingAttachment);
+    return this;
+  }
+
+  public BatchCreateIdEntityRequestBuilder<K, V> appendMultipleAttachments(final RestLiDataSourceIterator dataSourceIterator)
+  {
+    if (_streamingAttachments == null)
+    {
+      _streamingAttachments = new ArrayList<>();
+    }
+
+    _streamingAttachments.add(dataSourceIterator);
     return this;
   }
 
@@ -141,7 +167,8 @@ public class BatchCreateIdEntityRequestBuilder<K, V extends RecordTemplate> exte
                                                 getQueryParamClasses(),
                                                 getBaseUriTemplate(),
                                                 buildReadOnlyPathKeys(),
-                                                getRequestOptions());
+                                                getRequestOptions(),
+                                                _streamingAttachments == null ? null : Collections.unmodifiableList(_streamingAttachments));
   }
 
   private CollectionRequest<V> buildReadOnlyInput()

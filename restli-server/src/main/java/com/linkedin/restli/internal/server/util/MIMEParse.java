@@ -270,7 +270,27 @@ public final class MIMEParse
             : "";
   }
 
-  // hidden
+  /**
+   * Returns a {@link List} of {@link String}s representing all possible accept types from the provided header.
+   * The provided header should be the value of the 'Accept' header. This method simply returns the primary type
+   * followed by the subtype, meaning 'primaryType/subType'. For example it will return 'application/json' or
+   * 'multipart/related'. Therefore no quality factor information is preserved in the returned list of accept types.
+   *
+   * @param header the header to parse
+   * @return a List of Strings representing all possible accept types
+   */
+  public static List<String> parseAcceptType(final String header)
+  {
+    List<String> acceptTypes = new LinkedList<String>();
+    for (String acceptType : StringUtils.split(header, ','))
+    {
+      final ParseResults parseResults = parseMimeType(acceptType);
+      acceptTypes.add(parseResults.type + "/" + parseResults.subType);
+    }
+    return acceptTypes;
+  }
+
+  //Disable instantiation
   private MIMEParse()
   {
   }

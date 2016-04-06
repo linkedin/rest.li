@@ -23,6 +23,7 @@ import com.linkedin.restli.client.response.CreateResponse;
 import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
 import com.linkedin.restli.internal.client.ResponseImpl;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.HeaderUtil;
@@ -52,6 +53,7 @@ public class MockResponseBuilder<K, V>
   private List<HttpCookie> _cookies;
   private RestLiResponseException _restLiResponseException;
   private ProtocolVersion _protocolVersion;
+  private RestLiAttachmentReader _restLiAttachmentReader;
 
   private static final int DEFAULT_HTTP_STATUS = 200;
 
@@ -128,6 +130,18 @@ public class MockResponseBuilder<K, V>
   }
 
   /**
+   * Set the {@link com.linkedin.restli.common.attachments.RestLiAttachmentReader} for the {@link Response}
+   *
+   * @param restLiAttachmentReader the {@link com.linkedin.restli.common.attachments.RestLiAttachmentReader} for the {@link Response}
+   * @return
+   */
+  public MockResponseBuilder<K, V> setRestLiAttachmentReader(RestLiAttachmentReader restLiAttachmentReader)
+  {
+    _restLiAttachmentReader = restLiAttachmentReader;
+    return this;
+  }
+
+  /**
    * Builds a {@link Response} that has been constructed using the setters in this class.
    *
    * @return the constructed {@link Response}
@@ -165,6 +179,9 @@ public class MockResponseBuilder<K, V>
     }
     List<HttpCookie> cookies = _cookies == null ? Collections.<HttpCookie>emptyList() : _cookies;
 
-    return new ResponseImpl<V>(status, headers, cookies, _entity, _restLiResponseException);
+    final ResponseImpl<V> response = new ResponseImpl<V>(status, headers, cookies, _entity, _restLiResponseException);
+    response.setAttachmentReader(_restLiAttachmentReader);
+
+    return response;
   }
 }

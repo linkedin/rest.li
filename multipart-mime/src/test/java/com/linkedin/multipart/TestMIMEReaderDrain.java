@@ -49,19 +49,19 @@ import static org.mockito.Mockito.times;
 
 
 /**
- * Unit tests that mock out R2 and test the abandoning behavior of {@link com.linkedin.multipart.MultiPartMIMEReader}.
+ * Unit tests that mock out R2 and test the draining behavior of {@link com.linkedin.multipart.MultiPartMIMEReader}.
  *
  * @author Karim Vidhani
  */
-public class TestMIMEReaderAbandon extends AbstractMIMEUnitTest
+public class TestMIMEReaderDrain extends AbstractMIMEUnitTest
 {
-  MultiPartMIMEAbandonReaderCallbackImpl _currentMultiPartMIMEReaderCallback;
+  MultiPartMIMEDrainReaderCallbackImpl _currentMultiPartMIMEReaderCallback;
   MimeMultipart _currentMimeMultipartBody;
 
-  //This test will perform an abandon without registering a callback. It functions different then other abandon tests
+  //This test will perform a drain without registering a callback. It functions different then other drain tests
   //located in this class in terms of setup, assertions and verifies.
   @Test
-  public void testAbandonAllWithoutCallbackRegistered() throws Exception
+  public void testDrainAllWithoutCallbackRegistered() throws Exception
   {
     mockR2AndWrite(ByteString.copy("Some multipart mime payload. It doesn't need to be pretty".getBytes()),
                    1, "multipart/mixed; boundary=----abcdefghijk");
@@ -70,8 +70,8 @@ public class TestMIMEReaderAbandon extends AbstractMIMEUnitTest
 
     try
     {
-      reader.abandonAllParts(); //The first should succeed.
-      reader.abandonAllParts(); //The second should fail.
+      reader.drainAllParts(); //The first should succeed.
+      reader.drainAllParts(); //The second should fail.
       Assert.fail();
     }
     catch (MultiPartReaderFinishedException multiPartReaderFinishedException)
@@ -120,21 +120,21 @@ public class TestMIMEReaderAbandon extends AbstractMIMEUnitTest
   @Test(dataProvider = "allTypesOfBodiesDataSource")
   public void testSingleAllNoCallback(final int chunkSize, final List<MimeBodyPart> bodyPartList) throws Exception
   {
-    executeRequestWithAbandonStrategy(chunkSize, bodyPartList, SINGLE_ALL_NO_CALLBACK, "onFinished");
+    executeRequestWithDrainStrategy(chunkSize, bodyPartList, SINGLE_ALL_NO_CALLBACK, "onFinished");
 
-    //Single part abandons all individually but doesn't use a callback:
-    List<SinglePartMIMEAbandonReaderCallbackImpl> singlePartMIMEReaderCallbacks =
+    //Single part drains all individually but doesn't use a callback:
+    List<SinglePartMIMEDrainReaderCallbackImpl> singlePartMIMEReaderCallbacks =
         _currentMultiPartMIMEReaderCallback.getSinglePartMIMEReaderCallbacks();
     Assert.assertEquals(singlePartMIMEReaderCallbacks.size(), 0);
   }
 
   @Test(dataProvider = "allTypesOfBodiesDataSource")
-  public void testAbandonAllWithCallbackRegistered(final int chunkSize, final List<MimeBodyPart> bodyPartList) throws Exception
+  public void testDrainAllWithCallbackRegistered(final int chunkSize, final List<MimeBodyPart> bodyPartList) throws Exception
   {
-    executeRequestWithAbandonStrategy(chunkSize, bodyPartList, TOP_ALL_WITH_CALLBACK, "onAbandoned");
+    executeRequestWithDrainStrategy(chunkSize, bodyPartList, TOP_ALL_WITH_CALLBACK, "onDrainComplete");
 
-    //Top level abandons all after registering a callback and being invoked for the first time on onNewPart().
-    List<SinglePartMIMEAbandonReaderCallbackImpl> singlePartMIMEReaderCallbacks =
+    //Top level drains all after registering a callback and being invoked for the first time on onNewPart().
+    List<SinglePartMIMEDrainReaderCallbackImpl> singlePartMIMEReaderCallbacks =
         _currentMultiPartMIMEReaderCallback.getSinglePartMIMEReaderCallbacks();
     Assert.assertEquals(singlePartMIMEReaderCallbacks.size(), 0);
   }
@@ -142,12 +142,12 @@ public class TestMIMEReaderAbandon extends AbstractMIMEUnitTest
   @Test(dataProvider = "allTypesOfBodiesDataSource")
   public void testSinglePartialTopRemaining(final int chunkSize, final List<MimeBodyPart> bodyPartList) throws Exception
   {
-    //Execute the request, verify the correct header came back to ensure the server took the proper abandon actions
+    //Execute the request, verify the correct header came back to ensure the server took the proper drain actions
     //and return the payload so we can assert deeper.
-    executeRequestWithAbandonStrategy(chunkSize, bodyPartList, SINGLE_PARTIAL_TOP_REMAINING, "onAbandoned");
+    executeRequestWithDrainStrategy(chunkSize, bodyPartList, SINGLE_PARTIAL_TOP_REMAINING, "onDrainComplete");
 
-    //Single part abandons the first 6 then the top level abandons all of remaining
-    List<SinglePartMIMEAbandonReaderCallbackImpl> singlePartMIMEReaderCallbacks =
+    //Single part drains the first 6 then the top level drains all of remaining
+    List<SinglePartMIMEDrainReaderCallbackImpl> singlePartMIMEReaderCallbacks =
         _currentMultiPartMIMEReaderCallback.getSinglePartMIMEReaderCallbacks();
 
     Assert.assertEquals(singlePartMIMEReaderCallbacks.size(), 6);
@@ -155,7 +155,7 @@ public class TestMIMEReaderAbandon extends AbstractMIMEUnitTest
     for (int i = 0; i < singlePartMIMEReaderCallbacks.size(); i++)
     {
       //Actual 
-      final SinglePartMIMEAbandonReaderCallbackImpl currentCallback = singlePartMIMEReaderCallbacks.get(i);
+      final SinglePartMIMEDrainReaderCallbackImpl currentCallback = singlePartMIMEReaderCallbacks.get(i);
       //Expected 
       final BodyPart currentExpectedPart = _currentMimeMultipartBody.getBodyPart(i);
 
@@ -180,13 +180,13 @@ public class TestMIMEReaderAbandon extends AbstractMIMEUnitTest
   public void testSingleAlternateTopRemaining(final int chunkSize, final List<MimeBodyPart> bodyPartList)
       throws Exception
   {
-    //Execute the request, verify the correct header came back to ensure the server took the proper abandon actions
+    //Execute the request, verify the correct header came back to ensure the server took the proper drain actions
     //and return the payload so we can assert deeper.
-    executeRequestWithAbandonStrategy(chunkSize, bodyPartList, SINGLE_ALTERNATE_TOP_REMAINING, "onAbandoned");
+    executeRequestWithDrainStrategy(chunkSize, bodyPartList, SINGLE_ALTERNATE_TOP_REMAINING, "onDrainComplete");
 
-    //Single part alternates between consumption and abandoning the first 6 parts, then top level abandons all of remaining.
-    //This means that parts 0, 2, 4 will be consumed and parts 1, 3, 5 will be abandoned.
-    List<SinglePartMIMEAbandonReaderCallbackImpl> singlePartMIMEReaderCallbacks =
+    //Single part alternates between consumption and draining the first 6 parts, then top level drains all of remaining.
+    //This means that parts 0, 2, 4 will be consumed and parts 1, 3, 5 will be drained.
+    List<SinglePartMIMEDrainReaderCallbackImpl> singlePartMIMEReaderCallbacks =
         _currentMultiPartMIMEReaderCallback.getSinglePartMIMEReaderCallbacks();
 
     Assert.assertEquals(singlePartMIMEReaderCallbacks.size(), 6);
@@ -195,7 +195,7 @@ public class TestMIMEReaderAbandon extends AbstractMIMEUnitTest
     for (int i = 0; i < singlePartMIMEReaderCallbacks.size(); i = i + 2)
     {
       //Actual 
-      final SinglePartMIMEAbandonReaderCallbackImpl currentCallback = singlePartMIMEReaderCallbacks.get(i);
+      final SinglePartMIMEDrainReaderCallbackImpl currentCallback = singlePartMIMEReaderCallbacks.get(i);
       //Expected 
       final BodyPart currentExpectedPart = _currentMimeMultipartBody.getBodyPart(i);
 
@@ -224,11 +224,11 @@ public class TestMIMEReaderAbandon extends AbstractMIMEUnitTest
       }
     }
 
-    //Then the abandoned
+    //Then the drained
     for (int i = 1; i < singlePartMIMEReaderCallbacks.size(); i = i + 2)
     {
       //Actual 
-      final SinglePartMIMEAbandonReaderCallbackImpl currentCallback = singlePartMIMEReaderCallbacks.get(i);
+      final SinglePartMIMEDrainReaderCallbackImpl currentCallback = singlePartMIMEReaderCallbacks.get(i);
       //Expected 
       final BodyPart currentExpectedPart = _currentMimeMultipartBody.getBodyPart(i);
 
@@ -252,21 +252,21 @@ public class TestMIMEReaderAbandon extends AbstractMIMEUnitTest
   @Test(dataProvider = "allTypesOfBodiesDataSource")
   public void testSingleAll(final int chunkSize, final List<MimeBodyPart> bodyPartList) throws Exception
   {
-    //Execute the request, verify the correct header came back to ensure the server took the proper abandon actions
+    //Execute the request, verify the correct header came back to ensure the server took the proper drain actions
     //and return the payload so we can assert deeper.
-    executeRequestWithAbandonStrategy(chunkSize, bodyPartList, SINGLE_ALL, "onFinished");
+    executeRequestWithDrainStrategy(chunkSize, bodyPartList, SINGLE_ALL, "onFinished");
 
-    //Single part abandons all, one by one
-    List<SinglePartMIMEAbandonReaderCallbackImpl> singlePartMIMEReaderCallbacks =
+    //Single part drains all, one by one
+    List<SinglePartMIMEDrainReaderCallbackImpl> singlePartMIMEReaderCallbacks =
         _currentMultiPartMIMEReaderCallback.getSinglePartMIMEReaderCallbacks();
 
     Assert.assertEquals(singlePartMIMEReaderCallbacks.size(), 12);
 
-    //Verify everything was abandoned
+    //Verify everything was drained
     for (int i = 0; i < singlePartMIMEReaderCallbacks.size(); i++)
     {
       //Actual 
-      final SinglePartMIMEAbandonReaderCallbackImpl currentCallback = singlePartMIMEReaderCallbacks.get(i);
+      final SinglePartMIMEDrainReaderCallbackImpl currentCallback = singlePartMIMEReaderCallbacks.get(i);
       //Expected 
       final BodyPart currentExpectedPart = _currentMimeMultipartBody.getBodyPart(i);
 
@@ -290,13 +290,13 @@ public class TestMIMEReaderAbandon extends AbstractMIMEUnitTest
   @Test(dataProvider = "allTypesOfBodiesDataSource")
   public void testSingleAlternate(final int chunkSize, final List<MimeBodyPart> bodyPartList) throws Exception
   {
-    //Execute the request, verify the correct header came back to ensure the server took the proper abandon actions
+    //Execute the request, verify the correct header came back to ensure the server took the proper drain actions
     //and return the payload so we can assert deeper.
-    executeRequestWithAbandonStrategy(chunkSize, bodyPartList, SINGLE_ALTERNATE, "onFinished");
+    executeRequestWithDrainStrategy(chunkSize, bodyPartList, SINGLE_ALTERNATE, "onFinished");
 
-    //Single part alternates between consumption and abandoning for all 12 parts.
-    //This means that parts 0, 2, 4, etc.. will be consumed and parts 1, 3, 5, etc... will be abandoned.
-    List<SinglePartMIMEAbandonReaderCallbackImpl> singlePartMIMEReaderCallbacks =
+    //Single part alternates between consumption and draining for all 12 parts.
+    //This means that parts 0, 2, 4, etc.. will be consumed and parts 1, 3, 5, etc... will be drained.
+    List<SinglePartMIMEDrainReaderCallbackImpl> singlePartMIMEReaderCallbacks =
         _currentMultiPartMIMEReaderCallback.getSinglePartMIMEReaderCallbacks();
 
     Assert.assertEquals(singlePartMIMEReaderCallbacks.size(), 12);
@@ -305,7 +305,7 @@ public class TestMIMEReaderAbandon extends AbstractMIMEUnitTest
     for (int i = 0; i < singlePartMIMEReaderCallbacks.size(); i = i + 2)
     {
       //Actual 
-      final SinglePartMIMEAbandonReaderCallbackImpl currentCallback = singlePartMIMEReaderCallbacks.get(i);
+      final SinglePartMIMEDrainReaderCallbackImpl currentCallback = singlePartMIMEReaderCallbacks.get(i);
       //Expected 
       final BodyPart currentExpectedPart = _currentMimeMultipartBody.getBodyPart(i);
 
@@ -334,11 +334,11 @@ public class TestMIMEReaderAbandon extends AbstractMIMEUnitTest
       }
     }
 
-    //Then the abandoned
+    //Then the drained
     for (int i = 1; i < singlePartMIMEReaderCallbacks.size(); i = i + 2)
     {
       //Actual 
-      final SinglePartMIMEAbandonReaderCallbackImpl currentCallback = singlePartMIMEReaderCallbacks.get(i);
+      final SinglePartMIMEDrainReaderCallbackImpl currentCallback = singlePartMIMEReaderCallbacks.get(i);
       //Expected 
       final BodyPart currentExpectedPart = _currentMimeMultipartBody.getBodyPart(i);
 
@@ -361,8 +361,8 @@ public class TestMIMEReaderAbandon extends AbstractMIMEUnitTest
 
   ///////////////////////////////////////////////////////////////////////////////////////
 
-  private void executeRequestWithAbandonStrategy(final int chunkSize, final List<MimeBodyPart> bodyPartList,
-                                                 final String abandonStrategy, final String serverHeaderPrefix) throws Exception
+  private void executeRequestWithDrainStrategy(final int chunkSize, final List<MimeBodyPart> bodyPartList,
+                                               final String drainStrategy, final String serverHeaderPrefix) throws Exception
   {
     MimeMultipart multiPartMimeBody = new MimeMultipart();
 
@@ -381,16 +381,16 @@ public class TestMIMEReaderAbandon extends AbstractMIMEUnitTest
 
     final CountDownLatch latch = new CountDownLatch(1);
     MultiPartMIMEReader reader = MultiPartMIMEReader.createAndAcquireStream(_streamRequest);
-    _currentMultiPartMIMEReaderCallback = new MultiPartMIMEAbandonReaderCallbackImpl(latch, abandonStrategy, reader);
+    _currentMultiPartMIMEReaderCallback = new MultiPartMIMEDrainReaderCallbackImpl(latch, drainStrategy, reader);
     reader.registerReaderCallback(_currentMultiPartMIMEReaderCallback);
 
     latch.await(_testTimeout, TimeUnit.MILLISECONDS);
 
-    Assert.assertEquals(_currentMultiPartMIMEReaderCallback.getResponseHeaders().get(ABANDON_HEADER), serverHeaderPrefix + abandonStrategy);
+    Assert.assertEquals(_currentMultiPartMIMEReaderCallback.getResponseHeaders().get(DRAIN_HEADER), serverHeaderPrefix + drainStrategy);
 
     try
     {
-      reader.abandonAllParts();
+      reader.drainAllParts();
       Assert.fail();
     }
     catch (MultiPartReaderFinishedException multiPartReaderFinishedException)
@@ -411,7 +411,7 @@ public class TestMIMEReaderAbandon extends AbstractMIMEUnitTest
     verifyNoMoreInteractions(_readHandle);
   }
 
-  private static class SinglePartMIMEAbandonReaderCallbackImpl implements SinglePartMIMEReaderCallback
+  private static class SinglePartMIMEDrainReaderCallbackImpl implements SinglePartMIMEReaderCallback
   {
     final MultiPartMIMEReader.SinglePartMIMEReader _singlePartMIMEReader;
     final ByteArrayOutputStream _byteArrayOutputStream = new ByteArrayOutputStream();
@@ -419,7 +419,7 @@ public class TestMIMEReaderAbandon extends AbstractMIMEUnitTest
     ByteString _finishedData = null;
     static int partCounter = 0;
 
-    SinglePartMIMEAbandonReaderCallbackImpl(final MultiPartMIMEReader.SinglePartMIMEReader singlePartMIMEReader)
+    SinglePartMIMEDrainReaderCallbackImpl(final MultiPartMIMEReader.SinglePartMIMEReader singlePartMIMEReader)
     {
       _singlePartMIMEReader = singlePartMIMEReader;
       _headers = singlePartMIMEReader.dataSourceHeaders();
@@ -458,7 +458,7 @@ public class TestMIMEReaderAbandon extends AbstractMIMEUnitTest
 
     //Delegate to the top level for now for these two
     @Override
-    public void onAbandoned()
+    public void onDrainComplete()
     {
       partCounter++;
     }
@@ -471,23 +471,23 @@ public class TestMIMEReaderAbandon extends AbstractMIMEUnitTest
     }
   }
 
-  private static class MultiPartMIMEAbandonReaderCallbackImpl implements MultiPartMIMEReaderCallback
+  private static class MultiPartMIMEDrainReaderCallbackImpl implements MultiPartMIMEReaderCallback
   {
     final CountDownLatch _latch;
-    final String _abandonValue;
+    final String _drainValue;
     final MultiPartMIMEReader _reader;
     final Map<String, String> _responseHeaders = new HashMap<String, String>();
-    final List<SinglePartMIMEAbandonReaderCallbackImpl> _singlePartMIMEReaderCallbacks = new ArrayList<SinglePartMIMEAbandonReaderCallbackImpl>();
+    final List<SinglePartMIMEDrainReaderCallbackImpl> _singlePartMIMEReaderCallbacks = new ArrayList<SinglePartMIMEDrainReaderCallbackImpl>();
 
-    MultiPartMIMEAbandonReaderCallbackImpl(final CountDownLatch latch, final String abandonValue,
-                                           final MultiPartMIMEReader reader)
+    MultiPartMIMEDrainReaderCallbackImpl(final CountDownLatch latch, final String drainValue,
+                                         final MultiPartMIMEReader reader)
     {
       _latch = latch;
-      _abandonValue = abandonValue;
+      _drainValue = drainValue;
       _reader = reader;
     }
 
-    public List<SinglePartMIMEAbandonReaderCallbackImpl> getSinglePartMIMEReaderCallbacks()
+    public List<SinglePartMIMEDrainReaderCallbackImpl> getSinglePartMIMEReaderCallbacks()
     {
       return _singlePartMIMEReaderCallbacks;
     }
@@ -500,48 +500,48 @@ public class TestMIMEReaderAbandon extends AbstractMIMEUnitTest
     @Override
     public void onNewPart(MultiPartMIMEReader.SinglePartMIMEReader singlePartMIMEReader)
     {
-      if (_abandonValue.equalsIgnoreCase(SINGLE_ALL_NO_CALLBACK))
+      if (_drainValue.equalsIgnoreCase(SINGLE_ALL_NO_CALLBACK))
       {
-        singlePartMIMEReader.abandonPart();
+        singlePartMIMEReader.drainPart();
         return;
       }
 
-      if (_abandonValue.equalsIgnoreCase(TOP_ALL_WITH_CALLBACK))
+      if (_drainValue.equalsIgnoreCase(TOP_ALL_WITH_CALLBACK))
       {
-        _reader.abandonAllParts();
+        _reader.drainAllParts();
         return;
       }
 
-      if (_abandonValue.equalsIgnoreCase(SINGLE_PARTIAL_TOP_REMAINING) && _singlePartMIMEReaderCallbacks.size() == 6)
+      if (_drainValue.equalsIgnoreCase(SINGLE_PARTIAL_TOP_REMAINING) && _singlePartMIMEReaderCallbacks.size() == 6)
       {
-        _reader.abandonAllParts();
+        _reader.drainAllParts();
         return;
       }
 
-      if (_abandonValue.equalsIgnoreCase(SINGLE_ALTERNATE_TOP_REMAINING) && _singlePartMIMEReaderCallbacks.size() == 6)
+      if (_drainValue.equalsIgnoreCase(SINGLE_ALTERNATE_TOP_REMAINING) && _singlePartMIMEReaderCallbacks.size() == 6)
       {
-        _reader.abandonAllParts();
+        _reader.drainAllParts();
         return;
       }
 
-      //Now we know we have to either consume or abandon individually using a registered callback, so we
-      //register with the SinglePartReader and take appropriate action based on the abandon strategy:
-      SinglePartMIMEAbandonReaderCallbackImpl singlePartMIMEReaderCallback =
-          new SinglePartMIMEAbandonReaderCallbackImpl(singlePartMIMEReader);
+      //Now we know we have to either consume or drain individually using a registered callback, so we
+      //register with the SinglePartReader and take appropriate action based on the drain strategy:
+      SinglePartMIMEDrainReaderCallbackImpl singlePartMIMEReaderCallback =
+          new SinglePartMIMEDrainReaderCallbackImpl(singlePartMIMEReader);
       singlePartMIMEReader.registerReaderCallback(singlePartMIMEReaderCallback);
       _singlePartMIMEReaderCallbacks.add(singlePartMIMEReaderCallback);
 
-      if (_abandonValue.equalsIgnoreCase(SINGLE_ALL) || _abandonValue.equalsIgnoreCase(SINGLE_PARTIAL_TOP_REMAINING))
+      if (_drainValue.equalsIgnoreCase(SINGLE_ALL) || _drainValue.equalsIgnoreCase(SINGLE_PARTIAL_TOP_REMAINING))
       {
-        singlePartMIMEReader.abandonPart();
+        singlePartMIMEReader.drainPart();
         return;
       }
 
-      if (_abandonValue.equalsIgnoreCase(SINGLE_ALTERNATE) || _abandonValue.equalsIgnoreCase(SINGLE_ALTERNATE_TOP_REMAINING))
+      if (_drainValue.equalsIgnoreCase(SINGLE_ALTERNATE) || _drainValue.equalsIgnoreCase(SINGLE_ALTERNATE_TOP_REMAINING))
       {
-        if (SinglePartMIMEAbandonReaderCallbackImpl.partCounter % 2 == 1)
+        if (SinglePartMIMEDrainReaderCallbackImpl.partCounter % 2 == 1)
         {
-          singlePartMIMEReader.abandonPart();
+          singlePartMIMEReader.drainPart();
         }
         else
         {
@@ -554,15 +554,15 @@ public class TestMIMEReaderAbandon extends AbstractMIMEUnitTest
     public void onFinished()
     {
       //Happens for SINGLE_ALL_NO_CALLBACK, SINGLE_ALL and SINGLE_ALTERNATE
-      _responseHeaders.put(ABANDON_HEADER, "onFinished" + _abandonValue);
+      _responseHeaders.put(DRAIN_HEADER, "onFinished" + _drainValue);
       _latch.countDown();
     }
 
     @Override
-    public void onAbandoned()
+    public void onDrainComplete()
     {
       //Happens for TOP_ALL, SINGLE_PARTIAL_TOP_REMAINING and SINGLE_ALTERNATE_TOP_REMAINING
-      _responseHeaders.put(ABANDON_HEADER, "onAbandoned" + _abandonValue);
+      _responseHeaders.put(DRAIN_HEADER, "onDrainComplete" + _drainValue);
       _latch.countDown();
     }
 

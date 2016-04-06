@@ -18,10 +18,10 @@ package com.linkedin.restli.client;
 
 
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.restli.common.BatchCreateIdEntityResponse;
 import com.linkedin.restli.common.CollectionRequest;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
-import com.linkedin.restli.common.BatchCreateIdEntityResponse;
 import com.linkedin.restli.internal.client.BatchCreateIdEntityDecoder;
 
 import java.net.HttpCookie;
@@ -43,7 +43,8 @@ public class BatchCreateIdEntityRequest<K, V extends RecordTemplate> extends Req
                              Map<String, Class<?>> queryParamClasses,
                              String baseUriTemplate,
                              Map<String, Object> pathKeys,
-                             RestliRequestOptions requestOptions)
+                             RestliRequestOptions requestOptions,
+                             List<Object> streamingAttachments)
   {
     super(ResourceMethod.BATCH_CREATE,
           input,
@@ -56,6 +57,7 @@ public class BatchCreateIdEntityRequest<K, V extends RecordTemplate> extends Req
           null,
           baseUriTemplate,
           pathKeys,
-          requestOptions);
+          requestOptions,
+          streamingAttachments);
   }
 }

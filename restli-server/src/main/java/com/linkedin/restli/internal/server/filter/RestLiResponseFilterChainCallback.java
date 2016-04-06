@@ -17,6 +17,8 @@
 package com.linkedin.restli.internal.server.filter;
 
 
+import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
+import com.linkedin.restli.server.RestLiResponseAttachments;
 import com.linkedin.restli.server.RestLiResponseData;
 
 
@@ -32,6 +34,9 @@ public interface RestLiResponseFilterChainCallback
    * Indicate the completion of execution of all {@link com.linkedin.restli.server.filter.ResponseFilter}s..
    *
    * @param responseData {@link RestLiResponseData} obtained from invoking response filters.
+   * @param responseAttachments {@link com.linkedin.restli.server.RestLiResponseAttachments} attachments
+   *                             that are sent back in the response.
    */
-  void onCompletion(final RestLiResponseData responseData);
+  void onCompletion(final RestLiResponseData responseData, final RestLiAttachmentReader requestAttachmentReader,
+                    final RestLiResponseAttachments responseAttachments);
 }

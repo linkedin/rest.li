@@ -42,18 +42,20 @@ import java.util.Set;
 public class BatchRequest<T> extends Request<T>
 {
   BatchRequest(ResourceMethod method,
-                      RecordTemplate input,
-                      Map<String, String> headers,
-                      List<HttpCookie> cookies,
-                      RestResponseDecoder<T> decoder,
-                      ResourceSpec resourceSpec,
-                      Map<String, Object> queryParams,
-                      Map<String, Class<?>> queryParamClasses,
-                      String baseUriTemplate,
-                      Map<String, Object> pathKeys,
-                      RestliRequestOptions requestOptions)
+               RecordTemplate input,
+               Map<String, String> headers,
+               List<HttpCookie> cookies,
+               RestResponseDecoder<T> decoder,
+               ResourceSpec resourceSpec,
+               Map<String, Object> queryParams,
+               Map<String, Class<?>> queryParamClasses,
+               String baseUriTemplate,
+               Map<String, Object> pathKeys,
+               RestliRequestOptions requestOptions,
+               List<Object> streamingAttachments)
   {
-    super(method, input, headers, cookies, decoder, resourceSpec, queryParams, queryParamClasses, null, baseUriTemplate, pathKeys, requestOptions);
+    super(method, input, headers, cookies, decoder, resourceSpec, queryParams, queryParamClasses, null,
+          baseUriTemplate, pathKeys, requestOptions, streamingAttachments);
   }
 
   /**

@@ -20,18 +20,20 @@
 
 package com.linkedin.restli.client.base;
 
+
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.client.PartialUpdateRequestBuilder;
 import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ResourceSpec;
+import com.linkedin.restli.common.attachments.RestLiAttachmentDataSourceWriter;
+import com.linkedin.restli.common.attachments.RestLiDataSourceIterator;
 
 
 /**
  * @author Josh Walker
  * @version $Revision: $
  */
-
 public abstract class PartialUpdateRequestBuilderBase<
         K,
         V extends RecordTemplate,
@@ -44,6 +46,20 @@ public abstract class PartialUpdateRequestBuilderBase<
                                             RestliRequestOptions requestOptions)
   {
     super(baseUriTemplate, valueClass, resourceSpec, requestOptions);
+  }
+
+  @SuppressWarnings({"unchecked"})
+  @Override
+  public RB appendSingleAttachment(final RestLiAttachmentDataSourceWriter streamingAttachment)
+  {
+    return (RB) super.appendSingleAttachment(streamingAttachment);
+  }
+
+  @SuppressWarnings({"unchecked"})
+  @Override
+  public RB appendMultipleAttachments(final RestLiDataSourceIterator dataSourceIterator)
+  {
+    return (RB) super.appendMultipleAttachments(dataSourceIterator);
   }
 
   @SuppressWarnings({"unchecked"})

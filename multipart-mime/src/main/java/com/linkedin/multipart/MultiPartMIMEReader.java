@@ -104,7 +104,7 @@ public class MultiPartMIMEReader implements MultiPartMIMEDataSourceIterator
     @Override
     public void onInit(ReadHandle rh)
     {
-      //If there was a top level abandon performed without the registration of a callback, then at this point
+      //If there was a top level drain request performed without the registration of a callback, then at this point
       //_multiPartReaderState will be FINISHED. Therefore we just cancel and return.
       if (_multiPartReaderState == MultiPartReaderState.FINISHED)
       {
@@ -188,7 +188,7 @@ public class MultiPartMIMEReader implements MultiPartMIMEDataSourceIterator
         return;
       }
 
-      if (checkAndProcessAbandonment())
+      if (checkAndProcessTopLevelDraining())
       {
         return;
       }
@@ -256,10 +256,10 @@ public class MultiPartMIMEReader implements MultiPartMIMEDataSourceIterator
       return false;
     }
 
-    private boolean checkAndProcessAbandonment()
+    private boolean checkAndProcessTopLevelDraining()
     {
-      //Drop bytes for a top level abandonment.
-      if (_multiPartReaderState == MultiPartReaderState.ABANDONING)
+      //Drop bytes for a top level drain.
+      if (_multiPartReaderState == MultiPartReaderState.DRAINING)
       {
         if (_r2Done)
         {
@@ -270,14 +270,14 @@ public class MultiPartMIMEReader implements MultiPartMIMEDataSourceIterator
           try
           {
             //This can throw so we need to notify the client that their APIs threw an exception when we invoked them.
-            MultiPartMIMEReader.this._clientCallback.onAbandoned();
+            MultiPartMIMEReader.this._clientCallback.onDrainComplete();
           }
           catch (RuntimeException clientCallbackException)
           {
             handleExceptions(clientCallbackException);
           }
 
-          return true; //Regardless of whether the invocation to onFinished() threw or not we need to return here
+          return true; //Regardless of whether the invocation to onDrainComplete() threw or not we need to return here
         }
         //Otherwise we keep on chugging forward and dropping bytes.
         _rh.request(1);
@@ -389,7 +389,7 @@ public class MultiPartMIMEReader implements MultiPartMIMEDataSourceIterator
 
       //The goal of the logic here is the following:
       //1. If the buffer does not start with the boundary, then we fully consume as much of the buffer as possible.
-      //We notify clients of as much data we can drain. Note that in such a case, even if the buffer does not start with
+      //We notify clients of as much data we can consume. Note that in such a case, even if the buffer does not start with
       //the boundary, it could still contain the boundary. In such a case we read up until the boundary. In this situation
       //the bytes read would be the last bits of data they need for the current part. Subsequent invocations of
       //requestPartData() would then lead to the buffer starting with the boundary.
@@ -401,11 +401,11 @@ public class MultiPartMIMEReader implements MultiPartMIMEDataSourceIterator
       //following (assuming there are no error conditions):
       //1. onPartDataAvailable()
       //OR
-      //2. OnAbandoned() on SinglePartCallback followed by onNewPart() on MultiPartCallback
+      //2. OnDrainComplete() on SinglePartCallback followed by onNewPart() on MultiPartCallback
       //OR
       //3. OnFinished() on SinglePartCallback followed by onNewPart() on MultiPartCallback
       //OR
-      //4. OnAbandoned() on SinglePartCallback followed by onFinished() on MultiPartCallback
+      //4. OnDrainComplete() on SinglePartCallback followed by onFinished() on MultiPartCallback
       //OR
       //5. OnFinished() on SinglePartCallback followed by onFinished() on MultiPartCallback
       //
@@ -448,7 +448,7 @@ public class MultiPartMIMEReader implements MultiPartMIMEDataSourceIterator
       //1. They are ready to receive requested data on their onPartDataAvailable() callback, meaning
       //REQUESTED_DATA.
       //or
-      //2. They have requested an abandonment and are waiting for it to finish, meaning REQUESTED_ABANDON.
+      //2. They have requested a drain for this part and are waiting for it to finish, meaning REQUESTED_DRAIN.
       //
       //It is further important to note that in the current implementation, the reader will ALWAYS be ready at this point in time.
       //This is because we strictly allow only our clients to push us forward. This means they must be in a ready state
@@ -473,7 +473,7 @@ public class MultiPartMIMEReader implements MultiPartMIMEDataSourceIterator
       final SingleReaderState currentState = _currentSinglePartMIMEReader._singleReaderState;
 
       //Assert on our invariant described above.
-      assert (currentState == SingleReaderState.REQUESTED_DATA || currentState == SingleReaderState.REQUESTED_ABANDON);
+      assert (currentState == SingleReaderState.REQUESTED_DATA || currentState == SingleReaderState.REQUESTED_DRAIN);
 
       //We know the buffer doesn't begin with the boundary, but we can take different action if a boundary
       //exists in the buffer. This way we can consume the maximum amount of data.
@@ -533,7 +533,7 @@ public class MultiPartMIMEReader implements MultiPartMIMEDataSourceIterator
       }
       else
       {
-        //This is an abandon operation, so we need to drop the bytes and keep moving forward.
+        //This is a drain operation, so we need to drop the bytes and keep moving forward.
         //Note that we don't have a client to drive us forward so we do it ourselves.
         final Callable<Void> recursiveCallable = new RecursiveCallable(this);
 
@@ -721,9 +721,9 @@ public class MultiPartMIMEReader implements MultiPartMIMEDataSourceIterator
       //Close the current single part reader (except if this is the first boundary)
       if (_currentSinglePartMIMEReader != null)
       {
-        if (_currentSinglePartMIMEReader._singleReaderState == SingleReaderState.REQUESTED_ABANDON)
+        if (_currentSinglePartMIMEReader._singleReaderState == SingleReaderState.REQUESTED_DRAIN)
         {
-          //If they cared to be notified of the abandonment.
+          //If they cared to be notified of completion of the draining.
           if (_currentSinglePartMIMEReader._callback != null)
           {
             //We need to prevent the client from asking for more data because they are done.
@@ -737,7 +737,7 @@ public class MultiPartMIMEReader implements MultiPartMIMEDataSourceIterator
             //We need to proceed forward from here to move onto the next part.
             try
             {
-              _currentSinglePartMIMEReader._callback.onAbandoned();
+              _currentSinglePartMIMEReader._callback.onDrainComplete();
             }
             catch (RuntimeException clientCallbackException)
             {
@@ -1038,7 +1038,7 @@ public class MultiPartMIMEReader implements MultiPartMIMEDataSourceIterator
     CALLBACK_BOUND_AND_READING_PREAMBLE, //Callback is bound and we have started to read the preamble in.
     READING_PARTS, //Normal operation. Most time should be spent in this state.
     READING_EPILOGUE, //Epilogue is being read.
-    ABANDONING, //Client asked for an complete abandonment.
+    DRAINING, //Client asked for a complete draining.
     FINISHED //The reader is no longer usable.
   }
 
@@ -1164,16 +1164,16 @@ public class MultiPartMIMEReader implements MultiPartMIMEDataSourceIterator
   }
 
   /**
-   * Reads through and abandons the current new part (if applicable) and additionally the whole stream.
+   * Reads through and drains the current new part (if applicable) and additionally the whole stream.
    *
    * This API can be used in only the following scenarios:
    *
-   * 1. Without registering a {@link com.linkedin.multipart.MultiPartMIMEReaderCallback}. Abandonment will begin
+   * 1. Without registering a {@link com.linkedin.multipart.MultiPartMIMEReaderCallback}. Draining will begin
    * and since no callback is registered, there will be no notification when it is completed.
    *
    * 2. After registration using a {@link com.linkedin.multipart.MultiPartMIMEReaderCallback}
    * and after an invocation on {@link MultiPartMIMEReaderCallback#onNewPart(com.linkedin.multipart.MultiPartMIMEReader.SinglePartMIMEReader)}.
-   * Abandonment will begin and when it is complete, a call will be made to {@link MultiPartMIMEReaderCallback#onAbandoned()}.
+   * Draining will begin and when it is complete, a call will be made to {@link MultiPartMIMEReaderCallback#onDrainComplete()}.
    *
    * If this is called after registration and before an invocation on
    * {@link MultiPartMIMEReaderCallback#onNewPart(com.linkedin.multipart.MultiPartMIMEReader.SinglePartMIMEReader)},
@@ -1189,7 +1189,7 @@ public class MultiPartMIMEReader implements MultiPartMIMEDataSourceIterator
    * Since this is async and request queueing is not allowed, repetitive calls will result in
    * {@link com.linkedin.multipart.exceptions.StreamBusyException}.
    */
-  public void abandonAllParts()
+  public void drainAllParts()
   {
     //We are already done or almost done.
     if (_multiPartReaderState == MultiPartReaderState.FINISHED || _multiPartReaderState == MultiPartReaderState.READING_EPILOGUE)
@@ -1199,19 +1199,19 @@ public class MultiPartMIMEReader implements MultiPartMIMEDataSourceIterator
 
     if (_multiPartReaderState == MultiPartReaderState.CALLBACK_BOUND_AND_READING_PREAMBLE)
     {
-      throw new StreamBusyException("The reader is busy processing the preamble. Unable to proceed with abandonment. "
-          + "Please only call abandonAllParts() upon invocation of onNewPart() on the client callback.");
+      throw new StreamBusyException("The reader is busy processing the preamble. Unable to proceed with draining. "
+          + "Please only call drainAllParts() upon invocation of onNewPart() on the client callback.");
     }
 
-    if (_multiPartReaderState == MultiPartReaderState.ABANDONING)
+    if (_multiPartReaderState == MultiPartReaderState.DRAINING)
     {
-      throw new StreamBusyException("Reader already busy abandoning.");
+      throw new StreamBusyException("Reader already busy draining.");
     }
 
     //At this point we know we are in CREATED or READING_PARTS which is the desired state.
     if (_multiPartReaderState == MultiPartReaderState.CREATED)
     {
-      //There was a request to abandon without a top level callback. We have to eventually call _rh.cancel().
+      //There was a request to drain without a top level callback. We have to eventually call _rh.cancel().
       //Therefore we set the state to finished and set the reader on the entityStream. When our reader is invoked onInit(),
       //the cancel will take place.
       _multiPartReaderState = MultiPartReaderState.FINISHED;
@@ -1222,23 +1222,23 @@ public class MultiPartMIMEReader implements MultiPartMIMEDataSourceIterator
     {
       assert(_multiPartReaderState == MultiPartReaderState.READING_PARTS);
       //We are in READING_PARTS. At this point we require that there exist a valid, non-null SinglePartMIMEReader before
-      //we continue since the contract is that the top level callback can only abandon upon witnessing onNewPart().
+      //we continue since the contract is that the top level callback can only drainAllParts() upon witnessing onNewPart().
 
       //Note that there is a small window of opportunity where a client registers the callback and invokes
-      //abandonAllParts() after the reader has read the preamble in but before the reader has invoked onNewPart().
+      //drainAllParts() after the reader has read the preamble in but before the reader has invoked onNewPart().
       //At this point, _currentSinglePartMIMEReader may potentially be null.
       //This can happen, but so can a client invoking us concurrently which is forbidden. Therefore we will not check
       //for such a race.
 
       //As stated earlier, we know for a fact that onNewPart() has been invoked on the reader callback. Just make sure its
-      //at the beginning of a new part before we continue allowing the abandonment.
+      //at the beginning of a new part before we continue allowing the draining.
       if (_currentSinglePartMIMEReader._singleReaderState != SingleReaderState.CREATED)
       {
-        throw new StreamBusyException("Unable to abandon all parts due to current SinglePartMIMEReader in use.");
+        throw new StreamBusyException("Unable to drain all parts due to current SinglePartMIMEReader in use.");
       }
 
       _currentSinglePartMIMEReader._singleReaderState = SingleReaderState.FINISHED;
-      _multiPartReaderState = MultiPartReaderState.ABANDONING;
+      _multiPartReaderState = MultiPartReaderState.DRAINING;
 
       _reader.processEventAndInvokeClient();
     }
@@ -1280,9 +1280,9 @@ public class MultiPartMIMEReader implements MultiPartMIMEDataSourceIterator
           "Reader is busy reading in the preamble. Unable to register the callback at this time.");
     }
 
-    if (_multiPartReaderState == MultiPartReaderState.ABANDONING)
+    if (_multiPartReaderState == MultiPartReaderState.DRAINING)
     {
-      throw new StreamBusyException("Reader is busy performing a complete abandonment. Unable to register the callback.");
+      throw new StreamBusyException("Reader is busy performing a complete draining. Unable to register the callback.");
     }
 
     //At this point we know that _reader is in CREATED or READING_PARTS
@@ -1420,9 +1420,9 @@ public class MultiPartMIMEReader implements MultiPartMIMEDataSourceIterator
    * since they will not be given a chance to produce data.
    */
   @Override
-  public void abortAllDataSources()
+  public void abandonAllDataSources()
   {
-    abandonAllParts();
+    drainAllParts();
   }
 
   /**
@@ -1450,9 +1450,9 @@ public class MultiPartMIMEReader implements MultiPartMIMEDataSourceIterator
       }
 
       @Override
-      public void onAbandoned()
+      public void onDrainComplete()
       {
-        callback.onAbandoned();
+        callback.onAbandonComplete();
       }
 
       @Override
@@ -1520,14 +1520,14 @@ public class MultiPartMIMEReader implements MultiPartMIMEDataSourceIterator
      * Since this is async and request queueing is not allowed, repetitive calls will result in
      * {@link com.linkedin.multipart.exceptions.StreamBusyException}.
      *
-     * If the r2 reader is done, either through an error or a proper finish. Calls to requestPartData() will throw
+     * If the r2 reader is done, either through an error or a proper finish, calls to requestPartData() will throw
      * {@link com.linkedin.multipart.exceptions.SinglePartFinishedException}.
      */
     public void requestPartData()
     {
       verifyUsableState();
 
-      //Additionally, unlike abandonPartData(), requestPartData() can only be used if a callback is registered.
+      //Additionally, unlike drainPart(), requestPartData() can only be used if a callback is registered.
       if (_singleReaderState == SingleReaderState.CREATED)
       {
         throw new SinglePartNotInitializedException("This SinglePartMIMEReader has not had a callback registered with it yet.");
@@ -1542,30 +1542,30 @@ public class MultiPartMIMEReader implements MultiPartMIMEDataSourceIterator
     }
 
     /**
-     * Abandons all bytes from this part and then notifies the registered callback (if present) on
-     * {@link SinglePartMIMEReaderCallback#onAbandoned()}.
+     * Drains all bytes from this part and then notifies the registered callback (if present) on
+     * {@link SinglePartMIMEReaderCallback#onDrainComplete()}.
      *
      * Usage of this API does NOT require registration using a {@link com.linkedin.multipart.SinglePartMIMEReaderCallback}.
-     * If there is no callback registration then there is no notification provided upon completion of abandoning
+     * If there is no callback registration then there is no notification provided upon completion of draining
      * this part.
      *
      * If this part is fully consumed, meaning {@link SinglePartMIMEReaderCallback#onFinished()} has been called,
-     * then any subsequent calls to abandonPart() will throw {@link com.linkedin.multipart.exceptions.SinglePartFinishedException}.
+     * then any subsequent calls to drainPart() will throw {@link com.linkedin.multipart.exceptions.SinglePartFinishedException}.
      *
      * Since this is async and request queueing is not allowed, repetitive calls will result in
      * {@link com.linkedin.multipart.exceptions.StreamBusyException}.
      *
-     * * If the r2 reader is done, either through an error or a proper finish. Calls to abandonPart() will throw
+     * If the r2 reader is done, either through an error or a proper finish, calls to drainPart() will throw
      * {@link com.linkedin.multipart.exceptions.SinglePartFinishedException}.
      */
-    public void abandonPart()
+    public void drainPart()
     {
       verifyUsableState();
 
       //We know we are now at SingleReaderState.CALLBACK_BOUND_AND_READY
-      _singleReaderState = SingleReaderState.REQUESTED_ABANDON;
+      _singleReaderState = SingleReaderState.REQUESTED_DRAIN;
 
-      //We have updated our desire to be abandoned. Now we signal the reader to refresh itself and forcing it
+      //We have updated our desire to be drained. Now we signal the reader to refresh itself and forcing it
       //to read from the internal buffer as much as possible. We do this by notifying it of an empty ByteString.
       _r2MultiPartMIMEReader.processEventAndInvokeClient();
     }
@@ -1584,9 +1584,9 @@ public class MultiPartMIMEReader implements MultiPartMIMEDataSourceIterator
             "This SinglePartMIMEReader is currently busy fulfilling a call to requestPartData().");
       }
 
-      if (_singleReaderState == SingleReaderState.REQUESTED_ABANDON)
+      if (_singleReaderState == SingleReaderState.REQUESTED_DRAIN)
       {
-        throw new StreamBusyException("This SinglePartMIMEReader is currently busy fulfilling a call to abandonPart().");
+        throw new StreamBusyException("This SinglePartMIMEReader is currently busy fulfilling a call to drainPart().");
       }
     }
 
@@ -1650,7 +1650,7 @@ public class MultiPartMIMEReader implements MultiPartMIMEDataSourceIterator
 
       //Regardless of how it was called we need to completely drain and drop all bytes to the ground. We can't
       //leave these bytes in the SinglePartMIMEReader untouched.
-      abandonPart();
+      drainPart();
     }
   }
 
@@ -1660,7 +1660,7 @@ public class MultiPartMIMEReader implements MultiPartMIMEDataSourceIterator
     CREATED, //Initial construction, no callback bound.
     CALLBACK_BOUND_AND_READY, //Callback has been bound, ready to use APIs.
     REQUESTED_DATA, //Requested data, waiting to be notified.
-    REQUESTED_ABANDON, //Waiting for an abandon to finish.
+    REQUESTED_DRAIN, //Waiting for a drain to finish.
     FINISHED //This reader is done.
   }
 }

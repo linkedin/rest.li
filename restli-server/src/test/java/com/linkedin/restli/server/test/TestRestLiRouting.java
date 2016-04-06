@@ -21,17 +21,34 @@ import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
-import com.linkedin.restli.common.*;
+import com.linkedin.restli.common.ComplexResourceKey;
+import com.linkedin.restli.common.CompoundKey;
+import com.linkedin.restli.common.HttpStatus;
+import com.linkedin.restli.common.PatchRequest;
+import com.linkedin.restli.common.ProtocolVersion;
+import com.linkedin.restli.common.ResourceMethod;
+import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.TestConstants;
 import com.linkedin.restli.internal.server.RestLiRouter;
 import com.linkedin.restli.internal.server.RoutingResult;
+import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.server.PathKeys;
 import com.linkedin.restli.server.RoutingException;
 import com.linkedin.restli.server.combined.CombinedResources;
-import com.linkedin.restli.server.twitter.*;
+import com.linkedin.restli.server.twitter.CustomStatusCollectionResource;
+import com.linkedin.restli.server.twitter.DiscoveredItemsResource;
+import com.linkedin.restli.server.twitter.FollowsAssociativeResource;
+import com.linkedin.restli.server.twitter.LocationResource;
+import com.linkedin.restli.server.twitter.RepliesCollectionResource;
+import com.linkedin.restli.server.twitter.StatusCollectionResource;
+import com.linkedin.restli.server.twitter.TrendRegionsCollectionResource;
+import com.linkedin.restli.server.twitter.TrendingResource;
+import com.linkedin.restli.server.twitter.TwitterAccountsResource;
+import com.linkedin.restli.server.twitter.TwitterTestDataModels;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.Status;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.Trending;
 
@@ -42,11 +59,16 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import static com.linkedin.restli.server.test.RestLiTestHelper.buildResourceModels;
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 
 /**
@@ -75,7 +97,7 @@ public class TestRestLiRouting
     // #1 simple GET
     RestRequest request = createRequest(uri, "GET", version);
 
-    RoutingResult result = _router.process(request, new RequestContext());
+    RoutingResult result = _router.process(request, new RequestContext(), null);
     assertNotNull(result);
 
     ResourceMethodDescriptor resourceMethodDescriptor = result.getResourceMethod();
@@ -112,7 +134,7 @@ public class TestRestLiRouting
 
     RestRequest request = createRequest(uri, "GET", version);
 
-    RoutingResult result = _router.process(request, new RequestContext());
+    RoutingResult result = _router.process(request, new RequestContext(), null);
     assertNotNull(result);
 
     ResourceMethodDescriptor resourceMethodDescriptor = result.getResourceMethod();
@@ -139,7 +161,7 @@ public class TestRestLiRouting
 
     RestRequest request = createRequest(uri, "PUT", version);
 
-    RoutingResult result = _router.process(request, new RequestContext());
+    RoutingResult result = _router.process(request, new RequestContext(), null);
     assertNotNull(result);
 
     ResourceMethodDescriptor resourceMethodDescriptor = result.getResourceMethod();
@@ -166,7 +188,7 @@ public class TestRestLiRouting
 
     RestRequest request = createRequest(uri, "DELETE", version);
 
-    RoutingResult result = _router.process(request, new RequestContext());
+    RoutingResult result = _router.process(request, new RequestContext(), null);
     assertNotNull(result);
 
     ResourceMethodDescriptor resourceMethodDescriptor = result.getResourceMethod();
@@ -203,7 +225,7 @@ public class TestRestLiRouting
 
     RestRequest request = createRequest(uri, "GET", version);
 
-    RoutingResult result = _router.process(request, new RequestContext());
+    RoutingResult result = _router.process(request, new RequestContext(), null);
     assertNotNull(result);
 
     ResourceMethodDescriptor resourceMethodDescriptor = result.getResourceMethod();
@@ -258,7 +280,7 @@ public class TestRestLiRouting
 
     RestRequest request = createRequest(uri, "GET", version);
 
-    RoutingResult result = _router.process(request, new RequestContext());
+    RoutingResult result = _router.process(request, new RequestContext(), null);
     assertNotNull(result);
 
     ResourceMethodDescriptor resourceMethodDescriptor = result.getResourceMethod();
@@ -284,7 +306,7 @@ public class TestRestLiRouting
 
     RestRequest request = createRequest(uri, "PUT", version);
 
-    RoutingResult result = _router.process(request, new RequestContext());
+    RoutingResult result = _router.process(request, new RequestContext(), null);
     assertNotNull(result);
 
     ResourceMethodDescriptor resourceMethodDescriptor = result.getResourceMethod();
@@ -310,7 +332,7 @@ public class TestRestLiRouting
 
     RestRequest request = createRequest(uri, "POST", version);
 
-    RoutingResult result = _router.process(request, new RequestContext());
+    RoutingResult result = _router.process(request, new RequestContext(), null);
     assertNotNull(result);
 
     ResourceMethodDescriptor resourceMethodDescriptor = result.getResourceMethod();
@@ -336,7 +358,7 @@ public class TestRestLiRouting
 
     RestRequest request = createRequest(uri, "DELETE", version);
 
-    RoutingResult result = _router.process(request, new RequestContext());
+    RoutingResult result = _router.process(request, new RequestContext(), null);
     assertNotNull(result);
 
     ResourceMethodDescriptor resourceMethodDescriptor = result.getResourceMethod();
@@ -2669,7 +2691,7 @@ public class TestRestLiRouting
     _router = new RestLiRouter(pathRootResourceMap);
 
     RestRequest request = createRequest(uri, "POST", version);
-    RoutingResult result = _router.process(request, new RequestContext());
+    RoutingResult result = _router.process(request, new RequestContext(), null);
     assertNotNull(result);
     assertEquals(result.getResourceMethod().getActionName(), "register");
     assertEquals(result.getResourceMethod().getType(), ResourceMethod.ACTION);
@@ -2694,7 +2716,7 @@ public class TestRestLiRouting
     _router = new RestLiRouter(pathRootResourceMap);
 
     RestRequest request = createRequest(uri, "POST", version);
-    RoutingResult result = _router.process(request, new RequestContext());
+    RoutingResult result = _router.process(request, new RequestContext(), null);
     assertNotNull(result);
     assertEquals(result.getResourceMethod().getActionName(), "replyToAll");
     assertEquals(result.getResourceMethod().getType(), ResourceMethod.ACTION);
@@ -2720,7 +2742,7 @@ public class TestRestLiRouting
     _router = new RestLiRouter(pathRootResourceMap);
 
     RestRequest request = createRequest(uri, "POST", version);
-    RoutingResult result = _router.process(request, new RequestContext());
+    RoutingResult result = _router.process(request, new RequestContext(), null);
     assertNotNull(result);
     assertEquals(result.getResourceMethod().getActionName(), "new_status_from_location");
     assertEquals(result.getResourceMethod().getType(), ResourceMethod.ACTION);
@@ -2932,7 +2954,7 @@ public class TestRestLiRouting
       builder.setHeader("X-RestLi-Method", restliMethod);
     }
     RestRequest request = builder.build();
-    RoutingResult result = _router.process(request, new RequestContext());
+    RoutingResult result = _router.process(request, new RequestContext(), null);
 
     assertEquals(result.getResourceMethod().getType(), method);
     assertEquals(result.getResourceMethod().getResourceModel().getResourceClass(), resourceClass);
@@ -2991,7 +3013,7 @@ public class TestRestLiRouting
       throws URISyntaxException
   {
     RestRequest request = createRequest(uri, httpMethod, version);
-    RoutingResult result = _router.process(request, new RequestContext());
+    RoutingResult result = _router.process(request, new RequestContext(), null);
     Set<?> batchKeys = result.getContext().getPathKeys().getBatchIds();
     assertEquals(batchKeys, expectedBatchKeys);
   }
@@ -3010,7 +3032,7 @@ public class TestRestLiRouting
     RestRequest request = builder.build();
     try
     {
-      RoutingResult r = _router.process(request, new RequestContext());
+      RoutingResult r = _router.process(request, new RequestContext(), null);
       fail("Expected RoutingException, got: " + r.toString());
     }
     catch (RoutingException e)
@@ -3056,7 +3078,7 @@ public class TestRestLiRouting
     // #1 simple GET
     request = createRequest(uri, "GET", version);
 
-    result = _router.process(request, new RequestContext());
+    result = _router.process(request, new RequestContext(), null);
     assertNotNull(result);
     PathKeys keys = result.getContext().getPathKeys();
     assertEquals(keys.getAsString("testId"), "foo");
@@ -3071,5 +3093,85 @@ public class TestRestLiRouting
         { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "/test/foo/sub/bar" },
         { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/test/foo/sub/bar" }
       };
+  }
+
+  @DataProvider(name =  TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingDetailsSimpleStreaming")
+  public Object[][] routingDetailsSimpleStreaming()
+  {
+    return new Object[][]
+        {
+            //No response attachments allowed but request attachments are present
+            { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "/trending", "application/x-pson;q=1.0,application/json;q=0.9",
+                new RestLiAttachmentReader(null) },
+            { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/trending", "application/x-pson;q=1.0,*/*;q=0.9",
+                new RestLiAttachmentReader(null) },
+            { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/trending", "application/json;q=1.0,application/x-pson;q=0.9,*/*;q=0.8",
+                new RestLiAttachmentReader(null) },
+            { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/trending", "application/x-pson",
+                new RestLiAttachmentReader(null) },
+            { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/trending",
+                null, new RestLiAttachmentReader(null) },
+
+            //Response attachments allowed with a variety of different headers, but no request attachments present.
+            { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "/trending", "multipart/related;q=1.0,application/x-pson;q=0.9,application/json;q=0.8", null },
+            { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/trending", "application/x-pson;q=1.0,multipart/related;q=0.9,*/*;q=0.8", null },
+            { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/trending", "application/json;q=1.0,application/x-pson;q=0.9,*/*;q=0.8,multipart/related;q=0.7", null },
+            { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/trending", "application/x-pson,multipart/related", null },
+            { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/trending", "multipart/related", null },
+
+            //Response attachments allowed with a variety of different headers as well as request attachments present.
+            { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "/trending", "multipart/related;q=1.0,application/x-pson;q=0.9,application/json;q=0.8",
+                new RestLiAttachmentReader(null) },
+            { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/trending", "application/x-pson;q=1.0,multipart/related;q=0.9,*/*;q=0.8",
+                new RestLiAttachmentReader(null) },
+            { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/trending", "application/json;q=1.0,application/x-pson;q=0.9,*/*;q=0.8,multipart/related;q=0.7",
+                new RestLiAttachmentReader(null) },
+            { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/trending", "application/x-pson,multipart/related",
+                new RestLiAttachmentReader(null) },
+            { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/trending", "multipart/related",
+                new RestLiAttachmentReader(null) },
+        };
+  }
+
+  //This test verifies that the router can create the correct resource context based on attachments being
+  //present in the request or an accept type indicating a desire to receive response attachments.
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingDetailsSimpleStreaming")
+  public void testStreamingResourceContext(ProtocolVersion version, String uri, String acceptHeader,
+                                           RestLiAttachmentReader requestAttachments) throws Exception
+  {
+    Map<String, ResourceModel> pathRootResourceMap = buildResourceModels(TrendingResource.class);
+    _router = new RestLiRouter(pathRootResourceMap);
+
+    final RestRequestBuilder requestBuilder = new RestRequestBuilder(new URI(uri)).setMethod("GET")
+        .setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, version.toString());
+
+    if (acceptHeader != null)
+    {
+      requestBuilder.setHeader(RestConstants.HEADER_ACCEPT, acceptHeader);
+    }
+
+    final RestRequest request = requestBuilder.build();
+
+    RoutingResult result = _router.process(request, new RequestContext(), requestAttachments);
+    assertNotNull(result);
+
+    final ServerResourceContext resourceContext = (ServerResourceContext)result.getContext();
+    if (requestAttachments != null)
+    {
+      Assert.assertEquals(resourceContext.getRequestAttachmentReader(), requestAttachments);
+    }
+    else
+    {
+      Assert.assertNull(resourceContext.getRequestAttachmentReader());
+    }
+
+    if (acceptHeader != null && acceptHeader.contains("multipart/related"))
+    {
+      Assert.assertTrue(resourceContext.responseAttachmentsSupported());
+    }
+    else
+    {
+      Assert.assertFalse(resourceContext.responseAttachmentsSupported());
+    }
   }
 }

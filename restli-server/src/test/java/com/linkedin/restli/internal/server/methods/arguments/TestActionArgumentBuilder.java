@@ -16,6 +16,7 @@
 
 package com.linkedin.restli.internal.server.methods.arguments;
 
+
 import com.linkedin.common.callback.Callback;
 import com.linkedin.data.schema.EnumDataSchema;
 import com.linkedin.data.schema.IntegerDataSchema;
@@ -26,6 +27,7 @@ import com.linkedin.data.template.DynamicRecordMetadata;
 import com.linkedin.parseq.Context;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.test.SimpleEnum;
+import com.linkedin.restli.internal.server.MutablePathKeys;
 import com.linkedin.restli.internal.server.PathKeysImpl;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.model.AnnotationSet;
@@ -35,14 +37,15 @@ import com.linkedin.restli.server.PathKeys;
 import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiRequestData;
 import com.linkedin.restli.server.RoutingException;
-import java.util.Collections;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
 
+import java.util.Collections;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 import static org.easymock.EasyMock.verify;
 import static org.testng.Assert.assertEquals;
@@ -204,7 +207,7 @@ public class TestActionArgumentBuilder
   {
     RestRequest request = RestLiArgumentBuilderTestHelper.getMockRequest(false, entity, 3);
     ResourceMethodDescriptor descriptor = RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor(null, params, null, null);
-    ResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(null, null, null);
+    ResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(null, null, null, true);
     RoutingResult routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(descriptor, 2, context, 1);
 
     RestLiArgumentBuilder argumentBuilder = new ActionArgumentBuilder();
@@ -262,7 +265,7 @@ public class TestActionArgumentBuilder
     String entity = "{\"param2\":5678}";
     RestRequest request = RestLiArgumentBuilderTestHelper.getMockRequest(false, entity, 3);
     ResourceMethodDescriptor descriptor = RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor(null, getStringAndIntParams(), null, null);
-    ResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(null, null, null);
+    ResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(null, null, null, false);
     RoutingResult routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(descriptor, 2, context, 1);
 
     RestLiArgumentBuilder argumentBuilder = new ActionArgumentBuilder();
@@ -283,7 +286,7 @@ public class TestActionArgumentBuilder
   @DataProvider(name = "keyArgumentData")
   private Object[][] keyArgumentData()
   {
-    PathKeys pkeys = new PathKeysImpl().append("string1", "testString");
+    MutablePathKeys pkeys = new PathKeysImpl().append("string1", "testString");
     return new Object[][]
         {
             {
@@ -300,10 +303,10 @@ public class TestActionArgumentBuilder
   }
 
   @Test(dataProvider = "keyArgumentData")
-  public void testKeyArguments(List<Parameter<?>> params, PathKeys pathKeys, Object[] expectedArgs)
+  public void testKeyArguments(List<Parameter<?>> params, MutablePathKeys pathKeys, Object[] expectedArgs)
   {
     ResourceMethodDescriptor descriptor = RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor(null, params, null, null);
-    ResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(pathKeys, false);
+    ResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(pathKeys, false, true);
     RoutingResult routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(descriptor, 2, context, 1);
     RestRequest request = RestLiArgumentBuilderTestHelper.getMockRequest(false, "{\"a\":\"xyz\",\"b\":123}", 3);
 

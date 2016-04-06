@@ -33,12 +33,14 @@ import com.linkedin.restli.common.OperationNameGenerator;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.PathSegment.PathSegmentSyntaxException;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.internal.server.util.AlternativeKeyCoercerException;
 import com.linkedin.restli.internal.server.util.ArgumentUtils;
+import com.linkedin.restli.internal.server.util.MIMEParse;
 import com.linkedin.restli.internal.server.util.RestLiSyntaxException;
 import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.ResourceLevel;
@@ -93,7 +95,7 @@ public class RestLiRouter
    * @param req {@link RestRequest}
    * @return {@link RoutingResult}
    */
-  public RoutingResult process(final RestRequest req, final RequestContext requestContext)
+  public RoutingResult process(final RestRequest req, final RequestContext requestContext, final RestLiAttachmentReader attachmentReader)
   {
     String path = req.getURI().getRawPath();
     if (path.length() < 2)
@@ -129,11 +131,26 @@ public class RestLiRouter
                                                rootPath),
                                  HttpStatus.S_404_NOT_FOUND.getCode());
     }
+
     ServerResourceContext context;
 
     try
     {
-      context = new ResourceContextImpl(new PathKeysImpl(), req, requestContext);
+      final String acceptTypeHeader = req.getHeader(RestConstants.HEADER_ACCEPT);
+      boolean responseAttachmentsAllowed = false;
+      if (acceptTypeHeader != null)
+      {
+        final List<String> acceptTypes = MIMEParse.parseAcceptType(acceptTypeHeader);
+        for (final String acceptType : acceptTypes)
+        {
+          if (acceptType.equalsIgnoreCase(RestConstants.HEADER_VALUE_MULTIPART_RELATED))
+          {
+            responseAttachmentsAllowed = true;
+          }
+        }
+      }
+
+      context = new ResourceContextImpl(new PathKeysImpl(), req, requestContext, responseAttachmentsAllowed, attachmentReader);
     }
     catch (RestLiSyntaxException e)
     {

@@ -16,30 +16,34 @@
 
 package com.linkedin.restli.server.twitter;
 
+import com.linkedin.common.callback.Callback;
+import com.linkedin.restli.common.PatchRequest;
+import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
 import com.linkedin.restli.server.BatchCreateRequest;
 import com.linkedin.restli.server.BatchCreateResult;
 import com.linkedin.restli.server.BatchDeleteRequest;
 import com.linkedin.restli.server.BatchPatchRequest;
 import com.linkedin.restli.server.BatchUpdateRequest;
 import com.linkedin.restli.server.BatchUpdateResult;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import com.linkedin.common.callback.Callback;
-import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.PagingContext;
 import com.linkedin.restli.server.UpdateResponse;
+import com.linkedin.restli.server.annotations.Action;
+import com.linkedin.restli.server.annotations.ActionParam;
 import com.linkedin.restli.server.annotations.CallbackParam;
-import com.linkedin.restli.server.annotations.PagingContextParam;
 import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.Optional;
+import com.linkedin.restli.server.annotations.PagingContextParam;
 import com.linkedin.restli.server.annotations.QueryParam;
+import com.linkedin.restli.server.annotations.RestLiAttachmentsParam;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.resources.CollectionResourceAsyncTemplate;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.Status;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.StatusType;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * CollectionResource containing all statuses.
@@ -206,6 +210,14 @@ public class AsyncStatusCollectionResource extends
   @Override
   public void getAll(@PagingContextParam PagingContext ctx,
                      @CallbackParam Callback<List<Status>> callback)
+  {
+    callback.onSuccess(null);
+  }
+
+  @Action(name="streamingAction")
+  public void streamingAction(@ActionParam("metadata") String metadata,
+                              @RestLiAttachmentsParam RestLiAttachmentReader attachmentReader,
+                              @CallbackParam Callback<Long> callback)
   {
     callback.onSuccess(null);
   }

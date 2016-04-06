@@ -353,7 +353,7 @@ public class TestMIMEReader extends AbstractMIMEUnitTest
     //Verify this is unusable.
     try
     {
-      _reader.abandonAllParts();
+      _reader.drainAllParts();
       Assert.fail();
     }
     catch (MultiPartReaderFinishedException multiPartReaderFinishedException)
@@ -444,7 +444,7 @@ public class TestMIMEReader extends AbstractMIMEUnitTest
       //Verify that upon finishing that this is reader is no longer usable.
       try
       {
-        _singlePartMIMEReader.abandonPart();
+        _singlePartMIMEReader.drainPart();
         Assert.fail();
       }
       catch (SinglePartFinishedException singlePartFinishedException)
@@ -456,10 +456,10 @@ public class TestMIMEReader extends AbstractMIMEUnitTest
 
     //Delegate to the top level for now for these two
     @Override
-    public void onAbandoned()
+    public void onDrainComplete()
     {
       //This will end up failing the test.
-      _topLevelCallback.onAbandoned();
+      _topLevelCallback.onDrainComplete();
     }
 
     @Override
@@ -496,7 +496,7 @@ public class TestMIMEReader extends AbstractMIMEUnitTest
     }
 
     @Override
-    public void onAbandoned()
+    public void onDrainComplete()
     {
       Assert.fail();
     }

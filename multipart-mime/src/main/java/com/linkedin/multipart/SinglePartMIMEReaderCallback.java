@@ -45,9 +45,9 @@ public interface SinglePartMIMEReaderCallback
   public void onFinished();
 
   /**
-   * Invoked when the current part is finished being abandoned.
+   * Invoked when the current part is finished being drained.
    */
-  public void onAbandoned();
+  public void onDrainComplete();
 
   /**
    * Invoked when there was an error reading from the multipart envelope.

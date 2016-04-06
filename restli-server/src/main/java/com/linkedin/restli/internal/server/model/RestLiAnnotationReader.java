@@ -43,6 +43,7 @@ import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
 import com.linkedin.restli.common.validation.CreateOnly;
 import com.linkedin.restli.common.validation.ReadOnly;
 import com.linkedin.restli.common.validation.RestLiDataValidator;
@@ -89,6 +90,7 @@ import com.linkedin.restli.server.annotations.ResourceContextParam;
 import com.linkedin.restli.server.annotations.RestAnnotations;
 import com.linkedin.restli.server.annotations.RestLiActions;
 import com.linkedin.restli.server.annotations.RestLiAssociation;
+import com.linkedin.restli.server.annotations.RestLiAttachmentsParam;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.annotations.RestLiSimpleResource;
 import com.linkedin.restli.server.annotations.RestLiTemplate;
@@ -129,6 +131,14 @@ public final class RestLiAnnotationReader
 {
   private static final Logger log = LoggerFactory.getLogger(RestLiAnnotationReader.class);
   private static final Pattern INVALID_CHAR_PATTERN = Pattern.compile("\\W");
+  private static final Set<ResourceMethod> POST_OR_PUT_RESOURCE_METHODS = new HashSet<>(Arrays.asList(ResourceMethod.ACTION,
+                                                                                                      ResourceMethod.BATCH_CREATE,
+                                                                                                      ResourceMethod.BATCH_PARTIAL_UPDATE,
+                                                                                                      ResourceMethod.BATCH_UPDATE,
+                                                                                                      ResourceMethod.CREATE,
+                                                                                                      ResourceMethod.PARTIAL_UPDATE,
+                                                                                                      ResourceMethod.UPDATE));
+
   /**
    * This is a utility class.
    */
@@ -987,12 +997,16 @@ public final class RestLiAnnotationReader
         {
           param = buildValidatorParam(paramAnnotations, paramType);
         }
+        else if (paramAnnotations.contains(RestLiAttachmentsParam.class))
+        {
+          param = buildRestLiAttachmentsParam(paramAnnotations, paramType);
+        }
         else
         {
           throw new ResourceConfigException(buildMethodMessage(method)
               + " must annotate each parameter with @QueryParam, @ActionParam, @AssocKeyParam, @PagingContextParam, " +
               "@ProjectionParam, @MetadataProjectionParam, @PagingProjectionParam, @PathKeysParam, @HeaderParam, " +
-              "@CallbackParam, @ResourceContext or @ParSeqContextParam");
+              "@CallbackParam, @ResourceContext, @ParSeqContextParam, @ValidatorParam or @RestLiAttachmentsParam");
         }
       }
 
@@ -1030,6 +1044,7 @@ public final class RestLiAnnotationReader
                            annotations);
     }
 
+  @SuppressWarnings({ "unchecked", "rawtypes" })
   private static Parameter<RestLiDataValidator> buildValidatorParam(AnnotationSet annotations, final Class<?> paramType)
   {
     if (!paramType.equals(RestLiDataValidator.class))
@@ -1037,13 +1052,31 @@ public final class RestLiAnnotationReader
       throw new ResourceConfigException("Incorrect data type for param: @" + ValidatorParam.class.getSimpleName() + " parameter annotation must be of type " +  RestLiDataValidator.class.getName());
     }
     return new Parameter("validator",
-        paramType,
-        null,
-        false,
-        null,
-        Parameter.ParamType.VALIDATOR_PARAM,
-        false,
-        annotations);
+                         paramType,
+                         null,
+                         false,
+                         null,
+                         Parameter.ParamType.VALIDATOR_PARAM,
+                         false,
+                         annotations);
+  }
+
+  @SuppressWarnings({ "unchecked", "rawtypes" })
+  private static Parameter<RestLiAttachmentReader> buildRestLiAttachmentsParam(AnnotationSet annotations, final Class<?> paramType)
+  {
+    if (!paramType.equals(RestLiAttachmentReader.class))
+    {
+      throw new ResourceConfigException("Incorrect data type for param: @" + RestLiAttachmentsParam.class.getSimpleName() + " parameter annotation must be of type " +  RestLiAttachmentReader.class.getName());
+    }
+
+    return new Parameter("RestLi Attachment Reader",
+                         paramType,
+                         null,
+                         false, //RestLiAttachments cannot be optional. If its in the request we provide it, otherwise it's null.
+                         null,
+                         Parameter.ParamType.RESTLI_ATTACHMENTS_PARAM,
+                         false, //Not going to be persisted into the IDL at this time.
+                         annotations);
   }
 
   @SuppressWarnings({"unchecked", "rawtypes"})
@@ -1121,7 +1154,8 @@ public final class RestLiAnnotationReader
                              AssocKeyParam.class,
                              PagingContextParam.class,
                              CallbackParam.class,
-                             ParSeqContextParam.class);
+                             ParSeqContextParam.class,
+                             RestLiAttachmentsParam.class);
   }
 
   @SuppressWarnings({"unchecked", "rawtypes"})
@@ -1145,6 +1179,17 @@ public final class RestLiAnnotationReader
       throw new ResourceConfigException("Parameter '" + paramName + "' on "
           + buildMethodMessage(method) + " is not a valid type '" + actualParamType
           + "'.  Must be assignable from '" + param.getType() + "'.");
+    }
+
+    if (!POST_OR_PUT_RESOURCE_METHODS.contains(methodType))
+    {
+      //If this is not a post or put resource method, i.e a FINDER, then we can't have @RestLiAttachmentParams
+      if (annotations.contains(RestLiAttachmentsParam.class))
+      {
+        throw new ResourceConfigException("Parameter '" + paramName + "' on "
+                                              + buildMethodMessage(method) + " is only allowed within the following "
+                                              + "resource methods: " + POST_OR_PUT_RESOURCE_METHODS.toString());
+      }
     }
 
     if (methodType == ResourceMethod.ACTION)
@@ -1199,7 +1244,8 @@ public final class RestLiAnnotationReader
     if (annotationCount(annotations) > 1)
     {
       throw new ResourceConfigException(buildMethodMessage(method)
-          + "' must declare only one of @QueryParam, @ActionParam, @AssocKeyParam, @PagingContextParam, or @CallbackParam");
+          + "' must declare only one of @QueryParam, @ActionParam, @AssocKeyParam, @PagingContextParam, "
+                                            + "@CallbackParam or @RestLiAttachmentsParam");
     }
   }
 

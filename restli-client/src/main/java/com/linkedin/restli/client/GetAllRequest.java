@@ -55,7 +55,8 @@ public class GetAllRequest<T extends RecordTemplate> extends
           null,
           baseUriTemplate,
           pathKeys,
-          requestOptions);
+          requestOptions,
+          null);
     _assocKey = assocKey;
   }
 

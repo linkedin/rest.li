@@ -28,17 +28,15 @@ import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.internal.client.EmptyResponseDecoder;
 
 import java.net.HttpCookie;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
 
 /**
  * @author Josh Walker
  * @version $Revision: $
  */
-
-public class PartialUpdateRequest<T>
-        extends Request<EmptyRecord>
+public class PartialUpdateRequest<T> extends Request<EmptyRecord>
 {
   private final Object _id;
 
@@ -51,7 +49,8 @@ public class PartialUpdateRequest<T>
                        String baseUriTemplate,
                        Map<String, Object> pathKeys,
                        RestliRequestOptions requestOptions,
-                       Object id)
+                       Object id,
+                       List<Object> streamingAttachments)
   {
     super(ResourceMethod.PARTIAL_UPDATE,
           input,
@@ -64,7 +63,8 @@ public class PartialUpdateRequest<T>
           null,
           baseUriTemplate,
           pathKeys,
-          requestOptions);
+          requestOptions,
+          streamingAttachments);
     _id = id;
     validateKeyPresence(_id);
   }

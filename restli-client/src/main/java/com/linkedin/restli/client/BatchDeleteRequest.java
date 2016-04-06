@@ -33,6 +33,7 @@ import java.net.HttpCookie;
 import java.util.List;
 import java.util.Map;
 
+
 /**
  * @author Josh Walker
  * @version $Revision: $
@@ -62,6 +63,7 @@ public class BatchDeleteRequest<K, V extends RecordTemplate> extends BatchReques
           queryParamClasses,
           baseUriTemplate,
           pathKeys,
-          requestOptions);
+          requestOptions,
+          null);
   }
 }

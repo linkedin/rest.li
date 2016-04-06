@@ -18,7 +18,7 @@ package com.linkedin.multipart.exceptions;
 
 
 /**
- * Represents in an illegally formed multipart mime request.
+ * Represents in an illegally formed multipart mime body.
  *
  * @author Karim Vidhani
  */

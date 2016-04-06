@@ -47,19 +47,20 @@ import com.linkedin.restli.server.filter.FilterRequestContext;
 import com.linkedin.restli.server.filter.NextRequestFilter;
 import com.linkedin.restli.server.filter.RequestFilter;
 
-import io.netty.channel.nio.NioEventLoopGroup;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
-
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
+
+import io.netty.channel.nio.NioEventLoopGroup;
 
 /**
  * Integration tests for response compression.

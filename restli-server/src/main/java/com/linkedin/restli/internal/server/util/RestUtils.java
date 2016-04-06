@@ -17,25 +17,18 @@
 package com.linkedin.restli.internal.server.util;
 
 
-import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.collections.CheckedUtil;
 import com.linkedin.data.element.DataElement;
 import com.linkedin.data.it.Builder;
 import com.linkedin.data.it.IterationOrder;
 import com.linkedin.data.it.Predicate;
-import com.linkedin.data.schema.ArrayDataSchema;
-import com.linkedin.data.schema.DataSchema;
-import com.linkedin.data.schema.MapDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
-import com.linkedin.data.schema.UnionDataSchema;
-import com.linkedin.data.template.DynamicRecordTemplate;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.transform.filter.CopyFilter;
 import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.restli.common.CollectionMetadata;
-import com.linkedin.restli.common.CreateIdStatus;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.Link;
 import com.linkedin.restli.common.LinkArray;
@@ -52,8 +45,6 @@ import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.RoutingException;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.ParameterizedType;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
@@ -66,7 +57,6 @@ import org.apache.commons.lang.StringUtils;
  */
 public class RestUtils
 {
-
   public static CollectionMetadata buildMetadata(final URI requestUri,
                                                  final ResourceContext resourceContext,
                                                  final ResourceMethodDescriptor methodDescriptor,
@@ -223,18 +213,29 @@ public class RestUtils
   public static String pickBestEncoding(String acceptHeader)
   {
     if (acceptHeader == null || acceptHeader.isEmpty())
+    {
       return RestConstants.HEADER_VALUE_APPLICATION_JSON;
+    }
+
+    //For backward compatibility reasons, we have to assume that if there is ONLY multipart/related as an accept
+    //type that this means to default to JSON.
     try
     {
+      final List<String> acceptTypes = MIMEParse.parseAcceptType(acceptHeader);
+      if (acceptTypes.size() == 1 && acceptTypes.get(0).equalsIgnoreCase(RestConstants.HEADER_VALUE_MULTIPART_RELATED))
+      {
+        return RestConstants.HEADER_VALUE_APPLICATION_JSON;
+      }
+
       return MIMEParse.bestMatch(RestConstants.SUPPORTED_MIME_TYPES, acceptHeader);
     }
+
     // Handle the case when an accept MIME type that was passed in along with the
     // request is invalid.
     catch (InvalidMimeTypeException e)
     {
-      throw new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST,
-                                       String.format("Encountered invalid MIME type '%s' in accept header.",
-                                                     e.getType()));
+      throw new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST, String
+          .format("Encountered invalid MIME type '%s' in accept header.", e.getType()));
     }
   }
 

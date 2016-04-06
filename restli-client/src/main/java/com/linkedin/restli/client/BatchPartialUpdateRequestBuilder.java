@@ -29,20 +29,26 @@ import com.linkedin.restli.common.KeyValueRecordFactory;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.TypeSpec;
+import com.linkedin.restli.common.attachments.RestLiAttachmentDataSourceWriter;
+import com.linkedin.restli.common.attachments.RestLiDataSourceIterator;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+
 
 /**
  * @author Josh Walker
  * @version $Revision: $
  */
-
 public class BatchPartialUpdateRequestBuilder<K, V extends RecordTemplate> extends
     BatchKVRequestBuilder<K, V, BatchPartialUpdateRequest<K, V>>
 {
   private final KeyValueRecordFactory<K, PatchRequest<V>> _keyValueRecordFactory;
   private final Map<K, PatchRequest<V>> _partialUpdateInputMap;
+  private List<Object> _streamingAttachments; //We initialize only when we need to.
 
   @SuppressWarnings({"unchecked", "rawtypes"})
   public BatchPartialUpdateRequestBuilder(String baseUriTemplate,
@@ -74,6 +80,28 @@ public class BatchPartialUpdateRequestBuilder<K, V extends RecordTemplate> exten
       PatchRequest<V> value = entry.getValue();
       _partialUpdateInputMap.put(key, value);
     }
+    return this;
+  }
+
+  public BatchPartialUpdateRequestBuilder<K, V> appendSingleAttachment(final RestLiAttachmentDataSourceWriter streamingAttachment)
+  {
+    if (_streamingAttachments == null)
+    {
+      _streamingAttachments = new ArrayList<>();
+    }
+
+    _streamingAttachments.add(streamingAttachment);
+    return this;
+  }
+
+  public BatchPartialUpdateRequestBuilder<K, V> appendMultipleAttachments(final RestLiDataSourceIterator dataSourceIterator)
+  {
+    if (_streamingAttachments == null)
+    {
+      _streamingAttachments = new ArrayList<>();
+    }
+
+    _streamingAttachments.add(dataSourceIterator);
     return this;
   }
 
@@ -146,7 +174,8 @@ public class BatchPartialUpdateRequestBuilder<K, V extends RecordTemplate> exten
                                                _resourceSpec,
                                                getBaseUriTemplate(),
                                                buildReadOnlyPathKeys(),
-                                               getRequestOptions());
+                                               getRequestOptions(),
+                                               _streamingAttachments == null ? null : Collections.unmodifiableList(_streamingAttachments));
   }
 
   private CollectionRequest<KeyValueRecord<K, PatchRequest<V>>> buildReadOnlyInput()

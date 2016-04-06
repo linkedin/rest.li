@@ -5,10 +5,12 @@ dependencies {
   compile project(':r2-core')
   compile project(':restli-common')
   compile project(':li-jersey-uri')
+  compile project(':multipart-mime')
   compile externalDependency.mail
   compile externalDependency.commonsLang
   testCompile project(path: ':restli-common', configuration: 'testArtifacts')
   testCompile project(path: ':restli-internal-testutils', configuration: 'testArtifacts')
+  testCompile project(path: ':multipart-mime', configuration: 'testArtifacts')
   testCompile externalDependency.guava
   testCompile externalDependency.testng
   testCompile externalDependency.easymock

@@ -62,7 +62,8 @@ public class DeleteRequest<T extends RecordTemplate>
           null,
           baseUriTemplate,
           pathKeys,
-          requestOptions);
+          requestOptions,
+          null);
     _id = id;
     validateKeyPresence(_id);
   }

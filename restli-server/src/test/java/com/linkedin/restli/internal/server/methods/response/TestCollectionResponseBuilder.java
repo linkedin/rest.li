@@ -47,10 +47,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+
+import org.easymock.EasyMock;
 
 
 /**
@@ -264,7 +265,7 @@ public class TestCollectionResponseBuilder
     Assert.assertEquals(record.data().get("fruitsField"), Fruits.APPLE.toString());
   }
 
-
+  @SuppressWarnings("deprecation")
   private static ResourceContext getMockResourceContext(MaskTree dataMaskTree,
                                                         MaskTree metadataMaskTree,
                                                         MaskTree pagingMaskTree,

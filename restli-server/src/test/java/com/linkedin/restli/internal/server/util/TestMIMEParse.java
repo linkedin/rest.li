@@ -16,6 +16,9 @@
 
 package com.linkedin.restli.internal.server.util;
 
+
+import com.linkedin.restli.server.InvalidMimeTypeException;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -23,12 +26,10 @@ import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import com.linkedin.restli.server.InvalidMimeTypeException;
 
 /**
  * @author Nishanth Shankaran
  */
-
 public class TestMIMEParse
 {
   private static final String JSON_TYPE = "application/json";
@@ -53,7 +54,8 @@ public class TestMIMEParse
   @DataProvider(name = "successfulMatch")
   public Object[][] provideSuccessfulMatchData()
   {
-    return new Object[][] {
+    return new Object[][]
+    {
         { Arrays.asList(new String[] { JSON_TYPE }), JSON_HEADER, JSON_TYPE },
         { Arrays.asList(new String[] { PSON_TYPE }), JSON_HEADER, EMPTY_TYPE },
         { Arrays.asList(new String[] { JSON_TYPE, PSON_TYPE }), JSON_HEADER, JSON_TYPE },
@@ -72,7 +74,9 @@ public class TestMIMEParse
   @DataProvider(name = "invalidHeaders")
   public Object[][] provideInvalidHeadersData()
   {
-    return new Object[][] { { Arrays.asList(new String[] { JSON_TYPE, PSON_TYPE }), INVALID_TYPE_HEADER_1 },
+    return new Object[][]
+    {
+        { Arrays.asList(new String[] { JSON_TYPE, PSON_TYPE }), INVALID_TYPE_HEADER_1 },
         { Arrays.asList(new String[] { JSON_TYPE, PSON_TYPE }), INVALID_TYPE_HEADER_2 },
         { Arrays.asList(new String[] { JSON_TYPE, PSON_TYPE }), INVALID_TYPES_JSON_HEADER },
         { Arrays.asList(new String[] { JSON_TYPE, PSON_TYPE }), INVALID_TYPES_HTML_HEADER }
@@ -96,5 +100,49 @@ public class TestMIMEParse
   public void testBestMatchForInvalidHeaders(List<String> supportedTypes, String header)
   {
     MIMEParse.bestMatch(supportedTypes, header);
+  }
+
+  @DataProvider(name = "sampleValidAcceptHeaders")
+  public Object[][] sampleAcceptHeaders()
+  {
+    return new Object[][]
+    {
+        { "multipart/related;q=1.0,application/x-pson;q=0.9,application/json;q=0.8", Arrays.asList("multipart/related",
+                                                                                                   "application/x-pson",
+                                                                                                   "application/json") },
+        { "application/x-pson;q=1.0,multipart/related;q=0.9,*/*;q=0.8", Arrays.asList("application/x-pson",
+                                                                                      "multipart/related",
+                                                                                      "*/*") },
+        { "application/json;q=1.0,application/x-pson;q=0.9,*/*;q=0.8,multipart/related;q=0.7", Arrays.asList("application/json",
+                                                                                                             "application/x-pson",
+                                                                                                             "*/*",
+                                                                                                             "multipart/related") },
+        { "application/x-pson,multipart/related", Arrays.asList("application/x-pson", "multipart/related") },
+        { "multipart/related", Arrays.asList("multipart/related") }
+    };
+  }
+
+  @Test(dataProvider = "sampleValidAcceptHeaders")
+  public void testParseAcceptTypes(String header, List<String> supportedTypes)
+  {
+    Assert.assertEquals(MIMEParse.parseAcceptType(header), supportedTypes);
+  }
+
+  @DataProvider(name = "sampleInvalidAcceptHeaders")
+  public Object[][] sampleInvalidAcceptHeaders()
+  {
+    return new Object[][]
+    {
+        { INVALID_TYPE_HEADER_1 },
+        { INVALID_TYPE_HEADER_2 },
+        { INVALID_TYPES_JSON_HEADER },
+        { INVALID_TYPES_HTML_HEADER }
+    };
+  }
+
+  @Test(dataProvider = "sampleInvalidAcceptHeaders", expectedExceptions = InvalidMimeTypeException.class)
+  public void testParseAcceptInvalidTypes(String header)
+  {
+    MIMEParse.parseAcceptType(header);
   }
 }

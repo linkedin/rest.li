@@ -35,10 +35,10 @@ public class RestliRequestOptionsBuilder
   private RestClient.ContentType _contentType;
   private List<RestClient.AcceptType> _acceptTypes;
   private CompressionOption _responseCompressionOverride;
+  private boolean _acceptResponseAttachments = false;
 
   public RestliRequestOptionsBuilder()
   {
-
   }
 
   public RestliRequestOptionsBuilder(RestliRequestOptions restliRequestOptions)
@@ -48,6 +48,7 @@ public class RestliRequestOptionsBuilder
     setResponseCompressionOverride(restliRequestOptions.getResponseCompressionOverride());
     setContentType(restliRequestOptions.getContentType());
     setAcceptTypes(restliRequestOptions.getAcceptTypes());
+    setAcceptResponseAttachments(restliRequestOptions.getAcceptResponseAttachments());
   }
 
   public RestliRequestOptionsBuilder setProtocolVersionOption(ProtocolVersionOption protocolVersionOption)
@@ -80,8 +81,15 @@ public class RestliRequestOptionsBuilder
     return this;
   }
 
+  public RestliRequestOptionsBuilder setAcceptResponseAttachments(boolean acceptResponseAttachments)
+  {
+    _acceptResponseAttachments = acceptResponseAttachments;
+    return this;
+  }
+
   public RestliRequestOptions build()
   {
-    return new RestliRequestOptions(_protocolVersionOption, _requestCompressionOverride, _responseCompressionOverride, _contentType, _acceptTypes);
+    return new RestliRequestOptions(_protocolVersionOption, _requestCompressionOverride, _responseCompressionOverride,
+        _contentType, _acceptTypes, _acceptResponseAttachments);
   }
 }

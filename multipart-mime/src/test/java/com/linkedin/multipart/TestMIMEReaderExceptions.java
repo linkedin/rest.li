@@ -426,7 +426,7 @@ public class TestMIMEReaderExceptions extends AbstractMIMEUnitTest
     //Verify these are unusable.
     try
     {
-      reader.abandonAllParts();
+      reader.drainAllParts();
       Assert.fail();
     }
     catch (MultiPartReaderFinishedException multiPartReaderFinishedException)
@@ -499,7 +499,7 @@ public class TestMIMEReaderExceptions extends AbstractMIMEUnitTest
     }
 
     @Override
-    public void onAbandoned()
+    public void onDrainComplete()
     {
     }
 
@@ -560,7 +560,7 @@ public class TestMIMEReaderExceptions extends AbstractMIMEUnitTest
     }
 
     @Override
-    public void onAbandoned()
+    public void onDrainComplete()
     {
       Assert.fail();
     }

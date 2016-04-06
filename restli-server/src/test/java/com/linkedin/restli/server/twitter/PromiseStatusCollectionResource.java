@@ -16,12 +16,9 @@
 
 package com.linkedin.restli.server.twitter;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.linkedin.parseq.promise.Promise;
 import com.linkedin.restli.common.PatchRequest;
+import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
 import com.linkedin.restli.server.BatchCreateRequest;
 import com.linkedin.restli.server.BatchCreateResult;
 import com.linkedin.restli.server.BatchDeleteRequest;
@@ -34,16 +31,21 @@ import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.UpdateResponse;
 import com.linkedin.restli.server.annotations.Action;
 import com.linkedin.restli.server.annotations.ActionParam;
-import com.linkedin.restli.server.annotations.PagingContextParam;
 import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.Optional;
+import com.linkedin.restli.server.annotations.PagingContextParam;
 import com.linkedin.restli.server.annotations.QueryParam;
+import com.linkedin.restli.server.annotations.RestLiAttachmentsParam;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.annotations.RestMethod;
 import com.linkedin.restli.server.resources.KeyValueResource;
 import com.linkedin.restli.server.resources.ResourceContextHolder;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.Status;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.StatusType;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * CollectionResource containing all statuses
@@ -175,6 +177,13 @@ public class PromiseStatusCollectionResource extends ResourceContextHolder imple
   @Action(name="forward",
           resourceLevel= ResourceLevel.ENTITY)
   public void forward(@ActionParam("to") long userID)
+  {
+    throw new AssertionError("should be mocked");
+  }
+
+  @Action(name="streamingAction")
+  public Promise<Long> streamingAction(@ActionParam("metadata") String metadata,
+                              @RestLiAttachmentsParam RestLiAttachmentReader attachmentReader)
   {
     throw new AssertionError("should be mocked");
   }

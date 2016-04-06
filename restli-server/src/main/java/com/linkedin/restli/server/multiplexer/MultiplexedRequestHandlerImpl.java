@@ -23,6 +23,7 @@ import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.parseq.Engine;
 import com.linkedin.parseq.Task;
 import com.linkedin.parseq.Tasks;
+import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
@@ -46,10 +47,10 @@ import java.net.HttpCookie;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+
 import javax.activation.MimeTypeParseException;
 
 import org.slf4j.Logger;
@@ -98,7 +99,7 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
   }
 
   @Override
-  public boolean isMultiplexedRequest(RestRequest request)
+  public boolean isMultiplexedRequest(Request request)
   {
     // we don't check the method here because we want to return 405 if it is anything but POST
     return MUX_URI_PATH.equals(request.getURI().getPath());

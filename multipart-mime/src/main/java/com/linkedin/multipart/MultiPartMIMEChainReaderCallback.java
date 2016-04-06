@@ -93,7 +93,7 @@ final class MultiPartMIMEChainReaderCallback implements MultiPartMIMEDataSourceI
   }
 
   @Override
-  public void onAbandoned()
+  public void onAbandonComplete()
   {
     //This can happen if the MultiPartMIMEDataSourceIterator this callback was registered with was used as a data source and it was
     //told to abandon and the abandon finished.
