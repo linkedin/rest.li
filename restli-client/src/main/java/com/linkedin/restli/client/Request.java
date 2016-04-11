@@ -353,6 +353,10 @@ public class Request<T>
     {
       return false;
     }
+    if (_cookies != null ? !_cookies.equals(other._cookies) : other._cookies != null)
+    {
+      return false;
+    }
 
     return true;
   }
@@ -374,6 +378,7 @@ public class Request<T>
     hashCode = 31 * hashCode + (_methodName != null ? _methodName.hashCode() : 0);
     hashCode = 31 * hashCode + (_requestOptions != null ? _requestOptions.hashCode() : 0);
     hashCode = 31 * hashCode + (_streamingAttachments != null ? _streamingAttachments.hashCode() : 0);
+    hashCode = 31 * hashCode + (_cookies != null ? _cookies.hashCode() : 0);
     return hashCode;
   }
 
@@ -390,6 +395,7 @@ public class Request<T>
     sb.append(", _pathKeys=").append(_pathKeys);
     sb.append(", _queryParams=").append(_queryParams);
     sb.append(", _requestOptions=").append(_requestOptions);
+    sb.append(", _cookies=").append(_cookies);
     if (_streamingAttachments != null)
     {
       sb.append(", _streamingDataSources=");

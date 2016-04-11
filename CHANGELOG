@@ -1,6 +1,7 @@
 6.0.2
 ------
-
+(RB=701756)
+Added cookies to isEquals/hashCode/toString in Request.java
 
 6.0.1
 ------
