@@ -651,7 +651,7 @@ public class JacksonDataCodec implements TextDataCodec
       {
         if (!JsonToken.START_OBJECT.equals(token))
         {
-          throw new DataDecodingException("JSON text for object must start with \"{\".\"");
+          throw new DataDecodingException("JSON text for object must start with \"{\".");
         }
 
         final DataMap map = new DataMap();
@@ -666,7 +666,7 @@ public class JacksonDataCodec implements TextDataCodec
       {
         if (!JsonToken.START_ARRAY.equals(token))
         {
-          throw new DataDecodingException("JSON text for array must start with \"[\".\"");
+          throw new DataDecodingException("JSON text for array must start with \"[\".");
         }
 
         final DataList list = new DataList();
