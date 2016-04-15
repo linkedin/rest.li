@@ -19,6 +19,7 @@ package com.linkedin.restli.client;
 
 import com.linkedin.r2.filter.CompressionOption;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -71,7 +72,39 @@ public class RestliRequestOptionsBuilder
 
   public RestliRequestOptionsBuilder setAcceptTypes(List<RestClient.AcceptType> acceptTypes)
   {
-    _acceptTypes = acceptTypes == null ? null : Collections.unmodifiableList(acceptTypes);
+    _acceptTypes = new ArrayList<>(acceptTypes);
+    return this;
+  }
+
+  public RestliRequestOptionsBuilder addAcceptTypes(List<RestClient.AcceptType> acceptTypes)
+  {
+    if (_acceptTypes == null)
+    {
+      return setAcceptTypes(acceptTypes);
+    }
+    else
+    {
+      for (RestClient.AcceptType acceptType: acceptTypes)
+      {
+        if (!_acceptTypes.contains(acceptType))
+        {
+          _acceptTypes.add(acceptType);
+        }
+      }
+    }
+    return this;
+  }
+
+  public RestliRequestOptionsBuilder addAcceptType(RestClient.AcceptType acceptType)
+  {
+    if (_acceptTypes == null)
+    {
+      _acceptTypes = new ArrayList<>();
+    }
+    if (!_acceptTypes.contains(acceptType))
+    {
+      _acceptTypes.add(acceptType);
+    }
     return this;
   }
 
@@ -90,6 +123,36 @@ public class RestliRequestOptionsBuilder
   public RestliRequestOptions build()
   {
     return new RestliRequestOptions(_protocolVersionOption, _requestCompressionOverride, _responseCompressionOverride,
-        _contentType, _acceptTypes, _acceptResponseAttachments);
+        _contentType, Collections.unmodifiableList(_acceptTypes), _acceptResponseAttachments);
+  }
+
+  public ProtocolVersionOption getProtocolVersionOption()
+  {
+    return _protocolVersionOption;
+  }
+
+  public CompressionOption getRequestCompressionOverride()
+  {
+    return _requestCompressionOverride;
+  }
+
+  public RestClient.ContentType getContentType()
+  {
+    return _contentType;
+  }
+
+  public List<RestClient.AcceptType> getAcceptTypes()
+  {
+    return Collections.unmodifiableList(_acceptTypes);
+  }
+
+  public CompressionOption getResponseCompressionOverride()
+  {
+    return _responseCompressionOverride;
+  }
+
+  public boolean isAcceptResponseAttachments()
+  {
+    return _acceptResponseAttachments;
   }
 }
