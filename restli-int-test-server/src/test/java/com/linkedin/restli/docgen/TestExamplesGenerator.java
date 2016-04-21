@@ -41,6 +41,7 @@ import com.linkedin.restli.docgen.examplegen.ExampleRequestResponseGenerator;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.server.ActionsResource;
 import com.linkedin.restli.examples.greetings.server.CollectionUnderSimpleResource;
+import com.linkedin.restli.examples.greetings.server.CustomTypesResource;
 import com.linkedin.restli.examples.greetings.server.GreetingsResource;
 import com.linkedin.restli.examples.greetings.server.RootSimpleResource;
 import com.linkedin.restli.examples.greetings.server.SimpleResourceUnderCollectionResource;
@@ -65,6 +66,7 @@ import com.linkedin.restli.restspec.RestMethodSchema;
 import com.linkedin.restli.restspec.RestMethodSchemaArray;
 import com.linkedin.restli.restspec.SimpleSchema;
 import com.linkedin.restli.server.ResourceLevel;
+
 import java.io.IOException;
 import java.net.URI;
 import java.util.Arrays;
@@ -73,6 +75,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -93,7 +96,8 @@ public class TestExamplesGenerator
                                                                      GroupMembershipsResource2.class,
                                                                      RootSimpleResource.class,
                                                                      CollectionUnderSimpleResource.class,
-                                                                     SimpleResourceUnderCollectionResource.class);
+                                                                     SimpleResourceUnderCollectionResource.class,
+                                                                     CustomTypesResource.class);
     final ResourceSchemaCollection resourceSchemas = ResourceSchemaCollection.loadOrCreateResourceSchema(resources);
     final DataSchemaResolver schemaResolver = new ClassNameDataSchemaResolver();
     final ValidationOptions valOptions = new ValidationOptions(RequiredMode.MUST_BE_PRESENT);
@@ -114,6 +118,9 @@ public class TestExamplesGenerator
 
     final ResourceSchema actions = resourceSchemas.getResource("actions");
     ExampleRequestResponseGenerator actionsGenerator = new ExampleRequestResponseGenerator(actions, schemaResolver);
+
+    final ResourceSchema customTypes = resourceSchemas.getResource("customTypes");
+    ExampleRequestResponseGenerator customTypesGenerator = new ExampleRequestResponseGenerator(customTypes, schemaResolver);
 
     List<ResourceSchema> subResources = resourceSchemas.getSubResources(greeting);
     final ResourceSchema subgreetings = subResources.get(0);
@@ -251,6 +258,14 @@ public class TestExamplesGenerator
     capture = actionsGenerator.action("echoStringArray", ResourceLevel.COLLECTION);
     final DataMap echoStringArrayResponse = DataMapUtils.readMap(capture.getResponse());
     Assert.assertTrue(echoStringArrayResponse.containsKey("value"));
+
+    capture = customTypesGenerator.action("action", ResourceLevel.COLLECTION);
+    DataMap requestMap = _codec.bytesToMap(capture.getRequest().getEntity().copyBytes());
+    Assert.assertTrue(requestMap.containsKey("l"));
+    Assert.assertEquals(requestMap.size(), 1);
+    final DataMap customTypesActionResponse = DataMapUtils.readMap(capture.getResponse());
+    Assert.assertTrue(customTypesActionResponse.containsKey("value"));
+    Assert.assertEquals(customTypesActionResponse.size(), 1);
   }
 
   private static void checkPatchMap(DataMap patchMap)

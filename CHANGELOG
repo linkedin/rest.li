@@ -1,5 +1,8 @@
 6.0.2
 ------
+(RB=710508)
+Fix doc generation for action methods with custom parameter types.
+
 (RB=701756)
 Added cookies to isEquals/hashCode/toString in Request.java
 

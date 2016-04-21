@@ -21,6 +21,7 @@ import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.schema.DataSchema.Type;
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.EnumDataSchema;
 import com.linkedin.data.schema.FixedDataSchema;
@@ -115,6 +116,7 @@ import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.UpdateResponse;
+
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
@@ -771,6 +773,14 @@ public class ExampleRequestResponseGenerator
       {
         FieldDef<?> fieldDef = requestMetadata.getFieldDef(parameter.getName());
         Object value = generateFieldDefValue(fieldDef);
+        // For custom types(TypeRefs) we generate the example values using the dereferenced type. Changing the field-def
+        // to the dereferenced type so the example values can be set on the request without coercing.
+        if (fieldDef.getDataSchema().getType() == Type.TYPEREF)
+        {
+          FieldDef<?> deRefFieldDef = new FieldDef<>(fieldDef.getName(), fieldDef.getDataClass(), fieldDef.getDataSchema().getDereferencedDataSchema());
+          deRefFieldDef.getField().setRecord(fieldDef.getField().getRecord());
+          fieldDef = deRefFieldDef;
+        }
         request.setParam(fieldDef, value);
       }
     }
