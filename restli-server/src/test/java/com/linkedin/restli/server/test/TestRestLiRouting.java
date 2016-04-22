@@ -2495,6 +2495,18 @@ public class TestRestLiRouting
                 "DELETE",
                 "CREATE"
             },
+            {
+                "/statuses?ids=List(NONE)",
+                AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+                "DELETE",
+                "CREATE"
+            },
+            {
+                "/statuses?ids=List(1,2,3,NONE)",
+                AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+                "DELETE",
+                "CREATE"
+            },
         };
   }
 

@@ -1,3 +1,6 @@
+6.0.3
+------
+
 6.0.2
 ------
 (RB=710508)
@@ -8,6 +11,9 @@ Added cookies to isEquals/hashCode/toString in Request.java
 
 (RB=705680)
 Added addAcceptTypes and addAcceptType to RestliRequestOptionsBuilder
+
+(RB=710953)
+Resolving 500 error issue from invalid list params to return 400 instead.
 
 6.0.1
 ------

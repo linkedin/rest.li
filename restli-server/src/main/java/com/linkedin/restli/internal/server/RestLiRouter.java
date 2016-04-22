@@ -605,9 +605,20 @@ public class RestLiRouter
           {
             Key key = resource.getPrimaryKey();
             Object value;
-            // in v2, compound keys have already been converted and dealt with, so all we need to do here is convert simple values.
-            value = ArgumentUtils.convertSimpleValue(id, key.getDataSchema(), key.getType());
-            batchKeys.add(value);
+            try
+            {
+              // in v2, compound keys have already been converted and dealt with, so all we need to do here is convert simple values.
+              value = ArgumentUtils.convertSimpleValue(id, key.getDataSchema(), key.getType());
+              batchKeys.add(value);
+            }
+            catch (NumberFormatException e)
+            {
+              throw new RoutingException("NumberFormatException parsing batch key '" + id + "'", HttpStatus.S_400_BAD_REQUEST.getCode(), e);
+            }
+            catch (IllegalArgumentException e)
+            {
+              throw new RoutingException("IllegalArgumentException parsing batch key '" + id + "'", HttpStatus.S_400_BAD_REQUEST.getCode(), e);
+            }
           }
         }
         else
