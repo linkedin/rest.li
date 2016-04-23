@@ -5,20 +5,21 @@ buildscript {
     mavenCentral()
   }
   dependencies {
-    classpath 'com.linkedin.pegasus:gradle-plugins:1.15.9'
+    classpath 'com.linkedin.pegasus:gradle-plugins:5.0.19'
   }
 }
 
 task wrapper(type: Wrapper) {
-  gradleVersion = '1.12'
+  gradleVersion = '2.12'
 }
 
-final pegasusVersion = '1.15.9'
+final pegasusVersion = '5.0.19'
 ext.spec = [
   'product' : [
     'pegasus' : [
       'data' : 'com.linkedin.pegasus:data:' + pegasusVersion,
       'generator' : 'com.linkedin.pegasus:generator:' + pegasusVersion,
+      'r2Netty' : 'com.linkedin.pegasus:r2-netty:' + pegasusVersion,
       'restliCommon' : 'com.linkedin.pegasus:restli-common:' + pegasusVersion,
       'restliClient' : 'com.linkedin.pegasus:restli-client:' + pegasusVersion,
       'restliServer' : 'com.linkedin.pegasus:restli-server:' + pegasusVersion,
@@ -39,18 +40,11 @@ subprojects {
   apply plugin: 'maven'
 
   afterEvaluate {
-    if (project.plugins.hasPlugin('java')) {
-      sourceCompatibility = JavaVersion.VERSION_1_6
-    }
-
     // add the standard pegasus dependencies wherever the plugin is used
     if (project.plugins.hasPlugin('pegasus')) {
       dependencies {
         dataTemplateCompile spec.product.pegasus.data
         restClientCompile spec.product.pegasus.restliClient
-
-        // needed for Gradle 1.9+
-        restClientCompile spec.product.pegasus.restliCommon
       }
     }
   }

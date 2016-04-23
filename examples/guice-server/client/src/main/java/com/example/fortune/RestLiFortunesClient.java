@@ -20,6 +20,7 @@ package com.example.fortune;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
+import com.linkedin.r2.filter.CompressionConfig;
 import com.linkedin.r2.filter.FilterChains;
 import com.linkedin.r2.filter.compression.ClientCompressionFilter;
 import com.linkedin.r2.filter.compression.EncodingType;
@@ -39,6 +40,8 @@ import java.util.Collections;
  */
 public class RestLiFortunesClient
 {
+  private static final int THRESHOLD = 4096;
+
   /**
    * This stand-alone app demos the client-side Pegasus API.
    * To see the demo, run RestLiFortuneServer, then start the client
@@ -46,8 +49,12 @@ public class RestLiFortunesClient
   public static void main(String[] args) throws Exception
   {
     // Create an HttpClient and wrap it in an abstraction layer
-    final HttpClientFactory http = new HttpClientFactory(FilterChains.create(
-      new ClientCompressionFilter(EncodingType.IDENTITY, new EncodingType[]{ EncodingType.SNAPPY}, Collections.singletonList("*"))
+    final HttpClientFactory http = new HttpClientFactory(FilterChains.createRestChain(
+      new ClientCompressionFilter(EncodingType.IDENTITY,
+                                  new CompressionConfig(THRESHOLD),
+                                  new EncodingType[] { EncodingType.SNAPPY },
+                                  new CompressionConfig(THRESHOLD),
+                                  Collections.singletonList("*"))
     ));
 
     final Client r2Client = new TransportClientAdapter(
@@ -76,4 +83,3 @@ public class RestLiFortunesClient
   }
   private static final FortunesBuilders _fortuneBuilder = new FortunesBuilders();
 }
-

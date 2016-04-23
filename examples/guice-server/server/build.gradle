@@ -7,6 +7,7 @@ ext.apiProject = project(':api')
 
 dependencies {
   compile project(path: ':api', configuration: 'dataTemplate')
+  compile spec.product.pegasus.r2Netty
   compile spec.product.pegasus.restliServer
   compile spec.product.pegasus.restliGuiceBridge
   compile externalDependency.logbackClassic

@@ -8,27 +8,28 @@ buildscript {
     mavenCentral()
   }
   dependencies {
-    classpath "com.linkedin.pegasus:gradle-plugins:1.15.9"
+    classpath 'com.linkedin.pegasus:gradle-plugins:5.0.19'
   }
 }
 
 task wrapper(type: Wrapper) {
-  gradleVersion = '1.12'
+  gradleVersion = '2.12'
 }
 
-final String pegasusVersion = "1.15.9"
+final String pegasusVersion = '5.0.19'
 ext.spec = [
-  "product" : [
-    "pegasus" : [
-      "data" : "com.linkedin.pegasus:data:"+pegasusVersion,
-      "generator" : "com.linkedin.pegasus:generator:"+pegasusVersion,
-      "restliClient" : "com.linkedin.pegasus:restli-client:"+pegasusVersion,
-      "restliServer" : "com.linkedin.pegasus:restli-server:"+pegasusVersion,
-      "restliTools" : "com.linkedin.pegasus:restli-tools:"+pegasusVersion,
-      "gradlePlugins" : "com.linkedin.pegasus:gradle-plugins:"+pegasusVersion,
-      "restliNettyStandalone" : "com.linkedin.pegasus:restli-netty-standalone:"+pegasusVersion,
-      "restliServerStandalone" : "com.linkedin.pegasus:restli-server-standalone:"+pegasusVersion,
-      "restliSpringBridge" : "com.linkedin.pegasus:restli-spring-bridge:"+pegasusVersion
+  'product' : [
+    'pegasus' : [
+      'data' : 'com.linkedin.pegasus:data:'+pegasusVersion,
+      'generator' : 'com.linkedin.pegasus:generator:'+pegasusVersion,
+      'r2Netty' : 'com.linkedin.pegasus:r2-netty:'+pegasusVersion,
+      'restliClient' : 'com.linkedin.pegasus:restli-client:'+pegasusVersion,
+      'restliServer' : 'com.linkedin.pegasus:restli-server:'+pegasusVersion,
+      'restliTools' : 'com.linkedin.pegasus:restli-tools:'+pegasusVersion,
+      'gradlePlugins' : 'com.linkedin.pegasus:gradle-plugins:'+pegasusVersion,
+      'restliNettyStandalone' : 'com.linkedin.pegasus:restli-netty-standalone:'+pegasusVersion,
+      'restliServerStandalone' : 'com.linkedin.pegasus:restli-server-standalone:'+pegasusVersion,
+      'restliSpringBridge' : 'com.linkedin.pegasus:restli-spring-bridge:'+pegasusVersion
     ]
   ]
 ]
@@ -45,10 +46,6 @@ subprojects {
   apply plugin: 'eclipse'
 
   afterEvaluate {
-    if (project.plugins.hasPlugin('java')) {
-      sourceCompatibility = JavaVersion.VERSION_1_6
-    }
-
     // add the standard pegasus dependencies wherever the plugin is used
     if (project.plugins.hasPlugin('pegasus')) {
       dependencies {
@@ -63,4 +60,3 @@ subprojects {
     mavenCentral()
   }
 }
-

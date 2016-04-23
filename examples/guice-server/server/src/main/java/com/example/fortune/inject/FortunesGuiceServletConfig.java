@@ -21,6 +21,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.servlet.GuiceServletContextListener;
 import com.google.inject.servlet.ServletModule;
+import com.linkedin.r2.filter.CompressionConfig;
 import com.linkedin.r2.filter.FilterChain;
 import com.linkedin.r2.filter.FilterChains;
 import com.linkedin.r2.filter.compression.EncodingType;
@@ -35,6 +36,8 @@ import com.linkedin.restli.server.guice.GuiceRestliServlet;
  */
 public class FortunesGuiceServletConfig extends GuiceServletContextListener
 {
+  private static final int THRESHOLD = 4096;
+
   @Override
   protected Injector getInjector()
   {
@@ -48,8 +51,8 @@ public class FortunesGuiceServletConfig extends GuiceServletContextListener
             restLiConfig.setResourcePackageNames("com.example.fortune");
             bind(RestLiConfig.class).toInstance(restLiConfig);
 
-            FilterChain filterChain = FilterChains.create(
-                new ServerCompressionFilter(new EncodingType[] { EncodingType.SNAPPY }),
+            FilterChain filterChain = FilterChains.createRestChain(
+                new ServerCompressionFilter(new EncodingType[] { EncodingType.SNAPPY }, new CompressionConfig(THRESHOLD)),
                 new SimpleLoggingFilter());
             bind(FilterChain.class).toInstance(filterChain);
           }
