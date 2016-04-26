@@ -72,7 +72,10 @@ public class RestliRequestOptionsBuilder
 
   public RestliRequestOptionsBuilder setAcceptTypes(List<RestClient.AcceptType> acceptTypes)
   {
-    _acceptTypes = new ArrayList<>(acceptTypes);
+    if (acceptTypes != null)
+    {
+      _acceptTypes = new ArrayList<>(acceptTypes);
+    }
     return this;
   }
 
@@ -123,7 +126,7 @@ public class RestliRequestOptionsBuilder
   public RestliRequestOptions build()
   {
     return new RestliRequestOptions(_protocolVersionOption, _requestCompressionOverride, _responseCompressionOverride,
-        _contentType, Collections.unmodifiableList(_acceptTypes), _acceptResponseAttachments);
+        _contentType, _acceptTypes != null ? Collections.unmodifiableList(_acceptTypes) : null, _acceptResponseAttachments);
   }
 
   public ProtocolVersionOption getProtocolVersionOption()
@@ -143,7 +146,7 @@ public class RestliRequestOptionsBuilder
 
   public List<RestClient.AcceptType> getAcceptTypes()
   {
-    return Collections.unmodifiableList(_acceptTypes);
+    return _acceptTypes != null ? Collections.unmodifiableList(_acceptTypes) : null;
   }
 
   public CompressionOption getResponseCompressionOverride()
