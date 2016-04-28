@@ -67,7 +67,7 @@ public class TestRouteLookupClient
   {
     RouteLookup routeLookup = new SimpleTestRouteLookup();
 
-    final D2Client d2Client = new D2ClientBuilder().build();
+    final D2Client d2Client = new D2ClientBuilder().setZkHosts("localhost:2121").build();
     d2Client.start(new FutureCallback<None>());
     RouteLookupClient routeLookupClient = new RouteLookupClient(d2Client, routeLookup, "WestCoast");
     RestRequest dummyRestRequest = new RestRequestBuilder(URI.create("d2://simple_uri")).build();
@@ -96,7 +96,7 @@ public class TestRouteLookupClient
   {
     RouteLookup routeLookup = new SimpleTestRouteLookup();
 
-    final D2Client d2Client = new D2ClientBuilder().build();
+    final D2Client d2Client = new D2ClientBuilder().setZkHosts("localhost:2121").build();
     d2Client.start(new FutureCallback<None>());
     RouteLookupClient routeLookupClient = new RouteLookupClient(d2Client, routeLookup, "WestCoast");
     RestRequest dummyRestRequest = new RestRequestBuilder(URI.create("d2://simple_uri")).build();

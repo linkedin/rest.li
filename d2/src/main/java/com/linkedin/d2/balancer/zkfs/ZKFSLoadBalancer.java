@@ -263,6 +263,11 @@ public class ZKFSLoadBalancer
     LOG.info("ZK connect string: {}", _connectString);
     LOG.info("ZK session timeout: {}ms", _sessionTimeout);
     LOG.info("ZK initial connect timeout: {}ms", _initialZKTimeout);
+    if (_connectString == null || _connectString.isEmpty())
+    {
+      callback.onError(new IllegalArgumentException("ZooKeeper connection string is null or empty"));
+      return;
+    }
     if (_zkFlagFile == null)
     {
       LOG.info("ZK flag file not specified");

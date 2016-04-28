@@ -27,7 +27,7 @@ import com.linkedin.r2.transport.common.TransportClientFactory;
 
 public class D2ClientConfig
 {
-  String zkHosts = "localhost:2121";
+  String zkHosts = null;
   long zkSessionTimeoutInMs = 3600000L;
   long zkStartupTimeoutInMs = 10000L;
   long lbWaitTimeout = 5000L;
