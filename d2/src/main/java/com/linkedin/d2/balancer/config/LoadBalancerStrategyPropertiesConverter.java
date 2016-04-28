@@ -114,6 +114,12 @@ public class LoadBalancerStrategyPropertiesConverter
       {
         hashConfigProperties.put(URIRegexHash.KEY_REGEXES, hashConfig.getUriRegexes().stream().collect(Collectors.toList()));
       }
+      if (hashConfig.hasFailOnNoMatch()) {
+        hashConfigProperties.put(URIRegexHash.KEY_FAIL_ON_NO_MATCH, hashConfig.isFailOnNoMatch().toString());
+      }
+      if (hashConfig.hasWarnOnNoMatch()) {
+        hashConfigProperties.put(URIRegexHash.KEY_WARN_ON_NO_MATCH, hashConfig.isWarnOnNoMatch().toString());
+      }
       map.put(PropertyKeys.HTTP_LB_HASH_CONFIG, hashConfigProperties);
     }
     if (config.hasUpdateOnlyAtInterval())
@@ -195,6 +201,14 @@ public class LoadBalancerStrategyPropertiesConverter
       {
         List<String> uriRegexes = (List<String>)hashConfigProperties.get(URIRegexHash.KEY_REGEXES);
         hashConfig.setUriRegexes(new StringArray(uriRegexes));
+      }
+      if (hashConfigProperties.containsKey(URIRegexHash.KEY_WARN_ON_NO_MATCH)) {
+        String warnOnNoMatchString = (String) hashConfigProperties.get(URIRegexHash.KEY_WARN_ON_NO_MATCH);
+        hashConfig.setWarnOnNoMatch(Boolean.parseBoolean(warnOnNoMatchString));
+      }
+      if (hashConfigProperties.containsKey(URIRegexHash.KEY_FAIL_ON_NO_MATCH)) {
+        String failOnNoMatchString = (String) hashConfigProperties.get(URIRegexHash.KEY_FAIL_ON_NO_MATCH);
+        hashConfig.setFailOnNoMatch(Boolean.parseBoolean(failOnNoMatchString));
       }
       config.setHashConfig(hashConfig);
     }

@@ -17,11 +17,13 @@
     {
       "name": "partitionKeyRegex",
       "type": "string",
+      "optional": true,
       "doc": "The regular expression to extract the partition key from a request URI."
     },
     {
       "name": "partitionCount",
       "type": "int",
+      "optional": true,
       "doc": "The number of partitions this cluster has."
     },
     {

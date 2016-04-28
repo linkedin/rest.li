@@ -89,6 +89,18 @@
             },
             "doc": "List of Regex to match against the URI of incoming request and compute hash value. The hash value is computed based on the contents of the first capture group of the first expression that matches the request URI",
             "optional": true
+          },
+          {
+            "name": "failOnNoMatch",
+            "type": "boolean",
+            "doc": "Optional config value. if true, fail if no regex matches, otherwise fall back to random.",
+            "default": false
+          },
+          {
+            "name": "warnOnNoMatch",
+            "type": "boolean",
+            "doc": " Optional config value. if false, don't warn on falling back to random if the uri doesn't match the regex",
+            "default": true
           }
         ]
       },

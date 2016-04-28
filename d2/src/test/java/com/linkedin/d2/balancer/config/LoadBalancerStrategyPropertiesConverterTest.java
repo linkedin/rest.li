@@ -54,8 +54,10 @@ public class LoadBalancerStrategyPropertiesConverterTest
     final Double hashringPointCleanupRate = 0.2;
     regexes.add("+231{w+)");
     hashConfig.setUriRegexes(regexes);
-    Map<String, Object> loadBalancerStrategyProperties = new HashMap<>();
+    hashConfig.setWarnOnNoMatch(false);
+    hashConfig.setFailOnNoMatch(true);
 
+    Map<String, Object> loadBalancerStrategyProperties = new HashMap<>();
     loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_GLOBAL_STEP_DOWN, globalStepDown.toString());
     loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_GLOBAL_STEP_UP, globalStepUp.toString());
     loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_INITIAL_RECOVERY_LEVEL, recoveryLevel.toString());
@@ -70,6 +72,8 @@ public class LoadBalancerStrategyPropertiesConverterTest
     loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_HASHRING_POINT_CLEANUP_RATE, hashringPointCleanupRate.toString());
     Map<String, Object> hashConfigMap = new HashMap<>();
     hashConfigMap.put(URIRegexHash.KEY_REGEXES, regexes.stream().collect(Collectors.toList()));
+    hashConfigMap.put(URIRegexHash.KEY_WARN_ON_NO_MATCH, "false");
+    hashConfigMap.put(URIRegexHash.KEY_FAIL_ON_NO_MATCH, "true");
     loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_HASH_CONFIG, hashConfigMap);
 
     D2LoadBalancerStrategyProperties d2LoadBalancerStrategyProperties =

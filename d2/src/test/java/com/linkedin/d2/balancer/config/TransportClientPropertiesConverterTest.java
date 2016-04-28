@@ -53,6 +53,8 @@ public class TransportClientPropertiesConverterTest
     final poolStrategyType poolStrategy = poolStrategyType.LRU;
     final Integer minPoolSize = 5;
     final Integer maxConcurrentConnections = 1000;
+    final List<String> allowedClientOverrideKeys = Arrays.asList(PropertyKeys.HTTP_REQUEST_TIMEOUT,
+        PropertyKeys.HTTP_QUERY_POST_THRESHOLD);
 
     Map<String, Object> transportClientProperties = new HashMap<>();
     transportClientProperties.put(PropertyKeys.HTTP_QUERY_POST_THRESHOLD, queryPostThreshold.toString());
@@ -72,6 +74,7 @@ public class TransportClientPropertiesConverterTest
     transportClientProperties.put(PropertyKeys.HTTP_POOL_STRATEGY, poolStrategy.name());
     transportClientProperties.put(PropertyKeys.HTTP_POOL_MIN_SIZE, minPoolSize.toString());
     transportClientProperties.put(PropertyKeys.HTTP_MAX_CONCURRENT_CONNECTIONS, maxConcurrentConnections.toString());
+    transportClientProperties.put(PropertyKeys.ALLOWED_CLIENT_OVERRIDE_KEYS, allowedClientOverrideKeys.stream().collect(Collectors.joining(",")));
 
     D2TransportClientProperties d2TransportClientProperties =
         new D2TransportClientProperties()
@@ -90,7 +93,8 @@ public class TransportClientPropertiesConverterTest
             .setMaxChunkSize(maxChunkSize)
             .setPoolStrategy(poolStrategy)
             .setMinPoolSize(minPoolSize)
-            .setMaxConcurrentConnections(maxConcurrentConnections);
+            .setMaxConcurrentConnections(maxConcurrentConnections)
+            .setAllowedClientOverrideKeys(new StringArray(allowedClientOverrideKeys));
 
     Assert.assertEquals(TransportClientPropertiesConverter.toConfig(transportClientProperties), d2TransportClientProperties);
     Assert.assertEquals(TransportClientPropertiesConverter.toProperties(d2TransportClientProperties), transportClientProperties);

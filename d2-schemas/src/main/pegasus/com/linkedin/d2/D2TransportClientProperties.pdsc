@@ -116,6 +116,15 @@
       "type": "boolean",
       "doc": "whether to enable response compression or not",
       "default": false
+    },
+    {
+      "name": "allowedClientOverrideKeys",
+      "type": {
+        "type": "array",
+        "items": "string"
+      },
+      "doc": "a list of keys in D2TransportClientProperties which client can override",
+      "default": []
     }
   ]
 }

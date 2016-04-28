@@ -111,6 +111,11 @@ public class TransportClientPropertiesConverter
     {
       prop.put(PropertyKeys.HTTP_MAX_CONCURRENT_CONNECTIONS, config.getMaxConcurrentConnections().toString());
     }
+    if (!config.getAllowedClientOverrideKeys().isEmpty())
+    {
+      prop.put(PropertyKeys.ALLOWED_CLIENT_OVERRIDE_KEYS,
+          config.getAllowedClientOverrideKeys().stream().collect(Collectors.joining(",")));
+    }
     return prop;
   }
 
@@ -192,6 +197,12 @@ public class TransportClientPropertiesConverter
     if (properties.containsKey(PropertyKeys.HTTP_MAX_CONCURRENT_CONNECTIONS))
     {
       config.setMaxConcurrentConnections(coerce(properties.get(PropertyKeys.HTTP_MAX_CONCURRENT_CONNECTIONS), Integer.class));
+    }
+    if (properties.containsKey(PropertyKeys.ALLOWED_CLIENT_OVERRIDE_KEYS))
+    {
+      config.setAllowedClientOverrideKeys(new StringArray(
+          ConfigValueExtractor.buildList(properties.get(PropertyKeys.ALLOWED_CLIENT_OVERRIDE_KEYS), ",")
+      ));
     }
     return config;
   }
