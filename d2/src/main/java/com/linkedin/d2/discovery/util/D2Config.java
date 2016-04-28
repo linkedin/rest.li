@@ -262,7 +262,7 @@ public class D2Config
       }
 
       Map<String, String> clusterProperties = new HashMap<>();
-      if (coloVariants != null && coloVariants.size() > 0)
+      if (coloVariants != null && coloVariants.size() > 0 && !(coloVariants.size() == 1 && coloVariants.contains("")))
       {
         clusterProperties.put(PropertyKeys.COLO_VARIANTS, String.join(LIST_SEPARATOR, coloVariants));
       }
