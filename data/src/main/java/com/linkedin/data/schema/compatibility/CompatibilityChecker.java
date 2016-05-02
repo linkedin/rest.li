@@ -260,33 +260,98 @@ public class CompatibilityChecker
     }
   }
 
+  private static enum FieldModifier
+  {
+    OPTIONAL,
+    REQUIRED,
+    REQUIRED_WITH_DEFAULT
+  }
+
+  private static FieldModifier toFieldModifier(RecordDataSchema.Field field)
+  {
+    if (field.getOptional())
+    {
+      return FieldModifier.OPTIONAL;
+    }
+    else
+    {
+      if (field.getDefault() != null)
+      {
+        return FieldModifier.REQUIRED_WITH_DEFAULT;
+      }
+      else
+      {
+        return FieldModifier.REQUIRED;
+      }
+    }
+  }
+
   private void checkRecord(RecordDataSchema older, RecordDataSchema newer)
   {
     checkName(older, newer);
 
     List<RecordDataSchema.Field> commonFields = new ArrayList<RecordDataSchema.Field>(newer.getFields().size());
     List<String> newerRequiredAdded = new CheckerArrayList<String>();
+    List<String> newerRequiredWithDefaultAdded = new CheckerArrayList<>();
     List<String> newerOptionalAdded = new CheckerArrayList<String>();
     List<String> requiredToOptional = new CheckerArrayList<String>();
+    List<String> requiredWithDefaultToOptional = new CheckerArrayList<String>();
     List<String> optionalToRequired = new CheckerArrayList<String>();
+    List<String> optionalToRequiredWithDefault = new CheckerArrayList<String>();
     List<String> newerRequiredRemoved = new CheckerArrayList<String>();
     List<String> newerOptionalRemoved = new CheckerArrayList<String>();
+    List<String> requiredWithDefaultToRequired = new CheckerArrayList<String>();
+    List<String> requiredToRequiredWithDefault = new CheckerArrayList<String>();
 
     for (RecordDataSchema.Field newerField : newer.getFields())
     {
       String fieldName = newerField.getName();
       RecordDataSchema.Field olderField = older.getField(fieldName);
+
+      FieldModifier newerFieldModifier = toFieldModifier(newerField);
+
       if (olderField == null)
       {
-        (newerField.getOptional() ? newerOptionalAdded : newerRequiredAdded).add(fieldName);
+        if (newerFieldModifier == FieldModifier.OPTIONAL)
+        {
+          newerOptionalAdded.add(fieldName);
+        }
+        // Required fields with defaults are considered compatible and are not added to newerRequiredAdded
+        else if (newerFieldModifier == FieldModifier.REQUIRED)
+        {
+          newerRequiredAdded.add(fieldName);
+        }
+        else if (newerFieldModifier == FieldModifier.REQUIRED_WITH_DEFAULT)
+        {
+          newerRequiredWithDefaultAdded.add(fieldName);
+        }
       }
       else
       {
+        FieldModifier olderFieldModifier = toFieldModifier(olderField);
+
         commonFields.add(newerField);
-        boolean newerFieldOptional = newerField.getOptional();
-        if (newerFieldOptional != olderField.getOptional())
+        if (olderFieldModifier == FieldModifier.OPTIONAL && newerFieldModifier == FieldModifier.REQUIRED_WITH_DEFAULT) {
+          optionalToRequiredWithDefault.add(fieldName);
+        }
+        else if (olderFieldModifier == FieldModifier.OPTIONAL && newerFieldModifier == FieldModifier.REQUIRED) {
+          optionalToRequired.add(fieldName);
+        }
+        else if (olderFieldModifier == FieldModifier.REQUIRED && newerFieldModifier == FieldModifier.OPTIONAL)
         {
-          (newerFieldOptional ? requiredToOptional : optionalToRequired).add(fieldName);
+          requiredToOptional.add(fieldName);
+        }
+        else if (olderFieldModifier == FieldModifier.REQUIRED && newerFieldModifier == FieldModifier.REQUIRED_WITH_DEFAULT)
+        {
+          requiredToRequiredWithDefault.add(fieldName);
+        }
+        else if (olderFieldModifier == FieldModifier.REQUIRED_WITH_DEFAULT && newerFieldModifier == FieldModifier.OPTIONAL)
+        {
+          requiredWithDefaultToOptional.add(fieldName);
+        }
+        else if (olderFieldModifier == FieldModifier.REQUIRED_WITH_DEFAULT && newerFieldModifier == FieldModifier.REQUIRED)
+        {
+          requiredWithDefaultToRequired.add(fieldName);
         }
       }
     }
@@ -307,6 +372,13 @@ public class CompatibilityChecker
                     newerRequiredAdded);
     }
 
+    if (newerRequiredWithDefaultAdded.isEmpty() == false)
+    {
+      appendMessage(CompatibilityMessage.Impact.OLD_READER_IGNORES_DATA,
+          "new record added required with default fields %s",
+          newerRequiredAdded);
+    }
+
     if (newerRequiredRemoved.isEmpty() == false)
     {
       appendMessage(CompatibilityMessage.Impact.BREAKS_OLD_READER,
@@ -321,11 +393,29 @@ public class CompatibilityChecker
                     optionalToRequired);
     }
 
+    if (optionalToRequiredWithDefault.isEmpty() == false)
+    {
+      appendMessage(CompatibilityMessage.Impact.BREAKS_NEW_AND_OLD_READERS,
+          "new record changed optional fields to required fields with defaults %s. This change is compatible for "
+          + "Pegasus but incompatible for Avro, if this record schema is never converted to Avro, this error may "
+          + "safely be ignored.",
+          optionalToRequiredWithDefault);
+    }
+
     if (requiredToOptional.isEmpty() == false)
     {
       appendMessage(CompatibilityMessage.Impact.BREAKS_OLD_READER,
                     "new record changed required fields to optional fields %s",
                     requiredToOptional);
+    }
+
+    if (requiredWithDefaultToOptional.isEmpty() == false)
+    {
+      appendMessage(CompatibilityMessage.Impact.BREAKS_NEW_AND_OLD_READERS,
+          "new record changed required fields with defaults to optional fields %s. This change is compatible for "
+          + "Pegasus but incompatible for Avro, if this record schema is never converted to Avro, this error may "
+          + "safely be ignored.",
+          requiredWithDefaultToOptional);
     }
 
     if (newerOptionalAdded.isEmpty() == false)
@@ -340,6 +430,20 @@ public class CompatibilityChecker
       appendMessage(CompatibilityMessage.Impact.NEW_READER_IGNORES_DATA,
                     "new record removed optional fields %s",
                     newerOptionalRemoved);
+    }
+
+    if (requiredWithDefaultToRequired.isEmpty() == false)
+    {
+      appendMessage(CompatibilityMessage.Impact.BREAKS_NEW_READER,
+          "new record removed default from required fields %s",
+          requiredWithDefaultToRequired);
+    }
+
+    if (requiredToRequiredWithDefault.isEmpty() == false)
+    {
+      appendMessage(CompatibilityMessage.Impact.BREAKS_OLD_READER,
+          "new record added default to required fields %s",
+          requiredToRequiredWithDefault);
     }
 
     for (RecordDataSchema.Field newerField : commonFields)

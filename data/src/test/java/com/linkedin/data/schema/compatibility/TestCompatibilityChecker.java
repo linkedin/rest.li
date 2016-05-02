@@ -110,13 +110,13 @@ public class TestCompatibilityChecker
     _floatSchemaText,
     _doubleSchemaText
   );
-  
+
   private static final List<String> _nonNumericPrimitiveText = list(
     _booleanSchemaText,
     _stringSchemaText,
     _bytesSchemaText
   );
-  
+
   private static final List<String> _primitiveSchemaText = union(
     _numericSchemaText,
     _nonNumericPrimitiveText
@@ -261,12 +261,55 @@ public class TestCompatibilityChecker
           "ERROR :: BREAKS_OLD_READER :: /a.b.Record :: new record changed required fields to optional fields f1"
         },
         {
+          // field changed from required with default to optional
+          "{ \"name\" : \"a.b.Record\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"f1\", \"type\" : \"int\", \"default\": 1 } ] }",
+          "{ \"name\" : \"a.b.Record\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"f1\", \"type\" : \"int\", \"optional\" : true } ] }",
+          _dataAndSchema,
+          true,
+          "ERROR :: BREAKS_NEW_AND_OLD_READERS :: /a.b.Record :: new record changed required fields with defaults to optional fields f1. This change is compatible for "
+          + "Pegasus but incompatible for Avro, if this record schema is never converted to Avro, this error may "
+          + "safely be ignored."
+        },
+        {
           // added required fields
           "{ \"name\" : \"a.b.Record\", \"type\" : \"record\", \"fields\" : [ ] }",
           "{ \"name\" : \"a.b.Record\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"f1\", \"type\" : \"int\" }, { \"name\" : \"f2\", \"type\" : \"string\" } ] }",
           _dataAndSchema,
           true,
           "ERROR :: BREAKS_NEW_READER :: /a.b.Record :: new record added required fields f1, f2"
+        },
+        {
+          // added required field with default
+          "{ \"name\" : \"a.b.Record\", \"type\" : \"record\", \"fields\" : [ ] }",
+          "{ \"name\" : \"a.b.Record\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"f1\", \"type\" : \"int\", \"default\": 1 } ] }",
+          _dataAndSchema,
+          false
+        },
+        {
+          // modified required field to have a default
+          "{ \"name\" : \"a.b.Record\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"f1\", \"type\" : \"int\" } ] }",
+          "{ \"name\" : \"a.b.Record\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"f1\", \"type\" : \"int\", \"default\": 1 } ] }",
+          _dataAndSchema,
+          true,
+          "ERROR :: BREAKS_OLD_READER :: /a.b.Record :: new record added default to required fields f1"
+        },
+        {
+          // modified required field to no longer have a default
+          "{ \"name\" : \"a.b.Record\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"f1\", \"type\" : \"int\", \"default\": 1 } ] }",
+          "{ \"name\" : \"a.b.Record\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"f1\", \"type\" : \"int\" } ] }",
+          _dataAndSchema,
+          true,
+          "ERROR :: BREAKS_NEW_READER :: /a.b.Record :: new record removed default from required fields f1"
+        },
+        {
+          // modified optional field to required field with default
+          "{ \"name\" : \"a.b.Record\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"f1\", \"type\" : \"int\", \"optional\": true } ] }",
+          "{ \"name\" : \"a.b.Record\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"f1\", \"type\" : \"int\", \"default\": 1 } ] }",
+          _dataAndSchema,
+          true,
+          "ERROR :: BREAKS_NEW_AND_OLD_READERS :: /a.b.Record :: new record changed optional fields to required fields with defaults f1. This change is compatible for "
+          + "Pegasus but incompatible for Avro, if this record schema is never converted to Avro, this error may "
+          + "safely be ignored."
         },
         {
           // removed required fields

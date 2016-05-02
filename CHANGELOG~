@@ -6,11 +6,6 @@ Fix missing custom information for record field and union member.
 (RB=723090)
 Refactor code related to custom type.
 
-(RB=717162)
-Change the Pegasus compatibility checker to consider the addition of a 
-required field with a default as compatible and to consider setting a 
-default on an existing required field as backward incompatible.
-
 6.0.4
 ------
 (RB=714504)
