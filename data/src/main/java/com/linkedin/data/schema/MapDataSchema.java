@@ -16,6 +16,8 @@
 
 package com.linkedin.data.schema;
 
+import java.util.Objects;
+
 /**
  * {@link DataSchema} for map.
  *
@@ -25,8 +27,34 @@ public final class MapDataSchema extends ComplexDataSchema
 {
   public MapDataSchema(DataSchema values)
   {
+    this(null, values);
+  }
+
+  public MapDataSchema(DataSchema keys, DataSchema values)
+  {
     super(Type.MAP);
+    setKeys(keys);
     setValues(values);
+  }
+
+  /**
+   * Set the {@link DataSchema} of keys in the map.
+   *
+   * @param keys is the {@link DataSchema} of keys in the map.
+   */
+  void setKeys(DataSchema keys)
+  {
+    _keys = keys;
+  }
+
+  /**
+   * Return the {@link DataSchema} for the map's keys.
+   *
+   * @return the {@link DataSchema} for the map's keys.
+   */
+  public DataSchema getKeys()
+  {
+    return _keys;
   }
 
   /**
@@ -73,7 +101,7 @@ public final class MapDataSchema extends ComplexDataSchema
     if (object != null && object.getClass() == MapDataSchema.class)
     {
       MapDataSchema other = (MapDataSchema) object;
-      return super.equals(other) && _values.equals(other._values);
+      return super.equals(other) && _values.equals(other._values) && Objects.equals(_keys, other._keys);
     }
     return false;
   }
@@ -84,5 +112,6 @@ public final class MapDataSchema extends ComplexDataSchema
     return super.hashCode() ^ _values.hashCode();
   }
 
+  private DataSchema _keys = null;
   private DataSchema _values = DataSchemaConstants.NULL_DATA_SCHEMA;
 }

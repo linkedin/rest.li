@@ -414,8 +414,9 @@ public class SchemaParser extends AbstractSchemaParser
         appendCalleeMessage(size);
         break;
       case MAP:
+        DataSchema keysSchema = getOptionalSchemaData(map, KEYS_KEY);
         DataSchema valuesSchema = getSchemaData(map, VALUES_KEY);
-        MapDataSchema mapSchema = new MapDataSchema(valuesSchema);
+        MapDataSchema mapSchema = new MapDataSchema(keysSchema, valuesSchema);
         schema = mapSchema;
         break;
       case RECORD:
@@ -773,6 +774,10 @@ public class SchemaParser extends AbstractSchemaParser
           parseObject(items);
           break;
         case MAP:
+          Object keys = map.get(KEYS_KEY);
+          if (keys != null) {
+            parseObject(keys);
+          }
           Object values = map.get(VALUES_KEY);
           parseObject(values);
           break;
@@ -912,6 +917,19 @@ public class SchemaParser extends AbstractSchemaParser
       startErrorMessage(map).append(key).append(" is required but it is not present.\n");
     }
     return schema;
+  }
+
+  protected DataSchema getOptionalSchemaData(DataMap map, String key)
+  {
+    Object obj = map.get(key);
+    if (obj != null)
+    {
+      return parseObject(obj);
+    }
+    else
+    {
+      return null;
+    }
   }
 
   /**

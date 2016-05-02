@@ -90,6 +90,7 @@ public class DataSchemaTraverse
         break;
       case MAP:
         MapDataSchema mapDataSchema = (MapDataSchema) schema;
+        traverseChild(DataSchemaConstants.KEYS_KEY, mapDataSchema.getKeys());
         traverseChild(DataSchemaConstants.VALUES_KEY, mapDataSchema.getValues());
         break;
       case ARRAY:
