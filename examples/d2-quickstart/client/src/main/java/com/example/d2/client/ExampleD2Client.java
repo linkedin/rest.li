@@ -227,6 +227,9 @@ public class ExampleD2Client
   {
     for (Map.Entry<String, Long> entry : trafficProportion.entrySet())
     {
+      if (entry.getKey().equals("comment")) {
+        continue;
+      }
       URI uri = new URI("d2://" + entry.getKey());
       RestRequest request = new RestRequestBuilder(uri).setMethod("get").build();
       for (long i = 0; i < entry.getValue(); i++)
