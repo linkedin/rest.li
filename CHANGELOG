@@ -1,7 +1,13 @@
+6.0.4
+------
+
+
 6.0.3
 ------
 (RB=711485)
 Fix build of the example projects.
+(RB=713641)
+Remove default values for zkHosts
 
 6.0.2
 ------
