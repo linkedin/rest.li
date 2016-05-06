@@ -45,6 +45,7 @@ public class D2ClientConfig
   boolean shutdownAsynchronously = false;
   boolean isSymlinkAware = false;
   Map<String, Map<String, Object>> clientServicesConfig = Collections.<String, Map<String, Object>>emptyMap();
+  boolean useNewEphemeralStoreWatcher = false;
 
   public D2ClientConfig()
   {
@@ -193,6 +194,46 @@ public class D2ClientConfig
   }
 
   public D2ClientConfig(String zkHosts,
+      long zkSessionTimeoutInMs,
+      long zkStartupTimeoutInMs,
+      long lbWaitTimeout,
+      TimeUnit lbWaitUnit,
+      String flagFile,
+      String basePath,
+      String fsBasePath,
+      ComponentFactory componentFactory,
+      Map<String, TransportClientFactory> clientFactories,
+      LoadBalancerWithFacilitiesFactory lbWithFacilitiesFactory,
+      SSLContext sslContext,
+      SSLParameters sslParameters,
+      boolean isSSLEnabled,
+      boolean shutdownAsynchronously,
+      boolean isSymlinkAware,
+      Map<String, Map<String, Object>> clientServicesConfig,
+      String d2ServicePath)
+  {
+    this(zkHosts,
+        zkSessionTimeoutInMs,
+        zkStartupTimeoutInMs,
+        lbWaitTimeout,
+        lbWaitUnit,
+        flagFile,
+        basePath,
+        fsBasePath,
+        componentFactory,
+        clientFactories,
+        lbWithFacilitiesFactory,
+        sslContext,
+        sslParameters,
+        isSSLEnabled,
+        shutdownAsynchronously,
+        isSymlinkAware,
+        clientServicesConfig,
+        d2ServicePath,
+        false);
+  }
+
+  public D2ClientConfig(String zkHosts,
                         long zkSessionTimeoutInMs,
                         long zkStartupTimeoutInMs,
                         long lbWaitTimeout,
@@ -209,7 +250,8 @@ public class D2ClientConfig
                         boolean shutdownAsynchronously,
                         boolean isSymlinkAware,
                         Map<String, Map<String, Object>> clientServicesConfig,
-                        String d2ServicePath)
+                        String d2ServicePath,
+                        boolean useNewEphemeralStoreWatcher)
   {
     this.zkHosts = zkHosts;
     this.zkSessionTimeoutInMs = zkSessionTimeoutInMs;
@@ -229,6 +271,7 @@ public class D2ClientConfig
     this.isSymlinkAware = isSymlinkAware;
     this.clientServicesConfig = clientServicesConfig;
     this.d2ServicePath = d2ServicePath;
+    this.useNewEphemeralStoreWatcher = useNewEphemeralStoreWatcher;
   }
 
 }

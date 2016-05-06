@@ -187,14 +187,12 @@ public abstract class ZooKeeperStore<T> extends AbstractPropertyStoreAsync<T>
   {
     private final Object      _mutex        = new Object();
     private final Set<String> _watches  = new HashSet<String>();
-    private volatile int      _watchCount;
 
     public void addWatch(String propertyName)
     {
       synchronized (_mutex)
       {
         _watches.add(propertyName);
-        _watchCount++;
       }
     }
     public void cancelWatch(String propertyName)
@@ -202,12 +200,14 @@ public abstract class ZooKeeperStore<T> extends AbstractPropertyStoreAsync<T>
       synchronized (_mutex)
       {
         _watches.remove(propertyName);
-        _watchCount--;
       }
     }
     public int getWatchCount()
     {
-      return _watchCount;
+      synchronized (_mutex)
+      {
+        return _watches.size();
+      }
     }
 
     public void cancelAllWatches()
@@ -215,7 +215,6 @@ public abstract class ZooKeeperStore<T> extends AbstractPropertyStoreAsync<T>
       synchronized (_mutex)
       {
         _watches.clear();
-        _watchCount = 0;
       }
     }
 

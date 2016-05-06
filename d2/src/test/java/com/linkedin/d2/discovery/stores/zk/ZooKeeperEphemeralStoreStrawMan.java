@@ -43,7 +43,9 @@ public class ZooKeeperEphemeralStoreStrawMan
         new ZooKeeperEphemeralStore<String>(zkClient,
                                             new PropertyStringSerializer(),
                                             merger,
-                                            "/test/lb/test-property-ephemeral");
+                                            "/test/lb/test-property-ephemeral",
+                                            false,
+                                            true);
 
     listenTos.add("foo12");
 

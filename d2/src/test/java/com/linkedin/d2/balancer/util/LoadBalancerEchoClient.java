@@ -149,7 +149,9 @@ public class LoadBalancerEchoClient
         new ZooKeeperEphemeralStore<UriProperties>(zkClient,
                                                    new UriPropertiesJsonSerializer(),
                                                    new UriPropertiesMerger(),
-                                                   _basePath+"/uris");
+                                                   _basePath+"/uris",
+                                                   false,
+                                                   true);
 
     // fs stores
     File testDirectory =

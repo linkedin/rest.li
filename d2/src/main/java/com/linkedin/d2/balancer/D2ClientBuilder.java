@@ -78,7 +78,8 @@ public class D2ClientBuilder
                   _config.shutdownAsynchronously,
                   _config.isSymlinkAware,
                   _config.clientServicesConfig,
-                  _config.d2ServicePath);
+                  _config.d2ServicePath,
+                  _config.useNewEphemeralStoreWatcher);
 
     final LoadBalancerWithFacilities loadBalancer = loadBalancerFactory.create(cfg);
 

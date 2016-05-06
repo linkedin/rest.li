@@ -76,6 +76,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
   private final SSLParameters _sslParameters;
   private final boolean _isSSLEnabled;
   private final Map<String, Map<String, Object>> _clientServicesConfig;
+  private final boolean _useNewEphemeralStoreWatcher;
 
   private static final Logger _log = LoggerFactory.getLogger(ZKFSTogglingLoadBalancerFactoryImpl.class);
 
@@ -97,7 +98,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
     this(factory, timeout, timeoutUnit,
          baseZKPath, fsDir,
          clientFactories, loadBalancerStrategyFactories,
-         "", null, null, false, Collections.<String, Map<String, Object>>emptyMap());
+         "", null, null, false, Collections.<String, Map<String, Object>>emptyMap(), false);
   }
 
   /**
@@ -119,7 +120,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
                                              String d2ServicePath)
   {
     this(factory, timeout, timeoutUnit, baseZKPath, fsDir, clientFactories, loadBalancerStrategyFactories,
-         d2ServicePath, null, null, false, Collections.<String, Map<String, Object>>emptyMap());
+         d2ServicePath, null, null, false, Collections.<String, Map<String, Object>>emptyMap(), false);
   }
 
   /**
@@ -157,7 +158,8 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
          sslContext,
          sslParameters,
          isSSLEnabled,
-         Collections.<String, Map<String, Object>>emptyMap());
+         Collections.<String, Map<String, Object>>emptyMap(),
+         false);
   }
 
   public ZKFSTogglingLoadBalancerFactoryImpl(ComponentFactory factory,
@@ -171,7 +173,8 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
                                              SSLContext sslContext,
                                              SSLParameters sslParameters,
                                              boolean isSSLEnabled,
-                                             Map<String, Map<String, Object>> clientServicesConfig)
+                                             Map<String, Map<String, Object>> clientServicesConfig,
+                                             boolean useNewEphemeralStoreWatcher)
   {
     _factory = factory;
     _lbTimeout = timeout;
@@ -193,6 +196,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
     _sslParameters = sslParameters;
     _isSSLEnabled = isSSLEnabled;
     _clientServicesConfig = clientServicesConfig;
+    _useNewEphemeralStoreWatcher = useNewEphemeralStoreWatcher;
   }
 
   @Override
@@ -204,7 +208,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
     ZooKeeperPermanentStore<ServiceProperties> zkServiceRegistry = createPermanentStore(
             zkConnection, ZKFSUtil.servicePath(_baseZKPath, _d2ServicePath), new ServicePropertiesJsonSerializer());
     ZooKeeperEphemeralStore<UriProperties> zkUriRegistry =  createEphemeralStore(
-            zkConnection, ZKFSUtil.uriPath(_baseZKPath), new UriPropertiesJsonSerializer(), new UriPropertiesMerger());
+            zkConnection, ZKFSUtil.uriPath(_baseZKPath), new UriPropertiesJsonSerializer(), new UriPropertiesMerger(), _useNewEphemeralStoreWatcher);
 
     FileStore<ClusterProperties> fsClusterStore = createFileStore("clusters", new ClusterPropertiesJsonSerializer());
     FileStore<ServiceProperties> fsServiceStore = createFileStore(_d2ServicePath, new ServicePropertiesJsonSerializer());
@@ -258,9 +262,9 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
     return store;
   }
 
-  protected <T> ZooKeeperEphemeralStore<T> createEphemeralStore(ZKConnection zkConnection, String nodePath, PropertySerializer<T> serializer, ZooKeeperPropertyMerger<T> merger)
+  protected <T> ZooKeeperEphemeralStore<T> createEphemeralStore(ZKConnection zkConnection, String nodePath, PropertySerializer<T> serializer, ZooKeeperPropertyMerger<T> merger, boolean useNewWatcher)
   {
-    ZooKeeperEphemeralStore<T> store = new ZooKeeperEphemeralStore<T>(zkConnection, serializer, merger, nodePath);
+    ZooKeeperEphemeralStore<T> store = new ZooKeeperEphemeralStore<T>(zkConnection, serializer, merger, nodePath, false, useNewWatcher);
     return store;
   }
 

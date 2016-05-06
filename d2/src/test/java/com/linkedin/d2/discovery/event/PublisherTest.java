@@ -43,7 +43,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public abstract class PublisherTest
 {
 
-  private static final int BUS_UPDATE_TIMEOUT = 30;
+  protected static final int BUS_UPDATE_TIMEOUT = 30;
 
   /**
    *
@@ -102,7 +102,7 @@ public abstract class PublisherTest
     bus.awaitRemove(KEY, BUS_UPDATE_TIMEOUT, TimeUnit.SECONDS);
   }
 
-  private static class MockBusSink implements PropertyEventBus<String>
+  protected static class MockBusSink implements PropertyEventBus<String>
   {
     private final Lock _lock = new ReentrantLock();
     private final Condition _initCondition = _lock.newCondition();

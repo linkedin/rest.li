@@ -336,7 +336,9 @@ public class ZKFSTest
               new ZooKeeperEphemeralStore<UriProperties>(conn,
                                                          new UriPropertiesJsonSerializer(),
                                                          new UriPropertiesMerger(),
-                                                         ZKFSUtil.uriPath(BASE_PATH));
+                                                         ZKFSUtil.uriPath(BASE_PATH),
+                                                         false,
+                                                         true);
       Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<URI, Map<Integer, PartitionData>>();
       Map<Integer, PartitionData> partitionData = new HashMap<Integer, PartitionData>(1);
       partitionData.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1.0d));
