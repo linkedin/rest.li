@@ -1,6 +1,11 @@
-6.0.4
+6.0.5
 ------
 
+
+6.0.4
+------
+(RB=714504)
+Add missing d2 config properties into d2 schemas
 
 6.0.3
 ------
