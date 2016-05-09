@@ -6,4 +6,5 @@ dependencies {
   compile externalDependency.codemodel
 
   testCompile externalDependency.testng
+  testCompile externalDependency.mockito
 }

@@ -3,6 +3,7 @@ dependencies {
   testCompile project(path: ':data', configuration: 'testArtifacts')
   testCompile project(':generator')
   testCompile externalDependency.testng
+  testCompile externalDependency.mockito
 }
 
 project.sourceSets.test.java.srcDir('src/test/javaPegasus')

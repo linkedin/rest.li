@@ -16,16 +16,15 @@
 
 package com.linkedin.pegasus.generator.test;
 
+
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.TestUtil;
+import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.template.Custom;
-import com.linkedin.data.template.DataTemplate;
 import com.linkedin.data.template.DataTemplateUtil;
-import com.linkedin.data.template.DirectCoercer;
+import com.linkedin.data.template.GetMode;
 import com.linkedin.data.template.SetMode;
-import com.linkedin.data.template.TemplateOutputCastException;
-import com.linkedin.data.template.TestCustom;
 import com.linkedin.data.template.TestCustom.CustomPoint;
 import com.linkedin.data.template.TestCustom.CustomPoint.CustomPointCoercer;
 
@@ -34,6 +33,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
+
+import org.mockito.Mockito;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
@@ -260,6 +262,38 @@ public class TestCustomPoint
 
       i += 11;
     }
+  }
+
+  private static class CustomPointRecordWithPublicObtainCustomType extends CustomPointRecord
+  {
+    // in order to verify the call count of the protected method from the test, we need to promote its access permission
+    // generally not a good pattern to follow, but we only do this in specific test
+    @Override
+    public <T> T obtainCustomType(RecordDataSchema.Field field, Class<T> valueClass, GetMode mode)
+    {
+      return super.obtainCustomType(field, valueClass, mode);
+    }
+  }
+
+  @Test
+  public void testObtainCustomTypeFirstField()
+  {
+    CustomPointRecordWithPublicObtainCustomType record = Mockito.mock(CustomPointRecordWithPublicObtainCustomType.class);
+    testObtainCustomType(record, record::getCustomPoint);
+  }
+
+  @Test
+  public void testObtainCustomTypeSecondField()
+  {
+    CustomPointRecordWithPublicObtainCustomType record = Mockito.mock(CustomPointRecordWithPublicObtainCustomType.class);
+    testObtainCustomType(record, record::getAnotherCustomPoint);
+  }
+
+  private void testObtainCustomType(CustomPointRecordWithPublicObtainCustomType record,
+                                    Supplier<CustomPoint> getter) {
+    Mockito.when(getter.get()).thenCallRealMethod();
+    getter.get();
+    Mockito.verify(record).obtainCustomType(Mockito.any(), Mockito.any(), Mockito.any());
   }
 
   private static class CustomPointCoercer2 extends CustomPointCoercer

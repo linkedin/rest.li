@@ -162,7 +162,8 @@ public class ClassTemplateSpec
 
   public void setFullName(String fullName)
   {
-    _namespace = fullName.substring(0, fullName.lastIndexOf('.'));
-    _className = fullName.substring(_namespace.length() + 1);
+    final int dotIndex = fullName.lastIndexOf('.');
+    _namespace = dotIndex == -1 ? null : fullName.substring(0, dotIndex);
+    _className = fullName.substring(dotIndex + 1);
   }
 }

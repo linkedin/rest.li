@@ -8,6 +8,10 @@
       "type" : "CustomPoint"
     },
     {
+      "name" : "anotherCustomPoint",
+      "type" : "CustomPoint"
+    },
+    {
       "name" : "customPointArray",
       "type" : { "type" : "array", "items" : "CustomPoint" }
     },

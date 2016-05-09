@@ -694,9 +694,13 @@ public class TemplateSpecGenerator
         newMember.setClassTemplateSpec(processSchema(memberType, unionClass, memberType.getUnionMemberKey()));
         newMember.setDataClass(determineDataClass(memberType, unionClass, memberType.getUnionMemberKey()));
         final CustomInfoSpec customInfo = getImmediateCustomInfo(memberType);
-        if (customInfo != null && !customInfoMap.containsKey(customInfo))
+        if (customInfo != null)
         {
-          customInfoMap.put(customInfo, null);
+          if (!customInfoMap.containsKey(customInfo))
+          {
+            customInfoMap.put(customInfo, null);
+          }
+
           newMember.setCustomInfo(customInfo);
         }
       }
@@ -764,9 +768,13 @@ public class TemplateSpecGenerator
       newField.setDataClass(determineDataClass(field.getType(), recordClass, field.getName()));
 
       final CustomInfoSpec customInfo = getImmediateCustomInfo(field.getType());
-      if (customInfo != null && !customInfoMap.containsKey(customInfo))
+      if (customInfo != null)
       {
-        customInfoMap.put(customInfo, null);
+        if (!customInfoMap.containsKey(customInfo))
+        {
+          customInfoMap.put(customInfo, null);
+        }
+
         newField.setCustomInfo(customInfo);
       }
 

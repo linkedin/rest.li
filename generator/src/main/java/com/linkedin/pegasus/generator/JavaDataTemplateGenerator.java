@@ -83,7 +83,6 @@ import com.sun.codemodel.JInvocation;
 import com.sun.codemodel.JMethod;
 import com.sun.codemodel.JMod;
 import com.sun.codemodel.JVar;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -639,12 +638,12 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     for (RecordTemplateSpec.Field field : recordSpec.getFields())
     {
       generateRecordFieldAccessors(templateClass, field, generate(field.getType()), schemaFieldVar);
-
-      if (field.getCustomInfo() != null)
-      {
-        generateCustomClassInitialization(templateClass, field.getCustomInfo());
-      }
     }
+
+    recordSpec.getFields().stream()
+        .map(RecordTemplateSpec.Field::getCustomInfo)
+        .distinct()
+        .forEach(customInfo -> generateCustomClassInitialization(templateClass, customInfo));
 
     if (_copierMethods)
     {
@@ -815,12 +814,12 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
       {
         generateUnionMemberAccessors(unionClass, member, generate(member.getClassTemplateSpec()), generate(member.getDataClass()), schemaField);
       }
-
-      if (member.getCustomInfo() != null)
-      {
-        generateCustomClassInitialization(unionClass, member.getCustomInfo());
-      }
     }
+
+    unionSpec.getMembers().stream()
+        .map(UnionTemplateSpec.Member::getCustomInfo)
+        .distinct()
+        .forEach(customInfo -> generateCustomClassInitialization(unionClass, customInfo));
 
     if (_pathSpecMethods)
     {

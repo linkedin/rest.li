@@ -1,6 +1,7 @@
 6.0.5
 ------
-
+(RB=720861)
+Fix missing custom information for record field and union member.
 
 6.0.4
 ------
