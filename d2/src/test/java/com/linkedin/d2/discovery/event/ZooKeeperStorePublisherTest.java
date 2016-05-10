@@ -77,7 +77,7 @@ public abstract class ZooKeeperStorePublisherTest extends PublisherTest
 
   protected ZKConnection getConnection()
   {
-    ZKConnection conn = new ZKConnection(CONNECT, TIMEOUT);
+    ZKConnection conn = new ZKConnection(CONNECT, TIMEOUT * 1000 /* in milliseconds */);
     try
     {
       conn.start();
