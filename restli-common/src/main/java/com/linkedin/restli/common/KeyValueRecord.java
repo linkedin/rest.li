@@ -26,7 +26,8 @@ import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.GetMode;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.SetMode;
-import com.linkedin.restli.internal.common.TyperefUtils;
+import com.linkedin.util.CustomTypeUtil;
+
 import java.util.Map;
 
 /**
@@ -75,7 +76,7 @@ public class KeyValueRecord<K, V extends RecordTemplate> extends RecordTemplate
       case TYPEREF:
         TyperefDataSchema typerefDataSchema = (TyperefDataSchema)keySchema;
         DataSchema.Type dereferencedType = keySchema.getDereferencedType();
-        Class<?> javaClassForSchema = TyperefUtils.getJavaClassForSchema(typerefDataSchema);
+        Class<?> javaClassForSchema = CustomTypeUtil.getJavaCustomTypeClassFromSchema(typerefDataSchema);
         if (javaClassForSchema == null)
         {
           // typeref to a primitive. In this case the keyClass is a primitive, and so is the key.
@@ -181,7 +182,7 @@ public class KeyValueRecord<K, V extends RecordTemplate> extends RecordTemplate
     else if (keySchema.getType() == DataSchema.Type.TYPEREF)
     {
       TyperefDataSchema typerefDataSchema = (TyperefDataSchema)keySchema;
-      Class<?> javaClass = TyperefUtils.getJavaClassForSchema(typerefDataSchema);
+      Class<?> javaClass = CustomTypeUtil.getJavaCustomTypeClassFromSchema(typerefDataSchema);
       if (javaClass == null)
       {
         // typeref to a primitive. keyClass is a primitive

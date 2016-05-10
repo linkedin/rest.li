@@ -14,25 +14,30 @@
    limitations under the License.
 */
 
-package com.linkedin.restli.internal.common;
+package com.linkedin.util;
+
+
+import com.linkedin.data.schema.DataSchema;
 
 import java.util.Map;
 
-import com.linkedin.data.schema.TyperefDataSchema;
-
-public class TyperefUtils
+public class CustomTypeUtil
 {
-  public static String getJavaClassNameFromSchema(final TyperefDataSchema schema)
+  public static final String JAVA_PROPERTY = "java";
+  public static final String CLASS_PROPERTY = "class";
+  public static final String COERCER_CLASS_PROPERTY = "coercerClass";
+
+  public static String getJavaCustomTypeClassNameFromSchema(final DataSchema schema)
   {
-    Object o = schema.getProperties().get("java");
+    final Object o = schema.getProperties().get(JAVA_PROPERTY);
     if (o == null || !(o instanceof Map))
     {
       return null;
     }
 
     @SuppressWarnings("unchecked")
-    Map<String,Object> map = (Map<String,Object>)o;
-    Object o2 = map.get("class");
+    final Map<String, Object> map = (Map<String, Object>) o;
+    final Object o2 = map.get(CLASS_PROPERTY);
 
     if (o2 == null || !(o2 instanceof String))
     {
@@ -42,10 +47,10 @@ public class TyperefUtils
     return (String)o2;
   }
 
-  public static Class<?> getJavaClassForSchema(TyperefDataSchema schema)
+  public static Class<?> getJavaCustomTypeClassFromSchema(DataSchema schema)
   {
-    Class<?> bindingClass;
-    String javaCoercerClassName = getJavaClassNameFromSchema(schema);
+    final Class<?> bindingClass;
+    final String javaCoercerClassName = getJavaCustomTypeClassNameFromSchema(schema);
 
     if(javaCoercerClassName != null)
     {
@@ -55,7 +60,7 @@ public class TyperefUtils
       }
       catch (ClassNotFoundException e)
       {
-        throw new IllegalArgumentException("Unable to find java coercer class of " + javaCoercerClassName + " for typeref " + schema.getFullName());
+        throw new IllegalArgumentException("Unable to find java coercer class of " + javaCoercerClassName + " for schema " + schema.getUnionMemberKey());
       }
     }
     else
@@ -66,17 +71,17 @@ public class TyperefUtils
     return bindingClass;
   }
 
-  public static String getCoercerClassFromSchema(final TyperefDataSchema schema)
+  public static String getJavaCoercerClassFromSchema(final DataSchema schema)
   {
-    Object o = schema.getProperties().get("java");
+    final Object o = schema.getProperties().get(JAVA_PROPERTY);
     if (o == null || !(o instanceof Map))
     {
       return null;
     }
 
     @SuppressWarnings("unchecked")
-    Map<String,Object> map = (Map<String,Object>) o;
-    Object o2 = map.get("coercerClass");
+    final Map<String, Object> map = (Map<String, Object>) o;
+    final Object o2 = map.get(COERCER_CLASS_PROPERTY);
 
     if (o2 == null || !(o2 instanceof String))
     {

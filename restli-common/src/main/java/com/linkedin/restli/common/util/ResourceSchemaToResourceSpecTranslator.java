@@ -33,7 +33,6 @@ import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.ResourceSpecImpl;
 import com.linkedin.restli.common.TypeSpec;
-import com.linkedin.restli.internal.common.TyperefUtils;
 import com.linkedin.restli.restspec.ActionSchema;
 import com.linkedin.restli.restspec.ActionSchemaArray;
 import com.linkedin.restli.restspec.ActionsSetSchema;
@@ -46,6 +45,8 @@ import com.linkedin.restli.restspec.ParameterSchema;
 import com.linkedin.restli.restspec.ResourceSchema;
 import com.linkedin.restli.restspec.RestSpecCodec;
 import com.linkedin.restli.restspec.SimpleSchema;
+import com.linkedin.util.CustomTypeUtil;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -365,7 +366,7 @@ public class ResourceSchemaToResourceSpecTranslator
   {
     if (schema.getType() == DataSchema.Type.TYPEREF)
     {
-      Class<?> javaClass = TyperefUtils.getJavaClassForSchema((TyperefDataSchema) schema);
+      Class<?> javaClass = CustomTypeUtil.getJavaCustomTypeClassFromSchema((TyperefDataSchema) schema);
       if (javaClass != null) return javaClass;
     }
     DataSchema.Type dereferencedType = schema.getDereferencedType();

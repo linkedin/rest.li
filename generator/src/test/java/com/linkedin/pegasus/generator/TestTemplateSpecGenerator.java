@@ -12,11 +12,11 @@ import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.schema.UnionDataSchema;
 import com.linkedin.pegasus.generator.spec.RecordTemplateSpec;
 import com.linkedin.pegasus.generator.spec.UnionTemplateSpec;
+import com.linkedin.util.CustomTypeUtil;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -44,10 +44,12 @@ public class TestTemplateSpecGenerator
   {
     CUSTOM_TYPE_1 = new TyperefDataSchema(new Name("customType_1"));
     CUSTOM_TYPE_1.setReferencedType(DataSchemaUtil.classToPrimitiveDataSchema(String.class));
-    CUSTOM_TYPE_1.setProperties(Collections.singletonMap("java", new DataMap(Collections.singletonMap("class", CUSTOM_TYPE_NAME_1))));
+    CUSTOM_TYPE_1.setProperties(Collections.singletonMap(CustomTypeUtil.JAVA_PROPERTY,
+                                                         new DataMap(Collections.singletonMap(CustomTypeUtil.CLASS_PROPERTY, CUSTOM_TYPE_NAME_1))));
     CUSTOM_TYPE_2 = new TyperefDataSchema(new Name("customType_2"));
     CUSTOM_TYPE_2.setReferencedType(DataSchemaUtil.classToPrimitiveDataSchema(int.class));
-    CUSTOM_TYPE_2.setProperties(Collections.singletonMap("java", new DataMap(Collections.singletonMap("class", CUSTOM_TYPE_NAME_2))));
+    CUSTOM_TYPE_2.setProperties(Collections.singletonMap(CustomTypeUtil.JAVA_PROPERTY,
+                                                         new DataMap(Collections.singletonMap(CustomTypeUtil.CLASS_PROPERTY, CUSTOM_TYPE_NAME_2))));
   }
 
   private AtomicInteger _uniqueNumberGenerator;
@@ -81,7 +83,7 @@ public class TestTemplateSpecGenerator
     {
       Assert.assertNotNull(spec.getFields().get(i).getCustomInfo());
       Assert.assertEquals(spec.getFields().get(i).getCustomInfo().getCustomClass().getClassName(),
-                          ((Map<String, String>) customTypedSchemas.get(i).getProperties().get("java")).get("class"));
+                          CustomTypeUtil.getJavaCustomTypeClassNameFromSchema((TyperefDataSchema) customTypedSchemas.get(i)));
     }
   }
 
@@ -100,7 +102,7 @@ public class TestTemplateSpecGenerator
     {
       Assert.assertNotNull(spec.getMembers().get(i).getCustomInfo());
       Assert.assertEquals(spec.getMembers().get(i).getCustomInfo().getCustomClass().getClassName(),
-                          ((Map<String, String>) customTypedSchemas.get(i).getProperties().get("java")).get("class"));
+                          CustomTypeUtil.getJavaCustomTypeClassNameFromSchema((TyperefDataSchema) customTypedSchemas.get(i)));
     }
   }
 

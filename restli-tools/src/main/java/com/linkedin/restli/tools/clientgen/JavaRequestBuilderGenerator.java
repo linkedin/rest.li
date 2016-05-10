@@ -46,13 +46,14 @@ import com.linkedin.pegasus.generator.spec.ClassTemplateSpec;
 import com.linkedin.restli.client.OptionsRequestBuilder;
 import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.client.base.ActionRequestBuilderBase;
-import com.linkedin.restli.client.base.BatchCreateIdRequestBuilderBase;
 import com.linkedin.restli.client.base.BatchCreateIdEntityRequestBuilderBase;
+import com.linkedin.restli.client.base.BatchCreateIdRequestBuilderBase;
 import com.linkedin.restli.client.base.BatchDeleteRequestBuilderBase;
 import com.linkedin.restli.client.base.BatchGetEntityRequestBuilderBase;
 import com.linkedin.restli.client.base.BatchPartialUpdateRequestBuilderBase;
 import com.linkedin.restli.client.base.BatchUpdateRequestBuilderBase;
 import com.linkedin.restli.client.base.BuilderBase;
+import com.linkedin.restli.client.base.CreateIdEntityRequestBuilderBase;
 import com.linkedin.restli.client.base.CreateIdRequestBuilderBase;
 import com.linkedin.restli.client.base.DeleteRequestBuilderBase;
 import com.linkedin.restli.client.base.FindRequestBuilderBase;
@@ -60,7 +61,6 @@ import com.linkedin.restli.client.base.GetAllRequestBuilderBase;
 import com.linkedin.restli.client.base.GetRequestBuilderBase;
 import com.linkedin.restli.client.base.PartialUpdateRequestBuilderBase;
 import com.linkedin.restli.client.base.UpdateRequestBuilderBase;
-import com.linkedin.restli.client.base.CreateIdEntityRequestBuilderBase;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.CompoundKey.TypeInfo;
@@ -71,7 +71,6 @@ import com.linkedin.restli.common.ResourceSpecImpl;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.common.validation.RestLiDataValidator;
 import com.linkedin.restli.internal.common.RestliVersion;
-import com.linkedin.restli.internal.common.TyperefUtils;
 import com.linkedin.restli.internal.common.URIParamUtils;
 import com.linkedin.restli.internal.server.model.ResourceModelEncoder;
 import com.linkedin.restli.internal.tools.RestLiToolsUtils;
@@ -91,6 +90,7 @@ import com.linkedin.restli.restspec.RestMethodSchema;
 import com.linkedin.restli.restspec.RestMethodSchemaArray;
 import com.linkedin.restli.restspec.RestSpecCodec;
 import com.linkedin.restli.restspec.SimpleSchema;
+import com.linkedin.util.CustomTypeUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -1542,7 +1542,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
       final TyperefDataSchema typerefDataSchema = (TyperefDataSchema) schema;
       if (typerefDataSchema.getDereferencedDataSchema().getType() != DataSchema.Type.UNION)
       {
-        final String javaClassNameFromSchema = TyperefUtils.getJavaClassNameFromSchema(typerefDataSchema);
+        final String javaClassNameFromSchema = CustomTypeUtil.getJavaCustomTypeClassNameFromSchema(typerefDataSchema);
         if (javaClassNameFromSchema != null)
         {
           binding.valueClass = getCodeModel().directClass(javaClassNameFromSchema);

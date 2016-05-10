@@ -48,7 +48,6 @@ import com.linkedin.restli.common.validation.CreateOnly;
 import com.linkedin.restli.common.validation.ReadOnly;
 import com.linkedin.restli.common.validation.RestLiDataValidator;
 import com.linkedin.restli.internal.common.ReflectionUtils;
-import com.linkedin.restli.internal.common.TyperefUtils;
 import com.linkedin.restli.internal.server.PathKeysImpl;
 import com.linkedin.restli.internal.server.RestLiInternalException;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor.InterfaceType;
@@ -102,6 +101,7 @@ import com.linkedin.restli.server.resources.ComplexKeyResourcePromise;
 import com.linkedin.restli.server.resources.ComplexKeyResourceTask;
 import com.linkedin.restli.server.resources.KeyValueResource;
 import com.linkedin.restli.server.resources.SingleObjectResource;
+import com.linkedin.util.CustomTypeUtil;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
@@ -1649,7 +1649,7 @@ public final class RestLiAnnotationReader
       TyperefDataSchema typerefSchema = (TyperefDataSchema) elementSchema;
       if (RestModelConstants.PRIMITIVE_DATA_SCHEMA_TYPE_ALLOWED_TYPES.containsKey(typerefSchema.getDereferencedType()))
       {
-        if (TyperefUtils.getJavaClassNameFromSchema(typerefSchema) != null)
+        if (CustomTypeUtil.getJavaCustomTypeClassNameFromSchema(typerefSchema) != null)
         {
           registerCoercer(typerefSchema);
         }
@@ -1677,7 +1677,7 @@ public final class RestLiAnnotationReader
     if (validTypes != null)
     {
       String javaClassNameFromSchema =
-          TyperefUtils.getJavaClassNameFromSchema(typerefSchema);
+          CustomTypeUtil.getJavaCustomTypeClassNameFromSchema(typerefSchema);
 
       if (javaClassNameFromSchema != null)
       {
@@ -1718,8 +1718,8 @@ public final class RestLiAnnotationReader
 
   private static void registerCoercer(final TyperefDataSchema schema)
   {
-    String coercerClassName = TyperefUtils.getCoercerClassFromSchema(schema);
-    String javaClassNameFromSchema = TyperefUtils.getJavaClassNameFromSchema(schema);
+    String coercerClassName = CustomTypeUtil.getJavaCoercerClassFromSchema(schema);
+    String javaClassNameFromSchema = CustomTypeUtil.getJavaCustomTypeClassNameFromSchema(schema);
 
     // initialize the custom class
     try

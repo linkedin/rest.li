@@ -43,6 +43,7 @@ import com.linkedin.pegasus.generator.spec.PrimitiveTemplateSpec;
 import com.linkedin.pegasus.generator.spec.RecordTemplateSpec;
 import com.linkedin.pegasus.generator.spec.TyperefTemplateSpec;
 import com.linkedin.pegasus.generator.spec.UnionTemplateSpec;
+import com.linkedin.util.CustomTypeUtil;
 
 import java.util.ArrayDeque;
 import java.util.Collection;
@@ -65,10 +66,6 @@ import org.slf4j.LoggerFactory;
 public class TemplateSpecGenerator
 {
   private static final Logger _log = LoggerFactory.getLogger(TemplateSpecGenerator.class);
-
-  private static final String CLASS_PROPERTY = "class";
-  private static final String JAVA_PROPERTY = "java";
-  private static final String COERCER_CLASS_PROPERTY = "coercerClass";
   private static final String ARRAY_SUFFIX = "Array";
   private static final String MAP_SUFFIX = "Map";
   private static final String[] SPECIAL_SUFFIXES = {ARRAY_SUFFIX, MAP_SUFFIX};
@@ -118,7 +115,7 @@ public class TemplateSpecGenerator
 
   public TemplateSpecGenerator(DataSchemaResolver schemaResolver)
   {
-    this(schemaResolver, JAVA_PROPERTY, DataTemplate.class.getPackage().getName());
+    this(schemaResolver, CustomTypeUtil.JAVA_PROPERTY, DataTemplate.class.getPackage().getName());
   }
 
   public TemplateSpecGenerator(DataSchemaResolver schemaResolver, String customTypeLanguage, String templatePackageName)
@@ -439,7 +436,7 @@ public class TemplateSpecGenerator
           throw new IllegalArgumentException(schema + " has \"" + customTypeLanguage + "\" property that is not a DataMap");
         }
         final DataMap map = (DataMap) java;
-        final Object custom = map.get(CLASS_PROPERTY);
+        final Object custom = map.get(CustomTypeUtil.CLASS_PROPERTY);
         if (custom != null) {
           if (custom.getClass() != String.class) {
             throw new IllegalArgumentException(schema + " has \"" + customTypeLanguage + "\" property with \"class\" that is not a string");
@@ -453,7 +450,7 @@ public class TemplateSpecGenerator
           }
         }
         // check for coercer class
-        final Object coercerClass = map.get(COERCER_CLASS_PROPERTY);
+        final Object coercerClass = map.get(CustomTypeUtil.COERCER_CLASS_PROPERTY);
         if (coercerClass != null) {
           if (coercerClass.getClass() != String.class) {
             throw new IllegalArgumentException(schema + " has \"" + customTypeLanguage + "\" property with \"coercerClass\" that is not a string");

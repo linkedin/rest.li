@@ -32,6 +32,7 @@ import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.TypeSpec;
+import com.linkedin.util.CustomTypeUtil;
 
 import java.util.List;
 import java.util.Map;
@@ -65,7 +66,7 @@ public class ResponseUtils
       result = ValueConverter.coerceString(rawKey, primitiveClass);
 
       // Identify the binding class for the typeref.
-      keyBindingClass = TyperefUtils.getJavaClassForSchema(schema);
+      keyBindingClass = CustomTypeUtil.getJavaCustomTypeClassFromSchema(schema);
       if(keyBindingClass == null)
       {
         keyBindingClass = primitiveClass;

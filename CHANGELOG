@@ -3,6 +3,9 @@
 (RB=720861)
 Fix missing custom information for record field and union member.
 
+(RB=723090)
+Refactor code related to custom type.
+
 6.0.4
 ------
 (RB=714504)
