@@ -13,8 +13,9 @@ import com.linkedin.r2.message.stream.StreamResponse;
 public interface StreamRequestHandler
 {
   /**
-   * Handles the supplied request and notifies the supplied callback upon completion.<p/>
+   * Handles the supplied request and notifies the supplied callback upon completion.
    *
+   * <p>
    * If this is a dispatcher, as defined in the class documentation, then this method should return
    * {@link com.linkedin.r2.message.rest.RestStatus#NOT_FOUND} if no handler can be found for the
    * request.

@@ -1,3 +1,6 @@
+6.0.6
+------
+
 6.0.5
 ------
 (RB=720861)
@@ -10,6 +13,9 @@ Refactor code related to custom type.
 Change the Pegasus compatibility checker to consider the addition of a 
 required field with a default as compatible and to consider setting a 
 default on an existing required field as backward incompatible.
+
+(RB=725964)
+Modifying tag to make javadoc generation happy
 
 6.0.4
 ------
