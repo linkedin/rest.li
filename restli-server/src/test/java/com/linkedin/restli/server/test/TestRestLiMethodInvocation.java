@@ -1869,12 +1869,28 @@ public class TestRestLiMethodInvocation
   {
     return new Object[][]
       {
-        { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+        {
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
           "/promisediscovereditems?ids[0].itemId=1&ids[0].type=2&ids[0].userId=3&ids[1].itemId=4&ids[1].type=5&ids[1].userId=6",
-          "{\"entities\":{\"itemId=1&type=2&userId=3\":{},\"itemId=4&type=5&userId=6\":{}}}" },
-        { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "{\"entities\":{\"itemId=1&type=2&userId=3\":{},\"itemId=4&type=5&userId=6\":{}}}"
+        },
+        // With entity key fields arranged in random order
+        {
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "/promisediscovereditems?ids[0].itemId=1&ids[0].type=2&ids[0].userId=3&ids[1].itemId=4&ids[1].type=5&ids[1].userId=6",
+          "{\"entities\":{\"type=2&userId=3&itemId=1\":{},\"userId=6&type=5&itemId=4\":{}}}"
+        },
+        {
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
           "/promisediscovereditems?ids=List((itemId:1,type:2,userId:3),(itemId:4,type:5,userId:6))",
-          "{\"entities\":{\"(itemId:1,type:2,userId:3)\":{},\"(itemId:4,type:5,userId:6)\":{}}}" },
+          "{\"entities\":{\"(itemId:1,type:2,userId:3)\":{},\"(itemId:4,type:5,userId:6)\":{}}}"
+        },
+        // With entity key fields arranged in random order
+        {
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "/promisediscovereditems?ids=List((itemId:1,type:2,userId:3),(itemId:4,type:5,userId:6))",
+          "{\"entities\":{\"(type:2,userId:3,itemId:1)\":{},\"(userId:6,type:5,itemId:4)\":{}}}"
+        }
       };
   }
 
@@ -1926,13 +1942,27 @@ public class TestRestLiMethodInvocation
   {
     return new Object[][]
       {
-        { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+        {
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
           "/promisediscovereditems?ids[0].itemId=1&ids[0].type=2&ids[0].userId=3&ids[1].itemId=4&ids[1].type=5&ids[1].userId=6",
           "{\"entities\":{\"itemId=1&type=2&userId=3\":{},\"itemId=4&type=5&userId=6\":{}}}"
         },
-        { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+        // With entity key fields arranged in random order
+        {
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "/promisediscovereditems?ids[0].itemId=1&ids[0].type=2&ids[0].userId=3&ids[1].itemId=4&ids[1].type=5&ids[1].userId=6",
+          "{\"entities\":{\"type=2&userId=3&itemId=1\":{},\"userId=6&type=5&itemId=4\":{}}}"
+        },
+        {
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
           "/promisediscovereditems?ids=List((itemId:1,type:2,userId:3),(itemId:4,type:5,userId:6))",
           "{\"entities\":{\"(itemId:1,type:2,userId:3)\":{},\"(itemId:4,type:5,userId:6)\":{}}}"
+        },
+        // With entity key fields arranged in random order
+        {
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "/promisediscovereditems?ids=List((itemId:1,type:2,userId:3),(itemId:4,type:5,userId:6))",
+          "{\"entities\":{\"(type:2,userId:3,itemId:1)\":{},\"(userId:6,type:5,itemId:4)\":{}}}"
         }
       };
   }
@@ -3779,12 +3809,28 @@ public class TestRestLiMethodInvocation
   {
     return new Object[][]
       {
-        { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+        {
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
           "/asyncfollows?ids=followeeID%3D2%26followerID%3D1&ids=followeeID%3D4%26followerID%3D3&ids=followeeID%3D6%26followerID%3D5))",
-          "{\"entities\":{\"followeeID=2&followerID=1\": {}, \"followeeID=4&followerID=3\": {}, \"followeeID=6&followerID=5\": {} }}" },
-        { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "{\"entities\":{\"followeeID=2&followerID=1\": {}, \"followeeID=4&followerID=3\": {}, \"followeeID=6&followerID=5\": {} }}"
+        },
+        // With entity and query parameter key fields arranged in random order
+        {
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "/asyncfollows?ids=followeeID%3D2%26followerID%3D1&ids=followerID%3D3%26followeeID%3D4&ids=followeeID%3D6%26followerID%3D5))",
+          "{\"entities\":{\"followerID=1&followeeID=2\": {}, \"followeeID=4&followerID=3\": {}, \"followerID=5&followeeID=6\": {} }}"
+        },
+        {
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
           "/asyncfollows?ids=List((followeeID:2,followerID:1),(followeeID:4,followerID:3),(followeeID:6,followerID:5))",
-          "{\"entities\":{\"(followeeID:2,followerID:1)\": {}, \"(followeeID:4,followerID:3)\": {}, \"(followeeID:6,followerID:5)\": {} }}" },
+          "{\"entities\":{\"(followeeID:2,followerID:1)\": {}, \"(followeeID:4,followerID:3)\": {}, \"(followeeID:6,followerID:5)\": {} }}"
+        },
+        // With entity and query parameter key fields arranged in random order
+        {
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "/asyncfollows?ids=List((followeeID:2,followerID:1),(followerID:3,followeeID:4),(followeeID:6,followerID:5))",
+          "{\"entities\":{\"(followerID:1,followeeID:2)\": {}, \"(followeeID:4,followerID:3)\": {}, \"(followerID:5,followeeID:6)\": {} }}"
+        },
       };
   }
 
@@ -3997,12 +4043,28 @@ public class TestRestLiMethodInvocation
   {
     return new Object[][]
       {
-        { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+        {
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
           "/promisediscovereditems?ids[0].itemId=1&ids[0].type=1&ids[0].userId=1&ids[1].itemId=2&ids[1].type=2&ids[1].userId=2&ids[2].itemId=3&ids[2].type=3&ids[2].userId=3",
-          "{\"entities\":{\"itemId=1&type=1&userId=1\":{}, \"itemId=2&type=2&userId=2\":{}, \"itemId=3&type=3&userId=3\":{} }}" },
-        { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "{\"entities\":{\"itemId=1&type=1&userId=1\":{}, \"itemId=2&type=2&userId=2\":{}, \"itemId=3&type=3&userId=3\":{} }}"
+        },
+        // With entity and query parameter key fields arranged in random order
+        {
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "/promisediscovereditems?ids[0].itemId=1&ids[0].type=1&ids[0].userId=1&ids[1].itemId=2&ids[1].type=2&ids[1].userId=2&ids[2].itemId=3&ids[2].type=3&ids[2].userId=3",
+          "{\"entities\":{\"type=1&userId=1&itemId=1\":{}, \"userId=2&itemId=2&type=2\":{}, \"userId=3&type=3&itemId=3\":{} }}"
+        },
+        {
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
           "/asyncdiscovereditems?ids=List((itemId:1,type:1,userId:1),(itemId:2,type:2,userId:2),(itemId:3,type:3,userId:3))",
-          "{\"entities\":{\"(itemId:1,type:1,userId:1)\":{}, \"(itemId:2,type:2,userId:2)\":{}, \"(itemId:3,type:3,userId:3)\": {} }}" },
+          "{\"entities\":{\"(itemId:1,type:1,userId:1)\":{}, \"(itemId:2,type:2,userId:2)\":{}, \"(itemId:3,type:3,userId:3)\": {} }}"
+        },
+        // With entity and query parameter key fields arranged in random order
+        {
+          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+          "/asyncdiscovereditems?ids=List((itemId:1,type:1,userId:1),(userId:2,type:2,itemId:2),(itemId:3,type:3,userId:3))",
+          "{\"entities\":{\"(type:1,userId:1,itemId:1)\":{}, \"(userId:2,itemId:2,type:2)\":{}, \"(userId:3,type:3,itemId:3)\": {} }}"
+        }
       };
   }
 
@@ -5152,6 +5214,6 @@ public class TestRestLiMethodInvocation
   {
     return new ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams>(
         new DiscoveredItemKey().setItemId(itemId).setType(type).setUserId(userId),
-        null);
+        new DiscoveredItemKeyParams());
   }
 }

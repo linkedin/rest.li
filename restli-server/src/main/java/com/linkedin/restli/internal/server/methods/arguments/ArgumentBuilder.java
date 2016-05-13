@@ -33,24 +33,31 @@ import com.linkedin.data.template.AbstractArrayTemplate;
 import com.linkedin.data.template.DataTemplate;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.DynamicRecordTemplate;
+import com.linkedin.data.template.InvalidAlternativeKeyException;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.TemplateRuntimeException;
 import com.linkedin.internal.common.util.CollectionUtils;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.BatchRequest;
 import com.linkedin.restli.common.ComplexResourceKey;
+import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ProtocolVersion;
+import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.common.TypeSpec;
+import com.linkedin.restli.internal.common.PathSegment;
 import com.linkedin.restli.internal.common.QueryParamsDataMap;
-import com.linkedin.restli.internal.common.URIParamUtils;
+import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.internal.server.model.Parameter;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
+import com.linkedin.restli.internal.server.model.ResourceModel;
+import com.linkedin.restli.internal.server.util.AlternativeKeyCoercerException;
 import com.linkedin.restli.internal.server.util.ArgumentUtils;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.internal.server.util.RestUtils;
 import com.linkedin.restli.common.validation.RestLiDataValidator;
+import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.PagingContext;
 import com.linkedin.restli.server.ResourceConfigException;
 import com.linkedin.restli.server.ResourceContext;
@@ -503,17 +510,19 @@ public class ArgumentBuilder
 
   /**
    * Convert a DataMap representation of a BatchRequest (string->record) into a Java Map
-   * appropriate for passing into application code.  Note that compound/complex keys are
-   * represented as their string encoding in the DataMap.  Since we have already parsed
-   * these keys, we simply try to match the string representations, rather than re-parsing.
+   * appropriate for passing into application code. Note that compound/complex keys are
+   * represented as their string encoding in the DataMap. This method will parse the string
+   * encoded keys to compare with the passed in keys from query parameters. During mismatch or
+   * duplication of keys in the DataMap, an error will be thrown.
    *
-   *
-   * @param data - the input DataMap to be converted
-   * @param valueClass - the RecordTemplate type of the values
-   * @param ids - the parsed batch ids from the request URI
-   * @return a map using appropriate key and value classes, or null if ids is null
+   * @param routingResult {@link RoutingResult} instance for the current request
+   * @param data The input DataMap to be converted
+   * @param valueClass The RecordTemplate type of the values
+   * @param ids The parsed batch ids from the request URI
+   * @return A map using appropriate key and value classes, or null if ids is null
    */
-  public static <R extends RecordTemplate> Map<Object, R> buildBatchRequestMap(final DataMap data,
+  static <R extends RecordTemplate> Map<Object, R> buildBatchRequestMap(final RoutingResult routingResult,
+                                                                               final DataMap data,
                                                                                final Class<R> valueClass,
                                                                                final Set<?> ids,
                                                                                final ProtocolVersion version)
@@ -525,36 +534,84 @@ public class ArgumentBuilder
 
     BatchRequest<R> batchRequest = new BatchRequest<R>(data, new TypeSpec<R>(valueClass));
 
-    Map<String, Object> parsedKeyMap = new HashMap<String, Object>();
-    for (Object o : ids)
-    {
-      parsedKeyMap.put(URIParamUtils.encodeKeyForBody(o, true, version), o);
-    }
-
     Map<Object, R> result =
       new HashMap<Object, R>(CollectionUtils.getMapInitialCapacity(batchRequest.getEntities().size(), 0.75f), 0.75f);
     for (Map.Entry<String, R> entry : batchRequest.getEntities().entrySet())
     {
-      Object key = parsedKeyMap.get(entry.getKey());
-      if (key == null)
+      Object typedKey = parseStringKey(entry.getKey(), routingResult, version);
+
+      if (result.containsKey(typedKey))
       {
         throw new RoutingException(
-          String.format("Batch request mismatch, URI keys: '%s'  Entity keys: '%s'",
-                        ids.toString(),
-                        batchRequest.getEntities().keySet().toString()),
+            String.format("Duplicate key in batch request body: '%s'", typedKey),
+            HttpStatus.S_400_BAD_REQUEST.getCode());
+      }
+
+      if (!ids.contains(typedKey))
+      {
+        throw new RoutingException(
+          String.format("Batch request mismatch. Entity key '%s' not found in the query parameter.", typedKey),
           HttpStatus.S_400_BAD_REQUEST.getCode());
       }
+
       R value = DataTemplateUtil.wrap(entry.getValue().data(), valueClass);
-      result.put(key, value);
+      result.put(typedKey, value);
     }
+
     if (!ids.equals(result.keySet()))
     {
       throw new RoutingException(
-        String.format("Batch request mismatch, URI keys: '%s'  Entity keys: '%s'",
+        String.format("Batch request mismatch. URI keys: '%s' Entity keys: '%s'",
                       ids.toString(),
                       result.keySet().toString()),
         HttpStatus.S_400_BAD_REQUEST.getCode());
     }
     return result;
+  }
+
+  /**
+   * Parses the provided string key value and returns its corresponding typed key instance.
+   *
+   * @param stringKey Key string from the entity body
+   * @param routingResult {@link RoutingResult} instance for the current request
+   * @param version {@link ProtocolVersion} instance of the current request
+   * @return An instance of key's corresponding type
+   */
+  static Object parseStringKey(final String stringKey, final RoutingResult routingResult,
+      final ProtocolVersion version)
+  {
+    ResourceModel resourceModel = routingResult.getResourceMethod().getResourceModel();
+    ResourceContext resourceContext = routingResult.getContext();
+
+    try
+    {
+      Key primaryKey = resourceModel.getPrimaryKey();
+      String altKeyName = resourceContext.getParameter(RestConstants.ALT_KEY_PARAM);
+
+      if (altKeyName != null)
+      {
+        return ArgumentUtils.translateFromAlternativeKey(
+            ArgumentUtils.parseAlternativeKey(stringKey, altKeyName, resourceModel, version),
+            altKeyName, resourceModel);
+      }
+      else if (ComplexResourceKey.class.equals(primaryKey.getType()))
+      {
+        return ComplexResourceKey.parseString(stringKey, resourceModel.getKeyKeyClass(),
+            resourceModel.getKeyParamsClass(), version);
+      }
+      else if (CompoundKey.class.equals(primaryKey.getType()))
+      {
+        return ArgumentUtils.parseCompoundKey(stringKey, resourceModel.getKeys(), version);
+      }
+      else
+      {
+        return ArgumentUtils.parseSimplePathKey(stringKey, resourceModel, version);
+      }
+    }
+    catch (InvalidAlternativeKeyException | AlternativeKeyCoercerException | PathSegment.PathSegmentSyntaxException | IllegalArgumentException e)
+    {
+      throw new RoutingException(String.format("Invalid key: '%s'", stringKey),
+          HttpStatus.S_400_BAD_REQUEST.getCode());
+    }
   }
 }

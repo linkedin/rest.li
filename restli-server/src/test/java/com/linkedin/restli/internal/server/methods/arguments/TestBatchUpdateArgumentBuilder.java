@@ -17,6 +17,7 @@
 package com.linkedin.restli.internal.server.methods.arguments;
 
 
+import com.linkedin.data.schema.IntegerDataSchema;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
@@ -31,12 +32,15 @@ import com.linkedin.restli.internal.server.model.Parameter;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.server.BatchUpdateRequest;
+import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiRequestData;
 import com.linkedin.restli.server.RoutingException;
 
 import java.lang.annotation.Annotation;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -55,6 +59,9 @@ import static org.testng.Assert.fail;
  */
 public class TestBatchUpdateArgumentBuilder
 {
+  private static final String ERROR_MESSAGE_BATCH_KEYS_MISMATCH = "Batch request mismatch";
+  private static final String ERROR_MESSAGE_DUPLICATE_BATCH_KEYS = "Duplicate key in batch request";
+
   @DataProvider(name = "argumentData")
   private Object[][] argumentData()
   {
@@ -68,30 +75,40 @@ public class TestBatchUpdateArgumentBuilder
         {
             {
                 AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+                new Key("integerKey", Integer.class, new IntegerDataSchema()),
+                null,
                 "{\"entities\":{\"10001\":{\"b\":123,\"a\":\"abc\"}," +
                     "\"10002\":{\"b\":456,\"a\":\"XY\"}}}",
                 new Object[]{10001, 10002}
             },
             {
                 AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+                new Key("compoundKey", CompoundKey.class, null),
+                new Key[] { new Key("string1", String.class), new Key("string2", String.class) },
                 "{\"entities\":{\"string1=apples&string2=oranges\":{\"b\":123,\"a\":\"abc\"}," +
                     "\"string1=coffee&string2=tea\":{\"b\":456,\"a\":\"XY\"}}}",
                 compoundKeys
             },
             {
                 AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+                new Key("compoundKey", CompoundKey.class, null),
+                new Key[] { new Key("string1", String.class), new Key("string2", String.class) },
                 "{\"entities\":{\"(string1:coffee,string2:tea)\":{\"b\":456,\"a\":\"XY\"}," +
                     "\"(string1:apples,string2:oranges)\":{\"b\":123,\"a\":\"abc\"}}}",
                 compoundKeys
             },
             {
                 AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+                new Key("complexKey", ComplexResourceKey.class, null),
+                null,
                 "{\"entities\":{\"a=A1&b=111\":{\"b\":123,\"a\":\"abc\"}," +
                     "\"a=A2&b=222\":{\"b\":456,\"a\":\"XY\"}}}",
                 complexResourceKeys
             },
             {
                 AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+                new Key("complexKey", ComplexResourceKey.class, null),
+                null,
                 "{\"entities\":{\"($params:(),a:A2,b:222)\":{\"b\":456,\"a\":\"XY\"}," +
                     "\"($params:(),a:A1,b:111)\":{\"b\":123,\"a\":\"abc\"}}}",
                 complexResourceKeys
@@ -100,10 +117,11 @@ public class TestBatchUpdateArgumentBuilder
   }
 
   @Test(dataProvider = "argumentData")
-  public void testArgumentBuilderSuccess(ProtocolVersion version, String requestEntity, Object[] keys)
+  public void testArgumentBuilderSuccess(ProtocolVersion version, Key primaryKey, Key[] associationKeys, String requestEntity, Object[] keys)
   {
+    Set<Object> batchKeys = new HashSet<Object>(Arrays.asList(keys));
     RestRequest request = RestLiArgumentBuilderTestHelper.getMockRequest(requestEntity, version);
-    ResourceModel model = RestLiArgumentBuilderTestHelper.getMockResourceModel(MyComplexKey.class, null, false);
+    ResourceModel model = RestLiArgumentBuilderTestHelper.getMockResourceModel(MyComplexKey.class, primaryKey, associationKeys, batchKeys);
     @SuppressWarnings("rawtypes")
     Parameter<BatchUpdateRequest> param = new Parameter<BatchUpdateRequest>(
         "",
@@ -114,10 +132,10 @@ public class TestBatchUpdateArgumentBuilder
         Parameter.ParamType.BATCH,
         false,
         new AnnotationSet(new Annotation[]{}));
-    ResourceMethodDescriptor descriptor = RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor(model, param);
-    Set<Object> batchKeys = new HashSet<Object>(Arrays.asList(keys));
-    ResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(null, null, batchKeys, true);
-    RoutingResult routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(descriptor, 2, context, 2);
+    ResourceMethodDescriptor descriptor = RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor(
+        model, 3, Collections.singletonList(param));
+    ResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(batchKeys, true, false);
+    RoutingResult routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(descriptor, context);
 
     RestLiArgumentBuilder argumentBuilder = new BatchUpdateArgumentBuilder();
     RestLiRequestData requestData = argumentBuilder.extractRequestData(routingResult, request);
@@ -150,52 +168,100 @@ public class TestBatchUpdateArgumentBuilder
         {
             {
                 AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+                new Key("integerKey", Integer.class, new IntegerDataSchema()),
+                null,
                 "{\"entities\":{\"10001\":{\"b\":123,\"a\":\"abc\"}," +
                     "\"10002\":{\"b\":456,\"a\":\"XY\"}}}",
-                new Object[]{10001, 99999}
+                new Object[]{10001, 99999},
+                ERROR_MESSAGE_BATCH_KEYS_MISMATCH
             },
             {
                 AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+                new Key("integerKey", Integer.class, new IntegerDataSchema()),
+                null,
                 "{\"entities\":{\"10001\":{\"b\":123,\"a\":\"abc\"}," +
                     "\"99999\":{\"b\":456,\"a\":\"XY\"}}}",
-                new Object[]{10001, 10002}
+                new Object[]{10001, 10002},
+                ERROR_MESSAGE_BATCH_KEYS_MISMATCH
             },
             {
                 AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+                new Key("integerKey", Integer.class, new IntegerDataSchema()),
+                null,
                 "{\"entities\":{\"10001\":{\"b\":123,\"a\":\"abc\"}," +
                     "\"10002\":{\"b\":456,\"a\":\"XY\"}}}",
-                new Object[]{10001, 10002, 10003}
+                new Object[]{10001, 10002, 10003},
+                ERROR_MESSAGE_BATCH_KEYS_MISMATCH
             },
             {
                 AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+                new Key("compoundKey", CompoundKey.class, null),
+                new Key[] { new Key("string1", String.class), new Key("string2", String.class) },
                 "{\"entities\":{\"string1=apples&string2=oranges\":{\"b\":123,\"a\":\"abc\"}," +
                     "\"string1=coffee&string2=tea\":{\"b\":456,\"a\":\"XY\"}}}",
-                compoundKeys
+                compoundKeys,
+                ERROR_MESSAGE_BATCH_KEYS_MISMATCH
+            },
+            {
+                // Duplicate key in the entities body
+                AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+                new Key("compoundKey", CompoundKey.class, null),
+                new Key[] { new Key("string1", String.class), new Key("string2", String.class) },
+                "{\"entities\":{\"string1=coffee&string2=tea\":{\"b\":123,\"a\":\"abc\"}," +
+                    "\"string2=tea&string1=coffee\":{\"b\":456,\"a\":\"XY\"}}}",
+                compoundKeys,
+                ERROR_MESSAGE_DUPLICATE_BATCH_KEYS
             },
             {
                 AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+                new Key("compoundKey", CompoundKey.class, null),
+                new Key[] { new Key("string1", String.class), new Key("string2", String.class) },
                 "{\"entities\":{\"(string1:coffee,string2:tea)\":{\"b\":456,\"a\":\"XY\"}," +
                     "\"(string1:apples,string2:oranges)\":{\"b\":123,\"a\":\"abc\"}}}",
-                compoundKeys
+                compoundKeys,
+                ERROR_MESSAGE_BATCH_KEYS_MISMATCH
+            },
+            {
+                // Duplicate key in the entities body
+                AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+                new Key("compoundKey", CompoundKey.class, null),
+                new Key[] { new Key("string1", String.class), new Key("string2", String.class) },
+                "{\"entities\":{\"(string1:coffee,string2:tea)\":{\"b\":456,\"a\":\"XY\"}," +
+                    "\"(string2:tea,string1:coffee)\":{\"b\":123,\"a\":\"abc\"}}}",
+                compoundKeys,
+                ERROR_MESSAGE_DUPLICATE_BATCH_KEYS
             },
             {
                 AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+                new Key("complexKey", ComplexResourceKey.class, null),
+                null,
                 "{\"entities\":{\"a=A1&b=999\":{\"b\":123,\"a\":\"abc\"}," +
                     "\"a=A2&b=222\":{\"b\":456,\"a\":\"XY\"}}}",
-                complexResourceKeys
+                complexResourceKeys,
+                ERROR_MESSAGE_BATCH_KEYS_MISMATCH
+            },
+            {
+                // Duplicate key in the entities body
+                AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+                new Key("complexKey", ComplexResourceKey.class, null),
+                null,
+                "{\"entities\":{\"a=A1&b=111\":{\"b\":123,\"a\":\"abc\"}," +
+                    "\"b=111&a=A1\":{\"b\":456,\"a\":\"XY\"}}}",
+                complexResourceKeys,
+                ERROR_MESSAGE_DUPLICATE_BATCH_KEYS
             }
         };
   }
 
   @Test(dataProvider = "failureData")
-  public void testFailure(ProtocolVersion version, String requestEntity, Object[] keys)
+  public void testFailure(ProtocolVersion version, Key primaryKey, Key[] associationKeys, String requestEntity, Object[] keys, String errorMessage)
   {
-    RestRequest request = RestLiArgumentBuilderTestHelper.getMockRequest(requestEntity, version);
-    ResourceModel model = RestLiArgumentBuilderTestHelper.getMockResourceModel(MyComplexKey.class, null, false);
-    ResourceMethodDescriptor descriptor = RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor(model, 1, null);
     Set<Object> batchKeys = new HashSet<Object>(Arrays.asList(keys));
-    ServerResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(null, null, batchKeys, false);
-    RoutingResult routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(descriptor, 1, context, 1);
+    RestRequest request = RestLiArgumentBuilderTestHelper.getMockRequest(requestEntity, version);
+    ResourceModel model = RestLiArgumentBuilderTestHelper.getMockResourceModel(MyComplexKey.class, primaryKey, associationKeys, batchKeys);
+    ResourceMethodDescriptor descriptor = RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor(model);
+    ResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(batchKeys, false, false);
+    RoutingResult routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(descriptor, context);
 
     RestLiArgumentBuilder argumentBuilder = new BatchUpdateArgumentBuilder();
     try
@@ -205,7 +271,7 @@ public class TestBatchUpdateArgumentBuilder
     }
     catch (RoutingException e)
     {
-      assertTrue(e.getMessage().contains("Batch request mismatch"));
+      assertTrue(e.getMessage().contains(errorMessage));
     }
 
     verify(request, model, descriptor, context, routingResult);

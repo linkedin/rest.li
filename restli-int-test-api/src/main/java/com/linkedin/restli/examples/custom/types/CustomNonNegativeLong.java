@@ -52,7 +52,7 @@ public class CustomNonNegativeLong
   @Override
   public int hashCode()
   {
-    return super.hashCode();
+    return l.hashCode();
   }
 
 }

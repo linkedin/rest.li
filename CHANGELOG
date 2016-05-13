@@ -4,8 +4,12 @@
 
 6.0.7
 ------
+(RB=727062)
+Fixing the flawed comparision of keys on batch update/patch operations.
+
 (RB=730505)
 Added parseq_restClient into restli-int-test module.
+
 (RB=733000)
 Add HTTP_REQUEST_CONTENT_ENCODINGS to allowedClientPropertyKeys
 

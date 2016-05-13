@@ -18,12 +18,14 @@ package com.linkedin.restli.internal.server.methods.arguments;
 
 
 import com.linkedin.data.DataMap;
+import com.linkedin.data.schema.IntegerDataSchema;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ProtocolVersion;
+import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.common.test.MyComplexKey;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.server.RoutingResult;
@@ -31,13 +33,16 @@ import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.internal.server.model.AnnotationSet;
 import com.linkedin.restli.internal.server.model.Parameter;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
+import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.server.BatchPatchRequest;
+import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiRequestData;
 import com.linkedin.restli.server.RoutingException;
 
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -57,6 +62,9 @@ import static org.testng.Assert.fail;
  */
 public class TestBatchPatchArgumentBuilder
 {
+  private static final String ERROR_MESSAGE_BATCH_KEYS_MISMATCH = "Batch request mismatch";
+  private static final String ERROR_MESSAGE_DUPLICATE_BATCH_KEYS = "Duplicate key in batch request";
+
   @DataProvider(name = "argumentData")
   private Object[][] argumentData()
   {
@@ -90,6 +98,8 @@ public class TestBatchPatchArgumentBuilder
         {
             {
                 AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+                new Key("integerKey", Integer.class, new IntegerDataSchema()),
+                null,
                 "{\"entities\":{\"10001\":{\"patch\":{\"$set\":{\"a\":\"someString\"}}}," +
                     "\"10002\":{\"patch\":{\"$set\":{\"a\":\"someOtherString\"}}}}}",
                 new Object[]{10001, 10002},
@@ -97,6 +107,8 @@ public class TestBatchPatchArgumentBuilder
             },
             {
                 AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+                new Key("compoundKey", CompoundKey.class, null),
+                new Key[] { new Key("string1", String.class), new Key("string2", String.class) },
                 "{\"entities\":{\"string1=apples&string2=oranges\":{\"patch\":{\"$set\":{\"a\":\"someString\"}}}," +
                     "\"string1=coffee&string2=tea\":{\"patch\":{\"$set\":{\"a\":\"someOtherString\"}}}}}",
                 compoundKeys,
@@ -104,6 +116,8 @@ public class TestBatchPatchArgumentBuilder
             },
             {
                 AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+                new Key("compoundKey", CompoundKey.class, null),
+                new Key[] { new Key("string1", String.class), new Key("string2", String.class) },
                 "{\"entities\":{\"(string1:apples,string2:oranges)\":{\"patch\":{\"$set\":{\"a\":\"someString\"}}}," +
                     "\"(string1:coffee,string2:tea)\":{\"patch\":{\"$set\":{\"a\":\"someOtherString\"}}}}}",
                 compoundKeys,
@@ -111,6 +125,8 @@ public class TestBatchPatchArgumentBuilder
             },
             {
                 AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+                new Key("complexKey", ComplexResourceKey.class, null),
+                null,
                 "{\"entities\":{\"a=A1&b=111\":{\"patch\":{\"$set\":{\"a\":\"someString\"}}}," +
                     "\"a=A2&b=222\":{\"patch\":{\"$set\":{\"a\":\"someOtherString\"}}}}}",
                 complexResourceKeys,
@@ -118,6 +134,8 @@ public class TestBatchPatchArgumentBuilder
             },
             {
                 AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+                new Key("complexKey", ComplexResourceKey.class, null),
+                null,
                 "{\"entities\":{\"($params:(),a:A2,b:222)\":{\"patch\":{\"$set\":{\"a\":\"someOtherString\"}}}," +
                     "\"($params:(),a:A1,b:111)\":{\"patch\":{\"$set\":{\"a\":\"someString\"}}}}}",
                 complexResourceKeys,
@@ -127,9 +145,13 @@ public class TestBatchPatchArgumentBuilder
   }
 
   @Test(dataProvider = "argumentData")
-  public void testArgumentBuilderSuccess(ProtocolVersion version, String requestEntity, Object[] keys, PatchRequest<MyComplexKey>[] patches)
+  public void testArgumentBuilderSuccess(ProtocolVersion version, Key primaryKey, Key[] associationKeys,
+      String requestEntity, Object[] keys, PatchRequest<MyComplexKey>[] patches)
   {
+    Set<Object> batchKeys = new HashSet<Object>(Arrays.asList(keys));
     RestRequest request = RestLiArgumentBuilderTestHelper.getMockRequest(requestEntity, version);
+    ResourceModel model = RestLiArgumentBuilderTestHelper.getMockResourceModel(MyComplexKey.class, primaryKey, associationKeys, batchKeys);
+
     @SuppressWarnings("rawtypes")
     Parameter<BatchPatchRequest> param = new Parameter<BatchPatchRequest>(
       "",
@@ -140,10 +162,10 @@ public class TestBatchPatchArgumentBuilder
       Parameter.ParamType.BATCH,
       false,
       new AnnotationSet(new Annotation[]{}));
-    ResourceMethodDescriptor descriptor = RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor(null, param);
-    Set<Object> batchKeys = new HashSet<Object>(Arrays.asList(keys));
-    ResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(null, null, batchKeys, true);
-    RoutingResult routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(descriptor, 1, context, 2);
+    ResourceMethodDescriptor descriptor = RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor(
+        model, 2, Collections.singletonList(param));
+    ResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(batchKeys, true, false);
+    RoutingResult routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(descriptor, context);
 
     RestLiArgumentBuilder argumentBuilder = new BatchPatchArgumentBuilder();
     RestLiRequestData requestData = argumentBuilder.extractRequestData(routingResult, request);
@@ -175,56 +197,119 @@ public class TestBatchPatchArgumentBuilder
         {
             {
                 AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+                new Key("integerKey", Integer.class, new IntegerDataSchema()),
+                null,
                 "{\"entities\":{\"10001\":{\"patch\":{\"$set\":{\"a\":\"someString\"}}}," +
                     "\"10002\":{\"patch\":{\"$set\":{\"a\":\"someOtherString\"}}}}}",
-                new Object[]{10001, 99999}
+                new Object[]{10001, 99999},
+                ERROR_MESSAGE_BATCH_KEYS_MISMATCH
             },
             {
                 AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+                new Key("integerKey", Integer.class, new IntegerDataSchema()),
+                null,
                 "{\"entities\":{\"10001\":{\"patch\":{\"$set\":{\"a\":\"someString\"}}}," +
                     "\"99999\":{\"patch\":{\"$set\":{\"a\":\"someOtherString\"}}}}}",
-                new Object[]{10001, 10002}
+                new Object[]{10001, 10002},
+                ERROR_MESSAGE_BATCH_KEYS_MISMATCH
             },
             {
                 AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+                new Key("integerKey", Integer.class, new IntegerDataSchema()),
+                null,
                 "{\"entities\":{\"10001\":{\"patch\":{\"$set\":{\"a\":\"someString\"}}}," +
                     "\"10002\":{\"patch\":{\"$set\":{\"a\":\"someOtherString\"}}}}}",
-                new Object[]{10001, 10002, 10003}
+                new Object[]{10001, 10002, 10003},
+                ERROR_MESSAGE_BATCH_KEYS_MISMATCH
             },
             {
                 AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+                new Key("compoundKey", CompoundKey.class, null),
+                new Key[] { new Key("string1", String.class), new Key("string2", String.class) },
                 "{\"entities\":{\"string1=apples&string2=oranges\":{\"patch\":{\"$set\":{\"a\":\"someString\"}}}," +
                     "\"string1=coffee&string2=tea\":{\"patch\":{\"$set\":{\"a\":\"someOtherString\"}}}}}",
-                compoundKeys
+                compoundKeys,
+                ERROR_MESSAGE_BATCH_KEYS_MISMATCH
+            },
+            {
+                // Duplicate key in the entities body
+                AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+                new Key("compoundKey", CompoundKey.class, null),
+                new Key[] { new Key("string1", String.class), new Key("string2", String.class) },
+                "{\"entities\":{\"string1=apples&string2=oranges\":{\"patch\":{\"$set\":{\"a\":\"someString\"}}}," +
+                    "\"string2=oranges&string1=apples\":{\"patch\":{\"$set\":{\"a\":\"someOtherString\"}}}}}",
+                compoundKeys,
+                ERROR_MESSAGE_DUPLICATE_BATCH_KEYS
             },
             {
                 AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+                new Key("compoundKey", CompoundKey.class, null),
+                new Key[] { new Key("string1", String.class), new Key("string2", String.class) },
                 "{\"entities\":{\"(string1:apples,string2:oranges)\":{\"patch\":{\"$set\":{\"a\":\"someString\"}}}," +
                     "\"(string1:coffee,string2:tea)\":{\"patch\":{\"$set\":{\"a\":\"someOtherString\"}}}}}",
-                compoundKeys
+                compoundKeys,
+                ERROR_MESSAGE_BATCH_KEYS_MISMATCH
+            },
+            {
+                // Duplicate key in the entities body
+                AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+                new Key("compoundKey", CompoundKey.class, null),
+                new Key[] { new Key("string1", String.class), new Key("string2", String.class) },
+                "{\"entities\":{\"(string1:apples,string2:oranges)\":{\"patch\":{\"$set\":{\"a\":\"someString\"}}}," +
+                    "\"(string2:oranges,string1:apples)\":{\"patch\":{\"$set\":{\"a\":\"someOtherString\"}}}}}",
+                compoundKeys,
+                ERROR_MESSAGE_DUPLICATE_BATCH_KEYS
             },
             {
                 AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+                new Key("complexKey", ComplexResourceKey.class, null),
+                null,
                 "{\"entities\":{\"a=A1&b=111\":{\"patch\":{\"$set\":{\"a\":\"someString\"}}}," +
                     "\"a=A2&b=222\":{\"patch\":{\"$set\":{\"a\":\"someOtherString\"}}}}}",
-                complexResourceKeys
+                complexResourceKeys,
+                ERROR_MESSAGE_BATCH_KEYS_MISMATCH
+            },
+            {
+                // Duplicate key in the entities body
+                AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+                new Key("complexKey", ComplexResourceKey.class, null),
+                null,
+                "{\"entities\":{\"a=A2&b=222\":{\"patch\":{\"$set\":{\"a\":\"someString\"}}}," +
+                    "\"b=222&a=A2\":{\"patch\":{\"$set\":{\"a\":\"someOtherString\"}}}}}",
+                complexResourceKeys,
+                ERROR_MESSAGE_DUPLICATE_BATCH_KEYS
             },
             {
                 AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+                new Key("complexKey", ComplexResourceKey.class, null),
+                null,
                 "{\"entities\":{\"($params:(),a:A2,b:222)\":{\"patch\":{\"$set\":{\"a\":\"someOtherString\"}}}," +
                     "\"($params:(),a:A1,b:111)\":{\"patch\":{\"$set\":{\"a\":\"someString\"}}}}}",
-                complexResourceKeys
+                complexResourceKeys,
+                ERROR_MESSAGE_BATCH_KEYS_MISMATCH
+            },
+            {
+                // Duplicate key in the entities body
+                AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+                new Key("complexKey", ComplexResourceKey.class, null),
+                null,
+                "{\"entities\":{\"($params:(),a:A2,b:222)\":{\"patch\":{\"$set\":{\"a\":\"someOtherString\"}}}," +
+                    "\"($params:(),b:222,a:A2)\":{\"patch\":{\"$set\":{\"a\":\"someString\"}}}}}",
+                complexResourceKeys,
+                ERROR_MESSAGE_DUPLICATE_BATCH_KEYS
             }
         };
   }
 
   @Test(dataProvider = "failureData")
-  public void testFailure(ProtocolVersion version, String requestEntity, Object[] keys)
+  public void testFailure(ProtocolVersion version, Key primaryKey, Key[] associationKeys, String requestEntity, Object[] keys, String errorMessage)
   {
-    RestRequest request = RestLiArgumentBuilderTestHelper.getMockRequest(requestEntity, version);
     Set<Object> batchKeys = new HashSet<Object>(Arrays.asList(keys));
-    ServerResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(null, null, batchKeys, false);
-    RoutingResult routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(null, 0, context, 1);
+    RestRequest request = RestLiArgumentBuilderTestHelper.getMockRequest(requestEntity, version);
+    ResourceModel model = RestLiArgumentBuilderTestHelper.getMockResourceModel(MyComplexKey.class, primaryKey, associationKeys, batchKeys);
+    ResourceMethodDescriptor descriptor = RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor(model);
+    ResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(batchKeys, false, false);
+    RoutingResult routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(descriptor, context);
 
     RestLiArgumentBuilder argumentBuilder = new BatchPatchArgumentBuilder();
     try
@@ -234,7 +319,7 @@ public class TestBatchPatchArgumentBuilder
     }
     catch (RoutingException e)
     {
-      assertTrue(e.getMessage().contains("Batch request mismatch"));
+      assertTrue(e.getMessage().contains(errorMessage));
     }
 
     verify(request, context, routingResult);

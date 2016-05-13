@@ -22,6 +22,8 @@ import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.restli.common.ComplexResourceKey;
+import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.server.MutablePathKeys;
@@ -37,6 +39,7 @@ import com.linkedin.restli.server.ResourceContext;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -102,6 +105,41 @@ public class RestLiArgumentBuilderTestHelper
     return mockRequest;
   }
 
+  static ResourceModel getMockResourceModel(Class<? extends RecordTemplate> valueClass, Key key,
+      Key[] associationKeys, Set<Object> batchKeys)
+  {
+    ResourceModel model = createMock(ResourceModel.class);
+    if (valueClass != null)
+    {
+      expect((Class) model.getValueClass()).andReturn(valueClass);
+    }
+
+    // This conditional block to set the mock expectations doesn't explicitly take care of Alternate Key types yet.
+    if (key != null)
+    {
+      expect(model.getPrimaryKey()).andReturn(key).anyTimes();
+
+      if (CompoundKey.class.equals(key.getType()))
+      {
+        Set<Key> assocKeys = new HashSet<>();
+        Collections.addAll(assocKeys, associationKeys);
+        expect(model.getKeys()).andReturn(assocKeys).anyTimes();
+      }
+      else if (ComplexResourceKey.class.equals(key.getType()))
+      {
+        if (batchKeys != null && batchKeys.size() > 0)
+        {
+          ComplexResourceKey<? extends RecordTemplate, ? extends RecordTemplate> complexKey =
+              (ComplexResourceKey<? extends RecordTemplate, ? extends RecordTemplate>) batchKeys.toArray()[0];
+          expect((Class) model.getKeyKeyClass()).andReturn(complexKey.getKey().getClass()).anyTimes();
+          expect((Class) model.getKeyParamsClass()).andReturn(complexKey.getParams().getClass()).anyTimes();
+        }
+      }
+    }
+    replay(model);
+    return model;
+  }
+
   public static ResourceModel getMockResourceModel(Class<? extends RecordTemplate> valueClass, Key key, boolean returnNullKey)
   {
     ResourceModel model = createMock(ResourceModel.class);
@@ -129,6 +167,17 @@ public class RestLiArgumentBuilderTestHelper
       paramList.add(param);
     }
     return getMockResourceMethodDescriptor(model, 1, paramList);
+  }
+
+  static ResourceMethodDescriptor getMockResourceMethodDescriptor(ResourceModel model)
+  {
+    ResourceMethodDescriptor descriptor = createMock(ResourceMethodDescriptor.class);
+    if (model != null)
+    {
+      expect(descriptor.getResourceModel()).andReturn(model).anyTimes();
+    }
+    replay(descriptor);
+    return descriptor;
   }
 
   public static ResourceMethodDescriptor getMockResourceMethodDescriptor(ResourceModel model, int getResourceModelCount, List<Parameter<?>> paramList)
@@ -171,6 +220,29 @@ public class RestLiArgumentBuilderTestHelper
     ResourceContext context = createMock(ResourceContext.class);
     PathKeysImpl pathKeys = new PathKeysImpl();
     expect(context.getPathKeys()).andReturn(pathKeys);
+    replay(context);
+    return context;
+  }
+
+  static ServerResourceContext getMockResourceContext(Set<Object> batchKeys, boolean attachmentReaderGetExpected, boolean hasAlternateKeyParam)
+  {
+    ServerResourceContext context = createMock(ServerResourceContext.class);
+    if (batchKeys != null)
+    {
+      PathKeysImpl pathKeys = new PathKeysImpl();
+      if (batchKeys != null)
+      {
+        pathKeys.setBatchKeys(batchKeys);
+      }
+      expect(context.getPathKeys()).andReturn(pathKeys);
+    }
+
+    if (attachmentReaderGetExpected)
+    {
+      expect(context.getRequestAttachmentReader()).andReturn(null);
+    }
+
+    expect(context.getParameter(RestConstants.ALT_KEY_PARAM)).andReturn(hasAlternateKeyParam ? "" : null).anyTimes();
     replay(context);
     return context;
   }
@@ -314,6 +386,21 @@ public class RestLiArgumentBuilderTestHelper
     if (context != null)
     {
       expect(mockRoutingResult.getContext()).andReturn(context).times(getContextCount);
+    }
+    replay(mockRoutingResult);
+    return mockRoutingResult;
+  }
+
+  static RoutingResult getMockRoutingResult(ResourceMethodDescriptor descriptor, ResourceContext context)
+  {
+    RoutingResult mockRoutingResult = createMock(RoutingResult.class);
+    if (descriptor != null)
+    {
+      expect(mockRoutingResult.getResourceMethod()).andReturn(descriptor).anyTimes();
+    }
+    if (context != null)
+    {
+      expect(mockRoutingResult.getContext()).andReturn(context).anyTimes();
     }
     replay(mockRoutingResult);
     return mockRoutingResult;
