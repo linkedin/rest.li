@@ -1596,7 +1596,7 @@ class PegasusPlugin implements Plugin<Project>
       endMessage.append("You may use \"-P${property}=ignore\" to ignore compatibility errors.\n")
     }
 
-    endMessage.append("Documentation: https://github.com/linkedin/rest.li/wiki/Resource-Compatibility-Checking")
+    endMessage.append("Documentation: https://github.com/linkedin/rest.li/wiki/Snapshots-and-Resource-Compatibility-Checking")
 
     currentMessage.append(endMessage)
   }

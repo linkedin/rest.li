@@ -3,6 +3,9 @@
 
 6.0.5
 ------
+(RB=729776)
+Fix the wiki link for resource compatibility checking in Pegasus plugin.
+
 (RB=720861)
 Fix missing custom information for record field and union member.
 
