@@ -1,5 +1,11 @@
+6.0.7
+------
+
+
 6.0.6
 ------
+(RB=721198)
+Optimize ZookeeperEphemeral to reduce to number of read request to zookeeper.
 
 6.0.5
 ------
