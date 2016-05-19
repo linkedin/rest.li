@@ -29,6 +29,7 @@ import com.linkedin.d2.balancer.strategies.degrader.DegraderConfigFactory;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyConfig;
 import com.linkedin.internal.common.util.CollectionUtils;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
+import com.linkedin.util.clock.Clock;
 import com.linkedin.util.clock.SystemClock;
 import com.linkedin.util.degrader.DegraderImpl;
 import java.net.URI;
@@ -885,6 +886,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
             }
             LoadBalancerStateItem<ServiceProperties> serviceProperties = _serviceProperties.get(serviceName);
             DegraderImpl.Config config = null;
+            Clock clk = SystemClock.instance();
 
             if (serviceProperties == null || serviceProperties.getProperty() == null ||
                 serviceProperties.getProperty().getDegraderProperties() == null)
@@ -898,6 +900,14 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
                   serviceProperties.getProperty().getDegraderProperties();
               config = DegraderConfigFactory.toDegraderConfig(degraderImplProperties);
             }
+            if (serviceProperties != null && serviceProperties.getProperty() != null &&
+                serviceProperties.getProperty().getLoadBalancerStrategyProperties() != null)
+            {
+              Map<String, Object> loadBalancerStrategyProperties =
+                  serviceProperties.getProperty().getLoadBalancerStrategyProperties();
+              clk = MapUtil.getWithDefault(loadBalancerStrategyProperties, PropertyKeys.CLOCK, SystemClock.instance(), Clock.class);
+            }
+
             long trackerClientInterval = getTrackerClientInterval (serviceProperties.getProperty());
             for (URI uri : discoveryProperties.Uris())
             {
@@ -909,6 +919,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
                     uri,
                     partitionDataMap,
                     config,
+                    clk,
                     trackerClientInterval);
 
                 if (client != null)
@@ -1155,7 +1166,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   }
 
   private TrackerClient getTrackerClient(String serviceName, URI uri, Map<Integer, PartitionData> partitionDataMap,
-                                         DegraderImpl.Config config, long callTrackerInterval)
+                                         DegraderImpl.Config config, Clock clk, long callTrackerInterval)
   {
     Map<String,TransportClient> clientsByScheme = _serviceClients.get(serviceName);
     if (clientsByScheme == null)
@@ -1174,8 +1185,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
             new Object[]{uri.getScheme(), serviceName, uri, partitionDataMap });
       return null;
     }
-    TrackerClient trackerClient = new TrackerClient(uri, partitionDataMap, client, SystemClock.instance(), config,
-                                                    callTrackerInterval);
+    TrackerClient trackerClient = new TrackerClient(uri, partitionDataMap, client, clk, config, callTrackerInterval);
     return trackerClient;
   }
 
@@ -1315,6 +1325,14 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
           + " for service name = " + serviceName + " so we'll set config to default");
     }
 
+    Clock clk = SystemClock.instance();
+    if (serviceProperties.getLoadBalancerStrategyProperties() != null)
+    {
+      Map<String, Object> loadBalancerStrategyProperties =
+          serviceProperties.getLoadBalancerStrategyProperties();
+      clk = MapUtil.getWithDefault(loadBalancerStrategyProperties, PropertyKeys.CLOCK, SystemClock.instance(), Clock.class);
+    }
+
     Map<URI,TrackerClient> newTrackerClients;
 
     // update all tracker clients to use new configs
@@ -1330,7 +1348,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
       for (URI uri : uris)
       {
         TrackerClient trackerClient = getTrackerClient(serviceName, uri, uriProperties.getPartitionDataMap(uri),
-                                                       config, trackerClientInterval);
+                                                       config, clk, trackerClientInterval);
         if (trackerClient != null)
         {
           newTrackerClients.put(uri, trackerClient);
