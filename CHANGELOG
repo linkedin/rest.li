@@ -1,7 +1,13 @@
+6.0.8
+------
+
+
 6.0.7
 ------
 (RB=730505)
 Added parseq_restClient into restli-int-test module.
+(RB=733000)
+Add HTTP_REQUEST_CONTENT_ENCODINGS to allowedClientPropertyKeys
 
 6.0.6
 ------
