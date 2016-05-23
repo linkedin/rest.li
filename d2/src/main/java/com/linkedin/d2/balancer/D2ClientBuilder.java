@@ -210,6 +210,12 @@ public class D2ClientBuilder
     return this;
   }
 
+  public D2ClientBuilder setUseNewEphemeralStoreWatcher(boolean useNewEphemeralStoreWatcher)
+  {
+    _config.useNewEphemeralStoreWatcher = useNewEphemeralStoreWatcher;
+    return this;
+  }
+
   private Map<String, TransportClientFactory> createDefaultTransportClientFactories()
   {
     final Map<String, TransportClientFactory> clientFactories = new HashMap<String, TransportClientFactory>();
