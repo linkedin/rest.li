@@ -1006,7 +1006,8 @@ public final class RestLiAnnotationReader
           throw new ResourceConfigException(buildMethodMessage(method)
               + " must annotate each parameter with @QueryParam, @ActionParam, @AssocKeyParam, @PagingContextParam, " +
               "@ProjectionParam, @MetadataProjectionParam, @PagingProjectionParam, @PathKeysParam, @HeaderParam, " +
-              "@CallbackParam, @ResourceContext, @ParSeqContextParam, @ValidatorParam or @RestLiAttachmentsParam");
+              "@CallbackParam, @ResourceContext, @ParSeqContextParam, @ValidatorParam, @RestLiAttachmentsParam, " +
+              "or @ValidateParam");
         }
       }
 

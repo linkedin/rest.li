@@ -98,6 +98,19 @@ public class TestRestLiParameterAnnotations
   }
 
   @Test
+  public void parametersAreAnnotated()
+  {
+    try {
+      RestLiAnnotationReader.processResource(ParamsNotAnnotatedFailureResource.class);
+      Assert.fail("Processing " + ParamsNotAnnotatedFailureResource.class.getName() + " should throw " +
+                      ResourceConfigException.class.getName());
+    }
+    catch (ResourceConfigException e) {
+      Assert.assertTrue(e.getMessage().contains("@ValidateParam"));
+    }
+  }
+
+  @Test
   public void multipleAttachmentParamsInvalid()
   {
     try
@@ -195,6 +208,13 @@ public class TestRestLiParameterAnnotations
                                          @RestLiAttachmentsParam RestLiAttachmentReader attachmentReaderB)
     {
     }
+  }
+
+  @RestLiCollection(name="paramsNotAnnotatedFailureResource")
+  private static class ParamsNotAnnotatedFailureResource extends CollectionResourceTemplate<String, EmptyRecord>
+  {
+    @RestMethod.Get
+    public ParamsNotAnnotatedFailureResource get(String key, Long dummyParam) { return null; }
   }
 
   @RestLiCollection(name="collectionSuccessResource")
