@@ -1,6 +1,11 @@
-6.0.8
+6.0.9
 ------
 
+
+6.0.8
+------
+(RB=736708)
+Add symlink support for Zk#getChildren with Children2Callback
 
 6.0.7
 ------

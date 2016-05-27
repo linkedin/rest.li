@@ -145,6 +145,30 @@ public class SymlinkAwareZooKeeperTest
   }
 
   @Test
+  public void testSymlinkGetChildren2()
+      throws InterruptedException, ExecutionException, IOException, KeeperException
+  {
+    final CountDownLatch latch = new CountDownLatch(1);
+    Stat expectedStat = _zkClient.getZooKeeper().exists("/foo/bar", false);
+    AsyncCallback.Children2Callback callback = new AsyncCallback.Children2Callback()
+    {
+      @Override
+      public void processResult(int rc, String path, Object ctx, List<String> children, Stat stat)
+      {
+        KeeperException.Code result = KeeperException.Code.get(rc);
+        Assert.assertEquals(result, KeeperException.Code.OK);
+        Assert.assertEquals(path, "/foo/$link");
+        Assert.assertEquals(children.size(), 10);
+        Assert.assertEquals(stat, expectedStat);
+        latch.countDown();
+      }
+    };
+    // symlink: /foo/$link -> /foo/bar
+    _zkClient.getZooKeeper().getChildren("/foo/$link", null, callback, null);
+    latch.await(30, TimeUnit.SECONDS);
+  }
+
+  @Test
   public void testMultiSymlink() throws InterruptedException
   {
     final CountDownLatch latch = new CountDownLatch(1);
@@ -483,6 +507,57 @@ public class SymlinkAwareZooKeeperTest
       @Override
       public void processResult(int rc, String path, Object ctx, List<String> children)
       {
+        latch1.countDown();
+      }
+    };
+    // set watcher to /foo/$link
+    _zkClient.getZooKeeper().getChildren("/foo/$link", watcher, callback, null);
+    latch1.await(30, TimeUnit.SECONDS);
+    // update symlink
+    _zkClient.setSymlinkData("/foo/$link", "/bar/foo", new FutureCallback<None>());
+    latch2.await(30, TimeUnit.SECONDS);
+    FutureCallback<None> fcb = new FutureCallback<None>();
+    // restore symlink
+    _zkClient.setSymlinkData("/foo/$link", "/foo/bar", fcb);
+    fcb.get();
+  }
+
+  // test children2Callback watcher
+  @Test
+  public void testSymlinkWithChildrenWatcher3()
+      throws ExecutionException, InterruptedException, KeeperException
+  {
+    final CountDownLatch latch1 = new CountDownLatch(1);
+    final CountDownLatch latch2 = new CountDownLatch(1);
+    Stat expectedStat1 = _zkClient.getZooKeeper().exists("/foo/bar", false);
+    Stat expectedStat2 = _zkClient.getZooKeeper().exists("/bar/foo", false);
+
+    final AsyncCallback.Children2Callback callback2 = new AsyncCallback.Children2Callback()
+    {
+      @Override
+      public void processResult(int rc, String path, Object ctx, List<String> children, Stat stat)
+      {
+        Assert.assertEquals(path, "/foo/$link");
+        Assert.assertEquals(children.size(), 5);
+        Assert.assertEquals(stat, expectedStat2);
+        latch2.countDown();
+      }
+    };
+    Watcher watcher = new Watcher()
+    {
+      @Override
+      public void process(WatchedEvent event)
+      {
+        Assert.assertEquals(event.getType(), Event.EventType.NodeChildrenChanged);
+        _zkClient.getZooKeeper().getChildren(event.getPath(), null, callback2, null);
+      }
+    };
+    AsyncCallback.Children2Callback callback = new AsyncCallback.Children2Callback()
+    {
+      @Override
+      public void processResult(int rc, String path, Object ctx, List<String> children, Stat stat)
+      {
+        Assert.assertEquals(stat, expectedStat1);
         latch1.countDown();
       }
     };

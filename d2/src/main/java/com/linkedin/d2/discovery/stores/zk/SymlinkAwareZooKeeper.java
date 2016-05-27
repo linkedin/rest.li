@@ -129,6 +129,20 @@ public class SymlinkAwareZooKeeper extends AbstractZooKeeper
   }
 
   @Override
+  public void getChildren(final String path, Watcher watcher, AsyncCallback.Children2Callback cb, Object ctx)
+  {
+    if (!SymlinkUtil.containsSymlink(path))
+    {
+      _zk.getChildren(path, watcher, cb, ctx);
+    }
+    else
+    {
+      SymlinkChildren2Callback compositeCallback = new SymlinkChildren2Callback(path, watcher, cb);
+      getChildren2(path, watcher != null ? compositeCallback : null, compositeCallback, ctx);
+    }
+  }
+
+  @Override
   public void getData(final String path, final boolean watch, final AsyncCallback.DataCallback cb, final Object ctx)
   {
     if (!SymlinkUtil.containsSymlink(path))
@@ -357,6 +371,51 @@ public class SymlinkAwareZooKeeper extends AbstractZooKeeper
     }
   }
 
+  private void getChildren2(final String path, final SymlinkWatcher watcher, final AsyncCallback.Children2Callback cb, final Object ctx)
+  {
+    int index = SymlinkUtil.firstSymlinkIndex(path);
+    if (index < 0)
+    {
+      _zk.getChildren(path, watcher, cb, ctx);
+    }
+    else
+    {
+      String symlink = path.substring(0, index);
+      final String remainPath = path.substring(index);
+      AsyncCallback.DataCallback resolveCallback = new AsyncCallback.DataCallback()
+      {
+        @Override
+        public void processResult(int rc, String path, Object ctx, byte data[], Stat stat)
+        {
+          KeeperException.Code result = KeeperException.Code.get(rc);
+          switch (result)
+          {
+            case OK:
+              try
+              {
+                String realPath = _serializer.fromBytes(data);
+                getChildren2(realPath + remainPath, watcher, cb, ctx);
+              }
+              catch (Exception e)
+              {
+                if (watcher != null) watcher.disable();
+                cb.processResult(KeeperException.Code.NONODE.intValue(), path, ctx, Collections.<String>emptyList(), null);
+                LOG.warn("Exception when resolving symlink: " + path, e);
+              }
+              break;
+
+            default:
+              if (watcher != null) watcher.disable();
+              cb.processResult(rc, path, ctx, Collections.<String>emptyList(), null);
+              break;
+          }
+        }
+      };
+      _zk.getData(symlink, watcher, resolveCallback, ctx);
+    }
+  }
+
+
   private abstract class SymlinkWatcher implements Watcher
   {
     protected final Watcher _watch;
@@ -469,6 +528,42 @@ public class SymlinkAwareZooKeeper extends AbstractZooKeeper
     public void processResult(int rc, String path, Object ctx, List<String> children)
     {
       _callback.processResult(rc, _rawPath, ctx, children);
+      _callbackInvoked = true;
+      // flush out the pending watch event if necessary.
+      if (_pendingEvent != null)
+      {
+        _watch.process(_pendingEvent);
+      }
+    }
+
+    @Override
+    public WatchedEvent newWatchedEvent(WatchedEvent event)
+    {
+      if (event.getType() == Event.EventType.NodeDataChanged)
+      {
+        return new WatchedEvent(Event.EventType.NodeChildrenChanged, event.getState(), _rawPath);
+      }
+      else
+      {
+        return new WatchedEvent(event.getType(), event.getState(), _rawPath);
+      }
+    }
+  }
+
+  private class SymlinkChildren2Callback extends SymlinkWatcher implements AsyncCallback.Children2Callback
+  {
+    private final Children2Callback _callback;
+
+    public SymlinkChildren2Callback(String rawPath, Watcher watch, Children2Callback cb)
+    {
+      super(watch, rawPath);
+      _callback = cb;
+    }
+
+    @Override
+    public void processResult(int rc, String path, Object ctx, List<String> children, Stat stat)
+    {
+      _callback.processResult(rc, _rawPath, ctx, children, stat);
       _callbackInvoked = true;
       // flush out the pending watch event if necessary.
       if (_pendingEvent != null)
