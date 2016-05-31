@@ -48,6 +48,14 @@ public interface DegraderControlMBean
   double getErrorRate();
   long   getOutstandingLatency();
   int    getOutstandingCount();
+  default boolean isHigh()
+  {
+    return false;
+  }
+  default boolean isLow()
+  {
+    return false;
+  }
 
   // Control attributes
 

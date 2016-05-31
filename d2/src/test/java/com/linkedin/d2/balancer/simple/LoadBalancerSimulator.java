@@ -31,20 +31,25 @@ import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
 import com.linkedin.util.clock.Clock;
 import java.net.URI;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Delayed;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.Assert;
@@ -81,7 +86,7 @@ public class LoadBalancerSimulator
   private final MockStore<UriProperties> _uriRegistry = new MockStore<>();
   private final SimpleLoadBalancer _loadBalancer;
 
-  private final DelayGenerator<URI> _delayGenerator;
+  private final TimedValueGenerator<String> _delayGenerator;
   private final QPSGenerator _qpsGenerator;
 
   private final ClockedExecutor _clockedExecutor;
@@ -94,8 +99,7 @@ public class LoadBalancerSimulator
   // How often to reschedule next set of requests
   private final long SCHEDULE_INTERVAL = DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS;
   /**
-   * Return the delay for each T object
-   * @param <T>
+   * Return the expected delay at the given time
    */
   interface DelayGenerator<T>
   {
@@ -110,8 +114,16 @@ public class LoadBalancerSimulator
     int nextQPS();
   }
 
+  /**
+   * For a stream of values which changes periodically, get the value at the specific time
+   */
+  interface TimedValueGenerator<T>
+  {
+    long getValue(T t,  long time, TimeUnit unit);
+  }
+
   LoadBalancerSimulator(ServiceProperties serviceProperties, ClusterProperties clusterProperties,
-      UriProperties uriProperties, DelayGenerator<URI> delayGenerator,
+      UriProperties uriProperties, TimedValueGenerator<String> delayGenerator,
       QPSGenerator qpsGenerator) throws ExecutionException, InterruptedException
   {
     _executorService = new SynchronousExecutorService();
@@ -122,6 +134,7 @@ public class LoadBalancerSimulator
     transportProperty.put("ClockedExecutor", _clockedExecutor);
     Map<String, Object> strategyProperty = new HashMap<>(serviceProperties.getLoadBalancerStrategyProperties());
     strategyProperty.put(PropertyKeys.CLOCK, _clockedExecutor);
+    strategyProperty.put(PropertyKeys.HTTP_LB_QUARANTINE_EXECUTOR_SERVICE, _clockedExecutor);
 
     ServiceProperties updatedServiceProperties = new ServiceProperties(serviceProperties.getServiceName(),
         serviceProperties.getClusterName(), serviceProperties.getPath(),
@@ -163,8 +176,8 @@ public class LoadBalancerSimulator
     balancerCallback.get();
 
     // schedule the RequestTask, which starts new set of requests repeatedly at the given interval
-    _clockedExecutor.scheduleWithFixDelay(new RequestTask(updatedServiceProperties.getServiceName()),
-        INIT_SCHEDULE_DELAY, SCHEDULE_INTERVAL);
+    _clockedExecutor.scheduleWithFixedDelay(new RequestTask(updatedServiceProperties.getServiceName()),
+        INIT_SCHEDULE_DELAY, SCHEDULE_INTERVAL, TimeUnit.MILLISECONDS);
   }
 
   public void shutdown() throws Exception
@@ -182,7 +195,7 @@ public class LoadBalancerSimulator
       Assert.fail("unable to shutdown state");
     }
 
-    _clockedExecutor.shutdown();
+    _log.info("LoadBalancer Shutdown @ {}", _clockedExecutor.currentTimeMillis());
   }
 
   /**
@@ -249,6 +262,16 @@ public class LoadBalancerSimulator
     return _clockedExecutor;
   }
 
+  public ScheduledExecutorService getExecutorService()
+  {
+    return _clockedExecutor;
+  }
+
+  public ClockedExecutor getClockedExecutor()
+  {
+    return _clockedExecutor;
+  }
+
   /**
    * Given a serviceName and partition number, return the hashring points for each URI
    * @param serviceName
@@ -263,9 +286,7 @@ public class LoadBalancerSimulator
     Map<URI, Integer> pointsMap = new HashMap<>();
     Iterator<URI> iter = ring.getIterator(0);
 
-    iter.forEachRemaining(uri -> {
-      pointsMap.compute(uri, (k, v) -> v == null ? 1: v + 1);
-    });
+    iter.forEachRemaining(uri -> pointsMap.compute(uri, (k, v) -> v == null ? 1: v + 1));
 
     return pointsMap;
   }
@@ -282,12 +303,17 @@ public class LoadBalancerSimulator
     try
     {
       Map<URI, Integer> points = getPoints(serviceName, partition);
-      return points.get(uri);
+      return points.getOrDefault(uri, 0);
     }
     catch (ServiceUnavailableException e)
     {
       return 0;
     }
+  }
+
+  public int getPoint(String serviceName, int partition, String uriString)
+  {
+    return getPoint(serviceName, partition, URI.create("http://" + uriString));
   }
 
   /**
@@ -367,26 +393,8 @@ public class LoadBalancerSimulator
         };
 
         URI clientUri = client.getUri();
-        Long delay = uriDelays.get(clientUri);
-        if (delay == null)
-        {
-          try
-          {
-            delay = _delayGenerator.nextDelay(clientUri);
-          }
-          catch (IllegalArgumentException e)
-          {
-            _log.error("Delay is not available for uri {}", clientUri);
-            return;
-          }
 
-          uriDelays.put(clientUri, delay);
-        }
-
-        // use the requestContext to pass in the delay that is expected for this request
-        requestContext.putLocalAttr("Delay", delay);
-
-        _log.debug("Adding trackerclient for {}, delay {} ", clientUri, delay);
+        _log.debug("Adding trackerclient for {}", clientUri);
 
         // Increase the counter for each URI
         _clientCounters.compute(clientUri, (k, v) -> v == null ? 1 : v + 1);
@@ -407,8 +415,9 @@ public class LoadBalancerSimulator
     public TransportClient getClient(Map<String, ? extends Object> properties)
     {
       ClockedExecutor clockedExecutor = (ClockedExecutor) properties.get("ClockedExecutor");
+      TimedValueGenerator<String> delayGen = (TimedValueGenerator<String>) properties.get("DelayGenerator");
 
-      return new DelayClient(clockedExecutor);
+      return new DelayClient(clockedExecutor, delayGen);
     }
 
     /**
@@ -416,11 +425,13 @@ public class LoadBalancerSimulator
      */
     private class DelayClient implements TransportClient
     {
-      private ClockedExecutor _clockedExecutor;
+      final private ClockedExecutor _clockedExecutor;
+      final private TimedValueGenerator<String> _delayGen;
 
-      DelayClient(ClockedExecutor executor)
+      DelayClient(ClockedExecutor executor, TimedValueGenerator<String> delayGen)
       {
         _clockedExecutor = executor;
+        _delayGen = delayGen;
       }
 
       @Override
@@ -438,7 +449,8 @@ public class LoadBalancerSimulator
           Map<String, String> wireAttrs,
           TransportCallback<RestResponse> callback)
       {
-        Long delay = (Long) requestContext.getLocalAttr("Delay");
+        Long delay = _delayGen.getValue(request.getURI().getAuthority(), _clockedExecutor.currentTimeMillis(),
+            TimeUnit.MILLISECONDS);
         _clockedExecutor.schedule(new Runnable() {
           @Override
           public void run()
@@ -446,7 +458,7 @@ public class LoadBalancerSimulator
             RestResponse restResponse = new RestResponseBuilder().setEntity(request.getURI().getRawPath().getBytes()).build();
             callback.onResponse(TransportResponseImpl.success(restResponse));
           }
-        }, delay);
+        }, delay, TimeUnit.MILLISECONDS);
       }
 
       @Override
@@ -466,7 +478,7 @@ public class LoadBalancerSimulator
   /**
    * A simulated service executor and clock
    */
-  private class ClockedExecutor implements Clock, Executor
+  public class ClockedExecutor implements Clock, ScheduledExecutorService
   {
     private volatile long _currentTimeMillis = 0l;
     private volatile Boolean _stopped = true;
@@ -505,9 +517,10 @@ public class LoadBalancerSimulator
           {
             _currentTimeMillis = expectTime;
           }
-          _log.debug("Processing task, total {}, time {}", _taskList.size(), _currentTimeMillis);
+          _log.debug("Processing task " + task.toString() + " total {}, time {}",
+              _taskList.size(), _currentTimeMillis);
           task.run();
-          if (task.repeatCount() > 0 && !_stopped)
+          if (task.repeatCount() > 0 && !task.isCancelled() && !_stopped)
           {
             task.reschedule(_currentTimeMillis);
             _taskList.add(task);
@@ -519,28 +532,47 @@ public class LoadBalancerSimulator
       return taskExecutor;
     }
 
-    public void schedule(Runnable cmd, long delay)
+    @Override
+    public ScheduledFuture<Void> schedule(Runnable cmd, long delay, TimeUnit unit)
     {
-      ClockedTask task = new ClockedTask(cmd, _currentTimeMillis + delay);
+      ClockedTask task = new ClockedTask("ScheduledTask", cmd, _currentTimeMillis + delay);
       _taskList.add(task);
+      return task;
     }
 
-    public void scheduleWithFixDelay(Runnable cmd, long initDelay, long interval)
+    @Override
+    public <Void> ScheduledFuture<Void> schedule(Callable<Void> callable, long delay, TimeUnit unit)
     {
-      ClockedTask task = new ClockedTask(cmd, _currentTimeMillis + initDelay, interval, Long.MAX_VALUE);
+      throw new IllegalArgumentException("Not supported yet!");
+    }
+
+    @Override
+    public ScheduledFuture<Void> scheduleAtFixedRate(Runnable command, long initialDelay,
+        long period, TimeUnit unit)
+    {
+      throw new IllegalArgumentException("Not supported yet!");
+    }
+
+    @Override
+    public ScheduledFuture<Void> scheduleWithFixedDelay(Runnable cmd, long initDelay, long interval,
+        TimeUnit unit)
+    {
+      ClockedTask task = new ClockedTask("scheduledWithDelayTask", cmd, _currentTimeMillis
+          + unit.convert(initDelay, TimeUnit.MILLISECONDS), interval, Long.MAX_VALUE);
       _taskList.add(task);
+      return task;
     }
 
     public void scheduleWithRepeat(Runnable cmd, long initDelay, long interval, long repeatTimes)
     {
-      ClockedTask task = new ClockedTask(cmd, _currentTimeMillis + initDelay, interval, repeatTimes);
+      ClockedTask task = new ClockedTask("scheduledWithRepeatTask", cmd, _currentTimeMillis + initDelay, interval, repeatTimes);
       _taskList.add(task);
     }
 
     @Override
     public void execute(Runnable cmd)
     {
-      ClockedTask task = new ClockedTask(cmd, _currentTimeMillis);
+      ClockedTask task = new ClockedTask("executTask", cmd, _currentTimeMillis);
       _taskList.add(task);
     }
 
@@ -549,10 +581,84 @@ public class LoadBalancerSimulator
       _stopped = true;
     }
 
-    public void shutdown() throws Exception
+    @Override
+    public void shutdown()
     {
       _stopped = true;
       _executorService.shutdown();
+    }
+
+    @Override
+    public List<Runnable> shutdownNow()
+    {
+      throw new IllegalArgumentException("Not supported yet!");
+    }
+
+    @Override
+    public boolean isShutdown()
+    {
+      return _stopped;
+    }
+
+    @Override
+    public boolean isTerminated()
+    {
+      return _stopped && _taskList.isEmpty();
+    }
+
+    @Override
+    public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException
+    {
+      runUntil(unit.convert(timeout, TimeUnit.MILLISECONDS));
+      return true;
+    }
+
+    @Override
+    public <T> Future<T> submit(Callable<T> task)
+    {
+      throw new IllegalArgumentException("Not supported yet!");
+    }
+
+    @Override
+    public <T> Future<T> submit(Runnable task, T result)
+    {
+      throw new IllegalArgumentException("Not supported yet!");
+    }
+
+    @Override
+    public Future<?> submit(Runnable task)
+    {
+      throw new IllegalArgumentException("Not supported yet!");
+    }
+
+    @Override
+    public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks)
+        throws InterruptedException
+    {
+      throw new IllegalArgumentException("Not supported yet!");
+    }
+
+    @Override
+    public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks,
+        long timeout, TimeUnit unit)
+        throws InterruptedException
+    {
+      throw new IllegalArgumentException("Not supported yet!");
+    }
+
+    @Override
+    public <T> T invokeAny(Collection<? extends Callable<T>> tasks)
+        throws InterruptedException, ExecutionException
+    {
+      throw new IllegalArgumentException("Not supported yet!");
+    }
+
+    @Override
+    public <T> T invokeAny(Collection<? extends Callable<T>> tasks,
+        long timeout, TimeUnit unit)
+        throws InterruptedException, ExecutionException, TimeoutException
+    {
+      throw new IllegalArgumentException("Not supported yet!");
     }
 
     @Override
@@ -561,45 +667,48 @@ public class LoadBalancerSimulator
       return _currentTimeMillis;
     }
 
-    private class ClockedTask implements Comparable<ClockedTask>, Runnable
+
+    @Override
+    public String toString()
     {
+      return "ClockedExecutor [_currentTimeMillis: " + _currentTimeMillis + "_taskList:"
+          + _taskList.stream().map(e -> e.toString()).collect(Collectors.joining(","));
+    }
+
+    private class ClockedTask implements Runnable, ScheduledFuture<Void>
+    {
+      final private String _name;
       private long _expectTimeMillis = 0l;
       private long _interval = 0l;
       private Runnable _task;
       private long _repeatTimes = 0l;
+      private CountDownLatch _done;
+      private boolean _cancelled = false;
 
-      ClockedTask(Runnable task, long scheduledTime)
+      ClockedTask(String name, Runnable task, long scheduledTime)
       {
-        this(task, scheduledTime, 0l, 0l);
+        this(name, task, scheduledTime, 0l, 0l);
       }
 
-      ClockedTask(Runnable task, long scheduledTime, long interval, long repeat)
+      ClockedTask(String name, Runnable task, long scheduledTime, long interval, long repeat)
       {
+        _name = name;
         _task = task;
         _expectTimeMillis = scheduledTime;
         _interval = interval;
         _repeatTimes = repeat;
-      }
-
-      @Override
-      public int compareTo(ClockedTask other)
-      {
-        if (this._expectTimeMillis > other._expectTimeMillis)
-        {
-          return 1;
-        } else if (this._expectTimeMillis < other._expectTimeMillis)
-        {
-          return -1;
-        } else
-        {
-          return 0;
-        }
+        _done = new CountDownLatch(1);
+        _cancelled = false;
       }
 
       @Override
       public void run()
       {
-        _task.run();
+        if (!_cancelled)
+        {
+          _task.run();
+          _done.countDown();
+        }
       }
 
       long repeatCount()
@@ -614,10 +723,66 @@ public class LoadBalancerSimulator
 
       void reschedule(long currentTime)
       {
-        if (currentTime >= _expectTimeMillis && _repeatTimes-- > 0)
+        if (!_cancelled && currentTime >= _expectTimeMillis && _repeatTimes-- > 0)
         {
           _expectTimeMillis += (_interval - (currentTime - _expectTimeMillis));
+          _done = new CountDownLatch(1);
         }
+      }
+
+      @Override
+      public boolean cancel(boolean mayInterruptIfRunning)
+      {
+        _cancelled = true;
+        if (_done.getCount() > 0)
+        {
+          _done.countDown();
+          return true;
+        }
+        return false;
+      }
+
+      @Override
+      public boolean isCancelled()
+      {
+        return _cancelled;
+      }
+
+      @Override
+      public boolean isDone()
+      {
+        return _done.getCount() == 0;
+      }
+
+      @Override
+      public Void get() throws InterruptedException
+      {
+        _done.await();
+        return null;
+      }
+      @Override
+      public Void get(long timeout, TimeUnit unit) throws InterruptedException
+      {
+        _done.await(timeout, unit);
+        return null;
+      }
+      @Override
+      public long getDelay(TimeUnit unit)
+      {
+        return unit.convert(_expectTimeMillis - _currentTimeMillis, TimeUnit.MILLISECONDS);
+      }
+
+      @Override
+      public int compareTo(Delayed other)
+      {
+        return (int) (getDelay(TimeUnit.MILLISECONDS) - other.getDelay(TimeUnit.MILLISECONDS));
+      }
+
+      @Override
+      public String toString()
+      {
+        return "ClockedTask [_name=" + _name + "_expectedTime=" + _expectTimeMillis
+            + "_repeatTimes=" + _repeatTimes + "_interval=" + _interval + "]";
       }
     }
   }

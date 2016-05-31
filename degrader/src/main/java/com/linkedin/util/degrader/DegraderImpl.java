@@ -446,7 +446,7 @@ public class DegraderImpl implements Degrader
     }
   }
 
-  private boolean isHigh()
+  protected boolean isHigh()
   {
     return (_callTrackerStats.getCallCount() >= adjustedMinCallCount() &&
             (_latency >= _config.getHighLatency() ||
@@ -455,7 +455,7 @@ public class DegraderImpl implements Degrader
             _outstandingLatency >= _config.getHighOutstanding());
   }
 
-  private boolean isLow()
+  protected boolean isLow()
   {
     return _callTrackerStats.getCallCount() >= adjustedMinCallCount() &&
            _latency <= _config.getLowLatency() &&

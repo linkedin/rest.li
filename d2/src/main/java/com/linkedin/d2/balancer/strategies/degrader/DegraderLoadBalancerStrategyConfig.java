@@ -18,12 +18,15 @@ package com.linkedin.d2.balancer.strategies.degrader;
 
 import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.util.hashing.MPConsistentHashRing;
+import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
+import com.linkedin.r2.message.rest.RestMethod;
 import java.util.Collections;
 import java.util.Map;
 
 import com.linkedin.common.util.MapUtil;
 import com.linkedin.util.clock.Clock;
 import com.linkedin.util.clock.SystemClock;
+import java.util.concurrent.ScheduledExecutorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,6 +71,17 @@ public class DegraderLoadBalancerStrategyConfig
   private final String _consistentHashAlgorithm;
   private final int _numProbes;
 
+  // The servicePath that is used to construct the URI for quarantine probing
+  private final String _servicePath;
+
+  // The configs for quarantine
+  private final double _quarantineMaxPercent;
+  private final ScheduledExecutorService _executorService;
+  private final HealthCheckOperations _healthCheckOperations;
+  private final String _healthCheckMethod;
+  private final String _healthCheckPath;
+  private final long _quarantineLatency;           // in Milliseconds
+
   public static final Clock DEFAULT_CLOCK = SystemClock.instance();
   public static final double DEFAULT_INITIAL_RECOVERY_LEVEL = 0.01;
   public static final double DEFAULT_RAMP_FACTOR = 1.0;
@@ -90,6 +104,13 @@ public class DegraderLoadBalancerStrategyConfig
 
   public static final int DEFAULT_NUM_PROBES = MPConsistentHashRing.DEFAULT_NUM_PROBES;
 
+  public static final double DEFAULT_QUARANTINE_MAXPERCENT = 0.0;  // 0 means disable quarantine
+  public static final long DEFAULT_QUARANTINE_REENTRY_TIME = 30000;  // Milliseconds
+  public static final int DEFAULT_QUARANTINE_CHECKNUM = 5;
+  public static final long DEFAULT_QUARANTINE_CHECK_INTERVAL = 1000; // Milliseconds
+  public static final long DEFAULT_QUARANTINE_LATENCY = 100;         // Milliseconds
+  public static final String DEFAULT_QUARANTINE_METHOD = RestMethod.OPTIONS;
+
   public DegraderLoadBalancerStrategyConfig(long updateIntervalMs)
   {
     this(updateIntervalMs, DEFAULT_UPDATE_ONLY_AT_INTERVAL, 100, null, Collections.<String, Object>emptyMap(),
@@ -97,8 +118,10 @@ public class DegraderLoadBalancerStrategyConfig
          DEFAULT_GLOBAL_STEP_UP, DEFAULT_GLOBAL_STEP_DOWN,
          DEFAULT_CLUSTER_MIN_CALL_COUNT_HIGH_WATER_MARK,
          DEFAULT_CLUSTER_MIN_CALL_COUNT_LOW_WATER_MARK,
-         DEFAULT_HASHRING_POINT_CLEANUP_RATE,
-         null, DEFAULT_NUM_PROBES);
+         DEFAULT_HASHRING_POINT_CLEANUP_RATE, null,
+         DEFAULT_NUM_PROBES, null,
+         DEFAULT_QUARANTINE_MAXPERCENT,
+         null, null, DEFAULT_QUARANTINE_METHOD, null, DEFAULT_QUARANTINE_LATENCY);
   }
 
   public DegraderLoadBalancerStrategyConfig(DegraderLoadBalancerStrategyConfig config)
@@ -119,7 +142,14 @@ public class DegraderLoadBalancerStrategyConfig
          config.getMinClusterCallCountLowWaterMark(),
          config.getHashRingPointCleanUpRate(),
          config.getConsistentHashAlgorithm(),
-         config.getNumProbes());
+         config.getNumProbes(),
+         config.getServicePath(),
+         config.getQuarantineMaxPercent(),
+         config.getExecutorService(),
+         config.getHealthCheckOperations(),
+         config.getHealthCheckMethod(),
+         config.getHealthCheckPath(),
+         config.getQuarantineLatency());
   }
 
   public DegraderLoadBalancerStrategyConfig(long updateIntervalMs,
@@ -138,7 +168,14 @@ public class DegraderLoadBalancerStrategyConfig
                                             long minCallCountLowWaterMark,
                                             double hashRingPointCleanUpRate,
                                             String consistentHashAlgorithm,
-                                            int numProbes)
+                                            int numProbes,
+                                            String path,
+                                            double quarantineMaxPercent,
+                                            ScheduledExecutorService executorService,
+                                            HealthCheckOperations healthCheckOperations,
+                                            String healthCheckMethod,
+                                            String healthCheckPath,
+                                            long quarantineLatency)
   {
     _updateIntervalMs = updateIntervalMs;
     _updateOnlyAtInterval = updateOnlyAtInterval;
@@ -157,6 +194,13 @@ public class DegraderLoadBalancerStrategyConfig
     _hashRingPointCleanUpRate = hashRingPointCleanUpRate;
     _consistentHashAlgorithm = consistentHashAlgorithm;
     _numProbes = numProbes;
+    _servicePath = path;
+    _quarantineMaxPercent = quarantineMaxPercent;
+    _executorService = executorService;
+    _healthCheckOperations = healthCheckOperations;
+    _healthCheckMethod = healthCheckMethod;
+    _healthCheckPath = healthCheckPath;
+    _quarantineLatency = quarantineLatency;
   }
 
   /**
@@ -178,6 +222,12 @@ public class DegraderLoadBalancerStrategyConfig
    * the value in ringRampFactor.
    */
   public static DegraderLoadBalancerStrategyConfig createHttpConfigFromMap(Map<String,Object> map)
+  {
+    return createHttpConfigFromMap(map, null, null);
+  }
+
+  public static DegraderLoadBalancerStrategyConfig createHttpConfigFromMap(Map<String,Object> map,
+      HealthCheckOperations healthCheckOperations, ScheduledExecutorService overrideExecutorService)
   {
     Clock clock = MapUtil.getWithDefault(map, PropertyKeys.CLOCK,
                                          DEFAULT_CLOCK, Clock.class);
@@ -233,12 +283,47 @@ public class DegraderLoadBalancerStrategyConfig
     Integer numProbes = MapUtil.getWithDefault(map, PropertyKeys.HTTP_LB_CONSISTENT_HASH_NUM_PROBES,
         DEFAULT_NUM_PROBES);
 
+    String servicePath = MapUtil.getWithDefault(map, PropertyKeys.PATH, null, String.class);
+
+    Double quarantineMaxPercent = MapUtil.getWithDefault(map, PropertyKeys.HTTP_LB_QUARANTINE_MAX_PERCENT,
+        DEFAULT_QUARANTINE_MAXPERCENT, Double.class);
+    ScheduledExecutorService executorService = MapUtil.getWithDefault(map,
+        PropertyKeys.HTTP_LB_QUARANTINE_EXECUTOR_SERVICE, null, ScheduledExecutorService.class);
+    String method = MapUtil.getWithDefault(map, PropertyKeys.HTTP_LB_QUARANTINE_METHOD, DEFAULT_QUARANTINE_METHOD, String.class);
+
+    Long quarantineLatency = MapUtil.getWithDefault(map, PropertyKeys.HTTP_LB_QUARANTINE_LATENCY,
+        DEFAULT_QUARANTINE_LATENCY, Long.class);
+
+    // health checking method can be customized from d2config.
+    // The supported format is "<Restli Method>:<URI path>". Both part are optional.
+    // If <Restli method> is missing, the default method is 'OPTIONS'. If the <URI path>
+    // is missing, the service path will be used. For example, "OPTIONS:" and
+    // "GET:/contextPath/service/resources/1234" are all valid settings. Specifically,
+    // "GET:/<contextPath>/admin" can be used for admin node health checking, where
+    // <contextPath> has to match the product-spec.json topology configuration.
+    String healthCheckMethod = method;
+    String healthCheckPath = null;
+    int idx = method.indexOf(':');
+    if (idx != -1)
+    {
+      // Currently allows user to specify any method for health checking (including non-idempotent one)
+      healthCheckMethod = method.substring(0, idx);
+      healthCheckPath = method.substring(idx + 1);
+    }
+    if (healthCheckMethod.isEmpty())
+    {
+      healthCheckMethod = DEFAULT_QUARANTINE_METHOD;
+    }
+
     return new DegraderLoadBalancerStrategyConfig(
         updateIntervalMs, updateOnlyAtInterval, pointsPerWeight, hashMethod, hashConfig,
         clock, initialRecoveryLevel, ringRampFactor, highWaterMark, lowWaterMark,
         globalStepUp, globalStepDown, minClusterCallCountHighWaterMark,
         minClusterCallCountLowWaterMark, hashRingPointCleanUpRate,
-        consistentHashAlgorithm, numProbes);
+        consistentHashAlgorithm, numProbes,
+        servicePath, quarantineMaxPercent,
+        overrideExecutorService != null ? overrideExecutorService : executorService,
+        healthCheckOperations, healthCheckMethod, healthCheckPath, quarantineLatency);
   }
 
   /**
@@ -330,6 +415,41 @@ public class DegraderLoadBalancerStrategyConfig
   public int getNumProbes()
   {
     return _numProbes;
+  }
+
+  public String getServicePath()
+  {
+    return _servicePath;
+  }
+
+  public double getQuarantineMaxPercent()
+  {
+    return _quarantineMaxPercent;
+  }
+
+  public ScheduledExecutorService getExecutorService()
+  {
+    return _executorService;
+  }
+
+  public HealthCheckOperations getHealthCheckOperations()
+  {
+    return _healthCheckOperations;
+  }
+
+  public String getHealthCheckMethod()
+  {
+    return _healthCheckMethod;
+  }
+
+  public String getHealthCheckPath()
+  {
+    return _healthCheckPath;
+  }
+
+  public long getQuarantineLatency()
+  {
+    return _quarantineLatency;
   }
 
   @Override

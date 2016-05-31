@@ -17,10 +17,12 @@ package com.linkedin.d2.balancer;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
 
+import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
 import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl;
 import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl.ComponentFactory;
 import com.linkedin.r2.transport.common.TransportClientFactory;
@@ -46,6 +48,8 @@ public class D2ClientConfig
   boolean isSymlinkAware = false;
   Map<String, Map<String, Object>> clientServicesConfig = Collections.<String, Map<String, Object>>emptyMap();
   boolean useNewEphemeralStoreWatcher = false;
+  HealthCheckOperations _healthCheckOperations = null;
+  ScheduledExecutorService _executorService = null;
 
   public D2ClientConfig()
   {
@@ -230,7 +234,7 @@ public class D2ClientConfig
         isSymlinkAware,
         clientServicesConfig,
         d2ServicePath,
-        false);
+        false, null, null);
   }
 
   public D2ClientConfig(String zkHosts,
@@ -251,7 +255,9 @@ public class D2ClientConfig
                         boolean isSymlinkAware,
                         Map<String, Map<String, Object>> clientServicesConfig,
                         String d2ServicePath,
-                        boolean useNewEphemeralStoreWatcher)
+                        boolean useNewEphemeralStoreWatcher,
+                        HealthCheckOperations healthCheckOperations,
+                        ScheduledExecutorService executorService)
   {
     this.zkHosts = zkHosts;
     this.zkSessionTimeoutInMs = zkSessionTimeoutInMs;
@@ -272,6 +278,8 @@ public class D2ClientConfig
     this.clientServicesConfig = clientServicesConfig;
     this.d2ServicePath = d2ServicePath;
     this.useNewEphemeralStoreWatcher = useNewEphemeralStoreWatcher;
+    this._healthCheckOperations = healthCheckOperations;
+    this._executorService = executorService;
   }
 
 }

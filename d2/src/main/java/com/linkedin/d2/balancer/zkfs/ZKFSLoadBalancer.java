@@ -150,7 +150,8 @@ public class ZKFSLoadBalancer
                           String basePath,
                           boolean shutdownAsynchronously)
   {
-    this(zkConnectString, sessionTimeout, initialZKTimeout, factory, zkFlagFile, basePath, shutdownAsynchronously, false);
+    this(zkConnectString, sessionTimeout, initialZKTimeout, factory, zkFlagFile, basePath, shutdownAsynchronously, false,
+        Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("D2 PropertyEventExecutor")));
   }
 
   /**
@@ -167,6 +168,8 @@ public class ZKFSLoadBalancer
    * @param shutdownAsynchronously if true, shutdown the zookeeper connection asynchronously.
    * @param isSymlinkAware if true, ZKConnection will be aware of and resolve the symbolic link for
    * any read operation.
+   * @param executor the scheduledExecutorService that is shared across the project
+   *
    * LoadBalancer instances
    */
   public ZKFSLoadBalancer(String zkConnectString,
@@ -176,7 +179,8 @@ public class ZKFSLoadBalancer
                           String zkFlagFile,
                           String basePath,
                           boolean shutdownAsynchronously,
-                          boolean isSymlinkAware)
+                          boolean isSymlinkAware,
+                          ScheduledExecutorService executor)
   {
     _connectString = zkConnectString;
     _sessionTimeout = sessionTimeout;
@@ -195,7 +199,7 @@ public class ZKFSLoadBalancer
     _shutdownAsynchronously = shutdownAsynchronously;
     _isSymlinkAware = isSymlinkAware;
 
-    _executor = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("D2 PropertyEventExecutor"));
+    _executor = executor;
     _keyMapper = new ConsistentHashKeyMapper(this, this);
     _delayedExecution = 1000;
   }

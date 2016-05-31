@@ -21,6 +21,7 @@ import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.clients.DynamicClient;
+import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
 import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
@@ -30,6 +31,7 @@ import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 
+import java.util.concurrent.ScheduledExecutorService;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
 import java.net.URI;
@@ -79,7 +81,9 @@ public class D2ClientBuilder
                   _config.isSymlinkAware,
                   _config.clientServicesConfig,
                   _config.d2ServicePath,
-                  _config.useNewEphemeralStoreWatcher);
+                  _config.useNewEphemeralStoreWatcher,
+                  _config._healthCheckOperations,
+                  _config._executorService);
 
     final LoadBalancerWithFacilities loadBalancer = loadBalancerFactory.create(cfg);
 
@@ -187,6 +191,17 @@ public class D2ClientBuilder
     return this;
   }
 
+  public D2ClientBuilder setHealthCheckOperations(HealthCheckOperations healthCheckOperations)
+  {
+    _config._healthCheckOperations = healthCheckOperations;
+    return this;
+  }
+
+  public D2ClientBuilder setExecutorService(ScheduledExecutorService executorService)
+  {
+    _config._executorService = executorService;
+    return this;
+  }
   /**
    * Specify {@link TransportClientFactory} to generate the client for specific protocol.
    * Caller is responsible to maintain the life cycle of the factories.

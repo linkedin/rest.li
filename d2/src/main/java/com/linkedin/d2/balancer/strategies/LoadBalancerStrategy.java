@@ -66,4 +66,11 @@ public interface LoadBalancerStrategy
   Ring<URI> getRing(long clusterGenerationId,
                     int partitionId,
                     List<TrackerClient> trackerClients);
+
+  /**
+   * Shutdown loadBalanceStrategy
+   */
+  default void shutdown()
+  {
+  }
 }

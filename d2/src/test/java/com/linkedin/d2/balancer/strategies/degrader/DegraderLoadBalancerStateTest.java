@@ -42,7 +42,8 @@ public class DegraderLoadBalancerStateTest
     final DegraderLoadBalancerState subject
         = new DegraderLoadBalancerStrategyV3
             (new DegraderLoadBalancerStrategyConfig(5000, true, 1, null, Collections.<String, Object>emptyMap(),
-                                                    clock, 1, 1, 1, 1, 1, 1, 1, 1, 0.2, null, 21),
+                                                    clock, 1, 1, 1, 1, 1, 1, 1, 1, 0.2, null, 21, null,
+                                                    0.1, null, null, null, null, 100),
              SERVICE_NAME, null).getState();
     Thread getPartition1 = new Thread()
     {
@@ -105,7 +106,8 @@ public class DegraderLoadBalancerStateTest
                                                   Collections.<URI, Integer>emptyMap(),
                                                   PartitionDegraderLoadBalancerState.Strategy.LOAD_BALANCE,
                                                   0, 0, Collections.<TrackerClient, Double>emptyMap(),
-                                                  SERVICE_NAME, Collections.<String, String>emptyMap(), 0);
+                                                  SERVICE_NAME, Collections.<String, String>emptyMap(), 0,
+                                                  Collections.emptyMap(), Collections.emptyMap());
   }
 
   private static List<PartitionDegraderLoadBalancerState> newPartitionStates(int numberOfPartitions)

@@ -29,6 +29,7 @@ import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.util.URIRequest;
 import com.linkedin.d2.balancer.util.hashing.Ring;
 import com.linkedin.d2.balancer.util.hashing.URIRegexHash;
+import com.linkedin.d2.balancer.util.healthcheck.TransportHealthCheck;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
@@ -126,6 +127,8 @@ public class DegraderLoadBalancerTest
     configMap.put(PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_POINTS_PER_WEIGHT, 120);
     DegraderLoadBalancerStrategyConfig config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(configMap);
     long clusterCallCount = 15;
+    Map<TrackerClient, DegraderLoadBalancerQuarantine> quarantineMap = new HashMap<>();
+    Map<TrackerClient, DegraderLoadBalancerQuarantine> quarantineStore = new HashMap<>();
 
     double currentOverrideDropRate = 0.4;
     boolean initialized = true;
@@ -327,7 +330,9 @@ public class DegraderLoadBalancerTest
             currentAverageClusterLatency,
             recoveryMap,
             name, null,
-            clusterCallCount);
+            clusterCallCount,
+            quarantineMap,
+            quarantineStore);
 
     DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState newStateV3 = new
             DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState(clusterGenerationId,
@@ -340,7 +345,9 @@ public class DegraderLoadBalancerTest
             currentAverageClusterLatency,
             recoveryMap,
             name, null,
-            clusterCallCount);
+            clusterCallCount,
+            quarantineMap,
+            quarantineStore);
 
     assertTrue(DegraderLoadBalancerStrategyV3.isOldStateTheSameAsNewState(oldStateV3, newStateV3));
 
@@ -354,7 +361,9 @@ public class DegraderLoadBalancerTest
             currentAverageClusterLatency,
             recoveryMap,
             name, null,
-            clusterCallCount);
+            clusterCallCount,
+            quarantineMap,
+            quarantineStore);
 
     assertTrue(DegraderLoadBalancerStrategyV3.isOldStateTheSameAsNewState(oldStateV3, newStateV3));
 
@@ -367,7 +376,9 @@ public class DegraderLoadBalancerTest
             currentOverrideDropRate,
             currentAverageClusterLatency,
             recoveryMap,
-            name, null, clusterCallCount);
+            name, null, clusterCallCount,
+            quarantineMap,
+            quarantineStore);
 
     assertTrue(DegraderLoadBalancerStrategyV3.isOldStateTheSameAsNewState(oldStateV3, newStateV3));
 
@@ -382,7 +393,10 @@ public class DegraderLoadBalancerTest
             currentAverageClusterLatency,
             recoveryMap,
             name, null,
-            clusterCallCount);
+            clusterCallCount,
+            quarantineMap,
+            quarantineStore);
+
     assertFalse(DegraderLoadBalancerStrategyV3.isOldStateTheSameAsNewState(oldStateV3, newStateV3));
 
     points.put(uri2, 50);
@@ -396,7 +410,10 @@ public class DegraderLoadBalancerTest
             currentOverrideDropRate + 0.4,
             currentAverageClusterLatency,
             recoveryMap,
-            name, null, clusterCallCount);
+            name, null, clusterCallCount,
+            quarantineMap,
+            quarantineStore);
+
     assertFalse(DegraderLoadBalancerStrategyV3.isOldStateTheSameAsNewState(oldStateV3, newStateV3));
 
     newStateV3 = new DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState(clusterGenerationId,
@@ -408,7 +425,10 @@ public class DegraderLoadBalancerTest
             currentOverrideDropRate,
             currentAverageClusterLatency + 55,
             recoveryMap,
-            name, null, clusterCallCount);
+            name, null, clusterCallCount,
+            quarantineMap,
+            quarantineStore);
+
     //we don't care about averageClusterLatency for comparing states
     assertTrue(DegraderLoadBalancerStrategyV3.isOldStateTheSameAsNewState(oldStateV3, newStateV3));
 
@@ -426,7 +446,10 @@ public class DegraderLoadBalancerTest
             currentOverrideDropRate,
             currentAverageClusterLatency,
             recoveryMap,
-            name, null, clusterCallCount);
+            name, null, clusterCallCount,
+            quarantineMap,
+            quarantineStore);
+
     assertFalse(DegraderLoadBalancerStrategyV3.isOldStateTheSameAsNewState(oldStateV3, newStateV3));
 
     //test state health comparison
@@ -444,7 +467,9 @@ public class DegraderLoadBalancerTest
             300,
             recoveryMap,
             name, null,
-            clusterCallCount);
+            clusterCallCount,
+            quarantineMap,
+            quarantineStore);
 
     assertFalse(DegraderLoadBalancerStrategyV3.isNewStateHealthy(newStateV3, config, clientUpdaters, DEFAULT_PARTITION_ID));
     //make all points to have 120 so the cluster becomes "healthy"
@@ -462,7 +487,10 @@ public class DegraderLoadBalancerTest
             300,
             recoveryMap,
             name, null,
-            clusterCallCount);
+            clusterCallCount,
+            quarantineMap,
+            quarantineStore);
+
     assertTrue(DegraderLoadBalancerStrategyV3.isNewStateHealthy(newStateV3, config, clientUpdaters, DEFAULT_PARTITION_ID));
 
     //if currentAverageClusterLatency is > low water mark then cluster becomes unhealthy
@@ -476,7 +504,10 @@ public class DegraderLoadBalancerTest
             currentAverageClusterLatency,
             recoveryMap,
             name, null,
-            clusterCallCount);
+            clusterCallCount,
+            quarantineMap,
+            quarantineStore);
+
 
     assertFalse(DegraderLoadBalancerStrategyV3.isNewStateHealthy(newStateV3, config, clientUpdaters, DEFAULT_PARTITION_ID));
   }
@@ -528,7 +559,14 @@ public class DegraderLoadBalancerTest
               config.getMinClusterCallCountLowWaterMark(),
               config.getHashRingPointCleanUpRate(),
               config.getConsistentHashAlgorithm(),
-              config.getNumProbes());
+              config.getNumProbes(),
+              config.getServicePath(),
+              config.getQuarantineMaxPercent(),
+              config.getExecutorService(),
+              config.getHealthCheckOperations(),
+              config.getHealthCheckMethod(),
+              config.getHealthCheckPath(),
+              config.getQuarantineLatency());
     }
 
     @Override
@@ -1745,7 +1783,9 @@ public class DegraderLoadBalancerTest
             new HashMap<TrackerClient, Double>(),
             "Test",
             current.getDegraderProperties(),
-            clusterCallCount);
+            clusterCallCount,
+            Collections.emptyMap(),
+            Collections.emptyMap());
     strategy.getState().setPartitionState(DEFAULT_PARTITION_ID, current);
 
     // state is not null, but we're on the same cluster generation id, and 5 seconds
@@ -1766,7 +1806,10 @@ public class DegraderLoadBalancerTest
             new HashMap<TrackerClient, Double>(),
             "Test",
             current.getDegraderProperties(),
-            clusterCallCount);
+            clusterCallCount,
+            Collections.emptyMap(),
+            Collections.emptyMap());
+
     strategy.getState().setPartitionState(DEFAULT_PARTITION_ID, current);
 
     // state is not null, and cluster generation has changed so we will update
@@ -1786,7 +1829,10 @@ public class DegraderLoadBalancerTest
             new HashMap<TrackerClient, Double>(),
             "Test",
             current.getDegraderProperties(),
-            clusterCallCount);
+            clusterCallCount,
+            Collections.emptyMap(),
+            Collections.emptyMap());
+
     strategy.getState().setPartitionState(DEFAULT_PARTITION_ID, current);
 
     testClock.addMs(5000);
@@ -1805,7 +1851,10 @@ public class DegraderLoadBalancerTest
             new HashMap<TrackerClient, Double>(),
             "Test",
             current.getDegraderProperties(),
-            clusterCallCount);
+            clusterCallCount,
+            Collections.emptyMap(),
+            Collections.emptyMap());
+
     strategy.getState().setPartitionState(DEFAULT_PARTITION_ID, current);
 
     // now try a new cluster generation id so state will be updated again
@@ -1858,7 +1907,10 @@ public class DegraderLoadBalancerTest
             new HashMap<TrackerClient, Double>(),
             "Test",
             current.getDegraderProperties(),
-            clusterCallCount);
+            clusterCallCount,
+            Collections.emptyMap(),
+            Collections.emptyMap());
+
     strategy.getState().setPartitionState(DEFAULT_PARTITION_ID, current);
   }
 
@@ -1926,10 +1978,14 @@ public class DegraderLoadBalancerTest
                     DegraderLoadBalancerStrategyConfig.DEFAULT_GLOBAL_STEP_DOWN,
                     DegraderLoadBalancerStrategyConfig.DEFAULT_CLUSTER_MIN_CALL_COUNT_HIGH_WATER_MARK,
                     DegraderLoadBalancerStrategyConfig.DEFAULT_CLUSTER_MIN_CALL_COUNT_LOW_WATER_MARK,
-                    DegraderLoadBalancerStrategyConfig.DEFAULT_HASHRING_POINT_CLEANUP_RATE,
-                    null,
-                    DegraderLoadBalancerStrategyConfig.DEFAULT_NUM_PROBES),
-            "DegraderLoadBalancerTest", null);
+                    DegraderLoadBalancerStrategyConfig.DEFAULT_HASHRING_POINT_CLEANUP_RATE, null,
+                    DegraderLoadBalancerStrategyConfig.DEFAULT_NUM_PROBES, null,
+                    DegraderLoadBalancerStrategyConfig.DEFAULT_QUARANTINE_MAXPERCENT,
+                    null, null,
+                    DegraderLoadBalancerStrategyConfig.DEFAULT_QUARANTINE_METHOD, null,
+                    DegraderLoadBalancerStrategyConfig.DEFAULT_QUARANTINE_LATENCY),
+               "DegraderLoadBalancerTest", null);
+
     List<TrackerClient> clients = new ArrayList<TrackerClient>(NUM_SERVERS);
 
     for (int i = 0; i < NUM_SERVERS; i++)
@@ -3812,6 +3868,84 @@ public class DegraderLoadBalancerTest
     // update the hash ring we should get the results as well
     assertNotNull(getTrackerClient(strategy, null, new RequestContext(), 1, clients));
   }
+
+  /**
+   * DegraderLoadBalancerQuarantineTest
+   */
+  @Test(groups = { "small", "back-end" })
+  public void DegraderLoadBalancerQuarantineTest()
+  {
+    DegraderLoadBalancerStrategyConfig config = new DegraderLoadBalancerStrategyConfig(1000);
+    Map<Integer, PartitionData> partitionDataMap = new HashMap<Integer, PartitionData>(2);
+    TestClock clock = new TestClock();
+    DegraderImpl.Config degraderConfig = DegraderConfigFactory.toDegraderConfig(Collections.emptyMap());
+    List<TrackerClient> trackerClients = createTrackerClient(3, clock, degraderConfig);
+    TrackerClientUpdater trackerClientUpdater = new TrackerClientUpdater(trackerClients.get(0), DEFAULT_PARTITION_ID);
+
+    DegraderLoadBalancerQuarantine quarantine = new DegraderLoadBalancerQuarantine(trackerClientUpdater, config);
+    TransportHealthCheck healthCheck = (TransportHealthCheck) quarantine.getHealthCheckClient();
+    RestRequest restRequest = healthCheck.getRestRequest();
+
+    Assert.assertTrue(restRequest.getURI().equals(URI.create("http://test.linkedin.com:10010/abc0")));
+    Assert.assertTrue(restRequest.getMethod().equals("OPTIONS"));
+
+    DegraderLoadBalancerStrategyConfig config1 = new DegraderLoadBalancerStrategyConfig(
+        1000, DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_ONLY_AT_INTERVAL,
+        100, null, Collections.<String, Object>emptyMap(),
+        DegraderLoadBalancerStrategyConfig.DEFAULT_CLOCK,
+        DegraderLoadBalancerStrategyConfig.DEFAULT_INITIAL_RECOVERY_LEVEL,
+        DegraderLoadBalancerStrategyConfig.DEFAULT_RAMP_FACTOR,
+        DegraderLoadBalancerStrategyConfig.DEFAULT_HIGH_WATER_MARK,
+        DegraderLoadBalancerStrategyConfig.DEFAULT_LOW_WATER_MARK,
+        DegraderLoadBalancerStrategyConfig.DEFAULT_GLOBAL_STEP_UP,
+        DegraderLoadBalancerStrategyConfig.DEFAULT_GLOBAL_STEP_DOWN,
+        DegraderLoadBalancerStrategyConfig.DEFAULT_CLUSTER_MIN_CALL_COUNT_HIGH_WATER_MARK,
+        DegraderLoadBalancerStrategyConfig.DEFAULT_CLUSTER_MIN_CALL_COUNT_LOW_WATER_MARK,
+        DegraderLoadBalancerStrategyConfig.DEFAULT_HASHRING_POINT_CLEANUP_RATE, null,
+        DegraderLoadBalancerStrategyConfig.DEFAULT_NUM_PROBES, null,
+        DegraderLoadBalancerStrategyConfig.DEFAULT_QUARANTINE_MAXPERCENT,
+        null, null, "GET", "/test/admin",
+        DegraderLoadBalancerStrategyConfig.DEFAULT_QUARANTINE_LATENCY);
+
+    quarantine = new DegraderLoadBalancerQuarantine(trackerClientUpdater, config1);
+    healthCheck = (TransportHealthCheck) quarantine.getHealthCheckClient();
+    restRequest = healthCheck.getRestRequest();
+
+    TrackerClientUpdater updater1 = new TrackerClientUpdater(trackerClients.get(1), DEFAULT_PARTITION_ID);
+    quarantine = new DegraderLoadBalancerQuarantine(updater1, config1);
+    healthCheck = (TransportHealthCheck) quarantine.getHealthCheckClient();
+    restRequest = healthCheck.getRestRequest();
+
+    Assert.assertTrue(restRequest.getURI().equals(URI.create("http://test.linkedin.com:10010/test/admin")));
+    Assert.assertTrue(restRequest.getMethod().equals("GET"));
+
+    DegraderLoadBalancerStrategyConfig config2 = new DegraderLoadBalancerStrategyConfig(
+        1000, DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_ONLY_AT_INTERVAL,
+        100, null, Collections.<String, Object>emptyMap(),
+        DegraderLoadBalancerStrategyConfig.DEFAULT_CLOCK,
+        DegraderLoadBalancerStrategyConfig.DEFAULT_INITIAL_RECOVERY_LEVEL,
+        DegraderLoadBalancerStrategyConfig.DEFAULT_RAMP_FACTOR,
+        DegraderLoadBalancerStrategyConfig.DEFAULT_HIGH_WATER_MARK,
+        DegraderLoadBalancerStrategyConfig.DEFAULT_LOW_WATER_MARK,
+        DegraderLoadBalancerStrategyConfig.DEFAULT_GLOBAL_STEP_UP,
+        DegraderLoadBalancerStrategyConfig.DEFAULT_GLOBAL_STEP_DOWN,
+        DegraderLoadBalancerStrategyConfig.DEFAULT_CLUSTER_MIN_CALL_COUNT_HIGH_WATER_MARK,
+        DegraderLoadBalancerStrategyConfig.DEFAULT_CLUSTER_MIN_CALL_COUNT_LOW_WATER_MARK,
+        DegraderLoadBalancerStrategyConfig.DEFAULT_HASHRING_POINT_CLEANUP_RATE, null,
+        DegraderLoadBalancerStrategyConfig.DEFAULT_NUM_PROBES, null,
+        DegraderLoadBalancerStrategyConfig.DEFAULT_QUARANTINE_MAXPERCENT,
+        null, null, "OPTIONS", null,
+        DegraderLoadBalancerStrategyConfig.DEFAULT_QUARANTINE_LATENCY);
+
+    TrackerClientUpdater updater2 = new TrackerClientUpdater(trackerClients.get(2), DEFAULT_PARTITION_ID);
+    quarantine = new DegraderLoadBalancerQuarantine(updater2, config2);
+    healthCheck = (TransportHealthCheck) quarantine.getHealthCheckClient();
+    restRequest = healthCheck.getRestRequest();
+
+    Assert.assertTrue(restRequest.getURI().equals(URI.create("http://test.linkedin.com:10010/abc2")));
+    Assert.assertTrue(restRequest.getMethod().equals("OPTIONS"));
+  }
+
 
   public static DegraderLoadBalancerStrategyV3 getStrategy()
   {

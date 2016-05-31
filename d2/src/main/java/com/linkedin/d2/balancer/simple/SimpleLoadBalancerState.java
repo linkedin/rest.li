@@ -386,6 +386,12 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
       @Override
       public void innerRun()
       {
+        // Need to shutdown loadBalancerStrategies before the transportClients are shutdown
+        for (Map<String, LoadBalancerStrategy> strategyEntry : _serviceStrategies.values())
+        {
+          strategyEntry.values().forEach(LoadBalancerStrategy::shutdown);
+        }
+
         // put all tracker clients into a single set for convenience
         Set<TransportClient> transportClients = new HashSet<TransportClient>();
 
@@ -1478,6 +1484,9 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
       {
         Map<String, Object> loadBalancerStrategyProperties =
             new HashMap<String, Object>(serviceProperties.getLoadBalancerStrategyProperties());
+        // Save the service path as a property -- Quarantine may need this info to construct correct
+        // health checking path
+        loadBalancerStrategyProperties.put(PropertyKeys.PATH, serviceProperties.getPath());
 
         LoadBalancerStrategy strategy = factory.newLoadBalancer(
             serviceProperties.getServiceName(),
@@ -1516,6 +1525,9 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     // notify listeners of the removed strategy
     if (oldStrategies != null)
     {
+      // shutdown strategies before notification
+      oldStrategies.values().forEach(LoadBalancerStrategy::shutdown);
+
       for (SimpleLoadBalancerStateListener listener : _listeners)
       {
         for (Map.Entry<String, LoadBalancerStrategy> oldStrategy : oldStrategies.entrySet())

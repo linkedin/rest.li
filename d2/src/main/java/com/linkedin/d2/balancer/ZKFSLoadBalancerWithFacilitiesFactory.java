@@ -16,16 +16,20 @@
 
 package com.linkedin.d2.balancer;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyFactoryV3;
 import com.linkedin.d2.balancer.strategies.random.RandomLoadBalancerStrategyFactory;
+import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
 import com.linkedin.d2.balancer.zkfs.ZKFSComponentFactory;
 import com.linkedin.d2.balancer.zkfs.ZKFSLoadBalancer;
 import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl;
+import com.linkedin.r2.util.NamedThreadFactory;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+
 
 /**
  * Implementation of {@link LoadBalancerWithFacilitiesFactory} interface, which creates
@@ -37,6 +41,11 @@ public class ZKFSLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFa
   @Override
   public LoadBalancerWithFacilities create(D2ClientConfig config)
   {
+    if (config._executorService == null)
+    {
+      config._executorService =
+          Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("D2 PropertyEventExecutor"));
+    }
     return  new ZKFSLoadBalancer(config.zkHosts,
                                     (int) config.zkSessionTimeoutInMs,
                                     (int) config.zkStartupTimeoutInMs,
@@ -44,7 +53,8 @@ public class ZKFSLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFa
                                     config.flagFile,
                                     config.basePath,
                                     config.shutdownAsynchronously,
-                                    config.isSymlinkAware);
+                                    config.isSymlinkAware,
+                                    config._executorService);
   }
 
 
@@ -61,7 +71,7 @@ public class ZKFSLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFa
     }
 
     final Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories =
-        createDefaultLoadBalancerStrategyFactories();
+        createDefaultLoadBalancerStrategyFactories(config._healthCheckOperations, config._executorService);
 
     return new ZKFSTogglingLoadBalancerFactoryImpl(loadBalancerComponentFactory,
                                                    config.lbWaitTimeout,
@@ -78,13 +88,15 @@ public class ZKFSLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFa
                                                    config.useNewEphemeralStoreWatcher);
   }
 
-  private Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> createDefaultLoadBalancerStrategyFactories()
+  private Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> createDefaultLoadBalancerStrategyFactories(
+      HealthCheckOperations healthCheckOperations, ScheduledExecutorService executorService)
   {
     final Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories =
         new HashMap<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>>();
 
     final RandomLoadBalancerStrategyFactory randomStrategyFactory = new RandomLoadBalancerStrategyFactory();
-    final DegraderLoadBalancerStrategyFactoryV3 degraderStrategyFactoryV3 = new DegraderLoadBalancerStrategyFactoryV3();
+    final DegraderLoadBalancerStrategyFactoryV3 degraderStrategyFactoryV3 = new DegraderLoadBalancerStrategyFactoryV3(
+        healthCheckOperations, executorService);
 
     loadBalancerStrategyFactories.put("random", randomStrategyFactory);
     loadBalancerStrategyFactories.put("degrader", degraderStrategyFactoryV3);

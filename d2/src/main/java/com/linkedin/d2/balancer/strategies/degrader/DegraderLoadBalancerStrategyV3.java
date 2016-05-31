@@ -17,27 +17,36 @@
 package com.linkedin.d2.balancer.strategies.degrader;
 
 
+import com.linkedin.common.callback.Callback;
+import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
+import com.linkedin.d2.balancer.util.RateLimitedLogger;
 import com.linkedin.d2.balancer.util.hashing.HashFunction;
 import com.linkedin.d2.balancer.util.hashing.RandomHash;
 import com.linkedin.d2.balancer.util.hashing.Ring;
 import com.linkedin.d2.balancer.util.hashing.URIRegexHash;
+import com.linkedin.d2.balancer.util.healthcheck.HealthCheck;
+import com.linkedin.d2.balancer.util.healthcheck.HealthCheckClientBuilder;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.util.degrader.DegraderControl;
 
 import com.linkedin.util.degrader.DegraderImpl;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -70,6 +79,8 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
   private volatile HashFunction<Request>              _hashFunction;
   private final DegraderLoadBalancerState _state;
 
+  private final RateLimitedLogger _rateLimitedLogger;
+
   public DegraderLoadBalancerStrategyV3(DegraderLoadBalancerStrategyConfig config,
                                         String serviceName,
                                         Map<String, String> degraderProperties)
@@ -81,6 +92,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       degraderProperties = Collections.<String, String>emptyMap();
     }
     _state = new DegraderLoadBalancerState(serviceName, degraderProperties, config);
+    _rateLimitedLogger = new RateLimitedLogger(_log, config.DEFAULT_UPDATE_INTERVAL_MS, config.getClock());
   }
 
   @Override
@@ -272,10 +284,17 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       clientUpdaters.add(new TrackerClientUpdater(client, partition.getId()));
     }
 
+    boolean quarantineEnabled = _state._enableQuarantine.get();
+    if (config.getQuarantineMaxPercent() > 0.0 && !quarantineEnabled)
+    {
+      // if quarantine is configured but not enabled, check the hosts to see if the quarantine
+      // can be enabled.
+      checkQuarantineState(clientUpdaters, config);
+    }
     // doUpdatePartitionState has no side effects on _state or trackerClients.
     // all changes to the trackerClients would be recorded in clientUpdaters
     partitionState = doUpdatePartitionState(clusterGenerationId, partition.getId(), partitionState,
-                                          config, clientUpdaters);
+                                          config, clientUpdaters, quarantineEnabled);
     partition.setState(partitionState);
 
     // only if state update succeeded, do we actually apply the recorded changes to trackerClients
@@ -317,7 +336,8 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     // 2. When points map and recovery map both remain the same, we probably don't want to log it here.
     return oldState.getCurrentOverrideDropRate() == newState.getCurrentOverrideDropRate() &&
         oldState.getPointsMap().equals(newState.getPointsMap()) &&
-        oldState.getRecoveryMap().equals(newState.getRecoveryMap());
+        oldState.getRecoveryMap().equals(newState.getRecoveryMap()) &&
+        oldState.getQuarantineMap().equals(newState.getQuarantineMap());
   }
 
   private static void logState(PartitionDegraderLoadBalancerState oldState,
@@ -437,7 +457,8 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
   private static PartitionDegraderLoadBalancerState doUpdatePartitionState(long clusterGenerationId, int partitionId,
                                                                          PartitionDegraderLoadBalancerState oldState,
                                                                          DegraderLoadBalancerStrategyConfig config,
-                                                                         List<TrackerClientUpdater> trackerClientUpdaters)
+                                                                         List<TrackerClientUpdater> trackerClientUpdaters,
+                                                                         boolean isQuarantineEnabled)
   {
     debug(_log, "updating state for: ", trackerClientUpdaters);
 
@@ -450,6 +471,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     double newMaxDropRate;
     boolean hashRingChanges = false;
     boolean recoveryMapChanges = false;
+    boolean quarantineMapChanged = false;
 
     PartitionDegraderLoadBalancerState.Strategy strategy = oldState.getStrategy();
     Map<TrackerClient,Double> oldRecoveryMap = oldState.getRecoveryMap();
@@ -459,6 +481,10 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     double ringRampFactor = config.getRingRampFactor();
     int pointsPerWeight = config.getPointsPerWeight();
     PartitionDegraderLoadBalancerState newState;
+    Map<TrackerClient, DegraderLoadBalancerQuarantine> quarantineMap = oldState.getQuarantineMap();
+    Map<TrackerClient, DegraderLoadBalancerQuarantine> quarantineHistory = oldState.getQuarantineHistory();
+    Set<TrackerClient> activeClients = new HashSet<>();
+    long clk = config.getClock().currentTimeMillis();
 
     for (TrackerClientUpdater clientUpdater : trackerClientUpdaters)
     {
@@ -467,7 +493,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       double averageLatency = degraderControl.getLatency();
       long callCount = degraderControl.getCallCount();
       oldState.getPreviousMaxDropRate().put(client, clientUpdater.getMaxDropRate());
-      double clientWeight =  client.getPartitionWeight(partitionId);
+      double clientWeight = client.getPartitionWeight(partitionId);
 
       sumOfClusterLatencies += averageLatency * callCount;
       totalClusterCallCount += callCount;
@@ -477,63 +503,94 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       computedClusterWeight += clientWeight;
 
       boolean recoveryMapContainsClient = newRecoveryMap.containsKey(client);
-
-      // The following block of code calculates and updates the maxDropRate if the client had been
-      // fully degraded in the past and has not received any requests since being fully degraded.
-      // To increase the chances of the client receiving a request, we change the maxDropRate, which
-      // influences the maximum value of computedDropRate, which is used to compute the number of
-      // points in the hash ring for the clients.
-      if (callCount == 0)
+      if (isQuarantineEnabled)
       {
-        // if this client is enrolled in the program, decrease the maxDropRate
-        // it is important to note that this excludes clients that haven't gotten traffic
-        // due solely to low volume.
-        if (recoveryMapContainsClient)
+        activeClients.add(client);
+        // Check/update quarantine state if current client is already under quarantine
+        DegraderLoadBalancerQuarantine quarantine = quarantineMap.get(client);
+        if (quarantine != null && quarantine.checkUpdateQuarantineState())
         {
-          double oldMaxDropRate = clientUpdater.getMaxDropRate();
-          double transmissionRate = 1.0 - oldMaxDropRate;
-          if( transmissionRate <= 0.0)
-          {
-            // We use the initialRecoveryLevel to indicate how many points to initially set
-            // the tracker client to when traffic has stopped flowing to this node.
-            transmissionRate = initialRecoveryLevel;
-          }
-          else
-          {
-            transmissionRate *= ringRampFactor;
-            transmissionRate = Math.min(transmissionRate, 1.0);
-          }
-          newMaxDropRate = 1.0 - transmissionRate;
+          // Evict client from quarantine
+          quarantineMap.remove(client);
+          quarantineHistory.put(client, quarantine);
+          _log.info("TrackerClient {} evicted from quarantine @ {}", client.getUri(), clk);
 
-          if (strategy == PartitionDegraderLoadBalancerState.Strategy.LOAD_BALANCE)
-          {
-            // if it's the hash ring's turn to adjust, then adjust the maxDropRate.
-            // Otherwise, we let the call dropping strategy take it's turn, even if
-            // it may do nothing.
-            clientUpdater.setMaxDropRate(newMaxDropRate);
-          }
+          // Next need to put the client to slow-start/recovery mode to gradually pick up traffic.
+          // For now simply force the weight to the initialRecoveryLevel so the client can gradually recover
+          // RecoveryMap is used here to track the clients that just evicted from quarantine
+          // They'll not be quarantined again in the recovery phase even though the effective
+          // weight is within the range.
+          newRecoveryMap.put(client, degraderControl.getMaxDropRate());
+          clientUpdater.setMaxDropRate(1.0 - initialRecoveryLevel);
+
+          quarantineMapChanged = true;
+        }
+      }
+
+      if (recoveryMapContainsClient)
+      {
+        // The following block of code calculates and updates the maxDropRate if the client had been
+        // fully degraded in the past and has not received any requests since being fully degraded.
+        // To increase the chances of the client receiving a request, we change the maxDropRate, which
+        // influences the maximum value of computedDropRate, which is used to compute the number of
+        // points in the hash ring for the clients.
+        if (callCount == 0)
+        {
+          // if this client is enrolled in the program, decrease the maxDropRate
+          // it is important to note that this excludes clients that haven't gotten traffic
+          // due solely to low volume.
+            double oldMaxDropRate = clientUpdater.getMaxDropRate();
+            double transmissionRate = 1.0 - oldMaxDropRate;
+            if (transmissionRate <= 0.0)
+            {
+              // We use the initialRecoveryLevel to indicate how many points to initially set
+              // the tracker client to when traffic has stopped flowing to this node.
+              transmissionRate = initialRecoveryLevel;
+            }
+            else
+            {
+              transmissionRate *= ringRampFactor;
+              transmissionRate = Math.min(transmissionRate, 1.0);
+            }
+            newMaxDropRate = 1.0 - transmissionRate;
+
+            if (strategy == PartitionDegraderLoadBalancerState.Strategy.LOAD_BALANCE)
+            {
+              // if it's the hash ring's turn to adjust, then adjust the maxDropRate.
+              // Otherwise, we let the call dropping strategy take it's turn, even if
+              // it may do nothing.
+              clientUpdater.setMaxDropRate(newMaxDropRate);
+            }
+            recoveryMapChanges = true;
+        }
+        else
+        {
+          // else if the recovery map contains the client and the call count was > 0
+          // tough love here, once the rehab clients start taking traffic, we
+          // restore their maxDropRate to it's original value, and unenroll them
+          // from the program.
+          // This is safe because the hash ring points are controlled by the
+          // computedDropRate variable, and the call dropping rate is controlled by
+          // the overrideDropRate. The maxDropRate only serves to cap the computedDropRate and
+          // overrideDropRate.
+          // We store the maxDropRate and restore it here because the initialRecoveryLevel could
+          // potentially be higher than what the default maxDropRate allowed. (the maxDropRate doesn't
+          // necessarily have to be 1.0). For instance, if the maxDropRate was 0.99, and the
+          // initialRecoveryLevel was 0.05  then we need to store the old maxDropRate.
+          clientUpdater.setMaxDropRate(newRecoveryMap.get(client));
+          newRecoveryMap.remove(client);
           recoveryMapChanges = true;
         }
       }
-      else if(recoveryMapContainsClient)
-      {
-        // else if the recovery map contains the client and the call count was > 0
+    }
 
-        // tough love here, once the rehab clients start taking traffic, we
-        // restore their maxDropRate to it's original value, and unenroll them
-        // from the program.
-        // This is safe because the hash ring points are controlled by the
-        // computedDropRate variable, and the call dropping rate is controlled by
-        // the overrideDropRate. The maxDropRate only serves to cap the computedDropRate and
-        // overrideDropRate.
-        // We store the maxDropRate and restore it here because the initialRecoveryLevel could
-        // potentially be higher than what the default maxDropRate allowed. (the maxDropRate doesn't
-        // necessarily have to be 1.0). For instance, if the maxDropRate was 0.99, and the
-        // initialRecoveryLevel was 0.05  then we need to store the old maxDropRate.
-        clientUpdater.setMaxDropRate(newRecoveryMap.get(client));
-        newRecoveryMap.remove(client);
-        recoveryMapChanges = true;
-      }
+    // trackerClientUpdaters includes all trackerClients for the service of the partition.
+    // Check the quarantineMap/quarantineHistory and remove the trackerClients that do not exist
+    // in TrackerClientUpdaters -- those URIs were removed from zookeeper
+    if (isQuarantineEnabled)
+    {
+      quarantineMap.entrySet().removeIf(e -> !activeClients.contains(e.getKey()));
+      quarantineHistory.entrySet().removeIf(e -> !activeClients.contains(e.getKey()));
     }
 
     computedClusterDropRate = computedClusterDropSum / computedClusterWeight;
@@ -544,16 +601,16 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
           " nodes: ",
           computedClusterDropRate);
 
-    if (oldState.getClusterGenerationId() == clusterGenerationId
-        && totalClusterCallCount <= 0 && !recoveryMapChanges)
+    if (oldState.getClusterGenerationId() == clusterGenerationId && totalClusterCallCount <= 0
+        && !recoveryMapChanges && !quarantineMapChanged)
     {
       // if the cluster has not been called recently (total cluster call count is <= 0)
       // and we already have a state with the same set of URIs (same cluster generation),
-      // and no clients are in rehab, then don't change anything.
+      // and no clients are in rehab or evicted from quarantine, then don't change anything.
       debug(_log, "New state is the same as the old state so we're not changing anything. Old state = ", oldState
           ,", config= ", config);
       return new PartitionDegraderLoadBalancerState(oldState, clusterGenerationId,
-                                                    config.getClock().currentTimeMillis());
+          config.getClock().currentTimeMillis());
     }
 
     // update our overrides.
@@ -570,7 +627,6 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     double computedClusterSuccessRate = computedClusterWeight - computedClusterDropRate;
 
     // This points map stores how many hash map points to allocate for each tracker client.
-
     Map<URI, Integer> points = new HashMap<URI, Integer>();
     Map<URI, Integer> oldPointsMap = oldState.getPointsMap();
 
@@ -614,11 +670,61 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       // keep track if we're making actual changes to the Hash Ring in this updatePartitionState.
       int newPoints = (int) (successfulTransmissionWeight * pointsPerWeight);
 
+      boolean quarantineEffect = false;
+
+      if (isQuarantineEnabled)
+      {
+        if (quarantineMap.containsKey(client))
+        {
+          // If the client is still in quarantine, keep the points to 0 so no real traffic will be used
+          newPoints = 0;
+          quarantineEffect = true;
+        }
+        // To put a TrackerClient into quarantine, it needs to meet all the following criteria:
+        // 1. its effective weight is less than or equal to the threshold (0.0).
+        // 2. The call state in current interval is becoming worse, eg the latency or error rate is
+        //    higher than the threshold.
+        // 3. its clientWeight is greater than 0 (ClientWeight can be zero when the server's
+        //    clientWeight in zookeeper is explicitly set to zero in order to put the server
+        //    into standby. In this particular case, we should not put the tracker client into
+        //    the quarantine).
+        // 4. The total clients in the quarantine is less than the pre-configured number (decided by
+        //    HTTP_LB_QUARANTINE_MAX_PERCENT)
+        else if (successfulTransmissionWeight <= 0.0 && clientWeight > EPSILON && degraderControl.isHigh())
+        {
+          if (1.0 * quarantineMap.size() < Math.ceil(trackerClientUpdaters.size() * config.getQuarantineMaxPercent()))
+          {
+            // Put the client into quarantine
+            DegraderLoadBalancerQuarantine quarantine = quarantineHistory.remove(client);
+            if (quarantine == null)
+            {
+              quarantine = new DegraderLoadBalancerQuarantine(clientUpdater, config);
+            }
+
+            // If the trackerClient was just recently evicted from quarantine, it is possible that
+            // the service is already in trouble while the quarantine probing approach works
+            // fine. In such case we'll reuse the previous waiting duration instead of starting
+            // from scratch again
+            quarantine.reset((clk - quarantine.getLastChecked())
+                > DegraderLoadBalancerStrategyConfig.DEFAULT_QUARANTINE_REENTRY_TIME);
+            quarantineMap.put(client, quarantine);
+
+            newPoints = 0;     // reduce the points to 0 so no real traffic will be used
+            _log.warn("TrackerClient {} is put into quarantine {} ", client.getUri(), quarantine);
+            quarantineEffect = true;
+          }
+          else
+          {
+            _log.error("Quarantine for service {} is full! Could not add {}", oldState.getServiceName(), client);
+          }
+        }
+      }
+
       // We only enroll the tracker client in the recovery program when clientWeight is not zero but we got zero points.
       // ClientWeight can be zero when the server's clientWeight in zookeeper is explicitly set to zero,
       // in order to put the server into standby. In this particular case, we should not put the tracker
       // client into the recovery program, because we don't want this tracker client to get any traffic.
-      if (newPoints == 0 && clientWeight > EPSILON )
+      if (!quarantineEffect && newPoints == 0 && clientWeight > EPSILON )
       {
         // We are choking off traffic to this tracker client.
         // Enroll this tracker client in the recovery program so that
@@ -636,6 +742,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
           clientUpdater.setMaxDropRate(1.0 - initialRecoveryLevel);
         }
       }
+
 
       points.put(clientUri, newPoints);
       if (!oldPointsMap.containsKey(clientUri) || oldPointsMap.get(clientUri) != newPoints)
@@ -664,7 +771,9 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
               newRecoveryMap,
               oldState.getServiceName(),
               oldState.getDegraderProperties(),
-              totalClusterCallCount);
+              totalClusterCallCount,
+              quarantineMap,
+              quarantineHistory);
 
       logState(oldState, newState, partitionId, config, trackerClientUpdaters);
     }
@@ -737,10 +846,12 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
                                             PartitionDegraderLoadBalancerState.Strategy.LOAD_BALANCE,
                                             newDropLevel,
                                             newCurrentAvgClusterLatency,
-                                            oldRecoveryMap,
+                                            isQuarantineEnabled ? newRecoveryMap : oldRecoveryMap,
                                             oldState.getServiceName(),
                                             oldState.getDegraderProperties(),
-                                            totalClusterCallCount);
+                                            totalClusterCallCount,
+                                            quarantineMap,
+                                            quarantineHistory);
 
       logState(oldState, newState, partitionId, config, trackerClientUpdaters);
 
@@ -923,6 +1034,79 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     _updateEnabled = enabled;
   }
 
+  @Override
+  public void shutdown()
+  {
+    _state.shutdown(_config);
+  }
+
+  /**
+   * checkQuarantineState decides if the D2Quarantine can be enabled or not, by health
+   * checking all the trackerClients once. It enables quarantine only if at least one of the
+   * clients return success for the checking.
+   *
+   * The reasons for this checking include:
+   *
+   * . The default method "OPTIONS" is not always enabled by the service
+   * . The user can config any path/method for checking. We do a sanity checking to
+   *   make sure the configuration is correct, and service/host responds in time.
+   *   Otherwise the host can be kept in quarantine forever if we blindly enable it.
+   *
+   * This check actually can warm up the R2 connection pool by making a connection to
+   * each trackerClient. However since the check happens before any real requests are sent,
+   * it generally takes much longer time to get the results, due to different warming up
+   * requirements. Therefore the checking will be retried in next update if current check
+   * fails.
+
+   *
+   * This function is supposed to be protected by the update lock.
+   *
+   * @param clients
+   * @param config
+   */
+  private void checkQuarantineState(List<TrackerClientUpdater> clients, DegraderLoadBalancerStrategyConfig config)
+  {
+    Callback<None>  healthCheckCallback = new Callback<None>()
+    {
+      @Override
+      public void onError(Throwable e)
+      {
+        // Do nothing as the quarantine is disabled by default
+        _rateLimitedLogger.error("Error to enable quarantine. Health checking failed: " + e);
+      }
+
+      @Override
+      public void onSuccess(None result)
+      {
+        if (_state._enableQuarantine.compareAndSet(false, true))
+        {
+          _log.info("Quarantine is enabled");
+        }
+      }
+    };
+
+    for (TrackerClientUpdater client : clients)
+    {
+      try
+      {
+        HealthCheck healthCheckClient = _state.getHealthCheckClient(client);
+        if (healthCheckClient == null)
+        {
+          // create a new client if not exits
+          healthCheckClient = _state._healthCheckClientBuilder.setClient(client.getTrackerClient()).build();
+          _state.putHealthCheckClient(client, healthCheckClient);
+        }
+        healthCheckClient.checkHealth(healthCheckCallback);
+      }
+      catch (URISyntaxException e)
+      {
+        _log.error("Error to build healthCheckClient ", e);
+      }
+    }
+
+    // also remove the entries that the corresponding trackerClientUpdaters do not exist anymore
+    _state._healthCheckMap.entrySet().removeIf(e -> !clients.contains(e.getKey()));
+  }
 
   // for unit testing, this allows the strategy to be forced for the next time updatePartitionState
   // is called. This is not to be used in prod code.
@@ -940,7 +1124,9 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
                                              oldState.getRecoveryMap(),
                                              oldState.getServiceName(),
                                              oldState.getDegraderProperties(),
-                                             oldState.getCurrentClusterCallCount());
+                                             oldState.getCurrentClusterCallCount(),
+                                             oldState.getQuarantineMap(),
+                                             oldState.getQuarantineHistory());
 
     partition.setState(newState);
   }
@@ -1002,6 +1188,15 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     private final String _serviceName;
     private final Map<String, String> _degraderProperties;
     private final DegraderLoadBalancerStrategyConfig _config;
+    private final AtomicBoolean _enableQuarantine;
+    // _healthCheckMap keeps track of HealthCheck clients associated with TrackerClientUpdater
+    // It should only be accessed under the update lock.
+    // Note: after quarantine is enabled, there is no need to send health checking requests to all
+    // trackerClients anymore and we do not have to hold the healthCheck objects in healthCheckMap.
+    // When individual trackerClient is quarantined, the corresponding healthCheck will be
+    // generated again.
+    private final Map<TrackerClientUpdater, HealthCheck> _healthCheckMap;
+    private final HealthCheckClientBuilder _healthCheckClientBuilder;
 
     DegraderLoadBalancerState(String serviceName, Map<String, String> degraderProperties,
                               DegraderLoadBalancerStrategyConfig config)
@@ -1010,6 +1205,15 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       _partitions = new ConcurrentHashMap<Integer, Partition>();
       _serviceName = serviceName;
       _config = config;
+      _enableQuarantine = new AtomicBoolean(false);
+      _healthCheckClientBuilder =  new HealthCheckClientBuilder()
+        .setHealthCheckOperations(config.getHealthCheckOperations())
+        .setHealthCheckPath(config.getHealthCheckPath())
+        .setServicePath(config.getServicePath())
+        .setClock(config.getClock())
+        .setLatency(config.getQuarantineLatency())
+        .setMethod(config.getHealthCheckMethod());
+      _healthCheckMap = new HashMap<>();
     }
 
     private Partition getPartition(int partitionId)
@@ -1034,7 +1238,8 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
                                                                    0, 0,
                                                                    new HashMap<TrackerClient, Double>(),
                                                                    _serviceName, _degraderProperties,
-                                                                   0));
+                                                                   0,
+                                                                   new HashMap<>(), new HashMap<>()));
         Partition oldValue = _partitions.putIfAbsent(partitionId, newValue);
         if (oldValue == null)
           partition = newValue;
@@ -1066,6 +1271,41 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     void setPartitionState(int partitionId, PartitionDegraderLoadBalancerState newState)
     {
       getPartition(partitionId).setState(newState);
+    }
+
+    void putHealthCheckClient(TrackerClientUpdater updater, HealthCheck client)
+    {
+      _healthCheckMap.put(updater, client);
+    }
+
+    HealthCheck getHealthCheckClient(TrackerClientUpdater updater)
+    {
+      return _healthCheckMap.get(updater);
+    }
+
+    public void shutdown(DegraderLoadBalancerStrategyConfig config)
+    {
+      // Need to shutdown quarantine and release the related transport client
+      if (config.getQuarantineMaxPercent() <= 0.0 || !_enableQuarantine.get())
+      {
+        return;
+      }
+
+      for (Partition par : _partitions.values())
+      {
+        Lock lock = par.getLock();
+        lock.lock();
+
+        try
+        {
+          PartitionDegraderLoadBalancerState curState = par.getState();
+          curState.getQuarantineMap().values().forEach(DegraderLoadBalancerQuarantine::shutdown);
+        }
+        finally
+        {
+          lock.unlock();
+        }
+      }
     }
 
     @Override
@@ -1105,6 +1345,11 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     // ring, and are slowly being ramped up until they start receiving traffic again.
     private final Map<TrackerClient,Double>          _recoveryMap;
 
+    // quarantineMap is the active quarantine for trackerClient
+    private final Map<TrackerClient, DegraderLoadBalancerQuarantine> _quarantineMap;
+    // quarantineHistory saves all previous trackerClients that are once quarantined
+    private final Map<TrackerClient, DegraderLoadBalancerQuarantine> _quarantineHistory;
+
     // Because we will alternate between Load Balancing and Call Dropping strategies, we keep track of
     // the strategy to try to aid us in alternating strategies when updatingState. There is a setter
     // to manipulate the strategy tried if one particular strategy is desired for the next updatePartitionState.
@@ -1126,8 +1371,8 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
      * This constructor will copy the internal data structure shallowly unlike the other constructor.
      */
     public PartitionDegraderLoadBalancerState(PartitionDegraderLoadBalancerState state,
-                                                  long clusterGenerationId,
-                                                  long lastUpdated)
+        long clusterGenerationId,
+        long lastUpdated)
     {
       _clusterGenerationId = clusterGenerationId;
       _ringFactory = state._ringFactory;
@@ -1143,6 +1388,8 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       _degraderProperties = state._degraderProperties;
       _previousMaxDropRate = new HashMap<TrackerClient, Double>();
       _currentClusterCallCount = state._currentClusterCallCount;
+      _quarantineMap = state._quarantineMap;
+      _quarantineHistory = state._quarantineHistory;
     }
 
     public PartitionDegraderLoadBalancerState(long clusterGenerationId,
@@ -1156,7 +1403,9 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
                                          Map<TrackerClient,Double> recoveryMap,
                                          String serviceName,
                                          Map<String, String> degraderProperties,
-                                         long currentClusterCallCount)
+                                         long currentClusterCallCount,
+                                         Map<TrackerClient, DegraderLoadBalancerQuarantine> quarantineMap,
+                                         Map<TrackerClient, DegraderLoadBalancerQuarantine> quarantineHistory)
     {
       _clusterGenerationId = clusterGenerationId;
       _ringFactory = ringFactory;
@@ -1178,6 +1427,8 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
           Collections.<String, String>emptyMap();
       _previousMaxDropRate = new HashMap<TrackerClient, Double>();
       _currentClusterCallCount = currentClusterCallCount;
+      _quarantineMap = quarantineMap;
+      _quarantineHistory = quarantineHistory;
     }
 
     public Map<String, String> getDegraderProperties()
@@ -1225,6 +1476,16 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       return _recoveryMap;
     }
 
+    public Map<TrackerClient, DegraderLoadBalancerQuarantine> getQuarantineMap()
+    {
+      return _quarantineMap;
+    }
+
+    public Map<TrackerClient, DegraderLoadBalancerQuarantine> getQuarantineHistory()
+    {
+      return _quarantineHistory;
+    }
+
     public double getCurrentOverrideDropRate()
     {
       return _currentOverrideDropRate;
@@ -1260,6 +1521,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
           + ", _strategy=" + _strategy
           + ", _numHostsInCluster=" + (_pointsMap.size() + _recoveryMap.size())
           + ", _recoveryMap=" + _recoveryMap
+          + ", _quarantineList=" + _quarantineMap.values()
           + "]";
     }
   }

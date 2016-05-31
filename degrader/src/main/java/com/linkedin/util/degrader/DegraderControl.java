@@ -49,6 +49,18 @@ public class DegraderControl implements DegraderControlMBean
   }
 
   @Override
+  public boolean isHigh()
+  {
+    return _degrader.isHigh();
+  }
+
+  @Override
+  public boolean isLow()
+  {
+    return _degrader.isLow();
+  }
+
+  @Override
   public long getCurrentCountTotal()
   {
     return _degrader.getStats().getCurrentCountTotal();

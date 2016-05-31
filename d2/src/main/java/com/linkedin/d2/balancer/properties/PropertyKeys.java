@@ -86,6 +86,10 @@ public class PropertyKeys
   public static final String HTTP_LB_HASHRING_POINT_CLEANUP_RATE = "http.loadBalancer.hashRingPointCleanupRate";
   public static final String HTTP_LB_CONSISTENT_HASH_ALGORITHM = "http.loadBalancer.consistentHashAlgorithm";
   public static final String HTTP_LB_CONSISTENT_HASH_NUM_PROBES = "http.loadBalancer.consistentHashNumProbes";
+  public static final String HTTP_LB_QUARANTINE_MAX_PERCENT = "http.loadBalancer.quarantine.maxPercent";
+  public static final String HTTP_LB_QUARANTINE_EXECUTOR_SERVICE = "http.loadBalancer.quarantine.executorService";
+  public static final String HTTP_LB_QUARANTINE_METHOD = "http.loadBalancer.quarantine.method";
+  public static final String HTTP_LB_QUARANTINE_LATENCY = "http.loadBalancer.quarantine.latency";
 
   //used by service metadata properties
   public static final String SERVICE_FOLLOW_REDIRECTION_MAX_HOP = "followRedirection.maxHop";
