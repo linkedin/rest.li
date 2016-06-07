@@ -14,7 +14,7 @@
    limitations under the License.
 */
 
-package com.linkedin.restli.common.testutils.test;
+package com.linkedin.restli.common.testutils;
 
 
 import com.linkedin.data.DataList;
@@ -22,7 +22,6 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.validation.CoercionMode;
 import com.linkedin.data.schema.validation.RequiredMode;
 import com.linkedin.data.schema.validation.ValidationOptions;
-import com.linkedin.restli.common.testutils.DataAssert;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.test.RecordTemplateWithDefaultValue;
 import java.util.Arrays;
@@ -35,6 +34,7 @@ import org.testng.annotations.Test;
 /**
  * @author kparikh
  */
+@SuppressWarnings("deprecation")
 public class TestDataAssert
 {
   @Test

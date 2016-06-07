@@ -41,7 +41,10 @@ import org.testng.Assert;
  *
  * @author jflorencio
  * @author kparikh
+ *
+ * @deprecated Replaced by {@link DataAsserts}
  */
+@Deprecated
 public final class DataAssert
 {
   private static final String ERROR_MESSAGE_SEPARATOR = "\n";
