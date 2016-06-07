@@ -191,23 +191,37 @@ public class CookieUtil
     sb.append(cookie.getName()).append("=\"").append(cookie.getValue()).append('"');
 
     if (cookie.getPath() != null)
+    {
       sb.append(";Path=\"").append(cookie.getPath()).append('"');
+    }
     if (cookie.getDomain() != null)
+    {
       sb.append(";Domain=\"").append(cookie.getDomain()).append('"');
+    }
     if (cookie.getPortlist() != null)
+    {
       sb.append(";Port=\"").append(cookie.getPortlist()).append('"');
+    }
 
-    sb.append(";MaxAge=\"").append(Long.toString(cookie.getMaxAge())).append('"');
+    sb.append(";Max-Age=\"").append(Long.toString(cookie.getMaxAge())).append('"');
     sb.append(";Version=\"").append(Integer.toString(cookie.getVersion())).append('"');
     if (cookie.getDiscard())
+    {
       sb.append(";Discard");
+    }
     if (cookie.getSecure())
+    {
       sb.append(";Secure");
+    }
 
     if (cookie.getComment() != null)
+    {
       sb.append(";Comment=\"").append(cookie.getComment()).append('"');
+    }
     if (cookie.getCommentURL() != null)
+    {
       sb.append(";CommentURL=\"").append(cookie.getCommentURL()).append('"');
+    }
 
     return sb.toString();
   }

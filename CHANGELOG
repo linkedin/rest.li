@@ -1,7 +1,13 @@
+6.0.11
+------
+
 6.0.10
 ------
 (RB=731493)
 Add a d2 delay test framework
+
+(RB=742691)
+Fixed cookie attribute name Max-Age.
 
 6.0.9
 ------
