@@ -90,7 +90,7 @@ public class DegraderRingFactory<T> implements RingFactory<T>
       newRingPoints.addAll(tPoints.subList(0, numDesiredPoints));
     }
 
-    _log.debug("Creating new hash ring with the following points" + newRingPoints);
+    _log.debug("Creating new hash ring with the following points {}", newRingPoints);
     return new ConsistentHashRing<>(newRingPoints);
   }
 

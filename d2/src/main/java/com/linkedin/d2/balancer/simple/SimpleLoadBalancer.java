@@ -191,7 +191,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     }
     else
     {
-      _log.debug("service hint found, using generic client for target: " + targetService);
+      _log.debug("service hint found, using generic client for target: {}", targetService);
 
       TransportClient transportClient = _state.getClient(serviceName, targetService.getScheme());
       client = new RewriteClient(serviceName,targetService,transportClient);

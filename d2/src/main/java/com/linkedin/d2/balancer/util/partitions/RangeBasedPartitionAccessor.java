@@ -49,7 +49,7 @@ public class RangeBasedPartitionAccessor extends AbstractPartitionAccessor
         throw new PartitionAccessException("Partition id out of range: " + partitionId + ", partitionId range is [0, "+
         + (partitionCount - 1) + "]" );
       }
-      _log.debug("Getting partitionId for key (" + key + "): " + partitionId);
+      _log.debug("Getting partitionId for key ({}): {}", key, partitionId);
       return partitionId;
     }
     catch (NumberFormatException e)
