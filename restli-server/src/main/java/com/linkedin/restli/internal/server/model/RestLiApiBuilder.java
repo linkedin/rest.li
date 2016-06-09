@@ -77,15 +77,20 @@ public class RestLiApiBuilder implements RestApiBuilder
     return buildResourceModels(annotatedClasses);
   }
 
-  private static Class<?> getParentResourceClass(Class<?> resourceClass)  {
-    for (Annotation a : resourceClass.getAnnotations()) {
-      if (a instanceof RestLiAssociation) {
+  private static Class<?> getParentResourceClass(Class<?> resourceClass)
+  {
+    for (Annotation a : resourceClass.getAnnotations())
+    {
+      if (a instanceof RestLiAssociation)
+      {
         return ((RestLiAssociation)a).parent();
       }
-      else if (a instanceof RestLiCollection) {
+      else if (a instanceof RestLiCollection)
+      {
         return ((RestLiCollection)a).parent();
       }
-      else if (a instanceof RestLiSimpleResource) {
+      else if (a instanceof RestLiSimpleResource)
+      {
         return ((RestLiSimpleResource)a).parent();
       }
     }

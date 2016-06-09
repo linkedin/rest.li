@@ -1373,11 +1373,14 @@ public final class RestLiAnnotationReader
   {
     ResourceModel nextModel = model.getParentResourceModel();
 
-    while (nextModel != null) {
+    while (nextModel != null)
+    {
       Set<Key> keys = nextModel.getKeys();
 
-      for (Key key : keys) {
-        if (key.getName().equals(paramName)) {
+      for (Key key : keys)
+      {
+        if (key.getName().equals(paramName))
+        {
           return;
         }
       }
