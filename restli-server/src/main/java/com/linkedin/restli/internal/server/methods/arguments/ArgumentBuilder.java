@@ -64,7 +64,7 @@ import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.RoutingException;
 import com.linkedin.restli.server.annotations.HeaderParam;
-
+import com.linkedin.restli.server.PathKeys;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.Arrays;
@@ -159,6 +159,15 @@ public class ArgumentBuilder
         {
           arguments[i] = context.getPathKeys();
           continue;
+        }
+        else if (param.getParamType() == Parameter.ParamType.PATH_KEY_PARAM) {
+          Object value = context.getPathKeys().get(param.getName());
+
+          if (value != null)
+          {
+            arguments[i] = value;
+            continue;
+          }
         }
         else if (param.getParamType() == Parameter.ParamType.RESOURCE_CONTEXT || param.getParamType() == Parameter.ParamType.RESOURCE_CONTEXT_PARAM)
         {

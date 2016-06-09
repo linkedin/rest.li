@@ -1,5 +1,8 @@
 6.0.11
 ------
+(RB=742297)
+Add PathKeyParam annotation to enable declaring methods with strongly
+typed keys.
 
 6.0.10
 ------

@@ -16,14 +16,17 @@
 
 package com.linkedin.restli.internal.server.model;
 
-
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.server.ResourceConfigException;
+import com.linkedin.restli.server.RestLiConfig;
+import com.linkedin.restli.server.annotations.Action;
+import com.linkedin.restli.server.annotations.PathKeyParam;
 import com.linkedin.restli.server.annotations.RestLiActions;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.annotations.RestLiSimpleResource;
 import com.linkedin.restli.server.resources.CollectionResourceTemplate;
 import com.linkedin.restli.server.resources.SimpleResourceTemplate;
+import java.net.URI;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
@@ -105,4 +108,65 @@ public class TestRestLiApiBuilder
                         classes.length,
                         "The number of ResourceModels generated does not match the number of resource classes.");
   }
+
+  @Test
+  public void testProcessResource()
+  {
+    Set<Class<?>> set = new HashSet<>();
+    set.add(com.linkedin.restli.internal.server.model.ParentResource.class);
+    set.add(TestResource.class);
+    Map<String, ResourceModel> models = RestLiApiBuilder.buildResourceModels(set);
+
+    ResourceModel parentResource = models.get("/ParentResource");
+    junit.framework.Assert.assertTrue(parentResource.getSubResource("TestResource") != null);
+  }
+
+  @Test
+  public void testBadResource()
+  {
+    Set<Class<?>> set = new HashSet<>();
+    set.add(com.linkedin.restli.internal.server.model.ParentResource.class);
+    set.add(BadResource.class);
+
+    try
+    {
+      Map<String, ResourceModel> models = RestLiApiBuilder.buildResourceModels(set);
+      junit.framework.Assert.fail(
+          "Building api with BadResource should throw " + ResourceConfigException.class);
+    }
+    catch (ResourceConfigException e)  {
+      junit.framework.Assert.assertTrue(e.getMessage().contains("bogusKey not found in path keys"));
+    }
+  }
 }
+
+@RestLiCollection(
+    name = "TestResource",
+    namespace = "com.linkedin.restli.internal.server.model",
+    parent = com.linkedin.restli.internal.server.model.ParentResource.class
+)
+class TestResource extends CollectionResourceTemplate<String, EmptyRecord>
+{
+  @Action(name="testResourceAction")
+  public void takeAction()
+  {}
+}
+
+@RestLiCollection(
+    name = "ParentResource",
+    namespace = "com.linkedin.restli.internal.server.model"
+)
+class ParentResource extends CollectionResourceTemplate<String, EmptyRecord>
+{}
+
+@RestLiCollection(
+    name = "BadResource",
+    namespace = "com.linkedin.restli.internal.server.model"
+)
+class BadResource extends CollectionResourceTemplate<String, EmptyRecord>
+{
+  @Action(name="badResourceAction")
+  public void takeAction(@PathKeyParam("bogusKey") String bogusKey)
+  {}
+}
+

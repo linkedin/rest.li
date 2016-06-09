@@ -81,6 +81,7 @@ import com.linkedin.restli.server.annotations.PagingContextParam;
 import com.linkedin.restli.server.annotations.PagingProjectionParam;
 import com.linkedin.restli.server.annotations.ParSeqContext;
 import com.linkedin.restli.server.annotations.ParSeqContextParam;
+import com.linkedin.restli.server.annotations.PathKeyParam;
 import com.linkedin.restli.server.annotations.PathKeysParam;
 import com.linkedin.restli.server.annotations.Projection;
 import com.linkedin.restli.server.annotations.ProjectionParam;
@@ -154,6 +155,17 @@ public final class RestLiAnnotationReader
    */
   public static ResourceModel processResource(final Class<?> resourceClass)
   {
+    return processResource(resourceClass, null);
+  }
+
+  /**
+   * Processes an annotated resource class, producing a ResourceModel.
+   *
+   * @param resourceClass annotated resource class
+   * @return {@link ResourceModel} for the provided resource class
+   */
+  public static ResourceModel processResource(final Class<?> resourceClass, ResourceModel parentResourceModel)
+  {
     final ResourceModel model;
 
     checkAnnotation(resourceClass);
@@ -172,23 +184,28 @@ public final class RestLiAnnotationReader
       @SuppressWarnings("unchecked")
       Class<? extends KeyValueResource<?, ?>> clazz =
           (Class<? extends KeyValueResource<?, ?>>) resourceClass;
-      model = processCollection(clazz);
+      model = processCollection(clazz, parentResourceModel);
     }
     else if (resourceClass.isAnnotationPresent(RestLiActions.class))
     {
-      model = processActions(resourceClass);
+      model = processActions(resourceClass, parentResourceModel);
     }
     else if (resourceClass.isAnnotationPresent(RestLiSimpleResource.class))
     {
       @SuppressWarnings("unchecked")
       Class<? extends SingleObjectResource<?>> clazz =
           (Class<? extends SingleObjectResource<?>>) resourceClass;
-      model = processSingleObjectResource(clazz);
+      model = processSingleObjectResource(clazz, parentResourceModel);
     }
     else
     {
       throw new ResourceConfigException("Class '" + resourceClass.getName()
           + "' must be annotated with a valid @RestLi... annotation");
+    }
+
+    if (parentResourceModel != null)
+    {
+      parentResourceModel.addSubResource(model.getName(), model);
     }
 
     if (!model.isActions())
@@ -428,7 +445,8 @@ public final class RestLiAnnotationReader
   }
 
   @SuppressWarnings("unchecked")
-  private static ResourceModel processCollection(final Class<? extends KeyValueResource<?, ?>> collectionResourceClass)
+  private static ResourceModel processCollection(final Class<? extends KeyValueResource<?, ?>> collectionResourceClass,
+                                                 ResourceModel parentResourceModel)
   {
     Class<?> keyClass;
     Class<? extends RecordTemplate> keyKeyClass = null;
@@ -576,6 +594,9 @@ public final class RestLiAnnotationReader
                           name,
                           resourceType,
                           namespace);
+
+    collectionModel.setParentResourceModel(parentResourceModel);
+
     addResourceMethods(collectionResourceClass, collectionModel);
 
     log.info("Processed collection resource '" + collectionResourceClass.getName() + "'");
@@ -584,7 +605,7 @@ public final class RestLiAnnotationReader
   }
 
   private static ResourceModel processSingleObjectResource(
-      final Class<? extends SingleObjectResource<?>> singleObjectResourceClass)
+      final Class<? extends SingleObjectResource<?>> singleObjectResourceClass, ResourceModel parentResource)
   {
     Class<? extends RecordTemplate> valueClass;
 
@@ -622,6 +643,8 @@ public final class RestLiAnnotationReader
                           name,
                           resourceType,
                           namespace);
+
+    singleObjectResourceModel.setParentResourceModel(parentResource);
 
     addResourceMethods(singleObjectResourceClass, singleObjectResourceModel);
 
@@ -985,6 +1008,10 @@ public final class RestLiAnnotationReader
         {
           param = buildPathKeysParam(paramAnnotations, paramType, PathKeysParam.class);
         }
+        else if (paramAnnotations.contains(PathKeyParam.class))
+        {
+          param = buildPathKeyParam(model, paramAnnotations, paramType, PathKeyParam.class);
+        }
         else if (paramAnnotations.contains(HeaderParam.class))
         {
           param = buildHeaderParam(paramAnnotations, paramType);
@@ -1005,9 +1032,9 @@ public final class RestLiAnnotationReader
         {
           throw new ResourceConfigException(buildMethodMessage(method)
               + " must annotate each parameter with @QueryParam, @ActionParam, @AssocKeyParam, @PagingContextParam, " +
-              "@ProjectionParam, @MetadataProjectionParam, @PagingProjectionParam, @PathKeysParam, @HeaderParam, " +
-              "@CallbackParam, @ResourceContext, @ParSeqContextParam, @ValidatorParam, @RestLiAttachmentsParam, " +
-              "or @ValidateParam");
+              "@ProjectionParam, @MetadataProjectionParam, @PagingProjectionParam, @PathKeysParam, @PathKeyParam, " +
+              "@HeaderParam, @CallbackParam, @ResourceContext, @ParSeqContextParam, @ValidatorParam, " +
+              "@RestLiAttachmentsParam, or @ValidateParam");
         }
       }
 
@@ -1339,6 +1366,46 @@ public final class RestLiAnnotationReader
                                        projectionType,
                                        false,
                                        annotations);
+    return param;
+  }
+
+  private static void checkIfKeyIsValid(String paramName, final Class<?> paramType, ResourceModel model)
+  {
+    ResourceModel nextModel = model.getParentResourceModel();
+
+    while (nextModel != null) {
+      Set<Key> keys = nextModel.getKeys();
+
+      for (Key key : keys) {
+        if (key.getName().equals(paramName)) {
+          return;
+        }
+      }
+
+      nextModel = nextModel.getParentResourceModel();
+    }
+
+    throw new ResourceConfigException("Parameter " + paramName + " not found in path keys of class " + model.getResourceClass());
+  }
+
+  private static Parameter<?> buildPathKeyParam(final ResourceModel model,
+                                                AnnotationSet annotations,
+                                                final Class<?> paramType,
+                                                final Class<?> paramAnnotationType)
+  {
+    String paramName = annotations.get(PathKeyParam.class).value();
+
+    checkIfKeyIsValid(paramName, paramType, model);
+
+    Parameter<?> param = new Parameter(paramName,
+        paramType,
+        null,
+        annotations.get(Optional.class) != null,
+        null, // default mask is null.
+        Parameter.ParamType.PATH_KEY_PARAM,
+        false,
+        annotations);
+
     return param;
   }
 
@@ -2302,7 +2369,7 @@ public final class RestLiAnnotationReader
     // query parameters are checked in getQueryParameters method
   }
 
-  private static ResourceModel processActions(final Class<?> actionResourceClass)
+  private static ResourceModel processActions(final Class<?> actionResourceClass, ResourceModel parentResourceModel)
   {
     RestLiActions actionsAnno = actionResourceClass.getAnnotation(RestLiActions.class);
 
@@ -2320,6 +2387,9 @@ public final class RestLiAnnotationReader
                                                           name, // name
                                                           ResourceType.ACTIONS, // resource type
                                                           namespace); // namespace
+
+    actionResourceModel.setParentResourceModel(parentResourceModel);
+
     for (Method method : actionResourceClass.getDeclaredMethods())
     {
       // ignore synthetic, type-erased versions of methods

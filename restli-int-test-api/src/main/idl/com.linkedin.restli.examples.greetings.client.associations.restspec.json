@@ -60,6 +60,9 @@
             "name" : "action",
             "returns" : "int"
           }, {
+            "name" : "concatenateStrings",
+            "returns" : "string"
+          }, {
             "name" : "getSource",
             "returns" : "string"
           } ],

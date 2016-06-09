@@ -26,6 +26,7 @@ import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.server.PathKeys;
 import com.linkedin.restli.server.annotations.Action;
 import com.linkedin.restli.server.annotations.Finder;
+import com.linkedin.restli.server.annotations.PathKeyParam;
 import com.linkedin.restli.server.annotations.PathKeysParam;
 import com.linkedin.restli.server.annotations.QueryParam;
 import com.linkedin.restli.server.annotations.RestLiCollection;
@@ -98,5 +99,11 @@ public class AssociationsSubResource extends CollectionResourceTemplate<String, 
     {
       return null;
     }
+  }
+
+  @Action(name="concatenateStrings")
+  public String thingAction(@PathKeyParam("src") String src, @PathKeyParam("dest") String dest)
+  {
+    return src + dest;
   }
 }

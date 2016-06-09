@@ -73,6 +73,7 @@ public class Parameter<T> extends FieldDef<T>
     @Deprecated
     PATH_KEYS,                    // @Keys
     PATH_KEYS_PARAM,              // @PathKeysParam
+    PATH_KEY_PARAM,               // @PathKeyParam
     @Deprecated
     RESOURCE_CONTEXT,             // @ResourceContextParam
     RESOURCE_CONTEXT_PARAM,       // @ResourceContextParam
