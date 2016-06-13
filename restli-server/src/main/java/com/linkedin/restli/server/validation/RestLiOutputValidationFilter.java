@@ -19,6 +19,7 @@ package com.linkedin.restli.server.validation;
 
 import com.linkedin.data.schema.validation.ValidationResult;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.restli.common.CreateIdEntityStatus;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ResourceMethod;
@@ -51,6 +52,8 @@ public class RestLiOutputValidationFilter implements ResponseFilter
     ResourceMethod method = requestContext.getMethodType();
     RestLiDataValidator validator = new RestLiDataValidator(resourceClass.getAnnotations(), requestContext.getFilterResourceModel().getValueClass(), method);
     RestLiResponseData responseData = responseContext.getResponseData();
+    MaskTree projectionMask = requestContext.getProjectionMask();
+
     if (responseData.isErrorResponse())
     {
       nextResponseFilter.onResponse(requestContext, responseContext);
@@ -59,46 +62,46 @@ public class RestLiOutputValidationFilter implements ResponseFilter
     switch (method)
     {
       case GET:
-        validateSingleResponse(validator, responseData.getRecordResponseEnvelope().getRecord());
+        validateSingleResponse(validator, responseData.getRecordResponseEnvelope().getRecord(), projectionMask);
         break;
       case CREATE:
         if (requestContext.getCustomAnnotations().containsKey("returnEntity"))
         {
-          validateSingleResponse(validator, responseData.getRecordResponseEnvelope().getRecord());
+          validateSingleResponse(validator, responseData.getRecordResponseEnvelope().getRecord(), projectionMask);
         }
         break;
       case GET_ALL:
       case FINDER:
-        validateCollectionResponse(validator, responseData.getCollectionResponseEnvelope().getCollectionResponse());
+        validateCollectionResponse(validator, responseData.getCollectionResponseEnvelope().getCollectionResponse(), projectionMask);
         break;
       case BATCH_GET:
-        validateBatchResponse(validator, responseData.getBatchResponseEnvelope().getBatchResponseMap());
+        validateBatchResponse(validator, responseData.getBatchResponseEnvelope().getBatchResponseMap(), projectionMask);
         break;
       case BATCH_CREATE:
         if (requestContext.getCustomAnnotations().containsKey("returnEntity"))
         {
-          validateCreateCollectionResponse(validator, responseData.getCreateCollectionResponseEnvelope().getCreateResponses());
+          validateCreateCollectionResponse(validator, responseData.getCreateCollectionResponseEnvelope().getCreateResponses(), projectionMask);
         }
         break;
     }
     nextResponseFilter.onResponse(requestContext, responseContext);
   }
 
-  private void validateSingleResponse(RestLiDataValidator validator, RecordTemplate entity)
+  private void validateSingleResponse(RestLiDataValidator validator, RecordTemplate entity, MaskTree projectionMask)
   {
-    ValidationResult result = validator.validateOutput(entity);
+    ValidationResult result = validator.validateOutput(entity, projectionMask);
     if (!result.isValid())
     {
       throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, result.getMessages().toString());
     }
   }
 
-  private void validateCollectionResponse(RestLiDataValidator validator, List<? extends RecordTemplate> entities)
+  private void validateCollectionResponse(RestLiDataValidator validator, List<? extends RecordTemplate> entities, MaskTree projectionMask)
   {
     StringBuilder sb = new StringBuilder();
     for (RecordTemplate entity : entities)
     {
-      ValidationResult result = validator.validateOutput(entity);
+      ValidationResult result = validator.validateOutput(entity, projectionMask);
       if (!result.isValid())
       {
         sb.append(result.getMessages().toString());
@@ -110,7 +113,9 @@ public class RestLiOutputValidationFilter implements ResponseFilter
     }
   }
 
-  private void validateBatchResponse(RestLiDataValidator validator, Map<?, BatchResponseEnvelope.BatchResponseEntry> batchResponseMap)
+  private void validateBatchResponse(RestLiDataValidator validator,
+                                     Map<?, BatchResponseEnvelope.BatchResponseEntry> batchResponseMap,
+                                     MaskTree projectionMask)
   {
     StringBuilder sb = new StringBuilder();
     for (Map.Entry<?, ? extends BatchResponseEnvelope.BatchResponseEntry> entry : batchResponseMap.entrySet())
@@ -119,7 +124,7 @@ public class RestLiOutputValidationFilter implements ResponseFilter
       {
         continue;
       }
-      ValidationResult result = validator.validateOutput(entry.getValue().getRecord());
+      ValidationResult result = validator.validateOutput(entry.getValue().getRecord(), projectionMask);
       if (!result.isValid())
       {
         sb.append("Key: ");
@@ -134,7 +139,9 @@ public class RestLiOutputValidationFilter implements ResponseFilter
     }
   }
 
-  private void validateCreateCollectionResponse(RestLiDataValidator validator, List<CreateCollectionResponseEnvelope.CollectionCreateResponseItem> responses)
+  private void validateCreateCollectionResponse(RestLiDataValidator validator,
+                                                List<CreateCollectionResponseEnvelope.CollectionCreateResponseItem> responses,
+                                                MaskTree projectionMask)
   {
     StringBuilder sb = new StringBuilder();
     for (CreateCollectionResponseEnvelope.CollectionCreateResponseItem item : responses)
@@ -143,7 +150,7 @@ public class RestLiOutputValidationFilter implements ResponseFilter
       {
         continue;
       }
-      ValidationResult result = validator.validateOutput(((CreateIdEntityStatus)item.getRecord()).getEntity());
+      ValidationResult result = validator.validateOutput(((CreateIdEntityStatus)item.getRecord()).getEntity(), projectionMask);
       if (!result.isValid())
       {
         sb.append(result.getMessages().toString());

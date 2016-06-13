@@ -1,5 +1,8 @@
 6.0.11
 ------
+(RB=743441)
+Support projections in rest.li schema validation
+
 (RB=743114)
 Add a custom data comparator for JSON-like comparisons, and custom
 data asserts with easy-to-understand error messages.

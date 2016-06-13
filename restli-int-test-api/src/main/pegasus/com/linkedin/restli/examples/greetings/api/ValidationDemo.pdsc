@@ -2,6 +2,7 @@
   "type" : "record",
   "name" : "ValidationDemo",
   "namespace" : "com.linkedin.restli.examples.greetings.api",
+  "include" : ["IncludeMe"],
   "fields" : [
     {
       "name": "stringA",

@@ -132,17 +132,17 @@
         "value" : [ "stringA", "intA", "UnionFieldWithInlineRecord/com.linkedin.restli.examples.greetings.api.myRecord/foo1", "ArrayWithInlineRecord/*/bar1", "validationDemoNext/stringB", "validationDemoNext/UnionFieldWithInlineRecord" ]
       }
     },
-    "name" : "autoValidationDemos",
+    "name" : "autoValidationWithProjection",
     "namespace" : "com.linkedin.restli.examples.greetings.client",
-    "path" : "/autoValidationDemos",
+    "path" : "/autoValidationWithProjection",
     "schema" : "com.linkedin.restli.examples.greetings.api.ValidationDemo",
-    "doc" : "Free-form resource for testing Rest.li data validation.\n This class shows how to validate data automatically by using the validation filters.\n Invalid incoming data or outgoing data are rejected, and an error response is returned to the client.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.AutomaticValidationDemoResource",
+    "doc" : "A simplied resource for testing Rest.li data automatic validation with automatic projection.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.AutomaticValidationWithProjectionResource",
     "collection" : {
       "identifier" : {
-        "name" : "autoValidationDemosId",
+        "name" : "autoValidationWithProjectionId",
         "type" : "int"
       },
-      "supports" : [ "batch_create", "batch_get", "batch_partial_update", "batch_update", "create", "get", "get_all", "partial_update", "update" ],
+      "supports" : [ "batch_create", "batch_get", "create", "get", "get_all" ],
       "methods" : [ {
         "annotations" : {
           "returnEntity" : { }
@@ -151,10 +151,6 @@
       }, {
         "method" : "get"
       }, {
-        "method" : "update"
-      }, {
-        "method" : "partial_update"
-      }, {
         "annotations" : {
           "returnEntity" : { }
         },
@@ -162,21 +158,13 @@
       }, {
         "method" : "batch_get"
       }, {
-        "method" : "batch_update"
-      }, {
-        "method" : "batch_partial_update"
-      }, {
         "method" : "get_all"
       } ],
       "finders" : [ {
-        "name" : "search",
-        "parameters" : [ {
-          "name" : "intA",
-          "type" : "int"
-        } ]
+        "name" : "searchWithProjection"
       } ],
       "entity" : {
-        "path" : "/autoValidationDemos/{autoValidationDemosId}"
+        "path" : "/autoValidationWithProjection/{autoValidationWithProjectionId}"
       }
     }
   }
