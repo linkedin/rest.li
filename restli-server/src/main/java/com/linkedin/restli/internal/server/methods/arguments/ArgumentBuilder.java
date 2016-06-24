@@ -547,7 +547,7 @@ public class ArgumentBuilder
       new HashMap<Object, R>(CollectionUtils.getMapInitialCapacity(batchRequest.getEntities().size(), 0.75f), 0.75f);
     for (Map.Entry<String, R> entry : batchRequest.getEntities().entrySet())
     {
-      Object typedKey = parseStringKey(entry.getKey(), routingResult, version);
+      Object typedKey = parseEntityStringKey(entry.getKey(), routingResult, version);
 
       if (result.containsKey(typedKey))
       {
@@ -579,14 +579,15 @@ public class ArgumentBuilder
   }
 
   /**
-   * Parses the provided string key value and returns its corresponding typed key instance.
+   * Parses the provided string key value and returns its corresponding typed key instance. This method should only be
+   * used to parse keys which appear in the request body.
    *
    * @param stringKey Key string from the entity body
    * @param routingResult {@link RoutingResult} instance for the current request
    * @param version {@link ProtocolVersion} instance of the current request
    * @return An instance of key's corresponding type
    */
-  static Object parseStringKey(final String stringKey, final RoutingResult routingResult,
+  static Object parseEntityStringKey(final String stringKey, final RoutingResult routingResult,
       final ProtocolVersion version)
   {
     ResourceModel resourceModel = routingResult.getResourceMethod().getResourceModel();
@@ -614,7 +615,10 @@ public class ArgumentBuilder
       }
       else
       {
-        return ArgumentUtils.parseSimplePathKey(stringKey, resourceModel, version);
+        // The conversion of simple keys doesn't include URL decoding as the current version of Rest.li clients don't
+        // encode simple keys which appear in the request body for BATCH UPDATE and BATCH PATCH requests.
+        Key key = resourceModel.getPrimaryKey();
+        return ArgumentUtils.convertSimpleValue(stringKey, key.getDataSchema(), key.getType());
       }
     }
     catch (InvalidAlternativeKeyException | AlternativeKeyCoercerException | PathSegment.PathSegmentSyntaxException | IllegalArgumentException e)

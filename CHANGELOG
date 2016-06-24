@@ -1,5 +1,7 @@
 6.0.14
 ------
+(RB=760311)
+Skip decoding simple keys which were passed in the request body for BATCH UPDATE and PATCH requests.
 
 6.0.13
 ------

@@ -19,6 +19,7 @@ package com.linkedin.restli.internal.server.methods.arguments;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.IntegerDataSchema;
+import com.linkedin.data.schema.StringDataSchema;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
@@ -87,22 +88,31 @@ public class TestBatchPatchArgumentBuilder
     @SuppressWarnings("rawtypes")
     PatchRequest[] patches = new PatchRequest[]{patch1, patch2};
 
+    Object[] simpleKeys = new Object[]{"simple", "(s:pe%cial)"};
     Object[] compoundKeys = new Object[]{new CompoundKey().append("string1", "apples").append("string2", "oranges"),
-        new CompoundKey().append("string1", "coffee").append("string2", "tea")};
-
+        new CompoundKey().append("string1", "simple").append("string2", "(s:pe%cial)")};
     Object[] complexResourceKeys = new Object[]{
-        new ComplexResourceKey<MyComplexKey, EmptyRecord>(new MyComplexKey().setA("A1").setB(111L), new EmptyRecord()),
-        new ComplexResourceKey<MyComplexKey, EmptyRecord>(new MyComplexKey().setA("A2").setB(222L), new EmptyRecord())};
+        new ComplexResourceKey<MyComplexKey, EmptyRecord>(new MyComplexKey().setA("simple").setB(111L), new EmptyRecord()),
+        new ComplexResourceKey<MyComplexKey, EmptyRecord>(new MyComplexKey().setA("(s:pe%cial)").setB(222L), new EmptyRecord())};
 
     return new Object[][]
         {
             {
                 AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
-                new Key("integerKey", Integer.class, new IntegerDataSchema()),
+                new Key("stringKey", String.class, new StringDataSchema()),
                 null,
-                "{\"entities\":{\"10001\":{\"patch\":{\"$set\":{\"a\":\"someString\"}}}," +
-                    "\"10002\":{\"patch\":{\"$set\":{\"a\":\"someOtherString\"}}}}}",
-                new Object[]{10001, 10002},
+                "{\"entities\":{\"simple\":{\"patch\":{\"$set\":{\"a\":\"someString\"}}}," +
+                    "\"(s:pe%cial)\":{\"patch\":{\"$set\":{\"a\":\"someOtherString\"}}}}}",
+                simpleKeys,
+                patches
+            },
+            {
+                AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+                new Key("stringKey", String.class, new StringDataSchema()),
+                null,
+                "{\"entities\":{\"simple\":{\"patch\":{\"$set\":{\"a\":\"someString\"}}}," +
+                    "\"(s:pe%cial)\":{\"patch\":{\"$set\":{\"a\":\"someOtherString\"}}}}}",
+                simpleKeys,
                 patches
             },
             {
@@ -110,7 +120,7 @@ public class TestBatchPatchArgumentBuilder
                 new Key("compoundKey", CompoundKey.class, null),
                 new Key[] { new Key("string1", String.class), new Key("string2", String.class) },
                 "{\"entities\":{\"string1=apples&string2=oranges\":{\"patch\":{\"$set\":{\"a\":\"someString\"}}}," +
-                    "\"string1=coffee&string2=tea\":{\"patch\":{\"$set\":{\"a\":\"someOtherString\"}}}}}",
+                    "\"string1=simple&string2=(s:pe%25cial)\":{\"patch\":{\"$set\":{\"a\":\"someOtherString\"}}}}}",
                 compoundKeys,
                 patches
             },
@@ -119,7 +129,7 @@ public class TestBatchPatchArgumentBuilder
                 new Key("compoundKey", CompoundKey.class, null),
                 new Key[] { new Key("string1", String.class), new Key("string2", String.class) },
                 "{\"entities\":{\"(string1:apples,string2:oranges)\":{\"patch\":{\"$set\":{\"a\":\"someString\"}}}," +
-                    "\"(string1:coffee,string2:tea)\":{\"patch\":{\"$set\":{\"a\":\"someOtherString\"}}}}}",
+                    "\"(string1:simple,string2:%28s%3Ape%25cial%29)\":{\"patch\":{\"$set\":{\"a\":\"someOtherString\"}}}}}",
                 compoundKeys,
                 patches
             },
@@ -127,8 +137,8 @@ public class TestBatchPatchArgumentBuilder
                 AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
                 new Key("complexKey", ComplexResourceKey.class, null),
                 null,
-                "{\"entities\":{\"a=A1&b=111\":{\"patch\":{\"$set\":{\"a\":\"someString\"}}}," +
-                    "\"a=A2&b=222\":{\"patch\":{\"$set\":{\"a\":\"someOtherString\"}}}}}",
+                "{\"entities\":{\"a=simple&b=111\":{\"patch\":{\"$set\":{\"a\":\"someString\"}}}," +
+                    "\"a=(s:pe%25cial)&b=222\":{\"patch\":{\"$set\":{\"a\":\"someOtherString\"}}}}}",
                 complexResourceKeys,
                 patches
             },
@@ -136,8 +146,8 @@ public class TestBatchPatchArgumentBuilder
                 AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
                 new Key("complexKey", ComplexResourceKey.class, null),
                 null,
-                "{\"entities\":{\"($params:(),a:A2,b:222)\":{\"patch\":{\"$set\":{\"a\":\"someOtherString\"}}}," +
-                    "\"($params:(),a:A1,b:111)\":{\"patch\":{\"$set\":{\"a\":\"someString\"}}}}}",
+                "{\"entities\":{\"($params:(),a:%28s%3Ape%25cial%29,b:222)\":{\"patch\":{\"$set\":{\"a\":\"someOtherString\"}}}," +
+                    "\"($params:(),a:simple,b:111)\":{\"patch\":{\"$set\":{\"a\":\"someString\"}}}}}",
                 complexResourceKeys,
                 patches
             }

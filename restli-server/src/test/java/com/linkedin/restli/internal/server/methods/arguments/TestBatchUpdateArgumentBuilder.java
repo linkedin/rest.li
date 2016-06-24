@@ -18,6 +18,7 @@ package com.linkedin.restli.internal.server.methods.arguments;
 
 
 import com.linkedin.data.schema.IntegerDataSchema;
+import com.linkedin.data.schema.StringDataSchema;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
@@ -65,35 +66,44 @@ public class TestBatchUpdateArgumentBuilder
   @DataProvider(name = "argumentData")
   private Object[][] argumentData()
   {
+    Object[] simpleKeys = new Object[]{"simple", "(s:pe%cial)"};
     Object[] compoundKeys = new Object[]{new CompoundKey().append("string1", "apples").append("string2", "oranges"),
-        new CompoundKey().append("string1", "coffee").append("string2", "tea")};
+        new CompoundKey().append("string1", "simple").append("string2", "(s:pe%cial)")};
     Object[] complexResourceKeys = new Object[]{
-        new ComplexResourceKey<MyComplexKey, EmptyRecord>(new MyComplexKey().setA("A1").setB(111L), new EmptyRecord()),
-        new ComplexResourceKey<MyComplexKey, EmptyRecord>(new MyComplexKey().setA("A2").setB(222L), new EmptyRecord())};
+        new ComplexResourceKey<MyComplexKey, EmptyRecord>(new MyComplexKey().setA("simple").setB(111L), new EmptyRecord()),
+        new ComplexResourceKey<MyComplexKey, EmptyRecord>(new MyComplexKey().setA("(s:pe%cial)").setB(222L), new EmptyRecord())};
 
     return new Object[][]
         {
             {
                 AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
-                new Key("integerKey", Integer.class, new IntegerDataSchema()),
+                new Key("stringKey", String.class, new StringDataSchema()),
                 null,
-                "{\"entities\":{\"10001\":{\"b\":123,\"a\":\"abc\"}," +
-                    "\"10002\":{\"b\":456,\"a\":\"XY\"}}}",
-                new Object[]{10001, 10002}
+                "{\"entities\":{\"simple\":{\"b\":123,\"a\":\"abc\"}," +
+                    "\"(s:pe%cial)\":{\"b\":456,\"a\":\"XY\"}}}",
+                simpleKeys
+            },
+            {
+                AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+                new Key("stringKey", String.class, new StringDataSchema()),
+                null,
+                "{\"entities\":{\"simple\":{\"b\":123,\"a\":\"abc\"}," +
+                    "\"(s:pe%cial)\":{\"b\":456,\"a\":\"XY\"}}}",
+                simpleKeys
             },
             {
                 AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
                 new Key("compoundKey", CompoundKey.class, null),
                 new Key[] { new Key("string1", String.class), new Key("string2", String.class) },
                 "{\"entities\":{\"string1=apples&string2=oranges\":{\"b\":123,\"a\":\"abc\"}," +
-                    "\"string1=coffee&string2=tea\":{\"b\":456,\"a\":\"XY\"}}}",
+                    "\"string1=simple&string2=(s:pe%25cial)\":{\"b\":456,\"a\":\"XY\"}}}",
                 compoundKeys
             },
             {
                 AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
                 new Key("compoundKey", CompoundKey.class, null),
                 new Key[] { new Key("string1", String.class), new Key("string2", String.class) },
-                "{\"entities\":{\"(string1:coffee,string2:tea)\":{\"b\":456,\"a\":\"XY\"}," +
+                "{\"entities\":{\"(string1:simple,string2:%28s%3Ape%25cial%29)\":{\"b\":456,\"a\":\"XY\"}," +
                     "\"(string1:apples,string2:oranges)\":{\"b\":123,\"a\":\"abc\"}}}",
                 compoundKeys
             },
@@ -101,16 +111,16 @@ public class TestBatchUpdateArgumentBuilder
                 AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
                 new Key("complexKey", ComplexResourceKey.class, null),
                 null,
-                "{\"entities\":{\"a=A1&b=111\":{\"b\":123,\"a\":\"abc\"}," +
-                    "\"a=A2&b=222\":{\"b\":456,\"a\":\"XY\"}}}",
+                "{\"entities\":{\"a=simple&b=111\":{\"b\":123,\"a\":\"abc\"}," +
+                    "\"a=(s:pe%25cial)&b=222\":{\"b\":456,\"a\":\"XY\"}}}",
                 complexResourceKeys
             },
             {
                 AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
                 new Key("complexKey", ComplexResourceKey.class, null),
                 null,
-                "{\"entities\":{\"($params:(),a:A2,b:222)\":{\"b\":456,\"a\":\"XY\"}," +
-                    "\"($params:(),a:A1,b:111)\":{\"b\":123,\"a\":\"abc\"}}}",
+                "{\"entities\":{\"($params:(),a:%28s%3Ape%25cial%29,b:222)\":{\"b\":456,\"a\":\"XY\"}," +
+                    "\"($params:(),a:simple,b:111)\":{\"b\":123,\"a\":\"abc\"}}}",
                 complexResourceKeys
             }
         };
