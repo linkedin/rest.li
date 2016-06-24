@@ -22,6 +22,7 @@ package com.linkedin.restli.internal.server;
 
 
 import com.linkedin.data.DataMap;
+import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
 import com.linkedin.restli.server.ResourceContext;
@@ -31,6 +32,8 @@ import java.net.HttpCookie;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -41,6 +44,8 @@ import java.util.Map;
  */
 public interface ServerResourceContext extends ResourceContext
 {
+  Logger LOG = LoggerFactory.getLogger(ServerResourceContext.class);
+
   /**
    * @return {@link DataMap} of request parameters.
    */
@@ -111,4 +116,37 @@ public interface ServerResourceContext extends ResourceContext
    * in the request if any exist, or null otherwise.
    */
   RestLiAttachmentReader getRequestAttachmentReader();
+
+  /**
+   * Sets the specified projection mask for root object entities in the response. Setting the projection mask to
+   * {@code null} implies all fields should be projected.
+   *
+   * @param projectionMask Projection mask to use for root object entities
+   */
+  default void setProjectionMask(MaskTree projectionMask)
+  {
+    LOG.warn("This is a default no-op implementation. The specified projectionMask is ignored.");
+  }
+
+  /**
+   * Sets the specified projection mask for CollectionResult metadata in the response. Setting the projection mask to
+   * {@code null} implies all fields should be projected.
+   *
+   * @param metadataProjectionMask Projection mask to use for CollectionResult metadata
+   */
+  default void setMetadataProjectionMask(MaskTree metadataProjectionMask)
+  {
+    LOG.warn("This is a default no-op implementation. The specified metadataProjectionMask is ignored.");
+  }
+
+  /**
+   * Sets the specified projection mask for paging metadata in the response (applies only for collection responses).
+   * Setting the projection mask to {@code null} implies all fields should be projected.
+   *
+   * @param pagingProjectionMask Projection mask to use for paging metadata
+   */
+  default void setPagingProjectionMask(MaskTree pagingProjectionMask)
+  {
+    LOG.warn("This is a default no-op implementation. The specified pagingProjectionMask is ignored.");
+  }
 }

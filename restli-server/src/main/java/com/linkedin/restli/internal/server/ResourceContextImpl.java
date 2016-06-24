@@ -76,17 +76,17 @@ public class ResourceContextImpl implements ServerResourceContext
 
   //For root object entities
   private ProjectionMode                            _projectionMode;
-  private final MaskTree                            _projectionMask;
+  private MaskTree                                  _projectionMask;
 
   //For the metadata inside of a CollectionResult
   private ProjectionMode                            _metadataProjectionMode;
-  private final MaskTree                            _metadataProjectionMask;
+  private MaskTree                                  _metadataProjectionMask;
 
   //For paging. Note that there is no projection mode for paging (CollectionMetadata) because its fully automatic.
   //Client resource methods have the option of setting the total if they so desire, but restli will always
   //project CollectionMetadata if the client asks for it.
   //The paging projection mask is still available to both parties (the resource method and restli).
-  private final MaskTree                            _pagingProjectionMask;
+  private MaskTree                                  _pagingProjectionMask;
 
   //For streaming attachments
   private final RestLiAttachmentReader              _requestAttachmentReader;
@@ -249,13 +249,31 @@ public class ResourceContextImpl implements ServerResourceContext
   }
 
   @Override
+  public void setProjectionMask(MaskTree projectionMask)
+  {
+    _projectionMask = projectionMask;
+  }
+
+  @Override
   public MaskTree getMetadataProjectionMask() {
     return _metadataProjectionMask;
   }
 
   @Override
+  public void setMetadataProjectionMask(MaskTree metadataProjectionMask)
+  {
+    _metadataProjectionMask = metadataProjectionMask;
+  }
+
+  @Override
   public MaskTree getPagingProjectionMask() {
     return _pagingProjectionMask;
+  }
+
+  @Override
+  public void setPagingProjectionMask(MaskTree pagingProjectionMask)
+  {
+    _pagingProjectionMask = pagingProjectionMask;
   }
 
   @Override

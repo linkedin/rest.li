@@ -30,10 +30,14 @@ import com.linkedin.restli.server.RestLiRequestData;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 public interface FilterRequestContext
 {
+  Logger LOG = LoggerFactory.getLogger(FilterRequestContext.class);
+
   /**
    * Get the URI of the request.
    *
@@ -61,6 +65,17 @@ public interface FilterRequestContext
    * @return MaskTree parsed from query, or null if no projection mask was requested.
    */
   MaskTree getProjectionMask();
+
+  /**
+   * Sets the specified projection mask for root entity in the response. Setting the projection mask to {@code null}
+   * implies all fields should be projected.
+   *
+   * @param projectionMask Projection mask to use for root entity
+   */
+  default void setProjectionMask(MaskTree projectionMask)
+  {
+    LOG.warn("This is a default no-op implementation. The specified projectionMask is ignored.");
+  }
 
   /**
    * Get all query parameters from the request.

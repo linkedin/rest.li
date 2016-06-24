@@ -80,6 +80,12 @@ public class FilterRequestContextInternalImpl implements FilterRequestContextInt
   }
 
   @Override
+  public void setProjectionMask(MaskTree projectionMask)
+  {
+    _context.setProjectionMask(projectionMask);
+  }
+
+  @Override
   public PathKeys getPathKeys()
   {
     return _context.getPathKeys();
