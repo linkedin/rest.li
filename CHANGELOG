@@ -1,5 +1,7 @@
 6.0.12
 ------
+(RB=706638)
+Add a shared implementation of AsyncPool, AsyncSharedPoolImpl
 
 6.0.11
 ------

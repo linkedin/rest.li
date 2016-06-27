@@ -68,7 +68,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
 
   private enum State { NOT_YET_STARTED, RUNNING, SHUTTING_DOWN, STOPPED }
 
-  public enum Strategy { MRU, LRU };
+  public enum Strategy { MRU, LRU }
   private final Strategy _strategy;
 
   // All members below are protected by this lock
@@ -76,6 +76,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
   private final Object _lock = new Object();
   // Including idle, checked out, and creations/destructions in progress
   private int _poolSize = 0;
+  private int _checkedOut = 0;
   // Unused objects live here, sorted by age.
   // The first object is the least recently added object.
   private final Deque<TimedObject<T>> _idle = new LinkedList<TimedObject<T>>();
@@ -85,22 +86,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
   private Throwable _lastCreateError = null;
   private State _state = State.NOT_YET_STARTED;
   private Callback<None> _shutdownCallback = null;
-  private final LongTracking _waitTimeTracker = new LongTracking();
-
-  // Statistics for each pool, retrieved with getStats()
-  // See AsyncPoolStats for details
-  // These are total counts over the entire lifetime of the pool
-  private int _totalCreated = 0;
-  private int _totalDestroyed = 0;
-  private int _totalCreateErrors = 0;
-  private int _totalDestroyErrors = 0;
-  private int _totalBadDestroyed = 0;
-  private int _totalTimedOut = 0;
-  // These counters reset on each call to getStats()
-  private int _sampleMaxCheckedOut = 0;
-  private int _sampleMaxPoolSize = 0;
-  // These are instantaneous values
-  private int _checkedOut = 0;
+  private final AsyncPoolStatsTracker _statsTracker;
 
   /**
    * Constructs an AsyncPool with maxWaiters equals to ({@code Integer.MAX_VALUE}).
@@ -206,6 +192,27 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
     _strategy = strategy;
     _minSize = minSize;
     _rateLimiter = rateLimiter;
+    _statsTracker = new AsyncPoolStatsTracker(
+        () -> _lifecycle.getStats(),
+        () -> _maxSize,
+        () -> _minSize,
+        () -> {
+          synchronized (_lock) {
+            return _poolSize;
+          }
+        },
+        () -> {
+          synchronized (_lock)
+          {
+            return _checkedOut;
+          }
+        },
+        () -> {
+          synchronized (_lock)
+          {
+            return _idle.size();
+          }
+        });
   }
 
   @Override
@@ -332,7 +339,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
       {
         // Defer execution of the callback until we are out of the synchronized block
         callbackWithTracking.onError(new IllegalStateException(_poolName + " is " + _state));
-        return null;
+        return () -> false;
       }
       T rawObj = obj.get();
       if (_lifecycle.validateGet(rawObj))
@@ -342,10 +349,10 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
         synchronized (_lock)
         {
           _checkedOut++;
-          _sampleMaxCheckedOut = Math.max(_checkedOut, _sampleMaxCheckedOut);
+          _statsTracker.sampleMaxCheckedOut();
         }
         callbackWithTracking.onSuccess(rawObj);
-        return null;
+        return () -> false;
       }
       // Invalid object, discard it and keep trying
       destroy(rawObj, true);
@@ -409,7 +416,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
       else
       {
         _checkedOut++;
-        _sampleMaxCheckedOut = Math.max(_checkedOut, _sampleMaxCheckedOut);
+        _statsTracker.sampleMaxCheckedOut();
       }
       shutdown = checkShutdownComplete();
     }
@@ -449,32 +456,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
     // get a copy of the stats
     synchronized (_lock)
     {
-      LongStats waitTimeStats = _waitTimeTracker.getStats();
-      PoolStats.LifecycleStats lifecycleStats = _lifecycle.getStats();
-      AsyncPoolStats stats = new AsyncPoolStats(
-        _totalCreated,
-        _totalDestroyed,
-        _totalCreateErrors,
-        _totalDestroyErrors,
-        _totalBadDestroyed,
-        _totalTimedOut,
-        _checkedOut,
-        _maxSize,
-        _minSize,
-        _poolSize,
-        _sampleMaxCheckedOut,
-        _sampleMaxPoolSize,
-        _idle.size(),
-        waitTimeStats.getAverage(),
-        waitTimeStats.get50Pct(),
-        waitTimeStats.get95Pct(),
-        waitTimeStats.get99Pct(),
-        lifecycleStats
-      );
-      _sampleMaxCheckedOut = _checkedOut;
-      _sampleMaxPoolSize = _poolSize;
-      _waitTimeTracker.reset();
-      return stats;
+      return _statsTracker.getStats();
     }
   }
 
@@ -484,7 +466,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
     {
       synchronized(_lock)
       {
-        _totalBadDestroyed++;
+        _statsTracker.incrementBadDestroyed();
       }
     }
     trc("disposing a pooled object");
@@ -494,7 +476,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
         boolean create;
         synchronized (_lock)
         {
-          _totalDestroyed++;
+          _statsTracker.incrementDestroyed();
           create = objectDestroyed();
         }
         if (create)
@@ -507,7 +489,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
       public void onError(Throwable e) {
         boolean create;
         synchronized (_lock) {
-          _totalDestroyErrors++;
+          _statsTracker.incrementDestroyErrors();
           create = objectDestroyed();
         }
         if (create) {
@@ -570,7 +552,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
         else if (_waiters.size() > 0 || _poolSize < _minSize)
         {
           _poolSize++;
-          _sampleMaxPoolSize = Math.max(_poolSize, _sampleMaxPoolSize);
+          _statsTracker.sampleMaxPoolSize();
           result = true;
         }
       }
@@ -596,7 +578,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
           {
             synchronized (_lock)
             {
-              _totalCreated++;
+              _statsTracker.incrementCreated();
               _lastCreateError = null;
             }
             add(t);
@@ -618,7 +600,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
             boolean create;
             synchronized (_lock)
             {
-              _totalCreateErrors++;
+              _statsTracker.incrementCreateErrors();
               _lastCreateError = e;
               create = objectDestroyed(1 + cancelledCreate.size());
               if (!_waiters.isEmpty())
@@ -672,7 +654,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
       for (TimedObject<U> p; (p = queue.peek()) != null && p.getTime() < target && excess > 0; excess--)
       {
         toReap.add(queue.poll().get());
-        _totalTimedOut++;
+        _statsTracker.incrementTimedOut();
       }
     }
     return toReap;
@@ -768,7 +750,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
     {
       synchronized (_lock)
       {
-        _waitTimeTracker.addValue(System.currentTimeMillis() - _startTime);
+        _statsTracker.trackWaitTime(System.currentTimeMillis() - _startTime);
       }
       _callback.onError(e);
     }
@@ -778,7 +760,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
     {
       synchronized (_lock)
       {
-        _waitTimeTracker.addValue(System.currentTimeMillis() - _startTime);
+        _statsTracker.trackWaitTime(System.currentTimeMillis() - _startTime);
       }
       _callback.onSuccess(result);
     }
@@ -788,5 +770,4 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
   {
     LOG.trace("{}: {}", _poolName, toLog);
   }
-
 }

@@ -67,7 +67,9 @@ public interface AsyncPool<T>
    * Get an object from the pool.
    *
    * If a valid object is available, it will be passed to the callback (possibly by the thread
-   * that invoked <code>get</code>.
+   * that invoked <code>get</code>. Depending on the implementation, checked out objects might not
+   * be owned exclusively by the getter. If ownership is not exclusive, it's up to the implementation
+   * to guarantee that checked out objects with shared ownership can be used in a thread safe manner.
    *
    * The pool will determine if an idle object is valid by calling the Lifecycle's
    * <code>validate</code> method.
@@ -75,7 +77,7 @@ public interface AsyncPool<T>
    * If none is available, the method returns immediately.  If the pool is not yet at
    * max capacity, object creation will be initiated.
    *
-   * Callbacks will be executed in FIFO order as objects are returned to the pool (either
+   * Callbacks will be executed in FIFO order as objects become available to the pool (either
    * by other users, or as new object creation completes) or as the timeout expires.
    *
    * After finishing with the object, the user must return the object to the pool with
@@ -91,16 +93,18 @@ public interface AsyncPool<T>
   Cancellable get(Callback<T> callback);
 
   /**
-   * Return a previously checked out object to the pool.  It is an error to return an object to
-   * the pool that is not currently checked out from the pool.
+   * Return a previously checked out object to the pool. It is okay to return a checked out object
+   * more than once. But it is an error to return an object to the pool that is not currently checked
+   * out from the pool.
    *
    * @param obj the object to be returned
    */
   void put(T obj);
 
   /**
-   * Dispose of a checked out object which is not operating correctly.  It is an error to
-   * <code>dispose</code> an object which is not currently checked out from the pool.
+   * Dispose of a checked out object which is not operating correctly. It is okay to dispose a checked
+   * out object more than once. But it is an error to <code>dispose</code> an object which is not currently
+   * checked out from the pool.
    *
    * @param obj the object to be disposed
    */
@@ -115,7 +119,12 @@ public interface AsyncPool<T>
    */
   PoolStats getStats();
 
-  public interface Lifecycle<T>
+  /**
+   * Manages the lifecycle of {@link AsyncPool} items.
+   *
+   * @param <T>
+   */
+  interface Lifecycle<T>
   {
     void create(Callback<T> callback);
     boolean validateGet(T obj);
