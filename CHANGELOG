@@ -1,5 +1,12 @@
+6.0.13
+------
+
+
 6.0.12
 ------
+(RB=756157)
+Adding setters for projection masks in ServerResourceContext and FilterRequestContext.
+
 (RB=706638)
 Add a shared implementation of AsyncPool, AsyncSharedPoolImpl
 
@@ -62,8 +69,8 @@ Fix missing custom information for record field and union member.
 Refactor code related to custom type.
 
 (RB=717162)
-Change the Pegasus compatibility checker to consider the addition of a 
-required field with a default as compatible and to consider setting a 
+Change the Pegasus compatibility checker to consider the addition of a
+required field with a default as compatible and to consider setting a
 default on an existing required field as backward incompatible.
 
 (RB=725964)
