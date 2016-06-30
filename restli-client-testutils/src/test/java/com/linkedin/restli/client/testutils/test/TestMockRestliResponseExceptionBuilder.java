@@ -102,8 +102,7 @@ public class TestMockRestliResponseExceptionBuilder
 
     RestResponse errorResponse = exception.getResponse();
     assertEquals(errorResponse.getHeader(expectedEntry.getKey()), expectedEntry.getValue());
-    assertEquals(errorResponse.getCookies()
-        .get(0), expectedCookie.toString());
+    assertEquals(errorResponse.getCookies().get(0), "bar=foo");
   }
 
   @Test(expectedExceptions = IllegalArgumentException.class)

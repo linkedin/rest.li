@@ -1,6 +1,10 @@
-6.0.13
+6.0.14
 ------
 
+6.0.13
+------
+(RB=757621)
+Removed double quotes for cookie attribute values.
 
 6.0.12
 ------

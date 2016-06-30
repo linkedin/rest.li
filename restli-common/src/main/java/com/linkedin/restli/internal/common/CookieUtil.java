@@ -176,7 +176,7 @@ public class CookieUtil
     }
     StringBuilder sb = new StringBuilder();
 
-    sb.append(cookie.getName()).append("=\"").append(cookie.getValue()).append('"');
+    sb.append(cookie.getName()).append("=").append(cookie.getValue());
     return sb.toString();
   }
 
@@ -188,23 +188,24 @@ public class CookieUtil
     }
     StringBuilder sb = new StringBuilder();
 
-    sb.append(cookie.getName()).append("=\"").append(cookie.getValue()).append('"');
+    sb.append(cookie.getName()).append("=").append(cookie.getValue());
 
     if (cookie.getPath() != null)
     {
-      sb.append(";Path=\"").append(cookie.getPath()).append('"');
+      sb.append(";Path=").append(cookie.getPath());
     }
     if (cookie.getDomain() != null)
     {
-      sb.append(";Domain=\"").append(cookie.getDomain()).append('"');
+      sb.append(";Domain=").append(cookie.getDomain());
     }
     if (cookie.getPortlist() != null)
     {
+      // Port value should be quoted according to RFC 2965 Section 3.2.2.
       sb.append(";Port=\"").append(cookie.getPortlist()).append('"');
     }
 
-    sb.append(";Max-Age=\"").append(Long.toString(cookie.getMaxAge())).append('"');
-    sb.append(";Version=\"").append(Integer.toString(cookie.getVersion())).append('"');
+    sb.append(";Max-Age=").append(Long.toString(cookie.getMaxAge()));
+    sb.append(";Version=").append(Integer.toString(cookie.getVersion()));
     if (cookie.getDiscard())
     {
       sb.append(";Discard");
@@ -216,10 +217,11 @@ public class CookieUtil
 
     if (cookie.getComment() != null)
     {
-      sb.append(";Comment=\"").append(cookie.getComment()).append('"');
+      sb.append(";Comment=").append(cookie.getComment());
     }
     if (cookie.getCommentURL() != null)
     {
+      // CommentURL value should be quoted according to RFC 2965 Section 3.2.2.
       sb.append(";CommentURL=\"").append(cookie.getCommentURL()).append('"');
     }
 

@@ -40,7 +40,7 @@ public class TestCookieUtil
   @BeforeClass
   public void setUp() throws URISyntaxException
   {
-    cookieA=new HttpCookie("a", "android");
+    cookieA = new HttpCookie("a", "android");
     cookieA.setDomain(".android.com");
     cookieA.setPath("/source/");
     cookieA.setDiscard(false);
@@ -77,6 +77,16 @@ public class TestCookieUtil
     Assert.assertEquals(decodedCookie.getDiscard(), cookieA.getDiscard());
     Assert.assertEquals(decodedCookie.getMaxAge(), cookieA.getMaxAge());
     Assert.assertEquals(decodedCookie.getSecure(), cookieA.getSecure());
+  }
+
+  @Test
+  public void testCookieAttributeEncoding()
+  {
+    String encodedCookie = CookieUtil.encodeSetCookie(cookieA);
+
+    Assert.assertTrue(encodedCookie.contains("Domain=.android.com"));
+    Assert.assertTrue(encodedCookie.contains("Path=/source/"));
+    Assert.assertTrue(encodedCookie.contains("Max-Age=125"));
   }
 
   @Test
