@@ -1,6 +1,7 @@
 6.0.15
 ------
-
+(RB=770138)
+Removes -XX:MaxPermSize JVM argument now that we are fully on JDK8
 
 6.0.14
 ------
