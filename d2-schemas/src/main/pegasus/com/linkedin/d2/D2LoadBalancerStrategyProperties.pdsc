@@ -118,6 +118,29 @@
       "type": "double",
       "doc": "The highest ratio of unused entries over the total entries of the Ring points that d2 maintains.",
       "optional": true
+    },
+    {
+      "name": "consistentHashAlgorithm",
+      "type": {
+        "name": "ConsistentHashAlgorithmEnum",
+        "type": "enum",
+        "symbols": [
+          "POINT_BASED",
+          "MULTI_PROBE"
+        ],
+        "symbolDocs": {
+          "POINT_BASED": "Point-based consistent hash ring. The more points the ring has, the more balanced it is.",
+          "MULTI_PROBE": "Multi-probe consistent hash. The more probes to use, the more balanced the ring is."
+        }
+      },
+      "doc": "Consistent hash algorithm the d2 load balancer should use. Defaults to POINT_BASED.",
+      "optional": true
+    },
+    {
+      "name": "numberOfProbes",
+      "type": "int",
+      "doc": "The number of probes used to look up a key in consistent hash ring. Defaults to 21.",
+      "optional": true
     }
   ]
 }

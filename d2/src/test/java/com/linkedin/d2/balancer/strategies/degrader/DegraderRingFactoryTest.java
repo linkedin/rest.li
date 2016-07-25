@@ -22,7 +22,6 @@ import com.linkedin.d2.balancer.util.hashing.Ring;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -65,7 +64,7 @@ public class DegraderRingFactoryTest
   {
     Map<String, Integer> pointsMp = buildPointsMap(6);
 
-    DegraderRingFactory<String> ringFactory = new DegraderRingFactory<>(new DegraderLoadBalancerStrategyConfig(1L));
+    PointBasedConsistentHashRingFactory<String> ringFactory = new PointBasedConsistentHashRingFactory<>(new DegraderLoadBalancerStrategyConfig(1L));
     Ring<String>  ring = ringFactory.createRing(pointsMp);
     assertNotNull(ring.get(1000));
 
@@ -94,7 +93,7 @@ public class DegraderRingFactoryTest
   {
     Map<String, Integer> pointsMp = buildPointsMap(19);
 
-    DegraderRingFactory<String> ringFactory = new DegraderRingFactory<>(new DegraderLoadBalancerStrategyConfig(1L));
+    PointBasedConsistentHashRingFactory<String> ringFactory = new PointBasedConsistentHashRingFactory<>(new DegraderLoadBalancerStrategyConfig(1L));
     Ring<String>  ring = ringFactory.createRing(pointsMp);
     assertNotNull(ring.get(1000));
 
@@ -131,7 +130,7 @@ public class DegraderRingFactoryTest
       maxPoints.put(uri, 100);
     }
 
-    DegraderRingFactory<String> ringFactory = new DegraderRingFactory<>(new DegraderLoadBalancerStrategyConfig(1L));
+    PointBasedConsistentHashRingFactory<String> ringFactory = new PointBasedConsistentHashRingFactory<>(new DegraderLoadBalancerStrategyConfig(1L));
     Ring<String>  ring = ringFactory.createRing(pointsMp);
     assertNotNull(ring.get(1000));
 

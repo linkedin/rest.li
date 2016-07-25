@@ -2,6 +2,7 @@ package com.linkedin.d2.balancer.strategies.degrader;
 
 
 import com.linkedin.d2.balancer.properties.PropertyKeys;
+import com.linkedin.d2.balancer.util.hashing.MPConsistentHashRing;
 import com.linkedin.util.clock.Clock;
 import com.linkedin.util.clock.SystemClock;
 import java.util.Collection;
@@ -41,6 +42,8 @@ public class DegraderLoadBalancerStrategyConfigTest
     double httpGlobalStepUp = 0.17;
     double httpGlobalStepDown = 0.21;
     double hashRingPointCleanUpRate = 0.1;
+    String consistentHashAlgo = "multiProbe";
+    int numProbes = 1024;
     Map<String,Object> httpHashConfig = new HashMap<String,Object>();
     List<String> httpRegexes = new LinkedList<String>();
     httpRegexes.add("httphashToken=(\\d+)");
@@ -65,6 +68,8 @@ public class DegraderLoadBalancerStrategyConfigTest
     properties.put(PropertyKeys.HTTP_LB_GLOBAL_STEP_DOWN, httpGlobalStepDown);
     properties.put(PropertyKeys.HTTP_LB_GLOBAL_STEP_UP, httpGlobalStepUp);
     properties.put(PropertyKeys.HTTP_LB_HASHRING_POINT_CLEANUP_RATE, hashRingPointCleanUpRate);
+    properties.put(PropertyKeys.HTTP_LB_CONSISTENT_HASH_ALGORITHM, consistentHashAlgo);
+    properties.put(PropertyKeys.HTTP_LB_CONSISTENT_HASH_NUM_PROBES, Integer.toString(numProbes));
 
     //now test if there's http, then http config should take more priority
     DegraderLoadBalancerStrategyConfig config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(properties);
@@ -81,6 +86,8 @@ public class DegraderLoadBalancerStrategyConfigTest
     assertEquals(config.getGlobalStepUp(), httpGlobalStepUp);
     assertEquals(config.getHashConfig(), httpHashConfig);
     assertEquals(config.getHashRingPointCleanUpRate(), hashRingPointCleanUpRate);
+    assertEquals(config.getConsistentHashAlgorithm(), consistentHashAlgo);
+    assertEquals(config.getNumProbes(), numProbes);
 
     //test if there's no config, will the default config value set
     properties.clear();
@@ -97,5 +104,7 @@ public class DegraderLoadBalancerStrategyConfigTest
     assertEquals(config.getGlobalStepUp(), DegraderLoadBalancerStrategyConfig.DEFAULT_GLOBAL_STEP_UP);
     assertEquals(config.getHashConfig(), Collections.emptyMap());
     assertEquals(config.getHashRingPointCleanUpRate(), DegraderLoadBalancerStrategyConfig.DEFAULT_HASHRING_POINT_CLEANUP_RATE);
+    assertEquals(config.getConsistentHashAlgorithm(), null);
+    assertEquals(config.getNumProbes(), MPConsistentHashRing.DEFAULT_NUM_PROBES);
   }
 }

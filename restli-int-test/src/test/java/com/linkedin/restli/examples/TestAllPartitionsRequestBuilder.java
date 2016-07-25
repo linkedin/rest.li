@@ -21,6 +21,10 @@ import com.linkedin.d2.balancer.PartitionedLoadBalancerTestState;
 import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancer;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
+import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyConfig;
+import com.linkedin.d2.balancer.strategies.degrader.MPConsistentHashRingFactory;
+import com.linkedin.d2.balancer.strategies.degrader.PointBasedConsistentHashRingFactory;
+import com.linkedin.d2.balancer.strategies.degrader.RingFactory;
 import com.linkedin.d2.balancer.util.HostSet;
 import com.linkedin.d2.balancer.util.hashing.ConsistentHashKeyMapperTest;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
@@ -90,11 +94,11 @@ public class TestAllPartitionsRequestBuilder extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "restliRequestOptions")
-  public void testSendAllPartitionsRequests(RestliRequestOptions options) throws ServiceUnavailableException, URISyntaxException, RestException, InterruptedException
+  public void testSendAllPartitionsRequests(RestliRequestOptions options, RingFactory<URI> ringFactory) throws ServiceUnavailableException, URISyntaxException, RestException, InterruptedException
   {
     final int PARTITION_NUM = 5;
     List<URI> expectedUris = new ArrayList<URI>();
-    ConsistentHashKeyMapper mapper = getKeyToHostMapper(PARTITION_NUM, expectedUris);
+    ConsistentHashKeyMapper mapper = getKeyToHostMapper(PARTITION_NUM, expectedUris, ringFactory);
     AllPartitionsRequestBuilder<Greeting> searchRB = new AllPartitionsRequestBuilder<Greeting>(mapper);
     ActionRequestBuilder<Long, Greeting> builder = new ActionRequestBuilder<Long, Greeting>(TEST_URI,
                                                                                             Greeting.class,
@@ -147,7 +151,7 @@ public class TestAllPartitionsRequestBuilder extends RestLiIntegrationTest
     Assert.assertEquals(PARTITION_NUM, responses.size());
   }
 
-  private ConsistentHashKeyMapper getKeyToHostMapper(int partitionNum, List<URI> expectedUris) throws  URISyntaxException
+  private ConsistentHashKeyMapper getKeyToHostMapper(int partitionNum, List<URI> expectedUris, RingFactory<URI> ringFactory) throws  URISyntaxException
   {
     Map<URI, Map<Integer, PartitionData>> partitionDescriptions = new HashMap<URI, Map<Integer, PartitionData>>();
 
@@ -161,7 +165,7 @@ public class TestAllPartitionsRequestBuilder extends RestLiIntegrationTest
     }
 
     List<LoadBalancerState.SchemeStrategyPair> orderedStrategies = new ArrayList<LoadBalancerState.SchemeStrategyPair>();
-    LoadBalancerStrategy strategy = new ConsistentHashKeyMapperTest.TestLoadBalancerStrategy(partitionDescriptions);
+    LoadBalancerStrategy strategy = new ConsistentHashKeyMapperTest.TestLoadBalancerStrategy(partitionDescriptions, ringFactory);
     orderedStrategies.add(new LoadBalancerState.SchemeStrategyPair("http", strategy));
 
     PartitionAccessor accessor = new ConsistentHashKeyMapperTest.TestPartitionAccessor();
@@ -179,8 +183,10 @@ public class TestAllPartitionsRequestBuilder extends RestLiIntegrationTest
   {
     return new Object[][]
       {
-        { RestliRequestOptions.DEFAULT_OPTIONS },
-        { TestConstants.FORCE_USE_NEXT_OPTIONS }
+        { RestliRequestOptions.DEFAULT_OPTIONS, new PointBasedConsistentHashRingFactory<>(new DegraderLoadBalancerStrategyConfig(5000)) },
+        { RestliRequestOptions.DEFAULT_OPTIONS, new MPConsistentHashRingFactory<>(21) },
+        { TestConstants.FORCE_USE_NEXT_OPTIONS, new PointBasedConsistentHashRingFactory<>(new DegraderLoadBalancerStrategyConfig(5000)) },
+        { TestConstants.FORCE_USE_NEXT_OPTIONS, new MPConsistentHashRingFactory<>(21) }
       };
   }
 }

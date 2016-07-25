@@ -1,0 +1,15 @@
+plugins {
+  id 'me.champeau.gradle.jmh' version '0.3.0'
+}
+
+jmh {
+  include = '.*ConsistentHashRingBenchmark.*'
+  zip64 = true
+}
+
+
+dependencies {
+  jmh project(':d2')
+  jmh externalDependency.jmhCore
+  jmh externalDependency.jmhAnnotations
+}

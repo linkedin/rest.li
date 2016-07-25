@@ -17,6 +17,7 @@
 package com.linkedin.d2.balancer.strategies.degrader;
 
 import com.linkedin.d2.balancer.properties.PropertyKeys;
+import com.linkedin.d2.balancer.util.hashing.MPConsistentHashRing;
 import java.util.Collections;
 import java.util.Map;
 
@@ -64,6 +65,9 @@ public class DegraderLoadBalancerStrategyConfig
 
   private final double _hashRingPointCleanUpRate;
 
+  private final String _consistentHashAlgorithm;
+  private final int _numProbes;
+
   public static final Clock DEFAULT_CLOCK = SystemClock.instance();
   public static final double DEFAULT_INITIAL_RECOVERY_LEVEL = 0.01;
   public static final double DEFAULT_RAMP_FACTOR = 1.0;
@@ -84,6 +88,8 @@ public class DegraderLoadBalancerStrategyConfig
 
   public static final double DEFAULT_HASHRING_POINT_CLEANUP_RATE = 0.20;
 
+  public static final int DEFAULT_NUM_PROBES = MPConsistentHashRing.DEFAULT_NUM_PROBES;
+
   public DegraderLoadBalancerStrategyConfig(long updateIntervalMs)
   {
     this(updateIntervalMs, DEFAULT_UPDATE_ONLY_AT_INTERVAL, 100, null, Collections.<String, Object>emptyMap(),
@@ -91,7 +97,8 @@ public class DegraderLoadBalancerStrategyConfig
          DEFAULT_GLOBAL_STEP_UP, DEFAULT_GLOBAL_STEP_DOWN,
          DEFAULT_CLUSTER_MIN_CALL_COUNT_HIGH_WATER_MARK,
          DEFAULT_CLUSTER_MIN_CALL_COUNT_LOW_WATER_MARK,
-         DEFAULT_HASHRING_POINT_CLEANUP_RATE);
+         DEFAULT_HASHRING_POINT_CLEANUP_RATE,
+         null, DEFAULT_NUM_PROBES);
   }
 
   public DegraderLoadBalancerStrategyConfig(DegraderLoadBalancerStrategyConfig config)
@@ -110,7 +117,9 @@ public class DegraderLoadBalancerStrategyConfig
          config.getGlobalStepDown(),
          config.getMinClusterCallCountHighWaterMark(),
          config.getMinClusterCallCountLowWaterMark(),
-         config.getHashRingPointCleanUpRate());
+         config.getHashRingPointCleanUpRate(),
+         config.getConsistentHashAlgorithm(),
+         config.getNumProbes());
   }
 
   public DegraderLoadBalancerStrategyConfig(long updateIntervalMs,
@@ -127,7 +136,9 @@ public class DegraderLoadBalancerStrategyConfig
                                             double globalStepDown,
                                             long minCallCountHighWaterMark,
                                             long minCallCountLowWaterMark,
-                                            double hashRingPointCleanUpRate)
+                                            double hashRingPointCleanUpRate,
+                                            String consistentHashAlgorithm,
+                                            int numProbes)
   {
     _updateIntervalMs = updateIntervalMs;
     _updateOnlyAtInterval = updateOnlyAtInterval;
@@ -144,6 +155,8 @@ public class DegraderLoadBalancerStrategyConfig
     _minClusterCallCountHighWaterMark = minCallCountHighWaterMark;
     _minClusterCallCountLowWaterMark = minCallCountLowWaterMark;
     _hashRingPointCleanUpRate = hashRingPointCleanUpRate;
+    _consistentHashAlgorithm = consistentHashAlgorithm;
+    _numProbes = numProbes;
   }
 
   /**
@@ -214,11 +227,18 @@ public class DegraderLoadBalancerStrategyConfig
     Double hashRingPointCleanUpRate = MapUtil.getWithDefault(map, PropertyKeys.HTTP_LB_HASHRING_POINT_CLEANUP_RATE,
         DEFAULT_HASHRING_POINT_CLEANUP_RATE, Double.class);
 
+    String consistentHashAlgorithm = MapUtil.getWithDefault(map, PropertyKeys.HTTP_LB_CONSISTENT_HASH_ALGORITHM,
+        null, String.class);
+
+    Integer numProbes = MapUtil.getWithDefault(map, PropertyKeys.HTTP_LB_CONSISTENT_HASH_NUM_PROBES,
+        DEFAULT_NUM_PROBES);
+
     return new DegraderLoadBalancerStrategyConfig(
         updateIntervalMs, updateOnlyAtInterval, pointsPerWeight, hashMethod, hashConfig,
         clock, initialRecoveryLevel, ringRampFactor, highWaterMark, lowWaterMark,
         globalStepUp, globalStepDown, minClusterCallCountHighWaterMark,
-        minClusterCallCountLowWaterMark, hashRingPointCleanUpRate);
+        minClusterCallCountLowWaterMark, hashRingPointCleanUpRate,
+        consistentHashAlgorithm, numProbes);
   }
 
   /**
@@ -300,6 +320,16 @@ public class DegraderLoadBalancerStrategyConfig
   public double getHashRingPointCleanUpRate()
   {
     return _hashRingPointCleanUpRate;
+  }
+
+  public String getConsistentHashAlgorithm()
+  {
+    return _consistentHashAlgorithm;
+  }
+
+  public int getNumProbes()
+  {
+    return _numProbes;
   }
 
   @Override

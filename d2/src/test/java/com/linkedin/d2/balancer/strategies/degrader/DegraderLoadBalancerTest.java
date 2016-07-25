@@ -27,8 +27,6 @@ import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.util.URIRequest;
-import com.linkedin.d2.balancer.util.hashing.ConsistentHashRing;
-import com.linkedin.d2.balancer.util.hashing.ConsistentHashRing.Point;
 import com.linkedin.d2.balancer.util.hashing.Ring;
 import com.linkedin.d2.balancer.util.hashing.URIRegexHash;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
@@ -88,14 +86,6 @@ import static org.testng.Assert.fail;
 public class DegraderLoadBalancerTest
 {
   private static final int DEFAULT_PARTITION_ID = DefaultPartitionAccessor.DEFAULT_PARTITION_ID;
-
-  public static void main(String[] args) throws URISyntaxException,
-          InterruptedException
-  {
-    DegraderLoadBalancerTest test = new DegraderLoadBalancerTest();
-
-    test.testWeightedBalancingRing();
-  }
 
   public static TrackerClient getTrackerClient(LoadBalancerStrategy strategy,
                                                Request request,
@@ -536,7 +526,9 @@ public class DegraderLoadBalancerTest
               config.getGlobalStepDown(),
               config.getMinClusterCallCountHighWaterMark(),
               config.getMinClusterCallCountLowWaterMark(),
-              config.getHashRingPointCleanUpRate());
+              config.getHashRingPointCleanUpRate(),
+              config.getConsistentHashAlgorithm(),
+              config.getNumProbes());
     }
 
     @Override
@@ -1322,10 +1314,20 @@ public class DegraderLoadBalancerTest
     }
   }
 
-  @Test(groups = { "small", "back-end" })
-  public void testWeightedBalancingRing() throws URISyntaxException
+  @DataProvider(name = "consistentHashAlgorithms")
+  Object[][] getConsistentHashAlgorithm()
   {
-    DegraderLoadBalancerStrategyV3 strategy = getStrategy();
+    return new Object[][]
+        {
+            { DegraderRingFactory.POINT_BASED_CONSISTENT_HASH },
+            { DegraderRingFactory.MULTI_PROBE_CONSISTENT_HASH }
+        };
+  }
+
+  @Test(groups = { "small", "back-end" }, dataProvider = "consistentHashAlgorithms")
+  public void testWeightedBalancingRing(String consistentHashAlgorithm) throws URISyntaxException
+  {
+    DegraderLoadBalancerStrategyV3 strategy = getStrategy(consistentHashAlgorithm);
     List<TrackerClient> clients = new ArrayList<TrackerClient>();
     URI uri1 = URI.create("http://test.linkedin.com:3242/fdsaf");
     URI uri2 = URI.create("http://test.linkedin.com:3243/fdsaf");
@@ -1339,29 +1341,8 @@ public class DegraderLoadBalancerTest
     clients.add(client1);
     clients.add(client2);
 
-    System.err.println(client2.getDegraderControl(DEFAULT_PARTITION_ID).getCurrentComputedDropRate());
-    System.err.println(client1.getDegraderControl(DEFAULT_PARTITION_ID).getCurrentComputedDropRate());
-
     // trigger a state update
     assertNotNull(getTrackerClient(strategy, null, new RequestContext(), 1, clients));
-
-    // now verify that the ring has degraded client 2 by 20%
-    ConsistentHashRing<URI> ring =
-            (ConsistentHashRing<URI>) strategy.getState().getPartitionState(DEFAULT_PARTITION_ID).getRing();
-
-    Map<URI, AtomicInteger> count = new HashMap<URI, AtomicInteger>();
-
-    count.put(uri1, new AtomicInteger(0));
-    count.put(uri2, new AtomicInteger(0));
-
-    for (Point<URI> point : ring.getPoints())
-    {
-      count.get(point.getT()).incrementAndGet();
-    }
-
-    // .8 weight should degrade the weight of client2 by 20%
-    assertEquals(count.get(uri1).get(), 100);
-    assertEquals(count.get(uri2).get(), 80);
 
     // now do a basic verification to verify getTrackerClient is properly weighting things
     double calls = 10000d;
@@ -1389,10 +1370,10 @@ public class DegraderLoadBalancerTest
     assertTrue(Math.abs((client2Count / calls) - (80 / 180d)) < tolerance);
   }
 
-  @Test(groups = { "small", "back-end" })
-  public void testBalancingRing() throws URISyntaxException
+  @Test(groups = { "small", "back-end" }, dataProvider = "consistentHashAlgorithms")
+  public void testBalancingRing(String consistentHashAlgorithm) throws URISyntaxException
   {
-    DegraderLoadBalancerStrategyV3 strategy = getStrategy();
+    DegraderLoadBalancerStrategyV3 strategy = getStrategy(consistentHashAlgorithm);
     List<TrackerClient> clients = new ArrayList<TrackerClient>();
     URI uri1 = URI.create("http://someTestService/someTestUrl");
     URI uri2 = URI.create("http://abcxfweuoeueoueoueoukeueoueoueoueoueouo/2354");
@@ -1417,30 +1398,6 @@ public class DegraderLoadBalancerTest
 
     clock1.addMs(15000);
     clock2.addMs(5000);
-
-    System.err.println(dcClient2Default.getCurrentComputedDropRate());
-    System.err.println(client1.getDegraderControl(DEFAULT_PARTITION_ID).getCurrentComputedDropRate());
-
-    // trigger a state update
-    assertNotNull(getTrackerClient(strategy, null, new RequestContext(), 1, clients));
-
-    // now verify that the ring has degraded client 2 by 20%
-    ConsistentHashRing<URI> ring =
-            (ConsistentHashRing<URI>) strategy.getState().getPartitionState(DEFAULT_PARTITION_ID).getRing();
-
-    Map<URI, AtomicInteger> count = new HashMap<URI, AtomicInteger>();
-
-    count.put(uri1, new AtomicInteger(0));
-    count.put(uri2, new AtomicInteger(0));
-
-    for (Point<URI> point : ring.getPoints())
-    {
-      count.get(point.getT()).incrementAndGet();
-    }
-
-    // .4 degradation should degrade the weight of client2 by 40%
-    assertEquals(count.get(uri1).get(), 100);
-    assertEquals(count.get(uri2).get(), 60);
 
     // now do a basic verification to verify getTrackerClient is properly weighting things
     double calls = 10000d;
@@ -1468,10 +1425,10 @@ public class DegraderLoadBalancerTest
     assertTrue(Math.abs((client2Count / calls) - (60 / 160d)) < tolerance);
   }
 
-  @Test(groups = { "small", "back-end" })
-  public void testWeightedAndLatencyDegradationBalancingRingWithPartitions() throws URISyntaxException
+  @Test(groups = { "small", "back-end" }, dataProvider = "consistentHashAlgorithms")
+  public void testWeightedAndLatencyDegradationBalancingRingWithPartitions(String consistentHashAlgorithm) throws URISyntaxException
   {
-    DegraderLoadBalancerStrategyV3 strategy = getStrategy();
+    DegraderLoadBalancerStrategyV3 strategy = getStrategy(consistentHashAlgorithm);
 
     List<TrackerClient> clientsForPartition0 = new ArrayList<TrackerClient>();
     List<TrackerClient> clientsForPartition1 = new ArrayList<TrackerClient>();
@@ -1545,44 +1502,6 @@ public class DegraderLoadBalancerTest
     assertNotNull(strategy.getRing(1,partitionId0, clientsForPartition0));
     assertNotNull(strategy.getRing(1, partitionId1, clientsForPartition1));
 
-    ConsistentHashRing<URI> ring0 =
-            (ConsistentHashRing<URI>) strategy.getState().getPartitionState(partitionId0).getRing();
-
-    ConsistentHashRing<URI> ring1 =
-            (ConsistentHashRing<URI>) strategy.getState().getPartitionState(partitionId1).getRing();
-
-    Map<URI, AtomicInteger> count0 = new HashMap<URI, AtomicInteger>();
-
-    count0.put(uri1, new AtomicInteger(0));
-    count0.put(uri2, new AtomicInteger(0));
-
-    for (Point<URI> point : ring0.getPoints())
-    {
-      count0.get(point.getT()).incrementAndGet();
-    }
-
-    // .4 degradation on a .5 weighted node should degrade the weight of client2 by 30
-    assertEquals(count0.get(uri1).get(), 100);
-    assertEquals(count0.get(uri2).get(), 30);
-
-    Map<URI, AtomicInteger> count1 = new HashMap<URI, AtomicInteger>();
-
-    count1.put(uri2, new AtomicInteger(0));
-    count1.put(uri3, new AtomicInteger(0));
-    count1.put(uri4, new AtomicInteger(0));
-
-    for (Point<URI> point : ring1.getPoints())
-    {
-      count1.get(point.getT()).incrementAndGet();
-    }
-
-    // .4 degradation on a .5 weighted node should degrade the weight of client2 by 30
-    // .2 degradation on a 1 weighted node should degrade the weight of client3 by 80
-    assertEquals(count1.get(uri3).get(), 80);
-    assertEquals(count1.get(uri2).get(), 30);
-    // uri4 should be ignored due to non-specified partition weight
-    assertEquals(count1.get(uri4).get(), 0);
-
     // now do a basic verification to verify getTrackerClient is properly weighting things
     int calls = 10000;
     int client1Count = 0;
@@ -1638,10 +1557,10 @@ public class DegraderLoadBalancerTest
     assertTrue(client4Count == 0);
   }
 
-  @Test(groups = { "small", "back-end" })
-  public void testWeightedAndLatencyDegradationBalancingRing() throws URISyntaxException
+  @Test(groups = { "small", "back-end" }, dataProvider = "consistentHashAlgorithms")
+  public void testWeightedAndLatencyDegradationBalancingRing(String consistentHashAlgorithm) throws URISyntaxException
   {
-    DegraderLoadBalancerStrategyV3 strategy = getStrategy();
+    DegraderLoadBalancerStrategyV3 strategy = getStrategy(consistentHashAlgorithm);
     List<TrackerClient> clients = new ArrayList<TrackerClient>();
     URI uri1 = URI.create("http://test.linkedin.com:3242/fdsaf");
     URI uri2 = URI.create("http://test.linkedin.com:3243/fdsaf");
@@ -1668,32 +1587,8 @@ public class DegraderLoadBalancerTest
     clock1.addMs(15000);
     clock2.addMs(5000);
 
-    System.err.println(dcClient2Default.getCurrentComputedDropRate());
-    System.err.println(client1.getDegraderControl(DEFAULT_PARTITION_ID).getCurrentComputedDropRate());
-
     // trigger a state update
     assertNotNull(getTrackerClient(strategy, null, new RequestContext(), 1, clients));
-
-    // now verify that the ring has degraded client 2 by 20%
-    ConsistentHashRing<URI> ring =
-            (ConsistentHashRing<URI>) strategy.getState().getPartitionState(DEFAULT_PARTITION_ID).getRing();
-
-    Map<URI, AtomicInteger> count = new HashMap<URI, AtomicInteger>();
-
-    count.put(uri1, new AtomicInteger(0));
-    count.put(uri2, new AtomicInteger(0));
-
-    for (Point<URI> point : ring.getPoints())
-    {
-      count.get(point.getT()).incrementAndGet();
-    }
-
-    System.err.println(count);
-
-    // .4 degradation on a .8 weighted node should degrade the weight of client2 by 48
-    // points. 100 * (1 - 0.4) * 0.8 = 48
-    assertEquals(count.get(uri1).get(), 100);
-    assertEquals(count.get(uri2).get(), 48);
 
     // now do a basic verification to verify getTrackerClient is properly weighting things
     double calls = 10000d;
@@ -1721,10 +1616,10 @@ public class DegraderLoadBalancerTest
     assertTrue(Math.abs((client2Count / calls) - (48 / 148d)) < tolerance);
   }
 
-  @Test(groups = { "small", "back-end"})
-  public void TestRandomIncreaseReduceTrackerClients()
+  @Test(groups = { "small", "back-end"}, dataProvider = "consistentHashAlgorithms")
+  public void TestRandomIncreaseReduceTrackerClients(String consistentHashAlgorithm)
   {
-    final DegraderLoadBalancerStrategyV3 strategy = getStrategy();
+    final DegraderLoadBalancerStrategyV3 strategy = getStrategy(consistentHashAlgorithm);
     TestClock testClock = new TestClock();
     String baseUri = "http://linkedin.com:9999";
     int numberOfClients = 100;
@@ -1757,10 +1652,6 @@ public class DegraderLoadBalancerTest
       TrackerClient client =
           strategy.getTrackerClient(null, requestContext, i, DefaultPartitionAccessor.DEFAULT_PARTITION_ID, clients);
       assertNotNull(client);
-
-      ConsistentHashRing<URI> ring =
-          (ConsistentHashRing<URI>) strategy.getState().getPartitionState(DEFAULT_PARTITION_ID).getRing();
-      assertEquals(ring.getPoints().size(), numberOfClients * 100);
 
       // update the client number
       if (random.nextBoolean()) {
@@ -2035,7 +1926,9 @@ public class DegraderLoadBalancerTest
                     DegraderLoadBalancerStrategyConfig.DEFAULT_GLOBAL_STEP_DOWN,
                     DegraderLoadBalancerStrategyConfig.DEFAULT_CLUSTER_MIN_CALL_COUNT_HIGH_WATER_MARK,
                     DegraderLoadBalancerStrategyConfig.DEFAULT_CLUSTER_MIN_CALL_COUNT_LOW_WATER_MARK,
-                    DegraderLoadBalancerStrategyConfig.DEFAULT_HASHRING_POINT_CLEANUP_RATE),
+                    DegraderLoadBalancerStrategyConfig.DEFAULT_HASHRING_POINT_CLEANUP_RATE,
+                    null,
+                    DegraderLoadBalancerStrategyConfig.DEFAULT_NUM_PROBES),
             "DegraderLoadBalancerTest", null);
     List<TrackerClient> clients = new ArrayList<TrackerClient>(NUM_SERVERS);
 
@@ -3891,14 +3784,15 @@ public class DegraderLoadBalancerTest
             "client1 drop rate not less than 1.");
   }
 
-  @Test(groups = { "small", "back-end" })
-    public void testInconsistentHashAndTrackerclients() throws URISyntaxException,
+  @Test(groups = { "small", "back-end" }, dataProvider = "consistentHashAlgorithms")
+    public void testInconsistentHashAndTrackerclients(String consistentHashAlgorithm) throws URISyntaxException,
                                                                InterruptedException
   {
     // check if the inconsistent Hash ring and trackerlients can be handled
     TestClock clock = new TestClock();
     Map<String, Object> myMap = new HashMap<String, Object>();
     myMap.put(PropertyKeys.CLOCK, clock);
+    myMap.put(PropertyKeys.HTTP_LB_CONSISTENT_HASH_ALGORITHM, consistentHashAlgorithm);
     DegraderLoadBalancerStrategyConfig config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(myMap);
     DegraderLoadBalancerStrategyV3 strategy = new DegraderLoadBalancerStrategyV3(config, "DegraderLoadBalancerTest",
                                                                                  null);
@@ -3919,11 +3813,18 @@ public class DegraderLoadBalancerTest
     assertNotNull(getTrackerClient(strategy, null, new RequestContext(), 1, clients));
   }
 
-    public static DegraderLoadBalancerStrategyV3 getStrategy()
+  public static DegraderLoadBalancerStrategyV3 getStrategy()
   {
     return new DegraderLoadBalancerStrategyV3(new DegraderLoadBalancerStrategyConfig(5000),
             "DegraderLoadBalancerTest",
             null);
+  }
+
+  public static DegraderLoadBalancerStrategyV3 getStrategy(String consistentHashAlgorithm)
+  {
+    Map<String, Object> configMap = new HashMap<>();
+    configMap.put(PropertyKeys.HTTP_LB_CONSISTENT_HASH_ALGORITHM, consistentHashAlgorithm);
+    return getStrategy(configMap);
   }
 
   public static DegraderLoadBalancerStrategyV3 getStrategy(Map<String,Object> map)

@@ -16,14 +16,15 @@
 
 package com.linkedin.d2.balancer.config;
 
+import com.linkedin.d2.ConsistentHashAlgorithmEnum;
 import com.linkedin.d2.D2LoadBalancerStrategyProperties;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyV3;
+import com.linkedin.d2.balancer.strategies.degrader.DegraderRingFactory;
 import com.linkedin.d2.balancer.util.hashing.URIRegexHash;
 import com.linkedin.d2.hashConfigType;
 import com.linkedin.d2.hashMethodEnum;
 import com.linkedin.data.template.StringArray;
-import com.linkedin.data.template.StringMap;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -126,6 +127,22 @@ public class LoadBalancerStrategyPropertiesConverter
     {
       map.put(PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_UPDATE_ONLY_AT_INTERVAL, config.isUpdateOnlyAtInterval().toString());
     }
+    if (config.hasConsistentHashAlgorithm())
+    {
+      switch (config.getConsistentHashAlgorithm())
+      {
+        case MULTI_PROBE:
+          map.put(PropertyKeys.HTTP_LB_CONSISTENT_HASH_ALGORITHM, DegraderRingFactory.MULTI_PROBE_CONSISTENT_HASH);
+          break;
+        case POINT_BASED:
+          map.put(PropertyKeys.HTTP_LB_CONSISTENT_HASH_ALGORITHM, DegraderRingFactory.POINT_BASED_CONSISTENT_HASH);
+          break;
+      }
+    }
+    if (config.hasNumberOfProbes())
+    {
+      map.put(PropertyKeys.HTTP_LB_CONSISTENT_HASH_NUM_PROBES, config.getNumberOfProbes().toString());
+    }
     return map;
   }
 
@@ -217,6 +234,22 @@ public class LoadBalancerStrategyPropertiesConverter
       config.setUpdateOnlyAtInterval(
           coerce(properties.get(PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_UPDATE_ONLY_AT_INTERVAL),
               Boolean.class));
+    }
+    if (properties.containsKey(PropertyKeys.HTTP_LB_CONSISTENT_HASH_ALGORITHM))
+    {
+      String consistentHashAlgorithm = coerce(properties.get(PropertyKeys.HTTP_LB_CONSISTENT_HASH_ALGORITHM), String.class);
+      if (DegraderRingFactory.POINT_BASED_CONSISTENT_HASH.equalsIgnoreCase(consistentHashAlgorithm))
+      {
+        config.setConsistentHashAlgorithm(ConsistentHashAlgorithmEnum.POINT_BASED);
+      }
+      else if (DegraderRingFactory.MULTI_PROBE_CONSISTENT_HASH.equalsIgnoreCase(consistentHashAlgorithm))
+      {
+        config.setConsistentHashAlgorithm(ConsistentHashAlgorithmEnum.MULTI_PROBE);
+      }
+    }
+    if (properties.containsKey(PropertyKeys.HTTP_LB_CONSISTENT_HASH_NUM_PROBES))
+    {
+      config.setNumberOfProbes(coerce(properties.get(PropertyKeys.HTTP_LB_CONSISTENT_HASH_NUM_PROBES), Integer.class));
     }
     return config;
   }

@@ -30,6 +30,9 @@ import com.linkedin.d2.balancer.simple.SimpleLoadBalancer;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyConfig;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyV3;
+import com.linkedin.d2.balancer.strategies.degrader.MPConsistentHashRingFactory;
+import com.linkedin.d2.balancer.strategies.degrader.PointBasedConsistentHashRingFactory;
+import com.linkedin.d2.balancer.strategies.degrader.RingFactory;
 import com.linkedin.d2.balancer.util.HostToKeyMapper;
 import com.linkedin.d2.balancer.util.HostToKeyResult;
 import com.linkedin.d2.balancer.util.KeysAndHosts;
@@ -40,8 +43,10 @@ import com.linkedin.d2.balancer.util.partitions.PartitionInfoProvider;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import org.testng.Assert;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.net.URI;
@@ -81,11 +86,21 @@ public class ConsistentHashKeyMapperTest
     return result;
   }
 
-  @Test
-  public void testMapKeysV3() throws URISyntaxException, ServiceUnavailableException
+  @DataProvider(name = "ringFactories")
+  public Object[][] createRingFactories()
+  {
+    return new Object[][]
+        {
+            {new PointBasedConsistentHashRingFactory<>(new DegraderLoadBalancerStrategyConfig(5000))},
+            {new MPConsistentHashRingFactory<>(21)}
+        };
+  }
+
+  @Test(dataProvider = "ringFactories")
+  public void testMapKeysV3(RingFactory<URI> ringFactory) throws URISyntaxException, ServiceUnavailableException
   {
     URI serviceURI = new URI("d2://articles");
-    ConsistentHashKeyMapper mapper = getConsistentHashKeyMapper();
+    ConsistentHashKeyMapper mapper = getConsistentHashKeyMapper(ringFactory);
 
     List<Integer> keys = Arrays.asList(1, 2, 3, 4, 9, 10, 13, 15, 16);
 
@@ -93,12 +108,12 @@ public class ConsistentHashKeyMapperTest
     verifyHostToMapperWithKeys(result);
   }
 
-  @Test
-  public void testMapKeysV3StickKey() throws URISyntaxException, ServiceUnavailableException
+  @Test(dataProvider = "ringFactories")
+  public void testMapKeysV3StickKey(RingFactory<URI> ringFactory) throws URISyntaxException, ServiceUnavailableException
   {
     int numHost = 2;
     URI serviceURI = new URI("d2://articles");
-    ConsistentHashKeyMapper mapper = getConsistentHashKeyMapper();
+    ConsistentHashKeyMapper mapper = getConsistentHashKeyMapper(ringFactory);
 
     List<Integer> keys = Arrays.asList(1, 2, 3, 4, 9, 10, 13, 15, 16);
 
@@ -120,23 +135,24 @@ public class ConsistentHashKeyMapperTest
     Assert.assertEquals(100, numOfMatch);
   }
 
-  @Test
-  public void testAllPartitionMultipleHosts() throws URISyntaxException, ServiceUnavailableException
+  @Test(dataProvider = "ringFactories")
+  public void testAllPartitionMultipleHosts(RingFactory<URI> ringFactory)
+      throws URISyntaxException, ServiceUnavailableException
   {
     URI serviceURI = new URI("d2://articles");
-    ConsistentHashKeyMapper mapper = getConsistentHashKeyMapper();
+    ConsistentHashKeyMapper mapper = getConsistentHashKeyMapper(ringFactory);
 
     HostToKeyMapper<Integer> result = mapper.getAllPartitionsMultipleHosts(serviceURI, 2);
     verifyHostToMapperWithoutKeys(result);
   }
 
-  @Test
-  public void testAllPartitionMultipleHostsStickKey() throws URISyntaxException, ServiceUnavailableException
+  @Test(dataProvider = "ringFactories")
+  public void testAllPartitionMultipleHostsStickKey(RingFactory<URI> ringFactory) throws URISyntaxException, ServiceUnavailableException
   {
     int numHost = 2;
     URI serviceURI = new URI("d2://articles");
 
-    ConsistentHashKeyMapper mapper = getConsistentHashKeyMapper();
+    ConsistentHashKeyMapper mapper = getConsistentHashKeyMapper(ringFactory);
 
     String myStickyKey = "sticky";
     HostToKeyMapper<Integer> result = mapper.getAllPartitionsMultipleHosts(serviceURI, numHost, myStickyKey);
@@ -157,7 +173,7 @@ public class ConsistentHashKeyMapperTest
   }
 
 
-  private ConsistentHashKeyMapper getConsistentHashKeyMapper() throws URISyntaxException
+  private ConsistentHashKeyMapper getConsistentHashKeyMapper(RingFactory<URI> ringFactory) throws URISyntaxException
   {
     String serviceName = "articles";
     String clusterName = "cluster";
@@ -200,7 +216,7 @@ public class ConsistentHashKeyMapperTest
 
     //setup strategy which involves tweaking the hash ring to get partitionId -> URI host
     List<LoadBalancerState.SchemeStrategyPair> orderedStrategies = new ArrayList<LoadBalancerState.SchemeStrategyPair>();
-    LoadBalancerStrategy strategy = new TestLoadBalancerStrategy(partitionDescriptions);
+    LoadBalancerStrategy strategy = new TestLoadBalancerStrategy(partitionDescriptions, ringFactory);
 
     orderedStrategies.add(new LoadBalancerState.SchemeStrategyPair("http", strategy));
 
@@ -364,10 +380,10 @@ public class ConsistentHashKeyMapperTest
     return keyToHosts;
   }
 
-  @Test
-  public void testOneBatch() throws URISyntaxException, ServiceUnavailableException
+  @Test(dataProvider = "ringFactories")
+  public void testOneBatch(RingFactory<URI> ringFactory) throws URISyntaxException, ServiceUnavailableException
   {
-    ConsistentHashKeyMapper batcher = getKeyToHostMapper();
+    ConsistentHashKeyMapper batcher = getKeyToHostMapper(ringFactory);
 
     Set<Integer> keys = new HashSet<Integer>();
     keys.add(1);
@@ -378,10 +394,10 @@ public class ConsistentHashKeyMapperTest
     Assert.assertEquals(batchedKeys.keySet().size(), 1);
   }
 
-  @Test
-  public void testOneBatchManyKeys() throws URISyntaxException, ServiceUnavailableException
+  @Test(dataProvider = "ringFactories")
+  public void testOneBatchManyKeys(RingFactory<URI> ringFactory) throws URISyntaxException, ServiceUnavailableException
   {
-    ConsistentHashKeyMapper batcher = getKeyToHostMapper();
+    ConsistentHashKeyMapper batcher = getKeyToHostMapper(ringFactory);
     Set<Integer> keys = getRandomKeys(1000);
     Map<URI, Set<Integer>> batchedKeys = mapKeys(batcher, URI.create("d2://fooservice/"), keys);
 
@@ -401,13 +417,13 @@ public class ConsistentHashKeyMapperTest
     return keys;
   }
 
-  @Test
-  public void testTwoBatches() throws URISyntaxException, ServiceUnavailableException
+  @Test(dataProvider = "ringFactories")
+  public void testTwoBatches(RingFactory<URI> ringFactory) throws URISyntaxException, ServiceUnavailableException
   {
     Map<URI, Integer> endpoints = new HashMap<URI, Integer>();
     endpoints.put(new URI("test1"), 100);
     endpoints.put(new URI("test2"), 100);
-    ConsistentHashKeyMapper batcher = getKeyToHostMapper(endpoints);
+    ConsistentHashKeyMapper batcher = getKeyToHostMapper(endpoints, ringFactory);
 
     Set<Integer> keys = getRandomKeys(1000);
     Map<URI, Set<Integer>> batchedKeys = mapKeys(batcher, URI.create("d2://fooservice/"), keys);
@@ -418,15 +434,15 @@ public class ConsistentHashKeyMapperTest
     checkBatchLoad(keys, batchedKeys, 0.5);
   }
 
-  @Test
-  public void testThreePartitionsTwoBatches() throws URISyntaxException, ServiceUnavailableException
+  @Test(dataProvider = "ringFactories")
+  public void testThreePartitionsTwoBatches(RingFactory<URI> ringFactory) throws URISyntaxException, ServiceUnavailableException
   {
     Map<URI, Integer> endpoints = new HashMap<URI, Integer>();
     endpoints.put(new URI("test1"), 100);
     endpoints.put(new URI("test2"), 100);
     endpoints.put(new URI("test3"), 100);
 
-    ConsistentHashKeyMapper batcher = getKeyToHostMapper(endpoints, 3);
+    ConsistentHashKeyMapper batcher = getKeyToHostMapper(endpoints, 3, ringFactory);
 
     Set<Integer> rawkeys = getRandomKeys(3000);
     Set<Integer> keys = new HashSet<Integer>();
@@ -454,22 +470,22 @@ public class ConsistentHashKeyMapperTest
     }
   }
 
-  @Test
-  public void testManyBatches() throws URISyntaxException, ServiceUnavailableException
+  @Test(dataProvider = "ringFactories")
+  public void testManyBatches(RingFactory<URI> ringFactory) throws URISyntaxException, ServiceUnavailableException
   {
-    ConsistentHashKeyMapper batcher = getKeyToHostMapper(createEndpoints(100));
+    ConsistentHashKeyMapper batcher = getKeyToHostMapper(createEndpoints(100), ringFactory);
     Set<Integer> keys = getRandomKeys(1000);
     Map<URI, Set<Integer>> batchedKeys = mapKeys(batcher, URI.create("d2://fooservice/"), keys);
     checkBatchCoverage(keys, batchedKeys);
     checkBatchLoad(keys, batchedKeys, 1.0 / 100.0);
   }
 
-  @Test
-  public void testThreePartitionsManyBatches() throws URISyntaxException, ServiceUnavailableException
+  @Test(dataProvider = "ringFactories")
+  public void testThreePartitionsManyBatches(RingFactory<URI> ringFactory) throws URISyntaxException, ServiceUnavailableException
   {
     Map<URI, Integer> endpoints = createEndpoints(300);
 
-    ConsistentHashKeyMapper batcher = getKeyToHostMapper(endpoints, 3);
+    ConsistentHashKeyMapper batcher = getKeyToHostMapper(endpoints, 3, ringFactory);
 
     Set<Integer> rawkeys = getRandomKeys(3000);
     Set<Integer> keys = new HashSet<Integer>();
@@ -489,24 +505,24 @@ public class ConsistentHashKeyMapperTest
     checkBatchLoad(keys, batchedKeys, 1.0/200.0);
   }
 
-  @Test
-  public void testSparseBatches() throws URISyntaxException, ServiceUnavailableException
+  @Test(dataProvider = "ringFactories")
+  public void testSparseBatches(RingFactory<URI> ringFactory) throws URISyntaxException, ServiceUnavailableException
   {
-    ConsistentHashKeyMapper batcher = getKeyToHostMapper(createEndpoints(1000));
+    ConsistentHashKeyMapper batcher = getKeyToHostMapper(createEndpoints(1000), ringFactory);
     Set<Integer> keys = getRandomKeys(100);
     Map<URI, Set<Integer>> batchedKeys = mapKeys(batcher, URI.create("d2://fooservice/"), keys);
     checkBatchCoverage(keys, batchedKeys);
     checkBatchLoad(keys, batchedKeys, 1.0 / 1000.0);
   }
 
-  @Test
-  public void testConsistencyWithEndpointRemoval() throws URISyntaxException, ServiceUnavailableException
+  @Test(dataProvider = "ringFactories")
+  public void testConsistencyWithEndpointRemoval(RingFactory<URI> ringFactory) throws URISyntaxException, ServiceUnavailableException
   {
     int nKeys = 10000;
     int nEndpoints = 100;
 
     Map<URI, Integer> endpoints = createEndpoints(nEndpoints);
-    ConsistentHashKeyMapper batcher1 = getKeyToHostMapper(endpoints);
+    ConsistentHashKeyMapper batcher1 = getKeyToHostMapper(endpoints, ringFactory);
 
     Set<Integer> keys = getRandomKeys(nKeys);
 
@@ -516,7 +532,7 @@ public class ConsistentHashKeyMapperTest
 
     endpoints.remove(endpoints.keySet().iterator().next());
     Assert.assertEquals(endpoints.size(), 99);
-    ConsistentHashKeyMapper batcher2 = getKeyToHostMapper(endpoints);
+    ConsistentHashKeyMapper batcher2 = getKeyToHostMapper(endpoints, ringFactory);
 
     Map<URI, Set<Integer>> batchedKeys2 = mapKeys(batcher2, URI.create("d2://fooservice/"), keys);
     checkBatchCoverage(keys, batchedKeys2);
@@ -537,13 +553,13 @@ public class ConsistentHashKeyMapperTest
 
   }
 
-  @Test
-  public void testConsistencyWithRepeatedHashing() throws URISyntaxException, ServiceUnavailableException
+  @Test(dataProvider = "ringFactories")
+  public void testConsistencyWithRepeatedHashing(RingFactory<URI> ringFactory) throws URISyntaxException, ServiceUnavailableException
   {
     final int nRuns=3;
 
     Map<URI, Integer> endpoints = createEndpoints(100);
-    ConsistentHashKeyMapper mapper = getKeyToHostMapper(endpoints);
+    ConsistentHashKeyMapper mapper = getKeyToHostMapper(endpoints, ringFactory);
 
     Set<Integer> keys = getRandomKeys(1000);
 
@@ -556,11 +572,11 @@ public class ConsistentHashKeyMapperTest
 
   }
 
-  ConsistentHashKeyMapper getKeyToHostMapper() throws URISyntaxException, ServiceUnavailableException
+  ConsistentHashKeyMapper getKeyToHostMapper(RingFactory<URI> ringFactory) throws URISyntaxException, ServiceUnavailableException
   {
     Map<URI, Integer> one = new HashMap<URI, Integer>();
     one.put(new URI("test"), 100);
-    return getKeyToHostMapper(one);
+    return getKeyToHostMapper(one, ringFactory);
   }
 
 
@@ -604,9 +620,9 @@ public class ConsistentHashKeyMapperTest
     }
   }
 
-  private ConsistentHashKeyMapper getKeyToHostMapper(Map<URI, Integer> endpoints)
+  private ConsistentHashKeyMapper getKeyToHostMapper(Map<URI, Integer> endpoints, RingFactory<URI> ringFactory)
   {
-    ConsistentHashRing<URI> testRing = new ConsistentHashRing<URI>(endpoints);
+    Ring<URI> testRing = ringFactory.createRing(endpoints);
     ConsistentHashKeyMapper batcher = new ConsistentHashKeyMapper(new StaticRingProvider(testRing), new TestPartitionInfoProvider());
 
     return batcher;
@@ -627,7 +643,8 @@ public class ConsistentHashKeyMapperTest
     }
   }
 
-  private ConsistentHashKeyMapper getKeyToHostMapper(Map<URI, Integer> endpoints, int partitionNum)
+  private ConsistentHashKeyMapper getKeyToHostMapper(Map<URI, Integer> endpoints, int partitionNum,
+      RingFactory<URI> ringFactory)
   {
 
     final int partitionSize = endpoints.size() / partitionNum;
@@ -648,7 +665,7 @@ public class ConsistentHashKeyMapperTest
     List<Ring<URI>> rings = new ArrayList<Ring<URI>>();
     for (final Map<URI, Integer> map : mapList)
     {
-      final ConsistentHashRing<URI> ring = new ConsistentHashRing<URI>(map);
+      final Ring<URI> ring = ringFactory.createRing(map);
       rings.add(ring);
     }
 
@@ -658,8 +675,10 @@ public class ConsistentHashKeyMapperTest
   public static class TestLoadBalancerStrategy implements LoadBalancerStrategy
   {
     Map<Integer, Map<URI, Integer>> _partitionData;
+    private final RingFactory<URI> _ringFactory;
 
-    public TestLoadBalancerStrategy(Map<URI, Map<Integer, PartitionData>> partitionDescriptions) {
+    public TestLoadBalancerStrategy(Map<URI, Map<Integer, PartitionData>> partitionDescriptions,
+        RingFactory<URI> ringFactory) {
       _partitionData = new HashMap<Integer, Map<URI, Integer>>();
       for (Map.Entry<URI, Map<Integer, PartitionData>> uriPartitionPair : partitionDescriptions.entrySet())
       {
@@ -672,6 +691,7 @@ public class ConsistentHashKeyMapperTest
           _partitionData.get(partitionData.getKey()).put(uriPartitionPair.getKey(), 100);
         }
       }
+      _ringFactory = ringFactory;
     }
 
     @Override
@@ -689,11 +709,11 @@ public class ConsistentHashKeyMapperTest
     {
       if (_partitionData.containsKey(partitionId))
       {
-        return new ConsistentHashRing<URI>(_partitionData.get(partitionId));
+        return _ringFactory.createRing(_partitionData.get(partitionId));
       }
       else
       {
-        return new ConsistentHashRing<URI>(new HashMap<URI, Integer>());
+        return _ringFactory.createRing(Collections.emptyMap());
       }
     }
   }

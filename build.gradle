@@ -51,6 +51,8 @@ project.ext.externalDependency = [
   'javaxInject': 'javax.inject:javax.inject:1',
   'jdkTools': files("${System.getProperty('java.home')}/../lib/tools.jar"),
   'jetty': 'org.eclipse.jetty.aggregate:jetty-all:8.1.8.v20121106',
+  "jmhCore": "org.openjdk.jmh:jmh-core:1.11",
+  "jmhAnnotations": "org.openjdk.jmh:jmh-generator-annprocess:1.11",
   'log4j2Api': 'org.apache.logging.log4j:log4j-api:2.0.2',
   'log4j2Core': 'org.apache.logging.log4j:log4j-core:2.0.2',
   'log4jLog4j2': 'org.apache.logging.log4j:log4j-1.2-api:2.0.2',
@@ -66,6 +68,7 @@ project.ext.externalDependency = [
   'snappy': 'org.iq80.snappy:snappy:0.3',
   'testng': 'org.testng:testng:6.9.9',
   'velocity': 'org.apache.velocity:velocity:1.5',
+  'zero_allocation_hashing': 'net.openhft:zero-allocation-hashing:0.4',
   'zookeeper': 'org.apache.zookeeper:zookeeper:3.4.6',
 
   // for restli-spring-bridge ONLY, we must keep these dependencies isolated

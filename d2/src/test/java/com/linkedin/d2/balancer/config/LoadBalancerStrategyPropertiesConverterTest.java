@@ -16,9 +16,11 @@
 
 package com.linkedin.d2.balancer.config;
 
+import com.linkedin.d2.ConsistentHashAlgorithmEnum;
 import com.linkedin.d2.D2LoadBalancerStrategyProperties;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyV3;
+import com.linkedin.d2.balancer.strategies.degrader.DegraderRingFactory;
 import com.linkedin.d2.balancer.util.hashing.URIRegexHash;
 import com.linkedin.d2.hashConfigType;
 import com.linkedin.d2.hashMethodEnum;
@@ -52,6 +54,8 @@ public class LoadBalancerStrategyPropertiesConverterTest
     final hashConfigType hashConfig = new hashConfigType();
     final StringArray regexes = new StringArray();
     final Double hashringPointCleanupRate = 0.2;
+    final ConsistentHashAlgorithmEnum consistentHashAlgorithm = ConsistentHashAlgorithmEnum.MULTI_PROBE;
+    final Integer numProbes = 1024;
     regexes.add("+231{w+)");
     hashConfig.setUriRegexes(regexes);
     hashConfig.setWarnOnNoMatch(false);
@@ -70,6 +74,8 @@ public class LoadBalancerStrategyPropertiesConverterTest
     loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_CLUSTER_MIN_CALL_COUNT_LOW_WATER_MARK, minCallCountLowWaterMark.toString());
     loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_HASH_METHOD, DegraderLoadBalancerStrategyV3.HASH_METHOD_URI_REGEX);
     loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_HASHRING_POINT_CLEANUP_RATE, hashringPointCleanupRate.toString());
+    loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_CONSISTENT_HASH_ALGORITHM, DegraderRingFactory.MULTI_PROBE_CONSISTENT_HASH);
+    loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_CONSISTENT_HASH_NUM_PROBES, numProbes.toString());
     Map<String, Object> hashConfigMap = new HashMap<>();
     hashConfigMap.put(URIRegexHash.KEY_REGEXES, regexes.stream().collect(Collectors.toList()));
     hashConfigMap.put(URIRegexHash.KEY_WARN_ON_NO_MATCH, "false");
@@ -90,7 +96,9 @@ public class LoadBalancerStrategyPropertiesConverterTest
             .setMinCallCountLowWaterMark(minCallCountLowWaterMark)
             .setHashMethod(hashMethod)
             .setHashConfig(hashConfig)
-            .setHashRingPointCleanupRate(hashringPointCleanupRate);
+            .setHashRingPointCleanupRate(hashringPointCleanupRate)
+            .setConsistentHashAlgorithm(consistentHashAlgorithm)
+            .setNumberOfProbes(numProbes);
 
     Assert.assertEquals(LoadBalancerStrategyPropertiesConverter.toConfig(loadBalancerStrategyProperties), d2LoadBalancerStrategyProperties);
     Assert.assertEquals(LoadBalancerStrategyPropertiesConverter.toProperties(d2LoadBalancerStrategyProperties), loadBalancerStrategyProperties);

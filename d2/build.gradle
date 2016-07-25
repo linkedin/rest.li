@@ -16,6 +16,7 @@ dependencies {
   compile externalDependency.jacksonCore
   compile externalDependency.jacksonDataBind
   compile externalDependency.jdkTools
+  compile externalDependency.zero_allocation_hashing
   testCompile externalDependency.testng
   testCompile externalDependency.commonsIo
   testCompile externalDependency.easymock
