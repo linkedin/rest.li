@@ -56,7 +56,7 @@ import org.testng.annotations.Test;
 public class TestAsyncSharedPoolImpl
 {
   private static final String POOL_NAME = "testAsyncSharedPoolImpl";
-  private static final int NUMBER_OF_THREADS = 4096;
+  private static final int NUMBER_OF_THREADS = 128;
   private static final int SHUTDOWN_TIMEOUT = 5;
   private static final int GET_TIMEOUT = 5;
   private static final int OPERATION_TIMEOUT = 5;
