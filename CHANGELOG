@@ -2,6 +2,8 @@
 ------
 (RB=770138)
 Removes -XX:MaxPermSize JVM argument now that we are fully on JDK8
+(RB=770372)
+Reduces the number of threads in the ScheduledThreadPoolExecutor used in TestAsyncSharedPoolImpl
 
 6.0.14
 ------
