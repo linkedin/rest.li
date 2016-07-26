@@ -23,10 +23,12 @@ import com.linkedin.data.schema.Name;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.generator.AbstractGenerator;
 import com.linkedin.restli.tools.compatibility.CompatibilityInfoMap;
+import com.linkedin.restli.tools.compatibility.CompatibilityReport;
 import com.linkedin.restli.tools.compatibility.CompatibilityUtil;
 import com.linkedin.restli.tools.compatibility.ResourceCompatibilityChecker;
 import com.linkedin.restli.tools.idlcheck.CompatibilityInfo;
 import com.linkedin.restli.tools.idlcheck.CompatibilityLevel;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -41,6 +43,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Stack;
 
+
 /**
  * Check Compatibility between pairs of Snapshots (snapshot.json files). The results are categorized into types of errors found.
  *
@@ -54,10 +57,13 @@ public class RestLiSnapshotCompatibilityChecker
     final Options options = new Options();
     options.addOption("h", "help", false, "Print help");
     options.addOption(OptionBuilder.withArgName("compatibility_level")
-                        .withLongOpt("compat")
-                        .hasArg()
-                        .withDescription("Compatibility level " + listCompatLevelOptions())
-                        .create('c'));
+                          .withLongOpt("compat")
+                          .hasArg()
+                          .withDescription("Compatibility level " + listCompatLevelOptions())
+                          .create('c'));
+    options.addOption(OptionBuilder.withLongOpt("report")
+                          .withDescription("Prints a report at the end of the execution that can be parsed for reporting to other tools")
+                          .create("report"));
     final String cmdLineSyntax = RestLiSnapshotCompatibilityChecker.class.getCanonicalName() + " [pairs of <prevRestspecPath currRestspecPath>]";
 
     final CommandLineParser parser = new PosixParser();
@@ -70,7 +76,7 @@ public class RestLiSnapshotCompatibilityChecker
     catch (ParseException e)
     {
       new HelpFormatter().printHelp(cmdLineSyntax, options, true);
-      System.exit(1);
+      System.exit(255);
       return; // to suppress IDE warning
     }
 
@@ -78,7 +84,7 @@ public class RestLiSnapshotCompatibilityChecker
     if (cmd.hasOption('h') || targets.length < 2 || targets.length % 2 != 0)
     {
       new HelpFormatter().printHelp(cmdLineSyntax, options, true);
-      System.exit(1);
+      System.exit(255);
     }
 
     final String compatValue;
@@ -99,12 +105,10 @@ public class RestLiSnapshotCompatibilityChecker
     catch (IllegalArgumentException e)
     {
       new HelpFormatter().printHelp(cmdLineSyntax, options, true);
-      System.exit(1);
+      System.exit(255);
       return;
     }
 
-    final StringBuilder allSummaries = new StringBuilder();
-    boolean result = true;
     final String resolverPath = System.getProperty(AbstractGenerator.GENERATOR_RESOLVER_PATH);
     final RestLiSnapshotCompatibilityChecker checker = new RestLiSnapshotCompatibilityChecker();
     checker.setResolverPath(resolverPath);
@@ -113,18 +117,23 @@ public class RestLiSnapshotCompatibilityChecker
     {
       String prevTarget = targets[i - 1];
       String currTarget = targets[i];
-      CompatibilityInfoMap infoMap = checker.check(prevTarget, currTarget, compat);
-      result &= infoMap.isCompatible(compat);
-      allSummaries.append(infoMap.createSummary(prevTarget, currTarget));
-
+      checker.checkCompatibility(prevTarget, currTarget, compat, prevTarget.endsWith(".restspec.json"));
     }
 
-    if (compat != CompatibilityLevel.OFF && allSummaries.length() > 0)
+    String summary = checker.getInfoMap().createSummary();
+
+    if (compat != CompatibilityLevel.OFF && summary.length() > 0)
     {
-      System.out.println(allSummaries);
+      System.out.println(summary);
     }
 
-    System.exit(result ? 0 : 1);
+    if (cmd.hasOption("report"))
+    {
+      System.out.println(new CompatibilityReport(checker.getInfoMap(), compat).createReport());
+      System.exit(0);
+    }
+
+    System.exit(checker.getInfoMap().isCompatible(compat) ? 0 : 1);
   }
 
   public void setResolverPath(String resolverPath)
@@ -163,7 +172,7 @@ public class RestLiSnapshotCompatibilityChecker
 
   private CompatibilityInfoMap checkCompatibility(String prevRestModelPath, String currRestModelPath, CompatibilityLevel compatLevel, boolean isAgainstRestSpec)
   {
-    final CompatibilityInfoMap infoMap = new CompatibilityInfoMap();
+    final CompatibilityInfoMap infoMap = _infoMap;
     if (compatLevel == CompatibilityLevel.OFF)
     {
       // skip check entirely.
@@ -246,7 +255,7 @@ public class RestLiSnapshotCompatibilityChecker
   private static String listCompatLevelOptions()
   {
     final StringBuilder options = new StringBuilder("<");
-    for (CompatibilityLevel compatLevel: CompatibilityLevel.values())
+    for (CompatibilityLevel compatLevel : CompatibilityLevel.values())
     {
       options.append(compatLevel.name().toLowerCase()).append("|");
     }
@@ -259,7 +268,7 @@ public class RestLiSnapshotCompatibilityChecker
   {
     final DataSchemaResolver resolver = CompatibilityUtil.getDataSchemaResolver(resolverPath);
 
-    for(Map.Entry<String, NamedDataSchema> entry: snapshot.getModels().entrySet())
+    for (Map.Entry<String, NamedDataSchema> entry : snapshot.getModels().entrySet())
     {
       Name name = new Name(entry.getKey());
       NamedDataSchema schema = entry.getValue();
@@ -269,6 +278,11 @@ public class RestLiSnapshotCompatibilityChecker
     return resolver;
   }
 
-  private String _resolverPath;
+  public CompatibilityInfoMap getInfoMap()
+  {
+    return _infoMap;
+  }
 
+  private String _resolverPath;
+  private final CompatibilityInfoMap _infoMap = new CompatibilityInfoMap();
 }

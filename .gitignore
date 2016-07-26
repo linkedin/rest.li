@@ -18,5 +18,5 @@ codegen/
 test-output/
 examples/*/api/src/main/idl
 examples/*/api/src/main/snapshot
-*gradle/
 ligradle/
+
