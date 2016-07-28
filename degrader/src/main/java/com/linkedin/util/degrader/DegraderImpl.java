@@ -26,11 +26,10 @@ package com.linkedin.util.degrader;
  */
 
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.ThreadLocalRandom;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Random;
-import java.util.concurrent.atomic.AtomicLong;
 
 import com.linkedin.util.clock.Clock;
 import com.linkedin.util.clock.SystemClock;
@@ -141,6 +140,8 @@ public class DegraderImpl implements Degrader
   public static final long     DEFAULT_LOW_OUTSTANDING  = Time.milliseconds(  500);
   public static final Integer  DEFAULT_MIN_OUTSTANDING_COUNT = 5;
   public static final Integer  DEFAULT_OVERRIDE_MIN_CALL_COUNT = -1;
+  public static final double   DEFAULT_INITIAL_DROP_RATE = 0.0d;
+  public static final double   DEFAULT_SLOW_START_THRESHOLD = 0.0d;
 
   private ImmutableConfig _config;
   private String _name;
@@ -160,7 +161,6 @@ public class DegraderImpl implements Degrader
   private final AtomicLong _countTotal = new AtomicLong();
   private final AtomicLong _noOverrideDropCountTotal = new AtomicLong();
   private final AtomicLong _droppedCountTotal = new AtomicLong();
-  private final Random _random = new Random();
 
   public DegraderImpl(Config config)
   {
@@ -185,7 +185,7 @@ public class DegraderImpl implements Degrader
 
   public synchronized void reset()
   {
-    setComputedDropRate(0.0);
+    setComputedDropRate(_config.getInitialDropRate());
     _lastIntervalCountTotal = 0;
     _lastIntervalDroppedCountTotal = 0;
     _lastIntervalDroppedRate = 0.0;
@@ -272,7 +272,7 @@ public class DegraderImpl implements Degrader
    */
   public boolean checkDrop()
   {
-    return checkDrop(_random.nextDouble());
+    return checkDrop(ThreadLocalRandom.current().nextDouble());
   }
 
   public synchronized Stats getStats()
@@ -342,7 +342,17 @@ public class DegraderImpl implements Degrader
     }
     else if (oldDropRate > 0.0 && isLow())
     {
-      newDropRate = Math.max(0.0, oldDropRate - _config.getDownStep());
+      double oldTransmissionRate = 1.0 - oldDropRate;
+      // if the transmissionRate is less than slow start threshold,
+      // we'll slowly ramp up the traffic by just doubling the transmissionRate.
+      if (oldTransmissionRate < _config.getSlowStartThreshold())
+      {
+        newDropRate = oldTransmissionRate > 0.0 ? Math.max(0.0, 1 - 2 * oldTransmissionRate) : 0.99;
+      }
+      else
+      {
+        newDropRate = Math.max(0.0, oldDropRate - _config.getDownStep());
+      }
     }
 
     if (oldDropRate != newDropRate)
@@ -646,6 +656,8 @@ public class DegraderImpl implements Degrader
     protected long _lowOutstanding = DEFAULT_LOW_OUTSTANDING;
     protected int _minOutstandingCount = DEFAULT_MIN_OUTSTANDING_COUNT;
     protected int _overrideMinCallCount = DEFAULT_OVERRIDE_MIN_CALL_COUNT;
+    protected double _initialDropRate = DEFAULT_INITIAL_DROP_RATE;
+    protected double _slowStartThreshold = DEFAULT_SLOW_START_THRESHOLD;
 
     public ImmutableConfig()
     {
@@ -672,6 +684,8 @@ public class DegraderImpl implements Degrader
       this._lowOutstanding = config._lowOutstanding;
       this._minOutstandingCount = config._minOutstandingCount;
       this._overrideMinCallCount = config._overrideMinCallCount;
+      this._initialDropRate = config._initialDropRate;
+      this._slowStartThreshold = config._slowStartThreshold;
     }
 
     public String getName()
@@ -707,6 +721,11 @@ public class DegraderImpl implements Degrader
     public double getMaxDropRate()
     {
       return _maxDropRate;
+    }
+
+    public double getInitialDropRate()
+    {
+      return _initialDropRate;
     }
 
     public long getMaxDropDuration()
@@ -768,6 +787,11 @@ public class DegraderImpl implements Degrader
     {
       return _overrideMinCallCount;
     }
+
+    public double getSlowStartThreshold()
+    {
+      return _slowStartThreshold;
+    }
   }
 
   public static class Config extends ImmutableConfig
@@ -815,6 +839,11 @@ public class DegraderImpl implements Degrader
     public void setMaxDropRate(Double maxDropRate)
     {
       _maxDropRate = maxDropRate;
+    }
+
+    public void setInitialDropRate(double initialDropRate)
+    {
+      _initialDropRate = initialDropRate;
     }
 
     public void setMaxDropDuration(long maxDropDuration)
@@ -875,6 +904,11 @@ public class DegraderImpl implements Degrader
     public void setOverrideMinCallCount(Integer overrideMinCallCount)
     {
       _overrideMinCallCount = overrideMinCallCount;
+    }
+
+    public void setSlowStartThreshold(double slowStartThreshold)
+    {
+      _slowStartThreshold = slowStartThreshold;
     }
   }
 }

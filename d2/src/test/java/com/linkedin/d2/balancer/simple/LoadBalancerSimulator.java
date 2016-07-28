@@ -198,6 +198,11 @@ public class LoadBalancerSimulator
     _log.info("LoadBalancer Shutdown @ {}", _clockedExecutor.currentTimeMillis());
   }
 
+  public void updateUriProperties(UriProperties uriProperties)
+  {
+    _uriRegistry.put(uriProperties.getClusterName(), uriProperties);
+  }
+
   /**
    * Run the simulation until no task in the queue or stopped by explicitly call (Async)
    * @return

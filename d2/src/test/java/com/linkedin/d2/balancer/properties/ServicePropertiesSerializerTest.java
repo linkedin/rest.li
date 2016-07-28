@@ -45,7 +45,7 @@ public class ServicePropertiesSerializerTest
       new ServiceProperties("servicename", "clustername", "/foo", Arrays.asList("rr"));
     assertEquals(serializer.fromBytes(serializer.toBytes(property)), property);
 
-    property = new ServiceProperties("servicename2", "clustername2", "/path2", Arrays.asList("strategy2"), 
+    property = new ServiceProperties("servicename2", "clustername2", "/path2", Arrays.asList("strategy2"),
                                      Collections.<String,Object>singletonMap("foo", "bar"));
     assertEquals(serializer.fromBytes(serializer.toBytes(property)), property);
 
@@ -62,16 +62,39 @@ public class ServicePropertiesSerializerTest
                                      Collections.<URI>emptySet(),
                                      arbitraryProperties);
     assertEquals(serializer.fromBytes(serializer.toBytes(property)), property);
-
-/*
-    property = new ServiceProperties("servicename", "clustername", "/foo");
-    assertEquals(serializer.fromBytes(serializer.toBytes(property)), property);
-
-    property = new ServiceProperties("servicename", "clustername", null);
-    assertEquals(serializer.fromBytes(serializer.toBytes(property)), property);
-
-    property = new ServiceProperties("servicename", null, null);
-    assertEquals(serializer.fromBytes(serializer.toBytes(property)), property);
-*/
   }
+
+  @Test(groups = { "small", "back-end" })
+  public void testBadConfigInServiceProperties() throws PropertySerializationException
+  {
+    ServicePropertiesJsonSerializer serializer = new ServicePropertiesJsonSerializer();
+    Map<String, String> badDegraderConfig = Collections.singletonMap(PropertyKeys.DEGRADER_INITIAL_DROP_RATE, "0.1");
+
+    Map<String, Object> arbitraryProperties = new HashMap<String, Object>();
+    arbitraryProperties.put("foo", "bar");
+    ServiceProperties badServiceProp = new ServiceProperties("serviceName",
+        "clusterName",
+        "/service",
+        Arrays.asList("strategyName"),
+        arbitraryProperties,
+        arbitraryProperties,
+        badDegraderConfig,
+        Collections.<String>emptyList(),
+        Collections.<URI>emptySet(),
+        arbitraryProperties);
+
+    ServiceProperties goodServiceProp = new ServiceProperties("serviceName",
+        "clusterName",
+        "/service",
+        Arrays.asList("strategyName"),
+        arbitraryProperties,
+        arbitraryProperties,
+        Collections.<String, String>emptyMap(),
+        Collections.<String>emptyList(),
+        Collections.<URI>emptySet(),
+        arbitraryProperties);
+
+    assertEquals(serializer.fromBytes(serializer.toBytes(badServiceProp)), goodServiceProp);
+  }
+
 }

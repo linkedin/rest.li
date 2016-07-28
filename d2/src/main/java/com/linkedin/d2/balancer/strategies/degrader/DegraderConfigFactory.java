@@ -114,6 +114,14 @@ public class DegraderConfigFactory
       config.setOverrideMinCallCount(MapUtil.getWithDefault(properties,
                                                             PropertyKeys.DEGRADER_OVERRIDE_MIN_CALL_COUNT,
                                                             DegraderImpl.DEFAULT_OVERRIDE_MIN_CALL_COUNT));
+
+      config.setInitialDropRate(MapUtil.getWithDefault(properties,
+                                                       PropertyKeys.DEGRADER_INITIAL_DROP_RATE,
+                                                       DegraderImpl.DEFAULT_INITIAL_DROP_RATE));
+
+      config.setSlowStartThreshold(MapUtil.getWithDefault(properties,
+                                                          PropertyKeys.DEGRADER_SLOW_START_THRESHOLD,
+                                                          DegraderImpl.DEFAULT_SLOW_START_THRESHOLD));
     }
     return config;
   }

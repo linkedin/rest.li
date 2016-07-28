@@ -463,11 +463,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     debug(_log, "updating state for: ", trackerClientUpdaters);
 
     double sumOfClusterLatencies = 0.0;
-    double computedClusterDropSum = 0.0;
-    double computedClusterDropRate;
-    double computedClusterWeight = 0.0;
     long totalClusterCallCount = 0;
-    double clientDropRate;
     double newMaxDropRate;
     boolean hashRingChanges = false;
     boolean recoveryMapChanges = false;
@@ -493,14 +489,9 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       double averageLatency = degraderControl.getLatency();
       long callCount = degraderControl.getCallCount();
       oldState.getPreviousMaxDropRate().put(client, clientUpdater.getMaxDropRate());
-      double clientWeight = client.getPartitionWeight(partitionId);
 
       sumOfClusterLatencies += averageLatency * callCount;
       totalClusterCallCount += callCount;
-      clientDropRate = degraderControl.getCurrentComputedDropRate();
-      computedClusterDropSum += clientWeight * clientDropRate;
-
-      computedClusterWeight += clientWeight;
 
       boolean recoveryMapContainsClient = newRecoveryMap.containsKey(client);
       if (isQuarantineEnabled)
@@ -593,14 +584,6 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       quarantineHistory.entrySet().removeIf(e -> !activeClients.contains(e.getKey()));
     }
 
-    computedClusterDropRate = computedClusterDropSum / computedClusterWeight;
-    debug(_log, "total cluster call count: ", totalClusterCallCount);
-    debug(_log,
-          "computed cluster drop rate for ",
-          trackerClientUpdaters.size(),
-          " nodes: ",
-          computedClusterDropRate);
-
     if (oldState.getClusterGenerationId() == clusterGenerationId && totalClusterCallCount <= 0
         && !recoveryMapChanges && !quarantineMapChanged)
     {
@@ -622,9 +605,6 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     }
 
     debug(_log, "average cluster latency: ", newCurrentAvgClusterLatency);
-
-    // compute points for every node in the cluster
-    double computedClusterSuccessRate = computedClusterWeight - computedClusterDropRate;
 
     // This points map stores how many hash map points to allocate for each tracker client.
     Map<URI, Integer> points = new HashMap<URI, Integer>();

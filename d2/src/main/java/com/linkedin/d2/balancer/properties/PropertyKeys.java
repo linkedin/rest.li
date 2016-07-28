@@ -37,6 +37,7 @@ public class PropertyKeys
   public static final String DEGRADER_LOG_ENABLED = "degrader.logEnabled";
   public static final String DEGRADER_LATENCY_TO_USE = "degrader.latencyToUse";
   public static final String DEGRADER_OVERRIDE_DROP_DATE = "degrader.overrideDropDate";
+  public static final String DEGRADER_INITIAL_DROP_RATE = "degrader.initialDropRate";
   public static final String DEGRADER_MAX_DROP_RATE = "degrader.maxDropRate";
   public static final String DEGRADER_MAX_DROP_DURATION = "degrader.maxDropDuration";
   public static final String DEGRADER_UP_STEP = "degrader.upStep";
@@ -50,6 +51,7 @@ public class PropertyKeys
   public static final String DEGRADER_LOW_OUTSTANDING = "degrader.lowOutstanding";
   public static final String DEGRADER_MIN_OUTSTANDING_COUNT = "degrader.minOutstandingCount";
   public static final String DEGRADER_OVERRIDE_MIN_CALL_COUNT = "degrader.overrideMinCallCount";
+  public static final String DEGRADER_SLOW_START_THRESHOLD = "degrader.slowStartThreshold";
 
   //used by service properties
   public static final String PATH = "path";

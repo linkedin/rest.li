@@ -110,6 +110,18 @@
       },
       "doc": "latency used to calculate the drop rate. Defaults to AVERAGE.",
       "optional": true
+    },
+    {
+      "name": "initialDropRate",
+      "type": "double",
+      "doc": "The initial drop rate that this degrader should start with. Defaults to 0.0. For values greater than 0, it means the tracker client corresponding to this degrader will receive less than 100% of the normal traffic initially and slowly recover from there.",
+      "optional": true
+    },
+    {
+      "name": "slowStartThreshold",
+      "type": "double",
+      "doc": "The drop rate threshold that controls whether the degrader should perform slow start(by doubling the transmission rate) or the normal stepUp/Down operation. Defaults to 0.0 which means no slow start phase will be performed.",
+      "optional": true
     }
   ]
 }

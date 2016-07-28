@@ -47,6 +47,8 @@ public class DegraderPropertiesConverterTest
     final Integer minOutstandingCount = 5;
     final Long maxDropDuration = 50000l;
     final latencyType latencyToUse = latencyType.PCT50;
+    final Double initialDropRate = 0.1;
+    final Double slowStartThreshold = 0.32;
 
     Map<String, String> degraderProperties = new HashMap<>();
     degraderProperties.put(PropertyKeys.DEGRADER_LOG_ENABLED, logEnabled.toString());
@@ -63,6 +65,8 @@ public class DegraderPropertiesConverterTest
     degraderProperties.put(PropertyKeys.DEGRADER_MIN_OUTSTANDING_COUNT, minOutstandingCount.toString());
     degraderProperties.put(PropertyKeys.DEGRADER_MAX_DROP_DURATION, maxDropDuration.toString());
     degraderProperties.put(PropertyKeys.DEGRADER_LATENCY_TO_USE, latencyToUse.name());
+    degraderProperties.put(PropertyKeys.DEGRADER_INITIAL_DROP_RATE, initialDropRate.toString());
+    degraderProperties.put(PropertyKeys.DEGRADER_SLOW_START_THRESHOLD, slowStartThreshold.toString());
 
     D2DegraderProperties d2DegraderProperties =
         new D2DegraderProperties()
@@ -79,7 +83,9 @@ public class DegraderPropertiesConverterTest
         .setLowOutstanding(lowOutstanding)
         .setMinOutstandingCount(minOutstandingCount)
         .setMaxDropDuration(maxDropDuration)
-        .setLatencyToUse(latencyToUse);
+        .setLatencyToUse(latencyToUse)
+        .setInitialDropRate(initialDropRate)
+        .setSlowStartThreshold(slowStartThreshold);
 
     Assert.assertEquals(DegraderPropertiesConverter.toConfig(degraderProperties), d2DegraderProperties);
     Assert.assertEquals(DegraderPropertiesConverter.toProperties(d2DegraderProperties), degraderProperties);

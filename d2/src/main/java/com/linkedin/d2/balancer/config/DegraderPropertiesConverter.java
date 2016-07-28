@@ -97,6 +97,14 @@ public class DegraderPropertiesConverter
     {
       map.put(PropertyKeys.DEGRADER_LATENCY_TO_USE, config.getLatencyToUse().name());
     }
+    if (config.hasInitialDropRate())
+    {
+      map.put(PropertyKeys.DEGRADER_INITIAL_DROP_RATE, config.getInitialDropRate().toString());
+    }
+    if (config.hasSlowStartThreshold())
+    {
+      map.put(PropertyKeys.DEGRADER_SLOW_START_THRESHOLD, config.getSlowStartThreshold().toString());
+    }
     return map;
   }
 
@@ -160,6 +168,14 @@ public class DegraderPropertiesConverter
     if (properties.containsKey(PropertyKeys.DEGRADER_LATENCY_TO_USE))
     {
       config.setLatencyToUse(latencyType.valueOf(properties.get(PropertyKeys.DEGRADER_LATENCY_TO_USE)));
+    }
+    if (properties.containsKey(PropertyKeys.DEGRADER_INITIAL_DROP_RATE))
+    {
+      config.setInitialDropRate(coerce(properties.get(PropertyKeys.DEGRADER_INITIAL_DROP_RATE), Double.class));
+    }
+    if (properties.containsKey(PropertyKeys.DEGRADER_SLOW_START_THRESHOLD))
+    {
+      config.setSlowStartThreshold(coerce(properties.get(PropertyKeys.DEGRADER_SLOW_START_THRESHOLD), Double.class));
     }
     return config;
   }

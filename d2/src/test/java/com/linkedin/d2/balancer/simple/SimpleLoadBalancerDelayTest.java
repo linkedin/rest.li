@@ -17,22 +17,15 @@
 package com.linkedin.d2.balancer.simple;
 
 import com.linkedin.d2.balancer.ServiceUnavailableException;
-import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.properties.UriProperties;
-import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerQuarantine;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyConfig;
-import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyV3;
-import com.linkedin.d2.balancer.util.healthcheck.TransportHealthCheck;
+import com.linkedin.d2.balancer.strategies.degrader.DegraderRingFactory;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 
-import com.linkedin.r2.message.rest.RestRequest;
-import com.linkedin.r2.transport.common.TransportClientFactory;
-import com.linkedin.r2.transport.common.bridge.client.TransportClient;
-import com.linkedin.util.degrader.DegraderImpl;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
@@ -45,7 +38,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
@@ -158,6 +150,113 @@ public class SimpleLoadBalancerDelayTest
 
     // Done. Shutdown the simulation
     loadBalancerSimulator.shutdown();
+  }
+
+  @Test(groups = { "small", "back-end" })
+  public void testLoadBalancerWithSlowStartClient() throws Exception
+  {
+    // Generate service, cluster and uri properties for d2
+    URI uri1 = URI.create("http://test.qa1.com:1234");
+    URI uri2 = URI.create("http://test.qa2.com:2345");
+    URI uri3 = URI.create("http://test.qa3.com:6789");
+    String clusterName = "cluster-2";
+
+    Map<Integer, PartitionData> partitionData = new HashMap<>(1);
+    partitionData.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
+    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<>(3);
+    uriData.put(uri1, partitionData);
+    uriData.put(uri2, partitionData);
+    uriData.put(uri3, partitionData);
+
+    ClusterProperties clusterProperties = new ClusterProperties(clusterName);
+
+    List<String> prioritizedSchemes = Collections.singletonList("http");
+    // enable multi-probe consistent hashing
+    Map<String, Object> lbStrategyProperties = Collections.singletonMap(PropertyKeys.HTTP_LB_CONSISTENT_HASH_ALGORITHM,
+        DegraderRingFactory.MULTI_PROBE_CONSISTENT_HASH);
+    // set initial drop rate and slow start threshold
+    Map<String, String> degraderProperties = new HashMap<>();
+    degraderProperties.put(PropertyKeys.DEGRADER_INITIAL_DROP_RATE, "0.99");
+    degraderProperties.put(PropertyKeys.DEGRADER_SLOW_START_THRESHOLD, "0.1");
+
+    // constant delay generator
+    LoadBalancerSimulator.TimedValueGenerator<String> delayGenerator = (uri, time, unit) -> 100l;
+
+    // constant QPS generator
+    LoadBalancerSimulator.QPSGenerator qpsGenerator = () -> 1000;
+
+    Map<String, Object> transportClientProperties = Collections.singletonMap("DelayGenerator", delayGenerator);
+    ServiceProperties serviceProperties = new ServiceProperties("foo",
+        clusterName,
+        "/foo",
+        Arrays.asList("degrader"),
+        lbStrategyProperties,
+        transportClientProperties,
+        degraderProperties,
+        prioritizedSchemes,
+        null);
+
+    UriProperties uriProperties = new UriProperties(clusterName, uriData);
+
+    // pass all the info to the simulator
+    LoadBalancerSimulator loadBalancerSimulator = new LoadBalancerSimulator(serviceProperties,
+        clusterProperties, uriProperties, delayGenerator, qpsGenerator);
+
+    // Start the simulation, wait for 10 UPDATE_INTERVALS to make sure all uris are fully ramped.
+    loadBalancerSimulator.runWait(DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS * 20);
+    printStates(loadBalancerSimulator);
+
+    URI uri4 = URI.create("http://test.qa4.com:9876");
+    uriData.put(uri4, partitionData);
+    uriProperties = new UriProperties(clusterName, uriData);
+
+    loadBalancerSimulator.updateUriProperties(uriProperties);
+
+    loadBalancerSimulator.runWait(DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS);
+    printStates(loadBalancerSimulator);
+
+    // Create the delay generator for the uris
+    URI expectedUri4 = URI.create("http://test.qa4.com:9876/foo");
+    loadBalancerSimulator.getCountPercent(expectedUri4);
+
+    // the points for uri4 should be 1 and call count percentage is 0.3%.
+    double callCountPercent = loadBalancerSimulator.getCountPercent(expectedUri4);
+    assertTrue(callCountPercent <= 0.006, "expected percentage is less than 0.006, actual is " + callCountPercent);
+
+    // wait for 2 intervals due to call dropping
+    loadBalancerSimulator.runWait(DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS * 2);
+    printStates(loadBalancerSimulator);
+
+    // the points for uri4 should be 4 and call count percentage is 1.3%
+    callCountPercent = loadBalancerSimulator.getCountPercent(expectedUri4);
+    assertTrue(callCountPercent <= 0.02, "expected percentage is less than 0.02, actual is " + callCountPercent);
+
+    // wait for 2 intervals due to call dropping
+    loadBalancerSimulator.runWait(DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS * 2);
+    printStates(loadBalancerSimulator);
+
+    // the points for uri4 should be 16 and call count percentage is 5%
+    callCountPercent = loadBalancerSimulator.getCountPercent(expectedUri4);
+    assertTrue(callCountPercent <= 0.07, "expected percentage is less than 0.07, actual is " + callCountPercent);
+    assertTrue(callCountPercent >= 0.03, "expected percentage is larger than 0.03, actual is " + callCountPercent);
+
+    // wait for 2 intervals due to call dropping
+    loadBalancerSimulator.runWait(DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS * 2);
+    printStates(loadBalancerSimulator);
+
+    // the points for uri4 should be 56 and call count percentage is 16%
+    callCountPercent = loadBalancerSimulator.getCountPercent(expectedUri4);
+    assertTrue(callCountPercent <= 0.18, "expected percentage is less than 0.18, actual is " + callCountPercent);
+    assertTrue(callCountPercent >= 0.12, "expected percentage is larger than 0.12, actual is " + callCountPercent);
+
+    // wait for 2 intervals due to call dropping
+    loadBalancerSimulator.runWait(DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS * 2);
+    printStates(loadBalancerSimulator);
+
+    // the points for uri4 should be 96 and call count percentage is 24%
+    callCountPercent = loadBalancerSimulator.getCountPercent(expectedUri4);
+    assertTrue(callCountPercent <= 0.28, "expected percentage is less than 0.26, actual is " + callCountPercent);
+    assertTrue(callCountPercent >= 0.20, "expected percentage is larger than 0.22, actual is " + callCountPercent);
   }
 
   /**

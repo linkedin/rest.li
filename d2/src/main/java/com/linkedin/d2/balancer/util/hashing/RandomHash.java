@@ -22,7 +22,8 @@ package com.linkedin.d2.balancer.util.hashing;
 
 import com.linkedin.r2.message.Request;
 
-import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
+
 
 /**
  * @author Steven Ihde
@@ -31,17 +32,15 @@ import java.util.Random;
 
 public class RandomHash implements HashFunction<Request>
 {
-  private final Random _random = new Random();
-
   @Override
   public int hash(Request request)
   {
-    return _random.nextInt();
+    return ThreadLocalRandom.current().nextInt();
   }
 
   @Override
   public long hashLong(Request request)
   {
-    return _random.nextLong();
+    return ThreadLocalRandom.current().nextLong();
   }
 }
