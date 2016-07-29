@@ -1,5 +1,8 @@
-6.1.3
+7.0.0
 -----
+(RB=777249)
+Fix SnappyFramedCompressor to follow the standard x-snappy-framed
+specification.
 
 6.1.2
 -----

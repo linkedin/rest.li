@@ -41,7 +41,7 @@ import java.util.zip.DeflaterOutputStream;
 import java.util.zip.GZIPOutputStream;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream;
 import org.apache.commons.io.IOUtils;
-import org.iq80.snappy.SnappyOutputStream;
+import org.iq80.snappy.SnappyFramedOutputStream;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -77,7 +77,7 @@ public class TestStreamingCompression
     Arrays.fill(origin, (byte)'a');
 
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    SnappyOutputStream snappy = new SnappyOutputStream(out);
+    SnappyFramedOutputStream snappy = new SnappyFramedOutputStream(out);
     IOUtils.write(origin, snappy);
     snappy.close();
     byte[] compressed = out.toByteArray();

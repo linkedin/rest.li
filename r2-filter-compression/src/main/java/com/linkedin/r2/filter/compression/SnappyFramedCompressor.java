@@ -4,9 +4,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import org.apache.commons.io.IOUtils;
-import org.iq80.snappy.Snappy;
-import org.iq80.snappy.SnappyInputStream;
-import org.iq80.snappy.SnappyOutputStream;
+import org.iq80.snappy.SnappyFramedInputStream;
+import org.iq80.snappy.SnappyFramedOutputStream;
 
 
 /**
@@ -28,7 +27,7 @@ public class SnappyFramedCompressor implements Compressor {
   public byte[] inflate(InputStream data) throws CompressionException
   {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    try (SnappyInputStream snappy = new SnappyInputStream(data))
+    try (SnappyFramedInputStream snappy = new SnappyFramedInputStream(data, true))
     {
       IOUtils.copy(snappy, out);
     }
@@ -43,7 +42,7 @@ public class SnappyFramedCompressor implements Compressor {
   public byte[] deflate(InputStream data) throws CompressionException
   {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    try (SnappyOutputStream snappy = new SnappyOutputStream(out))
+    try (SnappyFramedOutputStream snappy = new SnappyFramedOutputStream(out))
     {
       IOUtils.copy(data, snappy);
     }

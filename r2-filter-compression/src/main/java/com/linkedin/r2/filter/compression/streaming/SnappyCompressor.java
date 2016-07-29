@@ -21,8 +21,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.concurrent.Executor;
-import org.iq80.snappy.SnappyInputStream;
-import org.iq80.snappy.SnappyOutputStream;
+import org.iq80.snappy.SnappyFramedInputStream;
+import org.iq80.snappy.SnappyFramedOutputStream;
 
 
 /**
@@ -51,7 +51,7 @@ public class SnappyCompressor extends AbstractCompressor
       @Override
       protected InputStream createInputStream(InputStream in) throws IOException
       {
-        return new SnappyInputStream(in);
+        return new SnappyFramedInputStream(in, true);
       }
     };
   }
@@ -64,7 +64,7 @@ public class SnappyCompressor extends AbstractCompressor
       @Override
       protected OutputStream createOutputStream(OutputStream out) throws IOException
       {
-        return new SnappyOutputStream(out);
+        return new SnappyFramedOutputStream(out);
       }
     };
   }
