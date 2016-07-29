@@ -1,9 +1,15 @@
+6.0.16
+------
+
+
 6.0.15
 ------
 (RB=770138)
 Removes -XX:MaxPermSize JVM argument now that we are fully on JDK8
 (RB=770372)
 Reduces the number of threads in the ScheduledThreadPoolExecutor used in TestAsyncSharedPoolImpl
+(RB=772345)
+Add a new consistent hash ring implementation that is more balanced and uses less memory.
 
 6.0.14
 ------
