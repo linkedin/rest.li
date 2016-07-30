@@ -19,17 +19,17 @@ package test.r2.perf.driver;
 
 import com.linkedin.r2.transport.common.Server;
 import test.r2.perf.PerfConfig;
-import test.r2.perf.server.HttpPerfServerFactory;
+import test.r2.perf.server.H2cPerfServerFactory;
 
 import java.io.IOException;
 import java.net.URI;
 
 
 /**
- * @author Chris Pettitt
+ * @author Sean Sheng
  * @version $Revision$
  */
-public class RunHttpServer
+public class RunH2cServer
 {
   private static volatile Server SERVER;
 
@@ -44,11 +44,11 @@ public class RunHttpServer
 
     if (pureStreaming)
     {
-      SERVER = new HttpPerfServerFactory().createPureStreamServer(port, relativeUri, msgSize, numHeaders, headerSize);
+      SERVER = new H2cPerfServerFactory().createPureStreamServer(port, relativeUri, msgSize, numHeaders, headerSize);
     }
     else
     {
-      SERVER = new HttpPerfServerFactory().create(port, relativeUri, msgSize);
+      SERVER = new H2cPerfServerFactory().create(port, relativeUri, msgSize);
     }
     SERVER.start();
   }

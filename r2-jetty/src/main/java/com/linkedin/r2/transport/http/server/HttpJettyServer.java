@@ -25,9 +25,12 @@ import javax.servlet.http.HttpServlet;
 import java.io.IOException;
 
 import com.linkedin.r2.filter.R2Constants;
+import org.eclipse.jetty.http.HttpCompliance;
 import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.HttpConfiguration;
+import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.nio.SelectChannelConnector;
+import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
@@ -39,11 +42,12 @@ import org.eclipse.jetty.util.thread.QueuedThreadPool;
 
 public class HttpJettyServer implements HttpServer
 {
-  private final int         _port;
-  private final String      _contextPath;
-  private final int         _threadPoolSize;
-  private Server            _server;
-  private final HttpServlet _servlet;
+  protected final int _port;
+  protected final int _threadPoolSize;
+  protected final String _contextPath;
+  protected final HttpServlet _servlet;
+
+  protected Server _server;
 
   public enum ServletType {RAP, ASYNC_EVENT}
 
@@ -53,39 +57,39 @@ public class HttpJettyServer implements HttpServer
   }
 
   public HttpJettyServer(int port,
-                         String contextPath,
-                         int threadPoolSize,
-                         HttpDispatcher dispatcher)
+      String contextPath,
+      int threadPoolSize,
+      HttpDispatcher dispatcher)
   {
     this(port, contextPath, threadPoolSize, dispatcher, ServletType.RAP, 0, R2Constants.DEFAULT_REST_OVER_STREAM);
   }
 
   public HttpJettyServer(int port,
-                         String contextPath,
-                         int threadPoolSize,
-                         HttpDispatcher dispatcher,
-                         boolean restOverStream)
+      String contextPath,
+      int threadPoolSize,
+      HttpDispatcher dispatcher,
+      boolean restOverStream)
   {
     this(port, contextPath, threadPoolSize, dispatcher, ServletType.RAP, 0, restOverStream);
   }
 
   public HttpJettyServer(int port,
-                         String contextPath,
-                         int threadPoolSize,
-                         HttpDispatcher dispatcher,
-                         ServletType type,
-                         int asyncTimeout)
+      String contextPath,
+      int threadPoolSize,
+      HttpDispatcher dispatcher,
+      ServletType type,
+      int asyncTimeout)
   {
     this(port, contextPath, threadPoolSize, createServlet(dispatcher, type, asyncTimeout, R2Constants.DEFAULT_REST_OVER_STREAM));
   }
 
   public HttpJettyServer(int port,
-                         String contextPath,
-                         int threadPoolSize,
-                         HttpDispatcher dispatcher,
-                         ServletType type,
-                         int asyncTimeout,
-                         boolean restOverStream)
+      String contextPath,
+      int threadPoolSize,
+      HttpDispatcher dispatcher,
+      ServletType type,
+      int asyncTimeout,
+      boolean restOverStream)
   {
     this(port, contextPath, threadPoolSize, createServlet(dispatcher, type, asyncTimeout, restOverStream));
   }
@@ -93,9 +97,9 @@ public class HttpJettyServer implements HttpServer
   public HttpJettyServer(int port, HttpServlet servlet)
   {
     this(port,
-         HttpServerFactory.DEFAULT_CONTEXT_PATH,
-         HttpServerFactory.DEFAULT_THREAD_POOL_SIZE,
-         servlet);
+        HttpServerFactory.DEFAULT_CONTEXT_PATH,
+        HttpServerFactory.DEFAULT_THREAD_POOL_SIZE,
+        servlet);
   }
 
   public HttpJettyServer(int port, String contextPath, int threadPoolSize, HttpServlet servlet)
@@ -109,9 +113,9 @@ public class HttpJettyServer implements HttpServer
   @Override
   public void start() throws IOException
   {
-    _server = new Server();
-    _server.setConnectors(getConnectors());
-    _server.setThreadPool(new QueuedThreadPool(_threadPoolSize));
+    _server = new Server(new QueuedThreadPool(_threadPoolSize));
+    _server.setConnectors(getConnectors(_server));
+
     ServletContextHandler root =
         new ServletContextHandler(_server, _contextPath, ServletContextHandler.SESSIONS);
     root.addServlet(new ServletHolder(_servlet), "/*");
@@ -149,9 +153,12 @@ public class HttpJettyServer implements HttpServer
     _server.join();
   }
 
-  protected Connector[] getConnectors()
+  protected Connector[] getConnectors(Server server)
   {
-    SelectChannelConnector connector = new SelectChannelConnector();
+    HttpConfiguration configuration = new HttpConfiguration();
+    ServerConnector connector = new ServerConnector(
+        server,
+        new HttpConnectionFactory(configuration, HttpCompliance.RFC2616));
     connector.setPort(_port);
     return new Connector[] { connector };
   }

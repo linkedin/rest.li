@@ -21,8 +21,13 @@
 package com.linkedin.r2.transport.http.server;
 
 
+import org.eclipse.jetty.http.HttpCompliance;
 import org.eclipse.jetty.server.Connector;
-import org.eclipse.jetty.server.ssl.SslSelectChannelConnector;
+import org.eclipse.jetty.server.HttpConfiguration;
+import org.eclipse.jetty.server.HttpConnectionFactory;
+import org.eclipse.jetty.server.SecureRequestCustomizer;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 
 
@@ -37,15 +42,15 @@ public class HttpsJettyServer extends HttpJettyServer
   private final String _keyStorePassword;
 
   public HttpsJettyServer(int port,
-                          int sslPort,
-                          String keyStore,
-                          String keyStorePassword,
-                          String contextPath,
-                          int threadPoolSize,
-                          HttpDispatcher dispatcher,
-                          HttpJettyServer.ServletType servletType,
-                          int asyncTimeOut,
-                          boolean restOverStream)
+      int sslPort,
+      String keyStore,
+      String keyStorePassword,
+      String contextPath,
+      int threadPoolSize,
+      HttpDispatcher dispatcher,
+      HttpJettyServer.ServletType servletType,
+      int asyncTimeOut,
+      boolean restOverStream)
   {
     super(port, contextPath, threadPoolSize, dispatcher, servletType, asyncTimeOut, restOverStream);
     _sslPort = sslPort;
@@ -54,18 +59,24 @@ public class HttpsJettyServer extends HttpJettyServer
   }
 
   @Override
-  protected Connector[] getConnectors()
+  protected Connector[] getConnectors(Server server)
   {
     SslContextFactory sslContextFactory = new SslContextFactory();
     sslContextFactory.setKeyStorePath(_keyStore);
     sslContextFactory.setKeyStorePassword(_keyStorePassword);
-    sslContextFactory.setTrustStore(_keyStore);
+    sslContextFactory.setTrustStorePath(_keyStore);
     sslContextFactory.setTrustStorePassword(_keyStorePassword);
 
-    Connector sslConnector = new SslSelectChannelConnector(sslContextFactory);
+    HttpConfiguration configuration = new HttpConfiguration();
+    configuration.addCustomizer(new SecureRequestCustomizer());
+
+    ServerConnector sslConnector = new ServerConnector(
+        server,
+        sslContextFactory,
+        new HttpConnectionFactory(configuration, HttpCompliance.RFC2616));
     sslConnector.setPort(_sslPort);
 
-    Connector[] httpConnectors = super.getConnectors();
+    Connector[] httpConnectors = super.getConnectors(server);
     Connector[] connectors = new Connector[httpConnectors.length + 1];
     int i  = 0;
     for (Connector c : httpConnectors)

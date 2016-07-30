@@ -184,6 +184,18 @@ public class HttpServerFactory
                                 restOverStream);
   }
 
+  public HttpServer createH2cServer(int port, TransportDispatcher transportDispatcher, boolean restOverStream)
+  {
+    final TransportDispatcher filterDispatcher = new FilterChainDispatcher(transportDispatcher,  _filters);
+    final HttpDispatcher dispatcher = new HttpDispatcher(filterDispatcher);
+    return new H2cJettyServer(
+        port,
+        DEFAULT_CONTEXT_PATH,
+        DEFAULT_THREAD_POOL_SIZE,
+        dispatcher,
+        restOverStream);
+  }
+
   public HttpServer createServer(int port, TransportDispatcher transportDispatcher, int timeout, boolean restOverStream)
   {
     return createServer(port, DEFAULT_CONTEXT_PATH, DEFAULT_THREAD_POOL_SIZE, transportDispatcher, _servletType, timeout, restOverStream);

@@ -1,6 +1,7 @@
 6.0.17
 ------
-
+(RB=633492)
+Add H2C Jetty server option to r2-perf-test
 
 6.0.16
 ------

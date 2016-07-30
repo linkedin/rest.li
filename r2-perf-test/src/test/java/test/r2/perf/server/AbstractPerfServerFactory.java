@@ -45,6 +45,8 @@ import test.r2.perf.StringGenerator;
  */
 public abstract class AbstractPerfServerFactory
 {
+  private static final String STATIC_HEADER_PREFIX = "X-LI-HEADER-";
+
   public Server create(int port, URI echoUri, int msg_size)
   {
 
@@ -55,8 +57,9 @@ public abstract class AbstractPerfServerFactory
     return createServer(port, dispatcher, PerfConfig.serverRestOverStream());
   }
 
-  public Server createPureStreamServer(int port, URI echoUri, final int msg_size)
+  public Server createPureStreamServer(int port, URI echoUri, final int msg_size, int numHeaders, int headerSize)
   {
+    String headerContent = new StringGenerator(headerSize).nextMessage();
     StreamRequestHandler handler = new StreamRequestHandler()
     {
       @Override
@@ -73,7 +76,13 @@ public abstract class AbstractPerfServerFactory
           @Override
           public void onSuccess(None result)
           {
-            callback.onSuccess(new StreamResponseBuilder().build(EntityStreams.newEntityStream(new PerfStreamWriter(msg_size))));
+            StreamResponseBuilder builder = new StreamResponseBuilder();
+            for (int i = 0; i < numHeaders; i++)
+            {
+              builder.setHeader(STATIC_HEADER_PREFIX + i, headerContent);
+            }
+
+            callback.onSuccess(builder.build(EntityStreams.newEntityStream(new PerfStreamWriter(msg_size))));
           }
         }, None.none()));
       }

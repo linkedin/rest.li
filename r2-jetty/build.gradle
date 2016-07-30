@@ -1,5 +1,10 @@
 dependencies {
   compile project (':r2-core')
-  compile externalDependency.jetty
+  compile externalDependency.jettyAlpnServer
+  compile externalDependency.jettyHttp
+  compile externalDependency.jettyHttp2Server
+  compile externalDependency.jettyServlet
+  compile externalDependency.jettyServer
+  compile externalDependency.jettyUtil
   compile externalDependency.servletApi
 }

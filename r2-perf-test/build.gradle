@@ -10,7 +10,7 @@ dependencies {
 }
 
 // Build tasks for running PRPC and HTTP servers and perf tests
-['Http'].each { proto ->
+['Http','H2c'].each { proto ->
   def props = System.properties.findAll { k,_ -> k.startsWith('perf.') }
 
   // Define server tasks

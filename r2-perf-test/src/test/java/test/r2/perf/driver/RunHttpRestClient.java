@@ -35,16 +35,18 @@ public class RunHttpRestClient
     final int numThreads = PerfConfig.getNumClientThreads();
     final int numMsgs = PerfConfig.getNumMessages();
     final int msgSize = PerfConfig.getMessageSize();
+    final int numHeaders = PerfConfig.getNumHeaders();
+    final int headerSize = PerfConfig.getHeaderSize();
     final boolean pureStreaming = PerfConfig.isClientPureStreaming();
 
     final PerfClient client;
     if (pureStreaming)
     {
-      client = PerfClients.httpPureStream(uri, numThreads, numMsgs, msgSize);
+      client = PerfClients.httpPureStream(uri, numThreads, numMsgs, msgSize, numHeaders, headerSize);
     }
     else
     {
-      client = PerfClients.httpRest(uri, numThreads, numMsgs, msgSize);
+      client = PerfClients.httpRest(uri, numThreads, numMsgs, msgSize, numHeaders, headerSize);
     }
     client.run();
     client.shutdown();

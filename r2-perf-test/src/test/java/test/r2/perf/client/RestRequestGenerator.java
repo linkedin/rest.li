@@ -32,21 +32,27 @@ import test.r2.perf.StringGenerator;
  */
 public class RestRequestGenerator implements Generator<RestRequest>
 {
+  private static final String HTTP_POST_METHOD = "POST";
+  private static final String STATIC_HEADER_PREFIX = "X-LI-HEADER-";
+
+  private final int _numHeaders;
+  private final String _headerContent;
   private final URI _uri;
   private final StringGenerator _generator;
   private final AtomicInteger _msgCounter;
 
-
-  public RestRequestGenerator(URI uri, int numMsgs, int msgSize)
+  public RestRequestGenerator(URI uri, int numMsgs, int msgSize, int numHeaders, int headerSize)
   {
-    this(uri, numMsgs, new StringGenerator(msgSize));
+    this(uri, numMsgs, numHeaders, headerSize, new StringGenerator(msgSize));
   }
 
-  public RestRequestGenerator(URI uri, int numMsgs, StringGenerator generator)
+  public RestRequestGenerator(URI uri, int numMsgs, int numHeaders, int headerSize, StringGenerator generator)
   {
     _uri = uri;
     _generator = generator;
     _msgCounter = new AtomicInteger(numMsgs);
+    _numHeaders = numHeaders;
+    _headerContent = new StringGenerator(headerSize).nextMessage();
   }
 
   @Override
@@ -54,12 +60,14 @@ public class RestRequestGenerator implements Generator<RestRequest>
   {
     if (_msgCounter.getAndDecrement() > 0)
     {
-      final String stringMsg = _generator.nextMessage();
-
-      return new RestRequestBuilder(_uri)
-        .setEntity(stringMsg.getBytes())
-        .setMethod("POST")
-        .build();
+      RestRequestBuilder builder = new RestRequestBuilder(_uri);
+      builder.setEntity(_generator.nextMessage().getBytes());
+      builder.setMethod(HTTP_POST_METHOD);
+      for (int i = 0; i < _numHeaders; i++)
+      {
+        builder.setHeader(STATIC_HEADER_PREFIX + i, _headerContent);
+      }
+      return builder.build();
     }
     else
     {

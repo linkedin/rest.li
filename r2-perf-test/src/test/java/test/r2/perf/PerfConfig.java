@@ -38,6 +38,10 @@ public class PerfConfig
   private static final String PERF_SERVER_PURE_STREAMING = "perf.server.pure_streaming";
   private static final String PERF_CLIENT_REST_OVER_STREAM = "perf.client.restOverStream";
   private static final String PERF_SERVER_REST_OVER_STREAM = "perf.server.restOverStream";
+  private static final String PERF_CLIENT_NUM_HEADERS = "perf.client.num_headers";
+  private static final String PERF_SERVER_NUM_HEADERS = "perf.server.num_headers";
+  private static final String PERF_CLIENT_HEADER_SIZE = "perf.client.header_size";
+  private static final String PERF_SERVER_HEADER_SIZE = "perf.server.header_size";
 
   // Default property values
   private static final String DEFAULT_HOST = "localhost";
@@ -50,6 +54,11 @@ public class PerfConfig
   private static final int DEFAULT_CLIENT_NUM_MSGS = 500 * 1000;
   private static final int DEFAULT_CLIENT_MSG_SIZE = 1000;
   private static final int DEFAULT_SERVER_MSG_SIZE = 1000;
+
+  private static final int DEFAULT_CLIENT_NUM_HEADERS = 0;
+  private static final int DEFAULT_CLIENT_HEADER_SIZE = 0;
+  private static final int DEFAULT_SERVER_NUM_HEADERS = 0;
+  private static final int DEFAULT_SERVER_HEADER_SIZE = 0;
 
   public static int getHttpPort()
   {
@@ -74,6 +83,26 @@ public class PerfConfig
   public static int getServerMessageSize()
   {
     return getInt(PERF_SERVER_MSG_SIZE);
+  }
+
+  public static int getNumHeaders()
+  {
+    return getInt(PERF_CLIENT_NUM_HEADERS);
+  }
+
+  public static int getServerNumHeaders()
+  {
+    return getInt(PERF_SERVER_NUM_HEADERS);
+  }
+
+  public static int getHeaderSize()
+  {
+    return getInt(PERF_CLIENT_HEADER_SIZE);
+  }
+
+  public static int getServerHeaderSize()
+  {
+    return getInt(PERF_SERVER_HEADER_SIZE);
   }
 
   public static URI getRelativeUri()
