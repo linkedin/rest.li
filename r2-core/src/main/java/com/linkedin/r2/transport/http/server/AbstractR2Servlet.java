@@ -211,19 +211,19 @@ public abstract class AbstractR2Servlet extends HttpServlet
         }
       }
     }
-
-
-    if (hasTransferEncoding(req))
+    
+    int length = req.getContentLength();
+    if (length > 0)
     {
-      rb.setEntity(ByteString.read(req.getInputStream()));
+      rb.setEntity(ByteString.read(req.getInputStream(), length));
     }
     else
     {
-      int length = req.getContentLength();
-      if (length >= 0)
-      {
-        rb.setEntity(ByteString.read(req.getInputStream(), length));
-      }
+      // Known cases for not sending a content-length header in a request
+      // 1. Chunked transfer encoding
+      // 2. HTTP/2
+      rb.setEntity(ByteString.read(req.getInputStream()));
+
     }
     return rb.build();
   }
@@ -313,10 +313,5 @@ public abstract class AbstractR2Servlet extends HttpServlet
     }
 
     return pathInfo;
-  }
-
-  private static boolean hasTransferEncoding(HttpServletRequest req)
-  {
-    return req.getHeaders(HttpConstants.TRANSFER_ENCODING).hasMoreElements();
   }
 }

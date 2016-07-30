@@ -1,5 +1,6 @@
 6.0.16
 ------
+(RB=777408) Change AbstractR2Servlet to only read input stream with size when content length is present
 
 
 6.0.15
