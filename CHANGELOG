@@ -1,7 +1,9 @@
 6.0.16
 ------
-(RB=777408) Change AbstractR2Servlet to only read input stream with size when content length is present
-
+(RB=777408)
+Change AbstractR2Servlet to only read input stream with size when content length is present
+(RB=777578)
+Fix test concurrency issue in TestAsyncSharedPoolImpl
 
 6.0.15
 ------

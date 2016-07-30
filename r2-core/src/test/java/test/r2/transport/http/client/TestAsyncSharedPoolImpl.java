@@ -605,7 +605,7 @@ public class TestAsyncSharedPoolImpl
     // Only one thread will perform the actual item creation task and the rest
     // will return immediately. Therefore we wait for GET_COUNT - 1 threads to complete.
     final CountDownLatch getLatch = new CountDownLatch(GET_COUNT - 1);
-    final List<Cancellable> cancellables = new ArrayList<>();
+    final ConcurrentLinkedQueue<Cancellable> cancellables = new ConcurrentLinkedQueue<>();
     for (int i = 0; i < GET_COUNT; i++)
     {
       SCHEDULER.execute(() -> {
