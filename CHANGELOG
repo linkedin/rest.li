@@ -1,7 +1,13 @@
+6.0.18
+------
+
+
 6.0.17
 ------
 (RB=633492)
 Add H2C Jetty server option to r2-perf-test
+(RB=778322)
+Making TestStreamEcho.testBackPressureEcho test more generous and add logging
 
 6.0.16
 ------
