@@ -29,48 +29,47 @@ import org.testng.annotations.Test;
 public class MPConsistentHashTest
 {
   static final int TOTAL_COUNT = 1000000;
-  final Random _random = new Random();
 
   @Test
   public void testFairness()
   {
     Map<Integer, Integer> dist = getDistribution(2, 1);
-    Assert.assertTrue(getPeakToAvg(dist) < 1.2);
+    Assert.assertTrue(getPeakToAvg(dist) < 1.1);
   }
 
   @Test
   public void testFairness2()
   {
     Map<Integer, Integer> dist = getDistribution(10, 1);
-    Assert.assertTrue(getPeakToAvg(dist) < 1.2);
+    Assert.assertTrue(getPeakToAvg(dist) < 1.1);
   }
 
   @Test
   public void testFairness3()
   {
     Map<Integer, Integer> dist = getDistribution(100, 1);
-    Assert.assertTrue(getPeakToAvg(dist) < 1.2);
+    Assert.assertTrue(getPeakToAvg(dist) < 1.1);
   }
 
   @Test
   public void testFairness4()
   {
     Map<Integer, Integer> dist = getDistribution(2, 100);
-    Assert.assertTrue(getPeakToAvg(dist) < 1.2);
+    Assert.assertTrue(getPeakToAvg(dist) < 1.1);
   }
 
   @Test
   public void testFairness5()
   {
     Map<Integer, Integer> dist = getDistribution(10, 100);
-    Assert.assertTrue(getPeakToAvg(dist) < 1.2);
+    Assert.assertTrue(getPeakToAvg(dist) < 1.1);
   }
 
   @Test
   public void testFairness6()
   {
     Map<Integer, Integer> dist = getDistribution(100, 100);
-    Assert.assertTrue(getPeakToAvg(dist) < 1.2);
+    Assert.assertTrue(getPeakToAvg(dist) < 1.1);
   }
 
   @Test
@@ -122,7 +121,7 @@ public class MPConsistentHashTest
     Map<Integer, Integer> pointsMap = new HashMap<>();
     for (int i = 0; i < numHosts; i++)
     {
-      pointsMap.put(_random.nextInt(), pointsPerHost);
+      pointsMap.put(i, pointsPerHost);
     }
     return getDistribution(pointsMap);
   }
@@ -134,7 +133,7 @@ public class MPConsistentHashTest
     Map<Integer, Integer> counts = new HashMap<>();
     for (int i = 0; i < TOTAL_COUNT; i++)
     {
-      Integer object = hashRing.get(_random.nextInt());
+      Integer object = hashRing.get(i);
       int count = counts.computeIfAbsent(object, k -> 0);
       counts.put(object, count+1);
     }
