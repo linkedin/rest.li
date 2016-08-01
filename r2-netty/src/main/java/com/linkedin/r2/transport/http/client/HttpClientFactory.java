@@ -89,6 +89,12 @@ public class HttpClientFactory implements TransportClientFactory
 {
   private static final Logger LOG = LoggerFactory.getLogger(HttpClientFactory.class);
 
+  public enum HttpProtocolVersion
+  {
+    HTTP_1_1,
+    HTTP_2,
+  }
+
   public static final String HTTP_QUERY_POST_THRESHOLD = "http.queryPostThreshold";
   public static final String HTTP_REQUEST_TIMEOUT = "http.requestTimeout";
   public static final String HTTP_MAX_RESPONSE_SIZE = "http.maxResponseSize";
@@ -108,6 +114,7 @@ public class HttpClientFactory implements TransportClientFactory
   public static final String HTTP_MAX_HEADER_SIZE = "http.maxHeaderSize";
   public static final String HTTP_MAX_CHUNK_SIZE = "http.maxChunkSize";
   public static final String HTTP_MAX_CONCURRENT_CONNECTIONS = "http.maxConcurrentConnections";
+  public static final String HTTP_PROTOCOL_VERSION = "http.protocolVersion";
 
   public static final int DEFAULT_POOL_WAITER_SIZE = Integer.MAX_VALUE;
   public static final int DEFAULT_POOL_SIZE = 200;
@@ -122,6 +129,7 @@ public class HttpClientFactory implements TransportClientFactory
   public static final int DEFAULT_MAX_CHUNK_SIZE = 8 * 1024;
   public static final EncodingType[] DEFAULT_RESPONSE_CONTENT_ENCODINGS
       = {EncodingType.GZIP, EncodingType.SNAPPY, EncodingType.SNAPPY_FRAMED, EncodingType.DEFLATE, EncodingType.BZIP2};
+  public static final HttpProtocolVersion DEFAULT_HTTP_PROTOCOL_VERSION = HttpProtocolVersion.HTTP_1_1;
 
   public static final StreamEncodingType[] DEFAULT_STREAM_RESPONSE_CONTENT_ENCODINGS
       = {StreamEncodingType.GZIP,
@@ -757,6 +765,29 @@ public class HttpClientFactory implements TransportClientFactory
     return DEFAULT_RESPONSE_CONTENT_ENCODINGS;
   }
 
+  private HttpProtocolVersion getHttpProtocolVersion(Map<String, ? extends Object> properties, String propertyKey)
+  {
+    if (properties == null)
+    {
+      LOG.warn("passed a null raw client properties");
+      return null;
+    }
+    if (properties.containsKey(propertyKey))
+    {
+      // These properties can be safely cast to String before converting them to Integers as we expect Integer values
+      // for all these properties.
+      String value = (String) properties.get(propertyKey);
+      switch (value)
+      {
+        case "HTTP/1.1":
+          return HttpProtocolVersion.HTTP_1_1;
+        case "HTTP/2":
+          return HttpProtocolVersion.HTTP_2;
+      }
+    }
+    return null;
+  }
+
   /**
    * helper method to get value from properties as well as to print log warning if the key is old
    * @param properties
@@ -854,26 +885,27 @@ public class HttpClientFactory implements TransportClientFactory
     Integer maxHeaderSize = chooseNewOverDefault(getIntValue(properties, HTTP_MAX_HEADER_SIZE), DEFAULT_MAX_HEADER_SIZE);
     Integer maxChunkSize = chooseNewOverDefault(getIntValue(properties, HTTP_MAX_CHUNK_SIZE), DEFAULT_MAX_CHUNK_SIZE);
     Integer maxConcurrentConnections = chooseNewOverDefault(getIntValue(properties, HTTP_MAX_CONCURRENT_CONNECTIONS), Integer.MAX_VALUE);
+    HttpProtocolVersion httpProtocolVersion =
+        chooseNewOverDefault(getHttpProtocolVersion(properties, HTTP_PROTOCOL_VERSION), DEFAULT_HTTP_PROTOCOL_VERSION);
 
-    HttpNettyStreamClient streamClient = new HttpNettyStreamClient(_eventLoopGroup,
-      _executor,
-      poolSize,
-      requestTimeout,
-      idleTimeout,
-      shutdownTimeout,
-      maxResponseSize,
-      sslContext,
-      sslParameters,
-      _callbackExecutorGroup,
-      poolWaiterSize,
-      clientName + "-Stream",  // to distinguish channel pool metrics from rest client during transition period
-      _jmxManager,
-      strategy,
-      poolMinSize,
-      maxHeaderSize,
-      maxChunkSize,
-      maxConcurrentConnections,
-      _tcpNoDelay);
+    TransportClient streamClient;
+    switch (httpProtocolVersion)
+    {
+      case HTTP_1_1:
+        streamClient = new HttpNettyStreamClient(_eventLoopGroup, _executor, poolSize, requestTimeout, idleTimeout, shutdownTimeout,
+            maxResponseSize, sslContext, sslParameters, _callbackExecutorGroup, poolWaiterSize,
+            clientName + "-Stream" /* to distinguish channel pool metrics from rest client during transition period */,
+            _jmxManager, strategy, poolMinSize, maxHeaderSize, maxChunkSize, maxConcurrentConnections, _tcpNoDelay);
+        break;
+      case HTTP_2:
+        streamClient = new Http2NettyStreamClient(_eventLoopGroup, _executor, requestTimeout, idleTimeout, shutdownTimeout,
+            maxResponseSize, sslContext, sslParameters, _callbackExecutorGroup, poolWaiterSize,
+            clientName + "-HTTP/2-Stream" /* to distinguish channel pool metrics from rest client during transition period */,
+            _jmxManager, maxHeaderSize, maxChunkSize, maxConcurrentConnections, _tcpNoDelay);
+        break;
+      default:
+        throw new IllegalArgumentException("Unrecognized HTTP protocol version " + httpProtocolVersion);
+    }
 
     HttpNettyClient legacyClient = new HttpNettyClient(_eventLoopGroup,
         _executor,
@@ -1124,7 +1156,7 @@ public class HttpClientFactory implements TransportClientFactory
     private final TransportClient _legacyClient;
     private final TransportClient _streamClient;
 
-    MixedClient(HttpNettyClient legacyClient, HttpNettyStreamClient streamClient)
+    MixedClient(TransportClient legacyClient, TransportClient streamClient)
     {
       _legacyClient = legacyClient;
       _streamClient = streamClient;
@@ -1159,17 +1191,17 @@ public class HttpClientFactory implements TransportClientFactory
 
     long getRequestTimeout()
     {
-      return ((HttpNettyStreamClient)_streamClient).getRequestTimeout();
+      return ((AbstractNettyStreamClient)_streamClient).getRequestTimeout();
     }
 
     long getShutdownTimeout()
     {
-      return ((HttpNettyStreamClient)_streamClient).getShutdownTimeout();
+      return ((AbstractNettyStreamClient)_streamClient).getShutdownTimeout();
     }
 
     long getMaxResponseSize()
     {
-      return ((HttpNettyStreamClient)_streamClient).getMaxResponseSize();
+      return ((AbstractNettyStreamClient)_streamClient).getMaxResponseSize();
     }
   }
 }

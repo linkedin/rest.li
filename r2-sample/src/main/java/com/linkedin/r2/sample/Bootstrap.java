@@ -35,6 +35,8 @@ import com.linkedin.r2.transport.http.server.HttpServerFactory;
 
 import java.net.URI;
 import java.util.Collections;
+import java.util.HashMap;
+
 
 /**
  * @author Chris Pettitt
@@ -65,6 +67,12 @@ public class Bootstrap
         .createServer(port, createDispatcher(), restOverStream);
   }
 
+  public static Server createH2cServer(int port, FilterChain filters, boolean restOverStream)
+  {
+    return new HttpServerFactory(filters)
+        .createH2cServer(port, createDispatcher(), restOverStream);
+  }
+
   public static Server createHttpsServer(String keyStore, String keyStorePassword, FilterChain filters)
   {
     return createHttpsServer(HTTPS_PORT, keyStore, keyStorePassword, filters);
@@ -84,10 +92,23 @@ public class Bootstrap
 
   public static Client createHttpClient(FilterChain filters, boolean restOverStream)
   {
+    HashMap<String, String> properties = new HashMap<>();
+    properties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, "HTTP/1.1");
     final TransportClient client = new HttpClientFactory.Builder()
         .setFilterChain(filters)
         .build()
-        .getClient(Collections.<String, String>emptyMap());
+        .getClient(properties);
+    return new TransportClientAdapter(client, restOverStream);
+  }
+
+  public static Client createHttp2Client(FilterChain filters, boolean restOverStream)
+  {
+    HashMap<String, String> properties = new HashMap<>();
+    properties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, "HTTP/2");
+    final TransportClient client = new HttpClientFactory.Builder()
+        .setFilterChain(filters)
+        .build()
+        .getClient(properties);
     return new TransportClientAdapter(client, restOverStream);
   }
 

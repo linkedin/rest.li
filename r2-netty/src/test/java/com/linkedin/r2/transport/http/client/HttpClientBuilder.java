@@ -207,4 +207,24 @@ class HttpClientBuilder
 
   }
 
+  public Http2NettyStreamClient buildHttp2Stream()
+  {
+    return new Http2NettyStreamClient(
+        _eventLoopGroup,
+        _scheduler,
+        _requestTimeout,
+        _idleTimeout,
+        _shutdownTimeout,
+        _maxResponseSize,
+        _sslContext,
+        _sslParameters,
+        _callbackExecutors,
+        _poolWaiterSize,
+        _name,
+        _jmxManager,
+        _maxHeaderSize,
+        _maxChunkSize,
+        _maxConcurrentConnections,
+        _tcpNoDelay);
+  }
 }

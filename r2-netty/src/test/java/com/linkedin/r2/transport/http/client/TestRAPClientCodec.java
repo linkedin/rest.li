@@ -33,6 +33,7 @@ import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpClientCodec;
+import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpObjectAggregator;
@@ -111,10 +112,10 @@ public class TestRAPClientCodec
     ch.writeOutbound(request);
     FullHttpRequest nettyRequest = (FullHttpRequest) ch.readOutbound();
 
-    Assert.assertEquals(nettyRequest.getUri(), uri);
-    Assert.assertEquals(nettyRequest.getMethod(), HttpMethod.valueOf(request.getMethod()));
+    Assert.assertEquals(nettyRequest.uri(), uri);
+    Assert.assertEquals(nettyRequest.method(), HttpMethod.valueOf(request.getMethod()));
     Assert.assertEquals(nettyRequest.content().toString(CHARSET), request.getEntity().asString(CHARSET));
-    Assert.assertEquals(nettyRequest.headers().get(HttpHeaders.Names.HOST), HOST);
+    Assert.assertEquals(nettyRequest.headers().get(HttpHeaderNames.HOST), HOST);
     assertList(nettyRequest.headers().getAll(HttpConstants.REQUEST_COOKIE_HEADER_NAME), request.getCookies());
 
     for (String name : request.getHeaders().keySet())
@@ -168,7 +169,7 @@ public class TestRAPClientCodec
     nettyResponse.headers().set(headers);
     for (String cookie : cookies)
     {
-      nettyResponse.headers().add(HttpHeaders.Names.SET_COOKIE, cookie);
+      nettyResponse.headers().add(HttpHeaderNames.SET_COOKIE, cookie);
     }
 
     ch.writeInbound(nettyResponse);

@@ -19,6 +19,7 @@ import com.linkedin.r2.message.stream.entitystream.ReadHandle;
 import com.linkedin.r2.message.stream.entitystream.Reader;
 import com.linkedin.r2.message.stream.entitystream.WriteHandle;
 import com.linkedin.r2.sample.Bootstrap;
+import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.StreamRequestHandler;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcherBuilder;
@@ -31,7 +32,6 @@ import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 import java.net.URI;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -90,9 +90,17 @@ public class TestStreamRequest extends AbstractStreamTest
   }
 
   @Override
-  protected Map<String, String> getClientProperties()
+  protected Map<String, String> getHttp1ClientProperties()
   {
-    Map<String, String> clientProperties = new HashMap<String, String>();
+    Map<String, String> clientProperties = super.getHttp1ClientProperties();
+    clientProperties.put(HttpClientFactory.HTTP_REQUEST_TIMEOUT, "30000");
+    return clientProperties;
+  }
+
+  @Override
+  protected Map<String, String> getHttp2ClientProperties()
+  {
+    Map<String, String> clientProperties = super.getHttp2ClientProperties();
     clientProperties.put(HttpClientFactory.HTTP_REQUEST_TIMEOUT, "30000");
     return clientProperties;
   }
@@ -100,124 +108,137 @@ public class TestStreamRequest extends AbstractStreamTest
   @Test
   public void testRequestLarge() throws Exception
   {
-    final long totalBytes = LARGE_BYTES_NUM;
-    EntityStream entityStream = EntityStreams.newEntityStream(new BytesWriter(totalBytes, BYTE));
-    StreamRequestBuilder builder = new StreamRequestBuilder(Bootstrap.createHttpURI(PORT, LARGE_URI));
-    StreamRequest request = builder.setMethod("POST").build(entityStream);
+    for (Client client : clients())
+    {
+      final long totalBytes = LARGE_BYTES_NUM;
+      EntityStream entityStream = EntityStreams.newEntityStream(new BytesWriter(totalBytes, BYTE));
+      StreamRequestBuilder builder = new StreamRequestBuilder(Bootstrap.createHttpURI(PORT, LARGE_URI));
+      StreamRequest request = builder.setMethod("POST").build(entityStream);
 
-
-
-    final AtomicInteger status = new AtomicInteger(-1);
-    final CountDownLatch latch = new CountDownLatch(1);
-    Callback<StreamResponse> callback = expectSuccessCallback(latch, status);
-    _client.streamRequest(request, callback);
-    latch.await(60000, TimeUnit.MILLISECONDS);
-    Assert.assertEquals(status.get(), RestStatus.OK);
-    BytesReader reader = _checkRequestHandler.getReader();
-    Assert.assertNotNull(reader);
-    Assert.assertEquals(totalBytes, reader.getTotalBytes());
-    Assert.assertTrue(reader.allBytesCorrect());
+      final AtomicInteger status = new AtomicInteger(-1);
+      final CountDownLatch latch = new CountDownLatch(1);
+      Callback<StreamResponse> callback = expectSuccessCallback(latch, status);
+      client.streamRequest(request, callback);
+      latch.await(60000, TimeUnit.MILLISECONDS);
+      Assert.assertEquals(status.get(), RestStatus.OK);
+      BytesReader reader = _checkRequestHandler.getReader();
+      Assert.assertNotNull(reader);
+      Assert.assertEquals(totalBytes, reader.getTotalBytes());
+      Assert.assertTrue(reader.allBytesCorrect());
+    }
   }
 
   // jetty 404 tests singled out
   @Test(enabled = false)
   public void test404() throws Exception
   {
-    final long totalBytes = TINY_BYTES_NUM;
-    EntityStream entityStream = EntityStreams.newEntityStream(new BytesWriter(totalBytes, BYTE));
-    StreamRequestBuilder builder = new StreamRequestBuilder(Bootstrap.createHttpURI(PORT, URI.create("/boo")));
-    StreamRequest request = builder.setMethod("POST").build(entityStream);
-    final AtomicInteger status = new AtomicInteger(-1);
-    final CountDownLatch latch = new CountDownLatch(1);
-    Callback<StreamResponse> callback = expectErrorCallback(latch, status);
-    _client.streamRequest(request, callback);
-    latch.await(60000, TimeUnit.MILLISECONDS);
-    Assert.assertEquals(status.get(), 404);
+    for (Client client : clients())
+    {
+      final long totalBytes = TINY_BYTES_NUM;
+      EntityStream entityStream = EntityStreams.newEntityStream(new BytesWriter(totalBytes, BYTE));
+      StreamRequestBuilder builder = new StreamRequestBuilder(Bootstrap.createHttpURI(PORT, URI.create("/boo")));
+      StreamRequest request = builder.setMethod("POST").build(entityStream);
+      final AtomicInteger status = new AtomicInteger(-1);
+      final CountDownLatch latch = new CountDownLatch(1);
+      Callback<StreamResponse> callback = expectErrorCallback(latch, status);
+      client.streamRequest(request, callback);
+      latch.await(60000, TimeUnit.MILLISECONDS);
+      Assert.assertEquals(status.get(), 404);
+    }
   }
 
   @Test
   public void testErrorWriter() throws Exception
   {
-    final long totalBytes = SMALL_BYTES_NUM;
-    EntityStream entityStream = EntityStreams.newEntityStream(new ErrorWriter(totalBytes, BYTE));
-    StreamRequestBuilder builder = new StreamRequestBuilder(Bootstrap.createHttpURI(PORT, FOOBAR_URI));
-    StreamRequest request = builder.setMethod("POST").build(entityStream);
-    final CountDownLatch latch = new CountDownLatch(1);
-    final AtomicReference<Throwable> error = new AtomicReference<Throwable>();
-    Callback<StreamResponse> callback = new Callback<StreamResponse>()
+    for (Client client : clients())
     {
-      @Override
-      public void onError(Throwable e)
+      final long totalBytes = SMALL_BYTES_NUM;
+      EntityStream entityStream = EntityStreams.newEntityStream(new ErrorWriter(totalBytes, BYTE));
+      StreamRequestBuilder builder = new StreamRequestBuilder(Bootstrap.createHttpURI(PORT, FOOBAR_URI));
+      StreamRequest request = builder.setMethod("POST").build(entityStream);
+      final CountDownLatch latch = new CountDownLatch(1);
+      final AtomicReference<Throwable> error = new AtomicReference<Throwable>();
+      Callback<StreamResponse> callback = new Callback<StreamResponse>()
       {
-        error.set(e);
-        latch.countDown();
-      }
+        @Override
+        public void onError(Throwable e)
+        {
+          error.set(e);
+          latch.countDown();
+        }
 
-      @Override
-      public void onSuccess(StreamResponse result)
-      {
-        latch.countDown();
-      }
-    };
-    _client.streamRequest(request, callback);
-    latch.await();
-    Assert.assertNotNull(error.get());
+        @Override
+        public void onSuccess(StreamResponse result)
+        {
+          latch.countDown();
+        }
+      };
+      client.streamRequest(request, callback);
+      latch.await();
+      Assert.assertNotNull(error.get());
+    }
   }
 
   @Test
   public void testErrorReceiver() throws Exception
   {
-    final long totalBytes = SMALL_BYTES_NUM;
-    EntityStream entityStream = EntityStreams.newEntityStream(new BytesWriter(totalBytes, BYTE));
-    StreamRequestBuilder builder = new StreamRequestBuilder(Bootstrap.createHttpURI(PORT, ERROR_RECEIVER_URI));
-    StreamRequest request = builder.setMethod("POST").build(entityStream);
-    final CountDownLatch latch = new CountDownLatch(1);
-    final AtomicReference<Throwable> error = new AtomicReference<Throwable>();
-    Callback<StreamResponse> callback = new Callback<StreamResponse>()
+    for (Client client : clients())
     {
-      @Override
-      public void onError(Throwable e)
+      final long totalBytes = SMALL_BYTES_NUM;
+      EntityStream entityStream = EntityStreams.newEntityStream(new BytesWriter(totalBytes, BYTE));
+      StreamRequestBuilder builder = new StreamRequestBuilder(Bootstrap.createHttpURI(PORT, ERROR_RECEIVER_URI));
+      StreamRequest request = builder.setMethod("POST").build(entityStream);
+      final CountDownLatch latch = new CountDownLatch(1);
+      final AtomicReference<Throwable> error = new AtomicReference<Throwable>();
+      Callback<StreamResponse> callback = new Callback<StreamResponse>()
       {
-        error.set(e);
-        latch.countDown();
-      }
+        @Override
+        public void onError(Throwable e)
+        {
+          error.set(e);
+          latch.countDown();
+        }
 
-      @Override
-      public void onSuccess(StreamResponse result)
-      {
-        latch.countDown();
-      }
-    };
-    _client.streamRequest(request, callback);
-    latch.await();
-    Assert.assertNotNull(error.get());
+        @Override
+        public void onSuccess(StreamResponse result)
+        {
+          latch.countDown();
+        }
+      };
+      client.streamRequest(request, callback);
+      latch.await();
+      Assert.assertNotNull(error.get());
+    }
   }
 
   @Test
   public void testBackPressure() throws Exception
   {
-    final long totalBytes = SMALL_BYTES_NUM;
-    TimedBytesWriter writer = new TimedBytesWriter(totalBytes, BYTE);
-    EntityStream entityStream = EntityStreams.newEntityStream(writer);
-    StreamRequestBuilder builder = new StreamRequestBuilder(Bootstrap.createHttpURI(PORT, RATE_LIMITED_URI));
-    StreamRequest request = builder.setMethod("POST").build(entityStream);
-    final AtomicInteger status = new AtomicInteger(-1);
-    final CountDownLatch latch = new CountDownLatch(1);
-    Callback<StreamResponse> callback = expectSuccessCallback(latch, status);
-    _client.streamRequest(request, callback);
-    latch.await(60000, TimeUnit.MILLISECONDS);
-    Assert.assertEquals(status.get(), RestStatus.OK);
-    TimedBytesReader reader = _rateLimitedRequestHandler.getReader();
-    Assert.assertNotNull(reader);
-    Assert.assertEquals(totalBytes, reader.getTotalBytes());
-    Assert.assertTrue(reader.allBytesCorrect());
-    long clientSendTimespan = writer.getStopTime() - writer.getStartTime();
-    long serverReceiveTimespan = reader.getStopTime() - reader.getStartTime();
-    Assert.assertTrue(serverReceiveTimespan > 1000);
-    double diff = Math.abs(serverReceiveTimespan - clientSendTimespan);
-    double diffRatio = diff / clientSendTimespan;
-    // make it generous to reduce the chance occasional test failures
-    Assert.assertTrue(diffRatio < 0.2);
+    for (Client client : clients())
+    {
+      final long totalBytes = SMALL_BYTES_NUM;
+      TimedBytesWriter writer = new TimedBytesWriter(totalBytes, BYTE);
+      EntityStream entityStream = EntityStreams.newEntityStream(writer);
+      StreamRequestBuilder builder = new StreamRequestBuilder(Bootstrap.createHttpURI(PORT, RATE_LIMITED_URI));
+      StreamRequest request = builder.setMethod("POST").build(entityStream);
+      final AtomicInteger status = new AtomicInteger(-1);
+      final CountDownLatch latch = new CountDownLatch(1);
+      Callback<StreamResponse> callback = expectSuccessCallback(latch, status);
+      client.streamRequest(request, callback);
+      latch.await(60000, TimeUnit.MILLISECONDS);
+      Assert.assertEquals(status.get(), RestStatus.OK);
+      TimedBytesReader reader = _rateLimitedRequestHandler.getReader();
+      Assert.assertNotNull(reader);
+      Assert.assertEquals(totalBytes, reader.getTotalBytes());
+      Assert.assertTrue(reader.allBytesCorrect());
+      long clientSendTimespan = writer.getStopTime() - writer.getStartTime();
+      long serverReceiveTimespan = reader.getStopTime() - reader.getStartTime();
+      Assert.assertTrue(serverReceiveTimespan > 1000);
+      double diff = Math.abs(serverReceiveTimespan - clientSendTimespan);
+      double diffRatio = diff / clientSendTimespan;
+      // make it generous to reduce the chance occasional test failures
+      Assert.assertTrue(diffRatio < 0.2);
+    }
   }
 
   private static class CheckRequestHandler implements StreamRequestHandler

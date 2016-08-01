@@ -21,11 +21,14 @@
 package test.r2.integ;
 
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
 
+import com.linkedin.r2.transport.common.Server;
+import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
+import com.linkedin.r2.transport.common.bridge.server.TransportDispatcherBuilder;
+import com.linkedin.r2.transport.http.server.HttpServerFactory;
 import java.net.URI;
-import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -33,7 +36,6 @@ import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
-import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 import com.linkedin.common.callback.FutureCallback;
@@ -44,10 +46,9 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.transport.common.Client;
-import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
-import com.linkedin.r2.transport.http.client.TestServer;
+
 
 /**
  * @author Steven Ihde
@@ -56,29 +57,53 @@ import com.linkedin.r2.transport.http.client.TestServer;
 
 public class TestHttpClient
 {
+  private static final int PORT = 8080;
+  private static final URI DISPATCHER_URI = URI.create("/");
+  private static final URI REQUEST_URI = URI.create("http://localhost:" + PORT + "/");
+  private static final int REQUEST_TIMEOUT = 1000;
+  private static final boolean REST_OVER_STREAM = true;
+  private static final boolean NOT_REST_OVER_STREAM = true;
+
   private HttpClientFactory _clientFactory;
-  private TestServer _testServer;
-
-  private final boolean _restOverStream;
-
-  @Factory(dataProvider = "configs")
-  public TestHttpClient(boolean restOverStream)
-  {
-    _restOverStream = restOverStream;
-  }
 
   @DataProvider
-  public static Object[][] configs()
+  public Object[][] configs()
   {
+    Map<String, String> http1ClientProperties = new HashMap<>();
+    http1ClientProperties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, HttpProtocolVersion.HTTP_1_1);
+    http1ClientProperties.put(HttpClientFactory.HTTP_REQUEST_TIMEOUT, Integer.toString(REQUEST_TIMEOUT));
+
+    Map<String, String> http2ClientProperties = new HashMap<>();
+    http2ClientProperties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, HttpProtocolVersion.HTTP_2);
+    http2ClientProperties.put(HttpClientFactory.HTTP_REQUEST_TIMEOUT, Integer.toString(REQUEST_TIMEOUT));
+
+    TransportDispatcher dispatcher = new TransportDispatcherBuilder()
+        .addRestHandler(DISPATCHER_URI, new EchoHandler())
+        .build();
+
     return new Object[][] {
-        {true}, {false}
+        {
+            new HttpServerFactory().createH2cServer(PORT, dispatcher, REST_OVER_STREAM),
+            new TransportClientAdapter(_clientFactory.getClient(http1ClientProperties), REST_OVER_STREAM)
+        },
+        {
+            new HttpServerFactory().createH2cServer(PORT, dispatcher, REST_OVER_STREAM),
+            new TransportClientAdapter(_clientFactory.getClient(http2ClientProperties), REST_OVER_STREAM)
+        },
+        {
+            new HttpServerFactory().createH2cServer(PORT, dispatcher, NOT_REST_OVER_STREAM),
+            new TransportClientAdapter(_clientFactory.getClient(http1ClientProperties), NOT_REST_OVER_STREAM)
+        },
+        {
+            new HttpServerFactory().createH2cServer(PORT, dispatcher, NOT_REST_OVER_STREAM),
+            new TransportClientAdapter(_clientFactory.getClient(http2ClientProperties), NOT_REST_OVER_STREAM)
+        },
     };
   }
 
   @BeforeClass
   private void init() throws Exception
   {
-    _testServer = new TestServer();
     _clientFactory = new HttpClientFactory();
   }
 
@@ -88,103 +113,111 @@ public class TestHttpClient
     final FutureCallback<None> callback = new FutureCallback<None>();
     _clientFactory.shutdown(callback);
     callback.get();
-
-    _testServer.shutdown();
   }
 
-  @Test
-  public void testClient() throws Exception
+  @Test(dataProvider = "configs")
+  public void testClient(Server server, Client client) throws Exception
   {
-    final TransportClient transportClient = _clientFactory.getClient(new HashMap<String, String>());
-    final Client client = new TransportClientAdapter(transportClient, _restOverStream);
-
-    RestRequestBuilder rb = new RestRequestBuilder(_testServer.getRequestURI());
-    rb.setMethod("GET");
-    RestRequest request = rb.build();
-    Future<RestResponse> f = client.restRequest(request);
-
-    // This will block
-    RestResponse response = f.get();
-    final ByteString entity = response.getEntity();
-    if (entity != null) {
-      System.out.println(entity.asString("UTF-8"));
-    } else {
-      System.out.println("NOTHING!");
-    }
-
-    assertEquals(response.getStatus(), 200);
-
-    final FutureCallback<None> callback = new FutureCallback<None>();
-    client.shutdown(callback);
-    callback.get();
-  }
-
-  @Test
-  public void testRequestContextReuse() throws Exception
-  {
-    final Integer REQUEST_TIMEOUT = 1000;
-    final TransportClient transportClient =
-        _clientFactory.getClient(Collections.singletonMap(HttpClientFactory.HTTP_REQUEST_TIMEOUT,
-                                                          Integer.toString(REQUEST_TIMEOUT)));
-    final Client client = new TransportClientAdapter(transportClient, _restOverStream);
-
-    RestRequestBuilder rb = new RestRequestBuilder(_testServer.getRequestURI());
-    rb.setMethod("GET");
-    RestRequest request = rb.build();
-
-    final RequestContext context = new RequestContext();
-    Future<RestResponse> f = client.restRequest(request, context);
-    Future<RestResponse> f2 = client.restRequest(request, context);
-
-    // This will block
-    RestResponse response = f.get(REQUEST_TIMEOUT, TimeUnit.MILLISECONDS);
-    assertEquals(response.getStatus(), 200);
-
-    response = f2.get(REQUEST_TIMEOUT, TimeUnit.MILLISECONDS);
-    assertEquals(response.getStatus(), 200);
-
-    final Integer iterations = 5;
-    //Test that sending multiple requests with the same request context works correctly, without
-    //modifying the original request context.
-    for (int i=0; i<iterations; ++i)
+    try
     {
-      FutureCallback<RestResponse> callback = new FutureCallback<RestResponse>();
-      client.restRequest(request, context, callback);
-      callback.get(REQUEST_TIMEOUT, TimeUnit.MILLISECONDS);
+      server.start();
+      RestRequestBuilder rb = new RestRequestBuilder(REQUEST_URI);
+      rb.setMethod("GET");
+      RestRequest request = rb.build();
+      Future<RestResponse> f = client.restRequest(request);
+
+      // This will block
+      RestResponse response = f.get();
+      final ByteString entity = response.getEntity();
+      if (entity != null)
+      {
+        System.out.println(entity.asString("UTF-8"));
+      } else
+      {
+        System.out.println("NOTHING!");
+      }
+
+      assertEquals(response.getStatus(), 200);
+
+      final FutureCallback<None> callback = new FutureCallback<None>();
+      client.shutdown(callback);
+      callback.get();
     }
-
-    Assert.assertTrue(context.getLocalAttrs().isEmpty());
-
-    final FutureCallback<None> callback = new FutureCallback<None>();
-    client.shutdown(callback);
-    callback.get();
+    finally
+    {
+      server.stop();
+    }
   }
 
-  @Test
-  public void testSimpleURI() throws Exception
+  @Test(dataProvider = "configs")
+  public void testRequestContextReuse(Server server, Client client) throws Exception
   {
-    final TransportClient transportClient = _clientFactory.getClient(new HashMap<String, String>());
-    final Client client = new TransportClientAdapter(transportClient, _restOverStream);
+    try
+    {
+      server.start();
+      RestRequestBuilder rb = new RestRequestBuilder(REQUEST_URI);
+      rb.setMethod("GET");
+      RestRequest request = rb.build();
 
-    // Note no trailing slash; the point of the test is to ensure this URI will
-    // send a Request-URI of "/".
-    URI uri = URI.create("http://localhost:" + _testServer.getPort());
-    RestRequestBuilder rb = new RestRequestBuilder(uri);
-    rb.setMethod("GET");
-    RestRequest request = rb.build();
-    Future<RestResponse> f = client.restRequest(request);
+      final RequestContext context = new RequestContext();
+      Future<RestResponse> f = client.restRequest(request, context);
+      Future<RestResponse> f2 = client.restRequest(request, context);
 
-    // This will block
-    RestResponse response = f.get();
+      // This will block
+      RestResponse response = f.get(REQUEST_TIMEOUT, TimeUnit.MILLISECONDS);
+      assertEquals(response.getStatus(), 200);
 
-    assertEquals(response.getStatus(), 200);
+      response = f2.get(REQUEST_TIMEOUT, TimeUnit.MILLISECONDS);
+      assertEquals(response.getStatus(), 200);
 
-    String requestString = _testServer.getLastRequest();
-    assertTrue(requestString.startsWith("GET / HTTP"), "Request '" + requestString +
-            "' should have started with 'GET / HTTP'");
+      final Integer iterations = 5;
+      //Test that sending multiple requests with the same request context works correctly, without
+      //modifying the original request context.
+      for (int i = 0; i < iterations; ++i)
+      {
+        FutureCallback<RestResponse> callback = new FutureCallback<RestResponse>();
+        client.restRequest(request, context, callback);
+        callback.get(REQUEST_TIMEOUT, TimeUnit.MILLISECONDS);
+      }
 
-    final FutureCallback<None> callback = new FutureCallback<None>();
-    client.shutdown(callback);
-    callback.get();
+      Assert.assertTrue(context.getLocalAttrs().isEmpty());
+
+      final FutureCallback<None> callback = new FutureCallback<None>();
+      client.shutdown(callback);
+      callback.get();
+    }
+    finally
+    {
+      server.stop();
+    }
+  }
+
+  @Test(dataProvider = "configs")
+  public void testSimpleURI(Server server, Client client) throws Exception
+  {
+    try
+    {
+      server.start();
+      // Note no trailing slash; the point of the test is to ensure this URI will
+      // send a Request-URI of "/".
+      URI uri = URI.create("http://localhost:" + PORT);
+      RestRequestBuilder rb = new RestRequestBuilder(uri);
+      rb.setMethod("GET");
+      RestRequest request = rb.build();
+      Future<RestResponse> f = client.restRequest(request);
+
+      // This will block
+      RestResponse response = f.get();
+
+      assertEquals(response.getStatus(), 200);
+
+      final FutureCallback<None> callback = new FutureCallback<None>();
+      client.shutdown(callback);
+      callback.get();
+    }
+    finally
+    {
+      server.stop();
+    }
   }
 }

@@ -15,6 +15,7 @@ import com.linkedin.r2.message.stream.StreamResponseBuilder;
 import com.linkedin.r2.message.stream.entitystream.EntityStreams;
 import com.linkedin.r2.message.stream.entitystream.ReadHandle;
 import com.linkedin.r2.sample.Bootstrap;
+import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.RestRequestHandler;
 import com.linkedin.r2.transport.common.StreamRequestHandler;
 import com.linkedin.r2.transport.common.StreamRequestHandlerAdapter;
@@ -86,9 +87,18 @@ public class TestStreamEcho extends AbstractStreamTest
   }
 
   @Override
-  protected Map<String, String> getClientProperties()
+  protected Map<String, String> getHttp1ClientProperties()
   {
-    Map<String, String> clientProperties = new HashMap<String, String>();
+    Map<String, String> clientProperties = super.getHttp1ClientProperties();
+    clientProperties.put(HttpClientFactory.HTTP_MAX_RESPONSE_SIZE, String.valueOf(LARGE_BYTES_NUM * 2));
+    clientProperties.put(HttpClientFactory.HTTP_REQUEST_TIMEOUT, "30000");
+    return clientProperties;
+  }
+
+  @Override
+  protected Map<String, String> getHttp2ClientProperties()
+  {
+    Map<String, String> clientProperties = super.getHttp2ClientProperties();
     clientProperties.put(HttpClientFactory.HTTP_MAX_RESPONSE_SIZE, String.valueOf(LARGE_BYTES_NUM * 2));
     clientProperties.put(HttpClientFactory.HTTP_REQUEST_TIMEOUT, "30000");
     return clientProperties;
@@ -120,94 +130,103 @@ public class TestStreamEcho extends AbstractStreamTest
 
   private void testNormalEcho(long bytesNum, URI uri) throws Exception
   {
-    BytesWriter writer = new BytesWriter(bytesNum, BYTE);
-    StreamRequest request = new StreamRequestBuilder(Bootstrap.createHttpURI(PORT, uri))
-        .build(EntityStreams.newEntityStream(writer));
+    for (Client client : clients())
+    {
+      BytesWriter writer = new BytesWriter(bytesNum, BYTE);
+      StreamRequest request =
+          new StreamRequestBuilder(Bootstrap.createHttpURI(PORT, uri)).build(EntityStreams.newEntityStream(writer));
 
-    final AtomicInteger status = new AtomicInteger(-1);
-    final CountDownLatch latch = new CountDownLatch(1);
-    final AtomicReference<Throwable> error = new AtomicReference<Throwable>();
+      final AtomicInteger status = new AtomicInteger(-1);
+      final CountDownLatch latch = new CountDownLatch(1);
+      final AtomicReference<Throwable> error = new AtomicReference<Throwable>();
 
-    final Callback<None> readerCallback = getReaderCallback(latch, error);
+      final Callback<None> readerCallback = getReaderCallback(latch, error);
 
-    final BytesReader reader = new BytesReader(BYTE, readerCallback);
+      final BytesReader reader = new BytesReader(BYTE, readerCallback);
 
-    Callback<StreamResponse> callback = getCallback(status, readerCallback, reader);
+      Callback<StreamResponse> callback = getCallback(status, readerCallback, reader);
 
-    _client.streamRequest(request, callback);
-    latch.await(60000, TimeUnit.MILLISECONDS);
-    Assert.assertNull(error.get());
-    Assert.assertEquals(status.get(), RestStatus.OK);
-    Assert.assertEquals(reader.getTotalBytes(), bytesNum);
-    Assert.assertTrue(reader.allBytesCorrect());
+      client.streamRequest(request, callback);
+      latch.await(60000, TimeUnit.MILLISECONDS);
+      Assert.assertNull(error.get());
+      Assert.assertEquals(status.get(), RestStatus.OK);
+      Assert.assertEquals(reader.getTotalBytes(), bytesNum);
+      Assert.assertTrue(reader.allBytesCorrect());
+    }
   }
 
   @Test
   public void testBackPressureEcho() throws Exception
   {
-    TimedBytesWriter writer = new TimedBytesWriter(SMALL_BYTES_NUM, BYTE);
-    StreamRequest request = new StreamRequestBuilder(Bootstrap.createHttpURI(PORT, ECHO_URI))
-        .build(EntityStreams.newEntityStream(writer));
-
-    final AtomicInteger status = new AtomicInteger(-1);
-    final CountDownLatch latch = new CountDownLatch(1);
-    final AtomicReference<Throwable> error = new AtomicReference<Throwable>();
-
-    final Callback<None> readerCallback = getReaderCallback(latch, error);
-
-    final TimedBytesReader reader = new TimedBytesReader(BYTE, readerCallback)
+    for (Client client : clients())
     {
-      int count = 0;
+      TimedBytesWriter writer = new TimedBytesWriter(SMALL_BYTES_NUM, BYTE);
+      StreamRequest request = new StreamRequestBuilder(Bootstrap.createHttpURI(PORT, ECHO_URI))
+          .build(EntityStreams.newEntityStream(writer));
 
-      @Override
-      protected void requestMore(final ReadHandle rh)
+      final AtomicInteger status = new AtomicInteger(-1);
+      final CountDownLatch latch = new CountDownLatch(1);
+      final AtomicReference<Throwable> error = new AtomicReference<Throwable>();
+
+      final Callback<None> readerCallback = getReaderCallback(latch, error);
+
+      final TimedBytesReader reader = new TimedBytesReader(BYTE, readerCallback)
       {
-        count ++;
-        if (count % 16 == 0)
+        int count = 0;
+
+        @Override
+        protected void requestMore(final ReadHandle rh)
         {
-          _scheduler.schedule(new Runnable()
+          count++;
+          if (count % 16 == 0)
           {
-            @Override
-            public void run()
+            _scheduler.schedule(new Runnable()
             {
-              rh.request(1);
-            }
-          }, INTERVAL, TimeUnit.MILLISECONDS);
+              @Override
+              public void run()
+              {
+                rh.request(1);
+              }
+            }, INTERVAL, TimeUnit.MILLISECONDS);
+          } else
+          {
+            rh.request(1);
+          }
         }
-        else
-        {
-          rh.request(1);
-        }
-      }
-    };
+      };
 
-    Callback<StreamResponse> callback = getCallback(status, readerCallback, reader);
+      Callback<StreamResponse> callback = getCallback(status, readerCallback, reader);
 
-    _client.streamRequest(request, callback);
-    latch.await(60000, TimeUnit.MILLISECONDS);
-    Assert.assertNull(error.get());
-    Assert.assertEquals(status.get(), RestStatus.OK);
-    Assert.assertEquals(reader.getTotalBytes(), SMALL_BYTES_NUM);
-    Assert.assertTrue(reader.allBytesCorrect());
+      client.streamRequest(request, callback);
+      latch.await(60000, TimeUnit.MILLISECONDS);
+      Assert.assertNull(error.get());
+      Assert.assertEquals(status.get(), RestStatus.OK);
+      Assert.assertEquals(reader.getTotalBytes(), SMALL_BYTES_NUM);
+      Assert.assertTrue(reader.allBytesCorrect());
 
-    long clientSendTimespan = writer.getStopTime()- writer.getStartTime();
-    long clientReceiveTimespan = reader.getStopTime() - reader.getStartTime();
-    double diff = Math.abs(clientReceiveTimespan - clientSendTimespan);
-    double diffRatio = diff / clientSendTimespan;
-    // make it generous to reduce the chance occasional test failures
-    Assert.assertTrue(
-        diffRatio < 0.5,
-        "Send/receive time delta is " + diff + " but expected to be less than 0.5. Send time span is "
-            + clientSendTimespan + " and receive time span is " + clientReceiveTimespan);
+      long clientSendTimespan = writer.getStopTime() - writer.getStartTime();
+      long clientReceiveTimespan = reader.getStopTime() - reader.getStartTime();
+      double diff = Math.abs(clientReceiveTimespan - clientSendTimespan);
+      double diffRatio = diff / clientSendTimespan;
+      // make it generous to reduce the chance occasional test failures
+      Assert.assertTrue(
+          diffRatio < 0.5,
+          "Send/receive time delta is " + diff + " but expected to be less than 0.5. Send time span is "
+              + clientSendTimespan + " and receive time span is " + clientReceiveTimespan);
+    }
   }
 
   @Test
   public void testDelayedEcho() throws Exception
   {
-    RestRequest restRequest = new RestRequestBuilder(Bootstrap.createHttpURI(PORT, DELAYED_ECHO_URI))
-        .setEntity("wei ni hao ma?".getBytes()).build();
-    RestResponse response = _client.restRequest(restRequest).get();
-    Assert.assertEquals(response.getEntity().asString(Charset.defaultCharset()), "wei ni hao ma?");
+    for (Client client : clients())
+    {
+      RestRequest restRequest =
+          new RestRequestBuilder(Bootstrap.createHttpURI(PORT, DELAYED_ECHO_URI)).setEntity("wei ni hao ma?".getBytes())
+              .build();
+      RestResponse response = client.restRequest(restRequest).get();
+      Assert.assertEquals(response.getEntity().asString(Charset.defaultCharset()), "wei ni hao ma?");
+    }
   }
 
   private static class SteamEchoHandler implements StreamRequestHandler

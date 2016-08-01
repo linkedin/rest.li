@@ -600,7 +600,7 @@ public class AsyncSharedPoolImpl<T> implements AsyncPool<T>
    */
   private void doDestroy(final T item, final boolean bad, SimpleCallback callback)
   {
-    LOG.debug("{}: disposing an item {}", _name, item);
+    LOG.debug("{}: destroying an item {}", _name, item);
     if (bad)
     {
       _statsTracker.incrementBadDestroyed();

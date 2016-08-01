@@ -22,14 +22,14 @@ package com.linkedin.r2.transport.http.client;
 
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import io.netty.channel.nio.NioEventLoopGroup;
-import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -37,6 +37,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.eclipse.jetty.server.Server;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -64,101 +65,112 @@ import javax.net.ssl.SSLParameters;
 
 public class TestHttpClientFactory
 {
-  private TestServer _testServer;
+  private static final String HTTP_1_1 = "HTTP/1.1";
+  private static final String HTTP_2 = "HTTP/2";
 
-  @BeforeClass
-  public void setup() throws IOException
-  {
-    _testServer = new TestServer();
-  }
-
-  @AfterClass
-  public void tearDown() throws IOException, InterruptedException
-  {
-    _testServer.shutdown();
-  }
+  private static final String URI = "http://localhost:8080/";
 
   @DataProvider
   public static Object[][] configs()
   {
-    return new Object[][] {{true}, {false}};
+    return new Object[][] {
+        { true, HTTP_1_1 },
+        { true, HTTP_2 },
+        { false, HTTP_1_1 },
+        { false, HTTP_2 },
+    };
   }
 
-//  @Test(dataProvider = "configs")
   @Test
-  public void testShutdownAfterClients() throws ExecutionException, TimeoutException, InterruptedException
+  public void testShutdownAfterClients() throws Exception
   {
     NioEventLoopGroup eventLoop = new NioEventLoopGroup();
     ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     HttpClientFactory factory = getHttpClientFactory(eventLoop, true, scheduler, true);
-
-    List<Client> clients = new ArrayList<Client>();
-    for (int i = 0; i < 1; i++)
+    Server server = new HttpServerBuilder().build();
+    try
     {
-      clients.add(new TransportClientAdapter(factory.getClient(Collections.<String, String>emptyMap()), true));
-    }
+      server.start();
+      List<Client> clients = new ArrayList<Client>();
+      for (int i = 0; i < 1; i++)
+      {
+        clients.add(new TransportClientAdapter(factory.getClient(Collections.<String, String>emptyMap()), true));
+      }
 
-    for (Client c : clients)
+      for (Client c : clients)
+      {
+        RestRequest r = new RestRequestBuilder(new URI(URI)).build();
+        FutureCallback<RestResponse> futureCallback = new FutureCallback<RestResponse>();
+        c.restRequest(r, futureCallback);
+        futureCallback.get(30, TimeUnit.SECONDS);
+      }
+
+      for (Client c : clients)
+      {
+        FutureCallback<None> callback = new FutureCallback<None>();
+        c.shutdown(callback);
+        callback.get(30, TimeUnit.SECONDS);
+      }
+
+      FutureCallback<None> factoryShutdown = new FutureCallback<None>();
+      factory.shutdown(factoryShutdown);
+      factoryShutdown.get(30, TimeUnit.SECONDS);
+
+      Assert.assertTrue(eventLoop.awaitTermination(30, TimeUnit.SECONDS), "Failed to shut down event-loop");
+      Assert.assertTrue(scheduler.awaitTermination(30, TimeUnit.SECONDS), "Failed to shut down scheduler");
+    }
+    finally
     {
-      RestRequest r = new RestRequestBuilder(_testServer.getRequestURI()).build();
-//      c.restRequest(r).get(30, TimeUnit.SECONDS);
-      FutureCallback<RestResponse> futureCallback = new FutureCallback<RestResponse>();
-      c.restRequest(r, futureCallback);
-      futureCallback.get(30, TimeUnit.SECONDS);
+      server.stop();
     }
-
-    for (Client c : clients)
-    {
-      FutureCallback<None> callback = new FutureCallback<None>();
-      c.shutdown(callback);
-      callback.get(30, TimeUnit.SECONDS);
-    }
-
-    FutureCallback<None> factoryShutdown = new FutureCallback<None>();
-    factory.shutdown(factoryShutdown);
-    factoryShutdown.get(30, TimeUnit.SECONDS);
-
-    Assert.assertTrue(eventLoop.awaitTermination(30, TimeUnit.SECONDS), "Failed to shut down event-loop");
-    Assert.assertTrue(scheduler.awaitTermination(30, TimeUnit.SECONDS), "Failed to shut down scheduler");
   }
 
   @Test(dataProvider = "configs")
-  public void testShutdownBeforeClients(boolean restOverStream) throws ExecutionException, TimeoutException, InterruptedException
+  public void testShutdownBeforeClients(boolean restOverStream, String protocolVersion) throws Exception
   {
     NioEventLoopGroup eventLoop = new NioEventLoopGroup();
     ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     HttpClientFactory factory = getHttpClientFactory(eventLoop, true, scheduler, true);
-
-    List<Client> clients = new ArrayList<Client>();
-    for (int i = 0; i < 100; i++)
+    Server server = new HttpServerBuilder().build();
+    try
     {
-      clients.add(new TransportClientAdapter(factory.getClient(Collections.<String, String>emptyMap()), restOverStream));
-    }
+      server.start();
+      List<Client> clients = new ArrayList<Client>();
+      for (int i = 0; i < 100; i++)
+      {
+        HashMap<String, String> properties = new HashMap<>();
+        properties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, protocolVersion);
+        clients.add(new TransportClientAdapter(factory.getClient(properties), restOverStream));
+      }
 
-    for (Client c : clients)
+      for (Client c : clients)
+      {
+        RestRequest r = new RestRequestBuilder(new URI(URI)).build();
+        c.restRequest(r).get(30, TimeUnit.SECONDS);
+      }
+
+      FutureCallback<None> factoryShutdown = new FutureCallback<None>();
+      factory.shutdown(factoryShutdown);
+
+      for (Client c : clients)
+      {
+        FutureCallback<None> callback = new FutureCallback<None>();
+        c.shutdown(callback);
+        callback.get(30, TimeUnit.SECONDS);
+      }
+
+      factoryShutdown.get(30, TimeUnit.SECONDS);
+
+      Assert.assertTrue(eventLoop.awaitTermination(30, TimeUnit.SECONDS), "Failed to shut down event-loop");
+      Assert.assertTrue(scheduler.awaitTermination(30, TimeUnit.SECONDS), "Failed to shut down scheduler");
+    }
+    finally
     {
-      RestRequest r = new RestRequestBuilder(_testServer.getRequestURI()).build();
-      c.restRequest(r).get(30, TimeUnit.SECONDS);
+      server.stop();
     }
-
-    FutureCallback<None> factoryShutdown = new FutureCallback<None>();
-    factory.shutdown(factoryShutdown);
-
-    for (Client c : clients)
-    {
-      FutureCallback<None> callback = new FutureCallback<None>();
-      c.shutdown(callback);
-      callback.get(30, TimeUnit.SECONDS);
-    }
-
-    factoryShutdown.get(30, TimeUnit.SECONDS);
-
-    Assert.assertTrue(eventLoop.awaitTermination(30, TimeUnit.SECONDS), "Failed to shut down event-loop");
-    Assert.assertTrue(scheduler.awaitTermination(30, TimeUnit.SECONDS), "Failed to shut down scheduler");
   }
 
-  @Test
-  public void testGetRawClient()
+  private void getRawClientHelper(String protocolVersion)
   {
     NioEventLoopGroup eventLoop = new NioEventLoopGroup();
     ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
@@ -190,10 +202,23 @@ public class TestHttpClientFactory
     properties.put(HttpClientFactory.HTTP_IDLE_TIMEOUT, idleTimeout);
     properties.put(HttpClientFactory.HTTP_MAX_RESPONSE_SIZE, maxResponse);
     properties.put(HttpClientFactory.HTTP_SHUTDOWN_TIMEOUT, shutdownTimeout);
+    properties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, protocolVersion);
     client = (HttpClientFactory.MixedClient)factory.getRawClient(properties);
     Assert.assertEquals(client.getMaxResponseSize(), Integer.parseInt(maxResponse));
     Assert.assertEquals(client.getRequestTimeout(), Integer.parseInt(requestTimeout));
     Assert.assertEquals(client.getShutdownTimeout(), Integer.parseInt(shutdownTimeout));
+  }
+
+  @Test
+  public void testGetHttpRawClient()
+  {
+    getRawClientHelper(HTTP_1_1);
+  }
+
+  @Test
+  public void testGetHttp2RawClient()
+  {
+    getRawClientHelper(HTTP_2);
   }
 
   @Test
@@ -242,55 +267,74 @@ public class TestHttpClientFactory
   }
 
   @Test(dataProvider = "configs")
-  public void testShutdownTimeout(boolean restOverStream) throws ExecutionException, TimeoutException, InterruptedException
+  public void testShutdownTimeout(boolean restOverStream, String protocolVersion) throws Exception
   {
     NioEventLoopGroup eventLoop = new NioEventLoopGroup();
     ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     HttpClientFactory factory = getHttpClientFactory(eventLoop, true, scheduler, true);
-
-    List<Client> clients = new ArrayList<Client>();
-    for (int i = 0; i < 100; i++)
+    Server server = new HttpServerBuilder().build();
+    try
     {
-      clients.add(new TransportClientAdapter(factory.getClient(Collections.<String, String>emptyMap()), restOverStream));
-    }
+      server.start();
+      List<Client> clients = new ArrayList<Client>();
+      for (int i = 0; i < 100; i++)
+      {
+        HashMap<String, String> properties = new HashMap<>();
+        properties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, protocolVersion);
+        clients.add(new TransportClientAdapter(factory.getClient(properties), restOverStream));
+      }
 
-    for (Client c : clients)
+      for (Client c : clients)
+      {
+        RestRequest r = new RestRequestBuilder(new URI(URI)).build();
+        c.restRequest(r).get(30, TimeUnit.SECONDS);
+      }
+
+      FutureCallback<None> factoryShutdown = new FutureCallback<None>();
+      factory.shutdown(factoryShutdown, 1, TimeUnit.SECONDS);
+
+      factoryShutdown.get(30, TimeUnit.SECONDS);
+
+      Assert.assertTrue(eventLoop.awaitTermination(30, TimeUnit.SECONDS), "Failed to shut down event-loop");
+      Assert.assertTrue(scheduler.awaitTermination(30, TimeUnit.SECONDS), "Failed to shut down scheduler");
+    }
+    finally
     {
-      RestRequest r = new RestRequestBuilder(_testServer.getRequestURI()).build();
-      c.restRequest(r).get(30, TimeUnit.SECONDS);
+      server.stop();
     }
-
-    FutureCallback<None> factoryShutdown = new FutureCallback<None>();
-    factory.shutdown(factoryShutdown, 1, TimeUnit.SECONDS);
-
-    factoryShutdown.get(30, TimeUnit.SECONDS);
-
-    Assert.assertTrue(eventLoop.awaitTermination(30, TimeUnit.SECONDS), "Failed to shut down event-loop");
-    Assert.assertTrue(scheduler.awaitTermination(30, TimeUnit.SECONDS), "Failed to shut down scheduler");
   }
 
   @Test(dataProvider = "configs")
-  public void testShutdownNoTimeout(boolean restOverStream) throws ExecutionException, TimeoutException, InterruptedException
+  public void testShutdownNoTimeout(boolean restOverStream, String protocolVersion) throws Exception
   {
     NioEventLoopGroup eventLoop = new NioEventLoopGroup();
     ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     HttpClientFactory factory = getHttpClientFactory(eventLoop, true, scheduler, true);
-
-    List<Client> clients = new ArrayList<Client>();
-    for (int i = 0; i < 100; i++)
+    Server server = new HttpServerBuilder().build();
+    try
     {
-      clients.add(new TransportClientAdapter(factory.getClient(Collections.<String, String>emptyMap()), restOverStream));
+      server.start();
+      List<Client> clients = new ArrayList<Client>();
+      for (int i = 0; i < 100; i++)
+      {
+        HashMap<String, String> properties = new HashMap<>();
+        properties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, protocolVersion);
+        clients.add(new TransportClientAdapter(factory.getClient(properties), restOverStream));
+      }
+
+      for (Client c : clients)
+      {
+        RestRequest r = new RestRequestBuilder(new URI(URI)).build();
+        c.restRequest(r).get(30, TimeUnit.SECONDS);
+      }
     }
-
-    for (Client c : clients)
+    finally
     {
-      RestRequest r = new RestRequestBuilder(_testServer.getRequestURI()).build();
-      c.restRequest(r).get(30, TimeUnit.SECONDS);
+      server.stop();
     }
 
     FutureCallback<None> factoryShutdown = new FutureCallback<None>();
     factory.shutdown(factoryShutdown);
-
     try
     {
       factoryShutdown.get(1, TimeUnit.SECONDS);
@@ -306,33 +350,42 @@ public class TestHttpClientFactory
   }
 
   @Test(dataProvider = "configs")
-  public void testShutdownIOThread(boolean restOverStream) throws ExecutionException, TimeoutException, InterruptedException
+  public void testShutdownIOThread(boolean restOverStream, String protocolVersion) throws Exception
   {
     NioEventLoopGroup eventLoop = new NioEventLoopGroup();
     ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     ExecutorService callbackExecutor = Executors.newFixedThreadPool(1);
     HttpClientFactory factory = getHttpClientFactory(eventLoop, true, scheduler, true, callbackExecutor, false);
+    CountDownLatch responseLatch = new CountDownLatch(1);
+    Server server = new HttpServerBuilder().responseLatch(responseLatch).build();
+    try
+    {
+      server.start();
+      HashMap<String, String> properties = new HashMap<>();
+      properties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, protocolVersion);
+      Client client = new TransportClientAdapter(factory.getClient(properties), restOverStream);
 
-    Client client = new TransportClientAdapter(factory.getClient(
-            Collections.<String, Object>emptyMap()), restOverStream);
+      URI uri = new URI(URI);
+      Future<RestResponse> responseFuture = client.restRequest(new RestRequestBuilder(uri).build());
 
-    Future<RestResponse> responseFuture = client.restRequest(new RestRequestBuilder(_testServer.resetResponseLatch(1)).build());
+      FutureCallback<None> factoryShutdown = new FutureCallback<None>();
+      factory.shutdown(factoryShutdown);
 
+      FutureCallback<None> clientShutdown = new FutureCallback<None>();
+      client.shutdown(clientShutdown);
 
-    FutureCallback<None> factoryShutdown = new FutureCallback<None>();
-    factory.shutdown(factoryShutdown);
+      // Client and factory shutdowns are now pending.  When we release the latch, the response will
+      // be returned, which causes the shutdowns to complete on the Netty IO thread that received the
+      // response.
+      responseLatch.countDown();
 
-    FutureCallback<None> clientShutdown = new FutureCallback<None>();
-    client.shutdown(clientShutdown);
-
-    // Client and factory shutdowns are now pending.  When we release the latch, the response will
-    // be returned, which causes the shutdowns to complete on the Netty IO thread that received the
-    // response.
-    _testServer.releaseResponseLatch();
-
-    responseFuture.get(60, TimeUnit.SECONDS);
-    clientShutdown.get(60, TimeUnit.SECONDS);
-    factoryShutdown.get(60, TimeUnit.SECONDS);
+      clientShutdown.get(60, TimeUnit.SECONDS);
+      factoryShutdown.get(60, TimeUnit.SECONDS);
+    }
+    finally
+    {
+      server.stop();
+    }
 
     Assert.assertTrue(eventLoop.awaitTermination(30, TimeUnit.SECONDS), "Failed to shut down event-loop");
     Assert.assertTrue(scheduler.awaitTermination(60, TimeUnit.SECONDS), "Failed to shut down scheduler");

@@ -82,9 +82,18 @@ public class TestStreamResponse extends AbstractStreamTest
   }
 
   @Override
-  protected Map<String, String> getClientProperties()
+  protected Map<String, String> getHttp1ClientProperties()
   {
-    Map<String, String> clientProperties = new HashMap<String, String>();
+    Map<String, String> clientProperties = super.getHttp1ClientProperties();
+    clientProperties.put(HttpClientFactory.HTTP_MAX_RESPONSE_SIZE, String.valueOf(LARGE_BYTES_NUM * 2));
+    clientProperties.put(HttpClientFactory.HTTP_REQUEST_TIMEOUT, "30000");
+    return clientProperties;
+  }
+
+  @Override
+  protected Map<String, String> getHttp2ClientProperties()
+  {
+    Map<String, String> clientProperties = super.getHttp2ClientProperties();
     clientProperties.put(HttpClientFactory.HTTP_MAX_RESPONSE_SIZE, String.valueOf(LARGE_BYTES_NUM * 2));
     clientProperties.put(HttpClientFactory.HTTP_REQUEST_TIMEOUT, "30000");
     return clientProperties;
@@ -104,22 +113,25 @@ public class TestStreamResponse extends AbstractStreamTest
 
   private void testResponse(URI uri) throws Exception
   {
-    StreamRequestBuilder builder = new StreamRequestBuilder(uri);
-    StreamRequest request = builder.build(EntityStreams.emptyStream());
-    final AtomicInteger status = new AtomicInteger(-1);
-    final CountDownLatch latch = new CountDownLatch(1);
-    final AtomicReference<Throwable> error = new AtomicReference<Throwable>();
+    for (Client client : clients())
+    {
+      StreamRequestBuilder builder = new StreamRequestBuilder(uri);
+      StreamRequest request = builder.build(EntityStreams.emptyStream());
+      final AtomicInteger status = new AtomicInteger(-1);
+      final CountDownLatch latch = new CountDownLatch(1);
+      final AtomicReference<Throwable> error = new AtomicReference<Throwable>();
 
-    final Callback<None> readerCallback = getReaderCallback(latch, error);
-    final BytesReader reader = new BytesReader(BYTE, readerCallback);
-    Callback<StreamResponse> callback = getCallback(status, readerCallback, reader);
+      final Callback<None> readerCallback = getReaderCallback(latch, error);
+      final BytesReader reader = new BytesReader(BYTE, readerCallback);
+      Callback<StreamResponse> callback = getCallback(status, readerCallback, reader);
 
-    _client.streamRequest(request, callback);
-    latch.await(60000, TimeUnit.MILLISECONDS);
-    Assert.assertNull(error.get());
-    Assert.assertEquals(status.get(), RestStatus.OK);
-    Assert.assertEquals(reader.getTotalBytes(), LARGE_BYTES_NUM);
-    Assert.assertTrue(reader.allBytesCorrect());
+      client.streamRequest(request, callback);
+      latch.await(60000, TimeUnit.MILLISECONDS);
+      Assert.assertNull(error.get());
+      Assert.assertEquals(status.get(), RestStatus.OK);
+      Assert.assertEquals(reader.getTotalBytes(), LARGE_BYTES_NUM);
+      Assert.assertTrue(reader.allBytesCorrect());
+    }
   }
 
   @Test
@@ -160,51 +172,53 @@ public class TestStreamResponse extends AbstractStreamTest
   @Test
   public void testBackpressure() throws Exception
   {
-    StreamRequestBuilder builder = new StreamRequestBuilder(Bootstrap.createHttpURI(PORT, SMALL_URI));
-    StreamRequest request = builder.build(EntityStreams.emptyStream());
-    final AtomicInteger status = new AtomicInteger(-1);
-    final CountDownLatch latch = new CountDownLatch(1);
-    final AtomicReference<Throwable> error = new AtomicReference<Throwable>();
-
-    final Callback<None> readerCallback = getReaderCallback(latch, error);
-    final TimedBytesReader reader = new TimedBytesReader(BYTE, readerCallback)
+    for (Client client : clients())
     {
-      int count = 0;
+      StreamRequestBuilder builder = new StreamRequestBuilder(Bootstrap.createHttpURI(PORT, SMALL_URI));
+      StreamRequest request = builder.build(EntityStreams.emptyStream());
+      final AtomicInteger status = new AtomicInteger(-1);
+      final CountDownLatch latch = new CountDownLatch(1);
+      final AtomicReference<Throwable> error = new AtomicReference<Throwable>();
 
-      @Override
-      protected void requestMore(final ReadHandle rh)
+      final Callback<None> readerCallback = getReaderCallback(latch, error);
+      final TimedBytesReader reader = new TimedBytesReader(BYTE, readerCallback)
       {
-        count ++;
-        if (count % 16 == 0)
-        {
-          _scheduler.schedule(new Runnable()
-          {
-            @Override
-            public void run()
-            {
-              rh.request(1);
-            }
-          }, INTERVAL, TimeUnit.MILLISECONDS);
-        }
-        else
-        {
-          rh.request(1);
-        }
-      }
-    };
-    Callback<StreamResponse> callback = getCallback(status, readerCallback, reader);
+        int count = 0;
 
-    _client.streamRequest(request, callback);
-    latch.await(60000, TimeUnit.MILLISECONDS);
-    Assert.assertNull(error.get());
-    Assert.assertEquals(status.get(), RestStatus.OK);
-    long serverSendTimespan = _smallHandler.getWriter().getStopTime() - _smallHandler.getWriter().getStartTime();
-    long clientReceiveTimespan = reader.getStopTime() - reader.getStartTime();
-    Assert.assertTrue(clientReceiveTimespan > 1000);
-    double diff = Math.abs(clientReceiveTimespan - serverSendTimespan);
-    double diffRatio = diff / serverSendTimespan;
-    // make it generous to reduce the chance occasional test failures
-    Assert.assertTrue(diffRatio < 0.2);
+        @Override
+        protected void requestMore(final ReadHandle rh)
+        {
+          count++;
+          if (count % 16 == 0)
+          {
+            _scheduler.schedule(new Runnable()
+            {
+              @Override
+              public void run()
+              {
+                rh.request(1);
+              }
+            }, INTERVAL, TimeUnit.MILLISECONDS);
+          } else
+          {
+            rh.request(1);
+          }
+        }
+      };
+      Callback<StreamResponse> callback = getCallback(status, readerCallback, reader);
+
+      client.streamRequest(request, callback);
+      latch.await(60000, TimeUnit.MILLISECONDS);
+      Assert.assertNull(error.get());
+      Assert.assertEquals(status.get(), RestStatus.OK);
+      long serverSendTimespan = _smallHandler.getWriter().getStopTime() - _smallHandler.getWriter().getStartTime();
+      long clientReceiveTimespan = reader.getStopTime() - reader.getStartTime();
+      Assert.assertTrue(clientReceiveTimespan > 1000);
+      double diff = Math.abs(clientReceiveTimespan - serverSendTimespan);
+      double diffRatio = diff / serverSendTimespan;
+      // make it generous to reduce the chance occasional test failures
+      Assert.assertTrue(diffRatio < 0.2);
+    }
   }
 
   private static class BytesWriterRequestHandler implements StreamRequestHandler

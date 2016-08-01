@@ -14,16 +14,17 @@ import com.linkedin.r2.message.stream.entitystream.Reader;
 import com.linkedin.r2.message.stream.entitystream.WriteHandle;
 import com.linkedin.r2.message.stream.entitystream.Writer;
 import com.linkedin.r2.sample.Bootstrap;
+import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.StreamRequestHandler;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcherBuilder;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.testng.Assert;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.net.URI;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -55,17 +56,34 @@ public class TestClientTimeout extends AbstractStreamTest
   }
 
   @Override
-  protected Map<String, String> getClientProperties()
+  protected Map<String, String> getHttp1ClientProperties()
   {
-    Map<String, String> clientProperties = new HashMap<String, String>();
+    Map<String, String> clientProperties = super.getHttp1ClientProperties();
     clientProperties.put(HttpClientFactory.HTTP_REQUEST_TIMEOUT, "3000");
     return clientProperties;
   }
 
-  @Test
-  public void testTimeoutBeforeResponse() throws Exception
+  @Override
+  protected Map<String, String> getHttp2ClientProperties()
   {
-    Future<RestResponse> future = _client.restRequest(
+    Map<String, String> clientProperties = super.getHttp2ClientProperties();
+    clientProperties.put(HttpClientFactory.HTTP_REQUEST_TIMEOUT, "3000");
+    return clientProperties;
+  }
+
+  @DataProvider(name = "clients")
+  public Object[][] clientProvider()
+  {
+    return new Object[][] {
+        { _http1Client },
+        { _http2Client },
+    };
+  }
+
+  @Test(dataProvider = "clients")
+  public void testTimeoutBeforeResponse(Client client) throws Exception
+  {
+    Future<RestResponse> future = client.restRequest(
         new RestRequestBuilder(Bootstrap.createHttpURI(PORT, TIMEOUT_BEFORE_RESPONSE_URI)).build());
     try
     {
@@ -81,10 +99,10 @@ public class TestClientTimeout extends AbstractStreamTest
     }
   }
 
-  @Test
-  public void testTimeoutDuringResponse() throws Exception
+  @Test(dataProvider = "clients")
+  public void testTimeoutDuringResponse(Client client) throws Exception
   {
-    Future<RestResponse> future = _client.restRequest(
+    Future<RestResponse> future = client.restRequest(
         new RestRequestBuilder(Bootstrap.createHttpURI(PORT, TIMEOUT_DURING_RESPONSE_URI)).build());
     try
     {
@@ -100,13 +118,13 @@ public class TestClientTimeout extends AbstractStreamTest
     }
   }
 
-  @Test
-  public void testReadAfterTimeout() throws Exception
+  @Test(dataProvider = "clients")
+  public void testReadAfterTimeout(Client client) throws Exception
   {
     StreamRequest request = new StreamRequestBuilder(Bootstrap.createHttpURI(PORT, NORMAL_URI)).build(EntityStreams.emptyStream());
     final CountDownLatch latch = new CountDownLatch(1);
     final AtomicReference<StreamResponse> response = new AtomicReference<StreamResponse>();
-    _client.streamRequest(request, new Callback<StreamResponse>()
+    client.streamRequest(request, new Callback<StreamResponse>()
     {
       @Override
       public void onError(Throwable e)

@@ -37,7 +37,7 @@ import io.netty.handler.codec.MessageToMessageEncoder;
 import io.netty.handler.codec.http.DefaultFullHttpRequest;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
-import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpVersion;
 
@@ -92,9 +92,9 @@ class RAPClientCodec extends ChannelDuplexHandler
       {
         nettyRequest.headers().set(e.getKey(), e.getValue());
       }
-      nettyRequest.headers().set(HttpHeaders.Names.HOST, url.getAuthority());
+      nettyRequest.headers().set(HttpHeaderNames.HOST, url.getAuthority());
       nettyRequest.headers().set(HttpConstants.REQUEST_COOKIE_HEADER_NAME, request.getCookies());
-      nettyRequest.headers().set(HttpHeaders.Names.CONTENT_LENGTH, entity.length());
+      nettyRequest.headers().set(HttpHeaderNames.CONTENT_LENGTH, entity.length());
 
       out.add(nettyRequest);
     }
@@ -108,14 +108,14 @@ class RAPClientCodec extends ChannelDuplexHandler
     {
       // Weird weird... Netty won't throw up, instead, it'll return a partially decoded response
       // if there is a decoding error.
-      if (nettyResponse.getDecoderResult().isFailure())
+      if (nettyResponse.decoderResult().isFailure())
       {
-        ctx.fireExceptionCaught(nettyResponse.getDecoderResult().cause());
+        ctx.fireExceptionCaught(nettyResponse.decoderResult().cause());
         return;
       }
 
       RestResponseBuilder builder = new RestResponseBuilder();
-      builder.setStatus(nettyResponse.getStatus().code());
+      builder.setStatus(nettyResponse.status().code());
 
       for (Map.Entry<String, String> e : nettyResponse.headers())
       {

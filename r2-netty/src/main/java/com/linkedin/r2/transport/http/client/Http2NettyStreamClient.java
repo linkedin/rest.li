@@ -20,17 +20,15 @@
 
 package com.linkedin.r2.transport.http.client;
 
-
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.stream.StreamResponse;
+import com.linkedin.r2.transport.common.bridge.common.RequestWithCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
 import com.linkedin.r2.util.Cancellable;
-import com.linkedin.r2.util.Timeout;
 import com.linkedin.r2.util.TimeoutRunnable;
-
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
@@ -39,15 +37,16 @@ import io.netty.channel.group.ChannelGroupFuture;
 import io.netty.channel.group.ChannelGroupFutureListener;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import java.util.concurrent.ExecutorService;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLParameters;
+import io.netty.handler.codec.http2.Http2Connection;
+import io.netty.handler.codec.http2.Http2Exception;
 import java.net.SocketAddress;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,22 +54,24 @@ import org.slf4j.LoggerFactory;
  * @author Steven Ihde
  * @author Ang Xu
  * @author Zhenkai Zhu
+ * @author Sean Sheng
  * @version $Revision: $
  */
 
-/* package private */ class HttpNettyStreamClient extends AbstractNettyStreamClient
+/* package private */ class Http2NettyStreamClient extends AbstractNettyStreamClient
 {
-  static final Logger LOG = LoggerFactory.getLogger(HttpNettyStreamClient.class);
+  static final Logger LOG = LoggerFactory.getLogger(Http2NettyStreamClient.class);
 
   private final ChannelPoolManager _channelPoolManager;
+  private final ScheduledExecutorService _scheduler;
+  private final long _requestTimeout;
 
   /**
-   * Creates a new HttpNettyStreamClient
+   * Creates a new Http2NettyStreamClient
    *
    * @param eventLoopGroup            The NioEventLoopGroup; it is the caller's responsibility to
    *                                  shut it down
-   * @param executor                  An executor; it is the caller's responsibility to shut it down
-   * @param poolSize                  Maximum size of the underlying HTTP connection pool
+   * @param scheduler                  An executor; it is the caller's responsibility to shut it down
    * @param requestTimeout            Timeout, in ms, to get a connection from the pool or create one
    * @param idleTimeout               Interval after which idle connections will be automatically closed
    * @param shutdownTimeout           Timeout, in ms, the client should wait after shutdown is
@@ -83,64 +84,35 @@ import org.slf4j.LoggerFactory;
    * @param name                      Name of the {@link HttpNettyStreamClient}
    * @param jmxManager                A management class that is aware of the creation/shutdown event
    *                                  of the underlying {@link ChannelPoolManager}
-   * @param strategy                  The strategy used to return pool objects.
-   * @param minPoolSize               Minimum number of objects in the pool. Set to zero for no minimum.
    * @param maxHeaderSize             Maximum size of all HTTP headers
    * @param maxChunkSize              Maximum size of a HTTP chunk
    * @param maxConcurrentConnections  Maximum number of concurrent connection attempts the HTTP
    *                                  connection pool can make.
    */
-  public HttpNettyStreamClient(NioEventLoopGroup eventLoopGroup,
-      ScheduledExecutorService executor,
-      int poolSize,
-      long requestTimeout,
-      long idleTimeout,
-      long shutdownTimeout,
-      long maxResponseSize,
-      SSLContext sslContext,
-      SSLParameters sslParameters,
-      ExecutorService callbackExecutors,
-      int poolWaiterSize,
-      String name,
-      AbstractJmxManager jmxManager,
-      AsyncPoolImpl.Strategy strategy,
-      int minPoolSize,
-      int maxHeaderSize,
-      int maxChunkSize,
-      int maxConcurrentConnections,
-      boolean tcpNoDelay)
+  public Http2NettyStreamClient(NioEventLoopGroup eventLoopGroup, ScheduledExecutorService scheduler,
+      long requestTimeout, long idleTimeout, long shutdownTimeout, long maxResponseSize, SSLContext sslContext,
+      SSLParameters sslParameters, ExecutorService callbackExecutors, int poolWaiterSize, String name,
+      AbstractJmxManager jmxManager, int maxHeaderSize,
+      int maxChunkSize, int maxConcurrentConnections, boolean tcpNoDelay)
   {
-    super(eventLoopGroup, executor, requestTimeout, shutdownTimeout, maxResponseSize, callbackExecutors,
+    super(eventLoopGroup, scheduler, requestTimeout, shutdownTimeout, maxResponseSize, callbackExecutors,
         jmxManager, maxConcurrentConnections);
 
-    ChannelInitializer<NioSocketChannel> initializer =
-        new RAPClientPipelineInitializer(sslContext, sslParameters, maxHeaderSize, maxChunkSize, maxResponseSize);
-
+    ChannelInitializer<NioSocketChannel> initializer = new Http2ClientPipelineInitializer(
+            sslContext, sslParameters, scheduler, maxHeaderSize, maxChunkSize, maxResponseSize, requestTimeout);
     Bootstrap bootstrap = new Bootstrap().group(eventLoopGroup)
         .channel(NioSocketChannel.class)
         .handler(initializer);
 
     _channelPoolManager = new ChannelPoolManager(
         new ChannelPoolFactoryImpl(bootstrap,
-            poolSize,
             idleTimeout,
             poolWaiterSize,
-            strategy,
-            minPoolSize, tcpNoDelay),
+            tcpNoDelay),
         name + ChannelPoolManager.BASE_NAME);
+    _scheduler = scheduler;
+    _requestTimeout = requestTimeout;
 
-    _jmxManager.onProviderCreate(_channelPoolManager);
-  }
-
-  /* Constructor for test purpose ONLY. */
-  HttpNettyStreamClient(ChannelPoolFactory factory,
-      ScheduledExecutorService executor,
-      int requestTimeout,
-      int shutdownTimeout,
-      long maxResponseSize)
-  {
-    super(factory, executor, requestTimeout, shutdownTimeout, maxResponseSize);
-    _channelPoolManager = new ChannelPoolManager(factory);
     _jmxManager.onProviderCreate(_channelPoolManager);
   }
 
@@ -155,7 +127,7 @@ import org.slf4j.LoggerFactory;
   {
     final long deadline = System.currentTimeMillis() + _shutdownTimeout;
     TimeoutCallback<None> closeChannelsCallback = new ChannelPoolShutdownCallback(
-        _scheduler, _shutdownTimeout, TimeUnit.MILLISECONDS, deadline, callback);
+            _scheduler, _shutdownTimeout, TimeUnit.MILLISECONDS, deadline, callback);
     _channelPoolManager.shutdown(closeChannelsCallback);
     _jmxManager.onProviderShutdown(_channelPoolManager);
   }
@@ -186,50 +158,36 @@ import org.slf4j.LoggerFactory;
   private class ChannelPoolFactoryImpl implements ChannelPoolFactory
   {
     private final Bootstrap _bootstrap;
-    private final int _maxPoolSize;
     private final long _idleTimeout;
     private final int _maxPoolWaiterSize;
-    private final AsyncPoolImpl.Strategy _strategy;
-    private final int _minPoolSize;
     private final boolean _tcpNoDelay;
 
-    private ChannelPoolFactoryImpl(Bootstrap bootstrap,
-        int maxPoolSize,
+    private ChannelPoolFactoryImpl(
+        Bootstrap bootstrap,
         long idleTimeout,
         int maxPoolWaiterSize,
-        AsyncPoolImpl.Strategy strategy,
-        int minPoolSize,
         boolean tcpNoDelay)
     {
       _bootstrap = bootstrap;
-      _maxPoolSize = maxPoolSize;
       _idleTimeout = idleTimeout;
       _maxPoolWaiterSize = maxPoolWaiterSize;
-      _strategy = strategy;
-      _minPoolSize = minPoolSize;
       _tcpNoDelay = tcpNoDelay;
     }
 
     @Override
     public AsyncPool<Channel> getPool(SocketAddress address)
     {
-      return new AsyncPoolImpl<>(address.toString() + " HTTP connection pool",
-          new ChannelPoolLifecycle(address,
+      return new AsyncSharedPoolImpl<>(
+          address.toString() + " HTTP connection pool",
+          new ChannelPoolLifecycle(
+              address,
               _bootstrap,
               _allChannels,
               _tcpNoDelay),
-          _maxPoolSize,
-          _idleTimeout,
           _scheduler,
-          _maxPoolWaiterSize,
-          _strategy,
-          _minPoolSize,
-          new ExponentialBackOffRateLimiter(0,
-              _requestTimeout / 2,
-              Math.max(10, _requestTimeout / 32),
-              _scheduler,
-              _maxConcurrentConnections)
-      );
+          new NoopRateLimiter(),
+          _idleTimeout,
+          _maxPoolWaiterSize);
     }
   }
 
@@ -246,51 +204,36 @@ import org.slf4j.LoggerFactory;
       _callback = callback;
     }
 
-
     @Override
-    public void onSuccess(final Channel channel)
+    public void onSuccess(Channel channel)
     {
-      // This handler ensures the channel is returned to the pool at the end of the
-      // Netty pipeline.
-      channel.attr(ChannelPoolStreamHandler.CHANNEL_POOL_ATTR_KEY).set(_pool);
-      _callback.addTimeoutTask(() -> {
-        AsyncPool<Channel> pool = channel.attr(ChannelPoolStreamHandler.CHANNEL_POOL_ATTR_KEY).getAndRemove();
-        if (pool != null)
-        {
-          pool.dispose(channel);
-        }
-      });
-
-      Timeout<None> streamingTimeout = new Timeout<>(_scheduler, _requestTimeout, TimeUnit.MILLISECONDS, None.none());
-      _callback.addTimeoutTask(() -> {
-        Timeout<None> timeout = channel.attr(RAPResponseDecoder.TIMEOUT_ATTR_KEY).getAndRemove();
-        if (timeout != null)
-        {
-          // stop the timeout for streaming since streaming of response would not happen
-          timeout.getItem();
-        }
-      });
-
-      // This handler invokes the callback with the response once it arrives.
-      channel.attr(RAPStreamResponseHandler.CALLBACK_ATTR_KEY).set(_callback);
-      channel.attr(RAPResponseDecoder.TIMEOUT_ATTR_KEY).set(streamingTimeout);
-
       State state = _state.get();
-      if (state == HttpNettyStreamClient.State.REQUESTS_STOPPING || state == HttpNettyStreamClient.State.SHUTDOWN)
+      if (state == AbstractNettyStreamClient.State.REQUESTS_STOPPING || state == AbstractNettyStreamClient.State.SHUTDOWN)
       {
         // In this case, we acquired a channel from the pool as request processing is halting.
         // The shutdown task might not timeout this callback, since it may already have scanned
         // all the channels for pending requests before we set the callback as the channel
         // attachment.  The TimeoutTransportCallback ensures the user callback in never
         // invoked more than once, so it is safe to invoke it unconditionally.
-        _callback.onResponse(TransportResponseImpl.<StreamResponse>error(
-            new TimeoutException("Operation did not complete before shutdown")));
+        _callback.onResponse(TransportResponseImpl
+            .<StreamResponse>error(new TimeoutException("Operation did not complete before shutdown")));
         return;
       }
 
+      // By wrapping the channel and the pool in a timeout handle we can guarantee the following
+      // 1. using the handle is the only mean to return a channel back to the pool because the reference to the
+      //    channel pool is not otherwise passed along
+      // 2. the channel can be returned back to the pool at most once through the handle
+      // 3. the channel will eventually be returned to the pool due to timeout of handle
+      TimeoutAsyncPoolHandle<Channel> handle = new TimeoutAsyncPoolHandle<>(
+          _pool, _scheduler, _requestTimeout, TimeUnit.MILLISECONDS, channel);
+
+      RequestWithCallback<Request, TimeoutTransportCallback<StreamResponse>, TimeoutAsyncPoolHandle<Channel>> request =
+          new RequestWithCallback<>(_request, _callback, handle);
+
       // here we want the exception in outbound operations to be passed back through pipeline so that
       // the user callback would be invoked with the exception and the channel can be put back into the pool
-      channel.writeAndFlush(_request).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
+      channel.writeAndFlush(request).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
     }
 
     @Override
@@ -307,9 +250,24 @@ import org.slf4j.LoggerFactory;
     {
       super(scheduler, timeout, timeoutUnit, new Callback<None>()
       {
+        @Override
+        public void onSuccess(None result)
+        {
+          LOG.info("All connection pools shut down, closing all channels");
+          finishShutdown();
+        }
+
+        @Override
+        public void onError(Throwable e)
+        {
+          LOG.warn("Error shutting down HTTP connection pools, ignoring and continuing shutdown", e);
+          finishShutdown();
+        }
+
         private void finishShutdown()
         {
-          _state.set(HttpNettyStreamClient.State.REQUESTS_STOPPING);
+          _state.set(AbstractNettyStreamClient.State.REQUESTS_STOPPING);
+
           // Timeout any waiters which haven't received a Channel yet
           for (Callback<Channel> callback : _channelPoolManager.cancelWaiters())
           {
@@ -317,15 +275,37 @@ import org.slf4j.LoggerFactory;
           }
 
           // Timeout any requests still pending response
-          for (Channel c : _allChannels)
-          {
-            TransportCallback<StreamResponse> callback =
-                c.attr(RAPStreamResponseHandler.CALLBACK_ATTR_KEY).getAndRemove();
-            if (callback != null)
+          _allChannels.forEach(channel -> {
+            Http2Connection connection = channel.attr(Http2ClientPipelineInitializer.HTTP2_CONNECTION_ATTR_KEY).get();
+            if (connection != null)
             {
-              errorResponse(callback, new TimeoutException("Operation did not complete before shutdown"));
+              Http2Connection.PropertyKey callbackKey =
+                  channel.attr(Http2ClientPipelineInitializer.CALLBACK_ATTR_KEY).get();
+              Http2Connection.PropertyKey handleKey =
+                  channel.attr(Http2ClientPipelineInitializer.CHANNEL_POOL_HANDLE_ATTR_KEY).get();
+              try
+              {
+                connection.forEachActiveStream(stream -> {
+                  TransportCallback<StreamResponse> callback = stream.getProperty(callbackKey);
+                  if (callback != null)
+                  {
+                    errorResponse(callback, new TimeoutException("Operation did not complete before shutdown"));
+                  }
+                  AsyncPoolHandle<Channel> handle = stream.getProperty(handleKey);
+                  if (handle != null)
+                  {
+                    handle.release();
+                  }
+                  return true;
+                });
+              }
+              catch (Http2Exception e)
+              {
+                // Errors are not expected here since no operation is done on the HTTP/2 connection
+                LOG.warn("Unexpected HTTP/2 error when invoking callbacks before shutdown", e);
+              }
             }
-          }
+          });
 
           // Close all active and idle Channels
           final TimeoutRunnable afterClose =
@@ -347,20 +327,6 @@ import org.slf4j.LoggerFactory;
               afterClose.run();
             }
           });
-        }
-
-        @Override
-        public void onSuccess(None none)
-        {
-          LOG.info("All connection pools shut down, closing all channels");
-          finishShutdown();
-        }
-
-        @Override
-        public void onError(Throwable e)
-        {
-          LOG.warn("Error shutting down HTTP connection pools, ignoring and continuing shutdown", e);
-          finishShutdown();
         }
       }, "Connection pool shutdown timeout exceeded (" + _shutdownTimeout + "ms)");
     }

@@ -41,6 +41,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -81,7 +82,8 @@ public class TestRequestCompression
   @BeforeClass
   public void setup() throws IOException
   {
-    _server = new HttpServerFactory(HttpJettyServer.ServletType.ASYNC_EVENT).createServer(PORT, getTransportDispatcher(), true);
+    _server = new HttpServerFactory(HttpJettyServer.ServletType.ASYNC_EVENT).createH2cServer(PORT,
+        getTransportDispatcher(), true);
     _server.start();
   }
 
@@ -106,27 +108,33 @@ public class TestRequestCompression
             StreamEncodingType.SNAPPY_FRAMED,
             StreamEncodingType.BZIP2,
         };
-    Object[][] args = new Object[encodings.length][2];
+    String[] protocols = new String[] {
+        HttpProtocolVersion.HTTP_1_1,
+        HttpProtocolVersion.HTTP_2,
+    };
+    Object[][] args = new Object[encodings.length * protocols.length][2];
 
     int cur = 0;
     for (StreamEncodingType requestEncoding : encodings)
     {
-      StreamFilter clientCompressionFilter =
-          new ClientStreamCompressionFilter(requestEncoding,
-              new CompressionConfig(THRESHOLD),
-              null,
-              new CompressionConfig(THRESHOLD),
-              Arrays.asList(new String[]{"*"}),
-              _executor);
+      for (String protocol : protocols)
+      {
+        StreamFilter clientCompressionFilter =
+            new ClientStreamCompressionFilter(requestEncoding, new CompressionConfig(THRESHOLD), null, new CompressionConfig(THRESHOLD),
+                Arrays.asList(new String[]{"*"}), _executor);
 
-      TransportClientFactory factory = new HttpClientFactory.Builder()
-      .setFilterChain(FilterChains.createStreamChain(clientCompressionFilter)).build();
-      Client client = new TransportClientAdapter(factory.getClient(Collections.<String, String>emptyMap()), true);
-      args[cur][0] = client;
-      args[cur][1] = URI.create("/" + requestEncoding.getHttpName());
-      cur ++;
-      _clientFactories.add(factory);
-      _clients.add(client);
+        TransportClientFactory factory =
+            new HttpClientFactory.Builder().setFilterChain(FilterChains.createStreamChain(clientCompressionFilter))
+                .build();
+        HashMap<String, String> properties = new HashMap<>();
+        properties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, protocol);
+        Client client = new TransportClientAdapter(factory.getClient(properties), true);
+        args[cur][0] = client;
+        args[cur][1] = URI.create("/" + requestEncoding.getHttpName());
+        cur++;
+        _clientFactories.add(factory);
+        _clients.add(client);
+      }
     }
     return args;
   }
@@ -142,27 +150,33 @@ public class TestRequestCompression
             StreamEncodingType.BZIP2,
             StreamEncodingType.IDENTITY
         };
-    Object[][] args = new Object[encodings.length][1];
+    String[] protocols = new String[] {
+        HttpProtocolVersion.HTTP_1_1,
+        HttpProtocolVersion.HTTP_2,
+    };
+    Object[][] args = new Object[encodings.length * protocols.length][1];
 
     int cur = 0;
     for (StreamEncodingType requestEncoding : encodings)
     {
-      StreamFilter clientCompressionFilter =
-          new ClientStreamCompressionFilter(requestEncoding,
-              new CompressionConfig(THRESHOLD),
-              null,
-              new CompressionConfig(THRESHOLD),
-              Arrays.asList(new String[]{"*"}),
-              _executor);
+      for (String protocol : protocols)
+      {
+        StreamFilter clientCompressionFilter =
+            new ClientStreamCompressionFilter(requestEncoding, new CompressionConfig(THRESHOLD), null, new CompressionConfig(THRESHOLD),
+                Arrays.asList(new String[]{"*"}), _executor);
 
-      TransportClientFactory factory = new HttpClientFactory.Builder()
-      .setFilterChain(FilterChains.createStreamChain(clientCompressionFilter)).build();
-      Client client = new TransportClientAdapter(factory.getClient(Collections.<String, String>emptyMap()), true);
-      args[cur][0] = client;
-      //args[cur][1] = URI.create("/" + requestEncoding.getHttpName());
-      cur ++;
-      _clientFactories.add(factory);
-      _clients.add(client);
+        TransportClientFactory factory =
+            new HttpClientFactory.Builder().setFilterChain(FilterChains.createStreamChain(clientCompressionFilter))
+                .build();
+        HashMap<String, String> properties = new HashMap<>();
+        properties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, protocol);
+        Client client = new TransportClientAdapter(factory.getClient(Collections.<String, String>emptyMap()), true);
+        args[cur][0] = client;
+        //args[cur][1] = URI.create("/" + requestEncoding.getHttpName());
+        cur++;
+        _clientFactories.add(factory);
+        _clients.add(client);
+      }
     }
     return args;
   }

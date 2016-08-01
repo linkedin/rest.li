@@ -53,13 +53,15 @@ public class TestQueryTunnel
   private final boolean _clientROS;
   private final boolean _serverROS;
   private final HttpJettyServer.ServletType _servletType;
+  private final String _httpProtocolVersion;
   private final int _port;
 
   @Factory(dataProvider = "configs")
-  public TestQueryTunnel(boolean clientROS, boolean serverROS, HttpJettyServer.ServletType servletType, int port)
+  public TestQueryTunnel(boolean clientROS, boolean serverROS, String httpProtocolVersion, HttpJettyServer.ServletType servletType, int port)
   {
     _clientROS = clientROS;
     _serverROS = serverROS;
+    _httpProtocolVersion = httpProtocolVersion;
     _servletType = servletType;
     _port = port;
   }
@@ -68,14 +70,22 @@ public class TestQueryTunnel
   public static Object[][] configs()
   {
     return new Object[][] {
-        {true, true, HttpJettyServer.ServletType.RAP, PORT},
-        {true, false, HttpJettyServer.ServletType.RAP, PORT + 1},
-        {false, true, HttpJettyServer.ServletType.RAP, PORT + 2},
-        {false, false, HttpJettyServer.ServletType.RAP, PORT + 3},
-        {true, true, HttpJettyServer.ServletType.ASYNC_EVENT, PORT + 4},
-        {true, false, HttpJettyServer.ServletType.ASYNC_EVENT, PORT + 5},
-        {false, true, HttpJettyServer.ServletType.ASYNC_EVENT, PORT + 6},
-        {false, false, HttpJettyServer.ServletType.ASYNC_EVENT, PORT + 7}
+        {true, true, HttpProtocolVersion.HTTP_1_1, HttpJettyServer.ServletType.RAP, PORT},
+        {true, false, HttpProtocolVersion.HTTP_1_1, HttpJettyServer.ServletType.RAP, PORT},
+        {false, true, HttpProtocolVersion.HTTP_1_1, HttpJettyServer.ServletType.RAP, PORT},
+        {false, false, HttpProtocolVersion.HTTP_1_1, HttpJettyServer.ServletType.RAP, PORT},
+        {true, true, HttpProtocolVersion.HTTP_1_1, HttpJettyServer.ServletType.ASYNC_EVENT, PORT},
+        {true, false, HttpProtocolVersion.HTTP_1_1, HttpJettyServer.ServletType.ASYNC_EVENT, PORT},
+        {false, true, HttpProtocolVersion.HTTP_1_1, HttpJettyServer.ServletType.ASYNC_EVENT, PORT},
+        {false, false, HttpProtocolVersion.HTTP_1_1, HttpJettyServer.ServletType.ASYNC_EVENT, PORT},
+        {true, true, HttpProtocolVersion.HTTP_2, HttpJettyServer.ServletType.RAP, PORT},
+        {true, false, HttpProtocolVersion.HTTP_2, HttpJettyServer.ServletType.RAP, PORT},
+        {false, true, HttpProtocolVersion.HTTP_2, HttpJettyServer.ServletType.RAP, PORT},
+        {false, false, HttpProtocolVersion.HTTP_2, HttpJettyServer.ServletType.RAP, PORT},
+        {true, true, HttpProtocolVersion.HTTP_2, HttpJettyServer.ServletType.ASYNC_EVENT, PORT},
+        {true, false, HttpProtocolVersion.HTTP_2, HttpJettyServer.ServletType.ASYNC_EVENT, PORT},
+        {false, true, HttpProtocolVersion.HTTP_2, HttpJettyServer.ServletType.ASYNC_EVENT, PORT},
+        {false, false, HttpProtocolVersion.HTTP_2, HttpJettyServer.ServletType.ASYNC_EVENT, PORT}
     };
   }
 
@@ -84,6 +94,7 @@ public class TestQueryTunnel
   {
     Map<String, String> clientProperties = new HashMap<String, String>();
     clientProperties.put(HttpClientFactory.HTTP_QUERY_POST_THRESHOLD, String.valueOf(QUERY_TUNNEL_THRESHOLD));
+    clientProperties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, _httpProtocolVersion);
     _clientFactory = new HttpClientFactory();
     final TransportClient transportClient = _clientFactory
         .getClient(clientProperties);
@@ -109,7 +120,7 @@ public class TestQueryTunnel
         streamHandler.handleRequest(req, requestContext, new TransportCallbackAdapter<StreamResponse>(callback));
       }
     };
-    _server = new HttpServerFactory(_servletType).createServer(_port, dispatcher, _serverROS);
+    _server = new HttpServerFactory(_servletType).createH2cServer(_port, dispatcher, _serverROS);
     _server.start();
   }
 

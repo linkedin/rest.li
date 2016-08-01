@@ -8,5 +8,12 @@ dependencies {
   compile externalDependency.netty
 
   testCompile project(path: ':r2-core', configuration: 'testArtifacts')
+  testCompile externalDependency.jettyAlpnServer
+  testCompile externalDependency.jettyHttp
+  testCompile externalDependency.jettyHttp2Server
+  testCompile externalDependency.jettyServlet
+  testCompile externalDependency.jettyServer
+  testCompile externalDependency.jettyUtil
+  testCompile externalDependency.servletApi
   testCompile externalDependency.testng
 }

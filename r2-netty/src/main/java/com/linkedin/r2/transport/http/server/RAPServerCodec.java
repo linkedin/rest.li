@@ -36,7 +36,7 @@ import io.netty.handler.codec.MessageToMessageDecoder;
 import io.netty.handler.codec.MessageToMessageEncoder;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
@@ -72,15 +72,15 @@ class RAPServerCodec extends ChannelDuplexHandler
     protected void decode(ChannelHandlerContext ctx, FullHttpRequest nettyRequest, List<Object> out)
         throws Exception
     {
-      if (nettyRequest.getDecoderResult().isFailure())
+      if (nettyRequest.decoderResult().isFailure())
       {
-        ctx.fireExceptionCaught(nettyRequest.getDecoderResult().cause());
+        ctx.fireExceptionCaught(nettyRequest.decoderResult().cause());
         return;
       }
 
-      URI uri = new URI(nettyRequest.getUri());
+      URI uri = new URI(nettyRequest.uri());
       RestRequestBuilder builder = new RestRequestBuilder(uri);
-      builder.setMethod(nettyRequest.getMethod().name());
+      builder.setMethod(nettyRequest.method().name());
       for (Map.Entry<String, String> e : nettyRequest.headers())
       {
         if (e.getKey().equalsIgnoreCase(HttpConstants.REQUEST_COOKIE_HEADER_NAME))
@@ -119,7 +119,7 @@ class RAPServerCodec extends ChannelDuplexHandler
       }
 
       nettyResponse.headers().set(HttpConstants.RESPONSE_COOKIE_HEADER_NAME, response.getCookies());
-      nettyResponse.headers().set(HttpHeaders.Names.CONTENT_LENGTH, entity.length());
+      nettyResponse.headers().set(HttpHeaderNames.CONTENT_LENGTH, entity.length());
 
       out.add(nettyResponse);
     }

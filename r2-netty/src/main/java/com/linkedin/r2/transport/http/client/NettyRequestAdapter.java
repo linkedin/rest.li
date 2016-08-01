@@ -16,6 +16,7 @@
 
 package com.linkedin.r2.transport.http.client;
 
+import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.transport.http.common.HttpConstants;
@@ -23,13 +24,23 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.DefaultFullHttpRequest;
 import io.netty.handler.codec.http.DefaultHttpRequest;
-import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpVersion;
 
+import io.netty.handler.codec.http2.DefaultHttp2Headers;
+import io.netty.handler.codec.http2.Http2Headers;
+import io.netty.handler.codec.http2.HttpConversionUtil;
+import io.netty.util.AsciiString;
+import java.net.URI;
 import java.net.URL;
+import java.util.HashSet;
 import java.util.Map;
+
+import static io.netty.util.AsciiString.EMPTY_STRING;
+
 
 /**
  * Adapts R2 requests to Netty requests
@@ -67,7 +78,7 @@ import java.util.Map;
     {
       nettyRequest.headers().set(entry.getKey(), entry.getValue());
     }
-    nettyRequest.headers().set(HttpHeaders.Names.HOST, url.getAuthority());
+    nettyRequest.headers().set(HttpHeaderNames.HOST, url.getAuthority());
     nettyRequest.headers().set(HttpConstants.REQUEST_COOKIE_HEADER_NAME, request.getCookies());
 
     return nettyRequest;
@@ -92,23 +103,93 @@ import java.util.Map;
     }
 
     HttpRequest nettyRequest = new DefaultHttpRequest(HttpVersion.HTTP_1_1, nettyMethod, path);
-    nettyRequest.headers().set(HttpHeaders.Names.TRANSFER_ENCODING, HttpHeaders.Values.CHUNKED);
+    nettyRequest.headers().set(HttpHeaderNames.TRANSFER_ENCODING, HttpHeaderValues.CHUNKED);
 
     for (Map.Entry<String, String> entry : request.getHeaders().entrySet())
     {
       // RFC 7230, section 3.3.2
       //   A sender MUST NOT send a Content-Length header field in any message
       //   that contains a Transfer-Encoding header field.
-      if (entry.getKey().equalsIgnoreCase(HttpHeaders.Names.CONTENT_LENGTH))
+      if (entry.getKey().equalsIgnoreCase(HttpHeaderNames.CONTENT_LENGTH.toString()))
       {
         continue;
       }
 
       nettyRequest.headers().set(entry.getKey(), entry.getValue());
     }
-    nettyRequest.headers().set(HttpHeaders.Names.HOST, url.getAuthority());
+    nettyRequest.headers().set(HttpHeaderNames.HOST, url.getAuthority());
     nettyRequest.headers().set(HttpConstants.REQUEST_COOKIE_HEADER_NAME, request.getCookies());
 
     return nettyRequest;
+  }
+
+  /**
+   * The set of headers that should not be directly copied when converting headers from HTTP to HTTP/2.
+   */
+  private static final HashSet<String> HEADER_BLACKLIST = new HashSet<>();
+  static {
+    HEADER_BLACKLIST.add(HttpHeaderNames.CONNECTION.toString());
+    @SuppressWarnings("deprecation")
+    AsciiString keepAlive = HttpHeaderNames.KEEP_ALIVE;
+    HEADER_BLACKLIST.add(keepAlive.toString());
+    @SuppressWarnings("deprecation")
+    AsciiString proxyConnection = HttpHeaderNames.PROXY_CONNECTION;
+    HEADER_BLACKLIST.add(proxyConnection.toString());
+    HEADER_BLACKLIST.add(HttpHeaderNames.TRANSFER_ENCODING.toString());
+    HEADER_BLACKLIST.add(HttpHeaderNames.HOST.toString());
+    HEADER_BLACKLIST.add(HttpHeaderNames.UPGRADE.toString());
+    HEADER_BLACKLIST.add(HttpConversionUtil.ExtensionHeaderNames.STREAM_ID.text().toString());
+    HEADER_BLACKLIST.add(HttpConversionUtil.ExtensionHeaderNames.SCHEME.text().toString());
+    HEADER_BLACKLIST.add(HttpConversionUtil.ExtensionHeaderNames.PATH.text().toString());
+  }
+
+  /**
+   * Extracts fields from a {@link Request} and construct a {@link Http2Headers} instance.
+   *
+   * @param request StreamRequest to extract fields from
+   * @return a new instance of Http2Headers
+   * @throws Exception
+   */
+  static <R extends Request> Http2Headers toHttp2Headers(R request) throws Exception
+  {
+    URI uri = request.getURI();
+    URL url = new URL(uri.toString());
+
+    String method = request.getMethod();
+    String authority = url.getAuthority();
+    String path = url.getFile();
+    String scheme = uri.getScheme();
+
+    // RFC 2616, section 5.1.2:
+    //   Note that the absolute path cannot be empty; if none is present in the original URI,
+    //   it MUST be given as "/" (the server root).
+    path = path.isEmpty() ? "/" : path;
+
+    final Http2Headers headers = new DefaultHttp2Headers()
+        .method(method)
+        .authority(authority)
+        .path(path)
+        .scheme(scheme);
+    for (Map.Entry<String, String> entry : request.getHeaders().entrySet())
+    {
+      // Ignores HTTP/2 blacklisted headers
+      if (HEADER_BLACKLIST.contains(entry.getKey().toLowerCase()))
+      {
+        continue;
+      }
+
+      // RFC 7540, section 8.1.2:
+      //   ... header field names MUST be converted to lowercase prior to their
+      //   encoding in HTTP/2.  A request or response containing uppercase
+      //   header field names MUST be treated as malformed (Section 8.1.2.6).
+      String name = entry.getKey().toLowerCase();
+      String value = entry.getValue();
+      headers.set(name, value);
+    }
+
+    // Split up cookies to allow for better header compression
+    headers.set(HttpHeaderNames.COOKIE, request.getCookies());
+
+    return headers;
   }
 }

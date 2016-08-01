@@ -38,7 +38,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -84,7 +83,7 @@ public class TestRestCompressionEcho
   @BeforeClass
   public void setup() throws IOException
   {
-    _server = getServerFactory().createServer(PORT, getTransportDispatcher(), REST_OVER_STREAM);
+    _server = getServerFactory().createH2cServer(PORT, getTransportDispatcher(), REST_OVER_STREAM);
     _server.start();
   }
 
@@ -122,9 +121,19 @@ public class TestRestCompressionEcho
         .build();
   }
 
-  protected Map<String, String> getClientProperties()
+  protected Map<String, String> getHttp1ClientProperties()
   {
     Map<String, String> clientProperties = new HashMap<String, String>();
+    clientProperties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, HttpProtocolVersion.HTTP_1_1);
+    clientProperties.put(HttpClientFactory.HTTP_MAX_RESPONSE_SIZE, String.valueOf(LARGE_BYTES_NUM * 2));
+    clientProperties.put(HttpClientFactory.HTTP_REQUEST_TIMEOUT, "60000");
+    return clientProperties;
+  }
+
+  protected Map<String, String> getHttp2ClientProperties()
+  {
+    Map<String, String> clientProperties = new HashMap<String, String>();
+    clientProperties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, HttpProtocolVersion.HTTP_2);
     clientProperties.put(HttpClientFactory.HTTP_MAX_RESPONSE_SIZE, String.valueOf(LARGE_BYTES_NUM * 2));
     clientProperties.put(HttpClientFactory.HTTP_REQUEST_TIMEOUT, "60000");
     return clientProperties;
@@ -139,7 +148,8 @@ public class TestRestCompressionEcho
             EncodingType.SNAPPY,
             EncodingType.IDENTITY
         };
-    Object[][] args = new Object[2 * encodings.length * encodings.length][2];
+    Object[][] args = new Object[4 * encodings.length * encodings.length][2];
+
 
     int cur = 0;
     for (EncodingType requestEncoding : encodings)
@@ -156,12 +166,16 @@ public class TestRestCompressionEcho
         TransportClientFactory factory = new HttpClientFactory.Builder()
             .setFilterChain(FilterChains.createRestChain(clientCompressionFilter))
             .build();
-        Client client = new TransportClientAdapter(factory.getClient(getClientProperties()), REST_OVER_STREAM);
-        args[cur][0] = client;
+        Client http1Client = new TransportClientAdapter(factory.getClient(getHttp1ClientProperties()), REST_OVER_STREAM);
+        Client http2Client = new TransportClientAdapter(factory.getClient(getHttp2ClientProperties()), REST_OVER_STREAM);
+        args[cur][0] = http1Client;
         args[cur][1] = LARGE_BYTES_NUM;
-        cur ++;
+        args[cur + 1][0] = http1Client;
+        args[cur + 1][1] = SMALL_BYTES_NUM;
+        cur += 2;
         _clientFactories.add(factory);
-        _clients.add(client);
+        _clients.add(http1Client);
+        _clients.add(http2Client);
       }
     }
     // test data that won't trigger compression
@@ -179,12 +193,16 @@ public class TestRestCompressionEcho
         TransportClientFactory factory = new HttpClientFactory.Builder()
             .setFilterChain(FilterChains.createRestChain(clientCompressionFilter))
             .build();
-        Client client = new TransportClientAdapter(factory.getClient(getClientProperties()), REST_OVER_STREAM);
-        args[cur][0] = client;
+        Client http1Client = new TransportClientAdapter(factory.getClient(getHttp1ClientProperties()), REST_OVER_STREAM);
+        Client http2Client = new TransportClientAdapter(factory.getClient(getHttp2ClientProperties()), REST_OVER_STREAM);
+        args[cur][0] = http1Client;
         args[cur][1] = SMALL_BYTES_NUM;
-        cur ++;
+        args[cur + 1][0] = http1Client;
+        args[cur + 1][1] = SMALL_BYTES_NUM;
+        cur += 2;
         _clientFactories.add(factory);
-        _clients.add(client);
+        _clients.add(http1Client);
+        _clients.add(http2Client);
       }
     }
     return args;

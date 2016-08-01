@@ -21,9 +21,17 @@
 package com.linkedin.r2.transport.http.client;
 
 import com.linkedin.r2.filter.R2Constants;
+import com.linkedin.r2.message.rest.RestResponse;
+import com.linkedin.r2.message.stream.StreamRequest;
+import com.linkedin.r2.message.stream.StreamRequestBuilder;
+import com.linkedin.r2.message.stream.entitystream.ByteStringWriter;
+import com.linkedin.r2.message.stream.entitystream.EntityStreams;
 import io.netty.channel.Channel;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.handler.codec.TooLongFrameException;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http2.Http2Exception;
+import io.netty.util.AsciiString;
 import java.io.IOException;
 import java.net.SocketAddress;
 import java.net.URI;
@@ -36,6 +44,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.net.ssl.SSLContext;
@@ -46,9 +55,11 @@ import com.linkedin.r2.message.Messages;
 import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.message.stream.entitystream.ReadHandle;
 import com.linkedin.r2.message.stream.entitystream.Reader;
+import org.eclipse.jetty.server.Server;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import com.linkedin.common.callback.Callback;
@@ -64,16 +75,33 @@ import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 /**
  * @author Steven Ihde
  * @author Ang Xu
+ * @author Sean Sheng
  * @version $Revision: $
  */
 
 public class TestHttpNettyStreamClient
 {
+  private static final String HOST = "127.0.0.1";
+  private static final String SCHEME = "http";
+  private static final int PORT = 8080;
+  private static final String URL = SCHEME + "://" + HOST + ":" + PORT + "/echo";
+
+  private static final int REQUEST_COUNT = 100;
+  private static final AsciiString HOST_NAME = new AsciiString(HOST + ':' + PORT);
+
+  private static final String HTTP_GET = "GET";
+  private static final String HTTP_POST = "POST";
+
+  private static final int NO_CONTENT = 0;
+  private static final int SMALL_CONTENT = 8 * 1024;
+  private static final int LARGE_CONTENT = 128 * 1024;
+
   private NioEventLoopGroup _eventLoop;
   private ScheduledExecutorService _scheduler;
 
   private static final int TEST_MAX_RESPONSE_SIZE = 500000;
-  private static final int TEST_MAX_HEADER_SIZE = 50000;
+  private static final int TEST_MAX_HEADER_SIZE = 5000;
+  private static final int TEST_HEADER_SIZE_BUFFER = 50;
 
   private static final int RESPONSE_OK = 1;
   private static final int TOO_LARGE = 2;
@@ -125,22 +153,33 @@ public class TestHttpNettyStreamClient
     }
   }
 
-  @Test
-  public void testNoResponseTimeout()
-      throws InterruptedException, IOException
+  @DataProvider(name = "noResponseClients")
+  public Object[][] noResponseClientProvider()
   {
-    TestServer testServer = new TestServer();
+    HttpClientBuilder builder = new HttpClientBuilder(_eventLoop, _scheduler)
+        .setRequestTimeout(500)
+        .setIdleTimeout(10000)
+        .setShutdownTimeout(500);
+    return new Object[][] {
+        { builder.buildStream() },
+        { builder.buildHttp2Stream() },
+    };
+  }
 
-    HttpNettyStreamClient client = new HttpClientBuilder(_eventLoop, _scheduler).setRequestTimeout(500).setIdleTimeout(10000)
-        .setShutdownTimeout(500).buildStream();
-
-    RestRequest r = new RestRequestBuilder(testServer.getNoResponseURI()).build();
-    FutureCallback<StreamResponse> cb = new FutureCallback<StreamResponse>();
-    TransportCallback<StreamResponse> callback = new TransportCallbackAdapter<StreamResponse>(cb);
-    client.streamRequest(Messages.toStreamRequest(r), new RequestContext(), new HashMap<String, String>(), callback);
-
+  @Test(dataProvider = "noResponseClients")
+  public void testNoResponseTimeout(AbstractNettyStreamClient client) throws Exception
+  {
+    CountDownLatch responseLatch = new CountDownLatch(1);
+    Server server = new HttpServerBuilder().responseLatch(responseLatch).build();
     try
     {
+      server.start();
+
+      RestRequest r = new RestRequestBuilder(new URI(URL)).build();
+      FutureCallback<StreamResponse> cb = new FutureCallback<StreamResponse>();
+      TransportCallback<StreamResponse> callback = new TransportCallbackAdapter<StreamResponse>(cb);
+      client.streamRequest(Messages.toStreamRequest(r), new RequestContext(), new HashMap<String, String>(), callback);
+
       // This timeout needs to be significantly larger than the getTimeout of the netty client;
       // we're testing that the client will generate its own timeout
       cb.get(30, TimeUnit.SECONDS);
@@ -157,18 +196,29 @@ public class TestHttpNettyStreamClient
     {
       verifyCauseChain(e, RemoteInvocationException.class, TimeoutException.class);
     }
-    testServer.shutdown();
+    finally
+    {
+      responseLatch.countDown();
+      server.stop();
+    }
   }
 
-  @Test
-  public void testBadAddress() throws InterruptedException, IOException, TimeoutException
+  @DataProvider(name = "badAddressClients")
+  public Object[][] badAddressClientsProvider()
   {
-    HttpNettyStreamClient client = new HttpClientBuilder(_eventLoop, _scheduler)
-                                  .setRequestTimeout(30000)
-                                  .setIdleTimeout(10000)
-                                  .setShutdownTimeout(500)
-                                  .buildStream();
+    HttpClientBuilder builder = new HttpClientBuilder(_eventLoop, _scheduler)
+        .setRequestTimeout(30000)
+        .setIdleTimeout(10000)
+        .setShutdownTimeout(500);
+    return new Object[][] {
+        { builder.buildStream() },
+        { builder.buildHttp2Stream() },
+    };
+  }
 
+  @Test(dataProvider = "badAddressClients")
+  public void testBadAddress(AbstractNettyStreamClient client) throws InterruptedException, IOException, TimeoutException
+  {
     RestRequest r = new RestRequestBuilder(URI.create("http://this.host.does.not.exist.linkedin.com")).build();
     FutureCallback<StreamResponse> cb = new FutureCallback<StreamResponse>();
     TransportCallback<StreamResponse> callback = new TransportCallbackAdapter<StreamResponse>(cb);
@@ -184,12 +234,20 @@ public class TestHttpNettyStreamClient
     }
   }
 
-  @Test
-  public void testRemoteClientAddress()
+  @DataProvider(name = "remoteClientAddressClients")
+  public Object[][] remoteClientAddressClientsProvider()
+  {
+    HttpClientBuilder builder = new HttpClientBuilder(_eventLoop, _scheduler);
+    return new Object[][] {
+        { builder.buildStream() },
+        { builder.buildHttp2Stream() },
+    };
+  }
+
+  @Test(dataProvider = "remoteClientAddressClients")
+  public void testRemoteClientAddress(AbstractNettyStreamClient client)
       throws InterruptedException, IOException, TimeoutException
   {
-    HttpNettyStreamClient client = new HttpClientBuilder(_eventLoop, _scheduler).buildStream();
-
     RestRequest r = new RestRequestBuilder(URI.create("http://localhost")).build();
 
     FutureCallback<StreamResponse> cb = new FutureCallback<>();
@@ -200,40 +258,48 @@ public class TestHttpNettyStreamClient
 
     final String actualRemoteAddress = (String) requestContext.getLocalAttr(R2Constants.REMOTE_SERVER_ADDR);
     Assert.assertTrue("127.0.0.1".equals(actualRemoteAddress) || "0:0:0:0:0:0:0:1".equals(actualRemoteAddress),
-                      "Actual remote client address is not expected. " +
-                          "The local attribute field must be IP address in string type");
+        "Actual remote client address is not expected. " + "The local attribute field must be IP address in string type");
   }
 
-  @Test
-  public void testMaxResponseSizeOK() throws InterruptedException, IOException, TimeoutException
+  @DataProvider(name = "responseSizeClients")
+  public Object[][] responseSizeClientProvider()
   {
-    testResponseSize(TEST_MAX_RESPONSE_SIZE - 1, RESPONSE_OK);
-
-    testResponseSize(TEST_MAX_RESPONSE_SIZE, RESPONSE_OK);
+    HttpClientBuilder builder = new HttpClientBuilder(_eventLoop, _scheduler)
+        .setRequestTimeout(50000)
+        .setIdleTimeout(10000)
+        .setShutdownTimeout(500)
+        .setMaxResponseSize(TEST_MAX_RESPONSE_SIZE);
+    return new Object[][] {
+        { builder.buildStream() },
+        { builder.buildHttp2Stream() },
+    };
   }
 
-  @Test
-  public void setTestMaxResponseSizeTooLarge() throws InterruptedException, IOException, TimeoutException
+  @Test(dataProvider = "responseSizeClients")
+  public void testMaxResponseSizeOK(AbstractNettyStreamClient client) throws Exception
   {
-    testResponseSize(TEST_MAX_RESPONSE_SIZE+1, TOO_LARGE);
+    testResponseSize(client, TEST_MAX_RESPONSE_SIZE - 1, RESPONSE_OK);
+
+    testResponseSize(client, TEST_MAX_RESPONSE_SIZE, RESPONSE_OK);
   }
 
-  public void testResponseSize(int responseSize, int expectedResult)
-      throws InterruptedException, IOException, TimeoutException
+  @Test(dataProvider = "responseSizeClients")
+  public void setTestMaxResponseSizeTooLarge(AbstractNettyStreamClient client) throws Exception
   {
-    TestServer testServer = new TestServer();
+    testResponseSize(client, TEST_MAX_RESPONSE_SIZE + 1, TOO_LARGE);
+  }
 
-    HttpNettyStreamClient client =
-        new HttpClientBuilder(_eventLoop, _scheduler).setRequestTimeout(50000).setIdleTimeout(10000)
-            .setShutdownTimeout(500).setMaxResponseSize(TEST_MAX_RESPONSE_SIZE).buildStream();
-
-    RestRequest r = new RestRequestBuilder(testServer.getResponseOfSizeURI(responseSize)).build();
-    FutureCallback<StreamResponse> cb = new FutureCallback<StreamResponse>();
-    TransportCallback<StreamResponse> callback = new TransportCallbackAdapter<StreamResponse>(cb);
-    client.streamRequest(Messages.toStreamRequest(r), new RequestContext(), new HashMap<String, String>(), callback);
-
+  public void testResponseSize(AbstractNettyStreamClient client, int responseSize, int expectedResult) throws Exception
+  {
+    Server server = new HttpServerBuilder().responseSize(responseSize).build();
     try
     {
+      server.start();
+      RestRequest r = new RestRequestBuilder(new URI(URL)).build();
+      FutureCallback<StreamResponse> cb = new FutureCallback<StreamResponse>();
+      TransportCallback<StreamResponse> callback = new TransportCallbackAdapter<StreamResponse>(cb);
+      client.streamRequest(Messages.toStreamRequest(r), new RequestContext(), new HashMap<String, String>(), callback);
+
       StreamResponse response = cb.get(30, TimeUnit.SECONDS);
       final CountDownLatch latch = new CountDownLatch(1);
       final AtomicReference<Throwable> error = new AtomicReference<Throwable>();
@@ -264,7 +330,10 @@ public class TestHttpNettyStreamClient
         }
       });
 
-      latch.await(30, TimeUnit.SECONDS);
+      if (!latch.await(30, TimeUnit.SECONDS))
+      {
+        Assert.fail("Timeout waiting for response");
+      }
 
       if(expectedResult == TOO_LARGE)
       {
@@ -280,39 +349,49 @@ public class TestHttpNettyStreamClient
     {
       if (expectedResult == RESPONSE_OK)
       {
-        Assert.fail("Unexpected ExecutionException, response was <= max response size.");
+        Assert.fail("Unexpected ExecutionException, response was <= max response size.", e);
       }
       verifyCauseChain(e, RemoteInvocationException.class, TooLongFrameException.class);
     }
-    testServer.shutdown();
+    finally
+    {
+      server.stop();
+    }
   }
 
-  @Test
-  public void testMaxHeaderSize() throws InterruptedException, IOException, TimeoutException
+  @DataProvider(name = "maxHeaderSizeClients")
+  public Object[][] maxHeaderSizeClientProvider()
   {
-    testHeaderSize(TEST_MAX_HEADER_SIZE - 1, RESPONSE_OK);
-
-    testHeaderSize(TEST_MAX_HEADER_SIZE, RESPONSE_OK);
-
-    testHeaderSize(TEST_MAX_HEADER_SIZE + 1, TOO_LARGE);
+    HttpClientBuilder builder = new HttpClientBuilder(_eventLoop, _scheduler)
+        .setRequestTimeout(5000)
+        .setIdleTimeout(10000)
+        .setShutdownTimeout(500)
+        .setMaxHeaderSize(TEST_MAX_HEADER_SIZE);
+    return new Object[][] {
+        { builder.buildStream() },
+        { builder.buildHttp2Stream() },
+    };
   }
 
-  public void testHeaderSize(int headerSize, int expectedResult)
-      throws InterruptedException, IOException, TimeoutException
+  @Test(dataProvider = "maxHeaderSizeClients")
+  public void testMaxHeaderSize(AbstractNettyStreamClient client) throws Exception
   {
-    TestServer testServer = new TestServer();
+    testHeaderSize(client, TEST_MAX_HEADER_SIZE - TEST_HEADER_SIZE_BUFFER, RESPONSE_OK);
 
-    HttpNettyStreamClient client =
-        new HttpClientBuilder(_eventLoop, _scheduler).setRequestTimeout(5000000).setIdleTimeout(10000)
-            .setShutdownTimeout(500).setMaxHeaderSize(TEST_MAX_HEADER_SIZE).buildStream();
+    testHeaderSize(client, TEST_MAX_HEADER_SIZE + TEST_HEADER_SIZE_BUFFER, TOO_LARGE);
+  }
 
-    RestRequest r = new RestRequestBuilder(testServer.getResponseWithHeaderSizeURI(headerSize)).build();
-    FutureCallback<StreamResponse> cb = new FutureCallback<StreamResponse>();
-    TransportCallback<StreamResponse> callback = new TransportCallbackAdapter<StreamResponse>(cb);
-    client.streamRequest(Messages.toStreamRequest(r), new RequestContext(), new HashMap<String, String>(), callback);
-
+  public void testHeaderSize(AbstractNettyStreamClient client, int headerSize, int expectedResult) throws Exception
+  {
+    Server server = new HttpServerBuilder().headerSize(headerSize).build();
     try
     {
+      server.start();
+      RestRequest r = new RestRequestBuilder(new URI(URL)).build();
+      FutureCallback<StreamResponse> cb = new FutureCallback<StreamResponse>();
+      TransportCallback<StreamResponse> callback = new TransportCallbackAdapter<StreamResponse>(cb);
+      client.streamRequest(Messages.toStreamRequest(r), new RequestContext(), new HashMap<String, String>(), callback);
+
       cb.get(300, TimeUnit.SECONDS);
       if (expectedResult == TOO_LARGE)
       {
@@ -323,52 +402,44 @@ public class TestHttpNettyStreamClient
     {
       if (expectedResult == RESPONSE_OK)
       {
-        Assert.fail("Unexpected ExecutionException, header was <= max header size.");
+        Assert.fail("Unexpected ExecutionException, header was <= max header size.", e);
       }
-      verifyCauseChain(e, RemoteInvocationException.class, TooLongFrameException.class);
+
+      if (client instanceof HttpNettyStreamClient)
+      {
+        verifyCauseChain(e, RemoteInvocationException.class, TooLongFrameException.class);
+      }
+      else if (client instanceof Http2NettyStreamClient)
+      {
+        verifyCauseChain(e, RemoteInvocationException.class, Http2Exception.class);
+      }
+      else
+      {
+        Assert.fail("Unrecognized client");
+      }
     }
-    testServer.shutdown();
+    finally
+    {
+      server.stop();
+    }
   }
 
-  @Test
-  public void testBadHeader() throws InterruptedException, IOException
+  @DataProvider(name = "shutdownClients")
+  public Object[][] shutdownClientProvider()
   {
-    TestServer testServer = new TestServer();
-    HttpNettyStreamClient client = new HttpClientBuilder(_eventLoop, _scheduler)
-                                  .setRequestTimeout(10000)
-                                  .setIdleTimeout(10000)
-                                  .setShutdownTimeout(500).buildStream();
-
-    RestRequest r = new RestRequestBuilder(testServer.getBadHeaderURI()).build();
-    FutureCallback<StreamResponse> cb = new FutureCallback<StreamResponse>();
-    TransportCallback<StreamResponse> callback = new TransportCallbackAdapter<StreamResponse>(cb);
-    client.streamRequest(Messages.toStreamRequest(r), new RequestContext(), new HashMap<String, String>(), callback);
-
-    try
-    {
-      cb.get(30, TimeUnit.SECONDS);
-      Assert.fail("Get was supposed to fail");
-    }
-    catch (TimeoutException e)
-    {
-      Assert.fail("Unexpected TimeoutException, should have been ExecutionException", e);
-    }
-    catch (ExecutionException e)
-    {
-      verifyCauseChain(e, RemoteInvocationException.class, IllegalArgumentException.class);
-    }
-    testServer.shutdown();
+    HttpClientBuilder builder = new HttpClientBuilder(_eventLoop, _scheduler)
+        .setRequestTimeout(500)
+        .setIdleTimeout(10000)
+        .setShutdownTimeout(500);
+    return new Object[][] {
+        { builder.buildStream() },
+        { builder.buildHttp2Stream() },
+    };
   }
 
-  @Test
-  public void testShutdown() throws ExecutionException, TimeoutException, InterruptedException
+  @Test(dataProvider = "shutdownClients")
+  public void testShutdown(AbstractNettyStreamClient client) throws Exception
   {
-    HttpNettyStreamClient client = new HttpClientBuilder(_eventLoop, _scheduler)
-                                  .setRequestTimeout(500)
-                                  .setIdleTimeout(10000)
-                                  .setShutdownTimeout(500)
-                                  .buildStream();
-
     FutureCallback<None> shutdownCallback = new FutureCallback<None>();
     client.shutdown(shutdownCallback);
     shutdownCallback.get(30, TimeUnit.SECONDS);
@@ -376,7 +447,8 @@ public class TestHttpNettyStreamClient
     // Now verify a new request will also fail
     RestRequest r = new RestRequestBuilder(URI.create("http://no.such.host.linkedin.com")).build();
     FutureCallback<StreamResponse> callback = new FutureCallback<StreamResponse>();
-    client.streamRequest(Messages.toStreamRequest(r), new RequestContext(), new HashMap<String,String>(), new TransportCallbackAdapter<StreamResponse>(callback));
+    client.streamRequest(Messages.toStreamRequest(r), new RequestContext(), new HashMap<String, String>(),
+        new TransportCallbackAdapter<StreamResponse>(callback));
     try
     {
       callback.get(30, TimeUnit.SECONDS);
@@ -416,43 +488,49 @@ public class TestHttpNettyStreamClient
   }
 
   @Test
-  public void testShutdownRequestOutstanding()
-      throws IOException, ExecutionException, TimeoutException, InterruptedException
+  public void testShutdownRequestOutstanding() throws Exception
   {
     // Test that it works when the shutdown kills the outstanding request...
-    testShutdownRequestOutstanding(500, 60000, RemoteInvocationException.class, TimeoutException.class);
+    HttpClientBuilder builder = new HttpClientBuilder(_eventLoop, _scheduler)
+        .setShutdownTimeout(500)
+        .setRequestTimeout(60000);
+    testShutdownRequestOutstanding(builder.buildStream(), RemoteInvocationException.class, TimeoutException.class);
+    testShutdownRequestOutstanding(builder.buildHttp2Stream(), RemoteInvocationException.class, TimeoutException.class);
   }
 
   @Test
-  public void testShutdownRequestOutstanding2()
-      throws IOException, ExecutionException, TimeoutException, InterruptedException
+  public void testShutdownRequestOutstanding2() throws Exception
   {
     // Test that it works when the request timeout kills the outstanding request...
-    testShutdownRequestOutstanding(60000, 500, RemoteInvocationException.class,
+    HttpClientBuilder builder = new HttpClientBuilder(_eventLoop, _scheduler)
+        .setShutdownTimeout(60000)
+        .setRequestTimeout(500);
+    testShutdownRequestOutstanding(builder.buildStream(), RemoteInvocationException.class,
+        // sometimes the test fails with ChannelClosedException
+        // TimeoutException.class
+        Exception.class);
+    testShutdownRequestOutstanding(builder.buildHttp2Stream(), RemoteInvocationException.class,
         // sometimes the test fails with ChannelClosedException
         // TimeoutException.class
         Exception.class);
   }
 
-  private void testShutdownRequestOutstanding(int shutdownTimeout, int requestTimeout, Class<?>... causeChain)
-      throws InterruptedException, IOException, ExecutionException, TimeoutException
+  private void testShutdownRequestOutstanding(AbstractNettyStreamClient client, Class<?>... causeChain) throws Exception
   {
-    TestServer testServer = new TestServer();
-
-    HttpNettyStreamClient client = new HttpClientBuilder(_eventLoop, _scheduler).setRequestTimeout(requestTimeout)
-        .setShutdownTimeout(shutdownTimeout).buildStream();
-
-    RestRequest r = new RestRequestBuilder(testServer.getNoResponseURI()).build();
-    FutureCallback<StreamResponse> cb = new FutureCallback<StreamResponse>();
-    TransportCallback<StreamResponse> callback = new TransportCallbackAdapter<StreamResponse>(cb);
-    client.streamRequest(Messages.toStreamRequest(r), new RequestContext(), new HashMap<String,String>(), callback);
-
-    FutureCallback<None> shutdownCallback = new FutureCallback<None>();
-    client.shutdown(shutdownCallback);
-    shutdownCallback.get(30, TimeUnit.SECONDS);
-
+    CountDownLatch responseLatch = new CountDownLatch(1);
+    Server server = new HttpServerBuilder().responseLatch(responseLatch).build();
     try
     {
+      server.start();
+      RestRequest r = new RestRequestBuilder(new URI(URL)).build();
+      FutureCallback<StreamResponse> cb = new FutureCallback<StreamResponse>();
+      TransportCallback<StreamResponse> callback = new TransportCallbackAdapter<StreamResponse>(cb);
+      client.streamRequest(Messages.toStreamRequest(r), new RequestContext(), new HashMap<String,String>(), callback);
+
+      FutureCallback<None> shutdownCallback = new FutureCallback<None>();
+      client.shutdown(shutdownCallback);
+      shutdownCallback.get(30, TimeUnit.SECONDS);
+
       // This timeout needs to be significantly larger than the getTimeout of the netty client;
       // we're testing that the client will generate its own timeout
       cb.get(30, TimeUnit.SECONDS);
@@ -469,7 +547,11 @@ public class TestHttpNettyStreamClient
     {
       verifyCauseChain(e, causeChain);
     }
-    testServer.shutdown();
+    finally
+    {
+      responseLatch.countDown();
+      server.stop();
+    }
   }
 
   private static void verifyCauseChain(Throwable throwable, Class<?>... causes)
@@ -500,8 +582,26 @@ public class TestHttpNettyStreamClient
     try
     {
       new HttpClientBuilder(_eventLoop, _scheduler)
-          .setSSLParameters(new SSLParameters())
-          .buildStream();
+          .setSSLParameters(new SSLParameters()).buildStream();
+    }
+    catch (IllegalArgumentException e)
+    {
+      // Check exception message to make sure it's the expected one.
+      Assert.assertEquals(e.getMessage(), "SSLParameters passed with no SSLContext");
+    }
+  }
+
+  // Test that cannot pass pass SSLParameters without SSLContext.
+  // This in fact tests HttpClientPipelineFactory constructor through HttpNettyClient
+  // constructor.
+  @Test
+  public void testHttp2ClientPipelineFactory1()
+      throws NoSuchAlgorithmException
+  {
+    try
+    {
+      new HttpClientBuilder(_eventLoop, _scheduler)
+          .setSSLParameters(new SSLParameters()).buildHttp2Stream();
     }
     catch (IllegalArgumentException e)
     {
@@ -535,6 +635,31 @@ public class TestHttpNettyStreamClient
     }
   }
 
+  // Test that cannot set cipher suites in SSLParameters that don't have any match in
+  // SSLContext.
+  // This in fact tests HttpClientPipelineFactory constructor through HttpNettyClient
+  // constructor.
+  @Test
+  public void testHttp2ClientPipelineFactory2Fail()
+      throws NoSuchAlgorithmException
+  {
+    String[] requestedCipherSuites = {"Unsupported"};
+    SSLParameters sslParameters = new SSLParameters();
+    sslParameters.setCipherSuites(requestedCipherSuites);
+    try
+    {
+      new HttpClientBuilder(_eventLoop, _scheduler)
+          .setSSLContext(SSLContext.getDefault())
+          .setSSLParameters(sslParameters)
+          .buildHttp2Stream();
+    }
+    catch (IllegalArgumentException e)
+    {
+      // Check exception message to make sure it's the expected one.
+      Assert.assertEquals(e.getMessage(), "None of the requested cipher suites: [Unsupported] are found in SSLContext");
+    }
+  }
+
   // Test that can set cipher suites in SSLParameters that have at least one match in
   // SSLContext.
   // This in fact tests HttpClientPipelineFactory constructor through HttpNettyClient
@@ -548,8 +673,24 @@ public class TestHttpNettyStreamClient
     sslParameters.setCipherSuites(requestedCipherSuites);
     new HttpClientBuilder(_eventLoop, _scheduler)
         .setSSLContext(SSLContext.getDefault())
+        .setSSLParameters(sslParameters).buildStream();
+  }
+
+  // Test that can set cipher suites in SSLParameters that have at least one match in
+  // SSLContext.
+  // This in fact tests HttpClientPipelineFactory constructor through HttpNettyClient
+  // constructor.
+  @Test
+  public void testHttp2ClientPipelineFactory2Pass()
+      throws NoSuchAlgorithmException
+  {
+    String[] requestedCipherSuites = {"Unsupported", "TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA"};
+    SSLParameters sslParameters = new SSLParameters();
+    sslParameters.setCipherSuites(requestedCipherSuites);
+    new HttpClientBuilder(_eventLoop, _scheduler)
+        .setSSLContext(SSLContext.getDefault())
         .setSSLParameters(sslParameters)
-        .buildStream();
+        .buildHttp2Stream();
   }
 
   // Test that cannot set protocols in SSLParameters that don't have any match in
@@ -577,6 +718,31 @@ public class TestHttpNettyStreamClient
     }
   }
 
+  // Test that cannot set protocols in SSLParameters that don't have any match in
+  // SSLContext.
+  // This in fact tests HttpClientPipelineFactory constructor through HttpNettyClient
+  // constructor.
+  @Test
+  public void testHttp2ClientPipelineFactory3Fail()
+      throws NoSuchAlgorithmException
+  {
+    String[] requestedProtocols = {"Unsupported"};
+    SSLParameters sslParameters = new SSLParameters();
+    sslParameters.setProtocols(requestedProtocols);
+    try
+    {
+      new HttpClientBuilder(_eventLoop, _scheduler)
+          .setSSLContext(SSLContext.getDefault())
+          .setSSLParameters(sslParameters)
+          .buildHttp2Stream();
+    }
+    catch (IllegalArgumentException e)
+    {
+      // Check exception message to make sure it's the expected one.
+      Assert.assertEquals(e.getMessage(), "None of the requested protocols: [Unsupported] are found in SSLContext");
+    }
+  }
+
   // Test that can set protocols in SSLParameters that have at least one match in
   // SSLContext.
   // This in fact tests HttpClientPipelineFactory constructor through HttpNettyClient
@@ -595,9 +761,26 @@ public class TestHttpNettyStreamClient
         .buildStream();
   }
 
+  // Test that can set protocols in SSLParameters that have at least one match in
+  // SSLContext.
+  // This in fact tests HttpClientPipelineFactory constructor through HttpNettyClient
+  // constructor.
   @Test
-  public void testPoolStatsProviderManager()
-      throws InterruptedException, ExecutionException, TimeoutException
+  public void testHttp2ClientPipelineFactory3Pass()
+      throws NoSuchAlgorithmException
+  {
+    String[] requestedProtocols = {"Unsupported", "TLSv1"};
+    SSLParameters sslParameters = new SSLParameters();
+    sslParameters.setProtocols(requestedProtocols);
+
+    new HttpClientBuilder(_eventLoop, _scheduler)
+        .setSSLContext(SSLContext.getDefault())
+        .setSSLParameters(sslParameters)
+        .buildHttp2Stream();
+  }
+
+  @DataProvider(name = "poolStatsClients")
+  public Object[][] poolStatsClientProvider()
   {
     final CountDownLatch setLatch = new CountDownLatch(1);
     final CountDownLatch removeLatch = new CountDownLatch(1);
@@ -615,11 +798,20 @@ public class TestHttpNettyStreamClient
         removeLatch.countDown();
       }
     };
+    HttpClientBuilder builder = new HttpClientBuilder(_eventLoop, _scheduler).setJmxManager(manager);
+    return new Object[][] {
+        { builder.buildStream(), setLatch, removeLatch },
+        { builder.buildHttp2Stream(), setLatch, removeLatch },
+    };
+  }
 
-    HttpNettyStreamClient client =
-        new HttpClientBuilder(_eventLoop, _scheduler)
-            .setJmxManager(manager)
-            .buildStream();
+  @Test(dataProvider = "poolStatsClients")
+  public void testPoolStatsProviderManager(
+      AbstractNettyStreamClient client,
+      CountDownLatch setLatch,
+      CountDownLatch removeLatch)
+      throws Exception
+  {
     // test setPoolStatsProvider
     try
     {
@@ -707,7 +899,180 @@ public class TestHttpNettyStreamClient
         }
       }, 0, 0, _scheduler);
     }
-
   }
 
+  @DataProvider(name = "requestResponseParameters")
+  public Object[][] parametersProvider() {
+    HttpClientBuilder builder = new HttpClientBuilder(_eventLoop, _scheduler);
+    // Client, Request Method, Request Size, Response Size, RestOverStream
+    return new Object[][] {
+        { builder.buildHttp2Stream(), HTTP_GET, NO_CONTENT, NO_CONTENT, true },
+        { builder.buildHttp2Stream(), HTTP_GET, NO_CONTENT, NO_CONTENT, false },
+        { builder.buildHttp2Stream(), HTTP_GET, SMALL_CONTENT, SMALL_CONTENT, true },
+        { builder.buildHttp2Stream(), HTTP_GET, SMALL_CONTENT, SMALL_CONTENT, false },
+        { builder.buildHttp2Stream(), HTTP_GET, LARGE_CONTENT, LARGE_CONTENT, true },
+        { builder.buildHttp2Stream(), HTTP_GET, LARGE_CONTENT, LARGE_CONTENT, false },
+        { builder.buildHttp2Stream(), HTTP_POST, NO_CONTENT, NO_CONTENT, true },
+        { builder.buildHttp2Stream(), HTTP_POST, NO_CONTENT, NO_CONTENT, false },
+        { builder.buildHttp2Stream(), HTTP_POST, SMALL_CONTENT, SMALL_CONTENT, true },
+        { builder.buildHttp2Stream(), HTTP_POST, SMALL_CONTENT, SMALL_CONTENT, false },
+        { builder.buildHttp2Stream(), HTTP_POST, LARGE_CONTENT, LARGE_CONTENT, true },
+        { builder.buildHttp2Stream(), HTTP_POST, LARGE_CONTENT, LARGE_CONTENT, false },
+        { builder.buildStream(), HTTP_GET, NO_CONTENT, NO_CONTENT, true },
+        { builder.buildStream(), HTTP_GET, NO_CONTENT, NO_CONTENT, false },
+        { builder.buildStream(), HTTP_GET, SMALL_CONTENT, SMALL_CONTENT, true },
+        { builder.buildStream(), HTTP_GET, SMALL_CONTENT, SMALL_CONTENT, false },
+        { builder.buildStream(), HTTP_GET, LARGE_CONTENT, LARGE_CONTENT, true },
+        { builder.buildStream(), HTTP_GET, LARGE_CONTENT, LARGE_CONTENT, false },
+        { builder.buildStream(), HTTP_POST, NO_CONTENT, NO_CONTENT, true },
+        { builder.buildStream(), HTTP_POST, NO_CONTENT, NO_CONTENT, false },
+        { builder.buildStream(), HTTP_POST, SMALL_CONTENT, SMALL_CONTENT, true },
+        { builder.buildStream(), HTTP_POST, SMALL_CONTENT, SMALL_CONTENT, false },
+        { builder.buildStream(), HTTP_POST, LARGE_CONTENT, LARGE_CONTENT, true },
+        { builder.buildStream(), HTTP_POST, LARGE_CONTENT, LARGE_CONTENT, false },
+    };
+  }
+
+  /**
+   * Tests implementations of {@link AbstractNettyStreamClient} with different request dimensions.
+   *
+   * @param client Client implementation of {@link AbstractNettyStreamClient}
+   * @param method HTTP request method
+   * @param requestSize Request content size
+   * @param responseSize Response content size
+   * @param isFullRequest Whether to buffer a full request before stream
+   * @throws Exception
+   */
+  @Test(dataProvider = "requestResponseParameters")
+  public void testStreamRequests(
+      AbstractNettyStreamClient client,
+      String method,
+      int requestSize,
+      int responseSize,
+      boolean isFullRequest) throws Exception
+  {
+    AtomicInteger succeeded = new AtomicInteger(0);
+    AtomicInteger failed = new AtomicInteger(0);
+    Server server = new HttpServerBuilder().responseSize(responseSize).build();
+    try
+    {
+      server.start();
+      CountDownLatch latch = new CountDownLatch(REQUEST_COUNT);
+      for (int i = 0; i < REQUEST_COUNT; i++)
+      {
+        StreamRequest request = new StreamRequestBuilder(new URI(URL)).setMethod(method)
+            .setHeader(HttpHeaderNames.HOST.toString(), HOST_NAME.toString())
+            .build(EntityStreams.newEntityStream(new ByteStringWriter(ByteString.copy(new byte[requestSize]))));
+        RequestContext context = new RequestContext();
+        context.putLocalAttr(R2Constants.IS_FULL_REQUEST, isFullRequest);
+        client.streamRequest(request, context, new HashMap<>(),
+            new TransportCallbackAdapter<>(new Callback<StreamResponse>()
+            {
+              @Override
+              public void onSuccess(StreamResponse response)
+              {
+                response.getEntityStream().setReader(new Reader()
+                {
+                  ReadHandle _rh;
+                  int _consumed = 0;
+
+                  @Override
+                  public void onDataAvailable(ByteString data)
+                  {
+                    _consumed += data.length();
+                    _rh.request(1);
+                  }
+
+                  @Override
+                  public void onDone()
+                  {
+                    succeeded.incrementAndGet();
+                    latch.countDown();
+                  }
+
+                  @Override
+                  public void onError(Throwable e)
+                  {
+                    failed.incrementAndGet();
+                    latch.countDown();
+                  }
+
+                  @Override
+                  public void onInit(ReadHandle rh)
+                  {
+                    _rh = rh;
+                    _rh.request(1);
+                  }
+                });
+              }
+
+              @Override
+              public void onError(Throwable e)
+              {
+                failed.incrementAndGet();
+                latch.countDown();
+              }
+            }));
+      }
+
+      if (!latch.await(30, TimeUnit.SECONDS))
+      {
+        Assert.fail("Timeout waiting for responses. " + succeeded + " requests succeeded and " + failed
+            + " requests failed out of total " + REQUEST_COUNT + " requests");
+      }
+
+      Assert.assertEquals(latch.getCount(), 0);
+      Assert.assertEquals(failed.get(), 0);
+      Assert.assertEquals(succeeded.get(), REQUEST_COUNT);
+
+      FutureCallback<None> shutdownCallback = new FutureCallback<>();
+      client.shutdown(shutdownCallback);
+      shutdownCallback.get(30, TimeUnit.SECONDS);
+    }
+    finally
+    {
+      server.stop();
+    }
+  }
+
+  @Test(dataProvider = "requestResponseParameters", expectedExceptions = UnsupportedOperationException.class)
+  public void testRestRequests(
+      AbstractNettyStreamClient client,
+      String method,
+      int requestSize,
+      int responseSize,
+      boolean isFullRequest) throws Exception
+  {
+    Server server = new HttpServerBuilder().responseSize(responseSize).build();
+    try
+    {
+      server.start();
+      for (int i = 0; i < REQUEST_COUNT; i++)
+      {
+        RestRequest request = new RestRequestBuilder(new URI(URL)).setMethod(method)
+            .setHeader(HttpHeaderNames.HOST.toString(), HOST_NAME.toString())
+            .setEntity(ByteString.copy(new byte[requestSize]))
+            .build();
+        RequestContext context = new RequestContext();
+        context.putLocalAttr(R2Constants.IS_FULL_REQUEST, isFullRequest);
+        client.restRequest(request, context, new HashMap<>(),
+            new TransportCallbackAdapter<>(new Callback<RestResponse>()
+            {
+              @Override
+              public void onSuccess(RestResponse response)
+              {
+              }
+
+              @Override
+              public void onError(Throwable e)
+              {
+              }
+            }));
+      }
+    }
+    finally
+    {
+      server.stop();
+    }
+  }
 }

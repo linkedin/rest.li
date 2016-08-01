@@ -41,6 +41,7 @@ import com.linkedin.r2.message.stream.entitystream.EntityStream;
 import com.linkedin.r2.message.stream.entitystream.EntityStreams;
 import com.linkedin.r2.message.stream.entitystream.Writer;
 import com.linkedin.r2.sample.Bootstrap;
+import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.StreamRequestHandler;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcherBuilder;
@@ -49,7 +50,6 @@ import com.linkedin.r2.transport.http.common.HttpConstants;
 import com.linkedin.r2.transport.http.server.HttpJettyServer;
 import com.linkedin.r2.transport.http.server.HttpServerFactory;
 import java.net.URI;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -111,9 +111,18 @@ public class TestResponseCompression extends AbstractStreamTest
   }
 
   @Override
-  protected Map<String, String> getClientProperties()
+  protected Map<String, String> getHttp1ClientProperties()
   {
-    Map<String, String> clientProperties = new HashMap<String, String>();
+    Map<String, String> clientProperties = super.getHttp1ClientProperties();
+    clientProperties.put(HttpClientFactory.HTTP_MAX_RESPONSE_SIZE, String.valueOf(LARGE_BYTES_NUM * 2));
+    clientProperties.put(HttpClientFactory.HTTP_REQUEST_TIMEOUT, "60000");
+    return clientProperties;
+  }
+
+  @Override
+  protected Map<String, String> getHttp2ClientProperties()
+  {
+    Map<String, String> clientProperties = super.getHttp2ClientProperties();
     clientProperties.put(HttpClientFactory.HTTP_MAX_RESPONSE_SIZE, String.valueOf(LARGE_BYTES_NUM * 2));
     clientProperties.put(HttpClientFactory.HTTP_REQUEST_TIMEOUT, "60000");
     return clientProperties;
@@ -202,49 +211,54 @@ public class TestResponseCompression extends AbstractStreamTest
   private void testResponseCompression(URI uri, long bytes, String acceptEncoding, final StreamingCompressor compressor)
       throws InterruptedException, TimeoutException, ExecutionException
   {
-    StreamRequestBuilder builder = new StreamRequestBuilder((Bootstrap.createHttpURI(PORT, uri)));
-    builder.addHeaderValue(HttpConstants.ACCEPT_ENCODING, acceptEncoding);
-    StreamRequest request = builder.build(EntityStreams.emptyStream());
+    for (Client client : clients())
+    {
+      StreamRequestBuilder builder = new StreamRequestBuilder((Bootstrap.createHttpURI(PORT, uri)));
+      builder.addHeaderValue(HttpConstants.ACCEPT_ENCODING, acceptEncoding);
+      StreamRequest request = builder.build(EntityStreams.emptyStream());
 
-    final FutureCallback<StreamResponse> callback = new FutureCallback<StreamResponse>();
-    _client.streamRequest(request, callback);
+      final FutureCallback<StreamResponse> callback = new FutureCallback<StreamResponse>();
+      client.streamRequest(request, callback);
 
-    final StreamResponse response = callback.get(60, TimeUnit.SECONDS);
-    Assert.assertEquals(response.getStatus(), RestStatus.OK);
+      final StreamResponse response = callback.get(60, TimeUnit.SECONDS);
+      Assert.assertEquals(response.getStatus(), RestStatus.OK);
 
-    final FutureCallback<None> readerCallback = new FutureCallback<None>();
-    final BytesReader reader = new BytesReader(BYTE, readerCallback);
-    final EntityStream decompressedStream = compressor.inflate(response.getEntityStream());
-    decompressedStream.setReader(reader);
+      final FutureCallback<None> readerCallback = new FutureCallback<None>();
+      final BytesReader reader = new BytesReader(BYTE, readerCallback);
+      final EntityStream decompressedStream = compressor.inflate(response.getEntityStream());
+      decompressedStream.setReader(reader);
 
-    readerCallback.get(60, TimeUnit.SECONDS);
-    Assert.assertEquals(reader.getTotalBytes(), bytes);
-    Assert.assertTrue(reader.allBytesCorrect());
+      readerCallback.get(60, TimeUnit.SECONDS);
+      Assert.assertEquals(reader.getTotalBytes(), bytes);
+      Assert.assertTrue(reader.allBytesCorrect());
+    }
   }
 
   public void testEncodingNotAcceptable(String acceptEncoding)
       throws TimeoutException, InterruptedException
   {
-    StreamRequestBuilder builder = new StreamRequestBuilder((Bootstrap.createHttpURI(PORT, SMALL_URI)));
-    if (acceptEncoding != null)
+    for (Client client : clients())
     {
-      builder.addHeaderValue(HttpConstants.ACCEPT_ENCODING, acceptEncoding);
-    }
-    StreamRequest request = builder.build(EntityStreams.emptyStream());
+      StreamRequestBuilder builder = new StreamRequestBuilder((Bootstrap.createHttpURI(PORT, SMALL_URI)));
+      if (acceptEncoding != null)
+      {
+        builder.addHeaderValue(HttpConstants.ACCEPT_ENCODING, acceptEncoding);
+      }
+      StreamRequest request = builder.build(EntityStreams.emptyStream());
 
-    final FutureCallback<StreamResponse> callback = new FutureCallback<StreamResponse>();
-    _client.streamRequest(request, callback);
-    try
-    {
-      final StreamResponse response = callback.get(60, TimeUnit.SECONDS);
-      Assert.fail("Should have thrown exception when encoding is not acceptable");
-    }
-    catch (ExecutionException e)
-    {
-      Throwable t = e.getCause();
-      Assert.assertTrue(t instanceof StreamException);
-      StreamResponse response = ((StreamException) t).getResponse();
-      Assert.assertEquals(response.getStatus(), HttpConstants.NOT_ACCEPTABLE);
+      final FutureCallback<StreamResponse> callback = new FutureCallback<StreamResponse>();
+      client.streamRequest(request, callback);
+      try
+      {
+        final StreamResponse response = callback.get(60, TimeUnit.SECONDS);
+        Assert.fail("Should have thrown exception when encoding is not acceptable");
+      } catch (ExecutionException e)
+      {
+        Throwable t = e.getCause();
+        Assert.assertTrue(t instanceof StreamException);
+        StreamResponse response = ((StreamException) t).getResponse();
+        Assert.assertEquals(response.getStatus(), HttpConstants.NOT_ACCEPTABLE);
+      }
     }
   }
 

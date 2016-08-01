@@ -43,6 +43,7 @@ import io.netty.handler.codec.http.HttpContent;
 import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.util.AttributeKey;
@@ -96,9 +97,9 @@ import static io.netty.handler.codec.http.HttpHeaders.removeTransferEncodingChun
     if (msg instanceof HttpResponse)
     {
       HttpResponse m = (HttpResponse) msg;
-      _shouldCloseConnection = !isKeepAlive(m);
+      _shouldCloseConnection = !HttpUtil.isKeepAlive(m);
 
-      if (is100ContinueExpected(m))
+      if (HttpUtil.is100ContinueExpected(m))
       {
         ctx.writeAndFlush(CONTINUE).addListener(new ChannelFutureListener()
         {
@@ -113,15 +114,15 @@ import static io.netty.handler.codec.http.HttpHeaders.removeTransferEncodingChun
           }
         });
       }
-      if (!m.getDecoderResult().isSuccess())
+      if (!m.decoderResult().isSuccess())
       {
-        ctx.fireExceptionCaught(m.getDecoderResult().cause());
+        ctx.fireExceptionCaught(m.decoderResult().cause());
         return;
       }
       // remove chunked encoding.
-      if (isTransferEncodingChunked(m))
+      if (HttpUtil.isTransferEncodingChunked(m))
       {
-        removeTransferEncodingChunked(m);
+        HttpUtil.setTransferEncodingChunked(m, false);
       }
 
       Timeout<None> timeout = ctx.channel().attr(TIMEOUT_ATTR_KEY).getAndRemove();
@@ -136,7 +137,7 @@ import static io.netty.handler.codec.http.HttpHeaders.removeTransferEncodingChun
       EntityStream entityStream = EntityStreams.newEntityStream(writer);
       _chunkedMessageWriter = writer;
       StreamResponseBuilder builder = new StreamResponseBuilder();
-      builder.setStatus(m.getStatus().code());
+      builder.setStatus(m.status().code());
 
       for (Map.Entry<String, String> e : m.headers())
       {
@@ -166,9 +167,9 @@ import static io.netty.handler.codec.http.HttpHeaders.removeTransferEncodingChun
                 " without " + HttpResponse.class.getSimpleName());
       }
 
-      if (!chunk.getDecoderResult().isSuccess())
+      if (!chunk.decoderResult().isSuccess())
       {
-        this.exceptionCaught(ctx, chunk.getDecoderResult().cause());
+        this.exceptionCaught(ctx, chunk.decoderResult().cause());
       }
 
       currentWriter.processHttpChunk(chunk);

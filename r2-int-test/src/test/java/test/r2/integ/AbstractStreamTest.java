@@ -9,11 +9,13 @@ import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.transport.http.server.HttpServer;
 import com.linkedin.r2.transport.http.server.HttpServerFactory;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -32,7 +34,8 @@ public abstract class AbstractStreamTest
   protected static final long INTERVAL = 20;
   protected HttpServer _server;
   protected TransportClientFactory _clientFactory;
-  protected Client _client;
+  protected Client _http1Client;
+  protected Client _http2Client;
   protected ScheduledExecutorService _scheduler;
 
   @BeforeClass
@@ -40,18 +43,22 @@ public abstract class AbstractStreamTest
   {
     _scheduler = Executors.newSingleThreadScheduledExecutor();
     _clientFactory = getClientFactory();
-    _client = new TransportClientAdapter(_clientFactory.getClient(getClientProperties()), true);
-    _server = getServerFactory().createServer(PORT, getTransportDispatcher(), true);
+    _http1Client = new TransportClientAdapter(_clientFactory.getClient(getHttp1ClientProperties()), true);
+    _http2Client = new TransportClientAdapter(_clientFactory.getClient(getHttp2ClientProperties()), true);
+    _server = getServerFactory().createH2cServer(PORT, getTransportDispatcher(), true);
     _server.start();
   }
 
   @AfterClass
   public void tearDown() throws Exception
   {
+    final FutureCallback<None> http1ClientShutdownCallback = new FutureCallback<None>();
+    _http1Client.shutdown(http1ClientShutdownCallback);
+    http1ClientShutdownCallback.get();
 
-    final FutureCallback<None> clientShutdownCallback = new FutureCallback<None>();
-    _client.shutdown(clientShutdownCallback);
-    clientShutdownCallback.get();
+    final FutureCallback<None> http2ClientShutdownCallback = new FutureCallback<None>();
+    _http2Client.shutdown(http2ClientShutdownCallback);
+    http2ClientShutdownCallback.get();
 
     final FutureCallback<None> factoryShutdownCallback = new FutureCallback<None>();
     _clientFactory.shutdown(factoryShutdownCallback);
@@ -64,6 +71,11 @@ public abstract class AbstractStreamTest
     }
   }
 
+  protected Collection<Client> clients()
+  {
+    return Arrays.asList(_http1Client, _http2Client);
+  }
+
   protected abstract TransportDispatcher getTransportDispatcher();
 
   protected TransportClientFactory getClientFactory()
@@ -71,9 +83,18 @@ public abstract class AbstractStreamTest
     return new HttpClientFactory();
   }
 
-  protected Map<String, String> getClientProperties()
+  protected Map<String, String> getHttp1ClientProperties()
   {
-    return Collections.emptyMap();
+    HashMap<String, String> properties = new HashMap<>();
+    properties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, HttpProtocolVersion.HTTP_1_1);
+    return properties;
+  }
+
+  protected Map<String, String> getHttp2ClientProperties()
+  {
+    HashMap<String, String> properties = new HashMap<>();
+    properties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, HttpProtocolVersion.HTTP_2);
+    return properties;
   }
 
   protected HttpServerFactory getServerFactory()
