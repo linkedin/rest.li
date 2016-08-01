@@ -195,7 +195,10 @@ public class TestStreamEcho extends AbstractStreamTest
     double diff = Math.abs(clientReceiveTimespan - clientSendTimespan);
     double diffRatio = diff / clientSendTimespan;
     // make it generous to reduce the chance occasional test failures
-    Assert.assertTrue(diffRatio < 0.2);
+    Assert.assertTrue(
+        diffRatio < 0.5,
+        "Send/receive time delta is " + diff + " but expected to be less than 0.5. Send time span is "
+            + clientSendTimespan + " and receive time span is " + clientReceiveTimespan);
   }
 
   @Test
