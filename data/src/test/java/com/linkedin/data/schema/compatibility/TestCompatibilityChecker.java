@@ -332,8 +332,8 @@ public class TestCompatibilityChecker
           "{ \"name\" : \"a.b.Record\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"f1\", \"type\" : \"int\", \"optional\" : true }, { \"name\" : \"f2\", \"type\" : \"string\", \"optional\" : true } ] }",
           "{ \"name\" : \"a.b.Record\", \"type\" : \"record\", \"fields\" : [ ] }",
           _dataAndSchema,
-          false,
-          "INFO :: NEW_READER_IGNORES_DATA :: /a.b.Record :: new record removed optional fields f1, f2"
+          true,
+          "ERROR :: BREAKS_NEW_AND_OLD_READERS :: /a.b.Record :: new record removed optional fields f1, f2. This allows a new field to be added with the same name but different type in the future."
         },
         {
           // removed optional fields, added required fields
@@ -342,7 +342,7 @@ public class TestCompatibilityChecker
           _dataAndSchema,
           true,
           "ERROR :: BREAKS_NEW_READER :: /a.b.Record :: new record added required fields f2",
-          "INFO :: NEW_READER_IGNORES_DATA :: /a.b.Record :: new record removed optional fields f1"
+          "ERROR :: BREAKS_NEW_AND_OLD_READERS :: /a.b.Record :: new record removed optional fields f1. This allows a new field to be added with the same name but different type in the future."
         },
         {
           // removed required fields, added optional fields
@@ -360,7 +360,7 @@ public class TestCompatibilityChecker
           _dataAndSchema,
           true,
           "ERROR :: BREAKS_NEW_READER :: /a.b.Record :: new record added required fields f2",
-          "INFO :: NEW_READER_IGNORES_DATA :: /a.b.Record :: new record removed optional fields f1"
+          "ERROR :: BREAKS_NEW_AND_OLD_READERS :: /a.b.Record :: new record removed optional fields f1. This allows a new field to be added with the same name but different type in the future."
         },
         {
           // changed required to optional fields, added optional fields

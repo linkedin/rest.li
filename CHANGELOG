@@ -1,6 +1,7 @@
 6.1.1
 ------
-
+(RB=769550)
+Convey that the removal of optional fields may be a backward incompatible change
 
 6.1.0
 ------
