@@ -1,6 +1,11 @@
-6.0.18
+6.1.1
 ------
 
+
+6.1.0
+------
+(RB=727325)
+Netty HTTP/2 client implementation
 
 6.0.17
 ------
