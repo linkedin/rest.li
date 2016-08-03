@@ -2,6 +2,8 @@
 ------
 (RB=769550)
 Convey that the removal of optional fields may be a backward incompatible change
+(RB=779968)
+Remove JVM argument for setting the max memory sizes available to the JVM
 
 6.1.0
 ------
