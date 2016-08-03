@@ -6,6 +6,10 @@
     "fields" : [ {
       "name" : "foo1",
       "type" : "int"
+    }, {
+      "name" : "foo2",
+      "type" : "int",
+      "optional" : true
     } ]
   }, {
     "type" : "enum",
@@ -103,7 +107,7 @@
   "schema" : {
     "annotations" : {
       "createOnly" : {
-        "value" : [ "stringB", "intB", "MapWithTyperefs/id" ]
+        "value" : [ "stringB", "intB", "UnionFieldWithInlineRecord/com.linkedin.restli.examples.greetings.api.myRecord/foo2", "MapWithTyperefs/id" ]
       },
       "readOnly" : {
         "value" : [ "intC", "stringA", "intA", "UnionFieldWithInlineRecord/com.linkedin.restli.examples.greetings.api.myRecord/foo1", "ArrayWithInlineRecord/bar1", "validationDemoNext/stringB", "validationDemoNext/UnionFieldWithInlineRecord" ]

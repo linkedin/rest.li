@@ -921,6 +921,10 @@ public class ResourceCompatibilityChecker
         }
       }
       // Removing an annotation is only valid if the field was removed from the schema.
+      // Note that removal of any field of any type is backwards incompatible. However at this point, only rest spec (resource)
+      // level incompatibilities are checked. Hence the reason that restSpecInfo is populated. Therefore we will
+      // treat restSpec incompatibility in isolation from model incompatibility in order to provide fine grained
+      // compatibility results.
       Set<Object> removedPaths = new HashSet<Object>(prevPaths);
       removedPaths.removeAll(currPaths);
       for (Object path : removedPaths)

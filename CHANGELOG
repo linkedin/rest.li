@@ -1,7 +1,11 @@
 6.1.1
 ------
+(RB=781062)
+Fix failing tests due to restriction of removing optional fields
+
 (RB=769550)
 Convey that the removal of optional fields may be a backward incompatible change
+
 (RB=779968)
 Remove JVM argument for setting the max memory sizes available to the JVM
 

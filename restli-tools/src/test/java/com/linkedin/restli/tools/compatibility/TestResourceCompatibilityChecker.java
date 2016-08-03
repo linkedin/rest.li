@@ -105,8 +105,6 @@ public class TestResourceCompatibilityChecker
     resourceTestDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "finders", "oneFinder", "parameters", "param1", "annotations", "deprecated"),
                                                 CompatibilityInfo.Type.ANNOTATIONS_CHANGED, "added"));
     modelTestDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("com.linkedin.greetings.api.Greeting"),
-                                             CompatibilityInfo.Type.TYPE_INFO, "new record removed optional fields tone"));
-    modelTestDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("com.linkedin.greetings.api.Greeting"),
                                              CompatibilityInfo.Type.TYPE_INFO, "new record added optional fields newField"));
 
     final ResourceSchema prevResource = idlToResource(IDLS_SUFFIX + PREV_COLL_FILE);
@@ -199,8 +197,6 @@ public class TestResourceCompatibilityChecker
                                                 CompatibilityInfo.Type.ANNOTATIONS_CHANGED, "added"));
     resourceTestDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "simple", "methods", "get", "annotations", "deprecated"),
                                                 CompatibilityInfo.Type.ANNOTATIONS_CHANGED, "added"));
-    modelTestDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("com.linkedin.greetings.api.Greeting"),
-                                             CompatibilityInfo.Type.TYPE_INFO, "new record removed optional fields tone"));
     modelTestDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("com.linkedin.greetings.api.Greeting"),
                                              CompatibilityInfo.Type.TYPE_INFO, "new record added optional fields newField"));
 
@@ -525,11 +521,12 @@ public class TestResourceCompatibilityChecker
     prevSchemaResolver.bindNameToSchema(toneName, tone, null);
     prevSchemaResolver.bindNameToSchema(greetingName, prevGreeting, null);
 
-    // compat greeting has removed optional field "tone" and added a new optional field "newField"
+    // compat greeting added a new optional field "newField"
     RecordDataSchema compatGreeting = new RecordDataSchema(greetingName, RecordDataSchema.RecordType.RECORD);
     List<RecordDataSchema.Field> compatFields = new ArrayList<RecordDataSchema.Field>();
     compatFields.add(id);
     compatFields.add(message);
+    compatFields.add(toneField);
     RecordDataSchema.Field newCompatField = new RecordDataSchema.Field(new StringDataSchema());
     newCompatField.setName("newField", errors);
     newCompatField.setOptional(true);
