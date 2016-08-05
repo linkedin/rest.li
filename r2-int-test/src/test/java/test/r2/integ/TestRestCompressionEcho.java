@@ -170,8 +170,8 @@ public class TestRestCompressionEcho
         Client http2Client = new TransportClientAdapter(factory.getClient(getHttp2ClientProperties()), REST_OVER_STREAM);
         args[cur][0] = http1Client;
         args[cur][1] = LARGE_BYTES_NUM;
-        args[cur + 1][0] = http1Client;
-        args[cur + 1][1] = SMALL_BYTES_NUM;
+        args[cur + 1][0] = http2Client;
+        args[cur + 1][1] = LARGE_BYTES_NUM;
         cur += 2;
         _clientFactories.add(factory);
         _clients.add(http1Client);
@@ -197,7 +197,7 @@ public class TestRestCompressionEcho
         Client http2Client = new TransportClientAdapter(factory.getClient(getHttp2ClientProperties()), REST_OVER_STREAM);
         args[cur][0] = http1Client;
         args[cur][1] = SMALL_BYTES_NUM;
-        args[cur + 1][0] = http1Client;
+        args[cur + 1][0] = http2Client;
         args[cur + 1][1] = SMALL_BYTES_NUM;
         cur += 2;
         _clientFactories.add(factory);
