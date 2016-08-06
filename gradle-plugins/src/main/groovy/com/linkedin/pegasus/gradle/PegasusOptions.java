@@ -22,7 +22,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,8 +70,8 @@ public class PegasusOptions
   public static class IdlItem
   {
     // Input options for pegasus IDL Generation
-    public String apiName;
-    public String[] packageNames;
+    String apiName;
+    String[] packageNames;
 
     public IdlItem(String inApiName, List<String> inPackageNames)
     {
@@ -87,8 +86,7 @@ public class PegasusOptions
 
     public void addIdlItem(String inApiName, List<String> inPackageNames)
     {
-      _log.warn(
-          "addIdlItem(inApiName, inPackageNames) has been deprecated, please use addIdlItem(inPackageNames) instead.");
+      _log.warn("addIdlItem(inApiName, inPackageNames) has been deprecated, please use addIdlItem(inPackageNames) instead.");
       IdlItem newItem = new IdlItem(inApiName, inPackageNames);
       _idlOptionsList.add(newItem);
     }
@@ -108,10 +106,10 @@ public class PegasusOptions
   public static class ClientItem
   {
     // Input options for pegasus Client Stub (Builder) generation
-    public String defaultPackage;
-    public String restModelFileName;
+    String defaultPackage;
+    String restModelFileName;
     // will be used in the future
-    public boolean keepDataTemplates = false;
+    boolean keepDataTemplates = false;
 
     public ClientItem(String inRestModelFileName, String inDefaultPackage, boolean inKeepDataTemplates)
     {
@@ -142,9 +140,7 @@ public class PegasusOptions
       for (ClientItem item : clientOptionsList)
       {
         if (item.restModelFileName.equals(fileName))
-        {
           return true;
-        }
       }
       return false;
     }

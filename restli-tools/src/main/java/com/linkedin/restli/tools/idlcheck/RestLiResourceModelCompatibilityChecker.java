@@ -16,7 +16,6 @@
 
 package com.linkedin.restli.tools.idlcheck;
 
-
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.SchemaParserFactory;
 import com.linkedin.data.schema.generator.AbstractGenerator;
@@ -25,9 +24,7 @@ import com.linkedin.data.schema.resolver.FileDataSchemaResolver;
 import com.linkedin.restli.restspec.ResourceSchema;
 import com.linkedin.restli.restspec.RestSpecCodec;
 import com.linkedin.restli.tools.compatibility.CompatibilityInfoMap;
-import com.linkedin.restli.tools.compatibility.CompatibilityReport;
 import com.linkedin.restli.tools.compatibility.ResourceCompatibilityChecker;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -57,13 +54,10 @@ public class RestLiResourceModelCompatibilityChecker
     final Options options = new Options();
     options.addOption("h", "help", false, "Print help");
     options.addOption(OptionBuilder.withArgName("compatibility_level")
-                          .withLongOpt("compat")
-                          .hasArg()
-                          .withDescription("Compatibility level " + listCompatLevelOptions())
-                          .create('c'));
-    options.addOption(OptionBuilder.withLongOpt("report")
-                          .withDescription("Prints a report at the end of the execution that can be parsed for reporting to other tools")
-                          .create("report"));
+                                   .withLongOpt("compat")
+                                   .hasArg()
+                                   .withDescription("Compatibility level " + listCompatLevelOptions())
+                                   .create('c'));
     final String cmdLineSyntax = RestLiResourceModelCompatibilityChecker.class.getCanonicalName() + " [pairs of <prevRestspecPath currRestspecPath>]";
 
     final CommandLineParser parser = new PosixParser();
@@ -76,7 +70,7 @@ public class RestLiResourceModelCompatibilityChecker
     catch (ParseException e)
     {
       new HelpFormatter().printHelp(cmdLineSyntax, options, true);
-      System.exit(255);
+      System.exit(1);
       return; // to suppress IDE warning
     }
 
@@ -84,7 +78,7 @@ public class RestLiResourceModelCompatibilityChecker
     if (cmd.hasOption('h') || targets.length < 2 || targets.length % 2 != 0)
     {
       new HelpFormatter().printHelp(cmdLineSyntax, options, true);
-      System.exit(255);
+      System.exit(1);
     }
 
     final String compatValue;
@@ -105,35 +99,29 @@ public class RestLiResourceModelCompatibilityChecker
     catch (IllegalArgumentException e)
     {
       new HelpFormatter().printHelp(cmdLineSyntax, options, true);
-      System.exit(255);
+      System.exit(1);
       return;
     }
 
     final StringBuilder allSummaries = new StringBuilder();
-    final RestLiResourceModelCompatibilityChecker checker = new RestLiResourceModelCompatibilityChecker();
+    boolean result = true;
     for (int i = 1; i < targets.length; i += 2)
     {
+      final RestLiResourceModelCompatibilityChecker checker = new RestLiResourceModelCompatibilityChecker();
       checker.setResolverPath(System.getProperty(AbstractGenerator.GENERATOR_RESOLVER_PATH));
 
       String prevTarget = targets[i - 1];
       String currTarget = targets[i];
-      checker.check(prevTarget, currTarget, compat);
+      result &= checker.check(prevTarget, currTarget, compat);
+      allSummaries.append(checker.getInfoMap().createSummary(prevTarget, currTarget));
     }
-
-    allSummaries.append(checker.getInfoMap().createSummary());
 
     if (compat != CompatibilityLevel.OFF && allSummaries.length() > 0)
     {
       System.out.println(allSummaries);
     }
 
-    if (cmd.hasOption("report"))
-    {
-      System.out.println(new CompatibilityReport(checker.getInfoMap(), compat).createReport());
-      System.exit(0);
-    }
-
-    System.exit(checker.getInfoMap().isCompatible(compat) ? 0 : 1);
+    System.exit(result ? 0 : 1);
   }
 
   public void setResolverPath(String resolverPath)
@@ -253,7 +241,7 @@ public class RestLiResourceModelCompatibilityChecker
   private static String listCompatLevelOptions()
   {
     final StringBuilder options = new StringBuilder("<");
-    for (CompatibilityLevel compatLevel : CompatibilityLevel.values())
+    for (CompatibilityLevel compatLevel: CompatibilityLevel.values())
     {
       options.append(compatLevel.name().toLowerCase()).append("|");
     }

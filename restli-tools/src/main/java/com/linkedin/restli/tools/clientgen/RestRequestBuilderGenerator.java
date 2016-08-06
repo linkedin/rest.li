@@ -51,7 +51,6 @@ public class RestRequestBuilderGenerator
 {
   private static final String GENERATOR_REST_GENERATE_DATATEMPLATES = "generator.rest.generate.datatemplates";
   private static final String GENERATOR_REST_GENERATE_VERSION = "generator.rest.generate.version";
-  private static final String GENERATOR_REST_GENERATE_DEPRECATED_VERSION = "generator.rest.generate.deprecated.version";
   private static final Logger _log = LoggerFactory.getLogger(RestRequestBuilderGenerator.class);
 
   /**
@@ -77,34 +76,14 @@ public class RestRequestBuilderGenerator
       throw new IllegalArgumentException("Unrecognized version: " + versionString);
     }
 
-    final RestliVersion deprecatedByVersion = findDeprecatedVersion();
-
     RestRequestBuilderGenerator.run(System.getProperty(AbstractGenerator.GENERATOR_RESOLVER_PATH),
                                     System.getProperty(JavaCodeGeneratorBase.GENERATOR_DEFAULT_PACKAGE),
                                     generateImported == null ? true : Boolean.parseBoolean(generateImported),
                                     generateDataTemplates == null ? true : Boolean.parseBoolean(generateDataTemplates),
                                     version,
-                                    deprecatedByVersion,
+                                    null,
                                     args[0],
                                     Arrays.copyOfRange(args, 1, args.length));
-  }
-
-  public static RestliVersion findDeprecatedVersion()
-  {
-    final String deprecatedByVersionString = System.getProperty(GENERATOR_REST_GENERATE_DEPRECATED_VERSION);
-    if (deprecatedByVersionString == null)
-    {
-      return null;
-    }
-
-    try
-    {
-      return RestliVersion.lookUpRestliVersion(new Version(deprecatedByVersionString));
-    }
-    catch (IllegalArgumentException ignored)
-    {
-      return null;
-    }
   }
 
   public static GeneratorResult run(String resolverPath,

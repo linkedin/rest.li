@@ -152,12 +152,6 @@ subprojects {
         pluginsRuntime project(':gradle-plugins')
         dataTemplateCompile project(':data')
         restClientCompile project(':restli-client')
-
-        //Providing the required dependencies for the plugin to execute under a configuration
-        pegasusPlugin project(':data')
-        pegasusPlugin project(':data-avro-generator')
-        pegasusPlugin project(':generator')
-        pegasusPlugin project(':restli-tools')
       }
     }
     else
