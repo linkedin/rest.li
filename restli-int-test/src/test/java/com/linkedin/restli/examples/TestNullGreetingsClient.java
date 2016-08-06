@@ -39,11 +39,9 @@ import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.client.NullGreetingBuilders;
 import com.linkedin.restli.examples.greetings.client.NullGreetingRequestBuilders;
 import com.linkedin.restli.internal.server.methods.response.ErrorResponseBuilder;
+import com.linkedin.restli.server.filter.Filter;
 import com.linkedin.restli.server.filter.FilterRequestContext;
 import com.linkedin.restli.server.filter.FilterResponseContext;
-import com.linkedin.restli.server.filter.NextResponseFilter;
-import com.linkedin.restli.server.filter.RequestFilter;
-import com.linkedin.restli.server.filter.ResponseFilter;
 import com.linkedin.restli.test.util.BatchCreateHelper;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
@@ -52,6 +50,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import java.util.concurrent.CompletableFuture;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -71,13 +70,24 @@ public class TestNullGreetingsClient extends RestLiIntegrationTest
   @BeforeClass
   public void initClass() throws Exception
   {
-    super.init(Collections.<RequestFilter>emptyList(), ImmutableList.of(new ResponseFilter() {
+    super.init(ImmutableList.of(new Filter() {
       @Override
-      public void onResponse(FilterRequestContext requestContext, FilterResponseContext responseContext, NextResponseFilter nextResponseFilter) {
+      public CompletableFuture<Void> onResponse(FilterRequestContext requestContext,
+                                                FilterResponseContext responseContext) {
         //Add a custom header to the response to make sure that 404s/500s returned by
         //nulls in resource methods are also given a chance to experience the filter
         responseContext.getResponseData().getHeaders().put("X-Null-Greetings-Filter", "Ack");
-        nextResponseFilter.onResponse(requestContext, responseContext);
+        return CompletableFuture.completedFuture(null);
+      }
+      @Override
+      public CompletableFuture<Void> onError(Throwable t, FilterRequestContext requestContext,
+                                             FilterResponseContext responseContext) {
+        //Add a custom header to the response to make sure that 404s/500s returned by
+        //nulls in resource methods are also given a chance to experience the filter
+        responseContext.getResponseData().getHeaders().put("X-Null-Greetings-Filter", "Ack");
+        CompletableFuture<Void> future = new CompletableFuture<Void>();
+        future.completeExceptionally(t);
+        return future;
       }
     }));
   }
@@ -267,7 +277,7 @@ public class TestNullGreetingsClient extends RestLiIntegrationTest
       Assert.assertNotNull(responseException.getResponse().getHeader("X-Null-Greetings-Filter"), "We should have" +
           " a header applied by the filter");
       Assert.assertEquals(responseException.getResponse().getHeader("X-Null-Greetings-Filter"), "Ack",
-          "The value of the header applied by the response filter should be correct");
+                          "The value of the header applied by the response filter should be correct");
     }
   }
 
@@ -576,7 +586,7 @@ public class TestNullGreetingsClient extends RestLiIntegrationTest
   }
 
   private void sendBatchCreateAndAssert(final RootBuilderWrapper<Long, Greeting> builders,
-      final List<Greeting> greetingList)
+                                        final List<Greeting> greetingList)
       throws RemoteInvocationException
   {
     try
@@ -595,14 +605,14 @@ public class TestNullGreetingsClient extends RestLiIntegrationTest
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][]
-    {
         {
-            new RootBuilderWrapper<Long, Greeting>(new NullGreetingBuilders())
-        },
-        {
-            new RootBuilderWrapper<Long, Greeting>(new NullGreetingRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS))
-        }
-    };
+            {
+                new RootBuilderWrapper<Long, Greeting>(new NullGreetingBuilders())
+            },
+            {
+                new RootBuilderWrapper<Long, Greeting>(new NullGreetingRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS))
+            }
+        };
   }
 
   private void assertCorrectInternalServerMessageForNull(final RestLiResponseException responseException, final String type)
@@ -716,13 +726,13 @@ public class TestNullGreetingsClient extends RestLiIntegrationTest
   private static Object[][] batchGetRequestBuilderDataProvider()
   {
     return new Object[][]
-    {
         {
-            new NullGreetingRequestBuilders().batchGet()
-        },
-        {
-            new NullGreetingRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS).batchGet()
-        }
-    };
+            {
+                new NullGreetingRequestBuilders().batchGet()
+            },
+            {
+                new NullGreetingRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS).batchGet()
+            }
+        };
   }
 }

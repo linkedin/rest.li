@@ -43,14 +43,14 @@ import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.client.GreetingsBuilders;
 import com.linkedin.restli.server.RestLiServiceException;
+import com.linkedin.restli.server.filter.Filter;
 import com.linkedin.restli.server.filter.FilterRequestContext;
-import com.linkedin.restli.server.filter.NextRequestFilter;
-import com.linkedin.restli.server.filter.RequestFilter;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -82,10 +82,10 @@ public class TestResponseCompression extends RestLiIntegrationTest
   @BeforeClass
   public void initClass() throws Exception
   {
-    class TestHelperFilter implements RequestFilter
+    class TestHelperFilter implements Filter
     {
       @Override
-      public void onRequest(FilterRequestContext requestContext, NextRequestFilter nextRequestFilter)
+      public CompletableFuture<Void> onRequest(FilterRequestContext requestContext)
       {
         Map<String, String> requestHeaders = requestContext.getRequestHeaders();
         if (requestHeaders.containsKey(EXPECTED_ACCEPT_ENCODING))
@@ -116,14 +116,14 @@ public class TestResponseCompression extends RestLiIntegrationTest
                 + ", but received " + requestHeaders.get(HttpConstants.HEADER_RESPONSE_COMPRESSION_THRESHOLD));
           }
         }
-        nextRequestFilter.onRequest(requestContext);
+        return CompletableFuture.completedFuture(null);
       }
     }
     // The default compression threshold is between tiny and huge threshold.
     final FilterChain fc = FilterChains.empty().addLastRest(new TestCompressionServer.SaveContentEncodingHeaderFilter())
         .addLastRest(new ServerCompressionFilter("x-snappy-framed,snappy,gzip,deflate", new CompressionConfig(10000)))
         .addLastRest(new SimpleLoggingFilter());
-    super.init(Arrays.asList(new TestHelperFilter()), null, fc, false);
+    super.init(Arrays.asList(new TestHelperFilter()), fc, false);
   }
 
   @AfterClass

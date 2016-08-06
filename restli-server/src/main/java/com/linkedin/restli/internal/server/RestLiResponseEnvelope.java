@@ -22,6 +22,7 @@ import com.linkedin.restli.internal.common.HeaderUtil;
 import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
 
+import com.linkedin.restli.server.RoutingException;
 import java.net.HttpCookie;
 import java.util.List;
 import java.util.Map;
@@ -103,6 +104,32 @@ public abstract class RestLiResponseEnvelope implements RestLiResponseData
 
   @Override
   public abstract ResponseType getResponseType();
+
+  /**
+   * Temporary interface - when new RestLiResponseEnvelope RB is approved, will use that instead
+   */
+  public void setException(Throwable throwable)
+  {
+    RestLiServiceException restLiServiceException;
+    if (throwable instanceof RestLiServiceException)
+    {
+      restLiServiceException = (RestLiServiceException) throwable;
+    }
+    else if (throwable instanceof RoutingException)
+    {
+      RoutingException routingException = (RoutingException) throwable;
+
+      restLiServiceException =
+          new RestLiServiceException(HttpStatus.fromCode(routingException.getStatus()), routingException.getMessage(),
+                                     routingException);
+    }
+    else
+    {
+      restLiServiceException =
+          new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, throwable.getMessage(), throwable);
+    }
+    setException(restLiServiceException);
+  }
 
   /**
    * Sets the top level exception of this response.

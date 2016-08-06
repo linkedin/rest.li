@@ -20,8 +20,7 @@ package com.linkedin.restli.example;
 import com.linkedin.restli.server.filter.Filter;
 import com.linkedin.restli.server.filter.FilterRequestContext;
 import com.linkedin.restli.server.filter.FilterResponseContext;
-import com.linkedin.restli.server.filter.NextRequestFilter;
-import com.linkedin.restli.server.filter.NextResponseFilter;
+import java.util.concurrent.CompletableFuture;
 
 
 /**
@@ -34,19 +33,18 @@ public class RestLiExampleFilter implements Filter
   private static final String START_TIME = RestLiExampleFilter.class.getName() + ".StartTime";
 
   @Override
-  public void onRequest(FilterRequestContext requestContext, NextRequestFilter nextRequestFilter)
+  public CompletableFuture<Void> onRequest(FilterRequestContext requestContext)
   {
     requestContext.getFilterScratchpad().put(START_TIME, System.nanoTime());
-    nextRequestFilter.onRequest(requestContext);
+    return CompletableFuture.completedFuture(null);
   }
 
   @Override
-  public void onResponse(FilterRequestContext requestContext,
-                         FilterResponseContext responseContext,
-                         NextResponseFilter nextResponseFilter)
+  public CompletableFuture<Void> onResponse(FilterRequestContext requestContext,
+                                            FilterResponseContext responseContext)
   {
     final Long startTime = (Long) requestContext.getFilterScratchpad().get(START_TIME);
     System.out.println(String.format("Request processing time: %d us", (System.nanoTime() - startTime) / 1000));
-    nextResponseFilter.onResponse(requestContext, responseContext);
+    return CompletableFuture.completedFuture(null);
   }
 }

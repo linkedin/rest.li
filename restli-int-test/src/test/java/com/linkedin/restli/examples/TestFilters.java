@@ -46,12 +46,9 @@ import com.linkedin.restli.examples.greetings.client.GreetingsTaskBuilders;
 import com.linkedin.restli.examples.greetings.client.GreetingsTaskRequestBuilders;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.RoutingException;
+import com.linkedin.restli.server.filter.Filter;
 import com.linkedin.restli.server.filter.FilterRequestContext;
 import com.linkedin.restli.server.filter.FilterResponseContext;
-import com.linkedin.restli.server.filter.NextRequestFilter;
-import com.linkedin.restli.server.filter.NextResponseFilter;
-import com.linkedin.restli.server.filter.RequestFilter;
-import com.linkedin.restli.server.filter.ResponseFilter;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import java.io.IOException;
@@ -60,10 +57,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.mockito.Mock;
+import java.util.concurrent.CompletableFuture;
 import org.mockito.MockitoAnnotations;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
@@ -76,11 +71,7 @@ import com.google.common.collect.Sets;
 import static com.linkedin.restli.examples.TestConstants.FORCE_USE_NEXT_OPTIONS;
 
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
@@ -103,10 +94,7 @@ public class TestFilters extends RestLiIntegrationTest
     toneMapper.put(Tone.SINCERE, Tone.INSULTING);
   }
 
-  @Mock
-  private RequestFilter _requestFilter;
-  @Mock
-  private ResponseFilter _responseFilter;
+  private TestFilter _filter;
 
   @BeforeClass
   public void initClass() throws Exception
@@ -157,7 +145,8 @@ public class TestFilters extends RestLiIntegrationTest
    * @throws Exception if anything unexpected happens.
    */
   @Test(dataProvider = "requestBuilderDataProvider")
-  public void testGetOldBuilders(RootBuilderWrapper<Long, Greeting> builders, Tone tone, boolean responseFilter, Exception responseFilterException) throws Exception
+  public void testGetOldBuilders(RootBuilderWrapper<Long, Greeting> builders, Tone tone, boolean responseFilter,
+                                 RuntimeException responseFilterException) throws Exception
   {
     setupFilters(responseFilter, responseFilterException);
     Greeting greeting = generateTestGreeting("Test greeting.....", tone);
@@ -245,106 +234,32 @@ public class TestFilters extends RestLiIntegrationTest
   private void verifyFilters(Tone tone, boolean respFilter)
   {
     int count = tone == Tone.INSULTING ? 1 : 3;
-    verify(_requestFilter, times(count)).onRequest(any(FilterRequestContext.class), any(NextRequestFilter.class));
-    verifyNoMoreInteractions(_requestFilter);
+    assertEquals(_filter.getNumRequests(), count);
     if (respFilter)
     {
-      verify(_responseFilter, times(count)).onResponse(any(FilterRequestContext.class),
-                                                       any(FilterResponseContext.class),
-                                                       any(NextResponseFilter.class));
-      verifyNoMoreInteractions(_responseFilter);
+      if (tone == Tone.INSULTING)
+      {
+        assertEquals(_filter.getNumErrors(), count);
+      }
+      else
+      {
+        assertEquals(_filter.getNumResponses(), count);
+      }
     }
   }
 
-  private void setupFilters(boolean responseFilter, final Exception responseFilterException) throws IOException
+  private void setupFilters(boolean responseFilter, final RuntimeException responseFilterException) throws IOException
   {
-    reset(_requestFilter);
-    final Integer spValue = new Integer(100);
-    final String spKey = "Counter";
-    doAnswer(new Answer<Object>()
-    {
-      @Override
-      public Object answer(InvocationOnMock invocation) throws Throwable
-      {
-        Object[] args = invocation.getArguments();
-        FilterRequestContext requestContext = (FilterRequestContext) args[0];
-        NextRequestFilter nextRequestFilter = (NextRequestFilter) args[1];
-        requestContext.getFilterScratchpad().put(spKey, spValue);
-        if (requestContext.getMethodType() == ResourceMethod.CREATE)
-        {
-          RecordTemplate entity = requestContext.getRequestData().getEntity();
-          if (entity != null && entity instanceof Greeting)
-          {
-            Greeting greeting = (Greeting) entity;
-            if (greeting.hasTone())
-            {
-              Tone tone = greeting.getTone();
-              if (tone == Tone.INSULTING)
-              {
-                throw new RestLiServiceException(REQ_FILTER_ERROR_STATUS, REQ_FILTER_ERROR_MESSAGE);
-              }
-              greeting.setTone(mapToneForIncomingRequest(tone));
-            }
-          }
-        }
-        nextRequestFilter.onRequest(requestContext);
-        return null;
-      }
-    }).when(_requestFilter).onRequest(any(FilterRequestContext.class), any(NextRequestFilter.class));
-    List<RequestFilter> reqFilters = Arrays.asList(_requestFilter);
-
-    List<ResponseFilter> respFilters = null;
     if (responseFilter)
     {
-      reset(_responseFilter);
-      doAnswer(new Answer<Object>()
-      {
-        @Override
-        public Object answer(InvocationOnMock invocation) throws Throwable
-        {
-          Object[] args = invocation.getArguments();
-          FilterRequestContext requestContext = (FilterRequestContext) args[0];
-          FilterResponseContext responseContext = (FilterResponseContext) args[1];
-          NextResponseFilter nextResponseFilter = (NextResponseFilter) args[2];
-          // Verify the scratch pad value.
-          assertTrue(requestContext.getFilterScratchpad().get(spKey) == spValue);
-          RecordTemplate entity;
-
-          switch (responseContext.getResponseData().getResponseType())
-          {
-            case SINGLE_ENTITY:
-              entity = responseContext.getResponseData().getRecordResponseEnvelope().getRecord();
-              break;
-            case STATUS_ONLY:
-              entity = null;
-              break;
-            default:
-              throw new RuntimeException("Unexpected resolver type.");
-          }
-          if (entity != null && requestContext.getMethodType() == ResourceMethod.GET
-              && responseContext.getResponseData().getStatus() == HttpStatus.S_200_OK)
-          {
-            Greeting greeting = new Greeting(entity.data());
-            if (greeting.hasTone())
-            {
-              greeting.setTone(mapToneForOutgoingResponse(greeting.getTone()));
-              responseContext.getResponseData().getRecordResponseEnvelope().setRecord(greeting, HttpStatus.S_200_OK);
-            }
-          }
-          if (responseContext.getResponseData().isErrorResponse()
-              && requestContext.getMethodType() == ResourceMethod.CREATE
-              && responseContext.getResponseData().getStatus() == REQ_FILTER_ERROR_STATUS)
-          {
-            throw responseFilterException;
-          }
-          nextResponseFilter.onResponse(requestContext, responseContext);
-          return null;
-        }
-      }).when(_responseFilter)
-          .onResponse(any(FilterRequestContext.class), any(FilterResponseContext.class), any(NextResponseFilter.class));
-      respFilters = Arrays.asList(_responseFilter);
+      _filter = new TestFilterWithResponse(responseFilterException);
     }
-    init(reqFilters, respFilters);
+    else
+    {
+      _filter = new TestFilter();
+    }
+    List<Filter> filters = Arrays.asList(_filter);
+    init(filters);
   }
 
   private static Tone mapToneForIncomingRequest(Tone inputTone)
@@ -416,5 +331,121 @@ public class TestFilters extends RestLiIntegrationTest
       assertEquals(dataSources[i].length, sets.size());
     }
     return dataSources;
+  }
+
+  // Filter for testing purposes. Keeps track of number of calls to each function and verifies data in each call
+  private class TestFilter implements Filter
+  {
+    protected final Integer spValue = new Integer(100);
+    protected final String spKey = "Counter";
+    protected int numRequests;
+    protected int numResponses;
+    protected int numErrors;
+
+    public TestFilter()
+    {
+      numRequests = 0;
+      numResponses = 0;
+      numErrors = 0;
+    }
+
+    public int getNumRequests()
+    {
+      return numRequests;
+    }
+
+    public int getNumResponses()
+    {
+      return numResponses;
+    }
+
+    public int getNumErrors()
+    {
+      return numErrors;
+    }
+
+    @Override
+    public CompletableFuture<Void> onRequest(FilterRequestContext requestContext)
+    {
+      numRequests++;
+      requestContext.getFilterScratchpad().put(spKey, spValue);
+      if (requestContext.getMethodType() == ResourceMethod.CREATE)
+      {
+        RecordTemplate entity = requestContext.getRequestData().getEntity();
+        if (entity != null && entity instanceof Greeting)
+        {
+          Greeting greeting = (Greeting) entity;
+          if (greeting.hasTone())
+          {
+            // filter does not allow insulting greetings, so should throw exception if one is found
+            Tone tone = greeting.getTone();
+            if (tone == Tone.INSULTING)
+            {
+              throw new RestLiServiceException(REQ_FILTER_ERROR_STATUS, REQ_FILTER_ERROR_MESSAGE);
+            }
+            greeting.setTone(mapToneForIncomingRequest(tone));
+          }
+        }
+      }
+      return CompletableFuture.completedFuture(null);
+    }
+  }
+
+  private class TestFilterWithResponse extends TestFilter
+  {
+    private RuntimeException _responseFilterException;
+
+    public TestFilterWithResponse(RuntimeException responseFilterException)
+    {
+      _responseFilterException = responseFilterException;
+    }
+
+    @Override
+    public CompletableFuture<Void> onResponse(FilterRequestContext requestContext,
+                                              FilterResponseContext responseContext)
+    {
+      numResponses++;
+      // Verify the scratch pad value.
+      assertTrue(requestContext.getFilterScratchpad().get(spKey) == spValue);
+      RecordTemplate entity;
+
+      switch (responseContext.getResponseData().getResponseType())
+      {
+        case SINGLE_ENTITY:
+          entity = responseContext.getResponseData().getRecordResponseEnvelope().getRecord();
+          break;
+        case STATUS_ONLY:
+          entity = null;
+          break;
+        default:
+          throw new RuntimeException("Unexpected resolver type.");
+      }
+      if (entity != null && requestContext.getMethodType() == ResourceMethod.GET
+          && responseContext.getResponseData().getStatus() == HttpStatus.S_200_OK)
+      {
+        Greeting greeting = new Greeting(entity.data());
+        if (greeting.hasTone())
+        {
+          greeting.setTone(mapToneForOutgoingResponse(greeting.getTone()));
+          responseContext.getResponseData().getRecordResponseEnvelope().setRecord(greeting, HttpStatus.S_200_OK);
+        }
+      }
+      return CompletableFuture.completedFuture(null);
+    }
+
+    @Override
+    public CompletableFuture<Void> onError(Throwable t, final FilterRequestContext requestContext,
+                                           final FilterResponseContext responseContext)
+    {
+      numErrors++;
+      if (requestContext.getMethodType() == ResourceMethod.CREATE
+          && responseContext.getResponseData().getStatus() == REQ_FILTER_ERROR_STATUS)
+      {
+        throw _responseFilterException;
+      }
+      CompletableFuture<Void> future = new CompletableFuture<Void>();
+      future.completeExceptionally(t);
+      return future;
+    }
   }
 }

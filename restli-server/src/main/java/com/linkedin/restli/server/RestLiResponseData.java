@@ -59,6 +59,9 @@ public interface RestLiResponseData
    */
   RestLiServiceException getServiceException();
 
+  // <TODO> replace with actual envelope setter when merged with envelope_interface_improvements
+  void setException(Throwable th);
+
   /**
    * Gets the status of the request.
    *

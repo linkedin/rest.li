@@ -52,15 +52,22 @@ import com.linkedin.restli.internal.server.RestLiResponseHandler;
 import com.linkedin.restli.internal.server.RestLiRouter;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.ServerResourceContext;
+import com.linkedin.restli.internal.server.filter.FilterChainCallback;
+import com.linkedin.restli.internal.server.filter.FilterChainCallbackImpl;
 import com.linkedin.restli.internal.server.filter.FilterRequestContextInternal;
 import com.linkedin.restli.internal.server.filter.FilterRequestContextInternalImpl;
+import com.linkedin.restli.internal.server.filter.RestLiFilterChain;
+import com.linkedin.restli.internal.server.filter.RestLiResponseFilterContextFactory;
+import com.linkedin.restli.internal.server.methods.MethodAdapterRegistry;
+import com.linkedin.restli.internal.server.methods.arguments.RestLiArgumentBuilder;
 import com.linkedin.restli.internal.server.methods.response.ErrorResponseBuilder;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor.InterfaceType;
 import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.internal.server.model.RestLiApiBuilder;
 import com.linkedin.restli.internal.server.util.MIMEParse;
-import com.linkedin.restli.server.filter.ResponseFilter;
+import com.linkedin.restli.internal.server.util.RestUtils;
+import com.linkedin.restli.server.filter.Filter;
 import com.linkedin.restli.server.multiplexer.MultiplexedRequestHandler;
 import com.linkedin.restli.server.multiplexer.MultiplexedRequestHandlerImpl;
 import com.linkedin.restli.server.resources.PrototypeResourceFactory;
@@ -102,7 +109,7 @@ public class RestLiServer extends BaseRestServer
   private final MultiplexedRequestHandler _multiplexedRequestHandler;
   private final ErrorResponseBuilder _errorResponseBuilder;
   private final Map<String, RestLiDebugRequestHandler> _debugHandlers;
-  private final List<ResponseFilter> _responseFilters;
+  private final List<Filter> _filters;
   private final List<InvokeAware> _invokeAwares;
   private boolean _isDocInitialized = false;
 
@@ -134,20 +141,19 @@ public class RestLiServer extends BaseRestServer
     _rootResources = new RestLiApiBuilder(config).build();
     _resourceFactory.setRootResources(_rootResources);
     _router = new RestLiRouter(_rootResources);
-    _methodInvoker =
-        new RestLiMethodInvoker(_resourceFactory, engine, _errorResponseBuilder, config.getRequestFilters());
+    _methodInvoker = new RestLiMethodInvoker(_resourceFactory, engine, _errorResponseBuilder);
     _responseHandler =
         new RestLiResponseHandler.Builder().setErrorResponseBuilder(_errorResponseBuilder)
-                                           .build();
+            .build();
     _docRequestHandler = config.getDocumentationRequestHandler();
     _debugHandlers = new HashMap<String, RestLiDebugRequestHandler>();
-    if (config.getResponseFilters() != null)
+    if (config.getFilters() != null)
     {
-      _responseFilters = config.getResponseFilters();
+      _filters = config.getFilters();
     }
     else
     {
-      _responseFilters = new ArrayList<ResponseFilter>();
+      _filters = new ArrayList<Filter>();
     }
     for (RestLiDebugRequestHandler debugHandler : config.getDebugRequestHandlers())
     {
@@ -303,15 +309,14 @@ public class RestLiServer extends BaseRestServer
                                      final RestLiAttachmentReader attachmentReader,
                                      final boolean isDebugMode)
   {
+
     try
     {
       ensureRequestUsesValidRestliProtocol(request);
     }
     catch (RestLiServiceException e)
     {
-      final RestLiCallback<Object> restLiCallback =
-          new RestLiCallback<Object>(request, null, _responseHandler, callback, null, null);
-      restLiCallback.onError(e, createEmptyExecutionReport(), attachmentReader, null);
+      respondWithPreRoutingError(e, request, attachmentReader, callback);
       return;
     }
     final RoutingResult method;
@@ -321,28 +326,85 @@ public class RestLiServer extends BaseRestServer
     }
     catch (Exception e)
     {
-      final RestLiCallback<Object> restLiCallback =
-          new RestLiCallback<Object>(request, null, _responseHandler, callback, null, null);
-      restLiCallback.onError(e, createEmptyExecutionReport(), attachmentReader, null);
+      respondWithPreRoutingError(e, request, attachmentReader, callback);
       return;
     }
     final RequestExecutionCallback<RestResponse> wrappedCallback = notifyInvokeAwares(method, callback);
 
+    RequestExecutionReportBuilder requestExecutionReportBuilder = null;
+    if (isDebugMode)
+    {
+      requestExecutionReportBuilder = new RequestExecutionReportBuilder();
+    }
+
     final FilterRequestContextInternal filterContext =
         new FilterRequestContextInternalImpl((ServerResourceContext) method.getContext(), method.getResourceMethod());
-    final RestLiCallback<Object> restLiCallback =
-        new RestLiCallback<Object>(request, method, _responseHandler, wrappedCallback, _responseFilters, filterContext);
+
+    RestLiArgumentBuilder adapter;
     try
     {
-      _methodInvoker.invoke(method, request, restLiCallback, isDebugMode, filterContext);
+      RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(),
+                                                               (ServerResourceContext)method.getContext());
+      adapter = buildRestLiArgumentBuilder(method, _errorResponseBuilder);
+      filterContext.setRequestData(adapter.extractRequestData(method, request));
     }
     catch (Exception e)
     {
-      //Response attachments should not exist at this point. All possible exception-throwing code paths after response
-      //attachments could been set should never make it here. It is possible that future refactoring may violate this,
-      //therefore to be on the safe side we will still check to make sure that any possible response attachments are aborted.
-      restLiCallback.onError(e, createEmptyExecutionReport(), attachmentReader, method.getContext().getResponseAttachments());
+      // would not trigger response filters because request filters haven't run yet
+      wrappedCallback.onError(e, requestExecutionReportBuilder == null ? null : requestExecutionReportBuilder.build(),
+                              ((ServerResourceContext)method.getContext()).getRequestAttachmentReader(), null);
+      return;
     }
+
+    RestLiResponseFilterContextFactory<Object> responseFilterContextFactory =
+        new RestLiResponseFilterContextFactory<Object>(request, method, _responseHandler);
+
+    FilterChainCallback filterChainCallback = new FilterChainCallbackImpl(method, _methodInvoker, adapter,
+                                                                          requestExecutionReportBuilder,
+                                                                          attachmentReader,
+                                                                          _responseHandler,
+                                                                          wrappedCallback);
+
+    RestLiFilterChain filterChain = new RestLiFilterChain(_filters, filterChainCallback);
+
+    RestLiCallback<Object> restLiCallback = new RestLiCallback<Object>(filterContext, responseFilterContextFactory,
+                                                                       filterChain);
+
+    filterChain.onRequest(filterContext, responseFilterContextFactory, restLiCallback);
+  }
+
+  private void respondWithPreRoutingError(Throwable th,
+                                          RestRequest request,
+                                          RestLiAttachmentReader attachmentReader,
+                                          RequestExecutionCallback<RestResponse> callback)
+  {
+    RestLiResponseFilterContextFactory<Object> responseFilterContextFactory =
+        new RestLiResponseFilterContextFactory<Object>(request, null, _responseHandler);
+    RestLiResponseData responseData = responseFilterContextFactory.fromThrowable(th).getResponseData();
+    RestException restException =
+        _responseHandler.buildRestException(th, _responseHandler.buildPartialResponse(null, responseData));
+    callback.onError(restException, createEmptyExecutionReport(), attachmentReader, null);
+  }
+
+  /**
+   * Builder for building a {@link RestLiArgumentBuilder}
+   *
+   * @param method the REST method
+   * @param errorResponseBuilder the {@link ErrorResponseBuilder}
+   * @return a {@link RestLiArgumentBuilder}
+   */
+  private RestLiArgumentBuilder buildRestLiArgumentBuilder(RoutingResult method,
+                                                           ErrorResponseBuilder errorResponseBuilder)
+  {
+    ResourceMethodDescriptor resourceMethodDescriptor = method.getResourceMethod();
+
+    RestLiArgumentBuilder adapter = new MethodAdapterRegistry(errorResponseBuilder)
+        .getArgumentBuilder(resourceMethodDescriptor.getType());
+    if (adapter == null)
+    {
+      throw new IllegalArgumentException("Unsupported method type: " + resourceMethodDescriptor.getType());
+    }
+    return adapter;
   }
 
   /**
@@ -424,13 +486,14 @@ public class RestLiServer extends BaseRestServer
     }
     catch (Exception e)
     {
+      FilterChainCallback filterChainCallback = new FilterChainCallbackImpl(null, _methodInvoker, null, null,
+                                                                            null,
+                                                                            _responseHandler,
+                                                                            new RestResponseExecutionCallbackAdapter(callback));
       final RestLiCallback<Object> restLiCallback =
-          new RestLiCallback<Object>(request,
-                                     null,
-                                     _responseHandler,
-                                     new RestResponseExecutionCallbackAdapter(callback),
-                                     null,
-                                     null);
+          new RestLiCallback<Object>(null,
+                                     new RestLiResponseFilterContextFactory(request, null, _responseHandler),
+                                     new RestLiFilterChain(_filters, filterChainCallback));
       restLiCallback.onError(e, createEmptyExecutionReport(), null, null);
     }
   }
@@ -580,7 +643,7 @@ public class RestLiServer extends BaseRestServer
         catch (ParseException e)
         {
           callback.onError(Messages.toStreamException(RestException.forError(400,
-                  "Unable to parse Content-Type: " + header)));
+                                                                             "Unable to parse Content-Type: " + header)));
           return;
         }
 
@@ -622,7 +685,7 @@ public class RestLiServer extends BaseRestServer
           if (debugHandlerForRequest != null)
           {
             handleDebugRequest(debugHandlerForRequest, result, requestContext, null,
-                    new RestResponseExecutionCallbackAdapter(Messages.toRestCallback(callback)));
+                               new RestResponseExecutionCallbackAdapter(Messages.toRestCallback(callback)));
           }
           else
           {
@@ -672,7 +735,7 @@ public class RestLiServer extends BaseRestServer
         if (contentTypeString == null)
         {
           _streamResponseCallback.onError(Messages.toStreamException(RestException.forError(400,
-                  "Incorrect multipart/related payload. First part must contain the Content-Type!")));
+                                                                                            "Incorrect multipart/related payload. First part must contain the Content-Type!")));
           return;
         }
 
@@ -684,7 +747,7 @@ public class RestLiServer extends BaseRestServer
         catch (ParseException e)
         {
           _streamResponseCallback.onError(Messages.toStreamException(RestException.forError(400,
-                  "Unable to parse Content-Type: " + contentTypeString)));
+                                                                                            "Unable to parse Content-Type: " + contentTypeString)));
           return;
         }
 
@@ -693,7 +756,7 @@ public class RestLiServer extends BaseRestServer
             baseType.equalsIgnoreCase(RestConstants.HEADER_VALUE_APPLICATION_PSON)))
         {
           _streamResponseCallback.onError(Messages.toStreamException(RestException.forError(415,
-                  "Unknown Content-Type for first part of multipart/related payload: " + contentType.toString())));
+                                                                                            "Unknown Content-Type for first part of multipart/related payload: " + contentType.toString())));
           return;
         }
 
@@ -739,7 +802,7 @@ public class RestLiServer extends BaseRestServer
       if (_requestPayload == null)
       {
         _streamResponseCallback.onError(Messages.toStreamException(RestException.forError(400,
-                "Did not receive any parts in the multipart mime request!")));
+                                                                                          "Did not receive any parts in the multipart mime request!")));
         return;
       }
 
@@ -830,7 +893,7 @@ public class RestLiServer extends BaseRestServer
     public void onDrainComplete()
     {
       _topLevelReaderCallback.onStreamError(Messages.toStreamException(RestException.forError(500, "Serious error. " +
-              "There should never be a call to drain part data when decoding the first part in a multipart mime response.")));
+          "There should never be a call to drain part data when decoding the first part in a multipart mime response.")));
     }
 
     @Override

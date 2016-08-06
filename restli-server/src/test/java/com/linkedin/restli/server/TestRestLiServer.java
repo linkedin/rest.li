@@ -52,12 +52,9 @@ import com.linkedin.restli.internal.common.TestConstants;
 import com.linkedin.restli.internal.server.methods.response.ErrorResponseBuilder;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.internal.testutils.RestLiTestAttachmentDataSource;
+import com.linkedin.restli.server.filter.Filter;
 import com.linkedin.restli.server.filter.FilterRequestContext;
 import com.linkedin.restli.server.filter.FilterResponseContext;
-import com.linkedin.restli.server.filter.NextRequestFilter;
-import com.linkedin.restli.server.filter.NextResponseFilter;
-import com.linkedin.restli.server.filter.RequestFilter;
-import com.linkedin.restli.server.filter.ResponseFilter;
 import com.linkedin.restli.server.resources.BaseResource;
 import com.linkedin.restli.server.test.EasyMockResourceFactory;
 import com.linkedin.restli.server.twitter.AsyncStatusCollectionResource;
@@ -75,6 +72,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -114,16 +112,14 @@ public class TestRestLiServer
   private RestLiServer _serverWithFilters;
   private RestLiServer _serverWithCustomErrorResponseConfig; // configured different than server
   private EasyMockResourceFactory _resourceFactory;
-  private RequestFilter _mockRequestFilter;
-  private ResponseFilter _mockResponseFilter;
+  private Filter _mockFilter;
 
   @BeforeTest
   protected void setUp()
   {
     // silence null engine warning and get EasyMock failure if engine is used
     Engine fakeEngine = EasyMock.createMock(Engine.class);
-    _mockRequestFilter = EasyMock.createMock(RequestFilter.class);
-    _mockResponseFilter = EasyMock.createMock(ResponseFilter.class);
+    _mockFilter = EasyMock.createMock(Filter.class);
     setUpServer(fakeEngine);
     setupServerWithFilters(fakeEngine);
     setupServerWithCustomErrorResponseConfig(fakeEngine);
@@ -143,8 +139,7 @@ public class TestRestLiServer
   {
     RestLiConfig config = new RestLiConfig(); // default is to use STRICT checking
     config.addResourcePackageNames("com.linkedin.restli.server.twitter");
-    config.addRequestFilter(_mockRequestFilter);
-    config.addResponseFilter(_mockResponseFilter);
+    config.addFilter(_mockFilter);
     _serverWithFilters = new RestLiServer(config, _resourceFactory, fakeEngine);
   }
 
@@ -229,13 +224,13 @@ public class TestRestLiServer
   {
     _resourceFactory = null;
     _server = null;
-    EasyMock.reset(_mockRequestFilter, _mockResponseFilter);
+    EasyMock.reset(_mockFilter, _mockFilter);
   }
 
   @AfterMethod
   protected void afterMethod()
   {
-    EasyMock.reset(_mockRequestFilter, _mockResponseFilter);
+    EasyMock.reset(_mockFilter, _mockFilter);
   }
 
   @DataProvider(name = "validClientProtocolVersionData")
@@ -336,32 +331,27 @@ public class TestRestLiServer
     EasyMock.expect(statusResource.get(eq(1L))).andReturn(buildStatusRecord()).once();
     if (filters)
     {
-      _mockRequestFilter.onRequest(EasyMock.anyObject(FilterRequestContext.class),
-                                   EasyMock.anyObject(NextRequestFilter.class));
+      _mockFilter.onRequest(EasyMock.anyObject(FilterRequestContext.class));
       EasyMock.expectLastCall().andAnswer(new IAnswer<Object>()
       {
         @Override
         public Object answer() throws Throwable
         {
-          ((NextRequestFilter) EasyMock.getCurrentArguments()[1]).onRequest((FilterRequestContext) EasyMock.getCurrentArguments()[0]);
-          return null;
+          return CompletableFuture.completedFuture(null);
         }
       }).times(1);
 
-      _mockResponseFilter.onResponse(EasyMock.anyObject(FilterRequestContext.class),
-                                     EasyMock.anyObject(FilterResponseContext.class),
-                                     EasyMock.anyObject(NextResponseFilter.class));
+      _mockFilter.onResponse(EasyMock.anyObject(FilterRequestContext.class),
+                             EasyMock.anyObject(FilterResponseContext.class));
       EasyMock.expectLastCall().andAnswer(new IAnswer<Object>()
       {
         @Override
         public Object answer() throws Throwable
         {
-          ((NextResponseFilter) EasyMock.getCurrentArguments()[2]).onResponse((FilterRequestContext) EasyMock.getCurrentArguments()[0],
-                                                                              (FilterResponseContext) EasyMock.getCurrentArguments()[1]);
-          return null;
+          return CompletableFuture.completedFuture(null);
         }
       }).times(1);
-      EasyMock.replay(_mockRequestFilter, _mockResponseFilter);
+      EasyMock.replay(_mockFilter);
     }
     EasyMock.replay(statusResource);
 
@@ -429,7 +419,7 @@ public class TestRestLiServer
     }
     if (filters)
     {
-      EasyMock.verify(_mockRequestFilter, _mockResponseFilter);
+      EasyMock.verify(_mockFilter, _mockFilter);
     }
   }
 
@@ -1753,7 +1743,7 @@ public class TestRestLiServer
             //We have the body so assert that the exception made it.
             assertTrue(result.length() > 0);
             assertTrue(result.asString(Charset.defaultCharset())
-                    .contains("Did not receive any parts in the multipart mime request"));
+                           .contains("Did not receive any parts in the multipart mime request"));
           }
         });
         streamResponse.getEntityStream().setReader(fullEntityReader);

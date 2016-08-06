@@ -34,9 +34,8 @@ import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.transport.http.server.HttpServer;
 import com.linkedin.restli.client.RestClient;
-import com.linkedin.restli.server.filter.RequestFilter;
-import com.linkedin.restli.server.filter.ResponseFilter;
 
+import com.linkedin.restli.server.filter.Filter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -89,14 +88,15 @@ public class RestLiIntegrationTest
     initClient(URI_PREFIX);
   }
 
-  public void init(List<? extends RequestFilter> requestFilters, List<? extends ResponseFilter> responseFilters) throws IOException
+  public void init(List<? extends Filter> filters) throws IOException
   {
-    final FilterChain fc = FilterChains.empty().addLastRest(new ServerCompressionFilter(RestLiIntTestServer.supportedCompression, new CompressionConfig(0)))
+    final FilterChain fc = FilterChains.empty()
+        .addLastRest(new ServerCompressionFilter(RestLiIntTestServer.supportedCompression, new CompressionConfig(0)))
         .addLastRest(new SimpleLoggingFilter());
-    init(requestFilters, responseFilters, fc, false);
+    init(filters, fc, false);
   }
 
-  public void init(List<? extends RequestFilter> requestFilters, List<? extends ResponseFilter> responseFilters,
+  public void init(List<? extends Filter> filters,
                    final FilterChain filterChain, boolean includeNoCompression) throws IOException
   {
     initSchedulerAndEngine();
@@ -105,8 +105,7 @@ public class RestLiIntegrationTest
                                          RestLiIntTestServer.FILTERS_PORT,
                                          false,
                                          -1,
-                                         requestFilters,
-                                         responseFilters,
+                                         filters,
                                          filterChain,
                                          !forceUseStreamServer());
     _serverWithFilters.start();

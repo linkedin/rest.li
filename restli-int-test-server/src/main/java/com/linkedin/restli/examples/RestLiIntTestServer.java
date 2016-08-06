@@ -49,8 +49,7 @@ import com.linkedin.restli.server.DelegatingTransportDispatcher;
 import com.linkedin.restli.server.ParseqTraceDebugRequestHandler;
 import com.linkedin.restli.server.RestLiConfig;
 import com.linkedin.restli.server.RestLiServer;
-import com.linkedin.restli.server.filter.RequestFilter;
-import com.linkedin.restli.server.filter.ResponseFilter;
+import com.linkedin.restli.server.filter.Filter;
 import com.linkedin.restli.server.mock.InjectMockResourceFactory;
 import com.linkedin.restli.server.mock.SimpleBeanProvider;
 import com.linkedin.restli.server.resources.ResourceFactory;
@@ -107,17 +106,17 @@ public class RestLiIntTestServer
                                         boolean useAsyncServletApi,
                                         int asyncTimeOut)
   {
-    final FilterChain fc = FilterChains.empty().addLastRest(new ServerCompressionFilter(supportedCompression, new CompressionConfig(0)))
+    final FilterChain fc = FilterChains.empty().addLastRest(new ServerCompressionFilter(supportedCompression,
+                                                                                        new CompressionConfig(0)))
         .addLastRest(new SimpleLoggingFilter());
-    return createServer(engine, port, useAsyncServletApi, asyncTimeOut, null, null, fc, false);
+    return createServer(engine, port, useAsyncServletApi, asyncTimeOut, null, fc, false);
   }
 
   public static HttpServer createServer(final Engine engine,
                                         int port,
                                         boolean useAsyncServletApi,
                                         int asyncTimeOut,
-                                        List<? extends RequestFilter> requestFilters,
-                                        List<? extends ResponseFilter> responseFilters,
+                                        List<? extends Filter> filters,
                                         final FilterChain filterChain,
                                         final boolean forceUseRestServer)
   {
@@ -126,8 +125,7 @@ public class RestLiIntTestServer
     config.setServerNodeUri(URI.create("http://localhost:" + port));
     config.setDocumentationRequestHandler(new DefaultDocumentationRequestHandler());
     config.addDebugRequestHandlers(new ParseqTraceDebugRequestHandler());
-    config.setRequestFilters(requestFilters);
-    config.setResponseFilters(responseFilters);
+    config.setFilters(filters);
 
     GroupMembershipMgr membershipMgr = new HashGroupMembershipMgr();
     GroupMgr groupMgr = new HashMapGroupMgr(membershipMgr);

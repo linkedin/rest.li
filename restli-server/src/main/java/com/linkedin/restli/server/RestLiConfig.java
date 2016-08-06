@@ -18,8 +18,7 @@ package com.linkedin.restli.server;
 
 
 import com.linkedin.restli.internal.server.methods.response.ErrorResponseBuilder;
-import com.linkedin.restli.server.filter.RequestFilter;
-import com.linkedin.restli.server.filter.ResponseFilter;
+import com.linkedin.restli.server.filter.Filter;
 import com.linkedin.restli.server.multiplexer.MultiplexerRunMode;
 import com.linkedin.restli.server.multiplexer.MultiplexerSingletonFilter;
 
@@ -78,8 +77,7 @@ public class RestLiConfig
   private String _internalErrorMessage = ErrorResponseBuilder.DEFAULT_INTERNAL_ERROR_MESSAGE;
   private RestliProtocolCheck _restliProtocolCheck = RestliProtocolCheck.STRICT;
   private List<RestLiDebugRequestHandler> _debugRequestHandlers;
-  private final List<RequestFilter> _requestFilters = new ArrayList<RequestFilter>();
-  private final List<ResponseFilter> _responseFilters = new ArrayList<ResponseFilter>();
+  private final List<Filter> _filters = new ArrayList<Filter>();
   private int _maxRequestsMultiplexed = DEFAULT_MAX_REQUESTS_MULTIPLEXED;
   private Set<String> _individualRequestHeaderWhitelist = Collections.emptySet();
   private MultiplexerSingletonFilter _multiplexerSingletonFilter;
@@ -302,72 +300,37 @@ public class RestLiConfig
   }
 
   /**
-   * Add request filters to the filter chain.
+   * Add filters to the filter list
    *
-   * @param filters
-   *          Ordered list of filters to be added to the filter chain.
+   * @param filters List of filters to be added to the filter list. Filters are the front of the list will be invoked
+   *                first on requests and will be invoked last on responses.
    */
-  public void addRequestFilter(RequestFilter...filters)
+  public void addFilter(Filter...filters)
   {
-    _requestFilters.addAll(Arrays.asList(filters));
+    _filters.addAll(Arrays.asList(filters));
   }
 
   /**
-   * Get a mutable reference to the request filter chain.
+   * Get a mutable reference to the filter list
    *
-   * @return Mutable reference to the request filter chain.
+   * @return Mutable reference to the filter list
    */
-  public List<RequestFilter> getRequestFilters()
+  public List<Filter> getFilters()
   {
-    return _requestFilters;
+    return _filters;
   }
 
   /**
-   * Set the request filter chain.
+   * Sets the filters stored in the filter list. Filters at the front of the list will be invoked first on requests
+   * and will be invoked last on responses
    *
-   * @param requestFilters
-   *          Ordered list of request filters.
+   * @param filters List of filters.
    */
-  public void setRequestFilters(List<? extends RequestFilter> requestFilters)
+  public void setFilters(List<? extends Filter> filters)
   {
-    if (requestFilters != null) {
-      _requestFilters.clear();
-      _requestFilters.addAll(requestFilters);
-    }
-  }
-
-  /**
-   * Add response filters to the filter chain.
-   *
-   * @param filters
-   *          Ordered list of filters to be added to the filter chain.
-   */
-  public void addResponseFilter(ResponseFilter...filters)
-  {
-    _responseFilters.addAll(Arrays.asList(filters));
-  }
-
-  /**
-   * Get a mutable reference to the response filter chain.
-   *
-   * @return Mutable reference to the response filter chain.
-   */
-  public List<ResponseFilter> getResponseFilters()
-  {
-    return _responseFilters;
-  }
-
-  /**
-   * Set the response filter chain.
-   *
-   * @param responseFilters
-   *          Ordered list of response filters.
-   */
-  public void setResponseFilters(List<? extends ResponseFilter> responseFilters)
-  {
-    if (responseFilters != null) {
-      _responseFilters.clear();
-      _responseFilters.addAll(responseFilters);
+    if (filters != null) {
+      _filters.clear();
+      _filters.addAll(filters);
     }
   }
 

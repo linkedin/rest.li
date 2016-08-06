@@ -90,9 +90,9 @@ public class TestRequestCompression extends RestLiIntegrationTest
     {
       @Override
       public void onRestRequest(RestRequest req,
-                         RequestContext requestContext,
-                         Map<String, String> wireAttrs,
-                         NextFilter<RestRequest, RestResponse> nextFilter)
+                                RequestContext requestContext,
+                                Map<String, String> wireAttrs,
+                                NextFilter<RestRequest, RestResponse> nextFilter)
       {
         Map<String, String> requestHeaders = req.getHeaders();
         if (requestHeaders.containsKey(TEST_HELP_HEADER))
@@ -109,7 +109,7 @@ public class TestRequestCompression extends RestLiIntegrationTest
               // Request should be compressed with the first encoding the client can compress with,
               // which is always snappy in this test.
               throw new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST,
-                  "Request is compressed with " + contentEncodingHeader + " instead of x-snappy-framed.");
+                                               "Request is compressed with " + contentEncodingHeader + " instead of x-snappy-framed.");
             }
           }
           else
@@ -149,7 +149,7 @@ public class TestRequestCompression extends RestLiIntegrationTest
         .addLastRest(new ServerCompressionFilter(RestLiIntTestServer.supportedCompression))
         .addLastRest(new CheckHeadersFilter())
         .addLastRest(new SimpleLoggingFilter());
-    super.init(null, null, fc, false);
+    super.init(null, fc, false);
   }
 
   @AfterClass
@@ -221,8 +221,8 @@ public class TestRequestCompression extends RestLiIntegrationTest
                          RestliRequestOptions restliRequestOptions,
                          int messageLength,
                          String testHelpHeader)
-    throws RemoteInvocationException, CloneNotSupportedException, InterruptedException, ExecutionException,
-           TimeoutException
+      throws RemoteInvocationException, CloneNotSupportedException, InterruptedException, ExecutionException,
+             TimeoutException
   {
     ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("R2 Netty Scheduler"));
     Map<String, CompressionConfig> requestCompressionConfigs = new HashMap<String, CompressionConfig>();
@@ -231,15 +231,15 @@ public class TestRequestCompression extends RestLiIntegrationTest
       requestCompressionConfigs.put(SERVICE_NAME, requestCompressionConfig);
     }
     HttpClientFactory httpClientFactory = new HttpClientFactory(FilterChains.empty(),
-        new NioEventLoopGroup(),
-        true,
-        executor,
-        true,
-        null,
-        false,
-        AbstractJmxManager.NULL_JMX_MANAGER,
-        500, // The default compression threshold is between small and large.
-        requestCompressionConfigs);
+                                                                new NioEventLoopGroup(),
+                                                                true,
+                                                                executor,
+                                                                true,
+                                                                null,
+                                                                false,
+                                                                AbstractJmxManager.NULL_JMX_MANAGER,
+                                                                500, // The default compression threshold is between small and large.
+                                                                requestCompressionConfigs);
     Map<String, String> properties = new HashMap<String, String>();
 
     properties.put(HttpClientFactory.HTTP_REQUEST_CONTENT_ENCODINGS, supportedEncodings);

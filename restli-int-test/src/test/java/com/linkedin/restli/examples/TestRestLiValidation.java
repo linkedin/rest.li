@@ -60,8 +60,7 @@ import com.linkedin.restli.examples.greetings.client.AutoValidationDemosBuilders
 import com.linkedin.restli.examples.greetings.client.AutoValidationDemosRequestBuilders;
 import com.linkedin.restli.examples.greetings.client.ValidationDemosBuilders;
 import com.linkedin.restli.examples.greetings.client.ValidationDemosRequestBuilders;
-import com.linkedin.restli.server.validation.RestLiInputValidationFilter;
-import com.linkedin.restli.server.validation.RestLiOutputValidationFilter;
+import com.linkedin.restli.server.validation.RestLiValidationFilter;
 import com.linkedin.restli.test.util.PatchBuilder;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 import org.testng.Assert;
@@ -99,7 +98,7 @@ public class TestRestLiValidation extends RestLiIntegrationTest
   {
     super.init();
     _restClientManual = getClient();
-    super.init(Arrays.asList(new RestLiInputValidationFilter()), Arrays.asList(new RestLiOutputValidationFilter()));
+    super.init(Arrays.asList(new RestLiValidationFilter()));
     _restClientAuto = getClient();
   }
 

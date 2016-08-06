@@ -59,8 +59,12 @@ import com.linkedin.restli.internal.server.RestLiMethodInvoker;
 import com.linkedin.restli.internal.server.RestLiResponseHandler;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.ServerResourceContext;
+import com.linkedin.restli.internal.server.filter.FilterChainCallback;
+import com.linkedin.restli.internal.server.filter.FilterChainCallbackImpl;
 import com.linkedin.restli.internal.server.filter.FilterRequestContextInternal;
 import com.linkedin.restli.internal.server.filter.FilterRequestContextInternalImpl;
+import com.linkedin.restli.internal.server.filter.RestLiFilterChain;
+import com.linkedin.restli.internal.server.filter.RestLiResponseFilterContextFactory;
 import com.linkedin.restli.internal.server.methods.MethodAdapterRegistry;
 import com.linkedin.restli.internal.server.methods.arguments.RestLiArgumentBuilder;
 import com.linkedin.restli.internal.server.methods.response.ErrorResponseBuilder;
@@ -68,6 +72,7 @@ import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.internal.server.util.ArgumentUtils;
 import com.linkedin.restli.internal.server.util.RestLiSyntaxException;
+import com.linkedin.restli.internal.server.util.RestUtils;
 import com.linkedin.restli.server.BatchCreateRequest;
 import com.linkedin.restli.server.BatchCreateResult;
 import com.linkedin.restli.server.BatchDeleteRequest;
@@ -79,11 +84,13 @@ import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.PagingContext;
 import com.linkedin.restli.server.RequestExecutionCallback;
 import com.linkedin.restli.server.RequestExecutionReport;
+import com.linkedin.restli.server.RequestExecutionReportBuilder;
 import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.RestLiRequestData;
 import com.linkedin.restli.server.RestLiRequestDataImpl;
 import com.linkedin.restli.server.RestLiResponseAttachments;
+import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.RoutingException;
 import com.linkedin.restli.server.TestRecord;
@@ -92,9 +99,8 @@ import com.linkedin.restli.server.combined.CombinedResources;
 import com.linkedin.restli.server.combined.CombinedTestDataModels;
 import com.linkedin.restli.server.custom.types.CustomLong;
 import com.linkedin.restli.server.custom.types.CustomString;
+import com.linkedin.restli.server.filter.Filter;
 import com.linkedin.restli.server.filter.FilterRequestContext;
-import com.linkedin.restli.server.filter.NextRequestFilter;
-import com.linkedin.restli.server.filter.RequestFilter;
 import com.linkedin.restli.server.resources.BaseResource;
 import com.linkedin.restli.server.test.EasyMockUtils.Matchers;
 import com.linkedin.restli.server.twitter.AsyncDiscoveredItemsResource;
@@ -134,6 +140,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -160,6 +167,7 @@ import static org.easymock.EasyMock.getCurrentArguments;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.reset;
 import static org.easymock.EasyMock.verify;
+import static org.mockito.Matchers.any;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.fail;
@@ -174,6 +182,8 @@ public class TestRestLiMethodInvocation
   private ScheduledExecutorService _scheduler;
   private Engine _engine;
   private EasyMockResourceFactory _resourceFactory;
+  private ErrorResponseBuilder _errorResponseBuilder;
+  private MethodAdapterRegistry _methodAdapterRegistry;
   private RestLiMethodInvoker _invoker;
 
   @BeforeTest
@@ -187,8 +197,11 @@ public class TestRestLiMethodInvocation
 
     _resourceFactory  = new EasyMockResourceFactory();
 
+    _errorResponseBuilder = new ErrorResponseBuilder();
+    _methodAdapterRegistry = new MethodAdapterRegistry(_errorResponseBuilder);
+
     // Add filters to the invoker.
-    _invoker = new RestLiMethodInvoker(_resourceFactory, _engine, new ErrorResponseBuilder());
+    _invoker = new RestLiMethodInvoker(_resourceFactory, _engine, _errorResponseBuilder);
   }
 
   @AfterTest
@@ -211,19 +224,14 @@ public class TestRestLiMethodInvocation
   @Test(dataProvider = "provideFilterConfig")
   public void testInvokerWithFilters(final boolean throwExceptionFromFirstFilter) throws Exception
   {
-    MethodAdapterRegistry mockRegistry = createMock(MethodAdapterRegistry.class);
     RestLiArgumentBuilder mockBuilder = createMock(RestLiArgumentBuilder.class);
-    RequestFilter mockFilter = createMock(RequestFilter.class);
+    Filter mockFilter = createMock(Filter.class);
     @SuppressWarnings("unchecked")
     RequestExecutionCallback<Object> mockCallback = createMock(RequestExecutionCallback.class);
     FilterRequestContextInternal mockFilterContext = createMock(FilterRequestContextInternal.class);
     RestLiRequestData requestData = new RestLiRequestDataImpl.Builder().key("Key").build();
     RestLiMethodInvoker invokerWithFilters =
-        new RestLiMethodInvoker(_resourceFactory,
-                                _engine,
-                                new ErrorResponseBuilder(),
-                                mockRegistry,
-                                Arrays.asList(mockFilter, mockFilter));
+        new RestLiMethodInvoker(_resourceFactory, _engine, new ErrorResponseBuilder());
     Map<String, ResourceModel> resourceModelMap =
         buildResourceModels(StatusCollectionResource.class, LocationResource.class, DiscoveredItemsResource.class);
     ResourceModel statusResourceModel = resourceModelMap.get("/statuses");
@@ -231,43 +239,64 @@ public class TestRestLiMethodInvocation
     final StatusCollectionResource resource = getMockResource(StatusCollectionResource.class);
     RestRequestBuilder builder =
         new RestRequestBuilder(new URI("/statuses/1")).setMethod("GET")
-                                                      .addHeaderValue("Accept", "application/json")
-                                                      .setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION,
-                                                                 AllProtocolVersions.LATEST_PROTOCOL_VERSION.toString());
+            .addHeaderValue("Accept", "application/json")
+            .setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION,
+                       AllProtocolVersions.LATEST_PROTOCOL_VERSION.toString());
     RestRequest request = builder.build();
     RoutingResult routingResult =
         new RoutingResult(new ResourceContextImpl(buildPathKeys("statusID", 1L), request, new RequestContext()),
                           resourceMethodDescriptor);
-    expect(mockRegistry.getArgumentBuilder(resourceMethodDescriptor.getType())).andReturn(mockBuilder);
-    expect(mockBuilder.extractRequestData(routingResult, request)).andReturn(requestData);
+
     mockFilterContext.setRequestData(requestData);
+    expectLastCall();
+    expect(mockBuilder.extractRequestData(routingResult, request)).andReturn(requestData);
+
+    FilterChainCallback filterChainCallback = new FilterChainCallback()
+    {
+      @Override
+      public void onRequestSuccess(RestLiRequestData requestData, RestLiCallback<Object> restLiCallback)
+      {
+        // only invoke if filter chain's requests were successful
+        invokerWithFilters.invoke(requestData, routingResult, mockBuilder, restLiCallback, null);
+      }
+      @Override
+      public void onResponseSuccess(RestLiResponseData responseData, RestLiResponseAttachments responseAttachments)
+      {
+        // unused
+      }
+      @Override
+      public void onError(Throwable th, RestLiResponseData responseData, RestLiResponseAttachments responseAttachments)
+      {
+        // unused
+      }
+    };
+
     final Exception exFromFilter = new RuntimeException("Exception from filter!");
     if (throwExceptionFromFirstFilter)
     {
-      mockFilter.onRequest(eq(mockFilterContext), EasyMock.anyObject(NextRequestFilter.class));
+      mockFilter.onRequest(eq(mockFilterContext));
       expectLastCall().andThrow(exFromFilter);
-      mockCallback.onError(eq(exFromFilter), anyObject(RequestExecutionReport.class),
-                           EasyMock.isNull(RestLiAttachmentReader.class), EasyMock.isNull(RestLiResponseAttachments.class));
+      mockCallback.onError(eq(exFromFilter),
+                           anyObject(RequestExecutionReport.class),
+                           EasyMock.isNull(RestLiAttachmentReader.class),
+                           EasyMock.isNull(RestLiResponseAttachments.class));
     }
     else
     {
       expect(mockFilterContext.getRequestData()).andReturn(requestData).times(3);
-      mockFilter.onRequest(eq(mockFilterContext), EasyMock.anyObject(NextRequestFilter.class));
+      mockFilter.onRequest(eq(mockFilterContext));
       expectLastCall().andAnswer(new IAnswer<Object>()
       {
         @Override
         public Object answer() throws Throwable
         {
           FilterRequestContext filterContext = (FilterRequestContext) getCurrentArguments()[0];
-          NextRequestFilter nextRequestFilter = (NextRequestFilter) getCurrentArguments()[1];
           RestLiRequestData data = filterContext.getRequestData();
           // Verify incoming data.
           assertEquals(data.getKey(), "Key");
           // Update data.
           data.setKey("Key-Filter1");
-          // Invoke next filter.
-          nextRequestFilter.onRequest(filterContext);
-          return null;
+          return CompletableFuture.completedFuture(null);
         }
       }).andAnswer(new IAnswer<Object>()
       {
@@ -275,15 +304,12 @@ public class TestRestLiMethodInvocation
         public Object answer() throws Throwable
         {
           FilterRequestContext filterContext = (FilterRequestContext) getCurrentArguments()[0];
-          NextRequestFilter nextRequestFilter = (NextRequestFilter) getCurrentArguments()[1];
           RestLiRequestData data = filterContext.getRequestData();
           // Verify incoming data.
           assertEquals(data.getKey(), "Key-Filter1");
           // Update data.
           data.setKey("Key-Filter2");
-          // Invoke next filter.
-          nextRequestFilter.onRequest(filterContext);
-          return null;
+          return CompletableFuture.completedFuture(null);
         }
       });
       Long[] argsArray = { 1L };
@@ -291,9 +317,19 @@ public class TestRestLiMethodInvocation
       expect(resource.get(eq(1L))).andReturn(null).once();
       mockCallback.onSuccess(eq(null), anyObject(RequestExecutionReport.class), anyObject(RestLiResponseAttachments.class));
     }
-    replay(resource, mockRegistry, mockBuilder, mockFilterContext, mockFilter, mockCallback);
-    invokerWithFilters.invoke(routingResult, request, mockCallback, false, mockFilterContext);
-    verify(mockRegistry, mockBuilder, mockFilterContext, mockFilter);
+    replay(resource, mockBuilder, mockFilterContext, mockFilter, mockCallback);
+
+    RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(),
+                                                             (ServerResourceContext)routingResult.getContext());
+    mockFilterContext.setRequestData(mockBuilder.extractRequestData(routingResult, request));
+
+    RestLiFilterChain filterChain = new RestLiFilterChain(Arrays.asList(mockFilter, mockFilter), filterChainCallback);
+    filterChain.onRequest(mockFilterContext,
+                          new RestLiResponseFilterContextFactory<Object>(request, routingResult,
+                                                                         new RestLiResponseHandler.Builder().build()),
+                          getCallback());
+
+    verify(mockBuilder, mockFilterContext, mockFilter);
     if (throwExceptionFromFirstFilter)
     {
       assertEquals(requestData.getKey(), "Key");
@@ -412,12 +448,12 @@ public class TestRestLiMethodInvocation
 
     EasyMock.replay(discoveredItemsResource);
     checkAsyncInvocation(discoveredItemsResource,
-                        callback,
-                        methodDescriptor,
-                        "GET",
-                        version,
-                        "/asyncdiscovereditems/(itemId:1,type:2,userId:3)",
-                        buildPathKeys("asyncDiscoveredItemId", key));
+                         callback,
+                         methodDescriptor,
+                         "GET",
+                         version,
+                         "/asyncdiscovereditems/(itemId:1,type:2,userId:3)",
+                         buildPathKeys("asyncDiscoveredItemId", key));
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "statusFinder")
@@ -498,7 +534,7 @@ public class TestRestLiMethodInvocation
     ResourceMethodDescriptor methodDescriptor = discoveredItemsResourceModel.findNamedMethod("user");
     AsyncDiscoveredItemsResource discoveredItemsResource = getMockResource(AsyncDiscoveredItemsResource.class);
     discoveredItemsResource.getDiscoveredItemsForUser(
-      (PagingContext)EasyMock.anyObject(), eq(1L), EasyMock.<Callback<List<DiscoveredItem>>> anyObject());
+        (PagingContext)EasyMock.anyObject(), eq(1L), EasyMock.<Callback<List<DiscoveredItem>>> anyObject());
 
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>()
     {
@@ -671,10 +707,10 @@ public class TestRestLiMethodInvocation
   public void testAsyncPost() throws Exception
   {
     Map<String, ResourceModel> resourceModelMap = buildResourceModels(
-            AsyncStatusCollectionResource.class,
-            AsyncRepliesCollectionResource.class,
-            AsyncLocationResource.class,
-            AsyncDiscoveredItemsResource.class);
+        AsyncStatusCollectionResource.class,
+        AsyncRepliesCollectionResource.class,
+        AsyncLocationResource.class,
+        AsyncDiscoveredItemsResource.class);
     ResourceModel statusResourceModel = resourceModelMap.get("/asyncstatuses");
     ResourceModel repliesResourceModel = statusResourceModel.getSubResource("asyncreplies");
     ResourceModel locationResourceModel = statusResourceModel.getSubResource("asynclocation");
@@ -1035,7 +1071,7 @@ public class TestRestLiMethodInvocation
     ResourceModel statusResourceModel = resourceModelMap.get("/asyncstatuses");
     ResourceModel locationResourceModel = statusResourceModel.getSubResource("asynclocation");
     ResourceModel followsAssociationResourceModel = buildResourceModel(
-            AsyncFollowsAssociativeResource.class);
+        AsyncFollowsAssociativeResource.class);
     ResourceModel discoveredItemsResourceModel = resourceModelMap.get("/asyncdiscovereditems");
 
     RestLiCallback<?> callback = getCallback();
@@ -1263,8 +1299,8 @@ public class TestRestLiMethodInvocation
     methodDescriptor = statusResourceModel.findNamedMethod("public_timeline");
     statusResource = getMockResource(PromiseStatusCollectionResource.class);
     EasyMock.expect(statusResource.getPublicTimeline((PagingContext) EasyMock.anyObject()))
-            .andReturn(Promises.<List<Status>> value(null))
-            .once();
+        .andReturn(Promises.<List<Status>> value(null))
+        .once();
     checkInvocation(statusResource, methodDescriptor, "GET", version, "/promisestatuses?q=public_timeline");
 
     // #2: get
@@ -1308,12 +1344,12 @@ public class TestRestLiMethodInvocation
   public Object[][] promiseFinder()
   {
     return new Object[][]
-      {
-        { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
-          "/promisestatuses?q=search&since=1" },
-        { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
-          "/promisestatuses?q=search&since=1" },
-      };
+        {
+            { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+                "/promisestatuses?q=search&since=1" },
+            { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+                "/promisestatuses?q=search&since=1" },
+        };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "promiseFinderError")
@@ -1362,7 +1398,7 @@ public class TestRestLiMethodInvocation
     ResourceMethodDescriptor methodDescriptor = discoveredItemsResourceModel.findNamedMethod("user");
     PromiseDiscoveredItemsResource discoveredItemsResource = getMockResource(PromiseDiscoveredItemsResource.class);
     EasyMock.expect(
-      discoveredItemsResource.getDiscoveredItemsForUser(eq(1L), (PagingContext) EasyMock.anyObject())).andReturn(Promises.<List<DiscoveredItem>>value(null)).once();
+        discoveredItemsResource.getDiscoveredItemsForUser(eq(1L), (PagingContext) EasyMock.anyObject())).andReturn(Promises.<List<DiscoveredItem>>value(null)).once();
     checkInvocation(discoveredItemsResource, methodDescriptor, "GET", version, "/promiseDiscoveredItems" + query);
   }
 
@@ -1370,7 +1406,7 @@ public class TestRestLiMethodInvocation
   public void testPromiseGetAssociativeResource() throws Exception
   {
     ResourceModel followsResourceModel = buildResourceModel(
-                                                            PromiseFollowsAssociativeResource.class);
+        PromiseFollowsAssociativeResource.class);
 
     ResourceMethodDescriptor methodDescriptor;
     PromiseFollowsAssociativeResource resource;
@@ -1485,7 +1521,7 @@ public class TestRestLiMethodInvocation
     ResourceMethodDescriptor methodDescriptor = statusResourceModel.findNamedMethod("user_timeline");
     PromiseStatusCollectionResource statusResource = getMockResource(PromiseStatusCollectionResource.class);
     EasyMock.expect(statusResource.getUserTimeline(eq(true), eq(new PagingContext(10, 100, false, false))))
-      .andReturn(Promises.<List<Status>>value(null)).once();
+        .andReturn(Promises.<List<Status>>value(null)).once();
     checkInvocation(statusResource,
                     methodDescriptor,
                     "GET",
@@ -1500,7 +1536,7 @@ public class TestRestLiMethodInvocation
     ResourceMethodDescriptor methodDescriptor = statusResourceModel.findNamedMethod("user_timeline");
     PromiseStatusCollectionResource statusResource = getMockResource(PromiseStatusCollectionResource.class);
     EasyMock.expect(statusResource.getUserTimeline(eq(true), eq(new PagingContext(0, 20, true, true))))
-      .andReturn(Promises.<List<Status>>value(null)).once();
+        .andReturn(Promises.<List<Status>>value(null)).once();
     checkInvocation(statusResource,
                     methodDescriptor,
                     "GET",
@@ -1513,7 +1549,7 @@ public class TestRestLiMethodInvocation
   {
     ResourceModel statusResourceModel = buildResourceModel(PromiseStatusCollectionResource.class);
     ResourceModel followsAssociationResourceModel = buildResourceModel(
-            PromiseFollowsAssociativeResource.class);
+        PromiseFollowsAssociativeResource.class);
     ResourceModel discoveredItemsResourceModel = buildResourceModel(PromiseDiscoveredItemsResource.class);
 
     ResourceMethodDescriptor methodDescriptor;
@@ -1582,10 +1618,10 @@ public class TestRestLiMethodInvocation
   public void testPromisePost() throws Exception
   {
     Map<String, ResourceModel> resourceModelMap = buildResourceModels(
-            PromiseStatusCollectionResource.class,
-            PromiseRepliesCollectionResource.class,
-            PromiseLocationResource.class,
-            PromiseDiscoveredItemsResource.class);
+        PromiseStatusCollectionResource.class,
+        PromiseRepliesCollectionResource.class,
+        PromiseLocationResource.class,
+        PromiseDiscoveredItemsResource.class);
 
     ResourceModel statusResourceModel = resourceModelMap.get("/promisestatuses");
     ResourceModel repliesResourceModel = statusResourceModel.getSubResource("promisereplies");
@@ -1696,7 +1732,7 @@ public class TestRestLiMethodInvocation
         getDiscoveredItemComplexKey(1L, 2, 3L);
     EasyMock.expect(
         discoveredItemsResource.update(eq(key), eq(expectedDiscoveredItem))).andReturn(
-          Promises.<UpdateResponse>value(null)).once();
+        Promises.<UpdateResponse>value(null)).once();
     checkInvocation(discoveredItemsResource,
                     methodDescriptor,
                     "POST",
@@ -1868,30 +1904,30 @@ public class TestRestLiMethodInvocation
   public Object[][] batchUpdateComplexKey()
   {
     return new Object[][]
-      {
         {
-          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
-          "/promisediscovereditems?ids[0].itemId=1&ids[0].type=2&ids[0].userId=3&ids[1].itemId=4&ids[1].type=5&ids[1].userId=6",
-          "{\"entities\":{\"itemId=1&type=2&userId=3\":{},\"itemId=4&type=5&userId=6\":{}}}"
-        },
-        // With entity key fields arranged in random order
-        {
-          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
-          "/promisediscovereditems?ids[0].itemId=1&ids[0].type=2&ids[0].userId=3&ids[1].itemId=4&ids[1].type=5&ids[1].userId=6",
-          "{\"entities\":{\"type=2&userId=3&itemId=1\":{},\"userId=6&type=5&itemId=4\":{}}}"
-        },
-        {
-          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
-          "/promisediscovereditems?ids=List((itemId:1,type:2,userId:3),(itemId:4,type:5,userId:6))",
-          "{\"entities\":{\"(itemId:1,type:2,userId:3)\":{},\"(itemId:4,type:5,userId:6)\":{}}}"
-        },
-        // With entity key fields arranged in random order
-        {
-          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
-          "/promisediscovereditems?ids=List((itemId:1,type:2,userId:3),(itemId:4,type:5,userId:6))",
-          "{\"entities\":{\"(type:2,userId:3,itemId:1)\":{},\"(userId:6,type:5,itemId:4)\":{}}}"
-        }
-      };
+            {
+                AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+                "/promisediscovereditems?ids[0].itemId=1&ids[0].type=2&ids[0].userId=3&ids[1].itemId=4&ids[1].type=5&ids[1].userId=6",
+                "{\"entities\":{\"itemId=1&type=2&userId=3\":{},\"itemId=4&type=5&userId=6\":{}}}"
+            },
+            // With entity key fields arranged in random order
+            {
+                AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+                "/promisediscovereditems?ids[0].itemId=1&ids[0].type=2&ids[0].userId=3&ids[1].itemId=4&ids[1].type=5&ids[1].userId=6",
+                "{\"entities\":{\"type=2&userId=3&itemId=1\":{},\"userId=6&type=5&itemId=4\":{}}}"
+            },
+            {
+                AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+                "/promisediscovereditems?ids=List((itemId:1,type:2,userId:3),(itemId:4,type:5,userId:6))",
+                "{\"entities\":{\"(itemId:1,type:2,userId:3)\":{},\"(itemId:4,type:5,userId:6)\":{}}}"
+            },
+            // With entity key fields arranged in random order
+            {
+                AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+                "/promisediscovereditems?ids=List((itemId:1,type:2,userId:3),(itemId:4,type:5,userId:6))",
+                "{\"entities\":{\"(type:2,userId:3,itemId:1)\":{},\"(userId:6,type:5,itemId:4)\":{}}}"
+            }
+        };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchUpdateComplexKey")
@@ -1902,17 +1938,17 @@ public class TestRestLiMethodInvocation
     ResourceMethodDescriptor methodDescriptor = discoveredItemsResourceModel.findMethod(ResourceMethod.BATCH_UPDATE);
     PromiseDiscoveredItemsResource discoveredItemsResource = getMockResource(PromiseDiscoveredItemsResource.class);
     ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams> keyA =
-      getDiscoveredItemComplexKey(1L, 2, 3L);
+        getDiscoveredItemComplexKey(1L, 2, 3L);
     ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams> keyB =
-      getDiscoveredItemComplexKey(4L, 5, 6L);
+        getDiscoveredItemComplexKey(4L, 5, 6L);
 
     BatchUpdateRequest<ComplexResourceKey<DiscoveredItemKey,DiscoveredItemKeyParams>,DiscoveredItem> batchUpdateRequest = EasyMock.anyObject();
     @SuppressWarnings("unchecked")
     Promise<BatchUpdateResult<ComplexResourceKey<DiscoveredItemKey,DiscoveredItemKeyParams>,DiscoveredItem>> batchUpdateResult =
-      discoveredItemsResource.batchUpdate(batchUpdateRequest);
+        discoveredItemsResource.batchUpdate(batchUpdateRequest);
     EasyMock.expect(batchUpdateResult).andReturn(
-      Promises.<BatchUpdateResult<ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams>, DiscoveredItem>>value(
-        null)).once();
+        Promises.<BatchUpdateResult<ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams>, DiscoveredItem>>value(
+            null)).once();
     checkInvocation(discoveredItemsResource, methodDescriptor, "PUT", version, uri, body, buildBatchPathKeys(keyA, keyB));
   }
 
@@ -1941,30 +1977,30 @@ public class TestRestLiMethodInvocation
   public Object[][] batchComplexKeyWithBody()
   {
     return new Object[][]
-      {
         {
-          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
-          "/promisediscovereditems?ids[0].itemId=1&ids[0].type=2&ids[0].userId=3&ids[1].itemId=4&ids[1].type=5&ids[1].userId=6",
-          "{\"entities\":{\"itemId=1&type=2&userId=3\":{},\"itemId=4&type=5&userId=6\":{}}}"
-        },
-        // With entity key fields arranged in random order
-        {
-          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
-          "/promisediscovereditems?ids[0].itemId=1&ids[0].type=2&ids[0].userId=3&ids[1].itemId=4&ids[1].type=5&ids[1].userId=6",
-          "{\"entities\":{\"type=2&userId=3&itemId=1\":{},\"userId=6&type=5&itemId=4\":{}}}"
-        },
-        {
-          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
-          "/promisediscovereditems?ids=List((itemId:1,type:2,userId:3),(itemId:4,type:5,userId:6))",
-          "{\"entities\":{\"(itemId:1,type:2,userId:3)\":{},\"(itemId:4,type:5,userId:6)\":{}}}"
-        },
-        // With entity key fields arranged in random order
-        {
-          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
-          "/promisediscovereditems?ids=List((itemId:1,type:2,userId:3),(itemId:4,type:5,userId:6))",
-          "{\"entities\":{\"(type:2,userId:3,itemId:1)\":{},\"(userId:6,type:5,itemId:4)\":{}}}"
-        }
-      };
+            {
+                AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+                "/promisediscovereditems?ids[0].itemId=1&ids[0].type=2&ids[0].userId=3&ids[1].itemId=4&ids[1].type=5&ids[1].userId=6",
+                "{\"entities\":{\"itemId=1&type=2&userId=3\":{},\"itemId=4&type=5&userId=6\":{}}}"
+            },
+            // With entity key fields arranged in random order
+            {
+                AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+                "/promisediscovereditems?ids[0].itemId=1&ids[0].type=2&ids[0].userId=3&ids[1].itemId=4&ids[1].type=5&ids[1].userId=6",
+                "{\"entities\":{\"type=2&userId=3&itemId=1\":{},\"userId=6&type=5&itemId=4\":{}}}"
+            },
+            {
+                AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+                "/promisediscovereditems?ids=List((itemId:1,type:2,userId:3),(itemId:4,type:5,userId:6))",
+                "{\"entities\":{\"(itemId:1,type:2,userId:3)\":{},\"(itemId:4,type:5,userId:6)\":{}}}"
+            },
+            // With entity key fields arranged in random order
+            {
+                AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+                "/promisediscovereditems?ids=List((itemId:1,type:2,userId:3),(itemId:4,type:5,userId:6))",
+                "{\"entities\":{\"(type:2,userId:3,itemId:1)\":{},\"(userId:6,type:5,itemId:4)\":{}}}"
+            }
+        };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchComplexKeyWithBody")
@@ -1974,13 +2010,13 @@ public class TestRestLiMethodInvocation
     ResourceMethodDescriptor methodDescriptor = discoveredItemsResourceModel.findMethod(ResourceMethod.BATCH_PARTIAL_UPDATE);
     PromiseDiscoveredItemsResource discoveredItemsResource = getMockResource(PromiseDiscoveredItemsResource.class);
     ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams> keyA =
-      getDiscoveredItemComplexKey(1L, 2, 3L);
+        getDiscoveredItemComplexKey(1L, 2, 3L);
     ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams> keyB =
-      getDiscoveredItemComplexKey(4L, 5, 6L);
+        getDiscoveredItemComplexKey(4L, 5, 6L);
 
     BatchPatchRequest<ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams>, DiscoveredItem> batchPatchRequest = EasyMock.anyObject();
     EasyMock.expect(discoveredItemsResource.batchUpdate(batchPatchRequest)).andReturn(
-      Promises.<BatchUpdateResult<ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams>, DiscoveredItem>>value(null)).once();
+        Promises.<BatchUpdateResult<ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams>, DiscoveredItem>>value(null)).once();
     checkInvocation(discoveredItemsResource,
                     methodDescriptor,
                     "POST",
@@ -2204,7 +2240,7 @@ public class TestRestLiMethodInvocation
   public void testGetAssociativeResource() throws Exception
   {
     ResourceModel followsResourceModel = buildResourceModel(
-                                                            FollowsAssociativeResource.class);
+        FollowsAssociativeResource.class);
 
     ResourceMethodDescriptor methodDescriptor;
     FollowsAssociativeResource resource;
@@ -2354,7 +2390,7 @@ public class TestRestLiMethodInvocation
   {
     ResourceModel statusResourceModel = buildResourceModel(StatusCollectionResource.class);
     ResourceModel followsAssociationResourceModel = buildResourceModel(
-            FollowsAssociativeResource.class);
+        FollowsAssociativeResource.class);
     ResourceModel discoveredItemsResourceModel = buildResourceModel(
         DiscoveredItemsResource.class);
 
@@ -2426,10 +2462,10 @@ public class TestRestLiMethodInvocation
   public void testPost() throws Exception
   {
     Map<String, ResourceModel> resourceModelMap = buildResourceModels(
-            StatusCollectionResource.class,
-            RepliesCollectionResource.class,
-            LocationResource.class,
-            DiscoveredItemsResource.class);
+        StatusCollectionResource.class,
+        RepliesCollectionResource.class,
+        LocationResource.class,
+        DiscoveredItemsResource.class);
     ResourceModel statusResourceModel = resourceModelMap.get("/statuses");
     ResourceModel repliesResourceModel = statusResourceModel.getSubResource("replies");
     ResourceModel locationResourceModel = statusResourceModel.getSubResource("location");
@@ -2556,7 +2592,7 @@ public class TestRestLiMethodInvocation
         DiscoveredItemsResource.class);
     ResourceModel statusResourceModel = resourceModelMap.get("/statuses");
     ResourceModel followsAssociationResourceModel = buildResourceModel(
-                                                                       FollowsAssociativeResource.class);
+        FollowsAssociativeResource.class);
     ResourceModel locationResourceModel = statusResourceModel.getSubResource("location");
     ResourceModel discoveredItemsResourceModel = resourceModelMap.get("/discovereditems");
 
@@ -2696,8 +2732,8 @@ public class TestRestLiMethodInvocation
     EasyMock.expectLastCall().once();
 
     String jsonEntityBody = RestLiTestHelper.doubleQuote(
-                                                         "{'first': 'alfred', 'last': 'hitchcock', 'email': 'alfred@test.linkedin.com', " +
-        "'company': 'genentech', 'openToMarketingEmails': false}");
+        "{'first': 'alfred', 'last': 'hitchcock', 'email': 'alfred@test.linkedin.com', " +
+            "'company': 'genentech', 'openToMarketingEmails': false}");
     checkInvocation(accountsResource,
                     methodDescriptor,
                     "POST",
@@ -2762,20 +2798,27 @@ public class TestRestLiMethodInvocation
     methodDescriptor = accountsResourceModel.findActionMethod("register", ResourceLevel.COLLECTION);
 
     String jsonEntityBody = RestLiTestHelper.doubleQuote(
-      "{'first': 42, 'last': 42, 'email': 42, " +
-      "'company': 42, 'openToMarketingEmails': 'false'}");
+        "{'first': 42, 'last': 42, 'email': 42, " +
+            "'company': 42, 'openToMarketingEmails': 'false'}");
 
     RestRequest request =
-            new RestRequestBuilder(new URI("/accounts?action=register"))
-                    .setMethod("POST").setEntity(jsonEntityBody.getBytes(Data.UTF_8_CHARSET))
-                    .setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, version.toString())
-                    .build();
+        new RestRequestBuilder(new URI("/accounts?action=register"))
+            .setMethod("POST").setEntity(jsonEntityBody.getBytes(Data.UTF_8_CHARSET))
+            .setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, version.toString())
+            .build();
 
     RoutingResult routingResult = new RoutingResult(new ResourceContextImpl(null, request,
                                                                             new RequestContext()), methodDescriptor);
+    final FilterRequestContextInternal filterContext =
+        new FilterRequestContextInternalImpl((ServerResourceContext) routingResult.getContext(), routingResult.getResourceMethod());
 
     try {
-      _invoker.invoke(routingResult, request, null, false, null);
+      RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(),
+                                                               (ServerResourceContext)routingResult.getContext());
+      filterContext.setRequestData(_methodAdapterRegistry.getArgumentBuilder(methodDescriptor.getMethodType())
+                                       .extractRequestData(routingResult, request));
+      _invoker.invoke(null, routingResult, _methodAdapterRegistry.getArgumentBuilder(methodDescriptor.getMethodType()),
+                      null, null);
       Assert.fail("expected routing exception");
     }
     catch (RoutingException e)
@@ -2794,19 +2837,26 @@ public class TestRestLiMethodInvocation
     methodDescriptor = accountsResourceModel.findActionMethod("spamTweets", ResourceLevel.COLLECTION);
 
     String jsonEntityBody = RestLiTestHelper.doubleQuote(
-      "{'statuses':[1,2,3]}");
+        "{'statuses':[1,2,3]}");
 
     RestRequest request =
-            new RestRequestBuilder(new URI("/accounts?action=spamTweets"))
-                    .setMethod("POST").setEntity(jsonEntityBody.getBytes(Data.UTF_8_CHARSET))
-                    .setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, version.toString())
-                    .build();
+        new RestRequestBuilder(new URI("/accounts?action=spamTweets"))
+            .setMethod("POST").setEntity(jsonEntityBody.getBytes(Data.UTF_8_CHARSET))
+            .setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, version.toString())
+            .build();
 
     RoutingResult routingResult = new RoutingResult(new ResourceContextImpl(null, request,
                                                                             new RequestContext()), methodDescriptor);
+    final FilterRequestContextInternal filterContext =
+        new FilterRequestContextInternalImpl((ServerResourceContext) routingResult.getContext(), routingResult.getResourceMethod());
+    RestLiArgumentBuilder adapter = _methodAdapterRegistry.getArgumentBuilder(methodDescriptor.getType());
 
     try {
-      _invoker.invoke(routingResult, request, null, false, null);
+      RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(),
+                                                               (ServerResourceContext)routingResult.getContext());
+      filterContext.setRequestData(adapter.extractRequestData(routingResult, request));
+      _invoker.invoke(filterContext.getRequestData(), routingResult,
+                      _methodAdapterRegistry.getArgumentBuilder(methodDescriptor.getMethodType()), null, null);
       Assert.fail("expected routing exception");
     }
     catch (RoutingException e)
@@ -2828,7 +2878,7 @@ public class TestRestLiMethodInvocation
     StringArray emailAddresses = new StringArray(Lists.newArrayList("bob@test.linkedin.com", "joe@test.linkedin.com"));
 
     EasyMock.expect(accountsResource.closeAccounts(eq(emailAddresses), eq(true), eq((StringMap)null)))
-    .andReturn((new StringMap())).once();
+        .andReturn((new StringMap())).once();
 
     String jsonEntityBody = RestLiTestHelper.doubleQuote(
         "{'emailAddresses': ['bob@test.linkedin.com', 'joe@test.linkedin.com'], 'someFlag': true}");
@@ -2844,10 +2894,10 @@ public class TestRestLiMethodInvocation
   public Object[][] customStringNoCoercer() throws Exception
   {
     return new Object[][]
-      {
-        { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "/statuses/1/replies?query=noCoercerCustomString&s=foo" },
-        { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/statuses/1/replies?query=noCoercerCustomString&s=foo" }
-      };
+        {
+            { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "/statuses/1/replies?query=noCoercerCustomString&s=foo" },
+            { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/statuses/1/replies?query=noCoercerCustomString&s=foo" }
+        };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "customTypeNoCoercer")
@@ -2866,10 +2916,10 @@ public class TestRestLiMethodInvocation
   public Object[][] customStringWrongType() throws Exception
   {
     return new Object[][]
-      {
-        { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "/statuses/1/replies?query=customLong&l=foo" },
-        { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/statuses/1/replies?query=customLong&l=foo" }
-      };
+        {
+            { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "/statuses/1/replies?query=customLong&l=foo" },
+            { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/statuses/1/replies?query=customLong&l=foo" }
+        };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "customTypeWrongType")
@@ -2910,10 +2960,10 @@ public class TestRestLiMethodInvocation
   public Object[][] customStringParam() throws Exception
   {
     return new Object[][]
-    {
-      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "/statuses/1/replies?query=customString&s=foo" },
-      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/statuses/1/replies?query=customString&s=foo" }
-    };
+        {
+            { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "/statuses/1/replies?query=customString&s=foo" },
+            { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/statuses/1/replies?query=customString&s=foo" }
+        };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "customStringParam")
@@ -2931,10 +2981,10 @@ public class TestRestLiMethodInvocation
   public Object[][] customLongParam() throws Exception
   {
     return new Object[][]
-      {
-        { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "/statuses/1/replies?query=customLong&l=100" },
-        { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/statuses/1/replies?query=customLong&l=100" }
-      };
+        {
+            { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "/statuses/1/replies?query=customLong&l=100" },
+            { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/statuses/1/replies?query=customLong&l=100" }
+        };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "customLongParam")
@@ -2952,10 +3002,10 @@ public class TestRestLiMethodInvocation
   public Object[][] customLongArray() throws Exception
   {
     return new Object[][]
-      {
-        { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "/statuses/1/replies?query=customLongArray&longs=100&longs=200" },
-        { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/statuses/1/replies?query=customLongArray&longs=List(100,200)" }
-      };
+        {
+            { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "/statuses/1/replies?query=customLongArray&longs=100&longs=200" },
+            { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/statuses/1/replies?query=customLongArray&longs=List(100,200)" }
+        };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "customLongArray")
@@ -3121,11 +3171,11 @@ public class TestRestLiMethodInvocation
     resource.recordParam(expectedRecord);
     EasyMock.expectLastCall().once();
     jsonEntityBody = RestLiTestHelper.doubleQuote("{'recordParam':{"
-                                                  + "'intField':" + String.valueOf(Long.MAX_VALUE) + ","
-                                                  + "'longField':" + String.valueOf(Integer.MAX_VALUE) + ","
-                                                  + "'floatField':" + String.valueOf(Double.MAX_VALUE) + ","
-                                                  + "'doubleField':" + String.valueOf(floatValue)
-                                                  + "}}");
+                                                      + "'intField':" + String.valueOf(Long.MAX_VALUE) + ","
+                                                      + "'longField':" + String.valueOf(Integer.MAX_VALUE) + ","
+                                                      + "'floatField':" + String.valueOf(Double.MAX_VALUE) + ","
+                                                      + "'doubleField':" + String.valueOf(floatValue)
+                                                      + "}}");
 
     checkInvocation(resource,
                     methodDescriptor,
@@ -3187,10 +3237,10 @@ public class TestRestLiMethodInvocation
     keys2.add(new Key("b", Double.class));
 
     return new Object[][]
-      {
-        { compoundKey1, dataMap1, keys1 },
-        { compoundKey2, dataMap2, keys2 }
-      };
+        {
+            { compoundKey1, dataMap1, keys1 },
+            { compoundKey2, dataMap2, keys2 }
+        };
   }
 
 
@@ -3381,14 +3431,14 @@ public class TestRestLiMethodInvocation
     ResourceMethodDescriptor methodDescriptor = discoveredItemsResourceModel.findMethod(ResourceMethod.BATCH_UPDATE);
     DiscoveredItemsResource discoveredItemsResource = getMockResource(DiscoveredItemsResource.class);
     ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams> keyA =
-      getDiscoveredItemComplexKey(1L, 2, 3L);
+        getDiscoveredItemComplexKey(1L, 2, 3L);
     ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams> keyB =
-      getDiscoveredItemComplexKey(4L, 5, 6L);
+        getDiscoveredItemComplexKey(4L, 5, 6L);
 
     BatchUpdateRequest<ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams>, DiscoveredItem> batchUpdateRequest = EasyMock.anyObject();
     @SuppressWarnings("unchecked")
     BatchUpdateResult<ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams>, DiscoveredItem> batchUpdateResult =
-      discoveredItemsResource.batchUpdate(batchUpdateRequest);
+        discoveredItemsResource.batchUpdate(batchUpdateRequest);
     EasyMock.expect(batchUpdateResult).andReturn(null).once();
 
     checkInvocation(discoveredItemsResource, methodDescriptor, "PUT", version, uri, body, buildBatchPathKeys(keyA, keyB));
@@ -3421,14 +3471,14 @@ public class TestRestLiMethodInvocation
     ResourceMethodDescriptor methodDescriptor = discoveredItemsResourceModel.findMethod(ResourceMethod.BATCH_PARTIAL_UPDATE);
     DiscoveredItemsResource discoveredItemsResource = getMockResource(DiscoveredItemsResource.class);
     ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams> keyA =
-      getDiscoveredItemComplexKey(1L, 2, 3L);
+        getDiscoveredItemComplexKey(1L, 2, 3L);
     ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams> keyB =
-      getDiscoveredItemComplexKey(4L, 5, 6L);
+        getDiscoveredItemComplexKey(4L, 5, 6L);
 
     BatchPatchRequest<ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams>, DiscoveredItem> batchPatchRequest = EasyMock.anyObject();
     @SuppressWarnings("unchecked")
     BatchUpdateResult<ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams>, DiscoveredItem> batchUpdateResult =
-      discoveredItemsResource.batchUpdate(batchPatchRequest);
+        discoveredItemsResource.batchUpdate(batchPatchRequest);
     EasyMock.expect(batchUpdateResult).andReturn(null).once();
 
     checkInvocation(discoveredItemsResource, methodDescriptor, "POST", version, uri, body, buildBatchPathKeys(keyA, keyB));
@@ -3524,10 +3574,10 @@ public class TestRestLiMethodInvocation
   public Object[][] paramCollectionGet() throws Exception
   {
     return new Object[][]
-      {
-        { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "/test/foo?intParam=1&stringParam=bar" },
-        { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/test/foo?intParam=1&stringParam=bar" }
-      };
+        {
+            { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "/test/foo?intParam=1&stringParam=bar" },
+            { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/test/foo?intParam=1&stringParam=bar" }
+        };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "paramCollectionGet")
@@ -3544,10 +3594,10 @@ public class TestRestLiMethodInvocation
   public Object[][] paramCollectionBatchGet() throws Exception
   {
     return new Object[][]
-      {
-        { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "/test?ids=foo&ids=bar&ids=baz&intParam=1&stringParam=qux" },
-        { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/test?ids=List(foo,bar,baz)&intParam=1&stringParam=qux" }
-      };
+        {
+            { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "/test?ids=foo&ids=bar&ids=baz&intParam=1&stringParam=qux" },
+            { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/test?ids=List(foo,bar,baz)&intParam=1&stringParam=qux" }
+        };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "paramCollectionBatchGet")
@@ -3564,10 +3614,10 @@ public class TestRestLiMethodInvocation
   public Object[][] paramCollectionCreate() throws Exception
   {
     return new Object[][]
-      {
-        { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "/test?intParam=1&stringParam=bar" },
-        { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/test?intParam=1&stringParam=bar" }
-      };
+        {
+            { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "/test?intParam=1&stringParam=bar" },
+            { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/test?intParam=1&stringParam=bar" }
+        };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "paramCollectionCreate")
@@ -3584,12 +3634,12 @@ public class TestRestLiMethodInvocation
   public Object[][] paramCollectionBatchCreate() throws Exception
   {
     return new Object[][]
-      {
-        { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
-          "/test?intParam=1&stringParam=bar", "{\"elements\":[{},{}]}" },
-        { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
-          "/test?intParam=1&stringParam=bar", "{\"elements\":[{},{}]}" }
-      };
+        {
+            { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+                "/test?intParam=1&stringParam=bar", "{\"elements\":[{},{}]}" },
+            { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+                "/test?intParam=1&stringParam=bar", "{\"elements\":[{},{}]}" }
+        };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "paramCollectionBatchCreate")
@@ -3602,7 +3652,7 @@ public class TestRestLiMethodInvocation
     BatchCreateRequest batchCreateRequest =(BatchCreateRequest)EasyMock.anyObject();
     @SuppressWarnings("unchecked")
     BatchCreateResult<String, CombinedTestDataModels.Foo> batchCreateResult =
-      resource.myBatchCreate(batchCreateRequest, eq(1), eq("bar"));
+        resource.myBatchCreate(batchCreateRequest, eq(1), eq("bar"));
     EasyMock.expect(batchCreateResult).andReturn(null).once();
     checkInvocation(resource, methodDescriptor, "POST", version, uri, body, buildBatchPathKeys());
   }
@@ -3611,10 +3661,10 @@ public class TestRestLiMethodInvocation
   public Object[][] paramCollectionUpdate() throws Exception
   {
     return new Object[][]
-      {
-        { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "/test?intParam=1&stringParam=bar" },
-        { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/test?intParam=1&stringParam=bar" }
-      };
+        {
+            { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "/test?intParam=1&stringParam=bar" },
+            { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/test?intParam=1&stringParam=bar" }
+        };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "paramCollectionUpdate")
@@ -3631,12 +3681,12 @@ public class TestRestLiMethodInvocation
   public Object[][] paramCollectionBatchUpdate() throws Exception
   {
     return new Object[][]
-      {
-        { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
-          "/test?ids=foo&ids=bar&intParam=1&stringParam=baz", "{\"entities\":{\"foo\":{},\"bar\":{}}}" },
-        { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
-          "/test?ids=List(foo,bar)&intParam=1&stringParam=baz", "{\"entities\":{\"foo\":{},\"bar\":{}}}" }
-      };
+        {
+            { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+                "/test?ids=foo&ids=bar&intParam=1&stringParam=baz", "{\"entities\":{\"foo\":{},\"bar\":{}}}" },
+            { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+                "/test?ids=List(foo,bar)&intParam=1&stringParam=baz", "{\"entities\":{\"foo\":{},\"bar\":{}}}" }
+        };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "paramCollectionBatchUpdate")
@@ -3649,7 +3699,7 @@ public class TestRestLiMethodInvocation
     BatchUpdateRequest batchUpdateRequest =(BatchUpdateRequest)EasyMock.anyObject();
     @SuppressWarnings("unchecked")
     BatchUpdateResult<String, CombinedTestDataModels.Foo> batchUpdateResult =
-      resource.myBatchUpdate(batchUpdateRequest, eq(1), eq("baz"));
+        resource.myBatchUpdate(batchUpdateRequest, eq(1), eq("baz"));
     EasyMock.expect(batchUpdateResult).andReturn(null).once();
     checkInvocation(resource, methodDescriptor, "PUT", version, uri, body, buildBatchPathKeys("foo", "bar"));
   }
@@ -3658,12 +3708,12 @@ public class TestRestLiMethodInvocation
   public Object[][] paramCollectionPartialUpdate() throws Exception
   {
     return new Object[][]
-      {
-        { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
-          "/test/foo?intParam=1&stringParam=bar", "{\"patch\":{\"$set\":{\"foo\":42}}}" },
-        { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
-          "/test/foo?intParam=1&stringParam=bar", "{\"patch\":{\"$set\":{\"foo\":42}}}" }
-      };
+        {
+            { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+                "/test/foo?intParam=1&stringParam=bar", "{\"patch\":{\"$set\":{\"foo\":42}}}" },
+            { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+                "/test/foo?intParam=1&stringParam=bar", "{\"patch\":{\"$set\":{\"foo\":42}}}" }
+        };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "paramCollectionPartialUpdate")
@@ -3683,12 +3733,12 @@ public class TestRestLiMethodInvocation
   public Object[][] paramCollectionBatchPartialUpdate() throws Exception
   {
     return new Object[][]
-      {
-        { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
-          "/test?ids=foo&ids=bar&intParam=1&stringParam=baz", "{\"entities\":{\"foo\":{},\"bar\":{}}}" },
-        { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
-          "/test?ids=List(foo,bar)&intParam=1&stringParam=baz", "{\"entities\":{\"foo\":{},\"bar\":{}}}" }
-      };
+        {
+            { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+                "/test?ids=foo&ids=bar&intParam=1&stringParam=baz", "{\"entities\":{\"foo\":{},\"bar\":{}}}" },
+            { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+                "/test?ids=List(foo,bar)&intParam=1&stringParam=baz", "{\"entities\":{\"foo\":{},\"bar\":{}}}" }
+        };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "paramCollectionBatchPartialUpdate")
@@ -3701,7 +3751,7 @@ public class TestRestLiMethodInvocation
     BatchPatchRequest batchPatchRequest =(BatchPatchRequest)EasyMock.anyObject();
     @SuppressWarnings("unchecked")
     BatchUpdateResult<String, CombinedTestDataModels.Foo> batchUpdateResult =
-      resource.myBatchUpdate(batchPatchRequest, eq(1), eq("baz"));
+        resource.myBatchUpdate(batchPatchRequest, eq(1), eq("baz"));
     EasyMock.expect(batchUpdateResult).andReturn(null).once();
     checkInvocation(resource, methodDescriptor, "POST", version, uri, body, buildBatchPathKeys("foo", "bar"));
   }
@@ -3710,10 +3760,10 @@ public class TestRestLiMethodInvocation
   public Object[][] paramCollectionDelete() throws Exception
   {
     return new Object[][]
-      {
-        { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "/test/foo?intParam=1&stringParam=bar" },
-        { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/test/foo?intParam=1&stringParam=bar" }
-      };
+        {
+            { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "/test/foo?intParam=1&stringParam=bar" },
+            { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/test/foo?intParam=1&stringParam=bar" }
+        };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "paramCollectionDelete")
@@ -3730,10 +3780,10 @@ public class TestRestLiMethodInvocation
   public Object[][] paramCollectionBatchDelete() throws Exception
   {
     return new Object[][]
-      {
-        { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "/statuses?ids=foo&ids=bar&intParam=1&stringParam=baz" },
-        { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/statuses?ids=List(foo,bar)&intParam=1&stringParam=baz" }
-      };
+        {
+            { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "/statuses?ids=foo&ids=bar&intParam=1&stringParam=baz" },
+            { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/statuses?ids=List(foo,bar)&intParam=1&stringParam=baz" }
+        };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "paramCollectionBatchDelete")
@@ -3746,7 +3796,7 @@ public class TestRestLiMethodInvocation
     BatchDeleteRequest batchDeleteRequest =(BatchDeleteRequest)EasyMock.anyObject();
     @SuppressWarnings("unchecked")
     BatchUpdateResult<String, CombinedTestDataModels.Foo> batchUpdateResult =
-      resource.myBatchDelete(batchDeleteRequest, eq(1), eq("baz"));
+        resource.myBatchDelete(batchDeleteRequest, eq(1), eq("baz"));
     EasyMock.expect(batchUpdateResult).andReturn(null).once();
     checkInvocation(resource, methodDescriptor, "DELETE", version, uri, "", buildBatchPathKeys("foo", "bar"));
   }
@@ -3755,10 +3805,10 @@ public class TestRestLiMethodInvocation
   public Object[][] paramSimpleGet() throws Exception
   {
     return new Object[][]
-      {
-        { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "/test?intParam=1&stringParam=bar" },
-        { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/test?intParam=1&stringParam=bar" }
-      };
+        {
+            { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "/test?intParam=1&stringParam=bar" },
+            { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/test?intParam=1&stringParam=bar" }
+        };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "paramSimple")
@@ -3808,33 +3858,33 @@ public class TestRestLiMethodInvocation
   public Object[][] batchUpdateCompoundKey()
   {
     return new Object[][]
-      {
         {
-          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
-          "/asyncfollows?ids=followeeID%3D2%26followerID%3D1&ids=followeeID%3D4%26followerID%3D3&ids=followeeID%3D6%26followerID%3D5))",
-          "{\"entities\":{\"followeeID=2&followerID=1\": {}, \"followeeID=4&followerID=3\": {}, \"followeeID=6&followerID=5\": {} }}"
-        },
-        // With entity and query parameter key fields arranged in random order
-        {
-          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
-          "/asyncfollows?ids=followeeID%3D2%26followerID%3D1&ids=followerID%3D3%26followeeID%3D4&ids=followeeID%3D6%26followerID%3D5))",
-          "{\"entities\":{\"followerID=1&followeeID=2\": {}, \"followeeID=4&followerID=3\": {}, \"followerID=5&followeeID=6\": {} }}"
-        },
-        {
-          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
-          "/asyncfollows?ids=List((followeeID:2,followerID:1),(followeeID:4,followerID:3),(followeeID:6,followerID:5))",
-          "{\"entities\":{\"(followeeID:2,followerID:1)\": {}, \"(followeeID:4,followerID:3)\": {}, \"(followeeID:6,followerID:5)\": {} }}"
-        },
-        // With entity and query parameter key fields arranged in random order
-        {
-          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
-          "/asyncfollows?ids=List((followeeID:2,followerID:1),(followerID:3,followeeID:4),(followeeID:6,followerID:5))",
-          "{\"entities\":{\"(followerID:1,followeeID:2)\": {}, \"(followeeID:4,followerID:3)\": {}, \"(followerID:5,followeeID:6)\": {} }}"
-        },
-      };
+            {
+                AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+                "/asyncfollows?ids=followeeID%3D2%26followerID%3D1&ids=followeeID%3D4%26followerID%3D3&ids=followeeID%3D6%26followerID%3D5))",
+                "{\"entities\":{\"followeeID=2&followerID=1\": {}, \"followeeID=4&followerID=3\": {}, \"followeeID=6&followerID=5\": {} }}"
+            },
+            // With entity and query parameter key fields arranged in random order
+            {
+                AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+                "/asyncfollows?ids=followeeID%3D2%26followerID%3D1&ids=followerID%3D3%26followeeID%3D4&ids=followeeID%3D6%26followerID%3D5))",
+                "{\"entities\":{\"followerID=1&followeeID=2\": {}, \"followeeID=4&followerID=3\": {}, \"followerID=5&followeeID=6\": {} }}"
+            },
+            {
+                AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+                "/asyncfollows?ids=List((followeeID:2,followerID:1),(followeeID:4,followerID:3),(followeeID:6,followerID:5))",
+                "{\"entities\":{\"(followeeID:2,followerID:1)\": {}, \"(followeeID:4,followerID:3)\": {}, \"(followeeID:6,followerID:5)\": {} }}"
+            },
+            // With entity and query parameter key fields arranged in random order
+            {
+                AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+                "/asyncfollows?ids=List((followeeID:2,followerID:1),(followerID:3,followeeID:4),(followeeID:6,followerID:5))",
+                "{\"entities\":{\"(followerID:1,followeeID:2)\": {}, \"(followeeID:4,followerID:3)\": {}, \"(followerID:5,followeeID:6)\": {} }}"
+            },
+        };
   }
 
- @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchUpdateCompoundKey")
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchUpdateCompoundKey")
   public void testAsyncBatchUpdateAssociativeResource(ProtocolVersion version, String uri, String body) throws Exception
   {
     ResourceModel followsResourceModel = buildResourceModel(AsyncFollowsAssociativeResource.class);
@@ -4042,30 +4092,30 @@ public class TestRestLiMethodInvocation
   public Object[][] asyncBatchUpdateComplexKey2()
   {
     return new Object[][]
-      {
         {
-          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
-          "/promisediscovereditems?ids[0].itemId=1&ids[0].type=1&ids[0].userId=1&ids[1].itemId=2&ids[1].type=2&ids[1].userId=2&ids[2].itemId=3&ids[2].type=3&ids[2].userId=3",
-          "{\"entities\":{\"itemId=1&type=1&userId=1\":{}, \"itemId=2&type=2&userId=2\":{}, \"itemId=3&type=3&userId=3\":{} }}"
-        },
-        // With entity and query parameter key fields arranged in random order
-        {
-          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
-          "/promisediscovereditems?ids[0].itemId=1&ids[0].type=1&ids[0].userId=1&ids[1].itemId=2&ids[1].type=2&ids[1].userId=2&ids[2].itemId=3&ids[2].type=3&ids[2].userId=3",
-          "{\"entities\":{\"type=1&userId=1&itemId=1\":{}, \"userId=2&itemId=2&type=2\":{}, \"userId=3&type=3&itemId=3\":{} }}"
-        },
-        {
-          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
-          "/asyncdiscovereditems?ids=List((itemId:1,type:1,userId:1),(itemId:2,type:2,userId:2),(itemId:3,type:3,userId:3))",
-          "{\"entities\":{\"(itemId:1,type:1,userId:1)\":{}, \"(itemId:2,type:2,userId:2)\":{}, \"(itemId:3,type:3,userId:3)\": {} }}"
-        },
-        // With entity and query parameter key fields arranged in random order
-        {
-          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
-          "/asyncdiscovereditems?ids=List((itemId:1,type:1,userId:1),(userId:2,type:2,itemId:2),(itemId:3,type:3,userId:3))",
-          "{\"entities\":{\"(type:1,userId:1,itemId:1)\":{}, \"(userId:2,itemId:2,type:2)\":{}, \"(userId:3,type:3,itemId:3)\": {} }}"
-        }
-      };
+            {
+                AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+                "/promisediscovereditems?ids[0].itemId=1&ids[0].type=1&ids[0].userId=1&ids[1].itemId=2&ids[1].type=2&ids[1].userId=2&ids[2].itemId=3&ids[2].type=3&ids[2].userId=3",
+                "{\"entities\":{\"itemId=1&type=1&userId=1\":{}, \"itemId=2&type=2&userId=2\":{}, \"itemId=3&type=3&userId=3\":{} }}"
+            },
+            // With entity and query parameter key fields arranged in random order
+            {
+                AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+                "/promisediscovereditems?ids[0].itemId=1&ids[0].type=1&ids[0].userId=1&ids[1].itemId=2&ids[1].type=2&ids[1].userId=2&ids[2].itemId=3&ids[2].type=3&ids[2].userId=3",
+                "{\"entities\":{\"type=1&userId=1&itemId=1\":{}, \"userId=2&itemId=2&type=2\":{}, \"userId=3&type=3&itemId=3\":{} }}"
+            },
+            {
+                AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+                "/asyncdiscovereditems?ids=List((itemId:1,type:1,userId:1),(itemId:2,type:2,userId:2),(itemId:3,type:3,userId:3))",
+                "{\"entities\":{\"(itemId:1,type:1,userId:1)\":{}, \"(itemId:2,type:2,userId:2)\":{}, \"(itemId:3,type:3,userId:3)\": {} }}"
+            },
+            // With entity and query parameter key fields arranged in random order
+            {
+                AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+                "/asyncdiscovereditems?ids=List((itemId:1,type:1,userId:1),(userId:2,type:2,itemId:2),(itemId:3,type:3,userId:3))",
+                "{\"entities\":{\"(type:1,userId:1,itemId:1)\":{}, \"(userId:2,itemId:2,type:2)\":{}, \"(userId:3,type:3,itemId:3)\": {} }}"
+            }
+        };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "asyncBatchUpdateComplexKey")
@@ -4200,47 +4250,59 @@ public class TestRestLiMethodInvocation
     RestRequest request = builder.build();
     final RestLiAttachmentReader attachmentReader = new RestLiAttachmentReader(null);
     final CountDownLatch latch = new CountDownLatch(1);
-    final RestLiCallback<Object> callback =
-        new RestLiCallback<Object>(request,
-                                   null,
-                                   new RestLiResponseHandler.Builder().build(),
-                                   new RequestExecutionCallback<RestResponse>()
-                                   {
-                                     @Override
-                                     public void onError(Throwable e, RequestExecutionReport executionReport,
-                                                         RestLiAttachmentReader requestAttachmentReader,
-                                                         RestLiResponseAttachments responseAttachments)
-                                     {
-                                       latch.countDown();
-                                       Assert.assertTrue(e instanceof RestException);
-                                       RestException ex = (RestException) e;
-                                       Assert.assertEquals(ex.getResponse().getStatus(),
-                                                           HttpStatus.S_406_NOT_ACCEPTABLE.getCode());
-                                       Assert.assertEquals(requestAttachmentReader, attachmentReader);
-                                       Assert.assertNull(responseAttachments);
-                                     }
-                                     @Override
-                                     public void onSuccess(RestResponse result,
-                                                           RequestExecutionReport executionReport,
-                                                           RestLiResponseAttachments responseAttachments)
-                                     {
-                                       Assert.fail();
-                                     }
-                                   }, null, null);
+    RestLiResponseHandler restLiResponseHandler = new RestLiResponseHandler.Builder().build();
+
+    RequestExecutionCallback<RestResponse> executionCallback = new RequestExecutionCallback<RestResponse>()
+    {
+      @Override
+      public void onError(Throwable e, RequestExecutionReport executionReport,
+                          RestLiAttachmentReader requestAttachmentReader,
+                          RestLiResponseAttachments responseAttachments)
+      {
+        latch.countDown();
+        Assert.assertTrue(e instanceof RestException);
+        RestException ex = (RestException) e;
+        Assert.assertEquals(ex.getResponse().getStatus(),
+                            HttpStatus.S_406_NOT_ACCEPTABLE.getCode());
+        Assert.assertEquals(requestAttachmentReader, attachmentReader);
+        Assert.assertNull(responseAttachments);
+      }
+      @Override
+      public void onSuccess(RestResponse result,
+                            RequestExecutionReport executionReport,
+                            RestLiResponseAttachments responseAttachments)
+      {
+        Assert.fail();
+      }
+    };
+
     ServerResourceContext resourceContext = new ResourceContextImpl(new PathKeysImpl(),
-                                                                      new RestRequestBuilder(URI.create(""))
-                                                                          .setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, AllProtocolVersions.LATEST_PROTOCOL_VERSION.toString())
-                                                                          .build(),
-                                                                      new RequestContext(),
-                                                                      false, attachmentReader);
-    _invoker.invoke(new RoutingResult(resourceContext, null), request, callback, false, null);
+                                                                    new RestRequestBuilder(URI.create(""))
+                                                                        .setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, AllProtocolVersions.LATEST_PROTOCOL_VERSION.toString())
+                                                                        .build(),
+                                                                    new RequestContext(),
+                                                                    false, attachmentReader);
+
     try
     {
+      RoutingResult routingResult = new RoutingResult(resourceContext, null);
+      RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(),
+                                                               (ServerResourceContext)routingResult.getContext());
+
+      FilterChainCallback filterChainCallback = new FilterChainCallbackImpl(null, _invoker, null, null, null,
+                                                                            restLiResponseHandler, executionCallback);
+      final RestLiCallback<Object> callback =
+          new RestLiCallback<Object>(null,
+                                     new RestLiResponseFilterContextFactory<Object>(request, null, restLiResponseHandler),
+                                     new RestLiFilterChain(null, filterChainCallback));
+
+      _invoker.invoke(null, routingResult, null, callback, null);
       latch.await();
     }
-    catch (InterruptedException e)
+    catch (Exception e)
     {
-      // Ignore
+      // exception is expected
+      Assert.assertTrue(e instanceof RestLiServiceException);
     }
     Assert.assertNull(resourceContext.getResponseMimeType());
   }
@@ -4253,39 +4315,48 @@ public class TestRestLiMethodInvocation
         .setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, version.toString());
     RestRequest request = builder.build();
     final CountDownLatch latch = new CountDownLatch(1);
-    final RestLiCallback<Object> callback =
-        new RestLiCallback<Object>(request,
-                                   null,
-                                   new RestLiResponseHandler.Builder().build(),
-                                   new RequestExecutionCallback<RestResponse>()
-                                   {
-                                     @Override
-                                     public void onError(Throwable e, RequestExecutionReport executionReport,
-                                                         RestLiAttachmentReader requestAttachmentReader,
-                                                         RestLiResponseAttachments responseAttachments)
-                                     {
-                                       latch.countDown();
-                                       Assert.assertTrue(e instanceof RestException);
-                                       RestException ex = (RestException) e;
-                                       Assert.assertEquals(ex.getResponse().getStatus(),
-                                                           HttpStatus.S_400_BAD_REQUEST.getCode());
-                                     }
-                                     @Override
-                                     public void onSuccess(RestResponse result,
-                                                           RequestExecutionReport executionReport,
-                                                           RestLiResponseAttachments responseAttachments)
-                                     {
-                                     }
-                                   }, null, null);
+    RestLiResponseHandler restLiResponseHandler = new RestLiResponseHandler.Builder().build();
+
+    RequestExecutionCallback<RestResponse> executionCallback = new RequestExecutionCallback<RestResponse>()
+    {
+      @Override
+      public void onError(Throwable e, RequestExecutionReport executionReport,
+                          RestLiAttachmentReader requestAttachmentReader,
+                          RestLiResponseAttachments responseAttachments)
+      {
+        latch.countDown();
+        Assert.assertTrue(e instanceof RestException);
+        RestException ex = (RestException) e;
+        Assert.assertEquals(ex.getResponse().getStatus(),
+                            HttpStatus.S_400_BAD_REQUEST.getCode());
+      }
+      @Override
+      public void onSuccess(RestResponse result,
+                            RequestExecutionReport executionReport,
+                            RestLiResponseAttachments responseAttachments)
+      {
+      }
+    };
+
     ServerResourceContext context = new ResourceContextImpl();
-    _invoker.invoke(new RoutingResult(context, null), request, callback, false, null);
     try
     {
+      RoutingResult routingResult = new RoutingResult(context, null);
+      RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(),
+                                                               (ServerResourceContext)routingResult.getContext());
+      FilterChainCallback filterChainCallback = new FilterChainCallbackImpl(null, _invoker, null, null, null,
+                                                                            restLiResponseHandler, executionCallback);
+      final RestLiCallback<Object> callback =
+          new RestLiCallback<Object>(null,
+                                     new RestLiResponseFilterContextFactory<Object>(request, null, restLiResponseHandler),
+                                     new RestLiFilterChain(null, filterChainCallback));
+      _invoker.invoke(null, routingResult, null, callback, null);
       latch.await();
     }
-    catch (InterruptedException e)
+    catch (Exception e)
     {
-      // Ignore
+      // exception is expected
+      Assert.assertTrue(e instanceof RestLiServiceException);
     }
     Assert.assertNull(context.getResponseMimeType());
   }
@@ -4350,7 +4421,7 @@ public class TestRestLiMethodInvocation
     methodDescriptor = statusResourceModel.findActionMethod("streamingAction", ResourceLevel.COLLECTION);
     statusResource = getMockResource(StatusCollectionResource.class);
     EasyMock.expect(statusResource.streamingAction(EasyMock.<String>anyObject(), EasyMock.<RestLiAttachmentReader>anyObject()))
-                        .andReturn(1234l).once();
+        .andReturn(1234l).once();
     checkInvocation(statusResource,
                     methodDescriptor,
                     "POST",
@@ -4697,130 +4768,130 @@ public class TestRestLiMethodInvocation
   public Object[][] statusPagingContextDefault() throws Exception
   {
     return new Object[][]
-      {
-        { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "?q=public_timeline" },
-        { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "?q=public_timeline" }
-      };
+        {
+            { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "?q=public_timeline" },
+            { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "?q=public_timeline" }
+        };
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "statusPagingContextStartOnly")
   public Object[][] statusPagingContextStartOnly() throws Exception
   {
     return new Object[][]
-      {
-        { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "?q=public_timeline&start=5" },
-        { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "?q=public_timeline&start=5" }
-      };
+        {
+            { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "?q=public_timeline&start=5" },
+            { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "?q=public_timeline&start=5" }
+        };
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "statusPagingContextCountOnly")
   public Object[][] statusPagingContextCountOnly() throws Exception
   {
     return new Object[][]
-      {
-        { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "?q=public_timeline&count=4" },
-        { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "?q=public_timeline&count=4" }
-      };
+        {
+            { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "?q=public_timeline&count=4" },
+            { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "?q=public_timeline&count=4" }
+        };
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "statusPagingContextBadCount")
   public Object[][] statusPagingContextBadCount() throws Exception
   {
     return new Object[][]
-      {
-        { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "?q=public_timeline&start=5&count=asdf" },
-        { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "?q=public_timeline&start=5&count=asdf" }
-      };
+        {
+            { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "?q=public_timeline&start=5&count=asdf" },
+            { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "?q=public_timeline&start=5&count=asdf" }
+        };
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "statusPagingContextBadStart")
   public Object[][] statusPagingContextBadStart() throws Exception
   {
     return new Object[][]
-      {
-        { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "?q=public_timeline&start=asdf&count=4" },
-        { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "?q=public_timeline&start=asdf&count=4" }
-      };
+        {
+            { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "?q=public_timeline&start=asdf&count=4" },
+            { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "?q=public_timeline&start=asdf&count=4" }
+        };
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "statusPagingContextNegativeCount")
   public Object[][] statusPagingContextNegativeCount() throws Exception
   {
     return new Object[][]
-      {
-        { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "?q=public_timeline&start=5&count=-1" },
-        { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "?q=public_timeline&start=5&count=-1" }
-      };
+        {
+            { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "?q=public_timeline&start=5&count=-1" },
+            { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "?q=public_timeline&start=5&count=-1" }
+        };
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "statusPagingContextNegativeStart")
   public Object[][] statusPagingContextNegativeStart() throws Exception
   {
     return new Object[][]
-      {
-        { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "?q=public_timeline&start=-1&count=4" },
-        { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "?q=public_timeline&start=-1&count=4" }
-      };
+        {
+            { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "?q=public_timeline&start=-1&count=4" },
+            { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "?q=public_timeline&start=-1&count=4" }
+        };
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "statusUserTimelineDefault")
   public Object[][] statusUserTimelineDefault() throws Exception
   {
     return new Object[][]
-      {
-        { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "?q=user_timeline" },
-        { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "?q=user_timeline" }
-      };
+        {
+            { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "?q=user_timeline" },
+            { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "?q=user_timeline" }
+        };
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "statusUserTimelineStartAndCount")
   public Object[][] statusUserTimelineStartAndCount() throws Exception
   {
     return new Object[][]
-      {
-        { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "?q=user_timeline&start=0&count=20" },
-        { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "?q=user_timeline&start=0&count=20" }
-      };
+        {
+            { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "?q=user_timeline&start=0&count=20" },
+            { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "?q=user_timeline&start=0&count=20" }
+        };
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "statusFinder")
   public Object[][] statusFinder() throws Exception
   {
     return new Object[][]
-      {
-        { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "?q=search&keywords=linkedin&since=1&type=REPLY" },
-        { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "?q=search&keywords=linkedin&since=1&type=REPLY" }
-      };
+        {
+            { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "?q=search&keywords=linkedin&since=1&type=REPLY" },
+            { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "?q=search&keywords=linkedin&since=1&type=REPLY" }
+        };
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "statusFinderOptionalParam")
   public Object[][] statusFinderOptionalParam() throws Exception
   {
     return new Object[][]
-      {
-        { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "?q=search&keywords=linkedin" },
-        { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "?q=search&keywords=linkedin" }
-      };
+        {
+            { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "?q=search&keywords=linkedin" },
+            { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "?q=search&keywords=linkedin" }
+        };
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "statusFinderOptionalBooleanParam")
   public Object[][] statusFinderOptionalBooleanParam() throws Exception
   {
     return new Object[][]
-      {
-        { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "?q=user_timeline&includeReplies=false" },
-        { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "?q=user_timeline&includeReplies=false" }
-      };
+        {
+            { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "?q=user_timeline&includeReplies=false" },
+            { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "?q=user_timeline&includeReplies=false" }
+        };
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "discoveredItemsFinder")
   public Object[][] discoveredItemsFinderOnComplexKey() throws Exception
   {
     return new Object[][]
-      {
-        { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "?q=user&userId=1" },
-        { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "?q=user&userId=1" }
-      };
+        {
+            { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "?q=user&userId=1" },
+            { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "?q=user&userId=1" }
+        };
   }
 
   // *****************
@@ -4902,7 +4973,7 @@ public class TestRestLiMethodInvocation
                                String httpMethod,
                                ProtocolVersion version,
                                String uri)
-                                   throws URISyntaxException, RestLiSyntaxException
+      throws URISyntaxException, RestLiSyntaxException
   {
     checkInvocation(resource, resourceMethodDescriptor, httpMethod,
                     version, uri, null, null, null, false, false);
@@ -4914,7 +4985,7 @@ public class TestRestLiMethodInvocation
                                ProtocolVersion version,
                                String uri,
                                String entityBody)
-                                   throws URISyntaxException, RestLiSyntaxException
+      throws URISyntaxException, RestLiSyntaxException
   {
     checkInvocation(resource, resourceMethodDescriptor, httpMethod,
                     version, uri, entityBody, null, null, false, false);
@@ -4926,7 +4997,7 @@ public class TestRestLiMethodInvocation
                                ProtocolVersion version,
                                String uri,
                                MutablePathKeys pathkeys)
-                                   throws URISyntaxException, RestLiSyntaxException
+      throws URISyntaxException, RestLiSyntaxException
   {
     checkInvocation(resource, resourceMethodDescriptor, httpMethod,
                     version, uri, null, pathkeys, null, false, false);
@@ -4998,10 +5069,18 @@ public class TestRestLiMethodInvocation
           .getContext(), resourceMethodDescriptor);
       final CountDownLatch latch = new CountDownLatch(1);
       final CountDownLatch expectedRoutingExceptionLatch = new CountDownLatch(1);
-      final RestLiCallback<Object> outerCallback = new RestLiCallback<Object>(request,
-                                                                    routingResult,
-                                                                    new RestLiResponseHandler.Builder().build(),
-                                                                    new RequestExecutionCallback<RestResponse>()
+      RestLiArgumentBuilder adapter = _methodAdapterRegistry.getArgumentBuilder(resourceMethodDescriptor.getType());
+      RestLiRequestData requestData = adapter.extractRequestData(routingResult, request);
+      filterContext.setRequestData(requestData);
+      RestLiResponseHandler restLiResponseHandler = new RestLiResponseHandler.Builder().build();
+
+      RequestExecutionReportBuilder requestExecutionReportBuilder = null;
+      if (isDebugMode)
+      {
+        requestExecutionReportBuilder = new RequestExecutionReportBuilder();
+      }
+
+      RequestExecutionCallback<RestResponse> executionCallback = new RequestExecutionCallback<RestResponse>()
       {
         @Override
         public void onError(Throwable e, RequestExecutionReport executionReport,
@@ -5054,8 +5133,22 @@ public class TestRestLiMethodInvocation
           Assert.assertEquals(responseAttachments, expectedResponseAttachments);
           latch.countDown();
         }
-      }, null, null);
-      _invoker.invoke(routingResult, request, outerCallback, isDebugMode, filterContext);
+      };
+
+      FilterChainCallback filterChainCallback = new FilterChainCallbackImpl(routingResult, _invoker, adapter,
+                                                                            requestExecutionReportBuilder,
+                                                                            expectedRequestAttachments,
+                                                                            restLiResponseHandler,
+                                                                            executionCallback);
+      final RestLiCallback<Object> outerCallback =
+          new RestLiCallback<Object>(filterContext,
+                                     new RestLiResponseFilterContextFactory<Object>(request, routingResult, restLiResponseHandler),
+                                     new RestLiFilterChain(null, filterChainCallback));
+      RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(),
+                                                               (ServerResourceContext)routingResult.getContext());
+      filterContext.setRequestData(adapter.extractRequestData(routingResult, request));
+      _invoker.invoke(filterContext.getRequestData(), routingResult, adapter, outerCallback,
+                      requestExecutionReportBuilder);
       try
       {
         latch.await();
@@ -5165,14 +5258,23 @@ public class TestRestLiMethodInvocation
       RoutingResult routingResult =
           new RoutingResult(new ResourceContextImpl(pathkeys, request,
                                                     new RequestContext()), methodDescriptor);
-      FilterRequestContextInternal filterContext = new FilterRequestContextInternalImpl((ServerResourceContext) routingResult
-          .getContext(), methodDescriptor);
 
-      _invoker.invoke(routingResult, request, callback, isDebugMode, filterContext);
+      RequestExecutionReportBuilder requestExecutionReportBuilder = null;
+      if (isDebugMode)
+      {
+        requestExecutionReportBuilder = new RequestExecutionReportBuilder();
+      }
+
+      RestLiArgumentBuilder adapter = _methodAdapterRegistry.getArgumentBuilder(methodDescriptor.getType());
+      RestLiRequestData requestData = adapter.extractRequestData(routingResult, request);
+
+      RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(),
+                                                               (ServerResourceContext)routingResult.getContext());
+      _invoker.invoke(requestData, routingResult, adapter, callback, requestExecutionReportBuilder);
       EasyMock.verify(resource);
       EasyMock.verify(callback);
       Assert.assertEquals(((ServerResourceContext) routingResult.getContext()).getResponseMimeType(),
-          "application/x-pson");
+                          "application/x-pson");
 
     }
     catch (RestLiSyntaxException e)

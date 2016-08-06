@@ -25,32 +25,23 @@ import com.linkedin.parseq.Task;
 import com.linkedin.parseq.promise.Promise;
 import com.linkedin.parseq.promise.PromiseListener;
 import com.linkedin.parseq.promise.Promises;
-import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
-import com.linkedin.restli.internal.server.filter.FilterRequestContextInternal;
-import com.linkedin.restli.internal.server.filter.RestLiRequestFilterChain;
-import com.linkedin.restli.internal.server.filter.RestLiRequestFilterChainCallback;
-import com.linkedin.restli.internal.server.methods.MethodAdapterRegistry;
 import com.linkedin.restli.internal.server.methods.arguments.RestLiArgumentBuilder;
 import com.linkedin.restli.internal.server.methods.response.ErrorResponseBuilder;
 import com.linkedin.restli.internal.server.model.Parameter.ParamType;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
-import com.linkedin.restli.internal.server.util.RestUtils;
 import com.linkedin.restli.server.RequestExecutionCallback;
 import com.linkedin.restli.server.RequestExecutionReport;
 import com.linkedin.restli.server.RequestExecutionReportBuilder;
 import com.linkedin.restli.server.RestLiRequestData;
 import com.linkedin.restli.server.RestLiResponseAttachments;
 import com.linkedin.restli.server.RestLiServiceException;
-import com.linkedin.restli.server.filter.RequestFilter;
 import com.linkedin.restli.server.resources.BaseResource;
 import com.linkedin.restli.server.resources.ResourceFactory;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
 
 
 /**
@@ -64,8 +55,6 @@ public class RestLiMethodInvoker
   private final ResourceFactory _resourceFactory;
   private final Engine _engine;
   private final ErrorResponseBuilder _errorResponseBuilder;
-  private final MethodAdapterRegistry _methodAdapterRegistry;
-  private final List<RequestFilter> _requestFilters;
 
   // This ThreadLocal stores Context of task that is currently being executed.
   // When it is set, new tasks do not start new plans but instead are scheduled
@@ -87,115 +76,17 @@ public class RestLiMethodInvoker
 
   /**
    * Constructor.
-   *
    * @param resourceFactory {@link ResourceFactory}
    * @param engine {@link Engine}
    * @param errorResponseBuilder {@link ErrorResponseBuilder}
-   */
-  public RestLiMethodInvoker(final ResourceFactory resourceFactory, final Engine engine, final ErrorResponseBuilder errorResponseBuilder)
-  {
-    this(resourceFactory, engine, errorResponseBuilder, new ArrayList<RequestFilter>());
-  }
-
-  /**
-   * Constructor.
-   *
-   * @param resourceFactory {@link ResourceFactory}
-   * @param engine {@link Engine}
-   * @param errorResponseBuilder {@link ErrorResponseBuilder}
-   * @param requestFilters List of {@link RequestFilter}
-   */
-  public RestLiMethodInvoker(final ResourceFactory resourceFactory, final Engine engine, final ErrorResponseBuilder errorResponseBuilder, final List<RequestFilter> requestFilters)
-  {
-    this(resourceFactory, engine, errorResponseBuilder, new MethodAdapterRegistry(errorResponseBuilder), requestFilters);
-  }
-
-  /**
-   * Constructor.
-   * @param resourceFactory {@link ResourceFactory}
-   * @param engine {@link Engine}
-   * @param errorResponseBuilder {@link ErrorResponseBuilder}
-   * @param methodAdapterRegistry {@link MethodAdapterRegistry}
-   * @param requestFilters List of {@link RequestFilter}
    */
   public RestLiMethodInvoker(final ResourceFactory resourceFactory,
                              final Engine engine,
-                             final ErrorResponseBuilder errorResponseBuilder,
-                             final MethodAdapterRegistry methodAdapterRegistry,
-                             final List<RequestFilter> requestFilters)
+                             final ErrorResponseBuilder errorResponseBuilder)
   {
     _resourceFactory = resourceFactory;
     _engine = engine;
     _errorResponseBuilder = errorResponseBuilder;
-    _methodAdapterRegistry = methodAdapterRegistry;
-    if (requestFilters != null)
-    {
-      _requestFilters = requestFilters;
-    }
-    else
-    {
-      _requestFilters = new ArrayList<RequestFilter>();
-    }
-  }
-
-  /**
-   * Invokes the method with the specified callback and arguments built from the request.
-   *
-   * @param invocableMethod
-   *          {@link RoutingResult}
-   * @param request
-   *          {@link RestRequest}
-   * @param callback
-   *          {@link RestLiCallback}
-   * @param isDebugMode
-   *          whether the invocation will be done as part of a debug request.
-   * @param filterContext
-   *          {@link FilterRequestContextInternal}
-   */
-  public void invoke(final RoutingResult invocableMethod,
-                     final RestRequest request,
-                     final RequestExecutionCallback<Object> callback,
-                     final boolean isDebugMode,
-                     final FilterRequestContextInternal filterContext)
-  {
-    RequestExecutionReportBuilder requestExecutionReportBuilder = null;
-
-    if (isDebugMode)
-    {
-      requestExecutionReportBuilder = new RequestExecutionReportBuilder();
-    }
-
-    // Fast fail if the request headers are invalid.
-    try
-    {
-      RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(),
-                                                               (ServerResourceContext) invocableMethod.getContext());
-    }
-    catch (RestLiServiceException e)
-    {
-      callback.onError(e, getRequestExecutionReport(requestExecutionReportBuilder),
-                       ((ServerResourceContext)invocableMethod.getContext()).getRequestAttachmentReader(), null);
-      return;
-    }
-    // Request headers are valid. Proceed with the invocation of the filters and eventually the resource.
-    ResourceMethodDescriptor resourceMethodDescriptor = invocableMethod.getResourceMethod();
-
-    RestLiArgumentBuilder adapter = _methodAdapterRegistry.getArgumentBuilder(resourceMethodDescriptor.getType());
-    if (adapter == null)
-    {
-      throw new IllegalArgumentException("Unsupported method type: "
-          + resourceMethodDescriptor.getType());
-    }
-    RestLiRequestData requestData = adapter.extractRequestData(invocableMethod, request);
-    filterContext.setRequestData(requestData);
-    // Kick off the request filter iterator, which finally would invoke the resource.
-    RestLiRequestFilterChainCallback restLiRequestFilterChainCallback = new RestLiRequestFilterChainCallbackImpl(
-        invocableMethod,
-        adapter,
-        callback,
-        requestExecutionReportBuilder,
-        ((ServerResourceContext)invocableMethod.getContext()));
-    new RestLiRequestFilterChain(_requestFilters, restLiRequestFilterChainCallback).onRequest(filterContext);
   }
 
   @SuppressWarnings("deprecation")
@@ -212,90 +103,90 @@ public class RestLiMethodInvoker
     {
       switch (descriptor.getInterfaceType())
       {
-      case CALLBACK:
-        int callbackIndex = descriptor.indexOfParameterType(ParamType.CALLBACK);
-        final RequestExecutionReport executionReport = getRequestExecutionReport(requestExecutionReportBuilder);
+        case CALLBACK:
+          int callbackIndex = descriptor.indexOfParameterType(ParamType.CALLBACK);
+          final RequestExecutionReport executionReport = getRequestExecutionReport(requestExecutionReportBuilder);
 
-        //Delegate the callback call to the request execution callback along with the
-        //request execution report.
-        arguments[callbackIndex] = new Callback<Object>(){
-          @Override
-          public void onError(Throwable e)
+          //Delegate the callback call to the request execution callback along with the
+          //request execution report.
+          arguments[callbackIndex] = new Callback<Object>(){
+            @Override
+            public void onError(Throwable e)
+            {
+              callback.onError(e instanceof RestLiServiceException ? e : new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, e),
+                               executionReport,
+                               resourceContext.getRequestAttachmentReader(),
+                               resourceContext.getResponseAttachments());
+            }
+
+            @Override
+            public void onSuccess(Object result)
+            {
+              callback.onSuccess(result, executionReport, resourceContext.getResponseAttachments());
+            }
+          };
+
+          method.invoke(resource, arguments);
+          // App code should use the callback
+          break;
+
+        case SYNC:
+          Object applicationResult = method.invoke(resource, arguments);
+          callback.onSuccess(applicationResult, getRequestExecutionReport(requestExecutionReportBuilder),
+                             resourceContext.getResponseAttachments());
+          break;
+
+        case PROMISE:
+          if (!checkEngine(resourceContext, callback, descriptor, requestExecutionReportBuilder))
           {
-            callback.onError(e instanceof RestLiServiceException ? e : new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, e),
-                             executionReport,
+            break;
+          }
+          int contextIndex = descriptor.indexOfParameterType(ParamType.PARSEQ_CONTEXT_PARAM);
+
+          if (contextIndex == -1)
+          {
+            contextIndex = descriptor.indexOfParameterType(ParamType.PARSEQ_CONTEXT);
+          }
+          // run through the engine to get the context
+          Task<Object> restliTask =
+              new RestLiParSeqTask(arguments, contextIndex, method, resource);
+
+          // propagate the result to the callback
+          restliTask.addListener(new CallbackPromiseAdapter<>(callback, restliTask, requestExecutionReportBuilder,
+                                                              resourceContext.getRequestAttachmentReader(),
+                                                              resourceContext.getResponseAttachments()));
+          runTask(restliTask);
+          break;
+
+        case TASK:
+          if (!checkEngine(resourceContext, callback, descriptor, requestExecutionReportBuilder))
+          {
+            break;
+          }
+
+          //addListener requires Task<Object> in this case
+          @SuppressWarnings("unchecked")
+          Task<Object> task = (Task<Object>) method.invoke(resource, arguments);
+          if (task == null)
+          {
+            callback.onError(new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
+                                                        "Error in application code: null Task"),
+                             getRequestExecutionReport(requestExecutionReportBuilder),
                              resourceContext.getRequestAttachmentReader(),
                              resourceContext.getResponseAttachments());
           }
-
-          @Override
-          public void onSuccess(Object result)
+          else
           {
-            callback.onSuccess(result, executionReport, resourceContext.getResponseAttachments());
+            task.addListener(new CallbackPromiseAdapter<>(callback, task, requestExecutionReportBuilder,
+                                                          resourceContext.getRequestAttachmentReader(),
+                                                          resourceContext.getResponseAttachments()));
+            runTask(task);
           }
-        };
-
-        method.invoke(resource, arguments);
-        // App code should use the callback
-        break;
-
-      case SYNC:
-        Object applicationResult = method.invoke(resource, arguments);
-        callback.onSuccess(applicationResult, getRequestExecutionReport(requestExecutionReportBuilder),
-            resourceContext.getResponseAttachments());
-        break;
-
-      case PROMISE:
-        if (!checkEngine(resourceContext, callback, descriptor, requestExecutionReportBuilder))
-        {
           break;
-        }
-        int contextIndex = descriptor.indexOfParameterType(ParamType.PARSEQ_CONTEXT_PARAM);
 
-        if (contextIndex == -1)
-        {
-          contextIndex = descriptor.indexOfParameterType(ParamType.PARSEQ_CONTEXT);
-        }
-        // run through the engine to get the context
-        Task<Object> restliTask =
-            new RestLiParSeqTask(arguments, contextIndex, method, resource);
-
-        // propagate the result to the callback
-        restliTask.addListener(new CallbackPromiseAdapter<>(callback, restliTask, requestExecutionReportBuilder,
-                                                            resourceContext.getRequestAttachmentReader(),
-                                                            resourceContext.getResponseAttachments()));
-        runTask(restliTask);
-        break;
-
-      case TASK:
-        if (!checkEngine(resourceContext, callback, descriptor, requestExecutionReportBuilder))
-        {
-          break;
-        }
-
-        //addListener requires Task<Object> in this case
-        @SuppressWarnings("unchecked")
-        Task<Object> task = (Task<Object>) method.invoke(resource, arguments);
-        if (task == null)
-        {
-          callback.onError(new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
-                                                           "Error in application code: null Task"),
-                              getRequestExecutionReport(requestExecutionReportBuilder),
-                              resourceContext.getRequestAttachmentReader(),
-                              resourceContext.getResponseAttachments());
-        }
-        else
-        {
-          task.addListener(new CallbackPromiseAdapter<>(callback, task, requestExecutionReportBuilder,
-                                                        resourceContext.getRequestAttachmentReader(),
-                                                        resourceContext.getResponseAttachments()));
-          runTask(task);
-        }
-        break;
-
-      default:
+        default:
           throw new AssertionError("Unexpected interface type "
-              + descriptor.getInterfaceType());
+                                       + descriptor.getInterfaceType());
       }
     }
     catch (InvocationTargetException e)
@@ -313,11 +204,11 @@ public class RestLiMethodInvoker
       else
       {
         callback.onError(new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
-                                                       _errorResponseBuilder.getInternalErrorMessage(),
-                                                       e.getCause()),
-                            getRequestExecutionReport(requestExecutionReportBuilder),
-                            resourceContext.getRequestAttachmentReader(),
-                            resourceContext.getResponseAttachments());
+                                                    _errorResponseBuilder.getInternalErrorMessage(),
+                                                    e.getCause()),
+                         getRequestExecutionReport(requestExecutionReportBuilder),
+                         resourceContext.getRequestAttachmentReader(),
+                         resourceContext.getResponseAttachments());
       }
     }
   }
@@ -349,8 +240,7 @@ public class RestLiMethodInvoker
       final String clazz = desc.getResourceModel().getResourceClass().getName();
       final String method = desc.getMethod().getName();
       final String msg = String.format(fmt, clazz, method);
-      callback.onError(new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
-                                                  msg),
+      callback.onError(new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, msg),
                        getRequestExecutionReport(executionReportBuilder),
                        resourceContext.getRequestAttachmentReader(),
                        null); //No response attachments can possibly exist here, since the resource method has not been invoked.
@@ -369,69 +259,51 @@ public class RestLiMethodInvoker
   }
 
   /**
-   * A concrete implementation of {@link RestLiRequestFilterChainCallback}.
+   * Invokes the method with the specified callback and arguments built from the request.
+   *
+   * @param requestData
+   *          {@link RestLiRequestData}
+   * @param invocableMethod
+   *          {@link RoutingResult}
+   * @param restLiArgumentBuilder
+   *          {@link RestLiArgumentBuilder}
+   * @param callback
+   *          {@link RequestExecutionCallback}
+   * @param requestExecutionReportBuilder
+   *          {@link RequestExecutionReportBuilder}
    */
-  private class RestLiRequestFilterChainCallbackImpl implements RestLiRequestFilterChainCallback
+  public void invoke(final RestLiRequestData requestData,
+                     final RoutingResult invocableMethod,
+                     final RestLiArgumentBuilder restLiArgumentBuilder,
+                     final RequestExecutionCallback<Object> callback,
+                     final RequestExecutionReportBuilder requestExecutionReportBuilder)
   {
-    private final RoutingResult _invocableMethod;
-    private final RestLiArgumentBuilder _restLiArgumentBuilder;
-    private final RequestExecutionCallback<Object> _callback;
-    private final RequestExecutionReportBuilder _requestExecutionReportBuilder;
-    private final ServerResourceContext _serverResourceContext;
-
-    public RestLiRequestFilterChainCallbackImpl(final RoutingResult invocableMethod,
-                                                final RestLiArgumentBuilder restLiArgumentBuilder,
-                                                final RequestExecutionCallback<Object> callback,
-                                                final RequestExecutionReportBuilder requestExecutionReportBuilder,
-                                                final ServerResourceContext serverResourceContext)
+    try
     {
-      _invocableMethod = invocableMethod;
-      _restLiArgumentBuilder = restLiArgumentBuilder;
-      _callback = callback;
-      _requestExecutionReportBuilder = requestExecutionReportBuilder;
-      _serverResourceContext = serverResourceContext;
-    }
+      ResourceMethodDescriptor resourceMethodDescriptor = invocableMethod.getResourceMethod();
+      Object resource = _resourceFactory.create(resourceMethodDescriptor.getResourceModel().getResourceClass());
 
-    @Override
-    public void onError(Throwable throwable)
-    {
-      _callback.onError(throwable,
-                        _requestExecutionReportBuilder == null ? null : _requestExecutionReportBuilder.build(),
-                        _serverResourceContext.getRequestAttachmentReader(),
-                        null); //No response attachments can possibly exist here since there was an exception thrown
-                               //in the request filter chain and that prevents a resource method from being invoked.
-    }
-
-    @Override
-    public void onSuccess(RestLiRequestData requestData)
-    {
-      try
+      //Acquire a handle on the ResourceContext when setting it in order to obtain any response attachments that need to
+      //be streamed back.
+      final ServerResourceContext resourceContext;
+      resourceContext = (ServerResourceContext)invocableMethod.getContext();
+      if (BaseResource.class.isAssignableFrom(resource.getClass()))
       {
-        ResourceMethodDescriptor resourceMethodDescriptor = _invocableMethod.getResourceMethod();
-        Object resource = _resourceFactory.create(resourceMethodDescriptor.getResourceModel().getResourceClass());
-
-        //Acquire a handle on the ResourceContext when setting it in order to obtain any response attachments that need to
-        //be streamed back.
-        final ServerResourceContext resourceContext;
-        resourceContext = (ServerResourceContext)_invocableMethod.getContext();
-        if (BaseResource.class.isAssignableFrom(resource.getClass()))
-        {
-          ((BaseResource) resource).setContext(resourceContext);
-        }
-
-        Object[] args = _restLiArgumentBuilder.buildArguments(requestData, _invocableMethod);
-        // Now invoke the resource implementation.
-        doInvoke(resourceMethodDescriptor, _callback, _requestExecutionReportBuilder, resource, resourceContext, args);
+        ((BaseResource) resource).setContext(resourceContext);
       }
-      catch (Exception e)
-      {
-        _callback.onError(e,
-                          _requestExecutionReportBuilder == null ? null : _requestExecutionReportBuilder.build(),
-                          ((ServerResourceContext)_invocableMethod.getContext()).getRequestAttachmentReader(),
-                          _invocableMethod.getContext().getResponseAttachments()); //Technically response attachments
-                          //could exist here. One possible way is if there is a runtime exception during response
-                          //construction after the rest.li response filter chain has been completed.
-      }
+
+      Object[] args = restLiArgumentBuilder.buildArguments(requestData, invocableMethod);
+      // Now invoke the resource implementation.
+      doInvoke(resourceMethodDescriptor, callback, requestExecutionReportBuilder, resource, resourceContext, args);
+    }
+    catch (Exception e)
+    {
+      callback.onError(e,
+                       requestExecutionReportBuilder == null ? null : requestExecutionReportBuilder.build(),
+                       ((ServerResourceContext)invocableMethod.getContext()).getRequestAttachmentReader(),
+                       invocableMethod.getContext().getResponseAttachments()); //Technically response attachments
+      //could exist here. One possible way is if there is a runtime exception during response
+      //construction after the rest.li response filter chain has been completed.
     }
   }
 
@@ -486,7 +358,7 @@ public class RestLiMethodInvoker
         {
           // Unbury the exception thrown from the resource method if it's there.
           return Promises.error(t.getCause() instanceof RestLiServiceException ?
-                                  t.getCause() : new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, t.getCause()));
+                                    t.getCause() : new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, t.getCause()));
         }
 
         return Promises.error(t instanceof RestLiServiceException ? t : new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, t));

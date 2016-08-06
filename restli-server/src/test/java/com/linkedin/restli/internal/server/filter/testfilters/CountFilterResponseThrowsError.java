@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2015 LinkedIn Corp.
+   Copyright (c) 2016 LinkedIn Corp.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -12,17 +12,22 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-*/
-
-package com.linkedin.restli.server.filter;
-
-
-/**
- * Abstraction for the next request filter in a chain of {@link com.linkedin.restli.server.filter.ResponseFilter}s.
- *
- * @author nshankar
  */
-public interface NextResponseFilter
+
+package com.linkedin.restli.internal.server.filter.testfilters;
+
+
+import com.linkedin.restli.server.filter.FilterRequestContext;
+import com.linkedin.restli.server.filter.FilterResponseContext;
+import java.util.concurrent.CompletableFuture;
+
+
+public class CountFilterResponseThrowsError extends CountFilter
 {
-  void onResponse(final FilterRequestContext requestContext, final FilterResponseContext responseContext);
+  @Override
+  public CompletableFuture<Void> onResponse(FilterRequestContext requestContext, FilterResponseContext responseContext)
+  {
+    _numResponses++;
+    throw new TestFilterException();
+  }
 }
