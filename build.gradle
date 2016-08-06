@@ -334,7 +334,7 @@ subprojects {
   }
 
   test {
-    maxHeapSize = '1g'
+    maxHeapSize = '4g'
 
     useTestNG() {
       excludeGroups 'not_implemented'
@@ -370,7 +370,7 @@ subprojects {
 
   //all functional tests which are expected to pass assuming proper environment setup
   task allTests(type: Test) {
-    maxHeapSize = '1g'
+    maxHeapSize = '4g'
 
     useTestNG() {
       excludeGroups 'known_issue'

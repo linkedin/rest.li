@@ -22,8 +22,8 @@ dependencies {
     description = "Runs the ${proto} server"
     classpath = sourceSets.main.runtimeClasspath + sourceSets.test.runtimeClasspath
     systemProperties += props
-    maxHeapSize = "512m"
-    minHeapSize = "512m"
+    maxHeapSize = "4g"
+    minHeapSize = "4g"
   }.doFirst { println "\n=== Starting ${proto} server ===\n" }
 
   // Define client tasks

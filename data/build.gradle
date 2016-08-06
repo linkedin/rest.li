@@ -5,8 +5,7 @@ dependencies {
 }
 
 test {
-  minHeapSize = '128m'
-  maxHeapSize = '512m'
+  maxHeapSize = '4g'
 
   forkEvery = 1
   maxParallelForks = 4
