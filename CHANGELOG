@@ -1,5 +1,8 @@
 6.1.1
-------
+-----
+(RB=782949)
+Fixing comparator logic in ResourceModelEncoder.
+
 (RB=781062)
 Fix failing tests due to restriction of removing optional fields
 
@@ -13,7 +16,7 @@ Remove JVM argument for setting the max memory sizes available to the JVM
 Increase max heap size to 4g for tests
 
 6.1.0
-------
+-----
 (RB=727325)
 Netty HTTP/2 client implementation
 

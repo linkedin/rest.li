@@ -783,29 +783,32 @@ public class ResourceModelEncoder
     return deprecatedAnnotation;
   }
 
+  static Comparator<ResourceMethodDescriptor> RESOURCE_METHOD_COMPARATOR = (ResourceMethodDescriptor o1, ResourceMethodDescriptor o2) ->
+  {
+    if (o1.getFinderName() == o2.getFinderName())
+    {
+      return 0;
+    }
+
+    if (o1.getFinderName() == null)
+    {
+      return -1;
+    }
+    else if (o2.getFinderName() == null)
+    {
+      return 1;
+    }
+
+    return o1.getFinderName().compareTo(o2.getFinderName());
+  };
+
   private FinderSchemaArray createFinders(final ResourceModel resourceModel)
   {
     FinderSchemaArray findersArray = new FinderSchemaArray();
 
     List<ResourceMethodDescriptor> resourceMethodDescriptors =
         resourceModel.getResourceMethodDescriptors();
-    Collections.sort(resourceMethodDescriptors, new Comparator<ResourceMethodDescriptor>()
-    {
-      @Override
-      public int compare(final ResourceMethodDescriptor o1, final ResourceMethodDescriptor o2)
-      {
-        if (o1.getFinderName() == null)
-        {
-          return -1;
-        }
-        else if (o2.getFinderName() == null)
-        {
-          return 1;
-        }
-
-        return o1.getFinderName().compareTo(o2.getFinderName());
-      }
-    });
+    Collections.sort(resourceMethodDescriptors, RESOURCE_METHOD_COMPARATOR);
 
     for (ResourceMethodDescriptor resourceMethodDescriptor : resourceMethodDescriptors)
     {
