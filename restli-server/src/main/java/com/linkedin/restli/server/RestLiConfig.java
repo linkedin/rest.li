@@ -17,7 +17,7 @@
 package com.linkedin.restli.server;
 
 
-import com.linkedin.restli.internal.server.methods.response.ErrorResponseBuilder;
+import com.linkedin.restli.internal.server.response.ErrorResponseBuilder;
 import com.linkedin.restli.server.filter.Filter;
 import com.linkedin.restli.server.multiplexer.MultiplexerRunMode;
 import com.linkedin.restli.server.multiplexer.MultiplexerSingletonFilter;

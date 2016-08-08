@@ -81,5 +81,4 @@ public class RestLiCallback<T> implements RequestExecutionCallback<T>
     // Now kick off the response filters with error
     _filterChain.onError(e, _filterRequestContext, responseContext, responseAttachments);
   }
-
 }

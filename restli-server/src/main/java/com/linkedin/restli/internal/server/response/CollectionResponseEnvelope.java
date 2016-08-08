@@ -20,62 +20,45 @@ package com.linkedin.restli.internal.server.response;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.CollectionMetadata;
 import com.linkedin.restli.common.HttpStatus;
-import com.linkedin.restli.internal.server.RestLiResponseEnvelope;
 import com.linkedin.restli.internal.server.ResponseType;
-import com.linkedin.restli.server.RestLiServiceException;
 
-import java.net.HttpCookie;
 import java.util.List;
-import java.util.Map;
 
 
 /**
  * Response for {@link com.linkedin.restli.internal.server.ResponseType#GET_COLLECTION}.
  * Lists passed to constructors and setters are kept by reference.
  *
- * The invariants of {@link com.linkedin.restli.internal.server.RestLiResponseEnvelope}
+ * The invariants of {@link RestLiResponseEnvelope}
  * is maintained, with the further condition that a collection response,
  * custom metadata, and response paging is available whenever
  * there are no top level exceptions.
  *
  * @author erli
  */
-public final class CollectionResponseEnvelope extends RestLiResponseEnvelope
+public abstract class CollectionResponseEnvelope extends RestLiResponseEnvelope
 {
-  private List<? extends RecordTemplate> _collectionResponse;
-  private RecordTemplate _collectionResponseCustomMetadata;
-  private CollectionMetadata _collectionResponsePaging;
+  protected List<? extends RecordTemplate> _collectionResponse;
+  protected RecordTemplate _collectionResponseCustomMetadata;
+  protected CollectionMetadata _collectionResponsePaging;
 
   /**
    * Sets a collection response without triggered exception.
-   *  @param collectionResponse The entities of the request.
+   *
+   * @param collectionResponse The entities of the request.
    * @param collectionResponsePaging Paging for the collection response.
    * @param collectionResponseCustomMetadata the custom metadata used for this collection response.
-   * @param headers of the response.
-   * @param cookies
+   * @param restLiResponseData wrapper response data that is storing this envelope.
    */
-  public CollectionResponseEnvelope(List<? extends RecordTemplate> collectionResponse,
-                                    CollectionMetadata collectionResponsePaging,
-                                    RecordTemplate collectionResponseCustomMetadata,
-                                    Map<String, String> headers, List<HttpCookie> cookies)
+  protected CollectionResponseEnvelope(List<? extends RecordTemplate> collectionResponse,
+                                       CollectionMetadata collectionResponsePaging,
+                                       RecordTemplate collectionResponseCustomMetadata,
+                                       RestLiResponseDataImpl restLiResponseData)
   {
-    super(HttpStatus.S_200_OK, headers, cookies);
-    setCollectionResponse(HttpStatus.S_200_OK, collectionResponse, collectionResponsePaging, collectionResponseCustomMetadata);
-  }
-
-  /**
-   * Sets a failed collection response with an exception.
-   *  @param exception caused the response failure.
-   * @param headers of the response.
-   * @param cookies
-   */
-  public CollectionResponseEnvelope(RestLiServiceException exception,
-                                    Map<String, String> headers, List<HttpCookie> cookies)
-  {
-    super(exception, headers, cookies);
-    _collectionResponse = null;
-    _collectionResponseCustomMetadata = null;
-    _collectionResponsePaging = null;
+    super(restLiResponseData);
+    _collectionResponse = collectionResponse;
+    _collectionResponsePaging = collectionResponsePaging;
+    _collectionResponseCustomMetadata = collectionResponseCustomMetadata;
   }
 
   /**
@@ -111,68 +94,41 @@ public final class CollectionResponseEnvelope extends RestLiResponseEnvelope
   /**
    * Sets a collection response with no triggered exception.
    *
-   * @param httpStatus the status of the request.
    * @param collectionResponse The entities of the request.
    * @param collectionResponsePaging Paging for the collection response.
    * @param collectionResponseCustomMetadata the custom metadata used for this collection response.
+   * @param httpStatus the HTTP status of the response.
    */
-  public void setCollectionResponse(HttpStatus httpStatus,
-                                    List<? extends RecordTemplate> collectionResponse,
+  public void setCollectionResponse(List<? extends RecordTemplate> collectionResponse,
                                     CollectionMetadata collectionResponsePaging,
-                                    RecordTemplate collectionResponseCustomMetadata)
+                                    RecordTemplate collectionResponseCustomMetadata,
+                                    HttpStatus httpStatus)
   {
-    super.setStatus(httpStatus);
+    _restLiResponseData.setStatus(httpStatus);
     _collectionResponse = collectionResponse;
     _collectionResponsePaging = collectionResponsePaging;
     _collectionResponseCustomMetadata = collectionResponseCustomMetadata;
   }
 
   /**
-   * Sets a failed collection response with an exception.
-   *
-   * @param exception caused the response failure.
+   * Sets the data stored by this envelope to null.
    */
-  public void setException(RestLiServiceException exception)
+  @Override
+  protected void clearData()
   {
-    super.setException(exception);
     _collectionResponse = null;
     _collectionResponsePaging = null;
     _collectionResponseCustomMetadata = null;
   }
 
+  /**
+   * Returns the {@link ResponseType}.
+   *
+   * @return {@link ResponseType}.
+   */
   @Override
-  public ResponseType getResponseType()
+  public final ResponseType getResponseType()
   {
     return ResponseType.GET_COLLECTION;
-  }
-
-  @Override
-  public RecordResponseEnvelope getRecordResponseEnvelope()
-  {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public CollectionResponseEnvelope getCollectionResponseEnvelope()
-  {
-    return this;
-  }
-
-  @Override
-  public CreateCollectionResponseEnvelope getCreateCollectionResponseEnvelope()
-  {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public BatchResponseEnvelope getBatchResponseEnvelope()
-  {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public EmptyResponseEnvelope getEmptyResponseEnvelope()
-  {
-    throw new UnsupportedOperationException();
   }
 }

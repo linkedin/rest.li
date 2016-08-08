@@ -25,17 +25,17 @@ import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.validation.RestLiDataValidator;
 import com.linkedin.restli.internal.server.response.BatchResponseEnvelope;
-import com.linkedin.restli.internal.server.response.CreateCollectionResponseEnvelope;
+import com.linkedin.restli.internal.server.response.BatchCreateResponseEnvelope;
 import com.linkedin.restli.server.RestLiRequestData;
 import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.filter.Filter;
 import com.linkedin.restli.server.filter.FilterRequestContext;
 import com.linkedin.restli.server.filter.FilterResponseContext;
+
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-
 
 /**
  * Rest.li validation filter that validates incoming data automatically,
@@ -71,48 +71,48 @@ public class RestLiValidationFilter implements Filter
       }
     }
     else if (method == ResourceMethod.BATCH_CREATE)
-    {
-      StringBuilder sb = new StringBuilder();
-      for (RecordTemplate entity : requestData.getBatchEntities())
       {
-        ValidationResult result = validator.validateInput(entity);
-        if (!result.isValid())
+        StringBuilder sb = new StringBuilder();
+        for (RecordTemplate entity : requestData.getBatchEntities())
         {
-          sb.append(result.getMessages().toString());
+          ValidationResult result = validator.validateInput(entity);
+          if (!result.isValid())
+          {
+            sb.append(result.getMessages().toString());
+          }
+        }
+        if (sb.length() > 0)
+        {
+          throw new RestLiServiceException(HttpStatus.S_422_UNPROCESSABLE_ENTITY, sb.toString());
         }
       }
-      if (sb.length() > 0)
-      {
-        throw new RestLiServiceException(HttpStatus.S_422_UNPROCESSABLE_ENTITY, sb.toString());
-      }
-    }
-    else if (method == ResourceMethod.BATCH_UPDATE || method == ResourceMethod.BATCH_PARTIAL_UPDATE)
-    {
-      StringBuilder sb = new StringBuilder();
-      for (Map.Entry<?, ? extends RecordTemplate> entry : requestData.getBatchKeyEntityMap().entrySet())
-      {
-        ValidationResult result;
-        if (method == ResourceMethod.BATCH_UPDATE)
+      else if (method == ResourceMethod.BATCH_UPDATE || method == ResourceMethod.BATCH_PARTIAL_UPDATE)
         {
-          result = validator.validateInput(entry.getValue());
+          StringBuilder sb = new StringBuilder();
+          for (Map.Entry<?, ? extends RecordTemplate> entry : requestData.getBatchKeyEntityMap().entrySet())
+          {
+            ValidationResult result;
+            if (method == ResourceMethod.BATCH_UPDATE)
+            {
+              result = validator.validateInput(entry.getValue());
+            }
+            else
+            {
+              result = validator.validateInput((PatchRequest) entry.getValue());
+            }
+            if (!result.isValid())
+            {
+              sb.append("Key: ");
+              sb.append(entry.getKey());
+              sb.append(", ");
+              sb.append(result.getMessages().toString());
+            }
+          }
+          if (sb.length() > 0)
+          {
+            throw new RestLiServiceException(HttpStatus.S_422_UNPROCESSABLE_ENTITY, sb.toString());
+          }
         }
-        else
-        {
-          result = validator.validateInput((PatchRequest) entry.getValue());
-        }
-        if (!result.isValid())
-        {
-          sb.append("Key: ");
-          sb.append(entry.getKey());
-          sb.append(", ");
-          sb.append(result.getMessages().toString());
-        }
-      }
-      if (sb.length() > 0)
-      {
-        throw new RestLiServiceException(HttpStatus.S_422_UNPROCESSABLE_ENTITY, sb.toString());
-      }
-    }
     return CompletableFuture.completedFuture(null);
   }
 
@@ -151,7 +151,7 @@ public class RestLiValidationFilter implements Filter
       case BATCH_CREATE:
         if (requestContext.getCustomAnnotations().containsKey("returnEntity"))
         {
-          validateCreateCollectionResponse(validator, responseData.getCreateCollectionResponseEnvelope().getCreateResponses(), projectionMask);
+          validateCreateCollectionResponse(validator, responseData.getBatchCreateResponseEnvelope().getCreateResponses(), projectionMask);
         }
         break;
     }
@@ -185,8 +185,8 @@ public class RestLiValidationFilter implements Filter
   }
 
   private void validateBatchResponse(RestLiDataValidator validator,
-      Map<?, BatchResponseEnvelope.BatchResponseEntry> batchResponseMap,
-      MaskTree projectionMask)
+                                     Map<?, BatchResponseEnvelope.BatchResponseEntry> batchResponseMap,
+                                     MaskTree projectionMask)
   {
     StringBuilder sb = new StringBuilder();
     for (Map.Entry<?, ? extends BatchResponseEnvelope.BatchResponseEntry> entry : batchResponseMap.entrySet())
@@ -211,11 +211,11 @@ public class RestLiValidationFilter implements Filter
   }
 
   private void validateCreateCollectionResponse(RestLiDataValidator validator,
-      List<CreateCollectionResponseEnvelope.CollectionCreateResponseItem> responses,
-      MaskTree projectionMask)
+                                                List<BatchCreateResponseEnvelope.CollectionCreateResponseItem> responses,
+                                                MaskTree projectionMask)
   {
     StringBuilder sb = new StringBuilder();
-    for (CreateCollectionResponseEnvelope.CollectionCreateResponseItem item : responses)
+    for (BatchCreateResponseEnvelope.CollectionCreateResponseItem item : responses)
     {
       if (item.isErrorResponse())
       {

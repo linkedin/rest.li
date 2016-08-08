@@ -22,8 +22,7 @@ import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.HeaderUtil;
 import com.linkedin.restli.internal.common.ProtocolVersionUtil;
-import com.linkedin.restli.internal.server.RestLiResponseEnvelope;
-import com.linkedin.restli.internal.server.RestLiResponseHandler;
+import com.linkedin.restli.internal.server.response.RestLiResponseHandler;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
@@ -70,7 +69,7 @@ public class RestLiResponseFilterContextFactory<T>
    */
   public FilterResponseContext fromResult(T result) throws IOException
   {
-    final RestLiResponseEnvelope responseData = _responseHandler.buildRestLiResponseData(_request, _method, result);
+    final RestLiResponseData responseData = _responseHandler.buildRestLiResponseData(_request, _method, result);
     return new FilterResponseContext()
     {
       @Override
@@ -115,11 +114,12 @@ public class RestLiResponseFilterContextFactory<T>
     headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION,
                 ProtocolVersionUtil.extractProtocolVersion(requestHeaders).toString());
     headers.put(HeaderUtil.getErrorResponseHeaderName(requestHeaders), RestConstants.HEADER_VALUE_ERROR);
-    final RestLiResponseEnvelope responseData = _responseHandler.buildExceptionResponseData(_request,
-                                                                                            _method,
-                                                                                            restLiServiceException,
-                                                                                            headers,
-                                                                                            Collections.<HttpCookie>emptyList());
+    
+    final RestLiResponseData responseData = _responseHandler.buildExceptionResponseData(_request,
+                                                                                        _method,
+                                                                                        restLiServiceException,
+                                                                                        headers,
+                                                                                        Collections.<HttpCookie>emptyList());
     return new FilterResponseContext()
     {
       @Override

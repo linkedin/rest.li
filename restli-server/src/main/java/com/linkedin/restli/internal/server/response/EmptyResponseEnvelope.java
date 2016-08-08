@@ -18,13 +18,7 @@ package com.linkedin.restli.internal.server.response;
 
 
 import com.linkedin.restli.common.HttpStatus;
-import com.linkedin.restli.internal.server.RestLiResponseEnvelope;
 import com.linkedin.restli.internal.server.ResponseType;
-import com.linkedin.restli.server.RestLiServiceException;
-
-import java.net.HttpCookie;
-import java.util.List;
-import java.util.Map;
 
 
 /**
@@ -32,75 +26,43 @@ import java.util.Map;
  *
  * @author erli
  */
-public final class EmptyResponseEnvelope extends RestLiResponseEnvelope
+public abstract class EmptyResponseEnvelope extends RestLiResponseEnvelope
 {
   /**
-   * Instantiates a response with only an HttpStatus without a triggered exception.
+   * Instantiates a response without a triggered exception.
    *
-   * @param httpStatus of the response.
-   * @param headers of the response.
-   * @param cookies
+   * @param restLiResponseData Wrapper response data that is storing this envelope.
    */
-  public EmptyResponseEnvelope(HttpStatus httpStatus, Map<String, String> headers, List<HttpCookie> cookies)
+  protected EmptyResponseEnvelope(RestLiResponseDataImpl restLiResponseData)
   {
-    super(httpStatus, headers, cookies);
+    super(restLiResponseData);
   }
 
   /**
-   * Instantiates a failed response with only an HttpStatus.
+   * Since there is no data, the {@link RestLiResponseEnvelope} invariant is maintained by default
+   * Users can simply change the status using this method without need to set data.
    *
-   * @param exception that triggered the failure.
-   * @param headers of the response.
-   * @param cookies
+   * @param httpStatus
    */
-  public EmptyResponseEnvelope(RestLiServiceException exception, Map<String, String> headers, List<HttpCookie> cookies)
+  public void setStatus(HttpStatus httpStatus)
   {
-    super(exception, headers, cookies);
+    _restLiResponseData.setStatus(httpStatus);
   }
 
   @Override
-  public ResponseType getResponseType()
+  protected void clearData()
+  {
+    // no data to clear, need to override due to extending abstract class.
+  }
+
+  /**
+   * Returns the {@link ResponseType}.
+   *
+   * @return {@link ResponseType}.
+   */
+  @Override
+  public final ResponseType getResponseType()
   {
     return ResponseType.STATUS_ONLY;
-  }
-
-  public void setStatus(HttpStatus status)
-  {
-    super.setStatus(status);
-  }
-
-  public void setException(RestLiServiceException exception)
-  {
-    super.setException(exception);
-  }
-
-  @Override
-  public RecordResponseEnvelope getRecordResponseEnvelope()
-  {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public CollectionResponseEnvelope getCollectionResponseEnvelope()
-  {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public CreateCollectionResponseEnvelope getCreateCollectionResponseEnvelope()
-  {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public BatchResponseEnvelope getBatchResponseEnvelope()
-  {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public EmptyResponseEnvelope getEmptyResponseEnvelope()
-  {
-    return this;
   }
 }

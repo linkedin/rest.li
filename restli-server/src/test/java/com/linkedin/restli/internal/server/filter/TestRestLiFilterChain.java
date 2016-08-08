@@ -3,8 +3,6 @@ package com.linkedin.restli.internal.server.filter;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
 import com.linkedin.restli.internal.server.RestLiCallback;
-import com.linkedin.restli.internal.server.RestLiResponseEnvelope;
-import com.linkedin.restli.internal.server.RestLiResponseHandler;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.filter.testfilters.CountFilter;
 import com.linkedin.restli.internal.server.filter.testfilters.CountFilterRequestErrorOnError;
@@ -17,6 +15,8 @@ import com.linkedin.restli.internal.server.filter.testfilters.CountFilterRespons
 import com.linkedin.restli.internal.server.filter.testfilters.CountFilterResponseOnError;
 import com.linkedin.restli.internal.server.filter.testfilters.CountFilterResponseThrowsError;
 import com.linkedin.restli.internal.server.filter.testfilters.TestFilterException;
+import com.linkedin.restli.internal.server.response.RestLiResponseDataImpl;
+import com.linkedin.restli.internal.server.response.RestLiResponseHandler;
 import com.linkedin.restli.server.RestLiRequestData;
 import com.linkedin.restli.server.RestLiResponseAttachments;
 import com.linkedin.restli.server.RestLiResponseData;
@@ -32,7 +32,17 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyList;
+import static org.mockito.Matchers.anyMap;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.isNull;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
 
@@ -49,9 +59,9 @@ public class TestRestLiFilterChain
   @Mock
   private RestLiRequestData _mockRestLiRequestData;
   @Mock
-  private RestLiResponseEnvelope _mockRestLiResponseData;
-  @Mock
   private FilterChainCallback _mockFilterChainCallback;
+  @Mock
+  private RestLiResponseDataImpl _mockRestLiResponseData;
   @Mock
   private FilterRequestContext _mockFilterRequestContext;
   @Mock
@@ -199,7 +209,6 @@ public class TestRestLiFilterChain
 
     verifySecondFilterRequestException();
   }
-
 
   private void verifySecondFilterRequestException()
   {

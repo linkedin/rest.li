@@ -92,7 +92,7 @@ import com.linkedin.restli.common.util.RichResourceSchema;
 import com.linkedin.restli.internal.client.RequestBodyTransformer;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.server.ResourceContextImpl;
-import com.linkedin.restli.internal.server.RestLiResponseHandler;
+import com.linkedin.restli.internal.server.response.RestLiResponseHandler;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.internal.server.model.Parameter;

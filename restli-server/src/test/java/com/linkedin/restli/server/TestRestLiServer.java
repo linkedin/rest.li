@@ -49,7 +49,7 @@ import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.AttachmentUtils;
 import com.linkedin.restli.internal.common.TestConstants;
-import com.linkedin.restli.internal.server.methods.response.ErrorResponseBuilder;
+import com.linkedin.restli.internal.server.response.ErrorResponseBuilder;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.internal.testutils.RestLiTestAttachmentDataSource;
 import com.linkedin.restli.server.filter.Filter;

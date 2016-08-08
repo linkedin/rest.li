@@ -19,6 +19,7 @@ package com.linkedin.restli.internal.server;
 
 import com.linkedin.restli.common.ResourceMethod;
 
+import com.linkedin.restli.server.RestLiResponseData;
 import java.util.Arrays;
 import java.util.List;
 
@@ -60,7 +61,7 @@ public enum ResponseType
   GET_COLLECTION(GET_ALL, FINDER),
 
   /**
-   * Used for {@link com.linkedin.restli.server.RestLiResponseData#getCreateCollectionResponseEnvelope()}
+   * Used for {@link RestLiResponseData#getBatchCreateResponseEnvelope()}
    */
   CREATE_COLLECTION(BATCH_CREATE),
 

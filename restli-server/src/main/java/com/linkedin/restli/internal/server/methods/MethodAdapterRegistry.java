@@ -20,7 +20,7 @@
 
 package com.linkedin.restli.internal.server.methods;
 
-import com.linkedin.restli.internal.server.methods.response.ErrorResponseBuilder;
+import com.linkedin.restli.internal.server.response.ErrorResponseBuilder;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -38,15 +38,15 @@ import com.linkedin.restli.internal.server.methods.arguments.GetArgumentBuilder;
 import com.linkedin.restli.internal.server.methods.arguments.PatchArgumentBuilder;
 import com.linkedin.restli.internal.server.methods.arguments.RestLiArgumentBuilder;
 import com.linkedin.restli.internal.server.methods.arguments.UpdateArgumentBuilder;
-import com.linkedin.restli.internal.server.methods.response.ActionResponseBuilder;
-import com.linkedin.restli.internal.server.methods.response.BatchCreateResponseBuilder;
-import com.linkedin.restli.internal.server.methods.response.BatchGetResponseBuilder;
-import com.linkedin.restli.internal.server.methods.response.BatchUpdateResponseBuilder;
-import com.linkedin.restli.internal.server.methods.response.CreateResponseBuilder;
-import com.linkedin.restli.internal.server.methods.response.CollectionResponseBuilder;
-import com.linkedin.restli.internal.server.methods.response.GetResponseBuilder;
-import com.linkedin.restli.internal.server.methods.response.RestLiResponseBuilder;
-import com.linkedin.restli.internal.server.methods.response.UpdateResponseBuilder;
+import com.linkedin.restli.internal.server.response.ActionResponseBuilder;
+import com.linkedin.restli.internal.server.response.BatchCreateResponseBuilder;
+import com.linkedin.restli.internal.server.response.BatchGetResponseBuilder;
+import com.linkedin.restli.internal.server.response.BatchUpdateResponseBuilder;
+import com.linkedin.restli.internal.server.response.CreateResponseBuilder;
+import com.linkedin.restli.internal.server.response.CollectionResponseBuilder;
+import com.linkedin.restli.internal.server.response.GetResponseBuilder;
+import com.linkedin.restli.internal.server.response.RestLiResponseBuilder;
+import com.linkedin.restli.internal.server.response.UpdateResponseBuilder;
 
 /**
  * @author Josh Walker

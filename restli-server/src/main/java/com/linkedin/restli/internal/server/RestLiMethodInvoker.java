@@ -28,7 +28,7 @@ import com.linkedin.parseq.promise.Promises;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
 import com.linkedin.restli.internal.server.methods.arguments.RestLiArgumentBuilder;
-import com.linkedin.restli.internal.server.methods.response.ErrorResponseBuilder;
+import com.linkedin.restli.internal.server.response.ErrorResponseBuilder;
 import com.linkedin.restli.internal.server.model.Parameter.ParamType;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.server.RequestExecutionCallback;

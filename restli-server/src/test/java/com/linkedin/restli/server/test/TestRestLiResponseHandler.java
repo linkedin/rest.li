@@ -46,13 +46,12 @@ import com.linkedin.restli.common.UpdateStatus;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.CookieUtil;
 import com.linkedin.restli.internal.common.TestConstants;
-import com.linkedin.restli.internal.server.RestLiResponseEnvelope;
 import com.linkedin.restli.internal.server.PathKeysImpl;
 import com.linkedin.restli.internal.server.ResourceContextImpl;
-import com.linkedin.restli.internal.server.RestLiResponseHandler;
+import com.linkedin.restli.internal.server.response.RestLiResponseHandler;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.ServerResourceContext;
-import com.linkedin.restli.internal.server.methods.response.PartialRestResponse;
+import com.linkedin.restli.internal.server.response.PartialRestResponse;
 import com.linkedin.restli.internal.server.model.Parameter;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor.InterfaceType;
@@ -69,6 +68,7 @@ import com.linkedin.restli.server.CollectionResult;
 import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.GetResult;
 import com.linkedin.restli.server.ResourceLevel;
+import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.UpdateResponse;
 import com.linkedin.restli.server.annotations.RestLiCollection;
@@ -668,7 +668,7 @@ public class TestRestLiResponseHandler
                                       String errorResponseHeaderName) throws Exception
   {
     final RestRequest request = buildRequest(acceptTypeData.acceptHeaders, protocolVersion);
-    RestLiResponseEnvelope responseData;
+    RestLiResponseData responseData;
     RoutingResult routingResult1 = buildRoutingResultAction(Status.class, request, acceptTypeData.acceptHeaders);
     // #1 simple record template
     responseData = _responseHandler.buildRestLiResponseData(request, routingResult1, buildStatusRecord());
@@ -1305,7 +1305,7 @@ public class TestRestLiResponseHandler
     assertEquals(response.getEntity() != null, hasEntity);
   }
 
-  private void checkResponseData(RestLiResponseEnvelope responseData, HttpStatus status, int numHeaders,
+  private void checkResponseData(RestLiResponseData responseData, HttpStatus status, int numHeaders,
                                  boolean hasError, boolean hasEntity, String errorResponseHeaderName)
   {
     assertEquals(responseData.getStatus(), status);

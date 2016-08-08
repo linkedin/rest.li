@@ -70,8 +70,6 @@ import com.google.common.collect.Sets;
 
 import static com.linkedin.restli.examples.TestConstants.FORCE_USE_NEXT_OPTIONS;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.verify;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;

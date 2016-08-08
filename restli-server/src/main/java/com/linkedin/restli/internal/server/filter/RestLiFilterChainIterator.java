@@ -21,6 +21,7 @@ import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.HeaderUtil;
 import com.linkedin.restli.internal.common.ProtocolVersionUtil;
 import com.linkedin.restli.internal.server.RestLiCallback;
+import com.linkedin.restli.internal.server.response.RestLiResponseDataImpl;
 import com.linkedin.restli.server.RestLiResponseAttachments;
 import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.filter.Filter;
@@ -158,9 +159,8 @@ public class RestLiFilterChainIterator
                 ProtocolVersionUtil.extractProtocolVersion(requestHeaders).toString());
     headers.put(HeaderUtil.getErrorResponseHeaderName(requestHeaders), RestConstants.HEADER_VALUE_ERROR);
 
-    RestLiResponseData responseData = responseContext.getResponseData();
+    RestLiResponseDataImpl responseData = (RestLiResponseDataImpl)responseContext.getResponseData();
     responseData.getHeaders().putAll(headers);
     responseData.setException(throwable);
   }
-
 }
