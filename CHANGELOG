@@ -1,6 +1,10 @@
-6.1.2
+6.1.3
 -----
 
+6.1.2
+-----
+(RB=786475)
+Removed ServiceProperties constructor that always threw a NullPointerException.
 
 6.1.1
 -----

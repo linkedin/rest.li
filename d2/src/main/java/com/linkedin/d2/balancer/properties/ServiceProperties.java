@@ -40,16 +40,6 @@ public class ServiceProperties
 
   public ServiceProperties(String serviceName,
                            String clusterName,
-                           String path)
-  {
-    this(serviceName, clusterName, path, null,
-         Collections.<String, Object>emptyMap(), Collections.<String, Object>emptyMap(),
-         Collections.<String, String>emptyMap(),
-         Collections.<String>emptyList(), Collections.<URI>emptySet());
-  }
-
-  public ServiceProperties(String serviceName,
-                           String clusterName,
                            String path,
                            List<String> loadBalancerStrategyList)
   {
@@ -111,9 +101,7 @@ public class ServiceProperties
     _serviceName = serviceName;
     _clusterName = clusterName;
     _path = path;
-    _loadBalancerStrategyList = (loadBalancerStrategyList != null) ?
-        Collections.unmodifiableList(loadBalancerStrategyList)
-        : Collections.<String>emptyList();
+    _loadBalancerStrategyList = Collections.unmodifiableList(loadBalancerStrategyList);
     _loadBalancerStrategyProperties = Collections.unmodifiableMap(loadBalancerStrategyProperties);
     _transportClientProperties = (transportClientProperties != null) ?
         Collections.unmodifiableMap(transportClientProperties) : Collections.<String, Object>emptyMap();
