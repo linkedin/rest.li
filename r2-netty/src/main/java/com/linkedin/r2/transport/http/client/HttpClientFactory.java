@@ -774,16 +774,7 @@ public class HttpClientFactory implements TransportClientFactory
     }
     if (properties.containsKey(propertyKey))
     {
-      // These properties can be safely cast to String before converting them to Integers as we expect Integer values
-      // for all these properties.
-      String value = (String) properties.get(propertyKey);
-      switch (value)
-      {
-        case "HTTP/1.1":
-          return HttpProtocolVersion.HTTP_1_1;
-        case "HTTP/2":
-          return HttpProtocolVersion.HTTP_2;
-      }
+      return HttpProtocolVersion.valueOf((String) properties.get(propertyKey));
     }
     return null;
   }

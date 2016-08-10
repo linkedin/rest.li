@@ -18,6 +18,7 @@ package com.linkedin.d2.balancer.config;
 
 import com.linkedin.d2.D2TransportClientProperties;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
+import com.linkedin.d2.HttpProtocolVersionType;
 import com.linkedin.d2.poolStrategyType;
 import com.linkedin.data.template.StringArray;
 import java.util.Arrays;
@@ -53,6 +54,7 @@ public class TransportClientPropertiesConverterTest
     final poolStrategyType poolStrategy = poolStrategyType.LRU;
     final Integer minPoolSize = 5;
     final Integer maxConcurrentConnections = 1000;
+    final HttpProtocolVersionType protocolVersion = HttpProtocolVersionType.HTTP_1_1;
     final List<String> allowedClientOverrideKeys = Arrays.asList(PropertyKeys.HTTP_REQUEST_TIMEOUT,
         PropertyKeys.HTTP_QUERY_POST_THRESHOLD);
 
@@ -74,6 +76,7 @@ public class TransportClientPropertiesConverterTest
     transportClientProperties.put(PropertyKeys.HTTP_POOL_STRATEGY, poolStrategy.name());
     transportClientProperties.put(PropertyKeys.HTTP_POOL_MIN_SIZE, minPoolSize.toString());
     transportClientProperties.put(PropertyKeys.HTTP_MAX_CONCURRENT_CONNECTIONS, maxConcurrentConnections.toString());
+    transportClientProperties.put(PropertyKeys.HTTP_PROTOCOL_VERSION, protocolVersion.name());
     transportClientProperties.put(PropertyKeys.ALLOWED_CLIENT_OVERRIDE_KEYS, allowedClientOverrideKeys.stream().collect(Collectors.joining(",")));
 
     D2TransportClientProperties d2TransportClientProperties =
@@ -94,6 +97,7 @@ public class TransportClientPropertiesConverterTest
             .setPoolStrategy(poolStrategy)
             .setMinPoolSize(minPoolSize)
             .setMaxConcurrentConnections(maxConcurrentConnections)
+            .setProtocolVersion(protocolVersion)
             .setAllowedClientOverrideKeys(new StringArray(allowedClientOverrideKeys));
 
     Assert.assertEquals(TransportClientPropertiesConverter.toConfig(transportClientProperties), d2TransportClientProperties);

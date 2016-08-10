@@ -19,6 +19,7 @@ package com.linkedin.d2.balancer.config;
 import com.linkedin.common.util.MapUtil;
 import com.linkedin.d2.D2TransportClientProperties;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
+import com.linkedin.d2.HttpProtocolVersionType;
 import com.linkedin.d2.poolStrategyType;
 import com.linkedin.data.template.StringArray;
 import com.linkedin.r2.util.ConfigValueExtractor;
@@ -111,6 +112,10 @@ public class TransportClientPropertiesConverter
     {
       prop.put(PropertyKeys.HTTP_MAX_CONCURRENT_CONNECTIONS, config.getMaxConcurrentConnections().toString());
     }
+    if (config.hasProtocolVersion())
+    {
+      prop.put(PropertyKeys.HTTP_PROTOCOL_VERSION, config.getProtocolVersion().name());
+    }
     if (!config.getAllowedClientOverrideKeys().isEmpty())
     {
       prop.put(PropertyKeys.ALLOWED_CLIENT_OVERRIDE_KEYS,
@@ -197,6 +202,11 @@ public class TransportClientPropertiesConverter
     if (properties.containsKey(PropertyKeys.HTTP_MAX_CONCURRENT_CONNECTIONS))
     {
       config.setMaxConcurrentConnections(coerce(properties.get(PropertyKeys.HTTP_MAX_CONCURRENT_CONNECTIONS), Integer.class));
+    }
+    if (properties.containsKey(PropertyKeys.HTTP_PROTOCOL_VERSION))
+    {
+      config.setProtocolVersion(
+          HttpProtocolVersionType.valueOf((String) properties.get(PropertyKeys.HTTP_PROTOCOL_VERSION)));
     }
     if (properties.containsKey(PropertyKeys.ALLOWED_CLIENT_OVERRIDE_KEYS))
     {

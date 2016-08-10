@@ -15,6 +15,9 @@ Remove JVM argument for setting the max memory sizes available to the JVM
 (RB=783448)
 Increase max heap size to 4g for tests
 
+(RB=784352)
+Add http.protocolVersion to d2 property keys and expose http protocol version in D2 schemas
+
 6.1.0
 -----
 (RB=727325)

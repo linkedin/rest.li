@@ -125,6 +125,23 @@
       },
       "doc": "a list of keys in D2TransportClientProperties which client can override",
       "default": []
+    },
+    {
+      "name": "protocolVersion",
+      "type": {
+        "type": "enum",
+        "name": "HttpProtocolVersionType",
+        "symbols" : [
+          "HTTP_1_1",
+          "HTTP_2"
+        ],
+        "symbolDocs": {
+          "HTTP_1_1": "HTTP/1.1",
+          "HTTP_2": "HTTP/2"
+        }
+      },
+      "doc": "service desired transport client protocol version e.g. HTTP/1.1, HTTP/2",
+      "optional": true
     }
   ]
 }

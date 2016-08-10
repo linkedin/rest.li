@@ -93,7 +93,7 @@ public class Bootstrap
   public static Client createHttpClient(FilterChain filters, boolean restOverStream)
   {
     HashMap<String, String> properties = new HashMap<>();
-    properties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, "HTTP/1.1");
+    properties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, HttpClientFactory.HttpProtocolVersion.HTTP_1_1.name());
     final TransportClient client = new HttpClientFactory.Builder()
         .setFilterChain(filters)
         .build()
@@ -104,7 +104,7 @@ public class Bootstrap
   public static Client createHttp2Client(FilterChain filters, boolean restOverStream)
   {
     HashMap<String, String> properties = new HashMap<>();
-    properties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, "HTTP/2");
+    properties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, HttpClientFactory.HttpProtocolVersion.HTTP_2.name());
     final TransportClient client = new HttpClientFactory.Builder()
         .setFilterChain(filters)
         .build()

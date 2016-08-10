@@ -65,8 +65,8 @@ import javax.net.ssl.SSLParameters;
 
 public class TestHttpClientFactory
 {
-  private static final String HTTP_1_1 = "HTTP/1.1";
-  private static final String HTTP_2 = "HTTP/2";
+  private static final String HTTP_1_1 = HttpClientFactory.HttpProtocolVersion.HTTP_1_1.name();
+  private static final String HTTP_2 = HttpClientFactory.HttpProtocolVersion.HTTP_2.name();
 
   private static final String URI = "http://localhost:8080/";
 

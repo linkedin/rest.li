@@ -125,6 +125,7 @@ public class PropertyKeys
   public static final String HTTP_MAX_HEADER_SIZE = HttpClientFactory.HTTP_MAX_HEADER_SIZE;
   public static final String HTTP_MAX_CHUNK_SIZE = HttpClientFactory.HTTP_MAX_CHUNK_SIZE;
   public static final String HTTP_MAX_CONCURRENT_CONNECTIONS = HttpClientFactory.HTTP_MAX_CONCURRENT_CONNECTIONS;
+  public static final String HTTP_PROTOCOL_VERSION = HttpClientFactory.HTTP_PROTOCOL_VERSION;
 
   //used for multi colo
   public static final String DEFAULT_COLO = "defaultColo";
