@@ -61,9 +61,9 @@ public class StreamExecutionCallback implements TransportCallback<StreamResponse
     @Override
     public void run()
     {
-      Runnable r = _taskQueue.poll();
       try
       {
+        Runnable r = _taskQueue.poll();
         r.run();
       }
       catch (Throwable t)
