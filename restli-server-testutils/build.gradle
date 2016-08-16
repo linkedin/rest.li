@@ -5,6 +5,8 @@ dependencies {
   compile project (':r2-core')
   compile project (':r2-jetty')
   compile project (':restli-server')
+  compile project(':restli-common')
+  compile project(':pegasus-common')
   compile externalDependency.parseq
 
   testCompile project(':restli-example-server')

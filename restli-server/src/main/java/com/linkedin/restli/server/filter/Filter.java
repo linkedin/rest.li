@@ -43,6 +43,9 @@ public interface Filter
    *   </li>
    * </ul>
    *
+   * CompletableFuture requires an argument to be passed in when complete() is invoked. When you complete the future
+   * successfully, null should be passed in as an argument because the CompletableFuture's type is Void.
+   *
    * Not completing the future, either successfully or exceptionally, will cause the request processing to hang.
    *
    * If a future completes exceptionally, the request fails and the current filter's onError() will be invoked with an
@@ -71,6 +74,9 @@ public interface Filter
    *     execution finishes.
    *   </li>
    * </ul>
+   *
+   * CompletableFuture requires an argument to be passed in when complete() is invoked. When you complete the future
+   * successfully, null should be passed in as an argument because the CompletableFuture's type is Void.
    *
    * Not completing the future, either successfully or exceptionally, will cause the response processing to hang.
    *
@@ -102,6 +108,9 @@ public interface Filter
    *     execution finishes.
    *   </li>
    * </ul>
+   *
+   * CompletableFuture requires an argument to be passed in when complete() is invoked. When you complete the future
+   * successfully, null should be passed in as an argument because the CompletableFuture's type is Void.
    *
    * Not completing the future, either successfully or exceptionally, will cause the error processing to hang.
    *

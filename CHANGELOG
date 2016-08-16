@@ -1,5 +1,17 @@
 7.0.0
 -----
+(RB=790683)
+Added response data builder to allow Rest.li users the ability to 
+instantiate response data and response envelope for tests.
+
+(RB=761646)
+Making envelope interfaces more intuitive by having naming reflect resource
+method and adding support for determining CREATE vs. CREATE + GET.
+
+(RB=758221)
+Filter improvements - simpler interface, support for async error invocation,
+and safeguards against user error.
+
 (RB=777249)
 Fix SnappyFramedCompressor to follow the standard x-snappy-framed
 specification.
