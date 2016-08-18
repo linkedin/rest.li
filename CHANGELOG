@@ -1,3 +1,9 @@
+7.0.1
+-----
+(RB=793402)
+Make MPConsistentHashRing iterator honor the weight of each element.
+
+
 7.0.0
 -----
 (RB=790683)
