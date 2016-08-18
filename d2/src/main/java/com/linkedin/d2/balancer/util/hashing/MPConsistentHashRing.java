@@ -18,10 +18,13 @@ package com.linkedin.d2.balancer.util.hashing;
 
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import net.openhft.hashing.LongHashFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,7 +54,7 @@ public class MPConsistentHashRing<T> implements Ring<T>
   /* we will only use the lower 32 bit of the hash code to avoid overflow */
   private static final long MASK = 0x00000000FFFFFFFFL;
 
-  private final List<Bucket<T>> _buckets;
+  private final List<Bucket> _buckets;
   private final LongHashFunction[] _hashFunctions;
   private final int _numProbes;
 
@@ -81,7 +84,7 @@ public class MPConsistentHashRing<T> implements Ring<T>
       {
         byte[] bytesToHash = entry.getKey().toString().getBytes(UTF8);
         long hash = HASH_FUNCTION_0.hashBytes(bytesToHash) & MASK;
-        _buckets.add(new Bucket<>(entry.getKey(), hash, entry.getValue()));
+        _buckets.add(new Bucket(entry.getKey(), hash, entry.getValue()));
       }
     }
     _numProbes = numProbes;
@@ -108,16 +111,14 @@ public class MPConsistentHashRing<T> implements Ring<T>
   @Override
   public Iterator<T> getIterator(int key)
   {
-    final int index = getIndex(key);
     return new Iterator<T>()
     {
-      private int _cursor = index;
-      private int _iterated = 0;
+      private final Set<T> _iterated = new HashSet<>();
 
       @Override
       public boolean hasNext()
       {
-        return _iterated < _buckets.size();
+        return _iterated.size() < _buckets.size();
       }
 
       @Override
@@ -128,27 +129,38 @@ public class MPConsistentHashRing<T> implements Ring<T>
           throw new NoSuchElementException();
         }
 
-        T result = _buckets.get(_cursor).getT();
-        _cursor = (_cursor+1) % _buckets.size();
-        _iterated++;
-        return result;
+        int index = getIndex(key, _iterated);
+        T item = _buckets.get(index).getT();
+        _iterated.add(item);
+        return item;
       }
     };
 
   }
 
-  private int getIndex(int key) {
+  private int getIndex(int key)
+  {
+    return getIndex(key, Collections.emptySet());
+  }
+
+  private int getIndex(int key, Set<T> excludes)
+  {
     float minDistance = Float.MAX_VALUE;
     int index = 0;
-    for (int i = 0; i < _numProbes; i++) {
+    for (int i = 0; i < _numProbes; i++)
+    {
       long hash = _hashFunctions[i].hashInt(key) & MASK;
       for (int j = 0; j < _buckets.size(); j++)
       {
-        Bucket<T> bucket = _buckets.get(j);
-        float distance = Math.abs(bucket.getHash() - hash) / (float) bucket.getPoints();
-        if (distance < minDistance) {
-          minDistance = distance;
-          index = j;
+        Bucket bucket = _buckets.get(j);
+        if (!excludes.contains(bucket.getT()))
+        {
+          float distance = Math.abs(bucket.getHash() - hash) / (float) bucket.getPoints();
+          if (distance < minDistance)
+          {
+            minDistance = distance;
+            index = j;
+          }
         }
       }
     }
@@ -161,7 +173,7 @@ public class MPConsistentHashRing<T> implements Ring<T>
     return "MPConsistentHashRing [" + _buckets + "]";
   }
 
-  private class Bucket<T>
+  private class Bucket
   {
     private final T _t;
     private final long _hash;

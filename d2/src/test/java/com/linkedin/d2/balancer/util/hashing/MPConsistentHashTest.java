@@ -16,7 +16,9 @@
 
 package com.linkedin.d2.balancer.util.hashing;
 
+import java.net.URI;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
 import org.testng.Assert;
@@ -113,6 +115,29 @@ public class MPConsistentHashTest
     Assert.assertTrue(Math.abs(percent2 - 0.2) < 0.2 * epsilon);
     Assert.assertTrue(Math.abs(percent3 - 0.3) < 0.3 * epsilon);
     Assert.assertTrue(Math.abs(percent4 - 0.4) < 0.4 * epsilon);
+  }
+
+  @Test
+  public void testHashRingIterator()
+  {
+    Map<URI, Integer> pointsMap = new HashMap<>();
+    pointsMap.put(URI.create("www.linkedin.com"), 100);
+    pointsMap.put(URI.create("www.google.com"), 67);
+    pointsMap.put(URI.create("www.facebook.com"), 33);
+    pointsMap.put(URI.create("www.microsoft.com"), 15);
+    MPConsistentHashRing<URI> hashRing = new MPConsistentHashRing<>(pointsMap);
+    int key = new Random().nextInt();
+    Iterator<URI> iter = hashRing.getIterator(key);
+
+    while (iter.hasNext()) {
+      URI nextUri = iter.next();
+      Assert.assertEquals(nextUri, hashRing.get(key));
+      // rebuild hash ring without the nextUri
+      pointsMap.remove(nextUri);
+      hashRing = new MPConsistentHashRing<>(pointsMap);
+    }
+    
+    Assert.assertTrue(pointsMap.isEmpty());
   }
 
 
