@@ -46,7 +46,6 @@ import com.linkedin.restli.common.attachments.RestLiAttachmentReaderException;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.AttachmentUtils;
 import com.linkedin.restli.internal.common.ProtocolVersionUtil;
-import com.linkedin.restli.internal.server.RestLiCallback;
 import com.linkedin.restli.internal.server.RestLiMethodInvoker;
 import com.linkedin.restli.internal.server.response.RestLiResponseHandler;
 import com.linkedin.restli.internal.server.RestLiRouter;
@@ -57,7 +56,7 @@ import com.linkedin.restli.internal.server.filter.FilterChainCallbackImpl;
 import com.linkedin.restli.internal.server.filter.FilterRequestContextInternal;
 import com.linkedin.restli.internal.server.filter.FilterRequestContextInternalImpl;
 import com.linkedin.restli.internal.server.filter.RestLiFilterChain;
-import com.linkedin.restli.internal.server.filter.RestLiResponseFilterContextFactory;
+import com.linkedin.restli.internal.server.filter.RestLiFilterResponseContextFactory;
 import com.linkedin.restli.internal.server.methods.MethodAdapterRegistry;
 import com.linkedin.restli.internal.server.methods.arguments.RestLiArgumentBuilder;
 import com.linkedin.restli.internal.server.response.ErrorResponseBuilder;
@@ -356,8 +355,8 @@ public class RestLiServer extends BaseRestServer
       return;
     }
 
-    RestLiResponseFilterContextFactory<Object> responseFilterContextFactory =
-        new RestLiResponseFilterContextFactory<Object>(request, method, _responseHandler);
+    RestLiFilterResponseContextFactory<Object> filterResponseContextFactory =
+        new RestLiFilterResponseContextFactory<Object>(request, method, _responseHandler);
 
     FilterChainCallback filterChainCallback = new FilterChainCallbackImpl(method, _methodInvoker, adapter,
                                                                           requestExecutionReportBuilder,
@@ -367,10 +366,7 @@ public class RestLiServer extends BaseRestServer
 
     RestLiFilterChain filterChain = new RestLiFilterChain(_filters, filterChainCallback);
 
-    RestLiCallback<Object> restLiCallback = new RestLiCallback<Object>(filterContext, responseFilterContextFactory,
-                                                                       filterChain);
-
-    filterChain.onRequest(filterContext, responseFilterContextFactory, restLiCallback);
+    filterChain.onRequest(filterContext, filterResponseContextFactory);
   }
 
   private void respondWithPreRoutingError(Throwable th,
@@ -378,9 +374,9 @@ public class RestLiServer extends BaseRestServer
                                           RestLiAttachmentReader attachmentReader,
                                           RequestExecutionCallback<RestResponse> callback)
   {
-    RestLiResponseFilterContextFactory<Object> responseFilterContextFactory =
-        new RestLiResponseFilterContextFactory<Object>(request, null, _responseHandler);
-    RestLiResponseData responseData = responseFilterContextFactory.fromThrowable(th).getResponseData();
+    RestLiFilterResponseContextFactory<Object> filterResponseContextFactory =
+        new RestLiFilterResponseContextFactory<Object>(request, null, _responseHandler);
+    RestLiResponseData responseData = filterResponseContextFactory.fromThrowable(th).getResponseData();
     RestException restException =
         _responseHandler.buildRestException(th, _responseHandler.buildPartialResponse(null, responseData));
     callback.onError(restException, createEmptyExecutionReport(), attachmentReader, null);
@@ -486,15 +482,7 @@ public class RestLiServer extends BaseRestServer
     }
     catch (Exception e)
     {
-      FilterChainCallback filterChainCallback = new FilterChainCallbackImpl(null, _methodInvoker, null, null,
-                                                                            null,
-                                                                            _responseHandler,
-                                                                            new RestResponseExecutionCallbackAdapter(callback));
-      final RestLiCallback<Object> restLiCallback =
-          new RestLiCallback<Object>(null,
-                                     new RestLiResponseFilterContextFactory(request, null, _responseHandler),
-                                     new RestLiFilterChain(_filters, filterChainCallback));
-      restLiCallback.onError(e, createEmptyExecutionReport(), null, null);
+      callback.onError(e);
     }
   }
 

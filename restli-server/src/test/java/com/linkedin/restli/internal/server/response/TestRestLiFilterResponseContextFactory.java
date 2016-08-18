@@ -22,12 +22,8 @@ import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.HttpStatus;
-import com.linkedin.restli.internal.server.filter.RestLiResponseFilterContextFactory;
-import com.linkedin.restli.internal.server.response.RestLiResponseHandler;
+import com.linkedin.restli.internal.server.filter.RestLiFilterResponseContextFactory;
 import com.linkedin.restli.internal.server.RoutingResult;
-import com.linkedin.restli.internal.server.response.GetResponseEnvelope;
-import com.linkedin.restli.server.RestLiResponseData;
-import com.linkedin.restli.internal.server.response.RestLiResponseDataImpl;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.RoutingException;
 import com.linkedin.restli.server.filter.FilterResponseContext;
@@ -60,7 +56,7 @@ import static org.testng.Assert.assertTrue;
 /**
  * @author nshankar
  */
-public class TestRestLiResponseFilterContextFactory
+public class TestRestLiFilterResponseContextFactory
 {
   @Mock
   private RestRequest _restRequest;
@@ -68,13 +64,13 @@ public class TestRestLiResponseFilterContextFactory
   private RoutingResult _routingResult;
   @Mock
   private RestLiResponseHandler _responseHandler;
-  private RestLiResponseFilterContextFactory<Object> _responseFilterContextFactory;
+  private RestLiFilterResponseContextFactory<Object> _filterResponseContextFactory;
 
   @BeforeTest
   protected void setUp() throws Exception
   {
     MockitoAnnotations.initMocks(this);
-    _responseFilterContextFactory = new RestLiResponseFilterContextFactory<Object>(_restRequest,
+    _filterResponseContextFactory = new RestLiFilterResponseContextFactory<Object>(_restRequest,
                                                                                    _routingResult,
                                                                                    _responseHandler);
   }
@@ -105,7 +101,7 @@ public class TestRestLiResponseFilterContextFactory
     responseData.setResponseEnvelope(new GetResponseEnvelope(entity1, responseData));
     when(_responseHandler.buildRestLiResponseData(_restRequest, _routingResult, entity1)).thenReturn(responseData);
 
-    FilterResponseContext responseContext = _responseFilterContextFactory.fromResult(entity1);
+    FilterResponseContext responseContext = _filterResponseContextFactory.fromResult(entity1);
     assertEquals(responseContext.getResponseData(), responseData);
     verify(_responseHandler).buildRestLiResponseData(_restRequest, _routingResult, entity1);
   }
@@ -150,7 +146,7 @@ public class TestRestLiResponseFilterContextFactory
     when(_restRequest.getHeaders()).thenReturn(null);
 
     // Invoke.
-    FilterResponseContext responseContext = _responseFilterContextFactory.fromThrowable(e);
+    FilterResponseContext responseContext = _filterResponseContextFactory.fromThrowable(e);
 
     // Verify.
     verify(_responseHandler).buildExceptionResponseData(eq(_restRequest),

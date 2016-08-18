@@ -23,7 +23,6 @@ import com.linkedin.restli.internal.common.ProtocolVersionUtil;
 import com.linkedin.restli.internal.server.RestLiCallback;
 import com.linkedin.restli.internal.server.response.RestLiResponseDataImpl;
 import com.linkedin.restli.server.RestLiResponseAttachments;
-import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.filter.Filter;
 import com.linkedin.restli.server.filter.FilterRequestContext;
 import com.linkedin.restli.server.filter.FilterResponseContext;
@@ -53,7 +52,7 @@ public class RestLiFilterChainIterator
   }
 
   public void onRequest(FilterRequestContext requestContext,
-                        RestLiResponseFilterContextFactory<Object> responseFilterContextFactory,
+                        RestLiFilterResponseContextFactory<Object> filterResponseContextFactory,
                         RestLiCallback<Object> restLiCallback)
   {
     if (_cursor < _filters.size())
@@ -65,14 +64,14 @@ public class RestLiFilterChainIterator
       }
       catch (Throwable th)
       {
-        onError(th, requestContext, responseFilterContextFactory.fromThrowable(th), null);
+        onError(th, requestContext, filterResponseContextFactory.fromThrowable(th), null);
         return;
       }
       filterFuture.thenAccept((v) -> {
-        onRequest(requestContext, responseFilterContextFactory, restLiCallback);
+        onRequest(requestContext, filterResponseContextFactory, restLiCallback);
       });
       filterFuture.exceptionally((throwable) -> {
-        onError(throwable, requestContext, responseFilterContextFactory.fromThrowable(throwable), null);
+        onError(throwable, requestContext, filterResponseContextFactory.fromThrowable(throwable), null);
         return null;
       });
     }

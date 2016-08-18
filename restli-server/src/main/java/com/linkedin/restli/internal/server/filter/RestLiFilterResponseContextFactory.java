@@ -43,13 +43,13 @@ import java.util.TreeMap;
  *
  * @author nshankar
  */
-public class RestLiResponseFilterContextFactory<T>
+public class RestLiFilterResponseContextFactory<T>
 {
   private final RoutingResult _method;
   private final RestLiResponseHandler _responseHandler;
   private final RestRequest _request;
 
-  public RestLiResponseFilterContextFactory(final RestRequest request,
+  public RestLiFilterResponseContextFactory(final RestRequest request,
                                             final RoutingResult method,
                                             final RestLiResponseHandler responseHandler)
   {
@@ -114,7 +114,7 @@ public class RestLiResponseFilterContextFactory<T>
     headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION,
                 ProtocolVersionUtil.extractProtocolVersion(requestHeaders).toString());
     headers.put(HeaderUtil.getErrorResponseHeaderName(requestHeaders), RestConstants.HEADER_VALUE_ERROR);
-    
+
     final RestLiResponseData responseData = _responseHandler.buildExceptionResponseData(_request,
                                                                                         _method,
                                                                                         restLiServiceException,

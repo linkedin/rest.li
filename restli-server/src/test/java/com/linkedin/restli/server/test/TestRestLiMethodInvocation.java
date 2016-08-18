@@ -64,7 +64,7 @@ import com.linkedin.restli.internal.server.filter.FilterChainCallbackImpl;
 import com.linkedin.restli.internal.server.filter.FilterRequestContextInternal;
 import com.linkedin.restli.internal.server.filter.FilterRequestContextInternalImpl;
 import com.linkedin.restli.internal.server.filter.RestLiFilterChain;
-import com.linkedin.restli.internal.server.filter.RestLiResponseFilterContextFactory;
+import com.linkedin.restli.internal.server.filter.RestLiFilterResponseContextFactory;
 import com.linkedin.restli.internal.server.methods.MethodAdapterRegistry;
 import com.linkedin.restli.internal.server.methods.arguments.RestLiArgumentBuilder;
 import com.linkedin.restli.internal.server.response.ErrorResponseBuilder;
@@ -324,9 +324,8 @@ public class TestRestLiMethodInvocation
 
     RestLiFilterChain filterChain = new RestLiFilterChain(Arrays.asList(mockFilter, mockFilter), filterChainCallback);
     filterChain.onRequest(mockFilterContext,
-                          new RestLiResponseFilterContextFactory<Object>(request, routingResult,
-                                                                         new RestLiResponseHandler.Builder().build()),
-                          getCallback());
+                          new RestLiFilterResponseContextFactory<Object>(request, routingResult,
+                                                                         new RestLiResponseHandler.Builder().build()));
 
     verify(mockBuilder, mockFilterContext, mockFilter);
     if (throwExceptionFromFirstFilter)
@@ -4292,7 +4291,7 @@ public class TestRestLiMethodInvocation
                                                                             restLiResponseHandler, executionCallback);
       final RestLiCallback<Object> callback =
           new RestLiCallback<Object>(null,
-                                     new RestLiResponseFilterContextFactory<Object>(request, null, restLiResponseHandler),
+                                     new RestLiFilterResponseContextFactory<Object>(request, null, restLiResponseHandler),
                                      new RestLiFilterChain(null, filterChainCallback));
 
       _invoker.invoke(null, routingResult, null, callback, null);
@@ -4347,7 +4346,7 @@ public class TestRestLiMethodInvocation
                                                                             restLiResponseHandler, executionCallback);
       final RestLiCallback<Object> callback =
           new RestLiCallback<Object>(null,
-                                     new RestLiResponseFilterContextFactory<Object>(request, null, restLiResponseHandler),
+                                     new RestLiFilterResponseContextFactory<Object>(request, null, restLiResponseHandler),
                                      new RestLiFilterChain(null, filterChainCallback));
       _invoker.invoke(null, routingResult, null, callback, null);
       latch.await();
@@ -5141,7 +5140,7 @@ public class TestRestLiMethodInvocation
                                                                             executionCallback);
       final RestLiCallback<Object> outerCallback =
           new RestLiCallback<Object>(filterContext,
-                                     new RestLiResponseFilterContextFactory<Object>(request, routingResult, restLiResponseHandler),
+                                     new RestLiFilterResponseContextFactory<Object>(request, routingResult, restLiResponseHandler),
                                      new RestLiFilterChain(null, filterChainCallback));
       RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(),
                                                                (ServerResourceContext)routingResult.getContext());

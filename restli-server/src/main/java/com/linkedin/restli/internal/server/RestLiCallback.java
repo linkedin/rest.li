@@ -19,7 +19,7 @@ package com.linkedin.restli.internal.server;
 
 import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
 import com.linkedin.restli.internal.server.filter.RestLiFilterChain;
-import com.linkedin.restli.internal.server.filter.RestLiResponseFilterContextFactory;
+import com.linkedin.restli.internal.server.filter.RestLiFilterResponseContextFactory;
 import com.linkedin.restli.server.RequestExecutionCallback;
 import com.linkedin.restli.server.RequestExecutionReport;
 import com.linkedin.restli.server.RestLiResponseAttachments;
@@ -37,13 +37,13 @@ public class RestLiCallback<T> implements RequestExecutionCallback<T>
 {
   private final RestLiFilterChain _filterChain;
   private final FilterRequestContext _filterRequestContext;
-  private final RestLiResponseFilterContextFactory _responseFilterContextFactory;
+  private final RestLiFilterResponseContextFactory _filterResponseContextFactory;
 
   public RestLiCallback(final FilterRequestContext filterRequestContext,
-                        final RestLiResponseFilterContextFactory responseFilterContextFactory,
+                        final RestLiFilterResponseContextFactory filterResponseContextFactory,
                         final RestLiFilterChain filterChain)
   {
-    _responseFilterContextFactory = responseFilterContextFactory;
+    _filterResponseContextFactory = filterResponseContextFactory;
     _filterChain = filterChain;
     _filterRequestContext = filterRequestContext;
   }
@@ -55,7 +55,7 @@ public class RestLiCallback<T> implements RequestExecutionCallback<T>
     final FilterResponseContext responseContext;
     try
     {
-      responseContext = _responseFilterContextFactory.fromResult(result);
+      responseContext = _filterResponseContextFactory.fromResult(result);
     }
     catch (Exception e)
     {
@@ -76,7 +76,7 @@ public class RestLiCallback<T> implements RequestExecutionCallback<T>
                       final RestLiAttachmentReader requestAttachmentReader,
                       final RestLiResponseAttachments responseAttachments)
   {
-    final FilterResponseContext responseContext = _responseFilterContextFactory.fromThrowable(e);
+    final FilterResponseContext responseContext = _filterResponseContextFactory.fromThrowable(e);
 
     // Now kick off the response filters with error
     _filterChain.onError(e, _filterRequestContext, responseContext, responseAttachments);

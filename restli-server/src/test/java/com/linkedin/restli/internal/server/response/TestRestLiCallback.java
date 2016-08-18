@@ -36,7 +36,7 @@ import com.linkedin.restli.internal.server.RestLiMethodInvoker;
 import com.linkedin.restli.internal.server.filter.RestLiFilterChain;
 import com.linkedin.restli.internal.server.filter.FilterChainCallback;
 import com.linkedin.restli.internal.server.filter.FilterChainCallbackImpl;
-import com.linkedin.restli.internal.server.filter.RestLiResponseFilterContextFactory;
+import com.linkedin.restli.internal.server.filter.RestLiFilterResponseContextFactory;
 import com.linkedin.restli.internal.server.methods.arguments.RestLiArgumentBuilder;
 import com.linkedin.restli.internal.server.RestLiCallback;
 import com.linkedin.restli.internal.server.RoutingResult;
@@ -129,14 +129,14 @@ public class TestRestLiCallback
 
   private FilterChainCallback _filterChainCallback;
 
-  private RestLiResponseFilterContextFactory<Object> _responseFilterContextFactory;
+  private RestLiFilterResponseContextFactory<Object> _filterResponseContextFactory;
 
   @BeforeTest
   protected void setUp() throws Exception
   {
     MockitoAnnotations.initMocks(this);
 
-    _responseFilterContextFactory = new RestLiResponseFilterContextFactory<Object>(_restRequest, _routingResult,
+    _filterResponseContextFactory = new RestLiFilterResponseContextFactory<Object>(_restRequest, _routingResult,
                                                                                    _responseHandler);
 
     _filterChainCallback =
@@ -148,16 +148,13 @@ public class TestRestLiCallback
     _twoFilterChain = new RestLiFilterChain(Arrays.asList(_filter, _filter), _filterChainCallback);
 
     _noFilterRestLiCallback =
-        new RestLiCallback<Object>(_filterRequestContext,
-                                   _responseFilterContextFactory,
+        new RestLiCallback<Object>(_filterRequestContext, _filterResponseContextFactory,
                                    _zeroFilterChain);
     _oneFilterRestLiCallback =
-        new RestLiCallback<Object>(_filterRequestContext,
-                                   _responseFilterContextFactory,
+        new RestLiCallback<Object>(_filterRequestContext, _filterResponseContextFactory,
                                    _oneFilterChain);
     _twoFilterRestLiCallback =
-        new RestLiCallback<Object>(_filterRequestContext,
-                                   _responseFilterContextFactory,
+        new RestLiCallback<Object>(_filterRequestContext, _filterResponseContextFactory,
                                    _twoFilterChain);
   }
 
@@ -353,7 +350,7 @@ public class TestRestLiCallback
 
     // invoke request filters so cursor is in correct place
     when(_filter.onRequest(any(FilterRequestContext.class))).thenReturn(CompletableFuture.completedFuture(null));
-    _twoFilterChain.onRequest(_filterRequestContext, _responseFilterContextFactory, _noFilterRestLiCallback);
+    _twoFilterChain.onRequest(_filterRequestContext, _filterResponseContextFactory);
     // Invoke.
     _noFilterRestLiCallback.onSuccess(result, executionReport, responseAttachments);
 
@@ -443,7 +440,7 @@ public class TestRestLiCallback
 
     // invoke request filters so cursor is in correct place
     when(_filter.onRequest(any(FilterRequestContext.class))).thenReturn(CompletableFuture.completedFuture(null));
-    _twoFilterChain.onRequest(_filterRequestContext, _responseFilterContextFactory, _twoFilterRestLiCallback);
+    _twoFilterChain.onRequest(_filterRequestContext, _filterResponseContextFactory);
     // Invoke with some response attachments.
     _twoFilterRestLiCallback.onSuccess(result, executionReport, restLiResponseAttachments);
 
@@ -532,7 +529,7 @@ public class TestRestLiCallback
 
     // invoke request filters so cursor is in correct place
     when(_filter.onRequest(any(FilterRequestContext.class))).thenReturn(CompletableFuture.completedFuture(null));
-    _twoFilterChain.onRequest(_filterRequestContext, _responseFilterContextFactory, _twoFilterRestLiCallback);
+    _twoFilterChain.onRequest(_filterRequestContext, _filterResponseContextFactory);
     // Invoke.
     _twoFilterRestLiCallback.onSuccess(entityFromApp, executionReport, responseAttachments);
 
@@ -623,7 +620,7 @@ public class TestRestLiCallback
 
     // invoke request filters so cursor is in correct place
     when(_filter.onRequest(any(FilterRequestContext.class))).thenReturn(CompletableFuture.completedFuture(null));
-    _twoFilterChain.onRequest(_filterRequestContext, _responseFilterContextFactory, _twoFilterRestLiCallback);
+    _twoFilterChain.onRequest(_filterRequestContext, _filterResponseContextFactory);
     // Invoke.
     _twoFilterRestLiCallback.onSuccess(entityFromApp, executionReport, responseAttachments);
 
@@ -690,7 +687,7 @@ public class TestRestLiCallback
 
     // invoke request filters so cursor is in correct place
     when(_filter.onRequest(any(FilterRequestContext.class))).thenReturn(CompletableFuture.completedFuture(null));
-    _oneFilterChain.onRequest(_filterRequestContext, _responseFilterContextFactory, _oneFilterRestLiCallback);
+    _oneFilterChain.onRequest(_filterRequestContext, _filterResponseContextFactory);
     // Invoke.
     _oneFilterRestLiCallback.onSuccess(entityFromApp, executionReport, responseAttachments);
 
@@ -778,7 +775,7 @@ public class TestRestLiCallback
 
     // invoke request filters so cursor is in correct place
     when(_filter.onRequest(any(FilterRequestContext.class))).thenReturn(CompletableFuture.completedFuture(null));
-    _twoFilterChain.onRequest(_filterRequestContext, _responseFilterContextFactory, _twoFilterRestLiCallback);
+    _twoFilterChain.onRequest(_filterRequestContext, _filterResponseContextFactory);
     // Invoke.
     _twoFilterRestLiCallback.onSuccess(result, executionReport, responseAttachments);
 
@@ -880,7 +877,7 @@ public class TestRestLiCallback
 
     // invoke request filters so cursor is in correct place
     when(_filter.onRequest(any(FilterRequestContext.class))).thenReturn(CompletableFuture.completedFuture(null));
-    _twoFilterChain.onRequest(_filterRequestContext, _responseFilterContextFactory, _twoFilterRestLiCallback);
+    _twoFilterChain.onRequest(_filterRequestContext, _filterResponseContextFactory);
     // Invoke.
     _twoFilterRestLiCallback.onError(exFromApp, executionReport, _requestAttachmentReader, responseAttachments);
     // Verify.
@@ -996,7 +993,7 @@ public class TestRestLiCallback
 
     // invoke request filters so cursor is in correct place
     when(_filter.onRequest(any(FilterRequestContext.class))).thenReturn(CompletableFuture.completedFuture(null));
-    _twoFilterChain.onRequest(_filterRequestContext, _responseFilterContextFactory, _twoFilterRestLiCallback);
+    _twoFilterChain.onRequest(_filterRequestContext, _filterResponseContextFactory);
     // Invoke.
     _twoFilterRestLiCallback.onError(exFromApp, executionReport, _requestAttachmentReader, responseAttachments);
     // Verify.
@@ -1081,7 +1078,7 @@ public class TestRestLiCallback
 
     // invoke request filters so cursor is in correct place
     when(_filter.onRequest(any(FilterRequestContext.class))).thenReturn(CompletableFuture.completedFuture(null));
-    _twoFilterChain.onRequest(_filterRequestContext, _responseFilterContextFactory, _twoFilterRestLiCallback);
+    _twoFilterChain.onRequest(_filterRequestContext, _filterResponseContextFactory);
     // Invoke.
     _twoFilterRestLiCallback.onError(exFromApp, executionReport, _requestAttachmentReader, responseAttachments);
 
@@ -1257,7 +1254,7 @@ public class TestRestLiCallback
 
     // invoke request filters so cursor is in correct place
     when(_filter.onRequest(any(FilterRequestContext.class))).thenReturn(CompletableFuture.completedFuture(null));
-    _twoFilterChain.onRequest(_filterRequestContext, _responseFilterContextFactory, _twoFilterRestLiCallback);
+    _twoFilterChain.onRequest(_filterRequestContext, _filterResponseContextFactory);
     // Invoke.
     _twoFilterRestLiCallback.onError(exFromApp, executionReport, _requestAttachmentReader, responseAttachments);
 
@@ -1370,7 +1367,7 @@ public class TestRestLiCallback
 
     // invoke request filters so cursor is in correct place
     when(_filter.onRequest(any(FilterRequestContext.class))).thenReturn(CompletableFuture.completedFuture(null));
-    _twoFilterChain.onRequest(_filterRequestContext, _responseFilterContextFactory, _twoFilterRestLiCallback);
+    _twoFilterChain.onRequest(_filterRequestContext, _filterResponseContextFactory);
     // Invoke.
     _twoFilterRestLiCallback.onError(exFromApp, executionReport, _requestAttachmentReader, responseAttachments);
 

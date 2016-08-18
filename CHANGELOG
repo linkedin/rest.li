@@ -1,6 +1,9 @@
 7.0.2
 -----
-
+(RB=793469)
+[pegasus] Follow up on Min's feedback from 758221 - refactored filter response
+context factory name and refactored RestLiCallback to be instantiated
+from within Filterchain.
 
 7.0.1
 -----

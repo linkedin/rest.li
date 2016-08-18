@@ -71,9 +71,7 @@ public class TestRestLiFilterChain
   @Mock
   private RestLiResponseAttachments _mockResponseAttachments;
   @Mock
-  private RestLiResponseFilterContextFactory<Object> _mockResponseFilterContextFactory;
-  @Mock
-  private RestLiCallback<Object> _mockRestLiCallback;
+  private RestLiFilterResponseContextFactory<Object> _mockFilterResponseContextFactory;
 
   @Mock
   private RestRequest _request;
@@ -113,6 +111,7 @@ public class TestRestLiFilterChain
     };
   }
 
+  @SuppressWarnings(value="unchecked")
   @Test
   public void testFilterInvocationSuccess() throws Exception
   {
@@ -123,13 +122,13 @@ public class TestRestLiFilterChain
         _restLiFilterChain.onResponse(_mockFilterRequestContext, _mockFilterResponseContext, _mockResponseAttachments);
         return null;
       }
-    }).when(_mockFilterChainCallback).onRequestSuccess(_mockRestLiRequestData, _mockRestLiCallback);
+    }).when(_mockFilterChainCallback).onRequestSuccess(eq(_mockRestLiRequestData), any(RestLiCallback.class));
 
     when(_mockFilterRequestContext.getRequestData()).thenReturn(_mockRestLiRequestData);
     when(_mockFilterResponseContext.getResponseData()).thenReturn(_mockRestLiResponseData);
-    when(_mockResponseFilterContextFactory.fromThrowable(any(Throwable.class))).thenReturn(_mockFilterResponseContext);
+    when(_mockFilterResponseContextFactory.fromThrowable(any(Throwable.class))).thenReturn(_mockFilterResponseContext);
 
-    _restLiFilterChain.onRequest(_mockFilterRequestContext, _mockResponseFilterContextFactory, _mockRestLiCallback);
+    _restLiFilterChain.onRequest(_mockFilterRequestContext, _mockFilterResponseContextFactory);
 
     for(CountFilter filter : _filters)
     {
@@ -139,12 +138,10 @@ public class TestRestLiFilterChain
     }
 
     verify(_mockFilterRequestContext).getRequestData();
-    verify(_mockFilterChainCallback).onRequestSuccess(_mockRestLiRequestData, _mockRestLiCallback);
+    verify(_mockFilterChainCallback).onRequestSuccess(eq(_mockRestLiRequestData), any(RestLiCallback.class));
     verify(_mockFilterChainCallback).onResponseSuccess(_mockRestLiResponseData, _mockResponseAttachments);
 
-    verifyNoMoreInteractions(_mockFilterChainCallback, _mockRestLiCallback,
-                             _mockFilterRequestContext,
-                             _mockRestLiRequestData);
+    verifyNoMoreInteractions(_mockFilterChainCallback, _mockFilterRequestContext, _mockRestLiRequestData);
   }
 
   @SuppressWarnings("unchecked")
@@ -155,12 +152,11 @@ public class TestRestLiFilterChain
     _filters[1] = new CountFilterRequestOnError();
     when(_responseHandler.buildExceptionResponseData(eq(_request), eq(_method), any(Object.class), anyMap(), anyList()))
         .thenReturn(_mockRestLiResponseData);
-    when(_mockResponseFilterContextFactory.fromThrowable(any(Throwable.class))).thenReturn(_mockFilterResponseContext);
+    when(_mockFilterResponseContextFactory.fromThrowable(any(Throwable.class))).thenReturn(_mockFilterResponseContext);
     when(_mockFilterResponseContext.getResponseData()).thenReturn(_mockRestLiResponseData);
 
     _restLiFilterChain.onRequest(_mockFilterRequestContext,
-                                 new RestLiResponseFilterContextFactory<Object>(_request, _method, _responseHandler),
-                                 _mockRestLiCallback);
+                                 new RestLiFilterResponseContextFactory<Object>(_request, _method, _responseHandler));
 
     verifySecondFilterRequestException();
   }
@@ -174,8 +170,7 @@ public class TestRestLiFilterChain
     when(_responseHandler.buildExceptionResponseData(eq(_request), eq(_method), any(Object.class), anyMap(), anyList()))
         .thenReturn(_mockRestLiResponseData);
     _restLiFilterChain.onRequest(_mockFilterRequestContext,
-                                 new RestLiResponseFilterContextFactory<Object>(_request, _method, _responseHandler),
-                                 _mockRestLiCallback);
+                                 new RestLiFilterResponseContextFactory<Object>(_request, _method, _responseHandler));
 
     verifySecondFilterRequestException();
   }
@@ -189,8 +184,7 @@ public class TestRestLiFilterChain
     when(_responseHandler.buildExceptionResponseData(eq(_request), eq(_method), any(Object.class), anyMap(), anyList()))
         .thenReturn(_mockRestLiResponseData);
     _restLiFilterChain.onRequest(_mockFilterRequestContext,
-                                 new RestLiResponseFilterContextFactory<Object>(_request, _method, _responseHandler),
-                                 _mockRestLiCallback);
+                                 new RestLiFilterResponseContextFactory<Object>(_request, _method, _responseHandler));
 
     verifySecondFilterRequestException();
   }
@@ -204,8 +198,7 @@ public class TestRestLiFilterChain
     when(_responseHandler.buildExceptionResponseData(eq(_request), eq(_method), any(Object.class), anyMap(), anyList()))
         .thenReturn(_mockRestLiResponseData);
     _restLiFilterChain.onRequest(_mockFilterRequestContext,
-                                 new RestLiResponseFilterContextFactory<Object>(_request, _method, _responseHandler),
-                                 _mockRestLiCallback);
+                                 new RestLiFilterResponseContextFactory<Object>(_request, _method, _responseHandler));
 
     verifySecondFilterRequestException();
   }
@@ -221,12 +214,10 @@ public class TestRestLiFilterChain
 
     verify(_mockRestLiResponseData, times(2)).setException(any(Throwable.class));
 
-    verifyNoMoreInteractions(_mockFilterChainCallback, _mockRestLiCallback,
-                             _mockFilterRequestContext,
-                             _mockRestLiRequestData);
+    verifyNoMoreInteractions(_mockFilterChainCallback, _mockFilterRequestContext, _mockRestLiRequestData);
   }
 
-
+  @SuppressWarnings(value="unchecked")
   @Test
   public void testFilterInvocationResponseOnError() throws Exception
   {
@@ -239,13 +230,13 @@ public class TestRestLiFilterChain
         _restLiFilterChain.onResponse(_mockFilterRequestContext, _mockFilterResponseContext, _mockResponseAttachments);
         return null;
       }
-    }).when(_mockFilterChainCallback).onRequestSuccess(_mockRestLiRequestData, _mockRestLiCallback);
+    }).when(_mockFilterChainCallback).onRequestSuccess(eq(_mockRestLiRequestData), any(RestLiCallback.class));
 
     when(_mockFilterRequestContext.getRequestData()).thenReturn(_mockRestLiRequestData);
     when(_mockFilterResponseContext.getResponseData()).thenReturn(_mockRestLiResponseData);
-    when(_mockResponseFilterContextFactory.fromThrowable(any(Throwable.class))).thenReturn(_mockFilterResponseContext);
+    when(_mockFilterResponseContextFactory.fromThrowable(any(Throwable.class))).thenReturn(_mockFilterResponseContext);
 
-    _restLiFilterChain.onRequest(_mockFilterRequestContext, _mockResponseFilterContextFactory, _mockRestLiCallback);
+    _restLiFilterChain.onRequest(_mockFilterRequestContext, _mockFilterResponseContextFactory);
 
     verifySecondFilterResponseException();
 
@@ -264,19 +255,20 @@ public class TestRestLiFilterChain
         _restLiFilterChain.onResponse(_mockFilterRequestContext, _mockFilterResponseContext, _mockResponseAttachments);
         return null;
       }
-    }).when(_mockFilterChainCallback).onRequestSuccess(_mockRestLiRequestData, _mockRestLiCallback);
+    }).when(_mockFilterChainCallback).onRequestSuccess(eq(_mockRestLiRequestData), any(RestLiCallback.class));
 
     when(_mockFilterRequestContext.getRequestData()).thenReturn(_mockRestLiRequestData);
     when(_mockFilterResponseContext.getResponseData()).thenReturn(_mockRestLiResponseData);
     when(_responseHandler.buildExceptionResponseData(eq(_request), eq(_method), any(Object.class), anyMap(), anyList()))
         .thenReturn(_mockRestLiResponseData);
-    when(_mockResponseFilterContextFactory.fromThrowable(any(Throwable.class))).thenReturn(_mockFilterResponseContext);
+    when(_mockFilterResponseContextFactory.fromThrowable(any(Throwable.class))).thenReturn(_mockFilterResponseContext);
 
-    _restLiFilterChain.onRequest(_mockFilterRequestContext, _mockResponseFilterContextFactory, _mockRestLiCallback);
+    _restLiFilterChain.onRequest(_mockFilterRequestContext, _mockFilterResponseContextFactory);
 
     verifySecondFilterResponseException();
   }
 
+  @SuppressWarnings(value="unchecked")
   @Test
   public void testFilterInvocationResponseThrowsError() throws Exception
   {
@@ -289,17 +281,18 @@ public class TestRestLiFilterChain
         _restLiFilterChain.onResponse(_mockFilterRequestContext, _mockFilterResponseContext, _mockResponseAttachments);
         return null;
       }
-    }).when(_mockFilterChainCallback).onRequestSuccess(_mockRestLiRequestData, _mockRestLiCallback);
+    }).when(_mockFilterChainCallback).onRequestSuccess(eq(_mockRestLiRequestData), any(RestLiCallback.class));
 
     when(_mockFilterRequestContext.getRequestData()).thenReturn(_mockRestLiRequestData);
     when(_mockFilterResponseContext.getResponseData()).thenReturn(_mockRestLiResponseData);
-    when(_mockResponseFilterContextFactory.fromThrowable(any(Throwable.class))).thenReturn(_mockFilterResponseContext);
+    when(_mockFilterResponseContextFactory.fromThrowable(any(Throwable.class))).thenReturn(_mockFilterResponseContext);
 
-    _restLiFilterChain.onRequest(_mockFilterRequestContext, _mockResponseFilterContextFactory, _mockRestLiCallback);
+    _restLiFilterChain.onRequest(_mockFilterRequestContext, _mockFilterResponseContextFactory);
 
     verifySecondFilterResponseException();
   }
 
+  @SuppressWarnings(value="unchecked")
   @Test
   public void testFilterInvocationResponseErrorThrowsError() throws Exception
   {
@@ -312,34 +305,34 @@ public class TestRestLiFilterChain
         _restLiFilterChain.onResponse(_mockFilterRequestContext, _mockFilterResponseContext, _mockResponseAttachments);
         return null;
       }
-    }).when(_mockFilterChainCallback).onRequestSuccess(_mockRestLiRequestData, _mockRestLiCallback);
+    }).when(_mockFilterChainCallback).onRequestSuccess(eq(_mockRestLiRequestData), any(RestLiCallback.class));
 
     when(_mockFilterRequestContext.getRequestData()).thenReturn(_mockRestLiRequestData);
     when(_mockFilterResponseContext.getResponseData()).thenReturn(_mockRestLiResponseData);
-    when(_mockResponseFilterContextFactory.fromThrowable(any(Throwable.class))).thenReturn(_mockFilterResponseContext);
+    when(_mockFilterResponseContextFactory.fromThrowable(any(Throwable.class))).thenReturn(_mockFilterResponseContext);
 
-    _restLiFilterChain.onRequest(_mockFilterRequestContext, _mockResponseFilterContextFactory, _mockRestLiCallback);
+    _restLiFilterChain.onRequest(_mockFilterRequestContext, _mockFilterResponseContextFactory);
 
     verifySecondFilterResponseException();
   }
 
+  @SuppressWarnings(value="unchecked")
   private void verifySecondFilterResponseException()
   {
     assertFilterCounts(_filters[0], 1, 0, 1);
     assertFilterCounts(_filters[1], 1, 1, 0);
     assertFilterCounts(_filters[2], 1, 1, 0);
 
-    verify(_mockFilterChainCallback).onRequestSuccess(_mockRestLiRequestData, _mockRestLiCallback);
+    verify(_mockFilterChainCallback).onRequestSuccess(eq(_mockRestLiRequestData), any(RestLiCallback.class));
     verify(_mockFilterChainCallback).onError(any(TestFilterException.class), eq(_mockRestLiResponseData),
                                              eq(_mockResponseAttachments));
     verify(_mockFilterRequestContext).getRequestData();
     verify(_mockFilterResponseContext, times(5)).getResponseData();
 
-    verifyNoMoreInteractions(_mockFilterChainCallback, _mockRestLiCallback,
-                             _mockFilterRequestContext,
-                             _mockRestLiRequestData);
+    verifyNoMoreInteractions(_mockFilterChainCallback, _mockFilterRequestContext, _mockRestLiRequestData);
   }
 
+  @SuppressWarnings(value="unchecked")
   @Test
   public void testFilterInvocationResponseErrorFixesError() throws Exception
   {
@@ -353,27 +346,26 @@ public class TestRestLiFilterChain
         _restLiFilterChain.onResponse(_mockFilterRequestContext, _mockFilterResponseContext, _mockResponseAttachments);
         return null;
       }
-    }).when(_mockFilterChainCallback).onRequestSuccess(_mockRestLiRequestData, _mockRestLiCallback);
+    }).when(_mockFilterChainCallback).onRequestSuccess(eq(_mockRestLiRequestData), any(RestLiCallback.class));
 
     when(_mockFilterRequestContext.getRequestData()).thenReturn(_mockRestLiRequestData);
     when(_mockFilterResponseContext.getResponseData()).thenReturn(_mockRestLiResponseData);
 
-    _restLiFilterChain.onRequest(_mockFilterRequestContext, _mockResponseFilterContextFactory, _mockRestLiCallback);
+    _restLiFilterChain.onRequest(_mockFilterRequestContext, _mockFilterResponseContextFactory);
 
     assertFilterCounts(_filters[0], 1, 1, 0);
     assertFilterCounts(_filters[1], 1, 0, 1);
     assertFilterCounts(_filters[2], 1, 1, 0);
 
-    verify(_mockFilterChainCallback).onRequestSuccess(_mockRestLiRequestData, _mockRestLiCallback);
+    verify(_mockFilterChainCallback).onRequestSuccess(eq(_mockRestLiRequestData), any(RestLiCallback.class));
     verify(_mockFilterChainCallback).onResponseSuccess(eq(_mockRestLiResponseData), eq(_mockResponseAttachments));
     verify(_mockFilterRequestContext).getRequestData();
     verify(_mockFilterResponseContext, times(3)).getResponseData();
 
-    verifyNoMoreInteractions(_mockFilterChainCallback, _mockRestLiCallback,
-                             _mockFilterRequestContext,
-                             _mockRestLiRequestData);
+    verifyNoMoreInteractions(_mockFilterChainCallback, _mockFilterRequestContext, _mockRestLiRequestData);
   }
 
+  @SuppressWarnings(value="unchecked")
   @Test
   public void testFilterInvocationLastResponseErrorFixesError() throws Exception
   {
@@ -387,27 +379,26 @@ public class TestRestLiFilterChain
         _restLiFilterChain.onResponse(_mockFilterRequestContext, _mockFilterResponseContext, _mockResponseAttachments);
         return null;
       }
-    }).when(_mockFilterChainCallback).onRequestSuccess(_mockRestLiRequestData, _mockRestLiCallback);
+    }).when(_mockFilterChainCallback).onRequestSuccess(eq(_mockRestLiRequestData), any(RestLiCallback.class));
 
     when(_mockFilterRequestContext.getRequestData()).thenReturn(_mockRestLiRequestData);
     when(_mockFilterResponseContext.getResponseData()).thenReturn(_mockRestLiResponseData);
 
-    _restLiFilterChain.onRequest(_mockFilterRequestContext, _mockResponseFilterContextFactory, _mockRestLiCallback);
+    _restLiFilterChain.onRequest(_mockFilterRequestContext, _mockFilterResponseContextFactory);
 
     assertFilterCounts(_filters[0], 1, 0, 1);
     assertFilterCounts(_filters[1], 1, 1, 0);
     assertFilterCounts(_filters[2], 1, 1, 0);
 
-    verify(_mockFilterChainCallback).onRequestSuccess(_mockRestLiRequestData, _mockRestLiCallback);
+    verify(_mockFilterChainCallback).onRequestSuccess(eq(_mockRestLiRequestData), any(RestLiCallback.class));
     verify(_mockFilterChainCallback).onResponseSuccess(eq(_mockRestLiResponseData), eq(_mockResponseAttachments));
     verify(_mockFilterRequestContext).getRequestData();
     verify(_mockFilterResponseContext, times(3)).getResponseData();
 
-    verifyNoMoreInteractions(_mockFilterChainCallback, _mockRestLiCallback,
-                             _mockFilterRequestContext,
-                             _mockRestLiRequestData);
+    verifyNoMoreInteractions(_mockFilterChainCallback, _mockFilterRequestContext, _mockRestLiRequestData);
   }
 
+  @SuppressWarnings(value="unchecked")
   @Test
   public void testFilterInvocationOnError() throws Exception
   {
@@ -419,30 +410,29 @@ public class TestRestLiFilterChain
                                    _mockFilterResponseContext, _mockResponseAttachments);
         return null;
       }
-    }).when(_mockFilterChainCallback).onRequestSuccess(_mockRestLiRequestData, _mockRestLiCallback);
+    }).when(_mockFilterChainCallback).onRequestSuccess(eq(_mockRestLiRequestData), any(RestLiCallback.class));
 
     when(_mockFilterRequestContext.getRequestData()).thenReturn(_mockRestLiRequestData);
     when(_mockFilterResponseContext.getResponseData()).thenReturn(_mockRestLiResponseData);
 
-    _restLiFilterChain.onRequest(_mockFilterRequestContext, _mockResponseFilterContextFactory, _mockRestLiCallback);
+    _restLiFilterChain.onRequest(_mockFilterRequestContext, _mockFilterResponseContextFactory);
 
     assertFilterCounts(_filters[0], 1, 0, 1);
     assertFilterCounts(_filters[1], 1, 0, 1);
     assertFilterCounts(_filters[2], 1, 0, 1);
 
-    verify(_mockFilterChainCallback).onRequestSuccess(_mockRestLiRequestData, _mockRestLiCallback);
+    verify(_mockFilterChainCallback).onRequestSuccess(eq(_mockRestLiRequestData), any(RestLiCallback.class));
     verify(_mockFilterChainCallback).onError(any(TestFilterException.class), eq(_mockRestLiResponseData),
                                              eq(_mockResponseAttachments));
     verify(_mockFilterRequestContext).getRequestData();
     verify(_mockFilterResponseContext, times(7)).getResponseData();
 
-    verifyNoMoreInteractions(_mockFilterChainCallback, _mockRestLiCallback,
-                             _mockRequestAttachmentReader,
-                             _mockFilterRequestContext,
+    verifyNoMoreInteractions(_mockFilterChainCallback, _mockRequestAttachmentReader, _mockFilterRequestContext,
                              _mockRestLiRequestData);
 
   }
 
+  @SuppressWarnings(value="unchecked")
   @Test
   public void testNoFilters() throws Exception
   {
@@ -455,21 +445,20 @@ public class TestRestLiFilterChain
         emptyFilterChain.onResponse(_mockFilterRequestContext, _mockFilterResponseContext, _mockResponseAttachments);
         return null;
       }
-    }).when(_mockFilterChainCallback).onRequestSuccess(_mockRestLiRequestData, _mockRestLiCallback);
+    }).when(_mockFilterChainCallback).onRequestSuccess(eq(_mockRestLiRequestData), any(RestLiCallback.class));
 
     when(_mockFilterRequestContext.getRequestData()).thenReturn(_mockRestLiRequestData);
     when(_mockFilterResponseContext.getResponseData()).thenReturn(_mockRestLiResponseData);
-    when(_mockResponseFilterContextFactory.fromThrowable(any(Throwable.class))).thenReturn(_mockFilterResponseContext);
+    when(_mockFilterResponseContextFactory.fromThrowable(any(Throwable.class))).thenReturn(_mockFilterResponseContext);
 
-    emptyFilterChain.onRequest(_mockFilterRequestContext, _mockResponseFilterContextFactory, _mockRestLiCallback);
+    emptyFilterChain.onRequest(_mockFilterRequestContext, _mockFilterResponseContextFactory);
 
-    verify(_mockFilterChainCallback).onRequestSuccess(_mockRestLiRequestData, _mockRestLiCallback);
+    verify(_mockFilterChainCallback).onRequestSuccess(eq(_mockRestLiRequestData), any(RestLiCallback.class));
     verify(_mockFilterChainCallback).onResponseSuccess(_mockRestLiResponseData, _mockResponseAttachments);
     verify(_mockFilterRequestContext).getRequestData();
     verify(_mockFilterResponseContext).getResponseData();
 
-    verifyNoMoreInteractions(_mockFilterChainCallback, _mockRestLiCallback, _mockFilterRequestContext,
-                             _mockRestLiRequestData);
+    verifyNoMoreInteractions(_mockFilterChainCallback, _mockFilterRequestContext, _mockRestLiRequestData);
   }
 
   private void assertFilterCounts(CountFilter filter, int expectedNumRequests, int expectedNumResponses,
