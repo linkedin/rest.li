@@ -20,7 +20,6 @@ package com.linkedin.d2.balancer.strategies.degrader;
 import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
-import com.linkedin.d2.balancer.util.hashing.ConsistentHashRing;
 import com.linkedin.d2.balancer.util.hashing.HashFunction;
 import com.linkedin.d2.balancer.util.hashing.RandomHash;
 import com.linkedin.d2.balancer.util.hashing.Ring;
@@ -29,6 +28,7 @@ import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.util.degrader.DegraderControl;
 
+import com.linkedin.util.degrader.DegraderImpl;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -44,7 +44,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.linkedin.d2.discovery.util.LogUtil.error;
 import static com.linkedin.d2.discovery.util.LogUtil.debug;
 import static com.linkedin.d2.discovery.util.LogUtil.warn;
 
@@ -805,13 +804,17 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       if (newOverrideMinCallCount != currentOverrideMinCallCount)
       {
         clientUpdater.setOverrideMinCallCount(newOverrideMinCallCount);
-        warn(_log,
-             "partitionId=",
-             partitionId,
-             "overriding Min Call Count to ",
-             newOverrideMinCallCount,
-             " for client: ",
-             client.getUri());
+        // log min call count change if current value != initial value
+        if (currentOverrideMinCallCount != DegraderImpl.DEFAULT_OVERRIDE_MIN_CALL_COUNT)
+        {
+          warn(_log,
+              "partitionId=",
+              partitionId,
+              "overriding Min Call Count to ",
+              newOverrideMinCallCount,
+              " for client: ",
+              client.getUri());
+        }
       }
     }
   }
@@ -1255,7 +1258,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
           + ", _currentOverrideDropRate=" + _currentOverrideDropRate
           + ", _clusterGenerationId=" + _clusterGenerationId
           + ", _strategy=" + _strategy
-          + ", _numHostsInCluster=" + _pointsMap.size() + _recoveryMap.size()
+          + ", _numHostsInCluster=" + (_pointsMap.size() + _recoveryMap.size())
           + ", _recoveryMap=" + _recoveryMap
           + "]";
     }

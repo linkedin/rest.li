@@ -1,8 +1,14 @@
+7.0.2
+-----
+
+
 7.0.1
 -----
 (RB=793402)
 Make MPConsistentHashRing iterator honor the weight of each element.
 
+(RB=794070)
+Fix logging issues in DegraderLoadBalancerStrategyV3.
 
 7.0.0
 -----
