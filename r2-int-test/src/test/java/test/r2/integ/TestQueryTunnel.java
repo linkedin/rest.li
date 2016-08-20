@@ -23,6 +23,7 @@ import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.server.TransportCallbackAdapter;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
+import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
 import com.linkedin.r2.transport.http.server.HttpJettyServer;
 import com.linkedin.r2.transport.http.server.HttpServerFactory;
 import org.testng.Assert;
@@ -70,22 +71,22 @@ public class TestQueryTunnel
   public static Object[][] configs()
   {
     return new Object[][] {
-        {true, true, HttpProtocolVersion.HTTP_1_1, HttpJettyServer.ServletType.RAP, PORT},
-        {true, false, HttpProtocolVersion.HTTP_1_1, HttpJettyServer.ServletType.RAP, PORT},
-        {false, true, HttpProtocolVersion.HTTP_1_1, HttpJettyServer.ServletType.RAP, PORT},
-        {false, false, HttpProtocolVersion.HTTP_1_1, HttpJettyServer.ServletType.RAP, PORT},
-        {true, true, HttpProtocolVersion.HTTP_1_1, HttpJettyServer.ServletType.ASYNC_EVENT, PORT},
-        {true, false, HttpProtocolVersion.HTTP_1_1, HttpJettyServer.ServletType.ASYNC_EVENT, PORT},
-        {false, true, HttpProtocolVersion.HTTP_1_1, HttpJettyServer.ServletType.ASYNC_EVENT, PORT},
-        {false, false, HttpProtocolVersion.HTTP_1_1, HttpJettyServer.ServletType.ASYNC_EVENT, PORT},
-        {true, true, HttpProtocolVersion.HTTP_2, HttpJettyServer.ServletType.RAP, PORT},
-        {true, false, HttpProtocolVersion.HTTP_2, HttpJettyServer.ServletType.RAP, PORT},
-        {false, true, HttpProtocolVersion.HTTP_2, HttpJettyServer.ServletType.RAP, PORT},
-        {false, false, HttpProtocolVersion.HTTP_2, HttpJettyServer.ServletType.RAP, PORT},
-        {true, true, HttpProtocolVersion.HTTP_2, HttpJettyServer.ServletType.ASYNC_EVENT, PORT},
-        {true, false, HttpProtocolVersion.HTTP_2, HttpJettyServer.ServletType.ASYNC_EVENT, PORT},
-        {false, true, HttpProtocolVersion.HTTP_2, HttpJettyServer.ServletType.ASYNC_EVENT, PORT},
-        {false, false, HttpProtocolVersion.HTTP_2, HttpJettyServer.ServletType.ASYNC_EVENT, PORT}
+        {true, true, HttpProtocolVersion.HTTP_1_1.name(), HttpJettyServer.ServletType.RAP, PORT},
+        {true, false, HttpProtocolVersion.HTTP_1_1.name(), HttpJettyServer.ServletType.RAP, PORT},
+        {false, true, HttpProtocolVersion.HTTP_1_1.name(), HttpJettyServer.ServletType.RAP, PORT},
+        {false, false, HttpProtocolVersion.HTTP_1_1.name(), HttpJettyServer.ServletType.RAP, PORT},
+        {true, true, HttpProtocolVersion.HTTP_1_1.name(), HttpJettyServer.ServletType.ASYNC_EVENT, PORT},
+        {true, false, HttpProtocolVersion.HTTP_1_1.name(), HttpJettyServer.ServletType.ASYNC_EVENT, PORT},
+        {false, true, HttpProtocolVersion.HTTP_1_1.name(), HttpJettyServer.ServletType.ASYNC_EVENT, PORT},
+        {false, false, HttpProtocolVersion.HTTP_1_1.name(), HttpJettyServer.ServletType.ASYNC_EVENT, PORT},
+        {true, true, HttpProtocolVersion.HTTP_2.name(), HttpJettyServer.ServletType.RAP, PORT},
+        {true, false, HttpProtocolVersion.HTTP_2.name(), HttpJettyServer.ServletType.RAP, PORT},
+        {false, true, HttpProtocolVersion.HTTP_2.name(), HttpJettyServer.ServletType.RAP, PORT},
+        {false, false, HttpProtocolVersion.HTTP_2.name(), HttpJettyServer.ServletType.RAP, PORT},
+        {true, true, HttpProtocolVersion.HTTP_2.name(), HttpJettyServer.ServletType.ASYNC_EVENT, PORT},
+        {true, false, HttpProtocolVersion.HTTP_2.name(), HttpJettyServer.ServletType.ASYNC_EVENT, PORT},
+        {false, true, HttpProtocolVersion.HTTP_2.name(), HttpJettyServer.ServletType.ASYNC_EVENT, PORT},
+        {false, false, HttpProtocolVersion.HTTP_2.name(), HttpJettyServer.ServletType.ASYNC_EVENT, PORT}
     };
   }
 

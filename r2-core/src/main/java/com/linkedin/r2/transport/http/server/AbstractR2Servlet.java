@@ -31,6 +31,7 @@ import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponse;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
 import com.linkedin.r2.transport.http.common.HttpConstants;
+import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -238,6 +239,10 @@ public abstract class AbstractR2Servlet extends HttpServlet
   {
     RequestContext context = new RequestContext();
     context.putLocalAttr(R2Constants.REMOTE_ADDR, req.getRemoteAddr());
+
+    HttpProtocolVersion protocol = HttpProtocolVersion.parse(req.getProtocol());
+    context.putLocalAttr(R2Constants.HTTP_PROTOCOL_VERSION, protocol);
+
     if (req.isSecure())
     {
       // attribute name documented in ServletRequest API:

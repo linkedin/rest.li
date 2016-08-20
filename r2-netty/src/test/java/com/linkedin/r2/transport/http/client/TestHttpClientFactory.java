@@ -21,6 +21,7 @@
 package com.linkedin.r2.transport.http.client;
 
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
+import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
 import io.netty.channel.nio.NioEventLoopGroup;
 import java.net.URI;
 import java.util.ArrayList;
@@ -65,8 +66,8 @@ import javax.net.ssl.SSLParameters;
 
 public class TestHttpClientFactory
 {
-  private static final String HTTP_1_1 = HttpClientFactory.HttpProtocolVersion.HTTP_1_1.name();
-  private static final String HTTP_2 = HttpClientFactory.HttpProtocolVersion.HTTP_2.name();
+  private static final String HTTP_1_1 = HttpProtocolVersion.HTTP_1_1.name();
+  private static final String HTTP_2 = HttpProtocolVersion.HTTP_2.name();
 
   private static final String URI = "http://localhost:8080/";
 

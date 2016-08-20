@@ -164,11 +164,12 @@ abstract class AbstractNettyStreamClient implements TransportClient
    * Writes the given request to the given socket address and invokes the callback after request is sent.
    *
    * @param request Request to send
+   * @param context Request context
    * @param callback Callback invoked after request is sent
    * @param address Socket address to send the request to
    */
-  protected abstract void doWriteRequest(final Request request, final SocketAddress address,
-      final TimeoutTransportCallback<StreamResponse> callback);
+  protected abstract void doWriteRequest(final Request request, final RequestContext context,
+      final SocketAddress address, final TimeoutTransportCallback<StreamResponse> callback);
 
   @Override
   public void restRequest(RestRequest request,
@@ -287,7 +288,7 @@ abstract class AbstractNettyStreamClient implements TransportClient
       return;
     }
 
-    doWriteRequest(request, address, callback);
+    doWriteRequest(request, requestContext, address, callback);
   }
 
   static <T> void errorResponse(TransportCallback<T> callback, Throwable e)

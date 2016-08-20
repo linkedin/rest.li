@@ -22,11 +22,14 @@ package com.linkedin.r2.transport.http.client;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
+import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.Request;
+import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.transport.common.bridge.common.RequestWithCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
+import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
 import com.linkedin.r2.util.Cancellable;
 import com.linkedin.r2.util.TimeoutRunnable;
 import io.netty.bootstrap.Bootstrap;
@@ -133,7 +136,7 @@ import org.slf4j.LoggerFactory;
   }
 
   @Override
-  protected void doWriteRequest(Request request, SocketAddress address,
+  protected void doWriteRequest(Request request, final RequestContext context, SocketAddress address,
       TimeoutTransportCallback<StreamResponse> callback)
   {
     final AsyncPool<Channel> pool;
@@ -146,6 +149,8 @@ import org.slf4j.LoggerFactory;
       errorResponse(callback, e);
       return;
     }
+
+    context.putLocalAttr(R2Constants.HTTP_PROTOCOL_VERSION, HttpProtocolVersion.HTTP_2);
 
     Callback<Channel> getCallback = new ChannelPoolGetCallback(pool, request, callback);
     final Cancellable pendingGet = pool.get(getCallback);

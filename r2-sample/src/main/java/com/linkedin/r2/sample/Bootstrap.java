@@ -31,6 +31,7 @@ import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcherBuilder;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
+import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
 import com.linkedin.r2.transport.http.server.HttpServerFactory;
 
 import java.net.URI;
@@ -93,7 +94,7 @@ public class Bootstrap
   public static Client createHttpClient(FilterChain filters, boolean restOverStream)
   {
     HashMap<String, String> properties = new HashMap<>();
-    properties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, HttpClientFactory.HttpProtocolVersion.HTTP_1_1.name());
+    properties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, HttpProtocolVersion.HTTP_1_1.name());
     final TransportClient client = new HttpClientFactory.Builder()
         .setFilterChain(filters)
         .build()
@@ -104,7 +105,7 @@ public class Bootstrap
   public static Client createHttp2Client(FilterChain filters, boolean restOverStream)
   {
     HashMap<String, String> properties = new HashMap<>();
-    properties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, HttpClientFactory.HttpProtocolVersion.HTTP_2.name());
+    properties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, HttpProtocolVersion.HTTP_2.name());
     final TransportClient client = new HttpClientFactory.Builder()
         .setFilterChain(filters)
         .build()

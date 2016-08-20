@@ -39,6 +39,7 @@ import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
+import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
 import com.linkedin.r2.util.ConfigValueExtractor;
 import com.linkedin.r2.util.NamedThreadFactory;
 
@@ -88,12 +89,6 @@ import org.slf4j.LoggerFactory;
 public class HttpClientFactory implements TransportClientFactory
 {
   private static final Logger LOG = LoggerFactory.getLogger(HttpClientFactory.class);
-
-  public enum HttpProtocolVersion
-  {
-    HTTP_1_1,
-    HTTP_2,
-  }
 
   public static final String HTTP_QUERY_POST_THRESHOLD = "http.queryPostThreshold";
   public static final String HTTP_REQUEST_TIMEOUT = "http.requestTimeout";

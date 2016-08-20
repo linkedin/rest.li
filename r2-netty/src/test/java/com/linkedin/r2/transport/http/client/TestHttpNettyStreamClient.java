@@ -26,6 +26,7 @@ import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamRequestBuilder;
 import com.linkedin.r2.message.stream.entitystream.ByteStringWriter;
 import com.linkedin.r2.message.stream.entitystream.EntityStreams;
+import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
 import io.netty.channel.Channel;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.handler.codec.TooLongFrameException;
@@ -245,7 +246,7 @@ public class TestHttpNettyStreamClient
   }
 
   @Test(dataProvider = "remoteClientAddressClients")
-  public void testRemoteClientAddress(AbstractNettyStreamClient client)
+  public void testRequestContextAttributes(AbstractNettyStreamClient client)
       throws InterruptedException, IOException, TimeoutException
   {
     RestRequest r = new RestRequestBuilder(URI.create("http://localhost")).build();
@@ -257,8 +258,22 @@ public class TestHttpNettyStreamClient
     client.streamRequest(Messages.toStreamRequest(r), requestContext, new HashMap<>(), callback);
 
     final String actualRemoteAddress = (String) requestContext.getLocalAttr(R2Constants.REMOTE_SERVER_ADDR);
+    final HttpProtocolVersion actualProtocolVersion = (HttpProtocolVersion) requestContext.getLocalAttr(R2Constants.HTTP_PROTOCOL_VERSION);
+
     Assert.assertTrue("127.0.0.1".equals(actualRemoteAddress) || "0:0:0:0:0:0:0:1".equals(actualRemoteAddress),
-        "Actual remote client address is not expected. " + "The local attribute field must be IP address in string type");
+        "Actual remote client address is not expected. " + "The local attribute field must be IP address in string type" + actualRemoteAddress);
+    if (client instanceof HttpNettyStreamClient)
+    {
+      Assert.assertEquals(actualProtocolVersion, HttpProtocolVersion.HTTP_1_1);
+    }
+    else if (client instanceof Http2NettyStreamClient)
+    {
+      Assert.assertEquals(actualProtocolVersion, HttpProtocolVersion.HTTP_2);
+    }
+    else
+    {
+      Assert.fail("Unexpected client instance type");
+    }
   }
 
   @DataProvider(name = "responseSizeClients")

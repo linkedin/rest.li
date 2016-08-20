@@ -24,6 +24,7 @@ import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcherBuilder;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
+import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
 import com.linkedin.r2.transport.http.server.HttpJettyServer;
 import com.linkedin.r2.transport.http.server.HttpServer;
 import com.linkedin.r2.transport.http.server.HttpServerFactory;
@@ -124,7 +125,7 @@ public class TestRestCompressionEcho
   protected Map<String, String> getHttp1ClientProperties()
   {
     Map<String, String> clientProperties = new HashMap<String, String>();
-    clientProperties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, HttpProtocolVersion.HTTP_1_1);
+    clientProperties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, HttpProtocolVersion.HTTP_1_1.name());
     clientProperties.put(HttpClientFactory.HTTP_MAX_RESPONSE_SIZE, String.valueOf(LARGE_BYTES_NUM * 2));
     clientProperties.put(HttpClientFactory.HTTP_REQUEST_TIMEOUT, "60000");
     return clientProperties;
@@ -133,7 +134,7 @@ public class TestRestCompressionEcho
   protected Map<String, String> getHttp2ClientProperties()
   {
     Map<String, String> clientProperties = new HashMap<String, String>();
-    clientProperties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, HttpProtocolVersion.HTTP_2);
+    clientProperties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, HttpProtocolVersion.HTTP_2.name());
     clientProperties.put(HttpClientFactory.HTTP_MAX_RESPONSE_SIZE, String.valueOf(LARGE_BYTES_NUM * 2));
     clientProperties.put(HttpClientFactory.HTTP_REQUEST_TIMEOUT, "60000");
     return clientProperties;

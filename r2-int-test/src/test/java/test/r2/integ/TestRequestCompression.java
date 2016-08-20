@@ -33,6 +33,7 @@ import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcherBuilder;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
+import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
 import com.linkedin.r2.transport.http.server.HttpJettyServer;
 import com.linkedin.r2.transport.http.server.HttpServer;
 import com.linkedin.r2.transport.http.server.HttpServerFactory;
@@ -109,8 +110,8 @@ public class TestRequestCompression
             StreamEncodingType.BZIP2,
         };
     String[] protocols = new String[] {
-        HttpProtocolVersion.HTTP_1_1,
-        HttpProtocolVersion.HTTP_2,
+        HttpProtocolVersion.HTTP_1_1.name(),
+        HttpProtocolVersion.HTTP_2.name(),
     };
     Object[][] args = new Object[encodings.length * protocols.length][2];
 
@@ -151,8 +152,8 @@ public class TestRequestCompression
             StreamEncodingType.IDENTITY
         };
     String[] protocols = new String[] {
-        HttpProtocolVersion.HTTP_1_1,
-        HttpProtocolVersion.HTTP_2,
+        HttpProtocolVersion.HTTP_1_1.name(),
+        HttpProtocolVersion.HTTP_2.name(),
     };
     Object[][] args = new Object[encodings.length * protocols.length][1];
 

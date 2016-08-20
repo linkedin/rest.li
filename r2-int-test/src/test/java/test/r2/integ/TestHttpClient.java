@@ -25,6 +25,7 @@ import static org.testng.Assert.assertEquals;
 import com.linkedin.r2.transport.common.Server;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcherBuilder;
+import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
 import com.linkedin.r2.transport.http.server.HttpServerFactory;
 import java.net.URI;
 import java.util.HashMap;
@@ -70,11 +71,11 @@ public class TestHttpClient
   public Object[][] configs()
   {
     Map<String, String> http1ClientProperties = new HashMap<>();
-    http1ClientProperties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, HttpProtocolVersion.HTTP_1_1);
+    http1ClientProperties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, HttpProtocolVersion.HTTP_1_1.name());
     http1ClientProperties.put(HttpClientFactory.HTTP_REQUEST_TIMEOUT, Integer.toString(REQUEST_TIMEOUT));
 
     Map<String, String> http2ClientProperties = new HashMap<>();
-    http2ClientProperties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, HttpProtocolVersion.HTTP_2);
+    http2ClientProperties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, HttpProtocolVersion.HTTP_2.name());
     http2ClientProperties.put(HttpClientFactory.HTTP_REQUEST_TIMEOUT, Integer.toString(REQUEST_TIMEOUT));
 
     TransportDispatcher dispatcher = new TransportDispatcherBuilder()

@@ -5,6 +5,9 @@
 context factory name and refactored RestLiCallback to be instantiated
 from within Filterchain.
 
+(RB=785576)
+Add HTTP protocol version to request context
+
 7.0.1
 -----
 (RB=793402)

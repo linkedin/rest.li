@@ -37,6 +37,11 @@ public class R2Constants
    * client side code after the request is sent
    * */
   public static final String REMOTE_SERVER_ADDR = "REMOTE_SERVER_ADDR";
+
+  /**
+   * The HTTP protocol that the client and server are communicated under.
+   */
+  public static final String HTTP_PROTOCOL_VERSION = "HTTP_PROTOCOL_VERSION";
   public static final String IS_SECURE = "IS_SECURE";
   public static final String CLIENT_CERT = "CLIENT_CERT";
   public static final String REQUEST_COMPRESSION_OVERRIDE = "REQUEST_COMPRESSION_OVERRIDE";

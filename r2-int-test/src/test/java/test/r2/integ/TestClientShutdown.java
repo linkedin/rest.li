@@ -10,6 +10,7 @@ import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcherBuilder;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
+import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
 import com.linkedin.r2.transport.http.server.HttpJettyServer;
 import com.linkedin.r2.transport.http.server.HttpServer;
 import com.linkedin.r2.transport.http.server.HttpServerFactory;
@@ -40,14 +41,14 @@ public class TestClientShutdown
   public static Object[][] configs()
   {
     return new Object[][]{
-        { true, true, HttpProtocolVersion.HTTP_1_1},
-        { true, true, HttpProtocolVersion.HTTP_2 },
-        { true, false, HttpProtocolVersion.HTTP_1_1},
-        { true, false, HttpProtocolVersion.HTTP_2 },
-        { false, true, HttpProtocolVersion.HTTP_1_1},
-        { false, true, HttpProtocolVersion.HTTP_2 },
-        { false, false, HttpProtocolVersion.HTTP_1_1},
-        { false, false, HttpProtocolVersion.HTTP_2 },
+        { true, true, HttpProtocolVersion.HTTP_1_1.name() },
+        { true, true, HttpProtocolVersion.HTTP_2.name() },
+        { true, false, HttpProtocolVersion.HTTP_1_1.name() },
+        { true, false, HttpProtocolVersion.HTTP_2.name() },
+        { false, true, HttpProtocolVersion.HTTP_1_1.name() },
+        { false, true, HttpProtocolVersion.HTTP_2.name() },
+        { false, false, HttpProtocolVersion.HTTP_1_1.name() },
+        { false, false, HttpProtocolVersion.HTTP_2.name() },
     };
   }
 

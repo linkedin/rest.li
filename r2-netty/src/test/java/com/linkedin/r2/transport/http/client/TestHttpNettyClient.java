@@ -31,6 +31,7 @@ import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.transport.common.bridge.client.TransportCallbackAdapter;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
+import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
 import io.netty.channel.Channel;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.handler.codec.EncoderException;
@@ -178,7 +179,7 @@ public class TestHttpNettyClient
   }
 
   @Test
-  public void testRemoteClientAddress()
+  public void testRequestContextAttributes()
       throws InterruptedException, IOException, TimeoutException
   {
     HttpNettyClient client = new HttpClientBuilder(_eventLoop, _scheduler).buildRest();
@@ -192,9 +193,12 @@ public class TestHttpNettyClient
     client.restRequest(r, requestContext, new HashMap<>(), callback);
 
     final String actualRemoteAddress = (String) requestContext.getLocalAttr(R2Constants.REMOTE_SERVER_ADDR);
+    final HttpProtocolVersion actualProtocolVersion = (HttpProtocolVersion) requestContext.getLocalAttr(R2Constants.HTTP_PROTOCOL_VERSION);
+
     Assert.assertTrue("127.0.0.1".equals(actualRemoteAddress) || "0:0:0:0:0:0:0:1".equals(actualRemoteAddress),
                       "Actual remote client address is not expected. " +
                           "The local attribute field must be IP address in string type");
+    Assert.assertEquals(actualProtocolVersion, HttpProtocolVersion.HTTP_1_1);
   }
 
 
