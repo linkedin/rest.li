@@ -1,3 +1,7 @@
+7.0.3
+-----
+
+
 7.0.2
 -----
 (RB=793469)
@@ -7,6 +11,9 @@ from within Filterchain.
 
 (RB=785576)
 Add HTTP protocol version to request context
+
+(RB=798720)
+Add http.protocolVersion to AllowedClientPropertyKeys
 
 7.0.1
 -----
