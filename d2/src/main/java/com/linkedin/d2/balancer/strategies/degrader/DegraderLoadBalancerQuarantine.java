@@ -8,7 +8,6 @@ import com.linkedin.d2.balancer.util.healthcheck.HealthCheck;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckClientBuilder;
 import com.linkedin.util.clock.Clock;
 import java.net.URISyntaxException;
-import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;

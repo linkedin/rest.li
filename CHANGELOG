@@ -1,6 +1,7 @@
 7.0.4
 -----
-
+(RB=805122)
+Add a cap to quarantine maxPercent.
 
 7.0.3
 -----

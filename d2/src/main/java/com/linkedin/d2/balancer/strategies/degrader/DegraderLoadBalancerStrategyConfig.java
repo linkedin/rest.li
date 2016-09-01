@@ -110,6 +110,7 @@ public class DegraderLoadBalancerStrategyConfig
   public static final long DEFAULT_QUARANTINE_CHECK_INTERVAL = 1000; // Milliseconds
   public static final long DEFAULT_QUARANTINE_LATENCY = 100;         // Milliseconds
   public static final String DEFAULT_QUARANTINE_METHOD = RestMethod.OPTIONS;
+  private static final double QUARANTINE_MAXPERCENT_CAP = 0.5;
 
   public DegraderLoadBalancerStrategyConfig(long updateIntervalMs)
   {
@@ -287,6 +288,13 @@ public class DegraderLoadBalancerStrategyConfig
 
     Double quarantineMaxPercent = MapUtil.getWithDefault(map, PropertyKeys.HTTP_LB_QUARANTINE_MAX_PERCENT,
         DEFAULT_QUARANTINE_MAXPERCENT, Double.class);
+    if (quarantineMaxPercent > QUARANTINE_MAXPERCENT_CAP)
+    {
+      // if the user configures the max percent to a very high value, it can dramatically limit the capacity of the
+      // cluster when something goes wrong. So impose a cap to max percent.
+      quarantineMaxPercent = QUARANTINE_MAXPERCENT_CAP;
+      _log.warn("MaxPercent value {} is too high. Changed it to {}", quarantineMaxPercent, QUARANTINE_MAXPERCENT_CAP);
+    }
     ScheduledExecutorService executorService = MapUtil.getWithDefault(map,
         PropertyKeys.HTTP_LB_QUARANTINE_EXECUTOR_SERVICE, null, ScheduledExecutorService.class);
     String method = MapUtil.getWithDefault(map, PropertyKeys.HTTP_LB_QUARANTINE_METHOD, DEFAULT_QUARANTINE_METHOD, String.class);
