@@ -169,6 +169,13 @@ public class RestClient
   }
 
   /**
+   * @return The URI Prefix that this RestClient is using.
+   */
+  public String getURIPrefix() {
+    return _uriPrefix;
+  }
+
+  /**
    * Sends a type-bound REST request, returning a future.
    *
    *
