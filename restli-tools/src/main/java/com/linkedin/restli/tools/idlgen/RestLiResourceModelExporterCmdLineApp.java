@@ -16,6 +16,9 @@
 
 package com.linkedin.restli.tools.idlgen;
 
+
+import com.linkedin.restli.internal.tools.AdditionalDocProvidersUtil;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.GnuParser;
@@ -42,26 +45,32 @@ public class RestLiResourceModelExporterCmdLineApp
   private static final Logger log = LoggerFactory.getLogger(RestLiResourceModelExporterCmdLineApp.class);
 
   private static final Options OPTIONS = new Options();
+
   static
   {
     OPTIONS.addOption(OptionBuilder.isRequired().withArgName("sourcepath").hasArgs()
-                      .withDescription("Space-delimited list of directories in which to find resource Java source files\nIf neither -resourcepackages nor -resourcepackages is provided, all classes defined in the directories will be scanned").create("sourcepath"));
+                          .withDescription(
+                              "Space-delimited list of directories in which to find resource Java source files\nIf neither -resourcepackages nor -resourcepackages is provided, all classes defined in the directories will be scanned").create(
+            "sourcepath"));
     OPTIONS.addOption(OptionBuilder.withArgName("name").hasArg()
-                      .withDescription("Name of the API").create("name"));
+                          .withDescription("Name of the API").create("name"));
     OPTIONS.addOption(OptionBuilder.withArgName("outdir").hasArg()
-                      .withDescription("Directory in which to output the generated IDL files (default=current working dir)").create("outdir"));
+                          .withDescription("Directory in which to output the generated IDL files (default=current working dir)").create("outdir"));
+    OPTIONS.addOption(OptionBuilder.withArgName("loadAdditionalDocProviders")
+                          .withDescription("Will load any additional DocProviders if available on the classpath.")
+                          .create("loadAdditionalDocProviders"));
 
     OPTIONS.addOption(new Option("split", false, "DEPRECATED! Splits IDL across multiple files, one per root resource (always true)"));
 
     final OptionGroup sourceGroup = new OptionGroup();
     final Option sourcePkgs =
-      OptionBuilder.withArgName("resourcepackages").hasArgs()
-                   .withDescription("Space-delimited list of packages to scan for resource classes")
-                   .create("resourcepackages");
+        OptionBuilder.withArgName("resourcepackages").hasArgs()
+            .withDescription("Space-delimited list of packages to scan for resource classes")
+            .create("resourcepackages");
     final Option sourceClasses =
-      OptionBuilder.withArgName("resourceclasses").hasArgs()
-                   .withDescription("space-delimited list of resource classes to scan")
-                   .create("resourceclasses");
+        OptionBuilder.withArgName("resourceclasses").hasArgs()
+            .withDescription("space-delimited list of resource classes to scan")
+            .create("resourceclasses");
     sourceGroup.addOption(sourcePkgs);
     sourceGroup.addOption(sourceClasses);
     OPTIONS.addOptionGroup(sourceGroup);
@@ -90,7 +99,7 @@ public class RestLiResourceModelExporterCmdLineApp
       System.err.println("Invalid arguments: " + e.getMessage());
       final HelpFormatter formatter = new HelpFormatter();
       formatter.printHelp("restliexporter -sourcepath sourcepath [-resourcepackages packagenames] [-resourceclasses classnames]" +
-                          "[-name api_name] [-outdir outdir]", OPTIONS);
+                              "[-name api_name] [-outdir outdir]", OPTIONS);
       System.exit(0);
     }
 
@@ -101,7 +110,8 @@ public class RestLiResourceModelExporterCmdLineApp
                                                cl.getOptionValues("sourcepath"),
                                                cl.getOptionValues("resourcepackages"),
                                                cl.getOptionValues("resourceclasses"),
-                                               cl.getOptionValue("outdir", "."));
+                                               cl.getOptionValue("outdir", "."),
+                                               AdditionalDocProvidersUtil.findDocProviders(log, cl.hasOption("loadAdditionalDocProviders")));
     }
     catch (Throwable e)
     {
