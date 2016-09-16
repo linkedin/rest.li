@@ -1,5 +1,12 @@
-7.0.4
+8.0.1
 -----
+
+
+8.0.0
+-----
+(RB=815196)
+Isolation of gradle's classpath from pegasus plugin's classpath.
+
 (RB=805122)
 Add a cap to quarantine maxPercent.
 
