@@ -1,6 +1,11 @@
-8.0.1
+8.0.2
 -----
 
+
+8.0.1
+-----
+(RB=817642)
+Fixed bug that snapshot file is not generated.
 
 8.0.0
 -----
@@ -39,7 +44,7 @@ Fix logging issues in DegraderLoadBalancerStrategyV3.
 7.0.0
 -----
 (RB=790683)
-Added response data builder to allow Rest.li users the ability to 
+Added response data builder to allow Rest.li users the ability to
 instantiate response data and response envelope for tests.
 
 (RB=761646)

@@ -6,6 +6,7 @@ import org.gradle.api.file.FileCollection
 import org.gradle.api.file.FileTree
 
 import static com.linkedin.pegasus.gradle.PegasusPlugin.IDL_FILE_SUFFIX
+import static com.linkedin.pegasus.gradle.PegasusPlugin.SNAPSHOT_FILE_SUFFIX
 
 class SharedFileUtils
 {
@@ -21,6 +22,6 @@ class SharedFileUtils
 
   static FileCollection getSnapshotFiles(Project project, Object destinationDirPrefix)
   {
-    return getSuffixedFiles(project, project.file(destinationDirPrefix + 'snapshot'), IDL_FILE_SUFFIX)
+    return getSuffixedFiles(project, project.file(destinationDirPrefix + 'snapshot'), SNAPSHOT_FILE_SUFFIX)
   }
 }
