@@ -50,8 +50,11 @@ public class CheckRestModelTask extends DefaultTask
 
     List<String> argFiles = []
     argFiles.addAll(findMatchingFiles(PegasusPlugin.SNAPSHOT_FILE_SUFFIX, currentSnapshotFiles,
-                                      project.files(previousSnapshotDirectory)))
-    argFiles.addAll(findMatchingFiles(PegasusPlugin.IDL_FILE_SUFFIX, currentIdlFiles, project.files(previousIdlDirectory)))
+                                      project.fileTree(previousSnapshotDirectory), false))
+    // We don't pass matching IDL files to RestLiSnapshotCompatibilityChecker. We only specify added or deleted IDL
+    // files, for which the checker will generate appropriate message.
+    argFiles.addAll(findMatchingFiles(PegasusPlugin.IDL_FILE_SUFFIX, currentIdlFiles,
+                                      project.fileTree(previousIdlDirectory), true))
 
     if (argFiles.isEmpty())
     {
@@ -79,12 +82,18 @@ public class CheckRestModelTask extends DefaultTask
   }
 
   /**
-   * Given two files collections and an extension, the matching files from the previous and current files. In the case that
-   * either the current or previous is missing, it will be <pre>""</pre>.
+   * Given two file collections and an extension, find files with the same names from the previous and current files.
+   * In the case that either the current or the previous is missing, it will be <pre>""</pre>.
    *
-   * @return A list of filepath pairs. The one is the current file, the right one is the previous one.
+   * @param ext           The file extension.
+   * @param currentFiles  Current files which are newly generated IDL or snapshot files.
+   * @param previousFiles Previous files which are existing IDL or snapshot files.
+   * @param diffOnly      Return only the difference between current files and previous files without files with
+   *                      matching names.
+   *
+   * @return A list of filepath which are pairs of current file and previous file concatenated together.
    */
-  public List<String> findMatchingFiles(String ext, FileCollection currentFiles, FileCollection previousFiles)
+  public List<String> findMatchingFiles(String ext, FileCollection currentFiles, FileCollection previousFiles, boolean diffOnly)
   {
     Map<String, String> currentFilenameToAbsolutePath = createMapFromFiles(currentFiles, ext)
     Map<String, String> previousFilenameToAbsolutePath = createMapFromFiles(previousFiles, ext)
@@ -94,7 +103,10 @@ public class CheckRestModelTask extends DefaultTask
     currentFilenameToAbsolutePath.each { filename, absolutePath ->
       if (previousFilenameToAbsolutePath.containsKey(filename))
       {
-        filePairs.addAll([absolutePath, previousFilenameToAbsolutePath.get(filename)])  //Add both files
+        if (!diffOnly)
+        {
+          filePairs.addAll([absolutePath, previousFilenameToAbsolutePath.get(filename)])  //Add both files
+        }
 
         previousFilenameToAbsolutePath.remove(filename)
         //remove it from the map, so that we can loop over everything left

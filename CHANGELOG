@@ -1,6 +1,11 @@
-8.0.2
+8.0.3
 -----
 
+
+8.0.2
+-----
+(RB=819217)
+Fixed snapshot check bug which treats all the IDL and snapshot as new.
 
 8.0.1
 -----
