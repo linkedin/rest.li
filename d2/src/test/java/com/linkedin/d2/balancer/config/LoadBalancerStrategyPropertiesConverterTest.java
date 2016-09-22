@@ -24,6 +24,7 @@ import com.linkedin.d2.balancer.strategies.degrader.DegraderRingFactory;
 import com.linkedin.d2.balancer.util.hashing.URIRegexHash;
 import com.linkedin.d2.hashConfigType;
 import com.linkedin.d2.hashMethodEnum;
+import com.linkedin.d2.quarantineInfo;
 import com.linkedin.data.template.StringArray;
 import java.util.HashMap;
 import java.util.Map;
@@ -56,6 +57,14 @@ public class LoadBalancerStrategyPropertiesConverterTest
     final Double hashringPointCleanupRate = 0.2;
     final ConsistentHashAlgorithmEnum consistentHashAlgorithm = ConsistentHashAlgorithmEnum.MULTI_PROBE;
     final Integer numProbes = 1024;
+    final Double quarantineMaxPercent = 0.2;
+    final String quarantineMethod = "OPTIONS:/test/path";
+    final Long quarantineLatency = 200l;
+    final quarantineInfo quarantineInfo = new quarantineInfo()
+        .setQuarantineMaxPercent(quarantineMaxPercent)
+        .setQuarantineMethod(quarantineMethod)
+        .setQuarantineLatency(quarantineLatency);
+
     regexes.add("+231{w+)");
     hashConfig.setUriRegexes(regexes);
     hashConfig.setWarnOnNoMatch(false);
@@ -81,6 +90,9 @@ public class LoadBalancerStrategyPropertiesConverterTest
     hashConfigMap.put(URIRegexHash.KEY_WARN_ON_NO_MATCH, "false");
     hashConfigMap.put(URIRegexHash.KEY_FAIL_ON_NO_MATCH, "true");
     loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_HASH_CONFIG, hashConfigMap);
+    loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_QUARANTINE_MAX_PERCENT, quarantineMaxPercent);
+    loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_QUARANTINE_METHOD, quarantineMethod);
+    loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_QUARANTINE_LATENCY, quarantineLatency);
 
     D2LoadBalancerStrategyProperties d2LoadBalancerStrategyProperties =
         new D2LoadBalancerStrategyProperties()
@@ -98,7 +110,8 @@ public class LoadBalancerStrategyPropertiesConverterTest
             .setHashConfig(hashConfig)
             .setHashRingPointCleanupRate(hashringPointCleanupRate)
             .setConsistentHashAlgorithm(consistentHashAlgorithm)
-            .setNumberOfProbes(numProbes);
+            .setNumberOfProbes(numProbes)
+            .setQuarantineCfg(quarantineInfo);
 
     Assert.assertEquals(LoadBalancerStrategyPropertiesConverter.toConfig(loadBalancerStrategyProperties), d2LoadBalancerStrategyProperties);
     Assert.assertEquals(LoadBalancerStrategyPropertiesConverter.toProperties(d2LoadBalancerStrategyProperties), loadBalancerStrategyProperties);

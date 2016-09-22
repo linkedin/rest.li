@@ -1,7 +1,13 @@
+8.0.4
+-----
+
+
 8.0.3
 -----
 (RB=776961)
 Add D2 slow start support.
+(RB=821295)
+Adding quarantine properties to d2 schema
 
 8.0.2
 -----

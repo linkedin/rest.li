@@ -141,6 +141,34 @@
       "type": "int",
       "doc": "The number of probes used to look up a key in consistent hash ring. Defaults to 21.",
       "optional": true
+    },
+    {
+      "name": "quarantineCfg",
+      "type": {
+        "name": "quarantineInfo",
+        "type": "record",
+        "doc": "Config info for d2 quarantine feature",
+        "fields": [
+          {
+            "name": "quarantineMaxPercent",
+            "type": "double",
+            "doc": "The percentage of the hosts that can be quarantined at the same time. It is also the switch to turn on Quarantine feature."
+          },
+          {
+            "name": "quarantineMethod",
+            "type": "string",
+            "doc": "Config the health checking method for quarantine. Format: <METHOD>:<FULL_PATH>. Default to OPTIONS method.",
+            "optional": true
+          },
+          {
+            "name": "quarantineLatency",
+            "type": "long",
+            "doc": "The latency threshold (in milliseconds) for health checking response. Responding time longer than this threshold is considered as unhealthy.",
+            "optional": true
+          }
+        ]
+      },
+      "optional": true
     }
   ]
 }

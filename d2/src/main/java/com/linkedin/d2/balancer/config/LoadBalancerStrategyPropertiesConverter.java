@@ -24,6 +24,7 @@ import com.linkedin.d2.balancer.strategies.degrader.DegraderRingFactory;
 import com.linkedin.d2.balancer.util.hashing.URIRegexHash;
 import com.linkedin.d2.hashConfigType;
 import com.linkedin.d2.hashMethodEnum;
+import com.linkedin.d2.quarantineInfo;
 import com.linkedin.data.template.StringArray;
 import java.util.Collections;
 import java.util.HashMap;
@@ -143,6 +144,22 @@ public class LoadBalancerStrategyPropertiesConverter
     {
       map.put(PropertyKeys.HTTP_LB_CONSISTENT_HASH_NUM_PROBES, config.getNumberOfProbes().toString());
     }
+    if (config.hasQuarantineCfg())
+    {
+      quarantineInfo quarantineInfo = config.getQuarantineCfg();
+      if (quarantineInfo.hasQuarantineMaxPercent())
+      {
+        map.put(PropertyKeys.HTTP_LB_QUARANTINE_MAX_PERCENT, quarantineInfo.getQuarantineMaxPercent().doubleValue());
+      }
+      if (quarantineInfo.hasQuarantineMethod())
+      {
+        map.put(PropertyKeys.HTTP_LB_QUARANTINE_METHOD, quarantineInfo.getQuarantineMethod().toString());
+      }
+      if (quarantineInfo.hasQuarantineLatency())
+      {
+        map.put(PropertyKeys.HTTP_LB_QUARANTINE_LATENCY, quarantineInfo.getQuarantineLatency().longValue());
+      }
+    }
     return map;
   }
 
@@ -250,6 +267,21 @@ public class LoadBalancerStrategyPropertiesConverter
     if (properties.containsKey(PropertyKeys.HTTP_LB_CONSISTENT_HASH_NUM_PROBES))
     {
       config.setNumberOfProbes(coerce(properties.get(PropertyKeys.HTTP_LB_CONSISTENT_HASH_NUM_PROBES), Integer.class));
+    }
+    if (properties.containsKey(PropertyKeys.HTTP_LB_QUARANTINE_MAX_PERCENT))
+    {
+      quarantineInfo quarantineInfo = new quarantineInfo();
+      quarantineInfo.setQuarantineMaxPercent(coerce(properties.get(PropertyKeys.HTTP_LB_QUARANTINE_MAX_PERCENT), Double.class));
+
+      if (properties.containsKey(PropertyKeys.HTTP_LB_QUARANTINE_METHOD))
+      {
+        quarantineInfo.setQuarantineMethod(coerce(properties.get(PropertyKeys.HTTP_LB_QUARANTINE_METHOD), String.class));
+      }
+      if (properties.containsKey(PropertyKeys.HTTP_LB_QUARANTINE_LATENCY))
+      {
+        quarantineInfo.setQuarantineLatency(coerce(properties.get(PropertyKeys.HTTP_LB_QUARANTINE_LATENCY), Long.class));
+      }
+      config.setQuarantineCfg(quarantineInfo);
     }
     return config;
   }
