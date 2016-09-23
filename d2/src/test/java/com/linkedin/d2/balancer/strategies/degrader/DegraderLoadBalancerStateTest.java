@@ -18,7 +18,13 @@ import static com.linkedin.d2.balancer.util.TestHelper.assertSameElements;
 import static com.linkedin.d2.balancer.util.TestHelper.concurrently;
 import static com.linkedin.d2.balancer.util.TestHelper.getAll;
 import static com.linkedin.d2.balancer.util.TestHelper.split;
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNotSame;
+import static org.testng.Assert.assertSame;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 public class DegraderLoadBalancerStateTest
 {
@@ -43,7 +49,7 @@ public class DegraderLoadBalancerStateTest
         = new DegraderLoadBalancerStrategyV3
             (new DegraderLoadBalancerStrategyConfig(5000, true, 1, null, Collections.<String, Object>emptyMap(),
                                                     clock, 1, 1, 1, 1, 1, 1, 1, 1, 0.2, null, 21, null,
-                                                    0.1, null, null, null, null, 100),
+                                                    0.1, null, null, null, null, 100, null, 0, 0, "Unknown"),
              SERVICE_NAME, null).getState();
     Thread getPartition1 = new Thread()
     {

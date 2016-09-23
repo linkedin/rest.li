@@ -163,7 +163,7 @@ public class DegraderLoadBalancerStrategyConfigTest
 
     //now test if there's http, then http config should take more priority
     DegraderLoadBalancerStrategyConfig config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(
-        properties, healthCheckOperations, null, degraderProperties);
+        properties, healthCheckOperations, null, degraderProperties, null);
 
     assertEquals(config.getUpdateIntervalMs(), httpUpdateIntervalMs);
     assertEquals(config.isUpdateOnlyAtInterval(), updateOnlyAtInterval);
@@ -183,7 +183,7 @@ public class DegraderLoadBalancerStrategyConfigTest
 
     degraderProperties.put(PropertyKeys.DEGRADER_LOW_LATENCY, "1500");
     config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(
-        properties, healthCheckOperations, null, degraderProperties);
+        properties, healthCheckOperations, null, degraderProperties, null);
     assertEquals(config.getQuarantineLatency(), DegraderLoadBalancerStrategyConfig.MAX_QUARANTINE_LATENCY);
 
     //test if there's no config, will the default config value set

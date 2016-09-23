@@ -16,6 +16,7 @@
 package com.linkedin.d2.balancer;
 
 import com.linkedin.d2.backuprequests.BackupRequestsStrategyStatsConsumer;
+import com.linkedin.d2.balancer.event.EventEmitter;
 import com.linkedin.d2.balancer.util.WarmUpLoadBalancer;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
 import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl;
@@ -58,6 +59,7 @@ public class D2ClientConfig
   ScheduledExecutorService _backupRequestsExecutorService = null;
   boolean retry = false;
   int retryLimit = DEAULT_RETRY_LIMIT;
+<<<<<<< HEAD
   boolean warmUp = false;
   int warmUpTimeoutSeconds = WarmUpLoadBalancer.DEFAULT_SEND_REQUESTS_TIMEOUT_SECONDS;
   int warmUpConcurrentRequests = WarmUpLoadBalancer.DEFAULT_CONCURRENT_REQUESTS;
@@ -65,6 +67,9 @@ public class D2ClientConfig
   BackupRequestsStrategyStatsConsumer backupRequestsStrategyStatsConsumer = null;
   long backupRequestsLatencyNotificationInterval = 1;
   TimeUnit backupRequestsLatencyNotificationIntervalUnit = TimeUnit.MINUTES;
+=======
+  EventEmitter _eventEmitter = null;
+>>>>>>> Preliminary D2Event schema and D2Event support
 
   private static final int DEAULT_RETRY_LIMIT = 3;
 
@@ -251,7 +256,7 @@ public class D2ClientConfig
         isSymlinkAware,
         clientServicesConfig,
         d2ServicePath,
-        false, null, null, false, 3);
+        false, null, null, false, 3, null);
   }
 
   public D2ClientConfig(String zkHosts,
@@ -276,7 +281,8 @@ public class D2ClientConfig
                         HealthCheckOperations healthCheckOperations,
                         ScheduledExecutorService executorService,
                         boolean retry,
-                        int retryLimit)
+                        int retryLimit,
+                        EventEmitter emitter)
   {
     this(zkHosts,
       zkSessionTimeoutInMs,
@@ -421,6 +427,7 @@ public class D2ClientConfig
     this._executorService = executorService;
     this.retry = retry;
     this.retryLimit = retryLimit;
+<<<<<<< HEAD
     this.warmUp = warmUp;
     this.warmUpTimeoutSeconds = warmUpTimeoutSeconds;
     this.warmUpConcurrentRequests = warmUpConcurrentRequests;
@@ -429,5 +436,8 @@ public class D2ClientConfig
     this.backupRequestsLatencyNotificationInterval = backupRequestsLatencyNotificationInterval;
     this.backupRequestsLatencyNotificationIntervalUnit = backupRequestsLatencyNotificationIntervalUnit;
     this._backupRequestsExecutorService = backupRequestsExecutorService;
+=======
+    this._eventEmitter = emitter;
+>>>>>>> Preliminary D2Event schema and D2Event support
   }
 }

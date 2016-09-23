@@ -25,6 +25,7 @@ package com.linkedin.util.degrader;
  * @version $Rev$
  */
 
+import com.linkedin.common.stats.LongStats;
 import java.util.Date;
 
 public class DegraderControl implements DegraderControlMBean
@@ -58,6 +59,12 @@ public class DegraderControl implements DegraderControlMBean
   public boolean isLow()
   {
     return _degrader.isLow();
+  }
+
+  @Override
+  public LongStats getCallTimeStats()
+  {
+    return _degrader.getStats().getCallTimeStats();
   }
 
   @Override

@@ -20,6 +20,7 @@
 
 package com.linkedin.util.degrader;
 
+import com.linkedin.common.stats.LongStats;
 import java.util.Date;
 
 /**
@@ -56,6 +57,7 @@ public interface DegraderControlMBean
   {
     return false;
   }
+  default LongStats getCallTimeStats() { return new LongStats();}
 
   // Control attributes
 

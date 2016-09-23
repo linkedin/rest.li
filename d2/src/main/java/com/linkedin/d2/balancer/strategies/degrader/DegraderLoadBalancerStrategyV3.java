@@ -16,11 +16,12 @@
 
 package com.linkedin.d2.balancer.strategies.degrader;
 
-
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.clients.TrackerClient;
+import com.linkedin.d2.balancer.event.D2MonitorBuilder;
+import com.linkedin.d2.balancer.event.EventEmitter;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.util.RateLimitedLogger;
 import com.linkedin.d2.balancer.util.hashing.HashFunction;
@@ -42,6 +43,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -309,10 +311,13 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
         _config.getExecutorService().submit(()->checkQuarantineState(clientUpdaters, config));
       }
     }
+
+    final D2MonitorBuilder d2MonitorBuilder = new D2MonitorBuilder(partitionState.getServiceName(),
+        config.getClusterName(), partition.getId(), config.getClock().currentTimeMillis());
     // doUpdatePartitionState has no side effects on _state or trackerClients.
     // all changes to the trackerClients would be recorded in clientUpdaters
     partitionState = doUpdatePartitionState(clusterGenerationId, partition.getId(), partitionState,
-                                          config, clientUpdaters, quarantineEnabled);
+                                            config, clientUpdaters, quarantineEnabled, d2MonitorBuilder);
     partition.setState(partitionState);
 
     // only if state update succeeded, do we actually apply the recorded changes to trackerClients
@@ -476,7 +481,8 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
                                                                          PartitionDegraderLoadBalancerState oldState,
                                                                          DegraderLoadBalancerStrategyConfig config,
                                                                          List<TrackerClientUpdater> trackerClientUpdaters,
-                                                                         boolean isQuarantineEnabled)
+                                                                         boolean isQuarantineEnabled,
+                                                                         D2MonitorBuilder d2MonitorBuilder)
   {
     debug(_log, "updating state for: ", trackerClientUpdaters);
 
@@ -486,6 +492,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     boolean hashRingChanges = false;
     boolean recoveryMapChanges = false;
     boolean quarantineMapChanged = false;
+    final int NUM_HEALTHY_HOST_TO_EMIT = 2;
 
     PartitionDegraderLoadBalancerState.Strategy strategy = oldState.getStrategy();
     Map<TrackerClient,Double> oldRecoveryMap = oldState.getRecoveryMap();
@@ -499,6 +506,9 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     Map<TrackerClient, DegraderLoadBalancerQuarantine> quarantineHistory = oldState.getQuarantineHistory();
     Set<TrackerClient> activeClients = new HashSet<>();
     long clk = config.getClock().currentTimeMillis();
+    D2MonitorBuilder.D2MonitorClusterStatsBuilder clusterStatsBuilder = d2MonitorBuilder.getClusterStatsBuilder();
+    long clusterErrorCount = 0;
+    long clusterDropCount = 0;
 
     for (TrackerClientUpdater clientUpdater : trackerClientUpdaters)
     {
@@ -506,6 +516,9 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       DegraderControl degraderControl = client.getDegraderControl(partitionId);
       double averageLatency = degraderControl.getLatency();
       long callCount = degraderControl.getCallCount();
+      clusterDropCount += (int)(degraderControl.getCurrentDropRate() * callCount);
+      clusterErrorCount += (int)(degraderControl.getErrorRate() * callCount);
+
       oldState.getPreviousMaxDropRate().put(client, clientUpdater.getMaxDropRate());
 
       sumOfClusterLatencies += averageLatency * callCount;
@@ -608,6 +621,8 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       // if the cluster has not been called recently (total cluster call count is <= 0)
       // and we already have a state with the same set of URIs (same cluster generation),
       // and no clients are in rehab or evicted from quarantine, then don't change anything.
+
+      // No D2Monitor emitted for this case as well, no matter how the interval is defined
       debug(_log, "New state is the same as the old state so we're not changing anything. Old state = ", oldState
           ,", config= ", config);
       return new PartitionDegraderLoadBalancerState(oldState, clusterGenerationId,
@@ -617,9 +632,16 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     // update our overrides.
     double newCurrentAvgClusterLatency = -1;
 
+    clusterStatsBuilder.setClusterNumHosts(trackerClientUpdaters.size());
+
     if(totalClusterCallCount > 0)
     {
       newCurrentAvgClusterLatency = sumOfClusterLatencies / totalClusterCallCount;
+      clusterStatsBuilder.setClusterCurrentCallCount(totalClusterCallCount)
+          .setClusterCurrentAverageLatencyMs(newCurrentAvgClusterLatency)
+          .setClusterCurrentDroppedCalls(clusterDropCount)
+          .setClusterCurrentErrorCount(clusterErrorCount)
+          .setClusterCurrentFailedToRouteCalls(0);  //TODO
     }
 
     debug(_log, "average cluster latency: ", newCurrentAvgClusterLatency);
@@ -628,11 +650,17 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     Map<URI, Integer> points = new HashMap<URI, Integer>();
     Map<URI, Integer> oldPointsMap = oldState.getPointsMap();
 
-    for (TrackerClientUpdater clientUpdater : trackerClientUpdaters)
+    Random rand = new Random();
+    boolean useLowEmittingInterval = false;
+    int healthyHostAdded = 0;
+
+    for (int i = 0; i < trackerClientUpdaters.size(); ++i)
     {
+      TrackerClientUpdater clientUpdater = trackerClientUpdaters.get(i);
       TrackerClient client = clientUpdater.getTrackerClient();
       double successfulTransmissionWeight;
       URI clientUri = client.getUri();
+      D2MonitorBuilder.D2MonitorUriInfoBuilder uriInfoBuilder = new D2MonitorBuilder.D2MonitorUriInfoBuilder(clientUri);
 
       // Don't take into account cluster health when calculating the number of points
       // for each client. This is because the individual clients already take into account
@@ -647,6 +675,8 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       DegraderControl degraderControl = client.getDegraderControl(partitionId);
       double dropRate = Math.min(degraderControl.getCurrentComputedDropRate(),
                                  clientUpdater.getMaxDropRate());
+
+      setUriStats(uriInfoBuilder, degraderControl, dropRate);
 
       // calculate the weight as the probability of successful transmission to this
       // node divided by the probability of successful transmission to the entire
@@ -667,6 +697,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
 
       // keep track if we're making actual changes to the Hash Ring in this updatePartitionState.
       int newPoints = (int) (successfulTransmissionWeight * pointsPerWeight);
+      uriInfoBuilder.setTransmissionPoints(newPoints);
 
       boolean quarantineEffect = false;
 
@@ -677,6 +708,8 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
           // If the client is still in quarantine, keep the points to 0 so no real traffic will be used
           newPoints = 0;
           quarantineEffect = true;
+
+          uriInfoBuilder.setQuarantineDuration(quarantineMap.get(client).getTimeTilNextCheck());
         }
         // To put a TrackerClient into quarantine, it needs to meet all the following criteria:
         // 1. its effective weight is less than or equal to the threshold (0.0).
@@ -706,6 +739,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
             quarantine.reset((clk - quarantine.getLastChecked())
                 > DegraderLoadBalancerStrategyConfig.DEFAULT_QUARANTINE_REENTRY_TIME);
             quarantineMap.put(client, quarantine);
+            uriInfoBuilder.setQuarantineDuration(quarantine.getTimeTilNextCheck());
 
             newPoints = 0;     // reduce the points to 0 so no real traffic will be used
             _log.warn("TrackerClient {} is put into quarantine {}. OverrideDropRate = {}, callCount = {}, latency = {},"
@@ -750,6 +784,25 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       {
         hashRingChanges = true;
       }
+
+      if (quarantineEffect || hashRingChanges)
+      {
+        // If current host is quarantined, or has point changes (could be in recovering phase),
+        // add the host to D2Monitor, also use lowEmittingInterval.
+        d2MonitorBuilder.addUriInfoBuilder(clientUri, uriInfoBuilder);
+        useLowEmittingInterval = true;
+      }
+      else if ((rand.nextInt(trackerClientUpdaters.size()) < NUM_HEALTHY_HOST_TO_EMIT)
+        || (healthyHostAdded == 0 && (trackerClientUpdaters.size() - i) < NUM_HEALTHY_HOST_TO_EMIT))
+      {
+        // We need at least one healthy host to contribute the health state.
+        // There 2 chances that current host will be chosen:
+        // 1. With the probability of (NUM_HEALTHY_HOST_TO_EMIT/'total num of hosts')
+        // 2. If we only have very few hosts left and no single healthy host is added
+        // Note we might still out of luck if the rest of the clients are all non-healthy.
+        d2MonitorBuilder.addUriInfoBuilder(clientUri, uriInfoBuilder);
+        healthyHostAdded++;
+      }
     }
 
     // Here is where we actually make the decision what compensating action to take, if any.
@@ -762,19 +815,19 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       // try Call Dropping next time we updatePartitionState.
       newState =
           new PartitionDegraderLoadBalancerState(clusterGenerationId,
-              config.getClock().currentTimeMillis(),
-              true,
-              oldState.getRingFactory(),
-              points,
-              PartitionDegraderLoadBalancerState.Strategy.CALL_DROPPING,
-              currentOverrideDropRate,
-              newCurrentAvgClusterLatency,
-              newRecoveryMap,
-              oldState.getServiceName(),
-              oldState.getDegraderProperties(),
-              totalClusterCallCount,
-              quarantineMap,
-              quarantineHistory);
+                                                 config.getClock().currentTimeMillis(),
+                                                 true,
+                                                 oldState.getRingFactory(),
+                                                 points,
+                                                 PartitionDegraderLoadBalancerState.Strategy.CALL_DROPPING,
+                                                 currentOverrideDropRate,
+                                                 newCurrentAvgClusterLatency,
+                                                 newRecoveryMap,
+                                                 oldState.getServiceName(),
+                                                 oldState.getDegraderProperties(),
+                                                 totalClusterCallCount,
+                                                 quarantineMap,
+                                                 quarantineHistory);
 
       logState(oldState, newState, partitionId, config, trackerClientUpdaters);
     }
@@ -839,6 +892,12 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
         overrideClusterDropRate(partitionId, newDropLevel, trackerClientUpdaters);
       }
 
+      clusterStatsBuilder.setClusterDropLevel(newDropLevel);
+      if (newDropLevel > 0)
+      {
+        useLowEmittingInterval = true;
+      }
+
       // don't change the points map or the recoveryMap, but try load balancing strategy next time.
       newState =
               new PartitionDegraderLoadBalancerState(clusterGenerationId, config.getClock().currentTimeMillis(), true,
@@ -862,6 +921,20 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     // adjust the min call count for each client based on the hash ring reduction and call dropping
     // fraction.
     overrideMinCallCount(partitionId, currentOverrideDropRate,trackerClientUpdaters, points, pointsPerWeight);
+
+    // D2Monitor can emit at different frequencies:
+    // 1. When all the hosts are in healthy state (ie no degrading/call dropping), the event is emitted
+    //    at a longer interval to reduce data volume
+    // 2. If there are hosts in bad state, a shorter interval will be used
+    if (config.getLowEventEmittingInterval() > 0)
+    {
+      EventEmitter emitter = config.getEventEmitter();
+      if ((useLowEmittingInterval && (clk - d2MonitorBuilder.getTimeStamp()) >= config.getLowEventEmittingInterval())
+          || (clk - d2MonitorBuilder.getTimeStamp() >= config.getHighEventEmittingInterval()))
+      {
+        emitter.emitEvent(d2MonitorBuilder.build(clk));
+      }
+    }
 
     return newState;
   }
@@ -999,6 +1072,22 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       _log.warn("Unknown hash method {}, falling back to random", hashMethod);
       _hashFunction = new RandomHash();
     }
+  }
+
+  private static void setUriStats(D2MonitorBuilder.D2MonitorUriInfoBuilder uriInfoBuilder,
+      DegraderControl degraderControl, double dropRate)
+  {
+    int callCount = degraderControl.getCallCount();
+    uriInfoBuilder.setCurrentCallCount(callCount)
+        .setCurrentLatency(degraderControl.getLatency())
+        .setTotalCallCount(degraderControl.getCurrentCountTotal())
+        .setCurrentErrorCount((int)(degraderControl.getErrorRate() * callCount))
+        .setOutstandingCount(degraderControl.getOutstandingCount())
+        .set50PctLatency(degraderControl.getCallTimeStats().get50Pct())
+        .set90PctLatency(degraderControl.getCallTimeStats().get90Pct())
+        .set95PctLatency(degraderControl.getCallTimeStats().get95Pct())
+        .set99PctLatency(degraderControl.getCallTimeStats().get99Pct())
+        .setComputedDropRate(dropRate);
   }
 
   @Override
@@ -1216,6 +1305,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     private final DegraderLoadBalancerStrategyConfig _config;
     private final AtomicBoolean _enableQuarantine;
     private final AtomicInteger _retryTimesForQuarantine;
+
     // _healthCheckMap keeps track of HealthCheck clients associated with TrackerClientUpdater
     // It should only be accessed under the update lock.
     // Note: after quarantine is enabled, there is no need to send health checking requests to all
@@ -1386,6 +1476,10 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     private final boolean   _initialized;
 
     private final Map<TrackerClient, Double> _previousMaxDropRate;
+
+    // Since we only take snapshot of the state, there is no need to carry over the old d2MonitorBuilder
+    // through different updates to save the events
+    // private final D2MonitorBuilder _d2MonitorBuilder;
 
     /**
      * This constructor will copy the internal data structure shallowly unlike the other constructor.

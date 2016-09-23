@@ -5,6 +5,7 @@ import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.clients.RewriteClient;
+import com.linkedin.d2.balancer.event.EventEmitter;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
@@ -126,7 +127,7 @@ public class LoadBalancerSimulator
 
   LoadBalancerSimulator(ServiceProperties serviceProperties, ClusterProperties clusterProperties,
       UriProperties uriProperties, TimedValueGenerator<String> delayGenerator,
-      QPSGenerator qpsGenerator) throws ExecutionException, InterruptedException
+      QPSGenerator qpsGenerator, EventEmitter eventEmitter) throws ExecutionException, InterruptedException
   {
     _executorService = new SynchronousExecutorService();
     _clockedExecutor = new ClockedExecutor();
@@ -158,7 +159,7 @@ public class LoadBalancerSimulator
         new HashMap<>();
     Map<String, TransportClientFactory> clientFactories = new HashMap<>();
 
-    loadBalancerStrategyFactories.put("degrader", new DegraderLoadBalancerStrategyFactoryV3());
+    loadBalancerStrategyFactories.put("degrader", new DegraderLoadBalancerStrategyFactoryV3(null, null, eventEmitter));
     DelayClientFactory delayClientFactory = new DelayClientFactory();
     clientFactories.put("http", delayClientFactory);
     clientFactories.put("https", delayClientFactory);

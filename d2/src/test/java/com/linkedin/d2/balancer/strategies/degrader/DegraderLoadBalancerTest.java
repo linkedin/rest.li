@@ -563,7 +563,11 @@ public class DegraderLoadBalancerTest
               config.getHealthCheckOperations(),
               config.getHealthCheckMethod(),
               config.getHealthCheckPath(),
-              config.getQuarantineLatency());
+              config.getQuarantineLatency(),
+              config.getEventEmitter(),
+              config.getLowEventEmittingInterval(),
+              config.getHighEventEmittingInterval(),
+              config.getClusterName());
     }
 
     @Override
@@ -1979,7 +1983,10 @@ public class DegraderLoadBalancerTest
                     DegraderLoadBalancerStrategyConfig.DEFAULT_QUARANTINE_MAXPERCENT,
                     null, null,
                     DegraderLoadBalancerStrategyConfig.DEFAULT_QUARANTINE_METHOD, null,
-                    DegraderImpl.DEFAULT_LOW_LATENCY),
+                    DegraderImpl.DEFAULT_LOW_LATENCY, null,
+                    DegraderLoadBalancerStrategyConfig.DEFAULT_LOW_EVENT_EMITTING_INTERVAL,
+                    DegraderLoadBalancerStrategyConfig.DEFAULT_HIGH_EVENT_EMITTING_INTERVAL,
+                    DegraderLoadBalancerStrategyConfig.DEFAULT_CLUSTER_NAME),
                "DegraderLoadBalancerTest", null);
 
     List<TrackerClient> clients = new ArrayList<TrackerClient>(NUM_SERVERS);
@@ -3901,7 +3908,10 @@ public class DegraderLoadBalancerTest
         DegraderLoadBalancerStrategyConfig.DEFAULT_NUM_PROBES, null,
         DegraderLoadBalancerStrategyConfig.DEFAULT_QUARANTINE_MAXPERCENT,
         null, null, "GET", "/test/admin",
-        DegraderImpl.DEFAULT_LOW_LATENCY);
+        DegraderImpl.DEFAULT_LOW_LATENCY, null,
+        DegraderLoadBalancerStrategyConfig.DEFAULT_LOW_EVENT_EMITTING_INTERVAL,
+        DegraderLoadBalancerStrategyConfig.DEFAULT_HIGH_EVENT_EMITTING_INTERVAL,
+        DegraderLoadBalancerStrategyConfig.DEFAULT_CLUSTER_NAME);
 
     TrackerClientUpdater updater1 = new TrackerClientUpdater(trackerClients.get(1), DEFAULT_PARTITION_ID);
     quarantine = new DegraderLoadBalancerQuarantine(updater1, config1, "abc0");
@@ -3927,7 +3937,10 @@ public class DegraderLoadBalancerTest
         DegraderLoadBalancerStrategyConfig.DEFAULT_NUM_PROBES, null,
         DegraderLoadBalancerStrategyConfig.DEFAULT_QUARANTINE_MAXPERCENT,
         null, null, "OPTIONS", null,
-        DegraderImpl.DEFAULT_LOW_LATENCY);
+        DegraderImpl.DEFAULT_LOW_LATENCY, null,
+        DegraderLoadBalancerStrategyConfig.DEFAULT_LOW_EVENT_EMITTING_INTERVAL,
+        DegraderLoadBalancerStrategyConfig.DEFAULT_HIGH_EVENT_EMITTING_INTERVAL,
+        DegraderLoadBalancerStrategyConfig.DEFAULT_CLUSTER_NAME);
 
     TrackerClientUpdater updater2 = new TrackerClientUpdater(trackerClients.get(2), DEFAULT_PARTITION_ID);
     quarantine = new DegraderLoadBalancerQuarantine(updater2, config2, "abc0");

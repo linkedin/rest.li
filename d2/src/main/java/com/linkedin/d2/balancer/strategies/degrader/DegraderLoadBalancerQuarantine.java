@@ -259,6 +259,11 @@ public class DegraderLoadBalancerQuarantine
     return _lastChecked;
   }
 
+  public long getTimeTilNextCheck()
+  {
+    return _timeTilNextCheck;
+  }
+
   // For testing only
   HealthCheck getHealthCheckClient()
   {

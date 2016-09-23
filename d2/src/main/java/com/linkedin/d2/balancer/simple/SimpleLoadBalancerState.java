@@ -54,11 +54,6 @@ import com.linkedin.r2.util.ConfigValueExtractor;
 import com.linkedin.util.clock.Clock;
 import com.linkedin.util.clock.SystemClock;
 import com.linkedin.util.degrader.DegraderImpl;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLParameters;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -74,6 +69,10 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.linkedin.d2.discovery.util.LogUtil.debug;
 import static com.linkedin.d2.discovery.util.LogUtil.info;
@@ -1503,6 +1502,8 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
         // Save the service path as a property -- Quarantine may need this info to construct correct
         // health checking path
         loadBalancerStrategyProperties.put(PropertyKeys.PATH, serviceProperties.getPath());
+        // Also save the clusterName as a property
+        loadBalancerStrategyProperties.put(PropertyKeys.CLUSTER_NAME, serviceProperties.getClusterName());
 
         LoadBalancerStrategy strategy = factory.newLoadBalancer(
             serviceProperties.getServiceName(),

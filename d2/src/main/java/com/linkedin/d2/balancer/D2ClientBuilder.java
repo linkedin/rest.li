@@ -24,6 +24,7 @@ import com.linkedin.d2.backuprequests.BackupRequestsStrategyStatsConsumer;
 import com.linkedin.d2.balancer.clients.BackupRequestsClient;
 import com.linkedin.d2.balancer.clients.DynamicClient;
 import com.linkedin.d2.balancer.clients.RetryClient;
+import com.linkedin.d2.balancer.event.EventEmitter;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
 import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl;
 import com.linkedin.r2.message.RequestContext;
@@ -99,7 +100,8 @@ public class D2ClientBuilder
                   _config.retryLimit,
                   _config.warmUp,
                   _config.warmUpTimeoutSeconds,
-                  _config.warmUpConcurrentRequests);
+                  _config.warmUpConcurrentRequests,
+                  _config._eventEmitter);
 
     final LoadBalancerWithFacilities loadBalancer = loadBalancerFactory.create(cfg);
 
@@ -281,6 +283,12 @@ public class D2ClientBuilder
   public D2ClientBuilder setRetryLimit(int retryLimit)
   {
     _config.retryLimit = retryLimit;
+    return this;
+  }
+
+  public D2ClientBuilder setEventEmitter(EventEmitter eventEmitter)
+  {
+    _config._eventEmitter = eventEmitter;
     return this;
   }
 

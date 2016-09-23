@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.balancer.strategies.degrader;
 
+import com.linkedin.d2.balancer.event.EventEmitter;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
 import java.util.concurrent.ScheduledExecutorService;
@@ -33,18 +34,21 @@ public class DegraderLoadBalancerStrategyFactoryV3 implements
                LoggerFactory.getLogger(DegraderLoadBalancerStrategyFactoryV3.class);
   private final HealthCheckOperations _healthCheckOperations;
   private final ScheduledExecutorService _executorService;
+  private final EventEmitter _eventEmitter;
 
   public DegraderLoadBalancerStrategyFactoryV3()
   {
     _healthCheckOperations = null;
     _executorService = null;
+    _eventEmitter = null;
   }
 
   public DegraderLoadBalancerStrategyFactoryV3(HealthCheckOperations healthCheckOperations,
-      ScheduledExecutorService executorService)
+      ScheduledExecutorService executorService, EventEmitter emitter)
   {
     _healthCheckOperations = healthCheckOperations;
     _executorService = executorService;
+    _eventEmitter = emitter;
   }
 
   @Override
@@ -56,7 +60,7 @@ public class DegraderLoadBalancerStrategyFactoryV3 implements
 
     final DegraderLoadBalancerStrategyConfig config =
         DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(strategyProperties,
-            _healthCheckOperations, _executorService, degraderProperties);
+            _healthCheckOperations, _executorService, degraderProperties, _eventEmitter);
     return new DegraderLoadBalancerStrategyV3(config, serviceName, degraderProperties);
   }
 }

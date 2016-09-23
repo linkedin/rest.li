@@ -25,6 +25,7 @@ package com.linkedin.util.degrader;
  * @version $Rev$
  */
 
+import com.linkedin.common.stats.LongStats;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.ThreadLocalRandom;
@@ -288,7 +289,8 @@ public class DegraderImpl implements Degrader
                      _callTrackerStats.getCallCount(),
                      _latency, _callTrackerStats.getErrorRate(),
                      _outstandingLatency, _callTrackerStats.getOutstandingCount(),
-                     _callTrackerStats.getErrorTypeCounts());
+                     _callTrackerStats.getErrorTypeCounts(),
+                     _callTrackerStats.getCallTimeStats());
   }
 
   /**
@@ -538,6 +540,7 @@ public class DegraderImpl implements Degrader
     private final long   _outstandingLatency;
     private final int    _outstandingCount;
     private final Map<ErrorType, Integer> _errorCountsMap;
+    private final LongStats _callTimeStats;
 
 
     private Stats(double currentDropRate, double currentComputedDropRate,
@@ -549,7 +552,10 @@ public class DegraderImpl implements Degrader
                   int callCount,
                   long latency,
                   double errorRate,
-                  long outstandingLatency, int outstandingCount, Map<ErrorType,Integer> errorCountsMap)
+                  long outstandingLatency,
+                  int outstandingCount,
+                  Map<ErrorType,Integer> errorCountsMap,
+                  LongStats callTimeStats)
     {
       _currentDropRate = currentDropRate;
       _currentComputedDropRate = currentComputedDropRate;
@@ -566,6 +572,7 @@ public class DegraderImpl implements Degrader
       _outstandingLatency = outstandingLatency;
       _outstandingCount = outstandingCount;
       _errorCountsMap = errorCountsMap;
+      _callTimeStats = callTimeStats;
     }
 
     public double getCurrentDropRate()
@@ -627,6 +634,10 @@ public class DegraderImpl implements Degrader
     public Map<ErrorType, Integer> getErrorCountsMap()
     {
       return _errorCountsMap;
+    }
+    public LongStats getCallTimeStats()
+    {
+      return _callTimeStats;
     }
   }
 

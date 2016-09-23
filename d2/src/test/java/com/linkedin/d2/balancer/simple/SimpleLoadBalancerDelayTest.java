@@ -17,6 +17,8 @@
 package com.linkedin.d2.balancer.simple;
 
 import com.linkedin.d2.balancer.ServiceUnavailableException;
+import com.linkedin.d2.balancer.event.D2Monitor;
+import com.linkedin.d2.balancer.event.EventEmitter;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
@@ -27,6 +29,7 @@ import com.linkedin.d2.balancer.strategies.degrader.DegraderRingFactory;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -57,6 +60,7 @@ public class SimpleLoadBalancerDelayTest
   }
 
   private static final Logger _log = LoggerFactory.getLogger(SimpleLoadBalancerDelayTest.class);
+  private static final List<D2Monitor> _d2Monitors = new ArrayList<>();
 
   @Test(groups = { "small", "back-end" }, enabled = false)
   public void testLoadBalancerWithDelay() throws Exception
@@ -106,7 +110,7 @@ public class SimpleLoadBalancerDelayTest
 
     // pass all the info to the simulator
     LoadBalancerSimulator loadBalancerSimulator = new LoadBalancerSimulator(serviceProperties,
-        clusterProperties, uriProperties, delayGenerator, qpsGenerator);
+        clusterProperties, uriProperties, delayGenerator, qpsGenerator, null);
 
     // Start the simulation
     loadBalancerSimulator.runWait(DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS);
@@ -200,7 +204,7 @@ public class SimpleLoadBalancerDelayTest
 
     // pass all the info to the simulator
     LoadBalancerSimulator loadBalancerSimulator = new LoadBalancerSimulator(serviceProperties,
-        clusterProperties, uriProperties, delayGenerator, qpsGenerator);
+        clusterProperties, uriProperties, delayGenerator, qpsGenerator, null);
 
     // Start the simulation, wait for 10 UPDATE_INTERVALS to make sure all uris are fully ramped.
     loadBalancerSimulator.runWait(DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS * 20);
@@ -1016,6 +1020,84 @@ public class SimpleLoadBalancerDelayTest
     loadBalancerSimulator.shutdown();
   }
 
+
+  /**
+   * Simple test to verify d2Monitor emitting
+   * @throws Exception
+   */
+  @Test(groups = { "small", "back-end" })
+  public void loadBalancerD2MonitorLowIntervalTest() throws Exception
+  {
+    String uri1 = "test.qa1.com:1234";
+    String uri2 = "test.qa2.com:2345";
+    List<String> uris = Arrays.asList(uri1, uri2);
+
+    // Construct the delay patterns: for each URI there is a list of delays for each interval
+    Map<String, List<Long>> delayMaps = new HashMap<>();
+    delayMaps.put("test.qa1.com:1234", Arrays.asList(80l, 30l, 30l, 30l, 30l, 80l, 60l, 80l, 80l, 60l, 80l, 80l));
+    delayMaps.put("test.qa2.com:2345", Arrays.asList(80l, 80l, 60l, 80l, 50l, 80l, 80l, 80l, 60l, 80l, 60l, 80l));
+    LoadBalancerSimulator.TimedValueGenerator<String> delayGenerator = new DelayValueGenerator(delayMaps,
+        DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS);
+
+    // Enable quarantine by setting the max percent to 0.05
+    Map<String, Object> strategyProperties = new HashMap<String, Object>();
+    strategyProperties.put(PropertyKeys.HTTP_LB_LOW_EVENT_EMITTING_INTERVAL, "10000");
+    strategyProperties.put(PropertyKeys.HTTP_LB_HIGH_EVENT_EMITTING_INTERVAL, "30000");
+
+    // Construct the QPS generator
+    LoadBalancerSimulator.QPSGenerator qpsGenerator = new ConstantQPSGenerator(400);
+
+    // Create the simulator
+    LoadBalancerSimulator loadBalancerSimulator = LoadBalancerSimulationBuilder.build(
+        "cluster-1", "foo", uris, strategyProperties, null, null, delayGenerator, qpsGenerator);
+    URI expectedUri1 = LoadBalancerSimulationBuilder.getExpectedUri("test.qa1.com:1234", "foo");
+
+    // Start the simulation
+    loadBalancerSimulator.runWait(DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS);
+    printStates(loadBalancerSimulator);
+
+    // the points for uri1 should be 100
+    assertEquals(loadBalancerSimulator.getPoint("foo", DefaultPartitionAccessor.DEFAULT_PARTITION_ID,
+        uri1), 100);
+    assertEquals(loadBalancerSimulator.getPoint("foo", DefaultPartitionAccessor.DEFAULT_PARTITION_ID,
+        uri2), 100);
+
+    // wait for 2 intervals due to call dropping involved
+    loadBalancerSimulator.runWait(DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS * 10);
+    printStates(loadBalancerSimulator);
+
+    // continue the simulation
+    loadBalancerSimulator.runWait(DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS * 2);
+    printStates(loadBalancerSimulator);
+    // the points for uri1 should be 0 as it is now in quarantine
+    assertEquals(loadBalancerSimulator.getPoint("foo", DefaultPartitionAccessor.DEFAULT_PARTITION_ID,
+        uri1), 0);
+    assertEquals(loadBalancerSimulator.getPoint("foo", DefaultPartitionAccessor.DEFAULT_PARTITION_ID,
+        uri2), 100);
+
+    loadBalancerSimulator.runWait(DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS * 2);
+    printStates(loadBalancerSimulator);
+    assertEquals(loadBalancerSimulator.getPoint("foo", DefaultPartitionAccessor.DEFAULT_PARTITION_ID,
+        uri1), 0);
+    assertEquals(loadBalancerSimulator.getPoint("foo", DefaultPartitionAccessor.DEFAULT_PARTITION_ID,
+        uri2), 100);
+
+    loadBalancerSimulator.runWait(DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS * 5);
+    printStates(loadBalancerSimulator);
+    // uri1 should fully recovered by now
+    assertEquals(loadBalancerSimulator.getPoint("foo", DefaultPartitionAccessor.DEFAULT_PARTITION_ID,
+        uri1), 100);
+    assertEquals(loadBalancerSimulator.getPoint("foo", DefaultPartitionAccessor.DEFAULT_PARTITION_ID,
+        uri2), 100);
+    // the points for uri3 should be around 60, recovering
+
+    _log.info(loadBalancerSimulator.getClockedExecutor().toString());
+
+    // Done. Shutdown the simulation
+    loadBalancerSimulator.shutdown();
+  }
+
+
     /**
      * LoadBalancerSimulationBuilder buildup the LoadBalancerSimulator
      */
@@ -1075,7 +1157,7 @@ public class SimpleLoadBalancerDelayTest
           null);
 
       return new LoadBalancerSimulator(serviceProperties, clusterProperties, uriProperties,
-          delayGenerator, qpsGenerator);
+          delayGenerator, qpsGenerator, new SimulatedEventEmitter());
     }
 
     public static URI getExpectedUri(String uriString, String serviceName)
@@ -1167,5 +1249,25 @@ public class SimpleLoadBalancerDelayTest
     }
     ringMap.forEach((k,v) -> { _log.info("{} - points {}: {}",
         new Object[] {simulator.getClock().currentTimeMillis(), k, v}); });
+
+    if (!_d2Monitors.isEmpty())
+    {
+      _d2Monitors.forEach(v -> {_log.info(v.toString());});
+      _d2Monitors.clear();
+      _log.info("Done with D2Monitor Dump");
+    }
+    else
+    {
+      _log.info("D2Monitor has no event");
+    }
+  }
+
+  private static class SimulatedEventEmitter implements EventEmitter
+  {
+    @Override
+    public void emitEvent(D2Monitor event)
+    {
+      _d2Monitors.add(event);
+    }
   }
 }

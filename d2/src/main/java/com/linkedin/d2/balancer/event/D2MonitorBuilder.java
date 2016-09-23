@@ -40,18 +40,19 @@ public class D2MonitorBuilder
     return _clusterStatsBuilder;
   }
 
-  public D2MonitorUriInfoBuilder getUriInfoBuilder(URI uri)
+  public D2MonitorUriInfoBuilder getOrCreateUriInfoBuilder(URI uri)
   {
-    if (_uriInfoBuilderMap.containsKey(uri))
-    {
-      return _uriInfoBuilderMap.get(uri);
-    }
-    else
-    {
-      D2MonitorUriInfoBuilder builder = new D2MonitorUriInfoBuilder(uri);
-      _uriInfoBuilderMap.put(uri, builder);
-      return builder;
-    }
+    return _uriInfoBuilderMap.computeIfAbsent(uri, k -> new D2MonitorUriInfoBuilder(k));
+  }
+
+  public D2MonitorUriInfoBuilder addUriInfoBuilder(URI uri, D2MonitorUriInfoBuilder uriInfoBuilder)
+  {
+    return _uriInfoBuilderMap.putIfAbsent(uri, uriInfoBuilder);
+  }
+
+  public long getTimeStamp()
+  {
+    return _timeStamp;
   }
 
   public int getPartitionId()

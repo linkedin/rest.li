@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.balancer;
 
+import com.linkedin.d2.balancer.event.EventEmitter;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyFactoryV3;
@@ -87,7 +88,7 @@ public class ZKFSLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFa
     }
 
     final Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories =
-        createDefaultLoadBalancerStrategyFactories(config._healthCheckOperations, config._executorService);
+        createDefaultLoadBalancerStrategyFactories(config._healthCheckOperations, config._executorService, config._eventEmitter);
 
     return new ZKFSTogglingLoadBalancerFactoryImpl(loadBalancerComponentFactory,
                                                    config.lbWaitTimeout,
@@ -106,14 +107,14 @@ public class ZKFSLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFa
   }
 
   private Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> createDefaultLoadBalancerStrategyFactories(
-      HealthCheckOperations healthCheckOperations, ScheduledExecutorService executorService)
+      HealthCheckOperations healthCheckOperations, ScheduledExecutorService executorService, EventEmitter emitter)
   {
     final Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories =
       new HashMap<>();
 
     final RandomLoadBalancerStrategyFactory randomStrategyFactory = new RandomLoadBalancerStrategyFactory();
     final DegraderLoadBalancerStrategyFactoryV3 degraderStrategyFactoryV3 = new DegraderLoadBalancerStrategyFactoryV3(
-        healthCheckOperations, executorService);
+        healthCheckOperations, executorService, emitter);
 
     loadBalancerStrategyFactories.put("random", randomStrategyFactory);
     loadBalancerStrategyFactories.put("degrader", degraderStrategyFactoryV3);
