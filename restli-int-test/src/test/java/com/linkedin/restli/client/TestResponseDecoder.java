@@ -18,6 +18,8 @@ package com.linkedin.restli.client;
 
 
 import com.linkedin.common.callback.CallbackAdapter;
+import com.linkedin.restli.client.response.BatchKVResponse;
+import com.linkedin.restli.common.EntityResponse;
 import com.linkedin.restli.examples.RestLiIntegrationTest;
 import com.linkedin.restli.examples.TestConstants;
 import com.linkedin.restli.examples.greetings.api.Message;
@@ -71,7 +73,7 @@ public class TestResponseDecoder extends RestLiIntegrationTest
     Set<String> keys = new HashSet<String>();
     keys.add(createDataSize(SERVER_HEADER_OVERLOAD_SIZE));
     BatchGetEntityRequest<String, Message> req = new StringKeysRequestBuilders(requestOptions).batchGet().ids(keys).build();
-    ResponseFuture batchKVResponseResponseFuture = getClient().sendRequest(req);
+    ResponseFuture<BatchKVResponse<String, EntityResponse<Message>>> batchKVResponseResponseFuture = getClient().sendRequest(req);
     try {
       batchKVResponseResponseFuture.getResponse();
       Assert.fail("Exception should have thrown before this point!");
