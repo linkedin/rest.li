@@ -122,4 +122,18 @@ public class TestBatchEntityResponseDecoder
       { _keys, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion() }
     };
   }
+
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchEntityResponseDataProvider")
+  public void testDecodingWithEmptyDataMap(List<String> keys, ProtocolVersion protocolVersion)
+    throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, IOException
+  {
+    final BatchEntityResponseDecoder<String, TestRecord> decoder =
+      new BatchEntityResponseDecoder<String, TestRecord>(new TypeSpec<TestRecord>(TestRecord.class),
+                                                         new TypeSpec<String>(String.class),
+                                                         Collections.<String, CompoundKey.TypeInfo>emptyMap(),
+                                                         null);
+
+    final BatchKVResponse<String, EntityResponse<TestRecord>> response = decoder.wrapResponse(null, Collections.<String, String>emptyMap(), protocolVersion);
+    Assert.assertNull(response);
+  }
 }

@@ -71,6 +71,11 @@ public class BatchUpdateResponseDecoder<K> extends RestResponseDecoder<BatchKVRe
   public BatchKVResponse<K, UpdateStatus> wrapResponse(DataMap dataMap, Map<String, String> headers, ProtocolVersion version)
     throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, IOException
   {
+    if (dataMap == null)
+    {
+      return null;
+    }
+
     final DataMap mergedResults = new DataMap();
     final DataMap inputResults = dataMap.containsKey(BatchResponse.RESULTS) ? dataMap.getDataMap(BatchResponse.RESULTS)
                                                                             : new DataMap();

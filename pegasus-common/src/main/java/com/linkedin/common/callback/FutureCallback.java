@@ -100,12 +100,8 @@ public class FutureCallback<T> implements Future<T>, Callback<T>
   @Override
   public void onError(final Throwable e)
   {
-    if (e == null)
-    {
-      throw new NullPointerException();
-    }
-
-    safeSetValue(Result.<T>createError(e));
+    Throwable error = e != null ? e : new NullPointerException("Null error is passed to onError!");
+    safeSetValue(Result.<T>createError(error));
     _doneLatch.countDown();
   }
 

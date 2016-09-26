@@ -17,6 +17,11 @@
 /* $Id$ */
 package com.linkedin.common.callback;
 
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+
 /**
  * Adapts the successful result type of a callback to another type.
  *
@@ -25,6 +30,7 @@ package com.linkedin.common.callback;
  */
 public abstract class CallbackAdapter<OLD, NEW> implements Callback<NEW>
 {
+  private static final Logger LOG = LoggerFactory.getLogger(CallbackAdapter.class);
   private final Callback<OLD> _callback;
 
   protected CallbackAdapter(final Callback<OLD> callback)
@@ -71,6 +77,13 @@ public abstract class CallbackAdapter<OLD, NEW> implements Callback<NEW>
   @Override
   public void onError(final Throwable e)
   {
-    _callback.onError(convertError(e));
+    Throwable newThrowable;
+    try {
+      newThrowable = convertError(e);
+    } catch (RuntimeException ex) {
+      LOG.error("Failed to convert callback error, original exception follows:", e);
+      newThrowable = ex;
+    }
+    _callback.onError(newThrowable);
   }
 }

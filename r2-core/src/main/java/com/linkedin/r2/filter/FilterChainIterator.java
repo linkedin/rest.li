@@ -30,6 +30,10 @@ import com.linkedin.r2.message.stream.StreamResponse;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+
 /**
 * @author Chris Pettitt
 * @author Zhenkai Zhu
@@ -38,6 +42,7 @@ import java.util.Map;
 /* package private */ abstract class FilterChainIterator<F, REQ extends Request, RES extends Response>
         implements NextFilter<REQ, RES>
 {
+  private static final Logger LOG = LoggerFactory.getLogger(FilterChainIterator.class);
   private final List<F> _filters;
   private int _cursor;
 
@@ -92,6 +97,9 @@ import java.util.Map;
       {
         onError(e, requestContext, wireAttrs);
       }
+    } else {
+      String lastFilterName = (_filters != null && _filters.size() > 0) ? _filters.get(0).getClass().getName() : "";
+      LOG.error("Uncaught exception from the last response filter in the filter chain: " + lastFilterName, ex);
     }
   }
 
