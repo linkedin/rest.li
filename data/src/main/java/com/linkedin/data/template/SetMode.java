@@ -24,7 +24,7 @@ public enum SetMode
    *
    * If the provided value is null, then do nothing,
    * i.e. the value of the field is not changed.
-   * The field may or may be present.
+   * The field may or may not be present.
    */
   IGNORE_NULL,
   /**

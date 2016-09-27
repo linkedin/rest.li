@@ -2,6 +2,8 @@
 -----
 (RB=825708)
 Add request details to the quarantine health checking logs
+(RB=824641)
+Update SetMode.java
 
 8.0.4
 -----
