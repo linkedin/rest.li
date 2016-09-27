@@ -4,6 +4,8 @@
 Add request details to the quarantine health checking logs
 (RB=824641)
 Update SetMode.java
+(RB=824394)
+Cache Validator classes to avoid reloading them on every request and response.
 
 8.0.4
 -----

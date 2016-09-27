@@ -1,5 +1,6 @@
 dependencies {
   compile externalDependency.jacksonCore
+  compile externalDependency.guava
   testCompile externalDependency.commonsIo
   testCompile externalDependency.testng
 }

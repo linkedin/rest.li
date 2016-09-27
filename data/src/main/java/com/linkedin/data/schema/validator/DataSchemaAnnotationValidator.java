@@ -17,6 +17,8 @@
 package com.linkedin.data.schema.validator;
 
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -195,10 +197,16 @@ public class DataSchemaAnnotationValidator implements Validator
     }
   };
 
+  private static final Cache<String, Class<? extends Validator>> VALIDATOR_CLASS_CACHE =
+      CacheBuilder.newBuilder().maximumSize(500).build();
+
+  // No-op {@link Validator} implementation to denote a negative cache value in {@link #VALIDATOR_CLASS_CACHE}
+  private static final Validator NULL_VALIDATOR = (context) -> {};
+
   private boolean _debugMode = false;
   private DataSchema _schema = DataSchemaConstants.NULL_DATA_SCHEMA;
-  private Map<String, Class<? extends Validator>> _classMap = Collections.emptyMap();
-  private Map<Object, List<Validator>> _cache = Collections.emptyMap();
+  private Map<String, Class<? extends Validator>> _customValidatorClassMap = Collections.emptyMap();
+  private Map<Object, List<Validator>> _schemaValidators = Collections.emptyMap();
   private MessageList<Message> _initMessages = new MessageList<Message>();
 
   private static final List<Validator> NO_VALIDATORS = Collections.emptyList();
@@ -273,8 +281,8 @@ public class DataSchemaAnnotationValidator implements Validator
   {
     _initMessages.clear();
     _schema = schema;
-    _classMap = classMap;
-    _cache = cacheValidators(_schema);
+    _customValidatorClassMap = classMap;
+    _schemaValidators = buildSchemaValidators(_schema);
     return isInitOk();
   }
 
@@ -327,7 +335,7 @@ public class DataSchemaAnnotationValidator implements Validator
    * @param schema to cache {@link Validator}s for.
    * @return the cache if successful.
    */
-  private IdentityHashMap<Object, List<Validator>> cacheValidators(DataSchema schema)
+  private IdentityHashMap<Object, List<Validator>> buildSchemaValidators(DataSchema schema)
   {
     final IdentityHashMap<Object, List<Validator>> map = new IdentityHashMap<Object, List<Validator>>();
 
@@ -458,38 +466,58 @@ public class DataSchemaAnnotationValidator implements Validator
    */
   protected Class<? extends Validator> locateValidatorClass(String key, List<String> path, Object source)
   {
-    Class<? extends Validator> clazz = _classMap.get(key);
-    if (clazz == null)
+    // Look up the custom class map for the passed in 'key'
+    Class<? extends Validator> clazz = _customValidatorClassMap.get(key);
+    if (clazz != null)
     {
-      Iterator<String> it = validatorClassNamesForKey(key);
-      while (it.hasNext())
+      return clazz;
+    }
+
+    // If we have already seen this key before, use the cached Validator class
+    clazz = VALIDATOR_CLASS_CACHE.getIfPresent(key);
+    if (clazz != null)
+    {
+      return (NULL_VALIDATOR.getClass().equals(clazz) ? null : clazz);
+    }
+
+    Iterator<String> it = validatorClassNamesForKey(key);
+    while (it.hasNext())
+    {
+      String className = it.next();
+      try
       {
-        String className = it.next();
-        try
+        Class<?> classFromName = Class.forName(className, true, Thread.currentThread().getContextClassLoader());
+        if (Validator.class.isAssignableFrom(classFromName))
         {
-          Class<?> classFromName = Class.forName(className, true, Thread.currentThread().getContextClassLoader());
-          if (Validator.class.isAssignableFrom(classFromName))
-          {
-            @SuppressWarnings("unchecked")
-            Class<? extends Validator> validatorClass = (Class<? extends Validator>) classFromName;
-            clazz = validatorClass;
-            break;
-          }
-          else
-          {
-            addMessage(path,
-                       (className.equals(key) ? true : false),
-                       "\"validate\" property of %1$s, %2$s is not a %3$s",
-                       source,
-                       classFromName.getName(),
-                       Validator.class.getName());
-          }
+          @SuppressWarnings("unchecked")
+          Class<? extends Validator> validatorClass = (Class<? extends Validator>) classFromName;
+          clazz = validatorClass;
+          break;
         }
-        catch (ClassNotFoundException e)
+        else
         {
+          addMessage(path, (className.equals(key) ? true : false),
+              "\"validate\" property of %1$s, %2$s is not a %3$s", source, classFromName.getName(), Validator.class.getName());
         }
       }
+      catch (ClassNotFoundException e)
+      {
+      }
     }
+
+    // Stash the loaded Validator class with the passed in 'key' as the cache key. For keys that didn't map to a valid
+    // Validator class, we stash a negative entry to avoid the costly class loading attempts again. The string 'key' is
+    // used instead of 'className' for the cache key to prevent attempting to load all possible classes for this 'key'
+    // returned from #validatorClassNamesForKey().
+    if (clazz != null)
+    {
+      VALIDATOR_CLASS_CACHE.put(key, clazz);
+    }
+    else
+    {
+      VALIDATOR_CLASS_CACHE.put(key, NULL_VALIDATOR.getClass());
+    }
+
     return clazz;
   }
 
@@ -566,7 +594,7 @@ public class DataSchemaAnnotationValidator implements Validator
 
   private void getAndInvokeValidatorList(ValidatorContext ctx, Object key)
   {
-    List<Validator> validatorList = _cache.get(key);
+    List<Validator> validatorList = _schemaValidators.get(key);
     if (validatorList == null)
     {
       // this means schema or field to be validated has not been cached.
@@ -644,7 +672,7 @@ public class DataSchemaAnnotationValidator implements Validator
       _initMessages.appendTo(sb);
     }
     sb.append("Validators:\n");
-    for (Map.Entry<Object, List<Validator>> e : _cache.entrySet())
+    for (Map.Entry<Object, List<Validator>> e : _schemaValidators.entrySet())
     {
       sb.append("  ");
       Object key = e.getKey();
