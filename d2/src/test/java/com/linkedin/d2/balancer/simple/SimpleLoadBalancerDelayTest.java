@@ -152,7 +152,7 @@ public class SimpleLoadBalancerDelayTest
     loadBalancerSimulator.shutdown();
   }
 
-  @Test(groups = { "small", "back-end" })
+  @Test(groups = { "small", "back-end" }, enabled = false)
   public void testLoadBalancerWithSlowStartClient() throws Exception
   {
     // Generate service, cluster and uri properties for d2
