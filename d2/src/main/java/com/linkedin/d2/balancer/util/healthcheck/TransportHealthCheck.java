@@ -82,17 +82,20 @@ public class TransportHealthCheck implements HealthCheck
       if (response.hasError())
       {
         // Currently treat all errors as failure
-        _log.error("checkHealth: error response for request:", response.getError());
+        _log.error("checkHealth: error response for request ({}): {}", _restRequest.getURI(),
+            response.getError());
         callback.onError(response.getError());
       }
       else if (delay > _responseTimeThreshold)
       {
-        _log.error("checkHealth: return delay ({}ms) longer than threshold", delay);
+        _log.error("checkHealth: return delay ({}ms) longer than threshold for request {}", delay,
+            _restRequest.getURI());
         callback.onError(new TimeoutException("HealthCheck Timeout"));
       }
       else if (!_healthCheckResponseValidator.validateResponse(response.getResponse()))
       {
-        _log.error("checkHealth: response validating error: {}", response);
+        _log.error("checkHealth: response validating error for request ({}): {}", _restRequest.getURI(),
+            response);
         callback.onError(new Throwable("HealthCheck Response Error"));
       }
       else
