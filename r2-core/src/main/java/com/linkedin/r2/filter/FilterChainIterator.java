@@ -79,9 +79,16 @@ import org.slf4j.LoggerFactory;
       }
       catch (RuntimeException e)
       {
+        if (_cursor == 0) {
+          LOG.error("Uncaught exception from the last response filter in the filter chain: " + getLastFilterName(), e);
+        }
         onError(e, requestContext, wireAttrs);
       }
     }
+  }
+
+  private String getLastFilterName() {
+    return (_filters != null && _filters.size() > 0) ? _filters.get(0).getClass().getName() : "";
   }
 
   @Override
@@ -95,11 +102,11 @@ import org.slf4j.LoggerFactory;
       }
       catch (RuntimeException e)
       {
+        if (_cursor == 0) {
+          LOG.error("Uncaught exception from the last error filter in the filter chain: " + getLastFilterName(), e);
+        }
         onError(e, requestContext, wireAttrs);
       }
-    } else {
-      String lastFilterName = (_filters != null && _filters.size() > 0) ? _filters.get(0).getClass().getName() : "";
-      LOG.error("Uncaught exception from the last response filter in the filter chain: " + lastFilterName, ex);
     }
   }
 
