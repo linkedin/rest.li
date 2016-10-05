@@ -1,6 +1,11 @@
-8.0.6
+8.0.7
 -----
 
+
+8.0.6
+-----
+(RB=830455)
+Removed extra R2 filter error log
 
 8.0.5
 -----
