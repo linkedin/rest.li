@@ -37,7 +37,7 @@ import java.util.Map;
  * to the {@link AnyRecordValidator}. Its {@code resolver} attribute allows the application to provide
  * a {@link DataSchemaResolver}. Depending the application's needs, the resolver
  * may obtain schemas from a schema registry or from generated {@link com.linkedin.data.template.DataTemplate}
- * classes {@link com.linkedin.data.schema.resolver.ClassNameDataSchemaResolver}.
+ * classes {@link com.linkedin.data.schema.resolver.ClasspathResourceDataSchemaResolver}.
  * The {@code validSchema} attribute specifies whether unresolvable or invalid schemas
  * is permitted.
  *

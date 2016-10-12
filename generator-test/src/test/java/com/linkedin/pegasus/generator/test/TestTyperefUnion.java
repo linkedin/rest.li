@@ -64,7 +64,6 @@ public class TestTyperefUnion
   @Test
   public void testRegisterCustomCoercer()
   {
-    assertFalse(DataTemplateUtil.hasCoercer(TestCustom.CustomNumber.class));
     new UnionTyperef2();
     assertTrue(DataTemplateUtil.hasCoercer(TestCustom.CustomNumber.class));
   }

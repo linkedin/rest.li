@@ -1,0 +1,14 @@
+{
+  "doc"  : "Test generation of Java bindings of properties with package override",
+  "type" : "record",
+  "name" : "PropertyTest",
+  "namespace" : "com.linkedin.pegasus.generator.testpackage",
+  "package" : "com.linkedin.pegasus.generator.override",
+  "fields" : [
+    { "name" : "ptInt", "type" : { "type" : "record", "name" : "PTInt", "fields" : [], "pInt" : 1 } },
+    { "name" : "ptFloat", "type" : { "type" : "record", "name" : "PTFloat", "fields" : [], "pFloat" : 0.5 } },
+    { "name" : "ptString", "type" : { "type" : "record", "name" : "PTString", "fields" : [], "pString" : "string" } },
+    { "name" : "ptList", "type" : { "type" : "record", "name" : "PTList", "fields" : [], "pList" : [ 1, 2, 3] } },
+    { "name" : "ptObject", "type" : { "type" : "record", "name" : "PTObject", "fields" : [], "pObject" : { "a" : 1, "b" : 0.5, "c" : "s" } } }
+  ]
+}

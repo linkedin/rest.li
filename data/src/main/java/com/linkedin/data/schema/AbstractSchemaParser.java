@@ -35,6 +35,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+import static com.linkedin.data.schema.DataSchemaConstants.PACKAGE_KEY;
+
 /**
  * Common base class for parsers that parse Data objects.
  *
@@ -246,6 +248,29 @@ abstract public class AbstractSchemaParser implements PegasusSchemaParser
   }
 
   /**
+   * Set the current package.
+   *
+   * Current package for generated data bindings. It is prepended to the unqualified name of pegasus types to produce the
+   * fully qualified data binding name.
+   *
+   * @param packageName to set as current package.
+   */
+  public void setCurrentPackage(String packageName)
+  {
+    _currentPackage = packageName;
+  }
+
+  /**
+   * Get the current package.
+   *
+   * @return the current package.
+   */
+  public String getCurrentPackage()
+  {
+    return _currentPackage;
+  }
+
+  /**
    * Return the {@link StringBuilder} containing the error message from parsing.
    *
    * @return the {@link StringBuilder} containing the error message from parsing.
@@ -334,6 +359,45 @@ abstract public class AbstractSchemaParser implements PegasusSchemaParser
     // this allows error messages such re-definition of a name to include a location.
     addToDataLocationMap(name, lookupDataLocation(nameString));
     return name;
+  }
+
+  /**
+   * Parse a {@link DataMap} to obtain a package name for data binding.
+   *
+   * Return the package name if explicitly specified for the named schema in the {@link DataMap}. If package is not
+   * specified, there are three cases:
+   * <p><ul>
+   * <li>If the namespace of the named schema is the same as currentNamespace, then it should inherit currentPackage as its package.
+   * <li>If the namespace of the named schema is a sub-namespace of currentNamespace, then it should inherit currentPackage as its package prefix and
+   * its package should be a sub-package of currentPackage.
+   * <li>Otherwise, we will return null for the package name to indicate that no package override for this named schema, and by default its namespace
+   * will be used in generating data binding.
+   * </ul><p>
+   *
+   * @param map to parse.
+   * @param packageKey is the key used to find the package in the map.
+   * @param currentPackage is the current package.
+   * @param currentNamespace is the current namespace.
+   * @param name {@link Name} parsed from the {@link DataMap}
+   * @return the package name for current named schema.
+   */
+  protected String getPackageFromDataMap(DataMap map, String packageKey, String currentPackage, String currentNamespace, Name name)
+  {
+    String packageName = getString(map, packageKey, false);
+    if (packageName == null)
+    {
+      packageName = currentPackage;
+      // check if the namespace of the named schema is a sub-namespace of currentNamespace, then it should inherit currentPackage as its package
+      // prefix and its package should be a sub-package of currentPackage. This normally happens for a nested named schema with a fully qualified
+      // name specified in its "name" field in the DataMap.
+      if (name.getNamespace().startsWith(currentNamespace + ".") && packageName != null && !packageName.isEmpty())
+      {
+        // in this case, if package is not explicitly specified, we should append sub-namespace to saveCurrentPackage
+        // but if saveCurrentPackage is not specified, then we should treat no package override for this nested type.
+        packageName += name.getNamespace().substring(currentNamespace.length());
+      }
+    }
+    return packageName;
   }
 
   /**
@@ -762,8 +826,15 @@ abstract public class AbstractSchemaParser implements PegasusSchemaParser
 
   /**
    * Current namespace, used to determine full name from unqualified name.
+   * This is used for over-the-wire rest.li protocol.
    */
   private String _currentNamespace = "";
+
+  /**
+   * Current package, used to pass package override information to nested unqualified name.
+   * This is used for generated data models to resolve class name conflict.
+   */
+  private String _currentPackage = "";
 
   private final Map<Object, DataLocation> _dataLocationMap = new IdentityHashMap<Object, DataLocation>();
   private final List<DataSchema> _topLevelDataSchemas = new ArrayList<DataSchema>();

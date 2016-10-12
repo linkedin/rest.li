@@ -23,11 +23,15 @@ project.ext.build = [
   'dataTemplateGenerateTasks': [:],
   'dataTemplateCompileTasks': [:],
   'avroSchemaTasks': [:],
+  'restModelGenerateTasks': [:],
 
   'getDataTemplateOutDirPath': { Project project, SourceSet sourceSet ->
     return getGeneratedSourceDirName(project, sourceSet, 'DataTemplate') + "${File.separatorChar}java"
   },
   'getAvroSchemaOutDirPath': { Project project, SourceSet sourceSet ->
     return getGeneratedSourceDirName(project, sourceSet, 'AvroSchema') + "${File.separatorChar}avro"
+  },
+  'getRestModelOutDirPath': { Project project, SourceSet sourceSet ->
+      return getGeneratedSourceDirName(project, sourceSet, 'Rest') + "${File.separatorChar}java"
   },
 ]

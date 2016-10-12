@@ -1,0 +1,11 @@
+{
+  "doc"  : "Test generation of Java bindings for includes with package override",
+  "type" : "record",
+  "name" : "IncludeD",
+  "namespace" : "com.linkedin.pegasus.generator.testpackage",
+  "package" : "com.linkedin.pegasus.generator.override",
+  "fields" : [
+    { "name" : "d1", "type" : "int" },
+    { "name" : "d2", "type" : "string" }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "doc"  : "Test generation of Java bindings for includes with package override",
+  "type" : "record",
+  "name" : "IncludeMultiple",
+  "namespace" : "com.linkedin.pegasus.generator.testpackage",
+  "package" : "com.linkedin.pegasus.generator.override",
+  "include" : [ "IncludeC", "IncludeD" ],
+  "fields" : [
+    { "name" : "m1", "type" : "int" },
+    { "name" : "m2", "type" : "string" }
+  ]
+}

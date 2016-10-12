@@ -1,0 +1,8 @@
+{
+  "doc"  : "Test generation of Java bindings for fixed type with package override",
+  "type" : "fixed",
+  "name" : "FixedMD5",
+  "namespace" : "com.linkedin.pegasus.generator.testpackage",
+  "package" : "com.linkedin.pegasus.generator.override",
+  "size" : 16
+}

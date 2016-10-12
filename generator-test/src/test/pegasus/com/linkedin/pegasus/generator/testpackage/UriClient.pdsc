@@ -1,0 +1,32 @@
+{
+  "doc"  : "Test generation of Java bindings for custom types with package override",
+  "type" : "record",
+  "name" : "UriClient",
+  "namespace" : "com.linkedin.pegasus.generator.testpackage",
+  "package" : "com.linkedin.pegasus.generator.override",
+  "fields" : [
+    {
+      "name" : "required",
+      "type" : "Uri"
+    },
+    {
+      "name": "optional",
+      "type" : "Uri",
+      "optional" : true
+    },
+    {
+      "name" : "array",
+      "type" : {
+        "type" : "array",
+        "items" : "Uri"
+      }
+    },
+    {
+      "name" : "map",
+      "type" : {
+        "type" : "map",
+        "values" : "Uri"
+      }
+    }
+  ]
+}

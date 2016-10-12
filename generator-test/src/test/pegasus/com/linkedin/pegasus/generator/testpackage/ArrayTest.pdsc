@@ -1,0 +1,76 @@
+{
+  "doc"  : "Test generation of Java bindings for arrays with package override",
+  "type" : "record",
+  "name" : "ArrayTest",
+  "namespace" : "com.linkedin.pegasus.generator.testpackage",
+  "package" : "com.linkedin.pegasus.generator.override",
+  "fields" : [
+
+    { "name" : "intArray", "type" : { "type" : "array", "items" : "int" } },
+    { "name" : "longArray", "type" : { "type" : "array", "items" : "long" } },
+    { "name" : "floatArray", "type" : { "type" : "array", "items" : "float" } },
+    { "name" : "doubleArray", "type" : { "type" : "array", "items" : "double" } },
+    { "name" : "booleanArray", "type" : { "type" : "array", "items" : "boolean" } },
+    { "name" : "stringArray", "type" : { "type" : "array", "items" : "string" } },
+    { "name" : "bytesArray", "type" : { "type" : "array", "items" : "bytes" } },
+
+    { "name" : "intMapArray", "type" : { "type" : "array", "items" : { "type" : "map", "values" : "int" } } },
+    { "name" : "longMapArray", "type" : { "type" : "array", "items" : { "type" : "map", "values" : "long" } } },
+    { "name" : "floatMapArray", "type" : { "type" : "array", "items" : { "type" : "map", "values" : "float" } } },
+    { "name" : "doubleMapArray", "type" : { "type" : "array", "items" : { "type" : "map", "values" : "double" } } },
+    { "name" : "booleanMapArray", "type" : { "type" : "array", "items" : { "type" : "map", "values" : "boolean" } } },
+    { "name" : "stringMapArray", "type" : { "type" : "array", "items" : { "type" : "map", "values" : "string" } } },
+    { "name" : "bytesMapArray", "type" : { "type" : "array", "items" : { "type" : "map", "values" : "bytes" } } },
+
+    { "name" : "intArrayArray", "type" : { "type" : "array", "items" : { "type" : "array", "items" : "int" } } },
+    { "name" : "stringArrayArray", "type" : { "type" : "array", "items" : { "type" : "array", "items" : "string" } } },
+
+    { "name" : "enumFruitsArray", "type" : { "type" : "array", "items" : "EnumFruits" } },
+
+    { "name" : "enumInlineArray", "type" :
+      { "type" : "array",
+        "items" : {
+          "type" : "enum", "name" : "EnumInArray", "symbols" : [ "A", "B" ]
+        }
+      }
+    },
+
+    { "name" : "recordArray", "type" : { "type" : "array", "items" : "RecordBar" } },
+
+    { "name" : "recordInlineArray", "type" :
+      { "type" : "array",
+        "items" : {
+          "type" : "record", "name" : "RecordInArray", "fields" : [
+            { "name" : "f", "type" : "int" }
+          ]
+        }
+      }
+    },
+
+    { "name" : "fixedArray", "type" : { "type" : "array", "items" : "FixedMD5" } },
+
+    { "name" : "fixedInlineArray", "type" :
+      { "type" : "array",
+        "items" : {
+          "type" : "fixed", "name" : "FixedInArray", "size" : 1
+        }
+      }
+    },
+
+    { "name" : "unionArray", "type" :
+      { "type" : "array",
+        "items" :
+        [
+          "null",
+          "int",
+          "string",
+          { "type" : "array", "items" : "int" },
+          { "type" : "map", "values" : "string" },
+          "EnumFruits",
+          "RecordBar",
+          "FixedMD5"
+        ]
+      }
+    }
+  ]
+}

@@ -34,7 +34,7 @@ project.sourceSets.all { SourceSet sourceSet ->
 
 // This module tests that deprecated types and fields in "Deprecated.pdsc",
 // result in correctly generated classes and methods that are also marked as deprecated.
-// Since the classes are generated, they cannot be marked with @SuppressWarnings("deprecated"), we must disable the 'deprecation' compiler warnings.
+// Since the classes are generated, they cannot be marked with @SuppressWarnings("deprecation"), we must disable the 'deprecation' compiler warnings.
 // For example, see: Deprecated.getSampleEnum()
 testCompileDataTemplate.options.compilerArgs += '-Xlint:-deprecation'
 // unfortunately, our build system also requires I disable the warning for compileTestJava, otherwise we get the same

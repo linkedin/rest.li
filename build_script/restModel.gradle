@@ -1,0 +1,87 @@
+/*
+   Copyright (c) 2016 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
+// determine data template generator classpath
+final FileCollection generatorConfig
+if (project.name == 'generator') {
+  generatorConfig = project.configurations.default + project.sourceSets.main.output
+} else {
+  final Project generatorProject = project.evaluationDependsOn(':generator')
+  generatorConfig = generatorProject.configurations.default + generatorProject.sourceSets.main.output
+}
+
+// determine rest model generator classpath
+final FileCollection restGeneratorConfig
+if (project.name == 'restli-tools') {
+  restGeneratorConfig = project.configurations.default + project.sourceSets.main.output
+} else {
+  final Project restGeneratorProject = project.evaluationDependsOn(':restli-tools')
+  restGeneratorConfig = restGeneratorProject.configurations.default + restGeneratorProject.sourceSets.main.output
+}
+
+project.sourceSets.all { SourceSet sourceSet ->
+  final String inputParentDirPath = "src${File.separatorChar}${sourceSet.name}"
+
+  // data template generation task
+  final String pegasusDirName = 'pegasus'
+  final String inputDataSchemaDirPath = "${inputParentDirPath}${File.separatorChar}${pegasusDirName}"
+  final FileTree inputDataSchemaFiles = project.fileTree(dir: inputDataSchemaDirPath, includes: ["**${File.separatorChar}*.pdsc"])
+  if (!inputDataSchemaFiles.empty) {
+    final String outputDataTemplateDirPath = rootProject.ext.build.getDataTemplateOutDirPath(project, sourceSet)
+    sourceSet.java.srcDir(outputDataTemplateDirPath)
+
+    rootProject.ext.build.dataTemplateGenerateTasks[sourceSet] = project.task(sourceSet.name + 'GenerateDataTemplate', type: JavaExec) {
+      main = 'com.linkedin.pegasus.generator.PegasusDataTemplateGenerator'
+      classpath generatorConfig
+      args outputDataTemplateDirPath
+      args inputDataSchemaFiles
+      systemProperties(['generator.resolver.path': inputDataSchemaDirPath])
+      doFirst {
+        project.mkdir(outputDataTemplateDirPath)
+      }
+    }
+
+    project.tasks[sourceSet.compileJavaTaskName].dependsOn(rootProject.ext.build.dataTemplateGenerateTasks[sourceSet])
+  }
+
+  // rest model generation task
+  final String idlDirName = 'idl'
+  final String inputIdlDirPath = "${inputParentDirPath}${File.separatorChar}${idlDirName}"
+  final FileTree inputIdlFiles = project.fileTree(dir: inputIdlDirPath, includes: ["**${File.separatorChar}*.restspec.json"])
+  if (!inputIdlFiles.empty) {
+    final String outputRestModelDirPath = rootProject.ext.build.getRestModelOutDirPath(project, sourceSet)
+    sourceSet.java.srcDir(outputRestModelDirPath)
+
+    rootProject.ext.build.restModelGenerateTasks[sourceSet] = project.task(sourceSet.name + 'GenerateRestModel', type: JavaExec) {
+      main = 'com.linkedin.restli.tools.clientgen.RestRequestBuilderGenerator'
+      classpath restGeneratorConfig
+      args outputRestModelDirPath
+      args inputIdlFiles
+      systemProperties(['generator.resolver.path': inputDataSchemaDirPath, "generator.rest.generate.version": "2.0.0", "generator.rest.generate.datatemplates": "false", "generator.generate.imported": "false"])
+      doFirst {
+        project.mkdir(outputRestModelDirPath)
+      }
+    }
+
+    project.tasks[sourceSet.compileJavaTaskName].dependsOn(rootProject.ext.build.restModelGenerateTasks[sourceSet])
+  }
+
+  final Task jarTask = project.tasks[sourceSet.getTaskName('', 'jar')]
+  jarTask.from(inputParentDirPath) {
+    include "${pegasusDirName}${File.separatorChar}**${File.separatorChar}*.pdsc"
+    include "${idlDirName}${File.separatorChar}**${File.separatorChar}*.restspec.json\""
+  }
+}

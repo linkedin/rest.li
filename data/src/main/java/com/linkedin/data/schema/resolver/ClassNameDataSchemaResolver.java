@@ -28,8 +28,13 @@ import com.linkedin.data.template.TyperefInfo;
 /**
  * Resolve Java class name into data schema, assuming the class is loaded using the {@link ClassLoader}.
  *
+ * @deprecated This class needs to be deprecated since we are supporting package override for a data schema, so the classname will
+ * be different from the schema name, which is the assumption used in this data schema resolver. Consider using
+ * {@link ClasspathResourceDataSchemaResolver} instead.
+ *
  * @author Keren Jin
  */
+@Deprecated
 public class ClassNameDataSchemaResolver extends DefaultDataSchemaResolver
 {
   /**

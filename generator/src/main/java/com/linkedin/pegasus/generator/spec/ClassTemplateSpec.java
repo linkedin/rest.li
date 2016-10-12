@@ -18,13 +18,14 @@ package com.linkedin.pegasus.generator.spec;
 
 
 import com.linkedin.data.schema.ArrayDataSchema;
+import com.linkedin.data.schema.BindingInfo;
 import com.linkedin.data.schema.DataSchema;
-import com.linkedin.data.schema.EnumDataSchema;
 import com.linkedin.data.schema.FixedDataSchema;
 import com.linkedin.data.schema.MapDataSchema;
 import com.linkedin.data.schema.PrimitiveDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.TyperefDataSchema;
+import com.linkedin.data.schema.EnumDataSchema;
 import com.linkedin.data.schema.UnionDataSchema;
 
 import java.util.Arrays;
@@ -35,13 +36,14 @@ import java.util.Set;
 /**
  * @author Keren Jin
  */
-public class ClassTemplateSpec
+public class ClassTemplateSpec implements BindingInfo
 {
   private DataSchema _schema;
   private TyperefDataSchema _originalTyperefSchema;
   private ClassTemplateSpec _enclosingClass;
   private String _namespace;
   private String _className;
+  private String _package;
   private Set<ModifierSpec> _modifiers;
   private String _location;
 
@@ -125,6 +127,17 @@ public class ClassTemplateSpec
     this._namespace = namespace;
   }
 
+  @Override
+  public String getPackage()
+  {
+    return (_package == null || _package.isEmpty()) ? _namespace : _package;
+  }
+
+  public void setPackage(String packageName)
+  {
+    _package = packageName;
+  }
+
   public String getClassName()
   {
     return _className;
@@ -157,7 +170,12 @@ public class ClassTemplateSpec
 
   public String getFullName()
   {
-    return (_namespace == null ? "" : _namespace + ".") + _className;
+    return (_namespace == null || _namespace.isEmpty()) ? _className : _namespace + "." + _className;
+  }
+
+  @Override
+  public String getBindingName() {
+    return (_package == null || _package.isEmpty()) ? getFullName() : _package + "." + _className;
   }
 
   public void setFullName(String fullName)

@@ -96,6 +96,7 @@ public class SchemaToJsonEncoder
 
   protected final JsonBuilder _builder;
   protected String _currentNamespace = "";
+  protected String _currentPackage = "";
   protected final Set<String> _alreadyDumped = new HashSet<String>();
 
   public SchemaToJsonEncoder(JsonBuilder builder)
@@ -205,10 +206,17 @@ public class SchemaToJsonEncoder
     }
 
     String saveCurrentNamespace = _currentNamespace;
+    String saveCurrentPackage = _currentPackage;
 
     _builder.writeStartObject();
     _builder.writeStringField(TYPE_KEY, schema.getType().toString().toLowerCase(), true);
     encodeName(NAME_KEY, schema);
+    final String packageName = schema.getPackage();
+    if (packageName != null && !_currentPackage.equals(packageName))
+    {
+      _builder.writeStringField(PACKAGE_KEY, packageName, false);
+      _currentPackage = packageName;
+    }
     _builder.writeStringField(DOC_KEY, schema.getDoc(), false);
 
     switch(schema.getType())
@@ -253,6 +261,7 @@ public class SchemaToJsonEncoder
     _builder.writeEndObject();
 
     _currentNamespace = saveCurrentNamespace;
+    _currentPackage = saveCurrentPackage;
   }
 
   protected void writeSchemaName(NamedDataSchema schema) throws IOException

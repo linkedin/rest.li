@@ -290,6 +290,7 @@ public class TestDataSchemaResolver
   @Test
   public void testClassNameDataSchemaResolver()
   {
+    @SuppressWarnings("deprecation")
     final ClassNameDataSchemaResolver resolver = new ClassNameDataSchemaResolver();
     final PegasusSchemaParser parser = new SchemaParser(resolver);
 
@@ -306,6 +307,25 @@ public class TestDataSchemaResolver
     assertNull(nonExistSchema);
     assertTrue(parser.errorMessage().contains(nonExistSchemaName));
     assertTrue(resolver.isBadLocation(new ClassNameDataSchemaLocation(nonExistSchemaName)));
+  }
+
+  @Test
+  public void testClasspathResourceDataSchemaResolver()
+  {
+    final ClasspathResourceDataSchemaResolver resolver = new ClasspathResourceDataSchemaResolver(SchemaParserFactory.instance());
+    final PegasusSchemaParser parser = new SchemaParser(resolver);
+
+    final String existingSchemaName = "com.linkedin.data.schema.ValidationDemo";
+    final String nonExistSchemaName = "Non-Existing Schema";
+
+    final DataSchema existSchema = parser.lookupName(existingSchemaName);
+    assertNotNull(existSchema);
+    assertTrue(existSchema instanceof RecordDataSchema);
+    assertEquals(((RecordDataSchema) existSchema).getFullName(), existingSchemaName);
+
+    final DataSchema nonExistSchema = parser.lookupName(nonExistSchemaName);
+    assertNull(nonExistSchema);
+    assertTrue(parser.errorMessage().contains(nonExistSchemaName));
   }
 
   public void lookup(DataSchemaResolver resolver, String[][] lookups, char separator, boolean debug)

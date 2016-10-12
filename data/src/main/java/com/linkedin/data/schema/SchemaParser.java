@@ -353,13 +353,17 @@ public class SchemaParser extends AbstractSchemaParser
     ComplexDataSchema schema = null;
     NamedDataSchema namedSchema = null;
     String saveCurrentNamespace = getCurrentNamespace();
+    String saveCurrentPackage = getCurrentPackage();
 
     Name name = null;
+    String packageName = null;
     List<Name> aliasNames = null;
     if (NAMED_DATA_SCHEMA_TYPE_SET.contains(type))
     {
       name = getNameFromDataMap(map, NAME_KEY, saveCurrentNamespace);
+      packageName = getPackageFromDataMap(map, PACKAGE_KEY, saveCurrentPackage, saveCurrentNamespace, name);
       setCurrentNamespace(name.getNamespace());
+      setCurrentPackage(packageName);
       aliasNames = getAliases(map);
     }
     else
@@ -473,6 +477,10 @@ public class SchemaParser extends AbstractSchemaParser
       {
         namedSchema.setDoc(doc);
       }
+      if (packageName != null)
+      {
+        namedSchema.setPackage(packageName);
+      }
       if (aliasNames != null)
       {
         namedSchema.setAliases(aliasNames);
@@ -486,6 +494,7 @@ public class SchemaParser extends AbstractSchemaParser
     }
 
     setCurrentNamespace(saveCurrentNamespace);
+    setCurrentPackage(saveCurrentPackage);
     return schema;
   }
 

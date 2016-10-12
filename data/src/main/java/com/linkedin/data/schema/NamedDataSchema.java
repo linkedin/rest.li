@@ -24,7 +24,7 @@ import java.util.List;
  *
  * @author slim
  */
-public abstract class NamedDataSchema extends ComplexDataSchema implements Named
+public abstract class NamedDataSchema extends ComplexDataSchema implements Named, BindingInfo
 {
   protected NamedDataSchema(Type type, Name name)
   {
@@ -53,6 +53,16 @@ public abstract class NamedDataSchema extends ComplexDataSchema implements Named
   }
 
   /**
+   * Set the binding package of the {@link DataSchema}.
+   *
+   * @param packageName of the {@link DataSchema}.
+   */
+  public void setPackage(String packageName)
+  {
+    _package = packageName;
+  }
+
+  /**
    * Return the {@link DataSchema}'s unqualified name.
    *
    * @return the {@link DataSchema}'s unqualified name.
@@ -65,6 +75,7 @@ public abstract class NamedDataSchema extends ComplexDataSchema implements Named
 
   /**
    * Return the {@link DataSchema}'s fully qualified name.
+   * This name is used in the over-the-wire protocol.
    *
    * @return the {@link DataSchema}'s fully qualified name.
    */
@@ -72,6 +83,29 @@ public abstract class NamedDataSchema extends ComplexDataSchema implements Named
   public String getFullName()
   {
     return _name.getFullName();
+  }
+
+  /**
+   * Return the {@link DataSchema}'s language binding name.
+   * This is the fully qualified name for the generated data model to resolve potential name conflict.
+   *
+   * @return the {@link DataSchema}'s language binding name.
+   */
+  @Override
+  public String getBindingName()
+  {
+    return (_package == null || _package.isEmpty()) ? getFullName() : _package + "." + getName();
+  }
+
+  /**
+   * Return the {@link DataSchema}'s binding package.
+   *
+   * @return the {@link DataSchema}'s binding package.
+   */
+  @Override
+  public String getPackage()
+  {
+    return _package;
   }
 
   /**
@@ -132,6 +166,12 @@ public abstract class NamedDataSchema extends ComplexDataSchema implements Named
   }
 
   private final Name _name;
+  /**
+   * Package override (if specified) for this data schema. This is used in  {@link #getBindingName()} to generate the
+   * language binding class name for generated data model. It is optional, if not specified, we will use schema namespace
+   * as the default package name.
+   */
+  private String _package = "";
   private String _doc = "";
   private List<Name> _aliases = _emptyAliases;
 

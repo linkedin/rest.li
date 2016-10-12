@@ -1,0 +1,10 @@
+{
+  "doc"  : "Test generation of Java bindings for circular imports with package override",
+  "type" : "record",
+  "name" : "CircularImportB",
+  "namespace" : "com.linkedin.pegasus.generator.testpackage",
+  "package" : "com.linkedin.pegasus.generator.override",
+  "fields" : [
+    { "name" : "link", "type" : [ "CircularImportA", "CircularImportB", "null" ] }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "type" : "typeref",
+  "name" : "Time",
+  "namespace": "com.linkedin.pegasus.generator.testpackage",
+  "package" : "com.linkedin.pegasus.generator.override",
+  "doc"  : "Number of milliseconds since midnight, January 1, 1970 UTC. It must be a positive number. Test generation of Java bindings with package override",
+  "ref"  : "long"
+}

@@ -62,6 +62,8 @@ public class TestRestLiSnapshotExporter
 
   private static final String CIRCULAR_FILE = "circular-circular.snapshot.json";
 
+  private static final String GREETINGS_FILE = "sample-com.linkedin.restli.tools.sample.greetings.snapshot.json";
+
   private File outdir;
   // Gradle by default will use the module directory as the working directory
   // IDE such as IntelliJ IDEA may use the project directory instead
@@ -166,6 +168,37 @@ public class TestRestLiSnapshotExporter
 
   }
 
+  @Test
+  public void testSampleGreetingSnapshot() throws Exception
+  {
+    RestLiSnapshotExporter exporter = new RestLiSnapshotExporter();
+    exporter.setResolverPath(moduleDir + File.separator + "src" + File.separator + "test" + File.separator + PEGASUS_SUFFIX);
+
+    assertEquals(outdir.list().length, 0);
+    GeneratorResult result = exporter.export("sample",
+            null,
+            new String[] {moduleDir + FS + TEST_DIR},
+            new String[] {"com.linkedin.restli.tools.sample"},
+            null,
+            outdir.getAbsolutePath());
+
+    String[] expectedFiles = {GREETINGS_FILE};
+
+    assertEquals(outdir.list().length, expectedFiles.length);
+    assertEquals(result.getModifiedFiles().size(), expectedFiles.length);
+    assertEquals(result.getTargetFiles().size(), expectedFiles.length);
+
+    for (String file : expectedFiles)
+    {
+      String actualFile = outdir + FS + file;
+      String expectedFile = SNAPSHOTS_DIR + FS + file;
+
+      compareFiles(actualFile, expectedFile);
+      assertTrue(result.getModifiedFiles().contains(new File(actualFile)));
+      assertTrue(result.getTargetFiles().contains(new File(actualFile)));
+    }
+  }
+
   private void compareFiles(String actualFileName, String expectedFileName)
     throws Exception
   {
@@ -259,5 +292,4 @@ public class TestRestLiSnapshotExporter
 
   private static final String PEGASUS_SUFFIX = "pegasus" + File.separator;
   private static final String RESOURCES_SUFFIX = "src" + File.separator + "test" + File.separator + "resources" + File.separator;
-
 }

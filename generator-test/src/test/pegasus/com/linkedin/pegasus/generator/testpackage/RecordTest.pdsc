@@ -1,0 +1,53 @@
+{
+  "doc"  : "Test generation of Java bindings for records with package override",
+  "type" : "record",
+  "name" : "RecordTest",
+  "namespace" : "com.linkedin.pegasus.generator.testpackage",
+  "package" : "com.linkedin.pegasus.generator.override",
+  "fields" : [
+    { "name" : "intField",       "type" : "int" },
+    { "name" : "intOptionalField", "type" : "int", "optional" : true },
+    { "name" : "intDefaultField" , "type" : "int", "default" : 17 },
+    { "name" : "intDefaultOptionalField", "type" : "int", "optional" : true, "default" : 42 },
+    { "name" : "longField",      "type" : "long" },
+    { "name" : "floatField",     "type" : "float" },
+    { "name" : "doubleField",    "type" : "double" },
+    { "name" : "booleanField",   "type" : "boolean" },
+    { "name" : "stringField",    "type" : "string" },
+    { "name" : "bytesField",     "type" : "bytes" },
+
+    { "name" : "enumField",      "type" : "EnumFruits" },
+    { "name" : "recordField",    "type" : "RecordBar" },
+    { "name" : "fixedField",     "type" : "FixedMD5" },
+
+    { "name" : "enumInlineField", "type" :
+      { "type" : "enum", "name" : "EnumInRecord", "symbols" : [ "A", "B", "C" ] }
+    },
+    { "name" : "recordInlineField", "type" :
+      { "type" : "record", "name" : "RecordInRecord",
+        "fields" : [
+          { "name" : "a", "type" : "int" }
+        ]
+      }
+    },
+    { "name" : "fixedInlineField", "type" :
+      { "type" : "fixed", "name" : "FixedInRecord", "size" : 1 }
+    },
+
+    { "name" : "arrayField",     "type" : { "type" : "array", "items" : "int" } },
+    { "name" : "mapField",       "type" : { "type" : "map", "values" : "string" } },
+
+    {
+      "name" : "unionField",
+      "type" : [
+        "int",
+        "string",
+        "EnumFruits",
+        "RecordBar",
+        { "type" : "array", "items" : "string" },
+        { "type" : "map", "values" : "long" },
+        "null"
+      ]
+    }
+  ]
+}

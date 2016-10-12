@@ -1,0 +1,134 @@
+{
+  "doc"  : "Test generation of Java bindings for typerefs with package override",
+  "name" : "TypeRefReferences",
+  "namespace": "com.linkedin.pegasus.generator.testpackage",
+  "package" : "com.linkedin.pegasus.generator.override",
+  "type" : "record",
+  "fields" : [
+    {
+      "name" : "a1",
+      "type" : {
+        "type" : "array",
+        "items" : {
+          "name" : "someEnum1",
+          "namespace" : "com.linkedin.pegasus.generator.testpackage",
+          "type" : "enum",
+          "symbols" : [ "A", "B" ]
+        }
+      }
+    },
+    {
+      "name" : "a2",
+      "type" : {
+        "type" : "map",
+        "values" : {
+          "name" : "someEnum2",
+          "namespace" : "com.linkedin.pegasus.generator.testpackage",
+          "type" : "enum",
+          "symbols" : [ "A", "B" ]
+        }
+      }
+    },
+    {
+      "name" : "a3",
+      "type" : [
+        {
+          "name" : "someEnum3",
+          "namespace" : "com.linkedin.pegasus.generator.testpackage",
+          "type" : "enum",
+          "symbols" : [ "A", "B" ]
+        },
+        "long",
+        "string"
+      ]
+    },
+    {
+      "name" : "a4",
+      "type" : {
+        "type" : "map",
+        "values": {
+          "type" : "array",
+          "items" : {
+            "type" : "map",
+            "values" : {
+                "name" : "someEnum4",
+                "namespace" : "com.linkedin.pegasus.generator.testpackage",
+                "type" : "enum",
+                "symbols" : [ "A", "B" ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "name" : "items",
+      "type" : {
+        "type" : "array",
+        "items": {
+          "name" : "TypeRefInArray",
+          "namespace": "com.linkedin.pegasus.generator.testpackage",
+          "type" : "typeref",
+          "ref"  : {
+            "name" : "TypeRefInArray2",
+            "namespace": "com.linkedin.pegasus.generator.testpackage",
+            "type" : "typeref",
+            "ref"  : "someEnum1"
+          }
+        }
+      }
+    },
+    {
+      "name" : "items2",
+      "type" : {
+        "type" : "map",
+        "values": {
+          "name" : "TypeRefInMap",
+          "namespace": "com.linkedin.pegasus.generator.testpackage",
+          "type" : "typeref",
+          "ref"  : {
+            "name" : "TypeRefInMap2",
+            "namespace": "com.linkedin.pegasus.generator.testpackage",
+            "type" : "typeref",
+            "ref"  : "someEnum2"
+          }
+        }
+      }
+    },
+    {
+      "name" : "union",
+      "type" : [
+        {
+          "name" : "TypeRefInUnion",
+          "namespace": "com.linkedin.pegasus.generator.testpackage",
+          "type" : "typeref",
+          "ref"  : {
+            "name" : "TypeRefInUnion2",
+            "namespace": "com.linkedin.pegasus.generator.testpackage",
+            "type" : "typeref",
+            "ref"  : "someEnum3"
+          }
+        },
+        "long",
+        "string"
+      ]
+    },
+    {
+      "name" : "items3",
+      "type" : {
+        "type" : "map",
+        "values": {
+          "type" : "array",
+          "items" : {
+            "type" : "map",
+            "values" : {
+              "name" : "TypeRefInNestedCollections",
+              "namespace": "com.linkedin.pegasus.generator.testpackage",
+              "type" : "typeref",
+              "ref"  : "someEnum4"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

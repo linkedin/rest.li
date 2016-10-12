@@ -33,6 +33,7 @@ public class DataSchemaConstants
   public static final String ITEMS_KEY = "items";
   public static final String NAME_KEY = "name";
   public static final String NAMESPACE_KEY = "namespace";
+  public static final String PACKAGE_KEY = "package";
   public static final String OPTIONAL_KEY = "optional";
   public static final String ORDER_KEY = "order";
   public static final String REF_KEY = "ref";
@@ -75,6 +76,7 @@ public class DataSchemaConstants
 
   public static final Pattern NAME_PATTERN = Pattern.compile("[A-Za-z_][0-9A-Za-z_]*(\\.[A-Za-z_][0-9A-Za-z_]*)*");
   public static final Pattern NAMESPACE_PATTERN = Pattern.compile("([A-Za-z_][0-9A-Za-z_]*(\\.[A-Za-z_][0-9A-Za-z_]*)*)?");
+  public static final Pattern PACKAGE_PATTERN = Pattern.compile("([A-Za-z_][0-9A-Za-z_]*(\\.[A-Za-z_][0-9A-Za-z_]*)*)?");
   public static final Pattern UNQUALIFIED_NAME_PATTERN = Pattern.compile("[A-Za-z_][0-9A-Za-z_]*");
   public static final Pattern ENUM_SYMBOL_PATTERN = Pattern.compile("[A-Za-z_][0-9A-Za-z_]*");
   public static final Pattern FIELD_NAME_PATTERN = Pattern.compile("[A-Za-z_][0-9A-Za-z_]*");
@@ -88,7 +90,7 @@ public class DataSchemaConstants
     NAMED_DATA_SCHEMA_TYPE_SET = Collections.unmodifiableSet(namedSet);
 
     Set<String> schemaKeys = new HashSet<String>(Arrays.asList(ALIASES_KEY, DOC_KEY, FIELDS_KEY, INCLUDE_KEY, ITEMS_KEY, NAME_KEY,
-                                                               NAMESPACE_KEY, REF_KEY,
+                                                               NAMESPACE_KEY, PACKAGE_KEY, REF_KEY,
                                                                SIZE_KEY, SYMBOLS_KEY, SYMBOL_DOCS_KEY, TYPE_KEY, VALUES_KEY));
     SCHEMA_KEYS = Collections.unmodifiableSet(schemaKeys);
 

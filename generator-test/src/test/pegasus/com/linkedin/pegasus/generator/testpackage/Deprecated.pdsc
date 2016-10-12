@@ -1,0 +1,40 @@
+{
+  "doc"  : "Test generation of Java bindings for deprecated with package override",
+  "type" : "record",
+  "name" : "Deprecated",
+  "namespace" : "com.linkedin.pegasus.generator.testpackage",
+  "package" : "com.linkedin.pegasus.generator.override",
+  "deprecated": true,
+  "fields" : [
+    { "name" : "deprecatedInt", "type" : "int", "deprecated": "Reason for int deprecation." },
+    { "name" : "sample", "type" : "int", "deprecated": true },
+    { "name" : "sampleTyperef", "type" : {
+        "type" : "typeref",
+        "name" : "DeprecatedTyperef",
+        "namespace" : "com.linkedin.pegasus.generator.testpackage",
+        "ref"  : "double",
+        "deprecated": "Reason for typeref deprecation."
+      },
+      "deprecated": true
+    },
+    { "name" : "sampleEnum", "type" : {
+        "name" : "DeprecatedEnum",
+        "namespace" : "com.linkedin.pegasus.generator.testpackage",
+        "type" : "enum",
+        "symbols" : [ "ONE", "TWO" ],
+        "deprecatedSymbols": { "ONE": "Reason for enum deprecation", "TWO": true },
+        "deprecated": true
+      },
+      "deprecated": true
+    },
+    { "name" : "sampleFixed", "type" : {
+        "type" : "fixed",
+        "name" : "DeprecatedFixed",
+        "namespace" : "com.linkedin.pegasus.generator.testpackage",
+        "size" : 16,
+        "deprecated": true
+      },
+      "deprecated": true
+    }
+  ]
+}

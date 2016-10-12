@@ -26,8 +26,10 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 
 import com.linkedin.pegasus.generator.GeneratorResult;
+import org.apache.commons.io.FileUtils;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
@@ -42,12 +44,15 @@ public class TestRestLiResourceModelExporter
   private static final String FS = File.separator;
   private static final String TEST_DIR = "src" + FS + "test" + FS + "java";
   private static final String IDLS_DIR = "src" + FS + "test" + FS + "resources" + FS + "idls";
+  private static final String IDL_DIR = "src" + FS + "test" + FS + "idl";
 
   private static final String STATUSES_FILE = "twitter-statuses.restspec.json";
   private static final String STATUSES_PARAMS_FILE = "twitter-statusesParams.restspec.json";
   private static final String FOLLOWS_FILE = "twitter-follows.restspec.json";
   private static final String ACCOUNTS_FILE = "twitter-accounts.restspec.json";
   private static final String TRENDING_FILE = "twitter-trending.restspec.json";
+
+  private static final String GREETING_FILE = "com.linkedin.restli.tools.sample.greetings.restspec.json";
 
   private File outdir;
   // Gradle by default will use the module directory as the working directory
@@ -66,6 +71,11 @@ public class TestRestLiResourceModelExporter
   public void tearDown() throws IOException
   {
     rmdir(outdir);
+  }
+
+  @BeforeMethod
+  public void testSetup() throws IOException {
+    FileUtils.cleanDirectory(outdir);
   }
 
   @Test
@@ -91,6 +101,36 @@ public class TestRestLiResourceModelExporter
     {
       String actualFile = outdir + FS + file;
       String expectedFile = moduleDir + FS + IDLS_DIR + FS + file;
+
+      compareFiles(actualFile, expectedFile);
+      assertTrue(result.getModifiedFiles().contains(new File(actualFile)));
+      assertTrue(result.getTargetFiles().contains(new File(actualFile)));
+    }
+  }
+
+  @Test
+  public void testSampleGreeting() throws Exception
+  {
+    RestLiResourceModelExporter exporter = new RestLiResourceModelExporter();
+
+    assertEquals(outdir.list().length, 0);
+    GeneratorResult result = exporter.export(null,
+            null,
+            new String[] {moduleDir + FS + TEST_DIR},
+            new String[] {"com.linkedin.restli.tools.sample"},
+            null,
+            outdir.getAbsolutePath());
+
+    String[] expectedFiles = {GREETING_FILE};
+
+    assertEquals(outdir.list().length, expectedFiles.length);
+    assertEquals(result.getModifiedFiles().size(), expectedFiles.length);
+    assertEquals(result.getTargetFiles().size(), expectedFiles.length);
+
+    for (String file : expectedFiles)
+    {
+      String actualFile = outdir + FS + file;
+      String expectedFile = moduleDir + FS + IDL_DIR + FS + file;
 
       compareFiles(actualFile, expectedFile);
       assertTrue(result.getModifiedFiles().contains(new File(actualFile)));

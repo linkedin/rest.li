@@ -442,21 +442,6 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
     }
   }
 
-  private static ClassTemplateSpec classSpecFromJavaClass(JDefinedClass clazz)
-  {
-    final ClassTemplateSpec classSpec = new ClassTemplateSpec();
-
-    classSpec.setNamespace(clazz.getPackage().name());
-    classSpec.setClassName(clazz.name());
-
-    if (clazz.outer() instanceof JDefinedClass)
-    {
-      classSpec.setEnclosingClass(classSpecFromJavaClass((JDefinedClass) clazz.outer()));
-    }
-
-    return classSpec;
-  }
-
   private boolean checkVersionAndDeprecateBuilderClass(JDefinedClass clazz, boolean isRootBuilders)
   {
     if (_deprecatedByVersion == null)
@@ -1567,7 +1552,6 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
    */
   private ClassTemplateSpec generateClassSpec(DataSchema schema, JDefinedClass enclosingClass)
   {
-    final ClassTemplateSpec enclosingClassSpec = classSpecFromJavaClass(enclosingClass);
     final DataSchemaLocation location = new FileDataSchemaLocation(_currentSourceFile);
     return _specGenerator.generate(schema, location);
   }
@@ -1576,7 +1560,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
   {
     if (schema instanceof NamedDataSchema)
     {
-      final String fullName = TemplateSpecGenerator.classNameForNamedSchema((NamedDataSchema) schema);
+      final String fullName = ((NamedDataSchema) schema).getBindingName();
       return getCodeModel().ref(fullName);
     }
     else if (schema instanceof PrimitiveDataSchema)
@@ -1587,7 +1571,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
     else
     {
       final ClassTemplateSpec classSpec = generateClassSpec(schema, enclosingClass);
-      return getCodeModel().ref(classSpec.getFullName());
+      return getCodeModel().ref(classSpec.getBindingName());
     }
   }
 

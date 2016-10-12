@@ -1,0 +1,8 @@
+{
+  "doc"  : "Test generation of Java bindings for unions with package override",
+  "type" : "typeref",
+  "name" : "UnionTyperef",
+  "namespace" : "com.linkedin.pegasus.generator.testpackage",
+  "package" : "com.linkedin.pegasus.generator.override",
+  "ref"  : [ "Date", "CustomPoint" ]
+}

@@ -1,0 +1,74 @@
+{
+  "models" : [ {
+    "type" : "record",
+    "name" : "SimpleGreeting",
+    "namespace" : "com.linkedin.restli.tools.sample.override",
+    "package" : "com.linkedin.restli.tools.sample",
+    "doc" : "A simple greeting",
+    "fields" : [ {
+      "name" : "id",
+      "type" : "long"
+    }, {
+      "name" : "message",
+      "type" : "string"
+    } ]
+  } ],
+  "schema" : {
+    "name" : "greetings",
+    "namespace" : "com.linkedin.restli.tools.sample",
+    "path" : "/greetings",
+    "schema" : "com.linkedin.restli.tools.sample.override.SimpleGreeting",
+    "doc" : "Sample Collection Resource containing all simple greetings\n\ngenerated from: com.linkedin.restli.tools.sample.SimpleGreetingResource",
+    "collection" : {
+      "identifier" : {
+        "name" : "greetingsId",
+        "type" : "long"
+      },
+      "supports" : [ "batch_get", "create", "delete", "get", "partial_update" ],
+      "methods" : [ {
+        "method" : "create",
+        "doc" : "Creates a new Greeting"
+      }, {
+        "method" : "get",
+        "doc" : "Gets a single greeting resource"
+      }, {
+        "method" : "partial_update",
+        "doc" : "Updates a single greeting resource"
+      }, {
+        "method" : "delete",
+        "doc" : "Deletes a greeting resource"
+      }, {
+        "method" : "batch_get",
+        "doc" : "Gets a batch of Greetings"
+      } ],
+      "finders" : [ {
+        "name" : "message",
+        "parameters" : [ {
+          "name" : "message",
+          "type" : "string",
+          "optional" : true
+        } ]
+      } ],
+      "actions" : [ {
+        "name" : "greetingArrayAction",
+        "doc" : "Action data template array return type and input type test case",
+        "parameters" : [ {
+          "name" : "greetings",
+          "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.tools.sample.override.SimpleGreeting\" }"
+        } ],
+        "returns" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.tools.sample.override.SimpleGreeting\" }"
+      }, {
+        "name" : "intArrayAction",
+        "doc" : "Action array return type test case",
+        "parameters" : [ {
+          "name" : "ints",
+          "type" : "{ \"type\" : \"array\", \"items\" : \"int\" }"
+        } ],
+        "returns" : "{ \"type\" : \"array\", \"items\" : \"int\" }"
+      } ],
+      "entity" : {
+        "path" : "/greetings/{greetingsId}"
+      }
+    }
+  }
+}

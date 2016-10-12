@@ -51,7 +51,6 @@ public class TestCustomPoint
   @BeforeSuite
   public void testInitializer()
   {
-    assertFalse(DataTemplateUtil.hasCoercer(CustomPoint.class));
     CustomPointRecord r = new CustomPointRecord();
     assertTrue(DataTemplateUtil.hasCoercer(CustomPoint.class));
   }

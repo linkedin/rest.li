@@ -18,7 +18,8 @@ package com.linkedin.restli.docgen;
 
 
 import com.linkedin.data.schema.DataSchemaResolver;
-import com.linkedin.data.schema.resolver.ClassNameDataSchemaResolver;
+import com.linkedin.data.schema.SchemaParserFactory;
+import com.linkedin.data.schema.resolver.ClasspathResourceDataSchemaResolver;
 import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.jersey.api.uri.UriComponent;
 import com.linkedin.jersey.core.util.MultivaluedMap;
@@ -49,7 +50,7 @@ public class DefaultDocumentationRequestHandler implements RestLiDocumentationRe
   @Override
   public void initialize(RestLiConfig config, Map<String, ResourceModel> rootResources)
   {
-    final DataSchemaResolver schemaResolver = new ClassNameDataSchemaResolver();
+    final DataSchemaResolver schemaResolver = new ClasspathResourceDataSchemaResolver(SchemaParserFactory.instance());
     final ResourceSchemaCollection resourceSchemas = ResourceSchemaCollection.loadOrCreateResourceSchema(rootResources);
     final RestLiResourceRelationship relationships = new RestLiResourceRelationship(resourceSchemas, schemaResolver);
 

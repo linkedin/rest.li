@@ -22,7 +22,8 @@ import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.RecordDataSchema;
-import com.linkedin.data.schema.resolver.ClassNameDataSchemaResolver;
+import com.linkedin.data.schema.SchemaParserFactory;
+import com.linkedin.data.schema.resolver.ClasspathResourceDataSchemaResolver;
 import com.linkedin.data.schema.validation.RequiredMode;
 import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
 import com.linkedin.data.schema.validation.ValidationOptions;
@@ -99,7 +100,7 @@ public class TestExamplesGenerator
                                                                      SimpleResourceUnderCollectionResource.class,
                                                                      CustomTypesResource.class);
     final ResourceSchemaCollection resourceSchemas = ResourceSchemaCollection.loadOrCreateResourceSchema(resources);
-    final DataSchemaResolver schemaResolver = new ClassNameDataSchemaResolver();
+    final DataSchemaResolver schemaResolver = new ClasspathResourceDataSchemaResolver(SchemaParserFactory.instance());
     final ValidationOptions valOptions = new ValidationOptions(RequiredMode.MUST_BE_PRESENT);
     ExampleRequestResponse capture;
     ValidationResult valRet;

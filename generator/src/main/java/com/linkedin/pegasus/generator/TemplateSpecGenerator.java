@@ -93,26 +93,6 @@ public class TemplateSpecGenerator
   private final String _customTypeLanguage;
   private final String _templatePackageName;
 
-  /**
-   * Return Java class name for a {@link NamedDataSchema}.
-   *
-   * @param schema provides the {@link NamedDataSchema}.
-   *
-   * @return the fully qualified Java class name for the provided {@link NamedDataSchema}.
-   */
-  public static String classNameForNamedSchema(NamedDataSchema schema)
-  {
-    final StringBuilder sb = new StringBuilder();
-    final String namespace = schema.getNamespace();
-    if (!namespace.isEmpty())
-    {
-      sb.append(namespace);
-      sb.append('.');
-    }
-    sb.append(schema.getName());
-    return sb.toString();
-  }
-
   public TemplateSpecGenerator(DataSchemaResolver schemaResolver)
   {
     this(schemaResolver, CustomTypeUtil.JAVA_PROPERTY, DataTemplate.class.getPackage().getName());
@@ -139,7 +119,7 @@ public class TemplateSpecGenerator
   {
     final ClassTemplateSpec spec = ClassTemplateSpec.createFromDataSchema(schema);
     _schemaToClassMap.put(schema, spec);
-    _classNameToSchemaMap.put(spec.getFullName(), schema);
+    _classNameToSchemaMap.put(spec.getBindingName(), schema);
   }
 
   /**
@@ -244,7 +224,7 @@ public class TemplateSpecGenerator
   /**
    * Checks if a class name conflict occurs, if it occurs throws {@link IllegalArgumentException}.
    *
-   * @param className provides the Java class name.
+   * @param className provides the template spec class name.
    * @param schema    provides the {@link DataSchema} that would be bound if there is no conflict.
    *
    * @throws IllegalArgumentException
@@ -317,12 +297,12 @@ public class TemplateSpecGenerator
   {
     classTemplateSpec.setLocation(currentLocation().toString());
     _schemaToClassMap.put(schema, classTemplateSpec);
-    _classNameToSchemaMap.put(classTemplateSpec.getFullName(), schema);
+    _classNameToSchemaMap.put(classTemplateSpec.getBindingName(), schema);
     _classToDataSchemaLocationMap.put(classTemplateSpec, currentLocation());
 
     if (schema instanceof NamedDataSchema)
     {
-      checkClassNameForSpecialSuffix(classTemplateSpec.getFullName());
+      checkClassNameForSpecialSuffix(classTemplateSpec.getBindingName());
     }
 
     _classTemplateSpecs.add(classTemplateSpec);
@@ -512,7 +492,8 @@ public class TemplateSpecGenerator
   {
     pushCurrentLocation(_schemaResolver.nameToDataSchemaLocations().get(schema.getFullName()));
 
-    final String className = classNameForNamedSchema(schema);
+    // make sure no duplicate template spec classname which should be binding name of the schema
+    final String className = schema.getBindingName();
     checkForClassNameConflict(className, schema);
 
     final ClassTemplateSpec templateClass;
@@ -659,6 +640,7 @@ public class TemplateSpecGenerator
 
     final UnionTemplateSpec unionClass = new UnionTemplateSpec(schema);
     unionClass.setNamespace(typerefDataSchema.getNamespace());
+    unionClass.setPackage(typerefDataSchema.getPackage());
     unionClass.setClassName(typerefDataSchema.getName());
     unionClass.setModifiers(ModifierSpec.PUBLIC);
     registerClassTemplateSpec(typerefDataSchema, unionClass);
@@ -710,6 +692,7 @@ public class TemplateSpecGenerator
   {
     final EnumTemplateSpec enumClass = new EnumTemplateSpec(schema);
     enumClass.setNamespace(schema.getNamespace());
+    enumClass.setPackage(schema.getPackage());
     enumClass.setClassName(schema.getName());
     enumClass.setModifiers(ModifierSpec.PUBLIC);
     registerClassTemplateSpec(schema, enumClass);
@@ -720,6 +703,7 @@ public class TemplateSpecGenerator
   {
     final FixedTemplateSpec fixedClass = new FixedTemplateSpec(schema);
     fixedClass.setNamespace(schema.getNamespace());
+    fixedClass.setPackage(schema.getPackage());
     fixedClass.setClassName(schema.getName());
     fixedClass.setModifiers(ModifierSpec.PUBLIC);
     registerClassTemplateSpec(schema, fixedClass);
@@ -732,6 +716,7 @@ public class TemplateSpecGenerator
     final TyperefTemplateSpec typerefClass = new TyperefTemplateSpec(schema);
     typerefClass.setOriginalTyperefSchema(originalTyperefSchema);
     typerefClass.setNamespace(schema.getNamespace());
+    typerefClass.setPackage(schema.getPackage());
     typerefClass.setClassName(schema.getName());
     typerefClass.setModifiers(ModifierSpec.PUBLIC);
     registerClassTemplateSpec(schema, typerefClass);
@@ -742,6 +727,7 @@ public class TemplateSpecGenerator
   {
     final RecordTemplateSpec recordClass = new RecordTemplateSpec(schema);
     recordClass.setNamespace(schema.getNamespace());
+    recordClass.setPackage(schema.getPackage());
     recordClass.setClassName(schema.getName());
     recordClass.setModifiers(ModifierSpec.PUBLIC);
     registerClassTemplateSpec(schema, recordClass);
@@ -790,7 +776,7 @@ public class TemplateSpecGenerator
     assert !(schema instanceof PrimitiveDataSchema);
 
     final ClassInfo classInfo = classNameForUnnamedTraverse(enclosingClass, name, schema);
-    final String className = classInfo.fullName();
+    final String className = classInfo.bindingName();
 
     final DataSchema schemaFromClassName = _classNameToSchemaMap.get(className);
     if (schemaFromClassName == null)
@@ -799,6 +785,7 @@ public class TemplateSpecGenerator
 
       if (enclosingClass != null && classInfo.namespace.equals(enclosingClass.getFullName()))
       {
+        // enclosingClass flag indicates whether a class is nested or not.
         classTemplateSpec.setEnclosingClass(enclosingClass);
         classTemplateSpec.setClassName(classInfo.name);
         classTemplateSpec.setModifiers(ModifierSpec.PUBLIC, ModifierSpec.STATIC, ModifierSpec.FINAL);
@@ -807,6 +794,7 @@ public class TemplateSpecGenerator
       {
         classTemplateSpec.setNamespace(classInfo.namespace);
         classTemplateSpec.setClassName(classInfo.name);
+        classTemplateSpec.setPackage(classInfo.packageName);
         classTemplateSpec.setModifiers(ModifierSpec.PUBLIC);
       }
       classInfo.definedClass = classTemplateSpec;
@@ -830,7 +818,7 @@ public class TemplateSpecGenerator
         CustomInfoSpec customInfo = getImmediateCustomInfo(arraySchema.getItems());
         if (customInfo != null)
         {
-          return new ClassInfo(customInfo.getCustomSchema().getNamespace(), customInfo.getCustomSchema().getName() + ARRAY_SUFFIX);
+          return new ClassInfo(customInfo.getCustomSchema().getNamespace(), customInfo.getCustomSchema().getName() + ARRAY_SUFFIX, customInfo.getCustomSchema().getPackage());
         }
         else
         {
@@ -843,7 +831,7 @@ public class TemplateSpecGenerator
         customInfo = getImmediateCustomInfo(mapSchema.getValues());
         if (customInfo != null)
         {
-          return new ClassInfo(customInfo.getCustomSchema().getNamespace(), customInfo.getCustomSchema().getName() + MAP_SUFFIX);
+          return new ClassInfo(customInfo.getCustomSchema().getNamespace(), customInfo.getCustomSchema().getName() + MAP_SUFFIX, customInfo.getCustomSchema().getPackage());
         }
         else
         {
@@ -861,7 +849,7 @@ public class TemplateSpecGenerator
           {
             typerefDataSchema = (TyperefDataSchema) referencedDataSchema;
           }
-          return new ClassInfo(typerefDataSchema.getNamespace(), CodeUtil.capitalize(typerefDataSchema.getName()));
+          return new ClassInfo(typerefDataSchema.getNamespace(), CodeUtil.capitalize(typerefDataSchema.getName()), typerefDataSchema.getPackage());
         }
         else
         {
@@ -872,7 +860,8 @@ public class TemplateSpecGenerator
       case RECORD:
       case ENUM:
         final NamedDataSchema namedSchema = (NamedDataSchema) dereferencedDataSchema;
-        return new ClassInfo(namedSchema.getNamespace(), CodeUtil.capitalize(namedSchema.getName()));
+        // carry package override information for named schema.
+        return new ClassInfo(namedSchema.getNamespace(), CodeUtil.capitalize(namedSchema.getName()), namedSchema.getPackage());
 
       case BOOLEAN:
         return new ClassInfo(_templatePackageName, "Boolean");
@@ -913,6 +902,7 @@ public class TemplateSpecGenerator
   {
     private String namespace;
     private String name;
+    private String packageName;
     private ClassTemplateSpec existingClass;
     private ClassTemplateSpec definedClass;
 
@@ -922,9 +912,27 @@ public class TemplateSpecGenerator
       this.name = name;
     }
 
+    private ClassInfo(String namespace, String name, String packageName)
+    {
+      this.namespace = namespace;
+      this.name = name;
+      this.packageName = packageName;
+    }
+
     private String fullName()
     {
       return namespace.isEmpty() ? name : namespace + '.' + name;
+    }
+
+    /**
+     * Return the {@link ClassInfo}'s language binding name.
+     * This is the fully qualified name for the generated data model to resolve potential name conflict.
+     *
+     * @return the {@link ClassInfo}'s language binding name.
+     */
+    private String bindingName()
+    {
+      return (packageName == null || packageName.isEmpty()) ? fullName() : packageName + "." + name;
     }
   }
 }

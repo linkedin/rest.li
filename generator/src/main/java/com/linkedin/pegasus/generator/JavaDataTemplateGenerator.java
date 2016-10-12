@@ -209,6 +209,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     {
       if (classTemplateSpec.getSchema() == null)
       {
+        // this is for custom class, package override is not applicable.
         result = getCodeModel().directClass(classTemplateSpec.getFullName());
       }
       else if (PredefinedJavaClasses.containsKey(classTemplateSpec.getSchema()))
@@ -421,7 +422,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
       final JClassContainer container;
       if (classTemplateSpec.getEnclosingClass() == null)
       {
-        container = getPackage(classTemplateSpec.getNamespace());
+        container = getPackage(classTemplateSpec.getPackage());
       }
       else
       {
