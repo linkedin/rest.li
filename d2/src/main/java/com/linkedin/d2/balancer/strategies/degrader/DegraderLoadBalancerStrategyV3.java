@@ -678,7 +678,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
             DegraderLoadBalancerQuarantine quarantine = quarantineHistory.remove(client);
             if (quarantine == null)
             {
-              quarantine = new DegraderLoadBalancerQuarantine(clientUpdater, config);
+              quarantine = new DegraderLoadBalancerQuarantine(clientUpdater, config, oldState.getServiceName());
             }
 
             // If the trackerClient was just recently evicted from quarantine, it is possible that

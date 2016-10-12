@@ -53,6 +53,7 @@ public class DegraderLoadBalancerQuarantine
   // TrackerClient with problem
   final private TrackerClient _trackerClient;
   final private HealthCheck _healthCheckClient;
+  final private String _serviceName;
 
   final private ScheduledExecutorService _executorService;
   final private Clock _clock;
@@ -68,13 +69,15 @@ public class DegraderLoadBalancerQuarantine
   final private DegraderLoadBalancerStrategyConfig _config;
   private final RateLimitedLogger _rateLimitedLogger;
 
-  public DegraderLoadBalancerQuarantine(TrackerClientUpdater client, DegraderLoadBalancerStrategyConfig config)
+  DegraderLoadBalancerQuarantine(TrackerClientUpdater client, DegraderLoadBalancerStrategyConfig config,
+                                 String serviceName)
   {
     _trackerClient = client.getTrackerClient();
     _config = config;
     _executorService = config.getExecutorService();
     _clock = config.getClock();
     _timeBetweenHC = DegraderLoadBalancerStrategyConfig.DEFAULT_QUARANTINE_CHECK_INTERVAL;
+    _serviceName = serviceName;
 
     _quarantineState = QuarantineStates.FAILURE;
     // Initial interval is the same as update interval
@@ -85,7 +88,7 @@ public class DegraderLoadBalancerQuarantine
 
     if (_timeBetweenHC < _config.getQuarantineLatency())
     {
-      _log.error("Illegal quarantine configurations: Interval {} too short", _timeBetweenHC);
+      _log.error("Illegal quarantine configurations for service {}: Interval {} too short", _serviceName, _timeBetweenHC);
       throw new IllegalArgumentException("Quarantine interval too short");
     }
 
@@ -130,6 +133,8 @@ public class DegraderLoadBalancerQuarantine
       @Override
       public void onError(Throwable e)
       {
+        _log.error("Healthchecking failed for {} (service={}): {}", new Object[] {_trackerClient.getUri(),
+                    _serviceName, e});
         _quarantineState = QuarantineStates.FAILURE;
       }
 
@@ -168,7 +173,7 @@ public class DegraderLoadBalancerQuarantine
    * Check and update the quarantine state
    * @return: true if current client is ready to exist quarantine, false otherwise.
    */
-  public boolean checkUpdateQuarantineState()
+  boolean checkUpdateQuarantineState()
   {
     long currentTime = _config.getClock().currentTimeMillis();
     _lastChecked = currentTime;
@@ -197,15 +202,16 @@ public class DegraderLoadBalancerQuarantine
         // Nothing to do for now. Just keep waiting
         if (_timeTilNextCheck > ERROR_REPORT_PERIOD)
         {
-          _rateLimitedLogger.error("Client {} is being kept in quarantine for {} seconds, "
-              + "Please check to make sure it is healthy", _trackerClient.getUri(),
-              (1.0 *_timeTilNextCheck / 1000));
+          _rateLimitedLogger.error("Client {}  for service {} is being kept in quarantine for {} seconds, "
+              + "Please check to make sure it is healthy", new Object[] {_trackerClient.getUri(), _serviceName,
+              (1.0 *_timeTilNextCheck / 1000)});
         }
         break;
       case SUCCESS:
         // success! ready to evict current trackerclient out of quarantine
         _quarantineState = QuarantineStates.DISABLED;
-        _log.info("checkUpdateQuarantineState: quarantine state for client {} is DISABLED", _trackerClient.getUri());
+        _log.info("checkUpdateQuarantineState: quarantine state for client {} service {} is DISABLED",
+                  _trackerClient.getUri(), _serviceName);
         return true;
     }
 
@@ -245,7 +251,7 @@ public class DegraderLoadBalancerQuarantine
     }
   }
 
-  public long getLastChecked()
+  long getLastChecked()
   {
     return _lastChecked;
   }

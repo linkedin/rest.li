@@ -47,7 +47,6 @@ import com.linkedin.util.degrader.CallCompletion;
 import com.linkedin.util.degrader.DegraderControl;
 import com.linkedin.util.degrader.DegraderImpl;
 import com.linkedin.util.degrader.ErrorType;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -68,9 +67,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -3882,7 +3879,7 @@ public class DegraderLoadBalancerTest
     List<TrackerClient> trackerClients = createTrackerClient(3, clock, degraderConfig);
     TrackerClientUpdater trackerClientUpdater = new TrackerClientUpdater(trackerClients.get(0), DEFAULT_PARTITION_ID);
 
-    DegraderLoadBalancerQuarantine quarantine = new DegraderLoadBalancerQuarantine(trackerClientUpdater, config);
+    DegraderLoadBalancerQuarantine quarantine = new DegraderLoadBalancerQuarantine(trackerClientUpdater, config, "abc0");
     TransportHealthCheck healthCheck = (TransportHealthCheck) quarantine.getHealthCheckClient();
     RestRequest restRequest = healthCheck.getRestRequest();
 
@@ -3907,12 +3904,8 @@ public class DegraderLoadBalancerTest
         null, null, "GET", "/test/admin",
         DegraderLoadBalancerStrategyConfig.DEFAULT_QUARANTINE_LATENCY);
 
-    quarantine = new DegraderLoadBalancerQuarantine(trackerClientUpdater, config1);
-    healthCheck = (TransportHealthCheck) quarantine.getHealthCheckClient();
-    restRequest = healthCheck.getRestRequest();
-
     TrackerClientUpdater updater1 = new TrackerClientUpdater(trackerClients.get(1), DEFAULT_PARTITION_ID);
-    quarantine = new DegraderLoadBalancerQuarantine(updater1, config1);
+    quarantine = new DegraderLoadBalancerQuarantine(updater1, config1, "abc0");
     healthCheck = (TransportHealthCheck) quarantine.getHealthCheckClient();
     restRequest = healthCheck.getRestRequest();
 
@@ -3938,7 +3931,7 @@ public class DegraderLoadBalancerTest
         DegraderLoadBalancerStrategyConfig.DEFAULT_QUARANTINE_LATENCY);
 
     TrackerClientUpdater updater2 = new TrackerClientUpdater(trackerClients.get(2), DEFAULT_PARTITION_ID);
-    quarantine = new DegraderLoadBalancerQuarantine(updater2, config2);
+    quarantine = new DegraderLoadBalancerQuarantine(updater2, config2, "abc0");
     healthCheck = (TransportHealthCheck) quarantine.getHealthCheckClient();
     restRequest = healthCheck.getRestRequest();
 
