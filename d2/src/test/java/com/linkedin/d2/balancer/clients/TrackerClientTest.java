@@ -22,6 +22,7 @@ import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import com.linkedin.data.ByteString;
+import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
@@ -43,10 +44,13 @@ import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
 import com.linkedin.util.clock.Clock;
 import com.linkedin.util.clock.SettableClock;
 
+import com.linkedin.util.degrader.DegraderControl;
+import com.linkedin.util.degrader.DegraderImpl;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -133,7 +137,10 @@ public class TrackerClientTest
             case 0: callback.onResponse(TransportResponseImpl.success(RestResponse.NO_RESPONSE));
                     break;
             // fail with rest exception
-            case 1: callback.onResponse(TransportResponseImpl.error(RestException.forError(400, "rest exception")));
+            case 1: callback.onResponse(TransportResponseImpl.error(RestException.forError(500, "rest exception")));
+                    break;
+            // fail with timeout exception
+            case 2: callback.onResponse(TransportResponseImpl.error(new RemoteInvocationException(new TimeoutException())));
                     break;
             // fail with other exception
             default: callback.onResponse(TransportResponseImpl.error(new RuntimeException()));
@@ -147,21 +154,43 @@ public class TrackerClientTest
 
     TrackerClient client = createTrackerClient(tc, clock, uri);
     CallTracker callTracker = client.getCallTracker();
-    long startTime = clock.currentTimeMillis();
+    CallTracker.CallStats stats;
+    DegraderControl degraderControl = client.getDegraderControl(DefaultPartitionAccessor.DEFAULT_PARTITION_ID);
     client.restRequest(new RestRequestBuilder(uri).build(), new RequestContext(), new HashMap<>(), new TestTransportCallback<>());
-    clock.addDuration(5);
-    Assert.assertEquals(callTracker.getCurrentCallCountTotal(), 1);
-    Assert.assertEquals(callTracker.getCurrentErrorCountTotal(), 0);
+    clock.addDuration(5000);
+    stats = callTracker.getCallStats();
+    Assert.assertEquals(stats.getCallCount(), 1);
+    Assert.assertEquals(stats.getErrorCount(), 0);
+    Assert.assertEquals(stats.getCallCountTotal(), 1);
+    Assert.assertEquals(stats.getErrorCountTotal(), 0);
+    Assert.assertEquals(degraderControl.getCurrentComputedDropRate(), 0.0, 0.001);
     action.set(1);
     client.restRequest(new RestRequestBuilder(uri).build(), new RequestContext(), new HashMap<>(), new TestTransportCallback<>());
-    clock.addDuration(5);
-    Assert.assertEquals(callTracker.getCurrentCallCountTotal(), 2);
-    Assert.assertEquals(callTracker.getCurrentErrorCountTotal(), 1);
+    clock.addDuration(5000);
+    stats = callTracker.getCallStats();
+    Assert.assertEquals(stats.getCallCount(), 1);
+    Assert.assertEquals(stats.getErrorCount(), 1);
+    Assert.assertEquals(stats.getCallCountTotal(), 2);
+    Assert.assertEquals(stats.getErrorCountTotal(), 1);
+    Assert.assertEquals(degraderControl.getCurrentComputedDropRate(), 0.2, 0.001);
     action.set(2);
     client.restRequest(new RestRequestBuilder(uri).build(), new RequestContext(), new HashMap<>(), new TestTransportCallback<>());
-    clock.addDuration(5);
-    Assert.assertEquals(callTracker.getCurrentCallCountTotal(), 3);
-    Assert.assertEquals(callTracker.getCurrentErrorCountTotal(), 2);
+    clock.addDuration(5000);
+    stats = callTracker.getCallStats();
+    Assert.assertEquals(stats.getCallCount(), 1);
+    Assert.assertEquals(stats.getErrorCount(), 1);
+    Assert.assertEquals(stats.getCallCountTotal(), 3);
+    Assert.assertEquals(stats.getErrorCountTotal(), 2);
+    Assert.assertEquals(degraderControl.getCurrentComputedDropRate(), 0.4, 0.001);
+    action.set(3);
+    client.restRequest(new RestRequestBuilder(uri).build(), new RequestContext(), new HashMap<>(), new TestTransportCallback<>());
+    clock.addDuration(5000);
+    stats = callTracker.getCallStats();
+    Assert.assertEquals(stats.getCallCount(), 1);
+    Assert.assertEquals(stats.getErrorCount(), 1);
+    Assert.assertEquals(stats.getCallCountTotal(), 4);
+    Assert.assertEquals(stats.getErrorCountTotal(), 3);
+    Assert.assertEquals(degraderControl.getCurrentComputedDropRate(), 0.2, 0.001);
   }
 
   @Test
@@ -188,7 +217,10 @@ public class TrackerClientTest
             break;
           // fail with stream exception
           case 1: callback.onResponse(TransportResponseImpl.error(
-              new StreamException(new StreamResponseBuilder().setStatus(400).build(EntityStreams.emptyStream()))));
+              new StreamException(new StreamResponseBuilder().setStatus(500).build(EntityStreams.emptyStream()))));
+            break;
+          // fail with timeout exception
+          case 2: callback.onResponse(TransportResponseImpl.error(new RemoteInvocationException(new TimeoutException())));
             break;
           // fail with other exception
           default: callback.onResponse(TransportResponseImpl.error(new RuntimeException()));
@@ -202,7 +234,8 @@ public class TrackerClientTest
 
     TrackerClient client = createTrackerClient(tc, clock, uri);
     CallTracker callTracker = client.getCallTracker();
-    long startTime = clock.currentTimeMillis();
+    CallTracker.CallStats stats;
+    DegraderControl degraderControl = client.getDegraderControl(DefaultPartitionAccessor.DEFAULT_PARTITION_ID);
     DelayConsumeCallback delayConsumeCallback = new DelayConsumeCallback();
     client.streamRequest(new StreamRequestBuilder(uri).build(EntityStreams.emptyStream()), new RequestContext(), new HashMap<>(), delayConsumeCallback);
     clock.addDuration(5);
@@ -213,10 +246,14 @@ public class TrackerClientTest
     // delay
     clock.addDuration(100);
     delayConsumeCallback.consume();
-    clock.addDuration(5);
+    clock.addDuration(5000);
     // now that we consumed the entity stream, callcompletion.endcall has been called.
-    Assert.assertEquals(callTracker.getCurrentCallCountTotal(), 1);
-    Assert.assertEquals(callTracker.getCurrentErrorCountTotal(), 0);
+    stats = callTracker.getCallStats();
+    Assert.assertEquals(stats.getCallCount(), 1);
+    Assert.assertEquals(stats.getErrorCount(), 0);
+    Assert.assertEquals(stats.getCallCountTotal(), 1);
+    Assert.assertEquals(stats.getErrorCountTotal(), 0);
+    Assert.assertEquals(degraderControl.getCurrentComputedDropRate(), 0.0, 0.001);
 
     action.set(1);
     client.streamRequest(new StreamRequestBuilder(uri).build(EntityStreams.emptyStream()), new RequestContext(), new HashMap<>(), delayConsumeCallback);
@@ -225,16 +262,40 @@ public class TrackerClientTest
     Assert.assertEquals(callTracker.getCurrentCallCountTotal(), 2);
     Assert.assertEquals(callTracker.getCurrentErrorCountTotal(), 1);
     delayConsumeCallback.consume();
-    clock.addDuration(5);
+    clock.addDuration(5000);
     // no change in tracking after entity is consumed
-    Assert.assertEquals(callTracker.getCurrentCallCountTotal(), 2);
-    Assert.assertEquals(callTracker.getCurrentErrorCountTotal(), 1);
+    stats = callTracker.getCallStats();
+    Assert.assertEquals(stats.getCallCount(), 1);
+    Assert.assertEquals(stats.getErrorCount(), 1);
+    Assert.assertEquals(stats.getCallCountTotal(), 2);
+    Assert.assertEquals(stats.getErrorCountTotal(), 1);
+    Assert.assertEquals(degraderControl.getCurrentComputedDropRate(), 0.2, 0.001);
 
     action.set(2);
     client.streamRequest(new StreamRequestBuilder(uri).build(EntityStreams.emptyStream()), new RequestContext(), new HashMap<>(), new TestTransportCallback<>());
     clock.addDuration(5);
     Assert.assertEquals(callTracker.getCurrentCallCountTotal(), 3);
     Assert.assertEquals(callTracker.getCurrentErrorCountTotal(), 2);
+    clock.addDuration(5000);
+    stats = callTracker.getCallStats();
+    Assert.assertEquals(stats.getCallCount(), 1);
+    Assert.assertEquals(stats.getErrorCount(), 1);
+    Assert.assertEquals(stats.getCallCountTotal(), 3);
+    Assert.assertEquals(stats.getErrorCountTotal(), 2);
+    Assert.assertEquals(degraderControl.getCurrentComputedDropRate(), 0.4, 0.001);
+
+    action.set(3);
+    client.streamRequest(new StreamRequestBuilder(uri).build(EntityStreams.emptyStream()), new RequestContext(), new HashMap<>(), new TestTransportCallback<>());
+    clock.addDuration(5);
+    Assert.assertEquals(callTracker.getCurrentCallCountTotal(), 4);
+    Assert.assertEquals(callTracker.getCurrentErrorCountTotal(), 3);
+    clock.addDuration(5000);
+    stats = callTracker.getCallStats();
+    Assert.assertEquals(stats.getCallCount(), 1);
+    Assert.assertEquals(stats.getErrorCount(), 1);
+    Assert.assertEquals(stats.getCallCountTotal(), 4);
+    Assert.assertEquals(stats.getErrorCountTotal(), 3);
+    Assert.assertEquals(degraderControl.getCurrentComputedDropRate(), 0.2, 0.001);
   }
 
   private TrackerClient createTrackerClient(TransportClient tc, Clock clock, URI uri)
@@ -242,7 +303,11 @@ public class TrackerClientTest
     double weight = 3d;
     Map<Integer, PartitionData> partitionDataMap = new HashMap<Integer, PartitionData>(2);
     partitionDataMap.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(3d));
-    return new TrackerClient(uri, partitionDataMap, tc, clock, null);
+    DegraderImpl.Config config = new DegraderImpl.Config();
+    config.setHighErrorRate(0.1);
+    config.setLowErrorRate(0.0);
+    config.setMinCallCount(1);
+    return new TrackerClient(uri, partitionDataMap, tc, clock, config);
   }
 
   public static class TestClient implements TransportClient

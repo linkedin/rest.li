@@ -92,6 +92,7 @@ public class PropertyKeys
   public static final String HTTP_LB_QUARANTINE_EXECUTOR_SERVICE = "http.loadBalancer.quarantine.executorService";
   public static final String HTTP_LB_QUARANTINE_METHOD = "http.loadBalancer.quarantine.method";
   public static final String HTTP_LB_QUARANTINE_LATENCY = "http.loadBalancer.quarantine.latency";
+  public static final String HTTP_LB_ERROR_STATUS_REGEX = "http.loadBalancer.errorStatusRegex";
 
   //used by service metadata properties
   public static final String SERVICE_FOLLOW_REDIRECTION_MAX_HOP = "followRedirection.maxHop";

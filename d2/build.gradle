@@ -64,4 +64,6 @@ configurations {
   testArtifacts {
     visible = true
   }
+  // exclude slf4j-log4j12 which is pulled in from zookeeper
+  all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
 }

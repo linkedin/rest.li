@@ -132,7 +132,7 @@ public class PartitionedLoadBalancerTestState implements LoadBalancerState
       else
       {
         // shorten the update interval to 20ms in order to increase the possibility of deadlock
-        _trackerClients.putIfAbsent(uri, new TrackerClient(uri, _partitionDescriptions.get(uri), null, new SettableClock(), null, 20));
+        _trackerClients.putIfAbsent(uri, new TrackerClient(uri, _partitionDescriptions.get(uri), null, new SettableClock(), null, 20, null));
       }
 
       return _trackerClients.get(uri);

@@ -64,6 +64,7 @@ public class LoadBalancerStrategyPropertiesConverterTest
         .setQuarantineMaxPercent(quarantineMaxPercent)
         .setQuarantineMethod(quarantineMethod)
         .setQuarantineLatency(quarantineLatency);
+    final String errorStatusRegex = "(5..)";
 
     regexes.add("+231{w+)");
     hashConfig.setUriRegexes(regexes);
@@ -93,6 +94,7 @@ public class LoadBalancerStrategyPropertiesConverterTest
     loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_QUARANTINE_MAX_PERCENT, quarantineMaxPercent);
     loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_QUARANTINE_METHOD, quarantineMethod);
     loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_QUARANTINE_LATENCY, quarantineLatency);
+    loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_ERROR_STATUS_REGEX, errorStatusRegex);
 
     D2LoadBalancerStrategyProperties d2LoadBalancerStrategyProperties =
         new D2LoadBalancerStrategyProperties()
@@ -111,7 +113,8 @@ public class LoadBalancerStrategyPropertiesConverterTest
             .setHashRingPointCleanupRate(hashringPointCleanupRate)
             .setConsistentHashAlgorithm(consistentHashAlgorithm)
             .setNumberOfProbes(numProbes)
-            .setQuarantineCfg(quarantineInfo);
+            .setQuarantineCfg(quarantineInfo)
+            .setErrorStatusRegex(errorStatusRegex);
 
     Assert.assertEquals(LoadBalancerStrategyPropertiesConverter.toConfig(loadBalancerStrategyProperties), d2LoadBalancerStrategyProperties);
     Assert.assertEquals(LoadBalancerStrategyPropertiesConverter.toProperties(d2LoadBalancerStrategyProperties), loadBalancerStrategyProperties);

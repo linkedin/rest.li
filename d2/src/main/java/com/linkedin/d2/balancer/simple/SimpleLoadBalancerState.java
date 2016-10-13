@@ -915,6 +915,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
             }
 
             long trackerClientInterval = getTrackerClientInterval (serviceProperties.getProperty());
+            String errorStatusPattern = getErrorStatusPattern(serviceProperties.getProperty());
             for (URI uri : discoveryProperties.Uris())
             {
               Map<Integer, PartitionData> partitionDataMap = discoveryProperties.getPartitionDataMap(uri);
@@ -926,7 +927,8 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
                     partitionDataMap,
                     config,
                     clk,
-                    trackerClientInterval);
+                    trackerClientInterval,
+                    errorStatusPattern);
 
                 if (client != null)
                 {
@@ -1172,7 +1174,8 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   }
 
   private TrackerClient getTrackerClient(String serviceName, URI uri, Map<Integer, PartitionData> partitionDataMap,
-                                         DegraderImpl.Config config, Clock clk, long callTrackerInterval)
+                                         DegraderImpl.Config config, Clock clk, long callTrackerInterval,
+                                         String errorStatusPattern)
   {
     Map<String,TransportClient> clientsByScheme = _serviceClients.get(serviceName);
     if (clientsByScheme == null)
@@ -1191,7 +1194,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
             new Object[]{uri.getScheme(), serviceName, uri, partitionDataMap });
       return null;
     }
-    TrackerClient trackerClient = new TrackerClient(uri, partitionDataMap, client, clk, config, callTrackerInterval);
+    TrackerClient trackerClient = new TrackerClient(uri, partitionDataMap, client, clk, config, callTrackerInterval, errorStatusPattern);
     return trackerClient;
   }
 
@@ -1306,6 +1309,17 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     return trackerClientInterval;
   }
 
+  private static String getErrorStatusPattern(ServiceProperties serviceProperties)
+  {
+    String pattern = TrackerClient.DEFAULT_ERROR_STATUS_REGEX;
+    if (serviceProperties.getLoadBalancerStrategyProperties() != null)
+    {
+      pattern = MapUtil.getWithDefault(serviceProperties.getLoadBalancerStrategyProperties(),
+          PropertyKeys.HTTP_LB_ERROR_STATUS_REGEX, TrackerClient.DEFAULT_ERROR_STATUS_REGEX, String.class);
+    }
+    return pattern;
+  }
+
   void refreshTransportClientsPerService(ServiceProperties serviceProperties)
   {
     String serviceName = serviceProperties.getServiceName();
@@ -1351,10 +1365,11 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
       newTrackerClients = new ConcurrentHashMap<URI, TrackerClient>(
           CollectionUtils.getMapInitialCapacity(uris.size(), 0.75f), 0.75f, 1);
       long trackerClientInterval = getTrackerClientInterval (serviceProperties);
+      String errorStatusPattern = getErrorStatusPattern(serviceProperties);
       for (URI uri : uris)
       {
         TrackerClient trackerClient = getTrackerClient(serviceName, uri, uriProperties.getPartitionDataMap(uri),
-                                                       config, clk, trackerClientInterval);
+                                                       config, clk, trackerClientInterval, errorStatusPattern);
         if (trackerClient != null)
         {
           newTrackerClients.put(uri, trackerClient);

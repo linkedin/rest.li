@@ -366,7 +366,7 @@ public class DegraderImpl implements Degrader
                  ", AdjustedMinCallCount=" + adjustedMinCallCount() +
                  ", CallCount=" + _callTrackerStats.getCallCount() +
                  ", Latency=" + _latency +
-                 ", ErrorRate=" + stats.getErrorRate() +
+                 ", ErrorRate=" + getErrorRateToDegrade() +
                  ", OutstandingLatency=" + _outstandingLatency +
                  ", OutstandingCount=" + stats.getOutstandingCount() +
                  ", NoOverrideDropCountTotal=" + noOverrideDropCountTotal +
@@ -384,7 +384,7 @@ public class DegraderImpl implements Degrader
                 ", AdjustedMinCallCount=" + adjustedMinCallCount() +
                 ", CallCount=" + _callTrackerStats.getCallCount() +
                 ", Latency=" + _latency +
-                ", ErrorRate=" + stats.getErrorRate() +
+                ", ErrorRate=" + getErrorRateToDegrade() +
                 ", OutstandingLatency=" + _outstandingLatency +
                 ", OutstandingCount=" + stats.getOutstandingCount() +
                 ", CountTotal=" + countTotal +
@@ -400,7 +400,7 @@ public class DegraderImpl implements Degrader
                          ", AdjustedMinCallCount=" + adjustedMinCallCount() +
                          ", CallCount=" + _callTrackerStats.getCallCount() +
                          ", Latency=" + _latency +
-                         ", ErrorRate=" + stats.getErrorRate() +
+                         ", ErrorRate=" + getErrorRateToDegrade() +
                          ", OutstandingLatency=" + _outstandingLatency +
                          ", OutstandingCount=" + stats.getOutstandingCount() +
                          ", CountTotal=" + countTotal +
@@ -475,7 +475,7 @@ public class DegraderImpl implements Degrader
   }
 
   /**
-   * Counts the rate of CONNECT_EXCEPTION, CLOSED_CHANNEL_EXCEPTION that happens during an interval.
+   * Counts the rate of CONNECT_EXCEPTION, CLOSED_CHANNEL_EXCEPTION and SERVER_ERROR that happens during an interval.
    * We only consider this type of exception for degrading trackerClient. Other errors maybe legitimate
    * so we don't want to punish the server for exceptions that the server is not responsible for e.g.
    * bad user input, frameTooLongException, etc.
@@ -483,17 +483,12 @@ public class DegraderImpl implements Degrader
   private double getErrorRateToDegrade()
   {
     Map<ErrorType, Integer> errorTypeCounts = _callTrackerStats.getErrorTypeCounts();
-    Integer connectExceptionCount = errorTypeCounts.get(ErrorType.CONNECT_EXCEPTION);
-    if (connectExceptionCount == null)
-    {
-      connectExceptionCount = 0;
-    }
-    Integer closedChannelExceptionCount = errorTypeCounts.get(ErrorType.CLOSED_CHANNEL_EXCEPTION);
-    if (closedChannelExceptionCount == null)
-    {
-      closedChannelExceptionCount = 0;
-    }
-    return safeDivide(connectExceptionCount + closedChannelExceptionCount, _callTrackerStats.getCallCount());
+    Integer connectExceptionCount = errorTypeCounts.getOrDefault(ErrorType.CONNECT_EXCEPTION, 0);
+    Integer closedChannelExceptionCount = errorTypeCounts.getOrDefault(ErrorType.CLOSED_CHANNEL_EXCEPTION, 0);
+    Integer serverErrorCount = errorTypeCounts.getOrDefault(ErrorType.SERVER_ERROR, 0);
+    Integer timeoutExceptionCount = errorTypeCounts.getOrDefault(ErrorType.TIMEOUT_EXCEPTION, 0);
+    return safeDivide(connectExceptionCount + closedChannelExceptionCount + serverErrorCount + timeoutExceptionCount,
+        _callTrackerStats.getCallCount());
   }
 
   private double safeDivide(double numerator, double denominator)

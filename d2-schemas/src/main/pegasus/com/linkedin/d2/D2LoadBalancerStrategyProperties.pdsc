@@ -169,6 +169,12 @@
         ]
       },
       "optional": true
+    },
+    {
+      "name": "errorStatusRegex",
+      "type": "string",
+      "doc": "Regular expression to match the status code indicates a server-side error.",
+      "optional": true
     }
   ]
 }

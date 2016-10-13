@@ -25,5 +25,15 @@ public enum ErrorType
    * Cannot send that many bytes over the wire
    * Socket timed out
    */
-  REMOTE_INVOCATION_EXCEPTION;
+  REMOTE_INVOCATION_EXCEPTION,
+
+  /**
+   * represents an error condition where the client can't get a response from server within certain timeout period
+   */
+  TIMEOUT_EXCEPTION,
+
+  /**
+   * represents a server side error condition
+   */
+  SERVER_ERROR
 }

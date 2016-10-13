@@ -26,8 +26,10 @@ import com.linkedin.d2.balancer.util.LoadBalancerUtil;
 import com.linkedin.data.ByteString;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.message.RequestContext;
+import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
+import com.linkedin.r2.message.stream.StreamException;
 import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.message.stream.entitystream.EntityStream;
@@ -53,6 +55,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import java.util.concurrent.TimeoutException;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,6 +67,9 @@ import static com.linkedin.d2.discovery.util.LogUtil.debug;
 
 public class TrackerClient implements LoadBalancerClient
 {
+  public static final String DEFAULT_ERROR_STATUS_REGEX = "(5..)";
+  public static final Pattern DEFAULT_ERROR_STATUS_PATTERN = Pattern.compile(DEFAULT_ERROR_STATUS_REGEX);
+
   private static final Logger      _log = LoggerFactory.getLogger(TrackerClient.class);
 
   private final TransportClient _wrappedClient;
@@ -69,26 +77,38 @@ public class TrackerClient implements LoadBalancerClient
   private final Map<Integer, PartitionState> _partitionStates;
   private final CallTracker     _callTracker;
   private final URI             _uri;
+  private final Pattern         _errorStatusPattern;
 
   public TrackerClient(URI uri, Map<Integer, PartitionData> partitionDataMap, TransportClient wrappedClient)
   {
     this(uri, partitionDataMap, wrappedClient, SystemClock.instance(), null,
-        DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS);
+        DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS, DEFAULT_ERROR_STATUS_REGEX);
   }
 
   public TrackerClient(URI uri, Map<Integer, PartitionData> partitionDataMap, TransportClient wrappedClient,
                        Clock clock, Config config)
   {
     this(uri, partitionDataMap, wrappedClient, clock, config,
-        DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS);
+        DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS, DEFAULT_ERROR_STATUS_REGEX);
   }
 
   public TrackerClient(URI uri, Map<Integer, PartitionData> partitionDataMap, TransportClient wrappedClient,
-                       Clock clock, Config config, long interval)
+                       Clock clock, Config config, long interval, String errorStatusRegex)
   {
     _uri = uri;
     _wrappedClient = wrappedClient;
     _callTracker = new CallTrackerImpl(interval, clock);
+    Pattern errorPattern;
+    try
+    {
+      errorPattern = Pattern.compile(errorStatusRegex != null ? errorStatusRegex : DEFAULT_ERROR_STATUS_REGEX);
+    }
+    catch (PatternSyntaxException ex)
+    {
+      _log.warn("Invalid error status regex: {}. Falling back to default regex: {}", errorStatusRegex, DEFAULT_ERROR_STATUS_REGEX);
+      errorPattern = DEFAULT_ERROR_STATUS_PATTERN;
+    }
+    _errorStatusPattern = errorPattern;
 
     if (config == null)
     {
@@ -225,7 +245,7 @@ public class TrackerClient implements LoadBalancerClient
         + ", _uri=" + _uri + ", _partitionStates=" + _partitionStates + ", _wrappedClient=" + _wrappedClient + "]";
   }
 
-  private static class TrackerClientRestCallback implements TransportCallback<RestResponse>
+  private class TrackerClientRestCallback implements TransportCallback<RestResponse>
   {
     private TransportCallback<RestResponse> _wrappedCallback;
     private CallCompletion       _callCompletion;
@@ -254,7 +274,7 @@ public class TrackerClient implements LoadBalancerClient
     }
   }
 
-  private static class TrackerClientStreamCallback implements TransportCallback<StreamResponse>
+  private class TrackerClientStreamCallback implements TransportCallback<StreamResponse>
   {
     private TransportCallback<StreamResponse> _wrappedCallback;
     private CallCompletion       _callCompletion;
@@ -320,9 +340,13 @@ public class TrackerClient implements LoadBalancerClient
     }
   }
 
-  private static void handleError(CallCompletion callCompletion, Throwable throwable)
+  private void handleError(CallCompletion callCompletion, Throwable throwable)
   {
-    if (throwable instanceof RemoteInvocationException)
+    if (isServerError(throwable))
+    {
+      callCompletion.endCallWithError(ErrorType.SERVER_ERROR);
+    }
+    else if (throwable instanceof RemoteInvocationException)
     {
       Throwable originalThrowable = LoadBalancerUtil.findOriginalThrowable(throwable);
       if (originalThrowable instanceof ConnectException)
@@ -333,6 +357,10 @@ public class TrackerClient implements LoadBalancerClient
       {
         callCompletion.endCallWithError(ErrorType.CLOSED_CHANNEL_EXCEPTION);
       }
+      else if (originalThrowable instanceof TimeoutException)
+      {
+        callCompletion.endCallWithError(ErrorType.TIMEOUT_EXCEPTION);
+      }
       else
       {
         callCompletion.endCallWithError(ErrorType.REMOTE_INVOCATION_EXCEPTION);
@@ -342,6 +370,35 @@ public class TrackerClient implements LoadBalancerClient
     {
       callCompletion.endCallWithError();
     }
+  }
+
+  /**
+   * Returns true if the given throwable indicates a server-side error.
+   */
+  private boolean isServerError(Throwable throwable)
+  {
+    if (throwable instanceof RestException)
+    {
+      RestException restException = (RestException) throwable;
+      if (restException.getResponse() != null)
+      {
+        return matchErrorStatus(restException.getResponse().getStatus());
+      }
+    }
+    else if (throwable instanceof StreamException)
+    {
+      StreamException streamException = (StreamException) throwable;
+      if (streamException.getResponse() != null)
+      {
+        return matchErrorStatus(streamException.getResponse().getStatus());
+      }
+    }
+    // default to false
+    return false;
+  }
+
+  private boolean matchErrorStatus(int status) {
+    return _errorStatusPattern.matcher(Integer.toString(status)).matches();
   }
 
   // we organize all data of a partition together so we don't have to maintain multiple maps in tracker client

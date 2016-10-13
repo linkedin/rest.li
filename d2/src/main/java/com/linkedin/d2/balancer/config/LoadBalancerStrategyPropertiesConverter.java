@@ -160,6 +160,10 @@ public class LoadBalancerStrategyPropertiesConverter
         map.put(PropertyKeys.HTTP_LB_QUARANTINE_LATENCY, quarantineInfo.getQuarantineLatency().longValue());
       }
     }
+    if (config.hasErrorStatusRegex())
+    {
+      map.put(PropertyKeys.HTTP_LB_ERROR_STATUS_REGEX, config.getErrorStatusRegex());
+    }
     return map;
   }
 
@@ -282,6 +286,10 @@ public class LoadBalancerStrategyPropertiesConverter
         quarantineInfo.setQuarantineLatency(coerce(properties.get(PropertyKeys.HTTP_LB_QUARANTINE_LATENCY), Long.class));
       }
       config.setQuarantineCfg(quarantineInfo);
+    }
+    if (properties.containsKey(PropertyKeys.HTTP_LB_ERROR_STATUS_REGEX))
+    {
+      config.setErrorStatusRegex(coerce(properties.get(PropertyKeys.HTTP_LB_ERROR_STATUS_REGEX), String.class));
     }
     return config;
   }
