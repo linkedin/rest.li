@@ -573,13 +573,72 @@ public class TestAsyncSharedPoolImpl
       if (i % 2 == 0)
       {
         pool.put(items.get(i));
-      }
-      else
+      } else
       {
         pool.dispose(items.get(i));
       }
     });
     shutdownCallback.get(SHUTDOWN_TIMEOUT, TIME_UNIT);
+  }
+
+  @Test
+  public void testGetOnSuccessCallbackThrows() throws Exception
+  {
+    AsyncSharedPoolImpl<Object> pool = new AsyncSharedPoolImpl<>(
+        POOL_NAME, LIFECYCLE, SCHEDULER, LIMITER, NO_POOL_TIMEOUT, MAX_WAITERS);
+    pool.start();
+
+    CountDownLatch onSuccessLatch = new CountDownLatch(1);
+    pool.get(new Callback<Object>()
+    {
+      @Override
+      public void onSuccess(Object result)
+      {
+        onSuccessLatch.countDown();
+        throw new RuntimeException();
+      }
+
+      @Override
+      public void onError(Throwable e)
+      {
+      }
+    });
+
+    if (!onSuccessLatch.await(GET_TIMEOUT, TIME_UNIT))
+    {
+      Assert.fail("Callback onSuccess was not invoked");
+    }
+  }
+
+  @Test
+  public void testGetOnErrorCallbackThrows() throws Exception
+  {
+    final LifecycleMock lifecycle = new LifecycleMock();
+    lifecycle.setCreateConsumer(callback -> callback.onError(new Throwable()));
+    AsyncSharedPoolImpl<Object> pool = new AsyncSharedPoolImpl<>(
+        POOL_NAME, lifecycle, SCHEDULER, LIMITER, NO_POOL_TIMEOUT, MAX_WAITERS);
+    pool.start();
+
+    CountDownLatch onSuccessLatch = new CountDownLatch(1);
+    pool.get(new Callback<Object>()
+    {
+      @Override
+      public void onSuccess(Object result)
+      {
+      }
+
+      @Override
+      public void onError(Throwable e)
+      {
+        onSuccessLatch.countDown();
+        throw new RuntimeException();
+      }
+    });
+
+    if (!onSuccessLatch.await(GET_TIMEOUT, TIME_UNIT))
+    {
+      Assert.fail("Callback Error was not invoked");
+    }
   }
 
   @Test

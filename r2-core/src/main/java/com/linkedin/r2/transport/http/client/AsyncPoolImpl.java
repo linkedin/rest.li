@@ -361,7 +361,8 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
     if (reject)
     {
       // This is a recoverable exception. User can simply retry the failed get() operation.
-      callbackWithTracking.onError(new SizeLimitExceededException("AsyncPool " + _poolName + " reached maximum waiter size: " + _maxWaiters));
+      callbackWithTracking.onError(
+          new SizeLimitExceededException("AsyncPool " + _poolName + " reached maximum waiter size: " + _maxWaiters));
       return null;
     }
     trc("enqueued a waiter");
@@ -614,7 +615,14 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
             }
             for (Callback<T> denied : waitersDenied)
             {
-              denied.onError(e);
+              try
+              {
+                denied.onError(e);
+              }
+              catch (Exception ex)
+              {
+                LOG.error("Encountered error while invoking error waiter callback", ex);
+              }
             }
             if (create)
             {

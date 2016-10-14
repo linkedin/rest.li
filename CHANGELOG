@@ -3,6 +3,9 @@
 (RB=836969)
 Add serviceName to quarantine logs
 
+(RB=826119)
+Catch and log exceptions thrown by the async pool waiters
+
 8.0.6
 -----
 (RB=830455)

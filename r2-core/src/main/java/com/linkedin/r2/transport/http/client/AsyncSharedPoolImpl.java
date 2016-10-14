@@ -499,7 +499,16 @@ public class AsyncSharedPoolImpl<T> implements AsyncPool<T>
         }
 
         // Invokes #onSuccess on each waiter callback
-        waiters.stream().forEach(waiter -> waiter.onSuccess(item));
+        waiters.stream().forEach(waiter -> {
+          try
+          {
+            waiter.onSuccess(item);
+          }
+          catch (Exception ex)
+          {
+            LOG.error("Encountered error while invoking success waiter callback", ex);
+          }
+        });
         callback.onDone();
       }
 
@@ -529,7 +538,16 @@ public class AsyncSharedPoolImpl<T> implements AsyncPool<T>
         }
 
         // Notifies the waiters with the current exception
-        waiters.stream().forEach(waiter -> waiter.onError(e));
+        waiters.stream().forEach(waiter -> {
+          try
+          {
+            waiter.onError(e);
+          }
+          catch (Exception ex)
+          {
+            LOG.error("Encountered error while invoking error waiter callback", ex);
+          }
+        });
 
         callback.onDone();
       }
