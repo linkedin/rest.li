@@ -30,6 +30,7 @@ import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.util.degrader.DegraderImpl;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Random;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +40,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.linkedin.d2.discovery.util.LogUtil.debug;
@@ -136,6 +138,7 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
     boolean hasInitializationError = _state.hasError();
 
     URI targetHostUri = KeyMapper.TargetHostHints.getRequestContextTargetHost(requestContext);
+    Set<URI> excludedUris = ExcludedHostHints.getRequestContextExcludedHosts(requestContext);
     URI hostHeaderUri = targetHostUri;
 
     //no valid target host header was found in the request
@@ -146,7 +149,18 @@ public class DegraderLoadBalancerStrategyV2 implements LoadBalancerStrategy
 
       // we operate only on URIs to ensure that we never hold on to an old tracker client
       // that the cluster manager has removed
-      targetHostUri = _state.getRing().get(hashCode);
+      Ring<URI> ring = _state.getRing();
+
+      Iterator<URI> iterator = ring.getIterator(hashCode);
+      while (iterator.hasNext() && targetHostUri == null)
+      {
+        URI uri = iterator.next();
+        if (excludedUris == null || !excludedUris.contains(uri))
+        {
+          targetHostUri = uri;
+        }
+      }
+      ExcludedHostHints.addRequestContextExcludedHost(requestContext, targetHostUri);
     }
     else if (hasInitializationError && targetHostUri == null)
     {

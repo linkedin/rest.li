@@ -123,58 +123,26 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     Ring<URI> ring =  _state.getRing(partitionId);
 
     URI targetHostUri = KeyMapper.TargetHostHints.getRequestContextTargetHost(requestContext);
-    URI hostHeaderUri = targetHostUri;
+    Set<URI> excludedUris = ExcludedHostHints.getRequestContextExcludedHosts(requestContext);
+    if (excludedUris == null)
+    {
+      excludedUris = new HashSet<>();
+    }
 
     //no valid target host header was found in the request
+    TrackerClient client;
     if (targetHostUri == null)
     {
-      // Compute the hash code
-      int hashCode = _hashFunction.hash(request);
-
-      // we operate only on URIs to ensure that we never hold on to an old tracker client
-      // that the cluster manager has removed
-      targetHostUri = (ring == null) ? null : ring.get(hashCode);
+      client = findValidClientFromRing(request, ring, trackerClients, excludedUris, requestContext);
     }
     else
     {
-      debug(_log, "Degrader honoring target host header in request, skipping hashing.  URI: " + targetHostUri.toString());
-    }
-
-    TrackerClient client = null;
-
-    if (targetHostUri != null)
-    {
-      // These are the clients that were passed in, NOT necessarily the clients that make up the
-      // consistent hash ring! Therefore, this linear scan is the best we can do.
+      debug(_log, "Degrader honoring target host header in request, skipping hashing.  URI: ", targetHostUri);
       client = searchClientFromUri(targetHostUri, trackerClients);
-
-      if (client == null && hostHeaderUri == null) {
-        // The consistent hash ring might not be updated as quickly as the trackerclients,
-        // so there could be an inconsistent situation where the trackerclient is already deleted
-        // while the uri still exists in the hash ring.
-        //
-        // When this happens, instead of failing the search, we simply return the next uri in the ring
-        // that is available in the trackerclient list.
-        debug(_log, "Degrader load balancer state is inconsistent with cluster manager (URI " + targetHostUri +
-                " does not exist), iterating through the hash ring for the next available host");
-        Iterator<URI> iter = ring.getIterator(_hashFunction.hash(request));
-        while (client == null && iter.hasNext())
-        {
-          targetHostUri = iter.next();
-          client = searchClientFromUri(targetHostUri, trackerClients);
-        }
-      }
-
       if (client == null)
       {
-        warn(_log, "No client found for " + targetHostUri + (hostHeaderUri == null ?
-                ", degrader load balancer state is inconsistent with cluster manager" :
-                ", target host specified is no longer part of cluster"));
+        warn(_log, "No client found for ", targetHostUri, ". Target host specified is no longer part of cluster");
       }
-    }
-    else
-    {
-      warn(_log, "unable to find a URI to use");
     }
 
     boolean dropCall = client == null;
@@ -194,6 +162,52 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     }
 
     return (!dropCall) ? client : null;
+  }
+
+  private TrackerClient findValidClientFromRing(Request request, Ring<URI> ring, List<TrackerClient> trackerClients, Set<URI> excludedUris, RequestContext requestContext)
+  {
+    // Compute the hash code
+    int hashCode = _hashFunction.hash(request);
+
+    if (ring == null)
+    {
+      warn(_log, "Can not find hash ring to use");
+    }
+
+    // we operate only on URIs to ensure that we never hold on to an old tracker client
+    // that the cluster manager has removed
+    URI targetHostUri = ring.get(hashCode);
+
+    Iterator<URI> iterator = ring.getIterator(hashCode);
+
+    // Now we get a URI from the ring. We need to make sure it's valid:
+    // 1. It's not in the set of excluded hosts
+    // 2. The consistent hash ring might not be updated as quickly as the trackerclients,
+    // so there could be an inconsistent situation where the trackerclient is already deleted
+    // while the uri still exists in the hash ring. When this happens, instead of failing the search,
+    // we simply return the next uri in the ring that is available in the trackerclient list.
+    TrackerClient client = null;
+    while ((excludedUris.contains(targetHostUri) || (client = searchClientFromUri(targetHostUri, trackerClients)) == null)
+        && iterator.hasNext())
+    {
+      targetHostUri = iterator.next();
+    }
+
+    if (client == null)
+    {
+      warn(_log, "No client found. Degrader load balancer state is inconsistent with cluster manager");
+    }
+    else if (excludedUris.contains(targetHostUri))
+    {
+      client = null;
+      warn(_log, "No client found. We have tried all hosts in the cluster");
+    }
+    else
+    {
+      ExcludedHostHints.addRequestContextExcludedHost(requestContext, targetHostUri);
+    }
+
+    return client;
   }
 
   /*

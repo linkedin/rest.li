@@ -314,7 +314,6 @@ public class RestClientTest
     Assert.assertEquals(ERR_VALUE, e.getErrorDetails().data().getString(ERR_KEY));
     Assert.assertEquals(APP_CODE, e.getServiceErrorCode().intValue());
     Assert.assertEquals(ERR_MSG, e.getMessage());
-    verifyResponseHeader(sendRequestOption, response.getHeaders());
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "sendRequestAndGetResponseOptions")
@@ -354,7 +353,6 @@ public class RestClientTest
       Assert.assertEquals(APP_CODE, e.getServiceErrorCode());
       Assert.assertEquals(ERR_MSG, e.getServiceErrorMessage());
 
-      verifyResponseHeader(sendRequestOption, e.getResponse().getHeaders());
     }
   }
 
@@ -394,7 +392,6 @@ public class RestClientTest
     Assert.assertEquals(APP_CODE, e.getServiceErrorCode());
     Assert.assertEquals(ERR_MSG, e.getServiceErrorMessage());
 
-    verifyResponseHeader(sendRequestOption, response.getHeaders());
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "sendRequestOptions")
@@ -435,7 +432,6 @@ public class RestClientTest
       Assert.assertEquals(ERR_VALUE, rlre.getErrorDetails().get(ERR_KEY));
       Assert.assertEquals(APP_CODE, rlre.getServiceErrorCode());
       Assert.assertEquals(ERR_MSG, rlre.getServiceErrorMessage());
-      verifyResponseHeader(option, rlre.getResponse().getHeaders());
 
       // Old
 
@@ -449,7 +445,6 @@ public class RestClientTest
       Assert.assertEquals(ERR_VALUE, er.getErrorDetails().data().getString(ERR_KEY));
       Assert.assertEquals(APP_CODE, er.getServiceErrorCode().intValue());
       Assert.assertEquals(ERR_MSG, er.getMessage());
-      verifyResponseHeader(option, re.getResponse().getHeaders());
     }
   }
 
@@ -677,19 +672,6 @@ public class RestClientTest
         throw new IllegalStateException();
     }
     return result;
-  }
-
-  private void verifyResponseHeader(SendRequestOption option, Map<String, String> headers)
-  {
-    for (Map.Entry<String, Object> attr : DEFAULT_REQUEST_CONTEXT.getLocalAttrs().entrySet())
-    {
-      if (attr.getKey().equals(R2Constants.OPERATION) || attr.getKey().equals(R2Constants.REQUEST_COMPRESSION_OVERRIDE)
-          || attr.getKey().equals(R2Constants.RESPONSE_COMPRESSION_OVERRIDE))
-      {
-        continue;
-      }
-      Assert.assertEquals(headers.get(attr.getKey()), option._context ? attr.getValue().toString() : null);
-    }
   }
 
   private <T extends RecordTemplate> RequestBuilder<Request<T>> mockRequestBuilder(final Request<T> request)

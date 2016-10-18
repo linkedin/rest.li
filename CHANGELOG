@@ -1,5 +1,11 @@
+8.0.8
+----
+
 8.0.7
 -----
+(RB=354529)
+D2 will retry request to a different host when the first attempt meets condition
+
 (RB=836969)
 Add serviceName to quarantine logs
 

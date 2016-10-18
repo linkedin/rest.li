@@ -76,7 +76,7 @@ public interface KeyMapper
    * @param <K> The key type
    * @return @link MapKeyResult contains mapped keys and also unmapped keys
    */
-  public <K> MapKeyResult<URI, K> mapKeysV2(URI serviceUri, Iterable<K> keys)
+  <K> MapKeyResult<URI, K> mapKeysV2(URI serviceUri, Iterable<K> keys)
       throws ServiceUnavailableException;
 
   /**
@@ -101,14 +101,14 @@ public interface KeyMapper
    * @return {@link HostToKeyMapper}
    * @throws ServiceUnavailableException
    */
-  public <K> HostToKeyMapper<K> mapKeysV3(URI serviceUri, Collection<K> keys, int limitNumHostsPerPartition)
+  <K> HostToKeyMapper<K> mapKeysV3(URI serviceUri, Collection<K> keys, int limitNumHostsPerPartition)
       throws ServiceUnavailableException;
 
   /**
    * Similar to the other mapKeysV3 method but accepting a sticky key to determine the order of hosts.
    * That means if the same sticky key is used in two different calls, the order of hosts in each partition will also be the same.
    */
-  public <K, S> HostToKeyMapper<K> mapKeysV3(URI serviceUri,
+  <K, S> HostToKeyMapper<K> mapKeysV3(URI serviceUri,
                                              Collection<K> keys,
                                              int limitNumHostsPerPartition,
                                              S stickyKey)
@@ -123,19 +123,19 @@ public interface KeyMapper
    * @param numHostPerPartition the number of hosts that we should return for each partition. Must be larger than 0.
    * @return {@link com.linkedin.d2.balancer.util.HostSet}
    */
-  public HostSet getAllPartitionsMultipleHosts(URI serviceUri, int numHostPerPartition)
+  HostSet getAllPartitionsMultipleHosts(URI serviceUri, int numHostPerPartition)
       throws ServiceUnavailableException;
 
   /**
    * Similar to the other getAllPartitionsMultipleHosts method but accepting a sticky key to determine the order of hosts.
    * That means if the same sticky key is used in two different calls, the order of hosts in each partition will also be the same.
    */
-  public <S> HostSet getAllPartitionsMultipleHosts(URI serviceUri,
+  <S> HostSet getAllPartitionsMultipleHosts(URI serviceUri,
                                                                                     int limitHostPerPartition,
                                                                                     final S stickyKey)
       throws ServiceUnavailableException;
 
-  public static class TargetHostHints
+  class TargetHostHints
   {
     private static final String TARGET_HOST_KEY_NAME = "D2-KeyMapper-TargetHost";
 

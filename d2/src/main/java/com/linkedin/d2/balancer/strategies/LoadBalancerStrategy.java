@@ -22,7 +22,9 @@ import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 
 import java.net.URI;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 
 /**
@@ -72,5 +74,49 @@ public interface LoadBalancerStrategy
    */
   default void shutdown()
   {
+  }
+
+  class ExcludedHostHints
+  {
+    private static final String EXCLUDED_HOST_KEY_NAME = "D2-Hint-ExcludedHosts";
+
+    /**
+     * Inserts a hint in RequestContext instructing D2 to avoid specified hosts. This hint can hold a set of
+     * hosts, and the request won't be routed to any of hosts in the set. This method adds one host to the set.
+     * Warning: This is an internal D2 hint. Please do not use it outside.
+     * @param context RequestContext for the request which will be made
+     * @param excludedHost host's URI to be added to the set
+     */
+    public static void addRequestContextExcludedHost(RequestContext context, URI excludedHost)
+    {
+      Set<URI> excludedHosts = getRequestContextExcludedHosts(context);
+      if (excludedHosts == null)
+      {
+        excludedHosts = new HashSet<URI>();
+        context.putLocalAttr(EXCLUDED_HOST_KEY_NAME, excludedHosts);
+      }
+      excludedHosts.add(excludedHost);
+    }
+
+    /**
+     * Retrieve the excluded hosts hint in the RequestContext, returning it if found, or null if no
+     * hint is present.
+     * @param context RequestContext for the request
+     * @return Set of excluded hosts
+     */
+    @SuppressWarnings("unchecked")
+    public static Set<URI> getRequestContextExcludedHosts(RequestContext context)
+    {
+      return (Set<URI>)context.getLocalAttr(EXCLUDED_HOST_KEY_NAME);
+    }
+
+    /**
+     * Clear the excluded hosts hint from RequestContext.
+     * @param context RequestContest from which the hint to be removed
+     */
+    public static void clearRequestContextExcludedHosts(RequestContext context)
+    {
+      context.removeLocalAttr(EXCLUDED_HOST_KEY_NAME);
+    }
   }
 }

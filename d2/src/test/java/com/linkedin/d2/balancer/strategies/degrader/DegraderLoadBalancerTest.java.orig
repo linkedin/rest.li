@@ -1663,6 +1663,7 @@ public class DegraderLoadBalancerTest
     degraderProperties.put(PropertyKeys.DEGRADER_HIGH_ERROR_RATE, "0.5");
     degraderProperties.put(PropertyKeys.DEGRADER_LOW_ERROR_RATE, "0.2");
     DegraderImpl.Config degraderConfig = DegraderConfigFactory.toDegraderConfig(degraderProperties);
+    RequestContext requestContext = new RequestContext();
     Random random = new Random();
     final List<TrackerClient> clients = new ArrayList<TrackerClient>();
 
@@ -1684,7 +1685,7 @@ public class DegraderLoadBalancerTest
       }
 
       TrackerClient client =
-          strategy.getTrackerClient(null, new RequestContext(), i, DefaultPartitionAccessor.DEFAULT_PARTITION_ID, clients);
+          strategy.getTrackerClient(null, requestContext, i, DefaultPartitionAccessor.DEFAULT_PARTITION_ID, clients);
       assertNotNull(client);
 
       // update the client number

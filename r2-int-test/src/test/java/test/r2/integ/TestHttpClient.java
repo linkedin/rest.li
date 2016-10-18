@@ -151,49 +151,6 @@ public class TestHttpClient
   }
 
   @Test(dataProvider = "configs")
-  public void testRequestContextReuse(Server server, Client client) throws Exception
-  {
-    try
-    {
-      server.start();
-      RestRequestBuilder rb = new RestRequestBuilder(REQUEST_URI);
-      rb.setMethod("GET");
-      RestRequest request = rb.build();
-
-      final RequestContext context = new RequestContext();
-      Future<RestResponse> f = client.restRequest(request, context);
-      Future<RestResponse> f2 = client.restRequest(request, context);
-
-      // This will block
-      RestResponse response = f.get(REQUEST_TIMEOUT, TimeUnit.MILLISECONDS);
-      assertEquals(response.getStatus(), 200);
-
-      response = f2.get(REQUEST_TIMEOUT, TimeUnit.MILLISECONDS);
-      assertEquals(response.getStatus(), 200);
-
-      final Integer iterations = 5;
-      //Test that sending multiple requests with the same request context works correctly, without
-      //modifying the original request context.
-      for (int i = 0; i < iterations; ++i)
-      {
-        FutureCallback<RestResponse> callback = new FutureCallback<RestResponse>();
-        client.restRequest(request, context, callback);
-        callback.get(REQUEST_TIMEOUT, TimeUnit.MILLISECONDS);
-      }
-
-      Assert.assertTrue(context.getLocalAttrs().isEmpty());
-
-      final FutureCallback<None> callback = new FutureCallback<None>();
-      client.shutdown(callback);
-      callback.get();
-    }
-    finally
-    {
-      server.stop();
-    }
-  }
-
-  @Test(dataProvider = "configs")
   public void testSimpleURI(Server server, Client client) throws Exception
   {
     try

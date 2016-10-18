@@ -50,6 +50,10 @@ public class D2ClientConfig
   boolean useNewEphemeralStoreWatcher = false;
   HealthCheckOperations _healthCheckOperations = null;
   ScheduledExecutorService _executorService = null;
+  boolean retry = false;
+  int retryLimit = DEAULT_RETRY_LIMIT;
+
+  private static final int DEAULT_RETRY_LIMIT = 3;
 
   public D2ClientConfig()
   {
@@ -234,7 +238,7 @@ public class D2ClientConfig
         isSymlinkAware,
         clientServicesConfig,
         d2ServicePath,
-        false, null, null);
+        false, null, null, false, 3);
   }
 
   public D2ClientConfig(String zkHosts,
@@ -257,7 +261,9 @@ public class D2ClientConfig
                         String d2ServicePath,
                         boolean useNewEphemeralStoreWatcher,
                         HealthCheckOperations healthCheckOperations,
-                        ScheduledExecutorService executorService)
+                        ScheduledExecutorService executorService,
+                        boolean retry,
+                        int retryLimit)
   {
     this.zkHosts = zkHosts;
     this.zkSessionTimeoutInMs = zkSessionTimeoutInMs;
@@ -280,6 +286,8 @@ public class D2ClientConfig
     this.useNewEphemeralStoreWatcher = useNewEphemeralStoreWatcher;
     this._healthCheckOperations = healthCheckOperations;
     this._executorService = executorService;
+    this.retry = retry;
+    this.retryLimit = retryLimit;
   }
 
 }

@@ -3,6 +3,7 @@ package com.linkedin.d2.balancer;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
+import com.linkedin.d2.balancer.clients.RetryTrackerClient;
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.PartitionData;
@@ -124,8 +125,15 @@ public class PartitionedLoadBalancerTestState implements LoadBalancerState
   {
     if (_partitionDescriptions.get(uri) != null)
     {
-      // shorten the update interval to 20ms in order to increase the possibility of deadlock
-      _trackerClients.putIfAbsent(uri, new TrackerClient(uri, _partitionDescriptions.get(uri), null, new SettableClock(), null, 20));
+      if (serviceName.equals("retryService"))
+      {
+        _trackerClients.putIfAbsent(uri, new RetryTrackerClient(uri, _partitionDescriptions.get(uri), null));
+      }
+      else
+      {
+        // shorten the update interval to 20ms in order to increase the possibility of deadlock
+        _trackerClients.putIfAbsent(uri, new TrackerClient(uri, _partitionDescriptions.get(uri), null, new SettableClock(), null, 20));
+      }
 
       return _trackerClients.get(uri);
     }

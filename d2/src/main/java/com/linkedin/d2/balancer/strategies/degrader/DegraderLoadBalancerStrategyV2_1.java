@@ -36,8 +36,10 @@ import org.slf4j.LoggerFactory;
 import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -128,6 +130,7 @@ public class DegraderLoadBalancerStrategyV2_1 implements LoadBalancerStrategy
     checkUpdateState(clusterGenerationId, trackerClients);
 
     URI targetHostUri = KeyMapper.TargetHostHints.getRequestContextTargetHost(requestContext);
+    Set<URI> excludedUris = ExcludedHostHints.getRequestContextExcludedHosts(requestContext);
     URI hostHeaderUri = targetHostUri;
 
     //no valid target host header was found in the request
@@ -138,7 +141,18 @@ public class DegraderLoadBalancerStrategyV2_1 implements LoadBalancerStrategy
 
       // we operate only on URIs to ensure that we never hold on to an old tracker client
       // that the cluster manager has removed
-      targetHostUri = _state.getRing().get(hashCode);
+      Ring<URI> ring = _state.getRing();
+
+      Iterator<URI> iterator = ring.getIterator(hashCode);
+      while (iterator.hasNext() && targetHostUri == null)
+      {
+        URI uri = iterator.next();
+        if (excludedUris == null || !excludedUris.contains(uri))
+        {
+          targetHostUri = uri;
+        }
+      }
+      ExcludedHostHints.addRequestContextExcludedHost(requestContext, targetHostUri);
     }
     else
     {

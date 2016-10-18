@@ -24,12 +24,14 @@ import com.linkedin.common.callback.Callback;
 import com.linkedin.common.stats.LongStats;
 import com.linkedin.common.stats.LongTracking;
 
+import com.linkedin.r2.RetriableRequestException;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.group.ChannelGroup;
+import java.net.ConnectException;
 import java.net.SocketAddress;
 
 
@@ -79,7 +81,15 @@ class ChannelPoolLifecycle implements AsyncPool.Lifecycle<Channel>
         }
         else
         {
-          channelCallback.onError(HttpNettyStreamClient.toException(channelFuture.cause()));
+          Throwable cause = channelFuture.cause();
+          if (cause instanceof ConnectException)
+          {
+            channelCallback.onError(new RetriableRequestException(cause));
+          }
+          else
+          {
+            channelCallback.onError(HttpNettyStreamClient.toException(cause));
+          }
         }
       }
     });

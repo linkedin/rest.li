@@ -21,6 +21,7 @@ import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.clients.DynamicClient;
+import com.linkedin.d2.balancer.clients.RetryClient;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
 import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl;
 import com.linkedin.r2.message.RequestContext;
@@ -83,11 +84,17 @@ public class D2ClientBuilder
                   _config.d2ServicePath,
                   _config.useNewEphemeralStoreWatcher,
                   _config._healthCheckOperations,
-                  _config._executorService);
+                  _config._executorService,
+                  _config.retry,
+                  _config.retryLimit);
 
     final LoadBalancerWithFacilities loadBalancer = loadBalancerFactory.create(cfg);
 
     D2Client d2Client = new DynamicClient(loadBalancer, loadBalancer, _restOverStream);
+    if (_config.retry)
+    {
+      d2Client = new RetryClient(d2Client, _config.retryLimit);
+    }
 
     /**
      * If we created default transport client factories, we need to shut them down when d2Client
@@ -202,6 +209,18 @@ public class D2ClientBuilder
     _config._executorService = executorService;
     return this;
   }
+  public D2ClientBuilder setRetry(boolean retry)
+  {
+    _config.retry = retry;
+    return this;
+  }
+
+  public D2ClientBuilder setRetryLimit(int retryLimit)
+  {
+    _config.retryLimit = retryLimit;
+    return this;
+  }
+
   /**
    * Specify {@link TransportClientFactory} to generate the client for specific protocol.
    * Caller is responsible to maintain the life cycle of the factories.
