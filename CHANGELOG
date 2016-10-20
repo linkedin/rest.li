@@ -1,6 +1,7 @@
 8.1.1
 -----
-
+(RB=843211)
+Add more info to the logfile when a client is quarantined
 
 8.1.0
 -----

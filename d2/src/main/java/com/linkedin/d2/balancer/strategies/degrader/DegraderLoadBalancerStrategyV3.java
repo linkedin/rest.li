@@ -704,7 +704,10 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
             quarantineMap.put(client, quarantine);
 
             newPoints = 0;     // reduce the points to 0 so no real traffic will be used
-            _log.warn("TrackerClient {} is put into quarantine {} ", client.getUri(), quarantine);
+            _log.warn("TrackerClient {} is put into quarantine {}. OverrideDropRate = {}, callCount = {}, latency = {},"
+                + " errorRate = {}",
+                new Object[] { client.getUri(), quarantine, degraderControl.getMaxDropRate(),
+                    degraderControl.getCallCount(), degraderControl.getLatency(), degraderControl.getErrorRate()});
             quarantineEffect = true;
           }
           else
