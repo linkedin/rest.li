@@ -149,7 +149,7 @@ public class LoadBalancerStrategyPropertiesConverter
       quarantineInfo quarantineInfo = config.getQuarantineCfg();
       if (quarantineInfo.hasQuarantineMaxPercent())
       {
-        map.put(PropertyKeys.HTTP_LB_QUARANTINE_MAX_PERCENT, quarantineInfo.getQuarantineMaxPercent().doubleValue());
+        map.put(PropertyKeys.HTTP_LB_QUARANTINE_MAX_PERCENT, quarantineInfo.getQuarantineMaxPercent().toString());
       }
       if (quarantineInfo.hasQuarantineMethod())
       {
@@ -157,7 +157,7 @@ public class LoadBalancerStrategyPropertiesConverter
       }
       if (quarantineInfo.hasQuarantineLatency())
       {
-        map.put(PropertyKeys.HTTP_LB_QUARANTINE_LATENCY, quarantineInfo.getQuarantineLatency().longValue());
+        map.put(PropertyKeys.HTTP_LB_QUARANTINE_LATENCY, quarantineInfo.getQuarantineLatency());
       }
     }
     if (config.hasErrorStatusRegex())

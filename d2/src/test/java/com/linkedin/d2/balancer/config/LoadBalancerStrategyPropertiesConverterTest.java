@@ -91,7 +91,7 @@ public class LoadBalancerStrategyPropertiesConverterTest
     hashConfigMap.put(URIRegexHash.KEY_WARN_ON_NO_MATCH, "false");
     hashConfigMap.put(URIRegexHash.KEY_FAIL_ON_NO_MATCH, "true");
     loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_HASH_CONFIG, hashConfigMap);
-    loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_QUARANTINE_MAX_PERCENT, quarantineMaxPercent);
+    loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_QUARANTINE_MAX_PERCENT, quarantineMaxPercent.toString());
     loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_QUARANTINE_METHOD, quarantineMethod);
     loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_QUARANTINE_LATENCY, quarantineLatency);
     loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_ERROR_STATUS_REGEX, errorStatusRegex);
