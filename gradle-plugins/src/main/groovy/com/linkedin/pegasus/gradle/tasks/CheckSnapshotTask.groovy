@@ -54,6 +54,7 @@ class CheckSnapshotTask extends DefaultTask
       it.main = 'com.linkedin.restli.tools.snapshot.check.RestLiSnapshotCompatibilityChecker'
       it.classpath = codegenClasspath
       it.args '--compat', snapshotCompatLevel
+      it.args '--report'
       it.args argFiles
       it.standardOutput = logChecker
     }

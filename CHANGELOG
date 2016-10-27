@@ -4,6 +4,9 @@
 
 8.1.1
 -----
+(RB=849512)
+Fix bug in CheckSnapshotTask that caused the publishRestModelTask to always skip.
+
 (RB=843211)
 Add more info to the logfile when a client is quarantined
 
