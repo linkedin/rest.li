@@ -1,7 +1,14 @@
+8.1.2
+-----
+
+
 8.1.1
 -----
 (RB=843211)
 Add more info to the logfile when a client is quarantined
+
+(RB=849323)
+Fix a bug in LoadBalancerStrategyPropertiesConverter to not use double
 
 8.1.0
 -----
