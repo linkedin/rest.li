@@ -152,22 +152,29 @@ class Http2StreamCodec extends Http2ConnectionHandler
   {
     super.onError(ctx, cause);
     Http2Exception http2Exception = getEmbeddedHttp2Exception(cause);
-    if (isStreamError(http2Exception))
+    if (http2Exception == null)
     {
-      Http2Exception.StreamException streamException = (Http2Exception.StreamException) http2Exception;
-      doHandleStreamException(connection().stream(streamException.streamId()), ctx, streamException);
-    }
-    else if (http2Exception instanceof Http2Exception.CompositeStreamException)
-    {
-      Http2Exception.CompositeStreamException compositException = (Http2Exception.CompositeStreamException) http2Exception;
-      for (Http2Exception.StreamException streamException : compositException)
-      {
-        doHandleStreamException(connection().stream(streamException.streamId()), ctx, streamException);
-      }
+      doHandleConnectionException(ctx, cause);
     }
     else
     {
-      doHandleConnectionException(ctx, http2Exception);
+      if (http2Exception instanceof Http2Exception.StreamException)
+      {
+        Http2Exception.StreamException streamException = (Http2Exception.StreamException) http2Exception;
+        doHandleStreamException(connection().stream(streamException.streamId()), ctx, streamException);
+      }
+      else if (http2Exception instanceof Http2Exception.CompositeStreamException)
+      {
+        Http2Exception.CompositeStreamException compositException = (Http2Exception.CompositeStreamException) http2Exception;
+        for (Http2Exception.StreamException streamException : compositException)
+        {
+          doHandleStreamException(connection().stream(streamException.streamId()), ctx, streamException);
+        }
+      }
+      else
+      {
+        doHandleConnectionException(ctx, http2Exception);
+      }
     }
   }
 

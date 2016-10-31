@@ -1,6 +1,7 @@
 8.1.2
 -----
-
+(RB=850669)
+Fix an NPE in Http2StreamCodec resulting in incorrect logging
 
 8.1.1
 -----
