@@ -1090,7 +1090,15 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
         if (healthCheckClient == null)
         {
           // create a new client if not exits
-          healthCheckClient = _state._healthCheckClientBuilder.setClient(client.getTrackerClient()).build();
+          healthCheckClient =  new HealthCheckClientBuilder()
+              .setHealthCheckOperations(config.getHealthCheckOperations())
+              .setHealthCheckPath(config.getHealthCheckPath())
+              .setServicePath(config.getServicePath())
+              .setClock(config.getClock())
+              .setLatency(config.getQuarantineLatency())
+              .setMethod(config.getHealthCheckMethod())
+              .setClient(client.getTrackerClient())
+              .build();
           _state.putHealthCheckClient(client, healthCheckClient);
         }
         healthCheckClient.checkHealth(healthCheckCallback);
@@ -1102,7 +1110,13 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     }
 
     // also remove the entries that the corresponding trackerClientUpdaters do not exist anymore
-    _state._healthCheckMap.entrySet().removeIf(e -> !clients.contains(e.getKey()));
+    for (TrackerClientUpdater client : _state._healthCheckMap.keySet())
+    {
+      if (!clients.contains(client))
+      {
+        _state._healthCheckMap.remove(client);
+      }
+    }
   }
 
   // for unit testing, this allows the strategy to be forced for the next time updatePartitionState
@@ -1192,8 +1206,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     // trackerClients anymore and we do not have to hold the healthCheck objects in healthCheckMap.
     // When individual trackerClient is quarantined, the corresponding healthCheck will be
     // generated again.
-    private final Map<TrackerClientUpdater, HealthCheck> _healthCheckMap;
-    private final HealthCheckClientBuilder _healthCheckClientBuilder;
+    private final ConcurrentMap<TrackerClientUpdater, HealthCheck> _healthCheckMap;
 
     DegraderLoadBalancerState(String serviceName, Map<String, String> degraderProperties,
                               DegraderLoadBalancerStrategyConfig config)
@@ -1203,14 +1216,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       _serviceName = serviceName;
       _config = config;
       _enableQuarantine = new AtomicBoolean(false);
-      _healthCheckClientBuilder =  new HealthCheckClientBuilder()
-        .setHealthCheckOperations(config.getHealthCheckOperations())
-        .setHealthCheckPath(config.getHealthCheckPath())
-        .setServicePath(config.getServicePath())
-        .setClock(config.getClock())
-        .setLatency(config.getQuarantineLatency())
-        .setMethod(config.getHealthCheckMethod());
-      _healthCheckMap = new HashMap<>();
+      _healthCheckMap = new ConcurrentHashMap<>();
     }
 
     private Partition getPartition(int partitionId)
