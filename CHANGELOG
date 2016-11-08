@@ -1,6 +1,11 @@
-8.1.3
+8.1.4
 -----
 
+
+8.1.3
+-----
+(RB=849323)
+Fix a bug in LoadBalancerStrategyPropertiesConverter to not use double
 
 8.1.2
 -----
@@ -14,9 +19,6 @@ Fix bug in CheckSnapshotTask that caused the publishRestModelTask to always skip
 
 (RB=843211)
 Add more info to the logfile when a client is quarantined
-
-(RB=849323)
-Fix a bug in LoadBalancerStrategyPropertiesConverter to not use double
 
 8.1.0
 -----
