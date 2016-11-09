@@ -1,6 +1,24 @@
-8.1.7
+8.1.8
 -----
 
+
+8.1.7
+-----
+(RB=850744)
+Fix several bugs in pegasus backward compatibility check, report generation and publishModel tasks.
+(All bugs were introduced in 8.0.0)
+PegasusPlugin:
+ - With Gradle 3.0 and gradle daemon enabled, the plugin will not be loaded on every run. So the plugin cannot assume the static variables will be reset for each run. Fixed the issue by initializing these static variables in runOnce block.
+
+CheckIdl, CheckRestModel and CheckSnapshot:
+ - These tasks were ignoring the compat level flag while checking for status after the compat checker was run. Fix is to look at the result of compat checker from the report it prints.
+ - Add the compatibility report message to the global message to be printed out after build is finished.
+ - Task was configured to fail only if both idl and models were incompatible. Fixed it to fail if either is incompatible.
+ - Fixed the order of files in checkRestModel task (order was wrong earlier)
+
+ChangedFileReport:
+ - Changed the inputs to this task from generated files to source system files on which the report should be based on.
+ - Now outputs list of files requiring checkin, which is printed after build is finished.
 
 8.1.6
 -----

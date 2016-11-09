@@ -32,6 +32,7 @@ class CheckIdlTask extends DefaultTask
   boolean isModelCompatible = true
   boolean isRestSpecCompatible = true
   boolean isEquivalent = true
+  String wholeMessage = "";
 
   private FileExtensionFilter _idlFilter = new FileExtensionFilter(PegasusPlugin.IDL_FILE_SUFFIX)
 
@@ -59,8 +60,9 @@ class CheckIdlTask extends DefaultTask
     isModelCompatible = logChecker.isModelCompatible()
     isRestSpecCompatible = logChecker.isRestSpecCompatible()
     isEquivalent = logChecker.getModelCompatibility().isEmpty() && logChecker.getRestSpecCompatibility().isEmpty()
+    wholeMessage = logChecker.getWholeText()
 
-    if (!isModelCompatible && !isRestSpecCompatible)
+    if (!isModelCompatible || !isRestSpecCompatible)
     {
       throw new GradleException("See output for " + getPath())
     }

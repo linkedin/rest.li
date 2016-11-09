@@ -11,7 +11,8 @@ import org.gradle.api.logging.Logging;
 
 
 /**
- * Parses the output from CLI that report compatibility
+ * Parses the output from CLI({@code RestLiResourceModelCompatibilityChecker}.
+ * For details on the format of the output generated, see {@code CompatibilityReport}
  */
 public class CompatibilityLogChecker extends OutputStream
 {
@@ -22,6 +23,14 @@ public class CompatibilityLogChecker extends OutputStream
 
   List<FileCompatibility> restSpecCompatibility = new ArrayList<>();
   List<FileCompatibility> modelCompatibility = new ArrayList<>();
+  /**
+   * Holds the status of rest spec compatibility based on the compatibility level specified by user.
+   */
+  boolean isRestSpecCompatible = true;
+  /**
+   * Holds the status of model compatibility based on the compatibility level specified by user.
+   */
+  boolean isModelCompatible = true;
 
   @Override
   public void write(int b)
@@ -40,24 +49,33 @@ public class CompatibilityLogChecker extends OutputStream
     }
   }
 
+  // See CompatibilityReport for the report format.
   private void processLine(String s)
   {
-    String fileName = s.substring(s.indexOf(':') + 1);
-    if (s.startsWith("[RS-C]"))
+    String message = s.substring(s.indexOf(':') + 1);
+    if (s.startsWith("[RS-COMPAT]"))
     {
-      restSpecCompatibility.add(new FileCompatibility(fileName, true));
+      isRestSpecCompatible = Boolean.parseBoolean(message.trim());
+    }
+    else if (s.startsWith("[MD-COMPAT]"))
+    {
+      isModelCompatible = Boolean.parseBoolean(message.trim());
+    }
+    else if (s.startsWith("[RS-C]"))
+    {
+      restSpecCompatibility.add(new FileCompatibility(message, true));
     }
     else if (s.startsWith("[RS-I]"))
     {
-      restSpecCompatibility.add(new FileCompatibility(fileName, false));
+      restSpecCompatibility.add(new FileCompatibility(message, false));
     }
     else if (s.startsWith("[MD-C]"))
     {
-      modelCompatibility.add(new FileCompatibility(fileName, true));
+      modelCompatibility.add(new FileCompatibility(message, true));
     }
     else if (s.startsWith("[MD-I]"))
     {
-      modelCompatibility.add(new FileCompatibility(fileName, false));
+      modelCompatibility.add(new FileCompatibility(message, false));
     }
   }
 
@@ -76,14 +94,20 @@ public class CompatibilityLogChecker extends OutputStream
     return modelCompatibility;
   }
 
+  /**
+   * @return if rest-spec was compatible based on the compat level passed to the compat checker.
+   */
   public boolean isRestSpecCompatible()
   {
-    return !restSpecCompatibility.stream().anyMatch(it -> !it.compatible);
+    return isRestSpecCompatible;
   }
 
+  /**
+   * @return if model was compatible based on the compat level passed to the compat checker.
+   */
   public boolean isModelCompatible()
   {
-    return !modelCompatibility.stream().anyMatch(it -> !it.compatible);
+    return isModelCompatible;
   }
 
   public static class FileCompatibility

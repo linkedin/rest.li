@@ -505,13 +505,14 @@ class PegasusPlugin implements Plugin<Project>
 
   private static final String GENERATOR_CLASSLOADER_NAME = 'pegasusGeneratorClassLoader'
 
-  private static boolean _runOnce = false
-
-  private static final StringBuffer _restModelCompatMessage = new StringBuffer()
+  // Below variables are used to collect data across all pegasus projects (sub-projects) and then print information
+  // to the user at the end after build is finished.
+  private static StringBuffer _restModelCompatMessage = new StringBuffer()
   private static final Collection<String> _needCheckinFiles = new ArrayList<String>()
   private static final Collection<String> _needBuildFolders = new ArrayList<String>()
   private static final Collection<String> _possibleMissingFilesInEarlierCommit = new ArrayList<String>()
 
+  private static final String RUN_ONCE = "runOnce";
   private static final Object STATIC_PROJECT_EVALUATED_LOCK = new Object()
 
   private Class<? extends Plugin> _thisPluginType = getClass().asSubclass(Plugin)
@@ -548,7 +549,9 @@ class PegasusPlugin implements Plugin<Project>
 
     synchronized (STATIC_PROJECT_EVALUATED_LOCK)
     {
-      if (!_runOnce)
+      // Check if this is the first time the block will run. Pegasus plugin can run multiple times in a build if
+      // multiple sub-projects applied the plugin.
+      if (!project.rootProject.hasProperty(RUN_ONCE) || !project.rootProject.property(RUN_ONCE))
       {
         project.gradle.projectsEvaluated { Gradle gradle ->
           gradle.rootProject.subprojects { Project subproject ->
@@ -562,9 +565,15 @@ class PegasusPlugin implements Plugin<Project>
           }
         }
 
+        // Re-initialze the static variables as they might have stale values from previous run. With Gradle 3.0 and
+        // gradle daemon enabled, the plugin class might not be loaded for every run.
+        _restModelCompatMessage = new StringBuffer()
+        _needCheckinFiles.clear()
+        _needBuildFolders.clear()
+        _possibleMissingFilesInEarlierCommit.clear()
+
         project.gradle.buildFinished { BuildResult result ->
           final StringBuilder endOfBuildMessage = new StringBuilder()
-
           if (_restModelCompatMessage.length() > 0)
           {
             endOfBuildMessage.append(_restModelCompatMessage)
@@ -585,8 +594,8 @@ class PegasusPlugin implements Plugin<Project>
             result.gradle.rootProject.logger.quiet(endOfBuildMessage.toString())
           }
         }
-
-        _runOnce = true
+        // Set an extra property on the root project to indicate the initialization is complete for the current build.
+        project.rootProject.ext.set(RUN_ONCE, true);
       }
     }
 
@@ -1032,6 +1041,12 @@ class PegasusPlugin implements Plugin<Project>
         onlyIf {
           !isPropertyTrue(project, SKIP_IDL_CHECK)
         }
+
+        doLast {
+          if (!isEquivalent) {
+            _restModelCompatMessage.append(wholeMessage)
+          }
+        }
       }
 
       final CheckSnapshotTask checkSnapshotTask = project.task(sourceSet.getTaskName('check', 'Snapshot'),
@@ -1150,9 +1165,19 @@ class PegasusPlugin implements Plugin<Project>
 
       ChangedFileReportTask changedFileReportTask = (ChangedFileReportTask) project.getTasks().
           getByName('changedFilesReport')
-      changedFileReportTask.idlFiles = SharedFileUtils.getIdlFiles(project, destinationDirPrefix)
-      changedFileReportTask.snapshotFiles = SharedFileUtils.getSnapshotFiles(project, destinationDirPrefix)
-      changedFileReportTask.mustRunAfter(checkRestModelTask, checkIdlTask, checkSnapshotTask, publishRestliIdlTask)
+      // Use the files from apiDir for generating the changed files report as we need to notify user only when
+      // source system files are modified.
+      changedFileReportTask.idlFiles = SharedFileUtils.getSuffixedFiles(project, apiIdlDir, IDL_FILE_SUFFIX)
+      changedFileReportTask.snapshotFiles = SharedFileUtils.getSuffixedFiles(project, apiSnapshotDir,
+          SNAPSHOT_FILE_SUFFIX)
+      changedFileReportTask.mustRunAfter(publishRestliSnapshotTask, publishRestliIdlTask)
+      changedFileReportTask.doLast {
+        if (!changedFileReportTask.needCheckinFiles.isEmpty()) {
+          project.logger.info("Adding modified files to need checkin list...")
+          _needCheckinFiles.addAll(changedFileReportTask.needCheckinFiles)
+          _needBuildFolders.add(getCheckedApiProject(project).getPath())
+        }
+      }
     }
   }
 

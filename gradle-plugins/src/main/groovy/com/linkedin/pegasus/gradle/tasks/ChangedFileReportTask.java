@@ -1,10 +1,10 @@
 package com.linkedin.pegasus.gradle.tasks;
 
-
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.tasks.InputFiles;
@@ -23,9 +23,15 @@ public class ChangedFileReportTask extends DefaultTask
   @SkipWhenEmpty
   FileCollection snapshotFiles = getProject().files();
 
+  Collection<String> needCheckinFiles = new ArrayList<>();
+
   @TaskAction
   public void checkFilesForChanges(IncrementalTaskInputs inputs)
   {
+    getLogger().lifecycle("Checking idl and snapshot files for changes...");
+    getLogger().info("idlFiles: " + idlFiles.getAsPath());
+    getLogger().info("snapshotFiles: " + snapshotFiles.getAsPath());
+
     Set<String> filesRemoved = new HashSet<>();
     Set<String> filesAdded = new HashSet<>();
     Set<String> filesChanged = new HashSet<>();
@@ -54,27 +60,31 @@ public class ChangedFileReportTask extends DefaultTask
       if (!filesRemoved.isEmpty())
       {
         String files = joinByComma(filesRemoved);
-        getLogger().lifecycle("The following files have been removed, be sure to remove them from source control: {}", files);
+        needCheckinFiles.add(files);
+        getLogger().lifecycle(
+            "The following files have been removed, be sure to remove them from source control: {}", files);
       }
 
       if (!filesAdded.isEmpty())
       {
         String files = joinByComma(filesAdded);
+        needCheckinFiles.add(files);
         getLogger().lifecycle("The following files have been added, be sure to add them to source control: {}", files);
       }
 
       if (!filesChanged.isEmpty())
       {
         String files = joinByComma(filesChanged);
+        needCheckinFiles.add(files);
         getLogger().lifecycle(
             "The following files have been changed, be sure to commit the changes to source control: {}", files);
       }
     }
   }
 
-  private String joinByComma(Set<String> filesRemoved)
+  private String joinByComma(Set<String> files)
   {
-    return filesRemoved.stream().collect(Collectors.joining(", "));
+    return files.stream().collect(Collectors.joining(", "));
   }
 
   public FileCollection getSnapshotFiles()
@@ -95,5 +105,10 @@ public class ChangedFileReportTask extends DefaultTask
   public void setIdlFiles(FileCollection idlFiles)
   {
     this.idlFiles = idlFiles;
+  }
+
+  public Collection<String> getNeedCheckinFiles()
+  {
+    return needCheckinFiles;
   }
 }

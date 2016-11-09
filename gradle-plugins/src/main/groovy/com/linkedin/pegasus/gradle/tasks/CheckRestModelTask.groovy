@@ -39,6 +39,7 @@ public class CheckRestModelTask extends DefaultTask
   boolean isModelCompatible = true
   boolean isRestSpecCompatible = true
   boolean isEquivalent = true
+  String wholeMessage = "";
 
   @TaskAction
   protected void check()
@@ -74,8 +75,9 @@ public class CheckRestModelTask extends DefaultTask
     isModelCompatible = logChecker.isModelCompatible()
     isRestSpecCompatible = logChecker.isRestSpecCompatible()
     isEquivalent = logChecker.getModelCompatibility().isEmpty() && logChecker.getRestSpecCompatibility().isEmpty()
+    wholeMessage = logChecker.getWholeText()
 
-    if (!isModelCompatible && !isRestSpecCompatible)
+    if (!isModelCompatible || !isRestSpecCompatible)
     {
       throw new GradleException("See output for " + getPath())
     }
@@ -105,7 +107,7 @@ public class CheckRestModelTask extends DefaultTask
       {
         if (!diffOnly)
         {
-          filePairs.addAll([absolutePath, previousFilenameToAbsolutePath.get(filename)])  //Add both files
+          filePairs.addAll([previousFilenameToAbsolutePath.get(filename), absolutePath])  //Add both files (prev, current)
         }
 
         previousFilenameToAbsolutePath.remove(filename)
