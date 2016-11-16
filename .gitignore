@@ -19,4 +19,4 @@ test-output/
 examples/*/api/src/main/idl
 examples/*/api/src/main/snapshot
 ligradle/
-
+.DS_Store
