@@ -271,11 +271,23 @@ public class BatchKVResponse<K, V extends RecordTemplate> extends RecordTemplate
     }
   }
 
+  /**
+   * Returns the results of batch operation. Please note differences between Rest.li protocol before and after 2.0
+   * @return
+   * For Rest.li protocol ver. <  2.0: entries which succeeded
+   * For Rest.li protocol ver. >= 2.0: all entries as EntityResponse, including successful and failed ones.
+   */
   public Map<K, V> getResults()
   {
     return _results;
   }
 
+  /**
+   * Returns the errors of batch operation. Please note differences between Rest.li protocol before and after 2.0
+   * @return
+   * For Rest.li protocol ver. <  2.0: entries which failed
+   * For Rest.li protocol ver. >= 2.0: ignore, please use getResults() instead
+   */
   public Map<K, ErrorResponse> getErrors()
   {
     return _errors;
