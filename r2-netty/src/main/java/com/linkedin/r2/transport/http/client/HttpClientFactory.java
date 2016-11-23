@@ -124,7 +124,6 @@ public class HttpClientFactory implements TransportClientFactory
   public static final int DEFAULT_MAX_CHUNK_SIZE = 8 * 1024;
   public static final EncodingType[] DEFAULT_RESPONSE_CONTENT_ENCODINGS
       = {EncodingType.GZIP, EncodingType.SNAPPY, EncodingType.SNAPPY_FRAMED, EncodingType.DEFLATE, EncodingType.BZIP2};
-  public static final HttpProtocolVersion DEFAULT_HTTP_PROTOCOL_VERSION = HttpProtocolVersion.HTTP_1_1;
 
   public static final StreamEncodingType[] DEFAULT_STREAM_RESPONSE_CONTENT_ENCODINGS
       = {StreamEncodingType.GZIP,
@@ -158,6 +157,9 @@ public class HttpClientFactory implements TransportClientFactory
   private final boolean                    _useClientCompression;
   // flag to enable/disable Nagle's algorithm
   private final boolean                    _tcpNoDelay;
+
+  /** Default HTTP version used in the client */
+  private final HttpProtocolVersion _defaultHttpVersion;
 
   // All fields below protected by _mutex
   private final Object                     _mutex               = new Object();
@@ -334,7 +336,7 @@ public class HttpClientFactory implements TransportClientFactory
       this(filters, eventLoopGroup, shutdownFactory, executor, shutdownExecutor, callbackExecutorGroup,
           shutdownCallbackExecutor, jmxManager, requestCompressionThresholdDefault,
           requestCompressionConfigs, responseCompressionConfigs, false,
-          useClientCompression ? Executors.newCachedThreadPool() : null);
+          useClientCompression ? Executors.newCachedThreadPool() : null, HttpProtocolVersion.HTTP_1_1);
   }
 
   public HttpClientFactory(FilterChain filters,
@@ -366,7 +368,26 @@ public class HttpClientFactory implements TransportClientFactory
   {
     this(filters, eventLoopGroup, shutdownFactory, executor, shutdownExecutor, callbackExecutorGroup,
         shutdownCallbackExecutor, jmxManager, requestCompressionThresholdDefault, requestCompressionConfigs,
-        Collections.<String, CompressionConfig>emptyMap(), tcpNoDelay, compressionExecutor);
+        Collections.<String, CompressionConfig>emptyMap(), tcpNoDelay, compressionExecutor, HttpProtocolVersion.HTTP_1_1);
+  }
+
+  public HttpClientFactory(FilterChain filters,
+      NioEventLoopGroup eventLoopGroup,
+      boolean shutdownFactory,
+      ScheduledExecutorService executor,
+      boolean shutdownExecutor,
+      ExecutorService callbackExecutorGroup,
+      boolean shutdownCallbackExecutor,
+      AbstractJmxManager jmxManager,
+      final int requestCompressionThresholdDefault,
+      final Map<String, CompressionConfig> requestCompressionConfigs,
+      final Map<String, CompressionConfig> responseCompressionConfigs,
+      boolean tcpNoDelay,
+      Executor compressionExecutor)
+  {
+    this(filters, eventLoopGroup, shutdownFactory, executor, shutdownExecutor, callbackExecutorGroup, shutdownCallbackExecutor,
+        jmxManager, requestCompressionThresholdDefault, requestCompressionConfigs, responseCompressionConfigs,
+        tcpNoDelay, compressionExecutor, HttpProtocolVersion.HTTP_1_1);
   }
 
   public HttpClientFactory(FilterChain filters,
@@ -381,7 +402,8 @@ public class HttpClientFactory implements TransportClientFactory
                            final Map<String, CompressionConfig> requestCompressionConfigs,
                            final Map<String, CompressionConfig> responseCompressionConfigs,
                            boolean tcpNoDelay,
-                           Executor compressionExecutor)
+                           Executor compressionExecutor,
+                           HttpProtocolVersion defaultHttpVersion)
   {
     _filters = filters;
     _eventLoopGroup = eventLoopGroup;
@@ -405,6 +427,7 @@ public class HttpClientFactory implements TransportClientFactory
     _tcpNoDelay = tcpNoDelay;
     _compressionExecutor = compressionExecutor;
     _useClientCompression = _compressionExecutor != null;
+    _defaultHttpVersion = defaultHttpVersion;
   }
 
   public static class Builder
@@ -423,6 +446,7 @@ public class HttpClientFactory implements TransportClientFactory
     private Map<String, CompressionConfig> _requestCompressionConfigs = Collections.<String, CompressionConfig>emptyMap();
     private Map<String, CompressionConfig> _responseCompressionConfigs = Collections.<String, CompressionConfig>emptyMap();
     private boolean                    _tcpNoDelay = true;
+    private HttpProtocolVersion        _defaultHttpVersion = HttpProtocolVersion.HTTP_1_1;
 
     public Builder setNioEventLoopGroup(NioEventLoopGroup nioEventLoopGroup)
     {
@@ -502,6 +526,12 @@ public class HttpClientFactory implements TransportClientFactory
       return this;
     }
 
+    public Builder setDefaultHttpVersion(HttpProtocolVersion defaultHttpVersion)
+    {
+      _defaultHttpVersion = defaultHttpVersion;
+      return this;
+    }
+
     public HttpClientFactory build()
     {
       NioEventLoopGroup eventLoopGroup = _eventLoopGroup != null ? _eventLoopGroup
@@ -512,7 +542,7 @@ public class HttpClientFactory implements TransportClientFactory
       return new HttpClientFactory(_filters, eventLoopGroup, _shutdownFactory, scheduledExecutorService,
           _shutdownExecutor, _callbackExecutorGroup, _shutdownCallbackExecutor, _jmxManager,
           _requestCompressionThresholdDefault, _requestCompressionConfigs, _responseCompressionConfigs, _tcpNoDelay,
-          _compressionExecutor);
+          _compressionExecutor, _defaultHttpVersion);
     }
   }
 
@@ -872,7 +902,7 @@ public class HttpClientFactory implements TransportClientFactory
     Integer maxChunkSize = chooseNewOverDefault(getIntValue(properties, HTTP_MAX_CHUNK_SIZE), DEFAULT_MAX_CHUNK_SIZE);
     Integer maxConcurrentConnections = chooseNewOverDefault(getIntValue(properties, HTTP_MAX_CONCURRENT_CONNECTIONS), Integer.MAX_VALUE);
     HttpProtocolVersion httpProtocolVersion =
-        chooseNewOverDefault(getHttpProtocolVersion(properties, HTTP_PROTOCOL_VERSION), DEFAULT_HTTP_PROTOCOL_VERSION);
+        chooseNewOverDefault(getHttpProtocolVersion(properties, HTTP_PROTOCOL_VERSION), _defaultHttpVersion);
 
     TransportClient streamClient;
     switch (httpProtocolVersion)

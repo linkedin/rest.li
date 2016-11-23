@@ -1,7 +1,7 @@
 8.1.9
 -----
-
-
+(RB=863804)
+Make HttpClientFactory default HTTP version configurable
 
 8.1.8
 -----
