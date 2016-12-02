@@ -19,7 +19,6 @@ package com.linkedin.data;
 
 import com.linkedin.data.collections.Common;
 import java.util.Collection;
-import java.util.IdentityHashMap;
 
 /**
  * Marker interface for complex Data objects.
@@ -81,14 +80,6 @@ public interface DataComplex extends Common, Instrumentable
    * @throws CloneNotSupportedException if the object cannot be deep copied.
    */
   DataComplex copy() throws CloneNotSupportedException;
-
-  /**
-   * Deep copy this object and the complex Data objects referenced by this object.
-    *
-   * @param alreadyCopied provides the objects already copied, and their copies.
-   * @throws CloneNotSupportedException if the referenced object cannot be copied.
-   */
-  void copyReferencedObjects(IdentityHashMap<DataComplex, DataComplex> alreadyCopied) throws CloneNotSupportedException;
 
   /**
    * Returns the data complex hash code of this data complex object.

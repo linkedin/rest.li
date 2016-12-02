@@ -20,7 +20,6 @@ import com.linkedin.data.collections.CheckedMap;
 import com.linkedin.data.collections.CommonMap;
 import com.linkedin.data.collections.MapChecker;
 import java.util.HashMap;
-import java.util.IdentityHashMap;
 import java.util.Map;
 
 
@@ -139,11 +138,16 @@ public final class DataMap extends CheckedMap<String,Object> implements DataComp
   @Override
   public DataMap copy() throws CloneNotSupportedException
   {
-    return Data.copy(this, new IdentityHashMap<DataComplex, DataComplex>());
+    return Data.copy(this, new DataComplexTable());
   }
 
-  @Override
-  public void copyReferencedObjects(IdentityHashMap<DataComplex, DataComplex> alreadyCopied) throws CloneNotSupportedException
+  /**
+   * Deep copy this object and the complex Data objects referenced by this object.
+   *
+   * @param alreadyCopied provides the objects already copied, and their copies.
+   * @throws CloneNotSupportedException if the referenced object cannot be copied.
+   */
+  public void copyReferencedObjects(DataComplexTable alreadyCopied) throws CloneNotSupportedException
   {
     for (Map.Entry<String,?> e : entrySet())
     {

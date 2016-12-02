@@ -1,3 +1,11 @@
+9.0.1
+-----
+
+9.0.0
+-----
+(RB=862822)
+Remove dependency on slow IdentityHashTable. Remove copyReferencedObjects from DataComplex interface.
+
 8.1.10
 ------
 (RB=874497)

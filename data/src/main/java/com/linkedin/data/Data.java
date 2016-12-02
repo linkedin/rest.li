@@ -62,14 +62,13 @@ import java.util.Map;
  *
  * A deep copy copies both the internal state and referenced complex
  * objects recursively. To keep track of complex objects that are referenced
- * more than once in the object graph and also to avoid infinite loops in
+ * more than once in the object graph, and also to avoid infinite loops in
  * recursive traversal of a non-acyclic object graph, a deep copy
  * keeps track of complex objects that have been copied.
- * The {@link DataComplex#copy()} method performs a deep copy, its implementation depends
- * on {@link DataComplex#clone()}, {@link Data#copy(Object, IdentityHashMap)}
- * and {@link DataComplex#copyReferencedObjects(IdentityHashMap)}.
- * The {@link IdentityHashMap} is used to track the complex objects
- * have already been copied.
+ * The {@link DataComplex#copy()} method performs a deep copy; its implementations depend
+ * on {@link Data#copy(Object, DataComplexTable)}.
+ * The {@link DataComplexTable} is used to track the complex objects
+ * that have already been copied.
  * <p>
  *
  * Primitive objects are immutable, neither deep copy nor shallow copy
@@ -95,7 +94,7 @@ import java.util.Map;
  * (following the Avro specification.)
  * <p>
  *
- * @see #copy(Object, IdentityHashMap)
+ * @see #copy(Object, DataComplexTable)
  * @see DataList
  * @see DataMap
  *
@@ -742,7 +741,7 @@ public class Data
    * @return the copy.
    * @throws CloneNotSupportedException if the complex object cannot be deep copied.
    */
-  static <T> T copy(T object, IdentityHashMap<DataComplex, DataComplex> alreadyCopied) throws CloneNotSupportedException
+  static <T> T copy(T object, DataComplexTable alreadyCopied) throws CloneNotSupportedException
   {
     if (object == null)
     {
@@ -750,18 +749,28 @@ public class Data
     }
     else if (isComplex(object))
     {
+      DataComplex src = (DataComplex) object;
+
       @SuppressWarnings("unchecked")
-      T found = (T) alreadyCopied.get(object);
+      T found = (T) alreadyCopied.get(src);
+
       if (found != null)
       {
         return found;
       }
       else
       {
-        DataComplex src = (DataComplex) object;
         DataComplex clone = src.clone();
         alreadyCopied.put(src, clone);
-        clone.copyReferencedObjects(alreadyCopied);
+
+        if (clone instanceof DataMap)
+        {
+          ((DataMap)clone).copyReferencedObjects(alreadyCopied);
+        }
+        else if (clone instanceof DataList)
+        {
+          ((DataList)clone).copyReferencedObjects(alreadyCopied);
+        }
 
         @SuppressWarnings("unchecked")
         T converted = (T) clone;
@@ -777,6 +786,7 @@ public class Data
       throw new CloneNotSupportedException("Illegal value encountered: " + object);
     }
   }
+
   /**
    * Make a Data object and its contained mutable Data objects read-only.
    *

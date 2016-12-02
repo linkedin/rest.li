@@ -21,7 +21,6 @@ import com.linkedin.data.collections.CommonList;
 import com.linkedin.data.collections.ListChecker;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -103,11 +102,16 @@ public final class DataList extends CheckedList<Object> implements DataComplex
   @Override
   public DataList copy() throws CloneNotSupportedException
   {
-    return Data.copy(this, new IdentityHashMap<DataComplex, DataComplex>());
+    return Data.copy(this, new DataComplexTable());
   }
 
-  @Override
-  public void copyReferencedObjects(IdentityHashMap<DataComplex, DataComplex> alreadyCopied) throws CloneNotSupportedException
+  /**
+   * Deep copy this object and the complex Data objects referenced by this object.
+   *
+   * @param alreadyCopied provides the objects already copied, and their copies.
+   * @throws CloneNotSupportedException if the referenced object cannot be copied.
+   */
+  public void copyReferencedObjects(DataComplexTable alreadyCopied) throws CloneNotSupportedException
   {
     int count = size();
     for (int i = 0; i < count; ++i)
