@@ -1,6 +1,9 @@
 8.1.10
 ------
-
+(RB=874497)
+Fix test failures caused by Jackson version bump
+(RB=869766)
+added comments to getResult() and getErrors()
 
 8.1.9
 -----
