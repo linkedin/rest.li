@@ -86,15 +86,15 @@ public class TestBatchCreateArgumentBuilder
   {
     return new Object[][]
         {
-            {"{\"elements\":{\"b\":123,\"a\":\"abc\"},{\"b\":5678,\"a\":\"xyzw\"}]}"},
-            {"{\"elements\":1234}"},
-            {"{\"elements\":"},
-            {"{\"elements\":[{\"b\":123,\"a\":\"abc\"},{1234:5678,\"a\":\"xyzw\"}]}"}
+            {"{\"elements\":{\"b\":123,\"a\":\"abc\"},{\"b\":5678,\"a\":\"xyzw\"}]}", "JsonParseException"},
+            {"{\"elements\":1234}", "JsonParseException"},
+            {"{\"elements\":", "JsonEOFException"},
+            {"{\"elements\":[{\"b\":123,\"a\":\"abc\"},{1234:5678,\"a\":\"xyzw\"}]}", "JsonParseException"}
         };
   }
 
   @Test(dataProvider = "failureData")
-  public void testFailure(String entity)
+  public void testFailure(String entity, String expectedExceptionMessage)
   {
     RestRequest request = RestLiArgumentBuilderTestHelper.getMockRequest(false, entity, 1);
     ResourceModel model = RestLiArgumentBuilderTestHelper.getMockResourceModel(MyComplexKey.class, null, false);
@@ -109,7 +109,7 @@ public class TestBatchCreateArgumentBuilder
     }
     catch (RestLiInternalException e)
     {
-      assertTrue(e.getMessage().contains("JsonParseException"));
+      assertTrue(e.getMessage().contains(expectedExceptionMessage));
     }
     catch (ClassCastException e)
     {

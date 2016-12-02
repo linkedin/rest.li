@@ -93,7 +93,7 @@ public class TestBadSchemas
           "}"
         ),
         IOException.class,
-        "build/test/testGeneratorBadSchemas/pegasus/com/linkedin/pegasus/generator/test/FieldDefinedTwice.pdsc,4,54: Field \"foo\" defined more than once, with \"long\" and \"string\"."
+        "build/test/testGeneratorBadSchemas/pegasus/com/linkedin/pegasus/generator/test/FieldDefinedTwice.pdsc,5,14: Field \"foo\" defined more than once, with \"long\" and \"string\"."
       }
     };
 
