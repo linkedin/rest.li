@@ -77,7 +77,7 @@ public class AsyncErrorResource
     // Non-RestLiServiceException passed to callback
     if (key.equals("returnNonService"))
     {
-      return Tasks.callable("", new Callable<Greeting>()
+      return Task.callable("", new Callable<Greeting>()
       {
         @Override
         public Greeting call() throws Exception
@@ -90,7 +90,7 @@ public class AsyncErrorResource
     // RestLiServiceException passed to callback
     if (key.equals("returnService"))
     {
-      return Tasks.callable("", new Callable<Greeting>() {
+      return Task.callable("", new Callable<Greeting>() {
         @Override
         public Greeting call() throws Exception
         {
@@ -111,7 +111,7 @@ public class AsyncErrorResource
       throw new IllegalStateException();
     }
 
-    return Tasks.callable("", new Callable<Greeting>()
+    return Task.callable("", new Callable<Greeting>()
     {
       @Override
       public Greeting call() throws Exception

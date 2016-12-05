@@ -62,7 +62,7 @@ public class ActionsResource
   @Action(name="returnVoid")
   public ActionResult<Void> returnVoid()
   {
-    return new ActionResult<Void>(HttpStatus.S_200_OK);
+    return new ActionResult<>(HttpStatus.S_200_OK);
   }
 
   @Action(name="returnInt")
@@ -171,7 +171,7 @@ public class ActionsResource
   }
 
   private static Task<String> makeConcatTask(final Task<?>... tasks) {
-    return Tasks.callable("concat", new Callable<String>()
+    return Task.callable("concat", new Callable<String>()
     {
       @Override
       public String call() throws Exception
@@ -256,7 +256,7 @@ public class ActionsResource
     final Task<String> t3 = makeTaskC(c);
     final Task<String> collect = makeConcatTask(t1, t2, t3);
 
-    return Tasks.seq(Tasks.par(t1, t2, t3), collect);
+    return Task.par(t1, t2, t3).andThen(collect);
   }
 
   /**

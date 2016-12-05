@@ -24,6 +24,7 @@ import com.linkedin.parseq.Engine;
 import com.linkedin.parseq.EngineBuilder;
 import com.linkedin.parseq.Task;
 import com.linkedin.parseq.promise.Promise;
+import com.linkedin.restli.client.config.RequestConfigProvider;
 import com.linkedin.restli.client.test.TestRecord;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.ErrorDetails;
@@ -39,6 +40,7 @@ import java.net.HttpCookie;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -90,7 +92,6 @@ public class ParSeqRestClientTest
     final ParSeqRestClient client = mockClient(id, httpCode, protocolVersion);
     final Request<TestRecord> req = mockRequest(TestRecord.class, versionOption);
 
-    @SuppressWarnings("deprecation")
     final Promise<Response<TestRecord>> promise = client.sendRequest(req);
     promise.await();
     Assert.assertFalse(promise.isFailed());
@@ -139,7 +140,6 @@ public class ParSeqRestClientTest
     final ParSeqRestClient client = mockClient(ERR_KEY, ERR_VALUE, ERR_MSG, HTTP_CODE, APP_CODE, protocolVersion, errorResponseHeaderName);
     final Request<EmptyRecord> req = mockRequest(EmptyRecord.class, versionOption);
 
-    @SuppressWarnings("deprecation")
     final Promise<Response<EmptyRecord>> promise = client.sendRequest(req);
     promise.await();
     Assert.assertTrue(promise.isFailed());
@@ -190,7 +190,7 @@ public class ParSeqRestClientTest
    */
   private <T extends RecordTemplate> Request<T> mockRequest(final Class<T> clazz, ProtocolVersionOption versionOption)
   {
-    return new GetRequest<T>(Collections.<String, String> emptyMap(),
+    return new GetRequest<>(Collections.<String, String> emptyMap(),
                              Collections.<HttpCookie>emptyList(),
                              clazz,
                              null,
@@ -232,12 +232,13 @@ public class ParSeqRestClientTest
       throw new RuntimeException(e);
     }
 
-    final Map<String, String> headers = new HashMap<String, String>();
+    final Map<String, String> headers = new HashMap<>();
     headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, protocolVersion.toString());
     headers.put(errorResponseHeaderName, RestConstants.HEADER_VALUE_ERROR);
 
     return new ParSeqRestClient(new RestClient(new MockClient(httpCode, headers, mapBytes),
-                                               "http://localhost"));
+                                               "http://localhost"),
+        RequestConfigProvider.build(new ParSeqRestliClientConfigBuilder().build(), () -> Optional.empty()));
   }
 
   /**
@@ -259,11 +260,12 @@ public class ParSeqRestClientTest
       throw new RuntimeException(e);
     }
 
-    final Map<String, String> headers = new HashMap<String, String>();
+    final Map<String, String> headers = new HashMap<>();
     headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, protocolVersion.toString());
 
     return new ParSeqRestClient(new RestClient(new MockClient(httpCode, headers, mapBytes),
-                                               "http://localhost"));
+                                               "http://localhost"),
+        RequestConfigProvider.build(new ParSeqRestliClientConfigBuilder().build(), () -> Optional.empty()));
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "protocolVersions")

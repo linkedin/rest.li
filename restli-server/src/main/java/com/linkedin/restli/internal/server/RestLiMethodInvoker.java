@@ -155,7 +155,7 @@ public class RestLiMethodInvoker
           restliTask.addListener(new CallbackPromiseAdapter<>(callback, restliTask, requestExecutionReportBuilder,
                                                               resourceContext.getRequestAttachmentReader(),
                                                               resourceContext.getResponseAttachments()));
-          runTask(restliTask);
+          runTask(restliTask, toPlanClass(descriptor));
           break;
 
         case TASK:
@@ -180,7 +180,7 @@ public class RestLiMethodInvoker
             task.addListener(new CallbackPromiseAdapter<>(callback, task, requestExecutionReportBuilder,
                                                           resourceContext.getRequestAttachmentReader(),
                                                           resourceContext.getResponseAttachments()));
-            runTask(task);
+            runTask(task, toPlanClass(descriptor));
           }
           break;
 
@@ -213,12 +213,29 @@ public class RestLiMethodInvoker
     }
   }
 
-  private void runTask(Task<Object> task)
+  private String toPlanClass(ResourceMethodDescriptor descriptor)
+  {
+    final StringBuilder sb = new StringBuilder();
+    sb.append("resource=").append(descriptor.getResourceName());
+    sb.append(",");
+    sb.append("method=").append(descriptor.getType());
+    if (descriptor.getFinderName() != null)
+    {
+      sb.append(",").append("finder=").append(descriptor.getFinderName());
+    }
+    if (descriptor.getActionName() != null)
+    {
+      sb.append(",").append("action=").append(descriptor.getActionName());
+    }
+    return sb.toString();
+  }
+
+  private void runTask(Task<Object> task, String planClass)
   {
     Context taskContext = TASK_CONTEXT.get();
     if (taskContext == null)
     {
-      _engine.run(task);
+      _engine.run(task, planClass);
     }
     else
     {

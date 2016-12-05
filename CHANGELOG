@@ -1,5 +1,12 @@
+9.0.2
+-----
+
+
 9.0.1
 -----
+(RB=876002)
+Upgraded ParSeq version to 2.6.3
+Added setting plan class that reflects type of request for async resources implemented using ParSeq
 
 9.0.0
 -----

@@ -64,6 +64,7 @@ import org.slf4j.LoggerFactory;
  */
 public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
 {
+  private static final String MUX_PLAN_CLASS = "mux";
   private static final String MUX_URI_PATH = "/mux";
 
   private final Logger _log = LoggerFactory.getLogger(MultiplexedRequestHandlerImpl.class);
@@ -93,7 +94,7 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
     _requestHandler = requestHandler;
     _engine = engine;
     _maximumRequestsNumber = maximumRequestsNumber;
-    _individualRequestHeaderWhitelist = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
+    _individualRequestHeaderWhitelist = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
     if (individualRequestHeaderWhitelist != null)
     {
       _individualRequestHeaderWhitelist.addAll(individualRequestHeaderWhitelist);
@@ -137,19 +138,16 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
     }
     // prepare the map of individual responses to be collected
     final IndividualResponseMap individualResponses = new IndividualResponseMap(individualRequests.size());
-    final Map<String, HttpCookie> responseCookies = new HashMap<String, HttpCookie>();
+    final Map<String, HttpCookie> responseCookies = new HashMap<>();
     // all tasks are Void and side effect based, that will be useful when we add streaming
-    Task<Void> requestProcessingTask = createParallelRequestsTask(request, requestContext, individualRequests, individualResponses, responseCookies);
-    Task<Void> responseAggregationTask = Tasks.action("send aggregated response", new Runnable()
-    {
-      @Override
-      public void run()
+    Task<?> requestProcessingTask = createParallelRequestsTask(request, requestContext, individualRequests, individualResponses, responseCookies);
+    Task<Void> responseAggregationTask = Task.action("send aggregated response", () ->
       {
         RestResponse aggregatedResponse = aggregateResponses(individualResponses, responseCookies);
         callback.onSuccess(aggregatedResponse);
       }
-    });
-    _engine.run(Tasks.seq(requestProcessingTask, responseAggregationTask));
+    );
+    _engine.run(requestProcessingTask.andThen(responseAggregationTask), MUX_PLAN_CLASS);
   }
 
   /**
@@ -206,13 +204,13 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
     }
   }
 
-  private Task<Void> createParallelRequestsTask(RestRequest envelopeRequest,
+  private Task<?> createParallelRequestsTask(RestRequest envelopeRequest,
                                                 RequestContext requestContext,
                                                 IndividualRequestMap individualRequests,
                                                 IndividualResponseMap individualResponses,
                                                 Map<String, HttpCookie> responseCookies)
   {
-    List<Task<Void>> tasks = new ArrayList<Task<Void>>(individualRequests.size());
+    List<Task<?>> tasks = new ArrayList<>(individualRequests.size());
     for (IndividualRequestMap.Entry<String, IndividualRequest> individualRequestMapEntry : individualRequests.entrySet())
     {
       String id = individualRequestMapEntry.getKey();
@@ -227,14 +225,15 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
       else
       {
         // recursively process dependent requests
-        Task<Void> dependentRequestsTask = createParallelRequestsTask(envelopeRequest, requestContext, dependentRequests, individualResponses, responseCookies);
+        Task<?> dependentRequestsTask = createParallelRequestsTask(envelopeRequest, requestContext, dependentRequests, individualResponses, responseCookies);
         // tasks for dependant requests are executed after the current request's task
-        tasks.add(Tasks.seq(individualRequestTask, dependentRequestsTask));
+        tasks.add(individualRequestTask.andThen(dependentRequestsTask));
       }
     }
-    return toVoid(Tasks.par(tasks));
+    return Tasks.par(tasks);
   }
 
+  @SuppressWarnings("deprecation")
   private Task<Void> createRequestHandlingTask(final String id,
                                                final RestRequest envelopeRequest,
                                                final RequestContext requestContext,
@@ -249,16 +248,12 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
     final RequestHandlingTask requestHandlingTask = new RequestHandlingTask(_requestHandler, syntheticRequestCreationTask, requestContext, _multiplexerRunMode);
     final IndividualResponseConversionTask toIndividualResponseTask = new IndividualResponseConversionTask(id, requestHandlingTask);
     final ResponseFilterTask responseFilterTask = new ResponseFilterTask(_multiplexerSingletonFilter, toIndividualResponseTask);
-    final Task<Void> addResponseTask = Tasks.action("add response", new Runnable()
-    {
-      @Override
-      public void run()
+    final Task<Void> addResponseTask = Task.action("add response", () ->
       {
         IndividualResponseWithCookies individualResponseWithCookies = responseFilterTask.get();
         individualResponses.put(id, individualResponseWithCookies.getIndividualResponse());
         addResponseCookies(responseCookies, individualResponseWithCookies.getCookies());
-      }
-    });
+      });
     return Tasks.seq(
       requestSanitizationTask,
       inheritEnvelopeRequestTask,
@@ -294,22 +289,5 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
         .setEntity(aggregatedResponseData)
         .setCookies(CookieUtil.encodeSetCookies(new ArrayList(responseCookies.values())))
       .build();
-  }
-
-  /**
-   * Converts a Task<List<Void>> into a Task<Void>. That is a hack to make the type system happy.
-   * This method adds an unneeded empty task to the execution plan.
-   */
-  private static Task<Void> toVoid(Task<List<Void>> task)
-  {
-    Task<Void> doNothingTask = Tasks.action("do nothing", new Runnable()
-    {
-      @Override
-      public void run()
-      {
-        // seriously, nothing
-      }
-    });
-    return Tasks.seq(task, doNothingTask);
   }
 }

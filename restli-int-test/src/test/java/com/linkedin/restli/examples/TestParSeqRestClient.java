@@ -52,6 +52,7 @@ public class TestParSeqRestClient extends RestLiIntegrationTest
   private ScheduledExecutorService      _scheduler;
   private ParSeqRestClient              _restClient;
 
+  @SuppressWarnings("deprecation")
   @BeforeClass
   public void setUp() throws Exception
   {
@@ -82,7 +83,6 @@ public class TestParSeqRestClient extends RestLiIntegrationTest
   {
     final Request<String> req =
         builders.<String>action("Parseq").setActionParam("A", 5).setActionParam("B", "yay").setActionParam("C", false).build();
-    @SuppressWarnings("deprecation")
     final Promise<Response<String>> promise = _restClient.sendRequest(req);
     promise.await();
     Assert.assertFalse(promise.isFailed());
@@ -142,7 +142,6 @@ public class TestParSeqRestClient extends RestLiIntegrationTest
   public void testFailPromise(RootBuilderWrapper<?, ?> builders) throws InterruptedException
   {
     final Request<Void> req = builders.<Void>action("FailPromiseCall").build();
-    @SuppressWarnings("deprecation")
     final Promise<Response<Void>> promise = _restClient.sendRequest(req);
     promise.await();
     Assert.assertTrue(promise.isFailed());
@@ -172,10 +171,10 @@ public class TestParSeqRestClient extends RestLiIntegrationTest
   {
     return new Object[][]
       {
-        { new RootBuilderWrapper<Object, RecordTemplate>(new ActionsBuilders()) },
-        { new RootBuilderWrapper<Object, RecordTemplate>(new ActionsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
-        { new RootBuilderWrapper<Object, RecordTemplate>(new ActionsRequestBuilders()) },
-        { new RootBuilderWrapper<Object, RecordTemplate>(new ActionsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
+        { new RootBuilderWrapper<>(new ActionsBuilders()) },
+        { new RootBuilderWrapper<>(new ActionsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
+        { new RootBuilderWrapper<>(new ActionsRequestBuilders()) },
+        { new RootBuilderWrapper<>(new ActionsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
       };
   }
 }

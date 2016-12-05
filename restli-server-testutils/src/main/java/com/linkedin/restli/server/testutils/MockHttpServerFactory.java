@@ -17,7 +17,6 @@
 package com.linkedin.restli.server.testutils;
 
 
-import com.linkedin.parseq.AsyncCallableTask;
 import com.linkedin.parseq.Engine;
 import com.linkedin.parseq.EngineBuilder;
 import com.linkedin.r2.filter.FilterChain;
@@ -51,6 +50,7 @@ import java.util.concurrent.ScheduledExecutorService;
  *
  * @author kparikh
  */
+@SuppressWarnings("deprecation")
 public class MockHttpServerFactory
 {
   private static final String LOCALHOST = "http://localhost:";
@@ -174,7 +174,7 @@ public class MockHttpServerFactory
     final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(NUM_THREADS);
     final ExecutorService executor = Executors.newFixedThreadPool(NUM_THREADS);
     EngineBuilder engineBuilder = new EngineBuilder().setTaskExecutor(scheduler).setTimerScheduler(scheduler);
-    AsyncCallableTask.register(engineBuilder, executor);
+    com.linkedin.parseq.AsyncCallableTask.register(engineBuilder, executor);
 
     final Engine engine = engineBuilder.build();
     ResourceFactory resourceFactory = createResourceFactory(beans);

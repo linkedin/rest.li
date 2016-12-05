@@ -20,6 +20,8 @@ import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.linkedin.parseq.internal.FIFOPriorityQueue;
+
 import org.slf4j.ILoggerFactory;
 
 
@@ -31,7 +33,7 @@ public class CountingEngine extends Engine
   public CountingEngine(Executor taskExecutor, DelayedExecutor timerExecutor, ILoggerFactory loggerFactory,
       Map<String, Object> properties, Engine engine)
   {
-    super(taskExecutor, timerExecutor, loggerFactory, properties);
+    super(taskExecutor, timerExecutor, loggerFactory, properties, planContext -> {}, planContext -> {}, FIFOPriorityQueue::new);
     _engine = engine;
   }
 

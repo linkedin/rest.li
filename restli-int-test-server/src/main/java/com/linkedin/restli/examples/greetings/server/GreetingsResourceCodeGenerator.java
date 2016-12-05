@@ -350,8 +350,8 @@ public class GreetingsResourceCodeGenerator
         out.println("}"); // try catch
         out.println("}"); // run
         out.println("};"); // runnable
-        out.printf("psContext.run(%s.action(\"restli-%s\", requestHandler));%n",
-                   className(Tasks.class),
+        out.printf("psContext.run(%s.action(\"restli-%s\", requestHandler::run));%n",
+                   className(Task.class),
                    method.getName());
         out.println("return result;");
       }

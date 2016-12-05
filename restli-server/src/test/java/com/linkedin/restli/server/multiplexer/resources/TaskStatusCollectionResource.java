@@ -16,15 +16,19 @@
 
 package com.linkedin.restli.server.multiplexer.resources;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Callable;
+
 import com.linkedin.data.DataMap;
 import com.linkedin.parseq.Task;
-import com.linkedin.parseq.Tasks;
+import com.linkedin.restli.server.annotations.Action;
+import com.linkedin.restli.server.annotations.Finder;
+import com.linkedin.restli.server.annotations.QueryParam;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.annotations.RestMethod;
 import com.linkedin.restli.server.multiplexer.resources.TestDataModels.User;
 import com.linkedin.restli.server.resources.KeyValueResource;
-
-import java.util.concurrent.Callable;
 
 
 @RestLiCollection(name="users", keyName="userID")
@@ -33,7 +37,7 @@ public class TaskStatusCollectionResource implements KeyValueResource<Long, User
   @RestMethod.Get
   public Task<User> get(Long key)
   {
-    return Tasks.callable("get: " + key, new Callable<User>()
+    return Task.callable("get: " + key, new Callable<User>()
     {
       @Override
       public User call() throws Exception
@@ -42,4 +46,17 @@ public class TaskStatusCollectionResource implements KeyValueResource<Long, User
       }
     });
   }
+
+  @Action(name="register")
+  public Task<Void> register()
+  {
+    return Task.action(() -> {});
+  }
+
+  @Finder("friends")
+  public Task<List<User>> getFriends(@QueryParam("userID") long userID)
+  {
+    return Task.value(new ArrayList<>());
+  }
+
 }

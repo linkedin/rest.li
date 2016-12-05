@@ -31,7 +31,7 @@ import com.linkedin.parseq.BaseTask;
 import com.linkedin.parseq.Context;
 import com.linkedin.parseq.Engine;
 import com.linkedin.parseq.EngineBuilder;
-import com.linkedin.parseq.Tasks;
+import com.linkedin.parseq.Task;
 import com.linkedin.parseq.promise.Promise;
 import com.linkedin.parseq.promise.Promises;
 import com.linkedin.parseq.promise.SettablePromise;
@@ -3364,7 +3364,7 @@ public class TestRestLiMethodInvocation
     methodDescriptor = taskStatusResourceModel.findMethod(ResourceMethod.GET);
     taskStatusResource = getMockResource(TaskStatusCollectionResource.class);
     EasyMock.expect(taskStatusResource.get(eq(1L))).andReturn(
-        Tasks.callable(
+        Task.callable(
             "myTask",
             new Callable<Status>()
             {
