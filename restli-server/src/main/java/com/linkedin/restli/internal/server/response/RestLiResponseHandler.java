@@ -276,12 +276,12 @@ public class RestLiResponseHandler
     if (RestConstants.HEADER_VALUE_APPLICATION_PSON.equalsIgnoreCase(mimeType))
     {
       builder.setHeader(RestConstants.HEADER_CONTENT_TYPE, RestConstants.HEADER_VALUE_APPLICATION_PSON);
-      builder.setEntity(DataMapUtils.mapToPsonBytes(dataMap));
+      builder.setEntity(DataMapUtils.mapToPsonByteString(dataMap));
     }
     else if (RestConstants.HEADER_VALUE_APPLICATION_JSON.equalsIgnoreCase(mimeType))
     {
       builder.setHeader(RestConstants.HEADER_CONTENT_TYPE, RestConstants.HEADER_VALUE_APPLICATION_JSON);
-      builder.setEntity(DataMapUtils.mapToBytes(dataMap));
+      builder.setEntity(DataMapUtils.mapToByteString(dataMap));
     }
     else
     {

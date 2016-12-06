@@ -17,6 +17,7 @@
 package com.linkedin.restli.internal.server.util;
 
 
+import com.linkedin.data.ByteString;
 import com.linkedin.data.DataComplex;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
@@ -319,6 +320,17 @@ public class DataMapUtils
     }
   }
 
+  /**
+   * Encode {@link DataMap} as a ByteString using {@link ByteString} unsafeWrap.
+   *
+   * @param dataMap input {@link DataMap}
+   * @return ByteString
+   */
+  public static ByteString mapToByteString(final DataMap dataMap)
+  {
+    return ByteString.unsafeWrap(DataMapUtils.mapToBytes(dataMap));
+  }
+
   public static byte[] listToBytes(final DataList dataList)
   {
     try
@@ -363,5 +375,16 @@ public class DataMapUtils
     {
       throw new RestLiInternalException(e);
     }
+  }
+
+  /**
+   * Encode the {@link DataMap} as a ByteString using {@link ByteString} unsafeWrap.
+   *
+   * @param dataMap input {@link DataMap}
+   * @return ByteString
+   */
+  public static ByteString mapToPsonByteString(final DataMap dataMap)
+  {
+    return ByteString.unsafeWrap(DataMapUtils.mapToPsonBytes(dataMap));
   }
 }
