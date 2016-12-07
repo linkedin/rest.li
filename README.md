@@ -4,8 +4,8 @@
 
 Rest.li is an open source REST framework for building robust, scalable RESTful
 architectures using type-safe bindings and asynchronous, non-blocking IO. Rest.li
-fills a niche for applying RESTful principals at scale with an end-to-end developer
-workflow for buildings REST APIs that promotes clean REST practices, uniform
+fills a niche for applying RESTful principles at scale with an end-to-end developer
+workflow for building REST APIs that promotes clean REST practices, uniform
 interface design and consistent data modeling.
 
 <p align="center"><a href="https://github.com/linkedin/rest.li">Source</a> | <a href="https://github.com/linkedin/rest.li/wiki">Documentation</a> | <a href="http://www.linkedin.com/groups/Restli-4855943">Discussion Group</a></p>
@@ -16,12 +16,12 @@ Features
 * [End-to-end framework](https://github.com/linkedin/rest.li/wiki/Rest.li-User-Guide#development-flow) for building RESTful APIs
 * Approachable APIs for writing non-blocking client and server code using [ParSeq](https://github.com/linkedin/parseq)
 * Type-safe development using generated data and client bindings
-* [JAX-RS](http://en.wikipedia.org/wiki/Java_API_for_RESTful_Web_Services) inspired annotation driven server side resource development
-* Engineered and battle tested for high scalability and high availability
-* Optional [Dynamic Discovery](https://github.com/linkedin/rest.li/wiki/Dynamic-Discovery) subsystem adds client side load balancing and fault tolerance
+* [JAX-RS](http://en.wikipedia.org/wiki/Java_API_for_RESTful_Web_Services)-inspired, annotation-driven, server-side resource development
+* Engineered and battle-tested for high scalability and high availability
+* Optional [Dynamic Discovery](https://github.com/linkedin/rest.li/wiki/Dynamic-Discovery) subsystem adds client-side load balancing and fault tolerance
 * Backward compatibility checking to ensure all API changes are safe
 * Support for batch operations, partial updates and projections
-* [Web UI](https://github.com/linkedin/rest.li-api-hub) for browsing and searching a catalog of rest.li APIs.
+* [Web UI](https://github.com/linkedin/rest.li-api-hub) for browsing and searching a catalog of rest.li APIs
 
 Website
 -------
