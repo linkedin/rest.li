@@ -38,7 +38,7 @@ project.sourceSets.all { SourceSet sourceSet ->
   // data template generation task
   final String pegasusDirName = 'pegasus'
   final String inputDataSchemaDirPath = "${inputParentDirPath}${File.separatorChar}${pegasusDirName}"
-  final FileTree inputDataSchemaFiles = project.fileTree(dir: inputDataSchemaDirPath, includes: ["**${File.separatorChar}*.pdsc"])
+  final FileTree inputDataSchemaFiles = project.fileTree(dir: inputDataSchemaDirPath, includes: ["**${File.separatorChar}*.pdsc", "**${File.separatorChar}*.pdl"])
   if (!inputDataSchemaFiles.empty) {
     final String outputDataTemplateDirPath = rootProject.ext.build.getDataTemplateOutDirPath(project, sourceSet)
     sourceSet.java.srcDir(outputDataTemplateDirPath)
@@ -82,6 +82,7 @@ project.sourceSets.all { SourceSet sourceSet ->
   final Task jarTask = project.tasks[sourceSet.getTaskName('', 'jar')]
   jarTask.from(inputParentDirPath) {
     include "${pegasusDirName}${File.separatorChar}**${File.separatorChar}*.pdsc"
+    include "${pegasusDirName}${File.separatorChar}**${File.separatorChar}*.pdl"
     include "${idlDirName}${File.separatorChar}**${File.separatorChar}*.restspec.json\""
   }
 }

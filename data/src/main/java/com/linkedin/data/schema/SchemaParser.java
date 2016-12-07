@@ -42,7 +42,7 @@ import static com.linkedin.data.schema.DataSchemaConstants.*;
 
 
 /**
- * Schema Parser.
+ * Schema Parser for the Pegasus data schema format (.pdsc).
  * <p>
  *
  * Inspired by Avro 1.4.1 specification.
@@ -72,26 +72,6 @@ public class SchemaParser extends AbstractSchemaParser
   public SchemaParser(DataSchemaResolver resolver)
   {
     super(resolver == null ? new DefaultDataSchemaResolver() : resolver);
-  }
-
-  /**
-   * Set the {@link ValidationOptions} used to validate default values.
-   *
-   * @param validationOptions used to validate default values.
-   */
-  public void setValidationOptions(ValidationOptions validationOptions)
-  {
-    _validationOptions = validationOptions;
-  }
-
-  /**
-   * Return the {@link ValidationOptions} used to validate default values.
-   *
-   * @return the {@link ValidationOptions} used to validate default values.
-   */
-  public ValidationOptions getValidationOptions()
-  {
-    return _validationOptions;
   }
 
   /**
@@ -824,39 +804,6 @@ public class SchemaParser extends AbstractSchemaParser
   }
 
   /**
-   * Validate that the default value complies with the {@link DataSchema} of the record.
-   *
-   * @param recordSchema of the record.
-   */
-  protected void validateDefaults(RecordDataSchema recordSchema)
-  {
-    for (RecordDataSchema.Field field : recordSchema.getFields())
-    {
-      Object value = field.getDefault();
-      if (value != null)
-      {
-        DataSchema valueSchema = field.getType();
-        ValidationResult result = ValidateDataAgainstSchema.validate(value, valueSchema, _validationOptions);
-        if (result.isValid() == false)
-        {
-          startErrorMessage(value).
-            append("Default value ").append(value).
-            append(" of field \"").append(field.getName()).
-            append("\" declared in record \"").append(recordSchema.getFullName()).
-            append("\" failed validation.\n");
-          MessageUtil.appendMessages(errorMessageBuilder(), result.getMessages());
-        }
-        Object fixed = result.getFixed();
-        field.setDefault(fixed);
-      }
-      if (field.getDefault() instanceof DataComplex)
-      {
-        ((DataComplex) field.getDefault()).setReadOnly();
-      }
-    }
-  }
-
-  /**
    * Parse a {@link DataMap} to obtain aliases.
    *
    * @param map to parse.
@@ -966,11 +913,5 @@ public class SchemaParser extends AbstractSchemaParser
     return _errorMessageBuilder;
   }
 
-  public static final ValidationOptions getDefaultSchemaParserValidationOptions()
-  {
-    return new ValidationOptions(RequiredMode.CAN_BE_ABSENT_IF_HAS_DEFAULT, CoercionMode.NORMAL);
-  }
-
-  private ValidationOptions _validationOptions = getDefaultSchemaParserValidationOptions();
   private StringBuilder _errorMessageBuilder = new StringBuilder();
 }

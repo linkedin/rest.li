@@ -1,0 +1,11 @@
+namespace com.linkedin.pegasus.generator.test.idl.records
+
+/**
+ * A simple record
+ */
+record Simple {
+  /**
+   * A simple field
+   */
+  message: string?
+}

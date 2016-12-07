@@ -1,0 +1,5 @@
+namespace com.linkedin.pegasus.generator.test.idl.records
+
+record RecursivelyDefinedRecord {
+  self: RecursivelyDefinedRecord?
+}

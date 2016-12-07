@@ -1,0 +1,7 @@
+namespace com.linkedin.pegasus.generator.test.idl.unions
+
+import com.linkedin.pegasus.generator.test.idl.customtypes.CustomRecord
+
+record WithRecordCustomTypeUnion {
+  `union`: union[CustomRecord]
+}

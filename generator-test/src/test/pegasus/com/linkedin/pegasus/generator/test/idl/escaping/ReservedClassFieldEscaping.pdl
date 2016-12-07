@@ -1,0 +1,8 @@
+namespace com.linkedin.pegasus.generator.test.idl.escaping
+
+record ReservedClassFieldEscaping {
+  data: string
+  schema: string
+  copy: string
+  clone: string
+}

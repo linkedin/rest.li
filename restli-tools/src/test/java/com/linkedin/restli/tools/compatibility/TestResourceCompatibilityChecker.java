@@ -22,10 +22,9 @@ import com.linkedin.data.schema.LongDataSchema;
 import com.linkedin.data.schema.Name;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.SchemaParser;
-import com.linkedin.data.schema.SchemaParserFactory;
 import com.linkedin.data.schema.StringDataSchema;
 import com.linkedin.data.schema.generator.AbstractGenerator;
-import com.linkedin.data.schema.resolver.FileDataSchemaResolver;
+import com.linkedin.data.schema.resolver.MultiFormatDataSchemaResolver;
 import com.linkedin.data.template.StringArray;
 import com.linkedin.restli.restspec.AssocKeySchema;
 import com.linkedin.restli.restspec.AssocKeySchemaArray;
@@ -65,9 +64,9 @@ public class TestResourceCompatibilityChecker
       resolverPath = resourcesDir + PEGASUS_SUFFIX;
     }
 
-    prevSchemaResolver = new FileDataSchemaResolver(SchemaParserFactory.instance(), resolverPath);
-    compatSchemaResolver = new FileDataSchemaResolver(SchemaParserFactory.instance(), resolverPath);
-    incompatSchemaResolver = new FileDataSchemaResolver(SchemaParserFactory.instance(), resolverPath);
+    prevSchemaResolver = MultiFormatDataSchemaResolver.withBuiltinFormats(resolverPath);
+    compatSchemaResolver = MultiFormatDataSchemaResolver.withBuiltinFormats(resolverPath);
+    incompatSchemaResolver = MultiFormatDataSchemaResolver.withBuiltinFormats(resolverPath);
 
     bindSchemaResolvers();
   }

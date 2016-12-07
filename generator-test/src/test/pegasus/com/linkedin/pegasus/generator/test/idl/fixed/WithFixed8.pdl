@@ -1,0 +1,5 @@
+namespace com.linkedin.pegasus.generator.test.idl.`fixed`
+
+record WithFixed8 {
+  `fixed`: Fixed8
+}

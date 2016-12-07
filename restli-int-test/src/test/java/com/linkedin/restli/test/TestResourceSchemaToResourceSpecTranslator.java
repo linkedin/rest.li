@@ -25,9 +25,8 @@ import com.linkedin.data.schema.EnumDataSchema;
 import com.linkedin.data.schema.FixedDataSchema;
 import com.linkedin.data.schema.MapDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
-import com.linkedin.data.schema.SchemaParserFactory;
 import com.linkedin.data.schema.UnionDataSchema;
-import com.linkedin.data.schema.resolver.FileDataSchemaResolver;
+import com.linkedin.data.schema.resolver.MultiFormatDataSchemaResolver;
 import com.linkedin.data.template.AbstractArrayTemplate;
 import com.linkedin.data.template.AbstractMapTemplate;
 import com.linkedin.data.template.DataTemplate;
@@ -101,7 +100,7 @@ public class TestResourceSchemaToResourceSpecTranslator
     String projectDir = System.getProperty("test.projectDir");
     idlDir = projectDir + FS + ".." + FS + "restli-int-test-api" + FS + "src" + FS + "main" + FS + "idl";
     String pdscDir = projectDir +  FS + ".." + FS + "restli-int-test-api" + FS + "src" + FS + "main" + FS + "pegasus";
-    resolver = new FileDataSchemaResolver(SchemaParserFactory.instance(), pdscDir);
+    resolver = MultiFormatDataSchemaResolver.withBuiltinFormats(pdscDir);
 
     translator = new ResourceSchemaToResourceSpecTranslator(resolver, new ExampleGeneratorClassBindingResolver());
   }

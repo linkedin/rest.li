@@ -1,0 +1,11 @@
+namespace com.linkedin.pegasus.generator.test.idl.deprecated
+
+@deprecated = "Use XYZ instead"
+record DeprecatedRecord {
+
+  @deprecated
+  field1: string
+
+  @deprecated = "Use XYZ instead"
+  field2: string
+}

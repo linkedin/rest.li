@@ -1,0 +1,15 @@
+{
+  "telling": {
+    "org.example.FortuneCookie": {
+      "message": " a message",
+      "certainty": 0.1,
+      "luckyNumbers": [1, 2, 3],
+      "map": {"x": 1, "y": 2},
+      "simple": { "message": "a simple message" },
+      "simpleArray": [ { "message": "M1" } ],
+      "simpleMap": { "message1": { "message": "M1" } },
+      "arrayArray": [[1, 2], [3, 4]]
+    }
+  },
+  "createdAt": "2015-01-01T00:00:00.000Z"
+}

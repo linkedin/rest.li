@@ -17,9 +17,10 @@
 package com.linkedin.restli.tools.compatibility;
 
 import com.linkedin.data.schema.DataSchemaResolver;
-import com.linkedin.data.schema.SchemaParserFactory;
 import com.linkedin.data.schema.resolver.DefaultDataSchemaResolver;
 import com.linkedin.data.schema.resolver.FileDataSchemaResolver;
+import com.linkedin.data.schema.resolver.MultiFormatDataSchemaResolver;
+
 
 /**
  * Basic Utilities for Resource Compatibility.
@@ -39,7 +40,7 @@ public class CompatibilityUtil
   {
     if (resolverPath != null)
     {
-      return new FileDataSchemaResolver(SchemaParserFactory.instance(), resolverPath);
+      return MultiFormatDataSchemaResolver.withBuiltinFormats(resolverPath);
     }
     else
     {

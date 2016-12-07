@@ -22,11 +22,11 @@ import com.linkedin.data.schema.DataSchemaLocation;
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.SchemaParser;
-import com.linkedin.data.schema.SchemaParserFactory;
 import com.linkedin.data.schema.PegasusSchemaParser;
 import com.linkedin.data.schema.resolver.DefaultDataSchemaResolver;
 import com.linkedin.data.schema.resolver.FileDataSchemaLocation;
 import com.linkedin.data.schema.resolver.FileDataSchemaResolver;
+import com.linkedin.data.schema.resolver.MultiFormatDataSchemaResolver;
 import com.linkedin.util.FileUtil;
 
 import java.io.File;
@@ -97,7 +97,7 @@ public abstract class AbstractGenerator
     final String resolverPath = getConfig().getResolverPath();
     if (resolverPath != null)
     {
-      _schemaResolver = new FileDataSchemaResolver(SchemaParserFactory.instance(), resolverPath);
+      _schemaResolver = MultiFormatDataSchemaResolver.withBuiltinFormats(resolverPath);
     }
   }
 

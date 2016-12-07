@@ -1,0 +1,6 @@
+namespace com.linkedin.pegasus.generator.test.idl.typerefs
+
+import com.linkedin.pegasus.generator.test.idl.records.Message
+import com.linkedin.pegasus.generator.test.idl.records.Note
+
+typeref Union = union[Note, Message]

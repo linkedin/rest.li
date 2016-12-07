@@ -1,0 +1,10 @@
+namespace com.linkedin.pegasus.generator.test.idl.typerefs
+
+typeref UnionWithInlineRecord = union[
+
+  record InlineRecord {
+    value: int?
+  }
+
+  record InlineRecord2 {}
+]

@@ -1,8 +1,14 @@
+apply plugin: 'antlr'
+
 dependencies {
-  compile externalDependency.jacksonCore
+  compile externalDependency.antlr
+  compile externalDependency.commonsLang3
   compile externalDependency.guava
+  compile externalDependency.jacksonCore
   testCompile externalDependency.commonsIo
   testCompile externalDependency.testng
+
+  antlr externalDependency.antlr
 }
 
 test {
@@ -10,4 +16,23 @@ test {
 
   forkEvery = 1
   maxParallelForks = 4
+}
+
+def generatedAntlrDir = file("src/mainGeneratedAntlr")
+def generatedAntlrJavaDir = file("${generatedAntlrDir}/java")
+
+generateGrammarSource {
+  outputDirectory = file("${generatedAntlrJavaDir}/com/linkedin/data/schema/grammar")
+}
+
+sourceSets.main.java {
+  srcDir generatedAntlrJavaDir
+}
+
+idea.module {
+  generatedSourceDirs += generatedAntlrJavaDir
+}
+
+clean {
+  delete generatedAntlrDir
 }

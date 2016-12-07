@@ -22,7 +22,7 @@ project.sourceSets.all { SourceSet sourceSet ->
   final String inputDataSchemaParentDirPath = "src${File.separatorChar}${sourceSet.name}"
   final String pegasusDirName = 'pegasus'
   final String inputDataSchemaDirPath = "${inputDataSchemaParentDirPath}${File.separatorChar}${pegasusDirName}"
-  final FileTree inputDataSchemaFiles = project.fileTree(dir: inputDataSchemaDirPath, includes: ["**${File.separatorChar}*.pdsc"])
+  final FileTree inputDataSchemaFiles = project.fileTree(dir: inputDataSchemaDirPath, includes: ["**${File.separatorChar}*.pdsc", "**${File.separatorChar}*.pdl"])
   if (inputDataSchemaFiles.empty)
   {
     return;
@@ -45,6 +45,7 @@ project.sourceSets.all { SourceSet sourceSet ->
   final Task jarTask = project.tasks[sourceSet.getTaskName('', 'jar')]
   jarTask.from(inputDataSchemaParentDirPath) {
     include "${pegasusDirName}${File.separatorChar}**${File.separatorChar}*.pdsc"
+    include "${pegasusDirName}${File.separatorChar}**${File.separatorChar}*.pdl"
   }
 
   final Task dataTemplateCompileTask = project.task(sourceSet.name + 'CompileDataTemplate',

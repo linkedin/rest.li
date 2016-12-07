@@ -155,6 +155,23 @@ public abstract class AbstractDataSchemaResolver implements DataSchemaResolver
     private final Iterator<String> _it;
   }
 
+  private final DataSchemaResolver _dependencyResolver;
+
+  /**
+   * Constructor.
+   *
+   * @param parserFactory that will be used by the resolver to parse schemas.
+   * @param dependencyResolver provides the parser used to resolve dependencies.  Note that
+   *                     when multiple file formats (e.g. both .pdsc and .pdl) are in use,
+   *                     a resolver that supports multiple file formats such as
+   *                     {@link MultiFormatDataSchemaResolver} must be provided.
+   */
+  protected AbstractDataSchemaResolver(DataSchemaParserFactory parserFactory, DataSchemaResolver dependencyResolver)
+  {
+    _parserFactory = parserFactory;
+    _dependencyResolver = dependencyResolver;
+  }
+
   /**
    * Constructor.
    *
@@ -163,6 +180,7 @@ public abstract class AbstractDataSchemaResolver implements DataSchemaResolver
   protected AbstractDataSchemaResolver(DataSchemaParserFactory parserFactory)
   {
     _parserFactory = parserFactory;
+    _dependencyResolver = this;
   }
 
   protected boolean isBadLocation(DataSchemaLocation location)
@@ -241,14 +259,12 @@ public abstract class AbstractDataSchemaResolver implements DataSchemaResolver
         continue;
       }
 
-      //out.println("Location " + location);
       InputStream inputStream = null;
       try
       {
         inputStream = locationToInputStream(location, errorMessageBuilder);
         if (inputStream == null)
         {
-          //out.println("Bad location " + location);
           addBadLocation(location);
         }
         else
@@ -290,9 +306,9 @@ public abstract class AbstractDataSchemaResolver implements DataSchemaResolver
   protected NamedDataSchema parse(InputStream inputStream, final DataSchemaLocation location, String name, StringBuilder errorMessageBuilder)
   {
     NamedDataSchema schema = null;
-    PegasusSchemaParser parser = _parserFactory.create(this);
+
+    PegasusSchemaParser parser = _parserFactory.create(_dependencyResolver);
     parser.setLocation(location);
-    //out.println("start parsing " + location);
 
     parser.parse(new FilterInputStream(inputStream)
     {
@@ -305,8 +321,6 @@ public abstract class AbstractDataSchemaResolver implements DataSchemaResolver
 
     if (parser.hasError())
     {
-      //out.println(parser.errorMessageBuilder().toString());
-
       errorMessageBuilder.append("Error parsing ").append(location).append(" for \"").append(name).append("\".\n");
       errorMessageBuilder.append(parser.errorMessageBuilder());
       errorMessageBuilder.append("Done parsing ").append(location).append(".\n");
@@ -315,22 +329,15 @@ public abstract class AbstractDataSchemaResolver implements DataSchemaResolver
     }
     else
     {
-      //out.println(parser.schemasToString());
-
       DataSchema found = _nameToDataSchema.get(name);
       if (found != null && found instanceof NamedDataSchema)
       {
         schema = (NamedDataSchema) found;
       }
-
-      //out.println(name + " can" + (schema == null ? "not" : "") + " be found in " + location + ".");
     }
 
-    //out.println("Done parsing " + location);
     return schema;
   }
-
-  // private final PrintStream out = new PrintStream(new FileOutputStream(FileDescriptor.out));
 
   private final Map<String, NamedDataSchema> _nameToDataSchema = new HashMap<String, NamedDataSchema>();
   private final Map<String, DataSchemaLocation> _nameToDataSchemaLocations = new HashMap<String, DataSchemaLocation>();

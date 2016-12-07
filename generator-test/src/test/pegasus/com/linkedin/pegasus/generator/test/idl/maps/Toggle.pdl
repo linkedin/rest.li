@@ -1,0 +1,6 @@
+namespace com.linkedin.pegasus.generator.test.idl.maps
+
+enum Toggle {
+  UP
+  DOWN
+}

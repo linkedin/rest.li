@@ -1,0 +1,14 @@
+{
+  "ints" : { "1": "int" },
+  "longs" : { "2": "long" },
+  "floats" : { "3.14": "float" },
+  "doubles" : { "2.71": "double" },
+  "booleans" : { "true": "boolean" },
+  "strings" : { "key": "string" },
+  "bytes" : { "\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007": "bytes" },
+  "record" : { "(message~key)": "record" },
+  "array" : { "List(1,2)": "array" },
+  "enum" : { "APPLE": "enum" },
+  "custom" : { "100": "custom" },
+  "fixed" : { "\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007": "fixed" }
+}

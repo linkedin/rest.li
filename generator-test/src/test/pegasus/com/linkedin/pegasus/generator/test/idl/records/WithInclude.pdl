@@ -1,0 +1,6 @@
+namespace com.linkedin.pegasus.generator.test.idl.records
+
+record WithInclude {
+  ...Simple
+  direct: int
+}

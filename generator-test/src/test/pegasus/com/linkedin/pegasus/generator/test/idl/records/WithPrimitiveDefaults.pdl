@@ -1,0 +1,14 @@
+namespace com.linkedin.pegasus.generator.test.idl.records
+
+import com.linkedin.pegasus.generator.test.idl.enums.Fruits
+
+record WithPrimitiveDefaults {
+  intWithDefault: int = 1
+  longWithDefault: long = 3000000000
+  floatWithDefault: float = 3.3
+  doubleWithDefault: double = 4.4e38
+  booleanWithDefault: boolean = true
+  stringWithDefault: string = "DEFAULT"
+  bytesWithDefault: bytes = ""
+  enumWithDefault: Fruits = "APPLE"
+}

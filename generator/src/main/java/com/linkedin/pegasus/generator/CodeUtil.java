@@ -19,11 +19,10 @@ package com.linkedin.pegasus.generator;
 
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaResolver;
-import com.linkedin.data.schema.SchemaParserFactory;
 import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.schema.resolver.DefaultDataSchemaResolver;
-import com.linkedin.data.schema.resolver.FileDataSchemaResolver;
 
+import com.linkedin.data.schema.resolver.MultiFormatDataSchemaResolver;
 import java.util.EnumSet;
 import java.util.Set;
 
@@ -71,7 +70,7 @@ public class CodeUtil
     }
     else
     {
-      return new FileDataSchemaResolver(SchemaParserFactory.instance(), resolverPath);
+      return MultiFormatDataSchemaResolver.withBuiltinFormats(resolverPath);
     }
   }
 

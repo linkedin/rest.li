@@ -1,0 +1,5 @@
+{
+  "union" : {
+    "com.linkedin.pegasus.generator.test.idl.records.Empty" : { }
+  }
+}

@@ -18,12 +18,18 @@ package com.linkedin.data.schema;
 
 
 import com.linkedin.data.Data;
+import com.linkedin.data.DataComplex;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.DataLocation;
 import com.linkedin.data.codec.JacksonDataCodec;
-import com.linkedin.data.schema.resolver.DefaultDataSchemaResolver;
+import com.linkedin.data.message.MessageUtil;
 
+import com.linkedin.data.schema.validation.CoercionMode;
+import com.linkedin.data.schema.validation.RequiredMode;
+import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
+import com.linkedin.data.schema.validation.ValidationOptions;
+import com.linkedin.data.schema.validation.ValidationResult;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
@@ -34,8 +40,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-
-import static com.linkedin.data.schema.DataSchemaConstants.PACKAGE_KEY;
 
 /**
  * Common base class for parsers that parse Data objects.
@@ -84,6 +88,25 @@ abstract public class AbstractSchemaParser implements PegasusSchemaParser
     return _dataLocationMap;
   }
 
+  /**
+   * Set the {@link ValidationOptions} used to validate default values.
+   *
+   * @param validationOptions used to validate default values.
+   */
+  public void setValidationOptions(ValidationOptions validationOptions)
+  {
+    _validationOptions = validationOptions;
+  }
+
+  /**
+   * Return the {@link ValidationOptions} used to validate default values.
+   *
+   * @return the {@link ValidationOptions} used to validate default values.
+   */
+  public ValidationOptions getValidationOptions()
+  {
+    return _validationOptions;
+  }
 
   /**
    * Bind name and aliases to {@link NamedDataSchema}.
@@ -698,6 +721,39 @@ abstract public class AbstractSchemaParser implements PegasusSchemaParser
   }
 
   /**
+   * Validate that the default value complies with the {@link DataSchema} of the record.
+   *
+   * @param recordSchema of the record.
+   */
+  protected void validateDefaults(RecordDataSchema recordSchema)
+  {
+    for (RecordDataSchema.Field field : recordSchema.getFields())
+    {
+      Object value = field.getDefault();
+      if (value != null)
+      {
+        DataSchema valueSchema = field.getType();
+        ValidationResult result = ValidateDataAgainstSchema.validate(value, valueSchema, _validationOptions);
+        if (result.isValid() == false)
+        {
+          startErrorMessage(value).
+              append("Default value ").append(value).
+              append(" of field \"").append(field.getName()).
+              append("\" declared in record \"").append(recordSchema.getFullName()).
+              append("\" failed validation.\n");
+          MessageUtil.appendMessages(errorMessageBuilder(), result.getMessages());
+        }
+        Object fixed = result.getFixed();
+        field.setDefault(fixed);
+      }
+      if (field.getDefault() instanceof DataComplex)
+      {
+        ((DataComplex) field.getDefault()).setReadOnly();
+      }
+    }
+  }
+
+  /**
    * Set the current location for the source of input to the parser.
    *
    * This current location is will be used to annotate {@link NamedDataSchema}'s
@@ -839,4 +895,11 @@ abstract public class AbstractSchemaParser implements PegasusSchemaParser
   private final Map<Object, DataLocation> _dataLocationMap = new IdentityHashMap<Object, DataLocation>();
   private final List<DataSchema> _topLevelDataSchemas = new ArrayList<DataSchema>();
   private final DataSchemaResolver _resolver;
+
+  public static final ValidationOptions getDefaultSchemaParserValidationOptions()
+  {
+    return new ValidationOptions(RequiredMode.CAN_BE_ABSENT_IF_HAS_DEFAULT, CoercionMode.NORMAL);
+  }
+
+  private ValidationOptions _validationOptions = getDefaultSchemaParserValidationOptions();
 }

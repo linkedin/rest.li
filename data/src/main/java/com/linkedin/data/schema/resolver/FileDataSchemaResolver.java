@@ -81,11 +81,41 @@ public class FileDataSchemaResolver extends AbstractDataSchemaResolver
    * Constructor.
    *
    * @param parserFactory to be used to construct {@link SchemaParser}'s to parse located files.
+   * @param dependencyResolver provides the parser used to resolve dependencies.  Note that
+   *                     when multiple file formats (e.g. both .pdsc and .pdl) are in use,
+   *                     a resolver that supports multiple file formats such as
+   *                     {@link MultiFormatDataSchemaResolver} must be provided.
+   */
+  public FileDataSchemaResolver(DataSchemaParserFactory parserFactory, DataSchemaResolver dependencyResolver)
+  {
+    super(parserFactory, dependencyResolver);
+  }
+
+  /**
+   * Constructor.
+   *
+   * @param parserFactory to be used to construct {@link SchemaParser}'s to parse located files.
    * @param paths is the search paths delimited by the default path separator.
    */
   public FileDataSchemaResolver(DataSchemaParserFactory parserFactory, String paths)
   {
     this(parserFactory);
+    setPaths(paths);
+  }
+
+  /**
+   * Constructor.
+   *
+   * @param parserFactory to be used to construct {@link SchemaParser}'s to parse located files.
+   * @param paths is the search paths delimited by the default path separator.
+   * @param dependencyResolver provides the parser used to resolve dependencies.  Note that
+   *                     when multiple file formats (e.g. both .pdsc and .pdl) are in use,
+   *                     a resolver that supports multiple file formats such as
+   *                     {@link MultiFormatDataSchemaResolver} must be provided.
+   */
+  public FileDataSchemaResolver(DataSchemaParserFactory parserFactory, String paths, DataSchemaResolver dependencyResolver)
+  {
+    this(parserFactory, dependencyResolver);
     setPaths(paths);
   }
 

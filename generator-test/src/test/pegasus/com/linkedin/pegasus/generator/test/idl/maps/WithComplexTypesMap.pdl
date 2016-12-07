@@ -1,0 +1,18 @@
+namespace com.linkedin.pegasus.generator.test.idl.maps
+
+import com.linkedin.pegasus.generator.test.idl.enums.Fruits
+import com.linkedin.pegasus.generator.test.idl.records.Empty
+import com.linkedin.pegasus.generator.test.idl.records.Simple
+import com.linkedin.pegasus.generator.test.idl.`fixed`.Fixed8
+
+record WithComplexTypesMap {
+  empties: map[string, Empty]
+  fruits: map[string, Fruits]
+  arrays: map[string, array[Simple]]
+  maps: map[string, map[string, Simple]]
+  unions: map[
+    string,
+    typeref WithComplexTypesMapUnion = union[int, string, Simple]
+  ]
+  `fixed`: map[string, Fixed8]
+}

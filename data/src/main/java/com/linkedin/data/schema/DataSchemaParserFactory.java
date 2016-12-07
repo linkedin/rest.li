@@ -11,4 +11,11 @@ public interface DataSchemaParserFactory
    * @return a new parser.
    */
   PegasusSchemaParser create(DataSchemaResolver resolver);
+
+  /**
+   * Gets the language file extension for the parser.  E.g. 'pdsc'  or 'pdl'.
+   *
+   * @return a language file extension.
+   */
+  String getLanguageExtension();
 }

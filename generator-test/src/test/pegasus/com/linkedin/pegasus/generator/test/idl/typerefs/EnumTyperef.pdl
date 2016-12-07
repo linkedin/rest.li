@@ -1,0 +1,5 @@
+namespace com.linkedin.pegasus.generator.test.idl.typerefs
+
+import com.linkedin.pegasus.generator.test.idl.enums.Fruits
+
+typeref EnumTyperef = Fruits

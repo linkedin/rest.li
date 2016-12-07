@@ -20,6 +20,10 @@ import com.linkedin.data.schema.validation.ValidationOptions;
 import java.util.HashMap;
 import java.util.Map;
 
+
+/**
+ * Parser factory for the Pegasus data schema format (.pdsc).
+ */
 public class SchemaParserFactory implements DataSchemaParserFactory
 {
   /**
@@ -36,6 +40,10 @@ public class SchemaParserFactory implements DataSchemaParserFactory
       parser.setValidationOptions(_validationOptions);
     }
     return parser;
+  }
+
+  public String getLanguageExtension() {
+    return "pdsc";
   }
 
   protected SchemaParserFactory(ValidationOptions validationOptions)
@@ -63,6 +71,6 @@ public class SchemaParserFactory implements DataSchemaParserFactory
   }
 
   static private final Map<ValidationOptions, SchemaParserFactory> factoryMap =
-      new HashMap<ValidationOptions, SchemaParserFactory>();
+      new HashMap<>();
   private final ValidationOptions _validationOptions;
 }

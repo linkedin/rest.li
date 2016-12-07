@@ -1,6 +1,6 @@
-10.0.3
+10.1.0
 ------
-
+Introduce .pdl file format for authoring Pegasus data schemas.
 
 10.0.2
 ------

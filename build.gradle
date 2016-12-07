@@ -28,6 +28,7 @@ apply from: environmentScript
 apply from: "${buildScriptDirPath}/configBuildScript.gradle"
 
 project.ext.externalDependency = [
+  'antlr': 'org.antlr:antlr4:4.5',
   'avro': 'org.apache.avro:avro:1.4.0',
   'avro_1_6': 'org.apache.avro:avro:1.6.3',
   'cglib': 'cglib:cglib-nodep:2.2',
@@ -38,6 +39,7 @@ project.ext.externalDependency = [
   'commonsHttpClient': 'commons-httpclient:commons-httpclient:3.1',
   'commonsIo': 'commons-io:commons-io:2.4',
   'commonsLang': 'commons-lang:commons-lang:2.4',
+  'commonsLang3': 'org.apache.commons:commons-lang3:3.4',
   'disruptor': 'com.lmax:disruptor:3.2.0',
   'easymock': 'org.easymock:easymock:3.1',
   'mockito': 'org.mockito:mockito-all:1.9.5',

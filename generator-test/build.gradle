@@ -22,6 +22,7 @@ project.sourceSets.all { SourceSet sourceSet ->
     def getPdscFile = { filename ->
       project.fileTree(inputDataSchemaDirPath) {
         include "**/${filename}.pdsc"
+        include "**/${filename}.pdl"
       }.singleFile
     }
 
@@ -40,3 +41,8 @@ testCompileDataTemplate.options.compilerArgs += '-Xlint:-deprecation'
 // unfortunately, our build system also requires I disable the warning for compileTestJava, otherwise we get the same
 // deprecation errors.  I'm not clear on why I need disable testCompileDataTemplate AND compileTestJava, but I do.
 compileTestJava.options.compilerArgs += '-Xlint:-deprecation'
+
+// Pass in a path to the test .json files for all test tasks (test, asyncTests, testsWithoutAssertion...)
+tasks.matching { it instanceof Test }.each {
+  it.systemProperties['testJsonDir'] = file("src/test/json").absolutePath
+}
