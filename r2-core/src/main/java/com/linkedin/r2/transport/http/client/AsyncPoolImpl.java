@@ -119,7 +119,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
                        int maxWaiters)
   {
     this(name, lifecycle, maxSize, idleTimeout, timeoutExecutor,
-         callbackExecutor, maxWaiters, Strategy.MRU, 0);
+        callbackExecutor, maxWaiters, Strategy.MRU, 0);
   }
 
   /**
