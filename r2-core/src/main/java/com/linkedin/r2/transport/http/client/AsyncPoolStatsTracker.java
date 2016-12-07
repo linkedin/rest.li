@@ -49,6 +49,7 @@ public class AsyncPoolStatsTracker
   private final Supplier<Integer> _poolSizeSupplier;
   private final Supplier<Integer> _checkedOutSupplier;
   private final Supplier<Integer> _idleSizeSupplier;
+  private final Supplier<Integer> _waitersSizeSupplier;
   private final LongTracking _waitTimeTracker;
 
   public AsyncPoolStatsTracker(
@@ -57,7 +58,8 @@ public class AsyncPoolStatsTracker
       Supplier<Integer> minSizeSupplier,
       Supplier<Integer> poolSizeSupplier,
       Supplier<Integer> checkedOutSupplier,
-      Supplier<Integer> idleSizeSupplier)
+      Supplier<Integer> idleSizeSupplier,
+      Supplier<Integer> waitersSizeSupplier)
   {
     _lifecycleStatsSupplier = lifecycleStatsSupplier;
     _maxSizeSupplier = maxSizeSupplier;
@@ -65,6 +67,7 @@ public class AsyncPoolStatsTracker
     _poolSizeSupplier = poolSizeSupplier;
     _checkedOutSupplier = checkedOutSupplier;
     _idleSizeSupplier = idleSizeSupplier;
+    _waitersSizeSupplier = waitersSizeSupplier;
     _waitTimeTracker = new LongTracking();
   }
 
@@ -130,6 +133,7 @@ public class AsyncPoolStatsTracker
         _sampleMaxCheckedOut,
         _sampleMaxPoolSize,
         _idleSizeSupplier.get(),
+        _waitersSizeSupplier.get(),
         waitTimeStats.getAverage(),
         waitTimeStats.get50Pct(),
         waitTimeStats.get95Pct(),

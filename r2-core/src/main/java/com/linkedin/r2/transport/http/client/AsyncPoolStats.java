@@ -46,6 +46,7 @@ public class AsyncPoolStats implements PoolStats
   private final int _sampleMaxPoolSize;
 
   private final int _idleCount;
+  private final int _waitersCount;
   private final double _waitTimeAvg;
   private final long _waitTime50Pct;
   private final long _waitTime95Pct;
@@ -73,6 +74,7 @@ public class AsyncPoolStats implements PoolStats
       int sampleMaxPoolSize,
 
       int idleCount,
+      int waitersCount,
       double waitTimeAvg,
       long waitTime50Pct,
       long waitTime95Pct,
@@ -96,6 +98,7 @@ public class AsyncPoolStats implements PoolStats
     _sampleMaxPoolSize = sampleMaxPoolSize;
 
     _idleCount = idleCount;
+    _waitersCount = waitersCount;
     _waitTimeAvg = waitTimeAvg;
     _waitTime50Pct = waitTime50Pct;
     _waitTime95Pct = waitTime95Pct;
@@ -249,6 +252,17 @@ public class AsyncPoolStats implements PoolStats
   }
 
   /**
+   * Get the number of objects that are waiting
+   * in the pool.
+   * @return The number of waiting objects
+   */
+  @Override
+  public int getWaitersCount()
+  {
+    return _waitersCount;
+  }
+
+  /**
    * Get the average wait time to get a pooled object.
    * @return The average wait time.
    */
@@ -313,6 +327,7 @@ public class AsyncPoolStats implements PoolStats
         "\nsampleMaxCheckedOut: " + _sampleMaxCheckedOut +
         "\nsampleMaxPoolSize: " + _sampleMaxPoolSize +
         "\nidleCount: " + _idleCount +
+        "\nwaitersCount: " + _waitersCount +
         "\nwaitTimeAvg: " + _waitTimeAvg +
         "\nwaitTime50Pct: " + _waitTime50Pct +
         "\nwaitTime95Pct: " + _waitTime95Pct +

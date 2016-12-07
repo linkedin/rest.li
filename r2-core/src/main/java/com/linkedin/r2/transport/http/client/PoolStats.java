@@ -120,6 +120,13 @@ public interface PoolStats
   int getIdleCount();
 
   /**
+   * Get the number of objects that are waiting
+   * in the pool.
+   * @return The number of waiting objects
+   */
+  int getWaitersCount();
+
+  /**
    * Get the average wait time to get a pooled object.
    * @return The average wait time.
    */

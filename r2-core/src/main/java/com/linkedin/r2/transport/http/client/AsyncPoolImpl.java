@@ -119,7 +119,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
                        int maxWaiters)
   {
     this(name, lifecycle, maxSize, idleTimeout, timeoutExecutor,
-        callbackExecutor, maxWaiters, Strategy.MRU, 0);
+         callbackExecutor, maxWaiters, Strategy.MRU, 0);
   }
 
   /**
@@ -211,6 +211,12 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
           synchronized (_lock)
           {
             return _idle.size();
+          }
+        },
+        () -> {
+          synchronized (_lock)
+          {
+            return _waiters.size();
           }
         });
   }

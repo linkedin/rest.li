@@ -39,6 +39,7 @@ public class TestAsyncPoolStatsTracker
   private static final int MAX_SIZE = Integer.MAX_VALUE;
   private static final int MIN_SIZE = 0;
   private static final int IDLE_SIZE = 100;
+  private static final int WAITERS_SIZE = 150;
   private static final int POOL_SIZE = 200;
   private static final int CHECKED_OUT = 300;
 
@@ -61,13 +62,15 @@ public class TestAsyncPoolStatsTracker
         () -> MIN_SIZE,
         () -> POOL_SIZE,
         () -> CHECKED_OUT,
-        () -> IDLE_SIZE);
+        () -> IDLE_SIZE,
+        () -> WAITERS_SIZE);
 
     AsyncPoolStats stats = tracker.getStats();
     Assert.assertSame(stats.getLifecycleStats(), LIFECYCLE_STATS);
     Assert.assertEquals(stats.getMaxPoolSize(), MAX_SIZE);
     Assert.assertEquals(stats.getMinPoolSize(), MIN_SIZE);
     Assert.assertEquals(stats.getIdleCount(), IDLE_SIZE);
+    Assert.assertEquals(stats.getWaitersCount(), WAITERS_SIZE);
     Assert.assertEquals(stats.getCheckedOut(), CHECKED_OUT);
     Assert.assertEquals(stats.getPoolSize(), POOL_SIZE);
 
@@ -93,7 +96,8 @@ public class TestAsyncPoolStatsTracker
         () -> MIN_SIZE,
         () -> POOL_SIZE,
         () -> CHECKED_OUT,
-        () -> IDLE_SIZE);
+        () -> IDLE_SIZE,
+        () -> WAITERS_SIZE);
 
     IntStream.range(0, DESTROY_ERROR_INCREMENTS).forEach(i -> tracker.incrementDestroyErrors());
     IntStream.range(0, DESTROY_INCREMENTS).forEach(i -> tracker.incrementDestroyed());
@@ -122,7 +126,8 @@ public class TestAsyncPoolStatsTracker
         () -> MIN_SIZE,
         () -> _poolSize,
         () -> _checkedOut,
-        () -> IDLE_SIZE);
+        () -> IDLE_SIZE,
+        () -> WAITERS_SIZE);
 
     // Samples the max pool size at POOL_SIZE
     tracker.sampleMaxPoolSize();
@@ -158,7 +163,8 @@ public class TestAsyncPoolStatsTracker
         () -> MIN_SIZE,
         () -> _poolSize,
         () -> _checkedOut,
-        () -> IDLE_SIZE);
+        () -> IDLE_SIZE,
+        () -> WAITERS_SIZE);
 
     for (int i = 0; i < 10; i++)
     {
