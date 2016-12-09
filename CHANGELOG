@@ -7,6 +7,9 @@
 (RB=876002)
 Upgraded ParSeq version to 2.6.3
 Added setting plan class that reflects type of request for async resources implemented using ParSeq
+(RB=876305)
+[pegasus] Add two APIs to DataMapUtils.java to support mapping DataMap objects to Json ByteString and Pson ByteString.
+RestResponseBuilder.encodeResult needs to set the builder's entity with the incoming dataMap object. This is currently done by converting the dataMap object to a raw byte array (either in Json or Pson format) and passing the array to RestResponseBuilder.setEntity. Then inside setEntity it converts the array to a ByteString object by calling ByteString.copy, which involves allocating an extra raw byte array (because they want to make the ByteString object independant of the original array). This process adds unnecessary memory footprint because we allocate two byte arrays, and the first one becomes dead after the second one copies it. In restli-perf-pegasus test, this shows up as 8% - 9% memory usage (allocation pressure) from Java flight recorder. The extra allocation could be avoided by a few approaches. 1) in RestResponseBuilder.setEntity, use ByteString(byte[] bytes) constructor instead of ByteString.copy, but this requires to make the constructor from private to public, which is kinda a violation of the original OO design. 2) add APIs to DataMapUtils.java to support mapping DataMap objects to Json ByteString and Pson ByteString without copying (via ByteString.unsafeWrap). This patch chose the second approach because there's no need to change any existing data structure. With the patch, restli-perf-pegasus shows smaller memory footprint (roughly the same 10 min period), and less GC occurrances (25 -> 23, 2 less ParallelScavenge young gc).
 
 9.0.0
 -----
