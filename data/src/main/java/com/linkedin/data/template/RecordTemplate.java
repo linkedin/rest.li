@@ -67,7 +67,7 @@ public abstract class RecordTemplate implements DataTemplate<DataMap>
   {
     RecordTemplate clone = (RecordTemplate) super.clone();
     clone._map = clone._map.clone();
-    clone._cache = clone._cache.clone();
+    clone._cache = clone._cache != null ? clone._cache.clone() : null;
     return clone;
   }
 
@@ -89,7 +89,7 @@ public abstract class RecordTemplate implements DataTemplate<DataMap>
   {
     RecordTemplate copy = (RecordTemplate) super.clone();
     copy._map = _map.copy();
-    copy._cache = new DataObjectToObjectCache<Object>();
+    copy._cache = null;
     return copy;
   }
 
@@ -193,7 +193,7 @@ public abstract class RecordTemplate implements DataTemplate<DataMap>
     {
       final Object coerced = DataTemplateUtil.coerceInput(object, valueClass, dataClass);
       _map.put(field.getName(), coerced);
-      _cache.put(coerced, object);
+      getCache().put(coerced, object);
     }
   }
 
@@ -269,7 +269,7 @@ public abstract class RecordTemplate implements DataTemplate<DataMap>
       if (object.getClass() == valueClass)
       {
         _map.put(field.getName(), object.data());
-        _cache.put(object.data(), object);
+        getCache().put(object.data(), object);
       }
       else
       {
@@ -347,14 +347,14 @@ public abstract class RecordTemplate implements DataTemplate<DataMap>
       return null;
     }
     // the underlying data type of the custom typed field should be immutable, thus checking class equality suffices
-    else if ((customTypeValue = _cache.get(found)) != null && customTypeValue.getClass() == valueClass)
+    else if ((customTypeValue = getCache().get(found)) != null && customTypeValue.getClass() == valueClass)
     {
       coerced = valueClass.cast(customTypeValue);
     }
     else
     {
       coerced = DataTemplateUtil.coerceOutput(found, valueClass);
-      _cache.put(found, coerced);
+      getCache().put(found, coerced);
     }
     return coerced;
   }
@@ -382,14 +382,14 @@ public abstract class RecordTemplate implements DataTemplate<DataMap>
     {
       wrapped = null;
     }
-    else if ((template = (DataTemplate<?>) _cache.get(found)) != null && template.data() == found)
+    else if ((template = (DataTemplate<?>) getCache().get(found)) != null && template.data() == found)
     {
       wrapped = valueClass.cast(template);
     }
     else
     {
       wrapped = DataTemplateUtil.wrap(found, field.getType(), valueClass);
-      _cache.put(found, wrapped);
+      getCache().put(found, wrapped);
     }
     return wrapped;
   }
@@ -480,7 +480,21 @@ public abstract class RecordTemplate implements DataTemplate<DataMap>
     return doPut;
   }
 
+  /**
+   * Get _cache. If this is the first time to use _cache, initialize it to a new {@link DataObjectToObjectCache}.
+   *
+   * @return a non-null _cache of {@link DataObjectToObjectCache} type.
+   */
+  private DataObjectToObjectCache<Object> getCache()
+  {
+    if (_cache == null)
+    {
+      _cache = new DataObjectToObjectCache<Object>();
+    }
+    return _cache;
+  }
+
   private DataMap _map;
   private final RecordDataSchema _schema;
-  private DataObjectToObjectCache<Object> _cache = new DataObjectToObjectCache<Object>();
+  private DataObjectToObjectCache<Object> _cache;
 }
