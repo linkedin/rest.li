@@ -1,6 +1,7 @@
-9.0.8
------
-
+10.0.0
+------
+(RB=885516)
+Add attribute pagingSupported in method schema and indicate in restspec if get_all and finder methods support paging.
 
 9.0.7
 -----

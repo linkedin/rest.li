@@ -10,7 +10,21 @@
       "type" : "long",
       "params" : "string"
     },
-    "supports" : [ "batch_get", "create", "delete", "get", "update" ],
+    "supports" : [ "batch_get", "create", "delete", "get", "update", "get_all" ],
+    "methods" : [ {
+      "method" : "batch_get"
+    }, {
+      "method" : "create"
+    }, {
+      "method" : "delete"
+    }, {
+      "method" : "get"
+    }, {
+      "method" : "update"
+    }, {
+      "method" : "get_all",
+      "pagingSupported" : true
+    } ],
     "finders" : [ {
       "name" : "search",
       "parameters" : [ {
@@ -26,7 +40,8 @@
       "metadata" : {
         "type" : { "type" : "array", "items" : "int" }
       },
-      "assocKeys" : [ "q", "s" ]
+      "assocKeys" : [ "q", "s" ],
+      "pagingSupported" : true
     }, {
       "name" : "find_assocKey_upgrade",
       "assocKeys" : [ "singular" ]
@@ -50,7 +65,8 @@
         },
         "type" : "string",
         "default" : "none"
-      } ]
+      } ],
+      "pagingSupported" : true
     } ],
     "actions" : [ {
       "name" : "oneAction",

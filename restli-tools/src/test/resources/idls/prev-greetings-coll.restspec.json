@@ -9,7 +9,19 @@
       "type" : "long",
       "params" : "string"
     },
-    "supports" : [ "batch_get", "create", "delete", "get" ],
+    "supports" : [ "batch_get", "create", "delete", "get", "get_all" ],
+    "methods" : [ {
+      "method" : "batch_get"
+    }, {
+      "method" : "create"
+    }, {
+      "method" : "delete"
+    }, {
+      "method" : "get"
+    }, {
+      "method" : "get_all",
+      "pagingSupported" : true
+    } ],
     "finders" : [ {
       "name" : "search",
       "parameters" : [ {
@@ -35,7 +47,8 @@
         "name" : "param1",
         "type" : "string",
         "default" : "none"
-      } ]
+      } ],
+      "pagingSupported" : true
     } ],
     "actions" : [ {
       "name" : "oneAction",

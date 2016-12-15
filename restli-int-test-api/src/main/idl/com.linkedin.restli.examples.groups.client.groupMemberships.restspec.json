@@ -31,7 +31,8 @@
     }, {
       "method" : "batch_delete"
     }, {
-      "method" : "get_all"
+      "method" : "get_all",
+      "pagingSupported" : true
     } ],
     "finders" : [ {
       "name" : "group",
@@ -56,10 +57,12 @@
         "type" : "com.linkedin.restli.examples.groups.api.MembershipSortOrder",
         "optional" : true
       } ],
-      "assocKeys" : [ "groupID" ]
+      "assocKeys" : [ "groupID" ],
+      "pagingSupported" : true
     }, {
       "name" : "member",
-      "assocKeys" : [ "memberID" ]
+      "assocKeys" : [ "memberID" ],
+      "pagingSupported" : true
     } ],
     "entity" : {
       "path" : "/groupMemberships/{groupMembershipsId}"

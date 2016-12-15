@@ -64,7 +64,8 @@
           } ],
           "finders" : [ {
             "name" : "get_trending_by_popularity",
-            "doc" : "Returns the trending regions sorted by popularity."
+            "doc" : "Returns the trending regions sorted by popularity.",
+            "pagingSupported" : true
           } ],
           "entity" : {
             "path" : "/trending/trendRegions/{trendRegionId}"

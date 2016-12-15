@@ -9,7 +9,19 @@
       "type" : "long",
       "params" : "long"
     },
-    "supports" : [ "create", "delete", "get", "update" ],
+    "supports" : [ "create", "delete", "get", "update", "get_all" ],
+    "methods" : [ {
+      "method" : "create"
+    }, {
+      "method" : "delete"
+    }, {
+      "method" : "get"
+    }, {
+      "method" : "update"
+    }, {
+      "method" : "get_all",
+      "pagingSupported" : true
+    } ],
     "finders" : [ {
       "name" : "search",
       "default" : true,

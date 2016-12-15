@@ -229,6 +229,28 @@ public class ResourceCompatibilityChecker
     return true;
   }
 
+  private boolean checkPagingSupport(Boolean prevPaging, Boolean currPaging)
+  {
+    if (prevPaging == currPaging)
+    {
+      return  true;
+    }
+
+    if ((prevPaging == null || !prevPaging) && (currPaging != null && currPaging))
+    {
+      _infoMap.addRestSpecInfo(CompatibilityInfo.Type.PAGING_ADDED, _infoPath);
+      return false;
+    }
+
+    if ((prevPaging != null && prevPaging) && (currPaging == null || !currPaging))
+    {
+      _infoMap.addRestSpecInfo(CompatibilityInfo.Type.PAGING_REMOVED, _infoPath);
+      return false;
+    }
+
+    return true;
+  }
+
   /**
    * @return whether the optionality check passes
    */
@@ -729,6 +751,9 @@ public class ResourceCompatibilityChecker
                       prevRec.getMetadata(GetMode.DEFAULT),
                       currRec.getMetadata(GetMode.DEFAULT));
 
+    checkPagingSupport(prevRec.isPagingSupported(GetMode.DEFAULT),
+        currRec.isPagingSupported(GetMode.DEFAULT));
+
     final String prevAssocKey = prevRec.getAssocKey(GetMode.DEFAULT);
     final String currAssocKey = currRec.getAssocKey(GetMode.DEFAULT);
     final StringArray prevAssocKeys = prevRec.getAssocKeys(GetMode.DEFAULT);
@@ -1069,6 +1094,8 @@ public class ResourceCompatibilityChecker
     checkParameterArrayField(prevRec.schema().getField("parameters"),
                              prevRec.getParameters(GetMode.DEFAULT),
                              currRec.getParameters(GetMode.DEFAULT));
+    checkPagingSupport(prevRec.isPagingSupported(GetMode.DEFAULT),
+        currRec.isPagingSupported(GetMode.DEFAULT));
   }
 
   /**

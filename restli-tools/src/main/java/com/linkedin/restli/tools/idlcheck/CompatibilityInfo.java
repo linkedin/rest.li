@@ -61,7 +61,9 @@ public class CompatibilityInfo
     RESOURCE_NEW(Level.COMPATIBLE, "New resource is created in \"%s\""),
     SUPERSET(Level.COMPATIBLE, "Current values have these extra values: %s"),
     VALUE_DIFFERENT(Level.COMPATIBLE, "Previous value \"%s\" is changed to \"%s\""),
-    TYPE_INFO(Level.COMPATIBLE, "%s"); // data type related information or warning, reported by com.linkedin.data.schema.compatibility.CompatibilityChecker
+    TYPE_INFO(Level.COMPATIBLE, "%s"), // data type related information or warning, reported by com.linkedin.data.schema.compatibility.CompatibilityChecker
+    PAGING_ADDED(Level.COMPATIBLE, "Method added paging support"),
+    PAGING_REMOVED(Level.INCOMPATIBLE, "Method removed paging support");
 
     public String getDescription(Object[] parameters)
     {

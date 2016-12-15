@@ -855,6 +855,10 @@ public class ResourceModelEncoder
           finder.setAnnotations(new CustomAnnotationContentSchemaMap(customAnnotation));
         }
 
+        if (resourceMethodDescriptor.isPagingSupported()) {
+          finder.setPagingSupported(true);
+        }
+
         findersArray.add(finder);
       }
     }
@@ -980,6 +984,10 @@ public class ResourceModelEncoder
       if (!customAnnotation.isEmpty())
       {
         restMethod.setAnnotations(new CustomAnnotationContentSchemaMap(customAnnotation));
+      }
+
+      if (method == ResourceMethod.GET_ALL && descriptor.isPagingSupported()) {
+        restMethod.setPagingSupported(true);
       }
 
       restMethods.add(restMethod);

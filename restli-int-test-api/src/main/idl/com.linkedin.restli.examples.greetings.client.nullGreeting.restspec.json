@@ -29,26 +29,30 @@
     }, {
       "method" : "batch_delete"
     }, {
-      "method" : "get_all"
+      "method" : "get_all",
+      "pagingSupported" : true
     } ],
     "finders" : [ {
       "name" : "finderCallbackNullList",
       "parameters" : [ {
         "name" : "tone",
         "type" : "com.linkedin.restli.examples.greetings.api.Tone"
-      } ]
+      } ],
+      "pagingSupported" : true
     }, {
       "name" : "finderPromiseNullList",
       "parameters" : [ {
         "name" : "tone",
         "type" : "com.linkedin.restli.examples.greetings.api.Tone"
-      } ]
+      } ],
+      "pagingSupported" : true
     }, {
       "name" : "finderTaskNullList",
       "parameters" : [ {
         "name" : "tone",
         "type" : "com.linkedin.restli.examples.greetings.api.Tone"
-      } ]
+      } ],
+      "pagingSupported" : true
     }, {
       "name" : "searchReturnNullCollectionList",
       "parameters" : [ {
@@ -57,13 +61,15 @@
       } ],
       "metadata" : {
         "type" : "com.linkedin.restli.examples.greetings.api.SearchMetadata"
-      }
+      },
+      "pagingSupported" : true
     }, {
       "name" : "searchReturnNullList",
       "parameters" : [ {
         "name" : "tone",
         "type" : "com.linkedin.restli.examples.greetings.api.Tone"
-      } ]
+      } ],
+      "pagingSupported" : true
     } ],
     "actions" : [ {
       "name" : "returnActionResultWithNullStatus",

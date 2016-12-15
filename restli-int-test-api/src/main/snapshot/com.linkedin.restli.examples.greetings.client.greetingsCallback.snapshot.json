@@ -102,7 +102,8 @@
       }, {
         "method" : "batch_delete"
       }, {
-        "method" : "get_all"
+        "method" : "get_all",
+        "pagingSupported" : true
       } ],
       "finders" : [ {
         "name" : "empty",
@@ -119,14 +120,16 @@
           "name" : "tone",
           "type" : "com.linkedin.restli.examples.greetings.api.Tone",
           "optional" : true
-        } ]
+        } ],
+        "pagingSupported" : true
       }, {
         "name" : "searchWithDefault",
         "parameters" : [ {
           "name" : "tone",
           "type" : "com.linkedin.restli.examples.greetings.api.Tone",
           "default" : "FRIENDLY"
-        } ]
+        } ],
+        "pagingSupported" : true
       }, {
         "name" : "searchWithFacets",
         "parameters" : [ {
@@ -136,19 +139,22 @@
         } ],
         "metadata" : {
           "type" : "com.linkedin.restli.examples.greetings.api.SearchMetadata"
-        }
+        },
+        "pagingSupported" : true
       }, {
         "name" : "searchWithPostFilter",
         "metadata" : {
           "type" : "com.linkedin.restli.examples.greetings.api.Empty"
-        }
+        },
+        "pagingSupported" : true
       }, {
         "name" : "searchWithTones",
         "parameters" : [ {
           "name" : "tones",
           "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.greetings.api.Tone\" }",
           "optional" : true
-        } ]
+        } ],
+        "pagingSupported" : true
       } ],
       "actions" : [ {
         "name" : "anotherAction",

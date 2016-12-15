@@ -6,12 +6,12 @@
   "fields" : [
     {
       "name" : "method",
-      "doc" : "method type for this rest method",
+      "doc" : "Method type for this rest method",
       "type" : "string"
     },
     {
       "name" : "doc",
-      "doc" : "Documentation for this finder",
+      "doc" : "Documentation for this rest method",
       "type" : "string",
       "optional" : true
     },
@@ -19,6 +19,12 @@
       "name" : "parameters",
       "doc" : "list of query parameters for this method",
       "type" : { "type" : "array", "items" : "ParameterSchema" },
+      "optional" : true
+    },
+    {
+      "name" : "pagingSupported",
+      "doc" : "Indicates if this rest method has paging support using the start and count parameters",
+      "type" : "boolean",
       "optional" : true
     }
   ]

@@ -93,7 +93,8 @@
                 "name" : "complexQueryParam",
                 "type" : "com.linkedin.restli.examples.greetings.api.Greeting",
                 "optional" : true
-              } ]
+              } ],
+              "pagingSupported" : true
             } ],
             "actions" : [ {
               "name" : "exceptionTest"

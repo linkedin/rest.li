@@ -37,7 +37,8 @@
         "name" : "keyword",
         "type" : "string",
         "optional" : true
-      } ]
+      } ],
+      "pagingSupported" : true
     } ],
     "entity" : {
       "path" : "/stringKeys/{parentKey}",

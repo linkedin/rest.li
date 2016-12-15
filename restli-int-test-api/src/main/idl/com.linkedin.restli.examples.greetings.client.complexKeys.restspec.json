@@ -28,7 +28,8 @@
     }, {
       "method" : "batch_delete"
     }, {
-      "method" : "get_all"
+      "method" : "get_all",
+      "pagingSupported" : true
     } ],
     "finders" : [ {
       "name" : "prefix",

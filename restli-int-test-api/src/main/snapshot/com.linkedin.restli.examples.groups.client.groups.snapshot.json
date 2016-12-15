@@ -482,19 +482,22 @@
           "name" : "records",
           "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.groups.api.GroupMembershipParam\" }",
           "default" : "[{\"intParameter\": 7, \"stringParameter\": \"success\"}]"
-        } ]
+        } ],
+        "pagingSupported" : true
       }, {
         "name" : "emailDomain",
         "parameters" : [ {
           "name" : "emailDomain",
           "type" : "string"
-        } ]
+        } ],
+        "pagingSupported" : true
       }, {
         "name" : "manager",
         "parameters" : [ {
           "name" : "managerMemberID",
           "type" : "int"
-        } ]
+        } ],
+        "pagingSupported" : true
       }, {
         "name" : "search",
         "parameters" : [ {
@@ -509,7 +512,8 @@
           "name" : "groupID",
           "type" : "int",
           "optional" : true
-        } ]
+        } ],
+        "pagingSupported" : true
       } ],
       "entity" : {
         "path" : "/groups/{groupID}",

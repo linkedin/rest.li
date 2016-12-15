@@ -78,7 +78,8 @@
           },
           "name" : "title",
           "type" : "string"
-        } ]
+        } ],
+        "pagingSupported" : true
       } ],
       "actions" : [ {
         "annotations" : {

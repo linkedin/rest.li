@@ -90,6 +90,8 @@ public class TestResourceCompatibilityChecker
                                                 CompatibilityInfo.Type.PARAMETER_NEW_OPTIONAL, "newParam"));
     resourceTestDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "finders", "search", "parameters", "tone"),
                                                 CompatibilityInfo.Type.DEPRECATED, "The \"items\" field"));
+    resourceTestDiffs.add(new CompatibilityInfo(Arrays.asList("", "collection", "finders", "search"),
+        CompatibilityInfo.Type.PAGING_ADDED));
     resourceTestDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "actions", "oneAction", "parameters"),
                                                 CompatibilityInfo.Type.PARAMETER_NEW_OPTIONAL, "newParam"));
     resourceTestDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "actions", "oneAction", "parameters", "bitfield"),
@@ -247,7 +249,7 @@ public class TestResourceCompatibilityChecker
                             CompatibilityInfo.Type.TYPE_ERROR, "schema type changed from string to long"));
     resourceTestErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "supports"),
                                          CompatibilityInfo.Type.ARRAY_NOT_CONTAIN,
-                                         new StringArray(Arrays.asList("batch_get", "create", "delete", "get"))));
+                                         new StringArray(Arrays.asList("batch_get", "create", "delete", "get", "get_all"))));
     resourceTestErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "methods"),
                                          CompatibilityInfo.Type.ARRAY_MISSING_ELEMENT, "batch_get"));
     resourceTestErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "finders", "search", "metadata", "type"),
@@ -285,6 +287,9 @@ public class TestResourceCompatibilityChecker
     resourceTestErrors.add(new CompatibilityInfo(
       Arrays.<Object>asList("", "collection", "entity", "actions", "someAction", "returns"),
       CompatibilityInfo.Type.TYPE_MISSING));
+    resourceTestErrors.add(new CompatibilityInfo(Arrays.asList("", "collection", "finders", "oneFinder"),
+        CompatibilityInfo.Type.PAGING_REMOVED));
+
     modelTestErrors.add(
       new CompatibilityInfo(Arrays.<Object>asList("com.linkedin.greetings.api.Greeting"),
                             CompatibilityInfo.Type.TYPE_BREAKS_NEW_READER,
@@ -312,6 +317,7 @@ public class TestResourceCompatibilityChecker
       Assert.assertTrue(resourceIncompatibles.contains(te), "Reported resource incompatibles should contain: " + te.toString());
       resourceIncompatibles.remove(te);
     }
+
     Assert.assertTrue(resourceIncompatibles.isEmpty());
 
     final Collection<CompatibilityInfo> modelIncompatibles = new HashSet<CompatibilityInfo>(checker.getInfoMap().getModelIncompatibles());

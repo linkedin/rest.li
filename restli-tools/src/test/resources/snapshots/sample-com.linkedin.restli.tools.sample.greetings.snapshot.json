@@ -47,7 +47,8 @@
           "name" : "message",
           "type" : "string",
           "optional" : true
-        } ]
+        } ],
+        "pagingSupported" : true
       } ],
       "actions" : [ {
         "name" : "greetingArrayAction",

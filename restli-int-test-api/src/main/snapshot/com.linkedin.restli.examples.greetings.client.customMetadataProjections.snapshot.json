@@ -35,38 +35,44 @@
       "supports" : [ "get_all" ],
       "methods" : [ {
         "method" : "get_all",
-        "doc" : "This resource method is a variant of the rootAutomaticMetadataManual finder above, except it uses GET_ALL.\n This test is to make sure that GET_ALL observes the same code path in restli as FINDER does for projection.\n Redundant comments excluded for the sake of brevity."
+        "doc" : "This resource method is a variant of the rootAutomaticMetadataManual finder above, except it uses GET_ALL.\n This test is to make sure that GET_ALL observes the same code path in restli as FINDER does for projection.\n Redundant comments excluded for the sake of brevity.",
+        "pagingSupported" : true
       } ],
       "finders" : [ {
         "name" : "rootAutomaticMetadataAutomatic",
         "doc" : "This resource method performs automatic projection for the root object entities and also the custom metadata.",
         "metadata" : {
           "type" : "com.linkedin.restli.examples.greetings.api.Greeting"
-        }
+        },
+        "pagingSupported" : true
       }, {
         "name" : "rootAutomaticMetadataAutomaticNull",
         "doc" : "This resource method performs automatic projection for the root object entities and automatic on the metadata\n as well. The caveat here is that the metadata returned by the resource method is null. We want to make sure\n restli doesn't fall over when it sees the null later on.",
         "metadata" : {
           "type" : "com.linkedin.restli.examples.greetings.api.Greeting"
-        }
+        },
+        "pagingSupported" : true
       }, {
         "name" : "rootAutomaticMetadataManual",
         "doc" : "This resource method performs automatic projection for the root object entities and manual projection for the\n custom metadata.",
         "metadata" : {
           "type" : "com.linkedin.restli.examples.greetings.api.Greeting"
-        }
+        },
+        "pagingSupported" : true
       }, {
         "name" : "rootManualMetadataAutomatic",
         "doc" : "This resource method performs manual projection for the root object entities and automatic projection for the\n custom metadata.",
         "metadata" : {
           "type" : "com.linkedin.restli.examples.greetings.api.Greeting"
-        }
+        },
+        "pagingSupported" : true
       }, {
         "name" : "rootManualMetadataManual",
         "doc" : "This resource method performs manual projection for the root object entities and manual projection for the\n custom metadata. Comments excluded since its combining behavior from the previous tests.",
         "metadata" : {
           "type" : "com.linkedin.restli.examples.greetings.api.Greeting"
-        }
+        },
+        "pagingSupported" : true
       } ],
       "entity" : {
         "path" : "/customMetadataProjections/{customMetadataProjectionsId}"

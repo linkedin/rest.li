@@ -33,7 +33,8 @@
         "name" : "format",
         "type" : "com.linkedin.restli.example.PhotoFormats",
         "optional" : true
-      } ]
+      } ],
+      "pagingSupported" : true
     } ],
     "actions" : [ {
       "name" : "purge",

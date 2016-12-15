@@ -395,6 +395,12 @@ public class ResourceMethodDescriptor implements RestLiMethodContext
     return _customAnnotations;
   }
 
+  public boolean isPagingSupported()
+  {
+    return _parameters.stream().anyMatch(param -> param.getParamType().equals(
+        Parameter.ParamType.PAGING_CONTEXT_PARAM));
+  }
+
   @Override
   public String toString()
   {
