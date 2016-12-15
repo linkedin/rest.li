@@ -2,6 +2,8 @@
 -----
 (RB=879362)
 [RecordTemplate] Do not allocate RecordTemplate's _cache until the first usage in order to save unnecessary memory allocation.
+(RB=884997)
+Fix wrong error message in converting key string.
 
 9.0.1
 -----

@@ -114,7 +114,7 @@ public class ResponseUtils
       }
       catch (IllegalArgumentException e)
       {
-        throw new IllegalStateException(keyType.getType().getName() + " is not supported as a key type for BatchKVResponse", e);
+        throw new IllegalStateException(rawKey + " is not a valid value for resource key type " + keyType.getType().getName(), e);
       }
     }
 
