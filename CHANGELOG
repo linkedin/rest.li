@@ -1,6 +1,7 @@
 9.0.2
 -----
-
+(RB=879362)
+[RecordTemplate] Do not allocate RecordTemplate's _cache until the first usage in order to save unnecessary memory allocation.
 
 9.0.1
 -----
