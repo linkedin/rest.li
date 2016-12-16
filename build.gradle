@@ -89,7 +89,9 @@ project.ext.externalDependency = [
   // for restli-scala-tools only, we must not add dependencies on scala from any other pegasus modules
   'scalaLibrary_2_10': 'org.scala-lang:scala-library:2.10.3',
   'scalaCompiler_2_10': 'org.scala-lang:scala-compiler:2.10.3',
-  'scalaReflect_2_10': 'org.scala-lang:scala-reflect:2.10.3'
+  'scalaReflect_2_10': 'org.scala-lang:scala-reflect:2.10.3',
+
+  'jsr305': 'com.google.code.findbugs:jsr305:3.0.0'
 ];
 
 if (!project.ext.isDefaultEnvironment)

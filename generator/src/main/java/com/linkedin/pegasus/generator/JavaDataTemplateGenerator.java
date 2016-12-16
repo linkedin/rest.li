@@ -67,12 +67,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 import com.sun.codemodel.ClassType;
 import com.sun.codemodel.JAnnotatable;
 import com.sun.codemodel.JBlock;
 import com.sun.codemodel.JClass;
 import com.sun.codemodel.JClassAlreadyExistsException;
 import com.sun.codemodel.JClassContainer;
+import com.sun.codemodel.JCommentPart;
 import com.sun.codemodel.JDefinedClass;
 import com.sun.codemodel.JDocCommentable;
 import com.sun.codemodel.JEnumConstant;
@@ -742,6 +746,17 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     final JMethod getterWithoutMode = templateClass.method(JMod.PUBLIC, type, getterName);
     addAccessorDoc(templateClass, getterWithoutMode, schemaField, "Getter");
     setDeprecatedAnnotationAndJavadoc(getterWithoutMode, schemaField);
+    JCommentPart returnComment = getterWithoutMode.javadoc().addReturn();
+    if (schemaField.getOptional())
+    {
+      getterWithoutMode.annotate(Nullable.class);
+      returnComment.add("Optional field. Always check for null.");
+    }
+    else
+    {
+      getterWithoutMode.annotate(Nonnull.class);
+      returnComment.add("Required field. Could be null for partial record.");
+    }
     final JBlock getterWithoutModeBody = getterWithoutMode.body();
     res = JExpr.invoke("obtain" + wrappedOrDirect).arg(fieldField).arg(JExpr.dotclass(type)).arg(_strictGetMode);
     getterWithoutModeBody._return(res);
@@ -768,6 +783,9 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     addAccessorDoc(templateClass, setter, schemaField, "Setter");
     setDeprecatedAnnotationAndJavadoc(setter, schemaField);
     JVar param = setter.param(type, "value");
+    param.annotate(Nonnull.class);
+    JCommentPart paramDoc = setter.javadoc().addParam(param);
+    paramDoc.add("Must not be null. For more control, use setters with mode instead.");
     JInvocation inv = setter.body().invoke("put" + wrappedOrDirect).arg(fieldField).arg(JExpr.dotclass(type));
     dataClassArg(inv, dataClass).arg(param).arg(_disallowNullSetMode);
     setter.body()._return(JExpr._this());

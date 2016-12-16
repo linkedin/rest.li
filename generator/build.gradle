@@ -4,6 +4,7 @@ dependencies {
   compile project(':pegasus-common')
   compile externalDependency.commonsIo
   compile externalDependency.codemodel
+  compile externalDependency.jsr305
 
   testCompile externalDependency.testng
   testCompile externalDependency.mockito

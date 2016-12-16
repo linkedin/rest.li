@@ -1261,6 +1261,9 @@ class PegasusPlugin implements Plugin<Project>
     _generateJavadocTask.classpath += project.configurations.dataTemplateCompile + generateDataTemplatesTask.resolverPath
     _generateJavadocTask.dependsOn(generateDataTemplatesTask)
 
+    // Add extra dependencies for data model compilation
+    project.getDependencies().add('dataTemplateCompile', 'com.google.code.findbugs:jsr305:3.0.0')
+
     // create new source set for generated java source and class files
     String targetSourceSetName = getGeneratedSourceSetName(sourceSet, DATA_TEMPLATE_GEN_TYPE)
     SourceSet targetSourceSet = project.sourceSets.create(targetSourceSetName) {
