@@ -1,6 +1,11 @@
-9.0.4
+9.0.5
 -----
 
+
+9.0.4
+-----
+(RB=885639)
+Fix bug in pegasus plugin. Run publishRestliIdl task only if rest-spec is not equivalent.
 
 9.0.3
 -----

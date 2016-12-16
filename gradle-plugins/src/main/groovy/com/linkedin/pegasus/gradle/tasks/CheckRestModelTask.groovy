@@ -39,6 +39,7 @@ public class CheckRestModelTask extends DefaultTask
   boolean isModelCompatible = true
   boolean isRestSpecCompatible = true
   boolean isEquivalent = true
+  boolean isRestSpecEquivalent = true
   String wholeMessage = "";
 
   @TaskAction
@@ -75,6 +76,7 @@ public class CheckRestModelTask extends DefaultTask
     isModelCompatible = logChecker.isModelCompatible()
     isRestSpecCompatible = logChecker.isRestSpecCompatible()
     isEquivalent = logChecker.getModelCompatibility().isEmpty() && logChecker.getRestSpecCompatibility().isEmpty()
+    isRestSpecEquivalent = logChecker.getRestSpecCompatibility().isEmpty()
     wholeMessage = logChecker.getWholeText()
 
     if (!isModelCompatible || !isRestSpecCompatible)

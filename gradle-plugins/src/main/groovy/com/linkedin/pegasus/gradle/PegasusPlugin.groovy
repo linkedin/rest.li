@@ -1145,12 +1145,12 @@ class PegasusPlugin implements Plugin<Project>
             (
                isPropertyTrue(project, SKIP_IDL_CHECK) &&
                isTaskSuccessful(checkSnapshotTask) &&
-               !(checkSnapshotTask.isEquivalent)
+               !(checkSnapshotTask.isRestSpecEquivalent)
             ) ||
             (
                !isPropertyTrue(project, SKIP_IDL_CHECK) &&
                (
-                  (isTaskSuccessful(checkRestModelTask) && !(checkRestModelTask.isEquivalent)) ||
+                  (isTaskSuccessful(checkRestModelTask) && !(checkRestModelTask.isRestSpecEquivalent)) ||
                   (isTaskSuccessful(checkIdlTask) && !(checkIdlTask.isEquivalent))
                )
             )
