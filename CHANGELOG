@@ -1,6 +1,13 @@
-9.0.3
+9.0.4
 -----
 
+
+9.0.3
+-----
+(RB=854847)
+Added null annotation to generated data models
+(RB=883693)
+Add utility methods to convert rest and stream TransportCallback
 
 9.0.2
 -----
