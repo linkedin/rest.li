@@ -59,3 +59,8 @@ project.sourceSets.all { SourceSet sourceSet ->
 
   project.tasks[sourceSet.compileJavaTaskName].dependsOn(dataTemplateCompileTask)
 }
+
+
+dependencies {
+  compile externalDependency.jsr305
+}
