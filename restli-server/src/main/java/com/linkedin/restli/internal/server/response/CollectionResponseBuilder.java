@@ -128,9 +128,8 @@ public class CollectionResponseBuilder implements RestLiResponseBuilder
     //If the client decides they want total in their paging response, then the resource method will see total in their
     //paging path spec and then decide to set total to a non null value. We will then also include it when we project
     //paging.
-    final RecordTemplate anyRecord = new AnyRecord(RestUtils.projectFields(paging.data(),
-        ProjectionMode.AUTOMATIC, resourceContext.getPagingProjectionMask()));
-    final CollectionMetadata projectedPaging = new CollectionMetadata(anyRecord.data());
+    final CollectionMetadata projectedPaging = new CollectionMetadata(RestUtils.projectFields(paging.data(),
+            ProjectionMode.AUTOMATIC, resourceContext.getPagingProjectionMask()));
 
     //For root object entities
     List<AnyRecord> processedElements = new ArrayList<AnyRecord>(elements.size());
