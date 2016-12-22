@@ -1,6 +1,7 @@
 9.0.5
 -----
-
+(RB=888618)
+Fixed test failures in TestMultiplexerRunMode and TestParseqTraceDebugRequestHandler
 
 9.0.4
 -----

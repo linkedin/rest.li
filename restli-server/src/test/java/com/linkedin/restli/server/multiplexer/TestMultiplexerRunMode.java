@@ -20,6 +20,7 @@ import com.linkedin.common.callback.Callback;
 import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.template.StringMap;
 import com.linkedin.parseq.CountingEngine;
+import com.linkedin.parseq.DelayedExecutorAdapter;
 import com.linkedin.parseq.Engine;
 import com.linkedin.parseq.EngineBuilder;
 import com.linkedin.r2.message.RequestContext;
@@ -50,6 +51,7 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+import org.testng.collections.Maps;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -157,12 +159,7 @@ public class TestMultiplexerRunMode
   {
     ExecutorService taskScheduler = Executors.newFixedThreadPool(1);
     ScheduledExecutorService timerScheduler = Executors.newSingleThreadScheduledExecutor();
-    Engine engine = new EngineBuilder()
-      .setTaskExecutor(taskScheduler)
-      .setTimerScheduler(timerScheduler)
-      .build();
-
-    CountingEngine countingEngine = new CountingEngine(null, null, LoggerFactory.getILoggerFactory(), null, engine);
+    CountingEngine countingEngine = new CountingEngine(taskScheduler, new DelayedExecutorAdapter(timerScheduler), LoggerFactory.getILoggerFactory(), Maps.newHashMap());
     return countingEngine;
   }
 

@@ -28,20 +28,18 @@ import org.slf4j.ILoggerFactory;
 public class CountingEngine extends Engine
 {
   private final AtomicInteger _plansStarted = new AtomicInteger();
-  private final Engine _engine;
 
   public CountingEngine(Executor taskExecutor, DelayedExecutor timerExecutor, ILoggerFactory loggerFactory,
-      Map<String, Object> properties, Engine engine)
+      Map<String, Object> properties)
   {
     super(taskExecutor, timerExecutor, loggerFactory, properties, planContext -> {}, planContext -> {}, FIFOPriorityQueue::new);
-    _engine = engine;
   }
 
   @Override
-  public void run(Task<?> task)
+  public void run(final Task<?> task, final String planClass)
   {
     _plansStarted.incrementAndGet();
-    _engine.run(task);
+    super.run(task, planClass);
   }
 
   public int plansStarted()

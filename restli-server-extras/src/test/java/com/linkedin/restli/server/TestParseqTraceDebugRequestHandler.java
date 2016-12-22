@@ -58,6 +58,8 @@ public class TestParseqTraceDebugRequestHandler
 {
   private static final String TEST_TRACE =
       "{" +
+          "\"planId\":0," +
+          "\"planClass\":\"pclass\"," +
           "\"traces\":" +
             "[" +
               "{" +
@@ -131,7 +133,7 @@ public class TestParseqTraceDebugRequestHandler
               {
                 Assert.assertEquals(result.getHeader(RestConstants.HEADER_CONTENT_TYPE), HEADER_VALUE_APPLICATION_JSON);
                 String traceJson = result.getEntity().asString(Charset.forName("UTF-8"));
-                Assert.assertEquals(traceJson, TEST_TRACE);
+                Assert.assertEquals(TEST_TRACE, traceJson);
               }
             });
   }
