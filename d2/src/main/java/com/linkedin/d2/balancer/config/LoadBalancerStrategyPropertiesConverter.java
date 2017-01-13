@@ -157,7 +157,7 @@ public class LoadBalancerStrategyPropertiesConverter
       }
       if (quarantineInfo.hasQuarantineLatency())
       {
-        map.put(PropertyKeys.HTTP_LB_QUARANTINE_LATENCY, quarantineInfo.getQuarantineLatency());
+        map.put(PropertyKeys.HTTP_LB_QUARANTINE_LATENCY, quarantineInfo.getQuarantineLatency().toString());
       }
     }
     if (config.hasErrorStatusRegex())

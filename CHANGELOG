@@ -1,7 +1,12 @@
+9.0.6
+-----
+
 9.0.5
 -----
 (RB=888618)
 Fixed test failures in TestMultiplexerRunMode and TestParseqTraceDebugRequestHandler
+(RB=896742)
+Force to convert QuarantineLatency to String
 
 9.0.4
 -----
