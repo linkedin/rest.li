@@ -23,7 +23,6 @@ import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
-
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.util.clock.Clock;
 import java.util.Map;
@@ -82,15 +81,15 @@ public class TransportHealthCheck implements HealthCheck
       if (response.hasError())
       {
         // Currently treat all errors as failure
-        _log.error("checkHealth: error response for request ({}): {}", _restRequest.getURI(),
+        _log.debug("checkHealth: error response for request ({}): {}", _restRequest.getURI(),
             response.getError());
-        callback.onError(response.getError());
+        callback.onError(new Exception("Error from " + _restRequest.getURI() + " : " + response.getError()));
       }
       else if (delay > _responseTimeThreshold)
       {
-        _log.error("checkHealth: return delay ({}ms) longer than threshold for request {}", delay,
+        _log.debug("checkHealth: return delay ({}ms) longer than threshold for request {}", delay,
             _restRequest.getURI());
-        callback.onError(new TimeoutException("HealthCheck Timeout"));
+        callback.onError(new TimeoutException("HealthCheck Timeout: " + delay + "ms for " + _restRequest.getURI()));
       }
       else if (!_healthCheckResponseValidator.validateResponse(response.getResponse()))
       {

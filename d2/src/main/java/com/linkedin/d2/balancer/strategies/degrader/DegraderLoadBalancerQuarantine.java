@@ -133,7 +133,7 @@ public class DegraderLoadBalancerQuarantine
       @Override
       public void onError(Throwable e)
       {
-        _log.error("Healthchecking failed for {} (service={}): {}", new Object[] {_trackerClient.getUri(),
+        _rateLimitedLogger.warn("Healthchecking failed for {} (service={}): {}", new Object[] {_trackerClient.getUri(),
                     _serviceName, e});
         _quarantineState = QuarantineStates.FAILURE;
       }
