@@ -93,7 +93,7 @@ public class LoadBalancerStrategyPropertiesConverterTest
     loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_HASH_CONFIG, hashConfigMap);
     loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_QUARANTINE_MAX_PERCENT, quarantineMaxPercent.toString());
     loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_QUARANTINE_METHOD, quarantineMethod);
-    loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_QUARANTINE_LATENCY, quarantineLatency);
+    loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_QUARANTINE_LATENCY, quarantineLatency.toString());
     loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_ERROR_STATUS_REGEX, errorStatusRegex);
 
     D2LoadBalancerStrategyProperties d2LoadBalancerStrategyProperties =
