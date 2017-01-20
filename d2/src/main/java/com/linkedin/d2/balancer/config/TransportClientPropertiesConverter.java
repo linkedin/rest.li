@@ -139,7 +139,7 @@ public class TransportClientPropertiesConverter
     if (properties.containsKey(PropertyKeys.HTTP_MAX_RESPONSE_SIZE))
     {
       config.setMaxResponseSize(coerce(properties.get(PropertyKeys.HTTP_MAX_RESPONSE_SIZE),
-          Integer.class));
+          Long.class));
     }
     if (properties.containsKey(PropertyKeys.HTTP_POOL_SIZE))
     {
