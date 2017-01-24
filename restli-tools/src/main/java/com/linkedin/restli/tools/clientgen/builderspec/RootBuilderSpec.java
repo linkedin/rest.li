@@ -36,6 +36,7 @@ public abstract class RootBuilderSpec extends BuilderSpec
   protected String _resourcePath;
   protected List<String> _pathKeys;
   protected Map<String, String> _keyPathTypes;
+  protected RootBuilderSpec _parentRootBuilder;
 
   public RootBuilderSpec(ResourceSchema resource)
   {
@@ -115,4 +116,14 @@ public abstract class RootBuilderSpec extends BuilderSpec
   }
 
   public abstract List<RootBuilderMethodSpec> getMethods();
+
+  public RootBuilderSpec getParentRootBuilder()
+  {
+    return _parentRootBuilder;
+  }
+
+  public void setParentRootBuilder(RootBuilderSpec parentRootBuilder)
+  {
+    _parentRootBuilder = parentRootBuilder;
+  }
 }

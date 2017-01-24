@@ -170,7 +170,7 @@ public class RequestBuilderSpecGenerator
     try
     {
       _currentSchemaLocation = new FileDataSchemaLocation(sourceFile);
-      generateRootRequestBuilder(resource, sourceFile.getAbsolutePath(), new HashMap<String, String>());
+      generateRootRequestBuilder(null, resource, sourceFile.getAbsolutePath(), new HashMap<String, String>());
     }
     catch (IOException e)
     {
@@ -178,7 +178,8 @@ public class RequestBuilderSpecGenerator
     }
   }
 
-  private RootBuilderSpec generateRootRequestBuilder(ResourceSchema resource,
+  private RootBuilderSpec generateRootRequestBuilder(RootBuilderSpec parentRootBuilder,
+                                                     ResourceSchema resource,
                                                      String sourceFile,
                                                      Map<String, String> pathKeyTypes)
       throws IOException
@@ -231,6 +232,7 @@ public class RequestBuilderSpecGenerator
     rootBuilderSpec.setResourcePath(resourcePath);
     List<String> pathKeys = getPathKeys(resourcePath);
     rootBuilderSpec.setPathKeys(pathKeys);
+    rootBuilderSpec.setParentRootBuilder(parentRootBuilder);
 
     StringArray supportsList = null;
     RestMethodSchemaArray restMethods = null;
@@ -312,7 +314,7 @@ public class RequestBuilderSpecGenerator
 
     if (subresources != null)
     {
-      subresourceSpecs = generateSubResources(sourceFile, subresources, pathKeyTypes);
+      subresourceSpecs = generateSubResources(sourceFile, rootBuilderSpec, subresources, pathKeyTypes);
     }
 
     // assign to rootBuilderClass
@@ -407,6 +409,7 @@ public class RequestBuilderSpecGenerator
   }
 
   private List<RootBuilderSpec> generateSubResources(String sourceFile,
+                                                     RootBuilderSpec parentRootBuilder,
                                                      ResourceSchemaArray subresources,
                                                      Map<String, String> pathKeyTypes)
       throws IOException
@@ -416,7 +419,7 @@ public class RequestBuilderSpecGenerator
     {
       for (ResourceSchema resource : subresources)
       {
-        RootBuilderSpec resourceSpec = generateRootRequestBuilder(resource, sourceFile, pathKeyTypes);
+        RootBuilderSpec resourceSpec = generateRootRequestBuilder(parentRootBuilder, resource, sourceFile, pathKeyTypes);
         subSpecList.add(resourceSpec);
       }
     }

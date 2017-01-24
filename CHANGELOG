@@ -1,7 +1,14 @@
+9.0.8
+-----
+
+
 9.0.7
 -----
 (RB=900756)
 Remove the route percent checking in unit test
+
+(RB=902053)
+RootBuilderSpec should provide a way to indicate parent-subresource hierarchy.
 
 9.0.6
 -----

@@ -216,6 +216,7 @@ public class TestRequestBuilderSpecGenerator
     Assert.assertNotNull(subRootBuilder);
     Assert.assertEquals(subRootBuilder.getSourceIdlName(), idl);
     Assert.assertEquals(subRootBuilder.getResourcePath(), "testCollection/{testCollectionId}/testCollectionSub");
+    Assert.assertEquals(subRootBuilder.getParentRootBuilder(), rootBuilder);
     Assert.assertNotNull(subRootBuilder.getRestMethods());
     Assert.assertTrue(subRootBuilder.getRestMethods().size() == 2);
     Assert.assertTrue(subRootBuilder.getFinders().isEmpty());
