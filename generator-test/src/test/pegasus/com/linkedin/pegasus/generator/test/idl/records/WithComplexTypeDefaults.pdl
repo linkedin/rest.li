@@ -9,5 +9,5 @@ record WithComplexTypeDefaults {
   `union`: union[int, string, Simple] = { "int": 1 }
   `array`: array[int] = [1]
   `map`: map[string, int] = { "a": 1 }
-  `custom`: CustomInt = 1
+  custom: CustomInt = 1
 }

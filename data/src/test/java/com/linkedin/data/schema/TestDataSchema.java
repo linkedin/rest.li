@@ -20,7 +20,10 @@ import com.linkedin.data.ByteString;
 import com.linkedin.data.Data;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.codec.JacksonDataCodec;
 import java.io.IOException;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -1425,6 +1428,47 @@ public class TestDataSchema
         out.println(result);
       }
     }
+  }
+
+  @Test
+  public void testEncodeOriginal() throws IOException
+  {
+      SchemaParser parser = new SchemaParser();
+      parser.parse("{ \"type\": \"record\", \"name\": \"ReferencedFieldType\", \"fields\" : []}");
+      parser.parse("{ \"type\": \"record\", \"name\": \"ReferencedMapValuesType\", \"fields\" : []}");
+      parser.parse("{ \"type\": \"record\", \"name\": \"ReferencedArrayItemsType\", \"fields\" : []}");
+      parser.parse("{ \"type\": \"record\", \"name\": \"ReferencedTyperefType\", \"fields\" : []}");
+      parser.parse("{ \"type\": \"record\", \"name\": \"ReferencedUnionMemberType\", \"fields\" : []}");
+      String originalSchemaJson = "{ " +
+          "  \"type\": \"record\"," +
+          "  \"name\": \"Original\"," +
+          "  \"namespace\": \"org.example\"," +
+          "  \"package\": \"org.example.packaged\"," +
+          "  \"doc\": \"A record\"," +
+          "  \"java\": { \"class\": \"org.example.X\", \"coercerClass\": \"org.example.XCoercer\" }," +
+          "  \"fields\" : [" +
+          "    {\"name\": \"inlineFieldType\", \"type\": { \"type\": \"record\", \"name\": \"Inline\", \"fields\": [] }}," +
+          "    {\"name\": \"inlineMapValueType\", \"type\": { \"type\": \"map\", \"values\": { \"type\": \"record\", \"name\": \"InlineValue\", \"fields\": [] } }}," +
+          "    {\"name\": \"inlineArrayItemsType\", \"type\": { \"type\": \"array\", \"items\": { \"type\": \"record\", \"name\": \"InlineItems\", \"fields\": [] } }}," +
+          "    {\"name\": \"inlineTyperefType\", \"type\": { \"type\": \"typeref\", \"name\": \"InlinedTyperef\", \"ref\": { \"type\": \"record\", \"name\": \"InlineRef\", \"fields\": [] } }}," +
+          "    {\"name\": \"inlineUnionType\", \"type\": [ \"string\", { \"type\": \"record\", \"name\": \"InlineUnionMember\", \"fields\": [] } ]}," +
+          "    {\"name\": \"referencedFieldType\", \"type\": \"ReferencedFieldType\" }," +
+          "    {\"name\": \"referencedMapValueType\", \"type\": { \"type\": \"map\", \"values\": \"ReferencedMapValuesType\" }}," +
+          "    {\"name\": \"referencedArrayItemsType\", \"type\": { \"type\": \"array\", \"items\": \"ReferencedArrayItemsType\" }}," +
+          "    {\"name\": \"referencedTyperefType\", \"type\": { \"type\": \"typeref\", \"name\": \"ReferencedTyperef\", \"ref\": \"ReferencedTyperefType\" }}," +
+          "    {\"name\": \"referencedUnionType\", \"type\": [ \"string\", \"ReferencedUnionMemberType\" ]}" +
+          "  ]" +
+          "}";
+      parser.parse(originalSchemaJson);
+      DataSchema originalSchema = parser.topLevelDataSchemas().get(parser.topLevelDataSchemas().size()-1);
+      JsonBuilder originalBuilder = new JsonBuilder(JsonBuilder.Pretty.INDENTED);
+      SchemaToJsonEncoder originalEncoder = new SchemaToJsonEncoder(originalBuilder);
+      originalEncoder.setTypeReferenceFormat(SchemaToJsonEncoder.TypeReferenceFormat.PRESERVE);
+      originalEncoder.encode(originalSchema);
+      JacksonDataCodec codec = new JacksonDataCodec();
+      DataMap original = codec.readMap(new StringReader(originalSchemaJson));
+      DataMap roundTripped = codec.readMap(new StringReader(originalBuilder.result()));
+      assertEquals(original, roundTripped);
   }
 
   @Test

@@ -1,0 +1,16 @@
+namespace com.linkedin.pegasus.generator.test.idl.denormalized
+
+record WithNamespacedDeclarations {
+  namespacedRecord: record com.linkedin.pegasus.generator.test.idl.withnamespace.Record {
+    x: string
+  }
+
+  namespacedFixed: fixed com.linkedin.pegasus.generator.test.idl.withnamespace.Fixed 5
+
+  namespacedTyperef: typeref com.linkedin.pegasus.generator.test.idl.withnamespace.Typeref = string
+
+  namespacedEnum: enum com.linkedin.pegasus.generator.test.idl.withnamespace.Enum {
+    ONE
+    TWO
+  }
+}

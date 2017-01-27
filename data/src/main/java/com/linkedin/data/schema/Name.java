@@ -21,7 +21,7 @@ import static com.linkedin.data.schema.DataSchemaConstants.NAMESPACE_PATTERN;
 import static com.linkedin.data.schema.DataSchemaConstants.NAME_PATTERN;
 import static com.linkedin.data.schema.DataSchemaConstants.UNQUALIFIED_NAME_PATTERN;
 
-public final class Name
+public final class Name implements Comparable<Name>
 {
   /**
    * Construct empty {@link Name}.
@@ -51,7 +51,7 @@ public final class Name
    * append errors in the specified {@link StringBuilder}.
    *
    * @param fullName provides the full name.
-   * @param errorMessageBuilder provides the {@link StringBuilder} to append 
+   * @param errorMessageBuilder provides the {@link StringBuilder} to append
    *                            error messages to.
    */
   public Name(String fullName, StringBuilder errorMessageBuilder)
@@ -60,12 +60,12 @@ public final class Name
   }
 
   /**
-   * Construct a new {@link Name} with the specified name and namespace, 
+   * Construct a new {@link Name} with the specified name and namespace,
    * and append errors in the specified {@link StringBuilder}.
    *
    * @param name provides the name.
-   * @param namespace provides the namespace.            
-   * @param errorMessageBuilder provides the {@link StringBuilder} to append 
+   * @param namespace provides the namespace.
+   * @param errorMessageBuilder provides the {@link StringBuilder} to append
    *                            error messages to.
    */
   public Name(String name, String namespace, StringBuilder errorMessageBuilder)
@@ -78,7 +78,7 @@ public final class Name
    * append errors in the specified {@link StringBuilder}.
    *
    * @param fullName provides the full name.
-   * @param errorMessageBuilder provides the {@link StringBuilder} to append 
+   * @param errorMessageBuilder provides the {@link StringBuilder} to append
    *                            error messages to.
    */
   public boolean setName(String fullName, StringBuilder errorMessageBuilder)
@@ -111,12 +111,12 @@ public final class Name
   }
 
   /**
-   * Sets this {@link Name} with the specified name and namespace, 
+   * Sets this {@link Name} with the specified name and namespace,
    * and append errors in the specified {@link StringBuilder}.
    *
    * @param name provides the name.
-   * @param namespace provides the namespace.            
-   * @param errorMessageBuilder provides the {@link StringBuilder} to append 
+   * @param namespace provides the namespace.
+   * @param errorMessageBuilder provides the {@link StringBuilder} to append
    *                            error messages to.
    */
   public boolean setName(String name, String namespace, StringBuilder errorMessageBuilder)
@@ -209,6 +209,11 @@ public final class Name
   public static boolean isValidUnqualifiedName(String name)
   {
     return UNQUALIFIED_NAME_PATTERN.matcher(name).matches();
+  }
+
+  @Override
+  public int compareTo(Name o) {
+    return this.getFullName().compareTo(o.getFullName());
   }
 
   private boolean _isEmpty = true;

@@ -49,7 +49,7 @@ abstract class GeneratorTest
     return readJsonToMap(mapToJson(complex));
   }
 
-  private static final File jsonPath = new File(System.getProperty("testJsonDir"));
+  private static final File jsonPath = new File(System.getProperty("testDir") + "/json");
 
   protected String load(String filename)
   {

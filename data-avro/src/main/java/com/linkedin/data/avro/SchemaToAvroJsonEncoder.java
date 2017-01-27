@@ -108,6 +108,24 @@ class SchemaToAvroJsonEncoder extends SchemaToJsonEncoder
     }
   }
 
+  /**
+   * Encode a {@link DataSchema}.
+   *
+   * Special handling is required for typeref's. All typeref's are
+   * de-referenced to the actual type.
+   *
+   * @param schema to encode.
+   * @throws IOException
+   */
+  @Override
+  protected void encode(DataSchema schema, boolean originallyInlined) throws IOException
+  {
+    if (encodeCustomAvroSchema(schema) == false)
+    {
+      super.encode(schema.getDereferencedDataSchema(), originallyInlined);
+    }
+  }
+
   @Override
   protected void encodeProperties(DataSchema schema) throws IOException
   {

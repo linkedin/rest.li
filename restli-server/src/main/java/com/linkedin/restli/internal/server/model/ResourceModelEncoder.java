@@ -20,6 +20,7 @@ package com.linkedin.restli.internal.server.model;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.DataCodec;
 import com.linkedin.data.codec.JacksonDataCodec;
+import com.linkedin.data.schema.AbstractSchemaEncoder;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.JsonBuilder;
 import com.linkedin.data.schema.NamedDataSchema;
@@ -310,7 +311,7 @@ public class ResourceModelEncoder
     try
     {
       builder = new JsonBuilder(JsonBuilder.Pretty.SPACES);
-      final SchemaToJsonEncoder encoder = new NamedSchemaReferencingJsonEncoder(builder);
+      final SchemaToJsonEncoder encoder = new SchemaToJsonEncoder(builder, AbstractSchemaEncoder.TypeReferenceFormat.MINIMIZE);
       encoder.encode(schema);
       return builder.result();
     }
@@ -324,25 +325,6 @@ public class ResourceModelEncoder
       {
         builder.closeQuietly();
       }
-    }
-  }
-
-  /**
-   * SchemaToJsonEncoder which encodes all NamedDataSchemas as name references.  This encoder
-   * never inlines the full schema text of a NamedDataSchema.
-   */
-  private static class NamedSchemaReferencingJsonEncoder extends SchemaToJsonEncoder
-  {
-    public NamedSchemaReferencingJsonEncoder(final JsonBuilder builder)
-    {
-      super(builder);
-    }
-
-    @Override
-    protected void encodeNamed(final NamedDataSchema schema) throws IOException
-    {
-      writeSchemaName(schema);
-      return;
     }
   }
 
@@ -371,7 +353,7 @@ public class ResourceModelEncoder
     try
     {
       builder = new JsonBuilder(JsonBuilder.Pretty.SPACES);
-      final SchemaToJsonEncoder encoder = new NamedSchemaReferencingJsonEncoder(builder);
+      final SchemaToJsonEncoder encoder = new SchemaToJsonEncoder(builder, AbstractSchemaEncoder.TypeReferenceFormat.MINIMIZE);
       encoder.encode(schemaToEncode);
       return builder.result();
     }

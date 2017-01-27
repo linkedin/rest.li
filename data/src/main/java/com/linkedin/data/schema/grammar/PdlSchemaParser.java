@@ -46,10 +46,12 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -334,7 +336,14 @@ public class PdlSchemaParser extends AbstractSchemaParser
     DataSchema schema;
     if (typeDeclaration.namedTypeDeclaration() != null)
     {
-      schema = parseNamedType(typeDeclaration.namedTypeDeclaration());
+      NamedDataSchema namedSchema = parseNamedType(typeDeclaration.namedTypeDeclaration());
+      if (!namedSchema.getNamespace().equals(getCurrentNamespace()))
+      {
+        throw new ParseException(typeDeclaration,
+            "Top level type declaration may not be qualified with a namespace different than the file namespace: " +
+            typeDeclaration.getText());
+      }
+      schema = namedSchema;
     }
     else if (typeDeclaration.anonymousTypeDeclaration() != null)
     {
@@ -499,6 +508,7 @@ public class PdlSchemaParser extends AbstractSchemaParser
     bindNameToSchema(name, schema);
     DataSchema refSchema = toDataSchema(typeref.ref);
     schema.setReferencedType(refSchema);
+    schema.setRefDeclaredInline(isDeclaredInline(typeref.ref));
 
     setProperties(context, schema);
     return schema;
@@ -506,7 +516,9 @@ public class PdlSchemaParser extends AbstractSchemaParser
 
   private ArrayDataSchema parseArray(ArrayDeclarationContext array) throws ParseException
   {
-    return new ArrayDataSchema(toDataSchema(array.typeParams.items));
+    ArrayDataSchema schema = new ArrayDataSchema(toDataSchema(array.typeParams.items));
+    schema.setItemsDeclaredInline(isDeclaredInline(array.typeParams.items));
+    return schema;
   }
 
   private MapDataSchema parseMap(MapDeclarationContext map) throws ParseException
@@ -547,6 +559,7 @@ public class PdlSchemaParser extends AbstractSchemaParser
     }
 
     schema.setProperties(propsToAdd);
+    schema.setValuesDeclaredInline(isDeclaredInline(valueType));
     return schema;
   }
 
@@ -556,6 +569,7 @@ public class PdlSchemaParser extends AbstractSchemaParser
     UnionDataSchema schema = new UnionDataSchema();
     List<UnionMemberDeclarationContext> members = union.typeParams.members;
     List<DataSchema> types = new ArrayList<>(members.size());
+    Set<DataSchema> typesDeclaredInline = new HashSet<>();
     for (UnionMemberDeclarationContext memberDecl: members)
     {
       TypeAssignmentContext memberType = memberDecl.member;
@@ -563,9 +577,14 @@ public class PdlSchemaParser extends AbstractSchemaParser
       if (dataSchema != null)
       {
         types.add(dataSchema);
+        if (isDeclaredInline(memberDecl.member))
+        {
+          typesDeclaredInline.add(dataSchema);
+        }
       }
     }
     schema.setTypes(types, errorMessageBuilder());
+    schema.setTypesDeclaredInline(typesDeclaredInline);
     return schema;
   }
 
@@ -581,6 +600,7 @@ public class PdlSchemaParser extends AbstractSchemaParser
     fieldsAndIncludes.fields.addAll(parseFields(schema, record.recordDecl));
     schema.setFields(fieldsAndIncludes.fields, errorMessageBuilder());
     schema.setInclude(fieldsAndIncludes.includes);
+    schema.setIncludesDeclaredInline(fieldsAndIncludes.includesDeclaredInline);
     validateDefaults(schema);
     setProperties(context, schema);
     return schema;
@@ -708,50 +728,58 @@ public class PdlSchemaParser extends AbstractSchemaParser
   {
     public final List<Field> fields;
     public final List<NamedDataSchema> includes;
+    public final Set<NamedDataSchema> includesDeclaredInline;
 
-    public FieldsAndIncludes(List<Field> fields, List<NamedDataSchema> includes)
+    public FieldsAndIncludes(List<Field> fields, List<NamedDataSchema> includes, Set<NamedDataSchema> includesDeclaredInline)
     {
       this.fields = fields;
       this.includes = includes;
+      this.includesDeclaredInline = includesDeclaredInline;
     }
   }
 
   private FieldsAndIncludes parseIncludes(PdlParser.FieldIncludesContext includeSet) throws ParseException
   {
     List<NamedDataSchema> includes = new ArrayList<>();
+    Set<NamedDataSchema> includesDeclaredInline = new HashSet<>();
     List<Field> fields = new ArrayList<>();
     if (includeSet != null)
     {
-      List<TypeReferenceContext> includeTypes = includeSet.typeReference();
-      for (TypeReferenceContext includeRef : includeTypes)
+      List<TypeAssignmentContext> includeTypes = includeSet.typeAssignment();
+      for (TypeAssignmentContext includeRef : includeTypes)
       {
         DataSchema includedSchema = toDataSchema(includeRef);
         if (includedSchema != null)
         {
           DataSchema dereferencedIncludedSchema = includedSchema.getDereferencedDataSchema();
-          if (dereferencedIncludedSchema instanceof RecordDataSchema)
+          if (includedSchema instanceof NamedDataSchema &&
+              dereferencedIncludedSchema instanceof RecordDataSchema)
           {
-            RecordDataSchema includedRecordSchema = (RecordDataSchema) dereferencedIncludedSchema;
-            fields.addAll(includedRecordSchema.getFields());
-
-            includes.add(includedRecordSchema);
+            NamedDataSchema includedNamedSchema = (NamedDataSchema) includedSchema;
+            RecordDataSchema dereferencedIncludedRecordSchema = (RecordDataSchema) dereferencedIncludedSchema;
+            fields.addAll(dereferencedIncludedRecordSchema.getFields());
+            includes.add(includedNamedSchema);
+            if (isDeclaredInline(includeRef))
+            {
+              includesDeclaredInline.add(includedNamedSchema);
+            }
           }
           else
           {
             startErrorMessage(includeRef)
-                .append("Include is not a record type: ")
-                .append(includeRef.value).append(NEWLINE);
+                .append("Include is not a record type or a typeref to a record type: ")
+                .append(includeRef).append(NEWLINE);
           }
         }
         else
         {
           startErrorMessage(includeRef)
               .append("Unable to resolve included schema: ")
-              .append(includeRef.value).append(NEWLINE);
+              .append(includeRef).append(NEWLINE);
         }
       }
     }
-    return new FieldsAndIncludes(fields, includes);
+    return new FieldsAndIncludes(fields, includes, includesDeclaredInline);
   }
 
   private List<Field> parseFields(
@@ -788,6 +816,8 @@ public class PdlSchemaParser extends AbstractSchemaParser
         }
         result.setProperties(properties);
         result.setRecord(recordSchema);
+        result.setDeclaredInline(isDeclaredInline(field.type));
+
         results.add(result);
       }
       else
@@ -798,6 +828,11 @@ public class PdlSchemaParser extends AbstractSchemaParser
       }
     }
     return results;
+  }
+
+  private boolean isDeclaredInline(TypeAssignmentContext assignment)
+  {
+    return assignment.typeReference() == null;
   }
 
   private DataSchema toDataSchema(TypeReferenceContext typeReference) throws ParseException
@@ -853,7 +888,14 @@ public class PdlSchemaParser extends AbstractSchemaParser
 
   private Name toName(String name)
   {
-    return new Name(name, getCurrentNamespace(), errorMessageBuilder());
+    if (name.contains("."))
+    {
+      return new Name(name, errorMessageBuilder());
+    }
+    else
+    {
+      return new Name(name, getCurrentNamespace(), errorMessageBuilder());
+    }
   }
 
   private Object parsePropValue(

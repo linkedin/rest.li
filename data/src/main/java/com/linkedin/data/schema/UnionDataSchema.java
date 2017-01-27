@@ -20,6 +20,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
 
 /**
  * {@link DataSchema} for union.
@@ -139,6 +141,24 @@ public final class UnionDataSchema extends ComplexDataSchema
     return (index != null ? _types.get(index) : null);
   }
 
+  /**
+   * Sets the union member types that are declared inline in the schema.
+   * @param typesDeclaredInline provides a set of member type that are declared inline.
+   */
+  public void setTypesDeclaredInline(Set<DataSchema> typesDeclaredInline)
+  {
+    _typesDeclaredInline = Collections.unmodifiableSet(typesDeclaredInline);
+  }
+
+  /**
+   * Checks if a union member type is declared inline.
+   * @return true if the union member type is declared inline, false if it is referenced by name.
+   */
+  public boolean isTypeDeclaredInline(DataSchema type)
+  {
+    return _typesDeclaredInline.contains(type);
+  }
+
   @Override
   public String getUnionMemberKey()
   {
@@ -195,7 +215,9 @@ public final class UnionDataSchema extends ComplexDataSchema
   private List<DataSchema> _types = _emptyTypes;
   private Map<String, Integer> _typesToIndexMap = _emptyTypesToIndexMap;
   private Map<String, Integer> _namesToIndexMap = _emptyTypesToIndexMap;
+  private Set<DataSchema> _typesDeclaredInline = _emptyTypeDeclaredInline;
 
   private static final List<DataSchema> _emptyTypes = Collections.emptyList();
   private static final Map<String, Integer> _emptyTypesToIndexMap = Collections.emptyMap();
+  private static final Set<DataSchema> _emptyTypeDeclaredInline = Collections.emptySet();
 }

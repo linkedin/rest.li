@@ -1,5 +1,11 @@
 namespace com.linkedin.pegasus.generator.test.idl.records
 
+/**
+ * A written message.
+ */
 record Note {
+  /**
+   * Contents of the written message.
+   */
   text: string
 }

@@ -57,6 +57,24 @@ public final class ArrayDataSchema extends ComplexDataSchema
     return _items;
   }
 
+  /**
+   * Sets if the items type is declared inline in the schema.
+   * @param itemsDeclaredInline true if the items type is declared inline, false if it is referenced by name.
+   */
+  public void setItemsDeclaredInline(boolean itemsDeclaredInline)
+  {
+    _itemsDeclaredInline = itemsDeclaredInline;
+  }
+
+  /**
+   * Checks if the item type is declared inline.
+   * @return true if the items type is declared inline, false if it is referenced by name.
+   */
+  public boolean isItemsDeclaredInline()
+  {
+    return _itemsDeclaredInline;
+  }
+
   @Override
   public String getUnionMemberKey()
   {
@@ -85,4 +103,5 @@ public final class ArrayDataSchema extends ComplexDataSchema
   }
 
   private DataSchema _items = DataSchemaConstants.NULL_DATA_SCHEMA;
+  private boolean _itemsDeclaredInline = false;
 }

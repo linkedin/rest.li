@@ -57,6 +57,24 @@ public final class MapDataSchema extends ComplexDataSchema
     return _values;
   }
 
+  /**
+   * Sets if the values type is declared inline in the schema.
+   * @param valuesDeclaredInline true if the values type is declared inline, false if it is referenced by name.
+   */
+  public void setValuesDeclaredInline(boolean valuesDeclaredInline)
+  {
+    _valuesDeclaredInline = valuesDeclaredInline;
+  }
+
+  /**
+   * Checks if the values type is declared inline.
+   * @return true if the values type is declared inline, false if it is referenced by name.
+   */
+  public boolean isValuesDeclaredInline()
+  {
+    return _valuesDeclaredInline;
+  }
+
   @Override
   public String getUnionMemberKey()
   {
@@ -85,4 +103,5 @@ public final class MapDataSchema extends ComplexDataSchema
   }
 
   private DataSchema _values = DataSchemaConstants.NULL_DATA_SCHEMA;
+  private boolean _valuesDeclaredInline = false;
 }

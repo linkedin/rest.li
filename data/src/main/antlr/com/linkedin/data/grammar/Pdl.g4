@@ -47,6 +47,11 @@ typeReference returns [String value]: qualifiedIdentifier {
 
 typeDeclaration: namedTypeDeclaration | anonymousTypeDeclaration;
 
+
+// Why are named declarations are identified with qualifiedIdentifier?
+// Begrudgingly, for compatibility with .pdsc. In .pdsc all type declarations may specify a namespace,
+// and there is not restriction on what the namespace is.
+//
 // Only named declarations support schemadoc and properties.
 namedTypeDeclaration: doc=schemadoc? props+=propDeclaration*
   (recordDeclaration | enumDeclaration | typerefDeclaration | fixedDeclaration);
@@ -69,12 +74,12 @@ propNameDeclaration returns [String name]: AT qualifiedIdentifier {
 
 propJsonValue: EQ jsonValue;
 
-recordDeclaration returns [String name]: RECORD identifier fieldIncludes? recordDecl=fieldSelection {
-  $name = $identifier.value;
+recordDeclaration returns [String name]: RECORD qualifiedIdentifier fieldIncludes? recordDecl=fieldSelection {
+  $name = $qualifiedIdentifier.value;
 };
 
-enumDeclaration returns [String name]: ENUM identifier enumDecl=enumSymbolDeclarations {
-  $name = $identifier.value;
+enumDeclaration returns [String name]: ENUM qualifiedIdentifier enumDecl=enumSymbolDeclarations {
+  $name = $qualifiedIdentifier.value;
 };
 
 enumSymbolDeclarations: OPEN_BRACE symbolDecls+=enumSymbolDeclaration* CLOSE_BRACE;
@@ -85,13 +90,13 @@ enumSymbol returns [String value]: identifier {
   $value = $identifier.value;
 };
 
-typerefDeclaration returns [String name]: TYPEREF identifier EQ ref=typeAssignment {
-  $name = $identifier.value;
+typerefDeclaration returns [String name]: TYPEREF qualifiedIdentifier EQ ref=typeAssignment {
+  $name = $qualifiedIdentifier.value;
 };
 
 fixedDeclaration returns[String name, int size]:
-  FIXED identifier sizeStr=NUMBER_LITERAL {
-  $name = $identifier.value;
+  FIXED qualifiedIdentifier sizeStr=NUMBER_LITERAL {
+  $name = $qualifiedIdentifier.value;
   $size = $sizeStr.int;
 };
 
@@ -111,7 +116,7 @@ mapTypeAssignments: OPEN_BRACKET key=typeAssignment value=typeAssignment CLOSE_B
 
 fieldSelection: OPEN_BRACE fields+=fieldDeclaration* CLOSE_BRACE;
 
-fieldIncludes: INCLUDES typeReference*;
+fieldIncludes: INCLUDES typeAssignment*;
 
 fieldDeclaration returns [String name, boolean isOptional]:
     doc=schemadoc? props+=propDeclaration* fieldName=identifier COLON type=typeAssignment QUESTION_MARK?

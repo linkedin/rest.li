@@ -29,6 +29,7 @@ package com.linkedin.data.schema;
 public class TyperefDataSchema extends NamedDataSchema
 {
   private DataSchema _referencedType = DataSchemaConstants.NULL_DATA_SCHEMA;
+  private boolean _refDeclaredInline = false;
 
   public TyperefDataSchema(Name name)
   {
@@ -61,6 +62,24 @@ public class TyperefDataSchema extends NamedDataSchema
   public DataSchema getRef()
   {
     return _referencedType;
+  }
+
+  /**
+   * Sets if the ref type is declared inline in the schema.
+   * @param refDeclaredInline true if the ref type is declared inline, false if it is referenced by name.
+   */
+  public void setRefDeclaredInline(boolean refDeclaredInline)
+  {
+    _refDeclaredInline = refDeclaredInline;
+  }
+
+  /**
+   * Checks if the ref type is declared inline.
+   * @return true if the ref type is declared inline, false if it is referenced by name.
+   */
+  public boolean isRefDeclaredInline()
+  {
+    return _refDeclaredInline;
   }
 
   @Override

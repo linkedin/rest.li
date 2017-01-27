@@ -1,0 +1,8 @@
+namespace com.linkedin.pegasus.generator.test.idl.denormalized
+
+record WithIncludeDeclaration includes
+  record com.linkedin.pegasus.generator.test.idl.withnamespace.IncludeRecord {
+    includeField: string
+  } {
+  normalField: int
+}

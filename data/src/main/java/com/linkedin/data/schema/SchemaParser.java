@@ -229,6 +229,7 @@ public class SchemaParser extends AbstractSchemaParser
         if (name != null && type != null)
         {
           RecordDataSchema.Field field = new RecordDataSchema.Field(type);
+          field.setDeclaredInline(isDeclaredInline(fieldMap.get(TYPE_KEY)));
           field.setDefault(fieldMap.get(DEFAULT_KEY));
           if (doc != null)
           {
@@ -294,16 +295,22 @@ public class SchemaParser extends AbstractSchemaParser
   {
     // Union
     List<DataSchema> types = new ArrayList<DataSchema>();
+    Set<DataSchema> typesDeclaredInline = new HashSet<>(0);
     for (Object o : list)
     {
       DataSchema type = parseObject(o);
       if (type != null)
       {
         types.add(type);
+        if (isDeclaredInline(o))
+        {
+          typesDeclaredInline.add(type);
+        }
       }
     }
     UnionDataSchema schema = new UnionDataSchema();
     schema.setTypes(types, startCalleeMessageBuilder());
+    schema.setTypesDeclaredInline(typesDeclaredInline);
     appendCalleeMessage(list);
     return schema;
   }
@@ -370,6 +377,7 @@ public class SchemaParser extends AbstractSchemaParser
       case ARRAY:
         DataSchema itemsSchema = getSchemaData(map, ITEMS_KEY);
         ArrayDataSchema arraySchema = new ArrayDataSchema(itemsSchema);
+        arraySchema.setItemsDeclaredInline(isDeclaredInline(map.get(ITEMS_KEY)));
         schema = arraySchema;
         break;
       case ENUM:
@@ -400,6 +408,7 @@ public class SchemaParser extends AbstractSchemaParser
       case MAP:
         DataSchema valuesSchema = getSchemaData(map, VALUES_KEY);
         MapDataSchema mapSchema = new MapDataSchema(valuesSchema);
+        mapSchema.setValuesDeclaredInline(isDeclaredInline(map.get(VALUES_KEY)));
         schema = mapSchema;
         break;
       case RECORD:
@@ -441,6 +450,7 @@ public class SchemaParser extends AbstractSchemaParser
         schema = namedSchema = typerefSchema;
         DataSchema referencedTypeSchema = getSchemaData(map, REF_KEY);
         typerefSchema.setReferencedType(referencedTypeSchema);
+        typerefSchema.setRefDeclaredInline(isDeclaredInline(map.get(REF_KEY)));
         // bind name after getSchemaData to prevent circular typeref
         // circular typeref is not possible because this typeref name cannot be resolved until
         // after the referenced type has been defined.
@@ -905,6 +915,11 @@ public class SchemaParser extends AbstractSchemaParser
       }
     }
     return type;
+  }
+
+  private static boolean isDeclaredInline(Object type)
+  {
+    return type instanceof DataComplex;
   }
 
   @Override

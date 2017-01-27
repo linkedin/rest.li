@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static com.linkedin.data.schema.DataSchemaConstants.FIELD_NAME_PATTERN;
 
@@ -309,6 +310,24 @@ public final class RecordDataSchema extends NamedDataSchema
       return _record;
     }
 
+    /**
+     * Sets if the record field type is declared inline in the schema.
+     * @param declaredInline true if the record field type is declared inline, false if it is referenced by name.
+     */
+    public void setDeclaredInline(boolean declaredInline)
+    {
+      _declaredInline = declaredInline;
+    }
+
+    /**
+     * Checks if record field type is declared inline.
+     * @return true if the record field type is declared inline, false if it is referenced by name.
+     */
+    public boolean isDeclaredInline()
+    {
+      return _declaredInline;
+    }
+
     @Override
     public boolean equals(Object object)
     {
@@ -376,6 +395,7 @@ public final class RecordDataSchema extends NamedDataSchema
     private RecordDataSchema _record = null;
     private List<String> _aliases = _emptyAliases;
     private Map<String, Object> _properties = _emptyProperties;
+    private boolean _declaredInline = false;
 
     static private final Map<String, Object> _emptyProperties = Collections.emptyMap();
     static private final List<String> _emptyAliases = Collections.emptyList();
@@ -540,6 +560,15 @@ public final class RecordDataSchema extends NamedDataSchema
     _include = Collections.unmodifiableList(include);
   }
 
+
+  public void setIncludesDeclaredInline(Set<NamedDataSchema> includesDeclaredInline) {
+    _includesDeclaredInline = Collections.unmodifiableSet(includesDeclaredInline);
+  }
+
+  public boolean isIncludeDeclaredInline(NamedDataSchema type) {
+    return _includesDeclaredInline.contains(type);
+  }
+
   @Override
   public boolean equals(Object object)
   {
@@ -625,6 +654,7 @@ public final class RecordDataSchema extends NamedDataSchema
   private List<Field> _fields = _emptyFields;
   private Map<String, Integer> _fieldNameToIndexMap = _emptyFieldNameToIndexMap;
   private final RecordType _recordType;
+  private Set<NamedDataSchema> _includesDeclaredInline = _emptyIncludesDeclaredInline;
 
   private static ThreadLocal<IdentityHashMap<RecordDataSchema, RecordDataSchema>> _equalsTracking =
       new ThreadLocal<IdentityHashMap<RecordDataSchema, RecordDataSchema>>()
@@ -649,4 +679,5 @@ public final class RecordDataSchema extends NamedDataSchema
   private static final List<NamedDataSchema> _emptyNamedSchemas = Collections.emptyList();
   private static final List<Field> _emptyFields = Collections.emptyList();
   private static final Map<String, Integer> _emptyFieldNameToIndexMap = Collections.emptyMap();
+  private static final Set<NamedDataSchema> _emptyIncludesDeclaredInline = Collections.emptySet();
 }

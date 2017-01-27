@@ -44,5 +44,5 @@ compileTestJava.options.compilerArgs += '-Xlint:-deprecation'
 
 // Pass in a path to the test .json files for all test tasks (test, asyncTests, testsWithoutAssertion...)
 tasks.matching { it instanceof Test }.each {
-  it.systemProperties['testJsonDir'] = file("src/test/json").absolutePath
+  it.systemProperties['testDir'] = file("src/test").absolutePath
 }
