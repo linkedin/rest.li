@@ -115,6 +115,7 @@ public final class EntityStreams
       }
       catch (RuntimeException ex)
       {
+        LOG.warn("Writer throws exception at onInit", ex);
         synchronized (_lock)
         {
           _state = State.ABORTED;
@@ -163,6 +164,7 @@ public final class EntityStreams
       }
       catch (RuntimeException ex)
       {
+        LOG.warn("Reader throws exception at onInit", ex);
         synchronized (_lock)
         {
           if (_state != State.ACTIVE && _state != State.ABORT_REQUESTED && writerInitEx == null)
@@ -246,6 +248,8 @@ public final class EntityStreams
         }
         catch (RuntimeException ex)
         {
+          LOG.warn("Reader throws exception at onDataAvailable", ex);
+
           // the lock ensures that once we change the _state to ABORTED, it will stay as ABORTED
           synchronized (_lock)
           {

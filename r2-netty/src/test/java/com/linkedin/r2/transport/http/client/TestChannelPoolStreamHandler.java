@@ -2,6 +2,10 @@ package com.linkedin.r2.transport.http.client;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
+import com.linkedin.r2.message.stream.StreamResponse;
+import com.linkedin.r2.message.stream.entitystream.DrainReader;
+import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
+import com.linkedin.r2.transport.common.bridge.common.TransportResponse;
 import com.linkedin.r2.util.Cancellable;
 import com.linkedin.r2.util.Timeout;
 import io.netty.channel.Channel;
@@ -65,8 +69,12 @@ public class TestChannelPoolStreamHandler
 
   private static EmbeddedChannel getChannel()
   {
-    EmbeddedChannel ch =  new EmbeddedChannel(new RAPResponseDecoder(1000), new ChannelPoolStreamHandler());
+    EmbeddedChannel ch =  new EmbeddedChannel(new RAPResponseDecoder(1000), new RAPStreamResponseHandler(), new ChannelPoolStreamHandler());
     ch.attr(RAPResponseDecoder.TIMEOUT_ATTR_KEY).set(new Timeout<None>(Executors.newSingleThreadScheduledExecutor(), 1000, TimeUnit.MILLISECONDS, None.none()));
+    ch.attr(RAPStreamResponseHandler.CALLBACK_ATTR_KEY).set(response -> {
+      StreamResponse streamResponse = response.getResponse();
+      streamResponse.getEntityStream().setReader(new DrainReader());
+    });
     return ch;
   }
 

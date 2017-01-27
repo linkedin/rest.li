@@ -1050,6 +1050,94 @@ public class TestHttpNettyStreamClient
     }
   }
 
+  @Test(dataProvider = "requestResponseParameters")
+  public void testCancelStreamRequests(
+      AbstractNettyStreamClient client,
+      String method,
+      int requestSize,
+      int responseSize,
+      boolean isFullRequest) throws Exception
+  {
+    AtomicInteger succeeded = new AtomicInteger(0);
+    AtomicInteger failed = new AtomicInteger(0);
+    Server server = new HttpServerBuilder().responseSize(responseSize).build();
+    try
+    {
+      server.start();
+      CountDownLatch latch = new CountDownLatch(REQUEST_COUNT);
+      for (int i = 0; i < REQUEST_COUNT; i++)
+      {
+        StreamRequest request = new StreamRequestBuilder(new URI(URL)).setMethod(method)
+            .setHeader(HttpHeaderNames.HOST.toString(), HOST_NAME.toString())
+            .build(EntityStreams.newEntityStream(new ByteStringWriter(ByteString.copy(new byte[requestSize]))));
+        RequestContext context = new RequestContext();
+        context.putLocalAttr(R2Constants.IS_FULL_REQUEST, isFullRequest);
+        client.streamRequest(request, context, new HashMap<>(),
+            new TransportCallbackAdapter<>(new Callback<StreamResponse>()
+            {
+              @Override
+              public void onSuccess(StreamResponse response)
+              {
+                response.getEntityStream().setReader(new Reader()
+                {
+                  @Override
+                  public void onDataAvailable(ByteString data)
+                  {
+                  }
+
+                  @Override
+                  public void onDone()
+                  {
+                    failed.incrementAndGet();
+                    latch.countDown();
+                  }
+
+                  @Override
+                  public void onError(Throwable e)
+                  {
+                    failed.incrementAndGet();
+                    latch.countDown();
+                  }
+
+                  @Override
+                  public void onInit(ReadHandle rh)
+                  {
+                    rh.cancel();
+                    succeeded.incrementAndGet();
+                    latch.countDown();
+                  }
+                });
+              }
+
+              @Override
+              public void onError(Throwable e)
+              {
+                failed.incrementAndGet();
+                latch.countDown();
+              }
+            }));
+      }
+
+      if (!latch.await(30, TimeUnit.SECONDS))
+      {
+        Assert.fail("Timeout waiting for responses. " + succeeded + " requests succeeded and " + failed
+            + " requests failed out of total " + REQUEST_COUNT + " requests");
+      }
+
+      Assert.assertEquals(latch.getCount(), 0);
+      Assert.assertEquals(failed.get(), 0);
+      Assert.assertEquals(succeeded.get(), REQUEST_COUNT);
+
+      FutureCallback<None> shutdownCallback = new FutureCallback<>();
+      client.shutdown(shutdownCallback);
+      shutdownCallback.get(30, TimeUnit.SECONDS);
+    }
+    finally
+    {
+      server.stop();
+    }
+  }
+
   @Test(dataProvider = "requestResponseParameters", expectedExceptions = UnsupportedOperationException.class)
   public void testRestRequests(
       AbstractNettyStreamClient client,

@@ -177,14 +177,6 @@ import static io.netty.handler.codec.http.HttpHeaders.removeTransferEncodingChun
       if (chunk instanceof LastHttpContent)
       {
         _chunkedMessageWriter = null;
-        if (_shouldCloseConnection)
-        {
-          ctx.fireChannelRead(ChannelPoolStreamHandler.CHANNEL_DESTROY_SIGNAL);
-        }
-        else
-        {
-          ctx.fireChannelRead(ChannelPoolStreamHandler.CHANNEL_RELEASE_SIGNAL);
-        }
       }
     }
     else
@@ -317,7 +309,7 @@ import static io.netty.handler.codec.http.HttpHeaders.removeTransferEncodingChun
     public void onAbort(Throwable ex)
     {
       _timeout.getItem();
-      _ctx.fireExceptionCaught(ex);
+      _ctx.fireChannelRead(ChannelPoolStreamHandler.CHANNEL_DESTROY_SIGNAL);
     }
 
     public void processHttpChunk(HttpContent chunk) throws TooLongFrameException
@@ -400,6 +392,14 @@ import static io.netty.handler.codec.http.HttpHeaders.removeTransferEncodingChun
           if (_lastChunkReceived)
           {
             _wh.done();
+            if (_shouldCloseConnection)
+            {
+              _ctx.fireChannelRead(ChannelPoolStreamHandler.CHANNEL_DESTROY_SIGNAL);
+            }
+            else
+            {
+              _ctx.fireChannelRead(ChannelPoolStreamHandler.CHANNEL_RELEASE_SIGNAL);
+            }
           }
           break;
         }

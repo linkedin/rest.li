@@ -1,6 +1,7 @@
 10.0.1
 ------
-
+(RB=898748)
+Delay releasing channel until entity stream is either done or aborted
 
 10.0.0
 ------

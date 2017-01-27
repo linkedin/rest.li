@@ -8,10 +8,12 @@ import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestStatus;
+import com.linkedin.r2.message.stream.StreamException;
 import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamRequestBuilder;
 import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.message.stream.StreamResponseBuilder;
+import com.linkedin.r2.message.stream.entitystream.CancelingReader;
 import com.linkedin.r2.message.stream.entitystream.DrainReader;
 import com.linkedin.r2.message.stream.entitystream.EntityStreams;
 import com.linkedin.r2.message.stream.entitystream.ReadHandle;
@@ -135,12 +137,17 @@ public class TestChannelPoolBehavior
   @Test
   public void testChannelReuse() throws Exception
   {
-    _client2.streamRequest(new StreamRequestBuilder(Bootstrap.createHttpURI(PORT, NOT_FOUND_URI))
-        .build(EntityStreams.newEntityStream(new SlowWriter())), new Callback<StreamResponse>()
+    _client2.streamRequest(new StreamRequestBuilder(Bootstrap.createHttpURI(PORT, NOT_FOUND_URI)).build(
+        EntityStreams.newEntityStream(new SlowWriter())), new Callback<StreamResponse>()
     {
       @Override
       public void onError(Throwable e)
       {
+        if (e instanceof StreamException)
+        {
+          StreamException streamException = (StreamException) e;
+          streamException.getResponse().getEntityStream().setReader(new CancelingReader());
+        }
         throw new RuntimeException(e);
       }
 
@@ -152,7 +159,7 @@ public class TestChannelPoolBehavior
     });
 
     Future<RestResponse> responseFuture = _client2.restRequest(new RestRequestBuilder(Bootstrap.createHttpURI(PORT, NORMAL_URI)).build());
-    RestResponse response = responseFuture.get(WRITER_DELAY * 2 , TimeUnit.MILLISECONDS);
+    RestResponse response = responseFuture.get(WRITER_DELAY * 1000 , TimeUnit.MILLISECONDS);
     Assert.assertEquals(response.getStatus(), RestStatus.OK);
 
   }
