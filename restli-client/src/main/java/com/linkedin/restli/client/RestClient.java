@@ -28,6 +28,7 @@ import com.linkedin.data.codec.PsonDataCodec;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.multipart.MultiPartMIMEUtils;
 import com.linkedin.multipart.MultiPartMIMEWriter;
+import com.linkedin.r2.disruptor.DisruptContext;
 import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.MessageHeadersBuilder;
 import com.linkedin.r2.message.Messages;
@@ -52,11 +53,14 @@ import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.common.attachments.RestLiAttachmentDataSourceWriter;
 import com.linkedin.restli.common.attachments.RestLiDataSourceIterator;
+import com.linkedin.restli.disruptor.DisruptRestController;
+import com.linkedin.restli.disruptor.DisruptRestControllerContainer;
 import com.linkedin.restli.internal.client.RequestBodyTransformer;
 import com.linkedin.restli.internal.client.ResponseFutureImpl;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.AttachmentUtils;
 import com.linkedin.restli.internal.common.CookieUtil;
+import com.linkedin.util.ArgumentUtil;
 
 import java.io.IOException;
 import java.net.URI;
@@ -117,12 +121,14 @@ import javax.mail.internet.ParseException;
  */
 public class RestClient
 {
+  private static final String MULTIPLEXER_RESOURCE = "mux";
   private static final JacksonDataCodec  JACKSON_DATA_CODEC = new JacksonDataCodec();
   private static final PsonDataCodec     PSON_DATA_CODEC    = new PsonDataCodec();
   private static final List<AcceptType>  DEFAULT_ACCEPT_TYPES = Collections.emptyList();
   private static final ContentType DEFAULT_CONTENT_TYPE = ContentType.JSON;
   private static final Random RANDOM_INSTANCE = new Random();
   private final Client _client;
+  private final DisruptRestController _controller;
 
   private final String _uriPrefix;
   private final List<AcceptType> _acceptTypes;
@@ -157,6 +163,7 @@ public class RestClient
     _uriPrefix = (uriPrefix == null) ? null : uriPrefix.trim();
     _acceptTypes = acceptTypes;
     _contentType = contentType;
+    _controller = DisruptRestControllerContainer.getInstance();
   }
 
   /**
@@ -287,13 +294,16 @@ public class RestClient
     ProtocolVersion protocolVersion = getProtocolVersionForService(request);
     URI requestUri = RestliUriBuilderUtil.createUriBuilder(request, _uriPrefix, protocolVersion).build();
 
+    final ResourceMethod method = request.getMethod();
+    final String methodName = request.getMethodName();
+    addDisruptContext(request.getBaseUriTemplate(), method, methodName, requestContext);
     sendStreamRequestImpl(requestContext,
                           requestUri,
-                          request.getMethod(),
+                          method,
                           input != null ? RequestBodyTransformer.transform(request, protocolVersion) : null,
                           request.getHeaders(),
                           CookieUtil.encodeCookies(request.getCookies()),
-                          request.getMethodName(),
+                          methodName,
                           protocolVersion,
                           request.getRequestOptions(),
                           request.getStreamingAttachments(),
@@ -331,13 +341,15 @@ public class RestClient
     ProtocolVersion protocolVersion = getProtocolVersionForService(request);
     URI requestUri = RestliUriBuilderUtil.createUriBuilder(request, _uriPrefix, protocolVersion).build();
 
+    final ResourceMethod method = request.getMethod();
+    final String methodName = request.getMethodName();
+    addDisruptContext(request.getBaseUriTemplate(), method, methodName, requestContext);
     sendRestRequestImpl(requestContext,
                         requestUri,
-                        request.getMethod(),
-                        input != null ? RequestBodyTransformer.transform(request, protocolVersion) : null,
-                        request.getHeaders(),
+                        method,
+                        input != null ? RequestBodyTransformer.transform(request, protocolVersion) : null, request.getHeaders(),
                         CookieUtil.encodeCookies(request.getCookies()),
-                        request.getMethodName(),
+                        methodName,
                         protocolVersion,
                         request.getRequestOptions(),
                         callback);
@@ -695,11 +707,26 @@ public class RestClient
    */
   public void sendRequest(MultiplexedRequest multiplexedRequest, Callback<MultiplexedResponse> callback)
   {
+    sendRequest(multiplexedRequest, new RequestContext(), callback);
+  }
+
+  /**
+   * Sends a multiplexed request. Responses are provided to individual requests' callbacks. After all responses are
+   * received the given aggregated callback is invoked.
+   *
+   * The request is sent using the protocol version 2.0.
+   *
+   * @param multiplexedRequest  the multiplexed request to send.
+   * @param requestContext context for the request
+   * @param callback the aggregated response callback.
+   */
+  public void sendRequest(MultiplexedRequest multiplexedRequest, RequestContext requestContext, Callback<MultiplexedResponse> callback)
+  {
     MultiplexedCallback muxCallback = new MultiplexedCallback(multiplexedRequest.getCallbacks(), callback);
+    addDisruptContext(MULTIPLEXER_RESOURCE, requestContext);
     try
     {
       RestRequest restRequest = buildMultiplexedRequest(multiplexedRequest);
-      RequestContext requestContext = new RequestContext();
       _client.restRequest(restRequest, requestContext, muxCallback);
     }
     catch (Exception e)
@@ -973,6 +1000,59 @@ public class RestClient
   private void addProtocolVersionHeader(MessageHeadersBuilder<?> builder, ProtocolVersion protocolVersion)
   {
     builder.setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, protocolVersion.toString());
+  }
+
+  /**
+   * Evaluates a {@link Request} against the {@link DisruptRestController} and stores the resolved {@link DisruptContext}
+   * to the {@link RequestContext} if the resolved DisruptContext is not {@code null}
+   *
+   * @param resource Resource name
+   * @param requestContext Request context
+   */
+  private void addDisruptContext(String resource, RequestContext requestContext)
+  {
+    addDisruptContext(resource, null, null, requestContext);
+  }
+
+  /**
+   * Evaluates a {@link Request} against the {@link DisruptRestController} and stores the resolved {@link DisruptContext}
+   * to the {@link RequestContext} if the resolved DisruptContext is not {@code null}
+   *
+   * @param resource Resource name
+   * @param method Resource method
+   * @param name Name of the finder or action
+   * @param requestContext Request context
+   */
+  private void addDisruptContext(String resource, ResourceMethod method, String name, RequestContext requestContext)
+  {
+    if (_controller == null)
+    {
+      return;
+    }
+
+    ArgumentUtil.notNull(resource, "resource");
+
+    final DisruptContext disruptContext;
+    if (method == null)
+    {
+      disruptContext = _controller.getDisruptContext(resource);
+    }
+    else
+    {
+      if (name == null)
+      {
+        disruptContext = _controller.getDisruptContext(resource, method);
+      }
+      else
+      {
+        disruptContext = _controller.getDisruptContext(resource, method, name);
+      }
+    }
+
+    if (disruptContext != null)
+    {
+      requestContext.putLocalAttr(DisruptContext.DISRUPT_CONTEXT_KEY, disruptContext);
+    }
   }
 
   public static enum AcceptType

@@ -1,0 +1,10 @@
+dependencies {
+  compile project(':r2-core')
+
+  testCompile externalDependency.testng
+  testCompile externalDependency.easymock
+}
+
+test {
+  systemProperties['test.projectDir'] = projectDir.toString()
+}

@@ -21,6 +21,7 @@ package com.linkedin.r2.transport.http.client;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.MultiCallback;
 import com.linkedin.common.util.None;
+import com.linkedin.r2.disruptor.DisruptFilter;
 import com.linkedin.r2.filter.FilterChain;
 import com.linkedin.r2.filter.FilterChains;
 import com.linkedin.r2.filter.CompressionConfig;
@@ -695,6 +696,12 @@ public class HttpClientFactory implements TransportClientFactory
     ClientQueryTunnelFilter clientQueryTunnelFilter = new ClientQueryTunnelFilter(queryPostThreshold);
     filters = filters.addLastRest(clientQueryTunnelFilter);
     filters = filters.addLast(clientQueryTunnelFilter);
+
+    // Add the disruptor filter to the end of the filter chain to get the most accurate simulation of disrupt
+    Integer requestTimeout = chooseNewOverDefault(getIntValue(properties, HTTP_REQUEST_TIMEOUT), DEFAULT_REQUEST_TIMEOUT);
+    DisruptFilter disruptFilter = new DisruptFilter(_executor, _eventLoopGroup, requestTimeout);
+    filters = filters.addLastRest(disruptFilter);
+    filters = filters.addLast(disruptFilter);
 
     client = new FilterChainClient(client, filters);
     client = new FactoryClient(client);

@@ -4,6 +4,7 @@ dependencies {
   compile project(':pegasus-common')
   compile project(':r2-core')
   compile project(':restli-common')
+  compile project(':restli-disruptor')
   compile project(':li-jersey-uri')
   compile project(':multipart-mime')
   compile externalDependency.mail
