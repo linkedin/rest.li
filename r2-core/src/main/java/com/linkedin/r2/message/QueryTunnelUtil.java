@@ -40,7 +40,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.HashMap;
+import java.util.TreeMap;
 import java.util.Map;
 
 
@@ -299,7 +299,8 @@ public class QueryTunnelUtil
     RestRequestBuilder requestBuilder = request.builder();
 
     // Get copy of headers and remove the override
-    Map<String, String> h = new HashMap<String, String>(request.getHeaders());
+    Map<String, String> h = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+    h.putAll(request.getHeaders());
     h.remove(HEADER_METHOD_OVERRIDE);
 
     // Simple case, just extract query params from entity, append to query, and clear entity

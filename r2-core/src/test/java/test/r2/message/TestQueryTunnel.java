@@ -439,6 +439,49 @@ public class TestQueryTunnel
     Assert.assertEquals(request.getEntity(), encodedWithFalseFlag.getEntity());
   }
 
+  @Test
+  public void testXHttpMethodOverrideHeaderRemoved() throws Exception
+  {
+    RestRequest request = new RestRequestBuilder(new URI("http://localhost:7279/foo?"))
+        .setMethod("GET")
+        .setHeader("content-type", "application/json")
+        .setHeader("x-http-method-override", "GET").build();
+
+    RestRequest decoded = decode(request);
+    Assert.assertNull(decoded.getHeader("x-http-method-override"), "Did not remove X-Http-Method-Override headers");
+  }
+
+  @Test
+  public void testDecodeRequestTwice() throws Exception
+  {
+    RestRequest request = new RestRequestBuilder(new URI("http://localhost:7279/foo?"))
+        .setMethod("GET")
+        .setHeader("content-type", "application/json")
+        .setHeader("x-http-method-override", "GET").build();
+
+    RestRequest decoded = decode(request);
+    Assert.assertEquals(decoded, decode(decoded), "Decoded RestRequest did not stay the same after another decode");
+  }
+
+  @DataProvider
+  public static Object[][] mixedCaseHeaders(){
+    return new Object[][] {{"CoNtEnT-TyPe"}, {"contenT-typE"}, {"cOntEnt-tYpE"}};
+  }
+  @Test(dataProvider = "mixedCaseHeaders")
+  public void testCaseInsensitiveHeaders(String header) throws Exception
+  {
+    RestRequest request = new RestRequestBuilder(new URI("http://localhost:7279/foo?"))
+        .setEntity("hello_world".getBytes())
+        .setMethod("GET")
+        .setHeader("x-http-method-override", "GET")
+        .setHeader("Content-Length", "12")
+        .setHeader(header, "application/x-www-form-urlencoded").build();
+
+    // Should remove header even with mixed content
+    RestRequest decoded = decode(request);
+    Assert.assertNull(decoded.getHeader(header), "Mixed case 'content-type' header failed to be decoded");
+  }
+
   private RestRequest encode(RestRequest request, int threshold) throws Exception
   {
     return encode(request, new RequestContext(), threshold);

@@ -1,6 +1,8 @@
 10.1.0
 ------
 Introduce .pdl file format for authoring Pegasus data schemas.
+(RB=906111)
+Using Treemap to allow QueryTunnelUtil.decode to parse case insensitive http headers
 
 10.0.2
 ------
