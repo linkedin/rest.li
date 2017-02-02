@@ -28,9 +28,13 @@ grammar Pdl;
 
 // Document is the top level node of this grammar.
 // Each .pdl file contains exactly one document.
-document: namespaceDeclaration? importDeclarations namedTypeDeclaration;
+// Ideally, only namedTypeDeclaration would be allowed for document level type declarations.
+// But for compatibility with .pdsc, arrays, maps and unions may be declared as well.
+document: namespaceDeclaration? packageDeclaration? importDeclarations typeDeclaration;
 
 namespaceDeclaration: NAMESPACE qualifiedIdentifier;
+
+packageDeclaration: PACKAGE qualifiedIdentifier;
 
 importDeclarations: importDeclaration*;
 
@@ -65,7 +69,7 @@ propNameDeclaration returns [String name]: AT qualifiedIdentifier {
 
 propJsonValue: EQ jsonValue;
 
-recordDeclaration returns [String name]: RECORD identifier recordDecl=fieldSelection {
+recordDeclaration returns [String name]: RECORD identifier fieldIncludes? recordDecl=fieldSelection {
   $name = $identifier.value;
 };
 
@@ -105,11 +109,9 @@ mapDeclaration: MAP typeParams=mapTypeAssignments;
 
 mapTypeAssignments: OPEN_BRACKET key=typeAssignment value=typeAssignment CLOSE_BRACKET;
 
-fieldSelection: OPEN_BRACE fields+=fieldSelectionElement* CLOSE_BRACE;
+fieldSelection: OPEN_BRACE fields+=fieldDeclaration* CLOSE_BRACE;
 
-fieldSelectionElement: fieldInclude | fieldDeclaration;
-
-fieldInclude: DOTDOTDOT typeReference;
+fieldIncludes: INCLUDES typeReference*;
 
 fieldDeclaration returns [String name, boolean isOptional]:
     doc=schemadoc? props+=propDeclaration* fieldName=identifier COLON type=typeAssignment QUESTION_MARK?
@@ -164,11 +166,13 @@ ARRAY: 'array';
 ENUM: 'enum';
 FIXED: 'fixed';
 IMPORT: 'import';
+PACKAGE: 'package';
 MAP: 'map';
 NAMESPACE: 'namespace';
 RECORD: 'record';
 TYPEREF: 'typeref';
 UNION: 'union';
+INCLUDES: 'includes';
 
 OPEN_PAREN: '(';
 CLOSE_PAREN: ')';
@@ -180,7 +184,6 @@ CLOSE_BRACKET: ']';
 AT: '@';
 COLON: ':';
 DOT: '.';
-DOTDOTDOT: '...';
 EQ: '=';
 QUESTION_MARK: '?';
 

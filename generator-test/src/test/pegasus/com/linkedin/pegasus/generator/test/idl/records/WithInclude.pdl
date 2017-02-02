@@ -1,6 +1,5 @@
 namespace com.linkedin.pegasus.generator.test.idl.records
 
-record WithInclude {
-  ...Simple
+record WithInclude includes Simple, Note {
   direct: int
 }

@@ -1,0 +1,6 @@
+namespace com.linkedin.pegasus.generator.test.idl.records
+package com.linkedin.pegasus.generator.test.idl.packaged
+
+record WithPackage {
+  text: string
+}

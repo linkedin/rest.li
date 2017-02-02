@@ -45,7 +45,6 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -66,7 +65,6 @@ import com.linkedin.data.grammar.PdlParser.EnumSymbolDeclarationContext;
 import com.linkedin.data.grammar.PdlParser.FieldDeclarationContext;
 import com.linkedin.data.grammar.PdlParser.FieldDefaultContext;
 import com.linkedin.data.grammar.PdlParser.FieldSelectionContext;
-import com.linkedin.data.grammar.PdlParser.FieldSelectionElementContext;
 import com.linkedin.data.grammar.PdlParser.FixedDeclarationContext;
 import com.linkedin.data.grammar.PdlParser.ImportDeclarationContext;
 import com.linkedin.data.grammar.PdlParser.ImportDeclarationsContext;
@@ -82,6 +80,7 @@ import com.linkedin.data.grammar.PdlParser.TypeReferenceContext;
 import com.linkedin.data.grammar.PdlParser.TyperefDeclarationContext;
 import com.linkedin.data.grammar.PdlParser.UnionDeclarationContext;
 import com.linkedin.data.grammar.PdlParser.UnionMemberDeclarationContext;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 
 
 /**
@@ -178,8 +177,8 @@ public class PdlSchemaParser extends AbstractSchemaParser
     }
     catch (Throwable t)
     {
-      ParseError parseError = new ParseError(new ParseErrorLocation(0, 0), "Internal parser error: ");
-      startErrorMessage(parseError).append(t.getMessage()).append(NEWLINE);
+      ParseError parseError = new ParseError(new ParseErrorLocation(0, 0), null);
+      startErrorMessage(parseError).append("Unexpected parser error: ").append(ExceptionUtils.getStackTrace(t)).append(NEWLINE);
     }
   }
 
@@ -308,82 +307,112 @@ public class PdlSchemaParser extends AbstractSchemaParser
    *
    * @param document provides the source code in AST form
    */
-  private String parse(DocumentContext document) throws ParseException
+  private DataSchema parse(DocumentContext document) throws ParseException
   {
-    if (document.namespaceDeclaration() != null)
+    PdlParser.NamespaceDeclarationContext namespaceDecl = document.namespaceDeclaration();
+
+    if (namespaceDecl != null)
     {
-      setCurrentNamespace(
-        document.namespaceDeclaration().qualifiedIdentifier().value);
+      setCurrentNamespace(namespaceDecl.qualifiedIdentifier().value);
     }
     else
     {
       setCurrentNamespace("");
     }
 
-    setCurrentImports(document.importDeclarations());
-    NamedDataSchema schema = parseNamedType(document.namedTypeDeclaration());
-    addTopLevelSchema(schema);
-    return schema.getFullName();
-  }
-
-  private DataSchema parseType(TypeDeclarationContext typ) throws ParseException
-  {
-    if (typ.namedTypeDeclaration() != null)
+    if (document.packageDeclaration() != null)
     {
-      return parseNamedType(typ.namedTypeDeclaration());
-    }
-    else if (typ.anonymousTypeDeclaration() != null)
-    {
-      AnonymousTypeDeclarationContext anon = typ.anonymousTypeDeclaration();
-      if (anon.unionDeclaration() != null)
-      {
-        return parseUnion(anon.unionDeclaration(), false);
-      }
-      else if (anon.mapDeclaration() != null)
-      {
-        return parseMap(anon.mapDeclaration());
-      }
-      else if (anon.arrayDeclaration() != null)
-      {
-        return parseArray(anon.arrayDeclaration());
-      }
-      else
-      {
-        throw new ParseException(anon,
-          "Unrecognized type parse node: " + anon.getText());
-      }
+      setCurrentPackage(document.packageDeclaration().qualifiedIdentifier().value);
     }
     else
     {
-      throw new ParseException(typ,
-        "Unrecognized typ declaration parse node: " + typ.getText());
+      setCurrentPackage(null);
+    }
+
+    setCurrentImports(document.importDeclarations());
+    TypeDeclarationContext typeDeclaration = document.typeDeclaration();
+    DataSchema schema;
+    if (typeDeclaration.namedTypeDeclaration() != null)
+    {
+      schema = parseNamedType(typeDeclaration.namedTypeDeclaration());
+    }
+    else if (typeDeclaration.anonymousTypeDeclaration() != null)
+    {
+      schema = parseAnonymousType(typeDeclaration.anonymousTypeDeclaration());
+    }
+    else
+    {
+      throw new ParseException(typeDeclaration,
+          "Unrecognized type declaration: " + typeDeclaration.getText());
+    }
+    addTopLevelSchema(schema);
+    return schema;
+  }
+
+  private DataSchema parseType(TypeDeclarationContext type) throws ParseException
+  {
+    if (type.namedTypeDeclaration() != null)
+    {
+      return parseNamedType(type.namedTypeDeclaration());
+    }
+    else if (type.anonymousTypeDeclaration() != null)
+    {
+      return parseAnonymousType(type.anonymousTypeDeclaration());
+    }
+    else
+    {
+      throw new ParseException(type,
+        "Unrecognized type declaration parse node: " + type.getText());
+    }
+  }
+
+  private DataSchema parseAnonymousType(AnonymousTypeDeclarationContext anon) throws ParseException {
+    if (anon.unionDeclaration() != null)
+    {
+      return parseUnion(anon.unionDeclaration(), false);
+    }
+    else if (anon.mapDeclaration() != null)
+    {
+      return parseMap(anon.mapDeclaration());
+    }
+    else if (anon.arrayDeclaration() != null)
+    {
+      return parseArray(anon.arrayDeclaration());
+    }
+    else
+    {
+      throw new ParseException(anon,
+        "Unrecognized type parse node: " + anon.getText());
     }
   }
 
   private NamedDataSchema parseNamedType(
       NamedTypeDeclarationContext namedType) throws ParseException
   {
+    NamedDataSchema schema;
     if (namedType.recordDeclaration() != null)
     {
-      return parseRecord(namedType, namedType.recordDeclaration());
+      schema = parseRecord(namedType, namedType.recordDeclaration());
     }
     else if (namedType.typerefDeclaration() != null)
     {
-      return parseTyperef(namedType, namedType.typerefDeclaration());
+      schema = parseTyperef(namedType, namedType.typerefDeclaration());
     }
     else if (namedType.fixedDeclaration() != null)
     {
-      return parseFixed(namedType, namedType.fixedDeclaration());
+      schema = parseFixed(namedType, namedType.fixedDeclaration());
     }
     else if (namedType.enumDeclaration() != null)
     {
-      return parseEnum(namedType, namedType.enumDeclaration());
+      schema = parseEnum(namedType, namedType.enumDeclaration());
     }
     else
     {
       throw new ParseException(namedType,
         "Unrecognized named type parse node: " + namedType.getText());
     }
+    schema.setPackage(getCurrentPackage());
+    return schema;
   }
 
   private FixedDataSchema parseFixed(
@@ -412,31 +441,18 @@ public class PdlSchemaParser extends AbstractSchemaParser
     List<EnumSymbolDeclarationContext> symbolDecls = enumDecl.enumDecl.symbolDecls;
 
     List<String> symbols = new ArrayList<>(symbolDecls.size());
+    Map<String, Object> props = setProperties(context, schema);
+    Map<String, Object> symbolDocs = new HashMap<>();
+    DataMap deprecatedSymbols = new DataMap();
+    DataMap symbolProperties = new DataMap();
+
     for (EnumSymbolDeclarationContext symbolDecl : symbolDecls)
     {
       symbols.add(symbolDecl.symbol.value);
-    }
-    schema.setSymbols(symbols, errorMessageBuilder());
-
-    Map<String, Object> props = setProperties(context, schema);
-
-    Map<String, Object> symbolDocs = new HashMap<>();
-    for (EnumSymbolDeclarationContext symbolDecl : symbolDecls)
-    {
       if (symbolDecl.doc != null)
       {
         symbolDocs.put(symbolDecl.symbol.value, symbolDecl.doc.value);
       }
-    }
-    if (symbolDocs.size() > 0)
-    {
-      schema.setSymbolDocs(symbolDocs, errorMessageBuilder());
-    }
-
-    DataMap deprecatedSymbols = new DataMap();
-    DataMap symbolProperties = new DataMap();
-    for (EnumSymbolDeclarationContext symbolDecl: symbolDecls)
-    {
       for (PropDeclarationContext prop: symbolDecl.props)
       {
         String symbol = symbolDecl.symbol.value;
@@ -452,6 +468,12 @@ public class PdlSchemaParser extends AbstractSchemaParser
           addPropertiesAtPath(prop, symbolProperties, path, value);
         }
       }
+    }
+
+    schema.setSymbols(symbols, errorMessageBuilder());
+    if (symbolDocs.size() > 0)
+    {
+      schema.setSymbolDocs(symbolDocs, errorMessageBuilder());
     }
 
     if (deprecatedSymbols.size() > 0)
@@ -486,8 +508,6 @@ public class PdlSchemaParser extends AbstractSchemaParser
   {
     return new ArrayDataSchema(toDataSchema(array.typeParams.items));
   }
-
-  private static JacksonDataCodec codec = new JacksonDataCodec();
 
   private MapDataSchema parseMap(MapDeclarationContext map) throws ParseException
   {
@@ -557,10 +577,11 @@ public class PdlSchemaParser extends AbstractSchemaParser
     RecordDataSchema schema = new RecordDataSchema(name, RecordDataSchema.RecordType.RECORD);
 
     bindNameToSchema(name, schema);
-    FieldsAndIncludes fieldsAndIncludes = parseFields(schema, record.recordDecl);
+    FieldsAndIncludes fieldsAndIncludes = parseIncludes(record.fieldIncludes());
+    fieldsAndIncludes.fields.addAll(parseFields(schema, record.recordDecl));
     schema.setFields(fieldsAndIncludes.fields, errorMessageBuilder());
-    validateDefaults(schema);
     schema.setInclude(fieldsAndIncludes.includes);
+    validateDefaults(schema);
     setProperties(context, schema);
     return schema;
   }
@@ -695,16 +716,51 @@ public class PdlSchemaParser extends AbstractSchemaParser
     }
   }
 
-  private FieldsAndIncludes parseFields(
+  private FieldsAndIncludes parseIncludes(PdlParser.FieldIncludesContext includeSet) throws ParseException
+  {
+    List<NamedDataSchema> includes = new ArrayList<>();
+    List<Field> fields = new ArrayList<>();
+    if (includeSet != null)
+    {
+      List<TypeReferenceContext> includeTypes = includeSet.typeReference();
+      for (TypeReferenceContext includeRef : includeTypes)
+      {
+        DataSchema includedSchema = toDataSchema(includeRef);
+        if (includedSchema != null)
+        {
+          DataSchema dereferencedIncludedSchema = includedSchema.getDereferencedDataSchema();
+          if (dereferencedIncludedSchema instanceof RecordDataSchema)
+          {
+            RecordDataSchema includedRecordSchema = (RecordDataSchema) dereferencedIncludedSchema;
+            fields.addAll(includedRecordSchema.getFields());
+
+            includes.add(includedRecordSchema);
+          }
+          else
+          {
+            startErrorMessage(includeRef)
+                .append("Include is not a record type: ")
+                .append(includeRef.value).append(NEWLINE);
+          }
+        }
+        else
+        {
+          startErrorMessage(includeRef)
+              .append("Unable to resolve included schema: ")
+              .append(includeRef.value).append(NEWLINE);
+        }
+      }
+    }
+    return new FieldsAndIncludes(fields, includes);
+  }
+
+  private List<Field> parseFields(
       RecordDataSchema recordSchema,
       FieldSelectionContext fieldGroup) throws ParseException
   {
-
     List<Field> results = new ArrayList<>();
-    List<NamedDataSchema> includes = new ArrayList<>();
-    for (FieldSelectionElementContext element : fieldGroup.fields)
+    for (FieldDeclarationContext field : fieldGroup.fields)
     {
-      FieldDeclarationContext field = element.fieldDeclaration();
       if (field != null)
       {
         Field result = new Field(toDataSchema(field.type));
@@ -734,36 +790,14 @@ public class PdlSchemaParser extends AbstractSchemaParser
         result.setRecord(recordSchema);
         results.add(result);
       }
-      else if (element.fieldInclude() != null)
-      {
-        TypeReferenceContext includeRef = element.fieldInclude().typeReference();
-        DataSchema includedSchema = toDataSchema(includeRef);
-        if (includedSchema != null)
-        {
-          DataSchema dereferencedIncludedSchema = includedSchema.getDereferencedDataSchema();
-          if (dereferencedIncludedSchema instanceof RecordDataSchema)
-          {
-            RecordDataSchema includedRecordSchema = (RecordDataSchema) dereferencedIncludedSchema;
-            results.addAll(includedRecordSchema.getFields());
-
-            includes.add(includedRecordSchema);
-          }
-          else
-          {
-            startErrorMessage(element)
-              .append("Include is not a record type: ")
-              .append(includeRef.value).append(NEWLINE);
-          }
-        }
-      }
       else
       {
-        startErrorMessage(element)
+        startErrorMessage(field)
           .append("Unrecognized field element parse node: ")
-          .append(element.getText()).append(NEWLINE);
+          .append(field.getText()).append(NEWLINE);
       }
     }
-    return new FieldsAndIncludes(results, includes);
+    return results;
   }
 
   private DataSchema toDataSchema(TypeReferenceContext typeReference) throws ParseException
@@ -939,39 +973,11 @@ public class PdlSchemaParser extends AbstractSchemaParser
     this.currentImports = importsBySimpleName;
   }
 
-
-  /**
-   * Set the current namespace.
-   *
-   * Current namespace is used to compute the full name from an unqualified name.
-   *
-   * @param namespace to set as current namespace.
-   */
-  public void setCurrentNamespace(String namespace)
-  {
-    _currentNamespace = namespace;
-  }
-
-  /**
-   * Get the current namespace.
-   *
-   * @return the current namespace.
-   */
-  public String getCurrentNamespace()
-  {
-    return _currentNamespace;
-  }
-
   @Override
   public String schemasToString()
   {
     return SchemaToJsonEncoder.schemasToJson(topLevelDataSchemas(), JsonBuilder.Pretty.SPACES);
   }
-
-  /**
-   * Current namespace, used to determine full name from unqualified name.
-   */
-  private String _currentNamespace = "";
 
   @Override
   public StringBuilder errorMessageBuilder()

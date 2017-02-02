@@ -92,10 +92,13 @@ public class MultiFormatDataSchemaResolver implements DataSchemaResolver
   }
 
   @Override
-  public NamedDataSchema findDataSchema(String name, StringBuilder errorMessageBuilder) {
-    for (DataSchemaResolver resolver: resolvers) {
+  public NamedDataSchema findDataSchema(String name, StringBuilder errorMessageBuilder)
+  {
+    for (DataSchemaResolver resolver: resolvers)
+    {
       NamedDataSchema result = resolver.findDataSchema(name, errorMessageBuilder);
-      if (result != null) {
+      if (result != null)
+      {
         return result;
       }
     }
@@ -103,18 +106,23 @@ public class MultiFormatDataSchemaResolver implements DataSchemaResolver
   }
 
   @Override
-  public void bindNameToSchema(Name name, NamedDataSchema schema, DataSchemaLocation location) {
-    for (DataSchemaResolver resolver: resolvers) {
+  public void bindNameToSchema(Name name, NamedDataSchema schema, DataSchemaLocation location)
+  {
+    for (DataSchemaResolver resolver: resolvers)
+    {
       resolver.bindNameToSchema(name, schema, location);
     }
 
   }
 
   @Override
-  public NamedDataSchema existingDataSchema(String name) {
-    for (DataSchemaResolver resolver: resolvers) {
+  public NamedDataSchema existingDataSchema(String name)
+  {
+    for (DataSchemaResolver resolver: resolvers)
+    {
       NamedDataSchema result = resolver.existingDataSchema(name);
-      if (result != null) {
+      if (result != null)
+      {
         return result;
       }
     }
@@ -122,9 +130,12 @@ public class MultiFormatDataSchemaResolver implements DataSchemaResolver
   }
 
   @Override
-  public boolean locationResolved(DataSchemaLocation location) {
-    for (DataSchemaResolver resolver: resolvers) {
-      if (resolver.locationResolved(location)) {
+  public boolean locationResolved(DataSchemaLocation location)
+  {
+    for (DataSchemaResolver resolver: resolvers)
+    {
+      if (resolver.locationResolved(location))
+      {
         return true;
       }
     }
