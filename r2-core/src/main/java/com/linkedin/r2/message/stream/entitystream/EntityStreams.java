@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+
 ;
 
 /**
@@ -108,12 +109,12 @@ public final class EntityStreams
       }
 
       final WriteHandle wh = new WriteHandleImpl();
-      RuntimeException writerInitEx = null;
+      Throwable writerInitEx = null;
       try
       {
         _writer.onInit(wh);
       }
-      catch (RuntimeException ex)
+      catch (Throwable ex)
       {
         LOG.warn("Writer throws exception at onInit", ex);
         synchronized (_lock)
@@ -236,7 +237,7 @@ public final class EntityStreams
           {
             observer.onDataAvailable(data);
           }
-          catch (RuntimeException ex)
+          catch (Throwable ex)
           {
             LOG.warn("Observer throws exception at onDataAvailable", ex);
           }
@@ -246,7 +247,7 @@ public final class EntityStreams
         {
           _reader.onDataAvailable(data);
         }
-        catch (RuntimeException ex)
+        catch (Throwable ex)
         {
           LOG.warn("Reader throws exception at onDataAvailable", ex);
 
@@ -296,7 +297,7 @@ public final class EntityStreams
           {
             observer.onDone();
           }
-          catch (RuntimeException ex)
+          catch (Throwable ex)
           {
             LOG.warn("Observer throws exception at onDone, ignored.", ex);
           }
@@ -306,7 +307,7 @@ public final class EntityStreams
         {
           _reader.onDone();
         }
-        catch (RuntimeException ex)
+        catch (Throwable ex)
         {
           LOG.warn("Reader throws exception at onDone; notifying writer", ex);
           // At this point, no cancel had happened and no cancel will happen, _writer.onAbort will not be invoked more than once
@@ -349,7 +350,7 @@ public final class EntityStreams
         {
           _reader.onError(e);
         }
-        catch (RuntimeException ex)
+        catch (Throwable ex)
         {
           LOG.warn("Reader throws exception at onError; notifying writer", ex);
           // at this point, no cancel had happened and no cancel will happen, _writer.onAbort will not be invoked more than once
@@ -435,7 +436,7 @@ public final class EntityStreams
           {
             _writer.onWritePossible();
           }
-          catch (RuntimeException ex)
+          catch (Throwable ex)
           {
             LOG.warn("Writer throws at onWritePossible", ex);
             // we can safely do cancel here as no WriteHandle method could be called at the same time
@@ -490,7 +491,7 @@ public final class EntityStreams
       {
         _writer.onAbort(throwable);
       }
-      catch (RuntimeException ex)
+      catch (Throwable ex)
       {
         LOG.warn("Writer throws exception at onAbort", ex);
       }
@@ -504,7 +505,7 @@ public final class EntityStreams
         {
           observer.onError(throwable);
         }
-        catch (RuntimeException ex)
+        catch (Throwable ex)
         {
           LOG.warn("Observer throws exception at onError, ignored.", ex);
         }
@@ -517,7 +518,7 @@ public final class EntityStreams
       {
         _reader.onError(throwable);
       }
-      catch (RuntimeException ex)
+      catch (Throwable ex)
       {
         LOG.error("Reader throws exception at onError", ex);
       }

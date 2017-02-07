@@ -153,11 +153,14 @@ public class TestEntityStream
     EntityStreams.newEntityStream(dumbWriter).setReader(dumbReader);
   }
 
+  /**
+   * This test will check the correct behavior in case of a Runtime Exception for the observer.
+   * Note the Runtime Exception is not the only unchecked exception, and we have to consider also Error
+   * which is the other unchecked throwable
+   */
   @Test
-  public void testObserverThrow()
+  public void testObserverThrowRuntimeException()
   {
-    TestWriter writer = new TestWriter();
-    ControlReader reader = new ControlReader();
     Observer observer = new TestObserver(){
       @Override
       public void onDone()
@@ -178,13 +181,50 @@ public class TestEntityStream
       }
     };
 
+    Exception ex = new RuntimeException("writer has problem");
+    testObserverThrow(observer, ex);
+  }
+
+  @Test
+  public void testObserversThrowUncheckedError()
+  {
+    Observer observer = new TestObserver()
+    {
+      @Override
+      public void onDone()
+      {
+        throw new Error("broken observer throws");
+      }
+
+      @Override
+      public void onDataAvailable(ByteString data)
+      {
+        throw new Error("broken observer throws");
+      }
+
+      @Override
+      public void onError(Throwable ex)
+      {
+        throw new Error("broken observer throws");
+      }
+    };
+
+    Error ex = new Error("writer has problem");
+    testObserverThrow(observer, ex);
+  }
+
+  public void testObserverThrow(Observer observer, Throwable writeError)
+  {
+    TestWriter writer = new TestWriter();
+    ControlReader reader = new ControlReader();
+
     EntityStream es = EntityStreams.newEntityStream(writer);
     es.addObserver(observer);
     es.setReader(reader);
     reader.read(1);
     writer.write();
     writer.done();
-    writer.error(new RuntimeException("writer has problem"));
+    writer.error(writeError);
 
     Assert.assertEquals(writer.abortedTimes(), 0);
     Assert.assertEquals(reader.getChunkCount(), 1);
@@ -198,95 +238,131 @@ public class TestEntityStream
     es.setReader(reader);
     reader.read(1);
     writer.write();
-    Exception ex = new RuntimeException("writer has problem");
-    writer.error(ex);
+    writer.error(writeError);
 
     Assert.assertEquals(writer.abortedTimes(), 0);
     Assert.assertEquals(reader.getChunkCount(), 1);
     Assert.assertEquals(reader.errorTimes(), 1);
   }
 
+
   @Test
-  public void testReaderThrow()
+  public void testReaderThrowRuntimeException()
   {
-    ControlReader reader = new ControlReader(){
+    testReaderThrow(new ControlReader()
+    {
       @Override
       public void onDataAvailable(ByteString data)
       {
         super.onDataAvailable(data);
         throw new RuntimeException("broken reader throws");
       }
-    };
-
-    TestWriter writer = new TestWriter();
-    TestObserver observer = new TestObserver();
-    EntityStream es = EntityStreams.newEntityStream(writer);
-    es.addObserver(observer);
-    es.setReader(reader);
-    reader.read(1);
-    writer.write();
-    writer.done();
-
-    Assert.assertEquals(writer.abortedTimes(), 1);
-    Assert.assertEquals(observer.getChunkCount(), 1);
-    Assert.assertEquals(observer.errorTimes(), 1);
-    Assert.assertEquals(observer.doneTimes(), 0);
-    Assert.assertEquals(reader.getChunkCount(), 1);
-    Assert.assertEquals(reader.errorTimes(), 1);
-    Assert.assertEquals(reader.doneTimes(), 0);
-
-    writer = new TestWriter();
-    observer = new TestObserver();
-    reader = new ControlReader(){
+    }, new ControlReader()
+    {
       @Override
       public void onDone()
       {
         super.onDone();
         throw new RuntimeException("broken reader throws");
       }
-    };
-    es = EntityStreams.newEntityStream(writer);
-    es.addObserver(observer);
-    es.setReader(reader);
-    reader.read(1);
-    writer.write();
-    writer.done();
-    Assert.assertEquals(writer.abortedTimes(), 1);
-    Assert.assertEquals(observer.getChunkCount(), 1);
-    Assert.assertEquals(observer.doneTimes(), 1);
-    Assert.assertEquals(observer.errorTimes(), 0);
-    Assert.assertEquals(reader.getChunkCount(), 1);
-    Assert.assertEquals(reader.doneTimes(), 1);
-    Assert.assertEquals(reader.errorTimes(), 0);
-
-
-    writer = new TestWriter();
-    observer = new TestObserver();
-    reader = new ControlReader(){
+    }, new ControlReader()
+    {
       @Override
       public void onError(Throwable error)
       {
         super.onError(error);
         throw new RuntimeException("broken reader throws");
       }
-    };
+    }, new RuntimeException("writer got problem"));
+  }
+
+  @Test
+  public void testReaderThrowUncheckedError()
+  {
+    testReaderThrow(new ControlReader()
+    {
+      @Override
+      public void onDataAvailable(ByteString data)
+      {
+        super.onDataAvailable(data);
+        throw new Error("broken reader throws");
+      }
+    }, new ControlReader()
+    {
+      @Override
+      public void onDone()
+      {
+        super.onDone();
+        throw new Error("broken reader throws");
+      }
+    }, new ControlReader()
+    {
+      @Override
+      public void onError(Throwable error)
+      {
+        super.onError(error);
+        throw new Error("broken reader throws");
+      }
+    }, new Error("writer got problem"));
+  }
+
+  public void testReaderThrow(ControlReader readerOnData, ControlReader readerOnDone, ControlReader readerOnError,
+                              Throwable writerProblem)
+  {
+    TestWriter writer = new TestWriter();
+    TestObserver observer = new TestObserver();
+    EntityStream es = EntityStreams.newEntityStream(writer);
+    es.addObserver(observer);
+    es.setReader(readerOnData);
+    readerOnData.read(1);
+    writer.write();
+    writer.done();
+
+    Assert.assertEquals(writer.abortedTimes(), 1);
+    Assert.assertEquals(observer.getChunkCount(), 1);
+    Assert.assertEquals(observer.errorTimes(), 1);
+    Assert.assertEquals(observer.doneTimes(), 0);
+    Assert.assertEquals(readerOnData.getChunkCount(), 1);
+    Assert.assertEquals(readerOnData.errorTimes(), 1);
+    Assert.assertEquals(readerOnData.doneTimes(), 0);
+
+    writer = new TestWriter();
+    observer = new TestObserver();
+
     es = EntityStreams.newEntityStream(writer);
     es.addObserver(observer);
-    es.setReader(reader);
-    reader.read(1);
+    es.setReader(readerOnDone);
+    readerOnDone.read(1);
     writer.write();
-    writer.error(new RuntimeException("writer got problem"));
+    writer.done();
+    Assert.assertEquals(writer.abortedTimes(), 1);
+    Assert.assertEquals(observer.getChunkCount(), 1);
+    Assert.assertEquals(observer.doneTimes(), 1);
+    Assert.assertEquals(observer.errorTimes(), 0);
+    Assert.assertEquals(readerOnDone.getChunkCount(), 1);
+    Assert.assertEquals(readerOnDone.doneTimes(), 1);
+    Assert.assertEquals(readerOnDone.errorTimes(), 0);
+
+    writer = new TestWriter();
+    observer = new TestObserver();
+
+    es = EntityStreams.newEntityStream(writer);
+    es.addObserver(observer);
+    es.setReader(readerOnError);
+    readerOnError.read(1);
+    writer.write();
+    writer.error(writerProblem);
     Assert.assertEquals(writer.abortedTimes(), 1);
     Assert.assertEquals(observer.getChunkCount(), 1);
     Assert.assertEquals(observer.doneTimes(), 0);
     Assert.assertEquals(observer.errorTimes(), 1);
-    Assert.assertEquals(reader.getChunkCount(), 1);
-    Assert.assertEquals(reader.doneTimes(), 0);
-    Assert.assertEquals(reader.errorTimes(), 1);
+    Assert.assertEquals(readerOnError.getChunkCount(), 1);
+    Assert.assertEquals(readerOnError.doneTimes(), 0);
+    Assert.assertEquals(readerOnError.errorTimes(), 1);
   }
 
   @Test
-  public void testWriterThrow()
+  public void testWriterThrowRuntimeException()
   {
     ControlReader reader = new ControlReader() {
       @Override
@@ -305,16 +381,60 @@ public class TestEntityStream
         throw new RuntimeException("broken writer throws");
       }
     };
+    TestWriter writerOnWritePossible = new TestWriter()
+    {
+      @Override
+      public void onWritePossible()
+      {
+        throw new RuntimeException("broken writer throws");
+      }
+    };
+    testWriterThrow(reader, writer, writerOnWritePossible);
+  }
 
+  @Test
+  public void testWriterThrowUncheckedError()
+  {
+    ControlReader reader = new ControlReader()
+    {
+      @Override
+      public void onDone()
+      {
+        super.onDone();
+        throw new Error("broken reader throws");
+      }
+    };
+    TestWriter writer = new TestWriter()
+    {
+      @Override
+      public void onAbort(Throwable ex)
+      {
+        super.onAbort(ex);
+        throw new Error("broken writer throws");
+      }
+    };
+    TestWriter writerOnWritePossible = new TestWriter()
+    {
+      @Override
+      public void onWritePossible()
+      {
+        throw new Error("broken writer throws");
+      }
+    };
+    testWriterThrow(reader, writer, writerOnWritePossible);
+  }
+
+  public void testWriterThrow(ControlReader reader, TestWriter writerOnAbort, TestWriter writerOnWritePossible)
+  {
     TestObserver observer = new TestObserver();
-    EntityStream es = EntityStreams.newEntityStream(writer);
+    EntityStream es = EntityStreams.newEntityStream(writerOnAbort);
     es.addObserver(observer);
     es.setReader(reader);
     reader.read(1);
-    writer.write();
-    writer.done();
+    writerOnAbort.write();
+    writerOnAbort.done();
 
-    Assert.assertEquals(writer.abortedTimes(), 1);
+    Assert.assertEquals(writerOnAbort.abortedTimes(), 1);
     Assert.assertEquals(observer.getChunkCount(), 1);
     Assert.assertEquals(observer.doneTimes(), 1);
     Assert.assertEquals(observer.errorTimes(), 0);
@@ -323,23 +443,16 @@ public class TestEntityStream
     Assert.assertEquals(reader.errorTimes(), 0);
 
     reader = new ControlReader();
-    writer = new TestWriter()
-    {
-      @Override
-      public void onWritePossible()
-      {
-        throw new RuntimeException("broken writer throws");
-      }
-    };
+
     observer = new TestObserver();
-    es = EntityStreams.newEntityStream(writer);
+    es = EntityStreams.newEntityStream(writerOnWritePossible);
     es.addObserver(observer);
     es.setReader(reader);
     reader.read(1);
-    writer.write();
-    writer.done();
+    writerOnWritePossible.write();
+    writerOnWritePossible.done();
 
-    Assert.assertEquals(writer.abortedTimes(), 1);
+    Assert.assertEquals(writerOnWritePossible.abortedTimes(), 1);
     Assert.assertEquals(observer.getChunkCount(), 0);
     Assert.assertEquals(observer.doneTimes(), 0);
     Assert.assertEquals(observer.errorTimes(), 1);
