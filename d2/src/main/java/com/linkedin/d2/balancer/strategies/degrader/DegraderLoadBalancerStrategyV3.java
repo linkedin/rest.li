@@ -32,7 +32,6 @@ import com.linkedin.d2.balancer.util.healthcheck.HealthCheckClientBuilder;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.util.degrader.DegraderControl;
-
 import com.linkedin.util.degrader.DegraderImpl;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -47,9 +46,9 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,6 +72,8 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
   public static final double EPSILON = 10e-6;
 
   private static final Logger _log = LoggerFactory.getLogger(DegraderLoadBalancerStrategyV3.class);
+  private static final int MAX_HOSTS_TO_CHECK_QUARANTINE = 10;
+  private static final int MAX_RETRIES_TO_CHECK_QUARANTINE = 2;
 
   private boolean                                     _updateEnabled;
   private volatile DegraderLoadBalancerStrategyConfig _config;
@@ -301,9 +302,12 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     boolean quarantineEnabled = _state._enableQuarantine.get();
     if (config.getQuarantineMaxPercent() > 0.0 && !quarantineEnabled)
     {
-      // if quarantine is configured but not enabled, check the hosts to see if the quarantine
-      // can be enabled.
-      checkQuarantineState(clientUpdaters, config);
+      // if quarantine is configured but not enabled, and we haven't tried MAX_RETRIES_TIMES
+      // check the hosts to see if the quarantine can be enabled.
+      if (_state._retryTimesForQuarantine.incrementAndGet() <= MAX_RETRIES_TO_CHECK_QUARANTINE)
+      {
+        _config.getExecutorService().submit(()->checkQuarantineState(clientUpdaters, config));
+      }
     }
     // doUpdatePartitionState has no side effects on _state or trackerClients.
     // all changes to the trackerClients would be recorded in clientUpdaters
@@ -1069,7 +1073,8 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       public void onError(Throwable e)
       {
         // Do nothing as the quarantine is disabled by default
-        _rateLimitedLogger.error("Error to enable quarantine. Health checking failed: " + e);
+        _rateLimitedLogger.error("Error to enable quarantine. Health checking failed for service {}: ",
+            _state._serviceName, e);
       }
 
       @Override
@@ -1077,37 +1082,43 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       {
         if (_state._enableQuarantine.compareAndSet(false, true))
         {
-          _log.info("Quarantine is enabled");
+          _log.info("Quarantine is enabled for service {}", _state._serviceName);
         }
       }
     };
 
-    for (TrackerClientUpdater client : clients)
-    {
-      try
-      {
-        HealthCheck healthCheckClient = _state.getHealthCheckClient(client);
-        if (healthCheckClient == null)
-        {
-          // create a new client if not exits
-          healthCheckClient =  new HealthCheckClientBuilder()
-              .setHealthCheckOperations(config.getHealthCheckOperations())
-              .setHealthCheckPath(config.getHealthCheckPath())
-              .setServicePath(config.getServicePath())
-              .setClock(config.getClock())
-              .setLatency(config.getQuarantineLatency())
-              .setMethod(config.getHealthCheckMethod())
-              .setClient(client.getTrackerClient())
-              .build();
-          _state.putHealthCheckClient(client, healthCheckClient);
-        }
-        healthCheckClient.checkHealth(healthCheckCallback);
-      }
-      catch (URISyntaxException e)
-      {
-        _log.error("Error to build healthCheckClient ", e);
-      }
-    }
+    // Ideally we would like to healthchecking all the service hosts (ie all TrackerClients) because
+    // this can help to warm up the R2 connections to the service hosts, thus speed up the initial access
+    // speed when d2client starts to access those hosts. However this can expose/expedite the problem that
+    // the d2client host needs too many connections or file handles to all the hosts, when the downstream
+    // services have large amount of hosts. Before that problem is addressed, we limit the number of hosts
+    // for pre-healthchecking to a small number
+    clients.stream().limit(MAX_HOSTS_TO_CHECK_QUARANTINE)
+        .forEach(client -> {
+          try
+          {
+            HealthCheck healthCheckClient = _state.getHealthCheckClient(client);
+            if (healthCheckClient == null)
+            {
+              // create a new client if not exits
+              healthCheckClient =  new HealthCheckClientBuilder()
+                  .setHealthCheckOperations(config.getHealthCheckOperations())
+                  .setHealthCheckPath(config.getHealthCheckPath())
+                  .setServicePath(config.getServicePath())
+                  .setClock(config.getClock())
+                  .setLatency(config.getQuarantineLatency())
+                  .setMethod(config.getHealthCheckMethod())
+                  .setClient(client.getTrackerClient())
+                  .build();
+              _state.putHealthCheckClient(client, healthCheckClient);
+            }
+            healthCheckClient.checkHealth(healthCheckCallback);
+          }
+          catch (URISyntaxException e)
+          {
+            _log.error("Error to build healthCheckClient ", e);
+          }
+        });
 
     // also remove the entries that the corresponding trackerClientUpdaters do not exist anymore
     for (TrackerClientUpdater client : _state._healthCheckMap.keySet())
@@ -1200,6 +1211,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     private final Map<String, String> _degraderProperties;
     private final DegraderLoadBalancerStrategyConfig _config;
     private final AtomicBoolean _enableQuarantine;
+    private final AtomicInteger _retryTimesForQuarantine;
     // _healthCheckMap keeps track of HealthCheck clients associated with TrackerClientUpdater
     // It should only be accessed under the update lock.
     // Note: after quarantine is enabled, there is no need to send health checking requests to all
@@ -1216,6 +1228,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       _serviceName = serviceName;
       _config = config;
       _enableQuarantine = new AtomicBoolean(false);
+      _retryTimesForQuarantine = new AtomicInteger(0);
       _healthCheckMap = new ConcurrentHashMap<>();
     }
 
