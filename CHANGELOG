@@ -1,5 +1,10 @@
+10.1.3
+------
+
 10.1.2
 ------
+(RB=916880)
+Support surrogate pairs for UTF-16 strings in URI encoding/decoding
 
 10.1.1
 ------

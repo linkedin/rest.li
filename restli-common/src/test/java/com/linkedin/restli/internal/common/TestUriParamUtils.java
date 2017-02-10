@@ -338,4 +338,38 @@ public class TestUriParamUtils
     Assert.assertEquals(components2.length, 1);
     Assert.assertEquals(components2[0], "foo");
   }
+
+  @DataProvider
+  public Object[][] unicode()
+  {
+    // create objects
+    // test unicode encoding
+    DataMap japaneseMap = new DataMap();
+    japaneseMap.put("konnichiwa","こんにちは"); // Japanese
+
+    DataMap emojiMap = new DataMap();
+    emojiMap.put("smiley","☺"); // Emoji
+
+    DataMap surrogatePairMap = new DataMap();
+    surrogatePairMap.put("stickoutTongue", "\uD83D\uDE1B"); // Emoji, but with surrogate pairs
+
+    return new Object[][] {
+        { japaneseMap, "(konnichiwa:こんにちは)", "(konnichiwa:%E3%81%93%E3%82%93%E3%81%AB%E3%81%A1%E3%81%AF)", "(konnichiwa:%E3%81%93%E3%82%93%E3%81%AB%E3%81%A1%E3%81%AF)" },
+        { emojiMap, "(smiley:☺)", "(smiley:%E2%98%BA)", "(smiley:%E2%98%BA)"},
+        { surrogatePairMap, "(stickoutTongue:\uD83D\uDE1B)", "(stickoutTongue:%F0%9F%98%9B)","(stickoutTongue:%F0%9F%98%9B)" }
+    };
+  }
+
+  @Test(dataProvider = "unicode")
+  public void testUnicode(Object obj, String expectedNoEsc, String expectedPathSegEsc, String expectedQueryParamEsc)
+  {
+    String actualNoEsc = URIParamUtils.encodeElement(obj, NO_ESCAPING, null);
+    Assert.assertEquals(actualNoEsc, expectedNoEsc);
+    String actualPathSegEsc = URIParamUtils.encodeElement(obj, URL_ESCAPING,
+        UriComponent.Type.PATH_SEGMENT);
+    Assert.assertEquals(actualPathSegEsc, expectedPathSegEsc);
+    String actualQueryParamEsc = URIParamUtils.encodeElement(obj, URL_ESCAPING,
+        UriComponent.Type.QUERY_PARAM);
+    Assert.assertEquals(actualQueryParamEsc, expectedQueryParamEsc);
+  }
 }

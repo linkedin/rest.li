@@ -124,6 +124,34 @@ public class TestURIElementParser
   }
 
   @DataProvider
+  private static Object[][] unicode()
+  {
+    // create objects
+    // test unicode encoding
+    DataMap japaneseMap = new DataMap();
+    japaneseMap.put("konnichiwa","こんにちは"); // Japanese
+
+    DataMap emojiMap = new DataMap();
+    emojiMap.put("smiley","☺"); // Emoji
+
+    DataMap surrogatePairMap = new DataMap();
+    surrogatePairMap.put("stickoutTongue", "\uD83D\uDE1B"); // Emoji, but with surrogate pairs
+
+    return new Object[][] {
+        {"(konnichiwa:%E3%81%93%E3%82%93%E3%81%AB%E3%81%A1%E3%81%AF)", japaneseMap },
+        { "(smiley:%E2%98%BA)", emojiMap},
+        { "(stickoutTongue:%F0%9F%98%9B)",surrogatePairMap }
+    };
+  }
+
+  @Test(dataProvider = "unicode")
+  public void testUnicode(String decodable, Object expectedObj) throws PathSegment.PathSegmentSyntaxException
+  {
+    Object actualObj = URIElementParser.parse(decodable);
+    Assert.assertEquals(actualObj, expectedObj);
+  }
+
+  @DataProvider
   private static Object[][] undecodables()
   {
     return new Object[][] {
