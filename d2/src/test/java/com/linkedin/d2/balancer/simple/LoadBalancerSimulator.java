@@ -44,7 +44,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -633,7 +635,14 @@ public class LoadBalancerSimulator
     @Override
     public Future<?> submit(Runnable task)
     {
-      throw new IllegalArgumentException("Not supported yet!");
+      if (task == null)
+      {
+        throw new NullPointerException();
+      }
+      RunnableFuture<Void> ftask =  new FutureTask<>(()->{}, null);
+      // Simulation only: Run the task in current thread
+      task.run();
+      return ftask;
     }
 
     @Override
