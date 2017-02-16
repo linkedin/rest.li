@@ -148,18 +148,31 @@ public class TestClientCompressionFilter
     CompressionConfig largeThresholdConfig = new CompressionConfig(10000);
 
     return new Object[][] {
-        {new CompressionConfig(Integer.MAX_VALUE), CompressionOption.FORCE_OFF, null, null},
-        {new CompressionConfig(Integer.MAX_VALUE), CompressionOption.FORCE_ON, ACCEPT_ENCODING_HEADER, Integer.toString(0)},
-        {new CompressionConfig(Integer.MAX_VALUE), null, ACCEPT_ENCODING_HEADER, Integer.toString(Integer.MAX_VALUE)},
-        {new CompressionConfig(0), CompressionOption.FORCE_OFF, null, null},
-        {new CompressionConfig(0), CompressionOption.FORCE_ON, ACCEPT_ENCODING_HEADER, Integer.toString(0)},
-        {new CompressionConfig(0), null, ACCEPT_ENCODING_HEADER, Integer.toString(0)},
-        {smallThresholdConfig, CompressionOption.FORCE_OFF, null, null},
-        {smallThresholdConfig, CompressionOption.FORCE_ON, ACCEPT_ENCODING_HEADER, Integer.toString(0)},
-        {smallThresholdConfig, null, ACCEPT_ENCODING_HEADER, Integer.toString(1)},
-        {largeThresholdConfig, CompressionOption.FORCE_OFF, null, null},
-        {largeThresholdConfig, CompressionOption.FORCE_ON, ACCEPT_ENCODING_HEADER, Integer.toString(0)},
-        {largeThresholdConfig, null, ACCEPT_ENCODING_HEADER, Integer.toString(10000)}
+        {new CompressionConfig(Integer.MAX_VALUE), CompressionOption.FORCE_OFF, null, null, "get"},
+        {new CompressionConfig(Integer.MAX_VALUE), CompressionOption.FORCE_ON, ACCEPT_ENCODING_HEADER, Integer.toString(0), "get"},
+        {new CompressionConfig(Integer.MAX_VALUE), null, ACCEPT_ENCODING_HEADER, Integer.toString(Integer.MAX_VALUE), "get"},
+        {new CompressionConfig(0), CompressionOption.FORCE_OFF, null, null, "get"},
+        {new CompressionConfig(0), CompressionOption.FORCE_ON, ACCEPT_ENCODING_HEADER, Integer.toString(0), "get"},
+        {new CompressionConfig(0), null, ACCEPT_ENCODING_HEADER, Integer.toString(0), "get"},
+        {smallThresholdConfig, CompressionOption.FORCE_OFF, null, null, "get"},
+        {smallThresholdConfig, CompressionOption.FORCE_ON, ACCEPT_ENCODING_HEADER, Integer.toString(0), "get"},
+        {smallThresholdConfig, null, ACCEPT_ENCODING_HEADER, Integer.toString(1), "get"},
+        {largeThresholdConfig, CompressionOption.FORCE_OFF, null, null, "get"},
+        {largeThresholdConfig, CompressionOption.FORCE_ON, ACCEPT_ENCODING_HEADER, Integer.toString(0), "get"},
+        {largeThresholdConfig, null, ACCEPT_ENCODING_HEADER, Integer.toString(10000), "get"},
+        // All the same tests as above, but with a null operation
+        {new CompressionConfig(Integer.MAX_VALUE), CompressionOption.FORCE_OFF, null, null, null},
+        {new CompressionConfig(Integer.MAX_VALUE), CompressionOption.FORCE_ON, ACCEPT_ENCODING_HEADER, Integer.toString(0), null},
+        {new CompressionConfig(Integer.MAX_VALUE), null, ACCEPT_ENCODING_HEADER, Integer.toString(Integer.MAX_VALUE), null},
+        {new CompressionConfig(0), CompressionOption.FORCE_OFF, null, null, null},
+        {new CompressionConfig(0), CompressionOption.FORCE_ON, ACCEPT_ENCODING_HEADER, Integer.toString(0), null},
+        {new CompressionConfig(0), null, ACCEPT_ENCODING_HEADER, Integer.toString(0), null},
+        {smallThresholdConfig, CompressionOption.FORCE_OFF, null, null, null},
+        {smallThresholdConfig, CompressionOption.FORCE_ON, ACCEPT_ENCODING_HEADER, Integer.toString(0), null},
+        {smallThresholdConfig, null, ACCEPT_ENCODING_HEADER, Integer.toString(1), null},
+        {largeThresholdConfig, CompressionOption.FORCE_OFF, null, null, null},
+        {largeThresholdConfig, CompressionOption.FORCE_ON, ACCEPT_ENCODING_HEADER, Integer.toString(0), null},
+        {largeThresholdConfig, null, ACCEPT_ENCODING_HEADER, Integer.toString(10000), null}
     };
   }
 
@@ -167,7 +180,8 @@ public class TestClientCompressionFilter
   public void testResponseCompressionRules(CompressionConfig responseCompressionConfig,
                                            CompressionOption responseCompressionOverride,
                                            String expectedAcceptEncoding,
-                                           String expectedCompressionThreshold)
+                                           String expectedCompressionThreshold,
+                                           String operation)
       throws CompressionException, URISyntaxException
   {
     ClientCompressionFilter clientCompressionFilter = new ClientCompressionFilter(EncodingType.SNAPPY.getHttpName(),
@@ -177,7 +191,12 @@ public class TestClientCompressionFilter
                                                                                   Arrays.asList(ClientCompressionHelper.COMPRESS_ALL_RESPONSES_INDICATOR));
     RestRequest restRequest = new RestRequestBuilder(new URI(URI)).build();
     RequestContext context = new RequestContext();
-    context.putLocalAttr(R2Constants.OPERATION, "get");
+
+    if (operation != null)
+    {
+      context.putLocalAttr(R2Constants.OPERATION, operation);
+    }
+
     context.putLocalAttr(R2Constants.RESPONSE_COMPRESSION_OVERRIDE, responseCompressionOverride);
     clientCompressionFilter.onRestRequest(restRequest, context, Collections.<String, String>emptyMap(),
                                           new HeaderCaptureFilter(HttpConstants.ACCEPT_ENCODING, expectedAcceptEncoding));

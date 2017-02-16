@@ -203,7 +203,7 @@ public class ClientCompressionFilter implements RestFilter
       }
 
       String operation = (String) requestContext.getLocalAttr(R2Constants.OPERATION);
-      if (!_acceptEncodingHeader.isEmpty() && operation != null && _helper.shouldCompressResponseForOperation(operation))
+      if (!_acceptEncodingHeader.isEmpty() && _helper.shouldCompressResponseForOperation(operation))
       {
         CompressionOption responseCompressionOverride =
             (CompressionOption) requestContext.getLocalAttr(R2Constants.RESPONSE_COMPRESSION_OVERRIDE);

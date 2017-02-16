@@ -1,5 +1,7 @@
 10.1.4
 ------
+(RB=876655)
+Modify client compression filter header-setting behavior to allow null operations.
 
 10.1.3
 ------

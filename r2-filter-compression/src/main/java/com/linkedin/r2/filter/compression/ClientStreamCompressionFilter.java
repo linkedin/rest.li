@@ -175,9 +175,8 @@ public class ClientStreamCompressionFilter implements StreamFilter
   {
     //Set accepted encoding for compressed response
     String operation = (String) requestContext.getLocalAttr(R2Constants.OPERATION);
-    if (!_acceptEncodingHeader.isEmpty() && operation != null && _helper.shouldCompressResponseForOperation(operation))
+    if (!_acceptEncodingHeader.isEmpty() && _helper.shouldCompressResponseForOperation(operation))
     {
-
       CompressionOption responseCompressionOverride =
           (CompressionOption) requestContext.getLocalAttr(R2Constants.RESPONSE_COMPRESSION_OVERRIDE);
       req = addResponseCompressionHeaders(responseCompressionOverride, req);

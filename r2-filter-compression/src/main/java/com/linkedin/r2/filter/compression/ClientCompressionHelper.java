@@ -89,9 +89,18 @@ public class ClientCompressionHelper
    */
   public boolean shouldCompressResponseForOperation(String operation)
   {
-    return _compressAllResponses ||
-        _responseCompressionMethods.contains(operation) ||
-        isMemberOfCompressionFamily(operation);
+    if (_compressAllResponses)
+    {
+      return true;
+    }
+    else if (operation == null)
+    {
+      return false;
+    }
+    else
+    {
+      return _responseCompressionMethods.contains(operation) || isMemberOfCompressionFamily(operation);
+    }
   }
 
   /**
