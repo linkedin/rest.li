@@ -96,6 +96,8 @@ public final class DataList extends CheckedList<Object> implements DataComplex
     o._madeReadOnly = false;
     o._instrumented = false;
     o._accessList = null;
+    o._dataComplexHashCode = DataComplexHashCode.nextHashCode();
+
     return o;
   }
 

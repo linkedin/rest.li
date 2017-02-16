@@ -1031,6 +1031,64 @@ public class TestData
   }
 
   @Test
+  public void mapClonesHaveDifferentHashValues() throws CloneNotSupportedException
+  {
+    DataMap originalMap = new DataMap();
+    originalMap.put("key", "value");
+
+    DataMap copyMap = originalMap.copy();
+
+    // The objects should be "equal," but not identical.
+    assertTrue(copyMap.equals(originalMap));
+    assertFalse(copyMap.dataComplexHashCode() == originalMap.dataComplexHashCode());
+  }
+
+  @Test
+  public void testListClonesHaveDifferentHashValues() throws CloneNotSupportedException
+  {
+    DataList originalList = new DataList();
+    originalList.add("value");
+
+    DataList copyList = originalList.copy();
+
+    // The objects should be "equal," but not identical.
+    assertTrue(copyList.equals(originalList));
+    assertFalse(copyList.dataComplexHashCode() == originalList.dataComplexHashCode());
+  }
+
+  @Test
+  public void testDeepCopy() throws CloneNotSupportedException
+  {
+    DataMap root = new DataMap();
+
+    DataMap a = new DataMap();
+    a.put("key", "a");
+
+    DataMap b = a.copy();
+    b.put("key", "b");
+
+    root.put("a", a);
+    root.put("b", b);
+
+    DataMap copy = root.copy();
+    assertEquals(root, copy);
+
+    ((DataMap)copy.get("a")).put("key", "A");
+    ((DataMap)copy.get("b")).put("key", "B");
+
+    DataMap rootA = (DataMap)root.get("a");
+    DataMap rootB = (DataMap)root.get("b");
+    DataMap copyA = (DataMap)copy.get("a");
+    DataMap copyB = (DataMap)copy.get("b");
+
+    assertEquals(rootA.get("key"), ("a"));
+    assertEquals(rootB.get("key"), ("b"));
+
+    assertEquals(copyA.get("key"), ("A"));
+    assertEquals(copyB.get("key"), ("B"));
+  }
+
+  @Test
   public void testNullValue()
   {
     DataMap map1 = new DataMap();

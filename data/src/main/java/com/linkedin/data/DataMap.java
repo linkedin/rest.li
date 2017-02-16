@@ -118,6 +118,8 @@ public final class DataMap extends CheckedMap<String,Object> implements DataComp
     o._madeReadOnly = false;
     o._instrumented = false;
     o._accessMap = null;
+    o._dataComplexHashCode = DataComplexHashCode.nextHashCode();
+
     return o;
   }
 
