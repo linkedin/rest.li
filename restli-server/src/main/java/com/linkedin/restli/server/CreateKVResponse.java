@@ -4,7 +4,12 @@ import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.HttpStatus;
 
 /**
- * Create a key-value response, enriching the createIdResponse with entity field.
+ * Create a key-value response, enriching the createIdResponse with entity field. This response can be used if the
+ * resource wants to return the created entity in the response of create.
+ *
+ * @param <K> - the key type of the resource. When using {@link com.linkedin.restli.common.ComplexResourceKey}, K should
+ *           be the entire {@code ComplexResourceKey} and not just the Key part of the complex key.
+ * @param <V> - the value type of the resource.
  *
  * @author Boyang Chen
  */
