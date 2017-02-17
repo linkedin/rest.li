@@ -96,9 +96,9 @@ public class Jsr330Adapter
 
       return bean;
     }
-    catch (Exception e)
+    catch (Throwable t)
     {
-      throw new RestLiInternalException(String.format("Error initializing bean %s", beanClass.getName()), e);
+      throw new RestLiInternalException(String.format("Error initializing bean %s", beanClass.getName()), t);
     }
   }
 
