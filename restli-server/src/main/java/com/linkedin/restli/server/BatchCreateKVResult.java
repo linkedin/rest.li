@@ -21,6 +21,12 @@ import com.linkedin.data.template.RecordTemplate;
 import java.util.List;
 
 /**
+ * Create a response for batch-create method by including the id and the created entity in each create response.
+ *
+ * @param <K> - the key type of the resource. When using {@link com.linkedin.restli.common.ComplexResourceKey}, K should
+ *           be the entire {@code ComplexResourceKey} and not just the Key part of the complex key.
+ * @param <V> - the value type of the resource.
+ *
  * @author Boyang Chen
  */
 
