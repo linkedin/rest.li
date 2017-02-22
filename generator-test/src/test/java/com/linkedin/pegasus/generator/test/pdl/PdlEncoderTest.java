@@ -1,10 +1,15 @@
 package com.linkedin.pegasus.generator.test.pdl;
 
+import com.linkedin.data.schema.AbstractSchemaParser;
+import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.NamedDataSchema;
+import com.linkedin.data.schema.SchemaParser;
 import com.linkedin.data.schema.SchemaToPdlEncoder;
+import com.linkedin.data.schema.grammar.PdlSchemaParser;
 import com.linkedin.data.schema.resolver.MultiFormatDataSchemaResolver;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.StringWriter;
 import org.apache.commons.io.FileUtils;
@@ -24,6 +29,7 @@ public class PdlEncoderTest extends GeneratorTest
   @Test
   public void testEncode() throws IOException
   {
+    assertRoundTrip("arrays.AnonArray");
     assertRoundTrip("arrays.WithPrimitivesArray");
     assertRoundTrip("denormalized.WithNamespacedDeclarations");
     assertRoundTrip("denormalized.WithIncludeDeclaration");
@@ -47,25 +53,34 @@ public class PdlEncoderTest extends GeneratorTest
     assertRoundTrip("unions.WithPrimitivesUnion");
   }
 
-  private NamedDataSchema parseSchema(String name) throws IOException
+  private DataSchema parseSchema(File file) throws IOException
   {
-    StringBuilder errors = new StringBuilder();
-    NamedDataSchema dataSchema = resolver.findDataSchema(name, errors);
-    if (errors.length() > 0)
+    AbstractSchemaParser parser = new PdlSchemaParser(resolver);
+    parser.parse(new FileInputStream(file));
+    StringBuilder errorMessageBuilder = parser.errorMessageBuilder();
+    if (errorMessageBuilder.length() > 0)
     {
-      fail("Parse error: " + errors.toString());
+      fail(
+          "Failed to parse schema: " + file.getAbsolutePath() + "\nerrors: " + errorMessageBuilder.toString());
+      System.exit(1);
     }
-    return dataSchema;
+    if (parser.topLevelDataSchemas().size() != 1)
+    {
+      fail(
+          "Failed to parse any schemas from: " + file.getAbsolutePath() + "\nerrors: " + errorMessageBuilder.toString());
+      System.exit(1);
+    }
+    return parser.topLevelDataSchemas().get(0);
   }
 
   private void assertRoundTrip(String relativeName) throws IOException
   {
     String fullName = "com.linkedin.pegasus.generator.test.idl." + relativeName;
-    String path = "/" + fullName.replace('.', '/') + ".pdl";
+    File file = new File(pegasusSrcDir, "/" + fullName.replace('.', '/') + ".pdl");
 
-    NamedDataSchema parsed = parseSchema(fullName);
-    String original = loadSchema(path);
-    assertNotNull(parsed, "Failed to resolve: " + fullName + "resolver path: " + pegasusSrcDir.getAbsolutePath());
+    DataSchema parsed = parseSchema(file);
+    String original = loadSchema(file);
+    assertNotNull(parsed, "Failed to resolve: " + fullName + " resolver path: " + pegasusSrcDir.getAbsolutePath());
 
     StringWriter writer = new StringWriter();
     SchemaToPdlEncoder encoder = new SchemaToPdlEncoder(writer);
@@ -80,15 +95,15 @@ public class PdlEncoderTest extends GeneratorTest
     assertEquals(canonicalize(lhs), canonicalize(rhs));
   }
 
-  private String loadSchema(String filename)
+  private String loadSchema(File file)
   {
     try
     {
-      return FileUtils.readFileToString(new File(pegasusSrcDir, filename));
+      return FileUtils.readFileToString(file);
     }
     catch (IOException e)
     {
-      fail("Failed to load file: " + filename + ": " + e.getMessage());
+      fail("Failed to load file: " + file + ": " + e.getMessage());
       return null;
     }
   }

@@ -32,29 +32,30 @@ grammar Pdl;
 // But for compatibility with .pdsc, arrays, maps and unions may be declared as well.
 document: namespaceDeclaration? packageDeclaration? importDeclarations typeDeclaration;
 
-namespaceDeclaration: NAMESPACE qualifiedIdentifier;
+namespaceDeclaration: NAMESPACE typeName;
 
-packageDeclaration: PACKAGE qualifiedIdentifier;
+packageDeclaration: PACKAGE typeName;
 
 importDeclarations: importDeclaration*;
 
-importDeclaration: IMPORT type=qualifiedIdentifier;
+importDeclaration: IMPORT type=typeName;
 
 // A typeReference is simply a type name that refers to a type defined elsewhere.
-typeReference returns [String value]: qualifiedIdentifier {
-  $value = $qualifiedIdentifier.value;
+typeReference returns [String value]: NULL_LITERAL { $value = "null"; } | typeName {
+  $value = $typeName.value;
 };
 
-typeDeclaration: namedTypeDeclaration | anonymousTypeDeclaration;
+typeDeclaration: scopedNamedTypeDeclaration | namedTypeDeclaration | anonymousTypeDeclaration;
 
-
-// Why are named declarations are identified with qualifiedIdentifier?
-// Begrudgingly, for compatibility with .pdsc. In .pdsc all type declarations may specify a namespace,
-// and there is not restriction on what the namespace is.
-//
 // Only named declarations support schemadoc and properties.
 namedTypeDeclaration: doc=schemadoc? props+=propDeclaration*
   (recordDeclaration | enumDeclaration | typerefDeclaration | fixedDeclaration);
+
+// Why can named type declarations be scoped with an alternate namespace and package?
+// Begrudgingly, for compatibility with .pdsc. In .pdsc all type declarations may specify a namespace and package,
+// even if they are inline declarations.
+scopedNamedTypeDeclaration: OPEN_BRACE namespaceDeclaration? packageDeclaration? namedTypeDeclaration CLOSE_BRACE;
+
 
 anonymousTypeDeclaration: unionDeclaration | arrayDeclaration | mapDeclaration;
 
@@ -68,18 +69,18 @@ propDeclaration returns [String name, List<String> path]: propNameDeclaration pr
   $path = Arrays.asList($propNameDeclaration.name.split("\\."));
 };
 
-propNameDeclaration returns [String name]: AT qualifiedIdentifier {
-  $name = $qualifiedIdentifier.value;
+propNameDeclaration returns [String name]: AT typeName {
+  $name = $typeName.value;
 };
 
 propJsonValue: EQ jsonValue;
 
-recordDeclaration returns [String name]: RECORD qualifiedIdentifier fieldIncludes? recordDecl=fieldSelection {
-  $name = $qualifiedIdentifier.value;
+recordDeclaration returns [String name]: RECORD identifier fieldIncludes? recordDecl=fieldSelection {
+  $name = $identifier.value;
 };
 
-enumDeclaration returns [String name]: ENUM qualifiedIdentifier enumDecl=enumSymbolDeclarations {
-  $name = $qualifiedIdentifier.value;
+enumDeclaration returns [String name]: ENUM identifier enumDecl=enumSymbolDeclarations {
+  $name = $identifier.value;
 };
 
 enumSymbolDeclarations: OPEN_BRACE symbolDecls+=enumSymbolDeclaration* CLOSE_BRACE;
@@ -90,13 +91,13 @@ enumSymbol returns [String value]: identifier {
   $value = $identifier.value;
 };
 
-typerefDeclaration returns [String name]: TYPEREF qualifiedIdentifier EQ ref=typeAssignment {
-  $name = $qualifiedIdentifier.value;
+typerefDeclaration returns [String name]: TYPEREF identifier EQ ref=typeAssignment {
+  $name = $identifier.value;
 };
 
 fixedDeclaration returns[String name, int size]:
-  FIXED qualifiedIdentifier sizeStr=NUMBER_LITERAL {
-  $name = $qualifiedIdentifier.value;
+  FIXED identifier sizeStr=NUMBER_LITERAL {
+  $name = $identifier.value;
   $size = $sizeStr.int;
 };
 
@@ -116,7 +117,7 @@ mapTypeAssignments: OPEN_BRACKET key=typeAssignment value=typeAssignment CLOSE_B
 
 fieldSelection: OPEN_BRACE fields+=fieldDeclaration* CLOSE_BRACE;
 
-fieldIncludes: INCLUDES typeAssignment*;
+fieldIncludes: INCLUDES typeAssignment+;
 
 fieldDeclaration returns [String name, boolean isOptional]:
     doc=schemadoc? props+=propDeclaration* fieldName=identifier COLON type=typeAssignment QUESTION_MARK?
@@ -128,7 +129,7 @@ fieldDeclaration returns [String name, boolean isOptional]:
 fieldDefault: EQ jsonValue;
 
 // A qualified identifier is simply one or more '.' separated identifiers.
-qualifiedIdentifier returns [String value]: ID (DOT ID)* {
+typeName returns [String value]: ID (DOT ID)* {
   $value = PdlParseUtils.unescapeIdentifier($text);
 };
 
@@ -206,6 +207,9 @@ fragment UNICODE: 'u' HEX HEX HEX HEX;
 fragment ESC:   '\\' (["\\/bfnrt] | UNICODE);
 STRING_LITERAL: '"' (ESC | ~["\\])* '"';
 
+// TODO: '-' and any legal json string, for that matter, should be legal in property
+// names, but not in identifiers.  Maybe make the lexer more forgiving but check if
+// identifiers are valid in the parser?   The regex char group escaping for '-' is '[\-]'
 ID: '`'? [A-Za-z_] [A-Za-z0-9_]* '`'?; // Avro/Pegasus identifiers with Scala/Swift escaping
 
 // "insignificant commas" are used in this grammar. Commas may be added as desired

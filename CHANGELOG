@@ -1,5 +1,7 @@
 10.1.9
 ------
+(RB=924582)
+Modify .pdl grammar to support nested namespace/package scopes.
 
 10.1.8
 ------

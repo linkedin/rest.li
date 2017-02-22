@@ -1,0 +1,4 @@
+namespace com.linkedin.pegasus.generator.test.idl.arrays
+
+record Element {
+}

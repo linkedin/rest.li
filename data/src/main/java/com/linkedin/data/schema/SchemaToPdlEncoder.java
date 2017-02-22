@@ -37,6 +37,7 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
   private Map<String, Name> _importsByLocalName;
   private int _indentDepth = 0;
   private String _namespace = null;
+  private String _package = null;
 
   /**
    * Construct a .pdl source code encoder.
@@ -81,22 +82,22 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
         if (hasPackage)
         {
           writeLine("package " + escapeIdentifier(namedSchema.getPackage()));
+          _package = namedSchema.getPackage();
         }
         newline();
       }
-
-      if (_importsByLocalName.size() > 0)
+    }
+    if (_importsByLocalName.size() > 0)
+    {
+      // Sort imports by fully qualified name
+      for (Name importName : new TreeSet<>(_importsByLocalName.values()))
       {
-        // Sort imports by fully qualified name
-        for (Name importName : new TreeSet<>(_importsByLocalName.values()))
+        if (!importName.getNamespace().equals(_namespace))
         {
-          if (!importName.getNamespace().equals(_namespace))
-          {
-            writeLine("import " + escapeIdentifier(importName.getFullName()));
-          }
+          writeLine("import " + escapeIdentifier(importName.getFullName()));
         }
-        newline();
       }
+      newline();
     }
     writeInlineSchema(schema);
   }
@@ -108,6 +109,37 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
    */
   private void writeInlineSchema(DataSchema schema) throws IOException
   {
+    boolean hasNamespaceOverride = false;
+    boolean hasPackageOverride = false;
+    String surroundingNamespace = _namespace;
+    String surroundingPackage = _package;
+    if (schema instanceof NamedDataSchema) {
+      NamedDataSchema namedSchema = (NamedDataSchema) schema;
+      hasNamespaceOverride = !namedSchema.getNamespace().equals(surroundingNamespace);
+      hasPackageOverride = !StringUtils.isEmpty(namedSchema.getPackage()) && !namedSchema.getPackage().equals(surroundingPackage);
+      if (hasNamespaceOverride || hasPackageOverride) {
+        write("{");
+        newline();
+        _indentDepth++;
+        indent();
+        if (hasNamespaceOverride) {
+
+          write("namespace ");
+          write(namedSchema.getNamespace());
+          newline();
+          indent();
+          _namespace = namedSchema.getNamespace();
+        }
+        if (hasPackageOverride) {
+          write("package ");
+          write(namedSchema.getPackage());
+          newline();
+          indent();
+          _package = namedSchema.getPackage();
+        }
+      }
+    }
+
     switch (schema.getType())
     {
       case RECORD:
@@ -140,8 +172,20 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
       case BYTES:
         writePrimitive((PrimitiveDataSchema) schema);
         break;
+      case NULL:
+        write("null");
+        break;
       default:
         throw new IllegalArgumentException("Unrecognized schema type " + schema.getClass());
+    }
+
+    if (hasNamespaceOverride || hasPackageOverride) {
+      --_indentDepth;
+      newline();
+      indent();
+      write("}");
+      _namespace = surroundingNamespace;
+      _package = surroundingPackage;
     }
   }
 

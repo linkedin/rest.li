@@ -1,16 +1,53 @@
 namespace com.linkedin.pegasus.generator.test.idl.denormalized
+package com.linkedin.pegasus.generator.test.idl.denormalized.pkg
 
 record WithNamespacedDeclarations {
-  namespacedRecord: record com.linkedin.pegasus.generator.test.idl.withnamespace.Record {
-    x: string
+  namespacedRecord: {
+    namespace com.linkedin.pegasus.generator.test.idl.withnamespace
+    package com.linkedin.pegasus.generator.test.idl.denormalized.pkgoverride
+
+    record Record {
+      x: string
+    }
   }
 
-  namespacedFixed: fixed com.linkedin.pegasus.generator.test.idl.withnamespace.Fixed 5
+  namespacedFixed: {
+    namespace com.linkedin.pegasus.generator.test.idl.withnamespace
+    package com.linkedin.pegasus.generator.test.idl.denormalized.pkgoverride
 
-  namespacedTyperef: typeref com.linkedin.pegasus.generator.test.idl.withnamespace.Typeref = string
-
-  namespacedEnum: enum com.linkedin.pegasus.generator.test.idl.withnamespace.Enum {
-    ONE
-    TWO
+    fixed Fixed 5
   }
+
+  namespacedTyperef: {
+    namespace com.linkedin.pegasus.generator.test.idl.withnamespace
+    package com.linkedin.pegasus.generator.test.idl.denormalized.pkgoverride
+
+    typeref Typeref = string
+  }
+
+  namespacedTyperefRef: typeref Typeref = {
+    namespace com.linkedin.pegasus.generator.test.idl.withnamespace
+    package com.linkedin.pegasus.generator.test.idl.denormalized.pkgoverride
+
+    record InlineTyperefRef { }
+  }
+
+  namespacedEnum: {
+    namespace com.linkedin.pegasus.generator.test.idl.withnamespace
+    package com.linkedin.pegasus.generator.test.idl.denormalized.pkgoverride
+
+    enum Enum {
+      ONE
+      TWO
+    }
+  }
+
+  namespacedUnionMember: union [{
+    namespace com.linkedin.pegasus.generator.test.idl.withnamespace
+    package com.linkedin.pegasus.generator.test.idl.denormalized.pkgoverride
+
+    record UnionMember {
+      x: string
+    }
+  }]
 }

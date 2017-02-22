@@ -1,0 +1,15 @@
+namespace com.linkedin.pegasus.generator.test.idl.denormalized
+
+record WithNestedScopes {
+  next: {
+    namespace com.linkedin.pegasus.generator.test.idl.denormalized.level1
+    record Level1 {
+      next: record Level2 {
+        next: {
+          namespace com.linkedin.pegasus.generator.test.idl.denormalized.level3
+          record Level3 { }
+        }
+      }
+    }
+  }
+}

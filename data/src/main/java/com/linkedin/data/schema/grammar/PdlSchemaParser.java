@@ -20,7 +20,6 @@ import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.Null;
 import com.linkedin.data.codec.DataLocation;
-import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.grammar.PdlLexer;
 import com.linkedin.data.grammar.PdlParser;
 import com.linkedin.data.schema.AbstractSchemaParser;
@@ -76,6 +75,7 @@ import com.linkedin.data.grammar.PdlParser.NamedTypeDeclarationContext;
 import com.linkedin.data.grammar.PdlParser.ObjectEntryContext;
 import com.linkedin.data.grammar.PdlParser.PropDeclarationContext;
 import com.linkedin.data.grammar.PdlParser.RecordDeclarationContext;
+import com.linkedin.data.grammar.PdlParser.ScopedNamedTypeDeclarationContext;
 import com.linkedin.data.grammar.PdlParser.TypeAssignmentContext;
 import com.linkedin.data.grammar.PdlParser.TypeDeclarationContext;
 import com.linkedin.data.grammar.PdlParser.TypeReferenceContext;
@@ -315,7 +315,7 @@ public class PdlSchemaParser extends AbstractSchemaParser
 
     if (namespaceDecl != null)
     {
-      setCurrentNamespace(namespaceDecl.qualifiedIdentifier().value);
+      setCurrentNamespace(namespaceDecl.typeName().value);
     }
     else
     {
@@ -324,7 +324,7 @@ public class PdlSchemaParser extends AbstractSchemaParser
 
     if (document.packageDeclaration() != null)
     {
-      setCurrentPackage(document.packageDeclaration().qualifiedIdentifier().value);
+      setCurrentPackage(document.packageDeclaration().typeName().value);
     }
     else
     {
@@ -360,6 +360,10 @@ public class PdlSchemaParser extends AbstractSchemaParser
 
   private DataSchema parseType(TypeDeclarationContext type) throws ParseException
   {
+    if (type.scopedNamedTypeDeclaration() != null)
+    {
+      return parseScopedNamedType(type.scopedNamedTypeDeclaration());
+    }
     if (type.namedTypeDeclaration() != null)
     {
       return parseNamedType(type.namedTypeDeclaration());
@@ -373,6 +377,27 @@ public class PdlSchemaParser extends AbstractSchemaParser
       throw new ParseException(type,
         "Unrecognized type declaration parse node: " + type.getText());
     }
+  }
+
+  private DataSchema parseScopedNamedType(ScopedNamedTypeDeclarationContext type) throws ParseException {
+    String surroundingNamespace = getCurrentNamespace();
+    String surroundingPackage = getCurrentPackage();
+
+    PdlParser.NamespaceDeclarationContext scopeNamespace = type.namespaceDeclaration();
+    if (scopeNamespace != null) {
+      setCurrentNamespace(scopeNamespace.typeName().value);
+    }
+    PdlParser.PackageDeclarationContext scopePackage = type.packageDeclaration();
+    if (scopePackage != null) {
+      setCurrentPackage(scopePackage.typeName().value);
+    }
+
+    NamedDataSchema parsedType = parseNamedType(type.namedTypeDeclaration());
+
+    setCurrentNamespace(surroundingNamespace);
+    setCurrentPackage(surroundingPackage);
+
+    return parsedType;
   }
 
   private DataSchema parseAnonymousType(AnonymousTypeDeclarationContext anon) throws ParseException {
@@ -791,6 +816,9 @@ public class PdlSchemaParser extends AbstractSchemaParser
     {
       if (field != null)
       {
+        if (field.type == null) {
+          throw new IllegalStateException("type is missing for field: " + field.getText());
+        }
         Field result = new Field(toDataSchema(field.type));
         Map<String, Object> properties = new HashMap<>();
         result.setName(field.name, errorMessageBuilder());
@@ -970,12 +998,11 @@ public class PdlSchemaParser extends AbstractSchemaParser
   // Extended fullname computation to handle imports
   public String computeFullName(String name) {
     String fullname;
-    DataSchema schema = DataSchemaUtil.typeStringToPrimitiveDataSchema(name);
-    if (schema != null)
+    if (DataSchemaUtil.typeStringToPrimitiveDataSchema(name) != null)
     {
       fullname = name;
     }
-    else if (Name.isFullName(name) || getCurrentNamespace().isEmpty())
+    else if (Name.isFullName(name))
     {
       fullname = name; // already a fullname
     }
@@ -983,6 +1010,10 @@ public class PdlSchemaParser extends AbstractSchemaParser
     {
       // imported names are higher precedence than names in current namespace
       fullname = currentImports.get(name).getFullName();
+    }
+    else if (getCurrentNamespace().isEmpty())
+    {
+      fullname = name;
     }
     else
     {
