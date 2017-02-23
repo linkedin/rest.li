@@ -36,8 +36,7 @@ import java.util.concurrent.TimeUnit;
  * @author Steven Ihde
  * @version $Revision: $
  */
-
-public class ZooKeeperAnnouncerJmx implements ZooKeeperAnnouncerJmxMBean
+public class ZooKeeperAnnouncerJmx implements ZooKeeperAnnouncerJmxMXBean
 {
   private final ZooKeeperAnnouncer _announcer;
 

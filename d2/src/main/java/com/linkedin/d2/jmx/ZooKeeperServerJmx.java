@@ -26,12 +26,10 @@ import com.linkedin.d2.discovery.stores.PropertyStoreException;
 import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-public class ZooKeeperServerJmx implements ZooKeeperServerJmxMBean
+public class ZooKeeperServerJmx implements ZooKeeperServerJmxMXBean
 {
   private final ZooKeeperServer _server;
 

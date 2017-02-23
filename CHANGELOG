@@ -14,6 +14,13 @@ Update documentation on CreateKVResponse and BatchCreateKVResult.
 
 (RB=918607)
 Add .pdsc to .pdl conversion support
+
+(RB+925594)
+Fix the issue that ZooKeeperAnnouncerJmxMBean does not return a open type
+
+10.1.4
+------
+>>>>>>> Fix the issue that ZooKeeperAnnouncerJmxMBean does not return a open type
 (RB=876655)
 Modify client compression filter header-setting behavior to allow null operations.
 

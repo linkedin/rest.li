@@ -14,46 +14,23 @@
    limitations under the License.
 */
 
-/**
- * $Id: $
- */
-
 package com.linkedin.d2.jmx;
 
 import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.discovery.stores.PropertyStoreException;
 
-import java.io.IOException;
+import java.net.URI;
 import java.util.Map;
+import java.util.Set;
 
-/**
- * @author Steven Ihde
- * @version $Revision: $
- */
-
-public interface ZooKeeperAnnouncerJmxMBean
+public interface ZooKeeperServerJmxMXBean
 {
+  // do not mark as deprecated yet; mark when we are ready to completely migrate to the new code
+  void setMarkUp(String clusterName, String uri, double weight) throws PropertyStoreException;
 
-  void reset() throws PropertyStoreException;
+  void setMarkup(String clusterName, String uri, Map<Integer, PartitionData> partitionDataMap) throws PropertyStoreException;
 
-  void markUp() throws PropertyStoreException;
+  void setMarkup(String clusterName, String uri, Map<Integer, PartitionData> partitionDataMap, Map<String, Object> uriSpecificProperties) throws PropertyStoreException;
 
-  void markDown() throws PropertyStoreException;
-
-  String getCluster();
-
-  void setCluster(String cluster);
-
-  String getUri();
-
-  void setUri(String uri);
-
-  void setWeight(double weight);
-
-  Map<Integer, PartitionData> getPartitionData();
-
-  void setPartitionDataUsingJson(String partitionDataJson)
-      throws IOException;
-
-  void setPartitionData(Map<Integer, PartitionData> partitionData);
+  void setMarkDown(String clusterName, String uri) throws PropertyStoreException;
 }

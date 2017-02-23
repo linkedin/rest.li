@@ -16,12 +16,17 @@
 
 package com.linkedin.d2.balancer.properties;
 
+import java.beans.ConstructorProperties;
+import javax.management.MXBean;
+
 // The data for partition, currently only a weight for partition is provided; however, in the future,
 // servers may want to specify more meta data for different partitions
+@MXBean
 public class PartitionData
 {
   private final double _weight;
 
+  @ConstructorProperties({"weight"})
   public PartitionData(double weight)
   {
     _weight = weight;
