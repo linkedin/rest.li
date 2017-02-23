@@ -1,16 +1,19 @@
 10.1.5
 ------
+
+
+10.1.4
+------
 (RB=915139)
 Ensuring cloned DataLists and DataMaps have unique __dataComplexHashCode values.
+(RB=925965)
+Bump up zero-allocation-hashing library version to the latest
 
 (RB=922604)
 Update documentation on CreateKVResponse and BatchCreateKVResult.
 
 (RB=918607)
 Add .pdsc to .pdl conversion support
-
-10.1.4
-------
 (RB=876655)
 Modify client compression filter header-setting behavior to allow null operations.
 

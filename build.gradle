@@ -75,7 +75,7 @@ project.ext.externalDependency = [
   'snappy': 'org.iq80.snappy:snappy:0.4',
   'testng': 'org.testng:testng:6.9.9',
   'velocity': 'org.apache.velocity:velocity:1.5',
-  'zero_allocation_hashing': 'net.openhft:zero-allocation-hashing:0.4',
+  'zero_allocation_hashing': 'net.openhft:zero-allocation-hashing:0.7',
   'zookeeper': 'org.apache.zookeeper:zookeeper:3.4.6',
 
   // for restli-spring-bridge ONLY, we must keep these dependencies isolated
