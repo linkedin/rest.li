@@ -1,9 +1,10 @@
 10.1.6
 ------
 
-
 10.1.5
 ------
+(RB=925594)
+Fix the issue that ZooKeeperAnnouncerJmxMBean does not return a open type
 (RB=927901)
 Fix streaming timeout non-active if response entity stream can be buffered in memory
 
@@ -13,19 +14,10 @@ Fix streaming timeout non-active if response entity stream can be buffered in me
 Ensuring cloned DataLists and DataMaps have unique __dataComplexHashCode values.
 (RB=925965)
 Bump up zero-allocation-hashing library version to the latest
-
 (RB=922604)
 Update documentation on CreateKVResponse and BatchCreateKVResult.
-
 (RB=918607)
 Add .pdsc to .pdl conversion support
-
-(RB+925594)
-Fix the issue that ZooKeeperAnnouncerJmxMBean does not return a open type
-
-10.1.4
-------
->>>>>>> Fix the issue that ZooKeeperAnnouncerJmxMBean does not return a open type
 (RB=876655)
 Modify client compression filter header-setting behavior to allow null operations.
 
