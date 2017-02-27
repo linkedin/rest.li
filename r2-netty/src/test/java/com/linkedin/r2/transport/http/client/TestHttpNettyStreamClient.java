@@ -26,6 +26,7 @@ import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamRequestBuilder;
 import com.linkedin.r2.message.stream.entitystream.ByteStringWriter;
 import com.linkedin.r2.message.stream.entitystream.EntityStreams;
+import com.linkedin.r2.transport.common.bridge.common.TransportResponse;
 import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
 import io.netty.channel.Channel;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -33,14 +34,17 @@ import io.netty.handler.codec.TooLongFrameException;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http2.Http2Exception;
 import io.netty.util.AsciiString;
+import io.netty.util.concurrent.Promise;
 import java.io.IOException;
 import java.net.SocketAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -152,6 +156,86 @@ public class TestHttpNettyStreamClient
     {
       verifyCauseChain(e, RemoteInvocationException.class, TimeoutException.class);
     }
+  }
+
+  @DataProvider(name = "slowReaderTimeoutClientProvider")
+  public Object[][] slowReaderTimeoutClientProvider()
+  {
+    // Sets request timeout to be reasonable small since this unit test will await for the timeout duration
+    // however increase the timeout if test is not stable
+    HttpClientBuilder builder = new HttpClientBuilder(_eventLoop, _scheduler).setRequestTimeout(1000);
+    return new Object[][] {
+        { builder.buildStream() },
+        { builder.buildHttp2Stream() }
+    };
+  }
+
+  /**
+   * Tests slow EntityStream {@link Reader} implementation should be subject to streaming timeout even
+   * if the entire response entity can be buffered in memory.
+   *
+   * @throws Exception
+   */
+  @Test(dataProvider = "slowReaderTimeoutClientProvider")
+  public void testSlowReaderTimeout(AbstractNettyStreamClient client) throws Exception
+  {
+    // Sets the response size to be greater than zero but smaller than the in-memory buffer for HTTP/1.1
+    // and smaller than the receiving window size for HTTP/2 so the receiver will not block sender
+    Server server = new HttpServerBuilder().responseSize(R2Constants.DEFAULT_DATA_CHUNK_SIZE).build();
+
+    StreamRequest request = new StreamRequestBuilder(new URI(URL))
+        .setHeader(HttpHeaderNames.HOST.toString(), HOST_NAME.toString())
+        .build(EntityStreams.emptyStream());
+
+    final CountDownLatch responseLatch = new CountDownLatch(1);
+    final CountDownLatch streamLatch = new CountDownLatch(1);
+    final AtomicReference<TransportResponse<StreamResponse>> atomicTransportResponse = new AtomicReference<>();
+    final AtomicReference<Throwable> atomicThrowable = new AtomicReference<>();
+    try {
+      server.start();
+      client.streamRequest(request, new RequestContext(), new HashMap<>(), response -> {
+        atomicTransportResponse.set(response);
+        responseLatch.countDown();
+
+        // Sets a reader that does not consume any byte
+        response.getResponse().getEntityStream().setReader(new Reader() {
+          @Override
+          public void onInit(ReadHandle rh) {
+          }
+
+          @Override
+          public void onDataAvailable(ByteString data) {
+          }
+
+          @Override
+          public void onDone() {
+          }
+
+          @Override
+          public void onError(Throwable e) {
+            atomicThrowable.set(e);
+            streamLatch.countDown();
+          }
+        });
+
+      });
+    } finally {
+      responseLatch.await(5, TimeUnit.SECONDS);
+      streamLatch.await(5, TimeUnit.SECONDS);
+      server.stop();
+    }
+
+    TransportResponse<StreamResponse> transportResponse = atomicTransportResponse.get();
+    Assert.assertNotNull(transportResponse, "Expected to receive a response");
+    Assert.assertFalse(transportResponse.hasError(), "Expected to receive a response without error");
+    Assert.assertNotNull(transportResponse.getResponse());
+    Assert.assertNotNull(transportResponse.getResponse().getEntityStream());
+
+    Throwable throwable = atomicThrowable.get();
+    Assert.assertNotNull(throwable, "Expected onError invoked with TimeoutException");
+    Assert.assertTrue(throwable instanceof RemoteInvocationException);
+    Assert.assertNotNull(throwable.getCause());
+    Assert.assertTrue(throwable.getCause() instanceof TimeoutException);
   }
 
   @DataProvider(name = "noResponseClients")

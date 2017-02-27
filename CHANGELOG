@@ -1,6 +1,11 @@
-10.1.5
+10.1.6
 ------
 
+
+10.1.5
+------
+(RB=927901)
+Fix streaming timeout non-active if response entity stream can be buffered in memory
 
 10.1.4
 ------

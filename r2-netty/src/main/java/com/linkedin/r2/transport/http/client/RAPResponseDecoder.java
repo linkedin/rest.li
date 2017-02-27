@@ -58,11 +58,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
-import static io.netty.handler.codec.http.HttpHeaders.is100ContinueExpected;
-import static io.netty.handler.codec.http.HttpHeaders.isTransferEncodingChunked;
-import static io.netty.handler.codec.http.HttpHeaders.isKeepAlive;
-import static io.netty.handler.codec.http.HttpHeaders.removeTransferEncodingChunked;
-
 /**
  * This Decoder decodes chunked Netty responses into StreamResponse.
  *
@@ -349,7 +344,6 @@ import static io.netty.handler.codec.http.HttpHeaders.removeTransferEncodingChun
         if (chunk instanceof LastHttpContent)
         {
           _lastChunkReceived = true;
-          _timeout.getItem();
         }
         if (_wh != null)
         {
@@ -392,6 +386,7 @@ import static io.netty.handler.codec.http.HttpHeaders.removeTransferEncodingChun
           if (_lastChunkReceived)
           {
             _wh.done();
+            _timeout.getItem();
             if (_shouldCloseConnection)
             {
               _ctx.fireChannelRead(ChannelPoolStreamHandler.CHANNEL_DESTROY_SIGNAL);

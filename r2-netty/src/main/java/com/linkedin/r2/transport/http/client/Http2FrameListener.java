@@ -333,7 +333,6 @@ public class Http2FrameListener extends Http2EventAdapter
         if (end)
         {
           _lastChunkReceived = true;
-          _timeout.getItem();
         }
         if (_wh != null)
         {
@@ -398,6 +397,7 @@ public class Http2FrameListener extends Http2EventAdapter
             // Signals Http2ChannelPoolHandler to return channel back to the async pool
             _ctx.fireChannelRead(_poolHandle);
             _wh.done();
+            _timeout.getItem();
           }
           break;
         }
