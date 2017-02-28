@@ -92,6 +92,9 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
  */
 public class PdlSchemaParser extends AbstractSchemaParser
 {
+  public static final String FILETYPE = "pdl";
+  public static final String FILE_EXTENSION = '.' + FILETYPE;
+
   private static final String NEWLINE = System.lineSeparator();
 
   public PdlSchemaParser(DataSchemaResolver resolver)

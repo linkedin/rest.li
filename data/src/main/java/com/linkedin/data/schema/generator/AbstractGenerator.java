@@ -17,12 +17,14 @@
 package com.linkedin.data.schema.generator;
 
 
+import com.linkedin.data.schema.AbstractSchemaParser;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaLocation;
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.SchemaParser;
 import com.linkedin.data.schema.PegasusSchemaParser;
+import com.linkedin.data.schema.grammar.PdlSchemaParser;
 import com.linkedin.data.schema.resolver.DefaultDataSchemaResolver;
 import com.linkedin.data.schema.resolver.FileDataSchemaLocation;
 import com.linkedin.data.schema.resolver.FileDataSchemaResolver;
@@ -121,7 +123,7 @@ public abstract class AbstractGenerator
         {
           if (sourceFile.isDirectory())
           {
-            FileUtil.FileExtensionFilter filter = new FileUtil.FileExtensionFilter(FileDataSchemaResolver.DEFAULT_EXTENSION);
+            FileUtil.FileExtensionFilter filter = new FileUtil.FileExtensionFilter(MultiFormatDataSchemaResolver.BUILTIN_EXTENSIONS);
             List<File> sourceFilesInDirectory = FileUtil.listFiles(sourceFile, filter);
             for (File f : sourceFilesInDirectory)
             {
@@ -264,7 +266,7 @@ public abstract class AbstractGenerator
    */
   protected List<DataSchema> parseSchema(final File schemaSourceFile) throws IOException
   {
-    PegasusSchemaParser parser = new SchemaParser(getSchemaResolver());
+    PegasusSchemaParser parser = AbstractSchemaParser.parserForFile(schemaSourceFile, getSchemaResolver());
     FileInputStream schemaStream = new SchemaFileInputStream(schemaSourceFile);
     try
     {

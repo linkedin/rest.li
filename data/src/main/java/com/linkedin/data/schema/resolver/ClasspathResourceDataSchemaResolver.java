@@ -19,6 +19,7 @@ package com.linkedin.data.schema.resolver;
 
 import com.linkedin.data.schema.DataSchemaLocation;
 import com.linkedin.data.schema.NamedDataSchema;
+import com.linkedin.data.schema.SchemaParser;
 import com.linkedin.data.schema.SchemaParserFactory;
 
 import java.io.File;
@@ -40,7 +41,7 @@ public class ClasspathResourceDataSchemaResolver extends DefaultDataSchemaResolv
   /**
    * The default file name extension is ".pdsc".
    */
-  public static final String DEFAULT_EXTENSION = ".pdsc";
+  public static final String DEFAULT_EXTENSION = SchemaParser.FILE_EXTENSION;
 
   /**
    * Construct a new instance that uses the {@link Thread#getContextClassLoader()} for the current thread.

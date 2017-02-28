@@ -25,11 +25,14 @@ import com.linkedin.data.codec.DataLocation;
 import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.message.MessageUtil;
 
+import com.linkedin.data.schema.grammar.PdlSchemaParser;
 import com.linkedin.data.schema.validation.CoercionMode;
 import com.linkedin.data.schema.validation.RequiredMode;
 import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
 import com.linkedin.data.schema.validation.ValidationOptions;
 import com.linkedin.data.schema.validation.ValidationResult;
+import com.linkedin.util.FileUtil;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
@@ -902,4 +905,25 @@ abstract public class AbstractSchemaParser implements PegasusSchemaParser
   }
 
   private ValidationOptions _validationOptions = getDefaultSchemaParserValidationOptions();
+
+  public static PegasusSchemaParser parserForFile(File schemaSourceFile, DataSchemaResolver resolver)
+  {
+    return parserForFileExtension(FileUtil.getExtension(schemaSourceFile), resolver);
+  }
+
+  public static PegasusSchemaParser parserForFileExtension(String extension, DataSchemaResolver resolver)
+  {
+    if (extension.equals(SchemaParser.FILETYPE))
+    {
+      return new SchemaParser(resolver);
+    }
+    else if (extension.equals(PdlSchemaParser.FILETYPE))
+    {
+      return new PdlSchemaParser(resolver);
+    }
+    else
+    {
+      throw new IllegalArgumentException("Unrecognized file extension: " + extension);
+    }
+  }
 }

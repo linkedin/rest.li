@@ -23,15 +23,27 @@ public class FileUtil
   {
     public FileExtensionFilter(String extension)
     {
-      _extension = extension;
+      _extensions = new String[] {extension};
+    }
+
+    public FileExtensionFilter(String[] extensions)
+    {
+      _extensions = extensions;
     }
 
     public boolean accept(File file)
     {
-      return file.getName().endsWith(_extension);
+      for (String extension : _extensions)
+      {
+        if (file.getName().endsWith(extension))
+        {
+          return true;
+        }
+      }
+      return false;
     }
 
-    private final String _extension;
+    private final String[] _extensions;
   }
 
   /**
@@ -141,6 +153,18 @@ public class FileUtil
       }
     }
     return mostRecent;
+  }
+
+  public static String getExtension(File file) {
+    String extension = "";
+    String fileName = file.getName();
+
+    int i = fileName.lastIndexOf('.');
+    if (i > 0)
+    {
+      extension = fileName.substring(i+1);
+    }
+    return extension;
   }
 
   /**

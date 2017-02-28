@@ -1,6 +1,5 @@
 package com.linkedin.data.schema;
 
-
 import java.io.InputStream;
 import java.io.Reader;
 import java.util.List;

@@ -191,8 +191,11 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
 
   private void writeRecord(RecordDataSchema schema) throws IOException
   {
-    writeDoc(schema.getDoc());
-    writeProperties(schema.getProperties());
+    boolean hasDoc = writeDoc(schema.getDoc());
+    boolean hasProperties = writeProperties(schema.getProperties());
+    if (hasDoc || hasProperties) {
+      indent();
+    }
     write("record ");
     write(toTypeIdentifier(schema));
     List<NamedDataSchema> includes = schema.getInclude();
@@ -217,6 +220,11 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
     {
       if (field.getRecord().equals(schema))
       {
+        if (StringUtils.isNotBlank(field.getDoc()) || !field.getProperties().isEmpty() || field.isDeclaredInline())
+        {
+          // For any non-trivial field declarations, separate with an additional newline.
+          newline();
+        }
         writeDoc(field.getDoc());
         writeProperties(field.getProperties());
         indent();
@@ -243,11 +251,14 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
 
   private void writeEnum(EnumDataSchema schema) throws IOException
   {
-    writeDoc(schema.getDoc());
+    boolean hasDoc = writeDoc(schema.getDoc());
     DataMap properties = new DataMap(schema.getProperties());
     DataMap propertiesMap = new DataMap(coercePropertyToDataMapOrFail(schema, "symbolProperties", properties.remove("symbolProperties")));
     DataMap deprecatedMap = coercePropertyToDataMapOrFail(schema, "deprecatedSymbols", properties.remove("deprecatedSymbols"));
-    writeProperties(properties);
+    boolean hasProperties = writeProperties(properties);
+    if (hasDoc || hasProperties) {
+      indent();
+    }
     write("enum ");
     write(toTypeIdentifier(schema));
     write(" {");
@@ -258,13 +269,20 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
 
     for (String symbol : schema.getSymbols())
     {
-      writeDoc(docs.get(symbol));
+      String docString = docs.get(symbol);
       DataMap symbolProperties = coercePropertyToDataMapOrFail(schema, "symbolProperties." + symbol, propertiesMap.get(symbol));
       Object deprecated = deprecatedMap.get(symbol);
       if (deprecated != null)
       {
         symbolProperties.put("deprecated", deprecated);
       }
+
+      if (StringUtils.isNotBlank(docString) || !symbolProperties.isEmpty())
+      {
+        // For any non-trivial symbol declarations, separate with an additional newline.
+        newline();
+      }
+      writeDoc(docString);
       writeProperties(symbolProperties);
       writeLine(symbol);
     }
@@ -356,7 +374,7 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
    * The documentation string will be embedded in a properly indented javadoc style doc string delimiters and margin.
    * @param doc provides the documentation to write.
    */
-  private void writeDoc(String doc) throws IOException
+  private boolean writeDoc(String doc) throws IOException
   {
     if (StringUtils.isNotBlank(doc))
     {
@@ -370,7 +388,9 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
         newline();
       }
       writeLine(" */");
+      return true;
     }
+    return false;
   }
 
   /**
@@ -391,7 +411,10 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
     }
     else if (value instanceof String)
     {
-      return "\"" + StringEscapeUtils.escapeJson((String) value) + "\"";
+      // JSON also allows the '/' char to be written in strings both unescaped ("/") and escaped ("\/").
+      // StringEscapeUtils.escapeJson always escapes '/' so we deliberately use escapeJava instead, which
+      // is exactly like escapeJson but without the '/' escaping.
+      return "\"" + StringEscapeUtils.escapeJava((String) value) + "\"";
     }
     else if (value instanceof Number)
     {
@@ -427,7 +450,15 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
     markEncountered(dataSchema);
     if (representation == TypeRepresentation.DECLARED_INLINE)
     {
+      boolean requiresNewlineLayout = requiredNewlineLayout(dataSchema);
+      if (requiresNewlineLayout) {
+        newline();
+        _indentDepth++;
+      }
       writeInlineSchema(dataSchema);
+      if (requiresNewlineLayout) {
+        _indentDepth--;
+      }
     }
     else
     {
@@ -443,12 +474,31 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
   }
 
   /**
+   * For inline declarations, determine if a type requires a newline to be declared.  Only types without a
+   * doc string or properties can initiate their declaration as a continuation of an existing line
+   * (e.g. "fieldName: record Example {}").
+   *
+   * @param dataSchema provides the type to check for layout requirements.
+   * @return true if the type requires a newline for layout
+   */
+  private boolean requiredNewlineLayout(DataSchema dataSchema) {
+    if (dataSchema instanceof NamedDataSchema) {
+      NamedDataSchema named = (NamedDataSchema) dataSchema;
+      if (StringUtils.isNotBlank(named.getDoc()) || !named.getProperties().isEmpty()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
    * Writes a set of schema properties to .pdl.
    * @param properties provides the properties to write.
    */
-  private void writeProperties(Map<String, Object> properties) throws IOException
+  private boolean writeProperties(Map<String, Object> properties) throws IOException
   {
     writeProperties(Collections.emptyList(), properties);
+    return !properties.isEmpty();
   }
 
   /**

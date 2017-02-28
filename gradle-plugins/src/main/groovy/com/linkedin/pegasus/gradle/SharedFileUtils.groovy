@@ -12,8 +12,12 @@ class SharedFileUtils
 {
   static FileTree getSuffixedFiles(Project project, Object baseDir, String suffix)
   {
-    // TODO (jbetz): Add .pdl to list of suffixes to enable pdl usage in direct project.
-    return project.fileTree(dir: baseDir, includes: ["**${File.separatorChar}*${suffix}".toString()]);
+    return getSuffixedFiles(project, baseDir, [suffix])
+  }
+
+  static FileTree getSuffixedFiles(Project project, Object baseDir, Collection<String> suffixes)
+  {
+    return project.fileTree(dir: baseDir, includes: suffixes.collect{ "**${File.separatorChar}*${it}".toString() });
   }
 
   static FileCollection getIdlFiles(Project project, Object destinationDirPrefix)

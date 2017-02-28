@@ -26,6 +26,7 @@ import com.linkedin.pegasus.gradle.tasks.GenerateDataTemplateTask
 import com.linkedin.pegasus.gradle.tasks.GenerateRestClientTask
 import com.linkedin.pegasus.gradle.tasks.GenerateRestModelTask
 import com.linkedin.pegasus.gradle.tasks.PublishRestModelTask
+import com.linkedin.pegasus.gradle.tasks.TranslateSchemasTask
 import org.gradle.BuildResult
 import org.gradle.api.*
 import org.gradle.api.artifacts.Configuration
@@ -492,6 +493,8 @@ class PegasusPlugin implements Plugin<Project>
   private static final String AVRO_SCHEMA_GEN_TYPE = 'AvroSchema'
 
   public static final String DATA_TEMPLATE_FILE_SUFFIX = '.pdsc'
+  public static final String PDL_FILE_SUFFIX = '.pdl'
+  public static final Collection<String> DATA_TEMPLATE_FILE_SUFFIXES = [DATA_TEMPLATE_FILE_SUFFIX, PDL_FILE_SUFFIX]
   public static final String IDL_FILE_SUFFIX = '.restspec.json'
   public static final String SNAPSHOT_FILE_SUFFIX = '.snapshot.json'
   public static final String SNAPSHOT_COMPAT_REQUIREMENT = 'rest.model.compatibility'
@@ -725,6 +728,8 @@ class PegasusPlugin implements Plugin<Project>
       // rest model generation could fail on incompatibility
       // if it can fail, fail it early
       configureRestModelGeneration(project, sourceSet)
+
+      configureConversionUtilities(project, sourceSet)
 
       configureDataTemplateGeneration(project, sourceSet)
 
@@ -1026,7 +1031,7 @@ class PegasusPlugin implements Plugin<Project>
       apiSnapshotDir.mkdirs()
       if (!isPropertyTrue(project, SKIP_IDL_CHECK))
       {
-        apiIdlDir.mkdirs();
+        apiIdlDir.mkdirs()
       }
 
       final CheckRestModelTask checkRestModelTask = project.task(sourceSet.getTaskName('check', 'RestModel'),
@@ -1232,10 +1237,53 @@ class PegasusPlugin implements Plugin<Project>
     }
   }
 
+  protected void configureConversionUtilities(Project project, SourceSet sourceSet)
+  {
+    final File dataSchemaDir = project.file(getDataSchemaPath(project, sourceSet))
+    final File conversionBackupBuildDir = project.file(project.buildDir.getAbsolutePath() + File.separatorChar + sourceSet.name + "ConversionBackup")
+
+    final Task backup = project.task(sourceSet.getTaskName('backup', 'Pdsc'), type: Copy) {
+      from(dataSchemaDir) {
+        include '**/*.pdsc'
+      }
+      into conversionBackupBuildDir
+    }
+
+    final Task restore = project.task(sourceSet.getTaskName('restore', 'PdscBackup'), type: Copy) {
+      from(conversionBackupBuildDir) {
+        include '**/*.pdsc'
+      }
+      into dataSchemaDir
+    }
+
+    // Utility task for migrating from PDSC to PDL.
+    project.task(sourceSet.getTaskName('convert', 'ToPdl'), type: TranslateSchemasTask, dependsOn: backup) {
+      inputDir = dataSchemaDir
+      destinationDir = dataSchemaDir
+      resolverPath = getDataModelConfig(project, sourceSet)
+      codegenClasspath = project.configurations.pegasusPlugin
+
+      onlyIf {
+        inputDir.exists()
+      }
+
+      doLast {
+        System.out.println("pdsc to pdl conversion complete.")
+        System.out.println("All pdsc files in ${dataSchemaDir} have been replaced with pdl files")
+        System.out.println("The pdsc files have been backed up to: ${conversionBackupBuildDir.getAbsolutePath()}")
+        System.out.println("If this conversion needs to be undone run the 'restorePdscBackup' task to restore  the backed up pdsc files.")
+        def tree = project.fileTree(dataSchemaDir)
+        tree.include '**/*.pdsc'
+        tree.each { it.delete() }
+      }
+    }
+  }
+
   protected void configureDataTemplateGeneration(Project project, SourceSet sourceSet)
   {
     final File dataSchemaDir = project.file(getDataSchemaPath(project, sourceSet))
     final File generatedDataTemplateDir = project.file(getGeneratedDirPath(project, sourceSet, DATA_TEMPLATE_GEN_TYPE) + File.separatorChar + 'java')
+    final File publishableSchemasBuildDir = project.file(project.buildDir.getAbsolutePath() + File.separatorChar + sourceSet.name + "Schemas")
 
     // generate data template source files from data schema
     final Task generateDataTemplatesTask = project.task(sourceSet.getTaskName('generate', 'dataTemplate'),
@@ -1281,11 +1329,34 @@ class PegasusPlugin implements Plugin<Project>
     final Task compileTask = project.tasks[targetSourceSet.compileJavaTaskName]
     compileTask.dependsOn(generateDataTemplatesTask)
 
+    // Convert all PDL files back to PDSC for publication
+    // TODO (jbetz): Remove this conversion when we're ready to publish PDL files directly into dataTemplate jars.
+    Task preparePdlSchemasForPublishTask = project.task(
+        sourceSet.name + 'TranslateSchemas',
+        type: TranslateSchemasTask) {
+      inputDir = dataSchemaDir
+      destinationDir = publishableSchemasBuildDir
+      resolverPath = getDataModelConfig(project, sourceSet)
+      codegenClasspath = project.configurations.pegasusPlugin
+      sourceFormat = SchemaFileType.PDL
+      destinationFormat = SchemaFileType.PDSC
+    }
+
+    // Copy all PDSC files directly over for publication
+    Task preparePdscSchemasForPublishTask = project.task(
+        sourceSet.name + 'CopyPdscSchemas',
+        type: Copy) {
+      from(dataSchemaDir) {
+        include '**/*.pdsc'
+      }
+      into publishableSchemasBuildDir
+    }
+
     // create data template jar file
     Task dataTemplateJarTask = project.task(sourceSet.name + 'DataTemplateJar',
                                             type: Jar,
-                                            dependsOn: compileTask) {
-      from (dataSchemaDir) {
+                                            dependsOn: [compileTask, preparePdlSchemasForPublishTask, preparePdscSchemasForPublishTask]) {
+      from (publishableSchemasBuildDir) {
         eachFile {
           it.path = 'pegasus' + File.separatorChar + it.path.toString()
         }

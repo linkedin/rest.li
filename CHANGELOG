@@ -1,5 +1,7 @@
 10.1.11
 ------
+(RB=940808)
+Add gradle task to translate .pdsc to .pdl
 
 10.1.10
 ------

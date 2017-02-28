@@ -20,6 +20,7 @@ import com.linkedin.data.grammar.PdlParser;
 import java.math.BigDecimal;
 import java.util.Iterator;
 import java.util.List;
+import org.antlr.v4.runtime.RecognitionException;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -114,6 +115,26 @@ public class PdlParseUtils
   public static String unescapeIdentifier(String identifier)
   {
     return identifier.replaceAll("`", "");
+  }
+
+  /**
+   * Validate that an identifier is a valid pegasus identifier.
+   * Identifiers are used both for property identifiers and pegasus identifiers.  Property
+   * identifiers can have symbols (currently only '-') that are not allowed in pegasus identifiers.
+   *
+   * Because lexers cannot disambiguate between the two types of identifiers, we validate pegasus
+   * identifiers in the parser using this method.
+   *
+   * @param identifier the identifier to validate.
+   * @return the validated pegasus identifier.
+   */
+  public static String validatePegasusId(String identifier)
+  {
+    if (identifier.contains("-"))
+    {
+      throw new IllegalArgumentException("Illegal '-' in identifier: " + identifier);
+    }
+    return identifier;
   }
 
   /**

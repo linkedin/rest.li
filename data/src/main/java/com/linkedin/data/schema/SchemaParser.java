@@ -23,6 +23,7 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.DataLocation;
 import com.linkedin.data.message.MessageUtil;
 import com.linkedin.data.schema.resolver.DefaultDataSchemaResolver;
+import com.linkedin.data.schema.resolver.FileDataSchemaResolver;
 import com.linkedin.data.schema.validation.CoercionMode;
 import com.linkedin.data.schema.validation.RequiredMode;
 import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
@@ -56,6 +57,9 @@ import static com.linkedin.data.schema.DataSchemaConstants.*;
  */
 public class SchemaParser extends AbstractSchemaParser
 {
+  public static final String FILETYPE = "pdsc";
+  public static final String FILE_EXTENSION = '.' + FILETYPE;
+
   /**
    * Constructor.
    */

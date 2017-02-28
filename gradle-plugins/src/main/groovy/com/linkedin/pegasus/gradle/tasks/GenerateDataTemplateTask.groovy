@@ -54,7 +54,7 @@ class GenerateDataTemplateTask extends DefaultTask
   @TaskAction
   protected void generate()
   {
-    final FileTree inputDataSchemaFiles = getSuffixedFiles(project, inputDir, PegasusPlugin.DATA_TEMPLATE_FILE_SUFFIX)
+    final FileTree inputDataSchemaFiles = getSuffixedFiles(project, inputDir, PegasusPlugin.DATA_TEMPLATE_FILE_SUFFIXES)
     final String[] inputDataSchemaFilenames = inputDataSchemaFiles.collect { it.path } as String[]
     if (inputDataSchemaFilenames.length == 0)
     {

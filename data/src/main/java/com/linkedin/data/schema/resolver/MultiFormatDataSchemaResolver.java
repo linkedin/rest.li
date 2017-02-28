@@ -21,7 +21,9 @@ import com.linkedin.data.schema.DataSchemaParserFactory;
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.Name;
 import com.linkedin.data.schema.NamedDataSchema;
+import com.linkedin.data.schema.SchemaParser;
 import com.linkedin.data.schema.SchemaParserFactory;
+import com.linkedin.data.schema.grammar.PdlSchemaParser;
 import com.linkedin.data.schema.grammar.PdlSchemaParserFactory;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -39,6 +41,12 @@ import java.util.Map;
  */
 public class MultiFormatDataSchemaResolver implements DataSchemaResolver
 {
+  /**
+   * File extensions for all builtin parsers: PDSC, PDL.
+   */
+  public static final String[] BUILTIN_EXTENSIONS = new String[] {SchemaParser.FILE_EXTENSION, PdlSchemaParser.FILE_EXTENSION
+  };
+
   private final List<DataSchemaResolver> resolvers;
 
   public static List<DataSchemaParserFactory> BUILTIN_FORMAT_PARSER_FACTORIES;

@@ -69,8 +69,8 @@ propDeclaration returns [String name, List<String> path]: propNameDeclaration pr
   $path = Arrays.asList($propNameDeclaration.name.split("\\."));
 };
 
-propNameDeclaration returns [String name]: AT typeName {
-  $name = $typeName.value;
+propNameDeclaration returns [String name]: AT propName {
+  $name = $propName.value;
 };
 
 propJsonValue: EQ jsonValue;
@@ -130,10 +130,14 @@ fieldDefault: EQ jsonValue;
 
 // A qualified identifier is simply one or more '.' separated identifiers.
 typeName returns [String value]: ID (DOT ID)* {
-  $value = PdlParseUtils.unescapeIdentifier($text);
+  $value = PdlParseUtils.validatePegasusId(PdlParseUtils.unescapeIdentifier($text));
 };
 
 identifier returns [String value]: ID {
+  $value = PdlParseUtils.validatePegasusId(PdlParseUtils.unescapeIdentifier($text));
+};
+
+propName returns [String value]: ID (DOT ID)* {
   $value = PdlParseUtils.unescapeIdentifier($text);
 };
 
@@ -207,10 +211,13 @@ fragment UNICODE: 'u' HEX HEX HEX HEX;
 fragment ESC:   '\\' (["\\/bfnrt] | UNICODE);
 STRING_LITERAL: '"' (ESC | ~["\\])* '"';
 
-// TODO: '-' and any legal json string, for that matter, should be legal in property
-// names, but not in identifiers.  Maybe make the lexer more forgiving but check if
-// identifiers are valid in the parser?   The regex char group escaping for '-' is '[\-]'
-ID: '`'? [A-Za-z_] [A-Za-z0-9_]* '`'?; // Avro/Pegasus identifiers with Scala/Swift escaping
+// ID lexeme is used both for property names and pegasus identifiers.
+// Unlike pegasus identifiers, it may contain '-' since that is allowed in property names.
+// The parser further constrains this ID using PdlParseUtils.validatePegasusId when matching
+// pegasus identifiers.
+fragment UNESCAPED_ID: [A-Za-z_] [A-Za-z0-9_\-]*;
+fragment ESCAPED_ID: '`' UNESCAPED_ID '`';
+ID: UNESCAPED_ID | ESCAPED_ID;
 
 // "insignificant commas" are used in this grammar. Commas may be added as desired
 // in source files, but they are treated as whitespace.

@@ -22,6 +22,7 @@ import com.linkedin.data.schema.DataSchemaParserFactory;
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.SchemaParser;
 import com.linkedin.data.schema.NamedDataSchema;
+import com.linkedin.data.schema.grammar.PdlSchemaParser;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -65,7 +66,7 @@ public class FileDataSchemaResolver extends AbstractDataSchemaResolver
   /**
    * The default file name extension is ".pdsc".
    */
-  public static final String DEFAULT_EXTENSION = ".pdsc";
+  public static final String DEFAULT_EXTENSION = SchemaParser.FILE_EXTENSION;
 
   /**
    * Constructor.
