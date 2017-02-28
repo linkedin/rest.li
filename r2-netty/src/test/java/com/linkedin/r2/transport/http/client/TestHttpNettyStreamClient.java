@@ -20,6 +20,7 @@
 
 package com.linkedin.r2.transport.http.client;
 
+import com.linkedin.r2.TestGroupNames;
 import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.stream.StreamRequest;
@@ -1134,7 +1135,7 @@ public class TestHttpNettyStreamClient
     }
   }
 
-  @Test(dataProvider = "requestResponseParameters")
+  @Test(dataProvider = "requestResponseParameters", groups = TestGroupNames.TESTNG_GROUP_KNOWN_ISSUE)
   public void testCancelStreamRequests(
       AbstractNettyStreamClient client,
       String method,
