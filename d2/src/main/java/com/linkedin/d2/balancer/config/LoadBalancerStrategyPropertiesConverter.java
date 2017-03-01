@@ -272,11 +272,15 @@ public class LoadBalancerStrategyPropertiesConverter
     {
       config.setNumberOfProbes(coerce(properties.get(PropertyKeys.HTTP_LB_CONSISTENT_HASH_NUM_PROBES), Integer.class));
     }
-    if (properties.containsKey(PropertyKeys.HTTP_LB_QUARANTINE_MAX_PERCENT))
+    if (properties.containsKey(PropertyKeys.HTTP_LB_QUARANTINE_MAX_PERCENT) ||
+        properties.containsKey(PropertyKeys.HTTP_LB_QUARANTINE_METHOD) ||
+        properties.containsKey(PropertyKeys.HTTP_LB_QUARANTINE_LATENCY))
     {
       quarantineInfo quarantineInfo = new quarantineInfo();
-      quarantineInfo.setQuarantineMaxPercent(coerce(properties.get(PropertyKeys.HTTP_LB_QUARANTINE_MAX_PERCENT), Double.class));
-
+      if (properties.containsKey(PropertyKeys.HTTP_LB_QUARANTINE_MAX_PERCENT))
+      {
+        quarantineInfo.setQuarantineMaxPercent(coerce(properties.get(PropertyKeys.HTTP_LB_QUARANTINE_MAX_PERCENT), Double.class));
+      }
       if (properties.containsKey(PropertyKeys.HTTP_LB_QUARANTINE_METHOD))
       {
         quarantineInfo.setQuarantineMethod(coerce(properties.get(PropertyKeys.HTTP_LB_QUARANTINE_METHOD), String.class));

@@ -1,5 +1,7 @@
 10.1.6
 ------
+(RB=930255)
+Fix LoadBalancerStrategyPropertiesConverter to serialize quarantine properties with or without maxPercentage property present
 
 10.1.5
 ------
