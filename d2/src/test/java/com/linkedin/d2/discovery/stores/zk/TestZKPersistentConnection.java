@@ -56,7 +56,7 @@ public class TestZKPersistentConnection
 
       TestListener listener = new TestListener();
       ZKPersistentConnection c = new ZKPersistentConnection(
-              "localhost:" + PORT, 15000, Collections.singleton(listener));
+        "localhost:" + PORT, 15000, Collections.singleton(listener));
 
       long count = listener.getCount();
       c.start();
@@ -84,8 +84,41 @@ public class TestZKPersistentConnection
     {
       server.shutdown();
     }
+  }
 
 
+  @Test
+  public void testWaitForNewSessionEstablished()
+    throws IOException, InterruptedException, KeeperException, TimeoutException
+  {
+    ZKServer server = new ZKServer();
+    server.startup();
+
+    try
+    {
+      final int PORT = server.getPort();
+
+      TestListener listener = new TestListener();
+      ZKPersistentConnection c = new ZKPersistentConnection(
+        "localhost:" + PORT, 15000, Collections.singleton(listener));
+
+      long count = listener.getCount();
+      c.start();
+
+      listener.waitForEvent(count, ZKPersistentConnection.Event.SESSION_ESTABLISHED, 30, TimeUnit.SECONDS);
+
+      // value of previous session id
+      long oldSessionId = c.getZooKeeper().getSessionId();
+
+      ZKTestUtil.expireSession("localhost:" + PORT, c.getZooKeeper(), 30, TimeUnit.SECONDS);
+
+      ZKTestUtil.waitForNewSessionEstablished(oldSessionId, c, 5, TimeUnit.SECONDS);
+      c.shutdown();
+    }
+    finally
+    {
+      server.shutdown();
+    }
   }
 
   private static class TestListener implements ZKPersistentConnection.EventListener

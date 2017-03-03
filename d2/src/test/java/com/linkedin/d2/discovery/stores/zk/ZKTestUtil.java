@@ -20,8 +20,6 @@
 
 package com.linkedin.d2.discovery.stores.zk;
 
-import static org.testng.Assert.fail;
-
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 
@@ -34,6 +32,8 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+
+import static org.testng.Assert.fail;
 
 /**
  * @author Steven Ihde
@@ -110,6 +110,29 @@ public class ZKTestUtil
     // NB, we must wait for SyncConnected before calling close(), otherwise it may not actually kill the session
     w.waitForConnected(timeout, timeoutUnit);
     zk.close();
+  }
+
+  /**
+   * Waits for the connection to re-establish after a session expire is triggered
+   *
+   * @param oldZKSessionId session id before the session is expired
+   * @param zkPersistentConnection
+   * @param timeout
+   * @param timeoutUnit
+   * @throws IOException
+   * @throws TimeoutException
+   * @throws InterruptedException
+   */
+  public static void waitForNewSessionEstablished(long oldZKSessionId, ZKPersistentConnection zkPersistentConnection, long timeout, TimeUnit timeoutUnit) throws IOException, TimeoutException, InterruptedException
+  {
+    Date deadline = new Date(System.currentTimeMillis() + timeoutUnit.toMillis(timeout));
+    while (zkPersistentConnection.getZooKeeper().getSessionId() == oldZKSessionId
+      && deadline.getTime() > System.currentTimeMillis())
+    {
+      Thread.sleep(100);
+    }
+    long remainingTime = deadline.getTime() - System.currentTimeMillis();
+    zkPersistentConnection.getZKConnection().waitForState(Watcher.Event.KeeperState.SyncConnected, remainingTime, TimeUnit.MILLISECONDS);
   }
 
   private static class WaiterWatcher implements Watcher
