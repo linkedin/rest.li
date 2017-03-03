@@ -1,0 +1,15 @@
+{
+  "type": "record",
+  "name": "WithoutResolverExample",
+  "fields": [
+    {
+      "name": "inlineRecord",
+      "type": {
+        "type": "record",
+        "name": "InlineRecord",
+        "fields": []
+      }
+    },
+    {"name": "reference", "type": "InlineRecord"}
+  ]
+}

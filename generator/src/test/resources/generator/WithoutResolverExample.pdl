@@ -1,0 +1,4 @@
+record WithoutResolverExample {
+  inlineRecord: record InlineRecord {}
+  reference: InlineRecord
+}

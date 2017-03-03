@@ -56,6 +56,14 @@ public class MultiFormatDataSchemaResolver implements DataSchemaResolver
     return new MultiFormatDataSchemaResolver(resolverPath, BUILTIN_FORMAT_PARSER_FACTORIES);
   }
 
+  /**
+   * Initializes a new resolver with a specific set of file format parsers.  Use @{link withBuiltinFormats}
+   * instead to initialize with the default file format parsers.
+   *
+   * @param resolverPath provides the search paths separated by the provided separator, or null for no search paths.
+   * @param parsersForFormats provides a list of parser factories, one for each file format (e.g. PDSC, PDL)
+   *                          this resolver supports.
+   */
   public MultiFormatDataSchemaResolver(
       String resolverPath,
       List<DataSchemaParserFactory> parsersForFormats)

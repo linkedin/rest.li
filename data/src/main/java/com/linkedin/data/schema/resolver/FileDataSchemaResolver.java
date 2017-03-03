@@ -146,16 +146,19 @@ public class FileDataSchemaResolver extends AbstractDataSchemaResolver
    * Specify the search paths as a string, with each search paths separated by
    * the provided separator.
    *
-   * @param paths is the search paths separated by the provided separator.
+   * @param paths provides the search paths separated by the provided separator, or null for no search paths.
    * @param separator contain the characters that separate each search path.
    */
   public void setPaths(String paths, String separator)
   {
-    List<String> list = new ArrayList<String>();
-    StringTokenizer tokenizer = new StringTokenizer(paths, separator);
-    while (tokenizer.hasMoreTokens())
+    List<String> list = new ArrayList<>();
+    if (paths != null)
     {
-      list.add(tokenizer.nextToken());
+      StringTokenizer tokenizer = new StringTokenizer(paths, separator);
+      while (tokenizer.hasMoreTokens())
+      {
+        list.add(tokenizer.nextToken());
+      }
     }
     setPaths(list);
   }

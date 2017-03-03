@@ -46,6 +46,9 @@ public class DataSchemaParser
   private final Map<String, FileFormatDataSchemaParser> _parserByFileExtension;
   private final MultiFormatDataSchemaResolver _resolver;
 
+  /**
+   * @param resolverPath provides the search paths separated by the system file separator, or null for no search paths.
+   */
   public DataSchemaParser(String resolverPath) {
     this(resolverPath, MultiFormatDataSchemaResolver.BUILTIN_FORMAT_PARSER_FACTORIES);
   }
