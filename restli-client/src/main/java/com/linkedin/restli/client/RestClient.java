@@ -128,7 +128,6 @@ public class RestClient
   private static final ContentType DEFAULT_CONTENT_TYPE = ContentType.JSON;
   private static final Random RANDOM_INSTANCE = new Random();
   private final Client _client;
-  private final DisruptRestController _controller;
 
   private final String _uriPrefix;
   private final List<AcceptType> _acceptTypes;
@@ -163,7 +162,6 @@ public class RestClient
     _uriPrefix = (uriPrefix == null) ? null : uriPrefix.trim();
     _acceptTypes = acceptTypes;
     _contentType = contentType;
-    _controller = DisruptRestControllerContainer.getInstance();
   }
 
   /**
@@ -1025,7 +1023,8 @@ public class RestClient
    */
   private void addDisruptContext(String resource, ResourceMethod method, String name, RequestContext requestContext)
   {
-    if (_controller == null)
+    final DisruptRestController controller = DisruptRestControllerContainer.getInstance();
+    if (controller == null)
     {
       return;
     }
@@ -1035,17 +1034,17 @@ public class RestClient
     final DisruptContext disruptContext;
     if (method == null)
     {
-      disruptContext = _controller.getDisruptContext(resource);
+      disruptContext = controller.getDisruptContext(resource);
     }
     else
     {
       if (name == null)
       {
-        disruptContext = _controller.getDisruptContext(resource, method);
+        disruptContext = controller.getDisruptContext(resource, method);
       }
       else
       {
-        disruptContext = _controller.getDisruptContext(resource, method, name);
+        disruptContext = controller.getDisruptContext(resource, method, name);
       }
     }
 

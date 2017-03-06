@@ -1,5 +1,7 @@
 10.1.8
 ------
+(RB=934222)
+Make RestClient get DisruptRestController from DisruptRestControllerContainer every time
 
 10.1.7
 ------
