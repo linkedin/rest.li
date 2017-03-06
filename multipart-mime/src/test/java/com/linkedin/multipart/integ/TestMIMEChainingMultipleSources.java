@@ -30,7 +30,6 @@ import com.linkedin.multipart.MultiPartMIMEStreamResponseFactory;
 import com.linkedin.multipart.MultiPartMIMEWriter;
 import com.linkedin.multipart.exceptions.MultiPartIllegalFormatException;
 import com.linkedin.multipart.utils.MIMETestUtils;
-import com.linkedin.r2.TestGroupNames;
 import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestException;
@@ -87,6 +86,7 @@ public class TestMIMEChainingMultipleSources
   private static final URI SERVER_A_URI = URI.create("/serverA");
   private static final URI SERVER_B_URI = URI.create("/serverB");
   private static final int TEST_TIMEOUT = 30000;
+  private static final String TESTNG_GROUP_KNOWN_ISSUE = "known_issue";
   private TransportClientFactory _clientFactory;
   private HttpServer _serverA;
   private HttpServer _serverB;
@@ -347,7 +347,7 @@ public class TestMIMEChainingMultipleSources
   //stream + the first part from the incoming mime response from Server B.
   //5. Main thread then gets all of this and stores it.
   //6. Server A then drains and stores the rest of the parts from Server B's response.
-  @Test(dataProvider = "chunkSizes", groups = TestGroupNames.TESTNG_GROUP_KNOWN_ISSUE)
+  @Test(dataProvider = "chunkSizes", groups = TESTNG_GROUP_KNOWN_ISSUE)
   public void testSinglePartDataSource(final int chunkSize) throws Exception
   {
     _chunkSize = chunkSize;
