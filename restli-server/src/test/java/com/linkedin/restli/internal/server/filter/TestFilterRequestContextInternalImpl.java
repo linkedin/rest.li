@@ -36,7 +36,9 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
@@ -62,6 +64,12 @@ public class TestFilterRequestContextInternalImpl
   protected void setUp() throws Exception
   {
     MockitoAnnotations.initMocks(this);
+  }
+
+  @AfterMethod
+  protected void resetSharedMocks() throws Exception
+  {
+    Mockito.reset(context, resourceMethod, resourceModel);
   }
 
   @Test
@@ -108,9 +116,6 @@ public class TestFilterRequestContextInternalImpl
     when(context.getRawRequestContext()).thenReturn(r2RequestContext);
 
     FilterRequestContextInternalImpl filterContext = new FilterRequestContextInternalImpl(context, resourceMethod);
-    Object spValue = new Object();
-    String spKey = UUID.randomUUID().toString();
-    filterContext.getFilterScratchpad().put(spKey, spValue);
 
     assertEquals(filterContext.getFilterResourceModel().getResourceName(), resourceName);
     assertEquals(filterContext.getFilterResourceModel().getResourceNamespace(), resourceNamespace);
@@ -127,7 +132,6 @@ public class TestFilterRequestContextInternalImpl
     assertEquals(filterContext.getFinderName(), finderName);
     assertEquals(filterContext.getRequestContextLocalAttrs(), localAttrs);
     assertNull(filterContext.getMethod());
-    assertTrue(filterContext.getFilterScratchpad().get(spKey) == spValue);
     filterContext.getRequestHeaders().put("header2", "value2");
     assertEquals(requestHeaders.get("header2"), "value2");
 
@@ -149,5 +153,27 @@ public class TestFilterRequestContextInternalImpl
     verify(context).getRawRequestContext();
     verify(resourceMethod).getFinderMetadataType();
     verifyNoMoreInteractions(context, resourceMethod, resourceModel);
+  }
+
+  @Test
+  public void testFilterScratchpad() throws Exception
+  {
+    FilterRequestContextInternalImpl filterContext = new FilterRequestContextInternalImpl(context, resourceMethod);
+    Object spValue = new Object();
+    String spKey = UUID.randomUUID().toString();
+    filterContext.getFilterScratchpad().put(spKey, spValue);
+    assertTrue(filterContext.getFilterScratchpad().get(spKey) == spValue);
+  }
+
+  @Test
+  public void testCustomContextData() throws Exception
+  {
+    FilterRequestContextInternalImpl filterContext = new FilterRequestContextInternalImpl(context, resourceMethod);
+    filterContext.putCustomContextData("foo", "bar");
+    filterContext.getCustomContextData("foo");
+    filterContext.removeCustomContextData("foo");
+    verify(context, times(1)).putCustomContextData("foo", "bar");
+    verify(context, times(1)).getCustomContextData("foo");
+    verify(context, times(1)).removeCustomContextData("foo");
   }
 }

@@ -31,7 +31,7 @@ import java.util.Map;
  *
  * @author dellamag
  */
-public interface ResourceContext
+public interface ResourceContext extends CustomRequestContext
 {
   /**
    * Get the RestRequest which caused the current context to be created.

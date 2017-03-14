@@ -23,15 +23,15 @@ import com.linkedin.data.transform.filter.request.MaskOperation;
 import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.restli.common.RestConstants;
-import com.linkedin.restli.internal.common.TestConstants;
 import com.linkedin.restli.internal.server.util.RestLiSyntaxException;
-
-import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.test.TestResourceContext;
+
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -39,9 +39,40 @@ import org.testng.annotations.Test;
 
 /**
  * @author Keren Jin
+ * @author jnchen
  */
 public class TestResourceContextImpl
 {
+  @Test
+  public void testAddCustomContextData() throws RestLiSyntaxException
+  {
+    final ResourceContextImpl context = new ResourceContextImpl();
+    String bar = "bar";
+    context.putCustomContextData("foo", bar);
+    Assert.assertTrue(context.getCustomContextData("foo").isPresent());
+    Assert.assertSame(context.getCustomContextData("foo").get(), bar);
+  }
+
+  @Test
+  public void testRemoveCustomContextData() throws RestLiSyntaxException
+  {
+    final ResourceContextImpl context = new ResourceContextImpl();
+    String bar = "bar";
+    context.putCustomContextData("foo", bar);
+    Optional<Object> barRemove = context.removeCustomContextData("foo");
+    Optional<Object> barAfterRemove = context.getCustomContextData("foo");
+    Assert.assertSame(barRemove.get(), bar);
+    Assert.assertFalse(barAfterRemove.isPresent());
+  }
+
+  @Test
+  public void testGetEmptyCustomContextData() throws RestLiSyntaxException
+  {
+    final ResourceContextImpl context = new ResourceContextImpl();
+    Optional<Object> foo = context.getCustomContextData("foo");
+    Assert.assertFalse(foo.isPresent());
+  }
+
   @Test(expectedExceptions = IllegalArgumentException.class)
   public void testSetIdHeader() throws RestLiSyntaxException
   {

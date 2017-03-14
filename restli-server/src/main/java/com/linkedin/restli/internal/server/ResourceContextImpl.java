@@ -53,7 +53,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
+
+import com.google.common.base.Strings;
 
 
 /**
@@ -62,6 +65,9 @@ import java.util.TreeMap;
  */
 public class ResourceContextImpl implements ServerResourceContext
 {
+  // Capacity base on guessumption that custom data count in most cases is either zero or one
+  private static final int INITIAL_CUSTOM_REQUEST_CONTEXT_CAPACITY = 1;
+
   private final MutablePathKeys                     _pathKeys;
   private final RestRequest                         _request;
   private final DataMap                             _parameters;
@@ -92,6 +98,9 @@ public class ResourceContextImpl implements ServerResourceContext
   private final RestLiAttachmentReader              _requestAttachmentReader;
   private final boolean                             _responseAttachmentsAllowed;
   private RestLiResponseAttachments                 _responseStreamingAttachments;
+
+  //Data map to store custom request context data
+  private Map<String, Object>                       _customRequestContext;
 
   /**
    * Default constructor.
@@ -482,5 +491,34 @@ public class ResourceContextImpl implements ServerResourceContext
   public RestLiResponseAttachments getResponseAttachments()
   {
     return _responseStreamingAttachments;
+  }
+
+  @Override
+  public Optional<Object> getCustomContextData(String key)
+  {
+    if (_customRequestContext != null && !Strings.isNullOrEmpty(key) && _customRequestContext.containsKey(key))
+    {
+      return Optional.of(_customRequestContext.get(key));
+    }
+    return Optional.empty();
+  }
+
+  @Override
+  public void putCustomContextData(String key, Object data)
+  {
+    if (!Strings.isNullOrEmpty(key) && data != null)
+    {
+      if (_customRequestContext == null)
+      {
+        _customRequestContext = new HashMap<String, Object>(INITIAL_CUSTOM_REQUEST_CONTEXT_CAPACITY);
+      }
+      _customRequestContext.put(key, data);
+    }
+  }
+
+  @Override
+  public Optional<Object> removeCustomContextData(String key)
+  {
+    return getCustomContextData(key).isPresent() ? Optional.of(_customRequestContext.remove(key)) : Optional.empty();
   }
 }

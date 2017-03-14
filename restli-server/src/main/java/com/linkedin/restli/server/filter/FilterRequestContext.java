@@ -23,6 +23,7 @@ import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.ResourceMethod;
+import com.linkedin.restli.server.CustomRequestContext;
 import com.linkedin.restli.server.PathKeys;
 import com.linkedin.restli.server.ProjectionMode;
 import com.linkedin.restli.server.RestLiRequestData;
@@ -34,7 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-public interface FilterRequestContext
+public interface FilterRequestContext extends CustomRequestContext
 {
   Logger LOG = LoggerFactory.getLogger(FilterRequestContext.class);
 

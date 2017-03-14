@@ -35,6 +35,7 @@ import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 
 /**
@@ -197,5 +198,23 @@ public class FilterRequestContextInternalImpl implements FilterRequestContextInt
   public Map<String, Object> getRequestContextLocalAttrs()
   {
     return Collections.unmodifiableMap(_context.getRawRequestContext().getLocalAttrs());
+  }
+
+  @Override
+  public Optional<Object> getCustomContextData(String key)
+  {
+    return _context.getCustomContextData(key);
+  }
+
+  @Override
+  public void putCustomContextData(String key, Object data)
+  {
+    _context.putCustomContextData(key, data);
+  }
+
+  @Override
+  public Optional<Object> removeCustomContextData(String key)
+  {
+    return _context.removeCustomContextData(key);
   }
 }

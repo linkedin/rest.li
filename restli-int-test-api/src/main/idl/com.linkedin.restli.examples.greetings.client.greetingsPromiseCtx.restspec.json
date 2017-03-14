@@ -108,6 +108,8 @@
     }, {
       "name" : "exceptionTest"
     }, {
+      "name" : "modifyCustomContext"
+    }, {
       "name" : "purge",
       "returns" : "int"
     } ],

@@ -479,4 +479,16 @@ class GreetingsResourceImpl implements KeyValueResource<Long,Greeting>
   {
     throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, "Test Exception");
   }
+
+  @Action(name = "modifyCustomContext")
+  public void modifyCustomContext(BaseResource resource)
+  {
+    java.util.Optional<Object> foo = resource.getContext().getCustomContextData("foo");
+    if (foo.isPresent() && foo.get().equals("bar"))
+    {
+      resource.getContext().putCustomContextData("foo", "newbar");
+      return;
+    }
+    throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR);
+  }
 }
