@@ -1,7 +1,14 @@
+10.?.?
+------
+
+
 10.1.9
 ------
 (RB=924582)
 Modify .pdl grammar to support nested namespace/package scopes.
+
+(RB=894913)
+Added ability to share data between filters and resources.
 
 10.1.8
 ------
