@@ -23,6 +23,7 @@ import com.linkedin.data.DataComplex;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.collections.CheckedUtil;
+import com.linkedin.util.FastByteArrayOutputStream;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -115,7 +116,7 @@ public class JacksonDataCodec implements TextDataCodec
 
   protected byte[] objectToBytes(Object object) throws IOException
   {
-    ByteArrayOutputStream out = new ByteArrayOutputStream(_defaultBufferSize);
+    FastByteArrayOutputStream out = new FastByteArrayOutputStream(_defaultBufferSize);
     writeObject(object, createJsonGenerator(out));
     return out.toByteArray();
   }
