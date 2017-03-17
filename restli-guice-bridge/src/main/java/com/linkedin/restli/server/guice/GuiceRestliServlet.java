@@ -21,6 +21,7 @@ import com.linkedin.parseq.Engine;
 import com.linkedin.r2.filter.FilterChain;
 import com.linkedin.r2.filter.FilterChains;
 import com.linkedin.r2.filter.transport.FilterChainDispatcher;
+import com.linkedin.r2.transport.common.StreamRequestHandlerAdapter;
 import com.linkedin.r2.transport.http.server.RAPServlet;
 import com.linkedin.restli.server.DelegatingTransportDispatcher;
 import com.linkedin.restli.server.RestLiConfig;
@@ -51,10 +52,10 @@ public class GuiceRestliServlet extends HttpServlet
                             OptionalFilterChain filterChain,
                             OptionalEngine engine)
   {
+    final RestLiServer restliServer = new RestLiServer(config, resourceFactory, engine.value);
     _r2Servlet = new RAPServlet(
         new FilterChainDispatcher(
-            new DelegatingTransportDispatcher(
-                new RestLiServer(config, resourceFactory, engine.value)),
+            new DelegatingTransportDispatcher(restliServer, restliServer),
             filterChain.value
         )
     );

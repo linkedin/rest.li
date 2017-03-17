@@ -16,6 +16,7 @@
 
 package com.linkedin.restli.server;
 
+import com.linkedin.r2.transport.common.StreamRequestHandlerAdapter;
 import java.io.IOException;
 import java.net.URI;
 import java.util.concurrent.Executors;
@@ -87,7 +88,7 @@ public class NettyStandaloneLauncher
         .build();
 
     final RestLiServer restServer = new RestLiServer(config, new PrototypeResourceFactory(), engine);
-    final TransportDispatcher dispatcher = new DelegatingTransportDispatcher(restServer);
+    final TransportDispatcher dispatcher = new DelegatingTransportDispatcher(restServer, restServer);
     System.err.println("Netty threadPoolSize: " + threadPoolSize);
     _server = new HttpNettyServerFactory(FilterChains.empty()).createServer(_port, threadPoolSize, dispatcher);
   }

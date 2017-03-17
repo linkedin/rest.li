@@ -17,6 +17,7 @@ package com.linkedin.restli.server;
 
 import com.linkedin.parseq.Engine;
 import com.linkedin.parseq.EngineBuilder;
+import com.linkedin.r2.transport.common.StreamRequestHandlerAdapter;
 import com.linkedin.r2.transport.http.server.AbstractR2Servlet;
 import com.linkedin.r2.transport.http.server.AsyncR2Servlet;
 import com.linkedin.restli.server.resources.PrototypeResourceFactory;
@@ -41,10 +42,10 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Restli HttpServlet implementation.
- * 
+ *
  * <p>Resource packages are provided as a servlet config init parameter in the web.xml.  If
  * providing multiple resource packages, separate them by with the ';' character.</p>
- * 
+ *
  * <pre><code>
  * <web-app>
  * ...
@@ -95,10 +96,9 @@ import org.slf4j.LoggerFactory;
  * <p>JSR-330 Dependency Injection (@Named, @Inject) is not available on Resource classes when using this servlet.
  * If dependency injection is needed, please see rest.li documentation about available integrations with dependency
  * injection frameworks (guice, spring...).</p>
- * 
+ *
  * @author Joe Betz
  */
-
 public class RestliServlet extends HttpServlet
 {
   private static final Logger log = LoggerFactory.getLogger(RestliServlet.class);
@@ -134,10 +134,11 @@ public class RestliServlet extends HttpServlet
         .setTimerScheduler(scheduler)
         .build();
 
-    DelegatingTransportDispatcher dispatcher = new DelegatingTransportDispatcher(new RestLiServer(
+    final RestLiServer restLiServer = new RestLiServer(
         config,
         resourceFactory,
-        engine));
+        engine);
+    DelegatingTransportDispatcher dispatcher = new DelegatingTransportDispatcher(restLiServer, restLiServer);
 
     boolean useAsync = getUseAsync(servletConfig);
     long asyncTimeOut = getAsyncTimeout(servletConfig);

@@ -115,7 +115,7 @@ public class StandaloneLauncher
         .build();
 
     final RestLiServer restServer = new RestLiServer(config, new PrototypeResourceFactory(), engine);
-    final TransportDispatcher dispatcher = new DelegatingTransportDispatcher(restServer);
+    final TransportDispatcher dispatcher = new DelegatingTransportDispatcher(restServer, restServer);
     System.err.println("Jetty threadPoolSize: " + threadPoolSize);
     _server =
         new HttpServerFactory(FilterChains.empty()).createServer(_port,

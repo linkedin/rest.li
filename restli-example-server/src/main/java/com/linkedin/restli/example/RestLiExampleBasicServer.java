@@ -79,7 +79,8 @@ public class RestLiExampleBasicServer
     // using InjectMockResourceFactory to keep examples spring-free
     final ResourceFactory factory = new InjectMockResourceFactory(beanProvider);
 
-    final TransportDispatcher dispatcher = new DelegatingTransportDispatcher(new RestLiServer(config, factory));
+    final RestLiServer restliServer = new RestLiServer(config, factory);
+    final TransportDispatcher dispatcher = new DelegatingTransportDispatcher(restliServer, restliServer);
     return new HttpServerFactory(FilterChains.empty()).createServer(SERVER_PORT, dispatcher);
   }
 

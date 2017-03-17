@@ -46,10 +46,19 @@ public class DelegatingTransportDispatcher implements TransportDispatcher
   // for the legacy code path
   private final RestRequestHandler _restHandler;
 
+  /**
+   * @deprecated Please use {@link #DelegatingTransportDispatcher(RestRequestHandler, StreamRequestHandler)}
+   */
+  @Deprecated
   public DelegatingTransportDispatcher(final RestRequestHandler handler)
   {
-    _streamHandler = new StreamRequestHandlerAdapter(handler);
-    _restHandler = handler;
+    this(handler, new StreamRequestHandlerAdapter(handler));
+  }
+
+  public DelegatingTransportDispatcher(final RestRequestHandler restRequestHandler, final StreamRequestHandler streamRequestHandler)
+  {
+    _restHandler = restRequestHandler;
+    _streamHandler = streamRequestHandler;
   }
 
   @Override

@@ -82,10 +82,10 @@ public class RestliHttpRequestHandler implements HttpRequestHandler {
                                   SpringInjectResourceFactory injectResourceFactory,
                                   FilterChain filterChain)
   {
+    RestLiServer restLiServer = new RestLiServer(config, injectResourceFactory);
     _r2Servlet = new RAPServlet(
         new FilterChainDispatcher(
-            new DelegatingTransportDispatcher(
-                new RestLiServer(config, injectResourceFactory)),
+            new DelegatingTransportDispatcher(restLiServer, restLiServer),
             filterChain
         )
     );
@@ -95,7 +95,7 @@ public class RestliHttpRequestHandler implements HttpRequestHandler {
   {
     _r2Servlet = r2Servlet;
   }
-  
+
   public void handleRequest(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException
   {
     _r2Servlet.service(req, res);

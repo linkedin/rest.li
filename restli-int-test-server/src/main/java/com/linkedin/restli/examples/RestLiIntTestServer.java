@@ -139,7 +139,8 @@ public class RestLiIntTestServer
     final TransportDispatcher dispatcher;
     if (forceUseRestServer)
     {
-      dispatcher = new DelegatingTransportDispatcher(new RestLiServer(config, factory, engine));
+      final RestLiServer restLiServer = new RestLiServer(config, factory, engine);
+      dispatcher = new DelegatingTransportDispatcher(restLiServer, restLiServer);
     }
     else
     {
