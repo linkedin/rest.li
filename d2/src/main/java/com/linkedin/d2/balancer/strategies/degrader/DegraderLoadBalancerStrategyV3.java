@@ -73,7 +73,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
 
   private static final Logger _log = LoggerFactory.getLogger(DegraderLoadBalancerStrategyV3.class);
   private static final int MAX_HOSTS_TO_CHECK_QUARANTINE = 10;
-  private static final int MAX_RETRIES_TO_CHECK_QUARANTINE = 2;
+  private static final int MAX_RETRIES_TO_CHECK_QUARANTINE = 5;
 
   private boolean                                     _updateEnabled;
   private volatile DegraderLoadBalancerStrategyConfig _config;
@@ -1073,7 +1073,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       public void onError(Throwable e)
       {
         // Do nothing as the quarantine is disabled by default
-        _rateLimitedLogger.error("Error to enable quarantine. Health checking failed for service {}: ",
+        _rateLimitedLogger.warn("Error to enable quarantine. Health checking failed for service {}: ",
             _state._serviceName, e);
       }
 
