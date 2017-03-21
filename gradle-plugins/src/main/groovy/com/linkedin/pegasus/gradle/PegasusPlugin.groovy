@@ -494,7 +494,11 @@ class PegasusPlugin implements Plugin<Project>
 
   public static final String DATA_TEMPLATE_FILE_SUFFIX = '.pdsc'
   public static final String PDL_FILE_SUFFIX = '.pdl'
-  public static final Collection<String> DATA_TEMPLATE_FILE_SUFFIXES = [DATA_TEMPLATE_FILE_SUFFIX, PDL_FILE_SUFFIX]
+  public static final Collection<String> DATA_TEMPLATE_FILE_SUFFIXES = [
+      DATA_TEMPLATE_FILE_SUFFIX
+      // TODO(jbetz): Enable once we are ready to use PDL.
+      // PDL_FILE_SUFFIX
+  ]
   public static final String IDL_FILE_SUFFIX = '.restspec.json'
   public static final String SNAPSHOT_FILE_SUFFIX = '.snapshot.json'
   public static final String SNAPSHOT_COMPAT_REQUIREMENT = 'rest.model.compatibility'
@@ -729,7 +733,8 @@ class PegasusPlugin implements Plugin<Project>
       // if it can fail, fail it early
       configureRestModelGeneration(project, sourceSet)
 
-      configureConversionUtilities(project, sourceSet)
+      // TODO (jbetz): Enable once https://rb.corp.linkedin.com/r/940808/ issues are resolved.
+      //configureConversionUtilities(project, sourceSet)
 
       configureDataTemplateGeneration(project, sourceSet)
 
