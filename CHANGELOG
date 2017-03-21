@@ -1,7 +1,14 @@
+10.1.12
+------
+
+
 10.1.11
 ------
 (RB=940808)
 Add gradle task to translate .pdsc to .pdl
+(RB=945938)
+Increase d2 quarantine pre-check retry times
+
 
 10.1.10
 ------
