@@ -18,10 +18,8 @@ package com.linkedin.restli.internal.client;
 
 
 import com.linkedin.data.DataMap;
-import com.linkedin.data.collections.CheckedUtil;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.client.response.BatchKVResponse;
-import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.ComplexKeySpec;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
@@ -32,9 +30,7 @@ import com.linkedin.restli.internal.client.response.BatchEntityResponse;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 
 /**
@@ -82,47 +78,6 @@ public class BatchEntityResponseDecoder<K, V extends RecordTemplate> extends Res
       return null;
     }
 
-    final DataMap mergedResults = new DataMap();
-    final DataMap inputResults = dataMap.containsKey(BatchResponse.RESULTS) ? dataMap.getDataMap(BatchResponse.RESULTS)
-                                                                            : new DataMap();
-    final DataMap inputStatuses = dataMap.containsKey(BatchResponse.STATUSES) ? dataMap.getDataMap(BatchResponse.STATUSES)
-                                                                              : new DataMap();
-    final DataMap inputErrors = dataMap.containsKey(BatchResponse.ERRORS) ? dataMap.getDataMap(BatchResponse.ERRORS)
-                                                                          : new DataMap();
-
-    final Set<String> mergedKeys = new HashSet<String>(inputResults.keySet());
-    mergedKeys.addAll(inputStatuses.keySet());
-    mergedKeys.addAll(inputErrors.keySet());
-
-    for (String key : mergedKeys)
-    {
-      final DataMap entityResponseData = new DataMap();
-
-      final Object entityData = inputResults.get(key);
-      if (entityData != null)
-      {
-        CheckedUtil.putWithoutChecking(entityResponseData, EntityResponse.ENTITY, entityData);
-      }
-
-      final Object statusData = inputStatuses.get(key);
-      if (statusData != null)
-      {
-        CheckedUtil.putWithoutChecking(entityResponseData, EntityResponse.STATUS, statusData);
-      }
-
-      final Object errorData = inputErrors.get(key);
-      if (errorData != null)
-      {
-        CheckedUtil.putWithoutChecking(entityResponseData, EntityResponse.ERROR, errorData);
-      }
-
-      CheckedUtil.putWithoutChecking(mergedResults, key, entityResponseData);
-    }
-
-    final DataMap responseData = new DataMap();
-    CheckedUtil.putWithoutChecking(responseData, BatchKVResponse.RESULTS, mergedResults);
-    CheckedUtil.putWithoutChecking(responseData, BatchKVResponse.ERRORS, inputErrors);
-
-    return new BatchEntityResponse<K, V>(responseData, _keyType, _entityType, _keyParts, _complexKeyType, version);
+    return new BatchEntityResponse<>(dataMap, _keyType, _entityType, _keyParts, _complexKeyType, version);
   }
 }

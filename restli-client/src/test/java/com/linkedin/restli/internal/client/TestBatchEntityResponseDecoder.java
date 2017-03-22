@@ -108,6 +108,9 @@ public class TestBatchEntityResponseDecoder
     Assert.assertEquals(results.get(statusKey).getStatus(), _status);
     Assert.assertEquals(results.get(errorKey).getError(), _error);
     Assert.assertEquals(errors.get(errorKey), _error);
+
+    // Check that the response still contains the original data map
+    Assert.assertEquals(response.data(), data);
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchEntityResponseDataProvider")

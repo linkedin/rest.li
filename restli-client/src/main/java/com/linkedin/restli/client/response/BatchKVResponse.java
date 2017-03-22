@@ -230,11 +230,19 @@ public class BatchKVResponse<K, V extends RecordTemplate> extends RecordTemplate
   }
 
   protected void deserializeData(TypeSpec<K> keyType,
-                                 Map<String, CompoundKey.TypeInfo> keyParts,
-                                 ComplexKeySpec<?, ?> complexKeyType,
-                                 ProtocolVersion version)
+      Map<String, CompoundKey.TypeInfo> keyParts,
+      ComplexKeySpec<?, ?> complexKeyType,
+      ProtocolVersion version)
   {
-    final DataMap resultsRaw = data().getDataMap(RESULTS);
+    deserializeData(data(), keyType, keyParts, complexKeyType, version);
+  }
+
+  protected void deserializeData(DataMap data, TypeSpec<K> keyType,
+      Map<String, CompoundKey.TypeInfo> keyParts,
+      ComplexKeySpec<?, ?> complexKeyType,
+      ProtocolVersion version)
+  {
+    final DataMap resultsRaw = data.getDataMap(RESULTS);
     if (resultsRaw == null)
     {
       _results = new ParamlessKeyHashMap<V>(complexKeyType);
@@ -252,7 +260,7 @@ public class BatchKVResponse<K, V extends RecordTemplate> extends RecordTemplate
       }
     }
 
-    final DataMap errorsRaw = data().getDataMap(ERRORS);
+    final DataMap errorsRaw = data.getDataMap(ERRORS);
     if (errorsRaw == null)
     {
       _errors = new ParamlessKeyHashMap<ErrorResponse>(complexKeyType);

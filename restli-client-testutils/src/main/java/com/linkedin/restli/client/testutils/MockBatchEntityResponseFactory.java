@@ -175,43 +175,40 @@ public class MockBatchEntityResponseFactory
                                                                     Map<K, ErrorResponse> errorResponses,
                                                                     ProtocolVersion version)
   {
-    Set<K> mergedKeys = new HashSet<K>();
-    mergedKeys.addAll(recordTemplates.keySet());
-    mergedKeys.addAll(statuses.keySet());
-    mergedKeys.addAll(errorResponses.keySet());
-
     DataMap batchResponseDataMap = new DataMap();
-    DataMap rawBatchData = new DataMap();
-    for (K key : mergedKeys)
+    DataMap resultData = new DataMap();
+    for (K key : recordTemplates.keySet())
     {
-      DataMap entityResponseData = new DataMap();
+      String stringKey = URIParamUtils.encodeKeyForBody(key, false, version);
       RecordTemplate recordTemplate = recordTemplates.get(key);
       if (recordTemplate != null)
       {
-        entityResponseData.put(EntityResponse.ENTITY, recordTemplate.data());
+        resultData.put(stringKey, recordTemplate.data());
       }
+    }
+    DataMap statusData = new DataMap();
+    for(K key : statuses.keySet())
+    {
+      String stringKey = URIParamUtils.encodeKeyForBody(key, false, version);
       HttpStatus status = statuses.get(key);
       if (status != null)
       {
-        entityResponseData.put(EntityResponse.STATUS, status.getCode());
+        statusData.put(stringKey, status.getCode());
       }
+    }
+    DataMap errorData = new DataMap();
+    for(K key : errorResponses.keySet())
+    {
+      String stringKey = URIParamUtils.encodeKeyForBody(key, false, version);
       ErrorResponse errorResponse = errorResponses.get(key);
       if (errorResponse != null)
       {
-        entityResponseData.put(EntityResponse.ERROR, errorResponse.data());
+        errorData.put(stringKey, errorResponse.data());
       }
-
-      String stringKey = URIParamUtils.encodeKeyForBody(key, false, version);
-      rawBatchData.put(stringKey, entityResponseData);
     }
-    batchResponseDataMap.put(BatchResponse.RESULTS, rawBatchData);
-
-    DataMap rawErrorData = new DataMap();
-    for (Map.Entry<K, ErrorResponse> errorResponse : errorResponses.entrySet())
-    {
-      rawErrorData.put(URIParamUtils.encodeKeyForBody(errorResponse.getKey(), false, version), errorResponse.getValue().data());
-    }
-    batchResponseDataMap.put(BatchResponse.ERRORS, rawErrorData);
+    batchResponseDataMap.put(BatchResponse.RESULTS, resultData);
+    batchResponseDataMap.put(BatchResponse.STATUSES, statusData);
+    batchResponseDataMap.put(BatchResponse.ERRORS, errorData);
     return batchResponseDataMap;
   }
 
