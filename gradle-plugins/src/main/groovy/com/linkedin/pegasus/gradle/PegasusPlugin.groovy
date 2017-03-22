@@ -1335,8 +1335,9 @@ class PegasusPlugin implements Plugin<Project>
     compileTask.dependsOn(generateDataTemplatesTask)
 
     // Convert all PDL files back to PDSC for publication
-    // TODO (jbetz): Remove this conversion when we're ready to publish PDL files directly into dataTemplate jars.
-    Task preparePdlSchemasForPublishTask = project.task(
+    // TODO (jbetz): Enable once https://rb.corp.linkedin.com/r/940808/ issues are resolved and make dataTemplateJarTask depend on this.
+    // TODO (jbetz): Remove this conversion permanently when we're ready to publish PDL files directly into dataTemplate jars.
+    /*Task preparePdlSchemasForPublishTask = project.task(
         sourceSet.name + 'TranslateSchemas',
         type: TranslateSchemasTask) {
       inputDir = dataSchemaDir
@@ -1345,7 +1346,7 @@ class PegasusPlugin implements Plugin<Project>
       codegenClasspath = project.configurations.pegasusPlugin
       sourceFormat = SchemaFileType.PDL
       destinationFormat = SchemaFileType.PDSC
-    }
+    }*/
 
     // Copy all PDSC files directly over for publication
     Task preparePdscSchemasForPublishTask = project.task(
@@ -1360,7 +1361,7 @@ class PegasusPlugin implements Plugin<Project>
     // create data template jar file
     Task dataTemplateJarTask = project.task(sourceSet.name + 'DataTemplateJar',
                                             type: Jar,
-                                            dependsOn: [compileTask, preparePdlSchemasForPublishTask, preparePdscSchemasForPublishTask]) {
+                                            dependsOn: [compileTask, preparePdscSchemasForPublishTask]) {
       from (publishableSchemasBuildDir) {
         eachFile {
           it.path = 'pegasus' + File.separatorChar + it.path.toString()

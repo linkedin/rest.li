@@ -1,6 +1,7 @@
 10.1.12
 ------
-
+(RB=948600)
+Disable TranslateSchemas task in pegasus plugin. It was incorrectly being enabled for all source sets.
 
 10.1.11
 ------
