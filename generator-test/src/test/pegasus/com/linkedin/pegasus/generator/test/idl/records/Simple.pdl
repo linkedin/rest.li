@@ -7,5 +7,5 @@ record Simple {
   /**
    * A simple field
    */
-  message: string?
+  message: optional string
 }

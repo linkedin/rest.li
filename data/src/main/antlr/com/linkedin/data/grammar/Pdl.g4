@@ -120,10 +120,10 @@ fieldSelection: OPEN_BRACE fields+=fieldDeclaration* CLOSE_BRACE;
 fieldIncludes: INCLUDES typeAssignment+;
 
 fieldDeclaration returns [String name, boolean isOptional]:
-    doc=schemadoc? props+=propDeclaration* fieldName=identifier COLON type=typeAssignment QUESTION_MARK?
+    doc=schemadoc? props+=propDeclaration* fieldName=identifier COLON OPTIONAL? type=typeAssignment
     fieldDefault? {
   $name = $identifier.value;
-  $isOptional = $QUESTION_MARK() != null;
+  $isOptional = $OPTIONAL() != null;
 };
 
 fieldDefault: EQ jsonValue;
@@ -176,6 +176,7 @@ ARRAY: 'array';
 ENUM: 'enum';
 FIXED: 'fixed';
 IMPORT: 'import';
+OPTIONAL: 'optional';
 PACKAGE: 'package';
 MAP: 'map';
 NAMESPACE: 'namespace';
@@ -195,7 +196,6 @@ AT: '@';
 COLON: ':';
 DOT: '.';
 EQ: '=';
-QUESTION_MARK: '?';
 
 BOOLEAN_LITERAL: 'true' | 'false';
 NULL_LITERAL: 'null';

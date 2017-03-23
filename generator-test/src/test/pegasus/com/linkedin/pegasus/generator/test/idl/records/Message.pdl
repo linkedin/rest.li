@@ -1,6 +1,6 @@
 namespace com.linkedin.pegasus.generator.test.idl.records
 
 record Message {
-  title: string?
-  body: string?
+  title: optional string
+  body: optional string
 }

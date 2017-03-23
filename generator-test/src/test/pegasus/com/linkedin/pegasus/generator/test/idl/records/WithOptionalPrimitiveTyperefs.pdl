@@ -1,11 +1,11 @@
 namespace com.linkedin.pegasus.generator.test.idl.records
 
 record WithOptionalPrimitiveTyperefs {
-  intField: typeref OptionalIntTyperef = int ?
-  longField: typeref OptionalLongTyperef = long ?
-  floatField: typeref OptionalFloatTyperef = float ?
-  doubleField: typeref OptionalDoubleTyperef = double ?
-  booleanField: typeref OptionalBooleanTyperef = boolean ?
-  stringField: typeref OptionalStringTyperef = string ?
-  bytesField: typeref OptionalBytesTyperef = bytes ?
+  intField: optional typeref OptionalIntTyperef = int
+  longField: optional typeref OptionalLongTyperef = long
+  floatField: optional typeref OptionalFloatTyperef = float
+  doubleField: optional typeref OptionalDoubleTyperef = double
+  booleanField: optional typeref OptionalBooleanTyperef = boolean
+  stringField: optional typeref OptionalStringTyperef = string
+  bytesField: optional typeref OptionalBytesTyperef = bytes
 }

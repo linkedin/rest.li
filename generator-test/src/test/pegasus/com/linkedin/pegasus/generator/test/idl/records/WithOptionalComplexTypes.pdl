@@ -4,11 +4,11 @@ import com.linkedin.pegasus.generator.test.idl.customtypes.CustomInt
 import com.linkedin.pegasus.generator.test.idl.enums.Fruits
 
 record WithOptionalComplexTypes {
-  `record`: Simple?
-  `enum`: Fruits?
-  `union`: union[int, string, Simple]?
-  `array`: array[int]?
-  `map`: map[string, int]?
-  complexMap: map[string, Simple]?
-  custom: CustomInt?
+  `record`: optional Simple
+  `enum`: optional Fruits
+  `union`: optional union[int, string, Simple]
+  `array`: optional array[int]
+  `map`: optional map[string, int]
+  complexMap: optional map[string, Simple]
+  custom: optional CustomInt
 }

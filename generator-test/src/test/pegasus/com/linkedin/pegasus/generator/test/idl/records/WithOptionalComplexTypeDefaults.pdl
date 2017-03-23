@@ -4,10 +4,10 @@ import com.linkedin.pegasus.generator.test.idl.customtypes.CustomInt
 import com.linkedin.pegasus.generator.test.idl.enums.Fruits
 
 record WithOptionalComplexTypeDefaults {
-  `record`: Simple? = { "message": "defaults!" }
-  `enum`: Fruits? = "APPLE"
-  `union`: union[int, string, Simple]? = { "int": 1 }
-  `array`: array[int]? = [1]
-  `map`: map[string, int]? = { "a": 1 }
-  `custom`: CustomInt? = 1
+  `record`: optional Simple = { "message": "defaults!" }
+  `enum`: optional Fruits = "APPLE"
+  `union`: optional union[int, string, Simple] = { "int": 1 }
+  `array`: optional array[int] = [1]
+  `map`: optional map[string, int] = { "a": 1 }
+  `custom`: optional CustomInt = 1
 }

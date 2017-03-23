@@ -1,11 +1,11 @@
 namespace com.linkedin.pegasus.generator.test.idl.records
 
 record WithOptionalPrimitives {
-  intField: int?
-  longField: long?
-  floatField: float?
-  doubleField: double?
-  booleanField: boolean?
-  stringField: string?
-  bytesField: bytes?
+  intField: optional int
+  longField: optional long
+  floatField: optional float
+  doubleField: optional double
+  booleanField: optional boolean
+  stringField: optional string
+  bytesField: optional bytes
 }

@@ -27,7 +27,7 @@ import org.apache.commons.lang3.StringUtils;
 public class SchemaToPdlEncoder extends AbstractSchemaEncoder
 {
   private static final Set<String> KEYWORDS = new HashSet<>(Arrays.asList(
-    "array", "enum", "fixed", "import", "includes", "map", "namespace", "package",
+    "array", "enum", "fixed", "import", "includes", "map", "namespace", "optional", "package",
 		"record", "typeref", "union", "null", "true", "false"
   ));
 
@@ -230,11 +230,11 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
         indent();
         write(escapeIdentifier(field.getName()));
         write(": ");
-        writeReferenceOrInline(field.getType(), field.isDeclaredInline());
         if (field.getOptional())
         {
-          write("?");
+          write("optional ");
         }
+        writeReferenceOrInline(field.getType(), field.isDeclaredInline());
 
         if (field.getDefault() != null)
         {
