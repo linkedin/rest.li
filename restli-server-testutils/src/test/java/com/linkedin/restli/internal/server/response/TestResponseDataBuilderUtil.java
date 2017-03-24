@@ -38,7 +38,7 @@ public class TestResponseDataBuilderUtil
   private RestLiServiceException _exception = new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR);
 
   @Test
-  protected void testRecordResponseDataBuilder()
+  public void testRecordResponseDataBuilder()
   {
     verifyRecordResponseData(ResponseDataBuilderUtil.buildGetResponseData(HttpStatus.S_200_OK, new EmptyRecord()), GET);
     verifyExceptionRecordResponseData(ResponseDataBuilderUtil.buildGetResponseData(_exception), GET);
@@ -53,7 +53,7 @@ public class TestResponseDataBuilderUtil
   }
 
   @Test
-  protected void testBatchCreateResponseDataBuilder()
+  public void testBatchCreateResponseDataBuilder()
   {
     verifyBatchCreateResponseData(
         ResponseDataBuilderUtil.buildBatchCreateResponseData(
@@ -64,7 +64,7 @@ public class TestResponseDataBuilderUtil
   }
 
   @Test
-  protected void testCollectionResponseDataBuilder()
+  public void testCollectionResponseDataBuilder()
   {
     verifyCollectionResponseData(
         ResponseDataBuilderUtil.buildFinderResponseData(
@@ -80,7 +80,7 @@ public class TestResponseDataBuilderUtil
   }
 
   @Test
-  protected void testBatchResponseDataBuilder()
+  public void testBatchResponseDataBuilder()
   {
     verifyBatchResponseData(
         ResponseDataBuilderUtil.buildBatchGetResponseData(
@@ -108,7 +108,7 @@ public class TestResponseDataBuilderUtil
   }
 
   @Test
-  protected void testStatusResponseDataBuilder()
+  public void testStatusResponseDataBuilder()
   {
     verifyStatusResponseData(ResponseDataBuilderUtil.buildDeleteResponseData(HttpStatus.S_200_OK), DELETE);
     verifyExceptionStatusResponseData(ResponseDataBuilderUtil.buildDeleteResponseData(_exception), DELETE);
@@ -180,8 +180,8 @@ public class TestResponseDataBuilderUtil
 
   private void verifyExceptionBatchResponseData(RestLiResponseData responseData, ResourceMethod expectedMethod)
   {
-    assertNotNull(responseData.getBatchResponseEnvelope().getBatchResponseMap());
-    assertNull(responseData.getServiceException());
+    assertNull(responseData.getBatchResponseEnvelope().getBatchResponseMap());
+    assertNotNull(responseData.getServiceException());
     assertEquals(responseData.getResourceMethod(), expectedMethod);
   }
 

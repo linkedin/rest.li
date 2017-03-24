@@ -229,7 +229,7 @@ public final class ResponseDataBuilderUtil
   {
     final RestLiResponseDataImpl responseData =
         new RestLiResponseDataImpl(status, new HashMap<String, String>(), new ArrayList<HttpCookie>());
-    responseData.setResponseEnvelope(new BatchUpdateResponseEnvelope(batchResponseMap, responseData));
+    responseData.setResponseEnvelope(new BatchGetResponseEnvelope(batchResponseMap, responseData));
     return responseData;
   }
 

@@ -1,6 +1,7 @@
 10.1.15
 -------
-
+(RB=951527)
+Fix one of ResponseDataBuilderUtil helper methods to return the correct ResponseEnvelope type and re-enabled unit tests which weren't running.
 
 10.1.14
 -------
