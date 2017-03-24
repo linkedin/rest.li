@@ -1,5 +1,7 @@
 10.1.14
 -------
+(RB=948921)
+Extract interface from RestClient and add a DisruptRestClient decorator class
 
 10.1.13
 ------

@@ -40,7 +40,6 @@ import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamRequestBuilder;
 import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.message.stream.entitystream.ByteStringWriter;
-import com.linkedin.r2.transport.common.Client;
 import com.linkedin.restli.client.multiplexer.MultiplexedCallback;
 import com.linkedin.restli.client.multiplexer.MultiplexedRequest;
 import com.linkedin.restli.client.multiplexer.MultiplexedResponse;
@@ -119,15 +118,13 @@ import javax.mail.internet.ParseException;
  * @author dellamag
  * @author Eran Leshem
  */
-public class RestClient
-{
-  private static final String MULTIPLEXER_RESOURCE = "mux";
+public class RestClient implements Client {
   private static final JacksonDataCodec  JACKSON_DATA_CODEC = new JacksonDataCodec();
   private static final PsonDataCodec     PSON_DATA_CODEC    = new PsonDataCodec();
   private static final List<AcceptType>  DEFAULT_ACCEPT_TYPES = Collections.emptyList();
   private static final ContentType DEFAULT_CONTENT_TYPE = ContentType.JSON;
   private static final Random RANDOM_INSTANCE = new Random();
-  private final Client _client;
+  private final com.linkedin.r2.transport.common.Client _client;
 
   private final String _uriPrefix;
   private final List<AcceptType> _acceptTypes;
@@ -138,7 +135,7 @@ public class RestClient
   private final boolean _forceUseNextVersionOverride =
       "true".equalsIgnoreCase(System.getProperty(RestConstants.RESTLI_FORCE_USE_NEXT_VERSION_OVERRIDE));
 
-  public RestClient(Client client, String uriPrefix)
+  public RestClient(com.linkedin.r2.transport.common.Client client, String uriPrefix)
   {
     this(client, uriPrefix, DEFAULT_CONTENT_TYPE, DEFAULT_ACCEPT_TYPES);
   }
@@ -147,7 +144,8 @@ public class RestClient
    * @deprecated please use {@link RestliRequestOptions} to configure accept types.
    */
   @Deprecated
-  public RestClient(Client client, String uriPrefix, List<AcceptType> acceptTypes)
+  public RestClient(com.linkedin.r2.transport.common.Client client,
+      String uriPrefix, List<AcceptType> acceptTypes)
   {
     this(client, uriPrefix, DEFAULT_CONTENT_TYPE, acceptTypes);
   }
@@ -156,7 +154,8 @@ public class RestClient
    * @deprecated please use {@link RestliRequestOptions} to configure content type and accept types.
    */
   @Deprecated
-  public RestClient(Client client, String uriPrefix, ContentType contentType, List<AcceptType> acceptTypes)
+  public RestClient(com.linkedin.r2.transport.common.Client client,
+      String uriPrefix, ContentType contentType, List<AcceptType> acceptTypes)
   {
     _client = client;
     _uriPrefix = (uriPrefix == null) ? null : uriPrefix.trim();
@@ -164,10 +163,7 @@ public class RestClient
     _contentType = contentType;
   }
 
-  /**
-   * Shuts down the underlying {@link Client} which this RestClient wraps.
-   * @param callback
-   */
+  @Override
   public void shutdown(Callback<None> callback)
   {
     _client.shutdown(callback);
@@ -175,90 +171,47 @@ public class RestClient
 
   /**
    * @return The URI Prefix that this RestClient is using.
+   * @deprecated Use PrefixAwareRestClient#getPrefix instead.
    */
+  @Deprecated
   public String getURIPrefix() {
     return _uriPrefix;
   }
 
-  /**
-   * Sends a type-bound REST request, returning a future.
-   *
-   *
-   * @param request to send
-   * @param requestContext context for the request
-   * @return response future
-   */
-  public <T> ResponseFuture<T> sendRequest(Request<T> request,
-                                           RequestContext requestContext)
+  @Override
+  public <T> ResponseFuture<T> sendRequest(Request<T> request, RequestContext requestContext)
   {
     FutureCallback<Response<T>> callback = new FutureCallback<Response<T>>();
     sendRequest(request, requestContext, callback);
     return new ResponseFutureImpl<T>(callback);
   }
 
-  /**
-   * Sends a type-bound REST request, returning a future.
-   *
-   *
-   * @param request to send
-   * @param requestContext context for the request
-   * @param errorHandlingBehavior error handling behavior
-   * @return response future
-   */
-  public <T> ResponseFuture<T> sendRequest(Request<T> request,
-                                           RequestContext requestContext,
-                                           ErrorHandlingBehavior errorHandlingBehavior)
+  @Override
+  public <T> ResponseFuture<T> sendRequest(Request<T> request, RequestContext requestContext,
+      ErrorHandlingBehavior errorHandlingBehavior)
   {
     FutureCallback<Response<T>> callback = new FutureCallback<Response<T>>();
     sendRequest(request, requestContext, callback);
     return new ResponseFutureImpl<T>(callback, errorHandlingBehavior);
   }
 
-  /**
-   * Sends a type-bound REST request, returning a future.
-   *
-   *
-   * @param requestBuilder to invoke {@link com.linkedin.restli.client.RequestBuilder#build()} on to obtain the request
-   *                       to send.
-   * @param requestContext context for the request
-   * @return response future
-   */
+  @Override
   public <T> ResponseFuture<T> sendRequest(RequestBuilder<? extends Request<T>> requestBuilder,
-                                           RequestContext requestContext)
+      RequestContext requestContext)
   {
     return sendRequest(requestBuilder.build(), requestContext);
   }
 
-  /**
-   * Sends a type-bound REST request, returning a future.
-   *
-   *
-   * @param requestBuilder to invoke {@link com.linkedin.restli.client.RequestBuilder#build()} on to obtain the request
-   *                       to send.
-   * @param requestContext context for the request
-   * @param errorHandlingBehavior error handling behavior
-   * @return response future
-   */
+  @Override
   public <T> ResponseFuture<T> sendRequest(RequestBuilder<? extends Request<T>> requestBuilder,
-                                           RequestContext requestContext,
-                                           ErrorHandlingBehavior errorHandlingBehavior)
+      RequestContext requestContext, ErrorHandlingBehavior errorHandlingBehavior)
   {
     return sendRequest(requestBuilder.build(), requestContext, errorHandlingBehavior);
   }
 
-  /**
-   * Sends a type-bound REST request using a callback.
-   *
-   * @param request to send
-   * @param requestContext context for the request
-   * @param callback to call on request completion. In the event of an error, the callback
-   *                 will receive a {@link com.linkedin.r2.RemoteInvocationException}. If a valid
-   *                 error response was received from the remote server, the callback will receive
-   *                 a {@link RestLiResponseException} containing the error details.
-   */
-  public <T> void sendRequest(final Request<T> request,
-                              final RequestContext requestContext,
-                              final Callback<Response<T>> callback)
+  @Override
+  public <T> void sendRequest(final Request<T> request, final RequestContext requestContext,
+      final Callback<Response<T>> callback)
   {
     //Here we need to decide if we want to use StreamRequest/StreamResponse or RestRequest/RestResponse.
     //Eventually we will move completely to StreamRequest/StreamResponse for all traffic.
@@ -310,7 +263,7 @@ public class RestClient
 
   /**
    * @deprecated as this API will change to private in a future release. Please use other APIs in this class, such as
-   * {@link RestClient#sendRequest(com.linkedin.restli.client.Request,com.linkedin.r2.message.RequestContext, com.linkedin.common.callback.Callback)}
+   * {@link RestClient#sendRequest(Request,RequestContext, Callback)}
    * to send type-bound REST requests.
    *
    * Sends a type-bound REST request and answers on the provided callback.
@@ -320,9 +273,8 @@ public class RestClient
    * @param callback to call on request completion
    */
   @Deprecated
-  public <T> void sendRestRequest(final Request<T> request,
-                                  RequestContext requestContext,
-                                  Callback<RestResponse> callback)
+  public <T> void sendRestRequest(final Request<T> request, RequestContext requestContext,
+      Callback<RestResponse> callback)
   {
     //We need this until we remove the deprecation above since clients could attempt these:
     if (request.getStreamingAttachments() != null)
@@ -588,137 +540,65 @@ public class RestClient
     return null;
   }
 
-  /**
-   * Sends a type-bound REST request using a callback.
-   *
-   * @param requestBuilder to invoke {@link com.linkedin.restli.client.RequestBuilder#build()} on to obtain the request
-   *                       to send.
-   * @param requestContext context for the request
-   * @param callback to call on request completion. In the event of an error, the callback
-   *                 will receive a {@link com.linkedin.r2.RemoteInvocationException}. If a valid
-   *                 error response was received from the remote server, the callback will receive
-   *                 a {@link RestLiResponseException} containing the error details.
-   */
-  public <T> void sendRequest(final RequestBuilder<? extends Request<T>> requestBuilder,
-                              RequestContext requestContext,
-                              Callback<Response<T>> callback)
+  @Override
+  public <T> void sendRequest(final RequestBuilder<? extends Request<T>> requestBuilder, RequestContext requestContext,
+      Callback<Response<T>> callback)
   {
     sendRequest(requestBuilder.build(), requestContext, callback);
   }
 
-  /**
-   * Sends a type-bound REST request, returning a future
-   * @param request to send
-   * @return response future
-   */
+  @Override
   public <T> ResponseFuture<T> sendRequest(Request<T> request)
   {
     return sendRequest(request, new RequestContext());
   }
 
-  /**
-   * Sends a type-bound REST request, returning a future
-   * @param request to send
-   * @param errorHandlingBehavior error handling behavior
-   * @return response future
-   */
+  @Override
   public <T> ResponseFuture<T> sendRequest(Request<T> request, ErrorHandlingBehavior errorHandlingBehavior)
   {
     return sendRequest(request, new RequestContext(), errorHandlingBehavior);
   }
 
-  /**
-   * Sends a type-bound REST request, returning a future
-   *
-   * @param requestBuilder to invoke {@link com.linkedin.restli.client.RequestBuilder#build()} on to obtain the request
-   *                       to send.
-   * @return response future
-   */
+  @Override
   public <T> ResponseFuture<T> sendRequest(RequestBuilder<? extends Request<T>> requestBuilder)
   {
     return sendRequest(requestBuilder.build(), new RequestContext());
   }
 
-  /**
-   * Sends a type-bound REST request, returning a future
-   *
-   * @param requestBuilder to invoke {@link com.linkedin.restli.client.RequestBuilder#build()} on to obtain the request
-   *                       to send.
-   * @param errorHandlingBehavior error handling behavior
-   * @return response future
-   */
+  @Override
   public <T> ResponseFuture<T> sendRequest(RequestBuilder<? extends Request<T>> requestBuilder,
-                                           ErrorHandlingBehavior errorHandlingBehavior)
+      ErrorHandlingBehavior errorHandlingBehavior)
   {
     return sendRequest(requestBuilder.build(), new RequestContext(), errorHandlingBehavior);
   }
 
-  /**
-   * Sends a type-bound REST request using a callback.
-   *
-   * @param request to send
-   * @param callback to call on request completion. In the event of an error, the callback
-   *                 will receive a {@link com.linkedin.r2.RemoteInvocationException}. If a valid
-   *                 error response was received from the remote server, the callback will receive
-   *                 a {@link RestLiResponseException} containing the error details.
-   */
+  @Override
   public <T> void sendRequest(final Request<T> request, Callback<Response<T>> callback)
   {
     sendRequest(request, new RequestContext(), callback);
   }
 
-  /**
-   * Sends a type-bound REST request using a callback.
-   *
-   * @param requestBuilder to invoke {@link com.linkedin.restli.client.RequestBuilder#build()} on to obtain the request
-   *                       to send.
-   * @param callback to call on request completion. In the event of an error, the callback
-   *                 will receive a {@link com.linkedin.r2.RemoteInvocationException}. If a valid
-   *                 error response was received from the remote server, the callback will receive
-   *                 a {@link RestLiResponseException} containing the error details.
-   */
+  @Override
   public <T> void sendRequest(final RequestBuilder<? extends Request<T>> requestBuilder, Callback<Response<T>> callback)
   {
     sendRequest(requestBuilder.build(), new RequestContext(), callback);
   }
 
-  /**
-   * Sends a multiplexed request. Responses are provided to individual requests' callbacks.
-   *
-   * The request is sent using the protocol version 2.0.
-   *
-   * @param multiplexedRequest the request to send.
-   */
+  @Override
   public void sendRequest(MultiplexedRequest multiplexedRequest)
   {
     sendRequest(multiplexedRequest, Callbacks.<MultiplexedResponse>empty());
   }
 
-  /**
-   * Sends a multiplexed request. Responses are provided to individual requests' callbacks. After all responses are
-   * received the given aggregated callback is invoked.
-   *
-   * The request is sent using the protocol version 2.0.
-   *
-   * @param multiplexedRequest  the multiplexed request to send.
-   * @param callback the aggregated response callback.
-   */
+  @Override
   public void sendRequest(MultiplexedRequest multiplexedRequest, Callback<MultiplexedResponse> callback)
   {
     sendRequest(multiplexedRequest, new RequestContext(), callback);
   }
 
-  /**
-   * Sends a multiplexed request. Responses are provided to individual requests' callbacks. After all responses are
-   * received the given aggregated callback is invoked.
-   *
-   * The request is sent using the protocol version 2.0.
-   *
-   * @param multiplexedRequest  the multiplexed request to send.
-   * @param requestContext context for the request
-   * @param callback the aggregated response callback.
-   */
-  public void sendRequest(MultiplexedRequest multiplexedRequest, RequestContext requestContext, Callback<MultiplexedResponse> callback)
+  @Override
+  public void sendRequest(MultiplexedRequest multiplexedRequest, RequestContext requestContext,
+      Callback<MultiplexedResponse> callback)
   {
     MultiplexedCallback muxCallback = new MultiplexedCallback(multiplexedRequest.getCallbacks(), callback);
     addDisruptContext(MULTIPLEXER_RESOURCE, requestContext);
@@ -1029,6 +909,12 @@ public class RestClient
       return;
     }
 
+    // Do not evaluate further if disrupt source key is already present in the request context
+    if (requestContext.getLocalAttr(DisruptContext.DISRUPT_SOURCE_KEY) != null)
+    {
+      return;
+    }
+
     ArgumentUtil.notNull(resource, "resource");
 
     final DisruptContext disruptContext;
@@ -1048,6 +934,7 @@ public class RestClient
       }
     }
 
+    requestContext.putLocalAttr(DisruptContext.DISRUPT_SOURCE_KEY, controller.getClass().getCanonicalName());
     if (disruptContext != null)
     {
       requestContext.putLocalAttr(DisruptContext.DISRUPT_CONTEXT_KEY, disruptContext);

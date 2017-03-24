@@ -7,6 +7,7 @@ dependencies {
 
   testCompile externalDependency.testng
   testCompile externalDependency.easymock
+  testCompile externalDependency.mockito
   testCompile project(path: ':restli-example-api', configuration: 'dataTemplate')
   testCompile project(path: ':restli-int-test-api', configuration: 'dataTemplate')
   testCompile project(path: ':restli-common', configuration: 'testArtifacts')

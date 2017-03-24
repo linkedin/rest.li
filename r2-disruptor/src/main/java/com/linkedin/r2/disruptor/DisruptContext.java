@@ -16,6 +16,9 @@
 
 package com.linkedin.r2.disruptor;
 
+import com.linkedin.r2.message.RequestContext;
+
+
 /**
  * Abstract implementation of different disrupt contexts.
  *
@@ -24,6 +27,16 @@ package com.linkedin.r2.disruptor;
  */
 public abstract class DisruptContext
 {
+  /**
+   * Key used to access the R2 disrupt source field in {@link RequestContext}. The
+   * disrupt source described if the {@link DisruptMode} of a request has already
+   * been evaluated by some source.
+   */
+  public static final String DISRUPT_SOURCE_KEY = "R2_DISRUPT_SOURCE";
+
+  /**
+   * Key used to access the R2 disrupt context field in {@link RequestContext}
+   */
   public static final String DISRUPT_CONTEXT_KEY = "R2_DISRUPT_CONTEXT";
 
   private final DisruptMode _mode;
