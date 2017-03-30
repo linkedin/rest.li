@@ -1,6 +1,8 @@
 11.0.2
 ------
-
+(RB=956032)
+Move schema logic from constructor to method for BatchKVResponse for performance.
+Moving the logic around creating the BatchKVResponse schema to the schema() method and pulling some variables into constants for efficiency gains since schema is inaccurate and rarely used in this class.
 
 11.0.1
 ------
@@ -12,7 +14,6 @@ Make RestLiDataValidator aware of wilcard for projecting Union members.
 Major version bump due to backward incompatible changes introduced in 10.1.13.
 (RB=957738)
 Add note to BatchEntityResponse explaining the backward incompatible change to DataMap format returned by data() method.
-
 
 10.1.15  (Note: This version is not backward compatible. See 11.0.0)
 -------
