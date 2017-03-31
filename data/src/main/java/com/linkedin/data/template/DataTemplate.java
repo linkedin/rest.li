@@ -75,4 +75,18 @@ public interface DataTemplate<E> extends Cloneable
    *                                    cannot be copied.
    */
   DataTemplate<E> copy() throws CloneNotSupportedException;
+
+  /**
+   * Check if two data templates are equal by comparing their internally stored data (dataMap for record/union/Map,
+   * dataList for Array) literally. Note that even if two data templates are semantically equal (for example, one record
+   * does not set a field with default value but the other record set the same field with its default value, one record
+   * set a Long field with an Integer value of the same numeric value as that set in another record. etc), this method
+   * will return false. To check semantic equality, please use
+   * {@link DataTemplateUtil#areEqual(DataTemplate, DataTemplate)} instead.
+   * @param object another data template.
+   * @return true if internal data maps or data lists of two data templates are equal.
+   */
+  @Override
+  boolean equals(Object object);
+
 }

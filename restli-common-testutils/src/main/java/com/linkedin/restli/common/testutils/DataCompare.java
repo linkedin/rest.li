@@ -23,6 +23,7 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.Null;
 import com.linkedin.data.schema.DataSchemaUtil;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -179,8 +180,10 @@ public class DataCompare
       }
     }
     else if (_options._shouldCoerceNumbers)
-    { // coerce to double and compare by value if coercion is enabled
-      if (expected.doubleValue() != actual.doubleValue())
+    { // coerce to BigDecimal and compare by value if coercion is enabled
+      BigDecimal expectedBigDecimal = new BigDecimal(expected.toString());
+      BigDecimal actualBigDecimal = new BigDecimal(actual.toString());
+      if (expectedBigDecimal.compareTo(actualBigDecimal) != 0)
       {
         result.mismatchedValue(path, expected, actual);
       }

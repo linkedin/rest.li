@@ -18,6 +18,7 @@ package com.linkedin.data.template;
 
 
 import com.linkedin.data.ByteString;
+import com.linkedin.data.DataComplex;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.DataSchema;
@@ -26,6 +27,12 @@ import com.linkedin.data.schema.DataSchemaUtil;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.SchemaParserFactory;
 import com.linkedin.data.schema.PegasusSchemaParser;
+import com.linkedin.data.schema.validation.CoercionMode;
+import com.linkedin.data.schema.validation.RequiredMode;
+import com.linkedin.data.schema.validation.UnrecognizedFieldMode;
+import com.linkedin.data.schema.validation.ValidationOptions;
+import com.linkedin.data.schema.validation.ValidationResult;
+import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
 
 import java.io.FileDescriptor;
 import java.io.FileOutputStream;
@@ -891,4 +898,94 @@ public class DataTemplateUtil
       throw new IllegalArgumentException(clazz + " cannot be initialized", exc);
     }
   }
+
+  /**
+   * Check if two data templates of the same type are semantically equal. We call two data templates semantically equal if all their
+   * fields satisfy any of the following:
+   * <ul>
+   *   <li>Both objects have the field set to the same value
+   *   <li>One object has the required field set to the default value and the other doesn't have the field set
+   *   <li>They both don't have the field set
+   * </ul>
+   * We will first check if data stored in the two data templates are equal. If not equal, we will apply fix-up to their data
+   * and compare equality of the fixed-up data. The fix-up will do the following massage to the original data:
+   * <ul>
+   *    <li>populate absent fields with their default values</li>
+   *    <li>coerce numeric values and strings containing numeric values to the schema's numeric type</li>
+   *    <li>keep any unrecognized fields not in the data template schema</li>
+   * </ul>
+   * @param data1 first data template.
+   * @param data2 second data template
+   * @return true if two data templates are semantically equal, false otherwise.
+   */
+  public static <T extends DataTemplate<?>> boolean areEqual(T data1, T data2)
+  {
+    return areEqual(data1, data2, false);
+  }
+
+  /**
+   * Check if two data templates of the same type are semantically equal. We call two data templates semantically equal if all their
+   * fields satisfy any of the following:
+   * <ul>
+   *   <li>Both objects have the field set to the same value
+   *   <li>One object has the required field set to the default value and the other doesn't have the field set
+   *   <li>They both don't have the field set
+   * </ul>
+   * We will first check if data stored in the two data templates are equal. If not equal, we will apply fix-up to their data
+   * and compare equality of the fixed-up data. The fix-up will do the following massage to the original data:
+   * <ul>
+   *    <li>populate absent fields with their default values</li>
+   *    <li>coerce numeric values and strings containing numeric values to data template schema's numeric type</li>
+   *    <li>ignore any unrecognized fields not in the data template schema if ignoreUnrecognizedField flag is true, otherwise we will
+   * keep those unrecognized fields in comparison.</li>
+   * </ul>
+   * @param data1 first data template.
+   * @param data2 second data template
+   * @param ignoreUnrecognizedField if this flag is set to true, we don't include unrecognized fields into data template comparison.
+   *                                Otherwise, we will compare those fields as well.
+   * @return true if two data templates are semantically equal, false otherwise.
+   */
+  public static <T extends DataTemplate<?>> boolean areEqual(T data1, T data2, boolean ignoreUnrecognizedField)
+  {
+    // default fix-up option
+    ValidationOptions validationOption = new ValidationOptions(RequiredMode.FIXUP_ABSENT_WITH_DEFAULT,
+            CoercionMode.NORMAL, ignoreUnrecognizedField ? UnrecognizedFieldMode.TRIM : UnrecognizedFieldMode.IGNORE);
+    return areEqual(data1, data2, validationOption);
+  }
+
+  @SuppressWarnings("unchecked")
+  private static <T extends DataTemplate<?>> boolean areEqual(T data1, T data2, ValidationOptions validationOption)
+  {
+    if (data1 == null || data2 == null)
+    {
+      return data1 == data2;
+    }
+    // return true if data1 and data2 are already equal
+    if (data1.equals(data2))
+    {
+      return true;
+    }
+    // try to fix up two data based on given data schema
+    // since fix-up will modify the original data, we need to make a copy before performing fix-up to avoid such side-effects.
+    try {
+      T data1Copy = (T)data1.copy();
+      T data2Copy = (T)data2.copy();
+      ValidationResult validateResult1 = ValidateDataAgainstSchema.validate(data1Copy, validationOption);
+      ValidationResult validateResult2 = ValidateDataAgainstSchema.validate(data2Copy, validationOption);
+      if (validateResult1.hasFix() || validateResult2.hasFix())
+      {
+        return data1Copy.equals(data2Copy);
+      }
+      else
+      {
+        // no fix-up is done
+        return false;
+      }
+    }
+    catch (CloneNotSupportedException e)
+    {
+      return false;
+    }
+  }
+
 }

@@ -148,6 +148,15 @@ public class TestDataCompare
     );
   }
 
+  public void testBigNumbersMismatch()
+  {
+    assertTrue(
+            DataCompare.compare(
+                    toDataMap("numberField", Long.MAX_VALUE),
+                    toDataMap("numberField", new Long(Long.MAX_VALUE-1).doubleValue())
+            ).hasError());
+  }
+
   public void testNumbersMatch()
   {
     DataCompare.Result compareResult = DataCompare.compare(

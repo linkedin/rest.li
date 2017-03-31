@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import com.linkedin.data.ByteString;
@@ -34,6 +35,9 @@ import com.linkedin.data.schema.IntegerDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.UnionDataSchema;
 
+import static com.linkedin.data.TestUtil.asList;
+import static com.linkedin.data.TestUtil.asMap;
+import static com.linkedin.data.TestUtil.asReadOnlyDataMap;
 import static org.testng.Assert.*;
 
 
@@ -1561,7 +1565,7 @@ public class TestRecordAndUnionTemplate
       assertEquals(foo.toString(), "{}");
     }
 
-    List<?> badInput = TestUtil.asList(3, "abc", new DataList());
+    List<?> badInput = asList(3, "abc", new DataList());
 
     DataMap map = new DataMap();
     foo = new Foo(map);
@@ -1636,7 +1640,7 @@ public class TestRecordAndUnionTemplate
       assertEquals(foo.toString(), "{}");
     }
 
-    List<?> badInput = TestUtil.asList(false, "abc", new DataList());
+    List<?> badInput = asList(false, "abc", new DataList());
 
     DataMap map = new DataMap();
     foo = new Foo(map);
@@ -1722,7 +1726,7 @@ public class TestRecordAndUnionTemplate
       assertEquals(foo.toString(), "{}");
     }
 
-    List<?> badInput = TestUtil.asList(false, "abc", new DataList());
+    List<?> badInput = asList(false, "abc", new DataList());
 
     DataMap map = new DataMap();
     foo = new Foo(map);
@@ -1742,8 +1746,8 @@ public class TestRecordAndUnionTemplate
       assertTrue(exc instanceof TemplateOutputCastException);
     }
 
-    List<?> castFrom = TestUtil.asList(88L, 99.0f, 77.0);
-    List<?> castTo = TestUtil.asList(88, 99, 77);
+    List<?> castFrom = asList(88L, 99.0f, 77.0);
+    List<?> castTo = asList(88, 99, 77);
     for (int i = 0; i < castFrom.size(); ++i)
     {
       map.put("int", castFrom.get(i));
@@ -1805,7 +1809,7 @@ public class TestRecordAndUnionTemplate
       assertEquals(foo.toString(), "{}");
     }
 
-    List<?> badInput = TestUtil.asList(false, "abc", new DataList());
+    List<?> badInput = asList(false, "abc", new DataList());
 
     DataMap map = new DataMap();
     foo = new Foo(map);
@@ -1825,8 +1829,8 @@ public class TestRecordAndUnionTemplate
       assertTrue(exc instanceof TemplateOutputCastException);
     }
 
-    List<?> castFrom = TestUtil.asList(88, 99.0f, 77.0);
-    List<?> castTo = TestUtil.asList(88L, 99L, 77L);
+    List<?> castFrom = asList(88, 99.0f, 77.0);
+    List<?> castTo = asList(88L, 99L, 77L);
     for (int i = 0; i < castFrom.size(); ++i)
     {
       map.put("long", castFrom.get(i));
@@ -1888,7 +1892,7 @@ public class TestRecordAndUnionTemplate
       assertEquals(foo.toString(), "{}");
     }
 
-    List<?> badInput = TestUtil.asList(false, "abc", new DataList());
+    List<?> badInput = asList(false, "abc", new DataList());
 
     DataMap map = new DataMap();
     foo = new Foo(map);
@@ -1908,8 +1912,8 @@ public class TestRecordAndUnionTemplate
       assertTrue(exc instanceof TemplateOutputCastException);
     }
 
-    List<?> castFrom = TestUtil.asList(88, 99.0, 77.0);
-    List<?> castTo = TestUtil.asList(88.0f, 99.0f, 77.0f);
+    List<?> castFrom = asList(88, 99.0, 77.0);
+    List<?> castTo = asList(88.0f, 99.0f, 77.0f);
     for (int i = 0; i < castFrom.size(); ++i)
     {
       map.put("float", castFrom.get(i));
@@ -1971,7 +1975,7 @@ public class TestRecordAndUnionTemplate
       assertEquals(foo.toString(), "{}");
     }
 
-    List<?> badInput = TestUtil.asList(false, "abc", new DataList());
+    List<?> badInput = asList(false, "abc", new DataList());
 
     DataMap map = new DataMap();
     foo = new Foo(map);
@@ -1991,8 +1995,8 @@ public class TestRecordAndUnionTemplate
       assertTrue(exc instanceof TemplateOutputCastException);
     }
 
-    List<?> castFrom = TestUtil.asList(88, 99L, 77.0f);
-    List<?> castTo = TestUtil.asList(88.0, 99.0, 77.0);
+    List<?> castFrom = asList(88, 99L, 77.0f);
+    List<?> castTo = asList(88.0, 99.0, 77.0);
     for (int i = 0; i < castFrom.size(); ++i)
     {
       map.put("double", castFrom.get(i));
@@ -2054,7 +2058,7 @@ public class TestRecordAndUnionTemplate
       assertEquals(foo.toString(), "{}");
     }
 
-    List<?> badInput = TestUtil.asList(false, 4, 5L, 6.0f, 7.0, new DataList());
+    List<?> badInput = asList(false, 4, 5L, 6.0f, 7.0, new DataList());
 
     DataMap map = new DataMap();
     foo = new Foo(map);
@@ -2128,7 +2132,7 @@ public class TestRecordAndUnionTemplate
       assertEquals(foo.toString(), "{}");
     }
 
-    List<?> badInput = TestUtil.asList(false, 33, "\u0100", new DataList());
+    List<?> badInput = asList(false, 33, "\u0100", new DataList());
 
     DataMap map = new DataMap();
     foo = new Foo(map);
@@ -2148,8 +2152,8 @@ public class TestRecordAndUnionTemplate
       assertTrue(exc instanceof TemplateOutputCastException);
     }
 
-    List<?> castFrom = TestUtil.asList("88");
-    List<?> castTo = TestUtil.asList(ByteString.copyAvroString("88", false));
+    List<?> castFrom = asList("88");
+    List<?> castTo = asList(ByteString.copyAvroString("88", false));
     for (int i = 0; i < castFrom.size(); ++i)
     {
       map.put("bytes", castFrom.get(i));
@@ -2237,7 +2241,7 @@ public class TestRecordAndUnionTemplate
       assertEquals(foo.toString(), "{}");
     }
 
-    List<?> badInput = TestUtil.asList(false, "abc", new DataMap(), ByteString.empty(), ByteString.copyAvroString("abc", false));
+    List<?> badInput = asList(false, "abc", new DataMap(), ByteString.empty(), ByteString.copyAvroString("abc", false));
 
     DataMap map = new DataMap();
     foo = new Foo(map);
@@ -2257,8 +2261,8 @@ public class TestRecordAndUnionTemplate
       assertTrue(exc instanceof TemplateOutputCastException);
     }
 
-    List<?> castFrom = TestUtil.asList("8888");
-    List<?> castTo = TestUtil.asList(ByteString.copyAvroString("8888", false));
+    List<?> castFrom = asList("8888");
+    List<?> castTo = asList(ByteString.copyAvroString("8888", false));
     for (int i = 0; i < castFrom.size(); ++i)
     {
       map.put("fixed", castFrom.get(i));
@@ -2326,7 +2330,7 @@ public class TestRecordAndUnionTemplate
       index++;
     }
 
-    List<?> badInput = TestUtil.asList(false, "abc", new DataList());
+    List<?> badInput = asList(false, "abc", new DataList());
 
     DataMap map = new DataMap();
     foo = new Foo(map);
@@ -2418,7 +2422,7 @@ public class TestRecordAndUnionTemplate
       index++;
     }
 
-    List<?> badInput = TestUtil.asList(false, "abc", new DataMap());
+    List<?> badInput = asList(false, "abc", new DataMap());
 
     DataMap map = new DataMap();
     foo = new Foo(map);
@@ -2442,7 +2446,7 @@ public class TestRecordAndUnionTemplate
   @Test
   public void testUnionField() throws CloneNotSupportedException
   {
-    List<?> badOutput = TestUtil.asList(false, "abc", new DataList());
+    List<?> badOutput = asList(false, "abc", new DataList());
 
     DataMap map = new DataMap();
     Foo foo = new Foo(map);
@@ -2790,5 +2794,149 @@ public class TestRecordAndUnionTemplate
 
     Foo.Union u8 = DataTemplateUtil.wrap(Data.NULL, Foo.Union.SCHEMA, Foo.Union.class);
     assertSame(Data.NULL, u8.data());
+  }
+
+  @DataProvider
+  private Object[][] dataForSemanticEquals()
+  {
+    return new Object[][] {
+      {
+        // null check
+        null,
+        new Foo().setInt(2).setDouble(5.0).setEnum(EnumType.BANANA).setRecord(new Bar().setInt(100)),
+        false,
+        false
+      },
+      {
+        // null check
+        new Foo().setInt(2).setDouble(5.0).setEnum(EnumType.BANANA).setRecord(new Bar().setInt(100)),
+        null,
+        false,
+        false
+      },
+      {
+        // null check
+        null,
+        null,
+        false,
+        true
+      },
+      {
+        // literally equal
+        new Foo().setInt(2).setDouble(5.0).setEnum(EnumType.BANANA).setRecord(new Bar().setInt(100)),
+        new Foo().setInt(2).setDouble(5.0).setEnum(EnumType.BANANA).setRecord(new Bar().setInt(100)),
+        false,
+        true
+      },
+      {
+        // fix-up absent required fields with default
+        new Foo(new DataMap(asMap("boolean", true, "int", -1, "string", "default_string", "enum", "APPLE",
+                "array", new DataList(asList(-1, -2, -3, -4)), "bytes", ByteString.copyString("default_bytes", "UTF-8"),
+                "recordArray", new DataList(asList()), "record", new Bar().setInt(-6).data(), "fixed", ByteString.copyString("1234", "UTF-8"),
+                "union", new DataMap(asMap("EnumType", "ORANGE")), "map", new DataMap(asMap("key1", -5))))),
+        new Foo(),
+        false,
+        true
+      },
+      {
+        // fix-up absent required fields with default
+        new Foo().setEnum(EnumType.ORANGE),
+        new Foo(new DataMap(asMap("boolean", true, "int", -1, "string", "default_string", "enum", "APPLE",
+                "array", new DataList(asList(-1, -2, -3, -4)), "bytes", ByteString.copyString("default_bytes", "UTF-8"),
+                "recordArray", new DataList(asList()), "record", new Bar().setInt(-6).data(), "fixed", ByteString.copyString("1234", "UTF-8"),
+                "union", new DataMap(asMap("EnumType", "ORANGE")), "map", new DataMap(asMap("key1", -5))))),
+        false,
+        false
+      },
+      {
+        // fix-up absent required fields with default
+        new Foo().setBoolean(true).setInt(-1),
+        new Foo(),
+        false,
+        true
+      },
+      {
+        // number coercing
+        new Foo(new DataMap(asMap("double", -4, "int", 99, "float", 99.5, "long", 1))),
+        new Foo().setDouble(-4.0).setInt(99).setFloat(99.500f).setLong(1L),
+        false,
+        true
+      },
+      {
+        // number coercing for read-only record since we are making copy
+        new Foo().setDouble(-4.0).setInt(99).setFloat(99.500f).setLong(1L),
+        new Foo(asReadOnlyDataMap("double", -4, "int", 99, "float", 99.5, "long", 1)),
+        false,
+        true
+      },
+      {
+        // including unrecognized fields
+        new Foo(new DataMap(asMap("double", -4, "int", 99, "float", 1, "junk", "garbage"))),
+        new Foo().setDouble(-4.0).setInt(99).setFloat(1.0f),
+        false,
+        false
+      },
+      {
+        // ignore unrecognized fields
+        new Foo(new DataMap(asMap("double", -4, "int", 99, "float", 1, "junk", "garbage"))),
+        new Foo().setDouble(-4.0).setInt(99).setFloat(1.0f),
+        true,
+        true
+      },
+      {
+        // different field value
+        new Foo().setDouble(10.0).setString("dog"),
+        new Foo().setDouble(-4.0).setString("cow"),
+        false,
+        false
+      }
+    };
+  }
+
+  @Test(dataProvider = "dataForSemanticEquals")
+  public void testSemanticEquals(Foo foo1, Foo foo2, boolean ignoreUnrecognizedField, boolean isEqual)
+  {
+    if (ignoreUnrecognizedField)
+    {
+      assertEquals(DataTemplateUtil.areEqual(foo1, foo2, ignoreUnrecognizedField), isEqual);
+    }
+    else
+    {
+      assertEquals(DataTemplateUtil.areEqual(foo1, foo2), isEqual);
+    }
+  }
+
+  public static class FakeRecordNoSchema extends RecordTemplate
+  {
+    public FakeRecordNoSchema()
+    {
+      super(new DataMap(), null);
+    }
+
+    public FakeRecordNoSchema(DataMap map)
+    {
+      super(map, null);
+    }
+
+    @Override
+    public FakeRecordNoSchema clone() throws CloneNotSupportedException
+    {
+      return (FakeRecordNoSchema) super.clone();
+    }
+
+    @Override
+    public FakeRecordNoSchema copy() throws CloneNotSupportedException
+    {
+      return (FakeRecordNoSchema) super.copy();
+    }
+  }
+
+  @Test
+  public void testSemanticEqualsMissingSchema()
+  {
+    // no fix-up can be done due to missing schema.
+    FakeRecordNoSchema r1 = new FakeRecordNoSchema(new DataMap(asMap("double", -4, "int", 99, "float", 1)));
+    FakeRecordNoSchema r2 = new FakeRecordNoSchema(new DataMap(asMap("double", -4.0, "int", 99, "float", 1.0f)));
+    assertEquals(DataTemplateUtil.areEqual(r1, r2), false);
   }
 }

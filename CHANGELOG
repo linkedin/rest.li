@@ -1,5 +1,7 @@
 11.0.3
 ------
+(RB=959468)
+Provide a utility to perform semantic equality comparison for two pegasus objects.
 
 11.0.2
 ------

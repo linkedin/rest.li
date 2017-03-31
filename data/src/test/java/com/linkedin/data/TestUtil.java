@@ -108,6 +108,13 @@ public class TestUtil
     return map;
   }
 
+  static public DataMap asReadOnlyDataMap(Object... objects)
+  {
+    DataMap dataMap = new DataMap(asMap(objects));
+    dataMap.makeReadOnly();
+    return dataMap;
+  }
+
   static public InputStream inputStreamFromString(String s) throws UnsupportedEncodingException
   {
     byte[] bytes = s.getBytes(Data.UTF_8_CHARSET);
