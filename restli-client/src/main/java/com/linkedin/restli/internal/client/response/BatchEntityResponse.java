@@ -33,6 +33,9 @@ import java.util.Set;
 
 /**
  * Specialized {@link BatchKVResponse} whose value class is {@link EntityResponse}.
+ * <p/>
+ * Note: The format of DataMap returned by {@link #data()} changed in version 11.* and above of pegasus. It now returns
+ * the DataMap returned by the server before the results, statuses and errors are merged into EntityResponse. <p/>
  *
  * @author Keren Jin
  */

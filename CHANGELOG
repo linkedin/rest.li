@@ -1,19 +1,22 @@
-10.1.16
+11.0.0
 -------
+Major version bump due to backward incompatible changes introduced in 10.1.13.
+(RB=957738)
+Add note to BatchEntityResponse explaining the backward incompatible change to DataMap format returned by data() method.
 
 
-10.1.15
+10.1.15  (Note: This version is not backward compatible. See 11.0.0)
 -------
 (RB=951527)
 Fix one of ResponseDataBuilderUtil helper methods to return the correct ResponseEnvelope type and re-enabled unit tests which weren't running.
 
-10.1.14
+10.1.14  (Note: This version is not backward compatible. See 11.0.0)
 -------
 (RB=948921)
 Extract interface from RestClient and add a DisruptRestClient decorator class
 
-10.1.13
-------
+10.1.13  (Note: This version is not backward compatible. See 11.0.0)
+-------
 (RB=949067)
 Refactor batch_get response conversion to entity response code into BatchKVResponse to be consistent with other decoder behavior.
 
