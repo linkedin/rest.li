@@ -669,14 +669,21 @@ public class RestLiDataValidator
    */
   private static UnionDataSchema buildUnionDataSchemaByProjection(UnionDataSchema originalSchema, DataMap maskMap) {
     List<DataSchema> newUnionTypeSchemas = new ArrayList<>();
-    for (Map.Entry<String, Object> maskEntry : maskMap.entrySet()) {
-      DataSchema originalTypeSchema = originalSchema.getType(maskEntry.getKey());
-      DataSchema typeSchemaToUse = reuseOrBuildDataSchema(originalTypeSchema, maskEntry.getValue());
-      newUnionTypeSchemas.add(typeSchemaToUse);
-    }
-    UnionDataSchema newSchema = new UnionDataSchema();
 
-    // No errors are expected here, as the new schema is merely subset of the orignal
+    // Get the wildcard mask if one is available
+    Object wildcardMask = maskMap.get(FilterConstants.WILDCARD);
+
+    for (DataSchema member: originalSchema.getTypes()) {
+      Object maskValue = maskMap.get(member.getUnionMemberKey());
+      // If a mask is available for this specific member use that, else use the wildcard mask if that is available
+      if (maskValue != null) {
+        newUnionTypeSchemas.add(reuseOrBuildDataSchema(member, maskValue));
+      } else if (wildcardMask != null) {
+        newUnionTypeSchemas.add(reuseOrBuildDataSchema(member, wildcardMask));
+      }
+    }
+
+    UnionDataSchema newSchema = new UnionDataSchema();
     newSchema.setTypes(newUnionTypeSchemas, new StringBuilder());
     if (originalSchema.getProperties() != null) {
       newSchema.setProperties(originalSchema.getProperties());

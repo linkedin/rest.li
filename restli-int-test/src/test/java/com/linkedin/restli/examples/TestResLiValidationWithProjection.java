@@ -95,12 +95,15 @@ public class TestResLiValidationWithProjection extends RestLiIntegrationTest
   @DataProvider
   private Object[][] provideProjectionWithValidFieldsBuilders() throws DataProcessingException
   {
-    List<PathSpec> spec = Arrays.asList(ValidationDemo.fields().stringB(),
-                                        ValidationDemo.fields().includedB(),
-                                        ValidationDemo.fields().UnionFieldWithInlineRecord().MyRecord().foo2(),
-                                        ValidationDemo.fields().ArrayWithInlineRecord().items().bar1(),
-                                        ValidationDemo.fields().MapWithTyperefs().values().id(),
-                                        ValidationDemo.fields().validationDemoNext().intB());
+    List<PathSpec> spec = Arrays.asList(
+        ValidationDemo.fields().stringB(),
+        ValidationDemo.fields().includedB(),
+        ValidationDemo.fields().UnionFieldWithInlineRecord().MyRecord().foo2(),
+        // Add a wildcard for projecting the rest of the union members
+        new PathSpec(ValidationDemo.fields().UnionFieldWithInlineRecord().getPathComponents(), PathSpec.WILDCARD),
+        ValidationDemo.fields().ArrayWithInlineRecord().items().bar1(),
+        ValidationDemo.fields().MapWithTyperefs().values().id(),
+        ValidationDemo.fields().validationDemoNext().intB());
 
     RootBuilderWrapper<Integer, ValidationDemo> wrapper =
         new RootBuilderWrapper<Integer, ValidationDemo>(new AutoValidationWithProjectionBuilders());

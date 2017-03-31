@@ -1,5 +1,11 @@
+11.0.2
+------
+
+
 11.0.1
 ------
+(RB=957811)
+Make RestLiDataValidator aware of wilcard for projecting Union members.
 
 11.0.0
 -------
