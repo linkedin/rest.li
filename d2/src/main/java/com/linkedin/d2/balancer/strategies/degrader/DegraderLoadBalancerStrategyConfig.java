@@ -20,6 +20,7 @@ import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.util.hashing.MPConsistentHashRing;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
 import com.linkedin.r2.message.rest.RestMethod;
+import com.linkedin.util.degrader.DegraderImpl;
 import java.util.Collections;
 import java.util.Map;
 
@@ -108,7 +109,7 @@ public class DegraderLoadBalancerStrategyConfig
   public static final long DEFAULT_QUARANTINE_REENTRY_TIME = 30000;  // Milliseconds
   public static final int DEFAULT_QUARANTINE_CHECKNUM = 5;
   public static final long DEFAULT_QUARANTINE_CHECK_INTERVAL = 1000; // Milliseconds
-  public static final long DEFAULT_QUARANTINE_LATENCY = 100;         // Milliseconds
+  public static final long MAX_QUARANTINE_LATENCY = 1000;         // Milliseconds
   public static final String DEFAULT_QUARANTINE_METHOD = RestMethod.OPTIONS;
   private static final double QUARANTINE_MAXPERCENT_CAP = 0.5;
 
@@ -122,7 +123,7 @@ public class DegraderLoadBalancerStrategyConfig
          DEFAULT_HASHRING_POINT_CLEANUP_RATE, null,
          DEFAULT_NUM_PROBES, null,
          DEFAULT_QUARANTINE_MAXPERCENT,
-         null, null, DEFAULT_QUARANTINE_METHOD, null, DEFAULT_QUARANTINE_LATENCY);
+         null, null, DEFAULT_QUARANTINE_METHOD, null, DegraderImpl.DEFAULT_LOW_LATENCY);
   }
 
   public DegraderLoadBalancerStrategyConfig(DegraderLoadBalancerStrategyConfig config)
@@ -222,13 +223,15 @@ public class DegraderLoadBalancerStrategyConfig
    * create the strategy. However if we can't find http.loadBalancer.ringRampFactor in the config, we'll use
    * the value in ringRampFactor.
    */
-  public static DegraderLoadBalancerStrategyConfig createHttpConfigFromMap(Map<String,Object> map)
+  // @Deprecated -- could not be enforced since -Werror option.
+  static DegraderLoadBalancerStrategyConfig createHttpConfigFromMap(Map<String,Object> map)
   {
-    return createHttpConfigFromMap(map, null, null);
+    return createHttpConfigFromMap(map, null, null, null);
   }
 
-  public static DegraderLoadBalancerStrategyConfig createHttpConfigFromMap(Map<String,Object> map,
-      HealthCheckOperations healthCheckOperations, ScheduledExecutorService overrideExecutorService)
+  static DegraderLoadBalancerStrategyConfig createHttpConfigFromMap(Map<String,Object> map,
+      HealthCheckOperations healthCheckOperations, ScheduledExecutorService overrideExecutorService,
+      Map<String, String> degraderProperties)
   {
     Clock clock = MapUtil.getWithDefault(map, PropertyKeys.CLOCK,
                                          DEFAULT_CLOCK, Clock.class);
@@ -299,8 +302,17 @@ public class DegraderLoadBalancerStrategyConfig
         PropertyKeys.HTTP_LB_QUARANTINE_EXECUTOR_SERVICE, null, ScheduledExecutorService.class);
     String method = MapUtil.getWithDefault(map, PropertyKeys.HTTP_LB_QUARANTINE_METHOD, DEFAULT_QUARANTINE_METHOD, String.class);
 
-    Long quarantineLatency = MapUtil.getWithDefault(map, PropertyKeys.HTTP_LB_QUARANTINE_LATENCY,
-        DEFAULT_QUARANTINE_LATENCY, Long.class);
+    // lowLatency reflects the expected health threshold for the service so we can use this value as the
+    // quarantine health checking latency.
+    Long quarantineLatency = (degraderProperties == null) ? DegraderImpl.DEFAULT_LOW_LATENCY
+        : MapUtil.getWithDefault(degraderProperties, PropertyKeys.DEGRADER_LOW_LATENCY, DegraderImpl.DEFAULT_LOW_LATENCY, Long.class);
+
+    // However we'd cap the latency value if degrader.LowLatency is too high: health checking does not involve complicated
+    // operations of the service therefore should not take that long
+    if (quarantineLatency > MAX_QUARANTINE_LATENCY)
+    {
+      quarantineLatency = MAX_QUARANTINE_LATENCY;
+    }
 
     // health checking method can be customized from d2config.
     // The supported format is "<Restli Method>:<URI path>". Both part are optional.

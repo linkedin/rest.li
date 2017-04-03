@@ -155,10 +155,6 @@ public class LoadBalancerStrategyPropertiesConverter
       {
         map.put(PropertyKeys.HTTP_LB_QUARANTINE_METHOD, quarantineInfo.getQuarantineMethod().toString());
       }
-      if (quarantineInfo.hasQuarantineLatency())
-      {
-        map.put(PropertyKeys.HTTP_LB_QUARANTINE_LATENCY, quarantineInfo.getQuarantineLatency().toString());
-      }
     }
     if (config.hasErrorStatusRegex())
     {
@@ -273,8 +269,7 @@ public class LoadBalancerStrategyPropertiesConverter
       config.setNumberOfProbes(coerce(properties.get(PropertyKeys.HTTP_LB_CONSISTENT_HASH_NUM_PROBES), Integer.class));
     }
     if (properties.containsKey(PropertyKeys.HTTP_LB_QUARANTINE_MAX_PERCENT) ||
-        properties.containsKey(PropertyKeys.HTTP_LB_QUARANTINE_METHOD) ||
-        properties.containsKey(PropertyKeys.HTTP_LB_QUARANTINE_LATENCY))
+        properties.containsKey(PropertyKeys.HTTP_LB_QUARANTINE_METHOD))
     {
       quarantineInfo quarantineInfo = new quarantineInfo();
       if (properties.containsKey(PropertyKeys.HTTP_LB_QUARANTINE_MAX_PERCENT))
@@ -284,10 +279,6 @@ public class LoadBalancerStrategyPropertiesConverter
       if (properties.containsKey(PropertyKeys.HTTP_LB_QUARANTINE_METHOD))
       {
         quarantineInfo.setQuarantineMethod(coerce(properties.get(PropertyKeys.HTTP_LB_QUARANTINE_METHOD), String.class));
-      }
-      if (properties.containsKey(PropertyKeys.HTTP_LB_QUARANTINE_LATENCY))
-      {
-        quarantineInfo.setQuarantineLatency(coerce(properties.get(PropertyKeys.HTTP_LB_QUARANTINE_LATENCY), Long.class));
       }
       config.setQuarantineCfg(quarantineInfo);
     }

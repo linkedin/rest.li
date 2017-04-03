@@ -1,7 +1,14 @@
+11.0.4
+------
+
+
 11.0.3
 ------
 (RB=959468)
 Provide a utility to perform semantic equality comparison for two pegasus objects.
+
+(RB=958964)
+Change the quarantine health checking latency to use degrader low latency
 
 11.0.2
 ------

@@ -1979,7 +1979,7 @@ public class DegraderLoadBalancerTest
                     DegraderLoadBalancerStrategyConfig.DEFAULT_QUARANTINE_MAXPERCENT,
                     null, null,
                     DegraderLoadBalancerStrategyConfig.DEFAULT_QUARANTINE_METHOD, null,
-                    DegraderLoadBalancerStrategyConfig.DEFAULT_QUARANTINE_LATENCY),
+                    DegraderImpl.DEFAULT_LOW_LATENCY),
                "DegraderLoadBalancerTest", null);
 
     List<TrackerClient> clients = new ArrayList<TrackerClient>(NUM_SERVERS);
@@ -3901,7 +3901,7 @@ public class DegraderLoadBalancerTest
         DegraderLoadBalancerStrategyConfig.DEFAULT_NUM_PROBES, null,
         DegraderLoadBalancerStrategyConfig.DEFAULT_QUARANTINE_MAXPERCENT,
         null, null, "GET", "/test/admin",
-        DegraderLoadBalancerStrategyConfig.DEFAULT_QUARANTINE_LATENCY);
+        DegraderImpl.DEFAULT_LOW_LATENCY);
 
     TrackerClientUpdater updater1 = new TrackerClientUpdater(trackerClients.get(1), DEFAULT_PARTITION_ID);
     quarantine = new DegraderLoadBalancerQuarantine(updater1, config1, "abc0");
@@ -3927,7 +3927,7 @@ public class DegraderLoadBalancerTest
         DegraderLoadBalancerStrategyConfig.DEFAULT_NUM_PROBES, null,
         DegraderLoadBalancerStrategyConfig.DEFAULT_QUARANTINE_MAXPERCENT,
         null, null, "OPTIONS", null,
-        DegraderLoadBalancerStrategyConfig.DEFAULT_QUARANTINE_LATENCY);
+        DegraderImpl.DEFAULT_LOW_LATENCY);
 
     TrackerClientUpdater updater2 = new TrackerClientUpdater(trackerClients.get(2), DEFAULT_PARTITION_ID);
     quarantine = new DegraderLoadBalancerQuarantine(updater2, config2, "abc0");

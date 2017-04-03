@@ -56,7 +56,7 @@ public class DegraderLoadBalancerStrategyFactoryV3 implements
 
     final DegraderLoadBalancerStrategyConfig config =
         DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(strategyProperties,
-            _healthCheckOperations, _executorService);
+            _healthCheckOperations, _executorService, degraderProperties);
     return new DegraderLoadBalancerStrategyV3(config, serviceName, degraderProperties);
   }
 }

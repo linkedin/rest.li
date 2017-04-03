@@ -247,7 +247,10 @@ public class DegraderLoadBalancerQuarantine
     }
     else
     {
-      _log.warn("HealthCheck: Interval {}ms for client {}", _timeTilNextCheck, _trackerClient.getUri());
+      _log.warn("HealthCheck: Interval {}ms is not reset for client {}, because it is quarantined again within 30s. "
+          + "This can happen if current health checking method is not sufficient for capturing when a node should stay in quarantine, "
+          + "for example it returns fast but the real queries return slow.",
+          _timeTilNextCheck, _trackerClient.getUri());
     }
   }
 
