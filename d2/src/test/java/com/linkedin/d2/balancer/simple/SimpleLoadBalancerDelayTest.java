@@ -518,7 +518,7 @@ public class SimpleLoadBalancerDelayTest
     // Construct the delay patterns: for each URI there is a list of delays for each interval
     Map<String, List<Long>> delayMaps = new HashMap<>();
     delayMaps.put("test.qa1.com:1234", Arrays.asList(1000l, 3000l, 3000l, 3000l, 3000l,  3080l, 60l, 80l, 80l, 60l, 80l, 80l));
-    delayMaps.put("test.qa2.com:2345", Arrays.asList(180l, 180l, 160l, 180l, 150l, 180l, 80l, 80l, 60l, 80l, 60l, 80l));
+    delayMaps.put("test.qa2.com:2345", Arrays.asList(680l, 680l, 660l, 780l, 650l, 980l, 80l, 80l, 60l, 80l, 60l, 80l));
     LoadBalancerSimulator.TimedValueGenerator<String> delayGenerator = new DelayValueGenerator(delayMaps,
         DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS);
 
@@ -942,7 +942,7 @@ public class SimpleLoadBalancerDelayTest
     Map<String, List<Long>> delayMaps = new HashMap<>();
     delayMaps.put("test.qa1.com:1234", Arrays.asList(80l, 3000l, 3000l, 3000l, 3000l, 3090l, 3075l, 90l, 80l, 75l, 90l, 80l, 20l, 60l, 85l, 60l));
     delayMaps.put("test.qa2.com:2345", Arrays.asList(90l, 90l, 75l, 90l, 50l, 80l, 90l, 90l, 75l, 90l, 75l, 90l, 50l, 60l, 20l, 80l, 60l, 20l));
-    delayMaps.put("test.qa3.com:6789", Arrays.asList(80l, 3000l, 3000l, 3000l, 3000l, 90l, 75l, 90l, 80l, 75l, 90l, 80l, 200l, 50l, 60l, 85l, 50l));
+    delayMaps.put("test.qa3.com:6789", Arrays.asList(80l, 3000l, 3000l, 3000l, 3000l, 90l, 75l, 90l, 80l, 75l, 90l, 80l, 800l, 50l, 60l, 85l, 50l));
     LoadBalancerSimulator.TimedValueGenerator<String> delayGenerator = new DelayValueGenerator(delayMaps,
         DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS);
 

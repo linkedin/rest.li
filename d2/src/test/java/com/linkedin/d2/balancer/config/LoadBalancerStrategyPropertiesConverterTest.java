@@ -62,8 +62,7 @@ public class LoadBalancerStrategyPropertiesConverterTest
     final Long quarantineLatency = 200l;
     final quarantineInfo quarantineInfo = new quarantineInfo()
         .setQuarantineMaxPercent(quarantineMaxPercent)
-        .setQuarantineMethod(quarantineMethod)
-        .setQuarantineLatency(quarantineLatency);
+        .setQuarantineMethod(quarantineMethod);
     final String errorStatusRegex = "(5..)";
 
     regexes.add("+231{w+)");
