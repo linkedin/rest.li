@@ -72,6 +72,11 @@ public class FileClassNameScanner
     {
       assert(f.exists() && f.isFile());
 
+      // Ignore hidden dot-files
+      if (f.getName().startsWith("."))
+      {
+        continue;
+      }
       final int extensionIndex = f.getName().lastIndexOf('.');
       final String filePath = f.getPath();
       if (extensionIndex < 0 || !filePath.startsWith(sourceDirWithSeparator))

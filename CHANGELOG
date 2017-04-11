@@ -1,6 +1,7 @@
 11.0.4
 ------
-
+(RB=966768)
+Fix FileClassNameScanner to ignore hidden dot-files.
 
 11.0.3
 ------

@@ -37,6 +37,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
+import static com.linkedin.data.schema.resolver.FileDataSchemaResolver.DEFAULT_PATH_SEPARATOR;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
@@ -134,6 +135,25 @@ public class TestRestLiSnapshotExporter
       assertTrue(result.getModifiedFiles().contains(new File(actualFile)));
       assertTrue(result.getTargetFiles().contains(new File(actualFile)));
     }
+  }
+
+  @Test
+  public void testSimpleSnapshotNoPackage() throws Exception
+  {
+    RestLiSnapshotExporter exporter = new RestLiSnapshotExporter();
+    exporter.setResolverPath(resolverPath
+            + DEFAULT_PATH_SEPARATOR
+            + moduleDir + File.separator + "src" + File.separator + "test" + File.separator + PEGASUS_SUFFIX);
+
+    assertEquals(outdir.list().length, 0);
+    // We want to test if snapshot exporter can run with empty package name and ignore hidden files.
+    exporter.export("all",
+            null,
+            new String[] {moduleDir + FS + TEST_DIR},
+            null,
+            null,
+            outdir.getAbsolutePath());
+
   }
 
   @Test
