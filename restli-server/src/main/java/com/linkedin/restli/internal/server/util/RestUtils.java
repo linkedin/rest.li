@@ -46,9 +46,13 @@ import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.RoutingException;
 
 import java.net.URI;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.commons.lang.StringUtils;
 
 
@@ -90,7 +94,7 @@ public class RestUtils
     String bestEncoding = RestConstants.HEADER_VALUE_APPLICATION_JSON;
     if (resourceContext.getRawRequest() != null)
     {
-      bestEncoding = pickBestEncoding(resourceContext.getRequestHeaders().get(RestConstants.HEADER_ACCEPT));
+      bestEncoding = pickBestEncoding(resourceContext.getRequestHeaders().get(RestConstants.HEADER_ACCEPT), Collections.emptySet());
     }
 
     //links use count as the step interval, so links don't make sense with count==0
@@ -210,7 +214,7 @@ public class RestUtils
     }
   }
 
-  public static String pickBestEncoding(String acceptHeader)
+  public static String pickBestEncoding(String acceptHeader, Set<String> customMimeTypesSupported)
   {
     if (acceptHeader == null || acceptHeader.isEmpty())
     {
@@ -227,7 +231,10 @@ public class RestUtils
         return RestConstants.HEADER_VALUE_APPLICATION_JSON;
       }
 
-      return MIMEParse.bestMatch(RestConstants.SUPPORTED_MIME_TYPES, acceptHeader);
+      return MIMEParse.bestMatch(
+          Stream.concat(customMimeTypesSupported.stream(), RestConstants.SUPPORTED_MIME_TYPES.stream())
+              .collect(Collectors.toList()),
+          acceptHeader);
     }
 
     // Handle the case when an accept MIME type that was passed in along with the
@@ -287,16 +294,32 @@ public class RestUtils
    *           if any of the headers are invalid.
    */
   public static void validateRequestHeadersAndUpdateResourceContext(final Map<String, String> headers,
+      ServerResourceContext resourceContext)
+  {
+    validateRequestHeadersAndUpdateResourceContext(headers, Collections.emptySet(), resourceContext);
+  }
+
+  /**
+   * Validate request headers.
+   *
+   * @param headers
+   *          Request headers.
+   * @throws RestLiServiceException
+   *           if any of the headers are invalid.
+   */
+  public static void validateRequestHeadersAndUpdateResourceContext(final Map<String, String> headers,
+                                                                    final Set<String> customMimeTypesSupported,
                                                                     ServerResourceContext resourceContext)
   {
     // Validate whether the accept headers have at least one type that we support.
     // Fail the validation if we will be unable to support the requested accept type.
-    String mimeType = pickBestEncoding(headers.get(RestConstants.HEADER_ACCEPT));
+    String mimeType = pickBestEncoding(headers.get(RestConstants.HEADER_ACCEPT), customMimeTypesSupported);
     if (StringUtils.isEmpty(mimeType))
     {
       throw new RestLiServiceException(HttpStatus.S_406_NOT_ACCEPTABLE,
                                        "None of the types in the request's 'Accept' header are supported. Supported MIME types are: "
-                                           + RestConstants.SUPPORTED_MIME_TYPES);
+                                           + RestConstants.SUPPORTED_MIME_TYPES
+                                           + customMimeTypesSupported);
     }
     else
     {

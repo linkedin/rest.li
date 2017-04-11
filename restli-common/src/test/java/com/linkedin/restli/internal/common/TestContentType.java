@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2015 LinkedIn Corp.
+   Copyright (c) 2017 LinkedIn Corp.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -17,48 +17,47 @@
 package com.linkedin.restli.internal.common;
 
 
-import com.linkedin.restli.internal.common.ContentTypeUtil.ContentType;
+import com.linkedin.restli.common.ContentType;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import javax.activation.MimeTypeParseException;
 
 
-public class TestContentTypeUtil
+public class TestContentType
 {
   @Test
   public void testJSONContentType() throws MimeTypeParseException
   {
-    ContentType contentType = ContentTypeUtil.getContentType("application/json");
+    ContentType contentType = ContentType.getContentType("application/json").get();
     Assert.assertEquals(contentType, ContentType.JSON);
 
-    ContentType contentTypeWithParameter = ContentTypeUtil.getContentType("application/json; charset=utf-8");
+    ContentType contentTypeWithParameter = ContentType.getContentType("application/json; charset=utf-8").get();
     Assert.assertEquals(contentTypeWithParameter, ContentType.JSON);
   }
 
   @Test
   public void testPSONContentType() throws MimeTypeParseException
   {
-    ContentType contentType = ContentTypeUtil.getContentType("application/x-pson; charset=utf-8");
+    ContentType contentType = ContentType.getContentType("application/x-pson; charset=utf-8").get();
     Assert.assertEquals(contentType, ContentType.PSON);
 
-    ContentType contentTypeWithParameter = ContentTypeUtil.getContentType("application/x-pson; charset=utf-8");
+    ContentType contentTypeWithParameter = ContentType.getContentType("application/x-pson; charset=utf-8").get();
     Assert.assertEquals(contentTypeWithParameter, ContentType.PSON);
   }
 
   @Test
   public void testUnknowContentType() throws MimeTypeParseException
   {
-    ContentType contentType = ContentTypeUtil.getContentType("foo/bar");
-    Assert.assertEquals(contentType, ContentType.JSON);  // default to JSON for unknown content type
+    // Return Optional.empty for unknown types
+    Assert.assertFalse(ContentType.getContentType("foo/bar").isPresent());
 
-    ContentType contentTypeWithParameter = ContentTypeUtil.getContentType("foo/bar; foo=bar");
-    Assert.assertEquals(contentTypeWithParameter, ContentType.JSON);  // default to JSON for unknown content type
+    Assert.assertFalse(ContentType.getContentType("foo/bar; foo=bar").isPresent());
   }
 
   @Test
   public void testNullContentType() throws MimeTypeParseException
   {
-    ContentType contentType = ContentTypeUtil.getContentType(null);
+    ContentType contentType = ContentType.getContentType(null).get();
     Assert.assertEquals(ContentType.JSON, contentType);  // default to JSON for null content-type
   }
 
@@ -66,6 +65,6 @@ public class TestContentTypeUtil
   public void testNonParsableContentType() throws MimeTypeParseException
   {
     // this should cause parse error
-    ContentTypeUtil.getContentType("application=json");
+    ContentType.getContentType("application=json");
   }
 }

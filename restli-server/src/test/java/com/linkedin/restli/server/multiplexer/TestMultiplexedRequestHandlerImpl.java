@@ -16,7 +16,7 @@
 
 package com.linkedin.restli.server.multiplexer;
 
-
+import com.google.common.collect.ImmutableMap;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.DataMap;
@@ -31,6 +31,7 @@ import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestResponseBuilder;
 import com.linkedin.r2.transport.common.RestRequestHandler;
+import com.linkedin.restli.common.ContentType;
 import com.linkedin.restli.common.HttpMethod;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.RestConstants;
@@ -41,15 +42,10 @@ import com.linkedin.restli.common.multiplexer.IndividualResponse;
 import com.linkedin.restli.common.multiplexer.IndividualResponseMap;
 import com.linkedin.restli.common.multiplexer.MultiplexedRequestContent;
 import com.linkedin.restli.common.multiplexer.MultiplexedResponseContent;
-import com.linkedin.restli.internal.common.ContentTypeUtil;
-import com.linkedin.restli.internal.common.ContentTypeUtil.ContentType;
 import com.linkedin.restli.internal.common.CookieUtil;
 import com.linkedin.restli.internal.common.DataMapConverter;
 import com.linkedin.restli.internal.server.response.ErrorResponseBuilder;
 import com.linkedin.restli.server.RestLiServiceException;
-
-import com.google.common.collect.ImmutableMap;
-
 import java.io.IOException;
 import java.net.HttpCookie;
 import java.net.URI;
@@ -66,7 +62,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-
 import org.easymock.EasyMock;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -75,10 +70,7 @@ import static org.easymock.EasyMock.createMockBuilder;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
+import static org.testng.Assert.*;
 
 
 public class TestMultiplexedRequestHandlerImpl
@@ -140,7 +132,7 @@ public class TestMultiplexedRequestHandlerImpl
     MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(null, multiplexerRunMode);
     RestRequest request = muxRequestBuilder()
         .setMethod(HttpMethod.POST.name())
-        .setHeader(RestConstants.HEADER_CONTENT_TYPE, RestConstants.HEADER_VALUE_APPLICATION_PSON)
+        .setHeader(RestConstants.HEADER_CONTENT_TYPE, "text/plain")
         .build();
     FutureCallback<RestResponse> callback = new FutureCallback<RestResponse>();
     multiplexer.handleRequest(request, new RequestContext(), callback);
@@ -152,7 +144,7 @@ public class TestMultiplexedRequestHandlerImpl
   {
     createMultiplexer(null, multiplexerRunMode);
     RestRequest request = muxRequestBuilder().build();
-    ContentType contentType = ContentTypeUtil.getContentType(request.getHeader(RestConstants.HEADER_CONTENT_TYPE));
+    ContentType contentType = ContentType.getContentType(request.getHeader(RestConstants.HEADER_CONTENT_TYPE)).get();
     assertEquals(contentType, ContentType.JSON);
   }
 
@@ -163,7 +155,7 @@ public class TestMultiplexedRequestHandlerImpl
     RestRequest request = muxRequestBuilder()
         .setHeader(RestConstants.HEADER_CONTENT_TYPE, "application/json; charset=utf-8")
         .build();
-    ContentType contentType = ContentTypeUtil.getContentType(request.getHeader(RestConstants.HEADER_CONTENT_TYPE));
+    ContentType contentType = ContentType.getContentType(request.getHeader(RestConstants.HEADER_CONTENT_TYPE)).get();
     assertEquals(contentType, ContentType.JSON);
   }
 

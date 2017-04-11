@@ -19,6 +19,7 @@ package com.linkedin.restli.client;
 
 import com.linkedin.r2.filter.CompressionOption;
 
+import com.linkedin.restli.common.ContentType;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -33,8 +34,8 @@ public class RestliRequestOptionsBuilder
 {
   private ProtocolVersionOption _protocolVersionOption;
   private CompressionOption _requestCompressionOverride;
-  private RestClient.ContentType _contentType;
-  private List<RestClient.AcceptType> _acceptTypes;
+  private ContentType _contentType;
+  private List<ContentType> _acceptTypes;
   private CompressionOption _responseCompressionOverride;
   private boolean _acceptResponseAttachments = false;
 
@@ -64,13 +65,13 @@ public class RestliRequestOptionsBuilder
     return this;
   }
 
-  public RestliRequestOptionsBuilder setContentType(RestClient.ContentType contentType)
+  public RestliRequestOptionsBuilder setContentType(ContentType contentType)
   {
     _contentType = contentType;
     return this;
   }
 
-  public RestliRequestOptionsBuilder setAcceptTypes(List<RestClient.AcceptType> acceptTypes)
+  public RestliRequestOptionsBuilder setAcceptTypes(List<ContentType> acceptTypes)
   {
     if (acceptTypes != null)
     {
@@ -79,7 +80,7 @@ public class RestliRequestOptionsBuilder
     return this;
   }
 
-  public RestliRequestOptionsBuilder addAcceptTypes(List<RestClient.AcceptType> acceptTypes)
+  public RestliRequestOptionsBuilder addAcceptTypes(List<ContentType> acceptTypes)
   {
     if (_acceptTypes == null)
     {
@@ -87,7 +88,7 @@ public class RestliRequestOptionsBuilder
     }
     else
     {
-      for (RestClient.AcceptType acceptType: acceptTypes)
+      for (ContentType acceptType: acceptTypes)
       {
         if (!_acceptTypes.contains(acceptType))
         {
@@ -98,7 +99,7 @@ public class RestliRequestOptionsBuilder
     return this;
   }
 
-  public RestliRequestOptionsBuilder addAcceptType(RestClient.AcceptType acceptType)
+  public RestliRequestOptionsBuilder addAcceptType(ContentType acceptType)
   {
     if (_acceptTypes == null)
     {
@@ -139,12 +140,12 @@ public class RestliRequestOptionsBuilder
     return _requestCompressionOverride;
   }
 
-  public RestClient.ContentType getContentType()
+  public ContentType getContentType()
   {
     return _contentType;
   }
 
-  public List<RestClient.AcceptType> getAcceptTypes()
+  public List<ContentType> getAcceptTypes()
   {
     return _acceptTypes != null ? Collections.unmodifiableList(_acceptTypes) : null;
   }

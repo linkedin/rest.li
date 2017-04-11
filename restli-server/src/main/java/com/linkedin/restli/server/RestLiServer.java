@@ -78,6 +78,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import java.util.Set;
+import java.util.stream.Collectors;
+import javax.activation.MimeTypeParseException;
 import javax.mail.internet.ContentType;
 import javax.mail.internet.ParseException;
 
@@ -111,6 +114,7 @@ public class RestLiServer extends BaseRestServer
   private final List<Filter> _filters;
   private final List<InvokeAware> _invokeAwares;
   private boolean _isDocInitialized = false;
+  private final Set<String> _customMimeTypesSupported;
 
   public RestLiServer(final RestLiConfig config)
   {
@@ -146,6 +150,8 @@ public class RestLiServer extends BaseRestServer
             .build();
     _docRequestHandler = config.getDocumentationRequestHandler();
     _debugHandlers = new HashMap<String, RestLiDebugRequestHandler>();
+    _customMimeTypesSupported = _config.getCustomContentTypes().stream().map(
+        com.linkedin.restli.common.ContentType::getHeaderKey).collect(Collectors.toSet());
     if (config.getFilters() != null)
     {
       _filters = config.getFilters();
@@ -344,6 +350,7 @@ public class RestLiServer extends BaseRestServer
     try
     {
       RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(),
+                                                               _customMimeTypesSupported,
                                                                (ServerResourceContext)method.getContext());
       adapter = buildRestLiArgumentBuilder(method, _errorResponseBuilder);
       filterContext.setRequestData(adapter.extractRequestData(method, request));
@@ -728,21 +735,19 @@ public class RestLiServer extends BaseRestServer
           return;
         }
 
-        ContentType contentType;
+        com.linkedin.restli.common.ContentType contentType;
         try
         {
-          contentType = new ContentType(contentTypeString);
+          contentType = com.linkedin.restli.common.ContentType.getContentType(contentTypeString).orElse(null);
         }
-        catch (ParseException e)
+        catch (MimeTypeParseException e)
         {
           _streamResponseCallback.onError(Messages.toStreamException(RestException.forError(400,
                                                                                             "Unable to parse Content-Type: " + contentTypeString)));
           return;
         }
 
-        final String baseType = contentType.getBaseType();
-        if (!(baseType.equalsIgnoreCase(RestConstants.HEADER_VALUE_APPLICATION_JSON) ||
-            baseType.equalsIgnoreCase(RestConstants.HEADER_VALUE_APPLICATION_PSON)))
+        if (contentType == null)
         {
           _streamResponseCallback.onError(Messages.toStreamException(RestException.forError(415,
                                                                                             "Unknown Content-Type for first part of multipart/related payload: " + contentType.toString())));

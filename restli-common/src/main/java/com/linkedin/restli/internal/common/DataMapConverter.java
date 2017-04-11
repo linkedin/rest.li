@@ -16,16 +16,13 @@
 
 package com.linkedin.restli.internal.common;
 
-
 import com.linkedin.data.ByteString;
 import com.linkedin.data.DataMap;
-import com.linkedin.data.codec.JacksonDataCodec;
-import com.linkedin.data.codec.PsonDataCodec;
+import com.linkedin.restli.common.ContentType;
 import com.linkedin.restli.common.RestConstants;
-import com.linkedin.restli.internal.common.ContentTypeUtil.ContentType;
-import javax.activation.MimeTypeParseException;
 import java.io.IOException;
 import java.util.Map;
+import javax.activation.MimeTypeParseException;
 
 
 /**
@@ -33,9 +30,6 @@ import java.util.Map;
  */
 public class DataMapConverter
 {
-  private static final JacksonDataCodec JACKSON_DATA_CODEC = new JacksonDataCodec();
-  private static final PsonDataCodec PSON_DATA_CODEC = new PsonDataCodec();
-
   /**
    * Convert from DataMap to ByteString based on the given Content-Type header value
    * @param headers headers of the HTTP request or response
@@ -72,16 +66,9 @@ public class DataMapConverter
    */
   public static ByteString dataMapToByteString(String contentTypeHeaderValue, DataMap dataMap) throws MimeTypeParseException, IOException
   {
-    ContentType contentType  = ContentTypeUtil.getContentType(contentTypeHeaderValue);
+    ContentType contentType  = ContentType.getContentType(contentTypeHeaderValue).orElse(ContentType.JSON);
 
-    if (contentType == ContentType.PSON)
-    {
-      return ByteString.copyFromDataMapAsPson(dataMap);
-    }
-    else
-    {
-      return ByteString.copyFromDataMapAsJson(dataMap);
-    }
+    return ByteString.unsafeWrap(contentType.getCodec().mapToBytes(dataMap));
   }
 
   /**
@@ -94,16 +81,9 @@ public class DataMapConverter
    */
   public static DataMap bytesToDataMap(String contentTypeHeaderValue, ByteString bytes) throws MimeTypeParseException, IOException
   {
-    ContentType contentType = ContentTypeUtil.getContentType(contentTypeHeaderValue);
+    ContentType contentType = ContentType.getContentType(contentTypeHeaderValue).orElse(ContentType.JSON);
 
-    if (contentType == ContentType.PSON)
-    {
-      return PSON_DATA_CODEC.readMap(bytes.asInputStream());
-    }
-    else
-    {
-      return JACKSON_DATA_CODEC.readMap(bytes.asInputStream());
-    }
+    return contentType.getCodec().readMap(bytes.asInputStream());
   }
 
   private static String getContentTypeHeader(Map<String, String> headers)

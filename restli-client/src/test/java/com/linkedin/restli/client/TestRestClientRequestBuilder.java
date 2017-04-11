@@ -18,8 +18,10 @@ package com.linkedin.restli.client;
 
 
 import com.linkedin.common.callback.Callback;
+import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.template.DynamicRecordMetadata;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.multipart.MultiPartMIMEReader;
@@ -32,8 +34,11 @@ import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.transport.common.Client;
+import com.linkedin.restli.client.multiplexer.MultiplexedRequest;
+import com.linkedin.restli.client.multiplexer.MultiplexedRequestBuilder;
 import com.linkedin.restli.common.CollectionRequest;
 import com.linkedin.restli.common.CompoundKey;
+import com.linkedin.restli.common.ContentType;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
@@ -80,6 +85,8 @@ public class TestRestClientRequestBuilder
   private static final String BASE_URI_TEMPLATE = "/foo";
   private static final String SERIALIZED_EMPTY_JSON = "{}";
   private static final String SERIALIZED_EMPTY_PSON = "#!PSON1\n ";
+  private static final String MULTIPLEXED_GET_ENTITY_BODY = "{\"requests\":{\"0\":{\"headers\":{},\"method\":\"GET\",\"relativeUrl\":\"/foo\",\"dependentRequests\":{}}}}";
+  private static final String MULTIPLEXED_POST_ENTITY_BODY = "{\"requests\":{\"0\":{\"headers\":{},\"method\":\"POST\",\"relativeUrl\":\"/foo\",\"body\":{\"testFieldName\":\"testValue\",\"testInteger\":1},\"dependentRequests\":{}}}}";
 
   //For streaming attachments. Note that the tests in this suite that test for attachments are only for rest.li methods
   //that use POST or PUT (i.e action, update, etc...).
@@ -88,6 +95,7 @@ public class TestRestClientRequestBuilder
   private static final ByteString FIRST_PART_PAYLOAD = ByteString.copyString("firstPart", Charset.defaultCharset());
   private static final ByteString SECOND_PART_PAYLOAD = ByteString.copyString("secondPart", Charset.defaultCharset());
 
+  private static final ContentType CUSTOM_TYPE = ContentType.createContentType("application/json-v2", new JacksonDataCodec());
   static
   {
     ENTITY_BODY.put("testFieldName", "testValue");
@@ -95,11 +103,11 @@ public class TestRestClientRequestBuilder
   }
 
   @Test(dataProvider = "data")
-  public void testGet(RestClient.ContentType contentType,
+  public void testGet(ContentType contentType,
                       String expectedContentTypeHeader,
                       String expectedRequestBody,
                       String expectedEntitiesBody,
-                      List<RestClient.AcceptType> acceptTypes,
+                      List<ContentType> acceptTypes,
                       String expectedAcceptHeader,
                       boolean acceptContentTypePerClient,
                       boolean streamAttachments,
@@ -119,11 +127,11 @@ public class TestRestClientRequestBuilder
   }
 
   @Test(dataProvider = "data")
-  public void testFinder(RestClient.ContentType contentType,
+  public void testFinder(ContentType contentType,
                          String expectedContentTypeHeader,
                          String expectedRequestBody,
                          String expectedEntitiesBody,
-                         List<RestClient.AcceptType> acceptTypes,
+                         List<ContentType> acceptTypes,
                          String expectedAcceptHeader,
                          boolean acceptContentTypePerClient,
                          boolean streamAttachments,
@@ -143,11 +151,11 @@ public class TestRestClientRequestBuilder
   }
 
   @Test(dataProvider = "data")
-  public void testAction(RestClient.ContentType contentType,
+  public void testAction(ContentType contentType,
                          String expectedContentTypeHeader,
                          String expectedRequestBody,
                          String expectedEntitiesBody,
-                         List<RestClient.AcceptType> acceptTypes,
+                         List<ContentType> acceptTypes,
                          String expectedAcceptHeader,
                          boolean acceptContentTypePerClient,
                          boolean streamAttachments,
@@ -217,11 +225,11 @@ public class TestRestClientRequestBuilder
   }
 
   @Test(dataProvider = "data")
-  public void testUpdate(RestClient.ContentType contentType,
+  public void testUpdate(ContentType contentType,
                          String expectedContentTypeHeader,
                          String expectedRequestBody,
                          String expectedEntitiesBody,
-                         List<RestClient.AcceptType> acceptTypes,
+                         List<ContentType> acceptTypes,
                          String expectedAcceptHeader,
                          boolean acceptContentTypePerClient,
                          boolean streamAttachments,
@@ -297,11 +305,11 @@ public class TestRestClientRequestBuilder
   }
 
   @Test(dataProvider = "data")
-  public void testCreate(RestClient.ContentType contentType,
+  public void testCreate(ContentType contentType,
                          String expectedContentTypeHeader,
                          String expectedRequestBody,
                          String expectedEntitiesBody,
-                         List<RestClient.AcceptType> acceptTypes,
+                         List<ContentType> acceptTypes,
                          String expectedAcceptHeader,
                          boolean acceptContentTypePerClient,
                          boolean streamAttachments,
@@ -345,11 +353,11 @@ public class TestRestClientRequestBuilder
   }
 
   @Test(dataProvider = "data")
-  public void testDelete(RestClient.ContentType contentType,
+  public void testDelete(ContentType contentType,
                          String expectedContentTypeHeader,
                          String expectedRequestBody,
                          String expectedEntitiesBody,
-                         List<RestClient.AcceptType> acceptTypes,
+                         List<ContentType> acceptTypes,
                          String expectedAcceptHeader,
                          boolean acceptContentTypePerClient,
                          boolean streamAttachments,
@@ -379,6 +387,70 @@ public class TestRestClientRequestBuilder
     return result.toArray(new Object[result.size()][]);
   }
 
+  @Test(dataProvider = "multiplexerData")
+  public void testMultiplexedGet(ContentType contentType,
+      String expectedContentTypeHeader,
+      List<ContentType> acceptTypes,
+      String expectedAcceptHeader) throws URISyntaxException, RestLiEncodingException
+  {
+    RestRequest restRequest = clientGeneratedMultiplexedRestRequest(
+        BatchGetRequest.class, ResourceMethod.BATCH_GET, null, contentType, acceptTypes);
+    Assert.assertEquals(restRequest.getHeader(CONTENT_TYPE_HEADER), expectedContentTypeHeader);
+    Assert.assertEquals(restRequest.getHeader(ACCEPT_TYPE_HEADER), expectedAcceptHeader);
+    Assert.assertEquals(restRequest.getEntity().asAvroString(), MULTIPLEXED_GET_ENTITY_BODY);
+  }
+
+  @Test(dataProvider = "multiplexerData")
+  public void testMultiplexedCreate(ContentType contentType,
+      String expectedContentTypeHeader,
+      List<ContentType> acceptTypes,
+      String expectedAcceptHeader) throws URISyntaxException, RestLiEncodingException
+  {
+    RestRequest restRequest = clientGeneratedMultiplexedRestRequest(
+        CreateRequest.class, ResourceMethod.CREATE, ENTITY_BODY, contentType, acceptTypes);
+    Assert.assertEquals(restRequest.getHeader(CONTENT_TYPE_HEADER), expectedContentTypeHeader);
+    Assert.assertEquals(restRequest.getEntity().asAvroString(), MULTIPLEXED_POST_ENTITY_BODY);
+    Assert.assertEquals(restRequest.getHeader(ACCEPT_TYPE_HEADER), expectedAcceptHeader);
+  }
+
+  @DataProvider(name = "multiplexerData")
+  public Object[][] multiplexedRequestData()
+  {
+    return new Object[][]
+        {
+            // {
+            //    ContentType contentType
+            //    String expectedContentTypeHeader,
+            //    List<ContentType> acceptTypes,
+            //    String expectedAcceptHeader
+            // }
+            {
+                null,
+                "application/json",
+                null,
+                null
+            }, // default client
+            {
+                ContentType.JSON,
+                "application/json",
+                Collections.<ContentType>emptyList(),
+                null
+            },
+            {
+                ContentType.JSON,
+                "application/json",
+                Collections.singletonList(ContentType.JSON),
+                "application/json"
+            },
+            {   // Test custom content and accept types.
+                CUSTOM_TYPE,
+                "application/json-v2",
+                Arrays.asList(CUSTOM_TYPE, ContentType.ACCEPT_TYPE_ANY),
+                "application/json-v2;q=1.0,*/*;q=0.9"
+            }
+        };
+  }
+
   public Object[][] restRequestData()
   {
     return new Object[][]
@@ -386,11 +458,11 @@ public class TestRestClientRequestBuilder
             // ContentTypes and acceptTypes configured per client (deprecated).
             //
             // {
-            //    RestClient.ContentType contentType
+            //    ContentType contentType
             //    String expectedContentTypeHeader,
             //    String expectedRequestBody,
             //    String expectedEntitiesBody,
-            //    List<RestClient.AcceptType> acceptTypes,
+            //    List<ContentType> acceptTypes,
             //    String expectedAcceptHeader
             //    boolean acceptContentTypePerClient
             //    boolean streamAttachments, //false for RestRequest
@@ -408,11 +480,11 @@ public class TestRestClientRequestBuilder
                 false
             }, // default client
             {
-                RestClient.ContentType.JSON,
+                ContentType.JSON,
                 "application/json",
                 JSON_ENTITY_BODY,
                 JSON_ENTITIES_BODY,
-                Collections.<RestClient.AcceptType>emptyList(),
+                Collections.<ContentType>emptyList(),
                 null,
                 true,
                 false,
@@ -420,220 +492,220 @@ public class TestRestClientRequestBuilder
 
             },
             {
-                RestClient.ContentType.PSON,
+                ContentType.PSON,
                 "application/x-pson",
                 PSON_ENTITY_BODY,
                 PSON_ENTITIES_BODY,
-                Collections.<RestClient.AcceptType>emptyList(),
+                Collections.<ContentType>emptyList(),
                 null,
                 true,
                 false,
                 false
             },
             {
-                RestClient.ContentType.JSON,
+                ContentType.JSON,
                 "application/json",
                 JSON_ENTITY_BODY,
                 JSON_ENTITIES_BODY,
-                Collections.singletonList(RestClient.AcceptType.ANY),
+                Collections.singletonList(ContentType.ACCEPT_TYPE_ANY),
                 "*/*",
                 true,
                 false,
                 false
             },
             {
-                RestClient.ContentType.PSON,
+                ContentType.PSON,
                 "application/x-pson",
                 PSON_ENTITY_BODY,
                 PSON_ENTITIES_BODY,
-                Collections.singletonList(RestClient.AcceptType.ANY),
+                Collections.singletonList(ContentType.ACCEPT_TYPE_ANY),
                 "*/*",
                 true,
                 false,
                 false
             },
             {
-                RestClient.ContentType.JSON,
+                ContentType.JSON,
                 "application/json",
                 JSON_ENTITY_BODY,
                 JSON_ENTITIES_BODY,
-                Collections.singletonList(RestClient.AcceptType.JSON),
+                Collections.singletonList(ContentType.JSON),
                 "application/json",
                 true,
                 false,
-                false,
+                false
             },
             {
-                RestClient.ContentType.PSON,
+                ContentType.PSON,
                 "application/x-pson",
                 PSON_ENTITY_BODY,
                 PSON_ENTITIES_BODY,
-                Collections.singletonList(RestClient.AcceptType.JSON),
+                Collections.singletonList(ContentType.JSON),
                 "application/json",
                 true,
                 false,
                 false
             },
             {
-                RestClient.ContentType.JSON,
+                ContentType.JSON,
                 "application/json",
                 JSON_ENTITY_BODY,
                 JSON_ENTITIES_BODY,
-                Collections.singletonList(RestClient.AcceptType.PSON),
+                Collections.singletonList(ContentType.PSON),
                 "application/x-pson",
                 true,
                 false,
                 false
             },
             {
-                RestClient.ContentType.PSON,
+                ContentType.PSON,
                 "application/x-pson",
                 PSON_ENTITY_BODY,
                 PSON_ENTITIES_BODY,
-                Collections.singletonList(RestClient.AcceptType.PSON),
+                Collections.singletonList(ContentType.PSON),
                 "application/x-pson",
                 true,
                 false,
                 false
             },
             {
-                RestClient.ContentType.JSON,
+                ContentType.JSON,
                 "application/json",
                 JSON_ENTITY_BODY,
                 JSON_ENTITIES_BODY,
-                Arrays.asList(RestClient.AcceptType.JSON, RestClient.AcceptType.PSON),
+                Arrays.asList(ContentType.JSON, ContentType.PSON),
                 "application/json;q=1.0,application/x-pson;q=0.9",
                 true,
                 false,
                 false
             },
             {
-                RestClient.ContentType.PSON,
+                ContentType.PSON,
                 "application/x-pson",
                 PSON_ENTITY_BODY,
                 PSON_ENTITIES_BODY,
-                Arrays.asList(RestClient.AcceptType.JSON, RestClient.AcceptType.PSON),
+                Arrays.asList(ContentType.JSON, ContentType.PSON),
                 "application/json;q=1.0,application/x-pson;q=0.9",
                 true,
                 false,
                 false
             },
             {
-                RestClient.ContentType.JSON,
+                ContentType.JSON,
                 "application/json",
                 JSON_ENTITY_BODY,
                 JSON_ENTITIES_BODY,
-                Arrays.asList(RestClient.AcceptType.JSON, RestClient.AcceptType.ANY),
+                Arrays.asList(ContentType.JSON, ContentType.ACCEPT_TYPE_ANY),
                 "application/json;q=1.0,*/*;q=0.9",
                 true,
                 false,
                 false
             },
             {
-                RestClient.ContentType.PSON,
+                ContentType.PSON,
                 "application/x-pson",
                 PSON_ENTITY_BODY,
                 PSON_ENTITIES_BODY,
-                Arrays.asList(RestClient.AcceptType.JSON, RestClient.AcceptType.ANY),
+                Arrays.asList(ContentType.JSON, ContentType.ACCEPT_TYPE_ANY),
                 "application/json;q=1.0,*/*;q=0.9",
                 true,
                 false,
                 false
             },
             {
-                RestClient.ContentType.JSON,
+                ContentType.JSON,
                 "application/json",
                 JSON_ENTITY_BODY,
                 JSON_ENTITIES_BODY,
-                Arrays.asList(RestClient.AcceptType.PSON, RestClient.AcceptType.JSON),
+                Arrays.asList(ContentType.PSON, ContentType.JSON),
                 "application/x-pson;q=1.0,application/json;q=0.9",
                 true,
                 false,
                 false
             },
             {
-                RestClient.ContentType.PSON,
+                ContentType.PSON,
                 "application/x-pson",
                 PSON_ENTITY_BODY,
                 PSON_ENTITIES_BODY,
-                Arrays.asList(RestClient.AcceptType.PSON, RestClient.AcceptType.JSON),
+                Arrays.asList(ContentType.PSON, ContentType.JSON),
                 "application/x-pson;q=1.0,application/json;q=0.9",
                 true,
                 false,
                 false
             },
             {
-                RestClient.ContentType.JSON,
+                ContentType.JSON,
                 "application/json",
                 JSON_ENTITY_BODY,
                 JSON_ENTITIES_BODY,
-                Arrays.asList(RestClient.AcceptType.PSON, RestClient.AcceptType.ANY),
+                Arrays.asList(ContentType.PSON, ContentType.ACCEPT_TYPE_ANY),
                 "application/x-pson;q=1.0,*/*;q=0.9",
                 true,
                 false,
                 false
             },
             {
-                RestClient.ContentType.PSON,
+                ContentType.PSON,
                 "application/x-pson",
                 PSON_ENTITY_BODY,
                 PSON_ENTITIES_BODY,
-                Arrays.asList(RestClient.AcceptType.PSON, RestClient.AcceptType.ANY),
+                Arrays.asList(ContentType.PSON, ContentType.ACCEPT_TYPE_ANY),
                 "application/x-pson;q=1.0,*/*;q=0.9",
                 true,
                 false,
                 false
             },
             {
-                RestClient.ContentType.JSON,
+                ContentType.JSON,
                 "application/json",
                 JSON_ENTITY_BODY,
                 JSON_ENTITIES_BODY,
-                Arrays.asList(RestClient.AcceptType.ANY, RestClient.AcceptType.JSON),
+                Arrays.asList(ContentType.ACCEPT_TYPE_ANY, ContentType.JSON),
                 "*/*;q=1.0,application/json;q=0.9",
                 true,
                 false,
                 false
             },
             {
-                RestClient.ContentType.PSON,
+                ContentType.PSON,
                 "application/x-pson",
                 PSON_ENTITY_BODY,
                 PSON_ENTITIES_BODY,
-                Arrays.asList(RestClient.AcceptType.ANY, RestClient.AcceptType.JSON),
+                Arrays.asList(ContentType.ACCEPT_TYPE_ANY, ContentType.JSON),
                 "*/*;q=1.0,application/json;q=0.9",
                 true,
                 false,
                 false
             },
             {
-                RestClient.ContentType.JSON,
+                ContentType.JSON,
                 "application/json",
                 JSON_ENTITY_BODY,
                 JSON_ENTITIES_BODY,
-                Arrays.asList(RestClient.AcceptType.ANY, RestClient.AcceptType.PSON),
+                Arrays.asList(ContentType.ACCEPT_TYPE_ANY, ContentType.PSON),
                 "*/*;q=1.0,application/x-pson;q=0.9",
                 true,
                 false,
                 false
             },
             {
-                RestClient.ContentType.PSON,
+                ContentType.PSON,
                 "application/x-pson",
                 PSON_ENTITY_BODY,
                 PSON_ENTITIES_BODY,
-                Arrays.asList(RestClient.AcceptType.ANY, RestClient.AcceptType.PSON),
+                Arrays.asList(ContentType.ACCEPT_TYPE_ANY, ContentType.PSON),
                 "*/*;q=1.0,application/x-pson;q=0.9",
                 true,
                 false,
                 false
             },
             {
-                RestClient.ContentType.PSON,
+                ContentType.PSON,
                 "application/x-pson",
                 PSON_ENTITY_BODY,
                 PSON_ENTITIES_BODY,
-                Arrays.asList(RestClient.AcceptType.JSON, RestClient.AcceptType.PSON, RestClient.AcceptType.ANY),
+                Arrays.asList(ContentType.JSON, ContentType.PSON, ContentType.ACCEPT_TYPE_ANY),
                 "application/json;q=1.0,application/x-pson;q=0.9,*/*;q=0.8",
                 true,
                 false,
@@ -646,7 +718,7 @@ public class TestRestClientRequestBuilder
             //    String expectedContentTypeHeader,
             //    String expectedRequestBody,
             //    String expectedEntitiesBody,
-            //    List<RestClient.AcceptType> acceptTypes,
+            //    List<ContentType> acceptTypes,
             //    String expectedAcceptHeader
             //    boolean acceptContentTypePerClient
             //    List<Object> streamingAttachmentDataSources, //null for RestRequest always
@@ -664,233 +736,244 @@ public class TestRestClientRequestBuilder
                 false
             }, // default client
             {
-                RestClient.ContentType.JSON,
+                ContentType.JSON,
                 "application/json",
                 JSON_ENTITY_BODY,
                 JSON_ENTITIES_BODY,
-                Collections.<RestClient.AcceptType>emptyList(),
+                Collections.<ContentType>emptyList(),
                 null,
                 false,
                 false,
                 false
             },
             {
-                RestClient.ContentType.PSON,
+                ContentType.PSON,
                 "application/x-pson",
                 PSON_ENTITY_BODY,
                 PSON_ENTITIES_BODY,
-                Collections.<RestClient.AcceptType>emptyList(),
+                Collections.<ContentType>emptyList(),
                 null,
                 false,
                 false,
                 false
             },
             {
-                RestClient.ContentType.JSON,
+                ContentType.JSON,
                 "application/json",
                 JSON_ENTITY_BODY,
                 JSON_ENTITIES_BODY,
-                Collections.singletonList(RestClient.AcceptType.ANY),
+                Collections.singletonList(ContentType.ACCEPT_TYPE_ANY),
                 "*/*",
                 false,
                 false,
                 false
             },
             {
-                RestClient.ContentType.PSON,
+                ContentType.PSON,
                 "application/x-pson",
                 PSON_ENTITY_BODY,
                 PSON_ENTITIES_BODY,
-                Collections.singletonList(RestClient.AcceptType.ANY),
+                Collections.singletonList(ContentType.ACCEPT_TYPE_ANY),
                 "*/*",
                 false,
                 false,
                 false
             },
             {
-                RestClient.ContentType.JSON,
+                ContentType.JSON,
                 "application/json",
                 JSON_ENTITY_BODY,
                 JSON_ENTITIES_BODY,
-                Collections.singletonList(RestClient.AcceptType.JSON),
+                Collections.singletonList(ContentType.JSON),
                 "application/json",
                 false,
                 false,
                 false
             },
             {
-                RestClient.ContentType.PSON,
+                ContentType.PSON,
                 "application/x-pson",
                 PSON_ENTITY_BODY,
                 PSON_ENTITIES_BODY,
-                Collections.singletonList(RestClient.AcceptType.JSON),
+                Collections.singletonList(ContentType.JSON),
                 "application/json",
                 false,
                 false,
                 false
             },
             {
-                RestClient.ContentType.JSON,
+                ContentType.JSON,
                 "application/json",
                 JSON_ENTITY_BODY,
                 JSON_ENTITIES_BODY,
-                Collections.singletonList(RestClient.AcceptType.PSON),
+                Collections.singletonList(ContentType.PSON),
                 "application/x-pson",
                 false,
                 false,
                 false
             },
             {
-                RestClient.ContentType.PSON,
+                ContentType.PSON,
                 "application/x-pson",
                 PSON_ENTITY_BODY,
                 PSON_ENTITIES_BODY,
-                Collections.singletonList(RestClient.AcceptType.PSON),
+                Collections.singletonList(ContentType.PSON),
                 "application/x-pson",
                 false,
                 false,
                 false
             },
             {
-                RestClient.ContentType.JSON,
+                ContentType.JSON,
                 "application/json",
                 JSON_ENTITY_BODY,
                 JSON_ENTITIES_BODY,
-                Arrays.asList(RestClient.AcceptType.JSON, RestClient.AcceptType.PSON),
+                Arrays.asList(ContentType.JSON, ContentType.PSON),
                 "application/json;q=1.0,application/x-pson;q=0.9",
                 false,
                 false,
                 false
             },
             {
-                RestClient.ContentType.PSON,
+                ContentType.PSON,
                 "application/x-pson",
                 PSON_ENTITY_BODY,
                 PSON_ENTITIES_BODY,
-                Arrays.asList(RestClient.AcceptType.JSON, RestClient.AcceptType.PSON),
+                Arrays.asList(ContentType.JSON, ContentType.PSON),
                 "application/json;q=1.0,application/x-pson;q=0.9",
                 false,
                 false,
                 false
             },
             {
-                RestClient.ContentType.JSON,
+                ContentType.JSON,
                 "application/json",
                 JSON_ENTITY_BODY,
                 JSON_ENTITIES_BODY,
-                Arrays.asList(RestClient.AcceptType.JSON, RestClient.AcceptType.ANY),
+                Arrays.asList(ContentType.JSON, ContentType.ACCEPT_TYPE_ANY),
                 "application/json;q=1.0,*/*;q=0.9",
                 false,
                 false,
                 false
             },
             {
-                RestClient.ContentType.PSON,
+                ContentType.PSON,
                 "application/x-pson",
                 PSON_ENTITY_BODY,
                 PSON_ENTITIES_BODY,
-                Arrays.asList(RestClient.AcceptType.JSON, RestClient.AcceptType.ANY),
+                Arrays.asList(ContentType.JSON, ContentType.ACCEPT_TYPE_ANY),
                 "application/json;q=1.0,*/*;q=0.9",
                 false,
                 false,
                 false
             },
             {
-                RestClient.ContentType.JSON,
+                ContentType.JSON,
                 "application/json",
                 JSON_ENTITY_BODY,
                 JSON_ENTITIES_BODY,
-                Arrays.asList(RestClient.AcceptType.PSON, RestClient.AcceptType.JSON),
+                Arrays.asList(ContentType.PSON, ContentType.JSON),
                 "application/x-pson;q=1.0,application/json;q=0.9",
                 false,
                 false,
                 false
             },
             {
-                RestClient.ContentType.PSON,
+                ContentType.PSON,
                 "application/x-pson",
                 PSON_ENTITY_BODY,
                 PSON_ENTITIES_BODY,
-                Arrays.asList(RestClient.AcceptType.PSON, RestClient.AcceptType.JSON),
+                Arrays.asList(ContentType.PSON, ContentType.JSON),
                 "application/x-pson;q=1.0,application/json;q=0.9",
                 false,
                 false,
                 false
             },
             {
-                RestClient.ContentType.JSON,
+                ContentType.JSON,
                 "application/json",
                 JSON_ENTITY_BODY,
                 JSON_ENTITIES_BODY,
-                Arrays.asList(RestClient.AcceptType.PSON, RestClient.AcceptType.ANY),
+                Arrays.asList(ContentType.PSON, ContentType.ACCEPT_TYPE_ANY),
                 "application/x-pson;q=1.0,*/*;q=0.9",
                 false,
                 false,
                 false
             },
             {
-                RestClient.ContentType.PSON,
+                ContentType.PSON,
                 "application/x-pson",
                 PSON_ENTITY_BODY,
                 PSON_ENTITIES_BODY,
-                Arrays.asList(RestClient.AcceptType.PSON, RestClient.AcceptType.ANY),
+                Arrays.asList(ContentType.PSON, ContentType.ACCEPT_TYPE_ANY),
                 "application/x-pson;q=1.0,*/*;q=0.9",
                 false,
                 false,
                 false
             },
             {
-                RestClient.ContentType.JSON,
+                ContentType.JSON,
                 "application/json",
                 JSON_ENTITY_BODY,
                 JSON_ENTITIES_BODY,
-                Arrays.asList(RestClient.AcceptType.ANY, RestClient.AcceptType.JSON),
+                Arrays.asList(ContentType.ACCEPT_TYPE_ANY, ContentType.JSON),
                 "*/*;q=1.0,application/json;q=0.9",
                 false,
                 false,
                 false
             },
             {
-                RestClient.ContentType.PSON,
+                ContentType.PSON,
                 "application/x-pson",
                 PSON_ENTITY_BODY,
                 PSON_ENTITIES_BODY,
-                Arrays.asList(RestClient.AcceptType.ANY, RestClient.AcceptType.JSON),
+                Arrays.asList(ContentType.ACCEPT_TYPE_ANY, ContentType.JSON),
                 "*/*;q=1.0,application/json;q=0.9",
                 false,
                 false,
                 false
             },
             {
-                RestClient.ContentType.JSON,
+                ContentType.JSON,
                 "application/json",
                 JSON_ENTITY_BODY,
                 JSON_ENTITIES_BODY,
-                Arrays.asList(RestClient.AcceptType.ANY, RestClient.AcceptType.PSON),
+                Arrays.asList(ContentType.ACCEPT_TYPE_ANY, ContentType.PSON),
                 "*/*;q=1.0,application/x-pson;q=0.9",
                 false,
                 false,
                 false
             },
             {
-                RestClient.ContentType.PSON,
+                ContentType.PSON,
                 "application/x-pson",
                 PSON_ENTITY_BODY,
                 PSON_ENTITIES_BODY,
-                Arrays.asList(RestClient.AcceptType.ANY, RestClient.AcceptType.PSON),
+                Arrays.asList(ContentType.ACCEPT_TYPE_ANY, ContentType.PSON),
                 "*/*;q=1.0,application/x-pson;q=0.9",
                 false,
                 false,
                 false
             },
             {
-                RestClient.ContentType.PSON,
+                ContentType.PSON,
                 "application/x-pson",
                 PSON_ENTITY_BODY,
                 PSON_ENTITIES_BODY,
-                Arrays.asList(RestClient.AcceptType.JSON, RestClient.AcceptType.PSON, RestClient.AcceptType.ANY),
+                Arrays.asList(ContentType.JSON, ContentType.PSON, ContentType.ACCEPT_TYPE_ANY),
                 "application/json;q=1.0,application/x-pson;q=0.9,*/*;q=0.8",
                 false,
+                false,
+                false
+            },
+            {   // Test custom content and accept types.
+                CUSTOM_TYPE,
+                "application/json-v2",
+                JSON_ENTITY_BODY,
+                JSON_ENTITIES_BODY,
+                Arrays.asList(CUSTOM_TYPE, ContentType.ACCEPT_TYPE_ANY),
+                "application/json-v2;q=1.0,*/*;q=0.9",
+                true,
                 false,
                 false
             }
@@ -1026,8 +1109,8 @@ public class TestRestClientRequestBuilder
   private <T extends Request> RestRequest clientGeneratedRestRequest(Class<T> requestClass,
                                                                      ResourceMethod method,
                                                                      DataMap entityBody,
-                                                                     RestClient.ContentType contentType,
-                                                                     List<RestClient.AcceptType> acceptTypes,
+                                                                     ContentType contentType,
+                                                                     List<ContentType> acceptTypes,
                                                                      boolean acceptContentTypePerClient)
     throws URISyntaxException
   {
@@ -1084,6 +1167,63 @@ public class TestRestClientRequestBuilder
     return restRequestCapture.getValue();
   }
 
+  @SuppressWarnings({"unchecked", "rawtypes", "deprecation"})
+  private <T extends Request> RestRequest clientGeneratedMultiplexedRestRequest(Class<T> requestClass,
+      ResourceMethod method,
+      DataMap entityBody,
+      ContentType contentType,
+      List<ContentType> acceptTypes) throws URISyntaxException, RestLiEncodingException
+  {
+    // massive setup...
+    Client mockClient = EasyMock.createMock(Client.class);
+
+    @SuppressWarnings({"rawtypes"})
+    Request<?> mockRequest = EasyMock.createMock(requestClass);
+
+    RecordTemplate mockRecordTemplate = EasyMock.createMock(RecordTemplate.class);
+
+    @SuppressWarnings({"rawtypes"})
+    RestResponseDecoder mockResponseDecoder = EasyMock.createMock(RestResponseDecoder.class);
+
+    RestliRequestOptions requestOptions = new RestliRequestOptions(ProtocolVersionOption.USE_LATEST_IF_AVAILABLE, null, null, contentType, acceptTypes, false);
+
+    setCommonExpectations(mockRequest, method, mockResponseDecoder, requestOptions);
+
+    if (entityBody != null)
+    {
+      EasyMock.expect(mockRequest.getInputRecord()).andReturn(mockRecordTemplate).anyTimes();
+      EasyMock.expect(mockRecordTemplate.data()).andReturn(entityBody).anyTimes();
+    }
+    else
+    {
+      EasyMock.expect(mockRequest.getInputRecord()).andReturn(null).anyTimes();
+    }
+
+    Capture<RestRequest> restRequestCapture = new Capture<RestRequest>();
+
+    EasyMock.expect(mockClient.getMetadata(new URI(HOST + SERVICE_NAME)))
+        .andReturn(Collections.<String, Object>emptyMap()).once();
+
+    mockClient.restRequest(EasyMock.capture(restRequestCapture),
+        (RequestContext) EasyMock.anyObject(),
+        (Callback<RestResponse>) EasyMock.anyObject());
+    EasyMock.expectLastCall().once();
+
+    EasyMock.replay(mockClient, mockRequest, mockRecordTemplate);
+
+    // do work!
+    RestClient restClient = new RestClient(mockClient, HOST);
+
+    MultiplexedRequest multiplexedRequest = MultiplexedRequestBuilder.createParallelRequest()
+        .addRequest(mockRequest, new FutureCallback())
+        .setRequestOptions(requestOptions)
+        .build();
+
+    restClient.sendRequest(multiplexedRequest);
+
+    return restRequestCapture.getValue();
+  }
+
   //This is similar to clientGeneratedRestRequest above except that it will generate a StreamRequest instead
   //of a RestRequest. Note that this will ONLY happen if either acceptResponseAttachments below is 'true' OR
   //streamingAttachmentDataSources below is non-null with a size greater then 0. If both of these do not hold,
@@ -1092,8 +1232,8 @@ public class TestRestClientRequestBuilder
   private <T extends Request> StreamRequest clientGeneratedStreamRequest(Class<T> requestClass,
                                                                          ResourceMethod method,
                                                                          DataMap entityBody,
-                                                                         RestClient.ContentType contentType,
-                                                                         List<RestClient.AcceptType> acceptTypes,
+                                                                         ContentType contentType,
+                                                                         List<ContentType> acceptTypes,
                                                                          boolean acceptContentTypePerClient,
                                                                          List<Object> streamingAttachmentDataSources,
                                                                          boolean acceptResponseAttachments)

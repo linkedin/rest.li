@@ -22,5 +22,7 @@ package com.linkedin.restli.internal.common;
  */
 public interface TestConstants
 {
+  // Use this constant to quickly search for tests that are related to restli protocol version. This can be used
+  // to find/update tests when adding a new version.
   String RESTLI_PROTOCOL_1_2_PREFIX = "restli_protocol_1_2_";
 }

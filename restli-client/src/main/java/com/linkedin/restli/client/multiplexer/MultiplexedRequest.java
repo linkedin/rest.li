@@ -19,6 +19,7 @@ package com.linkedin.restli.client.multiplexer;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.r2.message.rest.RestResponse;
+import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.common.multiplexer.MultiplexedRequestContent;
 
 import java.util.Map;
@@ -34,11 +35,13 @@ public class MultiplexedRequest
 {
   private final MultiplexedRequestContent _content;
   private final Map<Integer, Callback<RestResponse>> _callbacks;
+  private final RestliRequestOptions _requestOptions;
 
-  MultiplexedRequest(MultiplexedRequestContent content, Map<Integer, Callback<RestResponse>> callbacks)
+  MultiplexedRequest(MultiplexedRequestContent content, Map<Integer, Callback<RestResponse>> callbacks, RestliRequestOptions requestOptions)
   {
     _content = content;
     _callbacks = callbacks;
+    _requestOptions = requestOptions;
   }
 
   public MultiplexedRequestContent getContent()
@@ -49,5 +52,10 @@ public class MultiplexedRequest
   public Map<Integer, Callback<RestResponse>> getCallbacks()
   {
     return _callbacks;
+  }
+
+  public RestliRequestOptions getRequestOptions()
+  {
+    return _requestOptions;
   }
 }

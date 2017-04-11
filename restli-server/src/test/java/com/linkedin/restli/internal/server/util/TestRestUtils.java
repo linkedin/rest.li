@@ -35,6 +35,7 @@ import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.server.LinkedListNode;
 import com.linkedin.restli.server.RestLiServiceException;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -103,13 +104,13 @@ public class TestRestUtils
   @Test(dataProvider = "successfulMatch")
   public void testPickBestEncodingWithValidMimeTypes(String header, String result)
   {
-    Assert.assertEquals(RestUtils.pickBestEncoding(header), result);
+    Assert.assertEquals(RestUtils.pickBestEncoding(header, Collections.emptySet()), result);
   }
 
   @Test
   public void testPickBestEncodingWithNoMimeTypes()
   {
-    Assert.assertNotEquals(RestUtils.pickBestEncoding(null), EMPTY_TYPE);
+    Assert.assertNotEquals(RestUtils.pickBestEncoding(null, Collections.emptySet()), EMPTY_TYPE);
   }
 
   @Test(dataProvider = "invalidHeaders")
@@ -117,7 +118,7 @@ public class TestRestUtils
   {
     try
     {
-      RestUtils.pickBestEncoding(header);
+      RestUtils.pickBestEncoding(header, Collections.emptySet());
       Assert.fail();
     }
     catch (RestLiServiceException e)
@@ -135,14 +136,14 @@ public class TestRestUtils
     ServerResourceContext resourceContext = new ResourceContextImpl();
     try
     {
-      RestUtils.validateRequestHeadersAndUpdateResourceContext(headers, resourceContext);
+      RestUtils.validateRequestHeadersAndUpdateResourceContext(headers, Collections.emptySet(), resourceContext);
       Assert.fail();
     }
     catch (RestLiServiceException e)
     {
       Assert.assertEquals(e.getStatus(), HttpStatus.S_406_NOT_ACCEPTABLE);
       Assert.assertEquals(e.getMessage(),
-                          "None of the types in the request's 'Accept' header are supported. Supported MIME types are: [application/x-pson, application/json]");
+                          "None of the types in the request's 'Accept' header are supported. Supported MIME types are: [application/x-pson, application/json][]");
       Assert.assertEquals(resourceContext.getResponseMimeType(), null);
     }
   }
@@ -153,7 +154,7 @@ public class TestRestUtils
     Map<String, String> headers = new HashMap<String, String>();
     headers.put("Accept", "application/json");
     ServerResourceContext resourceContext = new ResourceContextImpl();
-    RestUtils.validateRequestHeadersAndUpdateResourceContext(headers, resourceContext);
+    RestUtils.validateRequestHeadersAndUpdateResourceContext(headers, Collections.emptySet(), resourceContext);
     Assert.assertEquals(resourceContext.getResponseMimeType(), "application/json");
   }
 

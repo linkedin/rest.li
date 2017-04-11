@@ -17,6 +17,7 @@
 package com.linkedin.restli.server.test;
 
 
+import com.google.common.collect.Sets;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.DataCodec;
@@ -35,6 +36,7 @@ import com.linkedin.restli.common.ActionResponse;
 import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CollectionMetadata;
 import com.linkedin.restli.common.CollectionResponse;
+import com.linkedin.restli.common.ContentType;
 import com.linkedin.restli.common.CreateStatus;
 import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.HttpStatus;
@@ -135,7 +137,7 @@ public class TestRestLiResponseHandler
     return _responseHandler.buildResponse(req, routing, body);
   }
 
-  private static enum AcceptTypeData
+  private enum AcceptTypeData
   {
     JSON  (JSON_ACCEPT_HEADERS,   APPLICATION_JSON,   JACKSON_DATA_CODEC),
     PSON  (PSON_ACCEPT_HEADERS,   APPLICATION_PSON,   PSON_DATA_CODEC),
@@ -146,7 +148,7 @@ public class TestRestLiResponseHandler
     public String              responseContentType;
     public DataCodec           dataCodec;
 
-    private AcceptTypeData(Map<String, String> acceptHeaders, String responseContentType, DataCodec dataCodec)
+    AcceptTypeData(Map<String, String> acceptHeaders, String responseContentType, DataCodec dataCodec)
     {
       this.acceptHeaders = acceptHeaders;
       this.responseContentType = responseContentType;
@@ -155,7 +157,7 @@ public class TestRestLiResponseHandler
   }
 
   @Test
-  private void testInvalidAcceptHeaders() throws Exception
+  public void testInvalidAcceptHeaders() throws Exception
   {
     Map<String, String> badAcceptHeaders = Collections.singletonMap("Accept", "foo/bar");
 
@@ -181,6 +183,45 @@ public class TestRestLiResponseHandler
     {
       Assert.assertEquals(e.getStatus().getCode(), 406);
     }
+  }
+
+  @Test
+  public void testCustomAcceptHeaders() throws Exception
+  {
+    Map<String, String> customAcceptHeaders = Collections.singletonMap("Accept", "application/json+2.0");
+
+    // check response with out codec support (expect 406 error)
+    try
+    {
+      invokeResponseHandler("/test", buildStatusRecord(), ResourceMethod.GET,
+          customAcceptHeaders, AllProtocolVersions.LATEST_PROTOCOL_VERSION);
+      Assert.fail();
+    }
+    catch (RestLiServiceException e)
+    {
+      Assert.assertEquals(e.getStatus().getCode(), 406);
+    }
+
+    // check response without creating a custom codec (expect 406 error)
+    try
+    {
+      RestRequest req = buildRequest("/test", customAcceptHeaders, AllProtocolVersions.LATEST_PROTOCOL_VERSION);
+      RoutingResult routing = buildRoutingResult(ResourceMethod.GET, req, customAcceptHeaders, Sets.newHashSet("application/json+2.0"));
+      _responseHandler.buildResponse(req, routing, buildStatusRecord());
+      Assert.fail();
+    }
+    catch (RestLiServiceException e)
+    {
+      Assert.assertEquals(e.getStatus().getCode(), 406);
+    }
+
+    // Register custom codec
+    ContentType.createContentType("application/json+2.0", JACKSON_DATA_CODEC);
+    RestRequest req = buildRequest("/test", customAcceptHeaders, AllProtocolVersions.LATEST_PROTOCOL_VERSION);
+    RoutingResult routing = buildRoutingResult(ResourceMethod.GET, req, customAcceptHeaders, Sets.newHashSet("application/json+2.0"));
+    RestResponse response =  _responseHandler.buildResponse(req, routing, buildStatusRecord());
+
+    checkResponse(response, 200, 2, "application/json+2.0", Status.class.getName(), null, true, RestConstants.HEADER_RESTLI_ERROR_RESPONSE);
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "statusData")
@@ -1241,6 +1282,13 @@ public class TestRestLiResponseHandler
   }
 
   private final RoutingResult buildRoutingResult(ResourceMethod resourceMethod, RestRequest request, Map<String, String> acceptHeaders)
+      throws SecurityException, NoSuchMethodException, RestLiSyntaxException
+  {
+    return buildRoutingResult(resourceMethod, request, acceptHeaders, Collections.emptySet());
+  }
+
+  private final RoutingResult buildRoutingResult(
+      ResourceMethod resourceMethod, RestRequest request, Map<String, String> acceptHeaders, Set<String> customTypes)
           throws SecurityException, NoSuchMethodException, RestLiSyntaxException
   {
     Method method = ProjectionTestFixture.class.getMethod("batchGet", Set.class);
@@ -1250,7 +1298,7 @@ public class TestRestLiResponseHandler
     model.addResourceMethodDescriptor(methodDescriptor);
     ServerResourceContext context =  new ResourceContextImpl(new PathKeysImpl(), request,
                             new RequestContext());
-    RestUtils.validateRequestHeadersAndUpdateResourceContext(acceptHeaders, context);
+    RestUtils.validateRequestHeadersAndUpdateResourceContext(acceptHeaders, customTypes, context);
     return new RoutingResult(context, methodDescriptor);
   }
 

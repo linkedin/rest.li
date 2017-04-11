@@ -23,8 +23,6 @@ import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.DataMap;
-import com.linkedin.data.codec.JacksonDataCodec;
-import com.linkedin.data.codec.PsonDataCodec;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.multipart.MultiPartMIMEUtils;
 import com.linkedin.multipart.MultiPartMIMEWriter;
@@ -45,6 +43,7 @@ import com.linkedin.restli.client.multiplexer.MultiplexedRequest;
 import com.linkedin.restli.client.multiplexer.MultiplexedResponse;
 import com.linkedin.restli.client.uribuilders.MultiplexerUriBuilder;
 import com.linkedin.restli.client.uribuilders.RestliUriBuilderUtil;
+import com.linkedin.restli.common.ContentType;
 import com.linkedin.restli.common.HttpMethod;
 import com.linkedin.restli.common.OperationNameGenerator;
 import com.linkedin.restli.common.ProtocolVersion;
@@ -70,7 +69,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import javax.mail.internet.ParseException;
+import javax.activation.MimeTypeParseException;
 
 
 /**
@@ -119,15 +118,13 @@ import javax.mail.internet.ParseException;
  * @author Eran Leshem
  */
 public class RestClient implements Client {
-  private static final JacksonDataCodec  JACKSON_DATA_CODEC = new JacksonDataCodec();
-  private static final PsonDataCodec     PSON_DATA_CODEC    = new PsonDataCodec();
-  private static final List<AcceptType>  DEFAULT_ACCEPT_TYPES = Collections.emptyList();
+  private static final List<ContentType>  DEFAULT_ACCEPT_TYPES = Collections.emptyList();
   private static final ContentType DEFAULT_CONTENT_TYPE = ContentType.JSON;
   private static final Random RANDOM_INSTANCE = new Random();
   private final com.linkedin.r2.transport.common.Client _client;
 
   private final String _uriPrefix;
-  private final List<AcceptType> _acceptTypes;
+  private final List<ContentType> _acceptTypes;
   private final ContentType _contentType;
   // This is a system property that a user can set to override the protocol version handshake mechanism and always
   // use FORCE_USE_NEXT as the ProtocolVersionOption. If this system property is "true" (ignoring case) the override
@@ -145,7 +142,7 @@ public class RestClient implements Client {
    */
   @Deprecated
   public RestClient(com.linkedin.r2.transport.common.Client client,
-      String uriPrefix, List<AcceptType> acceptTypes)
+      String uriPrefix, List<ContentType> acceptTypes)
   {
     this(client, uriPrefix, DEFAULT_CONTENT_TYPE, acceptTypes);
   }
@@ -155,7 +152,7 @@ public class RestClient implements Client {
    */
   @Deprecated
   public RestClient(com.linkedin.r2.transport.common.Client client,
-      String uriPrefix, ContentType contentType, List<AcceptType> acceptTypes)
+      String uriPrefix, ContentType contentType, List<ContentType> acceptTypes)
   {
     _client = client;
     _uriPrefix = (uriPrefix == null) ? null : uriPrefix.trim();
@@ -424,11 +421,11 @@ public class RestClient implements Client {
   // 1. Request header
   // 2. RestLiRequestOptions
   // 3. RestClient configuration
-  private void addAcceptHeaders(MessageHeadersBuilder<?> builder, List<AcceptType> acceptTypes, boolean acceptAttachments)
+  private void addAcceptHeaders(MessageHeadersBuilder<?> builder, List<ContentType> acceptTypes, boolean acceptAttachments)
   {
     if (builder.getHeader(RestConstants.HEADER_ACCEPT) == null)
     {
-      List<AcceptType> types = _acceptTypes;
+      List<ContentType> types = _acceptTypes;
       if (acceptTypes != null && !acceptTypes.isEmpty())
       {
         types = acceptTypes;
@@ -439,12 +436,12 @@ public class RestClient implements Client {
       }
       else if (acceptAttachments)
       {
-        builder.setHeader(RestConstants.HEADER_ACCEPT, createAcceptHeader(Collections.<AcceptType>emptyList(), acceptAttachments));
+        builder.setHeader(RestConstants.HEADER_ACCEPT, createAcceptHeader(Collections.emptyList(), acceptAttachments));
       }
     }
   }
 
-  private String createAcceptHeader(List<AcceptType> acceptTypes, boolean acceptAttachments)
+  private String createAcceptHeader(List<ContentType> acceptTypes, boolean acceptAttachments)
   {
     if (acceptTypes.size() == 1)
     {
@@ -457,7 +454,7 @@ public class RestClient implements Client {
     // general case
     StringBuilder acceptHeader = new StringBuilder();
     double currQ = 1.0;
-    Iterator<AcceptType> iterator = acceptTypes.iterator();
+    Iterator<ContentType> iterator = acceptTypes.iterator();
     while(iterator.hasNext())
     {
       acceptHeader.append(iterator.next().getHeaderKey());
@@ -493,48 +490,32 @@ public class RestClient implements Client {
     {
       String header = builder.getHeader(RestConstants.HEADER_CONTENT_TYPE);
 
-      ContentType type;
       if (header == null)
       {
         if (contentType != null)
         {
-          type = contentType;
+          return contentType;
         }
         else if (_contentType != null)
         {
-          type = _contentType;
+          return _contentType;
         }
-        else {
-          type = DEFAULT_CONTENT_TYPE;
+        else
+        {
+          return DEFAULT_CONTENT_TYPE;
         }
       }
       else
       {
-        javax.mail.internet.ContentType headerContentType;
         try
         {
-          headerContentType = new javax.mail.internet.ContentType(header);
+          return ContentType.getContentType(header).orElse(DEFAULT_CONTENT_TYPE);
         }
-        catch (ParseException e)
+        catch (MimeTypeParseException e)
         {
-          throw new IllegalStateException("Unable to parse Content-Type: " + header);
-        }
-
-        if (headerContentType.getBaseType().equalsIgnoreCase(RestConstants.HEADER_VALUE_APPLICATION_JSON))
-        {
-          type = ContentType.JSON;
-        }
-        else if (headerContentType.getBaseType().equalsIgnoreCase(RestConstants.HEADER_VALUE_APPLICATION_PSON))
-        {
-          type = ContentType.PSON;
-        }
-        else
-        {
-          throw new IllegalStateException("Unknown Content-Type: " + headerContentType.toString());
+          throw new IllegalStateException("Invalid mime type in Content-Type header: " + header, e);
         }
       }
-
-      return type;
     }
 
     return null;
@@ -617,25 +598,15 @@ public class RestClient implements Client {
   {
     URI requestUri = new MultiplexerUriBuilder(_uriPrefix).build();
     RestRequestBuilder requestBuilder = new RestRequestBuilder(requestUri).setMethod(HttpMethod.POST.toString());
-    addAcceptHeaders(requestBuilder, Collections.singletonList(AcceptType.JSON), false);
+    addAcceptHeaders(requestBuilder, multiplexedRequest.getRequestOptions().getAcceptTypes(), false);
 
     final DataMap multiplexedPayload = multiplexedRequest.getContent().data();
-    final ContentType type = resolveContentType(requestBuilder, multiplexedPayload, ContentType.JSON);
+    final ContentType type = resolveContentType(
+        requestBuilder, multiplexedPayload, multiplexedRequest.getRequestOptions().getContentType());
     assert (type != null);
     requestBuilder.setHeader(RestConstants.HEADER_CONTENT_TYPE, type.getHeaderKey());
-    switch (type)
-    {
-      case PSON:
-        requestBuilder.setEntity(PSON_DATA_CODEC.mapToBytes(multiplexedPayload));
-        break;
-      case JSON:
-        requestBuilder.setEntity(JACKSON_DATA_CODEC.mapToBytes(multiplexedPayload));
-        break;
-      default:
-        throw new IllegalStateException("Unknown ContentType:" + type);
-    }
+    requestBuilder.setEntity(type.getCodec().mapToBytes(multiplexedPayload));
 
-    //TODO: change this once multiplexer supports dynamic versioning.
     requestBuilder.setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION,
                              AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion().toString());
 
@@ -746,7 +717,7 @@ public class RestClient implements Client {
                                        List<String> cookies,
                                        ProtocolVersion protocolVersion,
                                        ContentType contentType,
-                                       List<AcceptType> acceptTypes,
+                                       List<ContentType> acceptTypes,
                                        boolean acceptResponseAttachments) throws Exception
   {
     RestRequestBuilder requestBuilder = new RestRequestBuilder(uri).setMethod(method.getHttpMethod().toString());
@@ -760,17 +731,8 @@ public class RestClient implements Client {
     if (type != null)
     {
       requestBuilder.setHeader(RestConstants.HEADER_CONTENT_TYPE, type.getHeaderKey());
-      switch (type)
-      {
-        case PSON:
-          requestBuilder.setEntity(PSON_DATA_CODEC.mapToBytes(dataMap));
-          break;
-        case JSON:
-          requestBuilder.setEntity(JACKSON_DATA_CODEC.mapToBytes(dataMap));
-          break;
-        default:
-          throw new IllegalStateException("Unknown ContentType:" + type);
-      }
+      // Use unsafe wrap to avoid copying the bytes when request builder creates ByteString.
+      requestBuilder.setEntity(ByteString.unsafeWrap(type.getCodec().mapToBytes(dataMap)));
     }
 
     addProtocolVersionHeader(requestBuilder, protocolVersion);
@@ -790,7 +752,7 @@ public class RestClient implements Client {
                                            List<String> cookies,
                                            ProtocolVersion protocolVersion,
                                            ContentType contentType,
-                                           List<AcceptType> acceptTypes,
+                                           List<ContentType> acceptTypes,
                                            boolean acceptResponseAttachments,
                                            List<Object> streamingAttachments) throws Exception
   {
@@ -818,17 +780,7 @@ public class RestClient implements Client {
       //eligible to have attachments. This is because all such requests are POST or PUTs. Even an action request
       //with empty action parameters will have an empty JSON ({}) as the body.
       assert (type != null);
-      switch (type)
-      {
-        case PSON:
-          firstPartWriter = new ByteStringWriter(ByteString.copy(PSON_DATA_CODEC.mapToBytes(dataMap)));
-          break;
-        case JSON:
-          firstPartWriter = new ByteStringWriter(ByteString.copy(JACKSON_DATA_CODEC.mapToBytes(dataMap)));
-          break;
-        default:
-          throw new IllegalStateException("Unknown ContentType:" + type);
-      }
+      firstPartWriter = new ByteStringWriter(ByteString.copy(type.getCodec().mapToBytes(dataMap)));
 
       //Our protocol does not use an epilogue or a preamble.
       final MultiPartMIMEWriter.Builder attachmentsBuilder = new MultiPartMIMEWriter.Builder();
@@ -938,43 +890,6 @@ public class RestClient implements Client {
     if (disruptContext != null)
     {
       requestContext.putLocalAttr(DisruptContext.DISRUPT_CONTEXT_KEY, disruptContext);
-    }
-  }
-
-  public static enum AcceptType
-  {
-    PSON(RestConstants.HEADER_VALUE_APPLICATION_PSON),
-    JSON(RestConstants.HEADER_VALUE_APPLICATION_JSON),
-    ANY(RestConstants.HEADER_VALUE_ACCEPT_ANY);
-
-    private String _headerKey;
-
-    private AcceptType(String headerKey)
-    {
-      _headerKey = headerKey;
-    }
-
-    public String getHeaderKey()
-    {
-      return _headerKey;
-    }
-  }
-
-  public static enum ContentType
-  {
-    PSON(RestConstants.HEADER_VALUE_APPLICATION_PSON),
-    JSON(RestConstants.HEADER_VALUE_APPLICATION_JSON);
-
-    private String _headerKey;
-
-    private ContentType(String headerKey)
-    {
-      _headerKey = headerKey;
-    }
-
-    public String getHeaderKey()
-    {
-      return _headerKey;
     }
   }
 }

@@ -17,12 +17,14 @@
 package com.linkedin.restli.internal.server.response;
 
 
+import com.linkedin.data.ByteString;
 import com.linkedin.data.DataMap;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestResponseBuilder;
 import com.linkedin.restli.common.ActionResponse;
+import com.linkedin.restli.common.ContentType;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.ResourceMethod;
@@ -38,7 +40,6 @@ import com.linkedin.restli.server.CollectionResult;
 import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
-import com.linkedin.restli.server.RoutingException;
 import com.linkedin.restli.server.UpdateResponse;
 import com.linkedin.restli.server.resources.CollectionResource;
 
@@ -48,6 +49,7 @@ import java.net.HttpCookie;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import javax.activation.MimeTypeParseException;
 
 
 /**
@@ -264,7 +266,7 @@ public class RestLiResponseHandler
       DataMap dataMap = partialResponse.getDataMap();
       ByteArrayOutputStream baos = new ByteArrayOutputStream(4096);
       DataMapUtils.write(dataMap, null, baos, true); // partialResponse.getSchema()
-      builder.setEntity(baos.toByteArray());
+      builder.setEntity(ByteString.unsafeWrap(baos.toByteArray()));
     }
     RestResponse restResponse = builder.build();
     RestException restException = new RestException(restResponse, e);
@@ -273,20 +275,21 @@ public class RestLiResponseHandler
 
   private RestResponseBuilder encodeResult(String mimeType, RestResponseBuilder builder, DataMap dataMap)
   {
-    if (RestConstants.HEADER_VALUE_APPLICATION_PSON.equalsIgnoreCase(mimeType))
+    try
     {
-      builder.setHeader(RestConstants.HEADER_CONTENT_TYPE, RestConstants.HEADER_VALUE_APPLICATION_PSON);
-      builder.setEntity(DataMapUtils.mapToPsonByteString(dataMap));
+      ContentType type = ContentType.getContentType(mimeType).orElseThrow(
+          () -> new RestLiServiceException(HttpStatus.S_406_NOT_ACCEPTABLE,
+              "Requested mime type for encoding is not supported. Mimetype: " + mimeType));
+      assert type != null;
+      builder.setHeader(RestConstants.HEADER_CONTENT_TYPE, type.getHeaderKey());
+      // Use unsafe wrap to avoid copying the bytes when request builder creates ByteString.
+      builder.setEntity(ByteString.unsafeWrap(DataMapUtils.mapToBytes(dataMap, type.getCodec())));
     }
-    else if (RestConstants.HEADER_VALUE_APPLICATION_JSON.equalsIgnoreCase(mimeType))
+    catch (MimeTypeParseException e)
     {
-      builder.setHeader(RestConstants.HEADER_CONTENT_TYPE, RestConstants.HEADER_VALUE_APPLICATION_JSON);
-      builder.setEntity(DataMapUtils.mapToByteString(dataMap));
+      throw new RestLiServiceException(HttpStatus.S_406_NOT_ACCEPTABLE, "Invalid mime type: " + mimeType);
     }
-    else
-    {
-      throw new RoutingException("No acceptable types can be returned", HttpStatus.S_406_NOT_ACCEPTABLE.getCode());
-    }
+
     return builder;
   }
 

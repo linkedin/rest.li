@@ -21,6 +21,7 @@ import com.linkedin.data.ByteString;
 import com.linkedin.data.DataComplex;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.codec.DataCodec;
 import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.codec.PsonDataCodec;
 import com.linkedin.data.schema.DataSchema;
@@ -387,4 +388,24 @@ public class DataMapUtils
   {
     return ByteString.unsafeWrap(DataMapUtils.mapToPsonBytes(dataMap));
   }
+
+  /**
+   * Encode {@link DataMap} as a byte array using the provided codec.
+   *
+   * @param dataMap input {@link DataMap}
+   * @param customCodec custom CODEC to use for encoding.
+   * @return byte array
+   */
+  public static byte[] mapToBytes(final DataMap dataMap, DataCodec customCodec)
+  {
+    try
+    {
+      return customCodec.mapToBytes(dataMap);
+    }
+    catch (IOException e)
+    {
+      throw new RestLiInternalException(e);
+    }
+  }
+
 }

@@ -17,8 +17,11 @@
 package com.linkedin.restli.test;
 
 
+import com.linkedin.data.codec.DataCodec;
+import com.linkedin.data.codec.PsonDataCodec;
 import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.client.uribuilders.RestliUriBuilderUtil;
+import com.linkedin.restli.common.RestConstants;
 import java.io.IOException;
 import java.util.Collections;
 
@@ -42,10 +45,11 @@ import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpecImpl;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
-import com.linkedin.restli.internal.common.TestConstants;
 import com.linkedin.restli.server.RestLiConfig;
 import com.linkedin.restli.server.RestLiServer;
 import com.linkedin.restli.server.resources.PrototypeResourceFactory;
+
+import static com.linkedin.restli.internal.common.TestConstants.*;
 
 
 /**
@@ -55,11 +59,15 @@ import com.linkedin.restli.server.resources.PrototypeResourceFactory;
 
 public class TestCharacterEncoding
 {
-  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "protocolVersions")
-  public void testQueryParamValueEncoding(ProtocolVersion protocolVersion)
+  @Test(dataProvider = RESTLI_PROTOCOL_1_2_PREFIX + "protocolVersionsAndAcceptTypes")
+  public void testQueryParamValueEncoding(ProtocolVersion protocolVersion, String acceptType, DataCodec codec)
   {
     RestLiConfig config = new RestLiConfig();
     config.setResourcePackageNames(QueryParamMockCollection.class.getPackage().getName());
+    if (acceptType != null)
+    {
+      config.addCustomContentType(acceptType, codec);
+    }
     RestLiServer server = new RestLiServer(config, new PrototypeResourceFactory(), null);
 
     for (char c = 0; c < 256; ++c)
@@ -81,7 +89,8 @@ public class TestCharacterEncoding
                       .id("dummy")
                       .setParam(QueryParamMockCollection.VALUE_KEY, testValue).build();
       RestRequest restRequest = new RestRequestBuilder(RestliUriBuilderUtil.createUriBuilder(req, protocolVersion).build())
-              .setMethod(req.getMethod().getHttpMethod().toString()).build();
+          .setMethod(req.getMethod().getHttpMethod().toString())
+          .addHeaderValue(RestConstants.HEADER_ACCEPT, acceptType).build();
 
       // N.B. since QueryParamMockCollection is implemented using the synchronous rest.li interface,
       // RestLiServer.handleRequest() will invoke the application resource *and* the callback
@@ -100,12 +109,16 @@ public class TestCharacterEncoding
         {
           try
           {
-            DataMap data = new JacksonDataCodec().readMap(result.getEntity().asInputStream());
+            DataMap data = codec.readMap(result.getEntity().asInputStream());
             Assert.assertEquals(data.get(QueryParamMockCollection.VALUE_KEY), testValue);
             Assert.assertEquals(QueryParamMockCollection._lastQueryParamValue, testValue);
+            if (acceptType != null) {
+              Assert.assertEquals(result.getHeader(RestConstants.HEADER_CONTENT_TYPE), acceptType);
+            }
           }
           catch (IOException e)
           {
+            e.printStackTrace();
             Assert.fail();
           }
         }
@@ -114,12 +127,14 @@ public class TestCharacterEncoding
     }
   }
 
-  @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "protocolVersions")
+  @DataProvider(name = RESTLI_PROTOCOL_1_2_PREFIX + "protocolVersionsAndAcceptTypes")
   public Object[][] protocolVersionsDataProvider()
   {
     return new Object[][] {
-      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), },
-      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), }
+      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), null, new JacksonDataCodec()},
+      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), null, new JacksonDataCodec()},
+      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "application/custom", new JacksonDataCodec()},
+      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "application/custompson", new PsonDataCodec()}
     };
   }
 }

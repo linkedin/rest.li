@@ -42,6 +42,7 @@ import com.linkedin.restli.common.CollectionRequest;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
+import com.linkedin.restli.common.ContentType;
 import com.linkedin.restli.common.CreateStatus;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.KeyValueRecord;
@@ -1417,15 +1418,15 @@ public class TestClientBuilders
     overrideOptions = new RestliRequestOptionsBuilder().setRequestCompressionOverride(CompressionOption.FORCE_OFF).build();
     Assert.assertEquals(builder.id(1L).setRequestOptions(overrideOptions).build().getRequestOptions(), overrideOptions);
 
-    overrideOptions = new RestliRequestOptionsBuilder().setContentType(RestClient.ContentType.PSON).build();
+    overrideOptions = new RestliRequestOptionsBuilder().setContentType(ContentType.PSON).build();
     Assert.assertEquals(builder.id(1L).setRequestOptions(overrideOptions).build().getRequestOptions(), overrideOptions);
 
-    overrideOptions = new RestliRequestOptionsBuilder().setAcceptTypes(Arrays.asList(RestClient.AcceptType.JSON, RestClient.AcceptType.PSON)).build();
+    overrideOptions = new RestliRequestOptionsBuilder().setAcceptTypes(Arrays.asList(ContentType.JSON, ContentType.PSON)).build();
     Assert.assertEquals(builder.id(1L).setRequestOptions(overrideOptions).build().getRequestOptions(), overrideOptions);
 
     overrideOptions = new RestliRequestOptionsBuilder().setProtocolVersionOption(ProtocolVersionOption.FORCE_USE_NEXT)
-        .setRequestCompressionOverride(CompressionOption.FORCE_OFF).setContentType(RestClient.ContentType.PSON)
-        .setAcceptTypes(Arrays.asList(RestClient.AcceptType.JSON, RestClient.AcceptType.PSON)).build();
+        .setRequestCompressionOverride(CompressionOption.FORCE_OFF).setContentType(ContentType.PSON)
+        .setAcceptTypes(Arrays.asList(ContentType.JSON, ContentType.PSON)).build();
     Assert.assertEquals(builder.id(1L).setRequestOptions(overrideOptions).build().getRequestOptions(), overrideOptions);
   }
 

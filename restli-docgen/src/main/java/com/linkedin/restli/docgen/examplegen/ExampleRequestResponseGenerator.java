@@ -547,7 +547,8 @@ public class ExampleRequestResponseGenerator
     try
     {
       ServerResourceContext context = new ResourceContextImpl();
-      RestUtils.validateRequestHeadersAndUpdateResourceContext(Collections.<String, String>emptyMap(), context);
+      RestUtils.validateRequestHeadersAndUpdateResourceContext(
+          Collections.emptyMap(), Collections.emptySet(), context);
       method.setResourceModel(_resourceModel);
       final RoutingResult routingResult = new RoutingResult(context, method);
       return _responseHandler.buildResponse(restRequest, routingResult, responseEntity);

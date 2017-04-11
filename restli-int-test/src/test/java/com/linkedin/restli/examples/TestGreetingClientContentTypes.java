@@ -27,6 +27,7 @@ import com.linkedin.restli.client.response.BatchKVResponse;
 import com.linkedin.restli.client.response.CreateResponse;
 import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CollectionResponse;
+import com.linkedin.restli.common.ContentType;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.EntityResponse;
 import com.linkedin.restli.common.IdResponse;
@@ -55,7 +56,7 @@ import org.testng.annotations.Test;
 
 public class TestGreetingClientContentTypes extends RestLiIntegrationTest
 {
-  private static final List<RestClient.AcceptType> ACCEPT_TYPES = Collections.singletonList(RestClient.AcceptType.JSON);
+  private static final List<ContentType> ACCEPT_TYPES = Collections.singletonList(ContentType.JSON);
 
   @BeforeClass
   public void initClass() throws Exception
@@ -270,14 +271,14 @@ public class TestGreetingClientContentTypes extends RestLiIntegrationTest
         { new RestClient(getDefaultTransportClient(), URI_PREFIX), new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }, // default client
         { new RestClient(getDefaultTransportClient(), URI_PREFIX), new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()) }, // default client
         { new RestClient(getDefaultTransportClient(), URI_PREFIX), new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }, // default client
-        { new RestClient(getDefaultTransportClient(), URI_PREFIX, RestClient.ContentType.JSON, ACCEPT_TYPES), new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()) },
-        { new RestClient(getDefaultTransportClient(), URI_PREFIX, RestClient.ContentType.JSON, ACCEPT_TYPES), new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
-        { new RestClient(getDefaultTransportClient(), URI_PREFIX, RestClient.ContentType.JSON, ACCEPT_TYPES), new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()) },
-        { new RestClient(getDefaultTransportClient(), URI_PREFIX, RestClient.ContentType.JSON, ACCEPT_TYPES), new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
-        { new RestClient(getDefaultTransportClient(), URI_PREFIX, RestClient.ContentType.PSON, ACCEPT_TYPES), new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()) },
-        { new RestClient(getDefaultTransportClient(), URI_PREFIX, RestClient.ContentType.PSON, ACCEPT_TYPES), new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
-        { new RestClient(getDefaultTransportClient(), URI_PREFIX, RestClient.ContentType.PSON, ACCEPT_TYPES), new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()) },
-        { new RestClient(getDefaultTransportClient(), URI_PREFIX, RestClient.ContentType.PSON, ACCEPT_TYPES), new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
+        { new RestClient(getDefaultTransportClient(), URI_PREFIX, ContentType.JSON, ACCEPT_TYPES), new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()) },
+        { new RestClient(getDefaultTransportClient(), URI_PREFIX, ContentType.JSON, ACCEPT_TYPES), new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
+        { new RestClient(getDefaultTransportClient(), URI_PREFIX, ContentType.JSON, ACCEPT_TYPES), new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()) },
+        { new RestClient(getDefaultTransportClient(), URI_PREFIX, ContentType.JSON, ACCEPT_TYPES), new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
+        { new RestClient(getDefaultTransportClient(), URI_PREFIX, ContentType.PSON, ACCEPT_TYPES), new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()) },
+        { new RestClient(getDefaultTransportClient(), URI_PREFIX, ContentType.PSON, ACCEPT_TYPES), new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
+        { new RestClient(getDefaultTransportClient(), URI_PREFIX, ContentType.PSON, ACCEPT_TYPES), new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()) },
+        { new RestClient(getDefaultTransportClient(), URI_PREFIX, ContentType.PSON, ACCEPT_TYPES), new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
       };
   }
 
@@ -289,10 +290,10 @@ public class TestGreetingClientContentTypes extends RestLiIntegrationTest
       {
         { new RestClient(getDefaultTransportClient(), URI_PREFIX), RestliRequestOptions.DEFAULT_OPTIONS },
         { new RestClient(getDefaultTransportClient(), URI_PREFIX), TestConstants.FORCE_USE_NEXT_OPTIONS },
-        { new RestClient(getDefaultTransportClient(), URI_PREFIX, RestClient.ContentType.JSON, ACCEPT_TYPES), RestliRequestOptions.DEFAULT_OPTIONS },
-        { new RestClient(getDefaultTransportClient(), URI_PREFIX, RestClient.ContentType.JSON, ACCEPT_TYPES), TestConstants.FORCE_USE_NEXT_OPTIONS },
-        { new RestClient(getDefaultTransportClient(), URI_PREFIX, RestClient.ContentType.PSON, ACCEPT_TYPES), RestliRequestOptions.DEFAULT_OPTIONS },
-        { new RestClient(getDefaultTransportClient(), URI_PREFIX, RestClient.ContentType.PSON, ACCEPT_TYPES), TestConstants.FORCE_USE_NEXT_OPTIONS },
+        { new RestClient(getDefaultTransportClient(), URI_PREFIX, ContentType.JSON, ACCEPT_TYPES), RestliRequestOptions.DEFAULT_OPTIONS },
+        { new RestClient(getDefaultTransportClient(), URI_PREFIX, ContentType.JSON, ACCEPT_TYPES), TestConstants.FORCE_USE_NEXT_OPTIONS },
+        { new RestClient(getDefaultTransportClient(), URI_PREFIX, ContentType.PSON, ACCEPT_TYPES), RestliRequestOptions.DEFAULT_OPTIONS },
+        { new RestClient(getDefaultTransportClient(), URI_PREFIX, ContentType.PSON, ACCEPT_TYPES), TestConstants.FORCE_USE_NEXT_OPTIONS },
       };
   }
 
@@ -304,10 +305,10 @@ public class TestGreetingClientContentTypes extends RestLiIntegrationTest
       {
         { new RestClient(getDefaultTransportClient(), URI_PREFIX), RestliRequestOptions.DEFAULT_OPTIONS }, // default client
         { new RestClient(getDefaultTransportClient(), URI_PREFIX), TestConstants.FORCE_USE_NEXT_OPTIONS }, // default client
-        { new RestClient(getDefaultTransportClient(), URI_PREFIX, RestClient.ContentType.JSON, ACCEPT_TYPES), RestliRequestOptions.DEFAULT_OPTIONS },
-        { new RestClient(getDefaultTransportClient(), URI_PREFIX, RestClient.ContentType.JSON, ACCEPT_TYPES), TestConstants.FORCE_USE_NEXT_OPTIONS },
-        { new RestClient(getDefaultTransportClient(), URI_PREFIX, RestClient.ContentType.PSON, ACCEPT_TYPES), RestliRequestOptions.DEFAULT_OPTIONS },
-        { new RestClient(getDefaultTransportClient(), URI_PREFIX, RestClient.ContentType.PSON, ACCEPT_TYPES), TestConstants.FORCE_USE_NEXT_OPTIONS }
+        { new RestClient(getDefaultTransportClient(), URI_PREFIX, ContentType.JSON, ACCEPT_TYPES), RestliRequestOptions.DEFAULT_OPTIONS },
+        { new RestClient(getDefaultTransportClient(), URI_PREFIX, ContentType.JSON, ACCEPT_TYPES), TestConstants.FORCE_USE_NEXT_OPTIONS },
+        { new RestClient(getDefaultTransportClient(), URI_PREFIX, ContentType.PSON, ACCEPT_TYPES), RestliRequestOptions.DEFAULT_OPTIONS },
+        { new RestClient(getDefaultTransportClient(), URI_PREFIX, ContentType.PSON, ACCEPT_TYPES), TestConstants.FORCE_USE_NEXT_OPTIONS }
       };
   }
 

@@ -17,6 +17,8 @@
 package com.linkedin.restli.server;
 
 
+import com.linkedin.data.codec.DataCodec;
+import com.linkedin.restli.common.ContentType;
 import com.linkedin.restli.internal.server.response.ErrorResponseBuilder;
 import com.linkedin.restli.server.filter.Filter;
 import com.linkedin.restli.server.multiplexer.MultiplexerRunMode;
@@ -28,6 +30,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -82,6 +85,7 @@ public class RestLiConfig
   private Set<String> _individualRequestHeaderWhitelist = Collections.emptySet();
   private MultiplexerSingletonFilter _multiplexerSingletonFilter;
   private MultiplexerRunMode _multiplexerRunMode = MultiplexerRunMode.MULTIPLE_PLANS;
+  private final List<ContentType> _customContentTypes = new LinkedList<>();
 
   /**
    * Constructor.
@@ -379,15 +383,33 @@ public class RestLiConfig
 
   /**
    * Set the MultiplexedRequest run mode. MultiplexerRunMode specifies if all requests belonging to the
-   * {@link MultiplexedRequest} will be executed as a single ParSeq plan ({@link #SINGLE_PLAN}) or if each request
-   * that belongs to the {@code MultiplexedRequest} will be executed as a separate ParSeq plan ({@link #MULTIPLE_PLANS}).
-   * {@link #SINGLE_PLAN} allows optimizations such as batching but it means that all tasks will be
-   * executed in sequence. {@link #MULTIPLE_PLANS} can potentially speed up execution because requests
+   * {@code MultiplexedRequest} will be executed as a single ParSeq plan ({@link MultiplexerRunMode#SINGLE_PLAN}) or if each request
+   * that belongs to the {@code MultiplexedRequest} will be executed as a separate ParSeq plan ({@link MultiplexerRunMode#MULTIPLE_PLANS}).
+   * {@link MultiplexerRunMode#SINGLE_PLAN} allows optimizations such as batching but it means that all tasks will be
+   * executed in sequence. {@link MultiplexerRunMode#MULTIPLE_PLANS} can potentially speed up execution because requests
    * can execute physically in parallel but some ParSeq optimization will not work across different plans.
    * @param multiplexerRunMode
    */
   public void setMultiplexerRunMode(MultiplexerRunMode multiplexerRunMode)
   {
     _multiplexerRunMode = multiplexerRunMode;
+  }
+
+  public List<ContentType> getCustomContentTypes()
+  {
+    return _customContentTypes;
+  }
+
+  /**
+   * Add the given mimeType as a supported Content-Type for the restli server and register the given codec as the one to
+   * use for serialization.
+   * @param mimeType custom Content-Type to add.
+   * @param codec CODEC to use for encoding/decoding.
+   */
+  public void addCustomContentType(String mimeType, DataCodec codec)
+  {
+    assert mimeType != null : "Mimetype cannot be null";
+    assert codec != null : "Codec cannot be null";
+    _customContentTypes.add(ContentType.createContentType(mimeType.toLowerCase(), codec));
   }
 }

@@ -22,7 +22,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
 
 
@@ -47,7 +46,9 @@ public interface RestConstants
   String HEADER_RESTLI_PROTOCOL_VERSION = "X-RestLi-Protocol-Version";
   String HEADER_CONTENT_ID = "Content-ID";
 
-  List<String> SUPPORTED_MIME_TYPES = Arrays.asList(HEADER_VALUE_APPLICATION_PSON, HEADER_VALUE_APPLICATION_JSON);
+  // Default supported mime types.
+  Set<String> SUPPORTED_MIME_TYPES = new LinkedHashSet<>(
+      Arrays.asList(HEADER_VALUE_APPLICATION_PSON, HEADER_VALUE_APPLICATION_JSON));
 
   String START_PARAM = "start";
   String COUNT_PARAM = "count";

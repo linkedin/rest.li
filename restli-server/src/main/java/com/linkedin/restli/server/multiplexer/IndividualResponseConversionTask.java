@@ -90,6 +90,7 @@ import javax.activation.MimeTypeParseException;
     ByteString entity = restResponse.getEntity();
     if (!entity.isEmpty())
     {
+      // TODO Avoid converting bytes to datamap here. Individual response should have only the bytes.
       individualResponse.setBody(new IndividualBody(DataMapConverter.bytesToDataMap(restResponse.getHeaders(), entity)));
     }
     return individualResponse;

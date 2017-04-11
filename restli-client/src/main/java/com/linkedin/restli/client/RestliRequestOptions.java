@@ -19,6 +19,8 @@ package com.linkedin.restli.client;
 
 import com.linkedin.r2.filter.CompressionOption;
 
+import com.linkedin.restli.common.ContentType;
+import java.util.Collections;
 import java.util.List;
 
 
@@ -32,8 +34,8 @@ public class RestliRequestOptions
   private final ProtocolVersionOption _protocolVersionOption;
   private final CompressionOption _requestCompressionOverride;
   private final CompressionOption _responseCompressionOverride;
-  private final RestClient.ContentType _contentType;
-  private final List<RestClient.AcceptType> _acceptTypes;
+  private final ContentType _contentType;
+  private final List<ContentType> _acceptTypes;
   private final boolean _acceptResponseAttachments;
 
   public static final RestliRequestOptions DEFAULT_OPTIONS
@@ -44,6 +46,14 @@ public class RestliRequestOptions
 
   public static final RestliRequestOptions FORCE_USE_PREV_OPTION =
       new RestliRequestOptions(ProtocolVersionOption.FORCE_USE_PREVIOUS, null, null, null, null, false);
+
+  public static final RestliRequestOptions DEFAULT_MULTIPLEXER_OPTIONS = new RestliRequestOptions(
+      ProtocolVersionOption.USE_LATEST_IF_AVAILABLE,
+      null,
+      null,
+      ContentType.JSON,
+      Collections.singletonList(ContentType.JSON),
+      false);
 
   /**
    * Content type and accept types (if not null) passed in this constructor will take precedence over the corresponding configuration set
@@ -62,8 +72,8 @@ public class RestliRequestOptions
   RestliRequestOptions(ProtocolVersionOption protocolVersionOption,
                        CompressionOption requestCompressionOverride,
                        CompressionOption responseCompressionOverride,
-                       RestClient.ContentType contentType,
-                       List<RestClient.AcceptType> acceptTypes,
+                       ContentType contentType,
+                       List<ContentType> acceptTypes,
                        boolean acceptResponseAttachments)
   {
     _protocolVersionOption =
@@ -85,12 +95,12 @@ public class RestliRequestOptions
     return _requestCompressionOverride;
   }
 
-  public List<RestClient.AcceptType> getAcceptTypes()
+  public List<ContentType> getAcceptTypes()
   {
     return _acceptTypes;
   }
 
-  public RestClient.ContentType getContentType()
+  public ContentType getContentType()
   {
     return _contentType;
   }

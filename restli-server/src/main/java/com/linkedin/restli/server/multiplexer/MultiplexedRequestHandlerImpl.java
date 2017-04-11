@@ -16,7 +16,6 @@
 
 package com.linkedin.restli.server.multiplexer;
 
-
 import com.linkedin.common.callback.Callback;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.DataTemplateUtil;
@@ -30,6 +29,7 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestResponseBuilder;
 import com.linkedin.r2.transport.common.RestRequestHandler;
+import com.linkedin.restli.common.ContentType;
 import com.linkedin.restli.common.HttpMethod;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.RestConstants;
@@ -38,12 +38,9 @@ import com.linkedin.restli.common.multiplexer.IndividualRequestMap;
 import com.linkedin.restli.common.multiplexer.IndividualResponseMap;
 import com.linkedin.restli.common.multiplexer.MultiplexedRequestContent;
 import com.linkedin.restli.common.multiplexer.MultiplexedResponseContent;
-import com.linkedin.restli.internal.common.ContentTypeUtil;
-import com.linkedin.restli.internal.common.ContentTypeUtil.ContentType;
 import com.linkedin.restli.internal.common.CookieUtil;
 import com.linkedin.restli.internal.server.response.ErrorResponseBuilder;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
-
 import java.net.HttpCookie;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -51,9 +48,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-
 import javax.activation.MimeTypeParseException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -195,7 +190,7 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
     boolean supported;
     try
     {
-      supported = (ContentType.JSON == ContentTypeUtil.getContentType(request.getHeader(RestConstants.HEADER_CONTENT_TYPE)));
+      supported = ContentType.getContentType(request.getHeader(RestConstants.HEADER_CONTENT_TYPE)).isPresent();
     }
     catch (MimeTypeParseException e)
     {

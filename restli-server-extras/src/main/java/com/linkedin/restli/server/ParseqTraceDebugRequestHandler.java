@@ -17,6 +17,7 @@
 package com.linkedin.restli.server;
 
 
+import com.linkedin.data.ByteString;
 import com.linkedin.parseq.trace.Trace;
 import com.linkedin.parseq.trace.codec.json.JsonTraceCodec;
 import com.linkedin.r2.message.RequestContext;
@@ -286,7 +287,7 @@ public class ParseqTraceDebugRequestHandler implements RestLiDebugRequestHandler
     RestResponse staticContentResponse = new RestResponseBuilder().
                                           setStatus(HttpStatus.S_200_OK.getCode()).
                                           setHeader(RestConstants.HEADER_CONTENT_TYPE, mediaType).
-                                          setEntity(responseBytes).
+                                          setEntity(ByteString.unsafeWrap(responseBytes)).
                                           build();
     callback.onSuccess(staticContentResponse, null, null);
   }

@@ -27,6 +27,7 @@ import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.RestLiCallbackAdapter;
 import com.linkedin.restli.client.RestLiEncodingException;
+import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.client.uribuilders.RestliUriBuilderUtil;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
@@ -52,11 +53,9 @@ import java.util.Map;
  */
 public class MultiplexedRequestBuilder
 {
-  private static final JacksonDataTemplateCodec TEMPLATE_CODEC = new JacksonDataTemplateCodec();
-
   private final List<RequestWithCallback<?>> _requestsWithCallbacks = new ArrayList<RequestWithCallback<?>>();
   private final boolean _isParallel;
-
+  private RestliRequestOptions _requestOptions = RestliRequestOptions.DEFAULT_MULTIPLEXER_OPTIONS;
   /**
    * Creates a builder for a multiplexed request containing parallel individual requests.
    *
@@ -101,6 +100,17 @@ public class MultiplexedRequestBuilder
   }
 
   /**
+   * Sets the request options to use for this multiplexed request.
+   * @param requestOptions Request options to configure the multiplexed request. Allows customizing content and accept
+   *                       types.
+   */
+  public MultiplexedRequestBuilder setRequestOptions(RestliRequestOptions requestOptions)
+  {
+    _requestOptions = requestOptions;
+    return this;
+  }
+
+  /**
    * Builds a multiplexed request from the current state of the builder.
    *
    * @return the request
@@ -136,7 +146,7 @@ public class MultiplexedRequestBuilder
       individualRequests.put(Integer.toString(i), individualRequest);
       callbacks.put(i, wrapCallback(requestWithCallback));
     }
-    return toMultiplexedRequest(individualRequests, callbacks);
+    return toMultiplexedRequest(individualRequests, callbacks, _requestOptions);
   }
 
   private MultiplexedRequest buildSequential() throws RestLiEncodingException
@@ -153,7 +163,7 @@ public class MultiplexedRequestBuilder
       dependentRequests.put(Integer.toString(i), individualRequest);
       callbacks.put(i, wrapCallback(requestWithCallback));
     }
-    return toMultiplexedRequest(dependentRequests, callbacks);
+    return toMultiplexedRequest(dependentRequests, callbacks, _requestOptions);
   }
 
   @SuppressWarnings({"rawtypes", "unchecked"})
@@ -205,10 +215,11 @@ public class MultiplexedRequestBuilder
     }
   }
 
-  private static MultiplexedRequest toMultiplexedRequest(IndividualRequestMap individualRequests, Map<Integer, Callback<RestResponse>> callbacks)
+  private static MultiplexedRequest toMultiplexedRequest(IndividualRequestMap individualRequests,
+      Map<Integer, Callback<RestResponse>> callbacks, RestliRequestOptions requestOptions)
   {
     MultiplexedRequestContent multiplexedRequestContent = new MultiplexedRequestContent();
     multiplexedRequestContent.setRequests(individualRequests);
-    return new MultiplexedRequest(multiplexedRequestContent, callbacks);
+    return new MultiplexedRequest(multiplexedRequestContent, callbacks, requestOptions);
   }
 }
