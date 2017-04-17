@@ -18,7 +18,6 @@ package com.linkedin.data.template;
 
 
 import com.linkedin.data.ByteString;
-import com.linkedin.data.DataComplex;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.DataSchema;
@@ -44,6 +43,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class DataTemplateUtil
 {
@@ -52,6 +52,8 @@ public class DataTemplateUtil
   public static final String UNKNOWN_ENUM = "$UNKNOWN";
   public static final PrintStream out = new PrintStream(new FileOutputStream(FileDescriptor.out));
   private static final boolean debug = false;
+  // Cache to speed up data schema retrieval
+  private static final Map<Class<?>, DataSchema> _classToSchemaMap = new ConcurrentHashMap<>();
 
   private DataTemplateUtil()
   {
@@ -357,39 +359,51 @@ public class DataTemplateUtil
   }
 
   /**
-   * Gets the data schema for a given java type.
+   * Gets the data schema for a given java type. We will first get cached data schema for the given type if it has already
+   * been accessed before, otherwise we will use reflection to retrieve its data schema and cache it for later use.
    *
    * @param type to get a schema for. Has to be primitive or a generated data template.
    * @throws TemplateRuntimeException if the {@link DataSchema} for the specified type cannot be provided.
    */
   public static DataSchema getSchema(Class<?> type) throws TemplateRuntimeException
   {
+    // primitive type has already been cached in a static map
     final DataSchema primitiveSchema = DataSchemaUtil.classToPrimitiveDataSchema(type);
     if (primitiveSchema != null)
     {
       return primitiveSchema;
     }
 
-    try
+    // complex type
+    // NOTE: due to a non-optimized implementation of ConcurrentHashMap.computeIfAbsent in Java 8
+    // (https://bugs.openjdk.java.net/browse/JDK-8161372), we are doing a pre-screen here before calling
+    // computeIfAbsent to avoid pessimistic locking in case of key present. This tradeoff
+    // (http://cs.oswego.edu/pipermail/concurrency-interest/2014-December/013360.html) can be removed
+    // when we upgrade to Java 9 when this concurrent issue is improved.
+    DataSchema typeSchema = _classToSchemaMap.get(type);
+    return (typeSchema != null) ? typeSchema : _classToSchemaMap.computeIfAbsent(type, key ->
     {
-      Field schemaField = type.getDeclaredField(SCHEMA_FIELD_NAME);
-      schemaField.setAccessible(true);
-      DataSchema schema = (DataSchema) schemaField.get(null);
-      if (schema == null)
+      try
       {
-        throw new TemplateRuntimeException("Schema field is not set in class: " + type.getName());
-      }
+        Field schemaField = type.getDeclaredField(SCHEMA_FIELD_NAME);
+        schemaField.setAccessible(true);
+        DataSchema schema = (DataSchema) schemaField.get(null);
+        if (schema == null)
+        {
+          throw new TemplateRuntimeException("Schema field is not set in class: " + type.getName());
+        }
 
-      return schema;
-    }
-    catch (IllegalAccessException e)
-    {
-      throw new TemplateRuntimeException("Error accessing schema field in class: " + type.getName(), e);
-    }
-    catch (NoSuchFieldException e)
-    {
-      throw new TemplateRuntimeException("Error accessing schema field in class: " + type.getName(), e);
-    }
+        return schema;
+      }
+      catch (IllegalAccessException e)
+      {
+        throw new TemplateRuntimeException("Error accessing schema field in class: " + type.getName(), e);
+      }
+      catch (NoSuchFieldException e)
+      {
+        throw new TemplateRuntimeException("Error accessing schema field in class: " + type.getName(), e);
+      }
+    });
   }
 
   /**
