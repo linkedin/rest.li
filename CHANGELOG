@@ -1,5 +1,7 @@
 11.0.5
 ------
+(RB=970594)
+Fix StreamExecutionCallback.EventLoopConnector race condition.
 
 11.0.4
 ------

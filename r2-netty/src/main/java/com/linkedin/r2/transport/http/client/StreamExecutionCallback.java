@@ -197,7 +197,10 @@ public class StreamExecutionCallback implements TransportCallback<StreamResponse
       trySchedule(() ->
         {
           _outstanding = _wh.remaining();
-          _rh.request(_outstanding);
+          if (_outstanding > 0)
+          {
+            _rh.request(_outstanding);
+          }
         });
     }
 
