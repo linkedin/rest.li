@@ -742,10 +742,12 @@ class PegasusPlugin implements Plugin<Project>
 
       configureRestClientGeneration(project, sourceSet)
 
-      Task cleanGeneratedDirTask = project.task(sourceSet.getTaskName('clean', 'GeneratedDir')) << {
-        deleteGeneratedDir(project, sourceSet, REST_GEN_TYPE)
-        deleteGeneratedDir(project, sourceSet, AVRO_SCHEMA_GEN_TYPE)
-        deleteGeneratedDir(project, sourceSet, DATA_TEMPLATE_GEN_TYPE)
+      Task cleanGeneratedDirTask = project.task(sourceSet.getTaskName('clean', 'GeneratedDir')) {
+        doLast {
+          deleteGeneratedDir(project, sourceSet, REST_GEN_TYPE)
+          deleteGeneratedDir(project, sourceSet, AVRO_SCHEMA_GEN_TYPE)
+          deleteGeneratedDir(project, sourceSet, DATA_TEMPLATE_GEN_TYPE)
+        }
       }
       // make clean depends on deleting the generated directories
       project.tasks.clean.dependsOn(cleanGeneratedDirTask)
