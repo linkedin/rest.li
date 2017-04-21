@@ -1,9 +1,15 @@
+11.0.6
+------
+
+
 11.0.5
 ------
 (RB=970594)
 Fix StreamExecutionCallback.EventLoopConnector race condition.
 (RB=973958)
 Remove deprecated << operator in PegasusPlugin.
+(RB=971445)
+Cache DataTemplateUtil.getSchema.
 
 11.0.4
 ------
