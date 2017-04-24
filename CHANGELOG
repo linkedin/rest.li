@@ -1,6 +1,7 @@
 11.0.6
 ------
-
+(RB=976188)
+Improved configurability of GenerateDataTemplateTask.
 
 11.0.5
 ------
