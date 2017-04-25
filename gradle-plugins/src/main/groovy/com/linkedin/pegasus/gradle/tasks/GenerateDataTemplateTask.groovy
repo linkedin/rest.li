@@ -102,7 +102,7 @@ class GenerateDataTemplateTask extends JavaExec
       target.classpath target.codegenClasspath //needed for backwards compatibility, we need to keep the existing API (codegenClasspath method)
       target.jvmArgs '-Dgenerator.resolver.path=' + resolverPathStr
       target.args target.destinationDir.path
-      target.args inputDataSchemaFilenames
+      target.args target.inputDir
 
       LOG.info("""$path - finished configuring task $target.path:
   - main: $target.main

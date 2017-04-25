@@ -276,7 +276,9 @@ public class ResourceModelEncoder
 
     try
     {
-      InputStream stream = this.getClass().getClassLoader().getResourceAsStream(resourceFilePath.toString());
+      InputStream stream = getResourceStream(resourceFilePath.toString(),
+        this.getClass().getClassLoader(),
+        Thread.currentThread().getContextClassLoader());
       if(stream == null)
       {
         // restspec.json file not found, building one instead
@@ -292,6 +294,21 @@ public class ResourceModelEncoder
     {
       throw new RuntimeException("Failed to read " + resourceFilePath.toString() + " from classpath.", e);
     }
+  }
+
+  // Get resource stream via a list of classloader.  This method will traverse via each class loader and
+  // return as soon as a stream is found
+  private static InputStream getResourceStream(String resourceName, ClassLoader... classLoaders)
+  {
+    for(ClassLoader classLoader: classLoaders)
+    {
+      InputStream res = classLoader.getResourceAsStream(resourceName);
+      if (res != null)
+      {
+        return res;
+      }
+    }
+    return null;
   }
 
   /*package*/ static String buildDataSchemaType(final Class<?> type)

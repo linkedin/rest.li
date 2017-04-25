@@ -652,6 +652,16 @@ class PegasusPlugin implements Plugin<Project>
         extendsFrom avroSchema
       }
 
+      //
+      // configuration for depending on rest idl and potentially generated client builders
+      // and for publishing jars containing rest idl to the project artifacts for including in the ivy.xml
+      //
+      def restModelConfig = project.configurations.create('restModel')
+      def testRestModelConfig = project.configurations.create('testRestModel')
+      {
+        extendsFrom(restModelConfig)
+      }
+
       // configuration for publishing jars containing data schemas and generated data templates
       // to the project artifacts for including in the ivy.xml
       //
@@ -1489,13 +1499,28 @@ class PegasusPlugin implements Plugin<Project>
     compileGeneratedRestClientTask.dependsOn(generateRestClientTask)
     compileGeneratedRestClientTask.options.compilerArgs += '-Xlint:-deprecation'
 
+    // create the rest model jar file
+    def restModelJarTask = project.task(sourceSet.name + 'RestModelJar', type: Jar)
+    {
+      from (idlDir)
+      {
+        eachFile
+        {
+          project.logger.info('Add idl file: ' + it.toString() )
+        }
+        includes = ['*' + IDL_FILE_SUFFIX]
+      }
+      appendix = getAppendix(sourceSet, 'rest-model')
+      description = 'Generate rest model jar'
+    }
+
     // create the rest client jar file
     def restClientJarTask = project.task(sourceSet.name + 'RestClientJar',
                                          type: Jar,
                                          dependsOn: compileGeneratedRestClientTask) {
       from (idlDir) {
         eachFile {
-          project.logger.lifecycle('Add interface file: ' + it.toString())
+          project.logger.info('Add interface file: ' + it.toString())
           it.path = 'idl' + File.separatorChar + it.path.toString()
         }
         includes = ['*' + IDL_FILE_SUFFIX]
@@ -1509,12 +1534,14 @@ class PegasusPlugin implements Plugin<Project>
     if (!isTestSourceSet(sourceSet))
     {
       project.artifacts {
+        restModel restModelJarTask
         restClient restClientJarTask
       }
     }
     else
     {
       project.artifacts {
+        testRestModel restModelJarTask
         testRestClient restClientJarTask
       }
     }
