@@ -16,6 +16,8 @@
 
 package com.linkedin.data.schema;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.Data;
 import com.linkedin.data.DataList;
@@ -23,12 +25,12 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.JacksonDataCodec;
 import java.io.IOException;
 import java.io.StringReader;
-import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -588,6 +590,33 @@ public class TestDataSchema
           "  ] " +
           "}",
           "{ \"type\" : \"record\", \"name\" : \"Foo\", \"fields\" : [ { \"name\" : \"b1\", \"type\" : { \"type\" : \"record\", \"name\" : \"Bar\", \"fields\" : [  ] } } ], \"include\" : [ \"Bar\" ] }"
+        },
+        // union field with aliases for primitives members (including null which should not have an alias)
+        {
+          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"funion\", \"type\" : [ \"null\", { \"alias\" : \"number\", \"type\" : \"int\" }, { \"alias\" : \"text\", \"type\" : \"string\" } ] } ] }",
+          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"funion\", \"type\" : [ \"null\", { \"alias\" : \"number\", \"type\" : \"int\" }, { \"alias\" : \"text\", \"type\" : \"string\" } ] } ] }"
+        },
+        // union field with aliases for same primitive type members
+        {
+          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"funion\", \"type\" : [ { \"alias\" : \"success\", \"type\" : \"int\" }, { \"alias\" : \"failure\", \"type\" : \"int\" } ] } ] }",
+          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"funion\", \"type\" : [ { \"alias\" : \"success\", \"type\" : \"int\" }, { \"alias\" : \"failure\", \"type\" : \"int\" } ] } ] }"
+        },
+        // union field with aliases for complex members (maps and records)
+        {
+          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"funion\", \"type\" : [ { \"alias\" : \"mMap\", \"type\" : { \"type\" : \"map\", \"values\" : \"string\" } }, { \"alias\" : \"mRecord\", \"type\" : { \"type\" : \"record\", \"name\" : \"FruitRecord\", \"fields\" : [  ] } } ] } ] }",
+          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"funion\", \"type\" : [ { \"alias\" : \"mMap\", \"type\" : { \"type\" : \"map\", \"values\" : \"string\" } }, { \"alias\" : \"mRecord\", \"type\" : { \"type\" : \"record\", \"name\" : \"FruitRecord\", \"fields\" : [  ] } } ] } ] }"
+        },
+        // union field with aliases for complex members (arrays and enums) and a default value
+        {
+          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"funion\", \"type\" : [ { \"alias\" : \"mArray\", \"type\" : { \"type\" : \"array\", \"items\" : \"string\" } }, { \"alias\" : \"mEnum\", \"type\" : { \"type\" : \"enum\", \"name\" : \"FruitEnum\", \"symbols\" : [ \"APPLE\" ] } } ], \"default\" : { \"mEnum\" : \"APPLE\" } } ] }",
+          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"funion\", \"type\" : [ { \"alias\" : \"mArray\", \"type\" : { \"type\" : \"array\", \"items\" : \"string\" } }, { \"alias\" : \"mEnum\", \"type\" : { \"type\" : \"enum\", \"name\" : \"FruitEnum\", \"symbols\" : [ \"APPLE\" ] } } ], \"default\" : { \"mEnum\" : \"APPLE\" } } ] }"
+        },
+        // union field with aliases for multiple typerefs that dereference to the same type
+        {
+          "{ \"type\" : \"typeref\", \"name\" : \"FruitUrn\", \"ref\" : \"string\" }" +
+          "{ \"type\" : \"typeref\", \"name\" : \"VegetableUrn\", \"ref\" : \"string\" }" +
+          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"food\", \"type\" : [ { \"alias\" : \"fruit\", \"type\" : \"FruitUrn\" }, { \"alias\" : \"anotherFruit\", \"type\" : \"FruitUrn\" }, { \"alias\" : \"vegetable\", \"type\" : \"VegetableUrn\" } ] } ] }",
+          "{ \"type\" : \"typeref\", \"name\" : \"FruitUrn\", \"ref\" : \"string\" }{ \"type\" : \"typeref\", \"name\" : \"VegetableUrn\", \"ref\" : \"string\" }{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"food\", \"type\" : [ { \"alias\" : \"fruit\", \"type\" : \"FruitUrn\" }, { \"alias\" : \"anotherFruit\", \"type\" : \"FruitUrn\" }, { \"alias\" : \"vegetable\", \"type\" : \"VegetableUrn\" } ] } ] }"
         }
       };
 
@@ -1309,7 +1338,8 @@ public class TestDataSchema
         mapSchema("\"int\""),
         "{ \"type\" : \"enum\", \"name\" : \"fruits\", \"symbols\" : [] }",
         "{ \"type\" : \"fixed\", \"name\" : \"md5\", \"size\" : 16 }",
-        "[ \"int\", \"string\" ]"
+        "[ \"int\", \"string\" ]", // union without alias
+        "[ { \"alias\": \"warnings\", \"type\": \"int\" }, { \"alias\": \"errors\", \"type\": \"int\" } ]" // union with alias
       };
 
     final String[] expected = { "cannot include", "because it is not a record" };
@@ -1453,11 +1483,13 @@ public class TestDataSchema
           "    {\"name\": \"inlineArrayItemsType\", \"type\": { \"type\": \"array\", \"items\": { \"type\": \"record\", \"name\": \"InlineItems\", \"fields\": [] } }}," +
           "    {\"name\": \"inlineTyperefType\", \"type\": { \"type\": \"typeref\", \"name\": \"InlinedTyperef\", \"ref\": { \"type\": \"record\", \"name\": \"InlineRef\", \"fields\": [] } }}," +
           "    {\"name\": \"inlineUnionType\", \"type\": [ \"string\", { \"type\": \"record\", \"name\": \"InlineUnionMember\", \"fields\": [] } ]}," +
+          "    {\"name\": \"inlineUnionTypeWithAliases\", \"type\": [ { \"alias\": \"memString\", \"type\": \"string\" }, { \"alias\": \"memRecord\", \"type\": { \"type\": \"record\", \"name\": \"InlineUnionMember\", \"fields\": [] } } ]}," +
           "    {\"name\": \"referencedFieldType\", \"type\": \"ReferencedFieldType\" }," +
           "    {\"name\": \"referencedMapValueType\", \"type\": { \"type\": \"map\", \"values\": \"ReferencedMapValuesType\" }}," +
           "    {\"name\": \"referencedArrayItemsType\", \"type\": { \"type\": \"array\", \"items\": \"ReferencedArrayItemsType\" }}," +
           "    {\"name\": \"referencedTyperefType\", \"type\": { \"type\": \"typeref\", \"name\": \"ReferencedTyperef\", \"ref\": \"ReferencedTyperefType\" }}," +
-          "    {\"name\": \"referencedUnionType\", \"type\": [ \"string\", \"ReferencedUnionMemberType\" ]}" +
+          "    {\"name\": \"referencedUnionType\", \"type\": [ \"string\", \"ReferencedUnionMemberType\" ]}," +
+          "    {\"name\": \"referencedUnionTypeWithAliases\", \"type\": [ { \"alias\": \"memString\", \"type\": \"string\" }, { \"alias\": \"memRecord\", \"type\": \"ReferencedUnionMemberType\" } ]}" +
           "  ]" +
           "}";
       parser.parse(originalSchemaJson);
@@ -1475,24 +1507,25 @@ public class TestDataSchema
   @Test
   public void testFieldDefaultsAndUnionMemberKeys() throws IOException
   {
-    String schemaText =
-      "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : \n" +
-      "[ { \"name\" : \"bar\", \"type\" : { \"name\" : \"barType\", \"type\" : \"record\", \"fields\" : [ \n" +
-      "{ \"name\" : \"boolean\", \"type\" : \"boolean\", \"default\" : true }, \n" +
-      "{ \"name\" : \"int\", \"type\" : \"int\", \"default\" : -1 }, \n" +
-      "{ \"name\" : \"long\", \"type\" : \"long\", \"default\" : -2 }, \n" +
-      "{ \"name\" : \"float\", \"type\" : \"float\", \"default\" : -3.0 }, \n" +
-      "{ \"name\" : \"double\", \"type\" : \"double\", \"default\" : -4.0 }, \n" +
-      "{ \"name\" : \"string\", \"type\" : \"string\", \"default\" : \"default_string\" }, \n" +
-      "{ \"name\" : \"bytes\", \"type\" : \"bytes\", \"default\" : \"default_bytes\" }, \n" +
-      "{ \"name\" : \"array\", \"type\" : { \"type\" : \"array\", \"items\" : \"int\" }, \"default\" : [ -1, -2, -3, -4 ] }, \n" +
-      "{ \"name\" : \"enum\", \"type\" : { \"type\" : \"enum\", \"name\" : \"enumType\", \"symbols\" : [ \"apple\", \"orange\", \"banana\" ] }, \"default\" : \"apple\" }, \n" +
-      "{ \"name\" : \"fixed\", \"type\" : { \"type\" : \"fixed\", \"name\" : \"fixedType\", \"size\" : 4 }, \"default\" : \"1234\" }, \n" +
-      "{ \"name\" : \"map\", \"type\" : { \"type\" : \"map\", \"values\" : \"int\" }, \"default\" : { \"key1\" : -5 } }, \n" +
-      "{ \"name\" : \"record\", \"type\" : { \"type\" : \"record\", \"name\" : \"recordType\", \"fields\" : [ { \"name\" : \"int\", \"type\" : \"int\" } ] }, \"default\" : { \"int\" : -6 } }, \n" +
-      "{ \"name\" : \"union\", \"type\" : [ \"int\", \"recordType\", \"enumType\", \"fixedType\" ], \"default\" : { \"enumType\" : \"orange\"} }, \n" +
-      "{ \"name\" : \"unionWithNull\", \"type\" : [ \"null\", \"enumType\", \"fixedType\" ], \"default\" : null } \n" +
-      "] } } ] }";
+    String schemaText =  "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
+        "{ \"name\" : \"bar\", \"type\" : { \"name\" : \"barType\", \"type\" : \"record\", \"fields\" : [ \n" +
+            "{ \"name\" : \"boolean\", \"type\" : \"boolean\", \"default\" : true }, \n" +
+            "{ \"name\" : \"int\", \"type\" : \"int\", \"default\" : -1 }, \n" +
+            "{ \"name\" : \"long\", \"type\" : \"long\", \"default\" : -2 }, \n" +
+            "{ \"name\" : \"float\", \"type\" : \"float\", \"default\" : -3.0 }, \n" +
+            "{ \"name\" : \"double\", \"type\" : \"double\", \"default\" : -4.0 }, \n" +
+            "{ \"name\" : \"string\", \"type\" : \"string\", \"default\" : \"default_string\" }, \n" +
+            "{ \"name\" : \"bytes\", \"type\" : \"bytes\", \"default\" : \"default_bytes\" }, \n" +
+            "{ \"name\" : \"array\", \"type\" : { \"type\" : \"array\", \"items\" : \"int\" }, \"default\" : [ -1, -2, -3, -4 ] }, \n" +
+            "{ \"name\" : \"enum\", \"type\" : { \"type\" : \"enum\", \"name\" : \"enumType\", \"symbols\" : [ \"apple\", \"orange\", \"banana\" ] }, \"default\" : \"apple\" }, \n" +
+            "{ \"name\" : \"fixed\", \"type\" : { \"type\" : \"fixed\", \"name\" : \"fixedType\", \"size\" : 4 }, \"default\" : \"1234\" }, \n" +
+            "{ \"name\" : \"map\", \"type\" : { \"type\" : \"map\", \"values\" : \"int\" }, \"default\" : { \"key1\" : -5 } }, \n" +
+            "{ \"name\" : \"record\", \"type\" : { \"type\" : \"record\", \"name\" : \"recordType\", \"fields\" : [ { \"name\" : \"int\", \"type\" : \"int\" } ] }, \"default\" : { \"int\" : -6 } }, \n" +
+            "{ \"name\" : \"union\", \"type\" : [ \"int\", \"recordType\", \"enumType\", \"fixedType\" ], \"default\" : { \"enumType\" : \"orange\"} }, \n" +
+            "{ \"name\" : \"unionWithAliases\", \"type\" : [ { \"alias\": \"fruitCount\", \"type\": \"int\" }, { \"alias\": \"fruit\", \"type\": \"enumType\" } ], \"default\" : { \"fruit\": \"orange\"} }, \n" +
+            "{ \"name\" : \"unionWithNull\", \"type\" : [ \"null\", \"enumType\", \"fixedType\" ], \"default\" : null } \n" +
+        "] } } \n" +
+    "] }";
 
     String key = "bar";
 
@@ -1553,6 +1586,10 @@ public class TestDataSchema
           new DataMap(asMap("enumType", "orange"))
         },
         {
+          "unionWithAliases",
+          new DataMap(asMap("fruit", "orange"))
+        },
+        {
           "unionWithNull",
           Data.NULL
         }
@@ -1570,7 +1607,7 @@ public class TestDataSchema
       assertEquals(pair[1], targetField.getDefault());
     }
 
-    // Test default values.
+    // Test union member key.
 
     Object unionMemberKeyInput[][] =
     {
@@ -1624,6 +1661,10 @@ public class TestDataSchema
         },
         {
           "union",
+          "union"
+        },
+        {
+          "unionWithAliases",
           "union"
         },
         {
@@ -2152,6 +2193,53 @@ public class TestDataSchema
           "union cannot be inside another union"
         },
         {
+          // union with duplicate aliases
+          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
+            "{ \"name\" : \"u1\", \"type\" : [ \n" +
+              "{ \"alias\" : \"count\", \"type\" : \"int\" }," +
+              "{ \"alias\" : \"count\", \"type\" : \"long\" }" +
+            "] } \n" +
+          "] }",
+          "alias count appears more than once in a union"
+        },
+        {
+          // union with aliases for partial members
+          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
+            "{ \"name\" : \"u1\", \"type\" : [ \n" +
+              "\"long\", \"string\", " +
+              "{ \"alias\" : \"count\", \"type\" : \"int\" }" +
+            "] } \n" +
+          "] }",
+          "Union definition should have aliases specified for either all or zero members."
+        },
+        {
+          // union with invalid alias
+          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
+            "{ \"name\" : \"u1\", \"type\" : [ \n" +
+              "{ \"alias\" : \"$aL!@s\", \"type\" : \"int\" }" +
+            "] } \n" +
+          "] }",
+          "is an invalid member alias"
+        },
+        {
+          // union with empty alias
+          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
+            "{ \"name\" : \"u1\", \"type\" : [ \n" +
+              "{ \"alias\" : \"\", \"type\" : \"int\" }" +
+            "] } \n" +
+          "] }",
+          "is an invalid member alias"
+        },
+        {
+          // union with alias for null member type
+          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
+            "{ \"name\" : \"u1\", \"type\" : [ \n" +
+              "{ \"alias\" : \"nothing\", \"type\" : \"null\" }" +
+            "] } \n" +
+          "] }",
+          "member should not have an alias"
+        },
+        {
           // typeref with with invalid referenced type
           "{ " +
           "  \"type\" : \"typeref\", " +
@@ -2331,6 +2419,140 @@ public class TestDataSchema
     for (String missingSymbol : missingSymbols)
     {
       Assert.assertFalse(schema.getSymbolDocs().containsKey(missingSymbol));
+    }
+  }
+
+  @Test
+  public void testUnionDataSchemaWithAliases() throws Exception
+  {
+    String schema =
+      "{ \"type\": \"record\", \"name\": \"AuxRecord\", \"fields\": [] }" +
+      "{ \"type\" : \"typeref\", \"name\" : \"VideoUrn\", \"ref\" : \"string\" }" +
+      "{ \"type\": \"record\", \"name\": \"MainRecord\", \"fields\": [ " +
+        "{ \"name\": \"resource\", \"type\": [ " +
+          "\"null\"," +
+          "{ \"alias\": \"member\", \"type\": \"string\", \"doc\": \"member doc\" }," +
+          "{ \"alias\": \"article\", \"type\": \"string\", \"doc\": \"article doc\" }," +
+          "{ \"alias\": \"school\", \"type\": \"AuxRecord\", \"doc\": \"school doc\" }," +
+          "{ \"alias\": \"organization\", \"type\": { \"type\": \"record\", \"name\": \"Organization\", \"fields\": [] }, \"doc\": \"organization doc\", \"inlined\": true }," +
+          "{ \"alias\": \"company\", \"type\": \"Organization\", \"doc\": \"company doc\" }," +
+          "{ \"alias\": \"jobs\", \"type\": { \"type\": \"array\", \"items\": \"string\" }, \"doc\": \"jobs doc\", \"inlined\": true }," +
+          "{ \"alias\": \"courses\", \"type\": { \"type\": \"map\", \"values\": \"AuxRecord\" }, \"doc\": \"courses doc\", \"inlined\": true }," +
+          "{ \"alias\": \"fingerprint\", \"type\": { \"type\": \"fixed\", \"name\": \"md5\", \"size\": 16 }, \"doc\": \"fingerprint doc\", \"inlined\": true }," +
+          "{ \"alias\": \"audio\", \"type\": { \"type\" : \"typeref\", \"name\" : \"AudioUrn\", \"ref\" : \"string\" }, \"doc\": \"audio doc\", \"inlined\": true }," +
+          "{ \"alias\": \"video\", \"type\": \"VideoUrn\", \"doc\": \"video doc\" }" +
+        "] }" +
+      "] }";
+    List<String> membersInDeclaredOrder = Lists.newArrayList(
+        "null", "member", "article", "school", "organization", "company", "jobs", "courses", "fingerprint", "audio", "video");
+    Set<String> inlinedMembers = Sets.newHashSet("organization", "jobs", "courses", "fingerprint", "audio");
+
+    PegasusSchemaParser parser = schemaParserFromString(schema);
+    RecordDataSchema mainRecordSchema = (RecordDataSchema) parser.topLevelDataSchemas().get(2);
+    RecordDataSchema.Field resourceField = mainRecordSchema.getField("resource");
+
+    UnionDataSchema resourceSchema = (UnionDataSchema) resourceField.getType();
+
+    assertTrue(resourceSchema.areMembersAliased());
+    assertEquals(resourceSchema.getMembers().size(), membersInDeclaredOrder.size());
+    assertEquals(resourceSchema.getTypes().size(), resourceSchema.getMembers().size());
+
+    int index = 0;
+    for (UnionDataSchema.Member member: resourceSchema.getMembers())
+    {
+      assertFalse(member.hasError());
+
+      boolean isNonNullMember = (member.getType().getDereferencedType() != DataSchema.Type.NULL);
+
+      // Only non-null members should be aliased
+      assertEquals(member.hasAlias(), isNonNullMember);
+
+      String memberKey = member.getUnionMemberKey();
+      DataSchema type = member.getType();
+
+      // Verify the member's getUnionMemberKey() is same as the member alias (for non null members)
+      assertEquals(memberKey, isNonNullMember ? member.getAlias() : type.getUnionMemberKey());
+
+      // Verify the order is maintained as declared in the union definition
+      assertEquals(memberKey, membersInDeclaredOrder.get(index));
+
+      // Verify the inlined member definition is captured correctly
+      assertEquals(member.isDeclaredInline(), inlinedMembers.contains(memberKey));
+
+      // Verify the type, doc and other properties
+      assertEquals(type, resourceSchema.getTypeByMemberKey(memberKey));
+      assertEquals(member.getDoc(), isNonNullMember ? memberKey + " doc" : "");
+      assertEquals(member.getProperties().containsKey("inlined"), member.isDeclaredInline());
+
+      // Verify the order is maintained between getTypes() and getMembers()
+      assertEquals(type, resourceSchema.getTypes().get(index));
+
+      index++;
+    }
+  }
+
+  @Test
+  public void testUnionDataSchemaWithoutAliases() throws Exception
+  {
+    String schema =
+      "{ \"type\": \"record\", \"name\": \"AuxRecord\", \"fields\": [] }" +
+      "{ \"type\" : \"typeref\", \"name\" : \"AudioUrn\", \"ref\" : \"string\" }" +
+      "{ \"type\": \"record\", \"name\": \"MainRecord\", \"fields\": [ " +
+        "{ \"name\": \"resource\", \"type\": [ " +
+          "\"null\"," +
+          "\"int\"," +
+          "\"AuxRecord\"," +
+          "{ \"type\": \"record\", \"name\": \"Organization\", \"fields\": [] }," +
+          "{ \"type\": \"array\", \"items\": \"string\" }," +
+          "{ \"type\": \"map\", \"values\": \"AuxRecord\" }," +
+          "{ \"type\": \"fixed\", \"name\": \"MD5\", \"size\": 16 }," +
+          "{ \"type\" : \"typeref\", \"name\" : \"VideoUrn\", \"ref\" : \"string\" }" +
+        "] }" +
+      "] }";
+    List<String> membersInDeclaredOrder = Lists.newArrayList(
+        "null", "int", "AuxRecord", "Organization", "array", "map", "MD5", "string");
+    Set<String> inlinedMembers = Sets.newHashSet("Organization", "array", "map", "MD5", "string");
+
+    PegasusSchemaParser parser = schemaParserFromString(schema);
+    RecordDataSchema mainRecordSchema = (RecordDataSchema) parser.topLevelDataSchemas().get(2);
+    RecordDataSchema.Field resourceField = mainRecordSchema.getField("resource");
+
+    UnionDataSchema resourceSchema = (UnionDataSchema) resourceField.getType();
+
+    assertFalse(resourceSchema.areMembersAliased());
+    assertEquals(resourceSchema.getMembers().size(), membersInDeclaredOrder.size());
+    assertEquals(resourceSchema.getTypes().size(), resourceSchema.getMembers().size());
+
+    int index = 0;
+    for (UnionDataSchema.Member member: resourceSchema.getMembers())
+    {
+      assertFalse(member.hasError());
+
+      assertFalse(member.hasAlias());
+      assertEquals(member.getAlias(), null);
+
+      String memberKey = member.getUnionMemberKey();
+      DataSchema type = member.getType();
+
+      // Verify the member's getUnionMemberKey() is same as the member type's getUnionMemberKey()
+      assertEquals(memberKey, type.getUnionMemberKey());
+
+      // Verify the order is maintained as declared in the union definition
+      assertEquals(memberKey, membersInDeclaredOrder.get(index));
+
+      // Verify the order is maintained between getTypes() and getMembers()
+      assertEquals(type, resourceSchema.getTypes().get(index));
+
+      // Verify the type, doc and other properties are empty
+      assertEquals(type, resourceSchema.getTypeByMemberKey(memberKey));
+      assertTrue(member.getDoc().isEmpty());
+      assertTrue(member.getProperties().isEmpty());
+
+      // Verify the inlined member definition is captured correctly
+      assertEquals(member.isDeclaredInline(), inlinedMembers.contains(memberKey));
+      assertEquals(resourceSchema.isTypeDeclaredInline(type), member.isDeclaredInline());
+
+      index++;
     }
   }
 

@@ -500,7 +500,7 @@ public final class ValidateDataAgainstSchema
         {
           Map.Entry<String, Object> entry = map.entrySet().iterator().next();
           String key = entry.getKey();
-          DataSchema memberSchema = schema.getType(key);
+          DataSchema memberSchema = schema.getTypeByMemberKey(key);
           if (memberSchema == null)
           {
             addMessage(element, "\"%1$s\" is not a member type of union %2$s", key, schema);

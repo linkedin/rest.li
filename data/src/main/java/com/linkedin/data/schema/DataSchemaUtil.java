@@ -104,7 +104,8 @@ public class DataSchemaUtil
           dataSchema = field.getType();
           break;
         case UNION:
-          dataSchema = ((UnionDataSchema) dataSchema).getType(path[i].toString());
+          UnionDataSchema unionDataSchema = (UnionDataSchema) dataSchema;
+          dataSchema = unionDataSchema.getTypeByMemberKey(path[i].toString());
           if (dataSchema == null) return null;
           break;
         default:

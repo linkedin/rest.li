@@ -43,6 +43,9 @@ public class TestDataSchemaUtil
         {"intB", true},
         {"UnionFieldWithInlineRecord", true},
         {"UnionFieldWithInlineRecord/com.linkedin.data.schema.myRecord/foo1", true},
+        {"UnionFieldWithInlineRecord/com.linkedin.data.schema.myRecord/foo2", true},
+        {"UnionFieldWithAliases", true},
+        {"UnionFieldWithAliases/company/name", true},
         {"ArrayWithInlineRecord", true},
         {"ArrayWithInlineRecord/*/bar1", true},
         {"ArrayWithInlineRecord/*/bar2", true},
@@ -58,7 +61,13 @@ public class TestDataSchemaUtil
         // valid path but not a field of a record
         {"UnionFieldWithInlineRecord/com.linkedin.data.schema.myRecord", false},
         {"UnionFieldWithInlineRecord/com.linkedin.data.schema.myEnum", false},
-        {"UnionFieldWithInlineRecord/com.linkedin.data.schema.myEnum/FOOFOO", false}
+        {"UnionFieldWithInlineRecord/com.linkedin.data.schema.myEnum/FOOFOO", false},
+        {"UnionFieldWithAliases/member", false},
+        {"UnionFieldWithAliases/company", false},
+        {"UnionFieldWithAliases/school", false},
+        {"UnionFieldWithAliases/school/PRIVATE", false},
+        // Union with aliases that uses the type name instead of the alias in the path
+        {"UnionFieldWithAliases/com.linkedin.data.schema.Company/name", false}
     };
   }
 

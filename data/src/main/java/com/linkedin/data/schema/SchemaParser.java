@@ -22,14 +22,17 @@ import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.DataLocation;
 import com.linkedin.data.schema.resolver.DefaultDataSchemaResolver;
+import com.linkedin.data.schema.UnionDataSchema.Member;
 import java.io.InputStream;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import static com.linkedin.data.schema.DataSchemaConstants.*;
@@ -291,23 +294,9 @@ public class SchemaParser extends AbstractSchemaParser
   protected UnionDataSchema dataListToDataSchema(DataList list)
   {
     // Union
-    List<DataSchema> types = new ArrayList<DataSchema>();
-    Set<DataSchema> typesDeclaredInline = new HashSet<>(0);
-    for (Object o : list)
-    {
-      DataSchema type = parseObject(o);
-      if (type != null)
-      {
-        types.add(type);
-        if (isDeclaredInline(o))
-        {
-          typesDeclaredInline.add(type);
-        }
-      }
-    }
     UnionDataSchema schema = new UnionDataSchema();
-    schema.setTypes(types, startCalleeMessageBuilder());
-    schema.setTypesDeclaredInline(typesDeclaredInline);
+    List<Member> members = parseUnionMembers(schema, list);
+    schema.setMembers(members, startCalleeMessageBuilder());
     appendCalleeMessage(list);
     return schema;
   }
@@ -511,6 +500,101 @@ public class SchemaParser extends AbstractSchemaParser
     setCurrentNamespace(saveCurrentNamespace);
     setCurrentPackage(saveCurrentPackage);
     return schema;
+  }
+
+  /**
+   * Parse a {@link DataList} to obtain the a list of {@link Member}.
+   *
+   * The {@link DataList} should contain a list of member definitions.
+   *
+   * @param unionSchema Schema of the Union that contains these members
+   * @param memberList {@link DataList} with the member definitions
+   * @return A {@link List} of {@link Member}
+   */
+  private List<Member> parseUnionMembers(UnionDataSchema unionSchema, DataList memberList)
+  {
+    List<Member> members = new LinkedList<>();
+
+    for (Object o: memberList)
+    {
+      Optional<Member> member = Optional.empty();
+
+      if (o instanceof DataMap)
+      {
+        DataMap memberMap = (DataMap) o;
+
+        String alias = getString(memberMap, ALIAS_KEY, false);
+        if (alias != null)
+        {
+          // Member definition with alias specified
+          member = parseUnionMemberWithAlias(memberMap, alias, unionSchema);
+        }
+        else
+        {
+          // Member definition (maps and arrays) without alias specified
+          member = parseUnionMemberWithoutAlias(o, unionSchema);
+        }
+      }
+      else
+      {
+        // Member definition without alias specified
+        member = parseUnionMemberWithoutAlias(o, unionSchema);
+      }
+
+      member.ifPresent(members::add);
+    }
+
+    return members;
+  }
+
+  private Optional<Member> parseUnionMemberWithAlias(
+      DataMap memberMap, String alias, UnionDataSchema unionSchema)
+  {
+    Member member = null;
+
+    DataSchema type = getSchemaData(memberMap, TYPE_KEY);
+    if (type != null)
+    {
+      member = new Member(type);
+      boolean isAliasValid = member.setAlias(alias, startCalleeMessageBuilder());
+      if (!isAliasValid)
+      {
+        appendCalleeMessage(memberMap);
+      }
+      member.setDeclaredInline(isDeclaredInline(memberMap.get(TYPE_KEY)));
+
+      String doc = getString(memberMap, DOC_KEY, false);
+      if (doc != null)
+      {
+        member.setDoc(doc);
+      }
+
+      Map<String, Object> properties = extractProperties(memberMap, MEMBER_KEYS);
+      if (properties != null && !properties.isEmpty())
+      {
+        member.setProperties(properties);
+      }
+    }
+    else
+    {
+      startErrorMessage(unionSchema).append(memberMap).append(" is missing type of the Union member.\n");
+    }
+
+    return Optional.ofNullable(member);
+  }
+
+  private Optional<Member> parseUnionMemberWithoutAlias(
+      Object memberObject, UnionDataSchema unionSchema)
+  {
+    Member member = null;
+
+    DataSchema type = parseObject(memberObject);
+    if (type != null) {
+      member = new Member(type);
+      member.setDeclaredInline(isDeclaredInline(memberObject));
+    }
+
+    return Optional.ofNullable(member);
   }
 
   /**

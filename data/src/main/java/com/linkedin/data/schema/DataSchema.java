@@ -126,12 +126,12 @@ public abstract class DataSchema
   public abstract Map<String, Object> getProperties();
 
   /**
-   * Return the union member key for this {@link DataSchema}.
+   * Return the default union member key for this {@link DataSchema}.
    *
-   * This key is used to uniquely identify a member of the union
-   * following the Avro specification.
+   * This key can be used to identify union members following the Avro specification but for unions
+   * that contain more than one member of the same type, using this key will not provide uniqueness.
    *
-   * @return the union member key for this {@link DataSchema}.
+   * @return the default union member key for this {@link DataSchema}.
    */
   public abstract String getUnionMemberKey();
 

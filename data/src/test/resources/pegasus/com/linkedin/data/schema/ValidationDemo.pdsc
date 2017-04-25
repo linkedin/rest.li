@@ -53,6 +53,39 @@
       ]
     },
     {
+      "name": "UnionFieldWithAliases",
+      "type": [
+        {
+          "alias": "member",
+          "type": "string"
+        },
+        {
+          "alias": "company",
+          "type": {
+            "type" : "record",
+            "name" : "Company",
+            "fields": [
+              {
+                "name": "name",
+                "type": "string"
+              }
+            ]
+          }
+        },
+        {
+          "alias": "school",
+          "type": {
+            "name": "SchoolType",
+            "type": "enum",
+            "symbols": [
+              "PRIVATE",
+              "PUBLIC"
+            ]
+          }
+        }
+      ]
+    },
+    {
       "name": "ArrayWithInlineRecord",
       "type": {
         "type": "array",

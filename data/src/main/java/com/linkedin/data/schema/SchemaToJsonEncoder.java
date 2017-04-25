@@ -189,13 +189,7 @@ public class SchemaToJsonEncoder extends AbstractSchemaEncoder
         _builder.writeEndObject();
         break;
       case UNION:
-        _builder.writeStartArray();
-        UnionDataSchema unionSchema = (UnionDataSchema) schema;
-        for (DataSchema memberSchema : unionSchema.getTypes())
-        {
-          encode(memberSchema, unionSchema.isTypeDeclaredInline(memberSchema));
-        }
-        _builder.writeEndArray();
+        encodeUnion((UnionDataSchema) schema);
         break;
       default:
         throw new IllegalStateException("schema type " + schema.getType() + " is not a known unnamed DataSchema type");
@@ -310,6 +304,60 @@ public class SchemaToJsonEncoder extends AbstractSchemaEncoder
   protected void encodeProperties(DataSchema schema) throws IOException
   {
     _builder.writeProperties(schema.getProperties());
+  }
+
+  /**
+   * Encode the members of an {@link UnionDataSchema}.
+   *
+   * @param unionDataSchema The union schema whose members needs to be encoded.
+   * @throws IOException if there is an error while encoding.
+   */
+  protected void encodeUnion(UnionDataSchema unionDataSchema) throws IOException
+  {
+    List<UnionDataSchema.Member> members = unionDataSchema.getMembers();
+
+    _builder.writeStartArray();
+
+    for (UnionDataSchema.Member member: members)
+    {
+      encodeUnionMember(member);
+    }
+
+    _builder.writeEndArray();
+  }
+
+  /**
+   * Encode a specific {@link com.linkedin.data.schema.UnionDataSchema.Member} of a union.
+   *
+   * @param member The specific union member that needs to be encoded.
+   * @throws IOException if there is an error while encoding.
+   */
+  protected void encodeUnionMember(UnionDataSchema.Member member) throws IOException
+  {
+    if (member.hasAlias())
+    {
+      _builder.writeStartObject();
+
+      // alias
+      _builder.writeStringField(ALIAS_KEY, member.getAlias(), true);
+
+      // type
+      _builder.writeFieldName(TYPE_KEY);
+      encode(member.getType(), member.isDeclaredInline());
+
+      // doc
+      _builder.writeStringField(DOC_KEY, member.getDoc(), false);
+
+      // properties
+      _builder.writeProperties(member.getProperties());
+
+      _builder.writeEndObject();
+    }
+    else
+    {
+      // for member without aliases, encode the type
+      encode(member.getType(), member.isDeclaredInline());
+    }
   }
 
   /**

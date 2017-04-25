@@ -32,6 +32,7 @@ public class DataSchemaConstants
   public static final String INCLUDE_KEY = "include";
   public static final String ITEMS_KEY = "items";
   public static final String NAME_KEY = "name";
+  public static final String ALIAS_KEY = "alias";
   public static final String NAMESPACE_KEY = "namespace";
   public static final String PACKAGE_KEY = "package";
   public static final String OPTIONAL_KEY = "optional";
@@ -73,6 +74,7 @@ public class DataSchemaConstants
   public static final Set<DataSchema.Type> NAMED_DATA_SCHEMA_TYPE_SET;
   public static final Set<String> SCHEMA_KEYS;
   public static final Set<String> FIELD_KEYS;
+  public static final Set<String> MEMBER_KEYS;
 
   public static final Pattern NAME_PATTERN = Pattern.compile("[A-Za-z_][0-9A-Za-z_]*(\\.[A-Za-z_][0-9A-Za-z_]*)*");
   public static final Pattern NAMESPACE_PATTERN = Pattern.compile("([A-Za-z_][0-9A-Za-z_]*(\\.[A-Za-z_][0-9A-Za-z_]*)*)?");
@@ -96,6 +98,9 @@ public class DataSchemaConstants
 
     Set<String> fieldKeys = new HashSet<String>(Arrays.asList(ALIASES_KEY, DEFAULT_KEY, DOC_KEY, NAME_KEY, OPTIONAL_KEY, ORDER_KEY, TYPE_KEY));
     FIELD_KEYS = Collections.unmodifiableSet(fieldKeys);
+
+    Set<String> memberKeys = new HashSet<String>(Arrays.asList(DOC_KEY, ALIAS_KEY, TYPE_KEY));
+    MEMBER_KEYS = Collections.unmodifiableSet(memberKeys);
   }
 
   private DataSchemaConstants()
