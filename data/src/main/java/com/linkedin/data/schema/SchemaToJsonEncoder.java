@@ -20,9 +20,7 @@ package com.linkedin.data.schema;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import static com.linkedin.data.schema.DataSchemaConstants.*;
 
@@ -258,18 +256,18 @@ public class SchemaToJsonEncoder extends AbstractSchemaEncoder
         break;
       case RECORD:
         RecordDataSchema recordDataSchema = (RecordDataSchema) schema;
-        if (isEncodeInclude() && recordDataSchema.getInclude().isEmpty() == false)
+        boolean hasIncludes = isEncodeInclude() && !recordDataSchema.getInclude().isEmpty();
+        boolean fieldsBeforeIncludes = recordDataSchema.isFieldsBeforeIncludes();
+        if (hasIncludes && !fieldsBeforeIncludes)
         {
-          _builder.writeFieldName(INCLUDE_KEY);
-          _builder.writeStartArray();
-          for (NamedDataSchema includedSchema : recordDataSchema.getInclude())
-          {
-            encode(includedSchema);
-          }
-          _builder.writeEndArray();
+          writeIncludes(recordDataSchema);
         }
         _builder.writeFieldName(FIELDS_KEY);
         encodeFields(recordDataSchema);
+        if (hasIncludes && fieldsBeforeIncludes)
+        {
+          writeIncludes(recordDataSchema);
+        }
         break;
       default:
         throw new IllegalStateException("schema type " + schema.getType() + " is not a known NamedDataSchema type");
@@ -286,6 +284,16 @@ public class SchemaToJsonEncoder extends AbstractSchemaEncoder
 
     _currentNamespace = saveCurrentNamespace;
     _currentPackage = saveCurrentPackage;
+  }
+
+  private void writeIncludes(RecordDataSchema recordDataSchema) throws IOException {
+    _builder.writeFieldName(INCLUDE_KEY);
+    _builder.writeStartArray();
+    for (NamedDataSchema includedSchema : recordDataSchema.getInclude())
+    {
+      encode(includedSchema);
+    }
+    _builder.writeEndArray();
   }
 
   protected void writeSchemaName(NamedDataSchema schema) throws IOException

@@ -199,18 +199,9 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
     write("record ");
     write(toTypeIdentifier(schema));
     List<NamedDataSchema> includes = schema.getInclude();
-    if (includes.size() > 0)
+    if (includes.size() > 0 && !schema.isFieldsBeforeIncludes())
     {
-      write(" includes ");
-      for (Iterator<NamedDataSchema> iter = includes.iterator(); iter.hasNext();)
-      {
-        NamedDataSchema include = iter.next();
-        writeReferenceOrInline(include, schema.isIncludeDeclaredInline(include));
-        if (iter.hasNext())
-        {
-          write(", ");
-        }
-      }
+      writeIncludes(schema, includes);
     }
     write(" {");
     newline();
@@ -227,6 +218,18 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
         }
         writeDoc(field.getDoc());
         writeProperties(field.getProperties());
+        if (field.getOrder() != null && !field.getOrder().equals(RecordDataSchema.Field.Order.ASCENDING))
+        {
+          write("@order = \"");
+          write(field.getOrder().name());
+          write("\"");
+        }
+        if (field.getAliases() != null && field.getAliases().size() > 0)
+        {
+          write("@aliases = [");
+          write(field.getAliases().stream().map(s -> "\"" + s + "\"").collect(Collectors.joining(", ")));
+          write("]");
+        }
         indent();
         write(escapeIdentifier(field.getName()));
         write(": ");
@@ -247,6 +250,24 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
     _indentDepth--;
     indent();
     write("}");
+
+    if (includes.size() > 0 && schema.isFieldsBeforeIncludes())
+    {
+      writeIncludes(schema, includes);
+    }
+  }
+
+  private void writeIncludes(RecordDataSchema schema, List<NamedDataSchema> includes) throws IOException {
+    write(" includes ");
+    for (Iterator<NamedDataSchema> iter = includes.iterator(); iter.hasNext();)
+    {
+      NamedDataSchema include = iter.next();
+      writeReferenceOrInline(include, schema.isIncludeDeclaredInline(include));
+      if (iter.hasNext())
+      {
+        write(", ");
+      }
+    }
   }
 
   private void writeEnum(EnumDataSchema schema) throws IOException
@@ -518,10 +539,6 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
       {
         // Favor @x.y.z = "value" property encoding style over @x = { "y": { "z": "value" } }
         writeProperties(pathParts, (DataMap) value);
-      }
-      else if (value instanceof DataList)
-      {
-        writeProperty(pathParts, CODEC.listToString((DataList) value));
       }
       else if (Boolean.TRUE.equals(value))
       {

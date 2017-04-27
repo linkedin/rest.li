@@ -16,16 +16,22 @@
 
 package com.linkedin.pegasus.generator.test.pdl;
 
+import com.linkedin.data.schema.Name;
+import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.template.IntegerArray;
 import com.linkedin.data.template.IntegerMap;
 import com.linkedin.pegasus.generator.test.idl.enums.Fruits;
+import com.linkedin.pegasus.generator.test.idl.maps.WithOrders;
 import com.linkedin.pegasus.generator.test.idl.records.InlineOptionalRecord;
 import com.linkedin.pegasus.generator.test.idl.records.InlineRecord;
+import com.linkedin.pegasus.generator.test.idl.records.Note;
 import com.linkedin.pegasus.generator.test.idl.records.Simple;
 import com.linkedin.pegasus.generator.test.idl.records.SimpleMap;
+import com.linkedin.pegasus.generator.test.idl.records.WithAliases;
 import com.linkedin.pegasus.generator.test.idl.records.WithComplexTypeDefaults;
 import com.linkedin.pegasus.generator.test.idl.records.WithComplexTypes;
 import com.linkedin.pegasus.generator.test.idl.records.WithInclude;
+import com.linkedin.pegasus.generator.test.idl.records.WithIncludeAfter;
 import com.linkedin.pegasus.generator.test.idl.records.WithInlineRecord;
 import com.linkedin.pegasus.generator.test.idl.records.WithOptionalComplexTypeDefaults;
 import com.linkedin.pegasus.generator.test.idl.records.WithOptionalComplexTypes;
@@ -38,10 +44,12 @@ import com.linkedin.pegasus.generator.test.idl.records.WithPrimitiveDefaults;
 import com.linkedin.pegasus.generator.test.idl.records.WithPrimitiveTyperefs;
 import com.linkedin.pegasus.generator.test.idl.records.WithPrimitives;
 import com.linkedin.pegasus.generator.test.pdl.fixtures.CustomInt;
+import java.util.List;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
 
 
 public class RecordGeneratorTest extends GeneratorTest
@@ -364,5 +372,34 @@ public class RecordGeneratorTest extends GeneratorTest
     assertNull(withDefaults.getArray());
     assertNull(withDefaults.getMap());
     assertNull(withDefaults.getCustom());
+  }
+
+  @Test
+  public void testWithAliases()
+  {
+    WithAliases withAliases = new WithAliases();
+    RecordDataSchema schema = withAliases.schema();
+    List<Name> schemaAliases = schema.getAliases();
+    assertTrue(schemaAliases.contains(new Name("org.example.RecordAlias1")));
+    assertTrue(schemaAliases.contains(new Name("com.linkedin.pegasus.generator.test.idl.records.RecordAlias2")));
+    List<String> fieldAliases = schema.getField("name").getAliases();
+    assertTrue(fieldAliases.contains("fieldAlias1"));
+    assertTrue(fieldAliases.contains("fieldAlias2"));
+  }
+
+  @Test
+  public void testWithIncludeAfter()
+  {
+    WithIncludeAfter withIncludeAfter = new WithIncludeAfter();
+    assertTrue(withIncludeAfter.schema().isFieldsBeforeIncludes());
+    assertTrue(withIncludeAfter.schema().getInclude().contains(new Simple().schema()));
+    assertTrue(withIncludeAfter.schema().getInclude().contains(new Note().schema()));
+  }
+
+  @Test
+  public void testWithOrder()
+  {
+    WithOrders withOrders = new WithOrders();
+    assertTrue(withOrders.schema().getField("desc").getOrder() == RecordDataSchema.Field.Order.DESCENDING);
   }
 }

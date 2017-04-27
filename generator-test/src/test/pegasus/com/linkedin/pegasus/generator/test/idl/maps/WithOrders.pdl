@@ -1,0 +1,7 @@
+namespace com.linkedin.pegasus.generator.test.idl.maps
+
+record WithOrders {
+
+  @order = "DESCENDING"
+  desc: string
+}

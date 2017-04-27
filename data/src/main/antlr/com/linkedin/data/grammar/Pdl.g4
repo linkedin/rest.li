@@ -75,7 +75,7 @@ propNameDeclaration returns [String name]: AT propName {
 
 propJsonValue: EQ jsonValue;
 
-recordDeclaration returns [String name]: RECORD identifier fieldIncludes? recordDecl=fieldSelection {
+recordDeclaration returns [String name]: RECORD identifier beforeIncludes=fieldIncludes? recordDecl=fieldSelection afterIncludes=fieldIncludes? {
   $name = $identifier.value;
 };
 

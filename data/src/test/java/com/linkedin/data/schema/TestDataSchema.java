@@ -560,6 +560,7 @@ public class TestDataSchema
         },
         // order of processing includes and fields is important when includes defines a named type
         // include before fields
+        // retains order of fields and include
         {
           "{ " +
           "  \"type\" : \"record\", " +
@@ -573,8 +574,8 @@ public class TestDataSchema
           "}",
           "{ \"type\" : \"record\", \"name\" : \"Foo\", \"include\" : [ { \"type\" : \"record\", \"name\" : \"Bar\", \"fields\" : [  ] } ], \"fields\" : [ { \"name\" : \"b1\", \"type\" : \"Bar\" } ] }"
         },
-        // order of processing includes and fields is important when includes defines a named type,
         // fields before include
+        // retains order of fields and include
         {
           "{ " +
           "  \"type\" : \"record\", " +
@@ -586,7 +587,7 @@ public class TestDataSchema
           "    \"Bar\" " +
           "  ] " +
           "}",
-          "{ \"type\" : \"record\", \"name\" : \"Foo\", \"include\" : [ { \"type\" : \"record\", \"name\" : \"Bar\", \"fields\" : [  ] } ], \"fields\" : [ { \"name\" : \"b1\", \"type\" : \"Bar\" } ] }"
+          "{ \"type\" : \"record\", \"name\" : \"Foo\", \"fields\" : [ { \"name\" : \"b1\", \"type\" : { \"type\" : \"record\", \"name\" : \"Bar\", \"fields\" : [  ] } } ], \"include\" : [ \"Bar\" ] }"
         }
       };
 

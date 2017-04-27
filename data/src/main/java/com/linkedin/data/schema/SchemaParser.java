@@ -21,14 +21,7 @@ import com.linkedin.data.DataComplex;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.DataLocation;
-import com.linkedin.data.message.MessageUtil;
 import com.linkedin.data.schema.resolver.DefaultDataSchemaResolver;
-import com.linkedin.data.schema.resolver.FileDataSchemaResolver;
-import com.linkedin.data.schema.validation.CoercionMode;
-import com.linkedin.data.schema.validation.RequiredMode;
-import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
-import com.linkedin.data.schema.validation.ValidationOptions;
-import com.linkedin.data.schema.validation.ValidationResult;
 import java.io.InputStream;
 import java.io.Reader;
 import java.io.StringReader;
@@ -435,6 +428,7 @@ public class SchemaParser extends AbstractSchemaParser
           // fields is before include
           fields.addAll(parseFields(recordSchema, fieldsList));
           fields.addAll(parseInclude(recordSchema, includeList));
+          recordSchema.setFieldsBeforeIncludes(true);
         }
         else
         {

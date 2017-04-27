@@ -39,9 +39,12 @@ public class PdlEncoderTest extends GeneratorTest
     assertRoundTrip("enums.DeprecatedSymbols");
     assertRoundTrip("escaping.PdlKeywordEscaping");
     assertRoundTrip("fixed.Fixed8");
+    assertRoundTrip("maps.WithOrders");
     assertRoundTrip("maps.WithPrimitivesMap");
     assertRoundTrip("records.Note");
+    assertRoundTrip("records.WithAliases");
     assertRoundTrip("records.WithInclude");
+    assertRoundTrip("records.WithIncludeAfter");
     assertRoundTrip("records.WithInlineRecord");
     assertRoundTrip("records.WithPrimitives");
     assertRoundTrip("records.WithOptionalPrimitives");

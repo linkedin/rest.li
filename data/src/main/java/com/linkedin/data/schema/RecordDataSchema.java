@@ -569,6 +569,16 @@ public final class RecordDataSchema extends NamedDataSchema
     return _includesDeclaredInline.contains(type);
   }
 
+  public void setFieldsBeforeIncludes(boolean fieldsBeforeIncludes)
+  {
+    _fieldsBeforeIncludes = fieldsBeforeIncludes;
+  }
+
+  public boolean isFieldsBeforeIncludes()
+  {
+    return _fieldsBeforeIncludes;
+  }
+
   @Override
   public boolean equals(Object object)
   {
@@ -655,6 +665,7 @@ public final class RecordDataSchema extends NamedDataSchema
   private Map<String, Integer> _fieldNameToIndexMap = _emptyFieldNameToIndexMap;
   private final RecordType _recordType;
   private Set<NamedDataSchema> _includesDeclaredInline = _emptyIncludesDeclaredInline;
+  private boolean _fieldsBeforeIncludes = false;
 
   private static ThreadLocal<IdentityHashMap<RecordDataSchema, RecordDataSchema>> _equalsTracking =
       new ThreadLocal<IdentityHashMap<RecordDataSchema, RecordDataSchema>>()

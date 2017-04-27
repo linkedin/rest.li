@@ -25,6 +25,7 @@ import com.linkedin.data.grammar.PdlParser;
 import com.linkedin.data.schema.AbstractSchemaParser;
 import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.schema.DataSchemaConstants;
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.DataSchemaUtil;
 import com.linkedin.data.schema.EnumDataSchema;
@@ -624,11 +625,22 @@ public class PdlSchemaParser extends AbstractSchemaParser
     RecordDataSchema schema = new RecordDataSchema(name, RecordDataSchema.RecordType.RECORD);
 
     bindNameToSchema(name, schema);
-    FieldsAndIncludes fieldsAndIncludes = parseIncludes(record.fieldIncludes());
+    FieldsAndIncludes fieldsAndIncludes = parseIncludes(record.beforeIncludes);
+    boolean hasBeforeIncludes = fieldsAndIncludes.includes.size() > 0;
     fieldsAndIncludes.fields.addAll(parseFields(schema, record.recordDecl));
+    FieldsAndIncludes afterIncludes = parseIncludes(record.afterIncludes);
+    boolean hasAfterIncludes = afterIncludes.includes.size() > 0;
+    if (hasBeforeIncludes && hasAfterIncludes)
+    {
+      startErrorMessage(record)
+          .append("Record may have includes before or after fields, but not both: ")
+          .append(record).append(NEWLINE);
+    }
+    fieldsAndIncludes.addAll(afterIncludes);
     schema.setFields(fieldsAndIncludes.fields, errorMessageBuilder());
     schema.setInclude(fieldsAndIncludes.includes);
     schema.setIncludesDeclaredInline(fieldsAndIncludes.includesDeclaredInline);
+    schema.setFieldsBeforeIncludes(hasAfterIncludes);
     validateDefaults(schema);
     setProperties(context, schema);
     return schema;
@@ -764,6 +776,13 @@ public class PdlSchemaParser extends AbstractSchemaParser
       this.includes = includes;
       this.includesDeclaredInline = includesDeclaredInline;
     }
+
+    public void addAll(FieldsAndIncludes includes)
+    {
+      this.fields.addAll(includes.fields);
+      this.includes.addAll(includes.includes);
+      this.includesDeclaredInline.addAll(includes.includesDeclaredInline);
+    }
   }
 
   private FieldsAndIncludes parseIncludes(PdlParser.FieldIncludesContext includeSet) throws ParseException
@@ -837,13 +856,75 @@ public class PdlSchemaParser extends AbstractSchemaParser
           }
         }
 
+        List<String> aliases = new ArrayList<>(0);
+        RecordDataSchema.Field.Order sortOrder = null;
         for (PropDeclarationContext prop : field.props)
         {
-          addPropertiesAtPath(properties, prop);
+          if (prop.name.equals(DataSchemaConstants.ALIASES_KEY))
+          {
+            Object value = parsePropValue(prop);
+            if (!(value instanceof DataList))
+            {
+              startErrorMessage(prop)
+                  .append("'aliases' must be a list, but found ")
+                  .append(prop.getText()).append(NEWLINE);
+            }
+            else
+            {
+              for (Object alias : (DataList) value) {
+                if (!(alias instanceof String))
+                {
+                  startErrorMessage(prop)
+                      .append("'aliases' list elements must be string, but found ")
+                      .append(alias.getClass())
+                      .append(" at ")
+                      .append(prop.getText()).append(NEWLINE);
+                }
+                else
+                {
+                  aliases.add((String) alias);
+                }
+              }
+            }
+          }
+          else if (prop.name.equals(DataSchemaConstants.ORDER_KEY))
+          {
+            Object value = parsePropValue(prop);
+            if (!(value instanceof String))
+            {
+              startErrorMessage(prop)
+                  .append("'order' must be string, but found ")
+                  .append(prop.getText()).append(NEWLINE);
+            }
+            else
+            {
+              String order = (String) value;
+              try
+              {
+                sortOrder = RecordDataSchema.Field.Order.valueOf(order.toUpperCase());
+              }
+              catch (IllegalArgumentException exc)
+              {
+                startErrorMessage(order).append("\"").append(order).append("\" is an invalid sort order.\n");
+              }
+            }
+          }
+          else
+          {
+            addPropertiesAtPath(properties, prop);
+          }
         }
         if (field.doc != null)
         {
           result.setDoc(field.doc.value);
+        }
+        if (aliases.size() > 0)
+        {
+          result.setAliases(aliases, errorMessageBuilder());
+        }
+        if (sortOrder != null)
+        {
+          result.setOrder(sortOrder);
         }
         result.setProperties(properties);
         result.setRecord(recordSchema);
