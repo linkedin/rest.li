@@ -51,9 +51,14 @@ class GenerateDataTemplateTask extends JavaExec
   /**
    * The resolver path.
    */
-  FileCollection resolverPath
+  @InputFiles FileCollection resolverPath
 
-  FileCollection codegenClasspath
+  /**
+   * Classpath of the java process that generates data template.
+   * The value will be automatically copied over to 'classpath' property.
+   * It is kept here for backwards compatibility.
+   */
+  @InputFiles FileCollection codegenClasspath
 
   GenerateDataTemplateTask()
   {

@@ -1,6 +1,7 @@
 11.0.8
 ------
-
+(RB=981603)
+Fixed issue with GenerateDataTemplateTask introduced in 11.0.6
 
 11.0.7
 ------
