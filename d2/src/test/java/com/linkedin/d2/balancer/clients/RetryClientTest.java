@@ -26,10 +26,16 @@ import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategy
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyV3;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessException;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
+import com.linkedin.data.ByteString;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
+import com.linkedin.r2.message.stream.StreamRequest;
+import com.linkedin.r2.message.stream.StreamRequestBuilder;
+import com.linkedin.r2.message.stream.StreamResponse;
+import com.linkedin.r2.message.stream.entitystream.ByteStringWriter;
+import com.linkedin.r2.message.stream.entitystream.EntityStreams;
 import java.util.Arrays;
 import org.testng.annotations.Test;
 
@@ -50,17 +56,35 @@ import static org.testng.Assert.assertTrue;
  */
 public class RetryClientTest
 {
+  private static final ByteString CONTENT = ByteString.copy(new byte[8092]);
+
   @Test
-  public void testRetry() throws Exception
+  public void testRestRetry() throws Exception
   {
     SimpleLoadBalancer balancer = prepareLoadBalancer(Arrays.asList("http://test.linkedin.com/retry1", "http://test.linkedin.com/good"));
 
     DynamicClient dynamicClient = new DynamicClient(balancer, null);
     RetryClient client = new RetryClient(dynamicClient, 3);
     URI uri = URI.create("d2://retryService?arg1arg2");
-    RestRequest restRequest = new RestRequestBuilder(uri).build();
+    RestRequest restRequest = new RestRequestBuilder(uri).setEntity(CONTENT).build();
     TrackerClientTest.TestCallback<RestResponse> restCallback = new TrackerClientTest.TestCallback<RestResponse>();
     client.restRequest(restRequest, restCallback);
+
+    assertNull(restCallback.e);
+    assertNotNull(restCallback.t);
+  }
+
+  @Test
+  public void testStreamRetry() throws Exception
+  {
+    SimpleLoadBalancer balancer = prepareLoadBalancer(Arrays.asList("http://test.linkedin.com/retry1", "http://test.linkedin.com/good"));
+
+    DynamicClient dynamicClient = new DynamicClient(balancer, null);
+    RetryClient client = new RetryClient(dynamicClient, 3);
+    URI uri = URI.create("d2://retryService?arg1arg2");
+    StreamRequest streamRequest = new StreamRequestBuilder(uri).build(EntityStreams.newEntityStream(new ByteStringWriter(CONTENT)));
+    TrackerClientTest.TestCallback<StreamResponse> restCallback = new TrackerClientTest.TestCallback<StreamResponse>();
+    client.streamRequest(streamRequest, restCallback);
 
     assertNull(restCallback.e);
     assertNotNull(restCallback.t);
@@ -87,7 +111,27 @@ public class RetryClientTest
   }
 
   @Test
-  public void testRetryOverLimit() throws Exception
+  public void testStreamException() throws Exception
+  {
+    SimpleLoadBalancer balancer = prepareLoadBalancer(Arrays.asList("http://test.linkedin.com/retry1", "http://test.linkedin.com/bad"));
+
+    DynamicClient dynamicClient = new DynamicClient(balancer, null);
+    RetryClient client = new RetryClient(dynamicClient, 3);
+    URI uri = URI.create("d2://retryService?arg1=empty&arg2=empty");
+    StreamRequest streamRequest = new StreamRequestBuilder(uri).build(EntityStreams.emptyStream());
+    TrackerClientTest.TestCallback<StreamResponse> streamCallback = new TrackerClientTest.TestCallback<StreamResponse>();
+
+    RequestContext context = new RequestContext();
+    KeyMapper.TargetHostHints.setRequestContextTargetHost(context, URI.create("http://test.linkedin.com/bad"));
+    client.streamRequest(streamRequest, context, streamCallback);
+
+    assertNull(streamCallback.t);
+    assertNotNull(streamCallback.e);
+    assertTrue(streamCallback.e.getMessage().contains("exception happens"));
+  }
+
+  @Test
+  public void testRestRetryOverLimit() throws Exception
   {
     SimpleLoadBalancer balancer = prepareLoadBalancer(Arrays.asList("http://test.linkedin.com/retry1", "http://test.linkedin.com/retry2"));
 
@@ -104,7 +148,24 @@ public class RetryClientTest
   }
 
   @Test
-  public void testRetryNoAvailableHosts() throws Exception
+  public void testStreamRetryOverLimit() throws Exception
+  {
+    SimpleLoadBalancer balancer = prepareLoadBalancer(Arrays.asList("http://test.linkedin.com/retry1", "http://test.linkedin.com/retry2"));
+
+    DynamicClient dynamicClient = new DynamicClient(balancer, null);
+    RetryClient client = new RetryClient(dynamicClient, 1);
+    URI uri = URI.create("d2://retryService?arg1=empty&arg2=empty");
+    StreamRequest streamRequest = new StreamRequestBuilder(uri).build(EntityStreams.emptyStream());
+    TrackerClientTest.TestCallback<StreamResponse> streamCallback = new TrackerClientTest.TestCallback<StreamResponse>();
+    client.streamRequest(streamRequest, streamCallback);
+
+    assertNull(streamCallback.t);
+    assertNotNull(streamCallback.e);
+    assertTrue(streamCallback.e.getMessage().contains("Data not available"));
+  }
+
+  @Test
+  public void testRestRetryNoAvailableHosts() throws Exception
   {
     SimpleLoadBalancer balancer = prepareLoadBalancer(Arrays.asList("http://test.linkedin.com/retry1", "http://test.linkedin.com/retry2"));
 
@@ -118,6 +179,23 @@ public class RetryClientTest
     assertNull(restCallback.t);
     assertNotNull(restCallback.e);
     assertTrue(restCallback.e.toString().contains("retryService is in a bad state"));
+  }
+
+  @Test
+  public void testStreamRetryNoAvailableHosts() throws Exception
+  {
+    SimpleLoadBalancer balancer = prepareLoadBalancer(Arrays.asList("http://test.linkedin.com/retry1", "http://test.linkedin.com/retry2"));
+
+    DynamicClient dynamicClient = new DynamicClient(balancer, null);
+    RetryClient client = new RetryClient(dynamicClient, 3);
+    URI uri = URI.create("d2://retryService?arg1=empty&arg2=empty");
+    StreamRequest streamRequest = new StreamRequestBuilder(uri).build(EntityStreams.emptyStream());
+    TrackerClientTest.TestCallback<StreamResponse> streamCallback = new TrackerClientTest.TestCallback<StreamResponse>();
+    client.streamRequest(streamRequest, streamCallback);
+
+    assertNull(streamCallback.t);
+    assertNotNull(streamCallback.e);
+    assertTrue(streamCallback.e.toString().contains("retryService is in a bad state"));
   }
 
   public SimpleLoadBalancer prepareLoadBalancer(List<String> uris) throws URISyntaxException

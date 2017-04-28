@@ -19,19 +19,27 @@ package com.linkedin.d2.balancer.clients;
 
 import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.r2.RetriableRequestException;
+import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
+import com.linkedin.r2.message.Response;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestResponseBuilder;
+import com.linkedin.r2.message.stream.StreamRequest;
+import com.linkedin.r2.message.stream.StreamResponse;
+import com.linkedin.r2.message.stream.StreamResponseBuilder;
+import com.linkedin.r2.message.stream.entitystream.DrainReader;
+import com.linkedin.r2.message.stream.entitystream.EntityStreams;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponse;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
-
-import java.net.ConnectException;
 import java.net.URI;
 import java.util.Map;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+
 
 public class RetryTrackerClient extends TrackerClient
 {
@@ -49,21 +57,18 @@ public class RetryTrackerClient extends TrackerClient
                           Map<String, String> wireAttrs,
                           TransportCallback<RestResponse> callback)
   {
-    TransportResponse<RestResponse> response;
-    if (_uri.toString().startsWith("http://test.linkedin.com/retry"))
-    {
-      RetriableRequestException ex = new RetriableRequestException("Data not available");
-      response = TransportResponseImpl.error(ex);
-    }
-    else if (_uri.toString().equals("http://test.linkedin.com/bad"))
-    {
-      response = TransportResponseImpl.error(RestException.forError(404, "exception happens"), wireAttrs);
-    }
-    else
-    {
-      response = TransportResponseImpl.success(new RestResponseBuilder().build(), wireAttrs);
-    }
-    callback.onResponse(response);
+    handleRequest(request, wireAttrs, callback, r -> {}, () -> new RestResponseBuilder().build());
+  }
+
+  @Override
+  public void streamRequest(StreamRequest request,
+      RequestContext requestContext,
+      Map<String, String> wireAttrs,
+      TransportCallback<StreamResponse> callback)
+  {
+    handleRequest(request, wireAttrs, callback,
+        r -> r.getEntityStream().setReader(new DrainReader()),
+        () -> new StreamResponseBuilder().build(EntityStreams.emptyStream()));
   }
 
   @Override
@@ -76,5 +81,33 @@ public class RetryTrackerClient extends TrackerClient
   public String toString()
   {
     return "";
+  }
+
+  private <REQ extends Request, RESP extends Response> void handleRequest(
+      REQ request,
+      Map<String, String> wireAttrs,
+      TransportCallback<RESP> callback,
+      Consumer<REQ> requestConsumer,
+      Supplier<RESP> responseSupplier)
+  {
+    // Process request
+    requestConsumer.accept(request);
+
+    // Prepare response
+    TransportResponse<RESP> response;
+    if (_uri.toString().startsWith("http://test.linkedin.com/retry"))
+    {
+      RetriableRequestException ex = new RetriableRequestException("Data not available");
+      response = TransportResponseImpl.error(ex);
+    }
+    else if (_uri.toString().equals("http://test.linkedin.com/bad"))
+    {
+      response = TransportResponseImpl.error(RestException.forError(404, "exception happens"), wireAttrs);
+    }
+    else
+    {
+      response = TransportResponseImpl.success(responseSupplier.get(), wireAttrs);
+    }
+    callback.onResponse(response);
   }
 }
