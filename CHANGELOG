@@ -1,12 +1,6 @@
-11.0.8
-------
-(RB=981603)
-Fixed issue with GenerateDataTemplateTask introduced in 11.0.6
-
 11.0.7
 ------
-(RB=975272)
-Create new EntityStream when retrying StreamRequest in RetryClient
+
 
 11.0.6
 ------
@@ -16,6 +10,12 @@ Improved configurability of GenerateDataTemplateTask.
 (RB=972736)
 Add restModel jar generation to make gradle plugin consistent with sbt plugin.
 Revised ResourceModelEncoder to fallback to ThreadContextClassLoader if idl cannot be located in the Class level class loader (this is needed in for play-on-gradle since the way class loader is setup for play-on-gradle in play, it only guarantees class are reachable via ThreadContextClassLoader).
+
+(RB=975272)
+Create new EntityStream when retrying StreamRequest in RetryClient
+
+(RB=981603)
+Fixed issue with GenerateDataTemplateTask introduced in 11.0.6
 
 11.0.5
 ------
