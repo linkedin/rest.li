@@ -17,11 +17,6 @@
 package com.linkedin.d2.balancer.properties;
 
 
-import com.linkedin.d2.balancer.util.JacksonUtil;
-import com.linkedin.d2.discovery.PropertyBuilder;
-import com.linkedin.d2.discovery.PropertySerializationException;
-import com.linkedin.d2.discovery.PropertySerializer;
-
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -33,10 +28,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.linkedin.d2.balancer.util.JacksonUtil;
+import com.linkedin.d2.discovery.PropertyBuilder;
+import com.linkedin.d2.discovery.PropertySerializationException;
+import com.linkedin.d2.discovery.PropertySerializer;
+
 
 public class ServicePropertiesJsonSerializer implements
     PropertySerializer<ServiceProperties>, PropertyBuilder<ServiceProperties>
 {
+  private static final Logger _log = LoggerFactory.getLogger(ServicePropertiesJsonSerializer.class);
+
   public static void main(String[] args) throws UnsupportedEncodingException,
       URISyntaxException, PropertySerializationException
   {
@@ -62,8 +67,7 @@ public class ServicePropertiesJsonSerializer implements
     }
     catch (Exception e)
     {
-      // TODO log
-      e.printStackTrace();
+      _log.error("Failed to serialize ServiceProperties: " + property, e);
     }
 
     return null;
@@ -149,6 +153,13 @@ public class ServicePropertiesJsonSerializer implements
       degraderProperties.remove(PropertyKeys.DEGRADER_INITIAL_DROP_RATE);
     }
 
+    @SuppressWarnings("unchecked")
+    List<Map<String, Object>> backupRequests = (List<Map<String, Object>>) map.get(PropertyKeys.BACKUP_REQUESTS);
+    if (backupRequests == null)
+    {
+      backupRequests = Collections.emptyList();
+    }
+
     return new ServiceProperties((String) map.get(PropertyKeys.SERVICE_NAME),
                                  (String) map.get(PropertyKeys.CLUSTER_NAME),
                                  (String) map.get(PropertyKeys.PATH),
@@ -158,7 +169,8 @@ public class ServicePropertiesJsonSerializer implements
                                  degraderProperties,
                                  prioritizedSchemes,
                                  banned,
-                                 metadataProperties);
+                                 metadataProperties,
+                                 backupRequests);
 
   }
 }

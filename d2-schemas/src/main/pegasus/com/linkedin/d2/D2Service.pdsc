@@ -82,6 +82,15 @@
       "name": "transportClientProperties",
       "type": "D2TransportClientProperties",
       "doc": "The transport client properties for this service"
+    },
+    {
+      "name": "backupRequests",
+      "type": {
+        "type": "array",
+        "items": "BackupRequestsConfiguration"
+      },
+      "doc": "Configuration of backup requests. Each element describes backup requests configuration for specific operation.",
+      "optional": true
     }
   ]
 }

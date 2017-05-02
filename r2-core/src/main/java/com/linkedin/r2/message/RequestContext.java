@@ -20,6 +20,7 @@
 
 package com.linkedin.r2.message;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -38,7 +39,11 @@ public class RequestContext
    */
   public RequestContext()
   {
-    _localAttrs = new HashMap<String, Object>();
+    // We use Collections.synchronizedMap() instead of ConcurrentHashMap because
+    // this class publicly exposes the _localAttrs through getLocalAttrs() and
+    // returned Map that must support null values because there is plenty of code
+    // that is using this property.
+    _localAttrs = Collections.synchronizedMap(new HashMap<>());
   }
 
   /**
@@ -49,7 +54,7 @@ public class RequestContext
    */
   public RequestContext(RequestContext other)
   {
-    _localAttrs = new HashMap<String, Object>(other._localAttrs);
+    _localAttrs = Collections.synchronizedMap(new HashMap<>(other._localAttrs));
   }
 
   private RequestContext(Map<String, Object> localAttrs)
@@ -103,9 +108,9 @@ public class RequestContext
   @Override
   public RequestContext clone()
   {
-    Map<String, Object> localAttrs = new HashMap<String, Object>();
+    Map<String, Object> localAttrs = new HashMap<>();
     localAttrs.putAll(this._localAttrs);
-    return new RequestContext(localAttrs);
+    return new RequestContext(Collections.synchronizedMap(localAttrs));
   }
 
   @Override

@@ -33,6 +33,7 @@ public class ServiceProperties
   private final List<String> _loadBalancerStrategyList;
   private final Map<String,Object> _loadBalancerStrategyProperties;
   private final Map<String,Object> _transportClientProperties;
+  private final List<Map<String,Object>> _backupRequests;  // each map in the list represents one backup requests strategy
   private final Map<String,String> _degraderProperties;
   private final List<String> _prioritizedSchemes;
   private final Set<URI> _banned;
@@ -79,6 +80,22 @@ public class ServiceProperties
   }
 
   public ServiceProperties(String serviceName,
+      String clusterName,
+      String path,
+      List<String> loadBalancerStrategyList,
+      Map<String,Object> loadBalancerStrategyProperties,
+      Map<String,Object> transportClientProperties,
+      Map<String,String> degraderProperties,
+      List<String> prioritizedSchemes,
+      Set<URI> banned,
+      Map<String,Object> serviceMetadataProperties)
+  {
+    this(serviceName,clusterName,path, loadBalancerStrategyList,loadBalancerStrategyProperties,
+        transportClientProperties, degraderProperties, prioritizedSchemes, banned,
+        serviceMetadataProperties, Collections.<Map<String,Object>>emptyList());
+  }
+
+  public ServiceProperties(String serviceName,
                            String clusterName,
                            String path,
                            List<String> loadBalancerStrategyList,
@@ -87,7 +104,8 @@ public class ServiceProperties
                            Map<String,String> degraderProperties,
                            List<String> prioritizedSchemes,
                            Set<URI> banned,
-                           Map<String,Object> serviceMetadataProperties)
+                           Map<String,Object> serviceMetadataProperties,
+                           List<Map<String,Object>> backupRequests)
   {
     ArgumentUtil.notNull(serviceName, PropertyKeys.SERVICE_NAME);
     ArgumentUtil.notNull(clusterName, PropertyKeys.CLUSTER_NAME);
@@ -98,6 +116,8 @@ public class ServiceProperties
       throw new NullPointerException("loadBalancerStrategyList is null or empty");
     }
 
+    _backupRequests =
+        Collections.unmodifiableList(backupRequests == null ? Collections.emptyList() : backupRequests);
     _serviceName = serviceName;
     _clusterName = clusterName;
     _path = path;
@@ -145,6 +165,11 @@ public class ServiceProperties
     return _transportClientProperties;
   }
 
+  public List<Map<String, Object>> getBackupRequests()
+  {
+    return _backupRequests;
+  }
+
   public Map<String, String> getDegraderProperties()
   {
     return _degraderProperties;
@@ -188,6 +213,8 @@ public class ServiceProperties
         + _banned
         + ", serviceMetadata="
         + _serviceMetadataProperties
+        + ", backupRequests="
+        + _backupRequests
         + "]";
   }
 
@@ -203,6 +230,7 @@ public class ServiceProperties
     result = prime * result + _loadBalancerStrategyProperties.hashCode();
     result = prime * result + _degraderProperties.hashCode();
     result = prime * result + _transportClientProperties.hashCode();
+    result = prime * result + _backupRequests.hashCode();
     result = prime * result + _prioritizedSchemes.hashCode();
     result = prime * result + _banned.hashCode();
     result = prime * result + _serviceMetadataProperties.hashCode();
@@ -230,15 +258,17 @@ public class ServiceProperties
     if (!_loadBalancerStrategyProperties.equals(other._loadBalancerStrategyProperties))
       return false;
     if (!_transportClientProperties.equals(other._transportClientProperties))
-          return false;
+      return false;
+    if (!_backupRequests.equals(other._backupRequests))
+      return false;
     if (!_degraderProperties.equals(other._degraderProperties))
-          return false;
+      return false;
     if (!_prioritizedSchemes.equals(other._prioritizedSchemes))
-          return false;
+      return false;
     if (!_banned.equals(other._banned))
-          return false;
+      return false;
     if (!_serviceMetadataProperties.equals(other._serviceMetadataProperties))
-          return false;
+      return false;
     return true;
   }
 

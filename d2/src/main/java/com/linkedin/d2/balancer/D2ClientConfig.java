@@ -15,6 +15,7 @@
 */
 package com.linkedin.d2.balancer;
 
+import com.linkedin.d2.backuprequests.BackupRequestsStrategyStatsConsumer;
 import com.linkedin.d2.balancer.util.WarmUpLoadBalancer;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
 import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl;
@@ -54,11 +55,16 @@ public class D2ClientConfig
    * By default is a single threaded executor
    */
   ScheduledExecutorService _executorService = null;
+  ScheduledExecutorService _backupRequestsExecutorService = null;
   boolean retry = false;
   int retryLimit = DEAULT_RETRY_LIMIT;
   boolean warmUp = false;
   int warmUpTimeoutSeconds = WarmUpLoadBalancer.DEFAULT_SEND_REQUESTS_TIMEOUT_SECONDS;
   int warmUpConcurrentRequests = WarmUpLoadBalancer.DEFAULT_CONCURRENT_REQUESTS;
+  boolean backupRequestsEnabled = true;
+  BackupRequestsStrategyStatsConsumer backupRequestsStrategyStatsConsumer = null;
+  long backupRequestsLatencyNotificationInterval = 1;
+  TimeUnit backupRequestsLatencyNotificationIntervalUnit = TimeUnit.MINUTES;
 
   private static final int DEAULT_RETRY_LIMIT = 3;
 
@@ -301,6 +307,66 @@ public class D2ClientConfig
   }
 
   public D2ClientConfig(String zkHosts,
+      long zkSessionTimeoutInMs,
+      long zkStartupTimeoutInMs,
+      long lbWaitTimeout,
+      TimeUnit lbWaitUnit,
+      String flagFile,
+      String basePath,
+      String fsBasePath,
+      ComponentFactory componentFactory,
+      Map<String, TransportClientFactory> clientFactories,
+      LoadBalancerWithFacilitiesFactory lbWithFacilitiesFactory,
+      SSLContext sslContext,
+      SSLParameters sslParameters,
+      boolean isSSLEnabled,
+      boolean shutdownAsynchronously,
+      boolean isSymlinkAware,
+      Map<String, Map<String, Object>> clientServicesConfig,
+      String d2ServicePath,
+      boolean useNewEphemeralStoreWatcher,
+      HealthCheckOperations healthCheckOperations,
+      ScheduledExecutorService executorService,
+      boolean retry,
+      int retryLimit,
+      boolean warmUp,
+      int warmUpTimeoutSeconds,
+      int warmUpConcurrentRequests)
+  {
+    this(zkHosts,
+        zkSessionTimeoutInMs,
+        zkStartupTimeoutInMs,
+        lbWaitTimeout,
+        lbWaitUnit,
+        flagFile,
+        basePath,
+        fsBasePath,
+        componentFactory,
+        clientFactories,
+        lbWithFacilitiesFactory,
+        sslContext,
+        sslParameters,
+        isSSLEnabled,
+        shutdownAsynchronously,
+        isSymlinkAware,
+        clientServicesConfig,
+        d2ServicePath,
+        useNewEphemeralStoreWatcher,
+        healthCheckOperations,
+        executorService,
+        retry,
+        retryLimit,
+        warmUp,
+        warmUpTimeoutSeconds,
+        warmUpConcurrentRequests,
+        true,
+        null,
+        1,
+        TimeUnit.MINUTES,
+        null);
+  }
+
+  public D2ClientConfig(String zkHosts,
                         long zkSessionTimeoutInMs,
                         long zkStartupTimeoutInMs,
                         long lbWaitTimeout,
@@ -325,7 +391,12 @@ public class D2ClientConfig
                         int retryLimit,
                         boolean warmUp,
                         int warmUpTimeoutSeconds,
-                        int warmUpConcurrentRequests)
+                        int warmUpConcurrentRequests,
+                        boolean backupRequestsEnabled,
+                        BackupRequestsStrategyStatsConsumer backupRequestsStrategyStatsConsumer,
+                        long backupRequestsLatencyNotificationInterval,
+                        TimeUnit backupRequestsLatencyNotificationIntervalUnit,
+                        ScheduledExecutorService backupRequestsExecutorService)
   {
     this.zkHosts = zkHosts;
     this.zkSessionTimeoutInMs = zkSessionTimeoutInMs;
@@ -353,5 +424,10 @@ public class D2ClientConfig
     this.warmUp = warmUp;
     this.warmUpTimeoutSeconds = warmUpTimeoutSeconds;
     this.warmUpConcurrentRequests = warmUpConcurrentRequests;
+    this.backupRequestsEnabled = backupRequestsEnabled;
+    this.backupRequestsStrategyStatsConsumer = backupRequestsStrategyStatsConsumer;
+    this.backupRequestsLatencyNotificationInterval = backupRequestsLatencyNotificationInterval;
+    this.backupRequestsLatencyNotificationIntervalUnit = backupRequestsLatencyNotificationIntervalUnit;
+    this._backupRequestsExecutorService = backupRequestsExecutorService;
   }
 }

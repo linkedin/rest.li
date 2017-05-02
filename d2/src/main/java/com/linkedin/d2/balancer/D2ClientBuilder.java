@@ -20,6 +20,8 @@ package com.linkedin.d2.balancer;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
+import com.linkedin.d2.backuprequests.BackupRequestsStrategyStatsConsumer;
+import com.linkedin.d2.balancer.clients.BackupRequestsClient;
 import com.linkedin.d2.balancer.clients.DynamicClient;
 import com.linkedin.d2.balancer.clients.RetryClient;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
@@ -31,13 +33,19 @@ import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
+import com.linkedin.r2.util.NamedThreadFactory;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.net.URI;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -49,6 +57,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class D2ClientBuilder
 {
+  private static final Logger LOG = LoggerFactory.getLogger(D2ClientBuilder.class);
+
   private boolean _restOverStream = false;
 
   /**
@@ -94,6 +104,22 @@ public class D2ClientBuilder
     final LoadBalancerWithFacilities loadBalancer = loadBalancerFactory.create(cfg);
 
     D2Client d2Client = new DynamicClient(loadBalancer, loadBalancer, _restOverStream);
+
+    if (_config.backupRequestsEnabled)
+    {
+      ScheduledExecutorService executor = _config._backupRequestsExecutorService;
+      if (executor == null) {
+        LOG.warn("Backup Requests Executor not configured, creating one with core pool size equal to: " +
+            Runtime.getRuntime().availableProcessors());
+        executor =
+            Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors(),
+                new NamedThreadFactory("Backup Requests Executor"));
+      }
+      d2Client = new BackupRequestsClient(d2Client, loadBalancer, executor,
+          _config.backupRequestsStrategyStatsConsumer, _config.backupRequestsLatencyNotificationInterval,
+          _config.backupRequestsLatencyNotificationIntervalUnit);
+    }
+
     if (_config.retry)
     {
       d2Client = new RetryClient(d2Client, _config.retryLimit);
@@ -216,9 +242,39 @@ public class D2ClientBuilder
     return this;
   }
 
+  public D2ClientBuilder setBackupRequestsExecutorService(ScheduledExecutorService executorService)
+  {
+    _config._backupRequestsExecutorService = executorService;
+    return this;
+  }
+
   public D2ClientBuilder setRetry(boolean retry)
   {
     _config.retry = retry;
+    return this;
+  }
+
+  public D2ClientBuilder setBackupRequestsEnabled(boolean backupRequestsEnabled)
+  {
+    _config.backupRequestsEnabled = backupRequestsEnabled;
+    return this;
+  }
+
+  public D2ClientBuilder setBackupRequestsStrategyStatsConsumer(BackupRequestsStrategyStatsConsumer backupRequestsStrategyStatsConsumer)
+  {
+    _config.backupRequestsStrategyStatsConsumer = backupRequestsStrategyStatsConsumer;
+    return this;
+  }
+
+  public D2ClientBuilder setBackupRequestsLatencyNotificationInterval(long backupRequestsLatencyNotificationInterval)
+  {
+    _config.backupRequestsLatencyNotificationInterval = backupRequestsLatencyNotificationInterval;
+    return this;
+  }
+
+  public D2ClientBuilder setBackupRequestsLatencyNotificationIntervalUnit(TimeUnit backupRequestsLatencyNotificationIntervalUnit)
+  {
+    _config.backupRequestsLatencyNotificationIntervalUnit = backupRequestsLatencyNotificationIntervalUnit;
     return this;
   }
 

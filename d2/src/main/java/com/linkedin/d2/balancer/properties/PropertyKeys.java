@@ -147,4 +147,14 @@ public class PropertyKeys
   public static final String ENABLE_SYMLINK = "enableSymlink";
   public static final String DEFAULT_ROUTING_TO_MASTER = "defaultRoutingToMaster";
 
+  //used for backup requests
+  public static final String BACKUP_REQUESTS = "backupRequests";
+  public static final String MIN_BACKUP_DELAY_MS = "minBackupDelayMs";
+  public static final String MAX_BURST = "maxBurst";
+  public static final String REQUIRED_HISTORY_LENGTH = "requiredHistoryLength";
+  public static final String HISTORY_LENGTH = "historyLength";
+  public static final String COST = "cost";
+  public static final String PROPERTIES = "properties";
+  public static final String STRATEGY = "strategy";
+  public static final String OPERATION = "operation";
 }

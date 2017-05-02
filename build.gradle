@@ -77,6 +77,7 @@ project.ext.externalDependency = [
   'velocity': 'org.apache.velocity:velocity:1.5',
   'zero_allocation_hashing': 'net.openhft:zero-allocation-hashing:0.7',
   'zookeeper': 'org.apache.zookeeper:zookeeper:3.4.6',
+  'hdrhistogram': 'org.hdrhistogram:HdrHistogram:2.1.9',
 
   // for restli-spring-bridge ONLY, we must keep these dependencies isolated
   'springCore': 'org.springframework:spring-core:3.2.3.RELEASE',

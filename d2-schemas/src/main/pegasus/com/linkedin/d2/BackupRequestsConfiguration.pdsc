@@ -1,0 +1,20 @@
+{
+  "type": "record",
+  "name": "BackupRequestsConfiguration",
+  "namespace": "com.linkedin.d2",
+  "doc": "Configuration of backup requests for specific operation.",
+  "fields": [
+    {
+      "name": "operation",
+      "type": "string",
+      "doc": "Operation for which specified backup requests will be made. Only idempotent operations should be used. Examples of operations when used with Rest.li: GET or FINDER:findByName",
+      "optional": false
+    },
+    {
+      "name": "strategy",
+      "type": [ "BoundedCostBackupRequests" ],
+      "doc": "Configuration properties of backup requests.",
+      "optional": false
+    }
+ ]
+}

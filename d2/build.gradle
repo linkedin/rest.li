@@ -12,6 +12,7 @@ dependencies {
   compile externalDependency.commonsHttpClient
   compile externalDependency.httpclient
   compile externalDependency.httpcore
+  compile externalDependency.hdrhistogram
   compile externalDependency.zookeeper
   compile externalDependency.jacksonCore
   compile externalDependency.jacksonDataBind
