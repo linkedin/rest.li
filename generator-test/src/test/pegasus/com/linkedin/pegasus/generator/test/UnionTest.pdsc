@@ -64,6 +64,28 @@
         { "type" : "map", "values" : "long" },
         "null"
       ]
+    },
+    {
+      "name" : "unionWithAliases",
+      "type" : [
+        "null",
+        { "alias" : "memInt", "type" : "int" },
+        { "alias" : "memAnotherInt", "type" : "int" },
+        { "alias" : "memLong", "type" : "long" },
+        { "alias" : "memFloat", "type" : "float" },
+        { "alias" : "memDouble", "type" : "double" },
+        { "alias" : "memBoolean", "type" : "boolean" },
+        { "alias" : "memString", "type" : "string" },
+        { "alias" : "memAnotherString", "type" : "string" },
+        { "alias" : "memBytes", "type" : "bytes" },
+        { "alias" : "memEnum", "type" : { "type" : "enum", "name" : "Alphabet", "symbols" : [ "A", "B", "C" ] } },
+        { "alias" : "memRecord", "type" : "RecordBar" },
+        { "alias" : "memAnotherRecord", "type" : "RecordBar" },
+        { "alias" : "memFixed", "type" : "FixedMD5" },
+        { "alias" : "memArray", "type" : { "type" : "array", "items" : "string" } },
+        { "alias" : "memMap", "type" : { "type" : "map", "values" : "long" } },
+        { "alias" : "memAnotherMap", "type" : { "type" : "map", "values" : "string" } }
+      ]
     }
   ]
 }

@@ -17,6 +17,8 @@
 package com.linkedin.data.template;
 
 
+import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.schema.PathSpec;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -146,6 +148,7 @@ public class TestRecordAndUnionTemplate
      "{ \"name\" : \"recordNoDefault\", \"type\" : \"Bar\" }, \n" +
      "{ \"name\" : \"recordOptional\", \"type\" : \"Bar\", \"optional\" : true }, \n" +
      "{ \"name\" : \"union\", \"type\" : [ \"int\", \"Bar\", \"EnumType\", \"fixedType\", \"Foo\" ], \"default\" : { \"EnumType\" : \"ORANGE\"} }, \n" +
+     "{ \"name\" : \"unionWithAliases\", \"type\" : [ { \"alias\" : \"label\", \"type\" : \"string\" }, { \"alias\" : \"count\", \"type\" : \"Bar\" }, { \"alias\" : \"fruit\", \"type\" : \"EnumType\" } ], \"default\" : { \"fruit\" : \"ORANGE\"} }, \n" +
      "{ \"name\" : \"unionWithNull\", \"type\" : [ \"null\", \"EnumType\", \"fixedType\" ], \"default\" : null } \n" +
      "] }"
     );
@@ -168,6 +171,7 @@ public class TestRecordAndUnionTemplate
     public static final RecordDataSchema.Field FIELD_recordOptional = SCHEMA.getField("recordOptional");
 
     public static final RecordDataSchema.Field FIELD_union = SCHEMA.getField("union");
+    public static final RecordDataSchema.Field FIELD_unionWithAliases = SCHEMA.getField("unionWithAliases");
 
     public Foo()
     {
@@ -801,9 +805,9 @@ public class TestRecordAndUnionTemplate
     public static class Union extends UnionTemplate
     {
       public static final UnionDataSchema SCHEMA = (UnionDataSchema) FIELD_union.getType();
-      public static final IntegerDataSchema MEMBER_int = (IntegerDataSchema) SCHEMA.getType("int");
-      public static final EnumDataSchema MEMBER_EnumType = (EnumDataSchema) SCHEMA.getType("EnumType");
-      public static final RecordDataSchema MEMBER_Bar = (RecordDataSchema) SCHEMA.getType("Bar");
+      public static final IntegerDataSchema MEMBER_int = (IntegerDataSchema) SCHEMA.getTypeByMemberKey("int");
+      public static final EnumDataSchema MEMBER_EnumType = (EnumDataSchema) SCHEMA.getTypeByMemberKey("EnumType");
+      public static final RecordDataSchema MEMBER_Bar = (RecordDataSchema) SCHEMA.getTypeByMemberKey("Bar");
 
       public Union()
       {
@@ -913,6 +917,120 @@ public class TestRecordAndUnionTemplate
     public Foo setUnion(Union value, SetMode mode)
     {
       putWrapped(FIELD_union, Union.class, value, mode);
+      return this;
+    }
+
+    public final static class UnionWithAliases extends UnionTemplate
+    {
+      private final static UnionDataSchema SCHEMA = (UnionDataSchema) FIELD_unionWithAliases.getType();
+      private final static DataSchema MEMBER_Label = SCHEMA.getTypeByMemberKey("label");
+      private final static DataSchema MEMBER_Count = SCHEMA.getTypeByMemberKey("count");
+      private final static DataSchema MEMBER_Fruit = SCHEMA.getTypeByMemberKey("fruit");
+
+      public UnionWithAliases() {
+        super(new DataMap(), SCHEMA);
+      }
+
+      public UnionWithAliases(Object data) {
+        super(data, SCHEMA);
+      }
+
+      public static UnionWithAliases createWithLabel(String value) {
+        UnionWithAliases newUnion = new UnionWithAliases();
+        newUnion.setLabel(value);
+        return newUnion;
+      }
+
+      public boolean isLabel() {
+        return memberIs("label");
+      }
+
+      public String getLabel() {
+        return obtainDirect(MEMBER_Label, String.class, "label");
+      }
+
+      public void setLabel(String value) {
+        selectDirect(MEMBER_Label, String.class, String.class, "label", value);
+      }
+
+      public static UnionWithAliases createWithCount(Bar value) {
+        UnionWithAliases newUnion = new UnionWithAliases();
+        newUnion.setCount(value);
+        return newUnion;
+      }
+
+      public boolean isCount() {
+        return memberIs("count");
+      }
+
+      public Bar getCount() {
+        return obtainWrapped(MEMBER_Count, Bar.class, "count");
+      }
+
+      public void setCount(Bar value) {
+        selectWrapped(MEMBER_Count, Bar.class, "count", value);
+      }
+
+      public static UnionWithAliases createWithFruit(EnumType value) {
+        UnionWithAliases newUnion = new UnionWithAliases();
+        newUnion.setFruit(value);
+        return newUnion;
+      }
+
+      public boolean isFruit() {
+        return memberIs("fruit");
+      }
+
+      public EnumType getFruit() {
+        return obtainDirect(MEMBER_Fruit, EnumType.class, "fruit");
+      }
+
+      public void setFruit(EnumType value) {
+        selectDirect(MEMBER_Fruit, EnumType.class, String.class, "fruit", value);
+      }
+
+      @Override
+      public UnionWithAliases clone() throws CloneNotSupportedException
+      {
+        return ((UnionWithAliases) super.clone());
+      }
+
+      @Override
+      public UnionWithAliases copy() throws CloneNotSupportedException
+      {
+        return ((UnionWithAliases) super.copy());
+      }
+    }
+
+    public boolean hasUnionWithAliases()
+    {
+      return contains(FIELD_unionWithAliases);
+    }
+
+    public UnionWithAliases getUnionWithAliases()
+    {
+      return getUnionWithAliases(GetMode.STRICT);
+    }
+
+    public UnionWithAliases getUnionWithAliases(GetMode mode)
+    {
+      return obtainWrapped(FIELD_unionWithAliases, UnionWithAliases.class, mode);
+    }
+
+    public void removeUnionWithAliases()
+    {
+      remove(FIELD_unionWithAliases);
+    }
+
+    public Foo setUnionWithAliases(UnionWithAliases value)
+    {
+      putWrapped(FIELD_unionWithAliases, UnionWithAliases.class, value, SetMode.DISALLOW_NULL);
+      return this;
+    }
+
+    public Foo setUnionWithAliases(UnionWithAliases value, SetMode mode)
+    {
+      putWrapped(FIELD_unionWithAliases, UnionWithAliases.class, value, mode);
       return this;
     }
 
@@ -2163,9 +2281,9 @@ public class TestRecordAndUnionTemplate
 
     // legacy test
     ByteString[] t = {
-      ByteString.copyAvroString("apple", false), 
-      ByteString.copyAvroString("orange", false), 
-      ByteString.copyAvroString("banana", false) 
+      ByteString.copyAvroString("apple", false),
+      ByteString.copyAvroString("orange", false),
+      ByteString.copyAvroString("banana", false)
     };
     foo = new Foo();
     foo.set1Bytes(t[0]);
@@ -2503,19 +2621,15 @@ public class TestRecordAndUnionTemplate
     Foo.Union lastUnion = union2.clone();
 
     // test union set and get wrapped
-    unionMap.clear();
     value = 32;
     Bar bar = new Bar();
-    bar.setInt(value.intValue());
+    bar.setInt(value);
     union2.setBar(bar);
     assertFalse(union2.isNull());
     assertTrue(union2.isBar());
     assertEquals(union2.getBar().getInt(), value);
     assertSame(union2.memberType(), Foo.Union.MEMBER_Bar);
     assertNull(union2.getInt());
-    assertTrue(union2.equals(union2));
-    assertNotNull(union2);
-    assertFalse(union2.equals(new Object()));
     int hashCode = union2.hashCode();
     assertFalse(hashCode == lastHashCode);
     lastHashCode = hashCode;
@@ -2761,6 +2875,111 @@ public class TestRecordAndUnionTemplate
     assertEquals(union.getInt(), i);
     assertFalse(union.isEnumType());
     assertNull(union.getEnumType());
+  }
+
+  @Test
+  public void testUnionFieldWithAliases() throws Exception
+  {
+    DataMap data = new DataMap();
+    Foo foo = new Foo(data);
+
+    // Since the union field has a default value defined in the schema, verify that
+    Foo.UnionWithAliases unionWithAliases = foo.getUnionWithAliases();
+
+    assertFalse(unionWithAliases.isLabel());
+    assertFalse(unionWithAliases.isCount());
+    assertTrue(unionWithAliases.isFruit());
+    assertEquals(unionWithAliases.getFruit(), EnumType.ORANGE);
+    assertFalse(unionWithAliases.isNull());
+
+    assertTrue(unionWithAliases.memberIs("fruit"));
+    assertEquals(unionWithAliases.memberType(), Foo.UnionWithAliases.MEMBER_Fruit);
+
+    int unionHashStash = unionWithAliases.hashCode();
+    Foo.UnionWithAliases unionFieldStash = unionWithAliases.clone();
+
+    // Set a specific member directly on the underlying map and verify that
+    DataMap unionField = new DataMap();
+    data.put("unionWithAliases", unionField);
+    unionField.put("label", "linkedin");
+    unionWithAliases = foo.getUnionWithAliases();
+
+    assertTrue(unionWithAliases.isLabel());
+    assertFalse(unionWithAliases.isCount());
+    assertFalse(unionWithAliases.isFruit());
+    assertFalse(unionWithAliases.isNull());
+
+    assertTrue(unionWithAliases.memberIs("label"));
+    assertEquals(unionWithAliases.memberType(), Foo.UnionWithAliases.MEMBER_Label);
+
+    assertFalse(unionWithAliases.hashCode() == unionHashStash);
+    assertFalse(unionWithAliases.equals(unionFieldStash));
+
+    unionHashStash = unionWithAliases.hashCode();
+    unionFieldStash = unionWithAliases.clone();
+
+    // Set another member using the union field's setter and verify that
+    Bar bar = new Bar();
+    bar.setInt(0);
+    unionWithAliases.setCount(bar);
+
+    assertFalse(unionWithAliases.isLabel());
+    assertTrue(unionWithAliases.isCount());
+    assertFalse(unionWithAliases.isFruit());
+    assertFalse(unionWithAliases.isNull());
+
+    assertTrue(unionWithAliases.memberIs("count"));
+    assertEquals(unionWithAliases.memberType(), Foo.UnionWithAliases.MEMBER_Count);
+
+    assertFalse(unionWithAliases.hashCode() == unionHashStash);
+    assertFalse(unionWithAliases.equals(unionFieldStash));
+  }
+
+  @Test
+  public void testInvalidDataOnUnionWithAliases() throws Exception
+  {
+    DataMap data = new DataMap();
+    Foo foo = new Foo(data);
+
+    // Test with invalid data types for union field
+    List<?> invalidDataTypes = asList(false, "abc", new DataList());
+    for (Object invalidDataType : invalidDataTypes)
+    {
+      data.put("unionWithAliases", invalidDataType);
+
+      try
+      {
+        foo.getUnionWithAliases();
+        fail("Should have thrown an exception");
+      }
+      catch (TemplateOutputCastException e)
+      {
+        // Do nothing
+      }
+    }
+
+    // Test with invalid data maps for the union field
+    List<Object> invalidData = new ArrayList<Object>();
+    invalidData.add(Data.NULL);
+    invalidData.add(new DataMap());
+    invalidData.add(new DataMap(TestUtil.asMap("int", 1, "invalid", 2)));
+    invalidData.add(new DataMap(TestUtil.asMap("invalid", 2)));
+    invalidData.add(new DataMap(TestUtil.asMap("string", "something")));
+    invalidData.add(new DataMap(TestUtil.asMap("com.linkedin.pegasus.generator.test.Alphabet", "A")));
+    for (Object invalid : invalidData)
+    {
+      data.put("unionWithAliases", invalid);
+
+      try
+      {
+        foo.getUnionWithAliases().memberType();
+        fail("Should have thrown an exception");
+      }
+      catch (TemplateOutputCastException e)
+      {
+        // Do nothing
+      }
+    }
   }
 
   @Test

@@ -125,7 +125,8 @@ public class UnionTemplate implements DataTemplate<Object>
     {
       key = _map.keySet().iterator().next();
     }
-    DataSchema memberType = _schema.getType(key);
+
+    DataSchema memberType = _schema.getTypeByMemberKey(key);
     if (memberType == null)
     {
       throw new TemplateOutputCastException(key + " is not a member of " + _schema);
@@ -134,13 +135,11 @@ public class UnionTemplate implements DataTemplate<Object>
   }
 
   /**
-   * Returns whether the type of the current value is identified by the specified key.
+   * Returns whether the contained member in the Union is identified by the specified key.
    *
-   * The type of the current value is identified by the specified key if the
-   * underlying {@link DataMap} has a single entry and the entry's key equals the
-   * specified key.
-   *
-   * For a null union, this method will always return false.
+   * If the underlying {@link DataMap} has a single entry and the entry's key equals the
+   * specified key, then the method will return true. For a null union, this method will
+   * always return false.
    *
    * @param key to check.
    * @return true if the current value is identified by the specified key.
@@ -253,7 +252,7 @@ public class UnionTemplate implements DataTemplate<Object>
    * @param memberSchema provides the {@link DataSchema} of the new value.
    * @param memberClass provides the expected class of the value.
    * @param dataClass provides the class stored in the underlying {@link DataMap}.
-   * @param key provides the key that identifies the type of the value.
+   * @param key provides the key that identifies the member value.
    * @param value provides the value to set.
    * @param <T> type of the value.
    * @throws ClassCastException if the input value does not match the
@@ -265,7 +264,7 @@ public class UnionTemplate implements DataTemplate<Object>
       throws ClassCastException, NullUnionUnsupportedOperationException
   {
     checkNotNull();
-    DataSchema memberType = _schema.getType(key);
+    DataSchema memberType = _schema.getTypeByMemberKey(key);
     assert(memberType != null); // something is wrong with the generated code if this occurs.
     Object object = DataTemplateUtil.coerceInput(value, memberClass, dataClass);
     _map.clear();
@@ -278,7 +277,7 @@ public class UnionTemplate implements DataTemplate<Object>
    * @param memberSchema provides the {@link DataSchema} of the new value.
    * @param memberClass provides the expected class of the value.
    * @param dataClass provides the class stored in the underlying {@link DataMap}.
-   * @param key provides the key that identifies the type of the value.
+   * @param key provides the key that identifies the member value.
    * @param value provides the value to set.
    * @param <T> type of the value.
    * @throws ClassCastException if the input value does not match the
@@ -290,7 +289,7 @@ public class UnionTemplate implements DataTemplate<Object>
       throws ClassCastException, NullUnionUnsupportedOperationException
   {
     checkNotNull();
-    DataSchema memberType = _schema.getType(key);
+    DataSchema memberType = _schema.getTypeByMemberKey(key);
     assert(memberType != null); // something is wrong with the generated code if this occurs.
     Object object = DataTemplateUtil.coerceInput(value, memberClass, dataClass);
     _map.clear();
@@ -305,7 +304,7 @@ public class UnionTemplate implements DataTemplate<Object>
    *
    * @param memberSchema provides the {@link DataSchema} of the new value.
    * @param memberClass provides the expected class of the value.
-   * @param key provides the key that identifies the type of the value.
+   * @param key provides the key that identifies the member value.
    * @param value provides the value to set.
    * @param <T> type of the value.
    * @throws ClassCastException if input value does not match the expected class.
@@ -315,7 +314,7 @@ public class UnionTemplate implements DataTemplate<Object>
       throws ClassCastException, NullUnionUnsupportedOperationException
   {
     checkNotNull();
-    DataSchema memberType = _schema.getType(key);
+    DataSchema memberType = _schema.getTypeByMemberKey(key);
     assert(memberType != null); // something is wrong with the generated code if this occurs.
     if (value.getClass() != memberClass)
     {
@@ -327,7 +326,7 @@ public class UnionTemplate implements DataTemplate<Object>
   }
 
   /**
-   * Get the value of a specified type.
+   * Get the value of the specified member key.
    *
    * This provides a type-safe get for a particular member type
    * of the union. It returns the value if the current value is
@@ -338,7 +337,7 @@ public class UnionTemplate implements DataTemplate<Object>
    *
    * @param memberSchema provides the {@link DataSchema} of the value.
    * @param memberClass provides the expected class of the value.
-   * @param key provides the key that identifies the type of the value.
+   * @param key provides the key that identifies the member value.
    * @param <T> type of the value.
    * @return the value if the type of the current value is identified
    *         by the specified key, else return null.
@@ -360,7 +359,7 @@ public class UnionTemplate implements DataTemplate<Object>
   }
 
   /**
-   * Get the value of a specified type which needs to be coerced by {@link DirectCoercer}.
+   * Get the value of the specified member key which needs to be coerced by {@link DirectCoercer}.
    *
    * @param memberSchema provides the {@link DataSchema} of the value.
    * @param memberClass provides the expected class of the value.
@@ -397,7 +396,7 @@ public class UnionTemplate implements DataTemplate<Object>
   }
 
   /**
-   * Get the value of a specified type.
+   * Get the value of the specified member key.
    *
    * This provides a type-safe get for a particular member type
    * of the union. It returns the value if the current value is

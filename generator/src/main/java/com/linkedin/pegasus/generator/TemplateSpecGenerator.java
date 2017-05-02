@@ -323,23 +323,16 @@ public class TemplateSpecGenerator
       }
 
       final ClassTemplateSpec found = _schemaToClassMap.get(schema);
+
       schema = typerefSchema.getRef();
-      if (found == null)
+      if (schema.getType() == DataSchema.Type.UNION)
       {
-        if (schema.getType() == DataSchema.Type.UNION)
-        {
-          result = generateUnion((UnionDataSchema) schema, typerefSchema);
-          break;
-        }
-        else
-        {
-          generateTyperef(typerefSchema, originalTyperefSchema);
-        }
-      }
-      else if (schema.getType() == DataSchema.Type.UNION)
-      {
-        result = found;
+        result = (found != null) ? found : generateUnion((UnionDataSchema) schema, typerefSchema);
         break;
+      }
+      else if (found == null)
+      {
+        generateTyperef(typerefSchema, originalTyperefSchema);
       }
     }
 
@@ -661,12 +654,15 @@ public class TemplateSpecGenerator
   {
     final Map<CustomInfoSpec, Object> customInfoMap = new IdentityHashMap<CustomInfoSpec, Object>(schema.getTypes().size() * 2);
 
-    for (DataSchema memberType : schema.getTypes())
+    for (UnionDataSchema.Member member: schema.getMembers())
     {
+      DataSchema memberType = member.getType();
+
       final UnionTemplateSpec.Member newMember = new UnionTemplateSpec.Member();
       unionClass.getMembers().add(newMember);
 
       newMember.setSchema(memberType);
+      newMember.setAlias(member.getAlias());
 
       if (memberType.getDereferencedType() != DataSchema.Type.NULL)
       {

@@ -61,10 +61,21 @@ public class UnionTemplateSpec extends ClassTemplateSpec
 
   public static class Member
   {
+    private String _alias;
     private DataSchema _schema;
     private ClassTemplateSpec _classTemplateSpec;
     private ClassTemplateSpec _dataClass;
     private CustomInfoSpec _customInfo;
+
+    public String getAlias()
+    {
+      return _alias;
+    }
+
+    public void setAlias(String alias)
+    {
+      _alias = alias;
+    }
 
     public DataSchema getSchema()
     {
@@ -104,6 +115,11 @@ public class UnionTemplateSpec extends ClassTemplateSpec
     public void setCustomInfo(CustomInfoSpec customInfo)
     {
       _customInfo = customInfo;
+    }
+
+    public String getUnionMemberKey()
+    {
+      return (_alias != null) ? _alias : _schema.getUnionMemberKey();
     }
   }
 }

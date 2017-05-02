@@ -23,6 +23,7 @@ import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.schema.resolver.DefaultDataSchemaResolver;
 
 import com.linkedin.data.schema.resolver.MultiFormatDataSchemaResolver;
+import com.linkedin.pegasus.generator.spec.UnionTemplateSpec;
 import java.util.EnumSet;
 import java.util.Set;
 
@@ -104,10 +105,11 @@ public class CodeUtil
   }
 
   /**
-   * Return the union member name for the specified member {@link DataSchema}.
+   * Return the union member name for the specified member {@link DataSchema}. The returned
+   * member name is capitalized using {@link #capitalize(String)}.
    *
    * @param memberType {@link DataSchema} for the member
-   * @return result union member name
+   * @return Capitalized union member name
    */
   public static String getUnionMemberName(DataSchema memberType)
   {
@@ -126,5 +128,19 @@ public class CodeUtil
       }
     }
     return capitalize(name);
+  }
+
+  /**
+   * Return the union member name for the specified member {@link UnionTemplateSpec.Member}.
+   * The returned member name is capitalized using {@link #capitalize(String)}.
+   *
+   * @param member {@link UnionTemplateSpec.Member} for the member
+   * @return Capitalized union member name
+   */
+  static String getUnionMemberName(UnionTemplateSpec.Member member)
+  {
+    return (member.getAlias() != null) ?
+        capitalize(member.getAlias()) :
+        getUnionMemberName(member.getSchema());
   }
 }

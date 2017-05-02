@@ -67,6 +67,22 @@ public class TestPathSpec
 
     p = UnionTest.fields().unionWithoutNull().RecordBar().location();
     Assert.assertEquals(p.toString(), "/unionWithoutNull/com.linkedin.pegasus.generator.test.RecordBar/location");
+
+    p = UnionTest.fields().unionWithNull().Null();
+    Assert.assertEquals(p.toString(), "/unionWithNull/null");
+
+    // Test path specs for Union member with aliases
+    p = UnionTest.fields().unionWithAliases().MemRecord().location();
+    Assert.assertEquals(p.toString(), "/unionWithAliases/memRecord/location");
+
+    p = UnionTest.fields().unionWithAliases().MemArray();
+    Assert.assertEquals(p.toString(), "/unionWithAliases/memArray");
+
+    p = UnionTest.fields().unionWithAliases().MemMap();
+    Assert.assertEquals(p.toString(), "/unionWithAliases/memMap");
+
+    p = UnionTest.fields().unionWithAliases().Null();
+    Assert.assertEquals(p.toString(), "/unionWithAliases/null");
   }
 
   @Test
@@ -131,7 +147,7 @@ public class TestPathSpec
     checkPathSpec(JavaReservedTest.fields().break_(), "/break");
     checkPathSpec(JavaReservedTest.fields().try_(), "/try");
     checkPathSpec(JavaReservedTest.fields().union(), "/union");
-    
+
     checkPathSpec(MapTest.fields().intMap(), "/intMap");
     checkPathSpec(MapTest.fields().longMap(), "/longMap");
     checkPathSpec(MapTest.fields().floatMap(), "/floatMap");

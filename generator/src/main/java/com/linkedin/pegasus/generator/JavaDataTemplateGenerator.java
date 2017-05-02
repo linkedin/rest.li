@@ -24,6 +24,7 @@ import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.EnumDataSchema;
 import com.linkedin.data.schema.JsonBuilder;
 import com.linkedin.data.schema.MapDataSchema;
+import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.SchemaToJsonEncoder;
 import com.linkedin.data.template.BooleanArray;
@@ -883,17 +884,19 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     {
       wrappedOrDirect = "Wrapped";
     }
-    final String memberKey = memberType.getUnionMemberKey();
-    final String capitalizedName = CodeUtil.getUnionMemberName(memberType);
+
+    String memberKey = member.getUnionMemberKey();
+    String capitalizedName = CodeUtil.getUnionMemberName(member);
 
     final String memberFieldName = "MEMBER_" + capitalizedName;
     final JFieldVar memberField = unionClass.field(JMod.PRIVATE | JMod.STATIC | JMod.FINAL, DataSchema.class, memberFieldName);
-    memberField.init(schemaField.invoke("getType").arg(memberKey));
+    memberField.init(schemaField.invoke("getTypeByMemberKey").arg(memberKey));
     final String setterName = "set" + capitalizedName;
 
     // Generate builder.
 
-    final JMethod createMethod = unionClass.method(JMod.PUBLIC | JMod.STATIC, unionClass, "create");
+    final String builderMethodName = (member.getAlias() != null) ? "createWith" + capitalizedName : "create";
+    final JMethod createMethod = unionClass.method(JMod.PUBLIC | JMod.STATIC, unionClass, builderMethodName);
     JVar param = createMethod.param(memberClass, "value");
     final JVar newUnionVar = createMethod.body().decl(unionClass, "newUnion", JExpr._new(unionClass));
     createMethod.body().invoke(newUnionVar, setterName).arg(param);
@@ -935,8 +938,11 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
         final JClass unionMemberClass = generate(member.getClassTemplateSpec());
         fieldsRefType = getCodeModel().ref(unionMemberClass.fullName() + ".Fields");
       }
-      final JMethod accessorMethod = fieldsNestedClass.method(JMod.PUBLIC, fieldsRefType, CodeUtil.getUnionMemberName(member.getSchema()));
-      accessorMethod.body()._return(JExpr._new(fieldsRefType).arg(JExpr.invoke("getPathComponents")).arg(member.getSchema().getUnionMemberKey()));
+
+      String memberKey = member.getUnionMemberKey();
+      String methodName = CodeUtil.getUnionMemberName(member);
+      final JMethod accessorMethod = fieldsNestedClass.method(JMod.PUBLIC, fieldsRefType, methodName);
+      accessorMethod.body()._return(JExpr._new(fieldsRefType).arg(JExpr.invoke("getPathComponents")).arg(memberKey));
     }
   }
 
