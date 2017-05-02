@@ -1,6 +1,7 @@
 11.0.7
 ------
-
+(RB=982922)
+Upgrade to Netty 4.1.6 and remove maxHeaderSize from Http2StreamCodecBuilder
 
 11.0.6
 ------

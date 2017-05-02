@@ -26,7 +26,6 @@ import io.netty.handler.codec.http2.DefaultHttp2ConnectionEncoder;
 import io.netty.handler.codec.http2.DefaultHttp2FrameReader;
 import io.netty.handler.codec.http2.DefaultHttp2FrameWriter;
 import io.netty.handler.codec.http2.DefaultHttp2HeadersDecoder;
-import io.netty.handler.codec.http2.Http2CodecUtil;
 import io.netty.handler.codec.http2.Http2Connection;
 import io.netty.handler.codec.http2.Http2ConnectionDecoder;
 import io.netty.handler.codec.http2.Http2ConnectionEncoder;
@@ -43,12 +42,9 @@ import java.util.concurrent.ScheduledExecutorService;
 
 public class Http2StreamCodecBuilder extends AbstractHttp2ConnectionHandlerBuilder<Http2StreamCodec, Http2StreamCodecBuilder>
 {
-  private static final int INITIAL_HUFFMAN_DECODE_CAPACITY = 32;
-
   private long _maxContentLength = -1;
   private long _streamingTimeout = -1;
   private long _gracefulShutdownTimeoutMillis = -1;
-  private int _maxHeaderSize = -1;
   private ScheduledExecutorService _scheduler = null;
   private Http2Connection _connection = null;
 
@@ -80,13 +76,6 @@ public class Http2StreamCodecBuilder extends AbstractHttp2ConnectionHandlerBuild
     return self();
   }
 
-  public Http2StreamCodecBuilder maxHeaderSize(int maxHeaderSize)
-  {
-    ObjectUtil.checkPositive(maxHeaderSize, "maxHeaderSize");
-    _maxHeaderSize = maxHeaderSize;
-    return self();
-  }
-
   @Override
   public Http2StreamCodecBuilder connection(Http2Connection connection)
   {
@@ -99,10 +88,8 @@ public class Http2StreamCodecBuilder extends AbstractHttp2ConnectionHandlerBuild
   public Http2StreamCodec build()
   {
     ObjectUtil.checkNotNull(_connection, "connection");
-    ObjectUtil.checkPositive(_maxHeaderSize, "maxHeaderSize");
 
-    Http2HeadersDecoder headerDecoder = new DefaultHttp2HeadersDecoder(
-        _maxHeaderSize, Http2CodecUtil.DEFAULT_HEADER_TABLE_SIZE, isValidateHeaders(), INITIAL_HUFFMAN_DECODE_CAPACITY);
+    Http2HeadersDecoder headerDecoder = new DefaultHttp2HeadersDecoder(isValidateHeaders());
     Http2FrameReader reader = new DefaultHttp2FrameReader(headerDecoder);
     Http2FrameWriter writer = new DefaultHttp2FrameWriter(headerSensitivityDetector());
 

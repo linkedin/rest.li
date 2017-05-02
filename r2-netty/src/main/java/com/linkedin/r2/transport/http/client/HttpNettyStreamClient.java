@@ -259,7 +259,7 @@ import org.slf4j.LoggerFactory;
       // Netty pipeline.
       channel.attr(ChannelPoolStreamHandler.CHANNEL_POOL_ATTR_KEY).set(_pool);
       _callback.addTimeoutTask(() -> {
-        AsyncPool<Channel> pool = channel.attr(ChannelPoolStreamHandler.CHANNEL_POOL_ATTR_KEY).getAndRemove();
+        AsyncPool<Channel> pool = channel.attr(ChannelPoolStreamHandler.CHANNEL_POOL_ATTR_KEY).getAndSet(null);
         if (pool != null)
         {
           pool.dispose(channel);
@@ -268,7 +268,7 @@ import org.slf4j.LoggerFactory;
 
       Timeout<None> streamingTimeout = new Timeout<>(_scheduler, _requestTimeout, TimeUnit.MILLISECONDS, None.none());
       _callback.addTimeoutTask(() -> {
-        Timeout<None> timeout = channel.attr(RAPResponseDecoder.TIMEOUT_ATTR_KEY).getAndRemove();
+        Timeout<None> timeout = channel.attr(RAPResponseDecoder.TIMEOUT_ATTR_KEY).getAndSet(null);
         if (timeout != null)
         {
           // stop the timeout for streaming since streaming of response would not happen
@@ -325,7 +325,7 @@ import org.slf4j.LoggerFactory;
           for (Channel c : _allChannels)
           {
             TransportCallback<StreamResponse> callback =
-                c.attr(RAPStreamResponseHandler.CALLBACK_ATTR_KEY).getAndRemove();
+                c.attr(RAPStreamResponseHandler.CALLBACK_ATTR_KEY).getAndSet(null);
             if (callback != null)
             {
               errorResponse(callback, new TimeoutException("Operation did not complete before shutdown"));

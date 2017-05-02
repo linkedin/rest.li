@@ -52,7 +52,7 @@ class ChannelPoolHandler extends ChannelInboundHandlerAdapter
   @Override
   public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception
   {
-    AsyncPool<Channel> pool = ctx.channel().attr(CHANNEL_POOL_ATTR_KEY).getAndRemove();
+    AsyncPool<Channel> pool = ctx.channel().attr(CHANNEL_POOL_ATTR_KEY).getAndSet(null);
     if (pool != null)
     {
       RestResponse restResponse = (RestResponse) msg;
@@ -75,7 +75,7 @@ class ChannelPoolHandler extends ChannelInboundHandlerAdapter
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception
   {
-    AsyncPool<Channel> pool = ctx.channel().attr(CHANNEL_POOL_ATTR_KEY).getAndRemove();
+    AsyncPool<Channel> pool = ctx.channel().attr(CHANNEL_POOL_ATTR_KEY).getAndSet(null);
     if (pool != null)
     {
       // TODO do all exceptions mean we should get rid of the channel?
@@ -86,7 +86,7 @@ class ChannelPoolHandler extends ChannelInboundHandlerAdapter
   @Override
   public void channelInactive(ChannelHandlerContext ctx) throws Exception
   {
-    AsyncPool<Channel> pool = ctx.channel().attr(CHANNEL_POOL_ATTR_KEY).getAndRemove();
+    AsyncPool<Channel> pool = ctx.channel().attr(CHANNEL_POOL_ATTR_KEY).getAndSet(null);
     if (pool != null)
     {
       pool.dispose(ctx.channel());

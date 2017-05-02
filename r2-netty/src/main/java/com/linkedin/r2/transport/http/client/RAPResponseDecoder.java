@@ -120,7 +120,7 @@ import java.util.concurrent.TimeoutException;
         HttpUtil.setTransferEncodingChunked(m, false);
       }
 
-      Timeout<None> timeout = ctx.channel().attr(TIMEOUT_ATTR_KEY).getAndRemove();
+      Timeout<None> timeout = ctx.channel().attr(TIMEOUT_ATTR_KEY).getAndSet(null);
       if (timeout == null)
       {
         LOG.debug("dropped a response after channel inactive or exception had happened.");
@@ -185,7 +185,7 @@ import java.util.concurrent.TimeoutException;
   @Override
   public void channelInactive(ChannelHandlerContext ctx) throws Exception
   {
-    Timeout<None> timeout = ctx.channel().attr(TIMEOUT_ATTR_KEY).getAndRemove();
+    Timeout<None> timeout = ctx.channel().attr(TIMEOUT_ATTR_KEY).getAndSet(null);
     if (timeout != null)
     {
       timeout.getItem();
@@ -201,7 +201,7 @@ import java.util.concurrent.TimeoutException;
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception
   {
-    Timeout<None> timeout = ctx.channel().attr(TIMEOUT_ATTR_KEY).getAndRemove();
+    Timeout<None> timeout = ctx.channel().attr(TIMEOUT_ATTR_KEY).getAndSet(null);
     if (timeout != null)
     {
       timeout.getItem();

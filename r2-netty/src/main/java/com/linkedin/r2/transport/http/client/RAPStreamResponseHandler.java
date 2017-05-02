@@ -71,7 +71,7 @@ class RAPStreamResponseHandler extends SimpleChannelInboundHandler<StreamRespons
     // In general there should always be a callback to handle a received message,
     // but it could have been removed due to a previous exception or closure on the
     // channel
-    TransportCallback<StreamResponse> callback = ctx.channel().attr(CALLBACK_ATTR_KEY).getAndRemove();
+    TransportCallback<StreamResponse> callback = ctx.channel().attr(CALLBACK_ATTR_KEY).getAndSet(null);
     if (callback != null)
     {
       LOG.debug("{}: handling a response", ctx.channel().remoteAddress());
@@ -86,7 +86,7 @@ class RAPStreamResponseHandler extends SimpleChannelInboundHandler<StreamRespons
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception
   {
-    TransportCallback<StreamResponse> callback = ctx.channel().attr(CALLBACK_ATTR_KEY).getAndRemove();
+    TransportCallback<StreamResponse> callback = ctx.channel().attr(CALLBACK_ATTR_KEY).getAndSet(null);
     if (callback != null)
     {
       LOG.debug(ctx.channel().remoteAddress() + ": exception on active channel", cause);
@@ -106,7 +106,7 @@ class RAPStreamResponseHandler extends SimpleChannelInboundHandler<StreamRespons
     // XXX this seems a bit odd, but if the channel closed before downstream layers received a response, we
     // have to deal with that ourselves (it does not get turned into an exception by downstream
     // layers, even though some other protocol errors do)
-    TransportCallback<StreamResponse> callback = ctx.channel().attr(CALLBACK_ATTR_KEY).getAndRemove();
+    TransportCallback<StreamResponse> callback = ctx.channel().attr(CALLBACK_ATTR_KEY).getAndSet(null);
     if (callback != null)
     {
       LOG.debug("{}: active channel closed", ctx.channel().remoteAddress());

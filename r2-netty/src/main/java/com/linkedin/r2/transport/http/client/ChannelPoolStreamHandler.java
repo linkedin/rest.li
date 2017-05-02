@@ -53,7 +53,7 @@ class ChannelPoolStreamHandler extends ChannelInboundHandlerAdapter
   {
     if (msg == CHANNEL_RELEASE_SIGNAL)
     {
-      AsyncPool<Channel> pool = ctx.channel().attr(CHANNEL_POOL_ATTR_KEY).getAndRemove();
+      AsyncPool<Channel> pool = ctx.channel().attr(CHANNEL_POOL_ATTR_KEY).getAndSet(null);
       if (pool != null)
       {
         pool.put(ctx.channel());
@@ -61,7 +61,7 @@ class ChannelPoolStreamHandler extends ChannelInboundHandlerAdapter
     }
     else if (msg == CHANNEL_DESTROY_SIGNAL)
     {
-      AsyncPool<Channel> pool = ctx.channel().attr(CHANNEL_POOL_ATTR_KEY).getAndRemove();
+      AsyncPool<Channel> pool = ctx.channel().attr(CHANNEL_POOL_ATTR_KEY).getAndSet(null);
       if (pool != null)
       {
         pool.dispose(ctx.channel());
@@ -72,7 +72,7 @@ class ChannelPoolStreamHandler extends ChannelInboundHandlerAdapter
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception
   {
-    AsyncPool<Channel> pool = ctx.channel().attr(CHANNEL_POOL_ATTR_KEY).getAndRemove();
+    AsyncPool<Channel> pool = ctx.channel().attr(CHANNEL_POOL_ATTR_KEY).getAndSet(null);
     if (pool != null)
     {
       // TODO do all exceptions mean we should get rid of the channel?
@@ -83,7 +83,7 @@ class ChannelPoolStreamHandler extends ChannelInboundHandlerAdapter
   @Override
   public void channelInactive(ChannelHandlerContext ctx) throws Exception
   {
-    AsyncPool<Channel> pool = ctx.channel().attr(CHANNEL_POOL_ATTR_KEY).getAndRemove();
+    AsyncPool<Channel> pool = ctx.channel().attr(CHANNEL_POOL_ATTR_KEY).getAndSet(null);
     if (pool != null)
     {
       pool.dispose(ctx.channel());

@@ -249,7 +249,7 @@ import org.slf4j.LoggerFactory;
                   // Timeout any requests still pending response
                   for (Channel c : _allChannels)
                   {
-                    TransportCallback<RestResponse> callback = c.attr(RAPResponseHandler.CALLBACK_ATTR_KEY).getAndRemove();
+                    TransportCallback<RestResponse> callback = c.attr(RAPResponseHandler.CALLBACK_ATTR_KEY).getAndSet(null);
                     if (callback != null)
                     {
                       errorResponse(callback, new TimeoutException("Operation did not complete before shutdown"));
@@ -389,7 +389,7 @@ import org.slf4j.LoggerFactory;
           @Override
           public void run()
           {
-            AsyncPool<Channel> pool = channel.attr(ChannelPoolHandler.CHANNEL_POOL_ATTR_KEY).getAndRemove();
+            AsyncPool<Channel> pool = channel.attr(ChannelPoolHandler.CHANNEL_POOL_ATTR_KEY).getAndSet(null);
             if (pool != null)
             {
               pool.dispose(channel);
