@@ -525,7 +525,56 @@ public class TestCompatibilityChecker
         _dataAndSchema,
         true,
         "ERROR :: BREAKS_OLD_READER :: /a.b.Union/ref/union :: new union added members int"
-      }
+      },
+      // Adding aliases to an existing Union
+      {
+        "[ \"int\", \"string\" ]",
+        "[ { \"alias\" : \"count\", \"type\" : \"int\" }, { \"alias\" : \"message\", \"type\" : \"string\" } ]",
+        _dataAndSchema,
+        true,
+        "ERROR :: BREAKS_NEW_AND_OLD_READERS :: /union :: new union added member aliases"
+      },
+      // Removing aliases from an existing Union
+      {
+        "[ { \"alias\" : \"count\", \"type\" : \"int\" }, { \"alias\" : \"message\", \"type\" : \"string\" } ]",
+        "[ \"int\", \"string\" ]",
+        _dataAndSchema,
+        true,
+        "ERROR :: BREAKS_NEW_AND_OLD_READERS :: /union :: new union removed member aliases"
+      },
+      // Adding a new member to an aliased Union
+      {
+        "[ { \"alias\" : \"count\", \"type\" : \"int\" } ]",
+        "[ { \"alias\" : \"count\", \"type\" : \"int\" }, { \"alias\" : \"message\", \"type\" : \"string\" } ]",
+        _dataAndSchema,
+        true,
+        "ERROR :: BREAKS_OLD_READER :: /union :: new union added members message"
+      },
+      // Removing a member from an aliased Union
+      {
+        "[ { \"alias\" : \"count\", \"type\" : \"int\" }, { \"alias\" : \"message\", \"type\" : \"string\" } ]",
+        "[ { \"alias\" : \"count\", \"type\" : \"int\" } ]",
+        _dataAndSchema,
+        true,
+        "ERROR :: BREAKS_NEW_READER :: /union :: new union removed members message"
+      },
+      // Updating the alias for a member in an Union
+      {
+        "[ { \"alias\" : \"count\", \"type\" : \"int\" }, { \"alias\" : \"message\", \"type\" : \"string\" } ]",
+        "[ { \"alias\" : \"count\", \"type\" : \"int\" }, { \"alias\" : \"text\", \"type\" : \"string\" } ]",
+        _dataAndSchema,
+        true,
+        "ERROR :: BREAKS_NEW_READER :: /union :: new union removed members message",
+        "ERROR :: BREAKS_OLD_READER :: /union :: new union added members text"
+      },
+      // Updating the type of an aliased member in an Union
+      {
+        "[ { \"alias\" : \"count\", \"type\" : \"int\" }, { \"alias\" : \"message\", \"type\" : \"string\" } ]",
+        "[ { \"alias\" : \"count\", \"type\" : \"long\" }, { \"alias\" : \"message\", \"type\" : \"string\" } ]",
+        _dataAndSchema,
+        true,
+        "ERROR :: BREAKS_NEW_AND_OLD_READERS :: /union/count/long :: schema type changed from int to long"
+      },
     };
 
     testCompatibility(inputs);

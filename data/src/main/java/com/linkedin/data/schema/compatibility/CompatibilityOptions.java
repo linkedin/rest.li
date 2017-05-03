@@ -30,8 +30,8 @@ package com.linkedin.data.schema.compatibility;
  *   <li>Both schemas are records and they have the same set of required fields,
  *       and the schemas of fields with the same name are also compatible.
  *       Fields are matched by name, i.e. order does not matter.
- *   <li>Both schemas are unions and they have the same set of member schemas,
- *       and the corresponding member schemas are also compatible.
+ *   <li>Both schemas are unions and they have the same set of members with matching
+ *       schema and alias (if the members are aliased) for each member.
  *   <li>Both schemas are primitive and non-numeric (i.e. bytes, string, boolean),
  *       their types are the same.
  *   <li>Both schemas are numeric, numeric promotion is enabled

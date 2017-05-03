@@ -35,6 +35,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
+
 /**
  * Compare two {@link com.linkedin.data.schema.DataSchema} for compatibility.
  */
@@ -462,12 +463,14 @@ public class CompatibilityChecker
   }
 
   private void computeAddedUnionMembers(UnionDataSchema base, UnionDataSchema changed,
-                                        List<String> added, List<DataSchema> commonMembers)
+                                        List<String> added, List<UnionDataSchema.Member> commonMembers)
   {
-    for (DataSchema member : changed.getTypes())
+    for (UnionDataSchema.Member member : changed.getMembers())
     {
       String unionMemberKey = member.getUnionMemberKey();
-      if (base.contains(unionMemberKey) == false)
+      boolean isMemberNewlyAdded = (base.getTypeByMemberKey(unionMemberKey) == null);
+
+      if (isMemberNewlyAdded)
       {
         added.add(unionMemberKey);
       }
@@ -480,35 +483,54 @@ public class CompatibilityChecker
 
   private void checkUnion(UnionDataSchema older, UnionDataSchema newer)
   {
+    // Check for any changes in member aliasing
+    if (older.areMembersAliased() != newer.areMembersAliased())
+    {
+      appendMessage(CompatibilityMessage.Impact.BREAKS_NEW_AND_OLD_READERS,
+          "new union %s member aliases",
+          newer.areMembersAliased() ? "added" : "removed");
+    }
+
     // using list to preserve union member order
-    List<DataSchema> commonMembers = new CheckerArrayList<DataSchema>(newer.getTypes().size());
+    List<UnionDataSchema.Member> commonMembers = new CheckerArrayList<>(newer.getMembers().size());
     List<String> newerAdded = new CheckerArrayList<String>();
     List<String> olderAdded = new CheckerArrayList<String>();
 
     computeAddedUnionMembers(older, newer, newerAdded, commonMembers);
     computeAddedUnionMembers(newer, older, olderAdded, null);
 
-    if (newerAdded.isEmpty() == false)
+    if (!newerAdded.isEmpty())
     {
       appendMessage(CompatibilityMessage.Impact.BREAKS_OLD_READER,
                     "new union added members %s",
                     newerAdded);
     }
 
-    if (olderAdded.isEmpty() == false)
+    if (!olderAdded.isEmpty())
     {
       appendMessage(CompatibilityMessage.Impact.BREAKS_NEW_READER,
                     "new union removed members %s",
                     olderAdded);
     }
 
-    for (DataSchema newerSchema : commonMembers)
+    for (UnionDataSchema.Member newerMember : commonMembers)
     {
-      String memberKey = newerSchema.getUnionMemberKey();
+      DataSchema newerSchema = newerMember.getType();
+      DataSchema olderSchema = older.getTypeByMemberKey(newerMember.getUnionMemberKey());
 
-      DataSchema olderSchema = older.getType(memberKey);
       assert(olderSchema != null);
+
+      if (newerMember.hasAlias())
+      {
+        _path.addLast(newerMember.getAlias());
+      }
+
       check(olderSchema, newerSchema);
+
+      if (newerMember.hasAlias())
+      {
+        _path.removeLast();
+      }
     }
   }
 
