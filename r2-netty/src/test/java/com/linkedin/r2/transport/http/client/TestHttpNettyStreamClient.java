@@ -468,8 +468,7 @@ public class TestHttpNettyStreamClient
         .setShutdownTimeout(500)
         .setMaxHeaderSize(TEST_MAX_HEADER_SIZE);
     return new Object[][] {
-        { builder.buildStream() },
-        { builder.buildHttp2Stream() },
+        { builder.buildStream() }
     };
   }
 
