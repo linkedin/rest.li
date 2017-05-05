@@ -16,7 +16,6 @@
 
 package com.linkedin.r2.transport.http.client;
 
-
 import com.linkedin.common.util.None;
 import com.linkedin.data.ByteString;
 import com.linkedin.r2.RemoteInvocationException;
@@ -28,7 +27,6 @@ import com.linkedin.r2.message.stream.entitystream.WriteHandle;
 import com.linkedin.r2.message.stream.entitystream.Writer;
 import com.linkedin.r2.transport.http.common.HttpConstants;
 import com.linkedin.r2.util.Timeout;
-
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.Unpooled;

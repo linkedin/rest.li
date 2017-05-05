@@ -25,14 +25,14 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http2.DefaultHttp2Connection;
 import io.netty.handler.codec.http2.Http2Connection;
 import io.netty.util.AttributeKey;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.ScheduledExecutorService;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLParameters;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 
 /**
@@ -44,11 +44,10 @@ class Http2ClientPipelineInitializer extends ChannelInitializer<NioSocketChannel
 
   private final SSLContext _sslContext;
   private final SSLParameters _sslParameters;
-  private final ScheduledExecutorService _scheduler;
   private final int _maxHeaderSize;
   private final int _maxChunkSize;
   private final long _maxResponseSize;
-  private final long _streamingTimeout;
+  private final long _gracefulShutdownTimeout;
 
   public static final AttributeKey<Http2Connection> HTTP2_CONNECTION_ATTR_KEY
       = AttributeKey.valueOf("Http2Connection");
@@ -58,8 +57,8 @@ class Http2ClientPipelineInitializer extends ChannelInitializer<NioSocketChannel
       = AttributeKey.valueOf("Handle");
 
   public Http2ClientPipelineInitializer(SSLContext sslContext, SSLParameters sslParameters,
-      ScheduledExecutorService scheduler, int maxHeaderSize, int maxChunkSize, long maxResponseSize,
-      long streamingTimeout)
+                                        int maxHeaderSize, int maxChunkSize, long maxResponseSize,
+                                        long gracefulShutdownTimeout)
   {
     // Check if requested parameters are present in the supported params of the context.
     // Log warning for those not present. Throw an exception if none present.
@@ -88,11 +87,10 @@ class Http2ClientPipelineInitializer extends ChannelInitializer<NioSocketChannel
     }
     _sslContext = sslContext;
     _sslParameters = sslParameters;
-    _scheduler = scheduler;
     _maxHeaderSize = maxHeaderSize;
     _maxChunkSize = maxChunkSize;
     _maxResponseSize = maxResponseSize;
-    _streamingTimeout = streamingTimeout;
+    _gracefulShutdownTimeout = gracefulShutdownTimeout;
   }
 
   @Override
@@ -104,7 +102,7 @@ class Http2ClientPipelineInitializer extends ChannelInitializer<NioSocketChannel
     channel.attr(CHANNEL_POOL_HANDLE_ATTR_KEY).set(connection.newKey());
 
     Http2InitializerHandler initializerHandler = new Http2InitializerHandler(_maxHeaderSize, _maxChunkSize,
-        _maxResponseSize, _streamingTimeout, _scheduler, connection, _sslContext, _sslParameters);
+        _maxResponseSize, _gracefulShutdownTimeout, connection, _sslContext, _sslParameters);
     channel.pipeline().addLast("initializerHandler", initializerHandler);
   }
 

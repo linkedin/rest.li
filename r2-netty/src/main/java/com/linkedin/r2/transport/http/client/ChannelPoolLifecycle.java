@@ -23,7 +23,6 @@ package com.linkedin.r2.transport.http.client;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.stats.LongStats;
 import com.linkedin.common.stats.LongTracking;
-
 import com.linkedin.r2.RetriableRequestException;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -31,6 +30,7 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.group.ChannelGroup;
+
 import java.net.ConnectException;
 import java.net.SocketAddress;
 
@@ -41,6 +41,17 @@ import java.net.SocketAddress;
 */
 class ChannelPoolLifecycle implements AsyncPool.Lifecycle<Channel>
 {
+  /**
+   * Maximum period in ms between retries for creating a channel in back-off policies
+   */
+  public static final int MAX_PERIOD_BEFORE_RETRY_CONNECTIONS = 5000;
+
+  /**
+   * When back-off policies are triggered in channel creation for the first time, this is the amount in ms to wait
+   * before a second attempt
+   */
+  public static final int INITIAL_PERIOD_BEFORE_RETRY_CONNECTIONS = 100;
+
   private final SocketAddress _remoteAddress;
   private final Bootstrap _bootstrap;
   private final ChannelGroup _channelGroup;

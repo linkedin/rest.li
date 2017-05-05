@@ -24,6 +24,7 @@ import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.Callbacks;
 import com.linkedin.common.util.None;
 import io.netty.channel.Channel;
+import io.netty.channel.group.ChannelGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,23 +52,29 @@ class ChannelPoolManager implements PoolStatsProvider
   // We set update concurrency to 1 because all updates occur in a synchronized block
   private final ConcurrentMap<SocketAddress,AsyncPool<Channel>> _pool =
           new ConcurrentHashMap<SocketAddress,AsyncPool<Channel>>(256, 0.75f, 1);
+  private final ChannelGroup _allChannels;
+
   private enum State { RUNNING, SHUTTING_DOWN, SHUTDOWN }
   private State _state = State.RUNNING;
 
   private final ChannelPoolFactory _channelPoolFactory;
   private final String _name;
 
-  public ChannelPoolManager(ChannelPoolFactory channelPoolFactory)
+  /* Constructor for test purpose ONLY. */
+  public ChannelPoolManager(ChannelPoolFactory channelPoolFactory,
+                            ChannelGroup allChannels)
   {
     this(channelPoolFactory,
-         HttpClientFactory.DEFAULT_CLIENT_NAME + BASE_NAME);
+      HttpClientFactory.DEFAULT_CLIENT_NAME + BASE_NAME, allChannels);
   }
 
   public ChannelPoolManager(ChannelPoolFactory channelPoolFactory,
-                            String name)
+                            String name,
+                            ChannelGroup allChannels)
   {
     _channelPoolFactory = channelPoolFactory;
     _name = name;
+    _allChannels = allChannels;
   }
 
   public void shutdown(final Callback<None> callback)
@@ -190,5 +197,10 @@ class ChannelPoolManager implements PoolStatsProvider
   public String getName()
   {
     return _name;
+  }
+
+  public ChannelGroup getAllChannels()
+  {
+    return _allChannels;
   }
 }

@@ -37,15 +37,12 @@ import io.netty.handler.codec.http2.Http2OutboundFrameLogger;
 import io.netty.handler.codec.http2.Http2Settings;
 import io.netty.handler.codec.http2.StreamBufferingEncoder;
 import io.netty.util.internal.ObjectUtil;
-import java.util.concurrent.ScheduledExecutorService;
 
 
 public class Http2StreamCodecBuilder extends AbstractHttp2ConnectionHandlerBuilder<Http2StreamCodec, Http2StreamCodecBuilder>
 {
   private long _maxContentLength = -1;
-  private long _streamingTimeout = -1;
   private long _gracefulShutdownTimeoutMillis = -1;
-  private ScheduledExecutorService _scheduler = null;
   private Http2Connection _connection = null;
 
   public Http2StreamCodecBuilder maxContentLength(long maxContentLength)
@@ -55,24 +52,10 @@ public class Http2StreamCodecBuilder extends AbstractHttp2ConnectionHandlerBuild
     return self();
   }
 
-  public Http2StreamCodecBuilder streamingTimeout(long streamingTimeout)
-  {
-    ObjectUtil.checkPositive(streamingTimeout, "streamingTimeout");
-    _streamingTimeout = streamingTimeout;
-    return self();
-  }
-
   public Http2StreamCodecBuilder gracefulShutdownTimeoutMillis(long gracefulShutdownTimeoutMillis)
   {
     ObjectUtil.checkPositive(gracefulShutdownTimeoutMillis, "gracefulShutdownTimeoutMillis");
     _gracefulShutdownTimeoutMillis = gracefulShutdownTimeoutMillis;
-    return self();
-  }
-
-  public Http2StreamCodecBuilder scheduler(ScheduledExecutorService scheduler)
-  {
-    ObjectUtil.checkNotNull(scheduler, "scheduler");
-    _scheduler = scheduler;
     return self();
   }
 
@@ -128,11 +111,10 @@ public class Http2StreamCodecBuilder extends AbstractHttp2ConnectionHandlerBuild
   {
     ObjectUtil.checkPositive(_maxContentLength, "maxContentLength");
     ObjectUtil.checkPositive(_gracefulShutdownTimeoutMillis, "gracefulShutdownTimeoutMillis");
-    ObjectUtil.checkNotNull(_scheduler, "scheduler");
     ObjectUtil.checkNotNull(_connection, "connection");
 
     Http2StreamCodec codec = new Http2StreamCodec(decoder, encoder, initialSettings);
-    super.frameListener(new Http2FrameListener(_scheduler, _connection, codec, _maxContentLength, _streamingTimeout));
+    super.frameListener(new Http2FrameListener(_connection, codec, _maxContentLength));
     super.gracefulShutdownTimeoutMillis(_gracefulShutdownTimeoutMillis);
 
     return codec;

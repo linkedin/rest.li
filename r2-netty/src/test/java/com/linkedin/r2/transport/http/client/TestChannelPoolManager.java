@@ -52,7 +52,7 @@ public class TestChannelPoolManager
         return new FakePool<Channel>();
       }
     };
-    ChannelPoolManager m = new ChannelPoolManager(factory);
+    ChannelPoolManager m = new ChannelPoolManager(factory, null);
 
     final int NUM = 100;
     List<SocketAddress> addresses = new ArrayList<SocketAddress>(NUM);

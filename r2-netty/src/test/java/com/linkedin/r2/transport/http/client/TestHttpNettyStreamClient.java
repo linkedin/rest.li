@@ -20,13 +20,27 @@
 
 package com.linkedin.r2.transport.http.client;
 
+import com.linkedin.common.callback.Callback;
+import com.linkedin.common.callback.FutureCallback;
+import com.linkedin.common.util.None;
+import com.linkedin.data.ByteString;
+import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.TestGroupNames;
 import com.linkedin.r2.filter.R2Constants;
+import com.linkedin.r2.message.Messages;
+import com.linkedin.r2.message.RequestContext;
+import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamRequestBuilder;
+import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.message.stream.entitystream.ByteStringWriter;
 import com.linkedin.r2.message.stream.entitystream.EntityStreams;
+import com.linkedin.r2.message.stream.entitystream.ReadHandle;
+import com.linkedin.r2.message.stream.entitystream.Reader;
+import com.linkedin.r2.transport.common.bridge.client.TransportCallbackAdapter;
+import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponse;
 import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
 import io.netty.channel.Channel;
@@ -35,32 +49,6 @@ import io.netty.handler.codec.TooLongFrameException;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http2.Http2Exception;
 import io.netty.util.AsciiString;
-import io.netty.util.concurrent.Promise;
-import java.io.IOException;
-import java.net.SocketAddress;
-import java.net.URI;
-import java.net.UnknownHostException;
-import java.security.NoSuchAlgorithmException;
-import java.util.HashMap;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
-
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLParameters;
-
-import com.linkedin.data.ByteString;
-import com.linkedin.r2.message.Messages;
-import com.linkedin.r2.message.stream.StreamResponse;
-import com.linkedin.r2.message.stream.entitystream.ReadHandle;
-import com.linkedin.r2.message.stream.entitystream.Reader;
 import org.eclipse.jetty.server.Server;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -68,15 +56,22 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import com.linkedin.common.callback.Callback;
-import com.linkedin.common.callback.FutureCallback;
-import com.linkedin.common.util.None;
-import com.linkedin.r2.RemoteInvocationException;
-import com.linkedin.r2.message.RequestContext;
-import com.linkedin.r2.message.rest.RestRequest;
-import com.linkedin.r2.message.rest.RestRequestBuilder;
-import com.linkedin.r2.transport.common.bridge.client.TransportCallbackAdapter;
-import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
+import java.io.IOException;
+import java.net.SocketAddress;
+import java.net.URI;
+import java.net.UnknownHostException;
+import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author Steven Ihde
@@ -130,7 +125,7 @@ public class TestHttpNettyStreamClient
   public void testNoChannelTimeout()
       throws InterruptedException
   {
-    HttpNettyStreamClient client = new HttpNettyStreamClient(new NoCreations(_scheduler), _scheduler, 500, 500, 1024 * 1024 * 2);
+    HttpNettyStreamClient client = new HttpNettyStreamClient(new NoCreations(_scheduler), _scheduler, 500, 500);
 
     RestRequest r = new RestRequestBuilder(URI.create("http://localhost/")).build();
 
@@ -166,8 +161,8 @@ public class TestHttpNettyStreamClient
     // however increase the timeout if test is not stable
     HttpClientBuilder builder = new HttpClientBuilder(_eventLoop, _scheduler).setRequestTimeout(1000);
     return new Object[][] {
-        { builder.buildStream() },
-        { builder.buildHttp2Stream() }
+        { builder.buildStreamClient() },
+        { builder.buildHttp2StreamClient() }
     };
   }
 
@@ -247,8 +242,8 @@ public class TestHttpNettyStreamClient
         .setIdleTimeout(10000)
         .setShutdownTimeout(500);
     return new Object[][] {
-        { builder.buildStream() },
-        { builder.buildHttp2Stream() },
+        { builder.buildStreamClient() },
+        { builder.buildHttp2StreamClient() },
     };
   }
 
@@ -297,8 +292,8 @@ public class TestHttpNettyStreamClient
         .setIdleTimeout(10000)
         .setShutdownTimeout(500);
     return new Object[][] {
-        { builder.buildStream() },
-        { builder.buildHttp2Stream() },
+        { builder.buildStreamClient() },
+        { builder.buildHttp2StreamClient() },
     };
   }
 
@@ -325,8 +320,8 @@ public class TestHttpNettyStreamClient
   {
     HttpClientBuilder builder = new HttpClientBuilder(_eventLoop, _scheduler);
     return new Object[][] {
-        { builder.buildStream() },
-        { builder.buildHttp2Stream() },
+        { builder.buildStreamClient() },
+        { builder.buildHttp2StreamClient() },
     };
   }
 
@@ -370,8 +365,8 @@ public class TestHttpNettyStreamClient
         .setShutdownTimeout(500)
         .setMaxResponseSize(TEST_MAX_RESPONSE_SIZE);
     return new Object[][] {
-        { builder.buildStream() },
-        { builder.buildHttp2Stream() },
+        { builder.buildStreamClient() },
+        { builder.buildHttp2StreamClient() },
     };
   }
 
@@ -468,7 +463,7 @@ public class TestHttpNettyStreamClient
         .setShutdownTimeout(500)
         .setMaxHeaderSize(TEST_MAX_HEADER_SIZE);
     return new Object[][] {
-        { builder.buildStream() }
+        { builder.buildStreamClient() }
     };
   }
 
@@ -531,8 +526,8 @@ public class TestHttpNettyStreamClient
         .setIdleTimeout(10000)
         .setShutdownTimeout(500);
     return new Object[][] {
-        { builder.buildStream() },
-        { builder.buildHttp2Stream() },
+        { builder.buildStreamClient() },
+        { builder.buildHttp2StreamClient() },
     };
   }
 
@@ -564,7 +559,7 @@ public class TestHttpNettyStreamClient
 
   {
     // Test that shutdown works when the outstanding request is stuck in the pool waiting for a channel
-    HttpNettyStreamClient client = new HttpNettyStreamClient(new NoCreations(_scheduler), _scheduler, 60000, 1, 1024 * 1024 * 2);
+    HttpNettyStreamClient client = new HttpNettyStreamClient(new NoCreations(_scheduler), _scheduler, 60000, 1);
 
     RestRequest r = new RestRequestBuilder(URI.create("http://some.host/")).build();
     FutureCallback<StreamResponse> futureCallback = new FutureCallback<StreamResponse>();
@@ -593,8 +588,8 @@ public class TestHttpNettyStreamClient
     HttpClientBuilder builder = new HttpClientBuilder(_eventLoop, _scheduler)
         .setShutdownTimeout(500)
         .setRequestTimeout(60000);
-    testShutdownRequestOutstanding(builder.buildStream(), RemoteInvocationException.class, TimeoutException.class);
-    testShutdownRequestOutstanding(builder.buildHttp2Stream(), RemoteInvocationException.class, TimeoutException.class);
+    testShutdownRequestOutstanding(builder.buildStreamClient(), RemoteInvocationException.class, TimeoutException.class);
+    testShutdownRequestOutstanding(builder.buildHttp2StreamClient(), RemoteInvocationException.class, TimeoutException.class);
   }
 
   @Test
@@ -604,11 +599,11 @@ public class TestHttpNettyStreamClient
     HttpClientBuilder builder = new HttpClientBuilder(_eventLoop, _scheduler)
         .setShutdownTimeout(60000)
         .setRequestTimeout(500);
-    testShutdownRequestOutstanding(builder.buildStream(), RemoteInvocationException.class,
+    testShutdownRequestOutstanding(builder.buildStreamClient(), RemoteInvocationException.class,
         // sometimes the test fails with ChannelClosedException
         // TimeoutException.class
         Exception.class);
-    testShutdownRequestOutstanding(builder.buildHttp2Stream(), RemoteInvocationException.class,
+    testShutdownRequestOutstanding(builder.buildHttp2StreamClient(), RemoteInvocationException.class,
         // sometimes the test fails with ChannelClosedException
         // TimeoutException.class
         Exception.class);
@@ -681,7 +676,7 @@ public class TestHttpNettyStreamClient
     try
     {
       new HttpClientBuilder(_eventLoop, _scheduler)
-          .setSSLParameters(new SSLParameters()).buildStream();
+          .setSSLParameters(new SSLParameters()).buildStreamClient();
     }
     catch (IllegalArgumentException e)
     {
@@ -700,7 +695,7 @@ public class TestHttpNettyStreamClient
     try
     {
       new HttpClientBuilder(_eventLoop, _scheduler)
-          .setSSLParameters(new SSLParameters()).buildHttp2Stream();
+          .setSSLParameters(new SSLParameters()).buildHttp2StreamClient();
     }
     catch (IllegalArgumentException e)
     {
@@ -725,7 +720,7 @@ public class TestHttpNettyStreamClient
       new HttpClientBuilder(_eventLoop, _scheduler)
           .setSSLContext(SSLContext.getDefault())
           .setSSLParameters(sslParameters)
-          .buildStream();
+          .buildStreamClient();
     }
     catch (IllegalArgumentException e)
     {
@@ -750,7 +745,7 @@ public class TestHttpNettyStreamClient
       new HttpClientBuilder(_eventLoop, _scheduler)
           .setSSLContext(SSLContext.getDefault())
           .setSSLParameters(sslParameters)
-          .buildHttp2Stream();
+          .buildHttp2StreamClient();
     }
     catch (IllegalArgumentException e)
     {
@@ -772,7 +767,7 @@ public class TestHttpNettyStreamClient
     sslParameters.setCipherSuites(requestedCipherSuites);
     new HttpClientBuilder(_eventLoop, _scheduler)
         .setSSLContext(SSLContext.getDefault())
-        .setSSLParameters(sslParameters).buildStream();
+        .setSSLParameters(sslParameters).buildStreamClient();
   }
 
   // Test that can set cipher suites in SSLParameters that have at least one match in
@@ -789,7 +784,7 @@ public class TestHttpNettyStreamClient
     new HttpClientBuilder(_eventLoop, _scheduler)
         .setSSLContext(SSLContext.getDefault())
         .setSSLParameters(sslParameters)
-        .buildHttp2Stream();
+        .buildHttp2StreamClient();
   }
 
   // Test that cannot set protocols in SSLParameters that don't have any match in
@@ -808,7 +803,7 @@ public class TestHttpNettyStreamClient
       new HttpClientBuilder(_eventLoop, _scheduler)
           .setSSLContext(SSLContext.getDefault())
           .setSSLParameters(sslParameters)
-          .buildStream();
+          .buildStreamClient();
     }
     catch (IllegalArgumentException e)
     {
@@ -833,7 +828,7 @@ public class TestHttpNettyStreamClient
       new HttpClientBuilder(_eventLoop, _scheduler)
           .setSSLContext(SSLContext.getDefault())
           .setSSLParameters(sslParameters)
-          .buildHttp2Stream();
+          .buildHttp2StreamClient();
     }
     catch (IllegalArgumentException e)
     {
@@ -857,7 +852,7 @@ public class TestHttpNettyStreamClient
     new HttpClientBuilder(_eventLoop, _scheduler)
         .setSSLContext(SSLContext.getDefault())
         .setSSLParameters(sslParameters)
-        .buildStream();
+        .buildStreamClient();
   }
 
   // Test that can set protocols in SSLParameters that have at least one match in
@@ -875,7 +870,7 @@ public class TestHttpNettyStreamClient
     new HttpClientBuilder(_eventLoop, _scheduler)
         .setSSLContext(SSLContext.getDefault())
         .setSSLParameters(sslParameters)
-        .buildHttp2Stream();
+        .buildHttp2StreamClient();
   }
 
   @DataProvider(name = "poolStatsClients")
@@ -899,8 +894,8 @@ public class TestHttpNettyStreamClient
     };
     HttpClientBuilder builder = new HttpClientBuilder(_eventLoop, _scheduler).setJmxManager(manager);
     return new Object[][] {
-        { builder.buildStream(), setLatch, removeLatch },
-        { builder.buildHttp2Stream(), setLatch, removeLatch },
+        { builder.buildStreamClient(), setLatch, removeLatch },
+        { builder.buildHttp2StreamClient(), setLatch, removeLatch },
     };
   }
 
@@ -944,7 +939,7 @@ public class TestHttpNettyStreamClient
     HttpNettyStreamClient client = new HttpClientBuilder(_eventLoop, _scheduler)
           .setSSLContext(context)
           .setSSLParameters(sslParameters)
-          .buildStream();
+          .buildStreamClient();
 
     RestRequest r = new RestRequestBuilder(URI.create("https://www.howsmyssl.com/a/check")).build();
     FutureCallback<StreamResponse> cb = new FutureCallback<StreamResponse>();
@@ -1005,30 +1000,30 @@ public class TestHttpNettyStreamClient
     HttpClientBuilder builder = new HttpClientBuilder(_eventLoop, _scheduler);
     // Client, Request Method, Request Size, Response Size, RestOverStream
     return new Object[][] {
-        { builder.buildHttp2Stream(), HTTP_GET, NO_CONTENT, NO_CONTENT, true },
-        { builder.buildHttp2Stream(), HTTP_GET, NO_CONTENT, NO_CONTENT, false },
-        { builder.buildHttp2Stream(), HTTP_GET, SMALL_CONTENT, SMALL_CONTENT, true },
-        { builder.buildHttp2Stream(), HTTP_GET, SMALL_CONTENT, SMALL_CONTENT, false },
-        { builder.buildHttp2Stream(), HTTP_GET, LARGE_CONTENT, LARGE_CONTENT, true },
-        { builder.buildHttp2Stream(), HTTP_GET, LARGE_CONTENT, LARGE_CONTENT, false },
-        { builder.buildHttp2Stream(), HTTP_POST, NO_CONTENT, NO_CONTENT, true },
-        { builder.buildHttp2Stream(), HTTP_POST, NO_CONTENT, NO_CONTENT, false },
-        { builder.buildHttp2Stream(), HTTP_POST, SMALL_CONTENT, SMALL_CONTENT, true },
-        { builder.buildHttp2Stream(), HTTP_POST, SMALL_CONTENT, SMALL_CONTENT, false },
-        { builder.buildHttp2Stream(), HTTP_POST, LARGE_CONTENT, LARGE_CONTENT, true },
-        { builder.buildHttp2Stream(), HTTP_POST, LARGE_CONTENT, LARGE_CONTENT, false },
-        { builder.buildStream(), HTTP_GET, NO_CONTENT, NO_CONTENT, true },
-        { builder.buildStream(), HTTP_GET, NO_CONTENT, NO_CONTENT, false },
-        { builder.buildStream(), HTTP_GET, SMALL_CONTENT, SMALL_CONTENT, true },
-        { builder.buildStream(), HTTP_GET, SMALL_CONTENT, SMALL_CONTENT, false },
-        { builder.buildStream(), HTTP_GET, LARGE_CONTENT, LARGE_CONTENT, true },
-        { builder.buildStream(), HTTP_GET, LARGE_CONTENT, LARGE_CONTENT, false },
-        { builder.buildStream(), HTTP_POST, NO_CONTENT, NO_CONTENT, true },
-        { builder.buildStream(), HTTP_POST, NO_CONTENT, NO_CONTENT, false },
-        { builder.buildStream(), HTTP_POST, SMALL_CONTENT, SMALL_CONTENT, true },
-        { builder.buildStream(), HTTP_POST, SMALL_CONTENT, SMALL_CONTENT, false },
-        { builder.buildStream(), HTTP_POST, LARGE_CONTENT, LARGE_CONTENT, true },
-        { builder.buildStream(), HTTP_POST, LARGE_CONTENT, LARGE_CONTENT, false },
+        { builder.buildHttp2StreamClient(), HTTP_GET, NO_CONTENT, NO_CONTENT, true },
+        { builder.buildHttp2StreamClient(), HTTP_GET, NO_CONTENT, NO_CONTENT, false },
+        { builder.buildHttp2StreamClient(), HTTP_GET, SMALL_CONTENT, SMALL_CONTENT, true },
+        { builder.buildHttp2StreamClient(), HTTP_GET, SMALL_CONTENT, SMALL_CONTENT, false },
+        { builder.buildHttp2StreamClient(), HTTP_GET, LARGE_CONTENT, LARGE_CONTENT, true },
+        { builder.buildHttp2StreamClient(), HTTP_GET, LARGE_CONTENT, LARGE_CONTENT, false },
+        { builder.buildHttp2StreamClient(), HTTP_POST, NO_CONTENT, NO_CONTENT, true },
+        { builder.buildHttp2StreamClient(), HTTP_POST, NO_CONTENT, NO_CONTENT, false },
+        { builder.buildHttp2StreamClient(), HTTP_POST, SMALL_CONTENT, SMALL_CONTENT, true },
+        { builder.buildHttp2StreamClient(), HTTP_POST, SMALL_CONTENT, SMALL_CONTENT, false },
+        { builder.buildHttp2StreamClient(), HTTP_POST, LARGE_CONTENT, LARGE_CONTENT, true },
+        { builder.buildHttp2StreamClient(), HTTP_POST, LARGE_CONTENT, LARGE_CONTENT, false },
+        { builder.buildStreamClient(), HTTP_GET, NO_CONTENT, NO_CONTENT, true },
+        { builder.buildStreamClient(), HTTP_GET, NO_CONTENT, NO_CONTENT, false },
+        { builder.buildStreamClient(), HTTP_GET, SMALL_CONTENT, SMALL_CONTENT, true },
+        { builder.buildStreamClient(), HTTP_GET, SMALL_CONTENT, SMALL_CONTENT, false },
+        { builder.buildStreamClient(), HTTP_GET, LARGE_CONTENT, LARGE_CONTENT, true },
+        { builder.buildStreamClient(), HTTP_GET, LARGE_CONTENT, LARGE_CONTENT, false },
+        { builder.buildStreamClient(), HTTP_POST, NO_CONTENT, NO_CONTENT, true },
+        { builder.buildStreamClient(), HTTP_POST, NO_CONTENT, NO_CONTENT, false },
+        { builder.buildStreamClient(), HTTP_POST, SMALL_CONTENT, SMALL_CONTENT, true },
+        { builder.buildStreamClient(), HTTP_POST, SMALL_CONTENT, SMALL_CONTENT, false },
+        { builder.buildStreamClient(), HTTP_POST, LARGE_CONTENT, LARGE_CONTENT, true },
+        { builder.buildStreamClient(), HTTP_POST, LARGE_CONTENT, LARGE_CONTENT, false },
     };
   }
 

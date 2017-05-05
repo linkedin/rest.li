@@ -36,8 +36,6 @@ import io.netty.channel.Channel;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.handler.codec.EncoderException;
 import io.netty.handler.codec.TooLongFrameException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicReference;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -53,10 +51,12 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author Steven Ihde
@@ -93,7 +93,7 @@ public class TestHttpNettyClient
   public void testNoChannelTimeout()
       throws InterruptedException
   {
-    HttpNettyClient client = new HttpNettyClient(new NoCreations(_scheduler), _scheduler, 500, 500, 1024 * 1024 * 2);
+    HttpNettyClient client = new HttpNettyClient(new NoCreations(_scheduler), _scheduler, 500, 500);
 
     RestRequest r = new RestRequestBuilder(URI.create("http://localhost/")).build();
     FutureCallback<RestResponse> cb = new FutureCallback<RestResponse>();
@@ -126,7 +126,7 @@ public class TestHttpNettyClient
     TestServer testServer = new TestServer();
 
     HttpNettyClient client = new HttpClientBuilder(_eventLoop, _scheduler).setRequestTimeout(500).setIdleTimeout(10000)
-        .setShutdownTimeout(500).buildRest();
+      .setShutdownTimeout(500).buildRestClient();
 
     RestRequest r = new RestRequestBuilder(testServer.getNoResponseURI()).build();
     FutureCallback<RestResponse> cb = new FutureCallback<RestResponse>();
@@ -161,7 +161,7 @@ public class TestHttpNettyClient
                                   .setRequestTimeout(30000)
                                   .setIdleTimeout(10000)
                                   .setShutdownTimeout(500)
-                                  .buildRest();
+                                  .buildRestClient();
 
     RestRequest r = new RestRequestBuilder(URI.create("http://this.host.does.not.exist.linkedin.com")).build();
     FutureCallback<RestResponse> cb = new FutureCallback<RestResponse>();
@@ -182,7 +182,7 @@ public class TestHttpNettyClient
   public void testRequestContextAttributes()
       throws InterruptedException, IOException, TimeoutException
   {
-    HttpNettyClient client = new HttpClientBuilder(_eventLoop, _scheduler).buildRest();
+    HttpNettyClient client = new HttpClientBuilder(_eventLoop, _scheduler).buildRestClient();
 
     RestRequest r = new RestRequestBuilder(URI.create("http://localhost")).build();
 
@@ -220,7 +220,7 @@ public class TestHttpNettyClient
 
     HttpNettyClient client =
         new HttpClientBuilder(_eventLoop, _scheduler).setRequestTimeout(50000).setIdleTimeout(10000)
-            .setShutdownTimeout(500).setMaxResponseSize(TEST_MAX_RESPONSE_SIZE).buildRest();
+            .setShutdownTimeout(500).setMaxResponseSize(TEST_MAX_RESPONSE_SIZE).buildRestClient();
 
     RestRequest r = new RestRequestBuilder(testServer.getResponseOfSizeURI(responseSize)).build();
     FutureCallback<RestResponse> cb = new FutureCallback<RestResponse>();
@@ -263,7 +263,7 @@ public class TestHttpNettyClient
 
     HttpNettyClient client =
         new HttpClientBuilder(_eventLoop, _scheduler).setRequestTimeout(5000000).setIdleTimeout(10000)
-            .setShutdownTimeout(500).setMaxHeaderSize(TEST_MAX_HEADER_SIZE).buildRest();
+          .setShutdownTimeout(500).setMaxHeaderSize(TEST_MAX_HEADER_SIZE).buildRestClient();
 
     RestRequest r = new RestRequestBuilder(testServer.getResponseWithHeaderSizeURI(headerSize)).build();
     FutureCallback<RestResponse> cb = new FutureCallback<RestResponse>();
@@ -296,7 +296,7 @@ public class TestHttpNettyClient
     HttpNettyClient client = new HttpClientBuilder(_eventLoop, _scheduler)
                                   .setRequestTimeout(10000)
                                   .setIdleTimeout(10000)
-                                  .setShutdownTimeout(500).buildRest();
+      .setShutdownTimeout(500).buildRestClient();
 
     RestRequest r = new RestRequestBuilder(testServer.getBadHeaderURI()).build();
     FutureCallback<RestResponse> cb = new FutureCallback<RestResponse>();
@@ -327,7 +327,7 @@ public class TestHttpNettyClient
     HttpNettyClient client = new HttpClientBuilder(_eventLoop, _scheduler)
         .setRequestTimeout(10000)
         .setIdleTimeout(10000)
-        .setShutdownTimeout(500).buildRest();
+      .setShutdownTimeout(500).buildRestClient();
 
 
     RestRequestBuilder rb = new RestRequestBuilder(testServer.getRequestURI());
@@ -361,7 +361,7 @@ public class TestHttpNettyClient
                                   .setRequestTimeout(500)
                                   .setIdleTimeout(10000)
                                   .setShutdownTimeout(500)
-                                  .buildRest();
+      .buildRestClient();
 
     FutureCallback<None> shutdownCallback = new FutureCallback<None>();
     client.shutdown(shutdownCallback);
@@ -387,7 +387,7 @@ public class TestHttpNettyClient
 
   {
     // Test that shutdown works when the outstanding request is stuck in the pool waiting for a channel
-    HttpNettyClient client = new HttpNettyClient(new NoCreations(_scheduler), _scheduler, 60000, 1, 1024 * 1024 * 2);
+    HttpNettyClient client = new HttpNettyClient(new NoCreations(_scheduler), _scheduler, 60000, 1);
 
     RestRequest r = new RestRequestBuilder(URI.create("http://some.host/")).build();
     FutureCallback<RestResponse> futureCallback = new FutureCallback<RestResponse>();
@@ -434,7 +434,7 @@ public class TestHttpNettyClient
     TestServer testServer = new TestServer();
 
     HttpNettyClient client = new HttpClientBuilder(_eventLoop, _scheduler).setRequestTimeout(requestTimeout)
-        .setShutdownTimeout(shutdownTimeout).buildRest();
+      .setShutdownTimeout(shutdownTimeout).buildRestClient();
 
     RestRequest r = new RestRequestBuilder(testServer.getNoResponseURI()).build();
     FutureCallback<RestResponse> cb = new FutureCallback<RestResponse>();
@@ -495,7 +495,7 @@ public class TestHttpNettyClient
     {
       new HttpClientBuilder(_eventLoop, _scheduler)
           .setSSLParameters(new SSLParameters())
-          .buildRest();
+        .buildRestClient();
     }
     catch (IllegalArgumentException e)
     {
@@ -520,7 +520,7 @@ public class TestHttpNettyClient
       new HttpClientBuilder(_eventLoop, _scheduler)
           .setSSLContext(SSLContext.getDefault())
           .setSSLParameters(sslParameters)
-          .buildRest();
+        .buildRestClient();
     }
     catch (IllegalArgumentException e)
     {
@@ -543,7 +543,7 @@ public class TestHttpNettyClient
     new HttpClientBuilder(_eventLoop, _scheduler)
         .setSSLContext(SSLContext.getDefault())
         .setSSLParameters(sslParameters)
-        .buildRest();
+      .buildRestClient();
   }
 
   // Test that cannot set protocols in SSLParameters that don't have any match in
@@ -562,7 +562,7 @@ public class TestHttpNettyClient
       new HttpClientBuilder(_eventLoop, _scheduler)
           .setSSLContext(SSLContext.getDefault())
           .setSSLParameters(sslParameters)
-          .buildRest();
+        .buildRestClient();
     }
     catch (IllegalArgumentException e)
     {
@@ -586,7 +586,7 @@ public class TestHttpNettyClient
     new HttpClientBuilder(_eventLoop, _scheduler)
         .setSSLContext(SSLContext.getDefault())
         .setSSLParameters(sslParameters)
-        .buildRest();
+      .buildRestClient();
   }
 
   @Test
@@ -613,7 +613,7 @@ public class TestHttpNettyClient
     HttpNettyClient client =
         new HttpClientBuilder(_eventLoop, _scheduler)
             .setJmxManager(manager)
-            .buildRest();
+          .buildRestClient();
     // test setPoolStatsProvider
     try
     {
@@ -647,7 +647,7 @@ public class TestHttpNettyClient
     HttpNettyClient client = new HttpClientBuilder(_eventLoop, _scheduler)
           .setSSLContext(context)
           .setSSLParameters(sslParameters)
-          .buildRest();
+      .buildRestClient();
 
     RestRequest r = new RestRequestBuilder(URI.create("https://www.howsmyssl.com/a/check")).build();
     FutureCallback<RestResponse> cb = new FutureCallback<RestResponse>();
@@ -719,7 +719,7 @@ public class TestHttpNettyClient
             Math.max(10, MAX_RATE_LIMITING_PERIOD / 32),
             _scheduler)
      );
-    HttpNettyClient client = new HttpNettyClient(address -> testPool, _scheduler, 500, 500, 1024 * 1024 * 2);
+    HttpNettyClient client = new HttpNettyClient(address -> testPool, _scheduler, 500, 500);
 
     final RestRequest r = new RestRequestBuilder(URI.create("http://localhost:8080/")).setMethod("GET").build();
     final ExecutorService executor = Executors.newSingleThreadExecutor();

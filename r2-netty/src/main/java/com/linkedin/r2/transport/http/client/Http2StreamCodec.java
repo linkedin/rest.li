@@ -36,8 +36,6 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
-import io.netty.handler.codec.http2.Http2CodecUtil;
-import io.netty.handler.codec.http2.Http2Connection;
 import io.netty.handler.codec.http2.Http2ConnectionDecoder;
 import io.netty.handler.codec.http2.Http2ConnectionEncoder;
 import io.netty.handler.codec.http2.Http2ConnectionHandler;
@@ -47,12 +45,12 @@ import io.netty.handler.codec.http2.Http2Headers;
 import io.netty.handler.codec.http2.Http2Settings;
 import io.netty.handler.codec.http2.Http2Stream;
 import io.netty.util.concurrent.PromiseCombiner;
-import java.util.Collections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
+
 import static io.netty.handler.codec.http2.Http2CodecUtil.getEmbeddedHttp2Exception;
-import static io.netty.handler.codec.http2.Http2Exception.isStreamError;
 
 
 /**
@@ -129,15 +127,12 @@ class Http2StreamCodec extends Http2ConnectionHandler
 
     // Sets TransportCallback as a stream property to be retrieved later
     TransportCallback<?> callback = ((RequestWithCallback)msg).callback();
-    Http2Connection.PropertyKey callbackKey =
-        ctx.channel().attr(Http2ClientPipelineInitializer.CALLBACK_ATTR_KEY).get();
-    connection().stream(streamId).setProperty(callbackKey, callback);
+    PipelineHttp2PropertyUtil.set(ctx, connection(), streamId, Http2ClientPipelineInitializer.CALLBACK_ATTR_KEY, callback);
 
     // Sets AsyncPoolHandle as a stream property to be retrieved later
     AsyncPoolHandle<?> handle = ((RequestWithCallback)msg).handle();
-    Http2Connection.PropertyKey handleKey =
-        ctx.channel().attr(Http2ClientPipelineInitializer.CHANNEL_POOL_HANDLE_ATTR_KEY).get();
-    connection().stream(streamId).setProperty(handleKey, handle);
+    PipelineHttp2PropertyUtil.set(ctx, connection(), streamId, Http2ClientPipelineInitializer.CHANNEL_POOL_HANDLE_ATTR_KEY,
+        handle);
   }
 
   @Override
@@ -180,20 +175,19 @@ class Http2StreamCodec extends Http2ConnectionHandler
 
   private void doHandleStreamException(Http2Stream stream, ChannelHandlerContext ctx, Throwable cause)
   {
-    Http2Connection.PropertyKey callbackKey =
-        ctx.channel().attr(Http2ClientPipelineInitializer.CALLBACK_ATTR_KEY).get();
-    Http2Connection.PropertyKey handleKey =
-        ctx.channel().attr(Http2ClientPipelineInitializer.CHANNEL_POOL_HANDLE_ATTR_KEY).get();
-
     // Invokes the call back with error
-    TimeoutTransportCallback<StreamResponse> callback = stream.removeProperty(callbackKey);
+    TimeoutTransportCallback<StreamResponse> callback =
+        PipelineHttp2PropertyUtil.remove(ctx, connection(), stream.id(), Http2ClientPipelineInitializer.CALLBACK_ATTR_KEY);
+
     if (callback != null)
     {
       callback.onResponse(TransportResponseImpl.<StreamResponse>error(cause, Collections.<String, String>emptyMap()));
     }
 
     // Signals to dispose the channel back to the pool
-    TimeoutAsyncPoolHandle<Channel> handle = stream.removeProperty(handleKey);
+    TimeoutAsyncPoolHandle<Channel> handle = PipelineHttp2PropertyUtil.remove(ctx, connection(), stream.id(),
+        Http2ClientPipelineInitializer.CHANNEL_POOL_HANDLE_ATTR_KEY);
+
     if (handle != null)
     {
       ctx.fireChannelRead(handle.error());

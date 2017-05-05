@@ -22,9 +22,9 @@ import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.MultiCallback;
 import com.linkedin.common.util.None;
 import com.linkedin.r2.disruptor.DisruptFilter;
+import com.linkedin.r2.filter.CompressionConfig;
 import com.linkedin.r2.filter.FilterChain;
 import com.linkedin.r2.filter.FilterChains;
-import com.linkedin.r2.filter.CompressionConfig;
 import com.linkedin.r2.filter.compression.ClientCompressionFilter;
 import com.linkedin.r2.filter.compression.ClientCompressionHelper;
 import com.linkedin.r2.filter.compression.ClientStreamCompressionFilter;
@@ -43,26 +43,24 @@ import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
 import com.linkedin.r2.util.ConfigValueExtractor;
 import com.linkedin.r2.util.NamedThreadFactory;
-
 import io.netty.channel.nio.NioEventLoopGroup;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A factory for HttpNettyClient instances.
@@ -123,6 +121,7 @@ public class HttpClientFactory implements TransportClientFactory
   public static final int DEFAULT_POOL_MIN_SIZE = 0;
   public static final int DEFAULT_MAX_HEADER_SIZE = 8 * 1024;
   public static final int DEFAULT_MAX_CHUNK_SIZE = 8 * 1024;
+  public static final int DEFAULT_DEFAULT_MAX_CONCURRENT_CONNECTIONS = Integer.MAX_VALUE;
   public static final EncodingType[] DEFAULT_RESPONSE_CONTENT_ENCODINGS
       = {EncodingType.GZIP, EncodingType.SNAPPY, EncodingType.SNAPPY_FRAMED, EncodingType.DEFLATE, EncodingType.BZIP2};
 
@@ -891,63 +890,55 @@ public class HttpClientFactory implements TransportClientFactory
                                SSLContext sslContext,
                                SSLParameters sslParameters)
   {
-    Integer poolSize = chooseNewOverDefault(getIntValue(properties, HTTP_POOL_SIZE), DEFAULT_POOL_SIZE);
+    // Channel Pool Manager properties
+    Integer maxPoolSize = chooseNewOverDefault(getIntValue(properties, HTTP_POOL_SIZE), DEFAULT_POOL_SIZE);
     Integer idleTimeout = chooseNewOverDefault(getIntValue(properties, HTTP_IDLE_TIMEOUT), DEFAULT_IDLE_TIMEOUT);
-    Integer shutdownTimeout = chooseNewOverDefault(getIntValue(properties, HTTP_SHUTDOWN_TIMEOUT), DEFAULT_SHUTDOWN_TIMEOUT);
     long maxResponseSize = chooseNewOverDefault(getLongValue(properties, HTTP_MAX_RESPONSE_SIZE), DEFAULT_MAX_RESPONSE_SIZE);
-    Integer requestTimeout = chooseNewOverDefault(getIntValue(properties, HTTP_REQUEST_TIMEOUT), DEFAULT_REQUEST_TIMEOUT);
     Integer poolWaiterSize = chooseNewOverDefault(getIntValue(properties, HTTP_POOL_WAITER_SIZE), DEFAULT_POOL_WAITER_SIZE);
+    Integer poolMinSize = chooseNewOverDefault(getIntValue(properties, HTTP_POOL_MIN_SIZE), DEFAULT_POOL_MIN_SIZE);
+    Integer maxHeaderSize = chooseNewOverDefault(getIntValue(properties, HTTP_MAX_HEADER_SIZE), DEFAULT_MAX_HEADER_SIZE);
+    Integer maxChunkSize = chooseNewOverDefault(getIntValue(properties, HTTP_MAX_CHUNK_SIZE), DEFAULT_MAX_CHUNK_SIZE);
+    Integer maxConcurrentConnectionInitializations = chooseNewOverDefault(getIntValue(properties, HTTP_MAX_CONCURRENT_CONNECTIONS), DEFAULT_DEFAULT_MAX_CONCURRENT_CONNECTIONS);
+
+    // Raw Client properties
+    Integer shutdownTimeout = chooseNewOverDefault(getIntValue(properties, HTTP_SHUTDOWN_TIMEOUT), DEFAULT_SHUTDOWN_TIMEOUT);
+
+    Integer requestTimeout = chooseNewOverDefault(getIntValue(properties, HTTP_REQUEST_TIMEOUT), DEFAULT_REQUEST_TIMEOUT);
     String clientName = null;
     if (properties != null && properties.containsKey(HTTP_SERVICE_NAME))
     {
       clientName = properties.get(HTTP_SERVICE_NAME) + "Client";
     }
     clientName = chooseNewOverDefault(clientName, DEFAULT_CLIENT_NAME);
+
     AsyncPoolImpl.Strategy strategy = chooseNewOverDefault(getStrategy(properties), DEFAULT_POOL_STRATEGY);
-    Integer poolMinSize = chooseNewOverDefault(getIntValue(properties, HTTP_POOL_MIN_SIZE), DEFAULT_POOL_MIN_SIZE);
-    Integer maxHeaderSize = chooseNewOverDefault(getIntValue(properties, HTTP_MAX_HEADER_SIZE), DEFAULT_MAX_HEADER_SIZE);
-    Integer maxChunkSize = chooseNewOverDefault(getIntValue(properties, HTTP_MAX_CHUNK_SIZE), DEFAULT_MAX_CHUNK_SIZE);
-    Integer maxConcurrentConnections = chooseNewOverDefault(getIntValue(properties, HTTP_MAX_CONCURRENT_CONNECTIONS), Integer.MAX_VALUE);
     HttpProtocolVersion httpProtocolVersion =
         chooseNewOverDefault(getHttpProtocolVersion(properties, HTTP_PROTOCOL_VERSION), _defaultHttpVersion);
+
+    ChannelPoolManagerBuilder channelPoolManagerBuilder = new ChannelPoolManagerBuilder(_eventLoopGroup, _executor);
+    channelPoolManagerBuilder.setMaxPoolSize(maxPoolSize).setGracefulShutdownTimeout(requestTimeout).setIdleTimeout(idleTimeout)
+      .setMaxResponseSize(maxResponseSize).setSSLContext(sslContext).setPoolWaiterSize(poolWaiterSize)
+      .setSSLParameters(sslParameters).setStrategy(strategy).setMinPoolSize(poolMinSize)
+      .setMaxHeaderSize(maxHeaderSize).setMaxChunkSize(maxChunkSize).setName(clientName)
+      .setMaxConcurrentConnectionInitializations(maxConcurrentConnectionInitializations).setTcpNoDelay(_tcpNoDelay);
 
     TransportClient streamClient;
     switch (httpProtocolVersion)
     {
       case HTTP_1_1:
-        streamClient = new HttpNettyStreamClient(_eventLoopGroup, _executor, poolSize, requestTimeout, idleTimeout, shutdownTimeout,
-            maxResponseSize, sslContext, sslParameters, _callbackExecutorGroup, poolWaiterSize,
-            clientName + "-Stream" /* to distinguish channel pool metrics from rest client during transition period */,
-            _jmxManager, strategy, poolMinSize, maxHeaderSize, maxChunkSize, maxConcurrentConnections, _tcpNoDelay);
+        streamClient = new HttpNettyStreamClient(_eventLoopGroup, _executor, requestTimeout, shutdownTimeout,
+          _callbackExecutorGroup, _jmxManager, channelPoolManagerBuilder.buildStream());
         break;
       case HTTP_2:
-        streamClient = new Http2NettyStreamClient(_eventLoopGroup, _executor, requestTimeout, idleTimeout, shutdownTimeout,
-            maxResponseSize, sslContext, sslParameters, _callbackExecutorGroup, poolWaiterSize,
-            clientName + "-HTTP/2-Stream" /* to distinguish channel pool metrics from rest client during transition period */,
-            _jmxManager, maxHeaderSize, maxChunkSize, maxConcurrentConnections, _tcpNoDelay);
+        streamClient = new Http2NettyStreamClient(_eventLoopGroup, _executor, requestTimeout, shutdownTimeout,
+          _callbackExecutorGroup, _jmxManager, channelPoolManagerBuilder.buildHttp2Stream());
         break;
       default:
         throw new IllegalArgumentException("Unrecognized HTTP protocol version " + httpProtocolVersion);
     }
 
-    HttpNettyClient legacyClient = new HttpNettyClient(_eventLoopGroup,
-        _executor,
-        poolSize,
-        requestTimeout,
-        idleTimeout,
-        shutdownTimeout,
-        (int)maxResponseSize,
-        sslContext,
-        sslParameters,
-        _callbackExecutorGroup,
-        poolWaiterSize,
-        clientName,
-        _jmxManager,
-        strategy,
-        poolMinSize,
-        maxHeaderSize,
-        maxChunkSize,
-        maxConcurrentConnections);
+    HttpNettyClient legacyClient = new HttpNettyClient(_eventLoopGroup, _executor, requestTimeout, shutdownTimeout,
+      _callbackExecutorGroup, _jmxManager, channelPoolManagerBuilder.buildRest());
 
     return new MixedClient(legacyClient, streamClient);
   }
@@ -1222,9 +1213,5 @@ public class HttpClientFactory implements TransportClientFactory
       return ((AbstractNettyStreamClient)_streamClient).getShutdownTimeout();
     }
 
-    long getMaxResponseSize()
-    {
-      return ((AbstractNettyStreamClient)_streamClient).getMaxResponseSize();
-    }
   }
 }

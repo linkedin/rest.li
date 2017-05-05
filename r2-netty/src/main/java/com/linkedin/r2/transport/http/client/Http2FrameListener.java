@@ -20,7 +20,6 @@
 
 package com.linkedin.r2.transport.http.client;
 
-import com.linkedin.common.util.None;
 import com.linkedin.data.ByteString;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.message.Response;
@@ -33,7 +32,6 @@ import com.linkedin.r2.message.stream.entitystream.Writer;
 import com.linkedin.r2.transport.common.bridge.common.ResponseWithCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.http.common.HttpConstants;
-import com.linkedin.r2.util.Timeout;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.channel.ChannelHandlerContext;
@@ -48,16 +46,15 @@ import io.netty.handler.codec.http2.Http2Headers;
 import io.netty.handler.codec.http2.Http2LifecycleManager;
 import io.netty.handler.codec.http2.Http2Settings;
 import io.netty.handler.codec.http2.Http2Stream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 
 /**
@@ -75,22 +72,18 @@ public class Http2FrameListener extends Http2EventAdapter
 
   private static final Logger LOG = LoggerFactory.getLogger(Http2FrameListener.class);
 
-  private final ScheduledExecutorService _scheduler;
   private final Http2Connection _connection;
   private final Http2Connection.PropertyKey _writerKey;
   private final Http2LifecycleManager _lifecycleManager;
   private final long _maxContentLength;
-  private final long _streamingTimeout;
 
-  public Http2FrameListener(ScheduledExecutorService scheduler, Http2Connection connection,
-      Http2LifecycleManager lifecycleManager, long maxContentLength, long streamingTimeout)
+  public Http2FrameListener(Http2Connection connection,
+                            Http2LifecycleManager lifecycleManager, long maxContentLength)
   {
-    _scheduler = scheduler;
     _connection = connection;
     _writerKey = connection.newKey();
     _lifecycleManager = lifecycleManager;
     _maxContentLength = maxContentLength;
-    _streamingTimeout = streamingTimeout;
   }
 
   @Override
@@ -144,10 +137,10 @@ public class Http2FrameListener extends Http2EventAdapter
     }
 
     // Gets async pool handle from stream properties
-    Http2Connection.PropertyKey handleKey =
-        ctx.channel().attr(Http2ClientPipelineInitializer.CHANNEL_POOL_HANDLE_ATTR_KEY).get();
-    TimeoutAsyncPoolHandle<?> handle = _connection.stream(streamId).removeProperty(handleKey);
-    if (handle == null)
+    TimeoutAsyncPoolHandle<?> timeoutHandle =
+        PipelineHttp2PropertyUtil.remove(ctx, _connection, streamId, Http2ClientPipelineInitializer.CHANNEL_POOL_HANDLE_ATTR_KEY);
+
+    if (timeoutHandle == null)
     {
       _lifecycleManager.onError(ctx, Http2Exception.connectionError(Http2Error.PROTOCOL_ERROR,
           "No channel pool handle is associated with this stream", streamId));
@@ -158,12 +151,12 @@ public class Http2FrameListener extends Http2EventAdapter
     if (endOfStream)
     {
       response = builder.build(EntityStreams.emptyStream());
-      ctx.fireChannelRead(handle);
+      ctx.fireChannelRead(timeoutHandle);
     }
     else
     {
       // Associate an entity stream writer to the HTTP/2 stream
-      final TimeoutBufferedWriter writer = new TimeoutBufferedWriter(ctx, streamId, _maxContentLength, handle);
+      final TimeoutBufferedWriter writer = new TimeoutBufferedWriter(ctx, streamId, _maxContentLength, timeoutHandle);
       if (_connection.stream(streamId).setProperty(_writerKey, writer) != null)
       {
         _lifecycleManager.onError(ctx, Http2Exception.connectionError(Http2Error.PROTOCOL_ERROR,
@@ -177,9 +170,8 @@ public class Http2FrameListener extends Http2EventAdapter
     }
 
     // Gets callback from stream properties
-    Http2Connection.PropertyKey callbackKey =
-        ctx.channel().attr(Http2ClientPipelineInitializer.CALLBACK_ATTR_KEY).get();
-    TransportCallback<?> callback = _connection.stream(streamId).removeProperty(callbackKey);
+    TransportCallback<?> callback =
+        PipelineHttp2PropertyUtil.remove(ctx, _connection, streamId, Http2ClientPipelineInitializer.CALLBACK_ATTR_KEY);
     if (callback != null)
     {
       ctx.fireChannelRead(new ResponseWithCallback<Response, TransportCallback<?>>(response, callback));
@@ -244,30 +236,28 @@ public class Http2FrameListener extends Http2EventAdapter
     private final ChannelHandlerContext _ctx;
     private final int _streamId;
     private final long _maxContentLength;
-    private final TimeoutAsyncPoolHandle<?> _poolHandle;
+    private final TimeoutAsyncPoolHandle<?> _timeoutPoolHandle;
     private WriteHandle _wh;
     private boolean _lastChunkReceived;
     private int _totalBytesWritten;
     private final Queue<ByteString> _buffer;
-    private final Timeout<None> _timeout;
     private volatile Throwable _failureBeforeInit;
 
     TimeoutBufferedWriter(final ChannelHandlerContext ctx, int streamId, long maxContentLength,
-        TimeoutAsyncPoolHandle<?> poolHandle)
+                          TimeoutAsyncPoolHandle<?> timeoutPoolHandle)
     {
       _ctx = ctx;
       _streamId = streamId;
       _maxContentLength = maxContentLength;
-      _poolHandle = poolHandle;
+      _timeoutPoolHandle = timeoutPoolHandle;
       _failureBeforeInit = null;
       _lastChunkReceived = false;
       _totalBytesWritten = 0;
       _buffer = new LinkedList<>();
 
       // schedule a timeout to set the stream and inform use
-      _timeout = new Timeout<>(_scheduler, _streamingTimeout, TimeUnit.MILLISECONDS, None.none());
-      _timeout.addTimeoutTask(() -> _ctx.executor().execute(()
-          -> {
+      _timeoutPoolHandle.addTimeoutTask(() -> _ctx.executor().execute(() ->
+      {
         final Exception cause = new TimeoutException("Timeout while receiving the response entity.");
         doFail(cause);
       }));
@@ -304,7 +294,7 @@ public class Http2FrameListener extends Http2EventAdapter
       doReset();
 
       // Signals Http2ChannelPoolHandler to return channel back to the async pool
-      _ctx.fireChannelRead(_poolHandle);
+      _ctx.fireChannelRead(_timeoutPoolHandle);
     }
 
     public void onDataRead(ByteBuf data, boolean end) throws TooLongFrameException
@@ -355,13 +345,11 @@ public class Http2FrameListener extends Http2EventAdapter
       }
 
       // Signals Http2ChannelPoolHandler to return channel back to the async pool
-      _ctx.fireChannelRead(_poolHandle.error());
+      _ctx.fireChannelRead(_timeoutPoolHandle.error());
     }
 
     private void doReset()
     {
-      // Cancels streaming timeout
-      _timeout.getItem();
       // Resets and closes the stream
       _lifecycleManager.resetStream(_ctx, _streamId, Http2Error.CANCEL.code(), _ctx.newPromise());
     }
@@ -394,10 +382,9 @@ public class Http2FrameListener extends Http2EventAdapter
         {
           if (_lastChunkReceived)
           {
-            // Signals Http2ChannelPoolHandler to return channel back to the async pool
-            _ctx.fireChannelRead(_poolHandle);
             _wh.done();
-            _timeout.getItem();
+            // Signals Http2ChannelPoolHandler to return channel back to the async pool
+            _ctx.fireChannelRead(_timeoutPoolHandle);
           }
           break;
         }

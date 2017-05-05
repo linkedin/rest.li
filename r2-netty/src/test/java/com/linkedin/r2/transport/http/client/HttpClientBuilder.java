@@ -18,46 +18,36 @@ package com.linkedin.r2.transport.http.client;
 
 import io.netty.channel.nio.NioEventLoopGroup;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ScheduledExecutorService;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ScheduledExecutorService;
 
 
 /**
  * Convenient class for building {@link HttpNettyStreamClient} with reasonable default configs.
  *
  * @author Ang Xu
+ * @author Francesco Capponi
  * @version $Revision: $
  */
 class HttpClientBuilder
 {
+
+  private final ChannelPoolManagerBuilder channelPoolManagerBuilder;
+  private ExecutorService _callbackExecutors = null;
+  private long _shutdownTimeout = 5000;
+  private long _requestTimeout = 10000;
+  private AbstractJmxManager _jmxManager = AbstractJmxManager.NULL_JMX_MANAGER;
   private final NioEventLoopGroup _eventLoopGroup;
   private final ScheduledExecutorService _scheduler;
-
-  private ExecutorService _callbackExecutors = null;
-  private SSLContext _sslContext = null;
-  private SSLParameters _sslParameters = null;
-  private long _requestTimeout = 10000;
-  private long _shutdownTimeout = 5000;
-  private long _idleTimeout = 25000;
-  private int _maxHeaderSize = 8192;
-  private int _maxChunkSize = 8192;
-  private int _maxResponseSize = 1024 * 1024 * 2;
-  private String _name = "noNameSpecifiedClient";
-  private int _maxPoolSize = 200;
-  private int _minPoolSize = 0;
-  private int _maxConcurrentConnections = Integer.MAX_VALUE;
-  private int _poolWaiterSize = Integer.MAX_VALUE;
-  private AsyncPoolImpl.Strategy _strategy = AsyncPoolImpl.Strategy.MRU;
-  private AbstractJmxManager _jmxManager = AbstractJmxManager.NULL_JMX_MANAGER;
-  private boolean _tcpNoDelay = true;
 
 
   public HttpClientBuilder(NioEventLoopGroup eventLoopGroup, ScheduledExecutorService scheduler)
   {
     _eventLoopGroup = eventLoopGroup;
     _scheduler = scheduler;
+    channelPoolManagerBuilder = new ChannelPoolManagerBuilder(eventLoopGroup, scheduler);
   }
 
   public HttpClientBuilder setCallbackExecutors(ExecutorService callbackExecutors)
@@ -66,165 +56,156 @@ class HttpClientBuilder
     return this;
   }
 
-  public HttpClientBuilder setSSLContext(SSLContext sslContext)
-  {
-    _sslContext = sslContext;
-    return this;
-  }
-
-  public HttpClientBuilder setSSLParameters(SSLParameters sslParameters)
-  {
-    _sslParameters = sslParameters;
-    return this;
-  }
-
+  /**
+   * @param requestTimeout Timeout, in ms, to get a connection from the pool or create one
+   */
   public HttpClientBuilder setRequestTimeout(long requestTimeout)
   {
     _requestTimeout = requestTimeout;
+    setGracefulShutdownTimeout((int) _requestTimeout);
     return this;
   }
 
+  /**
+   * @param shutdownTimeout Timeout, in ms, the client should wait after shutdown is
+   *                        initiated before terminating outstanding requests
+   */
   public HttpClientBuilder setShutdownTimeout(long shutdownTimeout)
   {
     _shutdownTimeout = shutdownTimeout;
     return this;
   }
 
-  public HttpClientBuilder setIdleTimeout(long idleTimeout)
-  {
-    _idleTimeout = idleTimeout;
-    return this;
-  }
-
-  public HttpClientBuilder setMaxHeaderSize(int maxHeaderSize)
-  {
-    _maxHeaderSize = maxHeaderSize;
-    return this;
-  }
-
-  public HttpClientBuilder setMaxChunkSize(int maxChunkSize)
-  {
-    _maxChunkSize = maxChunkSize;
-    return this;
-  }
-
-  public HttpClientBuilder setMaxResponseSize(int maxResponseSize)
-  {
-    _maxResponseSize = maxResponseSize;
-    return this;
-  }
-
-  public HttpClientBuilder setClientName(String name)
-  {
-    _name = name;
-    return this;
-  }
-
-  public HttpClientBuilder setMaxPoolSize(int maxPoolSize)
-  {
-    _maxPoolSize = maxPoolSize;
-    return this;
-  }
-
-  public HttpClientBuilder setMinPoolSize(int minPoolSize)
-  {
-    _minPoolSize = minPoolSize;
-    return this;
-  }
-
-  public void setMaxConcurrentConnections(int maxConcurrentConnections) {
-    _maxConcurrentConnections = maxConcurrentConnections;
-  }
-
-  public HttpClientBuilder setPoolWaiterSize(int poolWaiterSize)
-  {
-    _poolWaiterSize = poolWaiterSize;
-    return this;
-  }
-
-  public HttpClientBuilder setStrategy(AsyncPoolImpl.Strategy strategy)
-  {
-    _strategy = strategy;
-    return this;
-  }
-
+  /**
+   * @param jmxManager A management class that is aware of the creation/shutdown event
+   *                   of the underlying {@link ChannelPoolManager}
+   */
   public HttpClientBuilder setJmxManager(AbstractJmxManager jmxManager)
   {
     _jmxManager = jmxManager;
     return this;
   }
 
-  public HttpClientBuilder setTcpNoDelay(boolean tcpNoDelay)
+
+  public HttpNettyStreamClient buildStreamClient()
   {
-    _tcpNoDelay = tcpNoDelay;
+    return new HttpNettyStreamClient(
+      _eventLoopGroup,
+      _scheduler,
+      _requestTimeout,
+      _shutdownTimeout,
+      _callbackExecutors,
+      _jmxManager,
+      channelPoolManagerBuilder.buildStream()
+    );
+
+  }
+
+  public HttpNettyClient buildRestClient()
+  {
+    return new HttpNettyClient(
+      _eventLoopGroup,
+      _scheduler,
+      _requestTimeout,
+      _shutdownTimeout,
+      _callbackExecutors,
+      _jmxManager,
+      channelPoolManagerBuilder.buildRest()
+    );
+
+  }
+
+  public Http2NettyStreamClient buildHttp2StreamClient()
+  {
+    return new Http2NettyStreamClient(
+      _eventLoopGroup,
+      _scheduler,
+      _requestTimeout,
+      _shutdownTimeout,
+      _callbackExecutors,
+      _jmxManager,
+      channelPoolManagerBuilder.buildHttp2Stream());
+  }
+
+  // Delegating parameters
+
+  public HttpClientBuilder setSSLContext(SSLContext sslContext)
+  {
+    channelPoolManagerBuilder.setSSLContext(sslContext);
     return this;
   }
 
-  public HttpNettyStreamClient buildStream()
+  public HttpClientBuilder setSSLParameters(SSLParameters sslParameters)
   {
-    return new HttpNettyStreamClient(_eventLoopGroup,
-                               _scheduler,
-                               _maxPoolSize,
-                               _requestTimeout,
-                               _idleTimeout,
-                               _shutdownTimeout,
-                               _maxResponseSize,
-                               _sslContext,
-                               _sslParameters,
-                               _callbackExecutors,
-                               _poolWaiterSize,
-                               _name,
-                               _jmxManager,
-                               _strategy,
-                               _minPoolSize,
-                               _maxHeaderSize,
-                               _maxChunkSize,
-                               _maxConcurrentConnections,
-                               _tcpNoDelay);
-
+    channelPoolManagerBuilder.setSSLParameters(sslParameters);
+    return this;
   }
 
-  public HttpNettyClient buildRest()
+  public HttpClientBuilder setGracefulShutdownTimeout(int gracefulShutdownTimeout)
   {
-    return new HttpNettyClient(_eventLoopGroup,
-        _scheduler,
-        _maxPoolSize,
-        _requestTimeout,
-        _idleTimeout,
-        _shutdownTimeout,
-        _maxResponseSize,
-        _sslContext,
-        _sslParameters,
-        _callbackExecutors,
-        _poolWaiterSize,
-        _name,
-        _jmxManager,
-        _strategy,
-        _minPoolSize,
-        _maxHeaderSize,
-        _maxChunkSize,
-        _maxConcurrentConnections);
-
+    channelPoolManagerBuilder.setGracefulShutdownTimeout(gracefulShutdownTimeout);
+    return this;
   }
 
-  public Http2NettyStreamClient buildHttp2Stream()
+  public HttpClientBuilder setIdleTimeout(long idleTimeout)
   {
-    return new Http2NettyStreamClient(
-        _eventLoopGroup,
-        _scheduler,
-        _requestTimeout,
-        _idleTimeout,
-        _shutdownTimeout,
-        _maxResponseSize,
-        _sslContext,
-        _sslParameters,
-        _callbackExecutors,
-        _poolWaiterSize,
-        _name,
-        _jmxManager,
-        _maxHeaderSize,
-        _maxChunkSize,
-        _maxConcurrentConnections,
-        _tcpNoDelay);
+    channelPoolManagerBuilder.setIdleTimeout(idleTimeout);
+    return this;
   }
+
+
+  public HttpClientBuilder setMaxHeaderSize(int maxHeaderSize)
+  {
+    channelPoolManagerBuilder.setMaxHeaderSize(maxHeaderSize);
+    return this;
+  }
+
+  public HttpClientBuilder setMaxChunkSize(int maxChunkSize)
+  {
+    channelPoolManagerBuilder.setMaxChunkSize(maxChunkSize);
+    return this;
+  }
+
+  public HttpClientBuilder setMaxResponseSize(long maxResponseSize)
+  {
+    channelPoolManagerBuilder.setMaxResponseSize(maxResponseSize);
+    return this;
+  }
+
+  public HttpClientBuilder setMaxPoolSize(int maxPoolSize)
+  {
+    channelPoolManagerBuilder.setMaxPoolSize(maxPoolSize);
+    return this;
+  }
+
+  public HttpClientBuilder setMinPoolSize(int minPoolSize)
+  {
+    channelPoolManagerBuilder.setMinPoolSize(minPoolSize);
+    return this;
+  }
+
+  public HttpClientBuilder setMaxConcurrentConnectionInitializations(int maxConcurrentConnectionInitializations)
+  {
+    channelPoolManagerBuilder.setMaxConcurrentConnectionInitializations(maxConcurrentConnectionInitializations);
+    return this;
+  }
+
+  public HttpClientBuilder setPoolWaiterSize(int poolWaiterSize)
+  {
+    channelPoolManagerBuilder.setPoolWaiterSize(poolWaiterSize);
+    return this;
+  }
+
+  public HttpClientBuilder setStrategy(AsyncPoolImpl.Strategy strategy)
+  {
+    channelPoolManagerBuilder.setStrategy(strategy);
+    return this;
+  }
+
+  public HttpClientBuilder setTcpNoDelay(boolean tcpNoDelay)
+  {
+    channelPoolManagerBuilder.setTcpNoDelay(tcpNoDelay);
+    return this;
+  }
+
 }
