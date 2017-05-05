@@ -1,5 +1,8 @@
 11.0.8
 ------
+(RB=987245)
+Fixed log message formatting in SimpleLoadBalancerState.
+
 (RB=979967)
 Add field aliases, field order, and include after support to PDL.
 Fix PDSC to serialize include after fields if include was after fields in original schema declaration.

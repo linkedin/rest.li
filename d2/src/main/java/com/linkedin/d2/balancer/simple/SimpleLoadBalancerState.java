@@ -330,7 +330,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
         if (AllowedClientPropertyKeys.isAllowedConfigKey(clientSuppliedConfigKey))
         {
           validatedClientConfigForSingleService.put(clientSuppliedConfigKey, clientSuppliedConfigValue);
-          info(_log, "Client supplied config key {} for service {}", new Object[]{clientSuppliedConfigKey, serviceName});
+          _log.info("Client supplied config key {} for service {}", new Object[]{clientSuppliedConfigKey, serviceName});
         }
       }
       if (!validatedClientConfigForSingleService.isEmpty())
@@ -1189,7 +1189,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     {
       // logging this at debug because there may be situations where a service may want some of its
       // clients talking https while others are ok using http.
-      debug(_log, "No TransportClient for scheme {}, service {}, URI {} and partitionDataMap {}. " +
+      _log.debug("No TransportClient for scheme {}, service {}, URI {} and partitionDataMap {}. " +
                   "This client may not be configured to handle URIs in this scheme.",
             new Object[]{uri.getScheme(), serviceName, uri, partitionDataMap });
       return null;
@@ -1208,7 +1208,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     Map<String, Object> clientSuppliedServiceProperties = _clientServicesConfig.get(serviceProperties.getServiceName());
     if (clientSuppliedServiceProperties != null)
     {
-      debug(_log, "Client supplied configs for service {}", new Object[]{serviceProperties.getServiceName()});
+      _log.debug("Client supplied configs for service {}", new Object[]{serviceProperties.getServiceName()});
 
       // check for overrides
       for (String clientSuppliedKey: clientSuppliedServiceProperties.keySet())
@@ -1221,14 +1221,12 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
                                                         clientSuppliedKey))
           {
             transportClientProperties.put(clientSuppliedKey, clientSuppliedServiceProperties.get(clientSuppliedKey));
-            info(_log,
-                 "Client overrode config property {} for service {}. This is being used to instantiate the Transport Client",
+            _log.info("Client overrode config property {} for service {}. This is being used to instantiate the Transport Client",
                  new Object[]{clientSuppliedKey, serviceProperties.getServiceName()});
           }
           else
           {
-            warn(_log,
-                 "Client supplied config property {} with an invalid value {} for service {}",
+            _log.warn("Client supplied config property {} with an invalid value {} for service {}",
                  new Object[]{clientSuppliedKey,
                      clientSuppliedServiceProperties.get(clientSuppliedKey),
                      serviceProperties.getServiceName()});
