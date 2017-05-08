@@ -31,6 +31,8 @@ import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.transport.common.bridge.client.TransportCallbackAdapter;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
+import com.linkedin.r2.transport.http.client.common.ChannelPoolFactory;
+import com.linkedin.r2.transport.http.client.rest.HttpNettyClient;
 import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
 import io.netty.channel.Channel;
 import io.netty.channel.nio.NioEventLoopGroup;

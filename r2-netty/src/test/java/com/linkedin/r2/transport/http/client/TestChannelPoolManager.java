@@ -21,6 +21,8 @@
 package com.linkedin.r2.transport.http.client;
 
 import com.linkedin.common.callback.Callback;
+import com.linkedin.r2.transport.http.client.common.ChannelPoolFactory;
+import com.linkedin.r2.transport.http.client.common.ChannelPoolManager;
 import com.linkedin.r2.util.Cancellable;
 import com.linkedin.common.util.None;
 import io.netty.channel.Channel;

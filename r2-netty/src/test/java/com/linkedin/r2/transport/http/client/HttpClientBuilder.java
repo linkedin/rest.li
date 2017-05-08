@@ -16,6 +16,11 @@
 
 package com.linkedin.r2.transport.http.client;
 
+import com.linkedin.r2.transport.http.client.common.ChannelPoolManager;
+import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerBuilder;
+import com.linkedin.r2.transport.http.client.rest.HttpNettyClient;
+import com.linkedin.r2.transport.http.client.stream.http.HttpNettyStreamClient;
+import com.linkedin.r2.transport.http.client.stream.http2.Http2NettyStreamClient;
 import io.netty.channel.nio.NioEventLoopGroup;
 
 import javax.net.ssl.SSLContext;
