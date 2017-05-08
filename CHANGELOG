@@ -7,6 +7,9 @@ Fixed log message formatting in SimpleLoadBalancerState.
 Add field aliases, field order, and include after support to PDL.
 Fix PDSC to serialize include after fields if include was after fields in original schema declaration.
 
+(RB=988572)
+Surppress the warning message if quarantine is already enabled
+
 11.0.7
 ------
 (RB=982922)

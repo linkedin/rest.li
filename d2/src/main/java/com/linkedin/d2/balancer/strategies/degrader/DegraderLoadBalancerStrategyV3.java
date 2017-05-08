@@ -1073,8 +1073,12 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       public void onError(Throwable e)
       {
         // Do nothing as the quarantine is disabled by default
-        _rateLimitedLogger.warn("Error to enable quarantine. Health checking failed for service {}: ",
-            _state._serviceName, e);
+        if (!_state._enableQuarantine.get())
+        {
+          // No need to log the error message if quarantine is already enabled
+          _rateLimitedLogger.warn("Error enabling quarantine. Health checking failed for service {}: ",
+              _state._serviceName, e);
+        }
       }
 
       @Override
