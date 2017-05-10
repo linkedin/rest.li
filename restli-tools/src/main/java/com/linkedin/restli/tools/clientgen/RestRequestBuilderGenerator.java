@@ -183,7 +183,8 @@ public class RestRequestBuilderGenerator
     else
     {
       modifiedFiles = targetFiles;
-      _log.info("Generating " + targetFiles.size() + " files: " + targetFiles);
+      _log.info("Generating " + targetFiles.size() + " files");
+      _log.debug("Files: " + targetFiles);
       requestBuilderCodeModel.build(new FileCodeWriter(targetDirectory, true));
       dataTemplateCodeModel.build(new FileCodeWriter(targetDirectory, true));
     }

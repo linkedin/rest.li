@@ -171,7 +171,8 @@ public class AvroSchemaGenerator extends AbstractGenerator
       return;
     }
 
-    _log.info("Generating " + targetFiles.size() + " files: " + targetFiles);
+    _log.info("Generating " + targetFiles.size() + " files");
+    _log.debug("Files: " + targetFiles);
     outputAvroSchemas(targetDirectory);
   }
 

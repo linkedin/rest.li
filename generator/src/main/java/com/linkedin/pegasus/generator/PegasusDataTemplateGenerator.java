@@ -146,7 +146,8 @@ public class PegasusDataTemplateGenerator
     else
     {
       modifiedFiles = targetFiles;
-      _log.info("Generating " + targetFiles.size() + " files: " + targetFiles);
+      _log.info("Generating " + targetFiles.size() + " files");
+      _log.debug("Files: "+ targetFiles);
       validateDefinedClassRegistration(dataTemplateGenerator.getCodeModel(), dataTemplateGenerator.getGeneratedClasses().keySet());
       dataTemplateGenerator.getCodeModel().build(new FileCodeWriter(targetDirectory, true));
     }
