@@ -17,7 +17,8 @@
 package com.linkedin.r2.transport.http.client;
 
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManager;
-import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerBuilder;
+import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerFactory;
+import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerKeyBuilder;
 import com.linkedin.r2.transport.http.client.rest.HttpNettyClient;
 import com.linkedin.r2.transport.http.client.stream.http.HttpNettyStreamClient;
 import com.linkedin.r2.transport.http.client.stream.http2.Http2NettyStreamClient;
@@ -39,7 +40,7 @@ import java.util.concurrent.ScheduledExecutorService;
 class HttpClientBuilder
 {
 
-  private final ChannelPoolManagerBuilder channelPoolManagerBuilder;
+  private final ChannelPoolManagerKeyBuilder _channelPoolManagerKeyBuilder;
   private ExecutorService _callbackExecutors = null;
   private long _shutdownTimeout = 5000;
   private long _requestTimeout = 10000;
@@ -52,7 +53,7 @@ class HttpClientBuilder
   {
     _eventLoopGroup = eventLoopGroup;
     _scheduler = scheduler;
-    channelPoolManagerBuilder = new ChannelPoolManagerBuilder(eventLoopGroup, scheduler);
+    _channelPoolManagerKeyBuilder = new ChannelPoolManagerKeyBuilder();
   }
 
   public HttpClientBuilder setCallbackExecutors(ExecutorService callbackExecutors)
@@ -91,6 +92,10 @@ class HttpClientBuilder
     return this;
   }
 
+  private ChannelPoolManagerFactory getChannelPoolManagerFactory()
+  {
+    return new ChannelPoolManagerFactory(_eventLoopGroup, _scheduler, _channelPoolManagerKeyBuilder.build());
+  }
 
   public HttpNettyStreamClient buildStreamClient()
   {
@@ -101,7 +106,7 @@ class HttpClientBuilder
       _shutdownTimeout,
       _callbackExecutors,
       _jmxManager,
-      channelPoolManagerBuilder.buildStream()
+      getChannelPoolManagerFactory().buildStream()
     );
 
   }
@@ -115,7 +120,7 @@ class HttpClientBuilder
       _shutdownTimeout,
       _callbackExecutors,
       _jmxManager,
-      channelPoolManagerBuilder.buildRest()
+      getChannelPoolManagerFactory().buildRest()
     );
 
   }
@@ -129,87 +134,87 @@ class HttpClientBuilder
       _shutdownTimeout,
       _callbackExecutors,
       _jmxManager,
-      channelPoolManagerBuilder.buildHttp2Stream());
+      getChannelPoolManagerFactory().buildHttp2Stream());
   }
 
   // Delegating parameters
 
   public HttpClientBuilder setSSLContext(SSLContext sslContext)
   {
-    channelPoolManagerBuilder.setSSLContext(sslContext);
+    _channelPoolManagerKeyBuilder.setSSLContext(sslContext);
     return this;
   }
 
   public HttpClientBuilder setSSLParameters(SSLParameters sslParameters)
   {
-    channelPoolManagerBuilder.setSSLParameters(sslParameters);
+    _channelPoolManagerKeyBuilder.setSSLParameters(sslParameters);
     return this;
   }
 
   public HttpClientBuilder setGracefulShutdownTimeout(int gracefulShutdownTimeout)
   {
-    channelPoolManagerBuilder.setGracefulShutdownTimeout(gracefulShutdownTimeout);
+    _channelPoolManagerKeyBuilder.setGracefulShutdownTimeout(gracefulShutdownTimeout);
     return this;
   }
 
   public HttpClientBuilder setIdleTimeout(long idleTimeout)
   {
-    channelPoolManagerBuilder.setIdleTimeout(idleTimeout);
+    _channelPoolManagerKeyBuilder.setIdleTimeout(idleTimeout);
     return this;
   }
 
 
   public HttpClientBuilder setMaxHeaderSize(int maxHeaderSize)
   {
-    channelPoolManagerBuilder.setMaxHeaderSize(maxHeaderSize);
+    _channelPoolManagerKeyBuilder.setMaxHeaderSize(maxHeaderSize);
     return this;
   }
 
   public HttpClientBuilder setMaxChunkSize(int maxChunkSize)
   {
-    channelPoolManagerBuilder.setMaxChunkSize(maxChunkSize);
+    _channelPoolManagerKeyBuilder.setMaxChunkSize(maxChunkSize);
     return this;
   }
 
   public HttpClientBuilder setMaxResponseSize(long maxResponseSize)
   {
-    channelPoolManagerBuilder.setMaxResponseSize(maxResponseSize);
+    _channelPoolManagerKeyBuilder.setMaxResponseSize(maxResponseSize);
     return this;
   }
 
   public HttpClientBuilder setMaxPoolSize(int maxPoolSize)
   {
-    channelPoolManagerBuilder.setMaxPoolSize(maxPoolSize);
+    _channelPoolManagerKeyBuilder.setMaxPoolSize(maxPoolSize);
     return this;
   }
 
   public HttpClientBuilder setMinPoolSize(int minPoolSize)
   {
-    channelPoolManagerBuilder.setMinPoolSize(minPoolSize);
+    _channelPoolManagerKeyBuilder.setMinPoolSize(minPoolSize);
     return this;
   }
 
   public HttpClientBuilder setMaxConcurrentConnectionInitializations(int maxConcurrentConnectionInitializations)
   {
-    channelPoolManagerBuilder.setMaxConcurrentConnectionInitializations(maxConcurrentConnectionInitializations);
+    _channelPoolManagerKeyBuilder.setMaxConcurrentConnectionInitializations(maxConcurrentConnectionInitializations);
     return this;
   }
 
   public HttpClientBuilder setPoolWaiterSize(int poolWaiterSize)
   {
-    channelPoolManagerBuilder.setPoolWaiterSize(poolWaiterSize);
+    _channelPoolManagerKeyBuilder.setPoolWaiterSize(poolWaiterSize);
     return this;
   }
 
   public HttpClientBuilder setStrategy(AsyncPoolImpl.Strategy strategy)
   {
-    channelPoolManagerBuilder.setStrategy(strategy);
+    _channelPoolManagerKeyBuilder.setStrategy(strategy);
     return this;
   }
 
   public HttpClientBuilder setTcpNoDelay(boolean tcpNoDelay)
   {
-    channelPoolManagerBuilder.setTcpNoDelay(tcpNoDelay);
+    _channelPoolManagerKeyBuilder.setTcpNoDelay(tcpNoDelay);
     return this;
   }
 

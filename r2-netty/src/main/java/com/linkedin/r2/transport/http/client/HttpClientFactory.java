@@ -40,9 +40,11 @@ import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
-import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerBuilder;
-import com.linkedin.r2.transport.http.client.stream.AbstractNettyStreamClient;
+import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerFactory;
+import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerKey;
+import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerKeyBuilder;
 import com.linkedin.r2.transport.http.client.rest.HttpNettyClient;
+import com.linkedin.r2.transport.http.client.stream.AbstractNettyStreamClient;
 import com.linkedin.r2.transport.http.client.stream.http.HttpNettyStreamClient;
 import com.linkedin.r2.transport.http.client.stream.http2.Http2NettyStreamClient;
 import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
@@ -107,7 +109,10 @@ public class HttpClientFactory implements TransportClientFactory
   public static final String HTTP_RESPONSE_CONTENT_ENCODINGS = "http.responseContentEncodings";
   public static final String HTTP_REQUEST_CONTENT_ENCODINGS = "http.requestContentEncodings";
   public static final String HTTP_USE_RESPONSE_COMPRESSION = "http.useResponseCompression";
+
+  /* The name for the sensor is now auto-generated based on the properties */
   public static final String HTTP_SERVICE_NAME = "http.serviceName";
+  public static final String HTTP_POOL_STATS_NAME_PREFIX = "http.poolStatsNamePrefix";
   public static final String HTTP_POOL_STRATEGY = "http.poolStrategy";
   public static final String HTTP_POOL_MIN_SIZE = "http.poolMinSize";
   public static final String HTTP_MAX_HEADER_SIZE = "http.maxHeaderSize";
@@ -122,6 +127,7 @@ public class HttpClientFactory implements TransportClientFactory
   public static final int DEFAULT_SHUTDOWN_TIMEOUT = 5000;
   public static final long DEFAULT_MAX_RESPONSE_SIZE = 1024 * 1024 * 2;
   public static final String DEFAULT_CLIENT_NAME = "noNameSpecifiedClient";
+  public static final String DEFAULT_POOL_STATS_NAME_PREFIX = "noSpecifiedNamePrefix";
   public static final AsyncPoolImpl.Strategy DEFAULT_POOL_STRATEGY = AsyncPoolImpl.Strategy.MRU;
   public static final int DEFAULT_POOL_MIN_SIZE = 0;
   public static final int DEFAULT_MAX_HEADER_SIZE = 8 * 1024;
@@ -889,13 +895,14 @@ public class HttpClientFactory implements TransportClientFactory
   }
 
   /**
-   * Testing aid.
+   * Creates a {@link ChannelPoolManagerFactory} given the properties
    */
-  TransportClient getRawClient(Map<String, ? extends Object> properties,
-                               SSLContext sslContext,
-                               SSLParameters sslParameters)
+  private ChannelPoolManagerKey createChannelPoolManagerKey(Map<String, ? extends Object> properties,
+                                                            SSLContext sslContext,
+                                                            SSLParameters sslParameters)
   {
-    // Channel Pool Manager properties
+    String poolStatsNamePrefix = chooseNewOverDefault((String) properties.get(HTTP_POOL_STATS_NAME_PREFIX), DEFAULT_POOL_STATS_NAME_PREFIX);
+
     Integer maxPoolSize = chooseNewOverDefault(getIntValue(properties, HTTP_POOL_SIZE), DEFAULT_POOL_SIZE);
     Integer idleTimeout = chooseNewOverDefault(getIntValue(properties, HTTP_IDLE_TIMEOUT), DEFAULT_IDLE_TIMEOUT);
     long maxResponseSize = chooseNewOverDefault(getLongValue(properties, HTTP_MAX_RESPONSE_SIZE), DEFAULT_MAX_RESPONSE_SIZE);
@@ -904,46 +911,53 @@ public class HttpClientFactory implements TransportClientFactory
     Integer maxHeaderSize = chooseNewOverDefault(getIntValue(properties, HTTP_MAX_HEADER_SIZE), DEFAULT_MAX_HEADER_SIZE);
     Integer maxChunkSize = chooseNewOverDefault(getIntValue(properties, HTTP_MAX_CHUNK_SIZE), DEFAULT_MAX_CHUNK_SIZE);
     Integer maxConcurrentConnectionInitializations = chooseNewOverDefault(getIntValue(properties, HTTP_MAX_CONCURRENT_CONNECTIONS), DEFAULT_DEFAULT_MAX_CONCURRENT_CONNECTIONS);
+    AsyncPoolImpl.Strategy strategy = chooseNewOverDefault(getStrategy(properties), DEFAULT_POOL_STRATEGY);
+
+    Integer gracefulShutdownTimeout = chooseNewOverDefault(getIntValue(properties, HTTP_REQUEST_TIMEOUT), DEFAULT_REQUEST_TIMEOUT);
+
+    return new ChannelPoolManagerKeyBuilder()
+      .setMaxPoolSize(maxPoolSize).setGracefulShutdownTimeout(gracefulShutdownTimeout).setIdleTimeout(idleTimeout)
+      .setMaxResponseSize(maxResponseSize).setSSLContext(sslContext).setPoolWaiterSize(poolWaiterSize)
+      .setSSLParameters(sslParameters).setStrategy(strategy).setMinPoolSize(poolMinSize)
+      .setMaxHeaderSize(maxHeaderSize).setMaxChunkSize(maxChunkSize)
+      .setMaxConcurrentConnectionInitializations(maxConcurrentConnectionInitializations)
+      .setTcpNoDelay(_tcpNoDelay).setPoolStatsNamePrefix(poolStatsNamePrefix).build();
+  }
+
+  TransportClient getRawClient(Map<String, ? extends Object> properties,
+                               SSLContext sslContext,
+                               SSLParameters sslParameters)
+  {
+
+    // key which identifies and contains the set of transport properties to create a channel pool manager
+    ChannelPoolManagerKey key = createChannelPoolManagerKey(properties, sslContext, sslParameters);
+
+    ChannelPoolManagerFactory channelPoolManagerFactory = new ChannelPoolManagerFactory(_eventLoopGroup, _executor, key);
 
     // Raw Client properties
     Integer shutdownTimeout = chooseNewOverDefault(getIntValue(properties, HTTP_SHUTDOWN_TIMEOUT), DEFAULT_SHUTDOWN_TIMEOUT);
-
     Integer requestTimeout = chooseNewOverDefault(getIntValue(properties, HTTP_REQUEST_TIMEOUT), DEFAULT_REQUEST_TIMEOUT);
-    String clientName = null;
-    if (properties != null && properties.containsKey(HTTP_SERVICE_NAME))
-    {
-      clientName = properties.get(HTTP_SERVICE_NAME) + "Client";
-    }
-    clientName = chooseNewOverDefault(clientName, DEFAULT_CLIENT_NAME);
 
-    AsyncPoolImpl.Strategy strategy = chooseNewOverDefault(getStrategy(properties), DEFAULT_POOL_STRATEGY);
     HttpProtocolVersion httpProtocolVersion =
-        chooseNewOverDefault(getHttpProtocolVersion(properties, HTTP_PROTOCOL_VERSION), _defaultHttpVersion);
-
-    ChannelPoolManagerBuilder channelPoolManagerBuilder = new ChannelPoolManagerBuilder(_eventLoopGroup, _executor);
-    channelPoolManagerBuilder.setMaxPoolSize(maxPoolSize).setGracefulShutdownTimeout(requestTimeout).setIdleTimeout(idleTimeout)
-      .setMaxResponseSize(maxResponseSize).setSSLContext(sslContext).setPoolWaiterSize(poolWaiterSize)
-      .setSSLParameters(sslParameters).setStrategy(strategy).setMinPoolSize(poolMinSize)
-      .setMaxHeaderSize(maxHeaderSize).setMaxChunkSize(maxChunkSize).setName(clientName)
-      .setMaxConcurrentConnectionInitializations(maxConcurrentConnectionInitializations).setTcpNoDelay(_tcpNoDelay);
+      chooseNewOverDefault(getHttpProtocolVersion(properties, HTTP_PROTOCOL_VERSION), _defaultHttpVersion);
 
     TransportClient streamClient;
     switch (httpProtocolVersion)
     {
       case HTTP_1_1:
         streamClient = new HttpNettyStreamClient(_eventLoopGroup, _executor, requestTimeout, shutdownTimeout,
-          _callbackExecutorGroup, _jmxManager, channelPoolManagerBuilder.buildStream());
+          _callbackExecutorGroup, _jmxManager, channelPoolManagerFactory.buildStream());
         break;
       case HTTP_2:
         streamClient = new Http2NettyStreamClient(_eventLoopGroup, _executor, requestTimeout, shutdownTimeout,
-          _callbackExecutorGroup, _jmxManager, channelPoolManagerBuilder.buildHttp2Stream());
+          _callbackExecutorGroup, _jmxManager, channelPoolManagerFactory.buildHttp2Stream());
         break;
       default:
         throw new IllegalArgumentException("Unrecognized HTTP protocol version " + httpProtocolVersion);
     }
 
     HttpNettyClient legacyClient = new HttpNettyClient(_eventLoopGroup, _executor, requestTimeout, shutdownTimeout,
-      _callbackExecutorGroup, _jmxManager, channelPoolManagerBuilder.buildRest());
+      _callbackExecutorGroup, _jmxManager, channelPoolManagerFactory.buildRest());
 
     return new MixedClient(legacyClient, streamClient);
   }

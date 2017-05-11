@@ -16,22 +16,49 @@
 
 package com.linkedin.d2.balancer.simple;
 
-import static com.linkedin.d2.discovery.util.LogUtil.debug;
-import static com.linkedin.d2.discovery.util.LogUtil.info;
-import static com.linkedin.d2.discovery.util.LogUtil.trace;
-import static com.linkedin.d2.discovery.util.LogUtil.warn;
-
+import com.linkedin.common.callback.Callback;
+import com.linkedin.common.callback.Callbacks;
+import com.linkedin.common.callback.SimpleCallback;
 import com.linkedin.common.util.MapUtil;
-import com.linkedin.d2.balancer.properties.ClientServiceConfigValidator;
+import com.linkedin.common.util.None;
+import com.linkedin.d2.balancer.LoadBalancerState;
+import com.linkedin.d2.balancer.LoadBalancerStateItem;
+import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.properties.AllowedClientPropertyKeys;
+import com.linkedin.d2.balancer.properties.ClientServiceConfigValidator;
+import com.linkedin.d2.balancer.properties.ClusterProperties;
+import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
+import com.linkedin.d2.balancer.properties.ServiceProperties;
+import com.linkedin.d2.balancer.properties.UriProperties;
+import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
+import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderConfigFactory;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyConfig;
+import com.linkedin.d2.balancer.util.ClientFactoryProvider;
+import com.linkedin.d2.balancer.util.LoadBalancerUtil;
+import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
+import com.linkedin.d2.balancer.util.partitions.PartitionAccessorFactory;
+import com.linkedin.d2.discovery.event.PropertyEventBus;
+import com.linkedin.d2.discovery.event.PropertyEventBusImpl;
+import com.linkedin.d2.discovery.event.PropertyEventPublisher;
+import com.linkedin.d2.discovery.event.PropertyEventSubscriber;
+import com.linkedin.d2.discovery.event.PropertyEventThread.PropertyEvent;
+import com.linkedin.d2.discovery.event.PropertyEventThread.PropertyEventShutdownCallback;
 import com.linkedin.internal.common.util.CollectionUtils;
+import com.linkedin.r2.transport.common.TransportClientFactory;
+import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
+import com.linkedin.r2.util.ClosableQueue;
+import com.linkedin.r2.util.ConfigValueExtractor;
 import com.linkedin.util.clock.Clock;
 import com.linkedin.util.clock.SystemClock;
 import com.linkedin.util.degrader.DegraderImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -48,39 +75,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.linkedin.common.callback.Callback;
-import com.linkedin.common.callback.Callbacks;
-import com.linkedin.common.callback.SimpleCallback;
-import com.linkedin.common.util.None;
-import com.linkedin.d2.balancer.LoadBalancerState;
-import com.linkedin.d2.balancer.LoadBalancerStateItem;
-import com.linkedin.d2.balancer.clients.TrackerClient;
-import com.linkedin.d2.balancer.properties.ClusterProperties;
-import com.linkedin.d2.balancer.properties.PartitionData;
-import com.linkedin.d2.balancer.properties.ServiceProperties;
-import com.linkedin.d2.balancer.properties.UriProperties;
-import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
-import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
-import com.linkedin.d2.balancer.util.ClientFactoryProvider;
-import com.linkedin.d2.balancer.util.LoadBalancerUtil;
-import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
-import com.linkedin.d2.balancer.util.partitions.PartitionAccessorFactory;
-import com.linkedin.d2.discovery.event.PropertyEventBus;
-import com.linkedin.d2.discovery.event.PropertyEventBusImpl;
-import com.linkedin.d2.discovery.event.PropertyEventPublisher;
-import com.linkedin.d2.discovery.event.PropertyEventSubscriber;
-import com.linkedin.d2.discovery.event.PropertyEventThread.PropertyEvent;
-import com.linkedin.d2.discovery.event.PropertyEventThread.PropertyEventShutdownCallback;
-import com.linkedin.r2.transport.common.TransportClientFactory;
-import com.linkedin.r2.transport.common.bridge.client.TransportClient;
-import com.linkedin.r2.util.ClosableQueue;
-import com.linkedin.r2.util.ConfigValueExtractor;
-
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLParameters;
+import static com.linkedin.d2.discovery.util.LogUtil.debug;
+import static com.linkedin.d2.discovery.util.LogUtil.info;
+import static com.linkedin.d2.discovery.util.LogUtil.trace;
+import static com.linkedin.d2.discovery.util.LogUtil.warn;
 
 public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactoryProvider
 {
@@ -1278,6 +1276,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
         if (factory != null)
         {
           transportClientProperties.put(HttpClientFactory.HTTP_SERVICE_NAME, serviceProperties.getServiceName());
+          transportClientProperties.put(HttpClientFactory.HTTP_POOL_STATS_NAME_PREFIX, serviceProperties.getClusterName());
           TransportClient client = factory.getClient(transportClientProperties);
           newTransportClients.put(scheme.toLowerCase(), client);
         }
