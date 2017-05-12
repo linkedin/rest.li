@@ -46,6 +46,7 @@ public class TestCookieUtil
     cookieA.setDiscard(false);
     cookieA.setMaxAge(125L);
     cookieA.setSecure(true);
+    cookieA.setHttpOnly(true);
 
     cookieB = new HttpCookie("b", "boss");
     cookieC = new HttpCookie("c", "ios");
@@ -77,6 +78,7 @@ public class TestCookieUtil
     Assert.assertEquals(decodedCookie.getDiscard(), cookieA.getDiscard());
     Assert.assertEquals(decodedCookie.getMaxAge(), cookieA.getMaxAge());
     Assert.assertEquals(decodedCookie.getSecure(), cookieA.getSecure());
+    Assert.assertEquals(decodedCookie.isHttpOnly(), cookieA.isHttpOnly());
   }
 
   @Test
@@ -87,6 +89,7 @@ public class TestCookieUtil
     Assert.assertTrue(encodedCookie.contains("Domain=.android.com"));
     Assert.assertTrue(encodedCookie.contains("Path=/source/"));
     Assert.assertTrue(encodedCookie.contains("Max-Age=125"));
+    Assert.assertTrue(encodedCookie.contains("HttpOnly"));
   }
 
   @Test

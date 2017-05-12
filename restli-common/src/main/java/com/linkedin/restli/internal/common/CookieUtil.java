@@ -214,6 +214,10 @@ public class CookieUtil
     {
       sb.append(";Secure");
     }
+    if (cookie.isHttpOnly())
+    {
+      sb.append(";HttpOnly");
+    }
 
     if (cookie.getComment() != null)
     {

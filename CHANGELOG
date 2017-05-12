@@ -10,6 +10,9 @@ Fix PDSC to serialize include after fields if include was after fields in origin
 (RB=988572)
 Surppress the warning message if quarantine is already enabled
 
+(RB=993433)
+Encode HttpOnly for cookies that are set with this flag.
+
 11.0.7
 ------
 (RB=982922)
