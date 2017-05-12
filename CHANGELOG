@@ -13,6 +13,9 @@ Surppress the warning message if quarantine is already enabled
 (RB=993433)
 Encode HttpOnly for cookies that are set with this flag.
 
+(RB=992939)
+Change the failure for request body parsing error to 400_BAD_REQUEST instead of 500 internal error. This is also consistent with the behavior for other argument builders.
+
 11.0.7
 ------
 (RB=982922)
