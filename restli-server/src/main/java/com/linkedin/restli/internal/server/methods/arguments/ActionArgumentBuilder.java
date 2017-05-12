@@ -31,7 +31,6 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
-import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.server.RestLiRequestData;
 import com.linkedin.restli.server.RestLiRequestDataImpl;
 import com.linkedin.restli.server.RoutingException;
@@ -64,7 +63,7 @@ public class ActionArgumentBuilder implements RestLiArgumentBuilder
     }
     else
     {
-      data = DataMapUtils.readMap(request);
+      data = ArgumentBuilder.extractEntity(request);
     }
     DynamicRecordTemplate template = new DynamicRecordTemplate(data, resourceMethodDescriptor.getRequestDataSchema());
     ValidationResult result =

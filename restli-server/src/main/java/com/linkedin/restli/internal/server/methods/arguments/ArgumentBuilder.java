@@ -37,6 +37,7 @@ import com.linkedin.data.template.InvalidAlternativeKeyException;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.TemplateRuntimeException;
 import com.linkedin.internal.common.util.CollectionUtils;
+import com.linkedin.r2.message.rest.RestMessage;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.BatchRequest;
 import com.linkedin.restli.common.ComplexResourceKey;
@@ -64,7 +65,6 @@ import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.RoutingException;
 import com.linkedin.restli.server.annotations.HeaderParam;
-import com.linkedin.restli.server.PathKeys;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.Arrays;
@@ -514,6 +514,26 @@ public class ArgumentBuilder
     {
       throw new RoutingException("Error parsing entity body: " + e.getMessage(),
                                  HttpStatus.S_400_BAD_REQUEST.getCode());
+    }
+  }
+
+
+  /**
+   * Extracts the entity from the request body of {@link com.linkedin.r2.message.rest.RestMessage}
+   *
+   * @param message {@link com.linkedin.r2.message.rest.RestMessage}
+   * @return {@link DataMap} representing the body of the message.
+   * @throws RoutingException with 400_BAD_REQUEST as status if the message cannot be parsed.
+   */
+  static DataMap extractEntity(final RestMessage message)
+  {
+    try
+    {
+      return DataMapUtils.readMapWithExceptions(message);
+    }
+    catch (IOException e)
+    {
+      throw new RoutingException("Cannot parse request entity", HttpStatus.S_400_BAD_REQUEST.getCode(), e);
     }
   }
 

@@ -26,6 +26,7 @@ import com.linkedin.data.schema.StringDataSchema;
 import com.linkedin.data.template.DynamicRecordMetadata;
 import com.linkedin.parseq.Context;
 import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.test.SimpleEnum;
 import com.linkedin.restli.internal.server.MutablePathKeys;
 import com.linkedin.restli.internal.server.PathKeysImpl;
@@ -281,6 +282,30 @@ public class TestActionArgumentBuilder
     }
 
     verify(request, descriptor, routingResult);
+  }
+
+  @Test
+  public void testExtractRequestDataFailure()
+  {
+    String entity = "{param2\":5678}";
+    RestRequest request = RestLiArgumentBuilderTestHelper.getMockRequest(false, entity, 3);
+    ResourceMethodDescriptor descriptor = RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor(null, getStringAndIntParams(), null, null);
+    ResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(null, null, null, false);
+    RoutingResult routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(descriptor, 1, context, 0);
+
+    RestLiArgumentBuilder argumentBuilder = new ActionArgumentBuilder();
+    try
+    {
+      argumentBuilder.extractRequestData(routingResult, request);
+      fail("Expected RoutingException");
+    }
+    catch (RoutingException e)
+    {
+      assertEquals(e.getMessage(), "Cannot parse request entity");
+      assertEquals(HttpStatus.S_400_BAD_REQUEST.getCode(), e.getStatus());
+    }
+
+    verify(request, routingResult);
   }
 
   @DataProvider(name = "keyArgumentData")

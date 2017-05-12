@@ -18,6 +18,7 @@ package com.linkedin.restli.internal.server.methods.arguments;
 
 
 import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.test.MyComplexKey;
 import com.linkedin.restli.internal.server.RestLiInternalException;
 import com.linkedin.restli.internal.server.RoutingResult;
@@ -29,6 +30,7 @@ import com.linkedin.restli.server.BatchCreateRequest;
 import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiRequestData;
 
+import com.linkedin.restli.server.RoutingException;
 import java.lang.annotation.Annotation;
 import java.util.List;
 
@@ -86,10 +88,10 @@ public class TestBatchCreateArgumentBuilder
   {
     return new Object[][]
         {
-            {"{\"elements\":{\"b\":123,\"a\":\"abc\"},{\"b\":5678,\"a\":\"xyzw\"}]}", "JsonParseException"},
-            {"{\"elements\":1234}", "JsonParseException"},
-            {"{\"elements\":", "JsonEOFException"},
-            {"{\"elements\":[{\"b\":123,\"a\":\"abc\"},{1234:5678,\"a\":\"xyzw\"}]}", "JsonParseException"}
+            {"{\"elements\":{\"b\":123,\"a\":\"abc\"},{\"b\":5678,\"a\":\"xyzw\"}]}", "Cannot parse request"},
+            {"{\"elements\":1234}", "Cannot parse request"},
+            {"{\"elements\":", "Cannot parse request"},
+            {"{\"elements\":[{\"b\":123,\"a\":\"abc\"},{1234:5678,\"a\":\"xyzw\"}]}", "Cannot parse request"}
         };
   }
 
@@ -107,9 +109,10 @@ public class TestBatchCreateArgumentBuilder
       argumentBuilder.extractRequestData(routingResult, request);
       fail("Expected RestLiInternalException or ClassCastException");
     }
-    catch (RestLiInternalException e)
+    catch (RoutingException e)
     {
       assertTrue(e.getMessage().contains(expectedExceptionMessage));
+      assertEquals(HttpStatus.S_400_BAD_REQUEST.getCode(), e.getStatus());
     }
     catch (ClassCastException e)
     {

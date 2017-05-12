@@ -87,10 +87,10 @@ public class DataMapUtils
   }
 
   /**
-   * Read {@link DataMap} from a {@link com.linkedin.r2.message.MessageHeaders}, using the message's headers to determine the
+   * Read {@link DataMap} from a {@link com.linkedin.r2.message.rest.RestMessage}, using the message's headers to determine the
    * correct encoding type.
    *
-   * @param message {@link com.linkedin.r2.message.MessageHeaders}
+   * @param message {@link com.linkedin.r2.message.rest.RestMessage}
    * @return {@link DataMap}
    */
   public static DataMap readMap(final RestMessage message)
@@ -111,7 +111,7 @@ public class DataMapUtils
    *
    * @throws IOException if the message entity cannot be parsed.
    */
-  private static DataMap readMapWithExceptions(final RestMessage message) throws IOException
+  public static DataMap readMapWithExceptions(final RestMessage message) throws IOException
   {
     try
     {

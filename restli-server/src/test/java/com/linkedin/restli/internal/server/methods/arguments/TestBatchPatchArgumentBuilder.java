@@ -24,6 +24,7 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.EmptyRecord;
+import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
@@ -307,6 +308,16 @@ public class TestBatchPatchArgumentBuilder
                     "\"($params:(),b:222,a:A2)\":{\"patch\":{\"$set\":{\"a\":\"someString\"}}}}}",
                 complexResourceKeys,
                 ERROR_MESSAGE_DUPLICATE_BATCH_KEYS
+            },
+            {
+                // Duplicate key in the entities body
+                AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+                new Key("compoundKey", CompoundKey.class, null),
+                new Key[] { new Key("string1", String.class), new Key("string2", String.class) },
+                "{\"entities\":{\"(string1:apples,string2:oranges)\":{\"patch\":{\"$set\":{\"a\":\"someString\"}}}," +
+                    "(string2:oranges,string1:apples)\":{\"patch\":{\"$set\":{\"a\":\"someOtherString\"}}}}}",
+                compoundKeys,
+                "Cannot parse request"
             }
         };
   }
@@ -330,6 +341,7 @@ public class TestBatchPatchArgumentBuilder
     catch (RoutingException e)
     {
       assertTrue(e.getMessage().contains(errorMessage));
+      assertEquals(HttpStatus.S_400_BAD_REQUEST.getCode(), e.getStatus());
     }
 
     verify(request, context, routingResult);

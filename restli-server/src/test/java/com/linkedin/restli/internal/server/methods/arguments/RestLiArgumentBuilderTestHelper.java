@@ -95,7 +95,7 @@ public class RestLiArgumentBuilderTestHelper
     RestRequest mockRequest = createMock(RestRequest.class);
     Map<String, String> headers = new HashMap<String, String>();
     headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, version.toString());
-    expect(mockRequest.getHeaders()).andReturn(headers);
+    expect(mockRequest.getHeaders()).andReturn(headers).anyTimes();
     if (entity != null)
     {
       expect(mockRequest.getHeader("Content-Type")).andReturn("application/json");
@@ -234,7 +234,7 @@ public class RestLiArgumentBuilderTestHelper
       {
         pathKeys.setBatchKeys(batchKeys);
       }
-      expect(context.getPathKeys()).andReturn(pathKeys);
+      expect(context.getPathKeys()).andReturn(pathKeys).anyTimes();
     }
 
     if (attachmentReaderGetExpected)
@@ -383,7 +383,7 @@ public class RestLiArgumentBuilderTestHelper
     {
       expect(mockRoutingResult.getResourceMethod()).andReturn(descriptor).times(getResourceMethodCount);
     }
-    if (context != null)
+    if (context != null && getContextCount > 0)
     {
       expect(mockRoutingResult.getContext()).andReturn(context).times(getContextCount);
     }
