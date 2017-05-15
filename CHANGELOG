@@ -6,6 +6,9 @@ Make check tasks incremental
 (RB=1001187)
 Honor ErrorResponseFormat for exception thrown within multiplexer (or by multiplexer filter).
 
+(RB=994715)
+Add D2Monitor to support D2Event
+
 11.0.9
 ------
 (RB=991779)
