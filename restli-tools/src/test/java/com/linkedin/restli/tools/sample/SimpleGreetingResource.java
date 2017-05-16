@@ -101,10 +101,27 @@ public class SimpleGreetingResource extends CollectionResourceTemplate<Long,Simp
     return ints;
   }
 
+  @Action(name="markGreetingAsRead",
+      resourceLevel= ResourceLevel.COLLECTION)
+  public String markGreetingAsRead(
+      @Deprecated @Optional() @ActionParam("key") Long key,
+      @Optional @ActionParam("urnKey") String urnKey)
+  {
+    return null;
+  }
+
   // find greetings by message
   @Finder("message")
   public List<SimpleGreeting> find(@PagingContextParam PagingContext pagingContext,
                           @QueryParam("message") @Optional String title)
+  {
+    return null;
+  }
+
+  @Finder("recipients")
+  public List<SimpleGreeting> findGreetingsByGuest(
+      @Deprecated @Optional @QueryParam("recipientIds") long[] recipientIds,
+      @Optional @QueryParam("recipients") String[] recipients)
   {
     return null;
   }

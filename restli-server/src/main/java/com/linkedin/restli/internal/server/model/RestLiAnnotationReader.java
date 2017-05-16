@@ -123,6 +123,8 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static com.linkedin.restli.internal.server.model.ResourceModelEncoder.DEPRECATED_ANNOTATION_NAME;
+
 
 /**
  *
@@ -352,7 +354,7 @@ public final class RestLiAnnotationReader
   {
     if(clazz.isAnnotationPresent(Deprecated.class))
     {
-      annotationsMap.put("deprecated", new DataMap());
+      annotationsMap.put(DEPRECATED_ANNOTATION_NAME, new DataMap());
     }
     return annotationsMap;
   }
@@ -361,7 +363,7 @@ public final class RestLiAnnotationReader
   {
     if(annotatedElement.isAnnotationPresent(Deprecated.class))
     {
-      annotationsMap.put("deprecated", new DataMap());
+      annotationsMap.put(DEPRECATED_ANNOTATION_NAME, new DataMap());
     }
     return annotationsMap;
   }

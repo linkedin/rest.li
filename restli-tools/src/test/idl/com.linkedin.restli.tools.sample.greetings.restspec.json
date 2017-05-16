@@ -34,6 +34,20 @@
         "optional" : true
       } ],
       "pagingSupported" : true
+    }, {
+      "name" : "recipients",
+      "parameters" : [ {
+        "annotations" : {
+          "deprecated" : { }
+        },
+        "name" : "recipientIds",
+        "type" : "{ \"type\" : \"array\", \"items\" : \"long\" }",
+        "optional" : true
+      }, {
+        "name" : "recipients",
+        "type" : "{ \"type\" : \"array\", \"items\" : \"string\" }",
+        "optional" : true
+      } ]
     } ],
     "actions" : [ {
       "name" : "greetingArrayAction",
@@ -51,6 +65,21 @@
         "type" : "{ \"type\" : \"array\", \"items\" : \"int\" }"
       } ],
       "returns" : "{ \"type\" : \"array\", \"items\" : \"int\" }"
+    }, {
+      "name" : "markGreetingAsRead",
+      "parameters" : [ {
+        "annotations" : {
+          "deprecated" : { }
+        },
+        "name" : "key",
+        "type" : "long",
+        "optional" : true
+      }, {
+        "name" : "urnKey",
+        "type" : "string",
+        "optional" : true
+      } ],
+      "returns" : "string"
     } ],
     "entity" : {
       "path" : "/greetings/{greetingsId}"

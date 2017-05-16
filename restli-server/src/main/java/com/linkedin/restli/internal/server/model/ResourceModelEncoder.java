@@ -917,6 +917,11 @@ public class ResourceModelEncoder
       }
 
       final DataMap customAnnotation = param.getCustomAnnotationData();
+      if (param.getAnnotations().contains(Deprecated.class))
+      {
+        customAnnotation.put(DEPRECATED_ANNOTATION_NAME, new DataMap());
+      }
+
       if (!customAnnotation.isEmpty())
       {
         paramSchema.setAnnotations(new CustomAnnotationContentSchemaMap(customAnnotation));
