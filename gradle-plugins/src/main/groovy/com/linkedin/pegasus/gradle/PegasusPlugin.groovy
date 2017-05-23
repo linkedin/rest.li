@@ -1065,6 +1065,7 @@ class PegasusPlugin implements Plugin<Project>
         currentIdlFiles = SharedFileUtils.getIdlFiles(project, destinationDirPrefix)
         previousIdlDirectory = apiIdlDir
         codegenClasspath = project.configurations.pegasusPlugin
+        modelCompatLevel = PropertyUtil.findCompatLevel(project, FileCompatibilityType.SNAPSHOT)
 
         onlyIf {
           !isPropertyTrue(project, SKIP_IDL_CHECK)
@@ -1083,6 +1084,7 @@ class PegasusPlugin implements Plugin<Project>
         currentSnapshotFiles = SharedFileUtils.getSnapshotFiles(project, destinationDirPrefix)
         previousSnapshotDirectory = apiSnapshotDir
         codegenClasspath = project.configurations.pegasusPlugin
+        snapshotCompatLevel = PropertyUtil.findCompatLevel(project, FileCompatibilityType.SNAPSHOT)
 
         onlyIf {
           isPropertyTrue(project, SKIP_IDL_CHECK)
@@ -1096,6 +1098,7 @@ class PegasusPlugin implements Plugin<Project>
         previousIdlDirectory = apiIdlDir
         resolverPath = restModelResolverPath
         codegenClasspath = project.configurations.pegasusPlugin
+        idlCompatLevel = PropertyUtil.findCompatLevel(project, FileCompatibilityType.IDL)
 
         onlyIf {
           !isPropertyTrue(project, SKIP_IDL_CHECK) && PropertyUtil.findCompatLevel(project, FileCompatibilityType.IDL) != 'OFF'

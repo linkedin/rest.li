@@ -1,6 +1,7 @@
 11.0.10
 ------
-
+(RB=1001008)
+Make check tasks incremental
 
 11.0.9
 ------
@@ -9,6 +10,9 @@ Moving ChannelPoolManager sensors from ServiceName-based to be composed by Custo
 
 11.0.8
 ------
+(RB=998274)
+generateRestModel should be more strict about running
+
 (RB=987245)
 Fixed log message formatting in SimpleLoadBalancerState.
 

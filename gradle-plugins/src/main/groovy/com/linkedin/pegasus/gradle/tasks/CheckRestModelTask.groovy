@@ -1,16 +1,17 @@
 package com.linkedin.pegasus.gradle.tasks
 
 
-import com.linkedin.pegasus.gradle.FileCompatibilityType
+import com.linkedin.pegasus.gradle.IOUtil
 import com.linkedin.pegasus.gradle.PegasusPlugin
-import com.linkedin.pegasus.gradle.PropertyUtil
 import com.linkedin.pegasus.gradle.internal.CompatibilityLogChecker
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.file.FileCollection
 import org.gradle.api.specs.Spec
+import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFiles
+import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.SkipWhenEmpty
 import org.gradle.api.tasks.TaskAction
 import org.gradle.process.internal.JavaExecAction
@@ -36,20 +37,27 @@ public class CheckRestModelTask extends DefaultTask
   @InputFiles
   FileCollection codegenClasspath
 
+  @Input
+  String modelCompatLevel
+
+  @OutputFile
+  File getSummaryTarget()
+  {
+    return summaryTarget
+  }
+
   boolean isModelCompatible = true
   boolean isRestSpecCompatible = true
   boolean isEquivalent = true
   boolean isRestSpecEquivalent = true
-  String wholeMessage = "";
+  String wholeMessage = ""
+
+  private File summaryTarget = new File(project.buildDir, "reports/checkRestModel/summary.txt")
 
   @TaskAction
   protected void check()
   {
-
-    final String modelCompatLevel = PropertyUtil.findCompatLevel(project, FileCompatibilityType.SNAPSHOT)
-
     project.logger.info('Checking interface compatibility with API ...')
-
     List<String> argFiles = []
     argFiles.addAll(findMatchingFiles(PegasusPlugin.SNAPSHOT_FILE_SUFFIX, currentSnapshotFiles,
                                       project.fileTree(previousSnapshotDirectory), false))
@@ -78,11 +86,17 @@ public class CheckRestModelTask extends DefaultTask
     isEquivalent = logChecker.getModelCompatibility().isEmpty() && logChecker.getRestSpecCompatibility().isEmpty()
     isRestSpecEquivalent = logChecker.getRestSpecCompatibility().isEmpty()
     wholeMessage = logChecker.getWholeText()
+    IOUtil.writeText(getSummaryTarget(), wholeMessage)
 
     if (!isModelCompatible || !isRestSpecCompatible)
     {
-      throw new GradleException("See output for " + getPath())
+      throw new GradleException("See output for " + getPath() + ". Summary written to " + getSummaryTarget().absolutePath)
     }
+  }
+
+  void setSummaryTarget(File summaryTarget)
+  {
+    this.summaryTarget = summaryTarget
   }
 
   /**
@@ -97,7 +111,7 @@ public class CheckRestModelTask extends DefaultTask
    *
    * @return A list of filepath which are pairs of current file and previous file concatenated together.
    */
-  public List<String> findMatchingFiles(String ext, FileCollection currentFiles, FileCollection previousFiles, boolean diffOnly)
+  List<String> findMatchingFiles(String ext, FileCollection currentFiles, FileCollection previousFiles, boolean diffOnly)
   {
     Map<String, String> currentFilenameToAbsolutePath = createMapFromFiles(currentFiles, ext)
     Map<String, String> previousFilenameToAbsolutePath = createMapFromFiles(previousFiles, ext)

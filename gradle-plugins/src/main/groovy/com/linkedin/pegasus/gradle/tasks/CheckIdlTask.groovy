@@ -2,6 +2,7 @@ package com.linkedin.pegasus.gradle.tasks
 
 
 import com.linkedin.pegasus.gradle.FileCompatibilityType
+import com.linkedin.pegasus.gradle.IOUtil
 import com.linkedin.pegasus.gradle.PegasusPlugin
 import com.linkedin.pegasus.gradle.PropertyUtil
 import com.linkedin.pegasus.gradle.internal.CompatibilityLogChecker
@@ -9,8 +10,10 @@ import com.linkedin.pegasus.gradle.internal.FileExtensionFilter
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.file.FileCollection
+import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFiles
+import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.SkipWhenEmpty
 import org.gradle.api.tasks.TaskAction
 import org.gradle.process.internal.JavaExecAction
@@ -29,22 +32,29 @@ class CheckIdlTask extends DefaultTask
   @InputFiles
   FileCollection codegenClasspath
 
+  @Input
+  String idlCompatLevel
+
+  @OutputFile
+  File getSummaryTarget()
+  {
+    return summaryTarget
+  }
+
   boolean isModelCompatible = true
   boolean isRestSpecCompatible = true
   boolean isEquivalent = true
-  String wholeMessage = "";
+  String wholeMessage = ""
 
   private FileExtensionFilter _idlFilter = new FileExtensionFilter(PegasusPlugin.IDL_FILE_SUFFIX)
+
+  private File summaryTarget = new File(project.buildDir, "reports/checkIdl/summary.txt")
 
   @TaskAction
   protected void check()
   {
-    final String idlCompatLevel = PropertyUtil.findCompatLevel(project, FileCompatibilityType.IDL)
-
     project.logger.info('Checking interface compatibility with API ...')
-
     List<String> errorFilePairs = findErrorFilePairs()
-
     def logChecker = new CompatibilityLogChecker()
 
     project.javaexec { JavaExecAction it ->
@@ -61,11 +71,17 @@ class CheckIdlTask extends DefaultTask
     isRestSpecCompatible = logChecker.isRestSpecCompatible()
     isEquivalent = logChecker.getModelCompatibility().isEmpty() && logChecker.getRestSpecCompatibility().isEmpty()
     wholeMessage = logChecker.getWholeText()
+    IOUtil.writeText(getSummaryTarget(), wholeMessage)
 
     if (!isModelCompatible || !isRestSpecCompatible)
     {
-      throw new GradleException("See output for " + getPath())
+      throw new GradleException("See output for " + getPath() + ". Summary written to " + getSummaryTarget().absolutePath)
     }
+  }
+
+  void setSummaryTarget(File summaryTarget)
+  {
+    this.summaryTarget = summaryTarget
   }
 
   private List<String> findErrorFilePairs()
