@@ -16,13 +16,11 @@
 
 package com.linkedin.pegasus.gradle;
 
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +35,7 @@ public class PegasusOptions
   public Set<GenerationMode> generationModes = new HashSet<GenerationMode>(Arrays.asList(GenerationMode.PEGASUS));
   public IdlOptions idlOptions = new IdlOptions();
   public ClientOptions clientOptions = new ClientOptions();
+  public RestModelOptions restModelOptions = new RestModelOptions();
 
   private static final Logger _log = LoggerFactory.getLogger(PegasusOptions.class);
 
@@ -151,6 +150,21 @@ public class PegasusOptions
     public List<ClientItem> getClientItems()
     {
       return clientOptionsList;
+    }
+  }
+
+  public static class RestModelOptions
+  {
+    private String _restResourcesRootPath;
+
+    public void setRestResourcesRootPath(String restResourcesRootPath)
+    {
+      _restResourcesRootPath = restResourcesRootPath;
+    }
+
+    public String getRestResourcesRootPath()
+    {
+      return _restResourcesRootPath != null ? _restResourcesRootPath : "src/main/java";
     }
   }
 }

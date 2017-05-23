@@ -29,34 +29,43 @@ import org.gradle.process.internal.JavaExecAction
 class GenerateRestModelTask extends DefaultTask
 {
   @InputFiles
+  FileCollection watchedCodegenClasspath
+
+  @InputFiles
   @SkipWhenEmpty
-  Set<File> inputDirs
-  @OutputDirectory
-  File snapshotDestinationDir
-  @OutputDirectory
-  File idlDestinationDir
+  Set<File> watchedInputDirs
+
   @InputFiles
   FileCollection resolverPath
 
-  @InputFiles
-  FileCollection codegenClasspath
+  @OutputDirectory
+  File idlDestinationDir
+
+  @OutputDirectory
+  File snapshotDestinationDir
 
   PegasusOptions.IdlOptions idlOptions
-
   File localClasspath
+
+  // we make a separation between watched and unwatched variables to create a stricter definition for incremental builds.
+  // In this case, the unwatched directories and classes include all of the main source sets for the application. This
+  // creates a nasty use case where the user updates a utility class, but the rest models still regenerate. In Gradle 4.0
+  // this will no longer be needed with the introduction of normalizing filters.
+  private FileCollection _codegenClasspath
+  private Set<File> _inputDirs
 
   @TaskAction
   protected void generate()
   {
-    final String[] inputDirPaths = inputDirs.collect { it.path }
+    final String[] inputDirPaths = getInputDirs().collect { it.path }
     project.logger.debug("GenerateRestModel using input directories ${inputDirPaths}")
     project.logger.debug("GenerateRestModel using destination dir ${idlDestinationDir.path}")
     snapshotDestinationDir.mkdirs()
     idlDestinationDir.mkdirs()
-
     localClasspath = new File(project.buildDir, getName() + 'Classpath')
+
     project.copy {
-      from codegenClasspath
+      from getCodegenClasspath()
       include '*.jar'
       into localClasspath
     }
@@ -111,7 +120,7 @@ class GenerateRestModelTask extends DefaultTask
     project.javaexec { JavaExecAction it ->
       it.main = 'com.linkedin.restli.tools.snapshot.gen.RestLiSnapshotExporterCmdLineApp'
       it.classpath localClasspath.absolutePath + '/*'
-      it.classpath codegenClasspath.files.findAll { !it.file || !it.name.endsWith('.jar') }
+      it.classpath getCodegenClasspath().files.findAll { !it.file || !it.name.endsWith('.jar') }
       it.jvmArgs '-Dgenerator.resolver.path=' + resolverPath.asPath
       it.systemProperty "scala.usejavacp", "true"
       if (name != null)
@@ -145,7 +154,7 @@ class GenerateRestModelTask extends DefaultTask
     project.javaexec { JavaExecAction it ->
       it.main = 'com.linkedin.restli.tools.idlgen.RestLiResourceModelExporterCmdLineApp'
       it.classpath localClasspath.absolutePath + '/*'
-      it.classpath codegenClasspath.files.findAll { !it.file || !it.name.endsWith('.jar') }
+      it.classpath getCodegenClasspath().files.findAll { !it.file || !it.name.endsWith('.jar') }
       it.systemProperty "scala.usejavacp", "true"
       if (name != null)
       {
@@ -169,5 +178,21 @@ class GenerateRestModelTask extends DefaultTask
     def sourcePath = [prefix]
     sourcePath.addAll(args)
     return sourcePath
+  }
+
+  void setCodegenClasspath(FileCollection codegenClasspath) {
+    _codegenClasspath = codegenClasspath
+  }
+
+  void setInputDirs(Set<File> inputDirs) {
+    _inputDirs = inputDirs
+  }
+
+  FileCollection getCodegenClasspath() {
+    _codegenClasspath
+  }
+
+  Set<File> getInputDirs() {
+    _inputDirs
   }
 }

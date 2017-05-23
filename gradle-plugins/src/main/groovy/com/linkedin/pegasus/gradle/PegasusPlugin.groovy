@@ -17,6 +17,7 @@
 package com.linkedin.pegasus.gradle
 
 
+import com.linkedin.pegasus.gradle.PegasusOptions.IdlOptions
 import com.linkedin.pegasus.gradle.tasks.ChangedFileReportTask
 import com.linkedin.pegasus.gradle.tasks.CheckIdlTask
 import com.linkedin.pegasus.gradle.tasks.CheckRestModelTask
@@ -1024,19 +1025,24 @@ class PegasusPlugin implements Plugin<Project>
       }
 
       // generate the rest model
+      final FileCollection restModelCodegenClasspath = project.configurations.pegasusPlugin + project.configurations.runtime + sourceSet.runtimeClasspath
       final String destinationDirPrefix = getGeneratedDirPath(project, sourceSet, REST_GEN_TYPE) + File.separatorChar
       final FileCollection restModelResolverPath = apiProject.files(getDataSchemaPath(project, sourceSet)) + getDataModelConfig(apiProject, sourceSet)
+      final Set<File> watchedRestModelInputDirs = buildWatchedRestModelInputDirs(project, sourceSet)
+      final Set<File> restModelInputDirs = sourceSet.allSource.srcDirs - sourceSet.resources.srcDirs
 
       final Task generateRestModelTask = project.task(sourceSet.getTaskName('generate', 'restModel'),
                                                       type: GenerateRestModelTask) {
         dependsOn project.tasks[sourceSet.getClassesTaskName()]
-        inputDirs = sourceSet.allSource.srcDirs - sourceSet.resources.srcDirs
+        codegenClasspath = restModelCodegenClasspath
+        watchedCodegenClasspath = restModelCodegenClasspath.filter {it.name != 'main' && it.name != 'classes' }
+        inputDirs = restModelInputDirs
+        watchedInputDirs = watchedRestModelInputDirs.empty ? restModelInputDirs : watchedRestModelInputDirs
         // we need all the artifacts from runtime for any private implementation classes the server code might need.
         snapshotDestinationDir = project.file(destinationDirPrefix + 'snapshot')
         idlDestinationDir = project.file(destinationDirPrefix + 'idl')
         idlOptions = project.pegasus[sourceSet.name].idlOptions
         resolverPath = restModelResolverPath
-        codegenClasspath = project.configurations.pegasusPlugin + project.configurations.runtime + sourceSet.runtimeClasspath
 
         doFirst {
           deleteGeneratedDir(project, sourceSet, REST_GEN_TYPE)
@@ -1705,5 +1711,21 @@ class PegasusPlugin implements Plugin<Project>
         break
     }
     return property
+  }
+
+  private static Set<File> buildWatchedRestModelInputDirs(Project project, SourceSet sourceSet) {
+    File rootPath = new File(project.projectDir, project.pegasus[sourceSet.name].restModelOptions.restResourcesRootPath)
+    IdlOptions idlOptions = project.pegasus[sourceSet.name].idlOptions
+
+    if (idlOptions.idlItems.empty) {
+      return []
+    }
+
+    // if idlItems exist, only watch the smaller subset
+    (Set<File>) idlOptions.getIdlItems().collect {
+        it.packageNames.collect {
+          new File(rootPath, it.replace('.', '/'))
+        }
+      }.flatten().toSet()
   }
 }
