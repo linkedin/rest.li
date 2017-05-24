@@ -1,6 +1,11 @@
-11.0.9
+11.0.10
 ------
 
+
+11.0.9
+------
+(RB=991779)
+Moving ChannelPoolManager sensors from ServiceName-based to be composed by Custom Prefix and Hash of transport properties
 
 11.0.8
 ------
