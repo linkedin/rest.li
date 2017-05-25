@@ -22,6 +22,7 @@ import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.multiplexer.IndividualBody;
 import com.linkedin.restli.common.multiplexer.IndividualResponse;
 import com.linkedin.restli.internal.server.response.ErrorResponseBuilder;
+import com.linkedin.restli.server.ErrorResponseFormat;
 import com.linkedin.restli.server.RestLiServiceException;
 
 
@@ -36,22 +37,22 @@ import com.linkedin.restli.server.RestLiServiceException;
   private static final long serialVersionUID = 1;
   private final IndividualResponse _response;
 
-  public IndividualResponseException(HttpStatus status, String message)
+  public IndividualResponseException(HttpStatus status, String message, ErrorResponseBuilder errorResponseBuilder)
   {
     super(message);
-    _response = createErrorIndividualResponse(status, createErrorResponse(status, message));
+    _response = createErrorIndividualResponse(status, createErrorResponse(status, message, errorResponseBuilder));
   }
 
-  public IndividualResponseException(HttpStatus status, String message, Throwable e)
+  public IndividualResponseException(HttpStatus status, String message, Throwable e, ErrorResponseBuilder errorResponseBuilder)
   {
     super(message, e);
-    _response = createErrorIndividualResponse(status, createErrorResponse(status, message));
+    _response = createErrorIndividualResponse(status, createErrorResponse(status, message, errorResponseBuilder));
   }
 
-  public IndividualResponseException(RestLiServiceException e)
+  public IndividualResponseException(RestLiServiceException e, ErrorResponseBuilder errorResponseBuilder)
   {
     super(e);
-    _response = createErrorIndividualResponse(e.getStatus(), createErrorResponse(e));
+    _response = createErrorIndividualResponse(e.getStatus(), errorResponseBuilder.buildErrorResponse(e));
   }
 
   public IndividualResponse getResponse()
@@ -59,24 +60,24 @@ import com.linkedin.restli.server.RestLiServiceException;
     return _response;
   }
 
-  public static IndividualResponse createInternalServerErrorIndividualResponse(Throwable e)
+  public static IndividualResponse createInternalServerErrorIndividualResponse(Throwable e, ErrorResponseBuilder errorResponseBuilder)
   {
-    return createInternalServerErrorIndividualResponse(e.getMessage());
+    return createInternalServerErrorIndividualResponse(e.getMessage(), errorResponseBuilder);
   }
 
-  public static IndividualResponse createInternalServerErrorIndividualResponse(String message)
+  public static IndividualResponse createInternalServerErrorIndividualResponse(String message, ErrorResponseBuilder errorResponseBuilder)
   {
     ErrorResponse errorResponse = null;
     if (message != null && !message.isEmpty())
     {
-      errorResponse = createErrorResponse(HttpStatus.S_500_INTERNAL_SERVER_ERROR, message);
+      errorResponse = createErrorResponse(HttpStatus.S_500_INTERNAL_SERVER_ERROR, message, errorResponseBuilder);
     }
     return createErrorIndividualResponse(HttpStatus.S_500_INTERNAL_SERVER_ERROR, errorResponse);
   }
 
-  public static IndividualResponse createErrorIndividualResponse(RestLiServiceException e)
+  public static IndividualResponse createErrorIndividualResponse(RestLiServiceException e, ErrorResponseBuilder errorResponseBuilder)
   {
-    return createErrorIndividualResponse(e.getStatus(), createErrorResponse(e));
+    return createErrorIndividualResponse(e.getStatus(), errorResponseBuilder.buildErrorResponse(e));
   }
 
   private static IndividualResponse createErrorIndividualResponse(HttpStatus status, ErrorResponse errorResponse)
@@ -90,16 +91,18 @@ import com.linkedin.restli.server.RestLiServiceException;
     return response;
   }
 
-  private static ErrorResponse createErrorResponse(HttpStatus status, String message)
+  private static ErrorResponse createErrorResponse(HttpStatus status, String message, ErrorResponseBuilder errorResponseBuilder)
   {
     ErrorResponse errorResponse = new ErrorResponse();
-    errorResponse.setStatus(status.getCode());
-    errorResponse.setMessage(message);
+    ErrorResponseFormat errorResponseFormat = errorResponseBuilder.getErrorResponseFormat();
+    if (errorResponseFormat.showStatusCodeInBody())
+    {
+      errorResponse.setStatus(status.getCode());
+    }
+    if (errorResponseFormat.showMessage())
+    {
+      errorResponse.setMessage(message);
+    }
     return errorResponse;
-  }
-
-  private static ErrorResponse createErrorResponse(RestLiServiceException e)
-  {
-    return new ErrorResponseBuilder().buildErrorResponse(e);
   }
 }

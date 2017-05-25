@@ -45,6 +45,7 @@ import com.linkedin.restli.internal.common.ContentTypeUtil;
 import com.linkedin.restli.internal.common.ContentTypeUtil.ContentType;
 import com.linkedin.restli.internal.common.CookieUtil;
 import com.linkedin.restli.internal.common.DataMapConverter;
+import com.linkedin.restli.internal.server.response.ErrorResponseBuilder;
 import com.linkedin.restli.server.RestLiServiceException;
 
 import com.google.common.collect.ImmutableMap;
@@ -823,7 +824,7 @@ public class TestMultiplexedRequestHandlerImpl
       .build();
 
     return new MultiplexedRequestHandlerImpl(requestHandler, engine, maxRequestCount, individualRequestHeaderWhitelist, multiplexerSingletonFilter,
-        multiplexerRunMode);
+        multiplexerRunMode, new ErrorResponseBuilder());
   }
 
   private static MultiplexedRequestHandlerImpl createMultiplexer(RestRequestHandler requestHandler, MultiplexerRunMode multiplexerRunMode)

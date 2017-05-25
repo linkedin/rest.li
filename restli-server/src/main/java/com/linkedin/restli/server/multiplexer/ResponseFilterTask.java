@@ -22,6 +22,7 @@ import com.linkedin.parseq.Context;
 import com.linkedin.parseq.promise.Promise;
 import com.linkedin.parseq.promise.Promises;
 import com.linkedin.restli.common.multiplexer.IndividualResponse;
+import com.linkedin.restli.internal.server.response.ErrorResponseBuilder;
 import com.linkedin.restli.server.RestLiServiceException;
 
 
@@ -35,11 +36,14 @@ import com.linkedin.restli.server.RestLiServiceException;
 /* package private */ final class ResponseFilterTask extends BaseTask<IndividualResponseWithCookies>
 {
   private final MultiplexerSingletonFilter _multiplexerSingletonFilter;
+  private final ErrorResponseBuilder _errorResponseBuilder;
   private final BaseTask<IndividualResponseWithCookies> _individualResponseWithCookies;
 
-  /* package private */ ResponseFilterTask(MultiplexerSingletonFilter multiplexerSingletonFilter, BaseTask<IndividualResponseWithCookies> individualResponseWithCookies)
+  /* package private */ ResponseFilterTask(MultiplexerSingletonFilter multiplexerSingletonFilter, ErrorResponseBuilder errorResponseBuilder,
+    BaseTask<IndividualResponseWithCookies> individualResponseWithCookies)
   {
     _multiplexerSingletonFilter = multiplexerSingletonFilter;
+    _errorResponseBuilder = errorResponseBuilder;
     _individualResponseWithCookies = individualResponseWithCookies;
   }
 
@@ -56,11 +60,11 @@ import com.linkedin.restli.server.RestLiServiceException;
       }
       catch(RestLiServiceException e)
       {
-        return Promises.value(new IndividualResponseWithCookies(IndividualResponseException.createErrorIndividualResponse(e)));
+        return Promises.value(new IndividualResponseWithCookies(IndividualResponseException.createErrorIndividualResponse(e, _errorResponseBuilder)));
       }
       catch(Exception e)
       {
-        return Promises.value(new IndividualResponseWithCookies(IndividualResponseException.createInternalServerErrorIndividualResponse(e)));
+        return Promises.value(new IndividualResponseWithCookies(IndividualResponseException.createInternalServerErrorIndividualResponse(e, _errorResponseBuilder)));
       }
     }
     return Promises.value(individualResponseWithCookies);

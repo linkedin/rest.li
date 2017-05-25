@@ -28,6 +28,7 @@ import com.linkedin.restli.common.multiplexer.IndividualBody;
 import com.linkedin.restli.common.multiplexer.IndividualResponse;
 import com.linkedin.restli.internal.common.DataMapConverter;
 
+import com.linkedin.restli.internal.server.response.ErrorResponseBuilder;
 import java.io.IOException;
 
 import javax.activation.MimeTypeParseException;
@@ -42,11 +43,14 @@ import javax.activation.MimeTypeParseException;
 /* package private */ final class IndividualResponseConversionTask extends BaseTask<IndividualResponseWithCookies>
 {
   private final BaseTask<RestResponse> _restResponse;
+  private final ErrorResponseBuilder _errorResponseBuilder;
   private final String _restResponseId;
 
-  /* package private */ IndividualResponseConversionTask(String restResponseId, BaseTask<RestResponse> restResponse)
+  /* package private */ IndividualResponseConversionTask(String restResponseId, ErrorResponseBuilder errorResponseBuilder,
+    BaseTask<RestResponse> restResponse)
   {
     _restResponse = restResponse;
+    _errorResponseBuilder = errorResponseBuilder;
     _restResponseId = restResponseId;
   }
 
@@ -55,7 +59,7 @@ import javax.activation.MimeTypeParseException;
   {
     if (_restResponse.isFailed())
     {
-      return Promises.value(toErrorIndividualResponse(_restResponse.getError()));
+      return Promises.value(toErrorIndividualResponse(_restResponse.getError(), _errorResponseBuilder));
     }
 
     try
@@ -66,15 +70,15 @@ import javax.activation.MimeTypeParseException;
     }
     catch (MimeTypeParseException e)
     {
-      return Promises.value(createInternalServerErrorResponse("Invalid content type for individual response: " + _restResponseId));
+      return Promises.value(createInternalServerErrorResponse("Invalid content type for individual response: " + _restResponseId, _errorResponseBuilder));
     }
     catch (IOException e)
     {
-      return Promises.value(createInternalServerErrorResponse("Unable to set body for individual response: " + _restResponseId));
+      return Promises.value(createInternalServerErrorResponse("Unable to set body for individual response: " + _restResponseId, _errorResponseBuilder));
     }
     catch(Exception e)
     {
-      return Promises.value(toErrorIndividualResponse(e));
+      return Promises.value(toErrorIndividualResponse(e, _errorResponseBuilder));
     }
   }
 
@@ -91,12 +95,12 @@ import javax.activation.MimeTypeParseException;
     return individualResponse;
   }
 
-  private static IndividualResponseWithCookies createInternalServerErrorResponse(String message)
+  private static IndividualResponseWithCookies createInternalServerErrorResponse(String message, ErrorResponseBuilder errorResponseBuilder)
   {
-    return new IndividualResponseWithCookies(IndividualResponseException.createInternalServerErrorIndividualResponse(message));
+    return new IndividualResponseWithCookies(IndividualResponseException.createInternalServerErrorIndividualResponse(message, errorResponseBuilder));
   }
 
-  private static IndividualResponseWithCookies toErrorIndividualResponse(Throwable error)
+  private static IndividualResponseWithCookies toErrorIndividualResponse(Throwable error, ErrorResponseBuilder errorResponseBuilder)
   {
     // There can only be two types of errors at this stage. If any previous task failed "gracefully", it should
     // return an IndividualResponseException. Any other type of exception will be treated as unexpected error and will
@@ -107,7 +111,7 @@ import javax.activation.MimeTypeParseException;
     }
     else
     {
-      return new IndividualResponseWithCookies(IndividualResponseException.createInternalServerErrorIndividualResponse(error));
+      return new IndividualResponseWithCookies(IndividualResponseException.createInternalServerErrorIndividualResponse(error, errorResponseBuilder));
     }
   }
 }

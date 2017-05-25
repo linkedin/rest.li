@@ -21,9 +21,7 @@
 package com.linkedin.restli.internal.server.response;
 
 
-import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.message.rest.RestRequest;
-import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.ErrorDetails;
 import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.ProtocolVersion;
@@ -73,6 +71,11 @@ public final class ErrorResponseBuilder implements RestLiResponseBuilder
   public String getInternalErrorMessage()
   {
     return _internalErrorMessage;
+  }
+
+  public ErrorResponseFormat getErrorResponseFormat()
+  {
+    return _errorResponseFormat;
   }
 
   public ErrorResponse buildErrorResponse(RestLiServiceException result)

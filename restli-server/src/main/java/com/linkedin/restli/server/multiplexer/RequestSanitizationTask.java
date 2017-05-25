@@ -24,6 +24,7 @@ import com.linkedin.parseq.promise.Promises;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.multiplexer.IndividualRequest;
 
+import com.linkedin.restli.internal.server.response.ErrorResponseBuilder;
 import java.util.Map;
 import java.util.Set;
 
@@ -38,11 +39,14 @@ import java.util.Set;
 {
   private final Set<String> _individualRequestHeaderWhitelist;
   private final IndividualRequest _individualRequest;
+  private final ErrorResponseBuilder _errorResponseBuilder;
 
-  /* package private */ RequestSanitizationTask(IndividualRequest individualRequest, Set<String> individualRequestHeaderWhitelist)
+  /* package private */ RequestSanitizationTask(IndividualRequest individualRequest, Set<String> individualRequestHeaderWhitelist,
+    ErrorResponseBuilder errorResponseBuilder)
   {
     _individualRequestHeaderWhitelist = individualRequestHeaderWhitelist;
     _individualRequest = individualRequest;
+    _errorResponseBuilder = errorResponseBuilder;
   }
 
   @Override
@@ -55,7 +59,8 @@ import java.util.Set;
         String headerName = headerEntry.getKey();
         if (!_individualRequestHeaderWhitelist.contains(headerName))
         {
-          return Promises.error(new IndividualResponseException(HttpStatus.S_400_BAD_REQUEST, String.format("Request header %s is not allowed in the individual request.", headerName)));
+          return Promises.error(new IndividualResponseException(HttpStatus.S_400_BAD_REQUEST,
+            String.format("Request header %s is not allowed in the individual request.", headerName), _errorResponseBuilder));
         }
       }
     }

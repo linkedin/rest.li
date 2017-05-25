@@ -41,6 +41,7 @@ import com.linkedin.restli.common.multiplexer.MultiplexedResponseContent;
 import com.linkedin.restli.internal.common.ContentTypeUtil;
 import com.linkedin.restli.internal.common.ContentTypeUtil.ContentType;
 import com.linkedin.restli.internal.common.CookieUtil;
+import com.linkedin.restli.internal.server.response.ErrorResponseBuilder;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
 
 import java.net.HttpCookie;
@@ -74,6 +75,7 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
   private final MultiplexerSingletonFilter _multiplexerSingletonFilter;
   private final Set<String> _individualRequestHeaderWhitelist;
   private final MultiplexerRunMode _multiplexerRunMode;
+  private final ErrorResponseBuilder _errorResponseBuilder;
 
   /**
    * @param requestHandler        the handler that will take care of individual requests
@@ -89,7 +91,8 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
                                        int maximumRequestsNumber,
                                        Set<String> individualRequestHeaderWhitelist,
                                        MultiplexerSingletonFilter multiplexerSingletonFilter,
-                                       MultiplexerRunMode multiplexerRunMode)
+                                       MultiplexerRunMode multiplexerRunMode,
+                                       ErrorResponseBuilder errorResponseBuilder)
   {
     _requestHandler = requestHandler;
     _engine = engine;
@@ -101,6 +104,7 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
     }
     _multiplexerSingletonFilter = multiplexerSingletonFilter;
     _multiplexerRunMode = multiplexerRunMode;
+    _errorResponseBuilder = errorResponseBuilder;
   }
 
   @Override
@@ -241,13 +245,13 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
                                                final IndividualResponseMap individualResponses,
                                                final Map<String, HttpCookie> responseCookies)
   {
-    final RequestSanitizationTask requestSanitizationTask = new RequestSanitizationTask(individualRequest, _individualRequestHeaderWhitelist);
+    final RequestSanitizationTask requestSanitizationTask = new RequestSanitizationTask(individualRequest, _individualRequestHeaderWhitelist, _errorResponseBuilder);
     final InheritEnvelopeRequestTask inheritEnvelopeRequestTask = new InheritEnvelopeRequestTask(envelopeRequest, requestSanitizationTask);
-    final RequestFilterTask requestFilterTask = new RequestFilterTask(_multiplexerSingletonFilter, inheritEnvelopeRequestTask);
-    final SyntheticRequestCreationTask syntheticRequestCreationTask = new SyntheticRequestCreationTask(id, envelopeRequest, requestFilterTask);
+    final RequestFilterTask requestFilterTask = new RequestFilterTask(_multiplexerSingletonFilter, _errorResponseBuilder, inheritEnvelopeRequestTask);
+    final SyntheticRequestCreationTask syntheticRequestCreationTask = new SyntheticRequestCreationTask(id, envelopeRequest, _errorResponseBuilder, requestFilterTask);
     final RequestHandlingTask requestHandlingTask = new RequestHandlingTask(_requestHandler, syntheticRequestCreationTask, requestContext, _multiplexerRunMode);
-    final IndividualResponseConversionTask toIndividualResponseTask = new IndividualResponseConversionTask(id, requestHandlingTask);
-    final ResponseFilterTask responseFilterTask = new ResponseFilterTask(_multiplexerSingletonFilter, toIndividualResponseTask);
+    final IndividualResponseConversionTask toIndividualResponseTask = new IndividualResponseConversionTask(id, _errorResponseBuilder, requestHandlingTask);
+    final ResponseFilterTask responseFilterTask = new ResponseFilterTask(_multiplexerSingletonFilter, _errorResponseBuilder, toIndividualResponseTask);
     final Task<Void> addResponseTask = Task.action("add response", () ->
       {
         IndividualResponseWithCookies individualResponseWithCookies = responseFilterTask.get();

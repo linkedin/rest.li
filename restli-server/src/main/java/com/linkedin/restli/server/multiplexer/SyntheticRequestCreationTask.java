@@ -30,6 +30,7 @@ import com.linkedin.restli.common.multiplexer.IndividualBody;
 import com.linkedin.restli.common.multiplexer.IndividualRequest;
 import com.linkedin.restli.internal.common.DataMapConverter;
 
+import com.linkedin.restli.internal.server.response.ErrorResponseBuilder;
 import java.io.IOException;
 import java.net.URI;
 
@@ -47,13 +48,16 @@ import javax.activation.MimeTypeParseException;
 /* package private */ final class SyntheticRequestCreationTask extends BaseTask<RestRequest>
 {
   private final RestRequest _envelopeRequest;
+  private final ErrorResponseBuilder _errorResponseBuilder;
   private final BaseTask<IndividualRequest> _individualRequest;
   private final String _individualRequestId;
 
-  /* package private */ SyntheticRequestCreationTask(String individualRequestId, RestRequest envelopeRequest, BaseTask<IndividualRequest> individualRequest)
+  /* package private */ SyntheticRequestCreationTask(String individualRequestId, RestRequest envelopeRequest,
+    ErrorResponseBuilder errorResponseBuilder, BaseTask<IndividualRequest> individualRequest)
   {
     _individualRequestId = individualRequestId;
     _envelopeRequest = envelopeRequest;
+    _errorResponseBuilder = errorResponseBuilder;
     _individualRequest = individualRequest;
   }
 
@@ -71,11 +75,13 @@ import javax.activation.MimeTypeParseException;
     }
     catch (MimeTypeParseException e)
     {
-      return Promises.error(new IndividualResponseException(HttpStatus.S_415_UNSUPPORTED_MEDIA_TYPE, "Unsupported media type for request id=" + _individualRequestId, e));
+      return Promises.error(new IndividualResponseException(HttpStatus.S_415_UNSUPPORTED_MEDIA_TYPE, "Unsupported media type for request id=" + _individualRequestId, e,
+        _errorResponseBuilder));
     }
     catch (IOException e)
     {
-      return Promises.error(new IndividualResponseException(HttpStatus.S_400_BAD_REQUEST, "Invalid request body for request id=" + _individualRequestId, e));
+      return Promises.error(new IndividualResponseException(HttpStatus.S_400_BAD_REQUEST, "Invalid request body for request id=" + _individualRequestId, e,
+        _errorResponseBuilder));
     }
     catch (Exception e)
     {

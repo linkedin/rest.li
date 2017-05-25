@@ -3,6 +3,9 @@
 (RB=1001008)
 Make check tasks incremental
 
+(RB=1001187)
+Honor ErrorResponseFormat for exception thrown within multiplexer (or by multiplexer filter).
+
 11.0.9
 ------
 (RB=991779)

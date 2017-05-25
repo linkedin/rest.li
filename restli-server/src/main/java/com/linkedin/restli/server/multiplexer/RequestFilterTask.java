@@ -22,6 +22,7 @@ import com.linkedin.parseq.Context;
 import com.linkedin.parseq.promise.Promise;
 import com.linkedin.parseq.promise.Promises;
 import com.linkedin.restli.common.multiplexer.IndividualRequest;
+import com.linkedin.restli.internal.server.response.ErrorResponseBuilder;
 import com.linkedin.restli.server.RestLiServiceException;
 
 
@@ -37,11 +38,14 @@ import com.linkedin.restli.server.RestLiServiceException;
 {
   private final MultiplexerSingletonFilter _multiplexerSingletonFilter;
   private final BaseTask<IndividualRequest> _individualRequest;
+  private final ErrorResponseBuilder _errorResponseBuilder;
 
-  /* package private */ RequestFilterTask(MultiplexerSingletonFilter multiplexerSingletonFilter, BaseTask<IndividualRequest> individualRequest)
+  /* package private */ RequestFilterTask(MultiplexerSingletonFilter multiplexerSingletonFilter, ErrorResponseBuilder errorResponseBuilder,
+    BaseTask<IndividualRequest> individualRequest)
   {
     _multiplexerSingletonFilter = multiplexerSingletonFilter;
     _individualRequest = individualRequest;
+    _errorResponseBuilder = errorResponseBuilder;
   }
 
   @Override
@@ -61,7 +65,7 @@ import com.linkedin.restli.server.RestLiServiceException;
       }
       catch(RestLiServiceException e)
       {
-        return Promises.error(new IndividualResponseException(e));
+        return Promises.error(new IndividualResponseException(e, _errorResponseBuilder));
       }
       catch(Exception e)
       {
