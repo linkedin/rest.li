@@ -40,10 +40,10 @@ public class ChannelPoolManagerKeyBuilder
   private long _maxResponseSize = HttpClientFactory.DEFAULT_MAX_RESPONSE_SIZE;
   private int _maxPoolSize = HttpClientFactory.DEFAULT_POOL_SIZE;
   private int _minPoolSize = HttpClientFactory.DEFAULT_POOL_MIN_SIZE;
-  private int _maxConcurrentConnectionInitializations = HttpClientFactory.DEFAULT_DEFAULT_MAX_CONCURRENT_CONNECTIONS;
+  private int _maxConcurrentConnectionInitializations = HttpClientFactory.DEFAULT_MAX_CONCURRENT_CONNECTIONS;
   private int _poolWaiterSize = HttpClientFactory.DEFAULT_POOL_WAITER_SIZE;
   private AsyncPoolImpl.Strategy _strategy = HttpClientFactory.DEFAULT_POOL_STRATEGY;
-  private boolean _tcpNoDelay = true;
+  private boolean _tcpNoDelay = HttpClientFactory.DEFAULT_TCP_NO_DELAY;
   private String _poolStatsNamePrefix = HttpClientFactory.DEFAULT_POOL_STATS_NAME_PREFIX;
 
   /**
@@ -179,6 +179,9 @@ public class ChannelPoolManagerKeyBuilder
     return this;
   }
 
+  /**
+   * @param tcpNoDelay flag to enable/disable Nagle's algorithm
+   */
   public ChannelPoolManagerKeyBuilder setTcpNoDelay(boolean tcpNoDelay)
   {
     _tcpNoDelay = tcpNoDelay;

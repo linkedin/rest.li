@@ -118,6 +118,7 @@ public class HttpClientFactory implements TransportClientFactory
   public static final String HTTP_MAX_HEADER_SIZE = "http.maxHeaderSize";
   public static final String HTTP_MAX_CHUNK_SIZE = "http.maxChunkSize";
   public static final String HTTP_MAX_CONCURRENT_CONNECTIONS = "http.maxConcurrentConnections";
+  public static final String HTTP_TCP_NO_DELAY = "http.tcpNoDelay";
   public static final String HTTP_PROTOCOL_VERSION = "http.protocolVersion";
 
   public static final int DEFAULT_POOL_WAITER_SIZE = Integer.MAX_VALUE;
@@ -132,7 +133,9 @@ public class HttpClientFactory implements TransportClientFactory
   public static final int DEFAULT_POOL_MIN_SIZE = 0;
   public static final int DEFAULT_MAX_HEADER_SIZE = 8 * 1024;
   public static final int DEFAULT_MAX_CHUNK_SIZE = 8 * 1024;
-  public static final int DEFAULT_DEFAULT_MAX_CONCURRENT_CONNECTIONS = Integer.MAX_VALUE;
+  // flag to enable/disable Nagle's algorithm
+  public static final boolean DEFAULT_TCP_NO_DELAY = true;
+  public static final int DEFAULT_MAX_CONCURRENT_CONNECTIONS = Integer.MAX_VALUE;
   public static final EncodingType[] DEFAULT_RESPONSE_CONTENT_ENCODINGS
       = {EncodingType.GZIP, EncodingType.SNAPPY, EncodingType.SNAPPY_FRAMED, EncodingType.DEFLATE, EncodingType.BZIP2};
 
@@ -166,8 +169,6 @@ public class HttpClientFactory implements TransportClientFactory
   private final Map<String, CompressionConfig> _responseCompressionConfigs;
   /** If set to false, ClientCompressionFilter is never used to compress requests or decompress responses. */
   private final boolean                    _useClientCompression;
-  // flag to enable/disable Nagle's algorithm
-  private final boolean                    _tcpNoDelay;
 
   /** Default HTTP version used in the client */
   private final HttpProtocolVersion _defaultHttpVersion;
@@ -285,6 +286,7 @@ public class HttpClientFactory implements TransportClientFactory
          AbstractJmxManager.NULL_JMX_MANAGER);
   }
 
+  @Deprecated
   public HttpClientFactory(FilterChain filters,
                            NioEventLoopGroup eventLoopGroup,
                            boolean shutdownFactory,
@@ -292,10 +294,11 @@ public class HttpClientFactory implements TransportClientFactory
                            boolean shutdownExecutor,
                            ExecutorService callbackExecutorGroup,
                            boolean shutdownCallbackExecutor,
-                           AbstractJmxManager jmxManager)
+                           AbstractJmxManager jmxManager,
+                           boolean deprecated_tcpNoDelay)
   {
     this(filters, eventLoopGroup, shutdownFactory, executor, shutdownExecutor, callbackExecutorGroup,
-        shutdownCallbackExecutor, jmxManager, true);
+      shutdownCallbackExecutor, jmxManager);
   }
 
   public HttpClientFactory(FilterChain filters,
@@ -346,7 +349,7 @@ public class HttpClientFactory implements TransportClientFactory
   {
       this(filters, eventLoopGroup, shutdownFactory, executor, shutdownExecutor, callbackExecutorGroup,
           shutdownCallbackExecutor, jmxManager, requestCompressionThresholdDefault,
-          requestCompressionConfigs, responseCompressionConfigs, false,
+          requestCompressionConfigs, responseCompressionConfigs,
           useClientCompression ? Executors.newCachedThreadPool() : null, HttpProtocolVersion.HTTP_1_1);
   }
 
@@ -357,11 +360,10 @@ public class HttpClientFactory implements TransportClientFactory
                            boolean shutdownExecutor,
                            ExecutorService callbackExecutorGroup,
                            boolean shutdownCallbackExecutor,
-                           AbstractJmxManager jmxManager,
-                           boolean tcpNoDelay)
+                           AbstractJmxManager jmxManager)
   {
     this(filters, eventLoopGroup, shutdownFactory, executor, shutdownExecutor, callbackExecutorGroup, shutdownCallbackExecutor,
-        jmxManager, tcpNoDelay, Integer.MAX_VALUE, Collections.<String, CompressionConfig>emptyMap(), Executors.newCachedThreadPool());
+        jmxManager, Integer.MAX_VALUE, Collections.<String, CompressionConfig>emptyMap(), Executors.newCachedThreadPool());
   }
 
   public HttpClientFactory(FilterChain filters,
@@ -372,14 +374,13 @@ public class HttpClientFactory implements TransportClientFactory
                            ExecutorService callbackExecutorGroup,
                            boolean shutdownCallbackExecutor,
                            AbstractJmxManager jmxManager,
-                           boolean tcpNoDelay,
                            int requestCompressionThresholdDefault,
                            Map<String, CompressionConfig> requestCompressionConfigs,
                            Executor compressionExecutor)
   {
     this(filters, eventLoopGroup, shutdownFactory, executor, shutdownExecutor, callbackExecutorGroup,
         shutdownCallbackExecutor, jmxManager, requestCompressionThresholdDefault, requestCompressionConfigs,
-        Collections.<String, CompressionConfig>emptyMap(), tcpNoDelay, compressionExecutor, HttpProtocolVersion.HTTP_1_1);
+        Collections.<String, CompressionConfig>emptyMap(), compressionExecutor, HttpProtocolVersion.HTTP_1_1);
   }
 
   public HttpClientFactory(FilterChain filters,
@@ -393,12 +394,11 @@ public class HttpClientFactory implements TransportClientFactory
       final int requestCompressionThresholdDefault,
       final Map<String, CompressionConfig> requestCompressionConfigs,
       final Map<String, CompressionConfig> responseCompressionConfigs,
-      boolean tcpNoDelay,
       Executor compressionExecutor)
   {
     this(filters, eventLoopGroup, shutdownFactory, executor, shutdownExecutor, callbackExecutorGroup, shutdownCallbackExecutor,
         jmxManager, requestCompressionThresholdDefault, requestCompressionConfigs, responseCompressionConfigs,
-        tcpNoDelay, compressionExecutor, HttpProtocolVersion.HTTP_1_1);
+        compressionExecutor, HttpProtocolVersion.HTTP_1_1);
   }
 
   public HttpClientFactory(FilterChain filters,
@@ -412,7 +412,6 @@ public class HttpClientFactory implements TransportClientFactory
                            final int requestCompressionThresholdDefault,
                            final Map<String, CompressionConfig> requestCompressionConfigs,
                            final Map<String, CompressionConfig> responseCompressionConfigs,
-                           boolean tcpNoDelay,
                            Executor compressionExecutor,
                            HttpProtocolVersion defaultHttpVersion)
   {
@@ -435,7 +434,6 @@ public class HttpClientFactory implements TransportClientFactory
       throw new IllegalArgumentException("responseCompressionConfigs should not be null.");
     }
     _responseCompressionConfigs = Collections.unmodifiableMap(responseCompressionConfigs);
-    _tcpNoDelay = tcpNoDelay;
     _compressionExecutor = compressionExecutor;
     _useClientCompression = _compressionExecutor != null;
     _defaultHttpVersion = defaultHttpVersion;
@@ -456,7 +454,6 @@ public class HttpClientFactory implements TransportClientFactory
     private int                        _requestCompressionThresholdDefault = Integer.MAX_VALUE;
     private Map<String, CompressionConfig> _requestCompressionConfigs = Collections.<String, CompressionConfig>emptyMap();
     private Map<String, CompressionConfig> _responseCompressionConfigs = Collections.<String, CompressionConfig>emptyMap();
-    private boolean                    _tcpNoDelay = true;
     private HttpProtocolVersion        _defaultHttpVersion = HttpProtocolVersion.HTTP_1_1;
 
     public Builder setNioEventLoopGroup(NioEventLoopGroup nioEventLoopGroup)
@@ -531,12 +528,6 @@ public class HttpClientFactory implements TransportClientFactory
       return this;
     }
 
-    public Builder setTcpNoDelay(boolean tcpNoDelay)
-    {
-      _tcpNoDelay = tcpNoDelay;
-      return this;
-    }
-
     public Builder setDefaultHttpVersion(HttpProtocolVersion defaultHttpVersion)
     {
       _defaultHttpVersion = defaultHttpVersion;
@@ -552,7 +543,7 @@ public class HttpClientFactory implements TransportClientFactory
 
       return new HttpClientFactory(_filters, eventLoopGroup, _shutdownFactory, scheduledExecutorService,
           _shutdownExecutor, _callbackExecutorGroup, _shutdownCallbackExecutor, _jmxManager,
-          _requestCompressionThresholdDefault, _requestCompressionConfigs, _responseCompressionConfigs, _tcpNoDelay,
+          _requestCompressionThresholdDefault, _requestCompressionConfigs, _responseCompressionConfigs,
           _compressionExecutor, _defaultHttpVersion);
     }
   }
@@ -871,6 +862,31 @@ public class HttpClientFactory implements TransportClientFactory
     }
   }
 
+  /**
+   * helper method to get value from properties as well as to print log warning if the key is old
+   * @param properties
+   * @param propertyKey
+   * @return null if property key can't be found, integer otherwise
+   */
+  private Boolean getBooleanValue(Map<String, ? extends Object> properties, String propertyKey)
+  {
+    if (properties == null)
+    {
+      LOG.warn("passed a null raw client properties");
+      return null;
+    }
+    if (properties.containsKey(propertyKey))
+    {
+      // These properties can be safely cast to String before converting them to Integers as we expect Integer values
+      // for all these properties.
+      return Boolean.parseBoolean((String)properties.get(propertyKey));
+    }
+    else
+    {
+      return null;
+    }
+  }
+
   private AsyncPoolImpl.Strategy getStrategy(Map<String, ? extends Object> properties)
   {
     if (properties == null)
@@ -910,7 +926,8 @@ public class HttpClientFactory implements TransportClientFactory
     Integer poolMinSize = chooseNewOverDefault(getIntValue(properties, HTTP_POOL_MIN_SIZE), DEFAULT_POOL_MIN_SIZE);
     Integer maxHeaderSize = chooseNewOverDefault(getIntValue(properties, HTTP_MAX_HEADER_SIZE), DEFAULT_MAX_HEADER_SIZE);
     Integer maxChunkSize = chooseNewOverDefault(getIntValue(properties, HTTP_MAX_CHUNK_SIZE), DEFAULT_MAX_CHUNK_SIZE);
-    Integer maxConcurrentConnectionInitializations = chooseNewOverDefault(getIntValue(properties, HTTP_MAX_CONCURRENT_CONNECTIONS), DEFAULT_DEFAULT_MAX_CONCURRENT_CONNECTIONS);
+    Boolean tcpNoDelay = chooseNewOverDefault(getBooleanValue(properties, HTTP_TCP_NO_DELAY), DEFAULT_TCP_NO_DELAY);
+    Integer maxConcurrentConnectionInitializations = chooseNewOverDefault(getIntValue(properties, HTTP_MAX_CONCURRENT_CONNECTIONS), DEFAULT_MAX_CONCURRENT_CONNECTIONS);
     AsyncPoolImpl.Strategy strategy = chooseNewOverDefault(getStrategy(properties), DEFAULT_POOL_STRATEGY);
 
     Integer gracefulShutdownTimeout = chooseNewOverDefault(getIntValue(properties, HTTP_REQUEST_TIMEOUT), DEFAULT_REQUEST_TIMEOUT);
@@ -921,7 +938,7 @@ public class HttpClientFactory implements TransportClientFactory
       .setSSLParameters(sslParameters).setStrategy(strategy).setMinPoolSize(poolMinSize)
       .setMaxHeaderSize(maxHeaderSize).setMaxChunkSize(maxChunkSize)
       .setMaxConcurrentConnectionInitializations(maxConcurrentConnectionInitializations)
-      .setTcpNoDelay(_tcpNoDelay).setPoolStatsNamePrefix(poolStatsNamePrefix).build();
+      .setTcpNoDelay(tcpNoDelay).setPoolStatsNamePrefix(poolStatsNamePrefix).build();
   }
 
   TransportClient getRawClient(Map<String, ? extends Object> properties,
@@ -931,6 +948,9 @@ public class HttpClientFactory implements TransportClientFactory
 
     // key which identifies and contains the set of transport properties to create a channel pool manager
     ChannelPoolManagerKey key = createChannelPoolManagerKey(properties, sslContext, sslParameters);
+
+    String httpServiceName = (String) properties.get(HTTP_SERVICE_NAME);
+    LOG.info("The service '{}' has been assigned to the ChannelPoolManager with key '{}' ", httpServiceName, key.getName());
 
     ChannelPoolManagerFactory channelPoolManagerFactory = new ChannelPoolManagerFactory(_eventLoopGroup, _executor, key);
 
