@@ -16,7 +16,6 @@
 
 package com.linkedin.restli.tools.snapshot.gen;
 
-
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.pegasus.generator.GeneratorResult;
 import com.linkedin.restli.internal.server.model.ResourceModel;
@@ -29,7 +28,6 @@ import com.linkedin.restli.server.util.FileClassNameScanner;
 import com.linkedin.restli.tools.compatibility.CompatibilityUtil;
 import com.linkedin.restli.tools.idlgen.DocletDocsProvider;
 import com.linkedin.restli.tools.idlgen.MultiLanguageDocsProvider;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -38,7 +36,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

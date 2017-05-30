@@ -1,6 +1,7 @@
 package com.linkedin.pegasus.gradle.tasks
 
 
+import com.linkedin.pegasus.gradle.PathingJarUtil
 import com.linkedin.pegasus.gradle.PegasusOptions
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.FileCollection
@@ -45,7 +46,8 @@ class GenerateRestModelTask extends DefaultTask
   File snapshotDestinationDir
 
   PegasusOptions.IdlOptions idlOptions
-  File localClasspath
+
+  FileCollection pathedCodegenClasspath
 
   // we make a separation between watched and unwatched variables to create a stricter definition for incremental builds.
   // In this case, the unwatched directories and classes include all of the main source sets for the application. This
@@ -62,13 +64,7 @@ class GenerateRestModelTask extends DefaultTask
     project.logger.debug("GenerateRestModel using destination dir ${idlDestinationDir.path}")
     snapshotDestinationDir.mkdirs()
     idlDestinationDir.mkdirs()
-    localClasspath = new File(project.buildDir, getName() + 'Classpath')
-
-    project.copy {
-      from getCodegenClasspath()
-      include '*.jar'
-      into localClasspath
-    }
+    pathedCodegenClasspath =  PathingJarUtil.generatePathingJar(project, "generateRestModel", getCodegenClasspath())
 
     // handle multiple idl generations in the same project, see pegasus rest-framework-server-examples
     // for example.
@@ -119,8 +115,7 @@ class GenerateRestModelTask extends DefaultTask
   {
     project.javaexec { JavaExecAction it ->
       it.main = 'com.linkedin.restli.tools.snapshot.gen.RestLiSnapshotExporterCmdLineApp'
-      it.classpath localClasspath.absolutePath + '/*'
-      it.classpath getCodegenClasspath().files.findAll { !it.file || !it.name.endsWith('.jar') }
+      it.classpath pathedCodegenClasspath
       it.jvmArgs '-Dgenerator.resolver.path=' + resolverPath.asPath
       it.systemProperty "scala.usejavacp", "true"
       if (name != null)
@@ -153,8 +148,7 @@ class GenerateRestModelTask extends DefaultTask
 
     project.javaexec { JavaExecAction it ->
       it.main = 'com.linkedin.restli.tools.idlgen.RestLiResourceModelExporterCmdLineApp'
-      it.classpath localClasspath.absolutePath + '/*'
-      it.classpath getCodegenClasspath().files.findAll { !it.file || !it.name.endsWith('.jar') }
+      it.classpath pathedCodegenClasspath
       it.systemProperty "scala.usejavacp", "true"
       if (name != null)
       {
