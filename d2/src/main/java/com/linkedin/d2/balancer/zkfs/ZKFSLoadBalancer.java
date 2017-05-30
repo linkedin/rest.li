@@ -28,6 +28,7 @@ import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.LoadBalancer;
 import com.linkedin.d2.balancer.LoadBalancerWithFacilities;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
+import com.linkedin.d2.balancer.WarmUpService;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.util.ClientFactoryProvider;
 import com.linkedin.d2.balancer.util.DirectoryProvider;
@@ -72,7 +73,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class ZKFSLoadBalancer
         implements LoadBalancerWithFacilities, DirectoryProvider, KeyMapperProvider, HashRingProvider, PartitionInfoProvider,
-        ClientFactoryProvider
+        ClientFactoryProvider, WarmUpService
 {
   private static final Logger LOG = LoggerFactory.getLogger(ZKFSLoadBalancer.class);
 
@@ -95,12 +96,12 @@ public class ZKFSLoadBalancer
   private volatile ZKConnection _zkConnection;
 
   /**
-   * The currently active LoadBalancer.  LoadBalancer will not be assigned to this field until
-   * it has been sucessfully started, except the first time.
+   * The currently active LoadBalancer. LoadBalancer will not be assigned to this field until
+   * it has been successfully started, except the first time.
    */
-  private volatile LoadBalancer _currentLoadBalancer;
+  private volatile TogglingLoadBalancer _currentLoadBalancer;
 
-  public static interface TogglingLoadBalancerFactory
+  public interface TogglingLoadBalancerFactory
   {
     TogglingLoadBalancer createLoadBalancer(ZKConnection connection, ScheduledExecutorService executorService);
   }
@@ -314,7 +315,6 @@ public class ZKFSLoadBalancer
     }
     _executor.execute(new PropertyEventThread.PropertyEvent("startup")
     {
-
       @Override
       public void innerRun()
       {
@@ -443,6 +443,12 @@ public class ZKFSLoadBalancer
                                               "support obtaining client factories");
     }
     return ((ClientFactoryProvider)_currentLoadBalancer).getClientFactory(scheme);
+  }
+
+  @Override
+  public void warmUpService(String serviceName, Callback<None> callback)
+  {
+    _currentLoadBalancer.warmUpService(serviceName, callback);
   }
 
   /**

@@ -100,6 +100,10 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   private final AtomicLong                                                               _version;
 
   private final Map<String, Set<String>>                                                 _servicesPerCluster;
+
+  /**
+   * Single-threaded executor service intended to execute non-blocking calls only
+   */
   private final ScheduledExecutorService                                                 _executor;
   private final List<SimpleLoadBalancerStateListener>                                    _listeners;
 

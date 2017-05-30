@@ -32,7 +32,6 @@ import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 
-import java.util.concurrent.ScheduledExecutorService;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
 import java.net.URI;
@@ -40,6 +39,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 
@@ -86,7 +86,10 @@ public class D2ClientBuilder
                   _config._healthCheckOperations,
                   _config._executorService,
                   _config.retry,
-                  _config.retryLimit);
+                  _config.retryLimit,
+                  _config.warmUp,
+                  _config.warmUpTimeoutSeconds,
+                  _config.warmUpConcurrentRequests);
 
     final LoadBalancerWithFacilities loadBalancer = loadBalancerFactory.create(cfg);
 
@@ -204,11 +207,15 @@ public class D2ClientBuilder
     return this;
   }
 
+  /**
+   * Single-threaded executor service intended to manage the internal eventBus only
+   */
   public D2ClientBuilder setExecutorService(ScheduledExecutorService executorService)
   {
     _config._executorService = executorService;
     return this;
   }
+
   public D2ClientBuilder setRetry(boolean retry)
   {
     _config.retry = retry;
@@ -247,6 +254,21 @@ public class D2ClientBuilder
   public D2ClientBuilder setUseNewEphemeralStoreWatcher(boolean useNewEphemeralStoreWatcher)
   {
     _config.useNewEphemeralStoreWatcher = useNewEphemeralStoreWatcher;
+    return this;
+  }
+
+  public D2ClientBuilder setWarmUp(boolean warmUp){
+    _config.warmUp = warmUp;
+    return this;
+  }
+
+  public D2ClientBuilder setWarmUpTimeoutSeconds(int warmUpTimeoutSeconds){
+    _config.warmUpTimeoutSeconds = warmUpTimeoutSeconds;
+    return this;
+  }
+
+  public D2ClientBuilder setWarmUpConcurrentRequests(int warmUpConcurrentRequests){
+    _config.warmUpConcurrentRequests = warmUpConcurrentRequests;
     return this;
   }
 

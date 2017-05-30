@@ -59,6 +59,7 @@ import com.linkedin.d2.discovery.event.PropertyEventThread.PropertyEventShutdown
 import com.linkedin.d2.discovery.event.SynchronousExecutorService;
 import com.linkedin.d2.discovery.stores.PropertyStore;
 import com.linkedin.d2.discovery.stores.file.FileStore;
+import com.linkedin.d2.discovery.stores.file.FileStoreTest;
 import com.linkedin.d2.discovery.stores.mock.MockStore;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
@@ -70,6 +71,11 @@ import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.util.degrader.DegraderImpl;
+import org.apache.commons.io.FileUtils;
+import org.testng.Assert;
+import org.testng.annotations.AfterSuite;
+import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -79,7 +85,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -92,12 +97,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-
-import org.apache.commons.io.FileUtils;
-import org.testng.Assert;
-import org.testng.annotations.AfterSuite;
-import org.testng.annotations.BeforeSuite;
-import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
@@ -983,7 +982,7 @@ public class SimpleLoadBalancerTest
     public PropertyStore<T> getStore()
     {
       return new FileStore<T>(_testDirectory + File.separator + _subfolder,
-                              ".ini",
+                              FileStoreTest.FILE_STORE_EXTENSION,
                               _serializer);
     }
   }

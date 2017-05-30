@@ -17,6 +17,7 @@
 package com.linkedin.d2.balancer.simple;
 
 import com.linkedin.common.callback.Callback;
+import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.LoadBalancer;
@@ -25,6 +26,7 @@ import com.linkedin.d2.balancer.LoadBalancerState.LoadBalancerStateListenerCallb
 import com.linkedin.d2.balancer.LoadBalancerState.NullStateListenerCallback;
 import com.linkedin.d2.balancer.LoadBalancerStateItem;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
+import com.linkedin.d2.balancer.WarmUpService;
 import com.linkedin.d2.balancer.clients.RewriteClient;
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
@@ -70,7 +72,7 @@ import static com.linkedin.d2.discovery.util.LogUtil.debug;
 import static com.linkedin.d2.discovery.util.LogUtil.info;
 import static com.linkedin.d2.discovery.util.LogUtil.warn;
 
-public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, ClientFactoryProvider, PartitionInfoProvider
+public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, ClientFactoryProvider, PartitionInfoProvider, WarmUpService
 {
   private static final Logger     _log =
                                            LoggerFactory.getLogger(SimpleLoadBalancer.class);
@@ -303,74 +305,6 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     }
   }
 
-  private void listenToService(String serviceName)
-          throws ServiceUnavailableException
-  {
-    if (_timeout > 0)
-    {
-      CountDownLatch latch = new CountDownLatch(1);
-
-      SimpleLoadBalancerCountDownCallback callback =
-          new SimpleLoadBalancerCountDownCallback(latch)
-          {
-            @Override
-            public void done(int type, String name)
-            {
-              super.done(type, name);
-            }
-          };
-      _state.listenToService(serviceName, callback);
-
-      try
-      {
-        if (!latch.await(_timeout, _unit))
-        {
-          warn(_log, "timed out during wait while trying to add service: ", serviceName);
-        }
-      }
-      catch (InterruptedException e)
-      {
-        _log.error("got interrupt while waiting for a service to be registered", e);
-        die(serviceName, "got interrupt while waiting for a service to be registered");
-      }
-    }
-    else
-    {
-      _state.listenToService(serviceName, new NullStateListenerCallback());
-      _log.info("No timeout for service {}", serviceName);
-    }
-  }
-
-  private void listenToCluster(String serviceName,
-                               String clusterName)
-          throws ServiceUnavailableException
-  {
-    // get the cluster for this uri
-    if (_timeout > 0)
-    {
-      CountDownLatch latch = new CountDownLatch(1);
-
-      _state.listenToCluster(clusterName, new SimpleLoadBalancerCountDownCallback(latch));
-
-      try
-      {
-        if (!latch.await(_timeout, _unit))
-        {
-          warn(_log, "timed out during wait while trying to add cluster: ", clusterName);
-        }
-      }
-      catch (InterruptedException e)
-      {
-        die(serviceName, "got interrupt while waiting for a cluster to be registered: "
-            + clusterName);
-      }
-    }
-    else
-    {
-      _state.listenToCluster(clusterName, new NullStateListenerCallback());
-    }
-  }
-
   private ServiceProperties listenToServiceAndCluster(URI uri)
           throws ServiceUnavailableException
   {
@@ -382,12 +316,74 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     // get the service for this uri
     String serviceName = LoadBalancerUtil.getServiceNameFromUri(uri);
 
-    ServiceProperties service = getLoadBalancedServiceProperties(serviceName);
+    return listenToServiceAndCluster(serviceName);
+  }
 
-    String clusterName = service.getClusterName();
+  private ServiceProperties listenToServiceAndCluster(String serviceName)
+    throws ServiceUnavailableException
+  {
+    FutureCallback<ServiceProperties> servicePropertiesFutureCallback = new FutureCallback<>();
+    boolean waitForUpdatedValue = _timeout > 0;
+    listenToServiceAndCluster(serviceName, waitForUpdatedValue, servicePropertiesFutureCallback);
+    try
+    {
+      return servicePropertiesFutureCallback.get(_timeout, _unit);
+    }
+    catch (Exception e)
+    {
+      throw new ServiceUnavailableException(serviceName, e.getMessage(), e);
+    }
+  }
 
-    listenToCluster(serviceName, clusterName);
-    return service;
+  private void listenToServiceAndCluster(String serviceName, boolean waitForUpdatedValue, Callback<ServiceProperties> callback)
+  {
+    getLoadBalancedServiceProperties(serviceName, waitForUpdatedValue, new Callback<ServiceProperties>()
+    {
+      @Override
+      public void onError(Throwable e)
+      {
+        callback.onError(e);
+      }
+
+      @Override
+      public void onSuccess(ServiceProperties service)
+      {
+        String clusterName = service.getClusterName();
+        listenToCluster(clusterName, waitForUpdatedValue, (type, name) -> callback.onSuccess(service));
+      }
+    });
+  }
+
+  public void listenToCluster(String clusterName, boolean waitForUpdatedValue, LoadBalancerStateListenerCallback callback)
+  {
+    if (waitForUpdatedValue)
+    {
+      _state.listenToCluster(clusterName, callback);
+    }
+    else
+    {
+      _state.listenToCluster(clusterName, new NullStateListenerCallback());
+      callback.done(0, null);
+    }
+  }
+
+  @Override
+  public void warmUpService(String serviceName, Callback<None> callback)
+  {
+    listenToServiceAndCluster(serviceName, true, new Callback<ServiceProperties>()
+    {
+      @Override
+      public void onError(Throwable e)
+      {
+        callback.onError(e);
+      }
+
+      @Override
+      public void onSuccess(ServiceProperties result)
+      {
+        callback.onSuccess(None.none());
+      }
+    });
   }
 
   private LoadBalancerStateItem<UriProperties> getUriItem(String serviceName,
@@ -571,22 +567,53 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
 
   @Override
   public ServiceProperties getLoadBalancedServiceProperties(String serviceName)
-          throws ServiceUnavailableException
+    throws ServiceUnavailableException
   {
-    listenToService(serviceName);
-    LoadBalancerStateItem<ServiceProperties> serviceItem =
+    FutureCallback<ServiceProperties> futureCallback = new FutureCallback<>();
+    boolean waitForUpdatedValue = _timeout > 0;
+
+    getLoadBalancedServiceProperties(serviceName, waitForUpdatedValue, futureCallback);
+
+    try
+    {
+      return futureCallback.get(_timeout, _unit);
+    }
+    catch (Exception e)
+    {
+      throw new ServiceUnavailableException(serviceName, e.getMessage(), e);
+    }
+  }
+
+  public void getLoadBalancedServiceProperties(String serviceName, boolean waitForUpdatedValue, Callback<ServiceProperties> servicePropertiesCallback)
+  {
+    Runnable callback = () ->
+    {
+      LoadBalancerStateItem<ServiceProperties> serviceItem =
         _state.getServiceProperties(serviceName);
 
-    if (serviceItem == null || serviceItem.getProperty() == null)
+      if (serviceItem == null || serviceItem.getProperty() == null)
+      {
+        warn(_log, "unable to find service: ", serviceName);
+
+        die(servicePropertiesCallback, serviceName, "no service properties in lb state");
+        return;
+      }
+
+      debug(_log, "got service: ", serviceItem);
+
+      servicePropertiesCallback.onSuccess(serviceItem.getProperty());
+    };
+
+    if (waitForUpdatedValue)
     {
-      warn(_log, "unable to find service: ", serviceName);
-
-      die(serviceName, "no service properties in lb state");
+      _state.listenToService(serviceName, (type, name) -> callback.run());
     }
-
-    debug(_log, "got service: ", serviceItem);
-
-    return serviceItem.getProperty();
+    else
+    {
+      _log.info("No timeout for service {}", serviceName);
+      _state.listenToService(serviceName, new NullStateListenerCallback());
+      callback.run();
+    }
   }
 
   // supports partitioning
@@ -749,8 +776,13 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   private void die(String serviceName, String message) throws ServiceUnavailableException
   {
     _serviceUnavailableStats.inc();
-
     throw new ServiceUnavailableException(serviceName, message);
+  }
+
+  private void die(Callback<?> callback, String serviceName, String message)
+  {
+    _serviceUnavailableStats.inc();
+    callback.onError(new ServiceUnavailableException(serviceName, message));
   }
 
   public static class SimpleLoadBalancerCountDownCallback implements

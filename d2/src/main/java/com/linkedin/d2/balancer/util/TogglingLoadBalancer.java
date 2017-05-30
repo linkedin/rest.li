@@ -25,7 +25,9 @@ import com.linkedin.common.callback.Callbacks;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.LoadBalancer;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
+import com.linkedin.d2.balancer.WarmUpService;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
+import com.linkedin.d2.balancer.simple.SimpleLoadBalancer;
 import com.linkedin.d2.balancer.util.hashing.HashRingProvider;
 import com.linkedin.d2.balancer.util.hashing.Ring;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
@@ -48,15 +50,28 @@ import java.util.Map;
  * @version $Revision: $
  */
 
-public class TogglingLoadBalancer implements LoadBalancer, HashRingProvider, ClientFactoryProvider, PartitionInfoProvider
+public class TogglingLoadBalancer implements LoadBalancer, HashRingProvider, ClientFactoryProvider, PartitionInfoProvider, WarmUpService
 {
   private final LoadBalancer _balancer;
+  private final WarmUpService _warmUpService;
+  private final HashRingProvider _hashRingProvider;
+  private final PartitionInfoProvider _partitionInfoProvider;
+  private final ClientFactoryProvider _clientFactoryProvider;
   private final TogglingPublisher<?>[] _toggles;
 
-  public TogglingLoadBalancer(LoadBalancer balancer, TogglingPublisher<?> ... toggles)
+  public TogglingLoadBalancer(SimpleLoadBalancer balancer, TogglingPublisher<?>... toggles)
   {
     _balancer = balancer;
+    _warmUpService = balancer;
+    _hashRingProvider = balancer;
+    _partitionInfoProvider = balancer;
+    _clientFactoryProvider = balancer;
     _toggles = toggles;
+  }
+
+  public TogglingLoadBalancer(LoadBalancer balancer, TogglingPublisher<?>... toggles)
+  {
+    this((SimpleLoadBalancer) balancer, toggles);
   }
 
   public void enablePrimary(Callback<None> callback)
@@ -106,33 +121,33 @@ public class TogglingLoadBalancer implements LoadBalancer, HashRingProvider, Cli
   public <K> MapKeyResult<Ring<URI>, K> getRings(URI serviceUri, Iterable<K> keys) throws ServiceUnavailableException
   {
     checkLoadBalancer();
-    return ((HashRingProvider)_balancer).getRings(serviceUri, keys);
+    return _hashRingProvider.getRings(serviceUri, keys);
   }
 
   @Override
   public Map<Integer, Ring<URI>> getRings(URI serviceUri) throws ServiceUnavailableException
   {
     checkLoadBalancer();
-    return ((HashRingProvider)_balancer).getRings(serviceUri);
+    return _hashRingProvider.getRings(serviceUri);
   }
 
   @Override
   public <K> HostToKeyMapper<K> getPartitionInformation(URI serviceUri, Collection<K> keys, int limitHostPerPartition, int hash) throws ServiceUnavailableException
   {
     checkPartitionInfoProvider();
-    return ((PartitionInfoProvider)_balancer).getPartitionInformation(serviceUri, keys, limitHostPerPartition, hash);
+    return _partitionInfoProvider.getPartitionInformation(serviceUri, keys, limitHostPerPartition, hash);
   }
 
   @Override
   public PartitionAccessor getPartitionAccessor(URI serviceUri) throws ServiceUnavailableException
   {
     checkPartitionInfoProvider();
-    return ((PartitionInfoProvider)_balancer).getPartitionAccessor(serviceUri);
+    return _partitionInfoProvider.getPartitionAccessor(serviceUri);
   }
 
   private void checkLoadBalancer()
   {
-    if (_balancer == null || !(_balancer instanceof HashRingProvider))
+    if (_hashRingProvider == null)
     {
       throw new IllegalStateException("No HashRingProvider available to TogglingLoadBalancer - this could be because the load balancer " +
           "is not yet initialized, or because it has been configured with strategies that do not support " +
@@ -142,7 +157,7 @@ public class TogglingLoadBalancer implements LoadBalancer, HashRingProvider, Cli
 
   private void checkPartitionInfoProvider()
   {
-    if (_balancer == null || !(_balancer instanceof PartitionInfoProvider))
+    if (_partitionInfoProvider == null)
     {
       throw new IllegalStateException("No PartitionInfoProvider available to TogglingLoadBalancer - this could be because the load balancer " +
                                           "is not yet initialized, or because it has been configured with strategies that do not support " +
@@ -153,7 +168,7 @@ public class TogglingLoadBalancer implements LoadBalancer, HashRingProvider, Cli
   @Override
   public TransportClientFactory getClientFactory(String scheme)
   {
-    if (_balancer == null || !(_balancer instanceof ClientFactoryProvider))
+    if (_clientFactoryProvider == null)
     {
       throw new IllegalStateException("No ClientFactoryProvider available to TogglingLoadBalancer - " +
                                               "this could be because the load balancer " +
@@ -161,6 +176,12 @@ public class TogglingLoadBalancer implements LoadBalancer, HashRingProvider, Cli
                                               "configured with a LoadBalancer which does not" +
                                               "support obtaining client factories");
     }
-    return ((ClientFactoryProvider)_balancer).getClientFactory(scheme);
+    return _clientFactoryProvider.getClientFactory(scheme);
+  }
+
+  @Override
+  public void warmUpService(String serviceName, Callback<None> callback)
+  {
+    _warmUpService.warmUpService(serviceName, callback);
   }
 }

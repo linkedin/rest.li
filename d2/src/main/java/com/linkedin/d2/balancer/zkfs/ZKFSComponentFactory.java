@@ -40,13 +40,13 @@ import com.linkedin.d2.discovery.stores.zk.ZooKeeperPermanentStore;
 public class ZKFSComponentFactory implements ZKFSTogglingLoadBalancerFactoryImpl.ComponentFactory
 {
   @Override
-  public TogglingLoadBalancer createBalancer(SimpleLoadBalancer balancer,
+  public TogglingLoadBalancer createBalancer(SimpleLoadBalancer simpleLoadBalancer,
                                              SimpleLoadBalancerState state,
                                              TogglingPublisher<ClusterProperties> clusterToggle,
                                              TogglingPublisher<ServiceProperties> serviceToggle,
                                              TogglingPublisher<UriProperties> uriToggle)
   {
-    return new TogglingLoadBalancer(balancer, clusterToggle, serviceToggle, uriToggle);
+    return new TogglingLoadBalancer(simpleLoadBalancer, clusterToggle, serviceToggle, uriToggle);
   }
 
   @Override
@@ -54,7 +54,7 @@ public class ZKFSComponentFactory implements ZKFSTogglingLoadBalancerFactoryImpl
           ZooKeeperPermanentStore<ClusterProperties> zk, FileStore<ClusterProperties> fs,
           PropertyEventBus<ClusterProperties> bus)
   {
-    return new TogglingPublisher<ClusterProperties>(zk, fs, bus);
+    return new TogglingPublisher<>(zk, fs, bus);
   }
 
   @Override
@@ -62,7 +62,7 @@ public class ZKFSComponentFactory implements ZKFSTogglingLoadBalancerFactoryImpl
           ZooKeeperPermanentStore<ServiceProperties> zk, FileStore<ServiceProperties> fs,
           PropertyEventBus<ServiceProperties> bus)
   {
-    return new TogglingPublisher<ServiceProperties>(zk, fs, bus);
+    return new TogglingPublisher<>(zk, fs, bus);
   }
 
   @Override
@@ -70,6 +70,6 @@ public class ZKFSComponentFactory implements ZKFSTogglingLoadBalancerFactoryImpl
                                                           FileStore<UriProperties> fs,
                                                           PropertyEventBus<UriProperties> bus)
   {
-    return new TogglingPublisher<UriProperties>(zk, fs, bus);
+    return new TogglingPublisher<>(zk, fs, bus);
   }
 }

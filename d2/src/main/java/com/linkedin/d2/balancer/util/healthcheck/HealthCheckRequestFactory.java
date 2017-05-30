@@ -11,16 +11,17 @@ import java.util.Map;
 /**
  * HealthCheckRequestFactory provides parameters for health checking requests.
  */
-
-
 public class HealthCheckRequestFactory
 {
+  /**
+   * @param method of the HttpRequest ({@link com.linkedin.r2.message.rest.RestMethod})
+   * @param uri full URI of the request
+   */
   public RestRequest buildRestRequest(String method, URI uri)
   {
     RestRequestBuilder requestBuilder = new RestRequestBuilder(uri);
 
     requestBuilder.setMethod(method);
-
     requestBuilder.setHeader("X-RestLi-Protocol-Version", "2.0.0");
 
     return requestBuilder.build();

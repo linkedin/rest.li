@@ -15,17 +15,18 @@
 */
 package com.linkedin.d2.balancer;
 
-import java.util.Collections;
-import java.util.Map;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLParameters;
-
+import com.linkedin.d2.balancer.util.WarmUpLoadBalancer;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
 import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl;
 import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl.ComponentFactory;
 import com.linkedin.r2.transport.common.TransportClientFactory;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
+import java.util.Collections;
+import java.util.Map;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class D2ClientConfig
 {
@@ -49,9 +50,15 @@ public class D2ClientConfig
   Map<String, Map<String, Object>> clientServicesConfig = Collections.<String, Map<String, Object>>emptyMap();
   boolean useNewEphemeralStoreWatcher = false;
   HealthCheckOperations _healthCheckOperations = null;
+  /**
+   * By default is a single threaded executor
+   */
   ScheduledExecutorService _executorService = null;
   boolean retry = false;
   int retryLimit = DEAULT_RETRY_LIMIT;
+  boolean warmUp = false;
+  int warmUpTimeoutSeconds = WarmUpLoadBalancer.DEFAULT_SEND_REQUESTS_TIMEOUT_SECONDS;
+  int warmUpConcurrentRequests = WarmUpLoadBalancer.DEFAULT_CONCURRENT_REQUESTS;
 
   private static final int DEAULT_RETRY_LIMIT = 3;
 
@@ -265,6 +272,61 @@ public class D2ClientConfig
                         boolean retry,
                         int retryLimit)
   {
+    this(zkHosts,
+      zkSessionTimeoutInMs,
+      zkStartupTimeoutInMs,
+      lbWaitTimeout,
+      lbWaitUnit,
+      flagFile,
+      basePath,
+      fsBasePath,
+      componentFactory,
+      clientFactories,
+      lbWithFacilitiesFactory,
+      sslContext,
+      sslParameters,
+      isSSLEnabled,
+      shutdownAsynchronously,
+      isSymlinkAware,
+      clientServicesConfig,
+      d2ServicePath,
+      useNewEphemeralStoreWatcher,
+      healthCheckOperations,
+      executorService,
+      retry,
+      retryLimit,
+      false,
+      0,
+      0);
+  }
+
+  public D2ClientConfig(String zkHosts,
+                        long zkSessionTimeoutInMs,
+                        long zkStartupTimeoutInMs,
+                        long lbWaitTimeout,
+                        TimeUnit lbWaitUnit,
+                        String flagFile,
+                        String basePath,
+                        String fsBasePath,
+                        ComponentFactory componentFactory,
+                        Map<String, TransportClientFactory> clientFactories,
+                        LoadBalancerWithFacilitiesFactory lbWithFacilitiesFactory,
+                        SSLContext sslContext,
+                        SSLParameters sslParameters,
+                        boolean isSSLEnabled,
+                        boolean shutdownAsynchronously,
+                        boolean isSymlinkAware,
+                        Map<String, Map<String, Object>> clientServicesConfig,
+                        String d2ServicePath,
+                        boolean useNewEphemeralStoreWatcher,
+                        HealthCheckOperations healthCheckOperations,
+                        ScheduledExecutorService executorService,
+                        boolean retry,
+                        int retryLimit,
+                        boolean warmUp,
+                        int warmUpTimeoutSeconds,
+                        int warmUpConcurrentRequests)
+  {
     this.zkHosts = zkHosts;
     this.zkSessionTimeoutInMs = zkSessionTimeoutInMs;
     this.zkStartupTimeoutInMs = zkStartupTimeoutInMs;
@@ -288,6 +350,8 @@ public class D2ClientConfig
     this._executorService = executorService;
     this.retry = retry;
     this.retryLimit = retryLimit;
+    this.warmUp = warmUp;
+    this.warmUpTimeoutSeconds = warmUpTimeoutSeconds;
+    this.warmUpConcurrentRequests = warmUpConcurrentRequests;
   }
-
 }

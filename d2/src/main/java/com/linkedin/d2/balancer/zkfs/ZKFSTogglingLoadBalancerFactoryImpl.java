@@ -20,6 +20,8 @@
 
 package com.linkedin.d2.balancer.zkfs;
 
+import com.linkedin.common.callback.Callback;
+import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ClusterPropertiesJsonSerializer;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
@@ -31,6 +33,7 @@ import com.linkedin.d2.balancer.simple.SimpleLoadBalancer;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancerState;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
+import com.linkedin.d2.balancer.util.FileSystemDirectory;
 import com.linkedin.d2.balancer.util.TogglingLoadBalancer;
 import com.linkedin.d2.discovery.PropertySerializer;
 import com.linkedin.d2.discovery.event.PropertyEventBus;
@@ -41,18 +44,16 @@ import com.linkedin.d2.discovery.stores.zk.ZKConnection;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperPermanentStore;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperPropertyMerger;
-import com.linkedin.common.callback.Callback;
 import com.linkedin.r2.transport.common.TransportClientFactory;
-import com.linkedin.common.util.None;
-import java.util.Collections;
-import java.util.concurrent.ScheduledExecutorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
 import java.io.File;
+import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -68,7 +69,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
   private final long _lbTimeout;
   private final TimeUnit _lbTimeoutUnit;
   private final String _baseZKPath;
-  private final String _fsDir;
+  private final String _fsd2DirPath;
   private final Map<String, TransportClientFactory> _clientFactories;
   private final Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> _loadBalancerStrategyFactories;
   private final String _d2ServicePath;
@@ -85,20 +86,21 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
    * @param timeout Timeout for individual LoadBalancer operations
    * @param timeoutUnit Unit for the timeout
    * @param baseZKPath Path to the root ZNode where discovery information is stored
-   * @param fsDir Path to the root filesystem directory where backup file stores will live
+   * @param fsBasePath Path to the root filesystem directory where backup file stores will live
    * @param clientFactories Factory for transport clients
    * @param loadBalancerStrategyFactories Factory for LoadBalancer strategies
    */
   public ZKFSTogglingLoadBalancerFactoryImpl(ComponentFactory factory,
                                              long timeout, TimeUnit timeoutUnit,
-                                             String baseZKPath, String fsDir,
+                                             String baseZKPath, String fsBasePath,
                                              Map<String, TransportClientFactory> clientFactories,
                                              Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories)
   {
     this(factory, timeout, timeoutUnit,
-         baseZKPath, fsDir,
+         baseZKPath, fsBasePath,
          clientFactories, loadBalancerStrategyFactories,
-         "", null, null, false, Collections.<String, Map<String, Object>>emptyMap(), false);
+      "", null,
+      null, false);
   }
 
   /**
@@ -106,29 +108,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
    * @param timeout Timeout for individual LoadBalancer operations
    * @param timeoutUnit Unit for the timeout
    * @param baseZKPath Path to the root ZNode where discovery information is stored
-   * @param fsDir Path to the root filesystem directory where backup file stores will live
-   * @param clientFactories Factory for transport clients
-   * @param loadBalancerStrategyFactories Factory for LoadBalancer strategies
-   * @param d2ServicePath  alternate service discovery znodes path, relative to baseZKPath.
-   *                       d2ServicePath is "services" if it is an empty string or null.
-   */
-  public ZKFSTogglingLoadBalancerFactoryImpl(ComponentFactory factory,
-                                             long timeout, TimeUnit timeoutUnit,
-                                             String baseZKPath, String fsDir,
-                                             Map<String, TransportClientFactory> clientFactories,
-                                             Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories,
-                                             String d2ServicePath)
-  {
-    this(factory, timeout, timeoutUnit, baseZKPath, fsDir, clientFactories, loadBalancerStrategyFactories,
-         d2ServicePath, null, null, false, Collections.<String, Map<String, Object>>emptyMap(), false);
-  }
-
-  /**
-   *
-   * @param timeout Timeout for individual LoadBalancer operations
-   * @param timeoutUnit Unit for the timeout
-   * @param baseZKPath Path to the root ZNode where discovery information is stored
-   * @param fsDir Path to the root filesystem directory where backup file stores will live
+   * @param fsBasePath Path to the root filesystem directory where backup file stores will live
    * @param clientFactories Factory for transport clients
    * @param loadBalancerStrategyFactories Factory for LoadBalancer strategies
    * @param d2ServicePath  alternate service discovery znodes path, relative to baseZKPath.
@@ -139,7 +119,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
    */
   public ZKFSTogglingLoadBalancerFactoryImpl(ComponentFactory factory,
                                              long timeout, TimeUnit timeoutUnit,
-                                             String baseZKPath, String fsDir,
+                                             String baseZKPath, String fsBasePath,
                                              Map<String, TransportClientFactory> clientFactories,
                                              Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories,
                                              String d2ServicePath,
@@ -148,25 +128,25 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
                                              boolean isSSLEnabled)
   {
     this(factory,
-         timeout,
-         timeoutUnit,
-         baseZKPath,
-         fsDir,
-         clientFactories,
-         loadBalancerStrategyFactories,
-         d2ServicePath,
-         sslContext,
-         sslParameters,
-         isSSLEnabled,
-         Collections.<String, Map<String, Object>>emptyMap(),
-         false);
+      timeout,
+      timeoutUnit,
+      baseZKPath,
+      fsBasePath,
+      clientFactories,
+      loadBalancerStrategyFactories,
+      d2ServicePath,
+      sslContext,
+      sslParameters,
+      isSSLEnabled,
+      Collections.emptyMap(),
+      false);
   }
 
   public ZKFSTogglingLoadBalancerFactoryImpl(ComponentFactory factory,
                                              long timeout,
                                              TimeUnit timeoutUnit,
                                              String baseZKPath,
-                                             String fsDir,
+                                             String fsBasePath,
                                              Map<String, TransportClientFactory> clientFactories,
                                              Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories,
                                              String d2ServicePath,
@@ -180,7 +160,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
     _lbTimeout = timeout;
     _lbTimeoutUnit = timeoutUnit;
     _baseZKPath = baseZKPath;
-    _fsDir = fsDir;
+    _fsd2DirPath = fsBasePath;
     _clientFactories = clientFactories;
     _loadBalancerStrategyFactories = loadBalancerStrategyFactories;
     if(d2ServicePath == null || d2ServicePath.isEmpty())
@@ -210,13 +190,13 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
     ZooKeeperEphemeralStore<UriProperties> zkUriRegistry =  createEphemeralStore(
             zkConnection, ZKFSUtil.uriPath(_baseZKPath), new UriPropertiesJsonSerializer(), new UriPropertiesMerger(), _useNewEphemeralStoreWatcher);
 
-    FileStore<ClusterProperties> fsClusterStore = createFileStore("clusters", new ClusterPropertiesJsonSerializer());
-    FileStore<ServiceProperties> fsServiceStore = createFileStore(_d2ServicePath, new ServicePropertiesJsonSerializer());
-    FileStore<UriProperties> fsUriStore = createFileStore("uris", new UriPropertiesJsonSerializer());
+    FileStore<ClusterProperties> fsClusterStore = createFileStore(FileSystemDirectory.getClusterDirectory(_fsd2DirPath), new ClusterPropertiesJsonSerializer());
+    FileStore<ServiceProperties> fsServiceStore = createFileStore(FileSystemDirectory.getServiceDirectory(_fsd2DirPath, _d2ServicePath), new ServicePropertiesJsonSerializer());
+    FileStore<UriProperties> fsUriStore = createFileStore(_fsd2DirPath + File.separator + "uris", new UriPropertiesJsonSerializer());
 
-    PropertyEventBus<ClusterProperties> clusterBus = new PropertyEventBusImpl<ClusterProperties>(executorService);
-    PropertyEventBus<ServiceProperties> serviceBus = new PropertyEventBusImpl<ServiceProperties>(executorService);
-    PropertyEventBus<UriProperties> uriBus = new PropertyEventBusImpl<UriProperties>(executorService);
+    PropertyEventBus<ClusterProperties> clusterBus = new PropertyEventBusImpl<>(executorService);
+    PropertyEventBus<ServiceProperties> serviceBus = new PropertyEventBusImpl<>(executorService);
+    PropertyEventBus<UriProperties> uriBus = new PropertyEventBusImpl<>(executorService);
 
     // This ensures the filesystem store receives the events from the event bus so that
     // it can keep a local backup.
@@ -268,9 +248,9 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
     return store;
   }
 
-  protected <T> FileStore<T> createFileStore(String baseName, PropertySerializer<T> serializer)
+  protected <T> FileStore<T> createFileStore(String path, PropertySerializer<T> serializer)
   {
-    FileStore<T> store = new FileStore<T>(_fsDir + File.separator + baseName, ".ini", serializer);
+    FileStore<T> store = new FileStore<>(path, FileSystemDirectory.FILE_STORE_EXTENSION, serializer);
     return store;
   }
 

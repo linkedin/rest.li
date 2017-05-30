@@ -16,26 +16,27 @@
 
 package com.linkedin.d2.discovery.stores.file;
 
-import static org.testng.Assert.fail;
+import com.linkedin.d2.discovery.stores.PropertyStore;
+import com.linkedin.d2.discovery.stores.PropertyStoreTest;
+import com.linkedin.d2.discovery.stores.PropertyStringSerializer;
+import org.testng.annotations.Test;
 
 import java.io.File;
 import java.io.IOException;
 
-import org.testng.annotations.Test;
-
-import com.linkedin.d2.discovery.stores.PropertyStore;
-import com.linkedin.d2.discovery.stores.PropertyStoreTest;
-import com.linkedin.d2.discovery.stores.PropertyStringSerializer;
+import static org.testng.Assert.fail;
 
 public class FileStoreTest extends PropertyStoreTest
 {
+  public static final String FILE_STORE_EXTENSION = ".ini";
+
   @Override
   public PropertyStore<String> getStore()
   {
     try
     {
-      return new FileStore<String>(createTempDirectory("file-store-test").toString(),
-                                   ".ini",
+      return new FileStore<>(createTempDirectory("file-store-test").toString(),
+                                   FILE_STORE_EXTENSION,
                                    new PropertyStringSerializer());
     }
     catch (IOException e)
