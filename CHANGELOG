@@ -9,6 +9,9 @@ Honor ErrorResponseFormat for exception thrown within multiplexer (or by multipl
 (RB=994715)
 Add D2Monitor to support D2Event
 
+(RB=972175)
+Make AsyncPoolImpl consistent returning a Cancellable but cannot be cancelled instead of null
+
 11.0.9
 ------
 (RB=991779)

@@ -363,7 +363,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
       // This is a recoverable exception. User can simply retry the failed get() operation.
       callbackWithTracking.onError(
           new SizeLimitExceededException("AsyncPool " + _poolName + " reached maximum waiter size: " + _maxWaiters));
-      return null;
+      return () -> false;
     }
     trc("enqueued a waiter");
     if (create)
