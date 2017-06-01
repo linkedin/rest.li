@@ -329,7 +329,7 @@ public class DegraderLoadBalancerTest
             name, null,
             clusterCallCount,
             quarantineMap,
-            quarantineStore);
+            quarantineStore, null);
 
     DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState newStateV3 = new
             DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState(clusterGenerationId,
@@ -344,7 +344,7 @@ public class DegraderLoadBalancerTest
             name, null,
             clusterCallCount,
             quarantineMap,
-            quarantineStore);
+            quarantineStore, null);
 
     assertTrue(DegraderLoadBalancerStrategyV3.isOldStateTheSameAsNewState(oldStateV3, newStateV3));
 
@@ -360,7 +360,7 @@ public class DegraderLoadBalancerTest
             name, null,
             clusterCallCount,
             quarantineMap,
-            quarantineStore);
+            quarantineStore, null);
 
     assertTrue(DegraderLoadBalancerStrategyV3.isOldStateTheSameAsNewState(oldStateV3, newStateV3));
 
@@ -375,7 +375,7 @@ public class DegraderLoadBalancerTest
             recoveryMap,
             name, null, clusterCallCount,
             quarantineMap,
-            quarantineStore);
+            quarantineStore, null);
 
     assertTrue(DegraderLoadBalancerStrategyV3.isOldStateTheSameAsNewState(oldStateV3, newStateV3));
 
@@ -392,7 +392,7 @@ public class DegraderLoadBalancerTest
             name, null,
             clusterCallCount,
             quarantineMap,
-            quarantineStore);
+            quarantineStore, null);
 
     assertFalse(DegraderLoadBalancerStrategyV3.isOldStateTheSameAsNewState(oldStateV3, newStateV3));
 
@@ -409,7 +409,7 @@ public class DegraderLoadBalancerTest
             recoveryMap,
             name, null, clusterCallCount,
             quarantineMap,
-            quarantineStore);
+            quarantineStore, null);
 
     assertFalse(DegraderLoadBalancerStrategyV3.isOldStateTheSameAsNewState(oldStateV3, newStateV3));
 
@@ -424,7 +424,7 @@ public class DegraderLoadBalancerTest
             recoveryMap,
             name, null, clusterCallCount,
             quarantineMap,
-            quarantineStore);
+            quarantineStore, null);
 
     //we don't care about averageClusterLatency for comparing states
     assertTrue(DegraderLoadBalancerStrategyV3.isOldStateTheSameAsNewState(oldStateV3, newStateV3));
@@ -445,7 +445,7 @@ public class DegraderLoadBalancerTest
             recoveryMap,
             name, null, clusterCallCount,
             quarantineMap,
-            quarantineStore);
+            quarantineStore, null);
 
     assertFalse(DegraderLoadBalancerStrategyV3.isOldStateTheSameAsNewState(oldStateV3, newStateV3));
 
@@ -466,7 +466,7 @@ public class DegraderLoadBalancerTest
             name, null,
             clusterCallCount,
             quarantineMap,
-            quarantineStore);
+            quarantineStore, null);
 
     assertFalse(DegraderLoadBalancerStrategyV3.isNewStateHealthy(newStateV3, config, clientUpdaters, DEFAULT_PARTITION_ID));
     //make all points to have 120 so the cluster becomes "healthy"
@@ -486,7 +486,7 @@ public class DegraderLoadBalancerTest
             name, null,
             clusterCallCount,
             quarantineMap,
-            quarantineStore);
+            quarantineStore, null);
 
     assertTrue(DegraderLoadBalancerStrategyV3.isNewStateHealthy(newStateV3, config, clientUpdaters, DEFAULT_PARTITION_ID));
 
@@ -503,7 +503,7 @@ public class DegraderLoadBalancerTest
             name, null,
             clusterCallCount,
             quarantineMap,
-            quarantineStore);
+            quarantineStore, null);
 
 
     assertFalse(DegraderLoadBalancerStrategyV3.isNewStateHealthy(newStateV3, config, clientUpdaters, DEFAULT_PARTITION_ID));
@@ -1785,7 +1785,7 @@ public class DegraderLoadBalancerTest
             current.getDegraderProperties(),
             clusterCallCount,
             Collections.emptyMap(),
-            Collections.emptyMap());
+            Collections.emptyMap(), null);
     strategy.getState().setPartitionState(DEFAULT_PARTITION_ID, current);
 
     // state is not null, but we're on the same cluster generation id, and 5 seconds
@@ -1808,7 +1808,7 @@ public class DegraderLoadBalancerTest
             current.getDegraderProperties(),
             clusterCallCount,
             Collections.emptyMap(),
-            Collections.emptyMap());
+            Collections.emptyMap(), null);
 
     strategy.getState().setPartitionState(DEFAULT_PARTITION_ID, current);
 
@@ -1831,7 +1831,7 @@ public class DegraderLoadBalancerTest
             current.getDegraderProperties(),
             clusterCallCount,
             Collections.emptyMap(),
-            Collections.emptyMap());
+            Collections.emptyMap(), null);
 
     strategy.getState().setPartitionState(DEFAULT_PARTITION_ID, current);
 
@@ -1853,7 +1853,7 @@ public class DegraderLoadBalancerTest
             current.getDegraderProperties(),
             clusterCallCount,
             Collections.emptyMap(),
-            Collections.emptyMap());
+            Collections.emptyMap(), null);
 
     strategy.getState().setPartitionState(DEFAULT_PARTITION_ID, current);
 
@@ -1909,7 +1909,7 @@ public class DegraderLoadBalancerTest
             current.getDegraderProperties(),
             clusterCallCount,
             Collections.emptyMap(),
-            Collections.emptyMap());
+            Collections.emptyMap(), null);
 
     strategy.getState().setPartitionState(DEFAULT_PARTITION_ID, current);
   }

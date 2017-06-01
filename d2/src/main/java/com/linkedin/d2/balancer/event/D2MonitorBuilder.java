@@ -1,5 +1,6 @@
 package com.linkedin.d2.balancer.event;
 
+import com.linkedin.util.degrader.DegraderControl;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
@@ -58,6 +59,11 @@ public class D2MonitorBuilder
   public int getPartitionId()
   {
     return _partitionId;
+  }
+
+  public Map<URI, D2MonitorUriInfoBuilder> getUriInfoBuilderMap()
+  {
+    return _uriInfoBuilderMap;
   }
 
   /**
@@ -205,6 +211,11 @@ public class D2MonitorBuilder
       _transmissionPoints = 0;
     }
 
+    public URI getUri()
+    {
+      return _uri;
+    }
+
     public D2MonitorUriInfoBuilder setCurrentCallCount(long currentCallCount)
     {
       _currentCallCount = currentCallCount;
@@ -282,6 +293,20 @@ public class D2MonitorBuilder
       return new D2Monitor.UriInfo(_uri.getHost(), _uri.getPort(), _currentCallCount,
           _totalCallCount, _outstandingCount, _currentLatency, _currentErrorCount, _50PctLatency,
           _90PctLatency, _95PctLatency, _99PctLatency, _quarantineDuration, _computedDropRate, _transmissionPoints);
+    }
+
+    public void copyStats(DegraderControl degraderControl)
+    {
+      int callCount = degraderControl.getCallCount();
+      this.setCurrentCallCount(callCount)
+          .setCurrentLatency(degraderControl.getCallTimeStats().getAverage())
+          .setTotalCallCount(degraderControl.getCurrentCountTotal())
+          .setCurrentErrorCount((int)(degraderControl.getErrorRate() * callCount))
+          .setOutstandingCount(degraderControl.getOutstandingCount())
+          .set50PctLatency(degraderControl.getCallTimeStats().get50Pct())
+          .set90PctLatency(degraderControl.getCallTimeStats().get90Pct())
+          .set95PctLatency(degraderControl.getCallTimeStats().get95Pct())
+          .set99PctLatency(degraderControl.getCallTimeStats().get99Pct());
     }
   }
 

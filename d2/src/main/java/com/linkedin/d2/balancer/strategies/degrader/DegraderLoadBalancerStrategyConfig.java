@@ -89,9 +89,10 @@ public class DegraderLoadBalancerStrategyConfig
   // lowEventEmittingInterval and highEventEmittingInterval control the interval for d2monitor
   // to emit events. lowEventEmittingInterval is used when there are abnormal events that need
   // to emit at a higher frequency. highEventEmittingInterval is used when all the hosts are in
-  // healthy state. 'lowEventEmittingInterval == 0' disables d2monitor emitting.
+  // healthy state. 'lowEventEmittingInterval == 0 && highEventEmittingInterval = 0' disables
+  // d2monitor emitting.
   //
-  // The settings directly depend on the number of clients and QPS.
+  // The settings might need to tuned depending on the number of clients and QPS.
   private final long _lowEventEmittingInterval;
   private final long _highEventEmittingInterval;
 
@@ -125,8 +126,8 @@ public class DegraderLoadBalancerStrategyConfig
   public static final String DEFAULT_QUARANTINE_METHOD = RestMethod.OPTIONS;
   private static final double QUARANTINE_MAXPERCENT_CAP = 0.5;
 
-  public static final long DEFAULT_LOW_EVENT_EMITTING_INTERVAL = 0;  // Milliseconds. disable emitting by default
-  public static final long DEFAULT_HIGH_EVENT_EMITTING_INTERVAL = 60000; // Milliseconds
+  public static final long DEFAULT_LOW_EVENT_EMITTING_INTERVAL = 0;  // Milliseconds. 0 means disable low interval emitting
+  public static final long DEFAULT_HIGH_EVENT_EMITTING_INTERVAL = 0; // Milliseconds. 0 means disable high interval emitting
 
   public static final String DEFAULT_CLUSTER_NAME = "UNDEFINED_CLUSTER";
 

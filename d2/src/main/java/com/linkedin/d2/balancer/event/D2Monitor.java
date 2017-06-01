@@ -1,5 +1,7 @@
 package com.linkedin.d2.balancer.event;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 
@@ -35,7 +37,7 @@ public class D2Monitor
     _serviceName = serviceName;
     _clusterName = clusterName;
     _clusterStats = clusterStats;
-    _uriList = uriList;
+    _uriList = Collections.unmodifiableList(new ArrayList<>(uriList));
     _partitionId = partitionId;
     _intervalMs = intervalMs;
   }
@@ -76,7 +78,8 @@ public class D2Monitor
     return "D2Monitor (service=" + _serviceName + "),"
         + "(cluster=" + _clusterName + "),"
         + "(clusterStats=" + _clusterStats + "),"
-        + "[Uris: " + _uriList + "]";
+        + "[Uris: " + _uriList + "]"
+        + "(_intervalMs=" + _intervalMs + ")";
   }
 
   /**
@@ -93,14 +96,14 @@ public class D2Monitor
     private final int _clusterNumHosts;
 
     ClusterStats(long callCount, double averageLatency, long droppedCalls,
-        long clusterErrorCount, long failedToRoute, double dropLeve, int clusterNumHosts)
+        long clusterErrorCount, long failedToRoute, double dropLevel, int clusterNumHosts)
     {
       _clusterCallCount = callCount;
       _clusterAverageLatency = averageLatency;
       _clusterDroppedCalls = droppedCalls;
       _clusterErrorCount = clusterErrorCount;
       _clusterFailedRouteCalls = failedToRoute;
-      _clusterDropLevel = dropLeve;
+      _clusterDropLevel = dropLevel;
       _clusterNumHosts = clusterNumHosts;
     }
 
@@ -138,6 +141,14 @@ public class D2Monitor
     {
       return _clusterNumHosts;
     }
+
+    @Override
+    public String toString()
+    {
+      return "(clusterCallCount:" + _clusterCallCount + ", clusterAverageLatency:" + _clusterAverageLatency
+          + ", clusterErrorCount:" + _clusterErrorCount + ", clusterDropLevel:" + _clusterDropLevel
+          + ", clusterNumHosts:" + _clusterNumHosts +")";
+    }
   }
 
   /**
@@ -150,7 +161,7 @@ public class D2Monitor
     private final long _currentCallCount;
     private final long _totalCallCount;
     private final long _outstandingCount;
-    private final double _currentLatency;
+    private final double _currentAvgLatency;
     private final int _currentErrorCount;
     private final long _50PctLatency;
     private final long _90PctLatency;
@@ -161,7 +172,7 @@ public class D2Monitor
     private final int _transmissionPoints;
 
     UriInfo(String hostName, int portNumber, long callCount,
-        long totalCallCount, long outstandingCount, double currentLatency, int errorCount,
+        long totalCallCount, long outstandingCount, double currentAvgLatency, int errorCount,
         long a50PctLatency, long a90PctLatency, long a95PctLatency,
         long a99PctLatency, long quarantineDuration, double computedDropRate, int transmissionPoints)
     {
@@ -170,7 +181,7 @@ public class D2Monitor
       _currentCallCount = callCount;
       _totalCallCount = totalCallCount;
       _outstandingCount = outstandingCount;
-      _currentLatency = currentLatency;
+      _currentAvgLatency = currentAvgLatency;
       _currentErrorCount = errorCount;
       _50PctLatency = a50PctLatency;
       _90PctLatency = a90PctLatency;
@@ -196,9 +207,9 @@ public class D2Monitor
       return _currentCallCount;
     }
 
-    public double getCurrentLatency()
+    public double getCurrentAvgLatency()
     {
-      return _currentLatency;
+      return _currentAvgLatency;
     }
 
     public int getCurrentErrorCount()
@@ -250,5 +261,16 @@ public class D2Monitor
     {
       return _transmissionPoints;
     }
+
+    @Override
+    public String toString()
+    {
+      return "(uri:" + _hostName + ':' + _portNumber + ", callCount:" + _currentCallCount + ", outstandingCount:"
+          + _outstandingCount + ", errorCount:" + _currentErrorCount + ", quarantineDuration:" + _quarantineDuration
+          + ", computedDropRate:" + _computedDropRate + ", transmissionPoints:" + _transmissionPoints
+          + ", 50PctLatency:" + _50PctLatency + ", 90PctLatency:" + _90PctLatency + ", 95PctLatency:" + _95PctLatency
+          + ", 99PctLatency:" + _99PctLatency + ", currentAvgLatency: " + _currentAvgLatency + ")";
+    }
+
   }
 }

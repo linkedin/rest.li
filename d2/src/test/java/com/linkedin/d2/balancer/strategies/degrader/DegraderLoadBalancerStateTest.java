@@ -113,7 +113,7 @@ public class DegraderLoadBalancerStateTest
                                                   PartitionDegraderLoadBalancerState.Strategy.LOAD_BALANCE,
                                                   0, 0, Collections.<TrackerClient, Double>emptyMap(),
                                                   SERVICE_NAME, Collections.<String, String>emptyMap(), 0,
-                                                  Collections.emptyMap(), Collections.emptyMap());
+                                                  Collections.emptyMap(), Collections.emptyMap(), null);
   }
 
   private static List<PartitionDegraderLoadBalancerState> newPartitionStates(int numberOfPartitions)

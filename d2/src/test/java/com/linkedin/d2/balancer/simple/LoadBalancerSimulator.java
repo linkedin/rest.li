@@ -88,6 +88,7 @@ public class LoadBalancerSimulator
   private final MockStore<ClusterProperties> _clusterRegistry = new MockStore<>();
   private final MockStore<UriProperties> _uriRegistry = new MockStore<>();
   private final SimpleLoadBalancer _loadBalancer;
+  private final SimpleLoadBalancerState _loadBalancerState;
 
   private final TimedValueGenerator<String> _delayGenerator;
   private final QPSGenerator _qpsGenerator;
@@ -164,15 +165,14 @@ public class LoadBalancerSimulator
     clientFactories.put("http", delayClientFactory);
     clientFactories.put("https", delayClientFactory);
 
-    SimpleLoadBalancerState loadBalancerState =
-        new SimpleLoadBalancerState(_executorService,
+    _loadBalancerState = new SimpleLoadBalancerState(_executorService,
             _uriRegistry,
             _clusterRegistry,
             _serviceRegistry,
             clientFactories,
             loadBalancerStrategyFactories);
 
-    _loadBalancer = new SimpleLoadBalancer(loadBalancerState, 5, TimeUnit.SECONDS);
+    _loadBalancer = new SimpleLoadBalancer(_loadBalancerState, 5, TimeUnit.SECONDS);
 
     FutureCallback<None> balancerCallback = new FutureCallback<None>();
     _loadBalancer.start(balancerCallback);
@@ -278,6 +278,11 @@ public class LoadBalancerSimulator
   public ClockedExecutor getClockedExecutor()
   {
     return _clockedExecutor;
+  }
+
+  public SimpleLoadBalancerState getLoadBalancerState()
+  {
+    return _loadBalancerState;
   }
 
   /**
