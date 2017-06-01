@@ -1,6 +1,9 @@
 11.0.13
 ------
 
+(RB=1008758)
+Typo in the test file : test-util/src/main/java/com/linkedin/test/util/GaussianRandom.java
+
 11.0.12
 ------
 

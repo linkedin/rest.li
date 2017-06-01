@@ -26,7 +26,7 @@ public class GaussianRandom
   private static final Random RANDOM = new Random();
 
   /**
-   * Generate a random long that is centered at {@code delay} with the given {@code range}. The
+   * Generates a random long that is centered at {@code delay} with the given {@code range}. The
    * result is guaranteed to be non-negative.
    *
    * @return random long
