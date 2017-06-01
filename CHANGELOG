@@ -1,5 +1,11 @@
+11.0.11
+------
+
 11.0.10
 ------
+(RB=1008069)
+Make tcpNoDelay constructor's change backward compatible in HttpClientFactory
+
 (RB=1001008)
 Make check tasks incremental
 

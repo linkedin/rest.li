@@ -286,7 +286,6 @@ public class HttpClientFactory implements TransportClientFactory
          AbstractJmxManager.NULL_JMX_MANAGER);
   }
 
-  @Deprecated
   public HttpClientFactory(FilterChain filters,
                            NioEventLoopGroup eventLoopGroup,
                            boolean shutdownFactory,
@@ -294,11 +293,10 @@ public class HttpClientFactory implements TransportClientFactory
                            boolean shutdownExecutor,
                            ExecutorService callbackExecutorGroup,
                            boolean shutdownCallbackExecutor,
-                           AbstractJmxManager jmxManager,
-                           boolean deprecated_tcpNoDelay)
+                           AbstractJmxManager jmxManager)
   {
     this(filters, eventLoopGroup, shutdownFactory, executor, shutdownExecutor, callbackExecutorGroup,
-      shutdownCallbackExecutor, jmxManager);
+      shutdownCallbackExecutor, jmxManager, true);
   }
 
   public HttpClientFactory(FilterChain filters,
@@ -330,8 +328,8 @@ public class HttpClientFactory implements TransportClientFactory
                            boolean useClientCompression)
   {
     this(filters, eventLoopGroup, shutdownFactory, executor, shutdownExecutor, callbackExecutorGroup,
-        shutdownCallbackExecutor, jmxManager, requestCompressionThresholdDefault, requestCompressionConfigs,
-        Collections.<String, CompressionConfig>emptyMap(), useClientCompression);
+      shutdownCallbackExecutor, jmxManager, requestCompressionThresholdDefault, requestCompressionConfigs,
+      Collections.emptyMap(), useClientCompression);
   }
 
   public HttpClientFactory(FilterChain filters,
@@ -347,23 +345,10 @@ public class HttpClientFactory implements TransportClientFactory
                            final Map<String, CompressionConfig> responseCompressionConfigs,
                            boolean useClientCompression)
   {
-      this(filters, eventLoopGroup, shutdownFactory, executor, shutdownExecutor, callbackExecutorGroup,
-          shutdownCallbackExecutor, jmxManager, requestCompressionThresholdDefault,
-          requestCompressionConfigs, responseCompressionConfigs,
-          useClientCompression ? Executors.newCachedThreadPool() : null, HttpProtocolVersion.HTTP_1_1);
-  }
-
-  public HttpClientFactory(FilterChain filters,
-                           NioEventLoopGroup eventLoopGroup,
-                           boolean shutdownFactory,
-                           ScheduledExecutorService executor,
-                           boolean shutdownExecutor,
-                           ExecutorService callbackExecutorGroup,
-                           boolean shutdownCallbackExecutor,
-                           AbstractJmxManager jmxManager)
-  {
-    this(filters, eventLoopGroup, shutdownFactory, executor, shutdownExecutor, callbackExecutorGroup, shutdownCallbackExecutor,
-        jmxManager, Integer.MAX_VALUE, Collections.<String, CompressionConfig>emptyMap(), Executors.newCachedThreadPool());
+    this(filters, eventLoopGroup, shutdownFactory, executor, shutdownExecutor, callbackExecutorGroup,
+      shutdownCallbackExecutor, jmxManager, requestCompressionThresholdDefault,
+      requestCompressionConfigs, responseCompressionConfigs, true,
+      useClientCompression ? Executors.newCachedThreadPool() : null, HttpProtocolVersion.HTTP_1_1);
   }
 
   public HttpClientFactory(FilterChain filters,
@@ -374,31 +359,67 @@ public class HttpClientFactory implements TransportClientFactory
                            ExecutorService callbackExecutorGroup,
                            boolean shutdownCallbackExecutor,
                            AbstractJmxManager jmxManager,
+                           boolean deprecatedTcpNoDelay)
+  {
+    this(filters, eventLoopGroup, shutdownFactory, executor, shutdownExecutor, callbackExecutorGroup, shutdownCallbackExecutor,
+      jmxManager, deprecatedTcpNoDelay, Integer.MAX_VALUE, Collections.emptyMap(), Executors.newCachedThreadPool());
+  }
+
+  public HttpClientFactory(FilterChain filters,
+                           NioEventLoopGroup eventLoopGroup,
+                           boolean shutdownFactory,
+                           ScheduledExecutorService executor,
+                           boolean shutdownExecutor,
+                           ExecutorService callbackExecutorGroup,
+                           boolean shutdownCallbackExecutor,
+                           AbstractJmxManager jmxManager,
+                           boolean deprecatedTcpNoDelay,
                            int requestCompressionThresholdDefault,
                            Map<String, CompressionConfig> requestCompressionConfigs,
                            Executor compressionExecutor)
   {
     this(filters, eventLoopGroup, shutdownFactory, executor, shutdownExecutor, callbackExecutorGroup,
-        shutdownCallbackExecutor, jmxManager, requestCompressionThresholdDefault, requestCompressionConfigs,
-        Collections.<String, CompressionConfig>emptyMap(), compressionExecutor, HttpProtocolVersion.HTTP_1_1);
+      shutdownCallbackExecutor, jmxManager, requestCompressionThresholdDefault, requestCompressionConfigs,
+      Collections.emptyMap(), deprecatedTcpNoDelay, compressionExecutor, HttpProtocolVersion.HTTP_1_1);
   }
 
   public HttpClientFactory(FilterChain filters,
-      NioEventLoopGroup eventLoopGroup,
-      boolean shutdownFactory,
-      ScheduledExecutorService executor,
-      boolean shutdownExecutor,
-      ExecutorService callbackExecutorGroup,
-      boolean shutdownCallbackExecutor,
-      AbstractJmxManager jmxManager,
-      final int requestCompressionThresholdDefault,
-      final Map<String, CompressionConfig> requestCompressionConfigs,
-      final Map<String, CompressionConfig> responseCompressionConfigs,
-      Executor compressionExecutor)
+                           NioEventLoopGroup eventLoopGroup,
+                           boolean shutdownFactory,
+                           ScheduledExecutorService executor,
+                           boolean shutdownExecutor,
+                           ExecutorService callbackExecutorGroup,
+                           boolean shutdownCallbackExecutor,
+                           AbstractJmxManager jmxManager,
+                           final int requestCompressionThresholdDefault,
+                           final Map<String, CompressionConfig> requestCompressionConfigs,
+                           final Map<String, CompressionConfig> responseCompressionConfigs,
+                           boolean deprecatedTcpNoDelay,
+                           Executor compressionExecutor)
   {
     this(filters, eventLoopGroup, shutdownFactory, executor, shutdownExecutor, callbackExecutorGroup, shutdownCallbackExecutor,
-        jmxManager, requestCompressionThresholdDefault, requestCompressionConfigs, responseCompressionConfigs,
-        compressionExecutor, HttpProtocolVersion.HTTP_1_1);
+      jmxManager, requestCompressionThresholdDefault, requestCompressionConfigs, responseCompressionConfigs,
+      deprecatedTcpNoDelay, compressionExecutor, HttpProtocolVersion.HTTP_1_1);
+  }
+
+  public HttpClientFactory(FilterChain filters,
+                           NioEventLoopGroup eventLoopGroup,
+                           boolean shutdownFactory,
+                           ScheduledExecutorService executor,
+                           boolean shutdownExecutor,
+                           ExecutorService callbackExecutorGroup,
+                           boolean shutdownCallbackExecutor,
+                           AbstractJmxManager jmxManager,
+                           final int requestCompressionThresholdDefault,
+                           final Map<String, CompressionConfig> requestCompressionConfigs,
+                           final Map<String, CompressionConfig> responseCompressionConfigs,
+                           boolean deprecatedTcpNoDelay,
+                           Executor compressionExecutor,
+                           HttpProtocolVersion defaultHttpVersion)
+  {
+    this(filters, eventLoopGroup, shutdownFactory, executor, shutdownExecutor, callbackExecutorGroup, shutdownCallbackExecutor,
+      jmxManager, requestCompressionThresholdDefault, requestCompressionConfigs, responseCompressionConfigs,
+      compressionExecutor, defaultHttpVersion);
   }
 
   public HttpClientFactory(FilterChain filters,
