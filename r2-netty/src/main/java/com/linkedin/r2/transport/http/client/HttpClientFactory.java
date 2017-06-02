@@ -469,59 +469,99 @@ public class HttpClientFactory implements TransportClientFactory
     private boolean                    _shutdownExecutor = true;
     private boolean                    _shutdownCallbackExecutor = false;
     private FilterChain                _filters = FilterChains.empty();
-    private Executor                   _compressionExecutor = null;
+    private boolean                    _useClientCompression = true;
+    private Executor                   _customCompressionExecutor = null;
     private AbstractJmxManager         _jmxManager = AbstractJmxManager.NULL_JMX_MANAGER;
 
     private int                        _requestCompressionThresholdDefault = Integer.MAX_VALUE;
-    private Map<String, CompressionConfig> _requestCompressionConfigs = Collections.<String, CompressionConfig>emptyMap();
-    private Map<String, CompressionConfig> _responseCompressionConfigs = Collections.<String, CompressionConfig>emptyMap();
+    private Map<String, CompressionConfig> _requestCompressionConfigs = Collections.emptyMap();
+    private Map<String, CompressionConfig> _responseCompressionConfigs = Collections.emptyMap();
     private HttpProtocolVersion        _defaultHttpVersion = HttpProtocolVersion.HTTP_1_1;
 
+    /**
+     * @param nioEventLoopGroup the {@link NioEventLoopGroup} that all Clients created by this
+     *                          factory will share
+     */
     public Builder setNioEventLoopGroup(NioEventLoopGroup nioEventLoopGroup)
     {
       _eventLoopGroup = nioEventLoopGroup;
       return this;
     }
 
+    /**
+     * @param scheduleExecutorService an executor shared by all Clients created by this factory to schedule
+     *                                tasks
+     */
     public Builder setScheduleExecutorService(ScheduledExecutorService scheduleExecutorService)
     {
       _executor = scheduleExecutorService;
       return this;
     }
 
+    /**
+     * @param callbackExecutor an optional executor to invoke user callbacks that otherwise
+     *                         will be invoked by scheduler executor.
+     */
     public Builder setCallbackExecutor(ExecutorService callbackExecutor)
     {
       _callbackExecutorGroup = callbackExecutor;
       return this;
     }
 
+    /**
+     * @param shutDownFactory if true, the channelFactory will be shut down when this
+     *          factory is shut down
+     */
     public Builder setShutDownFactory(boolean shutDownFactory)
     {
       _shutdownFactory = shutDownFactory;
       return this;
     }
 
-    public Builder setShutdownScheduledExecutorService(boolean shutdown)
+    /**
+     * @param shutdownExecutor if true, the executor will be shut down when this factory is
+     *                         shut down
+     */
+    public Builder setShutdownScheduledExecutorService(boolean shutdownExecutor)
     {
-      _shutdownExecutor = shutdown;
+      _shutdownExecutor = shutdownExecutor;
       return this;
     }
 
-    public Builder setShutdownCallbackExecutor(boolean shutdown)
+    /**
+     * @param shutdownCallbackExecutor if true, the callback executor will be shut down when
+     *                                 this factory is shut down
+     */
+    public Builder setShutdownCallbackExecutor(boolean shutdownCallbackExecutor)
     {
-      _shutdownCallbackExecutor = shutdown;
+      _shutdownCallbackExecutor = shutdownCallbackExecutor;
       return this;
     }
 
+    /**
+     * @param filterChain the {@link FilterChain} shared by all Clients created by this factory.
+     */
     public Builder setFilterChain(FilterChain filterChain)
     {
       _filters = filterChain;
       return this;
     }
 
-    public Builder setCompressionExecutor(Executor executor)
+    /**
+     * @param useClientCompression enable or disable compression
+     */
+    public void setUseClientCompression(boolean useClientCompression)
     {
-      _compressionExecutor = executor;
+      _useClientCompression = useClientCompression;
+    }
+
+    /**
+     * @param customCompressionExecutor sets a custom compression executor and enables compression
+     */
+    public Builder setCompressionExecutor(Executor customCompressionExecutor)
+    {
+      setUseClientCompression(true);
+      _customCompressionExecutor = customCompressionExecutor;
       return this;
     }
 
@@ -562,10 +602,16 @@ public class HttpClientFactory implements TransportClientFactory
       ScheduledExecutorService scheduledExecutorService = _executor != null ? _executor
           : Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("R2 Netty Scheduler"));
 
+      Executor compressionExecutor = null;
+      if (_useClientCompression)
+      {
+        compressionExecutor = _customCompressionExecutor != null ? _customCompressionExecutor : Executors.newCachedThreadPool();
+      }
+
       return new HttpClientFactory(_filters, eventLoopGroup, _shutdownFactory, scheduledExecutorService,
-          _shutdownExecutor, _callbackExecutorGroup, _shutdownCallbackExecutor, _jmxManager,
-          _requestCompressionThresholdDefault, _requestCompressionConfigs, _responseCompressionConfigs,
-          _compressionExecutor, _defaultHttpVersion);
+        _shutdownExecutor, _callbackExecutorGroup, _shutdownCallbackExecutor, _jmxManager,
+        _requestCompressionThresholdDefault, _requestCompressionConfigs, _responseCompressionConfigs,
+        compressionExecutor, _defaultHttpVersion);
     }
   }
 

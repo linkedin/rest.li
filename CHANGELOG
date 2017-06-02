@@ -1,5 +1,10 @@
+11.0.12
+------
+
 11.0.11
 ------
+(RB=1008894)
+HttpClientFactory.Builder, added documentation and improved to handle more easily more cases
 
 11.0.10
 ------
