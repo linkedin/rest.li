@@ -265,7 +265,7 @@ public class Request<T>
    * Get the name of the service for this request
    * @return the service name for this request
    */
-  String getServiceName()
+  public String getServiceName()
   {
     if (_baseUriTemplate != null)
     {
