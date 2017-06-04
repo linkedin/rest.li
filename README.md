@@ -2,6 +2,8 @@
   <img src="https://github.com/linkedin/rest.li/wiki/restli-logo-white-small.png"/>
 </p>
 
+[![Build Status](https://travis-ci.org/linkedin/rest.li.svg?branch=master)](https://travis-ci.org/linkedin/rest.li)
+
 Rest.li is an open source REST framework for building robust, scalable RESTful
 architectures using type-safe bindings and asynchronous, non-blocking IO. Rest.li
 fills a niche for applying RESTful principals at scale with an end-to-end developer
