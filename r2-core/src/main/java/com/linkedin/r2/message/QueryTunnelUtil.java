@@ -61,7 +61,7 @@ import java.util.Map;
  *              --data $'ids=1,2,3' http://localhost
  *
  *     Example: Call http://localhost?ids=1,2,3 with a JSON body
- *         curl -X POST -H "X-HTTP-Method-Override: GET" -H "Content-Type: multipart/mixed, boundary=xyz"
+ *         curl -X POST -H "X-HTTP-Method-Override: PUT" -H "Content-Type: multipart/mixed; boundary=xyz"
  *              --data $'--xyz\r\nContent-Type: application/x-www-form-urlencoded\r\n\r\nids=1,2,3\r\n--xyz\r\n
  *                Content-Type: application/json\r\n\r\n{"foo":"bar"}\r\n--xyz--'
  *              http://localhost
