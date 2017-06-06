@@ -75,7 +75,7 @@ public class DocletDocsProvider implements DocsProvider
   @Override
   public void registerSourceFiles(Collection<String> sourceFileNames)
   {
-    log.info("Executing Javadoc tool...");
+    log.debug("Executing Javadoc tool...");
 
     final String flatClasspath;
     if (_classpath == null)

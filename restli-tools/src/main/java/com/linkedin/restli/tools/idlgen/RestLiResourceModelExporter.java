@@ -172,7 +172,7 @@ public class RestLiResourceModelExporter
       }
     }
 
-    log.info("Executing Rest.li annotation processor...");
+    log.debug("Executing Rest.li annotation processor...");
     final RestLiApiBuilder apiBuilder = new RestLiApiBuilder(config);
     final Map<String, ResourceModel> rootResourceMap = apiBuilder.build();
     if (rootResourceMap.isEmpty())
@@ -197,15 +197,15 @@ public class RestLiResourceModelExporter
       docsProvider = new MultiLanguageDocsProvider(languageSpecificDocsProviders);
     }
 
-    log.info("Registering source files with doc providers...");
+    log.debug("Registering source files with doc providers...");
 
     docsProvider.registerSourceFiles(classFileNames.values());
 
-    log.info("Exporting IDL files...");
+    log.debug("Exporting IDL files...");
 
     final GeneratorResult result = generateIDLFiles(apiName, outdir, rootResourceMap, docsProvider);
 
-    log.info("Done!");
+    log.debug("Done!");
 
     return result;
   }
@@ -334,7 +334,7 @@ public class RestLiResourceModelExporter
       throws IOException
   {
     fileName += RestConstants.RESOURCE_MODEL_FILENAME_EXTENSION;
-    log.info("Writing file '" + fileName + '\'');
+    log.debug("Writing file '" + fileName + '\'');
     final File file = new File(outdirFile, fileName);
 
     _codec.writeResourceSchema(rootResourceNode, new FileOutputStream(file));

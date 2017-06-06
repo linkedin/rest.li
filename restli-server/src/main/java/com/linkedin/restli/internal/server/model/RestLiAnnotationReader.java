@@ -599,7 +599,7 @@ public final class RestLiAnnotationReader
 
     addResourceMethods(collectionResourceClass, collectionModel);
 
-    log.info("Processed collection resource '" + collectionResourceClass.getName() + "'");
+    log.debug("Processed collection resource '" + collectionResourceClass.getName() + "'");
 
     return collectionModel;
   }

@@ -6,6 +6,9 @@ Typo in the test file : test-util/src/main/java/com/linkedin/test/util/GaussianR
 (RB=1002213)
 generateRestModel doesn't need a copy of the codegen classpath
 
+(RB=1010209)
+Changes to handle Restli info chatty output
+
 11.0.12
 ------
 

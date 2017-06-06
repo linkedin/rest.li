@@ -121,7 +121,7 @@ public class RestLiSnapshotExporter
       }
     }
 
-    log.info("Executing Rest.li annotation processor...");
+    log.debug("Executing Rest.li annotation processor...");
     final RestLiApiBuilder apiBuilder = new RestLiApiBuilder(config);
     final Map<String, ResourceModel> rootResourceMap = apiBuilder.build();
     if (rootResourceMap.isEmpty())
@@ -146,15 +146,15 @@ public class RestLiSnapshotExporter
       docsProvider = new MultiLanguageDocsProvider(languageSpecificDocsProviders);
     }
 
-    log.info("Registering source files with doc providers...");
+    log.debug("Registering source files with doc providers...");
 
     docsProvider.registerSourceFiles(classFileNames.values());
 
-    log.info("Exporting snapshot files...");
+    log.debug("Exporting snapshot files...");
 
     final GeneratorResult result = generateSnapshotFiles(apiName, outdir, rootResourceMap, docsProvider);
 
-    log.info("Done!");
+    log.debug("Done!");
 
     return result;
   }
@@ -218,7 +218,7 @@ public class RestLiSnapshotExporter
                                  String fileName,
                                  ResourceSchema rootResourceNode) throws IOException
   {
-    log.info("Writing file '" + fileName + '\'');
+    log.debug("Writing file '" + fileName + '\'');
 
     SnapshotGenerator generator = new SnapshotGenerator(rootResourceNode, _schemaResolver);
     return generator.writeFile(outdirFile, fileName);
