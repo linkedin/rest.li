@@ -95,7 +95,9 @@ public class TestSchemaTranslator
       //         which is JSON serialized Avro data. Usually, this is used to make sure that the translated default
       //         value is valid for Avro. Avro does not validate the default value in the schema. It will only
       //         de-serialize (and validate) the default value when it is actually used. The writer schema and
-      //         the JSON serialized Avro data should not include fields with default values.
+      //         the JSON serialized Avro data should not include fields with default values. The 4th element may be
+      //         marked with ##Q_START and ##Q_END around enum values. On Avro v1.4, the GenericRecord#toString() does
+      //         wrap enum values with quotes but it does on v1.6. These markers are used to handle this.
       //       If it is an Exception, then the Pegasus schema cannot be translated and this is the exception that
       //         is expected. The 3rd element is a string that should be contained in the message of the exception.
       // }
@@ -990,7 +992,7 @@ public class TestSchemaTranslator
           "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"foo1\", \"type\" : [ { \"type\" : \"record\", \"name\" : \"bar\", \"fields\" : [ { \"name\" : \"bar1\", \"type\" : [ \"string\", \"null\" ], \"default\" : \"abc\" } ] }, \"null\" ], \"default\" : { \"bar1\" : \"xyz\" } } ] }",
           emptyFooSchema,
           "{}",
-          "{ \"foo1\" : { \"bar1\" : \"xyz\" } }"
+          "{\"foo1\": {\"bar1\": \"xyz\"}}"
         },
       },
       {
@@ -1025,6 +1027,259 @@ public class TestSchemaTranslator
           "cannot translate field because its default value's type is not the same as translated field's first union member's type"
         },
       },
+      {
+        // Required 'union with aliases' field with no default value
+        "{" +
+          "\"type\": \"record\"," +
+          "\"name\": \"foo\"," +
+          "\"fields\": [" +
+            "{" +
+              "\"name\": \"result\"," +
+              "\"type\": ##T_START [" +
+                "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
+                "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
+              "] ##T_END" +
+            "}" +
+          "]" +
+        "}",
+        new Object[] {
+          allModes,
+          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\" }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\" }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } ] }"
+        }
+      },
+      {
+        // Required 'union with aliases' field with a null member and no default value
+        "{" +
+          "\"type\": \"record\"," +
+          "\"name\": \"foo\"," +
+          "\"fields\": [" +
+            "{" +
+              "\"name\": \"result\"," +
+              "\"type\": [" +
+                "\"null\"," +
+                "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
+                "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
+              "]" +
+            "}" +
+          "]" +
+        "}",
+        new Object[] {
+          allModes,
+          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\" }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\" }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"null\", \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } ] }"
+        }
+      },
+      {
+        // Optional 'union with aliases' field with no default value
+        "{" +
+          "\"type\": \"record\"," +
+          "\"name\": \"foo\"," +
+          "\"fields\": [" +
+            "{" +
+              "\"name\": \"result\"," +
+              "\"type\": [" +
+                "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
+                "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
+              "]," +
+              "\"optional\": true" +
+            "}" +
+          "]" +
+        "}",
+        new Object[] {
+          allModes,
+          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : [ \"null\", { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\" }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\" }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } ], \"default\" : null } ] }",
+          emptyFooSchema,
+          emptyFooValue,
+          "{\"result\": null}"
+        }
+      },
+      {
+        // Optional 'union with aliases' field with a null member and no default value
+        "{" +
+          "\"type\": \"record\"," +
+          "\"name\": \"foo\"," +
+          "\"fields\": [" +
+            "{" +
+              "\"name\": \"result\"," +
+              "\"type\": [" +
+                "\"null\"," +
+                "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
+                "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
+              "]," +
+              "\"optional\": true" +
+            "}" +
+          "]" +
+        "}",
+        new Object[] {
+          allModes,
+          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : [ \"null\", { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\" }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\" }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"null\", \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } ], \"default\" : null } ] }",
+          emptyFooSchema,
+          emptyFooValue,
+          "{\"result\": null}"
+        }
+      },
+      {
+        // Required 'union with aliases' field with a default value
+        "{" +
+          "\"type\": \"record\"," +
+          "\"name\": \"foo\"," +
+          "\"fields\": [" +
+            "{" +
+              "\"name\": \"result\"," +
+              "\"type\": [" +
+                "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
+                "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
+              "]," +
+              "\"default\": { \"success\": \"Union with aliases.\" }" +
+            "}" +
+          "]" +
+        "}",
+        new Object[] {
+          allModes,
+          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"string\", \"null\" ], \"doc\" : \"Success message\" }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\" }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] }, \"default\" : { \"fieldDiscriminator\" : \"success\", \"success\" : \"Union with aliases.\", \"failure\" : null } } ] }",
+          emptyFooSchema,
+          emptyFooValue,
+          "{\"result\": {\"success\": \"Union with aliases.\", \"failure\": null, \"fieldDiscriminator\": ##Q_STARTsuccess##Q_END}}"
+        }
+      },
+      {
+        // Optional 'union with aliases' field with a default value
+        "{" +
+          "\"type\": \"record\"," +
+          "\"name\": \"foo\"," +
+          "\"fields\": [" +
+            "{" +
+              "\"name\": \"result\"," +
+              "\"type\": [" +
+                "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
+                "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
+              "]," +
+              "\"optional\": true," +
+              "\"default\": { \"success\": \"Union with aliases.\" }" +
+            "}" +
+          "]" +
+        "}",
+        new Object[] {
+          translateDefault,
+          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : [ { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"string\", \"null\" ], \"doc\" : \"Success message\" }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\" }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] }, \"null\" ], \"default\" : { \"fieldDiscriminator\" : \"success\", \"success\" : \"Union with aliases.\", \"failure\" : null } } ] }",
+          emptyFooSchema,
+          emptyFooValue,
+          "{\"result\": {\"success\": \"Union with aliases.\", \"failure\": null, \"fieldDiscriminator\": ##Q_STARTsuccess##Q_END}}"
+        },
+        new Object[] {
+          translateToNull,
+          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : [ \"null\", { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\" }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\" }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } ], \"default\" : null } ] }",
+          emptyFooSchema,
+          emptyFooValue,
+          "{\"result\": null}"
+        }
+      },
+      {
+        // Optional 'union with aliases' field with a null member and a default null value
+        "{" +
+          "\"type\": \"record\"," +
+          "\"name\": \"foo\"," +
+          "\"fields\": [" +
+            "{" +
+              "\"name\": \"result\"," +
+              "\"type\": [" +
+                "\"null\"," +
+                "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
+                "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
+              "]," +
+              "\"optional\": true," +
+              "\"default\": null" +
+            "}" +
+          "]" +
+        "}",
+        new Object[] {
+            translateDefault,
+            "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : [ { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\" }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\" }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"null\", \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] }, \"null\" ], \"default\" : { \"fieldDiscriminator\" : \"null\", \"success\" : null, \"failure\" : null } } ] }",
+            emptyFooSchema,
+            emptyFooValue,
+            "{\"result\": {\"success\": null, \"failure\": null, \"fieldDiscriminator\": ##Q_STARTnull##Q_END}}"
+        },
+        new Object[] {
+            translateToNull,
+            "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : [ \"null\", { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\" }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\" }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"null\", \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } ], \"default\" : null } ] }",
+            emptyFooSchema,
+            emptyFooValue,
+            "{\"result\": null}"
+        }
+      },
+      {
+        // Two 'union with aliases' fields under different records but with the same field name. The generated record
+        // representation for these two unions should include the parent record's name to avoid any name conflicts.
+        "{" +
+          "\"type\": \"record\"," +
+          "\"name\": \"foo\"," +
+          "\"fields\": [" +
+            "{" +
+              "\"name\": \"bar\"," +
+              "\"type\": {" +
+                "\"type\": \"record\"," +
+                "\"name\": \"Bar\"," +
+                "\"fields\": [" +
+                  "{" +
+                    "\"name\": \"result\"," + // same union field name as the one below.
+                    "\"type\": [ { \"type\" : \"string\", \"alias\" : \"resultUrn\" } ]" +
+                  "}" +
+                "]" +
+              "}" +
+            "}," +
+            "{" +
+              "\"name\": \"baz\"," +
+              "\"type\": {" +
+                "\"type\": \"record\"," +
+                "\"name\": \"Baz\"," +
+                "\"fields\": [" +
+                 "{" +
+                    "\"name\": \"result\"," + // same union field name as the one above.
+                    "\"type\": [ { \"type\" : \"string\", \"alias\" : \"resultUrn\" } ]" +
+                  "}" +
+                "]" +
+              "}" +
+            "}" +
+          "]" +
+        "}",
+        new Object[] {
+          allModes,
+          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"record\", \"name\" : \"Bar\", \"fields\" : [ { \"name\" : \"result\", \"type\" : { \"type\" : \"record\", \"name\" : \"BarResult\", \"fields\" : [ { \"name\" : \"resultUrn\", \"type\" : [ \"null\", \"string\" ] }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"BarResultDiscriminator\", \"symbols\" : [ \"resultUrn\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } ] } }, { \"name\" : \"baz\", \"type\" : { \"type\" : \"record\", \"name\" : \"Baz\", \"fields\" : [ { \"name\" : \"result\", \"type\" : { \"type\" : \"record\", \"name\" : \"BazResult\", \"fields\" : [ { \"name\" : \"resultUrn\", \"type\" : [ \"null\", \"string\" ] }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"BazResultDiscriminator\", \"symbols\" : [ \"resultUrn\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } ] } } ] }"
+        }
+      },
+      {
+        // An 'union with aliases' field containing a record member which has another 'union with aliases' field
+        "{" +
+          "\"type\": \"record\"," +
+          "\"name\": \"foo\"," +
+          "\"fields\": [" +
+            "{" +
+              "\"name\": \"result\"," + // 'result' is an union field with just one member of type 'MessageRecord' record
+              "\"type\": [" +
+                "{ " +
+                  "\"type\" : {" +
+                    "\"type\": \"record\"," +
+                    "\"name\": \"MessageRecord\"," +
+                    "\"fields\": [" +
+                      "{" +
+                        "\"name\": \"message\"," + // 'message' is an union field under 'MessageRecord'
+                        "\"type\": [" +
+                          "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
+                          "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
+                        "]" +
+                      "}" +
+                    "]" +
+                  "}," +
+                  "\"alias\" : \"message\"" +
+                "}" +
+              "]" +
+            "}" +
+          "]" +
+        "}",
+        new Object[] {
+          allModes,
+          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"message\", \"type\" : [ \"null\", { \"type\" : \"record\", \"name\" : \"MessageRecord\", \"fields\" : [ { \"name\" : \"message\", \"type\" : { \"type\" : \"record\", \"name\" : \"MessageRecordMessage\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\" }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\" }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"MessageRecordMessageDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } ] } ] }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"message\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } ] }"
+        }
+      }
     };
 
     // test generating Avro schema from Pegasus schema
@@ -1136,7 +1391,7 @@ public class TestSchemaTranslator
             }
 
             String postTranslateSchemaText = schema.toString();
-            assertEquals(preTranslateSchemaText, postTranslateSchemaText);
+            assertEquals(postTranslateSchemaText, preTranslateSchemaText);
 
             // make sure Avro accepts it
             Schema avroSchema = Schema.parse(avroTextFromSchema);
@@ -1179,11 +1434,9 @@ public class TestSchemaTranslator
 
               if (modeInputs.length >= 5)
               {
-                String genericRecordJson = (String) modeInputs[4];
+                String expectedGenericRecordJson = (String) modeInputs[4];
                 String genericRecordAsString = genericRecord.toString();
-                DataMap expectedGenericRecord = TestUtil.dataMapFromString(genericRecordJson);
-                DataMap resultGenericRecord = TestUtil.dataMapFromString(genericRecordAsString);
-                assertEquals(resultGenericRecord, expectedGenericRecord);
+                assertEquals(genericRecordAsString, TestAvroUtil.serializedEnumValueProcessor(expectedGenericRecordJson));
               }
             }
 
@@ -1374,6 +1627,11 @@ public class TestSchemaTranslator
        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"int\", \"string\" ], \"default\" : { \"int\" : 42 }, \"optional\" : true } ] }"
       },
       {
+        // Union with a default value for its record type member. The converted Pegasus union's default value should use the fully qualified name of the record as its member key.
+        "{ \"type\" : \"record\", \"name\" : \"a.b.c.foo\", \"fields\" : [ { \"name\" : \"fooField\", \"type\" : [ { \"type\" : \"record\", \"name\" : \"x.y.z.bar\", \"fields\" : [ { \"name\" : \"barField\", \"type\" : \"string\" } ] }, \"int\" ], \"default\" : { \"barField\" : \"Union with an inlined record member\" } } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"namespace\" : \"a.b.c\", \"fields\" : [ { \"name\" : \"fooField\", \"type\" : [ { \"type\" : \"record\", \"name\" : \"bar\", \"namespace\" : \"x.y.z\", \"fields\" : [ { \"name\" : \"barField\", \"type\" : \"string\" } ] }, \"int\" ], \"default\" : { \"x.y.z.bar\" : { \"barField\" : \"Union with an inlined record member\" } } } ] }"
+      },
+      {
         // array of union with no default
         "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"array\", \"items\" : [ \"int\", \"string\" ] } } ] }",
         "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"array\", \"items\" : [ \"int\", \"string\" ] } } ] }",
@@ -1423,6 +1681,26 @@ public class TestSchemaTranslator
         "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ { \"type\" : \"map\", \"values\" : [ \"int\", \"string\" ] }, \"null\" ], \"default\" : { \"m1\" : 42 } } ] }",
         "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"map\", \"values\" : [ \"int\", \"string\" ] }, \"default\" : { \"m1\" : { \"int\" : 42 } }, \"optional\" : true } ] }",
       },
+      {
+        // Avro schema containing a record translated from a required Pegasus union with no default value.
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\" }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\" }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : \"string\", \"doc\" : \"Success message\", \"optional\" : true }, { \"name\" : \"failure\", \"type\" : \"string\", \"doc\" : \"Failure message\", \"optional\" : true }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } ] }"
+      },
+      {
+        // Avro schema containing a record translated from an optional Pegasus union with no default value.
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : [ \"null\", { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\" }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\" }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } ], \"default\" : null } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : \"string\", \"doc\" : \"Success message\", \"optional\" : true }, { \"name\" : \"failure\", \"type\" : \"string\", \"doc\" : \"Failure message\", \"optional\" : true }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] }, \"optional\" : true } ] }"
+      },
+      {
+        // Avro schema containing a record translated from a required Pegasus union with a default value.
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"string\", \"null\" ], \"doc\" : \"Success message\" }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\" }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] }, \"default\" : { \"fieldDiscriminator\" : \"success\", \"success\" : \"Union with aliases.\", \"failure\" : null } } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : \"string\", \"doc\" : \"Success message\", \"optional\" : true }, { \"name\" : \"failure\", \"type\" : \"string\", \"doc\" : \"Failure message\", \"optional\" : true }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] }, \"default\" : { \"success\" : \"Union with aliases.\", \"fieldDiscriminator\" : \"success\" } } ] }"
+      },
+      {
+        // Avro schema containing a record translated from an optional Pegasus union with a default value.
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : [ { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"string\", \"null\" ], \"doc\" : \"Success message\" }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\" }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] }, \"null\" ], \"default\" : { \"fieldDiscriminator\" : \"success\", \"success\" : \"Union with aliases.\", \"failure\" : null } } ] }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : \"string\", \"doc\" : \"Success message\", \"optional\" : true }, { \"name\" : \"failure\", \"type\" : \"string\", \"doc\" : \"Failure message\", \"optional\" : true }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] }, \"default\" : { \"success\" : \"Union with aliases.\", \"fieldDiscriminator\" : \"success\" }, \"optional\" : true } ] }"
+      }
     };
 
     AvroToDataSchemaTranslationOptions options[] =
@@ -1480,6 +1758,30 @@ public class TestSchemaTranslator
         AvroToDataSchemaTranslationMode.VERIFY_EMBEDDED_SCHEMA,
         "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ], \"com.linkedin.data\" : { \"schema\" : { \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ] }, \"optionalDefaultMode\" : \"TRANSLATE_DEFAULT\" } }",
         "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ] }"
+      },
+      {
+        // Convert an Avro schema containing a record field that was originally translated from a Pegasus union. The embedded
+        // pegasus schema under "com.linkedin.data" property has this union field. Since TRANSLATE is used, the generated
+        // pegasus schema will not contain this union but a translated record from the Avro record.
+        AvroToDataSchemaTranslationMode.TRANSLATE,
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ] }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"success\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } ], \"com.linkedin.data\" : { \"schema\" : { \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : [ { \"alias\" : \"success\", \"type\" : \"string\" } ] } ] }, \"optionalDefaultMode\" : \"TRANSLATE_DEFAULT\" } }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : \"string\", \"optional\" : true }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"success\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } ], \"com.linkedin.data\" : { \"schema\" : { \"name\" : \"foo\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"result\", \"type\" : [ { \"alias\" : \"success\", \"type\" : \"string\" } ] } ] }, \"optionalDefaultMode\" : \"TRANSLATE_DEFAULT\" } }"
+      },
+      {
+        // Convert an Avro schema containing a record field that was originally translated from a Pegasus Union. The embedded
+        // pegasus schema under "com.linkedin.data" property has this union field. Since RETURN_EMBEDDED_SCHEMA is used, the
+        // generated pegasus schema will be the embedded schema.
+        AvroToDataSchemaTranslationMode.RETURN_EMBEDDED_SCHEMA,
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ] }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"success\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } ], \"com.linkedin.data\" : { \"schema\" : { \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : [ { \"alias\" : \"success\", \"type\" : \"string\" } ] } ] }, \"optionalDefaultMode\" : \"TRANSLATE_DEFAULT\" } }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : [ { \"type\" : \"string\", \"alias\" : \"success\" } ] } ] }"
+      },
+      {
+        // Convert an Avro schema containing a record field that was originally translated from a Pegasus Union. The embedded
+        // pegasus schema under "com.linkedin.data" property has this union field. Since VERIFY_EMBEDDED_SCHEMA is used, the
+        // generated pegasus schema will be the embedded schema.
+        AvroToDataSchemaTranslationMode.VERIFY_EMBEDDED_SCHEMA,
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ] }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"success\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } ], \"com.linkedin.data\" : { \"schema\" : { \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : [ { \"alias\" : \"success\", \"type\" : \"string\" } ] } ] }, \"optionalDefaultMode\" : \"TRANSLATE_DEFAULT\" } }",
+        "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : [ { \"type\" : \"string\", \"alias\" : \"success\" } ] } ] }"
       }
     };
 
@@ -1508,7 +1810,7 @@ public class TestSchemaTranslator
   @Test
   public void testUnionDefaultValues() throws IOException
   {
-    boolean debug = true;
+    boolean debug = false;
 
     final String emptySchemaText =
       "{ " +

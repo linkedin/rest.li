@@ -27,6 +27,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.linkedin.data.schema.DataSchemaConstants.FIELD_NAME_PATTERN;
+import static com.linkedin.data.schema.DataSchemaConstants.RESTRICTED_UNION_ALIASES;
 
 
 /**
@@ -65,6 +66,11 @@ public final class UnionDataSchema extends ComplexDataSchema
       if (!FIELD_NAME_PATTERN.matcher(alias).matches())
       {
         errorMessageBuilder.append("\"").append(alias).append("\" is an invalid member alias.\n");
+        ok = false;
+      }
+      else if (RESTRICTED_UNION_ALIASES.contains(alias))
+      {
+        errorMessageBuilder.append("\"").append(alias).append("\" is restricted keyword for a member alias.\n");
         ok = false;
       }
       _alias = alias;

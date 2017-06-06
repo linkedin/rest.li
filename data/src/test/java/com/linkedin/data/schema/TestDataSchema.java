@@ -2222,6 +2222,15 @@ public class TestDataSchema
           "is an invalid member alias"
         },
         {
+          // union with restricted keyword as alias
+          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
+            "{ \"name\" : \"u1\", \"type\" : [ \n" +
+              "{ \"alias\" : \"fieldDiscriminator\", \"type\" : \"string\" }" +
+            "] } \n" +
+          "] }",
+          "is restricted keyword for a member alias."
+        },
+        {
           // union with empty alias
           "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
             "{ \"name\" : \"u1\", \"type\" : [ \n" +

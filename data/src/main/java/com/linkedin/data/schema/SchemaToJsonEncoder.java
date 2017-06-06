@@ -421,7 +421,7 @@ public class SchemaToJsonEncoder extends AbstractSchemaEncoder
     }
 
     // properties
-    _builder.writeProperties(field.getProperties());
+    encodeFieldProperties(field);
 
     // aliases
     _builder.writeStringArrayField(ALIASES_KEY, field.getAliases(), false);
@@ -472,6 +472,11 @@ public class SchemaToJsonEncoder extends AbstractSchemaEncoder
     {
       _builder.writeBooleanField(OPTIONAL_KEY, optional);
     }
+  }
+
+  protected void encodeFieldProperties(RecordDataSchema.Field field) throws IOException
+  {
+    _builder.writeProperties(field.getProperties());
   }
 
   /**

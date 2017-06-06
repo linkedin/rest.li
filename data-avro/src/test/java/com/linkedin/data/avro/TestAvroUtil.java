@@ -16,9 +16,9 @@
 
 package com.linkedin.data.avro;
 
-public class TestAvroUtil
+class TestAvroUtil
 {
-  public static String namespaceProcessor(String text)
+  static String namespaceProcessor(String text)
   {
     if (text.contains("##NS"))
     {
@@ -28,6 +28,24 @@ public class TestAvroUtil
         text = text.replaceAll("##NS\\(([^\\)]+)\\)", "$1");
       else
         text = text.replaceAll("##NS\\([^\\)]+\\)", "");
+    }
+    return text;
+  }
+
+  static String serializedEnumValueProcessor(String text)
+  {
+    if (text.contains("##Q_START") && text.contains("##Q_END"))
+    {
+      final AvroAdapter avroAdapter = AvroAdapterFinder.getAvroAdapter();
+
+      if (avroAdapter.jsonUnionMemberHasFullName())
+      {
+        return text.replaceAll("##Q_START", "\"").replaceAll("##Q_END", "\"");
+      }
+      else
+      {
+        return text.replaceAll("##Q_START", "").replaceAll("##Q_END", "");
+      }
     }
     return text;
   }

@@ -17,8 +17,11 @@
 package com.linkedin.data.schema;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -44,7 +47,7 @@ public class DataSchemaTraverse
   private final IdentityHashMap<DataSchema, Boolean> _seen = new IdentityHashMap<DataSchema, Boolean>();
   private final ArrayList<String> _path = new ArrayList<String>();
   private final Order _order;
-  private Callback _callback;
+  private Map<Order, Callback> _callbacks = new HashMap<>();
 
   public DataSchemaTraverse()
   {
@@ -58,9 +61,16 @@ public class DataSchemaTraverse
 
   public void traverse(DataSchema schema, Callback callback)
   {
+    traverse(schema, Collections.singletonMap(_order, callback));
+  }
+
+  public void traverse(DataSchema schema, Map<Order, Callback> callbacks)
+  {
     _seen.clear();
     _path.clear();
-    _callback = callback;
+    _callbacks.clear();
+
+    _callbacks.putAll(callbacks);
     _seen.put(schema, Boolean.TRUE);
     traverseRecurse(schema);
     assert(_path.isEmpty());
@@ -77,9 +87,9 @@ public class DataSchemaTraverse
       _path.add(schema.getUnionMemberKey());
     }
 
-    if (_order == Order.PRE_ORDER)
+    if (_callbacks.containsKey(Order.PRE_ORDER))
     {
-      _callback.callback(_path, schema);
+      _callbacks.get(Order.PRE_ORDER).callback(_path, schema);
     }
 
     switch (schema.getType())
@@ -105,9 +115,9 @@ public class DataSchemaTraverse
         break;
       case UNION:
         UnionDataSchema unionDataSchema = (UnionDataSchema) schema;
-        for (DataSchema memberType : unionDataSchema.getTypes())
+        for (UnionDataSchema.Member member : unionDataSchema.getMembers())
         {
-          traverseChild(memberType.getUnionMemberKey(), memberType);
+          traverseChild(member.getUnionMemberKey(), member.getType());
         }
         break;
       case FIXED:
@@ -119,9 +129,9 @@ public class DataSchemaTraverse
         break;
     }
 
-    if (_order == Order.POST_ORDER)
+    if (_callbacks.containsKey(Order.POST_ORDER))
     {
-      _callback.callback(_path, schema);
+      _callbacks.get(Order.POST_ORDER).callback(_path, schema);
     }
 
     _path.remove(_path.size() - 1);

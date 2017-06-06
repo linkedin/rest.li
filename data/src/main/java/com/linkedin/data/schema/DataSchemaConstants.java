@@ -62,6 +62,8 @@ public class DataSchemaConstants
 
   public static final String TYPEREF_TYPE = "typeref";
 
+  public static final String DISCRIMINATOR_FIELD = "fieldDiscriminator";
+
   public static final NullDataSchema NULL_DATA_SCHEMA = new NullDataSchema();
   public static final BooleanDataSchema BOOLEAN_DATA_SCHEMA = new BooleanDataSchema();
   public static final IntegerDataSchema INTEGER_DATA_SCHEMA = new IntegerDataSchema();
@@ -75,6 +77,7 @@ public class DataSchemaConstants
   public static final Set<String> SCHEMA_KEYS;
   public static final Set<String> FIELD_KEYS;
   public static final Set<String> MEMBER_KEYS;
+  public static final Set<String> RESTRICTED_UNION_ALIASES;
 
   public static final Pattern NAME_PATTERN = Pattern.compile("[A-Za-z_][0-9A-Za-z_]*(\\.[A-Za-z_][0-9A-Za-z_]*)*");
   public static final Pattern NAMESPACE_PATTERN = Pattern.compile("([A-Za-z_][0-9A-Za-z_]*(\\.[A-Za-z_][0-9A-Za-z_]*)*)?");
@@ -101,6 +104,9 @@ public class DataSchemaConstants
 
     Set<String> memberKeys = new HashSet<String>(Arrays.asList(DOC_KEY, ALIAS_KEY, TYPE_KEY));
     MEMBER_KEYS = Collections.unmodifiableSet(memberKeys);
+
+    Set<String> restrictedUnionAliases = new HashSet<>(Arrays.asList(DISCRIMINATOR_FIELD));
+    RESTRICTED_UNION_ALIASES = Collections.unmodifiableSet(restrictedUnionAliases);
   }
 
   private DataSchemaConstants()
