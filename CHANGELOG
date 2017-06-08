@@ -1,5 +1,7 @@
 11.0.17
 -------
+(RB=1015159)
+Fix pegasus plugin configuration to include the jdk tools jar.
 
 11.0.16
 -------

@@ -714,6 +714,7 @@ class PegasusPlugin implements Plugin<Project>
           project.getPath())
     }
     project.dependencies.add('pegasusPlugin', 'org.slf4j:slf4j-simple:1.7.2')
+    project.dependencies.add('pegasusPlugin', project.files("${System.getProperty('java.home')}/../lib/tools.jar"))
 
     // this call has to be here because:
     // 1) artifact cannot be published once projects has been evaluated, so we need to first
