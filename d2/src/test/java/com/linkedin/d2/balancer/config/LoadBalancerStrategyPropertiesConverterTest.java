@@ -59,11 +59,12 @@ public class LoadBalancerStrategyPropertiesConverterTest
     final Integer numProbes = 1024;
     final Double quarantineMaxPercent = 0.2;
     final String quarantineMethod = "OPTIONS:/test/path";
-    final Long quarantineLatency = 200l;
     final quarantineInfo quarantineInfo = new quarantineInfo()
         .setQuarantineMaxPercent(quarantineMaxPercent)
         .setQuarantineMethod(quarantineMethod);
     final String errorStatusRegex = "(5..)";
+    final Integer lowEmittingInterval = 10;
+    final Integer highEmittingInterval = 60;
 
     regexes.add("+231{w+)");
     hashConfig.setUriRegexes(regexes);
@@ -93,6 +94,8 @@ public class LoadBalancerStrategyPropertiesConverterTest
     loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_QUARANTINE_MAX_PERCENT, quarantineMaxPercent.toString());
     loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_QUARANTINE_METHOD, quarantineMethod);
     loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_ERROR_STATUS_REGEX, errorStatusRegex);
+    loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_LOW_EVENT_EMITTING_INTERVAL, lowEmittingInterval.toString());
+    loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_HIGH_EVENT_EMITTING_INTERVAL, highEmittingInterval.toString());
 
     D2LoadBalancerStrategyProperties d2LoadBalancerStrategyProperties =
         new D2LoadBalancerStrategyProperties()
@@ -112,7 +115,9 @@ public class LoadBalancerStrategyPropertiesConverterTest
             .setConsistentHashAlgorithm(consistentHashAlgorithm)
             .setNumberOfProbes(numProbes)
             .setQuarantineCfg(quarantineInfo)
-            .setErrorStatusRegex(errorStatusRegex);
+            .setErrorStatusRegex(errorStatusRegex)
+            .setLowEmittingInterval(lowEmittingInterval)
+            .setHighEmittingInterval(highEmittingInterval);
 
     Assert.assertEquals(LoadBalancerStrategyPropertiesConverter.toConfig(loadBalancerStrategyProperties), d2LoadBalancerStrategyProperties);
     Assert.assertEquals(LoadBalancerStrategyPropertiesConverter.toProperties(d2LoadBalancerStrategyProperties), loadBalancerStrategyProperties);

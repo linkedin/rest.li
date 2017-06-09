@@ -160,6 +160,14 @@ public class LoadBalancerStrategyPropertiesConverter
     {
       map.put(PropertyKeys.HTTP_LB_ERROR_STATUS_REGEX, config.getErrorStatusRegex());
     }
+    if (config.hasLowEmittingInterval())
+    {
+      map.put(PropertyKeys.HTTP_LB_LOW_EVENT_EMITTING_INTERVAL, config.getLowEmittingInterval().toString());
+    }
+    if (config.hasHighEmittingInterval())
+    {
+      map.put(PropertyKeys.HTTP_LB_HIGH_EVENT_EMITTING_INTERVAL, config.getHighEmittingInterval().toString());
+    }
     return map;
   }
 
@@ -286,6 +294,15 @@ public class LoadBalancerStrategyPropertiesConverter
     {
       config.setErrorStatusRegex(coerce(properties.get(PropertyKeys.HTTP_LB_ERROR_STATUS_REGEX), String.class));
     }
+    if (properties.containsKey(PropertyKeys.HTTP_LB_LOW_EVENT_EMITTING_INTERVAL))
+    {
+      config.setLowEmittingInterval(coerce(properties.get(PropertyKeys.HTTP_LB_LOW_EVENT_EMITTING_INTERVAL), Integer.class));
+    }
+    if (properties.containsKey(PropertyKeys.HTTP_LB_HIGH_EVENT_EMITTING_INTERVAL))
+    {
+      config.setHighEmittingInterval(coerce(properties.get(PropertyKeys.HTTP_LB_HIGH_EVENT_EMITTING_INTERVAL), Integer.class));
+    }
+
     return config;
   }
 }

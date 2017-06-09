@@ -175,6 +175,18 @@
       "type": "string",
       "doc": "Regular expression to match the status code indicates a server-side error.",
       "optional": true
+    },
+    {
+      "name": "lowEmittingInterval",
+      "type": "int",
+      "doc": "Low emitting interval (in ms) for D2Monitor events. Generally used when abnormal events present in D2Monitor that need higher emitting frequency.",
+      "optional": true
+    },
+    {
+      "name": "highEmittingInterval",
+      "type": "int",
+      "doc": "High emitting interval (in ms) for D2Monitor events. Used for normal D2Monitor Event emitting.",
+      "optional": true
     }
   ]
 }
