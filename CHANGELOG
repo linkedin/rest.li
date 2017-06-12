@@ -1,5 +1,8 @@
 11.0.17
 -------
+(RB=1017503)
+Added sslIdleTimeout to the d2-schemas
+
 (RB=1015159)
 Fix pegasus plugin configuration to include the jdk tools jar.
 

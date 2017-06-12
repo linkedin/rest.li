@@ -82,6 +82,12 @@
       "optional": true
     },
     {
+      "name": "sslIdleTimeout",
+      "type": "long",
+      "doc": "interval after which idle SSL connections will be automatically closed. Defaults to 2h 55m.",
+      "optional": true
+    },
+    {
       "name": "shutdownTimeout",
       "type": "long",
       "doc": "timeout, in ms, the client should wait after shutdown is initiated before terminating outstanding requests. Defaults to 5s",
