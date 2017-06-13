@@ -10,11 +10,6 @@ import java.util.stream.Collectors;
 
 /**
  * {@link D2MonitorBuilder} responsible for building up the D2Monitor event for one service.
- *
- * {@link D2MonitorBuilder} and associated ClusterStatsBuilder/UriInfoBuilder are not thread safe.
- * It is expected only to use under the updateLock. Any operation beyond the update phase will require
- * separate protection.
- *
  */
 
 public class D2MonitorBuilder
@@ -24,16 +19,14 @@ public class D2MonitorBuilder
   private final D2MonitorClusterStatsBuilder _clusterStatsBuilder;
   private final Map<URI, D2MonitorUriInfoBuilder> _uriInfoBuilderMap;
   private final int _partitionId;
-  private long _timeStamp;
 
-  public D2MonitorBuilder(String serviceName, String clusterName, int partitionId, long timeStamp)
+  public D2MonitorBuilder(String serviceName, String clusterName, int partitionId)
   {
     _serviceName = serviceName;
     _clusterName = clusterName;
     _clusterStatsBuilder = new D2MonitorClusterStatsBuilder();
     _uriInfoBuilderMap = new HashMap<>();
     _partitionId = partitionId;
-    _timeStamp = timeStamp;
   }
 
   public D2MonitorClusterStatsBuilder getClusterStatsBuilder()
@@ -49,11 +42,6 @@ public class D2MonitorBuilder
   public D2MonitorUriInfoBuilder addUriInfoBuilder(URI uri, D2MonitorUriInfoBuilder uriInfoBuilder)
   {
     return _uriInfoBuilderMap.putIfAbsent(uri, uriInfoBuilder);
-  }
-
-  public long getTimeStamp()
-  {
-    return _timeStamp;
   }
 
   public int getPartitionId()
@@ -73,8 +61,6 @@ public class D2MonitorBuilder
    * However it is necessary to clean uriInfoBuilderMap since we only want to keep track of the
    * unhealthy hosts in the past update interval.
    *
-   * timeStamp will not be updated here. It is only update at the build to to record the emitting.
-   *
    * @return
    */
   public D2MonitorBuilder reset()
@@ -89,13 +75,11 @@ public class D2MonitorBuilder
    *
    * The interval is the duration between this build and previous build (or when D2MonitorBuilder is created).
    *
-   * @param timeStamp
+   * @param intervalMs since last emitting
    * @return
    */
-  public final D2Monitor build(long timeStamp)
+  public final D2Monitor build(long intervalMs)
   {
-    long intervalMs = timeStamp - _timeStamp;
-    _timeStamp = timeStamp;
     return new D2Monitor(_serviceName, _clusterName, _clusterStatsBuilder.build(),
         _uriInfoBuilderMap.values().stream().map(D2MonitorUriInfoBuilder::build).collect(Collectors.toList()),
         _partitionId, intervalMs);

@@ -41,7 +41,7 @@ public class DegraderLoadBalancerStrategyFactoryV3 implements
   {
     _healthCheckOperations = null;
     _executorService = null;
-    _eventEmitter = null;
+    _eventEmitter = new NoopEventEmitter();
   }
 
   public DegraderLoadBalancerStrategyFactoryV3(HealthCheckOperations healthCheckOperations,

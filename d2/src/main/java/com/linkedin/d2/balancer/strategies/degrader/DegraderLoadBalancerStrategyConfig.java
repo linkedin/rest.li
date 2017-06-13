@@ -17,6 +17,7 @@
 package com.linkedin.d2.balancer.strategies.degrader;
 
 import com.linkedin.d2.balancer.event.EventEmitter;
+import com.linkedin.d2.balancer.event.NoopEventEmitter;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.util.hashing.MPConsistentHashRing;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
@@ -230,7 +231,7 @@ public class DegraderLoadBalancerStrategyConfig
     _healthCheckMethod = healthCheckMethod;
     _healthCheckPath = healthCheckPath;
     _quarantineLatency = quarantineLatency;
-    _eventEmitter = emitter;
+    _eventEmitter = emitter == null ? new NoopEventEmitter() : emitter;
     _lowEventEmittingInterval = lowEventEmittingInterval;
     _highEventEmittingInterval = highEventEmittingInterval;
     _clusterName = clusterName;
