@@ -61,11 +61,18 @@ public interface FilterRequestContext extends CustomRequestContext
   PathKeys getPathKeys();
 
   /**
-   * get the projection mask parsed from the query.
+   * get the projection mask parsed from the query for root object entities.
    *
    * @return MaskTree parsed from query, or null if no projection mask was requested.
    */
   MaskTree getProjectionMask();
+
+  /**
+   * get the projection mask parsed from the query for CollectionResult metadata
+   *
+   * @return MaskTree parsed from query, or null if no projection mask was requested.
+   */
+  MaskTree getMetadataProjectionMask();
 
   /**
    * Sets the specified projection mask for root entity in the response. Setting the projection mask to {@code null}

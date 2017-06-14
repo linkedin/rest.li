@@ -82,6 +82,7 @@ public class TestFilterRequestContextInternalImpl
     customAnnotations.put("foo", "Bar");
     final ProjectionMode projectionMode = ProjectionMode.AUTOMATIC;
     final MaskTree maskTree = new MaskTree();
+    final MaskTree metadataMaskTree = new MaskTree();
     final MutablePathKeys pathKeys = new PathKeysImpl();
     final Map<String, String> requestHeaders = new HashMap<String, String>();
     requestHeaders.put("Key1", "Value1");
@@ -108,6 +109,7 @@ public class TestFilterRequestContextInternalImpl
 
     when(context.getProjectionMode()).thenReturn(projectionMode);
     when(context.getProjectionMask()).thenReturn(maskTree);
+    when(context.getMetadataProjectionMask()).thenReturn(metadataMaskTree);
     when(context.getPathKeys()).thenReturn(pathKeys);
     when(context.getRequestHeaders()).thenReturn(requestHeaders);
     when(context.getRequestURI()).thenReturn(requestUri);
@@ -123,6 +125,7 @@ public class TestFilterRequestContextInternalImpl
     assertEquals(filterContext.getCustomAnnotations(), customAnnotations);
     assertEquals(filterContext.getProjectionMode(), projectionMode);
     assertEquals(filterContext.getProjectionMask(), maskTree);
+    assertEquals(filterContext.getMetadataProjectionMask(), metadataMaskTree);
     assertEquals(filterContext.getPathKeys(), pathKeys);
     assertEquals(filterContext.getRequestHeaders(), requestHeaders);
     assertEquals(filterContext.getRequestURI(), requestUri);
@@ -145,6 +148,7 @@ public class TestFilterRequestContextInternalImpl
     verify(resourceMethod).getMethod();
     verify(context).getProjectionMode();
     verify(context).getProjectionMask();
+    verify(context).getMetadataProjectionMask();
     verify(context).getPathKeys();
     verify(context, times(2)).getRequestHeaders();
     verify(context).getRequestURI();
