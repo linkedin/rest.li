@@ -1,16 +1,19 @@
+11.0.17
+-------
+
 11.0.16
-------
+-------
 (RB=1019823)
 Expose collection metadata projection mask in FilterRequestContext.
 
 11.0.15
-------
+-------
 
 11.0.14
-------
+-------
 
 11.0.13
-------
+-------
 (RB=1008758)
 Typo in the test file : test-util/src/main/java/com/linkedin/test/util/GaussianRandom.java
 
@@ -21,15 +24,15 @@ generateRestModel doesn't need a copy of the codegen classpath
 Changes to handle Restli info chatty output
 
 11.0.12
-------
+-------
 
 11.0.11
-------
+-------
 (RB=1008894)
 HttpClientFactory.Builder, added documentation and improved to handle more easily more cases
 
 11.0.10
-------
+-------
 (RB=1008069)
 Make tcpNoDelay constructor's change backward compatible in HttpClientFactory
 
