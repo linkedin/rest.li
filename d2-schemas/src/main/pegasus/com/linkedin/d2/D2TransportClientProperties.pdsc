@@ -47,6 +47,12 @@
       "optional": true
     },
     {
+      "name": "tcpNoDelay",
+      "type": "boolean",
+      "doc": "Flag to enable/disable Nagle's algorithm. Defaults to true",
+      "default": true
+    },
+    {
       "name": "poolStrategy",
       "type": {
         "type": "enum",
@@ -92,6 +98,12 @@
       "type": "long",
       "doc": "timeout, in ms, the client should wait after shutdown is initiated before terminating outstanding requests. Defaults to 5s",
       "optional": true
+    },
+    {
+      "name": "gracefulShutdownTimeout",
+      "type": "long",
+      "doc": "timeout, in ms, the client should wait for exiting http2 streams before shutting down the connection. Defaults to 30s",
+      "default": 30000
     },
     {
       "name": "responseCompressionOperations",

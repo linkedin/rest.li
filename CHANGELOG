@@ -1,5 +1,8 @@
 11.1.1
 -------
+(RB=1019396)
+Adding gracefulShutdownTimeout and tcpNoDelay to D2TransportClientProperties.pdsc
+
 (RB=1026302)
 Refactoring HttpNettyClients to use AbstractNettyClient for the common parts
 
