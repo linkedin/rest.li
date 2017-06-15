@@ -490,6 +490,107 @@ public class TestDataTranslator
         }
       },
       {
+        // record with a required "union with aliases" field
+        {
+          "{\n" +
+          "  \"type\" : \"record\",\n" +
+          "  \"name\" : \"foo.Foo\",\n" +
+          "  \"fields\" : [\n" +
+          "    {\n" +
+          "      \"name\" : \"uwaRequiredNoNull\",\n" +
+          "      \"type\" : ##T_START [\n" +
+          "        { \"alias\": \"success\", \"type\": \"string\" },\n" +
+          "        { \"alias\": \"failure\", \"type\": \"string\" }\n" +
+          "      ] ##T_END\n" +
+          "    }\n" +
+          "  ]\n" +
+          "}\n"
+        },
+        {
+          "{ \"uwaRequiredNoNull\" : { \"success\" : \"Union with aliases!\" } }",
+          "{\"uwaRequiredNoNull\":{\"success\":{\"string\":\"Union with aliases!\"},\"failure\":null,\"fieldDiscriminator\":\"success\"}}"
+        },
+        {
+          "{ \"uwaRequiredNoNull\" : { \"failure\" : \"Union with aliases!\" } }",
+          "{\"uwaRequiredNoNull\":{\"success\":null,\"failure\":{\"string\":\"Union with aliases!\"},\"fieldDiscriminator\":\"failure\"}}"
+        },
+        {
+          "{ \"uwaRequiredNoNull\" : null }",
+          "Error processing /uwaRequiredNoNull"
+        },
+        {
+          "{}",
+          "Error processing /uwaRequiredNoNull"
+        },
+        {
+          "{ \"uwaRequiredNoNull\" : {} }",
+          "Error processing /uwaRequiredNoNull"
+        },
+        {
+          "{ \"uwaRequiredNoNull\" : \"Union with aliases!\" }",
+          "Error processing /uwaRequiredNoNull"
+        },
+        {
+          "{ \"uwaRequiredNoNull\" : { \"string\" : \"Union with aliases!\" } }",
+          "Error processing /uwaRequiredNoNull"
+        },
+        {
+          "{ \"uwaRequiredNoNull\" : { \"success\" : 123 } }",
+          "Error processing /uwaRequiredNoNull/success"
+        }
+      },
+      {
+        // record with a required "union with aliases" field with null member
+        {
+          "{\n" +
+          "  \"type\" : \"record\",\n" +
+          "  \"name\" : \"foo.Foo\",\n" +
+          "  \"fields\" : [\n" +
+          "    {\n" +
+          "      \"name\" : \"uwaRequiredWithNull\",\n" +
+          "      \"type\" : ##T_START [\n" +
+          "        \"null\",\n" +
+          "        { \"alias\": \"success\", \"type\": \"string\" },\n" +
+          "        { \"alias\": \"failure\", \"type\": \"string\" }\n" +
+          "      ] ##T_END\n" +
+          "    }\n" +
+          "  ]\n" +
+          "}\n"
+        },
+        {
+          "{ \"uwaRequiredWithNull\" : { \"success\" : \"Union with aliases!\" } }",
+          "{\"uwaRequiredWithNull\":{\"success\":{\"string\":\"Union with aliases!\"},\"failure\":null,\"fieldDiscriminator\":\"success\"}}"
+        },
+        {
+          "{ \"uwaRequiredWithNull\" : { \"failure\" : \"Union with aliases!\" } }",
+          "{\"uwaRequiredWithNull\":{\"success\":null,\"failure\":{\"string\":\"Union with aliases!\"},\"fieldDiscriminator\":\"failure\"}}"
+        },
+        {
+          "{ \"uwaRequiredWithNull\" : null }",
+          "{\"uwaRequiredWithNull\":{\"success\":null,\"failure\":null,\"fieldDiscriminator\":\"null\"}}"
+        },
+        {
+          "{}",
+          "Error processing /uwaRequiredWithNull"
+        },
+        {
+          "{ \"uwaRequiredWithNull\" : {} }",
+          "Error processing /uwaRequiredWithNull"
+        },
+        {
+          "{ \"uwaRequiredWithNull\" : \"Union with aliases!\" }",
+          "Error processing /uwaRequiredWithNull"
+        },
+        {
+          "{ \"uwaRequiredWithNull\" : { \"string\" : \"Union with aliases!\" } }",
+          "Error processing /uwaRequiredWithNull"
+        },
+        {
+          "{ \"uwaRequiredWithNull\" : { \"success\" : 123 } }",
+          "Error processing /uwaRequiredWithNull/success"
+        }
+      },
+      {
         // record with array of union with null field
         // this is to check that translation of union with null that does not get converted to optional,
         // and that null union member translates correctly from Data to Avro and Avro to Data.
@@ -675,6 +776,101 @@ public class TestDataTranslator
           "{ \"unionOptional\" : {} }",
           "Error processing /unionOptional"
         },
+      },
+      {
+        // record with an optional "union with aliases" field
+        {
+          "{\n" +
+          "  \"type\" : \"record\",\n" +
+          "  \"name\" : \"foo.Foo\",\n" +
+          "  \"fields\" : [\n" +
+          "    {\n" +
+          "      \"name\" : \"uwaOptionalNoNull\",\n" +
+          "      \"type\" : ##T_START [\n" +
+          "        { \"alias\": \"success\", \"type\": \"string\" },\n" +
+          "        { \"alias\": \"failure\", \"type\": \"string\" }\n" +
+          "      ] ##T_END,\n" +
+          "      \"optional\": true\n" +
+          "    }\n" +
+          "  ]\n" +
+          "}\n"
+        },
+        {
+          "{ \"uwaOptionalNoNull\" : { \"success\" : \"Union with aliases!\" } }",
+          "{\"uwaOptionalNoNull\":{\"##NS(foo.)FooUwaOptionalNoNull\":{\"success\":{\"string\":\"Union with aliases!\"},\"failure\":null,\"fieldDiscriminator\":\"success\"}}}"
+        },
+        {
+          "{}",
+          "{\"uwaOptionalNoNull\":null}"
+        },
+        {
+          "{ \"uwaOptionalNoNull\" : null }",
+          "Error processing /uwaOptionalNoNull"
+        },
+        {
+          "{ \"uwaOptionalNoNull\" : {} }",
+          "Error processing /uwaOptionalNoNull"
+        },
+        {
+          "{ \"uwaOptionalNoNull\" : \"Union with aliases!\" }",
+          "Error processing /uwaOptionalNoNull"
+        },
+        {
+          "{ \"uwaOptionalNoNull\" : { \"string\" : \"Union with aliases!\" } }",
+          "Error processing /uwaOptionalNoNull"
+        },
+        {
+          "{ \"uwaOptionalNoNull\" : { \"success\" : 123 } }",
+          "Error processing /uwaOptionalNoNull/success"
+        }
+      },
+      {
+        // record with an optional "union with aliases" field with null member
+        {
+          "{\n" +
+          "  \"type\" : \"record\",\n" +
+          "  \"name\" : \"foo.Foo\",\n" +
+          "  \"fields\" : [\n" +
+          "    {\n" +
+          "      \"name\" : \"uwaOptionalWithNull\",\n" +
+          "      \"type\" : ##T_START [\n" +
+          "        \"null\",\n" +
+          "        { \"alias\": \"success\", \"type\": \"string\" },\n" +
+          "        { \"alias\": \"failure\", \"type\": \"string\" }\n" +
+          "      ] ##T_END,\n" +
+          "      \"optional\": true\n" +
+          "    }\n" +
+          "  ]\n" +
+          "}\n"
+        },
+        {
+          "{ \"uwaOptionalWithNull\" : { \"success\" : \"Union with aliases!\" } }",
+          "{\"uwaOptionalWithNull\":{\"##NS(foo.)FooUwaOptionalWithNull\":{\"success\":{\"string\":\"Union with aliases!\"},\"failure\":null,\"fieldDiscriminator\":\"success\"}}}"
+        },
+        {
+          "{}",
+          "{\"uwaOptionalWithNull\":null}"
+        },
+        {
+          "{ \"uwaOptionalWithNull\" : null }",
+          "{\"uwaOptionalWithNull\":{\"##NS(foo.)FooUwaOptionalWithNull\":{\"success\":null,\"failure\":null,\"fieldDiscriminator\":\"null\"}}}"
+        },
+        {
+          "{ \"uwaOptionalWithNull\" : {} }",
+          "Error processing /uwaOptionalWithNull"
+        },
+        {
+          "{ \"uwaOptionalWithNull\" : \"Union with aliases!\" }",
+          "Error processing /uwaOptionalWithNull"
+        },
+        {
+          "{ \"uwaOptionalWithNull\" : { \"string\" : \"Union with aliases!\" } }",
+          "Error processing /uwaOptionalWithNull"
+        },
+        {
+          "{ \"uwaOptionalWithNull\" : { \"success\" : 123 } }",
+          "Error processing /uwaOptionalWithNull/success"
+        }
       },
       {
         // record with optional enum field
