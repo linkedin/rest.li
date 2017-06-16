@@ -4,7 +4,7 @@
 
 Rest.li is an open source REST framework for building robust, scalable RESTful
 architectures using type-safe bindings and asynchronous, non-blocking IO. Rest.li
-fills a niche for applying RESTful principals at scale with an end-to-end developer
+fills a niche for applying RESTful principles at scale with an end-to-end developer
 workflow for building REST APIs, which promotes clean REST practices, uniform
 interface design and consistent data modeling.
 
