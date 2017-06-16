@@ -33,12 +33,12 @@ import com.linkedin.data.schema.PegasusSchemaParser;
 import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.schema.UnionDataSchema;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 
 /**
@@ -342,15 +342,15 @@ public class SchemaSampleDataGenerator implements DataGenerator
         break;
       case UNION:
         final UnionDataSchema unionSchema = (UnionDataSchema) derefSchema;
-        final List<DataSchema> types = removeAlreadyTraversedSchemasFromUnionMemberList(parentSchemas, unionSchema.getTypes());
-        final int unionIndex = _random.nextInt(types.size());
-        final DataSchema unionItemSchema = types.get(unionIndex);
-        data = buildData(parentSchemas, unionItemSchema, fieldName, spec);
+        final List<UnionDataSchema.Member> members = removeAlreadyTraversedSchemasFromUnionMemberList(parentSchemas, unionSchema.getMembers());
+        final int unionIndex = _random.nextInt(members.size());
+        final UnionDataSchema.Member unionMember = members.get(unionIndex);
+        data = buildData(parentSchemas, unionMember.getType(), fieldName, spec);
 
         if (data != null)
         {
           final DataMap unionMap = new DataMap();
-          unionMap.put(unionItemSchema.getUnionMemberKey(), data);
+          unionMap.put(unionMember.getUnionMemberKey(), data);
           data = unionMap;
         }
         break;
@@ -403,10 +403,9 @@ public class SchemaSampleDataGenerator implements DataGenerator
     return spec;
   }
 
-  private static List<DataSchema> removeAlreadyTraversedSchemasFromUnionMemberList(ParentSchemas parentSchemas, List<DataSchema> unionMembers)
+  private static List<UnionDataSchema.Member> removeAlreadyTraversedSchemasFromUnionMemberList(ParentSchemas parentSchemas, List<UnionDataSchema.Member> unionMembers)
   {
-    final ArrayList<DataSchema> copy = new ArrayList<DataSchema>(unionMembers);
-    copy.removeAll(parentSchemas.getAllReferenced());
+    final List<UnionDataSchema.Member> copy = unionMembers.stream().filter(member -> !parentSchemas.contains(member.getType())).collect(Collectors.toList());
     if(copy.isEmpty()) return unionMembers;  // eek, cannot safely filter out already traversed schemas, this code path will likely result in IllegalArgumentException being thrown from preventRecursionIntoAlreadyTraversedSchemas (which is the correct way to handle this).
     else return copy;
   }

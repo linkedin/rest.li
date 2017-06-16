@@ -388,8 +388,8 @@ public class TestCustom
   public final static class Union extends UnionTemplate
   {
     private final static UnionDataSchema SCHEMA = ((UnionDataSchema) DataTemplateUtil.parseSchema("[{\"type\":\"typeref\",\"name\":\"CustomPoint\",\"ref\":\"string\"}, \"int\"]"));
-    private final static DataSchema MEMBER_CustomPoint = SCHEMA.getType("string");
-    private final static DataSchema MEMBER_int = SCHEMA.getType("int");
+    private final static DataSchema MEMBER_CustomPoint = SCHEMA.getTypeByMemberKey("string");
+    private final static DataSchema MEMBER_int = SCHEMA.getTypeByMemberKey("int");
 
     public Union() {
       super(new DataMap(), SCHEMA);

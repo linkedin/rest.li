@@ -652,7 +652,7 @@ public class TemplateSpecGenerator
 
   private UnionTemplateSpec generateUnion(UnionDataSchema schema, UnionTemplateSpec unionClass)
   {
-    final Map<CustomInfoSpec, Object> customInfoMap = new IdentityHashMap<CustomInfoSpec, Object>(schema.getTypes().size() * 2);
+    final Map<CustomInfoSpec, Object> customInfoMap = new IdentityHashMap<CustomInfoSpec, Object>(schema.getMembers().size() * 2);
 
     for (UnionDataSchema.Member member: schema.getMembers())
     {

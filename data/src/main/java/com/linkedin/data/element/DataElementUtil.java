@@ -205,7 +205,7 @@ public class DataElementUtil
             childSchema = ((MapDataSchema) schema).getValues();
             break;
           case UNION:
-            childSchema = ((UnionDataSchema) schema).getType((String) name);
+            childSchema = ((UnionDataSchema) schema).getTypeByMemberKey((String) name);
             break;
           case RECORD:
             RecordDataSchema.Field field = ((RecordDataSchema) schema).getField((String) name);

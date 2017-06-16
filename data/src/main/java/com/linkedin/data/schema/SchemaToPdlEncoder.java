@@ -350,10 +350,10 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
   private void writeUnion(UnionDataSchema schema) throws IOException
   {
     write("union[");
-    for(Iterator<DataSchema> iter = schema.getTypes().iterator(); iter.hasNext();)
+    for(Iterator<UnionDataSchema.Member> iter = schema.getMembers().iterator(); iter.hasNext();)
     {
-      DataSchema member = iter.next();
-      writeReferenceOrInline(member, schema.isTypeDeclaredInline(member));
+      UnionDataSchema.Member member = iter.next();
+      writeReferenceOrInline(member.getType(), member.isDeclaredInline());
       if (iter.hasNext())
       {
         write(", ");
@@ -655,9 +655,9 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
       else if (schema instanceof UnionDataSchema)
       {
         UnionDataSchema unionSchema = (UnionDataSchema) schema;
-        for (DataSchema member : unionSchema.getTypes())
+        for (UnionDataSchema.Member member : unionSchema.getMembers())
         {
-          computeImports(member, unionSchema.isTypeDeclaredInline(member), importsAcc);
+          computeImports(member.getType(), member.isDeclaredInline(), importsAcc);
         }
       }
       else if (schema instanceof MapDataSchema)

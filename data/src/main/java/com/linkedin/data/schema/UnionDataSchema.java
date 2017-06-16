@@ -16,7 +16,6 @@
 
 package com.linkedin.data.schema;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -24,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static com.linkedin.data.schema.DataSchemaConstants.FIELD_NAME_PATTERN;
 import static com.linkedin.data.schema.DataSchemaConstants.RESTRICTED_UNION_ALIASES;
@@ -208,6 +206,39 @@ public final class UnionDataSchema extends ComplexDataSchema
       return _hasError;
     }
 
+    @Override
+    public boolean equals(Object object)
+    {
+      boolean result = false;
+      if (this == object)
+      {
+        result = true;
+      }
+      else if (object != null && object.getClass() == Member.class)
+      {
+        Member other = (Member) object;
+        result = ((_alias == null) ? other._alias == null : _alias.equals(other._alias)) &&
+            _type.equals(other._type) &&
+            _doc.equals(other._doc) &&
+            _properties.equals(other._properties) &&
+            _declaredInline == other._declaredInline &&
+            _hasError == other._hasError;
+      }
+
+      return result;
+    }
+
+    @Override
+    public int hashCode()
+    {
+      return (_alias == null) ? 0 : _alias.hashCode() ^
+          _type.hashCode() ^
+          _doc.hashCode() ^
+          _properties.hashCode() ^
+          (_declaredInline ? 0xAAAAAAAA : 0x55555555) ^
+          (_hasError ? 0xAAAAAAAA : 0x55555555);
+    }
+
     private String _alias = null;
     private DataSchema _type = DataSchemaConstants.NULL_DATA_SCHEMA;
     private String _doc = "";
@@ -232,11 +263,7 @@ public final class UnionDataSchema extends ComplexDataSchema
   {
     boolean ok = true;
 
-    List<DataSchema> types = new ArrayList<>(members.size());
-    Set<DataSchema> typesDeclaredInline = new HashSet<>(members.size());
-
-    Map<String, Integer> typeMap = new HashMap<>(members.size());
-    Map<String, Integer> nameMap = new HashMap<>(members.size());
+    Set<String> avroMemberKeys = new HashSet<>(members.size());
     Map<String, Integer> memberKeyMap = new HashMap<>(members.size());
 
     Optional<Boolean> areMembersAliased = Optional.empty();
@@ -281,32 +308,19 @@ public final class UnionDataSchema extends ComplexDataSchema
       }
       else
       {
-        String name = avroUnionMemberKey(memberType);
-        existing = nameMap.put(name, index);
-        if (existing != null && !memberHasAlias)
+        String avroMemberKey = avroUnionMemberKey(memberType);
+        boolean unique = avroMemberKeys.add(avroMemberKey);
+        if (!unique && !memberHasAlias)
         {
-          errorMessageBuilder.append(memberType).append(" has name ").append(name).append(" that appears more than once in a union, this may cause compatibility problems with Avro.\n");
+          errorMessageBuilder.append(memberType).append(" has name ").append(avroMemberKey).append(" that appears more than once in a union, this may cause compatibility problems with Avro.\n");
           ok = false;
         }
-      }
-
-      types.add(memberType);
-      typeMap.put(memberType.getUnionMemberKey(), index);
-
-      if (member.isDeclaredInline())
-      {
-        typesDeclaredInline.add(memberType);
       }
 
       index++;
     }
 
-    setTypesDeclaredInline(typesDeclaredInline);
-
     _members = Collections.unmodifiableList(members);
-    _types = Collections.unmodifiableList(types);
-    _typesToIndexMap = Collections.unmodifiableMap(typeMap);
-    _namesToIndexMap = Collections.unmodifiableMap(nameMap);
     _memberKeyToIndexMap = Collections.unmodifiableMap(memberKeyMap);
     _membersAliased = areMembersAliased.orElse(false);
 
@@ -319,39 +333,6 @@ public final class UnionDataSchema extends ComplexDataSchema
   }
 
   /**
-   * Sets the types of the union.
-   *
-   * @param types that may be members of the union in the order they are defined.
-   * @param errorMessageBuilder to append error message to.
-   * @return true if types were set successfully, false otherwise.
-   *
-   * TODO (aponniah): Mark this method as deprecated.
-   * (@deprecated) Deprecated when the support for aliasing Union members was introduced.
-   * Use {@link #setMembers(List, StringBuilder)} ()} instead.
-   */
-  public boolean setTypes(List<DataSchema> types, StringBuilder errorMessageBuilder)
-  {
-    List<Member> members = types.stream()
-        .map(Member::new)
-        .collect(Collectors.toList());
-    return setMembers(members, errorMessageBuilder);
-  }
-
-  /**
-   * Union members in the order declared.
-   *
-   * @return union members in the the order declared.
-   *
-   * TODO (aponniah): Mark this method as deprecated.
-   * (@deprecated) Deprecated when the support for aliasing Union members was introduced. Use
-   * {@link #getMembers()} instead.
-   */
-  public List<DataSchema> getTypes()
-  {
-    return _types;
-  }
-
-  /**
    * Union members in the order declared.
    *
    * @return union members in the the order declared.
@@ -359,22 +340,6 @@ public final class UnionDataSchema extends ComplexDataSchema
   public List<Member> getMembers()
   {
     return _members;
-  }
-
-  /**
-   * Returns the index of a member.
-   *
-   * @param type to obtain index for.
-   * @return positive integer which is the index of the member if found else return -1.
-   *
-   * TODO (aponniah): Mark this method as deprecated.
-   * (@deprecated) Deprecated when the support for aliasing Union members was introduced. For Unions declared with more
-   * than one member of the same type this method will return a wrong index.
-   */
-  public int index(String type)
-  {
-    Integer index = _typesToIndexMap.get(type);
-    return (index == null ? -1 : index);
   }
 
   /**
@@ -390,24 +355,6 @@ public final class UnionDataSchema extends ComplexDataSchema
   }
 
   /**
-   * Returns the {@link DataSchema} for a member. For {@link NamedDataSchema} types, the method expects
-   * its fully qualified name (with namespace) and for others, the default union member key returned from
-   * {@link DataSchema#getUnionMemberKey()}.
-   *
-   * @param type Fully qualified name of the member's type to return.
-   * @return the {@link DataSchema} if type is a member of the union, else return null.
-   *
-   * TODO (aponniah): Mark this method as deprecated.
-   * (@deprecated) Deprecated when the support for aliasing Union members was introduced.
-   * Use {@link #getTypeByMemberKey(String)} instead.
-   */
-  public DataSchema getType(String type)
-  {
-    Integer index = _typesToIndexMap.get(type);
-    return (index != null ? _types.get(index) : null);
-  }
-
-  /**
    * Returns the {@link DataSchema} for a member identified by its member key returned
    * from {@link Member#getUnionMemberKey()}.
    *
@@ -417,55 +364,7 @@ public final class UnionDataSchema extends ComplexDataSchema
   public DataSchema getTypeByMemberKey(String memberKey)
   {
     Integer index = _memberKeyToIndexMap.get(memberKey);
-    return (index != null ? _types.get(index) : null);
-  }
-
-  /**
-   * Returns the {@link DataSchema} for a member. For {@link NamedDataSchema} types, the method expects
-   * its simple name (without namespace) and for others, the default union member key returned from
-   * {@link DataSchema#getUnionMemberKey()}.
-   *
-   * @param typeName Simple name of the member's type to return
-   * @return the {@link DataSchema} if type is a member of the union, else return null.
-   *
-   * @see #avroUnionMemberKey(DataSchema)
-   *
-   * TODO (aponniah): Mark this method as deprecated.
-   * (@deprecated) Deprecated when the support for aliasing Union members was introduced.
-   * Use {@link #getTypeByMemberKey(String)} instead.
-   */
-  public DataSchema getTypeByName(String typeName)
-  {
-    Integer index = _namesToIndexMap.get(typeName);
-    return (index != null ? _types.get(index) : null);
-  }
-
-  /**
-   * Sets the union member types that are declared inline in the schema.
-   *
-   * @param typesDeclaredInline provides a set of member type that are declared inline.
-   *
-   * TODO (aponniah): Mark this method as deprecated.
-   * (@deprecated) Deprecated when the support for aliasing Union members was introduced.
-   * Replaced by {@link #setMembers(List, StringBuilder)} to set the union members.
-   */
-  public void setTypesDeclaredInline(Set<DataSchema> typesDeclaredInline)
-  {
-    _typesDeclaredInline = Collections.unmodifiableSet(typesDeclaredInline);
-  }
-
-  /**
-   * Checks if a union member type is declared inline.
-   *
-   * @return true if the union member type is declared inline, false if it is referenced by name.
-   *
-   * TODO (aponniah): Mark this method as deprecated.
-   * (@deprecated) Deprecated when the support for aliasing Union members was introduced. This method can potentially
-   * return a wrong value on Unions declared with aliases. Use {@link Member#isTypeDeclaredInline(DataSchema)} instead.
-   */
-  public boolean isTypeDeclaredInline(DataSchema type)
-  {
-    return _typesDeclaredInline.contains(type);
+    return (index != null ? _members.get(index).getType() : null);
   }
 
   /**
@@ -496,7 +395,7 @@ public final class UnionDataSchema extends ComplexDataSchema
     if (object != null && object.getClass() == UnionDataSchema.class)
     {
       UnionDataSchema other = (UnionDataSchema) object;
-      return super.equals(other) && _types.equals(other._types);
+      return super.equals(other) && _members.equals(other._members);
     }
     return false;
   }
@@ -504,7 +403,7 @@ public final class UnionDataSchema extends ComplexDataSchema
   @Override
   public int hashCode()
   {
-    return super.hashCode() ^ _types.hashCode();
+    return super.hashCode() ^ _members.hashCode();
   }
 
   /**
@@ -534,11 +433,7 @@ public final class UnionDataSchema extends ComplexDataSchema
   }
 
   private List<Member> _members = Collections.emptyList();
-  private List<DataSchema> _types = Collections.emptyList();
-  private Map<String, Integer> _typesToIndexMap = _emptyTypesToIndexMap;
-  private Map<String, Integer> _namesToIndexMap = _emptyTypesToIndexMap;
   private Map<String, Integer> _memberKeyToIndexMap = _emptyTypesToIndexMap;
-  private Set<DataSchema> _typesDeclaredInline = Collections.emptySet();
   private boolean _membersAliased = false;
 
   private static final Map<String, Integer> _emptyTypesToIndexMap = Collections.emptyMap();

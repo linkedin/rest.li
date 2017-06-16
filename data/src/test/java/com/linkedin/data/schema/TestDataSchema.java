@@ -2464,7 +2464,6 @@ public class TestDataSchema
 
     assertTrue(resourceSchema.areMembersAliased());
     assertEquals(resourceSchema.getMembers().size(), membersInDeclaredOrder.size());
-    assertEquals(resourceSchema.getTypes().size(), resourceSchema.getMembers().size());
 
     int index = 0;
     for (UnionDataSchema.Member member: resourceSchema.getMembers())
@@ -2492,9 +2491,6 @@ public class TestDataSchema
       assertEquals(type, resourceSchema.getTypeByMemberKey(memberKey));
       assertEquals(member.getDoc(), isNonNullMember ? memberKey + " doc" : "");
       assertEquals(member.getProperties().containsKey("inlined"), member.isDeclaredInline());
-
-      // Verify the order is maintained between getTypes() and getMembers()
-      assertEquals(type, resourceSchema.getTypes().get(index));
 
       index++;
     }
@@ -2530,7 +2526,6 @@ public class TestDataSchema
 
     assertFalse(resourceSchema.areMembersAliased());
     assertEquals(resourceSchema.getMembers().size(), membersInDeclaredOrder.size());
-    assertEquals(resourceSchema.getTypes().size(), resourceSchema.getMembers().size());
 
     int index = 0;
     for (UnionDataSchema.Member member: resourceSchema.getMembers())
@@ -2549,9 +2544,6 @@ public class TestDataSchema
       // Verify the order is maintained as declared in the union definition
       assertEquals(memberKey, membersInDeclaredOrder.get(index));
 
-      // Verify the order is maintained between getTypes() and getMembers()
-      assertEquals(type, resourceSchema.getTypes().get(index));
-
       // Verify the type, doc and other properties are empty
       assertEquals(type, resourceSchema.getTypeByMemberKey(memberKey));
       assertTrue(member.getDoc().isEmpty());
@@ -2559,7 +2551,6 @@ public class TestDataSchema
 
       // Verify the inlined member definition is captured correctly
       assertEquals(member.isDeclaredInline(), inlinedMembers.contains(memberKey));
-      assertEquals(resourceSchema.isTypeDeclaredInline(type), member.isDeclaredInline());
 
       index++;
     }

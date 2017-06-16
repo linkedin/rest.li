@@ -398,9 +398,9 @@ public class SnapshotGenerator
     else if (schema instanceof UnionDataSchema)
     {
       UnionDataSchema unionSchema = (UnionDataSchema)schema;
-      for(DataSchema type : unionSchema.getTypes())
+      for(UnionDataSchema.Member member : unionSchema.getMembers())
       {
-        recordType(type, foundTypes, typeOrder);
+        recordType(member.getType(), foundTypes, typeOrder);
       }
     }
   }

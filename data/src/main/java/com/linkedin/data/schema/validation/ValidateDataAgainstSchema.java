@@ -468,7 +468,7 @@ public final class ValidateDataAgainstSchema
     {
       if (object == Data.NULL)
       {
-        if (schema.getType(DataSchemaConstants.NULL_TYPE) == null)
+        if (schema.getTypeByMemberKey(DataSchemaConstants.NULL_TYPE) == null)
         {
           addMessage(element, "null is not a member type of union %1$s", schema);
         }
@@ -476,14 +476,14 @@ public final class ValidateDataAgainstSchema
       else if (_options.isAvroUnionMode())
       {
         // Avro union default value does not include member type discriminator
-        List<DataSchema> memberTypes = schema.getTypes();
-        if (memberTypes.isEmpty())
+        List<UnionDataSchema.Member> members = schema.getMembers();
+        if (members.isEmpty())
         {
           addMessage(element, "value %1$s is not valid for empty union", object.toString());
         }
         else
         {
-          DataSchema memberSchema = memberTypes.get(0);
+          DataSchema memberSchema = members.get(0).getType();
           assert(_recursive);
           validate(element, memberSchema, object);
         }

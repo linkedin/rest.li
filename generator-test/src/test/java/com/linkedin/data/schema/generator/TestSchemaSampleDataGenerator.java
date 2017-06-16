@@ -145,9 +145,9 @@ public class TestSchemaSampleDataGenerator
   {
     final UnionDataSchema schema = (UnionDataSchema) DataTemplateUtil.getSchema(UnionTest.UnionWithNull.class);
     final Set<String> memberKeys = new HashSet<String>();
-    for (DataSchema memberSchema: schema.getTypes())
+    for (UnionDataSchema.Member member: schema.getMembers())
     {
-      memberKeys.add(memberSchema.getUnionMemberKey());
+      memberKeys.add(member.getUnionMemberKey());
     }
     final String nullMemberKey = DataSchemaConstants.NULL_DATA_SCHEMA.getUnionMemberKey();
 

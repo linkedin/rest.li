@@ -667,28 +667,44 @@ public class RestLiDataValidator
   /**
    * Build a new {@link UnionDataSchema} schema that contains only the masked fields.
    */
-  private static UnionDataSchema buildUnionDataSchemaByProjection(UnionDataSchema originalSchema, DataMap maskMap) {
-    List<DataSchema> newUnionTypeSchemas = new ArrayList<>();
+  private static UnionDataSchema buildUnionDataSchemaByProjection(UnionDataSchema unionDataSchema, DataMap maskMap) {
+    List<UnionDataSchema.Member> newUnionMembers = new ArrayList<>();
 
+    StringBuilder errorMessageBuilder = new StringBuilder();
     // Get the wildcard mask if one is available
     Object wildcardMask = maskMap.get(FilterConstants.WILDCARD);
 
-    for (DataSchema member: originalSchema.getTypes()) {
+    for (UnionDataSchema.Member member: unionDataSchema.getMembers()) {
       Object maskValue = maskMap.get(member.getUnionMemberKey());
+
       // If a mask is available for this specific member use that, else use the wildcard mask if that is available
+      UnionDataSchema.Member newMember = null;
       if (maskValue != null) {
-        newUnionTypeSchemas.add(reuseOrBuildDataSchema(member, maskValue));
+        newMember = new UnionDataSchema.Member(reuseOrBuildDataSchema(member.getType(), maskValue));
       } else if (wildcardMask != null) {
-        newUnionTypeSchemas.add(reuseOrBuildDataSchema(member, wildcardMask));
+        newMember = new UnionDataSchema.Member(reuseOrBuildDataSchema(member.getType(), wildcardMask));
+      }
+
+      if (newMember != null)
+      {
+        if (member.hasAlias())
+        {
+          newMember.setAlias(member.getAlias(), errorMessageBuilder);
+        }
+        newMember.setDeclaredInline(member.isDeclaredInline());
+        newMember.setDoc(member.getDoc());
+        newMember.setProperties(member.getProperties());
+        newUnionMembers.add(newMember);
       }
     }
 
-    UnionDataSchema newSchema = new UnionDataSchema();
-    newSchema.setTypes(newUnionTypeSchemas, new StringBuilder());
-    if (originalSchema.getProperties() != null) {
-      newSchema.setProperties(originalSchema.getProperties());
+    UnionDataSchema newUnionDataSchema = new UnionDataSchema();
+    newUnionDataSchema.setMembers(newUnionMembers, errorMessageBuilder);
+    if (unionDataSchema.getProperties() != null)
+    {
+      newUnionDataSchema.setProperties(unionDataSchema.getProperties());
     }
-    return newSchema;
+    return newUnionDataSchema;
   }
 
   /**

@@ -497,7 +497,7 @@ public final class RecordDataSchema extends NamedDataSchema
           field.getType().getDereferencedType() == DataSchema.Type.UNION)
       {
         UnionDataSchema unionDataSchema = (UnionDataSchema) field.getType().getDereferencedDataSchema();
-        if (field.getOptional() == true && unionDataSchema.getType(DataSchemaConstants.NULL_TYPE) != null)
+        if (field.getOptional() == true && unionDataSchema.getTypeByMemberKey(DataSchemaConstants.NULL_TYPE) != null)
         {
           errorMessageBuilder.append("Field \"").append(field.getName());
           errorMessageBuilder.append("\" is optional and its type is a union with null.\n");

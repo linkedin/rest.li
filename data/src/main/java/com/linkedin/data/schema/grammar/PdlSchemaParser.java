@@ -597,23 +597,19 @@ public class PdlSchemaParser extends AbstractSchemaParser
   {
     UnionDataSchema schema = new UnionDataSchema();
     List<UnionMemberDeclarationContext> members = union.typeParams.members;
-    List<DataSchema> types = new ArrayList<>(members.size());
-    Set<DataSchema> typesDeclaredInline = new HashSet<>();
+    List<UnionDataSchema.Member> unionMembers = new ArrayList<>(members.size());
     for (UnionMemberDeclarationContext memberDecl: members)
     {
       TypeAssignmentContext memberType = memberDecl.member;
       DataSchema dataSchema = toDataSchema(memberType);
       if (dataSchema != null)
       {
-        types.add(dataSchema);
-        if (isDeclaredInline(memberDecl.member))
-        {
-          typesDeclaredInline.add(dataSchema);
-        }
+        UnionDataSchema.Member unionMember = new UnionDataSchema.Member(dataSchema);
+        unionMember.setDeclaredInline(isDeclaredInline(memberDecl.member));
+        unionMembers.add(unionMember);
       }
     }
-    schema.setTypes(types, errorMessageBuilder());
-    schema.setTypesDeclaredInline(typesDeclaredInline);
+    schema.setMembers(unionMembers, errorMessageBuilder());
     return schema;
   }
 

@@ -262,7 +262,7 @@ public class ObjectIterator implements DataIterator
             schema = (field == null ? null : field.getType());
             break;
           case UNION:
-            schema = ((UnionDataSchema) dereferencedSchema).getType(_currentEntry.getKey());
+            schema = ((UnionDataSchema) dereferencedSchema).getTypeByMemberKey(_currentEntry.getKey());
             break;
           case MAP:
             schema = ((MapDataSchema) dereferencedSchema).getValues();

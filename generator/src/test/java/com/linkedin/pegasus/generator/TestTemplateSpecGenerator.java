@@ -14,6 +14,7 @@ import com.linkedin.pegasus.generator.spec.RecordTemplateSpec;
 import com.linkedin.pegasus.generator.spec.UnionTemplateSpec;
 import com.linkedin.util.CustomTypeUtil;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -91,7 +92,10 @@ public class TestTemplateSpecGenerator
   public void testCustomInfoForUnionMembers(final List<DataSchema> customTypedSchemas)
   {
     final UnionDataSchema union = new UnionDataSchema();
-    union.setTypes(customTypedSchemas, null);
+    List<UnionDataSchema.Member> members = customTypedSchemas.stream()
+        .map(UnionDataSchema.Member::new)
+        .collect(Collectors.toCollection(ArrayList::new));
+    union.setMembers(members, null);
     final TyperefDataSchema typeref = new TyperefDataSchema(new Name(INPUT_SCHEMA_NAME));
     typeref.setReferencedType(union);
 

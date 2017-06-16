@@ -469,7 +469,7 @@ public class JacksonDataTemplateCodec extends JacksonDataCodec
             break;
           case UNION:
             UnionDataSchema unionSchema = (UnionDataSchema) _currentSchema;
-            newSchema = unionSchema.getType(key);
+            newSchema = unionSchema.getTypeByMemberKey(key);
             break;
           case MAP:
             MapDataSchema mapSchema = (MapDataSchema) _currentSchema;
