@@ -17,17 +17,18 @@
 package com.linkedin.d2.balancer.config;
 
 import com.linkedin.d2.D2TransportClientProperties;
-import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.HttpProtocolVersionType;
+import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.poolStrategyType;
 import com.linkedin.data.template.StringArray;
+import org.testng.Assert;
+import org.testng.annotations.Test;
+
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import org.testng.Assert;
-import org.testng.annotations.Test;
 
 
 /**
@@ -44,6 +45,7 @@ public class TransportClientPropertiesConverterTest
     final Integer poolSize = 200;
     final Integer poolWaiterSize = 32768;
     final Long idleTimeout = 600000l;
+    final Long sslIdleTimeout = 900000l;
     final Long shutdownTimeout = 50000l;
     final List<String> responseCompressionRaw = Arrays.asList("finder:*");
     final List<String> responseContentEncoding = Arrays.asList("gzip", "snappy");
@@ -65,6 +67,7 @@ public class TransportClientPropertiesConverterTest
     transportClientProperties.put(PropertyKeys.HTTP_POOL_SIZE, poolSize.toString());
     transportClientProperties.put(PropertyKeys.HTTP_POOL_WAITER_SIZE, poolWaiterSize.toString());
     transportClientProperties.put(PropertyKeys.HTTP_IDLE_TIMEOUT, idleTimeout.toString());
+    transportClientProperties.put(PropertyKeys.HTTP_SSL_IDLE_TIMEOUT, sslIdleTimeout.toString());
     transportClientProperties.put(PropertyKeys.HTTP_SHUTDOWN_TIMEOUT, shutdownTimeout.toString());
     transportClientProperties.put(PropertyKeys.HTTP_RESPONSE_COMPRESSION_OPERATIONS, responseCompressionRaw.stream().collect(
         Collectors.joining(",")));
@@ -87,6 +90,7 @@ public class TransportClientPropertiesConverterTest
             .setPoolSize(poolSize)
             .setPoolWaiterSize(poolWaiterSize)
             .setIdleTimeout(idleTimeout)
+            .setSslIdleTimeout(sslIdleTimeout)
             .setShutdownTimeout(shutdownTimeout)
             .setResponseCompressionOperations(new StringArray(responseCompressionRaw))
             .setResponseContentEncodings(new StringArray(responseContentEncoding))

@@ -1,5 +1,11 @@
+11.0.19
+-------
+
 11.0.18
 -------
+(RB=1024125)
+Added sslIdleTimeout to PropertyKeys and TransportClientPropertiesConverter
+
 Update pegasus version to newly released 11.0.17 for opensource quickstart project.
 
 11.0.17

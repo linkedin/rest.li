@@ -102,6 +102,7 @@ public class HttpClientFactory implements TransportClientFactory
   public static final String HTTP_POOL_SIZE = "http.poolSize";
   public static final String HTTP_POOL_WAITER_SIZE = "http.poolWaiterSize";
   public static final String HTTP_IDLE_TIMEOUT = "http.idleTimeout";
+  public static final String HTTP_SSL_IDLE_TIMEOUT = "http.sslIdleTimeout";
   public static final String HTTP_SHUTDOWN_TIMEOUT = "http.shutdownTimeout";
   public static final String HTTP_SSL_CONTEXT = "http.sslContext";
   public static final String HTTP_SSL_PARAMS = "http.sslParams";

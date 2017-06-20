@@ -118,6 +118,7 @@ public class PropertyKeys
   public static final String HTTP_MAX_RESPONSE_SIZE = HttpClientFactory.HTTP_MAX_RESPONSE_SIZE;
   public static final String HTTP_POOL_SIZE = HttpClientFactory.HTTP_POOL_SIZE;
   public static final String HTTP_IDLE_TIMEOUT = HttpClientFactory.HTTP_IDLE_TIMEOUT;
+  public static final String HTTP_SSL_IDLE_TIMEOUT = HttpClientFactory.HTTP_SSL_IDLE_TIMEOUT;
   public static final String HTTP_SHUTDOWN_TIMEOUT = HttpClientFactory.HTTP_SHUTDOWN_TIMEOUT;
   public static final String HTTP_SSL_CONTEXT = HttpClientFactory.HTTP_SSL_CONTEXT;
   public static final String HTTP_SSL_PARAMS = HttpClientFactory.HTTP_SSL_PARAMS;

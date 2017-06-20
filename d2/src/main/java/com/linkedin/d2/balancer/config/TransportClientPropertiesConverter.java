@@ -70,6 +70,10 @@ public class TransportClientPropertiesConverter
     {
       prop.put(PropertyKeys.HTTP_IDLE_TIMEOUT, config.getIdleTimeout().toString());
     }
+    if (config.hasSslIdleTimeout())
+    {
+      prop.put(PropertyKeys.HTTP_SSL_IDLE_TIMEOUT, config.getSslIdleTimeout().toString());
+    }
     if (config.hasShutdownTimeout())
     {
       prop.put(PropertyKeys.HTTP_SHUTDOWN_TIMEOUT, config.getShutdownTimeout().toString());
@@ -153,7 +157,12 @@ public class TransportClientPropertiesConverter
     if (properties.containsKey(PropertyKeys.HTTP_IDLE_TIMEOUT))
     {
       config.setIdleTimeout(coerce(properties.get(PropertyKeys.HTTP_IDLE_TIMEOUT),
-          Long.class));
+        Long.class));
+    }
+    if (properties.containsKey(PropertyKeys.HTTP_SSL_IDLE_TIMEOUT))
+    {
+      config.setSslIdleTimeout(coerce(properties.get(PropertyKeys.HTTP_SSL_IDLE_TIMEOUT),
+        Long.class));
     }
     if (properties.containsKey(PropertyKeys.HTTP_SHUTDOWN_TIMEOUT))
     {
