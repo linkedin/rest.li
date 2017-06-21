@@ -20,7 +20,6 @@
 
 package com.linkedin.r2.transport.http.client;
 
-import com.linkedin.common.callback.Callbacks;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
 import com.linkedin.r2.filter.CompressionConfig;
@@ -167,7 +166,7 @@ public class TestHttpClientFactory
     }
   }
 
-  private void getRawClientHelper(String protocolVersion)
+  private void createRawClientHelper(String protocolVersion)
   {
     NioEventLoopGroup eventLoop = new NioEventLoopGroup();
     ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
@@ -188,9 +187,7 @@ public class TestHttpClientFactory
     HttpClientFactory.MixedClient client;
 
     //test creation using default values
-    client = (HttpClientFactory.MixedClient) factory.getRawClient(properties);
-    Assert.assertEquals(client.getRequestTimeout(), HttpClientFactory.DEFAULT_REQUEST_TIMEOUT);
-    Assert.assertEquals(client.getShutdownTimeout(), HttpClientFactory.DEFAULT_SHUTDOWN_TIMEOUT);
+    factory.getRawClient(properties);
 
     //test using only new config keys
     properties.put(HttpClientFactory.HTTP_REQUEST_TIMEOUT, requestTimeout);
@@ -199,21 +196,19 @@ public class TestHttpClientFactory
     properties.put(HttpClientFactory.HTTP_MAX_RESPONSE_SIZE, maxResponse);
     properties.put(HttpClientFactory.HTTP_SHUTDOWN_TIMEOUT, shutdownTimeout);
     properties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, protocolVersion);
-    client = (HttpClientFactory.MixedClient)factory.getRawClient(properties);
-    Assert.assertEquals(client.getRequestTimeout(), Integer.parseInt(requestTimeout));
-    Assert.assertEquals(client.getShutdownTimeout(), Integer.parseInt(shutdownTimeout));
+    factory.getRawClient(properties);
   }
 
   @Test
   public void testGetHttpRawClient()
   {
-    getRawClientHelper(HTTP_1_1);
+    createRawClientHelper(HTTP_1_1);
   }
 
   @Test
   public void testGetHttp2RawClient()
   {
-    getRawClientHelper(HTTP_2);
+    createRawClientHelper(HTTP_2);
   }
 
   @Test
@@ -409,32 +404,6 @@ public class TestHttpClientFactory
     eventLoop.shutdownGracefully();
     Assert.assertTrue(scheduler.awaitTermination(60, TimeUnit.SECONDS));
     Assert.assertTrue(eventLoop.awaitTermination(60, TimeUnit.SECONDS));
-  }
-
-  @Test
-  public void testRequestTimeoutConfig()
-  {
-    HttpClientFactory factory = new HttpClientFactory.Builder().build();
-
-    try
-    {
-      Map<String,String> config = new HashMap<String, String>();
-
-      config.put(HttpClientFactory.HTTP_REQUEST_TIMEOUT, "999");
-      HttpClientFactory.MixedClient client = (HttpClientFactory.MixedClient)factory.getRawClient(config);
-      Assert.assertEquals(client.getRequestTimeout(), 999);
-
-
-      config.put(HttpClientFactory.HTTP_REQUEST_TIMEOUT, "888");
-      client = (HttpClientFactory.MixedClient)factory.getRawClient(config);
-      Assert.assertEquals(client.getRequestTimeout(), 888);
-
-    }
-    finally
-    {
-      factory.shutdown(Callbacks.<None>empty());
-    }
-
   }
 
   @Test

@@ -14,15 +14,9 @@
    limitations under the License.
 */
 
-/**
- * $Id: $
- */
-
-
 package com.linkedin.r2.transport.http.client.stream;
 
 import com.linkedin.common.callback.Callback;
-import com.linkedin.common.util.None;
 import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.Messages;
 import com.linkedin.r2.message.Request;
@@ -31,33 +25,21 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamResponse;
-import com.linkedin.r2.transport.common.MessageType;
 import com.linkedin.r2.transport.common.WireAttributeHelper;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
-import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
 import com.linkedin.r2.transport.http.client.AbstractJmxManager;
-import com.linkedin.r2.transport.http.client.AsyncPoolStats;
-import com.linkedin.r2.transport.http.client.common.ChannelPoolManager;
-import com.linkedin.r2.transport.http.client.PoolStats;
 import com.linkedin.r2.transport.http.client.TimeoutTransportCallback;
+import com.linkedin.r2.transport.http.client.common.AbstractNettyClient;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolFactory;
-import com.linkedin.r2.transport.http.common.HttpBridge;
+import com.linkedin.r2.transport.http.client.common.ChannelPoolManager;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.util.concurrent.DefaultEventExecutorGroup;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.SocketAddress;
-import java.net.URI;
-import java.net.UnknownHostException;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Abstract stream based abstract class implementation of {@link TransportClient} on top of Netty
@@ -67,28 +49,11 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author Steven Ihde
  * @author Ang Xu
  * @author Zhenkai Zhu
- * @version $Revision: $
  */
 
-public abstract class AbstractNettyStreamClient implements TransportClient
+public abstract class AbstractNettyStreamClient extends AbstractNettyClient<StreamRequest, StreamResponse>
 {
-  static final Logger LOG = LoggerFactory.getLogger(AbstractNettyStreamClient.class);
-
-  public enum State { RUNNING, SHUTTING_DOWN, REQUESTS_STOPPING, SHUTDOWN }
-
-  private static final int HTTP_DEFAULT_PORT = 80;
-  private static final int HTTPS_DEFAULT_PORT = 443;
-
-  protected final AtomicReference<State> _state = new AtomicReference<State>(State.RUNNING);
-
-  protected final ScheduledExecutorService _scheduler;
-  protected final ExecutorService _callbackExecutors;
-
-  protected final long _requestTimeout;
-  protected final long _shutdownTimeout;
-
-  protected final String _requestTimeoutMessage;
-  protected final AbstractJmxManager _jmxManager;
+  private final ExecutorService _callbackExecutors;
 
   /**
    * Creates a new HttpNettyClient
@@ -103,19 +68,12 @@ public abstract class AbstractNettyStreamClient implements TransportClient
    * @param jmxManager                A management class that is aware of the creation/shutdown event
    *                                  of the underlying {@link ChannelPoolManager}
    */
-  public AbstractNettyStreamClient(NioEventLoopGroup eventLoopGroup,
-                                   ScheduledExecutorService executor,
-                                   long requestTimeout,
-                                   long shutdownTimeout,
-                                   ExecutorService callbackExecutors,
-                                   AbstractJmxManager jmxManager)
+  public AbstractNettyStreamClient(NioEventLoopGroup eventLoopGroup, ScheduledExecutorService executor, long requestTimeout,
+                                   long shutdownTimeout, ExecutorService callbackExecutors, AbstractJmxManager jmxManager,
+                                   ChannelPoolManager channelPoolManager)
   {
-    _scheduler = executor;
+    super(executor, requestTimeout, shutdownTimeout, jmxManager, channelPoolManager);
     _callbackExecutors = callbackExecutors == null ? eventLoopGroup : callbackExecutors;
-    _requestTimeout = requestTimeout;
-    _shutdownTimeout = shutdownTimeout;
-    _requestTimeoutMessage = "Exceeded request timeout of " + _requestTimeout + "ms";
-    _jmxManager = jmxManager;
   }
 
   /* Constructor for test purpose ONLY. */
@@ -124,90 +82,30 @@ public abstract class AbstractNettyStreamClient implements TransportClient
                             int requestTimeout,
                             int shutdownTimeout)
   {
-    _scheduler = executor;
+    super(factory, executor, requestTimeout, shutdownTimeout);
     _callbackExecutors = new DefaultEventExecutorGroup(1);
-    _requestTimeout = requestTimeout;
-    _shutdownTimeout = shutdownTimeout;
-    _requestTimeoutMessage = "Exceeded request timeout of " + _requestTimeout + "ms";
-    _jmxManager = AbstractJmxManager.NULL_JMX_MANAGER;
-  }
-
-  /**
-   * Gets statistics from each channel pool. The map keys represent pool names.
-   * The values are the corresponding {@link AsyncPoolStats} objects.
-   *
-   * @return A map of pool names and statistics.
-   */
-  public abstract Map<String, PoolStats> getPoolStats();
-
-  /**
-   * Signals that the client has entered shutdown phase. Performs tasks necessary to shutdown the client and
-   * invokes the callback after shutdown tasks are complete.
-   *
-   * @param callback callback invoked after shutdown is complete
-   */
-  protected abstract void doShutdown(final Callback<None> callback);
-
-  /**
-   * Writes the given request to the given socket address and invokes the callback after request is sent.
-   *
-   * @param request Request to send
-   * @param context Request context
-   * @param callback Callback invoked after request is sent
-   * @param address Socket address to send the request to
-   */
-  protected abstract void doWriteRequest(final Request request, final RequestContext context,
-      final SocketAddress address, final TimeoutTransportCallback<StreamResponse> callback);
-
-  @Override
-  public void restRequest(RestRequest request,
-      RequestContext requestContext,
-      Map<String, String> wireAttrs,
-      final TransportCallback<RestResponse> callback)
-  {
-    throw new UnsupportedOperationException("This client only handles streaming.");
   }
 
   @Override
-  public void streamRequest(StreamRequest request,
-      RequestContext requestContext,
-      Map<String, String> wireAttrs,
-      TransportCallback<StreamResponse> callback)
+  public void restRequest(RestRequest request, RequestContext requestContext, Map<String, String> wireAttrs,
+                          final TransportCallback<RestResponse> callback)
   {
-    MessageType.setMessageType(MessageType.Type.REST, wireAttrs);
-    writeRequestWithTimeout(request, requestContext, wireAttrs, HttpBridge.streamToHttpCallback(callback, request));
+    throw new UnsupportedOperationException("Rest is not supported.");
   }
 
   @Override
-  public void shutdown(final Callback<None> callback)
+  protected TransportCallback<StreamResponse> getExecutionCallback(TransportCallback<StreamResponse> callback)
   {
-    LOG.info("Shutdown requested");
-    if (_state.compareAndSet(State.RUNNING, State.SHUTTING_DOWN))
-    {
-      LOG.info("Shutting down");
-      doShutdown(callback);
-    }
-    else
-    {
-      callback.onError(new IllegalStateException("Shutdown has already been requested."));
-    }
+    return new StreamExecutionCallback(_callbackExecutors, callback);
   }
 
-  private void writeRequestWithTimeout(final StreamRequest request, RequestContext requestContext, Map<String, String> wireAttrs,
-      TransportCallback<StreamResponse> callback)
-  {
-    StreamExecutionCallback executionCallback = new StreamExecutionCallback(_callbackExecutors, callback);
-    // By wrapping the callback in a Timeout callback before passing it along, we deny the rest
-    // of the code access to the unwrapped callback.  This ensures two things:
-    // 1. The user callback will always be invoked, since the Timeout will eventually expire
-    // 2. The user callback is never invoked more than once
-    final TimeoutTransportCallback<StreamResponse> timeoutCallback =
-        new TimeoutTransportCallback<StreamResponse>(_scheduler,
-            _requestTimeout,
-            TimeUnit.MILLISECONDS,
-            executionCallback,
-            _requestTimeoutMessage);
+  protected abstract void doWriteRequestWithWireAttrHeaders(Request request, final RequestContext requestContext, SocketAddress address,
+                                                            Map<String, String> wireAttrs, TimeoutTransportCallback<StreamResponse> callback);
 
+  @Override
+  protected void doWriteRequest(StreamRequest request, final RequestContext requestContext, SocketAddress address,
+                                Map<String, String> wireAttrs, TimeoutTransportCallback<StreamResponse> callback)
+  {
     final StreamRequest requestWithWireAttrHeaders = request.builder()
         .overwriteHeaders(WireAttributeHelper.toWireAttributes(wireAttrs))
         .build(request.getEntityStream());
@@ -224,92 +122,25 @@ public abstract class AbstractNettyStreamClient implements TransportClient
         @Override
         public void onError(Throwable e)
         {
-          errorResponse(timeoutCallback, e);
+          errorResponse(callback, e);
         }
 
         @Override
         public void onSuccess(RestRequest restRequest)
         {
-          writeRequest(restRequest, requestContext, timeoutCallback);
+          doWriteRequestWithWireAttrHeaders(restRequest, requestContext, address, wireAttrs, callback);
         }
       });
     }
     else
     {
-      writeRequest(requestWithWireAttrHeaders, requestContext, timeoutCallback);
+      doWriteRequestWithWireAttrHeaders(requestWithWireAttrHeaders, requestContext, address, wireAttrs, callback);
     }
   }
 
-  private void writeRequest(final Request request, final RequestContext requestContext, final TimeoutTransportCallback<StreamResponse> callback)
-  {
-    State state = _state.get();
-    if (state != State.RUNNING)
-    {
-      errorResponse(callback, new IllegalStateException("Client is " + state));
-      return;
-    }
-    URI uri = request.getURI();
-    String scheme = uri.getScheme();
-    if (!"http".equalsIgnoreCase(scheme) && !"https".equalsIgnoreCase(scheme))
-    {
-      errorResponse(callback, new IllegalArgumentException("Unknown scheme: " + scheme
-          + " (only http/https is supported)"));
-      return;
-    }
-    String host = uri.getHost();
-    int port = uri.getPort();
-    if (port == -1) {
-      port = "http".equalsIgnoreCase(scheme) ? HTTP_DEFAULT_PORT : HTTPS_DEFAULT_PORT;
-    }
-
-    final SocketAddress address;
-    try
-    {
-      // TODO investigate DNS resolution and timing
-      InetAddress inetAddress = InetAddress.getByName(host);
-      address = new InetSocketAddress(inetAddress, port);
-      requestContext.putLocalAttr(R2Constants.REMOTE_SERVER_ADDR, inetAddress.getHostAddress());
-    }
-    catch (UnknownHostException e)
-    {
-      errorResponse(callback, e);
-      return;
-    }
-
-    doWriteRequest(request, requestContext, address, callback);
-  }
-
-  public static <T> void errorResponse(TransportCallback<T> callback, Throwable e)
-  {
-    callback.onResponse(TransportResponseImpl.<T>error(e));
-  }
-
-  static boolean isFullRequest(RequestContext requestContext)
+  private static boolean isFullRequest(RequestContext requestContext)
   {
     Object isFull = requestContext.getLocalAttr(R2Constants.IS_FULL_REQUEST);
     return isFull != null && (Boolean)isFull;
   }
-
-  public static Exception toException(Throwable t)
-  {
-    if (t instanceof Exception)
-    {
-      return (Exception)t;
-    }
-    // This could probably be improved...
-    return new Exception("Wrapped Throwable", t);
-  }
-
-  // Test support
-
-  public long getRequestTimeout()
-  {
-    return _requestTimeout;
-  }
-
-  public long getShutdownTimeout()
-  {
-    return _shutdownTimeout;
-  }
-
 }

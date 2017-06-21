@@ -30,20 +30,18 @@ import com.linkedin.r2.transport.common.bridge.common.RequestWithCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
 import com.linkedin.r2.transport.http.client.AbstractJmxManager;
-import com.linkedin.r2.transport.http.client.stream.AbstractNettyStreamClient;
 import com.linkedin.r2.transport.http.client.AsyncPool;
 import com.linkedin.r2.transport.http.client.AsyncPoolHandle;
-import com.linkedin.r2.transport.http.client.common.ChannelPoolManager;
-import com.linkedin.r2.transport.http.client.PoolStats;
 import com.linkedin.r2.transport.http.client.TimeoutAsyncPoolHandle;
 import com.linkedin.r2.transport.http.client.TimeoutCallback;
 import com.linkedin.r2.transport.http.client.TimeoutTransportCallback;
+import com.linkedin.r2.transport.http.client.common.ChannelPoolManager;
+import com.linkedin.r2.transport.http.client.stream.AbstractNettyStreamClient;
 import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
 import com.linkedin.r2.util.Cancellable;
 import com.linkedin.r2.util.TimeoutRunnable;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.ChannelGroupFutureListener;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.handler.codec.http2.Http2Connection;
@@ -63,17 +61,11 @@ import java.util.concurrent.TimeoutException;
  * @author Ang Xu
  * @author Zhenkai Zhu
  * @author Sean Sheng
- * @version $Revision: $
  */
 
 public class Http2NettyStreamClient extends AbstractNettyStreamClient
 {
   static final Logger LOG = LoggerFactory.getLogger(Http2NettyStreamClient.class);
-
-  private final ChannelPoolManager _channelPoolManager;
-  private final ScheduledExecutorService _scheduler;
-  private final long _requestTimeout;
-  private final ChannelGroup _allChannels;
 
   /**
    * Creates a new Http2NettyStreamClient
@@ -96,20 +88,7 @@ public class Http2NettyStreamClient extends AbstractNettyStreamClient
                                 ChannelPoolManager channelPoolManager)
   {
     super(eventLoopGroup, scheduler, requestTimeout, shutdownTimeout, callbackExecutors,
-      jmxManager);
-    _channelPoolManager = channelPoolManager;
-    _scheduler = scheduler;
-    _requestTimeout = requestTimeout;
-
-    _jmxManager.onProviderCreate(_channelPoolManager);
-    _allChannels = channelPoolManager.getAllChannels();
-  }
-
-
-  @Override
-  public Map<String, PoolStats> getPoolStats()
-  {
-    return _channelPoolManager.getPoolStats();
+      jmxManager, channelPoolManager);
   }
 
   @Override
@@ -119,12 +98,11 @@ public class Http2NettyStreamClient extends AbstractNettyStreamClient
     TimeoutCallback<None> closeChannelsCallback = new ChannelPoolShutdownCallback(
       _scheduler, _shutdownTimeout, TimeUnit.MILLISECONDS, deadline, callback);
     _channelPoolManager.shutdown(closeChannelsCallback);
-    _jmxManager.onProviderShutdown(_channelPoolManager);
   }
 
   @Override
-  protected void doWriteRequest(Request request, final RequestContext context, SocketAddress address,
-      TimeoutTransportCallback<StreamResponse> callback)
+  protected void doWriteRequestWithWireAttrHeaders(Request request, final RequestContext context, SocketAddress address,
+                                                   Map<String, String> wireAttrs, TimeoutTransportCallback<StreamResponse> callback)
   {
     final AsyncPool<Channel> pool;
     try
@@ -143,7 +121,7 @@ public class Http2NettyStreamClient extends AbstractNettyStreamClient
     final Cancellable pendingGet = pool.get(getCallback);
     if (pendingGet != null)
     {
-      callback.addTimeoutTask(() -> pendingGet.cancel());
+      callback.addTimeoutTask(pendingGet::cancel);
     }
   }
 
@@ -171,8 +149,7 @@ public class Http2NettyStreamClient extends AbstractNettyStreamClient
         // all the channels for pending requests before we set the callback as the channel
         // attachment.  The TimeoutTransportCallback ensures the user callback in never
         // invoked more than once, so it is safe to invoke it unconditionally.
-        _callback.onResponse(TransportResponseImpl
-            .<StreamResponse>error(new TimeoutException("Operation did not complete before shutdown")));
+        _callback.onResponse(TransportResponseImpl          .error(new TimeoutException("Operation did not complete before shutdown")));
         return;
       }
 

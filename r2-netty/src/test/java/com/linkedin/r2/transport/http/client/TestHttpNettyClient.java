@@ -291,6 +291,16 @@ public class TestHttpNettyClient
     testServer.shutdown();
   }
 
+  @Test(expectedExceptions = UnsupportedOperationException.class)
+  public void testUnsupportedStreamRequest() throws UnsupportedOperationException
+  {
+    HttpNettyClient client =
+      new HttpClientBuilder(_eventLoop, _scheduler).buildRestClient();
+
+    client.streamRequest(null, new RequestContext(), new HashMap<>(), null);
+    Assert.fail("The Http Rest client should throw UnsupportedOperationException when streamRequest is called");
+  }
+
   @Test
   public void testReceiveBadHeader() throws InterruptedException, IOException
   {

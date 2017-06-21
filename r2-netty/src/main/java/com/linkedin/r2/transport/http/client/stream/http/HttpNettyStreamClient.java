@@ -30,25 +30,21 @@ import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
 import com.linkedin.r2.transport.http.client.AbstractJmxManager;
-import com.linkedin.r2.transport.http.client.stream.AbstractNettyStreamClient;
 import com.linkedin.r2.transport.http.client.AsyncPool;
-import com.linkedin.r2.transport.http.client.common.ChannelPoolFactory;
-import com.linkedin.r2.transport.http.client.common.ChannelPoolManager;
-import com.linkedin.r2.transport.http.client.PoolStats;
 import com.linkedin.r2.transport.http.client.TimeoutCallback;
 import com.linkedin.r2.transport.http.client.TimeoutTransportCallback;
+import com.linkedin.r2.transport.http.client.common.ChannelPoolFactory;
+import com.linkedin.r2.transport.http.client.common.ChannelPoolManager;
+import com.linkedin.r2.transport.http.client.stream.AbstractNettyStreamClient;
 import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
 import com.linkedin.r2.util.Cancellable;
 import com.linkedin.r2.util.Timeout;
 import com.linkedin.r2.util.TimeoutRunnable;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.ChannelGroupFuture;
 import io.netty.channel.group.ChannelGroupFutureListener;
-import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.util.concurrent.GlobalEventExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,15 +59,11 @@ import java.util.concurrent.TimeoutException;
  * @author Steven Ihde
  * @author Ang Xu
  * @author Zhenkai Zhu
- * @version $Revision: $
  */
 
 /* package private */public class HttpNettyStreamClient extends AbstractNettyStreamClient
 {
   static final Logger LOG = LoggerFactory.getLogger(HttpNettyStreamClient.class);
-
-  private final ChannelPoolManager _channelPoolManager;
-  private final ChannelGroup _allChannels;
 
   /**
    * Creates a new HttpNettyStreamClient
@@ -96,10 +88,7 @@ import java.util.concurrent.TimeoutException;
                                ChannelPoolManager channelPoolManager)
   {
     super(eventLoopGroup, executor, requestTimeout, shutdownTimeout, callbackExecutors,
-      jmxManager);
-    _channelPoolManager = channelPoolManager;
-    _jmxManager.onProviderCreate(_channelPoolManager);
-    _allChannels = channelPoolManager.getAllChannels();
+      jmxManager, channelPoolManager);
   }
 
   /* Constructor for test purpose ONLY. */
@@ -109,18 +98,6 @@ import java.util.concurrent.TimeoutException;
                         int shutdownTimeout)
   {
     super(factory, executor, requestTimeout, shutdownTimeout);
-    DefaultChannelGroup allChannels = new DefaultChannelGroup("R2 client channels", GlobalEventExecutor.INSTANCE);
-
-    _channelPoolManager = new ChannelPoolManager(factory, allChannels);
-    _allChannels = allChannels;
-
-    _jmxManager.onProviderCreate(_channelPoolManager);
-  }
-
-  @Override
-  public Map<String, PoolStats> getPoolStats()
-  {
-    return _channelPoolManager.getPoolStats();
   }
 
   @Override
@@ -130,12 +107,11 @@ import java.util.concurrent.TimeoutException;
     TimeoutCallback<None> closeChannelsCallback = new ChannelPoolShutdownCallback(
         _scheduler, _shutdownTimeout, TimeUnit.MILLISECONDS, deadline, callback);
     _channelPoolManager.shutdown(closeChannelsCallback);
-    _jmxManager.onProviderShutdown(_channelPoolManager);
   }
 
   @Override
-  protected void doWriteRequest(Request request, RequestContext context, SocketAddress address,
-      TimeoutTransportCallback<StreamResponse> callback)
+  protected void doWriteRequestWithWireAttrHeaders(Request request, RequestContext context, SocketAddress address,
+                                                   Map<String, String> wireAttrs, TimeoutTransportCallback<StreamResponse> callback)
   {
     final AsyncPool<Channel> pool;
     try
@@ -154,7 +130,7 @@ import java.util.concurrent.TimeoutException;
     final Cancellable pendingGet = pool.get(getCallback);
     if (pendingGet != null)
     {
-      callback.addTimeoutTask(() -> pendingGet.cancel());
+      callback.addTimeoutTask(pendingGet::cancel);
     }
   }
 
@@ -170,7 +146,6 @@ import java.util.concurrent.TimeoutException;
       _request = request;
       _callback = callback;
     }
-
 
     @Override
     public void onSuccess(final Channel channel)

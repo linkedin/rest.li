@@ -40,10 +40,11 @@ import com.linkedin.r2.message.stream.entitystream.EntityStreams;
 import com.linkedin.r2.message.stream.entitystream.ReadHandle;
 import com.linkedin.r2.message.stream.entitystream.Reader;
 import com.linkedin.r2.transport.common.bridge.client.TransportCallbackAdapter;
+import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponse;
-import com.linkedin.r2.transport.http.client.stream.AbstractNettyStreamClient;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolFactory;
+import com.linkedin.r2.transport.http.client.stream.AbstractNettyStreamClient;
 import com.linkedin.r2.transport.http.client.stream.http.HttpNettyStreamClient;
 import com.linkedin.r2.transport.http.client.stream.http2.Http2NettyStreamClient;
 import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
@@ -168,6 +169,24 @@ public class TestHttpNettyStreamClient
         { builder.buildStreamClient() },
         { builder.buildHttp2StreamClient() }
     };
+  }
+
+  @Test(expectedExceptions = UnsupportedOperationException.class)
+  public void testUnsupportedRestRequest() throws UnsupportedOperationException
+  {
+    TransportClient client = new HttpClientBuilder(_eventLoop, _scheduler).buildStreamClient();
+
+    client.restRequest(null, new RequestContext(), new HashMap<>(), null);
+    Assert.fail("The Http Stream clients should throw UnsupportedOperationException when streamRequest is called");
+  }
+
+  @Test(expectedExceptions = UnsupportedOperationException.class)
+  public void testUnsupportedRestRequestHttp2() throws UnsupportedOperationException
+  {
+    TransportClient client = new HttpClientBuilder(_eventLoop, _scheduler).buildHttp2StreamClient();
+
+    client.restRequest(null, new RequestContext(), new HashMap<>(), null);
+    Assert.fail("The Http Stream clients should throw UnsupportedOperationException when streamRequest is called");
   }
 
   /**

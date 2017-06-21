@@ -44,7 +44,6 @@ import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerFactory;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerKey;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerKeyBuilder;
 import com.linkedin.r2.transport.http.client.rest.HttpNettyClient;
-import com.linkedin.r2.transport.http.client.stream.AbstractNettyStreamClient;
 import com.linkedin.r2.transport.http.client.stream.http.HttpNettyStreamClient;
 import com.linkedin.r2.transport.http.client.stream.http2.Http2NettyStreamClient;
 import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
@@ -1310,17 +1309,5 @@ public class HttpClientFactory implements TransportClientFactory
       _legacyClient.shutdown(multiCallback);
       _streamClient.shutdown(multiCallback);
     }
-
-
-    long getRequestTimeout()
-    {
-      return ((AbstractNettyStreamClient)_streamClient).getRequestTimeout();
-    }
-
-    long getShutdownTimeout()
-    {
-      return ((AbstractNettyStreamClient)_streamClient).getShutdownTimeout();
-    }
-
   }
 }

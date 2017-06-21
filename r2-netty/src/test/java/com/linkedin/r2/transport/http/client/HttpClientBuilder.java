@@ -108,7 +108,6 @@ class HttpClientBuilder
       _jmxManager,
       getChannelPoolManagerFactory().buildStream()
     );
-
   }
 
   public HttpNettyClient buildRestClient()
@@ -122,7 +121,6 @@ class HttpClientBuilder
       _jmxManager,
       getChannelPoolManagerFactory().buildRest()
     );
-
   }
 
   public Http2NettyStreamClient buildHttp2StreamClient()
