@@ -23,6 +23,8 @@ package com.linkedin.r2.transport.http.client.common;
  */
 class UnknownSchemeException extends Exception
 {
+  static final long serialVersionUID = 1L;
+
   UnknownSchemeException(String message)
   {
     super(message);

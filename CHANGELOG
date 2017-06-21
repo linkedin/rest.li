@@ -1,5 +1,8 @@
 11.1.1
 -------
+(RB=1026302)
+Refactoring HttpNettyClients to use AbstractNettyClient for the common parts
+
 (RB=1017823)
 Adding idleTimeoutSsl's HttpClientFactory support
 
