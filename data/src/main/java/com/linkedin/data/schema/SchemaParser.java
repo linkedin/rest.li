@@ -449,9 +449,36 @@ public class SchemaParser extends AbstractSchemaParser
         DataSchema referencedTypeSchema = getSchemaData(map, REF_KEY);
         typerefSchema.setReferencedType(referencedTypeSchema);
         typerefSchema.setRefDeclaredInline(isDeclaredInline(map.get(REF_KEY)));
-        // bind name after getSchemaData to prevent circular typeref
-        // circular typeref is not possible because this typeref name cannot be resolved until
-        // after the referenced type has been defined.
+        // Bind the typeref name after constructing and setting the referenced schema. That means this typeref schema
+        // is not available during construction of the referenced schema. We cannot bind the typeref before setting
+        // its referenced schema. In one case, this would allow creating circular reference between typeref schemas.
+        // In another the referenced schema is required to compute included fields if a record schema includes the
+        // typeref. In the following example, TyperefA is included by RecordB. See parseInclude
+        // method.
+        //  {
+        //     "type":"typeref",
+        //     "name":"TyperefA",
+        //     "ref":{
+        //        "type":"record",
+        //        "name":"RecordA",
+        //        "fields":[
+        //           {
+        //              "name":"child",
+        //              "type":{
+        //                 "type":"record",
+        //                 "name":"RecordB",
+        //                 "fields":[
+        //
+        //                 ],
+        //                 "include":[
+        //                    "TyperefA"
+        //                 ]
+        //              },
+        //              "optional":true
+        //           }
+        //        ]
+        //     }
+        //  }
         bindNameToSchema(name, aliasNames, typerefSchema);
         break;
       default:
