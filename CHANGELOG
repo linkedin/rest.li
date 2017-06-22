@@ -1,5 +1,8 @@
 11.1.1
 -------
+(RB=1017823)
+Adding idleTimeoutSsl's HttpClientFactory support
+
 (RB=996078)
 Capture the @Deprecated trait of finder and action parameters in IDL.
 

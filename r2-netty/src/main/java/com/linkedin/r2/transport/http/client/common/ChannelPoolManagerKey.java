@@ -24,7 +24,8 @@ import javax.net.ssl.SSLParameters;
 
 /**
  * Class to store transport properties to create a channel pool manager
- * @author Francesco Capponi
+ *
+ * @author Francesco Capponi (fcapponi@linkedin.com)
  */
 public class ChannelPoolManagerKey
 {
@@ -33,6 +34,7 @@ public class ChannelPoolManagerKey
 
   private final int _gracefulShutdownTimeout;
   private final long _idleTimeout;
+  private final long _sslIdleTimeout;
   private final int _maxHeaderSize;
   private final int _maxChunkSize;
   private final long _maxResponseSize;
@@ -44,12 +46,17 @@ public class ChannelPoolManagerKey
   private final boolean _tcpNoDelay;
   private final String _poolStatsNamePrefix;
 
-  public ChannelPoolManagerKey(SSLContext sslContext, SSLParameters sslParameters, int gracefulShutdownTimeout, long idleTimeout, int maxHeaderSize, int maxChunkSize, long maxResponseSize, int maxPoolSize, int minPoolSize, int maxConcurrentConnectionInitializations, int poolWaiterSize, AsyncPoolImpl.Strategy strategy, boolean tcpNoDelay, String poolStatsNamePrefix)
+  public ChannelPoolManagerKey(SSLContext sslContext, SSLParameters sslParameters, int gracefulShutdownTimeout,
+                               long idleTimeout, long sslIdleTimeout, int maxHeaderSize, int maxChunkSize,
+                               long maxResponseSize, int maxPoolSize, int minPoolSize,
+                               int maxConcurrentConnectionInitializations, int poolWaiterSize, AsyncPoolImpl.Strategy strategy,
+                               boolean tcpNoDelay, String poolStatsNamePrefix)
   {
     _sslContext = sslContext;
     _sslParameters = sslParameters;
     _gracefulShutdownTimeout = gracefulShutdownTimeout;
     _idleTimeout = idleTimeout;
+    _sslIdleTimeout = sslIdleTimeout;
     _maxHeaderSize = maxHeaderSize;
     _maxChunkSize = maxChunkSize;
     _maxResponseSize = maxResponseSize;
@@ -87,6 +94,7 @@ public class ChannelPoolManagerKey
   {
     int result = _gracefulShutdownTimeout;
     result = 31 * result + (int) (_idleTimeout ^ (_idleTimeout >>> 32));
+    result = 31 * result + (int) (_sslIdleTimeout ^ (_sslIdleTimeout >>> 32));
     result = 31 * result + _maxHeaderSize;
     result = 31 * result + _maxChunkSize;
     result = 31 * result + (int) (_maxResponseSize ^ (_maxResponseSize >>> 32));
@@ -116,9 +124,12 @@ public class ChannelPoolManagerKey
     return _gracefulShutdownTimeout;
   }
 
+  /**
+   * @return idleTimeout if the connection is NOT Ssl, otherwise it returns sslIdleTimeout
+   */
   public long getIdleTimeout()
   {
-    return _idleTimeout;
+    return isSsl() ? _sslIdleTimeout : _idleTimeout;
   }
 
   public int getMaxHeaderSize()

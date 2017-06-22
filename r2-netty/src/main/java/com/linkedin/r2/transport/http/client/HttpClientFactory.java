@@ -126,6 +126,7 @@ public class HttpClientFactory implements TransportClientFactory
   public static final int DEFAULT_POOL_SIZE = 200;
   public static final int DEFAULT_REQUEST_TIMEOUT = 10000;
   public static final int DEFAULT_IDLE_TIMEOUT = 25000;
+  public static final int DEFAULT_SSL_IDLE_TIMEOUT = (2 * 3600 + 60 * 55) * 1000; // 2h 55m
   public static final int DEFAULT_SHUTDOWN_TIMEOUT = 5000;
   public static final long DEFAULT_MAX_RESPONSE_SIZE = 1024 * 1024 * 2;
   public static final String DEFAULT_CLIENT_NAME = "noNameSpecifiedClient";
@@ -989,6 +990,7 @@ public class HttpClientFactory implements TransportClientFactory
 
     Integer maxPoolSize = chooseNewOverDefault(getIntValue(properties, HTTP_POOL_SIZE), DEFAULT_POOL_SIZE);
     Integer idleTimeout = chooseNewOverDefault(getIntValue(properties, HTTP_IDLE_TIMEOUT), DEFAULT_IDLE_TIMEOUT);
+    Integer sslIdleTimeout = chooseNewOverDefault(getIntValue(properties, HTTP_SSL_IDLE_TIMEOUT), DEFAULT_SSL_IDLE_TIMEOUT);
     long maxResponseSize = chooseNewOverDefault(getLongValue(properties, HTTP_MAX_RESPONSE_SIZE), DEFAULT_MAX_RESPONSE_SIZE);
     Integer poolWaiterSize = chooseNewOverDefault(getIntValue(properties, HTTP_POOL_WAITER_SIZE), DEFAULT_POOL_WAITER_SIZE);
     Integer poolMinSize = chooseNewOverDefault(getIntValue(properties, HTTP_POOL_MIN_SIZE), DEFAULT_POOL_MIN_SIZE);
@@ -1002,8 +1004,8 @@ public class HttpClientFactory implements TransportClientFactory
 
     return new ChannelPoolManagerKeyBuilder()
       .setMaxPoolSize(maxPoolSize).setGracefulShutdownTimeout(gracefulShutdownTimeout).setIdleTimeout(idleTimeout)
-      .setMaxResponseSize(maxResponseSize).setSSLContext(sslContext).setPoolWaiterSize(poolWaiterSize)
-      .setSSLParameters(sslParameters).setStrategy(strategy).setMinPoolSize(poolMinSize)
+      .setSslIdleTimeout(sslIdleTimeout).setMaxResponseSize(maxResponseSize).setSSLContext(sslContext)
+      .setPoolWaiterSize(poolWaiterSize).setSSLParameters(sslParameters).setStrategy(strategy).setMinPoolSize(poolMinSize)
       .setMaxHeaderSize(maxHeaderSize).setMaxChunkSize(maxChunkSize)
       .setMaxConcurrentConnectionInitializations(maxConcurrentConnectionInitializations)
       .setTcpNoDelay(tcpNoDelay).setPoolStatsNamePrefix(poolStatsNamePrefix).build();

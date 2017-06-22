@@ -27,7 +27,7 @@ import javax.net.ssl.SSLParameters;
 /**
  * Convenient class for building {@link ChannelPoolManagerKey} with reasonable default configs.
  *
- * @author Francesco Capponi
+ * @author Francesco Capponi (fcapponi@linkedin.com)
  */
 public class ChannelPoolManagerKeyBuilder
 {
@@ -35,6 +35,7 @@ public class ChannelPoolManagerKeyBuilder
   private SSLParameters _sslParameters = null;
   private int _gracefulShutdownTimeout = 30000; // default value in netty
   private long _idleTimeout = HttpClientFactory.DEFAULT_IDLE_TIMEOUT;
+  private long _sslIdleTimeout = HttpClientFactory.DEFAULT_SSL_IDLE_TIMEOUT;
   private int _maxHeaderSize = HttpClientFactory.DEFAULT_MAX_HEADER_SIZE;
   private int _maxChunkSize = HttpClientFactory.DEFAULT_MAX_CHUNK_SIZE;
   private long _maxResponseSize = HttpClientFactory.DEFAULT_MAX_RESPONSE_SIZE;
@@ -86,6 +87,16 @@ public class ChannelPoolManagerKeyBuilder
   {
     ObjectUtil.checkPositive(idleTimeout, "idleTimeout");
     _idleTimeout = idleTimeout;
+    return this;
+  }
+
+  /**
+   * @param sslIdleTimeout Interval after which idle connections will be automatically closed
+   */
+  public ChannelPoolManagerKeyBuilder setSslIdleTimeout(long sslIdleTimeout)
+  {
+    ObjectUtil.checkPositive(sslIdleTimeout, "sslIdleTimeout");
+    _sslIdleTimeout = sslIdleTimeout;
     return this;
   }
 
@@ -190,8 +201,8 @@ public class ChannelPoolManagerKeyBuilder
 
   public ChannelPoolManagerKey build()
   {
-    return new ChannelPoolManagerKey(_sslContext, _sslParameters, _gracefulShutdownTimeout, _idleTimeout, _maxHeaderSize,
-      _maxChunkSize, _maxResponseSize, _maxPoolSize, _minPoolSize, _maxConcurrentConnectionInitializations,
+    return new ChannelPoolManagerKey(_sslContext, _sslParameters, _gracefulShutdownTimeout, _idleTimeout, _sslIdleTimeout,
+      _maxHeaderSize, _maxChunkSize, _maxResponseSize, _maxPoolSize, _minPoolSize, _maxConcurrentConnectionInitializations,
       _poolWaiterSize, _strategy, _tcpNoDelay, _poolStatsNamePrefix);
   }
 }
