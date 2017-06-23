@@ -15,36 +15,6 @@
 */
 package com.linkedin.d2.balancer.clients;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertNotSame;
-import static org.testng.Assert.assertSame;
-import static org.testng.Assert.assertTrue;
-
-import java.io.IOException;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Supplier;
-
-import org.HdrHistogram.AbstractHistogram;
-import org.HdrHistogram.Histogram;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
-
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.linkedin.common.callback.Callback;
@@ -77,6 +47,35 @@ import com.linkedin.r2.message.rest.RestResponseBuilder;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
+import org.HdrHistogram.AbstractHistogram;
+import org.HdrHistogram.Histogram;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Test;
+
+import java.io.IOException;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
+
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNotSame;
+import static org.testng.Assert.assertSame;
+import static org.testng.Assert.assertTrue;
 
 
 public class TestBackupRequestsClient
@@ -345,8 +344,12 @@ public class TestBackupRequestsClient
 
     assertEquals(statsConsumer.getLatencyWithoutBackup().size(), 1);
     assertEquals(statsConsumer.getLatencyWithBackup().size(), 1);
-    assertEquals(statsConsumer.getLatencyWithBackup().get(0).getTotalCount(),
-        statsConsumer.getLatencyWithoutBackup().get(0).getTotalCount());
+
+    // allowing 1% imprecision
+    long expected = statsConsumer.getLatencyWithoutBackup().get(0).getTotalCount();
+    long actual = statsConsumer.getLatencyWithBackup().get(0).getTotalCount();
+    assertTrue(actual > expected * .99 && actual < expected * 1.01,
+      "Expected: " + expected + "+-" + (expected * .01) + ", but actual: " + actual);
   }
 
   @Test
