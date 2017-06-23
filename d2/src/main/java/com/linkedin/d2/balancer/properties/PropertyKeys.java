@@ -120,6 +120,7 @@ public class PropertyKeys
   public static final String HTTP_IDLE_TIMEOUT = HttpClientFactory.HTTP_IDLE_TIMEOUT;
   public static final String HTTP_SSL_IDLE_TIMEOUT = HttpClientFactory.HTTP_SSL_IDLE_TIMEOUT;
   public static final String HTTP_SHUTDOWN_TIMEOUT = HttpClientFactory.HTTP_SHUTDOWN_TIMEOUT;
+  public static final String HTTP_GRACEFUL_SHUTDOWN_TIMEOUT = HttpClientFactory.HTTP_GRACEFUL_SHUTDOWN_TIMEOUT;
   public static final String HTTP_SSL_CONTEXT = HttpClientFactory.HTTP_SSL_CONTEXT;
   public static final String HTTP_SSL_PARAMS = HttpClientFactory.HTTP_SSL_PARAMS;
   public static final String HTTP_RESPONSE_COMPRESSION_OPERATIONS = HttpClientFactory.HTTP_RESPONSE_COMPRESSION_OPERATIONS;
@@ -132,6 +133,7 @@ public class PropertyKeys
   public static final String HTTP_MAX_HEADER_SIZE = HttpClientFactory.HTTP_MAX_HEADER_SIZE;
   public static final String HTTP_MAX_CHUNK_SIZE = HttpClientFactory.HTTP_MAX_CHUNK_SIZE;
   public static final String HTTP_MAX_CONCURRENT_CONNECTIONS = HttpClientFactory.HTTP_MAX_CONCURRENT_CONNECTIONS;
+  public static final String HTTP_TCP_NO_DELAY = HttpClientFactory.HTTP_TCP_NO_DELAY;
   public static final String HTTP_PROTOCOL_VERSION = HttpClientFactory.HTTP_PROTOCOL_VERSION;
 
   //used for multi colo

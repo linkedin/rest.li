@@ -18,11 +18,12 @@ package com.linkedin.d2.balancer.config;
 
 import com.linkedin.common.util.MapUtil;
 import com.linkedin.d2.D2TransportClientProperties;
-import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.HttpProtocolVersionType;
+import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.poolStrategyType;
 import com.linkedin.data.template.StringArray;
 import com.linkedin.r2.util.ConfigValueExtractor;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -78,6 +79,10 @@ public class TransportClientPropertiesConverter
     {
       prop.put(PropertyKeys.HTTP_SHUTDOWN_TIMEOUT, config.getShutdownTimeout().toString());
     }
+    if (config.hasGracefulShutdownTimeout())
+    {
+      prop.put(PropertyKeys.HTTP_GRACEFUL_SHUTDOWN_TIMEOUT, config.getGracefulShutdownTimeout().toString());
+    }
     if (config.hasResponseCompressionOperations())
     {
       prop.put(PropertyKeys.HTTP_RESPONSE_COMPRESSION_OPERATIONS,
@@ -115,6 +120,10 @@ public class TransportClientPropertiesConverter
     if (config.hasMaxConcurrentConnections())
     {
       prop.put(PropertyKeys.HTTP_MAX_CONCURRENT_CONNECTIONS, config.getMaxConcurrentConnections().toString());
+    }
+    if (config.hasTcpNoDelay())
+    {
+      prop.put(PropertyKeys.HTTP_TCP_NO_DELAY, config.isTcpNoDelay().toString());
     }
     if (config.hasProtocolVersion())
     {
@@ -169,6 +178,11 @@ public class TransportClientPropertiesConverter
       config.setShutdownTimeout(coerce(properties.get(PropertyKeys.HTTP_SHUTDOWN_TIMEOUT),
           Long.class));
     }
+    if (properties.containsKey(PropertyKeys.HTTP_GRACEFUL_SHUTDOWN_TIMEOUT))
+    {
+      config.setGracefulShutdownTimeout(coerce(properties.get(PropertyKeys.HTTP_GRACEFUL_SHUTDOWN_TIMEOUT),
+        Long.class));
+    }
     if (properties.containsKey(PropertyKeys.HTTP_RESPONSE_COMPRESSION_OPERATIONS))
     {
       config.setResponseCompressionOperations(new StringArray(
@@ -211,6 +225,10 @@ public class TransportClientPropertiesConverter
     if (properties.containsKey(PropertyKeys.HTTP_MAX_CONCURRENT_CONNECTIONS))
     {
       config.setMaxConcurrentConnections(coerce(properties.get(PropertyKeys.HTTP_MAX_CONCURRENT_CONNECTIONS), Integer.class));
+    }
+    if (properties.containsKey(PropertyKeys.HTTP_TCP_NO_DELAY))
+    {
+      config.setTcpNoDelay(coerce(properties.get(PropertyKeys.HTTP_TCP_NO_DELAY), Boolean.class));
     }
     if (properties.containsKey(PropertyKeys.HTTP_PROTOCOL_VERSION))
     {

@@ -103,6 +103,7 @@ public class HttpClientFactory implements TransportClientFactory
   public static final String HTTP_IDLE_TIMEOUT = "http.idleTimeout";
   public static final String HTTP_SSL_IDLE_TIMEOUT = "http.sslIdleTimeout";
   public static final String HTTP_SHUTDOWN_TIMEOUT = "http.shutdownTimeout";
+  public static final String HTTP_GRACEFUL_SHUTDOWN_TIMEOUT = "http.gracefulShutdownTimeout";
   public static final String HTTP_SSL_CONTEXT = "http.sslContext";
   public static final String HTTP_SSL_PARAMS = "http.sslParams";
   public static final String HTTP_RESPONSE_COMPRESSION_OPERATIONS = "http.responseCompressionOperations";

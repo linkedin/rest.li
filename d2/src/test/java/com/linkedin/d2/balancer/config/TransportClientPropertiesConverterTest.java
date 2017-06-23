@@ -40,13 +40,14 @@ public class TransportClientPropertiesConverterTest
   public void testTransportClientPropertiesConverter()
   {
     final Integer queryPostThreshold = 8192;
-    final Long requestTimeout = 10000l;
-    final Long maxResponseSize = 1003300l;
+    final Long requestTimeout = 10000L;
+    final Long maxResponseSize = 1003300L;
     final Integer poolSize = 200;
     final Integer poolWaiterSize = 32768;
-    final Long idleTimeout = 600000l;
-    final Long sslIdleTimeout = 900000l;
-    final Long shutdownTimeout = 50000l;
+    final Long idleTimeout = 600000L;
+    final Long sslIdleTimeout = 900000L;
+    final Long shutdownTimeout = 50000L;
+    final Long gracefulShutdownTimeout = 30000L;
     final List<String> responseCompressionRaw = Arrays.asList("finder:*");
     final List<String> responseContentEncoding = Arrays.asList("gzip", "snappy");
     final List<String> requestContentEncoding = Arrays.asList("lz4", "identity");
@@ -56,6 +57,7 @@ public class TransportClientPropertiesConverterTest
     final poolStrategyType poolStrategy = poolStrategyType.LRU;
     final Integer minPoolSize = 5;
     final Integer maxConcurrentConnections = 1000;
+    final Boolean tcpNoDelay = true;
     final HttpProtocolVersionType protocolVersion = HttpProtocolVersionType.HTTP_1_1;
     final List<String> allowedClientOverrideKeys = Arrays.asList(PropertyKeys.HTTP_REQUEST_TIMEOUT,
         PropertyKeys.HTTP_QUERY_POST_THRESHOLD);
@@ -69,6 +71,7 @@ public class TransportClientPropertiesConverterTest
     transportClientProperties.put(PropertyKeys.HTTP_IDLE_TIMEOUT, idleTimeout.toString());
     transportClientProperties.put(PropertyKeys.HTTP_SSL_IDLE_TIMEOUT, sslIdleTimeout.toString());
     transportClientProperties.put(PropertyKeys.HTTP_SHUTDOWN_TIMEOUT, shutdownTimeout.toString());
+    transportClientProperties.put(PropertyKeys.HTTP_GRACEFUL_SHUTDOWN_TIMEOUT, gracefulShutdownTimeout.toString());
     transportClientProperties.put(PropertyKeys.HTTP_RESPONSE_COMPRESSION_OPERATIONS, responseCompressionRaw.stream().collect(
         Collectors.joining(",")));
     transportClientProperties.put(PropertyKeys.HTTP_RESPONSE_CONTENT_ENCODINGS, responseContentEncoding.stream().collect(Collectors.joining(",")));
@@ -79,6 +82,7 @@ public class TransportClientPropertiesConverterTest
     transportClientProperties.put(PropertyKeys.HTTP_POOL_STRATEGY, poolStrategy.name());
     transportClientProperties.put(PropertyKeys.HTTP_POOL_MIN_SIZE, minPoolSize.toString());
     transportClientProperties.put(PropertyKeys.HTTP_MAX_CONCURRENT_CONNECTIONS, maxConcurrentConnections.toString());
+    transportClientProperties.put(PropertyKeys.HTTP_TCP_NO_DELAY, tcpNoDelay.toString());
     transportClientProperties.put(PropertyKeys.HTTP_PROTOCOL_VERSION, protocolVersion.name());
     transportClientProperties.put(PropertyKeys.ALLOWED_CLIENT_OVERRIDE_KEYS, allowedClientOverrideKeys.stream().collect(Collectors.joining(",")));
 
@@ -92,6 +96,7 @@ public class TransportClientPropertiesConverterTest
             .setIdleTimeout(idleTimeout)
             .setSslIdleTimeout(sslIdleTimeout)
             .setShutdownTimeout(shutdownTimeout)
+            .setGracefulShutdownTimeout(gracefulShutdownTimeout)
             .setResponseCompressionOperations(new StringArray(responseCompressionRaw))
             .setResponseContentEncodings(new StringArray(responseContentEncoding))
             .setRequestContentEncodings(new StringArray(requestContentEncoding))
@@ -102,6 +107,7 @@ public class TransportClientPropertiesConverterTest
             .setMinPoolSize(minPoolSize)
             .setMaxConcurrentConnections(maxConcurrentConnections)
             .setProtocolVersion(protocolVersion)
+            .setTcpNoDelay(tcpNoDelay)
             .setAllowedClientOverrideKeys(new StringArray(allowedClientOverrideKeys));
 
     Assert.assertEquals(TransportClientPropertiesConverter.toConfig(transportClientProperties), d2TransportClientProperties);
