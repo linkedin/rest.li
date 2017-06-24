@@ -8,8 +8,8 @@
     "fsBasePath" : "/tmp/backup",
     "clientShutdownTimeout" : 5000,
     "clientStartTimeout" : 5000,
+    "comment" : "this represent the number of request per second for a particular service",
     "trafficProportion" : {
-        "comment" : "this represent the number of request per second for a particular service",
         "newsArticle": 3,
         "jobRecommendation": 2,
         "articleRecommendation" : 1
