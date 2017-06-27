@@ -46,7 +46,7 @@ public class ResourceMethodDescriptor implements RestLiMethodContext
   private final Method                                  _method;
   private final List<Parameter<?>>                      _parameters;
   private final String                                  _finderName;
-  private final Class<? extends RecordTemplate>         _finderMetadataType;
+  private final Class<? extends RecordTemplate>         _collectionCustomMetadataType;
   // only applies to actions
   private final String                                  _actionName;
   private final ResourceLevel                           _actionResourceLevel;
@@ -141,6 +141,7 @@ public class ResourceMethodDescriptor implements RestLiMethodContext
     return createForRestful(type,
                             method,
                             Collections.<Parameter<?>> emptyList(),
+                            null,
                             interfaceType,
                             null);
   }
@@ -153,10 +154,39 @@ public class ResourceMethodDescriptor implements RestLiMethodContext
    * @param parameters list of method {@link Parameter}s
    * @param interfaceType resource {@link InterfaceType}
    * @return CRUD {@link ResourceMethodDescriptor}
+   *
+   * @deprecated Use {@link #createForRestful(ResourceMethod, Method, List, Class, InterfaceType, DataMap)} instead
+   */
+  @Deprecated
+  public static ResourceMethodDescriptor createForRestful(final ResourceMethod type,
+                                                          final Method method,
+                                                          final List<Parameter<?>> parameters,
+                                                          final InterfaceType interfaceType,
+                                                          final DataMap customAnnotations)
+  {
+    return createForRestful(type,
+                            method,
+                            parameters,
+                            null,
+                            interfaceType,
+                            customAnnotations);
+  }
+
+  /**
+   * Create a CRUD (not action or finder) resource method descriptor with parameters, custom annotations and
+   * custom collection metadata.
+   *
+   * @param type rest.li {@link ResourceMethod}
+   * @param method resource {@link Method}
+   * @param parameters list of method {@link Parameter}s
+   * @param collectionCustomMetadataType collection metadata type for GET_ALL method
+   * @param interfaceType resource {@link InterfaceType}
+   * @return CRUD {@link ResourceMethodDescriptor}
    */
   public static ResourceMethodDescriptor createForRestful(final ResourceMethod type,
                                                           final Method method,
                                                           final List<Parameter<?>> parameters,
+                                                          final Class<? extends RecordTemplate> collectionCustomMetadataType,
                                                           final InterfaceType interfaceType,
                                                           final DataMap customAnnotations)
   {
@@ -169,7 +199,7 @@ public class ResourceMethodDescriptor implements RestLiMethodContext
                                         null,
                                         null,
                                         null,
-                                        null,
+                                        collectionCustomMetadataType,
                                         interfaceType,
                                         customAnnotations);
   }
@@ -186,7 +216,7 @@ public class ResourceMethodDescriptor implements RestLiMethodContext
                                    final FieldDef<?> actionReturnType,
                                    final RecordDataSchema actionReturnRecordDataSchema,
                                    final RecordDataSchema requestDataSchema,
-                                   final Class<? extends RecordTemplate> finderMetadataType,
+                                   final Class<? extends RecordTemplate> collectionCustomMetadataType,
                                    final InterfaceType interfaceType,
                                    final DataMap customAnnotations)
   {
@@ -200,7 +230,7 @@ public class ResourceMethodDescriptor implements RestLiMethodContext
     _actionReturnFieldDef = actionReturnType;
     _actionReturnRecordDataSchema = actionReturnRecordDataSchema;
     _requestDataSchema = requestDataSchema;
-    _finderMetadataType = finderMetadataType;
+    _collectionCustomMetadataType = collectionCustomMetadataType;
     _interfaceType = interfaceType;
     _customAnnotations = customAnnotations;
   }
@@ -306,9 +336,18 @@ public class ResourceMethodDescriptor implements RestLiMethodContext
     return _finderName;
   }
 
+  /**
+   * @deprecated Use {@link #getCollectionCustomMetadataType()} instead.
+   */
+  @Deprecated
   public Class<? extends RecordTemplate> getFinderMetadataType()
   {
-    return _finderMetadataType;
+    return _collectionCustomMetadataType;
+  }
+
+  public Class<? extends RecordTemplate> getCollectionCustomMetadataType()
+  {
+    return _collectionCustomMetadataType;
   }
 
   @Override

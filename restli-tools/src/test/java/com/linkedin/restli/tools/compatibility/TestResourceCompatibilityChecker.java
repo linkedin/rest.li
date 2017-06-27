@@ -253,6 +253,8 @@ public class TestResourceCompatibilityChecker
                                          CompatibilityInfo.Type.ARRAY_MISSING_ELEMENT, "batch_get"));
     resourceTestErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "finders", "search", "metadata", "type"),
                                                  CompatibilityInfo.Type.TYPE_ERROR, "schema type changed from array to int"));
+    resourceTestErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "methods", "get_all", "metadata", "type"),
+                                                 CompatibilityInfo.Type.TYPE_ERROR, "schema type changed from array to int"));
     resourceTestErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "finders", "search", "assocKeys"),
                                                  CompatibilityInfo.Type.VALUE_NOT_EQUAL,
                                                  new StringArray(Arrays.asList("q", "s")), new StringArray(Arrays.asList("q", "changed_key"))));

@@ -20,6 +20,9 @@
       "method" : "get"
     }, {
       "method" : "get_all",
+      "metadata" : {
+        "type" : { "type" : "array", "items" : "int" }
+      },
       "pagingSupported" : true
     } ],
     "finders" : [ {

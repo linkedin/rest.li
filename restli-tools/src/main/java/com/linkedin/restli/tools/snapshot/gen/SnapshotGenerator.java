@@ -324,6 +324,12 @@ public class SnapshotGenerator
         findModelsParameter(parameterSchema, foundTypes, typeOrder);
       }
     }
+    MetadataSchema metadata = restMethodSchema.getMetadata();
+    if (metadata != null)
+    {
+      String type = metadata.getType();
+      recordType(type, foundTypes, typeOrder);
+    }
   }
 
   private void findModelsParameter(ParameterSchema parameterSchema, Map<String, NamedDataSchema> foundTypes, List<NamedDataSchema> typeOrder)

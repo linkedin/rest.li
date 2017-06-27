@@ -59,7 +59,7 @@ public class FilterRequestContextInternalImpl implements FilterRequestContextInt
     _resourceMethod = resourceMethod;
     _scratchPad = new HashMap<String, Object>();
     _resourceModel = new FilterResourceModelImpl(resourceMethod.getResourceModel());
-    _collectionCustomTypeSchema = resourceMethod.getFinderMetadataType() == null ? null : (RecordDataSchema) DataTemplateUtil.getSchema(resourceMethod.getFinderMetadataType());
+    _collectionCustomTypeSchema = resourceMethod.getCollectionCustomMetadataType() == null ? null : (RecordDataSchema) DataTemplateUtil.getSchema(resourceMethod.getCollectionCustomMetadataType());
   }
 
   @Override

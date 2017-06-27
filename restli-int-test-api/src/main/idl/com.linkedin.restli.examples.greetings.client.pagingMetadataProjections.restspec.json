@@ -13,6 +13,9 @@
     "methods" : [ {
       "method" : "get_all",
       "doc" : "Same as the test above except that this test is to make sure that GET_ALL observes the same code path in\n restli as FINDER does for custom metadata and paging projection.\n Redundant comments excluded for the sake of brevity.",
+      "metadata" : {
+        "type" : "com.linkedin.restli.examples.greetings.api.Greeting"
+      },
       "pagingSupported" : true
     } ],
     "finders" : [ {

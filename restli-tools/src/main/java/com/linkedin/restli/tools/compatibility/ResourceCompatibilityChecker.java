@@ -1094,6 +1094,11 @@ public class ResourceCompatibilityChecker
     checkParameterArrayField(prevRec.schema().getField("parameters"),
                              prevRec.getParameters(GetMode.DEFAULT),
                              currRec.getParameters(GetMode.DEFAULT));
+
+    checkComplexField(prevRec.schema().getField("metadata"),
+                      prevRec.getMetadata(GetMode.DEFAULT),
+                      currRec.getMetadata(GetMode.DEFAULT));
+
     checkPagingSupport(prevRec.isPagingSupported(GetMode.DEFAULT),
         currRec.isPagingSupported(GetMode.DEFAULT));
   }

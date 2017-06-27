@@ -20,6 +20,9 @@
       "method" : "update"
     }, {
       "method" : "get_all",
+      "metadata" : {
+        "type" : "int"
+      },
       "pagingSupported" : true
     } ],
     "finders" : [ {

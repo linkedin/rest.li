@@ -44,6 +44,11 @@
         "items" : "ToneFacet"
       }
     } ]
+  }, {
+    "type" : "record",
+    "name" : "Empty",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "fields" : [ ]
   } ],
   "schema" : {
     "name" : "nullGreeting",
@@ -77,6 +82,9 @@
         "method" : "batch_delete"
       }, {
         "method" : "get_all",
+        "metadata" : {
+          "type" : "com.linkedin.restli.examples.greetings.api.Empty"
+        },
         "pagingSupported" : true
       } ],
       "finders" : [ {

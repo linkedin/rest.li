@@ -22,6 +22,12 @@
       "optional" : true
     },
     {
+      "name" : "metadata",
+      "doc" : "Describes the collection level metadata returned by this method. This is usually set only for GET_ALL method type.",
+      "type" : "MetadataSchema",
+      "optional" : true
+    },
+    {
       "name" : "pagingSupported",
       "doc" : "Indicates if this rest method has paging support using the start and count parameters",
       "type" : "boolean",

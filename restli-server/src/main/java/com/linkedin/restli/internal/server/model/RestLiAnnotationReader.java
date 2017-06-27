@@ -1927,6 +1927,32 @@ public final class RestLiAnnotationReader
     }
   }
 
+  private static Class<? extends RecordTemplate> getCustomCollectionMetadata(final Method method)
+  {
+    Class<? extends RecordTemplate> metadataType = null;
+    final Class<?> returnClass = getLogicalReturnClass(method);
+    if (CollectionResult.class.isAssignableFrom(returnClass))
+    {
+      final List<Class<?>> typeArguments = ReflectionUtils.getTypeArguments(CollectionResult.class, returnClass.asSubclass(CollectionResult.class));
+      final Class<?> metadataClass;
+      if (typeArguments == null || typeArguments.get(1) == null)
+      {
+        // the return type may leave metadata type as parameterized and specify in runtime
+        metadataClass = ((Class<?>) ((ParameterizedType) getLogicalReturnType(method)).getActualTypeArguments()[1]);
+      }
+      else
+      {
+        metadataClass = typeArguments.get(1);
+      }
+
+      if (!metadataClass.equals(NoMetadata.class))
+      {
+        metadataType = metadataClass.asSubclass(RecordTemplate.class);
+      }
+    }
+    return metadataType;
+  }
+
   private static void addFinderResourceMethod(final ResourceModel model, final Method method)
   {
     Finder finderAnno = method.getAnnotation(Finder.class);
@@ -1942,27 +1968,7 @@ public final class RestLiAnnotationReader
 
     if (queryType != null)
     {
-      Class<? extends RecordTemplate> metadataType = null;
-      final Class<?> returnClass = getLogicalReturnClass(method);
-      if (CollectionResult.class.isAssignableFrom(returnClass))
-      {
-        final List<Class<?>> typeArguments = ReflectionUtils.getTypeArguments(CollectionResult.class, returnClass.asSubclass(CollectionResult.class));
-        final Class<?> metadataClass;
-        if (typeArguments == null || typeArguments.get(1) == null)
-        {
-          // the return type may leave metadata type as parameterized and specify in runtime
-          metadataClass = ((Class<?>) ((ParameterizedType) getLogicalReturnType(method)).getActualTypeArguments()[1]);
-        }
-        else
-        {
-          metadataClass = typeArguments.get(1);
-        }
-
-        if (!metadataClass.equals(NoMetadata.class))
-        {
-          metadataType = metadataClass.asSubclass(RecordTemplate.class);
-        }
-      }
+      Class<? extends RecordTemplate> metadataType = getCustomCollectionMetadata(method);
 
       DataMap annotationsMap = ResourceModelAnnotation.getAnnotationsMap(method.getAnnotations());
       addDeprecatedAnnotation(annotationsMap, method);
@@ -2032,6 +2038,7 @@ public final class RestLiAnnotationReader
       model.addResourceMethodDescriptor(ResourceMethodDescriptor.createForRestful(resourceMethod,
                                                                                   method,
                                                                                   parameters,
+                                                                                  null,
                                                                                   getInterfaceType(method),
                                                                                   annotationsMap));
     }
@@ -2101,6 +2108,12 @@ public final class RestLiAnnotationReader
                                                           method.getName()));
         }
 
+        Class<? extends RecordTemplate> metadataType = null;
+        if (ResourceMethod.GET_ALL.equals(resourceMethod))
+        {
+          metadataType = getCustomCollectionMetadata(method);
+        }
+
         DataMap annotationsMap = ResourceModelAnnotation.getAnnotationsMap(method.getAnnotations());
         addDeprecatedAnnotation(annotationsMap, method);
 
@@ -2108,6 +2121,7 @@ public final class RestLiAnnotationReader
         model.addResourceMethodDescriptor(ResourceMethodDescriptor.createForRestful(resourceMethod,
                                                                                     method,
                                                                                     parameters,
+                                                                                    metadataType,
                                                                                     getInterfaceType(method),
                                                                                     annotationsMap));
       }

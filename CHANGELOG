@@ -1,5 +1,8 @@
 11.1.1
 -------
+(RB=1031514)
+Capture collection custom metadata type for GET_ALL in IDL and expose that in FilterRequestContext.
+
 (RB=1019396)
 Adding gracefulShutdownTimeout and tcpNoDelay to D2TransportClientProperties.pdsc
 

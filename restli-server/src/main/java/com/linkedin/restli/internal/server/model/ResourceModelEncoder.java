@@ -990,8 +990,20 @@ public class ResourceModelEncoder
         restMethod.setAnnotations(new CustomAnnotationContentSchemaMap(customAnnotation));
       }
 
-      if (method == ResourceMethod.GET_ALL && descriptor.isPagingSupported()) {
-        restMethod.setPagingSupported(true);
+      if (method == ResourceMethod.GET_ALL)
+      {
+        if (descriptor.getCollectionCustomMetadataType() != null)
+        {
+          Class<?> metadataType = descriptor.getCollectionCustomMetadataType();
+          MetadataSchema metadataSchema = new MetadataSchema();
+          metadataSchema.setType(buildDataSchemaType(metadataType));
+          restMethod.setMetadata(metadataSchema);
+        }
+
+        if (descriptor.isPagingSupported())
+        {
+          restMethod.setPagingSupported(true);
+        }
       }
 
       restMethods.add(restMethod);

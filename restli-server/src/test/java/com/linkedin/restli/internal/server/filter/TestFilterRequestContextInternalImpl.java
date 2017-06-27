@@ -155,7 +155,7 @@ public class TestFilterRequestContextInternalImpl
     verify(context).getRestliProtocolVersion();
     verify(context).getParameters();
     verify(context).getRawRequestContext();
-    verify(resourceMethod).getFinderMetadataType();
+    verify(resourceMethod).getCollectionCustomMetadataType();
     verifyNoMoreInteractions(context, resourceMethod, resourceModel);
   }
 
