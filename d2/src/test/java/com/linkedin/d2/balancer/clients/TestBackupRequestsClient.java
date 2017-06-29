@@ -113,7 +113,7 @@ public class TestBackupRequestsClient
     assertEquals(response.get().getStatus(), 200);
   }
 
-  // @Test, disabled due to flaky run
+  // @Test - Disabled due to flakiness. See SI-3077 to track and resolve this.
   public void testBackupRequestsRun() throws Exception
   {
     final AtomicBoolean shutDown = new AtomicBoolean(false);
@@ -302,7 +302,7 @@ public class TestBackupRequestsClient
     assertSame(statsProvider, removedStatsProvider);
   }
 
-  @Test
+  // @Test - Disabled due to flakiness. See SI-3077 to track and resolve this.
   public void testStatsConsumerLatencyUpdate() throws Exception
   {
     AtomicReference<ServiceProperties> serviceProperties = new AtomicReference<>();
