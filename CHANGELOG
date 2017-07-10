@@ -24,6 +24,9 @@ Remove 'type' based methods in UnionDataSchema and cleanup pegasus codebase that
 (RB=993931)
 Support custom content-types/DataCodecs in Rest.Li. This change also adds customizable codec support for multiplexed requests.
 
+(RB=1037063)
+Removed the deprecated methods in ResourceMethodDescriptor (follow up from commit #a70de22).
+
 11.1.1
 -------
 (RB=1031514)
