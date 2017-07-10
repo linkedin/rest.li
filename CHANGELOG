@@ -1,5 +1,22 @@
 11.1.2
 ------
+(RB=978263)
+Initial set of changes in the data schema layer to support aliasing Union members.
+
+(RB=984126)
+Changes in the data template and Java codegen layer for supporting Union members aliases.
+
+(RB=985321)
+Updating compatibility checks for Union member aliasing.
+
+(RB=1015914)
+Schema translator changes for translating Pegasus union with aliases to Avro records with optional fields.
+
+(RB=1020864)
+Data translator changes for supporting Pegasus union with aliases.
+
+(RB=1022062)
+Remove 'type' based methods in UnionDataSchema and cleanup pegasus codebase that uses those methods.
 
 11.1.1
 -------
