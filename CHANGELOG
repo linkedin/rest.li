@@ -18,6 +18,9 @@ Data translator changes for supporting Pegasus union with aliases.
 (RB=1022062)
 Remove 'type' based methods in UnionDataSchema and cleanup pegasus codebase that uses those methods.
 
+(RB=993931)
+Support custom content-types/DataCodecs in Rest.Li. This change also adds customizable codec support for multiplexed requests.
+
 11.1.1
 -------
 (RB=1031514)
