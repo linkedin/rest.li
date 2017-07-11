@@ -27,6 +27,9 @@ Support custom content-types/DataCodecs in Rest.Li. This change also adds custom
 (RB=1037063)
 Removed the deprecated methods in ResourceMethodDescriptor (follow up from commit #a70de22).
 
+(RB=1037141)
+Killing the usage of getFinderMetadataType in ResourceModelEncoder.
+
 11.1.1
 -------
 (RB=1031514)

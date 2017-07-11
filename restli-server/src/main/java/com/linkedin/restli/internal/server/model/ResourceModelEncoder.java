@@ -833,12 +833,9 @@ public class ResourceModelEncoder
         {
           finder.setAssocKeys(assocKeys);
         }
-        if (resourceMethodDescriptor.getFinderMetadataType() != null)
+        if (resourceMethodDescriptor.getCollectionCustomMetadataType() != null)
         {
-          Class<?> metadataType = resourceMethodDescriptor.getFinderMetadataType();
-          MetadataSchema metadataSchema = new MetadataSchema();
-          metadataSchema.setType(buildDataSchemaType(metadataType));
-          finder.setMetadata(metadataSchema);
+          finder.setMetadata(createMetadataSchema(resourceMethodDescriptor));
         }
 
         final DataMap customAnnotation = resourceMethodDescriptor.getCustomAnnotationData();
@@ -877,6 +874,14 @@ public class ResourceModelEncoder
       }
     }
     return assocKeys;
+  }
+
+  private MetadataSchema createMetadataSchema(final ResourceMethodDescriptor resourceMethodDescriptor)
+  {
+    Class<?> metadataType = resourceMethodDescriptor.getCollectionCustomMetadataType();
+    MetadataSchema metadataSchema = new MetadataSchema();
+    metadataSchema.setType(buildDataSchemaType(metadataType));
+    return metadataSchema;
   }
 
   private ParameterSchemaArray createParameters(final ResourceMethodDescriptor resourceMethodDescriptor)
@@ -994,10 +999,7 @@ public class ResourceModelEncoder
       {
         if (descriptor.getCollectionCustomMetadataType() != null)
         {
-          Class<?> metadataType = descriptor.getCollectionCustomMetadataType();
-          MetadataSchema metadataSchema = new MetadataSchema();
-          metadataSchema.setType(buildDataSchemaType(metadataType));
-          restMethod.setMetadata(metadataSchema);
+          restMethod.setMetadata(createMetadataSchema(descriptor));
         }
 
         if (descriptor.isPagingSupported())
