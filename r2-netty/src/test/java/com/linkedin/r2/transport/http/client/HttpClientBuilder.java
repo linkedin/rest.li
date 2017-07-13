@@ -37,7 +37,7 @@ import java.util.concurrent.ScheduledExecutorService;
  * @author Francesco Capponi
  * @version $Revision: $
  */
-class HttpClientBuilder
+public class HttpClientBuilder
 {
 
   private final ChannelPoolManagerKeyBuilder _channelPoolManagerKeyBuilder;

@@ -1,5 +1,7 @@
 12.0.1
 ------
+(RB=1034793)
+Improves HTTP/2 error handling
 
 12.0.0
 ------

@@ -92,7 +92,6 @@ class Http2StreamCodec extends Http2ConnectionHandler
     int streamId = connection().local().incrementAndGetNextStreamId();
     if (request instanceof StreamRequest)
     {
-      LOG.debug("Writing StreamRequest...");
       StreamRequest streamRequest = (StreamRequest) request;
       Http2Headers http2Headers = NettyRequestAdapter.toHttp2Headers(streamRequest);
       BufferedReader reader = new BufferedReader(ctx, encoder, streamId, ((RequestWithCallback) msg).handle());
@@ -104,7 +103,6 @@ class Http2StreamCodec extends Http2ConnectionHandler
     }
     else if (request instanceof RestRequest)
     {
-      LOG.debug("Writing RestRequest...");
       PromiseCombiner promiseCombiner = new PromiseCombiner();
       ChannelPromise headersPromise = ctx.channel().newPromise();
       ChannelPromise dataPromise = ctx.channel().newPromise();
@@ -134,83 +132,78 @@ class Http2StreamCodec extends Http2ConnectionHandler
     Http2PipelinePropertyUtil.set(ctx, connection(), streamId, Http2ClientPipelineInitializer.CALLBACK_ATTR_KEY, callback);
 
     // Sets AsyncPoolHandle as a stream property to be retrieved later
-    AsyncPoolHandle<?> handle = ((RequestWithCallback)msg).handle();
+    @SuppressWarnings("unchecked")
+    TimeoutAsyncPoolHandle<Channel> handle = (TimeoutAsyncPoolHandle<Channel>) ((RequestWithCallback) msg).handle();
     Http2PipelinePropertyUtil.set(ctx, connection(), streamId, Http2ClientPipelineInitializer.CHANNEL_POOL_HANDLE_ATTR_KEY,
         handle);
+    handle.addTimeoutTask(() -> {
+      LOG.debug("Reset stream upon timeout, stream={}", streamId);
+      resetStream(ctx, streamId, Http2Error.CANCEL.code(), ctx.voidPromise());
+      // Flush the STREAM_RESET frame right away to allow server to free up resources
+      ctx.flush();
+    });
   }
 
   @Override
-  public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception
+  protected void onStreamError(ChannelHandlerContext ctx, Throwable cause, Http2Exception.StreamException streamException)
   {
-    super.exceptionCaught(ctx, cause);
-    onError(ctx, cause);
+    final int streamId = streamException.streamId();
+
+    // Logs the full exception here
+    LOG.error("HTTP/2 stream {} encountered an exception", streamId, cause);
+    try
+    {
+      doOnStreamError(ctx, streamId, cause);
+    }
+    finally
+    {
+      super.onStreamError(ctx, cause, streamException);
+    }
   }
 
   @Override
-  public void onError(ChannelHandlerContext ctx, Throwable cause)
+  protected void onConnectionError(ChannelHandlerContext ctx, Throwable cause, Http2Exception connectionError)
   {
-    super.onError(ctx, cause);
-    Http2Exception http2Exception = getEmbeddedHttp2Exception(cause);
-    if (http2Exception == null)
-    {
-      doHandleConnectionException(ctx, cause);
-    }
-    else
-    {
-      if (http2Exception instanceof Http2Exception.StreamException)
-      {
-        Http2Exception.StreamException streamException = (Http2Exception.StreamException) http2Exception;
-        doHandleStreamException(connection().stream(streamException.streamId()), ctx, streamException);
-      }
-      else if (http2Exception instanceof Http2Exception.CompositeStreamException)
-      {
-        Http2Exception.CompositeStreamException compositException = (Http2Exception.CompositeStreamException) http2Exception;
-        for (Http2Exception.StreamException streamException : compositException)
-        {
-          doHandleStreamException(connection().stream(streamException.streamId()), ctx, streamException);
-        }
-      }
-      else
-      {
-        doHandleConnectionException(ctx, http2Exception);
-      }
-    }
-  }
-
-  private void doHandleStreamException(Http2Stream stream, ChannelHandlerContext ctx, Throwable cause)
-  {
-    // Invokes the call back with error
-    TimeoutTransportCallback<StreamResponse> callback =
-        Http2PipelinePropertyUtil.remove(ctx, connection(), stream.id(), Http2ClientPipelineInitializer.CALLBACK_ATTR_KEY);
-
-    if (callback != null)
-    {
-      callback.onResponse(TransportResponseImpl.<StreamResponse>error(cause, Collections.<String, String>emptyMap()));
-    }
-
-    // Signals to dispose the channel back to the pool
-    TimeoutAsyncPoolHandle<Channel> handle = Http2PipelinePropertyUtil.remove(ctx, connection(), stream.id(),
-        Http2ClientPipelineInitializer.CHANNEL_POOL_HANDLE_ATTR_KEY);
-
-    if (handle != null)
-    {
-      ctx.fireChannelRead(handle.error());
-    }
-  }
-
-  private void doHandleConnectionException(ChannelHandlerContext ctx, Throwable cause)
-  {
+    // Logs the full exception here
+    LOG.error("HTTP/2 connection with {} active streams encountered an exception", connection().numActiveStreams(), cause);
     try
     {
       connection().forEachActiveStream(stream -> {
-        doHandleStreamException(stream, ctx, cause);
+        doOnStreamError(ctx, stream.id(), cause);
         return true;
       });
     }
     catch (Http2Exception e)
     {
       LOG.error("Encountered exception while invoking request callbacks with errors", e);
-      super.onError(ctx, cause);
+    }
+  }
+
+  /**
+   * If present, invokes the associated {@link TransportCallback} with error and disposes the {@link Channel}
+   * when an HTTP/2 stream encounters an error.
+   *
+   * @param ctx ChannelHandlerContext
+   * @param streamId Stream ID
+   * @param cause Cause of the error
+   */
+  private void doOnStreamError(ChannelHandlerContext ctx, int streamId, Throwable cause)
+  {
+    // Invokes the call back with error
+    final TimeoutTransportCallback<StreamResponse> callback = Http2PipelinePropertyUtil.remove(
+        ctx, connection(), streamId, Http2ClientPipelineInitializer.CALLBACK_ATTR_KEY);
+    if (callback != null)
+    {
+      callback.onResponse(TransportResponseImpl.<StreamResponse>error(cause, Collections.<String, String>emptyMap()));
+    }
+
+    // Signals to dispose the channel back to the pool
+    final TimeoutAsyncPoolHandle<Channel> handle = Http2PipelinePropertyUtil.remove(
+        ctx, connection(), streamId, Http2ClientPipelineInitializer.CHANNEL_POOL_HANDLE_ATTR_KEY);
+
+    if (handle != null)
+    {
+      ctx.fireChannelRead(handle.error());
     }
   }
 

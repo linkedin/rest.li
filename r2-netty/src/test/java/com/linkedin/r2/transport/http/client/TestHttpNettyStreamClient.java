@@ -25,7 +25,6 @@ import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
 import com.linkedin.data.ByteString;
 import com.linkedin.r2.RemoteInvocationException;
-import com.linkedin.r2.TestGroupNames;
 import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.Messages;
 import com.linkedin.r2.message.RequestContext;
@@ -1152,7 +1151,7 @@ public class TestHttpNettyStreamClient
     }
   }
 
-  @Test(dataProvider = "requestResponseParameters", groups = TestGroupNames.TESTNG_GROUP_KNOWN_ISSUE)
+  @Test(dataProvider = "requestResponseParameters")
   public void testCancelStreamRequests(
       AbstractNettyStreamClient client,
       String method,

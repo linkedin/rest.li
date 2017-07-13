@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -32,6 +33,7 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.util.thread.QueuedThreadPool;
 
 
 /**
@@ -47,8 +49,16 @@ public class HttpServerBuilder
   private int _responseSize = 0;
   private int _headerSize = 0;
   private int _status = 200;
+  private int _minThreads = 0;
+  private int _maxThreads = 150;
   private long _idleTimeout = 30000;
   private CountDownLatch _responseLatch = null;
+  private Consumer<Throwable> _exceptionListener = null;
+
+  // HTTP/2 settings
+  private int _maxConcurrentStreams = 256;
+  private int _initialSessionRecvWindow = 64 * 1024;
+  private int _initialStreamRecvWindow = 256 * 64 * 1024;
 
   public HttpServerBuilder status(int status)
   {
@@ -80,9 +90,45 @@ public class HttpServerBuilder
     return this;
   }
 
+  public HttpServerBuilder exceptionListener(Consumer<Throwable> exceptionListener)
+  {
+    _exceptionListener = exceptionListener;
+    return this;
+  }
+
+  public HttpServerBuilder minThreads(int minThreads)
+  {
+    _minThreads = minThreads;
+    return this;
+  }
+
+  public HttpServerBuilder maxThreads(int maxThreads)
+  {
+    _maxThreads = maxThreads;
+    return this;
+  }
+
+  public HttpServerBuilder maxConcurrentStreams(int maxConcurrentStreams)
+  {
+    _maxConcurrentStreams = maxConcurrentStreams;
+    return this;
+  }
+
+  public HttpServerBuilder initialSessionRecvWindow(int initialSessionRecvWindow)
+  {
+    _initialSessionRecvWindow = initialSessionRecvWindow;
+    return this;
+  }
+
+  public HttpServerBuilder initialStreamRecvWindow(int initialStreamRecvWindow)
+  {
+    _initialStreamRecvWindow = initialStreamRecvWindow;
+    return this;
+  }
+
   public Server build()
   {
-    Server server = new Server();
+    Server server = new Server(new QueuedThreadPool(_maxThreads, _minThreads));
 
     // HTTP Configuration
     HttpConfiguration configuration = new HttpConfiguration();
@@ -92,11 +138,20 @@ public class HttpServerBuilder
     configuration.setSendServerVersion(false);
     configuration.setSendDateHeader(false);
 
+    // HTTP connection factory
+    HttpConnectionFactory httpConnectionFactory = new HttpConnectionFactory(configuration);
+
+    // HTTP/2 clear text connection factory
+    HTTP2CServerConnectionFactory h2cConnectionFactory = new HTTP2CServerConnectionFactory(configuration);
+    h2cConnectionFactory.setMaxConcurrentStreams(_maxConcurrentStreams);
+    h2cConnectionFactory.setInitialStreamRecvWindow(_initialStreamRecvWindow);
+    h2cConnectionFactory.setInitialSessionRecvWindow(_initialSessionRecvWindow);
+
     // HTTP Connector
     ServerConnector http = new ServerConnector(
         server,
-        new HttpConnectionFactory(configuration),
-        new HTTP2CServerConnectionFactory(configuration));
+        httpConnectionFactory,
+        h2cConnectionFactory);
     http.setIdleTimeout(_idleTimeout);
     http.setPort(HTTP_PORT);
     server.addConnector(http);
@@ -107,34 +162,23 @@ public class HttpServerBuilder
       private static final long serialVersionUID = 0;
 
       @Override
-      protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException
+      protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException
       {
-        awaitLatch();
-        readEntity(req.getReader());
-
-        addStatus(resp);
-        addHeader(resp);
-        addContent(resp);
+        try
+        {
+          awaitLatch();
+          readEntity(req.getReader());
+          prepareResponse(resp);
+        }
+        catch (Exception e)
+        {
+          _exceptionListener.accept(e);
+          throw e;
+        }
       }
 
-      @Override
-      protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException
+      private void prepareResponse(HttpServletResponse resp) throws IOException
       {
-        awaitLatch();
-        readEntity(req.getReader());
-
-        addStatus(resp);
-        addHeader(resp);
-        addContent(resp);
-      }
-
-      @Override
-      protected void doOptions(HttpServletRequest req, HttpServletResponse resp)
-          throws ServletException, IOException
-      {
-        awaitLatch();
-        readEntity(req.getReader());
-
         addStatus(resp);
         addHeader(resp);
         addContent(resp);

@@ -353,6 +353,7 @@ class Http2FrameListener extends Http2EventAdapter
     {
       // Resets and closes the stream
       _lifecycleManager.resetStream(_ctx, _streamId, Http2Error.CANCEL.code(), _ctx.newPromise());
+      _ctx.flush();
     }
 
     private void doWrite()
