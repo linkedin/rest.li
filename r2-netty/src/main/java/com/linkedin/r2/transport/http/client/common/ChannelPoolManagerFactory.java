@@ -23,6 +23,8 @@ import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 
 import java.util.concurrent.ScheduledExecutorService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -33,6 +35,8 @@ import java.util.concurrent.ScheduledExecutorService;
  */
 public class ChannelPoolManagerFactory
 {
+  private static final Logger LOG = LoggerFactory.getLogger(ChannelPoolManagerFactory.class);
+
   private final NioEventLoopGroup _eventLoopGroup;
   private final ScheduledExecutorService _scheduler;
   private final ChannelPoolManagerKey _channelPoolManagerKey;
@@ -54,6 +58,15 @@ public class ChannelPoolManagerFactory
   public ChannelPoolManager buildRest()
   {
     DefaultChannelGroup channelGroup = new DefaultChannelGroup("R2 client channels", _eventLoopGroup.next());
+
+    // Logs a warning if the configured max response size exceeds the maximum integer value. Only the lower 32-bit
+    // of the long will be taken during the cast, potentially setting erroneous max response size.
+    if (_channelPoolManagerKey.getMaxResponseSize() > Integer.MAX_VALUE)
+    {
+      LOG.warn("The configured max response size {} has exceeded the max value allowed {} for the HTTP Rest client. "
+          + "Consider using the streaming implementation instead.",
+          _channelPoolManagerKey.getMaxResponseSize(), Integer.MAX_VALUE);
+    }
 
     return new ChannelPoolManager(
       new HttpNettyChannelPoolFactory(

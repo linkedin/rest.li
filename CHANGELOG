@@ -1,5 +1,7 @@
 12.0.2
 ------
+(RB=1005059)
+Logs a warning if maxResponseSize greater than max int is set to the HttpNettyChannelPoolFactory
 
 12.0.1
 ------
