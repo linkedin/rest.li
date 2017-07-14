@@ -6,9 +6,13 @@ import com.linkedin.pegasus.gradle.PegasusPlugin
 import com.linkedin.pegasus.gradle.SharedFileUtils
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.FileCollection
+import org.gradle.api.tasks.CacheableTask
+import org.gradle.api.tasks.Classpath
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.tasks.PathSensitive
+import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.SkipWhenEmpty
 import org.gradle.api.tasks.TaskAction
 import org.gradle.process.JavaExecSpec
@@ -28,17 +32,23 @@ import org.gradle.process.JavaExecSpec
  * </pre>
  * keepDataTemplates is a boolean that isn't used right now, but might be implemented in the future.
  */
+@CacheableTask
 class GenerateRestClientTask extends DefaultTask
 {
   @InputDirectory
   @SkipWhenEmpty
+  @PathSensitive(PathSensitivity.RELATIVE)
   File inputDir
-  @InputFiles
+
+  @Classpath
   FileCollection resolverPath
-  @InputFiles
+
+  @Classpath
   FileCollection runtimeClasspath
-  @InputFiles
+
+  @Classpath
   FileCollection codegenClasspath
+
   @OutputDirectory
   File destinationDir
 

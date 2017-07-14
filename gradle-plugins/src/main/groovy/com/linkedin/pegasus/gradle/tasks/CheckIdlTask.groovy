@@ -1,35 +1,42 @@
 package com.linkedin.pegasus.gradle.tasks
 
 
-import com.linkedin.pegasus.gradle.FileCompatibilityType
 import com.linkedin.pegasus.gradle.IOUtil
 import com.linkedin.pegasus.gradle.PegasusPlugin
-import com.linkedin.pegasus.gradle.PropertyUtil
 import com.linkedin.pegasus.gradle.internal.CompatibilityLogChecker
 import com.linkedin.pegasus.gradle.internal.FileExtensionFilter
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.file.FileCollection
+import org.gradle.api.tasks.CacheableTask
+import org.gradle.api.tasks.Classpath
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.OutputFile
+import org.gradle.api.tasks.PathSensitive
+import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.SkipWhenEmpty
 import org.gradle.api.tasks.TaskAction
 import org.gradle.process.internal.JavaExecAction
 
+@CacheableTask
 class CheckIdlTask extends DefaultTask
 {
   @InputFiles
   @SkipWhenEmpty
+  @PathSensitive(PathSensitivity.RELATIVE)
   FileCollection currentIdlFiles
 
   @InputDirectory
   @SkipWhenEmpty
+  @PathSensitive(PathSensitivity.RELATIVE)
   File previousIdlDirectory
-  @InputFiles
+
+  @Classpath
   FileCollection resolverPath
-  @InputFiles
+
+  @Classpath
   FileCollection codegenClasspath
 
   @Input

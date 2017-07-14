@@ -4,9 +4,12 @@ package com.linkedin.pegasus.gradle.tasks
 import com.linkedin.pegasus.gradle.SchemaFileType
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.FileCollection
+import org.gradle.api.tasks.CacheableTask
+import org.gradle.api.tasks.Classpath
 import org.gradle.api.tasks.InputDirectory
-import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.tasks.PathSensitive
+import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.SkipWhenEmpty
 import org.gradle.api.tasks.TaskAction
 import org.gradle.process.internal.JavaExecAction
@@ -15,6 +18,7 @@ import org.gradle.process.internal.JavaExecAction
 /**
  * Translates files between the .pdsc and .pdl Pegasus schema formats.
  */
+@CacheableTask
 class TranslateSchemasTask extends DefaultTask {
   /**
    * Directory to write the translated files.
@@ -27,15 +31,16 @@ class TranslateSchemasTask extends DefaultTask {
    */
   @InputDirectory
   @SkipWhenEmpty
+  @PathSensitive(PathSensitivity.RELATIVE)
   File inputDir
 
   /**
    * The resolver path.
    */
-  @InputFiles
+  @Classpath
   FileCollection resolverPath
 
-  @InputFiles
+  @Classpath
   FileCollection codegenClasspath
 
   SchemaFileType sourceFormat = SchemaFileType.PDSC

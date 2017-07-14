@@ -5,8 +5,12 @@ import com.linkedin.pegasus.gradle.PathingJarUtil
 import com.linkedin.pegasus.gradle.PegasusOptions
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.FileCollection
+import org.gradle.api.tasks.CacheableTask
+import org.gradle.api.tasks.Classpath
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.tasks.PathSensitive
+import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.SkipWhenEmpty
 import org.gradle.api.tasks.TaskAction
 import org.gradle.process.internal.JavaExecAction
@@ -27,19 +31,22 @@ import org.gradle.process.internal.JavaExecAction
  * pegasus.&lt;sourceSet&gt;.idlOptions.addIdlItem(['&lt;packageName&gt;'])
  * </pre>
  */
+@CacheableTask
 class GenerateRestModelTask extends DefaultTask
 {
-  @InputFiles
+  @Classpath
   FileCollection watchedCodegenClasspath
 
   @InputFiles
   @SkipWhenEmpty
+  @PathSensitive(PathSensitivity.RELATIVE)
   Set<File> watchedInputDirs
 
-  @InputFiles
+  @Classpath
   FileCollection resolverPath
 
   @OutputDirectory
+  @PathSensitive(PathSensitivity.NAME_ONLY)
   File idlDestinationDir
 
   @OutputDirectory

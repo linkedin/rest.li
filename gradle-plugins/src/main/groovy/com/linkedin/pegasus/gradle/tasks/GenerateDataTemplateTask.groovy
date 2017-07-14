@@ -8,10 +8,14 @@ import org.gradle.api.file.FileCollection
 import org.gradle.api.file.FileTree
 import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
+import org.gradle.api.tasks.CacheableTask
+import org.gradle.api.tasks.Classpath
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.JavaExec
 import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.tasks.PathSensitive
+import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.SkipWhenEmpty
 import org.gradle.api.tasks.TaskAction
 
@@ -32,6 +36,7 @@ import static com.linkedin.pegasus.gradle.SharedFileUtils.getSuffixedFiles
  * The plugin will scan the source set's pegasus directory, e.g. "src/main/pegasus"
  * for data schema (.pdsc) files.
  */
+@CacheableTask
 @CompileStatic
 class GenerateDataTemplateTask extends JavaExec
 {
@@ -46,19 +51,22 @@ class GenerateDataTemplateTask extends JavaExec
    */
   @InputDirectory
   @SkipWhenEmpty
+  @PathSensitive(PathSensitivity.RELATIVE)
   File inputDir
 
   /**
    * The resolver path.
    */
-  @InputFiles FileCollection resolverPath
+  @Classpath
+  FileCollection resolverPath
 
   /**
    * Classpath of the java process that generates data template.
    * The value will be automatically copied over to 'classpath' property.
    * It is kept here for backwards compatibility.
    */
-  @InputFiles FileCollection codegenClasspath
+  @Classpath
+  FileCollection codegenClasspath
 
   GenerateDataTemplateTask()
   {

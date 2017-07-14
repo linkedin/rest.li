@@ -5,9 +5,13 @@ import com.linkedin.pegasus.gradle.PegasusPlugin
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.FileCollection
 import org.gradle.api.file.FileTree
+import org.gradle.api.tasks.CacheableTask
+import org.gradle.api.tasks.Classpath
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.tasks.PathSensitive
+import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.StopExecutionException
 import org.gradle.api.tasks.SkipWhenEmpty
 import org.gradle.api.tasks.TaskAction
@@ -27,6 +31,7 @@ import static com.linkedin.pegasus.gradle.SharedFileUtils.getSuffixedFiles
  * The plugin will scan the source set's pegasus directory, e.g. "src/main/pegasus"
  * for data schema (.pdsc) files.
  */
+@CacheableTask
 class GenerateAvroSchemaTask extends DefaultTask
 {
   /**
@@ -40,15 +45,16 @@ class GenerateAvroSchemaTask extends DefaultTask
    */
   @InputDirectory
   @SkipWhenEmpty
+  @PathSensitive(PathSensitivity.RELATIVE)
   File inputDir
 
   /**
    * The resolver path.
    */
-  @InputFiles
+  @Classpath
   FileCollection resolverPath
 
-  @InputFiles
+  @Classpath
   FileCollection codegenClasspath
 
   @TaskAction

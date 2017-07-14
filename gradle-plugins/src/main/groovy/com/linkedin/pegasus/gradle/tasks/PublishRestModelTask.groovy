@@ -1,7 +1,8 @@
 package com.linkedin.pegasus.gradle.tasks;
 
 
-import org.gradle.api.file.FileTree;
+import org.gradle.api.file.FileTree
+import org.gradle.api.tasks.CacheableTask;
 import org.gradle.api.tasks.Copy;
 
 import static com.linkedin.pegasus.gradle.SharedFileUtils.getSuffixedFiles;
@@ -15,6 +16,7 @@ import static com.linkedin.pegasus.gradle.SharedFileUtils.getSuffixedFiles;
  * As prerequisite of this task, the api project needs to be designated. There are multiple ways to do this.
  * Please refer to the documentation section for detail.
  */
+@CacheableTask
 class PublishRestModelTask extends Copy
 {
   String suffix
