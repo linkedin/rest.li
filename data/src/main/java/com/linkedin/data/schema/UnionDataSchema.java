@@ -360,6 +360,22 @@ public final class UnionDataSchema extends ComplexDataSchema
    *
    * @param memberKey Union member key of the member.
    * @return the {@link DataSchema} if type is a member of the union, else return null.
+   *
+   * @deprecated Replaced by {@link #getTypeByMemberKey(String)}. This method exists only to help during the
+   * migration phase. It will be removed in the later versions and SHOULD NOT be used for any new use cases.
+   */
+  @Deprecated
+  public DataSchema getType(String memberKey)
+  {
+    return getTypeByMemberKey(memberKey);
+  }
+
+  /**
+   * Returns the {@link DataSchema} for a member identified by its member key returned
+   * from {@link Member#getUnionMemberKey()}.
+   *
+   * @param memberKey Union member key of the member.
+   * @return the {@link DataSchema} if type is a member of the union, else return null.
    */
   public DataSchema getTypeByMemberKey(String memberKey)
   {
