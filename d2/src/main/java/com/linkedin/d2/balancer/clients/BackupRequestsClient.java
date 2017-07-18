@@ -310,60 +310,70 @@ public class BackupRequestsClient implements D2Client
     try
     {
       final String serviceName = LoadBalancerUtil.getServiceNameFromUri(request.getURI());
-      final String operation = requestContext.getLocalAttr(R2Constants.OPERATION).toString();
-      final Optional<TrackingBackupRequestsStrategy> strategy = getStrategy(serviceName, operation);
-      if (strategy.isPresent())
+      final Object operationObject = requestContext.getLocalAttr(R2Constants.OPERATION);
+      if (operationObject != null)
       {
-
-        final TrackingBackupRequestsStrategy st = strategy.get();
-        final long startNano = System.nanoTime();
-
-        URI targetHostUri = KeyMapper.TargetHostHints.getRequestContextTargetHost(requestContext);
-        if (targetHostUri == null)
+        final String operation = operationObject.toString();
+        final Optional<TrackingBackupRequestsStrategy> strategy = getStrategy(serviceName, operation);
+        if (strategy.isPresent())
         {
-          Optional<Long> delayNano = st.getTimeUntilBackupRequestNano();
-          if (delayNano.isPresent())
-          {
-            return new DecoratedCallback<>(request, requestContext, client, callback, st, delayNano.get(),
-                _executorService, startNano, serviceName, operation);
-          }
-        }
-        // if caller specified concrete target host or backup strategy is not ready yet then return
-        // callback that updates backup strategy about latency
-        return new Callback<T>()
-        {
-          @Override
-          public void onSuccess(T result)
-          {
-            recordLatency();
-            callback.onSuccess(result);
-          }
 
-          private void recordLatency()
-          {
-            long latency = System.nanoTime() - startNano;
-            st.recordCompletion(latency);
-            st.getLatencyWithoutBackup().record(latency,
-                histogram -> notifyLatency(serviceName, operation, histogram, false));
-            st.getLatencyWithBackup().record(latency,
-                histogram -> notifyLatency(serviceName, operation, histogram, true));
-          }
+          final TrackingBackupRequestsStrategy st = strategy.get();
+          final long startNano = System.nanoTime();
 
-          @Override
-          public void onError(Throwable e)
+          URI targetHostUri = KeyMapper.TargetHostHints.getRequestContextTargetHost(requestContext);
+          if (targetHostUri == null)
           {
-            // disregard latency if request was not made
-            if (!(e instanceof ServiceUnavailableException))
+            Optional<Long> delayNano = st.getTimeUntilBackupRequestNano();
+            if (delayNano.isPresent())
+            {
+              return new DecoratedCallback<>(request, requestContext, client, callback, st, delayNano.get(),
+                  _executorService, startNano, serviceName, operation);
+            }
+          }
+          // if caller specified concrete target host or backup strategy is not ready yet then return
+          // callback that updates backup strategy about latency
+          return new Callback<T>()
+          {
+            @Override
+            public void onSuccess(T result)
             {
               recordLatency();
+              callback.onSuccess(result);
             }
-            callback.onError(e);
-          }
-        };
-      } else
+
+            private void recordLatency()
+            {
+              long latency = System.nanoTime() - startNano;
+              st.recordCompletion(latency);
+              st.getLatencyWithoutBackup().record(latency,
+                  histogram -> notifyLatency(serviceName, operation, histogram, false));
+              st.getLatencyWithBackup().record(latency,
+                  histogram -> notifyLatency(serviceName, operation, histogram, true));
+            }
+
+            @Override
+            public void onError(Throwable e)
+            {
+              // disregard latency if request was not made
+              if (!(e instanceof ServiceUnavailableException))
+              {
+                recordLatency();
+              }
+              callback.onError(e);
+            }
+          };
+        } else
+        {
+          // return original callback and don't send backup request if there is no backup requests strategy
+          // defined for this request
+          return callback;
+        }
+      }
+      else
       {
-        // return original callback and don't send backup request if there is no backup requests strategy
-        // defined for this request
+        // return original callback and don't send backup request if there is no operation declared in 
+        // request context
         return callback;
       }
     } catch (Throwable t)

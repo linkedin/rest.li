@@ -1,6 +1,11 @@
-12.0.3
+12.0.4
 ------
 
+
+12.0.3
+------
+(RB=1045362)
+Fix NPE when client is using D2 and does not set R2Constants.OPERATION on request context.
 
 12.0.2
 ------
