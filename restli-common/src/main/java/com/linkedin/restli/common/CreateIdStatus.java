@@ -52,7 +52,20 @@ public class CreateIdStatus<K> extends CreateStatus
    */
   public CreateIdStatus(int status, K key, ErrorResponse error, ProtocolVersion version)
   {
-    super(createDataMap(status, key, error, version));
+    super(createDataMap(status, key, null, error, version));
+    _key = key;
+  }
+
+  /**
+   * @param status the individual http status
+   * @param key the key; can be null
+   * @param location location url
+   * @param error the {@link ErrorResponse}; can be null
+   * @param version the {@link com.linkedin.restli.common.ProtocolVersion}
+   */
+  public CreateIdStatus(int status, K key, String location, ErrorResponse error, ProtocolVersion version)
+  {
+    super(createDataMap(status, key, location, error, version));
     _key = key;
   }
 
@@ -64,7 +77,7 @@ public class CreateIdStatus<K> extends CreateStatus
    * @param version the the {@link com.linkedin.restli.common.ProtocolVersion}, used to serialize the key
    * @return a {@link com.linkedin.data.DataMap} containing the given data
    */
-  protected static DataMap createDataMap(int status, Object key, ErrorResponse error, ProtocolVersion version)
+  protected static DataMap createDataMap(int status, Object key, String location, ErrorResponse error, ProtocolVersion version)
   {
     CreateStatus createStatus = new CreateStatus();
     createStatus.setStatus(status);
@@ -72,6 +85,10 @@ public class CreateIdStatus<K> extends CreateStatus
     {
       @SuppressWarnings("deprecation")
       CreateStatus c = createStatus.setId(URIParamUtils.encodeKeyForBody(key, false, version));
+    }
+    if (location != null)
+    {
+      createStatus.setLocation(location);
     }
     if (error != null)
     {

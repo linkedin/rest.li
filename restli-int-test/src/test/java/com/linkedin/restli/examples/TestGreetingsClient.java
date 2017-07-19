@@ -681,8 +681,9 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     }
   }
 
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testBatchCreate(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderWithResourceNameDataProvider")
+  public void testBatchCreate(RootBuilderWrapper<Long, Greeting> builders, String resourceName,
+                              ProtocolVersion protocolVersion) throws RemoteInvocationException
   {
     List<Greeting> greetings = generateBatchTestData(3, "BatchCreate", Tone.FRIENDLY);
 
@@ -695,6 +696,8 @@ public class TestGreetingsClient extends RestLiIntegrationTest
       @SuppressWarnings("deprecation")
       String id = status.getId();
       Assert.assertEquals(status.getKey().longValue(), Long.parseLong(id));
+      String expectedLocation = "/" + resourceName + "/" + status.getKey();
+      Assert.assertEquals(status.getLocation(), expectedLocation);
       createdIds.add(status.getKey());
     }
 

@@ -80,6 +80,7 @@ public class TestReturnEntityWithCreate extends RestLiIntegrationTest
     @SuppressWarnings("deprecation")
     String stringId = response.getId();
     Assert.assertEquals(response.getHeader(RestConstants.HEADER_CONTENT_TYPE), expectedContentType);
+    Assert.assertEquals(response.getHeader(RestConstants.HEADER_LOCATION), "/" + builders.getPrimaryResource() + "/" + id);
     Assert.assertEquals(id, Long.parseLong(stringId));
     Assert.assertEquals("second time!", ((Greeting) response.getEntity().getEntity()).getMessage());
   }
@@ -99,6 +100,7 @@ public class TestReturnEntityWithCreate extends RestLiIntegrationTest
     @SuppressWarnings("deprecation")
     String stringId = response.getId();
     Assert.assertEquals(response.getHeader(RestConstants.HEADER_CONTENT_TYPE), expectedContentType);
+    Assert.assertEquals(response.getHeader(RestConstants.HEADER_LOCATION), "/" + builders.getPrimaryResource() + "/" + id + "?fields=tone,id");
     Assert.assertEquals(id, Long.parseLong(stringId));
     Assert.assertEquals(false, ((Greeting) response.getEntity().getEntity()).hasMessage());
     Assert.assertEquals(Tone.FRIENDLY, ((Greeting) response.getEntity().getEntity()).getTone());
@@ -128,8 +130,9 @@ public class TestReturnEntityWithCreate extends RestLiIntegrationTest
       @SuppressWarnings("deprecation")
       String id = singleResponse.getId();
       Assert.assertNotNull(id);
+      Assert.assertEquals(singleResponse.getLocation(), "/" + builders.getPrimaryResource() + "/" + id);
       Greeting entity = (Greeting)singleResponse.getEntity();
-      Assert.assertEquals(Tone.FRIENDLY, entity.getTone());
+      Assert.assertEquals(entity.getTone(), Tone.FRIENDLY);
       Assert.assertEquals(singleResponse.getStatus().intValue(), HttpStatus.S_201_CREATED.getCode());
     }
   }
@@ -153,10 +156,11 @@ public class TestReturnEntityWithCreate extends RestLiIntegrationTest
       @SuppressWarnings("deprecation")
       String id = singleResponse.getId();
       Assert.assertNotNull(id);
+      Assert.assertEquals(singleResponse.getLocation(), "/" + builders.getPrimaryResource() + "/" + id + "?fields=tone,id");
       Greeting entity = (Greeting)singleResponse.getEntity();
-      Assert.assertEquals(false, entity.hasMessage());
-      Assert.assertEquals(true, entity.hasId());
-      Assert.assertEquals(Tone.FRIENDLY, entity.getTone());
+      Assert.assertEquals(entity.hasMessage(), false);
+      Assert.assertEquals(entity.hasId(), true);
+      Assert.assertEquals(entity.getTone(), Tone.FRIENDLY);
     }
   }
 
@@ -185,6 +189,7 @@ public class TestReturnEntityWithCreate extends RestLiIntegrationTest
       if (numOfElem > 2)
       {
         Assert.assertTrue(singleResponse.hasError());
+        Assert.assertNull(singleResponse.getLocation());
         Assert.assertEquals(singleResponse.getStatus().intValue(), HttpStatus.S_400_BAD_REQUEST.getCode());
         Assert.assertEquals(singleResponse.getError().getMessage(), "exceed quota"); // More than 3 elements were sent, should trigger exception.
       }
@@ -193,8 +198,9 @@ public class TestReturnEntityWithCreate extends RestLiIntegrationTest
         @SuppressWarnings("deprecation")
         String id = singleResponse.getId();
         Assert.assertNotNull(id);
+        Assert.assertEquals(singleResponse.getLocation(), "/" + builders.getPrimaryResource() + "/" + id);
         Greeting entity = (Greeting)singleResponse.getEntity();
-        Assert.assertEquals(Tone.FRIENDLY, entity.getTone());
+        Assert.assertEquals(entity.getTone(), Tone.FRIENDLY);
         Assert.assertEquals(singleResponse.getStatus().intValue(), HttpStatus.S_201_CREATED.getCode());
       }
       numOfElem++;
@@ -220,10 +226,12 @@ public class TestReturnEntityWithCreate extends RestLiIntegrationTest
     Response<IdResponse<Long>> response = restClient.sendRequest(createIdRequest).getResponse();
 
     Assert.assertEquals(response.getHeader(RestConstants.HEADER_CONTENT_TYPE), expectedContentType);
+
     long id = response.getEntity().getId();
     @SuppressWarnings("deprecation")
     String stringId = response.getId();
     Assert.assertEquals(id, Long.parseLong(stringId));
+    Assert.assertEquals(response.getHeader(RestConstants.HEADER_LOCATION), "/" + builders.getPrimaryResource() + "/" + id);
   }
 
   /**
@@ -247,7 +255,9 @@ public class TestReturnEntityWithCreate extends RestLiIntegrationTest
     Assert.assertEquals(response.getHeader(RestConstants.HEADER_CONTENT_TYPE), expectedContentType);
     List<CreateIdStatus<Long>> elems = response.getEntity().getElements();
     Assert.assertEquals(elems.get(0).getStatus().intValue(), HttpStatus.S_201_CREATED.getCode());
+    Assert.assertEquals(elems.get(0).getLocation(), "/" + builders.getPrimaryResource() + "/" + elems.get(0).getKey());
     Assert.assertEquals(elems.get(1).getStatus().intValue(), HttpStatus.S_201_CREATED.getCode());
+    Assert.assertEquals(elems.get(1).getLocation(), "/" + builders.getPrimaryResource() + "/" + elems.get(1).getKey());
   }
 
   @SuppressWarnings("deprecation")

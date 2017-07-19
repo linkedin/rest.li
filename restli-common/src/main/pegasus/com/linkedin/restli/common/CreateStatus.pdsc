@@ -15,6 +15,12 @@
       "deprecated" : "The serialized form of the returned key. You can get a strongly-typed form of the key by casting CreateStatus to CreateIdStatus and calling .getKey()"
     },
     {
+      "name": "location",
+      "type": "string",
+      "optional": true,
+      "doc" : "The location url to retrieve the newly created entity"
+    },
+    {
       "name": "error",
       "type": "ErrorResponse",
       "optional": true

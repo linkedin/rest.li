@@ -36,14 +36,19 @@ public class CreateIdEntityStatus<K, V extends RecordTemplate> extends CreateIdS
 
   public CreateIdEntityStatus(int status, K key, V entity, ErrorResponse error, ProtocolVersion version)
   {
-    super(createDataMap(status, key, entity, error, version), key);
+    super(createDataMap(status, key, entity, null, error, version), key);
     _entity = entity;
   }
 
-
-  private static DataMap createDataMap(int status, Object key, RecordTemplate entity, ErrorResponse error, ProtocolVersion version)
+  public CreateIdEntityStatus(int status, K key, V entity, String location, ErrorResponse error, ProtocolVersion version)
   {
-    DataMap idStatusMap = CreateIdStatus.createDataMap(status, key, error, version);
+    super(createDataMap(status, key, entity, location, error, version), key);
+    _entity = entity;
+  }
+
+  private static DataMap createDataMap(int status, Object key, RecordTemplate entity, String location, ErrorResponse error, ProtocolVersion version)
+  {
+    DataMap idStatusMap = CreateIdStatus.createDataMap(status, key, location, error, version);
     if (entity != null)
     {
       idStatusMap.put("entity", entity.data());

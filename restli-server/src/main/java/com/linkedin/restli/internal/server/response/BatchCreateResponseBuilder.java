@@ -23,12 +23,17 @@ package com.linkedin.restli.internal.server.response;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.jersey.api.uri.UriBuilder;
+import com.linkedin.jersey.api.uri.UriComponent;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.BatchCreateIdResponse;
 import com.linkedin.restli.common.CreateIdEntityStatus;
 import com.linkedin.restli.common.CreateIdStatus;
 import com.linkedin.restli.common.HttpStatus;
+import com.linkedin.restli.common.ProtocolVersion;
+import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.ProtocolVersionUtil;
+import com.linkedin.restli.internal.common.URIParamUtils;
 import com.linkedin.restli.internal.server.methods.AnyRecord;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.util.RestUtils;
@@ -94,6 +99,14 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder
                                                     Map<String, String> headers,
                                                     List<HttpCookie> cookies)
   {
+    Object altKey = null;
+    if (routingResult.getContext().hasParameter(RestConstants.ALT_KEY_PARAM))
+    {
+      altKey = routingResult.getContext().getParameter(RestConstants.ALT_KEY_PARAM);
+    }
+    final ProtocolVersion protocolVersion = ProtocolVersionUtil.extractProtocolVersion(headers);
+
+
     if (result instanceof BatchCreateKVResult)
     {
       BatchCreateKVResult<?, ?> list = (BatchCreateKVResult<?, ?>)result;
@@ -124,11 +137,13 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder
                                                          resourceContext.getProjectionMode(),
                                                          resourceContext.getProjectionMask());
 
-            CreateIdEntityStatus<Object, RecordTemplate> entry = new CreateIdEntityStatus<Object, RecordTemplate>(e.getStatus().getCode(),
-                                                                                                                  id,
-                                                                                                                  new AnyRecord(data),
-                                                                                                                  null,
-                                                                                                                  ProtocolVersionUtil.extractProtocolVersion(headers));
+            CreateIdEntityStatus<Object, RecordTemplate> entry = new CreateIdEntityStatus<Object, RecordTemplate>(
+                    e.getStatus().getCode(),
+                    id,
+                    new AnyRecord(data),
+                    getLocationUri(request, id, altKey, protocolVersion), // location uri
+                    null,
+                    protocolVersion);
             collectionCreateList.add(new BatchCreateResponseEnvelope.CollectionCreateResponseItem(entry));
 
           }
@@ -170,7 +185,12 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder
           Object id = ResponseUtils.translateCanonicalKeyToAlternativeKeyIfNeeded(e.getId(), routingResult);
           if (e.getError() == null)
           {
-            CreateIdStatus<Object> entry = new CreateIdStatus<Object>(e.getStatus().getCode(), id, null, ProtocolVersionUtil.extractProtocolVersion(headers));
+            CreateIdStatus<Object> entry = new CreateIdStatus<Object>(
+                    e.getStatus().getCode(),
+                    id,
+                    getLocationUri(request, id, altKey, protocolVersion), // location uri
+                    null,
+                    protocolVersion);
             collectionCreateList.add(new BatchCreateResponseEnvelope.CollectionCreateResponseItem(entry));
           }
           else
@@ -186,4 +206,24 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder
       return responseData;
     }
   }
+
+  // construct location uri for each created entity id
+  private String getLocationUri(RestRequest request, Object id, Object altKey, ProtocolVersion protocolVersion)
+  {
+    if (id == null)
+    {
+      // location uri is only set if object key is returned
+      return null;
+    }
+    String stringKey = URIParamUtils.encodeKeyForUri(id, UriComponent.Type.PATH_SEGMENT, protocolVersion);
+    UriBuilder uribuilder = UriBuilder.fromUri(request.getURI());
+    uribuilder.path(stringKey);
+    if (altKey != null)
+    {
+      // add altkey param to location URI
+      uribuilder.queryParam(RestConstants.ALT_KEY_PARAM, altKey);
+    }
+    return uribuilder.build((Object) null).toString();
+  }
+
 }

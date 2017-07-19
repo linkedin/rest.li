@@ -27,6 +27,8 @@ import com.linkedin.data.transform.filter.request.MaskOperation;
 import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.pegasus.generator.examples.Foo;
 import com.linkedin.pegasus.generator.examples.Fruits;
+import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.restli.common.BatchCreateIdResponse;
 import com.linkedin.restli.common.CreateIdEntityStatus;
 import com.linkedin.restli.common.CreateIdStatus;
@@ -48,6 +50,8 @@ import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
 
 import java.net.HttpCookie;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -73,12 +77,12 @@ public class TestBatchCreateResponseBuilder
     alternativeKeyMap.put("alt", new AlternativeKey<String, Long>(new TestKeyCoercer(), String.class, new StringDataSchema()));
 
     List<CreateIdStatus<Long>> expectedStatuses = new ArrayList<CreateIdStatus<Long>>(2);
-    expectedStatuses.add(new CreateIdStatus<Long>(201, 1L, null, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()));
-    expectedStatuses.add(new CreateIdStatus<Long>(201, 2L, null, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()));
+    expectedStatuses.add(new CreateIdStatus<Long>(201, 1L, "/foo/1", null, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()));
+    expectedStatuses.add(new CreateIdStatus<Long>(201, 2L, "/foo/2", null, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()));
 
     List<CreateIdStatus<String>> expectedAltStatuses = new ArrayList<CreateIdStatus<String>>(2);
-    expectedAltStatuses.add(new CreateIdStatus<String>(201, "Alt1", null, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()));
-    expectedAltStatuses.add(new CreateIdStatus<String>(201, "Alt2", null, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()));
+    expectedAltStatuses.add(new CreateIdStatus<String>(201, "Alt1", "/foo/Alt1?altkey=alt", null, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()));
+    expectedAltStatuses.add(new CreateIdStatus<String>(201, "Alt2", "/foo/Alt2?altkey=alt", null, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()));
 
     return new Object[][]
         {
@@ -91,7 +95,7 @@ public class TestBatchCreateResponseBuilder
   @SuppressWarnings("unchecked")
   public void testCreateResultBuilder(String altKeyName,
                                       Map<String, AlternativeKey<?, ?>> alternativeKeyMap,
-                                      List<CreateIdStatus<Object>> expectedStatuses)
+                                      List<CreateIdStatus<Object>> expectedStatuses) throws URISyntaxException
   {
     List<CreateResponse> createResponses = Arrays.asList(new CreateResponse(1L), new CreateResponse(2L));
     BatchCreateResult<Long, Foo> results =
@@ -102,8 +106,9 @@ public class TestBatchCreateResponseBuilder
     ResourceContext mockContext = getMockResourceContext(altKeyName);
     RoutingResult routingResult = new RoutingResult(mockContext, mockDescriptor);
 
+    RestRequest request = new RestRequestBuilder(new URI("/foo")).build();
     BatchCreateResponseBuilder responseBuilder = new BatchCreateResponseBuilder(null);
-    RestLiResponseData responseData = responseBuilder.buildRestLiResponseData(null,
+    RestLiResponseData responseData = responseBuilder.buildRestLiResponseData(request,
                                                                               routingResult,
                                                                               results,
                                                                               headers,
@@ -139,14 +144,14 @@ public class TestBatchCreateResponseBuilder
     foo2.setStringField("foo2");
 
     List<CreateIdEntityStatus<Long, Foo>> expectedResponses = new ArrayList<CreateIdEntityStatus<Long, Foo>>(2);
-    expectedResponses.add(new CreateIdEntityStatus<Long, Foo>(201, 1L, foo1, null, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()));
-    expectedResponses.add(new CreateIdEntityStatus<Long, Foo>(201, 2L, foo2, null,
+    expectedResponses.add(new CreateIdEntityStatus<Long, Foo>(201, 1L, foo1, "/foo/1", null, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()));
+    expectedResponses.add(new CreateIdEntityStatus<Long, Foo>(201, 2L, foo2, "/foo/2", null,
         AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()));
 
     List<CreateIdEntityStatus<String, Foo>> expectedAltResponses = new ArrayList<CreateIdEntityStatus<String, Foo>>(2);
-    expectedAltResponses.add(new CreateIdEntityStatus<String, Foo>(201, "Alt1", foo1, null,
+    expectedAltResponses.add(new CreateIdEntityStatus<String, Foo>(201, "Alt1", foo1, "/foo/Alt1?altkey=alt",null,
         AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()));
-    expectedAltResponses.add(new CreateIdEntityStatus<String, Foo>(201, "Alt2", foo2, null,
+    expectedAltResponses.add(new CreateIdEntityStatus<String, Foo>(201, "Alt2", foo2, "/foo/Alt2?altkey=alt",null,
         AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()));
 
     return new Object[][]
@@ -159,7 +164,7 @@ public class TestBatchCreateResponseBuilder
   @Test(dataProvider = "createKVResultBuilderTestData")
   public void testCreateKVResultBuilder(String altKeyName,
                                         Map<String, AlternativeKey<?, ?>> alternativeKeyMap,
-                                        List<CreateIdEntityStatus<?, Foo>> expectedResponses)
+                                        List<CreateIdEntityStatus<?, Foo>> expectedResponses) throws URISyntaxException
   {
     List<CreateKVResponse<Long, Foo>> createKVResponses = new ArrayList<CreateKVResponse<Long, Foo>>(2);
     Foo foo1 = new Foo();
@@ -178,7 +183,8 @@ public class TestBatchCreateResponseBuilder
     RoutingResult routingResult = new RoutingResult(mockContext, mockDescriptor);
 
     BatchCreateResponseBuilder responseBuilder = new BatchCreateResponseBuilder(null);
-    RestLiResponseData responseData = responseBuilder.buildRestLiResponseData(null,
+    RestRequest request = new RestRequestBuilder(new URI("/foo")).build();
+    RestLiResponseData responseData = responseBuilder.buildRestLiResponseData(request,
                                                                               routingResult,
                                                                               results,
                                                                               headers,
@@ -216,16 +222,18 @@ public class TestBatchCreateResponseBuilder
   }
 
   @Test(dataProvider = "exceptionTestData")
-  public void testBuilderExceptions(Object result, String expectedErrorMessage)
+  public void testBuilderExceptions(Object result, String expectedErrorMessage) throws URISyntaxException
   {
     Map<String, String> headers = ResponseBuilderUtil.getHeaders();
     ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor(null);
     ResourceContext mockContext = getMockResourceContext(null);
     RoutingResult routingResult = new RoutingResult(mockContext, mockDescriptor);
+
     BatchCreateResponseBuilder responseBuilder = new BatchCreateResponseBuilder(null);
+    RestRequest request = new RestRequestBuilder(new URI("/foo")).build();
     try
     {
-      responseBuilder.buildRestLiResponseData(null, routingResult, result, headers, Collections.<HttpCookie>emptyList());
+      responseBuilder.buildRestLiResponseData(request, routingResult, result, headers, Collections.<HttpCookie>emptyList());
       Assert.fail("buildRestLiResponseData should have thrown an exception because of null elements");
     }
     catch (RestLiServiceException e)
@@ -235,13 +243,14 @@ public class TestBatchCreateResponseBuilder
   }
 
   @Test
-  public void testProjectionInBuildRestLiResponseData()
+  @SuppressWarnings("unchecked")
+  public void testProjectionInBuildRestLiResponseData() throws URISyntaxException
   {
     MaskTree maskTree = new MaskTree();
     maskTree.addOperation(new PathSpec("fruitsField"), MaskOperation.POSITIVE_MASK_OP);
 
     ServerResourceContext mockContext = EasyMock.createMock(ServerResourceContext.class);
-    EasyMock.expect(mockContext.hasParameter(RestConstants.ALT_KEY_PARAM)).andReturn(false);
+    EasyMock.expect(mockContext.hasParameter(RestConstants.ALT_KEY_PARAM)).andReturn(false).atLeastOnce();
     EasyMock.expect(mockContext.getProjectionMode()).andReturn(ProjectionMode.AUTOMATIC);
     EasyMock.expect(mockContext.getProjectionMask()).andReturn(maskTree);
     EasyMock.replay(mockContext);
@@ -257,7 +266,8 @@ public class TestBatchCreateResponseBuilder
     BatchCreateKVResult<Long, Foo> results = new BatchCreateKVResult<Long, Foo>(createKVResponses);
 
     BatchCreateResponseBuilder responseBuilder = new BatchCreateResponseBuilder(new ErrorResponseBuilder());
-    RestLiResponseData responseData = responseBuilder.buildRestLiResponseData(null,
+    RestRequest request = new RestRequestBuilder(new URI("/foo")).build();
+    RestLiResponseData responseData = responseBuilder.buildRestLiResponseData(request,
                                                                               routingResult,
                                                                               results,
                                                                               Collections.<String, String>emptyMap(),
@@ -265,8 +275,9 @@ public class TestBatchCreateResponseBuilder
 
     Assert.assertTrue(responseData.getBatchCreateResponseEnvelope().isGetAfterCreate());
 
-    DataMap dataMap = responseData.getBatchCreateResponseEnvelope().getCreateResponses().get(0).getRecord().data()
-        .getDataMap("entity");
+    CreateIdEntityStatus<Long, Foo> item = (CreateIdEntityStatus<Long, Foo>) responseData.getBatchCreateResponseEnvelope().getCreateResponses().get(0).getRecord();
+    Assert.assertEquals(item.getLocation(), "/foo/1");
+    DataMap dataMap = item.data().getDataMap("entity");
     Assert.assertEquals(dataMap.size(), 1);
     Assert.assertEquals(dataMap.get("fruitsField"), Fruits.APPLE.toString());
 
