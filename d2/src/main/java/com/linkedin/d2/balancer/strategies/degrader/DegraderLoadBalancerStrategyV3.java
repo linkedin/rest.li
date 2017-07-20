@@ -57,6 +57,7 @@ import org.slf4j.LoggerFactory;
 
 import static com.linkedin.d2.discovery.util.LogUtil.debug;
 import static com.linkedin.d2.discovery.util.LogUtil.warn;
+import static com.linkedin.util.degrader.DegraderImpl.DEFAULT_INITIAL_DROP_RATE;
 
 
 /**
@@ -77,6 +78,9 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
   private static final Logger _log = LoggerFactory.getLogger(DegraderLoadBalancerStrategyV3.class);
   private static final int MAX_HOSTS_TO_CHECK_QUARANTINE = 10;
   private static final int MAX_RETRIES_TO_CHECK_QUARANTINE = 5;
+  private static final double SLOW_START_THRESHOLD = 0.0;
+  private static final double FAST_RECOVERY_THRESHOLD = 1.0;
+  private static final double FAST_RECOVERY_MAX_DROPRATE = 0.5;
 
   private boolean                                     _updateEnabled;
   private volatile DegraderLoadBalancerStrategyConfig _config;
@@ -443,10 +447,9 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
    * unhealthy (by using a high latency watermark) drop a portion of traffic across all tracker
    * clients corresponding to this cluster.
    *
-   * The reason we do not currently consider error rate when adjusting the hash ring is that
-   * there are legitimate errors that servers can send back for clients to handle, such as
-   * 400 return codes. A potential improvement would be to catch transport level exceptions and 500
-   * level return codes, but the implication of that would need to be carefully understood and documented.
+   * Currently only 500 level return codes are counted into error rate when adjusting the hash ring.
+   * The reason we do not consider other errors is that there are legitimate errors that servers can
+   * send back for clients to handle, such as 400 return codes.
    *
    * We don't want both to reduce hash points and allow clients to manage their own drop rates
    * because the clients do not have a global view that the load balancing strategy does. Without
@@ -489,10 +492,6 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
    * call-dropping with at most one step). Currently we will not call this concurrently, as
    * checkUpdatePartitionState will control entry to a single thread.
    *
-   * @param clusterGenerationId
-   * @param trackerClientUpdaters
-   * @param oldState
-   * @param config
    */
   private static PartitionDegraderLoadBalancerState doUpdatePartitionState(long clusterGenerationId, int partitionId,
                                                                          PartitionDegraderLoadBalancerState oldState,
@@ -504,7 +503,6 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
 
     double sumOfClusterLatencies = 0.0;
     long totalClusterCallCount = 0;
-    double newMaxDropRate;
     boolean hashRingChanges = false;
     boolean recoveryMapChanges = false;
     boolean quarantineMapChanged = false;
@@ -538,7 +536,6 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       sumOfClusterLatencies += averageLatency * callCount;
       totalClusterCallCount += callCount;
 
-      boolean recoveryMapContainsClient = newRecoveryMap.containsKey(client);
       activeClients.add(client);
       if (isQuarantineEnabled)
       {
@@ -563,60 +560,10 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
         }
       }
 
-      if (recoveryMapContainsClient)
+      if (newRecoveryMap.containsKey(client))
       {
-        // The following block of code calculates and updates the maxDropRate if the client had been
-        // fully degraded in the past and has not received any requests since being fully degraded.
-        // To increase the chances of the client receiving a request, we change the maxDropRate, which
-        // influences the maximum value of computedDropRate, which is used to compute the number of
-        // points in the hash ring for the clients.
-        if (callCount == 0)
-        {
-          // if this client is enrolled in the program, decrease the maxDropRate
-          // it is important to note that this excludes clients that haven't gotten traffic
-          // due solely to low volume.
-            double oldMaxDropRate = clientUpdater.getMaxDropRate();
-            double transmissionRate = 1.0 - oldMaxDropRate;
-            if (transmissionRate <= 0.0)
-            {
-              // We use the initialRecoveryLevel to indicate how many points to initially set
-              // the tracker client to when traffic has stopped flowing to this node.
-              transmissionRate = initialRecoveryLevel;
-            }
-            else
-            {
-              transmissionRate *= ringRampFactor;
-              transmissionRate = Math.min(transmissionRate, 1.0);
-            }
-            newMaxDropRate = 1.0 - transmissionRate;
-
-            if (strategy == PartitionDegraderLoadBalancerState.Strategy.LOAD_BALANCE)
-            {
-              // if it's the hash ring's turn to adjust, then adjust the maxDropRate.
-              // Otherwise, we let the call dropping strategy take it's turn, even if
-              // it may do nothing.
-              clientUpdater.setMaxDropRate(newMaxDropRate);
-            }
-            recoveryMapChanges = true;
-        }
-        else
-        {
-          // else if the recovery map contains the client and the call count was > 0
-          // tough love here, once the rehab clients start taking traffic, we
-          // restore their maxDropRate to it's original value, and unenroll them
-          // from the program.
-          // This is safe because the hash ring points are controlled by the
-          // computedDropRate variable, and the call dropping rate is controlled by
-          // the overrideDropRate. The maxDropRate only serves to cap the computedDropRate and
-          // overrideDropRate.
-          // We store the maxDropRate and restore it here because the initialRecoveryLevel could
-          // potentially be higher than what the default maxDropRate allowed. (the maxDropRate doesn't
-          // necessarily have to be 1.0). For instance, if the maxDropRate was 0.99, and the
-          // initialRecoveryLevel was 0.05  then we need to store the old maxDropRate.
-          clientUpdater.setMaxDropRate(newRecoveryMap.get(client));
-          newRecoveryMap.remove(client);
-          recoveryMapChanges = true;
-        }
+        recoveryMapChanges = handleClientInRecoveryMap(degraderControl, clientUpdater, initialRecoveryLevel, ringRampFactor,
+            callCount, newRecoveryMap, strategy);
       }
     }
 
@@ -628,6 +575,8 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       quarantineMap.entrySet().removeIf(e -> !activeClients.contains(e.getKey()));
       quarantineHistory.entrySet().removeIf(e -> !activeClients.contains(e.getKey()));
     }
+    // Also remove the clients from recoveryMap if they are gone
+    newRecoveryMap.entrySet().removeIf(e -> !activeClients.contains(e.getKey()));
 
     if (oldState.getClusterGenerationId() == clusterGenerationId && totalClusterCallCount <= 0
         && !recoveryMapChanges && !quarantineMapChanged)
@@ -658,7 +607,6 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     for (TrackerClientUpdater clientUpdater : trackerClientUpdaters)
     {
       TrackerClient client = clientUpdater.getTrackerClient();
-      double successfulTransmissionWeight;
       URI clientUri = client.getUri();
 
       // Don't take into account cluster health when calculating the number of points
@@ -679,7 +627,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       // node divided by the probability of successful transmission to the entire
       // cluster
       double clientWeight = client.getPartitionWeight(partitionId);
-      successfulTransmissionWeight = clientWeight * (1.0 - dropRate);
+      double successfulTransmissionWeight = clientWeight * (1.0 - dropRate);
 
       // calculate the weight as the probability of a successful transmission to this node
       // multiplied by the client's self-defined weight. thus, the node's final weight
@@ -752,7 +700,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       // ClientWeight can be zero when the server's clientWeight in zookeeper is explicitly set to zero,
       // in order to put the server into standby. In this particular case, we should not put the tracker
       // client into the recovery program, because we don't want this tracker client to get any traffic.
-      if (!quarantineEffect && newPoints == 0 && clientWeight > EPSILON )
+      if (!quarantineEffect && newPoints == 0 && clientWeight > EPSILON)
       {
         // We are choking off traffic to this tracker client.
         // Enroll this tracker client in the recovery program so that
@@ -763,7 +711,11 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
         newPoints = (int) (initialRecoveryLevel * pointsPerWeight);
 
         // Keep track of the original maxDropRate
-        if (!newRecoveryMap.containsKey(client))
+        // We want to exclude the RecoveryMap and MaxDropRate updates during CALL_DROPPING phase because the corresponding
+        // pointsMap won't get updated during CALL_DROP phase. In the past this is done by dropping newRecoveryMap for
+        // that phase. Now we want to keep newRecoveryMap because fastRecovery and Quarantine can add new clients to the map.
+        // Therefore we end up with adding this client to the Map only if it is in LOAD_BALANCE phase.
+        if (!newRecoveryMap.containsKey(client) && strategy == PartitionDegraderLoadBalancerState.Strategy.LOAD_BALANCE)
         {
           // keep track of this client,
           newRecoveryMap.put(client, oldMaxDropRate);
@@ -771,6 +723,8 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
         }
       }
 
+      // also enroll new client into the recoveryMap if possible
+      enrollNewClientInRecoveryMap(newRecoveryMap, oldState, config, degraderControl, clientUpdater);
 
       points.put(clientUri, newPoints);
       if (!oldPointsMap.containsKey(clientUri) || oldPointsMap.get(clientUri) != newPoints)
@@ -812,65 +766,17 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     else
     {
       // time to try call dropping strategy, if necessary.
-
-      // we are explicitly setting the override drop rate to a number between 0 and 1, inclusive.
-      double newDropLevel = Math.max(0.0, currentOverrideDropRate);
-
-      // if the cluster is unhealthy (above high water mark)
-      // then increase the override drop rate
-      //
-      // note that the tracker clients in the recovery list are also affected by the global
-      // overrideDropRate, and that their hash ring bump ups will also alternate with this
-      // overrideDropRate adjustment, if necessary. This is fine because the first priority is
-      // to get the cluster latency stabilized
-      if (newCurrentAvgClusterLatency > 0 && totalClusterCallCount >= config.getMinClusterCallCountHighWaterMark())
-      {
-        // if we enter here that means we have enough call counts to be confident that our average latency is
-        // statistically significant
-        if (newCurrentAvgClusterLatency >= config.getHighWaterMark() && currentOverrideDropRate != 1.0)
-        {
-          // if the cluster latency is too high and we can drop more traffic
-          newDropLevel = Math.min(1.0, newDropLevel + config.getGlobalStepUp());
-        }
-        else if (newCurrentAvgClusterLatency <= config.getLowWaterMark() && currentOverrideDropRate != 0.0)
-        {
-          // else if the cluster latency is good and we can reduce the override drop rate
-          newDropLevel = Math.max(0.0, newDropLevel - config.getGlobalStepDown());
-        }
-        // else the averageClusterLatency is between Low and High, or we can't change anything more,
-        // then do not change anything.
-      }
-      else if (newCurrentAvgClusterLatency > 0 && totalClusterCallCount >= config.getMinClusterCallCountLowWaterMark())
-      {
-        //if we enter here that means, we don't have enough calls to the cluster. We shouldn't degrade more
-        //but we might recover a bit if the latency is healthy
-        if (newCurrentAvgClusterLatency <= config.getLowWaterMark() && currentOverrideDropRate != 0.0)
-        {
-          // the cluster latency is good and we can reduce the override drop rate
-          newDropLevel = Math.max(0.0, newDropLevel - config.getGlobalStepDown());
-        }
-        // else the averageClusterLatency is somewhat high but since the qps is not that high, we shouldn't degrade
-      }
-      else
-      {
-        // if we enter here that means we have very low traffic. We should reduce the overrideDropRate, if possible.
-        // when we have below 1 QPS traffic, we should be pretty confident that the cluster can handle very low
-        // traffic. Of course this is depending on the MinClusterCallCountLowWaterMark that the service owner sets.
-        // Another reason is this might have happened if we had somehow choked off all traffic to the cluster, most
-        // likely in a one node/small cluster scenario. Obviously, we can't check latency here,
-        // we'll have to rely on the metric in the next updatePartitionState. If the cluster is still having
-        // latency problems, then we will oscillate between off and letting a little traffic through,
-        // and that is acceptable. If the latency, though high, is deemed acceptable, then the
-        // watermarks can be adjusted to let more traffic through.
-        newDropLevel = Math.max(0.0, newDropLevel - config.getGlobalStepDown());
-      }
+      double newDropLevel = calculateNewDropLevel(config, currentOverrideDropRate, newCurrentAvgClusterLatency,
+          totalClusterCallCount);
 
       if (newDropLevel != currentOverrideDropRate)
       {
         overrideClusterDropRate(partitionId, newDropLevel, trackerClientUpdaters);
       }
 
-      // don't change the points map or the recoveryMap, but try load balancing strategy next time.
+      // don't change the points map, but try load balancing strategy next time.
+      // recoveryMap needs to update if quarantine or fastRecovery is enabled. This is because the client will not
+      // have chance to get in in next interval (already evicted from quarantine or not a new client anymore).
       newState =
               new PartitionDegraderLoadBalancerState(clusterGenerationId, config.getClock().currentTimeMillis(), true,
                                             oldState.getRingFactory(),
@@ -878,7 +784,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
                                             PartitionDegraderLoadBalancerState.Strategy.LOAD_BALANCE,
                                             newDropLevel,
                                             newCurrentAvgClusterLatency,
-                                            isQuarantineEnabled ? newRecoveryMap : oldRecoveryMap,
+                                            newRecoveryMap,
                                             oldState.getServiceName(),
                                             oldState.getDegraderProperties(),
                                             totalClusterCallCount,
@@ -896,9 +802,35 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
 
     // adjust the min call count for each client based on the hash ring reduction and call dropping
     // fraction.
-    overrideMinCallCount(partitionId, currentOverrideDropRate,trackerClientUpdaters, points, pointsPerWeight);
+    overrideMinCallCount(partitionId, currentOverrideDropRate, trackerClientUpdaters, points, pointsPerWeight);
 
     return newState;
+  }
+
+  /**
+   /**
+   * Enroll new client into RecoveryMap
+   *
+   * When fastRecovery mode is enabled, we want to enroll the new client into recoveryMap to help its recovery
+   *
+   */
+  private static void enrollNewClientInRecoveryMap(Map<TrackerClient,Double> recoveryMap,
+      PartitionDegraderLoadBalancerState state, DegraderLoadBalancerStrategyConfig config,
+      DegraderControl degraderControl, TrackerClientUpdater clientUpdater)
+  {
+    TrackerClient client = clientUpdater.getTrackerClient();
+
+    if (!recoveryMap.containsKey(client)                                      // client is not in the map yet
+        && !state.getTrackerClients().contains(client)                        // client is new
+        && config.getRingRampFactor() > FAST_RECOVERY_THRESHOLD               // Fast recovery is enabled
+        && degraderControl.getInitialDropRate() > SLOW_START_THRESHOLD        // Slow start is enabled
+        && !degraderControl.isHigh())                                         // current client is not degrading or QPS is too low
+    {
+      recoveryMap.put(client, clientUpdater.getMaxDropRate());
+      // also set the maxDropRate to the computedDropRate if not 1;
+      double maxDropRate = 1.0 - config.getInitialRecoveryLevel();
+      clientUpdater.setMaxDropRate(Math.min(degraderControl.getCurrentComputedDropRate(), maxDropRate));
+    }
   }
 
   /**
@@ -998,7 +930,6 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
             !config.isUpdateOnlyAtInterval() && partitionState.getClusterGenerationId() != clusterGenerationId ||
             config.getClock().currentTimeMillis() - partitionState.getLastUpdated() >= config.getUpdateIntervalMs());
   }
-
 
   /**
    * only used in tests
@@ -1167,6 +1098,172 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
         _state._healthCheckMap.remove(client);
       }
     }
+  }
+
+  /**
+   * recoveryMap is the incubator for client to recovery in case the QPS is low. This function decides the fate for the
+   * clients in the recoveryMap:
+   * 1. Keep them in the map, but increase their chances to get requests (when qps is too low)
+   * 2. Keep them in the map and wait their recovery (when fastRecovery is enabled and the clients are healthy)
+   * 3. Get them out
+   *
+   * @return: true if the recoveryMap changed, false otherwise.
+   */
+  private static boolean handleClientInRecoveryMap(DegraderControl degraderControl, TrackerClientUpdater clientUpdater,
+      double initialRecoveryLevel, double ringRampFactor, long callCount,
+      Map<TrackerClient, Double> newRecoveryMap, PartitionDegraderLoadBalancerState.Strategy strategy)
+  {
+    if (callCount < degraderControl.getMinCallCount())
+    {
+      // The following block of code calculates and updates the maxDropRate if the client had been
+      // fully degraded in the past and has not received enough requests since being fully degraded.
+      // To increase the chances of the client receiving a request, we change the maxDropRate, which
+      // influences the maximum value of computedDropRate, which is used to compute the number of
+      // points in the hash ring for the clients.
+      if (strategy == PartitionDegraderLoadBalancerState.Strategy.LOAD_BALANCE)
+      {
+        // if it's the hash ring's turn to adjust, then adjust the maxDropRate.
+        // Otherwise, we let the call dropping strategy take it's turn, even if
+        // it may do nothing.
+
+        // if this client is enrolled in the program, and the traffic is too low (so it won't be able to recvoer),
+        // decrease the maxDropRate
+        double oldMaxDropRate = clientUpdater.getMaxDropRate();
+        double transmissionRate = 1.0 - oldMaxDropRate;
+        if (transmissionRate <= 0.0)
+        {
+          // We use the initialRecoveryLevel to indicate how many points to initially set
+          // the tracker client to when traffic has stopped flowing to this node.
+          transmissionRate = initialRecoveryLevel;
+        }
+        else
+        {
+          transmissionRate *= ringRampFactor;
+          transmissionRate = Math.min(transmissionRate, 1.0);
+        }
+
+        clientUpdater.setMaxDropRate(1.0 - transmissionRate);
+      }
+    }
+    // It is generally harder for the low average QPS hosts to recover, because the healthy clients have
+    // much higher chances to get the requests. We introduce the new FAST_RECOVERY mode to address this type
+    // of problem. The idea is to keep the client enrolled in the recoveryMap even if it gets traffic, until
+    // the computed droprate is less than the given threshold (currently defined as lesser of 0.5 or the maxDropRate).
+    //
+    // Note:
+    // 1. in this mode the client is kept in the map only if it is still healthy (ie latency < degrader.highLatency &&
+    //    errorRate < degrader.highErrorRate).
+    // 2. rampFactor has no effect on the computedDropRate. But the computedDropRate is used for points calculation
+    //    when the client gets out of recoveryMap. That's why we want to keep the client in the map until its
+    //    calculatedDropRate catch up with the maxDropRate. Here is an example (assume slowStart is enabled,
+    //    rampFactor is 2, and degrader.downStep is 0.2):
+    //    PreCallCount  MaxDropRate/transmissionRate  ComputedDropRate  HashRingPoints    In RecoveryMap?  Comments
+    //         0                  99/1                    99                  1                   y
+    //         0                  98/2                    99                  2                   y
+    //         ...
+    //         0                  84/16                   99                  16                  y        No traffic so far
+    //         1                  84/16                   98 (99 - 1)         16                  y        ComputedDropRate recovering
+    //         1                  84/16                   96 (98 - 2)         16                  y
+    //         0                  68/32                   96                  32                  y        No traffic again, MaxDropRate updated
+    //         1                  68/32                   92                  32                  y        recovering with traffic
+    //         ...
+    //         1                  68/32                   84                  32                  y        slowStart recovery done
+    //         1                  68/32                   64 (84 - 20)        36                  y
+    //         1                  68/32                   44 (64 - 20)        56                  n        get out of recoveryMap
+    //         1                  100 (restored)          24 (44 - 20)        76                  n        continue recovering
+    //         1                  100                     4  (24 - 20)        96                  n
+    //         1                  100                     0                   100                 n        fully recovered
+    //
+    else if (ringRampFactor > FAST_RECOVERY_THRESHOLD && !degraderControl.isHigh()
+        && degraderControl.getCurrentComputedDropRate() > Math.min(FAST_RECOVERY_MAX_DROPRATE, clientUpdater.getMaxDropRate()))
+    {
+      // If we come to this block, it means:
+      //    1. we're getting traffic and it's healthy (so we're recovering, ie computedDropRate is going up)
+      //    2. the computedDropRate is still higher than the threshold. The threshold is defined as min(0.5, maxDropRate).
+      //       If we already force the maxDropRate to a rate lower than 0.5, we want to keep the client recovers
+      //       beyond that point before get it out.
+      //
+      // Keep the client in the map and wait for the client further recovering.
+    }
+    else
+    {
+      // else if the recovery map contains the client and the call count was > 0
+      // tough love here, once the rehab clients start taking traffic, we
+      // restore their maxDropRate to it's original value, and unenroll them
+      // from the program.
+      // This is safe because the hash ring points are controlled by the
+      // computedDropRate variable, and the call dropping rate is controlled by
+      // the overrideDropRate. The maxDropRate only serves to cap the computedDropRate and
+      // overrideDropRate.
+      // We store the maxDropRate and restore it here because the initialRecoveryLevel could
+      // potentially be higher than what the default maxDropRate allowed. (the maxDropRate doesn't
+      // necessarily have to be 1.0). For instance, if the maxDropRate was 0.99, and the
+      // initialRecoveryLevel was 0.05  then we need to store the old maxDropRate.
+      TrackerClient client = clientUpdater.getTrackerClient();
+      clientUpdater.setMaxDropRate(newRecoveryMap.get(client));
+      newRecoveryMap.remove(client);
+    }
+    // Always return true to bypass early return (ie get the state update).
+    return true;
+  }
+
+  // Calculate DropRate
+  private static double calculateNewDropLevel(DegraderLoadBalancerStrategyConfig config,
+      double currentOverrideDropRate, double newCurrentAvgClusterLatency,
+      long totalClusterCallCount)
+  {
+    // we are explicitly setting the override drop rate to a number between 0 and 1, inclusive.
+    double newDropLevel = Math.max(0.0, currentOverrideDropRate);
+
+    // if the cluster is unhealthy (above high water mark)
+    // then increase the override drop rate
+    //
+    // note that the tracker clients in the recovery list are also affected by the global
+    // overrideDropRate, and that their hash ring bump ups will also alternate with this
+    // overrideDropRate adjustment, if necessary. This is fine because the first priority is
+    // to get the cluster latency stabilized
+    if (newCurrentAvgClusterLatency > 0 && totalClusterCallCount >= config.getMinClusterCallCountHighWaterMark())
+    {
+      // if we enter here that means we have enough call counts to be confident that our average latency is
+      // statistically significant
+      if (newCurrentAvgClusterLatency >= config.getHighWaterMark() && currentOverrideDropRate != 1.0)
+      {
+        // if the cluster latency is too high and we can drop more traffic
+        newDropLevel = Math.min(1.0, newDropLevel + config.getGlobalStepUp());
+      }
+      else if (newCurrentAvgClusterLatency <= config.getLowWaterMark() && currentOverrideDropRate != 0.0)
+      {
+        // else if the cluster latency is good and we can reduce the override drop rate
+        newDropLevel = Math.max(0.0, newDropLevel - config.getGlobalStepDown());
+      }
+      // else the averageClusterLatency is between Low and High, or we can't change anything more,
+      // then do not change anything.
+    }
+    else if (newCurrentAvgClusterLatency > 0 && totalClusterCallCount >= config.getMinClusterCallCountLowWaterMark())
+    {
+      //if we enter here that means, we don't have enough calls to the cluster. We shouldn't degrade more
+      //but we might recover a bit if the latency is healthy
+      if (newCurrentAvgClusterLatency <= config.getLowWaterMark() && currentOverrideDropRate != 0.0)
+      {
+        // the cluster latency is good and we can reduce the override drop rate
+        newDropLevel = Math.max(0.0, newDropLevel - config.getGlobalStepDown());
+      }
+      // else the averageClusterLatency is somewhat high but since the qps is not that high, we shouldn't degrade
+    }
+    else
+    {
+      // if we enter here that means we have very low traffic. We should reduce the overrideDropRate, if possible.
+      // when we have below 1 QPS traffic, we should be pretty confident that the cluster can handle very low
+      // traffic. Of course this is depending on the MinClusterCallCountLowWaterMark that the service owner sets.
+      // Another reason is this might have happened if we had somehow choked off all traffic to the cluster, most
+      // likely in a one node/small cluster scenario. Obviously, we can't check latency here,
+      // we'll have to rely on the metric in the next updatePartitionState. If the cluster is still having
+      // latency problems, then we will oscillate between off and letting a little traffic through,
+      // and that is acceptable. If the latency, though high, is deemed acceptable, then the
+      // watermarks can be adjusted to let more traffic through.
+      newDropLevel = Math.max(0.0, newDropLevel - config.getGlobalStepDown());
+    }
+    return newDropLevel;
   }
 
   // for unit testing, this allows the strategy to be forced for the next time updatePartitionState
@@ -1632,7 +1729,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
           + ", _currentClusterErrorCount=" + _currentClusterErrorCount
           + ", _clusterGenerationId=" + _clusterGenerationId
           + ", _strategy=" + _strategy
-          + ", _numHostsInCluster=" + (_pointsMap.size() + _recoveryMap.size())
+          + ", _numHostsInCluster=" + (getTrackerClients().size())
           + ", _recoveryMap=" + _recoveryMap
           + ", _quarantineList=" + _quarantineMap.values()
           + "]";

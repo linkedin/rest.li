@@ -2606,7 +2606,8 @@ public class DegraderLoadBalancerTest
     }
   }
 
-  @Test(groups = { "small", "back-end" })
+  // disabled since it triggers slowStart + fastRecovery, which is covered by other tests
+  @Test(groups = { "small", "back-end" }, enabled = false)
   public void testClusterRecoveryAfter100PercentDropCall()
   {
     Map<String, Object> myMap = new HashMap<String, Object>();

@@ -188,6 +188,12 @@ public class DegraderControl implements DegraderControlMBean
   }
 
   @Override
+  public double getInitialDropRate()
+  {
+    return _degrader.getConfig().getInitialDropRate();
+  }
+
+  @Override
   public int getMinCallCount()
   {
     return _degrader.getConfig().getMinCallCount();

@@ -1,5 +1,8 @@
 16.0.2
 ------
+(RB=1048086)
+Adding 'fast recovery' mode to help host recover in low QPS situation
+
 
 16.0.1
 ------
