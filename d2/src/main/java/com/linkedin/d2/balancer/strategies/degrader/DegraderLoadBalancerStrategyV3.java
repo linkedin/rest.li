@@ -1618,7 +1618,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
 
     public Set<TrackerClient> getTrackerClients()
     {
-      return Collections.unmodifiableSet(_trackerClients);
+      return Collections.unmodifiableSet(_trackerClients == null ? Collections.emptySet() : _trackerClients);
     }
 
     @Override

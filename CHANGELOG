@@ -1,9 +1,12 @@
+13.0.3
+------
 
 13.0.2
 ------
 (RB=1016157)
 Update D2 LoadBalancerStrategyProperties PDSC file with new D2Event properties
-
+(RB=1048885)
+Fix pegasus test failure
 
 13.0.1
 ------
