@@ -1,20 +1,20 @@
 {
   "models" : [ {
     "type" : "record",
-    "name" : "B",
+    "name" : "A",
     "namespace" : "com.linkedin.restli.tools.snapshot.circular",
     "fields" : [ {
-      "name" : "a",
+      "name" : "b",
       "type" : {
         "type" : "record",
-        "name" : "A",
+        "name" : "B",
         "fields" : [ {
-          "name" : "b",
-          "type" : "B"
+          "name" : "a",
+          "type" : "A"
         } ]
       }
     } ]
-  }, "com.linkedin.restli.tools.snapshot.circular.A", {
+  }, "com.linkedin.restli.tools.snapshot.circular.B", {
     "type" : "record",
     "name" : "C",
     "namespace" : "com.linkedin.restli.tools.snapshot.circular",
@@ -32,6 +32,9 @@
     } ]
   } ],
   "schema" : {
+    "name" : "circular",
+    "path" : "/circular",
+    "doc" : "generated from: com.linkedin.restli.tools.snapshot.circular.CircularResource",
     "actionsSet" : {
       "actions" : [ {
         "name" : "test",
@@ -49,9 +52,6 @@
           "type" : "com.linkedin.restli.tools.snapshot.circular.D"
         } ]
       } ]
-    },
-    "name" : "circular",
-    "doc" : "generated from: com.linkedin.restli.tools.snapshot.circular.CircularResource",
-    "path" : "/circular"
+    }
   }
 }
