@@ -63,7 +63,7 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
   private static final String MUX_PLAN_CLASS = "mux";
   private static final String MUX_URI_PATH = "/mux";
 
-  private final Logger _log = LoggerFactory.getLogger(MultiplexedRequestHandlerImpl.class);
+  private static final Logger _log = LoggerFactory.getLogger(MultiplexedRequestHandlerImpl.class);
   private final RestRequestHandler _requestHandler;
   private final Engine _engine;
   private final int _maximumRequestsNumber;
@@ -199,7 +199,9 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
 
     if (!supported)
     {
-      throw RestException.forError(HttpStatus.S_415_UNSUPPORTED_MEDIA_TYPE.getCode(), "Unsupported content type");
+      _log.warn("Unsupported content type: " + request.getHeader(RestConstants.HEADER_CONTENT_TYPE));
+      // TODO Add back the check for content type.
+      // throw RestException.forError(HttpStatus.S_415_UNSUPPORTED_MEDIA_TYPE.getCode(), "Unsupported content type");
     }
   }
 

@@ -126,7 +126,8 @@ public class TestMultiplexedRequestHandlerImpl
     assertEquals(getErrorStatus(callback), HttpStatus.S_405_METHOD_NOT_ALLOWED);
   }
 
-  @Test(dataProvider = "multiplexerConfigurations")
+  // Temporarily disabled.
+  @Test(dataProvider = "multiplexerConfigurations", enabled=false)
   public void testHandleWrongContentType(MultiplexerRunMode multiplexerRunMode) throws Exception
   {
     MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(null, multiplexerRunMode);

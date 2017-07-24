@@ -1,5 +1,7 @@
 13.0.3
 ------
+(RB=1050311)
+Temporarily remove the content type check for multiplexed requests.
 
 13.0.2
 ------
