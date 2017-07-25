@@ -1,5 +1,7 @@
 13.0.4
 ------
+(RB=1051427)
+Allow createDefaultTransportClientFactories to support https scheme as well
 
 13.0.3
 ------
