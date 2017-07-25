@@ -24,13 +24,14 @@ import com.linkedin.r2.transport.http.client.common.SslRequestHandler;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.HttpClientCodec;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLParameters;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 
 /**
@@ -131,11 +132,11 @@ class RAPStreamClientPipelineInitializer extends ChannelInitializer<NioSocketCha
     ch.pipeline().addLast("rapFullRequestEncoder", new RAPStreamFullRequestEncoder());
     ch.pipeline().addLast("rapEncoder", new RAPStreamRequestEncoder());
     ch.pipeline().addLast("rapDecoder", new RAPStreamResponseDecoder(_maxResponseSize));
-    ch.pipeline().addLast("responseHandler", new RAPStreamResponseHandler());
     if (_sslContext != null)
     {
       ch.pipeline().addLast("sslRequestHandler", new SslRequestHandler(_sslContext, _sslParameters));
     }
+    ch.pipeline().addLast("responseHandler", new RAPStreamResponseHandler());
     ch.pipeline().addLast("channelManager", new ChannelPoolStreamHandler());
   }
 }

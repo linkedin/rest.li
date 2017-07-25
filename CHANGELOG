@@ -9,6 +9,10 @@ Disabled few flaky tests.
 (RB=1026759)
 Fix testShutdownRequestOutstanding flaky test
 
+(RB=1051941)
+Allowing user to specify the "expected server's certificate principal name"
+to verify the identify of the server in http 1.1
+
 13.0.3
 ------
 (RB=1050311)

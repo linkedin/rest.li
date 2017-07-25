@@ -77,6 +77,8 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.linkedin.test.util.ExceptionTestUtil.verifyCauseChain;
+
 /**
  * @author Steven Ihde
  * @author Ang Xu
@@ -667,24 +669,6 @@ public class TestHttpNettyStreamClient
     {
       responseLatch.countDown();
       server.stop();
-    }
-  }
-
-  private static void verifyCauseChain(Throwable throwable, Class<?>... causes)
-  {
-    Throwable t = throwable;
-    for (Class<?> c : causes)
-    {
-      Throwable cause = t.getCause();
-      if (cause == null)
-      {
-        Assert.fail("Cause chain ended too early", throwable);
-      }
-      if (!c.isAssignableFrom(cause.getClass()))
-      {
-        Assert.fail("Expected cause " + c.getName() + " not " + cause.getClass().getName(), throwable);
-      }
-      t = cause;
     }
   }
 

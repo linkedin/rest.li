@@ -20,6 +20,7 @@ package com.linkedin.r2.sample.echo.rest;
 import com.linkedin.data.ByteString;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.CallbackAdapter;
+import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestMethod;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
@@ -44,13 +45,19 @@ public class RestEchoClient implements EchoService
     _client = client;
   }
 
+
   public void echo(String msg, Callback<String> callback)
+  {
+    echo(msg, new RequestContext(), callback);
+  }
+
+  public void echo(String msg, RequestContext requestContext, Callback<String> callback)
   {
     final RestRequest req = new RestRequestBuilder(_uri)
             .setEntity(ByteString.copyString(msg, RestEchoServer.CHARSET))
             .setMethod(RestMethod.POST)
             .build();
-    _client.restRequest(req, new CallbackAdapter<String, RestResponse>(callback) {
+    _client.restRequest(req, requestContext, new CallbackAdapter<String, RestResponse>(callback) {
       @Override
       protected String convertResponse(RestResponse response) throws Exception
       {

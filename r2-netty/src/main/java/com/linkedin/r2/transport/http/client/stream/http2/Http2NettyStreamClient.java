@@ -101,7 +101,7 @@ public class Http2NettyStreamClient extends AbstractNettyStreamClient
   }
 
   @Override
-  protected void doWriteRequestWithWireAttrHeaders(Request request, final RequestContext context, SocketAddress address,
+  protected void doWriteRequestWithWireAttrHeaders(Request request, final RequestContext requestContext, SocketAddress address,
                                                    Map<String, String> wireAttrs, TimeoutTransportCallback<StreamResponse> callback)
   {
     final AsyncPool<Channel> pool;
@@ -115,9 +115,9 @@ public class Http2NettyStreamClient extends AbstractNettyStreamClient
       return;
     }
 
-    context.putLocalAttr(R2Constants.HTTP_PROTOCOL_VERSION, HttpProtocolVersion.HTTP_2);
+    requestContext.putLocalAttr(R2Constants.HTTP_PROTOCOL_VERSION, HttpProtocolVersion.HTTP_2);
 
-    Callback<Channel> getCallback = new ChannelPoolGetCallback(pool, request, callback);
+    Callback<Channel> getCallback = new ChannelPoolGetCallback(pool, request, requestContext, callback);
     final Cancellable pendingGet = pool.get(getCallback);
     if (pendingGet != null)
     {
@@ -129,12 +129,14 @@ public class Http2NettyStreamClient extends AbstractNettyStreamClient
   {
     private final AsyncPool<Channel> _pool;
     private final Request _request;
+    private RequestContext _requestContext;
     private final TimeoutTransportCallback<StreamResponse> _callback;
 
-    ChannelPoolGetCallback(AsyncPool<Channel> pool, Request request, TimeoutTransportCallback<StreamResponse> callback)
+    ChannelPoolGetCallback(AsyncPool<Channel> pool, Request request, RequestContext requestContext, TimeoutTransportCallback<StreamResponse> callback)
     {
       _pool = pool;
       _request = request;
+      _requestContext = requestContext;
       _callback = callback;
     }
 
@@ -151,6 +153,13 @@ public class Http2NettyStreamClient extends AbstractNettyStreamClient
         // invoked more than once, so it is safe to invoke it unconditionally.
         _callback.onResponse(TransportResponseImpl          .error(new TimeoutException("Operation did not complete before shutdown")));
         return;
+      }
+
+      String expectedCertPrincipal = (String) _requestContext.getLocalAttr(R2Constants.EXPECTED_CERT_PRINCIPAL_NAME);
+      if (expectedCertPrincipal != null)
+      {
+        LOG.warn("Server's Certificate Principal's name is not supported yet on a Http2 connection and SSL, " +
+          "the requirement will be ignored");
       }
 
       // By wrapping the channel and the pool in a timeout handle we can guarantee the following

@@ -35,6 +35,7 @@ import com.linkedin.r2.transport.http.client.TimeoutCallback;
 import com.linkedin.r2.transport.http.client.TimeoutTransportCallback;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolFactory;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManager;
+import com.linkedin.r2.transport.http.client.common.SslRequestHandler;
 import com.linkedin.r2.transport.http.client.stream.AbstractNettyStreamClient;
 import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
 import com.linkedin.r2.util.Cancellable;
@@ -110,7 +111,7 @@ import java.util.concurrent.TimeoutException;
   }
 
   @Override
-  protected void doWriteRequestWithWireAttrHeaders(Request request, RequestContext context, SocketAddress address,
+  protected void doWriteRequestWithWireAttrHeaders(Request request, RequestContext requestContext, SocketAddress address,
                                                    Map<String, String> wireAttrs, TimeoutTransportCallback<StreamResponse> callback)
   {
     final AsyncPool<Channel> pool;
@@ -124,9 +125,9 @@ import java.util.concurrent.TimeoutException;
       return;
     }
 
-    context.putLocalAttr(R2Constants.HTTP_PROTOCOL_VERSION, HttpProtocolVersion.HTTP_1_1);
+    requestContext.putLocalAttr(R2Constants.HTTP_PROTOCOL_VERSION, HttpProtocolVersion.HTTP_1_1);
 
-    Callback<Channel> getCallback = new ChannelPoolGetCallback(pool, request, callback);
+    Callback<Channel> getCallback = new ChannelPoolGetCallback(pool, request, requestContext, callback);
     final Cancellable pendingGet = pool.get(getCallback);
     if (pendingGet != null)
     {
@@ -138,12 +139,14 @@ import java.util.concurrent.TimeoutException;
   {
     private final AsyncPool<Channel> _pool;
     private final Request _request;
+    private RequestContext _requestContext;
     private final TimeoutTransportCallback<StreamResponse> _callback;
 
-    ChannelPoolGetCallback(AsyncPool<Channel> pool, Request request, TimeoutTransportCallback<StreamResponse> callback)
+    ChannelPoolGetCallback(AsyncPool<Channel> pool, Request request, RequestContext requestContext, TimeoutTransportCallback<StreamResponse> callback)
     {
       _pool = pool;
       _request = request;
+      _requestContext = requestContext;
       _callback = callback;
     }
 
@@ -174,6 +177,10 @@ import java.util.concurrent.TimeoutException;
       // This handler invokes the callback with the response once it arrives.
       channel.attr(RAPStreamResponseHandler.CALLBACK_ATTR_KEY).set(_callback);
       channel.attr(RAPStreamResponseDecoder.TIMEOUT_ATTR_KEY).set(streamingTimeout);
+
+      // Set the expected value by the user of the cert principal name
+      String expectedCertPrincipal = (String) _requestContext.getLocalAttr(R2Constants.EXPECTED_CERT_PRINCIPAL_NAME);
+      channel.attr(SslRequestHandler.EXPECTED_CERT_PRINCIPAL_ATTR_KEY).set(expectedCertPrincipal);
 
       State state = _state.get();
       if (state == HttpNettyStreamClient.State.REQUESTS_STOPPING || state == HttpNettyStreamClient.State.SHUTDOWN)

@@ -22,12 +22,15 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
 import io.netty.handler.ssl.SslHandler;
+import io.netty.util.AttributeKey;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.FutureListener;
-import java.net.URI;
+
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLParameters;
+import javax.net.ssl.SSLPeerUnverifiedException;
+import java.net.URI;
 
 
 /**
@@ -41,6 +44,9 @@ public class SslRequestHandler extends ChannelOutboundHandlerAdapter
 
   private final SslHandler          _sslHandler;
   private String                    _firstTimeScheme;
+
+  public static final AttributeKey<String> EXPECTED_CERT_PRINCIPAL_ATTR_KEY
+    = AttributeKey.valueOf("expectedCertPrincipal");
 
   public SslRequestHandler(SSLContext sslContext, SSLParameters sslParameters)
   {
@@ -121,7 +127,7 @@ public class SslRequestHandler extends ChannelOutboundHandlerAdapter
         @Override
         public void operationComplete(Future<Channel> future) throws Exception
         {
-          ctx.flush();
+          checkCertPrincipalAndFlush(ctx);
         }
       });
     }
@@ -129,5 +135,19 @@ public class SslRequestHandler extends ChannelOutboundHandlerAdapter
     {
       ctx.flush();
     }
+  }
+
+  private void checkCertPrincipalAndFlush(final ChannelHandlerContext ctx) throws SSLPeerUnverifiedException
+  {
+    String expectedPrincipalName = ctx.channel().attr(EXPECTED_CERT_PRINCIPAL_ATTR_KEY).getAndSet(null);
+    String actualPrincipalName = _sslHandler.engine().getSession().getPeerPrincipal().getName();
+
+    // if cert is empty, the check is disabled and not needed by the user, therefore don't check
+    if (expectedPrincipalName != null && !expectedPrincipalName.equals(actualPrincipalName))
+    {
+      ctx.fireExceptionCaught(new UnknownServerCertPrincipalNameException(expectedPrincipalName, actualPrincipalName));
+      return;
+    }
+    ctx.flush();
   }
 }

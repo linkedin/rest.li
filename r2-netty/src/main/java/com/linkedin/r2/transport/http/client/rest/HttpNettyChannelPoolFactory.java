@@ -30,14 +30,15 @@ import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpObjectAggregator;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLParameters;
 import java.net.SocketAddress;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLParameters;
 
 
 /**
@@ -193,11 +194,11 @@ public class HttpNettyChannelPoolFactory implements ChannelPoolFactory
       ch.pipeline().addLast("codec", new HttpClientCodec(4096, _maxHeaderSize, _maxChunkSize));
       ch.pipeline().addLast("dechunker", new HttpObjectAggregator(_maxResponseSize));
       ch.pipeline().addLast("rapiCodec", new RAPClientCodec());
-      ch.pipeline().addLast("responseHandler", _responseHandler);
       if (_sslContext != null)
       {
         ch.pipeline().addLast("sslRequestHandler", new SslRequestHandler(_sslContext, _sslParameters));
       }
+      ch.pipeline().addLast("responseHandler", _responseHandler);
       ch.pipeline().addLast("channelManager", _handler);
     }
   }

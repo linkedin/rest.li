@@ -60,6 +60,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.linkedin.test.util.ExceptionTestUtil.verifyCauseChain;
+
 /**
  * @author Steven Ihde
  * @author Ang Xu
@@ -476,24 +478,6 @@ public class TestHttpNettyClient
       verifyCauseChain(e, causeChain);
     }
     testServer.shutdown();
-  }
-
-  private static void verifyCauseChain(Throwable throwable, Class<?>... causes)
-  {
-    Throwable t = throwable;
-    for (Class<?> c : causes)
-    {
-      Throwable cause = t.getCause();
-      if (cause == null)
-      {
-        Assert.fail("Cause chain ended too early", throwable);
-      }
-      if (!c.isAssignableFrom(cause.getClass()))
-      {
-        Assert.fail("Expected cause " + c.getName() + " not " + cause.getClass().getName(), throwable);
-      }
-      t = cause;
-    }
   }
 
   // Test that cannot pass pass SSLParameters without SSLContext.
