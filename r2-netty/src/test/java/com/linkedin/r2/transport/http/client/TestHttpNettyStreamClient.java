@@ -1151,7 +1151,7 @@ public class TestHttpNettyStreamClient
     }
   }
 
-  @Test(dataProvider = "requestResponseParameters")
+  @Test(dataProvider = "requestResponseParameters", enabled = false)
   public void testCancelStreamRequests(
       AbstractNettyStreamClient client,
       String method,

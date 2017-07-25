@@ -61,7 +61,7 @@ public class TestHttp2NettyStreamClient
    * Tests the condition that when a client request times out before the request is processed
    * by the server, the servlet implementation throws when attempting to read the request entity.
    */
-  @Test
+  @Test(enabled = false)
   public void testRequestTimeout() throws Exception
   {
     final AtomicInteger serverIOExceptions = new AtomicInteger(0);

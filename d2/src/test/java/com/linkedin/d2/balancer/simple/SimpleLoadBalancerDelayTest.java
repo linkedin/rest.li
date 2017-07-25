@@ -1153,7 +1153,7 @@ public class SimpleLoadBalancerDelayTest
     loadBalancerSimulator.shutdown();
   }
 
-  @Test(groups = { "small", "back-end" })
+  @Test(groups = { "small", "back-end" }, enabled = false)
   public void loadBalancerD2MonitorWithQuarantineTest() throws Exception
   {
     String uri1 = "test.qa1.com:1234";
