@@ -3,6 +3,9 @@
 (RB=1051427)
 Allow createDefaultTransportClientFactories to support https scheme as well
 
+(RB=1051811)
+Disabled few flaky tests.
+
 13.0.3
 ------
 (RB=1050311)
