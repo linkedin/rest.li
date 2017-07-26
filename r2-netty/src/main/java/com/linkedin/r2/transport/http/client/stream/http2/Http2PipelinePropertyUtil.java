@@ -16,21 +16,25 @@
 
 package com.linkedin.r2.transport.http.client.stream.http2;
 
+import com.linkedin.r2.transport.http.client.AsyncPoolHandle;
 import com.linkedin.util.ArgumentUtil;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http2.Http2Connection;
+import io.netty.handler.codec.http2.Http2Exception;
 import io.netty.handler.codec.http2.Http2Stream;
 import io.netty.util.AttributeKey;
-import java.util.Optional;
-import java.util.function.BiFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.function.BiFunction;
 
 
 /**
  * Util for setting, retrieving and removing properties in Http2 streams
  */
-final class Http2PipelinePropertyUtil {
+public final class Http2PipelinePropertyUtil
+{
   private static final Logger LOG = LoggerFactory.getLogger(Http2PipelinePropertyUtil.class);
 
   private Http2PipelinePropertyUtil() {
@@ -73,5 +77,32 @@ final class Http2PipelinePropertyUtil {
       return null;
     }
     return function.apply(stream, propertyKey);
+  }
+
+  public static void releaseChannelHandles(Channel channel)
+  {
+    Http2Connection connection = channel.attr(Http2ClientPipelineInitializer.HTTP2_CONNECTION_ATTR_KEY).get();
+    if (connection != null)
+    {
+      Http2Connection.PropertyKey handleKey =
+        channel.attr(Http2ClientPipelineInitializer.CHANNEL_POOL_HANDLE_ATTR_KEY).get();
+      try
+      {
+        connection.forEachActiveStream(stream ->
+        {
+          AsyncPoolHandle<Channel> handle = stream.getProperty(handleKey);
+          if (handle != null)
+          {
+            handle.release();
+          }
+          return true;
+        });
+      }
+      catch (Http2Exception e)
+      {
+        // Errors are not expected here since no operation is done on the HTTP/2 connection
+        LOG.warn("Unexpected HTTP/2 error when releasing handles", e);
+      }
+    }
   }
 }

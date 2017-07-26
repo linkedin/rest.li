@@ -17,7 +17,6 @@
 package com.linkedin.r2.transport.http.client.rest;
 
 import com.linkedin.common.callback.Callback;
-import com.linkedin.common.util.None;
 import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
@@ -29,7 +28,6 @@ import com.linkedin.r2.transport.common.WireAttributeHelper;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.http.client.AbstractJmxManager;
 import com.linkedin.r2.transport.http.client.AsyncPool;
-import com.linkedin.r2.transport.http.client.TimeoutCallback;
 import com.linkedin.r2.transport.http.client.TimeoutTransportCallback;
 import com.linkedin.r2.transport.http.client.common.AbstractNettyClient;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolFactory;
@@ -37,10 +35,8 @@ import com.linkedin.r2.transport.http.client.common.ChannelPoolManager;
 import com.linkedin.r2.transport.http.client.common.SslRequestHandler;
 import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
 import com.linkedin.r2.util.Cancellable;
-import com.linkedin.r2.util.TimeoutRunnable;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.group.ChannelGroupFutureListener;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.util.concurrent.DefaultEventExecutorGroup;
 import org.slf4j.Logger;
@@ -50,7 +46,6 @@ import java.net.SocketAddress;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -87,7 +82,6 @@ public class HttpNettyClient extends AbstractNettyClient<RestRequest, RestRespon
   {
     super(executor, requestTimeout, shutdownTimeout, jmxManager, channelPoolManager);
     _callbackExecutors = callbackExecutors == null ? eventLoopGroup : callbackExecutors;
-
   }
 
   /* Constructor for test purpose ONLY. */
@@ -103,55 +97,6 @@ public class HttpNettyClient extends AbstractNettyClient<RestRequest, RestRespon
                             TransportCallback<StreamResponse> callback)
   {
     throw new UnsupportedOperationException("Stream is not supported.");
-  }
-
-  protected void doShutdown(final Callback<None> callback) {
-    final long deadline = System.currentTimeMillis() + _shutdownTimeout;
-    TimeoutCallback<None> closeChannels =
-        new TimeoutCallback<>(_scheduler, _shutdownTimeout, TimeUnit.MILLISECONDS, new Callback<None>() {
-          private void finishShutdown() {
-            _state.set(State.REQUESTS_STOPPING);
-            // Timeout any waiters which haven't received a Channel yet
-            for (Callback<Channel> callback : _channelPoolManager.cancelWaiters()) {
-              callback.onError(new TimeoutException("Operation did not complete before shutdown"));
-            }
-
-            // Timeout any requests still pending response
-            for (Channel c : _allChannels) {
-              TransportCallback<RestResponse> callback = c.attr(RAPResponseHandler.CALLBACK_ATTR_KEY).getAndSet(null);
-              if (callback != null) {
-                errorResponse(callback, new TimeoutException("Operation did not complete before shutdown"));
-              }
-            }
-
-            // Close all active and idle Channels
-            final TimeoutRunnable afterClose =
-                new TimeoutRunnable(_scheduler, deadline - System.currentTimeMillis(), TimeUnit.MILLISECONDS, () -> {
-                  _state.set(State.SHUTDOWN);
-                  LOG.info("Shutdown complete");
-                  callback.onSuccess(None.none());
-                }, "Timed out waiting for channels to close, continuing shutdown");
-            _allChannels.close().addListener((ChannelGroupFutureListener) channelGroupFuture -> {
-              if (!channelGroupFuture.isSuccess()) {
-                LOG.warn("Failed to close some connections, ignoring");
-              }
-              afterClose.run();
-            });
-          }
-
-          @Override
-          public void onSuccess(None none) {
-            LOG.info("All connection pools shut down, closing all channels");
-            finishShutdown();
-          }
-
-          @Override
-          public void onError(Throwable e) {
-            LOG.warn("Error shutting down HTTP connection pools, ignoring and continuing shutdown", e);
-            finishShutdown();
-          }
-        }, "Connection pool shutdown timeout exceeded (" + _shutdownTimeout + "ms)");
-    _channelPoolManager.shutdown(closeChannels);
   }
 
   @Override

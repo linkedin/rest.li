@@ -16,8 +16,9 @@
 
 package com.linkedin.r2.transport.http.client;
 
-import com.linkedin.r2.transport.http.client.common.ChannelPoolManager;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerFactory;
+import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerFactoryImpl;
+import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerKey;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerKeyBuilder;
 import com.linkedin.r2.transport.http.client.rest.HttpNettyClient;
 import com.linkedin.r2.transport.http.client.stream.http.HttpNettyStreamClient;
@@ -41,6 +42,7 @@ public class HttpClientBuilder
 {
 
   private final ChannelPoolManagerKeyBuilder _channelPoolManagerKeyBuilder;
+  private final ChannelPoolManagerFactory _channelPoolManagerFactory;
   private ExecutorService _callbackExecutors = null;
   private long _shutdownTimeout = 5000;
   private long _requestTimeout = 10000;
@@ -48,12 +50,12 @@ public class HttpClientBuilder
   private final NioEventLoopGroup _eventLoopGroup;
   private final ScheduledExecutorService _scheduler;
 
-
   public HttpClientBuilder(NioEventLoopGroup eventLoopGroup, ScheduledExecutorService scheduler)
   {
     _eventLoopGroup = eventLoopGroup;
     _scheduler = scheduler;
     _channelPoolManagerKeyBuilder = new ChannelPoolManagerKeyBuilder();
+    _channelPoolManagerFactory = new ChannelPoolManagerFactoryImpl(_eventLoopGroup, _scheduler);
   }
 
   public HttpClientBuilder setCallbackExecutors(ExecutorService callbackExecutors)
@@ -84,7 +86,7 @@ public class HttpClientBuilder
 
   /**
    * @param jmxManager A management class that is aware of the creation/shutdown event
-   *                   of the underlying {@link ChannelPoolManager}
+   *                   of the underlying {@link com.linkedin.r2.transport.http.client.common.ChannelPoolManager}
    */
   public HttpClientBuilder setJmxManager(AbstractJmxManager jmxManager)
   {
@@ -92,9 +94,9 @@ public class HttpClientBuilder
     return this;
   }
 
-  private ChannelPoolManagerFactory getChannelPoolManagerFactory()
+  private ChannelPoolManagerKey getChannelPoolManagerKey()
   {
-    return new ChannelPoolManagerFactory(_eventLoopGroup, _scheduler, _channelPoolManagerKeyBuilder.build());
+    return _channelPoolManagerKeyBuilder.build();
   }
 
   public HttpNettyStreamClient buildStreamClient()
@@ -106,7 +108,7 @@ public class HttpClientBuilder
       _shutdownTimeout,
       _callbackExecutors,
       _jmxManager,
-      getChannelPoolManagerFactory().buildStream()
+      _channelPoolManagerFactory.buildStream(getChannelPoolManagerKey())
     );
   }
 
@@ -119,7 +121,7 @@ public class HttpClientBuilder
       _shutdownTimeout,
       _callbackExecutors,
       _jmxManager,
-      getChannelPoolManagerFactory().buildRest()
+      _channelPoolManagerFactory.buildRest(getChannelPoolManagerKey())
     );
   }
 
@@ -132,7 +134,7 @@ public class HttpClientBuilder
       _shutdownTimeout,
       _callbackExecutors,
       _jmxManager,
-      getChannelPoolManagerFactory().buildHttp2Stream());
+      _channelPoolManagerFactory.buildHttp2Stream(getChannelPoolManagerKey()));
   }
 
   // Delegating parameters

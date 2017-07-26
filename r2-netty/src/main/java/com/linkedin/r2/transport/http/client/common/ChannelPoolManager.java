@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2012 LinkedIn Corp.
+   Copyright (c) 2017 LinkedIn Corp.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -14,172 +14,34 @@
    limitations under the License.
 */
 
-/**
- * $Id: $
- */
-
 package com.linkedin.r2.transport.http.client.common;
 
 import com.linkedin.common.callback.Callback;
-import com.linkedin.common.callback.Callbacks;
 import com.linkedin.common.util.None;
 import com.linkedin.r2.transport.http.client.AsyncPool;
 import com.linkedin.r2.transport.http.client.AsyncPoolStats;
-import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.transport.http.client.PoolStats;
 import com.linkedin.r2.transport.http.client.PoolStatsProvider;
 import io.netty.channel.Channel;
 import io.netty.channel.group.ChannelGroup;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.net.SocketAddress;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 /**
- * @author Steven Ihde
- * @version $Revision: $
+ * Interface of a ChannelPoolManager that manages the lifecycle and returns on demand connection pools to a specific
+ * host/port
+ *
+ *  @author Francesco Capponi (fcapponi@linkedin.com)
  */
-public class ChannelPoolManager implements PoolStatsProvider
+public interface ChannelPoolManager extends PoolStatsProvider
 {
-  private static final Logger LOG = LoggerFactory.getLogger(ChannelPoolManager.class);
+  void shutdown(final Callback<None> callback, final Runnable callbackStopRequest, final Runnable callbackShutdown, long shutdownTimeout);
 
-  public static final String BASE_NAME = "ChannelPools";
+  Collection<Callback<Channel>> cancelWaiters();
 
-  // All modifications of _pool and all access to _state must be locked on _mutex.
-  // READS of _pool are allowed without synchronization
-  private final Object _mutex = new Object();
-  // We set update concurrency to 1 because all updates occur in a synchronized block
-  private final ConcurrentMap<SocketAddress,AsyncPool<Channel>> _pool =
-          new ConcurrentHashMap<SocketAddress,AsyncPool<Channel>>(256, 0.75f, 1);
-  private final ChannelGroup _allChannels;
-
-  private enum State { RUNNING, SHUTTING_DOWN, SHUTDOWN }
-  private State _state = State.RUNNING;
-
-  private final ChannelPoolFactory _channelPoolFactory;
-  private final String _name;
-
-  /* Constructor for test purpose ONLY. */
-  public ChannelPoolManager(ChannelPoolFactory channelPoolFactory,
-                            ChannelGroup allChannels)
-  {
-    this(channelPoolFactory,
-      HttpClientFactory.DEFAULT_CLIENT_NAME + BASE_NAME, allChannels);
-  }
-
-  public ChannelPoolManager(ChannelPoolFactory channelPoolFactory,
-                            String name,
-                            ChannelGroup allChannels)
-  {
-    _channelPoolFactory = channelPoolFactory;
-    _name = name;
-    _allChannels = allChannels;
-  }
-
-  public void shutdown(final Callback<None> callback)
-  {
-    final Collection<AsyncPool<Channel>> pools;
-    final State state;
-    synchronized (_mutex)
-    {
-      state = _state;
-      pools = _pool.values();
-      if (state == State.RUNNING)
-      {
-        _state = State.SHUTTING_DOWN;
-      }
-    }
-    if (state != State.RUNNING)
-    {
-      callback.onError(new IllegalStateException("ChannelPoolManager is " + state));
-      return;
-    }
-
-    LOG.info("Shutting down {} connection pools", pools.size());
-    Callback<None> poolCallback = Callbacks.countDown(new Callback<None>()
-    {
-      @Override
-      public void onSuccess(None none)
-      {
-        synchronized (_mutex)
-        {
-          _state = State.SHUTDOWN;
-        }
-        LOG.info("All connection pools shutdown");
-        callback.onSuccess(None.none());
-      }
-
-      @Override
-      public void onError(Throwable e)
-      {
-        synchronized (_mutex)
-        {
-          _state = State.SHUTDOWN;
-        }
-        LOG.error("Error shutting down connection pools", e);
-        callback.onError(e);
-      }
-    }, pools.size());
-    for (AsyncPool<Channel> pool : pools)
-    {
-      pool.shutdown(poolCallback);
-    }
-
-  }
-
-  public Collection<Callback<Channel>> cancelWaiters()
-  {
-    Collection<Callback<Channel>> cancelled = new ArrayList<Callback<Channel>>();
-    final Collection<AsyncPool<Channel>> pools;
-    synchronized (_mutex)
-    {
-      pools = _pool.values();
-    }
-    for (AsyncPool<Channel> pool : pools)
-    {
-      cancelled.addAll(pool.cancelWaiters());
-    }
-    return cancelled;
-  }
-
-  public AsyncPool<Channel> getPoolForAddress(SocketAddress address) throws IllegalStateException
-  {
-    /*
-        Unsynchronized get is safe because this is a ConcurrentHashMap
-        We don't need to check whether we're shutting down, because each
-        pool maintains its own shutdown state.  Synchronizing for get is
-        undesirable, because every request for every address comes through this path and it
-        would essentially be a global request lock.
-    */
-    AsyncPool<Channel> pool = _pool.get(address);
-    if (pool != null)
-    {
-      return pool;
-    }
-
-    synchronized (_mutex)
-    {
-      if (_state != State.RUNNING)
-      {
-        throw new IllegalStateException("ChannelPoolManager is shutting down");
-      }
-      // Retry the get while synchronized
-      pool = _pool.get(address);
-      if (pool == null)
-      {
-        pool = _channelPoolFactory.getPool(address);
-        pool.start();
-        _pool.put(address, pool);
-      }
-    }
-    return pool;
-  }
+  AsyncPool<Channel> getPoolForAddress(SocketAddress address) throws IllegalStateException;
 
   /**
    * Get statistics from each pool. The map keys represent pool names.
@@ -188,24 +50,10 @@ public class ChannelPoolManager implements PoolStatsProvider
    * @return A map of pool names and statistics.
    */
   @Override
-  public Map<String, PoolStats> getPoolStats()
-  {
-    final Map<String, PoolStats> stats = new HashMap<String, PoolStats>();
-    for(AsyncPool<Channel> pool : _pool.values())
-    {
-      stats.put(pool.getName(), pool.getStats());
-    }
-    return stats;
-  }
+  Map<String, PoolStats> getPoolStats();
 
   @Override
-  public String getName()
-  {
-    return _name;
-  }
+  String getName();
 
-  public ChannelGroup getAllChannels()
-  {
-    return _allChannels;
-  }
+  ChannelGroup getAllChannels();
 }

@@ -129,7 +129,7 @@ public abstract class AbstractNettyClient<Req extends Request, Res extends Respo
     _jmxManager = AbstractJmxManager.NULL_JMX_MANAGER;
     DefaultChannelGroup allChannels = new DefaultChannelGroup("R2 client channels", GlobalEventExecutor.INSTANCE);
 
-    _channelPoolManager = new ChannelPoolManager(factory, allChannels);
+    _channelPoolManager = new ChannelPoolManagerImpl(factory, allChannels, _scheduler);
     _jmxManager.onProviderCreate(_channelPoolManager);
     _allChannels = _channelPoolManager.getAllChannels();
   }
@@ -149,14 +149,6 @@ public abstract class AbstractNettyClient<Req extends Request, Res extends Respo
    */
   protected abstract void doWriteRequest(final Req request, final RequestContext context, final SocketAddress address,
                                          Map<String, String> wireAttrs, final TimeoutTransportCallback<Res> callback);
-
-  /**
-   * Signals that the client has entered shutdown phase. Performs tasks necessary to shutdown the client and
-   * invokes the callback after shutdown tasks are complete.
-   *
-   * @param callback callback invoked after shutdown is complete
-   */
-  protected abstract void doShutdown(final Callback<None> callback);
 
   @Override
   @SuppressWarnings("unchecked")
@@ -263,29 +255,32 @@ public abstract class AbstractNettyClient<Req extends Request, Res extends Respo
     LOG.info("Shutdown requested");
     if (_state.compareAndSet(State.RUNNING, State.SHUTTING_DOWN)) {
       LOG.info("Shutting down");
-      doShutdown(new Callback<None>()
-      {
-        private void releaseCallbacks()
+      _channelPoolManager.shutdown(
+        new Callback<None>()
         {
-          _userCallbacks.forEach(transportCallback -> transportCallback.onResponse(
-            TransportResponseImpl.error(new TimeoutException("Operation did not complete before shutdown"))
-          ));
-        }
+          private void releaseCallbacks()
+          {
+            _userCallbacks.forEach(transportCallback -> transportCallback.onResponse(
+              TransportResponseImpl.error(new TimeoutException("Operation did not complete before shutdown"))));
+          }
 
-        @Override
-        public void onError(Throwable e)
-        {
-          releaseCallbacks();
-          callback.onError(e);
-        }
+          @Override
+          public void onError(Throwable e)
+          {
+            releaseCallbacks();
+            callback.onError(e);
+          }
 
-        @Override
-        public void onSuccess(None result)
-        {
-          releaseCallbacks();
-          callback.onSuccess(result);
-        }
-      });
+          @Override
+          public void onSuccess(None result)
+          {
+            releaseCallbacks();
+            callback.onSuccess(result);
+          }
+        },
+        () -> _state.set(State.REQUESTS_STOPPING),
+        () -> _state.set(State.SHUTDOWN),
+        _shutdownTimeout);
       _jmxManager.onProviderShutdown(_channelPoolManager);
     } else {
       callback.onError(new IllegalStateException("Shutdown has already been requested."));

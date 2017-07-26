@@ -21,10 +21,11 @@
 package com.linkedin.r2.transport.http.client;
 
 import com.linkedin.common.callback.Callback;
+import com.linkedin.common.util.None;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolFactory;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManager;
+import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerImpl;
 import com.linkedin.r2.util.Cancellable;
-import com.linkedin.common.util.None;
 import io.netty.channel.Channel;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -54,7 +55,7 @@ public class TestChannelPoolManager
         return new FakePool<Channel>();
       }
     };
-    ChannelPoolManager m = new ChannelPoolManager(factory, null);
+    ChannelPoolManager m = new ChannelPoolManagerImpl(factory, null, null);
 
     final int NUM = 100;
     List<SocketAddress> addresses = new ArrayList<SocketAddress>(NUM);

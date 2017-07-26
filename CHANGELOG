@@ -1,3 +1,6 @@
+13.0.5
+------
+
 13.0.4
 ------
 (RB=1051427)
@@ -12,6 +15,9 @@ Fix testShutdownRequestOutstanding flaky test
 (RB=1051941)
 Allowing user to specify the "expected server's certificate principal name"
 to verify the identify of the server in http 1.1
+
+(RB=1028226)
+Refactoring shutdown Netty Client to AbstractNettyClient and ChannelPoolManager
 
 13.0.3
 ------

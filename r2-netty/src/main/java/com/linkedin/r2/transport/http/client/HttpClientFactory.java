@@ -41,6 +41,7 @@ import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerFactory;
+import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerFactoryImpl;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerKey;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerKeyBuilder;
 import com.linkedin.r2.transport.http.client.rest.HttpNettyClient;
@@ -180,6 +181,7 @@ public class HttpClientFactory implements TransportClientFactory
   private boolean                          _running             = true;
   private int                              _clientsOutstanding  = 0;
   private Callback<None>                   _factoryShutdownCallback;
+  private ChannelPoolManagerFactory        _channelPoolManagerFactory;
 
   /**
    * Construct a new instance using an empty filter chain.
@@ -460,6 +462,7 @@ public class HttpClientFactory implements TransportClientFactory
     _compressionExecutor = compressionExecutor;
     _useClientCompression = _compressionExecutor != null;
     _defaultHttpVersion = defaultHttpVersion;
+    _channelPoolManagerFactory = new ChannelPoolManagerFactoryImpl(_eventLoopGroup, _executor);
   }
 
   public static class Builder
@@ -1022,8 +1025,6 @@ public class HttpClientFactory implements TransportClientFactory
     String httpServiceName = (String) properties.get(HTTP_SERVICE_NAME);
     LOG.info("The service '{}' has been assigned to the ChannelPoolManager with key '{}' ", httpServiceName, key.getName());
 
-    ChannelPoolManagerFactory channelPoolManagerFactory = new ChannelPoolManagerFactory(_eventLoopGroup, _executor, key);
-
     // Raw Client properties
     Integer shutdownTimeout = chooseNewOverDefault(getIntValue(properties, HTTP_SHUTDOWN_TIMEOUT), DEFAULT_SHUTDOWN_TIMEOUT);
     Integer requestTimeout = chooseNewOverDefault(getIntValue(properties, HTTP_REQUEST_TIMEOUT), DEFAULT_REQUEST_TIMEOUT);
@@ -1036,18 +1037,18 @@ public class HttpClientFactory implements TransportClientFactory
     {
       case HTTP_1_1:
         streamClient = new HttpNettyStreamClient(_eventLoopGroup, _executor, requestTimeout, shutdownTimeout,
-          _callbackExecutorGroup, _jmxManager, channelPoolManagerFactory.buildStream());
+          _callbackExecutorGroup, _jmxManager, _channelPoolManagerFactory.buildStream(key));
         break;
       case HTTP_2:
         streamClient = new Http2NettyStreamClient(_eventLoopGroup, _executor, requestTimeout, shutdownTimeout,
-          _callbackExecutorGroup, _jmxManager, channelPoolManagerFactory.buildHttp2Stream());
+          _callbackExecutorGroup, _jmxManager, _channelPoolManagerFactory.buildHttp2Stream(key));
         break;
       default:
         throw new IllegalArgumentException("Unrecognized HTTP protocol version " + httpProtocolVersion);
     }
 
     HttpNettyClient legacyClient = new HttpNettyClient(_eventLoopGroup, _executor, requestTimeout, shutdownTimeout,
-      _callbackExecutorGroup, _jmxManager, channelPoolManagerFactory.buildRest());
+      _callbackExecutorGroup, _jmxManager, _channelPoolManagerFactory.buildRest(key));
 
     return new MixedClient(legacyClient, streamClient);
   }
@@ -1167,14 +1168,33 @@ public class HttpClientFactory implements TransportClientFactory
       _callbackExecutorGroup.shutdownNow();
     }
 
-    final Callback<None> callback;
-    synchronized (_mutex)
+    _channelPoolManagerFactory.shutdown(new Callback<None>()
     {
-      callback = _factoryShutdownCallback;
-    }
+      private void finishShutdown()
+      {
+        final Callback<None> callback;
+        synchronized (_mutex)
+        {
+          callback = _factoryShutdownCallback;
+        }
 
-    LOG.info("Shutdown complete");
-    callback.onSuccess(None.none());
+        LOG.info("Shutdown complete");
+        callback.onSuccess(None.none());
+      }
+
+      @Override
+      public void onError(Throwable e)
+      {
+        LOG.error("Incurred an error in shutting down channelPoolManagerFactory, the shutdown will be completed", e);
+        finishShutdown();
+      }
+
+      @Override
+      public void onSuccess(None result)
+      {
+        finishShutdown();
+      }
+    });
   }
 
   private void clientShutdown()
