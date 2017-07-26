@@ -32,6 +32,7 @@ import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
 import com.linkedin.r2.transport.http.client.AbstractJmxManager;
 import com.linkedin.r2.transport.http.client.AsyncPoolStats;
+import com.linkedin.r2.transport.http.client.InvokedOnceTransportCallback;
 import com.linkedin.r2.transport.http.client.PoolStats;
 import com.linkedin.r2.transport.http.client.TimeoutTransportCallback;
 import com.linkedin.r2.transport.http.common.HttpBridge;
@@ -47,8 +48,11 @@ import java.net.SocketAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
 
@@ -82,6 +86,12 @@ public abstract class AbstractNettyClient<Req extends Request, Res extends Respo
 
   private final String _requestTimeoutMessage;
   private final AbstractJmxManager _jmxManager;
+
+  /**
+   * Keeps track of the callbacks attached to the user's requests and in case of shutdown, it fires them
+   * with a Timeout Exception
+   */
+  private final Set<TransportCallback<Res>> _userCallbacks = ConcurrentHashMap.newKeySet();
 
   /**
    * Creates a new HttpNettyClient
@@ -165,6 +175,22 @@ public abstract class AbstractNettyClient<Req extends Request, Res extends Respo
   }
 
   /**
+   * Register the callback in a structure that allows to fire the callback in case of shutdown
+   */
+  private TransportCallback<Res> getShutdownAwareCallback(TransportCallback<Res> callback)
+  {
+    // Used InvokedOnceTransportCallback to avoid to trigger onResponse twice, in case of concurrent shutdown and firing
+    // the callback from the normal flow
+    TransportCallback<Res> onceTransportCallback = new InvokedOnceTransportCallback<>(callback);
+    _userCallbacks.add(onceTransportCallback);
+    return response ->
+    {
+      _userCallbacks.remove(onceTransportCallback);
+      onceTransportCallback.onResponse(response);
+    };
+  }
+
+  /**
    * This method calls the user defined method {@link AbstractNettyClient#doWriteRequest(Request, RequestContext, SocketAddress, Map, TimeoutTransportCallback)}
    * after having checked that the client is still running and resolved the DNS
    */
@@ -172,6 +198,8 @@ public abstract class AbstractNettyClient<Req extends Request, Res extends Respo
                             TransportCallback<Res> callback)
   {
     TransportCallback<Res> executionCallback = getExecutionCallback(callback);
+    TransportCallback<Res> shutdownAwareCallback = getShutdownAwareCallback(executionCallback);
+
     // By wrapping the callback in a Timeout callback before passing it along, we deny the rest
     // of the code access to the unwrapped callback.  This ensures two things:
     // 1. The user callback will always be invoked, since the Timeout will eventually expire
@@ -180,7 +208,7 @@ public abstract class AbstractNettyClient<Req extends Request, Res extends Respo
       new TimeoutTransportCallback<>(_scheduler,
         _requestTimeout,
         TimeUnit.MILLISECONDS,
-        executionCallback,
+        shutdownAwareCallback,
         _requestTimeoutMessage);
 
     // check lifecycle
@@ -235,7 +263,29 @@ public abstract class AbstractNettyClient<Req extends Request, Res extends Respo
     LOG.info("Shutdown requested");
     if (_state.compareAndSet(State.RUNNING, State.SHUTTING_DOWN)) {
       LOG.info("Shutting down");
-      doShutdown(callback);
+      doShutdown(new Callback<None>()
+      {
+        private void releaseCallbacks()
+        {
+          _userCallbacks.forEach(transportCallback -> transportCallback.onResponse(
+            TransportResponseImpl.error(new TimeoutException("Operation did not complete before shutdown"))
+          ));
+        }
+
+        @Override
+        public void onError(Throwable e)
+        {
+          releaseCallbacks();
+          callback.onError(e);
+        }
+
+        @Override
+        public void onSuccess(None result)
+        {
+          releaseCallbacks();
+          callback.onSuccess(result);
+        }
+      });
       _jmxManager.onProviderShutdown(_channelPoolManager);
     } else {
       callback.onError(new IllegalStateException("Shutdown has already been requested."));

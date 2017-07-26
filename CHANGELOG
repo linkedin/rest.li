@@ -6,6 +6,9 @@ Allow createDefaultTransportClientFactories to support https scheme as well
 (RB=1051811)
 Disabled few flaky tests.
 
+(RB=1026759)
+Fix testShutdownRequestOutstanding flaky test
+
 13.0.3
 ------
 (RB=1050311)
