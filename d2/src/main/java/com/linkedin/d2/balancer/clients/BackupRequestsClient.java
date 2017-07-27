@@ -24,6 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -56,6 +57,7 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamResponse;
+import com.linkedin.r2.util.NamedThreadFactory;
 
 
 /**
@@ -74,6 +76,7 @@ public class BackupRequestsClient implements D2Client
   private final D2Client _d2Client;
   private final LoadBalancer _loadBalancer;
   private final ScheduledExecutorService _executorService;
+  private final ScheduledThreadPoolExecutor _latenciesNotifierExecutor;
   private final ScheduledFuture<?> _latenciesNotifier;
 
   // serviceName -> operation -> BackupRequestsStrategyFromConfig
@@ -102,7 +105,12 @@ public class BackupRequestsClient implements D2Client
     _loadBalancer = loadBalancer;
     _executorService = executorService;
     _statsConsumer = Optional.ofNullable(statsConsumer).map(BackupRequestsClient::toSafeConsumer);
-    _latenciesNotifier = executorService.scheduleAtFixedRate(this::notifyLatencies, notifyLatencyInterval,
+    _latenciesNotifierExecutor =
+        new ScheduledThreadPoolExecutor(1, new NamedThreadFactory("backup-requests-latencies-notifier"));
+    _latenciesNotifierExecutor.setContinueExistingPeriodicTasksAfterShutdownPolicy(false);
+    _latenciesNotifierExecutor.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
+    _latenciesNotifierExecutor.setRemoveOnCancelPolicy(true);
+    _latenciesNotifier = _latenciesNotifierExecutor.scheduleAtFixedRate(this::notifyLatencies, notifyLatencyInterval,
         notifyLatencyInterval, notifyLatencyIntervalUnit);
   }
 
@@ -372,7 +380,7 @@ public class BackupRequestsClient implements D2Client
       }
       else
       {
-        // return original callback and don't send backup request if there is no operation declared in 
+        // return original callback and don't send backup request if there is no operation declared in
         // request context
         return callback;
       }
@@ -387,6 +395,7 @@ public class BackupRequestsClient implements D2Client
   public void shutdown(Callback<None> callback)
   {
     _latenciesNotifier.cancel(false);
+    _latenciesNotifierExecutor.shutdown();
     _d2Client.shutdown(callback);
   }
 
