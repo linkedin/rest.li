@@ -181,4 +181,33 @@ public class ChannelPoolManagerKey
   {
     return _poolStatsNamePrefix;
   }
+
+  @Override
+  public boolean equals(Object o)
+  {
+    if (this == o) return true;
+    if (!(o instanceof ChannelPoolManagerKey)) return false;
+
+    ChannelPoolManagerKey that = (ChannelPoolManagerKey) o;
+
+    if (_gracefulShutdownTimeout != that._gracefulShutdownTimeout) return false;
+    if (_idleTimeout != that._idleTimeout) return false;
+    if (_maxHeaderSize != that._maxHeaderSize) return false;
+    if (_maxChunkSize != that._maxChunkSize) return false;
+    if (_maxResponseSize != that._maxResponseSize) return false;
+    if (_maxPoolSize != that._maxPoolSize) return false;
+    if (_minPoolSize != that._minPoolSize) return false;
+    if (_maxConcurrentConnectionInitializations != that._maxConcurrentConnectionInitializations) return false;
+    if (_poolWaiterSize != that._poolWaiterSize) return false;
+    if (_tcpNoDelay != that._tcpNoDelay) return false;
+    if (isSsl() != that.isSsl()) return false;
+    if (_strategy != that._strategy) return false;
+    return _poolStatsNamePrefix != null ? _poolStatsNamePrefix.equals(that._poolStatsNamePrefix) : that._poolStatsNamePrefix == null;
+  }
+
+  @Override
+  public int hashCode()
+  {
+    return uniqueKeyBasedOnProperties();
+  }
 }

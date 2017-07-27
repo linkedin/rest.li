@@ -16,16 +16,6 @@
 
 package com.linkedin.r2.transport.http.client;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import org.eclipse.jetty.http2.server.HTTP2CServerConnectionFactory;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
@@ -34,6 +24,22 @@ import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 
 /**
@@ -54,6 +60,7 @@ public class HttpServerBuilder
   private long _idleTimeout = 30000;
   private CountDownLatch _responseLatch = null;
   private Consumer<Throwable> _exceptionListener = null;
+  private HttpServerStatsProvider _serverStatsProvider = new HttpServerStatsProvider();
 
   // HTTP/2 settings
   private int _maxConcurrentStreams = 256;
@@ -87,6 +94,12 @@ public class HttpServerBuilder
   public HttpServerBuilder responseLatch(CountDownLatch responseLatch)
   {
     _responseLatch = responseLatch;
+    return this;
+  }
+
+  public HttpServerBuilder serverStatsProvider(HttpServerStatsProvider serverStatsProvider)
+  {
+    _serverStatsProvider = serverStatsProvider;
     return this;
   }
 
@@ -166,6 +179,7 @@ public class HttpServerBuilder
       {
         try
         {
+          _serverStatsProvider.processRequest(req);
           awaitLatch();
           readEntity(req.getReader());
           prepareResponse(resp);
@@ -241,5 +255,44 @@ public class HttpServerBuilder
     }), "/*");
 
     return server;
+  }
+
+  public static class HttpServerStatsProvider
+  {
+    Set<String> clientConnections = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
+    AtomicInteger requestCount = new AtomicInteger(0);
+
+    Function<HttpServletRequest, Boolean> _checkValidRequest;
+
+    HttpServerStatsProvider()
+    {
+      this(httpServletRequest -> true);
+    }
+
+    HttpServerStatsProvider(Function<HttpServletRequest, Boolean> checkValidRequest)
+    {
+      _checkValidRequest = checkValidRequest;
+    }
+
+    void addClient(HttpServletRequest req)
+    {
+      clientConnections.add(req.getRemoteAddr() + ":" + req.getRemotePort());
+    }
+
+    void incrementRequestCount()
+    {
+      requestCount.incrementAndGet();
+    }
+
+    void processRequest(HttpServletRequest req)
+    {
+      if (!_checkValidRequest.apply(req))
+      {
+        return;
+      }
+      addClient(req);
+      incrementRequestCount();
+
+    }
   }
 }

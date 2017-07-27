@@ -61,64 +61,76 @@ import java.util.concurrent.TimeoutException;
 
 public class TestHttpClientFactory
 {
-  private static final String HTTP_1_1 = HttpProtocolVersion.HTTP_1_1.name();
-  private static final String HTTP_2 = HttpProtocolVersion.HTTP_2.name();
+  public static final String HTTP_1_1 = HttpProtocolVersion.HTTP_1_1.name();
+  public static final String HTTP_2 = HttpProtocolVersion.HTTP_2.name();
 
-  private static final String URI = "http://localhost:8080/";
+  public static final String URI = "http://localhost:8080/";
 
   @DataProvider
-  public static Object[][] configs()
+  public static Object[][] configsExpectedRequestCount()
   {
     return new Object[][] {
-        { true, HTTP_1_1 },
-        { true, HTTP_2 },
-        { false, HTTP_1_1 },
-        { false, HTTP_2 },
+      { true, HTTP_1_1,100 },
+      { true, HTTP_2 ,200}, // 200 because HTTP2 has also the initial OPTIONS request
+      { false, HTTP_1_1 ,100},
+      { false, HTTP_2 ,100},
     };
   }
 
-  @Test
-  public void testShutdownAfterClients() throws Exception
+  @Test(dataProvider = "configsExpectedRequestCount")
+  public void testSuccessfulRequest(boolean restOverStream, String protocolVersion, int expectedRequests) throws Exception
   {
     NioEventLoopGroup eventLoop = new NioEventLoopGroup();
     ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     HttpClientFactory factory = getHttpClientFactory(eventLoop, true, scheduler, true);
-    Server server = new HttpServerBuilder().build();
+
+    HttpServerBuilder.HttpServerStatsProvider httpServerStatsProvider = new HttpServerBuilder.HttpServerStatsProvider();
+
+    Server server = new HttpServerBuilder().serverStatsProvider(httpServerStatsProvider).build();
     try
     {
       server.start();
-      List<Client> clients = new ArrayList<Client>();
-      for (int i = 0; i < 1; i++)
+      List<Client> clients = new ArrayList<>();
+      for (int i = 0; i < 100; i++)
       {
-        clients.add(new TransportClientAdapter(factory.getClient(Collections.<String, String>emptyMap()), true));
+        HashMap<String, String> properties = new HashMap<>();
+        properties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, protocolVersion);
+        clients.add(new TransportClientAdapter(factory.getClient(properties), restOverStream));
       }
 
       for (Client c : clients)
       {
         RestRequest r = new RestRequestBuilder(new URI(URI)).build();
-        FutureCallback<RestResponse> futureCallback = new FutureCallback<RestResponse>();
-        c.restRequest(r, futureCallback);
-        futureCallback.get(30, TimeUnit.SECONDS);
+        c.restRequest(r).get(30, TimeUnit.SECONDS);
       }
+      Assert.assertEquals(httpServerStatsProvider.requestCount.get(), expectedRequests);
 
       for (Client c : clients)
       {
-        FutureCallback<None> callback = new FutureCallback<None>();
+        FutureCallback<None> callback = new FutureCallback<>();
         c.shutdown(callback);
         callback.get(30, TimeUnit.SECONDS);
       }
 
-      FutureCallback<None> factoryShutdown = new FutureCallback<None>();
+      FutureCallback<None> factoryShutdown = new FutureCallback<>();
       factory.shutdown(factoryShutdown);
       factoryShutdown.get(30, TimeUnit.SECONDS);
-
-      Assert.assertTrue(eventLoop.awaitTermination(30, TimeUnit.SECONDS), "Failed to shut down event-loop");
-      Assert.assertTrue(scheduler.awaitTermination(30, TimeUnit.SECONDS), "Failed to shut down scheduler");
     }
     finally
     {
       server.stop();
     }
+  }
+
+  @DataProvider
+  public static Object[][] configs()
+  {
+    return new Object[][] {
+      { true, HTTP_1_1 },
+      { true, HTTP_2 },
+      { false, HTTP_1_1 },
+      { false, HTTP_2 },
+    };
   }
 
   @Test(dataProvider = "configs")

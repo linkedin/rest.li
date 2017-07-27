@@ -42,6 +42,7 @@ import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerFactory;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerFactoryImpl;
+import com.linkedin.r2.transport.http.client.common.ConnectionSharingChannelPoolManagerFactory;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerKey;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerKeyBuilder;
 import com.linkedin.r2.transport.http.client.rest.HttpNettyClient;
@@ -126,6 +127,7 @@ public class HttpClientFactory implements TransportClientFactory
   public static final int DEFAULT_POOL_WAITER_SIZE = Integer.MAX_VALUE;
   public static final int DEFAULT_POOL_SIZE = 200;
   public static final int DEFAULT_REQUEST_TIMEOUT = 10000;
+  public static final int DEFAULT_GRACEFUL_SHUTDOWN_TIMEOUT = 30000;
   public static final int DEFAULT_IDLE_TIMEOUT = 25000;
   public static final int DEFAULT_SSL_IDLE_TIMEOUT = (2 * 3600 + 60 * 55) * 1000; // 2h 55m
   public static final int DEFAULT_SHUTDOWN_TIMEOUT = 15000;
@@ -138,6 +140,7 @@ public class HttpClientFactory implements TransportClientFactory
   public static final int DEFAULT_MAX_CHUNK_SIZE = 8 * 1024;
   // flag to enable/disable Nagle's algorithm
   public static final boolean DEFAULT_TCP_NO_DELAY = true;
+  public static final boolean DEFAULT_SHARE_CONNECTION = false;
   public static final int DEFAULT_MAX_CONCURRENT_CONNECTIONS = Integer.MAX_VALUE;
   public static final EncodingType[] DEFAULT_RESPONSE_CONTENT_ENCODINGS
       = {EncodingType.GZIP, EncodingType.SNAPPY, EncodingType.SNAPPY_FRAMED, EncodingType.DEFLATE, EncodingType.BZIP2};
@@ -440,6 +443,26 @@ public class HttpClientFactory implements TransportClientFactory
                            Executor compressionExecutor,
                            HttpProtocolVersion defaultHttpVersion)
   {
+    this(filters, eventLoopGroup, shutdownFactory, executor, shutdownExecutor, callbackExecutorGroup, shutdownCallbackExecutor,
+      jmxManager, requestCompressionThresholdDefault, requestCompressionConfigs, responseCompressionConfigs,
+      compressionExecutor, defaultHttpVersion, DEFAULT_SHARE_CONNECTION);
+  }
+
+  public HttpClientFactory(FilterChain filters,
+                           NioEventLoopGroup eventLoopGroup,
+                           boolean shutdownFactory,
+                           ScheduledExecutorService executor,
+                           boolean shutdownExecutor,
+                           ExecutorService callbackExecutorGroup,
+                           boolean shutdownCallbackExecutor,
+                           AbstractJmxManager jmxManager,
+                           final int requestCompressionThresholdDefault,
+                           final Map<String, CompressionConfig> requestCompressionConfigs,
+                           final Map<String, CompressionConfig> responseCompressionConfigs,
+                           Executor compressionExecutor,
+                           HttpProtocolVersion defaultHttpVersion,
+                           boolean shareConnection)
+  {
     _filters = filters;
     _eventLoopGroup = eventLoopGroup;
     _shutdownFactory = shutdownFactory;
@@ -463,6 +486,12 @@ public class HttpClientFactory implements TransportClientFactory
     _useClientCompression = _compressionExecutor != null;
     _defaultHttpVersion = defaultHttpVersion;
     _channelPoolManagerFactory = new ChannelPoolManagerFactoryImpl(_eventLoopGroup, _executor);
+    _channelPoolManagerFactory =
+      new ChannelPoolManagerFactoryImpl(_eventLoopGroup, _executor);
+    if (shareConnection)
+    {
+      _channelPoolManagerFactory = new ConnectionSharingChannelPoolManagerFactory(_channelPoolManagerFactory);
+    }
   }
 
   public static class Builder
@@ -473,6 +502,7 @@ public class HttpClientFactory implements TransportClientFactory
     private boolean                    _shutdownFactory = true;
     private boolean                    _shutdownExecutor = true;
     private boolean                    _shutdownCallbackExecutor = false;
+    private boolean                    _shareConnection = false;
     private FilterChain                _filters = FilterChains.empty();
     private boolean                    _useClientCompression = true;
     private Executor                   _customCompressionExecutor = null;
@@ -555,9 +585,19 @@ public class HttpClientFactory implements TransportClientFactory
     /**
      * @param useClientCompression enable or disable compression
      */
-    public void setUseClientCompression(boolean useClientCompression)
+    public Builder setUseClientCompression(boolean useClientCompression)
     {
       _useClientCompression = useClientCompression;
+      return this;
+    }
+
+    /**
+     * @param shareConnection enable or disable compression
+     */
+    public Builder setShareConnection(boolean shareConnection)
+    {
+      _shareConnection = shareConnection;
+      return this;
     }
 
     /**
@@ -616,7 +656,7 @@ public class HttpClientFactory implements TransportClientFactory
       return new HttpClientFactory(_filters, eventLoopGroup, _shutdownFactory, scheduledExecutorService,
         _shutdownExecutor, _callbackExecutorGroup, _shutdownCallbackExecutor, _jmxManager,
         _requestCompressionThresholdDefault, _requestCompressionConfigs, _responseCompressionConfigs,
-        compressionExecutor, _defaultHttpVersion);
+        compressionExecutor, _defaultHttpVersion, _shareConnection);
     }
   }
 
@@ -1002,8 +1042,7 @@ public class HttpClientFactory implements TransportClientFactory
     Boolean tcpNoDelay = chooseNewOverDefault(getBooleanValue(properties, HTTP_TCP_NO_DELAY), DEFAULT_TCP_NO_DELAY);
     Integer maxConcurrentConnectionInitializations = chooseNewOverDefault(getIntValue(properties, HTTP_MAX_CONCURRENT_CONNECTIONS), DEFAULT_MAX_CONCURRENT_CONNECTIONS);
     AsyncPoolImpl.Strategy strategy = chooseNewOverDefault(getStrategy(properties), DEFAULT_POOL_STRATEGY);
-
-    Integer gracefulShutdownTimeout = chooseNewOverDefault(getIntValue(properties, HTTP_REQUEST_TIMEOUT), DEFAULT_REQUEST_TIMEOUT);
+    Integer gracefulShutdownTimeout = chooseNewOverDefault(getIntValue(properties, HTTP_GRACEFUL_SHUTDOWN_TIMEOUT), DEFAULT_GRACEFUL_SHUTDOWN_TIMEOUT);
 
     return new ChannelPoolManagerKeyBuilder()
       .setMaxPoolSize(maxPoolSize).setGracefulShutdownTimeout(gracefulShutdownTimeout).setIdleTimeout(idleTimeout)
@@ -1143,35 +1182,35 @@ public class HttpClientFactory implements TransportClientFactory
       _shutdownTimeoutTask.cancel(false);
     }
 
-    if (_shutdownFactory)
-    {
-      LOG.info("Shutdown Netty Event Loop");
-      _eventLoopGroup.shutdownGracefully(0, 0, TimeUnit.SECONDS);
-    }
-
-    if (_shutdownExecutor)
-    {
-      // Due to a bug in ScheduledThreadPoolExecutor, shutdownNow() returns cancelled
-      // tasks as though they were still pending execution.  If the executor has a large
-      // number of cancelled tasks, shutdownNow() could take a long time to copy the array
-      // of tasks.  Calling shutdown() first will purge the cancelled tasks.  Bug filed with
-      // Oracle; will provide bug number when available.  May be fixed in JDK7 already.
-      _executor.shutdown();
-      _executor.shutdownNow();
-      LOG.info("Scheduler shutdown complete");
-    }
-
-    if (_shutdownCallbackExecutor)
-    {
-      LOG.info("Shutdown callback executor");
-      _callbackExecutorGroup.shutdown();
-      _callbackExecutorGroup.shutdownNow();
-    }
-
     _channelPoolManagerFactory.shutdown(new Callback<None>()
     {
       private void finishShutdown()
       {
+        if (_shutdownFactory)
+        {
+          LOG.info("Shutdown Netty Event Loop");
+          _eventLoopGroup.shutdownGracefully(0, 0, TimeUnit.SECONDS);
+        }
+
+        if (_shutdownExecutor)
+        {
+          // Due to a bug in ScheduledThreadPoolExecutor, shutdownNow() returns cancelled
+          // tasks as though they were still pending execution.  If the executor has a large
+          // number of cancelled tasks, shutdownNow() could take a long time to copy the array
+          // of tasks.  Calling shutdown() first will purge the cancelled tasks.  Bug filed with
+          // Oracle; will provide bug number when available.  May be fixed in JDK7 already.
+          _executor.shutdown();
+          _executor.shutdownNow();
+          LOG.info("Scheduler shutdown complete");
+        }
+
+        if (_shutdownCallbackExecutor)
+        {
+          LOG.info("Shutdown callback executor");
+          _callbackExecutorGroup.shutdown();
+          _callbackExecutorGroup.shutdownNow();
+        }
+
         final Callback<None> callback;
         synchronized (_mutex)
         {
