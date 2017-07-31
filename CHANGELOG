@@ -3,8 +3,6 @@
 (RB=1045941)
 Provide Location for BATCH_CREATE.
 
-13.0.5
-------
 (RB=1056106)
 Added BackupRequestsConverter and a dedicated ScheduledThreadPool for latencies notifier in BackupRequestsClient
 
