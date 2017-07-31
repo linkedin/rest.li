@@ -1,3 +1,8 @@
+13.0.7
+------
+(RB=1056932)
+Include Content-Type on all error responses.
+
 13.0.6
 ------
 (RB=1056963)

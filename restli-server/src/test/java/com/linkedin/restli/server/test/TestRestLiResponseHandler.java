@@ -29,6 +29,7 @@ import com.linkedin.data.template.DynamicRecordMetadata;
 import com.linkedin.data.template.FieldDef;
 import com.linkedin.data.template.StringMap;
 import com.linkedin.r2.message.RequestContext;
+import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
@@ -739,7 +740,42 @@ public class TestRestLiResponseHandler
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "basicData")
-  void testRestErrors(AcceptTypeData acceptTypeData,
+  void testBuildRestException(AcceptTypeData acceptTypeData,
+      ProtocolVersion protocolVersion,
+      String errorResponseHeaderName) throws Exception
+  {
+    final RestRequest request = buildRequest(acceptTypeData.acceptHeaders, protocolVersion);
+    final RoutingResult routingResult = buildRoutingResult(request, acceptTypeData.acceptHeaders);
+
+    Map<String, String> requestHeaders = new HashMap<>();
+    requestHeaders.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, protocolVersion.toString());
+
+    RestLiServiceException ex = new RestLiServiceException(HttpStatus.S_404_NOT_FOUND, "freeway not found").setServiceErrorCode(237);
+
+    RestLiResponseData responseData = _responseHandler.buildExceptionResponseData(
+        request, routingResult, ex, requestHeaders, Collections.emptyList());
+    RestException restException = _responseHandler.buildRestException(
+        ex, _responseHandler.buildPartialResponse(routingResult, responseData));
+
+    RestResponse response = restException.getResponse();
+    checkResponse(response,
+        404,
+        3,
+        ContentType.JSON.getHeaderKey(), // The response Content-Type should always be 'application/json'
+        ErrorResponse.class.getName(),
+        null,
+        true,
+        true,
+        errorResponseHeaderName);
+    DataMap dataMap = ContentType.JSON.getCodec().readMap(response.getEntity().asInputStream());
+
+    assertEquals(dataMap.getInteger("status"), Integer.valueOf(404));
+    assertEquals(dataMap.getString("message"), "freeway not found");
+    assertEquals(dataMap.getInteger("serviceErrorCode"), Integer.valueOf(237));
+  }
+
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "basicData")
+  void testBuildResponseWithExceptionObject(AcceptTypeData acceptTypeData,
                       ProtocolVersion protocolVersion,
                       String errorResponseHeaderName) throws Exception
   {

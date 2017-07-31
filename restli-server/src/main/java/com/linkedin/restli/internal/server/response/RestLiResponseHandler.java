@@ -267,6 +267,7 @@ public class RestLiResponseHandler
       ByteArrayOutputStream baos = new ByteArrayOutputStream(4096);
       DataMapUtils.write(dataMap, null, baos, true); // partialResponse.getSchema()
       builder.setEntity(ByteString.unsafeWrap(baos.toByteArray()));
+      builder.setHeader(RestConstants.HEADER_CONTENT_TYPE, ContentType.JSON.getHeaderKey());
     }
     RestResponse restResponse = builder.build();
     RestException restException = new RestException(restResponse, e);
