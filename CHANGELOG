@@ -3,6 +3,9 @@
 (RB=1056963)
 Increase HttpClient default shutdown timeout from 5s to 15s
 
+(RB=1058309)
+Bump open source plugin to Gradle 4.0
+
 13.0.5
 ------
 (RB=1045941)
