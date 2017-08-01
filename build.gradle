@@ -186,6 +186,10 @@ subprojects {
     all*.exclude group: 'com.sun.jmx', module: 'jmxri'
   }
 
+  if (it.name == 'd2') {
+    configurations.testArtifacts.visible = true
+  }
+
   // Default dependencies for all subprojects
   dependencies {
     compile externalDependency.slf4jApi
