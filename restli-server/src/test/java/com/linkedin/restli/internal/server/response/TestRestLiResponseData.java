@@ -8,6 +8,7 @@ import com.linkedin.restli.common.CreateIdStatus;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ResourceMethod;
+import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.server.ResponseType;
 import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
@@ -216,9 +217,12 @@ public class TestRestLiResponseData
     Assert.assertEquals(responseEnvelope.getCreateResponses().size(), 0);
     responseEnvelope.getCreateResponses()
         .add(new BatchCreateResponseEnvelope.CollectionCreateResponseItem(
-            new CreateIdStatus<Object>(new DataMap(), new Object())));
+            new CreateIdStatus<>(HttpStatus.S_201_CREATED.getCode(),
+                                 new Object(),
+                                 null,
+                                 AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion())));
     responseEnvelope.getCreateResponses()
-        .add(new BatchCreateResponseEnvelope.CollectionCreateResponseItem(exception500, 2));
+        .add(new BatchCreateResponseEnvelope.CollectionCreateResponseItem(exception500));
     Assert.assertEquals(responseEnvelope.getCreateResponses().size(), 2);
   }
 

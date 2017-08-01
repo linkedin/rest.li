@@ -6,7 +6,9 @@ import com.linkedin.restli.common.CollectionMetadata;
 import com.linkedin.restli.common.CreateIdStatus;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.HttpStatus;
+import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.ResourceMethod;
+import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.server.ResponseType;
 import com.linkedin.restli.internal.server.methods.AnyRecord;
 import com.linkedin.restli.server.RestLiServiceException;
@@ -134,12 +136,15 @@ public class TestRestLiResponseEnvelope
         List<BatchCreateResponseEnvelope.CollectionCreateResponseItem> oldCreateResponses =
             batchCreateResponseEnvelope.getCreateResponses();
 
-        CreateIdStatus<String> newCreateIdStatus = new CreateIdStatus<String>(new DataMap(), "key");
+        CreateIdStatus<String> newCreateIdStatus = new CreateIdStatus<>(HttpStatus.S_201_CREATED.getCode(),
+                                                                        "key",
+                                                                        null,
+                                                                        AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion());
         RestLiServiceException newException = new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR);
         BatchCreateResponseEnvelope.CollectionCreateResponseItem successCreateItem
             = new BatchCreateResponseEnvelope.CollectionCreateResponseItem(newCreateIdStatus);
         BatchCreateResponseEnvelope.CollectionCreateResponseItem exceptionCreateItem
-            = new BatchCreateResponseEnvelope.CollectionCreateResponseItem(newException, "id2");
+            = new BatchCreateResponseEnvelope.CollectionCreateResponseItem(newException);
 
         List<BatchCreateResponseEnvelope.CollectionCreateResponseItem> newCreateResponses =
             Arrays.asList(successCreateItem, exceptionCreateItem);
@@ -149,19 +154,21 @@ public class TestRestLiResponseEnvelope
         Assert.assertNotEquals(batchCreateResponseEnvelope.getCreateResponses(), oldCreateResponses);
         Assert.assertEquals(batchCreateResponseEnvelope.getCreateResponses(), newCreateResponses);
 
-        BatchCreateResponseEnvelope.CollectionCreateResponseItem firstItem =
+        BatchCreateResponseEnvelope.CollectionCreateResponseItem successItem =
             batchCreateResponseEnvelope.getCreateResponses().get(0);
-        Assert.assertNull(firstItem.getId());
-        Assert.assertEquals(firstItem.getRecord(), newCreateIdStatus);
-        Assert.assertFalse(firstItem.isErrorResponse());
-        Assert.assertNull(firstItem.getException());
+        Assert.assertEquals(successItem.getRecord(), newCreateIdStatus);
+        Assert.assertEquals(successItem.getId(), "key");
+        Assert.assertFalse(successItem.isErrorResponse());
+        Assert.assertNull(successItem.getException());
+        Assert.assertEquals(successItem.getStatus(), HttpStatus.S_201_CREATED);
 
-        BatchCreateResponseEnvelope.CollectionCreateResponseItem secondItem =
+        BatchCreateResponseEnvelope.CollectionCreateResponseItem errorItem =
             batchCreateResponseEnvelope.getCreateResponses().get(1);
-        Assert.assertEquals(secondItem.getId(), "id2");
-        Assert.assertNull(secondItem.getRecord());
-        Assert.assertTrue(secondItem.isErrorResponse());
-        Assert.assertEquals(secondItem.getException(), newException);
+        Assert.assertNull(errorItem.getRecord());
+        Assert.assertNull(errorItem.getId());
+        Assert.assertTrue(errorItem.isErrorResponse());
+        Assert.assertEquals(errorItem.getException(), newException);
+        Assert.assertEquals(errorItem.getStatus(), HttpStatus.S_500_INTERNAL_SERVER_ERROR);
         break;
       case BATCH_ENTITIES:
         BatchResponseEnvelope batchResponseEnvelope = (BatchResponseEnvelope)responseEnvelope;

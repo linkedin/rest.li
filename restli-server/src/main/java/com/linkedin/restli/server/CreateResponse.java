@@ -23,11 +23,18 @@ import com.linkedin.restli.common.HttpStatus;
  */
 public class CreateResponse
 {
+  // _id should be set for success response. However, historically, we allow null value.
   private final Object _id;
-  private final HttpStatus _status;
+
+  // _error must be set for an error response. Otherwise, it's consider a success response.
   private final RestLiServiceException _error;
 
+  // _status should always be set from a success response or from an exception.
+  private final HttpStatus _status;
+
   /**
+   * Constructs a success response. The HTTP status defaults to 201.
+   *
    * @param id the newly created resource id
    */
   public CreateResponse(final Object id)
@@ -38,6 +45,8 @@ public class CreateResponse
   }
 
   /**
+   * Constructs a success response.
+   *
    * @param id the newly created resource id
    * @param status HTTP response status.
    *               Should not be an error status code; passing a status >= 400 will not appear as an exception
@@ -51,6 +60,8 @@ public class CreateResponse
   }
 
   /**
+   * Constructs a success response without an ID.
+   *
    * @param status HTTP response status.
    *               Should not be an error status code; passing a status >= 400 will not appear as an exception
    */

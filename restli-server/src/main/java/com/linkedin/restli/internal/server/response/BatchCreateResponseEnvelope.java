@@ -140,12 +140,15 @@ public class BatchCreateResponseEnvelope extends RestLiResponseEnvelope
   {
     // The following sets of variables should be disjoint, e.g.
     // if one group is set the other group should all be null.
-    // For correct response
+
+    // For success response
     private CreateIdStatus<?> _recordResponse;
 
     // For exception response
-    private Object _id;
     private RestLiServiceException _exception;
+
+    // HttpStatus should always be set either from the success response or the exception.
+    private HttpStatus _httpStatus;
 
     /**
      * Instantiates an entry within a collection create response without triggered exception.
@@ -154,43 +157,25 @@ public class BatchCreateResponseEnvelope extends RestLiResponseEnvelope
      */
     public CollectionCreateResponseItem(CreateIdStatus response)
     {
-      setCollectionCreateResponseItem(response);
+      _recordResponse = response;
+
+      _exception = null;
+
+      _httpStatus = HttpStatus.fromCode(response.getStatus());
     }
 
     /**
      * Instantiates a failed entry within a collection create response.
      *
      * @param exception the exception that triggered the failure.
-     * @param id represents the key of the failed entry.
      */
-    public CollectionCreateResponseItem(RestLiServiceException exception, Object id)
-    {
-      setCollectionCreateResponseItem(exception, id);
-    }
-
-    /**
-     * Sets the entry to a response without a triggered exception.
-     *
-     * @param response the response value to set this entry to.
-     */
-    public void setCollectionCreateResponseItem(CreateIdStatus<?> response)
-    {
-      _recordResponse = response;
-      _id = null;
-      _exception = null;
-    }
-
-    /**
-     * Sets the entry to a failed response.
-     *
-     * @param exception the exception that caused the entry to fail.
-     * @param id is the id for the failed entry.
-     */
-    public void setCollectionCreateResponseItem(RestLiServiceException exception, Object id)
+    public CollectionCreateResponseItem(RestLiServiceException exception)
     {
       _exception = exception;
-      _id = id;
+
       _recordResponse = null;
+
+      _httpStatus = exception.getStatus();
     }
 
     /**
@@ -210,7 +195,7 @@ public class BatchCreateResponseEnvelope extends RestLiResponseEnvelope
      */
     public Object getId()
     {
-      return _id;
+      return _recordResponse != null ? _recordResponse.getKey() : null;
     }
 
     /**
@@ -231,6 +216,14 @@ public class BatchCreateResponseEnvelope extends RestLiResponseEnvelope
     public RestLiServiceException getException()
     {
       return _exception;
+    }
+
+    /**
+     * Gets the HTTP status of this entry. It's either set in the success response or in the exception.
+     */
+    public HttpStatus getStatus()
+    {
+      return _httpStatus;
     }
   }
 }

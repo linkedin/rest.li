@@ -118,9 +118,9 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder
       }
       List<BatchCreateResponseEnvelope.CollectionCreateResponseItem> collectionCreateList = new ArrayList<BatchCreateResponseEnvelope.CollectionCreateResponseItem>(list.getResults().size());
 
-      for (CreateKVResponse e : list.getResults())
+      for (CreateKVResponse createKVResponse : list.getResults())
       {
-        if (e == null)
+        if (createKVResponse == null)
         {
           throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
                                            "Unexpected null encountered. Null element inside of List inside of a BatchCreateResult returned by the resource method: "
@@ -128,17 +128,17 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder
         }
         else
         {
-          Object id = ResponseUtils.translateCanonicalKeyToAlternativeKeyIfNeeded(e.getId(), routingResult);
-          if (e.getError() == null)
+          Object id = ResponseUtils.translateCanonicalKeyToAlternativeKeyIfNeeded(createKVResponse.getId(), routingResult);
+          if (createKVResponse.getError() == null)
           {
             final ResourceContext resourceContext = routingResult.getContext();
-            DataMap entityData = e.getEntity() != null ? e.getEntity().data() : null;
+            DataMap entityData = createKVResponse.getEntity() != null ? createKVResponse.getEntity().data() : null;
             final DataMap data = RestUtils.projectFields(entityData,
                                                          resourceContext.getProjectionMode(),
                                                          resourceContext.getProjectionMask());
 
             CreateIdEntityStatus<Object, RecordTemplate> entry = new CreateIdEntityStatus<Object, RecordTemplate>(
-                    e.getStatus().getCode(),
+                    createKVResponse.getStatus().getCode(),
                     id,
                     new AnyRecord(data),
                     getLocationUri(request, id, altKey, protocolVersion), // location uri
@@ -149,7 +149,7 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder
           }
           else
           {
-            collectionCreateList.add(new BatchCreateResponseEnvelope.CollectionCreateResponseItem(e.getError(), id));
+            collectionCreateList.add(new BatchCreateResponseEnvelope.CollectionCreateResponseItem(createKVResponse.getError()));
           }
         }
       }
@@ -171,10 +171,10 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder
       }
 
       List<BatchCreateResponseEnvelope.CollectionCreateResponseItem> collectionCreateList = new ArrayList<BatchCreateResponseEnvelope.CollectionCreateResponseItem>(list.getResults().size());
-      for (CreateResponse e : list.getResults())
+      for (CreateResponse createResponse : list.getResults())
       {
         //Verify that a null element was not passed into the BatchCreateResult list. If so, this is a developer error.
-        if (e == null)
+        if (createResponse == null)
         {
           throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
                                            "Unexpected null encountered. Null element inside of List inside of a BatchCreateResult returned by the resource method: "
@@ -182,11 +182,11 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder
         }
         else
         {
-          Object id = ResponseUtils.translateCanonicalKeyToAlternativeKeyIfNeeded(e.getId(), routingResult);
-          if (e.getError() == null)
+          Object id = ResponseUtils.translateCanonicalKeyToAlternativeKeyIfNeeded(createResponse.getId(), routingResult);
+          if (createResponse.getError() == null)
           {
             CreateIdStatus<Object> entry = new CreateIdStatus<Object>(
-                    e.getStatus().getCode(),
+                    createResponse.getStatus().getCode(),
                     id,
                     getLocationUri(request, id, altKey, protocolVersion), // location uri
                     null,
@@ -195,7 +195,7 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder
           }
           else
           {
-            collectionCreateList.add(new BatchCreateResponseEnvelope.CollectionCreateResponseItem(e.getError(), id));
+            collectionCreateList.add(new BatchCreateResponseEnvelope.CollectionCreateResponseItem(createResponse.getError()));
           }
         }
       }
