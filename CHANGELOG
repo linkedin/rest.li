@@ -1,6 +1,7 @@
 13.0.6
 ------
-
+(RB=1056963)
+Increase HttpClient default shutdown timeout from 5s to 15s
 
 13.0.5
 ------

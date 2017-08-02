@@ -128,7 +128,7 @@ public class HttpClientFactory implements TransportClientFactory
   public static final int DEFAULT_REQUEST_TIMEOUT = 10000;
   public static final int DEFAULT_IDLE_TIMEOUT = 25000;
   public static final int DEFAULT_SSL_IDLE_TIMEOUT = (2 * 3600 + 60 * 55) * 1000; // 2h 55m
-  public static final int DEFAULT_SHUTDOWN_TIMEOUT = 5000;
+  public static final int DEFAULT_SHUTDOWN_TIMEOUT = 15000;
   public static final long DEFAULT_MAX_RESPONSE_SIZE = 1024 * 1024 * 2;
   public static final String DEFAULT_CLIENT_NAME = "noNameSpecifiedClient";
   public static final String DEFAULT_POOL_STATS_NAME_PREFIX = "noSpecifiedNamePrefix";
