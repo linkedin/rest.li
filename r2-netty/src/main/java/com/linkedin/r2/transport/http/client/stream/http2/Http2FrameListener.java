@@ -57,6 +57,8 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.TimeoutException;
 
+import static io.netty.handler.codec.http2.Http2CodecUtil.CONNECTION_STREAM_ID;
+
 
 /**
  * Listens to HTTP/2 frames and assembles {@link com.linkedin.r2.message.stream.StreamRequest}
@@ -78,8 +80,7 @@ class Http2FrameListener extends Http2EventAdapter
   private final Http2LifecycleManager _lifecycleManager;
   private final long _maxContentLength;
 
-  public Http2FrameListener(Http2Connection connection,
-                            Http2LifecycleManager lifecycleManager, long maxContentLength)
+  public Http2FrameListener(Http2Connection connection, Http2LifecycleManager lifecycleManager, long maxContentLength)
   {
     _connection = connection;
     _writerKey = connection.newKey();
