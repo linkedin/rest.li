@@ -165,8 +165,8 @@ import java.util.concurrent.TimeoutException;
       channel.attr(RAPStreamResponseDecoder.TIMEOUT_ATTR_KEY).set(streamingTimeout);
 
       // Set the expected value by the user of the cert principal name
-      String expectedCertPrincipal = (String) _requestContext.getLocalAttr(R2Constants.EXPECTED_CERT_PRINCIPAL_NAME);
-      channel.attr(SslRequestHandler.EXPECTED_CERT_PRINCIPAL_ATTR_KEY).set(expectedCertPrincipal);
+      String expectedCertPrincipal = (String) _requestContext.getLocalAttr(R2Constants.EXPECTED_SERVER_CERT_PRINCIPAL_NAME);
+      channel.attr(SslRequestHandler.EXPECTED_SERVER_CERT_PRINCIPAL_ATTR_KEY).set(expectedCertPrincipal);
 
       State state = _state.get();
       if (state == HttpNettyStreamClient.State.REQUESTS_STOPPING || state == HttpNettyStreamClient.State.SHUTDOWN)
@@ -176,8 +176,8 @@ import java.util.concurrent.TimeoutException;
         // all the channels for pending requests before we set the callback as the channel
         // attachment.  The TimeoutTransportCallback ensures the user callback in never
         // invoked more than once, so it is safe to invoke it unconditionally.
-        _callback.onResponse(TransportResponseImpl.<StreamResponse>error(
-            new TimeoutException("Operation did not complete before shutdown")));
+        _callback.onResponse(TransportResponseImpl.error(
+          new TimeoutException("Operation did not complete before shutdown")));
         return;
       }
 
@@ -189,7 +189,7 @@ import java.util.concurrent.TimeoutException;
     @Override
     public void onError(Throwable e)
     {
-      _callback.onResponse(TransportResponseImpl.<StreamResponse>error(e));
+      _callback.onResponse(TransportResponseImpl.error(e));
     }
   }
 }

@@ -53,5 +53,5 @@ public class R2Constants
   public static final int DEFAULT_DATA_CHUNK_SIZE = 8192;
   public static final boolean DEFAULT_REST_OVER_STREAM = false;
   public static final String RETRY_MESSAGE_ATTRIBUTE_KEY = "RETRY";
-  public static final String EXPECTED_CERT_PRINCIPAL_NAME = "EXPECTED_CERT_PRINCIPAL_NAME";
+  public static final String EXPECTED_SERVER_CERT_PRINCIPAL_NAME = "EXPECTED_SERVER_CERT_PRINCIPAL_NAME";
 }

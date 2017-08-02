@@ -147,8 +147,8 @@ public class HttpNettyClient extends AbstractNettyClient<RestRequest, RestRespon
         channel.attr(RAPResponseHandler.CALLBACK_ATTR_KEY).set(callback);
 
         // Set the expected value by the user of the cert principal name
-        String expectedCertPrincipal = (String) requestContext.getLocalAttr(R2Constants.EXPECTED_CERT_PRINCIPAL_NAME);
-        channel.attr(SslRequestHandler.EXPECTED_CERT_PRINCIPAL_ATTR_KEY).set(expectedCertPrincipal);
+        String expectedCertPrincipal = (String) requestContext.getLocalAttr(R2Constants.EXPECTED_SERVER_CERT_PRINCIPAL_NAME);
+        channel.attr(SslRequestHandler.EXPECTED_SERVER_CERT_PRINCIPAL_ATTR_KEY).set(expectedCertPrincipal);
 
         final State state = _state.get();
         if (state == State.REQUESTS_STOPPING || state == State.SHUTDOWN)

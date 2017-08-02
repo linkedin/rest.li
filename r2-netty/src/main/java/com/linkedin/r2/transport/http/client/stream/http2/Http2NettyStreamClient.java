@@ -73,7 +73,7 @@ public class Http2NettyStreamClient extends AbstractNettyStreamClient
    *                                  of the underlying {@link ChannelPoolManager}
    * @param channelPoolManager        channelPoolManager instance to use in the factory
    */
-   public Http2NettyStreamClient(NioEventLoopGroup eventLoopGroup, ScheduledExecutorService scheduler,
+  public Http2NettyStreamClient(NioEventLoopGroup eventLoopGroup, ScheduledExecutorService scheduler,
                                 long requestTimeout, long shutdownTimeout,
                                 ExecutorService callbackExecutors,
                                 AbstractJmxManager jmxManager,
@@ -134,14 +134,14 @@ public class Http2NettyStreamClient extends AbstractNettyStreamClient
         // all the channels for pending requests before we set the callback as the channel
         // attachment.  The TimeoutTransportCallback ensures the user callback in never
         // invoked more than once, so it is safe to invoke it unconditionally.
-        _callback.onResponse(TransportResponseImpl          .error(new TimeoutException("Operation did not complete before shutdown")));
+        _callback.onResponse(TransportResponseImpl.error(new TimeoutException("Operation did not complete before shutdown")));
         return;
       }
 
-      String expectedCertPrincipal = (String) _requestContext.getLocalAttr(R2Constants.EXPECTED_CERT_PRINCIPAL_NAME);
+      String expectedCertPrincipal = (String) _requestContext.getLocalAttr(R2Constants.EXPECTED_SERVER_CERT_PRINCIPAL_NAME);
       if (expectedCertPrincipal != null)
       {
-        LOG.warn("Server's Certificate Principal's name is not supported yet on a Http2 connection and SSL, " +
+        LOG.warn("Verification of server's certificate is not supported yet on a Http2 connection and SSL, " +
           "the requirement will be ignored");
       }
 
@@ -151,10 +151,10 @@ public class Http2NettyStreamClient extends AbstractNettyStreamClient
       // 2. the channel can be returned back to the pool at most once through the handle
       // 3. the channel will eventually be returned to the pool due to timeout of handle
       TimeoutAsyncPoolHandle<Channel> handle = new TimeoutAsyncPoolHandle<>(
-          _pool, _scheduler, _requestTimeout, TimeUnit.MILLISECONDS, channel);
+        _pool, _scheduler, _requestTimeout, TimeUnit.MILLISECONDS, channel);
 
       RequestWithCallback<Request, TimeoutTransportCallback<StreamResponse>, TimeoutAsyncPoolHandle<Channel>> request =
-          new RequestWithCallback<>(_request, _callback, handle);
+        new RequestWithCallback<>(_request, _callback, handle);
 
       // here we want the exception in outbound operations to be passed back through pipeline so that
       // the user callback would be invoked with the exception and the channel can be put back into the pool

@@ -45,8 +45,8 @@ public class SslRequestHandler extends ChannelOutboundHandlerAdapter
   private final SslHandler          _sslHandler;
   private String                    _firstTimeScheme;
 
-  public static final AttributeKey<String> EXPECTED_CERT_PRINCIPAL_ATTR_KEY
-    = AttributeKey.valueOf("expectedCertPrincipal");
+  public static final AttributeKey<String> EXPECTED_SERVER_CERT_PRINCIPAL_ATTR_KEY
+    = AttributeKey.valueOf("expectedServerCertPrincipal");
 
   public SslRequestHandler(SSLContext sslContext, SSLParameters sslParameters)
   {
@@ -139,13 +139,13 @@ public class SslRequestHandler extends ChannelOutboundHandlerAdapter
 
   private void checkCertPrincipalAndFlush(final ChannelHandlerContext ctx) throws SSLPeerUnverifiedException
   {
-    String expectedPrincipalName = ctx.channel().attr(EXPECTED_CERT_PRINCIPAL_ATTR_KEY).getAndSet(null);
+    String expectedPrincipalName = ctx.channel().attr(EXPECTED_SERVER_CERT_PRINCIPAL_ATTR_KEY).getAndSet(null);
     String actualPrincipalName = _sslHandler.engine().getSession().getPeerPrincipal().getName();
 
     // if cert is empty, the check is disabled and not needed by the user, therefore don't check
     if (expectedPrincipalName != null && !expectedPrincipalName.equals(actualPrincipalName))
     {
-      ctx.fireExceptionCaught(new UnknownServerCertPrincipalNameException(expectedPrincipalName, actualPrincipalName));
+      ctx.fireExceptionCaught(new ServerCertPrincipalNameMismatchException(expectedPrincipalName, actualPrincipalName));
       return;
     }
     ctx.flush();

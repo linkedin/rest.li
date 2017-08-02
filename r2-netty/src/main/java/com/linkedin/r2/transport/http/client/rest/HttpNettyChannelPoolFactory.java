@@ -198,6 +198,8 @@ public class HttpNettyChannelPoolFactory implements ChannelPoolFactory
       {
         ch.pipeline().addLast("sslRequestHandler", new SslRequestHandler(_sslContext, _sslParameters));
       }
+      // the response handler catches the exceptions thrown by other layers. By consequence no handlers that throw exceptions
+      // should be after this one, otherwise the exception won't be caught and managed by R2
       ch.pipeline().addLast("responseHandler", _responseHandler);
       ch.pipeline().addLast("channelManager", _handler);
     }

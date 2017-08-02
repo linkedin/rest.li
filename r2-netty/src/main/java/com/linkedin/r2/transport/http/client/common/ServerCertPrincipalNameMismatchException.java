@@ -21,11 +21,11 @@ package com.linkedin.r2.transport.http.client.common;
  *
  * @author Francesco Capponi (fcapponi@linkedin.com)
  */
-public class UnknownServerCertPrincipalNameException extends Exception
+public class ServerCertPrincipalNameMismatchException extends Exception
 {
   static final long serialVersionUID = 1L;
 
-  public UnknownServerCertPrincipalNameException(String expected, String actual)
+  public ServerCertPrincipalNameMismatchException(String expected, String actual)
   {
     super("Expected principal cert name = " + expected + ", but found = " + actual);
   }

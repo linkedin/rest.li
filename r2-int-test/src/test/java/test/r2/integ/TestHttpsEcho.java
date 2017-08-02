@@ -33,7 +33,7 @@ import com.linkedin.r2.transport.common.Server;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
-import com.linkedin.r2.transport.http.client.common.UnknownServerCertPrincipalNameException;
+import com.linkedin.r2.transport.http.client.common.ServerCertPrincipalNameMismatchException;
 import com.linkedin.test.util.ExceptionTestUtil;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
@@ -150,13 +150,12 @@ public class TestHttpsEcho extends AbstractEchoServiceTest
     try
     {
       testHttpsEchoWithCertPrincipal("WRONG CERTIFICATE NAME");
+      Assert.fail();
     }
     catch (Exception e)
     {
-      ExceptionTestUtil.verifyCauseChain(e, RemoteInvocationException.class, UnknownServerCertPrincipalNameException.class);
-      return;
+      ExceptionTestUtil.verifyCauseChain(e, RemoteInvocationException.class, ServerCertPrincipalNameMismatchException.class);
     }
-    Assert.fail();
   }
 
   @Test
@@ -181,7 +180,7 @@ public class TestHttpsEcho extends AbstractEchoServiceTest
     final String msg = "This is a simple echo message";
     final FutureCallback<String> callback = new FutureCallback<>();
     RequestContext requestContext = new RequestContext();
-    requestContext.putLocalAttr(R2Constants.EXPECTED_CERT_PRINCIPAL_NAME, principalName);
+    requestContext.putLocalAttr(R2Constants.EXPECTED_SERVER_CERT_PRINCIPAL_NAME, principalName);
     client.echo(msg, requestContext, callback);
 
     String actual = callback.get(2, TimeUnit.SECONDS);
