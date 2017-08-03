@@ -29,7 +29,7 @@ public abstract class AbstractStreamTest
 {
   protected static final int PORT = 8099;
   protected static final long LARGE_BYTES_NUM = 1024 * 1024 * 1024;
-  protected static final long SMALL_BYTES_NUM = 1024 * 1024 * 32;
+  protected static final long SMALL_BYTES_NUM = 1024 * 1024 * 64;
   protected static final long TINY_BYTES_NUM = 1024 * 64;
   protected static final byte BYTE = 100;
   protected static final long INTERVAL = 20;

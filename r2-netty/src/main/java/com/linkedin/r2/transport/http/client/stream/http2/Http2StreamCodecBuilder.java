@@ -122,8 +122,10 @@ class Http2StreamCodecBuilder extends AbstractHttp2ConnectionHandlerBuilder<Http
     ObjectUtil.checkPositive(_gracefulShutdownTimeoutMillis, "gracefulShutdownTimeoutMillis");
     ObjectUtil.checkNotNull(_connection, "connection");
 
-    // HTTP/2 initial settings
-    initialSettings.initialWindowSize(Math.min(MAX_INITIAL_STREAM_WINDOW_SIZE, (int)_maxContentLength));
+    // HTTP/2 initial settings - ensures 0 <= initialWindowSize <= MAX_INITIAL_STREAM_WINDOW_SIZE
+    initialSettings.initialWindowSize(Math.min(
+            MAX_INITIAL_STREAM_WINDOW_SIZE,
+            _maxContentLength > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int)_maxContentLength));
 
     Http2StreamCodec codec = new Http2StreamCodec(decoder, encoder, initialSettings);
     super.frameListener(new Http2FrameListener(_connection, codec, _maxContentLength));

@@ -217,6 +217,7 @@ public class TestStreamResponse extends AbstractStreamTest
       double diff = Math.abs(clientReceiveTimespan - serverSendTimespan);
       double diffRatio = diff / serverSendTimespan;
       // make it generous to reduce the chance occasional test failures
+      System.out.println("client=" + clientReceiveTimespan + " server=" + serverSendTimespan + " diff=" + diffRatio);
       Assert.assertTrue(diffRatio < 0.2);
     }
   }
