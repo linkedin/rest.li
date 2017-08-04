@@ -163,7 +163,7 @@ public class SyncIOHandler implements Writer, Reader
             catch (Exception e)
             {
               // Logs remote address and cause to standard out
-              final String message = String.format("[WARN] Writing to remote address %s caused %s", _remoteAddress, e.getCause());
+              final String message = String.format("[WARN] Writing to remote address %s caused %s", _remoteAddress, e.getClass());
               LOG.warn(message);
               throw e;
             }
@@ -193,7 +193,7 @@ public class SyncIOHandler implements Writer, Reader
               {
                 // Logs remote address to standard out
                 final String message =
-                    String.format("[WARN] Reading from remote address %s caused %s", _remoteAddress, e.getCause());
+                    String.format("[WARN] Reading from remote address %s caused %s", _remoteAddress, e.getClass());
                 LOG.warn(message);
                 throw e;
               }
@@ -261,7 +261,7 @@ public class SyncIOHandler implements Writer, Reader
               {
                 // Logs remote address to standard out
                 final String message =
-                    String.format("Reading during drain request from remote address %s caused %s", _remoteAddress, e.getCause());
+                    String.format("Reading during drain request from remote address %s caused %s", _remoteAddress, e.getClass());
                 LOG.warn(message);
                 throw e;
               }
