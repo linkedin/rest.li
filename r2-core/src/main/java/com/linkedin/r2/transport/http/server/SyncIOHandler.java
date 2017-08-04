@@ -24,6 +24,7 @@ import com.linkedin.r2.message.stream.entitystream.Reader;
 import com.linkedin.r2.message.stream.entitystream.WriteHandle;
 import com.linkedin.r2.message.stream.entitystream.Writer;
 
+import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
 import javax.servlet.ServletException;
 import javax.servlet.ServletInputStream;
 import javax.servlet.ServletOutputStream;
@@ -32,6 +33,8 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.linkedin.r2.filter.R2Constants.DEFAULT_DATA_CHUNK_SIZE;
 
@@ -42,6 +45,8 @@ import static com.linkedin.r2.filter.R2Constants.DEFAULT_DATA_CHUNK_SIZE;
  */
 public class SyncIOHandler implements Writer, Reader
 {
+  private static final Logger LOG = LoggerFactory.getLogger(SyncIOHandler.class);
+
   private final ServletInputStream _is;
   private final ServletOutputStream _os;
   private final int _maxBufferedChunks;
@@ -52,11 +57,21 @@ public class SyncIOHandler implements Writer, Reader
   private boolean _requestReadFinished;
   private boolean _responseWriteFinished;
   private final long _timeout;
+  private final String _remoteAddress;
+  private final String _protocol;
 
   public SyncIOHandler(ServletInputStream is, ServletOutputStream os, int maxBufferedChunks, long timeout)
   {
+    this(is, os, null, null, maxBufferedChunks, timeout);
+  }
+
+  public SyncIOHandler(ServletInputStream is, ServletOutputStream os, String protocol, String remoteAddress, int maxBufferedChunks,
+      long timeout)
+  {
     _is = is;
     _os = os;
+    _remoteAddress = remoteAddress;
+    _protocol = protocol;
     _maxBufferedChunks = maxBufferedChunks;
     _eventQueue = new LinkedBlockingDeque<>();
     _requestReadFinished = false;
@@ -136,7 +151,27 @@ public class SyncIOHandler implements Writer, Reader
         case ResponseDataAvailable:
         {
           ByteString data =  (ByteString) event.getData();
-          data.write(_os);
+
+          // The following block logs debug information for HTTP/2 while leaving HTTP/1.1 intact.
+          // TODO: Make the protocol configurable
+          if (_protocol != null && HttpProtocolVersion.parse(_protocol) == HttpProtocolVersion.HTTP_2)
+          {
+            try
+            {
+              data.write(_os);
+            }
+            catch (Exception e)
+            {
+              // Logs remote address and cause to standard out
+              final String message = String.format("[WARN] Writing to remote address %s caused %s", _remoteAddress, e.getCause());
+              LOG.warn(message);
+              throw e;
+            }
+          }
+          else
+          {
+            data.write(_os);
+          }
           _rh.request(1);
           break;
         }
@@ -144,7 +179,29 @@ public class SyncIOHandler implements Writer, Reader
         {
           while (_wh.remaining() > 0)
           {
-            int actualLen = _is.read(buf);
+            final int actualLen;
+
+            // The following block logs debug information for HTTP/2 while leaving HTTP/1.1 intact.
+            // TODO: Make the protocol configurable
+            if (_protocol != null && HttpProtocolVersion.parse(_protocol) == HttpProtocolVersion.HTTP_2)
+            {
+              try
+              {
+                actualLen = _is.read(buf);
+              }
+              catch (Exception e)
+              {
+                // Logs remote address to standard out
+                final String message =
+                    String.format("[WARN] Reading from remote address %s caused %s", _remoteAddress, e.getCause());
+                LOG.warn(message);
+                throw e;
+              }
+            }
+            else
+            {
+              actualLen = _is.read(buf);
+            }
 
             if (actualLen < 0)
             {
@@ -190,7 +247,30 @@ public class SyncIOHandler implements Writer, Reader
         {
           for (int i = 0; i < 10; i++)
           {
-            int actualLen = _is.read(buf);
+            final int actualLen;
+
+            // The following block logs debug information for HTTP/2 while leaving HTTP/1.1 intact.
+            // TODO: Make the protocol configurable
+            if (_protocol != null && HttpProtocolVersion.parse(_protocol) == HttpProtocolVersion.HTTP_2)
+            {
+              try
+              {
+                actualLen = _is.read(buf);
+              }
+              catch (Exception e)
+              {
+                // Logs remote address to standard out
+                final String message =
+                    String.format("Reading during drain request from remote address %s caused %s", _remoteAddress, e.getCause());
+                LOG.warn(message);
+                throw e;
+              }
+            }
+            else
+            {
+              actualLen = _is.read(buf);
+            }
+
             if (actualLen < 0)
             {
               _requestReadFinished = true;

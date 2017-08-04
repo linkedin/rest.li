@@ -77,7 +77,8 @@ public abstract class AbstractAsyncR2StreamServlet extends HttpServlet
     final WrappedAsyncContext wrappedCtx = new WrappedAsyncContext(ctx);
 
     final AsyncEventIOHandler ioHandler =
-        new AsyncEventIOHandler(req.getInputStream(), resp.getOutputStream(), wrappedCtx, MAX_BUFFERED_CHUNKS);
+        new AsyncEventIOHandler(req.getInputStream(), resp.getOutputStream(), req.getProtocol(), req.getRemoteAddr(),
+            wrappedCtx, MAX_BUFFERED_CHUNKS);
 
     final RequestContext requestContext = ServletHelper.readRequestContext(req);
 

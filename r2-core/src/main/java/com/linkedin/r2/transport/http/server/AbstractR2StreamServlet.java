@@ -53,7 +53,8 @@ public abstract class AbstractR2StreamServlet extends HttpServlet
   protected void service(final HttpServletRequest req, final HttpServletResponse resp)
           throws ServletException, IOException
   {
-    final SyncIOHandler ioHandler = new SyncIOHandler(req.getInputStream(), resp.getOutputStream(), 2, _ioHandlerTimeout);
+    final SyncIOHandler ioHandler = new SyncIOHandler(req.getInputStream(), resp.getOutputStream(), req.getProtocol(),
+        req.getRemoteAddr(), 2, _ioHandlerTimeout);
 
     RequestContext requestContext = ServletHelper.readRequestContext(req);
 
