@@ -805,7 +805,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
                                                  quarantineMap,
                                                  quarantineHistory,
                                                  activeClients,
-                                                 oldState.getListeners());
+                                                 oldState._listeners);
 
       logState(oldState, newState, partitionId, config, trackerClientUpdaters);
     }
@@ -1190,8 +1190,8 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
                                              oldState.getCurrentClusterErrorCount(),
                                              oldState.getQuarantineMap(),
                                              oldState.getQuarantineHistory(),
-                                             oldState.getTrackerClients(),
-                                             oldState.getListeners());
+                                             oldState._trackerClients,
+                                             oldState._listeners);
 
     partition.setState(newState);
   }
