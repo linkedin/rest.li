@@ -887,7 +887,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
                                             quarantineMap,
                                             quarantineHistory,
                                             activeClients,
-                                            oldState.getListeners());
+                                            oldState._listeners);
 
       logState(oldState, newState, partitionId, config, trackerClientUpdaters);
 
