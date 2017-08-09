@@ -34,16 +34,17 @@ public class AsyncEventIOHandler extends SyncIOHandler
   private volatile boolean _responseWriteStarted = false;
   private boolean _inLoop = false;
 
+  @Deprecated
   public AsyncEventIOHandler(ServletInputStream is, ServletOutputStream os,
       AbstractAsyncR2StreamServlet.WrappedAsyncContext ctx, int bufferCapacity)
   {
-    this(is, os, null, null, ctx, bufferCapacity);
+    this(is, os, UNKNOWN_REMOTE_ADDRESS, ctx, bufferCapacity, false);
   }
 
-  public AsyncEventIOHandler(ServletInputStream is, ServletOutputStream os, String protocol, String remoteAddress,
-      AbstractAsyncR2StreamServlet.WrappedAsyncContext ctx, int bufferCapacity)
+  public AsyncEventIOHandler(ServletInputStream is, ServletOutputStream os, String remoteAddress,
+      AbstractAsyncR2StreamServlet.WrappedAsyncContext ctx, int bufferCapacity, boolean logServletExceptions)
   {
-    super(is, os, protocol, remoteAddress, bufferCapacity, Integer.MAX_VALUE);
+    super(is, os, remoteAddress, bufferCapacity, Integer.MAX_VALUE, logServletExceptions);
     _ctx = ctx;
   }
 

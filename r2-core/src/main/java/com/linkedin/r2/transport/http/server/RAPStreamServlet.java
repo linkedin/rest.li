@@ -33,24 +33,38 @@ public class RAPStreamServlet extends AbstractR2StreamServlet
 
   private final HttpDispatcher _dispatcher;
 
+  @Deprecated
   public RAPStreamServlet(HttpDispatcher dispatcher)
   {
     this(dispatcher, DEFAULT_IOHANDLER_TIMEOUT);
   }
 
+  @Deprecated
   public RAPStreamServlet(TransportDispatcher dispatcher)
   {
     this(new HttpDispatcher(dispatcher));
   }
 
+  @Deprecated
   public RAPStreamServlet(TransportDispatcher dispatcher, long ioHandlerTimeout)
   {
-    this(new HttpDispatcher(dispatcher), ioHandlerTimeout);
+    this(new HttpDispatcher(dispatcher), ioHandlerTimeout, false);
   }
 
+  @Deprecated
   public RAPStreamServlet(HttpDispatcher dispatcher, long ioHandlerTimeout)
   {
-    super(ioHandlerTimeout);
+    this(dispatcher, ioHandlerTimeout, false);
+  }
+
+  public RAPStreamServlet(TransportDispatcher dispatcher, long ioHandlerTimeout, boolean logServletExceptions)
+  {
+    this(new HttpDispatcher(dispatcher), ioHandlerTimeout, logServletExceptions);
+  }
+
+  public RAPStreamServlet(HttpDispatcher dispatcher, long ioHandlerTimeout, boolean logServletExceptions)
+  {
+    super(ioHandlerTimeout, logServletExceptions);
     _dispatcher = dispatcher;
   }
 

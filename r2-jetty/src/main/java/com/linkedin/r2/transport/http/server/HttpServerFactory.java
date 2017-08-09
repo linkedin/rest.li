@@ -34,6 +34,7 @@ public class HttpServerFactory
   public static final String  DEFAULT_CONTEXT_PATH          = "/";
   public static final int     DEFAULT_THREAD_POOL_SIZE      = 512;
   public static final int     DEFAULT_ASYNC_TIMEOUT         = 30000;
+  public static final boolean DEFAULT_LOG_SERVLET_EXCEPTIONS = false;
   public static final HttpJettyServer.ServletType DEFAULT_SERVLET_TYPE = HttpJettyServer.ServletType.RAP;
 
   private final FilterChain _filters;
@@ -214,7 +215,9 @@ public class HttpServerFactory
   {
     final TransportDispatcher filterDispatcher =
         new FilterChainDispatcher(transportDispatcher,  _filters);
-    HttpServlet httpServlet = restOverStream ? new RAPStreamServlet(filterDispatcher, timeout) : new RAPServlet(filterDispatcher);
+    HttpServlet httpServlet = restOverStream ?
+        new RAPStreamServlet(filterDispatcher, timeout, DEFAULT_LOG_SERVLET_EXCEPTIONS) :
+        new RAPServlet(filterDispatcher);
     return new HttpJettyServer(port, httpServlet);
   }
 }

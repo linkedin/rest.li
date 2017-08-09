@@ -33,22 +33,28 @@ public class AsyncR2StreamServlet extends AbstractAsyncR2StreamServlet
 
   private final HttpDispatcher _dispatcher;
 
-
-  public AsyncR2StreamServlet(HttpDispatcher dispatcher,
-                              long timeout)
+  @Deprecated
+  public AsyncR2StreamServlet(HttpDispatcher dispatcher, long timeout)
   {
-    super(timeout);
+    this(dispatcher, timeout, false);
+  }
+
+  public AsyncR2StreamServlet(HttpDispatcher dispatcher, long timeout, boolean logServletExceptions)
+  {
+    super(timeout, logServletExceptions);
     _dispatcher = dispatcher;
   }
 
-  /**
-   * Creates the AsyncR2Servlet.
-   */
-  public AsyncR2StreamServlet(TransportDispatcher dispatcher,
-                              long timeout)
+  @Deprecated
+  public AsyncR2StreamServlet(TransportDispatcher dispatcher, long timeout)
+  {
+    this(dispatcher, timeout, false);
+  }
+
+  public AsyncR2StreamServlet(TransportDispatcher dispatcher, long timeout, boolean logServletExceptions)
   {
 
-    this(new HttpDispatcher(dispatcher), timeout);
+    this(new HttpDispatcher(dispatcher), timeout, logServletExceptions);
   }
 
   @Override

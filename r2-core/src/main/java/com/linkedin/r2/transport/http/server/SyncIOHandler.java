@@ -24,7 +24,6 @@ import com.linkedin.r2.message.stream.entitystream.Reader;
 import com.linkedin.r2.message.stream.entitystream.WriteHandle;
 import com.linkedin.r2.message.stream.entitystream.Writer;
 
-import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
 import javax.servlet.ServletException;
 import javax.servlet.ServletInputStream;
 import javax.servlet.ServletOutputStream;
@@ -46,6 +45,7 @@ import static com.linkedin.r2.filter.R2Constants.DEFAULT_DATA_CHUNK_SIZE;
 public class SyncIOHandler implements Writer, Reader
 {
   private static final Logger LOG = LoggerFactory.getLogger(SyncIOHandler.class);
+  protected static final String UNKNOWN_REMOTE_ADDRESS = "unknown";
 
   private final ServletInputStream _is;
   private final ServletOutputStream _os;
@@ -58,26 +58,27 @@ public class SyncIOHandler implements Writer, Reader
   private boolean _responseWriteFinished;
   private final long _timeout;
   private final String _remoteAddress;
-  private final String _protocol;
+  private final boolean _logServletExceptions;
 
+  @Deprecated
   public SyncIOHandler(ServletInputStream is, ServletOutputStream os, int maxBufferedChunks, long timeout)
   {
-    this(is, os, null, null, maxBufferedChunks, timeout);
+    this(is, os, UNKNOWN_REMOTE_ADDRESS, maxBufferedChunks, timeout, false);
   }
 
-  public SyncIOHandler(ServletInputStream is, ServletOutputStream os, String protocol, String remoteAddress, int maxBufferedChunks,
-      long timeout)
+  public SyncIOHandler(ServletInputStream is, ServletOutputStream os, String remoteAddress, int maxBufferedChunks,
+      long timeout, boolean logServletExceptions)
   {
     _is = is;
     _os = os;
     _remoteAddress = remoteAddress;
-    _protocol = protocol;
     _maxBufferedChunks = maxBufferedChunks;
     _eventQueue = new LinkedBlockingDeque<>();
     _requestReadFinished = false;
     _responseWriteFinished = false;
     _forceExit = false;
     _timeout = timeout;
+    _logServletExceptions = logServletExceptions;
   }
 
   @Override
@@ -151,27 +152,24 @@ public class SyncIOHandler implements Writer, Reader
         case ResponseDataAvailable:
         {
           ByteString data =  (ByteString) event.getData();
-
-          // The following block logs debug information for HTTP/2 while leaving HTTP/1.1 intact.
-          // TODO: Make the protocol configurable
-          if (_protocol != null && HttpProtocolVersion.parse(_protocol) == HttpProtocolVersion.HTTP_2)
-          {
-            try
-            {
-              data.write(_os);
-            }
-            catch (Exception e)
-            {
-              // Logs remote address and cause to standard out
-              final String message = String.format("[WARN] Writing to remote address %s caused %s", _remoteAddress, e.getClass());
-              LOG.warn(message);
-              throw e;
-            }
-          }
-          else
+          long startWriteTime = System.currentTimeMillis();
+          try
           {
             data.write(_os);
           }
+          catch (Exception e)
+          {
+            long writeDuration = System.currentTimeMillis() - startWriteTime;
+            if (_logServletExceptions)
+            {
+              final String message = String.format(
+                  "Encountered servlet exception, state=ResponseDataAvailable,remote=%s,duration=%dms",
+                  _remoteAddress, writeDuration);
+              LOG.info(message, e);
+            }
+            throw e;
+          }
+
           _rh.request(1);
           break;
         }
@@ -181,26 +179,22 @@ public class SyncIOHandler implements Writer, Reader
           {
             final int actualLen;
 
-            // The following block logs debug information for HTTP/2 while leaving HTTP/1.1 intact.
-            // TODO: Make the protocol configurable
-            if (_protocol != null && HttpProtocolVersion.parse(_protocol) == HttpProtocolVersion.HTTP_2)
-            {
-              try
-              {
-                actualLen = _is.read(buf);
-              }
-              catch (Exception e)
-              {
-                // Logs remote address to standard out
-                final String message =
-                    String.format("[WARN] Reading from remote address %s caused %s", _remoteAddress, e.getClass());
-                LOG.warn(message);
-                throw e;
-              }
-            }
-            else
+            long startWriteTime = System.currentTimeMillis();
+            try
             {
               actualLen = _is.read(buf);
+            }
+            catch (Exception e)
+            {
+              long writeDuration = System.currentTimeMillis() - startWriteTime;
+              if (_logServletExceptions)
+              {
+                final String message = String.format(
+                    "Encountered servlet exception, state=WriteRequestPossible,remote=%s,duration=%dms",
+                    _remoteAddress, writeDuration);
+                LOG.info(message, e);
+              }
+              throw e;
             }
 
             if (actualLen < 0)
@@ -249,26 +243,21 @@ public class SyncIOHandler implements Writer, Reader
           {
             final int actualLen;
 
-            // The following block logs debug information for HTTP/2 while leaving HTTP/1.1 intact.
-            // TODO: Make the protocol configurable
-            if (_protocol != null && HttpProtocolVersion.parse(_protocol) == HttpProtocolVersion.HTTP_2)
-            {
-              try
-              {
-                actualLen = _is.read(buf);
-              }
-              catch (Exception e)
-              {
-                // Logs remote address to standard out
-                final String message =
-                    String.format("Reading during drain request from remote address %s caused %s", _remoteAddress, e.getClass());
-                LOG.warn(message);
-                throw e;
-              }
-            }
-            else
+            long startWriteTime = System.currentTimeMillis();
+            try
             {
               actualLen = _is.read(buf);
+            }
+            catch (Exception e)
+            {
+              long writeDuration = System.currentTimeMillis() - startWriteTime;
+              if (_logServletExceptions) {
+                final String message = String.format(
+                    "Encountered servlet exception, state=DrainRequest,remote=%s,duration=%dms",
+                    _remoteAddress, writeDuration);
+                LOG.info(message, e);
+              }
+              throw e;
             }
 
             if (actualLen < 0)

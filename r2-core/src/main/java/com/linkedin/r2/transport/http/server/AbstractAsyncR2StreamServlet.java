@@ -55,16 +55,24 @@ public abstract class AbstractAsyncR2StreamServlet extends HttpServlet
 
   // servlet async context timeout in ms.
   private final long _timeout;
+  private final boolean _logServletExceptions;
 
   protected abstract HttpDispatcher getDispatcher();
+
+  @Deprecated
+  public AbstractAsyncR2StreamServlet(long timeout)
+  {
+    this(timeout, false);
+  }
 
   /**
    * Initialize the servlet, optionally using servlet-api-3.0 async API, if supported
    * by the container. The latter is checked later in init()
    */
-  public AbstractAsyncR2StreamServlet(long timeout)
+  public AbstractAsyncR2StreamServlet(long timeout, boolean logServletExceptions)
   {
     _timeout = timeout;
+    _logServletExceptions = logServletExceptions;
   }
 
   @Override
@@ -77,8 +85,8 @@ public abstract class AbstractAsyncR2StreamServlet extends HttpServlet
     final WrappedAsyncContext wrappedCtx = new WrappedAsyncContext(ctx);
 
     final AsyncEventIOHandler ioHandler =
-        new AsyncEventIOHandler(req.getInputStream(), resp.getOutputStream(), req.getProtocol(), req.getRemoteAddr(),
-            wrappedCtx, MAX_BUFFERED_CHUNKS);
+        new AsyncEventIOHandler(req.getInputStream(), resp.getOutputStream(), req.getRemoteAddr(),
+            wrappedCtx, MAX_BUFFERED_CHUNKS, _logServletExceptions);
 
     final RequestContext requestContext = ServletHelper.readRequestContext(req);
 

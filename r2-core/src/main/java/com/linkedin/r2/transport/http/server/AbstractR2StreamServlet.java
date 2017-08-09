@@ -41,20 +41,28 @@ public abstract class AbstractR2StreamServlet extends HttpServlet
   private static final long   serialVersionUID = 0L;
 
   private final long _ioHandlerTimeout;
+  private final boolean _logServletExceptions;
 
   protected abstract HttpDispatcher getDispatcher();
 
+  @Deprecated
   public AbstractR2StreamServlet(long ioHandlerTimeout)
   {
+    this(ioHandlerTimeout, false);
+  }
+
+  public AbstractR2StreamServlet(long ioHandlerTimeout, boolean logServletExceptions)
+  {
     _ioHandlerTimeout = ioHandlerTimeout;
+    _logServletExceptions = logServletExceptions;
   }
 
   @Override
   protected void service(final HttpServletRequest req, final HttpServletResponse resp)
           throws ServletException, IOException
   {
-    final SyncIOHandler ioHandler = new SyncIOHandler(req.getInputStream(), resp.getOutputStream(), req.getProtocol(),
-        req.getRemoteAddr(), 2, _ioHandlerTimeout);
+    final SyncIOHandler ioHandler = new SyncIOHandler(req.getInputStream(), resp.getOutputStream(),
+        req.getRemoteAddr(), 2, _ioHandlerTimeout, _logServletExceptions);
 
     RequestContext requestContext = ServletHelper.readRequestContext(req);
 

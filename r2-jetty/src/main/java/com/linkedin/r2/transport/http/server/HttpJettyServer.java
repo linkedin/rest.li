@@ -42,6 +42,9 @@ import org.eclipse.jetty.util.thread.QueuedThreadPool;
 
 public class HttpJettyServer implements HttpServer
 {
+  private static final boolean LOG_SERVLET_EXCEPTIONS = false;
+  private static final long DEFAULT_IOHANDLER_TIMEOUT = 30000;
+
   protected final int _port;
   protected final int _threadPoolSize;
   protected final String _contextPath;
@@ -169,10 +172,14 @@ public class HttpJettyServer implements HttpServer
     switch (type)
     {
       case ASYNC_EVENT:
-        httpServlet = restOverStream ? new AsyncR2StreamServlet(dispatcher, timeout) : new AsyncR2Servlet(dispatcher, timeout);
+        httpServlet = restOverStream ?
+            new AsyncR2StreamServlet(dispatcher, timeout, LOG_SERVLET_EXCEPTIONS) :
+            new AsyncR2Servlet(dispatcher, timeout);
         break;
       default:
-        httpServlet = restOverStream ? new RAPStreamServlet(dispatcher) : new RAPServlet(dispatcher);
+        httpServlet = restOverStream ?
+            new RAPStreamServlet(dispatcher, DEFAULT_IOHANDLER_TIMEOUT, LOG_SERVLET_EXCEPTIONS) :
+            new RAPServlet(dispatcher);
     }
 
     return httpServlet;
