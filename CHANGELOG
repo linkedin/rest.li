@@ -2,6 +2,8 @@
 ------
 (RB=1062462)
 Fail promise if h2c upgrade or alpn negotiation do not complete before connection closes
+(RB=1065376)
+TimeoutAsyncPoolHandle to use Optional#ofNullable instead Optional#of to deal with a potentially null value
 
 14.0.5
 ------

@@ -82,6 +82,6 @@ public class TimeoutAsyncPoolHandle<T> implements AsyncPoolHandle<T>, TimeoutExe
    */
   private void doTimeoutAwareAction(Consumer<T> action)
   {
-    Optional.of(_timeout.getItem()).ifPresent(action);
+    Optional.ofNullable(_timeout.getItem()).ifPresent(action);
   }
 }

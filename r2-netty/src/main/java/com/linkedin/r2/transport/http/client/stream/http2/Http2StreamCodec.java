@@ -203,7 +203,7 @@ class Http2StreamCodec extends Http2ConnectionHandler
         ctx, connection(), streamId, Http2ClientPipelineInitializer.CHANNEL_POOL_HANDLE_ATTR_KEY);
 
     // Disposes channel
-    Optional.of(handle).ifPresent(TimeoutAsyncPoolHandle::dispose);
+    Optional.ofNullable(handle).ifPresent(TimeoutAsyncPoolHandle::dispose);
   }
 
   /**
@@ -255,7 +255,7 @@ class Http2StreamCodec extends Http2ConnectionHandler
       _notFlushedChunks++;
       if (_notFlushedBytes >= FLUSH_THRESHOLD || _notFlushedChunks == MAX_BUFFERED_CHUNKS)
       {
-        _ctx.flush();
+        _ctx.channel().flush();
         _notFlushedBytes = 0;
         _notFlushedChunks = 0;
       }
@@ -267,7 +267,7 @@ class Http2StreamCodec extends Http2ConnectionHandler
       _encoder.writeData(_ctx, _streamId, Unpooled.EMPTY_BUFFER, NO_PADDING, END_STREAM, _ctx.channel().voidPromise());
       LOG.debug("Sent HTTP/2 DATA frame, stream={}, end={}, data={}bytes, padding={}bytes",
           new Object[] { _streamId, END_STREAM, NO_DATA, NO_PADDING });
-      _ctx.flush();
+      _ctx.channel().flush();
     }
 
     @Override
