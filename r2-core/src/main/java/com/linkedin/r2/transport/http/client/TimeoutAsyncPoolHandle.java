@@ -22,8 +22,10 @@ package com.linkedin.r2.transport.http.client;
 
 import com.linkedin.r2.util.Timeout;
 import com.linkedin.r2.util.TimeoutExecutor;
+import java.util.Optional;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 
 /**
@@ -40,8 +42,6 @@ public class TimeoutAsyncPoolHandle<T> implements AsyncPoolHandle<T>, TimeoutExe
   private final AsyncPool<T> _pool;
   private final Timeout<T> _timeout;
 
-  private volatile boolean _error = false;
-
   public TimeoutAsyncPoolHandle(
       AsyncPool<T> pool, ScheduledExecutorService scheduler, long timeout, TimeUnit unit, T item)
   {
@@ -50,29 +50,16 @@ public class TimeoutAsyncPoolHandle<T> implements AsyncPoolHandle<T>, TimeoutExe
     _timeout.addTimeoutTask(() -> _pool.dispose(item));
   }
 
-  public TimeoutAsyncPoolHandle<T> error()
-  {
-    _error = true;
-    return this;
-  }
-
   @Override
   public void release()
   {
-    T item = _timeout.getItem();
-    if (item == null)
-    {
-      return;
-    }
+    doTimeoutAwareAction(_pool::put);
+  }
 
-    if (_error)
-    {
-      _pool.dispose(item);
-    }
-    else
-    {
-      _pool.put(item);
-    }
+  @Override
+  public void dispose()
+  {
+    doTimeoutAwareAction(_pool::dispose);
   }
 
   @Override
@@ -85,5 +72,16 @@ public class TimeoutAsyncPoolHandle<T> implements AsyncPoolHandle<T>, TimeoutExe
   public void addTimeoutTask(Runnable task)
   {
     _timeout.addTimeoutTask(task);
+  }
+
+  /**
+   * Cancels timeout and executes the {@link Consumer} action on the pool object if timeout is
+   * not expired. Otherwise, do nothing.
+   *
+   * @param action {@link Consumer} action to be executed
+   */
+  private void doTimeoutAwareAction(Consumer<T> action)
+  {
+    Optional.of(_timeout.getItem()).ifPresent(action);
   }
 }

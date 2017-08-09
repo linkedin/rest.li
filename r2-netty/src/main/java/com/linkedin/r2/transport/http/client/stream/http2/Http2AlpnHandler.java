@@ -25,6 +25,7 @@ import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
 import com.linkedin.r2.transport.http.client.TimeoutAsyncPoolHandle;
 import io.netty.channel.ChannelDuplexHandler;
+import io.netty.channel.ChannelException;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
@@ -69,6 +70,14 @@ class Http2AlpnHandler extends ChannelDuplexHandler
 
     /** Note: {@link SslHandler} will initiate a handshake upon being added to the pipeline. */
     ctx.pipeline().addFirst("sslHandler", _sslHandler);
+
+    // Fail the ALPN promise when channel is closed
+    ctx.channel().closeFuture().addListener(future -> {
+      if (!_alpnPromise.isDone())
+      {
+        _alpnPromise.setFailure(new ChannelException("HTTP/2 ALPN did not complete before channel closed"));
+      }
+    });
   }
 
   @Override
@@ -91,7 +100,7 @@ class Http2AlpnHandler extends ChannelDuplexHandler
         // Releases the async pool handle
         @SuppressWarnings("unchecked")
         TimeoutAsyncPoolHandle<?> handle = ((RequestWithCallback<?, ?, TimeoutAsyncPoolHandle<?>>) msg).handle();
-        handle.error().release();
+        handle.dispose();
 
         // Invokes user specified callback with error
         TransportCallback<?> callback = ((RequestWithCallback) msg).callback();
@@ -159,7 +168,10 @@ class Http2AlpnHandler extends ChannelDuplexHandler
   public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception
   {
     LOG.error("Application level protocol negotiation failed", cause);
-    _alpnPromise.setFailure(cause);
+    if (!_alpnPromise.isDone())
+    {
+      _alpnPromise.setFailure(cause);
+    }
     ctx.fireExceptionCaught(cause);
   }
 }

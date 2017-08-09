@@ -73,7 +73,7 @@ public class TestTimeoutAsyncPoolHandle
     handle.addTimeoutTask(() -> latch.countDown());
     latch.await(OPERATION_TIMEOUT, TIME_UNIT);
 
-    handle.error().release();
+    handle.dispose();
     Assert.assertEquals(pool.getPutCount(), 0);
     Assert.assertEquals(pool.getDisposeCount(), 1);
   }
@@ -101,7 +101,7 @@ public class TestTimeoutAsyncPoolHandle
     TimeoutAsyncPoolHandle<Object> handle = new TimeoutAsyncPoolHandle<>(
         pool, _scheduler, LONG_TIMEOUT, TIME_UNIT, new Object());
 
-    handle.error().release();
+    handle.dispose();
     Assert.assertEquals(pool.getPutCount(), 0);
     Assert.assertEquals(pool.getDisposeCount(), 1);
   }

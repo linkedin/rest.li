@@ -134,14 +134,12 @@ class Http2InitializerHandler extends ChannelOutboundHandlerAdapter
 
     Http2UpgradeHandler upgradeHandler = new Http2UpgradeHandler(host, port, path);
     Http2StreamResponseHandler responseHandler = new Http2StreamResponseHandler();
-    Http2ChannelPoolHandler channelPoolHandler = new Http2ChannelPoolHandler();
 
     ctx.pipeline().addBefore(ctx.name(), "sourceCodec", sourceCodec);
     ctx.pipeline().addBefore(ctx.name(), "upgradeCodec", upgradeCodec);
     ctx.pipeline().addBefore(ctx.name(), "upgradeHandler", upgradeHandler);
     ctx.pipeline().addBefore(ctx.name(), "schemeHandler", schemeHandler);
     ctx.pipeline().addBefore(ctx.name(), "responseHandler", responseHandler);
-    ctx.pipeline().addBefore(ctx.name(), "channelHandler", channelPoolHandler);
 
     _setupComplete = true;
   }
@@ -174,12 +172,10 @@ class Http2InitializerHandler extends ChannelOutboundHandlerAdapter
     Http2AlpnHandler alpnHandler = new Http2AlpnHandler(sslHandler, http2Codec);
     Http2SchemeHandler schemeHandler = new Http2SchemeHandler(HttpScheme.HTTPS.toString());
     Http2StreamResponseHandler responseHandler = new Http2StreamResponseHandler();
-    Http2ChannelPoolHandler channelPoolHandler = new Http2ChannelPoolHandler();
 
     ctx.pipeline().addBefore(ctx.name(), "alpnHandler", alpnHandler);
     ctx.pipeline().addBefore(ctx.name(), "schemeHandler", schemeHandler);
     ctx.pipeline().addBefore(ctx.name(), "responseHandler", responseHandler);
-    ctx.pipeline().addBefore(ctx.name(), "channelHandler", channelPoolHandler);
 
     _setupComplete = true;
   }

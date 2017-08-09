@@ -57,8 +57,6 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.TimeoutException;
 
-import static io.netty.handler.codec.http2.Http2CodecUtil.CONNECTION_STREAM_ID;
-
 
 /**
  * Listens to HTTP/2 frames and assembles {@link com.linkedin.r2.message.stream.StreamRequest}
@@ -70,7 +68,10 @@ class Http2FrameListener extends Http2EventAdapter
 {
   public enum FrameEvent
   {
-    SETTINGS_FRAME_RECEIVED
+    /**
+     * An event indicating both SETTING and SETTING_ACK are received.
+     */
+    SETTINGS_COMPLETE
   }
 
   private static final Logger LOG = LoggerFactory.getLogger(Http2FrameListener.class);
@@ -79,6 +80,9 @@ class Http2FrameListener extends Http2EventAdapter
   private final Http2Connection.PropertyKey _writerKey;
   private final Http2LifecycleManager _lifecycleManager;
   private final long _maxContentLength;
+
+  private boolean _settingsReceived = false;
+  private boolean _settingsAckReceived = false;
 
   public Http2FrameListener(Http2Connection connection, Http2LifecycleManager lifecycleManager, long maxContentLength)
   {
@@ -153,7 +157,9 @@ class Http2FrameListener extends Http2EventAdapter
     if (endOfStream)
     {
       response = builder.build(EntityStreams.emptyStream());
-      ctx.fireChannelRead(timeoutHandle);
+
+      // Release the handle to put the channel back to the pool
+      timeoutHandle.release();
     }
     else
     {
@@ -215,13 +221,29 @@ class Http2FrameListener extends Http2EventAdapter
   public void onSettingsRead(ChannelHandlerContext ctx, Http2Settings settings) throws Http2Exception
   {
     LOG.debug("Received HTTP/2 SETTINGS frame, settings={}", settings);
-    ctx.fireUserEventTriggered(FrameEvent.SETTINGS_FRAME_RECEIVED);
+    _settingsReceived = true;
+    checkAndTriggerSettingsCompleteEvent(ctx);
   }
 
   @Override
   public void onSettingsAckRead(ChannelHandlerContext ctx) throws Http2Exception
   {
     LOG.debug("Received HTTP/2 SETTINGS_ACK frame");
+    _settingsAckReceived = true;
+    checkAndTriggerSettingsCompleteEvent(ctx);
+  }
+
+  /**
+   * Checks if conditions are met for triggering the SETTINGS_COMPLETE event.
+   *
+   * @param ctx
+   */
+  private void checkAndTriggerSettingsCompleteEvent(ChannelHandlerContext ctx)
+  {
+    if (_settingsReceived && _settingsAckReceived)
+    {
+      ctx.fireUserEventTriggered(FrameEvent.SETTINGS_COMPLETE);
+    }
   }
 
   @Override
@@ -295,8 +317,8 @@ class Http2FrameListener extends Http2EventAdapter
     {
       doReset();
 
-      // Signals Http2ChannelPoolHandler to return channel back to the async pool
-      _ctx.fireChannelRead(_timeoutPoolHandle);
+      // Release the handle to put the channel back to the pool
+      _timeoutPoolHandle.release();
     }
 
     public void onDataRead(ByteBuf data, boolean end) throws TooLongFrameException
@@ -346,8 +368,8 @@ class Http2FrameListener extends Http2EventAdapter
         _failureBeforeInit = cause;
       }
 
-      // Signals Http2ChannelPoolHandler to return channel back to the async pool
-      _ctx.fireChannelRead(_timeoutPoolHandle.error());
+      // Disposes the handle to dispose the channel back to the pool
+      _timeoutPoolHandle.dispose();
     }
 
     private void doReset()
@@ -386,8 +408,9 @@ class Http2FrameListener extends Http2EventAdapter
           if (_lastChunkReceived)
           {
             _wh.done();
-            // Signals Http2ChannelPoolHandler to return channel back to the async pool
-            _ctx.fireChannelRead(_timeoutPoolHandle);
+
+            // Release the handle to put the channel back to the pool
+            _timeoutPoolHandle.release();
           }
           break;
         }

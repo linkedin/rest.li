@@ -27,9 +27,14 @@ package com.linkedin.r2.transport.http.client;
 public interface AsyncPoolHandle<T>
 {
   /**
-   * Releases the handle and returns the object back to the pool
+   * Releases the handle and {@code AsyncPool#put} the object back to the pool
    */
   void release();
+
+  /**
+   * Releases the handle and {@code AsyncPool#dispose} the object back the pool
+   */
+  void dispose();
 
   /**
    * Gets the reference to the {@link AsyncPool} where the object was originally created

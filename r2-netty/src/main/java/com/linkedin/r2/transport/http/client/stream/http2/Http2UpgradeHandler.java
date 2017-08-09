@@ -25,6 +25,7 @@ import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
 import com.linkedin.r2.transport.http.client.TimeoutAsyncPoolHandle;
 import io.netty.channel.ChannelDuplexHandler;
+import io.netty.channel.ChannelException;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
@@ -71,6 +72,14 @@ class Http2UpgradeHandler extends ChannelDuplexHandler
     DefaultFullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.OPTIONS, _path);
     request.headers().add(HttpHeaderNames.HOST, _host + ":" + _port);
     ctx.writeAndFlush(request);
+
+    // Fail the upgrade promise when channel is closed
+    ctx.channel().closeFuture().addListener(future -> {
+      if (!_upgradePromise.isDone())
+      {
+        _upgradePromise.setFailure(new ChannelException("HTTP/2 upgrade did not complete before channel closed"));
+      }
+    });
   }
 
   @Override
@@ -93,7 +102,7 @@ class Http2UpgradeHandler extends ChannelDuplexHandler
         // Releases the async pool handle
         @SuppressWarnings("unchecked")
         TimeoutAsyncPoolHandle<?> handle = ((RequestWithCallback<?, ?, TimeoutAsyncPoolHandle<?>>) msg).handle();
-        handle.error().release();
+        handle.dispose();
 
         // Invokes user specified callback with error
         TransportCallback<?> callback = ((RequestWithCallback) msg).callback();
@@ -131,9 +140,9 @@ class Http2UpgradeHandler extends ChannelDuplexHandler
       LOG.error("HTTP/2 clear text upgrade failed");
       _upgradePromise.setFailure(new IllegalStateException("HTTP/2 clear text upgrade failed"));
     }
-    else if (evt == Http2FrameListener.FrameEvent.SETTINGS_FRAME_RECEIVED)
+    else if (evt == Http2FrameListener.FrameEvent.SETTINGS_COMPLETE)
     {
-      LOG.debug("HTTP/2 settings frame received");
+      LOG.debug("HTTP/2 settings and settings ack frames received");
       // Remove handler from pipeline after upgrade is successful
       ctx.pipeline().remove(this);
       _upgradePromise.setSuccess();
@@ -145,7 +154,10 @@ class Http2UpgradeHandler extends ChannelDuplexHandler
   public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception
   {
     LOG.error("HTTP/2 clear text upgrade failed", cause);
-    _upgradePromise.setFailure(cause);
+    if (!_upgradePromise.isDone())
+    {
+      _upgradePromise.setFailure(cause);
+    }
     ctx.fireExceptionCaught(cause);
   }
 }

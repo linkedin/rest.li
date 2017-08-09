@@ -44,7 +44,7 @@ public class HttpClientBuilder
   private final ChannelPoolManagerKeyBuilder _channelPoolManagerKeyBuilder;
   private final ChannelPoolManagerFactory _channelPoolManagerFactory;
   private ExecutorService _callbackExecutors = null;
-  private long _shutdownTimeout = 5000;
+  private long _shutdownTimeout = 15000;
   private long _requestTimeout = 10000;
   private AbstractJmxManager _jmxManager = AbstractJmxManager.NULL_JMX_MANAGER;
   private final NioEventLoopGroup _eventLoopGroup;

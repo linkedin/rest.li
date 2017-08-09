@@ -49,6 +49,7 @@ import io.netty.handler.codec.http2.Http2Headers;
 import io.netty.handler.codec.http2.Http2Settings;
 import io.netty.handler.codec.http2.Http2Stream;
 import io.netty.util.concurrent.PromiseCombiner;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -122,8 +123,8 @@ class Http2StreamCodec extends Http2ConnectionHandler
     }
     else
     {
-      // Request type is not supported. Returns channel back to the pool and throws exception.
-      ctx.fireChannelRead(((RequestWithCallback) msg).handle());
+      // Release the handle to put the channel back to the pool
+      ((RequestWithCallback) msg).handle().release();
       throw new IllegalArgumentException("Request is neither StreamRequest or RestRequest");
     }
 
@@ -201,10 +202,8 @@ class Http2StreamCodec extends Http2ConnectionHandler
     final TimeoutAsyncPoolHandle<Channel> handle = Http2PipelinePropertyUtil.remove(
         ctx, connection(), streamId, Http2ClientPipelineInitializer.CHANNEL_POOL_HANDLE_ATTR_KEY);
 
-    if (handle != null)
-    {
-      ctx.fireChannelRead(handle.error());
-    }
+    // Disposes channel
+    Optional.of(handle).ifPresent(TimeoutAsyncPoolHandle::dispose);
   }
 
   /**
@@ -256,7 +255,7 @@ class Http2StreamCodec extends Http2ConnectionHandler
       _notFlushedChunks++;
       if (_notFlushedBytes >= FLUSH_THRESHOLD || _notFlushedChunks == MAX_BUFFERED_CHUNKS)
       {
-        flush();
+        _ctx.flush();
         _notFlushedBytes = 0;
         _notFlushedChunks = 0;
       }
@@ -268,37 +267,21 @@ class Http2StreamCodec extends Http2ConnectionHandler
       _encoder.writeData(_ctx, _streamId, Unpooled.EMPTY_BUFFER, NO_PADDING, END_STREAM, _ctx.channel().voidPromise());
       LOG.debug("Sent HTTP/2 DATA frame, stream={}, end={}, data={}bytes, padding={}bytes",
           new Object[] { _streamId, END_STREAM, NO_DATA, NO_PADDING });
-      flush();
+      _ctx.flush();
     }
 
     @Override
     public void onError(Throwable cause)
     {
-      resetStream(_ctx, _streamId, Http2Error.CANCEL.code(), _ctx.newPromise());
+      resetStream(_ctx, _streamId, Http2Error.CANCEL.code(), _ctx.voidPromise());
 
-      // Signals Http2ChannelPoolHandler to return channel back to the async pool assuming the channel is still good
-      _ctx.fireChannelRead(_poolHandle);
+      // Releases the handle to put the channel back to the pool
+      _poolHandle.release();
     }
 
     private void request()
     {
       _readHandle.request(MAX_BUFFERED_CHUNKS);
-    }
-
-    private void flush()
-    {
-      try
-      {
-        _encoder.flowController().writePendingBytes();
-      }
-      catch (Http2Exception e)
-      {
-        Http2StreamCodec.this.onError(_ctx, e);
-      }
-      finally
-      {
-        _ctx.flush();
-      }
     }
   }
 }

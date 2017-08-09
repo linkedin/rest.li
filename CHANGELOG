@@ -1,5 +1,7 @@
 14.0.6
 ------
+(RB=1062462)
+Fail promise if h2c upgrade or alpn negotiation do not complete before connection closes
 
 14.0.5
 ------
