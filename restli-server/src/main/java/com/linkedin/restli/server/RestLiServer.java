@@ -370,7 +370,8 @@ public class RestLiServer extends BaseRestServer
                                                                           requestExecutionReportBuilder,
                                                                           attachmentReader,
                                                                           _responseHandler,
-                                                                          wrappedCallback);
+                                                                          wrappedCallback,
+                                                                          _errorResponseBuilder);
 
     RestLiFilterChain filterChain = new RestLiFilterChain(_filters, filterChainCallback);
 

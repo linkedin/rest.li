@@ -77,6 +77,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyList;
 import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.same;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.reset;
@@ -107,6 +108,7 @@ public class TestRestLiCallback
   private RestLiAttachmentReader _requestAttachmentReader;
   @Mock
   private RequestExecutionCallback<RestResponse> _callback;
+  private ErrorResponseBuilder _errorResponseBuilder;
 
   private RestLiCallback<Object> _noFilterRestLiCallback;
 
@@ -138,10 +140,10 @@ public class TestRestLiCallback
 
     _filterResponseContextFactory = new RestLiFilterResponseContextFactory<Object>(_restRequest, _routingResult,
                                                                                    _responseHandler);
-
+    _errorResponseBuilder = new ErrorResponseBuilder();
     _filterChainCallback =
         new FilterChainCallbackImpl(_routingResult, _methodInvoker, _adapter, _requestExecutionReportBuilder,
-                                    _requestAttachmentReader, _responseHandler, _callback);
+                                    _requestAttachmentReader, _responseHandler, _callback, _errorResponseBuilder);
 
     _zeroFilterChain = new RestLiFilterChain(_filterChainCallback);
     _oneFilterChain = new RestLiFilterChain(Arrays.asList(_filter), _filterChainCallback);
@@ -189,6 +191,77 @@ public class TestRestLiCallback
     verify(_responseHandler).buildRestLiResponseData(_restRequest, _routingResult, result);
     verify(_responseHandler).buildResponse(_routingResult, partialResponse);
     verify(_callback).onSuccess(restResponse, executionReport, restLiResponseAttachments);
+    verifyZeroInteractions(_restRequest, _routingResult);
+    verifyNoMoreInteractions(_responseHandler, _callback);
+  }
+
+  @Test
+  public void testOnSuccessBuildPartialResponseFailure() throws Exception
+  {
+    String result = "foo";
+    RequestExecutionReport executionReport = new RequestExecutionReportBuilder().build();
+    RestLiResponseAttachments restLiResponseAttachments = new RestLiResponseAttachments.Builder().build();
+    RestLiResponseData responseData = new RestLiResponseDataImpl(HttpStatus.S_200_OK,
+        Collections.<String,String>emptyMap(),
+        Collections.<HttpCookie>emptyList());
+    RestResponse restResponse = new RestResponseBuilder().build();
+    // Set up.
+    when(_requestExecutionReportBuilder.build()).thenReturn(executionReport);
+    when(_responseHandler.buildRestLiResponseData(_restRequest, _routingResult, result)).thenReturn(responseData);
+    Exception e = new RuntimeException("Error1");
+    when(_responseHandler.buildPartialResponse(_routingResult, responseData)).thenThrow(e);
+    RestException restException = new RestException(restResponse, e);
+    when(_responseHandler.buildRestException(same(e), any())).thenReturn(restException);
+
+    // Invoke.
+    _noFilterRestLiCallback.onSuccess(result, executionReport, restLiResponseAttachments);
+
+    // Verify.
+    verify(_responseHandler).buildPartialResponse(_routingResult, responseData);
+    verify(_responseHandler).buildRestLiResponseData(_restRequest, _routingResult, result);
+    ArgumentCaptor<PartialRestResponse> partialResponseCaptor = ArgumentCaptor.forClass(PartialRestResponse.class);
+    verify(_responseHandler).buildRestException(same(e), partialResponseCaptor.capture());
+    assertEquals(partialResponseCaptor.getValue().getStatus(), HttpStatus.S_500_INTERNAL_SERVER_ERROR);
+    assertEquals(RestConstants.HEADER_VALUE_ERROR,
+        partialResponseCaptor.getValue().getHeader(HeaderUtil.getErrorResponseHeaderName(Collections.emptyMap())));
+    verify(_callback).onError(restException, executionReport, _requestAttachmentReader, restLiResponseAttachments);
+    verifyZeroInteractions(_restRequest, _routingResult);
+    verifyNoMoreInteractions(_responseHandler, _callback);
+  }
+
+  @Test
+  public void testOnSuccessBuildResponseFailure() throws Exception
+  {
+    String result = "foo";
+    RequestExecutionReport executionReport = new RequestExecutionReportBuilder().build();
+    RestLiResponseAttachments restLiResponseAttachments = new RestLiResponseAttachments.Builder().build();
+    RestLiResponseData responseData = new RestLiResponseDataImpl(HttpStatus.S_200_OK,
+        Collections.<String,String>emptyMap(),
+        Collections.<HttpCookie>emptyList());
+    PartialRestResponse partialResponse = new PartialRestResponse.Builder().build();
+    RestResponse restResponse = new RestResponseBuilder().build();
+    // Set up.
+    when(_requestExecutionReportBuilder.build()).thenReturn(executionReport);
+    when(_responseHandler.buildRestLiResponseData(_restRequest, _routingResult, result)).thenReturn(responseData);
+    when(_responseHandler.buildPartialResponse(_routingResult, responseData)).thenReturn(partialResponse);
+    Exception e = new RuntimeException("Error1");
+    when(_responseHandler.buildResponse(_routingResult, partialResponse)).thenThrow(e);
+    RestException restException = new RestException(restResponse, e);
+    when(_responseHandler.buildRestException(same(e), any())).thenReturn(restException);
+
+    // Invoke.
+    _noFilterRestLiCallback.onSuccess(result, executionReport, restLiResponseAttachments);
+
+    // Verify.
+    verify(_responseHandler).buildPartialResponse(_routingResult, responseData);
+    verify(_responseHandler).buildRestLiResponseData(_restRequest, _routingResult, result);
+    verify(_responseHandler).buildResponse(_routingResult, partialResponse);
+    ArgumentCaptor<PartialRestResponse> partialResponseCaptor = ArgumentCaptor.forClass(PartialRestResponse.class);
+    verify(_responseHandler).buildRestException(same(e), partialResponseCaptor.capture());
+    assertEquals(partialResponseCaptor.getValue().getStatus(), HttpStatus.S_500_INTERNAL_SERVER_ERROR);
+    assertEquals(RestConstants.HEADER_VALUE_ERROR,
+        partialResponseCaptor.getValue().getHeader(HeaderUtil.getErrorResponseHeaderName(Collections.emptyMap())));
+    verify(_callback).onError(restException, executionReport, _requestAttachmentReader, restLiResponseAttachments);
     verifyZeroInteractions(_restRequest, _routingResult);
     verifyNoMoreInteractions(_responseHandler, _callback);
   }

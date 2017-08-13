@@ -4288,7 +4288,8 @@ public class TestRestLiMethodInvocation
                                                                (ServerResourceContext)routingResult.getContext());
 
       FilterChainCallback filterChainCallback = new FilterChainCallbackImpl(null, _invoker, null, null, null,
-                                                                            restLiResponseHandler, executionCallback);
+                                                                            restLiResponseHandler, executionCallback,
+                                                                            _errorResponseBuilder);
       final RestLiCallback<Object> callback =
           new RestLiCallback<Object>(null,
                                      new RestLiFilterResponseContextFactory<Object>(request, null, restLiResponseHandler),
@@ -4343,7 +4344,8 @@ public class TestRestLiMethodInvocation
       RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(),
                                                                (ServerResourceContext)routingResult.getContext());
       FilterChainCallback filterChainCallback = new FilterChainCallbackImpl(null, _invoker, null, null, null,
-                                                                            restLiResponseHandler, executionCallback);
+                                                                            restLiResponseHandler, executionCallback,
+                                                                            _errorResponseBuilder);
       final RestLiCallback<Object> callback =
           new RestLiCallback<Object>(null,
                                      new RestLiFilterResponseContextFactory<Object>(request, null, restLiResponseHandler),
@@ -5137,7 +5139,8 @@ public class TestRestLiMethodInvocation
                                                                             requestExecutionReportBuilder,
                                                                             expectedRequestAttachments,
                                                                             restLiResponseHandler,
-                                                                            executionCallback);
+                                                                            executionCallback,
+                                                                            _errorResponseBuilder);
       final RestLiCallback<Object> outerCallback =
           new RestLiCallback<Object>(filterContext,
                                      new RestLiFilterResponseContextFactory<Object>(request, routingResult, restLiResponseHandler),
