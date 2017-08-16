@@ -24,19 +24,26 @@ public class GaussianResponseTimeDistribution implements ResponseTimeDistributio
   private final double _average;
   private final double _stdDev;
   private final double _min;
+  private final long _max;
 
   public GaussianResponseTimeDistribution(long min, long average, long stdDev, TimeUnit unit)
+  {
+    this(min, average, stdDev, Long.MAX_VALUE, unit);
+  }
+
+  public GaussianResponseTimeDistribution(long min, long average, long stdDev, long max, TimeUnit unit)
   {
     _average = unit.toNanos(average);
     _stdDev = unit.toNanos(stdDev);
     _min = unit.toNanos(min);
+    _max = unit.toNanos(max);
   }
 
   @Override
   public long responseTimeNanos()
   {
     double rnd = _average + ThreadLocalRandom.current().nextGaussian() * _stdDev;
-    return (long) Math.max(rnd, _min);
+    return (long) Math.min(Math.max(rnd, _min), _max);
   }
 
 }

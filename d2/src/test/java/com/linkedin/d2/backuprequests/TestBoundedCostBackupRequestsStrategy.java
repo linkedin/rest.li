@@ -62,7 +62,7 @@ public class TestBoundedCostBackupRequestsStrategy
     BoundedCostBackupRequestsStrategy strategy = new BoundedCostBackupRequestsStrategy(5, 64, 1024, 128, 100);
 
     BackupRequestsSimulator simulator = new BackupRequestsSimulator(new PoissonEventsArrival(200, TimeUnit.SECONDS),
-        new GaussianResponseTimeDistribution(10, 50, 10, TimeUnit.MILLISECONDS), strategy);
+        new GaussianResponseTimeDistribution(10, 50, 10, 99, TimeUnit.MILLISECONDS), strategy);
     simulator.simulate(ITERATIONS);
     assertEquals(simulator.getNumberOfBackupRequestsMade(), 0);
   }
