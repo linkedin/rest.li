@@ -36,13 +36,13 @@ import org.testng.annotations.Test;
 public class TestHttp2UpgradeHandler
 {
   private static final String HOST = "localhost";
-  private static final String PATH = "echo";
+  private static final String PATH = "*";
   private static final int PORT = 8080;
 
   @Test
   public void testInitialization() throws Exception
   {
-    Http2UpgradeHandler handler = new Http2UpgradeHandler(HOST, PORT, PATH);
+    Http2UpgradeHandler handler = new Http2UpgradeHandler(HOST, PORT);
     EmbeddedChannel channel = new EmbeddedChannel(handler);
 
     Assert.assertTrue(channel.finish());
@@ -58,7 +58,7 @@ public class TestHttp2UpgradeHandler
 
   @Test
   public void testWriteBeforeUpgrade() throws Exception {
-    Http2UpgradeHandler handler = new Http2UpgradeHandler(HOST, PORT, PATH);
+    Http2UpgradeHandler handler = new Http2UpgradeHandler(HOST, PORT);
     EmbeddedChannel channel = new EmbeddedChannel(handler);
 
     // Reads the upgrade request from the outbound buffer to ensure nothing in the buffer
@@ -75,7 +75,7 @@ public class TestHttp2UpgradeHandler
   @Test(timeOut = 10000)
   @SuppressWarnings("unchecked")
   public void testChannelCloseBeforeUpgrade() throws Exception {
-    Http2UpgradeHandler handler = new Http2UpgradeHandler(HOST, PORT, PATH);
+    Http2UpgradeHandler handler = new Http2UpgradeHandler(HOST, PORT);
     EmbeddedChannel channel = new EmbeddedChannel(handler);
 
     // Reads the upgrade request from the outbound buffer to ensure nothing in the buffer

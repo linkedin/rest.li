@@ -53,15 +53,13 @@ class Http2UpgradeHandler extends ChannelDuplexHandler
 
   private final String _host;
   private final int _port;
-  private final String _path;
 
   private ChannelPromise _upgradePromise = null;
 
-  public Http2UpgradeHandler(String host, int port, String path)
+  public Http2UpgradeHandler(String host, int port)
   {
     _host = host;
     _port = port;
-    _path = path;
   }
 
   @Override
@@ -69,7 +67,10 @@ class Http2UpgradeHandler extends ChannelDuplexHandler
   {
     _upgradePromise = ctx.channel().newPromise();
 
-    DefaultFullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.OPTIONS, _path);
+    // For an upgrade request, clients should use an OPTIONS request for path “*” or a HEAD request for “/”.
+    // RFC: https://tools.ietf.org/html/rfc7540#section-3.2
+    // Implementation detail: https://http2.github.io/faq/#can-i-implement-http2-without-implementing-http11
+    DefaultFullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.OPTIONS, "*");
     request.headers().add(HttpHeaderNames.HOST, _host + ":" + _port);
     ctx.writeAndFlush(request);
 

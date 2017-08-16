@@ -130,9 +130,8 @@ class Http2InitializerHandler extends ChannelOutboundHandlerAdapter
 
     String host = request.getURI().getAuthority();
     int port = request.getURI().getPort();
-    String path = request.getURI().getPath();
 
-    Http2UpgradeHandler upgradeHandler = new Http2UpgradeHandler(host, port, path);
+    Http2UpgradeHandler upgradeHandler = new Http2UpgradeHandler(host, port);
     Http2StreamResponseHandler responseHandler = new Http2StreamResponseHandler();
 
     ctx.pipeline().addBefore(ctx.name(), "sourceCodec", sourceCodec);

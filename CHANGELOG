@@ -1,5 +1,13 @@
+14.0.9
+------
+
 14.0.8
 ------
+(RB=1071804)
+Use "*" as default path in Http2 upgrade requests
+
+(RB=1058650)
+Adding ChannelPoolManager Sharing feature
 
 14.0.7
 ------
