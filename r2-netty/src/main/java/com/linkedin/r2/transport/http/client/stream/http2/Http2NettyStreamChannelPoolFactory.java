@@ -45,10 +45,12 @@ public class Http2NettyStreamChannelPoolFactory implements ChannelPoolFactory
   private final boolean _tcpNoDelay;
   private final ChannelGroup _allChannels;
   private final ScheduledExecutorService _scheduler;
+  private final boolean _createChannelImmediately;
 
   public Http2NettyStreamChannelPoolFactory(
     long idleTimeout,
     int maxPoolWaiterSize,
+    int minPoolSize,
     boolean tcpNoDelay,
     ScheduledExecutorService scheduler,
     SSLContext sslContext,
@@ -66,6 +68,9 @@ public class Http2NettyStreamChannelPoolFactory implements ChannelPoolFactory
     _bootstrap = new Bootstrap().group(eventLoopGroup).channel(NioSocketChannel.class).handler(initializer);
     _idleTimeout = idleTimeout;
     _maxPoolWaiterSize = maxPoolWaiterSize;
+
+    // if the min pool size is greater than 0, create the (only) channel immediately
+    _createChannelImmediately = minPoolSize > 0;
     _tcpNoDelay = tcpNoDelay;
     _allChannels = channelGroup;
     _scheduler = scheduler;
@@ -84,6 +89,7 @@ public class Http2NettyStreamChannelPoolFactory implements ChannelPoolFactory
       _scheduler,
       new NoopRateLimiter(),
       _idleTimeout,
+      _createChannelImmediately,
       _maxPoolWaiterSize);
   }
 }

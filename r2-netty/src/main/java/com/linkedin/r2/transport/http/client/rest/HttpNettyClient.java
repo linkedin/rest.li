@@ -32,7 +32,7 @@ import com.linkedin.r2.transport.http.client.TimeoutTransportCallback;
 import com.linkedin.r2.transport.http.client.common.AbstractNettyClient;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolFactory;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManager;
-import com.linkedin.r2.transport.http.client.common.SslRequestHandler;
+import com.linkedin.r2.transport.http.client.common.CertificateHandler;
 import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
 import com.linkedin.r2.util.Cancellable;
 import io.netty.channel.Channel;
@@ -60,8 +60,7 @@ public class HttpNettyClient extends AbstractNettyClient<RestRequest, RestRespon
 
   /**
    * Creates a new HttpNettyClient
-   *
-   * @param eventLoopGroup            The NioEventLoopGroup; it is the caller's responsibility to
+   *  @param eventLoopGroup            The NioEventLoopGroup; it is the caller's responsibility to
    *                                  shut it down
    * @param executor                  An executor; it is the caller's responsibility to shut it down
    * @param requestTimeout            Timeout, in ms, to get a connection from the pool or create one
@@ -70,7 +69,8 @@ public class HttpNettyClient extends AbstractNettyClient<RestRequest, RestRespon
    * @param callbackExecutors         An optional EventExecutorGroup to invoke user callback
    * @param jmxManager                A management class that is aware of the creation/shutdown event
    *                                  of the underlying {@link ChannelPoolManager}
-   * @param channelPoolManager        channelPoolManager instance to use in the factory
+   * @param channelPoolManager        channelPoolManager instance to retrieve http only channels
+   * @param sslChannelPoolManager     channelPoolManager instance to retrieve https only connection
    */
   public HttpNettyClient(NioEventLoopGroup eventLoopGroup,
                          ScheduledExecutorService executor,
@@ -78,9 +78,10 @@ public class HttpNettyClient extends AbstractNettyClient<RestRequest, RestRespon
                          long shutdownTimeout,
                          ExecutorService callbackExecutors,
                          AbstractJmxManager jmxManager,
-                         ChannelPoolManager channelPoolManager)
+                         ChannelPoolManager channelPoolManager,
+                         ChannelPoolManager sslChannelPoolManager)
   {
-    super(executor, requestTimeout, shutdownTimeout, jmxManager, channelPoolManager);
+    super(executor, requestTimeout, shutdownTimeout, jmxManager, channelPoolManager, sslChannelPoolManager);
     _callbackExecutors = callbackExecutors == null ? eventLoopGroup : callbackExecutors;
   }
 
@@ -118,7 +119,7 @@ public class HttpNettyClient extends AbstractNettyClient<RestRequest, RestRespon
     final AsyncPool<Channel> pool;
     try
     {
-      pool = _channelPoolManager.getPoolForAddress(address);
+      pool = getChannelPoolManagerPerRequest(request).getPoolForAddress(address);
     }
     catch (IllegalStateException e)
     {
@@ -148,7 +149,7 @@ public class HttpNettyClient extends AbstractNettyClient<RestRequest, RestRespon
 
         // Set the expected value by the user of the cert principal name
         String expectedCertPrincipal = (String) requestContext.getLocalAttr(R2Constants.EXPECTED_SERVER_CERT_PRINCIPAL_NAME);
-        channel.attr(SslRequestHandler.EXPECTED_SERVER_CERT_PRINCIPAL_ATTR_KEY).set(expectedCertPrincipal);
+        channel.attr(CertificateHandler.EXPECTED_SERVER_CERT_PRINCIPAL_ATTR_KEY).set(expectedCertPrincipal);
 
         final State state = _state.get();
         if (state == State.REQUESTS_STOPPING || state == State.SHUTDOWN)

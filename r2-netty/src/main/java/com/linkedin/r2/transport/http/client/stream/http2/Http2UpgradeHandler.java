@@ -34,6 +34,7 @@ import io.netty.handler.codec.http.HttpClientUpgradeHandler;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpVersion;
+import java.net.InetSocketAddress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,27 +52,45 @@ class Http2UpgradeHandler extends ChannelDuplexHandler
 {
   private static final Logger LOG = LoggerFactory.getLogger(Http2UpgradeHandler.class);
 
-  private final String _host;
-  private final int _port;
-
   private ChannelPromise _upgradePromise = null;
-
-  public Http2UpgradeHandler(String host, int port)
-  {
-    _host = host;
-    _port = port;
-  }
 
   @Override
   public void handlerAdded(ChannelHandlerContext ctx) throws Exception
   {
     _upgradePromise = ctx.channel().newPromise();
 
+  }
+
+  @Override
+  public void channelActive(ChannelHandlerContext ctx) throws Exception
+  {
     // For an upgrade request, clients should use an OPTIONS request for path “*” or a HEAD request for “/”.
     // RFC: https://tools.ietf.org/html/rfc7540#section-3.2
     // Implementation detail: https://http2.github.io/faq/#can-i-implement-http2-without-implementing-http11
     DefaultFullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.OPTIONS, "*");
-    request.headers().add(HttpHeaderNames.HOST, _host + ":" + _port);
+
+    final String hostname;
+    if (ctx.channel().remoteAddress() instanceof InetSocketAddress)
+    {
+      // 1) The documentation of remoteAddress says that it should be down-casted to InetSocketAddress.
+      // 2) The getHostString doesn't attempt a reverse lookup
+      InetSocketAddress inetAddress = ((InetSocketAddress) ctx.channel().remoteAddress());
+      hostname = inetAddress.getHostString() + ":" + inetAddress.getPort();
+    }
+    else
+    {
+      // if it is not a InetSocketAddress, it is a DomainSocketAddress, a LocalAddress or a EmbeddedSocketAddress.
+      // In the R2 stack it should never happen
+      hostname = "localhost";
+      LOG.warn("The remoteAddress is not an InetSocketAddress, therefore it has been used '" + hostname + "'" +
+        " for the HOST of the upgrade request", ctx.channel().remoteAddress());
+    }
+
+    // The host is required given rfc2616 14.23 also for the upgrade request.
+    // Without it, the host the upgrade request fails
+    // https://tools.ietf.org/html/rfc2616#section-14.23
+    request.headers().add(HttpHeaderNames.HOST, hostname);
+
     ctx.writeAndFlush(request);
 
     // Fail the upgrade promise when channel is closed
@@ -81,6 +100,7 @@ class Http2UpgradeHandler extends ChannelDuplexHandler
         _upgradePromise.setFailure(new ChannelException("HTTP/2 upgrade did not complete before channel closed"));
       }
     });
+    ctx.fireChannelActive();
   }
 
   @Override

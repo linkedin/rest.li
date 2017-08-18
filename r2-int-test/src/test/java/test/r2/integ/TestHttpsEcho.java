@@ -21,112 +21,24 @@
 package test.r2.integ;
 
 import com.linkedin.common.callback.FutureCallback;
-import com.linkedin.r2.RemoteInvocationException;
-import com.linkedin.r2.filter.FilterChain;
-import com.linkedin.r2.filter.R2Constants;
-import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.sample.Bootstrap;
 import com.linkedin.r2.sample.echo.EchoService;
 import com.linkedin.r2.sample.echo.rest.RestEchoClient;
-import com.linkedin.r2.transport.common.Client;
-import com.linkedin.r2.transport.common.Server;
-import com.linkedin.r2.transport.common.bridge.client.TransportClient;
-import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
-import com.linkedin.r2.transport.http.client.HttpClientFactory;
-import com.linkedin.r2.transport.http.client.common.ServerCertPrincipalNameMismatchException;
-import com.linkedin.test.util.ExceptionTestUtil;
 import org.testng.Assert;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
-
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManagerFactory;
-import java.io.FileInputStream;
-import java.net.URI;
-import java.security.KeyStore;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 
 /**
  * @author Ang Xu
  */
-public class TestHttpsEcho extends AbstractEchoServiceTest
+public class TestHttpsEcho extends AbstractTestHttps
 {
-  // A self-signed server certificate. DO NOT use it outside integration test!!!
-  private final String keyStore = getClass().getClassLoader().getResource("keystore").getPath();
-  private final String keyStorePassword = "password";
-
-  private static final int PORT = 11990;
-
-  private final int _port;
-  private final boolean _clientROS;
-  private final boolean _serverROS;
 
   @Factory(dataProvider = "configs")
   public TestHttpsEcho(boolean clientROS, boolean serverROS, int port)
   {
-    _port = port;
-    _clientROS = clientROS;
-    _serverROS = serverROS;
-  }
-
-  @DataProvider
-  public static Object[][] configs()
-  {
-    return new Object[][] {
-        {true, true, PORT},
-        {true, false, PORT + 1},
-        {false, true, PORT + 2},
-        {false, false, PORT + 3}
-    };
-  }
-
-
-  @Override
-  protected RestEchoClient getEchoClient(Client client, URI uri)
-  {
-    return new RestEchoClient(Bootstrap.createHttpsURI(_port, uri), client);
-  }
-
-  @Override
-  protected Client createClient(FilterChain filters) throws Exception
-  {
-    final Map<String, Object> properties = new HashMap<String, Object>();
-
-    //load the keystore
-    KeyStore certKeyStore = KeyStore.getInstance(KeyStore.getDefaultType());
-    certKeyStore.load(new FileInputStream(keyStore), keyStorePassword.toCharArray());
-
-    //set KeyManger to use X509
-    KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
-    kmf.init(certKeyStore, keyStorePassword.toCharArray());
-
-    //use a standard trust manager and load server certificate
-    TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
-    tmf.init(certKeyStore);
-
-    //set context to TLS and initialize it
-    SSLContext context = SSLContext.getInstance("TLS");
-    context.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
-
-    properties.put(HttpClientFactory.HTTP_SSL_CONTEXT, context);
-    properties.put(HttpClientFactory.HTTP_SSL_PARAMS, context.getDefaultSSLParameters());
-
-    final TransportClient client = new HttpClientFactory.Builder()
-        .setFilterChain(filters)
-        .build()
-        .getClient(properties);
-    return new TransportClientAdapter(client, _clientROS);
-  }
-
-  @Override
-  protected Server createServer(FilterChain filters)
-  {
-    return Bootstrap.createHttpsServer(_port, keyStore, keyStorePassword, filters, _serverROS);
+    super(clientROS, serverROS, port);
   }
 
   /**
@@ -142,49 +54,6 @@ public class TestHttpsEcho extends AbstractEchoServiceTest
     client.echo(msg, callback);
 
     Assert.assertEquals(callback.get(), msg);
-  }
-
-  @Test
-  public void testHttpsEchoWithWrongCertPrincipal() throws Exception
-  {
-    try
-    {
-      testHttpsEchoWithCertPrincipal("WRONG CERTIFICATE NAME");
-      Assert.fail();
-    }
-    catch (Exception e)
-    {
-      ExceptionTestUtil.verifyCauseChain(e, RemoteInvocationException.class, ServerCertPrincipalNameMismatchException.class);
-    }
-  }
-
-  @Test
-  public void testHttpsEchoWithCorrectCertPrincipal() throws Exception
-  {
-    testHttpsEchoWithCertPrincipal("CN=com.linkedin.r2,OU=r2-int-test,O=LinkedIn,L=Unknown,ST=Unknown,C=Unknown");
-  }
-
-  /**
-   * If the user doesn't specify a principal cert name, anything is allowed and the requests should simply succeed
-   */
-  @Test
-  public void testHttpsEchoWithNoCertPrincipal() throws Exception
-  {
-    testHttpsEchoWithCertPrincipal(null);
-  }
-
-  public void testHttpsEchoWithCertPrincipal(String principalName) throws Exception
-  {
-    final RestEchoClient client = getEchoClient(_client, Bootstrap.getEchoURI());
-
-    final String msg = "This is a simple echo message";
-    final FutureCallback<String> callback = new FutureCallback<>();
-    RequestContext requestContext = new RequestContext();
-    requestContext.putLocalAttr(R2Constants.EXPECTED_SERVER_CERT_PRINCIPAL_NAME, principalName);
-    client.echo(msg, requestContext, callback);
-
-    String actual = callback.get(2, TimeUnit.SECONDS);
-    Assert.assertEquals(actual, msg);
   }
 
 }

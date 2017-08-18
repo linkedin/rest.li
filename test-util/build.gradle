@@ -1,3 +1,4 @@
 dependencies {
     compile externalDependency.testng
+    compile externalDependency.commonsLang
 }

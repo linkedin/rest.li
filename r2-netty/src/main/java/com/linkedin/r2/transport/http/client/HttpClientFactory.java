@@ -42,9 +42,9 @@ import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerFactory;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerFactoryImpl;
-import com.linkedin.r2.transport.http.client.common.ConnectionSharingChannelPoolManagerFactory;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerKey;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerKeyBuilder;
+import com.linkedin.r2.transport.http.client.common.ConnectionSharingChannelPoolManagerFactory;
 import com.linkedin.r2.transport.http.client.rest.HttpNettyClient;
 import com.linkedin.r2.transport.http.client.stream.http.HttpNettyStreamClient;
 import com.linkedin.r2.transport.http.client.stream.http2.Http2NettyStreamClient;
@@ -52,11 +52,6 @@ import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
 import com.linkedin.r2.util.ConfigValueExtractor;
 import com.linkedin.r2.util.NamedThreadFactory;
 import io.netty.channel.nio.NioEventLoopGroup;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLParameters;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -69,6 +64,10 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A factory for HttpNettyClient instances.
@@ -486,8 +485,6 @@ public class HttpClientFactory implements TransportClientFactory
     _useClientCompression = _compressionExecutor != null;
     _defaultHttpVersion = defaultHttpVersion;
     _channelPoolManagerFactory = new ChannelPoolManagerFactoryImpl(_eventLoopGroup, _executor);
-    _channelPoolManagerFactory =
-      new ChannelPoolManagerFactoryImpl(_eventLoopGroup, _executor);
     if (shareConnection)
     {
       _channelPoolManagerFactory = new ConnectionSharingChannelPoolManagerFactory(_channelPoolManagerFactory);
@@ -1059,7 +1056,8 @@ public class HttpClientFactory implements TransportClientFactory
   {
 
     // key which identifies and contains the set of transport properties to create a channel pool manager
-    ChannelPoolManagerKey key = createChannelPoolManagerKey(properties, sslContext, sslParameters);
+    ChannelPoolManagerKey key = createChannelPoolManagerKey(properties, null, null);
+    ChannelPoolManagerKey sslKey = createChannelPoolManagerKey(properties, sslContext, sslParameters);
 
     String httpServiceName = (String) properties.get(HTTP_SERVICE_NAME);
     LOG.info("The service '{}' has been assigned to the ChannelPoolManager with key '{}' ", httpServiceName, key.getName());
@@ -1076,18 +1074,21 @@ public class HttpClientFactory implements TransportClientFactory
     {
       case HTTP_1_1:
         streamClient = new HttpNettyStreamClient(_eventLoopGroup, _executor, requestTimeout, shutdownTimeout,
-          _callbackExecutorGroup, _jmxManager, _channelPoolManagerFactory.buildStream(key));
+          _callbackExecutorGroup, _jmxManager, _channelPoolManagerFactory.buildStream(key),
+          _channelPoolManagerFactory.buildStream(sslKey));
         break;
       case HTTP_2:
         streamClient = new Http2NettyStreamClient(_eventLoopGroup, _executor, requestTimeout, shutdownTimeout,
-          _callbackExecutorGroup, _jmxManager, _channelPoolManagerFactory.buildHttp2Stream(key));
+          _callbackExecutorGroup, _jmxManager, _channelPoolManagerFactory.buildHttp2Stream(key),
+          _channelPoolManagerFactory.buildHttp2Stream(sslKey));
         break;
       default:
         throw new IllegalArgumentException("Unrecognized HTTP protocol version " + httpProtocolVersion);
     }
 
     HttpNettyClient legacyClient = new HttpNettyClient(_eventLoopGroup, _executor, requestTimeout, shutdownTimeout,
-      _callbackExecutorGroup, _jmxManager, _channelPoolManagerFactory.buildRest(key));
+      _callbackExecutorGroup, _jmxManager, _channelPoolManagerFactory.buildRest(key),
+      _channelPoolManagerFactory.buildRest(sslKey));
 
     return new MixedClient(legacyClient, streamClient);
   }

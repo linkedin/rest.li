@@ -72,7 +72,8 @@ public abstract class AbstractNettyClient<Req extends Request, Res extends Respo
   private static final int HTTP_DEFAULT_PORT = 80;
   private static final int HTTPS_DEFAULT_PORT = 443;
 
-  protected final ChannelPoolManager _channelPoolManager;
+  private final ChannelPoolManager _channelPoolManager;
+  private final ChannelPoolManager _sslChannelPoolManager;
   protected final ChannelGroup _allChannels;
 
   protected final AtomicReference<State> _state = new AtomicReference<>(State.RUNNING);
@@ -101,17 +102,20 @@ public abstract class AbstractNettyClient<Req extends Request, Res extends Respo
    *                                  initiated before terminating outstanding requests
    * @param jmxManager                A management class that is aware of the creation/shutdown event
    *                                  of the underlying {@link ChannelPoolManager}
-   * @param channelPoolManager        channelPoolManager instance to use in the factory
+   * @param channelPoolManager        channelPoolManager instance to retrieve http only channels
+   * @param sslChannelPoolManager     channelPoolManager instance to retrieve https only connection
    */
   public AbstractNettyClient(ScheduledExecutorService executor,
                              long requestTimeout,
                              long shutdownTimeout,
                              AbstractJmxManager jmxManager,
-                             ChannelPoolManager channelPoolManager)
+                             ChannelPoolManager channelPoolManager,
+                             ChannelPoolManager sslChannelPoolManager)
   {
     _scheduler = executor;
     _requestTimeout = requestTimeout;
     _shutdownTimeout = shutdownTimeout;
+    _sslChannelPoolManager = sslChannelPoolManager;
     _requestTimeoutMessage = "Exceeded request timeout of " + _requestTimeout + "ms";
     _jmxManager = jmxManager;
     _channelPoolManager = channelPoolManager;
@@ -130,6 +134,8 @@ public abstract class AbstractNettyClient<Req extends Request, Res extends Respo
     DefaultChannelGroup allChannels = new DefaultChannelGroup("R2 client channels", GlobalEventExecutor.INSTANCE);
 
     _channelPoolManager = new ChannelPoolManagerImpl(factory, allChannels, _scheduler);
+    // test client doesn't support ssl connections
+    _sslChannelPoolManager = _channelPoolManager;
     _jmxManager.onProviderCreate(_channelPoolManager);
     _allChannels = _channelPoolManager.getAllChannels();
   }
@@ -224,6 +230,16 @@ public abstract class AbstractNettyClient<Req extends Request, Res extends Respo
     }
 
     doWriteRequest(request, requestContext, address, wireAttrs, timeoutCallback);
+  }
+
+  private static boolean isSslRequest(Request request)
+  {
+    return "https".equals(request.getURI().getScheme());
+  }
+
+  protected ChannelPoolManager getChannelPoolManagerPerRequest(Request request)
+  {
+    return isSslRequest(request) ? _sslChannelPoolManager : _channelPoolManager;
   }
 
   /**

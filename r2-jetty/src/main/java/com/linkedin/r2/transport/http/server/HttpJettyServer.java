@@ -21,6 +21,7 @@
 package com.linkedin.r2.transport.http.server;
 
 
+import java.net.BindException;
 import javax.servlet.http.HttpServlet;
 import java.io.IOException;
 
@@ -126,6 +127,10 @@ public class HttpJettyServer implements HttpServer
     try
     {
       _server.start();
+    }
+    catch (BindException e)
+    {
+      throw new IOException("Failed to start Jetty on port " + _port, e);
     }
     catch (Exception e)
     {

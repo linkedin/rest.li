@@ -19,9 +19,10 @@ package com.linkedin.r2.transport.http.client.rest;
 import com.linkedin.r2.transport.http.client.AsyncPool;
 import com.linkedin.r2.transport.http.client.AsyncPoolImpl;
 import com.linkedin.r2.transport.http.client.ExponentialBackOffRateLimiter;
+import com.linkedin.r2.transport.http.client.common.CertificateHandler;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolFactory;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolLifecycle;
-import com.linkedin.r2.transport.http.client.common.SslRequestHandler;
+import com.linkedin.r2.transport.http.client.common.SslHandlerUtil;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
@@ -30,15 +31,15 @@ import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpObjectAggregator;
-
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLParameters;
+import io.netty.handler.ssl.SslHandler;
 import java.net.SocketAddress;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLParameters;
 
 
 /**
@@ -111,7 +112,9 @@ public class HttpNettyChannelPoolFactory implements ChannelPoolFactory
     private final int _maxResponseSize;
 
     /**
-     * Creates new instance.
+     * Creates new instance. If sslParameters is present the PipelineInitializer
+     * will produce channels that support only https connections
+     *
      * @param sslContext {@link SSLContext} to be used for TLS-enabled channel pipeline.
      * @param sslParameters {@link SSLParameters} to configure {@link SSLEngine}s created
      *          from sslContext. This is somewhat redundant to
@@ -191,12 +194,18 @@ public class HttpNettyChannelPoolFactory implements ChannelPoolFactory
     @Override
     protected void initChannel(NioSocketChannel ch) throws Exception
     {
+      SslHandler sslHandler = null;
+      if (_sslContext != null)
+      {
+        sslHandler = SslHandlerUtil.getSslHandler(_sslContext,_sslParameters);
+        ch.pipeline().addLast(SslHandlerUtil.PIPELINE_SSL_HANDLER, sslHandler);
+      }
       ch.pipeline().addLast("codec", new HttpClientCodec(4096, _maxHeaderSize, _maxChunkSize));
       ch.pipeline().addLast("dechunker", new HttpObjectAggregator(_maxResponseSize));
       ch.pipeline().addLast("rapiCodec", new RAPClientCodec());
-      if (_sslContext != null)
+      if (sslHandler != null)
       {
-        ch.pipeline().addLast("sslRequestHandler", new SslRequestHandler(_sslContext, _sslParameters));
+        ch.pipeline().addLast("certificateHandler", new CertificateHandler(sslHandler));
       }
       // the response handler catches the exceptions thrown by other layers. By consequence no handlers that throw exceptions
       // should be after this one, otherwise the exception won't be caught and managed by R2

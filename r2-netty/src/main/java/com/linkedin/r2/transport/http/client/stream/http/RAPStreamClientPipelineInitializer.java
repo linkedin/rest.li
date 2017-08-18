@@ -14,30 +14,27 @@
    limitations under the License.
 */
 
-/**
- * $Id: $
- */
-
 package com.linkedin.r2.transport.http.client.stream.http;
 
-import com.linkedin.r2.transport.http.client.common.SslRequestHandler;
+import com.linkedin.r2.transport.http.client.common.CertificateHandler;
+import com.linkedin.r2.transport.http.client.common.SslHandlerUtil;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.HttpClientCodec;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLParameters;
+import io.netty.handler.ssl.SslHandler;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
  * Netty HTTP/1.1 streaming implementation of {@link ChannelInitializer}
  */
-class RAPStreamClientPipelineInitializer extends ChannelInitializer<NioSocketChannel>
+public class RAPStreamClientPipelineInitializer extends ChannelInitializer<NioSocketChannel>
 {
   static final Logger LOG = LoggerFactory.getLogger(RAPStreamClientPipelineInitializer.class);
 
@@ -128,13 +125,19 @@ class RAPStreamClientPipelineInitializer extends ChannelInitializer<NioSocketCha
   @Override
   protected void initChannel(NioSocketChannel ch) throws Exception
   {
+    SslHandler sslHandler = null;
+    if (_sslContext != null)
+    {
+      sslHandler = SslHandlerUtil.getSslHandler(_sslContext,_sslParameters);
+      ch.pipeline().addLast(SslHandlerUtil.PIPELINE_SSL_HANDLER, sslHandler);
+    }
     ch.pipeline().addLast("codec", new HttpClientCodec(4096, _maxHeaderSize, _maxChunkSize));
     ch.pipeline().addLast("rapFullRequestEncoder", new RAPStreamFullRequestEncoder());
     ch.pipeline().addLast("rapEncoder", new RAPStreamRequestEncoder());
     ch.pipeline().addLast("rapDecoder", new RAPStreamResponseDecoder(_maxResponseSize));
-    if (_sslContext != null)
+    if (sslHandler != null)
     {
-      ch.pipeline().addLast("sslRequestHandler", new SslRequestHandler(_sslContext, _sslParameters));
+      ch.pipeline().addLast("certificateHandler", new CertificateHandler(sslHandler));
     }
     // the response handler catches the exceptions thrown by other layers. By consequence no handlers that throw exceptions
     // should be after this one, otherwise the exception won't be caught and managed by R2

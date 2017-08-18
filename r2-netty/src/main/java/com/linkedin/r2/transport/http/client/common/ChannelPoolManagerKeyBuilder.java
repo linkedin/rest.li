@@ -131,7 +131,7 @@ public class ChannelPoolManagerKeyBuilder
   }
 
   /**
-   * @param maxPoolSize maximum size for each pool for each host
+   * @param maxPoolSize maximum size for each pool for each host. Http and Https have different pools
    */
   public ChannelPoolManagerKeyBuilder setMaxPoolSize(int maxPoolSize)
   {

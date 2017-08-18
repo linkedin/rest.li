@@ -35,14 +35,12 @@ import org.testng.annotations.Test;
 @SuppressWarnings("rawtypes")
 public class TestHttp2UpgradeHandler
 {
-  private static final String HOST = "localhost";
   private static final String PATH = "*";
-  private static final int PORT = 8080;
 
   @Test
   public void testInitialization() throws Exception
   {
-    Http2UpgradeHandler handler = new Http2UpgradeHandler(HOST, PORT);
+    Http2UpgradeHandler handler = new Http2UpgradeHandler();
     EmbeddedChannel channel = new EmbeddedChannel(handler);
 
     Assert.assertTrue(channel.finish());
@@ -53,12 +51,16 @@ public class TestHttp2UpgradeHandler
     Assert.assertNotNull(message);
     Assert.assertEquals(message.method(), HttpMethod.OPTIONS);
     Assert.assertEquals(message.uri(), PATH);
-    Assert.assertEquals(message.headers().get(HttpHeaderNames.HOST), HOST + ":" + PORT);
+
+    // 1) any value is ok in the host for the upgrade request
+    // 2) since we are using the EmbeddedChannel, which uses an EmbeddedSocketAddress and not a InetSocketAddress
+    // we cannot extract host and port from the channel context and "localhost" is used as default
+    Assert.assertEquals(message.headers().get(HttpHeaderNames.HOST), "localhost");
   }
 
   @Test
   public void testWriteBeforeUpgrade() throws Exception {
-    Http2UpgradeHandler handler = new Http2UpgradeHandler(HOST, PORT);
+    Http2UpgradeHandler handler = new Http2UpgradeHandler();
     EmbeddedChannel channel = new EmbeddedChannel(handler);
 
     // Reads the upgrade request from the outbound buffer to ensure nothing in the buffer
@@ -75,7 +77,7 @@ public class TestHttp2UpgradeHandler
   @Test(timeOut = 10000)
   @SuppressWarnings("unchecked")
   public void testChannelCloseBeforeUpgrade() throws Exception {
-    Http2UpgradeHandler handler = new Http2UpgradeHandler(HOST, PORT);
+    Http2UpgradeHandler handler = new Http2UpgradeHandler();
     EmbeddedChannel channel = new EmbeddedChannel(handler);
 
     // Reads the upgrade request from the outbound buffer to ensure nothing in the buffer

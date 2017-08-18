@@ -68,6 +68,7 @@ public class AsyncSharedPoolImpl<T> implements AsyncPool<T>
   private final ScheduledExecutorService _scheduler;
   private final RateLimiter _rateLimiter;
   private final long _timeoutMills;
+  private final boolean _createImmediately;
   private final int _maxWaiters;
 
   private volatile ScheduledFuture<?> _reaperTaskFuture = null;
@@ -96,7 +97,13 @@ public class AsyncSharedPoolImpl<T> implements AsyncPool<T>
   // ========================================================
 
   public AsyncSharedPoolImpl(String name, AsyncPool.Lifecycle<T> lifecycle, ScheduledExecutorService scheduler,
-      RateLimiter rateLimiter, long timeoutMills, int maxWaiters)
+                             RateLimiter rateLimiter, long timeoutMills, int maxWaiters)
+  {
+    this(name, lifecycle, scheduler, rateLimiter, timeoutMills, false, maxWaiters);
+  }
+
+  public AsyncSharedPoolImpl(String name, AsyncPool.Lifecycle<T> lifecycle, ScheduledExecutorService scheduler,
+                             RateLimiter rateLimiter, long timeoutMills, boolean createImmediately, int maxWaiters)
   {
     ArgumentUtil.notNull(name, "name");
     ArgumentUtil.notNull(lifecycle, "lifecycle");
@@ -108,13 +115,14 @@ public class AsyncSharedPoolImpl<T> implements AsyncPool<T>
     _scheduler = scheduler;
     _rateLimiter = rateLimiter;
     _timeoutMills = timeoutMills;
+    _createImmediately = createImmediately;
     _maxWaiters = maxWaiters;
 
     _item = new TimedObject<>();
     _statsTracker = new AsyncPoolStatsTracker(
         () -> _lifecycle.getStats(),
         () -> 1,
-        () -> 0,
+        () -> _createImmediately ? 1 : 0,
         () -> {
           synchronized (_lock)
           {
@@ -161,6 +169,10 @@ public class AsyncSharedPoolImpl<T> implements AsyncPool<T>
       {
         long freq = Math.min(_timeoutMills / 10, 1000);
         _reaperTaskFuture = _scheduler.scheduleAtFixedRate(() -> reap(), freq, freq, TimeUnit.MILLISECONDS);
+      }
+      if (_createImmediately)
+      {
+        doCreate();
       }
     }
   }

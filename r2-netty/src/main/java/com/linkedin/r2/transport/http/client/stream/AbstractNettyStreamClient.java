@@ -67,12 +67,14 @@ public abstract class AbstractNettyStreamClient extends AbstractNettyClient<Stre
    * @param callbackExecutors         An optional EventExecutorGroup to invoke user callback
    * @param jmxManager                A management class that is aware of the creation/shutdown event
    *                                  of the underlying {@link ChannelPoolManager}
-   */
+   * @param channelPoolManager        channelPoolManager instance to retrieve http only channels
+   * @param sslChannelPoolManager     channelPoolManager instance to retrieve https only connection
+   * */
   public AbstractNettyStreamClient(NioEventLoopGroup eventLoopGroup, ScheduledExecutorService executor, long requestTimeout,
                                    long shutdownTimeout, ExecutorService callbackExecutors, AbstractJmxManager jmxManager,
-                                   ChannelPoolManager channelPoolManager)
+                                   ChannelPoolManager channelPoolManager, ChannelPoolManager sslChannelPoolManager)
   {
-    super(executor, requestTimeout, shutdownTimeout, jmxManager, channelPoolManager);
+    super(executor, requestTimeout, shutdownTimeout, jmxManager, channelPoolManager, sslChannelPoolManager);
     _callbackExecutors = callbackExecutors == null ? eventLoopGroup : callbackExecutors;
   }
 

@@ -20,19 +20,29 @@
 
 package com.linkedin.r2.transport.http.client.stream.http2;
 
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.http.HttpClientCodec;
+import io.netty.handler.codec.http.HttpClientUpgradeHandler;
+import io.netty.handler.codec.http.HttpScheme;
 import io.netty.handler.codec.http2.DefaultHttp2Connection;
+import io.netty.handler.codec.http2.Http2ClientUpgradeCodec;
 import io.netty.handler.codec.http2.Http2Connection;
+import io.netty.handler.ssl.ApplicationProtocolConfig;
+import io.netty.handler.ssl.ApplicationProtocolNames;
+import io.netty.handler.ssl.ClientAuth;
+import io.netty.handler.ssl.IdentityCipherSuiteFilter;
+import io.netty.handler.ssl.JdkSslContext;
+import io.netty.handler.ssl.SslHandler;
 import io.netty.util.AttributeKey;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLParameters;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -48,6 +58,10 @@ class Http2ClientPipelineInitializer extends ChannelInitializer<NioSocketChannel
   private final int _maxChunkSize;
   private final long _maxResponseSize;
   private final long _gracefulShutdownTimeout;
+
+  private static final int MAX_CLIENT_UPGRADE_CONTENT_LENGTH = Integer.MAX_VALUE;
+  private static final int MAX_INITIAL_LINE_LENGTH = 4096;
+  private static final boolean IS_CLIENT = true;
 
   public static final AttributeKey<Http2Connection> HTTP2_CONNECTION_ATTR_KEY
       = AttributeKey.valueOf("Http2Connection");
@@ -101,10 +115,81 @@ class Http2ClientPipelineInitializer extends ChannelInitializer<NioSocketChannel
     channel.attr(CALLBACK_ATTR_KEY).set(connection.newKey());
     channel.attr(CHANNEL_POOL_HANDLE_ATTR_KEY).set(connection.newKey());
 
-    Http2InitializerHandler initializerHandler = new Http2InitializerHandler(_maxHeaderSize, _maxChunkSize,
-        _maxResponseSize, _gracefulShutdownTimeout, connection, _sslContext, _sslParameters);
-    channel.pipeline().addLast("initializerHandler", initializerHandler);
+    if (_sslParameters == null)
+    {
+      // clear text
+      configureHttpPipeline(channel, connection);
+    }
+    else
+    {
+      // TLS
+      configureHttpsPipeline(channel, connection);
+    }
   }
+
+
+  /**
+   * Sets up HTTP/2 over TCP through protocol upgrade (h2c) pipeline
+   */
+  private void configureHttpPipeline(Channel channel, Http2Connection connection) throws Exception
+  {
+    Http2StreamCodec http2Codec = new Http2StreamCodecBuilder()
+      .connection(connection)
+      .maxContentLength(_maxResponseSize)
+      .gracefulShutdownTimeoutMillis(_gracefulShutdownTimeout)
+      .build();
+    HttpClientCodec sourceCodec = new HttpClientCodec(MAX_INITIAL_LINE_LENGTH, _maxHeaderSize, _maxChunkSize);
+    Http2ClientUpgradeCodec upgradeCodec = new Http2ClientUpgradeCodec(http2Codec);
+    HttpClientUpgradeHandler upgradeHandler = new HttpClientUpgradeHandler(
+      sourceCodec, upgradeCodec, MAX_CLIENT_UPGRADE_CONTENT_LENGTH);
+    Http2SchemeHandler schemeHandler = new Http2SchemeHandler(HttpScheme.HTTP.toString());
+
+    Http2UpgradeHandler upgradeRequestHandler = new Http2UpgradeHandler();
+    Http2StreamResponseHandler responseHandler = new Http2StreamResponseHandler();
+
+    channel.pipeline().addLast("sourceCodec", sourceCodec);
+    channel.pipeline().addLast("upgradeHandler", upgradeHandler);
+    channel.pipeline().addLast("upgradeRequestHandler", upgradeRequestHandler);
+    channel.pipeline().addLast("schemeHandler", schemeHandler);
+    channel.pipeline().addLast("responseHandler", responseHandler);
+
+  }
+
+  /**
+   * Sets up HTTP/2 over TLS through ALPN (h2) pipeline
+   */
+  private void configureHttpsPipeline(NioSocketChannel ctx, Http2Connection connection) throws Exception
+  {
+    JdkSslContext context = new JdkSslContext(
+      _sslContext,
+      IS_CLIENT,
+      Arrays.asList(_sslParameters.getCipherSuites()),
+      IdentityCipherSuiteFilter.INSTANCE,
+      new ApplicationProtocolConfig(
+        ApplicationProtocolConfig.Protocol.ALPN,
+        ApplicationProtocolConfig.SelectorFailureBehavior.NO_ADVERTISE,
+        ApplicationProtocolConfig.SelectedListenerFailureBehavior.ACCEPT,
+        ApplicationProtocolNames.HTTP_2,
+        ApplicationProtocolNames.HTTP_1_1),
+      _sslParameters.getNeedClientAuth() ? ClientAuth.REQUIRE : ClientAuth.OPTIONAL);
+    SslHandler sslHandler = context.newHandler(ctx.alloc());
+
+    Http2StreamCodec http2Codec = new Http2StreamCodecBuilder()
+      .connection(connection)
+      .maxContentLength(_maxResponseSize)
+      .gracefulShutdownTimeoutMillis(_gracefulShutdownTimeout)
+      .build();
+
+    Http2AlpnHandler alpnHandler = new Http2AlpnHandler(sslHandler, http2Codec);
+    Http2SchemeHandler schemeHandler = new Http2SchemeHandler(HttpScheme.HTTPS.toString());
+    Http2StreamResponseHandler responseHandler = new Http2StreamResponseHandler();
+
+    ctx.pipeline().addLast("alpnHandler", alpnHandler);
+    ctx.pipeline().addLast("schemeHandler", schemeHandler);
+    ctx.pipeline().addLast("responseHandler", responseHandler);
+
+  }
+
 
   /**
    * Checks if an array is completely or partially contained in another. Logs warnings

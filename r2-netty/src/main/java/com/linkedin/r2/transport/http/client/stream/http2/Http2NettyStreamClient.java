@@ -71,16 +71,18 @@ public class Http2NettyStreamClient extends AbstractNettyStreamClient
    * @param callbackExecutors         An optional EventExecutorGroup to invoke user callback
    * @param jmxManager                A management class that is aware of the creation/shutdown event
    *                                  of the underlying {@link ChannelPoolManager}
-   * @param channelPoolManager        channelPoolManager instance to use in the factory
+   * @param channelPoolManager        channelPoolManager instance to retrieve http only channels
+   * @param sslChannelPoolManager     channelPoolManager instance to retrieve https only connection
    */
   public Http2NettyStreamClient(NioEventLoopGroup eventLoopGroup, ScheduledExecutorService scheduler,
                                 long requestTimeout, long shutdownTimeout,
                                 ExecutorService callbackExecutors,
                                 AbstractJmxManager jmxManager,
-                                ChannelPoolManager channelPoolManager)
+                                ChannelPoolManager channelPoolManager,
+                                ChannelPoolManager sslChannelPoolManager)
   {
     super(eventLoopGroup, scheduler, requestTimeout, shutdownTimeout, callbackExecutors,
-      jmxManager, channelPoolManager);
+      jmxManager, channelPoolManager, sslChannelPoolManager);
   }
 
   @Override
@@ -90,7 +92,7 @@ public class Http2NettyStreamClient extends AbstractNettyStreamClient
     final AsyncPool<Channel> pool;
     try
     {
-      pool = _channelPoolManager.getPoolForAddress(address);
+      pool = getChannelPoolManagerPerRequest(request).getPoolForAddress(address);
     }
     catch (IllegalStateException e)
     {

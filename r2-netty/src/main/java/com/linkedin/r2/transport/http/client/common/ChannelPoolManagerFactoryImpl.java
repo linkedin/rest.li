@@ -124,6 +124,7 @@ public class ChannelPoolManagerFactoryImpl implements ChannelPoolManagerFactory
       new Http2NettyStreamChannelPoolFactory(
         channelPoolManagerKey.getIdleTimeout(),
         channelPoolManagerKey.getPoolWaiterSize(),
+        channelPoolManagerKey.getMinPoolSize(),
         channelPoolManagerKey.isTcpNoDelay(),
         _scheduler,
         channelPoolManagerKey.getSslContext(),
