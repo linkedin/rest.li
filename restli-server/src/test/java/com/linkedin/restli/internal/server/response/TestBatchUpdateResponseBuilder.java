@@ -28,6 +28,7 @@ import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ProtocolVersion;
+import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.common.UpdateStatus;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
@@ -47,9 +48,10 @@ import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import java.net.HttpCookie;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -59,13 +61,21 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class TestBatchUpdateResponseBuilder
 {
+  private static final Map<ResourceMethod, BatchResponseBuilder<?>> BUILDERS = new HashMap<>();
+  static
+  {
+    BUILDERS.put(ResourceMethod.BATCH_UPDATE, new BatchUpdateResponseBuilder(new ErrorResponseBuilder()));
+    BUILDERS.put(ResourceMethod.BATCH_PARTIAL_UPDATE, new BatchPartialUpdateResponseBuilder(new ErrorResponseBuilder()));
+    BUILDERS.put(ResourceMethod.BATCH_DELETE, new BatchDeleteResponseBuilder(new ErrorResponseBuilder()));
+  }
+
   @DataProvider(name = "testData")
   public Object[][] dataProvider()
   {
     CompoundKey c1 = new CompoundKey().append("a", "a1").append("b", 1);
     CompoundKey c2 = new CompoundKey().append("a", "a2").append("b", 2);
     CompoundKey c3 = new CompoundKey().append("a", "a3").append("b", 3);
-    Map<CompoundKey, UpdateResponse> results = new HashMap<CompoundKey, UpdateResponse>();
+    Map<CompoundKey, UpdateResponse> results = new HashMap<>();
     results.put(c1, new UpdateResponse(HttpStatus.S_202_ACCEPTED));
     results.put(c2, new UpdateResponse(HttpStatus.S_202_ACCEPTED));
 
@@ -73,69 +83,61 @@ public class TestBatchUpdateResponseBuilder
     Map<CompoundKey, RestLiServiceException> errors = Collections.singletonMap(c3, restLiServiceException);
 
     BatchUpdateResult<CompoundKey, Foo> batchUpdateResult =
-        new BatchUpdateResult<CompoundKey, Foo>(results, errors);
+        new BatchUpdateResult<>(results, errors);
 
-    Map<CompoundKey, UpdateResponse> keyOverlapResults = new HashMap<CompoundKey, UpdateResponse>();
+    Map<CompoundKey, UpdateResponse> keyOverlapResults = new HashMap<>();
     keyOverlapResults.put(c1, new UpdateResponse(HttpStatus.S_202_ACCEPTED));
     keyOverlapResults.put(c2, new UpdateResponse(HttpStatus.S_202_ACCEPTED));
     keyOverlapResults.put(c3, new UpdateResponse(HttpStatus.S_404_NOT_FOUND));
     BatchUpdateResult<CompoundKey, Foo> keyOverlapBatchUpdateResult =
-        new BatchUpdateResult<CompoundKey, Foo>(keyOverlapResults, errors);
+        new BatchUpdateResult<>(keyOverlapResults, errors);
 
     UpdateStatus updateStatus = new UpdateStatus().setStatus(202);
     ErrorResponse errorResponse = new ErrorResponse().setStatus(404);
 
-    Map<String, UpdateStatus> expectedProtocol1Results = new HashMap<String, UpdateStatus>();
+    Map<String, UpdateStatus> expectedProtocol1Results = new HashMap<>();
     expectedProtocol1Results.put("a=a1&b=1", updateStatus);
     expectedProtocol1Results.put("a=a2&b=2", updateStatus);
-    Map<String, ErrorResponse> expectedProtocol1Errors = new HashMap<String, ErrorResponse>();
+    Map<String, ErrorResponse> expectedProtocol1Errors = new HashMap<>();
     expectedProtocol1Errors.put("a=a3&b=3", errorResponse);
 
-    Map<String, UpdateStatus> expectedProtocol2Results = new HashMap<String, UpdateStatus>();
+    Map<String, UpdateStatus> expectedProtocol2Results = new HashMap<>();
     expectedProtocol2Results.put("(a:a1,b:1)", updateStatus);
     expectedProtocol2Results.put("(a:a2,b:2)", updateStatus);
-    Map<String, ErrorResponse> expectedProtocol2Errors = new HashMap<String, ErrorResponse>();
+    Map<String, ErrorResponse> expectedProtocol2Errors = new HashMap<>();
     expectedProtocol2Errors.put("(a:a3,b:3)", errorResponse);
 
-    Map<String, UpdateStatus> expectedAltKeyResults = new HashMap<String, UpdateStatus>();
+    Map<String, UpdateStatus> expectedAltKeyResults = new HashMap<>();
     expectedAltKeyResults.put("aa1xb1", updateStatus);
     expectedAltKeyResults.put("aa2xb2", updateStatus);
-    Map<String, ErrorResponse> expectedAltKeyErrors = new HashMap<String, ErrorResponse>();
+    Map<String, ErrorResponse> expectedAltKeyErrors = new HashMap<>();
     expectedAltKeyErrors.put("aa3xb3", errorResponse);
 
-    Map<String, AlternativeKey<?, ?>> alternativeKeyMap = new HashMap<String, AlternativeKey<?, ?>>();
-    alternativeKeyMap.put("alt", new AlternativeKey<String, CompoundKey>(new TestKeyCoercer(), String.class, new StringDataSchema()));
+    Map<String, AlternativeKey<?, ?>> alternativeKeyMap = new HashMap<>();
+    alternativeKeyMap.put("alt", new AlternativeKey<>(new TestKeyCoercer(), String.class, new StringDataSchema()));
 
-    return new Object[][]
-        {
-            { batchUpdateResult, AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), null, null, expectedProtocol1Results, expectedProtocol1Errors },
-            { batchUpdateResult, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), null, null, expectedProtocol2Results, expectedProtocol2Errors },
-            { keyOverlapBatchUpdateResult, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), null, null, expectedProtocol2Results, expectedProtocol2Errors },
-            { batchUpdateResult,
-              AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
-              "alt",
-              alternativeKeyMap,
-              expectedAltKeyResults,
-              expectedAltKeyErrors
-            },
-            { batchUpdateResult,
-              AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
-              "alt",
-              alternativeKeyMap,
-              expectedAltKeyResults,
-              expectedAltKeyErrors
-            }
-        };
+    List<Object[]> data = new ArrayList<>();
+    for (ResourceMethod resourceMethod: BUILDERS.keySet())
+    {
+      data.add(new Object[] {batchUpdateResult, null, null, expectedProtocol1Results, expectedProtocol1Errors, AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), resourceMethod});
+      data.add(new Object[] {batchUpdateResult, null, null, expectedProtocol2Results, expectedProtocol2Errors, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), resourceMethod});
+      data.add(new Object[] {batchUpdateResult, "alt", alternativeKeyMap, expectedAltKeyResults, expectedAltKeyErrors, AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), resourceMethod});
+      data.add(new Object[] {batchUpdateResult, "alt", alternativeKeyMap, expectedAltKeyResults, expectedAltKeyErrors, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), resourceMethod});
+      data.add(new Object[] {keyOverlapBatchUpdateResult, null, null, expectedProtocol2Results, expectedProtocol2Errors, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), resourceMethod});
+    }
+
+    return data.toArray(new Object[data.size()][]);
   }
 
   @Test(dataProvider = "testData")
   @SuppressWarnings("unchecked")
-  public void testBuilder(Object results,
-                          ProtocolVersion protocolVersion,
-                          String altKeyName,
-                          Map<String, AlternativeKey<?, ?>> alternativeKeyMap,
-                          Map<String, UpdateStatus> expectedResults,
-                          Map<String, ErrorResponse> expectedErrors)
+  public <D extends RestLiResponseData<? extends BatchResponseEnvelope>> void testBuilder(Object results,
+      String altKeyName,
+      Map<String, AlternativeKey<?, ?>> alternativeKeyMap,
+      Map<String, UpdateStatus> expectedResults,
+      Map<String, ErrorResponse> expectedErrors,
+      ProtocolVersion protocolVersion,
+      ResourceMethod resourceMethod)
   {
     ResourceContext mockContext = getMockResourceContext(protocolVersion, altKeyName);
     ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor(alternativeKeyMap);
@@ -143,20 +145,23 @@ public class TestBatchUpdateResponseBuilder
 
     Map<String, String> headers = ResponseBuilderUtil.getHeaders();
 
-    BatchUpdateResponseBuilder batchUpdateResponseBuilder = new BatchUpdateResponseBuilder(new ErrorResponseBuilder());
-    RestLiResponseData responseData = batchUpdateResponseBuilder.buildRestLiResponseData(null,
-                                                                                         routingResult,
-                                                                                         results,
-                                                                                         headers,
-                                                                                         Collections.<HttpCookie>emptyList());
+    BatchResponseBuilder<D> batchUpdateResponseBuilder = (BatchResponseBuilder<D>) BUILDERS.get(resourceMethod);
+    D responseData = batchUpdateResponseBuilder.buildRestLiResponseData(null,
+        routingResult,
+        results,
+        headers,
+        Collections.emptyList());
     PartialRestResponse restResponse = batchUpdateResponseBuilder.buildResponse(routingResult, responseData);
 
+    @SuppressWarnings("unchecked")
     BatchResponse<UpdateStatus> batchResponse = (BatchResponse<UpdateStatus>) restResponse.getEntity();
     EasyMock.verify(mockContext, mockDescriptor);
+    Assert.assertEquals(responseData.getResourceMethod(), resourceMethod);
+    Assert.assertEquals(responseData.getResponseEnvelope().getResourceMethod(), resourceMethod);
     ResponseBuilderUtil.validateHeaders(restResponse, headers);
     Assert.assertEquals(batchResponse.getResults(), expectedResults);
     Assert.assertEquals(batchResponse.getErrors().size(), expectedErrors.size());
-    for (Map.Entry<String, ErrorResponse> entry: batchResponse.getErrors().entrySet())
+    for (Map.Entry<String, ErrorResponse> entry : batchResponse.getErrors().entrySet())
     {
       String key = entry.getKey();
       ErrorResponse value = entry.getValue();
@@ -169,37 +174,37 @@ public class TestBatchUpdateResponseBuilder
   {
     BatchUpdateResponseBuilder builder = new BatchUpdateResponseBuilder(new ErrorResponseBuilder());
     ServerResourceContext context = EasyMock.createMock(ServerResourceContext.class);
-    Map<Object,RestLiServiceException> errors = new HashMap<Object, RestLiServiceException>();
+    Map<Object,RestLiServiceException> errors = new HashMap<>();
     RestLiServiceException exception = new RestLiServiceException(HttpStatus.S_402_PAYMENT_REQUIRED);
     errors.put("foo", exception);
     EasyMock.expect(context.hasParameter("altkey")).andReturn(false);
     EasyMock.expect(context.getBatchKeyErrors()).andReturn(errors);
     EasyMock.replay(context);
-    RoutingResult routingResult = new RoutingResult(context, null);
-    RestLiResponseData envelope = builder.buildRestLiResponseData(null,
-                                                                  routingResult,
-                                                                  new BatchUpdateResult<Object, Integer>(Collections.<Object, UpdateResponse>emptyMap()),
-                                                                  Collections.<String, String>emptyMap(),
-                                                                  Collections.<HttpCookie>emptyList());
-    Assert.assertEquals(envelope.getBatchResponseEnvelope().getBatchResponseMap().get("foo").getException(),
+    RoutingResult routingResult = new RoutingResult(context, getMockResourceMethodDescriptor(null));
+    RestLiResponseData<BatchUpdateResponseEnvelope> responseData = builder.buildRestLiResponseData(null,
+                                                     routingResult,
+                                                     new BatchUpdateResult<>(Collections.emptyMap()),
+                                                     Collections.emptyMap(),
+                                                     Collections.emptyList());
+    Assert.assertEquals(responseData.getResponseEnvelope().getBatchResponseMap().get("foo").getException(),
                         exception);
-    Assert.assertEquals(envelope.getBatchResponseEnvelope().getBatchResponseMap().size(), 1);
+    Assert.assertEquals(responseData.getResponseEnvelope().getBatchResponseMap().size(), 1);
   }
 
   @DataProvider(name = "unsupportedNullKeyMapData")
   public Object[][] unsupportedNullKeyMapData()
   {
     final CompoundKey c1 = new CompoundKey().append("a", "a1").append("b", 1);
-    final Map<CompoundKey, UpdateResponse> results = new ConcurrentHashMap<CompoundKey, UpdateResponse>();
+    final Map<CompoundKey, UpdateResponse> results = new ConcurrentHashMap<>();
     results.put(c1, new UpdateResponse(HttpStatus.S_202_ACCEPTED));
 
     final BatchUpdateResult<CompoundKey, Foo> batchUpdateResult =
-        new BatchUpdateResult<CompoundKey, Foo>(results, new ConcurrentHashMap<CompoundKey, RestLiServiceException>());
+        new BatchUpdateResult<>(results, new ConcurrentHashMap<>());
     final UpdateStatus updateStatus = new UpdateStatus().setStatus(202);
 
-    final Map<String, UpdateStatus> expectedProtocol1Results = new HashMap<String, UpdateStatus>();
+    final Map<String, UpdateStatus> expectedProtocol1Results = new HashMap<>();
     expectedProtocol1Results.put("a=a1&b=1", updateStatus);
-    final Map<String, UpdateStatus> expectedProtocol2Results = new HashMap<String, UpdateStatus>();
+    final Map<String, UpdateStatus> expectedProtocol2Results = new HashMap<>();
     expectedProtocol2Results.put("(a:a1,b:1)", updateStatus);
 
     return new Object[][]
@@ -217,7 +222,7 @@ public class TestBatchUpdateResponseBuilder
   */
   @Test(dataProvider = "unsupportedNullKeyMapData")
   @SuppressWarnings("unchecked")
-  public void unsupportedNullKeyMapTest(Object results, ProtocolVersion protocolVersion, Map<String, UpdateStatus> expectedResults)
+  public void testUnsupportedNullKeyMap(Object results, ProtocolVersion protocolVersion, Map<String, UpdateStatus> expectedResults)
   {
     ResourceContext mockContext = getMockResourceContext(protocolVersion, null);
     ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor(null);
@@ -226,9 +231,9 @@ public class TestBatchUpdateResponseBuilder
     Map<String, String> headers = ResponseBuilderUtil.getHeaders();
 
     BatchUpdateResponseBuilder batchUpdateResponseBuilder = new BatchUpdateResponseBuilder(new ErrorResponseBuilder());
-    RestLiResponseData responseData = batchUpdateResponseBuilder.buildRestLiResponseData(null, routingResult, results,
-                                                                                         headers,
-                                                                                         Collections.<HttpCookie>emptyList());
+    RestLiResponseData<BatchUpdateResponseEnvelope> responseData = batchUpdateResponseBuilder.buildRestLiResponseData(null, routingResult, results,
+                                                                        headers,
+                                                                        Collections.emptyList());
     PartialRestResponse restResponse = batchUpdateResponseBuilder.buildResponse(routingResult, responseData);
 
     BatchResponse<UpdateStatus> batchResponse = (BatchResponse<UpdateStatus>) restResponse.getEntity();
@@ -238,7 +243,7 @@ public class TestBatchUpdateResponseBuilder
   }
 
   @Test(dataProvider = "updateStatusInstantiation")
-  public void testUpdateStatusInstantiation(RestLiResponseData responseData, UpdateStatus expectedResult)
+  public void testUpdateStatusInstantiation(RestLiResponseData<BatchUpdateResponseEnvelope> responseData, UpdateStatus expectedResult)
   {
     ResourceContext mockContext = getMockResourceContext(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), null);
     ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor(null);
@@ -246,13 +251,13 @@ public class TestBatchUpdateResponseBuilder
 
     PartialRestResponse response = new BatchUpdateResponseBuilder(new ErrorResponseBuilder())
         .buildResponse(routingResult, responseData);
-    Assert.assertEquals(((BatchResponse) response.getEntity()).getResults().get("key"), expectedResult);
+    Assert.assertEquals(((BatchResponse<?>) response.getEntity()).getResults().get("key"), expectedResult);
   }
 
   @DataProvider(name = "updateStatusInstantiation")
   public Object[][] updateStatusInstantiation()
   {
-    Map<String, BatchResponseEnvelope.BatchResponseEntry> normal = new HashMap<String, BatchResponseEnvelope.BatchResponseEntry>();
+    Map<String, BatchResponseEnvelope.BatchResponseEntry> normal = new HashMap<>();
     UpdateStatus foo = new UpdateStatus();
     foo.setStatus(500); // should be overwritten
     foo.data().put("foo", "bar"); //should be preserved
@@ -261,75 +266,39 @@ public class TestBatchUpdateResponseBuilder
     normalStatus.setStatus(200);
     normalStatus.data().put("foo", "bar");
 
-    Map<String, BatchResponseEnvelope.BatchResponseEntry> missing = new HashMap<String, BatchResponseEnvelope.BatchResponseEntry>();
+    Map<String, BatchResponseEnvelope.BatchResponseEntry> missing = new HashMap<>();
     missing.put("key", new BatchResponseEnvelope.BatchResponseEntry(HttpStatus.S_200_OK, (RecordTemplate) null));
     UpdateStatus missingStatus = new UpdateStatus();
     missingStatus.setStatus(200);
 
-    Map<String, BatchResponseEnvelope.BatchResponseEntry> mismatch = new HashMap<String, BatchResponseEnvelope.BatchResponseEntry>();
+    Map<String, BatchResponseEnvelope.BatchResponseEntry> mismatch = new HashMap<>();
     mismatch.put("key", new BatchResponseEnvelope.BatchResponseEntry(HttpStatus.S_200_OK, new AnyRecord(new DataMap())));
     UpdateStatus mismatchedStatus = new UpdateStatus();
     mismatchedStatus.setStatus(200);
 
-    RestLiResponseDataImpl batchGetNormal = new RestLiResponseDataImpl(HttpStatus.S_200_OK,
-                                                                       Collections.<String, String>emptyMap(),
-                                                                       Collections.<HttpCookie>emptyList());
-    batchGetNormal.setResponseEnvelope(new BatchGetResponseEnvelope(normal, batchGetNormal));
+    RestLiResponseData<?> batchGetNormal = ResponseDataBuilderUtil.buildBatchGetResponseData(HttpStatus.S_200_OK, normal);
 
-    RestLiResponseDataImpl batchGetMissing = new RestLiResponseDataImpl(HttpStatus.S_200_OK,
-                                                                        Collections.<String, String>emptyMap(),
-                                                                        Collections.<HttpCookie>emptyList());
-    batchGetMissing.setResponseEnvelope(new BatchGetResponseEnvelope(missing, batchGetNormal));
+    RestLiResponseData<?> batchGetMissing = ResponseDataBuilderUtil.buildBatchGetResponseData(HttpStatus.S_200_OK, missing);
 
-    RestLiResponseDataImpl batchGetMismatch = new RestLiResponseDataImpl(HttpStatus.S_200_OK,
-                                                                         Collections.<String, String>emptyMap(),
-                                                                         Collections.<HttpCookie>emptyList());
-    batchGetMismatch.setResponseEnvelope(new BatchGetResponseEnvelope(mismatch, batchGetNormal));
+    RestLiResponseData<?> batchGetMismatch = ResponseDataBuilderUtil.buildBatchGetResponseData(HttpStatus.S_200_OK, mismatch);
 
-    RestLiResponseDataImpl batchUpdateNormal = new RestLiResponseDataImpl(HttpStatus.S_200_OK,
-                                                                       Collections.<String, String>emptyMap(),
-                                                                       Collections.<HttpCookie>emptyList());
-    batchUpdateNormal.setResponseEnvelope(new BatchUpdateResponseEnvelope(normal, batchUpdateNormal));
+    RestLiResponseData<?> batchUpdateNormal = ResponseDataBuilderUtil.buildBatchUpdateResponseData(HttpStatus.S_200_OK, normal);
 
-    RestLiResponseDataImpl batchUpdateMissing = new RestLiResponseDataImpl(HttpStatus.S_200_OK,
-                                                                       Collections.<String, String>emptyMap(),
-                                                                       Collections.<HttpCookie>emptyList());
-    batchUpdateMissing.setResponseEnvelope(new BatchUpdateResponseEnvelope(missing, batchUpdateMissing));
+    RestLiResponseData<?> batchUpdateMissing = ResponseDataBuilderUtil.buildBatchUpdateResponseData(HttpStatus.S_200_OK, missing);
 
-    RestLiResponseDataImpl batchUpdateMismatch = new RestLiResponseDataImpl(HttpStatus.S_200_OK,
-                                                                       Collections.<String, String>emptyMap(),
-                                                                       Collections.<HttpCookie>emptyList());
-    batchUpdateMismatch.setResponseEnvelope(new BatchUpdateResponseEnvelope(mismatch, batchUpdateMismatch));
+    RestLiResponseData<?> batchUpdateMismatch = ResponseDataBuilderUtil.buildBatchUpdateResponseData(HttpStatus.S_200_OK, mismatch);
 
-    RestLiResponseDataImpl batchPartialUpdateNormal = new RestLiResponseDataImpl(HttpStatus.S_200_OK,
-                                                                                 Collections.<String, String>emptyMap(),
-                                                                                 Collections.<HttpCookie>emptyList());
-    batchPartialUpdateNormal.setResponseEnvelope(new BatchPartialUpdateResponseEnvelope(normal, batchPartialUpdateNormal));
+    RestLiResponseData<?> batchPartialUpdateNormal = ResponseDataBuilderUtil.buildBatchPartialUpdateResponseData(HttpStatus.S_200_OK, normal);
 
-    RestLiResponseDataImpl batchPartialUpdateMissing = new RestLiResponseDataImpl(HttpStatus.S_200_OK,
-                                                                                  Collections.<String, String>emptyMap(),
-                                                                                  Collections.<HttpCookie>emptyList());
-    batchPartialUpdateMissing.setResponseEnvelope(new BatchPartialUpdateResponseEnvelope(missing, batchPartialUpdateMissing));
+    RestLiResponseData<?> batchPartialUpdateMissing = ResponseDataBuilderUtil.buildBatchPartialUpdateResponseData(HttpStatus.S_200_OK, missing);
 
-    RestLiResponseDataImpl batchPartialUpdateMismatch = new RestLiResponseDataImpl(HttpStatus.S_200_OK,
-                                                                                   Collections.<String, String>emptyMap(),
-                                                                                   Collections.<HttpCookie>emptyList());
-    batchPartialUpdateMismatch.setResponseEnvelope(new BatchPartialUpdateResponseEnvelope(mismatch, batchPartialUpdateMismatch));
+    RestLiResponseData<?> batchPartialUpdateMismatch = ResponseDataBuilderUtil.buildBatchPartialUpdateResponseData(HttpStatus.S_200_OK, mismatch);
 
-    RestLiResponseDataImpl batchDeleteNormal = new RestLiResponseDataImpl(HttpStatus.S_200_OK,
-                                                                          Collections.<String, String>emptyMap(),
-                                                                          Collections.<HttpCookie>emptyList());
-    batchDeleteNormal.setResponseEnvelope(new BatchDeleteResponseEnvelope(normal, batchDeleteNormal));
+    RestLiResponseData<?> batchDeleteNormal = ResponseDataBuilderUtil.buildBatchDeleteResponseData(HttpStatus.S_200_OK, normal);
 
-    RestLiResponseDataImpl batchDeleteMissing = new RestLiResponseDataImpl(HttpStatus.S_200_OK,
-                                                                           Collections.<String, String>emptyMap(),
-                                                                           Collections.<HttpCookie>emptyList());
-    batchDeleteMissing.setResponseEnvelope(new BatchDeleteResponseEnvelope(missing, batchDeleteMissing));
+    RestLiResponseData<?> batchDeleteMissing = ResponseDataBuilderUtil.buildBatchDeleteResponseData(HttpStatus.S_200_OK, missing);
 
-    RestLiResponseDataImpl batchDeleteMismatch = new RestLiResponseDataImpl(HttpStatus.S_200_OK,
-                                                                            Collections.<String, String>emptyMap(),
-                                                                            Collections.<HttpCookie>emptyList());
-    batchDeleteMismatch.setResponseEnvelope(new BatchDeleteResponseEnvelope(mismatch, batchDeleteMismatch));
+    RestLiResponseData<?> batchDeleteMismatch = ResponseDataBuilderUtil.buildBatchDeleteResponseData(HttpStatus.S_200_OK, mismatch);
 
     return new Object[][] {
         { batchGetNormal, normalStatus },
@@ -350,7 +319,7 @@ public class TestBatchUpdateResponseBuilder
   private static ResourceContext getMockResourceContext(ProtocolVersion protocolVersion, String altKeyName)
   {
     ServerResourceContext mockContext = EasyMock.createMock(ServerResourceContext.class);
-    EasyMock.expect(mockContext.getBatchKeyErrors()).andReturn(Collections.<Object, RestLiServiceException>emptyMap()).once();
+    EasyMock.expect(mockContext.getBatchKeyErrors()).andReturn(Collections.emptyMap()).once();
     EasyMock.expect(mockContext.getRestliProtocolVersion()).andReturn(protocolVersion).once();
     EasyMock.expect(mockContext.hasParameter(RestConstants.ALT_KEY_PARAM)).andReturn(altKeyName != null).anyTimes();
     if (altKeyName != null)

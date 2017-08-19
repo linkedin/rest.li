@@ -60,7 +60,7 @@ public class RestLiFilterChain
     // Initiate the filter chain iterator. The RestLiCallback will be passed to the method invoker at the end of the
     // filter chain.
     _filterChainIterator.onRequest(requestContext, filterResponseContextFactory,
-                                   new RestLiCallback<Object>(requestContext, filterResponseContextFactory, this));
+                                   new RestLiCallback(requestContext, filterResponseContextFactory, this));
   }
 
   /**

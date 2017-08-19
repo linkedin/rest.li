@@ -21,7 +21,6 @@
 package com.linkedin.restli.internal.server.response;
 
 
-import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.ErrorDetails;
 import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.ProtocolVersion;
@@ -37,7 +36,6 @@ import com.linkedin.restli.server.RestLiServiceException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.HttpCookie;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -46,7 +44,7 @@ import java.util.Map;
  * @author Josh Walker
  * @version $Revision: $
  */
-public final class ErrorResponseBuilder implements RestLiResponseBuilder
+public final class ErrorResponseBuilder
 {
   public static final String DEFAULT_INTERNAL_ERROR_MESSAGE = "INTERNAL SERVER ERROR";
   private final ErrorResponseFormat _errorResponseFormat;
@@ -122,41 +120,70 @@ public final class ErrorResponseBuilder implements RestLiResponseBuilder
     return er;
   }
 
-  @Override
-  public PartialRestResponse buildResponse(RoutingResult routingResult, RestLiResponseData responseData)
+  public PartialRestResponse buildResponse(RestLiResponseData<?> responseData)
   {
-    ErrorResponse errorResponse = buildErrorResponse(responseData.getServiceException());
-    return new PartialRestResponse.Builder().headers(responseData.getHeaders()).cookies(responseData.getCookies()).status(responseData.getStatus())
-                                            .entity(errorResponse).build();
+    ErrorResponse errorResponse = buildErrorResponse(responseData.getResponseEnvelope().getException());
+    return new PartialRestResponse.Builder()
+        .headers(responseData.getHeaders())
+        .cookies(responseData.getCookies())
+        .status(responseData.getResponseEnvelope().getStatus())
+        .entity(errorResponse).build();
   }
 
-  @Override
-  public RestLiResponseData buildRestLiResponseData(RestRequest request,
-                                                    RoutingResult routingResult,
-                                                    Object object,
-                                                    Map<String, String> headers,
-                                                    List<HttpCookie> cookies)
+  public RestLiResponseData<?> buildRestLiResponseData(RoutingResult routingResult,
+      RestLiServiceException exceptionResult,
+      Map<String, String> headers,
+      List<HttpCookie> cookies)
   {
-    RestLiServiceException exceptionResult = (RestLiServiceException) object;
+    assert routingResult != null && routingResult.getResourceMethod() != null;
+
     if (_errorResponseFormat.showHeaders())
     {
       final ProtocolVersion protocolVersion = ProtocolVersionUtil.extractProtocolVersion(headers);
       headers.put(HeaderUtil.getErrorResponseHeaderName(protocolVersion), RestConstants.HEADER_VALUE_ERROR);
     }
-    final ResourceMethod type;
-    if (routingResult != null && routingResult.getResourceMethod() != null)
-    {
-      type = routingResult.getResourceMethod().getMethodType();
-    }
-    else
-    {
-      RestLiResponseDataImpl responseData = new RestLiResponseDataImpl(exceptionResult, headers, cookies);
-      return responseData;
-    }
 
-    RestLiResponseDataImpl responseData = new RestLiResponseDataImpl(exceptionResult, headers, cookies);
-    responseData.setResponseEnvelope(EnvelopeBuilderUtil.buildBlankResponseEnvelope(type, responseData));
+    ResourceMethod type = routingResult.getResourceMethod().getMethodType();
+    return buildErrorResponseData(type, exceptionResult, headers, cookies);
+  }
 
-    return responseData;
+  static RestLiResponseData<?> buildErrorResponseData(ResourceMethod method,
+      RestLiServiceException exception,
+      Map<String, String> headers,
+      List<HttpCookie> cookies)
+  {
+    switch (method)
+    {
+      case GET:
+        return new RestLiResponseDataImpl<>(new GetResponseEnvelope(exception), headers, cookies);
+      case CREATE:
+        return new RestLiResponseDataImpl<>(new CreateResponseEnvelope(exception, false), headers, cookies);
+      case ACTION:
+        return new RestLiResponseDataImpl<>(new ActionResponseEnvelope(exception), headers, cookies);
+      case GET_ALL:
+        return new RestLiResponseDataImpl<>(new GetAllResponseEnvelope(exception), headers, cookies);
+      case FINDER:
+        return new RestLiResponseDataImpl<>(new FinderResponseEnvelope(exception), headers, cookies);
+      case BATCH_CREATE:
+        return new RestLiResponseDataImpl<>(new BatchCreateResponseEnvelope(exception, false), headers, cookies);
+      case BATCH_GET:
+        return new RestLiResponseDataImpl<>(new BatchGetResponseEnvelope(exception), headers, cookies);
+      case BATCH_UPDATE:
+        return new RestLiResponseDataImpl<>(new BatchUpdateResponseEnvelope(exception), headers, cookies);
+      case BATCH_PARTIAL_UPDATE:
+        return new RestLiResponseDataImpl<>(new BatchPartialUpdateResponseEnvelope(exception), headers, cookies);
+      case BATCH_DELETE:
+        return new RestLiResponseDataImpl<>(new BatchDeleteResponseEnvelope(exception), headers, cookies);
+      case PARTIAL_UPDATE:
+        return new RestLiResponseDataImpl<>(new PartialUpdateResponseEnvelope(exception), headers, cookies);
+      case UPDATE:
+        return new RestLiResponseDataImpl<>(new UpdateResponseEnvelope(exception), headers, cookies);
+      case DELETE:
+        return new RestLiResponseDataImpl<>(new DeleteResponseEnvelope(exception), headers, cookies);
+      case OPTIONS:
+        return new RestLiResponseDataImpl<>(new OptionsResponseEnvelope(exception), headers, cookies);
+      default:
+        throw new IllegalArgumentException("Unexpected Rest.li resource method: " + method);
+    }
   }
 }

@@ -30,10 +30,8 @@ import com.linkedin.restli.server.filter.FilterResponseContext;
 /**
  * Used for callbacks from RestLiMethodInvoker. When the REST method completes its execution, it invokes RestLiCallback,
  * which sets off the filter chain responses and eventually a response is sent to the client.
- *
- * @param <T> the type of result coming from RestLiMethodInvoker.
  */
-public class RestLiCallback<T> implements RequestExecutionCallback<T>
+public class RestLiCallback implements RequestExecutionCallback<Object>
 {
   private final RestLiFilterChain _filterChain;
   private final FilterRequestContext _filterRequestContext;
@@ -49,7 +47,7 @@ public class RestLiCallback<T> implements RequestExecutionCallback<T>
   }
 
   @Override
-  public void onSuccess(final T result, RequestExecutionReport executionReport,
+  public void onSuccess(final Object result, RequestExecutionReport executionReport,
                         final RestLiResponseAttachments responseAttachments)
   {
     final FilterResponseContext responseContext;

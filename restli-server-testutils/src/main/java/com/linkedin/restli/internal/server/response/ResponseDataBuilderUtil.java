@@ -23,7 +23,6 @@ import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
 
-import java.net.HttpCookie;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -53,242 +52,163 @@ public final class ResponseDataBuilderUtil
     // private constructor to disable instantiation.
   }
 
-  public static RestLiResponseData buildGetResponseData(HttpStatus status, RecordTemplate getResponse)
+  public static RestLiResponseData<GetResponseEnvelope> buildGetResponseData(HttpStatus status, RecordTemplate getResponse)
   {
-    final RestLiResponseDataImpl responseData =
-        new RestLiResponseDataImpl(status, new HashMap<String, String>(), new ArrayList<HttpCookie>());
-    responseData.setResponseEnvelope(new GetResponseEnvelope(getResponse, responseData));
-    return responseData;
+    return new RestLiResponseDataImpl<>(new GetResponseEnvelope(status, getResponse), new HashMap<>(), new ArrayList<>());
   }
 
-  public static RestLiResponseData buildGetResponseData(RestLiServiceException exception)
+  public static RestLiResponseData<GetResponseEnvelope> buildGetResponseData(RestLiServiceException exception)
   {
-    final RestLiResponseDataImpl responseData =
-        new RestLiResponseDataImpl(exception, new HashMap<String, String>(), new ArrayList<HttpCookie>());
-    responseData.setResponseEnvelope(new GetResponseEnvelope(null, responseData));
-    return responseData;
+    return new RestLiResponseDataImpl<>(new GetResponseEnvelope(exception), new HashMap<>(), new ArrayList<>());
   }
 
-  public static RestLiResponseData buildCreateResponseData(HttpStatus status, RecordTemplate createResponse)
+  public static RestLiResponseData<CreateResponseEnvelope> buildCreateResponseData(HttpStatus status, RecordTemplate createResponse)
   {
-    final RestLiResponseDataImpl responseData =
-        new RestLiResponseDataImpl(status, new HashMap<String, String>(), new ArrayList<HttpCookie>());
-    responseData.setResponseEnvelope(new CreateResponseEnvelope(createResponse, responseData));
-    return responseData;
+    return new RestLiResponseDataImpl<>(new CreateResponseEnvelope(status, createResponse, false), new HashMap<>(), new ArrayList<>());
   }
 
-  public static RestLiResponseData buildCreateResponseData(RestLiServiceException exception)
+  public static RestLiResponseData<CreateResponseEnvelope> buildCreateResponseData(RestLiServiceException exception)
   {
-    final RestLiResponseDataImpl responseData =
-        new RestLiResponseDataImpl(exception, new HashMap<String, String>(), new ArrayList<HttpCookie>());
-    responseData.setResponseEnvelope(new CreateResponseEnvelope(null, responseData));
-    return responseData;
+    return new RestLiResponseDataImpl<>(new CreateResponseEnvelope(exception, false), new HashMap<>(), new ArrayList<>());
   }
 
-  public static RestLiResponseData buildActionResponseData(HttpStatus status, RecordTemplate actionResponse)
+  public static RestLiResponseData<ActionResponseEnvelope> buildActionResponseData(HttpStatus status, RecordTemplate actionResponse)
   {
-    final RestLiResponseDataImpl responseData =
-        new RestLiResponseDataImpl(status, new HashMap<String, String>(), new ArrayList<HttpCookie>());
-    responseData.setResponseEnvelope(new ActionResponseEnvelope(actionResponse, responseData));
-    return responseData;
+    return new RestLiResponseDataImpl<>(new ActionResponseEnvelope(status, actionResponse), new HashMap<>(), new ArrayList<>());
   }
 
-  public static RestLiResponseData buildActionResponseData(RestLiServiceException exception)
+  public static RestLiResponseData<ActionResponseEnvelope> buildActionResponseData(RestLiServiceException exception)
   {
-    final RestLiResponseDataImpl responseData =
-        new RestLiResponseDataImpl(exception, new HashMap<String, String>(), new ArrayList<HttpCookie>());
-    responseData.setResponseEnvelope(new ActionResponseEnvelope(null, responseData));
-    return responseData;
+    return new RestLiResponseDataImpl<>(new ActionResponseEnvelope(exception), new HashMap<>(), new ArrayList<>());
   }
 
-  public static RestLiResponseData buildFinderResponseData(HttpStatus status,
+  public static RestLiResponseData<FinderResponseEnvelope> buildFinderResponseData(HttpStatus status,
                                                            List<? extends RecordTemplate> collectionResponse,
                                                            CollectionMetadata collectionResponsePaging,
                                                            RecordTemplate collectionResponseCustomMetadata)
   {
-    final RestLiResponseDataImpl responseData =
-        new RestLiResponseDataImpl(status, new HashMap<String, String>(), new ArrayList<HttpCookie>());
-    responseData.setResponseEnvelope(
-        new FinderResponseEnvelope(collectionResponse, collectionResponsePaging, collectionResponseCustomMetadata,
-                                   responseData));
-    return responseData;
+    return new RestLiResponseDataImpl<>(new FinderResponseEnvelope(status, collectionResponse, collectionResponsePaging,
+        collectionResponseCustomMetadata), new HashMap<>(), new ArrayList<>());
   }
 
-  public static RestLiResponseData buildFinderResponseData(RestLiServiceException exception)
+  public static RestLiResponseData<FinderResponseEnvelope> buildFinderResponseData(RestLiServiceException exception)
   {
-    final RestLiResponseDataImpl responseData =
-        new RestLiResponseDataImpl(exception, new HashMap<String, String>(), new ArrayList<HttpCookie>());
-    responseData.setResponseEnvelope(new FinderResponseEnvelope(null, null, null, responseData));
-    return responseData;
+    return new RestLiResponseDataImpl<>(new FinderResponseEnvelope(exception), new HashMap<>(), new ArrayList<>());
   }
 
-  public static RestLiResponseData buildGetAllResponseData(HttpStatus status,
+  public static RestLiResponseData<GetAllResponseEnvelope> buildGetAllResponseData(HttpStatus status,
                                                            List<? extends RecordTemplate> collectionResponse,
                                                            CollectionMetadata collectionResponsePaging,
                                                            RecordTemplate collectionResponseCustomMetadata)
   {
-    final RestLiResponseDataImpl responseData =
-        new RestLiResponseDataImpl(status, new HashMap<String, String>(), new ArrayList<HttpCookie>());
-    responseData.setResponseEnvelope(
-        new GetAllResponseEnvelope(collectionResponse, collectionResponsePaging, collectionResponseCustomMetadata,
-                                   responseData));
-    return responseData;
+    return new RestLiResponseDataImpl<>(new GetAllResponseEnvelope(status, collectionResponse,
+        collectionResponsePaging, collectionResponseCustomMetadata), new HashMap<>(), new ArrayList<>());
   }
 
-  public static RestLiResponseData buildGetAllResponseData(RestLiServiceException exception)
+  public static RestLiResponseData<GetAllResponseEnvelope> buildGetAllResponseData(RestLiServiceException exception)
   {
-    final RestLiResponseDataImpl responseData =
-        new RestLiResponseDataImpl(exception, new HashMap<String, String>(), new ArrayList<HttpCookie>());
-    responseData.setResponseEnvelope(new GetAllResponseEnvelope(null, null, null, responseData));
-    return responseData;
+    return new RestLiResponseDataImpl<>(new GetAllResponseEnvelope(exception), new HashMap<>(), new ArrayList<>());
   }
 
-  public static RestLiResponseData buildUpdateResponseData(HttpStatus status)
+  public static RestLiResponseData<UpdateResponseEnvelope> buildUpdateResponseData(HttpStatus status)
   {
-    final RestLiResponseDataImpl responseData =
-        new RestLiResponseDataImpl(status, new HashMap<String, String>(), new ArrayList<HttpCookie>());
-    responseData.setResponseEnvelope(new UpdateResponseEnvelope(responseData));
-    return responseData;
+    return new RestLiResponseDataImpl<>(new UpdateResponseEnvelope(status), new HashMap<>(), new ArrayList<>());
   }
 
-  public static RestLiResponseData buildUpdateResponseData(RestLiServiceException exception)
+  public static RestLiResponseData<UpdateResponseEnvelope> buildUpdateResponseData(RestLiServiceException exception)
   {
-    final RestLiResponseDataImpl responseData =
-        new RestLiResponseDataImpl(exception, new HashMap<String, String>(), new ArrayList<HttpCookie>());
-    responseData.setResponseEnvelope(new UpdateResponseEnvelope(responseData));
-    return responseData;
+    return new RestLiResponseDataImpl<>(new UpdateResponseEnvelope(exception), new HashMap<>(), new ArrayList<>());
   }
 
-  public static RestLiResponseData buildPartialUpdateResponseData(HttpStatus status)
+  public static RestLiResponseData<PartialUpdateResponseEnvelope> buildPartialUpdateResponseData(HttpStatus status)
   {
-    final RestLiResponseDataImpl responseData =
-        new RestLiResponseDataImpl(status, new HashMap<String, String>(), new ArrayList<HttpCookie>());
-    responseData.setResponseEnvelope(new PartialUpdateResponseEnvelope(responseData));
-    return responseData;
+    return new RestLiResponseDataImpl<>(new PartialUpdateResponseEnvelope(status), new HashMap<>(), new ArrayList<>());
   }
 
-  public static RestLiResponseData buildPartialUpdateResponseData(RestLiServiceException exception)
+  public static RestLiResponseData<PartialUpdateResponseEnvelope> buildPartialUpdateResponseData(RestLiServiceException exception)
   {
-    final RestLiResponseDataImpl responseData =
-        new RestLiResponseDataImpl(exception, new HashMap<String, String>(), new ArrayList<HttpCookie>());
-    responseData.setResponseEnvelope(new PartialUpdateResponseEnvelope(responseData));
-    return responseData;
+    return new RestLiResponseDataImpl<>(new PartialUpdateResponseEnvelope(exception), new HashMap<>(), new ArrayList<>());
   }
 
-  public static RestLiResponseData buildOptionsResponseData(HttpStatus status)
+  public static RestLiResponseData<OptionsResponseEnvelope> buildOptionsResponseData(HttpStatus status)
   {
-    final RestLiResponseDataImpl responseData =
-        new RestLiResponseDataImpl(status, new HashMap<String, String>(), new ArrayList<HttpCookie>());
-    responseData.setResponseEnvelope(new OptionsResponseEnvelope(responseData));
-    return responseData;
+    return new RestLiResponseDataImpl<>(new OptionsResponseEnvelope(status), new HashMap<>(), new ArrayList<>());
   }
 
-  public static RestLiResponseData buildOptionsResponseData(RestLiServiceException exception)
+  public static RestLiResponseData<OptionsResponseEnvelope> buildOptionsResponseData(RestLiServiceException exception)
   {
-    final RestLiResponseDataImpl responseData =
-        new RestLiResponseDataImpl(exception, new HashMap<String, String>(), new ArrayList<HttpCookie>());
-    responseData.setResponseEnvelope(new OptionsResponseEnvelope(responseData));
-    return responseData;
+    return new RestLiResponseDataImpl<>(new OptionsResponseEnvelope(exception), new HashMap<>(), new ArrayList<>());
   }
 
-  public static RestLiResponseData buildDeleteResponseData(HttpStatus status)
+  public static RestLiResponseData<DeleteResponseEnvelope> buildDeleteResponseData(HttpStatus status)
   {
-    final RestLiResponseDataImpl responseData =
-        new RestLiResponseDataImpl(status, new HashMap<String, String>(), new ArrayList<HttpCookie>());
-    responseData.setResponseEnvelope(new DeleteResponseEnvelope(responseData));
-    return responseData;
+    return new RestLiResponseDataImpl<>(new DeleteResponseEnvelope(status), new HashMap<>(), new ArrayList<>());
   }
 
-  public static RestLiResponseData buildDeleteResponseData(RestLiServiceException exception)
+  public static RestLiResponseData<DeleteResponseEnvelope> buildDeleteResponseData(RestLiServiceException exception)
   {
-    final RestLiResponseDataImpl responseData =
-        new RestLiResponseDataImpl(exception, new HashMap<String, String>(), new ArrayList<HttpCookie>());
-    responseData.setResponseEnvelope(new DeleteResponseEnvelope(responseData));
-    return responseData;
+    return new RestLiResponseDataImpl<>(new DeleteResponseEnvelope(exception), new HashMap<>(), new ArrayList<>());
   }
 
-  public static RestLiResponseData buildBatchCreateResponseData(HttpStatus status,
+  public static RestLiResponseData<BatchCreateResponseEnvelope> buildBatchCreateResponseData(HttpStatus status,
                                                                 List<BatchCreateResponseEnvelope.CollectionCreateResponseItem> responseItems)
   {
-    final RestLiResponseDataImpl responseData =
-        new RestLiResponseDataImpl(status, new HashMap<String, String>(), new ArrayList<HttpCookie>());
-    responseData.setResponseEnvelope(new BatchCreateResponseEnvelope(responseItems, responseData));
-    return responseData;
+    return new RestLiResponseDataImpl<>(new BatchCreateResponseEnvelope(status, responseItems,
+        false), new HashMap<>(), new ArrayList<>());
   }
 
-  public static RestLiResponseData buildBatchCreateResponseData(RestLiServiceException exception)
+  public static RestLiResponseData<BatchCreateResponseEnvelope> buildBatchCreateResponseData(RestLiServiceException exception)
   {
-    final RestLiResponseDataImpl responseData =
-        new RestLiResponseDataImpl(exception, new HashMap<String, String>(), new ArrayList<HttpCookie>());
-    responseData.setResponseEnvelope(new BatchCreateResponseEnvelope(null, responseData));
-    return responseData;
+    return new RestLiResponseDataImpl<>(new BatchCreateResponseEnvelope(exception, false), new HashMap<>(),
+        new ArrayList<>());
   }
 
-  public static RestLiResponseData buildBatchGetResponseData(HttpStatus status,
-                                                             Map<? extends Object, BatchResponseEnvelope.BatchResponseEntry> batchResponseMap)
+  public static RestLiResponseData<BatchGetResponseEnvelope> buildBatchGetResponseData(HttpStatus status,
+                                                             Map<?, BatchResponseEnvelope.BatchResponseEntry> batchResponseMap)
   {
-    final RestLiResponseDataImpl responseData =
-        new RestLiResponseDataImpl(status, new HashMap<String, String>(), new ArrayList<HttpCookie>());
-    responseData.setResponseEnvelope(new BatchGetResponseEnvelope(batchResponseMap, responseData));
-    return responseData;
+    return new RestLiResponseDataImpl<>(new BatchGetResponseEnvelope(status, batchResponseMap), new HashMap<>(),
+        new ArrayList<>());
   }
 
-  public static RestLiResponseData buildBatchGetResponseData(RestLiServiceException exception)
+  public static RestLiResponseData<BatchGetResponseEnvelope> buildBatchGetResponseData(RestLiServiceException exception)
   {
-    final RestLiResponseDataImpl responseData =
-        new RestLiResponseDataImpl(exception, new HashMap<String, String>(), new ArrayList<HttpCookie>());
-    responseData.setResponseEnvelope(new BatchGetResponseEnvelope(null, responseData));
-    return responseData;
+    return new RestLiResponseDataImpl<>(new BatchGetResponseEnvelope(exception), new HashMap<>(), new ArrayList<>());
   }
 
-  public static RestLiResponseData buildBatchUpdateResponseData(HttpStatus status,
-                                                                Map<? extends Object, BatchResponseEnvelope.BatchResponseEntry> batchResponseMap)
+  public static RestLiResponseData<BatchUpdateResponseEnvelope> buildBatchUpdateResponseData(HttpStatus status,
+                                                                Map<?, BatchResponseEnvelope.BatchResponseEntry> batchResponseMap)
   {
-    final RestLiResponseDataImpl responseData =
-        new RestLiResponseDataImpl(status, new HashMap<String, String>(), new ArrayList<HttpCookie>());
-    responseData.setResponseEnvelope(new BatchUpdateResponseEnvelope(batchResponseMap, responseData));
-    return responseData;
+    return new RestLiResponseDataImpl<>(new BatchUpdateResponseEnvelope(status, batchResponseMap), new HashMap<>(),
+        new ArrayList<>());
   }
 
-  public static RestLiResponseData buildBatchUpdateResponseData(RestLiServiceException exception)
+  public static RestLiResponseData<BatchUpdateResponseEnvelope> buildBatchUpdateResponseData(RestLiServiceException exception)
   {
-    final RestLiResponseDataImpl responseData =
-        new RestLiResponseDataImpl(exception, new HashMap<String, String>(), new ArrayList<HttpCookie>());
-    responseData.setResponseEnvelope(new BatchUpdateResponseEnvelope(null, responseData));
-    return responseData;
+    return new RestLiResponseDataImpl<>(new BatchUpdateResponseEnvelope(exception), new HashMap<>(), new ArrayList<>());
   }
 
-  public static RestLiResponseData buildBatchPartialUpdateResponseData(HttpStatus status,
-                                                                       Map<? extends Object, BatchResponseEnvelope.BatchResponseEntry> batchResponseMap)
+  public static RestLiResponseData<BatchPartialUpdateResponseEnvelope> buildBatchPartialUpdateResponseData(HttpStatus status,
+                                                                       Map<?, BatchResponseEnvelope.BatchResponseEntry> batchResponseMap)
   {
-    final RestLiResponseDataImpl responseData =
-        new RestLiResponseDataImpl(status, new HashMap<String, String>(), new ArrayList<HttpCookie>());
-    responseData.setResponseEnvelope(new BatchPartialUpdateResponseEnvelope(batchResponseMap, responseData));
-    return responseData;
+    return new RestLiResponseDataImpl<>(new BatchPartialUpdateResponseEnvelope(status, batchResponseMap),
+        new HashMap<>(), new ArrayList<>());
   }
 
-  public static RestLiResponseData buildBatchPartialUpdateResponseData(RestLiServiceException exception)
+  public static RestLiResponseData<BatchPartialUpdateResponseEnvelope> buildBatchPartialUpdateResponseData(RestLiServiceException exception)
   {
-    final RestLiResponseDataImpl responseData =
-        new RestLiResponseDataImpl(exception, new HashMap<String, String>(), new ArrayList<HttpCookie>());
-    responseData.setResponseEnvelope(new BatchPartialUpdateResponseEnvelope(null, responseData));
-    return responseData;
+    return new RestLiResponseDataImpl<>(new BatchPartialUpdateResponseEnvelope(exception), new HashMap<>(),
+        new ArrayList<>());
   }
 
-  public static RestLiResponseData buildBatchDeleteResponseData(HttpStatus status,
-                                                                Map<? extends Object, BatchResponseEnvelope.BatchResponseEntry> batchResponseMap)
+  public static RestLiResponseData<BatchDeleteResponseEnvelope> buildBatchDeleteResponseData(HttpStatus status,
+                                                                Map<?, BatchResponseEnvelope.BatchResponseEntry> batchResponseMap)
   {
-    final RestLiResponseDataImpl responseData =
-        new RestLiResponseDataImpl(status, new HashMap<String, String>(), new ArrayList<HttpCookie>());
-    responseData.setResponseEnvelope(new BatchDeleteResponseEnvelope(batchResponseMap, responseData));
-    return responseData;
+    return new RestLiResponseDataImpl<>(new BatchDeleteResponseEnvelope(status, batchResponseMap), new HashMap<>(),
+        new ArrayList<>());
   }
 
-  public static RestLiResponseData buildBatchDeleteResponseData(RestLiServiceException exception)
+  public static RestLiResponseData<BatchDeleteResponseEnvelope> buildBatchDeleteResponseData(RestLiServiceException exception)
   {
-    final RestLiResponseDataImpl responseData =
-        new RestLiResponseDataImpl(exception, new HashMap<String, String>(), new ArrayList<HttpCookie>());
-    responseData.setResponseEnvelope(new BatchDeleteResponseEnvelope(null, responseData));
-    return responseData;
+    return new RestLiResponseDataImpl<>(new BatchDeleteResponseEnvelope(exception), new HashMap<>(), new ArrayList<>());
   }
 }

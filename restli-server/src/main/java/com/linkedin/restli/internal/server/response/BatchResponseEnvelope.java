@@ -37,17 +37,21 @@ import java.util.Map;
  */
 public abstract class BatchResponseEnvelope extends RestLiResponseEnvelope
 {
-  protected Map<?, BatchResponseEntry> _batchResponseMap;
+  private Map<?, BatchResponseEntry> _batchResponseMap;
 
   /**
    * @param batchResponseMap map with entities of the response.
-   * @param restLiResponseData wrapper response data that is storing this envelope.
+   *
    */
-  protected BatchResponseEnvelope(Map<?, BatchResponseEntry> batchResponseMap,
-                                  RestLiResponseDataImpl restLiResponseData)
+  BatchResponseEnvelope(HttpStatus status, Map<?, BatchResponseEntry> batchResponseMap)
   {
-    super(restLiResponseData);
+    super(status);
     _batchResponseMap = batchResponseMap;
+  }
+
+  BatchResponseEnvelope(RestLiServiceException exception)
+  {
+    super(exception);
   }
 
   /**
@@ -58,7 +62,7 @@ public abstract class BatchResponseEnvelope extends RestLiResponseEnvelope
    */
   public void setBatchResponseMap(Map<?, BatchResponseEntry> batchResponseMap, HttpStatus httpStatus)
   {
-    _restLiResponseData.setStatus(httpStatus);
+    super.setStatus(httpStatus);
     _batchResponseMap = batchResponseMap;
   }
 

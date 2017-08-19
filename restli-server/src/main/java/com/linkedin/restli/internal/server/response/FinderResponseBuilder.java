@@ -16,6 +16,8 @@
 
 package com.linkedin.restli.internal.server.response;
 
+import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.restli.common.CollectionMetadata;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.server.RestLiResponseData;
 import java.net.HttpCookie;
@@ -23,19 +25,16 @@ import java.util.List;
 import java.util.Map;
 
 
-public class BatchUpdateResponseBuilder extends BatchResponseBuilder<RestLiResponseData<BatchUpdateResponseEnvelope>>
+public class FinderResponseBuilder extends CollectionResponseBuilder<RestLiResponseData<FinderResponseEnvelope>>
 {
-  public BatchUpdateResponseBuilder(ErrorResponseBuilder errorResponseBuilder)
-  {
-    super(errorResponseBuilder);
-  }
-
   @Override
-  RestLiResponseData<BatchUpdateResponseEnvelope> buildResponseData(HttpStatus status,
-      Map<?, BatchResponseEnvelope.BatchResponseEntry> batchResponseMap,
+  RestLiResponseData<FinderResponseEnvelope> buildResponseData(HttpStatus status,
+      List<? extends RecordTemplate> processedElements,
+      CollectionMetadata projectedPaging,
+      RecordTemplate projectedCustomMetadata,
       Map<String, String> headers,
       List<HttpCookie> cookies)
   {
-    return new RestLiResponseDataImpl<>(new BatchUpdateResponseEnvelope(status, batchResponseMap), headers, cookies);
+    return new RestLiResponseDataImpl<>(new FinderResponseEnvelope(status, processedElements, projectedPaging, projectedCustomMetadata), headers, cookies);
   }
 }

@@ -18,7 +18,6 @@ package com.linkedin.restli.internal.server.filter;
 
 
 import com.linkedin.r2.message.rest.RestRequest;
-import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.HeaderUtil;
 import com.linkedin.restli.internal.common.ProtocolVersionUtil;
@@ -26,7 +25,6 @@ import com.linkedin.restli.internal.server.response.RestLiResponseHandler;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
-import com.linkedin.restli.server.RoutingException;
 import com.linkedin.restli.server.filter.FilterResponseContext;
 
 import java.io.IOException;
@@ -39,11 +37,9 @@ import java.util.TreeMap;
 /**
  * Factory class that creates {@link FilterResponseContext} based on the given inputs.
  *
- * @param <T>
- *
  * @author nshankar
  */
-public class RestLiFilterResponseContextFactory<T>
+public class RestLiFilterResponseContextFactory
 {
   private final RoutingResult _method;
   private final RestLiResponseHandler _responseHandler;
@@ -67,13 +63,13 @@ public class RestLiFilterResponseContextFactory<T>
    *
    * @throws IOException If an error was encountered while building a {@link FilterResponseContext}.
    */
-  public FilterResponseContext fromResult(T result) throws IOException
+  public FilterResponseContext fromResult(Object result) throws IOException
   {
-    final RestLiResponseData responseData = _responseHandler.buildRestLiResponseData(_request, _method, result);
+    final RestLiResponseData<?> responseData = _responseHandler.buildRestLiResponseData(_request, _method, result);
     return new FilterResponseContext()
     {
       @Override
-      public RestLiResponseData getResponseData()
+      public RestLiResponseData<?> getResponseData()
       {
         return responseData;
       }
@@ -89,41 +85,21 @@ public class RestLiFilterResponseContextFactory<T>
    */
   public FilterResponseContext fromThrowable(Throwable throwable)
   {
-    RestLiServiceException restLiServiceException;
-    if (throwable instanceof RestLiServiceException)
-    {
-      restLiServiceException = (RestLiServiceException) throwable;
-    }
-    else if (throwable instanceof RoutingException)
-    {
-      RoutingException routingException = (RoutingException) throwable;
-
-      restLiServiceException = new RestLiServiceException(HttpStatus.fromCode(routingException.getStatus()),
-                                                          routingException.getMessage(),
-                                                          routingException);
-    }
-    else
-    {
-      restLiServiceException = new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
-                                                          throwable.getMessage(),
-                                                          throwable);
-    }
-
     Map<String, String> requestHeaders = _request.getHeaders();
-    Map<String, String> headers = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+    Map<String, String> headers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION,
                 ProtocolVersionUtil.extractProtocolVersion(requestHeaders).toString());
     headers.put(HeaderUtil.getErrorResponseHeaderName(requestHeaders), RestConstants.HEADER_VALUE_ERROR);
 
-    final RestLiResponseData responseData = _responseHandler.buildExceptionResponseData(_request,
-                                                                                        _method,
-                                                                                        restLiServiceException,
-                                                                                        headers,
-                                                                                        Collections.<HttpCookie>emptyList());
+    final RestLiResponseData<?> responseData = _responseHandler.buildExceptionResponseData(_request,
+                                                                                           _method,
+                                                                                           RestLiServiceException.fromThrowable(throwable),
+                                                                                           headers,
+                                                                                           Collections.emptyList());
     return new FilterResponseContext()
     {
       @Override
-      public RestLiResponseData getResponseData()
+      public RestLiResponseData<?> getResponseData()
       {
         return responseData;
       }

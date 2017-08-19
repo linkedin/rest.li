@@ -288,7 +288,7 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
     return new RestResponseBuilder()
         .setStatus(HttpStatus.S_200_OK.getCode())
         .setEntity(aggregatedResponseData)
-        .setCookies(CookieUtil.encodeSetCookies(new ArrayList(responseCookies.values())))
+        .setCookies(CookieUtil.encodeSetCookies(new ArrayList<>(responseCookies.values())))
       .build();
   }
 }

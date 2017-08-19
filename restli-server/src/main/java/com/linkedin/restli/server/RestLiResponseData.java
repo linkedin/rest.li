@@ -38,6 +38,7 @@ import com.linkedin.restli.internal.server.response.PartialUpdateResponseEnvelop
 import com.linkedin.restli.internal.server.response.RecordResponseEnvelope;
 import com.linkedin.restli.internal.server.ResponseType;
 
+import com.linkedin.restli.internal.server.response.RestLiResponseEnvelope;
 import com.linkedin.restli.internal.server.response.UpdateResponseEnvelope;
 import java.net.HttpCookie;
 import java.util.List;
@@ -58,27 +59,33 @@ import java.util.Map;
  * @author gye
  *
  */
-public interface RestLiResponseData
+public interface RestLiResponseData<E extends RestLiResponseEnvelope>
 {
   /**
    * Determine if the data corresponds to an error response.
    *
    * @return true if the response is an error response; else false.
+   * @deprecated Use {@link RestLiResponseEnvelope#isErrorResponse()}.
    */
+  @Deprecated
   boolean isErrorResponse();
 
   /**
    * Obtain the RestLiServiceException associated with the response data when the data is an error response.
    *
    * @return the RestLiServiceException if one exists; else null.
+   * @deprecated Use {@link RestLiResponseEnvelope#getException()}.
    */
+  @Deprecated
   RestLiServiceException getServiceException();
 
   /**
    * Gets the status of the request.
    *
    * @return the http status.
+   * @deprecated Use {@link RestLiResponseEnvelope#getStatus()}
    */
+  @Deprecated
   HttpStatus getStatus();
 
   /**
@@ -110,12 +117,19 @@ public interface RestLiResponseData
   ResourceMethod getResourceMethod();
 
   /**
+   * Gets the {@link RestLiResponseEnvelope} containing the response content.
+   */
+  E getResponseEnvelope();
+
+  /**
    * Returns the response content for resource methods that fall under {@link ResponseType#SINGLE_ENTITY}.
    *
    * @throws UnsupportedOperationException if this method is invoked for the wrong ResponseType.
    *
    * @return the enveloped content for GET, ACTION, and CREATE resource methods.
+   * @deprecated Use {@link #getResponseEnvelope()}.
    */
+  @Deprecated
   RecordResponseEnvelope getRecordResponseEnvelope();
 
   /**
@@ -124,7 +138,9 @@ public interface RestLiResponseData
    * @throws UnsupportedOperationException if this method is invoked for the wrong ResponseType.
    *
    * @return the enveloped content for GET_ALL and FINDER resource methods.
+   * @deprecated Use {@link #getResponseEnvelope()}.
    */
+  @Deprecated
   CollectionResponseEnvelope getCollectionResponseEnvelope();
 
   /**
@@ -133,7 +149,9 @@ public interface RestLiResponseData
    * @throws UnsupportedOperationException if this method is invoked for the wrong ResponseType.
    *
    * @return the enveloped content for BATCH_GET, BATCH_UPDATE, BATCH_PARTIAL_UPDATE and BATCH_DELETE resource methods.
+   * @deprecated Use {@link #getResponseEnvelope()}.
    */
+  @Deprecated
   BatchResponseEnvelope getBatchResponseEnvelope();
 
   /**
@@ -142,7 +160,9 @@ public interface RestLiResponseData
    * @throws UnsupportedOperationException if this method is invoked for the wrong ResponseType.
    *
    * @return the enveloped content for PARTIAL_UPDATE, UPDATE, DELETE and OPTIONS resource methods.
+   * @deprecated Use {@link #getResponseEnvelope()}.
    */
+  @Deprecated
   EmptyResponseEnvelope getEmptyResponseEnvelope();
 
   /**
@@ -151,7 +171,9 @@ public interface RestLiResponseData
    * @throws UnsupportedOperationException if this method is invoked for the wrong ResourceMethod.
    *
    * @return the enveloped content for {@link com.linkedin.restli.common.ResourceMethod#ACTION}.
+   * @deprecated Use {@link #getResponseEnvelope()}.
    */
+  @Deprecated
   ActionResponseEnvelope getActionResponseEnvelope();
 
   /**
@@ -160,7 +182,9 @@ public interface RestLiResponseData
    * @throws UnsupportedOperationException if this method is invoked for the wrong ResourceMethod.
    *
    * @return the enveloped content for {@link com.linkedin.restli.common.ResourceMethod#BATCH_CREATE}.
+   * @deprecated Use {@link #getResponseEnvelope()}.
    */
+  @Deprecated
   BatchCreateResponseEnvelope getBatchCreateResponseEnvelope();
 
   /**
@@ -169,7 +193,9 @@ public interface RestLiResponseData
    * @throws UnsupportedOperationException if this method is invoked for the wrong ResourceMethod.
    *
    * @return the enveloped content for {@link com.linkedin.restli.common.ResourceMethod#BATCH_DELETE}.
+   * @deprecated Use {@link #getResponseEnvelope()}.
    */
+  @Deprecated
   BatchDeleteResponseEnvelope getBatchDeleteResponseEnvelope();
 
   /**
@@ -178,7 +204,9 @@ public interface RestLiResponseData
    * @throws UnsupportedOperationException if this method is invoked for the wrong ResourceMethod.
    *
    * @return the enveloped content for {@link com.linkedin.restli.common.ResourceMethod#BATCH_GET}.
+   * @deprecated Use {@link #getResponseEnvelope()}.
    */
+  @Deprecated
   BatchGetResponseEnvelope getBatchGetResponseEnvelope();
 
   /**
@@ -187,7 +215,9 @@ public interface RestLiResponseData
    * @throws UnsupportedOperationException if this method is invoked for the wrong ResourceMethod.
    *
    * @return the enveloped content for {@link com.linkedin.restli.common.ResourceMethod#BATCH_PARTIAL_UPDATE}.
+   * @deprecated Use {@link #getResponseEnvelope()}.
    */
+  @Deprecated
   BatchPartialUpdateResponseEnvelope getBatchPartialUpdateResponseEnvelope();
 
   /**
@@ -196,7 +226,9 @@ public interface RestLiResponseData
    * @throws UnsupportedOperationException if this method is invoked for the wrong ResourceMethod.
    *
    * @return the enveloped content for {@link com.linkedin.restli.common.ResourceMethod#BATCH_UPDATE}.
+   * @deprecated Use {@link #getResponseEnvelope()}.
    */
+  @Deprecated
   BatchUpdateResponseEnvelope getBatchUpdateResponseEnvelope();
 
   /**
@@ -205,7 +237,9 @@ public interface RestLiResponseData
    * @throws UnsupportedOperationException if this method is invoked for the wrong ResourceMethod.
    *
    * @return the enveloped content for {@link com.linkedin.restli.common.ResourceMethod#CREATE}.
+   * @deprecated Use {@link #getResponseEnvelope()}.
    */
+  @Deprecated
   CreateResponseEnvelope getCreateResponseEnvelope();
 
   /**
@@ -214,7 +248,9 @@ public interface RestLiResponseData
    * @throws UnsupportedOperationException if this method is invoked for the wrong ResourceMethod.
    *
    * @return the enveloped content for {@link com.linkedin.restli.common.ResourceMethod#DELETE}.
+   * @deprecated Use {@link #getResponseEnvelope()}.
    */
+  @Deprecated
   DeleteResponseEnvelope getDeleteResponseEnvelope();
 
   /**
@@ -223,7 +259,9 @@ public interface RestLiResponseData
    * @throws UnsupportedOperationException if this method is invoked for the wrong ResourceMethod.
    *
    * @return the enveloped content for {@link com.linkedin.restli.common.ResourceMethod#FINDER}.
+   * @deprecated Use {@link #getResponseEnvelope()}.
    */
+  @Deprecated
   FinderResponseEnvelope getFinderResponseEnvelope();
 
   /**
@@ -232,7 +270,9 @@ public interface RestLiResponseData
    * @throws UnsupportedOperationException if this method is invoked for the wrong ResourceMethod.
    *
    * @return the enveloped content for {@link com.linkedin.restli.common.ResourceMethod#GET_ALL}.
+   * @deprecated Use {@link #getResponseEnvelope()}.
    */
+  @Deprecated
   GetAllResponseEnvelope getGetAllResponseEnvelope();
 
   /**
@@ -241,7 +281,9 @@ public interface RestLiResponseData
    * @throws UnsupportedOperationException if this method is invoked for the wrong ResourceMethod.
    *
    * @return the enveloped content for {@link com.linkedin.restli.common.ResourceMethod#GET}.
+   * @deprecated Use {@link #getResponseEnvelope()}.
    */
+  @Deprecated
   GetResponseEnvelope getGetResponseEnvelope();
 
   /**
@@ -250,7 +292,9 @@ public interface RestLiResponseData
    * @throws UnsupportedOperationException if this method is invoked for the wrong ResourceMethod.
    *
    * @return the enveloped content for {@link com.linkedin.restli.common.ResourceMethod#OPTIONS}.
+   * @deprecated Use {@link #getResponseEnvelope()}.
    */
+  @Deprecated
   OptionsResponseEnvelope getOptionsResponseEnvelope();
 
   /**
@@ -259,7 +303,9 @@ public interface RestLiResponseData
    * @throws UnsupportedOperationException if this method is invoked for the wrong ResourceMethod.
    *
    * @return the enveloped content for {@link com.linkedin.restli.common.ResourceMethod#PARTIAL_UPDATE}.
+   * @deprecated Use {@link #getResponseEnvelope()}.
    */
+  @Deprecated
   PartialUpdateResponseEnvelope getPartialUpdateResponseEnvelope();
 
   /**
@@ -268,6 +314,8 @@ public interface RestLiResponseData
    * @throws UnsupportedOperationException if this method is invoked for the wrong ResourceMethod.
    *
    * @return the enveloped content for {@link com.linkedin.restli.common.ResourceMethod#UPDATE}.
+   * @deprecated Use {@link #getResponseEnvelope()}.
    */
+  @Deprecated
   UpdateResponseEnvelope getUpdateResponseEnvelope();
 }

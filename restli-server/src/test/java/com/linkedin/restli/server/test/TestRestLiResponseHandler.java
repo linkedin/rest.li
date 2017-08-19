@@ -51,6 +51,7 @@ import com.linkedin.restli.internal.common.CookieUtil;
 import com.linkedin.restli.internal.common.TestConstants;
 import com.linkedin.restli.internal.server.PathKeysImpl;
 import com.linkedin.restli.internal.server.ResourceContextImpl;
+import com.linkedin.restli.internal.server.response.ActionResponseEnvelope;
 import com.linkedin.restli.internal.server.response.RestLiResponseHandler;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.ServerResourceContext;
@@ -108,7 +109,7 @@ import static org.testng.Assert.*;
  */
 public class TestRestLiResponseHandler
 {
-  private final RestLiResponseHandler _responseHandler = new RestLiResponseHandler.Builder().build();
+  private RestLiResponseHandler _responseHandler = new RestLiResponseHandler.Builder().build();
 
   private static final String APPLICATION_JSON = "application/json";
   private static final String APPLICATION_PSON = "application/x-pson";
@@ -310,7 +311,7 @@ public class TestRestLiResponseHandler
     RestResponse response;
 
     // #4 batch
-    Map<Long, Status> map = new HashMap<Long, Status>();
+    Map<Long, Status> map = new HashMap<>();
     map.put(1L, buildStatusRecord());
     map.put(2L, buildStatusRecord());
     map.put(3L, buildStatusRecord());
@@ -324,11 +325,11 @@ public class TestRestLiResponseHandler
                   true,
                   errorResponseHeaderName);
 
-    Map<Long, UpdateResponse> updateStatusMap = new HashMap<Long, UpdateResponse>();
+    Map<Long, UpdateResponse> updateStatusMap = new HashMap<>();
     updateStatusMap.put(1L, new UpdateResponse(HttpStatus.S_204_NO_CONTENT));
     updateStatusMap.put(2L, new UpdateResponse(HttpStatus.S_204_NO_CONTENT));
     updateStatusMap.put(3L, new UpdateResponse(HttpStatus.S_204_NO_CONTENT));
-    BatchUpdateResult<Long, Status> batchUpdateResult = new BatchUpdateResult<Long, Status>(updateStatusMap);
+    BatchUpdateResult<Long, Status> batchUpdateResult = new BatchUpdateResult<>(updateStatusMap);
     response = invokeResponseHandler("/test", batchUpdateResult, ResourceMethod.BATCH_UPDATE, acceptTypeData.acceptHeaders, protocolVersion);
     checkResponse(response, 200, 2, acceptTypeData.responseContentType, BatchResponse.class.getName(), UpdateStatus.class.getName(), true, errorResponseHeaderName);
 
@@ -345,11 +346,11 @@ public class TestRestLiResponseHandler
                   true,
                   errorResponseHeaderName);
 
-    List<CreateResponse> createResponses = new ArrayList<CreateResponse>();
+    List<CreateResponse> createResponses = new ArrayList<>();
     createResponses.add(new CreateResponse("42", HttpStatus.S_204_NO_CONTENT));
     createResponses.add(new CreateResponse(HttpStatus.S_400_BAD_REQUEST));
     createResponses.add(new CreateResponse(HttpStatus.S_500_INTERNAL_SERVER_ERROR));
-    BatchCreateResult<Long, Status> batchCreateResult = new BatchCreateResult<Long, Status>(createResponses);
+    BatchCreateResult<Long, Status> batchCreateResult = new BatchCreateResult<>(createResponses);
 
     response = invokeResponseHandler("/test", batchCreateResult, ResourceMethod.BATCH_CREATE, acceptTypeData.acceptHeaders, protocolVersion); // here
     checkResponse(response, 200, 2, acceptTypeData.responseContentType, CollectionResponse.class.getName(), CreateStatus.class.getName(), true, errorResponseHeaderName);
@@ -378,7 +379,7 @@ public class TestRestLiResponseHandler
     // #1.1 using CollectionResult
     response = invokeResponseHandler(baseUri + "&start=0&count=5",
                                      methodDescriptor,
-                                     new BasicCollectionResult<Status>(buildStatusList(5)),
+                                     new BasicCollectionResult<>(buildStatusList(5)),
                                      acceptTypeData.acceptHeaders,
                                      protocolVersion);
     checkCollectionResponse(response, 5, 0, 5, 1, null, null, null, acceptTypeData);
@@ -386,7 +387,7 @@ public class TestRestLiResponseHandler
     // #1.1 using CollectionResult (with total)
     response = invokeResponseHandler(baseUri + "&start=0&count=5",
                                      methodDescriptor,
-                                     new BasicCollectionResult<Status>(buildStatusList(5), 10),
+                                     new BasicCollectionResult<>(buildStatusList(5), 10),
                                      acceptTypeData.acceptHeaders,
                                      protocolVersion);
     checkCollectionResponse(response, 5, 0, 5, 1, 10, null, null, acceptTypeData);
@@ -397,12 +398,12 @@ public class TestRestLiResponseHandler
 
     response = invokeResponseHandler(baseUri + "&start=0&count=5",
                                      methodDescriptor,
-                                     new CollectionResult<Status, CollectionMetadata>(buildStatusList(5), 10, metadata),
+                                     new CollectionResult<>(buildStatusList(5), 10, metadata),
                                      acceptTypeData.acceptHeaders,
                                      protocolVersion);
     checkCollectionResponse(response, 5, 0, 5, 1, 10, null, null, acceptTypeData);
     DataMap dataMap = acceptTypeData.dataCodec.readMap(response.getEntity().asInputStream());
-    CollectionResponse<Status> collectionResponse = new CollectionResponse<Status>(dataMap, Status.class);
+    CollectionResponse<Status> collectionResponse = new CollectionResponse<>(dataMap, Status.class);
     assertEquals(new CollectionMetadata(collectionResponse.getMetadataRaw()), metadata);
 
 
@@ -421,7 +422,7 @@ public class TestRestLiResponseHandler
                                      acceptTypeData.acceptHeaders,
                                      protocolVersion);
     //"/test?count=5&start=5&someParam=foo"
-    final Map<String, String> queryParamsMap3next = new HashMap<String, String>();
+    final Map<String, String> queryParamsMap3next = new HashMap<>();
     queryParamsMap3next.put("count", "5");
     queryParamsMap3next.put("start", "5");
     queryParamsMap3next.put("someParam", "foo");
@@ -435,12 +436,12 @@ public class TestRestLiResponseHandler
                                      acceptTypeData.acceptHeaders,
                                      protocolVersion);
     //"/test?count=5&start=0&someParam=foo", "/test?count=5&start=10&someParam=foo",
-    final Map<String, String> queryParamsMap4prev = new HashMap<String, String>();
+    final Map<String, String> queryParamsMap4prev = new HashMap<>();
     queryParamsMap4prev.put("count", "5");
     queryParamsMap4prev.put("start", "0");
     queryParamsMap4prev.put("someParam", "foo");
     final URIDetails expectedURIDetails4prev = new URIDetails(protocolVersion, "/test", null, queryParamsMap4prev, null);
-    final Map<String, String> queryParamsMap4next = new HashMap<String, String>();
+    final Map<String, String> queryParamsMap4next = new HashMap<>();
     queryParamsMap4next.put("count", "5");
     queryParamsMap4next.put("start", "10");
     queryParamsMap4next.put("someParam", "foo");
@@ -454,7 +455,7 @@ public class TestRestLiResponseHandler
                                      acceptTypeData.acceptHeaders,
                                      protocolVersion);
     //"/test?count=5&start=5&someParam=foo"
-    final Map<String, String> queryParamsMap5prev = new HashMap<String, String>();
+    final Map<String, String> queryParamsMap5prev = new HashMap<>();
     queryParamsMap5prev.put("count", "5");
     queryParamsMap5prev.put("start", "5");
     queryParamsMap5prev.put("someParam", "foo");
@@ -463,16 +464,16 @@ public class TestRestLiResponseHandler
 
     response = invokeResponseHandler(baseUri + "&start=10&count=5",
                                      methodDescriptor,
-                                     new BasicCollectionResult<Status>(buildStatusList(4), 15),
+                                     new BasicCollectionResult<>(buildStatusList(4), 15),
                                      acceptTypeData.acceptHeaders,
                                      protocolVersion);
     //"/test?count=5&start=5&someParam=foo", "/test?count=5&start=14&someParam=foo"
-    final Map<String, String> queryParamsMap6prev = new HashMap<String, String>();
+    final Map<String, String> queryParamsMap6prev = new HashMap<>();
     queryParamsMap6prev.put("count", "5");
     queryParamsMap6prev.put("start", "5");
     queryParamsMap6prev.put("someParam", "foo");
     final URIDetails expectedURIDetails6prev = new URIDetails(protocolVersion, "/test", null, queryParamsMap6prev, null);
-    final Map<String, String> queryParamsMap6next = new HashMap<String, String>();
+    final Map<String, String> queryParamsMap6next = new HashMap<>();
     queryParamsMap6next.put("count", "5");
     queryParamsMap6next.put("start", "14");
     queryParamsMap6next.put("someParam", "foo");
@@ -481,11 +482,11 @@ public class TestRestLiResponseHandler
 
     response = invokeResponseHandler(baseUri + "&start=10&count=5",
                                      methodDescriptor,
-                                     new BasicCollectionResult<Status>(buildStatusList(4), 14),
+                                     new BasicCollectionResult<>(buildStatusList(4), 14),
                                      acceptTypeData.acceptHeaders,
                                      protocolVersion);
     //"/test?count=5&start=5&someParam=foo"
-    final Map<String, String> queryParamsMap7prev = new HashMap<String, String>();
+    final Map<String, String> queryParamsMap7prev = new HashMap<>();
     queryParamsMap7prev.put("count", "5");
     queryParamsMap7prev.put("start", "5");
     queryParamsMap7prev.put("someParam", "foo");
@@ -703,6 +704,7 @@ public class TestRestLiResponseHandler
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "statusActionDataPartial")
+  @SuppressWarnings("unchecked")
   public void testRestLiResponseData(AcceptTypeData acceptTypeData,
                                       String response1,
                                       String response2,
@@ -710,33 +712,32 @@ public class TestRestLiResponseHandler
                                       String errorResponseHeaderName) throws Exception
   {
     final RestRequest request = buildRequest(acceptTypeData.acceptHeaders, protocolVersion);
-    RestLiResponseData responseData;
+    RestLiResponseData<ActionResponseEnvelope> responseData;
     RoutingResult routingResult1 = buildRoutingResultAction(Status.class, request, acceptTypeData.acceptHeaders);
     // #1 simple record template
-    responseData = _responseHandler.buildRestLiResponseData(request, routingResult1, buildStatusRecord());
+    responseData = (RestLiResponseData<ActionResponseEnvelope>) _responseHandler.buildRestLiResponseData(request, routingResult1, buildStatusRecord());
     checkResponseData(responseData, HttpStatus.S_200_OK, 1, false, true, errorResponseHeaderName);
-    assertEquals(responseData.getRecordResponseEnvelope().getRecord().toString(), response1);
+    assertEquals(responseData.getResponseEnvelope().getRecord().toString(), response1);
     // #2 DataTemplate response
     StringMap map = new StringMap();
     map.put("key1", "value1");
     map.put("key2", "value2");
     RoutingResult routingResult2 = buildRoutingResultAction(StringMap.class, request, acceptTypeData.acceptHeaders);
-    responseData = _responseHandler.buildRestLiResponseData(request, routingResult2, map);
+    responseData = (RestLiResponseData<ActionResponseEnvelope>) _responseHandler.buildRestLiResponseData(request, routingResult2, map);
     checkResponseData(responseData, HttpStatus.S_200_OK, 1, false, true, errorResponseHeaderName);
 
     //Obtain the maps necessary for comparison
     final DataMap actualMap;
     final DataMap expectedMap;
-    actualMap = responseData.getRecordResponseEnvelope().getRecord().data();
+    actualMap = responseData.getResponseEnvelope().getRecord().data();
     expectedMap = JACKSON_DATA_CODEC.stringToMap(response2);
     assertEquals(actualMap, expectedMap);
 
     RoutingResult routingResult3 = buildRoutingResultAction(Void.TYPE, request, acceptTypeData.acceptHeaders);
     // #3 empty response
-    responseData =
-    _responseHandler.buildRestLiResponseData(request, routingResult3, null);
+    responseData = (RestLiResponseData<ActionResponseEnvelope>) _responseHandler.buildRestLiResponseData(request, routingResult3, null);
     checkResponseData(responseData, HttpStatus.S_200_OK, 1, false, false, errorResponseHeaderName);
-    assertEquals(responseData.getRecordResponseEnvelope().getRecord(), null);
+    assertEquals(responseData.getResponseEnvelope().getRecord(), null);
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "basicData")
@@ -752,7 +753,7 @@ public class TestRestLiResponseHandler
 
     RestLiServiceException ex = new RestLiServiceException(HttpStatus.S_404_NOT_FOUND, "freeway not found").setServiceErrorCode(237);
 
-    RestLiResponseData responseData = _responseHandler.buildExceptionResponseData(
+    RestLiResponseData<?> responseData = _responseHandler.buildExceptionResponseData(
         request, routingResult, ex, requestHeaders, Collections.emptyList());
     RestException restException = _responseHandler.buildRestException(
         ex, _responseHandler.buildPartialResponse(routingResult, responseData));
@@ -975,7 +976,7 @@ public class TestRestLiResponseHandler
                   CollectionResponse.class.getName(), null, true, errorResponseHeaderName);
 
     DataMap dataMap = acceptTypeData.dataCodec.readMap(response.getEntity().asInputStream());
-    CollectionResponse<Status> collectionResponse = new CollectionResponse<Status>(dataMap, Status.class);
+    CollectionResponse<Status> collectionResponse = new CollectionResponse<>(dataMap, Status.class);
     assertEquals(collectionResponse.getElements().size(), 10);
     for (Status status : collectionResponse.getElements())
     {
@@ -1006,7 +1007,7 @@ public class TestRestLiResponseHandler
     checkResponse(response, 200, 2, acceptTypeData.responseContentType, CollectionResponse.class.getName(), null, true, errorResponseHeaderName);
 
     DataMap dataMap = acceptTypeData.dataCodec.readMap(response.getEntity().asInputStream());
-    CollectionResponse<Status> collectionResponse = new CollectionResponse<Status>(dataMap, Status.class);
+    CollectionResponse<Status> collectionResponse = new CollectionResponse<>(dataMap, Status.class);
     assertEquals(collectionResponse.getElements().size(), 10);
     for (Status status : collectionResponse.getElements())
     {
@@ -1064,7 +1065,7 @@ public class TestRestLiResponseHandler
                   Status.class.getName(), true, errorResponseHeaderName);
 
     DataMap dataMap = acceptTypeData.dataCodec.readMap(response.getEntity().asInputStream());
-    BatchResponse<Status> batchResponse = new BatchResponse<Status>(dataMap, Status.class);
+    BatchResponse<Status> batchResponse = new BatchResponse<>(dataMap, Status.class);
     assertEquals(batchResponse.getResults().size(), 10);
     for (Status status : batchResponse.getResults().values())
     {
@@ -1176,7 +1177,7 @@ public class TestRestLiResponseHandler
     RestResponse response;
     final Status status = buildStatusRecord();
 
-    final GetResult<Status> getResult = new GetResult<Status>(status, HttpStatus.S_500_INTERNAL_SERVER_ERROR);
+    final GetResult<Status> getResult = new GetResult<>(status, HttpStatus.S_500_INTERNAL_SERVER_ERROR);
     response = invokeResponseHandler("/test", getResult, ResourceMethod.GET, acceptTypeData.acceptHeaders, protocolVersion);
     checkResponse(response,
                   HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode(),
@@ -1189,7 +1190,7 @@ public class TestRestLiResponseHandler
     assertEquals(response.getEntity().asAvroString(), expectedStatus);
 
     final RestRequest request = buildRequest(acceptTypeData.acceptHeaders, protocolVersion);
-    final ActionResult<Status> actionResult = new ActionResult<Status>(status, HttpStatus.S_500_INTERNAL_SERVER_ERROR);
+    final ActionResult<Status> actionResult = new ActionResult<>(status, HttpStatus.S_500_INTERNAL_SERVER_ERROR);
     response = _responseHandler.buildResponse(request,
                                               buildRoutingResultAction(Status.class, request, acceptTypeData.acceptHeaders),
                                               actionResult);
@@ -1234,7 +1235,7 @@ public class TestRestLiResponseHandler
   {
     List<HttpCookie> cookies = Arrays.asList(new HttpCookie("cook1", "value1"), new HttpCookie("cook2", "value2"));
     RestRequest request = new RestRequestBuilder(new URI("http://www.abc.org/")).setMethod("DONT_CARE")
-        .setHeaders(new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER))
+        .setHeaders(new TreeMap<>(String.CASE_INSENSITIVE_ORDER))
         .setCookies(CookieUtil.encodeCookies(cookies)).build();
     ServerResourceContext resourceContext = new ResourceContextImpl(new PathKeysImpl(), request, new RequestContext());
     Assert.assertEquals(resourceContext.getRequestCookies(), cookies );
@@ -1243,12 +1244,12 @@ public class TestRestLiResponseHandler
   // Helper methods
   // *****************
 
-  private final RestRequest buildRequest(Map<String, String> headers, ProtocolVersion protocolVersion) throws URISyntaxException
+  private RestRequest buildRequest(Map<String, String> headers, ProtocolVersion protocolVersion) throws URISyntaxException
   {
     return buildRequest("/test", headers, protocolVersion);
   }
 
-  private final RestRequest buildRequest(String uri, Map<String, String> headers, ProtocolVersion protocolVersion) throws URISyntaxException
+  private RestRequest buildRequest(String uri, Map<String, String> headers, ProtocolVersion protocolVersion) throws URISyntaxException
   {
     return new RestRequestBuilder(new URI(uri)).setMethod("DONT_CARE").setHeaders(headers).setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, protocolVersion.toString()).build();
   }
@@ -1259,7 +1260,7 @@ public class TestRestLiResponseHandler
    * @param actionReturnType the return type of the action.
    * @return a RoutingResult
    */
-  private final RoutingResult buildRoutingResultAction(Class<?> actionReturnType, RestRequest request, Map<String, String> headers)
+  private RoutingResult buildRoutingResultAction(Class<?> actionReturnType, RestRequest request, Map<String, String> headers)
           throws NoSuchMethodException, RestLiSyntaxException, URISyntaxException
   {
     if (actionReturnType == Void.class)
@@ -1311,19 +1312,19 @@ public class TestRestLiResponseHandler
     return new RoutingResult(resourceContext, methodDescriptor);
   }
 
-  private final RoutingResult buildRoutingResult(RestRequest request, Map<String, String> acceptHeaders)
+  private RoutingResult buildRoutingResult(RestRequest request, Map<String, String> acceptHeaders)
           throws SecurityException, NoSuchMethodException, RestLiSyntaxException
   {
     return buildRoutingResult(ResourceMethod.GET, request, acceptHeaders);
   }
 
-  private final RoutingResult buildRoutingResult(ResourceMethod resourceMethod, RestRequest request, Map<String, String> acceptHeaders)
+  private RoutingResult buildRoutingResult(ResourceMethod resourceMethod, RestRequest request, Map<String, String> acceptHeaders)
       throws SecurityException, NoSuchMethodException, RestLiSyntaxException
   {
     return buildRoutingResult(resourceMethod, request, acceptHeaders, Collections.emptySet());
   }
 
-  private final RoutingResult buildRoutingResult(
+  private RoutingResult buildRoutingResult(
       ResourceMethod resourceMethod, RestRequest request, Map<String, String> acceptHeaders, Set<String> customTypes)
           throws SecurityException, NoSuchMethodException, RestLiSyntaxException
   {
@@ -1339,7 +1340,7 @@ public class TestRestLiResponseHandler
   }
 
 
-  private final RoutingResult buildRoutingResultFinder(RestRequest request, Map<String, String> acceptHeaders) throws SecurityException,
+  private RoutingResult buildRoutingResultFinder(RestRequest request, Map<String, String> acceptHeaders) throws SecurityException,
       NoSuchMethodException,
       RestLiSyntaxException
   {
@@ -1389,10 +1390,10 @@ public class TestRestLiResponseHandler
     assertEquals(response.getEntity() != null, hasEntity);
   }
 
-  private void checkResponseData(RestLiResponseData responseData, HttpStatus status, int numHeaders,
+  private void checkResponseData(RestLiResponseData<ActionResponseEnvelope> responseData, HttpStatus status, int numHeaders,
                                  boolean hasError, boolean hasEntity, String errorResponseHeaderName)
   {
-    assertEquals(responseData.getStatus(), status);
+    assertEquals(responseData.getResponseEnvelope().getStatus(), status);
     assertEquals(responseData.getHeaders().size(), numHeaders);
     if (hasError)
     {
@@ -1403,7 +1404,7 @@ public class TestRestLiResponseHandler
       assertNull(responseData.getHeaders().get(errorResponseHeaderName));
     }
 
-    assertEquals(responseData.getRecordResponseEnvelope().getRecord() != null, hasEntity);
+    assertEquals(responseData.getResponseEnvelope().getRecord() != null, hasEntity);
   }
 
   private void checkResponse(RestResponse response,
@@ -1446,7 +1447,7 @@ public class TestRestLiResponseHandler
 
   private List<Status> buildStatusList(int num)
   {
-    List<Status> list = new ArrayList<Status>();
+    List<Status> list = new ArrayList<>();
     for (int i = 0; i < num; i++)
     {
       list.add(buildStatusRecord());
@@ -1480,12 +1481,12 @@ public class TestRestLiResponseHandler
 
     List<Status> data = buildStatusListResult(numResults, fields);
 
-    return new BasicCollectionResult<Status>(data, numResults);
+    return new BasicCollectionResult<>(data, numResults);
   }
 
   private List<Status> buildStatusListResult(int numResults, String... fields)
   {
-    List<Status> data = new ArrayList<Status>();
+    List<Status> data = new ArrayList<>();
 
     for (int i = 0; i < numResults; i++)
     {
@@ -1498,7 +1499,7 @@ public class TestRestLiResponseHandler
 
   private Map<Integer, Status> buildStatusBatchResponse(int numResults, String... fields)
   {
-    Map<Integer, Status> map = new HashMap<Integer, Status>();
+    Map<Integer, Status> map = new HashMap<>();
 
     for (int i = 0; i < numResults; i++)
     {
@@ -1521,7 +1522,7 @@ public class TestRestLiResponseHandler
           throws Exception
   {
     DataMap dataMap = acceptTypeData.dataCodec.readMap(response.getEntity().asInputStream());
-    CollectionResponse<Status> collectionResponse = new CollectionResponse<Status>(dataMap, Status.class);
+    CollectionResponse<Status> collectionResponse = new CollectionResponse<>(dataMap, Status.class);
 
     assertEquals(collectionResponse.getElements().size(), numElements);
     assertEquals(collectionResponse.getPaging().getStart().intValue(), start);
@@ -1588,7 +1589,7 @@ public class TestRestLiResponseHandler
   {
     int index = 0;
     String key = null;
-    HashMap<String,V> map = new HashMap<String,V>();
+    HashMap<String,V> map = new HashMap<>();
     for (Object object : objects)
     {
       if (index % 2 == 0)

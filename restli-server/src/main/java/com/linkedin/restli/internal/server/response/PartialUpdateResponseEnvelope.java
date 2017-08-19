@@ -17,7 +17,9 @@
 package com.linkedin.restli.internal.server.response;
 
 
+import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ResourceMethod;
+import com.linkedin.restli.server.RestLiServiceException;
 
 
 /**
@@ -27,14 +29,14 @@ import com.linkedin.restli.common.ResourceMethod;
  */
 public class PartialUpdateResponseEnvelope extends EmptyResponseEnvelope
 {
-  /**
-   * Instantiates a partial update response.
-   *
-   * @param restLiResponseData wrapper response data that is storing this envelope.
-   */
-  PartialUpdateResponseEnvelope(RestLiResponseDataImpl restLiResponseData)
+  PartialUpdateResponseEnvelope(HttpStatus status)
   {
-    super(restLiResponseData);
+    super(status);
+  }
+
+  PartialUpdateResponseEnvelope(RestLiServiceException exception)
+  {
+    super(exception);
   }
 
   @Override

@@ -19,6 +19,7 @@ package com.linkedin.restli.internal.server.response;
 
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.internal.server.ResponseType;
+import com.linkedin.restli.server.RestLiServiceException;
 
 
 /**
@@ -28,14 +29,14 @@ import com.linkedin.restli.internal.server.ResponseType;
  */
 public abstract class EmptyResponseEnvelope extends RestLiResponseEnvelope
 {
-  /**
-   * Instantiates a response without a triggered exception.
-   *
-   * @param restLiResponseData Wrapper response data that is storing this envelope.
-   */
-  protected EmptyResponseEnvelope(RestLiResponseDataImpl restLiResponseData)
+  EmptyResponseEnvelope(HttpStatus status)
   {
-    super(restLiResponseData);
+    super(status);
+  }
+
+  EmptyResponseEnvelope(RestLiServiceException exception)
+  {
+    super(exception);
   }
 
   /**
@@ -46,7 +47,7 @@ public abstract class EmptyResponseEnvelope extends RestLiResponseEnvelope
    */
   public void setStatus(HttpStatus httpStatus)
   {
-    _restLiResponseData.setStatus(httpStatus);
+    super.setStatus(httpStatus);
   }
 
   @Override

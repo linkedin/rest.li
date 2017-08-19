@@ -22,6 +22,7 @@ import com.linkedin.restli.common.CollectionMetadata;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.internal.server.ResponseType;
 
+import com.linkedin.restli.server.RestLiServiceException;
 import java.util.List;
 
 
@@ -38,27 +39,33 @@ import java.util.List;
  */
 public abstract class CollectionResponseEnvelope extends RestLiResponseEnvelope
 {
-  protected List<? extends RecordTemplate> _collectionResponse;
-  protected RecordTemplate _collectionResponseCustomMetadata;
-  protected CollectionMetadata _collectionResponsePaging;
+  private List<? extends RecordTemplate> _collectionResponse;
+  private RecordTemplate _collectionResponseCustomMetadata;
+  private CollectionMetadata _collectionResponsePaging;
 
   /**
    * Sets a collection response without triggered exception.
-   *
    * @param collectionResponse The entities of the request.
    * @param collectionResponsePaging Paging for the collection response.
    * @param collectionResponseCustomMetadata the custom metadata used for this collection response.
-   * @param restLiResponseData wrapper response data that is storing this envelope.
    */
-  protected CollectionResponseEnvelope(List<? extends RecordTemplate> collectionResponse,
-                                       CollectionMetadata collectionResponsePaging,
-                                       RecordTemplate collectionResponseCustomMetadata,
-                                       RestLiResponseDataImpl restLiResponseData)
+  CollectionResponseEnvelope(HttpStatus status,
+      List<? extends RecordTemplate> collectionResponse,
+      CollectionMetadata collectionResponsePaging,
+      RecordTemplate collectionResponseCustomMetadata)
   {
-    super(restLiResponseData);
+    super(status);
     _collectionResponse = collectionResponse;
     _collectionResponsePaging = collectionResponsePaging;
     _collectionResponseCustomMetadata = collectionResponseCustomMetadata;
+  }
+
+  CollectionResponseEnvelope(RestLiServiceException exception)
+  {
+    super(exception);
+    _collectionResponse = null;
+    _collectionResponsePaging = null;
+    _collectionResponseCustomMetadata = null;
   }
 
   /**
@@ -104,7 +111,7 @@ public abstract class CollectionResponseEnvelope extends RestLiResponseEnvelope
                                     RecordTemplate collectionResponseCustomMetadata,
                                     HttpStatus httpStatus)
   {
-    _restLiResponseData.setStatus(httpStatus);
+    super.setStatus(httpStatus);
     _collectionResponse = collectionResponse;
     _collectionResponsePaging = collectionResponsePaging;
     _collectionResponseCustomMetadata = collectionResponseCustomMetadata;

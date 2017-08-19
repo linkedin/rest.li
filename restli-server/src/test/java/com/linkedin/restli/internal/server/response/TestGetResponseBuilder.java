@@ -32,7 +32,6 @@ import com.linkedin.restli.server.ProjectionMode;
 import com.linkedin.restli.server.ResourceContext;
 
 import com.linkedin.restli.server.RestLiResponseData;
-import java.net.HttpCookie;
 import java.util.Collections;
 import java.util.Map;
 
@@ -92,11 +91,11 @@ public class TestGetResponseBuilder
 
     GetResponseBuilder getResponseBuilder = new GetResponseBuilder();
 
-    RestLiResponseData responseData = getResponseBuilder.buildRestLiResponseData(null,
-                                                                                 routingResult,
-                                                                                 record,
-                                                                                 headers,
-                                                                                 Collections.<HttpCookie>emptyList());
+    RestLiResponseData<GetResponseEnvelope> responseData = getResponseBuilder.buildRestLiResponseData(null,
+                                                                              routingResult,
+                                                                              record,
+                                                                              headers,
+                                                                              Collections.emptyList());
 
     PartialRestResponse partialRestResponse = getResponseBuilder.buildResponse(null, responseData);
 
@@ -125,10 +124,11 @@ public class TestGetResponseBuilder
     Foo value = new Foo().setStringField("value").setFruitsField(Fruits.APPLE);
 
     GetResponseBuilder responseBuilder = new GetResponseBuilder();
-    RestLiResponseData responseData = responseBuilder.buildRestLiResponseData(null, routingResult, value,
-                                                                              Collections.<String, String>emptyMap(),
-                                                                              Collections.<HttpCookie>emptyList());
-    RecordTemplate record = responseData.getGetResponseEnvelope().getRecord();
+    RestLiResponseData<GetResponseEnvelope>
+        responseData = responseBuilder.buildRestLiResponseData(null, routingResult, value,
+                                                                              Collections.emptyMap(),
+                                                                              Collections.emptyList());
+    RecordTemplate record = responseData.getResponseEnvelope().getRecord();
     Assert.assertEquals(record.data().size(), 1);
     Assert.assertEquals(record.data().get("fruitsField"), Fruits.APPLE.toString());
 

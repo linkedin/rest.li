@@ -21,14 +21,13 @@ import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.HeaderUtil;
 import com.linkedin.restli.internal.common.ProtocolVersionUtil;
 import com.linkedin.restli.internal.server.RestLiCallback;
-import com.linkedin.restli.internal.server.response.RestLiResponseDataImpl;
 import com.linkedin.restli.server.RestLiResponseAttachments;
+import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.filter.Filter;
 import com.linkedin.restli.server.filter.FilterRequestContext;
 import com.linkedin.restli.server.filter.FilterResponseContext;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 
 
@@ -44,7 +43,7 @@ public class RestLiFilterChainIterator
   private int _cursor;
 
 
-  public RestLiFilterChainIterator(List<Filter> filters, FilterChainCallback filterChainCallback)
+   RestLiFilterChainIterator(List<Filter> filters, FilterChainCallback filterChainCallback)
   {
     _filters = filters;
     _filterChainCallback = filterChainCallback;
@@ -52,8 +51,8 @@ public class RestLiFilterChainIterator
   }
 
   public void onRequest(FilterRequestContext requestContext,
-                        RestLiFilterResponseContextFactory<Object> filterResponseContextFactory,
-                        RestLiCallback<Object> restLiCallback)
+                        RestLiFilterResponseContextFactory filterResponseContextFactory,
+                        RestLiCallback restLiCallback)
   {
     if (_cursor < _filters.size())
     {
@@ -67,9 +66,9 @@ public class RestLiFilterChainIterator
         onError(th, requestContext, filterResponseContextFactory.fromThrowable(th), null);
         return;
       }
-      filterFuture.thenAccept((v) -> {
-        onRequest(requestContext, filterResponseContextFactory, restLiCallback);
-      });
+      filterFuture.thenAccept((v) ->
+        onRequest(requestContext, filterResponseContextFactory, restLiCallback)
+      );
       filterFuture.exceptionally((throwable) -> {
         onError(throwable, requestContext, filterResponseContextFactory.fromThrowable(throwable), null);
         return null;
@@ -98,9 +97,9 @@ public class RestLiFilterChainIterator
         onError(th, requestContext, responseContext, responseAttachments);
         return;
       }
-      filterFuture.thenAccept((v) -> {
-        onResponse(requestContext, responseContext, responseAttachments);
-      });
+      filterFuture.thenAccept((v) ->
+        onResponse(requestContext, responseContext, responseAttachments)
+      );
       filterFuture.exceptionally((throwable) -> {
         updateResponseContextWithError(throwable, responseContext);
         onError(throwable, requestContext, responseContext, responseAttachments);
@@ -131,7 +130,9 @@ public class RestLiFilterChainIterator
         onError(t, requestContext, responseContext, responseAttachments);
         return;
       }
+
       filterFuture.thenAccept((v) -> {
+        removeErrorResponseHeader(responseContext);
         // if the filter future completes without an error, this means the previous error has been corrected
         // therefore, the filter chain will invoke the onResponse() method.
         onResponse(requestContext, responseContext, responseAttachments);
@@ -152,14 +153,25 @@ public class RestLiFilterChainIterator
 
   private void updateResponseContextWithError(Throwable throwable, FilterResponseContext responseContext)
   {
-    Map<String, String> requestHeaders = responseContext.getResponseData().getHeaders();
-    Map<String, String> headers = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
-    headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION,
-                ProtocolVersionUtil.extractProtocolVersion(requestHeaders).toString());
-    headers.put(HeaderUtil.getErrorResponseHeaderName(requestHeaders), RestConstants.HEADER_VALUE_ERROR);
+    assert throwable != null;
 
-    RestLiResponseDataImpl responseData = (RestLiResponseDataImpl)responseContext.getResponseData();
-    responseData.getHeaders().putAll(headers);
-    responseData.setException(throwable);
+    setErrorResponseHeader(responseContext);
+
+    RestLiServiceException restLiServiceException = RestLiServiceException.fromThrowable(throwable);
+    responseContext.getResponseData().getResponseEnvelope().setExceptionInternal(restLiServiceException);
+  }
+
+  private void setErrorResponseHeader(FilterResponseContext responseContext)
+  {
+    Map<String, String> requestHeaders = responseContext.getResponseData().getHeaders();
+    requestHeaders.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION,
+        ProtocolVersionUtil.extractProtocolVersion(requestHeaders).toString());
+    requestHeaders.put(HeaderUtil.getErrorResponseHeaderName(requestHeaders), RestConstants.HEADER_VALUE_ERROR);
+  }
+
+  private void removeErrorResponseHeader(FilterResponseContext responseContext)
+  {
+    Map<String, String> requestHeaders = responseContext.getResponseData().getHeaders();
+    requestHeaders.remove(HeaderUtil.getErrorResponseHeaderName(requestHeaders));
   }
 }

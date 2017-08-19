@@ -19,8 +19,10 @@ package com.linkedin.restli.internal.server.response;
 
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.CollectionMetadata;
+import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ResourceMethod;
 
+import com.linkedin.restli.server.RestLiServiceException;
 import java.util.List;
 
 
@@ -33,18 +35,21 @@ public class FinderResponseEnvelope extends CollectionResponseEnvelope
 {
   /**
    * Instantiates a finder response envelope.
-   *
    * @param collectionResponse The entities of the request.
    * @param collectionResponsePaging Paging for the collection response.
    * @param collectionResponseCustomMetadata The custom metadata used for this collection response.
-   * @param restLiResponseData Wrapper response data that is storing this envelope.
    */
-  FinderResponseEnvelope(List<? extends RecordTemplate> collectionResponse,
-                         CollectionMetadata collectionResponsePaging,
-                         RecordTemplate collectionResponseCustomMetadata,
-                         RestLiResponseDataImpl restLiResponseData)
+  FinderResponseEnvelope(HttpStatus status,
+      List<? extends RecordTemplate> collectionResponse,
+      CollectionMetadata collectionResponsePaging,
+      RecordTemplate collectionResponseCustomMetadata)
   {
-    super(collectionResponse, collectionResponsePaging, collectionResponseCustomMetadata, restLiResponseData);
+    super(status, collectionResponse, collectionResponsePaging, collectionResponseCustomMetadata);
+  }
+
+  FinderResponseEnvelope(RestLiServiceException exception)
+  {
+    super(exception);
   }
 
   @Override

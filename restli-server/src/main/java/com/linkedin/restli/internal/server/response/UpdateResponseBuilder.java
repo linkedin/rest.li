@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2012 LinkedIn Corp.
+   Copyright (c) 2017 LinkedIn Corp.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -16,47 +16,19 @@
 
 package com.linkedin.restli.internal.server.response;
 
-
-import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.HttpStatus;
-import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.server.RestLiResponseData;
-import com.linkedin.restli.server.RestLiServiceException;
-import com.linkedin.restli.server.UpdateResponse;
-
 import java.net.HttpCookie;
 import java.util.List;
 import java.util.Map;
 
 
-public class UpdateResponseBuilder implements RestLiResponseBuilder
+public class UpdateResponseBuilder extends EmptyResponseBuilder<RestLiResponseData<UpdateResponseEnvelope>>
 {
   @Override
-  public PartialRestResponse buildResponse(RoutingResult routingResult, RestLiResponseData responseData)
+  RestLiResponseData<UpdateResponseEnvelope> buildResponseData(HttpStatus status,
+      Map<String, String> headers, List<HttpCookie> cookies)
   {
-    return new PartialRestResponse.Builder().headers(responseData.getHeaders())
-                                            .cookies(responseData.getCookies())
-                                            .status(responseData.getStatus())
-                                            .build();
-  }
-
-  @Override
-  public RestLiResponseData buildRestLiResponseData(RestRequest request, RoutingResult routingResult,
-                                                    Object result, Map<String, String> headers,
-                                                    List<HttpCookie> cookies)
-  {
-    UpdateResponse updateResponse = (UpdateResponse) result;
-    //Verify that the status in the UpdateResponse is not null. If so, this is a developer error.
-    if (updateResponse.getStatus() == null)
-    {
-      throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
-          "Unexpected null encountered. HttpStatus is null inside of a UpdateResponse returned by the resource method: "
-              + routingResult.getResourceMethod());
-    }
-
-    RestLiResponseDataImpl responseData = new RestLiResponseDataImpl(updateResponse.getStatus(), headers, cookies);
-    responseData.setResponseEnvelope(new UpdateResponseEnvelope(responseData));
-
-    return responseData;
+    return new RestLiResponseDataImpl<>(new UpdateResponseEnvelope(status), headers, cookies);
   }
 }

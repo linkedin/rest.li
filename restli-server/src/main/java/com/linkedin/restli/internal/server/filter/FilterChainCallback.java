@@ -17,7 +17,6 @@
 package com.linkedin.restli.internal.server.filter;
 
 
-import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
 import com.linkedin.restli.internal.server.RestLiCallback;
 import com.linkedin.restli.server.RestLiRequestData;
 import com.linkedin.restli.server.RestLiResponseAttachments;
@@ -38,7 +37,7 @@ public interface FilterChainCallback
    * @param requestData the {@link RestLiRequestData} of the request.
    * @param restLiCallback the {@link RestLiCallback} to be called after the RestLi method has been invoked.
    */
-  void onRequestSuccess(final RestLiRequestData requestData, final RestLiCallback<Object> restLiCallback);
+  void onRequestSuccess(final RestLiRequestData requestData, final RestLiCallback restLiCallback);
 
   /**
    *Method to be called after a filter chain successfully iterates to the end of the response side.
@@ -46,7 +45,7 @@ public interface FilterChainCallback
    * @param responseData the {@link RestLiResponseData} of the response.
    * @param responseAttachments the {@link RestLiResponseAttachments} for the response.
    */
-  void onResponseSuccess(final RestLiResponseData responseData, final RestLiResponseAttachments responseAttachments);
+  void onResponseSuccess(final RestLiResponseData<?> responseData, final RestLiResponseAttachments responseAttachments);
 
   /**
    * Method to be called after a filter chain finishes iterating on the response side, but with an error.
@@ -55,5 +54,5 @@ public interface FilterChainCallback
    * @param responseData the {@link RestLiResponseData} of the response.
    * @param responseAttachments the {@link RestLiResponseAttachments} of the response.
    */
-  void onError(Throwable th, final RestLiResponseData responseData, final RestLiResponseAttachments responseAttachments);
+  void onError(Throwable th, final RestLiResponseData<?> responseData, final RestLiResponseAttachments responseAttachments);
 }

@@ -23,19 +23,19 @@ import java.util.List;
 import java.util.Map;
 
 
-public class BatchUpdateResponseBuilder extends BatchResponseBuilder<RestLiResponseData<BatchUpdateResponseEnvelope>>
+public class BatchDeleteResponseBuilder extends BatchResponseBuilder<RestLiResponseData<BatchDeleteResponseEnvelope>>
 {
-  public BatchUpdateResponseBuilder(ErrorResponseBuilder errorResponseBuilder)
+  public BatchDeleteResponseBuilder(ErrorResponseBuilder errorResponseBuilder)
   {
     super(errorResponseBuilder);
   }
 
   @Override
-  RestLiResponseData<BatchUpdateResponseEnvelope> buildResponseData(HttpStatus status,
+  RestLiResponseData<BatchDeleteResponseEnvelope> buildResponseData(HttpStatus status,
       Map<?, BatchResponseEnvelope.BatchResponseEntry> batchResponseMap,
       Map<String, String> headers,
       List<HttpCookie> cookies)
   {
-    return new RestLiResponseDataImpl<>(new BatchUpdateResponseEnvelope(status, batchResponseMap), headers, cookies);
+    return new RestLiResponseDataImpl<>(new BatchDeleteResponseEnvelope(status, batchResponseMap), headers, cookies);
   }
 }

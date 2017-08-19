@@ -63,9 +63,7 @@ public class FileClassNameScanner
       return Collections.emptyMap();
     }
 
-    // suppress the warning because of inconsistent FileUtils interface
-    @SuppressWarnings("unchecked")
-    final Collection<File> files = (Collection<File>) FileUtils.listFiles(dir, null, true);
+    final Collection<File> files = FileUtils.listFiles(dir, null, true);
     final Map<String, String> classFileNames = new HashMap<String, String>();
     final int prefixLength = sourceDirWithSeparator.length();
     for (File f : files)

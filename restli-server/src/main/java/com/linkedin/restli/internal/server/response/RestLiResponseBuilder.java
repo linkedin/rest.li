@@ -36,14 +36,14 @@ import java.util.Map;
  *
  * @author dellamag
  */
-public interface RestLiResponseBuilder
+public interface RestLiResponseBuilder<D extends RestLiResponseData<?>>
 {
   PartialRestResponse buildResponse(RoutingResult routingResult,
-                                    RestLiResponseData responseData);
+                                    D responseData);
 
-  RestLiResponseData buildRestLiResponseData(RestRequest request,
-                                             RoutingResult routingResult,
-                                             Object result,
-                                             Map<String, String> headers,
-                                             List<HttpCookie> cookies);
+  D buildRestLiResponseData(RestRequest request,
+                            RoutingResult routingResult,
+                            Object result,
+                            Map<String, String> headers,
+                            List<HttpCookie> cookies);
 }

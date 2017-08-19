@@ -40,14 +40,14 @@ import java.util.List;
 import java.util.Map;
 
 
-public class CollectionResponseBuilder implements RestLiResponseBuilder
+public abstract class CollectionResponseBuilder<D extends RestLiResponseData<? extends CollectionResponseEnvelope>> implements RestLiResponseBuilder<D>
 {
   @Override
-  public PartialRestResponse buildResponse(RoutingResult routingResult, RestLiResponseData responseData)
+  public PartialRestResponse buildResponse(RoutingResult routingResult, D responseData)
   {
-    CollectionResponseEnvelope response = responseData.getCollectionResponseEnvelope();
+    CollectionResponseEnvelope response = responseData.getResponseEnvelope();
     PartialRestResponse.Builder builder = new PartialRestResponse.Builder();
-    CollectionResponse<AnyRecord> collectionResponse = new CollectionResponse<AnyRecord>(AnyRecord.class);
+    CollectionResponse<AnyRecord> collectionResponse = new CollectionResponse<>(AnyRecord.class);
     collectionResponse.setPaging(response.getCollectionResponsePaging());
     DataList elementsMap = (DataList) collectionResponse.data().get(CollectionResponse.ELEMENTS);
     for (RecordTemplate entry : response.getCollectionResponse())
@@ -63,15 +63,15 @@ public class CollectionResponseBuilder implements RestLiResponseBuilder
   }
 
   @Override
-  public RestLiResponseData buildRestLiResponseData(RestRequest request,
-                                                    RoutingResult routingResult,
-                                                    Object object,
-                                                    Map<String, String> headers,
-                                                    List<HttpCookie> cookies)
+  public D buildRestLiResponseData(RestRequest request,
+      RoutingResult routingResult,
+      Object object,
+      Map<String, String> headers,
+      List<HttpCookie> cookies)
   {
     if (object instanceof List)
     {
-      @SuppressWarnings({ "unchecked" })
+      @SuppressWarnings({"unchecked"})
       /** constrained by {@link com.linkedin.restli.internal.server.model.RestLiAnnotationReader#validateFinderMethod(com.linkedin.restli.internal.server.model.ResourceMethodDescriptor, com.linkedin.restli.internal.server.model.ResourceModel)} */
       List<? extends RecordTemplate> result = (List<? extends RecordTemplate>) object;
 
@@ -79,7 +79,7 @@ public class CollectionResponseBuilder implements RestLiResponseBuilder
     }
     else
     {
-      @SuppressWarnings({ "unchecked" })
+      @SuppressWarnings({"unchecked"})
       /** constrained by {@link com.linkedin.restli.internal.server.model.RestLiAnnotationReader#validateFinderMethod(com.linkedin.restli.internal.server.model.ResourceMethodDescriptor, com.linkedin.restli.internal.server.model.ResourceModel)} */
       CollectionResult<? extends RecordTemplate, ? extends RecordTemplate> collectionResult =
           (CollectionResult<? extends RecordTemplate, ? extends RecordTemplate>) object;
@@ -98,14 +98,15 @@ public class CollectionResponseBuilder implements RestLiResponseBuilder
     }
   }
 
-  private static RestLiResponseData buildRestLiResponseData(final RestRequest request,
-                                                            final RoutingResult routingResult,
-                                                            final List<? extends RecordTemplate> elements,
-                                                            final PageIncrement pageIncrement,
-                                                            final RecordTemplate customMetadata,
-                                                            final Integer totalResults,
-                                                            final Map<String, String> headers,
-                                                            final List<HttpCookie> cookies)
+  @SuppressWarnings("unchecked")
+  private D buildRestLiResponseData(final RestRequest request,
+                                    final RoutingResult routingResult,
+                                    final List<? extends RecordTemplate> elements,
+                                    final PageIncrement pageIncrement,
+                                    final RecordTemplate customMetadata,
+                                    final Integer totalResults,
+                                    final Map<String, String> headers,
+                                    final List<HttpCookie> cookies)
   {
     //Extract the resource context that contains projection information for root object entities, metadata and paging.
     final ResourceContext resourceContext = routingResult.getContext();
@@ -132,15 +133,14 @@ public class CollectionResponseBuilder implements RestLiResponseBuilder
             ProjectionMode.AUTOMATIC, resourceContext.getPagingProjectionMask()));
 
     //For root object entities
-    List<AnyRecord> processedElements = new ArrayList<AnyRecord>(elements.size());
+    List<AnyRecord> processedElements = new ArrayList<>(elements.size());
     for (RecordTemplate entry : elements)
     {
       //We don't permit null elements in our lists. If so, this is a developer error.
       if (entry == null)
       {
         throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
-            "Unexpected null encountered. Null element inside of a List returned by the resource method: " + routingResult
-                .getResourceMethod());
+            "Unexpected null encountered. Null element inside of a List returned by the resource method: " + routingResult.getResourceMethod());
       }
       processedElements.add(new AnyRecord(RestUtils
           .projectFields(entry.data(), resourceContext.getProjectionMode(), resourceContext.getProjectionMask())));
@@ -159,23 +159,13 @@ public class CollectionResponseBuilder implements RestLiResponseBuilder
       projectedCustomMetadata = null;
     }
 
-    RestLiResponseDataImpl responseData = new RestLiResponseDataImpl(HttpStatus.S_200_OK, headers, cookies);
-    RestLiResponseEnvelope responseEnvelope;
-    switch(routingResult.getResourceMethod().getType())
-    {
-      case GET_ALL:
-        responseEnvelope = new GetAllResponseEnvelope(processedElements, projectedPaging, projectedCustomMetadata,
-                                                      responseData);
-        break;
-      case FINDER:
-        responseEnvelope = new FinderResponseEnvelope(processedElements, projectedPaging, projectedCustomMetadata,
-                                                      responseData);
-        break;
-      default:
-        throw new IllegalStateException("Resource method is invalid for CollectionResponseBuilder");
-    }
-    responseData.setResponseEnvelope(responseEnvelope);
-
-    return responseData;
+    return buildResponseData(HttpStatus.S_200_OK, processedElements, projectedPaging, projectedCustomMetadata, headers, cookies);
   }
+
+  abstract D buildResponseData(HttpStatus status,
+      List<? extends RecordTemplate> processedElements,
+      CollectionMetadata projectedPaging,
+      RecordTemplate projectedCustomMetadata,
+      Map<String, String> headers,
+      List<HttpCookie> cookies);
 }

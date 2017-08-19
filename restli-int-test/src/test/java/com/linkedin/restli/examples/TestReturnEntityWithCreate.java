@@ -82,7 +82,7 @@ public class TestReturnEntityWithCreate extends RestLiIntegrationTest
     Assert.assertEquals(response.getHeader(RestConstants.HEADER_CONTENT_TYPE), expectedContentType);
     Assert.assertEquals(response.getHeader(RestConstants.HEADER_LOCATION), "/" + builders.getPrimaryResource() + "/" + id);
     Assert.assertEquals(id, Long.parseLong(stringId));
-    Assert.assertEquals("second time!", ((Greeting) response.getEntity().getEntity()).getMessage());
+    Assert.assertEquals("second time!", response.getEntity().getEntity().getMessage());
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "newBuildersClientDataDataProvider")
@@ -102,8 +102,8 @@ public class TestReturnEntityWithCreate extends RestLiIntegrationTest
     Assert.assertEquals(response.getHeader(RestConstants.HEADER_CONTENT_TYPE), expectedContentType);
     Assert.assertEquals(response.getHeader(RestConstants.HEADER_LOCATION), "/" + builders.getPrimaryResource() + "/" + id + "?fields=tone,id");
     Assert.assertEquals(id, Long.parseLong(stringId));
-    Assert.assertEquals(false, ((Greeting) response.getEntity().getEntity()).hasMessage());
-    Assert.assertEquals(Tone.FRIENDLY, ((Greeting) response.getEntity().getEntity()).getTone());
+    Assert.assertEquals(false, response.getEntity().getEntity().hasMessage());
+    Assert.assertEquals(Tone.FRIENDLY, response.getEntity().getEntity().getTone());
   }
 
   @Test (dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "newBuildersClientDataDataProvider")

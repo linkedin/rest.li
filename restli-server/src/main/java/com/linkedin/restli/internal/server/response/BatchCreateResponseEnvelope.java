@@ -39,36 +39,26 @@ import java.util.List;
  */
 public class BatchCreateResponseEnvelope extends RestLiResponseEnvelope
 {
-  protected List<CollectionCreateResponseItem> _createResponses;
+  private List<CollectionCreateResponseItem> _createResponses;
   private final boolean _isGetAfterCreate;
-
-  /**
-   * This constructor is for non CREATE + GET (i.e. this constructor creates a BatchCreateResponse that doesn't contain
-   * the newly created data).
-   *
-   * @param createResponses List of created responses.
-   * @param restLiResponseData Wrapper response data that is storing this envelope.
-   */
-  BatchCreateResponseEnvelope(List<CollectionCreateResponseItem> createResponses,
-                              RestLiResponseDataImpl restLiResponseData)
-  {
-    this(createResponses, false, restLiResponseData);
-  }
 
   /**
    * This constructor has a configuration boolean for whether or not this is a CREATE + GET (i.e. this constructor
    * creates a BatchCreateResponse that contains the newly created data) as opposed to a normal CREATE. true = CREATE +
    * GET, false = CREATE.
-   *
    * @param createResponses List of created responses.
    * @param isGetAfterCreate Boolean flag denoting whether or not this is a CREATE + GET.
-   * @param restLiResponseData Wrapper response data that is storign this envelope.
    */
-  BatchCreateResponseEnvelope(List<CollectionCreateResponseItem> createResponses, boolean isGetAfterCreate,
-                              RestLiResponseDataImpl restLiResponseData)
+  BatchCreateResponseEnvelope(HttpStatus status, List<CollectionCreateResponseItem> createResponses, boolean isGetAfterCreate)
   {
-    super(restLiResponseData);
+    super(status);
     _createResponses = createResponses;
+    _isGetAfterCreate = isGetAfterCreate;
+  }
+
+  BatchCreateResponseEnvelope(RestLiServiceException exception, boolean isGetAfterCreate)
+  {
+    super(exception);
     _isGetAfterCreate = isGetAfterCreate;
   }
 
@@ -108,7 +98,7 @@ public class BatchCreateResponseEnvelope extends RestLiResponseEnvelope
    */
   public void setCreateResponse(List<CollectionCreateResponseItem> createResponse, HttpStatus httpStatus)
   {
-    _restLiResponseData.setStatus(httpStatus);
+    super.setStatus(httpStatus);
     _createResponses = createResponse;
   }
 
@@ -155,7 +145,7 @@ public class BatchCreateResponseEnvelope extends RestLiResponseEnvelope
      *
      * @param response value of the entry.
      */
-    public CollectionCreateResponseItem(CreateIdStatus response)
+    public CollectionCreateResponseItem(CreateIdStatus<?> response)
     {
       _recordResponse = response;
 

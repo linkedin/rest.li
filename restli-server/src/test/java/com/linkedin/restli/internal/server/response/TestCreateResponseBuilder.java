@@ -47,7 +47,6 @@ import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
 
-import java.net.HttpCookie;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
@@ -101,12 +100,12 @@ public class TestCreateResponseBuilder
     RoutingResult routingResult = new RoutingResult(mockContext, mockDescriptor);
 
     CreateResponseBuilder createResponseBuilder = new CreateResponseBuilder();
-    RestLiResponseData responseData = createResponseBuilder.buildRestLiResponseData(restRequest,
+    RestLiResponseData<CreateResponseEnvelope> responseData = createResponseBuilder.buildRestLiResponseData(restRequest,
                                                                                     routingResult,
                                                                                     createResponse,
                                                                                     headers,
-                                                                                    Collections.<HttpCookie>emptyList());
-    Assert.assertFalse(responseData.getCreateResponseEnvelope().isGetAfterCreate());
+                                                                                    Collections.emptyList());
+    Assert.assertFalse(responseData.getResponseEnvelope().isGetAfterCreate());
 
     PartialRestResponse partialRestResponse = createResponseBuilder.buildResponse(routingResult, responseData);
 
@@ -131,11 +130,11 @@ public class TestCreateResponseBuilder
   {
     CreateResponse createResponse = new CreateResponse(new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST));
     RestRequest restRequest = new RestRequestBuilder(new URI("/foo")).build();
-    RestLiResponseData envelope = new CreateResponseBuilder()
-        .buildRestLiResponseData(restRequest, null, createResponse, Collections.<String, String>emptyMap(),
-                                 Collections.<HttpCookie>emptyList());
+    RestLiResponseData<?> envelope = new CreateResponseBuilder()
+        .buildRestLiResponseData(restRequest, null, createResponse, Collections.emptyMap(),
+                                 Collections.emptyList());
 
-    Assert.assertTrue(envelope.isErrorResponse());
+    Assert.assertTrue(envelope.getResponseEnvelope().isErrorResponse());
   }
 
   @Test
@@ -156,7 +155,7 @@ public class TestCreateResponseBuilder
     CreateResponseBuilder createResponseBuilder = new CreateResponseBuilder();
     try
     {
-      createResponseBuilder.buildRestLiResponseData(restRequest, routingResult, createResponse, headers, Collections.<HttpCookie>emptyList());
+      createResponseBuilder.buildRestLiResponseData(restRequest, routingResult, createResponse, headers, Collections.emptyList());
       Assert.fail("buildRestLiResponseData should have thrown an exception because the status is null!");
     }
     catch (RestLiServiceException e)
@@ -178,17 +177,18 @@ public class TestCreateResponseBuilder
     RoutingResult routingResult = new RoutingResult(mockContext, null);
 
     Foo value = new Foo().setStringField("value").setFruitsField(Fruits.APPLE);
-    CreateKVResponse<Integer, Foo> values = new CreateKVResponse<Integer, Foo>(null, value);
+    CreateKVResponse<Integer, Foo> values = new CreateKVResponse<>(null, value);
 
     CreateResponseBuilder responseBuilder = new CreateResponseBuilder();
-    RestLiResponseData envelope = responseBuilder.buildRestLiResponseData(new RestRequestBuilder(new URI("/foo")).build(),
-                                                                          routingResult, values,
-                                                                          Collections.<String, String>emptyMap(),
-                                                                          Collections.<HttpCookie>emptyList());
-    RecordTemplate record = envelope.getRecordResponseEnvelope().getRecord();
+    RestLiResponseData<CreateResponseEnvelope> envelope = responseBuilder.buildRestLiResponseData(new RestRequestBuilder(new URI("/foo")).build(),
+                                                                          routingResult,
+                                                                          values,
+                                                                          Collections.emptyMap(),
+                                                                          Collections.emptyList());
+    RecordTemplate record = envelope.getResponseEnvelope().getRecord();
     Assert.assertEquals(record.data().size(), 1);
     Assert.assertEquals(record.data().get("fruitsField"), Fruits.APPLE.toString());
-    Assert.assertTrue(envelope.getCreateResponseEnvelope().isGetAfterCreate());
+    Assert.assertTrue(envelope.getResponseEnvelope().isGetAfterCreate());
 
     EasyMock.verify(mockContext);
   }

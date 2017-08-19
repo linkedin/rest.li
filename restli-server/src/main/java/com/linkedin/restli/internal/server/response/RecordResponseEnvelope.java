@@ -20,6 +20,7 @@ package com.linkedin.restli.internal.server.response;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.internal.server.ResponseType;
+import com.linkedin.restli.server.RestLiServiceException;
 
 
 /**
@@ -33,18 +34,23 @@ import com.linkedin.restli.internal.server.ResponseType;
  */
 public abstract class RecordResponseEnvelope extends RestLiResponseEnvelope
 {
-  protected RecordTemplate _recordResponse;
+  private RecordTemplate _recordResponse;
 
   /**
    * Sets an entity response with no triggered exception.
-   *
    * @param response entity of the response.
-   * @param restLiResponseData wrapper response data that is storing this envelope.
+   *
    */
-  protected RecordResponseEnvelope(RecordTemplate response, RestLiResponseDataImpl restLiResponseData)
+  RecordResponseEnvelope(HttpStatus status, RecordTemplate response)
   {
-    super(restLiResponseData);
+    super(status);
     _recordResponse = response;
+  }
+
+  RecordResponseEnvelope(RestLiServiceException exception)
+  {
+    super(exception);
+    _recordResponse = null;
   }
 
   /**
@@ -65,7 +71,7 @@ public abstract class RecordResponseEnvelope extends RestLiResponseEnvelope
    */
   public void setRecord(RecordTemplate response, HttpStatus httpStatus)
   {
-    _restLiResponseData.setStatus(httpStatus);
+    super.setStatus(httpStatus);
     _recordResponse = response;
   }
 

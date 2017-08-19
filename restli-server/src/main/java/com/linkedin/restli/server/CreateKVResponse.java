@@ -35,9 +35,10 @@ public class CreateKVResponse<K, V extends RecordTemplate> extends CreateRespons
     _entity = null;
   }
 
+  @SuppressWarnings("unchecked")
   public K getId()
   {
-    return (K)super.getId();
+    return (K) super.getId();
   }
 
   public boolean hasEntity()

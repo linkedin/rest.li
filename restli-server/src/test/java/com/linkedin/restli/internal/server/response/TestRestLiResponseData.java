@@ -1,8 +1,6 @@
 package com.linkedin.restli.internal.server.response;
 
 
-import com.linkedin.data.DataMap;
-import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.CollectionMetadata;
 import com.linkedin.restli.common.CreateIdStatus;
 import com.linkedin.restli.common.EmptyRecord;
@@ -36,10 +34,10 @@ public class TestRestLiResponseData
 
   // Tests for the exception/status invariant of RestLiResponseEnvelope class.
   @Test (dataProvider = "baseClassOperations")
-  public void testRestLiResponseEnvelopeInvariant(RestLiResponseDataImpl responseData)
+  public void testRestLiResponseEnvelopeInvariant(RestLiResponseData<?> responseData)
   {
     // Headers
-    Map<String, String> headers = new HashMap<String, String>();
+    Map<String, String> headers = new HashMap<>();
     Assert.assertEquals(responseData.getHeaders(), headers);
     String headerKey = "testKey";
     String headerValue = "testValue";
@@ -47,28 +45,28 @@ public class TestRestLiResponseData
     Assert.assertEquals(responseData.getHeaders().get(headerKey), headerValue);
 
     // Cookies
-    List<HttpCookie> cookies = Collections.<HttpCookie>emptyList();
+    List<HttpCookie> cookies = Collections.emptyList();
     Assert.assertEquals(responseData.getCookies(), cookies);
 
     // Exceptions
-    if (responseData.isErrorResponse())
+    if (responseData.getResponseEnvelope().isErrorResponse())
     {
-      Assert.assertNotNull(responseData.getServiceException());
-      Assert.assertEquals(responseData.getStatus(), HttpStatus.S_500_INTERNAL_SERVER_ERROR);
-      responseData.setException(exception503);
-      Assert.assertEquals(responseData.getServiceException().getStatus(), HttpStatus.S_503_SERVICE_UNAVAILABLE);
+      Assert.assertNotNull(responseData.getResponseEnvelope().getException());
+      Assert.assertEquals(responseData.getResponseEnvelope().getStatus(), HttpStatus.S_500_INTERNAL_SERVER_ERROR);
+      responseData.getResponseEnvelope().setExceptionInternal(exception503);
+      Assert.assertEquals(responseData.getResponseEnvelope().getException().getStatus(), HttpStatus.S_503_SERVICE_UNAVAILABLE);
 
       // Make sure conversion to normal works
-      responseData.setStatus(HttpStatus.S_200_OK);
-      Assert.assertFalse(responseData.isErrorResponse());
-      Assert.assertEquals(responseData.getStatus(), HttpStatus.S_200_OK);
+      responseData.getResponseEnvelope().setStatus(HttpStatus.S_200_OK);
+      Assert.assertFalse(responseData.getResponseEnvelope().isErrorResponse());
+      Assert.assertEquals(responseData.getResponseEnvelope().getStatus(), HttpStatus.S_200_OK);
     }
     else
     {
-      Assert.assertNull(responseData.getServiceException());
-      Assert.assertEquals(responseData.getStatus(), HttpStatus.S_200_OK);
-      responseData.setStatus(HttpStatus.S_201_CREATED);
-      Assert.assertEquals(responseData.getStatus(), HttpStatus.S_201_CREATED);
+      Assert.assertNull(responseData.getResponseEnvelope().getException());
+      Assert.assertEquals(responseData.getResponseEnvelope().getStatus(), HttpStatus.S_200_OK);
+      responseData.getResponseEnvelope().setStatus(HttpStatus.S_201_CREATED);
+      Assert.assertEquals(responseData.getResponseEnvelope().getStatus(), HttpStatus.S_201_CREATED);
     }
   }
 
@@ -82,14 +80,12 @@ public class TestRestLiResponseData
     Object[][] sampleResponseData = new Object[methods.length * 2][1];
     for (int i = 0; i < methods.length; i++)
     {
-      RestLiResponseDataImpl successResponseData = new RestLiResponseDataImpl(HttpStatus.S_200_OK,
-                                                                              Collections.<String, String>emptyMap(),
-                                                                              Collections.<HttpCookie>emptyList());
-      RestLiResponseDataImpl errorResponseData = new RestLiResponseDataImpl(exception,
-                                                                            Collections.<String, String>emptyMap(),
-                                                                            Collections.<HttpCookie>emptyList());
-      successResponseData.setResponseEnvelope(EnvelopeBuilderUtil.buildBlankResponseEnvelope(methods[i], successResponseData));
-      errorResponseData.setResponseEnvelope(EnvelopeBuilderUtil.buildBlankResponseEnvelope(methods[i], errorResponseData));
+      RestLiResponseData<?> successResponseData = buildResponseData(methods[i],
+                                                                    HttpStatus.S_200_OK);
+      RestLiResponseData<?> errorResponseData = ErrorResponseBuilder.buildErrorResponseData(methods[i],
+                                                                                          exception,
+                                                                                          Collections.emptyMap(),
+                                                                                          Collections.emptyList());
 
       sampleResponseData[i * 2] = new Object[] { successResponseData };
       sampleResponseData[i * 2 + 1] = new Object[] { errorResponseData };
@@ -99,43 +95,35 @@ public class TestRestLiResponseData
   }
 
   @Test(dataProvider = "recordResponseEnvelopesProvider")
-  public void testRecordResponseEnvelopeUpdates(RestLiResponseDataImpl responseData)
+  public void testRecordResponseEnvelopeUpdates(RestLiResponseData<? extends RecordResponseEnvelope> responseData)
   {
 
-    RecordResponseEnvelope recordResponseEnvelope = responseData.getRecordResponseEnvelope();
+    RecordResponseEnvelope recordResponseEnvelope = responseData.getResponseEnvelope();
 
-    Assert.assertFalse(responseData.isErrorResponse());
+    Assert.assertFalse(responseData.getResponseEnvelope().isErrorResponse());
     Assert.assertEquals(recordResponseEnvelope.getRecord(), new EmptyRecord());
 
     // Swap to exception
-    responseData.setException(exception500);
+    responseData.getResponseEnvelope().setExceptionInternal(exception500);
     Assert.assertNull(recordResponseEnvelope.getRecord());
-    Assert.assertEquals(responseData.getStatus(), HttpStatus.S_500_INTERNAL_SERVER_ERROR);
-    Assert.assertEquals(responseData.getServiceException(), exception500);
-    Assert.assertEquals(responseData.getServiceException(), exception500);
+    Assert.assertEquals(responseData.getResponseEnvelope().getStatus(), HttpStatus.S_500_INTERNAL_SERVER_ERROR);
+    Assert.assertEquals(responseData.getResponseEnvelope().getException(), exception500);
+    Assert.assertEquals(responseData.getResponseEnvelope().getException(), exception500);
 
     // Swap back
     recordResponseEnvelope.setRecord(new EmptyRecord(), HttpStatus.S_200_OK);
 
-    Assert.assertFalse(responseData.isErrorResponse());
+    Assert.assertFalse(responseData.getResponseEnvelope().isErrorResponse());
     Assert.assertEquals(recordResponseEnvelope.getRecord(), new EmptyRecord());
   }
 
   @DataProvider
   public static Object[][] recordResponseEnvelopesProvider()
   {
-    RestLiResponseDataImpl getResponseData = new RestLiResponseDataImpl(HttpStatus.S_200_OK,
-                                                                     Collections.<String, String>emptyMap(),
-                                                                     Collections.<HttpCookie>emptyList());
-    RestLiResponseDataImpl createResponseData = new RestLiResponseDataImpl(HttpStatus.S_200_OK,
-                                                                           Collections.<String, String>emptyMap(),
-                                                                           Collections.<HttpCookie>emptyList());
-    RestLiResponseDataImpl actionResponseData = new RestLiResponseDataImpl(HttpStatus.S_200_OK,
-                                                                           Collections.<String, String>emptyMap(),
-                                                                           Collections.<HttpCookie>emptyList());
-    getResponseData.setResponseEnvelope(new GetResponseEnvelope(new EmptyRecord(), getResponseData));
-    createResponseData.setResponseEnvelope(new CreateResponseEnvelope(new EmptyRecord(), createResponseData));
-    actionResponseData.setResponseEnvelope(new ActionResponseEnvelope(new EmptyRecord(), actionResponseData));
+    RestLiResponseData<?> getResponseData = ResponseDataBuilderUtil.buildGetResponseData(HttpStatus.S_200_OK, new EmptyRecord());
+    RestLiResponseData<?> createResponseData = ResponseDataBuilderUtil.buildCreateResponseData(HttpStatus.S_200_OK, new EmptyRecord());
+    RestLiResponseData<?> actionResponseData = ResponseDataBuilderUtil.buildActionResponseData(HttpStatus.S_200_OK, new EmptyRecord());
+
     return new Object[][]{
         { getResponseData },
         { createResponseData },
@@ -145,28 +133,28 @@ public class TestRestLiResponseData
 
   @Test(dataProvider = "collectionResponseEnvelopesProvider")
   @SuppressWarnings("unchecked")
-  public void testCollectionResponseEnvelopeUpdates(RestLiResponseDataImpl responseData)
+  public void testCollectionResponseEnvelopeUpdates(RestLiResponseData<? extends CollectionResponseEnvelope> responseData)
   {
-    CollectionResponseEnvelope responseEnvelope = responseData.getCollectionResponseEnvelope();
+    CollectionResponseEnvelope responseEnvelope = responseData.getResponseEnvelope();
 
-    Assert.assertFalse(responseData.isErrorResponse());
-    Assert.assertEquals(responseEnvelope.getCollectionResponse(), Collections.<EmptyRecord>emptyList());
+    Assert.assertFalse(responseData.getResponseEnvelope().isErrorResponse());
+    Assert.assertEquals(responseEnvelope.getCollectionResponse(), Collections.emptyList());
     Assert.assertEquals(responseEnvelope.getCollectionResponsePaging(), new CollectionMetadata());
     Assert.assertEquals(responseEnvelope.getCollectionResponseCustomMetadata(), new EmptyRecord());
 
     // Swap to exception
-    responseData.setException(exception500);
+    responseData.getResponseEnvelope().setExceptionInternal(exception500);
     Assert.assertNull(responseEnvelope.getCollectionResponse());
     Assert.assertNull(responseEnvelope.getCollectionResponseCustomMetadata());
     Assert.assertNull(responseEnvelope.getCollectionResponsePaging());
-    Assert.assertEquals(responseData.getServiceException(), exception500);
-    Assert.assertEquals(responseData.getStatus(), HttpStatus.S_500_INTERNAL_SERVER_ERROR);
+    Assert.assertEquals(responseData.getResponseEnvelope().getException(), exception500);
+    Assert.assertEquals(responseData.getResponseEnvelope().getStatus(), HttpStatus.S_500_INTERNAL_SERVER_ERROR);
 
     // Swap back
-    responseEnvelope.setCollectionResponse(new ArrayList<RecordTemplate>(), new CollectionMetadata(), new EmptyRecord(),
+    responseEnvelope.setCollectionResponse(new ArrayList<>(), new CollectionMetadata(), new EmptyRecord(),
                                            HttpStatus.S_200_OK);
-    Assert.assertFalse(responseData.isErrorResponse());
-    Assert.assertEquals(responseEnvelope.getCollectionResponse(), Collections.<EmptyRecord>emptyList());
+    Assert.assertFalse(responseData.getResponseEnvelope().isErrorResponse());
+    Assert.assertEquals(responseEnvelope.getCollectionResponse(), Collections.emptyList());
     Assert.assertEquals(responseEnvelope.getCollectionResponsePaging(), new CollectionMetadata());
     Assert.assertEquals(responseEnvelope.getCollectionResponseCustomMetadata(), new EmptyRecord());
 
@@ -179,18 +167,11 @@ public class TestRestLiResponseData
   @DataProvider
   public static Object[][] collectionResponseEnvelopesProvider()
   {
-    RestLiResponseDataImpl getAllResponseData = new RestLiResponseDataImpl(HttpStatus.S_200_OK,
-                                                                           Collections.<String, String>emptyMap(),
-                                                                           Collections.<HttpCookie>emptyList());
-    RestLiResponseDataImpl finderResponseData = new RestLiResponseDataImpl(HttpStatus.S_200_OK,
-                                                                           Collections.<String, String>emptyMap(),
-                                                                           Collections.<HttpCookie>emptyList());
-    getAllResponseData.setResponseEnvelope(new GetAllResponseEnvelope(Collections.<EmptyRecord>emptyList(),
-                                                                      new CollectionMetadata(),
-                                                                      new EmptyRecord(), getAllResponseData));
-    finderResponseData.setResponseEnvelope(new FinderResponseEnvelope(Collections.<EmptyRecord>emptyList(),
-                                                                      new CollectionMetadata(),
-                                                                      new EmptyRecord(), finderResponseData));
+    RestLiResponseData<?> getAllResponseData = ResponseDataBuilderUtil.buildGetAllResponseData(HttpStatus.S_200_OK,
+        Collections.emptyList(), new CollectionMetadata(), new EmptyRecord());
+    RestLiResponseData<?> finderResponseData = ResponseDataBuilderUtil.buildFinderResponseData(HttpStatus.S_200_OK,
+        Collections.emptyList(),
+        new CollectionMetadata(), new EmptyRecord());
     return new Object[][]{
         { getAllResponseData },
         { finderResponseData }
@@ -198,21 +179,21 @@ public class TestRestLiResponseData
   }
 
   @Test(dataProvider = "createCollectionResponseEnvelopesProvider")
-  public void testCreateCollectionResponseEnvelopeUpdates(RestLiResponseDataImpl responseData)
+  public void testCreateCollectionResponseEnvelopeUpdates(RestLiResponseData<BatchCreateResponseEnvelope> responseData)
   {
 
-    BatchCreateResponseEnvelope responseEnvelope = responseData.getBatchCreateResponseEnvelope();
+    BatchCreateResponseEnvelope responseEnvelope = responseData.getResponseEnvelope();
 
-    Assert.assertNull(responseData.getServiceException());
+    Assert.assertNull(responseData.getResponseEnvelope().getException());
     Assert.assertEquals(responseEnvelope.getCreateResponses(), Collections.emptyList());
-    Assert.assertFalse(responseData.isErrorResponse());
+    Assert.assertFalse(responseData.getResponseEnvelope().isErrorResponse());
 
-    responseData.setException(exception500);
+    responseData.getResponseEnvelope().setExceptionInternal(exception500);
     Assert.assertNull(responseEnvelope.getCreateResponses());
 
-    responseEnvelope.setCreateResponse(new ArrayList<BatchCreateResponseEnvelope.CollectionCreateResponseItem>(),
+    responseEnvelope.setCreateResponse(new ArrayList<>(),
                                        HttpStatus.S_200_OK);
-    Assert.assertNull(responseData.getServiceException());
+    Assert.assertNull(responseData.getResponseEnvelope().getException());
 
     Assert.assertEquals(responseEnvelope.getCreateResponses().size(), 0);
     responseEnvelope.getCreateResponses()
@@ -229,31 +210,28 @@ public class TestRestLiResponseData
   @DataProvider
   private Object[][] createCollectionResponseEnvelopesProvider()
   {
-    RestLiResponseDataImpl responseData = new RestLiResponseDataImpl(HttpStatus.S_200_OK,
-                                                                     Collections.<String, String>emptyMap(),
-                                                                     Collections.<HttpCookie>emptyList());
-    responseData.setResponseEnvelope(
-        new BatchCreateResponseEnvelope(Collections.<BatchCreateResponseEnvelope.CollectionCreateResponseItem>emptyList(),
-                                        responseData));
+    RestLiResponseData<?> responseData = ResponseDataBuilderUtil.buildBatchCreateResponseData(HttpStatus.S_200_OK,
+        Collections.emptyList());
+
     return new Object[][] {
         { responseData }
     };
   }
 
   @Test(dataProvider = "batchResponseEnvelopesProvider")
-  public void testBatchResponseEnvelopeUpdates(RestLiResponseDataImpl responseData)
+  public void testBatchResponseEnvelopeUpdates(RestLiResponseData<? extends BatchResponseEnvelope> responseData)
   {
-    BatchResponseEnvelope responseEnvelope = responseData.getBatchResponseEnvelope();
+    BatchResponseEnvelope responseEnvelope = responseData.getResponseEnvelope();
 
-    Assert.assertFalse(responseData.isErrorResponse());
-    Assert.assertNull(responseData.getServiceException());
+    Assert.assertFalse(responseData.getResponseEnvelope().isErrorResponse());
+    Assert.assertNull(responseData.getResponseEnvelope().getException());
 
-    responseData.setException(exception500);
+    responseData.getResponseEnvelope().setExceptionInternal(exception500);
     Assert.assertNull(responseEnvelope.getBatchResponseMap());
 
-    Map<Object, BatchResponseEnvelope.BatchResponseEntry> targetMap = new HashMap<Object, BatchResponseEnvelope.BatchResponseEntry>();
+    Map<Object, BatchResponseEnvelope.BatchResponseEntry> targetMap = new HashMap<>();
     responseEnvelope.setBatchResponseMap(targetMap, HttpStatus.S_200_OK);
-    Assert.assertNull(responseData.getServiceException());
+    Assert.assertNull(responseData.getResponseEnvelope().getException());
     targetMap.put("key", new BatchResponseEnvelope.BatchResponseEntry(null, new EmptyRecord()));
     Assert.assertEquals(responseEnvelope.getBatchResponseMap().size(), 1);
     Assert.assertEquals(responseEnvelope.getBatchResponseMap().get("key").getRecord(), new EmptyRecord());
@@ -262,30 +240,11 @@ public class TestRestLiResponseData
   @DataProvider
   public static Object[][] batchResponseEnvelopesProvider()
   {
-    RestLiResponseDataImpl batchGetResponseData = new RestLiResponseDataImpl(HttpStatus.S_200_OK,
-                                                                             Collections.<String, String>emptyMap(),
-                                                                             Collections.<HttpCookie>emptyList());
-    RestLiResponseDataImpl batchUpdateResponseData = new RestLiResponseDataImpl(HttpStatus.S_200_OK,
-                                                                                Collections.<String, String>emptyMap(),
-                                                                                Collections.<HttpCookie>emptyList());
-    RestLiResponseDataImpl batchPartialUpdateResponseData = new RestLiResponseDataImpl(HttpStatus.S_200_OK,
-                                                                                       Collections.<String, String>emptyMap(),
-                                                                                       Collections.<HttpCookie>emptyList());
-    RestLiResponseDataImpl batchDeleteResponseData = new RestLiResponseDataImpl(HttpStatus.S_200_OK,
-                                                                                Collections.<String, String>emptyMap(),
-                                                                                Collections.<HttpCookie>emptyList());
-    batchGetResponseData.setResponseEnvelope(
-        new BatchGetResponseEnvelope(Collections.<Object, BatchResponseEnvelope.BatchResponseEntry>emptyMap(),
-                                     batchGetResponseData));
-    batchUpdateResponseData.setResponseEnvelope(
-        new BatchUpdateResponseEnvelope(Collections.<Object, BatchResponseEnvelope.BatchResponseEntry>emptyMap(),
-                                        batchUpdateResponseData));
-    batchPartialUpdateResponseData.setResponseEnvelope(
-        new BatchPartialUpdateResponseEnvelope(Collections.<Object, BatchResponseEnvelope.BatchResponseEntry>emptyMap(),
-                                               batchPartialUpdateResponseData));
-    batchDeleteResponseData.setResponseEnvelope(
-        new BatchDeleteResponseEnvelope(Collections.<Object, BatchResponseEnvelope.BatchResponseEntry>emptyMap(),
-                                        batchDeleteResponseData));
+    RestLiResponseData<?> batchGetResponseData = ResponseDataBuilderUtil.buildBatchGetResponseData(HttpStatus.S_200_OK, Collections.emptyMap());
+    RestLiResponseData<?> batchUpdateResponseData = ResponseDataBuilderUtil.buildBatchUpdateResponseData(HttpStatus.S_200_OK, Collections.emptyMap());
+    RestLiResponseData<?> batchPartialUpdateResponseData = ResponseDataBuilderUtil.buildBatchPartialUpdateResponseData(HttpStatus.S_200_OK, Collections.emptyMap());
+    RestLiResponseData<?> batchDeleteResponseData = ResponseDataBuilderUtil.buildBatchDeleteResponseData(HttpStatus.S_200_OK, Collections.emptyMap());
+
     return new Object[][] {
         { batchGetResponseData },
         { batchUpdateResponseData },
@@ -295,38 +254,27 @@ public class TestRestLiResponseData
   }
 
   @Test(dataProvider = "emptyResponseEnvelopesProvider")
-  public void testEmptyResponseEnvelopeUpdates(RestLiResponseDataImpl responseData)
+  public void testEmptyResponseEnvelopeUpdates(RestLiResponseData<?> responseData)
   {
-    Assert.assertFalse(responseData.isErrorResponse());
+    Assert.assertFalse(responseData.getResponseEnvelope().isErrorResponse());
 
-    responseData.setException(new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR));
-    Assert.assertTrue(responseData.isErrorResponse());
-    Assert.assertEquals(responseData.getStatus(), HttpStatus.S_500_INTERNAL_SERVER_ERROR);
+    responseData.getResponseEnvelope().setExceptionInternal(new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR));
+    Assert.assertTrue(responseData.getResponseEnvelope().isErrorResponse());
+    Assert.assertEquals(responseData.getResponseEnvelope().getStatus(), HttpStatus.S_500_INTERNAL_SERVER_ERROR);
 
-    responseData.setStatus(HttpStatus.S_200_OK);
-    Assert.assertFalse(responseData.isErrorResponse());
-    Assert.assertEquals(responseData.getStatus(), HttpStatus.S_200_OK);
+    responseData.getResponseEnvelope().setStatus(HttpStatus.S_200_OK);
+    Assert.assertFalse(responseData.getResponseEnvelope().isErrorResponse());
+    Assert.assertEquals(responseData.getResponseEnvelope().getStatus(), HttpStatus.S_200_OK);
   }
 
   @DataProvider
   private Object[][] emptyResponseEnvelopesProvider()
   {
-    RestLiResponseDataImpl partialUpdateResponseData = new RestLiResponseDataImpl(HttpStatus.S_200_OK,
-                                                                                  Collections.<String, String>emptyMap(),
-                                                                                  Collections.<HttpCookie>emptyList());
-    RestLiResponseDataImpl updateResponseData = new RestLiResponseDataImpl(HttpStatus.S_200_OK,
-                                                                               Collections.<String, String>emptyMap(),
-                                                                               Collections.<HttpCookie>emptyList());
-    RestLiResponseDataImpl deleteResponseData = new RestLiResponseDataImpl(HttpStatus.S_200_OK,
-                                                                               Collections.<String, String>emptyMap(),
-                                                                               Collections.<HttpCookie>emptyList());
-    RestLiResponseDataImpl optionsResponseData = new RestLiResponseDataImpl(HttpStatus.S_200_OK,
-                                                                            Collections.<String, String>emptyMap(),
-                                                                            Collections.<HttpCookie>emptyList());
-    partialUpdateResponseData.setResponseEnvelope(new UpdateResponseEnvelope(partialUpdateResponseData));
-    updateResponseData.setResponseEnvelope(new UpdateResponseEnvelope(updateResponseData));
-    deleteResponseData.setResponseEnvelope(new DeleteResponseEnvelope(deleteResponseData));
-    optionsResponseData.setResponseEnvelope(new OptionsResponseEnvelope(optionsResponseData));
+    RestLiResponseData<?> partialUpdateResponseData = ResponseDataBuilderUtil.buildPartialUpdateResponseData(HttpStatus.S_200_OK);
+    RestLiResponseData<?> updateResponseData = ResponseDataBuilderUtil.buildUpdateResponseData(HttpStatus.S_200_OK);
+    RestLiResponseData<?> deleteResponseData = ResponseDataBuilderUtil.buildDeleteResponseData(HttpStatus.S_200_OK);
+    RestLiResponseData<?> optionsResponseData = ResponseDataBuilderUtil.buildOptionsResponseData(HttpStatus.S_200_OK);
+
     return new Object[][] {
         { partialUpdateResponseData },
         { updateResponseData },
@@ -336,34 +284,35 @@ public class TestRestLiResponseData
   }
 
   @Test(dataProvider = "envelopeResourceMethodDataProvider")
-  public void testResourceMethod(RestLiResponseData responseData, ResourceMethod resourceMethod)
+  public void testResourceMethod(RestLiResponseData<?> responseData, ResourceMethod resourceMethod)
   {
     Assert.assertEquals(responseData.getResourceMethod(), resourceMethod);
   }
 
   @Test(dataProvider = "envelopeResourceMethodDataProvider")
-  public void testResponseType(RestLiResponseData responseData, ResourceMethod resourceMethod)
+  public void testResponseType(RestLiResponseData<?> responseData, ResourceMethod resourceMethod)
   {
     ResponseType responseType = ResponseType.fromMethodType(resourceMethod);
     Assert.assertEquals(responseData.getResponseType(), responseType);
   }
 
   @Test(dataProvider = "envelopeResourceMethodDataProvider")
-  public void testSetNullExceptions(RestLiResponseDataImpl responseData, ResourceMethod resourceMethod)
+  public void testSetNullExceptions(RestLiResponseData<?> responseData, ResourceMethod resourceMethod)
   {
     try
     {
-      responseData.setException(null);
+      responseData.getResponseEnvelope().setExceptionInternal(null);
       Assert.fail();
     }
-    catch (UnsupportedOperationException e)
+    catch (AssertionError e)
     {
       // expected
     }
   }
 
   @Test(dataProvider = "envelopeResourceMethodDataProvider")
-  public void testSetNullStatus(RestLiResponseData responseData, ResourceMethod resourceMethod)
+  @SuppressWarnings("deprecation")
+  public void testSetNullStatus(RestLiResponseData<?> responseData, ResourceMethod resourceMethod)
   {
     ResponseType responseType = ResponseType.fromMethodType(resourceMethod);
     try
@@ -376,18 +325,18 @@ public class TestRestLiResponseData
           break;
         case BATCH_ENTITIES:
           responseData.getBatchResponseEnvelope()
-              .setBatchResponseMap(Collections.<Object, BatchResponseEnvelope.BatchResponseEntry>emptyMap(), null);
+              .setBatchResponseMap(Collections.emptyMap(), null);
           Assert.fail();
           break;
         case CREATE_COLLECTION:
           responseData.getBatchCreateResponseEnvelope()
-              .setCreateResponse(Collections.<BatchCreateResponseEnvelope.CollectionCreateResponseItem>emptyList(),
+              .setCreateResponse(Collections.emptyList(),
                                  null);
           Assert.fail();
           break;
         case GET_COLLECTION:
           responseData.getCollectionResponseEnvelope()
-              .setCollectionResponse(Collections.<RecordTemplate>emptyList(), new CollectionMetadata(),
+              .setCollectionResponse(Collections.emptyList(), new CollectionMetadata(),
                                      new EmptyRecord(), null);
           break;
         case STATUS_ONLY:
@@ -398,14 +347,15 @@ public class TestRestLiResponseData
       }
       Assert.fail();
     }
-    catch (UnsupportedOperationException e)
+    catch (AssertionError e)
     {
       // expected
     }
   }
 
   @Test(dataProvider = "envelopeResourceMethodDataProvider")
-  public void testRestLiResponseEnvelopesGetter(RestLiResponseData responseData, ResourceMethod resourceMethod)
+  @SuppressWarnings("deprecation")
+  public void testRestLiResponseEnvelopesGetter(RestLiResponseData<?> responseData, ResourceMethod resourceMethod)
   {
     // make sure the correct response envelope is returned for the resource method
     switch(resourceMethod)
@@ -463,7 +413,8 @@ public class TestRestLiResponseData
   }
 
   @Test(dataProvider = "envelopeResourceMethodDataProvider")
-  public void testRestLiResponseEnvelopesGetterException(RestLiResponseData responseData, ResourceMethod method)
+  @SuppressWarnings("deprecation")
+  public void testRestLiResponseEnvelopesGetterException(RestLiResponseData<?> responseData, ResourceMethod method)
   {
     ResponseType responseType = ResponseType.fromMethodType(method);
     try
@@ -651,14 +602,49 @@ public class TestRestLiResponseData
     Object[][] envelopeResourceMethods = new Object[resourceMethods.length][2];
     for (int i = 0; i < envelopeResourceMethods.length; i++)
     {
-      RestLiResponseDataImpl responseData = new RestLiResponseDataImpl(HttpStatus.S_200_OK,
-                                                                       Collections.<String, String>emptyMap(),
-                                                                       Collections.<HttpCookie>emptyList());
-      responseData.setResponseEnvelope(EnvelopeBuilderUtil.buildBlankResponseEnvelope(resourceMethods[i], responseData));
+      RestLiResponseData<?> responseData = buildResponseData(resourceMethods[i],
+                                                             HttpStatus.S_200_OK);
       envelopeResourceMethods[i][0] = responseData;
       envelopeResourceMethods[i][1] = resourceMethods[i];
     }
 
     return envelopeResourceMethods;
+  }
+
+  private static RestLiResponseData<?> buildResponseData(ResourceMethod method, HttpStatus status)
+  {
+    switch (method)
+    {
+      case GET:
+        return ResponseDataBuilderUtil.buildGetResponseData(status, new EmptyRecord());
+      case CREATE:
+        return ResponseDataBuilderUtil.buildCreateResponseData(status, new EmptyRecord());
+      case ACTION:
+        return ResponseDataBuilderUtil.buildActionResponseData(status, new EmptyRecord());
+      case GET_ALL:
+        return ResponseDataBuilderUtil.buildGetAllResponseData(status, Collections.emptyList(), new CollectionMetadata(), new EmptyRecord());
+      case FINDER:
+        return ResponseDataBuilderUtil.buildFinderResponseData(status, Collections.emptyList(), new CollectionMetadata(), new EmptyRecord());
+      case BATCH_CREATE:
+        return ResponseDataBuilderUtil.buildBatchCreateResponseData(status, Collections.emptyList());
+      case BATCH_GET:
+        return ResponseDataBuilderUtil.buildBatchGetResponseData(status, Collections.emptyMap());
+      case BATCH_UPDATE:
+        return ResponseDataBuilderUtil.buildBatchUpdateResponseData(status, Collections.emptyMap());
+      case BATCH_PARTIAL_UPDATE:
+        return ResponseDataBuilderUtil.buildBatchPartialUpdateResponseData(status, Collections.emptyMap());
+      case BATCH_DELETE:
+        return ResponseDataBuilderUtil.buildBatchDeleteResponseData(status, Collections.emptyMap());
+      case PARTIAL_UPDATE:
+        return ResponseDataBuilderUtil.buildPartialUpdateResponseData(status);
+      case UPDATE:
+        return ResponseDataBuilderUtil.buildUpdateResponseData(status);
+      case DELETE:
+        return ResponseDataBuilderUtil.buildDeleteResponseData(status);
+      case OPTIONS:
+        return ResponseDataBuilderUtil.buildOptionsResponseData(status);
+      default:
+        throw new IllegalArgumentException("Unexpected Rest.li resource method: " + method);
+    }
   }
 }

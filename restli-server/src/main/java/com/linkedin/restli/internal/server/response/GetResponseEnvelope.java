@@ -18,7 +18,9 @@ package com.linkedin.restli.internal.server.response;
 
 
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ResourceMethod;
+import com.linkedin.restli.server.RestLiServiceException;
 
 
 /**
@@ -31,12 +33,17 @@ public class GetResponseEnvelope extends RecordResponseEnvelope
   /**
    * Instantiates a get response envelope.
    *
+   * @param status   Status of the response.
    * @param response Entity of the response.
-   * @param restLiResponseData Wrapper response data that is storing this envelope.
    */
-  GetResponseEnvelope(RecordTemplate response, RestLiResponseDataImpl restLiResponseData)
+  GetResponseEnvelope(HttpStatus status, RecordTemplate response)
   {
-    super(response, restLiResponseData);
+    super(status, response);
+  }
+
+  GetResponseEnvelope(RestLiServiceException exception)
+  {
+    super(exception);
   }
 
   @Override

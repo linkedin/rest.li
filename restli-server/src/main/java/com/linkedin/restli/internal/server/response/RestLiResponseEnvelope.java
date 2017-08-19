@@ -17,9 +17,10 @@
 package com.linkedin.restli.internal.server.response;
 
 
+import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.internal.server.ResponseType;
-import com.linkedin.restli.server.RestLiResponseData;
+import com.linkedin.restli.server.RestLiServiceException;
 
 
 /**
@@ -32,30 +33,70 @@ import com.linkedin.restli.server.RestLiResponseData;
  */
 public abstract class RestLiResponseEnvelope
 {
-  /**
-   * Overview of response envelope invariant:
-   *
-   * In the {@link RestLiResponseData} that stores this envelope - if there is an exception, RestLiResponseEnvelope must
-   * have its data set to null.
-   * When RestLiResponseEnvelope's data is not null, there must be no error - thus, in the parent
-   * {@link RestLiResponseData} exception must be null and status must be not null.
-   *
-   * As such, in any subclass envelope, setting data into the envelope must call the parent response data's setStatus()
-   * method to ensure the above invariant is maintained.
-   */
+  // Only one of _status and _exception is non-null. Setting value to one of them sets the other to null.
+  private HttpStatus _status;
+  private RestLiServiceException _exception;
 
-  protected RestLiResponseDataImpl _restLiResponseData;
-
-  /**
-   * Constructor.
-   *
-   * @param restLiResponseData the response data that stores this response envelope. We need this response data object
-   *                           so we can change its Http status when data is set within the envelope. This ensures we
-   *                           can maintain the above mentioned invariant.
-   */
-  protected RestLiResponseEnvelope(RestLiResponseDataImpl restLiResponseData)
+  RestLiResponseEnvelope(HttpStatus status)
   {
-    _restLiResponseData = restLiResponseData;
+    _status = status;
+  }
+
+  RestLiResponseEnvelope(RestLiServiceException exception)
+  {
+    _exception = exception;
+  }
+
+  /**
+   * Gets the status of the response.
+   *
+   * @return the http status.
+   */
+  public HttpStatus getStatus()
+  {
+    return _exception != null ? _exception.getStatus() : _status;
+  }
+
+  void setStatus(HttpStatus status)
+  {
+    assert status != null;
+    _status = status;
+    _exception = null;
+  }
+
+  /**
+   * Gets the RestLiServiceException associated with the response data when the data is an error response.
+   *
+   * @return the RestLiServiceException if one exists; else null.
+   */
+  public RestLiServiceException getException()
+  {
+    return _exception;
+  }
+
+  /**
+   * Determines if the data corresponds to an error response.
+   *
+   * @return true if the response is an error response; else false.
+   */
+  public boolean isErrorResponse()
+  {
+    return _exception != null;
+  }
+
+  /**
+   * Sets the RestLiServiceException to the envelope. This is intended for internal use only by {@link com.linkedin.restli.internal.server.filter.RestLiFilterChainIterator}
+   * when handling exception from the filter implementation.
+   * <p/>
+   * DO NOT USE in filter implementation. {@link com.linkedin.restli.server.filter.Filter} should throw exception or
+   * return a future that completes exceptionally in case of errorr.
+   */
+  public void setExceptionInternal(RestLiServiceException exception)
+  {
+    assert exception != null;
+    _exception = exception;
+    _status = null;
+    clearData();
   }
 
   /**

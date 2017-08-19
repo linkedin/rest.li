@@ -19,9 +19,6 @@ package com.linkedin.restli.server.filter;
 
 import com.linkedin.restli.server.RestLiResponseData;
 
-import java.util.Map;
-
-
 /**
  * @author nshankar
  *
@@ -34,5 +31,5 @@ public interface FilterResponseContext
    *
    * @return {@link RestLiResponseData}
    */
-  RestLiResponseData getResponseData();
+  RestLiResponseData<?> getResponseData();
 }

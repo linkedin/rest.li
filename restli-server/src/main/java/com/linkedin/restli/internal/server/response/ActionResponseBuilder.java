@@ -32,22 +32,22 @@ import java.util.List;
 import java.util.Map;
 
 
-public class ActionResponseBuilder implements RestLiResponseBuilder
+public class ActionResponseBuilder implements RestLiResponseBuilder<RestLiResponseData<ActionResponseEnvelope>>
 {
 
   @Override
   public PartialRestResponse buildResponse(RoutingResult routingResult,
-                                           RestLiResponseData responseData)
+                                           RestLiResponseData<ActionResponseEnvelope> responseData)
   {
-    return new PartialRestResponse.Builder().status(responseData.getStatus())
-                                            .entity(responseData.getRecordResponseEnvelope().getRecord())
+    return new PartialRestResponse.Builder().status(responseData.getResponseEnvelope().getStatus())
+                                            .entity(responseData.getResponseEnvelope().getRecord())
                                             .headers(responseData.getHeaders())
                                             .cookies(responseData.getCookies())
                                             .build();
   }
 
   @Override
-  public RestLiResponseData buildRestLiResponseData(RestRequest request,
+  public RestLiResponseData<ActionResponseEnvelope> buildRestLiResponseData(RestRequest request,
                                                     RoutingResult routingResult,
                                                     Object result,
                                                     Map<String, String> headers,
@@ -77,11 +77,8 @@ public class ActionResponseBuilder implements RestLiResponseBuilder
     FieldDef<Object> actionReturnFieldDef =
         (FieldDef<Object>) routingResult.getResourceMethod().getActionReturnFieldDef();
     final ActionResponse<?> actionResponse =
-        new ActionResponse<Object>(value, actionReturnFieldDef, actionReturnRecordDataSchema);
+        new ActionResponse<>(value, actionReturnFieldDef, actionReturnRecordDataSchema);
 
-    RestLiResponseDataImpl responseData = new RestLiResponseDataImpl(status, headers, cookies);
-    responseData.setResponseEnvelope(new ActionResponseEnvelope(actionResponse, responseData));
-
-    return responseData;
+    return new RestLiResponseDataImpl<>(new ActionResponseEnvelope(status, actionResponse), headers, cookies);
   }
 }

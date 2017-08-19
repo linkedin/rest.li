@@ -18,8 +18,10 @@ package com.linkedin.restli.internal.server.response;
 
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.CollectionMetadata;
+import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ResourceMethod;
 
+import com.linkedin.restli.server.RestLiServiceException;
 import java.util.List;
 
 
@@ -32,18 +34,21 @@ public class GetAllResponseEnvelope extends CollectionResponseEnvelope
 {
   /**
    * Instantiates a get-all response envelope.
-   *
    * @param collectionResponse The entities of the request.
    * @param collectionResponsePaging Paging for the collection response.
    * @param collectionResponseCustomMetadata the custom metadata used for this collection response.
-   * @param restLiResponseData wrapper response data that is storing this envelope.
    */
-  GetAllResponseEnvelope(List<? extends RecordTemplate> collectionResponse,
-                         CollectionMetadata collectionResponsePaging,
-                         RecordTemplate collectionResponseCustomMetadata,
-                         RestLiResponseDataImpl restLiResponseData)
+  GetAllResponseEnvelope(HttpStatus status,
+      List<? extends RecordTemplate> collectionResponse,
+      CollectionMetadata collectionResponsePaging,
+      RecordTemplate collectionResponseCustomMetadata)
   {
-    super(collectionResponse, collectionResponsePaging, collectionResponseCustomMetadata, restLiResponseData);
+    super(status, collectionResponse, collectionResponsePaging, collectionResponseCustomMetadata);
+  }
+
+  GetAllResponseEnvelope(RestLiServiceException exception)
+  {
+    super(exception);
   }
 
   @Override

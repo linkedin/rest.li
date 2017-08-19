@@ -18,7 +18,9 @@ package com.linkedin.restli.internal.server.response;
 
 
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ResourceMethod;
+import com.linkedin.restli.server.RestLiServiceException;
 
 
 /**
@@ -31,29 +33,21 @@ public class CreateResponseEnvelope extends RecordResponseEnvelope
   private final boolean _isGetAfterCreate;
 
   /**
-   * This constructor is for non CREATE + GET (i.e. this constructor creates a CreateResponse that doesn't contain the
-   * newly created data).
-   *
-   * @param response Entity of the response.
-   * @param restLiResponseData Wrapper response data that is storing this envelope.
-   */
-  CreateResponseEnvelope(RecordTemplate response, RestLiResponseDataImpl restLiResponseData)
-  {
-    this(response, false, restLiResponseData);
-  }
-
-  /**
    * This constructor has a configuration boolean for whether or not this is a CREATE + GET (i.e. this constructor
    * creates a BatchCreateResponse that contains the newly created data) as opposed to a normal CREATE. true = CREATE +
    * GET, false = CREATE.
-   *
    * @param response Newly created response.
    * @param isGetAfterCreate Boolean flag denoting whether or not this is a CREATE + GET.
-   * @param restLiResponseData Wrapper response data that is storign this envelope.
    */
-  CreateResponseEnvelope(RecordTemplate response, boolean isGetAfterCreate, RestLiResponseDataImpl restLiResponseData)
+  CreateResponseEnvelope(HttpStatus status, RecordTemplate response, boolean isGetAfterCreate)
   {
-    super(response, restLiResponseData);
+    super(status, response);
+    _isGetAfterCreate = isGetAfterCreate;
+  }
+
+  CreateResponseEnvelope(RestLiServiceException exception, boolean isGetAfterCreate)
+  {
+    super(exception);
     _isGetAfterCreate = isGetAfterCreate;
   }
 

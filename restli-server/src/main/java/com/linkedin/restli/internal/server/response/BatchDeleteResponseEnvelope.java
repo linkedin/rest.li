@@ -17,8 +17,10 @@
 package com.linkedin.restli.internal.server.response;
 
 
+import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ResourceMethod;
 
+import com.linkedin.restli.server.RestLiServiceException;
 import java.util.Map;
 
 
@@ -34,9 +36,14 @@ public class BatchDeleteResponseEnvelope extends BatchResponseEnvelope
    *
    * @param batchResponseMap Map with entities of the response.
    */
-  BatchDeleteResponseEnvelope(Map<?, BatchResponseEntry> batchResponseMap, RestLiResponseDataImpl restLiResponseData)
+  BatchDeleteResponseEnvelope(HttpStatus status, Map<?, BatchResponseEntry> batchResponseMap)
   {
-    super(batchResponseMap, restLiResponseData);
+    super(status, batchResponseMap);
+  }
+
+  BatchDeleteResponseEnvelope(RestLiServiceException exception)
+  {
+    super(exception);
   }
 
   @Override

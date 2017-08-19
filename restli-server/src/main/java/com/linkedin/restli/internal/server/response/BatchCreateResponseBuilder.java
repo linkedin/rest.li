@@ -14,10 +14,6 @@
    limitations under the License.
  */
 
-/**
- * $Id: $
- */
-
 package com.linkedin.restli.internal.server.response;
 
 
@@ -52,7 +48,7 @@ import java.util.List;
 import java.util.Map;
 
 
-public class BatchCreateResponseBuilder implements RestLiResponseBuilder
+public class BatchCreateResponseBuilder implements RestLiResponseBuilder<RestLiResponseData<BatchCreateResponseEnvelope>>
 {
   private final ErrorResponseBuilder _errorResponseBuilder;
 
@@ -63,11 +59,11 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder
 
   @Override
   @SuppressWarnings("unchecked")
-  public PartialRestResponse buildResponse(RoutingResult routingResult, RestLiResponseData responseData)
+  public PartialRestResponse buildResponse(RoutingResult routingResult, RestLiResponseData<BatchCreateResponseEnvelope> responseData)
   {
     List<BatchCreateResponseEnvelope.CollectionCreateResponseItem> collectionCreateResponses =
-                                                responseData.getBatchCreateResponseEnvelope().getCreateResponses();
-    List<CreateIdStatus<Object>> formattedResponses = new ArrayList<CreateIdStatus<Object>>(collectionCreateResponses.size());
+                                                responseData.getResponseEnvelope().getCreateResponses();
+    List<CreateIdStatus<Object>> formattedResponses = new ArrayList<>(collectionCreateResponses.size());
 
     // Iterate through the responses and generate the ErrorResponse with the appropriate override for exceptions.
     // Otherwise, add the result as is.
@@ -76,7 +72,7 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder
       if (response.isErrorResponse())
       {
         RestLiServiceException exception = response.getException();
-        formattedResponses.add(new CreateIdStatus<Object>(exception.getStatus().getCode(),
+        formattedResponses.add(new CreateIdStatus<>(exception.getStatus().getCode(),
                                                           response.getId(),
                                                           _errorResponseBuilder.buildErrorResponse(exception),
                                                           ProtocolVersionUtil.extractProtocolVersion(responseData.getHeaders())));
@@ -88,12 +84,12 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder
     }
 
     PartialRestResponse.Builder builder = new PartialRestResponse.Builder();
-    BatchCreateIdResponse<Object> batchCreateIdResponse = new BatchCreateIdResponse<Object>(formattedResponses);
+    BatchCreateIdResponse<Object> batchCreateIdResponse = new BatchCreateIdResponse<>(formattedResponses);
     return builder.headers(responseData.getHeaders()).cookies(responseData.getCookies()).entity(batchCreateIdResponse).build();
   }
 
   @Override
-  public RestLiResponseData buildRestLiResponseData(RestRequest request,
+  public RestLiResponseData<BatchCreateResponseEnvelope> buildRestLiResponseData(RestRequest request,
                                                     RoutingResult routingResult,
                                                     Object result,
                                                     Map<String, String> headers,
@@ -116,9 +112,9 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder
                                          "Unexpected null encountered. Null List inside of a BatchCreateKVResult returned by the resource method: " + routingResult
                                              .getResourceMethod());
       }
-      List<BatchCreateResponseEnvelope.CollectionCreateResponseItem> collectionCreateList = new ArrayList<BatchCreateResponseEnvelope.CollectionCreateResponseItem>(list.getResults().size());
+      List<BatchCreateResponseEnvelope.CollectionCreateResponseItem> collectionCreateList = new ArrayList<>(list.getResults().size());
 
-      for (CreateKVResponse createKVResponse : list.getResults())
+      for (CreateKVResponse<?, ?> createKVResponse : list.getResults())
       {
         if (createKVResponse == null)
         {
@@ -137,7 +133,7 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder
                                                          resourceContext.getProjectionMode(),
                                                          resourceContext.getProjectionMask());
 
-            CreateIdEntityStatus<Object, RecordTemplate> entry = new CreateIdEntityStatus<Object, RecordTemplate>(
+            CreateIdEntityStatus<Object, RecordTemplate> entry = new CreateIdEntityStatus<>(
                     createKVResponse.getStatus().getCode(),
                     id,
                     new AnyRecord(data),
@@ -153,10 +149,7 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder
           }
         }
       }
-      RestLiResponseDataImpl responseData = new RestLiResponseDataImpl(HttpStatus.S_200_OK, headers, cookies);
-      responseData.setResponseEnvelope(new BatchCreateResponseEnvelope(collectionCreateList, true, responseData));
-
-      return responseData;
+      return new RestLiResponseDataImpl<>(new BatchCreateResponseEnvelope(HttpStatus.S_200_OK, collectionCreateList, true), headers, cookies);
     }
     else
     {
@@ -170,7 +163,7 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder
                                              .getResourceMethod());
       }
 
-      List<BatchCreateResponseEnvelope.CollectionCreateResponseItem> collectionCreateList = new ArrayList<BatchCreateResponseEnvelope.CollectionCreateResponseItem>(list.getResults().size());
+      List<BatchCreateResponseEnvelope.CollectionCreateResponseItem> collectionCreateList = new ArrayList<>(list.getResults().size());
       for (CreateResponse createResponse : list.getResults())
       {
         //Verify that a null element was not passed into the BatchCreateResult list. If so, this is a developer error.
@@ -185,7 +178,7 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder
           Object id = ResponseUtils.translateCanonicalKeyToAlternativeKeyIfNeeded(createResponse.getId(), routingResult);
           if (createResponse.getError() == null)
           {
-            CreateIdStatus<Object> entry = new CreateIdStatus<Object>(
+            CreateIdStatus<Object> entry = new CreateIdStatus<>(
                     createResponse.getStatus().getCode(),
                     id,
                     getLocationUri(request, id, altKey, protocolVersion), // location uri
@@ -200,10 +193,7 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder
         }
       }
 
-      RestLiResponseDataImpl responseData = new RestLiResponseDataImpl(HttpStatus.S_200_OK, headers, cookies);
-      responseData.setResponseEnvelope(new BatchCreateResponseEnvelope(collectionCreateList, responseData));
-
-      return responseData;
+      return new RestLiResponseDataImpl<>(new BatchCreateResponseEnvelope(HttpStatus.S_200_OK, collectionCreateList, false), headers, cookies);
     }
   }
 

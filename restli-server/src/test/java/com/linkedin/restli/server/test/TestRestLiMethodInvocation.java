@@ -253,18 +253,18 @@ public class TestRestLiMethodInvocation
     FilterChainCallback filterChainCallback = new FilterChainCallback()
     {
       @Override
-      public void onRequestSuccess(RestLiRequestData requestData, RestLiCallback<Object> restLiCallback)
+      public void onRequestSuccess(RestLiRequestData requestData, RestLiCallback restLiCallback)
       {
         // only invoke if filter chain's requests were successful
         invokerWithFilters.invoke(requestData, routingResult, mockBuilder, restLiCallback, null);
       }
       @Override
-      public void onResponseSuccess(RestLiResponseData responseData, RestLiResponseAttachments responseAttachments)
+      public void onResponseSuccess(RestLiResponseData<?> responseData, RestLiResponseAttachments responseAttachments)
       {
         // unused
       }
       @Override
-      public void onError(Throwable th, RestLiResponseData responseData, RestLiResponseAttachments responseAttachments)
+      public void onError(Throwable th, RestLiResponseData<?> responseData, RestLiResponseAttachments responseAttachments)
       {
         // unused
       }
@@ -324,7 +324,7 @@ public class TestRestLiMethodInvocation
 
     RestLiFilterChain filterChain = new RestLiFilterChain(Arrays.asList(mockFilter, mockFilter), filterChainCallback);
     filterChain.onRequest(mockFilterContext,
-                          new RestLiFilterResponseContextFactory<Object>(request, routingResult,
+                          new RestLiFilterResponseContextFactory(request, routingResult,
                                                                          new RestLiResponseHandler.Builder().build()));
 
     verify(mockBuilder, mockFilterContext, mockFilter);
@@ -357,7 +357,7 @@ public class TestRestLiMethodInvocation
     ResourceModel discoveredItemsResourceModel = resourceModelMap.get("/asyncdiscovereditems");
 
     ResourceMethodDescriptor methodDescriptor;
-    RestLiCallback<?> callback = getCallback();
+    RestLiCallback callback = getCallback();
 
     methodDescriptor = statusResourceModel.findNamedMethod("public_timeline");
     statusResource = getMockResource(AsyncStatusCollectionResource.class);
@@ -458,7 +458,7 @@ public class TestRestLiMethodInvocation
   @SuppressWarnings("unchecked")
   public void testAsyncFinder(ProtocolVersion version, String query) throws Exception
   {
-    RestLiCallback<?> callback = getCallback();
+    RestLiCallback callback = getCallback();
     ResourceModel statusResourceModel = buildResourceModel(AsyncStatusCollectionResource.class);
     ResourceMethodDescriptor methodDescriptor = statusResourceModel.findNamedMethod("search");
     AsyncStatusCollectionResource statusResource = getMockResource(AsyncStatusCollectionResource.class);
@@ -480,7 +480,7 @@ public class TestRestLiMethodInvocation
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "statusFinderOptionalParam")
   public void testAsyncFinderOptionalParam(ProtocolVersion version, String query) throws Exception
   {
-    RestLiCallback<?> callback = getCallback();
+    RestLiCallback callback = getCallback();
     ResourceModel statusResourceModel = buildResourceModel(AsyncStatusCollectionResource.class);
     ResourceMethodDescriptor methodDescriptor = statusResourceModel.findNamedMethod("search");
     AsyncStatusCollectionResource statusResource = getMockResource(AsyncStatusCollectionResource.class);
@@ -503,7 +503,7 @@ public class TestRestLiMethodInvocation
   @SuppressWarnings("unchecked")
   public void testAsyncFinderOptionalBooleanParam(ProtocolVersion version, String query) throws Exception
   {
-    RestLiCallback<?> callback = getCallback();
+    RestLiCallback callback = getCallback();
     ResourceModel statusResourceModel = buildResourceModel(AsyncStatusCollectionResource.class);
     ResourceMethodDescriptor methodDescriptor = statusResourceModel.findNamedMethod("user_timeline");
     AsyncStatusCollectionResource statusResource = getMockResource(AsyncStatusCollectionResource.class);
@@ -527,7 +527,7 @@ public class TestRestLiMethodInvocation
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "discoveredItemsFinder")
   public void testAsyncFinderOnComplexKey(ProtocolVersion version, String query) throws Exception
   {
-    RestLiCallback<?> callback = getCallback();
+    RestLiCallback callback = getCallback();
     ResourceModel discoveredItemsResourceModel = buildResourceModel(AsyncDiscoveredItemsResource.class);
     ResourceMethodDescriptor methodDescriptor = discoveredItemsResourceModel.findNamedMethod("user");
     AsyncDiscoveredItemsResource discoveredItemsResource = getMockResource(AsyncDiscoveredItemsResource.class);
@@ -555,7 +555,7 @@ public class TestRestLiMethodInvocation
   {
     ResourceModel followsResourceModel = buildResourceModel(AsyncFollowsAssociativeResource.class);
 
-    RestLiCallback<?> callback = getCallback();
+    RestLiCallback callback = getCallback();
     ResourceMethodDescriptor methodDescriptor;
     AsyncFollowsAssociativeResource resource;
 
@@ -597,7 +597,7 @@ public class TestRestLiMethodInvocation
     ResourceModel followsAssociationResourceModel = buildResourceModel(AsyncFollowsAssociativeResource.class);
     ResourceModel discoveredItemsResourceModel = buildResourceModel(AsyncDiscoveredItemsResource.class);
 
-    RestLiCallback<?> callback = getCallback();
+    RestLiCallback callback = getCallback();
     ResourceMethodDescriptor methodDescriptor;
     AsyncStatusCollectionResource statusResource;
     AsyncFollowsAssociativeResource followsResource;
@@ -713,7 +713,7 @@ public class TestRestLiMethodInvocation
     ResourceModel repliesResourceModel = statusResourceModel.getSubResource("asyncreplies");
     ResourceModel locationResourceModel = statusResourceModel.getSubResource("asynclocation");
     ResourceModel discoveredItemsResourceModel = resourceModelMap.get("/asyncdiscovereditems");
-    RestLiCallback<?> callback = getCallback();
+    RestLiCallback callback = getCallback();
 
     ResourceMethodDescriptor methodDescriptor;
     AsyncStatusCollectionResource statusResource;
@@ -881,7 +881,7 @@ public class TestRestLiMethodInvocation
   public void testAsyncBatchCreate() throws Exception
   {
     ResourceModel statusResourceModel = buildResourceModel(AsyncStatusCollectionResource.class);
-    RestLiCallback<?> callback = getCallback();
+    RestLiCallback callback = getCallback();
 
     ResourceMethodDescriptor methodDescriptor;
     AsyncStatusCollectionResource statusResource;
@@ -918,7 +918,7 @@ public class TestRestLiMethodInvocation
   public void testAsyncBatchDelete() throws Exception
   {
     ResourceModel statusResourceModel = buildResourceModel(AsyncStatusCollectionResource.class);
-    RestLiCallback<?> callback = getCallback();
+    RestLiCallback callback = getCallback();
 
     ResourceMethodDescriptor methodDescriptor;
     AsyncStatusCollectionResource statusResource;
@@ -954,7 +954,7 @@ public class TestRestLiMethodInvocation
   {
 
     ResourceModel statusResourceModel = buildResourceModel(AsyncStatusCollectionResource.class);
-    RestLiCallback<?> callback = getCallback();
+    RestLiCallback callback = getCallback();
 
     ResourceMethodDescriptor methodDescriptor;
     AsyncStatusCollectionResource statusResource;
@@ -990,7 +990,7 @@ public class TestRestLiMethodInvocation
   public void testAsyncBatchPatch() throws Exception
   {
     ResourceModel statusResourceModel = buildResourceModel(AsyncStatusCollectionResource.class);
-    RestLiCallback<?> callback = getCallback();
+    RestLiCallback callback = getCallback();
 
     ResourceMethodDescriptor methodDescriptor;
     AsyncStatusCollectionResource statusResource;
@@ -1026,7 +1026,7 @@ public class TestRestLiMethodInvocation
   public void testAsyncGetAll() throws Exception
   {
     ResourceModel statusResourceModel = buildResourceModel(AsyncStatusCollectionResource.class);
-    RestLiCallback<?> callback = getCallback();
+    RestLiCallback callback = getCallback();
 
     ResourceMethodDescriptor methodDescriptor;
     AsyncStatusCollectionResource statusResource;
@@ -1072,7 +1072,7 @@ public class TestRestLiMethodInvocation
         AsyncFollowsAssociativeResource.class);
     ResourceModel discoveredItemsResourceModel = resourceModelMap.get("/asyncdiscovereditems");
 
-    RestLiCallback<?> callback = getCallback();
+    RestLiCallback callback = getCallback();
 
     ResourceMethodDescriptor methodDescriptor;
     AsyncStatusCollectionResource statusResource;
@@ -1200,7 +1200,7 @@ public class TestRestLiMethodInvocation
     ResourceModel locationResourceModel = statusResourceModel.getSubResource("asynclocation");
     ResourceModel discoveredItemsResourceModel = resourceModelMap.get("/asyncdiscovereditems");
 
-    RestLiCallback<?> callback = getCallback();
+    RestLiCallback callback = getCallback();
 
     ResourceMethodDescriptor methodDescriptor;
     AsyncStatusCollectionResource statusResource;
@@ -3303,7 +3303,7 @@ public class TestRestLiMethodInvocation
 
     // #2: Callback based Async Method Execution
     Capture<RequestExecutionReport> requestExecutionReportCapture = new Capture<RequestExecutionReport>();
-    RestLiCallback<?> callback = getCallback(requestExecutionReportCapture);
+    RestLiCallback callback = getCallback(requestExecutionReportCapture);
     methodDescriptor = asyncStatusResourceModel.findMethod(ResourceMethod.GET);
     asyncStatusResource = getMockResource(AsyncStatusCollectionResource.class);
     asyncStatusResource.get(eq(1L), EasyMock.<Callback<Status>> anyObject());
@@ -3887,7 +3887,7 @@ public class TestRestLiMethodInvocation
   {
     ResourceModel followsResourceModel = buildResourceModel(AsyncFollowsAssociativeResource.class);
 
-    RestLiCallback<?> callback = getCallback();
+    RestLiCallback callback = getCallback();
     ResourceMethodDescriptor methodDescriptor;
     AsyncFollowsAssociativeResource resource;
 
@@ -3930,7 +3930,7 @@ public class TestRestLiMethodInvocation
   {
     ResourceModel followsResourceModel = buildResourceModel(AsyncFollowsAssociativeResource.class);
 
-    RestLiCallback<?> callback = getCallback();
+    RestLiCallback callback = getCallback();
     ResourceMethodDescriptor methodDescriptor;
     AsyncFollowsAssociativeResource resource;
 
@@ -3972,7 +3972,7 @@ public class TestRestLiMethodInvocation
   {
     ResourceModel followsResourceModel = buildResourceModel(AsyncFollowsAssociativeResource.class);
 
-    RestLiCallback<?> callback = getCallback();
+    RestLiCallback callback = getCallback();
     ResourceMethodDescriptor methodDescriptor;
     AsyncFollowsAssociativeResource resource;
 
@@ -4014,7 +4014,7 @@ public class TestRestLiMethodInvocation
   {
     ResourceModel followsResourceModel = buildResourceModel(AsyncFollowsAssociativeResource.class);
 
-    RestLiCallback<?> callback = getCallback();
+    RestLiCallback callback = getCallback();
     ResourceMethodDescriptor methodDescriptor;
     AsyncFollowsAssociativeResource resource;
 
@@ -4047,7 +4047,7 @@ public class TestRestLiMethodInvocation
   public void testAsyncBatchCreateComplexKeyResource() throws Exception
   {
     ResourceModel discoveredResourceModel = buildResourceModel(AsyncDiscoveredItemsResource.class);
-    RestLiCallback<?> callback = getCallback();
+    RestLiCallback callback = getCallback();
 
     ResourceMethodDescriptor methodDescriptor;
     AsyncDiscoveredItemsResource discoveredResource;
@@ -4120,7 +4120,7 @@ public class TestRestLiMethodInvocation
   public void testAsyncBatchUpdateComplexKeyResource(ProtocolVersion version, String uri, String body) throws Exception
   {
     ResourceModel discoveredResourceModel = buildResourceModel(AsyncDiscoveredItemsResource.class);
-    RestLiCallback<?> callback = getCallback();
+    RestLiCallback callback = getCallback();
 
     ResourceMethodDescriptor methodDescriptor;
     AsyncDiscoveredItemsResource discoveredResource;
@@ -4160,7 +4160,7 @@ public class TestRestLiMethodInvocation
   public void testAsyncBatchPatchComplexKeyResource(ProtocolVersion version, String uri, String body) throws Exception
   {
     ResourceModel discoveredResourceModel = buildResourceModel(AsyncDiscoveredItemsResource.class);
-    RestLiCallback<?> callback = getCallback();
+    RestLiCallback callback = getCallback();
 
     ResourceMethodDescriptor methodDescriptor;
     AsyncDiscoveredItemsResource discoveredResource;
@@ -4201,7 +4201,7 @@ public class TestRestLiMethodInvocation
   public void testAsyncBatchDeleteComplexResource() throws Exception
   {
     ResourceModel discoveredResourceModel = buildResourceModel(AsyncDiscoveredItemsResource.class);
-    RestLiCallback<?> callback = getCallback();
+    RestLiCallback callback = getCallback();
 
     ResourceMethodDescriptor methodDescriptor;
     AsyncDiscoveredItemsResource discoveredResource;
@@ -4290,9 +4290,9 @@ public class TestRestLiMethodInvocation
       FilterChainCallback filterChainCallback = new FilterChainCallbackImpl(null, _invoker, null, null, null,
                                                                             restLiResponseHandler, executionCallback,
                                                                             _errorResponseBuilder);
-      final RestLiCallback<Object> callback =
-          new RestLiCallback<Object>(null,
-                                     new RestLiFilterResponseContextFactory<Object>(request, null, restLiResponseHandler),
+      final RestLiCallback callback =
+          new RestLiCallback(null,
+                                     new RestLiFilterResponseContextFactory(request, null, restLiResponseHandler),
                                      new RestLiFilterChain(null, filterChainCallback));
 
       _invoker.invoke(null, routingResult, null, callback, null);
@@ -4346,9 +4346,9 @@ public class TestRestLiMethodInvocation
       FilterChainCallback filterChainCallback = new FilterChainCallbackImpl(null, _invoker, null, null, null,
                                                                             restLiResponseHandler, executionCallback,
                                                                             _errorResponseBuilder);
-      final RestLiCallback<Object> callback =
-          new RestLiCallback<Object>(null,
-                                     new RestLiFilterResponseContextFactory<Object>(request, null, restLiResponseHandler),
+      final RestLiCallback callback =
+          new RestLiCallback(null,
+                                     new RestLiFilterResponseContextFactory(request, null, restLiResponseHandler),
                                      new RestLiFilterChain(null, filterChainCallback));
       _invoker.invoke(null, routingResult, null, callback, null);
       latch.await();
@@ -4365,7 +4365,7 @@ public class TestRestLiMethodInvocation
   public void testAsyncGetAllComplexKeyResource() throws Exception
   {
     ResourceModel discoveredResourceModel = buildResourceModel(AsyncDiscoveredItemsResource.class);
-    RestLiCallback<?> callback = getCallback();
+    RestLiCallback callback = getCallback();
 
     ResourceMethodDescriptor methodDescriptor;
     AsyncDiscoveredItemsResource discoveredResource;
@@ -5141,9 +5141,9 @@ public class TestRestLiMethodInvocation
                                                                             restLiResponseHandler,
                                                                             executionCallback,
                                                                             _errorResponseBuilder);
-      final RestLiCallback<Object> outerCallback =
-          new RestLiCallback<Object>(filterContext,
-                                     new RestLiFilterResponseContextFactory<Object>(request, routingResult, restLiResponseHandler),
+      final RestLiCallback outerCallback =
+          new RestLiCallback(filterContext,
+                                     new RestLiFilterResponseContextFactory(request, routingResult, restLiResponseHandler),
                                      new RestLiFilterChain(null, filterChainCallback));
       RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(),
                                                                (ServerResourceContext)routingResult.getContext());
@@ -5177,15 +5177,15 @@ public class TestRestLiMethodInvocation
     }
   }
 
-  private RestLiCallback<Object> getCallback()
+  private RestLiCallback getCallback()
   {
     return getCallback(new Capture<RequestExecutionReport>());
   }
 
-  private RestLiCallback<Object> getCallback(Capture<RequestExecutionReport> requestExecutionReport)
+  private RestLiCallback getCallback(Capture<RequestExecutionReport> requestExecutionReport)
   {
     @SuppressWarnings("unchecked")
-    RestLiCallback<Object> callback = EasyMock.createMock(RestLiCallback.class);
+    RestLiCallback callback = EasyMock.createMock(RestLiCallback.class);
     callback.onSuccess(EasyMock.anyObject(), EasyMock.capture(requestExecutionReport), EasyMock.anyObject(RestLiResponseAttachments.class));
     EasyMock.expectLastCall().once();
     EasyMock.replay(callback);

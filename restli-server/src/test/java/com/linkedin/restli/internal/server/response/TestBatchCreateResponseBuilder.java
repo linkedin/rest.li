@@ -49,7 +49,6 @@ import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
 
-import java.net.HttpCookie;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -108,20 +107,20 @@ public class TestBatchCreateResponseBuilder
 
     RestRequest request = new RestRequestBuilder(new URI("/foo")).build();
     BatchCreateResponseBuilder responseBuilder = new BatchCreateResponseBuilder(null);
-    RestLiResponseData responseData = responseBuilder.buildRestLiResponseData(request,
-                                                                              routingResult,
-                                                                              results,
-                                                                              headers,
-                                                                              Collections.<HttpCookie>emptyList());
+    RestLiResponseData<BatchCreateResponseEnvelope> responseData = responseBuilder.buildRestLiResponseData(request,
+                                                                                   routingResult,
+                                                                                   results,
+                                                                                   headers,
+                                                                                   Collections.emptyList());
     PartialRestResponse restResponse = responseBuilder.buildResponse(routingResult, responseData);
 
     EasyMock.verify(mockDescriptor);
     ResponseBuilderUtil.validateHeaders(restResponse, headers);
 
-    Assert.assertFalse(responseData.getBatchCreateResponseEnvelope().isGetAfterCreate());
+    Assert.assertFalse(responseData.getResponseEnvelope().isGetAfterCreate());
 
     List<com.linkedin.restli.common.CreateIdStatus<Object>> items = new ArrayList<CreateIdStatus<Object>>();
-    for (BatchCreateResponseEnvelope.CollectionCreateResponseItem item : responseData.getBatchCreateResponseEnvelope()
+    for (BatchCreateResponseEnvelope.CollectionCreateResponseItem item : responseData.getResponseEnvelope()
         .getCreateResponses())
     {
       items.add((CreateIdStatus<Object>) item.getRecord());
@@ -184,20 +183,20 @@ public class TestBatchCreateResponseBuilder
 
     BatchCreateResponseBuilder responseBuilder = new BatchCreateResponseBuilder(null);
     RestRequest request = new RestRequestBuilder(new URI("/foo")).build();
-    RestLiResponseData responseData = responseBuilder.buildRestLiResponseData(request,
+    RestLiResponseData<BatchCreateResponseEnvelope> responseData = responseBuilder.buildRestLiResponseData(request,
                                                                               routingResult,
                                                                               results,
                                                                               headers,
-                                                                              Collections.<HttpCookie>emptyList());
+                                                                              Collections.emptyList());
     PartialRestResponse restResponse = responseBuilder.buildResponse(routingResult, responseData);
 
     EasyMock.verify(mockDescriptor);
     ResponseBuilderUtil.validateHeaders(restResponse, headers);
 
-    Assert.assertTrue(responseData.getBatchCreateResponseEnvelope().isGetAfterCreate());
+    Assert.assertTrue(responseData.getResponseEnvelope().isGetAfterCreate());
 
     List<CreateIdEntityStatus<Object, Foo>> items = new ArrayList<CreateIdEntityStatus<Object, Foo>>();
-    for (BatchCreateResponseEnvelope.CollectionCreateResponseItem item : responseData.getBatchCreateResponseEnvelope()
+    for (BatchCreateResponseEnvelope.CollectionCreateResponseItem item : responseData.getResponseEnvelope()
         .getCreateResponses())
     {
       @SuppressWarnings("unchecked")
@@ -233,7 +232,7 @@ public class TestBatchCreateResponseBuilder
     RestRequest request = new RestRequestBuilder(new URI("/foo")).build();
     try
     {
-      responseBuilder.buildRestLiResponseData(request, routingResult, result, headers, Collections.<HttpCookie>emptyList());
+      responseBuilder.buildRestLiResponseData(request, routingResult, result, headers, Collections.emptyList());
       Assert.fail("buildRestLiResponseData should have thrown an exception because of null elements");
     }
     catch (RestLiServiceException e)
@@ -267,15 +266,15 @@ public class TestBatchCreateResponseBuilder
 
     BatchCreateResponseBuilder responseBuilder = new BatchCreateResponseBuilder(new ErrorResponseBuilder());
     RestRequest request = new RestRequestBuilder(new URI("/foo")).build();
-    RestLiResponseData responseData = responseBuilder.buildRestLiResponseData(request,
+    RestLiResponseData<BatchCreateResponseEnvelope> responseData = responseBuilder.buildRestLiResponseData(request,
                                                                               routingResult,
                                                                               results,
-                                                                              Collections.<String, String>emptyMap(),
-                                                                              Collections.<HttpCookie>emptyList());
+                                                                              Collections.emptyMap(),
+                                                                              Collections.emptyList());
 
-    Assert.assertTrue(responseData.getBatchCreateResponseEnvelope().isGetAfterCreate());
+    Assert.assertTrue(responseData.getResponseEnvelope().isGetAfterCreate());
 
-    CreateIdEntityStatus<Long, Foo> item = (CreateIdEntityStatus<Long, Foo>) responseData.getBatchCreateResponseEnvelope().getCreateResponses().get(0).getRecord();
+    CreateIdEntityStatus<Long, Foo> item = (CreateIdEntityStatus<Long, Foo>) responseData.getResponseEnvelope().getCreateResponses().get(0).getRecord();
     Assert.assertEquals(item.getLocation(), "/foo/1");
     DataMap dataMap = item.data().getDataMap("entity");
     Assert.assertEquals(dataMap.size(), 1);

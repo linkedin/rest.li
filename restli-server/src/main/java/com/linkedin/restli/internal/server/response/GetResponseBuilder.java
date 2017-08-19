@@ -30,24 +30,28 @@ import com.linkedin.restli.internal.server.methods.AnyRecord;
 import com.linkedin.restli.internal.server.util.RestUtils;
 import com.linkedin.restli.server.GetResult;
 import com.linkedin.restli.server.ResourceContext;
-import com.linkedin.restli.server.RestLiResponseData;
 
+import com.linkedin.restli.server.RestLiResponseData;
 import java.net.HttpCookie;
 import java.util.List;
 import java.util.Map;
 
 
-public class GetResponseBuilder implements RestLiResponseBuilder
+public class GetResponseBuilder implements RestLiResponseBuilder<RestLiResponseData<GetResponseEnvelope>>
 {
   @Override
-  public PartialRestResponse buildResponse(RoutingResult routingResult, RestLiResponseData responseData)
+  public PartialRestResponse buildResponse(RoutingResult routingResult, RestLiResponseData<GetResponseEnvelope> responseData)
   {
-    return new PartialRestResponse.Builder().headers(responseData.getHeaders()).cookies(responseData.getCookies()).status(responseData.getStatus())
-                                            .entity(responseData.getRecordResponseEnvelope().getRecord()).build();
+    return new PartialRestResponse.Builder()
+        .headers(responseData.getHeaders())
+        .cookies(responseData.getCookies())
+        .status(responseData.getResponseEnvelope().getStatus())
+        .entity(responseData.getResponseEnvelope().getRecord())
+        .build();
   }
 
   @Override
-  public RestLiResponseData buildRestLiResponseData(RestRequest request,
+  public RestLiResponseData<GetResponseEnvelope> buildRestLiResponseData(RestRequest request,
                                                         RoutingResult routingResult,
                                                         Object result,
                                                         Map<String, String> headers,
@@ -70,9 +74,6 @@ public class GetResponseBuilder implements RestLiResponseBuilder
     final DataMap data = RestUtils.projectFields(record.data(), resourceContext.getProjectionMode(),
                                                  resourceContext.getProjectionMask());
 
-    RestLiResponseDataImpl responseData = new RestLiResponseDataImpl(status, headers, cookies);
-    responseData.setResponseEnvelope(new GetResponseEnvelope(new AnyRecord(data), responseData));
-
-    return responseData;
+    return new RestLiResponseDataImpl<>(new GetResponseEnvelope(status, new AnyRecord(data)), headers, cookies);
   }
 }

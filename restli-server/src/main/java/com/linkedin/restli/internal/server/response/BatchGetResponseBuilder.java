@@ -43,7 +43,7 @@ import java.util.List;
 import java.util.Map;
 
 
-public class BatchGetResponseBuilder implements RestLiResponseBuilder
+public class BatchGetResponseBuilder implements RestLiResponseBuilder<RestLiResponseData<BatchGetResponseEnvelope>>
 {
   private final ErrorResponseBuilder _errorResponseBuilder;
 
@@ -54,9 +54,9 @@ public class BatchGetResponseBuilder implements RestLiResponseBuilder
 
   @Override
   @SuppressWarnings("unchecked")
-  public PartialRestResponse buildResponse(RoutingResult routingResult, RestLiResponseData responseData)
+  public PartialRestResponse buildResponse(RoutingResult routingResult, RestLiResponseData<BatchGetResponseEnvelope> responseData)
   {
-    final Map<Object, BatchResponseEntry> responses = (Map<Object, BatchResponseEntry>) responseData.getBatchResponseEnvelope().getBatchResponseMap();
+    final Map<Object, BatchResponseEntry> responses = (Map<Object, BatchResponseEntry>) responseData.getResponseEnvelope().getBatchResponseMap();
 
     // Build the EntityResponse for each key from the merged map with mask from routingResult.
     Map<Object, EntityResponse<RecordTemplate>> entityBatchResponse = buildEntityResponse(routingResult, responses);
@@ -75,7 +75,7 @@ public class BatchGetResponseBuilder implements RestLiResponseBuilder
   private Map<Object, EntityResponse<RecordTemplate>> buildEntityResponse(RoutingResult routingResult,
                                                                           Map<Object, BatchResponseEntry> mergedResponse)
   {
-    Map<Object, EntityResponse<RecordTemplate>> entityBatchResponse = new HashMap<Object, EntityResponse<RecordTemplate>>(mergedResponse.size());
+    Map<Object, EntityResponse<RecordTemplate>> entityBatchResponse = new HashMap<>(mergedResponse.size());
 
     for (Map.Entry<Object, BatchResponseEntry> entry : mergedResponse.entrySet())
     {
@@ -107,13 +107,13 @@ public class BatchGetResponseBuilder implements RestLiResponseBuilder
     final EntityResponse<RecordTemplate> entityResponse;
     if (entityTemplate == null)
     {
-      entityResponse = new EntityResponse<RecordTemplate>(null);
+      entityResponse = new EntityResponse<>(null);
     }
     else
     {
       @SuppressWarnings("unchecked")
       final Class<RecordTemplate> entityClass = (Class<RecordTemplate>) entityTemplate.getClass();
-      entityResponse = new EntityResponse<RecordTemplate>(entityClass);
+      entityResponse = new EntityResponse<>(entityClass);
       CheckedUtil.putWithoutChecking(entityResponse.data(), EntityResponse.ENTITY, entityTemplate.data());
     }
 
@@ -121,11 +121,11 @@ public class BatchGetResponseBuilder implements RestLiResponseBuilder
   }
 
   @Override
-  public RestLiResponseData buildRestLiResponseData(RestRequest request,
-                                                    RoutingResult routingResult,
-                                                    Object result,
-                                                    Map<String, String> headers,
-                                                    List<HttpCookie> cookies)
+  public RestLiResponseData<BatchGetResponseEnvelope> buildRestLiResponseData(RestRequest request,
+                                                      RoutingResult routingResult,
+                                                      Object result,
+                                                      Map<String, String> headers,
+                                                      List<HttpCookie> cookies)
   {
     @SuppressWarnings({ "unchecked" })
     /** constrained by signature of {@link com.linkedin.restli.server.resources.CollectionResource#batchGet(java.util.Set)} */
@@ -157,7 +157,7 @@ public class BatchGetResponseBuilder implements RestLiResponseBuilder
       // In this case it is OK to swallow this exception and proceed.
     }
 
-    Map<Object, BatchResponseEntry> batchResult = new HashMap<Object, BatchResponseEntry>(entities.size() + serviceErrors.size());
+    Map<Object, BatchResponseEntry> batchResult = new HashMap<>(entities.size() + serviceErrors.size());
     for (Map.Entry<Object, RecordTemplate> entity : entities.entrySet())
     {
       if (entity.getKey() == null)
@@ -194,10 +194,7 @@ public class BatchGetResponseBuilder implements RestLiResponseBuilder
       batchResult.put(finalKey, new BatchResponseEntry(statuses.get(entry.getKey()), entry.getValue()));
     }
 
-    RestLiResponseDataImpl responseData = new RestLiResponseDataImpl(HttpStatus.S_200_OK, headers, cookies);
-    responseData.setResponseEnvelope(new BatchGetResponseEnvelope(batchResult, responseData));
-
-    return responseData;
+    return new RestLiResponseDataImpl<>(new BatchGetResponseEnvelope(HttpStatus.S_200_OK, batchResult), headers, cookies);
   }
 
   private static <K, V extends RecordTemplate> BatchResponse<AnyRecord> toBatchResponse(Map<K, EntityResponse<V>> entities,
@@ -236,6 +233,6 @@ public class BatchGetResponseBuilder implements RestLiResponseBuilder
     CheckedUtil.putWithoutChecking(splitResponseData, BatchResponse.STATUSES, splitStatuses);
     CheckedUtil.putWithoutChecking(splitResponseData, BatchResponse.ERRORS, splitErrors);
 
-    return new BatchResponse<AnyRecord>(splitResponseData, AnyRecord.class);
+    return new BatchResponse<>(splitResponseData, AnyRecord.class);
   }
 }

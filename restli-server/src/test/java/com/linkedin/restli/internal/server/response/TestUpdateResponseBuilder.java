@@ -19,17 +19,22 @@ package com.linkedin.restli.internal.server.response;
 
 
 import com.linkedin.restli.common.HttpStatus;
+import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.UpdateResponse;
 
-import java.net.HttpCookie;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+
 import org.easymock.EasyMock;
 import org.testng.Assert;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 
@@ -38,8 +43,16 @@ import org.testng.annotations.Test;
  */
 public class TestUpdateResponseBuilder
 {
-  @Test
-  public void testBuilder()
+  private static final Map<ResourceMethod, EmptyResponseBuilder<?>> BUILDERS = new HashMap<>();
+  static
+  {
+    BUILDERS.put(ResourceMethod.UPDATE, new UpdateResponseBuilder());
+    BUILDERS.put(ResourceMethod.PARTIAL_UPDATE, new PartialUpdateResponseBuilder());
+    BUILDERS.put(ResourceMethod.DELETE, new DeleteResponseBuilder());
+  }
+
+  @Test(dataProvider = "builderData")
+  public <D extends RestLiResponseData<? extends EmptyResponseEnvelope>> void testBuilder(ResourceMethod resourceMethod)
   {
     HttpStatus status = HttpStatus.S_200_OK;
     UpdateResponse updateResponse = new UpdateResponse(status);
@@ -48,17 +61,26 @@ public class TestUpdateResponseBuilder
     ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor();
     RoutingResult routingResult = new RoutingResult(null, mockDescriptor);
 
-    UpdateResponseBuilder updateResponseBuilder = new UpdateResponseBuilder();
-    RestLiResponseData responseData = updateResponseBuilder.buildRestLiResponseData(null,
-                                                                                    routingResult,
-                                                                                    updateResponse,
-                                                                                    headers,
-                                                                                    Collections.<HttpCookie>emptyList());
+    @SuppressWarnings("unchecked")
+    EmptyResponseBuilder<D> updateResponseBuilder = (EmptyResponseBuilder<D>) BUILDERS.get(resourceMethod);
+    D responseData = updateResponseBuilder.buildRestLiResponseData(null,
+        routingResult,
+        updateResponse,
+        headers,
+        Collections.emptyList());
     PartialRestResponse partialRestResponse = updateResponseBuilder.buildResponse(routingResult, responseData);
 
     EasyMock.verify(mockDescriptor);
+    Assert.assertEquals(responseData.getResourceMethod(), resourceMethod);
+    Assert.assertEquals(responseData.getResponseEnvelope().getResourceMethod(), resourceMethod);
     ResponseBuilderUtil.validateHeaders(partialRestResponse, headers);
     Assert.assertEquals(partialRestResponse.getStatus(), status);
+  }
+
+  @DataProvider
+  public Object[][] builderData()
+  {
+    return BUILDERS.keySet().stream().map(m -> new Object[] {m}).toArray(Object[][]::new);
   }
 
   @Test
@@ -73,7 +95,7 @@ public class TestUpdateResponseBuilder
 
     try
     {
-      updateResponseBuilder.buildRestLiResponseData(null, routingResult, updateResponse, headers, Collections.<HttpCookie>emptyList());
+      updateResponseBuilder.buildRestLiResponseData(null, routingResult, updateResponse, headers, Collections.emptyList());
       Assert.fail("buildRestLiResponseData should have failed because of a null HTTP status!");
     }
     catch (RestLiServiceException e)

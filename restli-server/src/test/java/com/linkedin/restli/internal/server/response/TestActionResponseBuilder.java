@@ -26,7 +26,6 @@ import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.server.ActionResult;
 
 import com.linkedin.restli.server.RestLiResponseData;
-import java.net.HttpCookie;
 import java.util.Collections;
 import java.util.Map;
 
@@ -41,7 +40,7 @@ import org.testng.annotations.Test;
  */
 public class TestActionResponseBuilder
 {
-  private static final FieldDef<Long> LONG_RETURN = new FieldDef<Long>("longReturn", Long.class);
+  private static final FieldDef<Long> LONG_RETURN = new FieldDef<>("longReturn", Long.class);
 
   @DataProvider(name = "testData")
   public Object[][] dataProvider()
@@ -49,7 +48,7 @@ public class TestActionResponseBuilder
     return new Object[][]
         {
             {1L, HttpStatus.S_200_OK, 1L},
-            {new ActionResult<Long>(1L, HttpStatus.S_202_ACCEPTED), HttpStatus.S_202_ACCEPTED, 1L}
+            {new ActionResult<>(1L, HttpStatus.S_202_ACCEPTED), HttpStatus.S_202_ACCEPTED, 1L}
         };
   }
 
@@ -61,11 +60,11 @@ public class TestActionResponseBuilder
     RoutingResult routingResult = new RoutingResult(null, mockDescriptor);
 
     ActionResponseBuilder actionResponseBuilder = new ActionResponseBuilder();
-    RestLiResponseData responseData = actionResponseBuilder.buildRestLiResponseData(null,
+    RestLiResponseData<ActionResponseEnvelope> responseData = actionResponseBuilder.buildRestLiResponseData(null,
                                                                                     routingResult,
                                                                                     result,
                                                                                     headers,
-                                                                                    Collections.<HttpCookie>emptyList());
+                                                                                    Collections.emptyList());
     PartialRestResponse restResponse = actionResponseBuilder.buildResponse(routingResult, responseData);
 
     EasyMock.verify(mockDescriptor);
@@ -89,6 +88,6 @@ public class TestActionResponseBuilder
   {
     DataMap dataMap = new DataMap();
     dataMap.put(LONG_RETURN.getName(), returnValue);
-    return new ActionResponse<Long>(dataMap, LONG_RETURN, LONG_RETURN.getField().getRecord());
+    return new ActionResponse<>(dataMap, LONG_RETURN, LONG_RETURN.getField().getRecord());
   }
 }

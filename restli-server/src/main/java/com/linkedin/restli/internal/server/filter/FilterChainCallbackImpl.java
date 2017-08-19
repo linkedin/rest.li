@@ -78,14 +78,14 @@ public class FilterChainCallbackImpl implements FilterChainCallback
   }
 
   @Override
-  public void onRequestSuccess(final RestLiRequestData requestData, final RestLiCallback<Object> restLiCallback)
+  public void onRequestSuccess(final RestLiRequestData requestData, final RestLiCallback restLiCallback)
   {
     _methodInvoker.invoke(requestData, _method, _restLiArgumentBuilder, restLiCallback,
                           _requestExecutionReportBuilder);
   }
 
   @Override
-  public void onResponseSuccess(final RestLiResponseData responseData,
+  public void onResponseSuccess(final RestLiResponseData<?> responseData,
                                 final RestLiResponseAttachments responseAttachments)
   {
     RestResponse result = null;
@@ -114,7 +114,7 @@ public class FilterChainCallbackImpl implements FilterChainCallback
   }
 
   @Override
-  public void onError(Throwable th, final RestLiResponseData responseData,
+  public void onError(Throwable th, final RestLiResponseData<?> responseData,
                       final RestLiResponseAttachments responseAttachments)
   {
     try

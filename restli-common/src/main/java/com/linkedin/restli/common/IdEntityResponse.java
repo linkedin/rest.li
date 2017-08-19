@@ -23,24 +23,17 @@ import com.linkedin.data.template.RecordTemplate;
  *
  * @author Boyang Chen
  */
-public class IdEntityResponse<K, V extends RecordTemplate> extends RecordTemplate
+public class IdEntityResponse<K, V extends RecordTemplate> extends IdResponse<K>
 {
-  private K _key;
   private V _entity;
 
   public IdEntityResponse(K key, V entity)
   {
-    super(null, null);
-    _key = key;
+    super(key);
     _entity = entity;
   }
 
-  public K getId()
-  {
-    return _key;
-  }
-
-  public Object getEntity()
+  public V getEntity()
   {
     return _entity;
   }
@@ -48,18 +41,17 @@ public class IdEntityResponse<K, V extends RecordTemplate> extends RecordTemplat
   @Override
   public String toString()
   {
-    return "id: " + (_key == null ? "" : _key) + ", entity: " + (_entity == null ? "" : _entity);
+    return "id: " + super.toString() + ", entity: " + (_entity == null ? "" : _entity);
   }
 
   @Override
-  public boolean equals(Object that)
+  public boolean equals(Object obj)
   {
-    if (that instanceof IdEntityResponse)
+    if (obj instanceof IdEntityResponse)
     {
-      IdEntityResponse<?, ?> thatIdResponse = (IdEntityResponse<?, ?>) that;
-      boolean keyEquals = (this._key == null)? thatIdResponse._key == null : this._key.equals(thatIdResponse._key);
-      boolean entityEquals = (this._entity == null)? thatIdResponse._entity == null : this._entity.equals(thatIdResponse._entity);
-      return keyEquals && entityEquals;
+      IdEntityResponse<?, ?> that = (IdEntityResponse<?, ?>) obj;
+      return super.equals(that) &&
+          (this._entity == null ? that._entity == null : this._entity.equals(that._entity));
     }
     else
     {
@@ -70,6 +62,6 @@ public class IdEntityResponse<K, V extends RecordTemplate> extends RecordTemplat
   @Override
   public int hashCode()
   {
-    return (_key == null ? 0 : _key.hashCode()) + (_entity == null ? 0 : _entity.hashCode());
+    return super.hashCode() * 31 + (_entity == null ? 0 : _entity.hashCode());
   }
 }

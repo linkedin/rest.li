@@ -17,7 +17,6 @@
 package com.linkedin.restli.internal.server.response;
 
 
-import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.CollectionMetadata;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.HttpStatus;
@@ -57,7 +56,7 @@ public class TestResponseDataBuilderUtil
   {
     verifyBatchCreateResponseData(
         ResponseDataBuilderUtil.buildBatchCreateResponseData(
-            HttpStatus.S_200_OK, Collections.<BatchCreateResponseEnvelope.CollectionCreateResponseItem>emptyList()),
+            HttpStatus.S_200_OK, Collections.emptyList()),
         BATCH_CREATE);
     verifyExceptionBatchCreateResponseData(ResponseDataBuilderUtil.buildBatchCreateResponseData(_exception),
                                            BATCH_CREATE);
@@ -68,13 +67,13 @@ public class TestResponseDataBuilderUtil
   {
     verifyCollectionResponseData(
         ResponseDataBuilderUtil.buildFinderResponseData(
-            HttpStatus.S_200_OK, Collections.<RecordTemplate>emptyList(), new CollectionMetadata(), new EmptyRecord()),
+            HttpStatus.S_200_OK, Collections.emptyList(), new CollectionMetadata(), new EmptyRecord()),
         FINDER);
     verifyExceptionCollectionResponseData(ResponseDataBuilderUtil.buildFinderResponseData(_exception), FINDER);
 
     verifyCollectionResponseData(
         ResponseDataBuilderUtil.buildGetAllResponseData(
-            HttpStatus.S_200_OK, Collections.<RecordTemplate>emptyList(), new CollectionMetadata(), new EmptyRecord()),
+            HttpStatus.S_200_OK, Collections.emptyList(), new CollectionMetadata(), new EmptyRecord()),
         GET_ALL);
     verifyExceptionCollectionResponseData(ResponseDataBuilderUtil.buildGetAllResponseData(_exception), GET_ALL);
   }
@@ -84,25 +83,25 @@ public class TestResponseDataBuilderUtil
   {
     verifyBatchResponseData(
         ResponseDataBuilderUtil.buildBatchGetResponseData(
-            HttpStatus.S_200_OK, Collections.<Object, BatchResponseEnvelope.BatchResponseEntry>emptyMap()), BATCH_GET);
+            HttpStatus.S_200_OK, Collections.emptyMap()), BATCH_GET);
     verifyExceptionBatchResponseData(ResponseDataBuilderUtil.buildBatchGetResponseData(_exception), BATCH_GET);
 
     verifyBatchResponseData(
         ResponseDataBuilderUtil.buildBatchUpdateResponseData(
-            HttpStatus.S_200_OK, Collections.<Object, BatchResponseEnvelope.BatchResponseEntry>emptyMap()),
+            HttpStatus.S_200_OK, Collections.emptyMap()),
         BATCH_UPDATE);
     verifyExceptionBatchResponseData(ResponseDataBuilderUtil.buildBatchUpdateResponseData(_exception), BATCH_UPDATE);
 
     verifyBatchResponseData(
         ResponseDataBuilderUtil.buildBatchPartialUpdateResponseData(
-            HttpStatus.S_200_OK, Collections.<Object, BatchResponseEnvelope.BatchResponseEntry>emptyMap()),
+            HttpStatus.S_200_OK, Collections.emptyMap()),
         BATCH_PARTIAL_UPDATE);
     verifyExceptionBatchResponseData(ResponseDataBuilderUtil.buildBatchPartialUpdateResponseData(_exception),
                                      BATCH_PARTIAL_UPDATE);
 
     verifyBatchResponseData(
         ResponseDataBuilderUtil.buildBatchDeleteResponseData(
-            HttpStatus.S_200_OK, Collections.<Object, BatchResponseEnvelope.BatchResponseEntry>emptyMap()),
+            HttpStatus.S_200_OK, Collections.emptyMap()),
         BATCH_DELETE);
     verifyExceptionBatchResponseData(ResponseDataBuilderUtil.buildBatchDeleteResponseData(_exception), BATCH_DELETE);
   }
@@ -125,75 +124,75 @@ public class TestResponseDataBuilderUtil
     verifyExceptionStatusResponseData(ResponseDataBuilderUtil.buildOptionsResponseData(_exception), OPTIONS);
   }
 
-  private void verifyRecordResponseData(RestLiResponseData responseData, ResourceMethod expectedMethod)
+  private void verifyRecordResponseData(RestLiResponseData<? extends RecordResponseEnvelope> responseData, ResourceMethod expectedMethod)
   {
-    assertNotNull(responseData.getRecordResponseEnvelope().getRecord());
-    assertNull(responseData.getServiceException());
+    assertNotNull(responseData.getResponseEnvelope().getRecord());
+    assertNull(responseData.getResponseEnvelope().getException());
     assertEquals(responseData.getResourceMethod(), expectedMethod);
   }
 
-  private void verifyExceptionRecordResponseData(RestLiResponseData responseData, ResourceMethod expectedMethod)
+  private void verifyExceptionRecordResponseData(RestLiResponseData<? extends RecordResponseEnvelope> responseData, ResourceMethod expectedMethod)
   {
-    assertNull(responseData.getRecordResponseEnvelope().getRecord());
-    assertNotNull(responseData.getServiceException());
+    assertNull(responseData.getResponseEnvelope().getRecord());
+    assertNotNull(responseData.getResponseEnvelope().getException());
     assertEquals(responseData.getResourceMethod(), expectedMethod);
   }
 
-  private void verifyBatchCreateResponseData(RestLiResponseData responseData, ResourceMethod expectedMethod)
+  private void verifyBatchCreateResponseData(RestLiResponseData<BatchCreateResponseEnvelope> responseData, ResourceMethod expectedMethod)
   {
-    assertNotNull(responseData.getBatchCreateResponseEnvelope().getCreateResponses());
-    assertNull(responseData.getServiceException());
+    assertNotNull(responseData.getResponseEnvelope().getCreateResponses());
+    assertNull(responseData.getResponseEnvelope().getException());
     assertEquals(responseData.getResourceMethod(), expectedMethod);
   }
 
-  private void verifyExceptionBatchCreateResponseData(RestLiResponseData responseData, ResourceMethod expectedMethod)
+  private void verifyExceptionBatchCreateResponseData(RestLiResponseData<BatchCreateResponseEnvelope> responseData, ResourceMethod expectedMethod)
   {
-    assertNull(responseData.getBatchCreateResponseEnvelope().getCreateResponses());
-    assertNotNull(responseData.getServiceException());
+    assertNull(responseData.getResponseEnvelope().getCreateResponses());
+    assertNotNull(responseData.getResponseEnvelope().getException());
     assertEquals(responseData.getResourceMethod(), expectedMethod);
   }
 
-  private void verifyCollectionResponseData(RestLiResponseData responseData, ResourceMethod expectedMethod)
+  private void verifyCollectionResponseData(RestLiResponseData<? extends CollectionResponseEnvelope> responseData, ResourceMethod expectedMethod)
   {
-    assertNotNull(responseData.getCollectionResponseEnvelope().getCollectionResponse());
-    assertNotNull(responseData.getCollectionResponseEnvelope().getCollectionResponsePaging());
-    assertNotNull(responseData.getCollectionResponseEnvelope().getCollectionResponseCustomMetadata());
-    assertNull(responseData.getServiceException());
+    assertNotNull(responseData.getResponseEnvelope().getCollectionResponse());
+    assertNotNull(responseData.getResponseEnvelope().getCollectionResponsePaging());
+    assertNotNull(responseData.getResponseEnvelope().getCollectionResponseCustomMetadata());
+    assertNull(responseData.getResponseEnvelope().getException());
     assertEquals(responseData.getResourceMethod(), expectedMethod);
   }
 
-  private void verifyExceptionCollectionResponseData(RestLiResponseData responseData, ResourceMethod expectedMethod)
+  private void verifyExceptionCollectionResponseData(RestLiResponseData<? extends CollectionResponseEnvelope> responseData, ResourceMethod expectedMethod)
   {
-    assertNull(responseData.getCollectionResponseEnvelope().getCollectionResponse());
-    assertNull(responseData.getCollectionResponseEnvelope().getCollectionResponsePaging());
-    assertNull(responseData.getCollectionResponseEnvelope().getCollectionResponseCustomMetadata());
-    assertNotNull(responseData.getServiceException());
+    assertNull(responseData.getResponseEnvelope().getCollectionResponse());
+    assertNull(responseData.getResponseEnvelope().getCollectionResponsePaging());
+    assertNull(responseData.getResponseEnvelope().getCollectionResponseCustomMetadata());
+    assertNotNull(responseData.getResponseEnvelope().getException());
     assertEquals(responseData.getResourceMethod(), expectedMethod);
   }
 
-  private void verifyBatchResponseData(RestLiResponseData responseData, ResourceMethod expectedMethod)
+  private void verifyBatchResponseData(RestLiResponseData<? extends BatchResponseEnvelope> responseData, ResourceMethod expectedMethod)
   {
-    assertNotNull(responseData.getBatchResponseEnvelope().getBatchResponseMap());
-    assertNull(responseData.getServiceException());
+    assertNotNull(responseData.getResponseEnvelope().getBatchResponseMap());
+    assertNull(responseData.getResponseEnvelope().getException());
     assertEquals(responseData.getResourceMethod(), expectedMethod);
   }
 
-  private void verifyExceptionBatchResponseData(RestLiResponseData responseData, ResourceMethod expectedMethod)
+  private void verifyExceptionBatchResponseData(RestLiResponseData<? extends BatchResponseEnvelope> responseData, ResourceMethod expectedMethod)
   {
-    assertNull(responseData.getBatchResponseEnvelope().getBatchResponseMap());
-    assertNotNull(responseData.getServiceException());
+    assertNull(responseData.getResponseEnvelope().getBatchResponseMap());
+    assertNotNull(responseData.getResponseEnvelope().getException());
     assertEquals(responseData.getResourceMethod(), expectedMethod);
   }
 
-  private void verifyStatusResponseData(RestLiResponseData responseData, ResourceMethod expectedMethod)
+  private void verifyStatusResponseData(RestLiResponseData<?> responseData, ResourceMethod expectedMethod)
   {
-    assertNull(responseData.getServiceException());
+    assertNull(responseData.getResponseEnvelope().getException());
     assertEquals(responseData.getResourceMethod(), expectedMethod);
   }
 
-  private void verifyExceptionStatusResponseData(RestLiResponseData responseData, ResourceMethod expectedMethod)
+  private void verifyExceptionStatusResponseData(RestLiResponseData<?> responseData, ResourceMethod expectedMethod)
   {
-    assertNotNull(responseData.getServiceException());
+    assertNotNull(responseData.getResponseEnvelope().getException());
     assertEquals(responseData.getResourceMethod(), expectedMethod);
   }
 }

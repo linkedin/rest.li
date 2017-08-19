@@ -18,6 +18,7 @@ dependencies {
   testCompile project(path: ':restli-common', configuration: 'testArtifacts')
   testCompile project(path: ':restli-client')
   testCompile project(path: ':restli-internal-testutils', configuration: 'testArtifacts')
+  testCompile project(':restli-server-testutils')
   testCompile project(path: ':multipart-mime', configuration: 'testArtifacts')
   testCompile externalDependency.guava
   testCompile externalDependency.testng
@@ -37,4 +38,7 @@ test {
 // We are directing the compiler to not fail the build on warnings as we expect deprecation warnings.
 // The reason we have this here is 'coz of a bug in java 6. See http://bugs.java.com/view_bug.do?bug_id=6460147
 // for more info.
-tasks[sourceSets.main.getCompileTaskName('java')].options.compilerArgs = ['-Xlint', '-Xlint:-path', '-Xlint:-static' ]
+tasks[sourceSets.main.getCompileTaskName('java')].options.compilerArgs = [
+    '-Xlint',
+    '-Xlint:-path',
+    '-Xlint:-static']

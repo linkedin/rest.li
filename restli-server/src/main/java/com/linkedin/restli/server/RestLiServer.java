@@ -38,6 +38,7 @@ import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.message.stream.entitystream.ByteStringWriter;
 import com.linkedin.r2.util.URIUtil;
+import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
@@ -45,8 +46,10 @@ import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
 import com.linkedin.restli.common.attachments.RestLiAttachmentReaderException;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.AttachmentUtils;
+import com.linkedin.restli.internal.common.HeaderUtil;
 import com.linkedin.restli.internal.common.ProtocolVersionUtil;
 import com.linkedin.restli.internal.server.RestLiMethodInvoker;
+import com.linkedin.restli.internal.server.response.PartialRestResponse;
 import com.linkedin.restli.internal.server.response.RestLiResponseHandler;
 import com.linkedin.restli.internal.server.RestLiRouter;
 import com.linkedin.restli.internal.server.RoutingResult;
@@ -72,6 +75,7 @@ import com.linkedin.restli.server.multiplexer.MultiplexedRequestHandlerImpl;
 import com.linkedin.restli.server.resources.PrototypeResourceFactory;
 import com.linkedin.restli.server.resources.ResourceFactory;
 
+import java.net.HttpCookie;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -79,6 +83,7 @@ import java.util.List;
 import java.util.Map;
 
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 import javax.activation.MimeTypeParseException;
 import javax.mail.internet.ContentType;
@@ -363,8 +368,8 @@ public class RestLiServer extends BaseRestServer
       return;
     }
 
-    RestLiFilterResponseContextFactory<Object> filterResponseContextFactory =
-        new RestLiFilterResponseContextFactory<Object>(request, method, _responseHandler);
+    RestLiFilterResponseContextFactory filterResponseContextFactory =
+        new RestLiFilterResponseContextFactory(request, method, _responseHandler);
 
     FilterChainCallback filterChainCallback = new FilterChainCallbackImpl(method, _methodInvoker, adapter,
                                                                           requestExecutionReportBuilder,
@@ -378,16 +383,26 @@ public class RestLiServer extends BaseRestServer
     filterChain.onRequest(filterContext, filterResponseContextFactory);
   }
 
-  private void respondWithPreRoutingError(Throwable th,
+  private void respondWithPreRoutingError(Throwable throwable,
                                           RestRequest request,
                                           RestLiAttachmentReader attachmentReader,
                                           RequestExecutionCallback<RestResponse> callback)
   {
-    RestLiFilterResponseContextFactory<Object> filterResponseContextFactory =
-        new RestLiFilterResponseContextFactory<Object>(request, null, _responseHandler);
-    RestLiResponseData responseData = filterResponseContextFactory.fromThrowable(th).getResponseData();
-    RestException restException =
-        _responseHandler.buildRestException(th, _responseHandler.buildPartialResponse(null, responseData));
+    Map<String, String> requestHeaders = request.getHeaders();
+    Map<String, String> headers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+    headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION,
+        ProtocolVersionUtil.extractProtocolVersion(requestHeaders).toString());
+    headers.put(HeaderUtil.getErrorResponseHeaderName(requestHeaders), RestConstants.HEADER_VALUE_ERROR);
+
+    RestLiServiceException restLiServiceException = RestLiServiceException.fromThrowable(throwable);
+    ErrorResponse errorResponse = _errorResponseBuilder.buildErrorResponse(restLiServiceException);
+    PartialRestResponse partialRestResponse = new PartialRestResponse.Builder()
+        .status(restLiServiceException.getStatus())
+        .entity(errorResponse)
+        .headers(headers)
+        .cookies(Collections.emptyList())
+        .build();
+    RestException restException = _responseHandler.buildRestException(throwable, partialRestResponse);
     callback.onError(restException, createEmptyExecutionReport(), attachmentReader, null);
   }
 

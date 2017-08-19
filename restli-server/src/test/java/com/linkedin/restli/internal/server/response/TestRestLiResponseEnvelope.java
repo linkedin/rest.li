@@ -6,13 +6,11 @@ import com.linkedin.restli.common.CollectionMetadata;
 import com.linkedin.restli.common.CreateIdStatus;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.HttpStatus;
-import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.server.ResponseType;
 import com.linkedin.restli.internal.server.methods.AnyRecord;
 import com.linkedin.restli.server.RestLiServiceException;
-import java.net.HttpCookie;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -28,8 +26,11 @@ public class TestRestLiResponseEnvelope
   @Test(dataProvider = "resourceMethodProvider")
   public void testBuildBlankResponseEnvelope(ResourceMethod resourceMethod)
   {
-    RestLiResponseEnvelope responseEnvelope = EnvelopeBuilderUtil.buildBlankResponseEnvelope(resourceMethod, null);
+    RestLiResponseEnvelope responseEnvelope = buildBlankResponseEnvelope(resourceMethod);
     Assert.assertNotNull(responseEnvelope);
+    Assert.assertEquals(responseEnvelope.getStatus(), HttpStatus.S_200_OK);
+    Assert.assertNull(responseEnvelope.getException());
+    Assert.assertFalse(responseEnvelope.isErrorResponse());
     ResponseType responseType = ResponseType.fromMethodType(resourceMethod);
 
     switch (responseType)
@@ -216,7 +217,7 @@ public class TestRestLiResponseEnvelope
   public void testEnvelopeSetDataNull(ResourceMethod resourceMethod)
   {
     // create an envelope and set all the data to null
-    RestLiResponseEnvelope responseEnvelope = EnvelopeBuilderUtil.buildBlankResponseEnvelope(resourceMethod, null);
+    RestLiResponseEnvelope responseEnvelope = buildBlankResponseEnvelope(resourceMethod);
     responseEnvelope.clearData();
     ResponseType responseType = ResponseType.fromMethodType(resourceMethod);
 
@@ -253,19 +254,51 @@ public class TestRestLiResponseEnvelope
   @DataProvider
   private Object[][] envelopeResourceMethodDataProvider()
   {
-    RestLiResponseDataImpl responseData = new RestLiResponseDataImpl(HttpStatus.S_200_OK,
-                                                                     Collections.<String, String>emptyMap(),
-                                                                     Collections.<HttpCookie>emptyList());
     ResourceMethod[] resourceMethods = ResourceMethod.values();
     Object[][] envelopeResourceMethods = new Object[resourceMethods.length][2];
     for (int i = 0; i < resourceMethods.length; i++)
     {
-      RestLiResponseEnvelope responseEnvelope = EnvelopeBuilderUtil.buildBlankResponseEnvelope(resourceMethods[i],
-                                                                                               responseData);
-      responseData.setResponseEnvelope(responseEnvelope);
+      RestLiResponseEnvelope responseEnvelope = buildBlankResponseEnvelope(resourceMethods[i]);
       envelopeResourceMethods[i][0] = responseEnvelope;
       envelopeResourceMethods[i][1] = resourceMethods[i];
     }
     return envelopeResourceMethods;
+  }
+
+  private static RestLiResponseEnvelope buildBlankResponseEnvelope(ResourceMethod resourceMethod)
+  {
+    switch (resourceMethod)
+    {
+      case GET:
+        return new GetResponseEnvelope(HttpStatus.S_200_OK, new EmptyRecord());
+      case CREATE:
+        return new CreateResponseEnvelope(HttpStatus.S_200_OK, new EmptyRecord(), false);
+      case ACTION:
+        return new ActionResponseEnvelope(HttpStatus.S_200_OK, new EmptyRecord());
+      case GET_ALL:
+        return new GetAllResponseEnvelope(HttpStatus.S_200_OK, Collections.emptyList(), null, new EmptyRecord());
+      case FINDER:
+        return new FinderResponseEnvelope(HttpStatus.S_200_OK, Collections.emptyList(), null, new EmptyRecord());
+      case BATCH_CREATE:
+        return new BatchCreateResponseEnvelope(HttpStatus.S_200_OK, Collections.emptyList(), false);
+      case BATCH_GET:
+        return new BatchGetResponseEnvelope(HttpStatus.S_200_OK, Collections.emptyMap());
+      case BATCH_UPDATE:
+        return new BatchUpdateResponseEnvelope(HttpStatus.S_200_OK, Collections.emptyMap());
+      case BATCH_PARTIAL_UPDATE:
+        return new BatchPartialUpdateResponseEnvelope(HttpStatus.S_200_OK, Collections.emptyMap());
+      case BATCH_DELETE:
+        return new BatchDeleteResponseEnvelope(HttpStatus.S_200_OK, Collections.emptyMap());
+      case PARTIAL_UPDATE:
+        return new PartialUpdateResponseEnvelope(HttpStatus.S_200_OK);
+      case UPDATE:
+        return new UpdateResponseEnvelope(HttpStatus.S_200_OK);
+      case DELETE:
+        return new DeleteResponseEnvelope(HttpStatus.S_200_OK);
+      case OPTIONS:
+        return new OptionsResponseEnvelope(HttpStatus.S_200_OK);
+      default:
+        throw new IllegalStateException();
+    }
   }
 }

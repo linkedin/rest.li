@@ -17,7 +17,9 @@
 package com.linkedin.restli.internal.server.response;
 
 
+import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ResourceMethod;
+import com.linkedin.restli.server.RestLiServiceException;
 
 
 /**
@@ -27,14 +29,14 @@ import com.linkedin.restli.common.ResourceMethod;
  */
 public class DeleteResponseEnvelope extends EmptyResponseEnvelope
 {
-  /**
-   * Instantiates a delete response envelope.
-   *
-   * @param restLiResponseData Wrapper response data that is storing this envelope.
-   */
-  DeleteResponseEnvelope(RestLiResponseDataImpl restLiResponseData)
+  DeleteResponseEnvelope(HttpStatus status)
   {
-    super(restLiResponseData);
+    super(status);
+  }
+
+  DeleteResponseEnvelope(RestLiServiceException exception)
+  {
+    super(exception);
   }
 
   @Override

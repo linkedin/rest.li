@@ -144,7 +144,6 @@ public class RestLiResponseHandler
    *          {@link RoutingResult}
    * @param partialResponse
    *          {@link PartialRestResponse}
-   * @return
    */
   public RestResponse buildResponse(final RoutingResult routingResult,
                                      PartialRestResponse partialResponse)
@@ -165,22 +164,23 @@ public class RestLiResponseHandler
   /**
    * Build a ParialRestResponse from RestLiResponseDataInternal and RoutingResult.
    *
-   * @param routingResult
-   *          {@link RoutingResult}
-   * @param responseData
-   *          response value
+   * @param routingResult {@link RoutingResult}
+   * @param responseData response value
    * @return {@link PartialRestResponse}
-   * @throws IOException
-   *           if cannot build response
    */
-  public PartialRestResponse buildPartialResponse(final RoutingResult routingResult,
-                                                  final RestLiResponseData responseData)
+  public <D extends RestLiResponseData<?>> PartialRestResponse buildPartialResponse(final RoutingResult routingResult,
+                                                                                    final D responseData)
   {
-    if (responseData.isErrorResponse()){
-      return _errorResponseBuilder.buildResponse(routingResult, responseData);
+    if (responseData.getResponseEnvelope().isErrorResponse())
+    {
+      return _errorResponseBuilder.buildResponse(responseData);
     }
 
-    return chooseResponseBuilder(null, routingResult).buildResponse(routingResult, responseData);
+    // The resource method in the routingResult must agree with that of responseData.
+    @SuppressWarnings("unchecked")
+    RestLiResponseBuilder<D> responseBuilder = (RestLiResponseBuilder<D>) _methodAdapterRegistry.getResponseBuilder(
+        routingResult.getResourceMethod().getType());
+    return responseBuilder.buildResponse(routingResult, responseData);
   }
 
   /**
@@ -196,13 +196,13 @@ public class RestLiResponseHandler
    * @throws IOException
    *           if cannot build response
    */
-  public RestLiResponseData buildRestLiResponseData(final RestRequest request,
-                                                    final RoutingResult routingResult,
-                                                    final Object responseObject) throws IOException
+  public RestLiResponseData<?> buildRestLiResponseData(final RestRequest request,
+                                                       final RoutingResult routingResult,
+                                                       final Object responseObject) throws IOException
   {
     ServerResourceContext context = (ServerResourceContext) routingResult.getContext();
     final ProtocolVersion protocolVersion = context.getRestliProtocolVersion();
-    Map<String, String> responseHeaders = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+    Map<String, String> responseHeaders = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     responseHeaders.putAll(context.getResponseHeaders());
     responseHeaders.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, protocolVersion.toString());
     List<HttpCookie> responseCookies = context.getResponseCookies();
@@ -213,10 +213,7 @@ public class RestLiResponseHandler
       //If we have a null result, we have to assign the correct response status
       if (routingResult.getResourceMethod().getType().equals(ResourceMethod.ACTION))
       {
-        RestLiResponseDataImpl responseData = new RestLiResponseDataImpl(HttpStatus.S_200_OK, responseHeaders,
-                                                                         responseCookies);
-        responseData.setResponseEnvelope(new ActionResponseEnvelope(null, responseData));
-        return responseData;
+        return new RestLiResponseDataImpl<>(new ActionResponseEnvelope(HttpStatus.S_200_OK, null), responseHeaders, responseCookies);
       }
       else if (routingResult.getResourceMethod().getType().equals(ResourceMethod.GET))
       {
@@ -231,7 +228,13 @@ public class RestLiResponseHandler
       }
     }
 
-    RestLiResponseBuilder responseBuilder = chooseResponseBuilder(responseObject, routingResult);
+    if (responseObject instanceof RestLiServiceException)
+    {
+      return _errorResponseBuilder.buildRestLiResponseData(routingResult, (RestLiServiceException) responseObject, responseHeaders, responseCookies);
+    }
+
+    RestLiResponseBuilder<?> responseBuilder = _methodAdapterRegistry.getResponseBuilder(
+        routingResult.getResourceMethod().getType());
 
     if (responseBuilder == null)
     {
@@ -246,13 +249,13 @@ public class RestLiResponseHandler
     return responseBuilder.buildRestLiResponseData(request, routingResult, responseObject, responseHeaders, responseCookies);
   }
 
-  public RestLiResponseData buildExceptionResponseData(final RestRequest request,
+  public RestLiResponseData<?> buildExceptionResponseData(final RestRequest request,
                                                            final RoutingResult routingResult,
-                                                           final Object object,
+                                                           final RestLiServiceException exception,
                                                            final Map<String, String> headers,
                                                            final List<HttpCookie> cookies)
   {
-    return _errorResponseBuilder.buildRestLiResponseData(request, routingResult, object, headers, cookies);
+    return _errorResponseBuilder.buildRestLiResponseData(routingResult, exception, headers, cookies);
   }
 
   public RestException buildRestException(final Throwable e, PartialRestResponse partialResponse)
@@ -270,8 +273,7 @@ public class RestLiResponseHandler
       builder.setHeader(RestConstants.HEADER_CONTENT_TYPE, ContentType.JSON.getHeaderKey());
     }
     RestResponse restResponse = builder.build();
-    RestException restException = new RestException(restResponse, e);
-    return restException;
+    return new RestException(restResponse, e);
   }
 
   private RestResponseBuilder encodeResult(String mimeType, RestResponseBuilder builder, DataMap dataMap)
@@ -292,17 +294,5 @@ public class RestLiResponseHandler
     }
 
     return builder;
-  }
-
-  private RestLiResponseBuilder chooseResponseBuilder(final Object responseObject,
-                                                      final RoutingResult routingResult)
-  {
-    if (responseObject != null && responseObject instanceof RestLiServiceException)
-    {
-      return _errorResponseBuilder;
-    }
-
-    return _methodAdapterRegistry.getResponsebuilder(routingResult.getResourceMethod()
-                                                                 .getType());
   }
 }

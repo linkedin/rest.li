@@ -31,7 +31,6 @@ import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.LinkArray;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.internal.server.RoutingResult;
-import com.linkedin.restli.internal.server.model.Parameter;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.server.CollectionResult;
 import com.linkedin.restli.server.ProjectionMode;
@@ -39,12 +38,12 @@ import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
 
-import java.net.HttpCookie;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -60,6 +59,13 @@ import org.easymock.EasyMock;
  */
 public class TestCollectionResponseBuilder
 {
+  private static final Map<ResourceMethod, CollectionResponseBuilder<?>> BUILDERS = new HashMap<>();
+  static
+  {
+    BUILDERS.put(ResourceMethod.FINDER, new FinderResponseBuilder());
+    BUILDERS.put(ResourceMethod.GET_ALL, new GetAllResponseBuilder());
+  }
+
   @DataProvider(name = "testData")
   public Object[][] dataProvider() throws CloneNotSupportedException
   {
@@ -67,7 +73,7 @@ public class TestCollectionResponseBuilder
     Foo projectedMetadata = new Foo().setIntField(7);
     final List<Foo> generatedList = generateTestList();
     final List<Foo> testListWithProjection = generateTestListWithProjection();
-    CollectionResult<Foo, Foo> collectionResult = new CollectionResult<Foo, Foo>(generatedList, generatedList.size(), metadata);
+    CollectionResult<Foo, Foo> collectionResult = new CollectionResult<>(generatedList, generatedList.size(), metadata);
 
     DataMap dataProjectionDataMap = new DataMap();
     dataProjectionDataMap.put("stringField", MaskOperation.POSITIVE_MASK_OP.getRepresentation());
@@ -88,11 +94,12 @@ public class TestCollectionResponseBuilder
     ProjectionMode auto = ProjectionMode.AUTOMATIC;
     ProjectionMode manual = ProjectionMode.MANUAL;
 
-    return new Object[][]
-        {
-            // auto projection for data and metadata with null projection masks
-            {generatedList, null, generatedList, collectionMetadata1, null, null, null, auto, auto},
-            {collectionResult,
+    List<Object[]> data = new ArrayList<>();
+    for (ResourceMethod resourceMethod: BUILDERS.keySet())
+    {
+      // auto projection for data and metadata with null projection masks
+      data.add(new Object[] {generatedList, null, generatedList, collectionMetadata1, null, null, null, auto, auto, resourceMethod});
+      data.add(new Object[] {collectionResult,
                 metadata.data(),
                 collectionResult.getElements(),
                 collectionMetadata2,
@@ -100,11 +107,12 @@ public class TestCollectionResponseBuilder
                 null,
                 null,
                 auto,
-                auto},
+                auto,
+                resourceMethod});
 
-            // manual projection for data and metadata with null projection masks
-            {generatedList, null, generatedList, collectionMetadata1, null, null, null, manual, manual},
-            {collectionResult,
+      // manual projection for data and metadata with null projection masks
+      data.add(new Object[] {generatedList, null, generatedList, collectionMetadata1, null, null, null, manual, manual, resourceMethod});
+      data.add(new Object[] {collectionResult,
                 metadata.data(),
                 collectionResult.getElements(),
                 collectionMetadata2,
@@ -112,12 +120,13 @@ public class TestCollectionResponseBuilder
                 null,
                 null,
                 manual,
-                manual},
+                manual,
+                resourceMethod});
 
-            // NOTE - we always apply projections to the CollectionMetaData if the paging MaskTree is non-null
-            //        since ProjectionMode.AUTOMATIC is used.
-            // manual projection for data and metadata with non-null projection masks
-            {generatedList,
+      // NOTE - we always apply projections to the CollectionMetaData if the paging MaskTree is non-null
+      //        since ProjectionMode.AUTOMATIC is used.
+      // manual projection for data and metadata with non-null projection masks
+      data.add(new Object[] {generatedList,
                 null,
                 generatedList,
                 collectionMetadataWithProjection,
@@ -125,8 +134,9 @@ public class TestCollectionResponseBuilder
                 metadataMaskTree,
                 pagingMaskTree,
                 manual,
-                manual},
-            {collectionResult,
+                manual,
+                resourceMethod});
+      data.add(new Object[] {collectionResult,
                 metadata.data(),
                 collectionResult.getElements(),
                 collectionMetadataWithProjection,
@@ -134,10 +144,11 @@ public class TestCollectionResponseBuilder
                 metadataMaskTree,
                 pagingMaskTree,
                 manual,
-                manual},
+                manual,
+                resourceMethod});
 
-            // auto projection for data with non-null data and paging projection masks
-            {generatedList,
+      // auto projection for data with non-null data and paging projection masks
+      data.add(new Object[] {generatedList,
                 null,
                 testListWithProjection,
                 collectionMetadataWithProjection,
@@ -145,10 +156,11 @@ public class TestCollectionResponseBuilder
                 null,
                 pagingMaskTree,
                 auto,
-                auto},
+                auto,
+                resourceMethod});
 
-            // auto projection for data and metadata with non-null projection masks
-            {collectionResult,
+      // auto projection for data and metadata with non-null projection masks
+      data.add(new Object[] {collectionResult,
                 projectedMetadata.data(),
                 testListWithProjection,
                 collectionMetadataWithProjection,
@@ -156,10 +168,11 @@ public class TestCollectionResponseBuilder
                 metadataMaskTree,
                 pagingMaskTree,
                 auto,
-                auto},
+                auto,
+                resourceMethod});
 
-            // auto data projection, manual metadata projection, and auto (default) paging projection
-            {collectionResult,
+      // auto data projection, manual metadata projection, and auto (default) paging projection
+      data.add(new Object[] {collectionResult,
                 metadata.data(),
                 testListWithProjection,
                 collectionMetadataWithProjection,
@@ -167,13 +180,15 @@ public class TestCollectionResponseBuilder
                 metadataMaskTree,
                 pagingMaskTree,
                 auto,
-                manual},
-        };
+                manual,
+                resourceMethod});
+    }
+    return data.toArray(new Object[data.size()][]);
   }
 
   @SuppressWarnings("unchecked")
   @Test(dataProvider = "testData")
-  public void testBuilder(Object results,
+  public <D extends RestLiResponseData<? extends CollectionResponseEnvelope>> void testBuilder(Object results,
                           DataMap expectedMetadata,
                           List<Foo> expectedElements,
                           CollectionMetadata expectedPaging,
@@ -181,34 +196,33 @@ public class TestCollectionResponseBuilder
                           MaskTree metaDataMaskTree,
                           MaskTree pagingMaskTree,
                           ProjectionMode dataProjectionMode,
-                          ProjectionMode metadataProjectionMode) throws URISyntaxException
+                          ProjectionMode metadataProjectionMode,
+                          ResourceMethod resourceMethod) throws URISyntaxException
   {
+    Map<String, String> headers = ResponseBuilderUtil.getHeaders();
 
-    for (ResourceMethod resourceMethod : Arrays.asList(ResourceMethod.GET_ALL, ResourceMethod.FINDER))
-    {
+    ResourceContext mockContext =
+        getMockResourceContext(dataMaskTree, metaDataMaskTree, pagingMaskTree, dataProjectionMode,
+                               metadataProjectionMode);
+    ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor();
+    RoutingResult routingResult = new RoutingResult(mockContext, mockDescriptor);
 
-      Map<String, String> headers = ResponseBuilderUtil.getHeaders();
+    CollectionResponseBuilder<D> responseBuilder = (CollectionResponseBuilder<D>) BUILDERS.get(resourceMethod);
+    D responseData =
+        responseBuilder.buildRestLiResponseData(getRestRequest(), routingResult, results, headers, Collections.emptyList());
+    PartialRestResponse restResponse = responseBuilder.buildResponse(routingResult, responseData);
 
-      ResourceContext mockContext =
-          getMockResourceContext(dataMaskTree, metaDataMaskTree, pagingMaskTree, dataProjectionMode,
-                                 metadataProjectionMode);
-      ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor(resourceMethod);
-      RoutingResult routingResult = new RoutingResult(mockContext, mockDescriptor);
+    Assert.assertEquals(responseData.getResourceMethod(), resourceMethod);
+    Assert.assertEquals(responseData.getResponseEnvelope().getResourceMethod(), resourceMethod);
 
-      CollectionResponseBuilder responseBuilder = new CollectionResponseBuilder();
-      RestLiResponseData responseData =
-          responseBuilder.buildRestLiResponseData(getRestRequest(), routingResult, results, headers, Collections.<HttpCookie>emptyList());
-      PartialRestResponse restResponse = responseBuilder.buildResponse(routingResult, responseData);
+    EasyMock.verify(mockContext, mockDescriptor);
+    ResponseBuilderUtil.validateHeaders(restResponse, headers);
+    CollectionResponse<Foo> actualResults = (CollectionResponse<Foo>) restResponse.getEntity();
+    Assert.assertEquals(actualResults.getElements(), expectedElements);
+    Assert.assertEquals(actualResults.getMetadataRaw(), expectedMetadata);
+    Assert.assertEquals(actualResults.getPaging(), expectedPaging);
 
-      EasyMock.verify(mockContext, mockDescriptor);
-      ResponseBuilderUtil.validateHeaders(restResponse, headers);
-      CollectionResponse<Foo> actualResults = (CollectionResponse<Foo>) restResponse.getEntity();
-      Assert.assertEquals(actualResults.getElements(), expectedElements);
-      Assert.assertEquals(actualResults.getMetadataRaw(), expectedMetadata);
-      Assert.assertEquals(actualResults.getPaging(), expectedPaging);
-
-      EasyMock.verify(mockContext);
-    }
+    EasyMock.verify(mockContext);
   }
 
   @DataProvider(name = "exceptionTestData")
@@ -220,7 +234,7 @@ public class TestCollectionResponseBuilder
         {
             {Arrays.asList(f1, null),
                 "Unexpected null encountered. Null element inside of a List returned by the resource method: "},
-            {new CollectionResult<Foo, Foo>(null),
+            {new CollectionResult<>(null),
                 "Unexpected null encountered. Null elements List inside of CollectionResult returned by the resource method: "}
         };
   }
@@ -233,10 +247,10 @@ public class TestCollectionResponseBuilder
     ResourceContext mockContext = getMockResourceContext(null, null, null, null, null);
     ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor();
     RoutingResult routingResult = new RoutingResult(mockContext, mockDescriptor);
-    CollectionResponseBuilder responseBuilder = new CollectionResponseBuilder();
+    FinderResponseBuilder responseBuilder = new FinderResponseBuilder();
     try
     {
-      responseBuilder.buildRestLiResponseData(getRestRequest(), routingResult, results, headers, Collections.<HttpCookie>emptyList());
+      responseBuilder.buildRestLiResponseData(getRestRequest(), routingResult, results, headers, Collections.emptyList());
       Assert.fail("An exception should have been thrown because of null elements!");
     }
     catch (RestLiServiceException e)
@@ -246,26 +260,28 @@ public class TestCollectionResponseBuilder
   }
 
   @Test
-  public void testProjectionInBuildRestliResponseData() throws URISyntaxException {
+  @SuppressWarnings("unchecked")
+  public <D extends RestLiResponseData<? extends CollectionResponseEnvelope>> void testProjectionInBuildRestliResponseData() throws URISyntaxException {
 
-    for (ResourceMethod resourceMethod : Arrays.asList(ResourceMethod.GET_ALL, ResourceMethod.FINDER))
+    for (Map.Entry<ResourceMethod, CollectionResponseBuilder<?>> entry: BUILDERS.entrySet())
     {
+      ResourceMethod resourceMethod = entry.getKey();
       MaskTree maskTree = new MaskTree();
       maskTree.addOperation(new PathSpec("fruitsField"), MaskOperation.POSITIVE_MASK_OP);
 
       ResourceContext mockContext =
           getMockResourceContext(maskTree, null, null, ProjectionMode.AUTOMATIC, ProjectionMode.AUTOMATIC);
-      RoutingResult routingResult = new RoutingResult(mockContext, getMockResourceMethodDescriptor(resourceMethod));
+      RoutingResult routingResult = new RoutingResult(mockContext, getMockResourceMethodDescriptor());
 
-      List<RecordTemplate> values = new ArrayList<RecordTemplate>();
+      List<RecordTemplate> values = new ArrayList<>();
       Foo value = new Foo().setStringField("value").setFruitsField(Fruits.APPLE);
       values.add(value);
 
-      CollectionResponseBuilder responseBuilder = new CollectionResponseBuilder();
-      RestLiResponseData responseData = responseBuilder.buildRestLiResponseData(getRestRequest(), routingResult, values,
-                                                                                Collections.<String, String>emptyMap(),
-                                                                                Collections.<HttpCookie>emptyList());
-      RecordTemplate record = responseData.getCollectionResponseEnvelope().getCollectionResponse().get(0);
+      CollectionResponseBuilder<D> responseBuilder = (CollectionResponseBuilder<D>) entry.getValue();
+      D responseData = responseBuilder.buildRestLiResponseData(getRestRequest(), routingResult, values,
+                                                                                Collections.emptyMap(),
+                                                                                Collections.emptyList());
+      RecordTemplate record = responseData.getResponseEnvelope().getCollectionResponse().get(0);
       Assert.assertEquals(record.data().size(), 1);
       Assert.assertEquals(record.data().get("fruitsField"), Fruits.APPLE.toString());
     }
@@ -302,17 +318,7 @@ public class TestCollectionResponseBuilder
   private static ResourceMethodDescriptor getMockResourceMethodDescriptor()
   {
     ResourceMethodDescriptor mockDescriptor = EasyMock.createMock(ResourceMethodDescriptor.class);
-    EasyMock.expect(mockDescriptor.getParametersWithType(EasyMock.<Parameter.ParamType>anyObject())).andReturn(Collections.<Parameter<?>>emptyList()).once();
-    EasyMock.replay(mockDescriptor);
-    return mockDescriptor;
-  }
-
-  private static ResourceMethodDescriptor getMockResourceMethodDescriptor(ResourceMethod resourceMethod)
-  {
-    ResourceMethodDescriptor mockDescriptor = EasyMock.createMock(ResourceMethodDescriptor.class);
-    EasyMock.expect(mockDescriptor.getParametersWithType(EasyMock.<Parameter.ParamType>anyObject()))
-        .andReturn(Collections.<Parameter<?>>emptyList()).once();
-    EasyMock.expect(mockDescriptor.getType()).andReturn(resourceMethod);
+    EasyMock.expect(mockDescriptor.getParametersWithType(EasyMock.anyObject())).andReturn(Collections.emptyList()).once();
     EasyMock.replay(mockDescriptor);
     return mockDescriptor;
   }

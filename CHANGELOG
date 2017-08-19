@@ -1,6 +1,15 @@
-14.0.13
+15.0.1
 -------
 
+15.0.0
+-------
+(RB=1076571)
+Added type parameter for RestLiResponseEnvelope to RestLiResponseData and RestLiResponseDataImpl.
+Moved status and exception from RestLiResponseData to RestLiResponseEnvelope.
+Created subclasses for UpdateResponseBuilder, BatchUpdateResponseBuilder, and CollectionResponseBuilder to build responses for specific types.
+Broke ErrorResponseBuilder from RestLiResponseBuilder hierarchy.
+Removed type parameter for RestLiCallback and RestLiFilterResponseContextFactory.
+Made IdEntityResponse to extend IdResponse.
 
 14.0.12
 -------

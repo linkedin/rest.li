@@ -139,4 +139,30 @@ public class RestLiServiceException extends RuntimeException
   {
     return _errorResponseFormat;
   }
+
+  public static RestLiServiceException fromThrowable(Throwable throwable)
+  {
+    RestLiServiceException restLiServiceException;
+    if (throwable instanceof RestLiServiceException)
+    {
+      restLiServiceException = (RestLiServiceException) throwable;
+    }
+    else if (throwable instanceof RoutingException)
+    {
+      RoutingException routingException = (RoutingException) throwable;
+
+      restLiServiceException = new RestLiServiceException(HttpStatus.fromCode(routingException.getStatus()),
+          routingException.getMessage(),
+          routingException);
+    }
+    else
+    {
+      restLiServiceException = new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
+          throwable.getMessage(),
+          throwable);
+    }
+
+    return restLiServiceException;
+  }
+
 }

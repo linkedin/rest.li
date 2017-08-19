@@ -20,15 +20,14 @@ package com.linkedin.restli.internal.server.response;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.message.rest.RestRequest;
-import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.internal.server.filter.RestLiFilterResponseContextFactory;
 import com.linkedin.restli.internal.server.RoutingResult;
+import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.RoutingException;
 import com.linkedin.restli.server.filter.FilterResponseContext;
 
-import java.net.HttpCookie;
 import java.util.Collections;
 import java.util.Map;
 
@@ -64,13 +63,13 @@ public class TestRestLiFilterResponseContextFactory
   private RoutingResult _routingResult;
   @Mock
   private RestLiResponseHandler _responseHandler;
-  private RestLiFilterResponseContextFactory<Object> _filterResponseContextFactory;
+  private RestLiFilterResponseContextFactory _filterResponseContextFactory;
 
   @BeforeTest
   protected void setUp() throws Exception
   {
     MockitoAnnotations.initMocks(this);
-    _filterResponseContextFactory = new RestLiFilterResponseContextFactory<Object>(_restRequest,
+    _filterResponseContextFactory = new RestLiFilterResponseContextFactory(_restRequest,
                                                                                    _routingResult,
                                                                                    _responseHandler);
   }
@@ -88,6 +87,7 @@ public class TestRestLiFilterResponseContextFactory
   }
 
   @Test
+  @SuppressWarnings("unchecked")
   public void testFromResult() throws Exception
   {
     DataMap dataMap = new DataMap();
@@ -96,10 +96,10 @@ public class TestRestLiFilterResponseContextFactory
     headers.put("x", "y");
     RecordTemplate entity1 = new Foo(dataMap);
 
-    RestLiResponseDataImpl responseData = new RestLiResponseDataImpl(HttpStatus.S_200_OK, headers,
-                                                                 Collections.<HttpCookie>emptyList());
-    responseData.setResponseEnvelope(new GetResponseEnvelope(entity1, responseData));
-    when(_responseHandler.buildRestLiResponseData(_restRequest, _routingResult, entity1)).thenReturn(responseData);
+    RestLiResponseData<GetResponseEnvelope> responseData =
+        new RestLiResponseDataImpl<>(new GetResponseEnvelope(HttpStatus.S_200_OK, entity1), headers,
+            Collections.emptyList());
+    when((RestLiResponseData<GetResponseEnvelope>) _responseHandler.buildRestLiResponseData(_restRequest, _routingResult, entity1)).thenReturn(responseData);
 
     FilterResponseContext responseContext = _filterResponseContextFactory.fromResult(entity1);
     assertEquals(responseContext.getResponseData(), responseData);
@@ -131,10 +131,11 @@ public class TestRestLiFilterResponseContextFactory
     {
       serviceException = new RestLiServiceException(status, e);
     }
-    RestLiResponseDataImpl responseData = new RestLiResponseDataImpl(serviceException,
-                                                                     Collections.<String, String>emptyMap(),
-                                                                     Collections.<HttpCookie>emptyList());
-    responseData.setResponseEnvelope(new GetResponseEnvelope(new EmptyRecord(), responseData));
+    RestLiServiceException exception = serviceException;
+    Map<String, String> headers = Collections.emptyMap();
+    java.util.List<java.net.HttpCookie> cookies = Collections.emptyList();
+    RestLiResponseData<GetResponseEnvelope> responseData =
+        new RestLiResponseDataImpl<>(new GetResponseEnvelope(exception), headers, cookies);
     ArgumentCaptor<RestLiServiceException> exceptionArgumentCaptor = ArgumentCaptor.forClass(RestLiServiceException.class);
 
     // Setup.
@@ -160,12 +161,10 @@ public class TestRestLiFilterResponseContextFactory
     assertTrue(exceptionArgument.equals(e) || exceptionArgument.getCause().equals(e));
     assertEquals(exceptionArgument.getStatus(), status);
     // The end result should also contain the original exception.
-    assertTrue(responseContext.getResponseData().isErrorResponse());
-    assertTrue(responseContext.getResponseData().getServiceException().equals(e) || responseContext.getResponseData()
-                                                                                                   .getServiceException()
-                                                                                                   .getCause()
-                                                                                                   .equals(e));
-    assertEquals(responseContext.getResponseData().getServiceException().getStatus(), status);
+    assertTrue(responseContext.getResponseData().getResponseEnvelope().isErrorResponse());
+    assertTrue(responseContext.getResponseData().getResponseEnvelope().getException().equals(e) ||
+        responseContext.getResponseData().getResponseEnvelope().getException().getCause().equals(e));
+    assertEquals(responseContext.getResponseData().getResponseEnvelope().getException().getStatus(), status);
   }
 
   private static class Foo extends RecordTemplate

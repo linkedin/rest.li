@@ -29,7 +29,6 @@ import com.linkedin.pegasus.generator.examples.Foo;
 import com.linkedin.pegasus.generator.examples.Fruits;
 import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CompoundKey;
-import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ProtocolVersion;
@@ -47,7 +46,6 @@ import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
 
-import java.net.HttpCookie;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -67,7 +65,7 @@ public class TestBatchGetResponseBuilder
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "testData")
   public Object[][] dataProvider()
   {
-    Map<CompoundKey, Foo> results = new HashMap<CompoundKey, Foo>();
+    Map<CompoundKey, Foo> results = new HashMap<>();
     CompoundKey c1 = new CompoundKey().append("a", "a1").append("b", 1);
     CompoundKey c2 = new CompoundKey().append("a", "a2").append("b", 2);
     CompoundKey c3 = new CompoundKey().append("a", "a3").append("b", 3);
@@ -82,30 +80,30 @@ public class TestBatchGetResponseBuilder
     projectionDataMap.put("stringField", MaskOperation.POSITIVE_MASK_OP.getRepresentation());
     MaskTree maskTree = new MaskTree(projectionDataMap);
 
-    Map<String, Foo> protocol1TransformedResults = new HashMap<String, Foo>();
+    Map<String, Foo> protocol1TransformedResults = new HashMap<>();
     protocol1TransformedResults.put("a=a1&b=1", record1);
     protocol1TransformedResults.put("a=a2&b=2", record2);
-    Map<String, Foo> protocol1TransformedResultsWithProjection = new HashMap<String, Foo>();
+    Map<String, Foo> protocol1TransformedResultsWithProjection = new HashMap<>();
     protocol1TransformedResultsWithProjection.put("a=a1&b=1", projectedRecord1);
     protocol1TransformedResultsWithProjection.put("a=a2&b=2", projectedRecord2);
 
-    Map<String, Foo> protocol2TransformedResults = new HashMap<String, Foo>();
+    Map<String, Foo> protocol2TransformedResults = new HashMap<>();
     protocol2TransformedResults.put("(a:a1,b:1)", record1);
     protocol2TransformedResults.put("(a:a2,b:2)", record2);
-    Map<String, Foo> protocol2TransformedResultsWithProjection = new HashMap<String, Foo>();
+    Map<String, Foo> protocol2TransformedResultsWithProjection = new HashMap<>();
     protocol2TransformedResultsWithProjection.put("(a:a1,b:1)", projectedRecord1);
     protocol2TransformedResultsWithProjection.put("(a:a2,b:2)", projectedRecord2);
 
     Map<String, ErrorResponse> protocol1Errors = Collections.singletonMap("a=a3&b=3", new ErrorResponse().setStatus(404));
     Map<String, ErrorResponse> protocol2Errors = Collections.singletonMap("(a:a3,b:3)", new ErrorResponse().setStatus(404));
 
-    Map<CompoundKey, HttpStatus> statuses = new HashMap<CompoundKey, HttpStatus>();
+    Map<CompoundKey, HttpStatus> statuses = new HashMap<>();
     statuses.put(c1, HttpStatus.S_200_OK);
     statuses.put(c2, HttpStatus.S_200_OK);
-    Map<CompoundKey, RestLiServiceException> exceptions = new HashMap<CompoundKey, RestLiServiceException>();
+    Map<CompoundKey, RestLiServiceException> exceptions = new HashMap<>();
     exceptions.put(c3, new RestLiServiceException(HttpStatus.S_404_NOT_FOUND));
-    BatchResult<CompoundKey, Foo> batchResult = new BatchResult<CompoundKey, Foo>(results, statuses, exceptions);
-    Map<Object, RestLiServiceException> exceptionsWithUntypedKey = new HashMap<Object, RestLiServiceException>(exceptions);
+    BatchResult<CompoundKey, Foo> batchResult = new BatchResult<>(results, statuses, exceptions);
+    Map<Object, RestLiServiceException> exceptionsWithUntypedKey = new HashMap<>(exceptions);
 
     ProtocolVersion protocolVersion1 = AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion();
     ProtocolVersion protocolVersion2 = AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion();
@@ -162,11 +160,11 @@ public class TestBatchGetResponseBuilder
     Map<String, String> headers = ResponseBuilderUtil.getHeaders();
 
     BatchGetResponseBuilder responseBuilder = new BatchGetResponseBuilder(new ErrorResponseBuilder());
-    RestLiResponseData responseData = responseBuilder.buildRestLiResponseData(null,
-                                                                              routingResult,
-                                                                              results,
-                                                                              headers,
-                                                                              Collections.<HttpCookie>emptyList());
+    RestLiResponseData<BatchGetResponseEnvelope> responseData = responseBuilder.buildRestLiResponseData(null,
+                                                                                routingResult,
+                                                                                results,
+                                                                                headers,
+                                                                                Collections.emptyList());
     PartialRestResponse restResponse = responseBuilder.buildResponse(routingResult, responseData);
 
     EasyMock.verify(mockContext, mockDescriptor);
@@ -176,7 +174,7 @@ public class TestBatchGetResponseBuilder
     Assert.assertEquals(entity.getResults(), expectedTransformedResult);
     if (results instanceof BatchResult)
     {
-      Map<String, Integer> expectedStatuses = new HashMap<String, Integer>();
+      Map<String, Integer> expectedStatuses = new HashMap<>();
       for (String key: entity.getResults().keySet())
       {
         expectedStatuses.put(key, HttpStatus.S_200_OK.getCode());
@@ -202,26 +200,26 @@ public class TestBatchGetResponseBuilder
   {
     BatchGetResponseBuilder builder = new BatchGetResponseBuilder(new ErrorResponseBuilder());
     ServerResourceContext context = EasyMock.createMock(ServerResourceContext.class);
-    Map<Object, RestLiServiceException> errors = new HashMap<Object, RestLiServiceException>();
+    Map<Object, RestLiServiceException> errors = new HashMap<>();
     RestLiServiceException exception = new RestLiServiceException(HttpStatus.S_402_PAYMENT_REQUIRED);
     errors.put("foo", exception);
     EasyMock.expect(context.hasParameter("altkey")).andReturn(false);
     EasyMock.expect(context.getBatchKeyErrors()).andReturn(errors);
     EasyMock.replay(context);
     RoutingResult routingResult = new RoutingResult(context, null);
-    RestLiResponseData responseData = builder.buildRestLiResponseData(null,
+    RestLiResponseData<BatchGetResponseEnvelope> responseData = builder.buildRestLiResponseData(null,
                                                                       routingResult,
-                                                                      new BatchResult<Object, EmptyRecord>(Collections.<Object, EmptyRecord>emptyMap(), Collections.<Object, RestLiServiceException>emptyMap()),
-                                                                      Collections.<String, String>emptyMap(), Collections.<HttpCookie>emptyList());
-    Assert.assertEquals(responseData.getBatchResponseEnvelope().getBatchResponseMap().get("foo").getException(),
+                                                                      new BatchResult<>(Collections.emptyMap(), Collections.emptyMap()),
+                                                                      Collections.emptyMap(), Collections.emptyList());
+    Assert.assertEquals(responseData.getResponseEnvelope().getBatchResponseMap().get("foo").getException(),
             exception);
-    Assert.assertEquals(responseData.getBatchResponseEnvelope().getBatchResponseMap().size(), 1);
+    Assert.assertEquals(responseData.getResponseEnvelope().getBatchResponseMap().size(), 1);
   }
 
   @Test
   public void testAlternativeKeyBuilder()
   {
-    Map<CompoundKey, Foo> rawResults = new HashMap<CompoundKey, Foo>();
+    Map<CompoundKey, Foo> rawResults = new HashMap<>();
     CompoundKey c1 = new CompoundKey().append("a", "a1").append("b", 1);
     CompoundKey c2 = new CompoundKey().append("a", "a2").append("b", 2);
     Foo record1 = new Foo().setStringField("record1").setFruitsField(Fruits.APPLE);
@@ -229,23 +227,23 @@ public class TestBatchGetResponseBuilder
     rawResults.put(c1, record1);
     rawResults.put(c2, record2);
 
-    Map<String, AlternativeKey<?, ?>> alternativeKeyMap = new HashMap<String, AlternativeKey<?, ?>>();
-    alternativeKeyMap.put("alt", new AlternativeKey<String, CompoundKey>(new TestKeyCoercer(), String.class, new StringDataSchema()));
+    Map<String, AlternativeKey<?, ?>> alternativeKeyMap = new HashMap<>();
+    alternativeKeyMap.put("alt", new AlternativeKey<>(new TestKeyCoercer(), String.class, new StringDataSchema()));
 
     Map<String, String> headers = ResponseBuilderUtil.getHeaders();
 
     ResourceContext mockContext = getMockResourceContext(AllProtocolVersions.LATEST_PROTOCOL_VERSION,
-            Collections.<Object, RestLiServiceException>emptyMap(),
+            Collections.emptyMap(),
             "alt", null, null);
     ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor(alternativeKeyMap);
     RoutingResult routingResult = new RoutingResult(mockContext, mockDescriptor);
 
     BatchGetResponseBuilder batchGetResponseBuilder = new BatchGetResponseBuilder(null);
-    RestLiResponseData responseData = batchGetResponseBuilder.buildRestLiResponseData(null,
+    RestLiResponseData<BatchGetResponseEnvelope> responseData = batchGetResponseBuilder.buildRestLiResponseData(null,
                                                                                       routingResult,
                                                                                       rawResults,
                                                                                       headers,
-                                                                                      Collections.<HttpCookie>emptyList());
+                                                                                      Collections.emptyList());
     PartialRestResponse restResponse = batchGetResponseBuilder.buildResponse(routingResult, responseData);
 
     EasyMock.verify(mockContext, mockDescriptor);
@@ -261,14 +259,14 @@ public class TestBatchGetResponseBuilder
   @DataProvider(name = "exceptionTestData")
   public Object[][] exceptionDataProvider()
   {
-    Map<Long, Foo> results = new HashMap<Long, Foo>();
+    Map<Long, Foo> results = new HashMap<>();
     Foo f1 = new Foo().setStringField("f1");
     Foo f2 = new Foo().setStringField("f2");
     results.put(null, f1);
     results.put(1L, f2);
 
-    BatchResult<Long, Foo> batchResult = new BatchResult<Long, Foo>(Collections.singletonMap(1L, f1),
-                                                                    Collections.<Long, HttpStatus>singletonMap(null, HttpStatus.S_404_NOT_FOUND),
+    BatchResult<Long, Foo> batchResult = new BatchResult<>(Collections.singletonMap(1L, f1),
+                                                                    Collections.singletonMap(null, HttpStatus.S_404_NOT_FOUND),
                                                                     null);
     final String expectedMessage = "Unexpected null encountered. Null key inside of a Map returned by the resource method: ";
     return new Object[][]
@@ -282,7 +280,7 @@ public class TestBatchGetResponseBuilder
   public void testBuilderExceptions(Object results, String expectedErrorMessage)
   {
     // Protocol version doesn't matter here
-    ResourceContext mockContext = getMockResourceContext(null, Collections.<Object, RestLiServiceException>emptyMap(),
+    ResourceContext mockContext = getMockResourceContext(null, Collections.emptyMap(),
         null, null, null);
     ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor(null);
     RoutingResult routingResult = new RoutingResult(mockContext, mockDescriptor);
@@ -293,7 +291,7 @@ public class TestBatchGetResponseBuilder
     try
     {
       responseBuilder.buildRestLiResponseData(null, routingResult, results, headers,
-                                              Collections.<HttpCookie>emptyList());
+                                              Collections.emptyList());
       Assert.fail("buildRestLiResponseData should have failed because of null elements!");
     }
     catch (RestLiServiceException e)
@@ -311,21 +309,21 @@ public class TestBatchGetResponseBuilder
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "unsupportedNullKeyMapData")
   public Object[][] unsupportedNullKeyMapData()
   {
-    Map<CompoundKey, Foo> results = new ConcurrentHashMap<CompoundKey, Foo>();
+    Map<CompoundKey, Foo> results = new ConcurrentHashMap<>();
     CompoundKey c1 = new CompoundKey().append("a", "a1").append("b", 1);
     Foo record1 = new Foo().setStringField("record1").setFruitsField(Fruits.APPLE);
     results.put(c1, record1);
 
-    Map<CompoundKey, HttpStatus> statuses = new ConcurrentHashMap<CompoundKey, HttpStatus>();
+    Map<CompoundKey, HttpStatus> statuses = new ConcurrentHashMap<>();
     statuses.put(c1, HttpStatus.S_200_OK);
 
     final BatchResult<CompoundKey, Foo> batchResult =
-        new BatchResult<CompoundKey, Foo>(results, statuses, new ConcurrentHashMap<CompoundKey, RestLiServiceException>());
+        new BatchResult<>(results, statuses, new ConcurrentHashMap<>());
 
-    final Map<String, Foo> protocol1TransformedResults = new ConcurrentHashMap<String, Foo>();
+    final Map<String, Foo> protocol1TransformedResults = new ConcurrentHashMap<>();
     protocol1TransformedResults.put("a=a1&b=1", record1);
 
-    final Map<String, Foo> protocol2TransformedResults = new ConcurrentHashMap<String, Foo>();
+    final Map<String, Foo> protocol2TransformedResults = new ConcurrentHashMap<>();
     protocol2TransformedResults.put("(a:a1,b:1)", record1);
 
     ProtocolVersion protocolVersion1 = AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion();
@@ -345,18 +343,18 @@ public class TestBatchGetResponseBuilder
   public void unsupportedNullKeyMapTest(Object results, ProtocolVersion protocolVersion, Map<String, Foo> expectedTransformedResult)
   {
     ResourceContext mockContext = getMockResourceContext(protocolVersion,
-        Collections.<Object, RestLiServiceException>emptyMap(), null, null, null);
+        Collections.emptyMap(), null, null, null);
     ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor(null);
     RoutingResult routingResult = new RoutingResult(mockContext, mockDescriptor);
 
     Map<String, String> headers = ResponseBuilderUtil.getHeaders();
 
     BatchGetResponseBuilder responseBuilder = new BatchGetResponseBuilder(new ErrorResponseBuilder());
-    RestLiResponseData responseData = responseBuilder.buildRestLiResponseData(null,
+    RestLiResponseData<BatchGetResponseEnvelope> responseData = responseBuilder.buildRestLiResponseData(null,
                                                                               routingResult,
                                                                               results,
                                                                               headers,
-                                                                              Collections.<HttpCookie>emptyList());
+                                                                              Collections.emptyList());
     PartialRestResponse restResponse = responseBuilder.buildResponse(routingResult, responseData);
 
     ResponseBuilderUtil.validateHeaders(restResponse, headers);
@@ -365,7 +363,7 @@ public class TestBatchGetResponseBuilder
     Assert.assertEquals(entity.getResults(), expectedTransformedResult);
     if (results instanceof BatchResult)
     {
-      Map<String, Integer> expectedStatuses = new HashMap<String, Integer>();
+      Map<String, Integer> expectedStatuses = new HashMap<>();
       for (String key: entity.getResults().keySet())
       {
         expectedStatuses.put(key, HttpStatus.S_200_OK.getCode());
@@ -389,23 +387,23 @@ public class TestBatchGetResponseBuilder
     EasyMock.expect(mockContext.hasParameter(RestConstants.ALT_KEY_PARAM)).andReturn(false);
     EasyMock.expect(mockContext.getProjectionMode()).andReturn(ProjectionMode.AUTOMATIC);
     EasyMock.expect(mockContext.getProjectionMask()).andReturn(maskTree);
-    EasyMock.expect(mockContext.getBatchKeyErrors()).andReturn(Collections.<Object, RestLiServiceException>emptyMap()).once();
+    EasyMock.expect(mockContext.getBatchKeyErrors()).andReturn(Collections.emptyMap()).once();
     EasyMock.replay(mockContext);
 
     ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor(null);
     RoutingResult routingResult = new RoutingResult(mockContext, mockDescriptor);
 
-    Map<Integer, Foo> results = new HashMap<Integer, Foo>();
+    Map<Integer, Foo> results = new HashMap<>();
     Foo value = new Foo().setStringField("value").setFruitsField(Fruits.APPLE);
     results.put(1, value);
 
     BatchGetResponseBuilder responseBuilder = new BatchGetResponseBuilder(new ErrorResponseBuilder());
-    RestLiResponseData responseData = responseBuilder.buildRestLiResponseData(null,
+    RestLiResponseData<BatchGetResponseEnvelope> responseData = responseBuilder.buildRestLiResponseData(null,
                                                                               routingResult,
                                                                               results,
-                                                                              Collections.<String, String>emptyMap(),
-                                                                              Collections.<HttpCookie>emptyList());
-    RecordTemplate record = responseData.getBatchResponseEnvelope().getBatchResponseMap().get(1).getRecord();
+                                                                              Collections.emptyMap(),
+                                                                              Collections.emptyList());
+    RecordTemplate record = responseData.getResponseEnvelope().getBatchResponseMap().get(1).getRecord();
     Assert.assertEquals(record.data().size(), 1);
     Assert.assertEquals(record.data().get("fruitsField"), Fruits.APPLE.toString());
 

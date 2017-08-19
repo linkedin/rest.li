@@ -32,7 +32,6 @@ import com.linkedin.restli.server.ErrorResponseFormat;
 import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
 
-import java.net.HttpCookie;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -72,12 +71,11 @@ public class TestErrorResponseBuilder
                                                                          runtimeException);
 
     ErrorResponseBuilder errorResponseBuilder = new ErrorResponseBuilder();
-    RestLiResponseData responseData = errorResponseBuilder.buildRestLiResponseData(null,
-                                                                                   routingResult,
+    RestLiResponseData<?> responseData = errorResponseBuilder.buildRestLiResponseData(routingResult,
                                                                                    serviceException,
                                                                                    headers,
-                                                                                   Collections.<HttpCookie>emptyList());
-    PartialRestResponse restResponse = errorResponseBuilder.buildResponse(routingResult, responseData);
+                                                                                   Collections.emptyList());
+    PartialRestResponse restResponse = errorResponseBuilder.buildResponse(responseData);
 
     EasyMock.verify(mockDescriptor);
     ErrorResponse errorResponse = (ErrorResponse)restResponse.getEntity();

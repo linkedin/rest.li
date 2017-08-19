@@ -24,8 +24,13 @@ import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.validation.RestLiDataValidator;
-import com.linkedin.restli.internal.server.response.BatchResponseEnvelope;
 import com.linkedin.restli.internal.server.response.BatchCreateResponseEnvelope;
+import com.linkedin.restli.internal.server.response.BatchGetResponseEnvelope;
+import com.linkedin.restli.internal.server.response.BatchResponseEnvelope;
+import com.linkedin.restli.internal.server.response.CreateResponseEnvelope;
+import com.linkedin.restli.internal.server.response.FinderResponseEnvelope;
+import com.linkedin.restli.internal.server.response.GetAllResponseEnvelope;
+import com.linkedin.restli.internal.server.response.GetResponseEnvelope;
 import com.linkedin.restli.server.RestLiRequestData;
 import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
@@ -64,7 +69,7 @@ public class RestLiValidationFilter implements Filter
     }
     else if (method == ResourceMethod.PARTIAL_UPDATE)
     {
-      ValidationResult result = validator.validateInput((PatchRequest) requestData.getEntity());
+      ValidationResult result = validator.validateInput((PatchRequest<?>) requestData.getEntity());
       if (!result.isValid())
       {
         throw new RestLiServiceException(HttpStatus.S_422_UNPROCESSABLE_ENTITY, result.getMessages().toString());
@@ -98,7 +103,7 @@ public class RestLiValidationFilter implements Filter
             }
             else
             {
-              result = validator.validateInput((PatchRequest) entry.getValue());
+              result = validator.validateInput((PatchRequest<?>) entry.getValue());
             }
             if (!result.isValid())
             {
@@ -116,6 +121,7 @@ public class RestLiValidationFilter implements Filter
     return CompletableFuture.completedFuture(null);
   }
 
+  @SuppressWarnings("unchecked")
   public CompletableFuture<Void> onResponse(final FilterRequestContext requestContext,
                                             final FilterResponseContext responseContext)
   {
@@ -123,35 +129,37 @@ public class RestLiValidationFilter implements Filter
     ResourceMethod method = requestContext.getMethodType();
     RestLiDataValidator
         validator = new RestLiDataValidator(resourceClass.getAnnotations(), requestContext.getFilterResourceModel().getValueClass(), method);
-    RestLiResponseData responseData = responseContext.getResponseData();
+    RestLiResponseData<?> responseData = responseContext.getResponseData();
     MaskTree projectionMask = requestContext.getProjectionMask();
 
-    if (responseData.isErrorResponse())
+    if (responseData.getResponseEnvelope().isErrorResponse())
     {
       return CompletableFuture.completedFuture(null);
     }
     switch (method)
     {
       case GET:
-        validateSingleResponse(validator, responseData.getRecordResponseEnvelope().getRecord(), projectionMask);
+        validateSingleResponse(validator, ((GetResponseEnvelope) responseData.getResponseEnvelope()).getRecord(), projectionMask);
         break;
       case CREATE:
         if (requestContext.getCustomAnnotations().containsKey("returnEntity"))
         {
-          validateSingleResponse(validator, responseData.getRecordResponseEnvelope().getRecord(), projectionMask);
+          validateSingleResponse(validator, ((CreateResponseEnvelope) responseData.getResponseEnvelope()).getRecord(), projectionMask);
         }
         break;
       case GET_ALL:
+        validateCollectionResponse(validator, ((GetAllResponseEnvelope) responseData.getResponseEnvelope()).getCollectionResponse(), projectionMask);
+        break;
       case FINDER:
-        validateCollectionResponse(validator, responseData.getCollectionResponseEnvelope().getCollectionResponse(), projectionMask);
+        validateCollectionResponse(validator, ((FinderResponseEnvelope) responseData.getResponseEnvelope()).getCollectionResponse(), projectionMask);
         break;
       case BATCH_GET:
-        validateBatchResponse(validator, responseData.getBatchResponseEnvelope().getBatchResponseMap(), projectionMask);
+        validateBatchResponse(validator, ((BatchGetResponseEnvelope) responseData.getResponseEnvelope()).getBatchResponseMap(), projectionMask);
         break;
       case BATCH_CREATE:
         if (requestContext.getCustomAnnotations().containsKey("returnEntity"))
         {
-          validateCreateCollectionResponse(validator, responseData.getBatchCreateResponseEnvelope().getCreateResponses(), projectionMask);
+          validateCreateCollectionResponse(validator, ((BatchCreateResponseEnvelope) responseData.getResponseEnvelope()).getCreateResponses(), projectionMask);
         }
         break;
     }
@@ -222,7 +230,7 @@ public class RestLiValidationFilter implements Filter
         continue;
       }
       ValidationResult
-          result = validator.validateOutput(((CreateIdEntityStatus)item.getRecord()).getEntity(), projectionMask);
+          result = validator.validateOutput(((CreateIdEntityStatus<?, ?>) item.getRecord()).getEntity(), projectionMask);
       if (!result.isValid())
       {
         sb.append(result.getMessages().toString());
@@ -237,7 +245,7 @@ public class RestLiValidationFilter implements Filter
   public CompletableFuture<Void> onError(Throwable t, final FilterRequestContext requestContext,
                                          final FilterResponseContext responseContext)
   {
-    CompletableFuture<Void> future = new CompletableFuture<Void>();
+    CompletableFuture<Void> future = new CompletableFuture<>();
     future.completeExceptionally(t);
     return future;
   }

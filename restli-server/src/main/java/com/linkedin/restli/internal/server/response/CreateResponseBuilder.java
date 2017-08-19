@@ -18,6 +18,7 @@ package com.linkedin.restli.internal.server.response;
 
 
 import com.linkedin.data.DataMap;
+import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.jersey.api.uri.UriComponent;
 import com.linkedin.r2.message.rest.RestRequest;
@@ -42,31 +43,32 @@ import java.util.List;
 import java.util.Map;
 
 
-public class CreateResponseBuilder implements RestLiResponseBuilder
+public class CreateResponseBuilder implements RestLiResponseBuilder<RestLiResponseData<CreateResponseEnvelope>>
 {
   @Override
-  public PartialRestResponse buildResponse(RoutingResult routingResult, RestLiResponseData responseData)
+  public PartialRestResponse buildResponse(RoutingResult routingResult, RestLiResponseData<CreateResponseEnvelope> responseData)
   {
-    return new PartialRestResponse.Builder().entity(responseData.getRecordResponseEnvelope().getRecord())
+    return new PartialRestResponse.Builder().entity(responseData.getResponseEnvelope().getRecord())
                                             .headers(responseData.getHeaders())
                                             .cookies(responseData.getCookies())
-                                            .status(responseData.getStatus())
+                                            .status(responseData.getResponseEnvelope().getStatus())
                                             .build();
   }
 
   @Override
-  public RestLiResponseData buildRestLiResponseData(RestRequest request,
+  public RestLiResponseData<CreateResponseEnvelope> buildRestLiResponseData(RestRequest request,
                                                     RoutingResult routingResult,
                                                     Object result,
                                                     Map<String, String> headers,
                                                     List<HttpCookie> cookies)
   {
     CreateResponse createResponse = (CreateResponse) result;
+    boolean isGetAfterCreate = createResponse instanceof CreateKVResponse;
+
     if (createResponse.hasError())
     {
-      RestLiResponseDataImpl responseData = new RestLiResponseDataImpl(createResponse.getError(), headers, cookies);
-      responseData.setResponseEnvelope(new CreateResponseEnvelope(null, responseData));
-      return responseData;
+      RestLiServiceException exception = createResponse.getError();
+      return new RestLiResponseDataImpl<>(new CreateResponseEnvelope(exception, isGetAfterCreate), headers, cookies);
     }
 
     Object id = null;
@@ -94,22 +96,22 @@ public class CreateResponseBuilder implements RestLiResponseBuilder
               + routingResult.getResourceMethod());
     }
 
-    RestLiResponseDataImpl responseData = new RestLiResponseDataImpl(createResponse.getStatus(), headers, cookies);
-    CreateResponseEnvelope responseEnvelope;
+    RecordTemplate idResponse;
     if (createResponse instanceof CreateKVResponse)
     {
       final ResourceContext resourceContext = routingResult.getContext();
-      DataMap entityData = ((CreateKVResponse)createResponse).getEntity().data();
+      DataMap entityData = ((CreateKVResponse<?, ?>) createResponse).getEntity().data();
       final DataMap data = RestUtils.projectFields(entityData, resourceContext.getProjectionMode(), resourceContext.getProjectionMask());
-      responseEnvelope = new CreateResponseEnvelope(new AnyRecord(data), true, responseData);
+      idResponse = new AnyRecord(data);
+      // Ideally, we should set an IdEntityResponse to the envelope. But we are keeping AnyRecord
+      // to make sure the runtime object is backwards compatible.
+      // idResponse = new IdEntityResponse<>(id, new AnyRecord(data));
     }
     else //Instance of idResponse
     {
-      IdResponse<?> idResponse = new IdResponse<Object>(id);
-      responseEnvelope = new CreateResponseEnvelope(idResponse, responseData);
+      idResponse = new IdResponse<>(id);
     }
-    responseData.setResponseEnvelope(responseEnvelope);
 
-    return responseData;
+    return new RestLiResponseDataImpl<>(new CreateResponseEnvelope(createResponse.getStatus(), idResponse, isGetAfterCreate), headers, cookies);
   }
 }

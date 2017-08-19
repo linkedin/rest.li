@@ -44,6 +44,8 @@ import com.linkedin.restli.examples.greetings.client.GreetingsPromiseRequestBuil
 import com.linkedin.restli.examples.greetings.client.GreetingsRequestBuilders;
 import com.linkedin.restli.examples.greetings.client.GreetingsTaskBuilders;
 import com.linkedin.restli.examples.greetings.client.GreetingsTaskRequestBuilders;
+import com.linkedin.restli.internal.server.response.RecordResponseEnvelope;
+import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.RoutingException;
 import com.linkedin.restli.server.filter.Filter;
@@ -399,6 +401,7 @@ public class TestFilters extends RestLiIntegrationTest
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public CompletableFuture<Void> onResponse(FilterRequestContext requestContext,
                                               FilterResponseContext responseContext)
     {
@@ -410,7 +413,7 @@ public class TestFilters extends RestLiIntegrationTest
       switch (responseContext.getResponseData().getResponseType())
       {
         case SINGLE_ENTITY:
-          entity = responseContext.getResponseData().getRecordResponseEnvelope().getRecord();
+          entity = ((RestLiResponseData<RecordResponseEnvelope>)responseContext.getResponseData()).getResponseEnvelope().getRecord();
           break;
         case STATUS_ONLY:
           entity = null;
@@ -419,13 +422,13 @@ public class TestFilters extends RestLiIntegrationTest
           throw new RuntimeException("Unexpected resolver type.");
       }
       if (entity != null && requestContext.getMethodType() == ResourceMethod.GET
-          && responseContext.getResponseData().getStatus() == HttpStatus.S_200_OK)
+          && responseContext.getResponseData().getResponseEnvelope().getStatus() == HttpStatus.S_200_OK)
       {
         Greeting greeting = new Greeting(entity.data());
         if (greeting.hasTone())
         {
           greeting.setTone(mapToneForOutgoingResponse(greeting.getTone()));
-          responseContext.getResponseData().getRecordResponseEnvelope().setRecord(greeting, HttpStatus.S_200_OK);
+          ((RestLiResponseData<RecordResponseEnvelope>)responseContext.getResponseData()).getResponseEnvelope().setRecord(greeting, HttpStatus.S_200_OK);
         }
       }
       return CompletableFuture.completedFuture(null);
@@ -437,7 +440,7 @@ public class TestFilters extends RestLiIntegrationTest
     {
       numErrors++;
       if (requestContext.getMethodType() == ResourceMethod.CREATE
-          && responseContext.getResponseData().getStatus() == REQ_FILTER_ERROR_STATUS)
+          && responseContext.getResponseData().getResponseEnvelope().getStatus() == REQ_FILTER_ERROR_STATUS)
       {
         throw _responseFilterException;
       }
