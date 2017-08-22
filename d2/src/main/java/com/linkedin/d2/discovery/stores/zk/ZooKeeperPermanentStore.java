@@ -16,17 +16,16 @@
 
 package com.linkedin.d2.discovery.stores.zk;
 
+import com.linkedin.common.callback.Callback;
+import com.linkedin.common.util.None;
+import com.linkedin.d2.discovery.PropertySerializationException;
+import com.linkedin.d2.discovery.PropertySerializer;
 import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.linkedin.common.callback.Callback;
-import com.linkedin.common.util.None;
-import com.linkedin.d2.discovery.PropertySerializationException;
-import com.linkedin.d2.discovery.PropertySerializer;
 
 import static com.linkedin.d2.discovery.util.LogUtil.trace;
 
@@ -149,6 +148,9 @@ public class ZooKeeperPermanentStore<T> extends ZooKeeperStore<T>
         _zk.getData(watchedEvent.getPath(), this, this, false);
     }
 
+    /**
+     * Callback for getData call
+     */
     @Override
     public void processResult(int rc, String path, Object ctx, byte[] bytes, Stat stat)
     {
@@ -203,6 +205,9 @@ public class ZooKeeperPermanentStore<T> extends ZooKeeperStore<T>
       }
     }
 
+    /**
+     * Callback for exist call
+     */
     @Override
     public void processResult(int rc, String path, Object ctx, Stat stat)
     {

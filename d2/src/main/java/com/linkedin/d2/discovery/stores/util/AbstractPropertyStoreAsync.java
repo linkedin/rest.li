@@ -20,14 +20,12 @@
 
 package com.linkedin.d2.discovery.stores.util;
 
-import com.linkedin.d2.discovery.event.PropertyEventThread;
-import com.linkedin.d2.discovery.stores.PropertyStore;
-import com.linkedin.d2.discovery.stores.PropertyStoreAsync;
-import com.linkedin.d2.discovery.stores.PropertyStoreException;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
-
+import com.linkedin.d2.discovery.stores.PropertyStore;
+import com.linkedin.d2.discovery.stores.PropertyStoreAsync;
+import com.linkedin.d2.discovery.stores.PropertyStoreException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -63,23 +61,9 @@ public abstract class AbstractPropertyStoreAsync<T> implements PropertyStoreAsyn
   }
 
   @Override
-  public final void shutdown(final PropertyEventThread.PropertyEventShutdownCallback callback)
+  public void shutdown(final Callback<None> callback)
   {
-    Callback<None> cb = new Callback<None>()
-    {
-      @Override
-      public void onSuccess(None none)
-      {
-        callback.done();
-      }
-
-      @Override
-      public void onError(Throwable e)
-      {
-        callback.done();
-      }
-    };
-    shutdown(cb);
+    shutdown(callback);
   }
 
   protected static <U> U getUninterruptibly(Future<U> future) throws PropertyStoreException

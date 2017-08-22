@@ -16,7 +16,13 @@
 
 package com.linkedin.d2.discovery.stores.zk;
 
-import java.util.ArrayList;
+import com.linkedin.common.callback.Callback;
+import com.linkedin.common.callback.CallbackAdapter;
+import com.linkedin.common.callback.FutureCallback;
+import com.linkedin.common.util.None;
+import com.linkedin.d2.discovery.PropertySerializationException;
+import com.linkedin.d2.discovery.PropertySerializer;
+import com.linkedin.d2.discovery.stores.PropertyStoreException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -28,8 +34,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import java.util.stream.Collectors;
 import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
@@ -38,14 +42,6 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.linkedin.common.callback.Callback;
-import com.linkedin.common.callback.CallbackAdapter;
-import com.linkedin.common.callback.FutureCallback;
-import com.linkedin.common.util.None;
-import com.linkedin.d2.discovery.PropertySerializationException;
-import com.linkedin.d2.discovery.PropertySerializer;
-import com.linkedin.d2.discovery.stores.PropertyStoreException;
 
 import static com.linkedin.d2.discovery.util.LogUtil.trace;
 
@@ -438,6 +434,9 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
       _zk.getChildren(getPath(propertyName), this, this, false);
     }
 
+    /**
+     * Callback for children call
+     */
     @Override
     public void processResult(int rc, final String path, Object ctx, List<String> children)
     {
@@ -501,6 +500,9 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
       }
     }
 
+    /**
+     * Callback for exist call
+     */
     @Override
     public void processResult(int rc, String path, Object ctx, Stat stat)
     {

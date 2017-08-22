@@ -16,18 +16,17 @@
 
 package com.linkedin.d2.discovery.stores.toggling;
 
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.fail;
-
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
-import org.testng.annotations.Test;
-
-import com.linkedin.d2.discovery.event.PropertyEventThread.PropertyEventShutdownCallback;
+import com.linkedin.common.callback.FutureCallback;
+import com.linkedin.common.util.None;
 import com.linkedin.d2.discovery.stores.PropertyStoreException;
 import com.linkedin.d2.discovery.stores.PropertyStoreTest;
 import com.linkedin.d2.discovery.stores.mock.MockStore;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import org.testng.annotations.Test;
+
+import static org.testng.Assert.assertNull;
 
 public class TogglingStoreTest extends PropertyStoreTest
 {
@@ -72,26 +71,17 @@ public class TogglingStoreTest extends PropertyStoreTest
   }
 
   @Test(groups = { "small", "back-end" })
-  public void testShutdownDisabled() throws InterruptedException
+  public void testShutdownDisabled() throws InterruptedException, TimeoutException, ExecutionException
   {
     TogglingStore<String> store = getStore();
 
     store.setEnabled(false);
 
-    final CountDownLatch latch = new CountDownLatch(1);
+    final FutureCallback<None> latch = new FutureCallback<>();
 
-    store.shutdown(new PropertyEventShutdownCallback()
-    {
-      @Override
-      public void done()
-      {
-        latch.countDown();
-      }
-    });
+    store.shutdown(latch);
 
-    if (!latch.await(5, TimeUnit.SECONDS))
-    {
-      fail("unable to shut down store");
-    }
+    // unable to shut down store
+    latch.get(5, TimeUnit.SECONDS);
   }
 }

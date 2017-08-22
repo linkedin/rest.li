@@ -16,29 +16,26 @@
 
 package com.linkedin.d2.discovery.stores.zk;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
-
+import com.linkedin.common.callback.FutureCallback;
+import com.linkedin.common.util.None;
+import com.linkedin.d2.discovery.stores.PropertyStore;
+import com.linkedin.d2.discovery.stores.PropertyStoreException;
+import com.linkedin.d2.discovery.stores.PropertyStringSerializer;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-
+import java.util.concurrent.TimeoutException;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
-import com.linkedin.d2.discovery.event.PropertyEventThread.PropertyEventShutdownCallback;
-import com.linkedin.d2.discovery.stores.PropertyStore;
-import com.linkedin.d2.discovery.stores.PropertyStoreException;
-import com.linkedin.d2.discovery.stores.PropertyStringSerializer;
-import com.linkedin.common.callback.FutureCallback;
-import com.linkedin.common.util.None;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 public class ZooKeeperEphemeralStoreTest
 {
@@ -121,20 +118,15 @@ public class ZooKeeperEphemeralStoreTest
 
     assertNull(store.get("service-2"));
 
-    final CountDownLatch latch = new CountDownLatch(1);
-
-    store.shutdown(new PropertyEventShutdownCallback()
+    final FutureCallback<None> latch = new FutureCallback<>();
+    store.shutdown(latch);
+    try
     {
-      @Override
-      public void done()
-      {
-        latch.countDown();
-      }
-    });
-
-    if (!latch.await(5, TimeUnit.SECONDS))
+      latch.get(5, TimeUnit.SECONDS);
+    }
+    catch (InterruptedException | ExecutionException | TimeoutException e)
     {
-      fail("unable to shut down");
+      fail("unable to shut down store");
     }
   }
 
@@ -144,18 +136,13 @@ public class ZooKeeperEphemeralStoreTest
   {
     PropertyStore<String> store = getStore();
 
-    final CountDownLatch latch = new CountDownLatch(1);
-
-    store.shutdown(new PropertyEventShutdownCallback()
+    final FutureCallback<None> latch = new FutureCallback<>();
+    store.shutdown(latch);
+    try
     {
-      @Override
-      public void done()
-      {
-        latch.countDown();
-      }
-    });
-
-    if (!latch.await(5, TimeUnit.SECONDS))
+      latch.get(5, TimeUnit.SECONDS);
+    }
+    catch (InterruptedException | ExecutionException | TimeoutException e)
     {
       fail("unable to shut down store");
     }

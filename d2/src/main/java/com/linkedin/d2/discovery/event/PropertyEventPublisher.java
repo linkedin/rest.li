@@ -52,6 +52,6 @@ public interface PropertyEventPublisher<T>
 
   void start(Callback<None> callback);
 
-  void shutdown(PropertyEventThread.PropertyEventShutdownCallback callback);
+  void shutdown(Callback<None> callback);
 
 }

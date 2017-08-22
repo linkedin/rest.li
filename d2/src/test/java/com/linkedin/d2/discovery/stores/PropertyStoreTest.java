@@ -16,16 +16,16 @@
 
 package com.linkedin.d2.discovery.stores;
 
+import com.linkedin.common.callback.FutureCallback;
+import com.linkedin.common.util.None;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import org.testng.annotations.Test;
+
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.fail;
-
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
-import org.testng.annotations.Test;
-
-import com.linkedin.d2.discovery.event.PropertyEventThread.PropertyEventShutdownCallback;
 
 public abstract class PropertyStoreTest
 {
@@ -63,22 +63,17 @@ public abstract class PropertyStoreTest
 
   @Test(groups = { "small", "back-end" })
   public void testShutdown() throws InterruptedException,
-      PropertyStoreException
+    PropertyStoreException
   {
     PropertyStore<String> store = getStore();
 
-    final CountDownLatch latch = new CountDownLatch(1);
-
-    store.shutdown(new PropertyEventShutdownCallback()
+    final FutureCallback<None> latch = new FutureCallback<>();
+    store.shutdown(latch);
+    try
     {
-      @Override
-      public void done()
-      {
-        latch.countDown();
-      }
-    });
-
-    if (!latch.await(5, TimeUnit.SECONDS))
+      latch.get(5, TimeUnit.SECONDS);
+    }
+    catch (InterruptedException | ExecutionException | TimeoutException e)
     {
       fail("unable to shut down store");
     }

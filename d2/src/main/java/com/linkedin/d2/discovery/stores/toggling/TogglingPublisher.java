@@ -20,16 +20,14 @@
 
 package com.linkedin.d2.discovery.stores.toggling;
 
-import com.linkedin.d2.discovery.event.PropertyEventBus;
-import com.linkedin.d2.discovery.event.PropertyEventPublisher;
-import com.linkedin.d2.discovery.event.PropertyEventThread;
-import com.linkedin.d2.discovery.stores.PropertyStore;
-import com.linkedin.d2.discovery.stores.util.NullEventBus;
-import com.linkedin.d2.discovery.stores.util.StoreEventPublisher;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.Callbacks;
 import com.linkedin.common.util.None;
-
+import com.linkedin.d2.discovery.event.PropertyEventBus;
+import com.linkedin.d2.discovery.event.PropertyEventPublisher;
+import com.linkedin.d2.discovery.stores.PropertyStore;
+import com.linkedin.d2.discovery.stores.util.NullEventBus;
+import com.linkedin.d2.discovery.stores.util.StoreEventPublisher;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -106,23 +104,13 @@ public class TogglingPublisher<T>
     int count = (primary ? 1 : 0) + (backup ? 1 : 0);
     final Callback<None> multiCallback = Callbacks.countDown(callback, count);
 
-    PropertyEventThread.PropertyEventShutdownCallback pcallback =
-            new PropertyEventThread.PropertyEventShutdownCallback()
-    {
-      @Override
-      public void done()
-      {
-        multiCallback.onSuccess(None.none());
-      }
-    };
-
     if (primary)
     {
-      _primary.getPublisher().shutdown(pcallback);
+      _primary.getPublisher().shutdown(multiCallback);
     }
     if (backup)
     {
-      _backup.getPublisher().shutdown(pcallback);
+      _backup.getPublisher().shutdown(multiCallback);
     }
   }
 

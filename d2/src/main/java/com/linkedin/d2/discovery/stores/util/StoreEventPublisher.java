@@ -22,14 +22,12 @@ package com.linkedin.d2.discovery.stores.util;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.linkedin.d2.discovery.event.PropertyEventBus;
 import com.linkedin.d2.discovery.event.PropertyEventPublisher;
-import com.linkedin.d2.discovery.event.PropertyEventThread;
 import com.linkedin.d2.discovery.stores.PropertyStore;
 import com.linkedin.d2.discovery.stores.PropertyStoreException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Steven Ihde
@@ -85,7 +83,7 @@ public class StoreEventPublisher<T> implements PropertyEventPublisher<T>
   }
 
   @Override
-  public void shutdown(PropertyEventThread.PropertyEventShutdownCallback callback)
+  public void shutdown(Callback<None> callback)
   {
     _store.shutdown(callback);
   }

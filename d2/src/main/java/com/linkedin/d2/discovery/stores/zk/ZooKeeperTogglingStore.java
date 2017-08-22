@@ -16,17 +16,17 @@
 
 package com.linkedin.d2.discovery.stores.zk;
 
-import static com.linkedin.d2.discovery.util.LogUtil.info;
-import static com.linkedin.d2.discovery.util.LogUtil.warn;
-
+import com.linkedin.common.callback.Callback;
+import com.linkedin.common.util.None;
+import com.linkedin.d2.discovery.event.PropertyEventBus;
 import com.linkedin.d2.discovery.stores.PropertyStore;
 import com.linkedin.d2.discovery.stores.toggling.TogglingPublisher;
+import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.apache.zookeeper.Watcher.Event.KeeperState;
 
-import com.linkedin.d2.discovery.event.PropertyEventBus;
-import com.linkedin.d2.discovery.event.PropertyEventThread.PropertyEventShutdownCallback;
+import static com.linkedin.d2.discovery.util.LogUtil.info;
+import static com.linkedin.d2.discovery.util.LogUtil.warn;
 
 /**
  * ZooKeeperTogglingStore manages a ZooKeeperStore, a backup store, and an event bus such that if a
@@ -71,10 +71,16 @@ public class ZooKeeperTogglingStore<T> extends TogglingPublisher<T>
             //setEnabled(false);
 
             // this will block until zk comes back, at which point, shutdown will complete
-            store.shutdown(new PropertyEventShutdownCallback()
+            store.shutdown(new Callback<None>()
             {
               @Override
-              public void done()
+              public void onError(Throwable e)
+              {
+                warn(_log, "shutdown didn't complete");
+              }
+
+              @Override
+              public void onSuccess(None result)
               {
                 info(_log, "shutdown complete");
               }

@@ -20,10 +20,9 @@
 
 package com.linkedin.d2.discovery.stores.util;
 
-import com.linkedin.d2.discovery.event.PropertyEventThread;
-import com.linkedin.d2.discovery.stores.PropertyStore;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
+import com.linkedin.d2.discovery.stores.PropertyStore;
 
 /**
  * @author Steven Ihde
@@ -57,8 +56,8 @@ public class NullStore<T> implements PropertyStore<T>
   }
 
   @Override
-  public void shutdown(PropertyEventThread.PropertyEventShutdownCallback callback)
+  public void shutdown(Callback<None> callback)
   {
-    callback.done();
+    callback.onSuccess(None.none());
   }
 }

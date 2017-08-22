@@ -16,57 +16,53 @@
 
 package com.linkedin.d2.discovery.stores.file;
 
-import static com.linkedin.d2.discovery.util.LogUtil.debug;
-import static com.linkedin.d2.discovery.util.LogUtil.error;
-import static com.linkedin.d2.discovery.util.LogUtil.info;
-import static com.linkedin.d2.discovery.util.LogUtil.warn;
-
+import com.linkedin.common.callback.Callback;
+import com.linkedin.common.util.None;
+import com.linkedin.d2.discovery.PropertySerializationException;
+import com.linkedin.d2.discovery.PropertySerializer;
+import com.linkedin.d2.discovery.event.PropertyEventSubscriber;
+import com.linkedin.d2.discovery.stores.PropertyStore;
+import com.linkedin.d2.discovery.util.Stats;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-
-import com.linkedin.d2.discovery.PropertySerializationException;
-import com.linkedin.common.callback.Callback;
-import com.linkedin.common.util.None;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.linkedin.d2.discovery.PropertySerializer;
-import com.linkedin.d2.discovery.event.PropertyEventSubscriber;
-import com.linkedin.d2.discovery.event.PropertyEventThread.PropertyEventShutdownCallback;
-import com.linkedin.d2.discovery.stores.PropertyStore;
-import com.linkedin.d2.discovery.util.Stats;
+import static com.linkedin.d2.discovery.util.LogUtil.error;
+import static com.linkedin.d2.discovery.util.LogUtil.info;
+import static com.linkedin.d2.discovery.util.LogUtil.warn;
 
 public class FileStore<T> implements PropertyStore<T>, PropertyEventSubscriber<T>
 {
   private static final Logger         _log = LoggerFactory.getLogger(FileStore.class);
   private static final String         TMP_FILE_PREFIX = "d2-";
 
-  private final String                _path;
-  private final String                _extension;
+  private final String _fsPath;
+  private final String _fsFileExtension;
   private final PropertySerializer<T> _serializer;
-  private final Stats                 _getStats;
-  private final Stats                 _putStats;
-  private final Stats                 _removeStats;
+  private final Stats _getStats;
+  private final Stats _putStats;
+  private final Stats _removeStats;
 
-  public FileStore(String path, String extension, PropertySerializer<T> serializer)
+  public FileStore(String fsPath, String fsFileExtension, PropertySerializer<T> serializer)
   {
     _getStats = new Stats(60000);
     _putStats = new Stats(60000);
     _removeStats = new Stats(60000);
-    _path = path;
-    _extension = extension;
+    _fsPath = fsPath;
+    _fsFileExtension = fsFileExtension;
     _serializer = serializer;
 
-    File file = new File(_path);
+    File file = new File(_fsPath);
 
     if (!file.exists())
     {
       if (!file.mkdirs())
       {
-        error(_log, "unable to create file path: " + _path);
+        error(_log, "unable to create file path: " + _fsPath);
       }
     }
   }
@@ -74,12 +70,12 @@ public class FileStore<T> implements PropertyStore<T>, PropertyEventSubscriber<T
   @Override
   public void start(Callback<None> callback)
   {
-    File file = new File(_path);
+    File file = new File(_fsPath);
     if (!file.exists())
     {
       if (!file.mkdirs())
       {
-        callback.onError(new IOException("unable to create file path: " + _path));
+        callback.onError(new IOException("unable to create file path: " + _fsPath));
       }
       else
       {
@@ -203,25 +199,25 @@ public class FileStore<T> implements PropertyStore<T>, PropertyEventSubscriber<T
 
   private File getFile(String listenTo)
   {
-    return new File(_path + File.separatorChar + listenTo + _extension);
+    return new File(_fsPath + File.separatorChar + listenTo + _fsFileExtension);
   }
 
   private File getTempFile(String listenTo) throws IOException
   {
-    return File.createTempFile(TMP_FILE_PREFIX+listenTo, "tmp", new File(_path));
+    return File.createTempFile(TMP_FILE_PREFIX+listenTo, "tmp", new File(_fsPath));
   }
 
   @Override
-  public void shutdown(PropertyEventShutdownCallback shutdown)
+  public void shutdown(Callback<None> shutdown)
   {
     info(_log, "shutting down");
 
-    shutdown.done();
+    shutdown.onSuccess(None.none());
   }
 
   public String getPath()
   {
-    return _path;
+    return _fsPath;
   }
 
   public PropertySerializer<T> getSerializer()

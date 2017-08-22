@@ -16,17 +16,15 @@
 
 package com.linkedin.d2.discovery.stores.toggling;
 
-import static com.linkedin.d2.discovery.util.LogUtil.info;
-import static com.linkedin.d2.discovery.util.LogUtil.warn;
-
+import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
+import com.linkedin.d2.discovery.stores.PropertyStore;
+import com.linkedin.d2.discovery.stores.PropertyStoreException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.linkedin.d2.discovery.event.PropertyEventThread.PropertyEventShutdownCallback;
-import com.linkedin.d2.discovery.stores.PropertyStore;
-import com.linkedin.d2.discovery.stores.PropertyStoreException;
-import com.linkedin.common.callback.Callback;
+import static com.linkedin.d2.discovery.util.LogUtil.info;
+import static com.linkedin.d2.discovery.util.LogUtil.warn;
 
 public class TogglingStore<T> implements PropertyStore<T>
 {
@@ -107,7 +105,7 @@ public class TogglingStore<T> implements PropertyStore<T>
   }
 
   @Override
-  public void shutdown(PropertyEventShutdownCallback callback)
+  public void shutdown(Callback<None> callback)
   {
     if (_enabled)
     {
@@ -117,7 +115,7 @@ public class TogglingStore<T> implements PropertyStore<T>
     {
       warn(_log, _store, " shutdown called on disabled store");
 
-      callback.done();
+      callback.onSuccess(None.none());
     }
   }
 

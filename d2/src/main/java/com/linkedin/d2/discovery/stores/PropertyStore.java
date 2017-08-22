@@ -16,7 +16,6 @@
 
 package com.linkedin.d2.discovery.stores;
 
-import com.linkedin.d2.discovery.event.PropertyEventThread.PropertyEventShutdownCallback;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 
@@ -31,5 +30,5 @@ public interface PropertyStore<T>
   void start(Callback<None> callback);
 
   // TODO get rid of this in favor of the other shutdown
-  void shutdown(PropertyEventShutdownCallback callback);
+  void shutdown(Callback<None> callback);
 }

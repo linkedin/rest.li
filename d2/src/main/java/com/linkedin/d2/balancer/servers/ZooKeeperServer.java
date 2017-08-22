@@ -17,21 +17,21 @@
 package com.linkedin.d2.balancer.servers;
 
 import com.linkedin.common.callback.Callback;
+import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.LoadBalancerServer;
 import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.properties.UriProperties;
-import com.linkedin.d2.discovery.event.PropertyEventThread.PropertyEventShutdownCallback;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.linkedin.d2.discovery.util.LogUtil.info;
 import static com.linkedin.d2.discovery.util.LogUtil.warn;
@@ -62,14 +62,7 @@ public class
   @Override
   public void shutdown(final Callback<None> callback)
   {
-    _store.shutdown(new PropertyEventShutdownCallback()
-    {
-      @Override
-      public void done()
-      {
-        callback.onSuccess(None.none());
-      }
-    });
+    _store.shutdown(callback);
   }
 
   @Override
@@ -222,29 +215,18 @@ public class
   {
     info(_log, "shutting down zk server");
 
-    final CountDownLatch latch = new CountDownLatch(1);
-
-    _store.shutdown(new PropertyEventShutdownCallback()
-    {
-      @Override
-      public void done()
-      {
-        latch.countDown();
-      }
-    });
-
+    final FutureCallback<None> latch = new FutureCallback<>();
+    _store.shutdown(latch);
     try
     {
-      if (!latch.await(5, TimeUnit.SECONDS))
-      {
-        warn(_log, "unable to shut down propertly");
-      }
-      else
-      {
-        info(_log, "shutting down complete");
-      }
+      latch.get(5, TimeUnit.SECONDS);
+      info(_log, "shutting down complete");
     }
-    catch (InterruptedException e)
+    catch (TimeoutException e)
+    {
+      warn(_log, "unable to shut down propertly");
+    }
+    catch (InterruptedException | ExecutionException e)
     {
       warn(_log, "unable to shut down propertly.. got interrupt exception while waiting");
     }
