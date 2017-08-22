@@ -127,6 +127,13 @@ public class SslRequestHandler extends ChannelOutboundHandlerAdapter
         @Override
         public void operationComplete(Future<Channel> future) throws Exception
         {
+          // if the handshake wasn't successful, we can immediately flush
+          // and avoid to check principal which would throw an exception
+          if (!future.isSuccess())
+          {
+            ctx.flush();
+            return;
+          }
           checkCertPrincipalAndFlush(ctx);
         }
       });
@@ -140,13 +147,16 @@ public class SslRequestHandler extends ChannelOutboundHandlerAdapter
   private void checkCertPrincipalAndFlush(final ChannelHandlerContext ctx) throws SSLPeerUnverifiedException
   {
     String expectedPrincipalName = ctx.channel().attr(EXPECTED_SERVER_CERT_PRINCIPAL_ATTR_KEY).getAndSet(null);
-    String actualPrincipalName = _sslHandler.engine().getSession().getPeerPrincipal().getName();
 
     // if cert is empty, the check is disabled and not needed by the user, therefore don't check
-    if (expectedPrincipalName != null && !expectedPrincipalName.equals(actualPrincipalName))
+    if (expectedPrincipalName != null)
     {
-      ctx.fireExceptionCaught(new ServerCertPrincipalNameMismatchException(expectedPrincipalName, actualPrincipalName));
-      return;
+      String actualPrincipalName = _sslHandler.engine().getSession().getPeerPrincipal().getName();
+      if (!expectedPrincipalName.equals(actualPrincipalName))
+      {
+        ctx.fireExceptionCaught(new ServerCertPrincipalNameMismatchException(expectedPrincipalName, actualPrincipalName));
+        return;
+      }
     }
     ctx.flush();
   }
