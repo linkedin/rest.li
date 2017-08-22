@@ -14,22 +14,16 @@
    limitations under the License.
 */
 
-/**
- * $Id: $
- */
-
 package com.linkedin.d2.discovery.stores.zk;
-
-import java.util.Collections;
-import java.util.concurrent.ScheduledExecutorService;
-import org.apache.zookeeper.Watcher;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import org.apache.zookeeper.Watcher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class provides a simple persistent ZooKeeper connection that automatically reconnects
@@ -49,12 +43,8 @@ public class ZKPersistentConnection
 {
   private static final Logger LOG = LoggerFactory.getLogger(ZKPersistentConnection.class);
 
-  private final String _connectionString;
-  private final int _sessionTimeout;
-  private final boolean _shutdownAsynchronously;
-  private final boolean _isSymlinkAware;
-
   private final Object _mutex = new Object();
+  private final ZKConnectionBuilder _zkConnectionBuilder;
   private ZKConnection _zkConnection;
   private Set<EventListener> _listeners;
   private State _state = State.INIT;
@@ -77,24 +67,76 @@ public class ZKPersistentConnection
     SESSION_ESTABLISHED,
 
     /**
+     * The session has expired.  New session establishment is underway.
+     */
+    SESSION_EXPIRED,
+
+    /**
      * The ZooKeeper ensemble is currently unreachable.
+     * After this event, the connection could get re-connected and notified with a CONNECTED event
      */
     DISCONNECTED,
 
     /**
-     * The ZooKeeper ensemble is currently reachable and the session remains valid.
+     * The ZooKeeper ensemble is currently reachable again and the session remains valid.
+     * This event is received only after a DISCONNECTED and not on the first connection established.
+     *
+     * If watches were set, there is no need to recreate them since they will receive all the events they missed
+     * while the connection was in DISCONNECTED state
      */
-    CONNECTED,
-
-    /**
-     * The session has expired.  New session establishment is underway.
-     */
-    SESSION_EXPIRED
+    CONNECTED
   }
 
   public interface EventListener
   {
     void notifyEvent(Event event);
+  }
+
+  /**
+   * Helper class to listen to the events coming from ZK
+   */
+  public static class EventListenerNotifiers implements EventListener
+  {
+    public void notifyEvent(Event event)
+    {
+      switch (event)
+      {
+        case SESSION_ESTABLISHED:
+        {
+          sessionEstablished(event);
+          break;
+        }
+        case SESSION_EXPIRED:
+        {
+          sessionExpired(event);
+          break;
+        }
+        case CONNECTED:
+        {
+          connected(event);
+          break;
+        }
+        case DISCONNECTED:
+          disconnected(event);
+          break;
+      }
+    }
+
+    public void sessionEstablished(Event event)
+    {
+    }
+
+    public void sessionExpired(Event event)
+    {
+    }
+
+    public void disconnected(Event event)
+    {
+    }
+
+    public void connected(Event event)
+    {
+    }
   }
 
   public ZKPersistentConnection(String connect, int timeout, Collection<? extends EventListener> listeners)
@@ -110,23 +152,43 @@ public class ZKPersistentConnection
   public ZKPersistentConnection(String connect, int timeout, Collection<? extends EventListener> listeners,
                                 boolean shutdownAsynchronously, boolean isSymlinkAware)
   {
-    _connectionString = connect;
-    _sessionTimeout = timeout;
-    _shutdownAsynchronously = shutdownAsynchronously;
-    _isSymlinkAware = isSymlinkAware;
-    _zkConnection = new ZKConnection(connect, timeout, shutdownAsynchronously, isSymlinkAware);
-    _zkConnection.addStateListener(new Listener());
-    _listeners = new HashSet<EventListener>(listeners);
+    this(new ZKConnectionBuilder(connect).setTimeout(timeout)
+      .setShutdownAsynchronously(shutdownAsynchronously).setIsSymlinkAware(isSymlinkAware));
+    addListeners(listeners);
+  }
 
-    // NB: to support adding EventListeners after the connection is started, must consider the
-    // following:
-    // 1. At the moment the registration occurs, the session may already be connected.  We will
-    // need to deliver a "dummy" SESSION_ESTABLISHED to the listener (otherwise how does it
-    // know to start talking to ZooKeeper?)
-    // 2. Events that come to us from the ZooKeeper event thread (via the watcher) are always
-    // delivered in the correct order.  If we deliver a dummy SESSION_ESTABLISHED event to the
-    // listener, it could arrive out of order (e.g. after a SESSION_EXPIRED that really occurred
-    // before).
+  public ZKPersistentConnection(ZKConnectionBuilder zkConnectionBuilder)
+  {
+    _zkConnectionBuilder = zkConnectionBuilder;
+    _zkConnection = _zkConnectionBuilder.build();
+    _zkConnection.addStateListener(new Listener());
+    _listeners = new HashSet<>();
+
+
+  }
+
+  /**
+   * Allows to add other listeners ONLY before the connection is started
+   */
+  public void addListeners(Collection<? extends EventListener> listeners)
+  {
+    synchronized (_mutex)
+    {
+      // NB: to support adding EventListeners after the connection is started, must consider the
+      // following:
+      // 1. At the moment the registration occurs, the session may already be connected.  We will
+      // need to deliver a "dummy" SESSION_ESTABLISHED to the listener (otherwise how does it
+      // know to start talking to ZooKeeper?)
+      // 2. Events that come to us from the ZooKeeper event thread (via the watcher) are always
+      // delivered in the correct order.  If we deliver a dummy SESSION_ESTABLISHED event to the
+      // listener, it could arrive out of order (e.g. after a SESSION_EXPIRED that really occurred
+      // before).
+      if (_state != State.INIT)
+      {
+        throw new IllegalStateException("Listeners can be added only before connection starts, current state: " + _state);
+      }
+      _listeners.addAll(listeners);
+    }
   }
 
   public void start() throws IOException
@@ -214,8 +276,7 @@ public class ZKPersistentConnection
             if (_state == State.STARTED)
             {
               _zkConnection.shutdown();
-              _zkConnection =
-                  new ZKConnection(_connectionString, _sessionTimeout, _shutdownAsynchronously, _isSymlinkAware);
+              _zkConnection = _zkConnectionBuilder.build();
               _zkConnection.addStateListener(new Listener());
               _zkConnection.start();
             }

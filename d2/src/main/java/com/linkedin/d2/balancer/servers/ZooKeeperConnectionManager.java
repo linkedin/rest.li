@@ -20,22 +20,22 @@
 
 package com.linkedin.d2.balancer.servers;
 
-import com.linkedin.d2.balancer.properties.UriProperties;
-import com.linkedin.d2.balancer.zkfs.ZKFSUtil;
-import com.linkedin.d2.discovery.stores.zk.ZKConnection;
-import com.linkedin.d2.discovery.stores.zk.ZKPersistentConnection;
-import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
-import com.linkedin.d2.discovery.stores.zk.ZooKeeperStore;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.CallbackAdapter;
 import com.linkedin.common.callback.Callbacks;
 import com.linkedin.common.util.None;
+import com.linkedin.d2.balancer.properties.UriProperties;
+import com.linkedin.d2.balancer.zkfs.ZKFSUtil;
+import com.linkedin.d2.discovery.stores.zk.ZKConnection;
+import com.linkedin.d2.discovery.stores.zk.ZKConnectionBuilder;
+import com.linkedin.d2.discovery.stores.zk.ZKPersistentConnection;
+import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
+import com.linkedin.d2.discovery.stores.zk.ZooKeeperStore;
 import java.util.Collections;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicReference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -69,7 +69,8 @@ public class ZooKeeperConnectionManager
     _zkBasePath = zkBasePath;
     _factory = factory;
     _servers = servers;
-    _zkConnection = new ZKPersistentConnection(_zkConnectString, _zkSessionTimeout, Collections.singletonList(new Listener()));
+    _zkConnection = new ZKPersistentConnection(new ZKConnectionBuilder(_zkConnectString).setTimeout(_zkSessionTimeout));
+    _zkConnection.addListeners(Collections.singletonList(new Listener()));
   }
 
   /**

@@ -20,12 +20,6 @@
 
 package com.linkedin.d2.discovery.stores.zk;
 
-import org.apache.zookeeper.CreateMode;
-import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.ZooDefs;
-import org.testng.Assert;
-import org.testng.annotations.Test;
-
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Date;
@@ -34,6 +28,13 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.ZooDefs;
+import org.testng.Assert;
+import org.testng.annotations.Test;
+
+import static org.testng.Assert.fail;
 
 /**
  * @author Steven Ihde
@@ -56,7 +57,8 @@ public class TestZKPersistentConnection
 
       TestListener listener = new TestListener();
       ZKPersistentConnection c = new ZKPersistentConnection(
-        "localhost:" + PORT, 15000, Collections.singleton(listener));
+        new ZKConnectionBuilder("localhost:" + PORT).setTimeout(15000));
+      c.addListeners(Collections.singletonList(listener));
 
       long count = listener.getCount();
       c.start();
@@ -100,7 +102,8 @@ public class TestZKPersistentConnection
 
       TestListener listener = new TestListener();
       ZKPersistentConnection c = new ZKPersistentConnection(
-        "localhost:" + PORT, 15000, Collections.singleton(listener));
+        new ZKConnectionBuilder("localhost:" + PORT).setTimeout(15000));
+      c.addListeners(Collections.singletonList(listener));
 
       long count = listener.getCount();
       c.start();
@@ -117,6 +120,74 @@ public class TestZKPersistentConnection
     }
     finally
     {
+      server.shutdown();
+    }
+  }
+
+
+  @Test
+  public void testAddListenersBeforeStart()
+    throws IOException, InterruptedException, KeeperException, TimeoutException
+  {
+    ZKServer server = new ZKServer();
+    server.startup();
+
+    try
+    {
+      final int PORT = server.getPort();
+
+      TestListener listener = new TestListener();
+      TestListener listener2 = new TestListener();
+      ZKPersistentConnection c = new ZKPersistentConnection(
+        new ZKConnectionBuilder("localhost:" + PORT).setTimeout(15000));
+      c.addListeners(Collections.singletonList(listener));
+      c.addListeners(Collections.singleton(listener2));
+      long count = listener.getCount();
+      long count2 = listener2.getCount();
+      c.start();
+
+      listener.waitForEvent(count, ZKPersistentConnection.Event.SESSION_ESTABLISHED, 30, TimeUnit.SECONDS);
+      listener.waitForEvent(count2, ZKPersistentConnection.Event.SESSION_ESTABLISHED, 30, TimeUnit.SECONDS);
+
+      c.shutdown();
+    }
+    finally
+    {
+      server.shutdown();
+    }
+  }
+
+
+  @Test
+  public void testFailureAddListenersAfterStart()
+    throws IOException, InterruptedException, KeeperException, TimeoutException
+  {
+    ZKServer server = new ZKServer();
+    server.startup();
+    ZKPersistentConnection c = null;
+    try
+    {
+      final int PORT = server.getPort();
+
+      TestListener listener = new TestListener();
+      TestListener listener2 = new TestListener();
+      c = new ZKPersistentConnection(
+        new ZKConnectionBuilder("localhost:" + PORT).setTimeout(15000));
+      c.addListeners(Collections.singletonList(listener));
+
+      c.start();
+      c.addListeners(Collections.singleton(listener2));
+
+      fail("Adding a listener after start should fail");
+    }
+    catch (IllegalStateException e)
+    {
+      // success
+    }
+    finally
+    {
+      // it should have always a value
+      c.shutdown();
       server.shutdown();
     }
   }
