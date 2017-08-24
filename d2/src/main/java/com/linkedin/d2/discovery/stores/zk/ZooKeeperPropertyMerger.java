@@ -19,9 +19,18 @@ package com.linkedin.d2.discovery.stores.zk;
 import java.util.Collection;
 import java.util.Map;
 
+/**
+ * The following class will be used to merge multiple nodes' data entries into one, and then to unmerge them
+ */
 public interface ZooKeeperPropertyMerger<T>
 {
-  T merge(String listenTo, Collection<T> propertiesToMerge);
+  /**
+   * Merge multiple properties into one. The data structure T has to support this kind of operation
+   */
+  T merge(String propertyName, Collection<T> propertiesToMerge);
 
-  String unmerge(String listenTo, T toDelete, Map<String, T> propertiesToMerge);
+  /**
+   * unmerge should return the String key of the propertiesToMerge containing the value to delete
+   */
+  String unmerge(String propertyName, T toDelete, Map<String, T> propertiesToMerge);
 }

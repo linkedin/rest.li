@@ -104,7 +104,9 @@ public class ZKFSLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFa
                                                    config.isSSLEnabled,
                                                    config.clientServicesConfig,
                                                    config.useNewEphemeralStoreWatcher,
-                                                   config.partitionAccessorRegistry);
+                                                   config.partitionAccessorRegistry,
+                                                   config.enableSaveUriDataOnDisk
+    );
   }
 
   private Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> createDefaultLoadBalancerStrategyFactories(

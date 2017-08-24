@@ -53,7 +53,7 @@ public class FileSystemDirectory
     return getFileListWithoutExtension(getClusterDirectory(_d2ServicePath));
   }
 
-  private List<String> getFileListWithoutExtension(String path)
+  public static List<String> getFileListWithoutExtension(String path)
   {
     File dir = new File(path);
     File[] files = dir.listFiles((dir1, name) -> name.endsWith(FileSystemDirectory.FILE_STORE_EXTENSION));

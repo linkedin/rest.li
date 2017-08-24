@@ -20,11 +20,10 @@ import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.discovery.stores.PropertyStore;
 import com.linkedin.d2.discovery.stores.PropertyStoreException;
+import com.linkedin.d2.discovery.stores.PropertyStringMerger;
 import com.linkedin.d2.discovery.stores.PropertyStringSerializer;
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -145,50 +144,6 @@ public class ZooKeeperEphemeralStoreTest
     catch (InterruptedException | ExecutionException | TimeoutException e)
     {
       fail("unable to shut down store");
-    }
-  }
-
-  public static class PropertyStringMerger implements ZooKeeperPropertyMerger<String>
-  {
-    @Override
-    public String merge(String listenTo, Collection<String> propertiesToMerge)
-    {
-      String combinedName = "";
-
-      for (String property : propertiesToMerge)
-      {
-        combinedName += property + ",";
-      }
-
-      if (combinedName.endsWith(","))
-      {
-        combinedName = combinedName.substring(0, combinedName.length() - 1);
-      }
-
-      if (combinedName.length() > 0)
-      {
-        return new String(combinedName);
-      }
-      else
-      {
-        return null;
-      }
-    }
-
-    @Override
-    public String unmerge(String listenTo,
-                          String toDelete,
-                          Map<String, String> propertiesToMerge)
-    {
-      for (Map.Entry<String, String> property : propertiesToMerge.entrySet())
-      {
-        if (toDelete.equals(property.getValue()))
-        {
-          return property.getKey();
-        }
-      }
-
-      return null;
     }
   }
 

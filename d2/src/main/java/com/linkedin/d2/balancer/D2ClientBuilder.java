@@ -108,7 +108,9 @@ public class D2ClientBuilder
                   _config._backupRequestsExecutorService,
                   _config.eventEmitter,
                   _config.partitionAccessorRegistry,
-                  _config.zooKeeperDecorator);
+                  _config.zooKeeperDecorator,
+                  _config.enableSaveUriDataOnDisk);
+
     final LoadBalancerWithFacilities loadBalancer = loadBalancerFactory.create(cfg);
 
     D2Client d2Client = new DynamicClient(loadBalancer, loadBalancer, _restOverStream);
@@ -339,6 +341,11 @@ public class D2ClientBuilder
 
   public D2ClientBuilder setWarmUpConcurrentRequests(int warmUpConcurrentRequests){
     _config.warmUpConcurrentRequests = warmUpConcurrentRequests;
+    return this;
+  }
+
+  public D2ClientBuilder setEnableSaveUriDataOnDisk(boolean enableSaveUriDataOnDisk){
+    _config.enableSaveUriDataOnDisk = enableSaveUriDataOnDisk;
     return this;
   }
 

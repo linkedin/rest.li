@@ -54,6 +54,7 @@ public class D2ClientConfig
   Map<String, Map<String, Object>> clientServicesConfig = Collections.<String, Map<String, Object>>emptyMap();
   boolean useNewEphemeralStoreWatcher = false;
   HealthCheckOperations healthCheckOperations = null;
+  boolean enableSaveUriDataOnDisk = false;
   /**
    * By default is a single threaded executor
    */
@@ -377,8 +378,8 @@ public class D2ClientConfig
         null,
         emitter,
         partitionAccessorRegistry,
-        null
-      );
+        null,
+        false);
   }
 
   public D2ClientConfig(String zkHosts,
@@ -414,7 +415,8 @@ public class D2ClientConfig
                         ScheduledExecutorService backupRequestsExecutorService,
                         EventEmitter emitter,
                         PartitionAccessorRegistry partitionAccessorRegistry,
-                        Function<ZooKeeper, ZooKeeper> zooKeeperDecorator)
+                        Function<ZooKeeper, ZooKeeper> zooKeeperDecorator,
+                        boolean enableSaveUriDataOnDisk)
   {
     this.zkHosts = zkHosts;
     this.zkSessionTimeoutInMs = zkSessionTimeoutInMs;
@@ -450,5 +452,6 @@ public class D2ClientConfig
     this.eventEmitter = emitter;
     this.partitionAccessorRegistry = partitionAccessorRegistry;
     this.zooKeeperDecorator = zooKeeperDecorator;
+    this.enableSaveUriDataOnDisk = enableSaveUriDataOnDisk;
   }
 }

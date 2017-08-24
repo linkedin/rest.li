@@ -20,9 +20,12 @@ import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.CallbackAdapter;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
+import com.linkedin.d2.balancer.util.FileSystemDirectory;
 import com.linkedin.d2.discovery.PropertySerializationException;
 import com.linkedin.d2.discovery.PropertySerializer;
 import com.linkedin.d2.discovery.stores.PropertyStoreException;
+import com.linkedin.d2.discovery.stores.file.FileStore;
+import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -45,6 +48,24 @@ import org.slf4j.LoggerFactory;
 
 import static com.linkedin.d2.discovery.util.LogUtil.trace;
 
+/**
+ * The ZooKeeperEphemeralStore has two features:
+ * 1) it allows to create ephemeral ZooKeeper nodes through the PropertyStore interface
+ * 2) it allows to watch children of a node subscribing through the PropertyEventPublisher interface
+ *
+ * The store doesn't manage the lifecycle of the connection, which should be handled by the user of this class
+ * All the callbacks will be executed through the single threaded ZK event thread
+ *
+ * Point 1: PropertyStore
+ * Through the PropertyStore the user can create ephemeral ZK nodes that will live until the connection
+ * assigned to the ZooKeeperEphemeralStore is alive
+ *
+ * Point 2: PropertyEventPublisher
+ * This interface allows the user to subscribe to children of a specific node and their data.
+ * There are several modes in which it can run:
+ * - watching each node for data change enabling the watchChildNodes flag
+ * - considering the children nodes immutable and watching only for membership changes
+ */
 public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
 {
   private static final Logger                                      _log =
@@ -53,10 +74,11 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
 
   private final ZooKeeperPropertyMerger<T>                      _merger;
   private final ConcurrentMap<String, EphemeralStoreWatcher> _ephemeralStoreWatchers = new ConcurrentHashMap<>();
+  private final String _ephemeralNodesFilePath;
+  private final boolean _watchChildNodes;
 
   //TODO: remove the following members after everybody has migrated to use EphemeralStoreWatcher.
   private final ZKStoreWatcher _zkStoreWatcher = new ZKStoreWatcher();
-  private final boolean _watchChildNodes;
   private final boolean _useNewWatcher;
 
   public ZooKeeperEphemeralStore(ZKConnection client,
@@ -64,7 +86,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
                                  ZooKeeperPropertyMerger<T> merger,
                                  String path)
   {
-    this(client,serializer, merger, path, false, false);
+    this(client, serializer, merger, path, false, false, null);
   }
 
   public ZooKeeperEphemeralStore(ZKConnection client,
@@ -73,7 +95,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
                                  String path,
                                  boolean watchChildNodes)
   {
-    this(client, serializer, merger, path, watchChildNodes, false);
+    this(client, serializer, merger, path, watchChildNodes, false, null);
   }
 
   public ZooKeeperEphemeralStore(ZKConnection client,
@@ -83,6 +105,22 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
                                  boolean watchChildNodes,
                                  boolean useNewWatcher)
   {
+    this(client, serializer, merger, path, watchChildNodes, useNewWatcher, null);
+  }
+
+  /**
+   * @param watchChildNodes        if true, a watcher for each children node will be set (this have a large cost)
+   * @param ephemeralNodesFilePath if a FS path is specified, children nodes are considered unmodifiable,
+   *                               and a local cache for children nodes is enabled
+   */
+  public ZooKeeperEphemeralStore(ZKConnection client,
+                                 PropertySerializer<T> serializer,
+                                 ZooKeeperPropertyMerger<T> merger,
+                                 String path,
+                                 boolean watchChildNodes,
+                                 boolean useNewWatcher,
+                                 String ephemeralNodesFilePath)
+  {
     super(client, serializer, path);
 
     if (watchChildNodes && useNewWatcher)
@@ -90,9 +128,22 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
       throw new IllegalArgumentException("watchChildNodes and useNewWatcher can not both be true.");
     }
 
+    if (watchChildNodes && ephemeralNodesFilePath != null)
+    {
+      throw new IllegalArgumentException("watchChildNodes and ephemeralNodesFilePath, which enables a local cache for " +
+        "ChildNodes, can not both be enabled together.");
+    }
+
+    if (ephemeralNodesFilePath != null && !useNewWatcher)
+    {
+      _log.warn("Forcing enabling useNewWatcher with ephemeralNodesFilePath!=null");
+      useNewWatcher = true;
+    }
+
     _merger = merger;
     _watchChildNodes = watchChildNodes;
     _useNewWatcher = useNewWatcher;
+    _ephemeralNodesFilePath = ephemeralNodesFilePath;
   }
 
   @Override
@@ -286,7 +337,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
     else
     {
       _log.debug("getMergedChildren: no children");
-      callback.onSuccess(_merger.merge(propertyName, Collections.<T>emptyList()));
+      callback.onSuccess(_merger.merge(propertyName, Collections.emptyList()));
     }
   }
 
@@ -294,17 +345,17 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
    * Gets children data asynchronously. If the given children collection is empty, the callback is fired
    * immediately.
    */
-  private void getChildren(String path, Collection<String> children, Callback<Map<String, T>> callback)
+  private void getChildrenData(String path, Collection<String> children, Callback<Map<String, T>> callback)
   {
     if (children.size() > 0)
     {
-      _log.debug("getChildren: collecting {}", children);
+      _log.debug("getChildrenData: collecting {}", children);
       ChildCollector collector = new ChildCollector(children.size(), callback);
       children.forEach(child -> _zk.getData(path + "/" + child, null, collector, null));
     }
     else
     {
-      _log.debug("getChildren: no children");
+      _log.debug("getChildrenData: no children");
       callback.onSuccess(Collections.emptyMap());
     }
   }
@@ -332,7 +383,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
 
     if (_useNewWatcher)
     {
-      EphemeralStoreWatcher watcher = _ephemeralStoreWatchers.computeIfAbsent(prop, k -> new EphemeralStoreWatcher());
+      EphemeralStoreWatcher watcher = _ephemeralStoreWatchers.computeIfAbsent(prop, k -> new EphemeralStoreWatcher(prop));
       watcher.addWatch(prop);
       _zk.getChildren(getPath(prop), watcher, watcher, true);
     }
@@ -538,10 +589,22 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
   private class EphemeralStoreWatcher extends ZooKeeperStore<T>.ZKStoreWatcher
       implements AsyncCallback.Children2Callback, AsyncCallback.StatCallback
   {
-    /* map from child to its data */
+    // map from child to its data
     private final Map<String, T> _childrenMap = new HashMap<>();
-    /* id of the transaction that caused the parent node to be created */
-    private volatile long _czxid = 0;
+
+    // property that is being watched
+    private final String _prop;
+
+    // id of the transaction that caused the parent node to be created
+    private long _czxid = 0;
+
+    // FileStore to save unmodifiable nodes' data
+    private FileStore<T> _fileStore = null;
+
+    EphemeralStoreWatcher(String prop)
+    {
+      _prop = prop;
+    }
 
     @Override
     protected void processWatch(String propertyName, WatchedEvent event)
@@ -550,6 +613,9 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
       _zk.getChildren(getPath(propertyName), this, this, false);
     }
 
+    /**
+     * Children callback
+     */
     @Override
     public void processResult(int rc, String path, Object ctx, List<String> children, Stat stat)
     {
@@ -561,69 +627,9 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
       {
         case OK:
         {
-          // Bootstrap the childrenMap if this is the initial call or if the parent node was
-          // removed and then re-created.
-          boolean bootstrap = init || (_czxid != 0 && _czxid != stat.getCzxid());
-          if (bootstrap)
-          {
-            getChildren(path, children, new Callback<Map<String, T>>()
-            {
-              @Override
-              public void onError(Throwable e)
-              {
-                _log.error("Failed to merge children for path " + path, e);
-                if (init)
-                {
-                  _eventBus.publishInitialize(property, null);
-                }
-                _log.debug("{}: published init", path);
-              }
-
-              @Override
-              public void onSuccess(Map<String, T> result)
-              {
-                _czxid = stat.getCzxid();
-                _childrenMap.clear();
-                _childrenMap.putAll(result);
-                if (init)
-                {
-                  _eventBus.publishInitialize(property, _merger.merge(property, _childrenMap.values()));
-                  _log.debug("{}: published init", path);
-                }
-                else
-                {
-                  _eventBus.publishAdd(property, _merger.merge(property, _childrenMap.values()));
-                  _log.debug("{}: published add", path);
-                }
-              }
-            });
-          }
-          else // otherwise, only fetch the delta between new and old children.
-          {
-            // remove old children from the map
-            Set<String> oldChildren = new HashSet<>(_childrenMap.keySet());
-            oldChildren.removeAll(children);
-            oldChildren.forEach(_childrenMap::remove);
-
-            Set<String> newChildren = new HashSet<>(children);
-            newChildren.removeAll(_childrenMap.keySet());
-            getChildren(path, newChildren, new Callback<Map<String, T>>()
-            {
-              @Override
-              public void onError(Throwable e) {
-                _log.error("Failed to merge children for path " + path, e);
-                // do not update
-              }
-
-              @Override
-              public void onSuccess(Map<String, T> result)
-              {
-                _childrenMap.putAll(result);
-                _eventBus.publishAdd(property, _merger.merge(property, _childrenMap.values()));
-                _log.debug("{}: published add", path);
-              }
-            });
-          }
+          initCurrentNode(stat);
+          Set<String> newChildren = calculateChildrenDeltaAndUpdateState(children);
+          getChildrenData(path, newChildren, getChildrenDataCallback(path, init, property));
           break;
         }
         case NONODE:
@@ -640,6 +646,10 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
             _eventBus.publishRemove(property);
             _log.debug("{}: published remove", path);
           }
+          if (_fileStore != null)
+          {
+            _fileStore.removeDirectory();
+          }
           break;
 
         default:
@@ -648,6 +658,92 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
       }
     }
 
+    private Callback<Map<String, T>> getChildrenDataCallback(String path, boolean init, String property)
+    {
+      return new Callback<Map<String, T>>()
+      {
+        @Override
+        public void onError(Throwable e)
+        {
+          _log.error("Failed to merge children for path " + path, e);
+          if (init)
+          {
+            _eventBus.publishInitialize(property, null);
+          }
+          _log.debug("{}: published init", path);
+        }
+
+        @Override
+        public void onSuccess(Map<String, T> result)
+        {
+          _childrenMap.putAll(result);
+          if (_fileStore != null)
+          {
+            result.forEach(_fileStore::put);
+          }
+          if (init)
+          {
+            _eventBus.publishInitialize(property, _merger.merge(property, _childrenMap.values()));
+            _log.debug("{}: published init", path);
+          }
+          else
+          {
+            _eventBus.publishAdd(property, _merger.merge(property, _childrenMap.values()));
+            _log.debug("{}: published add", path);
+          }
+        }
+      };
+    }
+
+    private void initCurrentNode(Stat stat)
+    {
+      // in the case of startup or the node gets recreated, create a new file store
+      if (_czxid != stat.getCzxid())
+      {
+        // if node==0 it means that it is just booting up, if it !=0 it means that the node has been recreated
+        if (_czxid != 0)
+        {
+          _childrenMap.clear();
+          if (_ephemeralNodesFilePath != null)
+          {
+            // The file structure for each children saved is: myBasePath/nodeWatchedProp/zkNodeId123/ephemeral-2
+            // When the node of nodeWatchedProp gets deleted and recreated, the new directory will be:
+            // myBasePath/nodeWatchedProp/zkNodeId234/
+            // Therefore we need to clean up from old nodes the directory myBasePath/nodeWatchedProp, to avoid
+            // storing unused data, removing the entire directory before creating zkNodeId234
+            FileStore.removeDirectory((_ephemeralNodesFilePath + File.separator + _prop));
+          }
+        }
+
+        _czxid = stat.getCzxid();
+        if (_ephemeralNodesFilePath != null)
+        {
+          _fileStore = new FileStore<>(_ephemeralNodesFilePath + File.separator + _prop + File.separator
+            + _czxid, FileSystemDirectory.FILE_STORE_EXTENSION, _serializer);
+          _fileStore.start();
+          _childrenMap.putAll(_fileStore.getAll());
+        }
+      }
+    }
+
+    private Set<String> calculateChildrenDeltaAndUpdateState(List<String> children)
+    {
+      // remove children that have been evicted from the map
+      Set<String> oldChildren = new HashSet<>(_childrenMap.keySet());
+      oldChildren.removeAll(children);
+      oldChildren.forEach(_childrenMap::remove);
+      if (_fileStore != null)
+      {
+        oldChildren.forEach(_fileStore::remove);
+      }
+      Set<String> newChildren = new HashSet<>(children);
+      newChildren.removeAll(_childrenMap.keySet());
+      return newChildren;
+    }
+
+    /**
+     * Exist callback
+     */
     @Override
     public void processResult(int rc, String path, Object ctx, Stat stat)
     {

@@ -74,6 +74,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
   private final String _fsd2DirPath;
   private final Map<String, TransportClientFactory> _clientFactories;
   private final Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> _loadBalancerStrategyFactories;
+  private boolean _enableSaveUriDataOnDisk;
   private final String _d2ServicePath;
   private final SSLContext _sslContext;
   private final SSLParameters _sslParameters;
@@ -143,7 +144,8 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
       isSSLEnabled,
       Collections.emptyMap(),
       false,
-      new PartitionAccessorRegistryImpl());
+      new PartitionAccessorRegistryImpl(),
+      false);
   }
 
   public ZKFSTogglingLoadBalancerFactoryImpl(ComponentFactory factory,
@@ -159,7 +161,8 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
                                              boolean isSSLEnabled,
                                              Map<String, Map<String, Object>> clientServicesConfig,
                                              boolean useNewEphemeralStoreWatcher,
-                                             PartitionAccessorRegistry partitionAccessorRegistry)
+                                             PartitionAccessorRegistry partitionAccessorRegistry,
+                                             boolean enableSaveUriDataOnDisk)
   {
     _factory = factory;
     _lbTimeout = timeout;
@@ -168,6 +171,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
     _fsd2DirPath = fsBasePath;
     _clientFactories = clientFactories;
     _loadBalancerStrategyFactories = loadBalancerStrategyFactories;
+    _enableSaveUriDataOnDisk = enableSaveUriDataOnDisk;
     if(d2ServicePath == null || d2ServicePath.isEmpty())
     {
       _d2ServicePath = "services";
@@ -193,8 +197,16 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
             zkConnection, ZKFSUtil.clusterPath(_baseZKPath), new ClusterPropertiesJsonSerializer());
     ZooKeeperPermanentStore<ServiceProperties> zkServiceRegistry = createPermanentStore(
             zkConnection, ZKFSUtil.servicePath(_baseZKPath, _d2ServicePath), new ServicePropertiesJsonSerializer());
+
+    String backupStoreFilePath = null;
+    if (_enableSaveUriDataOnDisk)
+    {
+      backupStoreFilePath = _fsd2DirPath + File.separator + "urisValues";
+    }
+
     ZooKeeperEphemeralStore<UriProperties> zkUriRegistry =  createEphemeralStore(
-            zkConnection, ZKFSUtil.uriPath(_baseZKPath), new UriPropertiesJsonSerializer(), new UriPropertiesMerger(), _useNewEphemeralStoreWatcher);
+      zkConnection, ZKFSUtil.uriPath(_baseZKPath), new UriPropertiesJsonSerializer(),
+      new UriPropertiesMerger(), _useNewEphemeralStoreWatcher, backupStoreFilePath);
 
     FileStore<ClusterProperties> fsClusterStore = createFileStore(FileSystemDirectory.getClusterDirectory(_fsd2DirPath), new ClusterPropertiesJsonSerializer());
     FileStore<ServiceProperties> fsServiceStore = createFileStore(FileSystemDirectory.getServiceDirectory(_fsd2DirPath, _d2ServicePath), new ServicePropertiesJsonSerializer());
@@ -248,9 +260,13 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
     return store;
   }
 
-  protected <T> ZooKeeperEphemeralStore<T> createEphemeralStore(ZKConnection zkConnection, String nodePath, PropertySerializer<T> serializer, ZooKeeperPropertyMerger<T> merger, boolean useNewWatcher)
+  protected <T> ZooKeeperEphemeralStore<T> createEphemeralStore(ZKConnection zkConnection, String nodePath,
+                                                                PropertySerializer<T> serializer,
+                                                                ZooKeeperPropertyMerger<T> merger,
+                                                                boolean useNewWatcher, String backupStoreFilePath)
   {
-    ZooKeeperEphemeralStore<T> store = new ZooKeeperEphemeralStore<T>(zkConnection, serializer, merger, nodePath, false, useNewWatcher);
+    ZooKeeperEphemeralStore<T> store = new ZooKeeperEphemeralStore<T>(zkConnection, serializer, merger, nodePath,
+      false, useNewWatcher, backupStoreFilePath);
     return store;
   }
 

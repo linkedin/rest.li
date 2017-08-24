@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.discovery.stores.zk;
 
+import com.linkedin.d2.discovery.stores.PropertyStringMerger;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
@@ -23,10 +24,8 @@ import java.util.Set;
 import com.linkedin.d2.discovery.event.PropertyEventBus;
 import com.linkedin.d2.discovery.event.PropertyEventBusImpl;
 import com.linkedin.d2.discovery.event.PropertyEventSubscriber;
-import com.linkedin.d2.discovery.event.PropertyEventThread;
 import com.linkedin.d2.discovery.stores.PropertyStoreException;
 import com.linkedin.d2.discovery.stores.PropertyStringSerializer;
-import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStoreTest.PropertyStringMerger;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 

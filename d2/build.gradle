@@ -22,6 +22,7 @@ dependencies {
   testCompile externalDependency.commonsIo
   testCompile externalDependency.easymock
   testCompile project(':r2-jetty')
+  testCompile project (':test-util')
 }
 
 task packup(dependsOn: configurations.default.allArtifacts, type: Copy) {

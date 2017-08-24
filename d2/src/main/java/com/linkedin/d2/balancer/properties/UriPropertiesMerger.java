@@ -27,12 +27,12 @@ import java.util.Set;
 public class UriPropertiesMerger implements ZooKeeperPropertyMerger<UriProperties>
 {
   @Override
-  public UriProperties merge(String listenTo, Collection<UriProperties> propertiesToMerge)
+  public UriProperties merge(String propertyName, Collection<UriProperties> propertiesToMerge)
   {
     Map<URI, Map<Integer, PartitionData>> partitionData = new HashMap<URI, Map<Integer, PartitionData>>();
     Map<URI, Map<String, Object>> uriSpecificProperties = new HashMap<URI, Map<String, Object>>();
 
-    String clusterName = listenTo;
+    String clusterName = propertyName;
 
     for (UriProperties property : propertiesToMerge)
     {
@@ -50,7 +50,7 @@ public class UriPropertiesMerger implements ZooKeeperPropertyMerger<UriPropertie
   }
 
   @Override
-  public String unmerge(String listenTo,
+  public String unmerge(String propertyName,
                         UriProperties toDelete,
                         Map<String, UriProperties> propertiesToMerge)
   {

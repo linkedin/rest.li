@@ -23,13 +23,12 @@ package com.linkedin.d2.discovery.event;
 import com.linkedin.d2.discovery.stores.PropertyStore;
 import com.linkedin.d2.discovery.stores.PropertyStoreException;
 import com.linkedin.d2.discovery.stores.PropertyStringSerializer;
+import com.linkedin.d2.discovery.stores.PropertyStringMerger;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
-import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStoreTest;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperPropertyMerger;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperStore;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
-import com.linkedin.data.it.ValueAccumulator;
 import java.util.Arrays;
 import java.util.concurrent.TimeoutException;
 import org.testng.Assert;
@@ -44,7 +43,7 @@ import java.util.concurrent.TimeUnit;
 
 public class ZooKeeperEphemeralStorePublisherTest extends ZooKeeperStorePublisherTest
 {
-  private final ZooKeeperPropertyMerger<String> _merger = new ZooKeeperEphemeralStoreTest.PropertyStringMerger();
+  private final ZooKeeperPropertyMerger<String> _merger = new PropertyStringMerger();
   @Override
   protected ZooKeeperStore<String> getStore()
   {
