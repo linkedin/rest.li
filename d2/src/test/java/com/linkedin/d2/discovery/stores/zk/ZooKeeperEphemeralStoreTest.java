@@ -118,11 +118,11 @@ public class ZooKeeperEphemeralStoreTest
 
     assertNull(store.get("service-2"));
 
-    final FutureCallback<None> latch = new FutureCallback<>();
-    store.shutdown(latch);
+    final FutureCallback<None> callback = new FutureCallback<>();
+    store.shutdown(callback);
     try
     {
-      latch.get(5, TimeUnit.SECONDS);
+      callback.get(5, TimeUnit.SECONDS);
     }
     catch (InterruptedException | ExecutionException | TimeoutException e)
     {
@@ -136,11 +136,11 @@ public class ZooKeeperEphemeralStoreTest
   {
     PropertyStore<String> store = getStore();
 
-    final FutureCallback<None> latch = new FutureCallback<>();
-    store.shutdown(latch);
+    final FutureCallback<None> callback = new FutureCallback<>();
+    store.shutdown(callback);
     try
     {
-      latch.get(5, TimeUnit.SECONDS);
+      callback.get(5, TimeUnit.SECONDS);
     }
     catch (InterruptedException | ExecutionException | TimeoutException e)
     {

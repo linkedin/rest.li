@@ -215,11 +215,11 @@ public class
   {
     info(_log, "shutting down zk server");
 
-    final FutureCallback<None> latch = new FutureCallback<>();
-    _store.shutdown(latch);
+    final FutureCallback<None> callback = new FutureCallback<>();
+    _store.shutdown(callback);
     try
     {
-      latch.get(5, TimeUnit.SECONDS);
+      callback.get(5, TimeUnit.SECONDS);
       info(_log, "shutting down complete");
     }
     catch (TimeoutException e)

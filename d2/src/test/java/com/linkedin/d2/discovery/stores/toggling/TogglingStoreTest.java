@@ -77,11 +77,11 @@ public class TogglingStoreTest extends PropertyStoreTest
 
     store.setEnabled(false);
 
-    final FutureCallback<None> latch = new FutureCallback<>();
+    final FutureCallback<None> callback = new FutureCallback<>();
 
-    store.shutdown(latch);
+    store.shutdown(callback);
 
     // unable to shut down store
-    latch.get(5, TimeUnit.SECONDS);
+    callback.get(5, TimeUnit.SECONDS);
   }
 }

@@ -67,11 +67,11 @@ public abstract class PropertyStoreTest
   {
     PropertyStore<String> store = getStore();
 
-    final FutureCallback<None> latch = new FutureCallback<>();
-    store.shutdown(latch);
+    final FutureCallback<None> callback = new FutureCallback<>();
+    store.shutdown(callback);
     try
     {
-      latch.get(5, TimeUnit.SECONDS);
+      callback.get(5, TimeUnit.SECONDS);
     }
     catch (InterruptedException | ExecutionException | TimeoutException e)
     {

@@ -16,17 +16,15 @@
 
 package com.linkedin.d2.discovery.stores.mock;
 
+import com.linkedin.common.callback.Callback;
+import com.linkedin.common.util.None;
+import com.linkedin.d2.discovery.event.PropertyEventBus;
+import com.linkedin.d2.discovery.event.PropertyEventPublisher;
+import com.linkedin.d2.discovery.stores.PropertyStore;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
-import com.linkedin.d2.discovery.event.PropertyEventBus;
-import com.linkedin.d2.discovery.event.PropertyEventPublisher;
-import com.linkedin.d2.discovery.event.PropertyEventThread.PropertyEventShutdownCallback;
-import com.linkedin.d2.discovery.stores.PropertyStore;
-import com.linkedin.common.callback.Callback;
-import com.linkedin.common.util.None;
 
 public class MockStore<T> implements PropertyEventPublisher<T>, PropertyStore<T>
 {
@@ -123,10 +121,10 @@ public class MockStore<T> implements PropertyEventPublisher<T>, PropertyStore<T>
   }
 
   @Override
-  public void shutdown(PropertyEventShutdownCallback shutdown)
+  public void shutdown(Callback<None> shutdown)
   {
     _shutdown = true;
-    shutdown.done();
+    shutdown.onSuccess(None.none());
   }
 
   public boolean isShutdown()

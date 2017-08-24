@@ -1295,22 +1295,13 @@ public class LoadBalancerClientCli
 
   private void shutdownPropertyStore(PropertyStore<?> store, long timeout, TimeUnit unit) throws Exception
   {
-    final CountDownLatch registryLatch = new CountDownLatch(1);
-
-    store.shutdown(new PropertyEventShutdownCallback()
-    {
-      @Override
-      public void done()
-      {
-        registryLatch.countDown();
-      }
-    });
-
+    final FutureCallback<None> callback = new FutureCallback<>();
+    store.shutdown(callback);
     try
     {
-      registryLatch.await(timeout, unit);
+      callback.get(timeout, unit);
     }
-    catch (InterruptedException e)
+    catch (InterruptedException | ExecutionException | TimeoutException e)
     {
       System.err.println("unable to shutdown store: " + store);
     }
