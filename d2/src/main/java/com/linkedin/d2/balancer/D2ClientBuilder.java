@@ -29,20 +29,16 @@ import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessorRegistry;
 import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeper;
-import com.linkedin.r2.message.RequestContext;
-import com.linkedin.r2.message.rest.RestRequest;
-import com.linkedin.r2.message.rest.RestResponse;
-import com.linkedin.r2.message.stream.StreamRequest;
-import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.util.NamedThreadFactory;
-import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -71,9 +67,16 @@ public class D2ClientBuilder
         createDefaultTransportClientFactories() :  // if user didn't provide transportClientFactories we'll use default ones
         _config.clientFactories;
 
-    final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?
-        new ZKFSLoadBalancerWithFacilitiesFactory() :
-        _config.lbWithFacilitiesFactory;
+    List<ScheduledExecutorService> executorsToShutDown= new ArrayList<>();
+
+    if (_config._executorService == null)
+    {
+      LOG.warn("No executor service passed as argument. Pass it for " +
+        "enhanced monitoring and to have better control over the executor.");
+      _config._executorService =
+        Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("D2 PropertyEventExecutor"));
+      executorsToShutDown.add(_config._executorService);
+    }
 
     final D2ClientConfig cfg = new D2ClientConfig(_config.zkHosts,
                   _config.zkSessionTimeoutInMs,
@@ -111,7 +114,11 @@ public class D2ClientBuilder
                   _config.zooKeeperDecorator,
                   _config.enableSaveUriDataOnDisk);
 
-    final LoadBalancerWithFacilities loadBalancer = loadBalancerFactory.create(cfg);
+    final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?
+      new ZKFSLoadBalancerWithFacilitiesFactory() :
+      _config.lbWithFacilitiesFactory;
+
+    LoadBalancerWithFacilities loadBalancer = loadBalancerFactory.create(cfg);
 
     D2Client d2Client = new DynamicClient(loadBalancer, loadBalancer, _restOverStream);
 
@@ -124,6 +131,8 @@ public class D2ClientBuilder
         executor =
             Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors(),
                 new NamedThreadFactory("Backup Requests Executor"));
+        executorsToShutDown.add(executor);
+
       }
       d2Client = new BackupRequestsClient(d2Client, loadBalancer, executor,
           _config.backupRequestsStrategyStatsConsumer, _config.backupRequestsLatencyNotificationInterval,
@@ -135,13 +144,16 @@ public class D2ClientBuilder
       d2Client = new RetryClient(d2Client, _config.retryLimit);
     }
 
-    /**
-     * If we created default transport client factories, we need to shut them down when d2Client
-     * is being shut down.
-     */
+    // If we created default transport client factories, we need to shut them down when d2Client
+    // is being shut down.
     if (_config.clientFactories != transportClientFactories)
     {
       d2Client = new TransportClientFactoryAwareD2Client(d2Client, transportClientFactories.values());
+    }
+
+    if (executorsToShutDown.size()>0)
+    {
+      d2Client = new ExecutorShutdownAwareD2Client(d2Client, executorsToShutDown);
     }
     return d2Client;
   }
@@ -371,60 +383,14 @@ public class D2ClientBuilder
 
   private final D2ClientConfig _config = new D2ClientConfig();
 
-  private class TransportClientFactoryAwareD2Client implements D2Client
+  private class TransportClientFactoryAwareD2Client extends D2ClientDelegator
   {
+    private Collection<TransportClientFactory> _clientFactories;
+
     TransportClientFactoryAwareD2Client(D2Client d2Client, Collection<TransportClientFactory> clientFactories)
     {
-      _d2Client = d2Client;
+      super(d2Client);
       _clientFactories = clientFactories;
-    }
-
-    @Override
-    public Facilities getFacilities()
-    {
-      return _d2Client.getFacilities();
-    }
-
-    @Override
-    public void start(Callback<None> callback)
-    {
-      _d2Client.start(callback);
-    }
-
-    @Override
-    public Future<RestResponse> restRequest(RestRequest request)
-    {
-      return _d2Client.restRequest(request);
-    }
-
-    @Override
-    public Future<RestResponse> restRequest(RestRequest request, RequestContext requestContext)
-    {
-      return _d2Client.restRequest(request, requestContext);
-    }
-
-    @Override
-    public void restRequest(RestRequest request, Callback<RestResponse> callback)
-    {
-      _d2Client.restRequest(request, callback);
-    }
-
-    @Override
-    public void restRequest(RestRequest request, RequestContext requestContext, Callback<RestResponse> callback)
-    {
-      _d2Client.restRequest(request, requestContext, callback);
-    }
-
-    @Override
-    public void streamRequest(StreamRequest request, Callback<StreamResponse> callback)
-    {
-      _d2Client.streamRequest(request, callback);
-    }
-
-    @Override
-    public void streamRequest(StreamRequest request, RequestContext requestContext, Callback<StreamResponse> callback)
-    {
-      _d2Client.streamRequest(request, requestContext, callback);
     }
 
     @Override
@@ -434,17 +400,40 @@ public class D2ClientBuilder
 
       for (TransportClientFactory clientFactory: _clientFactories)
       {
-        clientFactory.shutdown(new FutureCallback<None>());
+        clientFactory.shutdown(new FutureCallback<>());
       }
+    }
+  }
+
+  private class ExecutorShutdownAwareD2Client extends D2ClientDelegator
+  {
+    private List<ScheduledExecutorService> _executors;
+
+    ExecutorShutdownAwareD2Client(D2Client d2Client, List<ScheduledExecutorService> executors)
+    {
+      super(d2Client);
+      _executors = executors;
     }
 
     @Override
-    public Map<String, Object> getMetadata(URI uri)
+    public void shutdown(Callback<None> callback)
     {
-      return _d2Client.getMetadata(uri);
-    }
+      _d2Client.shutdown(new Callback<None>()
+      {
+        @Override
+        public void onError(Throwable e)
+        {
+          _executors.forEach(ExecutorService::shutdown);
+          callback.onError(e);
+        }
 
-    private D2Client _d2Client;
-    private Collection<TransportClientFactory> _clientFactories;
+        @Override
+        public void onSuccess(None result)
+        {
+          _executors.forEach(ExecutorService::shutdown);
+          callback.onSuccess(result);
+        }
+      });
+    }
   }
 }

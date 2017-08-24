@@ -26,14 +26,11 @@ import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
 import com.linkedin.d2.balancer.zkfs.ZKFSComponentFactory;
 import com.linkedin.d2.balancer.zkfs.ZKFSLoadBalancer;
 import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl;
-import com.linkedin.r2.util.NamedThreadFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -47,13 +44,8 @@ public class ZKFSLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFa
   @Override
   public LoadBalancerWithFacilities create(D2ClientConfig config)
   {
-    if (config._executorService == null)
-    {
-      LOG.warn("It has not been passed an executor service. It's suggested to be passed to enhance monitoring and have " +
-        "better control over the executor");
-      config._executorService =
-          Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("D2 PropertyEventExecutor"));
-    }
+    LOG.info("Creating D2 LoadBalancer based on ZKFSLoadBalancerWithFacilitiesFactory");
+
     ZKFSLoadBalancer zkfsLoadBalancer = new ZKFSLoadBalancer(config.zkHosts,
       (int) config.zkSessionTimeoutInMs,
       (int) config.zkStartupTimeoutInMs,

@@ -64,6 +64,11 @@ public class FileStore<T> implements PropertyStore<T>, PropertyEventSubscriber<T
   private final Lock r = rwl.readLock();
   private final Lock w = rwl.writeLock();
 
+  public FileStore(String fsPath, PropertySerializer<T> serializer)
+  {
+    this(fsPath, FileSystemDirectory.FILE_STORE_EXTENSION, serializer);
+  }
+
   public FileStore(String fsPath, String fsFileExtension, PropertySerializer<T> serializer)
   {
     _getStats = new Stats(60000);
@@ -89,11 +94,11 @@ public class FileStore<T> implements PropertyStore<T>, PropertyEventSubscriber<T
   {
     if (start())
     {
-      callback.onError(new IOException("unable to create file path: " + _fsPath));
+      callback.onSuccess(None.none());
     }
     else
     {
-      callback.onSuccess(None.none());
+      callback.onError(new IOException("unable to create file path: " + _fsPath));
     }
   }
 
