@@ -32,7 +32,7 @@ import java.util.function.Consumer;
  * Wraps an {@link AsyncPool} object with an associated timeout. Provides an interface to return or
  * dispose the pool object by invoking #put or #dispose respectively. If either #put or #dispose method
  * is invoked prior to timeout expires, the timeout is cancelled. Otherwise, when timeout expires, the
- * wrapped item is disposed to the async pool and subsequent invocations to #put and #dispose become no-op.
+ * wrapped item is put back to the async pool and subsequent invocations to #put and #dispose become no-op.
  *
  * @author Sean Sheng
  * @param <T>
@@ -47,7 +47,7 @@ public class TimeoutAsyncPoolHandle<T> implements AsyncPoolHandle<T>, TimeoutExe
   {
     _pool = pool;
     _timeout = new Timeout<>(scheduler, timeout, unit, item);
-    _timeout.addTimeoutTask(() -> _pool.dispose(item));
+    _timeout.addTimeoutTask(() -> _pool.put(item));
   }
 
   @Override

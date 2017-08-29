@@ -103,7 +103,7 @@ public class TestHttpClientFactory
         RestRequest r = new RestRequestBuilder(new URI(URI)).build();
         c.restRequest(r).get(30, TimeUnit.SECONDS);
       }
-      Assert.assertEquals(httpServerStatsProvider.requestCount.get(), expectedRequests);
+      Assert.assertEquals(httpServerStatsProvider.requestCount(), expectedRequests);
 
       for (Client c : clients)
       {

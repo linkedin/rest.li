@@ -29,7 +29,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -51,6 +50,7 @@ public class HttpServerBuilder
   private static final int RESPONSE_LATCH_TIMEOUT = 30;
   private static final TimeUnit RESPONSE_LATCH_TIMEUNIT = TimeUnit.SECONDS;
   private static final String HEADER_NAME = "X-DUMMY-HEADER";
+  private static final int INPUT_BUFFER_SIZE = 8192;
 
   private int _responseSize = 0;
   private int _headerSize = 0;
@@ -58,6 +58,7 @@ public class HttpServerBuilder
   private int _minThreads = 0;
   private int _maxThreads = 150;
   private long _idleTimeout = 30000;
+  private long _stopTimeout = 30000;
   private CountDownLatch _responseLatch = null;
   private Consumer<Throwable> _exceptionListener = null;
   private HttpServerStatsProvider _serverStatsProvider = new HttpServerStatsProvider();
@@ -139,9 +140,22 @@ public class HttpServerBuilder
     return this;
   }
 
+  /**
+   * Time in milliseconds the {@link Server} is willing to wait before forcefully shutdown.
+   *
+   * @param stopTimeout Timeout in milliseconds
+   * @return The same {@link HttpServerBuilder} instance
+   */
+  public HttpServerBuilder stopTimeout(long stopTimeout)
+  {
+    _stopTimeout = stopTimeout;
+    return this;
+  }
+
   public Server build()
   {
     Server server = new Server(new QueuedThreadPool(_maxThreads, _minThreads));
+    server.setStopTimeout(_stopTimeout);
 
     // HTTP Configuration
     HttpConfiguration configuration = new HttpConfiguration();
@@ -181,12 +195,15 @@ public class HttpServerBuilder
         {
           _serverStatsProvider.processRequest(req);
           awaitLatch();
-          readEntity(req.getReader());
+          consumeRequest(req);
           prepareResponse(resp);
         }
         catch (Exception e)
         {
-          _exceptionListener.accept(e);
+          if (_exceptionListener != null)
+          {
+            _exceptionListener.accept(e);
+          }
           throw e;
         }
       }
@@ -221,9 +238,9 @@ public class HttpServerBuilder
         {
           return;
         }
-        char[] content = new char[_responseSize];
-        Arrays.fill(content, 'a');
-        resp.getWriter().write(content);
+        byte[] content = new byte[_responseSize];
+        Arrays.fill(content, (byte)0xff);
+        resp.getOutputStream().write(content);
       }
 
       private void awaitLatch()
@@ -240,12 +257,12 @@ public class HttpServerBuilder
         }
       }
 
-      private void readEntity(BufferedReader reader) throws IOException
+      private void consumeRequest(HttpServletRequest req) throws IOException
       {
         while (true)
         {
-          char[] bytes = new char[8192];
-          int read = reader.read(bytes);
+          byte[] bytes = new byte[INPUT_BUFFER_SIZE];
+          int read = req.getInputStream().read(bytes);
           if (read < 0)
           {
             break;
@@ -259,32 +276,41 @@ public class HttpServerBuilder
 
   public static class HttpServerStatsProvider
   {
-    Set<String> clientConnections = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
-    AtomicInteger requestCount = new AtomicInteger(0);
+    private Set<String> clientConnections = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
+    private AtomicInteger requestCount = new AtomicInteger(0);
+    private Function<HttpServletRequest, Boolean> _checkValidRequest;
 
-    Function<HttpServletRequest, Boolean> _checkValidRequest;
-
-    HttpServerStatsProvider()
+    public HttpServerStatsProvider()
     {
       this(httpServletRequest -> true);
     }
 
-    HttpServerStatsProvider(Function<HttpServletRequest, Boolean> checkValidRequest)
+    public HttpServerStatsProvider(Function<HttpServletRequest, Boolean> checkValidRequest)
     {
       _checkValidRequest = checkValidRequest;
     }
 
-    void addClient(HttpServletRequest req)
+    public int requestCount()
+    {
+      return requestCount.get();
+    }
+
+    public Set<String> clientConnections()
+    {
+      return Collections.unmodifiableSet(clientConnections);
+    }
+
+    private void addClient(HttpServletRequest req)
     {
       clientConnections.add(req.getRemoteAddr() + ":" + req.getRemotePort());
     }
 
-    void incrementRequestCount()
+    private void incrementRequestCount()
     {
       requestCount.incrementAndGet();
     }
 
-    void processRequest(HttpServletRequest req)
+    private void processRequest(HttpServletRequest req)
     {
       if (!_checkValidRequest.apply(req))
       {

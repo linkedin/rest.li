@@ -38,6 +38,7 @@ import com.linkedin.r2.transport.http.client.TimeoutTransportCallback;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import io.netty.handler.codec.http2.Http2ConnectionDecoder;
@@ -48,6 +49,8 @@ import io.netty.handler.codec.http2.Http2Exception;
 import io.netty.handler.codec.http2.Http2Headers;
 import io.netty.handler.codec.http2.Http2Settings;
 import io.netty.handler.codec.http2.Http2Stream;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GenericFutureListener;
 import io.netty.util.concurrent.PromiseCombiner;
 import java.util.Optional;
 import org.slf4j.Logger;
@@ -73,8 +76,7 @@ class Http2StreamCodec extends Http2ConnectionHandler
   private static final boolean NOT_END_STREAM = false;
   private static final boolean END_STREAM = true;
 
-  protected Http2StreamCodec(Http2ConnectionDecoder decoder, Http2ConnectionEncoder encoder,
-      Http2Settings initialSettings)
+  Http2StreamCodec(Http2ConnectionDecoder decoder, Http2ConnectionEncoder encoder, Http2Settings initialSettings)
   {
     super(decoder, encoder, initialSettings);
   }
@@ -91,35 +93,40 @@ class Http2StreamCodec extends Http2ConnectionHandler
     Request request = ((RequestWithCallback)msg).request();
     Http2ConnectionEncoder encoder = encoder();
     int streamId = connection().local().incrementAndGetNextStreamId();
+    final ChannelFuture headersFuture;
     if (request instanceof StreamRequest)
     {
-      StreamRequest streamRequest = (StreamRequest) request;
-      Http2Headers http2Headers = NettyRequestAdapter.toHttp2Headers(streamRequest);
-      BufferedReader reader = new BufferedReader(ctx, encoder, streamId, ((RequestWithCallback) msg).handle());
+      final StreamRequest streamRequest = (StreamRequest) request;
+      final Http2Headers http2Headers = NettyRequestAdapter.toHttp2Headers(streamRequest);
+      final BufferedReader reader = new BufferedReader(ctx, encoder, streamId, ((RequestWithCallback) msg).handle());
       streamRequest.getEntityStream().setReader(reader);
-      encoder.writeHeaders(ctx, streamId, http2Headers, NO_PADDING, NOT_END_STREAM, promise)
-          .addListener(future -> reader.request());
       LOG.debug("Sent HTTP/2 HEADERS frame, stream={}, end={}, headers={}, padding={}bytes",
           new Object[] { streamId, NOT_END_STREAM, http2Headers.size(), NO_PADDING});
+      headersFuture = encoder.writeHeaders(ctx, streamId, http2Headers, NO_PADDING, NOT_END_STREAM, promise);
+      headersFuture.addListener(future -> {
+        if (future.isSuccess())
+        {
+          reader.request();
+        }
+      });
     }
     else if (request instanceof RestRequest)
     {
-      PromiseCombiner promiseCombiner = new PromiseCombiner();
-      ChannelPromise headersPromise = ctx.channel().newPromise();
-      ChannelPromise dataPromise = ctx.channel().newPromise();
-      promiseCombiner.add(headersPromise);
-      promiseCombiner.add(dataPromise);
-      promiseCombiner.finish(promise);
-
-      RestRequest restRequest = (RestRequest) request;
-      Http2Headers headers = NettyRequestAdapter.toHttp2Headers(restRequest);
-      encoder.writeHeaders(ctx, streamId, headers, NO_PADDING, NOT_END_STREAM, headersPromise);
+      final RestRequest restRequest = (RestRequest) request;
+      final Http2Headers headers = NettyRequestAdapter.toHttp2Headers(restRequest);
       LOG.debug("Sent HTTP/2 HEADERS frame, stream={}, end={}, headers={}, padding={}bytes",
           new Object[] { streamId, NOT_END_STREAM, headers.size(), NO_PADDING});
-      ByteBuf data = Unpooled.wrappedBuffer(restRequest.getEntity().asByteBuffer());
-      encoder.writeData(ctx, streamId, data, NO_PADDING, END_STREAM, dataPromise);
-      LOG.debug("Sent HTTP/2 DATA frame, stream={}, end={}, data={}bytes, padding={}bytes",
-          new Object[] { streamId, END_STREAM, data.readableBytes(), NO_PADDING});
+      headersFuture = encoder.writeHeaders(ctx, streamId, headers, NO_PADDING, NOT_END_STREAM, promise);
+      headersFuture.addListener(future -> {
+        if (future.isSuccess())
+        {
+          final ByteBuf data = Unpooled.wrappedBuffer(restRequest.getEntity().asByteBuffer());
+          LOG.debug("Sent HTTP/2 DATA frame, stream={}, end={}, data={}bytes, padding={}bytes",
+              new Object[]{streamId, END_STREAM, data.readableBytes(), NO_PADDING});
+          encoder.writeData(ctx, streamId, data, NO_PADDING, END_STREAM, ctx.newPromise());
+          ctx.channel().flush();
+        }
+      });
     }
     else
     {
@@ -128,20 +135,45 @@ class Http2StreamCodec extends Http2ConnectionHandler
       throw new IllegalArgumentException("Request is neither StreamRequest or RestRequest");
     }
 
-    // Sets TransportCallback as a stream property to be retrieved later
-    TransportCallback<?> callback = ((RequestWithCallback)msg).callback();
-    Http2PipelinePropertyUtil.set(ctx, connection(), streamId, Http2ClientPipelineInitializer.CALLBACK_ATTR_KEY, callback);
-
-    // Sets AsyncPoolHandle as a stream property to be retrieved later
+    final TransportCallback<?> callback = ((RequestWithCallback)msg).callback();
     @SuppressWarnings("unchecked")
-    TimeoutAsyncPoolHandle<Channel> handle = (TimeoutAsyncPoolHandle<Channel>) ((RequestWithCallback) msg).handle();
-    Http2PipelinePropertyUtil.set(ctx, connection(), streamId, Http2ClientPipelineInitializer.CHANNEL_POOL_HANDLE_ATTR_KEY,
-        handle);
-    handle.addTimeoutTask(() -> {
-      LOG.debug("Reset stream upon timeout, stream={}", streamId);
-      resetStream(ctx, streamId, Http2Error.CANCEL.code(), ctx.voidPromise());
-      // Flush the STREAM_RESET frame right away to allow server to free up resources
-      ctx.flush();
+    final TimeoutAsyncPoolHandle<Channel> handle = (TimeoutAsyncPoolHandle<Channel>) ((RequestWithCallback) msg).handle();
+
+    headersFuture.addListener(future -> {
+      if (future.isSuccess())
+      {
+        // Sets TransportCallback as a stream property to be retrieved later
+        Http2PipelinePropertyUtil.set(
+            ctx, connection(), streamId, Http2ClientPipelineInitializer.CALLBACK_ATTR_KEY, callback);
+
+        // Sets AsyncPoolHandle as a stream property to be retrieved later
+        Http2PipelinePropertyUtil.set(
+            ctx, connection(), streamId, Http2ClientPipelineInitializer.CHANNEL_POOL_HANDLE_ATTR_KEY, handle);
+
+        // Sets a timeout task to reset stream
+        // Channel pool handle is also released at timeout
+        handle.addTimeoutTask(() -> {
+          LOG.debug("Reset stream upon timeout, stream={}", streamId);
+          resetStream(ctx, streamId, Http2Error.CANCEL.code(), ctx.newPromise());
+          ctx.flush();
+        });
+      }
+      else
+      {
+        // Invokes callback onResponse with the error thrown during write header or data
+        callback.onResponse(TransportResponseImpl.error(future.cause()));
+
+        // Releases the handle to put the channel back to the pool
+        handle.release();
+
+        // Resets the stream if a stream is created after we sent header
+        if (connection().stream(streamId) != null)
+        {
+          LOG.debug("Reset stream upon timeout, stream={}", streamId);
+          resetStream(ctx, streamId, Http2Error.CANCEL.code(), ctx.newPromise());
+          ctx.flush();
+        }
+      }
     });
   }
 
@@ -178,10 +210,14 @@ class Http2StreamCodec extends Http2ConnectionHandler
     {
       LOG.error("Encountered exception while invoking request callbacks with errors", e);
     }
+    finally
+    {
+      super.onConnectionError(ctx, cause, connectionError);
+    }
   }
 
   /**
-   * If present, invokes the associated {@link TransportCallback} with error and disposes the {@link Channel}
+   * If present, invokes the associated {@link TransportCallback} with error and releases the {@link Channel}
    * when an HTTP/2 stream encounters an error.
    *
    * @param ctx ChannelHandlerContext
@@ -198,12 +234,10 @@ class Http2StreamCodec extends Http2ConnectionHandler
       callback.onResponse(TransportResponseImpl.<StreamResponse>error(cause, Collections.<String, String>emptyMap()));
     }
 
-    // Signals to dispose the channel back to the pool
+    // Signals to release the channel back to the pool
     final TimeoutAsyncPoolHandle<Channel> handle = Http2PipelinePropertyUtil.remove(
         ctx, connection(), streamId, Http2ClientPipelineInitializer.CHANNEL_POOL_HANDLE_ATTR_KEY);
-
-    // Disposes channel
-    Optional.ofNullable(handle).ifPresent(TimeoutAsyncPoolHandle::dispose);
+    Optional.ofNullable(handle).ifPresent(TimeoutAsyncPoolHandle::release);
   }
 
   /**
@@ -264,7 +298,7 @@ class Http2StreamCodec extends Http2ConnectionHandler
     @Override
     public void onDone()
     {
-      _encoder.writeData(_ctx, _streamId, Unpooled.EMPTY_BUFFER, NO_PADDING, END_STREAM, _ctx.channel().voidPromise());
+      _encoder.writeData(_ctx, _streamId, Unpooled.EMPTY_BUFFER, NO_PADDING, END_STREAM, _ctx.channel().newPromise());
       LOG.debug("Sent HTTP/2 DATA frame, stream={}, end={}, data={}bytes, padding={}bytes",
           new Object[] { _streamId, END_STREAM, NO_DATA, NO_PADDING });
       _ctx.channel().flush();
@@ -273,7 +307,7 @@ class Http2StreamCodec extends Http2ConnectionHandler
     @Override
     public void onError(Throwable cause)
     {
-      resetStream(_ctx, _streamId, Http2Error.CANCEL.code(), _ctx.voidPromise());
+      resetStream(_ctx, _streamId, Http2Error.CANCEL.code(), _ctx.newPromise());
 
       // Releases the handle to put the channel back to the pool
       _poolHandle.release();

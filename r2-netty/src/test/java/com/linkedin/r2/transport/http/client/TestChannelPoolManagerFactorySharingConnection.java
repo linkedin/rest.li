@@ -149,11 +149,11 @@ public class TestChannelPoolManagerFactorySharingConnection
         shutdownCallback.get(20, TimeUnit.SECONDS);
 
       }
-      Assert.assertEquals(httpServerStatsProvider.requestCount.get(), NUMBER_OF_REQUESTS);
+      Assert.assertEquals(httpServerStatsProvider.requestCount(), NUMBER_OF_REQUESTS);
 
       int expectedOpenedConnections = shareConnection ? expectedConnectionsWithSharing : OPENED_CONNECTIONS_WITHOUT_SHARING;
 
-      Assert.assertEquals(httpServerStatsProvider.clientConnections.size(), expectedOpenedConnections);
+      Assert.assertEquals(httpServerStatsProvider.clientConnections().size(), expectedOpenedConnections);
     }
     finally
     {

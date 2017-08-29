@@ -58,8 +58,8 @@ public class TestTimeoutAsyncPoolHandle
     handle.addTimeoutTask(() -> latch.countDown());
     latch.await(OPERATION_TIMEOUT, TIME_UNIT);
 
-    Assert.assertEquals(pool.getPutCount(), 0);
-    Assert.assertEquals(pool.getDisposeCount(), 1);
+    Assert.assertEquals(pool.getPutCount(), 1);
+    Assert.assertEquals(pool.getDisposeCount(), 0);
   }
 
   @Test
@@ -74,8 +74,8 @@ public class TestTimeoutAsyncPoolHandle
     latch.await(OPERATION_TIMEOUT, TIME_UNIT);
 
     handle.dispose();
-    Assert.assertEquals(pool.getPutCount(), 0);
-    Assert.assertEquals(pool.getDisposeCount(), 1);
+    Assert.assertEquals(pool.getPutCount(), 1);
+    Assert.assertEquals(pool.getDisposeCount(), 0);
   }
 
   @Test
@@ -90,8 +90,8 @@ public class TestTimeoutAsyncPoolHandle
     latch.await(OPERATION_TIMEOUT, TIME_UNIT);
 
     handle.release();
-    Assert.assertEquals(pool.getPutCount(), 0);
-    Assert.assertEquals(pool.getDisposeCount(), 1);
+    Assert.assertEquals(pool.getPutCount(), 1);
+    Assert.assertEquals(pool.getDisposeCount(), 0);
   }
 
   @Test

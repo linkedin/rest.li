@@ -281,10 +281,7 @@ class Http2FrameListener extends Http2EventAdapter
 
       // schedule a timeout to set the stream and inform use
       _timeoutPoolHandle.addTimeoutTask(() -> _ctx.executor().execute(() ->
-      {
-        final Exception cause = new TimeoutException("Timeout while receiving the response entity.");
-        doFail(cause);
-      }));
+          doResetAndNotify(new TimeoutException("Timeout while receiving the response entity."))));
     }
 
     @Override
@@ -298,7 +295,7 @@ class Http2FrameListener extends Http2EventAdapter
     {
       if (_failureBeforeInit != null)
       {
-        doFail(_failureBeforeInit);
+        doResetAndNotify(_failureBeforeInit);
         return;
       }
 
@@ -316,16 +313,13 @@ class Http2FrameListener extends Http2EventAdapter
     public void onAbort(Throwable ex)
     {
       doReset();
-
-      // Release the handle to put the channel back to the pool
-      _timeoutPoolHandle.release();
     }
 
     public void onDataRead(ByteBuf data, boolean end) throws TooLongFrameException
     {
       if (data.readableBytes() + _totalBytesWritten > _maxContentLength)
       {
-        doFail(new TooLongFrameException("HTTP content length exceeded " + _maxContentLength + " bytes."));
+        doResetAndNotify(new TooLongFrameException("HTTP content length exceeded " + _maxContentLength + " bytes."));
       }
       else
       {
@@ -339,7 +333,7 @@ class Http2FrameListener extends Http2EventAdapter
           }
           catch (IOException ex)
           {
-            doFail(ex);
+            doResetAndNotify(ex);
             return;
           }
           _buffer.add(bytes);
@@ -355,7 +349,7 @@ class Http2FrameListener extends Http2EventAdapter
       }
     }
 
-    private void doFail(Throwable cause)
+    private void doResetAndNotify(Throwable cause)
     {
       doReset();
 
@@ -367,9 +361,6 @@ class Http2FrameListener extends Http2EventAdapter
       {
         _failureBeforeInit = cause;
       }
-
-      // Disposes the handle to dispose the channel back to the pool
-      _timeoutPoolHandle.dispose();
     }
 
     private void doReset()
@@ -377,6 +368,9 @@ class Http2FrameListener extends Http2EventAdapter
       // Resets and closes the stream
       _lifecycleManager.resetStream(_ctx, _streamId, Http2Error.CANCEL.code(), _ctx.newPromise());
       _ctx.flush();
+
+      // Releases the handle to put the channel back to the pool
+      _timeoutPoolHandle.release();
     }
 
     private void doWrite()
@@ -395,7 +389,7 @@ class Http2FrameListener extends Http2EventAdapter
           }
           catch (Http2Exception e)
           {
-            doFail(e);
+            doResetAndNotify(e);
             return;
           }
           finally
