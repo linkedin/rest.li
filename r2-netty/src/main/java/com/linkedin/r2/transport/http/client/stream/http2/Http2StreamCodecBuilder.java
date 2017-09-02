@@ -45,7 +45,7 @@ import static io.netty.handler.codec.http2.DefaultHttp2LocalFlowController.DEFAU
 class Http2StreamCodecBuilder extends AbstractHttp2ConnectionHandlerBuilder<Http2StreamCodec, Http2StreamCodecBuilder>
 {
   // TODO: Consider exposing these as configurable values
-  private final int MAX_INITIAL_STREAM_WINDOW_SIZE = 8 * 1024 * 1024;
+  private final long MAX_INITIAL_STREAM_WINDOW_SIZE = 8 * 1024 * 1024;
   private final boolean AUTO_REFILL_CONNECTION_WINDOW = true;
 
   private long _maxContentLength = -1;
@@ -123,12 +123,11 @@ class Http2StreamCodecBuilder extends AbstractHttp2ConnectionHandlerBuilder<Http
     ObjectUtil.checkNotNull(_connection, "connection");
 
     // HTTP/2 initial settings - ensures 0 <= initialWindowSize <= MAX_INITIAL_STREAM_WINDOW_SIZE
-    initialSettings.initialWindowSize(Math.min(
-            MAX_INITIAL_STREAM_WINDOW_SIZE,
-            _maxContentLength > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int)_maxContentLength));
+    final int initialWindowSize = (int) Math.min(MAX_INITIAL_STREAM_WINDOW_SIZE, _maxContentLength);
+    initialSettings.initialWindowSize(initialWindowSize);
 
     Http2StreamCodec codec = new Http2StreamCodec(decoder, encoder, initialSettings);
-    super.frameListener(new Http2FrameListener(_connection, codec, _maxContentLength));
+    super.frameListener(new Http2FrameListener(_connection, codec, _maxContentLength, initialWindowSize));
     super.gracefulShutdownTimeoutMillis(_gracefulShutdownTimeoutMillis);
 
     return codec;

@@ -47,6 +47,7 @@ import io.netty.handler.codec.http2.Http2Headers;
 import io.netty.handler.codec.http2.Http2LifecycleManager;
 import io.netty.handler.codec.http2.Http2Settings;
 import io.netty.handler.codec.http2.Http2Stream;
+import io.netty.util.internal.ObjectUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,16 +81,26 @@ class Http2FrameListener extends Http2EventAdapter
   private final Http2Connection.PropertyKey _writerKey;
   private final Http2LifecycleManager _lifecycleManager;
   private final long _maxContentLength;
+  private final int _connectionWindowSizeDelta;
 
   private boolean _settingsReceived = false;
   private boolean _settingsAckReceived = false;
+  private boolean _settingsCompleteEventFired = false;
 
-  public Http2FrameListener(Http2Connection connection, Http2LifecycleManager lifecycleManager, long maxContentLength)
+  public Http2FrameListener(Http2Connection connection, Http2LifecycleManager lifecycleManager, long maxContentLength,
+      int initialConnectionWindowSize)
   {
+    if (initialConnectionWindowSize < Http2CodecUtil.DEFAULT_WINDOW_SIZE)
+    {
+      throw new IllegalArgumentException("Initial connection window size should be greater than or equal"
+          + " to the default window size " + Http2CodecUtil.DEFAULT_WINDOW_SIZE);
+    }
+
     _connection = connection;
     _writerKey = connection.newKey();
     _lifecycleManager = lifecycleManager;
     _maxContentLength = maxContentLength;
+    _connectionWindowSizeDelta = initialConnectionWindowSize - Http2CodecUtil.DEFAULT_WINDOW_SIZE;
   }
 
   @Override
@@ -221,6 +232,10 @@ class Http2FrameListener extends Http2EventAdapter
   public void onSettingsRead(ChannelHandlerContext ctx, Http2Settings settings) throws Http2Exception
   {
     LOG.debug("Received HTTP/2 SETTINGS frame, settings={}", settings);
+
+    // Increase the connection flow control window size by sending the delta as a window update
+    _connection.local().flowController().incrementWindowSize(_connection.connectionStream(), _connectionWindowSizeDelta);
+
     _settingsReceived = true;
     checkAndTriggerSettingsCompleteEvent(ctx);
   }
@@ -240,9 +255,11 @@ class Http2FrameListener extends Http2EventAdapter
    */
   private void checkAndTriggerSettingsCompleteEvent(ChannelHandlerContext ctx)
   {
-    if (_settingsReceived && _settingsAckReceived)
+    // Ensures SETTINGS_COMPLETE event is fired at most once
+    if (_settingsReceived && _settingsAckReceived && !_settingsCompleteEventFired)
     {
       ctx.fireUserEventTriggered(FrameEvent.SETTINGS_COMPLETE);
+      _settingsCompleteEventFired = true;
     }
   }
 
@@ -280,8 +297,12 @@ class Http2FrameListener extends Http2EventAdapter
       _buffer = new LinkedList<>();
 
       // schedule a timeout to set the stream and inform use
-      _timeoutPoolHandle.addTimeoutTask(() -> _ctx.executor().execute(() ->
-          doResetAndNotify(new TimeoutException("Timeout while receiving the response entity."))));
+      _timeoutPoolHandle.addTimeoutTask(() -> _ctx.executor().execute(() -> {
+        final String message = String.format(
+            "Timeout while receiving the response entity, stream=%d, remote=%s",
+            streamId, ctx.channel().remoteAddress());
+        doResetAndNotify(new TimeoutException(message));
+      }));
     }
 
     @Override

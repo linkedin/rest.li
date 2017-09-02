@@ -114,7 +114,7 @@ public class TestClientTimeout extends AbstractStreamTest
       Throwable throwable = ExceptionUtils.getRootCause(ex);
       Assert.assertTrue(throwable instanceof TimeoutException);
       // should fail with timeout while streaming response
-      Assert.assertEquals(throwable.getMessage(), "Timeout while receiving the response entity.");
+      Assert.assertTrue(throwable.getMessage().startsWith("Timeout while receiving the response entity"));
     }
   }
 
@@ -161,7 +161,7 @@ public class TestClientTimeout extends AbstractStreamTest
     Assert.assertNotNull(throwable.get());
     Throwable rootCause = ExceptionUtils.getRootCause(throwable.get());
     Assert.assertTrue(rootCause instanceof TimeoutException);
-    Assert.assertEquals(rootCause.getMessage(), "Timeout while receiving the response entity.");
+    Assert.assertTrue(rootCause.getMessage().startsWith("Timeout while receiving the response entity"));
   }
 
   private class DelayBeforeResponseHandler implements StreamRequestHandler
