@@ -14,10 +14,6 @@
    limitations under the License.
 */
 
-/**
- * $Id: $
- */
-
 package com.linkedin.d2.balancer.zkfs;
 
 import com.linkedin.d2.balancer.Directory;
@@ -33,9 +29,7 @@ import java.util.List;
 
 /**
  * @author Steven Ihde
- * @version $Revision: $
  */
-
 public class ZKFSDirectory implements Directory
 {
   private final String _basePath;
@@ -51,26 +45,7 @@ public class ZKFSDirectory implements Directory
   {
     final ZooKeeper zk = _connection.getZooKeeper();
     final String path = ZKFSUtil.servicePath(_basePath);
-    zk.getChildren(path, false, new AsyncCallback.Children2Callback()
-    {
-      @Override
-      public void processResult(int rc, String path, Object ctx, List<String> children, Stat stat)
-      {
-        KeeperException.Code code = KeeperException.Code.get(rc);
-        switch (code)
-        {
-          case OK:
-            callback.onSuccess(children);
-            break;
-          case NONODE:
-            callback.onSuccess(Collections.<String>emptyList());
-            break;
-          default:
-            callback.onError(KeeperException.create(code));
-            break;
-        }
-      }
-    }, null);
+    zk.getChildren(path, false, new ChildrenCallback(callback), null);
   }
 
   @Override
@@ -78,27 +53,35 @@ public class ZKFSDirectory implements Directory
   {
     final ZooKeeper zk = _connection.getZooKeeper();
     final String path = ZKFSUtil.clusterPath(_basePath);
-    zk.getChildren(path, false, new AsyncCallback.Children2Callback()
-    {
-      @Override
-      public void processResult(int rc, String path, Object ctx, List<String> children, Stat stat)
-      {
-        KeeperException.Code code = KeeperException.Code.get(rc);
-        switch (code)
-        {
-          case OK:
-            callback.onSuccess(children);
-            break;
-          case NONODE:
-            callback.onSuccess(Collections.<String>emptyList());
-            break;
-          default:
-            callback.onError(KeeperException.create(code));
-            break;
-        }
-      }
-    }, null);
+    zk.getChildren(path, false, new ChildrenCallback(callback), null);
+  }
 
+  class ChildrenCallback implements AsyncCallback.Children2Callback
+  {
+    private Callback<List<String>> _callback;
+
+    ChildrenCallback(final Callback<List<String>> callback)
+    {
+      _callback = callback;
+    }
+
+    @Override
+    public void processResult(int rc, String path, Object ctx, List<String> children, Stat stat)
+    {
+      KeeperException.Code code = KeeperException.Code.get(rc);
+      switch (code)
+      {
+        case OK:
+          _callback.onSuccess(children);
+          break;
+        case NONODE:
+          _callback.onSuccess(Collections.<String>emptyList());
+          break;
+        default:
+          _callback.onError(KeeperException.create(code));
+          break;
+      }
+    }
   }
 
   public void setConnection(ZKConnection connection)

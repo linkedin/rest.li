@@ -14,10 +14,6 @@
    limitations under the License.
 */
 
-/**
- * $Id: $
- */
-
 package com.linkedin.d2.discovery.stores.util;
 
 import com.linkedin.common.callback.Callback;
@@ -63,7 +59,7 @@ public abstract class AbstractPropertyStoreAsync<T> implements PropertyStoreAsyn
   @Override
   public void shutdown(final Callback<None> callback)
   {
-    shutdown(callback);
+    callback.onSuccess(None.none());
   }
 
   protected static <U> U getUninterruptibly(Future<U> future) throws PropertyStoreException

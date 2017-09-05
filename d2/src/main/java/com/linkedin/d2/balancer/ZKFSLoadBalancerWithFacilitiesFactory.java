@@ -49,8 +49,8 @@ public class ZKFSLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFa
   {
     if (config._executorService == null)
     {
-      LOG.warn("It's suggested to pass a custom executorService to enhance monitoring and have better control over " +
-        "the executor");
+      LOG.warn("It has not been passed an executor service. It's suggested to be passed to enhance monitoring and have " +
+        "better control over the executor");
       config._executorService =
           Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("D2 PropertyEventExecutor"));
     }

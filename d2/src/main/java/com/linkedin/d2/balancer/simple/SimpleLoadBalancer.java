@@ -50,9 +50,6 @@ import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -67,6 +64,8 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.linkedin.d2.discovery.util.LogUtil.debug;
 import static com.linkedin.d2.discovery.util.LogUtil.info;
@@ -79,8 +78,8 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   private static final String     D2_SCHEME_NAME = "d2";
 
   private final LoadBalancerState _state;
-  private final Stats             _serviceUnavailableStats;
-  private final Stats             _serviceAvailableStats;
+  private final Stats _serviceUnavailableStats;
+  private final Stats _serviceAvailableStats;
   private final long              _timeout;
   private final TimeUnit          _unit;
   private final Random            _random = new Random();
@@ -437,8 +436,8 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
    */
   @Override
   public <K> HostToKeyMapper<K> getPartitionInformation(URI serviceUri, Collection<K> keys,
-                                                                  int limitHostPerPartition,
-                                                                  int hash)
+                                                        int limitHostPerPartition,
+                                                        int hash)
           throws ServiceUnavailableException
   {
     if (limitHostPerPartition <= 0)
@@ -786,7 +785,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   }
 
   public static class SimpleLoadBalancerCountDownCallback implements
-      LoadBalancerStateListenerCallback
+    LoadBalancerStateListenerCallback
   {
     private CountDownLatch _latch;
 

@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2012 LinkedIn Corp.
+   Copyright (c) 2017 LinkedIn Corp.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -13,10 +13,6 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 */
-
-/**
- * $Id: $
- */
 
 package com.linkedin.d2.discovery.stores.zk;
 
