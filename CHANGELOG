@@ -1,6 +1,7 @@
 14.0.12
 -------
-
+(RB=1081339)
+Simplifies channel creation failure log message
 
 14.0.11
 -------

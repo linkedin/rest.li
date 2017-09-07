@@ -37,6 +37,8 @@ import io.netty.channel.group.ChannelGroup;
 
 import java.net.ConnectException;
 import java.net.SocketAddress;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -45,6 +47,8 @@ import java.net.SocketAddress;
 */
 public class ChannelPoolLifecycle implements AsyncPool.Lifecycle<Channel>
 {
+  private static final Logger LOG = LoggerFactory.getLogger(ChannelPoolLifecycle.class);
+
   /**
    * Maximum period in ms between retries for creating a channel in back-off policies
    */
@@ -75,36 +79,32 @@ public class ChannelPoolLifecycle implements AsyncPool.Lifecycle<Channel>
   public void create(final Callback<Channel> channelCallback)
   {
     final long start = System.currentTimeMillis();
-    _bootstrap.connect(_remoteAddress).addListener(new ChannelFutureListener()
-    {
-      @Override
-      public void operationComplete(ChannelFuture channelFuture) throws Exception
+    _bootstrap.connect(_remoteAddress).addListener((ChannelFutureListener) channelFuture -> {
+      if (channelFuture.isSuccess())
       {
-        if (channelFuture.isSuccess())
+        synchronized (_createTimeTracker)
         {
-          synchronized (_createTimeTracker)
-          {
-            _createTimeTracker.addValue(System.currentTimeMillis() - start);
-          }
-          Channel c = channelFuture.channel();
-          if (_tcpNoDelay)
-          {
-            c.config().setOption(ChannelOption.TCP_NODELAY, true);
-          }
-          _channelGroup.add(c);
-          channelCallback.onSuccess(c);
+          _createTimeTracker.addValue(System.currentTimeMillis() - start);
+        }
+        Channel c = channelFuture.channel();
+        if (_tcpNoDelay)
+        {
+          c.config().setOption(ChannelOption.TCP_NODELAY, true);
+        }
+        _channelGroup.add(c);
+        channelCallback.onSuccess(c);
+      }
+      else
+      {
+        Throwable cause = channelFuture.cause();
+        LOG.error("Failed to create channel, remote={}", _remoteAddress, cause);
+        if (cause instanceof ConnectException)
+        {
+          channelCallback.onError(new RetriableRequestException(cause));
         }
         else
         {
-          Throwable cause = channelFuture.cause();
-          if (cause instanceof ConnectException)
-          {
-            channelCallback.onError(new RetriableRequestException(cause));
-          }
-          else
-          {
-            channelCallback.onError(HttpNettyStreamClient.toException(cause));
-          }
+          channelCallback.onError(HttpNettyStreamClient.toException(cause));
         }
       }
     });
@@ -127,19 +127,16 @@ public class ChannelPoolLifecycle implements AsyncPool.Lifecycle<Channel>
   {
     if (channel.isOpen())
     {
-      channel.close().addListener(new ChannelFutureListener()
-      {
-        @Override
-        public void operationComplete(ChannelFuture channelFuture) throws Exception
+      channel.close().addListener((ChannelFutureListener) channelFuture -> {
+        if (channelFuture.isSuccess())
         {
-          if (channelFuture.isSuccess())
-          {
-            channelCallback.onSuccess(channelFuture.channel());
-          }
-          else
-          {
-            channelCallback.onError(HttpNettyStreamClient.toException(channelFuture.cause()));
-          }
+          channelCallback.onSuccess(channelFuture.channel());
+        }
+        else
+        {
+          final Throwable cause = channelFuture.cause();
+          LOG.error("Failed to destroy channel, remote={}", _remoteAddress, cause);
+          channelCallback.onError(HttpNettyStreamClient.toException(cause));
         }
       });
     }

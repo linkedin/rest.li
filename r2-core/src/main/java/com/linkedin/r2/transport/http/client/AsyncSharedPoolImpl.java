@@ -515,7 +515,7 @@ public class AsyncSharedPoolImpl<T> implements AsyncPool<T>
       @Override
       public void onError(final Throwable e)
       {
-        LOG.error("{}: item creation failed", _name, e);
+        LOG.debug("{}: item creation failed", _name, e);
 
         // Note we drain all waiters and cancel all pending creates if a create fails.
         // When a create fails, rate-limiting logic will be applied. In this case,

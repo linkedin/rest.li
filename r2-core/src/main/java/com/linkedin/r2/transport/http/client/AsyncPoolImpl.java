@@ -628,7 +628,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
             {
               create();
             }
-            LOG.error(_poolName + ": object creation failed", e);
+            LOG.debug(_poolName + ": object creation failed", e);
             callback.onDone();
           }
         });
