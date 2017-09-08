@@ -183,7 +183,10 @@ class Http2StreamCodec extends Http2ConnectionHandler
     final int streamId = streamException.streamId();
 
     // Logs the full exception here
-    LOG.error("HTTP/2 stream {} encountered an exception", streamId, cause);
+    final String message = String.format(
+        "HTTP/2 stream encountered an exception, stream=%d, remote=%s",
+        streamId, ctx.channel().remoteAddress());
+    LOG.error(message, cause);
     try
     {
       doOnStreamError(ctx, streamId, cause);
@@ -198,13 +201,18 @@ class Http2StreamCodec extends Http2ConnectionHandler
   protected void onConnectionError(ChannelHandlerContext ctx, Throwable cause, Http2Exception connectionError)
   {
     // Logs the full exception here
-    LOG.error("HTTP/2 connection with {} active streams encountered an exception", connection().numActiveStreams(), cause);
+    final String message = String.format(
+        "HTTP/2 connection encountered an exception, streamCount=%d, remote=%s",
+        connection().numActiveStreams(), ctx.channel().remoteAddress());
+    LOG.error(message, cause);
     try
     {
       connection().forEachActiveStream(stream -> {
+        resetStream(ctx, stream.id(), Http2Error.CANCEL.code(), ctx.newPromise());
         doOnStreamError(ctx, stream.id(), cause);
         return true;
       });
+      ctx.flush();
     }
     catch (Http2Exception e)
     {

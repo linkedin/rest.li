@@ -2,6 +2,8 @@
 -------
 (RB=1081339)
 Simplifies channel creation failure log message
+(RB=1091439)
+Reset streams during a connection error
 
 14.0.11
 -------
