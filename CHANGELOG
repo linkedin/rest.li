@@ -1,5 +1,11 @@
+15.0.2
+-------
+
+
 15.0.1
 -------
+(RB=1097555) 
+Fixing double callback invocation bug in WarmUpLoadBalancer
 
 15.0.0
 -------
@@ -10,6 +16,12 @@ Created subclasses for UpdateResponseBuilder, BatchUpdateResponseBuilder, and Co
 Broke ErrorResponseBuilder from RestLiResponseBuilder hierarchy.
 Removed type parameter for RestLiCallback and RestLiFilterResponseContextFactory.
 Made IdEntityResponse to extend IdResponse.
+
+14.1.0
+-------
+(RB=1074559)
+Introduced early handshake and early http2 upgrade request.
+Added AssertionMethods utils to test-util module
 
 14.0.12
 -------

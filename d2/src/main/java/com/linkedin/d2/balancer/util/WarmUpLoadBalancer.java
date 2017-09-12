@@ -140,7 +140,7 @@ public class WarmUpLoadBalancer implements LoadBalancerWithFacilities
 
       if (serviceNames.size() == 0)
       {
-        startUpCallback.onSuccess(None.none());
+        timeoutCallback.onSuccess(None.none());
         return;
       }
 
@@ -154,7 +154,7 @@ public class WarmUpLoadBalancer implements LoadBalancerWithFacilities
     catch (Exception e)
     {
       LOG.error("D2 WarmUp Failed", e);
-      startUpCallback.onSuccess(None.none());
+      timeoutCallback.onSuccess(None.none());
     }
   }
 
