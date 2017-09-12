@@ -60,8 +60,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.testng.Assert;
-import org.testng.annotations.AfterSuite;
-import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -91,7 +91,7 @@ public class TestMIMEIntegrationReaderWriter extends AbstractMIMEIntegrationStre
   MIMEDataPart _bodyLessBody;
   MIMEDataPart _purelyEmptyBody;
 
-  @BeforeSuite
+  @BeforeClass
   public void dataSourceSetup()
   {
     scheduledExecutorService = Executors.newScheduledThreadPool(10);
@@ -118,7 +118,7 @@ public class TestMIMEIntegrationReaderWriter extends AbstractMIMEIntegrationStre
     _purelyEmptyBody = new MIMEDataPart(ByteString.empty(), Collections.<String, String>emptyMap());
   }
 
-  @AfterSuite
+  @AfterClass
   public void shutDown()
   {
     scheduledExecutorService.shutdownNow();

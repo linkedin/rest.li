@@ -64,7 +64,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
@@ -98,21 +97,9 @@ public class TestMIMEChainingMultipleSources
   private ScheduledExecutorService _scheduledExecutorService;
 
   @BeforeClass
-  public void threadPoolSetup()
-  {
-    _scheduledExecutorService = Executors.newScheduledThreadPool(30);
-  }
-
-  @AfterClass
-  public void threadPoolTearDown()
-  {
-    _scheduledExecutorService.shutdownNow();
-  }
-
-  @BeforeMethod
   public void setup() throws IOException
   {
-    _latch = new CountDownLatch(2);
+    _scheduledExecutorService = Executors.newScheduledThreadPool(30);
     _clientFactory = new HttpClientFactory();
     _client = new TransportClientAdapter(_clientFactory.getClient(Collections.<String, String>emptyMap()));
     _server_A_client = new TransportClientAdapter(_clientFactory.getClient(Collections.<String, String>emptyMap()));
@@ -133,9 +120,10 @@ public class TestMIMEChainingMultipleSources
     _serverB.start();
   }
 
-  @AfterMethod
+  @AfterClass
   public void tearDown() throws Exception
   {
+    _scheduledExecutorService.shutdownNow();
     final FutureCallback<None> clientShutdownCallback = new FutureCallback<None>();
     _client.shutdown(clientShutdownCallback);
     clientShutdownCallback.get();
@@ -152,6 +140,12 @@ public class TestMIMEChainingMultipleSources
     _serverA.waitForStop();
     _serverB.stop();
     _serverB.waitForStop();
+  }
+
+  @BeforeMethod
+  public void setupMethod() throws IOException
+  {
+    _latch = new CountDownLatch(2);
   }
 
   @DataProvider(name = "chunkSizes")
