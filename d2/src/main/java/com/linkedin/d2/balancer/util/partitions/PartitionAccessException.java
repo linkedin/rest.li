@@ -16,8 +16,10 @@
 
 package com.linkedin.d2.balancer.util.partitions;
 
-// This exception is meant to force us be aware of problems in accessing partitions (obtaining partition id)
-// and handle it appropriately. Our code should handle this exception whenever possible
+/**
+ * This exception is meant to force us be aware of problems in accessing partitions (obtaining partition id)
+ * and handle it appropriately. Our code should handle this exception whenever possible
+ */
 public class PartitionAccessException extends Exception
 {
   private static final long serialVersionUID = 69954L;

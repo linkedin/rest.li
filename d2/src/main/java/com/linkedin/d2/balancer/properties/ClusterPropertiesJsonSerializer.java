@@ -127,6 +127,19 @@ public class ClusterPropertiesJsonSerializer implements
               new HashBasedPartitionProperties(partitionKeyRegex, partitionCount, algorithm);
           break;
         }
+        case CUSTOM:
+        {
+          int partitionCount = partitionPropertiesMap.containsKey(PropertyKeys.PARTITION_COUNT)
+              ? PropertyUtil.checkAndGetValue(partitionPropertiesMap, PropertyKeys.PARTITION_COUNT, Number.class, scope).intValue()
+              : 0;
+
+          @SuppressWarnings("unchecked")
+          List<String> partitionAccessorList =partitionPropertiesMap.containsKey(PropertyKeys.PARTITION_ACCESSOR_LIST)
+              ? PropertyUtil.checkAndGetValue(partitionPropertiesMap, PropertyKeys.PARTITION_ACCESSOR_LIST, List.class, scope)
+              : Collections.emptyList();
+          partitionProperties = new CustomizedPartitionProperties(partitionCount, partitionAccessorList);
+          break;
+        }
         case NONE:
           partitionProperties = NullPartitionProperties.getInstance();
           break;

@@ -18,11 +18,11 @@ package com.linkedin.d2.balancer.config;
 
 import com.linkedin.d2.D2ClusterPartitionConfiguration;
 import com.linkedin.d2.PartitionTypeEnum;
+import com.linkedin.d2.RangedPartitionProperties;
 import com.linkedin.d2.balancer.properties.HashBasedPartitionProperties;
 import com.linkedin.d2.balancer.properties.NullPartitionProperties;
 import com.linkedin.d2.balancer.properties.PartitionProperties;
 import com.linkedin.d2.balancer.properties.RangeBasedPartitionProperties;
-import com.linkedin.d2.rangedPartitionProperties;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -58,7 +58,7 @@ public class PartitionPropertiesConverterTest
     D2ClusterPartitionConfiguration.PartitionTypeSpecificData data =
         new D2ClusterPartitionConfiguration.PartitionTypeSpecificData();
     data.setRangedPartitionProperties(
-        new rangedPartitionProperties()
+        new RangedPartitionProperties()
             .setKeyRangeStart(keyRangeStart)
             .setPartitionSize(paritionSize)
     );
@@ -86,7 +86,7 @@ public class PartitionPropertiesConverterTest
 
     D2ClusterPartitionConfiguration.PartitionTypeSpecificData data
         = new D2ClusterPartitionConfiguration.PartitionTypeSpecificData();
-    data.setHashAlgorithm(com.linkedin.d2.hashAlgorithm.MD5);
+    data.setHashAlgorithm(com.linkedin.d2.HashAlgorithm.MD5);
     D2ClusterPartitionConfiguration partitionConfig =
         new D2ClusterPartitionConfiguration()
             .setType(PartitionTypeEnum.HASH)
@@ -112,7 +112,7 @@ public class PartitionPropertiesConverterTest
 
     D2ClusterPartitionConfiguration.PartitionTypeSpecificData data
         = new D2ClusterPartitionConfiguration.PartitionTypeSpecificData();
-    data.setHashAlgorithm(com.linkedin.d2.hashAlgorithm.MODULO);
+    data.setHashAlgorithm(com.linkedin.d2.HashAlgorithm.MODULO);
     D2ClusterPartitionConfiguration partitionConfig =
         new D2ClusterPartitionConfiguration()
             .setType(PartitionTypeEnum.HASH)

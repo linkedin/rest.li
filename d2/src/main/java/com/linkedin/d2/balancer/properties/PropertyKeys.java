@@ -106,6 +106,7 @@ public class PropertyKeys
   public static final String PARTITION_SIZE = "partitionSize";
   public static final String PARTITION_COUNT = "partitionCount";
   public static final String PARTITION_KEY_REGEX = "partitionKeyRegex";
+  public static final String PARTITION_ACCESSOR_LIST = "partitionAccessorList";
   public static final String HASH_ALGORITHM = "hashAlgorithm";
   public static final String CLUSTER_VARIANTS = "clusterVariants";
   public static final String TYPE = "type";

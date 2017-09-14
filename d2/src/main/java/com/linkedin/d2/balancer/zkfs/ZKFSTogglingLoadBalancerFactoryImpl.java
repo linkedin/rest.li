@@ -35,6 +35,8 @@ import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.util.FileSystemDirectory;
 import com.linkedin.d2.balancer.util.TogglingLoadBalancer;
+import com.linkedin.d2.balancer.util.partitions.PartitionAccessorRegistry;
+import com.linkedin.d2.balancer.util.partitions.PartitionAccessorRegistryImpl;
 import com.linkedin.d2.discovery.PropertySerializer;
 import com.linkedin.d2.discovery.event.PropertyEventBus;
 import com.linkedin.d2.discovery.event.PropertyEventBusImpl;
@@ -78,6 +80,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
   private final boolean _isSSLEnabled;
   private final Map<String, Map<String, Object>> _clientServicesConfig;
   private final boolean _useNewEphemeralStoreWatcher;
+  private final PartitionAccessorRegistry _partitionAccessorRegistry;
 
   private static final Logger _log = LoggerFactory.getLogger(ZKFSTogglingLoadBalancerFactoryImpl.class);
 
@@ -139,7 +142,8 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
       sslParameters,
       isSSLEnabled,
       Collections.emptyMap(),
-      false);
+      false,
+      new PartitionAccessorRegistryImpl());
   }
 
   public ZKFSTogglingLoadBalancerFactoryImpl(ComponentFactory factory,
@@ -154,7 +158,8 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
                                              SSLParameters sslParameters,
                                              boolean isSSLEnabled,
                                              Map<String, Map<String, Object>> clientServicesConfig,
-                                             boolean useNewEphemeralStoreWatcher)
+                                             boolean useNewEphemeralStoreWatcher,
+                                             PartitionAccessorRegistry partitionAccessorRegistry)
   {
     _factory = factory;
     _lbTimeout = timeout;
@@ -177,6 +182,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
     _isSSLEnabled = isSSLEnabled;
     _clientServicesConfig = clientServicesConfig;
     _useNewEphemeralStoreWatcher = useNewEphemeralStoreWatcher;
+    _partitionAccessorRegistry = partitionAccessorRegistry;
   }
 
   @Override
@@ -214,7 +220,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
 
     SimpleLoadBalancerState state = new SimpleLoadBalancerState(
             executorService, uriBus, clusterBus, serviceBus, _clientFactories, _loadBalancerStrategyFactories,
-            _sslContext, _sslParameters, _isSSLEnabled, _clientServicesConfig);
+            _sslContext, _sslParameters, _isSSLEnabled, _clientServicesConfig, _partitionAccessorRegistry);
     SimpleLoadBalancer balancer = new SimpleLoadBalancer(state, _lbTimeout, _lbTimeoutUnit);
 
     TogglingLoadBalancer togLB = _factory.createBalancer(balancer, state, clusterToggle, serviceToggle, uriToggle);

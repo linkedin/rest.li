@@ -9,10 +9,13 @@
       "type": {
       "type" : "enum",
       "name" : "PartitionTypeEnum",
-      "symbols" : ["HASH", "RANGE", "NONE"]
+      "symbols" : ["HASH", "RANGE", "CUSTOM", "NONE"]
       },
       "doc": "The type of partitioning. We support HASH, RANGE, NONE.",
-      "symbolDocs": {"RANGE":"partitioning based on range e.g. Id 1-1000 goes to bucket A, Id 1001-2000 goes to bucket B, etc.", "HASH":"Partitioning based on hash.", "NONE":"No Partitioning."}
+      "symbolDocs": {"RANGE":"partitioning based on range e.g. Id 1-1000 goes to bucket A, Id 1001-2000 goes to bucket B, etc.",
+        "HASH":"Partitioning based on hash.",
+        "CUSTOM":"Partitioning base on the customized function provided by the service",
+        "NONE":"No Partitioning."}
     },
     {
       "name": "partitionKeyRegex",
@@ -28,11 +31,11 @@
     },
     {
       "name": "partitionTypeSpecificData",
-      "doc": "If the partition type is RANGE, then we have rangedPartitionProperties. If it's type HASH, we should have a hashAlgorithm. Otherwise we won't have any extra data in this field",
+      "doc": "If the partition type is RANGE, then we have RangedPartitionProperties. If it's type HASH, we should have a HashAlgorithm. If it is type CUSTOM, we have PartitionAccessorList. Otherwise we won't have any extra data in this field",
       "type": [
         {
           "type" : "record",
-          "name" : "rangedPartitionProperties",
+          "name" : "RangedPartitionProperties",
           "fields": [
             {
               "name": "partitionSize",
@@ -47,11 +50,28 @@
           ]
         },
         {
-          "name": "hashAlgorithm",
+          "name": "HashAlgorithm",
           "type" : "enum",
           "symbols" : ["MODULO", "MD5"],
           "doc": "The hashing algorithm used in HASH based partitioning. Supported algorithms are: MODULO or MD5. Not used for RANGE based partition.",
           "symbolDocs": {"MODULO":"Mod the key with partitionCount to get the partitionKey", "MD5":"Hash the key and mod it with partitionCount to get the partitionKey"}
+        },
+        {
+          "name": "PartitionAccessorList",
+          "type": "record",
+          "doc": "The list of class names that implement BasePartitionAccessor. D2 goes through the list and uses the first one that is registered to PartitionAccessorRegistry. This list is used when the service needs to provide/deploy multiple versions of implementation.",
+          "fields":
+          [
+            {
+              "name": "classNames",
+              "type":
+              {
+                "type": "array",
+                "items": "string"
+              },
+              "doc":"Class names for the implemented BasePartitionAccessor"
+            }
+          ]
         }
       ],
       "optional": true

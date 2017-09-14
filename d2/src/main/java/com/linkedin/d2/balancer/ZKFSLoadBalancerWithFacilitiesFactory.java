@@ -88,7 +88,7 @@ public class ZKFSLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFa
     }
 
     final Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories =
-        createDefaultLoadBalancerStrategyFactories(config._healthCheckOperations, config._executorService, config._eventEmitter);
+        createDefaultLoadBalancerStrategyFactories(config.healthCheckOperations, config._executorService, config.eventEmitter);
 
     return new ZKFSTogglingLoadBalancerFactoryImpl(loadBalancerComponentFactory,
                                                    config.lbWaitTimeout,
@@ -102,8 +102,8 @@ public class ZKFSLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFa
                                                    config.sslParameters,
                                                    config.isSSLEnabled,
                                                    config.clientServicesConfig,
-                                                   config.useNewEphemeralStoreWatcher
-    );
+                                                   config.useNewEphemeralStoreWatcher,
+                                                   config.partitionAccessorRegistry);
   }
 
   private Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> createDefaultLoadBalancerStrategyFactories(

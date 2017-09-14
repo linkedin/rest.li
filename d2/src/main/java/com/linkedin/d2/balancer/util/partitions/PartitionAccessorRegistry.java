@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2012 LinkedIn Corp.
+   Copyright (c) 2017 LinkedIn Corp.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -14,17 +14,25 @@
    limitations under the License.
 */
 
-package com.linkedin.d2.balancer.properties;
+package com.linkedin.d2.balancer.util.partitions;
+
+import java.util.List;
 
 /**
- * This is a semi-marker interface for partition properties
+ * PartitionAccessorRegistry allows to register and retrieve BasePartitionAccessor
+ * with its clusterName.
  */
-public interface PartitionProperties
-{
-  enum PartitionType
-  {
-    RANGE, HASH, CUSTOM, NONE
-  }
 
-  PartitionType getPartitionType();
+public interface PartitionAccessorRegistry
+{
+  /**
+   *  Register BasePartitionAccessor with the given clusterName
+   */
+  void register(String clusterName, BasePartitionAccessor accessor);
+
+  /**
+   * Retrieve BasePartitionAccessor
+   */
+  List<BasePartitionAccessor> getPartitionAccessors(String clusterName);
 }
+

@@ -17,13 +17,16 @@
 package com.linkedin.d2.balancer.config;
 
 import com.linkedin.d2.D2ClusterPartitionConfiguration;
+import com.linkedin.d2.HashAlgorithm;
+import com.linkedin.d2.PartitionAccessorList;
 import com.linkedin.d2.PartitionTypeEnum;
+import com.linkedin.d2.balancer.properties.CustomizedPartitionProperties;
 import com.linkedin.d2.balancer.properties.HashBasedPartitionProperties;
 import com.linkedin.d2.balancer.properties.NullPartitionProperties;
 import com.linkedin.d2.balancer.properties.PartitionProperties;
 import com.linkedin.d2.balancer.properties.RangeBasedPartitionProperties;
-import com.linkedin.d2.hashAlgorithm;
-import com.linkedin.d2.rangedPartitionProperties;
+import com.linkedin.d2.RangedPartitionProperties;
+import com.linkedin.data.template.StringArray;
 
 
 /**
@@ -40,7 +43,7 @@ public class PartitionPropertiesConverter
     {
       case RANGE:
       {
-        rangedPartitionProperties rangedPartitionProperties =
+        RangedPartitionProperties rangedPartitionProperties =
             config.getPartitionTypeSpecificData().getRangedPartitionProperties();
         partitionProperties =
             new RangeBasedPartitionProperties(config.getPartitionKeyRegex(),
@@ -68,6 +71,10 @@ public class PartitionPropertiesConverter
                 config.getPartitionCount(),
                 algorithm);
         break;
+      case CUSTOM:
+        partitionProperties = new CustomizedPartitionProperties(config.getPartitionCount(),
+          config.getPartitionTypeSpecificData().getPartitionAccessorList().getClassNames());
+        break;
       case NONE:
         partitionProperties = NullPartitionProperties.getInstance();
         break;
@@ -91,7 +98,7 @@ public class PartitionPropertiesConverter
         config.setPartitionCount(range.getPartitionCount());
 
         specificData = new D2ClusterPartitionConfiguration.PartitionTypeSpecificData();
-        rangedPartitionProperties rangedPartitionProperties = new rangedPartitionProperties();
+        RangedPartitionProperties rangedPartitionProperties = new RangedPartitionProperties();
         rangedPartitionProperties.setKeyRangeStart(range.getKeyRangeStart());
         rangedPartitionProperties.setPartitionSize(range.getPartitionSize());
         specificData.setRangedPartitionProperties(rangedPartitionProperties);
@@ -105,9 +112,23 @@ public class PartitionPropertiesConverter
         config.setPartitionCount(hash.getPartitionCount());
 
         specificData = new D2ClusterPartitionConfiguration.PartitionTypeSpecificData();
-        specificData.setHashAlgorithm(hashAlgorithm.valueOf(hash.getHashAlgorithm().name()));
+        specificData.setHashAlgorithm(HashAlgorithm.valueOf(hash.getHashAlgorithm().name()));
         config.setPartitionTypeSpecificData(specificData);
         break;
+      case CUSTOM:
+      {
+        CustomizedPartitionProperties properties = (CustomizedPartitionProperties) property;
+        config = new D2ClusterPartitionConfiguration();
+        config.setType(PartitionTypeEnum.CUSTOM);
+        config.setPartitionCount(properties.getPartitionCount());
+
+        specificData = new D2ClusterPartitionConfiguration.PartitionTypeSpecificData();
+        PartitionAccessorList partitionList = new PartitionAccessorList();
+        partitionList.setClassNames(new StringArray(properties.getPartitionAccessorList()));
+        specificData.setPartitionAccessorList(partitionList);
+        config.setPartitionTypeSpecificData(specificData);
+        break;
+      }
       case NONE:
         config = new D2ClusterPartitionConfiguration();
         config.setType(PartitionTypeEnum.NONE);

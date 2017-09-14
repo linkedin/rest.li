@@ -707,8 +707,7 @@ public class D2Config
         }
         Long partitionSize = PropertyUtil.parseLong(PropertyKeys.PARTITION_SIZE,
                                                     PropertyUtil.checkAndGetValue(partitionProperties, PropertyKeys.PARTITION_SIZE, String.class, clusterName));
-        int partitionCount = PropertyUtil.parseInt(PropertyKeys.PARTITION_COUNT,
-                                                   PropertyUtil.checkAndGetValue(partitionProperties, PropertyKeys.PARTITION_COUNT, String.class, clusterName));
+        int partitionCount = parsePartitionCount(partitionProperties, clusterName);
         Long start = PropertyUtil.parseLong(PropertyKeys.KEY_RANGE_START,
                                             PropertyUtil.checkAndGetValue(partitionProperties, PropertyKeys.KEY_RANGE_START, String.class, clusterName));
 
@@ -745,8 +744,7 @@ public class D2Config
           return PARTITION_CONFIG_ERROR_EXIT_CODE;
         }
 
-        int partitionCount = PropertyUtil.parseInt(PropertyKeys.PARTITION_COUNT,
-                                                   PropertyUtil.checkAndGetValue(partitionProperties, PropertyKeys.PARTITION_COUNT, String.class, clusterName));
+        int partitionCount = parsePartitionCount(partitionProperties, clusterName);
         if (partitionCount < 0)
         {
           _log.error("partition count needs to be non negative");
@@ -769,10 +767,39 @@ public class D2Config
       }
       break;
 
+      case CUSTOM:
+      {
+        int partitionCount = parsePartitionCount(partitionProperties, clusterName);
+        if ( partitionCount < 0)
+        {
+          _log.error("partition count needs to be non negative");
+          return PARTITION_CONFIG_ERROR_EXIT_CODE;
+        }
+        @SuppressWarnings("unchecked")
+        List<String> partitionAccessorList = partitionProperties.containsKey(PropertyKeys.PARTITION_ACCESSOR_LIST)
+            ? PropertyUtil.checkAndGetValue(partitionProperties, PropertyKeys.PARTITION_ACCESSOR_LIST, List.class, clusterName)
+            : Collections.emptyList();
+        partitionProperties.put(PropertyKeys.PARTITION_COUNT, partitionCount);
+        clusterConfig.put(PropertyKeys.PARTITION_ACCESSOR_LIST, partitionAccessorList);
+        break;
+      }
       default:
         break;
     }
     return NO_ERROR_EXIT_CODE;
+  }
+
+  private int parsePartitionCount(Map<String, Object> partitionProperties, String clusterName)
+  {
+    // Partition Count is not a required field for all partition types.
+    // When not presented, set it to 0;
+    if (!partitionProperties.containsKey(PropertyKeys.PARTITION_COUNT))
+    {
+      return 0;
+    }
+
+    return PropertyUtil.parseInt(PropertyKeys.PARTITION_COUNT,
+        PropertyUtil.checkAndGetValue(partitionProperties, PropertyKeys.PARTITION_COUNT, String.class, clusterName));
   }
 
   // clusterToServiceMapping will store the servicesConfig using the clusterVariant name as the key.

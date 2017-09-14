@@ -26,6 +26,7 @@ import com.linkedin.d2.balancer.clients.DynamicClient;
 import com.linkedin.d2.balancer.clients.RetryClient;
 import com.linkedin.d2.balancer.event.EventEmitter;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
+import com.linkedin.d2.balancer.util.partitions.PartitionAccessorRegistry;
 import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
@@ -35,13 +36,11 @@ import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.util.NamedThreadFactory;
-
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLParameters;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
 import java.net.URI;
 import java.util.Collection;
 import java.util.HashMap;
@@ -94,14 +93,15 @@ public class D2ClientBuilder
                   _config.clientServicesConfig,
                   _config.d2ServicePath,
                   _config.useNewEphemeralStoreWatcher,
-                  _config._healthCheckOperations,
+                  _config.healthCheckOperations,
                   _config._executorService,
                   _config.retry,
                   _config.retryLimit,
                   _config.warmUp,
                   _config.warmUpTimeoutSeconds,
                   _config.warmUpConcurrentRequests,
-                  _config._eventEmitter);
+                  _config.eventEmitter,
+                  _config.partitionAccessorRegistry);
 
     final LoadBalancerWithFacilities loadBalancer = loadBalancerFactory.create(cfg);
 
@@ -231,7 +231,7 @@ public class D2ClientBuilder
 
   public D2ClientBuilder setHealthCheckOperations(HealthCheckOperations healthCheckOperations)
   {
-    _config._healthCheckOperations = healthCheckOperations;
+    _config.healthCheckOperations = healthCheckOperations;
     return this;
   }
 
@@ -288,7 +288,7 @@ public class D2ClientBuilder
 
   public D2ClientBuilder setEventEmitter(EventEmitter eventEmitter)
   {
-    _config._eventEmitter = eventEmitter;
+    _config.eventEmitter = eventEmitter;
     return this;
   }
 
@@ -333,6 +333,12 @@ public class D2ClientBuilder
 
   public D2ClientBuilder setWarmUpConcurrentRequests(int warmUpConcurrentRequests){
     _config.warmUpConcurrentRequests = warmUpConcurrentRequests;
+    return this;
+  }
+
+  public D2ClientBuilder setPartitionAccessorRegistry(PartitionAccessorRegistry registry)
+  {
+    _config.partitionAccessorRegistry = registry;
     return this;
   }
 

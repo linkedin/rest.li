@@ -19,6 +19,7 @@ package com.linkedin.d2.balancer.simple;
 import com.linkedin.d2.balancer.LoadBalancerState;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessorFactory;
+import com.linkedin.d2.balancer.util.partitions.PartitionAccessorRegistry;
 import com.linkedin.d2.discovery.event.PropertyEventBus;
 
 /**
@@ -28,12 +29,15 @@ class ClusterLoadBalancerSubscriber extends
   AbstractLoadBalancerSubscriber<ClusterProperties>
 {
 
-  private SimpleLoadBalancerState _simpleLoadBalancerState;
+  final private SimpleLoadBalancerState _simpleLoadBalancerState;
+  final private PartitionAccessorRegistry _partitionAccessorRegistry;
 
-  public ClusterLoadBalancerSubscriber(SimpleLoadBalancerState simpleLoadBalancerState, PropertyEventBus<ClusterProperties> cPropertyEventBus)
+  public ClusterLoadBalancerSubscriber(SimpleLoadBalancerState simpleLoadBalancerState,
+      PropertyEventBus<ClusterProperties> cPropertyEventBus, PartitionAccessorRegistry partitionAccessorRegistry)
   {
     super(LoadBalancerState.LoadBalancerStateListenerCallback.CLUSTER, cPropertyEventBus);
     this._simpleLoadBalancerState = simpleLoadBalancerState;
+    this._partitionAccessorRegistry = partitionAccessorRegistry;
   }
 
   @Override
@@ -43,7 +47,8 @@ class ClusterLoadBalancerSubscriber extends
     {
       _simpleLoadBalancerState.getClusterInfo().put(listenTo,
         new ClusterInfoItem(_simpleLoadBalancerState, discoveryProperties,
-          PartitionAccessorFactory.getPartitionAccessor(discoveryProperties.getPartitionProperties())));
+          PartitionAccessorFactory.getPartitionAccessor(discoveryProperties.getClusterName(),
+              _partitionAccessorRegistry, discoveryProperties.getPartitionProperties())));
     }
     else
     {

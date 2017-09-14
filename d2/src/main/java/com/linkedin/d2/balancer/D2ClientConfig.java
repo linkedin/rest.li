@@ -19,6 +19,7 @@ import com.linkedin.d2.backuprequests.BackupRequestsStrategyStatsConsumer;
 import com.linkedin.d2.balancer.event.EventEmitter;
 import com.linkedin.d2.balancer.util.WarmUpLoadBalancer;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
+import com.linkedin.d2.balancer.util.partitions.PartitionAccessorRegistry;
 import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl;
 import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl.ComponentFactory;
 import com.linkedin.r2.transport.common.TransportClientFactory;
@@ -51,7 +52,7 @@ public class D2ClientConfig
   boolean isSymlinkAware = false;
   Map<String, Map<String, Object>> clientServicesConfig = Collections.<String, Map<String, Object>>emptyMap();
   boolean useNewEphemeralStoreWatcher = false;
-  HealthCheckOperations _healthCheckOperations = null;
+  HealthCheckOperations healthCheckOperations = null;
   /**
    * By default is a single threaded executor
    */
@@ -66,7 +67,8 @@ public class D2ClientConfig
   BackupRequestsStrategyStatsConsumer backupRequestsStrategyStatsConsumer = null;
   long backupRequestsLatencyNotificationInterval = 1;
   TimeUnit backupRequestsLatencyNotificationIntervalUnit = TimeUnit.MINUTES;
-  EventEmitter _eventEmitter = null;
+  EventEmitter eventEmitter = null;
+  PartitionAccessorRegistry partitionAccessorRegistry = null;
 
   private static final int DEAULT_RETRY_LIMIT = 3;
 
@@ -306,7 +308,9 @@ public class D2ClientConfig
       false,
       0,
       0,
-      null);
+      null,
+      null
+    );
   }
 
   public D2ClientConfig(String zkHosts,
@@ -335,7 +339,8 @@ public class D2ClientConfig
       boolean warmUp,
       int warmUpTimeoutSeconds,
       int warmUpConcurrentRequests,
-      EventEmitter emitter)
+      EventEmitter emitter,
+      PartitionAccessorRegistry partitionAccessorRegistry)
   {
     this(zkHosts,
         zkSessionTimeoutInMs,
@@ -368,7 +373,8 @@ public class D2ClientConfig
         1,
         TimeUnit.MINUTES,
         null,
-        emitter);
+        emitter,
+        partitionAccessorRegistry);
   }
 
   public D2ClientConfig(String zkHosts,
@@ -402,7 +408,8 @@ public class D2ClientConfig
                         long backupRequestsLatencyNotificationInterval,
                         TimeUnit backupRequestsLatencyNotificationIntervalUnit,
                         ScheduledExecutorService backupRequestsExecutorService,
-                        EventEmitter emitter)
+                        EventEmitter emitter,
+                        PartitionAccessorRegistry partitionAccessorRegistry)
   {
     this.zkHosts = zkHosts;
     this.zkSessionTimeoutInMs = zkSessionTimeoutInMs;
@@ -423,7 +430,7 @@ public class D2ClientConfig
     this.clientServicesConfig = clientServicesConfig;
     this.d2ServicePath = d2ServicePath;
     this.useNewEphemeralStoreWatcher = useNewEphemeralStoreWatcher;
-    this._healthCheckOperations = healthCheckOperations;
+    this.healthCheckOperations = healthCheckOperations;
     this._executorService = executorService;
     this.retry = retry;
     this.retryLimit = retryLimit;
@@ -435,6 +442,7 @@ public class D2ClientConfig
     this.backupRequestsLatencyNotificationInterval = backupRequestsLatencyNotificationInterval;
     this.backupRequestsLatencyNotificationIntervalUnit = backupRequestsLatencyNotificationIntervalUnit;
     this._backupRequestsExecutorService = backupRequestsExecutorService;
-    this._eventEmitter = emitter;
+    this.eventEmitter = emitter;
+    this.partitionAccessorRegistry = partitionAccessorRegistry;
   }
 }

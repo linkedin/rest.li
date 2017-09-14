@@ -38,6 +38,9 @@ import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategy
 import com.linkedin.d2.balancer.util.ClientFactoryProvider;
 import com.linkedin.d2.balancer.util.LoadBalancerUtil;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
+import com.linkedin.d2.balancer.util.partitions.PartitionAccessorFactory;
+import com.linkedin.d2.balancer.util.partitions.PartitionAccessorRegistry;
+import com.linkedin.d2.balancer.util.partitions.PartitionAccessorRegistryImpl;
 import com.linkedin.d2.discovery.event.PropertyEventBus;
 import com.linkedin.d2.discovery.event.PropertyEventBusImpl;
 import com.linkedin.d2.discovery.event.PropertyEventPublisher;
@@ -51,6 +54,9 @@ import com.linkedin.r2.util.ConfigValueExtractor;
 import com.linkedin.util.clock.Clock;
 import com.linkedin.util.clock.SystemClock;
 import com.linkedin.util.degrader.DegraderImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -66,8 +72,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static com.linkedin.d2.discovery.util.LogUtil.debug;
 import static com.linkedin.d2.discovery.util.LogUtil.info;
@@ -195,7 +199,8 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
          sslContext,
          sslParameters,
          isSSLEnabled,
-         Collections.<String, Map<String, Object>>emptyMap());
+         Collections.<String, Map<String, Object>>emptyMap(),
+         new PartitionAccessorRegistryImpl());
   }
 
   public SimpleLoadBalancerState(ScheduledExecutorService executorService,
@@ -217,7 +222,8 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
          sslContext,
          sslParameters,
          isSSLEnabled,
-         Collections.<String, Map<String, Object>>emptyMap());
+         Collections.<String, Map<String, Object>>emptyMap(),
+         new PartitionAccessorRegistryImpl());
   }
 
   public SimpleLoadBalancerState(ScheduledExecutorService executorService,
@@ -229,7 +235,8 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
                                  SSLContext sslContext,
                                  SSLParameters sslParameters,
                                  boolean isSSLEnabled,
-                                 Map<String, Map<String, Object>> clientServicesConfig)
+                                 Map<String, Map<String, Object>> clientServicesConfig,
+                                 PartitionAccessorRegistry partitionAccessorRegistry)
   {
     _executor = executorService;
     _uriProperties =
@@ -244,7 +251,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     _uriSubscriber = new UriLoadBalancerSubscriber(uriBus, this);
 
     _clusterBus = clusterBus;
-    _clusterSubscriber = new ClusterLoadBalancerSubscriber(this, clusterBus);
+    _clusterSubscriber = new ClusterLoadBalancerSubscriber(this, clusterBus, partitionAccessorRegistry);
 
     _serviceBus = serviceBus;
     _serviceSubscriber = new ServiceLoadBalancerSubscriber(serviceBus, this);

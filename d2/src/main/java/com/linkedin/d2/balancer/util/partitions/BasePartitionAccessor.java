@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2012 LinkedIn Corp.
+   Copyright (c) 2017 LinkedIn Corp.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -14,17 +14,24 @@
    limitations under the License.
 */
 
-package com.linkedin.d2.balancer.properties;
+
+package com.linkedin.d2.balancer.util.partitions;
+
+import java.net.URI;
 
 /**
- * This is a semi-marker interface for partition properties
+ * BasePartitionAccessor returns partitionId according to the given URI.
+ *
  */
-public interface PartitionProperties
+public interface BasePartitionAccessor
 {
-  enum PartitionType
-  {
-    RANGE, HASH, CUSTOM, NONE
-  }
-
-  PartitionType getPartitionType();
+  /**
+   * Given uri as input, return the corresponding partitionID
+   *
+   * @param uri input URI
+   * @return partitionID
+   * @throws PartitionAccessException see {@Link PartitionAccessException}
+   */
+  int getPartitionId(URI uri) throws PartitionAccessException;
 }
+

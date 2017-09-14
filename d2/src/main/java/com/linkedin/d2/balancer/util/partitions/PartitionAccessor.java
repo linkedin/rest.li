@@ -23,10 +23,36 @@ import java.net.URI;
  * as data storage only and move the logic of manipulating the data to a separate place.
  * To get a PartitionAccessor, one should use {@link PartitionAccessorFactory}
  */
-public interface PartitionAccessor
+public interface PartitionAccessor extends BasePartitionAccessor
 {
-  int getPartitionId(URI uri) throws PartitionAccessException;
-  int getPartitionId(String key) throws PartitionAccessException;
+  /**
+   * We're moving towards using BasePartitionAccessor for all partition accesses
+   * (including both loadbalancing and keyMapping). The default
+   * implementation here is used for backward compatibility purpose.
+   * Will be deprecated after all the existing users get updated.
+   *
+   * @param key: input key
+   * @return partitionId
+   * @throws PartitionAccessException
+   */
+  default int getPartitionId(String key) throws PartitionAccessException
+  {
+    URI uri;
+    try
+    {
+      uri = URI.create(key);
+    }
+    catch (IllegalArgumentException e)
+    {
+      throw new PartitionAccessException(e);
+    }
+    return getPartitionId(uri);
+  }
+
+  /**
+   *
+   * @return MaxPartitionId for the cluster
+   */
   int getMaxPartitionId();
 }
 
