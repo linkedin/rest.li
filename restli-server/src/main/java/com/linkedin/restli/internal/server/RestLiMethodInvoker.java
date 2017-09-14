@@ -26,13 +26,11 @@ import com.linkedin.parseq.promise.Promise;
 import com.linkedin.parseq.promise.PromiseListener;
 import com.linkedin.parseq.promise.Promises;
 import com.linkedin.restli.common.HttpStatus;
-import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
 import com.linkedin.restli.internal.server.methods.arguments.RestLiArgumentBuilder;
 import com.linkedin.restli.internal.server.response.ErrorResponseBuilder;
 import com.linkedin.restli.internal.server.model.Parameter.ParamType;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.server.RequestExecutionCallback;
-import com.linkedin.restli.server.RequestExecutionReport;
 import com.linkedin.restli.server.RequestExecutionReportBuilder;
 import com.linkedin.restli.server.RestLiRequestData;
 import com.linkedin.restli.server.RestLiResponseAttachments;
@@ -65,17 +63,6 @@ public class RestLiMethodInvoker
 
   /**
    * Constructor.
-   *
-   * @param resourceFactory {@link ResourceFactory}
-   * @param engine {@link Engine}
-   */
-  public RestLiMethodInvoker(final ResourceFactory resourceFactory, final Engine engine)
-  {
-    this(resourceFactory, engine, new ErrorResponseBuilder());
-  }
-
-  /**
-   * Constructor.
    * @param resourceFactory {@link ResourceFactory}
    * @param engine {@link Engine}
    * @param errorResponseBuilder {@link ErrorResponseBuilder}
@@ -91,7 +78,7 @@ public class RestLiMethodInvoker
 
   @SuppressWarnings("deprecation")
   private void doInvoke(final ResourceMethodDescriptor descriptor,
-                        final RequestExecutionCallback<Object> callback,
+                        final RestLiCallback callback,
                         final RequestExecutionReportBuilder requestExecutionReportBuilder,
                         final Object resource,
                         final ServerResourceContext resourceContext,
@@ -105,24 +92,19 @@ public class RestLiMethodInvoker
       {
         case CALLBACK:
           int callbackIndex = descriptor.indexOfParameterType(ParamType.CALLBACK);
-          final RequestExecutionReport executionReport = getRequestExecutionReport(requestExecutionReportBuilder);
 
-          //Delegate the callback call to the request execution callback along with the
-          //request execution report.
           arguments[callbackIndex] = new Callback<Object>(){
             @Override
             public void onError(Throwable e)
             {
               callback.onError(e instanceof RestLiServiceException ? e : new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, e),
-                               executionReport,
-                               resourceContext.getRequestAttachmentReader(),
-                               resourceContext.getResponseAttachments());
+                  resourceContext.getResponseAttachments());
             }
 
             @Override
             public void onSuccess(Object result)
             {
-              callback.onSuccess(result, executionReport, resourceContext.getResponseAttachments());
+              callback.onSuccess(result, resourceContext.getResponseAttachments());
             }
           };
 
@@ -132,12 +114,12 @@ public class RestLiMethodInvoker
 
         case SYNC:
           Object applicationResult = method.invoke(resource, arguments);
-          callback.onSuccess(applicationResult, getRequestExecutionReport(requestExecutionReportBuilder),
+          callback.onSuccess(applicationResult,
                              resourceContext.getResponseAttachments());
           break;
 
         case PROMISE:
-          if (!checkEngine(resourceContext, callback, descriptor, requestExecutionReportBuilder))
+          if (!checkEngine(callback, descriptor))
           {
             break;
           }
@@ -153,13 +135,12 @@ public class RestLiMethodInvoker
 
           // propagate the result to the callback
           restliTask.addListener(new CallbackPromiseAdapter<>(callback, restliTask, requestExecutionReportBuilder,
-                                                              resourceContext.getRequestAttachmentReader(),
                                                               resourceContext.getResponseAttachments()));
           runTask(restliTask, toPlanClass(descriptor));
           break;
 
         case TASK:
-          if (!checkEngine(resourceContext, callback, descriptor, requestExecutionReportBuilder))
+          if (!checkEngine(callback, descriptor))
           {
             break;
           }
@@ -170,15 +151,11 @@ public class RestLiMethodInvoker
           if (task == null)
           {
             callback.onError(new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
-                                                        "Error in application code: null Task"),
-                             getRequestExecutionReport(requestExecutionReportBuilder),
-                             resourceContext.getRequestAttachmentReader(),
-                             resourceContext.getResponseAttachments());
+                                                        "Error in application code: null Task"), resourceContext.getResponseAttachments());
           }
           else
           {
             task.addListener(new CallbackPromiseAdapter<>(callback, task, requestExecutionReportBuilder,
-                                                          resourceContext.getRequestAttachmentReader(),
                                                           resourceContext.getResponseAttachments()));
             runTask(task, toPlanClass(descriptor));
           }
@@ -197,18 +174,13 @@ public class RestLiMethodInvoker
       {
         RestLiServiceException restLiServiceException =
             (RestLiServiceException) e.getCause();
-        callback.onError(restLiServiceException, getRequestExecutionReport(requestExecutionReportBuilder),
-                         resourceContext.getRequestAttachmentReader(),
-                         resourceContext.getResponseAttachments());
+        callback.onError(restLiServiceException, resourceContext.getResponseAttachments());
       }
       else
       {
         callback.onError(new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
                                                     _errorResponseBuilder.getInternalErrorMessage(),
-                                                    e.getCause()),
-                         getRequestExecutionReport(requestExecutionReportBuilder),
-                         resourceContext.getRequestAttachmentReader(),
-                         resourceContext.getResponseAttachments());
+                                                    e.getCause()), resourceContext.getResponseAttachments());
       }
     }
   }
@@ -243,10 +215,7 @@ public class RestLiMethodInvoker
     }
   }
 
-  private boolean checkEngine(final ServerResourceContext resourceContext,
-                              final RequestExecutionCallback<Object> callback,
-                              final ResourceMethodDescriptor desc,
-                              final RequestExecutionReportBuilder executionReportBuilder)
+  private boolean checkEngine(final RestLiCallback callback, final ResourceMethodDescriptor desc)
   {
     if (_engine == null)
     {
@@ -257,22 +226,13 @@ public class RestLiMethodInvoker
       final String clazz = desc.getResourceModel().getResourceClass().getName();
       final String method = desc.getMethod().getName();
       final String msg = String.format(fmt, clazz, method);
-      callback.onError(new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, msg),
-                       getRequestExecutionReport(executionReportBuilder),
-                       resourceContext.getRequestAttachmentReader(),
-                       null); //No response attachments can possibly exist here, since the resource method has not been invoked.
+      callback.onError(new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, msg), null); //No response attachments can possibly exist here, since the resource method has not been invoked.
       return false;
     }
     else
     {
       return true;
     }
-  }
-
-  private static RequestExecutionReport getRequestExecutionReport(
-      RequestExecutionReportBuilder requestExecutionReportBuilder)
-  {
-    return requestExecutionReportBuilder == null ? null : requestExecutionReportBuilder.build();
   }
 
   /**
@@ -292,7 +252,7 @@ public class RestLiMethodInvoker
   public void invoke(final RestLiRequestData requestData,
                      final RoutingResult invocableMethod,
                      final RestLiArgumentBuilder restLiArgumentBuilder,
-                     final RequestExecutionCallback<Object> callback,
+                     final RestLiCallback callback,
                      final RequestExecutionReportBuilder requestExecutionReportBuilder)
   {
     try
@@ -315,10 +275,7 @@ public class RestLiMethodInvoker
     }
     catch (Exception e)
     {
-      callback.onError(e,
-                       requestExecutionReportBuilder == null ? null : requestExecutionReportBuilder.build(),
-                       ((ServerResourceContext)invocableMethod.getContext()).getRequestAttachmentReader(),
-                       invocableMethod.getContext().getResponseAttachments()); //Technically response attachments
+      callback.onError(e, invocableMethod.getContext().getResponseAttachments()); //Technically response attachments
       //could exist here. One possible way is if there is a runtime exception during response
       //construction after the rest.li response filter chain has been completed.
     }
@@ -336,7 +293,7 @@ public class RestLiMethodInvoker
     private final Method _method;
     private final Object _resource;
 
-    public RestLiParSeqTask(final Object[] arguments,
+    RestLiParSeqTask(final Object[] arguments,
                             final int contextIndex,
                             final Method method,
                             final Object resource)
@@ -390,22 +347,19 @@ public class RestLiMethodInvoker
    */
   private static class CallbackPromiseAdapter<T> implements PromiseListener<T>
   {
-    private final RequestExecutionCallback<T> _callback;
+    private final RestLiCallback _callback;
     private final RequestExecutionReportBuilder _executionReportBuilder;
-    private final RestLiAttachmentReader _requestAttachments;
     private final RestLiResponseAttachments _responseAttachments;
     private final Task<T> _associatedTask;
 
-    public CallbackPromiseAdapter(final RequestExecutionCallback<T> callback,
-                                  final Task<T> associatedTask,
-                                  final RequestExecutionReportBuilder executionReportBuilder,
-                                  final RestLiAttachmentReader requestAttachments,
-                                  final RestLiResponseAttachments responseAttachments)
+    CallbackPromiseAdapter(final RestLiCallback callback,
+        final Task<T> associatedTask,
+        final RequestExecutionReportBuilder executionReportBuilder,
+        final RestLiResponseAttachments responseAttachments)
     {
       _callback = callback;
       _associatedTask = associatedTask;
       _executionReportBuilder = executionReportBuilder;
-      _requestAttachments = requestAttachments;
       _responseAttachments = responseAttachments;
     }
 
@@ -417,19 +371,15 @@ public class RestLiMethodInvoker
         _executionReportBuilder.setParseqTrace(_associatedTask.getTrace());
       }
 
-      RequestExecutionReport executionReport = getRequestExecutionReport(_executionReportBuilder);
-
       if (promise.isFailed())
       {
         _callback.onError(promise.getError() instanceof RestLiServiceException ?
                               promise.getError() : new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, promise.getError()),
-                          executionReport,
-                          _requestAttachments,
-                          _responseAttachments);
+            _responseAttachments);
       }
       else
       {
-        _callback.onSuccess(promise.get(), executionReport, _responseAttachments);
+        _callback.onSuccess(promise.get(), _responseAttachments);
       }
     }
   }

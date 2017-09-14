@@ -22,17 +22,13 @@ import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
 import com.linkedin.restli.internal.common.HeaderUtil;
-import com.linkedin.restli.internal.server.RestLiCallback;
-import com.linkedin.restli.internal.server.RestLiMethodInvoker;
 import com.linkedin.restli.internal.server.RoutingResult;
-import com.linkedin.restli.internal.server.methods.arguments.RestLiArgumentBuilder;
 import com.linkedin.restli.internal.server.response.ErrorResponseBuilder;
 import com.linkedin.restli.internal.server.response.PartialRestResponse;
 import com.linkedin.restli.internal.server.response.RestLiResponseHandler;
 import com.linkedin.restli.server.RequestExecutionCallback;
 import com.linkedin.restli.server.RequestExecutionReport;
 import com.linkedin.restli.server.RequestExecutionReportBuilder;
-import com.linkedin.restli.server.RestLiRequestData;
 import com.linkedin.restli.server.RestLiResponseAttachments;
 import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
@@ -50,8 +46,6 @@ public class FilterChainCallbackImpl implements FilterChainCallback
 {
   private static final Logger LOGGER = LoggerFactory.getLogger(FilterChainCallbackImpl.class);
   private RoutingResult _method;
-  private RestLiMethodInvoker _methodInvoker;
-  private RestLiArgumentBuilder _restLiArgumentBuilder;
   private RequestExecutionReportBuilder _requestExecutionReportBuilder;
   private RestLiAttachmentReader _requestAttachmentReader;
   private RestLiResponseHandler _responseHandler;
@@ -59,17 +53,13 @@ public class FilterChainCallbackImpl implements FilterChainCallback
   private final ErrorResponseBuilder _errorResponseBuilder;
 
   public FilterChainCallbackImpl(RoutingResult method,
-                                 RestLiMethodInvoker methodInvoker,
-                                 RestLiArgumentBuilder adapter,
-                                 RequestExecutionReportBuilder requestExecutionReportBuilder,
-                                 RestLiAttachmentReader requestAttachmentReader,
-                                 RestLiResponseHandler responseHandler,
-                                 RequestExecutionCallback<RestResponse> wrappedCallback,
-                                 ErrorResponseBuilder errorResponseBuilder)
+      RequestExecutionReportBuilder requestExecutionReportBuilder,
+      RestLiAttachmentReader requestAttachmentReader,
+      RestLiResponseHandler responseHandler,
+      RequestExecutionCallback<RestResponse> wrappedCallback,
+      ErrorResponseBuilder errorResponseBuilder)
   {
     _method = method;
-    _methodInvoker = methodInvoker;
-    _restLiArgumentBuilder = adapter;
     _requestExecutionReportBuilder = requestExecutionReportBuilder;
     _requestAttachmentReader = requestAttachmentReader;
     _responseHandler = responseHandler;
@@ -78,17 +68,10 @@ public class FilterChainCallbackImpl implements FilterChainCallback
   }
 
   @Override
-  public void onRequestSuccess(final RestLiRequestData requestData, final RestLiCallback restLiCallback)
-  {
-    _methodInvoker.invoke(requestData, _method, _restLiArgumentBuilder, restLiCallback,
-                          _requestExecutionReportBuilder);
-  }
-
-  @Override
   public void onResponseSuccess(final RestLiResponseData<?> responseData,
                                 final RestLiResponseAttachments responseAttachments)
   {
-    RestResponse result = null;
+    RestResponse result;
     try
     {
       final PartialRestResponse response = _responseHandler.buildPartialResponse(_method, responseData);
@@ -119,7 +102,7 @@ public class FilterChainCallbackImpl implements FilterChainCallback
   {
     try
     {
-      RestLiServiceException e = responseData.getServiceException();
+      RestLiServiceException e = responseData.getResponseEnvelope().getException();
       final PartialRestResponse response = _responseHandler.buildPartialResponse(_method, responseData);
 
       _wrappedCallback.onError(_responseHandler.buildRestException(e, response), getRequestExecutionReport(),
@@ -136,7 +119,7 @@ public class FilterChainCallbackImpl implements FilterChainCallback
     return _requestExecutionReportBuilder == null ? null : _requestExecutionReportBuilder.build();
   }
 
-  private PartialRestResponse buildErrorResponse(Throwable th, RestLiResponseData responseData)
+  private PartialRestResponse buildErrorResponse(Throwable th, RestLiResponseData<?> responseData)
   {
     Map<String, String> responseHeaders = responseData.getHeaders();
     responseHeaders.put(HeaderUtil.getErrorResponseHeaderName(responseHeaders), RestConstants.HEADER_VALUE_ERROR);

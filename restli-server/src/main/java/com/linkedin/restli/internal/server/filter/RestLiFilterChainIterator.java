@@ -39,13 +39,15 @@ import java.util.concurrent.CompletableFuture;
 public class RestLiFilterChainIterator
 {
   private List<Filter> _filters;
+  private FilterChainDispatcher _filterChainDispatcher;
   private FilterChainCallback _filterChainCallback;
   private int _cursor;
 
 
-   RestLiFilterChainIterator(List<Filter> filters, FilterChainCallback filterChainCallback)
+   RestLiFilterChainIterator(List<Filter> filters, FilterChainDispatcher filterChainDispatcher, FilterChainCallback filterChainCallback)
   {
     _filters = filters;
+    _filterChainDispatcher = filterChainDispatcher;
     _filterChainCallback = filterChainCallback;
     _cursor = 0;
   }
@@ -77,7 +79,7 @@ public class RestLiFilterChainIterator
     else
     {
       // Now that all the filters have been invoked successfully, invoke onSuccess on the filter chain callback.
-      _filterChainCallback.onRequestSuccess(requestContext.getRequestData(), restLiCallback);
+      _filterChainDispatcher.onRequestSuccess(requestContext.getRequestData(), restLiCallback);
     }
   }
 

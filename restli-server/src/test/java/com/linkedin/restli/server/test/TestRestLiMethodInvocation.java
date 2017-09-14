@@ -56,6 +56,8 @@ import com.linkedin.restli.internal.server.PathKeysImpl;
 import com.linkedin.restli.internal.server.ResourceContextImpl;
 import com.linkedin.restli.internal.server.RestLiCallback;
 import com.linkedin.restli.internal.server.RestLiMethodInvoker;
+import com.linkedin.restli.internal.server.filter.FilterChainDispatcher;
+import com.linkedin.restli.internal.server.filter.FilterChainDispatcherImpl;
 import com.linkedin.restli.internal.server.response.RestLiResponseHandler;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.ServerResourceContext;
@@ -152,7 +154,6 @@ import org.testng.annotations.BeforeTest;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
 
@@ -250,7 +251,7 @@ public class TestRestLiMethodInvocation
     expectLastCall();
     expect(mockBuilder.extractRequestData(routingResult, request)).andReturn(requestData);
 
-    FilterChainCallback filterChainCallback = new FilterChainCallback()
+    FilterChainDispatcher filterChainDispatcher = new FilterChainDispatcher()
     {
       @Override
       public void onRequestSuccess(RestLiRequestData requestData, RestLiCallback restLiCallback)
@@ -258,6 +259,9 @@ public class TestRestLiMethodInvocation
         // only invoke if filter chain's requests were successful
         invokerWithFilters.invoke(requestData, routingResult, mockBuilder, restLiCallback, null);
       }
+    };
+    FilterChainCallback filterChainCallback = new FilterChainCallback()
+    {
       @Override
       public void onResponseSuccess(RestLiResponseData<?> responseData, RestLiResponseAttachments responseAttachments)
       {
@@ -322,7 +326,8 @@ public class TestRestLiMethodInvocation
                                                              (ServerResourceContext)routingResult.getContext());
     mockFilterContext.setRequestData(mockBuilder.extractRequestData(routingResult, request));
 
-    RestLiFilterChain filterChain = new RestLiFilterChain(Arrays.asList(mockFilter, mockFilter), filterChainCallback);
+    RestLiFilterChain filterChain = new RestLiFilterChain(Arrays.asList(mockFilter, mockFilter), filterChainDispatcher,
+        filterChainCallback);
     filterChain.onRequest(mockFilterContext,
                           new RestLiFilterResponseContextFactory(request, routingResult,
                                                                          new RestLiResponseHandler.Builder().build()));
@@ -361,7 +366,7 @@ public class TestRestLiMethodInvocation
 
     methodDescriptor = statusResourceModel.findNamedMethod("public_timeline");
     statusResource = getMockResource(AsyncStatusCollectionResource.class);
-    statusResource.getPublicTimeline((PagingContext)EasyMock.anyObject(), EasyMock.<Callback<List<Status>>> anyObject());
+    statusResource.getPublicTimeline(EasyMock.anyObject(), EasyMock.anyObject());
     // the goal of below lines is that to make sure that we are getting callback in the resource
     //an callback is called without any problem
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>()
@@ -386,7 +391,7 @@ public class TestRestLiMethodInvocation
     // #3: get
     methodDescriptor = statusResourceModel.findMethod(ResourceMethod.GET);
     statusResource = getMockResource(AsyncStatusCollectionResource.class);
-    statusResource.get(eq(1L), EasyMock.<Callback<Status>> anyObject());
+    statusResource.get(eq(1L), EasyMock.anyObject());
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
       public Object answer() throws Throwable {
@@ -408,7 +413,7 @@ public class TestRestLiMethodInvocation
     // #4: get on simple resource
     methodDescriptor = locationResourceModel.findMethod(ResourceMethod.GET);
     locationResource = getMockResource(AsyncLocationResource.class);
-    locationResource.get(EasyMock.<Callback<Location>> anyObject());
+    locationResource.get(EasyMock.anyObject());
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
       public Object answer() throws Throwable {
@@ -433,7 +438,7 @@ public class TestRestLiMethodInvocation
     ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams> key =
         getDiscoveredItemComplexKey(1L, 2, 3L);
 
-    discoveredItemsResource.get(eq(key), EasyMock.<Callback<DiscoveredItem>>anyObject());
+    discoveredItemsResource.get(eq(key), EasyMock.anyObject());
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
       public Object answer() throws Throwable {
@@ -462,7 +467,7 @@ public class TestRestLiMethodInvocation
     ResourceModel statusResourceModel = buildResourceModel(AsyncStatusCollectionResource.class);
     ResourceMethodDescriptor methodDescriptor = statusResourceModel.findNamedMethod("search");
     AsyncStatusCollectionResource statusResource = getMockResource(AsyncStatusCollectionResource.class);
-    statusResource.search((PagingContext) EasyMock.anyObject(), eq("linkedin"), eq(1L),
+    statusResource.search(EasyMock.anyObject(), eq("linkedin"), eq(1L),
                           eq(StatusType.REPLY), (Callback<List<Status>>) EasyMock.anyObject());
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
@@ -484,8 +489,8 @@ public class TestRestLiMethodInvocation
     ResourceModel statusResourceModel = buildResourceModel(AsyncStatusCollectionResource.class);
     ResourceMethodDescriptor methodDescriptor = statusResourceModel.findNamedMethod("search");
     AsyncStatusCollectionResource statusResource = getMockResource(AsyncStatusCollectionResource.class);
-    statusResource.search((PagingContext)EasyMock.anyObject(), eq("linkedin"), eq(-1L), eq((StatusType)null),
-                          EasyMock.<Callback<List<Status>>> anyObject());
+    statusResource.search(EasyMock.anyObject(), eq("linkedin"), eq(-1L), eq(null),
+                          EasyMock.anyObject());
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
       public Object answer() throws Throwable {
@@ -507,8 +512,8 @@ public class TestRestLiMethodInvocation
     ResourceModel statusResourceModel = buildResourceModel(AsyncStatusCollectionResource.class);
     ResourceMethodDescriptor methodDescriptor = statusResourceModel.findNamedMethod("user_timeline");
     AsyncStatusCollectionResource statusResource = getMockResource(AsyncStatusCollectionResource.class);
-    statusResource.getUserTimeline((PagingContext) EasyMock.anyObject(), eq(false),
-                                   (Callback<List<Status>>) EasyMock.anyObject());
+    statusResource.getUserTimeline(EasyMock.anyObject(), eq(false),
+                                   EasyMock.anyObject());
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>()
     {
       @Override
@@ -532,7 +537,7 @@ public class TestRestLiMethodInvocation
     ResourceMethodDescriptor methodDescriptor = discoveredItemsResourceModel.findNamedMethod("user");
     AsyncDiscoveredItemsResource discoveredItemsResource = getMockResource(AsyncDiscoveredItemsResource.class);
     discoveredItemsResource.getDiscoveredItemsForUser(
-        (PagingContext)EasyMock.anyObject(), eq(1L), EasyMock.<Callback<List<DiscoveredItem>>> anyObject());
+        EasyMock.anyObject(), eq(1L), EasyMock.anyObject());
 
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>()
     {
@@ -568,7 +573,7 @@ public class TestRestLiMethodInvocation
     rawKey.append("followeeID", 2L);
     CompoundKey key = eq(rawKey);
 
-    resource.get(key, EasyMock.<Callback<Followed>> anyObject());
+    resource.get(key, EasyMock.anyObject());
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
       public Object answer() throws Throwable {
@@ -607,7 +612,7 @@ public class TestRestLiMethodInvocation
     methodDescriptor = statusResourceModel.findMethod(ResourceMethod.BATCH_GET);
     statusResource = getMockResource(AsyncStatusCollectionResource.class);
     statusResource.batchGet((Set<Long>)Matchers.eqCollectionUnordered(Sets.newHashSet(1L, 2L, 3L)),
-                            EasyMock.<Callback<Map<Long, Status>>> anyObject());
+                            EasyMock.anyObject());
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
       public Object answer() throws Throwable {
@@ -676,7 +681,7 @@ public class TestRestLiMethodInvocation
 
     discoveredItemsResource.batchGet(
         set,
-        EasyMock.<Callback<Map<ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams>, DiscoveredItem>>>anyObject());
+        EasyMock.anyObject());
 
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
@@ -724,7 +729,7 @@ public class TestRestLiMethodInvocation
     // #1
     methodDescriptor = statusResourceModel.findMethod(ResourceMethod.CREATE);
     statusResource = getMockResource(AsyncStatusCollectionResource.class);
-    statusResource.create((Status)EasyMock.anyObject(), EasyMock.<Callback<CreateResponse>> anyObject());
+    statusResource.create(EasyMock.anyObject(), EasyMock.anyObject());
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
       public Object answer() throws Throwable {
@@ -747,7 +752,7 @@ public class TestRestLiMethodInvocation
     // #1.1: different endpoint
     methodDescriptor = repliesResourceModel.findMethod(ResourceMethod.CREATE);
     repliesResource = getMockResource(AsyncRepliesCollectionResource.class);
-    repliesResource.create((Status)EasyMock.anyObject(), (Callback<CreateResponse>)EasyMock.anyObject());
+    repliesResource.create(EasyMock.anyObject(), EasyMock.anyObject());
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>()
     {
       @Override
@@ -772,9 +777,9 @@ public class TestRestLiMethodInvocation
     methodDescriptor = statusResourceModel.findMethod(ResourceMethod.PARTIAL_UPDATE);
     statusResource = getMockResource(AsyncStatusCollectionResource.class);
     PatchTree p = new PatchTree();
-    p.addOperation(new PathSpec("foo"), PatchOpFactory.setFieldOp(Integer.valueOf(42)));
+    p.addOperation(new PathSpec("foo"), PatchOpFactory.setFieldOp(42));
     PatchRequest<Status> expected = PatchRequest.createFromPatchDocument(p.getDataMap());
-    statusResource.update(eq(1L), eq(expected), EasyMock.<Callback<UpdateResponse>> anyObject());
+    statusResource.update(eq(1L), eq(expected), EasyMock.anyObject());
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
       public Object answer() throws Throwable {
@@ -798,9 +803,9 @@ public class TestRestLiMethodInvocation
     methodDescriptor = locationResourceModel.findMethod(ResourceMethod.PARTIAL_UPDATE);
     locationResource = getMockResource(AsyncLocationResource.class);
     p = new PatchTree();
-    p.addOperation(new PathSpec("foo"), PatchOpFactory.setFieldOp(Integer.valueOf(51)));
+    p.addOperation(new PathSpec("foo"), PatchOpFactory.setFieldOp(51));
     PatchRequest<Location> expectedLocation = PatchRequest.createFromPatchDocument(p.getDataMap());
-    locationResource.update(eq(expectedLocation), EasyMock.<Callback<UpdateResponse>> anyObject());
+    locationResource.update(eq(expectedLocation), EasyMock.anyObject());
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
       public Object answer() throws Throwable {
@@ -823,8 +828,8 @@ public class TestRestLiMethodInvocation
     // #4 Complex-key resource create
     methodDescriptor = discoveredItemsResourceModel.findMethod(ResourceMethod.CREATE);
     discoveredItemsResource = getMockResource(AsyncDiscoveredItemsResource.class);
-    discoveredItemsResource.create((DiscoveredItem)EasyMock.anyObject(),
-                                   EasyMock.<Callback<CreateResponse>>anyObject());
+    discoveredItemsResource.create(EasyMock.anyObject(),
+                                   EasyMock.anyObject());
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
       public Object answer() throws Throwable {
@@ -849,13 +854,13 @@ public class TestRestLiMethodInvocation
     methodDescriptor = discoveredItemsResourceModel.findMethod(ResourceMethod.PARTIAL_UPDATE);
     discoveredItemsResource = getMockResource(AsyncDiscoveredItemsResource.class);
     p = new PatchTree();
-    p.addOperation(new PathSpec("foo"), PatchOpFactory.setFieldOp(Integer.valueOf(43)));
+    p.addOperation(new PathSpec("foo"), PatchOpFactory.setFieldOp(43));
     PatchRequest<DiscoveredItem> expectedDiscoveredItem =
         PatchRequest.createFromPatchDocument(p.getDataMap());
     ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams> key =
         getDiscoveredItemComplexKey(1L, 2, 3L);
 
-    discoveredItemsResource.update(eq(key), eq(expectedDiscoveredItem), EasyMock.<Callback<UpdateResponse>>anyObject());
+    discoveredItemsResource.update(eq(key), eq(expectedDiscoveredItem), EasyMock.anyObject());
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
       public Object answer() throws Throwable {
@@ -890,8 +895,8 @@ public class TestRestLiMethodInvocation
     statusResource = getMockResource(AsyncStatusCollectionResource.class);
 
     @SuppressWarnings("unchecked")
-    BatchCreateRequest<Long, Status> mockBatchCreateReq = (BatchCreateRequest<Long, Status>)EasyMock.anyObject();
-    statusResource.batchCreate(mockBatchCreateReq, EasyMock.<Callback<BatchCreateResult<Long, Status>>> anyObject());
+    BatchCreateRequest<Long, Status> mockBatchCreateReq = EasyMock.anyObject();
+    statusResource.batchCreate(mockBatchCreateReq, EasyMock.anyObject());
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
       public Object answer() throws Throwable {
@@ -927,8 +932,8 @@ public class TestRestLiMethodInvocation
     statusResource = getMockResource(AsyncStatusCollectionResource.class);
 
     @SuppressWarnings("unchecked")
-    BatchDeleteRequest<Long, Status> mockBatchDeleteReq = (BatchDeleteRequest<Long, Status>)EasyMock.anyObject();
-    statusResource.batchDelete(mockBatchDeleteReq, EasyMock.<Callback<BatchUpdateResult<Long, Status>>> anyObject());
+    BatchDeleteRequest<Long, Status> mockBatchDeleteReq = EasyMock.anyObject();
+    statusResource.batchDelete(mockBatchDeleteReq, EasyMock.anyObject());
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
       public Object answer() throws Throwable {
@@ -963,8 +968,8 @@ public class TestRestLiMethodInvocation
     statusResource = getMockResource(AsyncStatusCollectionResource.class);
 
     @SuppressWarnings("unchecked")
-    BatchUpdateRequest<Long, Status> mockBatchUpdateReq = (BatchUpdateRequest<Long, Status>)EasyMock.anyObject();
-    statusResource.batchUpdate(mockBatchUpdateReq, EasyMock.<Callback<BatchUpdateResult<Long, Status>>> anyObject());
+    BatchUpdateRequest<Long, Status> mockBatchUpdateReq = EasyMock.anyObject();
+    statusResource.batchUpdate(mockBatchUpdateReq, EasyMock.anyObject());
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
       public Object answer() throws Throwable {
@@ -999,8 +1004,8 @@ public class TestRestLiMethodInvocation
     statusResource = getMockResource(AsyncStatusCollectionResource.class);
 
     @SuppressWarnings("unchecked")
-    BatchPatchRequest<Long, Status> mockBatchPatchReq = (BatchPatchRequest<Long, Status>)EasyMock.anyObject();
-    statusResource.batchUpdate(mockBatchPatchReq, EasyMock.<Callback<BatchUpdateResult<Long, Status>>> anyObject());
+    BatchPatchRequest<Long, Status> mockBatchPatchReq =  EasyMock.anyObject();
+    statusResource.batchUpdate(mockBatchPatchReq, EasyMock.anyObject());
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
       public Object answer() throws Throwable {
@@ -1035,8 +1040,8 @@ public class TestRestLiMethodInvocation
     statusResource = getMockResource(AsyncStatusCollectionResource.class);
 
     @SuppressWarnings("unchecked")
-    PagingContext mockCtx = (PagingContext)EasyMock.anyObject();
-    statusResource.getAll(mockCtx, EasyMock.<Callback<List<Status>>> anyObject());
+    PagingContext mockCtx = EasyMock.anyObject();
+    statusResource.getAll(mockCtx, EasyMock.anyObject());
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
       public Object answer() throws Throwable {
@@ -1084,8 +1089,8 @@ public class TestRestLiMethodInvocation
     methodDescriptor = statusResourceModel.findMethod(ResourceMethod.UPDATE);
     statusResource = getMockResource(AsyncStatusCollectionResource.class);
     long id = eq(1L);
-    Status status  =(Status)EasyMock.anyObject();
-    statusResource.update(id, status, EasyMock.<Callback<UpdateResponse>> anyObject());
+    Status status  =EasyMock.anyObject();
+    statusResource.update(id, status, EasyMock.anyObject());
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
       public Object answer() throws Throwable {
@@ -1114,7 +1119,7 @@ public class TestRestLiMethodInvocation
     rawKey.append("followeeID", 2L);
     CompoundKey key = eq(rawKey);
 
-    Followed followed = (Followed)EasyMock.anyObject();
+    Followed followed = EasyMock.anyObject();
     followsResource.update(key, followed, (Callback<UpdateResponse>) EasyMock.anyObject());
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>()
     {
@@ -1139,8 +1144,8 @@ public class TestRestLiMethodInvocation
     // #3 Update on simple resource
     methodDescriptor = locationResourceModel.findMethod(ResourceMethod.UPDATE);
     locationResource = getMockResource(AsyncLocationResource.class);
-    Location location  =(Location)EasyMock.anyObject();
-    locationResource.update(location, EasyMock.<Callback<UpdateResponse>> anyObject());
+    Location location  = EasyMock.anyObject();
+    locationResource.update(location, EasyMock.anyObject());
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
       public Object answer() throws Throwable {
@@ -1166,8 +1171,8 @@ public class TestRestLiMethodInvocation
     ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams> complexKey =
         getDiscoveredItemComplexKey(1L, 2, 3L);
     discoveredItemsResource.update(eq(complexKey),
-                                   (DiscoveredItem)EasyMock.anyObject(),
-                                   EasyMock.<Callback<UpdateResponse>>anyObject());
+                                   EasyMock.anyObject(DiscoveredItem.class),
+                                   EasyMock.anyObject());
 
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
@@ -1210,7 +1215,7 @@ public class TestRestLiMethodInvocation
     // #1 Delete on collection resource
     methodDescriptor = statusResourceModel.findMethod(ResourceMethod.DELETE);
     statusResource = getMockResource(AsyncStatusCollectionResource.class);
-    statusResource.delete(eq(1L), EasyMock.<Callback<UpdateResponse>> anyObject());
+    statusResource.delete(eq(1L), EasyMock.anyObject());
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
       public Object answer() throws Throwable {
@@ -1232,7 +1237,7 @@ public class TestRestLiMethodInvocation
     // #2 Delete on simple resource
     methodDescriptor = locationResourceModel.findMethod(ResourceMethod.DELETE);
     locationResource = getMockResource(AsyncLocationResource.class);
-    locationResource.delete(EasyMock.<Callback<UpdateResponse>> anyObject());
+    locationResource.delete(EasyMock.anyObject());
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
       public Object answer() throws Throwable {
@@ -1257,7 +1262,7 @@ public class TestRestLiMethodInvocation
     ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams> key =
         getDiscoveredItemComplexKey(1L, 2, 3L);
 
-    discoveredItemsResource.delete(eq(key), EasyMock.<Callback<UpdateResponse>>anyObject());
+    discoveredItemsResource.delete(eq(key), EasyMock.anyObject());
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
       public Object answer() throws Throwable {
@@ -1296,15 +1301,15 @@ public class TestRestLiMethodInvocation
     // #1: simple filter
     methodDescriptor = statusResourceModel.findNamedMethod("public_timeline");
     statusResource = getMockResource(PromiseStatusCollectionResource.class);
-    EasyMock.expect(statusResource.getPublicTimeline((PagingContext) EasyMock.anyObject()))
-        .andReturn(Promises.<List<Status>> value(null))
+    EasyMock.expect(statusResource.getPublicTimeline(EasyMock.anyObject()))
+        .andReturn(Promises.value(null))
         .once();
     checkInvocation(statusResource, methodDescriptor, "GET", version, "/promisestatuses?q=public_timeline");
 
     // #2: get
     methodDescriptor = statusResourceModel.findMethod(ResourceMethod.GET);
     statusResource = getMockResource(PromiseStatusCollectionResource.class);
-    EasyMock.expect(statusResource.get(eq(1L))).andReturn(Promises.<Status> value(null)).once();
+    EasyMock.expect(statusResource.get(eq(1L))).andReturn(Promises.value(null)).once();
     checkInvocation(statusResource,
                     methodDescriptor,
                     "GET",
@@ -1315,7 +1320,7 @@ public class TestRestLiMethodInvocation
     // #3: get on simple resource
     methodDescriptor = locationResourceModel.findMethod(ResourceMethod.GET);
     locationResource = getMockResource(PromiseLocationResource.class);
-    EasyMock.expect(locationResource.get()).andReturn(Promises.<Location> value(null)).once();
+    EasyMock.expect(locationResource.get()).andReturn(Promises.value(null)).once();
     checkInvocation(locationResource,
                     methodDescriptor,
                     "GET",
@@ -1328,7 +1333,7 @@ public class TestRestLiMethodInvocation
     discoveredItemsResource = getMockResource(PromiseDiscoveredItemsResource.class);
     ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams> key =
         getDiscoveredItemComplexKey(1L, 2, 3L);
-    EasyMock.expect(discoveredItemsResource.get(eq(key))).andReturn(Promises.<DiscoveredItem> value(null)).once();
+    EasyMock.expect(discoveredItemsResource.get(eq(key))).andReturn(Promises.value(null)).once();
     checkInvocation(discoveredItemsResource,
                     methodDescriptor,
                     "GET",
@@ -1365,7 +1370,7 @@ public class TestRestLiMethodInvocation
     ResourceModel statusResourceModel = buildResourceModel(PromiseStatusCollectionResource.class);
     ResourceMethodDescriptor methodDescriptor = statusResourceModel.findNamedMethod("search");
     PromiseStatusCollectionResource statusResource = getMockResource(PromiseStatusCollectionResource.class);
-    EasyMock.expect(statusResource.search(eq("linkedin"), eq(1L), eq(StatusType.REPLY))).andReturn(Promises.<List<Status>> value(null)).once();
+    EasyMock.expect(statusResource.search(eq("linkedin"), eq(1L), eq(StatusType.REPLY))).andReturn(Promises.value(null)).once();
     checkInvocation(statusResource, methodDescriptor, "GET", version, "/promiseStatuses" + query);
   }
 
@@ -1375,7 +1380,7 @@ public class TestRestLiMethodInvocation
     ResourceModel statusResourceModel = buildResourceModel(PromiseStatusCollectionResource.class);
     ResourceMethodDescriptor methodDescriptor = statusResourceModel.findNamedMethod("search");
     PromiseStatusCollectionResource statusResource = getMockResource(PromiseStatusCollectionResource.class);
-    EasyMock.expect(statusResource.search(eq("linkedin"), eq(-1L), eq((StatusType) null))).andReturn(Promises.<List<Status>> value(null)).once();
+    EasyMock.expect(statusResource.search(eq("linkedin"), eq(-1L), eq((StatusType) null))).andReturn(Promises.value(null)).once();
     checkInvocation(statusResource, methodDescriptor, "GET", version, "/promiseStatuses" + query);
   }
 
@@ -1385,7 +1390,7 @@ public class TestRestLiMethodInvocation
     ResourceModel statusResourceModel = buildResourceModel(PromiseStatusCollectionResource.class);
     ResourceMethodDescriptor methodDescriptor = statusResourceModel.findNamedMethod("user_timeline");
     PromiseStatusCollectionResource statusResource = getMockResource(PromiseStatusCollectionResource.class);
-    EasyMock.expect(statusResource.getUserTimeline(eq(false), (PagingContext) EasyMock.anyObject())).andReturn(Promises.<List<Status>> value(null)).once();
+    EasyMock.expect(statusResource.getUserTimeline(eq(false), EasyMock.anyObject())).andReturn(Promises.value(null)).once();
     checkInvocation(statusResource, methodDescriptor, "GET", version, "/promiseStatuses" + query);
   }
 
@@ -1396,7 +1401,7 @@ public class TestRestLiMethodInvocation
     ResourceMethodDescriptor methodDescriptor = discoveredItemsResourceModel.findNamedMethod("user");
     PromiseDiscoveredItemsResource discoveredItemsResource = getMockResource(PromiseDiscoveredItemsResource.class);
     EasyMock.expect(
-        discoveredItemsResource.getDiscoveredItemsForUser(eq(1L), (PagingContext) EasyMock.anyObject())).andReturn(Promises.<List<DiscoveredItem>>value(null)).once();
+        discoveredItemsResource.getDiscoveredItemsForUser(eq(1L), EasyMock.anyObject())).andReturn(Promises.value(null)).once();
     checkInvocation(discoveredItemsResource, methodDescriptor, "GET", version, "/promiseDiscoveredItems" + query);
   }
 
@@ -1433,7 +1438,7 @@ public class TestRestLiMethodInvocation
     ResourceModel statusResourceModel = buildResourceModel(PromiseStatusCollectionResource.class);
     ResourceMethodDescriptor methodDescriptor = statusResourceModel.findNamedMethod("public_timeline");
     PromiseStatusCollectionResource statusResource = getMockResource(PromiseStatusCollectionResource.class);
-    EasyMock.expect(statusResource.getPublicTimeline(eq(buildPagingContext(null, null)))).andReturn(Promises.<List<Status>>value(null)).once();
+    EasyMock.expect(statusResource.getPublicTimeline(eq(buildPagingContext(null, null)))).andReturn(Promises.value(null)).once();
     checkInvocation(statusResource,
                     methodDescriptor,
                     "GET",
@@ -1447,7 +1452,7 @@ public class TestRestLiMethodInvocation
     ResourceModel statusResourceModel = buildResourceModel(PromiseStatusCollectionResource.class);
     ResourceMethodDescriptor methodDescriptor = statusResourceModel.findNamedMethod("public_timeline");
     PromiseStatusCollectionResource statusResource = getMockResource(PromiseStatusCollectionResource.class);
-    EasyMock.expect(statusResource.getPublicTimeline(eq(buildPagingContext(5, null)))).andReturn(Promises.<List<Status>>value(null)).once();
+    EasyMock.expect(statusResource.getPublicTimeline(eq(buildPagingContext(5, null)))).andReturn(Promises.value(null)).once();
     checkInvocation(statusResource,
                     methodDescriptor,
                     "GET",
@@ -1461,7 +1466,7 @@ public class TestRestLiMethodInvocation
     ResourceModel statusResourceModel = buildResourceModel(PromiseStatusCollectionResource.class);
     ResourceMethodDescriptor methodDescriptor = statusResourceModel.findNamedMethod("public_timeline");
     PromiseStatusCollectionResource statusResource = getMockResource(PromiseStatusCollectionResource.class);
-    EasyMock.expect(statusResource.getPublicTimeline(eq(buildPagingContext(null, 4)))).andReturn(Promises.<List<Status>>value(null)).once();
+    EasyMock.expect(statusResource.getPublicTimeline(eq(buildPagingContext(null, 4)))).andReturn(Promises.value(null)).once();
     checkInvocation(statusResource, methodDescriptor, "GET", version, "/promisestatuses" + query);
   }
 
@@ -1519,7 +1524,7 @@ public class TestRestLiMethodInvocation
     ResourceMethodDescriptor methodDescriptor = statusResourceModel.findNamedMethod("user_timeline");
     PromiseStatusCollectionResource statusResource = getMockResource(PromiseStatusCollectionResource.class);
     EasyMock.expect(statusResource.getUserTimeline(eq(true), eq(new PagingContext(10, 100, false, false))))
-        .andReturn(Promises.<List<Status>>value(null)).once();
+        .andReturn(Promises.value(null)).once();
     checkInvocation(statusResource,
                     methodDescriptor,
                     "GET",
@@ -1534,7 +1539,7 @@ public class TestRestLiMethodInvocation
     ResourceMethodDescriptor methodDescriptor = statusResourceModel.findNamedMethod("user_timeline");
     PromiseStatusCollectionResource statusResource = getMockResource(PromiseStatusCollectionResource.class);
     EasyMock.expect(statusResource.getUserTimeline(eq(true), eq(new PagingContext(0, 20, true, true))))
-        .andReturn(Promises.<List<Status>>value(null)).once();
+        .andReturn(Promises.value(null)).once();
     checkInvocation(statusResource,
                     methodDescriptor,
                     "GET",
@@ -1558,7 +1563,7 @@ public class TestRestLiMethodInvocation
     // #1 Batch get on collection resource
     methodDescriptor = statusResourceModel.findMethod(ResourceMethod.BATCH_GET);
     statusResource = getMockResource(PromiseStatusCollectionResource.class);
-    EasyMock.expect(statusResource.batchGet((Set<Long>)Matchers.eqCollectionUnordered(Sets.newHashSet(1L, 2L, 3L)))).andReturn(Promises.<Map<Long, Status>>value(null)).once();
+    EasyMock.expect(statusResource.batchGet((Set<Long>)Matchers.eqCollectionUnordered(Sets.newHashSet(1L, 2L, 3L)))).andReturn(Promises.value(null)).once();
     checkInvocation(statusResource,
                     methodDescriptor,
                     "GET",
@@ -1580,7 +1585,7 @@ public class TestRestLiMethodInvocation
     key2.append("followerID", 2L);
     expectedKeys.add(key2);
 
-    EasyMock.expect(followsResource.batchGet((Set<CompoundKey>)Matchers.eqCollectionUnordered(expectedKeys))).andReturn(Promises.<Map<CompoundKey, Followed>>value(null)).once();
+    EasyMock.expect(followsResource.batchGet((Set<CompoundKey>)Matchers.eqCollectionUnordered(expectedKeys))).andReturn(Promises.value(null)).once();
     checkInvocation(followsResource,
                     methodDescriptor,
                     "GET",
@@ -1601,7 +1606,7 @@ public class TestRestLiMethodInvocation
         (Set<ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams>>)
             Matchers.eqCollectionUnordered(Sets.newHashSet(keyA, keyB));
 
-    EasyMock.expect(discoveredItemsResource.batchGet(set)).andReturn(Promises.<Map<ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams>, DiscoveredItem>>value(
+    EasyMock.expect(discoveredItemsResource.batchGet(set)).andReturn(Promises.value(
         null)).once();
 
     checkInvocation(discoveredItemsResource,
@@ -1635,7 +1640,7 @@ public class TestRestLiMethodInvocation
     // #1
     methodDescriptor = statusResourceModel.findMethod(ResourceMethod.CREATE);
     statusResource = getMockResource(PromiseStatusCollectionResource.class);
-    EasyMock.expect(statusResource.create((Status)EasyMock.anyObject())).andReturn(Promises.<CreateResponse>value(null)).once();
+    EasyMock.expect(statusResource.create(EasyMock.anyObject())).andReturn(Promises.value(null)).once();
     checkInvocation(statusResource,
                     methodDescriptor,
                     "POST",
@@ -1646,7 +1651,7 @@ public class TestRestLiMethodInvocation
     // #1.1: different endpoint
     methodDescriptor = repliesResourceModel.findMethod(ResourceMethod.CREATE);
     repliesResource = getMockResource(PromiseRepliesCollectionResource.class);
-    EasyMock.expect(repliesResource.create((Status)EasyMock.anyObject())).andReturn(Promises.<CreateResponse>value(null)).once();
+    EasyMock.expect(repliesResource.create(EasyMock.anyObject())).andReturn(Promises.value(null)).once();
     checkInvocation(repliesResource,
                     methodDescriptor,
                     "POST",
@@ -1658,7 +1663,7 @@ public class TestRestLiMethodInvocation
     // #1.2: invalid entity
     methodDescriptor = statusResourceModel.findMethod(ResourceMethod.CREATE);
     statusResource = getMockResource(PromiseStatusCollectionResource.class);
-    EasyMock.expect(statusResource.create((Status)EasyMock.anyObject())).andReturn(Promises.<CreateResponse>value(null)).once();
+    EasyMock.expect(statusResource.create(EasyMock.anyObject())).andReturn(Promises.value(null)).once();
     try
     {
       checkInvocation(statusResource,
@@ -1679,9 +1684,9 @@ public class TestRestLiMethodInvocation
     methodDescriptor = statusResourceModel.findMethod(ResourceMethod.PARTIAL_UPDATE);
     statusResource = getMockResource(PromiseStatusCollectionResource.class);
     PatchTree p = new PatchTree();
-    p.addOperation(new PathSpec("foo"), PatchOpFactory.setFieldOp(Integer.valueOf(42)));
+    p.addOperation(new PathSpec("foo"), PatchOpFactory.setFieldOp(42));
     PatchRequest<Status> expected = PatchRequest.createFromPatchDocument(p.getDataMap());
-    EasyMock.expect(statusResource.update(eq(1L), eq(expected))).andReturn(Promises.<UpdateResponse>value(null)).once();
+    EasyMock.expect(statusResource.update(eq(1L), eq(expected))).andReturn(Promises.value(null)).once();
     checkInvocation(statusResource,
                     methodDescriptor,
                     "POST",
@@ -1695,9 +1700,9 @@ public class TestRestLiMethodInvocation
     methodDescriptor = locationResourceModel.findMethod(ResourceMethod.PARTIAL_UPDATE);
     locationResource = getMockResource(PromiseLocationResource.class);
     p = new PatchTree();
-    p.addOperation(new PathSpec("foo"), PatchOpFactory.setFieldOp(Integer.valueOf(51)));
+    p.addOperation(new PathSpec("foo"), PatchOpFactory.setFieldOp(51));
     PatchRequest<Location> expectedLocation = PatchRequest.createFromPatchDocument(p.getDataMap());
-    EasyMock.expect(locationResource.update(eq(expectedLocation))).andReturn(Promises.<UpdateResponse>value(null)).once();
+    EasyMock.expect(locationResource.update(eq(expectedLocation))).andReturn(Promises.value(null)).once();
     checkInvocation(locationResource,
                     methodDescriptor,
                     "POST",
@@ -1711,7 +1716,7 @@ public class TestRestLiMethodInvocation
     discoveredItemsResource = getMockResource(PromiseDiscoveredItemsResource.class);
     EasyMock.expect(
         discoveredItemsResource.create(
-            (DiscoveredItem)EasyMock.anyObject())).andReturn(Promises.<CreateResponse>value(null)).once();
+            EasyMock.anyObject())).andReturn(Promises.value(null)).once();
     checkInvocation(discoveredItemsResource,
                     methodDescriptor,
                     "POST",
@@ -1723,14 +1728,14 @@ public class TestRestLiMethodInvocation
     methodDescriptor = discoveredItemsResourceModel.findMethod(ResourceMethod.PARTIAL_UPDATE);
     discoveredItemsResource = getMockResource(PromiseDiscoveredItemsResource.class);
     p = new PatchTree();
-    p.addOperation(new PathSpec("foo"), PatchOpFactory.setFieldOp(Integer.valueOf(43)));
+    p.addOperation(new PathSpec("foo"), PatchOpFactory.setFieldOp(43));
     PatchRequest<DiscoveredItem> expectedDiscoveredItem =
         PatchRequest.createFromPatchDocument(p.getDataMap());
     ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams> key =
         getDiscoveredItemComplexKey(1L, 2, 3L);
     EasyMock.expect(
         discoveredItemsResource.update(eq(key), eq(expectedDiscoveredItem))).andReturn(
-        Promises.<UpdateResponse>value(null)).once();
+        Promises.value(null)).once();
     checkInvocation(discoveredItemsResource,
                     methodDescriptor,
                     "POST",
@@ -1764,8 +1769,8 @@ public class TestRestLiMethodInvocation
     methodDescriptor = statusResourceModel.findMethod(ResourceMethod.UPDATE);
     statusResource = getMockResource(PromiseStatusCollectionResource.class);
     long id = eq(1L);
-    Status status  =(Status)EasyMock.anyObject();
-    EasyMock.expect(statusResource.update(id, status)).andReturn(Promises.<UpdateResponse>value(null)).once();
+    Status status  =EasyMock.anyObject();
+    EasyMock.expect(statusResource.update(id, status)).andReturn(Promises.value(null)).once();
     checkInvocation(statusResource,
                     methodDescriptor,
                     "PUT",
@@ -1783,8 +1788,8 @@ public class TestRestLiMethodInvocation
     rawKey.append("followeeID", 2L);
     CompoundKey key = eq(rawKey);
 
-    Followed followed = (Followed)EasyMock.anyObject();
-    EasyMock.expect(followsResource.update(key, followed)).andReturn(Promises.<UpdateResponse>value(null)).once();
+    Followed followed = EasyMock.anyObject();
+    EasyMock.expect(followsResource.update(key, followed)).andReturn(Promises.value(null)).once();
     checkInvocation(followsResource,
                     methodDescriptor,
                     "PUT",
@@ -1796,8 +1801,8 @@ public class TestRestLiMethodInvocation
     // #3 Update on simple resource
     methodDescriptor = locationResourceModel.findMethod(ResourceMethod.UPDATE);
     locationResource = getMockResource(PromiseLocationResource.class);
-    Location location  =(Location)EasyMock.anyObject();
-    EasyMock.expect(locationResource.update(location)).andReturn(Promises.<UpdateResponse>value(null)).once();
+    Location location  = EasyMock.anyObject();
+    EasyMock.expect(locationResource.update(location)).andReturn(Promises.value(null)).once();
     checkInvocation(locationResource,
                     methodDescriptor,
                     "PUT",
@@ -1813,7 +1818,7 @@ public class TestRestLiMethodInvocation
         getDiscoveredItemComplexKey(1L, 2, 3L);
     EasyMock.expect(discoveredItemsResource.update(
         eq(complexKey),
-        (DiscoveredItem)EasyMock.anyObject())).andReturn(null).once();
+        EasyMock.anyObject(DiscoveredItem.class))).andReturn(null).once();
     checkInvocation(discoveredItemsResource,
                     methodDescriptor,
                     "PUT",
@@ -1843,7 +1848,7 @@ public class TestRestLiMethodInvocation
     // #1 Delete on collection resource
     methodDescriptor = statusResourceModel.findMethod(ResourceMethod.DELETE);
     statusResource = getMockResource(PromiseStatusCollectionResource.class);
-    EasyMock.expect(statusResource.delete(eq(1L))).andReturn(Promises.<UpdateResponse>value(null)).once();
+    EasyMock.expect(statusResource.delete(eq(1L))).andReturn(Promises.value(null)).once();
     checkInvocation(statusResource,
                     methodDescriptor,
                     "DELETE",
@@ -1854,7 +1859,7 @@ public class TestRestLiMethodInvocation
     // #2 Delete on simple resource
     methodDescriptor = locationResourceModel.findMethod(ResourceMethod.DELETE);
     locationResource = getMockResource(PromiseLocationResource.class);
-    EasyMock.expect(locationResource.delete()).andReturn(Promises.<UpdateResponse>value(null)).once();
+    EasyMock.expect(locationResource.delete()).andReturn(Promises.value(null)).once();
     checkInvocation(locationResource,
                     methodDescriptor,
                     "DELETE",
@@ -1867,7 +1872,7 @@ public class TestRestLiMethodInvocation
     discoveredItemsResource = getMockResource(PromiseDiscoveredItemsResource.class);
     ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams> key =
         getDiscoveredItemComplexKey(1L, 2, 3L);
-    EasyMock.expect(discoveredItemsResource.delete(eq(key))).andReturn(Promises.<UpdateResponse>value(null)).once();
+    EasyMock.expect(discoveredItemsResource.delete(eq(key))).andReturn(Promises.value(null)).once();
     checkInvocation(discoveredItemsResource,
                     methodDescriptor,
                     "DELETE",
@@ -1885,9 +1890,9 @@ public class TestRestLiMethodInvocation
     ResourceMethodDescriptor methodDescriptor = statusResourceModel.findMethod(ResourceMethod.BATCH_UPDATE);
     PromiseStatusCollectionResource statusResource = getMockResource(PromiseStatusCollectionResource.class);
     @SuppressWarnings("rawtypes")
-    BatchUpdateRequest batchUpdateRequest =(BatchUpdateRequest)EasyMock.anyObject();
+    BatchUpdateRequest batchUpdateRequest = EasyMock.anyObject();
     EasyMock.expect(statusResource.batchUpdate(batchUpdateRequest)).andReturn(
-        Promises.<BatchUpdateResult<Long, Status>>value(null)).once();
+        Promises.value(null)).once();
     String body = RestLiTestHelper.doubleQuote("{'entities':{'1':{},'2':{}}}");
     checkInvocation(statusResource,
                     methodDescriptor,
@@ -1945,7 +1950,7 @@ public class TestRestLiMethodInvocation
     Promise<BatchUpdateResult<ComplexResourceKey<DiscoveredItemKey,DiscoveredItemKeyParams>,DiscoveredItem>> batchUpdateResult =
         discoveredItemsResource.batchUpdate(batchUpdateRequest);
     EasyMock.expect(batchUpdateResult).andReturn(
-        Promises.<BatchUpdateResult<ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams>, DiscoveredItem>>value(
+        Promises.value(
             null)).once();
     checkInvocation(discoveredItemsResource, methodDescriptor, "PUT", version, uri, body, buildBatchPathKeys(keyA, keyB));
   }
@@ -1958,9 +1963,9 @@ public class TestRestLiMethodInvocation
     ResourceMethodDescriptor methodDescriptor = statusResourceModel.findMethod(ResourceMethod.BATCH_PARTIAL_UPDATE);
     PromiseStatusCollectionResource statusResource = getMockResource(PromiseStatusCollectionResource.class);
     @SuppressWarnings("rawtypes")
-    BatchPatchRequest batchPatchRequest =(BatchPatchRequest)EasyMock.anyObject();
+    BatchPatchRequest batchPatchRequest = EasyMock.anyObject();
     EasyMock.expect(statusResource.batchUpdate(batchPatchRequest)).andReturn(
-        Promises.<BatchUpdateResult<Long, Status>>value(null)).once();
+        Promises.value(null)).once();
     String body = RestLiTestHelper.doubleQuote("{'entities':{'1':{},'2':{}}}");
     checkInvocation(statusResource,
                     methodDescriptor,
@@ -2014,7 +2019,7 @@ public class TestRestLiMethodInvocation
 
     BatchPatchRequest<ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams>, DiscoveredItem> batchPatchRequest = EasyMock.anyObject();
     EasyMock.expect(discoveredItemsResource.batchUpdate(batchPatchRequest)).andReturn(
-        Promises.<BatchUpdateResult<ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams>, DiscoveredItem>>value(null)).once();
+        Promises.value(null)).once();
     checkInvocation(discoveredItemsResource,
                     methodDescriptor,
                     "POST",
@@ -2039,9 +2044,9 @@ public class TestRestLiMethodInvocation
     methodDescriptor = statusResourceModel.findMethod(ResourceMethod.BATCH_CREATE);
     statusResource = getMockResource(PromiseStatusCollectionResource.class);
     @SuppressWarnings("rawtypes")
-    BatchCreateRequest batchCreateRequest =(BatchCreateRequest)EasyMock.anyObject();
+    BatchCreateRequest batchCreateRequest = EasyMock.anyObject();
     EasyMock.expect(statusResource.batchCreate(batchCreateRequest)).andReturn(
-        Promises.<BatchCreateResult<Long, Status>>value(null)).once();
+        Promises.value(null)).once();
     String body = RestLiTestHelper.doubleQuote("{'elements':[{},{}]}");
     checkInvocation(statusResource,
                     methodDescriptor,
@@ -2054,9 +2059,9 @@ public class TestRestLiMethodInvocation
     // #2 Batch create on complex-key resource
     methodDescriptor = discoveredItemsResourceModel.findMethod(ResourceMethod.BATCH_CREATE);
     discoveredItemsResource = getMockResource(PromiseDiscoveredItemsResource.class);
-    batchCreateRequest =(BatchCreateRequest)EasyMock.anyObject();
+    batchCreateRequest = EasyMock.anyObject();
     EasyMock.expect(discoveredItemsResource.batchCreate(batchCreateRequest)).andReturn(
-        Promises.<BatchCreateResult<ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams>, DiscoveredItem>>value(
+        Promises.value(
             null)).once();
     checkInvocation(discoveredItemsResource,
                     methodDescriptor,
@@ -2081,7 +2086,7 @@ public class TestRestLiMethodInvocation
     methodDescriptor = statusResourceModel.findMethod(ResourceMethod.BATCH_DELETE);
     statusResource = getMockResource(PromiseStatusCollectionResource.class);
     @SuppressWarnings("rawtypes")
-    BatchDeleteRequest batchDeleteRequest =(BatchDeleteRequest)EasyMock.anyObject();
+    BatchDeleteRequest batchDeleteRequest = EasyMock.anyObject();
     EasyMock.expect(statusResource.batchDelete(batchDeleteRequest)).andReturn(
         Promises.<BatchUpdateResult<Long, Status>> value(null)).once();
     checkInvocation(statusResource,
@@ -2100,7 +2105,7 @@ public class TestRestLiMethodInvocation
     ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams> keyB =
         getDiscoveredItemComplexKey(4L, 5, 6L);
 
-    batchDeleteRequest =(BatchDeleteRequest)EasyMock.anyObject();
+    batchDeleteRequest = EasyMock.anyObject();
     EasyMock.expect(discoveredItemsResource.batchDelete(batchDeleteRequest)).andReturn(
         Promises.<BatchUpdateResult<ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams>, DiscoveredItem>> value(null)).once();
     checkInvocation(discoveredItemsResource,
@@ -2129,7 +2134,7 @@ public class TestRestLiMethodInvocation
     // #1: simple filter
     methodDescriptor = statusResourceModel.findNamedMethod("public_timeline");
     statusResource = getMockResource(StatusCollectionResource.class);
-    EasyMock.expect(statusResource.getPublicTimeline((PagingContext)EasyMock.anyObject())).andReturn(null).once();
+    EasyMock.expect(statusResource.getPublicTimeline(EasyMock.anyObject())).andReturn(null).once();
     checkInvocation(statusResource,
                     methodDescriptor,
                     "GET",
@@ -2220,7 +2225,7 @@ public class TestRestLiMethodInvocation
     ResourceModel statusResourceModel = buildResourceModel(StatusCollectionResource.class);
     ResourceMethodDescriptor methodDescriptor = statusResourceModel.findNamedMethod("user_timeline");
     StatusCollectionResource statusResource = getMockResource(StatusCollectionResource.class);
-    EasyMock.expect(statusResource.getUserTimeline(eq(false), (PagingContext)EasyMock.anyObject())).andReturn(null).once();
+    EasyMock.expect(statusResource.getUserTimeline(eq(false), EasyMock.anyObject())).andReturn(null).once();
     checkInvocation(statusResource, methodDescriptor, "GET", version, "/statuses" + query);
   }
 
@@ -2478,7 +2483,7 @@ public class TestRestLiMethodInvocation
     // #1
     methodDescriptor = statusResourceModel.findMethod(ResourceMethod.CREATE);
     statusResource = getMockResource(StatusCollectionResource.class);
-    EasyMock.expect(statusResource.create((Status)EasyMock.anyObject())).andReturn(null).once();
+    EasyMock.expect(statusResource.create(EasyMock.anyObject())).andReturn(null).once();
     checkInvocation(statusResource,
                     methodDescriptor,
                     "POST",
@@ -2489,7 +2494,7 @@ public class TestRestLiMethodInvocation
     // #1.1: different endpoint
     methodDescriptor = repliesResourceModel.findMethod(ResourceMethod.CREATE);
     repliesResource = getMockResource(RepliesCollectionResource.class);
-    EasyMock.expect(repliesResource.create((Status)EasyMock.anyObject())).andReturn(null).once();
+    EasyMock.expect(repliesResource.create(EasyMock.anyObject())).andReturn(null).once();
     checkInvocation(repliesResource,
                     methodDescriptor,
                     "POST",
@@ -2501,7 +2506,7 @@ public class TestRestLiMethodInvocation
     // #1.2: invalid entity
     methodDescriptor = statusResourceModel.findMethod(ResourceMethod.CREATE);
     statusResource = getMockResource(StatusCollectionResource.class);
-    EasyMock.expect(statusResource.create((Status)EasyMock.anyObject())).andReturn(null).once();
+    EasyMock.expect(statusResource.create(EasyMock.anyObject())).andReturn(null).once();
     try
     {
       checkInvocation(statusResource,
@@ -2522,7 +2527,7 @@ public class TestRestLiMethodInvocation
     methodDescriptor = statusResourceModel.findMethod(ResourceMethod.PARTIAL_UPDATE);
     statusResource = getMockResource(StatusCollectionResource.class);
     PatchTree p = new PatchTree();
-    p.addOperation(new PathSpec("foo"), PatchOpFactory.setFieldOp(Integer.valueOf(42)));
+    p.addOperation(new PathSpec("foo"), PatchOpFactory.setFieldOp(42));
     PatchRequest<Status> expected = PatchRequest.createFromPatchDocument(p.getDataMap());
     EasyMock.expect(statusResource.update(eq(1L), eq(expected))).andReturn(null).once();
     checkInvocation(statusResource,
@@ -2538,7 +2543,7 @@ public class TestRestLiMethodInvocation
     methodDescriptor = locationResourceModel.findMethod(ResourceMethod.PARTIAL_UPDATE);
     locationResource = getMockResource(LocationResource.class);
     p = new PatchTree();
-    p.addOperation(new PathSpec("foo"), PatchOpFactory.setFieldOp(Integer.valueOf(51)));
+    p.addOperation(new PathSpec("foo"), PatchOpFactory.setFieldOp(51));
     PatchRequest<Location> expectedLocation = PatchRequest.createFromPatchDocument(p.getDataMap());
     EasyMock.expect(locationResource.update(eq(expectedLocation))).andReturn(null).once();
     checkInvocation(locationResource,
@@ -2552,7 +2557,7 @@ public class TestRestLiMethodInvocation
     methodDescriptor = discoveredItemsResourceModel.findMethod(ResourceMethod.CREATE);
     discoveredItemsResource = getMockResource(DiscoveredItemsResource.class);
     EasyMock.expect(
-        discoveredItemsResource.create((DiscoveredItem)EasyMock.anyObject())).andReturn(null).once();
+        discoveredItemsResource.create(EasyMock.anyObject())).andReturn(null).once();
     checkInvocation(discoveredItemsResource,
                     methodDescriptor,
                     "POST",
@@ -2564,7 +2569,7 @@ public class TestRestLiMethodInvocation
     methodDescriptor = discoveredItemsResourceModel.findMethod(ResourceMethod.PARTIAL_UPDATE);
     discoveredItemsResource = getMockResource(DiscoveredItemsResource.class);
     p = new PatchTree();
-    p.addOperation(new PathSpec("foo"), PatchOpFactory.setFieldOp(Integer.valueOf(43)));
+    p.addOperation(new PathSpec("foo"), PatchOpFactory.setFieldOp(43));
     PatchRequest<DiscoveredItem> expectedDiscoveredItem =
         PatchRequest.createFromPatchDocument(p.getDataMap());
     ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams> key =
@@ -2604,7 +2609,7 @@ public class TestRestLiMethodInvocation
     methodDescriptor = statusResourceModel.findMethod(ResourceMethod.UPDATE);
     statusResource = getMockResource(StatusCollectionResource.class);
     long id = eq(1L);
-    Status status  =(Status)EasyMock.anyObject();
+    Status status = EasyMock.anyObject();
     EasyMock.expect(statusResource.update(id, status)).andReturn(null).once();
     checkInvocation(statusResource,
                     methodDescriptor,
@@ -2623,7 +2628,7 @@ public class TestRestLiMethodInvocation
     rawKey.append("followeeID", 2L);
     CompoundKey key = eq(rawKey);
 
-    Followed followed = (Followed)EasyMock.anyObject();
+    Followed followed = EasyMock.anyObject();
     EasyMock.expect(followsResource.update(key, followed)).andReturn(null).once();
     checkInvocation(followsResource,
                     methodDescriptor,
@@ -2635,7 +2640,7 @@ public class TestRestLiMethodInvocation
     // #3 Update on simple resource
     methodDescriptor = locationResourceModel.findMethod(ResourceMethod.UPDATE);
     locationResource = getMockResource(LocationResource.class);
-    Location location  =(Location)EasyMock.anyObject();
+    Location location  = EasyMock.anyObject();
     EasyMock.expect(locationResource.update(location)).andReturn(null).once();
     checkInvocation(locationResource,
                     methodDescriptor,
@@ -2652,7 +2657,7 @@ public class TestRestLiMethodInvocation
         getDiscoveredItemComplexKey(1L, 2, 3L);
     EasyMock.expect(discoveredItemsResource.update(
         eq(complexKey),
-        (DiscoveredItem)EasyMock.anyObject())).andReturn(null).once();
+        EasyMock.anyObject(DiscoveredItem.class))).andReturn(null).once();
     checkInvocation(discoveredItemsResource,
                     methodDescriptor,
                     "PUT",
@@ -2847,12 +2852,12 @@ public class TestRestLiMethodInvocation
                                                                             new RequestContext()), methodDescriptor);
     final FilterRequestContextInternal filterContext =
         new FilterRequestContextInternalImpl((ServerResourceContext) routingResult.getContext(), routingResult.getResourceMethod());
-    RestLiArgumentBuilder adapter = _methodAdapterRegistry.getArgumentBuilder(methodDescriptor.getType());
+    RestLiArgumentBuilder argumentBuilder = _methodAdapterRegistry.getArgumentBuilder(methodDescriptor.getType());
 
     try {
       RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(),
                                                                (ServerResourceContext)routingResult.getContext());
-      filterContext.setRequestData(adapter.extractRequestData(routingResult, request));
+      filterContext.setRequestData(argumentBuilder.extractRequestData(routingResult, request));
       _invoker.invoke(filterContext.getRequestData(), routingResult,
                       _methodAdapterRegistry.getArgumentBuilder(methodDescriptor.getMethodType()), null, null);
       Assert.fail("expected routing exception");
@@ -3302,11 +3307,10 @@ public class TestRestLiMethodInvocation
                     true, false);
 
     // #2: Callback based Async Method Execution
-    Capture<RequestExecutionReport> requestExecutionReportCapture = new Capture<RequestExecutionReport>();
-    RestLiCallback callback = getCallback(requestExecutionReportCapture);
+    RestLiCallback callback = getCallback();
     methodDescriptor = asyncStatusResourceModel.findMethod(ResourceMethod.GET);
     asyncStatusResource = getMockResource(AsyncStatusCollectionResource.class);
-    asyncStatusResource.get(eq(1L), EasyMock.<Callback<Status>> anyObject());
+    asyncStatusResource.get(eq(1L), EasyMock.anyObject());
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
       public Object answer() throws Throwable {
@@ -3326,12 +3330,11 @@ public class TestRestLiMethodInvocation
                          null,
                          buildPathKeys("statusID", 1L),
                          true);
-    Assert.assertNull(requestExecutionReportCapture.getValue().getParseqTrace());
 
     // #3: Promise based Async Method Execution
     methodDescriptor = promiseStatusResourceModel.findMethod(ResourceMethod.GET);
     promiseStatusResource = getMockResource(PromiseStatusCollectionResource.class);
-    EasyMock.expect(promiseStatusResource.get(eq(1L))).andReturn(Promises.<Status> value(null)).once();
+    EasyMock.expect(promiseStatusResource.get(eq(1L))).andReturn(Promises.value(null)).once();
     checkInvocation(promiseStatusResource,
                     methodDescriptor,
                     "GET",
@@ -3410,7 +3413,7 @@ public class TestRestLiMethodInvocation
     ResourceMethodDescriptor methodDescriptor = statusResourceModel.findMethod(ResourceMethod.BATCH_UPDATE);
     StatusCollectionResource statusResource = getMockResource(StatusCollectionResource.class);
     @SuppressWarnings("rawtypes")
-    BatchUpdateRequest batchUpdateRequest =(BatchUpdateRequest)EasyMock.anyObject();
+    BatchUpdateRequest batchUpdateRequest = EasyMock.anyObject();
     EasyMock.expect(statusResource.batchUpdate(batchUpdateRequest)).andReturn(null).once();
     String body = RestLiTestHelper.doubleQuote("{'entities':{'1':{},'2':{}}}");
     checkInvocation(statusResource,
@@ -3450,7 +3453,7 @@ public class TestRestLiMethodInvocation
     ResourceMethodDescriptor methodDescriptor = statusResourceModel.findMethod(ResourceMethod.BATCH_PARTIAL_UPDATE);
     StatusCollectionResource statusResource = getMockResource(StatusCollectionResource.class);
     @SuppressWarnings("rawtypes")
-    BatchPatchRequest batchPatchRequest =(BatchPatchRequest)EasyMock.anyObject();
+    BatchPatchRequest batchPatchRequest = EasyMock.anyObject();
     EasyMock.expect(statusResource.batchUpdate(batchPatchRequest)).andReturn(null).once();
     String body = RestLiTestHelper.doubleQuote("{'entities':{'1':{},'2':{}}}");
     checkInvocation(statusResource,
@@ -3497,7 +3500,7 @@ public class TestRestLiMethodInvocation
     methodDescriptor = statusResourceModel.findMethod(ResourceMethod.BATCH_CREATE);
     statusResource = getMockResource(StatusCollectionResource.class);
     @SuppressWarnings("rawtypes")
-    BatchCreateRequest batchCreateRequest =(BatchCreateRequest)EasyMock.anyObject();
+    BatchCreateRequest batchCreateRequest = EasyMock.anyObject();
     EasyMock.expect(statusResource.batchCreate(batchCreateRequest)).andReturn(null).once();
     String body = RestLiTestHelper.doubleQuote("{'elements':[{},{}]}");
     checkInvocation(statusResource,
@@ -3511,7 +3514,7 @@ public class TestRestLiMethodInvocation
     // #2 Batch create on complex-key resource
     methodDescriptor = discoveredItemsResourceModel.findMethod(ResourceMethod.BATCH_CREATE);
     discoveredItemsResource = getMockResource(DiscoveredItemsResource.class);
-    batchCreateRequest =(BatchCreateRequest)EasyMock.anyObject();
+    batchCreateRequest = EasyMock.anyObject();
     EasyMock.expect(discoveredItemsResource.batchCreate(batchCreateRequest)).andReturn(null).once();
     checkInvocation(discoveredItemsResource,
                     methodDescriptor,
@@ -3537,7 +3540,7 @@ public class TestRestLiMethodInvocation
     methodDescriptor = statusResourceModel.findMethod(ResourceMethod.BATCH_DELETE);
     statusResource = getMockResource(StatusCollectionResource.class);
     @SuppressWarnings("rawtypes")
-    BatchDeleteRequest batchDeleteRequest =(BatchDeleteRequest)EasyMock.anyObject();
+    BatchDeleteRequest batchDeleteRequest = EasyMock.anyObject();
     EasyMock.expect(statusResource.batchDelete(batchDeleteRequest)).andReturn(null).once();
     checkInvocation(statusResource,
                     methodDescriptor,
@@ -3555,7 +3558,7 @@ public class TestRestLiMethodInvocation
     ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams> keyB =
         getDiscoveredItemComplexKey(4L, 5, 6L);
 
-    batchDeleteRequest =(BatchDeleteRequest)EasyMock.anyObject();
+    batchDeleteRequest = EasyMock.anyObject();
     EasyMock.expect(discoveredItemsResource.batchDelete(batchDeleteRequest)).andReturn(null).once();
 
     String uri = "/discovereditems?ids=List((itemId:1,type:2,userId:3),(itemId:4,type:5,userId:6))";
@@ -3647,7 +3650,7 @@ public class TestRestLiMethodInvocation
     ResourceMethodDescriptor methodDescriptor = model.findMethod(ResourceMethod.BATCH_CREATE);
     CombinedResources.CollectionWithCustomCrudParams resource = getMockResource(CombinedResources.CollectionWithCustomCrudParams.class);
     @SuppressWarnings("rawtypes")
-    BatchCreateRequest batchCreateRequest =(BatchCreateRequest)EasyMock.anyObject();
+    BatchCreateRequest batchCreateRequest = EasyMock.anyObject();
     @SuppressWarnings("unchecked")
     BatchCreateResult<String, CombinedTestDataModels.Foo> batchCreateResult =
         resource.myBatchCreate(batchCreateRequest, eq(1), eq("bar"));
@@ -3671,7 +3674,7 @@ public class TestRestLiMethodInvocation
     ResourceModel model = buildResourceModel(CombinedResources.CollectionWithCustomCrudParams.class);
     ResourceMethodDescriptor methodDescriptor = model.findMethod(ResourceMethod.UPDATE);
     CombinedResources.CollectionWithCustomCrudParams resource = getMockResource(CombinedResources.CollectionWithCustomCrudParams.class);
-    EasyMock.expect(resource.myUpdate(eq("foo"), (CombinedTestDataModels.Foo)EasyMock.anyObject(), eq(1), eq("bar"))).andReturn(null).once();
+    EasyMock.expect(resource.myUpdate(eq("foo"), EasyMock.anyObject(CombinedTestDataModels.Foo.class), eq(1), eq("bar"))).andReturn(null).once();
     checkInvocation(resource, methodDescriptor, "PUT", version, uri, "{}", buildPathKeys("testId", "foo"));
   }
 
@@ -3694,7 +3697,7 @@ public class TestRestLiMethodInvocation
     ResourceMethodDescriptor methodDescriptor = model.findMethod(ResourceMethod.BATCH_UPDATE);
     CombinedResources.CollectionWithCustomCrudParams resource = getMockResource(CombinedResources.CollectionWithCustomCrudParams.class);
     @SuppressWarnings("rawtypes")
-    BatchUpdateRequest batchUpdateRequest =(BatchUpdateRequest)EasyMock.anyObject();
+    BatchUpdateRequest batchUpdateRequest = EasyMock.anyObject();
     @SuppressWarnings("unchecked")
     BatchUpdateResult<String, CombinedTestDataModels.Foo> batchUpdateResult =
         resource.myBatchUpdate(batchUpdateRequest, eq(1), eq("baz"));
@@ -3721,7 +3724,7 @@ public class TestRestLiMethodInvocation
     ResourceMethodDescriptor methodDescriptor = model.findMethod(ResourceMethod.PARTIAL_UPDATE);
     CombinedResources.CollectionWithCustomCrudParams resource = getMockResource(CombinedResources.CollectionWithCustomCrudParams.class);
     PatchTree p = new PatchTree();
-    p.addOperation(new PathSpec("foo"), PatchOpFactory.setFieldOp(Integer.valueOf(42)));
+    p.addOperation(new PathSpec("foo"), PatchOpFactory.setFieldOp(42));
     PatchRequest<CombinedTestDataModels.Foo> expected = PatchRequest.createFromPatchDocument(p.getDataMap());
     EasyMock.expect(resource.myUpdate(eq("foo"), eq(expected), eq(1), eq("bar"))).andReturn(null).once();
     checkInvocation(resource, methodDescriptor, "POST", version, uri, body, buildPathKeys("testId", "foo"));
@@ -3746,7 +3749,7 @@ public class TestRestLiMethodInvocation
     ResourceMethodDescriptor methodDescriptor = model.findMethod(ResourceMethod.BATCH_PARTIAL_UPDATE);
     CombinedResources.CollectionWithCustomCrudParams resource = getMockResource(CombinedResources.CollectionWithCustomCrudParams.class);
     @SuppressWarnings("rawtypes")
-    BatchPatchRequest batchPatchRequest =(BatchPatchRequest)EasyMock.anyObject();
+    BatchPatchRequest batchPatchRequest = EasyMock.anyObject();
     @SuppressWarnings("unchecked")
     BatchUpdateResult<String, CombinedTestDataModels.Foo> batchUpdateResult =
         resource.myBatchUpdate(batchPatchRequest, eq(1), eq("baz"));
@@ -3791,7 +3794,7 @@ public class TestRestLiMethodInvocation
     ResourceMethodDescriptor methodDescriptor = model.findMethod(ResourceMethod.BATCH_DELETE);
     CombinedResources.CollectionWithCustomCrudParams resource = getMockResource(CombinedResources.CollectionWithCustomCrudParams.class);
     @SuppressWarnings("rawtypes")
-    BatchDeleteRequest batchDeleteRequest =(BatchDeleteRequest)EasyMock.anyObject();
+    BatchDeleteRequest batchDeleteRequest = EasyMock.anyObject();
     @SuppressWarnings("unchecked")
     BatchUpdateResult<String, CombinedTestDataModels.Foo> batchUpdateResult =
         resource.myBatchDelete(batchDeleteRequest, eq(1), eq("baz"));
@@ -3825,7 +3828,7 @@ public class TestRestLiMethodInvocation
     ResourceModel model = buildResourceModel(CombinedResources.SimpleResourceWithCustomCrudParams.class);
     ResourceMethodDescriptor methodDescriptor = model.findMethod(ResourceMethod.UPDATE);
     CombinedResources.SimpleResourceWithCustomCrudParams resource = getMockResource(CombinedResources.SimpleResourceWithCustomCrudParams.class);
-    EasyMock.expect(resource.myUpdate((CombinedTestDataModels.Foo)EasyMock.anyObject(), eq(1), eq("bar"))).andReturn(null).once();
+    EasyMock.expect(resource.myUpdate(EasyMock.anyObject(), eq(1), eq("bar"))).andReturn(null).once();
     checkInvocation(resource, methodDescriptor, "PUT", version, uri, "{}", buildBatchPathKeys());
   }
 
@@ -3836,7 +3839,7 @@ public class TestRestLiMethodInvocation
     ResourceMethodDescriptor methodDescriptor = model.findMethod(ResourceMethod.PARTIAL_UPDATE);
     CombinedResources.SimpleResourceWithCustomCrudParams resource = getMockResource(CombinedResources.SimpleResourceWithCustomCrudParams.class);
     PatchTree p = new PatchTree();
-    p.addOperation(new PathSpec("foo"), PatchOpFactory.setFieldOp(Integer.valueOf(51)));
+    p.addOperation(new PathSpec("foo"), PatchOpFactory.setFieldOp(51));
     PatchRequest<CombinedTestDataModels.Foo> expected = PatchRequest.createFromPatchDocument(p.getDataMap());
     EasyMock.expect(resource.myPartialUpdate(eq(expected), eq(1), eq("bar"))).andReturn(null).once();
     checkInvocation(resource, methodDescriptor, "POST", version, uri,"{\"patch\":{\"$set\":{\"foo\":51}}}", buildBatchPathKeys());
@@ -3896,8 +3899,8 @@ public class TestRestLiMethodInvocation
 
     @SuppressWarnings("unchecked")
     BatchUpdateRequest<CompoundKey, Followed> mockBatchUpdateReq =
-        (BatchUpdateRequest<CompoundKey, Followed>)EasyMock.anyObject();
-    resource.batchUpdate(mockBatchUpdateReq, EasyMock.<Callback<BatchUpdateResult<CompoundKey, Followed>>> anyObject());
+        EasyMock.anyObject();
+    resource.batchUpdate(mockBatchUpdateReq, EasyMock.anyObject());
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>()
     {
       @Override
@@ -3939,8 +3942,8 @@ public class TestRestLiMethodInvocation
 
     @SuppressWarnings("unchecked")
     BatchPatchRequest<CompoundKey, Followed> mockBatchPatchReq =
-        (BatchPatchRequest<CompoundKey, Followed>)EasyMock.anyObject();
-    resource.batchUpdate(mockBatchPatchReq, EasyMock.<Callback<BatchUpdateResult<CompoundKey, Followed>>>anyObject());
+         EasyMock.anyObject();
+    resource.batchUpdate(mockBatchPatchReq, EasyMock.anyObject());
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>()
     {
       @Override
@@ -3981,8 +3984,8 @@ public class TestRestLiMethodInvocation
 
     @SuppressWarnings("unchecked")
     BatchDeleteRequest<CompoundKey, Followed> mockBatchDeleteReq =
-        (BatchDeleteRequest<CompoundKey, Followed>)EasyMock.anyObject();
-    resource.batchDelete(mockBatchDeleteReq, EasyMock.<Callback<BatchUpdateResult<CompoundKey, Followed>>>anyObject());
+        EasyMock.anyObject();
+    resource.batchDelete(mockBatchDeleteReq, EasyMock.anyObject());
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>()
     {
       @Override
@@ -4021,7 +4024,7 @@ public class TestRestLiMethodInvocation
     methodDescriptor = followsResourceModel.findMethod(ResourceMethod.GET_ALL);
     resource = getMockResource(AsyncFollowsAssociativeResource.class);
 
-    resource.getAll((PagingContext)EasyMock.anyObject(), EasyMock.<Callback<List<Followed>>> anyObject());
+    resource.getAll(EasyMock.anyObject(), EasyMock.anyObject());
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>()
     {
       @Override
@@ -4057,9 +4060,9 @@ public class TestRestLiMethodInvocation
 
     @SuppressWarnings("unchecked")
     BatchCreateRequest<ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams>, DiscoveredItem> mockBatchCreateReq =
-        (BatchCreateRequest<ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams>, DiscoveredItem>)EasyMock.anyObject();
+        EasyMock.anyObject();
     discoveredResource.batchCreate(mockBatchCreateReq,
-                                   EasyMock.<Callback<BatchCreateResult<ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams>, DiscoveredItem>>>anyObject());
+                                   EasyMock.anyObject());
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
       public Object answer() throws Throwable {
@@ -4130,9 +4133,9 @@ public class TestRestLiMethodInvocation
 
     @SuppressWarnings("unchecked")
     BatchUpdateRequest<ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams>, DiscoveredItem> mockBatchUpdateReq =
-        (BatchUpdateRequest<ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams>, DiscoveredItem>)EasyMock.anyObject();
+        EasyMock.anyObject();
     discoveredResource.batchUpdate(mockBatchUpdateReq,
-                                   EasyMock.<Callback<BatchUpdateResult<ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams>, DiscoveredItem>>>anyObject());
+                                   EasyMock.anyObject());
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
       public Object answer() throws Throwable {
@@ -4170,9 +4173,9 @@ public class TestRestLiMethodInvocation
 
     @SuppressWarnings("unchecked")
     BatchPatchRequest<ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams>, DiscoveredItem> mockBatchPatchReq =
-        (BatchPatchRequest<ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams>, DiscoveredItem>)EasyMock.anyObject();
+         EasyMock.anyObject();
     discoveredResource.batchUpdate(mockBatchPatchReq,
-                                   EasyMock.<Callback<BatchUpdateResult<ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams>, DiscoveredItem>>>anyObject());
+                                   EasyMock.anyObject());
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
       public Object answer() throws Throwable {
@@ -4211,9 +4214,9 @@ public class TestRestLiMethodInvocation
 
     @SuppressWarnings("unchecked")
     BatchDeleteRequest<ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams>, DiscoveredItem> mockBatchDeleteReq =
-        (BatchDeleteRequest<ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams>, DiscoveredItem>)EasyMock.anyObject();
+        EasyMock.anyObject();
     discoveredResource.batchDelete(mockBatchDeleteReq,
-                                   EasyMock.<Callback<BatchUpdateResult<ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams>, DiscoveredItem>>>anyObject());
+                                   EasyMock.anyObject());
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
       public Object answer() throws Throwable {
@@ -4287,13 +4290,14 @@ public class TestRestLiMethodInvocation
       RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(),
                                                                (ServerResourceContext)routingResult.getContext());
 
-      FilterChainCallback filterChainCallback = new FilterChainCallbackImpl(null, _invoker, null, null, null,
+      FilterChainDispatcher filterChainDispatcher = new FilterChainDispatcherImpl(routingResult, _invoker, null, null);
+      FilterChainCallback filterChainCallback = new FilterChainCallbackImpl(null, null, null,
                                                                             restLiResponseHandler, executionCallback,
                                                                             _errorResponseBuilder);
       final RestLiCallback callback =
           new RestLiCallback(null,
                                      new RestLiFilterResponseContextFactory(request, null, restLiResponseHandler),
-                                     new RestLiFilterChain(null, filterChainCallback));
+                                     new RestLiFilterChain(null, filterChainDispatcher, filterChainCallback));
 
       _invoker.invoke(null, routingResult, null, callback, null);
       latch.await();
@@ -4343,13 +4347,14 @@ public class TestRestLiMethodInvocation
       RoutingResult routingResult = new RoutingResult(context, null);
       RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(),
                                                                (ServerResourceContext)routingResult.getContext());
-      FilterChainCallback filterChainCallback = new FilterChainCallbackImpl(null, _invoker, null, null, null,
+      FilterChainDispatcher filterChainDispatcher = new FilterChainDispatcherImpl(routingResult, _invoker, null, null);
+      FilterChainCallback filterChainCallback = new FilterChainCallbackImpl(null, null, null,
                                                                             restLiResponseHandler, executionCallback,
                                                                             _errorResponseBuilder);
       final RestLiCallback callback =
           new RestLiCallback(null,
                                      new RestLiFilterResponseContextFactory(request, null, restLiResponseHandler),
-                                     new RestLiFilterChain(null, filterChainCallback));
+                                     new RestLiFilterChain(null, filterChainDispatcher, filterChainCallback));
       _invoker.invoke(null, routingResult, null, callback, null);
       latch.await();
     }
@@ -4374,8 +4379,8 @@ public class TestRestLiMethodInvocation
     discoveredResource = getMockResource(AsyncDiscoveredItemsResource.class);
 
     @SuppressWarnings("unchecked")
-    PagingContext mockCtx = (PagingContext)EasyMock.anyObject();
-    discoveredResource.getAll(mockCtx, EasyMock.<Callback<List<DiscoveredItem>>>anyObject());
+    PagingContext mockCtx = EasyMock.anyObject();
+    discoveredResource.getAll(mockCtx, EasyMock.anyObject());
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
       public Object answer() throws Throwable {
@@ -4420,7 +4425,7 @@ public class TestRestLiMethodInvocation
     //Sync Method Execution - Successful scenario
     methodDescriptor = statusResourceModel.findActionMethod("streamingAction", ResourceLevel.COLLECTION);
     statusResource = getMockResource(StatusCollectionResource.class);
-    EasyMock.expect(statusResource.streamingAction(EasyMock.<String>anyObject(), EasyMock.<RestLiAttachmentReader>anyObject()))
+    EasyMock.expect(statusResource.streamingAction(EasyMock.anyObject(), EasyMock.anyObject()))
         .andReturn(1234l).once();
     checkInvocation(statusResource,
                     methodDescriptor,
@@ -4453,7 +4458,7 @@ public class TestRestLiMethodInvocation
 
     //Sync Method Execution - Error scenario
     statusResource = getMockResource(StatusCollectionResource.class);
-    EasyMock.expect(statusResource.streamingAction(EasyMock.<String>anyObject(), EasyMock.<RestLiAttachmentReader>anyObject()))
+    EasyMock.expect(statusResource.streamingAction(EasyMock.anyObject(), EasyMock.anyObject()))
         .andThrow(new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR)).once();
     checkInvocation(statusResource,
                     methodDescriptor,
@@ -4488,8 +4493,8 @@ public class TestRestLiMethodInvocation
     //Callback Method Execution - Successful scenario
     methodDescriptor = asyncStatusResourceModel.findMethod(ResourceMethod.ACTION);
     asyncStatusResource = getMockResource(AsyncStatusCollectionResource.class);
-    asyncStatusResource.streamingAction(EasyMock.<String>anyObject(), EasyMock.<RestLiAttachmentReader>anyObject(),
-                                        EasyMock.<Callback<Long>>anyObject());
+    asyncStatusResource.streamingAction(EasyMock.anyObject(), EasyMock.anyObject(),
+                                        EasyMock.anyObject());
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
       public Object answer() throws Throwable {
@@ -4530,8 +4535,8 @@ public class TestRestLiMethodInvocation
 
     //Callback Method Execution - Error scenario
     asyncStatusResource = getMockResource(AsyncStatusCollectionResource.class);
-    asyncStatusResource.streamingAction(EasyMock.<String>anyObject(), EasyMock.<RestLiAttachmentReader>anyObject(),
-                                        EasyMock.<Callback<Long>>anyObject());
+    asyncStatusResource.streamingAction(EasyMock.anyObject(), EasyMock.anyObject(),
+                                        EasyMock.anyObject());
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
       public Object answer() throws Throwable {
@@ -4574,7 +4579,7 @@ public class TestRestLiMethodInvocation
     //Promise Method Execution - Successful scenario
     methodDescriptor = promiseStatusResourceModel.findActionMethod("streamingAction", ResourceLevel.COLLECTION);
     promiseStatusResource = getMockResource(PromiseStatusCollectionResource.class);
-    promiseStatusResource.streamingAction(EasyMock.<String>anyObject(), EasyMock.<RestLiAttachmentReader>anyObject());
+    promiseStatusResource.streamingAction(EasyMock.anyObject(), EasyMock.anyObject());
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
       public Object answer() throws Throwable {
@@ -4628,7 +4633,7 @@ public class TestRestLiMethodInvocation
 
     //Promise Method Execution - Error scenario
     promiseStatusResource = getMockResource(PromiseStatusCollectionResource.class);
-    promiseStatusResource.streamingAction(EasyMock.<String>anyObject(), EasyMock.<RestLiAttachmentReader>anyObject());
+    promiseStatusResource.streamingAction(EasyMock.anyObject(), EasyMock.anyObject());
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
       public Object answer() throws Throwable {
@@ -4677,7 +4682,7 @@ public class TestRestLiMethodInvocation
     //Task Method Execution - Successful scenario
     methodDescriptor = taskStatusResourceModel.findMethod(ResourceMethod.ACTION);
     taskStatusResource = getMockResource(TaskStatusCollectionResource.class);
-    taskStatusResource.streamingAction(EasyMock.<String>anyObject(), EasyMock.<RestLiAttachmentReader>anyObject());
+    taskStatusResource.streamingAction(EasyMock.anyObject(), EasyMock.anyObject());
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
       public Object answer() throws Throwable {
@@ -4721,7 +4726,7 @@ public class TestRestLiMethodInvocation
 
     //Task Method Execution - Error scenario
     taskStatusResource = getMockResource(TaskStatusCollectionResource.class);
-    taskStatusResource.streamingAction(EasyMock.<String>anyObject(), EasyMock.<RestLiAttachmentReader>anyObject());
+    taskStatusResource.streamingAction(EasyMock.anyObject(), EasyMock.anyObject());
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
       public Object answer() throws Throwable {
@@ -4951,7 +4956,7 @@ public class TestRestLiMethodInvocation
     if (BaseResource.class.isAssignableFrom(resourceClass))
     {
       BaseResource baseResource = (BaseResource)resource;
-      baseResource.setContext((ResourceContext)EasyMock.anyObject());
+      baseResource.setContext(EasyMock.anyObject());
       EasyMock.expectLastCall().once();
     }
     return resource;
@@ -5069,8 +5074,8 @@ public class TestRestLiMethodInvocation
           .getContext(), resourceMethodDescriptor);
       final CountDownLatch latch = new CountDownLatch(1);
       final CountDownLatch expectedRoutingExceptionLatch = new CountDownLatch(1);
-      RestLiArgumentBuilder adapter = _methodAdapterRegistry.getArgumentBuilder(resourceMethodDescriptor.getType());
-      RestLiRequestData requestData = adapter.extractRequestData(routingResult, request);
+      RestLiArgumentBuilder argumentBuilder = _methodAdapterRegistry.getArgumentBuilder(resourceMethodDescriptor.getType());
+      RestLiRequestData requestData = argumentBuilder.extractRequestData(routingResult, request);
       filterContext.setRequestData(requestData);
       RestLiResponseHandler restLiResponseHandler = new RestLiResponseHandler.Builder().build();
 
@@ -5135,20 +5140,24 @@ public class TestRestLiMethodInvocation
         }
       };
 
-      FilterChainCallback filterChainCallback = new FilterChainCallbackImpl(routingResult, _invoker, adapter,
-                                                                            requestExecutionReportBuilder,
-                                                                            expectedRequestAttachments,
-                                                                            restLiResponseHandler,
-                                                                            executionCallback,
-                                                                            _errorResponseBuilder);
+      FilterChainDispatcher filterChainDispatcher = new FilterChainDispatcherImpl(routingResult,
+          _invoker,
+          argumentBuilder,
+          requestExecutionReportBuilder);
+      FilterChainCallback filterChainCallback = new FilterChainCallbackImpl(routingResult,
+          requestExecutionReportBuilder,
+          expectedRequestAttachments,
+          restLiResponseHandler,
+          executionCallback,
+          _errorResponseBuilder);
       final RestLiCallback outerCallback =
           new RestLiCallback(filterContext,
                                      new RestLiFilterResponseContextFactory(request, routingResult, restLiResponseHandler),
-                                     new RestLiFilterChain(null, filterChainCallback));
+                                     new RestLiFilterChain(null, filterChainDispatcher, filterChainCallback));
       RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(),
                                                                (ServerResourceContext)routingResult.getContext());
-      filterContext.setRequestData(adapter.extractRequestData(routingResult, request));
-      _invoker.invoke(filterContext.getRequestData(), routingResult, adapter, outerCallback,
+      filterContext.setRequestData(argumentBuilder.extractRequestData(routingResult, request));
+      _invoker.invoke(filterContext.getRequestData(), routingResult, argumentBuilder, outerCallback,
                       requestExecutionReportBuilder);
       try
       {
@@ -5179,14 +5188,9 @@ public class TestRestLiMethodInvocation
 
   private RestLiCallback getCallback()
   {
-    return getCallback(new Capture<RequestExecutionReport>());
-  }
-
-  private RestLiCallback getCallback(Capture<RequestExecutionReport> requestExecutionReport)
-  {
     @SuppressWarnings("unchecked")
     RestLiCallback callback = EasyMock.createMock(RestLiCallback.class);
-    callback.onSuccess(EasyMock.anyObject(), EasyMock.capture(requestExecutionReport), EasyMock.anyObject(RestLiResponseAttachments.class));
+    callback.onSuccess(EasyMock.anyObject(), EasyMock.anyObject(RestLiResponseAttachments.class));
     EasyMock.expectLastCall().once();
     EasyMock.replay(callback);
     return callback;
@@ -5266,12 +5270,12 @@ public class TestRestLiMethodInvocation
         requestExecutionReportBuilder = new RequestExecutionReportBuilder();
       }
 
-      RestLiArgumentBuilder adapter = _methodAdapterRegistry.getArgumentBuilder(methodDescriptor.getType());
-      RestLiRequestData requestData = adapter.extractRequestData(routingResult, request);
+      RestLiArgumentBuilder argumentBuilder = _methodAdapterRegistry.getArgumentBuilder(methodDescriptor.getType());
+      RestLiRequestData requestData = argumentBuilder.extractRequestData(routingResult, request);
 
       RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(),
                                                                (ServerResourceContext)routingResult.getContext());
-      _invoker.invoke(requestData, routingResult, adapter, callback, requestExecutionReportBuilder);
+      _invoker.invoke(requestData, routingResult, argumentBuilder, callback, requestExecutionReportBuilder);
       EasyMock.verify(resource);
       EasyMock.verify(callback);
       Assert.assertEquals(((ServerResourceContext) routingResult.getContext()).getResponseMimeType(),
@@ -5286,9 +5290,7 @@ public class TestRestLiMethodInvocation
     {
       EasyMock.reset(callback, resource);
       callback.onSuccess(EasyMock.anyObject(),
-                         isDebugMode ?
-                             EasyMock.isA(RequestExecutionReport.class) :
-                             EasyMock.<RequestExecutionReport>isNull(), EasyMock.anyObject(RestLiResponseAttachments.class));
+                         EasyMock.anyObject(RestLiResponseAttachments.class));
       EasyMock.expectLastCall().once();
       EasyMock.replay(callback);
     }

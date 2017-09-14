@@ -33,19 +33,14 @@ import java.util.List;
  */
 public class RestLiFilterChain
 {
-  private final List<Filter> _filters;
   private final RestLiFilterChainIterator _filterChainIterator;
 
-  public RestLiFilterChain(final List<Filter> filters,
-                           FilterChainCallback filterChainCallback)
+  public RestLiFilterChain(List<Filter> filters,
+      FilterChainDispatcher filterChainDispatcher,
+      FilterChainCallback filterChainCallback)
   {
-    _filters = filters == null ? Collections.<Filter>emptyList() : filters;
-    _filterChainIterator = new RestLiFilterChainIterator(_filters, filterChainCallback);
-  }
-
-  public RestLiFilterChain(FilterChainCallback filterChainCallback)
-  {
-    this(null, filterChainCallback);
+    filters = filters == null ? Collections.emptyList() : filters;
+    _filterChainIterator = new RestLiFilterChainIterator(filters, filterChainDispatcher, filterChainCallback);
   }
 
   /**

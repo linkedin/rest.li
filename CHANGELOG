@@ -1,5 +1,8 @@
 15.0.2
 -------
+(RB=1100491)
+FilterChainCallback and RestLiCallback code refactoring.
+
 (RB=1098968)
 Improve the test execution for multipart-mime tests. Server is started/shutdown once per class instead of per test. This brings the build time for pegasus down from 20+ minutes to 6.5 mins.
 
@@ -8,7 +11,7 @@ Throw 400 error for invalid query parameter values.
 
 15.0.1
 -------
-(RB=1097555) 
+(RB=1097555)
 Fixing double callback invocation bug in WarmUpLoadBalancer
 
 15.0.0

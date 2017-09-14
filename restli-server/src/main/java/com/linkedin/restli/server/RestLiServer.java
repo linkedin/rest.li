@@ -49,6 +49,8 @@ import com.linkedin.restli.internal.common.AttachmentUtils;
 import com.linkedin.restli.internal.common.HeaderUtil;
 import com.linkedin.restli.internal.common.ProtocolVersionUtil;
 import com.linkedin.restli.internal.server.RestLiMethodInvoker;
+import com.linkedin.restli.internal.server.filter.FilterChainDispatcher;
+import com.linkedin.restli.internal.server.filter.FilterChainDispatcherImpl;
 import com.linkedin.restli.internal.server.response.PartialRestResponse;
 import com.linkedin.restli.internal.server.response.RestLiResponseHandler;
 import com.linkedin.restli.internal.server.RestLiRouter;
@@ -75,7 +77,6 @@ import com.linkedin.restli.server.multiplexer.MultiplexedRequestHandlerImpl;
 import com.linkedin.restli.server.resources.PrototypeResourceFactory;
 import com.linkedin.restli.server.resources.ResourceFactory;
 
-import java.net.HttpCookie;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -351,14 +352,14 @@ public class RestLiServer extends BaseRestServer
     final FilterRequestContextInternal filterContext =
         new FilterRequestContextInternalImpl((ServerResourceContext) method.getContext(), method.getResourceMethod());
 
-    RestLiArgumentBuilder adapter;
+    RestLiArgumentBuilder argumentBuilder;
     try
     {
       RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(),
                                                                _customMimeTypesSupported,
                                                                (ServerResourceContext)method.getContext());
-      adapter = buildRestLiArgumentBuilder(method, _errorResponseBuilder);
-      filterContext.setRequestData(adapter.extractRequestData(method, request));
+      argumentBuilder = buildRestLiArgumentBuilder(method, _errorResponseBuilder);
+      filterContext.setRequestData(argumentBuilder.extractRequestData(method, request));
     }
     catch (Exception e)
     {
@@ -371,14 +372,18 @@ public class RestLiServer extends BaseRestServer
     RestLiFilterResponseContextFactory filterResponseContextFactory =
         new RestLiFilterResponseContextFactory(request, method, _responseHandler);
 
-    FilterChainCallback filterChainCallback = new FilterChainCallbackImpl(method, _methodInvoker, adapter,
-                                                                          requestExecutionReportBuilder,
-                                                                          attachmentReader,
-                                                                          _responseHandler,
-                                                                          wrappedCallback,
-                                                                          _errorResponseBuilder);
+    FilterChainCallback filterChainCallback = new FilterChainCallbackImpl(method,
+        requestExecutionReportBuilder,
+        attachmentReader,
+        _responseHandler,
+        wrappedCallback,
+        _errorResponseBuilder);
+    FilterChainDispatcher filterChainDispatcher = new FilterChainDispatcherImpl(method,
+        _methodInvoker,
+        argumentBuilder,
+        requestExecutionReportBuilder);
 
-    RestLiFilterChain filterChain = new RestLiFilterChain(_filters, filterChainCallback);
+    RestLiFilterChain filterChain = new RestLiFilterChain(_filters, filterChainDispatcher, filterChainCallback);
 
     filterChain.onRequest(filterContext, filterResponseContextFactory);
   }

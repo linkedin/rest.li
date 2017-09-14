@@ -32,6 +32,8 @@ import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.HeaderUtil;
 import com.linkedin.restli.internal.server.ResponseType;
 import com.linkedin.restli.internal.server.RestLiMethodInvoker;
+import com.linkedin.restli.internal.server.filter.FilterChainDispatcher;
+import com.linkedin.restli.internal.server.filter.FilterChainDispatcherImpl;
 import com.linkedin.restli.internal.server.filter.RestLiFilterChain;
 import com.linkedin.restli.internal.server.filter.FilterChainCallback;
 import com.linkedin.restli.internal.server.filter.FilterChainCallbackImpl;
@@ -99,14 +101,13 @@ public class TestRestLiCallback
   @Mock
   private RestLiMethodInvoker _methodInvoker;
   @Mock
-  private RestLiArgumentBuilder _adapter;
+  private RestLiArgumentBuilder _argumentBuilder;
   @Mock
   private RestLiResponseHandler _responseHandler;
   @Mock
   private RestLiAttachmentReader _requestAttachmentReader;
   @Mock
   private RequestExecutionCallback<RestResponse> _callback;
-  private ErrorResponseBuilder _errorResponseBuilder;
 
   private RestLiCallback _noFilterRestLiCallback;
 
@@ -127,8 +128,6 @@ public class TestRestLiCallback
   private RestLiFilterChain _oneFilterChain;
   private RestLiFilterChain _twoFilterChain;
 
-  private FilterChainCallback _filterChainCallback;
-
   private RestLiFilterResponseContextFactory _filterResponseContextFactory;
 
   @BeforeTest
@@ -138,14 +137,19 @@ public class TestRestLiCallback
 
     _filterResponseContextFactory = new RestLiFilterResponseContextFactory(_restRequest, _routingResult,
                                                                                    _responseHandler);
-    _errorResponseBuilder = new ErrorResponseBuilder();
-    _filterChainCallback =
-        new FilterChainCallbackImpl(_routingResult, _methodInvoker, _adapter, _requestExecutionReportBuilder,
-                                    _requestAttachmentReader, _responseHandler, _callback, _errorResponseBuilder);
+    ErrorResponseBuilder errorResponseBuilder = new ErrorResponseBuilder();
+    FilterChainDispatcher filterChainDispatcher = new FilterChainDispatcherImpl(_routingResult,
+        _methodInvoker, _argumentBuilder,
+        _requestExecutionReportBuilder);
+    FilterChainCallback filterChainCallback = new FilterChainCallbackImpl(_routingResult,
+        _requestExecutionReportBuilder,
+        _requestAttachmentReader,
+        _responseHandler,
+        _callback, errorResponseBuilder);
 
-    _zeroFilterChain = new RestLiFilterChain(_filterChainCallback);
-    _oneFilterChain = new RestLiFilterChain(Arrays.asList(_filter), _filterChainCallback);
-    _twoFilterChain = new RestLiFilterChain(Arrays.asList(_filter, _filter), _filterChainCallback);
+    _zeroFilterChain = new RestLiFilterChain(null, filterChainDispatcher, filterChainCallback);
+    _oneFilterChain = new RestLiFilterChain(Arrays.asList(_filter), filterChainDispatcher, filterChainCallback);
+    _twoFilterChain = new RestLiFilterChain(Arrays.asList(_filter, _filter), filterChainDispatcher, filterChainCallback);
 
     _noFilterRestLiCallback =
         new RestLiCallback(_filterRequestContext, _filterResponseContextFactory,
@@ -181,7 +185,7 @@ public class TestRestLiCallback
     when(_responseHandler.buildResponse(_routingResult, partialResponse)).thenReturn(restResponse);
 
     // Invoke.
-    _noFilterRestLiCallback.onSuccess(result, executionReport, restLiResponseAttachments);
+    _noFilterRestLiCallback.onSuccess(result, restLiResponseAttachments);
 
     // Verify.
     verify(_responseHandler).buildPartialResponse(_routingResult, responseData);
@@ -210,7 +214,7 @@ public class TestRestLiCallback
     when(_responseHandler.buildRestException(same(e), any())).thenReturn(restException);
 
     // Invoke.
-    _noFilterRestLiCallback.onSuccess(result, executionReport, restLiResponseAttachments);
+    _noFilterRestLiCallback.onSuccess(result, restLiResponseAttachments);
 
     // Verify.
     verify(_responseHandler).buildPartialResponse(_routingResult, responseData);
@@ -245,7 +249,7 @@ public class TestRestLiCallback
     when(_responseHandler.buildRestException(same(e), any())).thenReturn(restException);
 
     // Invoke.
-    _noFilterRestLiCallback.onSuccess(result, executionReport, restLiResponseAttachments);
+    _noFilterRestLiCallback.onSuccess(result, restLiResponseAttachments);
 
     // Verify.
     verify(_responseHandler).buildPartialResponse(_routingResult, responseData);
@@ -291,7 +295,7 @@ public class TestRestLiCallback
     when(_responseHandler.buildRestException(ex, partialResponse)).thenReturn(restException);
 
     // Invoke.
-    _noFilterRestLiCallback.onError(ex, executionReport, _requestAttachmentReader, responseAttachments);
+    _noFilterRestLiCallback.onError(ex, responseAttachments);
 
     // Verify.
     verify(_responseHandler).buildRestException(ex, partialResponse);
@@ -348,7 +352,7 @@ public class TestRestLiCallback
     when(_responseHandler.buildRestException(wrappedEx, partialResponse)).thenReturn(restException);
 
     // Invoke.
-    _noFilterRestLiCallback.onError(ex, executionReport, _requestAttachmentReader, responseAttachments);
+    _noFilterRestLiCallback.onError(ex, responseAttachments);
 
     // Verify.
     verify(_responseHandler).buildExceptionResponseData(eq(_restRequest), eq(_routingResult),
@@ -413,7 +417,7 @@ public class TestRestLiCallback
     when(_filter.onRequest(any(FilterRequestContext.class))).thenReturn(CompletableFuture.completedFuture(null));
     _twoFilterChain.onRequest(_filterRequestContext, _filterResponseContextFactory);
     // Invoke.
-    _noFilterRestLiCallback.onSuccess(result, executionReport, responseAttachments);
+    _noFilterRestLiCallback.onSuccess(result, responseAttachments);
 
     // Verify.
     verify(_responseHandler).buildRestLiResponseData(_restRequest, _routingResult, result);
@@ -504,7 +508,7 @@ public class TestRestLiCallback
     when(_filter.onRequest(any(FilterRequestContext.class))).thenReturn(CompletableFuture.completedFuture(null));
     _twoFilterChain.onRequest(_filterRequestContext, _filterResponseContextFactory);
     // Invoke with some response attachments.
-    _twoFilterRestLiCallback.onSuccess(result, executionReport, restLiResponseAttachments);
+    _twoFilterRestLiCallback.onSuccess(result, restLiResponseAttachments);
 
     // Verify.
     assertNotNull(appResponseData);
@@ -583,7 +587,7 @@ public class TestRestLiCallback
     when(_filter.onRequest(any(FilterRequestContext.class))).thenReturn(CompletableFuture.completedFuture(null));
     _twoFilterChain.onRequest(_filterRequestContext, _filterResponseContextFactory);
     // Invoke.
-    _twoFilterRestLiCallback.onSuccess(entityFromApp, executionReport, responseAttachments);
+    _twoFilterRestLiCallback.onSuccess(entityFromApp, responseAttachments);
 
     // Verify.
     verify(_responseHandler).buildRestLiResponseData(_restRequest, _routingResult, entityFromApp);
@@ -672,7 +676,7 @@ public class TestRestLiCallback
     when(_filter.onRequest(any(FilterRequestContext.class))).thenReturn(CompletableFuture.completedFuture(null));
     _twoFilterChain.onRequest(_filterRequestContext, _filterResponseContextFactory);
     // Invoke.
-    _twoFilterRestLiCallback.onSuccess(entityFromApp, executionReport, responseAttachments);
+    _twoFilterRestLiCallback.onSuccess(entityFromApp, responseAttachments);
 
     // Verify.
     verify(_responseHandler).buildRestLiResponseData(_restRequest, _routingResult, entityFromApp);
@@ -736,7 +740,7 @@ public class TestRestLiCallback
     when(_filter.onRequest(any(FilterRequestContext.class))).thenReturn(CompletableFuture.completedFuture(null));
     _oneFilterChain.onRequest(_filterRequestContext, _filterResponseContextFactory);
     // Invoke.
-    _oneFilterRestLiCallback.onSuccess(entityFromApp, executionReport, responseAttachments);
+    _oneFilterRestLiCallback.onSuccess(entityFromApp, responseAttachments);
 
     // Verify.
     verify(_responseHandler).buildRestLiResponseData(_restRequest, _routingResult, entityFromApp);
@@ -819,7 +823,7 @@ public class TestRestLiCallback
     when(_filter.onRequest(any(FilterRequestContext.class))).thenReturn(CompletableFuture.completedFuture(null));
     _twoFilterChain.onRequest(_filterRequestContext, _filterResponseContextFactory);
     // Invoke.
-    _twoFilterRestLiCallback.onSuccess(result, executionReport, responseAttachments);
+    _twoFilterRestLiCallback.onSuccess(result, responseAttachments);
 
     // Verify.
     verify(_responseHandler).buildPartialResponse(_routingResult, appResponseData);
@@ -922,7 +926,7 @@ public class TestRestLiCallback
     when(_filter.onRequest(any(FilterRequestContext.class))).thenReturn(CompletableFuture.completedFuture(null));
     _twoFilterChain.onRequest(_filterRequestContext, _filterResponseContextFactory);
     // Invoke.
-    _twoFilterRestLiCallback.onError(exFromApp, executionReport, _requestAttachmentReader, responseAttachments);
+    _twoFilterRestLiCallback.onError(exFromApp, responseAttachments);
     // Verify.
     assertNotNull(responseData);
     assertEquals(HttpStatus.S_403_FORBIDDEN, responseData.getResponseEnvelope().getStatus());
@@ -1040,7 +1044,7 @@ public class TestRestLiCallback
     when(_filter.onRequest(any(FilterRequestContext.class))).thenReturn(CompletableFuture.completedFuture(null));
     _twoFilterChain.onRequest(_filterRequestContext, _filterResponseContextFactory);
     // Invoke.
-    _twoFilterRestLiCallback.onError(exFromApp, executionReport, _requestAttachmentReader, responseAttachments);
+    _twoFilterRestLiCallback.onError(exFromApp, responseAttachments);
     // Verify.
     assertNotNull(responseData);
     assertEquals(HttpStatus.S_403_FORBIDDEN, responseData.getResponseEnvelope().getStatus());
@@ -1118,7 +1122,7 @@ public class TestRestLiCallback
     when(_filter.onRequest(any(FilterRequestContext.class))).thenReturn(CompletableFuture.completedFuture(null));
     _twoFilterChain.onRequest(_filterRequestContext, _filterResponseContextFactory);
     // Invoke.
-    _twoFilterRestLiCallback.onError(exFromApp, executionReport, _requestAttachmentReader, responseAttachments);
+    _twoFilterRestLiCallback.onError(exFromApp, responseAttachments);
 
     // Verify.
     ArgumentCaptor<RestLiServiceException> exCapture = ArgumentCaptor.forClass(RestLiServiceException.class);
@@ -1286,7 +1290,7 @@ public class TestRestLiCallback
     when(_filter.onRequest(any(FilterRequestContext.class))).thenReturn(CompletableFuture.completedFuture(null));
     _twoFilterChain.onRequest(_filterRequestContext, _filterResponseContextFactory);
     // Invoke.
-    _twoFilterRestLiCallback.onError(exFromApp, executionReport, _requestAttachmentReader, responseAttachments);
+    _twoFilterRestLiCallback.onError(exFromApp, responseAttachments);
 
     // Verify.
     verify(_responseHandler).buildExceptionResponseData(eq(_restRequest), eq(_routingResult),
@@ -1394,7 +1398,7 @@ public class TestRestLiCallback
     when(_filter.onRequest(any(FilterRequestContext.class))).thenReturn(CompletableFuture.completedFuture(null));
     _twoFilterChain.onRequest(_filterRequestContext, _filterResponseContextFactory);
     // Invoke.
-    _twoFilterRestLiCallback.onError(exFromApp, executionReport, _requestAttachmentReader, responseAttachments);
+    _twoFilterRestLiCallback.onError(exFromApp, responseAttachments);
 
     // Verify.
     ArgumentCaptor<RestLiServiceException> wrappedExCapture = ArgumentCaptor.forClass(RestLiServiceException.class);

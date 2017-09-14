@@ -17,11 +17,8 @@
 package com.linkedin.restli.internal.server;
 
 
-import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
 import com.linkedin.restli.internal.server.filter.RestLiFilterChain;
 import com.linkedin.restli.internal.server.filter.RestLiFilterResponseContextFactory;
-import com.linkedin.restli.server.RequestExecutionCallback;
-import com.linkedin.restli.server.RequestExecutionReport;
 import com.linkedin.restli.server.RestLiResponseAttachments;
 import com.linkedin.restli.server.filter.FilterRequestContext;
 import com.linkedin.restli.server.filter.FilterResponseContext;
@@ -31,7 +28,7 @@ import com.linkedin.restli.server.filter.FilterResponseContext;
  * Used for callbacks from RestLiMethodInvoker. When the REST method completes its execution, it invokes RestLiCallback,
  * which sets off the filter chain responses and eventually a response is sent to the client.
  */
-public class RestLiCallback implements RequestExecutionCallback<Object>
+public class RestLiCallback
 {
   private final RestLiFilterChain _filterChain;
   private final FilterRequestContext _filterRequestContext;
@@ -46,9 +43,7 @@ public class RestLiCallback implements RequestExecutionCallback<Object>
     _filterRequestContext = filterRequestContext;
   }
 
-  @Override
-  public void onSuccess(final Object result, RequestExecutionReport executionReport,
-                        final RestLiResponseAttachments responseAttachments)
+  public void onSuccess(final Object result, final RestLiResponseAttachments responseAttachments)
   {
     final FilterResponseContext responseContext;
     try
@@ -60,7 +55,7 @@ public class RestLiCallback implements RequestExecutionCallback<Object>
       // Invoke the onError method if we run into any exception while creating the response context from result.
       // Note that due to the fact we are in onSuccess(), we assume the application code has absorbed, or is in the
       // process of absorbing any request attachments present.
-      onError(e, executionReport, null, responseAttachments);
+      onError(e, responseAttachments);
       return;
     }
     // Now kick off the responses in the filter chain. Same note as above; we assume that the application code has
@@ -68,11 +63,7 @@ public class RestLiCallback implements RequestExecutionCallback<Object>
     _filterChain.onResponse(_filterRequestContext, responseContext, responseAttachments);
   }
 
-  @Override
-  public void onError(final Throwable e,
-                      final RequestExecutionReport executionReport,
-                      final RestLiAttachmentReader requestAttachmentReader,
-                      final RestLiResponseAttachments responseAttachments)
+  public void onError(final Throwable e, final RestLiResponseAttachments responseAttachments)
   {
     final FilterResponseContext responseContext = _filterResponseContextFactory.fromThrowable(e);
 

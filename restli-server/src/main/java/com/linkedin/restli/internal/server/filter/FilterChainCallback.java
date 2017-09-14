@@ -17,8 +17,6 @@
 package com.linkedin.restli.internal.server.filter;
 
 
-import com.linkedin.restli.internal.server.RestLiCallback;
-import com.linkedin.restli.server.RestLiRequestData;
 import com.linkedin.restli.server.RestLiResponseAttachments;
 import com.linkedin.restli.server.RestLiResponseData;
 
@@ -31,14 +29,6 @@ import com.linkedin.restli.server.RestLiResponseData;
  */
 public interface FilterChainCallback
 {
-  /**
-   * Method to be called after a filter chain successfully iterates to the end of the request side.
-   *
-   * @param requestData the {@link RestLiRequestData} of the request.
-   * @param restLiCallback the {@link RestLiCallback} to be called after the RestLi method has been invoked.
-   */
-  void onRequestSuccess(final RestLiRequestData requestData, final RestLiCallback restLiCallback);
-
   /**
    *Method to be called after a filter chain successfully iterates to the end of the response side.
    *
