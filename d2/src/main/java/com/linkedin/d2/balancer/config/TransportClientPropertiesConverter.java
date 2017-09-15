@@ -117,6 +117,10 @@ public class TransportClientPropertiesConverter
     {
       prop.put(PropertyKeys.HTTP_POOL_MIN_SIZE, config.getMinPoolSize().toString());
     }
+    if (config.hasPoolStatsNamePrefix())
+    {
+      prop.put(PropertyKeys.HTTP_POOL_STATS_NAME_PREFIX, config.getPoolStatsNamePrefix());
+    }
     if (config.hasMaxConcurrentConnections())
     {
       prop.put(PropertyKeys.HTTP_MAX_CONCURRENT_CONNECTIONS, config.getMaxConcurrentConnections().toString());
@@ -221,6 +225,10 @@ public class TransportClientPropertiesConverter
     if (properties.containsKey(PropertyKeys.HTTP_POOL_MIN_SIZE))
     {
       config.setMinPoolSize(coerce(properties.get(PropertyKeys.HTTP_POOL_MIN_SIZE), Integer.class));
+    }
+    if (properties.containsKey(PropertyKeys.HTTP_POOL_STATS_NAME_PREFIX))
+    {
+      config.setPoolStatsNamePrefix(coerce(properties.get(PropertyKeys.HTTP_POOL_STATS_NAME_PREFIX), String.class));
     }
     if (properties.containsKey(PropertyKeys.HTTP_MAX_CONCURRENT_CONNECTIONS))
     {

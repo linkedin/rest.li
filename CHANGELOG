@@ -1,5 +1,8 @@
 15.0.2
 -------
+(RB=1102528)
+Allow d2 clients to configure http.poolStatsNamePrefix from D2 zookeeper's service config
+
 (RB=1100491)
 FilterChainCallback and RestLiCallback code refactoring.
 

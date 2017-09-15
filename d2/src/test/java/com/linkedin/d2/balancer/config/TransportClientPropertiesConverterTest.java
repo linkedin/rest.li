@@ -56,6 +56,7 @@ public class TransportClientPropertiesConverterTest
     final Integer maxChunkSize = 4096;
     final poolStrategyType poolStrategy = poolStrategyType.LRU;
     final Integer minPoolSize = 5;
+    final String poolStatsNamePrefix = "poolStats";
     final Integer maxConcurrentConnections = 1000;
     final Boolean tcpNoDelay = true;
     final HttpProtocolVersionType protocolVersion = HttpProtocolVersionType.HTTP_1_1;
@@ -81,6 +82,7 @@ public class TransportClientPropertiesConverterTest
     transportClientProperties.put(PropertyKeys.HTTP_MAX_CHUNK_SIZE, maxChunkSize.toString());
     transportClientProperties.put(PropertyKeys.HTTP_POOL_STRATEGY, poolStrategy.name());
     transportClientProperties.put(PropertyKeys.HTTP_POOL_MIN_SIZE, minPoolSize.toString());
+    transportClientProperties.put(PropertyKeys.HTTP_POOL_STATS_NAME_PREFIX, poolStatsNamePrefix);
     transportClientProperties.put(PropertyKeys.HTTP_MAX_CONCURRENT_CONNECTIONS, maxConcurrentConnections.toString());
     transportClientProperties.put(PropertyKeys.HTTP_TCP_NO_DELAY, tcpNoDelay.toString());
     transportClientProperties.put(PropertyKeys.HTTP_PROTOCOL_VERSION, protocolVersion.name());
@@ -105,6 +107,7 @@ public class TransportClientPropertiesConverterTest
             .setMaxChunkSize(maxChunkSize)
             .setPoolStrategy(poolStrategy)
             .setMinPoolSize(minPoolSize)
+            .setPoolStatsNamePrefix(poolStatsNamePrefix)
             .setMaxConcurrentConnections(maxConcurrentConnections)
             .setProtocolVersion(protocolVersion)
             .setTcpNoDelay(tcpNoDelay)

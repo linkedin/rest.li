@@ -47,6 +47,12 @@
       "optional": true
     },
     {
+      "name": "poolStatsNamePrefix",
+      "type": "string",
+      "doc": "Custom prefix of the name of the pool stats.",
+      "optional": true
+    },
+    {
       "name": "tcpNoDelay",
       "type": "boolean",
       "doc": "Flag to enable/disable Nagle's algorithm. Defaults to true",

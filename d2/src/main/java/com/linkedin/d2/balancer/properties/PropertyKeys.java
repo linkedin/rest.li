@@ -132,6 +132,7 @@ public class PropertyKeys
   public static final String HTTP_QUERY_POST_THRESHOLD = HttpClientFactory.HTTP_QUERY_POST_THRESHOLD;
   public static final String HTTP_POOL_STRATEGY = HttpClientFactory.HTTP_POOL_STRATEGY;
   public static final String HTTP_POOL_MIN_SIZE = HttpClientFactory.HTTP_POOL_MIN_SIZE;
+  public static final String HTTP_POOL_STATS_NAME_PREFIX = HttpClientFactory.HTTP_POOL_STATS_NAME_PREFIX;
   public static final String HTTP_MAX_HEADER_SIZE = HttpClientFactory.HTTP_MAX_HEADER_SIZE;
   public static final String HTTP_MAX_CHUNK_SIZE = HttpClientFactory.HTTP_MAX_CHUNK_SIZE;
   public static final String HTTP_MAX_CONCURRENT_CONNECTIONS = HttpClientFactory.HTTP_MAX_CONCURRENT_CONNECTIONS;
