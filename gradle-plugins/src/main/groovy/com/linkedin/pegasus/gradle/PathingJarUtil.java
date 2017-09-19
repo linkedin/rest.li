@@ -29,14 +29,16 @@ public class PathingJarUtil {
    * @param project the {@link Project}
    * @param taskName the name of the task to create the pathing JAR for
    * @param classpath the classpath for the task
+   * @param alwaysUsePathingJar pathing jar is created when set to true,
+   *  else depending on the inclusion of 'restli-tools-scala' pathing jar may not be created
    * @return the new classpath for the task
    * @throws IOException if there any issues creating the pathing JAR
    */
-  public static FileCollection generatePathingJar(final Project project, final String taskName, final FileCollection classpath)
-      throws IOException {
+  public static FileCollection generatePathingJar(final Project project, final String taskName, final FileCollection classpath,
+    boolean alwaysUsePathingJar) throws IOException {
     //There is a bug in the Scala nsc compiler that does not parse the dependencies of JARs in the JAR manifest
     //As such, we disable pathing for any libraries compiling docs for Scala resources
-    if (!classpath.filter(f -> f.getAbsolutePath().contains("restli-tools-scala")).isEmpty()) {
+    if (!alwaysUsePathingJar && !classpath.filter(f -> f.getAbsolutePath().contains("restli-tools-scala")).isEmpty()) {
       LOG.info("Compiling Scala resource classes. Disabling pathing jar for " + taskName + " to avoid breaking Scala compilation");
       return classpath;
     }

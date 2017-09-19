@@ -63,6 +63,8 @@ class GenerateRestModelTask extends DefaultTask
   private FileCollection _codegenClasspath
   private Set<File> _inputDirs
 
+  public static final String INCLUDED_SOURCE_TYPES_PROPERTY = "pegasus.generateRestModel.includedSourceTypes"
+
   @TaskAction
   protected void generate()
   {
@@ -71,7 +73,17 @@ class GenerateRestModelTask extends DefaultTask
     project.logger.debug("GenerateRestModel using destination dir ${idlDestinationDir.path}")
     snapshotDestinationDir.mkdirs()
     idlDestinationDir.mkdirs()
-    pathedCodegenClasspath =  PathingJarUtil.generatePathingJar(project, "generateRestModel", getCodegenClasspath())
+
+    boolean ignoreNonJavaFiles = false
+
+    Set<String> includedSourceTypes = project.findProperty(INCLUDED_SOURCE_TYPES_PROPERTY) ?: ["ALL"]
+
+    if (includedSourceTypes.size() == 1 && includedSourceTypes.contains("JAVA")){
+      ignoreNonJavaFiles = true
+    }
+
+    pathedCodegenClasspath =  PathingJarUtil.generatePathingJar(project, "generateRestModel", getCodegenClasspath(),
+      ignoreNonJavaFiles)
 
     // handle multiple idl generations in the same project, see pegasus rest-framework-server-examples
     // for example.
@@ -83,7 +95,7 @@ class GenerateRestModelTask extends DefaultTask
     // pegasus.main.idlOptions.addIdlItem(['com.linkedin.groups.server.rest.impl', 'com.linkedin.greetings.server.rest.impl'])
     // they will still be placed in the same jar, though
 
-    def loadAdditionalDocProviders = project.tasks.findByName("scaladoc") != null
+    def loadAdditionalDocProviders = !ignoreNonJavaFiles && project.tasks.findByName("scaladoc") != null
 
     if (idlOptions.idlItems.empty)
     {

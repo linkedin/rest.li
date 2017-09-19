@@ -1,3 +1,7 @@
+15.0.3
+-------
+
+
 15.0.2
 -------
 (RB=1102528)
@@ -11,6 +15,10 @@ Improve the test execution for multipart-mime tests. Server is started/shutdown 
 
 (RB=1104659)
 Throw 400 error for invalid query parameter values.
+
+(RB=1104041)
+Adds property pegasus.generateRestModel.includedSourceTypes to let users specify source types for GenerateRestModelTask
+Changes RestLiSnapshotExporter,RestLiResourceModelExporter to use MultiLanguageDocsProvider by default
 
 15.0.1
 -------

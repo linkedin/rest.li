@@ -180,22 +180,17 @@ public class RestLiResourceModelExporter
       return new Result();
     }
 
-    // We always include the doc provider for javadoc
-    DocsProvider javadocProvider = new DocletDocsProvider(apiName, classpath, sourcePaths, resourcePackages);
+    List<DocsProvider> languageSpecificDocsProviders = new ArrayList<>();
 
-    DocsProvider docsProvider;
-    if (additionalDocProviders == null || additionalDocProviders.isEmpty())
-    {
-      docsProvider = javadocProvider;
-    }
-    else
-    {
-      // dynamically load doc providers for additional language, if available
-      List<DocsProvider> languageSpecificDocsProviders = new ArrayList<DocsProvider>();
-      languageSpecificDocsProviders.add(javadocProvider);
+    // We always include the doc provider for javadoc
+    languageSpecificDocsProviders.add(new DocletDocsProvider(apiName, classpath, sourcePaths, resourcePackages));
+
+    // dynamically load doc providers for additional language, if available
+    if (additionalDocProviders != null && !additionalDocProviders.isEmpty()) {
       languageSpecificDocsProviders.addAll(MultiLanguageDocsProvider.loadExternalProviders(additionalDocProviders));
-      docsProvider = new MultiLanguageDocsProvider(languageSpecificDocsProviders);
     }
+
+    DocsProvider docsProvider = new MultiLanguageDocsProvider(languageSpecificDocsProviders);
 
     log.debug("Registering source files with doc providers...");
 
