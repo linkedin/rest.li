@@ -35,6 +35,7 @@ import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.internal.server.model.AnnotationSet;
 import com.linkedin.restli.internal.server.model.Parameter;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
+import com.linkedin.restli.server.LinkedListNode;
 import com.linkedin.restli.server.PagingContext;
 import com.linkedin.restli.server.PathKeys;
 import com.linkedin.restli.server.ResourceContext;
@@ -207,6 +208,78 @@ public class TestArgumentBuilder
     Assert.assertEquals(results[3], param4Final);
     Assert.assertEquals(results[4], param5Final);
     Assert.assertEquals(results[5], param6Final);
+  }
+
+  @DataProvider(name = "parameterInvalidData")
+  @SuppressWarnings("deprecation")
+  private Object[][] parameterInvalidData()
+  {
+    String intParamKey = "intParam";
+    String intParamValue = "5.5";
+
+    String arrParamKey = "arrParam";
+    DataMap arrParamValue = new DataMap();
+    arrParamValue.put("wrongKey", "arrParam1");
+
+    String recordParamKey = "recParam";
+    Double recordParamValue = 5.5;
+
+    String nestedRecordParamKey = "nestedRecParam";
+    DataMap nestedRecordParamValue = new DataMap();
+    nestedRecordParamValue.put("intField", 1);
+    nestedRecordParamValue.put("next", 2);
+
+    return new Object[][]
+        {
+            // primitive type parameter
+            {
+                intParamKey,
+                Integer.TYPE,
+                intParamValue
+            },
+
+            // array type parameter
+            {
+                arrParamKey,
+                StringArray.class,
+                arrParamValue
+            },
+            // data template parameter
+            {
+                recordParamKey,
+                TestRecord.class,
+                recordParamValue
+            },
+            // nested record parameter
+            {
+                nestedRecordParamKey,
+                LinkedListNode.class,
+                nestedRecordParamValue
+            }
+        };
+  }
+
+  @Test(expectedExceptions = RoutingException.class, dataProvider = "parameterInvalidData")
+  public void testBuildArgsInvalidValue(String paramKey, Class<?> dataType, Object invalidValue)
+  {
+    @SuppressWarnings({"unchecked","rawtypes"})
+    Parameter<?> param = new Parameter(paramKey, dataType, DataTemplateUtil.getSchema(dataType),
+        false, null, Parameter.ParamType.QUERY, false, AnnotationSet.EMPTY);
+
+    ServerResourceContext mockResourceContext = EasyMock.createMock(ServerResourceContext.class);
+    EasyMock.expect(mockResourceContext.getRequestAttachmentReader()).andReturn(null);
+    if (DataTemplate.class.isAssignableFrom(dataType))
+    {
+      EasyMock.expect(mockResourceContext.getStructuredParameter(paramKey)).andReturn(invalidValue);
+    }
+    else
+    {
+      EasyMock.expect(mockResourceContext.getParameter(paramKey)).andReturn((String)invalidValue);
+    }
+    EasyMock.replay(mockResourceContext);
+
+    List<Parameter<?>> parameters = Collections.<Parameter<?>>singletonList(param);
+    ArgumentBuilder.buildArgs(new Object[0], getMockResourceMethod(parameters), mockResourceContext, null);
   }
 
   @Test
