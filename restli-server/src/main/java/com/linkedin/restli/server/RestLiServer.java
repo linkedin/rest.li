@@ -19,7 +19,6 @@ package com.linkedin.restli.server;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.data.ByteString;
-import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.multipart.MultiPartMIMEReader;
 import com.linkedin.multipart.MultiPartMIMEReaderCallback;
 import com.linkedin.multipart.MultiPartMIMEStreamResponseFactory;
@@ -41,7 +40,8 @@ import com.linkedin.r2.message.stream.entitystream.ByteStringWriter;
 import com.linkedin.r2.message.stream.entitystream.EntityStream;
 import com.linkedin.r2.message.stream.entitystream.EntityStreams;
 import com.linkedin.r2.message.stream.entitystream.Writer;
-import com.linkedin.r2.util.URIUtil;
+import com.linkedin.r2.transport.common.RestRequestHandler;
+import com.linkedin.r2.transport.common.StreamRequestHandler;
 import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ProtocolVersion;
@@ -85,7 +85,6 @@ import com.linkedin.restli.server.resources.ResourceFactory;
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -105,26 +104,16 @@ import org.slf4j.LoggerFactory;
  * @author nshankar
  * @author Karim Vidhani
  */
-//TODO: Remove this once use of InvokeAware has been discontinued.
-@SuppressWarnings("deprecation")
-public class RestLiServer extends BaseRestServer
+public class RestLiServer implements RestRequestHandler, StreamRequestHandler
 {
-  public static final String DEBUG_PATH_SEGMENT = "__debug";
-
   private static final Logger log = LoggerFactory.getLogger(RestLiServer.class);
 
-  private final RestLiConfig _config;
   private final RestLiRouter _router;
-  private final ResourceFactory _resourceFactory;
   private final RestLiMethodInvoker _methodInvoker;
   private final RestLiResponseHandler _responseHandler;
-  private final RestLiDocumentationRequestHandler _docRequestHandler;
-  private final MultiplexedRequestHandler _multiplexedRequestHandler;
+  private final List<RequestHandler> _requestHandlers;
   private final ErrorResponseBuilder _errorResponseBuilder;
-  private final Map<String, RestLiDebugRequestHandler> _debugHandlers;
   private final List<Filter> _filters;
-  private final List<InvokeAware> _invokeAwares;
-  private boolean _isDocInitialized = false;
   private final Set<String> _customMimeTypesSupported;
 
   public RestLiServer(final RestLiConfig config)
@@ -139,29 +128,15 @@ public class RestLiServer extends BaseRestServer
 
   public RestLiServer(final RestLiConfig config, final ResourceFactory resourceFactory, final Engine engine)
   {
-    this(config, resourceFactory, engine, null);
-  }
-
-  @Deprecated
-  public RestLiServer(final RestLiConfig config,
-                      final ResourceFactory resourceFactory,
-                      final Engine engine,
-                      final List<InvokeAware> invokeAwares)
-  {
-    super(config);
-    _config = config;
     _errorResponseBuilder = new ErrorResponseBuilder(config.getErrorResponseFormat(), config.getInternalErrorMessage());
-    _resourceFactory = resourceFactory;
-    _rootResources = new RestLiApiBuilder(config).build();
-    _resourceFactory.setRootResources(_rootResources);
-    _router = new RestLiRouter(_rootResources);
-    _methodInvoker = new RestLiMethodInvoker(_resourceFactory, engine, _errorResponseBuilder);
+    Map<String, ResourceModel> rootResources = new RestLiApiBuilder(config).build();
+    resourceFactory.setRootResources(rootResources);
+    _router = new RestLiRouter(rootResources);
+    _methodInvoker = new RestLiMethodInvoker(resourceFactory, engine, _errorResponseBuilder);
     _responseHandler =
         new RestLiResponseHandler.Builder().setErrorResponseBuilder(_errorResponseBuilder)
             .build();
-    _docRequestHandler = config.getDocumentationRequestHandler();
-    _debugHandlers = new HashMap<String, RestLiDebugRequestHandler>();
-    _customMimeTypesSupported = _config.getCustomContentTypes().stream().map(
+    _customMimeTypesSupported = config.getCustomContentTypes().stream().map(
         com.linkedin.restli.common.ContentType::getHeaderKey).collect(Collectors.toSet());
     if (config.getFilters() != null)
     {
@@ -169,25 +144,13 @@ public class RestLiServer extends BaseRestServer
     }
     else
     {
-      _filters = new ArrayList<Filter>();
+      _filters = new ArrayList<>();
     }
-    for (RestLiDebugRequestHandler debugHandler : config.getDebugRequestHandlers())
-    {
-      _debugHandlers.put(debugHandler.getHandlerId(), debugHandler);
-    }
-
-    _multiplexedRequestHandler = new MultiplexedRequestHandlerImpl(this,
-                                                                   engine,
-                                                                   config.getMaxRequestsMultiplexed(),
-                                                                   config.getMultiplexedIndividualRequestHeaderWhitelist(),
-                                                                   config.getMultiplexerSingletonFilter(),
-                                                                   config.getMultiplexerRunMode(),
-                                                                   _errorResponseBuilder);
 
     // verify that if there are resources using the engine, then the engine is not null
     if (engine == null)
     {
-      for (ResourceModel model : _rootResources.values())
+      for (ResourceModel model : rootResources.values())
       {
         for (ResourceMethodDescriptor desc : model.getResourceMethodDescriptors())
         {
@@ -203,23 +166,55 @@ public class RestLiServer extends BaseRestServer
         }
       }
     }
-    _invokeAwares =
-        (invokeAwares == null) ? Collections.<InvokeAware> emptyList() : Collections.unmodifiableList(invokeAwares);
-  }
 
-  public Map<String, ResourceModel> getRootResources()
-  {
-    return Collections.unmodifiableMap(_rootResources);
+    _requestHandlers = new ArrayList<>();
+
+    // Add documentation request handler
+    RestLiDocumentationRequestHandler docReqHandler = config.getDocumentationRequestHandler();
+    if (docReqHandler != null)
+    {
+      docReqHandler.initialize(config, rootResources);
+      _requestHandlers.add(docReqHandler);
+    }
+
+    // Add multiplexed request handler
+    MultiplexedRequestHandler muxReqHandler = new MultiplexedRequestHandlerImpl(this,
+        engine,
+        config.getMaxRequestsMultiplexed(),
+        config.getMultiplexedIndividualRequestHeaderWhitelist(),
+        config.getMultiplexerSingletonFilter(),
+        config.getMultiplexerRunMode(),
+        _errorResponseBuilder);
+    _requestHandlers.add(muxReqHandler);
+
+    // Add debug request handlers
+    for (RestLiDebugRequestHandler debugHandler : config.getDebugRequestHandlers())
+    {
+      _requestHandlers.add(new DelegatingDebugRequestHandler(debugHandler, this));
+    }
   }
 
   /**
-   * @see BaseRestServer#doHandleRequest(com.linkedin.r2.message.rest.RestRequest,
-   *      com.linkedin.r2.message.RequestContext, com.linkedin.common.callback.Callback)
+   * @see RestRequestHandler#handleRequest(RestRequest, RequestContext, Callback)
    */
   @Override
-  protected void doHandleRequest(final RestRequest request,
-                                 final RequestContext requestContext,
-                                 final Callback<RestResponse> callback)
+  public void handleRequest(final RestRequest request, final RequestContext requestContext,
+      final Callback<RestResponse> callback)
+  {
+    try
+    {
+      doHandleRequest(request, requestContext, callback);
+    }
+    catch (Exception e)
+    {
+      log.error("Uncaught exception", e);
+      callback.onError(e);
+    }
+  }
+
+  private void doHandleRequest(final RestRequest request,
+      final RequestContext requestContext,
+      final Callback<RestResponse> callback)
   {
     //Until RestRequest is removed, this code path cannot accept content types or accept types that contain
     //multipart/related. This is because these types of requests will usually have very large payloads and therefore
@@ -229,31 +224,20 @@ public class RestLiServer extends BaseRestServer
       return; //If there is an exception return and do not continue.
     }
 
-    if (isDocumentationRequest(request))
+    for (RequestHandler handler : _requestHandlers)
     {
-      handleDocumentationRequest(request, callback);
+      if (handler.shouldHandle(request))
+      {
+        handler.handleRequest(request, requestContext, callback);
+        return;
+      }
     }
-    else if (isMultiplexedRequest(request))
-    {
-      handleMultiplexedRequest(request, requestContext, callback);
-    }
-    else
-    {
-      RestLiDebugRequestHandler debugHandlerForRequest = findDebugRequestHandler(request);
 
-      if (debugHandlerForRequest != null)
-      {
-        handleDebugRequest(debugHandlerForRequest, request, requestContext, null, new RestResponseExecutionCallbackAdapter(callback));
-      }
-      else
-      {
-        handleResourceRequest(request,
-                              requestContext,
-                              new RestResponseExecutionCallbackAdapter(callback),
-                              null,
-                              false);
-      }
-    }
+    handleResourceRequest(request,
+        requestContext,
+        new RestResponseExecutionCallbackAdapter(callback),
+        null,
+        false);
   }
 
   private boolean isSupportedProtocolVersion(ProtocolVersion clientProtocolVersion,
@@ -291,40 +275,11 @@ public class RestLiServer extends BaseRestServer
     }
   }
 
-  private void handleDebugRequest(final RestLiDebugRequestHandler debugHandler,
-                                  final RestRequest request,
-                                  final RequestContext requestContext,
-                                  final RestLiAttachmentReader attachmentReader,
-                                  final RequestExecutionCallback<RestResponse> callback)
-  {
-    debugHandler.handleRequest(request, requestContext, new RestLiDebugRequestHandler.ResourceDebugRequestHandler()
-    {
-      @Override
-      public void handleRequest(final RestRequest request,
-                                final RequestContext requestContext,
-                                final RequestExecutionCallback<RestResponse> callback)
-      {
-        // Create a new request at this point from the debug request by removing the path suffix
-        // starting with "__debug".
-        String fullPath = request.getURI().getPath();
-        int debugSegmentIndex = fullPath.indexOf(DEBUG_PATH_SEGMENT);
-
-        RestRequestBuilder requestBuilder = new RestRequestBuilder(request);
-
-        UriBuilder uriBuilder = UriBuilder.fromUri(request.getURI());
-        uriBuilder.replacePath(request.getURI().getPath().substring(0, debugSegmentIndex - 1));
-        requestBuilder.setURI(uriBuilder.build());
-
-        handleResourceRequest(requestBuilder.build(), requestContext, callback, attachmentReader, true);
-      }
-    }, attachmentReader, callback);
-  }
-
-  private void handleResourceRequest(final RestRequest request,
-                                     final RequestContext requestContext,
-                                     final RequestExecutionCallback<RestResponse> callback,
-                                     final RestLiAttachmentReader attachmentReader,
-                                     final boolean isDebugMode)
+  void handleResourceRequest(final RestRequest request,
+      final RequestContext requestContext,
+      final RequestExecutionCallback<RestResponse> callback,
+      final RestLiAttachmentReader attachmentReader,
+      final boolean isDebugMode)
   {
 
     try
@@ -346,7 +301,6 @@ public class RestLiServer extends BaseRestServer
       respondWithPreRoutingError(e, request, attachmentReader, callback);
       return;
     }
-    final RequestExecutionCallback<RestResponse> wrappedCallback = notifyInvokeAwares(method, callback);
 
     RequestExecutionReportBuilder requestExecutionReportBuilder = null;
     if (isDebugMode)
@@ -369,7 +323,7 @@ public class RestLiServer extends BaseRestServer
     catch (Exception e)
     {
       // would not trigger response filters because request filters haven't run yet
-      wrappedCallback.onError(e, requestExecutionReportBuilder == null ? null : requestExecutionReportBuilder.build(),
+      callback.onError(e, requestExecutionReportBuilder == null ? null : requestExecutionReportBuilder.build(),
                               ((ServerResourceContext)method.getContext()).getRequestAttachmentReader(), null);
       return;
     }
@@ -381,7 +335,7 @@ public class RestLiServer extends BaseRestServer
         requestExecutionReportBuilder,
         attachmentReader,
         _responseHandler,
-        wrappedCallback,
+        callback,
         _errorResponseBuilder);
     FilterChainDispatcher filterChainDispatcher = new FilterChainDispatcherImpl(method,
         _methodInvoker,
@@ -437,117 +391,6 @@ public class RestLiServer extends BaseRestServer
     return adapter;
   }
 
-  /**
-   * Invoke {@link InvokeAware#onInvoke(ResourceContext, RestLiMethodContext)} of registered invokeAwares.
-   * @return A new callback that wraps the originalCallback, which invokes desired callbacks of invokeAwares after the method invocation finishes
-   */
-  private RequestExecutionCallback<RestResponse> notifyInvokeAwares(final RoutingResult routingResult,
-                                                                    final RequestExecutionCallback<RestResponse> originalCallback)
-  {
-    if (!_invokeAwares.isEmpty())
-    {
-      final List<Callback<RestResponse>> invokeAwareCallbacks = new ArrayList<Callback<RestResponse>>();
-      for (InvokeAware invokeAware : _invokeAwares)
-      {
-        invokeAwareCallbacks.add(invokeAware.onInvoke(routingResult.getContext(), routingResult.getResourceMethod()));
-      }
-
-      return new RequestExecutionCallback<RestResponse>()
-      {
-        @Override
-        public void onSuccess(final RestResponse result, final RequestExecutionReport executionReport,
-                              final RestLiResponseAttachments responseAttachments)
-        {
-          for (Callback<RestResponse> callback : invokeAwareCallbacks)
-          {
-            callback.onSuccess(result);
-          }
-          originalCallback.onSuccess(result, executionReport, responseAttachments);
-        }
-
-        @Override
-        public void onError(final Throwable error, final RequestExecutionReport executionReport,
-                            final RestLiAttachmentReader requestAttachmentReader,
-                            final RestLiResponseAttachments responseAttachments)
-        {
-          for (Callback<RestResponse> callback : invokeAwareCallbacks)
-          {
-            callback.onError(error);
-          }
-          originalCallback.onError(error, executionReport, requestAttachmentReader, responseAttachments);
-        }
-      };
-    }
-
-    return originalCallback;
-  }
-
-
-  private boolean isMultiplexedRequest(Request request)
-  {
-    return _multiplexedRequestHandler.isMultiplexedRequest(request);
-  }
-
-  private void handleMultiplexedRequest(RestRequest request, RequestContext requestContext, Callback<RestResponse> callback)
-  {
-    _multiplexedRequestHandler.handleRequest(request, requestContext, callback);
-  }
-
-  private boolean isDocumentationRequest(Request request)
-  {
-    return _docRequestHandler != null && _docRequestHandler.isDocumentationRequest(request);
-  }
-
-  private void handleDocumentationRequest(final RestRequest request, final Callback<RestResponse> callback)
-  {
-    try
-    {
-      synchronized (this)
-      {
-        if (!_isDocInitialized)
-        {
-          _docRequestHandler.initialize(_config, _rootResources);
-          _isDocInitialized = true;
-        }
-      }
-
-      final RestResponse response = _docRequestHandler.processDocumentationRequest(request);
-      callback.onSuccess(response);
-    }
-    catch (Exception e)
-    {
-      callback.onError(e);
-    }
-  }
-
-  private RestLiDebugRequestHandler findDebugRequestHandler(Request request)
-  {
-    String[] pathSegments = URIUtil.tokenizePath(request.getURI().getPath());
-    String debugHandlerId = null;
-    RestLiDebugRequestHandler resultDebugHandler = null;
-
-    for (int i = 0; i < pathSegments.length; ++i)
-    {
-      String pathSegment = pathSegments[i];
-      if (pathSegment.equals(DEBUG_PATH_SEGMENT))
-      {
-        if (i < pathSegments.length - 1)
-        {
-          debugHandlerId = pathSegments[i + 1];
-        }
-
-        break;
-      }
-    }
-
-    if (debugHandlerId != null)
-    {
-      resultDebugHandler = _debugHandlers.get(debugHandlerId);
-    }
-
-    return resultDebugHandler;
-  }
-
   private static RequestExecutionReport createEmptyExecutionReport()
   {
     return new RequestExecutionReportBuilder().build();
@@ -578,144 +421,95 @@ public class RestLiServer extends BaseRestServer
     }
   }
 
+  /**
+   * @see StreamRequestHandler#handleRequest(StreamRequest, RequestContext, Callback)
+   */
+  @Override
+  public void handleRequest(StreamRequest request, RequestContext requestContext, Callback<StreamResponse> callback)
+  {
+    try
+    {
+      doHandleStreamRequest(request, requestContext, callback);
+    }
+    catch (Exception e)
+    {
+      log.error("Uncaught exception", e);
+      callback.onError(e);
+    }
+  }
+
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //Streaming related functionality defined here.
   //In the future we will deprecate and remove RestRequest/RestResponse. Until then we need to be minimally invasive
   //while still offering existing functionality.
 
-  /**
-   * @see BaseRestServer#doHandleStreamRequest(com.linkedin.r2.message.stream.StreamRequest,
-   *      com.linkedin.r2.message.RequestContext, com.linkedin.common.callback.Callback)
-   */
-  @Override
-  protected void doHandleStreamRequest(final StreamRequest request,
-                                       final RequestContext requestContext,
-                                       final Callback<StreamResponse> callback)
+  private void doHandleStreamRequest(final StreamRequest request,
+      final RequestContext requestContext,
+      final Callback<StreamResponse> callback)
   {
     //Eventually - when RestRequest is removed, we will migrate all of these code paths to StreamRequest.
 
-    //For documentation requests, it is important to note that the payload is ignored therefore we can just read
-    //everything into memory.
-    if (isDocumentationRequest(request))
+    for (RequestHandler handler : _requestHandlers)
     {
-      Messages.toRestRequest(request, new Callback<RestRequest>()
+      if (handler.shouldHandle(request))
       {
-        @Override
-        public void onError(Throwable e)
-        {
-          callback.onError(e);
-        }
-
-        @Override
-        public void onSuccess(RestRequest result)
-        {
-          handleDocumentationRequest(result, Messages.toRestCallback(callback));
-        }
-      });
+        handler.handleRequest(request, requestContext, callback);
+        return;
+      }
     }
-    //For multiplexed requests, we read everything into memory. If individual requests specify multipart/related
-    //as a content type or accept type, a bad request will be thrown later when the multiplexer calls
-    //handleRequest(RestRequest request ....) for each individual request.
-    else if (isMultiplexedRequest(request))
+
+    //At this point we need to check the content-type to understand how we should handle the request.
+    String header = request.getHeader(RestConstants.HEADER_CONTENT_TYPE);
+    if (header != null)
     {
-      //We verify that the top level multiplexed request does not have an accept type of multipart/related. Note that if
-      //the content type is incorrect, the handleMultiplexedRequest() code path will throw an exception. Therefore we only
-      //have to check accept types here.
-      final String acceptTypeHeader = request.getHeader(RestConstants.HEADER_ACCEPT);
-      if (acceptTypeHeader != null)
+      ContentType contentType = null;
+      try
       {
-        final List<String> acceptTypes = MIMEParse.parseAcceptType(acceptTypeHeader);
-        for (final String acceptType : acceptTypes)
-        {
-          if (acceptType.equalsIgnoreCase(RestConstants.HEADER_VALUE_MULTIPART_RELATED))
-          {
-            callback.onError(Messages.toStreamException
-                (RestException.forError(406, "This server cannot handle multiplexed requests that have an accept type of multipart/related")));
-            return;
-          }
-        }
+        contentType = new ContentType(header);
+      }
+      catch (ParseException e)
+      {
+        callback.onError(Messages.toStreamException(RestException.forError(400,
+                                                                           "Unable to parse Content-Type: " + header)));
+        return;
       }
 
-      Messages.toRestRequest(request, new Callback<RestRequest>()
+      if (contentType.getBaseType().equalsIgnoreCase(RestConstants.HEADER_VALUE_MULTIPART_RELATED))
       {
-        @Override
-        public void onError(Throwable e)
-        {
-          callback.onError(e);
-        }
-
-        @Override
-        public void onSuccess(RestRequest result)
-        {
-          handleMultiplexedRequest(result, requestContext, Messages.toRestCallback(callback));
-        }
-      });
+        //We need to reconstruct a RestRequest that has the first part of the multipart/related payload as the
+        //traditional rest.li payload of a RestRequest.
+        final MultiPartMIMEReader multiPartMIMEReader = MultiPartMIMEReader.createAndAcquireStream(request);
+        final TopLevelReaderCallback firstPartReader =
+            new TopLevelReaderCallback(requestContext, callback, multiPartMIMEReader, request);
+        multiPartMIMEReader.registerReaderCallback(firstPartReader);
+        return;
+      }
     }
-    else
-    {
-      //At this point we need to check the content-type to understand how we should handle the request.
-      String header = request.getHeader(RestConstants.HEADER_CONTENT_TYPE);
-      if (header != null)
-      {
-        ContentType contentType = null;
-        try
-        {
-          contentType = new ContentType(header);
-        }
-        catch (ParseException e)
-        {
-          callback.onError(Messages.toStreamException(RestException.forError(400,
-                                                                             "Unable to parse Content-Type: " + header)));
-          return;
-        }
 
-        if (contentType.getBaseType().equalsIgnoreCase(RestConstants.HEADER_VALUE_MULTIPART_RELATED))
-        {
-          //We need to reconstruct a RestRequest that has the first part of the multipart/related payload as the
-          //traditional rest.li payload of a RestRequest.
-          final MultiPartMIMEReader multiPartMIMEReader = MultiPartMIMEReader.createAndAcquireStream(request);
-          final TopLevelReaderCallback firstPartReader =
-              new TopLevelReaderCallback(requestContext, callback, multiPartMIMEReader, request);
-          multiPartMIMEReader.registerReaderCallback(firstPartReader);
-          return;
-        }
+    //If we get here this means that the content-type is missing (which is supported to maintain backwards compatibility)
+    //or that it exists and is something other than multipart/related. This means we can read the entire payload into memory
+    //and reconstruct the RestRequest.
+    Messages.toRestRequest(request, new Callback<RestRequest>()
+    {
+      @Override
+      public void onError(Throwable e)
+      {
+        callback.onError(e);
       }
 
-      //If we get here this means that the content-type is missing (which is supported to maintain backwards compatibility)
-      //or that it exists and is something other than multipart/related. This means we can read the entire payload into memory
-      //and reconstruct the RestRequest.
-      Messages.toRestRequest(request, new Callback<RestRequest>()
+      @Override
+      public void onSuccess(RestRequest result)
       {
-        @Override
-        public void onError(Throwable e)
-        {
-          callback.onError(e);
-        }
+        //This callback is invoked once the incoming StreamRequest is converted into a RestRequest. We can now
+        //move forward with this request.
+        //It is important to note that the server's response may include attachments so we factor that into
+        //consideration upon completion of this request.
+        final StreamResponseCallbackAdaptor streamResponseCallbackAdaptor = new StreamResponseCallbackAdaptor(callback);
 
-        @Override
-        public void onSuccess(RestRequest result)
-        {
-          //This callback is invoked once the incoming StreamRequest is converted into a RestRequest. We can now
-          //move forward with this request.
-          //It is important to note that the server's response may include attachments so we factor that into
-          //consideration upon completion of this request.
-          final StreamResponseCallbackAdaptor streamResponseCallbackAdaptor = new StreamResponseCallbackAdaptor(callback);
-
-          //We must also check to see if this was a debug request.
-          final RestLiDebugRequestHandler debugHandlerForRequest = findDebugRequestHandler(request);
-
-          if (debugHandlerForRequest != null)
-          {
-            handleDebugRequest(debugHandlerForRequest, result, requestContext, null,
-                               new RestResponseExecutionCallbackAdapter(Messages.toRestCallback(callback)));
-          }
-          else
-          {
-            handleResourceRequest(result, requestContext, streamResponseCallbackAdaptor, null, false);
-          }
-        }
-      });
-    }
+        // Debug request should have already been handled by one of the request handlers.
+        handleResourceRequest(result, requestContext, streamResponseCallbackAdaptor, null, false);
+      }
+    });
   }
 
   private class TopLevelReaderCallback implements MultiPartMIMEReaderCallback
@@ -796,21 +590,10 @@ public class RestLiServer extends BaseRestServer
         //callback will be invoked on onDrainComplete().
 
         _restRequestBuilder.setEntity(_requestPayload);
-        final StreamResponseCallbackAdaptor streamResponseCallbackAdaptor = new StreamResponseCallbackAdaptor(_streamResponseCallback);
 
-        //We have to be able to handle debug requests as well.
-        final RestLiDebugRequestHandler debugHandlerForRequest = findDebugRequestHandler(_streamRequest);
-
-        if (debugHandlerForRequest != null)
-        {
-          handleDebugRequest(debugHandlerForRequest, _restRequestBuilder.build(), _requestContext,
-                             new RestLiAttachmentReader(_multiPartMIMEReader), streamResponseCallbackAdaptor);
-        }
-        else
-        {
-          handleResourceRequest(_restRequestBuilder.build(), _requestContext, streamResponseCallbackAdaptor,
-                                new RestLiAttachmentReader(_multiPartMIMEReader), false);
-        }
+        // Debug request should have already been handled and attachment is not supported.
+        handleResourceRequest(_restRequestBuilder.build(), _requestContext, new StreamResponseCallbackAdaptor(_streamResponseCallback),
+            new RestLiAttachmentReader(_multiPartMIMEReader), false);
       }
     }
 
@@ -840,20 +623,10 @@ public class RestLiServer extends BaseRestServer
       //invoked.
 
       _restRequestBuilder.setEntity(_requestPayload);
-      final StreamResponseCallbackAdaptor streamResponseCallbackAdaptor = new StreamResponseCallbackAdaptor(_streamResponseCallback);
-
-      //We have to be able to handle debug requests as well.
-      final RestLiDebugRequestHandler debugHandlerForRequest = findDebugRequestHandler(_streamRequest);
-
-      if (debugHandlerForRequest != null)
-      {
-        handleDebugRequest(debugHandlerForRequest, _restRequestBuilder.build(), _requestContext, null, streamResponseCallbackAdaptor);
-      }
-      else
-      {
-        //We have no attachments so we pass null for the reader.
-        handleResourceRequest(_restRequestBuilder.build(), _requestContext, streamResponseCallbackAdaptor, null, false);
-      }
+      //We have no attachments so we pass null for the reader.
+      // Debug request should have already handled by one of the request handlers.
+      handleResourceRequest(_restRequestBuilder.build(), _requestContext,
+          new StreamResponseCallbackAdaptor(_streamResponseCallback), null, false);
     }
 
     @Override

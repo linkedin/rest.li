@@ -41,6 +41,7 @@ import com.linkedin.restli.common.multiplexer.MultiplexedResponseContent;
 import com.linkedin.restli.internal.common.CookieUtil;
 import com.linkedin.restli.internal.server.response.ErrorResponseBuilder;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
+
 import java.net.HttpCookie;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -103,7 +104,7 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
   }
 
   @Override
-  public boolean isMultiplexedRequest(Request request)
+  public boolean shouldHandle(Request request)
   {
     // we don't check the method here because we want to return 405 if it is anything but POST
     return MUX_URI_PATH.equals(request.getURI().getPath());

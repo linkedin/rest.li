@@ -3,6 +3,11 @@
 (RB=1109051)
 Expose remote port number in the request context in both server and client sides
 
+(RB=1107522)
+Introduced a generic RequestHandler interface. Refactored existing documentation handler, multiplexed request handler and debug request handler to use this interface.
+Collapse BaseRestServer with RestLiServer as its not used.
+Removed deprecated InvokeAware and related code. It's not used at LinkedIn.
+
 15.0.3
 -------
 (RB=1091414)

@@ -46,9 +46,11 @@ import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
+import com.linkedin.restli.docgen.DefaultDocumentationRequestHandler;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.AttachmentUtils;
 import com.linkedin.restli.internal.common.TestConstants;
+import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.internal.server.response.ErrorResponseBuilder;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.internal.testutils.RestLiTestAttachmentDataSource;
@@ -62,6 +64,7 @@ import com.linkedin.restli.server.twitter.FeedDownloadResource;
 import com.linkedin.restli.server.twitter.StatusCollectionResource;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.Status;
 
+import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 
 import java.io.ByteArrayOutputStream;
@@ -72,6 +75,7 @@ import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -93,11 +97,7 @@ import org.easymock.EasyMock;
 import org.easymock.IAnswer;
 
 import static org.easymock.EasyMock.*;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
+import static org.testng.Assert.*;
 
 
 /**
@@ -109,6 +109,8 @@ public class TestRestLiServer
 {
   private static final String DEBUG_HANDLER_RESPONSE_A = "Response A";
   private static final String DEBUG_HANDLER_RESPONSE_B = "Response B";
+
+  private static final String DOCUMENTATION_RESPONSE = "Documentation Response";
 
   private RestLiServer _server;
   private RestLiServer _serverWithFilters;
@@ -125,7 +127,7 @@ public class TestRestLiServer
     setUpServer(fakeEngine);
     setupServerWithFilters(fakeEngine);
     setupServerWithCustomErrorResponseConfig(fakeEngine);
-    EasyMock.replay(fakeEngine);
+    replay(fakeEngine);
   }
 
   private void setupServerWithCustomErrorResponseConfig(Engine fakeEngine)
@@ -151,68 +153,12 @@ public class TestRestLiServer
     config.addResourcePackageNames("com.linkedin.restli.server.twitter");
     _resourceFactory  = new EasyMockResourceFactory();
 
-    RestLiDebugRequestHandler debugRequestHandlerA = new RestLiDebugRequestHandler()
-    {
-      @Override
-      public void handleRequest(final RestRequest request,
-                                final RequestContext context,
-                                final ResourceDebugRequestHandler resourceRequestHandler,
-                                final RestLiAttachmentReader attachmentReader,
-                                final RequestExecutionCallback<RestResponse> callback)
-      {
-        handleRequestWithCustomResponse(callback, DEBUG_HANDLER_RESPONSE_A);
-      }
+    RestLiDebugRequestHandler debugRequestHandlerA = new DebugRequestHandler("a", DEBUG_HANDLER_RESPONSE_A);
 
-      @Override
-      public String getHandlerId()
-      {
-        return "a";
-      }
-    };
-
-    RestLiDebugRequestHandler debugRequestHandlerB = new RestLiDebugRequestHandler()
-    {
-      @Override
-      @SuppressWarnings("unchecked")
-      public void handleRequest(final RestRequest request,
-                                final RequestContext context,
-                                final ResourceDebugRequestHandler resourceRequestHandler,
-                                final RestLiAttachmentReader attachmentReader,
-                                final RequestExecutionCallback<RestResponse> callback)
-      {
-        resourceRequestHandler.handleRequest(request,
-                                             context,
-                                             EasyMock.createMock(RequestExecutionCallback.class));
-        handleRequestWithCustomResponse(callback, DEBUG_HANDLER_RESPONSE_B);
-      }
-
-      @Override
-      public String getHandlerId()
-      {
-        return "b";
-      }
-    };
+    RestLiDebugRequestHandler debugRequestHandlerB = new DebugRequestHandler("b", DEBUG_HANDLER_RESPONSE_B);
 
     config.addDebugRequestHandlers(debugRequestHandlerA, debugRequestHandlerB);
     _server = new RestLiServer(config, _resourceFactory, engine);
-  }
-
-  private void handleRequestWithCustomResponse(final RequestExecutionCallback<RestResponse> callback, final String response)
-  {
-    RestResponseBuilder responseBuilder = new RestResponseBuilder();
-    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-
-    try
-    {
-      IOUtils.write(response, outputStream);
-    }
-    catch (IOException exc)
-    {
-      //Test will fail later.
-    }
-
-    responseBuilder.setEntity(outputStream.toByteArray());
-    callback.onSuccess(responseBuilder.build(), null, null);
   }
 
   private enum RestOrStream
@@ -414,7 +360,7 @@ public class TestRestLiServer
     EasyMock.expect(statusResource.get(eq(1L))).andReturn(buildStatusRecord()).once();
     if (filters)
     {
-      _mockFilter.onRequest(EasyMock.anyObject(FilterRequestContext.class));
+      _mockFilter.onRequest(anyObject(FilterRequestContext.class));
       EasyMock.expectLastCall().andAnswer(new IAnswer<Object>()
       {
         @Override
@@ -424,8 +370,8 @@ public class TestRestLiServer
         }
       }).times(1);
 
-      _mockFilter.onResponse(EasyMock.anyObject(FilterRequestContext.class),
-                             EasyMock.anyObject(FilterResponseContext.class));
+      _mockFilter.onResponse(anyObject(FilterRequestContext.class),
+                             anyObject(FilterResponseContext.class));
       EasyMock.expectLastCall().andAnswer(new IAnswer<Object>()
       {
         @Override
@@ -434,9 +380,9 @@ public class TestRestLiServer
           return CompletableFuture.completedFuture(null);
         }
       }).times(1);
-      EasyMock.replay(_mockFilter);
+      replay(_mockFilter);
     }
-    EasyMock.replay(statusResource);
+    replay(statusResource);
 
     final Callback<RestResponse> restResponseCallback = new Callback<RestResponse>()
     {
@@ -593,7 +539,7 @@ public class TestRestLiServer
         return null;
       }
     });
-    EasyMock.replay(statusResource);
+    replay(statusResource);
 
     final Callback<RestResponse> restResponseCallback = new Callback<RestResponse>()
     {
@@ -662,7 +608,7 @@ public class TestRestLiServer
   {
     final StatusCollectionResource statusResource = getMockResource(StatusCollectionResource.class);
     EasyMock.expect(statusResource.get(eq(1L))).andReturn(null).once();
-    EasyMock.replay(statusResource);
+    replay(statusResource);
 
     Callback<RestResponse> restResponseCallback = new Callback<RestResponse>()
     {
@@ -733,7 +679,7 @@ public class TestRestLiServer
   {
     //Bad key type will generate a routing error
     final StatusCollectionResource statusResource = _resourceFactory.getMock(StatusCollectionResource.class);
-    EasyMock.replay(statusResource);
+    replay(statusResource);
 
     Callback<RestResponse> restResponseCallback = new Callback<RestResponse>()
     {
@@ -811,7 +757,7 @@ public class TestRestLiServer
     final StatusCollectionResource statusResource = getMockResource(StatusCollectionResource.class);
     EasyMock.expect(statusResource.get(eq(1L))).andThrow(new RestLiServiceException(
         HttpStatus.S_500_INTERNAL_SERVER_ERROR, "Mock Exception")).once();
-    EasyMock.replay(statusResource);
+    replay(statusResource);
 
     Callback<RestResponse> restResponseCallback = new Callback<RestResponse>()
     {
@@ -900,7 +846,7 @@ public class TestRestLiServer
   {
     final StatusCollectionResource statusResource = getMockResource(StatusCollectionResource.class);
     EasyMock.expect(statusResource.get(eq(1L))).andThrow(new IllegalArgumentException("oops")).once();
-    EasyMock.replay(statusResource);
+    replay(statusResource);
 
     Callback<RestResponse> restResponseCallback = new Callback<RestResponse>()
     {
@@ -982,7 +928,7 @@ public class TestRestLiServer
   {
     final StatusCollectionResource statusResource = getMockResource(StatusCollectionResource.class);
     EasyMock.expect(statusResource.get(eq(1L))).andThrow(new IllegalArgumentException("oops")).once();
-    EasyMock.replay(statusResource);
+    replay(statusResource);
 
     Callback<RestResponse> restResponseCallback = new Callback<RestResponse>()
     {
@@ -1068,7 +1014,7 @@ public class TestRestLiServer
     details.put("errorKey", "errorDetail");
     EasyMock.expect(statusResource.get(eq(1L))).andThrow(new RestLiServiceException(
         HttpStatus.S_500_INTERNAL_SERVER_ERROR, "Mock Exception").setErrorDetails(details)).once();
-    EasyMock.replay(statusResource);
+    replay(statusResource);
 
     Callback<RestResponse> restResponseCallback = new Callback<RestResponse>()
     {
@@ -1162,7 +1108,7 @@ public class TestRestLiServer
     //request for nested projection within string field will generate error
     final StatusCollectionResource statusResource = getMockResource(StatusCollectionResource.class);
     EasyMock.expect(statusResource.get(eq(1L))).andReturn(buildStatusRecord()).once();
-    EasyMock.replay(statusResource);
+    replay(statusResource);
 
     Callback<RestResponse> restResponseCallback = new Callback<RestResponse>()
     {
@@ -1341,7 +1287,7 @@ public class TestRestLiServer
     //With a resource this time
     final StatusCollectionResource statusResource = getMockResource(StatusCollectionResource.class);
     EasyMock.expect(statusResource.get(eq(1L))).andReturn(buildStatusRecord()).once();
-    EasyMock.replay(statusResource);
+    replay(statusResource);
 
     final Callback<RestResponse> resourceRestResponseCallback = new Callback<RestResponse>()
     {
@@ -1589,7 +1535,7 @@ public class TestRestLiServer
 
     Capture<ResourceContext> resourceContextCapture = new Capture<ResourceContext>();
     final AsyncStatusCollectionResource statusResource = getMockResource(AsyncStatusCollectionResource.class,
-                                                                         EasyMock.capture(resourceContextCapture));
+                                                                         capture(resourceContextCapture));
 
     statusResource.streamingAction(EasyMock.<String>anyObject(), EasyMock.<RestLiAttachmentReader>anyObject(),
                                    EasyMock.<Callback<Long>> anyObject());
@@ -1615,7 +1561,7 @@ public class TestRestLiServer
         return null;
       }
     });
-    EasyMock.replay(statusResource);
+    replay(statusResource);
 
     //Now we create a multipart/related payload.
     final String payload = "{\"metadata\": \"someMetadata\"}";
@@ -1716,7 +1662,7 @@ public class TestRestLiServer
         return null;
       }
     });
-    EasyMock.replay(statusResource);
+    replay(statusResource);
 
     //Now we create a multipart/related payload.
     final String payload = "{\"metadata\": \"someMetadata\"}";
@@ -1853,7 +1799,7 @@ public class TestRestLiServer
 
     Capture<ResourceContext> resourceContextCapture = new Capture<ResourceContext>();
     final AsyncStatusCollectionResource statusResource = getMockResource(AsyncStatusCollectionResource.class,
-                                                                         EasyMock.capture(resourceContextCapture));
+                                                                         capture(resourceContextCapture));
 
     statusResource.streamingAction(EasyMock.<String>anyObject(), EasyMock.<RestLiAttachmentReader>anyObject(),
                                    EasyMock.<Callback<Long>> anyObject());
@@ -1878,7 +1824,7 @@ public class TestRestLiServer
         return null;
       }
     });
-    EasyMock.replay(statusResource);
+    replay(statusResource);
 
     //Now we create a multipart/related payload.
     final String payload = "{\"metadata\": \"someMetadata\"}";
@@ -1946,9 +1892,149 @@ public class TestRestLiServer
     Assert.assertTrue(toBeAbortedDataSource.dataSourceAborted());
   }
 
+  @Test(dataProvider = "requestHandlersData")
+  public void testRequestHandlers(URI uri, String expectedResponse)
+  {
+    RestLiConfig config = new RestLiConfig();
+    config.addResourcePackageNames("com.linkedin.restli.server.twitter");
+    config.setDocumentationRequestHandler(new DefaultDocumentationRequestHandler() {
+      @Override
+      public void initialize(RestLiConfig config, Map<String, ResourceModel> rootResources) {/* no-op */}
+      @Override
+      public void handleRequest(RestRequest req, RequestContext ctx, Callback<RestResponse> cb)
+      {
+        cb.onSuccess(new RestResponseBuilder().setEntity(toByteString(DOCUMENTATION_RESPONSE)).build());
+      }
+    });
+    config.addDebugRequestHandlers(new DebugRequestHandler("a", DEBUG_HANDLER_RESPONSE_A),
+        new DebugRequestHandler("b", DEBUG_HANDLER_RESPONSE_B));
+
+    RestLiServer server = new RestLiServer(config, new EasyMockResourceFactory(), createMock(Engine.class));
+
+    RestRequest restReq = new RestRequestBuilder(uri).build();
+    server.handleRequest(restReq, createMock(RequestContext.class), new RestResponseAssertionCallback(expectedResponse));
+
+    StreamRequest streamReq = new StreamRequestBuilder(uri).build(EntityStreams.emptyStream());
+    server.handleRequest(streamReq, createMock(RequestContext.class), new StreamResponseAssertionCallback(expectedResponse));
+  }
+
+  @DataProvider
+  public Object[][] requestHandlersData() throws URISyntaxException
+  {
+    return new Object[][] {
+        new Object[] {new URI("profiles/__debug/a/1"), DEBUG_HANDLER_RESPONSE_A},
+        new Object[] {new URI("profiles/__debug/b/1"), DEBUG_HANDLER_RESPONSE_B},
+        new Object[] {new URI("profiles/restli/docs"), DOCUMENTATION_RESPONSE},
+    };
+  }
+
+  private static class RestResponseAssertionCallback implements Callback<RestResponse>
+  {
+    private final String _expectedResponse;
+
+    RestResponseAssertionCallback(String expectedResponse)
+    {
+      _expectedResponse = expectedResponse;
+    }
+
+    @Override
+    public void onError(Throwable e)
+    {
+      fail();
+    }
+
+    @Override
+    public void onSuccess(RestResponse result)
+    {
+      assertEquals(fromByteString(result.getEntity()), _expectedResponse);
+    }
+  }
+
+  private static class StreamResponseAssertionCallback implements Callback<StreamResponse>
+  {
+    private final String _expectedResponse;
+
+    StreamResponseAssertionCallback(String expectedResponse)
+    {
+      _expectedResponse = expectedResponse;
+    }
+
+    @Override
+    public void onError(Throwable e)
+    {
+      fail();
+    }
+
+    @Override
+    public void onSuccess(StreamResponse result)
+    {
+      Messages.toRestResponse(result, new RestResponseAssertionCallback(_expectedResponse));
+    }
+  }
+
+  private static class DebugRequestHandler implements RestLiDebugRequestHandler
+  {
+    private final String _handlerId;
+    private final String _debugHandlerResponse;
+
+    private DebugRequestHandler(String handlerId, String debugHandlerResponse)
+    {
+      _handlerId = handlerId;
+      _debugHandlerResponse = debugHandlerResponse;
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public void handleRequest(final RestRequest request,
+        final RequestContext context,
+        final RestLiDebugRequestHandler.ResourceDebugRequestHandler resourceRequestHandler,
+        final RestLiAttachmentReader attachmentReader,
+        final RequestExecutionCallback<RestResponse> callback)
+    {
+      resourceRequestHandler.handleRequest(request,
+          context,
+          EasyMock.createMock(RequestExecutionCallback.class));
+      handleRequestWithCustomResponse(callback, _debugHandlerResponse);
+    }
+
+    @Override
+    public String getHandlerId()
+    {
+      return _handlerId;
+    }
+
+    private void handleRequestWithCustomResponse(final RequestExecutionCallback<RestResponse> callback, final String response)
+    {
+      RestResponseBuilder responseBuilder = new RestResponseBuilder();
+      ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+      try
+      {
+        IOUtils.write(response, outputStream);
+      }
+      catch (IOException exc)
+      {
+        //Test will fail later.
+      }
+
+      responseBuilder.setEntity(outputStream.toByteArray());
+      callback.onSuccess(responseBuilder.build(), null, null);
+    }
+  }
+
+  private static ByteString toByteString(String s)
+  {
+    return ByteString.copyString(s, Charsets.UTF_8);
+  }
+
+  private static String fromByteString(ByteString bs)
+  {
+    return bs.asString(Charsets.UTF_8);
+  }
+
   private <R extends BaseResource> R getMockResource(Class<R> resourceClass)
   {
-    return getMockResource(resourceClass, EasyMock.anyObject());
+    return getMockResource(resourceClass, anyObject());
   }
 
   private <R extends BaseResource> R getMockResource(Class<R> resourceClass, ResourceContext resourceContext)

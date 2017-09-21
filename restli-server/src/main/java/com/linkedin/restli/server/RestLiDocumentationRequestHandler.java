@@ -27,9 +27,7 @@ import java.util.Map;
 /**
  * @author Keren Jin
  */
-public interface RestLiDocumentationRequestHandler
+public interface RestLiDocumentationRequestHandler extends RequestHandler
 {
   void initialize(RestLiConfig config, Map<String, ResourceModel> rootResources);
-  boolean isDocumentationRequest(Request request);
-  RestResponse processDocumentationRequest(Request request);
 }

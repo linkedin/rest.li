@@ -105,7 +105,7 @@ public class TestMultiplexedRequestHandlerImpl
   {
     MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(null, multiplexerRunMode);
     RestRequest request = fakeMuxRestRequest();
-    assertTrue(multiplexer.isMultiplexedRequest(request));
+    assertTrue(multiplexer.shouldHandle(request));
   }
 
   @Test(dataProvider = "multiplexerConfigurations")
@@ -113,7 +113,7 @@ public class TestMultiplexedRequestHandlerImpl
   {
     MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(null, multiplexerRunMode);
     RestRequest request = new RestRequestBuilder(new URI("/somethingElse")).setMethod(HttpMethod.POST.name()).build();
-    assertFalse(multiplexer.isMultiplexedRequest(request));
+    assertFalse(multiplexer.shouldHandle(request));
   }
 
   @Test(dataProvider = "multiplexerConfigurations")
@@ -182,7 +182,6 @@ public class TestMultiplexedRequestHandlerImpl
     multiplexer.handleRequest(request, new RequestContext(), callback);
     assertEquals(getErrorStatus(callback), HttpStatus.S_400_BAD_REQUEST);
   }
-
 
   @Test(dataProvider = "multiplexerConfigurations")
   public void testHandleTooManySequentialRequests(MultiplexerRunMode multiplexerRunMode) throws Exception

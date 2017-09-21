@@ -67,6 +67,6 @@ public class TestDefaultDocumentationRequestHandler
   @Test(dataProvider = "data")
   public void testIsDocumentationRequest(RestRequest restRequest, boolean expectedIsDocumentationRequest)
   {
-    Assert.assertEquals(DEFAULT_HANDLER.isDocumentationRequest(restRequest), expectedIsDocumentationRequest);
+    Assert.assertEquals(DEFAULT_HANDLER.shouldHandle(restRequest), expectedIsDocumentationRequest);
   }
 }

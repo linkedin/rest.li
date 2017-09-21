@@ -18,7 +18,7 @@ package com.linkedin.restli.server.multiplexer;
 
 
 import com.linkedin.r2.message.Request;
-import com.linkedin.r2.transport.common.RestRequestHandler;
+import com.linkedin.restli.server.RequestHandler;
 
 
 /**
@@ -26,13 +26,6 @@ import com.linkedin.r2.transport.common.RestRequestHandler;
  *
  * @author Dmitriy Yefremov
  */
-public interface MultiplexedRequestHandler extends RestRequestHandler
+public interface MultiplexedRequestHandler extends RequestHandler
 {
-  /**
-   * Checks if the given request is a multiplexed request.
-   *
-   * @param request the request to check
-   * @return true if it is a multiplexer request, false otherwise
-   */
-  boolean isMultiplexedRequest(Request request);
 }

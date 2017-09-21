@@ -17,6 +17,7 @@
 package com.linkedin.restli.docgen;
 
 
+import com.linkedin.common.callback.Callback;
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.SchemaParserFactory;
 import com.linkedin.data.schema.resolver.ClasspathResourceDataSchemaResolver;
@@ -24,6 +25,8 @@ import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.jersey.api.uri.UriComponent;
 import com.linkedin.jersey.core.util.MultivaluedMap;
 import com.linkedin.r2.message.Request;
+import com.linkedin.r2.message.RequestContext;
+import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestResponseBuilder;
 import com.linkedin.restli.common.HttpMethod;
@@ -62,7 +65,7 @@ public class DefaultDocumentationRequestHandler implements RestLiDocumentationRe
   }
 
   @Override
-  public boolean isDocumentationRequest(Request request)
+  public boolean shouldHandle(Request request)
   {
     final String path = request.getURI().getRawPath();
     final List<UriComponent.PathSegment> pathSegments = UriComponent.decodePath(path, true);
@@ -73,8 +76,21 @@ public class DefaultDocumentationRequestHandler implements RestLiDocumentationRe
   }
 
   @Override
+  public void handleRequest(RestRequest request, RequestContext requestContext, Callback<RestResponse> callback)
+  {
+    try
+    {
+      RestResponse response = processDocumentationRequest(request);
+      callback.onSuccess(response);
+    }
+    catch (Exception e)
+    {
+      callback.onError(e);
+    }
+  }
+
   @SuppressWarnings("fallthrough")
-  public RestResponse processDocumentationRequest(Request request)
+  private RestResponse processDocumentationRequest(Request request)
   {
     final String path = request.getURI().getRawPath();
     final List<UriComponent.PathSegment> pathSegments = UriComponent.decodePath(path, true);

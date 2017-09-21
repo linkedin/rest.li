@@ -91,9 +91,9 @@ public class ParseqTraceDebugRequestHandler implements RestLiDebugRequestHandler
   {
     //Find out the path coming after the "__debug" path segment
     String fullPath = request.getURI().getPath();
-    int debugSegmentIndex = fullPath.indexOf(RestLiServer.DEBUG_PATH_SEGMENT);
+    int debugSegmentIndex = fullPath.indexOf(DelegatingDebugRequestHandler.DEBUG_PATH_SEGMENT);
     final String debugHandlerPath = fullPath.substring(
-        debugSegmentIndex + RestLiServer.DEBUG_PATH_SEGMENT.length() + 1);
+        debugSegmentIndex + DelegatingDebugRequestHandler.DEBUG_PATH_SEGMENT.length() + 1);
 
     assert (debugHandlerPath.startsWith(HANDLER_ID));
 

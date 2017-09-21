@@ -22,7 +22,6 @@ import com.linkedin.data.template.FieldDef;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.server.ResourceLevel;
-import com.linkedin.restli.server.RestLiMethodContext;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -32,9 +31,7 @@ import java.util.List;
 /**
  * @author dellamag
  */
-//TODO: Remove this once use of InvokeAware has been discontinued.
-@SuppressWarnings("deprecation")
-public class ResourceMethodDescriptor implements RestLiMethodContext
+public class ResourceMethodDescriptor
 {
   public static enum InterfaceType
   {
@@ -287,7 +284,6 @@ public class ResourceMethodDescriptor implements RestLiMethodContext
    * @return parameter value
    */
   @SuppressWarnings("unchecked")
-
   public <T> Parameter<T> getParameter(final String name)
   {
     for (Parameter<?> p : _parameters)
@@ -304,7 +300,6 @@ public class ResourceMethodDescriptor implements RestLiMethodContext
   /**
    * @return method finder name
    */
-  @Override
   public String getFinderName()
   {
     return _finderName;
@@ -315,25 +310,21 @@ public class ResourceMethodDescriptor implements RestLiMethodContext
     return _collectionCustomMetadataType;
   }
 
-  @Override
   public String getActionName()
   {
     return _actionName;
   }
 
-  @Override
   public String getResourceName()
   {
     return _resourceModel.getName();
   }
 
-  @Override
   public String getNamespace()
   {
     return _resourceModel.getNamespace();
   }
 
-  @Override
   public ResourceMethod getMethodType()
   {
     return _type;

@@ -110,7 +110,7 @@ public interface FilterRequestContext extends CustomRequestContext
    * Get the name of the target resource.
    *
    * @return Name of the resource.
-   * @deprecated Use getResourceModel().getResourceName() instead.
+   * @deprecated Use {@link #getFilterResourceModel()} then {@link FilterResourceModel#getResourceName()} instead.
    */
   @Deprecated
   String getResourceName();
@@ -119,7 +119,7 @@ public interface FilterRequestContext extends CustomRequestContext
    * Get the namespace of the target resource.
    *
    * @return Namespace of the resource.
-   * @deprecated Use getResourceModel().getResourceNamespace() instead.
+   * @deprecated Use {@link #getFilterResourceModel()} then {@link FilterResourceModel#getResourceNamespace()} instead.
    */
   @Deprecated
   String getResourceNamespace();
