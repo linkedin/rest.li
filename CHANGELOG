@@ -1,6 +1,11 @@
-15.0.3
+15.0.4
 -------
 
+
+15.0.3
+-------
+(RB=1091414)
+Support Unstructured Data (Blob) as Rest.li Resource
 
 15.0.2
 -------
