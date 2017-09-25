@@ -32,17 +32,21 @@ class TestPathingJarUtil {
   }
 
   @Test
-  void testDoesNotCreatePathingJarWhenOverriden() {
+  void testDoesNotCreatePathingJar() {
     //setup
     final Project project = ProjectBuilder.builder().build()
     final String taskName = 'myTaskName'
+
     final tempFile = new File(project.buildDir, 'temp.class')
+    final restliTools = new File(project.buildDir, 'restli-tools-scala')
+
     GFileUtils.touch(tempFile)
-    final FileCollection files = project.files(tempFile)
+    GFileUtils.touch(restliTools)
+    final FileCollection files = project.files(tempFile, restliTools)
 
     //when
-    PathingJarUtil.generatePathingJar(project, taskName, files, false)
     File pathingJar = new File(project.buildDir, "${taskName}/${project.name}-pathing.jar")
+    PathingJarUtil.generatePathingJar(project, taskName, files, false)
     assert !pathingJar.exists()
   }
 }
