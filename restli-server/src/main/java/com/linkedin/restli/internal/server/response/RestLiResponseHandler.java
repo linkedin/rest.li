@@ -36,6 +36,7 @@ import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.internal.server.methods.MethodAdapterRegistry;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
+import com.linkedin.restli.restspec.ResourceEntityType;
 import com.linkedin.restli.server.CollectionResult;
 import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.RestLiResponseData;
@@ -152,10 +153,15 @@ public class RestLiResponseHandler
     RestResponseBuilder builder =
         new RestResponseBuilder().setHeaders(partialResponse.getHeaders()).setCookies(cookies).setStatus(partialResponse.getStatus()
                                                      .getCode());
-    if (partialResponse.hasData())
+
+    ServerResourceContext context = (ServerResourceContext) routingResult.getContext();
+    ResourceEntityType resourceEntityType = routingResult.getResourceMethod()
+                                                         .getResourceModel()
+                                                         .getResourceEntityType();
+    if (partialResponse.hasData() && ResourceEntityType.STRUCTURED_DATA == resourceEntityType)
     {
       DataMap dataMap = partialResponse.getDataMap();
-      String mimeType = ((ServerResourceContext) routingResult.getContext()).getResponseMimeType();
+      String mimeType = context.getResponseMimeType();
       builder = encodeResult(mimeType, builder, dataMap);
     }
     return builder.build();
@@ -217,8 +223,17 @@ public class RestLiResponseHandler
       }
       else if (routingResult.getResourceMethod().getType().equals(ResourceMethod.GET))
       {
-        throw new RestLiServiceException(HttpStatus.S_404_NOT_FOUND,
-            "Requested entity not found: " + routingResult.getResourceMethod());
+        if (ResourceEntityType.UNSTRUCTURED_DATA == routingResult.getResourceMethod().getResourceModel().getResourceEntityType())
+        {
+          return new RestLiResponseDataImpl<>(
+            new GetResponseEnvelope(HttpStatus.S_200_OK, null), responseHeaders, responseCookies
+          );
+        }
+        else
+        {
+          throw new RestLiServiceException(HttpStatus.S_404_NOT_FOUND,
+                                           "Requested entity not found: " + routingResult.getResourceMethod());
+        }
       }
       else
       {

@@ -473,7 +473,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
   private JDefinedClass generateResourceFacade(ResourceSchema resource, File sourceFile, Map<String, JClass> pathKeyTypes, Map<String, JClass> assocKeyTypes, Map<String, List<String>> pathToAssocKeys)
       throws JClassAlreadyExistsException, IOException
   {
-    final ValidationResult validationResult = ValidateDataAgainstSchema.validate(resource.data(), resource.schema(), new ValidationOptions(RequiredMode.MUST_BE_PRESENT));
+    final ValidationResult validationResult = ValidateDataAgainstSchema.validate(resource.data(), resource.schema(), new ValidationOptions());
     if (!validationResult.isValid())
     {
       throw new IllegalArgumentException(String.format("Resource validation error.  Resource File '%s', Error Details '%s'", sourceFile, validationResult.toString()));

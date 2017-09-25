@@ -41,6 +41,7 @@ import com.linkedin.restli.internal.common.QueryParamsDataMap;
 import com.linkedin.restli.internal.common.URIParamUtils;
 import com.linkedin.restli.internal.server.util.ArgumentUtils;
 import com.linkedin.restli.internal.server.util.RestLiSyntaxException;
+import com.linkedin.restli.server.UnstructuredDataWriter;
 import com.linkedin.restli.server.ProjectionMode;
 import com.linkedin.restli.server.RestLiResponseAttachments;
 import com.linkedin.restli.server.RestLiServiceException;
@@ -101,6 +102,9 @@ public class ResourceContextImpl implements ServerResourceContext
 
   //Data map to store custom request context data
   private Map<String, Object>                       _customRequestContext;
+
+  //For writing unstructured data resource response
+  private UnstructuredDataWriter _unstructuredDataWriter;
 
   /**
    * Default constructor.
@@ -475,6 +479,20 @@ public class ResourceContextImpl implements ServerResourceContext
   public RestLiAttachmentReader getRequestAttachmentReader()
   {
     return _requestAttachmentReader;
+  }
+
+  @Override
+  public void setUnstructuredDataWriter(UnstructuredDataWriter unstructuredDataWriter)
+  {
+    _unstructuredDataWriter = unstructuredDataWriter;
+    _responseStreamingAttachments = new RestLiResponseAttachments.Builder().appendUnstructuredDataWriter(
+      _unstructuredDataWriter).build();
+  }
+
+  @Override
+  public UnstructuredDataWriter getUnstructuredDataWriter()
+  {
+    return _unstructuredDataWriter;
   }
 
   @Override

@@ -52,6 +52,7 @@ import com.linkedin.restli.internal.common.TestConstants;
 import com.linkedin.restli.internal.server.PathKeysImpl;
 import com.linkedin.restli.internal.server.ResourceContextImpl;
 import com.linkedin.restli.internal.server.response.ActionResponseEnvelope;
+import com.linkedin.restli.internal.server.response.GetResponseEnvelope;
 import com.linkedin.restli.internal.server.response.RestLiResponseHandler;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.ServerResourceContext;
@@ -68,6 +69,7 @@ import com.linkedin.restli.server.ActionResult;
 import com.linkedin.restli.server.BasicCollectionResult;
 import com.linkedin.restli.server.BatchCreateResult;
 import com.linkedin.restli.server.BatchUpdateResult;
+import com.linkedin.restli.server.UnstructuredDataWriter;
 import com.linkedin.restli.server.CollectionResult;
 import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.GetResult;
@@ -77,6 +79,7 @@ import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.UpdateResponse;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.resources.CollectionResourceTemplate;
+import com.linkedin.restli.server.twitter.FeedDownloadResource;
 import com.linkedin.restli.server.twitter.StatusCollectionResource;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.Status;
 
@@ -1240,6 +1243,27 @@ public class TestRestLiResponseHandler
     ServerResourceContext resourceContext = new ResourceContextImpl(new PathKeysImpl(), request, new RequestContext());
     Assert.assertEquals(resourceContext.getRequestCookies(), cookies );
   }
+
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "basicData")
+  @SuppressWarnings("unchecked")
+  public void testBuildRestLiUnstructuredDataResponse(AcceptTypeData acceptTypeData,
+                                          ProtocolVersion protocolVersion,
+                                          String errorResponseHeaderName)
+    throws Exception
+  {
+    final RestRequest request = buildRequest(Collections.EMPTY_MAP, protocolVersion);
+    RoutingResult routingResult = buildUnstructuredDataRoutingResult(request);
+    ServerResourceContext context = (ServerResourceContext) routingResult.getContext();
+    context.setUnstructuredDataWriter(new UnstructuredDataWriter(null, context));
+
+    RestLiResponseData<GetResponseEnvelope> responseData = (RestLiResponseData<GetResponseEnvelope>) _responseHandler.buildRestLiResponseData(request, routingResult, null);
+    assertEquals(responseData.getResponseEnvelope().getStatus(), HttpStatus.S_200_OK);
+    assertNull(responseData.getResponseEnvelope().getRecord());
+
+    RestResponse restResponse = _responseHandler.buildResponse(request, routingResult, null);
+    assertNotNull(restResponse);
+  }
+
   // *****************
   // Helper methods
   // *****************
@@ -1336,6 +1360,18 @@ public class TestRestLiResponseHandler
     ServerResourceContext context =  new ResourceContextImpl(new PathKeysImpl(), request,
                             new RequestContext());
     RestUtils.validateRequestHeadersAndUpdateResourceContext(acceptHeaders, customTypes, context);
+    return new RoutingResult(context, methodDescriptor);
+  }
+
+  private RoutingResult buildUnstructuredDataRoutingResult(RestRequest request)
+          throws SecurityException, NoSuchMethodException, RestLiSyntaxException
+  {
+    Method method = FeedDownloadResource.class.getMethod("get", Long.class, UnstructuredDataWriter.class);
+    ResourceModel model = RestLiTestHelper.buildResourceModel(FeedDownloadResource.class);
+    ResourceMethodDescriptor methodDescriptor =
+        ResourceMethodDescriptor.createForRestful(ResourceMethod.GET, method, InterfaceType.SYNC);
+    model.addResourceMethodDescriptor(methodDescriptor);
+    ServerResourceContext context = new ResourceContextImpl(new PathKeysImpl(), request, new RequestContext());
     return new RoutingResult(context, methodDescriptor);
   }
 

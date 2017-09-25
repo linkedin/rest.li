@@ -28,6 +28,7 @@ import com.linkedin.data.schema.resolver.MultiFormatDataSchemaResolver;
 import com.linkedin.data.template.StringArray;
 import com.linkedin.restli.restspec.AssocKeySchema;
 import com.linkedin.restli.restspec.AssocKeySchemaArray;
+import com.linkedin.restli.restspec.ResourceEntityType;
 import com.linkedin.restli.restspec.ResourceSchema;
 import com.linkedin.restli.restspec.RestSpecCodec;
 import com.linkedin.restli.tools.idlcheck.CompatibilityInfo;
@@ -290,6 +291,8 @@ public class TestResourceCompatibilityChecker
       CompatibilityInfo.Type.TYPE_MISSING));
     resourceTestErrors.add(new CompatibilityInfo(Arrays.asList("", "collection", "finders", "oneFinder"),
         CompatibilityInfo.Type.PAGING_REMOVED));
+    resourceTestErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "entityType"),
+                                                 CompatibilityInfo.Type.VALUE_NOT_EQUAL, ResourceEntityType.STRUCTURED_DATA, ResourceEntityType.UNSTRUCTURED_DATA));
 
     modelTestErrors.add(
       new CompatibilityInfo(Arrays.<Object>asList("com.linkedin.greetings.api.Greeting"),
@@ -492,6 +495,33 @@ public class TestResourceCompatibilityChecker
     Assert.assertTrue(compatibles.isEmpty());
   }
 
+  @Test
+  public void testFailUnstructuredDataFile() throws IOException
+  {
+    final Collection<CompatibilityInfo> errors = new HashSet<CompatibilityInfo>();
+    errors.add(new CompatibilityInfo(Arrays.<Object>asList("", "entityType"),
+                                        CompatibilityInfo.Type.VALUE_NOT_EQUAL, ResourceEntityType.UNSTRUCTURED_DATA, ResourceEntityType.STRUCTURED_DATA));
+
+    final ResourceSchema prevResource = idlToResource(IDLS_SUFFIX + PREV_UNSTRUCTURED_DATA_FILE);
+    final ResourceSchema currResource = idlToResource(IDLS_SUFFIX + CURR_UNSTRUCTURED_DATA_FAIL_FILE);
+
+    ResourceCompatibilityChecker checker = new ResourceCompatibilityChecker(prevResource, prevSchemaResolver,
+                                                                            currResource, prevSchemaResolver);
+
+    Assert.assertFalse(checker.check(CompatibilityLevel.BACKWARDS));
+
+    final Collection<CompatibilityInfo> incompatibles = checker.getInfoMap().getIncompatibles();
+    Assert.assertFalse(incompatibles.isEmpty());
+
+    for (CompatibilityInfo td : errors)
+    {
+      Assert.assertTrue(incompatibles.contains(td), "Reported compatibles should contain: " + td.toString());
+      incompatibles.remove(td);
+    }
+
+    Assert.assertTrue(incompatibles.isEmpty());
+  }
+
   private ResourceSchema idlToResource(String path) throws IOException
   {
     final InputStream resourceStream = getClass().getClassLoader().getResourceAsStream(path);
@@ -570,6 +600,7 @@ public class TestResourceCompatibilityChecker
   private static final String PREV_ASSOC_FILE = "prev-greetings-assoc.restspec.json";
   private static final String PREV_AS_FILE = "prev-greetings-as.restspec.json";
   private static final String PREV_SIMPLE_FILE = "prev-greeting-simple.restspec.json";
+  private static final String PREV_UNSTRUCTURED_DATA_FILE = "prev-greetings-unstructured-data.restspec.json";
   private static final String CURR_COLL_PASS_FILE = "curr-greetings-coll-pass.restspec.json";
   private static final String CURR_ASSOC_PASS_FILE = "curr-greetings-assoc-pass.restspec.json";
   private static final String CURR_SIMPLE_PASS_FILE = "curr-greeting-simple-pass.restspec.json";
@@ -578,6 +609,7 @@ public class TestResourceCompatibilityChecker
   private static final String CURR_SIMPLE_FAIL_FILE = "curr-greeting-simple-fail.restspec.json";
   private static final String CURR_AS_FAIL_FILE = "curr-greetings-as-fail.restspec.json";
   private static final String CURR_AS_PASS_FILE = "curr-greetings-as-pass.restspec.json";
+  private static final String CURR_UNSTRUCTURED_DATA_FAIL_FILE = "curr-greetings-unstructured-data-fail.restspec.json";
 
   private static final RestSpecCodec _codec = new RestSpecCodec();
 

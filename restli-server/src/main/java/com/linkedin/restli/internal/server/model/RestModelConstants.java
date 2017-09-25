@@ -49,6 +49,10 @@ import com.linkedin.restli.server.resources.SimpleResource;
 import com.linkedin.restli.server.resources.SimpleResourceAsync;
 import com.linkedin.restli.server.resources.SimpleResourcePromise;
 import com.linkedin.restli.server.resources.SimpleResourceTask;
+import com.linkedin.restli.server.resources.unstructuredData.AssociationUnstructuredDataResource;
+import com.linkedin.restli.server.resources.unstructuredData.CollectionUnstructuredDataResource;
+import com.linkedin.restli.server.resources.unstructuredData.SimpleUnstructuredDataResource;
+
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -211,6 +215,9 @@ public interface RestModelConstants
       SimpleResourceAsync.class,
       SimpleResourcePromise.class,
       SimpleResourceTask.class,
+      CollectionUnstructuredDataResource.class,
+      AssociationUnstructuredDataResource.class,
+      SimpleUnstructuredDataResource.class
   };
 
   Set<Class<?>> CLASSES_WITHOUT_SCHEMAS = new HashSet<Class<?>>(

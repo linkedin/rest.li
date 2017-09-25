@@ -56,6 +56,7 @@ import com.linkedin.restli.server.BatchCreateRequest;
 import com.linkedin.restli.server.BatchDeleteRequest;
 import com.linkedin.restli.server.BatchPatchRequest;
 import com.linkedin.restli.server.BatchUpdateRequest;
+import com.linkedin.restli.server.UnstructuredDataWriter;
 import com.linkedin.restli.server.CollectionResult;
 import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.NoMetadata;
@@ -91,6 +92,7 @@ import com.linkedin.restli.server.annotations.RestAnnotations;
 import com.linkedin.restli.server.annotations.RestLiActions;
 import com.linkedin.restli.server.annotations.RestLiAssociation;
 import com.linkedin.restli.server.annotations.RestLiAttachmentsParam;
+import com.linkedin.restli.server.annotations.UnstructuredDataWriterParam;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.annotations.RestLiSimpleResource;
 import com.linkedin.restli.server.annotations.RestLiTemplate;
@@ -102,6 +104,8 @@ import com.linkedin.restli.server.resources.ComplexKeyResourcePromise;
 import com.linkedin.restli.server.resources.ComplexKeyResourceTask;
 import com.linkedin.restli.server.resources.KeyValueResource;
 import com.linkedin.restli.server.resources.SingleObjectResource;
+import com.linkedin.restli.server.resources.unstructuredData.KeyUnstructuredDataResource;
+import com.linkedin.restli.server.resources.unstructuredData.SingleUnstructuredDataResource;
 import com.linkedin.util.CustomTypeUtil;
 
 import java.lang.annotation.Annotation;
@@ -168,49 +172,15 @@ public final class RestLiAnnotationReader
    */
   public static ResourceModel processResource(final Class<?> resourceClass, ResourceModel parentResourceModel)
   {
-    final ResourceModel model;
-
     checkAnnotation(resourceClass);
-
-    if ((resourceClass.isAnnotationPresent(RestLiCollection.class) ||
-         resourceClass.isAnnotationPresent(RestLiAssociation.class)))
-    {
-      // If any of these annotations, a subclass of KeyValueResource is expected
-      if (!KeyValueResource.class.isAssignableFrom(resourceClass))
-      {
-        throw new RestLiInternalException("Resource class '" + resourceClass.getName()
-            + "' declares RestLi annotation but does not implement "
-            + KeyValueResource.class.getName() + " interface.");
-      }
-
-      @SuppressWarnings("unchecked")
-      Class<? extends KeyValueResource<?, ?>> clazz =
-          (Class<? extends KeyValueResource<?, ?>>) resourceClass;
-      model = processCollection(clazz, parentResourceModel);
-    }
-    else if (resourceClass.isAnnotationPresent(RestLiActions.class))
-    {
-      model = processActions(resourceClass, parentResourceModel);
-    }
-    else if (resourceClass.isAnnotationPresent(RestLiSimpleResource.class))
-    {
-      @SuppressWarnings("unchecked")
-      Class<? extends SingleObjectResource<?>> clazz =
-          (Class<? extends SingleObjectResource<?>>) resourceClass;
-      model = processSingleObjectResource(clazz, parentResourceModel);
-    }
-    else
-    {
-      throw new ResourceConfigException("Class '" + resourceClass.getName()
-          + "' must be annotated with a valid @RestLi... annotation");
-    }
+    ResourceModel model = buildBaseResourceModel(resourceClass, parentResourceModel);
 
     if (parentResourceModel != null)
     {
       parentResourceModel.addSubResource(model.getName(), model);
     }
 
-    if (!model.isActions())
+    if (model.getValueClass() != null)
     {
       checkRestLiDataAnnotations(resourceClass, (RecordDataSchema) getDataSchema(model.getValueClass(), null));
     }
@@ -222,6 +192,50 @@ public final class RestLiAnnotationReader
     model.setCustomAnnotation(annotationsMap);
 
     return model;
+  }
+
+  private static ResourceModel buildBaseResourceModel(Class<?> resourceClass, ResourceModel parentResourceModel)
+  {
+    if (resourceClass.isAnnotationPresent(RestLiCollection.class) ||
+        resourceClass.isAnnotationPresent(RestLiAssociation.class))
+    {
+      if (KeyValueResource.class.isAssignableFrom(resourceClass) ||
+          KeyUnstructuredDataResource.class.isAssignableFrom(resourceClass))
+      {
+        return processCollection(resourceClass, parentResourceModel);
+      }
+      else
+      {
+        throw new RestLiInternalException(
+            "Resource class '" + resourceClass.getName() +
+            "' declares RestLiCollection/RestLiAssociation annotation but does not implement " +
+            KeyValueResource.class.getName() + " or " + KeyUnstructuredDataResource.class.getName() + " interface.");
+      }
+    }
+    else if (resourceClass.isAnnotationPresent(RestLiActions.class))
+    {
+      return processActions(resourceClass, parentResourceModel);
+    }
+    else if (resourceClass.isAnnotationPresent(RestLiSimpleResource.class))
+    {
+      if (SingleObjectResource.class.isAssignableFrom(resourceClass) ||
+          SingleUnstructuredDataResource.class.isAssignableFrom(resourceClass))
+      {
+        return processSimpleResource(resourceClass, parentResourceModel);
+      }
+      else
+      {
+        throw new RestLiInternalException(
+          "Resource class '" + resourceClass.getName() +
+            "' declares RestLiSimpleResource annotation but does not implement " +
+            SingleObjectResource.class.getName() + " or " + SingleUnstructuredDataResource.class.getName() + " interface.");
+      }
+    }
+    else
+    {
+      throw new ResourceConfigException("Class '" + resourceClass.getName()
+          + "' must be annotated with a valid @RestLi... annotation");
+    }
   }
 
   /**
@@ -447,13 +461,13 @@ public final class RestLiAnnotationReader
   }
 
   @SuppressWarnings("unchecked")
-  private static ResourceModel processCollection(final Class<? extends KeyValueResource<?, ?>> collectionResourceClass,
+  private static ResourceModel processCollection(final Class<?> collectionResourceClass,
                                                  ResourceModel parentResourceModel)
   {
     Class<?> keyClass;
     Class<? extends RecordTemplate> keyKeyClass = null;
     Class<? extends RecordTemplate> keyParamsClass = null;
-    Class<? extends RecordTemplate> valueClass;
+    Class<? extends RecordTemplate> valueClass = null;
     Class<?> complexKeyResourceBase = null;
     // If ComplexKeyResource or ComplexKeyResourceAsync, the parameters are Key type K, Params type P and Resource
     // type V and the resource key type is ComplexResourceKey<K,P>
@@ -504,15 +518,30 @@ public final class RestLiAnnotationReader
       valueClass = kvParams.get(2).asSubclass(RecordTemplate.class);
     }
 
-    // Otherwise, it's a KeyValueResource, whose parameters are resource key and resource
-    // value
+    // Otherwise, it is either:
+    // - A KeyValueResource, whose parameters are resource key and resource value
+    // - A KeyUnstructuredDataResource, whose parameter is resource key
     else
     {
-      List<Type> actualTypeArguments =
-          ReflectionUtils.getTypeArgumentsParametrized(KeyValueResource.class,
-                                                       collectionResourceClass);
-      keyClass = ReflectionUtils.getClass(actualTypeArguments.get(0));
+      List<Type> actualTypeArguments = null;
 
+      if (KeyValueResource.class.isAssignableFrom(collectionResourceClass))
+      {
+        @SuppressWarnings("unchecked")
+        Class<? extends KeyValueResource<?, ?>> clazz = (Class<? extends KeyValueResource<?, ?>>) collectionResourceClass;
+        actualTypeArguments = ReflectionUtils.getTypeArgumentsParametrized(KeyValueResource.class, clazz);
+
+        // 2nd type parameter must be the resource value class
+        valueClass = ReflectionUtils.getClass(actualTypeArguments.get(1)).asSubclass(RecordTemplate.class);
+      }
+      else if (KeyUnstructuredDataResource.class.isAssignableFrom(collectionResourceClass))
+      {
+        @SuppressWarnings("unchecked")
+        Class<? extends KeyUnstructuredDataResource<?>> clazz = (Class<? extends KeyUnstructuredDataResource<?>>) collectionResourceClass;
+        actualTypeArguments = ReflectionUtils.getTypeArgumentsParametrized(KeyUnstructuredDataResource.class, clazz);
+      }
+
+      keyClass = ReflectionUtils.getClass(actualTypeArguments.get(0));
       if (RecordTemplate.class.isAssignableFrom(keyClass))
       {
         // a complex key is being used and thus ComplexKeyResource should be implemented so that we can wrap it in a
@@ -534,28 +563,11 @@ public final class RestLiAnnotationReader
         keyKeyClass = ReflectionUtils.getClass(typeArguments[0]).asSubclass(RecordTemplate.class);
         keyParamsClass = ReflectionUtils.getClass(typeArguments[1]).asSubclass(RecordTemplate.class);
       }
-
-      valueClass = ReflectionUtils.getClass(actualTypeArguments.get(1)).asSubclass(RecordTemplate.class);
     }
 
     ResourceType resourceType = getResourceType(collectionResourceClass);
 
-    RestLiAnnotationData annotationData;
-    if (collectionResourceClass.isAnnotationPresent(RestLiCollection.class))
-    {
-      annotationData =
-          new RestLiAnnotationData(collectionResourceClass.getAnnotation(RestLiCollection.class));
-    }
-    else if (collectionResourceClass.isAnnotationPresent(RestLiAssociation.class))
-    {
-      annotationData =
-          new RestLiAnnotationData(collectionResourceClass.getAnnotation(RestLiAssociation.class));
-    }
-    else
-    {
-      throw new ResourceConfigException("No valid annotation on resource class '"
-          + collectionResourceClass.getName() + "'");
-    }
+    RestLiAnnotationData annotationData = getRestLiAnnotationData(collectionResourceClass);
 
     String name = annotationData.name();
     String namespace = annotationData.namespace();
@@ -606,30 +618,42 @@ public final class RestLiAnnotationReader
     return collectionModel;
   }
 
-  private static ResourceModel processSingleObjectResource(
-      final Class<? extends SingleObjectResource<?>> singleObjectResourceClass, ResourceModel parentResource)
+  private static RestLiAnnotationData getRestLiAnnotationData(Class<?> resourceClass)
   {
-    Class<? extends RecordTemplate> valueClass;
-
-    List<Class<?>> kvParams =
-        ReflectionUtils.getTypeArguments(SingleObjectResource.class,
-                singleObjectResourceClass);
-
-    valueClass = kvParams.get(0).asSubclass(RecordTemplate.class);
-
-    ResourceType resourceType = getResourceType(singleObjectResourceClass);
-
     RestLiAnnotationData annotationData;
-    if (singleObjectResourceClass.isAnnotationPresent(RestLiSimpleResource.class))
+    if (resourceClass.isAnnotationPresent(RestLiCollection.class))
     {
-      annotationData =
-          new RestLiAnnotationData(singleObjectResourceClass.getAnnotation(RestLiSimpleResource.class));
+      return new RestLiAnnotationData(resourceClass.getAnnotation(RestLiCollection.class));
+    }
+    else if (resourceClass.isAnnotationPresent(RestLiAssociation.class))
+    {
+      return new RestLiAnnotationData(resourceClass.getAnnotation(RestLiAssociation.class));
+    }
+    else if (resourceClass.isAnnotationPresent(RestLiSimpleResource.class))
+    {
+      return new RestLiAnnotationData(resourceClass.getAnnotation(RestLiSimpleResource.class));
     }
     else
     {
       throw new ResourceConfigException("No valid annotation on resource class '"
-                                            + singleObjectResourceClass.getName() + "'");
+          + resourceClass.getName() + "'");
     }
+  }
+
+  private static ResourceModel processSimpleResource(final Class<?> resourceClass, ResourceModel parentResource)
+  {
+    Class<? extends RecordTemplate> valueClass = null;
+    if (SingleObjectResource.class.isAssignableFrom(resourceClass))
+    {
+      @SuppressWarnings("unchecked")
+      Class<? extends SingleObjectResource<?>> clazz = (Class<? extends SingleObjectResource<?>>) resourceClass;
+      List<Class<?>> kvParams = ReflectionUtils.getTypeArguments(SingleObjectResource.class, clazz);
+      valueClass = kvParams.get(0).asSubclass(RecordTemplate.class);
+    }
+
+    ResourceType resourceType = getResourceType(resourceClass);
+
+    RestLiAnnotationData annotationData = getRestLiAnnotationData(resourceClass);
 
     String name = annotationData.name();
     String namespace = annotationData.namespace();
@@ -638,21 +662,21 @@ public final class RestLiAnnotationReader
         annotationData.parent().equals(RestAnnotations.ROOT.class) ? null
             : annotationData.parent();
 
-    ResourceModel singleObjectResourceModel =
+    ResourceModel resourceModel =
         new ResourceModel(valueClass,
-                          singleObjectResourceClass,
+                          resourceClass,
                           parentResourceClass,
                           name,
                           resourceType,
                           namespace);
 
-    singleObjectResourceModel.setParentResourceModel(parentResource);
+    resourceModel.setParentResourceModel(parentResource);
 
-    addResourceMethods(singleObjectResourceClass, singleObjectResourceModel);
+    addResourceMethods(resourceClass, resourceModel);
 
-    log.info("Processed single object resource '" + singleObjectResourceClass.getName() + "'");
+    log.debug("Processed simple resource '" + resourceClass.getName() + "'");
 
-    return singleObjectResourceModel;
+    return resourceModel;
   }
 
   private static ResourceType getResourceType(final Class<?> resourceClass)
@@ -1030,13 +1054,17 @@ public final class RestLiAnnotationReader
         {
           param = buildRestLiAttachmentsParam(paramAnnotations, paramType);
         }
+        else if (paramAnnotations.contains(UnstructuredDataWriterParam.class))
+        {
+          param = buildUnstructuredDataWriterParam(paramAnnotations, paramType);
+        }
         else
         {
           throw new ResourceConfigException(buildMethodMessage(method)
               + " must annotate each parameter with @QueryParam, @ActionParam, @AssocKeyParam, @PagingContextParam, " +
               "@ProjectionParam, @MetadataProjectionParam, @PagingProjectionParam, @PathKeysParam, @PathKeyParam, " +
               "@HeaderParam, @CallbackParam, @ResourceContext, @ParSeqContextParam, @ValidatorParam, " +
-              "@RestLiAttachmentsParam, or @ValidateParam");
+              "@RestLiAttachmentsParam, @UnstructuredDataWriterParam, or @ValidateParam");
         }
       }
 
@@ -1105,6 +1133,24 @@ public final class RestLiAnnotationReader
                          false, //RestLiAttachments cannot be optional. If its in the request we provide it, otherwise it's null.
                          null,
                          Parameter.ParamType.RESTLI_ATTACHMENTS_PARAM,
+                         false, //Not going to be persisted into the IDL at this time.
+                         annotations);
+  }
+
+  @SuppressWarnings({ "unchecked", "rawtypes" })
+  private static Parameter<UnstructuredDataWriter> buildUnstructuredDataWriterParam(AnnotationSet annotations, final Class<?> paramType)
+  {
+    if (!paramType.equals(UnstructuredDataWriter.class))
+    {
+      throw new ResourceConfigException("Incorrect data type for param: @" + UnstructuredDataWriterParam.class.getSimpleName() + " parameter annotation must be of type " +  UnstructuredDataWriter.class.getName());
+    }
+
+    return new Parameter("RestLi Unstructured Data Writer",
+                         paramType,
+                         null,
+                         false,
+                         null,
+                         Parameter.ParamType.UNSTRUCTURED_DATA_WRITER_PARAM,
                          false, //Not going to be persisted into the IDL at this time.
                          annotations);
   }
@@ -1185,6 +1231,7 @@ public final class RestLiAnnotationReader
                              PagingContextParam.class,
                              CallbackParam.class,
                              ParSeqContextParam.class,
+                             UnstructuredDataWriterParam.class,
                              RestLiAttachmentsParam.class);
   }
 
@@ -1220,6 +1267,14 @@ public final class RestLiAnnotationReader
                                               + buildMethodMessage(method) + " is only allowed within the following "
                                               + "resource methods: " + POST_OR_PUT_RESOURCE_METHODS.toString());
       }
+    }
+
+    //Only GET can have @UnstructuredDataWriterParam
+    if (methodType != ResourceMethod.GET && annotations.contains(UnstructuredDataWriterParam.class))
+    {
+      throw new ResourceConfigException("Parameter '" + paramName + "' on "
+                                            + buildMethodMessage(method) + " is only allowed within the following "
+                                            + "resource methods: " + ResourceMethod.GET);
     }
 
     if (methodType == ResourceMethod.ACTION)
@@ -1275,7 +1330,7 @@ public final class RestLiAnnotationReader
     {
       throw new ResourceConfigException(buildMethodMessage(method)
           + "' must declare only one of @QueryParam, @ActionParam, @AssocKeyParam, @PagingContextParam, "
-                                            + "@CallbackParam or @RestLiAttachmentsParam");
+                                            + "@CallbackParam, @RestLiAttachmentsParam or @UnstructuredDataWriterParam");
     }
   }
 

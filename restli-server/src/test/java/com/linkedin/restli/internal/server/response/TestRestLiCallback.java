@@ -31,16 +31,16 @@ import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.HeaderUtil;
 import com.linkedin.restli.internal.server.ResponseType;
+import com.linkedin.restli.internal.server.RestLiCallback;
 import com.linkedin.restli.internal.server.RestLiMethodInvoker;
+import com.linkedin.restli.internal.server.RoutingResult;
+import com.linkedin.restli.internal.server.filter.FilterChainCallback;
+import com.linkedin.restli.internal.server.filter.FilterChainCallbackImpl;
 import com.linkedin.restli.internal.server.filter.FilterChainDispatcher;
 import com.linkedin.restli.internal.server.filter.FilterChainDispatcherImpl;
 import com.linkedin.restli.internal.server.filter.RestLiFilterChain;
-import com.linkedin.restli.internal.server.filter.FilterChainCallback;
-import com.linkedin.restli.internal.server.filter.FilterChainCallbackImpl;
 import com.linkedin.restli.internal.server.filter.RestLiFilterResponseContextFactory;
 import com.linkedin.restli.internal.server.methods.arguments.RestLiArgumentBuilder;
-import com.linkedin.restli.internal.server.RestLiCallback;
-import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.server.RequestExecutionCallback;
 import com.linkedin.restli.server.RequestExecutionReport;
 import com.linkedin.restli.server.RequestExecutionReportBuilder;
@@ -52,40 +52,31 @@ import com.linkedin.restli.server.filter.Filter;
 import com.linkedin.restli.server.filter.FilterRequestContext;
 import com.linkedin.restli.server.filter.FilterResponseContext;
 
-import com.google.common.collect.Maps;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import java.util.concurrent.CompletableFuture;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
 
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
+import com.google.common.collect.Maps;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyList;
 import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.same;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.testng.Assert.*;
 
 
@@ -166,6 +157,34 @@ public class TestRestLiCallback
   protected void resetMocks()
   {
     reset(_filter, _filterRequestContext, _restRequest, _routingResult, _responseHandler, _callback);
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testOnSuccessWithUnstructuredDataResponse() throws Exception
+  {
+    String result = "foo";
+    RequestExecutionReport executionReport = new RequestExecutionReportBuilder().build();
+    RestLiResponseAttachments restLiResponseAttachments = new RestLiResponseAttachments.Builder().build();
+    RestLiResponseData<UpdateResponseEnvelope> responseData = ResponseDataBuilderUtil.buildUpdateResponseData(HttpStatus.S_200_OK);
+    PartialRestResponse partialResponse = new PartialRestResponse.Builder().build();
+    RestResponse restResponse = new RestResponseBuilder().build();
+    // Set up.
+    when(_requestExecutionReportBuilder.build()).thenReturn(executionReport);
+    when((RestLiResponseData<UpdateResponseEnvelope>) _responseHandler.buildRestLiResponseData(_restRequest, _routingResult, result)).thenReturn(responseData);
+    when(_responseHandler.buildPartialResponse(_routingResult, responseData)).thenReturn(partialResponse);
+    when(_responseHandler.buildResponse(_routingResult, partialResponse)).thenReturn(restResponse);
+
+    // Invoke.
+    _noFilterRestLiCallback.onSuccess(result, restLiResponseAttachments);
+
+    // Verify.
+    verify(_responseHandler).buildPartialResponse(_routingResult, responseData);
+    verify(_responseHandler).buildRestLiResponseData(_restRequest, _routingResult, result);
+    verify(_responseHandler).buildResponse(_routingResult, partialResponse);
+    verify(_callback).onSuccess(restResponse, executionReport, restLiResponseAttachments);
+    verifyZeroInteractions(_restRequest, _routingResult);
+    verifyNoMoreInteractions(_responseHandler, _callback);
   }
 
   @Test

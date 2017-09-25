@@ -22,9 +22,26 @@
     },
     {
       "name" : "schema",
-      "doc" : "Java-style fully-qualified class name for entities of this resource",
+      "doc" : "Java-style fully-qualified class name for record entities of this resource. This is only present when the entity type is STRUCTURED_DATA",
       "type" : "string",
       "optional" : true
+    },
+    {
+      "name" : "entityType",
+      "doc" : "The type of entity this resource produces. This is not the record schema type, which is specified in the 'schema' field",
+      "type" : {
+        "name": "ResourceEntityType",
+        "type": "enum",
+        "symbols": [
+          "STRUCTURED_DATA",
+          "UNSTRUCTURED_DATA"
+        ],
+        "symbolDocs": {
+          "STRUCTURED_DATA": "This resource produces structured data that is defined by schema",
+          "UNSTRUCTURED_DATA": "This resource produces unstructured data that has no schema"
+        }
+      },
+      "default" : "STRUCTURED_DATA"
     },
     {
       "name" : "doc",

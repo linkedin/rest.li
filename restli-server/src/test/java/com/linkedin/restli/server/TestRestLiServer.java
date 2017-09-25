@@ -58,6 +58,7 @@ import com.linkedin.restli.server.filter.FilterResponseContext;
 import com.linkedin.restli.server.resources.BaseResource;
 import com.linkedin.restli.server.test.EasyMockResourceFactory;
 import com.linkedin.restli.server.twitter.AsyncStatusCollectionResource;
+import com.linkedin.restli.server.twitter.FeedDownloadResource;
 import com.linkedin.restli.server.twitter.StatusCollectionResource;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.Status;
 
@@ -91,9 +92,10 @@ import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
 
-import static org.easymock.EasyMock.eq;
+import static org.easymock.EasyMock.*;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
@@ -251,6 +253,18 @@ public class TestRestLiServer
         };
   }
 
+  @DataProvider(name = "validClientProtocolVersionDataStreamOnly")
+  public Object[][] provideValidClientProtocolVersionDataStreamOnly()
+  {
+    return new Object[][]
+        {
+            { _server, AllProtocolVersions.BASELINE_PROTOCOL_VERSION, RestConstants.HEADER_RESTLI_PROTOCOL_VERSION},
+            { _server, AllProtocolVersions.LATEST_PROTOCOL_VERSION, RestConstants.HEADER_RESTLI_PROTOCOL_VERSION},
+            { _server, AllProtocolVersions.NEXT_PROTOCOL_VERSION, RestConstants.HEADER_RESTLI_PROTOCOL_VERSION},
+            { _server, AllProtocolVersions.PREVIOUS_PROTOCOL_VERSION, RestConstants.HEADER_RESTLI_PROTOCOL_VERSION}
+        };
+  }
+
   @DataProvider(name = "invalidClientProtocolVersionData")
   public Object[][] provideInvalidClientProtocolVersionData()
   {
@@ -297,6 +311,75 @@ public class TestRestLiServer
                                              String headerConstant, RestOrStream restOrStream) throws URISyntaxException
   {
     testValidRequest(server, clientProtocolVersion, false, headerConstant, restOrStream);
+  }
+
+  @Test(dataProvider = "validClientProtocolVersionDataStreamOnly")
+  public void testValidUnstructuredDataRequest(RestLiServer server,
+                                               ProtocolVersion clientProtocolVersion,
+                                               String headerConstant)
+    throws URISyntaxException, IOException
+  {
+    StreamRequest streamRequest = new StreamRequestBuilder(new URI("/feedDownloads/1")).setHeader(headerConstant,
+                                                                                                  clientProtocolVersion.toString())
+                                                                                       .build(EntityStreams.emptyStream());
+
+    final FeedDownloadResource resource = getMockResource(FeedDownloadResource.class);
+    final Capture<UnstructuredDataWriter> capturedUnstructuredDataWriter = new Capture<>();
+    resource.get(eq(1L), capture(capturedUnstructuredDataWriter));
+    EasyMock.expectLastCall().andDelegateTo(new FeedDownloadResource() {
+      @Override
+      public void get(Long key, UnstructuredDataWriter writer)
+      {
+        capturedUnstructuredDataWriter.getValue().setContentType("foo");
+      }
+    }).once();
+    replay(resource);
+
+    @SuppressWarnings("unchecked")
+    Callback<StreamResponse> r2Callback = createMock(Callback.class);
+    r2Callback.onSuccess(anyObject());
+    expectLastCall().once();
+    replay(r2Callback);
+
+    RequestContext requestContext = new RequestContext();
+    server.handleRequest(streamRequest, requestContext, r2Callback);
+
+    verify(resource);
+    verify(r2Callback);
+  }
+
+  @Test(dataProvider = "validClientProtocolVersionDataStreamOnly")
+  public void testValidUnstructuredDataRequestMissingHeader(RestLiServer server,
+                                                            ProtocolVersion clientProtocolVersion,
+                                                            String headerConstant)
+    throws URISyntaxException, IOException
+  {
+    StreamRequest streamRequest = new StreamRequestBuilder(new URI("/feedDownloads/1")).setHeader(headerConstant,
+                                                                                                  clientProtocolVersion.toString())
+                                                                                       .build(EntityStreams.emptyStream());
+
+    final FeedDownloadResource resource = getMockResource(FeedDownloadResource.class);
+    resource.get(eq(1L), anyObject(UnstructuredDataWriter.class));
+    EasyMock.expectLastCall().andDelegateTo(new FeedDownloadResource() {
+      @Override
+      public void get(Long key, UnstructuredDataWriter writer)
+      {
+        // do nothing here, this should cause error
+      }
+    }).once();
+    replay(resource);
+
+    @SuppressWarnings("unchecked")
+    Callback<StreamResponse> r2Callback = createMock(Callback.class);
+    r2Callback.onError(anyObject());
+    expectLastCall().once();
+    replay(r2Callback);
+
+    RequestContext requestContext = new RequestContext();
+    server.handleRequest(streamRequest, requestContext, r2Callback);
+
+    verify(resource);
+    verify(r2Callback);
   }
 
   private void testValidRequest(RestLiServer restLiServer, final ProtocolVersion clientProtocolVersion, boolean filters,

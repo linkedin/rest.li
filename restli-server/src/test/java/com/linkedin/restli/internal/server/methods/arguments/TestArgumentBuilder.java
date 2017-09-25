@@ -35,6 +35,7 @@ import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.internal.server.model.AnnotationSet;
 import com.linkedin.restli.internal.server.model.Parameter;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
+import com.linkedin.restli.server.UnstructuredDataWriter;
 import com.linkedin.restli.server.LinkedListNode;
 import com.linkedin.restli.server.PagingContext;
 import com.linkedin.restli.server.PathKeys;
@@ -43,8 +44,10 @@ import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.RoutingException;
 import com.linkedin.restli.server.TestRecord;
 import com.linkedin.restli.server.TestRecordArray;
+import com.linkedin.restli.server.annotations.UnstructuredDataWriterParam;
 import com.linkedin.restli.server.annotations.HeaderParam;
 
+import java.io.ByteArrayOutputStream;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -54,12 +57,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.easymock.Capture;
+import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-
-import org.easymock.Capture;
-import org.easymock.EasyMock;
 
 
 /**
@@ -421,6 +423,32 @@ public class TestArgumentBuilder
     Object[] results = ArgumentBuilder.buildArgs(new Object[0], getMockResourceMethod(parameters), mockResourceContext, null);
     Assert.assertEquals(results[0], pagingContext);
     Assert.assertEquals(results[1], pagingContext);
+  }
+
+  @Test
+  public void testUnstructuredDataWriterParam()
+  {
+    ServerResourceContext mockResourceContext = EasyMock.createMock(ServerResourceContext.class);
+
+    mockResourceContext.setUnstructuredDataWriter(EasyMock.anyObject());
+    EasyMock.expectLastCall().once();
+    EasyMock.expect(mockResourceContext.getRequestAttachmentReader()).andReturn(null);
+    EasyMock.replay(mockResourceContext);
+
+    @SuppressWarnings({"unchecked","rawtypes"})
+    final Parameter<UnstructuredDataWriterParam> param = new Parameter("RestLi Unstructured Data Writer",
+                                                                       UnstructuredDataWriter.class, null, false, null,
+                                                                       Parameter.ParamType.UNSTRUCTURED_DATA_WRITER_PARAM, false,
+                                                                       AnnotationSet.EMPTY);
+
+    List<Parameter<?>> parameters = Collections.<Parameter<?>>singletonList(param);
+
+    Object[] results = ArgumentBuilder.buildArgs(new Object[0], getMockResourceMethod(parameters), mockResourceContext, null);
+
+    UnstructuredDataWriter result = (UnstructuredDataWriter) results[0];
+    Assert.assertNotNull(result);
+    Assert.assertTrue(result.getOutputStream() instanceof ByteArrayOutputStream);
+    EasyMock.verify(mockResourceContext);
   }
 
   @Test

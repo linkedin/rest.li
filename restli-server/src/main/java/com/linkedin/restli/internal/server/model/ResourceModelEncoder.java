@@ -55,6 +55,7 @@ import com.linkedin.restli.restspec.IdentifierSchema;
 import com.linkedin.restli.restspec.MetadataSchema;
 import com.linkedin.restli.restspec.ParameterSchema;
 import com.linkedin.restli.restspec.ParameterSchemaArray;
+import com.linkedin.restli.restspec.ResourceEntityType;
 import com.linkedin.restli.restspec.ResourceSchema;
 import com.linkedin.restli.restspec.ResourceSchemaArray;
 import com.linkedin.restli.restspec.RestMethodSchema;
@@ -63,6 +64,7 @@ import com.linkedin.restli.restspec.SimpleSchema;
 import com.linkedin.restli.server.AlternativeKey;
 import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.ResourceLevel;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
@@ -73,6 +75,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import org.apache.commons.io.IOUtils;
 
 
@@ -212,6 +215,13 @@ public class ResourceModelEncoder
   public ResourceSchema buildResourceSchema(final ResourceModel resourceModel)
   {
     ResourceSchema rootNode = new ResourceSchema();
+
+    // Set the entityType only when it is a UNSTRUCTURED_DATA base resource to avoid
+    // modifying all existing resources, which by default are STRUCTURED_DATA base.
+    if (ResourceEntityType.UNSTRUCTURED_DATA == resourceModel.getResourceEntityType())
+    {
+      rootNode.setEntityType(ResourceEntityType.UNSTRUCTURED_DATA);
+    }
 
     switch (resourceModel.getResourceType())
     {

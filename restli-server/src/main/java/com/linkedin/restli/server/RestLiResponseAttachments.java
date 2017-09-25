@@ -41,23 +41,15 @@ import com.linkedin.restli.internal.common.AttachmentUtils;
 public class RestLiResponseAttachments
 {
   private final MultiPartMIMEWriter.Builder _responseAttachmentsBuilder;
+  private final UnstructuredDataWriter _unstructuredDataWriter;
 
   /**
    * Builder to create an instance of RestLiResponseAttachments.
    */
   public static class Builder
   {
-    private final MultiPartMIMEWriter.Builder _responseAttachmentsBuilder;
-
-    /**
-     * Create a RestLiResponseAttachments Builder.
-     *
-     * @return the builder to continue building.
-     */
-    public Builder()
-    {
-      _responseAttachmentsBuilder = new MultiPartMIMEWriter.Builder();
-    }
+    private MultiPartMIMEWriter.Builder _responseAttachmentsBuilder;
+    private UnstructuredDataWriter _unstructuredDataWriter;
 
     /**
      * Append a {@link com.linkedin.restli.common.attachments.RestLiAttachmentDataSourceWriter} to be placed as an attachment.
@@ -67,6 +59,10 @@ public class RestLiResponseAttachments
      */
     public Builder appendSingleAttachment(final RestLiAttachmentDataSourceWriter dataSource)
     {
+      if (_responseAttachmentsBuilder == null)
+      {
+        _responseAttachmentsBuilder = new MultiPartMIMEWriter.Builder();
+      }
       AttachmentUtils.appendSingleAttachmentToBuilder(_responseAttachmentsBuilder, dataSource);
       return this;
     }
@@ -82,7 +78,23 @@ public class RestLiResponseAttachments
      */
     public Builder appendMultipleAttachments(final RestLiDataSourceIterator dataSourceIterator)
     {
+      if (_responseAttachmentsBuilder == null)
+      {
+        _responseAttachmentsBuilder = new MultiPartMIMEWriter.Builder();
+      }
       AttachmentUtils.appendMultipleAttachmentsToBuilder(_responseAttachmentsBuilder, dataSourceIterator);
+      return this;
+    }
+
+    /**
+     * Append a {@link UnstructuredDataWriter} to be used for sending a unstructured data response.
+     *
+     * @param dataSourceIterator
+     * @return the builder to continue building.
+     */
+    public Builder appendUnstructuredDataWriter(final UnstructuredDataWriter unstructuredDataWriter)
+    {
+      _unstructuredDataWriter = unstructuredDataWriter;
       return this;
     }
 
@@ -98,17 +110,34 @@ public class RestLiResponseAttachments
 
   private RestLiResponseAttachments(final RestLiResponseAttachments.Builder builder)
   {
+    if (builder._responseAttachmentsBuilder != null && builder._unstructuredDataWriter != null)
+    {
+      throw new IllegalStateException("RestLiResponseAttachments cannot be both attachment and unstructured data at the same time");
+    }
     _responseAttachmentsBuilder = builder._responseAttachmentsBuilder;
+    _unstructuredDataWriter = builder._unstructuredDataWriter;
   }
 
   /**
    * Internal use only for rest.li framework.
    *
    * Returns the {@link com.linkedin.multipart.MultiPartMIMEWriter.Builder} representing the attachments added
-   * thus far.
+   * thus far. Returns null if this {@link RestLiResponseAttachments} carries a unstructured data reponse.
    */
   public MultiPartMIMEWriter.Builder getResponseAttachmentsBuilder()
   {
     return _responseAttachmentsBuilder;
   }
+
+  /**
+   * Internal use only for rest.li framework.
+   *
+   * Returns the {@link UnstructuredDataWriter} representing a unstructured data response. Returns null if this
+   * {@link RestLiResponseAttachments} carries Rest.li attachments.
+   */
+  public UnstructuredDataWriter getUnstructuredDataWriter()
+  {
+    return _unstructuredDataWriter;
+  }
+
 }

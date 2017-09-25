@@ -36,7 +36,11 @@ import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamResponse;
+import com.linkedin.r2.message.stream.StreamResponseBuilder;
 import com.linkedin.r2.message.stream.entitystream.ByteStringWriter;
+import com.linkedin.r2.message.stream.entitystream.EntityStream;
+import com.linkedin.r2.message.stream.entitystream.EntityStreams;
+import com.linkedin.r2.message.stream.entitystream.Writer;
 import com.linkedin.r2.util.URIUtil;
 import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.HttpStatus;
@@ -48,27 +52,28 @@ import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.AttachmentUtils;
 import com.linkedin.restli.internal.common.HeaderUtil;
 import com.linkedin.restli.internal.common.ProtocolVersionUtil;
+import com.linkedin.restli.internal.server.RestLiInternalException;
 import com.linkedin.restli.internal.server.RestLiMethodInvoker;
-import com.linkedin.restli.internal.server.filter.FilterChainDispatcher;
-import com.linkedin.restli.internal.server.filter.FilterChainDispatcherImpl;
-import com.linkedin.restli.internal.server.response.PartialRestResponse;
-import com.linkedin.restli.internal.server.response.RestLiResponseHandler;
 import com.linkedin.restli.internal.server.RestLiRouter;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.internal.server.filter.FilterChainCallback;
 import com.linkedin.restli.internal.server.filter.FilterChainCallbackImpl;
+import com.linkedin.restli.internal.server.filter.FilterChainDispatcher;
+import com.linkedin.restli.internal.server.filter.FilterChainDispatcherImpl;
 import com.linkedin.restli.internal.server.filter.FilterRequestContextInternal;
 import com.linkedin.restli.internal.server.filter.FilterRequestContextInternalImpl;
 import com.linkedin.restli.internal.server.filter.RestLiFilterChain;
 import com.linkedin.restli.internal.server.filter.RestLiFilterResponseContextFactory;
 import com.linkedin.restli.internal.server.methods.MethodAdapterRegistry;
 import com.linkedin.restli.internal.server.methods.arguments.RestLiArgumentBuilder;
-import com.linkedin.restli.internal.server.response.ErrorResponseBuilder;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor.InterfaceType;
 import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.internal.server.model.RestLiApiBuilder;
+import com.linkedin.restli.internal.server.response.ErrorResponseBuilder;
+import com.linkedin.restli.internal.server.response.PartialRestResponse;
+import com.linkedin.restli.internal.server.response.RestLiResponseHandler;
 import com.linkedin.restli.internal.server.util.MIMEParse;
 import com.linkedin.restli.internal.server.util.RestUtils;
 import com.linkedin.restli.server.filter.Filter;
@@ -77,12 +82,12 @@ import com.linkedin.restli.server.multiplexer.MultiplexedRequestHandlerImpl;
 import com.linkedin.restli.server.resources.PrototypeResourceFactory;
 import com.linkedin.restli.server.resources.ResourceFactory;
 
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
@@ -986,26 +991,64 @@ public class RestLiServer extends BaseRestServer
     public void onSuccess(final RestResponse result, final RequestExecutionReport executionReport,
                           final RestLiResponseAttachments responseAttachments)
     {
-      //Construct the StreamResponse and invoke the callback. The RestResponse entity should be the first part.
-      //There may potentially be attachments included in the response. Note that unlike the client side request builders,
-      //here it is possible to have a non-null attachment list with 0 attachments due to the way the builder in
-      //RestLiResponseAttachments works. Therefore we have to make sure its a non zero size as well.
-      if (responseAttachments != null && responseAttachments.getResponseAttachmentsBuilder().getCurrentSize() > 0)
+      if (responseAttachments != null)
       {
-        final ByteStringWriter firstPartWriter = new ByteStringWriter(result.getEntity());
-        final MultiPartMIMEWriter multiPartMIMEWriter =
-            AttachmentUtils.createMultiPartMIMEWriter(firstPartWriter, result.getHeader(RestConstants.HEADER_CONTENT_TYPE),
-                                                      responseAttachments.getResponseAttachmentsBuilder());
+        UnstructuredDataWriter writer = responseAttachments.getUnstructuredDataWriter();
+        if (writer != null)
+        {
+          /* This is a unstructured data response */
 
-        //Ensure that any headers or cookies from the RestResponse make into the outgoing StreamResponse. The exception
-        //of course being the Content-Type header which will be overridden by MultiPartMIMEStreamResponseFactory.
-        final StreamResponse streamResponse =
-            MultiPartMIMEStreamResponseFactory.generateMultiPartMIMEStreamResponse(AttachmentUtils.RESTLI_MULTIPART_SUBTYPE,
-                                                                                   multiPartMIMEWriter,
-                                                                                   Collections.<String, String>emptyMap(),
-                                                                                   result.getHeaders(), result.getStatus(),
-                                                                                   result.getCookies());
-        _streamResponseCallback.onSuccess(streamResponse);
+          // OutputStream must be ByteArrayOutputStream
+          if (!(writer.getOutputStream() instanceof ByteArrayOutputStream))
+          {
+            _streamResponseCallback.onError(new RestLiInternalException("OutputStream must be ByteArrayOutputStream"));
+          }
+
+          // Content-Type is required
+          if (result.getHeaders().get(RestConstants.HEADER_CONTENT_TYPE) == null)
+          {
+            _streamResponseCallback.onError(new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, "Content-Type is missing."));
+          }
+
+          ByteArrayOutputStream outputStream = (ByteArrayOutputStream) writer.getOutputStream();
+          byte[] bytes = outputStream.toByteArray();
+          ByteString byteString = ByteString.unsafeWrap(bytes);
+          Writer byteStringWriter = new ByteStringWriter(byteString);
+          EntityStream entityStream = EntityStreams.newEntityStream(byteStringWriter);
+
+          StreamResponseBuilder builder = new StreamResponseBuilder();
+          builder.setCookies(result.getCookies());
+          builder.setStatus(result.getStatus());
+          builder.setHeaders(result.getHeaders());
+          StreamResponse response = builder.build(entityStream);
+
+          _streamResponseCallback.onSuccess(response);
+        }
+        else if (responseAttachments.getResponseAttachmentsBuilder().getCurrentSize() > 0)
+        {
+          /* This is a writer response as attachments */
+
+          //Construct the StreamResponse and invoke the callback. The RestResponse entity should be the first part.
+          //There may potentially be attachments included in the response. Note that unlike the client side request builders,
+          //here it is possible to have a non-null attachment list with 0 attachments due to the way the builder in
+          //RestLiResponseAttachments works. Therefore we have to make sure its a non zero size as well.
+          final ByteStringWriter firstPartWriter = new ByteStringWriter(result.getEntity());
+          final MultiPartMIMEWriter multiPartMIMEWriter = AttachmentUtils.createMultiPartMIMEWriter(firstPartWriter,
+                                                                                                    result.getHeader(
+                                                                                                      RestConstants.HEADER_CONTENT_TYPE),
+                                                                                                    responseAttachments.getResponseAttachmentsBuilder());
+
+          //Ensure that any headers or cookies from the RestResponse make into the outgoing StreamResponse. The exception
+          //of course being the Content-Type header which will be overridden by MultiPartMIMEStreamResponseFactory.
+          final StreamResponse streamResponse = MultiPartMIMEStreamResponseFactory.generateMultiPartMIMEStreamResponse(
+            AttachmentUtils.RESTLI_MULTIPART_SUBTYPE,
+            multiPartMIMEWriter,
+            Collections.<String, String>emptyMap(),
+            result.getHeaders(),
+            result.getStatus(),
+            result.getCookies());
+          _streamResponseCallback.onSuccess(streamResponse);
+        }
       }
       else
       {

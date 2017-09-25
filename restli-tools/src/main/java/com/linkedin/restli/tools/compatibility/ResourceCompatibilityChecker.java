@@ -53,6 +53,7 @@ import com.linkedin.restli.restspec.IdentifierSchema;
 import com.linkedin.restli.restspec.MetadataSchema;
 import com.linkedin.restli.restspec.ParameterSchema;
 import com.linkedin.restli.restspec.ParameterSchemaArray;
+import com.linkedin.restli.restspec.ResourceEntityType;
 import com.linkedin.restli.restspec.ResourceSchema;
 import com.linkedin.restli.restspec.RestMethodSchema;
 import com.linkedin.restli.restspec.RestSpecAnnotation;
@@ -670,10 +671,15 @@ public class ResourceCompatibilityChecker
                           prevRec.getPath(GetMode.DEFAULT),
                           currRec.getPath(GetMode.DEFAULT));
 
+    checkEqualSingleValue(prevRec.schema().getField("entityType"),
+                          prevRec.getEntityType(GetMode.DEFAULT),
+                          currRec.getEntityType(GetMode.DEFAULT));
+
     checkType("schema",
               prevRec.getSchema(GetMode.DEFAULT),
               currRec.getSchema(GetMode.DEFAULT),
-              prevRec.hasActionsSet()); // action sets do not have schemas.
+              // action sets and unstructured data resource do not have schemas, skipping the check
+              prevRec.hasActionsSet() || ResourceEntityType.UNSTRUCTURED_DATA == prevRec.getEntityType());
 
     checkComplexField(prevRec.schema().getField("collection"), prevRec.getCollection(), currRec.getCollection());
 

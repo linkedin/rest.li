@@ -59,6 +59,7 @@ import com.linkedin.restli.internal.server.util.ArgumentUtils;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.internal.server.util.RestUtils;
 import com.linkedin.restli.common.validation.RestLiDataValidator;
+import com.linkedin.restli.server.UnstructuredDataWriter;
 import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.PagingContext;
 import com.linkedin.restli.server.ResourceConfigException;
@@ -66,6 +67,8 @@ import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.RoutingException;
 import com.linkedin.restli.server.annotations.HeaderParam;
+
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.Arrays;
@@ -186,6 +189,12 @@ public class ArgumentBuilder
         {
           arguments[i] = ((ServerResourceContext)context).getRequestAttachmentReader();
           attachmentsDesired = true;
+          continue;
+        }
+        else if (param.getParamType() == Parameter.ParamType.UNSTRUCTURED_DATA_WRITER_PARAM)
+        {
+          UnstructuredDataWriter unstructuredDataWriter = new UnstructuredDataWriter(new ByteArrayOutputStream(), ((ServerResourceContext)context));
+          arguments[i] = unstructuredDataWriter;
           continue;
         }
         else if (param.getParamType() == Parameter.ParamType.POST)

@@ -24,8 +24,10 @@ import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.server.util.RestLiSyntaxException;
+import com.linkedin.restli.server.UnstructuredDataWriter;
 import com.linkedin.restli.server.test.TestResourceContext;
 
+import java.io.ByteArrayOutputStream;
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
@@ -92,6 +94,21 @@ public class TestResourceContextImpl
   {
     final ResourceContextImpl context = new ResourceContextImpl();
     context.getResponseHeaders().put(RestConstants.HEADER_ID, "foobar");
+  }
+
+  @Test
+  public void testSetUnstructuredDataWriter() throws RestLiSyntaxException
+  {
+    final ResourceContextImpl context = new ResourceContextImpl();
+    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+    UnstructuredDataWriter writer = new UnstructuredDataWriter(outputStream, context);
+    context.setUnstructuredDataWriter(writer);
+    Assert.assertNotNull(context.getUnstructuredDataWriter());
+    Assert.assertNotNull(context.getResponseAttachments());
+    Assert.assertNotNull(context.getResponseAttachments().getUnstructuredDataWriter());
+    Assert.assertFalse(context.responseAttachmentsSupported());
+    Assert.assertSame(context.getResponseAttachments().getUnstructuredDataWriter().getOutputStream(), outputStream);
+    Assert.assertSame(context.getUnstructuredDataWriter().getOutputStream(), outputStream);
   }
 
   @DataProvider

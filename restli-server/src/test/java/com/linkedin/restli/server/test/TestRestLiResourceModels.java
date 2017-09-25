@@ -29,6 +29,8 @@ import com.linkedin.restli.internal.server.model.Parameter;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.internal.server.model.ResourceType;
+import com.linkedin.restli.restspec.ResourceEntityType;
+import com.linkedin.restli.server.UnstructuredDataWriter;
 import com.linkedin.restli.server.ResourceConfigException;
 import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.combined.CombinedResources;
@@ -43,7 +45,9 @@ import com.linkedin.restli.server.twitter.AsyncDiscoveredItemsResource;
 import com.linkedin.restli.server.twitter.AsyncFollowsAssociativeResource;
 import com.linkedin.restli.server.twitter.AsyncStatusCollectionResource;
 import com.linkedin.restli.server.twitter.ExceptionsResource;
+import com.linkedin.restli.server.twitter.FeedDownloadResource;
 import com.linkedin.restli.server.twitter.FollowsAssociativeResource;
+import com.linkedin.restli.server.twitter.SingleFeedDownloadResource;
 import com.linkedin.restli.server.twitter.StatusCollectionResource;
 import com.linkedin.restli.server.twitter.TwitterAccountsResource;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.DiscoveredItem;
@@ -293,6 +297,64 @@ public class TestRestLiResourceModels
     assertTrue(optionsParam.isOptional());
     assertFalse(optionsParam.hasDefaultValue());
     assertNull(optionsParam.getDefaultValue());
+
+    assertEquals(resourceModel.getResourceEntityType(), ResourceEntityType.STRUCTURED_DATA);
+  }
+
+  @Test
+  public void testCollectionUnstructuredDataResource() throws Exception
+  {
+    ResourceModel resourceModel = buildResourceModel(FeedDownloadResource.class);
+
+    assertEquals(resourceModel.getResourceType(), ResourceType.COLLECTION);
+    assertEquals(resourceModel.getResourceMethodDescriptors().size(), 1);
+
+    final ResourceMethodDescriptor getMethod = resourceModel.findMethod(ResourceMethod.GET);
+    assertNotNull(getMethod);
+
+    List<Parameter<?>> parameters = getMethod.getParameters();
+
+    Parameter<?> firstParam = parameters.get(0);
+    assertNotNull(firstParam);
+    assertEquals(firstParam.getName(), "feedId");
+    assertEquals(firstParam.getType(), Long.class);
+    assertFalse(firstParam.isOptional());
+    assertFalse(firstParam.hasDefaultValue());
+    assertNull(firstParam.getDefaultValue());
+
+    Parameter<?> secondParam = parameters.get(1);
+    assertNotNull(secondParam);
+    assertEquals(secondParam.getName(), "RestLi Unstructured Data Writer");
+    assertEquals(secondParam.getType(), UnstructuredDataWriter.class);
+    assertFalse(secondParam.isOptional());
+    assertFalse(secondParam.hasDefaultValue());
+    assertNull(secondParam.getDefaultValue());
+
+    assertEquals(resourceModel.getResourceEntityType(), ResourceEntityType.UNSTRUCTURED_DATA);
+  }
+
+  @Test
+  public void testSimpleUnstructuredDataResource() throws Exception
+  {
+    ResourceModel resourceModel = buildResourceModel(SingleFeedDownloadResource.class);
+
+    assertEquals(resourceModel.getResourceType(), ResourceType.SIMPLE);
+    assertEquals(resourceModel.getResourceMethodDescriptors().size(), 1);
+
+    final ResourceMethodDescriptor getMethod = resourceModel.findMethod(ResourceMethod.GET);
+    assertNotNull(getMethod);
+
+    List<Parameter<?>> parameters = getMethod.getParameters();
+
+    Parameter<?> firstParam = parameters.get(0);
+    assertNotNull(firstParam);
+    assertEquals(firstParam.getName(), "RestLi Unstructured Data Writer");
+    assertEquals(firstParam.getType(), UnstructuredDataWriter.class);
+    assertFalse(firstParam.isOptional());
+    assertFalse(firstParam.hasDefaultValue());
+    assertNull(firstParam.getDefaultValue());
+
+    assertEquals(resourceModel.getResourceEntityType(), ResourceEntityType.UNSTRUCTURED_DATA);
   }
 
   @Test

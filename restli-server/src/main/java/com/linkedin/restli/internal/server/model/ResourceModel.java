@@ -22,10 +22,13 @@ import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.internal.common.util.CollectionUtils;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.ResourceMethod;
+import com.linkedin.restli.restspec.ResourceEntityType;
 import com.linkedin.restli.server.AlternativeKey;
 import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.resources.ComplexKeyResource;
+import com.linkedin.restli.server.resources.unstructuredData.KeyUnstructuredDataResource;
+import com.linkedin.restli.server.resources.unstructuredData.SingleUnstructuredDataResource;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -332,6 +335,16 @@ public class ResourceModel
   public boolean isActions()
   {
     return ResourceType.ACTIONS.equals(getResourceType());
+  }
+
+  public ResourceEntityType getResourceEntityType()
+  {
+    if (KeyUnstructuredDataResource.class.isAssignableFrom(getResourceClass()) ||
+        SingleUnstructuredDataResource.class.isAssignableFrom(getResourceClass()))
+    {
+      return ResourceEntityType.UNSTRUCTURED_DATA;
+    }
+    return ResourceEntityType.STRUCTURED_DATA;
   }
 
   /**

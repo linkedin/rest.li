@@ -184,7 +184,7 @@ public class RequestBuilderSpecGenerator
                                                      Map<String, String> pathKeyTypes)
       throws IOException
   {
-    ValidationResult validationResult = ValidateDataAgainstSchema.validate(resource.data(), resource.schema(), new ValidationOptions(RequiredMode.MUST_BE_PRESENT));
+    ValidationResult validationResult = ValidateDataAgainstSchema.validate(resource.data(), resource.schema(), new ValidationOptions());
     if (!validationResult.isValid())
     {
       throw new IllegalArgumentException(String.format(

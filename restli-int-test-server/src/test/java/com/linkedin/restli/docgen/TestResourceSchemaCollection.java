@@ -113,6 +113,10 @@ public class TestResourceSchemaCollection
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.manualProjections", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.scala.client.scalaGreetings", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.asyncErrors", ResourceType.ACTIONS);
+    expectedTypes.put("com.linkedin.restli.examples.greetings.client.customGreetingCollectionUnstructuredData", ResourceType.COLLECTION);
+    expectedTypes.put("com.linkedin.restli.examples.greetings.client.greetingCollectionUnstructuredData", ResourceType.COLLECTION);
+    expectedTypes.put("com.linkedin.restli.examples.greetings.client.greetingAssociationUnstructuredData", ResourceType.ASSOCIATION);
+    expectedTypes.put("com.linkedin.restli.examples.greetings.client.greetingSimpleUnstructuredData", ResourceType.SIMPLE);
 
     for (Map.Entry<String, ResourceSchema> entry: _schemas.getResources().entrySet())
     {

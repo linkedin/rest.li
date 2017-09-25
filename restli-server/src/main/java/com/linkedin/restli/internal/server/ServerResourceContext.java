@@ -25,6 +25,7 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
+import com.linkedin.restli.server.UnstructuredDataWriter;
 import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiServiceException;
 
@@ -116,6 +117,16 @@ public interface ServerResourceContext extends ResourceContext
    * in the request if any exist, or null otherwise.
    */
   RestLiAttachmentReader getRequestAttachmentReader();
+
+  /**
+   * Set a {@link UnstructuredDataWriter} for this request.
+   */
+  void setUnstructuredDataWriter(UnstructuredDataWriter unstructuredDataWriter);
+
+  /**
+   * Returns the {@link UnstructuredDataWriter} for sending a unstructured data response. For any other cases, this returns null.
+   */
+  UnstructuredDataWriter getUnstructuredDataWriter();
 
   /**
    * Sets the specified projection mask for root object entities in the response. Setting the projection mask to

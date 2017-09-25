@@ -19,6 +19,7 @@ package com.linkedin.restli.tools.clientgen;
 
 import com.linkedin.common.Version;
 import com.linkedin.data.schema.generator.AbstractGenerator;
+import com.linkedin.data.template.GetMode;
 import com.linkedin.pegasus.generator.CodeUtil;
 import com.linkedin.pegasus.generator.DefaultGeneratorResult;
 import com.linkedin.pegasus.generator.GeneratorResult;
@@ -26,6 +27,7 @@ import com.linkedin.pegasus.generator.JavaCodeGeneratorBase;
 import com.linkedin.pegasus.generator.JavaCodeUtil;
 import com.linkedin.pegasus.generator.PegasusDataTemplateGenerator;
 import com.linkedin.restli.internal.common.RestliVersion;
+import com.linkedin.restli.restspec.ResourceEntityType;
 import com.linkedin.restli.restspec.ResourceSchema;
 import com.linkedin.util.FileUtil;
 
@@ -126,9 +128,17 @@ public class RestRequestBuilderGenerator
     final StringBuilder message = new StringBuilder();
     for (CodeUtil.Pair<ResourceSchema, File> pair : parseResult.getSchemaAndFiles())
     {
+      ResourceSchema resourceSchema = pair.first;
+
+      // Skip unstructured data resources for client generation
+      if (resourceSchema != null && ResourceEntityType.UNSTRUCTURED_DATA == resourceSchema.getEntityType())
+      {
+        continue;
+      }
+
       try
       {
-        final JDefinedClass clazz = generator.generate(pair.first, pair.second);
+        final JDefinedClass clazz = generator.generate(resourceSchema, pair.second);
       }
       catch (Exception e)
       {

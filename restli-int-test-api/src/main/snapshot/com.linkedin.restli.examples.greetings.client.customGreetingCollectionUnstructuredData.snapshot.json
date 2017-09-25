@@ -1,0 +1,23 @@
+{
+  "models" : [ ],
+  "schema" : {
+    "name" : "customGreetingCollectionUnstructuredData",
+    "namespace" : "com.linkedin.restli.examples.greetings.client",
+    "path" : "/customGreetingCollectionUnstructuredData",
+    "entityType" : "UNSTRUCTURED_DATA",
+    "doc" : "This resource models a (very simple) custom collection resource that produces unstructured data as results.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.CustomGreetingCollectionUnstructuredDataResource",
+    "collection" : {
+      "identifier" : {
+        "name" : "customGreetingCollectionUnstructuredDataId",
+        "type" : "string"
+      },
+      "supports" : [ "get" ],
+      "methods" : [ {
+        "method" : "get"
+      } ],
+      "entity" : {
+        "path" : "/customGreetingCollectionUnstructuredData/{customGreetingCollectionUnstructuredDataId}"
+      }
+    }
+  }
+}

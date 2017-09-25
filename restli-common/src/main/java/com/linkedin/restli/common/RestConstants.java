@@ -39,6 +39,7 @@ public interface RestConstants
   String HEADER_LOCATION = "Location";
   String HEADER_ACCEPT = "Accept";
   String HEADER_CONTENT_TYPE = "Content-Type";
+  String HEADER_CONTENT_DISPOSITION = "Content-Disposition";
   String HEADER_VALUE_APPLICATION_JSON = "application/json";
   String HEADER_VALUE_APPLICATION_PSON = "application/x-pson";
   String HEADER_VALUE_MULTIPART_RELATED = "multipart/related";

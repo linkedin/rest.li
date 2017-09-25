@@ -2,6 +2,7 @@
   "name" : "greetings",
   "path" : "/greetings",
   "schema" : "com.linkedin.greetings.api.Greeting",
+  "entityType" : "UNSTRUCTURED_DATA",
   "doc" : "A richer \"Hello world\" example, demonstrating a full array of methods, finders and actions",
   "collection" : {
     "identifier" : {
