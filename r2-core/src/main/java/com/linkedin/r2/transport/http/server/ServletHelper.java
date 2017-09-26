@@ -164,6 +164,7 @@ import java.util.Map;
   {
     RequestContext context = new RequestContext();
     context.putLocalAttr(R2Constants.REMOTE_ADDR, req.getRemoteAddr());
+    context.putLocalAttr(R2Constants.REMOTE_PORT, req.getRemotePort());
 
     HttpProtocolVersion protocol = HttpProtocolVersion.parse(req.getProtocol());
     context.putLocalAttr(R2Constants.HTTP_PROTOCOL_VERSION, protocol);

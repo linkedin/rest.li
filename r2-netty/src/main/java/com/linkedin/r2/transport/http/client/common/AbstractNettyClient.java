@@ -262,6 +262,7 @@ public abstract class AbstractNettyClient<Req extends Request, Res extends Respo
     InetAddress inetAddress = InetAddress.getByName(host);
     final SocketAddress address = new InetSocketAddress(inetAddress, port);
     requestContext.putLocalAttr(R2Constants.REMOTE_SERVER_ADDR, inetAddress.getHostAddress());
+    requestContext.putLocalAttr(R2Constants.REMOTE_SERVER_PORT, port);
 
     return address;
   }

@@ -25,18 +25,20 @@ public class R2Constants
   public static final String OPERATION = "OPERATION";
 
   /**
-   * The address of the remote client or last proxy that sent the http request.
-   * Typically this value is set by servlets and accessible
-   * for server side code
-   * */
+   * The address and port of the remote client or last proxy that sent the http request.
+   * Typically this value is set by servlets and accessible for server side code.
+   **/
   public static final String REMOTE_ADDR = "REMOTE_ADDR";
+  public static final String REMOTE_PORT = "REMOTE_PORT";
+
 
   /**
-   * The address of the remote server that received the http request.
+   * The address and port of the remote server that received the http request.
    * Typically this value is set by transport client and accessible for
    * client side code after the request is sent
    * */
   public static final String REMOTE_SERVER_ADDR = "REMOTE_SERVER_ADDR";
+  public static final String REMOTE_SERVER_PORT = "REMOTE_SERVER_PORT";
 
   /**
    * The HTTP protocol that the client and server are communicated under.

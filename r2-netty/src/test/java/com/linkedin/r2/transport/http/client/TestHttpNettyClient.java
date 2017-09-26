@@ -197,11 +197,13 @@ public class TestHttpNettyClient
     client.restRequest(r, requestContext, new HashMap<>(), callback);
 
     final String actualRemoteAddress = (String) requestContext.getLocalAttr(R2Constants.REMOTE_SERVER_ADDR);
+    final int actualRemotePort = (int) requestContext.getLocalAttr(R2Constants.REMOTE_SERVER_PORT);
     final HttpProtocolVersion actualProtocolVersion = (HttpProtocolVersion) requestContext.getLocalAttr(R2Constants.HTTP_PROTOCOL_VERSION);
 
     Assert.assertTrue("127.0.0.1".equals(actualRemoteAddress) || "0:0:0:0:0:0:0:1".equals(actualRemoteAddress),
                       "Actual remote client address is not expected. " +
                           "The local attribute field must be IP address in string type");
+    Assert.assertEquals(actualRemotePort, 80);
     Assert.assertEquals(actualProtocolVersion, HttpProtocolVersion.HTTP_1_1);
   }
 
