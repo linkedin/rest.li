@@ -17,7 +17,6 @@
 package com.linkedin.restli.internal.server.filter;
 
 
-import com.linkedin.restli.server.RestLiResponseAttachments;
 import com.linkedin.restli.server.RestLiResponseData;
 
 
@@ -30,19 +29,16 @@ import com.linkedin.restli.server.RestLiResponseData;
 public interface FilterChainCallback
 {
   /**
-   *Method to be called after a filter chain successfully iterates to the end of the response side.
-   *
+   * Method to be called after a filter chain successfully iterates to the end of the response side.
    * @param responseData the {@link RestLiResponseData} of the response.
-   * @param responseAttachments the {@link RestLiResponseAttachments} for the response.
+   *
    */
-  void onResponseSuccess(final RestLiResponseData<?> responseData, final RestLiResponseAttachments responseAttachments);
+  void onResponseSuccess(final RestLiResponseData<?> responseData);
 
   /**
    * Method to be called after a filter chain finishes iterating on the response side, but with an error.
-   *
    * @param th the throwable that caused the error.
    * @param responseData the {@link RestLiResponseData} of the response.
-   * @param responseAttachments the {@link RestLiResponseAttachments} of the response.
    */
-  void onError(Throwable th, final RestLiResponseData<?> responseData, final RestLiResponseAttachments responseAttachments);
+  void onError(Throwable th, final RestLiResponseData<?> responseData);
 }

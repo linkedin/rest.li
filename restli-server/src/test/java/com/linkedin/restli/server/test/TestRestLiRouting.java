@@ -31,11 +31,13 @@ import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.TestConstants;
+import com.linkedin.restli.internal.server.PathKeysImpl;
+import com.linkedin.restli.internal.server.ResourceContextImpl;
 import com.linkedin.restli.internal.server.RestLiRouter;
-import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.model.ResourceModel;
+import com.linkedin.restli.internal.server.util.RestLiSyntaxException;
 import com.linkedin.restli.server.PathKeys;
 import com.linkedin.restli.server.RoutingException;
 import com.linkedin.restli.server.combined.CombinedResources;
@@ -97,10 +99,9 @@ public class TestRestLiRouting
     // #1 simple GET
     RestRequest request = createRequest(uri, "GET", version);
 
-    RoutingResult result = _router.process(request, new RequestContext(), null);
-    assertNotNull(result);
+    ServerResourceContext context = new ResourceContextImpl(new PathKeysImpl(), request, new RequestContext());
 
-    ResourceMethodDescriptor resourceMethodDescriptor = result.getResourceMethod();
+    ResourceMethodDescriptor resourceMethodDescriptor = _router.process(context);
     assertNotNull(resourceMethodDescriptor);
     assertEquals(resourceMethodDescriptor.getType(), ResourceMethod.GET);
     assertNull(resourceMethodDescriptor.getActionName());
@@ -110,8 +111,7 @@ public class TestRestLiRouting
     assertEquals(resourceMethodDescriptor.getMethod().getParameterTypes(), new Class<?>[] {Long.class});
     assertEquals(resourceMethodDescriptor.getResourceModel().getName(), "statuses");
 
-    assertNotNull(result.getContext());
-    PathKeys keys = result.getContext().getPathKeys();
+    PathKeys keys = context.getPathKeys();
     assertEquals(keys.getAsLong("statusID"), new Long(1));
     assertNull(keys.getAsString("foo"));
   }
@@ -134,10 +134,9 @@ public class TestRestLiRouting
 
     RestRequest request = createRequest(uri, "GET", version);
 
-    RoutingResult result = _router.process(request, new RequestContext(), null);
-    assertNotNull(result);
+    ServerResourceContext context = new ResourceContextImpl(new PathKeysImpl(), request, new RequestContext());
 
-    ResourceMethodDescriptor resourceMethodDescriptor = result.getResourceMethod();
+    ResourceMethodDescriptor resourceMethodDescriptor = _router.process(context);
     assertNotNull(resourceMethodDescriptor);
     assertEquals(resourceMethodDescriptor.getType(), ResourceMethod.GET);
     assertNull(resourceMethodDescriptor.getActionName());
@@ -147,8 +146,7 @@ public class TestRestLiRouting
     assertEquals(resourceMethodDescriptor.getMethod().getParameterTypes(), new Class<?>[] {CompoundKey.class});
     assertEquals(resourceMethodDescriptor.getResourceModel().getName(), "follows");
 
-    assertNotNull(result.getContext());
-    PathKeys keys = result.getContext().getPathKeys();
+    PathKeys keys = context.getPathKeys();
     assertEquals(keys.getAsLong("followerID"), new Long(1L));
     assertEquals(keys.getAsLong("followeeID"), new Long(2L));
   }
@@ -161,10 +159,9 @@ public class TestRestLiRouting
 
     RestRequest request = createRequest(uri, "PUT", version);
 
-    RoutingResult result = _router.process(request, new RequestContext(), null);
-    assertNotNull(result);
+    ServerResourceContext context = new ResourceContextImpl(new PathKeysImpl(), request, new RequestContext());
 
-    ResourceMethodDescriptor resourceMethodDescriptor = result.getResourceMethod();
+    ResourceMethodDescriptor resourceMethodDescriptor = _router.process(context);
     assertNotNull(resourceMethodDescriptor);
     assertEquals(resourceMethodDescriptor.getType(), ResourceMethod.UPDATE);
     assertNull(resourceMethodDescriptor.getActionName());
@@ -174,8 +171,7 @@ public class TestRestLiRouting
     assertEquals(resourceMethodDescriptor.getMethod().getParameterTypes(), new Class<?>[] { Long.class, Status.class });
     assertEquals(resourceMethodDescriptor.getResourceModel().getName(), "statuses");
 
-    assertNotNull(result.getContext());
-    PathKeys keys = result.getContext().getPathKeys();
+    PathKeys keys = context.getPathKeys();
     assertEquals(keys.getAsLong("statusID"), new Long(1));
     assertNull(keys.getAsString("foo"));
   }
@@ -188,10 +184,9 @@ public class TestRestLiRouting
 
     RestRequest request = createRequest(uri, "DELETE", version);
 
-    RoutingResult result = _router.process(request, new RequestContext(), null);
-    assertNotNull(result);
+    ServerResourceContext context = new ResourceContextImpl(new PathKeysImpl(), request, new RequestContext());
 
-    ResourceMethodDescriptor resourceMethodDescriptor = result.getResourceMethod();
+    ResourceMethodDescriptor resourceMethodDescriptor = _router.process(context);
     assertNotNull(resourceMethodDescriptor);
     assertEquals(resourceMethodDescriptor.getType(), ResourceMethod.DELETE);
     assertNull(resourceMethodDescriptor.getActionName());
@@ -201,8 +196,7 @@ public class TestRestLiRouting
     assertEquals(resourceMethodDescriptor.getMethod().getParameterTypes(), new Class<?>[] { Long.class });
     assertEquals(resourceMethodDescriptor.getResourceModel().getName(), "statuses");
 
-    assertNotNull(result.getContext());
-    PathKeys keys = result.getContext().getPathKeys();
+    PathKeys keys = context.getPathKeys();
     assertEquals(keys.getAsLong("statusID"), new Long(1));
     assertNull(keys.getAsString("foo"));
   }
@@ -225,10 +219,9 @@ public class TestRestLiRouting
 
     RestRequest request = createRequest(uri, "GET", version);
 
-    RoutingResult result = _router.process(request, new RequestContext(), null);
-    assertNotNull(result);
+    ServerResourceContext context = new ResourceContextImpl(new PathKeysImpl(), request, new RequestContext());
 
-    ResourceMethodDescriptor resourceMethodDescriptor = result.getResourceMethod();
+    ResourceMethodDescriptor resourceMethodDescriptor = _router.process(context);
     assertNotNull(resourceMethodDescriptor);
     assertEquals(resourceMethodDescriptor.getType(), ResourceMethod.BATCH_GET);
     assertNull(resourceMethodDescriptor.getActionName());
@@ -238,8 +231,7 @@ public class TestRestLiRouting
     assertEquals(resourceMethodDescriptor.getMethod().getParameterTypes(), new Class<?>[] {Set.class});
     assertEquals(resourceMethodDescriptor.getResourceModel().getName(), "follows");
 
-    assertNotNull(result.getContext());
-    PathKeys keys = result.getContext().getPathKeys();
+    PathKeys keys = context.getPathKeys();
     assertNull(keys.getAsString("followerID"));
     assertNull(keys.getAsString("followeeID"));
 
@@ -249,7 +241,7 @@ public class TestRestLiRouting
     CompoundKey key2 = new CompoundKey();
     key2.append("followerID", 3L);
     key2.append("followeeID", 4L);
-    Set<CompoundKey> expectedBatchKeys = new HashSet<CompoundKey>();
+    Set<CompoundKey> expectedBatchKeys = new HashSet<>();
     expectedBatchKeys.add(key1);
     expectedBatchKeys.add(key2);
 
@@ -280,10 +272,9 @@ public class TestRestLiRouting
 
     RestRequest request = createRequest(uri, "GET", version);
 
-    RoutingResult result = _router.process(request, new RequestContext(), null);
-    assertNotNull(result);
+    ServerResourceContext context = new ResourceContextImpl(new PathKeysImpl(), request, new RequestContext());
 
-    ResourceMethodDescriptor resourceMethodDescriptor = result.getResourceMethod();
+    ResourceMethodDescriptor resourceMethodDescriptor = _router.process(context);
     assertNotNull(resourceMethodDescriptor);
     assertEquals(resourceMethodDescriptor.getType(), ResourceMethod.GET);
     assertNull(resourceMethodDescriptor.getActionName());
@@ -293,8 +284,7 @@ public class TestRestLiRouting
     assertEquals(resourceMethodDescriptor.getMethod().getParameterTypes(), new Class<?>[] {});
     assertEquals(resourceMethodDescriptor.getResourceModel().getName(), "trending");
 
-    assertNotNull(result.getContext());
-    PathKeys keys = result.getContext().getPathKeys();
+    PathKeys keys = context.getPathKeys();
     assertNull(keys.getBatchIds());
   }
 
@@ -306,10 +296,9 @@ public class TestRestLiRouting
 
     RestRequest request = createRequest(uri, "PUT", version);
 
-    RoutingResult result = _router.process(request, new RequestContext(), null);
-    assertNotNull(result);
+    ServerResourceContext context = new ResourceContextImpl(new PathKeysImpl(), request, new RequestContext());
 
-    ResourceMethodDescriptor resourceMethodDescriptor = result.getResourceMethod();
+    ResourceMethodDescriptor resourceMethodDescriptor = _router.process(context);
     assertNotNull(resourceMethodDescriptor);
     assertEquals(resourceMethodDescriptor.getType(), ResourceMethod.UPDATE);
     assertNull(resourceMethodDescriptor.getActionName());
@@ -319,8 +308,7 @@ public class TestRestLiRouting
     assertEquals(resourceMethodDescriptor.getMethod().getParameterTypes(), new Class<?>[] { Trending.class });
     assertEquals(resourceMethodDescriptor.getResourceModel().getName(), "trending");
 
-    assertNotNull(result.getContext());
-    PathKeys keys = result.getContext().getPathKeys();
+    PathKeys keys = context.getPathKeys();
     assertNull(keys.getBatchIds());
   }
 
@@ -332,10 +320,9 @@ public class TestRestLiRouting
 
     RestRequest request = createRequest(uri, "POST", version);
 
-    RoutingResult result = _router.process(request, new RequestContext(), null);
-    assertNotNull(result);
+    ServerResourceContext context = new ResourceContextImpl(new PathKeysImpl(), request, new RequestContext());
 
-    ResourceMethodDescriptor resourceMethodDescriptor = result.getResourceMethod();
+    ResourceMethodDescriptor resourceMethodDescriptor = _router.process(context);
     assertNotNull(resourceMethodDescriptor);
     assertEquals(resourceMethodDescriptor.getType(), ResourceMethod.PARTIAL_UPDATE);
     assertNull(resourceMethodDescriptor.getActionName());
@@ -345,8 +332,7 @@ public class TestRestLiRouting
     assertEquals(resourceMethodDescriptor.getMethod().getParameterTypes(), new Class<?>[] { PatchRequest.class });
     assertEquals(resourceMethodDescriptor.getResourceModel().getName(), "trending");
 
-    assertNotNull(result.getContext());
-    PathKeys keys = result.getContext().getPathKeys();
+    PathKeys keys = context.getPathKeys();
     assertNull(keys.getBatchIds());
   }
 
@@ -358,10 +344,9 @@ public class TestRestLiRouting
 
     RestRequest request = createRequest(uri, "DELETE", version);
 
-    RoutingResult result = _router.process(request, new RequestContext(), null);
-    assertNotNull(result);
+    ServerResourceContext context = new ResourceContextImpl(new PathKeysImpl(), request, new RequestContext());
 
-    ResourceMethodDescriptor resourceMethodDescriptor = result.getResourceMethod();
+    ResourceMethodDescriptor resourceMethodDescriptor = _router.process(context);
     assertNotNull(resourceMethodDescriptor);
     assertEquals(resourceMethodDescriptor.getType(), ResourceMethod.DELETE);
     assertNull(resourceMethodDescriptor.getActionName());
@@ -371,8 +356,7 @@ public class TestRestLiRouting
     assertEquals(resourceMethodDescriptor.getMethod().getParameterTypes(), new Class<?>[] {});
     assertEquals(resourceMethodDescriptor.getResourceModel().getName(), "trending");
 
-    assertNotNull(result.getContext());
-    PathKeys keys = result.getContext().getPathKeys();
+    PathKeys keys = context.getPathKeys();
     assertNull(keys.getBatchIds());
   }
 
@@ -388,7 +372,7 @@ public class TestRestLiRouting
           null,
           ResourceMethod.BATCH_GET,
           "batchGet",
-          new HashSet<Long>(Arrays.asList(1L, 2L, 3L))
+          new HashSet<>(Arrays.asList(1L, 2L, 3L))
         },
         {
           "/statuses?ids=List(1,2,3)",
@@ -397,7 +381,7 @@ public class TestRestLiRouting
           null,
           ResourceMethod.BATCH_GET,
           "batchGet",
-          new HashSet<Long>(Arrays.asList(1L, 2L, 3L))
+          new HashSet<>(Arrays.asList(1L, 2L, 3L))
         },
         {
           "/statuses?ids=1&ids=2&ids=3",
@@ -406,7 +390,7 @@ public class TestRestLiRouting
           "BATCH_GET",
           ResourceMethod.BATCH_GET,
           "batchGet",
-          new HashSet<Long>(Arrays.asList(1L, 2L, 3L))
+          new HashSet<>(Arrays.asList(1L, 2L, 3L))
         },
         {
           "/statuses?ids=List(1,2,3)",
@@ -415,8 +399,8 @@ public class TestRestLiRouting
           "BATCH_GET",
           ResourceMethod.BATCH_GET,
           "batchGet",
-          new HashSet<Long>(Arrays.asList(1L, 2L, 3L))
-        },        
+          new HashSet<>(Arrays.asList(1L, 2L, 3L))
+        },
         {
           "/statuses?ids=1&ids=2",
           AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
@@ -424,7 +408,7 @@ public class TestRestLiRouting
           null,
           ResourceMethod.BATCH_UPDATE,
           "batchUpdate",
-          new HashSet<Long>(Arrays.asList(1L, 2L))
+          new HashSet<>(Arrays.asList(1L, 2L))
         },
         {
           "/statuses?ids=List(1,2)",
@@ -433,7 +417,7 @@ public class TestRestLiRouting
           null,
           ResourceMethod.BATCH_UPDATE,
           "batchUpdate",
-          new HashSet<Long>(Arrays.asList(1L, 2L))
+          new HashSet<>(Arrays.asList(1L, 2L))
         },
         {
           "/statuses?ids=1&ids=2",
@@ -442,7 +426,7 @@ public class TestRestLiRouting
           "BATCH_UPDATE",
           ResourceMethod.BATCH_UPDATE,
           "batchUpdate",
-          new HashSet<Long>(Arrays.asList(1L, 2L))
+          new HashSet<>(Arrays.asList(1L, 2L))
         },
         {
           "/statuses?ids=List(1,2)",
@@ -451,7 +435,7 @@ public class TestRestLiRouting
           "BATCH_UPDATE",
           ResourceMethod.BATCH_UPDATE,
           "batchUpdate",
-          new HashSet<Long>(Arrays.asList(1L, 2L))
+          new HashSet<>(Arrays.asList(1L, 2L))
         },
         {
           "/statuses?ids=1&ids=2",
@@ -460,7 +444,7 @@ public class TestRestLiRouting
           "BATCH_PARTIAL_UPDATE",
           ResourceMethod.BATCH_PARTIAL_UPDATE,
           "batchUpdate",
-          new HashSet<Long>(Arrays.asList(1L, 2L))
+          new HashSet<>(Arrays.asList(1L, 2L))
         },
         {
           "/statuses?ids=List(1,2)",
@@ -469,7 +453,7 @@ public class TestRestLiRouting
           "BATCH_PARTIAL_UPDATE",
           ResourceMethod.BATCH_PARTIAL_UPDATE,
           "batchUpdate",
-          new HashSet<Long>(Arrays.asList(1L, 2L))
+          new HashSet<>(Arrays.asList(1L, 2L))
         },
         {
           "/statuses?ids=1&ids=2",
@@ -478,7 +462,7 @@ public class TestRestLiRouting
           null,
           ResourceMethod.BATCH_DELETE,
           "batchDelete",
-          new HashSet<Long>(Arrays.asList(1L, 2L))
+          new HashSet<>(Arrays.asList(1L, 2L))
         },
         {
           "/statuses?ids=List(1,2)",
@@ -487,7 +471,7 @@ public class TestRestLiRouting
           null,
           ResourceMethod.BATCH_DELETE,
           "batchDelete",
-          new HashSet<Long>(Arrays.asList(1L, 2L))
+          new HashSet<>(Arrays.asList(1L, 2L))
         },
         {
           "/statuses?ids=1&ids=2",
@@ -496,7 +480,7 @@ public class TestRestLiRouting
           "BATCH_DELETE",
           ResourceMethod.BATCH_DELETE,
           "batchDelete",
-          new HashSet<Long>(Arrays.asList(1L, 2L))
+          new HashSet<>(Arrays.asList(1L, 2L))
         },
         {
           "/statuses?ids=List(1,2)",
@@ -505,7 +489,7 @@ public class TestRestLiRouting
           "BATCH_DELETE",
           ResourceMethod.BATCH_DELETE,
           "batchDelete",
-          new HashSet<Long>(Arrays.asList(1L, 2L))
+          new HashSet<>(Arrays.asList(1L, 2L))
         },
       };
   }
@@ -539,7 +523,7 @@ public class TestRestLiRouting
           null,
           ResourceMethod.BATCH_GET,
           "batchGet",
-          new HashSet<Long>(Arrays.asList(1L, 2L, 3L))
+          new HashSet<>(Arrays.asList(1L, 2L, 3L))
         },
         {
           "/statuses?ids=Alt1&ids=badAlt2&ids=Alt3&altkey=alt",
@@ -548,7 +532,7 @@ public class TestRestLiRouting
           null,
           ResourceMethod.BATCH_GET,
           "batchGet",
-          new HashSet<Long>(Arrays.asList(1L, 3L)) // second key should log an error.
+          new HashSet<>(Arrays.asList(1L, 3L)) // second key should log an error.
         },
         {
           "/statuses?ids=List(Alt1,Alt2,Alt3)&altkey=alt",
@@ -557,7 +541,7 @@ public class TestRestLiRouting
           null,
           ResourceMethod.BATCH_GET,
           "batchGet",
-          new HashSet<Long>(Arrays.asList(1L, 2L, 3L))
+          new HashSet<>(Arrays.asList(1L, 2L, 3L))
         },
         {
           "/statuses?ids=List(Alt1,badAlt2,Alt3)&altkey=alt",
@@ -566,7 +550,7 @@ public class TestRestLiRouting
           null,
           ResourceMethod.BATCH_GET,
           "batchGet",
-          new HashSet<Long>(Arrays.asList(1L, 3L)) // second key should log an error.
+          new HashSet<>(Arrays.asList(1L, 3L)) // second key should log an error.
         },
         {
           "/statuses?ids=Alt1&ids=Alt2&ids=Alt3&altkey=alt",
@@ -575,7 +559,7 @@ public class TestRestLiRouting
           "BATCH_GET",
           ResourceMethod.BATCH_GET,
           "batchGet",
-          new HashSet<Long>(Arrays.asList(1L, 2L, 3L))
+          new HashSet<>(Arrays.asList(1L, 2L, 3L))
         },
         {
           "/statuses?ids=Alt1&ids=badAlt2&ids=Alt3&altkey=alt",
@@ -584,7 +568,7 @@ public class TestRestLiRouting
           "BATCH_GET",
           ResourceMethod.BATCH_GET,
           "batchGet",
-          new HashSet<Long>(Arrays.asList(1L, 3L)) // second key should log an error
+          new HashSet<>(Arrays.asList(1L, 3L)) // second key should log an error
         },
         {
           "/statuses?ids=List(Alt1,Alt2,Alt3)&altkey=alt",
@@ -593,7 +577,7 @@ public class TestRestLiRouting
           "BATCH_GET",
           ResourceMethod.BATCH_GET,
           "batchGet",
-          new HashSet<Long>(Arrays.asList(1L, 2L, 3L))
+          new HashSet<>(Arrays.asList(1L, 2L, 3L))
         },
         {
           "/statuses?ids=List(Alt1,badAlt2,Alt3)&altkey=alt",
@@ -602,7 +586,7 @@ public class TestRestLiRouting
           "BATCH_GET",
           ResourceMethod.BATCH_GET,
           "batchGet",
-          new HashSet<Long>(Arrays.asList(1L, 3L)) // second key should log an error
+          new HashSet<>(Arrays.asList(1L, 3L)) // second key should log an error
         },
         {
           "/statuses?ids=Alt1&ids=Alt2&altkey=alt",
@@ -611,7 +595,7 @@ public class TestRestLiRouting
           null,
           ResourceMethod.BATCH_UPDATE,
           "batchUpdate",
-          new HashSet<Long>(Arrays.asList(1L, 2L))
+          new HashSet<>(Arrays.asList(1L, 2L))
         },
         {
           "/statuses?ids=List(Alt1,Alt2)&altkey=alt",
@@ -620,7 +604,7 @@ public class TestRestLiRouting
           null,
           ResourceMethod.BATCH_UPDATE,
           "batchUpdate",
-          new HashSet<Long>(Arrays.asList(1L, 2L))
+          new HashSet<>(Arrays.asList(1L, 2L))
         },
         {
           "/statuses?ids=Alt1&ids=Alt2&altkey=alt",
@@ -629,7 +613,7 @@ public class TestRestLiRouting
           "BATCH_UPDATE",
           ResourceMethod.BATCH_UPDATE,
           "batchUpdate",
-          new HashSet<Long>(Arrays.asList(1L, 2L))
+          new HashSet<>(Arrays.asList(1L, 2L))
         },
         {
           "/statuses?ids=List(Alt1,Alt2)&altkey=alt",
@@ -638,7 +622,7 @@ public class TestRestLiRouting
           "BATCH_UPDATE",
           ResourceMethod.BATCH_UPDATE,
           "batchUpdate",
-          new HashSet<Long>(Arrays.asList(1L, 2L))
+          new HashSet<>(Arrays.asList(1L, 2L))
         },
         {
           "/statuses?ids=Alt1&ids=Alt2&altkey=alt",
@@ -647,7 +631,7 @@ public class TestRestLiRouting
           "BATCH_PARTIAL_UPDATE",
           ResourceMethod.BATCH_PARTIAL_UPDATE,
           "batchUpdate",
-          new HashSet<Long>(Arrays.asList(1L, 2L))
+          new HashSet<>(Arrays.asList(1L, 2L))
         },
         {
           "/statuses?ids=List(Alt1,Alt2)&altkey=alt",
@@ -656,7 +640,7 @@ public class TestRestLiRouting
           "BATCH_PARTIAL_UPDATE",
           ResourceMethod.BATCH_PARTIAL_UPDATE,
           "batchUpdate",
-          new HashSet<Long>(Arrays.asList(1L, 2L))
+          new HashSet<>(Arrays.asList(1L, 2L))
         },
         {
           "/statuses?ids=Alt1&ids=Alt2&altkey=alt",
@@ -665,7 +649,7 @@ public class TestRestLiRouting
           null,
           ResourceMethod.BATCH_DELETE,
           "batchDelete",
-          new HashSet<Long>(Arrays.asList(1L, 2L))
+          new HashSet<>(Arrays.asList(1L, 2L))
         },
         {
           "/statuses?ids=List(Alt1,Alt2)&altkey=alt",
@@ -674,7 +658,7 @@ public class TestRestLiRouting
           null,
           ResourceMethod.BATCH_DELETE,
           "batchDelete",
-          new HashSet<Long>(Arrays.asList(1L, 2L))
+          new HashSet<>(Arrays.asList(1L, 2L))
         },
         {
           "/statuses?ids=Alt1&ids=Alt2&altkey=alt",
@@ -683,7 +667,7 @@ public class TestRestLiRouting
           "BATCH_DELETE",
           ResourceMethod.BATCH_DELETE,
           "batchDelete",
-          new HashSet<Long>(Arrays.asList(1L, 2L))
+          new HashSet<>(Arrays.asList(1L, 2L))
         },
         {
           "/statuses?ids=List(Alt1,Alt2)&altkey=alt",
@@ -692,7 +676,7 @@ public class TestRestLiRouting
           "BATCH_DELETE",
           ResourceMethod.BATCH_DELETE,
           "batchDelete",
-          new HashSet<Long>(Arrays.asList(1L, 2L))
+          new HashSet<>(Arrays.asList(1L, 2L))
         }
       };
   }
@@ -726,7 +710,7 @@ public class TestRestLiRouting
           null,
           ResourceMethod.BATCH_GET,
           "batchGet",
-          new HashSet<Long>(Arrays.asList(1L, 2L, 3L))
+          new HashSet<>(Arrays.asList(1L, 2L, 3L))
         },
         {
           "/statuses/1/replies?ids=List(1,2,3)",
@@ -735,7 +719,7 @@ public class TestRestLiRouting
           null,
           ResourceMethod.BATCH_GET,
           "batchGet",
-          new HashSet<Long>(Arrays.asList(1L, 2L, 3L))
+          new HashSet<>(Arrays.asList(1L, 2L, 3L))
         }
       };
   }
@@ -769,7 +753,7 @@ public class TestRestLiRouting
           null,
           ResourceMethod.BATCH_GET,
           "batchGet",
-          new HashSet<String>(Arrays.asList("1", "2", "3"))
+          new HashSet<>(Arrays.asList("1", "2", "3"))
         },
         {
           "/trending/trendRegions?ids=List(1,2,3)",
@@ -778,7 +762,7 @@ public class TestRestLiRouting
           null,
           ResourceMethod.BATCH_GET,
           "batchGet",
-          new HashSet<String>(Arrays.asList("1", "2", "3"))
+          new HashSet<>(Arrays.asList("1", "2", "3"))
         },
         {
           "/trending/trendRegions?ids=1&ids=2",
@@ -787,7 +771,7 @@ public class TestRestLiRouting
           "BATCH_UPDATE",
           ResourceMethod.BATCH_UPDATE,
           "batchUpdate",
-          new HashSet<String>(Arrays.asList("1", "2"))
+          new HashSet<>(Arrays.asList("1", "2"))
         },
         {
           "/trending/trendRegions?ids=List(1,2)",
@@ -796,7 +780,7 @@ public class TestRestLiRouting
           "BATCH_UPDATE",
           ResourceMethod.BATCH_UPDATE,
           "batchUpdate",
-          new HashSet<String>(Arrays.asList("1", "2"))
+          new HashSet<>(Arrays.asList("1", "2"))
         },
         {
           "/trending/trendRegions?ids=1&ids=2",
@@ -805,7 +789,7 @@ public class TestRestLiRouting
           "BATCH_PARTIAL_UPDATE",
           ResourceMethod.BATCH_PARTIAL_UPDATE,
           "batchUpdate",
-          new HashSet<String>(Arrays.asList("1", "2"))
+          new HashSet<>(Arrays.asList("1", "2"))
         },
         {
           "/trending/trendRegions?ids=List(1,2)",
@@ -814,7 +798,7 @@ public class TestRestLiRouting
           "BATCH_PARTIAL_UPDATE",
           ResourceMethod.BATCH_PARTIAL_UPDATE,
           "batchUpdate",
-          new HashSet<String>(Arrays.asList("1", "2"))
+          new HashSet<>(Arrays.asList("1", "2"))
         }
       };
   }
@@ -869,7 +853,7 @@ public class TestRestLiRouting
           null,
           ResourceMethod.BATCH_GET,
           "batchGet",
-          new HashSet<CompoundKey>(Arrays.asList(key1, key2, key3))
+          new HashSet<>(Arrays.asList(key1, key2, key3))
         },
         { "/follows?ids=followerID%3D1%26followeeID%3D1&ids=followerID%3D1%26followeeID%3D3&ids=followerID%3D1%26followeeID%3D2",
           AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
@@ -877,7 +861,7 @@ public class TestRestLiRouting
           null,
           ResourceMethod.BATCH_GET,
           "batchGet",
-          new HashSet<CompoundKey>(Arrays.asList(key1, key2, key3))
+          new HashSet<>(Arrays.asList(key1, key2, key3))
         },
         { "/follows?ids=List((followerID:1,followeeID:1),(followerID:1,followeeID:3),(followerID:1,followeeID:2))",
           AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
@@ -885,7 +869,7 @@ public class TestRestLiRouting
           null,
           ResourceMethod.BATCH_GET,
           "batchGet",
-          new HashSet<CompoundKey>(Arrays.asList(key1, key2, key3))
+          new HashSet<>(Arrays.asList(key1, key2, key3))
         },
         { "/follows?ids=followerID:1;followeeID:1&ids=followerID:1;followeeID:3;badKey:5&ids=followerID:1;followeeID:2", // legacy
           AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
@@ -893,7 +877,7 @@ public class TestRestLiRouting
           null,
           ResourceMethod.BATCH_GET,
           "batchGet",
-          new HashSet<CompoundKey>(Arrays.asList(key1, key3)) // second key should log an error.
+          new HashSet<>(Arrays.asList(key1, key3)) // second key should log an error.
         },
         { "/follows?ids=followerID%3D1%26followeeID%3D1&ids=followerID%3D1%26followeeID%3D3%26badKey%3D5&ids=followerID%3D1%26followeeID%3D2",
           AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
@@ -901,7 +885,7 @@ public class TestRestLiRouting
           null,
           ResourceMethod.BATCH_GET,
           "batchGet",
-          new HashSet<CompoundKey>(Arrays.asList(key1, key3)) // second key should log an error
+          new HashSet<>(Arrays.asList(key1, key3)) // second key should log an error
         },
         { "/follows?ids=List((followerID:1,followeeID:1),(followerID:1,followeeID:3,badKey:5),(followerID:1,followeeID:2))",
           AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
@@ -909,7 +893,7 @@ public class TestRestLiRouting
           null,
           ResourceMethod.BATCH_GET,
           "batchGet",
-          new HashSet<CompoundKey>(Arrays.asList(key1, key3)) // second key should log an error
+          new HashSet<>(Arrays.asList(key1, key3)) // second key should log an error
         },
       };
   }
@@ -940,9 +924,9 @@ public class TestRestLiRouting
     TwitterTestDataModels.DiscoveredItemKeyParams emptyParams = new TwitterTestDataModels.DiscoveredItemKeyParams();
 
     ComplexResourceKey<TwitterTestDataModels.DiscoveredItemKey, TwitterTestDataModels.DiscoveredItemKeyParams> complexKey1 =
-      new ComplexResourceKey<TwitterTestDataModels.DiscoveredItemKey, TwitterTestDataModels.DiscoveredItemKeyParams>(keyPart1, emptyParams);
+      new ComplexResourceKey<>(keyPart1, emptyParams);
     ComplexResourceKey<TwitterTestDataModels.DiscoveredItemKey, TwitterTestDataModels.DiscoveredItemKeyParams> complexKey2 =
-      new ComplexResourceKey<TwitterTestDataModels.DiscoveredItemKey, TwitterTestDataModels.DiscoveredItemKeyParams>(keyPart2, emptyParams);
+      new ComplexResourceKey<>(keyPart2, emptyParams);
 
     return new Object[][]
       {
@@ -953,7 +937,7 @@ public class TestRestLiRouting
           "BATCH_GET",
           ResourceMethod.BATCH_GET,
           "batchGet",
-          new HashSet<ComplexResourceKey<TwitterTestDataModels.DiscoveredItemKey, TwitterTestDataModels.DiscoveredItemKeyParams>>(Arrays.asList(complexKey1, complexKey2))
+          new HashSet<>(Arrays.asList(complexKey1, complexKey2))
         },
         {
           "/discovereditems?ids=List((userId:1,type:2,itemId:3),(userId:4,type:5,itemId:6))",
@@ -962,7 +946,7 @@ public class TestRestLiRouting
           "BATCH_GET",
           ResourceMethod.BATCH_GET,
           "batchGet",
-          new HashSet<ComplexResourceKey<TwitterTestDataModels.DiscoveredItemKey, TwitterTestDataModels.DiscoveredItemKeyParams>>(Arrays.asList(complexKey1, complexKey2))
+          new HashSet<>(Arrays.asList(complexKey1, complexKey2))
         },
         {
           "/discovereditems?ids%5B0%5D.userId=1&ids%5B0%5D.type=2&ids%5B0%5D.itemId=3&ids%5B1%5D.userId=4&ids%5B1%5D.type=5&ids%5B1%5D.itemId=6",
@@ -971,7 +955,7 @@ public class TestRestLiRouting
           "BATCH_UPDATE",
           ResourceMethod.BATCH_UPDATE,
           "batchUpdate",
-          new HashSet<ComplexResourceKey<TwitterTestDataModels.DiscoveredItemKey, TwitterTestDataModels.DiscoveredItemKeyParams>>(Arrays.asList(complexKey1, complexKey2))
+          new HashSet<>(Arrays.asList(complexKey1, complexKey2))
         },
         {
           "/discovereditems?ids=List((userId:1,type:2,itemId:3),(userId:4,type:5,itemId:6))",
@@ -980,7 +964,7 @@ public class TestRestLiRouting
           "BATCH_UPDATE",
           ResourceMethod.BATCH_UPDATE,
           "batchUpdate",
-          new HashSet<ComplexResourceKey<TwitterTestDataModels.DiscoveredItemKey, TwitterTestDataModels.DiscoveredItemKeyParams>>(Arrays.asList(complexKey1, complexKey2))
+          new HashSet<>(Arrays.asList(complexKey1, complexKey2))
         },
         {
           "/discovereditems?ids%5B0%5D.userId=1&ids%5B0%5D.type=2&ids%5B0%5D.itemId=3&ids%5B1%5D.userId=4&ids%5B1%5D.type=5&ids%5B1%5D.itemId=6",
@@ -989,7 +973,7 @@ public class TestRestLiRouting
           "BATCH_PARTIAL_UPDATE",
           ResourceMethod.BATCH_PARTIAL_UPDATE,
           "batchUpdate",
-          new HashSet<ComplexResourceKey<TwitterTestDataModels.DiscoveredItemKey, TwitterTestDataModels.DiscoveredItemKeyParams>>(Arrays.asList(complexKey1, complexKey2))
+          new HashSet<>(Arrays.asList(complexKey1, complexKey2))
         },
         {
           "/discovereditems?ids=List((userId:1,type:2,itemId:3),(userId:4,type:5,itemId:6))",
@@ -998,7 +982,7 @@ public class TestRestLiRouting
           "BATCH_PARTIAL_UPDATE",
           ResourceMethod.BATCH_PARTIAL_UPDATE,
           "batchUpdate",
-          new HashSet<ComplexResourceKey<TwitterTestDataModels.DiscoveredItemKey, TwitterTestDataModels.DiscoveredItemKeyParams>>(Arrays.asList(complexKey1, complexKey2))
+          new HashSet<>(Arrays.asList(complexKey1, complexKey2))
         },
         {
           "/discovereditems?ids%5B0%5D.userId=1&ids%5B0%5D.type=2&ids%5B0%5D.itemId=3&ids%5B1%5D.userId=4&ids%5B1%5D.type=5&ids%5B1%5D.itemId=6",
@@ -1007,7 +991,7 @@ public class TestRestLiRouting
           "BATCH_DELETE",
           ResourceMethod.BATCH_DELETE,
           "batchDelete",
-          new HashSet<ComplexResourceKey<TwitterTestDataModels.DiscoveredItemKey, TwitterTestDataModels.DiscoveredItemKeyParams>>(Arrays.asList(complexKey1, complexKey2))
+          new HashSet<>(Arrays.asList(complexKey1, complexKey2))
         },
         {
           "/discovereditems?ids=List((userId:1,type:2,itemId:3),(userId:4,type:5,itemId:6))",
@@ -1016,7 +1000,7 @@ public class TestRestLiRouting
           "BATCH_DELETE",
           ResourceMethod.BATCH_DELETE,
           "batchDelete",
-          new HashSet<ComplexResourceKey<TwitterTestDataModels.DiscoveredItemKey, TwitterTestDataModels.DiscoveredItemKeyParams>>(Arrays.asList(complexKey1, complexKey2))
+          new HashSet<>(Arrays.asList(complexKey1, complexKey2))
         },
       };
   }
@@ -1042,17 +1026,17 @@ public class TestRestLiRouting
   public Object[][] routingCollection()
   {
     String[] statusKey = new String[] { "statusID" };
-    
+
     return new Object[][]
       {
-        { 
+        {
           "/statuses/1",
-          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), 
-          "GET", 
+          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+          "GET",
           null,
-          ResourceMethod.GET, 
-          "get", 
-          statusKey 
+          ResourceMethod.GET,
+          "get",
+          statusKey
         },
         { "/statuses/1",
           AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
@@ -1060,7 +1044,7 @@ public class TestRestLiRouting
           null,
           ResourceMethod.GET,
           "get",
-          statusKey 
+          statusKey
         },
         { "/statuses/1",
           AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
@@ -1068,7 +1052,7 @@ public class TestRestLiRouting
           "GET",
           ResourceMethod.GET,
           "get",
-          statusKey 
+          statusKey
         },
         { "/statuses/1",
           AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
@@ -1076,7 +1060,7 @@ public class TestRestLiRouting
           "GET",
           ResourceMethod.GET,
           "get",
-          statusKey 
+          statusKey
         },
         { "/st%61tuses/1",
           AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
@@ -1084,7 +1068,7 @@ public class TestRestLiRouting
           null,
           ResourceMethod.GET,
           "get",
-          statusKey 
+          statusKey
         },
         { "/st%61tuses/1",
           AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
@@ -1092,7 +1076,7 @@ public class TestRestLiRouting
           null,
           ResourceMethod.GET,
           "get",
-          statusKey 
+          statusKey
         },
         { "/statuses/%31",
           AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
@@ -1100,7 +1084,7 @@ public class TestRestLiRouting
           null,
           ResourceMethod.GET,
           "get",
-          statusKey 
+          statusKey
         },
         { "/statuses/%31",
           AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
@@ -1108,7 +1092,7 @@ public class TestRestLiRouting
           null,
           ResourceMethod.GET,
           "get",
-          statusKey 
+          statusKey
         },
         { "/statuses/-1",
           AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
@@ -1116,7 +1100,7 @@ public class TestRestLiRouting
            null,
           ResourceMethod.GET,
           "get",
-          statusKey 
+          statusKey
         },
         { "/statuses/-1",
           AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
@@ -1124,7 +1108,7 @@ public class TestRestLiRouting
            null,
           ResourceMethod.GET,
           "get",
-          statusKey 
+          statusKey
         },
         { "/statuses",
           AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
@@ -1132,7 +1116,7 @@ public class TestRestLiRouting
           null,
           ResourceMethod.CREATE,
           "create",
-          new String[0] 
+          new String[0]
         },
         { "/statuses",
           AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
@@ -1140,7 +1124,7 @@ public class TestRestLiRouting
           null,
           ResourceMethod.CREATE,
           "create",
-          new String[0] 
+          new String[0]
         },
         { "/statuses",
           AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
@@ -1148,7 +1132,7 @@ public class TestRestLiRouting
           "CREATE",
           ResourceMethod.CREATE,
           "create",
-          new String[0] 
+          new String[0]
         },
         { "/statuses",
           AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
@@ -1156,7 +1140,7 @@ public class TestRestLiRouting
           "CREATE",
           ResourceMethod.CREATE,
           "create",
-          new String[0] 
+          new String[0]
         },
         { "/statuses/1",
           AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
@@ -1164,7 +1148,7 @@ public class TestRestLiRouting
           null,
           ResourceMethod.UPDATE,
           "update",
-          statusKey 
+          statusKey
         },
         { "/statuses/1",
           AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
@@ -1172,7 +1156,7 @@ public class TestRestLiRouting
           null,
           ResourceMethod.UPDATE,
           "update",
-          statusKey 
+          statusKey
         },
         { "/statuses/1",
           AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
@@ -1180,7 +1164,7 @@ public class TestRestLiRouting
           "UPDATE",
           ResourceMethod.UPDATE,
           "update",
-          statusKey 
+          statusKey
         },
         { "/statuses/1",
           AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
@@ -1188,7 +1172,7 @@ public class TestRestLiRouting
           "UPDATE",
           ResourceMethod.UPDATE,
           "update",
-          statusKey 
+          statusKey
         },
         { "/statuses/1",
           AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
@@ -1196,7 +1180,7 @@ public class TestRestLiRouting
           null,
           ResourceMethod.PARTIAL_UPDATE,
           "update",
-          statusKey 
+          statusKey
         },
         { "/statuses/1",
           AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
@@ -1204,7 +1188,7 @@ public class TestRestLiRouting
           null,
           ResourceMethod.PARTIAL_UPDATE,
           "update",
-          statusKey 
+          statusKey
         },
         { "/statuses/1",
           AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
@@ -1212,7 +1196,7 @@ public class TestRestLiRouting
           "PARTIAL_UPDATE",
           ResourceMethod.PARTIAL_UPDATE,
           "update",
-          statusKey 
+          statusKey
         },
         { "/statuses/1",
           AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
@@ -1220,7 +1204,7 @@ public class TestRestLiRouting
           "PARTIAL_UPDATE",
           ResourceMethod.PARTIAL_UPDATE,
           "update",
-          statusKey 
+          statusKey
         },
         { "/statuses/1",
           AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
@@ -1228,7 +1212,7 @@ public class TestRestLiRouting
           null,
           ResourceMethod.DELETE,
           "delete",
-          statusKey 
+          statusKey
         },
         { "/statuses/1",
           AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
@@ -1236,7 +1220,7 @@ public class TestRestLiRouting
           null,
           ResourceMethod.DELETE,
           "delete",
-          statusKey 
+          statusKey
         },
         { "/statuses/1",
           AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
@@ -1244,7 +1228,7 @@ public class TestRestLiRouting
           "DELETE",
           ResourceMethod.DELETE,
           "delete",
-          statusKey 
+          statusKey
         },
         { "/statuses/1",
           AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
@@ -1252,7 +1236,7 @@ public class TestRestLiRouting
           "DELETE",
           ResourceMethod.DELETE,
           "delete",
-          statusKey 
+          statusKey
         },
         { "/statuses?q=search",
           AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
@@ -1260,7 +1244,7 @@ public class TestRestLiRouting
           null,
           ResourceMethod.FINDER,
           "search",
-          new String[0] 
+          new String[0]
         },
         { "/statuses?q=search",
           AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
@@ -1268,7 +1252,7 @@ public class TestRestLiRouting
           null,
           ResourceMethod.FINDER,
           "search",
-          new String[0] 
+          new String[0]
         },
         { "/statuses?q=search",
           AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
@@ -1276,7 +1260,7 @@ public class TestRestLiRouting
           "FINDER",
           ResourceMethod.FINDER,
           "search",
-          new String[0] 
+          new String[0]
         },
         { "/statuses?q=search",
           AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
@@ -1284,7 +1268,7 @@ public class TestRestLiRouting
           "FINDER",
           ResourceMethod.FINDER,
           "search",
-          new String[0] 
+          new String[0]
         },
         { "/statuses?q=search&keywords=linkedin",
           AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
@@ -1292,7 +1276,7 @@ public class TestRestLiRouting
           null,
           ResourceMethod.FINDER,
           "search",
-          new String[0] 
+          new String[0]
         },
         { "/statuses?q=search&keywords=linkedin",
           AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
@@ -1300,7 +1284,7 @@ public class TestRestLiRouting
           null,
           ResourceMethod.FINDER,
           "search",
-          new String[0] 
+          new String[0]
         },
         { "/statuses?q=user_timeline",
           AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
@@ -1308,7 +1292,7 @@ public class TestRestLiRouting
           null,
           ResourceMethod.FINDER,
           "getUserTimeline",
-          new String[0] 
+          new String[0]
         },
         { "/statuses?q=user_timeline",
           AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
@@ -1316,7 +1300,7 @@ public class TestRestLiRouting
           null,
           ResourceMethod.FINDER,
           "getUserTimeline",
-          new String[0] 
+          new String[0]
         },
         { "/statuses?q=public_timeline",
           AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
@@ -1324,7 +1308,7 @@ public class TestRestLiRouting
           null,
           ResourceMethod.FINDER,
           "getPublicTimeline",
-          new String[0] 
+          new String[0]
         },
         { "/statuses?q=public_timeline",
           AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
@@ -1332,7 +1316,7 @@ public class TestRestLiRouting
           null,
           ResourceMethod.FINDER,
           "getPublicTimeline",
-          new String[0] 
+          new String[0]
         },
         { "/statuses",
           AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
@@ -1340,7 +1324,7 @@ public class TestRestLiRouting
           "BATCH_CREATE",
           ResourceMethod.BATCH_CREATE,
           "batchCreate",
-          new String[0] 
+          new String[0]
         },
         { "/statuses",
           AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
@@ -1348,7 +1332,7 @@ public class TestRestLiRouting
           "BATCH_CREATE",
           ResourceMethod.BATCH_CREATE,
           "batchCreate",
-          new String[0] 
+          new String[0]
         }
       };
   }
@@ -1583,7 +1567,7 @@ public class TestRestLiRouting
 
     checkResult(uri, version, httpMethod, restliMethod, method, StatusCollectionResource.class, methodName, false, pathKeys);
   }
-  
+
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingCollectionSubResource")
   public Object[][] routingCollectionSubResource()
   {
@@ -1677,7 +1661,7 @@ public class TestRestLiRouting
   public Object[][] routingAssociation()
   {
     String[] assocPathKeys = new String[] { "followerID", "followeeID" };
-    
+
     return new Object[][]
       {
         {
@@ -1973,7 +1957,7 @@ public class TestRestLiRouting
 
     checkResult(uri, version, httpMethod, restliMethod, method, DiscoveredItemsResource.class, methodName, false, hasKeys? new String[]{"discoveredItemId"} : new String[0]);
   }
-  
+
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingSimpleResource")
   public Object[][] routingSimpleResource() throws Exception
   {
@@ -2638,7 +2622,7 @@ public class TestRestLiRouting
     CompoundKey key2 = new CompoundKey();
     key2.append("foo", "2,1").append("bar", "2;2");
 
-    Set<CompoundKey> keys = new HashSet<CompoundKey>();
+    Set<CompoundKey> keys = new HashSet<>();
     keys.add(key1);
     keys.add(key2);
 
@@ -2703,10 +2687,12 @@ public class TestRestLiRouting
     _router = new RestLiRouter(pathRootResourceMap);
 
     RestRequest request = createRequest(uri, "POST", version);
-    RoutingResult result = _router.process(request, new RequestContext(), null);
-    assertNotNull(result);
-    assertEquals(result.getResourceMethod().getActionName(), "register");
-    assertEquals(result.getResourceMethod().getType(), ResourceMethod.ACTION);
+    ServerResourceContext context = new ResourceContextImpl(new PathKeysImpl(), request, new RequestContext());
+    ResourceMethodDescriptor method = _router.process(context);
+
+    assertNotNull(method);
+    assertEquals(method.getActionName(), "register");
+    assertEquals(method.getType(), ResourceMethod.ACTION);
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "actionNestedRouting")
@@ -2728,11 +2714,13 @@ public class TestRestLiRouting
     _router = new RestLiRouter(pathRootResourceMap);
 
     RestRequest request = createRequest(uri, "POST", version);
-    RoutingResult result = _router.process(request, new RequestContext(), null);
-    assertNotNull(result);
-    assertEquals(result.getResourceMethod().getActionName(), "replyToAll");
-    assertEquals(result.getResourceMethod().getType(), ResourceMethod.ACTION);
-    assertEquals(result.getContext().getPathKeys().get("statusID"), Long.valueOf(1));
+    ServerResourceContext context = new ResourceContextImpl(new PathKeysImpl(), request, new RequestContext());
+    ResourceMethodDescriptor method = _router.process(context);
+
+    assertNotNull(method);
+    assertEquals(method.getActionName(), "replyToAll");
+    assertEquals(method.getType(), ResourceMethod.ACTION);
+    assertEquals(context.getPathKeys().get("statusID"), Long.valueOf(1));
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "actionNestedSimpleRouting")
@@ -2754,12 +2742,14 @@ public class TestRestLiRouting
     _router = new RestLiRouter(pathRootResourceMap);
 
     RestRequest request = createRequest(uri, "POST", version);
-    RoutingResult result = _router.process(request, new RequestContext(), null);
-    assertNotNull(result);
-    assertEquals(result.getResourceMethod().getActionName(), "new_status_from_location");
-    assertEquals(result.getResourceMethod().getType(), ResourceMethod.ACTION);
-    assertEquals(result.getResourceMethod().getMethod().getParameterTypes(), new Class<?>[] { String.class });
-    assertEquals(result.getContext().getPathKeys().get("statusID"), Long.valueOf(1));
+    ServerResourceContext context = new ResourceContextImpl(new PathKeysImpl(), request, new RequestContext());
+    ResourceMethodDescriptor method = _router.process(context);
+
+    assertNotNull(method);
+    assertEquals(method.getActionName(), "new_status_from_location");
+    assertEquals(method.getType(), ResourceMethod.ACTION);
+    assertEquals(method.getMethod().getParameterTypes(), new Class<?>[] { String.class });
+    assertEquals(context.getPathKeys().get("statusID"), Long.valueOf(1));
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingErrors")
@@ -2958,7 +2948,7 @@ public class TestRestLiRouting
                            String methodName,
                            boolean hasBatchKeys,
                            String... expectedPathKeys)
-          throws URISyntaxException
+      throws URISyntaxException, RestLiSyntaxException
   {
     RestRequestBuilder builder = createRequestBuilder(uri, httpMethod, version);
     if (restliMethod != null)
@@ -2966,17 +2956,18 @@ public class TestRestLiRouting
       builder.setHeader("X-RestLi-Method", restliMethod);
     }
     RestRequest request = builder.build();
-    RoutingResult result = _router.process(request, new RequestContext(), null);
+    ServerResourceContext context = new ResourceContextImpl(new PathKeysImpl(), request, new RequestContext());
+    ResourceMethodDescriptor methodDescriptor = _router.process(context);
 
-    assertEquals(result.getResourceMethod().getType(), method);
-    assertEquals(result.getResourceMethod().getResourceModel().getResourceClass(), resourceClass);
-    assertEquals(result.getResourceMethod().getMethod().getName(), methodName);
+    assertEquals(methodDescriptor.getType(), method);
+    assertEquals(methodDescriptor.getResourceModel().getResourceClass(), resourceClass);
+    assertEquals(methodDescriptor.getMethod().getName(), methodName);
     // If hasBatchKeys, there are batch keys in the context, and if not, there are none.
-    assertEquals(hasBatchKeys, result.getContext().getPathKeys().getBatchIds() != null);
+    assertEquals(hasBatchKeys, context.getPathKeys().getBatchIds() != null);
 
     for (String pathKey : expectedPathKeys)
     {
-      assertNotNull(result.getContext().getPathKeys().get(pathKey));
+      assertNotNull(context.getPathKeys().get(pathKey));
     }
     if (method != null)
     {
@@ -2984,15 +2975,15 @@ public class TestRestLiRouting
       switch (method)
       {
         case ACTION:
-          expectedOperationName = "action:" + result.getResourceMethod().getActionName();
+          expectedOperationName = "action:" + methodDescriptor.getActionName();
           break;
         case FINDER:
-          expectedOperationName = "finder:" + result.getResourceMethod().getFinderName();
+          expectedOperationName = "finder:" + methodDescriptor.getFinderName();
           break;
         default:
           expectedOperationName = method.toString().toLowerCase();
       }
-      assertEquals(result.getContext().getRawRequestContext().getLocalAttr(R2Constants.OPERATION),
+      assertEquals(context.getRawRequestContext().getLocalAttr(R2Constants.OPERATION),
                    expectedOperationName);
     }
   }
@@ -3005,7 +2996,7 @@ public class TestRestLiRouting
                            String methodName,
                            boolean hasBatchKeys,
                            String... expectedPathKeys)
-      throws URISyntaxException
+      throws URISyntaxException, RestLiSyntaxException
   {
     checkResult(uri,
                 version,
@@ -3022,11 +3013,12 @@ public class TestRestLiRouting
                               ProtocolVersion version,
                               String httpMethod,
                               Set<?> expectedBatchKeys)
-      throws URISyntaxException
+      throws URISyntaxException, RestLiSyntaxException
   {
     RestRequest request = createRequest(uri, httpMethod, version);
-    RoutingResult result = _router.process(request, new RequestContext(), null);
-    Set<?> batchKeys = result.getContext().getPathKeys().getBatchIds();
+    ServerResourceContext context = new ResourceContextImpl(new PathKeysImpl(), request, new RequestContext());
+    _router.process(context);
+    Set<?> batchKeys = context.getPathKeys().getBatchIds();
     assertEquals(batchKeys, expectedBatchKeys);
   }
 
@@ -3034,7 +3026,8 @@ public class TestRestLiRouting
                                                 ProtocolVersion version,
                                                 String httpMethod,
                                                 String restliMethod,
-                                                HttpStatus status) throws URISyntaxException
+                                                HttpStatus status)
+      throws URISyntaxException
   {
     RestRequestBuilder builder = createRequestBuilder(uri, httpMethod, version);
     if (restliMethod != null)
@@ -3044,8 +3037,16 @@ public class TestRestLiRouting
     RestRequest request = builder.build();
     try
     {
-      RoutingResult r = _router.process(request, new RequestContext(), null);
-      fail("Expected RoutingException, got: " + r.toString());
+      try
+      {
+        ServerResourceContext context = new ResourceContextImpl(new PathKeysImpl(), request, new RequestContext());
+        ResourceMethodDescriptor method = _router.process(context);
+        fail("Expected RoutingException, got: " + method.toString());
+      }
+      catch (RestLiSyntaxException e)
+      {
+        throw new RoutingException(e.getMessage(), HttpStatus.S_400_BAD_REQUEST.getCode());
+      }
     }
     catch (RoutingException e)
     {
@@ -3085,14 +3086,14 @@ public class TestRestLiRouting
     _router = new RestLiRouter(pathRootResourceMap);
 
     RestRequest request;
-    RoutingResult result;
 
     // #1 simple GET
     request = createRequest(uri, "GET", version);
 
-    result = _router.process(request, new RequestContext(), null);
-    assertNotNull(result);
-    PathKeys keys = result.getContext().getPathKeys();
+    ServerResourceContext context = new ResourceContextImpl(new PathKeysImpl(), request, new RequestContext());
+    ResourceMethodDescriptor method = _router.process(context);
+    assertNotNull(method);
+    PathKeys keys = context.getPathKeys();
     assertEquals(keys.getAsString("testId"), "foo");
     assertEquals(keys.getAsString("subId"), "bar");
   }
@@ -3164,26 +3165,28 @@ public class TestRestLiRouting
 
     final RestRequest request = requestBuilder.build();
 
-    RoutingResult result = _router.process(request, new RequestContext(), requestAttachments);
-    assertNotNull(result);
+    ServerResourceContext context = new ResourceContextImpl(new PathKeysImpl(), request, new RequestContext());
+    context.setRequestAttachmentReader(requestAttachments);
+    ResourceMethodDescriptor method = _router.process(context);
 
-    final ServerResourceContext resourceContext = (ServerResourceContext)result.getContext();
+    assertNotNull(method);
+
     if (requestAttachments != null)
     {
-      Assert.assertEquals(resourceContext.getRequestAttachmentReader(), requestAttachments);
+      Assert.assertEquals(context.getRequestAttachmentReader(), requestAttachments);
     }
     else
     {
-      Assert.assertNull(resourceContext.getRequestAttachmentReader());
+      Assert.assertNull(context.getRequestAttachmentReader());
     }
 
     if (acceptHeader != null && acceptHeader.contains("multipart/related"))
     {
-      Assert.assertTrue(resourceContext.responseAttachmentsSupported());
+      Assert.assertTrue(context.responseAttachmentsSupported());
     }
     else
     {
-      Assert.assertFalse(resourceContext.responseAttachmentsSupported());
+      Assert.assertFalse(context.responseAttachmentsSupported());
     }
   }
 }

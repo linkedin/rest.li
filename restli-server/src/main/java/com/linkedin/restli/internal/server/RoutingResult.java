@@ -21,7 +21,7 @@ import com.linkedin.restli.server.ResourceContext;
 
 public class RoutingResult
 {
-  private final ResourceContext          _context;
+  private final ServerResourceContext          _context;
   private final ResourceMethodDescriptor _methodDescriptor;
 
   /**
@@ -30,13 +30,13 @@ public class RoutingResult
    * @param context {@link ResourceContext}
    * @param methodDescriptor {@link ResourceMethodDescriptor}
    */
-  public RoutingResult(ResourceContext context, ResourceMethodDescriptor methodDescriptor)
+  public RoutingResult(ServerResourceContext context, ResourceMethodDescriptor methodDescriptor)
   {
     _context = context;
     _methodDescriptor = methodDescriptor;
   }
 
-  public ResourceContext getContext()
+  public ServerResourceContext getContext()
   {
     return _context;
   }

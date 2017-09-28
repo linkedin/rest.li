@@ -80,10 +80,7 @@ public interface FilterRequestContext extends CustomRequestContext
    *
    * @param projectionMask Projection mask to use for root entity
    */
-  default void setProjectionMask(MaskTree projectionMask)
-  {
-    LOG.warn("This is a default no-op implementation. The specified projectionMask is ignored.");
-  }
+  void setProjectionMask(MaskTree projectionMask);
 
   /**
    * Get all query parameters from the request.

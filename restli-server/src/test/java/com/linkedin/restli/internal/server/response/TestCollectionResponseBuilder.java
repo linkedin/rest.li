@@ -31,10 +31,10 @@ import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.LinkArray;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.internal.server.RoutingResult;
+import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.server.CollectionResult;
 import com.linkedin.restli.server.ProjectionMode;
-import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
 
@@ -201,7 +201,7 @@ public class TestCollectionResponseBuilder
   {
     Map<String, String> headers = ResponseBuilderUtil.getHeaders();
 
-    ResourceContext mockContext =
+    ServerResourceContext mockContext =
         getMockResourceContext(dataMaskTree, metaDataMaskTree, pagingMaskTree, dataProjectionMode,
                                metadataProjectionMode);
     ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor();
@@ -244,7 +244,7 @@ public class TestCollectionResponseBuilder
       throws URISyntaxException
   {
     Map<String, String> headers = ResponseBuilderUtil.getHeaders();
-    ResourceContext mockContext = getMockResourceContext(null, null, null, null, null);
+    ServerResourceContext mockContext = getMockResourceContext(null, null, null, null, null);
     ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor();
     RoutingResult routingResult = new RoutingResult(mockContext, mockDescriptor);
     FinderResponseBuilder responseBuilder = new FinderResponseBuilder();
@@ -269,7 +269,7 @@ public class TestCollectionResponseBuilder
       MaskTree maskTree = new MaskTree();
       maskTree.addOperation(new PathSpec("fruitsField"), MaskOperation.POSITIVE_MASK_OP);
 
-      ResourceContext mockContext =
+      ServerResourceContext mockContext =
           getMockResourceContext(maskTree, null, null, ProjectionMode.AUTOMATIC, ProjectionMode.AUTOMATIC);
       RoutingResult routingResult = new RoutingResult(mockContext, getMockResourceMethodDescriptor());
 
@@ -288,17 +288,16 @@ public class TestCollectionResponseBuilder
   }
 
   @SuppressWarnings("deprecation")
-  private static ResourceContext getMockResourceContext(MaskTree dataMaskTree,
+  private static ServerResourceContext getMockResourceContext(MaskTree dataMaskTree,
                                                         MaskTree metadataMaskTree,
                                                         MaskTree pagingMaskTree,
                                                         ProjectionMode dataProjectionMode,
                                                         ProjectionMode metadataProjectionMode)
       throws URISyntaxException
   {
-    ResourceContext mockContext = EasyMock.createMock(ResourceContext.class);
+    ServerResourceContext mockContext = EasyMock.createMock(ServerResourceContext.class);
     EasyMock.expect(mockContext.getParameter(EasyMock.<String>anyObject())).andReturn(null).times(2);
     EasyMock.expect(mockContext.getRequestHeaders()).andReturn(ResponseBuilderUtil.getHeaders()).once();
-    EasyMock.expect(mockContext.getRawRequest()).andReturn(getRestRequest()).once();
 
     //Field Projection
     EasyMock.expect(mockContext.getProjectionMode()).andReturn(dataProjectionMode).times(generateTestList().size());

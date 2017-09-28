@@ -25,12 +25,12 @@ import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.test.MyComplexKey;
 import com.linkedin.restli.internal.server.RoutingResult;
+import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.internal.server.model.AnnotationSet;
 import com.linkedin.restli.internal.server.model.Parameter;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.server.Key;
-import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiRequestData;
 import com.linkedin.restli.server.RoutingException;
 
@@ -151,7 +151,7 @@ public class TestPatchArgumentBuilder
     {
       descriptor = RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor(model, 1, params);
     }
-    ResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(keyName, keyValue, null, true);
+    ServerResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(keyName, keyValue, null, true);
     RoutingResult routingResult;
     if (key != null)
     {
@@ -173,11 +173,11 @@ public class TestPatchArgumentBuilder
     }
 
     Assert.assertTrue(args[args.length - 1] instanceof PatchRequest);
-    Map<String, Object> aMap = new HashMap<String, Object>();
+    Map<String, Object> aMap = new HashMap<>();
     aMap.put("a", "someString");
-    Map<String, Object> setMap = new HashMap<String, Object>();
+    Map<String, Object> setMap = new HashMap<>();
     setMap.put("$set", new DataMap(aMap));
-    Map<String, Object> data = new HashMap<String, Object>();
+    Map<String, Object> data = new HashMap<>();
     data.put("patch", new DataMap(setMap));
     PatchRequest<MyComplexKey> patch = new PatchRequest<MyComplexKey>(new DataMap(data));
     Assert.assertEquals(args[args.length - 1], patch);

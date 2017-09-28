@@ -57,7 +57,6 @@ public class UnstructuredDataWriter
   {
     _outputStream = outputStream;
     _resourceContext = resourceContext;
-    _resourceContext.setUnstructuredDataWriter(this);
   }
 
   /**

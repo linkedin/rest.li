@@ -26,10 +26,10 @@ import com.linkedin.pegasus.generator.examples.Foo;
 import com.linkedin.pegasus.generator.examples.Fruits;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.internal.server.RoutingResult;
+import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.server.GetResult;
 import com.linkedin.restli.server.ProjectionMode;
-import com.linkedin.restli.server.ResourceContext;
 
 import com.linkedin.restli.server.RestLiResponseData;
 import java.util.Collections;
@@ -60,22 +60,22 @@ public class TestGetResponseBuilder
         {
             // no projections with null projection masks and auto projection mode
             {getRecord(), HttpStatus.S_200_OK, null, auto},
-            {new GetResult<Foo>(getRecord(), HttpStatus.S_207_MULTI_STATUS),
+            {new GetResult<>(getRecord(), HttpStatus.S_207_MULTI_STATUS),
                 HttpStatus.S_207_MULTI_STATUS, null, auto},
 
             // no projections with null projection masks and manual projection mode
             {getRecord(), HttpStatus.S_200_OK, null, manual},
-            {new GetResult<Foo>(getRecord(), HttpStatus.S_207_MULTI_STATUS),
+            {new GetResult<>(getRecord(), HttpStatus.S_207_MULTI_STATUS),
                 HttpStatus.S_207_MULTI_STATUS, null, manual},
 
             // no projections with non-null projection masks and manual projection mode
             {getRecord(), HttpStatus.S_200_OK, maskTree, manual},
-            {new GetResult<Foo>(getRecord(), HttpStatus.S_207_MULTI_STATUS),
+            {new GetResult<>(getRecord(), HttpStatus.S_207_MULTI_STATUS),
                 HttpStatus.S_207_MULTI_STATUS, maskTree, manual},
 
             // projections with non-null projection masks and auto projection mode
             {getRecord(), HttpStatus.S_200_OK, maskTree, auto},
-            {new GetResult<Foo>(getRecord(), HttpStatus.S_207_MULTI_STATUS),
+            {new GetResult<>(getRecord(), HttpStatus.S_207_MULTI_STATUS),
                 HttpStatus.S_207_MULTI_STATUS, maskTree, auto}
         };
   }
@@ -84,7 +84,7 @@ public class TestGetResponseBuilder
   public void testBuilder(Object record, HttpStatus expectedHttpStatus, MaskTree maskTree, ProjectionMode projectionMode)
   {
     Map<String, String> headers = ResponseBuilderUtil.getHeaders();
-    ResourceContext mockContext = getMockResourceContext(maskTree, projectionMode);
+    ServerResourceContext mockContext = getMockResourceContext(maskTree, projectionMode);
     ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor();
 
     RoutingResult routingResult = new RoutingResult(mockContext, mockDescriptor);
@@ -118,7 +118,7 @@ public class TestGetResponseBuilder
     MaskTree maskTree = new MaskTree();
     maskTree.addOperation(new PathSpec("fruitsField"), MaskOperation.POSITIVE_MASK_OP);
 
-    ResourceContext mockContext = getMockResourceContext(maskTree, ProjectionMode.AUTOMATIC);
+    ServerResourceContext mockContext = getMockResourceContext(maskTree, ProjectionMode.AUTOMATIC);
     RoutingResult routingResult = new RoutingResult(mockContext, getMockResourceMethodDescriptor());
 
     Foo value = new Foo().setStringField("value").setFruitsField(Fruits.APPLE);
@@ -142,9 +142,9 @@ public class TestGetResponseBuilder
     return mockDescriptor;
   }
 
-  private static ResourceContext getMockResourceContext(MaskTree maskTree, ProjectionMode projectionMode)
+  private static ServerResourceContext getMockResourceContext(MaskTree maskTree, ProjectionMode projectionMode)
   {
-    ResourceContext mockContext = EasyMock.createMock(ResourceContext.class);
+    ServerResourceContext mockContext = EasyMock.createMock(ServerResourceContext.class);
     EasyMock.expect(mockContext.getProjectionMode()).andReturn(projectionMode).once();
     EasyMock.expect(mockContext.getProjectionMask()).andReturn(maskTree).once();
     EasyMock.replay(mockContext);

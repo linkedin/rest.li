@@ -1,6 +1,13 @@
-18.0.9
+19.0.1
 ------
 
+
+19.0.0
+------
+(RB=1141049)
+Refactoring changes:
+ - Route resource request before adapting StreamReqeust to RestRequest.
+ - Simplified callbacks that passe Rest.li attachment and ParSeq trace.
 
 18.0.8
 ------

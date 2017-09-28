@@ -27,7 +27,6 @@ import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ProtocolVersion;
-import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.common.test.MyComplexKey;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.server.RoutingResult;
@@ -38,7 +37,6 @@ import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.server.BatchPatchRequest;
 import com.linkedin.restli.server.Key;
-import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiRequestData;
 import com.linkedin.restli.server.RoutingException;
 
@@ -70,21 +68,21 @@ public class TestBatchPatchArgumentBuilder
   @DataProvider(name = "argumentData")
   private Object[][] argumentData()
   {
-    Map<String, Object> aMap1 = new HashMap<String, Object>();
+    Map<String, Object> aMap1 = new HashMap<>();
     aMap1.put("a", "someString");
-    Map<String, Object> setMap1 = new HashMap<String, Object>();
+    Map<String, Object> setMap1 = new HashMap<>();
     setMap1.put("$set", new DataMap(aMap1));
-    Map<String, Object> patchMap1 = new HashMap<String, Object>();
+    Map<String, Object> patchMap1 = new HashMap<>();
     patchMap1.put("patch", new DataMap(setMap1));
-    PatchRequest<MyComplexKey> patch1 = new PatchRequest<MyComplexKey>(new DataMap(patchMap1));
+    PatchRequest<MyComplexKey> patch1 = new PatchRequest<>(new DataMap(patchMap1));
 
-    Map<String, Object> aMap2 = new HashMap<String, Object>();
+    Map<String, Object> aMap2 = new HashMap<>();
     aMap2.put("a", "someOtherString");
-    Map<String, Object> setMap2 = new HashMap<String, Object>();
+    Map<String, Object> setMap2 = new HashMap<>();
     setMap2.put("$set", new DataMap(aMap2));
-    Map<String, Object> data2 = new HashMap<String, Object>();
+    Map<String, Object> data2 = new HashMap<>();
     data2.put("patch", new DataMap(setMap2));
-    PatchRequest<MyComplexKey> patch2 = new PatchRequest<MyComplexKey>(new DataMap(data2));
+    PatchRequest<MyComplexKey> patch2 = new PatchRequest<>(new DataMap(data2));
 
     @SuppressWarnings("rawtypes")
     PatchRequest[] patches = new PatchRequest[]{patch1, patch2};
@@ -164,7 +162,7 @@ public class TestBatchPatchArgumentBuilder
     ResourceModel model = RestLiArgumentBuilderTestHelper.getMockResourceModel(MyComplexKey.class, primaryKey, associationKeys, batchKeys);
 
     @SuppressWarnings("rawtypes")
-    Parameter<BatchPatchRequest> param = new Parameter<BatchPatchRequest>(
+    Parameter<BatchPatchRequest> param = new Parameter<>(
       "",
       BatchPatchRequest.class,
       null,
@@ -175,7 +173,7 @@ public class TestBatchPatchArgumentBuilder
       new AnnotationSet(new Annotation[]{}));
     ResourceMethodDescriptor descriptor = RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor(
         model, 2, Collections.singletonList(param));
-    ResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(batchKeys, true, false);
+    ServerResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(batchKeys, true, false);
     RoutingResult routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(descriptor, context);
 
     RestLiArgumentBuilder argumentBuilder = new BatchPatchArgumentBuilder();
@@ -329,7 +327,7 @@ public class TestBatchPatchArgumentBuilder
     RestRequest request = RestLiArgumentBuilderTestHelper.getMockRequest(requestEntity, version);
     ResourceModel model = RestLiArgumentBuilderTestHelper.getMockResourceModel(MyComplexKey.class, primaryKey, associationKeys, batchKeys);
     ResourceMethodDescriptor descriptor = RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor(model);
-    ResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(batchKeys, false, false);
+    ServerResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(batchKeys, false, false);
     RoutingResult routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(descriptor, context);
 
     RestLiArgumentBuilder argumentBuilder = new BatchPatchArgumentBuilder();

@@ -19,7 +19,6 @@ package com.linkedin.restli.server;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.data.ByteString;
-import com.linkedin.java.util.concurrent.Flow;
 import com.linkedin.multipart.MultiPartMIMEReader;
 import com.linkedin.multipart.MultiPartMIMEReaderCallback;
 import com.linkedin.multipart.MultiPartMIMEStreamResponseFactory;
@@ -39,8 +38,6 @@ import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.message.stream.StreamResponseBuilder;
 import com.linkedin.r2.message.stream.entitystream.ByteStringWriter;
 import com.linkedin.r2.message.stream.entitystream.EntityStream;
-import com.linkedin.r2.message.stream.entitystream.EntityStreams;
-import com.linkedin.r2.message.stream.entitystream.Writer;
 import com.linkedin.r2.transport.common.RestRequestHandler;
 import com.linkedin.r2.transport.common.StreamRequestHandler;
 import com.linkedin.restli.common.ErrorResponse;
@@ -49,12 +46,12 @@ import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
 import com.linkedin.restli.common.attachments.RestLiAttachmentReaderException;
-import com.linkedin.restli.common.streaming.FlowBridge;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.AttachmentUtils;
 import com.linkedin.restli.internal.common.HeaderUtil;
 import com.linkedin.restli.internal.common.ProtocolVersionUtil;
-import com.linkedin.restli.internal.server.RestLiInternalException;
+import com.linkedin.restli.internal.server.PathKeysImpl;
+import com.linkedin.restli.internal.server.ResourceContextImpl;
 import com.linkedin.restli.internal.server.RestLiMethodInvoker;
 import com.linkedin.restli.internal.server.RestLiRouter;
 import com.linkedin.restli.internal.server.RoutingResult;
@@ -63,7 +60,6 @@ import com.linkedin.restli.internal.server.filter.FilterChainCallback;
 import com.linkedin.restli.internal.server.filter.FilterChainCallbackImpl;
 import com.linkedin.restli.internal.server.filter.FilterChainDispatcher;
 import com.linkedin.restli.internal.server.filter.FilterChainDispatcherImpl;
-import com.linkedin.restli.internal.server.filter.FilterRequestContextInternal;
 import com.linkedin.restli.internal.server.filter.FilterRequestContextInternalImpl;
 import com.linkedin.restli.internal.server.filter.RestLiFilterChain;
 import com.linkedin.restli.internal.server.filter.RestLiFilterResponseContextFactory;
@@ -77,17 +73,17 @@ import com.linkedin.restli.internal.server.response.ErrorResponseBuilder;
 import com.linkedin.restli.internal.server.response.PartialRestResponse;
 import com.linkedin.restli.internal.server.response.RestLiResponseHandler;
 import com.linkedin.restli.internal.server.util.MIMEParse;
+import com.linkedin.restli.internal.server.util.RestLiSyntaxException;
 import com.linkedin.restli.internal.server.util.RestUtils;
 import com.linkedin.restli.server.filter.Filter;
+import com.linkedin.restli.server.filter.FilterRequestContext;
 import com.linkedin.restli.server.multiplexer.MultiplexedRequestHandler;
 import com.linkedin.restli.server.multiplexer.MultiplexedRequestHandlerImpl;
 import com.linkedin.restli.server.resources.PrototypeResourceFactory;
 import com.linkedin.restli.server.resources.ResourceFactory;
 
-import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -246,11 +242,7 @@ public class RestLiServer implements RestRequestHandler, StreamRequestHandler
       }
     }
 
-    handleResourceRequest(request,
-        requestContext,
-        new RestResponseExecutionCallbackAdapter(callback),
-        null,
-        false);
+    handleResourceRequest(request, requestContext, callback);
   }
 
   private boolean isSupportedProtocolVersion(ProtocolVersion clientProtocolVersion,
@@ -276,7 +268,7 @@ public class RestLiServer implements RestRequestHandler, StreamRequestHandler
    *           if the protocol version used by the client is not valid based on the rules described
    *           above
    */
-  private void ensureRequestUsesValidRestliProtocol(final RestRequest request) throws RestLiServiceException
+  private void ensureRequestUsesValidRestliProtocol(final Request request) throws RestLiServiceException
   {
     ProtocolVersion clientProtocolVersion = ProtocolVersionUtil.extractProtocolVersion(request.getHeaders());
     ProtocolVersion lowerBound = AllProtocolVersions.OLDEST_SUPPORTED_PROTOCOL_VERSION;
@@ -288,72 +280,74 @@ public class RestLiServer implements RestRequestHandler, StreamRequestHandler
     }
   }
 
-  void handleResourceRequest(final RestRequest request,
-      final RequestContext requestContext,
-      final RequestExecutionCallback<RestResponse> callback,
-      final RestLiAttachmentReader attachmentReader,
-      final boolean isDebugMode)
+  private RoutingResult getRoutingResult(Request request, RequestContext requestContext)
   {
+    ensureRequestUsesValidRestliProtocol(request);
 
     try
     {
-      ensureRequestUsesValidRestliProtocol(request);
+      ServerResourceContext context = new ResourceContextImpl(new PathKeysImpl(), request, requestContext);
+      final ResourceMethodDescriptor method = _router.process(context);
+
+      return new RoutingResult(context, method);
     }
-    catch (RestLiServiceException e)
+    catch (RestLiSyntaxException e)
     {
-      respondWithPreRoutingError(e, request, attachmentReader, callback);
-      return;
+      throw new RoutingException(e.getMessage(), HttpStatus.S_400_BAD_REQUEST.getCode());
     }
-    final RoutingResult method;
+  }
+
+  void handleResourceRequest(RestRequest request, RequestContext requestContext, Callback<RestResponse> callback)
+  {
+    RoutingResult routingResult;
     try
     {
-      method = _router.process(request, requestContext, attachmentReader);
+      routingResult = getRoutingResult(request, requestContext);
     }
     catch (Exception e)
     {
-      respondWithPreRoutingError(e, request, attachmentReader, callback);
+      respondWithPreRoutingError(e, request, callback);
       return;
     }
 
-    RequestExecutionReportBuilder requestExecutionReportBuilder = null;
-    if (isDebugMode)
-    {
-      requestExecutionReportBuilder = new RequestExecutionReportBuilder();
-    }
+    handleRoutedResourceRequest(request, routingResult, callback);
+  }
 
-    final FilterRequestContextInternal filterContext =
-        new FilterRequestContextInternalImpl((ServerResourceContext) method.getContext(), method.getResourceMethod());
+  private void handleRoutedResourceRequest(final RestRequest request, RoutingResult routingResult, final Callback<RestResponse> callback)
+  {
+    ServerResourceContext context = routingResult.getContext();
+    ResourceMethodDescriptor method = routingResult.getResourceMethod();
 
+    FilterRequestContext filterContext;
     RestLiArgumentBuilder argumentBuilder;
     try
     {
       RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(),
                                                                _customMimeTypesSupported,
-                                                               (ServerResourceContext)method.getContext());
-      argumentBuilder = buildRestLiArgumentBuilder(method, _errorResponseBuilder);
-      filterContext.setRequestData(argumentBuilder.extractRequestData(method, request));
+                                                               context);
+      argumentBuilder = lookupArgumentBuilder(method, _errorResponseBuilder);
+      RestLiRequestData requestData = argumentBuilder.extractRequestData(routingResult, request);
+      filterContext = new FilterRequestContextInternalImpl(context, method, requestData);
     }
     catch (Exception e)
     {
       // would not trigger response filters because request filters haven't run yet
-      callback.onError(e, requestExecutionReportBuilder == null ? null : requestExecutionReportBuilder.build(),
-                              ((ServerResourceContext)method.getContext()).getRequestAttachmentReader(), null);
+      drainRequestAttachments(context.getRequestAttachmentReader());
+      drainResponseAttachments(context.getResponseAttachments(), e);
+      callback.onError(e);
       return;
     }
 
     RestLiFilterResponseContextFactory filterResponseContextFactory =
-        new RestLiFilterResponseContextFactory(request, method, _responseHandler);
+        new RestLiFilterResponseContextFactory(request, routingResult, _responseHandler);
 
-    FilterChainCallback filterChainCallback = new FilterChainCallbackImpl(method,
-        requestExecutionReportBuilder,
-        attachmentReader,
+    FilterChainCallback filterChainCallback = new FilterChainCallbackImpl(routingResult,
         _responseHandler,
-        callback,
+        new AttachmentsDrainingCallback(context, callback),
         _errorResponseBuilder);
-    FilterChainDispatcher filterChainDispatcher = new FilterChainDispatcherImpl(method,
+    FilterChainDispatcher filterChainDispatcher = new FilterChainDispatcherImpl(routingResult,
         _methodInvoker,
-        argumentBuilder,
-        requestExecutionReportBuilder);
+        argumentBuilder);
 
     RestLiFilterChain filterChain = new RestLiFilterChain(_filters, filterChainDispatcher, filterChainCallback);
 
@@ -361,9 +355,20 @@ public class RestLiServer implements RestRequestHandler, StreamRequestHandler
   }
 
   private void respondWithPreRoutingError(Throwable throwable,
-                                          RestRequest request,
-                                          RestLiAttachmentReader attachmentReader,
-                                          RequestExecutionCallback<RestResponse> callback)
+      RestRequest request,
+      Callback<RestResponse> callback)
+  {
+    callback.onError(buildPreRoutingError(throwable, request));
+  }
+
+  private void respondWithPreRoutingError(Throwable throwable,
+      StreamRequest request,
+      Callback<StreamResponse> callback)
+  {
+    callback.onError(Messages.toStreamException(buildPreRoutingError(throwable, request)));
+  }
+
+  private RestException buildPreRoutingError(Throwable throwable, Request request)
   {
     Map<String, String> requestHeaders = request.getHeaders();
     Map<String, String> headers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
@@ -379,59 +384,26 @@ public class RestLiServer implements RestRequestHandler, StreamRequestHandler
         .headers(headers)
         .cookies(Collections.emptyList())
         .build();
-    RestException restException = _responseHandler.buildRestException(throwable, partialRestResponse);
-    callback.onError(restException, createEmptyExecutionReport(), attachmentReader, null);
+    return _responseHandler.buildRestException(throwable, partialRestResponse);
   }
 
   /**
    * Builder for building a {@link RestLiArgumentBuilder}
    *
-   * @param method the REST method
+   * @param method the resource method
    * @param errorResponseBuilder the {@link ErrorResponseBuilder}
    * @return a {@link RestLiArgumentBuilder}
    */
-  private RestLiArgumentBuilder buildRestLiArgumentBuilder(RoutingResult method,
-                                                           ErrorResponseBuilder errorResponseBuilder)
+  private RestLiArgumentBuilder lookupArgumentBuilder(ResourceMethodDescriptor method,
+      ErrorResponseBuilder errorResponseBuilder)
   {
-    ResourceMethodDescriptor resourceMethodDescriptor = method.getResourceMethod();
-
-    RestLiArgumentBuilder adapter = new MethodAdapterRegistry(errorResponseBuilder)
-        .getArgumentBuilder(resourceMethodDescriptor.getType());
-    if (adapter == null)
+    RestLiArgumentBuilder argumentBuilder = new MethodAdapterRegistry(errorResponseBuilder)
+        .getArgumentBuilder(method.getType());
+    if (argumentBuilder == null)
     {
-      throw new IllegalArgumentException("Unsupported method type: " + resourceMethodDescriptor.getType());
+      throw new IllegalArgumentException("Unsupported method type: " + method.getType());
     }
-    return adapter;
-  }
-
-  private static RequestExecutionReport createEmptyExecutionReport()
-  {
-    return new RequestExecutionReportBuilder().build();
-  }
-
-  private class RestResponseExecutionCallbackAdapter implements RequestExecutionCallback<RestResponse>
-  {
-    private final Callback<RestResponse> _wrappedCallback;
-
-    public RestResponseExecutionCallbackAdapter(Callback<RestResponse> wrappedCallback)
-    {
-      _wrappedCallback = wrappedCallback;
-    }
-
-    @Override
-    public void onError(final Throwable e, final RequestExecutionReport executionReport,
-                        final RestLiAttachmentReader requestAttachmentReader,
-                        final RestLiResponseAttachments responseAttachments)
-    {
-      _wrappedCallback.onError(e);
-    }
-
-    @Override
-    public void onSuccess(final RestResponse result, final RequestExecutionReport executionReport,
-                          final RestLiResponseAttachments responseAttachments)
-    {
-      _wrappedCallback.onSuccess(result);
-    }
+    return argumentBuilder;
   }
 
   /**
@@ -451,17 +423,10 @@ public class RestLiServer implements RestRequestHandler, StreamRequestHandler
     }
   }
 
-  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  //Streaming related functionality defined here.
-  //In the future we will deprecate and remove RestRequest/RestResponse. Until then we need to be minimally invasive
-  //while still offering existing functionality.
-
   private void doHandleStreamRequest(final StreamRequest request,
       final RequestContext requestContext,
       final Callback<StreamResponse> callback)
   {
-    //Eventually - when RestRequest is removed, we will migrate all of these code paths to StreamRequest.
-
     for (RequestHandler handler : _requestHandlers)
     {
       if (handler.shouldHandle(request))
@@ -471,11 +436,18 @@ public class RestLiServer implements RestRequestHandler, StreamRequestHandler
       }
     }
 
+    handleResourceRequest(request, requestContext, callback);
+  }
+
+  private void handleResourceRequest(StreamRequest request,
+      RequestContext requestContext,
+      Callback<StreamResponse> callback)
+  {
     //At this point we need to check the content-type to understand how we should handle the request.
     String header = request.getHeader(RestConstants.HEADER_CONTENT_TYPE);
     if (header != null)
     {
-      ContentType contentType = null;
+      ContentType contentType;
       try
       {
         contentType = new ContentType(header);
@@ -483,7 +455,7 @@ public class RestLiServer implements RestRequestHandler, StreamRequestHandler
       catch (ParseException e)
       {
         callback.onError(Messages.toStreamException(RestException.forError(400,
-                                                                           "Unable to parse Content-Type: " + header)));
+            "Unable to parse Content-Type: " + header)));
         return;
       }
 
@@ -492,8 +464,17 @@ public class RestLiServer implements RestRequestHandler, StreamRequestHandler
         //We need to reconstruct a RestRequest that has the first part of the multipart/related payload as the
         //traditional rest.li payload of a RestRequest.
         final MultiPartMIMEReader multiPartMIMEReader = MultiPartMIMEReader.createAndAcquireStream(request);
-        final TopLevelReaderCallback firstPartReader =
-            new TopLevelReaderCallback(requestContext, callback, multiPartMIMEReader, request);
+        RoutingResult routingResult;
+        try
+        {
+          routingResult = getRoutingResult(request, requestContext);
+        }
+        catch (Exception e)
+        {
+          respondWithPreRoutingError(e, request, callback);
+          return;
+        }
+        final TopLevelReaderCallback firstPartReader = new TopLevelReaderCallback(routingResult, callback, multiPartMIMEReader, request);
         multiPartMIMEReader.registerReaderCallback(firstPartReader);
         return;
       }
@@ -511,38 +492,47 @@ public class RestLiServer implements RestRequestHandler, StreamRequestHandler
       }
 
       @Override
-      public void onSuccess(RestRequest result)
+      public void onSuccess(RestRequest restRequest)
       {
+        RoutingResult routingResult;
+        try
+        {
+          routingResult = getRoutingResult(request, requestContext);
+        }
+        catch (Exception e)
+        {
+          respondWithPreRoutingError(e, restRequest, Messages.toRestCallback(callback));
+          return;
+        }
+
         //This callback is invoked once the incoming StreamRequest is converted into a RestRequest. We can now
         //move forward with this request.
         //It is important to note that the server's response may include attachments so we factor that into
         //consideration upon completion of this request.
-        final StreamResponseCallbackAdaptor streamResponseCallbackAdaptor = new StreamResponseCallbackAdaptor(callback);
+        final StreamResponseCallbackAdaptor streamResponseCallbackAdaptor = new StreamResponseCallbackAdaptor(callback, routingResult.getContext());
 
-        // Debug request should have already been handled by one of the request handlers.
-        handleResourceRequest(result, requestContext, streamResponseCallbackAdaptor, null, false);
+        handleRoutedResourceRequest(restRequest, routingResult, streamResponseCallbackAdaptor);
       }
     });
   }
 
   private class TopLevelReaderCallback implements MultiPartMIMEReaderCallback
   {
+    private final RoutingResult _routingResult;
     private final RestRequestBuilder _restRequestBuilder;
     private volatile ByteString _requestPayload = null;
-    private final RequestContext _requestContext;
-    private final Callback<StreamResponse> _streamResponseCallback;
     private final MultiPartMIMEReader _multiPartMIMEReader;
-    private final StreamRequest _streamRequest;
+    private final Callback<StreamResponse> _streamResponseCallback;
 
-    private TopLevelReaderCallback(final RequestContext requestContext,
-                                   final Callback<StreamResponse> streamResponseCallback, final MultiPartMIMEReader multiPartMIMEReader,
-                                   final StreamRequest streamRequest)
+    private TopLevelReaderCallback(RoutingResult routingResult,
+        final Callback<StreamResponse> streamResponseCallback,
+        final MultiPartMIMEReader multiPartMIMEReader,
+        final StreamRequest streamRequest)
     {
+      _routingResult = routingResult;
       _restRequestBuilder = new RestRequestBuilder(streamRequest);
-      _requestContext = requestContext;
       _streamResponseCallback = streamResponseCallback;
       _multiPartMIMEReader = multiPartMIMEReader;
-      _streamRequest = streamRequest;
     }
 
     private void setRequestPayload(final ByteString requestPayload)
@@ -583,7 +573,7 @@ public class RestLiServer implements RestRequestHandler, StreamRequestHandler
         if (contentType == null)
         {
           _streamResponseCallback.onError(Messages.toStreamException(RestException.forError(415,
-                                                                                            "Unknown Content-Type for first part of multipart/related payload: " + contentType.toString())));
+                                                                                            "Unknown Content-Type for first part of multipart/related payload: " + contentTypeString)));
           return;
         }
 
@@ -603,10 +593,13 @@ public class RestLiServer implements RestRequestHandler, StreamRequestHandler
         //callback will be invoked on onDrainComplete().
 
         _restRequestBuilder.setEntity(_requestPayload);
+        ServerResourceContext context = _routingResult.getContext();
+        context.setRequestAttachmentReader(new RestLiAttachmentReader(_multiPartMIMEReader));
 
         // Debug request should have already been handled and attachment is not supported.
-        handleResourceRequest(_restRequestBuilder.build(), _requestContext, new StreamResponseCallbackAdaptor(_streamResponseCallback),
-            new RestLiAttachmentReader(_multiPartMIMEReader), false);
+        handleRoutedResourceRequest(_restRequestBuilder.build(),
+            _routingResult,
+            new StreamResponseCallbackAdaptor(_streamResponseCallback, context));
       }
     }
 
@@ -638,8 +631,9 @@ public class RestLiServer implements RestRequestHandler, StreamRequestHandler
       _restRequestBuilder.setEntity(_requestPayload);
       //We have no attachments so we pass null for the reader.
       // Debug request should have already handled by one of the request handlers.
-      handleResourceRequest(_restRequestBuilder.build(), _requestContext,
-          new StreamResponseCallbackAdaptor(_streamResponseCallback), null, false);
+      handleRoutedResourceRequest(_restRequestBuilder.build(),
+          _routingResult,
+          new StreamResponseCallbackAdaptor(_streamResponseCallback, _routingResult.getContext()));
     }
 
     @Override
@@ -674,8 +668,7 @@ public class RestLiServer implements RestRequestHandler, StreamRequestHandler
     private final MultiPartMIMEReader.SinglePartMIMEReader _singlePartMIMEReader;
     private final ByteString.Builder _builder = new ByteString.Builder();
 
-    public FirstPartReaderCallback(
-        final TopLevelReaderCallback topLevelReaderCallback,
+    FirstPartReaderCallback(final TopLevelReaderCallback topLevelReaderCallback,
         final MultiPartMIMEReader.SinglePartMIMEReader singlePartMIMEReader)
     {
       _topLevelReaderCallback = topLevelReaderCallback;
@@ -710,19 +703,20 @@ public class RestLiServer implements RestRequestHandler, StreamRequestHandler
     }
   }
 
-  private class StreamResponseCallbackAdaptor implements RequestExecutionCallback<RestResponse>
+  private class StreamResponseCallbackAdaptor implements Callback<RestResponse>
   {
-    private final Callback<StreamResponse> _streamResponseCallback;
+    private final Callback<StreamResponse> _callback;
+    private final ServerResourceContext _context;
 
-    private StreamResponseCallbackAdaptor(final Callback<StreamResponse> streamResponseCallback)
+    private StreamResponseCallbackAdaptor(final Callback<StreamResponse> callback,
+        ServerResourceContext context)
     {
-      _streamResponseCallback = streamResponseCallback;
+      _callback = callback;
+      _context = context;
     }
 
     @Override
-    public void onError(final Throwable e, final RequestExecutionReport executionReport,
-                        final RestLiAttachmentReader requestAttachmentReader,
-                        final RestLiResponseAttachments responseAttachments)
+    public void onError(final Throwable e)
     {
       //Due to the exception we have to fully drain the request attachment and response attachments (if applicable).
       //This is necessary due to the following reasons:
@@ -737,8 +731,107 @@ public class RestLiServer implements RestRequestHandler, StreamRequestHandler
       //or there is an exception in the framework when sending the response back (i.e response filters). In these cases
       //we must drain all these attachments because some of these attachments could potentially be chained from other servers,
       //thereby hogging resources until timeouts occur.
+      drainRequestAttachments(_context.getRequestAttachmentReader());
 
-      if (requestAttachmentReader != null && !requestAttachmentReader.haveAllAttachmentsFinished())
+      //Drop all attachments to send back on the ground as well.
+      drainResponseAttachments(_context.getResponseAttachments(), e);
+
+      //At this point, 'e' must be a RestException. It's a bug in the rest.li framework if this is not the case; at which
+      //point a 500 will be returned.
+      _callback.onError(Messages.toStreamException((RestException)e));
+    }
+
+    @Override
+    public void onSuccess(final RestResponse result)
+    {
+      RestLiResponseAttachments responseAttachments = _context.getResponseAttachments();
+      EntityStream entityStream = _context.getEntityStream();
+      if (entityStream != null)
+      {
+        /* This is a unstructured data response */
+
+        // Content-Type is required
+        if (result.getHeaders().get(RestConstants.HEADER_CONTENT_TYPE) == null)
+        {
+          _callback.onError(new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
+              "Content-Type is missing."));
+          return;
+        }
+
+        StreamResponseBuilder builder = new StreamResponseBuilder();
+        builder.setCookies(result.getCookies());
+        builder.setStatus(result.getStatus());
+        builder.setHeaders(result.getHeaders());
+        StreamResponse response = builder.build(entityStream);
+
+        _callback.onSuccess(response);
+      }
+      else if (responseAttachments != null && responseAttachments.getMultiPartMimeWriterBuilder().getCurrentSize() > 0)
+      {
+        /* This is a writer response as attachments */
+
+        //Construct the StreamResponse and invoke the callback. The RestResponse entity should be the first part.
+        //There may potentially be attachments included in the response. Note that unlike the client side request builders,
+        //here it is possible to have a non-null attachment list with 0 attachments due to the way the builder in
+        //RestLiResponseAttachments works. Therefore we have to make sure its a non zero size as well.
+        final ByteStringWriter firstPartWriter = new ByteStringWriter(result.getEntity());
+        final MultiPartMIMEWriter multiPartMIMEWriter = AttachmentUtils.createMultiPartMIMEWriter(firstPartWriter,
+            result.getHeader(RestConstants.HEADER_CONTENT_TYPE),
+            responseAttachments.getMultiPartMimeWriterBuilder());
+
+        //Ensure that any headers or cookies from the RestResponse make into the outgoing StreamResponse. The exception
+        //of course being the Content-Type header which will be overridden by MultiPartMIMEStreamResponseFactory.
+        final StreamResponse streamResponse = MultiPartMIMEStreamResponseFactory.generateMultiPartMIMEStreamResponse(
+          AttachmentUtils.RESTLI_MULTIPART_SUBTYPE,
+          multiPartMIMEWriter,
+          Collections.emptyMap(),
+          result.getHeaders(),
+          result.getStatus(),
+          result.getCookies());
+        _callback.onSuccess(streamResponse);
+      }
+      else
+      {
+        _callback.onSuccess(Messages.toStreamResponse(result));
+      }
+    }
+  }
+
+  private static class AttachmentsDrainingCallback implements Callback<RestResponse>
+  {
+    private final ServerResourceContext _context;
+    private final Callback<RestResponse> _callback;
+
+    private AttachmentsDrainingCallback(ServerResourceContext context, Callback<RestResponse> callback)
+    {
+      _context = context;
+      _callback = callback;
+    }
+
+    @Override
+    public void onError(Throwable e)
+    {
+      drainRequestAttachments(_context.getRequestAttachmentReader());
+      drainResponseAttachments(_context.getResponseAttachments(), e);
+      _callback.onError(e);
+    }
+
+    @Override
+    public void onSuccess(RestResponse result)
+    {
+      _callback.onSuccess(result);
+    }
+  }
+
+  static void drainRequestAttachments(RestLiAttachmentReader requestAttachmentReader)
+  {
+    //Since this is eventually sent back as a success, we need to
+    //drain any request attachments as well as any response attachments.
+    //Normally this is done by StreamResponseCallbackAdaptor's onError, but
+    //this is sent back as a success so we handle it here instead.
+    if (requestAttachmentReader != null && !requestAttachmentReader.haveAllAttachmentsFinished())
+    {
+      try
       {
         //Here we simply call drainAllAttachments. At this point the current callback assigned is likely the
         //TopLevelReaderCallback in RestLiServer. When this callback is notified that draining is completed (via
@@ -748,119 +841,24 @@ public class RestLiServer implements RestRequestHandler, StreamRequestHandler
         //bytes in the background. Note that it could be the case that even though there is an exception thrown,
         //that application code could still be reading these attachments. In such a case we would not be able to call
         //drainAllAttachments() successfully. Therefore we handle this exception and swallow.
-        try
-        {
-          requestAttachmentReader.drainAllAttachments();
-        }
-        catch (RestLiAttachmentReaderException readerException)
-        {
-          //Swallow here.
-          //It could be the case that the application code is still absorbing attachments.
-          //We back off and send the error to the client. If the application code is not actively doing this, despite
-          //seemingly beginning the process, there is a chance for a resource leak on the server. In such a case the framework
-          //can do nothing else.
-        }
+        requestAttachmentReader.drainAllAttachments();
       }
-
-      //Drop all attachments to send back on the ground as well.
-      if (responseAttachments != null)
+      catch (RestLiAttachmentReaderException readerException)
       {
-        responseAttachments.getMultiPartMimeWriterBuilder().build().abortAllDataSources(e);
+        //Swallow here.
+        //It could be the case that the application code is still absorbing attachments.
+        //We back off and send the original response to the client. If the application code is not doing this,
+        //there is a chance for a resource leak. In such a case the framework can do nothing else.
       }
-
-      //At this point, 'e' must be a RestException. It's a bug in the rest.li framework if this is not the case; at which
-      //point a 500 will be returned.
-      _streamResponseCallback.onError(Messages.toStreamException((RestException)e));
     }
+  }
 
-    @Override
-    public void onSuccess(final RestResponse result, final RequestExecutionReport executionReport,
-                          final RestLiResponseAttachments responseAttachments)
+  static void drainResponseAttachments(RestLiResponseAttachments responseAttachments, Throwable e)
+  {
+    //Drop all attachments to send back on the ground as well.
+    if (responseAttachments != null)
     {
-      if (responseAttachments != null)
-      {
-        if (responseAttachments.getUnstructuredDataReactiveResult() != null)
-        {
-          /* This is an unstructured data response in reactive */
-
-          UnstructuredDataReactiveResult publisherWrapper = responseAttachments.getUnstructuredDataReactiveResult();
-          Flow.Publisher<ByteString> publisher = publisherWrapper.getPublisher();
-          String contentType = publisherWrapper.getContentType();
-
-          StreamResponseBuilder builder = new StreamResponseBuilder();
-          builder.setCookies(result.getCookies());
-          builder.setStatus(result.getStatus());
-          builder.setHeaders(result.getHeaders());
-          if (contentType != null)
-          {
-            builder.addHeaderValue(RestConstants.HEADER_CONTENT_TYPE, contentType);
-          }
-
-          EntityStream entityStream = FlowBridge.fromPublisher(publisher);
-          StreamResponse response = builder.build(entityStream);
-          _streamResponseCallback.onSuccess(response);
-        }
-        else if (responseAttachments.getUnstructuredDataWriter() != null)
-        {
-          /* This is an unstructured data response */
-
-          UnstructuredDataWriter writer = responseAttachments.getUnstructuredDataWriter();
-
-          if (!(writer.getOutputStream() instanceof ByteArrayOutputStream))
-          {
-            _streamResponseCallback.onError(new RestLiInternalException("OutputStream must be ByteArrayOutputStream"));
-          }
-          else if (result.getHeaders().get(RestConstants.HEADER_CONTENT_TYPE) == null)
-          {
-            _streamResponseCallback.onError(new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, "Content-Type is missing."));
-          }
-          else
-          {
-            ByteArrayOutputStream outputStream = (ByteArrayOutputStream) writer.getOutputStream();
-            byte[] bytes = outputStream.toByteArray();
-            ByteString byteString = ByteString.unsafeWrap(bytes);
-            Writer byteStringWriter = new ByteStringWriter(byteString);
-            EntityStream entityStream = EntityStreams.newEntityStream(byteStringWriter);
-
-            StreamResponseBuilder builder = new StreamResponseBuilder();
-            builder.setCookies(result.getCookies());
-            builder.setStatus(result.getStatus());
-            builder.setHeaders(result.getHeaders());
-            StreamResponse response = builder.build(entityStream);
-
-            _streamResponseCallback.onSuccess(response);
-          }
-        }
-        else if (responseAttachments.getMultiPartMimeWriterBuilder().getCurrentSize() > 0)
-        {
-          /* This is a writer response as attachments */
-
-          //Construct the StreamResponse and invoke the callback. The RestResponse entity should be the first part.
-          //There may potentially be attachments included in the response. Note that unlike the client side request builders,
-          //here it is possible to have a non-null attachment list with 0 attachments due to the way the builder in
-          //RestLiResponseAttachments works. Therefore we have to make sure its a non zero size as well.
-          final ByteStringWriter firstPartWriter = new ByteStringWriter(result.getEntity());
-          final MultiPartMIMEWriter multiPartMIMEWriter = AttachmentUtils.createMultiPartMIMEWriter(firstPartWriter,
-                                                                                                    result.getHeader(
-                                                                                                      RestConstants.HEADER_CONTENT_TYPE),
-                                                                                                    responseAttachments.getMultiPartMimeWriterBuilder());
-
-          //Ensure that any headers or cookies from the RestResponse make into the outgoing StreamResponse. The exception
-          //of course being the Content-Type header which will be overridden by MultiPartMIMEStreamResponseFactory.
-          final StreamResponse streamResponse = MultiPartMIMEStreamResponseFactory.generateMultiPartMIMEStreamResponse(
-            AttachmentUtils.RESTLI_MULTIPART_SUBTYPE,
-            multiPartMIMEWriter,
-            Collections.<String, String>emptyMap(),
-            result.getHeaders(),
-            result.getStatus(),
-            result.getCookies());
-          _streamResponseCallback.onSuccess(streamResponse);
-        }
-      }
-      else
-      {
-        _streamResponseCallback.onSuccess(Messages.toStreamResponse(result));
-      }
+      responseAttachments.getMultiPartMimeWriterBuilder().build().abortAllDataSources(e);
     }
   }
 

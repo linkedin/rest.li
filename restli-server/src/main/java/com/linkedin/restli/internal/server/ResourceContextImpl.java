@@ -14,10 +14,6 @@
    limitations under the License.
 */
 
-/**
- * $Id: $
- */
-
 package com.linkedin.restli.internal.server;
 
 
@@ -26,9 +22,12 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.template.StringArray;
 import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.jersey.api.uri.UriComponent;
+import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
+import com.linkedin.r2.message.stream.StreamRequest;
+import com.linkedin.r2.message.stream.entitystream.EntityStream;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
@@ -40,8 +39,8 @@ import com.linkedin.restli.internal.common.ProtocolVersionUtil;
 import com.linkedin.restli.internal.common.QueryParamsDataMap;
 import com.linkedin.restli.internal.common.URIParamUtils;
 import com.linkedin.restli.internal.server.util.ArgumentUtils;
+import com.linkedin.restli.internal.server.util.MIMEParse;
 import com.linkedin.restli.internal.server.util.RestLiSyntaxException;
-import com.linkedin.restli.server.UnstructuredDataWriter;
 import com.linkedin.restli.server.ProjectionMode;
 import com.linkedin.restli.server.RestLiResponseAttachments;
 import com.linkedin.restli.server.RestLiServiceException;
@@ -70,7 +69,7 @@ public class ResourceContextImpl implements ServerResourceContext
   private static final int INITIAL_CUSTOM_REQUEST_CONTEXT_CAPACITY = 1;
 
   private final MutablePathKeys                     _pathKeys;
-  private final RestRequest                         _request;
+  private final Request                             _request;
   private final DataMap                             _parameters;
   private final Map<String, String>                 _requestHeaders;
   private final Map<String, String>                 _responseHeaders;
@@ -96,15 +95,15 @@ public class ResourceContextImpl implements ServerResourceContext
   private MaskTree                                  _pagingProjectionMask;
 
   //For streaming attachments
-  private final RestLiAttachmentReader              _requestAttachmentReader;
+  private RestLiAttachmentReader                    _requestAttachmentReader;
   private final boolean                             _responseAttachmentsAllowed;
   private RestLiResponseAttachments                 _responseStreamingAttachments;
 
   //Data map to store custom request context data
   private Map<String, Object>                       _customRequestContext;
 
-  //For writing unstructured data resource response
-  private UnstructuredDataWriter _unstructuredDataWriter;
+  // Response entity stream
+  private EntityStream _entityStream;
 
   /**
    * Default constructor.
@@ -130,28 +129,18 @@ public class ResourceContextImpl implements ServerResourceContext
    *           incorrect
    */
   public ResourceContextImpl(final MutablePathKeys pathKeys,
-                             final RestRequest request,
+                             final Request request,
                              final RequestContext requestContext) throws RestLiSyntaxException
-  {
-    this(pathKeys, request, requestContext, false, null);
-  }
-
-  public ResourceContextImpl(final MutablePathKeys pathKeys,
-                             final RestRequest request,
-                             final RequestContext requestContext,
-                             final boolean responseAttachmentsAllowed,
-                             final RestLiAttachmentReader restLiAttachmentReader) throws RestLiSyntaxException
   {
     _pathKeys = pathKeys;
     _request = request;
-    _requestHeaders = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+    _requestHeaders = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     _requestHeaders.putAll(request.getHeaders());
-    _responseHeaders = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
-    _requestCookies = new ArrayList<HttpCookie>(CookieUtil.decodeCookies(_request.getCookies()));
-    _responseCookies = new ArrayList<HttpCookie>();
+    _responseHeaders = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+    _requestCookies = new ArrayList<>(CookieUtil.decodeCookies(_request.getCookies()));
+    _responseCookies = new ArrayList<>();
     _requestContext = requestContext;
-    _responseAttachmentsAllowed = responseAttachmentsAllowed;
-    _requestAttachmentReader = restLiAttachmentReader;
+    _responseAttachmentsAllowed = isResponseAttachmentsAllowed(request);
 
     _protocolVersion = ProtocolVersionUtil.extractProtocolVersion(request.getHeaders());
 
@@ -201,10 +190,27 @@ public class ResourceContextImpl implements ServerResourceContext
       _pagingProjectionMask = null;
     }
 
-    _batchKeyErrors = new HashMap<Object, RestLiServiceException>();
+    _batchKeyErrors = new HashMap<>();
 
     _projectionMode = ProjectionMode.getDefault();
     _metadataProjectionMode = ProjectionMode.getDefault();
+  }
+
+  private static boolean isResponseAttachmentsAllowed(Request request)
+  {
+    final String acceptTypeHeader = request.getHeader(RestConstants.HEADER_ACCEPT);
+    if (acceptTypeHeader != null)
+    {
+      final List<String> acceptTypes = MIMEParse.parseAcceptType(acceptTypeHeader);
+      for (final String acceptType : acceptTypes)
+      {
+        if (acceptType.equalsIgnoreCase(RestConstants.HEADER_VALUE_MULTIPART_RELATED))
+        {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   @Override
@@ -247,7 +253,15 @@ public class ResourceContextImpl implements ServerResourceContext
   @Deprecated
   public RestRequest getRawRequest()
   {
-    return _request;
+    if (_request instanceof RestRequest)
+    {
+      return (RestRequest) _request;
+    }
+
+    // The content of the entity stream is not copied to the RestRequest. Reading the content is challenging because the entity
+    // stream can only be read once. However, this is acceptable in this deprecated method because no application
+    // depends on the entity content.
+    return new RestRequestBuilder((StreamRequest) _request).build();
   }
 
   @Override
@@ -471,23 +485,27 @@ public class ResourceContextImpl implements ServerResourceContext
   }
 
   @Override
+  public void setRequestAttachmentReader(RestLiAttachmentReader requestAttachmentReader)
+  {
+    _requestAttachmentReader = requestAttachmentReader;
+  }
+
+  @Override
   public RestLiAttachmentReader getRequestAttachmentReader()
   {
     return _requestAttachmentReader;
   }
 
   @Override
-  public void setUnstructuredDataWriter(UnstructuredDataWriter unstructuredDataWriter)
+  public void setEntityStream(EntityStream entityStream)
   {
-    _unstructuredDataWriter = unstructuredDataWriter;
-    _responseStreamingAttachments = new RestLiResponseAttachments.Builder().appendUnstructuredDataWriter(
-      _unstructuredDataWriter).build();
+    _entityStream = entityStream;
   }
 
   @Override
-  public UnstructuredDataWriter getUnstructuredDataWriter()
+  public EntityStream getEntityStream()
   {
-    return _unstructuredDataWriter;
+    return _entityStream;
   }
 
   @Override
@@ -523,7 +541,7 @@ public class ResourceContextImpl implements ServerResourceContext
     {
       if (_customRequestContext == null)
       {
-        _customRequestContext = new HashMap<String, Object>(INITIAL_CUSTOM_REQUEST_CONTEXT_CAPACITY);
+        _customRequestContext = new HashMap<>(INITIAL_CUSTOM_REQUEST_CONTEXT_CAPACITY);
       }
       _customRequestContext.put(key, data);
     }

@@ -17,19 +17,15 @@
 package com.linkedin.restli.internal.server.filter;
 
 
+import com.linkedin.common.callback.Callback;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.RestConstants;
-import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
 import com.linkedin.restli.internal.common.HeaderUtil;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.response.ErrorResponseBuilder;
 import com.linkedin.restli.internal.server.response.PartialRestResponse;
 import com.linkedin.restli.internal.server.response.RestLiResponseHandler;
-import com.linkedin.restli.server.RequestExecutionCallback;
-import com.linkedin.restli.server.RequestExecutionReport;
-import com.linkedin.restli.server.RequestExecutionReportBuilder;
-import com.linkedin.restli.server.RestLiResponseAttachments;
 import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
 import java.util.Map;
@@ -46,77 +42,60 @@ public class FilterChainCallbackImpl implements FilterChainCallback
 {
   private static final Logger LOGGER = LoggerFactory.getLogger(FilterChainCallbackImpl.class);
   private RoutingResult _method;
-  private RequestExecutionReportBuilder _requestExecutionReportBuilder;
-  private RestLiAttachmentReader _requestAttachmentReader;
   private RestLiResponseHandler _responseHandler;
-  private RequestExecutionCallback<RestResponse> _wrappedCallback;
+  private Callback<RestResponse> _wrappedCallback;
   private final ErrorResponseBuilder _errorResponseBuilder;
 
   public FilterChainCallbackImpl(RoutingResult method,
-      RequestExecutionReportBuilder requestExecutionReportBuilder,
-      RestLiAttachmentReader requestAttachmentReader,
       RestLiResponseHandler responseHandler,
-      RequestExecutionCallback<RestResponse> wrappedCallback,
+      Callback<RestResponse> wrappedCallback,
       ErrorResponseBuilder errorResponseBuilder)
   {
     _method = method;
-    _requestExecutionReportBuilder = requestExecutionReportBuilder;
-    _requestAttachmentReader = requestAttachmentReader;
     _responseHandler = responseHandler;
     _wrappedCallback = wrappedCallback;
     _errorResponseBuilder = errorResponseBuilder;
   }
 
   @Override
-  public void onResponseSuccess(final RestLiResponseData<?> responseData,
-                                final RestLiResponseAttachments responseAttachments)
+  public void onResponseSuccess(final RestLiResponseData<?> responseData)
   {
-    RestResponse result;
+    RestResponse response;
     try
     {
-      final PartialRestResponse response = _responseHandler.buildPartialResponse(_method, responseData);
-      result = _responseHandler.buildResponse(_method, response);
+      final PartialRestResponse partialResponse = _responseHandler.buildPartialResponse(_method, responseData);
+      response = _responseHandler.buildResponse(_method, partialResponse);
     }
     catch (Throwable th)
     {
       LOGGER.error("Unexpected error while building the success response. Converting to error response.", th);
-      _wrappedCallback.onError(_responseHandler.buildRestException(th, buildErrorResponse(th, responseData)),
-          getRequestExecutionReport(),
-          _requestAttachmentReader, responseAttachments);
+      _wrappedCallback.onError(_responseHandler.buildRestException(th, buildErrorResponse(th, responseData)));
       return;
     }
-    try
-    {
-      _wrappedCallback.onSuccess(result, getRequestExecutionReport(), responseAttachments);
-    }
-    catch (Throwable th)
-    {
-      LOGGER.error("Unexpected error from onSuccess of the wrapped callback.", th);
-      throw th;
-    }
+
+    _wrappedCallback.onSuccess(response);
   }
 
   @Override
-  public void onError(Throwable th, final RestLiResponseData<?> responseData,
-                      final RestLiResponseAttachments responseAttachments)
+  public void onError(Throwable th, final RestLiResponseData<?> responseData)
   {
+    // The Throwable passed in is not used at all. However, before every invocation, the throwable is wrapped inside
+    // the RestLiResponseData parameter. This can potentially be refactored.
+
+    Throwable error;
     try
     {
-      RestLiServiceException e = responseData.getResponseEnvelope().getException();
+      RestLiServiceException serviceException = responseData.getResponseEnvelope().getException();
       final PartialRestResponse response = _responseHandler.buildPartialResponse(_method, responseData);
-
-      _wrappedCallback.onError(_responseHandler.buildRestException(e, response), getRequestExecutionReport(),
-          _requestAttachmentReader, responseAttachments);
+      error = _responseHandler.buildRestException(serviceException, response);
     }
     catch (Throwable throwable)
     {
-      LOGGER.error("Unexpected error from onError of the wrapped callback.", throwable);
-      throw throwable;
+      LOGGER.error("Unexpected error when processing error response.", responseData.getResponseEnvelope().getException());
+      error = throwable;
     }
-  }
 
-  private RequestExecutionReport getRequestExecutionReport() {
-    return _requestExecutionReportBuilder == null ? null : _requestExecutionReportBuilder.build();
+    _wrappedCallback.onError(error);
   }
 
   private PartialRestResponse buildErrorResponse(Throwable th, RestLiResponseData<?> responseData)

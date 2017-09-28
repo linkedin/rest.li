@@ -29,8 +29,6 @@ public interface Callback<T> extends SuccessCallback<T>
   /**
    * Called if the asynchronous operation failed with an error.
    *
-   * TODO: Should we take Throwable instead of Exception?
-   *
    * @param e the error
    */
   void onError(Throwable e);

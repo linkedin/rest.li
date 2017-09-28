@@ -39,7 +39,6 @@ import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.server.AlternativeKey;
 import com.linkedin.restli.server.BatchUpdateResult;
-import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.UpdateResponse;
@@ -139,7 +138,7 @@ public class TestBatchUpdateResponseBuilder
       ProtocolVersion protocolVersion,
       ResourceMethod resourceMethod)
   {
-    ResourceContext mockContext = getMockResourceContext(protocolVersion, altKeyName);
+    ServerResourceContext mockContext = getMockResourceContext(protocolVersion, altKeyName);
     ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor(alternativeKeyMap);
     RoutingResult routingResult = new RoutingResult(mockContext, mockDescriptor);
 
@@ -224,7 +223,7 @@ public class TestBatchUpdateResponseBuilder
   @SuppressWarnings("unchecked")
   public void testUnsupportedNullKeyMap(Object results, ProtocolVersion protocolVersion, Map<String, UpdateStatus> expectedResults)
   {
-    ResourceContext mockContext = getMockResourceContext(protocolVersion, null);
+    ServerResourceContext mockContext = getMockResourceContext(protocolVersion, null);
     ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor(null);
     RoutingResult routingResult = new RoutingResult(mockContext, mockDescriptor);
 
@@ -245,7 +244,7 @@ public class TestBatchUpdateResponseBuilder
   @Test(dataProvider = "updateStatusInstantiation")
   public void testUpdateStatusInstantiation(RestLiResponseData<BatchUpdateResponseEnvelope> responseData, UpdateStatus expectedResult)
   {
-    ResourceContext mockContext = getMockResourceContext(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), null);
+    ServerResourceContext mockContext = getMockResourceContext(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), null);
     ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor(null);
     RoutingResult routingResult = new RoutingResult(mockContext, mockDescriptor);
 
@@ -316,7 +315,7 @@ public class TestBatchUpdateResponseBuilder
     };
   }
 
-  private static ResourceContext getMockResourceContext(ProtocolVersion protocolVersion, String altKeyName)
+  private static ServerResourceContext getMockResourceContext(ProtocolVersion protocolVersion, String altKeyName)
   {
     ServerResourceContext mockContext = EasyMock.createMock(ServerResourceContext.class);
     EasyMock.expect(mockContext.getBatchKeyErrors()).andReturn(Collections.emptyMap()).once();

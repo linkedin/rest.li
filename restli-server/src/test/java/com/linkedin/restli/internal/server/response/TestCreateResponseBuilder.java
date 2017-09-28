@@ -43,7 +43,6 @@ import com.linkedin.restli.server.AlternativeKey;
 import com.linkedin.restli.server.CreateKVResponse;
 import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.ProjectionMode;
-import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
 
@@ -96,7 +95,7 @@ public class TestCreateResponseBuilder
     Map<String, String> expectedHeaders = new HashMap<String, String>(headers);
 
     ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor(alternativeKeyMap);
-    ResourceContext mockContext = getMockResourceContext(protocolVersion, altKeyName);
+    ServerResourceContext mockContext = getMockResourceContext(protocolVersion, altKeyName);
     RoutingResult routingResult = new RoutingResult(mockContext, mockDescriptor);
 
     CreateResponseBuilder createResponseBuilder = new CreateResponseBuilder();
@@ -149,7 +148,7 @@ public class TestCreateResponseBuilder
     headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, protocolVersion.toString());
 
     ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor(null);
-    ResourceContext mockContext = getMockResourceContext(protocolVersion, null);
+    ServerResourceContext mockContext = getMockResourceContext(protocolVersion, null);
     RoutingResult routingResult = new RoutingResult(mockContext, mockDescriptor);
 
     CreateResponseBuilder createResponseBuilder = new CreateResponseBuilder();
@@ -193,7 +192,7 @@ public class TestCreateResponseBuilder
     EasyMock.verify(mockContext);
   }
 
-  private static ResourceContext getMockResourceContext(ProtocolVersion protocolVersion,
+  private static ServerResourceContext getMockResourceContext(ProtocolVersion protocolVersion,
                                                         String altKeyName)
   {
     ServerResourceContext mockContext = EasyMock.createMock(ServerResourceContext.class);

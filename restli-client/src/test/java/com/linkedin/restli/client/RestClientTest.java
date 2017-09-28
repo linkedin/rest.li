@@ -35,6 +35,7 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestResponseBuilder;
 import com.linkedin.r2.transport.common.Client;
+import com.linkedin.restli.common.CollectionRequest;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.ErrorDetails;
 import com.linkedin.restli.common.ErrorResponse;

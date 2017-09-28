@@ -29,6 +29,7 @@ import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.server.ProjectionMode;
+import com.linkedin.restli.server.filter.FilterRequestContext;
 
 import java.net.URI;
 import java.util.HashMap;
@@ -117,7 +118,7 @@ public class TestFilterRequestContextInternalImpl
     when(context.getParameters()).thenReturn(queryParams);
     when(context.getRawRequestContext()).thenReturn(r2RequestContext);
 
-    FilterRequestContextInternalImpl filterContext = new FilterRequestContextInternalImpl(context, resourceMethod);
+    FilterRequestContext filterContext = new FilterRequestContextInternalImpl(context, resourceMethod, null);
 
     assertEquals(filterContext.getFilterResourceModel().getResourceName(), resourceName);
     assertEquals(filterContext.getFilterResourceModel().getResourceNamespace(), resourceNamespace);
@@ -162,7 +163,7 @@ public class TestFilterRequestContextInternalImpl
   @Test
   public void testFilterScratchpad() throws Exception
   {
-    FilterRequestContextInternalImpl filterContext = new FilterRequestContextInternalImpl(context, resourceMethod);
+    FilterRequestContext filterContext = new FilterRequestContextInternalImpl(context, resourceMethod, null);
     Object spValue = new Object();
     String spKey = UUID.randomUUID().toString();
     filterContext.getFilterScratchpad().put(spKey, spValue);
@@ -172,7 +173,7 @@ public class TestFilterRequestContextInternalImpl
   @Test
   public void testCustomContextData() throws Exception
   {
-    FilterRequestContextInternalImpl filterContext = new FilterRequestContextInternalImpl(context, resourceMethod);
+    FilterRequestContext filterContext = new FilterRequestContextInternalImpl(context, resourceMethod, null);
     filterContext.putCustomContextData("foo", "bar");
     filterContext.getCustomContextData("foo");
     filterContext.removeCustomContextData("foo");

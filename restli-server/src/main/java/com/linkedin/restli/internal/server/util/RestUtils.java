@@ -91,11 +91,7 @@ public class RestUtils
 
     LinkArray links = new LinkArray();
 
-    String bestEncoding = RestConstants.HEADER_VALUE_APPLICATION_JSON;
-    if (resourceContext.getRawRequest() != null)
-    {
-      bestEncoding = pickBestEncoding(resourceContext.getRequestHeaders().get(RestConstants.HEADER_ACCEPT), Collections.emptySet());
-    }
+    String bestEncoding = pickBestEncoding(resourceContext.getRequestHeaders().get(RestConstants.HEADER_ACCEPT), Collections.emptySet());
 
     //links use count as the step interval, so links don't make sense with count==0
     if (pagingContext.getCount() > 0)

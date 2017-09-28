@@ -24,7 +24,6 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.util.URIUtil;
-import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
 
 
 /**
@@ -75,8 +74,7 @@ class DelegatingDebugRequestHandler implements RequestHandler
     _delegate.handleRequest(request,
         requestContext,
         new ResourceDebugRequestHandlerImpl(),
-        null, // Attachment not supported for debugging.
-        new RestResponseExecutionCallbackAdapter(callback));
+        callback);
   }
 
   private class ResourceDebugRequestHandlerImpl implements RestLiDebugRequestHandler.ResourceDebugRequestHandler
@@ -84,7 +82,7 @@ class DelegatingDebugRequestHandler implements RequestHandler
     @Override
     public void handleRequest(final RestRequest request,
         final RequestContext requestContext,
-        final RequestExecutionCallback<RestResponse> callback)
+        final Callback<RestResponse> callback)
     {
       // Create a new request at this point from the debug request by removing the path suffix
       // starting with "__debug".
@@ -97,33 +95,7 @@ class DelegatingDebugRequestHandler implements RequestHandler
       uriBuilder.replacePath(request.getURI().getPath().substring(0, debugSegmentIndex - 1));
       requestBuilder.setURI(uriBuilder.build());
 
-      _restLiServer.handleResourceRequest(requestBuilder.build(), requestContext, callback, null, true);
+      _restLiServer.handleResourceRequest(requestBuilder.build(), requestContext, callback);
     }
   }
-
-  private class RestResponseExecutionCallbackAdapter implements RequestExecutionCallback<RestResponse>
-  {
-    private final Callback<RestResponse> _wrappedCallback;
-
-    RestResponseExecutionCallbackAdapter(Callback<RestResponse> wrappedCallback)
-    {
-      _wrappedCallback = wrappedCallback;
-    }
-
-    @Override
-    public void onError(final Throwable e, final RequestExecutionReport executionReport,
-        final RestLiAttachmentReader requestAttachmentReader,
-        final RestLiResponseAttachments responseAttachments)
-    {
-      _wrappedCallback.onError(e);
-    }
-
-    @Override
-    public void onSuccess(final RestResponse result, final RequestExecutionReport executionReport,
-        final RestLiResponseAttachments responseAttachments)
-    {
-      _wrappedCallback.onSuccess(result);
-    }
-  }
-
 }

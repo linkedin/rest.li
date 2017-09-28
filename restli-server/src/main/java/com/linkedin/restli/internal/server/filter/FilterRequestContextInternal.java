@@ -16,18 +16,27 @@
 
 package com.linkedin.restli.internal.server.filter;
 
+import com.linkedin.restli.internal.server.ServerResourceContext;
+import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.server.RestLiRequestData;
 import com.linkedin.restli.server.filter.FilterRequestContext;
 
 /**
  * @author nshankar
+ * @deprecated Use {@link FilterRequestContextInternalImpl#FilterRequestContextInternalImpl(ServerResourceContext, ResourceMethodDescriptor, RestLiRequestData)}
+ *             to pass <code>RestLiRequestData</code> to the constructor.
  */
+@Deprecated
+// TODO: This interface is no longer needed in Pegasus. Remove it after checking external usage.
 public interface FilterRequestContextInternal extends FilterRequestContext
 {
   /**
    * Set request data.
    *
    * @return Request data.
+   * @deprecated Use {@link FilterRequestContextInternalImpl#FilterRequestContextInternalImpl(ServerResourceContext, ResourceMethodDescriptor, RestLiRequestData)}
+   *             to pass <code>RestLiRequestData</code> to the constructor.
    */
+  @Deprecated
   void setRequestData(RestLiRequestData data);
 }

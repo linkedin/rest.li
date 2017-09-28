@@ -24,12 +24,12 @@ import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.test.MyComplexKey;
 import com.linkedin.restli.internal.server.RoutingResult;
+import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.internal.server.model.AnnotationSet;
 import com.linkedin.restli.internal.server.model.Parameter;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.server.Key;
-import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiRequestData;
 import com.linkedin.restli.server.RoutingException;
 
@@ -149,7 +149,7 @@ public class TestUpdateArgumentBuilder
     {
       descriptor = RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor(model, 2, params);
     }
-    ResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(keyName, keyValue, null, true);
+    ServerResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(keyName, keyValue, null, true);
     RoutingResult routingResult;
     if (key != null)
     {

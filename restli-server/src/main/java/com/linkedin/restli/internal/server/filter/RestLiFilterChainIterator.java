@@ -21,11 +21,15 @@ import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.HeaderUtil;
 import com.linkedin.restli.internal.common.ProtocolVersionUtil;
 import com.linkedin.restli.internal.server.RestLiCallback;
-import com.linkedin.restli.server.RestLiResponseAttachments;
+import com.linkedin.restli.internal.server.response.RestLiResponseEnvelope;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.filter.Filter;
 import com.linkedin.restli.server.filter.FilterRequestContext;
 import com.linkedin.restli.server.filter.FilterResponseContext;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -38,6 +42,8 @@ import java.util.concurrent.CompletableFuture;
  */
 public class RestLiFilterChainIterator
 {
+  private static final Logger LOG = LoggerFactory.getLogger(RestLiFilterChainIterator.class);
+
   private List<Filter> _filters;
   private FilterChainDispatcher _filterChainDispatcher;
   private FilterChainCallback _filterChainCallback;
@@ -65,14 +71,14 @@ public class RestLiFilterChainIterator
       }
       catch (Throwable th)
       {
-        onError(th, requestContext, filterResponseContextFactory.fromThrowable(th), null);
+        onError(th, requestContext, filterResponseContextFactory.fromThrowable(th));
         return;
       }
       filterFuture.thenAccept((v) ->
         onRequest(requestContext, filterResponseContextFactory, restLiCallback)
       );
       filterFuture.exceptionally((throwable) -> {
-        onError(throwable, requestContext, filterResponseContextFactory.fromThrowable(throwable), null);
+        onError(throwable, requestContext, filterResponseContextFactory.fromThrowable(throwable));
         return null;
       });
     }
@@ -83,8 +89,7 @@ public class RestLiFilterChainIterator
     }
   }
 
-  public void onResponse(FilterRequestContext requestContext, FilterResponseContext responseContext,
-                         RestLiResponseAttachments responseAttachments)
+  public void onResponse(FilterRequestContext requestContext, FilterResponseContext responseContext)
   {
     if (_cursor > 0)
     {
@@ -96,27 +101,26 @@ public class RestLiFilterChainIterator
       catch (Throwable th)
       {
         updateResponseContextWithError(th, responseContext);
-        onError(th, requestContext, responseContext, responseAttachments);
+        onError(th, requestContext, responseContext);
         return;
       }
       filterFuture.thenAccept((v) ->
-        onResponse(requestContext, responseContext, responseAttachments)
+        onResponse(requestContext, responseContext)
       );
       filterFuture.exceptionally((throwable) -> {
         updateResponseContextWithError(throwable, responseContext);
-        onError(throwable, requestContext, responseContext, responseAttachments);
+        onError(throwable, requestContext, responseContext);
         return null;
       });
     }
     else
     {
       // Now that we are done invoking all the filters, invoke the response filter callback.
-      _filterChainCallback.onResponseSuccess(responseContext.getResponseData(), responseAttachments);
+      _filterChainCallback.onResponseSuccess(responseContext.getResponseData());
     }
   }
 
-  public void onError(Throwable th, FilterRequestContext requestContext, FilterResponseContext responseContext,
-                      RestLiResponseAttachments responseAttachments)
+  public void onError(Throwable th, FilterRequestContext requestContext, FilterResponseContext responseContext)
   {
     if (_cursor > 0)
     {
@@ -129,7 +133,7 @@ public class RestLiFilterChainIterator
       {
         // update response context with latest error.
         updateResponseContextWithError(t, responseContext);
-        onError(t, requestContext, responseContext, responseAttachments);
+        onError(t, requestContext, responseContext);
         return;
       }
 
@@ -137,19 +141,19 @@ public class RestLiFilterChainIterator
         removeErrorResponseHeader(responseContext);
         // if the filter future completes without an error, this means the previous error has been corrected
         // therefore, the filter chain will invoke the onResponse() method.
-        onResponse(requestContext, responseContext, responseAttachments);
+        onResponse(requestContext, responseContext);
       });
       filterFuture.exceptionally((throwable) -> {
         // update response context with latest error
         updateResponseContextWithError(throwable, responseContext);
-        onError(throwable, requestContext, responseContext, responseAttachments);
+        onError(throwable, requestContext, responseContext);
         return null;
       });
     }
     else
     {
       // Now that we are done invoking all the filters, invoke the the response filter callback.
-      _filterChainCallback.onError(th, responseContext.getResponseData(), responseAttachments);
+      _filterChainCallback.onError(th, responseContext.getResponseData());
     }
   }
 
@@ -159,8 +163,16 @@ public class RestLiFilterChainIterator
 
     setErrorResponseHeader(responseContext);
 
+    RestLiResponseEnvelope responseEnvelope = responseContext.getResponseData().getResponseEnvelope();
+    if (responseEnvelope.isErrorResponse())
+    {
+      // Log the original exception that's about to be replaced.
+      RestLiServiceException original = responseEnvelope.getException();
+      LOG.error("Encountered new exception " + throwable + ". The original exception is " + original, original);
+    }
+
     RestLiServiceException restLiServiceException = RestLiServiceException.fromThrowable(throwable);
-    responseContext.getResponseData().getResponseEnvelope().setExceptionInternal(restLiServiceException);
+    responseEnvelope.setExceptionInternal(restLiServiceException);
   }
 
   private void setErrorResponseHeader(FilterResponseContext responseContext)

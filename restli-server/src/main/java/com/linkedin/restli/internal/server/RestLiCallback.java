@@ -17,9 +17,9 @@
 package com.linkedin.restli.internal.server;
 
 
+import com.linkedin.common.callback.Callback;
 import com.linkedin.restli.internal.server.filter.RestLiFilterChain;
 import com.linkedin.restli.internal.server.filter.RestLiFilterResponseContextFactory;
-import com.linkedin.restli.server.RestLiResponseAttachments;
 import com.linkedin.restli.server.filter.FilterRequestContext;
 import com.linkedin.restli.server.filter.FilterResponseContext;
 
@@ -28,7 +28,7 @@ import com.linkedin.restli.server.filter.FilterResponseContext;
  * Used for callbacks from RestLiMethodInvoker. When the REST method completes its execution, it invokes RestLiCallback,
  * which sets off the filter chain responses and eventually a response is sent to the client.
  */
-public class RestLiCallback
+public class RestLiCallback implements Callback<Object>
 {
   private final RestLiFilterChain _filterChain;
   private final FilterRequestContext _filterRequestContext;
@@ -43,7 +43,7 @@ public class RestLiCallback
     _filterRequestContext = filterRequestContext;
   }
 
-  public void onSuccess(final Object result, final RestLiResponseAttachments responseAttachments)
+  public void onSuccess(final Object result)
   {
     final FilterResponseContext responseContext;
     try
@@ -55,19 +55,19 @@ public class RestLiCallback
       // Invoke the onError method if we run into any exception while creating the response context from result.
       // Note that due to the fact we are in onSuccess(), we assume the application code has absorbed, or is in the
       // process of absorbing any request attachments present.
-      onError(e, responseAttachments);
+      onError(e);
       return;
     }
     // Now kick off the responses in the filter chain. Same note as above; we assume that the application code has
     // absorbed any request attachments present in the request.
-    _filterChain.onResponse(_filterRequestContext, responseContext, responseAttachments);
+    _filterChain.onResponse(_filterRequestContext, responseContext);
   }
 
-  public void onError(final Throwable e, final RestLiResponseAttachments responseAttachments)
+  public void onError(final Throwable e)
   {
     final FilterResponseContext responseContext = _filterResponseContextFactory.fromThrowable(e);
 
     // Now kick off the response filters with error
-    _filterChain.onError(e, _filterRequestContext, responseContext, responseAttachments);
+    _filterChain.onError(e, _filterRequestContext, responseContext);
   }
 }

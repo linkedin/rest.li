@@ -18,7 +18,6 @@ package com.linkedin.restli.internal.server.filter;
 
 
 import com.linkedin.restli.internal.server.RestLiCallback;
-import com.linkedin.restli.server.RestLiResponseAttachments;
 import com.linkedin.restli.server.filter.Filter;
 import com.linkedin.restli.server.filter.FilterRequestContext;
 import com.linkedin.restli.server.filter.FilterResponseContext;
@@ -60,34 +59,27 @@ public class RestLiFilterChain
 
   /**
    * Creates a filter chain iterator and passes the response through it.
-   *
-   * @param requestContext
+   *  @param requestContext
    *          {@link FilterRequestContext}
    * @param responseContext
    *          {@link FilterResponseContext}
    */
-  public void onResponse(FilterRequestContext requestContext,
-                         FilterResponseContext responseContext,
-                         RestLiResponseAttachments responseAttachments)
+  public void onResponse(FilterRequestContext requestContext, FilterResponseContext responseContext)
   {
-    _filterChainIterator.onResponse(requestContext, responseContext, responseAttachments);
+    _filterChainIterator.onResponse(requestContext, responseContext);
   }
 
   /**
    * Creates a filter chain iterator and passes an error response through it.
-   *
-   * @param th
+   *  @param th
    *          {@link Throwable}
    * @param requestContext
    *          {@link FilterRequestContext}
    * @param responseContext
-   *          {@link FilterResponseContext}
+ *          {@link FilterResponseContext}
    */
-  public void onError(Throwable th,
-                      FilterRequestContext requestContext,
-                      FilterResponseContext responseContext,
-                      RestLiResponseAttachments responseAttachments)
+  public void onError(Throwable th, FilterRequestContext requestContext, FilterResponseContext responseContext)
   {
-    _filterChainIterator.onError(th, requestContext, responseContext, responseAttachments);
+    _filterChainIterator.onError(th, requestContext, responseContext);
   }
 }

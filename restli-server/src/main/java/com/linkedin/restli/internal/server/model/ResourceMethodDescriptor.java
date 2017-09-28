@@ -35,7 +35,7 @@ public class ResourceMethodDescriptor
 {
   public enum InterfaceType
   {
-    SYNC, CALLBACK, PROMISE, TASK, REACTIVE
+    SYNC, CALLBACK, PROMISE, TASK
   }
 
   private ResourceModel                                 _resourceModel;

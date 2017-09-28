@@ -1254,8 +1254,6 @@ public class TestRestLiResponseHandler
   {
     final RestRequest request = buildRequest(Collections.EMPTY_MAP, protocolVersion);
     RoutingResult routingResult = buildUnstructuredDataRoutingResult(request);
-    ServerResourceContext context = (ServerResourceContext) routingResult.getContext();
-    context.setUnstructuredDataWriter(new UnstructuredDataWriter(null, context));
 
     RestLiResponseData<GetResponseEnvelope> responseData = (RestLiResponseData<GetResponseEnvelope>) _responseHandler.buildRestLiResponseData(request, routingResult, null);
     assertEquals(responseData.getResponseEnvelope().getStatus(), HttpStatus.S_200_OK);

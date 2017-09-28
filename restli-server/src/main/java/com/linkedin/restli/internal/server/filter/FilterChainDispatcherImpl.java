@@ -20,7 +20,6 @@ import com.linkedin.restli.internal.server.RestLiCallback;
 import com.linkedin.restli.internal.server.RestLiMethodInvoker;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.methods.arguments.RestLiArgumentBuilder;
-import com.linkedin.restli.server.RequestExecutionReportBuilder;
 import com.linkedin.restli.server.RestLiRequestData;
 
 
@@ -32,24 +31,20 @@ public class FilterChainDispatcherImpl implements FilterChainDispatcher
   private RoutingResult _method;
   private RestLiMethodInvoker _methodInvoker;
   private RestLiArgumentBuilder _restLiArgumentBuilder;
-  private RequestExecutionReportBuilder _requestExecutionReportBuilder;
 
   public FilterChainDispatcherImpl(RoutingResult method,
       RestLiMethodInvoker methodInvoker,
-      RestLiArgumentBuilder adapter,
-      RequestExecutionReportBuilder requestExecutionReportBuilder)
+      RestLiArgumentBuilder adapter)
   {
     _method = method;
     _methodInvoker = methodInvoker;
     _restLiArgumentBuilder = adapter;
-    _requestExecutionReportBuilder = requestExecutionReportBuilder;
   }
 
   @Override
   public void onRequestSuccess(final RestLiRequestData requestData, final RestLiCallback restLiCallback)
   {
-    _methodInvoker.invoke(requestData, _method, _restLiArgumentBuilder, restLiCallback,
-        _requestExecutionReportBuilder);
+    _methodInvoker.invoke(requestData, _method, _restLiArgumentBuilder, restLiCallback);
   }
 
 }

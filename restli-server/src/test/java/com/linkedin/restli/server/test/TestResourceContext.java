@@ -22,6 +22,7 @@ import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.transform.filter.FilterConstants;
 import com.linkedin.data.transform.filter.request.MaskTree;
+import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
@@ -298,9 +299,11 @@ public class TestResourceContext
   @Test
   public void testStreamingDataResourceContext() throws Exception
   {
+    RestRequest request = new RestRequestBuilder(URI.create("foobar")).addHeaderValue(RestConstants.HEADER_ACCEPT, RestConstants.HEADER_VALUE_MULTIPART_RELATED).build();
     ServerResourceContext fullyStreamingResourceContext = new ResourceContextImpl(new PathKeysImpl(),
-                                                                   new MockRequest(URI.create("foobar"), Collections.emptyMap()),
-                                                                   new RequestContext(), true, new RestLiAttachmentReader(null));
+                                                                   request,
+                                                                   new RequestContext());
+    fullyStreamingResourceContext.setRequestAttachmentReader(new RestLiAttachmentReader(null));
     Assert.assertTrue(fullyStreamingResourceContext.responseAttachmentsSupported());
     Assert.assertNotNull(fullyStreamingResourceContext.getRequestAttachmentReader());
     //Now set and get response attachments
@@ -309,8 +312,8 @@ public class TestResourceContext
     Assert.assertEquals(fullyStreamingResourceContext.getResponseAttachments(), restLiResponseAttachments);
 
     ServerResourceContext responseAllowedNoRequestAttachmentsPresent = new ResourceContextImpl(new PathKeysImpl(),
-                                                                                        new MockRequest(URI.create("foobar"), Collections.emptyMap()),
-                                                                                        new RequestContext(), true, null);
+                                                                                        request,
+                                                                                        new RequestContext());
     Assert.assertTrue(responseAllowedNoRequestAttachmentsPresent.responseAttachmentsSupported());
     Assert.assertNull(responseAllowedNoRequestAttachmentsPresent.getRequestAttachmentReader());
     //Now set and get response attachments
@@ -319,7 +322,8 @@ public class TestResourceContext
 
     ServerResourceContext noResponseAllowedRequestAttachmentsPresent = new ResourceContextImpl(new PathKeysImpl(),
                                                                                                new MockRequest(URI.create("foobar"), Collections.emptyMap()),
-                                                                                               new RequestContext(), false, new RestLiAttachmentReader(null));
+                                                                                               new RequestContext());
+    noResponseAllowedRequestAttachmentsPresent.setRequestAttachmentReader(new RestLiAttachmentReader(null));
     Assert.assertFalse(noResponseAllowedRequestAttachmentsPresent.responseAttachmentsSupported());
     Assert.assertNotNull(noResponseAllowedRequestAttachmentsPresent.getRequestAttachmentReader());
     //Now try to set and make sure we fail

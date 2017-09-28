@@ -23,8 +23,7 @@ import com.linkedin.data.template.InvalidAlternativeKeyException;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.TemplateRuntimeException;
 import com.linkedin.r2.filter.R2Constants;
-import com.linkedin.r2.message.RequestContext;
-import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.Request;
 import com.linkedin.restli.common.ComplexKeySpec;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
@@ -33,15 +32,12 @@ import com.linkedin.restli.common.OperationNameGenerator;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.RestConstants;
-import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.PathSegment.PathSegmentSyntaxException;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.internal.server.util.AlternativeKeyCoercerException;
 import com.linkedin.restli.internal.server.util.ArgumentUtils;
-import com.linkedin.restli.internal.server.util.MIMEParse;
-import com.linkedin.restli.internal.server.util.RestLiSyntaxException;
 import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.RestLiServiceException;
@@ -90,14 +86,11 @@ public class RestLiRouter
   private static final Pattern SLASH_PATTERN = Pattern.compile(Pattern.quote("/"));
 
   /**
-   * Processes provided {@link RestRequest}.
-   *
-   * @param req {@link RestRequest}
-   * @return {@link RoutingResult}
+   * Processes provided {@link Request}.
    */
-  public RoutingResult process(final RestRequest req, final RequestContext requestContext, final RestLiAttachmentReader attachmentReader)
+  public ResourceMethodDescriptor process(final ServerResourceContext context)
   {
-    String path = req.getURI().getRawPath();
+    String path = context.getRequestURI().getRawPath();
     if (path.length() < 2)
     {
       throw new RoutingException(HttpStatus.S_404_NOT_FOUND.getCode());
@@ -108,8 +101,7 @@ public class RestLiRouter
       path = path.substring(1);
     }
 
-    Queue<String> remainingPath =
-        new LinkedList<String>(Arrays.asList(SLASH_PATTERN.split(path)));
+    Queue<String> remainingPath = new LinkedList<>(Arrays.asList(SLASH_PATTERN.split(path)));
 
     String rootPath = "/" + remainingPath.poll();
 
@@ -132,35 +124,10 @@ public class RestLiRouter
                                  HttpStatus.S_404_NOT_FOUND.getCode());
     }
 
-    ServerResourceContext context;
-
-    try
-    {
-      final String acceptTypeHeader = req.getHeader(RestConstants.HEADER_ACCEPT);
-      boolean responseAttachmentsAllowed = false;
-      if (acceptTypeHeader != null)
-      {
-        final List<String> acceptTypes = MIMEParse.parseAcceptType(acceptTypeHeader);
-        for (final String acceptType : acceptTypes)
-        {
-          if (acceptType.equalsIgnoreCase(RestConstants.HEADER_VALUE_MULTIPART_RELATED))
-          {
-            responseAttachmentsAllowed = true;
-          }
-        }
-      }
-
-      context = new ResourceContextImpl(new PathKeysImpl(), req, requestContext, responseAttachmentsAllowed, attachmentReader);
-    }
-    catch (RestLiSyntaxException e)
-    {
-      throw new RoutingException(e.getMessage(), HttpStatus.S_400_BAD_REQUEST.getCode());
-    }
-
     return processResourceTree(currentResource, context, remainingPath);
   }
 
-  private RoutingResult processResourceTree(final ResourceModel resource,
+  private ResourceMethodDescriptor processResourceTree(final ResourceModel resource,
                                             final ServerResourceContext context,
                                             final Queue<String> remainingPath)
   {
@@ -183,7 +150,6 @@ public class RestLiRouter
       }
       else
       {
-        ResourceModel currentCollectionResource = currentResource;
         if (currentResource.getKeys().isEmpty())
         {
           throw new RoutingException(String.format("Path key not supported on resource '%s' for URI '%s'",
@@ -206,7 +172,7 @@ public class RestLiRouter
           CompoundKey compoundKey;
           try
           {
-            compoundKey = parseCompoundKey(currentCollectionResource, context, currentPathSegment);
+            compoundKey = parseCompoundKey(currentResource, context, currentPathSegment);
           }
           catch (IllegalArgumentException e)
           {
@@ -251,7 +217,7 @@ public class RestLiRouter
     }
   }
 
-  private RoutingResult findMethodDescriptor(final ResourceModel resource,
+  private ResourceMethodDescriptor findMethodDescriptor(final ResourceModel resource,
                                              final ResourceLevel resourceLevel,
                                              final ServerResourceContext context)
   {
@@ -270,7 +236,7 @@ public class RestLiRouter
       context.getRawRequestContext().putLocalAttr(R2Constants.OPERATION,
                                                   OperationNameGenerator.generate(methodDescriptor.getMethodType(),
                                                                                   methodName));
-      return new RoutingResult(context, methodDescriptor);
+      return methodDescriptor;
     }
 
     String httpMethod = context.getRequestMethod();
@@ -477,11 +443,6 @@ public class RestLiRouter
   /**
    * Instantiate the complex key from the current path segment (treat is as a list of
    * query parameters) and put it into the context.
-   *
-   * @param currentPathSegment
-   * @param context
-   * @param resource
-   * @return
    */
   private static void parseComplexKey(final ResourceModel resource,
                                       final ServerResourceContext context,
@@ -534,7 +495,7 @@ public class RestLiRouter
         }
         else
         {
-          batchKeys = new HashSet<Object>();
+          batchKeys = new HashSet<>();
 
           // Validate the complex keys and put them into the context batch keys
           for (Object complexKey : batchIds)
@@ -565,7 +526,7 @@ public class RestLiRouter
         }
         else
         {
-          batchKeys = new HashSet<Object>();
+          batchKeys = new HashSet<>();
 
           // Validate the compound keys and put them into the contex batch keys
           for (Object compoundKey : batchIds)
@@ -596,7 +557,7 @@ public class RestLiRouter
       // collection batch get in v2, collection or association batch get in v1
       else if (context.hasParameter(RestConstants.QUERY_BATCH_IDS_PARAM))
       {
-        batchKeys = new HashSet<Object>();
+        batchKeys = new HashSet<>();
 
         List<String> ids = context.getParameterValues(RestConstants.QUERY_BATCH_IDS_PARAM);
         if (version.compareTo(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()) >= 0)

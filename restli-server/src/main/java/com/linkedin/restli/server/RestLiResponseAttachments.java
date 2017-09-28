@@ -41,8 +41,6 @@ import com.linkedin.restli.internal.common.AttachmentUtils;
 public class RestLiResponseAttachments
 {
   private final MultiPartMIMEWriter.Builder _multiPartMimeWriterBuilder;
-  private UnstructuredDataWriter _unstructuredDataWriter;
-  private UnstructuredDataReactiveResult _reactiveResult;
 
   /**
    * Builder to create an instance of RestLiResponseAttachments.
@@ -50,8 +48,6 @@ public class RestLiResponseAttachments
   public static class Builder
   {
     private final MultiPartMIMEWriter.Builder _multiPartMimeWriterBuilder;
-    private UnstructuredDataWriter _unstructuredDataWriter;
-    private UnstructuredDataReactiveResult _reactiveResult;
 
     /**
      * Create a RestLiResponseAttachments Builder.
@@ -81,33 +77,11 @@ public class RestLiResponseAttachments
      * {@link com.linkedin.restli.common.attachments.RestLiDataSourceIterator} will be chained and placed as attachments in the new
      * attachment list.
      *
-     * @param dataSourceIterator
      * @return the builder to continue building.
      */
     public Builder appendMultipleAttachments(final RestLiDataSourceIterator dataSourceIterator)
     {
       AttachmentUtils.appendMultipleAttachmentsToBuilder(_multiPartMimeWriterBuilder, dataSourceIterator);
-      return this;
-    }
-
-    /**
-     * Append a {@link UnstructuredDataWriter} to be used for sending a unstructured data response.
-     * @return the builder to continue building.
-     */
-    public Builder appendUnstructuredDataWriter(final UnstructuredDataWriter unstructuredDataWriter)
-    {
-      _unstructuredDataWriter = unstructuredDataWriter;
-      return this;
-    }
-
-    /**
-     * Append a {@link com.linkedin.java.util.concurrent.Flow.Publisher} to be used for streaming a unstructured data
-     * response reactively.
-     * @return the builder to continue building.
-     */
-    public Builder appendUnstructuredDataReactiveResult(final UnstructuredDataReactiveResult reactiveResult)
-    {
-      _reactiveResult = reactiveResult;
       return this;
     }
 
@@ -124,40 +98,16 @@ public class RestLiResponseAttachments
   private RestLiResponseAttachments(final RestLiResponseAttachments.Builder builder)
   {
     _multiPartMimeWriterBuilder = builder._multiPartMimeWriterBuilder;
-    _unstructuredDataWriter = builder._unstructuredDataWriter;
-    _reactiveResult = builder._reactiveResult;
   }
 
   /**
    * Internal use only for rest.li framework.
    *
    * Returns the {@link com.linkedin.multipart.MultiPartMIMEWriter.Builder} representing the attachments added
-   * thus far. Returns null if this {@link RestLiResponseAttachments} carries a unstructured data reponse.
+   * thus far.
    */
   public MultiPartMIMEWriter.Builder getMultiPartMimeWriterBuilder()
   {
     return _multiPartMimeWriterBuilder;
-  }
-
-  /**
-   * Internal use only for rest.li framework.
-   *
-   * Returns the {@link UnstructuredDataWriter} representing a unstructured data response. Returns null if this
-   * {@link RestLiResponseAttachments} carries Rest.li attachments.
-   */
-  public UnstructuredDataWriter getUnstructuredDataWriter()
-  {
-    return _unstructuredDataWriter;
-  }
-
-  /**
-   * Internal use only for rest.li framework.
-   *
-   * Returns a {@link com.linkedin.java.util.concurrent.Flow.Publisher} that produce unstructured data response reactively.
-   * Returns null if this is not a streaming response.
-   */
-  public UnstructuredDataReactiveResult getUnstructuredDataReactiveResult()
-  {
-    return _reactiveResult;
   }
 }

@@ -41,6 +41,7 @@ import java.util.Optional;
 /**
  * @author nshankar
  */
+// TODO: Change to implementing FilterRequestContext and rename to FilterRequestContextImpl
 public class FilterRequestContextInternalImpl implements FilterRequestContextInternal
 {
   private RestLiRequestData _requestData;
@@ -52,12 +53,26 @@ public class FilterRequestContextInternalImpl implements FilterRequestContextInt
   // Collection specific
   private final RecordDataSchema _collectionCustomTypeSchema;
 
+  /**
+   * @deprecated Use {@link #FilterRequestContextInternalImpl(ServerResourceContext, ResourceMethodDescriptor, RestLiRequestData)}
+   *             and pass in RestLiRequestData.
+   */
+  @Deprecated
+  // TODO: Remove this constructor once external use are removed.
   public FilterRequestContextInternalImpl(final ServerResourceContext context,
-                                          final ResourceMethodDescriptor resourceMethod)
+      final ResourceMethodDescriptor resourceMethod)
+  {
+    this(context, resourceMethod, null);
+  }
+
+  public FilterRequestContextInternalImpl(final ServerResourceContext context,
+      final ResourceMethodDescriptor resourceMethod,
+      final RestLiRequestData requestData)
   {
     _context = context;
     _resourceMethod = resourceMethod;
-    _scratchPad = new HashMap<String, Object>();
+    _requestData = requestData;
+    _scratchPad = new HashMap<>();
     _resourceModel = new FilterResourceModelImpl(resourceMethod.getResourceModel());
     _collectionCustomTypeSchema = resourceMethod.getCollectionCustomMetadataType() == null ? null : (RecordDataSchema) DataTemplateUtil.getSchema(resourceMethod.getCollectionCustomMetadataType());
   }
@@ -147,6 +162,7 @@ public class FilterRequestContextInternalImpl implements FilterRequestContextInt
   }
 
   @Override
+  @Deprecated
   public void setRequestData(RestLiRequestData data)
   {
     _requestData = data;

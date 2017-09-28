@@ -20,14 +20,13 @@ package com.linkedin.restli.internal.server.methods.arguments;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.test.MyComplexKey;
-import com.linkedin.restli.internal.server.RestLiInternalException;
 import com.linkedin.restli.internal.server.RoutingResult;
+import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.internal.server.model.AnnotationSet;
 import com.linkedin.restli.internal.server.model.Parameter;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.server.BatchCreateRequest;
-import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiRequestData;
 
 import com.linkedin.restli.server.RoutingException;
@@ -54,7 +53,7 @@ public class TestBatchCreateArgumentBuilder
     RestRequest request = RestLiArgumentBuilderTestHelper.getMockRequest(false, "{\"elements\":[{\"b\":123,\"a\":\"abc\"},{\"b\":5678,\"a\":\"xyzw\"}]}", 1);
     ResourceModel model = RestLiArgumentBuilderTestHelper.getMockResourceModel(MyComplexKey.class, null, false);
     @SuppressWarnings("rawtypes")
-    Parameter<BatchCreateRequest> param = new Parameter<BatchCreateRequest>("",
+    Parameter<BatchCreateRequest> param = new Parameter<>("",
         BatchCreateRequest.class,
         null,
         false,
@@ -63,7 +62,7 @@ public class TestBatchCreateArgumentBuilder
         false,
         new AnnotationSet(new Annotation[]{}));
     ResourceMethodDescriptor descriptor = RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor(model, param);
-    ResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(null, null, null, true);
+    ServerResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(null, null, null, true);
     RoutingResult routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(descriptor, 2, context, 1);
 
     RestLiArgumentBuilder argumentBuilder = new BatchCreateArgumentBuilder();

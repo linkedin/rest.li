@@ -45,7 +45,6 @@ import com.linkedin.restli.server.BatchCreateResult;
 import com.linkedin.restli.server.CreateKVResponse;
 import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.ProjectionMode;
-import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
 
@@ -102,7 +101,7 @@ public class TestBatchCreateResponseBuilder
     Map<String, String> headers = ResponseBuilderUtil.getHeaders();
 
     ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor(alternativeKeyMap);
-    ResourceContext mockContext = getMockResourceContext(altKeyName);
+    ServerResourceContext mockContext = getMockResourceContext(altKeyName);
     RoutingResult routingResult = new RoutingResult(mockContext, mockDescriptor);
 
     RestRequest request = new RestRequestBuilder(new URI("/foo")).build();
@@ -177,7 +176,7 @@ public class TestBatchCreateResponseBuilder
 
     ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor(alternativeKeyMap);
 
-    ResourceContext mockContext = getMockKVResourceContext(altKeyName);
+    ServerResourceContext mockContext = getMockKVResourceContext(altKeyName);
 
     RoutingResult routingResult = new RoutingResult(mockContext, mockDescriptor);
 
@@ -225,7 +224,7 @@ public class TestBatchCreateResponseBuilder
   {
     Map<String, String> headers = ResponseBuilderUtil.getHeaders();
     ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor(null);
-    ResourceContext mockContext = getMockResourceContext(null);
+    ServerResourceContext mockContext = getMockResourceContext(null);
     RoutingResult routingResult = new RoutingResult(mockContext, mockDescriptor);
 
     BatchCreateResponseBuilder responseBuilder = new BatchCreateResponseBuilder(null);
@@ -302,7 +301,7 @@ public class TestBatchCreateResponseBuilder
     return mockResourceModel;
   }
 
-  private static ResourceContext getMockResourceContext(String altKeyName)
+  private static ServerResourceContext getMockResourceContext(String altKeyName)
   {
     ServerResourceContext mockContext = EasyMock.createMock(ServerResourceContext.class);
     EasyMock.expect(mockContext.hasParameter(RestConstants.ALT_KEY_PARAM)).andReturn(altKeyName != null).atLeastOnce();
@@ -314,7 +313,7 @@ public class TestBatchCreateResponseBuilder
     return mockContext;
   }
 
-  private static ResourceContext getMockKVResourceContext(String altKeyName)
+  private static ServerResourceContext getMockKVResourceContext(String altKeyName)
   {
     ServerResourceContext mockContext = EasyMock.createMock(ServerResourceContext.class);
     EasyMock.expect(mockContext.hasParameter(RestConstants.ALT_KEY_PARAM)).andReturn(altKeyName != null).atLeastOnce();

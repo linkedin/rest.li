@@ -42,7 +42,6 @@ import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.server.AlternativeKey;
 import com.linkedin.restli.server.BatchResult;
 import com.linkedin.restli.server.ProjectionMode;
-import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
 
@@ -149,7 +148,7 @@ public class TestBatchGetResponseBuilder
                           MaskTree maskTree,
                           ProjectionMode projectionMode)
   {
-    ResourceContext mockContext = getMockResourceContext(protocolVersion,
+    ServerResourceContext mockContext = getMockResourceContext(protocolVersion,
                                                          expectedExceptionsWithUntypedKey,
                                                          null,
                                                          maskTree,
@@ -232,7 +231,7 @@ public class TestBatchGetResponseBuilder
 
     Map<String, String> headers = ResponseBuilderUtil.getHeaders();
 
-    ResourceContext mockContext = getMockResourceContext(AllProtocolVersions.LATEST_PROTOCOL_VERSION,
+    ServerResourceContext mockContext = getMockResourceContext(AllProtocolVersions.LATEST_PROTOCOL_VERSION,
             Collections.emptyMap(),
             "alt", null, null);
     ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor(alternativeKeyMap);
@@ -280,7 +279,7 @@ public class TestBatchGetResponseBuilder
   public void testBuilderExceptions(Object results, String expectedErrorMessage)
   {
     // Protocol version doesn't matter here
-    ResourceContext mockContext = getMockResourceContext(null, Collections.emptyMap(),
+    ServerResourceContext mockContext = getMockResourceContext(null, Collections.emptyMap(),
         null, null, null);
     ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor(null);
     RoutingResult routingResult = new RoutingResult(mockContext, mockDescriptor);
@@ -342,7 +341,7 @@ public class TestBatchGetResponseBuilder
   @SuppressWarnings("unchecked")
   public void unsupportedNullKeyMapTest(Object results, ProtocolVersion protocolVersion, Map<String, Foo> expectedTransformedResult)
   {
-    ResourceContext mockContext = getMockResourceContext(protocolVersion,
+    ServerResourceContext mockContext = getMockResourceContext(protocolVersion,
         Collections.emptyMap(), null, null, null);
     ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor(null);
     RoutingResult routingResult = new RoutingResult(mockContext, mockDescriptor);
@@ -410,7 +409,7 @@ public class TestBatchGetResponseBuilder
     EasyMock.verify(mockContext);
   }
 
-  private static ResourceContext getMockResourceContext(ProtocolVersion protocolVersion,
+  private static ServerResourceContext getMockResourceContext(ProtocolVersion protocolVersion,
                                                         Map<Object, RestLiServiceException> exceptions,
                                                         String altKeyName,
                                                         MaskTree maskTree,

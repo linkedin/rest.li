@@ -14,13 +14,10 @@
    limitations under the License.
 */
 
-/**
- * $Id: $
- */
-
 package com.linkedin.restli.internal.server.methods.arguments;
 
 
+import com.linkedin.data.ByteString;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.ArrayDataSchema;
@@ -29,7 +26,6 @@ import com.linkedin.data.schema.validation.CoercionMode;
 import com.linkedin.data.schema.validation.RequiredMode;
 import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
 import com.linkedin.data.schema.validation.ValidationOptions;
-import com.linkedin.data.schema.validation.ValidationResult;
 import com.linkedin.data.template.AbstractArrayTemplate;
 import com.linkedin.data.template.DataTemplate;
 import com.linkedin.data.template.DataTemplateUtil;
@@ -40,6 +36,9 @@ import com.linkedin.data.template.TemplateRuntimeException;
 import com.linkedin.internal.common.util.CollectionUtils;
 import com.linkedin.r2.message.rest.RestMessage;
 import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.stream.entitystream.EntityStreams;
+import com.linkedin.r2.message.stream.entitystream.WriteHandle;
+import com.linkedin.r2.message.stream.entitystream.Writer;
 import com.linkedin.restli.common.BatchRequest;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
@@ -76,6 +75,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 
 /**
@@ -98,7 +98,7 @@ public class ArgumentBuilder
   @SuppressWarnings("deprecation")
   public static Object[] buildArgs(final Object[] positionalArguments,
                                    final ResourceMethodDescriptor resourceMethod,
-                                   final ResourceContext context,
+                                   final ServerResourceContext context,
                                    final DynamicRecordTemplate template)
   {
     List<Parameter<?>> parameters = resourceMethod.getParameters();
@@ -187,14 +187,19 @@ public class ArgumentBuilder
         }
         else if (param.getParamType() == Parameter.ParamType.RESTLI_ATTACHMENTS_PARAM)
         {
-          arguments[i] = ((ServerResourceContext)context).getRequestAttachmentReader();
+          arguments[i] = context.getRequestAttachmentReader();
           attachmentsDesired = true;
           continue;
         }
         else if (param.getParamType() == Parameter.ParamType.UNSTRUCTURED_DATA_WRITER_PARAM)
         {
-          UnstructuredDataWriter unstructuredDataWriter = new UnstructuredDataWriter(new ByteArrayOutputStream(), ((ServerResourceContext)context));
-          arguments[i] = unstructuredDataWriter;
+          // The OutputStream is passed to the resource implementation in a synchronous call. Upon return of the
+          // resource method, all the bytes would haven't written to the OutputStream. The EntityStream would have
+          // contained all the bytes by the time data is requested.
+          ByteArrayOutputStream out = new ByteArrayOutputStream();
+          context.setEntityStream(EntityStreams.newEntityStream(new ByteArrayOutputStreamWriter(out)));
+
+          arguments[i] = new UnstructuredDataWriter(out, context);
           continue;
         }
         else if (param.getParamType() == Parameter.ParamType.POST)
@@ -277,7 +282,7 @@ public class ArgumentBuilder
     //incoming attachments and send back a bad request. We must take precaution here since simply ignoring the request
     //attachments is not correct behavior here. Ignoring other request level constructs such as headers or query parameters
     //that were not needed is safe, but not for request attachments.
-    if (!attachmentsDesired && ((ServerResourceContext)context).getRequestAttachmentReader() != null)
+    if (!attachmentsDesired && context.getRequestAttachmentReader() != null)
     {
       throw new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST,
                                        "Resource method endpoint invoked does not accept any request attachments.");
@@ -658,6 +663,43 @@ public class ArgumentBuilder
     {
       throw new RoutingException(String.format("Invalid key: '%s'", stringKey),
           HttpStatus.S_400_BAD_REQUEST.getCode());
+    }
+  }
+
+  /**
+   * A reactive Writer that writes out all the bytes written to a ByteArrayOutputStream as one data chunk.
+   */
+  private static class ByteArrayOutputStreamWriter implements Writer
+  {
+    private final ByteArrayOutputStream _out;
+    private WriteHandle _wh;
+
+
+    ByteArrayOutputStreamWriter(ByteArrayOutputStream out)
+    {
+      _out = out;
+    }
+
+    @Override
+    public void onInit(WriteHandle wh)
+    {
+      _wh = wh;
+    }
+
+    @Override
+    public void onWritePossible()
+    {
+      if (_wh.remaining() > 0)
+      {
+        _wh.write(ByteString.unsafeWrap(_out.toByteArray()));
+        _wh.done();
+      }
+    }
+
+    @Override
+    public void onAbort(Throwable ex)
+    {
+      // do nothing
     }
   }
 }

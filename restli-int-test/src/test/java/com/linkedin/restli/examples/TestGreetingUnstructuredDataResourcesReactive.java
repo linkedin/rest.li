@@ -115,11 +115,11 @@ public class TestGreetingUnstructuredDataResourcesReactive extends UnstructuredD
   {
     sendGet(resourceURL, (conn) ->
     {
-      assertEquals(conn.getResponseCode(), 200);
-      assertNull(conn.getHeaderField(RestConstants.HEADER_CONTENT_TYPE));
-      assertUnstructuredDataResponse(conn.getInputStream(), UNSTRUCTURED_DATA_BYTES);
+      // Content type is required.
+      assertEquals(conn.getResponseCode(), 500);
     });
   }
+
   @Test(dataProvider = "goodInlineURLs")
   public void testGetGoodInline(String resourceURL)
     throws Throwable

@@ -378,7 +378,7 @@ public class RestLiArgumentBuilderTestHelper
   }
 
   public static RoutingResult getMockRoutingResult(ResourceMethodDescriptor descriptor, int getResourceMethodCount,
-                                                   ResourceContext context, int getContextCount)
+                                                   ServerResourceContext context, int getContextCount)
   {
     RoutingResult mockRoutingResult = createMock(RoutingResult.class);
     if (descriptor != null)
@@ -393,7 +393,7 @@ public class RestLiArgumentBuilderTestHelper
     return mockRoutingResult;
   }
 
-  static RoutingResult getMockRoutingResult(ResourceMethodDescriptor descriptor, ResourceContext context)
+  static RoutingResult getMockRoutingResult(ResourceMethodDescriptor descriptor, ServerResourceContext context)
   {
     RoutingResult mockRoutingResult = createMock(RoutingResult.class);
     if (descriptor != null)

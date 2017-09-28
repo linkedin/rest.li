@@ -21,11 +21,11 @@ import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.test.MyComplexKey;
 import com.linkedin.restli.internal.server.RoutingResult;
+import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.internal.server.model.AnnotationSet;
 import com.linkedin.restli.internal.server.model.Parameter;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.model.ResourceModel;
-import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiRequestData;
 import com.linkedin.restli.server.RoutingException;
 
@@ -48,7 +48,7 @@ public class TestCreateArgumentBuilder
   {
     RestRequest request = RestLiArgumentBuilderTestHelper.getMockRequest(false, "{\"a\":\"xyz\",\"b\":123}", 1);
     ResourceModel model = RestLiArgumentBuilderTestHelper.getMockResourceModel(MyComplexKey.class, null, false);
-    Parameter<MyComplexKey> param = new Parameter<MyComplexKey>("",
+    Parameter<MyComplexKey> param = new Parameter<>("",
         MyComplexKey.class,
         DataTemplateUtil.getSchema(MyComplexKey.class),
         false,
@@ -57,7 +57,7 @@ public class TestCreateArgumentBuilder
         false,
         new AnnotationSet(new Annotation[]{}));
     ResourceMethodDescriptor descriptor = RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor(model, param);
-    ResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(null, null, null, true);
+    ServerResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(null, null, null, true);
     RoutingResult routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(descriptor, 2, context, 1);
 
     RestLiArgumentBuilder argumentBuilder = new CreateArgumentBuilder();

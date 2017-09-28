@@ -25,14 +25,14 @@ import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.test.MyComplexKey;
+import com.linkedin.restli.internal.server.MutablePathKeys;
 import com.linkedin.restli.internal.server.RoutingResult;
+import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.internal.server.model.AnnotationSet;
 import com.linkedin.restli.internal.server.model.Parameter;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.server.Key;
-import com.linkedin.restli.server.PathKeys;
-import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiRequestData;
 import com.linkedin.restli.server.RoutingException;
 import com.linkedin.restli.server.annotations.HeaderParam;
@@ -149,7 +149,7 @@ public class TestGetArgumentBuilder
     {
       descriptor = RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor(model, null);
     }
-    ResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(keyName, keyValue, null, true);
+    ServerResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(keyName, keyValue, null, true);
     RoutingResult routingResult;
     if (param != null)
     {
@@ -246,7 +246,7 @@ public class TestGetArgumentBuilder
 
     ResourceModel model = RestLiArgumentBuilderTestHelper.getMockResourceModel(null, key, false);
     ResourceMethodDescriptor descriptor = RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor(model, 2, paramList);
-    ResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(keyName, keyValue, null, true);
+    ServerResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(keyName, keyValue, null, true);
     RoutingResult routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(descriptor, 3, context, 2);
     RestRequest request = RestLiArgumentBuilderTestHelper.getMockRequest(false, null, 0);
 
@@ -290,7 +290,8 @@ public class TestGetArgumentBuilder
 
     ResourceModel model = RestLiArgumentBuilderTestHelper.getMockResourceModel(null, key, false);
     ResourceMethodDescriptor descriptor = RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor(model, 2, headerParams);
-    ResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(keyName, keyValue, null, headers,
+    ServerResourceContext
+        context = RestLiArgumentBuilderTestHelper.getMockResourceContext(keyName, keyValue, null, headers,
                                                                                      true);
     RoutingResult routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(descriptor, 3, context, 2);
     RestRequest request = RestLiArgumentBuilderTestHelper.getMockRequest(false, null, 0);
@@ -332,8 +333,8 @@ public class TestGetArgumentBuilder
     List<Parameter<?>> paramList = Collections.<Parameter<?>>singletonList(param);
     ResourceMethodDescriptor descriptor = RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor(model, 2, paramList);
 
-    ResourceContext context = EasyMock.createMock(ResourceContext.class);
-    PathKeys mockPathKeys = EasyMock.createMock(PathKeys.class);
+    ServerResourceContext context = EasyMock.createMock(ServerResourceContext.class);
+    MutablePathKeys mockPathKeys = EasyMock.createMock(MutablePathKeys.class);
     EasyMock.expect(mockPathKeys.get(keyName)).andReturn(null).anyTimes();
     EasyMock.expect(context.getPathKeys()).andReturn(mockPathKeys).anyTimes();
     EasyMock.replay(context, mockPathKeys);

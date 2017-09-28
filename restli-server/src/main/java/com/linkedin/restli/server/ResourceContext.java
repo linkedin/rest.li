@@ -34,9 +34,10 @@ import java.util.Map;
 public interface ResourceContext extends CustomRequestContext
 {
   /**
-   * Get the RestRequest which caused the current context to be created.
+   * Get the RestRequest which caused the current context to be created. The entity may not be populated.
    *
    * @return RestRequest for the current context
+   * @deprecated No replacement. Application should avoid building any business logic based on the raw request.
    */
   @Deprecated
   RestRequest getRawRequest();

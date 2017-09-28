@@ -33,6 +33,7 @@ import com.linkedin.parseq.Engine;
 import com.linkedin.parseq.EngineBuilder;
 import com.linkedin.parseq.Task;
 import com.linkedin.parseq.promise.Promise;
+import com.linkedin.parseq.promise.PromiseListener;
 import com.linkedin.parseq.promise.Promises;
 import com.linkedin.parseq.promise.SettablePromise;
 import com.linkedin.r2.message.RequestContext;
@@ -63,7 +64,6 @@ import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.internal.server.filter.FilterChainCallback;
 import com.linkedin.restli.internal.server.filter.FilterChainCallbackImpl;
-import com.linkedin.restli.internal.server.filter.FilterRequestContextInternal;
 import com.linkedin.restli.internal.server.filter.FilterRequestContextInternalImpl;
 import com.linkedin.restli.internal.server.filter.RestLiFilterChain;
 import com.linkedin.restli.internal.server.filter.RestLiFilterResponseContextFactory;
@@ -84,10 +84,6 @@ import com.linkedin.restli.server.BatchUpdateResult;
 import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.PagingContext;
-import com.linkedin.restli.server.RequestExecutionCallback;
-import com.linkedin.restli.server.RequestExecutionReport;
-import com.linkedin.restli.server.RequestExecutionReportBuilder;
-import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.RestLiRequestData;
 import com.linkedin.restli.server.RestLiRequestDataImpl;
@@ -137,6 +133,7 @@ import com.google.common.collect.Sets;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -179,6 +176,7 @@ import static org.testng.Assert.fail;
 public class TestRestLiMethodInvocation
 {
   private static final ProtocolVersion version = AllProtocolVersions.NEXT_PROTOCOL_VERSION;
+  private static final String ATTRIBUTE_PARSEQ_TRACE = "parseqTrace";
   private ScheduledExecutorService _scheduler;
   private Engine _engine;
   private EasyMockResourceFactory _resourceFactory;
@@ -224,11 +222,11 @@ public class TestRestLiMethodInvocation
   @Test(dataProvider = "provideFilterConfig")
   public void testInvokerWithFilters(final boolean throwExceptionFromFirstFilter) throws Exception
   {
-    RestLiArgumentBuilder mockBuilder = createMock(RestLiArgumentBuilder.class);
+    RestLiArgumentBuilder mockArgumentBuilder = createMock(RestLiArgumentBuilder.class);
     Filter mockFilter = createMock(Filter.class);
     @SuppressWarnings("unchecked")
-    RequestExecutionCallback<Object> mockCallback = createMock(RequestExecutionCallback.class);
-    FilterRequestContextInternal mockFilterContext = createMock(FilterRequestContextInternal.class);
+    Callback<Object> mockCallback = createMock(Callback.class);
+    FilterRequestContext mockFilterContext = createMock(FilterRequestContext.class);
     RestLiRequestData requestData = new RestLiRequestDataImpl.Builder().key("Key").build();
     RestLiMethodInvoker invokerWithFilters =
         new RestLiMethodInvoker(_resourceFactory, _engine, new ErrorResponseBuilder());
@@ -247,9 +245,7 @@ public class TestRestLiMethodInvocation
         new RoutingResult(new ResourceContextImpl(buildPathKeys("statusID", 1L), request, new RequestContext()),
                           resourceMethodDescriptor);
 
-    mockFilterContext.setRequestData(requestData);
     expectLastCall();
-    expect(mockBuilder.extractRequestData(routingResult, request)).andReturn(requestData);
 
     FilterChainDispatcher filterChainDispatcher = new FilterChainDispatcher()
     {
@@ -257,18 +253,18 @@ public class TestRestLiMethodInvocation
       public void onRequestSuccess(RestLiRequestData requestData, RestLiCallback restLiCallback)
       {
         // only invoke if filter chain's requests were successful
-        invokerWithFilters.invoke(requestData, routingResult, mockBuilder, restLiCallback, null);
+        invokerWithFilters.invoke(requestData, routingResult, mockArgumentBuilder, restLiCallback);
       }
     };
     FilterChainCallback filterChainCallback = new FilterChainCallback()
     {
       @Override
-      public void onResponseSuccess(RestLiResponseData<?> responseData, RestLiResponseAttachments responseAttachments)
+      public void onResponseSuccess(RestLiResponseData<?> responseData)
       {
         // unused
       }
       @Override
-      public void onError(Throwable th, RestLiResponseData<?> responseData, RestLiResponseAttachments responseAttachments)
+      public void onError(Throwable th, RestLiResponseData<?> responseData)
       {
         // unused
       }
@@ -279,10 +275,7 @@ public class TestRestLiMethodInvocation
     {
       mockFilter.onRequest(eq(mockFilterContext));
       expectLastCall().andThrow(exFromFilter);
-      mockCallback.onError(eq(exFromFilter),
-                           anyObject(RequestExecutionReport.class),
-                           EasyMock.isNull(RestLiAttachmentReader.class),
-                           EasyMock.isNull(RestLiResponseAttachments.class));
+      mockCallback.onError(eq(exFromFilter));
     }
     else
     {
@@ -316,15 +309,13 @@ public class TestRestLiMethodInvocation
         }
       });
       Long[] argsArray = { 1L };
-      expect(mockBuilder.buildArguments(requestData, routingResult)).andReturn(argsArray);
+      expect(mockArgumentBuilder.buildArguments(requestData, routingResult)).andReturn(argsArray);
       expect(resource.get(eq(1L))).andReturn(null).once();
-      mockCallback.onSuccess(eq(null), anyObject(RequestExecutionReport.class), anyObject(RestLiResponseAttachments.class));
+      mockCallback.onSuccess(eq(null));
     }
-    replay(resource, mockBuilder, mockFilterContext, mockFilter, mockCallback);
+    replay(resource, mockArgumentBuilder, mockFilterContext, mockFilter, mockCallback);
 
-    RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(),
-                                                             (ServerResourceContext)routingResult.getContext());
-    mockFilterContext.setRequestData(mockBuilder.extractRequestData(routingResult, request));
+    RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(), routingResult.getContext());
 
     RestLiFilterChain filterChain = new RestLiFilterChain(Arrays.asList(mockFilter, mockFilter), filterChainDispatcher,
         filterChainCallback);
@@ -332,7 +323,7 @@ public class TestRestLiMethodInvocation
                           new RestLiFilterResponseContextFactory(request, routingResult,
                                                                          new RestLiResponseHandler.Builder().build()));
 
-    verify(mockBuilder, mockFilterContext, mockFilter);
+    verify(mockArgumentBuilder, mockFilterContext, mockFilter);
     if (throwExceptionFromFirstFilter)
     {
       assertEquals(requestData.getKey(), "Key");
@@ -2812,16 +2803,13 @@ public class TestRestLiMethodInvocation
 
     RoutingResult routingResult = new RoutingResult(new ResourceContextImpl(null, request,
                                                                             new RequestContext()), methodDescriptor);
-    final FilterRequestContextInternal filterContext =
-        new FilterRequestContextInternalImpl((ServerResourceContext) routingResult.getContext(), routingResult.getResourceMethod());
 
     try {
-      RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(),
-                                                               (ServerResourceContext)routingResult.getContext());
-      filterContext.setRequestData(_methodAdapterRegistry.getArgumentBuilder(methodDescriptor.getMethodType())
-                                       .extractRequestData(routingResult, request));
+      RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(), routingResult.getContext());
+      _methodAdapterRegistry.getArgumentBuilder(methodDescriptor.getMethodType())
+          .extractRequestData(routingResult, request);
       _invoker.invoke(null, routingResult, _methodAdapterRegistry.getArgumentBuilder(methodDescriptor.getMethodType()),
-                      null, null);
+                      null);
       Assert.fail("expected routing exception");
     }
     catch (RoutingException e)
@@ -2850,16 +2838,13 @@ public class TestRestLiMethodInvocation
 
     RoutingResult routingResult = new RoutingResult(new ResourceContextImpl(null, request,
                                                                             new RequestContext()), methodDescriptor);
-    final FilterRequestContextInternal filterContext =
-        new FilterRequestContextInternalImpl((ServerResourceContext) routingResult.getContext(), routingResult.getResourceMethod());
     RestLiArgumentBuilder argumentBuilder = _methodAdapterRegistry.getArgumentBuilder(methodDescriptor.getType());
 
     try {
-      RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(),
-                                                               (ServerResourceContext)routingResult.getContext());
-      filterContext.setRequestData(argumentBuilder.extractRequestData(routingResult, request));
-      _invoker.invoke(filterContext.getRequestData(), routingResult,
-                      _methodAdapterRegistry.getArgumentBuilder(methodDescriptor.getMethodType()), null, null);
+      RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(), routingResult.getContext());
+      RestLiRequestData requestData = argumentBuilder.extractRequestData(routingResult, request);
+      _invoker.invoke(requestData, routingResult,
+                      _methodAdapterRegistry.getArgumentBuilder(methodDescriptor.getMethodType()), null);
       Assert.fail("expected routing exception");
     }
     catch (RoutingException e)
@@ -3255,61 +3240,56 @@ public class TestRestLiMethodInvocation
   }
 
   @Test
-  public void testExecutionReport() throws RestLiSyntaxException, URISyntaxException
+  public void testParseqTraceSync() throws RestLiSyntaxException, URISyntaxException
   {
     Map<String, ResourceModel> resourceModelMap = buildResourceModels(
-        StatusCollectionResource.class,
-        AsyncStatusCollectionResource.class,
-        PromiseStatusCollectionResource.class,
-        TaskStatusCollectionResource.class);
-
+        StatusCollectionResource.class);
     ResourceModel statusResourceModel = resourceModelMap.get("/statuses");
-    ResourceModel asyncStatusResourceModel = resourceModelMap.get("/asyncstatuses");
-    ResourceModel promiseStatusResourceModel = resourceModelMap.get("/promisestatuses");
-    ResourceModel taskStatusResourceModel = resourceModelMap.get("/taskstatuses");
-
-    ResourceMethodDescriptor methodDescriptor;
-    StatusCollectionResource statusResource;
-    AsyncStatusCollectionResource asyncStatusResource;
-    PromiseStatusCollectionResource promiseStatusResource;
-    TaskStatusCollectionResource taskStatusResource;
 
     // #1: Sync Method Execution
-    methodDescriptor = statusResourceModel.findMethod(ResourceMethod.GET);
-    statusResource = getMockResource(StatusCollectionResource.class);
+    RequestContext requestContext = new RequestContext();
+    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findMethod(ResourceMethod.GET);
+    StatusCollectionResource statusResource = getMockResource(StatusCollectionResource.class);
     EasyMock.expect(statusResource.get(eq(1L))).andReturn(null).once();
     checkInvocation(statusResource,
+                    requestContext,
                     methodDescriptor,
                     "GET",
                     version,
                     "/statuses/1",
                     null,
                     buildPathKeys("statusID", 1L),
-                    new RequestExecutionCallback<RestResponse>()
+                    new Callback<RestResponse>()
                     {
                       //A 404 is considered an error by rest.li
                       @Override
-                      public void onError(Throwable e, RequestExecutionReport executionReport,
-                                          RestLiAttachmentReader requestAttachmentReader,
-                                          RestLiResponseAttachments responseAttachments)
+                      public void onError(Throwable e)
                       {
-                        Assert.assertNull(executionReport.getParseqTrace(), "There should be no parseq trace!");
+                        Assert.assertNull(requestContext.getLocalAttr(ATTRIBUTE_PARSEQ_TRACE), "There should be no parseq trace!");
                       }
 
                       @Override
-                      public void onSuccess(RestResponse result,
-                                            RequestExecutionReport executionReport,
-                                            RestLiResponseAttachments responseAttachments)
+                      public void onSuccess(RestResponse result)
                       {
                         Assert.fail("Request failed unexpectedly.");
                       }
                     },
                     true, false);
 
+  }
+
+  @Test
+  public void testParseqTraceAsync() throws RestLiSyntaxException, URISyntaxException
+  {
+    Map<String, ResourceModel> resourceModelMap = buildResourceModels(
+        AsyncStatusCollectionResource.class);
+
+    ResourceModel asyncStatusResourceModel = resourceModelMap.get("/asyncstatuses");
+
     // #2: Callback based Async Method Execution
     RestLiCallback callback = getCallback();
-    methodDescriptor = asyncStatusResourceModel.findMethod(ResourceMethod.GET);
-    asyncStatusResource = getMockResource(AsyncStatusCollectionResource.class);
+    ResourceMethodDescriptor methodDescriptor = asyncStatusResourceModel.findMethod(ResourceMethod.GET);
+    AsyncStatusCollectionResource asyncStatusResource = getMockResource(AsyncStatusCollectionResource.class);
     asyncStatusResource.get(eq(1L), EasyMock.anyObject());
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
@@ -3322,50 +3302,65 @@ public class TestRestLiMethodInvocation
     });
     EasyMock.replay(asyncStatusResource);
     checkAsyncInvocation(asyncStatusResource,
-                         callback,
-                         methodDescriptor,
-                         "GET",
-                         version,
-                         "/asyncstatuses/1",
-                         null,
-                         buildPathKeys("statusID", 1L),
-                         true);
+        callback,
+        methodDescriptor,
+        "GET",
+        version,
+        "/asyncstatuses/1",
+        null,
+        buildPathKeys("statusID", 1L),
+        true);
+  }
+
+  @Test
+  public void testParseqTracePromise() throws RestLiSyntaxException, URISyntaxException
+  {
+    Map<String, ResourceModel> resourceModelMap = buildResourceModels(
+        PromiseStatusCollectionResource.class);
+    ResourceModel promiseStatusResourceModel = resourceModelMap.get("/promisestatuses");
 
     // #3: Promise based Async Method Execution
-    methodDescriptor = promiseStatusResourceModel.findMethod(ResourceMethod.GET);
-    promiseStatusResource = getMockResource(PromiseStatusCollectionResource.class);
+    RequestContext promiseRequestContext = new RequestContext();
+    ResourceMethodDescriptor methodDescriptor = promiseStatusResourceModel.findMethod(ResourceMethod.GET);
+    PromiseStatusCollectionResource promiseStatusResource = getMockResource(PromiseStatusCollectionResource.class);
     EasyMock.expect(promiseStatusResource.get(eq(1L))).andReturn(Promises.value(null)).once();
     checkInvocation(promiseStatusResource,
-                    methodDescriptor,
-                    "GET",
-                    version,
-                    "/promisestatuses/1",
-                    null,
-                    buildPathKeys("statusID", 1L),
-                    new RequestExecutionCallback<RestResponse>()
-                    {
-                      //A 404 is considered an error by rest.li
-                      @Override
-                      public void onError(Throwable e, RequestExecutionReport executionReport,
-                                          RestLiAttachmentReader requestAttachmentReader,
-                                          RestLiResponseAttachments responseAttachments)
-                      {
-                        Assert.assertNotNull(executionReport.getParseqTrace(), "There should be a valid parseq trace!");
-                      }
+        promiseRequestContext,
+        methodDescriptor,
+        "GET",
+        version,
+        "/promisestatuses/1",
+        null,
+        buildPathKeys("statusID", 1L),
+        new Callback<RestResponse>()
+        {
+          //A 404 is considered an error by rest.li
+          @Override
+          public void onError(Throwable e)
+          {
+            Assert.assertNotNull(promiseRequestContext.getLocalAttr(ATTRIBUTE_PARSEQ_TRACE), "There should be a valid parseq trace!");
+          }
 
-                      @Override
-                      public void onSuccess(RestResponse result,
-                                            RequestExecutionReport executionReport,
-                                            RestLiResponseAttachments responseAttachments)
-                      {
-                        Assert.fail("Request failed unexpectedly.");
-                      }
-                    },
-                    true, false);
+          @Override
+          public void onSuccess(RestResponse result)
+          {
+            Assert.fail("Request failed unexpectedly.");
+          }
+        },
+        true, false);
+  }
+
+  @Test
+  public void testParseqTraceTask() throws RestLiSyntaxException, URISyntaxException
+  {
+    Map<String, ResourceModel> resourceModelMap = buildResourceModels(
+        TaskStatusCollectionResource.class);
+    ResourceModel taskStatusResourceModel = resourceModelMap.get("/taskstatuses");
 
     // #4: Task based Async Method Execution
-    methodDescriptor = taskStatusResourceModel.findMethod(ResourceMethod.GET);
-    taskStatusResource = getMockResource(TaskStatusCollectionResource.class);
+    RequestContext taskRequestContext = new RequestContext();
+    ResourceMethodDescriptor methodDescriptor = taskStatusResourceModel.findMethod(ResourceMethod.GET);
+    TaskStatusCollectionResource taskStatusResource = getMockResource(TaskStatusCollectionResource.class);
     EasyMock.expect(taskStatusResource.get(eq(1L))).andReturn(
         Task.callable(
             "myTask",
@@ -3379,30 +3374,27 @@ public class TestRestLiMethodInvocation
             })).once();
 
     checkInvocation(taskStatusResource,
-                    methodDescriptor,
-                    "GET",
-                    version,
-                    "/taskstatuses/1",
-                    null,
-                    buildPathKeys("statusID", 1L),
-                    new RequestExecutionCallback<RestResponse>()
-                    {
-                      @Override
-                      public void onError(Throwable e, RequestExecutionReport executionReport,
-                                          RestLiAttachmentReader requestAttachmentReader,
-                                          RestLiResponseAttachments responseAttachments)
-                      {
-                        Assert.fail("Request failed unexpectedly.");
-                      }
+        taskRequestContext,
+        methodDescriptor,
+        "GET",
+        version,
+        "/taskstatuses/1",
+        null,
+        buildPathKeys("statusID", 1L),
+        new Callback<RestResponse>()
+        {
+          @Override
+          public void onError(Throwable e)
+          {
+            Assert.fail("Request failed unexpectedly.");
+          }
 
-                      @Override
-                      public void onSuccess(RestResponse result,
-                                            RequestExecutionReport executionReport,
-                                            RestLiResponseAttachments responseAttachments)
-                      {
-                        Assert.assertNotNull(executionReport.getParseqTrace());
-                      }
-                    }, true, false);
+          @Override
+          public void onSuccess(RestResponse result)
+          {
+            Assert.assertNotNull(taskRequestContext.getLocalAttr(ATTRIBUTE_PARSEQ_TRACE));
+          }
+        }, true, false);
   }
 
   @Test
@@ -4253,45 +4245,40 @@ public class TestRestLiMethodInvocation
     final CountDownLatch latch = new CountDownLatch(1);
     RestLiResponseHandler restLiResponseHandler = new RestLiResponseHandler.Builder().build();
 
-    RequestExecutionCallback<RestResponse> executionCallback = new RequestExecutionCallback<RestResponse>()
+    ServerResourceContext resourceContext = new ResourceContextImpl(new PathKeysImpl(),
+        new RestRequestBuilder(URI.create(""))
+            .setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, AllProtocolVersions.LATEST_PROTOCOL_VERSION.toString())
+            .build(),
+        new RequestContext());
+    resourceContext.setRequestAttachmentReader(attachmentReader);
+
+    Callback<RestResponse> executionCallback = new Callback<RestResponse>()
     {
       @Override
-      public void onError(Throwable e, RequestExecutionReport executionReport,
-                          RestLiAttachmentReader requestAttachmentReader,
-                          RestLiResponseAttachments responseAttachments)
+      public void onError(Throwable e)
       {
         latch.countDown();
         Assert.assertTrue(e instanceof RestException);
         RestException ex = (RestException) e;
         Assert.assertEquals(ex.getResponse().getStatus(),
                             HttpStatus.S_406_NOT_ACCEPTABLE.getCode());
-        Assert.assertEquals(requestAttachmentReader, attachmentReader);
-        Assert.assertNull(responseAttachments);
+        Assert.assertEquals(resourceContext.getRequestAttachmentReader(), attachmentReader);
+        Assert.assertNull(resourceContext.getResponseAttachments());
       }
       @Override
-      public void onSuccess(RestResponse result,
-                            RequestExecutionReport executionReport,
-                            RestLiResponseAttachments responseAttachments)
+      public void onSuccess(RestResponse result)
       {
         Assert.fail();
       }
     };
 
-    ServerResourceContext resourceContext = new ResourceContextImpl(new PathKeysImpl(),
-                                                                    new RestRequestBuilder(URI.create(""))
-                                                                        .setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, AllProtocolVersions.LATEST_PROTOCOL_VERSION.toString())
-                                                                        .build(),
-                                                                    new RequestContext(),
-                                                                    false, attachmentReader);
-
     try
     {
       RoutingResult routingResult = new RoutingResult(resourceContext, null);
-      RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(),
-                                                               (ServerResourceContext)routingResult.getContext());
+      RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(), routingResult.getContext());
 
-      FilterChainDispatcher filterChainDispatcher = new FilterChainDispatcherImpl(routingResult, _invoker, null, null);
-      FilterChainCallback filterChainCallback = new FilterChainCallbackImpl(null, null, null,
+      FilterChainDispatcher filterChainDispatcher = new FilterChainDispatcherImpl(routingResult, _invoker, null);
+      FilterChainCallback filterChainCallback = new FilterChainCallbackImpl(null,
                                                                             restLiResponseHandler, executionCallback,
                                                                             _errorResponseBuilder);
       final RestLiCallback callback =
@@ -4299,7 +4286,7 @@ public class TestRestLiMethodInvocation
                                      new RestLiFilterResponseContextFactory(request, null, restLiResponseHandler),
                                      new RestLiFilterChain(null, filterChainDispatcher, filterChainCallback));
 
-      _invoker.invoke(null, routingResult, null, callback, null);
+      _invoker.invoke(null, routingResult, null, callback);
       latch.await();
     }
     catch (Exception e)
@@ -4320,12 +4307,10 @@ public class TestRestLiMethodInvocation
     final CountDownLatch latch = new CountDownLatch(1);
     RestLiResponseHandler restLiResponseHandler = new RestLiResponseHandler.Builder().build();
 
-    RequestExecutionCallback<RestResponse> executionCallback = new RequestExecutionCallback<RestResponse>()
+    Callback<RestResponse> executionCallback = new Callback<RestResponse>()
     {
       @Override
-      public void onError(Throwable e, RequestExecutionReport executionReport,
-                          RestLiAttachmentReader requestAttachmentReader,
-                          RestLiResponseAttachments responseAttachments)
+      public void onError(Throwable e)
       {
         latch.countDown();
         Assert.assertTrue(e instanceof RestException);
@@ -4334,9 +4319,7 @@ public class TestRestLiMethodInvocation
                             HttpStatus.S_400_BAD_REQUEST.getCode());
       }
       @Override
-      public void onSuccess(RestResponse result,
-                            RequestExecutionReport executionReport,
-                            RestLiResponseAttachments responseAttachments)
+      public void onSuccess(RestResponse result)
       {
       }
     };
@@ -4345,17 +4328,15 @@ public class TestRestLiMethodInvocation
     try
     {
       RoutingResult routingResult = new RoutingResult(context, null);
-      RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(),
-                                                               (ServerResourceContext)routingResult.getContext());
-      FilterChainDispatcher filterChainDispatcher = new FilterChainDispatcherImpl(routingResult, _invoker, null, null);
-      FilterChainCallback filterChainCallback = new FilterChainCallbackImpl(null, null, null,
+      RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(), routingResult.getContext());
+      FilterChainDispatcher filterChainDispatcher = new FilterChainDispatcherImpl(routingResult, _invoker, null);
+      FilterChainCallback filterChainCallback = new FilterChainCallbackImpl(null,
                                                                             restLiResponseHandler, executionCallback,
                                                                             _errorResponseBuilder);
-      final RestLiCallback callback =
-          new RestLiCallback(null,
-                                     new RestLiFilterResponseContextFactory(request, null, restLiResponseHandler),
-                                     new RestLiFilterChain(null, filterChainDispatcher, filterChainCallback));
-      _invoker.invoke(null, routingResult, null, callback, null);
+      final RestLiCallback callback = new RestLiCallback(null,
+          new RestLiFilterResponseContextFactory(request, null, restLiResponseHandler),
+          new RestLiFilterChain(null, filterChainDispatcher, filterChainCallback));
+      _invoker.invoke(null, routingResult, null, callback);
       latch.await();
     }
     catch (Exception e)
@@ -4427,27 +4408,22 @@ public class TestRestLiMethodInvocation
     statusResource = getMockResource(StatusCollectionResource.class);
     EasyMock.expect(statusResource.streamingAction(EasyMock.anyObject(), EasyMock.anyObject()))
         .andReturn(1234l).once();
-    checkInvocation(statusResource,
-                    methodDescriptor,
+    checkInvocation(statusResource, new RequestContext(), methodDescriptor,
                     "POST",
                     version,
                     "/statuses/?action=streamingAction",
                     payload,
                     null,
-                    new RequestExecutionCallback<RestResponse>()
+                    new Callback<RestResponse>()
                     {
                       @Override
-                      public void onError(Throwable e, RequestExecutionReport executionReport,
-                                          RestLiAttachmentReader requestAttachmentReader,
-                                          RestLiResponseAttachments responseAttachments)
+                      public void onError(Throwable e)
                       {
                         Assert.fail("Request failed unexpectedly.");
                       }
 
                       @Override
-                      public void onSuccess(RestResponse result,
-                                            RequestExecutionReport executionReport,
-                                            RestLiResponseAttachments responseAttachments)
+                      public void onSuccess(RestResponse result)
                       {
                       }
                     },
@@ -4460,26 +4436,21 @@ public class TestRestLiMethodInvocation
     statusResource = getMockResource(StatusCollectionResource.class);
     EasyMock.expect(statusResource.streamingAction(EasyMock.anyObject(), EasyMock.anyObject()))
         .andThrow(new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR)).once();
-    checkInvocation(statusResource,
-                    methodDescriptor,
+    checkInvocation(statusResource, new RequestContext(), methodDescriptor,
                     "POST",
                     version,
                     "/statuses/?action=streamingAction",
                     payload,
                     null,
-                    new RequestExecutionCallback<RestResponse>()
+                    new Callback<RestResponse>()
                     {
                       @Override
-                      public void onError(Throwable e, RequestExecutionReport executionReport,
-                                          RestLiAttachmentReader requestAttachmentReader,
-                                          RestLiResponseAttachments responseAttachments)
+                      public void onError(Throwable e)
                       {
                       }
 
                       @Override
-                      public void onSuccess(RestResponse result,
-                                            RequestExecutionReport executionReport,
-                                            RestLiResponseAttachments responseAttachments)
+                      public void onSuccess(RestResponse result)
                       {
                         Assert.fail("Request passed unexpectedly.");
                       }
@@ -4504,27 +4475,22 @@ public class TestRestLiMethodInvocation
         return null;
       }
     });
-    checkInvocation(asyncStatusResource,
-                    methodDescriptor,
+    checkInvocation(asyncStatusResource, new RequestContext(), methodDescriptor,
                     "POST",
                     version,
                     "/asyncstatuses/?action=streamingAction",
                     payload,
                     null,
-                    new RequestExecutionCallback<RestResponse>()
+                    new Callback<RestResponse>()
                     {
                       @Override
-                      public void onError(Throwable e, RequestExecutionReport executionReport,
-                                          RestLiAttachmentReader requestAttachmentReader,
-                                          RestLiResponseAttachments responseAttachments)
+                      public void onError(Throwable e)
                       {
                         Assert.fail("Request failed unexpectedly.");
                       }
 
                       @Override
-                      public void onSuccess(RestResponse result,
-                                            RequestExecutionReport executionReport,
-                                            RestLiResponseAttachments responseAttachments)
+                      public void onSuccess(RestResponse result)
                       {
                       }
                     },
@@ -4546,26 +4512,21 @@ public class TestRestLiMethodInvocation
         return null;
       }
     });
-    checkInvocation(asyncStatusResource,
-                    methodDescriptor,
+    checkInvocation(asyncStatusResource, new RequestContext(), methodDescriptor,
                     "POST",
                     version,
                     "/asyncstatuses/?action=streamingAction",
                     payload,
                     null,
-                    new RequestExecutionCallback<RestResponse>()
+                    new Callback<RestResponse>()
                     {
                       @Override
-                      public void onError(Throwable e, RequestExecutionReport executionReport,
-                                          RestLiAttachmentReader requestAttachmentReader,
-                                          RestLiResponseAttachments responseAttachments)
+                      public void onError(Throwable e)
                       {
                       }
 
                       @Override
-                      public void onSuccess(RestResponse result,
-                                            RequestExecutionReport executionReport,
-                                            RestLiResponseAttachments responseAttachments)
+                      public void onSuccess(RestResponse result)
                       {
                         Assert.fail("Request passed unexpectedly.");
                       }
@@ -4602,27 +4563,22 @@ public class TestRestLiMethodInvocation
         return result;
       }
     });
-    checkInvocation(promiseStatusResource,
-                    methodDescriptor,
+    checkInvocation(promiseStatusResource, new RequestContext(), methodDescriptor,
                     "POST",
                     version,
                     "/promisestatuses/?action=streamingAction",
                     payload,
                     null,
-                    new RequestExecutionCallback<RestResponse>()
+                    new Callback<RestResponse>()
                     {
                       @Override
-                      public void onError(Throwable e, RequestExecutionReport executionReport,
-                                          RestLiAttachmentReader requestAttachmentReader,
-                                          RestLiResponseAttachments responseAttachments)
+                      public void onError(Throwable e)
                       {
                         Assert.fail("Request failed unexpectedly.");
                       }
 
                       @Override
-                      public void onSuccess(RestResponse result,
-                                            RequestExecutionReport executionReport,
-                                            RestLiResponseAttachments responseAttachments)
+                      public void onSuccess(RestResponse result)
                       {
                       }
                     },
@@ -4649,26 +4605,21 @@ public class TestRestLiMethodInvocation
         return result;
       }
     });
-    checkInvocation(promiseStatusResource,
-                    methodDescriptor,
+    checkInvocation(promiseStatusResource, new RequestContext(), methodDescriptor,
                     "POST",
                     version,
                     "/promisestatuses/?action=streamingAction",
                     payload,
                     null,
-                    new RequestExecutionCallback<RestResponse>()
+                    new Callback<RestResponse>()
                     {
                       @Override
-                      public void onError(Throwable e, RequestExecutionReport executionReport,
-                                          RestLiAttachmentReader requestAttachmentReader,
-                                          RestLiResponseAttachments responseAttachments)
+                      public void onError(Throwable e)
                       {
                       }
 
                       @Override
-                      public void onSuccess(RestResponse result,
-                                            RequestExecutionReport executionReport,
-                                            RestLiResponseAttachments responseAttachments)
+                      public void onSuccess(RestResponse result)
                       {
                         Assert.fail("Request passed unexpectedly.");
                       }
@@ -4695,27 +4646,22 @@ public class TestRestLiMethodInvocation
         };
       }
     });
-    checkInvocation(taskStatusResource,
-                    methodDescriptor,
+    checkInvocation(taskStatusResource, new RequestContext(), methodDescriptor,
                     "POST",
                     version,
                     "/taskstatuses/?action=streamingAction",
                     payload,
                     null,
-                    new RequestExecutionCallback<RestResponse>()
+                    new Callback<RestResponse>()
                     {
                       @Override
-                      public void onError(Throwable e, RequestExecutionReport executionReport,
-                                          RestLiAttachmentReader requestAttachmentReader,
-                                          RestLiResponseAttachments responseAttachments)
+                      public void onError(Throwable e)
                       {
                         Assert.fail("Request failed unexpectedly.");
                       }
 
                       @Override
-                      public void onSuccess(RestResponse result,
-                                            RequestExecutionReport executionReport,
-                                            RestLiResponseAttachments responseAttachments)
+                      public void onSuccess(RestResponse result)
                       {
                       }
                     },
@@ -4739,26 +4685,21 @@ public class TestRestLiMethodInvocation
         };
       }
     });
-    checkInvocation(taskStatusResource,
-                    methodDescriptor,
+    checkInvocation(taskStatusResource, new RequestContext(), methodDescriptor,
                     "POST",
                     version,
                     "/taskstatuses/?action=streamingAction",
                     payload,
                     null,
-                    new RequestExecutionCallback<RestResponse>()
+                    new Callback<RestResponse>()
                     {
                       @Override
-                      public void onError(Throwable e, RequestExecutionReport executionReport,
-                                          RestLiAttachmentReader requestAttachmentReader,
-                                          RestLiResponseAttachments responseAttachments)
+                      public void onError(Throwable e)
                       {
                       }
 
                       @Override
-                      public void onSuccess(RestResponse result,
-                                            RequestExecutionReport executionReport,
-                                            RestLiResponseAttachments responseAttachments)
+                      public void onSuccess(RestResponse result)
                       {
                         Assert.fail("Request passed unexpectedly.");
                       }
@@ -4969,7 +4910,7 @@ public class TestRestLiMethodInvocation
                                String uri, boolean expectRoutingException)
       throws URISyntaxException, RestLiSyntaxException
   {
-    checkInvocation(resource, resourceMethodDescriptor, httpMethod,
+    checkInvocation(resource, new RequestContext(), resourceMethodDescriptor, httpMethod,
                     version, uri, null, null, null, false, expectRoutingException);
   }
 
@@ -4980,7 +4921,7 @@ public class TestRestLiMethodInvocation
                                String uri)
       throws URISyntaxException, RestLiSyntaxException
   {
-    checkInvocation(resource, resourceMethodDescriptor, httpMethod,
+    checkInvocation(resource, new RequestContext(), resourceMethodDescriptor, httpMethod,
                     version, uri, null, null, null, false, false);
   }
 
@@ -4992,7 +4933,7 @@ public class TestRestLiMethodInvocation
                                String entityBody)
       throws URISyntaxException, RestLiSyntaxException
   {
-    checkInvocation(resource, resourceMethodDescriptor, httpMethod,
+    checkInvocation(resource, new RequestContext(), resourceMethodDescriptor, httpMethod,
                     version, uri, entityBody, null, null, false, false);
   }
 
@@ -5004,7 +4945,7 @@ public class TestRestLiMethodInvocation
                                MutablePathKeys pathkeys)
       throws URISyntaxException, RestLiSyntaxException
   {
-    checkInvocation(resource, resourceMethodDescriptor, httpMethod,
+    checkInvocation(resource, new RequestContext(), resourceMethodDescriptor, httpMethod,
                     version, uri, null, pathkeys, null, false, false);
   }
 
@@ -5017,38 +4958,40 @@ public class TestRestLiMethodInvocation
                                MutablePathKeys pathkeys)
       throws URISyntaxException, RestLiSyntaxException
   {
-    checkInvocation(resource, resourceMethodDescriptor, httpMethod,
+    checkInvocation(resource, new RequestContext(), resourceMethodDescriptor, httpMethod,
                     version, uri, entityBody, pathkeys, null, false, false);
   }
 
   private void checkInvocation(Object resource,
-                               ResourceMethodDescriptor resourceMethodDescriptor,
-                               String httpMethod,
-                               ProtocolVersion version,
-                               String uri,
-                               String entityBody,
-                               MutablePathKeys pathkeys,
-                               final RequestExecutionCallback<RestResponse> callback,
-                               final boolean isDebugMode,
-                               final boolean expectRoutingException)
+      RequestContext requestContext,
+      ResourceMethodDescriptor resourceMethodDescriptor,
+      String httpMethod,
+      ProtocolVersion version,
+      String uri,
+      String entityBody,
+      MutablePathKeys pathkeys,
+      final Callback<RestResponse> callback,
+      final boolean isDebugMode,
+      final boolean expectRoutingException)
       throws URISyntaxException, RestLiSyntaxException
   {
-    checkInvocation(resource, resourceMethodDescriptor, httpMethod, version,
+    checkInvocation(resource, requestContext, resourceMethodDescriptor, httpMethod, version,
                     uri, entityBody, pathkeys, callback, isDebugMode, expectRoutingException, null, null);
   }
 
   private void checkInvocation(Object resource,
-                               ResourceMethodDescriptor resourceMethodDescriptor,
-                               String httpMethod,
-                               ProtocolVersion version,
-                               String uri,
-                               String entityBody,
-                               MutablePathKeys pathkeys,
-                               final RequestExecutionCallback<RestResponse> callback,
-                               final boolean isDebugMode,
-                               final boolean expectRoutingException,
-                               final RestLiAttachmentReader expectedRequestAttachments,
-                               final RestLiResponseAttachments expectedResponseAttachments)
+      RequestContext requestContext,
+      ResourceMethodDescriptor resourceMethodDescriptor,
+      String httpMethod,
+      ProtocolVersion version,
+      String uri,
+      String entityBody,
+      MutablePathKeys pathkeys,
+      final Callback<RestResponse> callback,
+      final boolean isDebugMode,
+      final boolean expectRoutingException,
+      final RestLiAttachmentReader expectedRequestAttachments,
+      final RestLiResponseAttachments expectedResponseAttachments)
       throws URISyntaxException, RestLiSyntaxException
   {
     assertNotNull(resource);
@@ -5064,89 +5007,80 @@ public class TestRestLiMethodInvocation
       {
         builder.setEntity(entityBody.getBytes(Data.UTF_8_CHARSET));
       }
+      if (expectedResponseAttachments != null)
+      {
+        builder.addHeaderValue(RestConstants.HEADER_ACCEPT, RestConstants.HEADER_VALUE_MULTIPART_RELATED);
+      }
       RestRequest request = builder.build();
-      final ResourceContext resourceContext = new ResourceContextImpl(pathkeys, request,
-                                                                      new RequestContext(),
-                                                                      true, expectedRequestAttachments);
-      resourceContext.setResponseAttachments(expectedResponseAttachments);
-      RoutingResult routingResult = new RoutingResult(resourceContext, resourceMethodDescriptor);
-      FilterRequestContextInternal filterContext = new FilterRequestContextInternalImpl((ServerResourceContext) routingResult
-          .getContext(), resourceMethodDescriptor);
-      final CountDownLatch latch = new CountDownLatch(1);
-      final CountDownLatch expectedRoutingExceptionLatch = new CountDownLatch(1);
-      RestLiArgumentBuilder argumentBuilder = _methodAdapterRegistry.getArgumentBuilder(resourceMethodDescriptor.getType());
-      RestLiRequestData requestData = argumentBuilder.extractRequestData(routingResult, request);
-      filterContext.setRequestData(requestData);
-      RestLiResponseHandler restLiResponseHandler = new RestLiResponseHandler.Builder().build();
 
-      RequestExecutionReportBuilder requestExecutionReportBuilder = null;
       if (isDebugMode)
       {
-        requestExecutionReportBuilder = new RequestExecutionReportBuilder();
+        requestContext.putLocalAttr(RestLiMethodInvoker.ATTRIBUTE_PROMISE_LISTENER, new PromiseListener<Object>()
+        {
+          @Override
+          public void onResolved(Promise<Object> promise)
+          {
+            // ParSeq debugging no longer uses this local attribute to pass the trace. This is simply to test the
+            // PromiseListener is invoked with a task.
+            if (promise instanceof Task)
+            {
+              requestContext.putLocalAttr(ATTRIBUTE_PARSEQ_TRACE, ((Task<?>) promise).getTrace());
+            }
+          }
+        });
       }
 
-      RequestExecutionCallback<RestResponse> executionCallback = new RequestExecutionCallback<RestResponse>()
+      final ServerResourceContext resourceContext = new ResourceContextImpl(pathkeys, request, requestContext);
+      resourceContext.setRequestAttachmentReader(expectedRequestAttachments);
+      if (expectedResponseAttachments != null)
+      {
+        resourceContext.setResponseAttachments(expectedResponseAttachments);
+      }
+      RoutingResult routingResult = new RoutingResult(resourceContext, resourceMethodDescriptor);
+      RestLiArgumentBuilder argumentBuilder = _methodAdapterRegistry.getArgumentBuilder(resourceMethodDescriptor.getType());
+      FilterRequestContext filterContext = new FilterRequestContextInternalImpl(routingResult
+          .getContext(), resourceMethodDescriptor, argumentBuilder.extractRequestData(routingResult, request));
+      final CountDownLatch latch = new CountDownLatch(1);
+      final CountDownLatch expectedRoutingExceptionLatch = new CountDownLatch(1);
+      RestLiResponseHandler restLiResponseHandler = new RestLiResponseHandler.Builder().build();
+
+      Callback<RestResponse> executionCallback = new Callback<RestResponse>()
       {
         @Override
-        public void onError(Throwable e, RequestExecutionReport executionReport,
-                            RestLiAttachmentReader requestAttachmentReader,
-                            RestLiResponseAttachments responseAttachments)
+        public void onError(Throwable e)
         {
-          if (isDebugMode)
-          {
-            Assert.assertNotNull(executionReport);
-          }
-          else
-          {
-            Assert.assertNull(executionReport);
-          }
-
-          if (e.getCause().getCause() instanceof RoutingException)
+          if (e.getCause() != null && e.getCause().getCause() instanceof RoutingException)
           {
             expectedRoutingExceptionLatch.countDown();
           }
 
           if (callback != null)
           {
-            callback.onError(e, executionReport, null, null);
+            callback.onError(e);
           }
 
-          Assert.assertEquals(requestAttachmentReader, expectedRequestAttachments);
-          Assert.assertEquals(responseAttachments, expectedResponseAttachments);
+          Assert.assertEquals(resourceContext.getRequestAttachmentReader(), expectedRequestAttachments);
+          Assert.assertEquals(resourceContext.getResponseAttachments(), expectedResponseAttachments);
           latch.countDown();
         }
 
         @Override
-        public void onSuccess(final RestResponse result,
-                              RequestExecutionReport executionReport,
-                              RestLiResponseAttachments responseAttachments)
+        public void onSuccess(final RestResponse result)
         {
-          if (isDebugMode)
-          {
-            Assert.assertNotNull(executionReport);
-          }
-          else
-          {
-            Assert.assertNull(executionReport);
-          }
-
           if (callback != null)
           {
-            callback.onSuccess(result, executionReport, null);
+            callback.onSuccess(result);
           }
 
-          Assert.assertEquals(responseAttachments, expectedResponseAttachments);
+          Assert.assertEquals(resourceContext.getResponseAttachments(), expectedResponseAttachments);
           latch.countDown();
         }
       };
 
       FilterChainDispatcher filterChainDispatcher = new FilterChainDispatcherImpl(routingResult,
           _invoker,
-          argumentBuilder,
-          requestExecutionReportBuilder);
+          argumentBuilder);
       FilterChainCallback filterChainCallback = new FilterChainCallbackImpl(routingResult,
-          requestExecutionReportBuilder,
-          expectedRequestAttachments,
           restLiResponseHandler,
           executionCallback,
           _errorResponseBuilder);
@@ -5154,11 +5088,8 @@ public class TestRestLiMethodInvocation
           new RestLiCallback(filterContext,
                                      new RestLiFilterResponseContextFactory(request, routingResult, restLiResponseHandler),
                                      new RestLiFilterChain(null, filterChainDispatcher, filterChainCallback));
-      RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(),
-                                                               (ServerResourceContext)routingResult.getContext());
-      filterContext.setRequestData(argumentBuilder.extractRequestData(routingResult, request));
-      _invoker.invoke(filterContext.getRequestData(), routingResult, argumentBuilder, outerCallback,
-                      requestExecutionReportBuilder);
+      RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(),routingResult.getContext());
+      _invoker.invoke(argumentBuilder.extractRequestData(routingResult, request), routingResult, argumentBuilder, outerCallback);
       try
       {
         latch.await();
@@ -5172,7 +5103,7 @@ public class TestRestLiMethodInvocation
         // Ignore
       }
       EasyMock.verify(resource);
-      Assert.assertEquals(((ServerResourceContext) routingResult.getContext()).getResponseMimeType(),
+      Assert.assertEquals((routingResult.getContext()).getResponseMimeType(),
                           "application/json");
     }
     catch (RestLiSyntaxException e)
@@ -5190,7 +5121,7 @@ public class TestRestLiMethodInvocation
   {
     @SuppressWarnings("unchecked")
     RestLiCallback callback = EasyMock.createMock(RestLiCallback.class);
-    callback.onSuccess(EasyMock.anyObject(), EasyMock.anyObject(RestLiResponseAttachments.class));
+    callback.onSuccess(EasyMock.anyObject());
     EasyMock.expectLastCall().once();
     EasyMock.replay(callback);
     return callback;
@@ -5264,21 +5195,14 @@ public class TestRestLiMethodInvocation
           new RoutingResult(new ResourceContextImpl(pathkeys, request,
                                                     new RequestContext()), methodDescriptor);
 
-      RequestExecutionReportBuilder requestExecutionReportBuilder = null;
-      if (isDebugMode)
-      {
-        requestExecutionReportBuilder = new RequestExecutionReportBuilder();
-      }
-
       RestLiArgumentBuilder argumentBuilder = _methodAdapterRegistry.getArgumentBuilder(methodDescriptor.getType());
       RestLiRequestData requestData = argumentBuilder.extractRequestData(routingResult, request);
 
-      RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(),
-                                                               (ServerResourceContext)routingResult.getContext());
-      _invoker.invoke(requestData, routingResult, argumentBuilder, callback, requestExecutionReportBuilder);
+      RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(), routingResult.getContext());
+      _invoker.invoke(requestData, routingResult, argumentBuilder, callback);
       EasyMock.verify(resource);
       EasyMock.verify(callback);
-      Assert.assertEquals(((ServerResourceContext) routingResult.getContext()).getResponseMimeType(),
+      Assert.assertEquals((routingResult.getContext()).getResponseMimeType(),
                           "application/x-pson");
 
     }
@@ -5289,8 +5213,7 @@ public class TestRestLiMethodInvocation
     finally
     {
       EasyMock.reset(callback, resource);
-      callback.onSuccess(EasyMock.anyObject(),
-                         EasyMock.anyObject(RestLiResponseAttachments.class));
+      callback.onSuccess(EasyMock.anyObject());
       EasyMock.expectLastCall().once();
       EasyMock.replay(callback);
     }
@@ -5317,7 +5240,7 @@ public class TestRestLiMethodInvocation
   private ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams> getDiscoveredItemComplexKey(
       long itemId, int type, long userId)
   {
-    return new ComplexResourceKey<DiscoveredItemKey, DiscoveredItemKeyParams>(
+    return new ComplexResourceKey<>(
         new DiscoveredItemKey().setItemId(itemId).setType(type).setUserId(userId),
         new DiscoveredItemKeyParams());
   }

@@ -35,7 +35,6 @@ import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.server.BatchUpdateRequest;
 import com.linkedin.restli.server.Key;
-import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiRequestData;
 import com.linkedin.restli.server.RoutingException;
 
@@ -145,7 +144,7 @@ public class TestBatchUpdateArgumentBuilder
         new AnnotationSet(new Annotation[]{}));
     ResourceMethodDescriptor descriptor = RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor(
         model, 3, Collections.singletonList(param));
-    ResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(batchKeys, true, false);
+    ServerResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(batchKeys, true, false);
     RoutingResult routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(descriptor, context);
 
     RestLiArgumentBuilder argumentBuilder = new BatchUpdateArgumentBuilder();
@@ -280,7 +279,7 @@ public class TestBatchUpdateArgumentBuilder
     RestRequest request = RestLiArgumentBuilderTestHelper.getMockRequest(requestEntity, version);
     ResourceModel model = RestLiArgumentBuilderTestHelper.getMockResourceModel(MyComplexKey.class, primaryKey, associationKeys, batchKeys);
     ResourceMethodDescriptor descriptor = RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor(model);
-    ResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(batchKeys, false, false);
+    ServerResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(batchKeys, false, false);
     RoutingResult routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(descriptor, context);
 
     RestLiArgumentBuilder argumentBuilder = new BatchUpdateArgumentBuilder();

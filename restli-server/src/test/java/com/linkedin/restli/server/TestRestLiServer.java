@@ -1827,8 +1827,8 @@ public class TestRestLiServer
     final MultiPartMIMEWriter.Builder builder = new MultiPartMIMEWriter.Builder();
 
     final StreamRequest streamRequest =
-        MultiPartMIMEStreamRequestFactory.generateMultiPartMIMEStreamRequest(new URI("/doesNotMatter"), "related",
-                                                                             builder.build(), Collections.<String, String>emptyMap(),
+        MultiPartMIMEStreamRequestFactory.generateMultiPartMIMEStreamRequest(new URI("/statuses/1"), "related",
+                                                                             builder.build(), Collections.emptyMap(),
                                                                              "POST",
                                                                              ImmutableMap.of(RestConstants.HEADER_ACCEPT, RestConstants.HEADER_VALUE_MULTIPART_RELATED),
                                                                              Collections.emptyList());
@@ -2079,13 +2079,11 @@ public class TestRestLiServer
     @SuppressWarnings("unchecked")
     public void handleRequest(final RestRequest request,
         final RequestContext context,
-        final RestLiDebugRequestHandler.ResourceDebugRequestHandler resourceRequestHandler,
-        final RestLiAttachmentReader attachmentReader,
-        final RequestExecutionCallback<RestResponse> callback)
+        final ResourceDebugRequestHandler resourceRequestHandler, final Callback<RestResponse> callback)
     {
       resourceRequestHandler.handleRequest(request,
           context,
-          EasyMock.createMock(RequestExecutionCallback.class));
+          EasyMock.createMock(Callback.class));
       handleRequestWithCustomResponse(callback, _debugHandlerResponse);
     }
 
@@ -2095,7 +2093,7 @@ public class TestRestLiServer
       return _handlerId;
     }
 
-    private void handleRequestWithCustomResponse(final RequestExecutionCallback<RestResponse> callback, final String response)
+    private void handleRequestWithCustomResponse(final Callback<RestResponse> callback, final String response)
     {
       RestResponseBuilder responseBuilder = new RestResponseBuilder();
       ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -2110,7 +2108,7 @@ public class TestRestLiServer
       }
 
       responseBuilder.setEntity(outputStream.toByteArray());
-      callback.onSuccess(responseBuilder.build(), null, null);
+      callback.onSuccess(responseBuilder.build());
     }
   }
 

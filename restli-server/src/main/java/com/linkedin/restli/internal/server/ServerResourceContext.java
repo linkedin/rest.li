@@ -23,9 +23,9 @@ package com.linkedin.restli.internal.server;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.transform.filter.request.MaskTree;
+import com.linkedin.r2.message.stream.entitystream.EntityStream;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
-import com.linkedin.restli.server.UnstructuredDataWriter;
 import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiServiceException;
 
@@ -109,6 +109,12 @@ public interface ServerResourceContext extends ResourceContext
   String getResponseMimeType();
 
   /**
+   * Sets the {@link RestLiAttachmentReader}. The attachment reader is not available when the ServerResourceContext is
+   * constructed during routing and can only be set after the stream content is inspected.
+   */
+  void setRequestAttachmentReader(RestLiAttachmentReader requestAttachmentReader);
+
+  /**
    * Returns a {@link com.linkedin.restli.common.attachments.RestLiAttachmentReader} if there are attachments
    * available to asynchronously walk through in the incoming request. If no attachments are present in the incoming
    * request, null is returned.
@@ -119,14 +125,14 @@ public interface ServerResourceContext extends ResourceContext
   RestLiAttachmentReader getRequestAttachmentReader();
 
   /**
-   * Set a {@link UnstructuredDataWriter} for this request.
+   * Set a {@link EntityStream} for this request.
    */
-  void setUnstructuredDataWriter(UnstructuredDataWriter unstructuredDataWriter);
+  void setEntityStream(EntityStream entityStream);
 
   /**
-   * Returns the {@link UnstructuredDataWriter} for sending a unstructured data response. For any other cases, this returns null.
+   * Returns the {@link EntityStream}. For any other cases, this returns null.
    */
-  UnstructuredDataWriter getUnstructuredDataWriter();
+  EntityStream getEntityStream();
 
   /**
    * Sets the specified projection mask for root object entities in the response. Setting the projection mask to
@@ -134,10 +140,7 @@ public interface ServerResourceContext extends ResourceContext
    *
    * @param projectionMask Projection mask to use for root object entities
    */
-  default void setProjectionMask(MaskTree projectionMask)
-  {
-    LOG.warn("This is a default no-op implementation. The specified projectionMask is ignored.");
-  }
+  void setProjectionMask(MaskTree projectionMask);
 
   /**
    * Sets the specified projection mask for CollectionResult metadata in the response. Setting the projection mask to
@@ -145,10 +148,7 @@ public interface ServerResourceContext extends ResourceContext
    *
    * @param metadataProjectionMask Projection mask to use for CollectionResult metadata
    */
-  default void setMetadataProjectionMask(MaskTree metadataProjectionMask)
-  {
-    LOG.warn("This is a default no-op implementation. The specified metadataProjectionMask is ignored.");
-  }
+  void setMetadataProjectionMask(MaskTree metadataProjectionMask);
 
   /**
    * Sets the specified projection mask for paging metadata in the response (applies only for collection responses).
@@ -156,8 +156,5 @@ public interface ServerResourceContext extends ResourceContext
    *
    * @param pagingProjectionMask Projection mask to use for paging metadata
    */
-  default void setPagingProjectionMask(MaskTree pagingProjectionMask)
-  {
-    LOG.warn("This is a default no-op implementation. The specified pagingProjectionMask is ignored.");
-  }
+  void setPagingProjectionMask(MaskTree pagingProjectionMask);
 }

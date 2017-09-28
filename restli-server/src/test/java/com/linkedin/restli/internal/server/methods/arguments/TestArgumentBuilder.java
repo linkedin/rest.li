@@ -36,7 +36,6 @@ import com.linkedin.restli.internal.server.model.AnnotationSet;
 import com.linkedin.restli.internal.server.model.Parameter;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.server.UnstructuredDataWriter;
-import com.linkedin.restli.server.LinkedListNode;
 import com.linkedin.restli.server.PagingContext;
 import com.linkedin.restli.server.PathKeys;
 import com.linkedin.restli.server.ResourceContext;
@@ -84,19 +83,19 @@ public class TestArgumentBuilder
   {
     //test integer association key integer
     String param1Key = "param1";
-    Parameter<Integer> param1 = new Parameter<Integer>(param1Key, Integer.class, DataTemplateUtil.getSchema(Integer.class),
+    Parameter<Integer> param1 = new Parameter<>(param1Key, Integer.class, DataTemplateUtil.getSchema(Integer.class),
                                           false, null, Parameter.ParamType.ASSOC_KEY_PARAM, false, AnnotationSet.EMPTY);
     Integer param1Value = 123;
 
     //test regular string argument
     String param2Key = "param2";
-    Parameter<String> param2 = new Parameter<String>(param2Key, String.class, DataTemplateUtil.getSchema(String.class),
+    Parameter<String> param2 = new Parameter<>(param2Key, String.class, DataTemplateUtil.getSchema(String.class),
                                           true, null, Parameter.ParamType.QUERY, true, AnnotationSet.EMPTY);
     String param2Value = "param2Value";
 
     //test data template argument array with more than element
     String param3Key = "param3";
-    Parameter<StringArray> param3 = new Parameter<StringArray>(param3Key, StringArray.class, DataTemplateUtil.getSchema(StringArray.class),
+    Parameter<StringArray> param3 = new Parameter<>(param3Key, StringArray.class, DataTemplateUtil.getSchema(StringArray.class),
                                       true, null, Parameter.ParamType.QUERY, true, AnnotationSet.EMPTY);
 
     DataList param3Value = new DataList(Arrays.asList("param3a", "param3b"));
@@ -104,14 +103,14 @@ public class TestArgumentBuilder
 
     //test data template argument array with only one element
     String param4Key = "param4";
-    Parameter<StringArray> param4 = new Parameter<StringArray>(param4Key, StringArray.class, DataTemplateUtil.getSchema(StringArray.class),
+    Parameter<StringArray> param4 = new Parameter<>(param4Key, StringArray.class, DataTemplateUtil.getSchema(StringArray.class),
                                           true, null, Parameter.ParamType.QUERY, true, AnnotationSet.EMPTY);
     String param4Value = "param4Value";
     StringArray param4Final = new StringArray(new DataList(Collections.singletonList(param4Value)));
 
     // test record template
     String param5Key = "param5";
-    Parameter<TestRecord> param5 = new Parameter<TestRecord>(param5Key, TestRecord.class, DataTemplateUtil.getSchema(TestRecord.class),
+    Parameter<TestRecord> param5 = new Parameter<>(param5Key, TestRecord.class, DataTemplateUtil.getSchema(TestRecord.class),
                                                              true, null, Parameter.ParamType.QUERY, true, AnnotationSet.EMPTY);
     DataMap param5Value = new DataMap();
     param5Value.put("doubleField", "5.5");
@@ -127,7 +126,7 @@ public class TestArgumentBuilder
 
     // test record template array
     String param6Key = "param6";
-    Parameter<TestRecordArray> param6 = new Parameter<TestRecordArray>(param6Key, TestRecordArray.class, DataTemplateUtil.getSchema(TestRecordArray.class),
+    Parameter<TestRecordArray> param6 = new Parameter<>(param6Key, TestRecordArray.class, DataTemplateUtil.getSchema(TestRecordArray.class),
                                                                        true, null, Parameter.ParamType.QUERY, true, AnnotationSet.EMPTY);
     DataList param6Value = new DataList();
     DataMap testRecordDataMap1 = new DataMap();
@@ -158,7 +157,7 @@ public class TestArgumentBuilder
     param6Final.add(testRecord2);
 
 
-    List<Parameter<?>> parameters = new ArrayList<Parameter<?>>();
+    List<Parameter<?>> parameters = new ArrayList<>();
     parameters.add(param1);
     parameters.add(param2);
     parameters.add(param3);
@@ -167,12 +166,12 @@ public class TestArgumentBuilder
     parameters.add(param6);
     Object[] positionalArguments = new Object[0];
 
-    Capture<String> param1Capture = new Capture<String>();
-    Capture<String> param2Capture = new Capture<String>();
-    Capture<String> param3Capture = new Capture<String>();
-    Capture<String> param4Capture = new Capture<String>();
-    Capture<String> param5Capture = new Capture<String>();
-    Capture<String> param6Capture = new Capture<String>();
+    Capture<String> param1Capture = new Capture<>();
+    Capture<String> param2Capture = new Capture<>();
+    Capture<String> param3Capture = new Capture<>();
+    Capture<String> param4Capture = new Capture<>();
+    Capture<String> param5Capture = new Capture<>();
+    Capture<String> param6Capture = new Capture<>();
 
     ServerResourceContext mockResourceContext = EasyMock.createMock(ServerResourceContext.class);
     EasyMock.expect(mockResourceContext.getRequestAttachmentReader()).andReturn(null);
@@ -231,9 +230,9 @@ public class TestArgumentBuilder
     EasyMock.expect(mockResourceContext.getRequestAttachmentReader()).andReturn(null);
     EasyMock.replay(mockResourceContext, annotation, annotationSet);
 
-    Parameter<String> param = new Parameter<String>(testParamKey, String.class, DataSchemaConstants.STRING_DATA_SCHEMA,
+    Parameter<String> param = new Parameter<>(testParamKey, String.class, DataSchemaConstants.STRING_DATA_SCHEMA,
         false, null, Parameter.ParamType.HEADER, false, annotationSet);
-    List<Parameter<?>> parameters = Collections.<Parameter<?>>singletonList(param);
+    List<Parameter<?>> parameters = Collections.singletonList(param);
 
     Object[] results = ArgumentBuilder.buildArgs(new Object[0], getMockResourceMethod(parameters), mockResourceContext, null);
     Assert.assertEquals(results[0], expectedTestParamValue);
@@ -270,7 +269,7 @@ public class TestArgumentBuilder
     @SuppressWarnings({"unchecked","rawtypes"})
     Parameter<?> param = new Parameter(paramKey, dataType, null, false, null, paramType,
         false, AnnotationSet.EMPTY);
-    List<Parameter<?>> parameters = Collections.<Parameter<?>>singletonList(param);
+    List<Parameter<?>> parameters = Collections.singletonList(param);
 
     Object[] results = ArgumentBuilder.buildArgs(new Object[0], getMockResourceMethod(parameters), mockResourceContext, null);
     Assert.assertEquals(results[0], null);
@@ -320,9 +319,9 @@ public class TestArgumentBuilder
     EasyMock.expect(mockResourceContext.getRequestAttachmentReader()).andReturn(null);
     EasyMock.replay(mockResourceContext);
 
-    Parameter<MaskTree> param = new Parameter<MaskTree>(testParamKey, MaskTree.class, null, false, null, paramType,
+    Parameter<MaskTree> param = new Parameter<>(testParamKey, MaskTree.class, null, false, null, paramType,
         false, AnnotationSet.EMPTY);
-    List<Parameter<?>> parameters = Collections.<Parameter<?>>singletonList(param);
+    List<Parameter<?>> parameters = Collections.singletonList(param);
 
     Object[] results = ArgumentBuilder.buildArgs(new Object[0], getMockResourceMethod(parameters), mockResourceContext, null);
     Assert.assertEquals(results[0], mockMask);
@@ -342,9 +341,9 @@ public class TestArgumentBuilder
     EasyMock.replay(mockResourceContext);
 
     List<Parameter<?>> parameters = new ArrayList<Parameter<?>>();
-    Parameter<PagingContext> param1 = new Parameter<PagingContext>(testParamKey, PagingContext.class, null,
+    Parameter<PagingContext> param1 = new Parameter<>(testParamKey, PagingContext.class, null,
         false, null, Parameter.ParamType.PAGING_CONTEXT_PARAM, false, AnnotationSet.EMPTY);
-    Parameter<PagingContext> param2 = new Parameter<PagingContext>(testParamKey, PagingContext.class, null,
+    Parameter<PagingContext> param2 = new Parameter<>(testParamKey, PagingContext.class, null,
         false, null, Parameter.ParamType.CONTEXT, false, AnnotationSet.EMPTY);
     parameters.add(param1);
     parameters.add(param2);
@@ -359,7 +358,7 @@ public class TestArgumentBuilder
   {
     ServerResourceContext mockResourceContext = EasyMock.createMock(ServerResourceContext.class);
 
-    mockResourceContext.setUnstructuredDataWriter(EasyMock.anyObject());
+    mockResourceContext.setEntityStream(EasyMock.anyObject());
     EasyMock.expectLastCall().once();
     EasyMock.expect(mockResourceContext.getRequestAttachmentReader()).andReturn(null);
     EasyMock.replay(mockResourceContext);
@@ -370,7 +369,7 @@ public class TestArgumentBuilder
                                                                        Parameter.ParamType.UNSTRUCTURED_DATA_WRITER_PARAM, false,
                                                                        AnnotationSet.EMPTY);
 
-    List<Parameter<?>> parameters = Collections.<Parameter<?>>singletonList(param);
+    List<Parameter<?>> parameters = Collections.singletonList(param);
 
     Object[] results = ArgumentBuilder.buildArgs(new Object[0], getMockResourceMethod(parameters), mockResourceContext, null);
 
@@ -396,7 +395,7 @@ public class TestArgumentBuilder
                                                                   Parameter.ParamType.RESTLI_ATTACHMENTS_PARAM, false,
                                                                   AnnotationSet.EMPTY);
 
-    List<Parameter<?>> parameters = Collections.<Parameter<?>>singletonList(param);
+    List<Parameter<?>> parameters = Collections.singletonList(param);
 
     Object[] results = ArgumentBuilder.buildArgs(new Object[0], getMockResourceMethod(parameters), mockResourceContext, null);
     Assert.assertEquals(results[0], restLiAttachmentReader);
@@ -418,7 +417,7 @@ public class TestArgumentBuilder
                                                                   Parameter.ParamType.RESTLI_ATTACHMENTS_PARAM, false,
                                                                   AnnotationSet.EMPTY);
 
-    List<Parameter<?>> parameters = Collections.<Parameter<?>>singletonList(param);
+    List<Parameter<?>> parameters = Collections.singletonList(param);
 
     Object[] results = ArgumentBuilder.buildArgs(new Object[0], getMockResourceMethod(parameters), mockResourceContext, null);
     Assert.assertEquals(results[0], null);
@@ -436,7 +435,7 @@ public class TestArgumentBuilder
     EasyMock.expect(mockResourceContext.getRequestAttachmentReader()).andReturn(restLiAttachmentReader);
     EasyMock.replay(mockResourceContext);
 
-    List<Parameter<?>> parameters = Collections.<Parameter<?>>emptyList();
+    List<Parameter<?>> parameters = Collections.emptyList();
 
     try
     {
@@ -465,14 +464,14 @@ public class TestArgumentBuilder
     EasyMock.expect(mockResourceContext.getRequestAttachmentReader()).andReturn(null);
     EasyMock.replay(mockResourceContext, mockPathKeys);
 
-    List<Parameter<?>> parameters = new ArrayList<Parameter<?>>();
-    Parameter<String> param1 = new Parameter<String>(testParamKey, String.class, null,
+    List<Parameter<?>> parameters = new ArrayList<>();
+    Parameter<String> param1 = new Parameter<>(testParamKey, String.class, null,
       false, null, Parameter.ParamType.KEY, false, AnnotationSet.EMPTY);
-    Parameter<String> param2 = new Parameter<String>(testParamKey, String.class, null,
+    Parameter<String> param2 = new Parameter<>(testParamKey, String.class, null,
         false, null, Parameter.ParamType.ASSOC_KEY_PARAM, false, AnnotationSet.EMPTY);
-    Parameter<PathKeys> param3 = new Parameter<PathKeys>(testParamKey, PathKeys.class, null,
+    Parameter<PathKeys> param3 = new Parameter<>(testParamKey, PathKeys.class, null,
         false, null, Parameter.ParamType.PATH_KEYS, false, AnnotationSet.EMPTY);
-    Parameter<PathKeys> param4 = new Parameter<PathKeys>(testParamKey, PathKeys.class, null,
+    Parameter<PathKeys> param4 = new Parameter<>(testParamKey, PathKeys.class, null,
         false, null, Parameter.ParamType.PATH_KEYS_PARAM, false, AnnotationSet.EMPTY);
     parameters.add(param1);
     parameters.add(param2);
@@ -494,10 +493,10 @@ public class TestArgumentBuilder
 
     ServerResourceContext mockResourceContext = EasyMock.createMock(ServerResourceContext.class);
 
-    List<Parameter<?>> parameters = new ArrayList<Parameter<?>>();
-    Parameter<ResourceContext> param1 = new Parameter<ResourceContext>(testParamKey, ResourceContext.class, null,
+    List<Parameter<?>> parameters = new ArrayList<>();
+    Parameter<ResourceContext> param1 = new Parameter<>(testParamKey, ResourceContext.class, null,
         false, null, Parameter.ParamType.RESOURCE_CONTEXT, false, AnnotationSet.EMPTY);
-    Parameter<ResourceContext> param2 = new Parameter<ResourceContext>(testParamKey, ResourceContext.class, null,
+    Parameter<ResourceContext> param2 = new Parameter<>(testParamKey, ResourceContext.class, null,
         false, null, Parameter.ParamType.RESOURCE_CONTEXT_PARAM, false, AnnotationSet.EMPTY);
     parameters.add(param1);
     parameters.add(param2);
@@ -519,9 +518,9 @@ public class TestArgumentBuilder
     entityBody.put(testParamKey, expectedTestParamValue);
     DynamicRecordTemplate template = new DynamicRecordTemplate(entityBody, null);
 
-    Parameter<String> param = new Parameter<String>(testParamKey, String.class, DataSchemaConstants.STRING_DATA_SCHEMA,
+    Parameter<String> param = new Parameter<>(testParamKey, String.class, DataSchemaConstants.STRING_DATA_SCHEMA,
         false, null, Parameter.ParamType.POST, false, AnnotationSet.EMPTY);
-    List<Parameter<?>> parameters = Collections.<Parameter<?>>singletonList(param);
+    List<Parameter<?>> parameters = Collections.singletonList(param);
 
     EasyMock.expect(mockResourceContext.getRequestAttachmentReader()).andReturn(null);
     Object[] results = ArgumentBuilder.buildArgs(new Object[0], getMockResourceMethod(parameters), mockResourceContext, template);
@@ -540,9 +539,9 @@ public class TestArgumentBuilder
     EasyMock.expect(mockResourceContext.getRequestAttachmentReader()).andReturn(null);
     EasyMock.replay(mockResourceContext);
 
-    Parameter<String> param = new Parameter<String>(testParamKey, String.class, DataSchemaConstants.STRING_DATA_SCHEMA,
+    Parameter<String> param = new Parameter<>(testParamKey, String.class, DataSchemaConstants.STRING_DATA_SCHEMA,
         false, null, Parameter.ParamType.QUERY, false, AnnotationSet.EMPTY);
-    List<Parameter<?>> parameters = Collections.<Parameter<?>>singletonList(param);
+    List<Parameter<?>> parameters = Collections.singletonList(param);
 
     Object[] results = ArgumentBuilder.buildArgs(new Object[0], getMockResourceMethod(parameters), mockResourceContext, null);
     Assert.assertEquals(results[0], expectedTestParamValue);
@@ -569,12 +568,12 @@ public class TestArgumentBuilder
   {
     String paramKey = "testParam";
 
-    ResourceContext mockResourceContext = EasyMock.createMock(ResourceContext.class);
+    ServerResourceContext mockResourceContext = EasyMock.createMock(ServerResourceContext.class);
 
     @SuppressWarnings({"unchecked","rawtypes"})
     Parameter<?> param = new Parameter(paramKey, dataType, null, false, null, paramType,
         false, AnnotationSet.EMPTY);
-    List<Parameter<?>> parameters = Collections.<Parameter<?>>singletonList(param);
+    List<Parameter<?>> parameters = Collections.singletonList(param);
 
     ArgumentBuilder.buildArgs(new Object[0], getMockResourceMethod(parameters), mockResourceContext, null);
   }
@@ -613,7 +612,7 @@ public class TestArgumentBuilder
     }
 
     // invoke buildArgs
-    List<Parameter<?>> parameters = Collections.<Parameter<?>>singletonList(param);
+    List<Parameter<?>> parameters = Collections.singletonList(param);
     return ArgumentBuilder.buildArgs(new Object[0], getMockResourceMethod(parameters), mockResourceContext, template);
   }
 
