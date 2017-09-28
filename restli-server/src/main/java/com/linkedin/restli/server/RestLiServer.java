@@ -192,6 +192,16 @@ public class RestLiServer implements RestRequestHandler, StreamRequestHandler
     {
       _requestHandlers.add(new DelegatingDebugRequestHandler(debugHandler, this));
     }
+
+    List<ResourceDefinitionListener> resourceDefinitionListeners = config.getResourceDefinitionListeners();
+    if (resourceDefinitionListeners != null)
+    {
+      Map<String, ResourceDefinition> resourceDefinitions = Collections.unmodifiableMap(rootResources);
+      for (ResourceDefinitionListener listener : resourceDefinitionListeners)
+      {
+        listener.onInitialized(resourceDefinitions);
+      }
+    }
   }
 
   /**

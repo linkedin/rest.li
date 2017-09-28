@@ -240,6 +240,44 @@ public class TestRestLiServer
         };
   }
 
+  @Test
+  public void testResourceDefinitionListeners() throws Exception
+  {
+    int[] counts = new int[2];
+
+    RestLiConfig config = new RestLiConfig();
+    config.addResourcePackageNames("com.linkedin.restli.server.twitter");
+    config.addResourceDefinitionListener(new ResourceDefinitionListener()
+    {
+      @Override
+      public void onInitialized(Map<String, ResourceDefinition> definitions)
+      {
+        int resourceCount = 0;
+        for (ResourceDefinition definition : definitions.values()) {
+          resourceCount = resourceCount + 1 + countSubResources(definition);
+        }
+
+        counts[0] = definitions.size();
+        counts[1] = resourceCount;
+      }
+    });
+
+    new RestLiServer(config, new EasyMockResourceFactory(), EasyMock.createMock(Engine.class));
+
+    assertEquals(counts[0], 16);
+    assertEquals(counts[1], 23);
+  }
+
+  private int countSubResources(ResourceDefinition definition) {
+    int count = 0;
+    if (definition.hasSubResources()) {
+      for (ResourceDefinition subResource : definition.getSubResourceDefinitions().values()) {
+        count = count + 1 + countSubResources(subResource);
+      }
+    }
+    return count;
+  }
+
   @Test(dataProvider = "restOrStream")
   public void testServer(final RestOrStream restOrStream) throws Exception
   {

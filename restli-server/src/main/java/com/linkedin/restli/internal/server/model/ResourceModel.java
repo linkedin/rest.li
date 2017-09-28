@@ -25,6 +25,7 @@ import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.restspec.ResourceEntityType;
 import com.linkedin.restli.server.AlternativeKey;
 import com.linkedin.restli.server.Key;
+import com.linkedin.restli.server.ResourceDefinition;
 import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.resources.ComplexKeyResource;
 import com.linkedin.restli.server.resources.unstructuredData.KeyUnstructuredDataResource;
@@ -42,7 +43,7 @@ import java.util.Set;
  *
  * @author dellamag
  */
-public class ResourceModel
+public class ResourceModel implements ResourceDefinition
 {
   private final String                          _name;
   private final String                          _namespace;
@@ -249,6 +250,12 @@ public class ResourceModel
     return _valueClass;
   }
 
+  @Override
+  public ResourceDefinition getParent()
+  {
+    return _parentResourceModel;
+  }
+
   public ResourceModel getParentResourceModel()
   {
     return _parentResourceModel;
@@ -296,6 +303,12 @@ public class ResourceModel
   public Iterable<ResourceModel> getSubResources()
   {
     return _pathSubResourceMap.values();
+  }
+
+  @Override
+  public Map<String, ResourceDefinition> getSubResourceDefinitions()
+  {
+    return Collections.unmodifiableMap(_pathSubResourceMap);
   }
 
   /**

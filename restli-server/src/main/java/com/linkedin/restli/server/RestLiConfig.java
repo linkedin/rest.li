@@ -72,35 +72,37 @@ public class RestLiConfig
     STRICT;
   }
 
-  private final Set<String> _resourcePackageNames = new HashSet<String>();
-  private final Set<String> _resourceClassNames = new HashSet<String>();
+  private final Set<String> _resourcePackageNames = new HashSet<>();
+  private final Set<String> _resourceClassNames = new HashSet<>();
   private URI _serverNodeUri = URI.create("");
   private RestLiDocumentationRequestHandler _documentationRequestHandler = null;
   private ErrorResponseFormat _errorResponseFormat = ErrorResponseFormat.FULL;
   private String _internalErrorMessage = ErrorResponseBuilder.DEFAULT_INTERNAL_ERROR_MESSAGE;
   private RestliProtocolCheck _restliProtocolCheck = RestliProtocolCheck.STRICT;
-  private List<RestLiDebugRequestHandler> _debugRequestHandlers;
-  private final List<Filter> _filters = new ArrayList<Filter>();
+  private List<RestLiDebugRequestHandler> _debugRequestHandlers = new ArrayList<>();
+  private final List<Filter> _filters = new ArrayList<>();
   private int _maxRequestsMultiplexed = DEFAULT_MAX_REQUESTS_MULTIPLEXED;
   private Set<String> _individualRequestHeaderWhitelist = Collections.emptySet();
   private MultiplexerSingletonFilter _multiplexerSingletonFilter;
   private MultiplexerRunMode _multiplexerRunMode = MultiplexerRunMode.MULTIPLE_PLANS;
   private final List<ContentType> _customContentTypes = new LinkedList<>();
+  private final List<ResourceDefinitionListener> _resourceDefinitionListeners = new ArrayList<>();
 
   /**
    * Constructor.
    */
   public RestLiConfig()
   {
-    this (Collections.<String, Object>emptyMap());
+    this(Collections.emptyMap());
   }
 
   /**
    * @param mapConfig not currently used
+   * @deprecated Map of config properties is not supported. There is no replacement.
    */
+  @Deprecated
   public RestLiConfig(final Map<String, Object> mapConfig)
   {
-    _debugRequestHandlers = new ArrayList<RestLiDebugRequestHandler>();
   }
 
   public Set<String> getResourcePackageNamesSet()
@@ -411,5 +413,21 @@ public class RestLiConfig
     assert mimeType != null : "Mimetype cannot be null";
     assert codec != null : "Codec cannot be null";
     _customContentTypes.add(ContentType.createContentType(mimeType.toLowerCase(), codec));
+  }
+
+  /**
+   * Adds a {@link ResourceDefinitionListener}. The listener is notified when {@link ResourceDefinition}s are initialized.
+   */
+  public void addResourceDefinitionListener(ResourceDefinitionListener listener)
+  {
+    _resourceDefinitionListeners.add(listener);
+  }
+
+  /**
+   * Gets the <code>ResourceDefinitionListener</code>s.
+   */
+  List<ResourceDefinitionListener> getResourceDefinitionListeners()
+  {
+    return _resourceDefinitionListeners;
   }
 }
