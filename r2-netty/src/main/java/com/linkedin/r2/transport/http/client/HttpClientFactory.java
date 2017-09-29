@@ -745,7 +745,7 @@ public class HttpClientFactory implements TransportClientFactory
                                    SSLContext sslContext,
                                    SSLParameters sslParameters)
   {
-    LOG.info("Getting a client with configuration {} and SSLContext {}",
+    LOG.debug("Getting a client with configuration {} and SSLContext {}",
              properties,
              sslContext);
     TransportClient client = getRawClient(properties, sslContext, sslParameters);
