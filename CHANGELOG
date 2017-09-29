@@ -1,4 +1,8 @@
-15.0.6
+15.1.1
+-------
+
+
+15.1.0
 -------
 (RB=1114407)
 Added ResourceDefinitionListener to provide a mechanism for RestLiServer to notify the listener of the initialized Rest.li resources.
