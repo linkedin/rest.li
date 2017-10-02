@@ -52,7 +52,7 @@ public class TestHttpsEarlyHandshake extends AbstractTestHttps
   }
 
   @Test
-  public void testHttpsEchoWithCertPrincipal() throws Exception
+  public void testHttpsEarlyHandshakeHttp1() throws Exception
   {
     NioEventLoopGroup eventLoopGroup = new NioEventLoopGroup();
     ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();

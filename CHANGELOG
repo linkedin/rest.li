@@ -1,6 +1,7 @@
 15.1.1
 -------
-
+(RB=1116706)
+Adding possibility to specify a server's certificate checker implementing the SSLSessionValidator interface
 
 15.1.0
 -------

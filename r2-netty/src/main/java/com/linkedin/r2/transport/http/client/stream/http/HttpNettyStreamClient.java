@@ -31,9 +31,10 @@ import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
 import com.linkedin.r2.transport.http.client.AbstractJmxManager;
 import com.linkedin.r2.transport.http.client.AsyncPool;
 import com.linkedin.r2.transport.http.client.TimeoutTransportCallback;
+import com.linkedin.r2.transport.http.client.common.CertificateHandler;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolFactory;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManager;
-import com.linkedin.r2.transport.http.client.common.CertificateHandler;
+import com.linkedin.r2.transport.http.client.common.ssl.SslSessionValidator;
 import com.linkedin.r2.transport.http.client.stream.AbstractNettyStreamClient;
 import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
 import com.linkedin.r2.util.Cancellable;
@@ -41,7 +42,6 @@ import com.linkedin.r2.util.Timeout;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.nio.NioEventLoopGroup;
-
 import java.net.SocketAddress;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -163,9 +163,9 @@ import java.util.concurrent.TimeoutException;
       channel.attr(RAPStreamResponseHandler.CALLBACK_ATTR_KEY).set(_callback);
       channel.attr(RAPStreamResponseDecoder.TIMEOUT_ATTR_KEY).set(streamingTimeout);
 
-      // Set the expected value by the user of the cert principal name
-      String expectedCertPrincipal = (String) _requestContext.getLocalAttr(R2Constants.EXPECTED_SERVER_CERT_PRINCIPAL_NAME);
-      channel.attr(CertificateHandler.EXPECTED_SERVER_CERT_PRINCIPAL_ATTR_KEY).set(expectedCertPrincipal);
+      // Set the session validator requested by the user
+      SslSessionValidator sslSessionValidator = (SslSessionValidator) _requestContext.getLocalAttr(R2Constants.REQUESTED_SSL_SESSION_VALIDATOR);
+      channel.attr(CertificateHandler.REQUESTED_SSL_SESSION_VALIDATOR).set(sslSessionValidator);
 
       State state = _state.get();
       if (state == HttpNettyStreamClient.State.REQUESTS_STOPPING || state == HttpNettyStreamClient.State.SHUTDOWN)

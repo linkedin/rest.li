@@ -22,9 +22,11 @@ import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.sample.Bootstrap;
 import com.linkedin.r2.sample.echo.rest.RestEchoClient;
-import com.linkedin.r2.transport.http.client.common.ServerCertPrincipalNameMismatchException;
+import com.linkedin.r2.transport.http.client.common.ssl.SslSessionNotTrustedException;
+import com.linkedin.r2.transport.http.client.common.ssl.SslSessionValidator;
 import com.linkedin.test.util.ExceptionTestUtil;
 import java.util.concurrent.TimeUnit;
+import javax.net.ssl.SSLSession;
 import org.testng.Assert;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
@@ -42,42 +44,44 @@ public class TestHttpsCheckCertificate extends AbstractTestHttps
   }
 
   @Test
-  public void testHttpsEchoWithWrongCertPrincipal() throws Exception
+  public void testHttpsEchoWithUnvalidSession() throws Exception
   {
     try
     {
-      testHttpsEchoWithCertPrincipal("WRONG CERTIFICATE NAME");
+      testHttpsEchoWithSessionValidator(sslSession -> {
+        throw new SslSessionNotTrustedException();
+      });
       Assert.fail();
     }
     catch (Exception e)
     {
-      ExceptionTestUtil.verifyCauseChain(e, RemoteInvocationException.class, ServerCertPrincipalNameMismatchException.class);
+      ExceptionTestUtil.verifyCauseChain(e, RemoteInvocationException.class, SslSessionNotTrustedException.class);
     }
   }
 
   @Test
-  public void testHttpsEchoWithCorrectCertPrincipal() throws Exception
+  public void testHttpsEchoWithValidSession() throws Exception
   {
-    testHttpsEchoWithCertPrincipal("CN=com.linkedin.r2,OU=r2-int-test,O=LinkedIn,L=Unknown,ST=Unknown,C=Unknown");
+    testHttpsEchoWithSessionValidator(SSLSession::isValid);
   }
 
   /**
-   * If the user doesn't specify a principal cert name, anything is allowed and the requests should simply succeed
+   * If the user doesn't specify a session validator, anything is allowed and the requests should simply succeed
    */
   @Test
-  public void testHttpsEchoWithNoCertPrincipal() throws Exception
+  public void testHttpsEchoWithNoSessioValidator() throws Exception
   {
-    testHttpsEchoWithCertPrincipal(null);
+    testHttpsEchoWithSessionValidator(null);
   }
 
-  private void testHttpsEchoWithCertPrincipal(String principalName) throws Exception
+  public void testHttpsEchoWithSessionValidator(SslSessionValidator sslSessionValidator) throws Exception
   {
     final RestEchoClient client = getEchoClient(_client, Bootstrap.getEchoURI());
 
     final String msg = "This is a simple echo message";
     final FutureCallback<String> callback = new FutureCallback<>();
     RequestContext requestContext = new RequestContext();
-    requestContext.putLocalAttr(R2Constants.EXPECTED_SERVER_CERT_PRINCIPAL_NAME, principalName);
+    requestContext.putLocalAttr(R2Constants.REQUESTED_SSL_SESSION_VALIDATOR, sslSessionValidator);
     client.echo(msg, requestContext, callback);
 
     String actual = callback.get(2, TimeUnit.SECONDS);

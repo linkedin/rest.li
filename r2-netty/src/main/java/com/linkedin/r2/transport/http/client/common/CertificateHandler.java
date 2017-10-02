@@ -16,6 +16,8 @@
 
 package com.linkedin.r2.transport.http.client.common;
 
+import com.linkedin.r2.transport.http.client.common.ssl.SslSessionNotTrustedException;
+import com.linkedin.r2.transport.http.client.common.ssl.SslSessionValidator;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
@@ -24,14 +26,17 @@ import io.netty.util.AttributeKey;
 
 
 /**
- * In the case the user requires the Server verification, we extract the server's principal certificate and compare it
+ * In the case the user requires the Server verification, we extract the
+ * generated session and we run a validity check on it
  * @author Francesco Capponi (fcapponi@linkedin.com)
  */
 public class CertificateHandler extends ChannelOutboundHandlerAdapter
 {
-  public static final AttributeKey<String> EXPECTED_SERVER_CERT_PRINCIPAL_ATTR_KEY
-    = AttributeKey.valueOf("expectedServerCertPrincipal");
   private final SslHandler _sslHandler;
+
+  public static final AttributeKey<SslSessionValidator> REQUESTED_SSL_SESSION_VALIDATOR
+    = AttributeKey.valueOf("requestedSslSessionValidator");
+
 
   public CertificateHandler(SslHandler sslHandler)
   {
@@ -41,17 +46,19 @@ public class CertificateHandler extends ChannelOutboundHandlerAdapter
   @Override
   public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception
   {
-
     _sslHandler.handshakeFuture().addListener(future -> {
-      String expectedPrincipalName = ctx.channel().attr(EXPECTED_SERVER_CERT_PRINCIPAL_ATTR_KEY).getAndSet(null);
+      SslSessionValidator _sslSessionValidator = ctx.channel().attr(REQUESTED_SSL_SESSION_VALIDATOR).getAndSet(null);
 
       // if cert is empty, the check is disabled and not needed by the user, therefore don't check
-      if (expectedPrincipalName != null)
+      if (_sslSessionValidator != null)
       {
-        String actualPrincipalName = _sslHandler.engine().getSession().getPeerPrincipal().getName();
-        if (!expectedPrincipalName.equals(actualPrincipalName))
+        try
         {
-          ctx.fireExceptionCaught(new ServerCertPrincipalNameMismatchException(expectedPrincipalName, actualPrincipalName));
+          _sslSessionValidator.validatePeerSession(_sslHandler.engine().getSession());
+        }
+        catch (SslSessionNotTrustedException e)
+        {
+          ctx.fireExceptionCaught(e);
           return;
         }
       }
