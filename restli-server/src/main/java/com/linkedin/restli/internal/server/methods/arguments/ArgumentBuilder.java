@@ -504,7 +504,7 @@ public class ArgumentBuilder
       try
       {
         ValidationResult result = ValidateDataAgainstSchema.validate(paramRecordTemplate.data(), paramRecordTemplate.schema(),
-            new ValidationOptions(RequiredMode.CAN_BE_ABSENT_IF_HAS_DEFAULT, CoercionMode.STRING_TO_PRIMITIVE));
+            new ValidationOptions(RequiredMode.IGNORE, CoercionMode.STRING_TO_PRIMITIVE));
         if (!result.isValid())
         {
           throw new RoutingException(String.format("Argument parameter '%s' value '%s' is invalid", param.getName(),

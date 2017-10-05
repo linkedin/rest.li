@@ -213,7 +213,6 @@ public class TestArgumentBuilder
   }
 
   @DataProvider(name = "parameterInvalidData")
-  @SuppressWarnings("deprecation")
   private Object[][] parameterInvalidData()
   {
     String intParamKey = "intParam";
@@ -264,8 +263,7 @@ public class TestArgumentBuilder
   @Test(expectedExceptions = RoutingException.class, dataProvider = "parameterInvalidData")
   public void testBuildArgsInvalidValue(String paramKey, Class<?> dataType, Object invalidValue)
   {
-    @SuppressWarnings({"unchecked","rawtypes"})
-    Parameter<?> param = new Parameter(paramKey, dataType, DataTemplateUtil.getSchema(dataType),
+    Parameter<?> param = new Parameter<>(paramKey, dataType, DataTemplateUtil.getSchema(dataType),
         false, null, Parameter.ParamType.QUERY, false, AnnotationSet.EMPTY);
 
     ServerResourceContext mockResourceContext = EasyMock.createMock(ServerResourceContext.class);
@@ -280,9 +278,52 @@ public class TestArgumentBuilder
     }
     EasyMock.replay(mockResourceContext);
 
-    List<Parameter<?>> parameters = Collections.<Parameter<?>>singletonList(param);
+    List<Parameter<?>> parameters = Collections.singletonList(param);
     ArgumentBuilder.buildArgs(new Object[0], getMockResourceMethod(parameters), mockResourceContext, null);
   }
+
+  @DataProvider(name = "parameterMissingRequired")
+  private Object[][] parameterMissingRequired()
+  {
+
+    String recordParamKey = "recParam";
+    DataMap recordParamValue = new DataMap();
+    recordParamValue.put("intField", "5");
+    recordParamValue.put("longField", "5");
+
+    return new Object[][]
+        {
+            // data template parameter
+            {
+                recordParamKey,
+                TestRecord.class,
+                recordParamValue
+            }
+        };
+  }
+
+  @Test(dataProvider = "parameterMissingRequired")
+  public void testBuildArgsMissingRequired(String paramKey, Class<?> dataType, Object invalidValue)
+  {
+    Parameter<?> param = new Parameter<>(paramKey, dataType, DataTemplateUtil.getSchema(dataType),
+        false, null, Parameter.ParamType.QUERY, false, AnnotationSet.EMPTY);
+
+    ServerResourceContext mockResourceContext = EasyMock.createMock(ServerResourceContext.class);
+    EasyMock.expect(mockResourceContext.getRequestAttachmentReader()).andReturn(null);
+    if (DataTemplate.class.isAssignableFrom(dataType))
+    {
+      EasyMock.expect(mockResourceContext.getStructuredParameter(paramKey)).andReturn(invalidValue);
+    }
+    else
+    {
+      EasyMock.expect(mockResourceContext.getParameter(paramKey)).andReturn((String)invalidValue);
+    }
+    EasyMock.replay(mockResourceContext);
+
+    List<Parameter<?>> parameters = Collections.singletonList(param);
+    ArgumentBuilder.buildArgs(new Object[0], getMockResourceMethod(parameters), mockResourceContext, null);
+  }
+
 
   @Test
   public void testHeaderParamType()
