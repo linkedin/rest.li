@@ -28,6 +28,7 @@ import com.linkedin.d2.balancer.event.EventEmitter;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessorRegistry;
 import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl;
+import com.linkedin.d2.discovery.stores.zk.ZooKeeper;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
@@ -36,11 +37,6 @@ import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.util.NamedThreadFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLParameters;
 import java.net.URI;
 import java.util.Collection;
 import java.util.HashMap;
@@ -49,6 +45,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -100,9 +101,14 @@ public class D2ClientBuilder
                   _config.warmUp,
                   _config.warmUpTimeoutSeconds,
                   _config.warmUpConcurrentRequests,
+                  _config.backupRequestsEnabled,
+                  _config.backupRequestsStrategyStatsConsumer,
+                  _config.backupRequestsLatencyNotificationInterval,
+                  _config.backupRequestsLatencyNotificationIntervalUnit,
+                  _config._backupRequestsExecutorService,
                   _config.eventEmitter,
-                  _config.partitionAccessorRegistry);
-
+                  _config.partitionAccessorRegistry,
+                  _config.zooKeeperDecorator);
     final LoadBalancerWithFacilities loadBalancer = loadBalancerFactory.create(cfg);
 
     D2Client d2Client = new DynamicClient(loadBalancer, loadBalancer, _restOverStream);
@@ -339,6 +345,11 @@ public class D2ClientBuilder
   public D2ClientBuilder setPartitionAccessorRegistry(PartitionAccessorRegistry registry)
   {
     _config.partitionAccessorRegistry = registry;
+    return this;
+  }
+
+  public D2ClientBuilder setZooKeeperDecorator(Function<ZooKeeper, ZooKeeper> zooKeeperDecorator){
+    _config.zooKeeperDecorator = zooKeeperDecorator;
     return this;
   }
 

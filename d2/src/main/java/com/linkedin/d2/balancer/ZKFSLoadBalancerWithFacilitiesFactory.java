@@ -62,7 +62,8 @@ public class ZKFSLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFa
       config.basePath,
       config.shutdownAsynchronously,
       config.isSymlinkAware,
-      config._executorService);
+      config._executorService,
+      config.zooKeeperDecorator);
 
     LoadBalancerWithFacilities balancer = zkfsLoadBalancer;
 

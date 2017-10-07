@@ -43,16 +43,13 @@ import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
 import com.linkedin.d2.balancer.util.partitions.PartitionInfoProvider;
 import com.linkedin.d2.discovery.event.PropertyEventThread;
 import com.linkedin.d2.discovery.stores.zk.ZKConnection;
+import com.linkedin.d2.discovery.stores.zk.ZKConnectionBuilder;
+import com.linkedin.d2.discovery.stores.zk.ZooKeeper;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.util.NamedThreadFactory;
-import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.Watcher;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.net.URI;
 import java.util.Collection;
@@ -61,6 +58,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.Watcher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * LoadBalancer which manages the total lifecycle of a ZooKeeper connection.  It connects to
@@ -80,12 +82,11 @@ public class ZKFSLoadBalancer
   private final String _connectString;
   private final int _sessionTimeout;
   private final int _initialZKTimeout;
-  private final boolean _shutdownAsynchronously;
-  private final boolean _isSymlinkAware;
   private final AtomicReference<Callback<None>> _startupCallback = new AtomicReference<Callback<None>>();
   private final TogglingLoadBalancerFactory _loadBalancerFactory;
   private final File _zkFlagFile;
   private final ZKFSDirectory _directory;
+  private final ZKConnectionBuilder _zkConnectionBuilder;
   private volatile long _delayedExecution;
   private final ScheduledExecutorService _executor;
   private final KeyMapper _keyMapper;
@@ -155,8 +156,21 @@ public class ZKFSLoadBalancer
         Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("D2 PropertyEventExecutor")));
   }
 
+  public ZKFSLoadBalancer(String zkConnectString,
+                          int sessionTimeout,
+                          int initialZKTimeout,
+                          TogglingLoadBalancerFactory factory,
+                          String zkFlagFile,
+                          String basePath,
+                          boolean shutdownAsynchronously,
+                          boolean isSymlinkAware,
+                          ScheduledExecutorService executor)
+  {
+    this(zkConnectString, sessionTimeout, initialZKTimeout, factory, zkFlagFile, basePath, shutdownAsynchronously,
+      isSymlinkAware, executor, null);
+  }
+
   /**
-   *
    * @param zkConnectString Connect string listing ZK ensemble hosts in ZK format
    * @param sessionTimeout timeout (in milliseconds) of ZK session.  This controls how long
    * the session will last while connectivity between client and server is interrupted; if an
@@ -170,8 +184,7 @@ public class ZKFSLoadBalancer
    * @param isSymlinkAware if true, ZKConnection will be aware of and resolve the symbolic link for
    * any read operation.
    * @param executor the scheduledExecutorService that is shared across the project
-   *
-   * LoadBalancer instances
+   * @param zooKeeperDecorator the callback will be invoked when the a new ZKConnection is created
    */
   public ZKFSLoadBalancer(String zkConnectString,
                           int sessionTimeout,
@@ -181,7 +194,8 @@ public class ZKFSLoadBalancer
                           String basePath,
                           boolean shutdownAsynchronously,
                           boolean isSymlinkAware,
-                          ScheduledExecutorService executor)
+                          ScheduledExecutorService executor,
+                          Function<ZooKeeper, ZooKeeper> zooKeeperDecorator)
   {
     _connectString = zkConnectString;
     _sessionTimeout = sessionTimeout;
@@ -196,13 +210,15 @@ public class ZKFSLoadBalancer
       _zkFlagFile = new File(zkFlagFile);
     }
     _directory = new ZKFSDirectory(basePath);
-
-    _shutdownAsynchronously = shutdownAsynchronously;
-    _isSymlinkAware = isSymlinkAware;
-
     _executor = executor;
     _keyMapper = new ConsistentHashKeyMapper(this, this);
     _delayedExecution = 1000;
+
+    _zkConnectionBuilder = new ZKConnectionBuilder(zkConnectString)
+      .setTimeout(sessionTimeout)
+      .setShutdownAsynchronously(shutdownAsynchronously)
+      .setIsSymlinkAware(isSymlinkAware)
+      .setZooKeeperDecorator(zooKeeperDecorator);
   }
 
   public long getDelayedExecution()
@@ -283,7 +299,7 @@ public class ZKFSLoadBalancer
       LOG.info("ZK currently suppressed by flag file: {}", suppressZK());
     }
 
-    _zkConnection = new ZKConnection(_connectString, _sessionTimeout, _shutdownAsynchronously, _isSymlinkAware);
+    _zkConnection = _zkConnectionBuilder.build();
     final TogglingLoadBalancer balancer = _loadBalancerFactory.createLoadBalancer(_zkConnection, _executor);
 
     // _currentLoadBalancer will never be null except the first time this method is called.

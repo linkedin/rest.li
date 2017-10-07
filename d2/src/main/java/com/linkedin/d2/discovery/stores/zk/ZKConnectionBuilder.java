@@ -18,6 +18,7 @@ package com.linkedin.d2.discovery.stores.zk;
 
 import com.linkedin.util.ArgumentUtil;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.function.Function;
 
 /**
  * Builder for {@link ZKConnection}
@@ -32,6 +33,7 @@ public class ZKConnectionBuilder
   private boolean _exponentialBackoff = false;
   private ScheduledExecutorService _retryScheduler = null;
   private long _initInterval = 0;
+  private Function<ZooKeeper, ZooKeeper> _zkDecorator = null;
 
   /**
    * @param connectString comma separated host:port pairs, each corresponding to a zk
@@ -117,9 +119,18 @@ public class ZKConnectionBuilder
     return this;
   }
 
+  /**
+   * @param zkDecorator add a decorator to the Base ZooKeeper
+   */
+  public ZKConnectionBuilder setZooKeeperDecorator(Function<ZooKeeper, ZooKeeper> zkDecorator)
+  {
+    _zkDecorator = zkDecorator;
+    return this;
+  }
+
   public ZKConnection build()
   {
     return new ZKConnection(_connectString, _sessionTimeout, _retryLimit, _exponentialBackoff,
-      _retryScheduler, _initInterval, _shutdownAsynchronously, _isSymlinkAware);
+      _retryScheduler, _initInterval, _shutdownAsynchronously, _isSymlinkAware, _zkDecorator);
   }
 }

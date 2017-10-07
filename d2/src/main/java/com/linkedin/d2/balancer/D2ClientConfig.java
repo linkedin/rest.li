@@ -22,14 +22,15 @@ import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessorRegistry;
 import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl;
 import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl.ComponentFactory;
+import com.linkedin.d2.discovery.stores.zk.ZooKeeper;
 import com.linkedin.r2.transport.common.TransportClientFactory;
-
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLParameters;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
 
 public class D2ClientConfig
 {
@@ -69,6 +70,7 @@ public class D2ClientConfig
   TimeUnit backupRequestsLatencyNotificationIntervalUnit = TimeUnit.MINUTES;
   EventEmitter eventEmitter = null;
   PartitionAccessorRegistry partitionAccessorRegistry = null;
+  Function<ZooKeeper, ZooKeeper> zooKeeperDecorator = null;
 
   private static final int DEAULT_RETRY_LIMIT = 3;
 
@@ -374,7 +376,9 @@ public class D2ClientConfig
         TimeUnit.MINUTES,
         null,
         emitter,
-        partitionAccessorRegistry);
+        partitionAccessorRegistry,
+        null
+      );
   }
 
   public D2ClientConfig(String zkHosts,
@@ -409,7 +413,8 @@ public class D2ClientConfig
                         TimeUnit backupRequestsLatencyNotificationIntervalUnit,
                         ScheduledExecutorService backupRequestsExecutorService,
                         EventEmitter emitter,
-                        PartitionAccessorRegistry partitionAccessorRegistry)
+                        PartitionAccessorRegistry partitionAccessorRegistry,
+                        Function<ZooKeeper, ZooKeeper> zooKeeperDecorator)
   {
     this.zkHosts = zkHosts;
     this.zkSessionTimeoutInMs = zkSessionTimeoutInMs;
@@ -444,5 +449,6 @@ public class D2ClientConfig
     this._backupRequestsExecutorService = backupRequestsExecutorService;
     this.eventEmitter = emitter;
     this.partitionAccessorRegistry = partitionAccessorRegistry;
+    this.zooKeeperDecorator = zooKeeperDecorator;
   }
 }

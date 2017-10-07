@@ -1,7 +1,7 @@
 15.1.6
 -------
-
-
+(RB=1122619)
+Adding ability to decorate the VanillaZooKeeper from ZKConnection
 
 15.1.5
 -------

@@ -20,6 +20,10 @@
 
 package com.linkedin.d2.discovery.stores.zk;
 
+import com.linkedin.common.callback.Callback;
+import com.linkedin.common.callback.Callbacks;
+import com.linkedin.common.util.None;
+import com.linkedin.d2.discovery.PropertySerializer;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
@@ -30,18 +34,14 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
-
-import com.linkedin.common.callback.Callback;
-import com.linkedin.common.callback.Callbacks;
-import com.linkedin.common.util.None;
-import com.linkedin.d2.discovery.PropertySerializer;
+import java.util.function.Function;
 import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
+import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,6 +70,7 @@ public class ZKConnection
   private final long _initInterval;
   private final boolean _shutdownAsynchronously;
   private final boolean _isSymlinkAware;
+  private final Function<ZooKeeper, ZooKeeper> _zkDecorator;
   private PropertySerializer<String> _symlinkSerializer = new SymlinkAwareZooKeeper.DefaultSerializer();;
 
   // _countDownLatch signals when _zkRef is ready to be used
@@ -129,9 +130,18 @@ public class ZKConnection
     this(connectString, timeout, retryLimit, exponentialBackoff, scheduler, initInterval, shutdownAsynchronously, false);
   }
 
+
   public ZKConnection(String connectString, int timeout, int retryLimit, boolean exponentialBackoff,
                       ScheduledExecutorService scheduler, long initInterval, boolean shutdownAsynchronously,
                       boolean isSymlinkAware)
+  {
+    this(connectString, timeout, retryLimit, exponentialBackoff, scheduler, initInterval, shutdownAsynchronously,
+      isSymlinkAware, null);
+  }
+
+  public ZKConnection(String connectString, int timeout, int retryLimit, boolean exponentialBackoff,
+                      ScheduledExecutorService scheduler, long initInterval, boolean shutdownAsynchronously,
+                      boolean isSymlinkAware, Function<ZooKeeper,ZooKeeper> zkDecorator)
   {
     _connectString = connectString;
     _timeout = timeout;
@@ -141,7 +151,12 @@ public class ZKConnection
     _initInterval = initInterval;
     _shutdownAsynchronously = shutdownAsynchronously;
     _isSymlinkAware = isSymlinkAware;
-
+    if (zkDecorator == null)
+    {
+      // if null, just return itself
+      zkDecorator = zooKeeper -> zooKeeper;
+    }
+    _zkDecorator = zkDecorator;
   }
 
   public void start() throws IOException
@@ -155,7 +170,9 @@ public class ZKConnection
     // notified of connection state changes (without having to explicitly register)
     // and never notified of anything else.
     Watcher defaultWatcher = new DefaultWatcher();
-    ZooKeeper  zk = new VanillaZooKeeperAdapter(_connectString, _timeout, defaultWatcher);
+    ZooKeeper zk = new VanillaZooKeeperAdapter(_connectString, _timeout, defaultWatcher);
+
+    zk = _zkDecorator.apply(zk);
     if (_retryLimit <= 0)
     {
       if (_isSymlinkAware)
@@ -760,7 +777,7 @@ public class ZKConnection
           {
             _currentState = state;
             _mutex.notifyAll();
-            listeners = new HashSet<StateListener>(_listeners);
+            listeners = new HashSet<>(_listeners);
           }
         }
         for (StateListener listener : listeners)
@@ -771,7 +788,9 @@ public class ZKConnection
       }
       else
       {
-        LOG.warn("Received unexpected event of type {} for session 0x{}", watchedEvent.getType(), Long.toHexString(sessionID));
+        LOG.warn("Received unexpected event of type {} for session 0x{}. " +
+            "This event is NOT propagated and NONE of the watchers will receive data for this event",
+          watchedEvent.getType(), Long.toHexString(sessionID));
       }
     }
   }
