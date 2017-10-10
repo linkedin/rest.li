@@ -25,6 +25,7 @@ import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestResponseBuilder;
 import com.linkedin.restli.common.ActionResponse;
 import com.linkedin.restli.common.ContentType;
+import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.ResourceMethod;
@@ -225,8 +226,9 @@ public class RestLiResponseHandler
       {
         if (ResourceEntityType.UNSTRUCTURED_DATA == routingResult.getResourceMethod().getResourceModel().getResourceEntityType())
         {
+          // TODO: A dummy empty record is used here to avoid NPE where a record is expected for GET, need a better fix.
           return new RestLiResponseDataImpl<>(
-            new GetResponseEnvelope(HttpStatus.S_200_OK, null), responseHeaders, responseCookies
+            new GetResponseEnvelope(HttpStatus.S_200_OK, new EmptyRecord()), responseHeaders, responseCookies
           );
         }
         else

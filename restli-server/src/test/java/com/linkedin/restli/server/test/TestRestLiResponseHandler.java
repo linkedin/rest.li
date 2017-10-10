@@ -39,6 +39,7 @@ import com.linkedin.restli.common.CollectionMetadata;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.ContentType;
 import com.linkedin.restli.common.CreateStatus;
+import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.Link;
@@ -1258,7 +1259,7 @@ public class TestRestLiResponseHandler
 
     RestLiResponseData<GetResponseEnvelope> responseData = (RestLiResponseData<GetResponseEnvelope>) _responseHandler.buildRestLiResponseData(request, routingResult, null);
     assertEquals(responseData.getResponseEnvelope().getStatus(), HttpStatus.S_200_OK);
-    assertNull(responseData.getResponseEnvelope().getRecord());
+    assertEquals(responseData.getResponseEnvelope().getRecord(), new EmptyRecord());
 
     RestResponse restResponse = _responseHandler.buildResponse(request, routingResult, null);
     assertNotNull(restResponse);
