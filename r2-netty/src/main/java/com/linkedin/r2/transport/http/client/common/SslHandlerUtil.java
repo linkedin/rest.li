@@ -16,7 +16,6 @@
 
 package com.linkedin.r2.transport.http.client.common;
 
-import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.handler.ssl.SslHandler;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
@@ -26,7 +25,7 @@ import javax.net.ssl.SSLParameters;
 /**
  * @author Francesco Capponi (fcapponi@linkedin.com)
  */
-public class SslHandlerUtil extends ChannelOutboundHandlerAdapter
+public class SslHandlerUtil
 {
 
   public final static String PIPELINE_SSL_HANDLER = "sslHandler";
@@ -37,17 +36,9 @@ public class SslHandlerUtil extends ChannelOutboundHandlerAdapter
     sslEngine.setUseClientMode(true);
     if (sslParameters != null)
     {
-      String[] cipherSuites = sslParameters.getCipherSuites();
-      if (cipherSuites != null && cipherSuites.length > 0)
-      {
-        sslEngine.setEnabledCipherSuites(sslParameters.getCipherSuites());
-      }
-      String[] protocols = sslParameters.getProtocols();
-      if (protocols != null && protocols.length > 0)
-      {
-        sslEngine.setEnabledProtocols(sslParameters.getProtocols());
-      }
+      sslEngine.setSSLParameters(sslParameters);
     }
+
     return new SslHandler(sslEngine);
   }
 }
