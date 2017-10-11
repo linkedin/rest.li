@@ -1,6 +1,12 @@
-15.1.5
+15.1.6
 -------
 
+
+
+15.1.5
+-------
+(RB=1124336)
+Use EmptyRecord for unstructured data get response
 
 15.1.4
 -------
