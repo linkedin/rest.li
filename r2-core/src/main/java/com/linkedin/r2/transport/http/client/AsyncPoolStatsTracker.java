@@ -18,6 +18,8 @@ package com.linkedin.r2.transport.http.client;
 
 import com.linkedin.common.stats.LongStats;
 import com.linkedin.common.stats.LongTracking;
+
+import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 
 
@@ -44,20 +46,20 @@ public class AsyncPoolStatsTracker
   private int _sampleMaxPoolSize = 0;
 
   private final Supplier<PoolStats.LifecycleStats> _lifecycleStatsSupplier;
-  private final Supplier<Integer> _maxSizeSupplier;
-  private final Supplier<Integer> _minSizeSupplier;
-  private final Supplier<Integer> _poolSizeSupplier;
-  private final Supplier<Integer> _checkedOutSupplier;
-  private final Supplier<Integer> _idleSizeSupplier;
+  private final IntSupplier _maxSizeSupplier;
+  private final IntSupplier _minSizeSupplier;
+  private final IntSupplier _poolSizeSupplier;
+  private final IntSupplier _checkedOutSupplier;
+  private final IntSupplier _idleSizeSupplier;
   private final LongTracking _waitTimeTracker;
 
   public AsyncPoolStatsTracker(
       Supplier<PoolStats.LifecycleStats> lifecycleStatsSupplier,
-      Supplier<Integer> maxSizeSupplier,
-      Supplier<Integer> minSizeSupplier,
-      Supplier<Integer> poolSizeSupplier,
-      Supplier<Integer> checkedOutSupplier,
-      Supplier<Integer> idleSizeSupplier)
+      IntSupplier maxSizeSupplier,
+      IntSupplier minSizeSupplier,
+      IntSupplier poolSizeSupplier,
+      IntSupplier checkedOutSupplier,
+      IntSupplier idleSizeSupplier)
   {
     _lifecycleStatsSupplier = lifecycleStatsSupplier;
     _maxSizeSupplier = maxSizeSupplier;

@@ -23,6 +23,7 @@ package test.r2.transport.http.client;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
+import com.linkedin.data.template.BooleanArray;
 import com.linkedin.r2.transport.http.client.AsyncPool;
 import com.linkedin.r2.transport.http.client.AsyncPoolLifecycleStats;
 import com.linkedin.r2.transport.http.client.AsyncSharedPoolImpl;
@@ -39,6 +40,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
@@ -1148,8 +1150,8 @@ public class TestAsyncSharedPoolImpl
 
     private Consumer<Callback<Object>> _createConsumer;
     private Consumer<Callback<Object>> _destroyConsumer;
-    private Supplier<Boolean> _validateGetSupplier;
-    private Supplier<Boolean> _validatePutSupplier;
+    private BooleanSupplier _validateGetSupplier;
+    private BooleanSupplier _validatePutSupplier;
     private Supplier<AsyncPoolLifecycleStats> _statsSupplier;
 
     public LifecycleMock()
@@ -1175,13 +1177,13 @@ public class TestAsyncSharedPoolImpl
     @Override
     public boolean validateGet(Object item)
     {
-      return _validateGetSupplier.get();
+      return _validateGetSupplier.getAsBoolean();
     }
 
     @Override
     public boolean validatePut(Object item)
     {
-      return _validatePutSupplier.get();
+      return _validatePutSupplier.getAsBoolean();
     }
 
     @Override
@@ -1213,13 +1215,13 @@ public class TestAsyncSharedPoolImpl
       return this;
     }
 
-    public LifecycleMock setValidateGetSupplier(Supplier<Boolean> validateGetSupplier)
+    public LifecycleMock setValidateGetSupplier(BooleanSupplier validateGetSupplier)
     {
       _validateGetSupplier = validateGetSupplier;
       return this;
     }
 
-    public LifecycleMock setValidatePutSupplier(Supplier<Boolean> validatePutSupplier)
+    public LifecycleMock setValidatePutSupplier(BooleanSupplier validatePutSupplier)
     {
       _validatePutSupplier = validatePutSupplier;
       return this;
