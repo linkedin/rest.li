@@ -50,7 +50,7 @@ public class CertificateHandler extends ChannelOutboundHandlerAdapter
       SslSessionValidator _sslSessionValidator = ctx.channel().attr(REQUESTED_SSL_SESSION_VALIDATOR).getAndSet(null);
 
       // if cert is empty, the check is disabled and not needed by the user, therefore don't check
-      if (_sslSessionValidator != null)
+      if (future.isSuccess() && _sslSessionValidator != null)
       {
         try
         {
@@ -64,6 +64,11 @@ public class CertificateHandler extends ChannelOutboundHandlerAdapter
       }
       ctx.write(msg, promise);
     });
+  }
 
+  @Override
+  public void flush(ChannelHandlerContext ctx) throws Exception
+  {
+    _sslHandler.handshakeFuture().addListener(future -> ctx.flush());
   }
 }

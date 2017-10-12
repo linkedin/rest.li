@@ -1,6 +1,7 @@
 15.1.7
 -------
-
+(RB=1125956)
+Make CertificateHandler queue flush calls in addition to write calls
 
 15.1.6
 -------
