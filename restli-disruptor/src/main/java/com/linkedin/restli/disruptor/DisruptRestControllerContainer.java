@@ -17,17 +17,25 @@
 package com.linkedin.restli.disruptor;
 
 import java.util.concurrent.atomic.AtomicReference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
- * Singleton container of a {@link DisruptRestController} implementation
+ * Singleton container of a {@link DisruptRestController} implementation.
+ *
+ * <p> The goal of using this class is to achieve a backward compatible way to enable Rest.li disruptor
+ * without code change. We should consider removing this class once the disruptor implementation has
+ * been widely adopted.
  *
  * @author Sean Sheng
  * @version $Revision$
  */
 public class DisruptRestControllerContainer
 {
-  private static final AtomicReference<DisruptRestController> _instance = new AtomicReference<>();
+  private static final Logger LOG = LoggerFactory.getLogger(DisruptRestControllerContainer.class);
+
+  private static final AtomicReference<DisruptRestController> INSTANCE = new AtomicReference<>();
 
   private DisruptRestControllerContainer()
   {
@@ -35,19 +43,19 @@ public class DisruptRestControllerContainer
 
   public static DisruptRestController getInstance()
   {
-    return _instance.get();
+    return INSTANCE.get();
   }
 
   public static void setInstance(DisruptRestController instance)
   {
-    if (!_instance.compareAndSet(null, instance))
+    if (!INSTANCE.compareAndSet(null, instance))
     {
-      throw new IllegalStateException("Instance has already been set");
+      LOG.warn("Ignored because instance has already been set. Invoke resetInstance before setInstance again.");
     }
   }
 
   /* package private */ static void resetInstance()
   {
-    _instance.set(null);
+    INSTANCE.set(null);
   }
 }

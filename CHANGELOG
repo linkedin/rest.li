@@ -1,6 +1,7 @@
 15.1.8
 -------
-
+(RB=1127791)
+Relax multiple DisruptRestControllerContainer::setInstance from throwing exceptions to logging warnings
 
 15.1.7
 -------

@@ -50,7 +50,10 @@ public class TestDisruptRestControllerContainer
     Assert.assertSame(DisruptRestControllerContainer.getInstance(), controller);
   }
 
-  @Test(expectedExceptions = IllegalStateException.class)
+  /**
+   * Multiple setInstance calls log warning but should not throw.
+   */
+  @Test
   public static void testMultiSetInstance()
   {
     DisruptRestController controller = EasyMock.createMock(DisruptRestController.class);
