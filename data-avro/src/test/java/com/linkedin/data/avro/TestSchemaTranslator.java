@@ -21,6 +21,7 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.TestUtil;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.JsonBuilder;
+import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.SchemaParser;
 import com.linkedin.data.schema.PegasusSchemaParser;
 import com.linkedin.data.schema.SchemaToJsonEncoder;
@@ -1278,6 +1279,245 @@ public class TestSchemaTranslator
         new Object[] {
           allModes,
           "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"message\", \"type\" : [ \"null\", { \"type\" : \"record\", \"name\" : \"MessageRecord\", \"fields\" : [ { \"name\" : \"message\", \"type\" : { \"type\" : \"record\", \"name\" : \"MessageRecordMessage\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\" }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\" }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"MessageRecordMessageDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } ] } ] }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"message\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } ] }"
+        }
+      },
+      {
+        // A required array field with 'union with aliases' as its item type and no default value
+        "{" +
+          "\"type\": \"record\"," +
+          "\"name\": \"foo\"," +
+          "\"fields\": [" +
+            "{" +
+              "\"name\": \"results\"," +
+              "\"type\": ##T_START {" +
+                "\"type\": \"array\"," +
+                "\"items\": [" +
+                  "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
+                  "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
+                "]" +
+              "} ##T_END" +
+            "}" +
+          "]" +
+        "}",
+        new Object[] {
+          allModes,
+          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"results\", \"type\" : { \"type\" : \"array\", \"items\" : { \"type\" : \"record\", \"name\" : \"fooResults\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\" }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\" }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultsDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } } ] }"
+        }
+      },
+      {
+        // A required array field with 'union with aliases' as its item type and a default value
+        "{" +
+          "\"type\": \"record\"," +
+          "\"name\": \"foo\"," +
+          "\"fields\": [" +
+            "{" +
+              "\"name\": \"results\"," +
+              "\"type\": {" +
+                "\"type\": \"array\"," +
+                "\"items\": [" +
+                  "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
+                  "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
+                "]" +
+              "}," +
+              "\"default\": [ { \"success\": \"Operation completed.\" }, { \"failure\": \"Operation failed.\" } ]" +
+            "}" +
+          "]" +
+        "}",
+        new Object[] {
+          allModes,
+          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"results\", \"type\" : { \"type\" : \"array\", \"items\" : { \"type\" : \"record\", \"name\" : \"fooResults\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\" }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\" }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultsDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } } ] }"
+        }
+      },
+      {
+        // An optional array field with 'union with aliases' as its item type and no default value
+        "{" +
+          "\"type\": \"record\"," +
+          "\"name\": \"foo\"," +
+          "\"fields\": [" +
+            "{" +
+              "\"name\": \"results\"," +
+              "\"type\": {" +
+                "\"type\": \"array\"," +
+                "\"items\": [" +
+                  "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
+                  "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
+                "]" +
+              "}," +
+              "\"optional\": true" +
+            "}" +
+          "]" +
+        "}",
+        new Object[] {
+          allModes,
+          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"results\", \"type\" : [ \"null\", { \"type\" : \"array\", \"items\" : { \"type\" : \"record\", \"name\" : \"fooResults\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\" }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\" }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultsDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } ], \"default\" : null } ] }"
+        }
+      },
+      {
+        // An optional array field with 'union with aliases' as its item type and a default value
+        "{" +
+          "\"type\": \"record\"," +
+          "\"name\": \"foo\"," +
+          "\"fields\": [" +
+            "{" +
+              "\"name\": \"results\"," +
+              "\"type\": {" +
+                "\"type\": \"array\"," +
+                "\"items\": [" +
+                  "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
+                  "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
+                "]" +
+              "}," +
+              "\"default\": [ { \"success\": \"Operation completed.\" }, { \"failure\": \"Operation failed.\" } ]," +
+              "\"optional\": true" +
+            "}" +
+          "]" +
+        "}",
+        new Object[] {
+          allModes,
+          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"results\", \"type\" : [ \"null\", { \"type\" : \"array\", \"items\" : { \"type\" : \"record\", \"name\" : \"fooResults\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\" }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\" }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultsDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } ], \"default\" : null } ] }"
+        }
+      },
+      {
+        // A nested array field with 'union with aliases' as its item type and a default value
+        "{" +
+          "\"type\": \"record\"," +
+          "\"name\": \"foo\"," +
+          "\"fields\": [" +
+            "{" +
+              "\"name\": \"results\"," +
+              "\"type\": {" +
+                "\"type\": \"array\"," +
+                "\"items\": {" +
+                  "\"type\": \"array\"," +
+                  "\"items\": {" +
+                    "\"type\": \"array\"," +
+                    "\"items\": [" +
+                      "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
+                      "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
+                    "]" +
+                  "}" +
+                "}" +
+              "}," +
+              "\"default\": [ [ [ { \"success\": \"Operation completed.\" }, { \"failure\": \"Operation failed.\" } ] ] ]" +
+            "}" +
+          "]" +
+        "}",
+        new Object[] {
+          allModes,
+          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"results\", \"type\" : { \"type\" : \"array\", \"items\" : { \"type\" : \"array\", \"items\" : { \"type\" : \"array\", \"items\" : { \"type\" : \"record\", \"name\" : \"fooResults\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\" }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\" }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultsDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } } } } ] }"
+        }
+      },
+      {
+        // A nested array and map field with 'union with aliases' as its item type and a default value
+        "{" +
+          "\"type\": \"record\"," +
+          "\"name\": \"foo\"," +
+          "\"fields\": [" +
+            "{" +
+              "\"name\": \"results\"," +
+              "\"type\": {" +
+                "\"type\": \"array\"," +
+                "\"items\": {" +
+                  "\"type\": \"map\"," +
+                  "\"values\": {" +
+                    "\"type\": \"array\"," +
+                    "\"items\": [" +
+                      "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
+                      "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
+                    "]" +
+                "}" +
+              "}" +
+            "}," +
+            "\"default\": [ { \"key\": [ { \"success\": \"Operation completed.\" }, { \"failure\": \"Operation failed.\" } ] } ]" +
+            "}" +
+          "]" +
+        "}",
+        new Object[] {
+          allModes,
+          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"results\", \"type\" : { \"type\" : \"array\", \"items\" : { \"type\" : \"map\", \"values\" : { \"type\" : \"array\", \"items\" : { \"type\" : \"record\", \"name\" : \"fooResults\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\" }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\" }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultsDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } } } } ] }"
+        }
+      },
+      {
+        // A nested map field with 'union with aliases' as its item type and a default value
+        "{" +
+          "\"type\": \"record\"," +
+          "\"name\": \"foo\"," +
+          "\"fields\": [" +
+            "{" +
+              "\"name\": \"results\"," +
+              "\"type\": {" +
+                "\"type\": \"map\"," +
+                "\"values\": {" +
+                  "\"type\": \"map\"," +
+                  "\"values\": {" +
+                    "\"type\": \"map\"," +
+                    "\"values\": [" +
+                      "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
+                      "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
+                    "]" +
+                  "}" +
+                "}" +
+              "}," +
+              "\"default\": { \"level1\": { \"level2\": { \"level3key1\": { \"success\": \"Operation completed.\" }, \"level3key2\": { \"failure\": \"Operation failed.\" } } } }" +
+            "}" +
+          "]" +
+        "}",
+        new Object[] {
+          allModes,
+          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"results\", \"type\" : { \"type\" : \"map\", \"values\" : { \"type\" : \"map\", \"values\" : { \"type\" : \"map\", \"values\" : { \"type\" : \"record\", \"name\" : \"fooResults\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\" }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\" }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultsDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } } } } ] }"
+        }
+      },
+      {
+        // A nested map and array field with 'union with aliases' as its item type and a default value
+        "{" +
+          "\"type\": \"record\"," +
+          "\"name\": \"foo\"," +
+          "\"fields\": [" +
+            "{" +
+              "\"name\": \"results\"," +
+              "\"type\": {" +
+                "\"type\": \"map\"," +
+                "\"values\": {" +
+                  "\"type\": \"array\"," +
+                  "\"items\": {" +
+                    "\"type\": \"map\"," +
+                    "\"values\": [" +
+                      "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
+                      "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
+                    "]" +
+                  "}" +
+                "}" +
+              "}," +
+              "\"default\": { \"level1\": [ { \"level3key1\": { \"success\": \"Operation completed.\" }, \"level3key2\": { \"failure\": \"Operation failed.\" } } ] }" +
+            "}" +
+          "]" +
+        "}",
+        new Object[] {
+          allModes,
+          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"results\", \"type\" : { \"type\" : \"map\", \"values\" : { \"type\" : \"array\", \"items\" : { \"type\" : \"map\", \"values\" : { \"type\" : \"record\", \"name\" : \"fooResults\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\" }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\" }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultsDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } } } } ] }"
+        }
+      },
+      {
+        // A required map field with 'union with aliases' as its item type with no default value
+        "{" +
+          "\"type\": \"record\"," +
+          "\"name\": \"foo\"," +
+          "\"fields\": [" +
+            "{" +
+              "\"name\": \"results\"," +
+              "\"type\": ##T_START {" +
+                "\"type\": \"map\"," +
+                "\"values\": [" +
+                  "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
+                  "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
+                "]" +
+              "} ##T_END" +
+            "}" +
+          "]" +
+        "}",
+        new Object[] {
+          allModes,
+          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"results\", \"type\" : { \"type\" : \"map\", \"values\" : { \"type\" : \"record\", \"name\" : \"fooResults\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\" }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\" }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultsDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } } ] }"
         }
       }
     };

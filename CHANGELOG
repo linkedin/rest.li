@@ -1,5 +1,7 @@
 15.1.10
 -------
+(RB=1128480)
+Fix the SchemaTranslator to translate array or map of union with aliases fields in the Pegasus schema.
 
 15.1.9
 -------
