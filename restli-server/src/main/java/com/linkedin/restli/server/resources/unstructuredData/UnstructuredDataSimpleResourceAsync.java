@@ -14,34 +14,23 @@
  * limitations under the License.
  */
 
-package com.linkedin.restli.server.twitter;
+package com.linkedin.restli.server.resources.unstructuredData;
 
 
+import com.linkedin.common.callback.Callback;
+import com.linkedin.restli.server.RoutingException;
 import com.linkedin.restli.server.UnstructuredDataWriter;
-import com.linkedin.restli.server.annotations.RestLiSimpleResource;
 import com.linkedin.restli.server.annotations.UnstructuredDataWriterParam;
-import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataSimpleResourceTemplate;
-
-import java.io.IOException;
+import com.linkedin.restli.server.resources.BaseResource;
 
 
 /**
- * Resource that serve a single feed download.
+ * A version of {@link UnstructuredDataSimpleResource} with callback async interface
  */
-@RestLiSimpleResource(name="singleFeedDownload")
-public class SingleFeedDownloadResource extends UnstructuredDataSimpleResourceTemplate
+public interface UnstructuredDataSimpleResourceAsync extends BaseResource, SingleUnstructuredDataResource
 {
-  @Override
-  public void get(@UnstructuredDataWriterParam UnstructuredDataWriter writer)
+  default void get(@UnstructuredDataWriterParam UnstructuredDataWriter writer, Callback<Void> callback)
   {
-    try
-    {
-      writer.setContentType("text/plain");
-      writer.getOutputStream().write("hello".getBytes());
-    }
-    catch (IOException e)
-    {
-      e.printStackTrace();
-    }
+    throw new RoutingException("'get' is not implemented", 400);
   }
 }

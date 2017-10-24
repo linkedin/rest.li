@@ -18,11 +18,11 @@ package com.linkedin.restli.examples.greetings.server;
 
 
 import com.linkedin.restli.common.HttpStatus;
-import com.linkedin.restli.server.UnstructuredDataWriter;
 import com.linkedin.restli.server.RestLiServiceException;
-import com.linkedin.restli.server.annotations.UnstructuredDataWriterParam;
+import com.linkedin.restli.server.UnstructuredDataWriter;
 import com.linkedin.restli.server.annotations.RestLiCollection;
-import com.linkedin.restli.server.resources.unstructuredData.CollectionUnstructuredDataResourceTemplate;
+import com.linkedin.restli.server.annotations.UnstructuredDataWriterParam;
+import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataCollectionResourceTemplate;
 
 import static com.linkedin.restli.common.RestConstants.HEADER_CONTENT_DISPOSITION;
 import static com.linkedin.restli.examples.greetings.server.GreetingUnstructuredDataUtils.CONTENT_DISPOSITION_VALUE;
@@ -34,7 +34,7 @@ import static com.linkedin.restli.examples.greetings.server.GreetingUnstructured
  * This resource models a collection resource that produces unstructured data entities as results.
  */
 @RestLiCollection(name = "greetingCollectionUnstructuredData", namespace = "com.linkedin.restli.examples.greetings.client")
-public class GreetingCollectionUnstructuredDataResource extends CollectionUnstructuredDataResourceTemplate<String>
+public class GreetingUnstructuredDataCollectionResource extends UnstructuredDataCollectionResourceTemplate<String>
 {
   @Override
   public void get(String key, @UnstructuredDataWriterParam UnstructuredDataWriter writer)

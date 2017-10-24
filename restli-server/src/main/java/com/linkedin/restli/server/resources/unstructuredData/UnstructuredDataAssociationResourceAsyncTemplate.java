@@ -17,15 +17,15 @@
 package com.linkedin.restli.server.resources.unstructuredData;
 
 
-import com.linkedin.restli.server.annotations.RestLiCollection;
+import com.linkedin.restli.server.annotations.RestLiAssociation;
 import com.linkedin.restli.server.annotations.RestLiTemplate;
 import com.linkedin.restli.server.resources.ResourceContextHolder;
 
 
 /**
- * Base {@link CollectionUnstructuredDataResource} implementation. All implementations should extend this.
+ * Base {@link UnstructuredDataAssociationResourceAsync} implementation. All implementations should extend this.
  */
-@RestLiTemplate(expectedAnnotation = RestLiCollection.class)
-public class CollectionUnstructuredDataResourceTemplate<K> extends ResourceContextHolder implements CollectionUnstructuredDataResource<K>
+@RestLiTemplate(expectedAnnotation = RestLiAssociation.class)
+public class UnstructuredDataAssociationResourceAsyncTemplate extends ResourceContextHolder implements UnstructuredDataAssociationResourceAsync
 {
 }

@@ -18,9 +18,9 @@ package com.linkedin.restli.server.twitter;
 
 
 import com.linkedin.restli.server.UnstructuredDataWriter;
-import com.linkedin.restli.server.annotations.UnstructuredDataWriterParam;
 import com.linkedin.restli.server.annotations.RestLiCollection;
-import com.linkedin.restli.server.resources.unstructuredData.CollectionUnstructuredDataResourceTemplate;
+import com.linkedin.restli.server.annotations.UnstructuredDataWriterParam;
+import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataCollectionResourceTemplate;
 
 import java.io.IOException;
 
@@ -29,7 +29,7 @@ import java.io.IOException;
  * Resource that serve feed downloads.
  */
 @RestLiCollection(name="feedDownloads", keyName = "feedId")
-public class FeedDownloadResource extends CollectionUnstructuredDataResourceTemplate<Long>
+public class FeedDownloadResource extends UnstructuredDataCollectionResourceTemplate<Long>
 {
   @Override
   public void get(Long key, @UnstructuredDataWriterParam UnstructuredDataWriter writer)

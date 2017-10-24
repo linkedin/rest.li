@@ -1,0 +1,20 @@
+{
+  "name" : "greetingCollectionUnstructuredDataTask",
+  "namespace" : "com.linkedin.restli.examples.greetings.client",
+  "path" : "/greetingCollectionUnstructuredDataTask",
+  "entityType" : "UNSTRUCTURED_DATA",
+  "doc" : "generated from: com.linkedin.restli.examples.greetings.server.GreetingUnstructuredDataCollectionResourceTask",
+  "collection" : {
+    "identifier" : {
+      "name" : "greetingCollectionUnstructuredDataTaskId",
+      "type" : "string"
+    },
+    "supports" : [ "get" ],
+    "methods" : [ {
+      "method" : "get"
+    } ],
+    "entity" : {
+      "path" : "/greetingCollectionUnstructuredDataTask/{greetingCollectionUnstructuredDataTaskId}"
+    }
+  }
+}

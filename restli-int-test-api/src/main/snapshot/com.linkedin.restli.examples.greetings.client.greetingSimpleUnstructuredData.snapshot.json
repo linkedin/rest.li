@@ -5,7 +5,7 @@
     "namespace" : "com.linkedin.restli.examples.greetings.client",
     "path" : "/greetingSimpleUnstructuredData",
     "entityType" : "UNSTRUCTURED_DATA",
-    "doc" : "This resource models an simple resource that produces unstructured data entities as results.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.GreetingSimpleUnstructuredDataResource",
+    "doc" : "This resource models an simple resource that produces unstructured data entities as results.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.GreetingUnstructuredDataSimpleResource",
     "simple" : {
       "supports" : [ "get" ],
       "methods" : [ {

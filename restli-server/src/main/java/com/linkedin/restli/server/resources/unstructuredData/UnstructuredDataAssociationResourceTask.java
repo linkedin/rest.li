@@ -17,27 +17,20 @@
 package com.linkedin.restli.server.resources.unstructuredData;
 
 
-import com.linkedin.restli.server.UnstructuredDataWriter;
+import com.linkedin.parseq.Task;
+import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.server.RoutingException;
+import com.linkedin.restli.server.UnstructuredDataWriter;
 import com.linkedin.restli.server.annotations.UnstructuredDataWriterParam;
 import com.linkedin.restli.server.resources.BaseResource;
 
 
 /**
- * Interface for implementations of Rest.li Collection Resources for unstructured data.
+ * A version of {@link UnstructuredDataAssociationResource} with {@link Task} async interface
  */
-public interface CollectionUnstructuredDataResource<K> extends BaseResource, KeyUnstructuredDataResource<K>
+public interface UnstructuredDataAssociationResourceTask extends BaseResource, KeyUnstructuredDataResource
 {
-  /**
-   * Return a unstructured data response.
-   *
-   * Before returning from this method, the data content must be fully written to the
-   * {@link UnstructuredDataWriter#getOutputStream()} or it could result in an incomplete or empty response.
-   *
-   * @param key The key of the unstructured data
-   * @param writer The unstructured data response writer
-   */
-  default void get(K key, @UnstructuredDataWriterParam UnstructuredDataWriter writer)
+  default Task<Void> get(CompoundKey key, @UnstructuredDataWriterParam UnstructuredDataWriter writer)
   {
     throw new RoutingException("'get' is not implemented", 400);
   }

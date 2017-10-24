@@ -17,28 +17,19 @@
 package com.linkedin.restli.server.resources.unstructuredData;
 
 
-import com.linkedin.restli.common.CompoundKey;
-import com.linkedin.restli.server.UnstructuredDataWriter;
+import com.linkedin.common.callback.Callback;
 import com.linkedin.restli.server.RoutingException;
+import com.linkedin.restli.server.UnstructuredDataWriter;
 import com.linkedin.restli.server.annotations.UnstructuredDataWriterParam;
 import com.linkedin.restli.server.resources.BaseResource;
 
 
 /**
- * This is used to model unstructured data as result of resource that represents associations between entities.
+ * A version of {@link UnstructuredDataCollectionResource} with callback async interface
  */
-public interface AssociationUnstructuredDataResource extends BaseResource, KeyUnstructuredDataResource<CompoundKey>
+public interface UnstructuredDataCollectionResourceAsync<K> extends BaseResource, KeyUnstructuredDataResource<K>
 {
-  /**
-   * Return a unstructured data response.
-   *
-   * Before returning from this method, the data content must be fully written to the
-   * {@link UnstructuredDataWriter#getOutputStream()} or it could result in incomplete or empty response.
-   *
-   * @param key The key of the unstructured data
-   * @param writer The unstructured data response writer
-   */
-  default void get(CompoundKey key, @UnstructuredDataWriterParam UnstructuredDataWriter writer)
+  default void get(K key, @UnstructuredDataWriterParam UnstructuredDataWriter writer, Callback<Void> callback)
   {
     throw new RoutingException("'get' is not implemented", 400);
   }

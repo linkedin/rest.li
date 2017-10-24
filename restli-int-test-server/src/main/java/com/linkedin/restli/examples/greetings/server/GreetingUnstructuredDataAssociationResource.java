@@ -19,12 +19,12 @@ package com.linkedin.restli.examples.greetings.server;
 
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.HttpStatus;
-import com.linkedin.restli.server.UnstructuredDataWriter;
 import com.linkedin.restli.server.RestLiServiceException;
+import com.linkedin.restli.server.UnstructuredDataWriter;
 import com.linkedin.restli.server.annotations.Key;
 import com.linkedin.restli.server.annotations.RestLiAssociation;
 import com.linkedin.restli.server.annotations.UnstructuredDataWriterParam;
-import com.linkedin.restli.server.resources.unstructuredData.AssociationUnstructuredDataResourceTemplate;
+import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataAssociationResourceTemplate;
 
 import static com.linkedin.restli.common.RestConstants.HEADER_CONTENT_DISPOSITION;
 import static com.linkedin.restli.examples.greetings.server.GreetingUnstructuredDataUtils.CONTENT_DISPOSITION_VALUE;
@@ -43,7 +43,7 @@ import static com.linkedin.restli.examples.greetings.server.GreetingUnstructured
     @Key(name = "dest", type = String.class)
   }
 )
-public class GreetingAssociationUnstructuredDataResource extends AssociationUnstructuredDataResourceTemplate
+public class GreetingUnstructuredDataAssociationResource extends UnstructuredDataAssociationResourceTemplate
 {
   @Override
   public void get(CompoundKey key, @UnstructuredDataWriterParam UnstructuredDataWriter writer)

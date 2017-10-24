@@ -18,9 +18,9 @@ package com.linkedin.restli.examples.greetings.server;
 
 
 import com.linkedin.restli.server.UnstructuredDataWriter;
-import com.linkedin.restli.server.annotations.UnstructuredDataWriterParam;
 import com.linkedin.restli.server.annotations.RestLiSimpleResource;
-import com.linkedin.restli.server.resources.unstructuredData.SimpleUnstructuredDataResourceTemplate;
+import com.linkedin.restli.server.annotations.UnstructuredDataWriterParam;
+import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataSimpleResourceTemplate;
 
 import static com.linkedin.restli.examples.greetings.server.GreetingUnstructuredDataUtils.respondGoodUnstructuredData;
 
@@ -29,7 +29,7 @@ import static com.linkedin.restli.examples.greetings.server.GreetingUnstructured
  * This resource models an simple resource that produces unstructured data entities as results.
  */
 @RestLiSimpleResource(name = "greetingSimpleUnstructuredData", namespace = "com.linkedin.restli.examples.greetings.client")
-public class GreetingSimpleUnstructuredDataResource extends SimpleUnstructuredDataResourceTemplate
+public class GreetingUnstructuredDataSimpleResource extends UnstructuredDataSimpleResourceTemplate
 {
   @Override
   public void get(@UnstructuredDataWriterParam UnstructuredDataWriter writer)

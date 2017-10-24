@@ -1,0 +1,19 @@
+{
+  "models" : [ ],
+  "schema" : {
+    "name" : "greetingSimpleUnstructuredDataAsync",
+    "namespace" : "com.linkedin.restli.examples.greetings.client",
+    "path" : "/greetingSimpleUnstructuredDataAsync",
+    "entityType" : "UNSTRUCTURED_DATA",
+    "doc" : "This resource models an simple resource that produces unstructured data entities as results.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.GreetingUnstructuredDataSimpleResourceAsync",
+    "simple" : {
+      "supports" : [ "get" ],
+      "methods" : [ {
+        "method" : "get"
+      } ],
+      "entity" : {
+        "path" : "/greetingSimpleUnstructuredDataAsync"
+      }
+    }
+  }
+}

@@ -17,6 +17,12 @@
 package com.linkedin.restli.docgen;
 
 
+import com.linkedin.restli.internal.server.model.ResourceModel;
+import com.linkedin.restli.internal.server.model.ResourceType;
+import com.linkedin.restli.internal.server.model.RestLiApiBuilder;
+import com.linkedin.restli.restspec.ResourceSchema;
+import com.linkedin.restli.server.RestLiConfig;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -25,12 +31,6 @@ import java.util.Set;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
-
-import com.linkedin.restli.internal.server.model.ResourceModel;
-import com.linkedin.restli.internal.server.model.ResourceType;
-import com.linkedin.restli.internal.server.model.RestLiApiBuilder;
-import com.linkedin.restli.restspec.ResourceSchema;
-import com.linkedin.restli.server.RestLiConfig;
 
 
 /**
@@ -113,10 +113,15 @@ public class TestResourceSchemaCollection
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.manualProjections", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.scala.client.scalaGreetings", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.asyncErrors", ResourceType.ACTIONS);
-    expectedTypes.put("com.linkedin.restli.examples.greetings.client.customGreetingCollectionUnstructuredData", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.greetingCollectionUnstructuredData", ResourceType.COLLECTION);
+    expectedTypes.put("com.linkedin.restli.examples.greetings.client.greetingCollectionUnstructuredDataAsync", ResourceType.COLLECTION);
+    expectedTypes.put("com.linkedin.restli.examples.greetings.client.greetingCollectionUnstructuredDataPromise", ResourceType.COLLECTION);
+    expectedTypes.put("com.linkedin.restli.examples.greetings.client.greetingCollectionUnstructuredDataTask", ResourceType.COLLECTION);
+    expectedTypes.put("com.linkedin.restli.examples.greetings.client.customGreetingCollectionUnstructuredData", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.greetingAssociationUnstructuredData", ResourceType.ASSOCIATION);
+    expectedTypes.put("com.linkedin.restli.examples.greetings.client.greetingAssociationUnstructuredDataAsync", ResourceType.ASSOCIATION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.greetingSimpleUnstructuredData", ResourceType.SIMPLE);
+    expectedTypes.put("com.linkedin.restli.examples.greetings.client.greetingSimpleUnstructuredDataAsync", ResourceType.SIMPLE);
 
     for (Map.Entry<String, ResourceSchema> entry: _schemas.getResources().entrySet())
     {
