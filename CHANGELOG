@@ -1,3 +1,7 @@
+15.1.11
+-------
+
+
 15.1.10
 -------
 (RB=1128480)
@@ -6,7 +10,7 @@ Fix the SchemaTranslator to translate array or map of union with aliases fields 
 15.1.9
 -------
 (RB=1108176)
-Implement FileStore support in ZooKeeperEphemeralStore to avoid re-fetching children data when watching a node
+Implement FileStore support in ZooKeeperEphemeralStore to avoid re-fetching children data when start watching a node
 
 15.1.8
 -------
