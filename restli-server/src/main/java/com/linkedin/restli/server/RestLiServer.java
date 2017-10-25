@@ -85,6 +85,7 @@ import com.linkedin.restli.server.resources.ResourceFactory;
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -762,7 +763,7 @@ public class RestLiServer implements RestRequestHandler, StreamRequestHandler
       //Drop all attachments to send back on the ground as well.
       if (responseAttachments != null)
       {
-        responseAttachments.getResponseAttachmentsBuilder().build().abortAllDataSources(e);
+        responseAttachments.getMultiPartMimeWriterBuilder().build().abortAllDataSources(e);
       }
 
       //At this point, 'e' must be a RestException. It's a bug in the rest.li framework if this is not the case; at which
@@ -776,10 +777,40 @@ public class RestLiServer implements RestRequestHandler, StreamRequestHandler
     {
       if (responseAttachments != null)
       {
-        UnstructuredDataWriter writer = responseAttachments.getUnstructuredDataWriter();
-        if (writer != null)
+        if (responseAttachments.getReactiveDataWriter() != null)
         {
-          /* This is a unstructured data response */
+          /* This is an unstructured data response in reactive */
+
+          ReactiveDataWriter reactiveWriter = responseAttachments.getReactiveDataWriter();
+
+          EntityStream entityStream = EntityStreams.newEntityStream(reactiveWriter.getWriter());
+
+          StreamResponseBuilder builder = new StreamResponseBuilder();
+          builder.setCookies(result.getCookies());
+          builder.setStatus(result.getStatus());
+
+          if (reactiveWriter.getContentType() != null)
+          {
+            // The copy is required because result.getHeaders() returns an unmodifiable map
+            Map<String, String> updatedHeaders = new HashMap<String, String>();
+            updatedHeaders.putAll(result.getHeaders());
+            updatedHeaders.put(RestConstants.HEADER_CONTENT_TYPE, reactiveWriter.getContentType());
+            builder.setHeaders(updatedHeaders);
+          }
+          else
+          {
+            builder.setHeaders(result.getHeaders());
+          }
+
+          StreamResponse response = builder.build(entityStream);
+
+          _streamResponseCallback.onSuccess(response);
+        }
+        else if (responseAttachments.getUnstructuredDataWriter() != null)
+        {
+          /* This is an unstructured data response */
+
+          UnstructuredDataWriter writer = responseAttachments.getUnstructuredDataWriter();
 
           // OutputStream must be ByteArrayOutputStream
           if (!(writer.getOutputStream() instanceof ByteArrayOutputStream))
@@ -807,7 +838,7 @@ public class RestLiServer implements RestRequestHandler, StreamRequestHandler
 
           _streamResponseCallback.onSuccess(response);
         }
-        else if (responseAttachments.getResponseAttachmentsBuilder().getCurrentSize() > 0)
+        else if (responseAttachments.getMultiPartMimeWriterBuilder().getCurrentSize() > 0)
         {
           /* This is a writer response as attachments */
 
@@ -819,7 +850,7 @@ public class RestLiServer implements RestRequestHandler, StreamRequestHandler
           final MultiPartMIMEWriter multiPartMIMEWriter = AttachmentUtils.createMultiPartMIMEWriter(firstPartWriter,
                                                                                                     result.getHeader(
                                                                                                       RestConstants.HEADER_CONTENT_TYPE),
-                                                                                                    responseAttachments.getResponseAttachmentsBuilder());
+                                                                                                    responseAttachments.getMultiPartMimeWriterBuilder());
 
           //Ensure that any headers or cookies from the RestResponse make into the outgoing StreamResponse. The exception
           //of course being the Content-Type header which will be overridden by MultiPartMIMEStreamResponseFactory.

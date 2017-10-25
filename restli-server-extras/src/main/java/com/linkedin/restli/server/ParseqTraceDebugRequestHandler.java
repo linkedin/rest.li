@@ -143,7 +143,7 @@ public class ParseqTraceDebugRequestHandler implements RestLiDebugRequestHandler
                                                //Drop all attachments to send back on the ground as well.
                                                if (responseAttachments != null)
                                                {
-                                                 responseAttachments.getResponseAttachmentsBuilder().build().abortAllDataSources(e);
+                                                 responseAttachments.getMultiPartMimeWriterBuilder().build().abortAllDataSources(e);
                                                }
 
                                                sendDebugResponse(callback, executionReport, debugHandlerPath);
@@ -157,8 +157,8 @@ public class ParseqTraceDebugRequestHandler implements RestLiDebugRequestHandler
                                                //to drain them here.
                                                if (responseAttachments != null)
                                                {
-                                                 responseAttachments.getResponseAttachmentsBuilder().build()
-                                                         .abortAllDataSources(new UnsupportedOperationException("Response attachments " +
+                                                 responseAttachments.getMultiPartMimeWriterBuilder().build()
+                                                                    .abortAllDataSources(new UnsupportedOperationException("Response attachments " +
                                                                  "may not be sent back for parseq trace debugging"));
                                                }
 

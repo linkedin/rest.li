@@ -17,9 +17,13 @@
 package com.linkedin.restli.examples.greetings.server;
 
 
+import com.linkedin.data.ByteString;
+import com.linkedin.r2.message.stream.entitystream.WriteHandle;
+import com.linkedin.r2.message.stream.entitystream.Writer;
 import com.linkedin.restli.common.HttpStatus;
-import com.linkedin.restli.server.UnstructuredDataWriter;
 import com.linkedin.restli.server.RestLiServiceException;
+import com.linkedin.restli.server.UnstructuredDataWriter;
+import com.linkedin.util.ArgumentUtil;
 
 import java.io.IOException;
 
@@ -29,7 +33,7 @@ import java.io.IOException;
  */
 public final class GreetingUnstructuredDataUtils
 {
-  public static byte[] UNSTRUCTURED_DATA_BYTES = "hello".getBytes();
+  public static byte[] UNSTRUCTURED_DATA_BYTES = "hello world".getBytes();
   public static String MIME_TYPE = "text/csv";
   public static String CONTENT_DISPOSITION_VALUE = "inline";
 

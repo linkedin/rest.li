@@ -25,11 +25,13 @@ import com.linkedin.parseq.Task;
 import com.linkedin.parseq.promise.Promise;
 import com.linkedin.parseq.promise.PromiseListener;
 import com.linkedin.parseq.promise.Promises;
+import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.internal.server.methods.arguments.RestLiArgumentBuilder;
 import com.linkedin.restli.internal.server.response.ErrorResponseBuilder;
 import com.linkedin.restli.internal.server.model.Parameter.ParamType;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
+import com.linkedin.restli.server.ReactiveDataWriter;
 import com.linkedin.restli.server.RequestExecutionCallback;
 import com.linkedin.restli.server.RequestExecutionReportBuilder;
 import com.linkedin.restli.server.RestLiRequestData;
@@ -116,6 +118,15 @@ public class RestLiMethodInvoker
           Object applicationResult = method.invoke(resource, arguments);
           callback.onSuccess(applicationResult,
                              resourceContext.getResponseAttachments());
+          break;
+
+        case REACTIVE:
+          @SuppressWarnings("unchecked") ReactiveDataWriter writer = (ReactiveDataWriter) method.invoke(resource, arguments);
+
+          // TODO Refactor this to stop piggybacking on RestLiResponseAttachments and using dumb EmptyRecord
+          RestLiResponseAttachments responseAttachments =
+            new RestLiResponseAttachments.Builder().appendReactiveDataWriter(writer).build();
+          callback.onSuccess(new EmptyRecord(), responseAttachments);
           break;
 
         case PROMISE:

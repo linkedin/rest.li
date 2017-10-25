@@ -18,7 +18,7 @@ package com.linkedin.restli.server;
 
 
 import com.linkedin.data.ByteString;
-import com.linkedin.restli.common.attachments.RestLiAttachmentDataSourceWriter;
+import com.linkedin.r2.message.stream.entitystream.ByteStringWriter;
 import com.linkedin.restli.internal.server.ResourceContextImpl;
 import com.linkedin.restli.internal.server.util.RestLiSyntaxException;
 import com.linkedin.restli.internal.testutils.RestLiTestAttachmentDataSource;
@@ -46,7 +46,7 @@ public class TestRestLiResponseAttachments
     //More detailed tests can be found in TestAttachmentUtils.
 
     final RestLiResponseAttachments emptyAttachments = new RestLiResponseAttachments.Builder().build();
-    Assert.assertNull(emptyAttachments.getResponseAttachmentsBuilder());
+    Assert.assertEquals(emptyAttachments.getMultiPartMimeWriterBuilder().getCurrentSize(), 0);
 
     //For multiple data attachments
     final RestLiTestAttachmentDataSource dataSourceA =
@@ -64,8 +64,9 @@ public class TestRestLiResponseAttachments
     multipleAttachmentsBuilder.appendMultipleAttachments(dataSourceIterator);
 
     RestLiResponseAttachments attachments = multipleAttachmentsBuilder.build();
-    Assert.assertEquals(attachments.getResponseAttachmentsBuilder().getCurrentSize(), 2);
+    Assert.assertEquals(attachments.getMultiPartMimeWriterBuilder().getCurrentSize(), 2);
     Assert.assertNull(attachments.getUnstructuredDataWriter());
+    Assert.assertNull(attachments.getReactiveDataWriter());
   }
 
   @Test
@@ -74,20 +75,15 @@ public class TestRestLiResponseAttachments
   {
     UnstructuredDataWriter unstructuredDataWriter = new UnstructuredDataWriter(new ByteArrayOutputStream(), new ResourceContextImpl());
     final RestLiResponseAttachments attachments = new RestLiResponseAttachments.Builder().appendUnstructuredDataWriter(unstructuredDataWriter).build();
-
-    Assert.assertNull(attachments.getResponseAttachmentsBuilder());
     Assert.assertEquals(attachments.getUnstructuredDataWriter(), unstructuredDataWriter);
   }
 
-  @Test(expectedExceptions = IllegalStateException.class)
-  public void testRestLiResponseAttachmentsIllegalState()
+  @Test
+  public void testRestLiResponseAttachmentsForReactiveWriter()
     throws RestLiSyntaxException
   {
-    UnstructuredDataWriter unstructuredDataWriter = new UnstructuredDataWriter(new ByteArrayOutputStream(), new ResourceContextImpl());
-    RestLiAttachmentDataSourceWriter attachmentWriter = new RestLiTestAttachmentDataSource("id", ByteString.copy("foobar".getBytes()));
-    final RestLiResponseAttachments attachments =
-      new RestLiResponseAttachments.Builder().appendUnstructuredDataWriter(unstructuredDataWriter)
-                                             .appendSingleAttachment(attachmentWriter).build();
-    Assert.fail("Should have failed at this point.");
+    ReactiveDataWriter writer = new ReactiveDataWriter(new ByteStringWriter(ByteString.empty()));
+    final RestLiResponseAttachments attachments = new RestLiResponseAttachments.Builder().appendReactiveDataWriter(writer).build();
+    Assert.assertEquals(attachments.getReactiveDataWriter(), writer);
   }
 }

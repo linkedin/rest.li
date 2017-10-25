@@ -1,0 +1,23 @@
+{
+  "models" : [ ],
+  "schema" : {
+    "name" : "reactiveGreetingCollectionUnstructuredData",
+    "namespace" : "com.linkedin.restli.examples.greetings.client",
+    "path" : "/reactiveGreetingCollectionUnstructuredData",
+    "entityType" : "UNSTRUCTURED_DATA",
+    "doc" : "This resource models a collection resource that reactively streams unstructured data response\n\ngenerated from: com.linkedin.restli.examples.greetings.server.GreetingUnstructuredDataCollectionResourceReactive",
+    "collection" : {
+      "identifier" : {
+        "name" : "reactiveGreetingCollectionUnstructuredDataId",
+        "type" : "string"
+      },
+      "supports" : [ "get" ],
+      "methods" : [ {
+        "method" : "get"
+      } ],
+      "entity" : {
+        "path" : "/reactiveGreetingCollectionUnstructuredData/{reactiveGreetingCollectionUnstructuredDataId}"
+      }
+    }
+  }
+}

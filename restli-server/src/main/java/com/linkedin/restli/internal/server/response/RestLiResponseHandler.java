@@ -224,7 +224,10 @@ public class RestLiResponseHandler
       }
       else if (routingResult.getResourceMethod().getType().equals(ResourceMethod.GET))
       {
-        if (ResourceEntityType.UNSTRUCTURED_DATA == routingResult.getResourceMethod().getResourceModel().getResourceEntityType())
+        ResourceEntityType resourceEntityType = routingResult.getResourceMethod()
+                                                             .getResourceModel()
+                                                             .getResourceEntityType();
+        if (ResourceEntityType.UNSTRUCTURED_DATA == resourceEntityType)
         {
           // TODO: A dummy empty record is used here to avoid NPE where a record is expected for GET, need a better fix.
           return new RestLiResponseDataImpl<>(

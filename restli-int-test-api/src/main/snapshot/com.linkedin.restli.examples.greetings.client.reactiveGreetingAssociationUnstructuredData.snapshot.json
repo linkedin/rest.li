@@ -1,0 +1,27 @@
+{
+  "models" : [ ],
+  "schema" : {
+    "name" : "reactiveGreetingAssociationUnstructuredData",
+    "namespace" : "com.linkedin.restli.examples.greetings.client",
+    "path" : "/reactiveGreetingAssociationUnstructuredData",
+    "entityType" : "UNSTRUCTURED_DATA",
+    "doc" : "This resource models an association resource that reactively streams unstructured data response.\n\n For more comprehensive examples, look at {@link GreetingUnstructuredDataCollectionResourceReactive}\n\ngenerated from: com.linkedin.restli.examples.greetings.server.GreetingUnstructuredDataAssociationResourceReactive",
+    "association" : {
+      "identifier" : "reactiveGreetingAssociationUnstructuredDataId",
+      "assocKeys" : [ {
+        "name" : "dest",
+        "type" : "string"
+      }, {
+        "name" : "src",
+        "type" : "string"
+      } ],
+      "supports" : [ "get" ],
+      "methods" : [ {
+        "method" : "get"
+      } ],
+      "entity" : {
+        "path" : "/reactiveGreetingAssociationUnstructuredData/{reactiveGreetingAssociationUnstructuredDataId}"
+      }
+    }
+  }
+}

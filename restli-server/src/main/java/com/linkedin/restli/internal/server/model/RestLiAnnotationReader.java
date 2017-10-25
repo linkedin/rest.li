@@ -56,6 +56,7 @@ import com.linkedin.restli.server.BatchCreateRequest;
 import com.linkedin.restli.server.BatchDeleteRequest;
 import com.linkedin.restli.server.BatchPatchRequest;
 import com.linkedin.restli.server.BatchUpdateRequest;
+import com.linkedin.restli.server.ReactiveDataWriter;
 import com.linkedin.restli.server.UnstructuredDataWriter;
 import com.linkedin.restli.server.CollectionResult;
 import com.linkedin.restli.server.Key;
@@ -2488,6 +2489,7 @@ public final class RestLiAnnotationReader
   {
     boolean promise = Promise.class.isAssignableFrom(method.getReturnType());
     boolean task = Task.class.isAssignableFrom(method.getReturnType());
+    boolean reactiveWriter = ReactiveDataWriter.class.isAssignableFrom(method.getReturnType());
     boolean callback = getParamIndex(method, Callback.class) != -1;
     boolean isVoid = method.getReturnType().equals(Void.TYPE);
 
@@ -2509,6 +2511,10 @@ public final class RestLiAnnotationReader
     else if (promise)
     {
       return InterfaceType.PROMISE;
+    }
+    if (reactiveWriter)
+    {
+      return InterfaceType.REACTIVE;
     }
     else
     {

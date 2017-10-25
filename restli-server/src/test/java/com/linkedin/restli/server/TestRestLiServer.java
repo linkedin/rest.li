@@ -61,11 +61,9 @@ import com.linkedin.restli.server.resources.BaseResource;
 import com.linkedin.restli.server.test.EasyMockResourceFactory;
 import com.linkedin.restli.server.twitter.AsyncStatusCollectionResource;
 import com.linkedin.restli.server.twitter.FeedDownloadResource;
+import com.linkedin.restli.server.twitter.FeedDownloadResourceReactive;
 import com.linkedin.restli.server.twitter.StatusCollectionResource;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.Status;
-
-import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableMap;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -80,10 +78,13 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
 import javax.mail.internet.ContentType;
 import javax.mail.internet.ParseException;
 
+import org.apache.commons.io.IOUtils;
+import org.easymock.Capture;
+import org.easymock.EasyMock;
+import org.easymock.IAnswer;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterTest;
@@ -91,11 +92,8 @@ import org.testng.annotations.BeforeTest;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import org.apache.commons.io.IOUtils;
-import org.easymock.Capture;
-import org.easymock.EasyMock;
-import org.easymock.IAnswer;
-
+import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableMap;
 import static org.easymock.EasyMock.*;
 import static org.testng.Assert.*;
 
@@ -264,8 +262,8 @@ public class TestRestLiServer
 
     new RestLiServer(config, new EasyMockResourceFactory(), EasyMock.createMock(Engine.class));
 
-    assertEquals(counts[0], 16);
-    assertEquals(counts[1], 23);
+    assertEquals(counts[0], 17);
+    assertEquals(counts[1], 24);
   }
 
   private int countSubResources(ResourceDefinition definition) {
@@ -298,6 +296,51 @@ public class TestRestLiServer
   }
 
   @Test(dataProvider = "validClientProtocolVersionDataStreamOnly")
+  public void testValidReactiveUnstructuredDataRequest(RestLiServer server,
+                                                       ProtocolVersion clientProtocolVersion,
+                                                       String headerConstant)
+    throws URISyntaxException, IOException
+  {
+    StreamRequest streamRequest = new StreamRequestBuilder(new URI("/reactiveFeedDownloads/1")).setHeader(headerConstant,
+                                                                                                  clientProtocolVersion.toString())
+                                                                                       .build(EntityStreams.emptyStream());
+
+    final FeedDownloadResourceReactive resource = getMockResource(FeedDownloadResourceReactive.class);
+    resource.get(eq(1L));
+    EasyMock.expectLastCall().andDelegateTo(new FeedDownloadResourceReactive()).once();
+    replay(resource);
+
+    @SuppressWarnings("unchecked")
+    Callback<StreamResponse> r2Callback = createMock(Callback.class);
+    final Capture<StreamResponse> streamResponse = new Capture<>();
+    r2Callback.onSuccess(capture(streamResponse));
+    expectLastCall().once();
+    replay(r2Callback);
+
+    RequestContext requestContext = new RequestContext();
+    server.handleRequest(streamRequest, requestContext, r2Callback);
+
+    verify(resource);
+    verify(r2Callback);
+    assertNotNull(streamResponse);
+    assertEquals(streamResponse.getValue().getHeader(RestConstants.HEADER_CONTENT_TYPE), FeedDownloadResourceReactive.CONTENT_TYPE);
+    FullEntityReader fullEntityReader = new FullEntityReader(new Callback<ByteString>() {
+      @Override
+      public void onError(Throwable e)
+      {
+        fail("Error inside callback!! Failed to read response data from stream!", e);
+      }
+
+      @Override
+      public void onSuccess(ByteString result)
+      {
+        assertEquals(result, FeedDownloadResourceReactive.CONTENT);
+      }
+    });
+    streamResponse.getValue().getEntityStream().setReader(fullEntityReader);
+  }
+
+  @Test(dataProvider = "validClientProtocolVersionDataStreamOnly")
   public void testValidUnstructuredDataRequest(RestLiServer server,
                                                ProtocolVersion clientProtocolVersion,
                                                String headerConstant)
@@ -308,20 +351,14 @@ public class TestRestLiServer
                                                                                        .build(EntityStreams.emptyStream());
 
     final FeedDownloadResource resource = getMockResource(FeedDownloadResource.class);
-    final Capture<UnstructuredDataWriter> capturedUnstructuredDataWriter = new Capture<>();
-    resource.get(eq(1L), capture(capturedUnstructuredDataWriter));
-    EasyMock.expectLastCall().andDelegateTo(new FeedDownloadResource() {
-      @Override
-      public void get(Long key, UnstructuredDataWriter writer)
-      {
-        capturedUnstructuredDataWriter.getValue().setContentType("foo");
-      }
-    }).once();
+    resource.get(eq(1L), anyObject(UnstructuredDataWriter.class));
+    EasyMock.expectLastCall().andDelegateTo(new FeedDownloadResource()).once();
     replay(resource);
 
     @SuppressWarnings("unchecked")
     Callback<StreamResponse> r2Callback = createMock(Callback.class);
-    r2Callback.onSuccess(anyObject());
+    final Capture<StreamResponse> streamResponse = new Capture<>();
+    r2Callback.onSuccess(capture(streamResponse));
     expectLastCall().once();
     replay(r2Callback);
 
@@ -330,6 +367,23 @@ public class TestRestLiServer
 
     verify(resource);
     verify(r2Callback);
+
+    assertNotNull(streamResponse);
+    assertEquals(streamResponse.getValue().getHeader(RestConstants.HEADER_CONTENT_TYPE), FeedDownloadResource.CONTENT_TYPE);
+    FullEntityReader fullEntityReader = new FullEntityReader(new Callback<ByteString>() {
+      @Override
+      public void onError(Throwable e)
+      {
+        fail("Error inside callback!! Failed to read response data from stream!", e);
+      }
+
+      @Override
+      public void onSuccess(ByteString result)
+      {
+        assertEquals(result.copyBytes(), FeedDownloadResource.CONTENT);
+      }
+    });
+    streamResponse.getValue().getEntityStream().setReader(fullEntityReader);
   }
 
   @Test(dataProvider = "validClientProtocolVersionDataStreamOnly")

@@ -3,6 +3,9 @@
 (RB=1136651)
 Support Async Interface for Unstructured Data and rename Unstructured Data resource classes
 
+(RB=1126626)
+Support Reactive Streaming for Unstructured Data
+
 15.1.10
 -------
 (RB=1128480)

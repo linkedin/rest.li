@@ -49,18 +49,21 @@ import com.linkedin.restli.server.resources.SimpleResource;
 import com.linkedin.restli.server.resources.SimpleResourceAsync;
 import com.linkedin.restli.server.resources.SimpleResourcePromise;
 import com.linkedin.restli.server.resources.SimpleResourceTask;
+import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataAssociationResource;
 import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataAssociationResourceAsync;
 import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataAssociationResourcePromise;
+import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataAssociationResourceReactive;
 import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataAssociationResourceTask;
+import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataCollectionResource;
 import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataCollectionResourceAsync;
 import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataCollectionResourcePromise;
+import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataCollectionResourceReactive;
 import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataCollectionResourceTask;
+import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataSimpleResource;
 import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataSimpleResourceAsync;
 import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataSimpleResourcePromise;
+import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataSimpleResourceReactive;
 import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataSimpleResourceTask;
-import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataAssociationResource;
-import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataCollectionResource;
-import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataSimpleResource;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -235,7 +238,10 @@ public interface RestModelConstants
       UnstructuredDataSimpleResource.class,
       UnstructuredDataSimpleResourceAsync.class,
       UnstructuredDataSimpleResourcePromise.class,
-      UnstructuredDataSimpleResourceTask.class
+      UnstructuredDataSimpleResourceTask.class,
+      UnstructuredDataCollectionResourceReactive.class,
+      UnstructuredDataAssociationResourceReactive.class,
+      UnstructuredDataSimpleResourceReactive.class
   };
 
   Set<Class<?>> CLASSES_WITHOUT_SCHEMAS = new HashSet<Class<?>>(

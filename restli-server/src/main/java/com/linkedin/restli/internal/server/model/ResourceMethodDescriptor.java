@@ -33,9 +33,9 @@ import java.util.List;
  */
 public class ResourceMethodDescriptor
 {
-  public static enum InterfaceType
+  public enum InterfaceType
   {
-    SYNC, CALLBACK, PROMISE, TASK
+    SYNC, CALLBACK, PROMISE, TASK, REACTIVE
   }
 
   private ResourceModel                                 _resourceModel;

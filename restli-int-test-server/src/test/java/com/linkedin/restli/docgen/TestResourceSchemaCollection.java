@@ -113,15 +113,22 @@ public class TestResourceSchemaCollection
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.manualProjections", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.scala.client.scalaGreetings", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.asyncErrors", ResourceType.ACTIONS);
+
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.greetingCollectionUnstructuredData", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.greetingCollectionUnstructuredDataAsync", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.greetingCollectionUnstructuredDataPromise", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.greetingCollectionUnstructuredDataTask", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.customGreetingCollectionUnstructuredData", ResourceType.COLLECTION);
+
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.greetingAssociationUnstructuredData", ResourceType.ASSOCIATION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.greetingAssociationUnstructuredDataAsync", ResourceType.ASSOCIATION);
+
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.greetingSimpleUnstructuredData", ResourceType.SIMPLE);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.greetingSimpleUnstructuredDataAsync", ResourceType.SIMPLE);
+
+    expectedTypes.put("com.linkedin.restli.examples.greetings.client.reactiveGreetingCollectionUnstructuredData", ResourceType.COLLECTION);
+    expectedTypes.put("com.linkedin.restli.examples.greetings.client.reactiveGreetingAssociationUnstructuredData", ResourceType.ASSOCIATION);
+    expectedTypes.put("com.linkedin.restli.examples.greetings.client.reactiveGreetingSimpleUnstructuredData", ResourceType.SIMPLE);
 
     for (Map.Entry<String, ResourceSchema> entry: _schemas.getResources().entrySet())
     {

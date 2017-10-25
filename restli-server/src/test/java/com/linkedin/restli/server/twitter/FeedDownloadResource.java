@@ -31,13 +31,16 @@ import java.io.IOException;
 @RestLiCollection(name="feedDownloads", keyName = "feedId")
 public class FeedDownloadResource extends UnstructuredDataCollectionResourceTemplate<Long>
 {
+  public static final byte[] CONTENT = "hello".getBytes();
+  public static final String CONTENT_TYPE = "text/plain";
+
   @Override
   public void get(Long key, @UnstructuredDataWriterParam UnstructuredDataWriter writer)
   {
     try
     {
-      writer.setContentType("text/plain");
-      writer.getOutputStream().write("hello".getBytes());
+      writer.setContentType(CONTENT_TYPE);
+      writer.getOutputStream().write(CONTENT);
     }
     catch (IOException e)
     {
