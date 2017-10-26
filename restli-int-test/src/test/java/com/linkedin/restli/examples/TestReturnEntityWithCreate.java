@@ -100,7 +100,7 @@ public class TestReturnEntityWithCreate extends RestLiIntegrationTest
     @SuppressWarnings("deprecation")
     String stringId = response.getId();
     Assert.assertEquals(response.getHeader(RestConstants.HEADER_CONTENT_TYPE), expectedContentType);
-    Assert.assertEquals(response.getHeader(RestConstants.HEADER_LOCATION), "/" + builders.getPrimaryResource() + "/" + id + "?fields=tone,id");
+    Assert.assertEquals(response.getHeader(RestConstants.HEADER_LOCATION), "/" + builders.getPrimaryResource() + "/" + id + "?fields=tone%2Cid");
     Assert.assertEquals(id, Long.parseLong(stringId));
     Assert.assertEquals(false, response.getEntity().getEntity().hasMessage());
     Assert.assertEquals(Tone.FRIENDLY, response.getEntity().getEntity().getTone());
@@ -156,7 +156,7 @@ public class TestReturnEntityWithCreate extends RestLiIntegrationTest
       @SuppressWarnings("deprecation")
       String id = singleResponse.getId();
       Assert.assertNotNull(id);
-      Assert.assertEquals(singleResponse.getLocation(), "/" + builders.getPrimaryResource() + "/" + id + "?fields=tone,id");
+      Assert.assertEquals(singleResponse.getLocation(), "/" + builders.getPrimaryResource() + "/" + id + "?fields=tone%2Cid");
       Greeting entity = (Greeting)singleResponse.getEntity();
       Assert.assertEquals(entity.hasMessage(), false);
       Assert.assertEquals(entity.hasId(), true);

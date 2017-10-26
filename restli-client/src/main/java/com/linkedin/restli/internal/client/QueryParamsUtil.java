@@ -71,10 +71,18 @@ public class QueryParamsUtil
       }
       else
       {
-        result.put(key, paramToDataObject(value, queryParamClasses.get(key), version));
+        Object objValue = paramToDataObject(value, queryParamClasses.get(key), version);
+        // If the value object is of type DataComplex, mark that as read only as the parameter value can be from a user
+        // constructed DataTemplate and we don't want this to be modified in any way.
+        if (objValue instanceof DataComplex)
+        {
+          ((DataComplex) objValue).makeReadOnly();
+        }
+
+        result.put(key, objValue);
       }
     }
-    result.makeReadOnly();
+
     return result;
   }
 

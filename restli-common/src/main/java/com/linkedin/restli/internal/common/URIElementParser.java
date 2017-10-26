@@ -247,7 +247,7 @@ public class URIElementParser
     return new Token(decodeString(strToken), startLocation);
   }
 
-  private  static String decodeString(String str) throws PathSegment.PathSegmentSyntaxException
+  public static String decodeString(String str) throws PathSegment.PathSegmentSyntaxException
   {
     if (str.equals(URIConstants.EMPTY_STRING_REP))
     {

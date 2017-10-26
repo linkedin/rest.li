@@ -54,16 +54,16 @@ public class URIParamUtils
 
   private static Map<String, String> dataMapToQueryParams(DataMap dataMap)
   {
-    final Map<String, String> result = encodeDataMapParameters(dataMap);
-
-    //Walk through the pipeline
+    // Serialize the projection MaskTree values
     for (final String parameterName : RestConstants.PROJECTION_PARAMETERS)
     {
       if (dataMap.containsKey(parameterName))
       {
-        result.put(parameterName, URIMaskUtil.encodeMaskForURI(dataMap.getDataMap(parameterName)));
+        dataMap.put(parameterName, URIMaskUtil.encodeMaskForURI(dataMap.getDataMap(parameterName)));
       }
     }
+
+    final Map<String, String> result = encodeDataMapParameters(dataMap);
 
     return result;
   }
@@ -417,8 +417,8 @@ public class URIParamUtils
 
       if (RestConstants.PROJECTION_PARAMETERS.contains(key))
       {
-        //don't decode it.
-        value = encodedValue;
+        // URL decode but not deserialize the projection as that is handled later
+        value = URIElementParser.decodeString(encodedValue);
       }
       else
       {
