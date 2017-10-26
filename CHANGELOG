@@ -1,8 +1,16 @@
-
 16.0.3
 ------
 (RB=1148212)
 Error out if zookeeper connection is not ready for markup/markdown
+
+(RB=1139217)
+Update URIMaskUtil is parse array ranges in URI fields projection and fix bugs in Filer and CopyFilter.
+
+(RB=1148299)
+Changes to specify array ranges while projecting fields.
+(0) Update PathSpec to include attributes (start and count).
+(1) Update Java DataTemplate codegen to generate field PathSpec methods for specifying array ranges.
+(2) Update MaskComposition to take care of merging array ranges.
 
 16.0.2
 ------

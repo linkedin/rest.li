@@ -56,7 +56,7 @@ public class URIParamUtils
   {
     final Map<String, String> result = encodeDataMapParameters(dataMap);
 
-    //Walk through the pipeline
+    // Serialize the projection MaskTree values
     for (final String parameterName : RestConstants.PROJECTION_PARAMETERS)
     {
       if (dataMap.containsKey(parameterName))
@@ -417,7 +417,7 @@ public class URIParamUtils
 
       if (RestConstants.PROJECTION_PARAMETERS.contains(key))
       {
-        //don't decode it.
+        // Don't decode it
         value = encodedValue;
       }
       else

@@ -21,12 +21,15 @@ package com.linkedin.restli.internal.common;
 
 import static com.linkedin.data.TestUtil.dataMapFromString;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import com.linkedin.data.DataMap;
@@ -81,16 +84,31 @@ public class TestURIMaskUtil
       /*mask in JSON:*/   "{'a': { '$*': { '$*': 1, 'e': 0 }, 'b': { 'c': { 'd': 0 }}}, 'e': { 'f': { 'g': 0 }}}",
       /*mask in URI:*/    "a:($*:($*,-e),b:(c:(-d))),e:(f:(-g))",
     },
+    {
+      /*description:*/    "Test array range with a start value specified.",
+      /*mask in JSON:*/   "{'a': 1, 'b': { '$*': 1, '$start': 2 } }",
+      /*mask in URI:*/    "a,b:($*,$start:2)",
+    },
+    {
+      /*description:*/    "Test array range with a start and count value specified.",
+      /*mask in JSON:*/   "{'a': 1, 'b': { '$*': { 'c': 1 }, '$start': 2, '$count': 4 } }",
+      /*mask in URI:*/    "a,b:($*:(c),$start:2,$count:4)",
+    },
+    {
+      /*description:*/    "Test array range with a start and count value specified as 0 and 1 (same as negative and positive mask).",
+      /*mask in JSON:*/   "{'a': 1, 'b': { '$*': 1, '$start': 0, '$count': 1 } }",
+      /*mask in URI:*/    "a,b:($*,$start:0,$count:1)",
+    }
   };
 
   private void executeSingleTestCase(String jsonMask, String uriMask, String description) throws IllegalMaskException,
       IOException
   {
     testEncodingToURI(jsonMask, uriMask, description);
-    testDeodingFromURI(jsonMask, uriMask, description);
+    testDecodingFromURI(jsonMask, uriMask, description);
   }
 
-  private void testDeodingFromURI(String jsonMask, String uriMask, String description) throws IllegalMaskException,
+  private void testDecodingFromURI(String jsonMask, String uriMask, String description) throws IllegalMaskException,
       IOException
   {
     MaskTree decoded = URIMaskUtil.decodeMaskUriFormat(new StringBuilder(uriMask));
@@ -187,4 +205,29 @@ public class TestURIMaskUtil
       executeSingleTestCase(testCase[1], testCase[2], testCase[0]);
   }
 
+  @DataProvider(name = "invalidArrayRangeProvider")
+  private Object[][] invalidArrayRangeProvider()
+  {
+    return new Object[][] {
+      { "a:($*,:2)", "Malformed mask syntax: expected '(' token" },
+      { "a:($*,b:5)", "Malformed mask syntax: expected '(' token" },
+      { "a:($*,$start:-10)", "Malformed mask syntax: unexpected range value" },
+      { "a:($*,$count:xyz)", "Malformed mask syntax: unexpected range value" },
+      { "a:($*,$start:1yz)", "Malformed mask syntax: unexpected range value" }
+    };
+  }
+
+  @Test(dataProvider = "invalidArrayRangeProvider")
+  public void invalidArrayRange(String uriMask, String errorMessage)
+  {
+    try
+    {
+      URIMaskUtil.decodeMaskUriFormat(new StringBuilder(uriMask));
+      fail("Excepted to throw an exception with a message: " + errorMessage);
+    }
+    catch (IllegalMaskException e)
+    {
+      assertTrue(e.getMessage().contains(errorMessage));
+    }
+  }
 }

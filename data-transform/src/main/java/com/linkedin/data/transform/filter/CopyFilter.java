@@ -36,16 +36,15 @@ public class CopyFilter extends AbstractFilter
   @Override
   protected Object onFilterDataList(DataList data, int start, int count, Object operation)
   {
-    if (operation == FilterConstants.NEGATIVE)
+    if (operation == FilterConstants.NEGATIVE || start >= data.size() || count <= 0)
     {
       return EMPTY_DATALIST;
     }
 
-    final int end = Math.min(data.size(), start + count);
-    final int size = Math.max(end - start, 0);
-    final DataList resultList =  new DataList(size);
+    count = Math.min(count, data.size() - start);
+    final DataList resultList =  new DataList(count);
 
-    for (int i = start; i < end; ++i)
+    for (int i = start; i < start + count; ++i)
     {
       final Class<?> operationClass = operation.getClass();
       final Object original = data.get(i);
