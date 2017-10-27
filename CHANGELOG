@@ -1,7 +1,12 @@
-16.0.1
+16.0.2
 ------
 
-
+16.0.1
+------
+(RB=1089940)
+Adding a D2 LoadBalancer that reads always latest data from disk in parallel of the LoadBalancer toggling mechanism
+in order to eventually deprecate it.
+The user will be able to switch between the two.
 
 16.0.0
 ------
