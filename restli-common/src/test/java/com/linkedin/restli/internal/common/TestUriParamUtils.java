@@ -28,7 +28,6 @@ import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.test.MyComplexKey;
 
-import java.net.URI;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -293,45 +292,6 @@ public class TestUriParamUtils
     URIParamUtils.addSortedParams(uriBuilder, queryParams);
     String query = uriBuilder.build().getQuery();
     Assert.assertEquals(query, "aParam=(empty:(),foo:bar,someField:someValue)&bParam=List(x,y,z)");
-  }
-
-  @Test
-  public void testProjectionMask()
-  {
-    DataMap queryParams = new DataMap();
-
-    DataMap fields = new DataMap();
-    fields.put("name", 1);
-
-    DataMap friends = new DataMap();
-    friends.put("$start", 1);
-    friends.put("$count", 2);
-    fields.put("friends", friends);
-
-    queryParams.put("fields", fields);
-
-    DataMap paramMap = new DataMap();
-    paramMap.put("foo", "bar");
-    paramMap.put("empty", new DataMap());
-
-    queryParams.put("aParam", paramMap);
-
-    DataList paramList = new DataList();
-    paramList.add("x");
-    paramList.add("y");
-    paramList.add("z");
-
-    queryParams.put("bParam", paramList);
-
-    UriBuilder uriBuilder = new UriBuilder();
-    URIParamUtils.addSortedParams(uriBuilder, queryParams);
-    URI uri = uriBuilder.build();
-
-    String query = uri.getQuery();
-    Assert.assertEquals(query, "aParam=(empty:(),foo:bar)&bParam=List(x,y,z)&fields=name,friends:($start=1,$count=2)");
-
-    String rawQuery = uri.getRawQuery();
-    Assert.assertEquals(rawQuery, "aParam=(empty:(),foo:bar)&bParam=List(x,y,z)&fields=name%2Cfriends%3A%28$start%3D1%2C$count%3D2%29");
   }
 
   @Test

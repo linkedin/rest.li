@@ -65,7 +65,7 @@ public class Filter extends AbstractFilter implements Interpreter
     }
     else
     {
-      if (count < data.size() - start)
+      if (start + count < data.size())
       {
         data.removeRange(start + count, data.size());
       }

@@ -237,18 +237,6 @@ public class TestFilterOnData
       /*expected*/    "{'b': []}"
     },
     {
-      /*description:*/"Filter contains simple range. Array contains integers and with just start of the range specified.",
-      /*data:*/       "{'a': 10, 'b': [1, 2, 3, 4, 5, 6]}",
-      /*filter:*/     "{'b' : { '$start': 3}}",
-      /*expected*/    "{'b': [4, 5, 6]}"
-    },
-    {
-      /*description:*/"Filter contains simple range. Array contains integers and with just count of the range specified.",
-      /*data:*/       "{'a': 10, 'b': [1, 2, 3, 4, 5, 6]}",
-      /*filter:*/     "{'b' : { '$count': 3}}",
-      /*expected*/    "{'b': [1, 2, 3]}"
-    },
-    {
       /*description:*/"Filter contains simple positive wildcard. Array contains objects.",
       /*data:*/       "{'a': 10, 'b': [{'a': 'aaa'}, {'b': 'bbb'}, {'c': 'ccc'}, {'d': 'ddd'}, {'e': 'eee'}]}",
       /*filter:*/     "{'b' : { '$*': 1}}",

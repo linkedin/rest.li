@@ -1,7 +1,7 @@
+
 16.0.3
 ------
-(RB=1139217)
-Update URIMaskUtil is parse array ranges in URI fields projection and fix bugs in Filer and CopyFilter.
+
 
 16.0.2
 ------

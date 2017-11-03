@@ -132,7 +132,7 @@ public class QueryParamsDataMap
     {
       if (dataMap.containsKey(parameterName))
       {
-        processIndividualProjection(dataMap, result, parameterName);
+        dataMap = processIndividualProjection(dataMap, result, parameterName);
       }
     }
 
@@ -140,13 +140,24 @@ public class QueryParamsDataMap
     return dataMap;
   }
 
-  private static void processIndividualProjection(final DataMap dataMap, final Map<String, List<String>> result,
+  private static DataMap processIndividualProjection(final DataMap dataMap, final Map<String, List<String>> result,
       final String projectionKey)
   {
     final DataMap projectionsMap = dataMap.getDataMap(projectionKey);
     final String encodedFields = URIMaskUtil.encodeMaskForURI(projectionsMap);
     result.put(projectionKey, Collections.singletonList(encodedFields));
-    dataMap.remove(projectionKey);
+    final DataMap dataMapClone;
+    try
+    {
+      dataMapClone = dataMap.clone();
+      dataMapClone.remove(projectionKey);
+    }
+    catch (CloneNotSupportedException e)
+    {
+      // should never be reached
+      throw new AssertionError(e);
+    }
+    return dataMapClone;
   }
 
   private static void iterate(String keyPrefix,
