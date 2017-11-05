@@ -1,7 +1,8 @@
 
 16.0.3
 ------
-
+(RB=1148212)
+Error out if zookeeper connection is not ready for markup/markdown
 
 16.0.2
 ------

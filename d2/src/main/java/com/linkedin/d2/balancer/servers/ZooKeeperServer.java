@@ -160,7 +160,8 @@ public class
         callback.onError(e);
       }
     };
-    _store.get(clusterName, getCallback);
+
+    storeGet(clusterName, getCallback);
   }
 
   @Override
@@ -201,7 +202,8 @@ public class
         callback.onError(e);
       }
     };
-    _store.get(clusterName, getCallback);
+
+    storeGet(clusterName, getCallback);
   }
 
   public void setStore(ZooKeeperEphemeralStore<UriProperties> store)
@@ -229,6 +231,18 @@ public class
     catch (InterruptedException | ExecutionException e)
     {
       warn(_log, "unable to shut down propertly.. got interrupt exception while waiting");
+    }
+  }
+
+  private void storeGet(final String clusterName, final Callback<UriProperties> callback)
+  {
+    if (_store == null)
+    {
+      callback.onError(new Throwable("ZK connection not ready yet"));
+    }
+    else
+    {
+      _store.get(clusterName, callback);
     }
   }
 }
