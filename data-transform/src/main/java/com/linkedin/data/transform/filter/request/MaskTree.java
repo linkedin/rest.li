@@ -25,6 +25,7 @@ import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.transform.DataComplexProcessor;
 import com.linkedin.data.transform.DataProcessingException;
 import com.linkedin.data.transform.Escaper;
+import com.linkedin.data.transform.filter.FilterConstants;
 import com.linkedin.data.transform.filter.MaskComposition;
 
 import java.util.HashMap;
@@ -73,7 +74,7 @@ public class MaskTree
   public void addOperation(PathSpec path, MaskOperation op)
   {
     List<String> segments = path.getPathComponents();
-
+    Map<String, Object> attributes = path.getPathAttributes();
 
     final DataMap fieldMask = new DataMap();
     DataMap map = fieldMask;  //map variable contains DataMap, into which current segment will be put
@@ -84,8 +85,30 @@ public class MaskTree
       map.put(segment, childMap);
       map = childMap;
     }
+
     String lastSegment = Escaper.escapePathSegment(segments.get(segments.size()-1));
-    map.put(lastSegment, op.getRepresentation());
+
+    Object start = attributes.get(PathSpec.ATTR_ARRAY_START);
+    Object count = attributes.get(PathSpec.ATTR_ARRAY_COUNT);
+    if (start != null || count != null)
+    {
+      DataMap childMap = new DataMap();
+      map.put(lastSegment, childMap);
+
+      if (start != null)
+      {
+        childMap.put(FilterConstants.START, start);
+      }
+
+      if (count != null)
+      {
+        childMap.put(FilterConstants.COUNT, count);
+      }
+    }
+    else
+    {
+      map.put(lastSegment, op.getRepresentation());
+    }
 
     //compose existing tree with mask for specific field
     try

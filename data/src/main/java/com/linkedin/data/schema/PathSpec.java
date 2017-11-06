@@ -23,7 +23,11 @@ package com.linkedin.data.schema;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
 
 /**
  * A PathSpec represents a path within a complex data object.  PathSpecs may be obtained from
@@ -40,6 +44,9 @@ public class PathSpec
 {
   //use this specific instance to differentiate a true wildcard from a "*" key
   public static final String WILDCARD = new String("*");
+
+  public static final String ATTR_ARRAY_START = "start";
+  public static final String ATTR_ARRAY_COUNT = "count";
 
   /**
    * Construct a new {@link PathSpec} from a list of parent segments and a current
@@ -84,6 +91,11 @@ public class PathSpec
     _path = Collections.emptyList();
   }
 
+  public void setAttribute(String name, Object value)
+  {
+    _attributes.put(name, value);
+  }
+
   /**
    * Return an empty {@link PathSpec} that has no segments.
    *
@@ -99,6 +111,11 @@ public class PathSpec
     return Collections.unmodifiableList(_path);
   }
 
+  public Map<String, Object> getPathAttributes()
+  {
+    return Collections.unmodifiableMap(_attributes);
+  }
+
   @Override
   public String toString()
   {
@@ -107,6 +124,20 @@ public class PathSpec
     {
       rep.append(SEPARATOR);
       rep.append(s);
+    }
+
+    boolean beforeAttributes = true;
+    if (!_attributes.isEmpty())
+    {
+      for (Map.Entry<String, Object> attribute: _attributes.entrySet())
+      {
+        rep.append(beforeAttributes ? PATH_ATTR_SEPARATOR : ATTR_SEPARATOR);
+        rep.append(attribute.getKey());
+        rep.append(ATTR_KEY_VALUE_SEPARATOR);
+        rep.append(attribute.getValue());
+
+        beforeAttributes = false;
+      }
     }
 
     return rep.toString();
@@ -134,7 +165,8 @@ public class PathSpec
           return false;
         }
       }
-      return true;
+
+      return Objects.equals(_attributes, other._attributes);
     }
     return false;
   }
@@ -146,6 +178,10 @@ public class PathSpec
   }
 
   private final List<String> _path;
+  private final Map<String, Object> _attributes = new HashMap<>();
   private static final PathSpec EMPTY_PATH_SPEC = new PathSpec();
   private static final char SEPARATOR = '/';
+  private static final char ATTR_SEPARATOR = '&';
+  private static final char PATH_ATTR_SEPARATOR = '?';
+  private static final char ATTR_KEY_VALUE_SEPARATOR = '=';
 }

@@ -21,10 +21,12 @@ import com.linkedin.data.ByteString;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.schema.DataSchemaConstants;
 import com.linkedin.data.schema.EnumDataSchema;
 import com.linkedin.data.schema.JsonBuilder;
 import com.linkedin.data.schema.MapDataSchema;
 import com.linkedin.data.schema.NamedDataSchema;
+import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.SchemaToJsonEncoder;
 import com.linkedin.data.template.BooleanArray;
@@ -63,6 +65,7 @@ import com.linkedin.pegasus.generator.spec.RecordTemplateSpec;
 import com.linkedin.pegasus.generator.spec.TyperefTemplateSpec;
 import com.linkedin.pegasus.generator.spec.UnionTemplateSpec;
 
+import com.sun.codemodel.JStatement;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -279,6 +282,11 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
           return false;
       }
     }
+  }
+
+  private static boolean isArrayType(DataSchema schema)
+  {
+    return schema.getDereferencedType() == DataSchema.Type.ARRAY;
   }
 
   private static void generateConstructorWithNoArg(JDefinedClass cls, JVar schemaField, JClass newClass)
@@ -683,6 +691,29 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
         constantField.javadoc().append(field.getSchemaField().getDoc());
       }
       setDeprecatedAnnotationAndJavadoc(constantField, field.getSchemaField());
+
+      // For array types, add another method to get PathSpec with a range specified
+      if (isArrayType(field.getSchemaField().getType()))
+      {
+        final JMethod pathSpecRangeMethod = fieldsNestedClass.method(JMod.PUBLIC, _pathSpecClass, escapeReserved(field.getSchemaField().getName()));
+        final JVar arrayPathSpec = pathSpecRangeMethod.body()
+            .decl(_pathSpecClass, "arrayPathSpec",
+                JExpr._new(_pathSpecClass).arg(JExpr.invoke("getPathComponents")).arg(field.getSchemaField().getName()));
+        JClass integerClass = generate(PrimitiveTemplateSpec.getInstance(DataSchema.Type.INT));
+        JVar start = pathSpecRangeMethod.param(integerClass, "start");
+        pathSpecRangeMethod.body()._if(start.ne(JExpr._null())).
+            _then().invoke(arrayPathSpec, "setAttribute").arg(PathSpec.ATTR_ARRAY_START).arg(start);
+        JVar count = pathSpecRangeMethod.param(integerClass, "count");
+        pathSpecRangeMethod.body()._if(count.ne(JExpr._null()))
+            ._then().invoke(arrayPathSpec, "setAttribute").arg(PathSpec.ATTR_ARRAY_COUNT).arg(count);
+        pathSpecRangeMethod.body()._return(arrayPathSpec);
+
+        if (!field.getSchemaField().getDoc().isEmpty())
+        {
+          pathSpecRangeMethod.javadoc().append(field.getSchemaField().getDoc());
+        }
+        setDeprecatedAnnotationAndJavadoc(pathSpecRangeMethod, field.getSchemaField());
+      }
     }
 
     final JVar staticFields = templateClass.field(JMod.PRIVATE | JMod.STATIC | JMod.FINAL, fieldsNestedClass, "_fields").init(JExpr._new(fieldsNestedClass));

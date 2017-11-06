@@ -53,6 +53,22 @@ public class TestPathSpec
   }
 
   @Test
+  public void testArrayRangePathSpec()
+  {
+    PathSpec p = ArrayTest.fields().intArray(10, 5);
+    Assert.assertEquals(p.toString(), "/intArray?start=10&count=5");
+
+    p = ArrayTest.fields().recordInlineArray(null, 2);
+    Assert.assertEquals(p.toString(), "/recordInlineArray?count=2");
+
+    p = ArrayTest.fields().unionArray(8, null);
+    Assert.assertEquals(p.toString(), "/unionArray?start=8");
+
+    p = ArrayTest.fields().stringArray(null, null);
+    Assert.assertEquals(p.toString(), "/stringArray");
+  }
+
+  @Test
   public void testMapWildcardPathSpec()
   {
     PathSpec p = MapTest.fields().recordInlineMap().values().f();

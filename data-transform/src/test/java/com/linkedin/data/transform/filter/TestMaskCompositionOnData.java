@@ -237,22 +237,34 @@ public class TestMaskCompositionOnData
       /*expected*/    "{'a': 1}"
     },
     {
-      /*description:*/"Compose array range with '$*': 1. a is an array in data object. Range should be removed.",
+      /*description:*/"Compose array range with '$*': 1. a is an array in data object. Range should be merged with wildcard.",
       /*data1:*/      "{'a': { '$start': 2, '$count': 3 }}",
       /*data2:*/      "{'a': { '$*': 1 }}",
-      /*expected*/    "{'a': { '$*': 1 }}"
+      /*expected*/    "{'a': { '$*': 1, '$start': 2, '$count': 3 }}"
     },
     {
-      /*description:*/"Compose array range with complex wildcard merged with 1. a is an array in data object. Range should be removed.",
+      /*description:*/"Compose array range with complex wildcard merged with 1. a is an array in data object. Range should be merged with wildcard.",
       /*data1:*/      "{'a': { '$start': 2, '$count': 3 }}",
       /*data2:*/      "{'a': { '$*': { '$*': 1, 'b': 0} }}",
-      /*expected*/    "{'a': { '$*': { '$*': 1, 'b': 0} }}"
+      /*expected*/    "{'a': { '$*': { '$*': 1, 'b': 0}, '$start': 2, '$count': 3 }}"
     },
     {
       /*description:*/"Compose disjoint array ranges. The result is smallest range containing both ranges.",
       /*data1:*/      "{'a': { '$start': 2, '$count': 3 }}",
       /*data2:*/      "{'a': { '$start': 12, '$count': 3 }}",
       /*expected*/    "{'a': { '$start': 2, '$count': 13 }}"
+    },
+    {
+      /*description:*/"Compose disjoint array ranges with a default for start. The result is smallest range containing both ranges.",
+      /*data1:*/      "{'a': { '$count': 10 }}",
+      /*data2:*/      "{'a': { '$start': 20, '$count': 50 }}",
+      /*expected*/    "{'a': { '$count': 70 }}"
+    },
+    {
+      /*description:*/"Compose disjoint array ranges with a default for start and count. The result is smallest range containing both ranges.",
+      /*data1:*/      "{'a': { '$count': 10 }}",
+      /*data2:*/      "{'a': { '$start': 20 }}",
+      /*expected*/    "{'a': {}}"
     },
     {
       /*description:*/"Compose array ranges when one range contain other. The result is larger range.",
@@ -266,6 +278,36 @@ public class TestMaskCompositionOnData
       /*data2:*/      "{'a': { '$start': 4, '$count': 5 }}",
       /*expected*/    "{'a': { '$start': 2, '$count': 7 }}"
     },
+    {
+      /*description:*/"Compose array ranges with one of them having the default values specified explicitly.",
+      /*data1:*/      "{'a': { '$start': 0, '$count': 2147483647 }}",
+      /*data2:*/      "{'a': { '$start': 20, '$count': 50 }}",
+      /*expected*/    "{'a': {}}"
+    },
+    {
+      /*description:*/"Compose array ranges with one of them having the count default value specified explicitly.",
+      /*data1:*/      "{'a': { '$count': 2147483647 }}",
+      /*data2:*/      "{'a': { '$start': 20, '$count': 50 }}",
+      /*expected*/    "{'a': {}}"
+    },
+    {
+      /*description:*/"Compose array ranges with one of them having the start default value specified explicitly.",
+      /*data1:*/      "{'a': { '$start': 0 }}",
+      /*data2:*/      "{'a': { '$start': 20, '$count': 50 }}",
+      /*expected*/    "{'a': {}}"
+    },
+    {
+      /*description:*/"Compose array ranges with one of them having range values that overflows the integer range.",
+      /*data1:*/      "{'a': { '$*': 1 }}",
+      /*data2:*/      "{'a': { '$start': 2147483640, '$count': 200 }}", // Adding the count to start will cause an overflow
+      /*expected*/    "{'a': { '$*': 1, '$start': 2147483640, '$count': 7 }}"
+    },
+    {
+      /*description:*/"Compose array ranges with both of them having range values that overflows the integer range.",
+      /*data1:*/      "{'a': { '$start': 10, '$count': 2147483640 }}", // Adding the count to start will cause an overflow
+      /*data2:*/      "{'a': { '$start': 2147483640, '$count': 10 }}", // Adding the count to start will cause an overflow
+      /*expected*/    "{'a': { '$start': 10, '$count': 2147483637 }}"
+    }
   };
 
   /**

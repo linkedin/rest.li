@@ -29,6 +29,7 @@ import com.linkedin.data.transform.filter.request.MaskTree;
 
 import java.io.IOException;
 
+import java.nio.file.Path;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -76,6 +77,97 @@ public class TestMaskCreation
     fooBarQuxMap.put("foo", fooMap);
     fooBarQuxMap.put("bar", barMap);
     Assert.assertEquals(mask.getDataMap(), fooBarQuxMap, "The MaskTree DataMap should match");
+  }
+
+  @Test
+  public void testPositiveMaskWithArrayRange()
+  {
+    PathSpec parentPath = new PathSpec("parent");
+    PathSpec childPath = new PathSpec(parentPath.getPathComponents(), "child");
+    childPath.setAttribute(PathSpec.ATTR_ARRAY_START, 10);
+    childPath.setAttribute(PathSpec.ATTR_ARRAY_COUNT, 5);
+    PathSpec grandChildPath = new PathSpec(childPath.getPathComponents(), "grandChild");
+    MaskTree mask = MaskCreator.createPositiveMask(childPath, grandChildPath);
+
+    // {parent={child={$start=10, grandChild=1, $count=5}}}
+    DataMap childMap = new DataMap();
+    childMap.put(FilterConstants.START, 10);
+    childMap.put(FilterConstants.COUNT, 5);
+    childMap.put("grandChild", MaskOperation.POSITIVE_MASK_OP.getRepresentation());
+    DataMap parentMap = new DataMap();
+    parentMap.put("child", childMap);
+    DataMap expectedMaskMap = new DataMap();
+    expectedMaskMap.put("parent", parentMap);
+
+    Assert.assertEquals(mask.getDataMap(), expectedMaskMap);
+  }
+
+  @Test
+  public void testPositiveMaskWithDefaultArrayRangeValues()
+  {
+    PathSpec parentPath = new PathSpec("parent");
+    PathSpec childPath = new PathSpec(parentPath.getPathComponents(), "child");
+    // Use the default value for both start and count
+    childPath.setAttribute(PathSpec.ATTR_ARRAY_START, 0);
+    childPath.setAttribute(PathSpec.ATTR_ARRAY_COUNT, Integer.MAX_VALUE);
+    PathSpec grandChildPath = new PathSpec(childPath.getPathComponents(), "grandChild");
+    MaskTree mask = MaskCreator.createPositiveMask(childPath, grandChildPath);
+
+    // Build the expected map with both start and count filtered out
+    // {parent={child={grandChild=1}}}
+    DataMap childMap = new DataMap();
+    childMap.put("grandChild", MaskOperation.POSITIVE_MASK_OP.getRepresentation());
+    DataMap parentMap = new DataMap();
+    parentMap.put("child", childMap);
+    DataMap expectedMaskMap = new DataMap();
+    expectedMaskMap.put("parent", parentMap);
+
+    Assert.assertEquals(mask.getDataMap(), expectedMaskMap);
+  }
+
+  @Test
+  public void testPositiveMaskWithArrayWildcardAndRange()
+  {
+    PathSpec parentPath = new PathSpec("parent");
+    PathSpec childPath = new PathSpec(parentPath.getPathComponents(), "child");
+    childPath.setAttribute(PathSpec.ATTR_ARRAY_START, 10);
+    childPath.setAttribute(PathSpec.ATTR_ARRAY_COUNT, 5);
+    PathSpec grandChildrenPath = new PathSpec(childPath.getPathComponents(), PathSpec.WILDCARD);
+    PathSpec specificGrandChildPath = new PathSpec(childPath.getPathComponents(), "TheKid");
+    // The pathspec 'specificGrandChildPath' should show up in the mask as we have the wildcard specified for grand children
+    MaskTree mask = MaskCreator.createPositiveMask(childPath, grandChildrenPath, specificGrandChildPath);
+
+    // {parent={child={$*=1, $start=10, $count=5}}}
+    DataMap childMap = new DataMap();
+    childMap.put(FilterConstants.START, 10);
+    childMap.put(FilterConstants.COUNT, 5);
+    childMap.put(FilterConstants.WILDCARD, MaskOperation.POSITIVE_MASK_OP.getRepresentation());
+    DataMap parentMap = new DataMap();
+    parentMap.put("child", childMap);
+    DataMap expectedMaskMap = new DataMap();
+    expectedMaskMap.put("parent", parentMap);
+
+    Assert.assertEquals(mask.getDataMap(), expectedMaskMap);
+  }
+
+  @Test
+  public void testPositiveMaskWithRandomAttributes()
+  {
+    PathSpec parentPath = new PathSpec("parent");
+    PathSpec childPath = new PathSpec(parentPath.getPathComponents(), "child");
+    childPath.setAttribute("random", 10); // This shouldn't be in the generated MaskTree
+    childPath.setAttribute(PathSpec.ATTR_ARRAY_COUNT, 5);
+    MaskTree mask = MaskCreator.createPositiveMask(childPath);
+
+    // {parent={child={$count=5}}}
+    DataMap childMap = new DataMap();
+    childMap.put(FilterConstants.COUNT, 5);
+    DataMap parentMap = new DataMap();
+    parentMap.put("child", childMap);
+    DataMap expectedMaskMap = new DataMap();
+    expectedMaskMap.put("parent", parentMap);
+
+    Assert.assertEquals(mask.getDataMap(), expectedMaskMap);
   }
 
   @Test
@@ -228,5 +320,4 @@ public class TestMaskCreation
     mask.addOperation(new PathSpec("a"), MaskOperation.NEGATIVE_MASK_OP);
     Assert.assertEquals(mask.toString(), "{a=0}");
   }
-
 }

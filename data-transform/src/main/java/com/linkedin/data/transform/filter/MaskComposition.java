@@ -19,7 +19,6 @@
  */
 package com.linkedin.data.transform.filter;
 
-import static com.linkedin.data.transform.filter.FilterUtil.getIntegerWithDefaultValue;
 import static com.linkedin.data.transform.filter.FilterUtil.isMarkedAsMergedWith1;
 
 import java.util.ArrayList;
@@ -30,6 +29,7 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.transform.Instruction;
 import com.linkedin.data.transform.Interpreter;
 import com.linkedin.data.transform.InterpreterContext;
+
 
 /**
  * This interpreter performs masks composition. Both data and operation are treated as
@@ -70,26 +70,26 @@ public class MaskComposition implements Interpreter
       }
       else
       {
-          //process array range
-          composeArrayRange(data, op, instrCtx);
+        //process array range
+        composeArrayRange(data, op, instrCtx);
 
-          // process all fields
-          for (Entry<String, Object> entry : op.entrySet())
+        // process all fields
+        for (Entry<String, Object> entry : op.entrySet())
+        {
+          String fieldName = entry.getKey();
+          Object opMask = entry.getValue();
+          Object dataMask = data.get(fieldName);
+
+          if (!fieldName.equals(FilterConstants.START) && !fieldName.equals(FilterConstants.COUNT))
           {
-            String fieldName = entry.getKey();
-            Object opMask = entry.getValue();
-            Object dataMask = data.get(fieldName);
-
-            if (!fieldName.equals(FilterConstants.START) && !fieldName.equals(FilterConstants.COUNT))
-            {
-              composeField(fieldName,
-                           opMask,
-                           dataMask,
-                           data,
-                           dataWildcard,
-                           instrCtx);
-            }
+            composeField(fieldName,
+                         opMask,
+                         dataMask,
+                         data,
+                         dataWildcard,
+                         instrCtx);
           }
+        }
       }
     }
   }
@@ -105,41 +105,110 @@ public class MaskComposition implements Interpreter
    * </ul>
    * Values: 0 for start and {@link Integer#MAX_VALUE} for count are not stored explicitly.
    */
-  protected void composeArrayRange(final DataMap data, final DataMap op, InterpreterContext instrCtx)
+  private void composeArrayRange(DataMap first, DataMap second, InterpreterContext interpreterContext)
   {
-    // otherwise ranges need to be merged
-    final Integer startData = getIntegerWithDefaultValue(data, FilterConstants.START, 0);
-    if (startData == null)
-      addValueTypeNotIntegerError(data, FilterConstants.START, instrCtx);
-    final Integer startOp = getIntegerWithDefaultValue(op, FilterConstants.START, 0);
-    if (startOp == null)
-      addValueTypeNotIntegerError(op, FilterConstants.START, instrCtx);
-    final Integer countData = getIntegerWithDefaultValue(data, FilterConstants.COUNT, Integer.MAX_VALUE);
-    if (countData == null)
-      addValueTypeNotIntegerError(data, FilterConstants.COUNT, instrCtx);
-    final Integer countOp = getIntegerWithDefaultValue(op, FilterConstants.COUNT, Integer.MAX_VALUE);
-    if (countOp == null)
-      addValueTypeNotIntegerError(op, FilterConstants.COUNT, instrCtx);
+    ArrayRange firstArrayRange = extractArrayRange(first, interpreterContext);
+    ArrayRange secondArrayRange = extractArrayRange(second, interpreterContext);
 
-    if (startData < 0)
-      addNegativeIntegerError(data, FilterConstants.START, startData, instrCtx);
-    if (startOp < 0)
-      addNegativeIntegerError(op, FilterConstants.START, startOp, instrCtx);
-    if (countData < 0)
-      addNegativeIntegerError(data, FilterConstants.COUNT, countData, instrCtx);
-    if (countOp < 0)
-      addNegativeIntegerError(op, FilterConstants.COUNT, countOp, instrCtx);
+    Integer mergedStart = mergeStart(firstArrayRange, secondArrayRange);
+    Integer mergedCount = mergeCount(firstArrayRange, secondArrayRange, mergedStart);
 
+    storeNonDefaultValue(first, FilterConstants.START, ArrayRange.DEFAULT_START, mergedStart);
+    storeNonDefaultValue(first, FilterConstants.COUNT, ArrayRange.DEFAULT_COUNT, mergedCount);
+  }
 
-    if (startData != null && startOp != null && countData != null && countOp != null &&
-        startData >= 0 && startOp >= 0 && countData >= 0 && countOp >= 0)
+  private ArrayRange extractArrayRange(DataMap data, InterpreterContext interpreterContext)
+  {
+    Integer start = extractRangeValue(data, FilterConstants.START, interpreterContext);
+    Integer count = extractRangeValue(data, FilterConstants.COUNT, interpreterContext);
+
+    return new ArrayRange(start, count);
+  }
+
+  /**
+   * Extract the value for the specified range key in the provided data. If the extracted value is a positive integer
+   * a non-null value is returned.
+   */
+  private Integer extractRangeValue(DataMap data, String key, InterpreterContext instrCtx)
+  {
+    Integer value = null;
+    final Object o = data.get(key);
+    if (o != null)
     {
-      final Integer start = Math.min(startData, startOp);
-      final Integer count = Math.max(startData + countData, startOp + countOp) - start;
-      storeNonDefaultValue(data, FilterConstants.START, 0, start);
-      storeNonDefaultValue(data, FilterConstants.COUNT, Integer.MAX_VALUE, count);
+      if (o instanceof Integer)
+      {
+        Integer integerValue = (Integer) o;
+        if (integerValue >= 0)
+        {
+          value = integerValue;
+        }
+        else
+        {
+          addNegativeIntegerError(data, key, integerValue, instrCtx);
+        }
+      }
+      else
+      {
+        addValueTypeNotIntegerError(data, key, instrCtx);
+      }
     }
+    return value;
+  }
 
+  /**
+   * Get the merged start value from the two provided instances of {@link ArrayRange}s. The merge algorithm works as
+   * described below,
+   * <ul>
+   *   <li>If both the instances have either start or count specified, the minimum value of their start is returned.</li>
+   *   <li>If one of them have either start or count specified, the corresponding start value is returned.</li>
+   *   <li>If both the instances have neither start nor count specified, the default start value is returned.</li>
+   * </ul>
+   */
+  private Integer mergeStart(ArrayRange firstArrayRange, ArrayRange secondArrayRange)
+  {
+    Integer mergedStart = ArrayRange.DEFAULT_START;
+    if (firstArrayRange.hasAnyValue() && secondArrayRange.hasAnyValue())
+    {
+      mergedStart = Math.min(firstArrayRange.getStartOrDefault(), secondArrayRange.getStartOrDefault());
+    }
+    else if (firstArrayRange.hasAnyValue())
+    {
+      mergedStart = firstArrayRange.getStartOrDefault();
+    }
+    else if (secondArrayRange.hasAnyValue())
+    {
+      mergedStart = secondArrayRange.getStartOrDefault();
+    }
+    return mergedStart;
+  }
+
+  /**
+   * Get the merged count value from the two provided instances of {@link ArrayRange}s. The merge algorithm works as
+   * described below,
+   * <ul>
+   *   <li>If both the instances have either start or count specified, the returned count will be such that it covers
+   *   both the ranges relative to the merged start value.</li>
+   *   <li>If one of them have either start or count specified, the returned count value will cover the range for the
+   *   instance that has either one of the values specified.</li>
+   *   <li>If both the instances have neither start nor count specified, the default count value is returned.</li>
+   * </ul>
+   */
+  private Integer mergeCount(ArrayRange firstArrayRange, ArrayRange secondArrayRange, Integer mergedStart)
+  {
+    Integer mergedEnd = ArrayRange.DEFAULT_COUNT;
+    if (firstArrayRange.hasAnyValue() && secondArrayRange.hasAnyValue())
+    {
+      mergedEnd = Math.max(firstArrayRange.getEnd(), secondArrayRange.getEnd());
+    }
+    else if (firstArrayRange.hasAnyValue())
+    {
+      mergedEnd = firstArrayRange.getEnd();
+    }
+    else if (secondArrayRange.hasAnyValue())
+    {
+      mergedEnd = secondArrayRange.getEnd();
+    }
+    return (mergedEnd - mergedStart);
   }
 
   private void addNegativeIntegerError(DataMap data, String fieldName, Integer value, InterpreterContext instrCtx)
