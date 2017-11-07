@@ -28,6 +28,8 @@ import com.linkedin.r2.message.rest.RestResponseBuilder;
 import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.internal.common.HeaderUtil;
 
+import java.util.Optional;
+
 /**
  * @author Josh Walker
  * @version $Revision: $
@@ -44,18 +46,18 @@ public class RestLiResponseException extends RestException
 {
   private static final long serialVersionUID = 1;
 
-  private final int _status;
-  private final ErrorResponse _errorResponse;
-  private final Response<?> _decodedResponse;
+  private final Optional<Integer> _status;
+  private final Optional<ErrorResponse> _errorResponse;
+  private final Optional<Response<?>> _decodedResponse;
 
   public RestLiResponseException(RestResponse rawResponse,
                                  Response<?> decodedResponse,
                                  ErrorResponse errorResponse)
   {
     super(rawResponse);
-    _status = rawResponse.getStatus();
-    _errorResponse = errorResponse;
-    _decodedResponse = decodedResponse;
+    _status = Optional.of(rawResponse.getStatus());
+    _errorResponse = Optional.ofNullable(errorResponse);
+    _decodedResponse =  Optional.ofNullable(decodedResponse);
   }
 
   public RestLiResponseException(RestResponse rawResponse,
@@ -64,74 +66,84 @@ public class RestLiResponseException extends RestException
                                  Throwable cause)
   {
     super(rawResponse, cause);
-    _status = rawResponse.getStatus();
-    _errorResponse = errorResponse;
-    _decodedResponse = decodedResponse;
+    _status = Optional.of(rawResponse.getStatus());
+    _errorResponse = Optional.ofNullable(errorResponse);
+    _decodedResponse = Optional.ofNullable(decodedResponse);
   }
 
   RestLiResponseException(ErrorResponse errorResponse)
   {
     super(createErrorRestResponse(errorResponse));
-    _status = errorResponse.getStatus();
-    _errorResponse = errorResponse;
-    _decodedResponse = null;
+    _status = Optional.ofNullable(errorResponse.getStatus());
+    _errorResponse = Optional.ofNullable(errorResponse);
+    _decodedResponse = Optional.empty();
   }
 
   public int getStatus()
   {
-    return _status;
+    return _status.orElse(0);
+  }
+
+  public ErrorResponse getErrorResponse() {
+    return _errorResponse.orElse(null);
   }
 
   public boolean hasServiceErrorCode()
   {
-    return _errorResponse.hasServiceErrorCode();
+    return _errorResponse.isPresent() && _errorResponse.get().hasServiceErrorCode();
   }
 
   public int getServiceErrorCode()
   {
-    return _errorResponse.getServiceErrorCode(GetMode.NULL);
+    Integer serviceCode = 0;
+
+    // Had to add the extra checks because getServiceErrorCode throws a null pointer exception if null
+    if(_errorResponse.isPresent()) {
+      serviceCode = _errorResponse.get().getServiceErrorCode(GetMode.NULL);
+    }
+    return serviceCode != null ? serviceCode : 0;
   }
 
   public boolean hasServiceErrorMessage()
   {
-    return _errorResponse.hasMessage();
+    return _errorResponse.isPresent() && _errorResponse.get().hasMessage();
   }
 
   public String getServiceErrorMessage()
   {
-    return _errorResponse.getMessage(GetMode.NULL);
+    return _errorResponse.isPresent() ? _errorResponse.get().getMessage(GetMode.NULL) : null;
   }
 
   public boolean hasServiceErrorStackTrace()
   {
-    return _errorResponse.hasStackTrace();
+    return _errorResponse.isPresent() && _errorResponse.get().hasStackTrace();
   }
 
   public String getServiceErrorStackTrace()
   {
-    return _errorResponse.getStackTrace(GetMode.NULL);
+    return _errorResponse.isPresent() ? _errorResponse.get().getStackTrace(GetMode.NULL) : null;
   }
 
   public boolean hasServiceExceptionClass()
   {
-    return _errorResponse.hasExceptionClass();
+    return _errorResponse.isPresent() && _errorResponse.get().hasExceptionClass();
   }
 
   public String getServiceExceptionClass()
   {
-    return _errorResponse.getExceptionClass(GetMode.NULL);
+    return _errorResponse.isPresent() ? _errorResponse.get().getExceptionClass(GetMode.NULL) : null;
   }
 
   public boolean hasErrorDetails()
   {
-    return _errorResponse.hasErrorDetails();
+    return _errorResponse.isPresent() && _errorResponse.get().hasErrorDetails();
   }
 
   public DataMap getErrorDetails()
   {
     if (hasErrorDetails())
     {
-      return _errorResponse.getErrorDetails().data();
+      return _errorResponse.get().getErrorDetails().data();
     }
     else
     {
@@ -174,18 +186,20 @@ public class RestLiResponseException extends RestException
 
   public Response<?> getDecodedResponse()
   {
-    return _decodedResponse;
+    return _decodedResponse.orElse(null);
   }
 
   public boolean hasDecodedResponse()
   {
-    return _decodedResponse != null;
+    return _decodedResponse.isPresent();
   }
 
   private static RestResponse createErrorRestResponse(ErrorResponse errorResponse)
   {
-    RestResponseBuilder builder = new RestResponseBuilder().setStatus(errorResponse.getStatus());
-    String errorMessage = errorResponse.getMessage();
+    Optional<ErrorResponse> response = Optional.ofNullable(errorResponse);
+    Integer status = response.isPresent() ? response.get().getStatus() : 0;
+    RestResponseBuilder builder = new RestResponseBuilder().setStatus(status);
+    String errorMessage = response.isPresent() ? response.get().getMessage() : null;
     if (errorMessage != null)
     {
       builder.setEntity(errorMessage.getBytes());
