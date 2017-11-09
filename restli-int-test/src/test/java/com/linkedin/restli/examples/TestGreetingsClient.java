@@ -131,6 +131,160 @@ public class TestGreetingsClient extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
+  public void testGetRequestWithProjection(RootBuilderWrapper<Long, Greeting> builders) throws Exception
+  {
+    Greeting.Fields fields = Greeting.fields();
+
+    // Project all required fields leaving out 'senders'
+    Request<Greeting> request = builders.get()
+        .id(1L)
+        .fields(fields.id(), fields.message(), fields.tone())
+        .build();
+
+    Greeting greetingResponse = getClient().sendRequest(request).getResponse().getEntity();
+    Assert.assertNotNull(greetingResponse.getId());
+    Assert.assertNotNull(greetingResponse.getMessage());
+    Assert.assertNotNull(greetingResponse.getTone());
+    Assert.assertNull(greetingResponse.getSenders());
+
+    // Project all fields including the 'senders' array
+    request = builders.get()
+        .id(1L)
+        .fields(fields.id(), fields.message(), fields.tone(), fields.senders())
+        .build();
+    greetingResponse = getClient().sendRequest(request).getResponse().getEntity();
+    Assert.assertNotNull(greetingResponse.getId());
+    Assert.assertNotNull(greetingResponse.getMessage());
+    Assert.assertNotNull(greetingResponse.getTone());
+    List<String> fullSenders = greetingResponse.getSenders();
+    Assert.assertNotNull(fullSenders);
+    // We always send back 8 senders for all messages
+    Assert.assertEquals(fullSenders.size(), 8);
+
+    // Project the 'senders' array with a range (start: 0 and count: 5)
+    request = builders.get()
+        .id(1L)
+        .fields(fields.id(), fields.message(), fields.tone(), fields.senders(0, 5))
+        .build();
+    greetingResponse = getClient().sendRequest(request).getResponse().getEntity();
+    Assert.assertNotNull(greetingResponse.getSenders());
+    Assert.assertEquals(greetingResponse.getSenders().size(), 5);
+    Assert.assertEquals(greetingResponse.getSenders(), fullSenders.subList(0, 5));
+
+    // Project the 'senders' array with a range (start: 3 and count: 2)
+    request = builders.get()
+        .id(1L)
+        .fields(fields.id(), fields.message(), fields.tone(), fields.senders(3, 2))
+        .build();
+    greetingResponse = getClient().sendRequest(request).getResponse().getEntity();
+    Assert.assertNotNull(greetingResponse.getSenders());
+    Assert.assertEquals(greetingResponse.getSenders().size(), 2);
+    Assert.assertEquals(greetingResponse.getSenders(), fullSenders.subList(3, 5));
+
+    // Project the 'senders' array with a range (the default start and count: 5)
+    request = builders.get()
+        .id(1L)
+        .fields(fields.id(), fields.message(), fields.tone(), fields.senders(null, 5))
+        .build();
+    greetingResponse = getClient().sendRequest(request).getResponse().getEntity();
+    Assert.assertNotNull(greetingResponse.getSenders());
+    Assert.assertEquals(greetingResponse.getSenders().size(), 5);
+    Assert.assertEquals(greetingResponse.getSenders(), fullSenders.subList(0, 5));
+
+    // Project the 'senders' array with a range (start: 5 and the default count)
+    request = builders.get()
+        .id(1L)
+        .fields(fields.id(), fields.message(), fields.tone(), fields.senders(5, null))
+        .build();
+    greetingResponse = getClient().sendRequest(request).getResponse().getEntity();
+    Assert.assertNotNull(greetingResponse.getSenders());
+    Assert.assertEquals(greetingResponse.getSenders().size(), 3);
+    Assert.assertEquals(greetingResponse.getSenders(), fullSenders.subList(5, 8));
+
+    // Project the 'senders' array with a range (the default start and the default count)
+    request = builders.get()
+        .id(1L)
+        .fields(fields.id(), fields.message(), fields.tone(), fields.senders(null, null))
+        .build();
+    greetingResponse = getClient().sendRequest(request).getResponse().getEntity();
+    Assert.assertNotNull(greetingResponse.getSenders());
+    Assert.assertEquals(greetingResponse.getSenders().size(), 8);
+    Assert.assertEquals(greetingResponse.getSenders(), fullSenders);
+  }
+
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
+  public void testGetRequestWithArrayRangeProjection(RootBuilderWrapper<Long, Greeting> builders) throws Exception {
+    Greeting.Fields fields = Greeting.fields();
+
+    // Get the full 'senders' list for later assertions
+    Request<Greeting> request = builders.get().id(1L).build();
+    Greeting greetingResponse = getClient().sendRequest(request).getResponse().getEntity();
+    List<String> fullSenders = greetingResponse.getSenders();
+    // We always send back 8 senders for all messages
+    Assert.assertEquals(fullSenders.size(), 8);
+
+    // Project the 'senders' array twice with overlapping ranges (1 to 3 and 2 to 5)
+    request = request = builders.get()
+        .id(1L)
+        .fields(fields.id(), fields.message(), fields.tone(), fields.senders(1, 3), fields.senders(2, 4))
+        .build();
+    greetingResponse = getClient().sendRequest(request).getResponse().getEntity();
+    Assert.assertNotNull(greetingResponse.getSenders());
+    Assert.assertEquals(greetingResponse.getSenders().size(), 5);
+    Assert.assertEquals(greetingResponse.getSenders(), fullSenders.subList(1, 6));
+
+    // Project the 'senders' array twice with overlapping ranges with defaults for one of them (0 to MAX_INT and 5 to 6)
+    request = request = builders.get()
+        .id(1L)
+        .fields(fields.id(), fields.message(), fields.tone(), fields.senders(0, Integer.MAX_VALUE), fields.senders(5, 2))
+        .build();
+    greetingResponse = getClient().sendRequest(request).getResponse().getEntity();
+    Assert.assertNotNull(greetingResponse.getSenders());
+    Assert.assertEquals(greetingResponse.getSenders().size(), 8);
+    Assert.assertEquals(greetingResponse.getSenders(), fullSenders);
+
+    // Project the 'senders' array twice with non-overlapping ranges (1 to 3 and 5 to 6)
+    request = request = builders.get()
+        .id(1L)
+        .fields(fields.id(), fields.message(), fields.tone(), fields.senders(1, 3), fields.senders(5, 2))
+        .build();
+    greetingResponse = getClient().sendRequest(request).getResponse().getEntity();
+    Assert.assertNotNull(greetingResponse.getSenders());
+    Assert.assertEquals(greetingResponse.getSenders().size(), 6);
+    Assert.assertEquals(greetingResponse.getSenders(), fullSenders.subList(1, 7));
+
+    // Project the 'senders' array twice with non-overlapping ranges with unspecified parameter values (default start to 3 and 5 to 6)
+    request = request = builders.get()
+        .id(1L)
+        .fields(fields.id(), fields.message(), fields.tone(), fields.senders(null, 3), fields.senders(5, 2))
+        .build();
+    greetingResponse = getClient().sendRequest(request).getResponse().getEntity();
+    Assert.assertNotNull(greetingResponse.getSenders());
+    Assert.assertEquals(greetingResponse.getSenders().size(), 7);
+    Assert.assertEquals(greetingResponse.getSenders(), fullSenders.subList(0, 7));
+
+    // Project the 'senders' array twice with overlapping ranges with unspecified parameter values (2 to 5 and 5 to default end)
+    request = request = builders.get()
+        .id(1L)
+        .fields(fields.id(), fields.message(), fields.tone(), fields.senders(2, 5), fields.senders(5, null))
+        .build();
+    greetingResponse = getClient().sendRequest(request).getResponse().getEntity();
+    Assert.assertNotNull(greetingResponse.getSenders());
+    Assert.assertEquals(greetingResponse.getSenders().size(), 6);
+    Assert.assertEquals(greetingResponse.getSenders(), fullSenders.subList(2, 8));
+
+    // Project the 'senders' array twice with non-overlapping ranges with unspecified parameter values (default start to 2 and 5 to default end)
+    request = request = builders.get()
+        .id(1L)
+        .fields(fields.id(), fields.message(), fields.tone(), fields.senders(null, 3), fields.senders(5, null))
+        .build();
+    greetingResponse = getClient().sendRequest(request).getResponse().getEntity();
+    Assert.assertNotNull(greetingResponse.getSenders());
+    Assert.assertEquals(greetingResponse.getSenders().size(), 8);
+    Assert.assertEquals(greetingResponse.getSenders(), fullSenders);
+  }
+
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testFinderRequestOptionsPropagation(RootBuilderWrapper<Long, Greeting> builders)
   {
     Request<CollectionResponse<Greeting>> findRequest =

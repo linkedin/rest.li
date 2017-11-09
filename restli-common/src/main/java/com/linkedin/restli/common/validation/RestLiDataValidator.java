@@ -17,6 +17,7 @@
 package com.linkedin.restli.common.validation;
 
 
+import com.google.common.collect.Sets;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.element.DataElement;
 import com.linkedin.data.element.DataElementUtil;
@@ -129,6 +130,8 @@ public class RestLiDataValidator
   private static final String INSTANTIATION_ERROR = "InstantiationException while trying to instantiate the record template class";
   private static final String ILLEGAL_ACCESS_ERROR = "IllegalAccessException while trying to instantiate the record template class";
   private static final String TEMPLATE_RUNTIME_ERROR = "TemplateRuntimeException while trying to find the schema class";
+
+  private static final Set<String> ARRAY_RANGE_PARAMS = Sets.newHashSet(FilterConstants.START, FilterConstants.COUNT);
 
   private static PathMatchesPatternPredicate stringToPredicate(String path, boolean includeDescendants)
   {
@@ -659,6 +662,9 @@ public class RestLiDataValidator
         newSchema.setProperties(originalSchema.getProperties());
       }
       return newSchema;
+    } else if (ARRAY_RANGE_PARAMS.containsAll(maskMap.keySet())) {
+      // If the mask contains array range parameters without a WILDCARD, return the original schema
+      return originalSchema;
     }
 
     throw new IllegalArgumentException("Missing wildcard key in projection mask: " + maskMap.keySet());

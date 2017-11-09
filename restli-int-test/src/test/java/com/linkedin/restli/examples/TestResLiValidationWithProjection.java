@@ -114,6 +114,9 @@ public class TestResLiValidationWithProjection extends RestLiIntegrationTest
     Request<ValidationDemo> getRequest =
         wrapper.get().id(1).fields(spec.toArray(new PathSpec[spec.size()])).build();
 
+    Request<ValidationDemo> getRequestWithArrayRange =
+        wrapper.get().id(1).fields(ValidationDemo.fields().ArrayWithInlineRecord(10, 20)).build();
+
     Request<CollectionResponse<ValidationDemo>> getAllRequest =
         wrapper.getAll().fields(spec.toArray(new PathSpec[spec.size()])).build();
 
@@ -131,6 +134,7 @@ public class TestResLiValidationWithProjection extends RestLiIntegrationTest
     return new Object[][] {
         { findRequest, HttpStatus.S_200_OK },
         { getRequest, HttpStatus.S_200_OK },
+        { getRequestWithArrayRange, HttpStatus.S_200_OK },
         { getAllRequest, HttpStatus.S_200_OK },
         { createAndGetRequest, HttpStatus.S_201_CREATED },
         { batchCreateAndGetRequest, HttpStatus.S_200_OK }

@@ -1,19 +1,9 @@
 {
   "models" : [ {
     "type" : "enum",
-    "name" : "MembershipLevel",
-    "namespace" : "com.linkedin.restli.examples.groups.api",
-    "symbols" : [ "BLOCKED", "NON_MEMBER", "REQUESTING_TO_JOIN", "MEMBER", "MODERATOR", "MANAGER", "OWNER" ]
-  }, {
-    "type" : "enum",
     "name" : "EmailDigestFrequency",
     "namespace" : "com.linkedin.restli.examples.groups.api",
     "symbols" : [ "NONE", "DAILY", "WEEKLY" ]
-  }, {
-    "type" : "enum",
-    "name" : "WriteLevel",
-    "namespace" : "com.linkedin.restli.examples.groups.api",
-    "symbols" : [ "NONE", "PREMODERATED", "DEFAULT", "FULL" ]
   }, {
     "type" : "record",
     "name" : "GroupMembership",
@@ -33,7 +23,11 @@
       "doc" : "This field is read-only."
     }, {
       "name" : "membershipLevel",
-      "type" : "MembershipLevel"
+      "type" : {
+        "type" : "enum",
+        "name" : "MembershipLevel",
+        "symbols" : [ "BLOCKED", "NON_MEMBER", "REQUESTING_TO_JOIN", "MEMBER", "MODERATOR", "MANAGER", "OWNER" ]
+      }
     }, {
       "name" : "contactEmail",
       "type" : "string"
@@ -74,7 +68,11 @@
       "type" : "boolean"
     }, {
       "name" : "writeLevel",
-      "type" : "WriteLevel",
+      "type" : {
+        "type" : "enum",
+        "name" : "WriteLevel",
+        "symbols" : [ "NONE", "PREMODERATED", "DEFAULT", "FULL" ]
+      },
       "doc" : "This field can only be accessed by moderators of the group"
     }, {
       "name" : "firstName",
@@ -85,12 +83,12 @@
       "type" : "string",
       "doc" : "Denormalized from members"
     } ]
-  }, {
+  }, "com.linkedin.restli.examples.groups.api.MembershipLevel", {
     "type" : "enum",
     "name" : "MembershipSortOrder",
     "namespace" : "com.linkedin.restli.examples.groups.api",
     "symbols" : [ "LAST_NAME_ASC", "LAST_TRANSITION_ON_DESC" ]
-  } ],
+  }, "com.linkedin.restli.examples.groups.api.WriteLevel" ],
   "schema" : {
     "name" : "groupMemberships",
     "namespace" : "com.linkedin.restli.examples.groups.client",

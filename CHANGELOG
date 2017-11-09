@@ -1,13 +1,20 @@
+16.0.6
+------
+
+
 16.0.5
 ------
+(RB=1153256)
+Integration tests for projecting array fields with specific ranges.
+
 (RB=1155706)
 Fix the DataTemplate generation issue on Gradle 4.3's modified OutputDirectory generation time.
-
 
 16.0.4
 ------
 (RB=1147537)
 Logs request path only instead of the full URI
+
 (RB=1154436)
 Allows SslSessionNotTrustedException to be created with an inner exception and message
 

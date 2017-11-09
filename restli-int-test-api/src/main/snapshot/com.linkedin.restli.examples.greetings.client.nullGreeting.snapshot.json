@@ -1,9 +1,9 @@
 {
   "models" : [ {
-    "type" : "enum",
-    "name" : "Tone",
+    "type" : "record",
+    "name" : "Empty",
     "namespace" : "com.linkedin.restli.examples.greetings.api",
-    "symbols" : [ "FRIENDLY", "SINCERE", "INSULTING" ]
+    "fields" : [ ]
   }, {
     "type" : "record",
     "name" : "Greeting",
@@ -17,20 +17,20 @@
       "type" : "string"
     }, {
       "name" : "tone",
-      "type" : "Tone",
+      "type" : {
+        "type" : "enum",
+        "name" : "Tone",
+        "symbols" : [ "FRIENDLY", "SINCERE", "INSULTING" ]
+      },
       "doc" : "tone"
-    } ]
-  }, {
-    "type" : "record",
-    "name" : "ToneFacet",
-    "namespace" : "com.linkedin.restli.examples.greetings.api",
-    "doc" : "metadata for greetings search results",
-    "fields" : [ {
-      "name" : "tone",
-      "type" : "Tone"
     }, {
-      "name" : "count",
-      "type" : "int"
+      "name" : "senders",
+      "type" : {
+        "type" : "array",
+        "items" : "string"
+      },
+      "doc" : "Sender(s) of the message",
+      "optional" : true
     } ]
   }, {
     "type" : "record",
@@ -41,15 +41,21 @@
       "name" : "facets",
       "type" : {
         "type" : "array",
-        "items" : "ToneFacet"
+        "items" : {
+          "type" : "record",
+          "name" : "ToneFacet",
+          "doc" : "metadata for greetings search results",
+          "fields" : [ {
+            "name" : "tone",
+            "type" : "Tone"
+          }, {
+            "name" : "count",
+            "type" : "int"
+          } ]
+        }
       }
     } ]
-  }, {
-    "type" : "record",
-    "name" : "Empty",
-    "namespace" : "com.linkedin.restli.examples.greetings.api",
-    "fields" : [ ]
-  } ],
+  }, "com.linkedin.restli.examples.greetings.api.Tone", "com.linkedin.restli.examples.greetings.api.ToneFacet" ],
   "schema" : {
     "name" : "nullGreeting",
     "namespace" : "com.linkedin.restli.examples.greetings.client",

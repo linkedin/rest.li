@@ -1,45 +1,33 @@
 {
   "models" : [ {
     "type" : "record",
-    "name" : "GroupMembershipKey",
-    "namespace" : "com.linkedin.restli.examples.groups.api",
-    "doc" : "A GroupMembership entity key",
-    "fields" : [ {
-      "name" : "memberID",
-      "type" : "int",
-      "doc" : "This field is read-only."
-    }, {
-      "name" : "groupID",
-      "type" : "int",
-      "doc" : "This field is read-only."
-    } ]
-  }, {
-    "type" : "enum",
-    "name" : "MembershipLevel",
-    "namespace" : "com.linkedin.restli.examples.groups.api",
-    "symbols" : [ "BLOCKED", "NON_MEMBER", "REQUESTING_TO_JOIN", "MEMBER", "MODERATOR", "MANAGER", "OWNER" ]
-  }, {
-    "type" : "enum",
-    "name" : "EmailDigestFrequency",
-    "namespace" : "com.linkedin.restli.examples.groups.api",
-    "symbols" : [ "NONE", "DAILY", "WEEKLY" ]
-  }, {
-    "type" : "enum",
-    "name" : "WriteLevel",
-    "namespace" : "com.linkedin.restli.examples.groups.api",
-    "symbols" : [ "NONE", "PREMODERATED", "DEFAULT", "FULL" ]
-  }, {
-    "type" : "record",
     "name" : "ComplexKeyGroupMembership",
     "namespace" : "com.linkedin.restli.examples.groups.api",
     "doc" : "A GroupMembership entity",
     "fields" : [ {
       "name" : "id",
-      "type" : "GroupMembershipKey",
+      "type" : {
+        "type" : "record",
+        "name" : "GroupMembershipKey",
+        "doc" : "A GroupMembership entity key",
+        "fields" : [ {
+          "name" : "memberID",
+          "type" : "int",
+          "doc" : "This field is read-only."
+        }, {
+          "name" : "groupID",
+          "type" : "int",
+          "doc" : "This field is read-only."
+        } ]
+      },
       "doc" : "Complex key consisting of groupID and memberID"
     }, {
       "name" : "membershipLevel",
-      "type" : "MembershipLevel"
+      "type" : {
+        "type" : "enum",
+        "name" : "MembershipLevel",
+        "symbols" : [ "BLOCKED", "NON_MEMBER", "REQUESTING_TO_JOIN", "MEMBER", "MODERATOR", "MANAGER", "OWNER" ]
+      }
     }, {
       "name" : "contactEmail",
       "type" : "string"
@@ -63,7 +51,11 @@
       "doc" : "This field is read-only."
     }, {
       "name" : "emailDigestFrequency",
-      "type" : "EmailDigestFrequency"
+      "type" : {
+        "type" : "enum",
+        "name" : "EmailDigestFrequency",
+        "symbols" : [ "NONE", "DAILY", "WEEKLY" ]
+      }
     }, {
       "name" : "creationTime",
       "type" : "long",
@@ -80,7 +72,11 @@
       "type" : "boolean"
     }, {
       "name" : "writeLevel",
-      "type" : "WriteLevel",
+      "type" : {
+        "type" : "enum",
+        "name" : "WriteLevel",
+        "symbols" : [ "NONE", "PREMODERATED", "DEFAULT", "FULL" ]
+      },
       "doc" : "This field can only be accessed by moderators of the group"
     }, {
       "name" : "firstName",
@@ -91,7 +87,7 @@
       "type" : "string",
       "doc" : "Denormalized from members"
     } ]
-  }, {
+  }, "com.linkedin.restli.examples.groups.api.EmailDigestFrequency", "com.linkedin.restli.examples.groups.api.GroupMembershipKey", {
     "type" : "record",
     "name" : "GroupMembershipParam",
     "namespace" : "com.linkedin.restli.examples.groups.api",
@@ -115,7 +111,7 @@
       "name" : "stringParameter",
       "type" : "string"
     } ]
-  } ],
+  }, "com.linkedin.restli.examples.groups.api.MembershipLevel", "com.linkedin.restli.examples.groups.api.WriteLevel" ],
   "schema" : {
     "name" : "groupMembershipsComplex",
     "namespace" : "com.linkedin.restli.examples.groups.client",

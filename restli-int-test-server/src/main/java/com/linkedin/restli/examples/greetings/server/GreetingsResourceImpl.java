@@ -18,6 +18,7 @@ package com.linkedin.restli.examples.greetings.server;
 
 
 import com.linkedin.data.template.BooleanArray;
+import com.linkedin.data.template.StringArray;
 import com.linkedin.data.template.StringMap;
 import com.linkedin.data.transform.DataProcessingException;
 import com.linkedin.restli.common.HttpStatus;
@@ -81,6 +82,8 @@ class GreetingsResourceImpl implements KeyValueResource<Long,Greeting>
   private static final String[] GREETINGS =
       { "Good morning!", "Guten Morgen!", "Buenos dias!", "Bon jour!", "Buon Giorno!" };
   private static final Tone[] TONES = { Tone.FRIENDLY, Tone.SINCERE, Tone.INSULTING };
+  private static final List<String> GREETING_SENDERS = Arrays.asList(
+      "Alice", "Bob", "Cath", "Dave", "Erica", "Filipe", "Gordon", "Helen" );
 
   private static final Tone DEFAULT_TONE = Tone.INSULTING;
 
@@ -90,9 +93,10 @@ class GreetingsResourceImpl implements KeyValueResource<Long,Greeting>
   static {
     // generate some "random" initial data
     for (int i = 0; i < INITIAL_SIZE; i++)
+    {
       INITIAL_MESSAGES[i] = GREETINGS[i % GREETINGS.length];
-    for (int i = 0; i < INITIAL_SIZE; i++)
       INITIAL_TONES[i] = TONES[i % TONES.length];
+    }
   }
 
   private final AtomicLong _idSeq = new AtomicLong();
@@ -103,10 +107,11 @@ class GreetingsResourceImpl implements KeyValueResource<Long,Greeting>
   {
     for (int i = 0; i < INITIAL_SIZE; i++)
     {
-      Greeting g =
-          new Greeting().setId(_idSeq.incrementAndGet())
-                        .setMessage(INITIAL_MESSAGES[i])
-                        .setTone(INITIAL_TONES[i]);
+      Greeting g = new Greeting()
+          .setId(_idSeq.incrementAndGet())
+          .setMessage(INITIAL_MESSAGES[i])
+          .setTone(INITIAL_TONES[i])
+          .setSenders(new StringArray(GREETING_SENDERS));
       _db.put(g.getId(), g);
     }
     _resourceName = resourceName;

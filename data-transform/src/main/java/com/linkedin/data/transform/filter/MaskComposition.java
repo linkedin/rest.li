@@ -233,7 +233,6 @@ public class MaskComposition implements Interpreter
       data.remove(tag);
     else
       data.put(tag, value);
-
   }
 
   /**
@@ -313,7 +312,7 @@ public class MaskComposition implements Interpreter
    * Removes array ranges from mask.
    * @param data
    */
-  private void removeArrayRenges(DataMap data)
+  private void removeArrayRanges(DataMap data)
   {
     data.remove(FilterConstants.START);
     data.remove(FilterConstants.COUNT);
@@ -336,8 +335,8 @@ public class MaskComposition implements Interpreter
   {
     instrCtx.setCurrentField(fieldName);
 
-  boolean failed = false;
-  if (dataMask == null)
+    boolean failed = false;
+    if (dataMask == null)
     {
       // avoid copying 1 if there exist wildcard with value 1
       if (!opMask.equals(FilterConstants.POSITIVE) || !isMarkedAsMergedWith1(data))
@@ -348,7 +347,7 @@ public class MaskComposition implements Interpreter
     {
       //if mask is negative, then there is no need for further merging
       //if it is positive, then
-      if (((Integer)dataMask).equals(FilterConstants.POSITIVE))
+      if (dataMask.equals(FilterConstants.POSITIVE))
       {
         if (opMask instanceof Integer)
         {
@@ -393,11 +392,12 @@ public class MaskComposition implements Interpreter
         instrCtx.addErrorMessage("field mask value of unsupported type: %1$s", opMask.getClass().getName());
         failed = true;
       }
-    } else
-      {
+    }
+    else
+    {
       instrCtx.addErrorMessage("field mask value of unsupported type: %1$s", dataMask.getClass().getName());
       failed = true;
-      }
+    }
 
     //return true if operation was successful and false otherwise
     return !failed;
@@ -431,7 +431,7 @@ public class MaskComposition implements Interpreter
    */
   private void prunePositiveMask(final DataMap complex)
   {
-    removeArrayRenges(complex);
+    removeArrayRanges(complex);
     final List<String> toBeRemoved = new ArrayList<String>();
     for (Entry<String, Object> entry : complex.entrySet())
     {

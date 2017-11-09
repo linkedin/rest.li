@@ -16,6 +16,15 @@
       "name" : "tone",
       "doc" : "tone",
       "type" : "Tone"
+    },
+    {
+      "name": "senders",
+      "doc": "Sender(s) of the message",
+      "type": {
+        "type": "array",
+        "items": "string"
+      },
+      "optional": true
     }
   ]
 }

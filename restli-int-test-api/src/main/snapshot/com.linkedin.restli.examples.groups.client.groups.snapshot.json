@@ -5,52 +5,6 @@
     "namespace" : "com.linkedin.restli.examples.groups.api",
     "symbols" : [ "OFFICIAL", "SPONSORED", "FEATURED", "FOR_GOOD", "NONE" ]
   }, {
-    "type" : "record",
-    "name" : "Location",
-    "namespace" : "com.linkedin.restli.examples.groups.api",
-    "doc" : "A Location record. TODO HIGH This should be in common.linkedin",
-    "fields" : [ {
-      "name" : "countryCode",
-      "type" : "string"
-    }, {
-      "name" : "postalCode",
-      "type" : "string"
-    }, {
-      "name" : "geoPostalCode",
-      "type" : "string"
-    }, {
-      "name" : "regionCode",
-      "type" : "int"
-    }, {
-      "name" : "latitude",
-      "type" : "float"
-    }, {
-      "name" : "longitude",
-      "type" : "float"
-    }, {
-      "name" : "geoPlaceCodes",
-      "type" : {
-        "type" : "array",
-        "items" : "string"
-      }
-    }, {
-      "name" : "gmtOffset",
-      "type" : "float"
-    }, {
-      "name" : "usesDaylightSavings",
-      "type" : "boolean"
-    } ]
-  }, {
-    "type" : "enum",
-    "name" : "Visibility",
-    "namespace" : "com.linkedin.restli.examples.groups.api",
-    "symbols" : [ "PUBLIC", "PRIVATE", "HIDDEN" ]
-  }, {
-    "type" : "enum",
-    "name" : "State",
-    "namespace" : "com.linkedin.restli.examples.groups.api",
-    "symbols" : [ "ACTIVE", "LOCKED", "INACTIVE", "PROPOSED" ]
-  }, {
     "type" : "enum",
     "name" : "Contactability",
     "namespace" : "com.linkedin.restli.examples.groups.api",
@@ -62,110 +16,9 @@
     "symbols" : [ "NONE", "LINKEDIN", "PUBLIC" ]
   }, {
     "type" : "enum",
-    "name" : "PostCategory",
-    "namespace" : "com.linkedin.restli.examples.groups.api",
-    "symbols" : [ "DISCUSSION", "JOB", "PROMOTION" ]
-  }, {
-    "type" : "enum",
-    "name" : "NewsFormat",
-    "namespace" : "com.linkedin.restli.examples.groups.api",
-    "symbols" : [ "RECENT", "CLUSTERED" ]
-  }, {
-    "type" : "enum",
-    "name" : "PreModerationType",
-    "namespace" : "com.linkedin.restli.examples.groups.api",
-    "symbols" : [ "NONE", "COMMENTS", "ALL" ]
-  }, {
-    "type" : "enum",
-    "name" : "NonMemberPermissions",
-    "namespace" : "com.linkedin.restli.examples.groups.api",
-    "symbols" : [ "NONE", "READ_ONLY", "COMMENT_WITH_MODERATION", "COMMENT_AND_POST_WITH_MODERATION", "COMMENT_NO_MODERATION_POST_MODERATION" ]
-  }, {
-    "type" : "enum",
-    "name" : "MembershipLevel",
-    "namespace" : "com.linkedin.restli.examples.groups.api",
-    "symbols" : [ "BLOCKED", "NON_MEMBER", "REQUESTING_TO_JOIN", "MEMBER", "MODERATOR", "MANAGER", "OWNER" ]
-  }, {
-    "type" : "enum",
     "name" : "EmailDigestFrequency",
     "namespace" : "com.linkedin.restli.examples.groups.api",
     "symbols" : [ "NONE", "DAILY", "WEEKLY" ]
-  }, {
-    "type" : "enum",
-    "name" : "WriteLevel",
-    "namespace" : "com.linkedin.restli.examples.groups.api",
-    "symbols" : [ "NONE", "PREMODERATED", "DEFAULT", "FULL" ]
-  }, {
-    "type" : "record",
-    "name" : "GroupMembership",
-    "namespace" : "com.linkedin.restli.examples.groups.api",
-    "doc" : "A GroupMembership entity",
-    "fields" : [ {
-      "name" : "id",
-      "type" : "string",
-      "doc" : "Compound key of groupID and memberID"
-    }, {
-      "name" : "memberID",
-      "type" : "int",
-      "doc" : "This field is read-only."
-    }, {
-      "name" : "groupID",
-      "type" : "int",
-      "doc" : "This field is read-only."
-    }, {
-      "name" : "membershipLevel",
-      "type" : "MembershipLevel"
-    }, {
-      "name" : "contactEmail",
-      "type" : "string"
-    }, {
-      "name" : "isPublicized",
-      "type" : "boolean"
-    }, {
-      "name" : "allowMessagesFromMembers",
-      "type" : "boolean"
-    }, {
-      "name" : "joinedTime",
-      "type" : "long",
-      "doc" : "This field is read-only."
-    }, {
-      "name" : "resignedTime",
-      "type" : "long",
-      "doc" : "This field is read-only."
-    }, {
-      "name" : "lastModifiedStateTime",
-      "type" : "long",
-      "doc" : "This field is read-only."
-    }, {
-      "name" : "emailDigestFrequency",
-      "type" : "EmailDigestFrequency"
-    }, {
-      "name" : "creationTime",
-      "type" : "long",
-      "doc" : "This field is read-only."
-    }, {
-      "name" : "lastModifiedTime",
-      "type" : "long",
-      "doc" : "This field is read-only."
-    }, {
-      "name" : "emailAnnouncementsFromManagers",
-      "type" : "boolean"
-    }, {
-      "name" : "emailForEveryNewPost",
-      "type" : "boolean"
-    }, {
-      "name" : "writeLevel",
-      "type" : "WriteLevel",
-      "doc" : "This field can only be accessed by moderators of the group"
-    }, {
-      "name" : "firstName",
-      "type" : "string",
-      "doc" : "Denormalized from members"
-    }, {
-      "name" : "lastName",
-      "type" : "string",
-      "doc" : "Denormalized from members"
-    } ]
   }, {
     "type" : "record",
     "name" : "Group",
@@ -218,7 +71,42 @@
       "type" : "string"
     }, {
       "name" : "location",
-      "type" : "Location",
+      "type" : {
+        "type" : "record",
+        "name" : "Location",
+        "doc" : "A Location record. TODO HIGH This should be in common.linkedin",
+        "fields" : [ {
+          "name" : "countryCode",
+          "type" : "string"
+        }, {
+          "name" : "postalCode",
+          "type" : "string"
+        }, {
+          "name" : "geoPostalCode",
+          "type" : "string"
+        }, {
+          "name" : "regionCode",
+          "type" : "int"
+        }, {
+          "name" : "latitude",
+          "type" : "float"
+        }, {
+          "name" : "longitude",
+          "type" : "float"
+        }, {
+          "name" : "geoPlaceCodes",
+          "type" : {
+            "type" : "array",
+            "items" : "string"
+          }
+        }, {
+          "name" : "gmtOffset",
+          "type" : "float"
+        }, {
+          "name" : "usesDaylightSavings",
+          "type" : "boolean"
+        } ]
+      },
       "doc" : "An inlined Location struct"
     }, {
       "name" : "locale",
@@ -229,10 +117,18 @@
       "doc" : "System-generated, read-only"
     }, {
       "name" : "visibility",
-      "type" : "Visibility"
+      "type" : {
+        "type" : "enum",
+        "name" : "Visibility",
+        "symbols" : [ "PUBLIC", "PRIVATE", "HIDDEN" ]
+      }
     }, {
       "name" : "state",
-      "type" : "State",
+      "type" : {
+        "type" : "enum",
+        "name" : "State",
+        "symbols" : [ "ACTIVE", "LOCKED", "INACTIVE", "PROPOSED" ]
+      },
       "default" : "ACTIVE"
     }, {
       "name" : "createdTimestamp",
@@ -287,7 +183,11 @@
       "type" : "boolean"
     }, {
       "name" : "categoriesEnabled",
-      "type" : "PostCategory"
+      "type" : {
+        "type" : "enum",
+        "name" : "PostCategory",
+        "symbols" : [ "DISCUSSION", "JOB", "PROMOTION" ]
+      }
     }, {
       "name" : "hasNetworkUpdates",
       "type" : "boolean"
@@ -308,16 +208,28 @@
       "type" : "int"
     }, {
       "name" : "newsFormat",
-      "type" : "NewsFormat"
+      "type" : {
+        "type" : "enum",
+        "name" : "NewsFormat",
+        "symbols" : [ "RECENT", "CLUSTERED" ]
+      }
     }, {
       "name" : "preModeration",
-      "type" : "PreModerationType"
+      "type" : {
+        "type" : "enum",
+        "name" : "PreModerationType",
+        "symbols" : [ "NONE", "COMMENTS", "ALL" ]
+      }
     }, {
       "name" : "preModerationCategories",
       "type" : "PostCategory"
     }, {
       "name" : "nonMemberPermissions",
-      "type" : "NonMemberPermissions"
+      "type" : {
+        "type" : "enum",
+        "name" : "NonMemberPermissions",
+        "symbols" : [ "NONE", "READ_ONLY", "COMMENT_WITH_MODERATION", "COMMENT_AND_POST_WITH_MODERATION", "COMMENT_NO_MODERATION_POST_MODERATION" ]
+      }
     }, {
       "name" : "openedToNonMembersTimestamp",
       "type" : "long"
@@ -335,44 +247,86 @@
       }
     }, {
       "name" : "owner",
-      "type" : "GroupMembership",
+      "type" : {
+        "type" : "record",
+        "name" : "GroupMembership",
+        "doc" : "A GroupMembership entity",
+        "fields" : [ {
+          "name" : "id",
+          "type" : "string",
+          "doc" : "Compound key of groupID and memberID"
+        }, {
+          "name" : "memberID",
+          "type" : "int",
+          "doc" : "This field is read-only."
+        }, {
+          "name" : "groupID",
+          "type" : "int",
+          "doc" : "This field is read-only."
+        }, {
+          "name" : "membershipLevel",
+          "type" : {
+            "type" : "enum",
+            "name" : "MembershipLevel",
+            "symbols" : [ "BLOCKED", "NON_MEMBER", "REQUESTING_TO_JOIN", "MEMBER", "MODERATOR", "MANAGER", "OWNER" ]
+          }
+        }, {
+          "name" : "contactEmail",
+          "type" : "string"
+        }, {
+          "name" : "isPublicized",
+          "type" : "boolean"
+        }, {
+          "name" : "allowMessagesFromMembers",
+          "type" : "boolean"
+        }, {
+          "name" : "joinedTime",
+          "type" : "long",
+          "doc" : "This field is read-only."
+        }, {
+          "name" : "resignedTime",
+          "type" : "long",
+          "doc" : "This field is read-only."
+        }, {
+          "name" : "lastModifiedStateTime",
+          "type" : "long",
+          "doc" : "This field is read-only."
+        }, {
+          "name" : "emailDigestFrequency",
+          "type" : "EmailDigestFrequency"
+        }, {
+          "name" : "creationTime",
+          "type" : "long",
+          "doc" : "This field is read-only."
+        }, {
+          "name" : "lastModifiedTime",
+          "type" : "long",
+          "doc" : "This field is read-only."
+        }, {
+          "name" : "emailAnnouncementsFromManagers",
+          "type" : "boolean"
+        }, {
+          "name" : "emailForEveryNewPost",
+          "type" : "boolean"
+        }, {
+          "name" : "writeLevel",
+          "type" : {
+            "type" : "enum",
+            "name" : "WriteLevel",
+            "symbols" : [ "NONE", "PREMODERATED", "DEFAULT", "FULL" ]
+          },
+          "doc" : "This field can only be accessed by moderators of the group"
+        }, {
+          "name" : "firstName",
+          "type" : "string",
+          "doc" : "Denormalized from members"
+        }, {
+          "name" : "lastName",
+          "type" : "string",
+          "doc" : "Denormalized from members"
+        } ]
+      },
       "doc" : "Required when creating a group, not returned as part of the default representation (must be explicitly requested via 'fields'"
-    } ]
-  }, {
-    "type" : "fixed",
-    "name" : "Fixed16",
-    "namespace" : "com.linkedin.restli.examples.typeref.api",
-    "size" : 16
-  }, {
-    "type" : "typeref",
-    "name" : "Union",
-    "namespace" : "com.linkedin.restli.examples.typeref.api",
-    "ref" : [ "int", "string" ]
-  }, {
-    "type" : "record",
-    "name" : "GroupMembershipParam",
-    "namespace" : "com.linkedin.restli.examples.groups.api",
-    "doc" : "A GroupMembership entity parameters",
-    "fields" : [ {
-      "name" : "intParameter",
-      "type" : "int"
-    }, {
-      "name" : "stringParameter",
-      "type" : "string"
-    } ]
-  }, {
-    "type" : "record",
-    "name" : "TransferOwnershipRequest",
-    "namespace" : "com.linkedin.restli.examples.groups.api",
-    "doc" : "Request for transferOwnership RPC method",
-    "fields" : [ {
-      "name" : "newOwnerMemberID",
-      "type" : "int",
-      "doc" : "The new owner"
-    }, {
-      "name" : "newOwnerContactEmail",
-      "type" : "string",
-      "doc" : "The new owner's email"
     } ]
   }, {
     "type" : "record",
@@ -415,6 +369,42 @@
       "name" : "updatedAt",
       "type" : "long"
     } ]
+  }, "com.linkedin.restli.examples.groups.api.GroupMembership", {
+    "type" : "record",
+    "name" : "GroupMembershipParam",
+    "namespace" : "com.linkedin.restli.examples.groups.api",
+    "doc" : "A GroupMembership entity parameters",
+    "fields" : [ {
+      "name" : "intParameter",
+      "type" : "int"
+    }, {
+      "name" : "stringParameter",
+      "type" : "string"
+    } ]
+  }, "com.linkedin.restli.examples.groups.api.Location", "com.linkedin.restli.examples.groups.api.MembershipLevel", "com.linkedin.restli.examples.groups.api.NewsFormat", "com.linkedin.restli.examples.groups.api.NonMemberPermissions", "com.linkedin.restli.examples.groups.api.PostCategory", "com.linkedin.restli.examples.groups.api.PreModerationType", "com.linkedin.restli.examples.groups.api.State", {
+    "type" : "record",
+    "name" : "TransferOwnershipRequest",
+    "namespace" : "com.linkedin.restli.examples.groups.api",
+    "doc" : "Request for transferOwnership RPC method",
+    "fields" : [ {
+      "name" : "newOwnerMemberID",
+      "type" : "int",
+      "doc" : "The new owner"
+    }, {
+      "name" : "newOwnerContactEmail",
+      "type" : "string",
+      "doc" : "The new owner's email"
+    } ]
+  }, "com.linkedin.restli.examples.groups.api.Visibility", "com.linkedin.restli.examples.groups.api.WriteLevel", {
+    "type" : "fixed",
+    "name" : "Fixed16",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "size" : 16
+  }, {
+    "type" : "typeref",
+    "name" : "Union",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "ref" : [ "int", "string" ]
   } ],
   "schema" : {
     "name" : "groups",

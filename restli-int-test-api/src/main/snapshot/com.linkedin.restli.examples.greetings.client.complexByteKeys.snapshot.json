@@ -1,24 +1,15 @@
 {
   "models" : [ {
-    "type" : "typeref",
-    "name" : "IntRef",
-    "namespace" : "com.linkedin.restli.examples.typeref.api",
-    "ref" : "int"
-  }, {
-    "type" : "typeref",
-    "name" : "LongRef",
-    "namespace" : "com.linkedin.restli.examples.typeref.api",
-    "ref" : "long"
-  }, {
-    "type" : "typeref",
-    "name" : "FloatRef",
-    "namespace" : "com.linkedin.restli.examples.typeref.api",
-    "ref" : "float"
-  }, {
-    "type" : "typeref",
-    "name" : "DoubleRef",
-    "namespace" : "com.linkedin.restli.examples.typeref.api",
-    "ref" : "double"
+    "type" : "record",
+    "name" : "TwoPartKey",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "fields" : [ {
+      "name" : "major",
+      "type" : "string"
+    }, {
+      "name" : "minor",
+      "type" : "string"
+    } ]
   }, {
     "type" : "typeref",
     "name" : "BooleanRef",
@@ -26,14 +17,39 @@
     "ref" : "boolean"
   }, {
     "type" : "typeref",
-    "name" : "StringRef",
-    "namespace" : "com.linkedin.restli.examples.typeref.api",
-    "ref" : "string"
-  }, {
-    "type" : "typeref",
     "name" : "BytesRef",
     "namespace" : "com.linkedin.restli.examples.typeref.api",
     "ref" : "bytes"
+  }, {
+    "type" : "typeref",
+    "name" : "DoubleRef",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "ref" : "double"
+  }, {
+    "type" : "fixed",
+    "name" : "Fixed16",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "size" : 16
+  }, {
+    "type" : "typeref",
+    "name" : "Fixed16Ref",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "ref" : "Fixed16"
+  }, {
+    "type" : "typeref",
+    "name" : "FloatRef",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "ref" : "float"
+  }, {
+    "type" : "enum",
+    "name" : "Fruits",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "symbols" : [ "APPLE", "ORANGE" ]
+  }, {
+    "type" : "typeref",
+    "name" : "FruitsRef",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "ref" : "Fruits"
   }, {
     "type" : "typeref",
     "name" : "IntArrayRef",
@@ -51,35 +67,15 @@
       "values" : "int"
     }
   }, {
-    "type" : "fixed",
-    "name" : "Fixed16",
+    "type" : "typeref",
+    "name" : "IntRef",
     "namespace" : "com.linkedin.restli.examples.typeref.api",
-    "size" : 16
+    "ref" : "int"
   }, {
     "type" : "typeref",
-    "name" : "Fixed16Ref",
+    "name" : "LongRef",
     "namespace" : "com.linkedin.restli.examples.typeref.api",
-    "ref" : "Fixed16"
-  }, {
-    "type" : "enum",
-    "name" : "Fruits",
-    "namespace" : "com.linkedin.restli.examples.typeref.api",
-    "symbols" : [ "APPLE", "ORANGE" ]
-  }, {
-    "type" : "typeref",
-    "name" : "FruitsRef",
-    "namespace" : "com.linkedin.restli.examples.typeref.api",
-    "ref" : "Fruits"
-  }, {
-    "type" : "typeref",
-    "name" : "Union",
-    "namespace" : "com.linkedin.restli.examples.typeref.api",
-    "ref" : [ "int", "string" ]
-  }, {
-    "type" : "typeref",
-    "name" : "UnionRef",
-    "namespace" : "com.linkedin.restli.examples.typeref.api",
-    "ref" : "Union"
+    "ref" : "long"
   }, {
     "type" : "record",
     "name" : "Point",
@@ -96,6 +92,11 @@
     "name" : "PointRef",
     "namespace" : "com.linkedin.restli.examples.typeref.api",
     "ref" : "Point"
+  }, {
+    "type" : "typeref",
+    "name" : "StringRef",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "ref" : "string"
   }, {
     "type" : "record",
     "name" : "TyperefRecord",
@@ -146,29 +147,26 @@
       "optional" : true
     }, {
       "name" : "union",
-      "type" : "Union",
+      "type" : {
+        "type" : "typeref",
+        "name" : "Union",
+        "ref" : [ "int", "string" ]
+      },
       "optional" : true
     }, {
       "name" : "union2",
-      "type" : "UnionRef",
+      "type" : {
+        "type" : "typeref",
+        "name" : "UnionRef",
+        "ref" : "Union"
+      },
       "optional" : true
     }, {
       "name" : "point",
       "type" : "PointRef",
       "optional" : true
     } ]
-  }, {
-    "type" : "record",
-    "name" : "TwoPartKey",
-    "namespace" : "com.linkedin.restli.examples.greetings.api",
-    "fields" : [ {
-      "name" : "major",
-      "type" : "string"
-    }, {
-      "name" : "minor",
-      "type" : "string"
-    } ]
-  } ],
+  }, "com.linkedin.restli.examples.typeref.api.Union", "com.linkedin.restli.examples.typeref.api.UnionRef" ],
   "schema" : {
     "name" : "complexByteKeys",
     "namespace" : "com.linkedin.restli.examples.greetings.client",

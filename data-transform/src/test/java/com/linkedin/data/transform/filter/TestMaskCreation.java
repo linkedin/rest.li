@@ -171,6 +171,33 @@ public class TestMaskCreation
   }
 
   @Test
+  public void testPositiveMaskWithFullArrayRangeValues()
+  {
+    PathSpec parentPath = new PathSpec("parent");
+
+    // Build the array field's path with range (0 to 999)
+    PathSpec arrayFirstHalfPath = new PathSpec(parentPath.getPathComponents(), "arrayField");
+    arrayFirstHalfPath.setAttribute(PathSpec.ATTR_ARRAY_START, 0);
+    arrayFirstHalfPath.setAttribute(PathSpec.ATTR_ARRAY_COUNT, 1000);
+
+    // Build the array field's path with range (1000 to Integer.MAX_INT)
+    PathSpec arraySecondHalfPath = new PathSpec(parentPath.getPathComponents(), "arrayField");
+    arraySecondHalfPath.setAttribute(PathSpec.ATTR_ARRAY_START, 1000);
+    arraySecondHalfPath.setAttribute(PathSpec.ATTR_ARRAY_COUNT, Integer.MAX_VALUE);
+
+    MaskTree mask = MaskCreator.createPositiveMask(arrayFirstHalfPath, arraySecondHalfPath);
+
+    // Build the expected map with both start and count filtered out
+    // {parent={arrayField=1}}
+    DataMap parentMap = new DataMap();
+    parentMap.put("arrayField", MaskOperation.POSITIVE_MASK_OP.getRepresentation());
+    DataMap expectedMaskMap = new DataMap();
+    expectedMaskMap.put("parent", parentMap);
+
+    Assert.assertEquals(mask.getDataMap(), expectedMaskMap);
+  }
+
+  @Test
   public void testNegativeMaskSingleField()
   {
     MaskTree mask = MaskCreator.createNegativeMask(new PathSpec("foo"));
