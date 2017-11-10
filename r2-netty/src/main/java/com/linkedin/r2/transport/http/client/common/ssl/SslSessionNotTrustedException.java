@@ -29,4 +29,16 @@ public class SslSessionNotTrustedException extends Exception
   {
     super("The session established didn't pass the SSL Session validity test");
   }
+
+  public SslSessionNotTrustedException(String message) {
+    super(message);
+  }
+
+  public SslSessionNotTrustedException(String message, Throwable cause) {
+    super(message, cause);
+  }
+
+  public SslSessionNotTrustedException(Throwable cause) {
+    super(cause);
+  }
 }
