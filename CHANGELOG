@@ -1,6 +1,7 @@
 16.0.4
 ------
-
+(RB=1147537)
+Logs request path only instead of the full URI
 
 16.0.3
 ------
