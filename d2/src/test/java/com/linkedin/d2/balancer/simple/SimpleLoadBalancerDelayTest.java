@@ -1514,7 +1514,8 @@ public class SimpleLoadBalancerDelayTest
     printStates(loadBalancerSimulator);
   }
 
-  @Test(groups = { "small", "back-end" })
+  // TODO (SI-4985): This test has been flaky and needs to be fixed.
+  //@Test(groups = { "small", "back-end" })
   public void testLoadBalancerWithFastRecoveryAndSlowstartWithErrors() throws Exception
   {
     // Generate service, cluster and uri properties for d2
