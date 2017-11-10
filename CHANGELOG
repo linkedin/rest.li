@@ -1,7 +1,13 @@
+16.0.5
+------
+
+
 16.0.4
 ------
 (RB=1147537)
 Logs request path only instead of the full URI
+(RB=1154436)
+Allows SslSessionNotTrustedException to be created with an inner exception and message
 
 16.0.3
 ------
