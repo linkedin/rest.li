@@ -32,6 +32,7 @@ import com.linkedin.r2.transport.common.bridge.common.TransportResponse;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Map;
 
 /**
@@ -51,7 +52,7 @@ public class HttpBridge
   public static TransportCallback<RestResponse> restToHttpCallback(final TransportCallback<RestResponse> callback,
                                                                    RestRequest request)
   {
-    final URI uri = request.getURI();
+    final String uri = getDisplayedURI(request.getURI());
     return new TransportCallback<RestResponse>()
     {
       @Override
@@ -139,7 +140,7 @@ public class HttpBridge
   public static TransportCallback<StreamResponse> streamToHttpCallback(final TransportCallback<StreamResponse> callback,
                                                         StreamRequest request)
   {
-    final URI uri = request.getURI();
+    final String uri = getDisplayedURI(request.getURI());
     return new TransportCallback<StreamResponse>()
     {
       @Override
@@ -205,5 +206,24 @@ public class HttpBridge
         callback.onResponse(response);
       }
     };
+  }
+
+  /**
+   * Gets the URI to display in exception messages. The query parameters part of the URI is omitted to prevent
+   * displaying sensitive information.
+   *
+   * @param uri Original URI to extract formatted displayed value
+   * @return URI value to display
+   */
+  private static String getDisplayedURI(URI uri)
+  {
+    try
+    {
+      return new URI(uri.getScheme(), uri.getAuthority(), uri.getPath(), null, uri.getFragment()).toString();
+    }
+    catch (URISyntaxException e)
+    {
+      return "Unknown URI";
+    }
   }
 }

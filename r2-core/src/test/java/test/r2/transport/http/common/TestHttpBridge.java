@@ -54,7 +54,7 @@ public class TestHttpBridge
   @Test
   public void testRestToHttpErrorMessage() throws TimeoutException, InterruptedException
   {
-    URI uri = URI.create("http://some.host/thisShouldAppearInTheErrorMessage");
+    URI uri = URI.create("http://some.host/thisShouldAppearInTheErrorMessage?this=shoudNotAppear");
 
     RestRequest r = new RestRequestBuilder(uri).build();
 
@@ -71,7 +71,8 @@ public class TestHttpBridge
     }
     catch (ExecutionException e)
     {
-      Assert.assertTrue(e.getCause().getMessage().contains(uri.toString()));
+      Assert.assertFalse(e.getCause().getMessage().contains("http://some.host/thisShouldAppearInTheErrorMessage?this=shoudNotAppear"));
+      Assert.assertTrue(e.getCause().getMessage().contains("http://some.host/thisShouldAppearInTheErrorMessage"));
     }
 
   }
@@ -100,7 +101,7 @@ public class TestHttpBridge
   @Test
   public void testStreamToHttpErrorMessage() throws TimeoutException, InterruptedException
   {
-    URI uri = URI.create("http://some.host/thisShouldAppearInTheErrorMessage");
+    URI uri = URI.create("http://some.host/thisShouldAppearInTheErrorMessage?this=shoudNotAppear");
 
     RestRequest r = new RestRequestBuilder(uri).build();
 
@@ -118,7 +119,8 @@ public class TestHttpBridge
     }
     catch (ExecutionException e)
     {
-      Assert.assertTrue(e.getCause().getMessage().contains(uri.toString()));
+      Assert.assertFalse(e.getCause().getMessage().contains("http://some.host/thisShouldAppearInTheErrorMessage?this=shoudNotAppear"));
+      Assert.assertTrue(e.getCause().getMessage().contains("http://some.host/thisShouldAppearInTheErrorMessage"));
     }
 
   }
