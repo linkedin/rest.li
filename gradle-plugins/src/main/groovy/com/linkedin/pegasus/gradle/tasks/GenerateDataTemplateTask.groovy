@@ -107,7 +107,6 @@ class GenerateDataTemplateTask extends JavaExec
 
       LOG.lifecycle(
           "There are ${inputDataSchemaFilenames.length} data schema input files. Using input root folder: ${target.inputDir}")
-      target.destinationDir.mkdirs()
 
       final String resolverPathStr = (target.resolverPath + project.files(target.inputDir)).asPath
 

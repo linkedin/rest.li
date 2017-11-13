@@ -1,5 +1,7 @@
 16.0.5
 ------
+(RB=1155706)
+Fix the DataTemplate generation issue on Gradle 4.3's modified OutputDirectory generation time.
 
 
 16.0.4

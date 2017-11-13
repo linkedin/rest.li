@@ -149,6 +149,7 @@ public class PegasusDataTemplateGenerator
       _log.info("Generating " + targetFiles.size() + " files");
       _log.debug("Files: "+ targetFiles);
       validateDefinedClassRegistration(dataTemplateGenerator.getCodeModel(), dataTemplateGenerator.getGeneratedClasses().keySet());
+      targetDirectory.mkdirs();
       dataTemplateGenerator.getCodeModel().build(new FileCodeWriter(targetDirectory, true));
     }
     return new DefaultGeneratorResult(parseResult.getSourceFiles(), targetFiles, modifiedFiles);
