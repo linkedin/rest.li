@@ -78,7 +78,7 @@ public class ConsistentHashRing<T> implements Ring<T>
     debug(_log, "Initializing consistent hash ring with {} items: ", points.size());
   }
 
-  // Next two constructors and add() function are only used by DegraderLoadBalancerStrategyV2 and V2_1,
+  // Next two constructors and add() function are only used by DegraderLoadBalancerStrategy V2 and V2_1,
   // which are obsoleted already. When those strategies are removed, this three functions should be removed too.
   public ConsistentHashRing(Map<T, Integer> pointMap)
   {
@@ -98,6 +98,7 @@ public class ConsistentHashRing<T> implements Ring<T>
     add(pointMap);
   }
 
+  @Deprecated
   public ConsistentHashRing(Map<T, Integer> pointMap, MessageDigest md)
   {
     _points = new ArrayList<Point<T>>();

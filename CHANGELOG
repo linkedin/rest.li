@@ -1,6 +1,7 @@
 16.0.6
 ------
-
+(RB=1161557)
+Refactor DegraderLoadBalancerStrategyV3 class
 
 16.0.5
 ------

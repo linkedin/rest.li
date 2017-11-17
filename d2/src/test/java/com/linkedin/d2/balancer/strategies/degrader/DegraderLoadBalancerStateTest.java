@@ -1,8 +1,6 @@
 package com.linkedin.d2.balancer.strategies.degrader;
 
 import com.linkedin.d2.balancer.clients.TrackerClient;
-import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyV3.DegraderLoadBalancerState;
-import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyV3.PartitionDegraderLoadBalancerState;
 import com.linkedin.util.clock.SettableClock;
 import java.net.URI;
 import java.util.ArrayList;
@@ -113,7 +111,7 @@ public class DegraderLoadBalancerStateTest
                                                   PartitionDegraderLoadBalancerState.Strategy.LOAD_BALANCE,
                                                   0, 0, Collections.<TrackerClient, Double>emptyMap(),
                                                   SERVICE_NAME, Collections.<String, String>emptyMap(), 0, 0, 0,
-                                                  Collections.emptyMap(), Collections.emptyMap(), null, null);
+                                                  Collections.emptyMap(), Collections.emptyMap(), null);
   }
 
   private static List<PartitionDegraderLoadBalancerState> newPartitionStates(int numberOfPartitions)

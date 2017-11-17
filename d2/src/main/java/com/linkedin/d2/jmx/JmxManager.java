@@ -22,8 +22,6 @@ import com.linkedin.d2.balancer.servers.ZooKeeperServer;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancer;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancerState;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
-import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyV2;
-import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyV2_1;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyV3;
 import com.linkedin.d2.discovery.stores.file.FileStore;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
@@ -131,16 +129,7 @@ public class JmxManager
   public synchronized JmxManager registerLoadBalancerStrategy(String name,
                                                               LoadBalancerStrategy strategy)
   {
-    if (strategy instanceof DegraderLoadBalancerStrategyV2)
-    {
-      checkReg(new DegraderLoadBalancerStrategyV2Jmx((DegraderLoadBalancerStrategyV2) strategy),
-          name);
-    }
-    else if (strategy instanceof DegraderLoadBalancerStrategyV2_1)
-    {
-      checkReg(new DegraderLoadBalancerStrategyV2_1Jmx((DegraderLoadBalancerStrategyV2_1) strategy), name);
-    }
-    else if (strategy instanceof DegraderLoadBalancerStrategyV3)
+    if (strategy instanceof DegraderLoadBalancerStrategyV3)
     {
       checkReg(new DegraderLoadBalancerStrategyV3Jmx((DegraderLoadBalancerStrategyV3) strategy), name);
     }
@@ -149,22 +138,6 @@ public class JmxManager
       warn(_log, "unable to register a jmx bean for unknown strategy: ", strategy);
     }
 
-    return this;
-  }
-
-  // Register the jmx bean passed in with the jmx manager.
-  public synchronized JmxManager registerLoadBalancerStrategyV2JmxBean(String name,
-                                             DegraderLoadBalancerStrategyV2JmxMBean strategyJmx)
-  {
-    checkReg(strategyJmx, name);
-    return this;
-  }
-
-  // Register the jmx bean passed in with the jmx manager.
-  public synchronized JmxManager registerLoadBalancerStrategyV2_1JmxBean(String name,
-                                                                       DegraderLoadBalancerStrategyV2_1JmxMBean strategyJmx)
-  {
-    checkReg(strategyJmx, name);
     return this;
   }
 

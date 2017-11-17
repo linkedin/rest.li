@@ -32,8 +32,6 @@ import com.linkedin.d2.balancer.simple.SimpleLoadBalancer;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancerState;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
-import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyFactoryV2;
-import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyFactoryV2_1;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyFactoryV3;
 import com.linkedin.d2.balancer.strategies.random.RandomLoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.zkfs.ZKFSComponentFactory;
@@ -715,10 +713,10 @@ public class LoadBalancerClientCli
         new HashMap<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>>();
 
     loadBalancerStrategyFactories.put("random", new RandomLoadBalancerStrategyFactory());
-    loadBalancerStrategyFactories.put("degrader", new DegraderLoadBalancerStrategyFactoryV2());
-    loadBalancerStrategyFactories.put("degraderV2", new DegraderLoadBalancerStrategyFactoryV2());
+    loadBalancerStrategyFactories.put("degrader", new DegraderLoadBalancerStrategyFactoryV3());
+    loadBalancerStrategyFactories.put("degraderV2", new DegraderLoadBalancerStrategyFactoryV3());
     loadBalancerStrategyFactories.put("degraderV3", new DegraderLoadBalancerStrategyFactoryV3());
-    loadBalancerStrategyFactories.put("degraderV2_1", new DegraderLoadBalancerStrategyFactoryV2_1());
+    loadBalancerStrategyFactories.put("degraderV2_1", new DegraderLoadBalancerStrategyFactoryV3());
 
     Map<String, TransportClientFactory> clientFactories =
         new HashMap<String, TransportClientFactory>();
@@ -768,10 +766,10 @@ public class LoadBalancerClientCli
     new HashMap<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>>();
 
     loadBalancerStrategyFactories.put("random", new RandomLoadBalancerStrategyFactory());
-    loadBalancerStrategyFactories.put("degrader", new DegraderLoadBalancerStrategyFactoryV2());
-    loadBalancerStrategyFactories.put("degraderV2", new DegraderLoadBalancerStrategyFactoryV2());
+    loadBalancerStrategyFactories.put("degrader", new DegraderLoadBalancerStrategyFactoryV3());
+    loadBalancerStrategyFactories.put("degraderV2", new DegraderLoadBalancerStrategyFactoryV3());
     loadBalancerStrategyFactories.put("degraderV3", new DegraderLoadBalancerStrategyFactoryV3());
-    loadBalancerStrategyFactories.put("degraderV2_1", new DegraderLoadBalancerStrategyFactoryV2_1());
+    loadBalancerStrategyFactories.put("degraderV2_1", new DegraderLoadBalancerStrategyFactoryV3());
 
 	ZKFSTogglingLoadBalancerFactoryImpl factory = new ZKFSTogglingLoadBalancerFactoryImpl(componentFactory,
                                         TIMEOUT, TimeUnit.MILLISECONDS,
