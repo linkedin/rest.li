@@ -25,6 +25,7 @@ import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyConfig;
+import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyV3;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderRingFactory;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import java.net.URI;
@@ -52,22 +53,19 @@ import static org.testng.Assert.assertTrue;
 
 public class SimpleLoadBalancerDelayTest
 {
-  public static void main(String[] args) throws Exception
-  {
-    new SimpleLoadBalancerDelayTest().testLoadBalancerWithDelay();
-    _log.info("Done");
-  }
-
   private static final Logger _log = LoggerFactory.getLogger(SimpleLoadBalancerDelayTest.class);
   private static final Map<String, List<D2Monitor>> _d2MonitorMap = new HashMap<>();
+  private static final Map<String, Object> HASH_CONFIG_MAP = Collections.singletonMap(
+      DegraderLoadBalancerStrategyV3.HASH_SEED, "123456789");
 
-  @Test(groups = { "small", "back-end" }, enabled = false)
+  @Test(groups = { "small", "back-end" })
   public void testLoadBalancerWithDelay() throws Exception
   {
     // Generate service, cluster and uri properties for d2
     URI uri1 = URI.create("http://test.qa1.com:1234");
     URI uri2 = URI.create("http://test.qa2.com:2345");
     URI uri3 = URI.create("http://test.qa3.com:6789");
+    List<String> uris = Arrays.asList("test.qa1.com:1234", "test.qa2.com:2345", "test.qa3.com:6789");
 
     Map<Integer, PartitionData> partitionData = new HashMap<Integer, PartitionData>(1);
     partitionData.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
@@ -76,40 +74,35 @@ public class SimpleLoadBalancerDelayTest
     uriData.put(uri2, partitionData);
     uriData.put(uri3, partitionData);
 
-    ClusterProperties clusterProperties = new ClusterProperties("cluster-1");
+    Map<String, List<Long>> delayMaps = new HashMap<>();
+    delayMaps.put("test.qa1.com:1234", Arrays.asList(50l, 60l, 75l, 55l, 60l, 80l, 50l, 50l, 50l));
+    delayMaps.put("test.qa2.com:2345", Arrays.asList(60l, 60l, 50l, 60l, 50l, 80l, 50l, 50l, 50l));
+    delayMaps.put("test.qa3.com:6789", Arrays.asList(80l, 3000l, 3000l, 3000l, 5000l, 80l, 50l, 50l));
+    LoadBalancerSimulator.TimedValueGenerator<String, Long> delayGenerator = new DelayValueGenerator<>(
+        delayMaps, DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS);
+    Map<String, String> degraderProperties = new HashMap<>();
+    degraderProperties.put(PropertyKeys.DEGRADER_DOWN_STEP, "0.2");
+    degraderProperties.put(PropertyKeys.DEGRADER_UP_STEP, "0.2");
+
+    Map<String, Object> transportClientProperties = Collections.singletonMap("DelayGenerator", delayGenerator);
 
     List<String> prioritizedSchemes = Collections.singletonList("http");
     ServiceProperties serviceProperties = new ServiceProperties("foo",
         "cluster-1",
         "/foo",
         Arrays.asList("degrader"),
-        Collections.emptyMap(),
+        Collections.singletonMap(PropertyKeys.HTTP_LB_HASH_CONFIG, HASH_CONFIG_MAP),
         null,
-        null,
+        degraderProperties,
         prioritizedSchemes,
         null);
 
     UriProperties uriProperties = new UriProperties("cluster-1", uriData);
 
-    // Create the delay generator for the uris
-    URI expectedUri1 = URI.create("http://test.qa1.com:1234/foo");
-    URI expectedUri2 = URI.create("http://test.qa2.com:2345/foo");
-    URI expectedUri3 = URI.create("http://test.qa3.com:6789/foo");
-
-    // Construct the delay patterns: for each URI there is a list of delays for each interval
-    Map<String, List<Long>> delayMaps = new HashMap<>();
-    delayMaps.put("http://test.qa1.com:1234/foo", Arrays.asList(50l, 60l, 75l, 55l, 60l, 80l, 50l));
-    delayMaps.put("http://test.qa1.com:2345/foo", Arrays.asList(60l, 60l, 50l, 60l, 50l, 80l, 50l));
-    delayMaps.put("http://test.qa1.com:6789/foo", Arrays.asList(80l, 3000l, 3000l, 3000l, 5000l, 80l, 50l));
-    LoadBalancerSimulator.TimedValueGenerator<String, Long> delayGenerator = new DelayValueGenerator<>(
-            delayMaps, DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS);
-
     // Construct the QPS generator
     LoadBalancerSimulator.QPSGenerator qpsGenerator = new ConstantQPSGenerator(1000);
-
-    // pass all the info to the simulator
-    LoadBalancerSimulator loadBalancerSimulator = new LoadBalancerSimulator(serviceProperties,
-        clusterProperties, uriProperties, delayGenerator, qpsGenerator, null);
+    LoadBalancerSimulator loadBalancerSimulator = LoadBalancerSimulationBuilder.build(
+        "cluster-1", "foo", uris, null, null, degraderProperties, delayGenerator, qpsGenerator);
 
     // Start the simulation
     loadBalancerSimulator.runWait(DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS);
@@ -118,11 +111,6 @@ public class SimpleLoadBalancerDelayTest
     // the points for uri3 should be 100
     assertEquals(loadBalancerSimulator.getPoint("foo", DefaultPartitionAccessor.DEFAULT_PARTITION_ID,
         uri3), 100);
-    // the uri3 should be used around 33% of all queries. Due to the hashring variance we need
-    // to check the range.
-    // uri3 will be degrading further after the previous interval
-    // assertTrue(loadBalancerSimulator.getCountPercent(expectedUri3) <= 0.375);
-    // assertTrue(loadBalancerSimulator.getCountPercent(expectedUri3) >= 0.295);
 
     // wait for 2 intervals due to call dropping involved
     loadBalancerSimulator.runWait(DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS * 2);
@@ -131,9 +119,6 @@ public class SimpleLoadBalancerDelayTest
     // Also if the loadbalancing strategy changed, the numbers could be lower
     assertEquals(loadBalancerSimulator.getPoint("foo", DefaultPartitionAccessor.DEFAULT_PARTITION_ID,
         uri3), 80);
-    // the uri3 should be used around 28%, will be degrading further next
-    // assertTrue(loadBalancerSimulator.getCountPercent(expectedUri3) <= 0.32);
-    // assertTrue(loadBalancerSimulator.getCountPercent(expectedUri3) >= 0.24);
 
     // continue the simulation
     loadBalancerSimulator.runWait(DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS * 2);
@@ -141,9 +126,6 @@ public class SimpleLoadBalancerDelayTest
     // the points for uri3 should be around 40
     assertEquals(loadBalancerSimulator.getPoint("foo", DefaultPartitionAccessor.DEFAULT_PARTITION_ID,
         uri3), 39);
-    // the uri3 should be used around 16%, will be recovering next
-    // assertTrue(loadBalancerSimulator.getCountPercent(expectedUri3) <= 0.20);
-    // assertTrue(loadBalancerSimulator.getCountPercent(expectedUri3) >= 0.12);
 
     loadBalancerSimulator.runWait(DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS * 3);
     printStates(loadBalancerSimulator);
@@ -155,7 +137,7 @@ public class SimpleLoadBalancerDelayTest
     loadBalancerSimulator.shutdown();
   }
 
-  @Test(groups = { "small", "back-end" }, enabled = false)
+  @Test(groups = { "small", "back-end" })
   public void testLoadBalancerWithSlowStartClient() throws Exception
   {
     // Generate service, cluster and uri properties for d2
@@ -175,8 +157,9 @@ public class SimpleLoadBalancerDelayTest
 
     List<String> prioritizedSchemes = Collections.singletonList("http");
     // enable multi-probe consistent hashing
-    Map<String, Object> lbStrategyProperties = Collections.singletonMap(PropertyKeys.HTTP_LB_CONSISTENT_HASH_ALGORITHM,
-        DegraderRingFactory.MULTI_PROBE_CONSISTENT_HASH);
+    Map<String, Object> lbStrategyProperties = new HashMap<>();
+    lbStrategyProperties.put(PropertyKeys.HTTP_LB_CONSISTENT_HASH_ALGORITHM, DegraderRingFactory.MULTI_PROBE_CONSISTENT_HASH);
+    lbStrategyProperties.put(PropertyKeys.HTTP_LB_HASH_CONFIG, HASH_CONFIG_MAP);
     // set initial drop rate and slow start threshold
     Map<String, String> degraderProperties = new HashMap<>();
     degraderProperties.put(PropertyKeys.DEGRADER_INITIAL_DROP_RATE, "0.99");
@@ -280,16 +263,13 @@ public class SimpleLoadBalancerDelayTest
     LoadBalancerSimulator.TimedValueGenerator<String, Long> delayGenerator = new DelayValueGenerator<>(delayMaps,
         DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS);
 
-    // Enable quarantine by setting the max percent to 0.05
-    Map<String, Object> strategyProperties =
-        Collections.singletonMap(PropertyKeys.HTTP_LB_QUARANTINE_MAX_PERCENT, 0.05);
 
     // Construct the QPS generator
     LoadBalancerSimulator.QPSGenerator qpsGenerator = new ConstantQPSGenerator(1000);
 
     // Create the simulator
     LoadBalancerSimulator loadBalancerSimulator = LoadBalancerSimulationBuilder.build(
-        "cluster-1", "foo", uris, strategyProperties, null, null, delayGenerator, qpsGenerator);
+        "cluster-1", "foo", uris, lbStrategyPropertiesWithQuarantine(), null, null, delayGenerator, qpsGenerator);
     URI expectedUri1 = LoadBalancerSimulationBuilder.getExpectedUri("test.qa1.com:1234", "foo");
 
     // Start the simulation
@@ -363,16 +343,12 @@ public class SimpleLoadBalancerDelayTest
     LoadBalancerSimulator.TimedValueGenerator<String, Long> delayGenerator = new DelayValueGenerator<>(delayMaps,
         DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS);
 
-    // Enable quarantine by setting the max percent to 0.05
-    Map<String, Object> strategyProperties =
-        Collections.singletonMap(PropertyKeys.HTTP_LB_QUARANTINE_MAX_PERCENT, 0.05);
-
     // Construct the QPS generator
     LoadBalancerSimulator.QPSGenerator qpsGenerator = new ConstantQPSGenerator(1000);
 
     // Create the simulator
     LoadBalancerSimulator loadBalancerSimulator = LoadBalancerSimulationBuilder.build(
-        "cluster-1", "foo", uris, strategyProperties, null, null, delayGenerator, qpsGenerator);
+        "cluster-1", "foo", uris, lbStrategyPropertiesWithQuarantine(), null, null, delayGenerator, qpsGenerator);
     URI expectedUri1 = LoadBalancerSimulationBuilder.getExpectedUri("test.qa1.com:1234", "foo");
 
     // Start the simulation
@@ -436,10 +412,6 @@ public class SimpleLoadBalancerDelayTest
     LoadBalancerSimulator.TimedValueGenerator<String, Long> delayGenerator = new DelayValueGenerator<>(delayMaps,
         DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS);
 
-    // Enable quarantine by setting the max percent to 0.05
-    Map<String, Object> strategyProperties =
-        Collections.singletonMap(PropertyKeys.HTTP_LB_QUARANTINE_MAX_PERCENT, 0.05);
-
     // Construct the QPS generator
     LoadBalancerSimulator.QPSGenerator qpsGenerator = new ConstantQPSGenerator(1000);
     // use the default up/down steps for degrading/recovering
@@ -449,7 +421,7 @@ public class SimpleLoadBalancerDelayTest
 
     // Create the simulator
     LoadBalancerSimulator loadBalancerSimulator = LoadBalancerSimulationBuilder.build(
-        "cluster-1", "foo", uris, strategyProperties, null, degraderProperties, delayGenerator, qpsGenerator);
+        "cluster-1", "foo", uris, lbStrategyPropertiesWithQuarantine(), null, degraderProperties, delayGenerator, qpsGenerator);
     URI expectedUri1 = LoadBalancerSimulationBuilder.getExpectedUri("test.qa1.com:1234", "foo");
 
     // Start the simulation
@@ -525,16 +497,12 @@ public class SimpleLoadBalancerDelayTest
     LoadBalancerSimulator.TimedValueGenerator<String, Long> delayGenerator = new DelayValueGenerator<>(delayMaps,
         DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS);
 
-    // Enable quarantine by setting the max percent to 0.05
-    Map<String, Object> strategyProperties =
-        Collections.singletonMap(PropertyKeys.HTTP_LB_QUARANTINE_MAX_PERCENT, 0.05);
-
     // Construct the QPS generator
     LoadBalancerSimulator.QPSGenerator qpsGenerator = new ConstantQPSGenerator(1000);
 
     // Create the simulator
     LoadBalancerSimulator loadBalancerSimulator = LoadBalancerSimulationBuilder.build(
-        "cluster-1", "foo", uris, strategyProperties, null, null, delayGenerator, qpsGenerator);
+        "cluster-1", "foo", uris, lbStrategyPropertiesWithQuarantine(), null, null, delayGenerator, qpsGenerator);
     URI expectedUri1 = LoadBalancerSimulationBuilder.getExpectedUri("test.qa1.com:1234", "foo");
 
     // Start the simulation
@@ -603,16 +571,12 @@ public class SimpleLoadBalancerDelayTest
     LoadBalancerSimulator.TimedValueGenerator<String, Long> delayGenerator = new DelayValueGenerator<>(delayMaps,
         DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS);
 
-    // Enable quarantine by setting the max percent to 0.05
-    Map<String, Object> strategyProperties =
-        Collections.singletonMap(PropertyKeys.HTTP_LB_QUARANTINE_MAX_PERCENT, 0.05);
-
     // Construct the QPS generator
     LoadBalancerSimulator.QPSGenerator qpsGenerator = new ConstantQPSGenerator(1000);
 
     // Create the simulator
     LoadBalancerSimulator loadBalancerSimulator = LoadBalancerSimulationBuilder.build(
-        "cluster-1", "foo", uris, strategyProperties, null, null, delayGenerator, qpsGenerator);
+        "cluster-1", "foo", uris, lbStrategyPropertiesWithQuarantine(), null, null, delayGenerator, qpsGenerator);
     URI expectedUri1 = LoadBalancerSimulationBuilder.getExpectedUri("test.qa1.com:1234", "foo");
 
     // Start the simulation
@@ -687,16 +651,12 @@ public class SimpleLoadBalancerDelayTest
     LoadBalancerSimulator.TimedValueGenerator<String, Long> delayGenerator = new DelayValueGenerator<>(delayMaps,
         DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS);
 
-    // Enable quarantine by setting the max percent to 0.05
-    Map<String, Object> strategyProperties =
-        Collections.singletonMap(PropertyKeys.HTTP_LB_QUARANTINE_MAX_PERCENT, 0.05);
-
     // Construct the QPS generator
     LoadBalancerSimulator.QPSGenerator qpsGenerator = new ConstantQPSGenerator(1000);
 
     // Create the simulator
     LoadBalancerSimulator loadBalancerSimulator = LoadBalancerSimulationBuilder.build(
-        "cluster-1", "foo", uris, strategyProperties, null, null, delayGenerator, qpsGenerator);
+        "cluster-1", "foo", uris, lbStrategyPropertiesWithQuarantine(), null, null, delayGenerator, qpsGenerator);
     URI expectedUri1 = LoadBalancerSimulationBuilder.getExpectedUri("test.qa1.com:1234", "foo");
 
     // Start the simulation
@@ -778,9 +738,6 @@ public class SimpleLoadBalancerDelayTest
     LoadBalancerSimulator.TimedValueGenerator<String, Long> delayGenerator = new DelayValueGenerator<>(delayMaps,
         DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS);
 
-    // Enable quarantine by setting the max percent to 0.05
-    Map<String, Object> strategyProperties =
-        Collections.singletonMap(PropertyKeys.HTTP_LB_QUARANTINE_MAX_PERCENT, 0.05);
     // check interval is 1000ms, so 10 checks will span across 2 check intervals
     // strategyProperties.put(PropertyKeys.HTTP_LB_QUARANTINE_CHECK_INTERVAL, "1000");
 
@@ -789,7 +746,7 @@ public class SimpleLoadBalancerDelayTest
 
     // Create the simulator
     LoadBalancerSimulator loadBalancerSimulator = LoadBalancerSimulationBuilder.build(
-        "cluster-1", "foo", uris, strategyProperties, null, null, delayGenerator, qpsGenerator);
+        "cluster-1", "foo", uris, lbStrategyPropertiesWithQuarantine(), null, null, delayGenerator, qpsGenerator);
     URI expectedUri1 = LoadBalancerSimulationBuilder.getExpectedUri("test.qa1.com:1234", "foo");
 
     // Start the simulation
@@ -865,16 +822,12 @@ public class SimpleLoadBalancerDelayTest
     LoadBalancerSimulator.TimedValueGenerator<String, Long> delayGenerator = new DelayValueGenerator<>(delayMaps,
         DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS);
 
-    // Enable quarantine by setting the max percent to 0.05
-    Map<String, Object> strategyProperties =
-        Collections.singletonMap(PropertyKeys.HTTP_LB_QUARANTINE_MAX_PERCENT, 0.05);
-
     // Construct the QPS generator
     LoadBalancerSimulator.QPSGenerator qpsGenerator = new ConstantQPSGenerator(1000);
 
     // Create the simulator
     LoadBalancerSimulator loadBalancerSimulator = LoadBalancerSimulationBuilder.build(
-        "cluster-1", "foo", uris, strategyProperties, null, null, delayGenerator, qpsGenerator);
+        "cluster-1", "foo", uris, lbStrategyPropertiesWithQuarantine(), null, null, delayGenerator, qpsGenerator);
     URI expectedUri1 = LoadBalancerSimulationBuilder.getExpectedUri("test.qa1.com:1234", "foo");
 
     // Start the simulation
@@ -949,16 +902,12 @@ public class SimpleLoadBalancerDelayTest
     LoadBalancerSimulator.TimedValueGenerator<String, Long> delayGenerator = new DelayValueGenerator<>(delayMaps,
         DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS);
 
-    // Enable quarantine by setting the max percent to 0.05
-    Map<String, Object> strategyProperties =
-        Collections.singletonMap(PropertyKeys.HTTP_LB_QUARANTINE_MAX_PERCENT, 0.05);
-
     // Construct the QPS generator
     LoadBalancerSimulator.QPSGenerator qpsGenerator = new ConstantQPSGenerator(1000);
 
     // Create the simulator
     LoadBalancerSimulator loadBalancerSimulator = LoadBalancerSimulationBuilder.build(
-        "cluster-1", "foo", uris, strategyProperties, null, null, delayGenerator, qpsGenerator);
+        "cluster-1", "foo", uris, lbStrategyPropertiesWithQuarantine(), null, null, delayGenerator, qpsGenerator);
     URI expectedUri1 = LoadBalancerSimulationBuilder.getExpectedUri("test.qa1.com:1234", "foo");
 
     // Start the simulation
@@ -1005,7 +954,7 @@ public class SimpleLoadBalancerDelayTest
     assertEquals(loadBalancerSimulator.getPoint("foo", DefaultPartitionAccessor.DEFAULT_PARTITION_ID,
         uri3), 1);
 
-    loadBalancerSimulator.runWait(DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS * 7);
+    loadBalancerSimulator.runWait(DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS * 8);
     printStates(loadBalancerSimulator);
     // uri1/uri3 should fully recovered by now
     assertEquals(loadBalancerSimulator.getPoint("foo", DefaultPartitionAccessor.DEFAULT_PARTITION_ID,
@@ -1045,6 +994,7 @@ public class SimpleLoadBalancerDelayTest
     // setting the event emitting interval to 10s vs 40s
     strategyProperties.put(PropertyKeys.HTTP_LB_LOW_EVENT_EMITTING_INTERVAL, "10000");
     strategyProperties.put(PropertyKeys.HTTP_LB_HIGH_EVENT_EMITTING_INTERVAL, "40000");
+    strategyProperties.put(PropertyKeys.HTTP_LB_HASH_CONFIG, HASH_CONFIG_MAP);
 
     // Construct the QPS generator
     LoadBalancerSimulator.QPSGenerator qpsGenerator = new ConstantQPSGenerator(2000);
@@ -1153,7 +1103,7 @@ public class SimpleLoadBalancerDelayTest
     loadBalancerSimulator.shutdown();
   }
 
-  @Test(groups = { "small", "back-end" }, enabled = false)
+  @Test(groups = { "small", "back-end" })
   public void loadBalancerD2MonitorWithQuarantineTest() throws Exception
   {
     String uri1 = "test.qa1.com:1234";
@@ -1175,6 +1125,7 @@ public class SimpleLoadBalancerDelayTest
     strategyProperties.put(PropertyKeys.HTTP_LB_LOW_EVENT_EMITTING_INTERVAL, "10000");
     strategyProperties.put(PropertyKeys.HTTP_LB_HIGH_EVENT_EMITTING_INTERVAL, "40000");
     strategyProperties.put(PropertyKeys.HTTP_LB_QUARANTINE_MAX_PERCENT, 0.05);
+    strategyProperties.put(PropertyKeys.HTTP_LB_HASH_CONFIG, HASH_CONFIG_MAP);
 
     // Construct the QPS generator
     LoadBalancerSimulator.QPSGenerator qpsGenerator = new ConstantQPSGenerator(2000);
@@ -1293,10 +1244,6 @@ public class SimpleLoadBalancerDelayTest
     ClusterProperties clusterProperties = new ClusterProperties(clusterName);
 
     List<String> prioritizedSchemes = Collections.singletonList("http");
-    // enable multi-probe consistent hashing
-    Map<String, Object> lbStrategyProperties = new HashMap<>();
-    // lbStrategyProperties.put(PropertyKeys.HTTP_LB_CONSISTENT_HASH_ALGORITHM, DegraderRingFactory.POINT_BASED_CONSISTENT_HASH);
-    lbStrategyProperties.put(PropertyKeys.HTTP_LB_RING_RAMP_FACTOR, "2.0");
     // set initial drop rate and slow start threshold
     Map<String, String> degraderProperties = new HashMap<>();
     degraderProperties.put(PropertyKeys.DEGRADER_INITIAL_DROP_RATE, "0.99");
@@ -1321,7 +1268,7 @@ public class SimpleLoadBalancerDelayTest
         clusterName,
         "/foo",
         Arrays.asList("degrader"),
-        lbStrategyProperties,
+        lbStrategyPropertiesWithSlowstart(),
         transportClientProperties,
         degraderProperties,
         prioritizedSchemes,
@@ -1378,9 +1325,6 @@ public class SimpleLoadBalancerDelayTest
     ClusterProperties clusterProperties = new ClusterProperties(clusterName);
 
     List<String> prioritizedSchemes = Collections.singletonList("http");
-    // enable multi-probe consistent hashing
-    Map<String, Object> lbStrategyProperties = new HashMap<>();
-    lbStrategyProperties.put(PropertyKeys.HTTP_LB_RING_RAMP_FACTOR, "2.0");
     // set initial drop rate and slow start threshold
     Map<String, String> degraderProperties = new HashMap<>();
     degraderProperties.put(PropertyKeys.DEGRADER_MIN_CALL_COUNT, "1");
@@ -1403,7 +1347,7 @@ public class SimpleLoadBalancerDelayTest
         clusterName,
         "/foo",
         Arrays.asList("degrader"),
-        lbStrategyProperties,
+        lbStrategyPropertiesWithSlowstart(),
         transportClientProperties,
         degraderProperties,
         prioritizedSchemes,
@@ -1450,10 +1394,6 @@ public class SimpleLoadBalancerDelayTest
     ClusterProperties clusterProperties = new ClusterProperties(clusterName);
 
     List<String> prioritizedSchemes = Collections.singletonList("http");
-    // enable multi-probe consistent hashing
-    Map<String, Object> lbStrategyProperties = new HashMap<>();
-    // lbStrategyProperties.put(PropertyKeys.HTTP_LB_CONSISTENT_HASH_ALGORITHM, DegraderRingFactory.MULTI_PROBE_CONSISTENT_HASH);
-    lbStrategyProperties.put(PropertyKeys.HTTP_LB_RING_RAMP_FACTOR, "2.0");
     // set initial drop rate and slow start threshold
     Map<String, String> degraderProperties = new HashMap<>();
     degraderProperties.put(PropertyKeys.DEGRADER_INITIAL_DROP_RATE, "0.99");
@@ -1472,7 +1412,7 @@ public class SimpleLoadBalancerDelayTest
         clusterName,
         "/foo",
         Arrays.asList("degrader"),
-        lbStrategyProperties,
+        lbStrategyPropertiesWithSlowstart(),
         transportClientProperties,
         degraderProperties,
         prioritizedSchemes,
@@ -1514,8 +1454,7 @@ public class SimpleLoadBalancerDelayTest
     printStates(loadBalancerSimulator);
   }
 
-  // TODO (SI-4985): This test has been flaky and needs to be fixed.
-  //@Test(groups = { "small", "back-end" })
+  @Test(groups = { "small", "back-end" })
   public void testLoadBalancerWithFastRecoveryAndSlowstartWithErrors() throws Exception
   {
     // Generate service, cluster and uri properties for d2
@@ -1531,9 +1470,6 @@ public class SimpleLoadBalancerDelayTest
     ClusterProperties clusterProperties = new ClusterProperties(clusterName);
 
     List<String> prioritizedSchemes = Collections.singletonList("http");
-    Map<String, Object> lbStrategyProperties = new HashMap<>();
-    // lbStrategyProperties.put(PropertyKeys.HTTP_LB_CONSISTENT_HASH_ALGORITHM, DegraderRingFactory.MULTI_PROBE_CONSISTENT_HASH);
-    lbStrategyProperties.put(PropertyKeys.HTTP_LB_RING_RAMP_FACTOR, "2.0");
     // set initial drop rate and slow start threshold
     Map<String, String> degraderProperties = new HashMap<>();
     degraderProperties.put(PropertyKeys.DEGRADER_INITIAL_DROP_RATE, "0.99");
@@ -1562,7 +1498,7 @@ public class SimpleLoadBalancerDelayTest
         clusterName,
         "/foo",
         Arrays.asList("degrader"),
-        lbStrategyProperties,
+        lbStrategyPropertiesWithSlowstart(),
         transportClientProperties,
         degraderProperties,
         prioritizedSchemes,
@@ -1590,8 +1526,8 @@ public class SimpleLoadBalancerDelayTest
 
     // no traffic to uri2, even though the points are increasing
     loadBalancerSimulator.runWait(DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS * 10);
-    assertTrue(loadBalancerSimulator.getPoint("foo", DefaultPartitionAccessor.DEFAULT_PARTITION_ID, uri2) >= 4 );
     printStates(loadBalancerSimulator);
+    assertTrue(loadBalancerSimulator.getPoint("foo", DefaultPartitionAccessor.DEFAULT_PARTITION_ID, uri2) >= 4 );
 
     // Getting traffic for uri2 -- kicked out due to errors
     loadBalancerSimulator.runWait(DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS * 4);
@@ -1603,7 +1539,7 @@ public class SimpleLoadBalancerDelayTest
     printStates(loadBalancerSimulator);
   }
 
-  @Test(groups = { "small", "back-end" }, enabled = false)
+  @Test(groups = { "small", "back-end" })
   public void testLoadBalancerWithFastRecovery() throws Exception
   {
     // Generate service, cluster and uri properties for d2
@@ -1620,10 +1556,6 @@ public class SimpleLoadBalancerDelayTest
     ClusterProperties clusterProperties = new ClusterProperties(clusterName);
 
     List<String> prioritizedSchemes = Collections.singletonList("http");
-    // enable multi-probe consistent hashing
-    Map<String, Object> lbStrategyProperties = new HashMap<>();
-    // lbStrategyProperties.put(PropertyKeys.HTTP_LB_CONSISTENT_HASH_ALGORITHM, DegraderRingFactory.MULTI_PROBE_CONSISTENT_HASH);
-    lbStrategyProperties.put(PropertyKeys.HTTP_LB_RING_RAMP_FACTOR, "2.0");
     // set initial drop rate and slow start threshold
     Map<String, String> degraderProperties = new HashMap<>();
     degraderProperties.put(PropertyKeys.DEGRADER_MIN_CALL_COUNT, "1");
@@ -1644,7 +1576,7 @@ public class SimpleLoadBalancerDelayTest
         clusterName,
         "/foo",
         Arrays.asList("degrader"),
-        lbStrategyProperties,
+        lbStrategyPropertiesWithSlowstart(),
         transportClientProperties,
         degraderProperties,
         prioritizedSchemes,
@@ -1714,6 +1646,25 @@ public class SimpleLoadBalancerDelayTest
     printStates(loadBalancerSimulator);
   }
 
+  private static Map<String, Object> lbStrategyPropertiesWithQuarantine()
+  {
+    // Enable quarantine by setting the max percent to 0.05
+    Map<String, Object> lbStrategyProperties = new HashMap<>();
+    lbStrategyProperties.put(PropertyKeys.HTTP_LB_QUARANTINE_MAX_PERCENT, 0.05);
+    lbStrategyProperties.put(PropertyKeys.HTTP_LB_HASH_CONFIG, HASH_CONFIG_MAP);
+
+    return lbStrategyProperties;
+  }
+
+  private static Map<String, Object> lbStrategyPropertiesWithSlowstart()
+  {
+    // Enable slowStart by setting ramp_factor > 1.0
+    Map<String, Object> lbStrategyProperties = new HashMap<>();
+    lbStrategyProperties.put(PropertyKeys.HTTP_LB_RING_RAMP_FACTOR, "2.0");
+    lbStrategyProperties.put(PropertyKeys.HTTP_LB_HASH_CONFIG, HASH_CONFIG_MAP);
+
+    return lbStrategyProperties;
+  }
 
   /**
      * LoadBalancerSimulationBuilder buildup the LoadBalancerSimulator
