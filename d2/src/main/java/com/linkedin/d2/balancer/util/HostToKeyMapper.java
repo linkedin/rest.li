@@ -229,4 +229,44 @@ public class HostToKeyMapper<K> implements HostSet
   {
     return _unmappedKeys;
   }
+
+  /**
+   * Convert results to MapKeyResult<URI, K> used by mapKeyV2. One the first host is used.
+   */
+  public MapKeyResult<URI, K> toMapKeyResult()
+  {
+    Map<URI, Collection<K>> mapResults = new HashMap<>();
+    _partitionInfoMap.forEach((k, v) -> {
+      if (!v.getHosts().isEmpty())
+      {
+        URI host = v.getHosts().get(0);
+        if (mapResults.containsKey(host))
+        {
+          mapResults.get(host).addAll(v.getKeys());
+        }
+        else
+        {
+          mapResults.put(host, new HashSet<>(v.getKeys()));
+        }
+      }
+    });
+
+    Set<MapKeyResult.UnmappedKey<K>> unmappedKeys = new HashSet<>();
+    _unmappedKeys.forEach(k -> {
+      switch (k.getErrorType())
+      {
+        case FAIL_TO_FIND_PARTITION:
+          unmappedKeys.add(new MapKeyResult.UnmappedKey<>(k.getKey(),
+              MapKeyResult.ErrorType.FAIL_TO_FIND_PARTITION));
+          break;
+        case NO_HOST_AVAILABLE_IN_PARTITION:
+          unmappedKeys.add(new MapKeyResult.UnmappedKey<>(k.getKey(),
+              MapKeyResult.ErrorType.NO_HOST_AVAILABLE_IN_PARTITION));
+          break;
+        default:
+          throw new IllegalArgumentException("unsupported Error Type: " + k.getErrorType());
+      }
+    });
+    return new MapKeyResult<>(mapResults, unmappedKeys);
+  }
 }

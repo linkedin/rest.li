@@ -18,6 +18,7 @@ import com.linkedin.util.clock.SettableClock;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -37,12 +38,22 @@ public class PartitionedLoadBalancerTestState implements LoadBalancerState
   List<SchemeStrategyPair> _orderedStrategies;
   PartitionAccessor _partitionAccessor;
   ConcurrentHashMap<URI, TrackerClient> _trackerClients;
+  Map<String, Object> _loadBalancerStrategyProperties;
 
   public PartitionedLoadBalancerTestState(String cluster, String service, String path, String strategyName,
                                    Map<URI,Map<Integer, PartitionData>> partitionDescriptions,
                                    List<SchemeStrategyPair> orderedStrategies,
                                    PartitionAccessor partitionAccessor)
   {
+    this(cluster, service, path, strategyName, partitionDescriptions, orderedStrategies, partitionAccessor, Collections.emptyMap());
+  }
+
+
+  public PartitionedLoadBalancerTestState(String cluster, String service, String path, String strategyName,
+      Map<URI,Map<Integer, PartitionData>> partitionDescriptions,
+      List<SchemeStrategyPair> orderedStrategies,
+      PartitionAccessor partitionAccessor, Map<String, Object> loadBalancerStrategyProperties)
+    {
     _cluster = cluster;
     _service = service;
     _path = path;
@@ -51,6 +62,7 @@ public class PartitionedLoadBalancerTestState implements LoadBalancerState
     _orderedStrategies = orderedStrategies;
     _partitionAccessor = partitionAccessor;
     _trackerClients = new ConcurrentHashMap<URI, TrackerClient>();
+    _loadBalancerStrategyProperties = loadBalancerStrategyProperties;
   }
 
   @Override
@@ -116,7 +128,8 @@ public class PartitionedLoadBalancerTestState implements LoadBalancerState
   @Override
   public LoadBalancerStateItem<ServiceProperties> getServiceProperties(String serviceName)
   {
-    ServiceProperties serviceProperties = new ServiceProperties(_service, _cluster, _path, Arrays.asList(_strategyName));
+    ServiceProperties serviceProperties = new ServiceProperties(_service, _cluster, _path, Arrays.asList(_strategyName),
+        _loadBalancerStrategyProperties);
     return new LoadBalancerStateItem<ServiceProperties>(serviceProperties, 1, 1);
   }
 

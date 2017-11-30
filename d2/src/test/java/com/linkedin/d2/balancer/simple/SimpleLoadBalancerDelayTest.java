@@ -56,7 +56,7 @@ public class SimpleLoadBalancerDelayTest
   private static final Logger _log = LoggerFactory.getLogger(SimpleLoadBalancerDelayTest.class);
   private static final Map<String, List<D2Monitor>> _d2MonitorMap = new HashMap<>();
   private static final Map<String, Object> HASH_CONFIG_MAP = Collections.singletonMap(
-      DegraderLoadBalancerStrategyV3.HASH_SEED, "123456789");
+      PropertyKeys.HASH_SEED, "123456789");
 
   @Test(groups = { "small", "back-end" })
   public void testLoadBalancerWithDelay() throws Exception

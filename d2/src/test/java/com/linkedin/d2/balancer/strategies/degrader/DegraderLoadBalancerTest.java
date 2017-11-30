@@ -1757,7 +1757,7 @@ public class DegraderLoadBalancerTest
 
     DegraderLoadBalancerStrategyV3 strategy = new DegraderLoadBalancerStrategyV3(
             new DegraderLoadBalancerStrategyConfig(
-                    5000, true, 100, DegraderLoadBalancerStrategyV3.HASH_METHOD_URI_REGEX,
+                    5000, true, 100, PropertyKeys.HASH_METHOD_URI_REGEX,
                     Collections.<String,Object>singletonMap(URIRegexHash.KEY_REGEXES,
                             Collections.singletonList("(.*)")), SystemClock.instance(),
                     DegraderLoadBalancerStrategyConfig.DEFAULT_INITIAL_RECOVERY_LEVEL,

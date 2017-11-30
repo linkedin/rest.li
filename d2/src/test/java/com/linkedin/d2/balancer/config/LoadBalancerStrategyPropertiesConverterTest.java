@@ -82,7 +82,7 @@ public class LoadBalancerStrategyPropertiesConverterTest
     loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS, updateIntervalMs.toString());
     loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_CLUSTER_MIN_CALL_COUNT_HIGH_WATER_MARK, minCallCountHighWaterMark.toString());
     loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_CLUSTER_MIN_CALL_COUNT_LOW_WATER_MARK, minCallCountLowWaterMark.toString());
-    loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_HASH_METHOD, DegraderLoadBalancerStrategyV3.HASH_METHOD_URI_REGEX);
+    loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_HASH_METHOD, PropertyKeys.HASH_METHOD_URI_REGEX);
     loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_HASHRING_POINT_CLEANUP_RATE, hashringPointCleanupRate.toString());
     loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_CONSISTENT_HASH_ALGORITHM, DegraderRingFactory.MULTI_PROBE_CONSISTENT_HASH);
     loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_CONSISTENT_HASH_NUM_PROBES, numProbes.toString());
