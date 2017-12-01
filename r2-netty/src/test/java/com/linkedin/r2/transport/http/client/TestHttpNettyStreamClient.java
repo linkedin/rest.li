@@ -651,7 +651,7 @@ public class TestHttpNettyStreamClient
 
       // This timeout needs to be significantly larger than the getTimeout of the netty client;
       // we're testing that the client will generate its own timeout
-      cb.get(30, TimeUnit.SECONDS);
+      cb.get(60, TimeUnit.SECONDS);
       Assert.fail("Get was supposed to time out");
     }
     catch (TimeoutException e)
