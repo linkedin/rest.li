@@ -1,7 +1,12 @@
+17.0.2
+------
+
 17.0.1
 ------
 (RB=1168627)
 Re-enable delay tests with seeded randomHash
+(RB=1171477)
+Ensure publisher is set after zk connection is established
 
 17.0.0
 ------

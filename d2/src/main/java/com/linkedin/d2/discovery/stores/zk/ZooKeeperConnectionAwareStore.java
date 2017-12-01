@@ -48,6 +48,7 @@ public class ZooKeeperConnectionAwareStore<TYPE, STORE extends ZooKeeperStore<TY
   private ZooKeeperStore<TYPE> _wrappedZkStore;
   private ZooKeeperStoreBuilder<STORE> _zkStoreBuilder;
   private PropertyEventBus<TYPE> _bus;
+  private boolean _pendingSetPublisher = false;
 
   private ConcurrentLinkedQueue<Runnable> _afterStartupCallbacks = new ConcurrentLinkedQueue<>();
 
@@ -67,6 +68,10 @@ public class ZooKeeperConnectionAwareStore<TYPE, STORE extends ZooKeeperStore<TY
     if (_wrappedZkStore != null)
     {
       bus.setPublisher(_wrappedZkStore);
+    }
+    else
+    {
+      _pendingSetPublisher = true;
     }
   }
 
@@ -169,6 +174,11 @@ public class ZooKeeperConnectionAwareStore<TYPE, STORE extends ZooKeeperStore<TY
     {
       _zkStoreBuilder.setZkConnection(_zkPersistentConnection.getZKConnection());
       _wrappedZkStore = _zkStoreBuilder.build();
+      if (_pendingSetPublisher)
+      {
+        _pendingSetPublisher = false;
+        _bus.setPublisher(_wrappedZkStore);
+      }
       _startupCompleted = true;
       startStore();
     }
