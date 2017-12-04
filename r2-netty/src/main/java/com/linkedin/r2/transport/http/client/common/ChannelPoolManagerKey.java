@@ -83,7 +83,7 @@ public class ChannelPoolManagerKey
    */
   public String getName()
   {
-    return _poolStatsNamePrefix + " " + String.valueOf(uniqueKeyBasedOnProperties());
+    return _poolStatsNamePrefix + " " + String.valueOf(uniqueKeyBasedOnProperties()) + " " + (isSsl() ? "SSL" : "");
   }
 
   /**

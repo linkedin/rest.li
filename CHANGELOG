@@ -1,5 +1,11 @@
+17.0.3
+------
+
+
 17.0.2
 ------
+(RB=1172849)
+Shutting down ssl channelPool and fixing race condition
 
 17.0.1
 ------

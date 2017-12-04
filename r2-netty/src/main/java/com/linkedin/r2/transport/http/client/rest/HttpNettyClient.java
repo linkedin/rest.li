@@ -161,6 +161,16 @@ public class HttpNettyClient extends AbstractNettyClient<RestRequest, RestRespon
           // invoked more than once, so it is safe to invoke it unconditionally.
           errorResponse(callback,
             new TimeoutException("Operation did not complete before shutdown"));
+
+          // The channel is usually release in two places: timeout or in the netty pipeline.
+          // Since we call the callback above, the timeout associated will be never invoked. On top of that
+          // we never send the request to the pipeline (due to the return statement), and nobody is releasing the channel
+          // until the channel is forcefully closed by the shutdownTimeout. Therefore we have to release it here
+          AsyncPool<Channel> pool = channel.attr(ChannelPoolHandler.CHANNEL_POOL_ATTR_KEY).getAndSet(null);
+          if (pool != null)
+          {
+            pool.put(channel);
+          }
           return;
         }
 

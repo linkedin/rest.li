@@ -17,6 +17,7 @@ package com.linkedin.r2.transport.http.client.common;
 */
 
 import com.linkedin.common.callback.Callback;
+import com.linkedin.common.callback.MultiCallback;
 import com.linkedin.common.util.None;
 import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.Request;
@@ -36,12 +37,8 @@ import com.linkedin.r2.transport.http.client.InvokedOnceTransportCallback;
 import com.linkedin.r2.transport.http.client.PoolStats;
 import com.linkedin.r2.transport.http.client.TimeoutTransportCallback;
 import com.linkedin.r2.transport.http.common.HttpBridge;
-import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.util.concurrent.GlobalEventExecutor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -54,6 +51,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -74,7 +73,6 @@ public abstract class AbstractNettyClient<Req extends Request, Res extends Respo
 
   private final ChannelPoolManager _channelPoolManager;
   private final ChannelPoolManager _sslChannelPoolManager;
-  protected final ChannelGroup _allChannels;
 
   protected final AtomicReference<State> _state = new AtomicReference<>(State.RUNNING);
 
@@ -115,12 +113,12 @@ public abstract class AbstractNettyClient<Req extends Request, Res extends Respo
     _scheduler = executor;
     _requestTimeout = requestTimeout;
     _shutdownTimeout = shutdownTimeout;
-    _sslChannelPoolManager = sslChannelPoolManager;
     _requestTimeoutMessage = "Exceeded request timeout of " + _requestTimeout + "ms";
     _jmxManager = jmxManager;
     _channelPoolManager = channelPoolManager;
-    _allChannels = _channelPoolManager.getAllChannels();
+    _sslChannelPoolManager = sslChannelPoolManager;
     _jmxManager.onProviderCreate(_channelPoolManager);
+    _jmxManager.onProviderCreate(_sslChannelPoolManager);
   }
 
   /* Constructor for test purpose ONLY. */
@@ -137,7 +135,6 @@ public abstract class AbstractNettyClient<Req extends Request, Res extends Respo
     // test client doesn't support ssl connections
     _sslChannelPoolManager = _channelPoolManager;
     _jmxManager.onProviderCreate(_channelPoolManager);
-    _allChannels = _channelPoolManager.getAllChannels();
   }
 
   /**
@@ -272,7 +269,7 @@ public abstract class AbstractNettyClient<Req extends Request, Res extends Respo
     LOG.info("Shutdown requested");
     if (_state.compareAndSet(State.RUNNING, State.SHUTTING_DOWN)) {
       LOG.info("Shutting down");
-      _channelPoolManager.shutdown(
+      MultiCallback poolShutdown = new MultiCallback(
         new Callback<None>()
         {
           private void releaseCallbacks()
@@ -294,11 +291,18 @@ public abstract class AbstractNettyClient<Req extends Request, Res extends Respo
             releaseCallbacks();
             callback.onSuccess(result);
           }
-        },
+        }, 2);
+
+      _channelPoolManager.shutdown(poolShutdown,
+        () -> _state.set(State.REQUESTS_STOPPING),
+        () -> _state.set(State.SHUTDOWN),
+        _shutdownTimeout);
+      _sslChannelPoolManager.shutdown(poolShutdown,
         () -> _state.set(State.REQUESTS_STOPPING),
         () -> _state.set(State.SHUTDOWN),
         _shutdownTimeout);
       _jmxManager.onProviderShutdown(_channelPoolManager);
+      _jmxManager.onProviderShutdown(_sslChannelPoolManager);
     } else {
       callback.onError(new IllegalStateException("Shutdown has already been requested."));
     }
