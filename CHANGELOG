@@ -1,6 +1,11 @@
-17.0.3
+17.0.4
 ------
 
+
+17.0.3
+------
+(RB=1173612)
+Update MaskTree#getOperations method to handle array range attributes.
 
 17.0.2
 ------

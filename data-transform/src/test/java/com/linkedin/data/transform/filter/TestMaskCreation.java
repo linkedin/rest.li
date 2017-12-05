@@ -30,6 +30,7 @@ import com.linkedin.data.transform.filter.request.MaskTree;
 import java.io.IOException;
 
 import java.nio.file.Path;
+import java.util.Map;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -100,6 +101,11 @@ public class TestMaskCreation
     expectedMaskMap.put("parent", parentMap);
 
     Assert.assertEquals(mask.getDataMap(), expectedMaskMap);
+
+    Map<PathSpec, MaskOperation> operations = mask.getOperations();
+    Assert.assertEquals(operations.size(), 2);
+    Assert.assertEquals(operations.get(childPath), MaskOperation.POSITIVE_MASK_OP);
+    Assert.assertEquals(operations.get(grandChildPath), MaskOperation.POSITIVE_MASK_OP);
   }
 
   @Test
@@ -123,6 +129,10 @@ public class TestMaskCreation
     expectedMaskMap.put("parent", parentMap);
 
     Assert.assertEquals(mask.getDataMap(), expectedMaskMap);
+
+    Map<PathSpec, MaskOperation> operations = mask.getOperations();
+    Assert.assertEquals(operations.size(), 1);
+    Assert.assertEquals(operations.get(grandChildPath), MaskOperation.POSITIVE_MASK_OP);
   }
 
   @Test
@@ -148,6 +158,11 @@ public class TestMaskCreation
     expectedMaskMap.put("parent", parentMap);
 
     Assert.assertEquals(mask.getDataMap(), expectedMaskMap);
+
+    Map<PathSpec, MaskOperation> operations = mask.getOperations();
+    Assert.assertEquals(operations.size(), 2);
+    Assert.assertEquals(operations.get(childPath), MaskOperation.POSITIVE_MASK_OP);
+    Assert.assertEquals(operations.get(grandChildrenPath), MaskOperation.POSITIVE_MASK_OP);
   }
 
   @Test
@@ -168,6 +183,14 @@ public class TestMaskCreation
     expectedMaskMap.put("parent", parentMap);
 
     Assert.assertEquals(mask.getDataMap(), expectedMaskMap);
+
+    // Create a copy of the childPath without the random attribute as the generated mask won't include those attributes
+    PathSpec childPathCopy = new PathSpec(childPath.getPathComponents().toArray(new String[0]));
+    childPathCopy.setAttribute(PathSpec.ATTR_ARRAY_COUNT, 5);
+
+    Map<PathSpec, MaskOperation> operations = mask.getOperations();
+    Assert.assertEquals(operations.size(), 1);
+    Assert.assertEquals(operations.get(childPathCopy), MaskOperation.POSITIVE_MASK_OP);
   }
 
   @Test

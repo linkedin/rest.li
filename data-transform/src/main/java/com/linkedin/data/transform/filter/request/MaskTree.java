@@ -31,6 +31,8 @@ import com.linkedin.data.transform.filter.MaskComposition;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+
 
 /**
  * @author Josh Walker
@@ -147,6 +149,12 @@ public class MaskTree
     for (Map.Entry<String, Object> entry : data.entrySet())
     {
       String segment = Escaper.unescapePathSegment(entry.getKey());
+      // Ignore if the segment is $start or $count, as we have already taken care of the array ranges
+      if (FilterConstants.START.equals(segment) || FilterConstants.COUNT.equals(segment))
+      {
+        continue;
+      }
+
       PathSpec subpath = new PathSpec(path.getPathComponents(), segment);
       Object value = entry.getValue();
       if (value instanceof Integer)
@@ -166,13 +174,39 @@ public class MaskTree
       }
       else if (value.getClass() == DataMap.class)
       {
-        getOperationsImpl((DataMap) value, subpath, result);
+        DataMap subMask = (DataMap) value;
+
+        Optional<PathSpec> pathWithAttributes = addArrayRangeAttributes(subMask, subpath);
+        pathWithAttributes.ifPresent(p -> result.put(p, MaskOperation.POSITIVE_MASK_OP));
+
+        getOperationsImpl(subMask, subpath, result);
       }
       else
       {
         throw new IllegalStateException("invalid mask tree");
       }
     }
+  }
+
+  /**
+   * If the specified mask contains array range attributes, add them to the pathSpec parameter and return the updated
+   * pathSpec. If the mask doesn't have any array range attributes return an empty Optional.
+   */
+  private Optional<PathSpec> addArrayRangeAttributes(DataMap mask, PathSpec pathSpec)
+  {
+    Object start = mask.get(FilterConstants.START);
+    if (start != null)
+    {
+      pathSpec.setAttribute(PathSpec.ATTR_ARRAY_START, start);
+    }
+
+    Object count = mask.get(FilterConstants.COUNT);
+    if (count != null)
+    {
+      pathSpec.setAttribute(PathSpec.ATTR_ARRAY_COUNT, count);
+    }
+
+    return (start != null || count != null) ? Optional.of(pathSpec) : Optional.empty();
   }
 
   @Override

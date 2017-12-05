@@ -174,7 +174,7 @@ public class PathSpec
   @Override
   public int hashCode()
   {
-    return _path.hashCode();
+    return Objects.hash(_path, _attributes);
   }
 
   private final List<String> _path;
