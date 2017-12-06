@@ -91,15 +91,15 @@ public class FileFormatDataSchemaParser {
                 if (!entry.isDirectory() && entry.getName().endsWith(_schemaParserFactory.getLanguageExtension()))
                 {
                   parseJarEntry(jarFile, entry, result);
+                  result.getSourceFiles().add(sourceFile);
                 }
               }
             }
             else
             {
               parseFile(sourceFile, result);
+              result.getSourceFiles().add(sourceFile);
             }
-
-            result.getSourceFiles().add(sourceFile);
           }
         }
         else

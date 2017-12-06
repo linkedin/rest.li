@@ -1,6 +1,7 @@
 17.0.4
 ------
-
+(RB=1175234)
+Fix SchemaParser to handle jar files as sources. Bug was introduced during the refactor to support pdl schemas.
 
 17.0.3
 ------

@@ -126,6 +126,12 @@ public class DataSchemaParser
             }
           }
         }
+        else if (sourceFile.getName().endsWith(".jar"))
+        {
+          // Add jar files to each extension's source list. The file based parser for each extension will extract the
+          // jar and process only files that match the extension.
+          byExtension.values().forEach(files -> files.add(sourceFile.getAbsolutePath()));
+        }
         else
         {
           String ext = FilenameUtils.getExtension(sourceFile.getName());
