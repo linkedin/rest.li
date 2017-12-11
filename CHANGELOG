@@ -1,5 +1,7 @@
 17.0.5
 ------
+(RB=1178474)
+Update quickstart service to use the latest maven release.
 
 17.0.4
 ------
