@@ -137,7 +137,7 @@ public class CodeUtil
    * @param member {@link UnionTemplateSpec.Member} for the member
    * @return Capitalized union member name
    */
-  static String getUnionMemberName(UnionTemplateSpec.Member member)
+  public static String getUnionMemberName(UnionTemplateSpec.Member member)
   {
     return (member.getAlias() != null) ?
         capitalize(member.getAlias()) :

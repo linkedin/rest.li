@@ -2,6 +2,8 @@
 ------
 (RB=1178474)
 Update quickstart service to use the latest maven release.
+(RB=1179112)
+Make CodeUtil.getUnionMemberName(UnionTemplate.Member) public to make it accessible for codegen in other languages.
 
 17.0.4
 ------
