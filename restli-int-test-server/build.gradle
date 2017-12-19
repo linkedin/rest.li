@@ -15,6 +15,7 @@ dependencies {
   compile project(':restli-server')
   compile project(':restli-server-extras')
   compile project(':restli-common')
+  compile project(':li-java9-flow')
   compile externalDependency.guava
   compile externalDependency.commonsLang
   compile externalDependency.javaxInject

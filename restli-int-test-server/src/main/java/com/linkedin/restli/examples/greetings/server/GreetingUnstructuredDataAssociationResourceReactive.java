@@ -17,10 +17,15 @@
 package com.linkedin.restli.examples.greetings.server;
 
 
+import com.linkedin.common.callback.Callback;
 import com.linkedin.data.ByteString;
+import com.linkedin.java.util.concurrent.Flow;
 import com.linkedin.r2.message.stream.entitystream.ByteStringWriter;
+import com.linkedin.r2.message.stream.entitystream.Writer;
 import com.linkedin.restli.common.CompoundKey;
-import com.linkedin.restli.server.ReactiveDataWriter;
+import com.linkedin.restli.common.streaming.FlowBridge;
+import com.linkedin.restli.server.UnstructuredDataReactiveResult;
+import com.linkedin.restli.server.annotations.CallbackParam;
 import com.linkedin.restli.server.annotations.Key;
 import com.linkedin.restli.server.annotations.RestLiAssociation;
 import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataAssociationResourceReactiveTemplate;
@@ -45,11 +50,10 @@ import static com.linkedin.restli.examples.greetings.server.GreetingUnstructured
 public class GreetingUnstructuredDataAssociationResourceReactive extends UnstructuredDataAssociationResourceReactiveTemplate
 {
   @Override
-  public ReactiveDataWriter get(CompoundKey key)
+  public void get(CompoundKey key, @CallbackParam Callback<UnstructuredDataReactiveResult> callback)
   {
-    ByteStringWriter goodWriter = new ByteStringWriter(ByteString.copy(UNSTRUCTURED_DATA_BYTES));
-    ReactiveDataWriter goodReactiveWriter = new ReactiveDataWriter(goodWriter);
-    goodReactiveWriter.setContentType(MIME_TYPE);
-    return goodReactiveWriter;
+    Writer writer = new ByteStringWriter(ByteString.copy(UNSTRUCTURED_DATA_BYTES));
+    Flow.Publisher<ByteString> publisher = FlowBridge.toPublisher(writer);
+    callback.onSuccess(new UnstructuredDataReactiveResult(publisher, MIME_TYPE));
   }
 }

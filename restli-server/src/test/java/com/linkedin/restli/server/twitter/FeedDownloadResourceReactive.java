@@ -17,10 +17,14 @@
 package com.linkedin.restli.server.twitter;
 
 
+import com.linkedin.common.callback.Callback;
 import com.linkedin.data.ByteString;
+import com.linkedin.java.util.concurrent.Flow;
 import com.linkedin.r2.message.stream.entitystream.WriteHandle;
 import com.linkedin.r2.message.stream.entitystream.Writer;
-import com.linkedin.restli.server.ReactiveDataWriter;
+import com.linkedin.restli.common.streaming.FlowBridge;
+import com.linkedin.restli.server.UnstructuredDataReactiveResult;
+import com.linkedin.restli.server.annotations.CallbackParam;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataCollectionResourceReactiveTemplate;
 import com.linkedin.util.ArgumentUtil;
@@ -36,12 +40,11 @@ public class FeedDownloadResourceReactive extends UnstructuredDataCollectionReso
   public static final ByteString CONTENT = ByteString.unsafeWrap("hello world".getBytes());
 
   @Override
-  public ReactiveDataWriter get(Long key)
+  public void get(Long key, @CallbackParam Callback<UnstructuredDataReactiveResult> callback)
   {
     MultiByteStringWriter writer = new MultiByteStringWriter(CONTENT);
-    ReactiveDataWriter reactiveDataWriter = new ReactiveDataWriter(writer);
-    reactiveDataWriter.setContentType(CONTENT_TYPE);
-    return reactiveDataWriter;
+    Flow.Publisher<ByteString> publisher = FlowBridge.toPublisher(writer);
+    callback.onSuccess(new UnstructuredDataReactiveResult(publisher, CONTENT_TYPE));
   }
 
   /*

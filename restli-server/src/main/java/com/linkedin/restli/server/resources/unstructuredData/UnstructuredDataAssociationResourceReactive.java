@@ -17,9 +17,11 @@
 package com.linkedin.restli.server.resources.unstructuredData;
 
 
+import com.linkedin.common.callback.Callback;
 import com.linkedin.restli.common.CompoundKey;
-import com.linkedin.restli.server.ReactiveDataWriter;
+import com.linkedin.restli.server.UnstructuredDataReactiveResult;
 import com.linkedin.restli.server.RoutingException;
+import com.linkedin.restli.server.annotations.CallbackParam;
 import com.linkedin.restli.server.resources.BaseResource;
 
 
@@ -29,12 +31,12 @@ import com.linkedin.restli.server.resources.BaseResource;
 public interface UnstructuredDataAssociationResourceReactive extends BaseResource, KeyUnstructuredDataResource<CompoundKey>
 {
   /**
-   * Respond with an unstructured data response in reactive streaming.
+   * Respond an unstructured data with reactive streaming.
    *
-   * @param key the key of the data
-   * @return the response writer
+   * @param key the key of the data requested
+   * @param callback The response callback
    */
-  default ReactiveDataWriter get(CompoundKey key)
+  default void get(CompoundKey key, Callback<UnstructuredDataReactiveResult> callback)
   {
     throw new RoutingException("'get' is not implemented", 400);
   }

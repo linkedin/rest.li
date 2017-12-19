@@ -56,8 +56,6 @@ import com.linkedin.restli.server.BatchCreateRequest;
 import com.linkedin.restli.server.BatchDeleteRequest;
 import com.linkedin.restli.server.BatchPatchRequest;
 import com.linkedin.restli.server.BatchUpdateRequest;
-import com.linkedin.restli.server.ReactiveDataWriter;
-import com.linkedin.restli.server.UnstructuredDataWriter;
 import com.linkedin.restli.server.CollectionResult;
 import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.NoMetadata;
@@ -66,6 +64,7 @@ import com.linkedin.restli.server.PathKeys;
 import com.linkedin.restli.server.ResourceConfigException;
 import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.ResourceLevel;
+import com.linkedin.restli.server.UnstructuredDataWriter;
 import com.linkedin.restli.server.annotations.Action;
 import com.linkedin.restli.server.annotations.ActionParam;
 import com.linkedin.restli.server.annotations.AlternativeKey;
@@ -93,11 +92,11 @@ import com.linkedin.restli.server.annotations.RestAnnotations;
 import com.linkedin.restli.server.annotations.RestLiActions;
 import com.linkedin.restli.server.annotations.RestLiAssociation;
 import com.linkedin.restli.server.annotations.RestLiAttachmentsParam;
-import com.linkedin.restli.server.annotations.UnstructuredDataWriterParam;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.annotations.RestLiSimpleResource;
 import com.linkedin.restli.server.annotations.RestLiTemplate;
 import com.linkedin.restli.server.annotations.RestMethod;
+import com.linkedin.restli.server.annotations.UnstructuredDataWriterParam;
 import com.linkedin.restli.server.annotations.ValidatorParam;
 import com.linkedin.restli.server.resources.ComplexKeyResource;
 import com.linkedin.restli.server.resources.ComplexKeyResourceAsync;
@@ -2489,7 +2488,6 @@ public final class RestLiAnnotationReader
   {
     boolean promise = Promise.class.isAssignableFrom(method.getReturnType());
     boolean task = Task.class.isAssignableFrom(method.getReturnType());
-    boolean reactiveWriter = ReactiveDataWriter.class.isAssignableFrom(method.getReturnType());
     boolean callback = getParamIndex(method, Callback.class) != -1;
     boolean isVoid = method.getReturnType().equals(Void.TYPE);
 
@@ -2511,10 +2509,6 @@ public final class RestLiAnnotationReader
     else if (promise)
     {
       return InterfaceType.PROMISE;
-    }
-    if (reactiveWriter)
-    {
-      return InterfaceType.REACTIVE;
     }
     else
     {

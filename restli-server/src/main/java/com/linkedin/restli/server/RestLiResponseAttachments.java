@@ -42,7 +42,7 @@ public class RestLiResponseAttachments
 {
   private final MultiPartMIMEWriter.Builder _multiPartMimeWriterBuilder;
   private UnstructuredDataWriter _unstructuredDataWriter;
-  private ReactiveDataWriter _reactiveDataWriter;
+  private UnstructuredDataReactiveResult _reactiveResult;
 
   /**
    * Builder to create an instance of RestLiResponseAttachments.
@@ -51,7 +51,7 @@ public class RestLiResponseAttachments
   {
     private final MultiPartMIMEWriter.Builder _multiPartMimeWriterBuilder;
     private UnstructuredDataWriter _unstructuredDataWriter;
-    private ReactiveDataWriter _reactiveDataWriter;
+    private UnstructuredDataReactiveResult _reactiveResult;
 
     /**
      * Create a RestLiResponseAttachments Builder.
@@ -92,8 +92,6 @@ public class RestLiResponseAttachments
 
     /**
      * Append a {@link UnstructuredDataWriter} to be used for sending a unstructured data response.
-     *
-     * @param dataSourceIterator
      * @return the builder to continue building.
      */
     public Builder appendUnstructuredDataWriter(final UnstructuredDataWriter unstructuredDataWriter)
@@ -103,14 +101,13 @@ public class RestLiResponseAttachments
     }
 
     /**
-     * Append a {@link ReactiveDataWriter} to be used for streaming a unstructured data response reactively.
-     *
-     * @param dataSourceIterator
+     * Append a {@link com.linkedin.java.util.concurrent.Flow.Publisher} to be used for streaming a unstructured data
+     * response reactively.
      * @return the builder to continue building.
      */
-    public Builder appendReactiveDataWriter(final ReactiveDataWriter reactiveDataWriter)
+    public Builder appendUnstructuredDataReactiveResult(final UnstructuredDataReactiveResult reactiveResult)
     {
-      _reactiveDataWriter = reactiveDataWriter;
+      _reactiveResult = reactiveResult;
       return this;
     }
 
@@ -128,7 +125,7 @@ public class RestLiResponseAttachments
   {
     _multiPartMimeWriterBuilder = builder._multiPartMimeWriterBuilder;
     _unstructuredDataWriter = builder._unstructuredDataWriter;
-    _reactiveDataWriter = builder._reactiveDataWriter;
+    _reactiveResult = builder._reactiveResult;
   }
 
   /**
@@ -155,10 +152,12 @@ public class RestLiResponseAttachments
 
   /**
    * Internal use only for rest.li framework.
+   *
+   * Returns a {@link com.linkedin.java.util.concurrent.Flow.Publisher} that produce unstructured data response reactively.
+   * Returns null if this is not a streaming response.
    */
-  public ReactiveDataWriter getReactiveDataWriter()
+  public UnstructuredDataReactiveResult getUnstructuredDataReactiveResult()
   {
-    return _reactiveDataWriter;
+    return _reactiveResult;
   }
-
 }

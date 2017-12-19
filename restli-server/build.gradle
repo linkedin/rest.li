@@ -3,6 +3,7 @@ dependencies {
   compile project(':data-transform')
   compile project(':r2-core')
   compile project(':li-jersey-uri')
+  compile project(':li-java9-flow')
   compile project(':restli-common')
   compile project(':pegasus-common')
   compile project(':multipart-mime')
@@ -20,6 +21,7 @@ dependencies {
   testCompile project(path: ':restli-internal-testutils', configuration: 'testArtifacts')
   testCompile project(':restli-server-testutils')
   testCompile project(path: ':multipart-mime', configuration: 'testArtifacts')
+  testCompile project(':li-java9-flow')
   testCompile externalDependency.guava
   testCompile externalDependency.testng
   testCompile externalDependency.easymock

@@ -19,6 +19,7 @@ package com.linkedin.restli.server;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.data.ByteString;
+import com.linkedin.java.util.concurrent.Flow;
 import com.linkedin.multipart.MultiPartMIMEReader;
 import com.linkedin.multipart.MultiPartMIMEReaderCallback;
 import com.linkedin.multipart.MultiPartMIMEStreamResponseFactory;
@@ -48,6 +49,7 @@ import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
 import com.linkedin.restli.common.attachments.RestLiAttachmentReaderException;
+import com.linkedin.restli.common.streaming.FlowBridge;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.AttachmentUtils;
 import com.linkedin.restli.internal.common.HeaderUtil;
@@ -777,33 +779,25 @@ public class RestLiServer implements RestRequestHandler, StreamRequestHandler
     {
       if (responseAttachments != null)
       {
-        if (responseAttachments.getReactiveDataWriter() != null)
+        if (responseAttachments.getUnstructuredDataReactiveResult() != null)
         {
           /* This is an unstructured data response in reactive */
 
-          ReactiveDataWriter reactiveWriter = responseAttachments.getReactiveDataWriter();
-
-          EntityStream entityStream = EntityStreams.newEntityStream(reactiveWriter.getWriter());
+          UnstructuredDataReactiveResult publisherWrapper = responseAttachments.getUnstructuredDataReactiveResult();
+          Flow.Publisher<ByteString> publisher = publisherWrapper.getPublisher();
+          String contentType = publisherWrapper.getContentType();
 
           StreamResponseBuilder builder = new StreamResponseBuilder();
           builder.setCookies(result.getCookies());
           builder.setStatus(result.getStatus());
-
-          if (reactiveWriter.getContentType() != null)
+          builder.setHeaders(result.getHeaders());
+          if (contentType != null)
           {
-            // The copy is required because result.getHeaders() returns an unmodifiable map
-            Map<String, String> updatedHeaders = new HashMap<String, String>();
-            updatedHeaders.putAll(result.getHeaders());
-            updatedHeaders.put(RestConstants.HEADER_CONTENT_TYPE, reactiveWriter.getContentType());
-            builder.setHeaders(updatedHeaders);
-          }
-          else
-          {
-            builder.setHeaders(result.getHeaders());
+            builder.addHeaderValue(RestConstants.HEADER_CONTENT_TYPE, contentType);
           }
 
+          EntityStream entityStream = FlowBridge.fromPublisher(publisher);
           StreamResponse response = builder.build(entityStream);
-
           _streamResponseCallback.onSuccess(response);
         }
         else if (responseAttachments.getUnstructuredDataWriter() != null)
@@ -812,31 +806,30 @@ public class RestLiServer implements RestRequestHandler, StreamRequestHandler
 
           UnstructuredDataWriter writer = responseAttachments.getUnstructuredDataWriter();
 
-          // OutputStream must be ByteArrayOutputStream
           if (!(writer.getOutputStream() instanceof ByteArrayOutputStream))
           {
             _streamResponseCallback.onError(new RestLiInternalException("OutputStream must be ByteArrayOutputStream"));
           }
-
-          // Content-Type is required
-          if (result.getHeaders().get(RestConstants.HEADER_CONTENT_TYPE) == null)
+          else if (result.getHeaders().get(RestConstants.HEADER_CONTENT_TYPE) == null)
           {
             _streamResponseCallback.onError(new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, "Content-Type is missing."));
           }
+          else
+          {
+            ByteArrayOutputStream outputStream = (ByteArrayOutputStream) writer.getOutputStream();
+            byte[] bytes = outputStream.toByteArray();
+            ByteString byteString = ByteString.unsafeWrap(bytes);
+            Writer byteStringWriter = new ByteStringWriter(byteString);
+            EntityStream entityStream = EntityStreams.newEntityStream(byteStringWriter);
 
-          ByteArrayOutputStream outputStream = (ByteArrayOutputStream) writer.getOutputStream();
-          byte[] bytes = outputStream.toByteArray();
-          ByteString byteString = ByteString.unsafeWrap(bytes);
-          Writer byteStringWriter = new ByteStringWriter(byteString);
-          EntityStream entityStream = EntityStreams.newEntityStream(byteStringWriter);
+            StreamResponseBuilder builder = new StreamResponseBuilder();
+            builder.setCookies(result.getCookies());
+            builder.setStatus(result.getStatus());
+            builder.setHeaders(result.getHeaders());
+            StreamResponse response = builder.build(entityStream);
 
-          StreamResponseBuilder builder = new StreamResponseBuilder();
-          builder.setCookies(result.getCookies());
-          builder.setStatus(result.getStatus());
-          builder.setHeaders(result.getHeaders());
-          StreamResponse response = builder.build(entityStream);
-
-          _streamResponseCallback.onSuccess(response);
+            _streamResponseCallback.onSuccess(response);
+          }
         }
         else if (responseAttachments.getMultiPartMimeWriterBuilder().getCurrentSize() > 0)
         {

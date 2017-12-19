@@ -27,6 +27,7 @@ import static com.linkedin.restli.examples.greetings.server.GreetingUnstructured
 import static com.linkedin.restli.examples.greetings.server.GreetingUnstructuredDataUtils.MIME_TYPE;
 import static com.linkedin.restli.examples.greetings.server.GreetingUnstructuredDataUtils.UNSTRUCTURED_DATA_BYTES;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNull;
 
 
 /**
@@ -60,11 +61,27 @@ public class TestGreetingUnstructuredDataResourcesReactive extends UnstructuredD
     };
   }
 
+  @DataProvider(name = "goodNullContentTypeURLs")
+  private static Object[][] goodNullContentTypeURLs()
+  {
+    return new Object[][] {
+      { "/reactiveGreetingCollectionUnstructuredData/goodNullContentType" }
+    };
+  }
+
   @DataProvider(name = "internalErrorURLs")
   private static Object[][] internalErrorURLs()
   {
     return new Object[][] {
       { "/reactiveGreetingCollectionUnstructuredData/exception" }
+    };
+  }
+
+  @DataProvider(name = "callbackErrorURLs")
+  private static Object[][] callbackErrorURLs()
+  {
+    return new Object[][] {
+      { "/reactiveGreetingCollectionUnstructuredData/callbackError" }
     };
   }
 
@@ -92,6 +109,17 @@ public class TestGreetingUnstructuredDataResourcesReactive extends UnstructuredD
     });
   }
 
+  @Test(dataProvider = "goodNullContentTypeURLs")
+  public void testGetGoodNullContentType(String resourceURL)
+    throws Throwable
+  {
+    sendGet(resourceURL, (conn) ->
+    {
+      assertEquals(conn.getResponseCode(), 200);
+      assertNull(conn.getHeaderField(RestConstants.HEADER_CONTENT_TYPE));
+      assertUnstructuredDataResponse(conn.getInputStream(), UNSTRUCTURED_DATA_BYTES);
+    });
+  }
   @Test(dataProvider = "goodInlineURLs")
   public void testGetGoodInline(String resourceURL)
     throws Throwable
@@ -102,6 +130,15 @@ public class TestGreetingUnstructuredDataResourcesReactive extends UnstructuredD
       assertEquals(conn.getHeaderField(RestConstants.HEADER_CONTENT_TYPE), MIME_TYPE);
       assertEquals(conn.getHeaderField(HEADER_CONTENT_DISPOSITION), CONTENT_DISPOSITION_VALUE);
       assertUnstructuredDataResponse(conn.getInputStream(), UNSTRUCTURED_DATA_BYTES);
+    });
+  }
+
+  @Test(dataProvider = "callbackErrorURLs")
+  public void testCallbackError(String resourceURL)
+    throws Throwable
+  {
+    sendGet(resourceURL, (conn) -> {
+      assertEquals(conn.getResponseCode(), 500);
     });
   }
 

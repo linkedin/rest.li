@@ -306,7 +306,7 @@ public class TestRestLiServer
                                                                                        .build(EntityStreams.emptyStream());
 
     final FeedDownloadResourceReactive resource = getMockResource(FeedDownloadResourceReactive.class);
-    resource.get(eq(1L));
+    resource.get(eq(1L), anyObject());
     EasyMock.expectLastCall().andDelegateTo(new FeedDownloadResourceReactive()).once();
     replay(resource);
 

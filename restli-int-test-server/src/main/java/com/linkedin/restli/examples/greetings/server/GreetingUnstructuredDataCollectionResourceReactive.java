@@ -17,16 +17,22 @@
 package com.linkedin.restli.examples.greetings.server;
 
 
+import com.linkedin.common.callback.Callback;
 import com.linkedin.data.ByteString;
+import com.linkedin.java.util.concurrent.Flow;
 import com.linkedin.r2.message.stream.entitystream.ByteStringWriter;
 import com.linkedin.r2.message.stream.entitystream.WriteHandle;
 import com.linkedin.r2.message.stream.entitystream.Writer;
 import com.linkedin.restli.common.HttpStatus;
-import com.linkedin.restli.server.ReactiveDataWriter;
+import com.linkedin.restli.common.streaming.FlowBridge;
+import com.linkedin.restli.server.UnstructuredDataReactiveResult;
 import com.linkedin.restli.server.RestLiResponseDataException;
 import com.linkedin.restli.server.RestLiServiceException;
+import com.linkedin.restli.server.annotations.CallbackParam;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataCollectionResourceReactiveTemplate;
+
+import javax.naming.NoPermissionException;
 
 import static com.linkedin.restli.common.RestConstants.HEADER_CONTENT_DISPOSITION;
 import static com.linkedin.restli.examples.greetings.server.GreetingUnstructuredDataUtils.CONTENT_DISPOSITION_VALUE;
@@ -41,39 +47,47 @@ import static com.linkedin.restli.examples.greetings.server.GreetingUnstructured
 public class GreetingUnstructuredDataCollectionResourceReactive extends UnstructuredDataCollectionResourceReactiveTemplate<String>
 {
   @Override
-  public ReactiveDataWriter get(String key)
+  public void get(String key, @CallbackParam Callback<UnstructuredDataReactiveResult> callback)
   {
-    /*
-     * In these examples, the writer is simply backed by a static data source. However, in real-life use cases, the writer
-     * is typically backed by a "reactive"-style data source that supports fetching the data partially such as FileInputStream
-     */
+    if (key.equals("callbackError"))
+    {
+      callback.onError(new NoPermissionException("missing access permission"));
+      return;
+    }
+
+    Writer writer = chooseGreetingWriter(key);
+    Flow.Publisher<ByteString> publisher = FlowBridge.toPublisher(writer);
+
+    String contentType;
+    if (key.equals("goodNullContentType"))
+    {
+      contentType = null;
+    }
+    else
+    {
+      contentType = MIME_TYPE;
+    }
+    UnstructuredDataReactiveResult result = new UnstructuredDataReactiveResult(publisher, contentType);
+    callback.onSuccess(result);
+  }
+
+  /**
+   * Choose a writer based on the test key
+   */
+  private Writer chooseGreetingWriter(String key)
+  {
     switch (key)
     {
       case "good":
-        ByteStringWriter goodWriter = new ByteStringWriter(ByteString.copy(UNSTRUCTURED_DATA_BYTES));
-        ReactiveDataWriter goodReactiveWriter = new ReactiveDataWriter(goodWriter);
-        goodReactiveWriter.setContentType(MIME_TYPE);
-        return goodReactiveWriter;
+      case "goodNullContentType":
+        return new ByteStringWriter(ByteString.copy(UNSTRUCTURED_DATA_BYTES));
       case "goodMultiWrites":
-        MultiByteStringWriter multiWriter = new MultiByteStringWriter(ByteString.copy(UNSTRUCTURED_DATA_BYTES));
-        ReactiveDataWriter reactiveWriter = new ReactiveDataWriter(multiWriter);
-        reactiveWriter.setContentType(MIME_TYPE);
-        return reactiveWriter;
+        return new MultiByteStringWriter(ByteString.copy(UNSTRUCTURED_DATA_BYTES));
       case "goodInline":
-        ByteStringWriter goodInlineWriter = new ByteStringWriter(ByteString.copy(UNSTRUCTURED_DATA_BYTES));
         getContext().setResponseHeader(HEADER_CONTENT_DISPOSITION, CONTENT_DISPOSITION_VALUE);
-        ReactiveDataWriter goodReactiveInlineWriter = new ReactiveDataWriter(goodInlineWriter);
-        goodReactiveInlineWriter.setContentType(MIME_TYPE);
-        return goodReactiveInlineWriter;
-      case "missingContentType":
-        ByteStringWriter fineWriter = new ByteStringWriter(ByteString.copy(UNSTRUCTURED_DATA_BYTES));
-        ReactiveDataWriter missingContentTypeWriter = new ReactiveDataWriter(fineWriter);
-        return missingContentTypeWriter;
+        return new ByteStringWriter(ByteString.copy(UNSTRUCTURED_DATA_BYTES));
       case "bad":
-        BadWriter badWriter = new BadWriter();
-        ReactiveDataWriter badReactiveWriter = new ReactiveDataWriter(badWriter);
-        badReactiveWriter.setContentType(MIME_TYPE);
-        return badReactiveWriter;
+        return new BadWriter();
       case "exception":
         throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, "internal service exception");
       default:

@@ -18,7 +18,9 @@ package com.linkedin.restli.server;
 
 
 import com.linkedin.data.ByteString;
+import com.linkedin.java.util.concurrent.Flow;
 import com.linkedin.r2.message.stream.entitystream.ByteStringWriter;
+import com.linkedin.restli.common.streaming.FlowBridge;
 import com.linkedin.restli.internal.server.ResourceContextImpl;
 import com.linkedin.restli.internal.server.util.RestLiSyntaxException;
 import com.linkedin.restli.internal.testutils.RestLiTestAttachmentDataSource;
@@ -66,7 +68,7 @@ public class TestRestLiResponseAttachments
     RestLiResponseAttachments attachments = multipleAttachmentsBuilder.build();
     Assert.assertEquals(attachments.getMultiPartMimeWriterBuilder().getCurrentSize(), 2);
     Assert.assertNull(attachments.getUnstructuredDataWriter());
-    Assert.assertNull(attachments.getReactiveDataWriter());
+    Assert.assertNull(attachments.getUnstructuredDataReactiveResult());
   }
 
   @Test
@@ -79,11 +81,14 @@ public class TestRestLiResponseAttachments
   }
 
   @Test
-  public void testRestLiResponseAttachmentsForReactiveWriter()
+  public void testRestLiResponseAttachmentsForPublisher()
     throws RestLiSyntaxException
   {
-    ReactiveDataWriter writer = new ReactiveDataWriter(new ByteStringWriter(ByteString.empty()));
-    final RestLiResponseAttachments attachments = new RestLiResponseAttachments.Builder().appendReactiveDataWriter(writer).build();
-    Assert.assertEquals(attachments.getReactiveDataWriter(), writer);
+    ByteStringWriter writer = new ByteStringWriter(ByteString.empty());
+    Flow.Publisher<ByteString> publisher = FlowBridge.toPublisher(writer);
+    UnstructuredDataReactiveResult publisherWrapper = new UnstructuredDataReactiveResult(publisher, "contentType");
+    final RestLiResponseAttachments attachments = new RestLiResponseAttachments.Builder().appendUnstructuredDataReactiveResult(publisherWrapper).build();
+    Assert.assertEquals(attachments.getUnstructuredDataReactiveResult(), publisherWrapper);
+    Assert.assertEquals(attachments.getUnstructuredDataReactiveResult().getPublisher(), publisher);
   }
 }
