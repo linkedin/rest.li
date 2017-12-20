@@ -1,5 +1,11 @@
-17.0.6
+18.0.1
 ------
+
+
+18.0.0
+------
+(RB=1170654)
+Updated unstructured data streaming to use Java 9 Flow APIs
 
 17.0.5
 ------
