@@ -3,6 +3,7 @@ package com.linkedin.d2.balancer.util;
 import com.linkedin.util.clock.Clock;
 import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
+import org.slf4j.Marker;
 
 
 /**
@@ -11,245 +12,542 @@ import org.slf4j.Logger;
  * messages within that duration will be ignored.
  */
 
-public class RateLimitedLogger
+public class RateLimitedLogger implements Logger
 {
   private static final long INIT_TIME = -1;
 
-  private final Logger _logger;
+  private final Logger _loggerImpl;
   private final long _logRate;
   private final Clock _clock;
 
   private final AtomicLong _lastLog = new AtomicLong(INIT_TIME);
 
-  public RateLimitedLogger(Logger logger, long logRate, Clock clock)
+  public RateLimitedLogger(Logger loggerImpl, long logRate, Clock clock)
   {
-    _logger = logger;
+    _loggerImpl = loggerImpl;
     _logRate = logRate;
     _clock = clock;
   }
 
-  public boolean isTraceEnabled()
+  @Override
+  public String getName()
   {
-    return _logger.isTraceEnabled();
+    return _loggerImpl.getName();
   }
 
+  @Override
+  public boolean isTraceEnabled()
+  {
+    return _loggerImpl.isTraceEnabled();
+  }
+
+  @Override
   public void trace(String msg)
   {
     if (logAllowed())
     {
-      _logger.trace(msg);
+      _loggerImpl.trace(msg);
     }
   }
 
+  @Override
   public void trace(String format, Object[] argArray)
   {
     if (logAllowed())
     {
-      _logger.trace(format, argArray);
+      _loggerImpl.trace(format, argArray);
     }
   }
 
+  @Override
   public void trace(String msg, Throwable t)
   {
     if (logAllowed())
     {
-      _logger.trace(msg, t);
+      _loggerImpl.trace(msg, t);
     }
   }
 
+  @Override
   public void trace(String format, Object obj)
   {
     if (logAllowed())
     {
-      _logger.trace(format, obj);
+      _loggerImpl.trace(format, obj);
     }
   }
 
+  @Override
   public void trace(String format, Object obj1, Object obj2)
   {
     if (logAllowed())
     {
-      _logger.trace(format, obj1, obj2);
+      _loggerImpl.trace(format, obj1, obj2);
     }
   }
 
-  public boolean isDebugEnabled()
+  @Override
+  public boolean isTraceEnabled(Marker marker)
   {
-    return _logger.isDebugEnabled();
+    return _loggerImpl.isTraceEnabled(marker);
   }
 
+  @Override
+  public void trace(Marker marker, String msg)
+  {
+    if (logAllowed())
+    {
+      _loggerImpl.trace(marker, msg);
+    }
+  }
+
+  @Override
+  public void trace(Marker marker, String format, Object arg)
+  {
+    if (logAllowed())
+    {
+      _loggerImpl.trace(marker, format, arg);
+    }
+  }
+
+  @Override
+  public void trace(Marker marker, String format, Object arg1, Object arg2)
+  {
+    if (logAllowed())
+    {
+      _loggerImpl.trace(marker, format, arg1, arg2);
+    }
+  }
+
+  @Override
+  public void trace(Marker marker, String format, Object[] argArray)
+  {
+    if (logAllowed())
+    {
+      _loggerImpl.trace(marker, format, argArray);
+    }
+  }
+
+  @Override
+  public void trace(Marker marker, String msg, Throwable t)
+  {
+    if (logAllowed())
+    {
+      _loggerImpl.trace(marker, msg, t);
+    }
+  }
+
+  @Override
+  public boolean isDebugEnabled()
+  {
+    return _loggerImpl.isDebugEnabled();
+  }
+
+  @Override
   public void debug(String msg)
   {
     if (logAllowed())
     {
-      _logger.debug(msg);
+      _loggerImpl.debug(msg);
     }
   }
 
+  @Override
   public void debug(String format, Object[] argArray)
   {
     if (logAllowed())
     {
-      _logger.debug(format, argArray);
+      _loggerImpl.debug(format, argArray);
     }
   }
 
+  @Override
   public void debug(String msg, Throwable t)
   {
     if (logAllowed())
     {
-      _logger.debug(msg, t);
+      _loggerImpl.debug(msg, t);
     }
   }
 
+  @Override
   public void debug(String format, Object obj)
   {
     if (logAllowed())
     {
-      _logger.debug(format, obj);
+      _loggerImpl.debug(format, obj);
     }
   }
 
+  @Override
   public void debug(String format, Object obj1, Object obj2)
   {
     if (logAllowed())
     {
-      _logger.debug(format, obj1, obj2);
+      _loggerImpl.debug(format, obj1, obj2);
     }
   }
 
-  public boolean isInfoEnabled()
+  @Override
+  public boolean isDebugEnabled(Marker marker)
   {
-    return _logger.isInfoEnabled();
+    return _loggerImpl.isDebugEnabled(marker);
   }
 
+
+  @Override
+  public void debug(Marker marker, String msg)
+  {
+    if (logAllowed())
+    {
+      _loggerImpl.debug(marker, msg);
+    }
+  }
+
+  @Override
+  public void debug(Marker marker, String format, Object arg)
+  {
+    if (logAllowed())
+    {
+      _loggerImpl.debug(marker, format, arg);
+    }
+  }
+
+  @Override
+  public void debug(Marker marker, String format, Object arg1, Object arg2)
+  {
+    if (logAllowed())
+    {
+      _loggerImpl.debug(marker, format, arg1, arg2);
+    }
+  }
+
+  @Override
+  public void debug(Marker marker, String format, Object[] argArray)
+  {
+    if (logAllowed())
+    {
+      _loggerImpl.debug(marker, format, argArray);
+    }
+  }
+
+  @Override
+  public void debug(Marker marker, String msg, Throwable t)
+  {
+    if (logAllowed())
+    {
+      _loggerImpl.debug(marker, msg, t);
+    }
+  }
+
+
+  @Override
+  public boolean isInfoEnabled()
+  {
+    return _loggerImpl.isInfoEnabled();
+  }
+
+  @Override
   public void info(String msg)
   {
     if (logAllowed())
     {
-      _logger.info(msg);
+      _loggerImpl.info(msg);
     }
   }
 
+  @Override
   public void info(String format, Object[] argArray)
   {
     if (logAllowed())
     {
-      _logger.info(format, argArray);
+      _loggerImpl.info(format, argArray);
     }
   }
 
+  @Override
   public void info(String msg, Throwable t)
   {
     if (logAllowed())
     {
-      _logger.info(msg, t);
+      _loggerImpl.info(msg, t);
     }
   }
 
+  @Override
   public void info(String format, Object obj)
   {
     if (logAllowed())
     {
-      _logger.info(format, obj);
+      _loggerImpl.info(format, obj);
     }
   }
 
+  @Override
   public void info(String format, Object obj1, Object obj2)
   {
     if (logAllowed())
     {
-      _logger.info(format, obj1, obj2);
+      _loggerImpl.info(format, obj1, obj2);
     }
   }
 
-  public boolean isWarnEnabled()
+  @Override
+  public boolean isInfoEnabled(Marker marker)
   {
-    return _logger.isWarnEnabled();
+    return _loggerImpl.isInfoEnabled(marker);
   }
 
+
+  @Override
+  public void info(Marker marker, String msg)
+  {
+    if (logAllowed())
+    {
+      _loggerImpl.info(marker, msg);
+    }
+  }
+
+  @Override
+  public void info(Marker marker, String format, Object arg)
+  {
+    if (logAllowed())
+    {
+      _loggerImpl.info(marker, format, arg);
+    }
+  }
+
+  @Override
+  public void info(Marker marker, String format, Object arg1, Object arg2)
+  {
+    if (logAllowed())
+    {
+      _loggerImpl.info(marker, format, arg1, arg2);
+    }
+  }
+
+  @Override
+  public void info(Marker marker, String format, Object[] argArray)
+  {
+    if (logAllowed())
+    {
+      _loggerImpl.info(marker, format, argArray);
+    }
+  }
+
+  @Override
+  public void info(Marker marker, String msg, Throwable t)
+  {
+    if (logAllowed())
+    {
+      _loggerImpl.info(marker, msg, t);
+    }
+  }
+
+
+  @Override
+  public boolean isWarnEnabled()
+  {
+    return _loggerImpl.isWarnEnabled();
+  }
+
+  @Override
   public void warn(String msg)
   {
     if (logAllowed())
     {
-      _logger.warn(msg);
+      _loggerImpl.warn(msg);
     }
   }
 
+  @Override
   public void warn(String format, Object[] argArray)
   {
     if (logAllowed())
     {
-      _logger.warn(format, argArray);
+      _loggerImpl.warn(format, argArray);
     }
   }
 
+  @Override
   public void warn(String msg, Throwable t)
   {
     if (logAllowed())
     {
-      _logger.warn(msg, t);
+      _loggerImpl.warn(msg, t);
     }
   }
 
+  @Override
   public void warn(String format, Object obj)
   {
     if (logAllowed())
     {
-      _logger.warn(format, obj);
+      _loggerImpl.warn(format, obj);
     }
   }
 
+  @Override
   public void warn(String format, Object obj1, Object obj2)
   {
     if (logAllowed())
     {
-      _logger.warn(format, obj1, obj2);
+      _loggerImpl.warn(format, obj1, obj2);
     }
   }
 
-  public boolean isErrorEnabled()
+
+  @Override
+  public boolean isWarnEnabled(Marker marker)
   {
-    return _logger.isErrorEnabled();
+    return _loggerImpl.isWarnEnabled(marker);
   }
 
+  @Override
+  public void warn(Marker marker, String msg)
+  {
+    if (logAllowed())
+    {
+      _loggerImpl.warn(marker, msg);
+    }
+  }
+
+  @Override
+  public void warn(Marker marker, String format, Object arg)
+  {
+    if (logAllowed())
+    {
+      _loggerImpl.warn(marker, format, arg);
+    }
+  }
+
+  @Override
+  public void warn(Marker marker, String format, Object arg1, Object arg2)
+  {
+    if (logAllowed())
+    {
+      _loggerImpl.warn(marker, format, arg1, arg2);
+    }
+  }
+
+  @Override
+  public void warn(Marker marker, String format, Object[] argArray)
+  {
+    if (logAllowed())
+    {
+      _loggerImpl.warn(marker, format, argArray);
+    }
+  }
+
+  @Override
+  public void warn(Marker marker, String msg, Throwable t)
+  {
+    if (logAllowed())
+    {
+      _loggerImpl.warn(marker, msg, t);
+    }
+  }
+
+
+  @Override
+  public boolean isErrorEnabled()
+  {
+    return _loggerImpl.isErrorEnabled();
+  }
+
+  @Override
   public void error(String msg)
   {
     if (logAllowed())
     {
-      _logger.error(msg);
+      _loggerImpl.error(msg);
     }
   }
 
+  @Override
   public void error(String format, Object[] argArray)
   {
     if (logAllowed())
     {
-      _logger.error(format, argArray);
+      _loggerImpl.error(format, argArray);
     }
   }
 
+  @Override
   public void error(String msg, Throwable t)
   {
     if (logAllowed())
     {
-      _logger.error(msg, t);
+      _loggerImpl.error(msg, t);
     }
   }
 
+  @Override
   public void error(String format, Object obj)
   {
     if (logAllowed())
     {
-      _logger.error(format, obj);
+      _loggerImpl.error(format, obj);
     }
   }
 
+  @Override
   public void error(String format, Object obj1, Object obj2)
   {
     if (logAllowed())
     {
-      _logger.error(format, obj1, obj2);
+      _loggerImpl.error(format, obj1, obj2);
+    }
+  }
+
+  @Override
+  public boolean isErrorEnabled(Marker marker)
+  {
+    return _loggerImpl.isErrorEnabled(marker);
+  }
+
+  @Override
+  public void error(Marker marker, String msg)
+  {
+    if (logAllowed())
+    {
+      _loggerImpl.error(marker, msg);
+    }
+  }
+
+  @Override
+  public void error(Marker marker, String format, Object arg)
+  {
+    if (logAllowed())
+    {
+      _loggerImpl.error(marker, format, arg);
+    }
+  }
+
+  @Override
+  public void error(Marker marker, String format, Object arg1, Object arg2)
+  {
+    if (logAllowed())
+    {
+      _loggerImpl.error(marker, format, arg1, arg2);
+    }
+  }
+
+  @Override
+  public void error(Marker marker, String format, Object[] argArray)
+  {
+    if (logAllowed())
+    {
+      _loggerImpl.error(marker, format, argArray);
+    }
+  }
+
+  @Override
+  public void error(Marker marker, String msg, Throwable t)
+  {
+    if (logAllowed())
+    {
+      _loggerImpl.error(marker, msg, t);
     }
   }
 

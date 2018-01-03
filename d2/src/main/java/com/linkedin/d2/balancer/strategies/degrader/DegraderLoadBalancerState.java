@@ -91,7 +91,7 @@ public class DegraderLoadBalancerState
                   _serviceName, _degraderProperties,
                   0, 0, 0,
                   new HashMap<>(), new HashMap<>(),
-                  null),
+                  null, 0),
           _degraderStateListenerFactories.stream()
               .map(factory -> factory.create(partitionId, _config)).collect(Collectors.toList()));
 

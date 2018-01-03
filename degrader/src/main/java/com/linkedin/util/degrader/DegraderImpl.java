@@ -122,7 +122,7 @@ import com.linkedin.common.util.ConfigHelper;
 public class DegraderImpl implements Degrader
 {
   public static final String MODULE = Degrader.class.getName();
-  private static final Logger log = LoggerFactory.getLogger(MODULE);
+  private static final Logger LOG = LoggerFactory.getLogger(MODULE);
 
   public static final Clock    DEFAULT_CLOCK = SystemClock.instance();
   public static final Boolean  DEFAULT_LOG_ENABLED = false;
@@ -162,6 +162,7 @@ public class DegraderImpl implements Degrader
   private final AtomicLong _countTotal = new AtomicLong();
   private final AtomicLong _noOverrideDropCountTotal = new AtomicLong();
   private final AtomicLong _droppedCountTotal = new AtomicLong();
+  private final Logger _rateLimitedLogger;
 
   public DegraderImpl(Config config)
   {
@@ -171,6 +172,7 @@ public class DegraderImpl implements Degrader
     _callTracker = config.getCallTracker();
     _callTrackerStats = _callTracker.getCallStats();
     _maxDropDuration = config.getMaxDropDuration();
+    _rateLimitedLogger = config.getLogger();
 
     reset();
 
@@ -214,7 +216,7 @@ public class DegraderImpl implements Degrader
 
   public synchronized void setConfig(Config config)
   {
-    if (config.getName() != _config.getName() ||
+    if (!config.getName().equals(_config.getName()) ||
         config.getCallTracker() != _config.getCallTracker() ||
         config.getClock() != _config.getClock())
     {
@@ -276,6 +278,18 @@ public class DegraderImpl implements Degrader
     return checkDrop(ThreadLocalRandom.current().nextDouble());
   }
 
+  /**
+   * choose logger to use: always use the default logger if isHigh() return true, otherwise go with rateLimitedLogger
+   */
+  public Logger getLogger()
+  {
+    if (isHigh())
+    {
+      return LOG;
+    }
+    return _rateLimitedLogger;
+  }
+
   public synchronized Stats getStats()
   {
     checkStale(_clock.currentTimeMillis());
@@ -323,6 +337,7 @@ public class DegraderImpl implements Degrader
     snapLatency();
     snapOutstandingLatency();
 
+    Logger log = getLogger();
     if (_config.isLogEnabled())
     {
       log.info(_config.getName() + " " + _callTrackerStats);
@@ -664,6 +679,7 @@ public class DegraderImpl implements Degrader
     protected int _overrideMinCallCount = DEFAULT_OVERRIDE_MIN_CALL_COUNT;
     protected double _initialDropRate = DEFAULT_INITIAL_DROP_RATE;
     protected double _slowStartThreshold = DEFAULT_SLOW_START_THRESHOLD;
+    protected Logger _logger = LoggerFactory.getLogger(ImmutableConfig.class);
 
     public ImmutableConfig()
     {
@@ -692,6 +708,7 @@ public class DegraderImpl implements Degrader
       this._overrideMinCallCount = config._overrideMinCallCount;
       this._initialDropRate = config._initialDropRate;
       this._slowStartThreshold = config._slowStartThreshold;
+      this._logger = config._logger;
     }
 
     public String getName()
@@ -797,6 +814,11 @@ public class DegraderImpl implements Degrader
     public double getSlowStartThreshold()
     {
       return _slowStartThreshold;
+    }
+
+    public Logger getLogger()
+    {
+      return _logger;
     }
   }
 
@@ -915,6 +937,11 @@ public class DegraderImpl implements Degrader
     public void setSlowStartThreshold(double slowStartThreshold)
     {
       _slowStartThreshold = slowStartThreshold;
+    }
+
+    public void setLogger(Logger logger)
+    {
+      _logger = logger;
     }
   }
 }

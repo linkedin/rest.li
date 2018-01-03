@@ -37,6 +37,7 @@ import com.linkedin.d2.balancer.strategies.degrader.DegraderConfigFactory;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyConfig;
 import com.linkedin.d2.balancer.util.ClientFactoryProvider;
 import com.linkedin.d2.balancer.util.LoadBalancerUtil;
+import com.linkedin.d2.balancer.util.RateLimitedLogger;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessorFactory;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessorRegistry;
@@ -82,6 +83,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
 {
   private static final Logger                                                            _log =
                                                                                                   LoggerFactory.getLogger(SimpleLoadBalancerState.class);
+  private static final int DEGRADER_RATELIMITEDLOG_RATE_MS = 10000;
 
   private final UriLoadBalancerSubscriber _uriSubscriber;
   private final ClusterLoadBalancerSubscriber _clusterSubscriber;
@@ -923,9 +925,12 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     // each tracker clients that we instantiate here. If there's no such information, then we'll instantiate
     // each tracker clients with default configuration
     DegraderImpl.Config config = null;
+    Clock clk = SystemClock.instance();
+
     if (serviceProperties.getDegraderProperties() != null && !serviceProperties.getDegraderProperties().isEmpty())
     {
       config = DegraderConfigFactory.toDegraderConfig(serviceProperties.getDegraderProperties());
+      config.setLogger(new RateLimitedLogger(_log, DEGRADER_RATELIMITEDLOG_RATE_MS, clk));
     }
     else
     {
@@ -933,7 +938,6 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
           + " for service name = " + serviceName + " so we'll set config to default");
     }
 
-    Clock clk = SystemClock.instance();
     if (serviceProperties.getLoadBalancerStrategyProperties() != null)
     {
       Map<String, Object> loadBalancerStrategyProperties =

@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 
 /**
@@ -73,6 +74,7 @@ public class PartitionDegraderLoadBalancerState
   private final long        _currentClusterCallCount;
   private final long        _currentClusterDropCount;
   private final long        _currentClusterErrorCount;
+  private final int         _unHealthyClientNumber;
 
 
   // We consider this PartitionDegraderLoadBalancerState to be initialized when after an updatePartitionState.
@@ -109,6 +111,7 @@ public class PartitionDegraderLoadBalancerState
     _quarantineMap = state._quarantineMap;
     _quarantineHistory = state._quarantineHistory;
     _trackerClients = state._trackerClients;
+    _unHealthyClientNumber = state._unHealthyClientNumber;
   }
 
   public PartitionDegraderLoadBalancerState(long clusterGenerationId,
@@ -127,7 +130,8 @@ public class PartitionDegraderLoadBalancerState
       long currentClusterErrorCount,
       Map<TrackerClient, DegraderLoadBalancerQuarantine> quarantineMap,
       Map<TrackerClient, DegraderLoadBalancerQuarantine> quarantineHistory,
-      Set<TrackerClient> trackerClients)
+      Set<TrackerClient> trackerClients,
+      int unHealthyClientNumber)
   {
     _clusterGenerationId = clusterGenerationId;
     _ringFactory = ringFactory;
@@ -154,6 +158,7 @@ public class PartitionDegraderLoadBalancerState
     _quarantineMap = quarantineMap;
     _quarantineHistory = quarantineHistory;
     _trackerClients = trackerClients;
+    _unHealthyClientNumber = unHealthyClientNumber;
   }
 
   public Map<String, String> getDegraderProperties()
@@ -245,6 +250,11 @@ public class PartitionDegraderLoadBalancerState
     return _currentClusterErrorCount;
   }
 
+  public int getUnHealthyClientNumber()
+  {
+    return _unHealthyClientNumber;
+  }
+
   public Set<TrackerClient> getTrackerClients()
   {
     return Collections.unmodifiableSet(_trackerClients == null ? Collections.emptySet() : _trackerClients);
@@ -253,6 +263,8 @@ public class PartitionDegraderLoadBalancerState
   @Override
   public String toString()
   {
+    final int LOG_RECOVERY_MAP_HOSTS = 10;
+
     return "DegraderLoadBalancerState [_serviceName="+ _serviceName
         + ", _currentClusterCallCount=" + _currentClusterCallCount
         + ", _currentAvgClusterLatency=" + _currentAvgClusterLatency
@@ -260,9 +272,12 @@ public class PartitionDegraderLoadBalancerState
         + ", _currentClusterDropCount=" + _currentClusterDropCount
         + ", _currentClusterErrorCount=" + _currentClusterErrorCount
         + ", _clusterGenerationId=" + _clusterGenerationId
+        + ", _unHealthyClientNumber=" + _unHealthyClientNumber
         + ", _strategy=" + _strategy
         + ", _numHostsInCluster=" + (getTrackerClients().size())
-        + ", _recoveryMap=" + _recoveryMap
+        + ", _recoveryMap={" + _recoveryMap.entrySet().stream().limit(LOG_RECOVERY_MAP_HOSTS)
+        .map(entry -> entry.getKey() + ":" + entry.getValue()).collect(Collectors.joining(","))
+        + (_recoveryMap.size() <= LOG_RECOVERY_MAP_HOSTS ? "}" : "...(total " + _recoveryMap.size() + ")}")
         + ", _quarantineList=" + _quarantineMap.values()
         + "]";
   }

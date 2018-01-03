@@ -241,8 +241,7 @@ public class TrackerClient implements LoadBalancerClient
   @Override
   public String toString()
   {
-    return "TrackerClient [_callTracker=" + _callTracker
-        + ", _uri=" + _uri + ", _partitionStates=" + _partitionStates + ", _wrappedClient=" + _wrappedClient + "]";
+    return "TrackerClient [_uri=" + _uri + ", _partitionStates=" + _partitionStates + "]";
   }
 
   private class TrackerClientRestCallback implements TransportCallback<RestResponse>
@@ -436,8 +435,8 @@ public class TrackerClient implements LoadBalancerClient
       StringBuilder sb = new StringBuilder();
       sb.append("{_partitionData = ");
       sb.append(_partitionData);
-      sb.append("_degrader = " + _degrader);
-      sb.append("degraderMinCallCount = " + _degraderControl.getMinCallCount());
+      sb.append(", _degrader = " + _degrader);
+      sb.append(", degraderMinCallCount = " + _degraderControl.getMinCallCount());
       sb.append("}");
       return sb.toString();
     }

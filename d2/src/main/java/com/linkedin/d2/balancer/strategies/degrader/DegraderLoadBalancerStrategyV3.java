@@ -376,30 +376,58 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
                         PartitionDegraderLoadBalancerState newState,
                         int partitionId,
                         DegraderLoadBalancerStrategyConfig config,
-                        List<TrackerClientUpdater> trackerClientUpdaters)
+                        List<TrackerClient> unHealthyClients,
+                        boolean clientDegraded)
   {
     Map<URI, Integer> pointsMap = newState.getPointsMap();
-    List<TrackerClient> unhealthyClients = getUnhealthyTrackerClients(trackerClientUpdaters,
-        pointsMap, config, partitionId);
+    final int LOG_UNHEALTHY_CLIENT_NUMBERS = 10;
+
     if (_log.isDebugEnabled())
     {
       _log.debug("Strategy updated: partitionId= " + partitionId + ", newState=" + newState +
           ", unhealthyClients = ["
-          + (unhealthyClients.stream().map(client -> getClientStats(client, partitionId, pointsMap, config))
+          + (unHealthyClients.stream().map(client -> getClientStats(client, partitionId, pointsMap, config))
           .collect(Collectors.joining(",")))
           + "], config=" + config +
           ", HashRing coverage=" + newState.getRing());
     }
-    else if (!isNewStateHealthy(newState, config, unhealthyClients) ||
-          !isOldStateTheSameAsNewState(oldState, newState))
+    else if (allowToLog(oldState, newState, clientDegraded))
     {
       _log.info("Strategy updated: partitionId= " + partitionId + ", newState=" + newState +
           ", unhealthyClients = ["
-          + (unhealthyClients.stream().map(client -> getClientStats(client, partitionId, pointsMap, config))
-          .collect(Collectors.joining(",")))
-          + "], oldState =" +
-          oldState + ", new state's config=" + config);
+          + (unHealthyClients.stream().limit(LOG_UNHEALTHY_CLIENT_NUMBERS)
+          .map(client -> getClientStats(client, partitionId, pointsMap, config)).collect(Collectors.joining(",")))
+          + (unHealthyClients.size() > LOG_UNHEALTHY_CLIENT_NUMBERS ? "...(total " + unHealthyClients.size() + ")" : "")
+          + "], oldState =" + oldState + ", new state's config=" + config);
     }
+  }
+
+  // We do not always want to log the state when it changes to avoid excessive messages. allowToLog# check the requirements
+  private static boolean allowToLog(PartitionDegraderLoadBalancerState oldState, PartitionDegraderLoadBalancerState newState,
+      boolean clientDegraded)
+
+  {
+    // always log if the cluster level drop rate changes
+    if (oldState.getCurrentOverrideDropRate() != newState.getCurrentOverrideDropRate())
+    {
+      return true;
+    }
+
+    // if host number changes or there are clients degraded
+    if (oldState.getPointsMap().size() != newState.getPointsMap().size() || clientDegraded)
+    {
+      return true;
+    }
+
+    // if the unHealthyClient number changes
+    if (oldState.getUnHealthyClientNumber() != newState.getUnHealthyClientNumber())
+    {
+      return true;
+    }
+
+    // if hosts number changes in recoveryMap or quarantineMap
+    return oldState.getRecoveryMap().size() != newState.getRecoveryMap().size()
+        || oldState.getQuarantineMap().size() != newState.getQuarantineMap().size();
   }
 
   private static String getClientStats(TrackerClient client, int partitionId, Map<URI, Integer> pointsMap,
@@ -498,6 +526,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     double sumOfClusterLatencies = 0.0;
     long totalClusterCallCount = 0;
     boolean hashRingChanges = false;
+    boolean clientDegraded = false;
     boolean recoveryMapChanges = false;
     boolean quarantineMapChanged = false;
 
@@ -724,6 +753,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       if (!oldPointsMap.containsKey(clientUri) || oldPointsMap.get(clientUri) != newPoints)
       {
         hashRingChanges = true;
+        clientDegraded |= oldPointsMap.containsKey(clientUri) && (newPoints < oldPointsMap.get(clientUri));
       }
     }
 
@@ -735,6 +765,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     {
       // atomic overwrite
       // try Call Dropping next time we updatePartitionState.
+      List<TrackerClient> unHealthyClients = getUnhealthyTrackerClients(trackerClientUpdaters, points, config, partitionId);
       newState =
           new PartitionDegraderLoadBalancerState(clusterGenerationId,
                                                  config.getClock().currentTimeMillis(),
@@ -752,9 +783,10 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
                                                  clusterErrorCount,
                                                  quarantineMap,
                                                  quarantineHistory,
-                                                 activeClients);
+                                                 activeClients,
+                                                 unHealthyClients.size());
 
-      logState(oldState, newState, partitionId, config, trackerClientUpdaters);
+      logState(oldState, newState, partitionId, config, unHealthyClients, clientDegraded);
     }
     else
     {
@@ -770,6 +802,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       // don't change the points map, but try load balancing strategy next time.
       // recoveryMap needs to update if quarantine or fastRecovery is enabled. This is because the client will not
       // have chance to get in in next interval (already evicted from quarantine or not a new client anymore).
+      List<TrackerClient> unHealthyClients = getUnhealthyTrackerClients(trackerClientUpdaters, oldPointsMap, config, partitionId);
       newState =
               new PartitionDegraderLoadBalancerState(clusterGenerationId, config.getClock().currentTimeMillis(), true,
                                             oldState.getRingFactory(),
@@ -785,9 +818,10 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
                                             clusterErrorCount,
                                             quarantineMap,
                                             quarantineHistory,
-                                            activeClients);
+                                            activeClients,
+                                            unHealthyClients.size());
 
-      logState(oldState, newState, partitionId, config, trackerClientUpdaters);
+      logState(oldState, newState, partitionId, config, unHealthyClients, clientDegraded);
 
       points = oldPointsMap;
     }
@@ -1280,7 +1314,8 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
                                              oldState.getCurrentClusterErrorCount(),
                                              oldState.getQuarantineMap(),
                                              oldState.getQuarantineHistory(),
-                                             oldState.getTrackerClients());
+                                             oldState.getTrackerClients(),
+                                             oldState.getUnHealthyClientNumber());
 
     partition.setState(newState);
   }

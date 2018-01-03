@@ -1,6 +1,7 @@
 18.0.8
 ------
-
+(RB=1194168)
+Cutdown d2 INFO/WARN messages when a lot of hosts are put into recoveryMap
 
 18.0.7
 ------

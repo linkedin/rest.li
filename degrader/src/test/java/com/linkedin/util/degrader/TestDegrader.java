@@ -29,6 +29,7 @@ import java.util.Date;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertSame;
 import static org.testng.Assert.assertTrue;
 
 /**
@@ -1242,5 +1243,82 @@ public class TestDegrader
     setClockToNextInterval();
     assertEquals(_control.getCurrentComputedDropRate(), expectedDropRate, 10E-6);
     assertFalse(checkDrop(expectedDropRate + 0.05));
+  }
+
+  @Test
+  public void testLoggerWithSlowStart()
+  {
+    double expectedDropRate = 0.0;
+
+    _callTracker = new CallTrackerImpl(_defaultInterval, _clock);
+    _config.setCallTracker(_callTracker);
+    _config.setSlowStartThreshold(_testSlowStartThreshold);
+    _config.setMaxDropRate(1.0d); // set max drop rate to 100%
+    _config.setLogger(log);
+    _degrader = new DegraderImpl(_config);
+    _control = new DegraderControl(_degrader);
+
+    assertEquals(_control.getCurrentComputedDropRate(), expectedDropRate);
+    assertFalse(checkDrop(expectedDropRate + 0.05));
+
+    // Fully degrading so the expectedDropRate becomes 1
+    for (int i = 0; i < 5; ++i)
+    {
+      makeCall(1, _defaultHighLatency, false);
+      setClockToNextInterval();
+    }
+    expectedDropRate = 1.0;
+    assertEquals(_control.getCurrentComputedDropRate(), expectedDropRate, 10E-6);
+
+
+    // Go through the slowStart steps
+    int steps = 0;
+    do
+    {
+      steps++;
+      makeCall(1, _defaultLowLatency, false);
+      setClockToNextInterval();
+      _degrader.getStats();
+      assertSame(_degrader.getLogger(), log);
+    } while (_control.getCurrentComputedDropRate() > 0);
+
+    assertTrue(steps < 10);
+    makeCall(10, _defaultLowLatency, false);
+    setClockToNextInterval();
+    _degrader.getStats();
+    assertEquals(_control.getCurrentComputedDropRate(), 0, 10E-6);
+  }
+
+
+  @Test
+  public void testLoggerWithSlowStartAndErrors()
+  {
+    double expectedDropRate = 0.0;
+
+    _callTracker = new CallTrackerImpl(_defaultInterval, _clock);
+    _config.setCallTracker(_callTracker);
+    _config.setSlowStartThreshold(_testSlowStartThreshold);
+    _config.setMaxDropRate(1.0d); // set max drop rate to 100%
+    _config.setLogger(log);
+    _degrader = new DegraderImpl(_config);
+    _control = new DegraderControl(_degrader);
+
+    assertEquals(_control.getCurrentComputedDropRate(), expectedDropRate);
+    assertFalse(checkDrop(expectedDropRate + 0.05));
+
+    // Fully degrading so the expectedDropRate becomes 1
+    for (int i = 0; i < 5; ++i)
+    {
+      makeCall(1, _defaultHighLatency, false);
+      setClockToNextInterval();
+    }
+    expectedDropRate = 1.0;
+    assertEquals(_control.getCurrentComputedDropRate(), expectedDropRate, 10E-6);
+
+    // Go through the slowStart steps
+    makeCall(10, _defaultLowLatency, true);
+    setClockToNextInterval();
+    assertEquals(_control.getCurrentComputedDropRate(), 1.0, 10E-6);
+    assertTrue(_degrader.getLogger() != log);
   }
 }
