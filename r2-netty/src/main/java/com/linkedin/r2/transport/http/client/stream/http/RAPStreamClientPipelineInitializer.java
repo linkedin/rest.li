@@ -17,7 +17,7 @@
 package com.linkedin.r2.transport.http.client.stream.http;
 
 import com.linkedin.r2.transport.http.client.common.CertificateHandler;
-import com.linkedin.r2.transport.http.client.common.SslHandlerUtil;
+import com.linkedin.r2.transport.http.util.SslHandlerUtil;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.HttpClientCodec;
@@ -128,7 +128,7 @@ public class RAPStreamClientPipelineInitializer extends ChannelInitializer<NioSo
     SslHandler sslHandler = null;
     if (_sslContext != null)
     {
-      sslHandler = SslHandlerUtil.getSslHandler(_sslContext,_sslParameters);
+      sslHandler = SslHandlerUtil.getClientSslHandler(_sslContext,_sslParameters);
       ch.pipeline().addLast(SslHandlerUtil.PIPELINE_SSL_HANDLER, sslHandler);
     }
     ch.pipeline().addLast("codec", new HttpClientCodec(4096, _maxHeaderSize, _maxChunkSize));

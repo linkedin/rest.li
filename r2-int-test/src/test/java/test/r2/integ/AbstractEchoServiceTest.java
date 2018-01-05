@@ -34,8 +34,8 @@ import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.Server;
 import com.linkedin.common.util.None;
 import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.net.URI;
@@ -54,16 +54,17 @@ public abstract class AbstractEchoServiceTest
   private final String _toClientKey = "to-client";
   private final String _toClientValue = "this value goes to the client";
 
-  protected Client _client;
+  protected final static String ECHO_MSG = "This is a simple echo message";
 
-  private Server _server;
+  protected Client _client;
+  protected Server _server;
 
   private CaptureWireAttributesFilter _serverCaptureFilter;
   private CaptureWireAttributesFilter _clientCaptureFilter;
   private LogEntityLengthFilter _serverLengthFilter;
   private LogEntityLengthFilter _clientLengthFilter;
 
-  @BeforeClass
+  @BeforeMethod
   protected void setUp() throws Exception
   {
     _serverCaptureFilter = new CaptureWireAttributesFilter();
@@ -94,12 +95,18 @@ public abstract class AbstractEchoServiceTest
             .addLast(clientWireFilter);
 
     _client = createClient(clientFilters);
-
     _server = createServer(serverFilters);
-    _server.start();
+    try
+    {
+      _server.start();
+    }
+    catch (Exception e)
+    {
+      System.out.println(e.getMessage());
+    }
   }
 
-  @AfterClass
+  @AfterMethod
   protected void tearDown() throws Exception
   {
     final FutureCallback<None> callback = new FutureCallback<None>();
@@ -272,10 +279,42 @@ public abstract class AbstractEchoServiceTest
     Assert.assertNull(_clientCaptureFilter.getResponse().get(_toServerKey));
   }
 
+  protected FilterChain getClientFilters()
+  {
+    _clientCaptureFilter = new CaptureWireAttributesFilter();
+    _clientLengthFilter = new LogEntityLengthFilter();
+    final SendWireAttributeFilter clientWireFilter = new SendWireAttributeFilter(_toServerKey, _toServerValue, true);
+
+    return FilterChains.empty()
+        .addFirstRest(_clientCaptureFilter)
+        .addLastRest(_clientLengthFilter)
+        .addLastRest(clientWireFilter)
+        .addFirst(_clientCaptureFilter)
+        // test adapted rest filter works fine in rest over stream setting
+        .addLast(StreamFilterAdapters.adaptRestFilter(_clientLengthFilter))
+        .addLast(clientWireFilter);
+  }
+
+  protected FilterChain getServerFilters()
+  {
+    _serverCaptureFilter = new CaptureWireAttributesFilter();
+    _serverLengthFilter = new LogEntityLengthFilter();
+    final SendWireAttributeFilter serverWireFilter = new SendWireAttributeFilter(_toClientKey, _toClientValue, false);
+
+    return FilterChains.empty()
+        .addFirstRest(_serverCaptureFilter)
+        .addLastRest(_serverLengthFilter)
+        .addLastRest(serverWireFilter)
+        .addFirst(_serverCaptureFilter)
+        // test adapted rest filter works fine in rest over stream setting
+        .addLast(StreamFilterAdapters.adaptRestFilter(_serverLengthFilter))
+        .addLast(serverWireFilter);
+  }
+
   protected abstract EchoService getEchoClient(Client client, URI uri);
 
   protected abstract Client createClient(FilterChain filters) throws Exception;
 
-  protected abstract Server createServer(FilterChain filters);
+  protected abstract Server createServer(FilterChain filters) throws Exception;
 
 }

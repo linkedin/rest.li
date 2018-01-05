@@ -16,6 +16,7 @@
 
 package com.linkedin.r2.transport.http.client.common;
 
+import com.linkedin.r2.transport.http.util.SslHandlerUtil;
 import io.netty.handler.ssl.SslHandler;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
@@ -56,7 +57,7 @@ public class TestSslHandlerUtil
     sslParameters.setNeedClientAuth(NEED_CLIENT_AUTH);
     sslParameters.setProtocols(PROTOCOLS);
 
-    final SslHandler sslHandler = SslHandlerUtil.getSslHandler(sslContext, sslParameters);
+    final SslHandler sslHandler = SslHandlerUtil.getClientSslHandler(sslContext, sslParameters);
     Assert.assertNotNull(sslHandler);
 
     final SSLEngine sslEngine = sslHandler.engine();

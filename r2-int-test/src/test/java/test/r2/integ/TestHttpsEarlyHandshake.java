@@ -22,7 +22,7 @@ import com.linkedin.r2.transport.http.client.common.ChannelPoolManager;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerFactoryImpl;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerKey;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerKeyBuilder;
-import com.linkedin.r2.transport.http.client.common.SslHandlerUtil;
+import com.linkedin.r2.transport.http.util.SslHandlerUtil;
 import io.netty.channel.Channel;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.handler.ssl.SslHandler;

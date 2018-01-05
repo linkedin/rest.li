@@ -20,6 +20,8 @@
 
 package com.linkedin.r2.transport.http.server;
 
+import com.linkedin.r2.transport.http.client.common.CertificateHandler;
+import com.linkedin.r2.transport.http.util.SslHandlerUtil;
 import java.net.InetSocketAddress;
 import java.util.Collections;
 
@@ -49,8 +51,11 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpRequestDecoder;
 import io.netty.handler.codec.http.HttpResponseEncoder;
+import io.netty.handler.ssl.SslHandler;
 import io.netty.util.concurrent.DefaultEventExecutorGroup;
 import io.netty.util.concurrent.EventExecutorGroup;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,6 +76,8 @@ import org.slf4j.LoggerFactory;
   private final int _threadPoolSize;
   private final HttpDispatcher _dispatcher;
   private final boolean _restOverStream;
+  private final SSLContext _sslContext;
+  private final SSLParameters _sslParameters;
 
   private NioEventLoopGroup _bossGroup;
   private NioEventLoopGroup _workerGroup;
@@ -81,12 +88,27 @@ import org.slf4j.LoggerFactory;
     this(port, threadPoolSize, dispatcher, R2Constants.DEFAULT_REST_OVER_STREAM);
   }
 
+  public HttpNettyServer(int port, int threadPoolSize, HttpDispatcher dispatcher,
+      SSLContext sslContext, SSLParameters sslParameters)
+  {
+    this(port, threadPoolSize, dispatcher, R2Constants.DEFAULT_REST_OVER_STREAM, sslContext, sslParameters);
+  }
+
   public HttpNettyServer(int port, int threadPoolSize, HttpDispatcher dispatcher, boolean restOverStream)
+  {
+    this(port, threadPoolSize, dispatcher, restOverStream, null,null);
+  }
+
+  public HttpNettyServer(int port, int threadPoolSize, HttpDispatcher dispatcher, boolean restOverStream,
+      SSLContext sslContext, SSLParameters sslParameters)
   {
     _port = port;
     _threadPoolSize = threadPoolSize;
     _dispatcher = dispatcher;
     _restOverStream = restOverStream;
+    SslHandlerUtil.validateSslParameters(sslContext, sslParameters);
+    _sslContext = sslContext;
+    _sslParameters = sslParameters;
   }
 
   @Override
@@ -95,23 +117,11 @@ import org.slf4j.LoggerFactory;
     _eventExecutors =  new DefaultEventExecutorGroup(_threadPoolSize);
     _bossGroup = new NioEventLoopGroup(1, new NamedThreadFactory("R2 Nio Boss"));
     _workerGroup = new NioEventLoopGroup(0, new NamedThreadFactory("R2 Nio Worker"));
-    
+
     ServerBootstrap bootstrap = new ServerBootstrap()
                                       .group(_bossGroup, _workerGroup)
                                       .channel(NioServerSocketChannel.class)
-                                      .childHandler(new ChannelInitializer<NioSocketChannel>()
-                                      {
-                                        @Override
-                                        protected void initChannel(NioSocketChannel ch)
-                                            throws Exception
-                                        {
-                                          ch.pipeline().addLast("decoder", new HttpRequestDecoder());
-                                          ch.pipeline().addLast("aggregator", new HttpObjectAggregator(1048576));
-                                          ch.pipeline().addLast("encoder", new HttpResponseEncoder());
-                                          ch.pipeline().addLast("rapi", new RAPServerCodec());
-                                          ch.pipeline().addLast(_eventExecutors, "handler", _restOverStream ? new StreamHandler() : new RestHandler());
-                                        }
-                                      });
+                                      .childHandler(new HttpServerPipelineInitializer());
 
     bootstrap.bind(new InetSocketAddress(_port));
   }
@@ -263,4 +273,22 @@ import org.slf4j.LoggerFactory;
     }
   }
 
+  private class HttpServerPipelineInitializer extends ChannelInitializer<NioSocketChannel>
+  {
+    @Override
+    protected void initChannel(NioSocketChannel ch) throws Exception
+    {
+      // If _sslContext is not NULL, first add SSL handler to the pipeline.
+      if (_sslContext != null)
+      {
+        final SslHandler sslHandler = SslHandlerUtil.getServerSslHandler(_sslContext, _sslParameters);
+        ch.pipeline().addLast(SslHandlerUtil.PIPELINE_SSL_HANDLER, sslHandler);
+      }
+      ch.pipeline().addLast("decoder", new HttpRequestDecoder());
+      ch.pipeline().addLast("aggregator", new HttpObjectAggregator(1048576));
+      ch.pipeline().addLast("encoder", new HttpResponseEncoder());
+      ch.pipeline().addLast("rapi", new RAPServerCodec());
+      ch.pipeline().addLast(_eventExecutors, "handler", _restOverStream ? new StreamHandler() : new RestHandler());
+    }
+  }
 }
