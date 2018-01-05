@@ -37,6 +37,8 @@ import com.linkedin.r2.transport.http.server.HttpServerFactory;
 import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
 
 
 /**
@@ -94,6 +96,19 @@ public class Bootstrap
   public static Client createHttpClient(FilterChain filters, boolean restOverStream)
   {
     HashMap<String, String> properties = new HashMap<>();
+    properties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, HttpProtocolVersion.HTTP_1_1.name());
+    final TransportClient client = new HttpClientFactory.Builder()
+        .setFilterChain(filters)
+        .build()
+        .getClient(properties);
+    return new TransportClientAdapter(client, restOverStream);
+  }
+
+  public static Client createHttpsClient(FilterChain filters, boolean restOverStream, SSLContext sslContext, SSLParameters sslParameters)
+  {
+    HashMap<String, Object> properties = new HashMap<>();
+    properties.put(HttpClientFactory.HTTP_SSL_CONTEXT, sslContext);
+    properties.put(HttpClientFactory.HTTP_SSL_PARAMS, sslParameters);
     properties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, HttpProtocolVersion.HTTP_1_1.name());
     final TransportClient client = new HttpClientFactory.Builder()
         .setFilterChain(filters)

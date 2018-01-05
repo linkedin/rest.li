@@ -22,7 +22,7 @@ import com.linkedin.r2.transport.http.client.ExponentialBackOffRateLimiter;
 import com.linkedin.r2.transport.http.client.common.CertificateHandler;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolFactory;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolLifecycle;
-import com.linkedin.r2.transport.http.client.common.SslHandlerUtil;
+import com.linkedin.r2.transport.http.util.SslHandlerUtil;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
@@ -129,66 +129,9 @@ public class HttpNettyChannelPoolFactory implements ChannelPoolFactory
       _maxHeaderSize = maxHeaderSize;
       _maxChunkSize = maxChunkSize;
       _maxResponseSize = maxResponseSize;
-      // Check if requested parameters are present in the supported params of the context.
-      // Log warning for those not present. Throw an exception if none present.
-      if (sslParameters != null)
-      {
-        if (sslContext == null)
-        {
-          throw new IllegalArgumentException("SSLParameters passed with no SSLContext");
-        }
-
-        SSLParameters supportedSSLParameters = sslContext.getSupportedSSLParameters();
-
-        if (sslParameters.getCipherSuites() != null)
-        {
-          checkContained(supportedSSLParameters.getCipherSuites(),
-              sslParameters.getCipherSuites(),
-              "cipher suite");
-        }
-
-        if (sslParameters.getProtocols() != null)
-        {
-          checkContained(supportedSSLParameters.getProtocols(),
-              sslParameters.getProtocols(),
-              "protocol");
-        }
-      }
+      SslHandlerUtil.validateSslParameters(sslContext, sslParameters);
       _sslContext = sslContext;
       _sslParameters = sslParameters;
-    }
-
-    /**
-     * Checks if an array is completely or partially contained in another. Logs warnings
-     * for one array values not contained in the other. Throws IllegalArgumentException if
-     * none are.
-     *
-     * @param containingArray array to contain another.
-     * @param containedArray array to be contained in another.
-     * @param valueName - name of the value type to be included in log warning or
-     *          exception.
-     */
-    private void checkContained(String[] containingArray,
-                                String[] containedArray,
-                                String valueName)
-    {
-      Set<String> containingSet = new HashSet<String>(Arrays.asList(containingArray));
-      Set<String> containedSet = new HashSet<String>(Arrays.asList(containedArray));
-
-      boolean changed = containedSet.removeAll(containingSet);
-      if (!changed)
-      {
-        throw new IllegalArgumentException("None of the requested " + valueName
-            + "s: " + containedSet + " are found in SSLContext");
-      }
-
-      if (!containedSet.isEmpty())
-      {
-        for (String paramValue : containedSet)
-        {
-          HttpNettyClient.LOG.warn("{} {} requested but not found in SSLContext", valueName, paramValue);
-        }
-      }
     }
 
     @Override
@@ -197,7 +140,7 @@ public class HttpNettyChannelPoolFactory implements ChannelPoolFactory
       SslHandler sslHandler = null;
       if (_sslContext != null)
       {
-        sslHandler = SslHandlerUtil.getSslHandler(_sslContext,_sslParameters);
+        sslHandler = SslHandlerUtil.getClientSslHandler(_sslContext,_sslParameters);
         ch.pipeline().addLast(SslHandlerUtil.PIPELINE_SSL_HANDLER, sslHandler);
       }
       ch.pipeline().addLast("codec", new HttpClientCodec(4096, _maxHeaderSize, _maxChunkSize));

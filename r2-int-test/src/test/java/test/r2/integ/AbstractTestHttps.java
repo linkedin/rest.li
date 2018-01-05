@@ -21,14 +21,9 @@ import com.linkedin.r2.sample.Bootstrap;
 import com.linkedin.r2.sample.echo.rest.RestEchoClient;
 import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.Server;
-import com.linkedin.r2.transport.common.bridge.client.TransportClient;
-import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
-import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import java.io.FileInputStream;
 import java.net.URI;
 import java.security.KeyStore;
-import java.util.HashMap;
-import java.util.Map;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
@@ -98,21 +93,11 @@ abstract public class AbstractTestHttps extends AbstractEchoServiceTest
   @Override
   protected Client createClient(FilterChain filters) throws Exception
   {
-    final Map<String, Object> properties = new HashMap<>();
-
-    SSLContext context = getContext();
-    properties.put(HttpClientFactory.HTTP_SSL_CONTEXT, context);
-    properties.put(HttpClientFactory.HTTP_SSL_PARAMS, context.getDefaultSSLParameters());
-
-    final TransportClient client = new HttpClientFactory.Builder()
-      .setFilterChain(filters)
-      .build()
-      .getClient(properties);
-    return new TransportClientAdapter(client, _clientROS);
+    return Bootstrap.createHttpsClient(filters, _clientROS, getContext(), null);
   }
 
   @Override
-  protected Server createServer(FilterChain filters)
+  protected Server createServer(FilterChain filters) throws Exception
   {
     return Bootstrap.createHttpsServer(_port, keyStore, keyStorePassword, filters, _serverROS);
   }

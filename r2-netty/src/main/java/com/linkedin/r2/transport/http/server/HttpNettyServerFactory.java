@@ -28,7 +28,10 @@ import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
  * @author Chris Pettitt
  * @author Joe Betz
  * @version $Revision$
+ *
+ * @deprecated Use {@link HttpNettyServerBuilder} instead.
  */
+@Deprecated
 public class HttpNettyServerFactory
 {
   public static final int DEFAULT_THREAD_POOL_SIZE = 256;

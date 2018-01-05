@@ -54,9 +54,10 @@ public abstract class AbstractEchoServiceTest
   private final String _toClientKey = "to-client";
   private final String _toClientValue = "this value goes to the client";
 
-  protected Client _client;
+  protected final static String ECHO_MSG = "This is a simple echo message";
 
-  private Server _server;
+  protected Client _client;
+  protected Server _server;
 
   private CaptureWireAttributesFilter _serverCaptureFilter;
   private CaptureWireAttributesFilter _clientCaptureFilter;
@@ -66,35 +67,10 @@ public abstract class AbstractEchoServiceTest
   @BeforeClass
   protected void setUp() throws Exception
   {
-    _serverCaptureFilter = new CaptureWireAttributesFilter();
-    _clientCaptureFilter = new CaptureWireAttributesFilter();
-
-    _serverLengthFilter = new LogEntityLengthFilter();
-    _clientLengthFilter = new LogEntityLengthFilter();
-
-    SendWireAttributeFilter serverWireFilter = new SendWireAttributeFilter(_toClientKey, _toClientValue, false);
-    SendWireAttributeFilter clientWireFilter = new SendWireAttributeFilter(_toServerKey, _toServerValue, true);
-
-    final FilterChain serverFilters = FilterChains.empty()
-            .addFirstRest(_serverCaptureFilter)
-            .addLastRest(_serverLengthFilter)
-            .addLastRest(serverWireFilter)
-            .addFirst(_serverCaptureFilter)
-            // test adapted rest filter works fine in rest over stream setting
-            .addLast(StreamFilterAdapters.adaptRestFilter(_serverLengthFilter))
-            .addLast(serverWireFilter);
-
-    final FilterChain clientFilters = FilterChains.empty()
-            .addFirstRest(_clientCaptureFilter)
-            .addLastRest(_clientLengthFilter)
-            .addLastRest(clientWireFilter)
-            .addFirst(_clientCaptureFilter)
-            // test adapted rest filter works fine in rest over stream setting
-            .addLast(StreamFilterAdapters.adaptRestFilter(_clientLengthFilter))
-            .addLast(clientWireFilter);
+    final FilterChain clientFilters = getClientFilters();
+    final FilterChain serverFilters = getServerFilters();
 
     _client = createClient(clientFilters);
-
     _server = createServer(serverFilters);
     _server.start();
   }
@@ -102,8 +78,13 @@ public abstract class AbstractEchoServiceTest
   @AfterClass
   protected void tearDown() throws Exception
   {
+    tearDown(_client, _server);
+  }
+
+  protected void tearDown(Client client, Server server) throws Exception
+  {
     final FutureCallback<None> callback = new FutureCallback<None>();
-    _client.shutdown(callback);
+    client.shutdown(callback);
 
     try
     {
@@ -111,10 +92,10 @@ public abstract class AbstractEchoServiceTest
     }
     finally
     {
-      if (_server != null)
+      if (server != null)
       {
-        _server.stop();
-        _server.waitForStop();
+        server.stop();
+        server.waitForStop();
       }
     }
   }
@@ -272,10 +253,42 @@ public abstract class AbstractEchoServiceTest
     Assert.assertNull(_clientCaptureFilter.getResponse().get(_toServerKey));
   }
 
+  protected FilterChain getClientFilters()
+  {
+    _clientCaptureFilter = new CaptureWireAttributesFilter();
+    _clientLengthFilter = new LogEntityLengthFilter();
+    final SendWireAttributeFilter clientWireFilter = new SendWireAttributeFilter(_toServerKey, _toServerValue, true);
+
+    return FilterChains.empty()
+        .addFirstRest(_clientCaptureFilter)
+        .addLastRest(_clientLengthFilter)
+        .addLastRest(clientWireFilter)
+        .addFirst(_clientCaptureFilter)
+        // test adapted rest filter works fine in rest over stream setting
+        .addLast(StreamFilterAdapters.adaptRestFilter(_clientLengthFilter))
+        .addLast(clientWireFilter);
+  }
+
+  protected FilterChain getServerFilters()
+  {
+    _serverCaptureFilter = new CaptureWireAttributesFilter();
+    _serverLengthFilter = new LogEntityLengthFilter();
+    final SendWireAttributeFilter serverWireFilter = new SendWireAttributeFilter(_toClientKey, _toClientValue, false);
+
+    return FilterChains.empty()
+        .addFirstRest(_serverCaptureFilter)
+        .addLastRest(_serverLengthFilter)
+        .addLastRest(serverWireFilter)
+        .addFirst(_serverCaptureFilter)
+        // test adapted rest filter works fine in rest over stream setting
+        .addLast(StreamFilterAdapters.adaptRestFilter(_serverLengthFilter))
+        .addLast(serverWireFilter);
+  }
+
   protected abstract EchoService getEchoClient(Client client, URI uri);
 
   protected abstract Client createClient(FilterChain filters) throws Exception;
 
-  protected abstract Server createServer(FilterChain filters);
+  protected abstract Server createServer(FilterChain filters) throws Exception;
 
 }
