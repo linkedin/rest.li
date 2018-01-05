@@ -96,14 +96,7 @@ public abstract class AbstractEchoServiceTest
 
     _client = createClient(clientFilters);
     _server = createServer(serverFilters);
-    try
-    {
-      _server.start();
-    }
-    catch (Exception e)
-    {
-      System.out.println(e.getMessage());
-    }
+    _server.start();
   }
 
   @AfterMethod

@@ -20,8 +20,6 @@
 
 package com.linkedin.r2.transport.http.server;
 
-import com.linkedin.r2.transport.http.client.common.CertificateHandler;
-import com.linkedin.r2.transport.http.util.SslHandlerUtil;
 import java.net.InetSocketAddress;
 import java.util.Collections;
 
@@ -38,6 +36,7 @@ import com.linkedin.r2.transport.common.WireAttributeHelper;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponse;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
+import com.linkedin.r2.transport.http.util.SslHandlerUtil;
 
 import com.linkedin.r2.util.NamedThreadFactory;
 import io.netty.bootstrap.ServerBootstrap;
@@ -278,7 +277,7 @@ import org.slf4j.LoggerFactory;
     @Override
     protected void initChannel(NioSocketChannel ch) throws Exception
     {
-      // If _sslContext is not NULL, first add SSL handler to the pipeline.
+      // If _sslContext is not NULL, we should first add SSL handler to the pipeline to secure the channel.
       if (_sslContext != null)
       {
         final SslHandler sslHandler = SslHandlerUtil.getServerSslHandler(_sslContext, _sslParameters);

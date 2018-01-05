@@ -39,7 +39,7 @@ abstract public class AbstractTestHttps extends AbstractEchoServiceTest
   private final String keyStore = getClass().getClassLoader().getResource("keystore").getPath();
   private final String keyStorePassword = "password";
 
-  protected static final int PORT = 11990;
+  private static final int PORT = 11990;
 
   final int _port;
   final boolean _clientROS;

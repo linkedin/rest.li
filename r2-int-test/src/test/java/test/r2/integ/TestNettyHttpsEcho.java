@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2015 LinkedIn Corp.
+   Copyright (c) 2018 LinkedIn Corp.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -13,10 +13,6 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 */
-
-/**
- * $Id: $
- */
 
 package test.r2.integ;
 
@@ -53,19 +49,27 @@ public class TestNettyHttpsEcho extends AbstractTestHttps
   @Override
   protected Server createServer(FilterChain filters) throws Exception
   {
-    final SSLContext sslContext = getContext();
-
-    return createServer(filters, sslContext, null);
+    return createHttpsServer(filters);
   }
 
-  protected Server createServer(FilterChain filters, SSLContext sslContext, SSLParameters sslParameters) throws Exception
+  protected Server createHttpServer(FilterChain filters) throws Exception
   {
     final TransportDispatcher dispatcher = new TransportDispatcherBuilder()
         .addRestHandler(Bootstrap.getEchoURI(), new RestEchoServer(new EchoServiceImpl()))
         .build();
 
     return new HttpNettyServerFactory(filters)
-        .createServer(_port, dispatcher, sslContext, sslParameters);
+        .createServer(_port, dispatcher, null, null);
+  }
+
+  protected Server createHttpsServer(FilterChain filters) throws Exception
+  {
+    final TransportDispatcher dispatcher = new TransportDispatcherBuilder()
+        .addRestHandler(Bootstrap.getEchoURI(), new RestEchoServer(new EchoServiceImpl()))
+        .build();
+
+    return new HttpNettyServerFactory(filters)
+        .createServer(_port, dispatcher, getContext(), null);
   }
 
   /**
@@ -81,7 +85,7 @@ public class TestNettyHttpsEcho extends AbstractTestHttps
       _server.stop();
       _server.waitForStop();
     }
-    _server = createServer(getServerFilters(), null, null);
+    _server = createHttpServer(getServerFilters());
     _server.start();
 
     final FutureCallback<String> callback = new FutureCallback<String>();
@@ -104,7 +108,7 @@ public class TestNettyHttpsEcho extends AbstractTestHttps
       _server.stop();
       _server.waitForStop();
     }
-    _server = createServer(getServerFilters(), null, null);
+    _server = createHttpServer(getServerFilters());
     _server.start();
 
     final FutureCallback<String> callback = new FutureCallback<String>();

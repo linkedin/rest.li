@@ -17,7 +17,6 @@
 /* $Id$ */
 package com.linkedin.r2.transport.http.server;
 
-import com.linkedin.data.template.TemplateRuntimeException;
 import com.linkedin.r2.filter.FilterChain;
 import com.linkedin.r2.filter.FilterChains;
 import com.linkedin.r2.filter.transport.FilterChainDispatcher;
