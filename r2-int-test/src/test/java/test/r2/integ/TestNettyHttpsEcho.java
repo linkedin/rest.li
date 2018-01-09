@@ -17,6 +17,7 @@
 package test.r2.integ;
 
 import com.linkedin.common.callback.FutureCallback;
+import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.filter.FilterChain;
 import com.linkedin.r2.sample.Bootstrap;
 import com.linkedin.r2.sample.echo.EchoService;
@@ -27,12 +28,14 @@ import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.Server;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcherBuilder;
+import com.linkedin.r2.transport.http.server.HttpNettyServerBuilder;
 import com.linkedin.r2.transport.http.server.HttpNettyServerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
 import org.testng.Assert;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
+import java.net.URI;
 
 
 /**
@@ -49,27 +52,30 @@ public class TestNettyHttpsEcho extends AbstractTestHttps
   @Override
   protected Server createServer(FilterChain filters) throws Exception
   {
-    return createHttpsServer(filters);
+    return createHttpsServer(filters, _port);
   }
 
-  protected Server createHttpServer(FilterChain filters) throws Exception
+  protected Server createHttpServer(FilterChain filters, int port) throws Exception
   {
     final TransportDispatcher dispatcher = new TransportDispatcherBuilder()
         .addRestHandler(Bootstrap.getEchoURI(), new RestEchoServer(new EchoServiceImpl()))
         .build();
 
     return new HttpNettyServerFactory(filters)
-        .createServer(_port, dispatcher, null, null);
+        .createServer(port, dispatcher);
   }
 
-  protected Server createHttpsServer(FilterChain filters) throws Exception
+  protected Server createHttpsServer(FilterChain filters, int port) throws Exception
   {
     final TransportDispatcher dispatcher = new TransportDispatcherBuilder()
         .addRestHandler(Bootstrap.getEchoURI(), new RestEchoServer(new EchoServiceImpl()))
         .build();
 
-    return new HttpNettyServerFactory(filters)
-        .createServer(_port, dispatcher, getContext(), null);
+    return new HttpNettyServerBuilder()
+        .port(port)
+        .filters(filters)
+        .transportDispatcher(dispatcher)
+        .sslContext(getContext()).build();
   }
 
   /**
@@ -78,21 +84,7 @@ public class TestNettyHttpsEcho extends AbstractTestHttps
   @Test
   public void testInsecureServerProcessHttpRequestFromSecureClient() throws Exception
   {
-    final EchoService service = new RestEchoClient(Bootstrap.createHttpURI(_port, Bootstrap.getEchoURI()), _client);
-
-    if (_server != null)
-    {
-      _server.stop();
-      _server.waitForStop();
-    }
-    _server = createHttpServer(getServerFilters());
-    _server.start();
-
-    final FutureCallback<String> callback = new FutureCallback<String>();
-    service.echo(ECHO_MSG, callback);
-
-    final String actual = callback.get();
-    Assert.assertEquals(actual, ECHO_MSG);
+    testInsecureServerProcessRequestFromSecureClient(true);
   }
 
   /**
@@ -101,29 +93,7 @@ public class TestNettyHttpsEcho extends AbstractTestHttps
   @Test
   public void testInsecureServerProcessHttpsRequestFromSecureClient() throws Exception
   {
-    final EchoService service = new RestEchoClient(Bootstrap.createHttpsURI(_port, Bootstrap.getEchoURI()), _client);
-
-    if (_server != null)
-    {
-      _server.stop();
-      _server.waitForStop();
-    }
-    _server = createHttpServer(getServerFilters());
-    _server.start();
-
-    final FutureCallback<String> callback = new FutureCallback<String>();
-    service.echo(ECHO_MSG, callback);
-
-    try
-    {
-      callback.get();
-      Assert.fail("Should have thrown an exception.");
-    }
-    catch (Exception e)
-    {
-      // expected
-      System.out.println("The exception is expected.");
-    }
+    testInsecureServerProcessRequestFromSecureClient(false);
   }
 
   /**
@@ -132,22 +102,7 @@ public class TestNettyHttpsEcho extends AbstractTestHttps
   @Test
   public void testSecureServerProcessHttpRequestFromInsecureClient() throws Exception
   {
-    final Client client = Bootstrap.createHttpClient(getClientFilters(), _clientROS);
-    final EchoService service = new RestEchoClient(Bootstrap.createHttpURI(_port, Bootstrap.getEchoURI()), client);
-
-    final FutureCallback<String> callback = new FutureCallback<String>();
-    service.echo(ECHO_MSG, callback);
-
-    try
-    {
-      callback.get();
-      Assert.fail("Should have thrown an exception.");
-    }
-    catch (Exception e)
-    {
-      // expected
-      System.out.println("The exception is expected.");
-    }
+    testSecureServerProcessRequestFromInsecureClient(true);
   }
 
   /**
@@ -156,8 +111,58 @@ public class TestNettyHttpsEcho extends AbstractTestHttps
   @Test
   public void testSecureServerProcessHttpsRequestFromInsecureClient() throws Exception
   {
-    final Client client = Bootstrap.createHttpClient(getClientFilters(), _clientROS);
-    final EchoService service = new RestEchoClient(Bootstrap.createHttpsURI(_port, Bootstrap.getEchoURI()), client);
+    testSecureServerProcessRequestFromInsecureClient(false);
+  }
+
+  private void testInsecureServerProcessRequestFromSecureClient(boolean httpUri) throws Exception
+  {
+    final FilterChain filters = getServerFilters();
+    final Client client = createClient(filters);
+    final int port = _port + 1;
+    final URI uri = httpUri ? Bootstrap.createHttpURI(port, Bootstrap.getEchoURI()) : Bootstrap.createHttpsURI(port, Bootstrap.getEchoURI());
+    final EchoService service = new RestEchoClient(uri, client);
+    final Server server = createHttpServer(filters, port);
+    server.start();
+
+    final FutureCallback<String> callback = new FutureCallback<String>();
+    service.echo(ECHO_MSG, callback);
+
+    try
+    {
+      final String actual = callback.get();
+      if (httpUri)
+      {
+        Assert.assertEquals(actual, ECHO_MSG);
+      }
+      else
+      {
+        Assert.fail("Should have thrown an exception.");
+      }
+    }
+    catch (Exception e)
+    {
+      if (!httpUri)
+      {
+        Assert.assertTrue(e.getCause() instanceof RemoteInvocationException);
+      }
+      else
+      {
+        Assert.fail("Exception is not expected: " + e.getMessage());
+      }
+    }
+
+    tearDown(client, server);
+  }
+
+  private void testSecureServerProcessRequestFromInsecureClient(boolean httpUri) throws Exception
+  {
+    final FilterChain filters = getServerFilters();
+    final Client client = Bootstrap.createHttpClient(filters, _clientROS);
+    final int port = _port + 1;
+    final URI uri = httpUri ? Bootstrap.createHttpURI(port, Bootstrap.getEchoURI()) : Bootstrap.createHttpsURI(port, Bootstrap.getEchoURI());
+    final EchoService service = new RestEchoClient(uri, client);
+    final Server server = createHttpsServer(filters, port);
+    server.start();
 
     final FutureCallback<String> callback = new FutureCallback<String>();
     service.echo(ECHO_MSG, callback);
@@ -169,8 +174,9 @@ public class TestNettyHttpsEcho extends AbstractTestHttps
     }
     catch (Exception e)
     {
-      // expected
-      System.out.println("The exception is expected.");
+      Assert.assertTrue(e.getCause() instanceof RemoteInvocationException);
     }
+
+    tearDown(client, server);
   }
 }

@@ -34,8 +34,8 @@ import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.Server;
 import com.linkedin.common.util.None;
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.net.URI;
@@ -64,7 +64,7 @@ public abstract class AbstractEchoServiceTest
   private LogEntityLengthFilter _serverLengthFilter;
   private LogEntityLengthFilter _clientLengthFilter;
 
-  @BeforeMethod
+  @BeforeClass
   protected void setUp() throws Exception
   {
     _serverCaptureFilter = new CaptureWireAttributesFilter();
@@ -99,11 +99,16 @@ public abstract class AbstractEchoServiceTest
     _server.start();
   }
 
-  @AfterMethod
+  @AfterClass
   protected void tearDown() throws Exception
   {
+    tearDown(_client, _server);
+  }
+
+  protected void tearDown(Client client, Server server) throws Exception
+  {
     final FutureCallback<None> callback = new FutureCallback<None>();
-    _client.shutdown(callback);
+    client.shutdown(callback);
 
     try
     {
@@ -111,10 +116,10 @@ public abstract class AbstractEchoServiceTest
     }
     finally
     {
-      if (_server != null)
+      if (server != null)
       {
-        _server.stop();
-        _server.waitForStop();
+        server.stop();
+        server.waitForStop();
       }
     }
   }

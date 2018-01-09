@@ -21,9 +21,6 @@ import com.linkedin.r2.filter.FilterChain;
 import com.linkedin.r2.filter.FilterChains;
 import com.linkedin.r2.filter.transport.FilterChainDispatcher;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLParameters;
-
 
 /**
  * Creates Netty backed Http servers.
@@ -57,19 +54,5 @@ public class HttpNettyServerFactory
     final TransportDispatcher filterDispatcher = new FilterChainDispatcher(transportDispatcher, _filters);
     final HttpDispatcher dispatcher = new HttpDispatcher(filterDispatcher);
     return new HttpNettyServer(port, threadPoolSize, dispatcher);
-  }
-
-  public HttpServer createServer(int port, TransportDispatcher transportDispatcher,
-      SSLContext sslContext, SSLParameters sslParameters)
-  {
-    return createServer(port, DEFAULT_THREAD_POOL_SIZE, transportDispatcher, sslContext, sslParameters);
-  }
-
-  public HttpServer createServer(int port, final int threadPoolSize, TransportDispatcher transportDispatcher,
-      SSLContext sslContext, SSLParameters sslParameters)
-  {
-    final TransportDispatcher filterDispatcher = new FilterChainDispatcher(transportDispatcher, _filters);
-    final HttpDispatcher dispatcher = new HttpDispatcher(filterDispatcher);
-    return new HttpNettyServer(port, threadPoolSize, dispatcher, sslContext, sslParameters);
   }
 }
