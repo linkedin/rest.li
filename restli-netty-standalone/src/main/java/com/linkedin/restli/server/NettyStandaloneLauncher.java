@@ -17,6 +17,7 @@
 package com.linkedin.restli.server;
 
 import com.linkedin.r2.transport.common.StreamRequestHandlerAdapter;
+import com.linkedin.r2.transport.http.server.HttpNettyServerBuilder;
 import java.io.IOException;
 import java.net.URI;
 import java.util.concurrent.Executors;
@@ -27,7 +28,6 @@ import com.linkedin.parseq.EngineBuilder;
 import com.linkedin.r2.filter.FilterChains;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
 import com.linkedin.r2.transport.http.server.HttpServer;
-import com.linkedin.r2.transport.http.server.HttpNettyServerFactory;
 import com.linkedin.restli.docgen.DefaultDocumentationRequestHandler;
 import com.linkedin.restli.server.resources.PrototypeResourceFactory;
 
@@ -56,7 +56,7 @@ public class NettyStandaloneLauncher
    */
   public NettyStandaloneLauncher(final int port, final String... packages)
   {
-    this(port, HttpNettyServerFactory.DEFAULT_THREAD_POOL_SIZE, getDefaultParseqThreadPoolSize(), packages);
+    this(port, HttpNettyServerBuilder.DEFAULT_THREAD_POOL_SIZE, getDefaultParseqThreadPoolSize(), packages);
   }
 
   /**
@@ -90,7 +90,8 @@ public class NettyStandaloneLauncher
     final RestLiServer restServer = new RestLiServer(config, new PrototypeResourceFactory(), engine);
     final TransportDispatcher dispatcher = new DelegatingTransportDispatcher(restServer, restServer);
     System.err.println("Netty threadPoolSize: " + threadPoolSize);
-    _server = new HttpNettyServerFactory(FilterChains.empty()).createServer(_port, threadPoolSize, dispatcher);
+    _server = new HttpNettyServerBuilder().filters(FilterChains.empty()).port(_port)
+        .threadPoolSize(threadPoolSize).transportDispatcher(dispatcher).build();
   }
 
   /**
@@ -177,7 +178,7 @@ public class NettyStandaloneLauncher
 
     int port = 1338;
     String[] packages = null;
-    int threadPoolSize = HttpNettyServerFactory.DEFAULT_THREAD_POOL_SIZE;
+    int threadPoolSize = HttpNettyServerBuilder.DEFAULT_THREAD_POOL_SIZE;
     int parseqThreadPoolSize = getDefaultParseqThreadPoolSize();
 
     for (int i = 0; i < args.length; i++)

@@ -53,7 +53,6 @@ public class R2Constants
   public static final String RESPONSE_DECOMPRESSION_OFF = "RESPONSE_DECOMPRESSION_OFF";
   public static final String IS_FULL_REQUEST = "IS_FULL_REQUEST";
   public static final int DEFAULT_DATA_CHUNK_SIZE = 8192;
-  public static final int DEFAULT_NETTY_HTTP_SERVER_PORT = 8080;
   public static final boolean DEFAULT_REST_OVER_STREAM = false;
   public static final String RETRY_MESSAGE_ATTRIBUTE_KEY = "RETRY";
   @Deprecated
