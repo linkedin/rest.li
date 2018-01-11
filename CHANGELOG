@@ -1,6 +1,7 @@
 18.0.1
 ------
-
+(RB=1178824)
+Exposes PartitionDegraderLoadBalancerStateListener through constructors of D2 classes
 
 18.0.0
 ------
