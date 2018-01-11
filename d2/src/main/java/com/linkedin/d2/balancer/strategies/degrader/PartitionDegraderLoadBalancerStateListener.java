@@ -19,4 +19,19 @@ package com.linkedin.d2.balancer.strategies.degrader;
 public interface PartitionDegraderLoadBalancerStateListener
 {
   void onUpdate(PartitionDegraderLoadBalancerState state);
+
+  /**
+   * Creates an instance of {@link PartitionDegraderLoadBalancerStateListener} with a given partition ID.
+   */
+  interface Factory
+  {
+    /**
+     * Creates an instance of {@link PartitionDegraderLoadBalancerStateListener}.
+     *
+     * @param partitionId Paritition ID
+     * @param config Degrader load balancer configuration
+     * @return An instance of {@link PartitionDegraderLoadBalancerStateListener} with the partition ID.
+     */
+    PartitionDegraderLoadBalancerStateListener create(int partitionId, DegraderLoadBalancerStrategyConfig config);
+  }
 }

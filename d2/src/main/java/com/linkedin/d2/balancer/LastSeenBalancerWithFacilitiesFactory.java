@@ -16,7 +16,6 @@
 
 package com.linkedin.d2.balancer;
 
-import com.linkedin.d2.balancer.event.EventEmitter;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ClusterPropertiesJsonSerializer;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
@@ -26,12 +25,7 @@ import com.linkedin.d2.balancer.properties.UriPropertiesJsonSerializer;
 import com.linkedin.d2.balancer.properties.UriPropertiesMerger;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancer;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancerState;
-import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
-import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
-import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyFactoryV3;
-import com.linkedin.d2.balancer.strategies.random.RandomLoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.util.FileSystemDirectory;
-import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
 import com.linkedin.d2.balancer.zkfs.LastSeenLoadBalancerWithFacilities;
 import com.linkedin.d2.balancer.zkfs.ZKFSUtil;
 import com.linkedin.d2.discovery.event.PropertyEventBus;
@@ -42,9 +36,6 @@ import com.linkedin.d2.discovery.stores.zk.ZKPersistentConnection;
 import com.linkedin.d2.discovery.stores.zk.builder.ZooKeeperEphemeralStoreBuilder;
 import com.linkedin.d2.discovery.stores.zk.builder.ZooKeeperPermanentStoreBuilder;
 import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ScheduledExecutorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,13 +73,9 @@ public class LastSeenBalancerWithFacilitiesFactory implements LoadBalancerWithFa
     PropertyEventBus<UriProperties> uriBus = new PropertyEventBusImpl<>(config._executorService);
     uriBus.setPublisher(lsUrisStore);
 
-    // init the strategy
-    final Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories =
-      createDefaultLoadBalancerStrategyFactories(config.healthCheckOperations, config._executorService, config.eventEmitter);
-
     // create the simple load balancer
     SimpleLoadBalancerState state = new SimpleLoadBalancerState(
-      config._executorService, uriBus, clusterBus, serviceBus, config.clientFactories, loadBalancerStrategyFactories,
+      config._executorService, uriBus, clusterBus, serviceBus, config.clientFactories, config.loadBalancerStrategyFactories,
       config.sslContext, config.sslParameters, config.isSSLEnabled, config.clientServicesConfig, config.partitionAccessorRegistry);
     SimpleLoadBalancer simpleLoadBalancer = new SimpleLoadBalancer(state, config.lbWaitTimeout, config.lbWaitUnit);
 
@@ -147,25 +134,4 @@ public class LastSeenBalancerWithFacilitiesFactory implements LoadBalancerWithFa
       config.warmUpConcurrentRequests
     );
   }
-
-  private Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> createDefaultLoadBalancerStrategyFactories(
-      HealthCheckOperations healthCheckOperations, ScheduledExecutorService executorService, EventEmitter emitter)
-  {
-    final Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories =
-      new HashMap<>();
-
-    final RandomLoadBalancerStrategyFactory randomStrategyFactory = new RandomLoadBalancerStrategyFactory();
-    final DegraderLoadBalancerStrategyFactoryV3 degraderStrategyFactoryV3 = new DegraderLoadBalancerStrategyFactoryV3(
-        healthCheckOperations, executorService, emitter);
-
-    loadBalancerStrategyFactories.put("random", randomStrategyFactory);
-    loadBalancerStrategyFactories.put("degrader", degraderStrategyFactoryV3);
-    loadBalancerStrategyFactories.put("degraderV2", degraderStrategyFactoryV3);
-    loadBalancerStrategyFactories.put("degraderV3", degraderStrategyFactoryV3);
-    loadBalancerStrategyFactories.put("degraderV2_1", degraderStrategyFactoryV3);
-
-    return loadBalancerStrategyFactories;
-  }
-
-
 }

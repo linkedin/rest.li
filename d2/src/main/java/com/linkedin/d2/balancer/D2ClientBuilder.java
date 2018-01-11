@@ -25,6 +25,10 @@ import com.linkedin.d2.balancer.clients.BackupRequestsClient;
 import com.linkedin.d2.balancer.clients.DynamicClient;
 import com.linkedin.d2.balancer.clients.RetryClient;
 import com.linkedin.d2.balancer.event.EventEmitter;
+import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
+import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
+import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyFactoryV3;
+import com.linkedin.d2.balancer.strategies.random.RandomLoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessorRegistry;
 import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl;
@@ -34,6 +38,7 @@ import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.util.NamedThreadFactory;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -78,6 +83,9 @@ public class D2ClientBuilder
       executorsToShutDown.add(_config._executorService);
     }
 
+    final Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories =
+        createDefaultLoadBalancerStrategyFactories();
+
     final D2ClientConfig cfg = new D2ClientConfig(_config.zkHosts,
                   _config.zkSessionTimeoutInMs,
                   _config.zkStartupTimeoutInMs,
@@ -112,7 +120,8 @@ public class D2ClientBuilder
                   _config.eventEmitter,
                   _config.partitionAccessorRegistry,
                   _config.zooKeeperDecorator,
-                  _config.enableSaveUriDataOnDisk);
+                  _config.enableSaveUriDataOnDisk,
+                  loadBalancerStrategyFactories);
 
     final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?
       new ZKFSLoadBalancerWithFacilitiesFactory() :
@@ -372,6 +381,13 @@ public class D2ClientBuilder
     return this;
   }
 
+  public D2ClientBuilder setLoadBalancerStrategyFactories (
+      Map<String, LoadBalancerStrategyFactory<?>> loadBalancerStrategyFactories)
+  {
+    _config.loadBalancerStrategyFactories = loadBalancerStrategyFactories;
+    return this;
+  }
+
   private Map<String, TransportClientFactory> createDefaultTransportClientFactories()
   {
     final Map<String, TransportClientFactory> clientFactories = new HashMap<String, TransportClientFactory>();
@@ -379,6 +395,30 @@ public class D2ClientBuilder
     clientFactories.put("http", transportClientFactory);
     clientFactories.put("https", transportClientFactory);
     return clientFactories;
+  }
+
+  /**
+   * Adds the default load balancer strategy factories only if they are not present in the provided factories
+   * during the transition period.
+   *
+   * @return Default mapping of the load balancer strategy names and the strategies
+   */
+  private Map<String, LoadBalancerStrategyFactory<?>> createDefaultLoadBalancerStrategyFactories()
+  {
+    final Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories =
+        new HashMap<>(_config.loadBalancerStrategyFactories);
+
+    final RandomLoadBalancerStrategyFactory randomStrategyFactory = new RandomLoadBalancerStrategyFactory();
+    loadBalancerStrategyFactories.putIfAbsent("random", randomStrategyFactory);
+
+    final DegraderLoadBalancerStrategyFactoryV3 degraderStrategyFactoryV3 = new DegraderLoadBalancerStrategyFactoryV3(
+        _config.healthCheckOperations, _config._executorService, _config.eventEmitter, Collections.emptyList());
+    loadBalancerStrategyFactories.putIfAbsent("degrader", degraderStrategyFactoryV3);
+    loadBalancerStrategyFactories.putIfAbsent("degraderV2", degraderStrategyFactoryV3);
+    loadBalancerStrategyFactories.putIfAbsent("degraderV3", degraderStrategyFactoryV3);
+    loadBalancerStrategyFactories.putIfAbsent("degraderV2_1", degraderStrategyFactoryV3);
+
+    return loadBalancerStrategyFactories;
   }
 
   private final D2ClientConfig _config = new D2ClientConfig();

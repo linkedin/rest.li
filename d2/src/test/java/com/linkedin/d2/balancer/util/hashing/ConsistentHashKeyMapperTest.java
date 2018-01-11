@@ -31,6 +31,7 @@ import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyConfig;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyV3;
 import com.linkedin.d2.balancer.strategies.degrader.MPConsistentHashRingFactory;
+import com.linkedin.d2.balancer.strategies.degrader.PartitionDegraderLoadBalancerStateListener;
 import com.linkedin.d2.balancer.strategies.degrader.PointBasedConsistentHashRingFactory;
 import com.linkedin.d2.balancer.strategies.degrader.RingFactory;
 import com.linkedin.d2.balancer.util.HostToKeyMapper;
@@ -73,6 +74,8 @@ public class ConsistentHashKeyMapperTest
 {
   private static final double TOLERANCE = 0.05d;
   private static final long RANDOM_SEED = 42;
+  private static final List<PartitionDegraderLoadBalancerStateListener.Factory> DEGRADER_STATE_LISTENER_FACTORIES =
+      Collections.emptyList();
 
   static Map<URI, Set<Integer>> mapKeys(KeyMapper mapper, URI uri, Set<Integer> keys) throws ServiceUnavailableException
   {
@@ -254,7 +257,9 @@ public class ConsistentHashKeyMapperTest
     }
     partitionDescriptions.put(foo1, foo1Data);
 
-    DegraderLoadBalancerStrategyV3 strategy = new DegraderLoadBalancerStrategyV3(new DegraderLoadBalancerStrategyConfig(5000), serviceName, null);
+    DegraderLoadBalancerStrategyV3 strategy = new DegraderLoadBalancerStrategyV3(
+        new DegraderLoadBalancerStrategyConfig(5000),
+        serviceName, null, DEGRADER_STATE_LISTENER_FACTORIES);
     List<LoadBalancerState.SchemeStrategyPair> orderedStrategies = new ArrayList<LoadBalancerState.SchemeStrategyPair>();
     orderedStrategies.add(new LoadBalancerState.SchemeStrategyPair("http", strategy));
 

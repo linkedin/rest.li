@@ -37,6 +37,7 @@ import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.message.stream.entitystream.ByteStringWriter;
 import com.linkedin.r2.message.stream.entitystream.EntityStreams;
 import java.util.Arrays;
+import java.util.Collections;
 import org.testng.annotations.Test;
 
 import java.net.URI;
@@ -215,7 +216,9 @@ public class RetryClientTest
       partitionDescriptions.put(foo, foo1Data);
     }
 
-    DegraderLoadBalancerStrategyV3 strategy = new DegraderLoadBalancerStrategyV3(new DegraderLoadBalancerStrategyConfig(5000), serviceName, null);
+    DegraderLoadBalancerStrategyV3 strategy = new DegraderLoadBalancerStrategyV3(
+        new DegraderLoadBalancerStrategyConfig(5000), serviceName,
+        null, Collections.emptyList());
     List<LoadBalancerState.SchemeStrategyPair> orderedStrategies = new ArrayList<LoadBalancerState.SchemeStrategyPair>();
     orderedStrategies.add(new LoadBalancerState.SchemeStrategyPair("http", strategy));
 

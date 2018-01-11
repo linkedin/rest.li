@@ -16,19 +16,10 @@
 
 package com.linkedin.d2.balancer;
 
-import com.linkedin.d2.balancer.event.EventEmitter;
-import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
-import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
-import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyFactoryV3;
-import com.linkedin.d2.balancer.strategies.random.RandomLoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.util.WarmUpLoadBalancer;
-import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
 import com.linkedin.d2.balancer.zkfs.ZKFSComponentFactory;
 import com.linkedin.d2.balancer.zkfs.ZKFSLoadBalancer;
 import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ScheduledExecutorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,16 +71,13 @@ public class ZKFSLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFa
       loadBalancerComponentFactory = config.componentFactory;
     }
 
-    final Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories =
-        createDefaultLoadBalancerStrategyFactories(config.healthCheckOperations, config._executorService, config.eventEmitter);
-
     return new ZKFSTogglingLoadBalancerFactoryImpl(loadBalancerComponentFactory,
                                                    config.lbWaitTimeout,
                                                    config.lbWaitUnit,
                                                    config.basePath,
                                                    config.fsBasePath,
                                                    config.clientFactories,
-                                                   loadBalancerStrategyFactories,
+                                                   config.loadBalancerStrategyFactories,
                                                    config.d2ServicePath,
                                                    config.sslContext,
                                                    config.sslParameters,
@@ -100,25 +88,4 @@ public class ZKFSLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFa
                                                    config.enableSaveUriDataOnDisk
     );
   }
-
-  private Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> createDefaultLoadBalancerStrategyFactories(
-      HealthCheckOperations healthCheckOperations, ScheduledExecutorService executorService, EventEmitter emitter)
-  {
-    final Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories =
-      new HashMap<>();
-
-    final RandomLoadBalancerStrategyFactory randomStrategyFactory = new RandomLoadBalancerStrategyFactory();
-    final DegraderLoadBalancerStrategyFactoryV3 degraderStrategyFactoryV3 = new DegraderLoadBalancerStrategyFactoryV3(
-        healthCheckOperations, executorService, emitter);
-
-    loadBalancerStrategyFactories.put("random", randomStrategyFactory);
-    loadBalancerStrategyFactories.put("degrader", degraderStrategyFactoryV3);
-    loadBalancerStrategyFactories.put("degraderV2", degraderStrategyFactoryV3);
-    loadBalancerStrategyFactories.put("degraderV3", degraderStrategyFactoryV3);
-    loadBalancerStrategyFactories.put("degraderV2_1", degraderStrategyFactoryV3);
-
-    return loadBalancerStrategyFactories;
-  }
-
-
 }

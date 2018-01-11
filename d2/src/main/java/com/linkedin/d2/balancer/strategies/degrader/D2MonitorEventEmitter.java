@@ -173,4 +173,20 @@ class D2MonitorEventEmitter implements PartitionDegraderLoadBalancerStateListene
     }
     return uriInfoBuilder;
   }
+
+  static class Factory implements PartitionDegraderLoadBalancerStateListener.Factory
+  {
+    private final String _serviceName;
+
+    public Factory(String serviceName)
+    {
+      _serviceName = serviceName;
+    }
+
+    @Override
+    public PartitionDegraderLoadBalancerStateListener create(int partitionId, DegraderLoadBalancerStrategyConfig config)
+    {
+      return new D2MonitorEventEmitter(_serviceName, config, partitionId);
+    }
+  }
 }

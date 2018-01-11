@@ -28,6 +28,9 @@ public class DegraderLoadBalancerStateTest
 {
   private static final String SERVICE_NAME = "test";
 
+  private static final List<PartitionDegraderLoadBalancerStateListener.Factory> DEGRADER_STATE_LISTENER_FACTORIES =
+      Collections.emptyList();
+
   /**
    * Resizing the array of partitions doesn't interfere with setting partition state.
    */
@@ -48,7 +51,7 @@ public class DegraderLoadBalancerStateTest
             (new DegraderLoadBalancerStrategyConfig(5000, true, 1, null, Collections.<String, Object>emptyMap(),
                                                     clock, 1, 1, 1, 1, 1, 1, 1, 1, 0.2, null, 21, null,
                                                     0.1, null, null, null, null, 100, null, 0, 0, "Unknown"),
-             SERVICE_NAME, null).getState();
+             SERVICE_NAME, null, DEGRADER_STATE_LISTENER_FACTORIES).getState();
     Thread getPartition1 = new Thread()
     {
       @Override

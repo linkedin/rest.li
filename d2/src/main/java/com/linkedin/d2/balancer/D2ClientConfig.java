@@ -17,6 +17,7 @@ package com.linkedin.d2.balancer;
 
 import com.linkedin.d2.backuprequests.BackupRequestsStrategyStatsConsumer;
 import com.linkedin.d2.balancer.event.EventEmitter;
+import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.util.WarmUpLoadBalancer;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessorRegistry;
@@ -72,6 +73,7 @@ public class D2ClientConfig
   EventEmitter eventEmitter = null;
   PartitionAccessorRegistry partitionAccessorRegistry = null;
   Function<ZooKeeper, ZooKeeper> zooKeeperDecorator = null;
+  Map<String, LoadBalancerStrategyFactory<?>> loadBalancerStrategyFactories = Collections.emptyMap();
 
   private static final int DEAULT_RETRY_LIMIT = 3;
 
@@ -113,7 +115,8 @@ public class D2ClientConfig
                  EventEmitter emitter,
                  PartitionAccessorRegistry partitionAccessorRegistry,
                  Function<ZooKeeper, ZooKeeper> zooKeeperDecorator,
-                 boolean enableSaveUriDataOnDisk)
+                 boolean enableSaveUriDataOnDisk,
+                 Map<String, LoadBalancerStrategyFactory<?>> loadBalancerStrategyFactories)
   {
     this.zkHosts = zkHosts;
     this.zkSessionTimeoutInMs = zkSessionTimeoutInMs;
@@ -150,5 +153,6 @@ public class D2ClientConfig
     this.partitionAccessorRegistry = partitionAccessorRegistry;
     this.zooKeeperDecorator = zooKeeperDecorator;
     this.enableSaveUriDataOnDisk = enableSaveUriDataOnDisk;
+    this.loadBalancerStrategyFactories = loadBalancerStrategyFactories;
   }
 }

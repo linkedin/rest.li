@@ -83,9 +83,9 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
 
   private final RateLimitedLogger _rateLimitedLogger;
 
-  public DegraderLoadBalancerStrategyV3(DegraderLoadBalancerStrategyConfig config,
-                                        String serviceName,
-                                        Map<String, String> degraderProperties)
+  public DegraderLoadBalancerStrategyV3(DegraderLoadBalancerStrategyConfig config, String serviceName,
+      Map<String, String> degraderProperties,
+      List<PartitionDegraderLoadBalancerStateListener.Factory> degraderStateListenerFactories)
   {
     _updateEnabled = true;
     setConfig(config);
@@ -93,7 +93,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     {
       degraderProperties = Collections.<String, String>emptyMap();
     }
-    _state = new DegraderLoadBalancerState(serviceName, degraderProperties, config);
+    _state = new DegraderLoadBalancerState(serviceName, degraderProperties, config, degraderStateListenerFactories);
     _rateLimitedLogger = new RateLimitedLogger(_log, config.DEFAULT_UPDATE_INTERVAL_MS, config.getClock());
 
   }

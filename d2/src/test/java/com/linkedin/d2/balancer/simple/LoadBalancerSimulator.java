@@ -161,7 +161,9 @@ public class LoadBalancerSimulator
         new HashMap<>();
     Map<String, TransportClientFactory> clientFactories = new HashMap<>();
 
-    loadBalancerStrategyFactories.put("degrader", new DegraderLoadBalancerStrategyFactoryV3(null, null, eventEmitter));
+
+    loadBalancerStrategyFactories.put("degraderV3", new DegraderLoadBalancerStrategyFactoryV3(
+        null, null, eventEmitter, Collections.emptyList()));
     DelayClientFactory delayClientFactory = new DelayClientFactory();
     clientFactories.put("http", delayClientFactory);
     clientFactories.put("https", delayClientFactory);

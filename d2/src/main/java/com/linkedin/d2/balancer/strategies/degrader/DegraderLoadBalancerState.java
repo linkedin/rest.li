@@ -22,6 +22,7 @@ import com.linkedin.d2.balancer.util.healthcheck.HealthCheck;
 import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -29,6 +30,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 
 /**
@@ -49,14 +51,17 @@ public class DegraderLoadBalancerState
   // When individual trackerClient is quarantined, the corresponding healthCheck will be
   // generated again.
   private final ConcurrentMap<TrackerClientUpdater, HealthCheck> _healthCheckMap;
+  private final List<PartitionDegraderLoadBalancerStateListener.Factory> _degraderStateListenerFactories;
 
   DegraderLoadBalancerState(String serviceName, Map<String, String> degraderProperties,
-      DegraderLoadBalancerStrategyConfig config)
+      DegraderLoadBalancerStrategyConfig config,
+      List<PartitionDegraderLoadBalancerStateListener.Factory> degraderStateListenerFactories)
   {
     _degraderProperties = degraderProperties != null ? degraderProperties : Collections.<String, String>emptyMap();
     _partitions = new ConcurrentHashMap<Integer, Partition>();
     _serviceName = serviceName;
     _config = config;
+    _degraderStateListenerFactories = degraderStateListenerFactories;
     _quarantineEnabled = new AtomicBoolean(false);
     _quarantineRetries = new AtomicInteger(0);
     _healthCheckMap = new ConcurrentHashMap<>();
@@ -87,7 +92,8 @@ public class DegraderLoadBalancerState
                   0, 0, 0,
                   new HashMap<>(), new HashMap<>(),
                   null),
-          Collections.singleton(new D2MonitorEventEmitter(_serviceName, _config, partitionId)));
+          _degraderStateListenerFactories.stream()
+              .map(factory -> factory.create(partitionId, _config)).collect(Collectors.toList()));
 
       Partition oldValue = _partitions.putIfAbsent(partitionId, newValue);
       if (oldValue == null)

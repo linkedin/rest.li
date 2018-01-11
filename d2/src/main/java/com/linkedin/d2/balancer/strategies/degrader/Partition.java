@@ -17,7 +17,7 @@
 package com.linkedin.d2.balancer.strategies.degrader;
 
 import java.util.Collections;
-import java.util.Set;
+import java.util.List;
 import java.util.concurrent.locks.Lock;
 
 
@@ -26,10 +26,10 @@ class Partition
   private final int _id;
   private final Lock _lock;
   private volatile PartitionDegraderLoadBalancerState _state;
-  private final Set<PartitionDegraderLoadBalancerStateListener> _listeners;
+  private final List<PartitionDegraderLoadBalancerStateListener> _listeners;
 
   Partition(int id, Lock lock, PartitionDegraderLoadBalancerState state,
-      Set<PartitionDegraderLoadBalancerStateListener> listeners)
+      List<PartitionDegraderLoadBalancerStateListener> listeners)
   {
     _id = id;
     _lock = lock;
@@ -60,9 +60,9 @@ class Partition
     _state = state;
   }
 
-  public Set<PartitionDegraderLoadBalancerStateListener> getListeners()
+  public List<PartitionDegraderLoadBalancerStateListener> getListeners()
   {
-    return Collections.unmodifiableSet(_listeners);
+    return Collections.unmodifiableList(_listeners);
   }
 
   @Override

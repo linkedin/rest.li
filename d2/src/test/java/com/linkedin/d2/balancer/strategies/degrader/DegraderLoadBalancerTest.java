@@ -85,6 +85,9 @@ public class DegraderLoadBalancerTest
 {
   private static final int DEFAULT_PARTITION_ID = DefaultPartitionAccessor.DEFAULT_PARTITION_ID;
 
+  private static final List<PartitionDegraderLoadBalancerStateListener.Factory> DEGRADER_STATE_LISTENER_FACTORIES =
+      Collections.emptyList();
+
   public static TrackerClient getTrackerClient(LoadBalancerStrategy strategy,
                                                Request request,
                                                RequestContext requestContext,
@@ -532,7 +535,8 @@ public class DegraderLoadBalancerTest
     clients.add(brokenClient);
 
     //test DegraderLoadBalancerStrategyV3 when the strategy is LOAD_BALANCE
-    DegraderLoadBalancerStrategyV3 strategyV3 = new DegraderLoadBalancerStrategyV3(brokenConfig, "testStrategyV3", null);
+    DegraderLoadBalancerStrategyV3 strategyV3 = new DegraderLoadBalancerStrategyV3(brokenConfig,
+        "testStrategyV3", null, DEGRADER_STATE_LISTENER_FACTORIES);
     DegraderLoadBalancerStrategyAdapter strategyAdapterV3 = new DegraderLoadBalancerStrategyAdapter(strategyV3);
     //simulate 100 threads trying to get client at the same time. Make sure that they won't be blocked if an exception
     //occurs during updateState()
@@ -761,7 +765,7 @@ public class DegraderLoadBalancerTest
   {
     DegraderLoadBalancerStrategyV3 strategy =
             new DegraderLoadBalancerStrategyV3(new DegraderLoadBalancerStrategyConfig(5000),
-                    "DegraderLoadBalancerTest", null);
+                    "DegraderLoadBalancerTest", null, DEGRADER_STATE_LISTENER_FACTORIES);
     List<TrackerClient> clients = new ArrayList<TrackerClient>();
     SettableClock clock1 = new SettableClock();
     SettableClock clock2 = new SettableClock();
@@ -794,7 +798,7 @@ public class DegraderLoadBalancerTest
     // max so we don't time out from lag on testing machine
     DegraderLoadBalancerStrategyV3 strategy =
             new DegraderLoadBalancerStrategyV3(new DegraderLoadBalancerStrategyConfig(5000),
-                    "DegraderLoadBalancerTest", null);
+                    "DegraderLoadBalancerTest", null, DEGRADER_STATE_LISTENER_FACTORIES);
     List<TrackerClient> clients = new ArrayList<TrackerClient>();
     TestClock clock1 = new TestClock();
     TestClock clock2 = new TestClock();
@@ -827,9 +831,7 @@ public class DegraderLoadBalancerTest
     // max so we don't time out from lag on testing machine
     DegraderLoadBalancerStrategyV3 strategy =
             new DegraderLoadBalancerStrategyV3(new DegraderLoadBalancerStrategyConfig(5000),
-                    "DegraderLoadBalancerTest",
-                    null
-            );
+                "DegraderLoadBalancerTest", null, DEGRADER_STATE_LISTENER_FACTORIES);
     List<TrackerClient> clients = new ArrayList<TrackerClient>();
     TestClock clock1 = new TestClock();
     TestClock clock2 = new TestClock();
@@ -916,7 +918,8 @@ public class DegraderLoadBalancerTest
     DegraderLoadBalancerStrategyConfig config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(myMap);
     //test strategy v3
     DegraderLoadBalancerStrategyAdapter strategyAdapter = new DegraderLoadBalancerStrategyAdapter(
-            new DegraderLoadBalancerStrategyV3(config, "DegraderLoadBalancerTest", null));
+            new DegraderLoadBalancerStrategyV3(config, "DegraderLoadBalancerTest", null,
+                DEGRADER_STATE_LISTENER_FACTORIES));
 
     final List<TrackerClient> clients = createTrackerClient(3, clock, null);
     testCallDroppingHelper(strategyAdapter, clients, clock, timeInterval);
@@ -1774,7 +1777,7 @@ public class DegraderLoadBalancerTest
                     DegraderLoadBalancerStrategyConfig.DEFAULT_LOW_EVENT_EMITTING_INTERVAL,
                     DegraderLoadBalancerStrategyConfig.DEFAULT_HIGH_EVENT_EMITTING_INTERVAL,
                     DegraderLoadBalancerStrategyConfig.DEFAULT_CLUSTER_NAME),
-               "DegraderLoadBalancerTest", null);
+               "DegraderLoadBalancerTest", null, DEGRADER_STATE_LISTENER_FACTORIES);
 
     List<TrackerClient> clients = new ArrayList<TrackerClient>(NUM_SERVERS);
 
@@ -1905,8 +1908,8 @@ public class DegraderLoadBalancerTest
 
     //test Strategy V3
     DegraderLoadBalancerStrategyConfig config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(myMap);
-    DegraderLoadBalancerStrategyV3 strategyV3 = new DegraderLoadBalancerStrategyV3(config, "DegraderLoadBalancerTest",
-            null);
+    DegraderLoadBalancerStrategyV3 strategyV3 = new DegraderLoadBalancerStrategyV3(config,
+        "DegraderLoadBalancerTest", null, DEGRADER_STATE_LISTENER_FACTORIES);
     DegraderLoadBalancerStrategyAdapter strategy = new DegraderLoadBalancerStrategyAdapter(strategyV3);
     clusterRecovery1TC(myMap, clock, stepsToFullRecovery, timeInterval, strategy,
         PartitionDegraderLoadBalancerState.Strategy.LOAD_BALANCE);
@@ -1928,8 +1931,8 @@ public class DegraderLoadBalancerTest
 
     //test Strategy V3
     DegraderLoadBalancerStrategyConfig config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(myMap);
-    DegraderLoadBalancerStrategyV3 strategyV3 = new DegraderLoadBalancerStrategyV3(config, "DegraderLoadBalancerTest",
-            null);
+    DegraderLoadBalancerStrategyV3 strategyV3 = new DegraderLoadBalancerStrategyV3(config,
+        "DegraderLoadBalancerTest", null, DEGRADER_STATE_LISTENER_FACTORIES);
     DegraderLoadBalancerStrategyAdapter strategy = new DegraderLoadBalancerStrategyAdapter(strategyV3);
     clusterRecovery1TC(myMap, clock, stepsToFullRecovery, timeInterval, strategy,
         PartitionDegraderLoadBalancerState.Strategy.LOAD_BALANCE);
@@ -2182,7 +2185,8 @@ public class DegraderLoadBalancerTest
   private Object[] clientGlitchV3(int numberOfPartitions, DegraderLoadBalancerStrategyConfig config)
   {
     return new Object[]{numberOfPartitions,
-            new DegraderLoadBalancerStrategyV3(config, "DegraderLoadBalancerTest.V3", null),
+            new DegraderLoadBalancerStrategyV3(config, "DegraderLoadBalancerTest.V3",
+                null, DEGRADER_STATE_LISTENER_FACTORIES),
             config.getClock(),
             config.getUpdateIntervalMs()};
   }
@@ -2322,8 +2326,8 @@ public class DegraderLoadBalancerTest
 
     //test Strategy V3
     DegraderLoadBalancerStrategyConfig config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(myMap);
-    DegraderLoadBalancerStrategyV3 strategyV3 = new DegraderLoadBalancerStrategyV3(config, "DegraderLoadBalancerTest",
-            null);
+    DegraderLoadBalancerStrategyV3 strategyV3 = new DegraderLoadBalancerStrategyV3(config,
+        "DegraderLoadBalancerTest", null, DEGRADER_STATE_LISTENER_FACTORIES);
     DegraderLoadBalancerStrategyAdapter strategy = new DegraderLoadBalancerStrategyAdapter(strategyV3);
     clusterTotalRecovery1TC(myMap,
             clock,
@@ -2713,8 +2717,8 @@ public class DegraderLoadBalancerTest
     //test Strategy V3
     List<TrackerClient> clients = createTrackerClient(1, clock, degraderConfig);
     DegraderLoadBalancerStrategyConfig config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(myMap);
-    DegraderLoadBalancerStrategyV3 strategyV3 = new DegraderLoadBalancerStrategyV3(config, "DegraderLoadBalancerTest",
-            null);
+    DegraderLoadBalancerStrategyV3 strategyV3 = new DegraderLoadBalancerStrategyV3(config,
+        "DegraderLoadBalancerTest", null, DEGRADER_STATE_LISTENER_FACTORIES);
     DegraderLoadBalancerStrategyAdapter strategy = new DegraderLoadBalancerStrategyAdapter(strategyV3);
     testDegraderLoadBalancerSimulator(strategy, clock, timeInterval, clients, qps, degraderConfig);
   }
@@ -2740,8 +2744,8 @@ public class DegraderLoadBalancerTest
     //test Strategy V3
     List<TrackerClient> clients = createTrackerClient(10, clock, degraderConfig);
     DegraderLoadBalancerStrategyConfig config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(myMap);
-    DegraderLoadBalancerStrategyV3 strategyV3 = new DegraderLoadBalancerStrategyV3(config, "DegraderLoadBalancerTest",
-            null);
+    DegraderLoadBalancerStrategyV3 strategyV3 = new DegraderLoadBalancerStrategyV3(config,
+        "DegraderLoadBalancerTest",null, DEGRADER_STATE_LISTENER_FACTORIES);
     DegraderLoadBalancerStrategyAdapter strategy = new DegraderLoadBalancerStrategyAdapter(strategyV3);
     testDegraderLoadBalancerSimulator(strategy, clock, timeInterval, clients, qps, degraderConfig);
   }
@@ -2768,8 +2772,8 @@ public class DegraderLoadBalancerTest
     //test Strategy V3
     List<TrackerClient> clients = createTrackerClient(100, clock, degraderConfig);
     DegraderLoadBalancerStrategyConfig config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(myMap);
-    DegraderLoadBalancerStrategyV3 strategyV3 = new DegraderLoadBalancerStrategyV3(config, "DegraderLoadBalancerTest",
-            null);
+    DegraderLoadBalancerStrategyV3 strategyV3 = new DegraderLoadBalancerStrategyV3(config,
+        "DegraderLoadBalancerTest", null, DEGRADER_STATE_LISTENER_FACTORIES);
     DegraderLoadBalancerStrategyAdapter strategy = new DegraderLoadBalancerStrategyAdapter(strategyV3);
     testDegraderLoadBalancerSimulator(strategy, clock, timeInterval, clients, qps, degraderConfig);
   }
@@ -2792,8 +2796,8 @@ public class DegraderLoadBalancerTest
     //test Strategy V3
     List<TrackerClient> clients = createTrackerClient(1, clock, degraderConfig);
     DegraderLoadBalancerStrategyConfig config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(myMap);
-    DegraderLoadBalancerStrategyV3 strategyV3 = new DegraderLoadBalancerStrategyV3(config, "DegraderLoadBalancerTest",
-            null);
+    DegraderLoadBalancerStrategyV3 strategyV3 = new DegraderLoadBalancerStrategyV3(config,
+        "DegraderLoadBalancerTest",null, DEGRADER_STATE_LISTENER_FACTORIES);
     DegraderLoadBalancerStrategyAdapter strategy = new DegraderLoadBalancerStrategyAdapter(strategyV3);
     testDegraderLoadBalancerSimulator(strategy, clock, timeInterval, clients, qps, degraderConfig);
   }
@@ -2815,8 +2819,8 @@ public class DegraderLoadBalancerTest
     //test Strategy V3
     List<TrackerClient> clients = createTrackerClient(10, clock, degraderConfig);
     DegraderLoadBalancerStrategyConfig config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(myMap);
-    DegraderLoadBalancerStrategyV3 strategyV3 = new DegraderLoadBalancerStrategyV3(config, "DegraderLoadBalancerTest",
-            null);
+    DegraderLoadBalancerStrategyV3 strategyV3 = new DegraderLoadBalancerStrategyV3(config,
+        "DegraderLoadBalancerTest",null, DEGRADER_STATE_LISTENER_FACTORIES);
     DegraderLoadBalancerStrategyAdapter strategy = new DegraderLoadBalancerStrategyAdapter(strategyV3);
     testDegraderLoadBalancerSimulator(strategy, clock, timeInterval, clients, qps, degraderConfig);
   }
@@ -2840,8 +2844,8 @@ public class DegraderLoadBalancerTest
     //test Strategy V3
     List<TrackerClient> clients = createTrackerClient(100, clock, degraderConfig);
     DegraderLoadBalancerStrategyConfig config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(myMap);
-    DegraderLoadBalancerStrategyV3 strategyV3 = new DegraderLoadBalancerStrategyV3(config, "DegraderLoadBalancerTest",
-            null);
+    DegraderLoadBalancerStrategyV3 strategyV3 = new DegraderLoadBalancerStrategyV3(config,
+        "DegraderLoadBalancerTest",null, DEGRADER_STATE_LISTENER_FACTORIES);
     DegraderLoadBalancerStrategyAdapter strategy = new DegraderLoadBalancerStrategyAdapter(strategyV3);
     testDegraderLoadBalancerSimulator(strategy, clock, timeInterval, clients, qps, degraderConfig);
   }
@@ -2864,8 +2868,8 @@ public class DegraderLoadBalancerTest
     //test Strategy V3
     List<TrackerClient> clients = createTrackerClient(1, clock, degraderConfig);
     DegraderLoadBalancerStrategyConfig config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(myMap);
-    DegraderLoadBalancerStrategyV3 strategyV3 = new DegraderLoadBalancerStrategyV3(config, "DegraderLoadBalancerTest",
-            null);
+    DegraderLoadBalancerStrategyV3 strategyV3 = new DegraderLoadBalancerStrategyV3(config,
+        "DegraderLoadBalancerTest",null, DEGRADER_STATE_LISTENER_FACTORIES);
     DegraderLoadBalancerStrategyAdapter strategy = new DegraderLoadBalancerStrategyAdapter(strategyV3);
     testDegraderLoadBalancerSimulator(strategy, clock, timeInterval, clients, qps, degraderConfig);
   }
@@ -2887,8 +2891,8 @@ public class DegraderLoadBalancerTest
     //test Strategy V3
     List<TrackerClient> clients = createTrackerClient(10, clock, degraderConfig);
     DegraderLoadBalancerStrategyConfig config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(myMap);
-    DegraderLoadBalancerStrategyV3 strategyV3 = new DegraderLoadBalancerStrategyV3(config, "DegraderLoadBalancerTest",
-            null);
+    DegraderLoadBalancerStrategyV3 strategyV3 = new DegraderLoadBalancerStrategyV3(config,
+        "DegraderLoadBalancerTest",null, DEGRADER_STATE_LISTENER_FACTORIES);
     DegraderLoadBalancerStrategyAdapter strategy = new DegraderLoadBalancerStrategyAdapter(strategyV3);
     testDegraderLoadBalancerSimulator(strategy, clock, timeInterval, clients, qps, degraderConfig);
   }
@@ -2911,8 +2915,8 @@ public class DegraderLoadBalancerTest
     //test Strategy V3
     List<TrackerClient> clients = createTrackerClient(100, clock, degraderConfig);
     DegraderLoadBalancerStrategyConfig config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(myMap);
-    DegraderLoadBalancerStrategyV3 strategyV3 = new DegraderLoadBalancerStrategyV3(config, "DegraderLoadBalancerTest",
-            null);
+    DegraderLoadBalancerStrategyV3 strategyV3 = new DegraderLoadBalancerStrategyV3(config,
+        "DegraderLoadBalancerTest",null, DEGRADER_STATE_LISTENER_FACTORIES);
     DegraderLoadBalancerStrategyAdapter strategy = new DegraderLoadBalancerStrategyAdapter(strategyV3);
     testDegraderLoadBalancerSimulator(strategy, clock, timeInterval, clients, qps, degraderConfig);
   }
@@ -3153,8 +3157,8 @@ public class DegraderLoadBalancerTest
     myMap.put(PropertyKeys.HTTP_LB_CLUSTER_MIN_CALL_COUNT_LOW_WATER_MARK, 1l);
 
     DegraderLoadBalancerStrategyConfig config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(myMap);
-    DegraderLoadBalancerStrategyV3 strategy = new DegraderLoadBalancerStrategyV3(config, "DegraderLoadBalancerTest",
-            null);
+    DegraderLoadBalancerStrategyV3 strategy = new DegraderLoadBalancerStrategyV3(config,
+        "DegraderLoadBalancerTest",null, DEGRADER_STATE_LISTENER_FACTORIES);
 
     List<TrackerClient> clients = new ArrayList<TrackerClient>();
     URI uri1 = URI.create("http://test.linkedin.com:3242/fdsaf");
@@ -3269,8 +3273,8 @@ public class DegraderLoadBalancerTest
     TestClock clock = new TestClock();
     myMap.put(PropertyKeys.CLOCK, clock);
     DegraderLoadBalancerStrategyConfig config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(myMap);
-    DegraderLoadBalancerStrategyV3 strategy = new DegraderLoadBalancerStrategyV3(config, "DegraderLoadBalancerTest",
-            null);
+    DegraderLoadBalancerStrategyV3 strategy = new DegraderLoadBalancerStrategyV3(config,
+        "DegraderLoadBalancerTest",null, DEGRADER_STATE_LISTENER_FACTORIES);
 
     List<TrackerClient> clients = new ArrayList<TrackerClient>();
     URI uri1 = URI.create("http://test.linkedin.com:3242/fdsaf");
@@ -3401,8 +3405,8 @@ public class DegraderLoadBalancerTest
     TestClock clock = new TestClock();
     myMap.put(PropertyKeys.CLOCK, clock);
     DegraderLoadBalancerStrategyConfig config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(myMap);
-    DegraderLoadBalancerStrategyV3 strategy = new DegraderLoadBalancerStrategyV3(config, "DegraderLoadBalancerTest",
-            null);
+    DegraderLoadBalancerStrategyV3 strategy = new DegraderLoadBalancerStrategyV3(config,
+        "DegraderLoadBalancerTest",null, DEGRADER_STATE_LISTENER_FACTORIES);
 
     List<TrackerClient> clients = new ArrayList<TrackerClient>();
     URI uri1 = URI.create("http://test.linkedin.com:3242/fdsaf");
@@ -3474,8 +3478,8 @@ public class DegraderLoadBalancerTest
     myMap.put(PropertyKeys.CLOCK, clock);
     myMap.put(PropertyKeys.HTTP_LB_CONSISTENT_HASH_ALGORITHM, consistentHashAlgorithm);
     DegraderLoadBalancerStrategyConfig config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(myMap);
-    DegraderLoadBalancerStrategyV3 strategy = new DegraderLoadBalancerStrategyV3(config, "DegraderLoadBalancerTest",
-                                                                                 null);
+    DegraderLoadBalancerStrategyV3 strategy = new DegraderLoadBalancerStrategyV3(config,
+        "DegraderLoadBalancerTest",null, DEGRADER_STATE_LISTENER_FACTORIES);
 
     List<TrackerClient> clients = new ArrayList<TrackerClient>();
 
@@ -3576,8 +3580,7 @@ public class DegraderLoadBalancerTest
   public static DegraderLoadBalancerStrategyV3 getStrategy()
   {
     return new DegraderLoadBalancerStrategyV3(new DegraderLoadBalancerStrategyConfig(5000),
-            "DegraderLoadBalancerTest",
-            null);
+        "DegraderLoadBalancerTest",null, DEGRADER_STATE_LISTENER_FACTORIES);
   }
 
   public static DegraderLoadBalancerStrategyV3 getStrategy(String consistentHashAlgorithm)
@@ -3590,8 +3593,7 @@ public class DegraderLoadBalancerTest
   public static DegraderLoadBalancerStrategyV3 getStrategy(Map<String,Object> map)
   {
     return new DegraderLoadBalancerStrategyV3(DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(map),
-            "DegraderLoadBalancerTest",
-            null);
+        "DegraderLoadBalancerTest",null, DEGRADER_STATE_LISTENER_FACTORIES);
   }
 
   public static TrackerClient getClient(URI uri)
