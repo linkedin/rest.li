@@ -82,7 +82,6 @@ import org.slf4j.LoggerFactory;
     _threadPoolSize = threadPoolSize;
     _dispatcher = dispatcher;
     _restOverStream = restOverStream;
-    SslHandlerUtil.validateSslParameters(sslContext, sslParameters);
     _sslContext = sslContext;
     _sslParameters = sslParameters;
   }

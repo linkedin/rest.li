@@ -16,8 +16,6 @@
 
 package com.linkedin.restli.server;
 
-import com.linkedin.r2.transport.common.StreamRequestHandlerAdapter;
-import com.linkedin.r2.transport.http.server.HttpNettyServerBuilder;
 import java.io.IOException;
 import java.net.URI;
 import java.util.concurrent.Executors;
@@ -27,6 +25,7 @@ import com.linkedin.parseq.Engine;
 import com.linkedin.parseq.EngineBuilder;
 import com.linkedin.r2.filter.FilterChains;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
+import com.linkedin.r2.transport.http.server.HttpNettyServerBuilder;
 import com.linkedin.r2.transport.http.server.HttpServer;
 import com.linkedin.restli.docgen.DefaultDocumentationRequestHandler;
 import com.linkedin.restli.server.resources.PrototypeResourceFactory;

@@ -102,8 +102,7 @@ public class HttpNettyServerBuilder
 
   private void validateParameters()
   {
-    final String errorMsg = " is required by HttpNettyServerBuilder, however it was not set.";
-    ArgumentUtil.notNull(_transportDispatcher, "Parameter 'transportDispatcher'" + errorMsg);
-    ArgumentUtil.notNull(_filters, "Parameter 'filters'" + errorMsg);
+    ArgumentUtil.notNull(_transportDispatcher, "transportDispatcher");
+    ArgumentUtil.notNull(_filters, "filters");
   }
 }
