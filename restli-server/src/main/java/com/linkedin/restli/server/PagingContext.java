@@ -26,43 +26,77 @@ public class PagingContext
 {
   private final int     _start;
   private final int     _count;
-  private final boolean _hasStart;
-  private final boolean _hasCount;
+  private final boolean _isUserProvidedStart;
+  private final boolean _isUserProvidedCount;
 
+  /**
+   * Constructor to create an instance of {@link PagingContext}.
+   *
+   * @param start The start value to use
+   * @param count The count value to use
+   */
   public PagingContext(final int start, final int count)
   {
     this(start, count, true, true);
   }
 
+  /**
+   * Constructor to create an instance of {@link PagingContext}.
+   *
+   * @param start The start value to use
+   * @param count The count value to use
+   * @param isUserProvidedStart True if the start value is a user provided value, false otherwise
+   * @param isUserProvidedCount True if the count value is a user provided value, false otherwise
+   */
   public PagingContext(final int start,
                        final int count,
-                       final boolean hasStart,
-                       final boolean hasCount)
+                       final boolean isUserProvidedStart,
+                       final boolean isUserProvidedCount)
   {
     _start = start;
     _count = count;
-    _hasStart = hasStart;
-    _hasCount = hasCount;
+    _isUserProvidedStart = isUserProvidedStart;
+    _isUserProvidedCount = isUserProvidedCount;
   }
 
+  /**
+   * Method to return the start value.
+   *
+   * @return Returns the stored start value.
+   */
   public int getStart()
   {
     return _start;
   }
 
+  /**
+   * Method to return the count value.
+   *
+   * @return Returns the stored count value.
+   */
   public int getCount()
   {
     return _count;
   }
 
+  /**
+   * Method to check if the start value is a user provided value or a framework default value.
+   *
+   * @return Returns true if the start value is a user provided value and false otherwise.
+   */
   public boolean hasStart()
   {
-    return _hasStart;
+    return _isUserProvidedStart;
   }
 
+  /**
+   * Method to check if the count value is a user provided value or a framework default value.
+   *
+   * @return Returns true if the count value is a user provided value and false otherwise.
+   */
   public boolean hasCount()
   {
-    return _hasCount;
+    return _isUserProvidedCount;
   }
 
   /**
@@ -85,8 +119,8 @@ public class PagingContext
   {
     return new HashCodeBuilder(1, 31).append(_count)
                                      .append(_start)
-                                     .append(_hasCount)
-                                     .append(_hasStart)
+                                     .append(_isUserProvidedCount)
+                                     .append(_isUserProvidedStart)
                                      .hashCode();
   }
 
@@ -109,8 +143,8 @@ public class PagingContext
 
     return new EqualsBuilder().append(_count, other._count)
                               .append(_start, other._start)
-                              .append(_hasCount, other._hasCount)
-                              .append(_hasStart, other._hasStart)
+                              .append(_isUserProvidedCount, other._isUserProvidedCount)
+                              .append(_isUserProvidedStart, other._isUserProvidedStart)
                               .isEquals();
   }
 }

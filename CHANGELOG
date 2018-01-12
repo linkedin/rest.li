@@ -1,12 +1,16 @@
 18.0.2
 ------
-
+(RB=1194362)
+Added javadocs and renamed field variables in PagingContext to avoid ambiguities.
+    
 18.0.1
 ------
 (RB=1178824)
 Exposes PartitionDegraderLoadBalancerStateListener through constructors of D2 classes
+
 (RB=1188873)
 Add SSL support for netty server.
+
 (RB=1178824)
 Adding the ability to set the request timeout on a per-request basis
 
@@ -19,6 +23,7 @@ Updated unstructured data streaming to use Java 9 Flow APIs
 ------
 (RB=1178474)
 Update quickstart service to use the latest maven release.
+
 (RB=1179112)
 Make CodeUtil.getUnionMemberName(UnionTemplate.Member) public to make it accessible for codegen in other languages.
 
@@ -41,6 +46,7 @@ Shutting down ssl channelPool and fixing race condition
 ------
 (RB=1168627)
 Re-enable delay tests with seeded randomHash
+
 (RB=1171477)
 Ensure publisher is set after zk connection is established
 
