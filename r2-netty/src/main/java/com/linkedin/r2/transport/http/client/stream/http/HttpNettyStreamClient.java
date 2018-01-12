@@ -97,7 +97,8 @@ import java.util.concurrent.TimeoutException;
 
   @Override
   protected void doWriteRequestWithWireAttrHeaders(Request request, RequestContext requestContext, SocketAddress address,
-                                                   Map<String, String> wireAttrs, TimeoutTransportCallback<StreamResponse> callback)
+                                                   Map<String, String> wireAttrs,
+                                                   TimeoutTransportCallback<StreamResponse> callback, long requestTimeout)
   {
     final AsyncPool<Channel> pool;
     try
@@ -112,7 +113,7 @@ import java.util.concurrent.TimeoutException;
 
     requestContext.putLocalAttr(R2Constants.HTTP_PROTOCOL_VERSION, HttpProtocolVersion.HTTP_1_1);
 
-    Callback<Channel> getCallback = new ChannelPoolGetCallback(pool, request, requestContext, callback);
+    Callback<Channel> getCallback = new ChannelPoolGetCallback(pool, request, requestContext, callback, requestTimeout);
     final Cancellable pendingGet = pool.get(getCallback);
     if (pendingGet != null)
     {
@@ -126,13 +127,15 @@ import java.util.concurrent.TimeoutException;
     private final Request _request;
     private RequestContext _requestContext;
     private final TimeoutTransportCallback<StreamResponse> _callback;
+    private final long _requestTimeout;
 
-    ChannelPoolGetCallback(AsyncPool<Channel> pool, Request request, RequestContext requestContext, TimeoutTransportCallback<StreamResponse> callback)
+    ChannelPoolGetCallback(AsyncPool<Channel> pool, Request request, RequestContext requestContext, TimeoutTransportCallback<StreamResponse> callback, long requestTimeout)
     {
       _pool = pool;
       _request = request;
       _requestContext = requestContext;
       _callback = callback;
+      _requestTimeout = requestTimeout;
     }
 
     @Override

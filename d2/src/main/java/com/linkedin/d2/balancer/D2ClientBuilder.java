@@ -23,6 +23,7 @@ import com.linkedin.common.util.None;
 import com.linkedin.d2.backuprequests.BackupRequestsStrategyStatsConsumer;
 import com.linkedin.d2.balancer.clients.BackupRequestsClient;
 import com.linkedin.d2.balancer.clients.DynamicClient;
+import com.linkedin.d2.balancer.clients.RequestTimeoutClient;
 import com.linkedin.d2.balancer.clients.RetryClient;
 import com.linkedin.d2.balancer.event.EventEmitter;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
@@ -121,7 +122,8 @@ public class D2ClientBuilder
                   _config.partitionAccessorRegistry,
                   _config.zooKeeperDecorator,
                   _config.enableSaveUriDataOnDisk,
-                  loadBalancerStrategyFactories);
+                  loadBalancerStrategyFactories,
+                  _config.requestTimeoutHandlerEnabled);
 
     final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?
       new ZKFSLoadBalancerWithFacilitiesFactory() :
@@ -130,6 +132,11 @@ public class D2ClientBuilder
     LoadBalancerWithFacilities loadBalancer = loadBalancerFactory.create(cfg);
 
     D2Client d2Client = new DynamicClient(loadBalancer, loadBalancer, _restOverStream);
+
+    if (_config.requestTimeoutHandlerEnabled)
+    {
+      d2Client = new RequestTimeoutClient(d2Client, loadBalancer, _config._executorService);
+    }
 
     if (_config.backupRequestsEnabled)
     {
@@ -160,7 +167,7 @@ public class D2ClientBuilder
       d2Client = new TransportClientFactoryAwareD2Client(d2Client, transportClientFactories.values());
     }
 
-    if (executorsToShutDown.size()>0)
+    if (executorsToShutDown.size() > 0)
     {
       d2Client = new ExecutorShutdownAwareD2Client(d2Client, executorsToShutDown);
     }
@@ -385,6 +392,12 @@ public class D2ClientBuilder
       Map<String, LoadBalancerStrategyFactory<?>> loadBalancerStrategyFactories)
   {
     _config.loadBalancerStrategyFactories = loadBalancerStrategyFactories;
+    return this;
+  }
+
+  public D2ClientBuilder setRequestTimeoutHandlerEnabled(boolean requestTimeoutHandlerEnabled)
+  {
+    _config.requestTimeoutHandlerEnabled = requestTimeoutHandlerEnabled;
     return this;
   }
 

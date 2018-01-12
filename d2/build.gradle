@@ -21,6 +21,7 @@ dependencies {
   testCompile externalDependency.testng
   testCompile externalDependency.commonsIo
   testCompile externalDependency.easymock
+  testCompile externalDependency.mockito
   testCompile project(':r2-jetty')
   testCompile project (':test-util')
 }

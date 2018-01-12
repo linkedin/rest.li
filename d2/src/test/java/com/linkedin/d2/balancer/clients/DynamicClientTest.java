@@ -16,39 +16,26 @@
 
 package com.linkedin.d2.balancer.clients;
 
-
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
-import com.linkedin.d2.balancer.Directory;
 import com.linkedin.d2.balancer.Facilities;
-import com.linkedin.d2.balancer.KeyMapper;
-import com.linkedin.d2.balancer.LoadBalancer;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.clients.TrackerClientTest.TestCallback;
-import com.linkedin.d2.balancer.clients.TrackerClientTest.TestClient;
-import com.linkedin.d2.balancer.properties.ServiceProperties;
+import com.linkedin.d2.balancer.clients.stub.DirectoryProviderMock;
+import com.linkedin.d2.balancer.clients.stub.KeyMapperProviderMock;
+import com.linkedin.d2.balancer.clients.stub.LoadBalancerMock;
 import com.linkedin.d2.balancer.util.ClientFactoryProvider;
 import com.linkedin.d2.balancer.util.DelegatingFacilities;
 import com.linkedin.d2.balancer.util.DirectoryProvider;
-import com.linkedin.d2.balancer.util.HostToKeyMapper;
 import com.linkedin.d2.balancer.util.KeyMapperProvider;
-import com.linkedin.d2.balancer.util.MapKeyResult;
-import com.linkedin.d2.discovery.event.PropertyEventThread.PropertyEventShutdownCallback;
-import com.linkedin.r2.message.Request;
-import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
-import com.linkedin.r2.transport.common.TransportClientFactory;
-import com.linkedin.r2.transport.common.bridge.client.TransportClient;
-
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Collection;
-import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
+import org.mockito.Mockito;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -65,10 +52,10 @@ public class DynamicClientTest
   @SuppressWarnings("deprecation")
   public void testClient(boolean restOverStream) throws URISyntaxException
   {
-    TestLoadBalancer balancer = new TestLoadBalancer(false);
-    DirectoryProvider dirProvider = new TestDirectoryProvider();
-    KeyMapperProvider keyMapperProvider = new TestKeyMapperProvider();
-    ClientFactoryProvider clientFactoryProvider = new TestClientFactoryProvider();
+    LoadBalancerMock balancer = new LoadBalancerMock(false);
+    DirectoryProvider dirProvider = new DirectoryProviderMock();
+    KeyMapperProvider keyMapperProvider = new KeyMapperProviderMock();
+    ClientFactoryProvider clientFactoryProvider = Mockito.mock(ClientFactoryProvider.class);
     Facilities facilities = new DelegatingFacilities(dirProvider, keyMapperProvider, clientFactoryProvider);
     DynamicClient client = new DynamicClient(balancer, facilities, restOverStream);
     URI uri = URI.create("d2://test");
@@ -87,7 +74,7 @@ public class DynamicClientTest
   @Test(groups = { "small", "back-end" }, dataProvider = "restOverStreamSwitch")
   public void testUnavailable(boolean restOverStream) throws URISyntaxException
   {
-    TestLoadBalancer balancer = new TestLoadBalancer(true);
+    LoadBalancerMock balancer = new LoadBalancerMock(true);
     DynamicClient client = new DynamicClient(balancer, null, restOverStream);
     URI uri = URI.create("d2://test");
     RestRequest restRequest = new RestRequestBuilder(uri).build();
@@ -107,7 +94,7 @@ public class DynamicClientTest
   public void testShutdown() throws URISyntaxException,
       InterruptedException
   {
-    TestLoadBalancer balancer = new TestLoadBalancer(true);
+    LoadBalancerMock balancer = new LoadBalancerMock(true);
     DynamicClient client = new DynamicClient(balancer, null, true);
     final CountDownLatch latch = new CountDownLatch(1);
 
@@ -133,133 +120,6 @@ public class DynamicClientTest
     }
 
     assertTrue(balancer.shutdown);
-  }
-
-  public static class TestLoadBalancer implements LoadBalancer
-  {
-    private boolean _serviceUnavailable;
-    public boolean  shutdown = false;
-
-    public TestLoadBalancer(boolean serviceUnavailable)
-    {
-      _serviceUnavailable = serviceUnavailable;
-    }
-
-    @Override
-    public TransportClient getClient(Request request, RequestContext requestContext) throws ServiceUnavailableException
-    {
-      if (_serviceUnavailable)
-      {
-        throw new ServiceUnavailableException("bad", "bad");
-      }
-
-      return new TestClient();
-    }
-
-    @Override
-    public void start(Callback<None> callback)
-    {
-      callback.onSuccess(None.none());
-    }
-
-    @Override
-    public void shutdown(PropertyEventShutdownCallback shutdown)
-    {
-      this.shutdown = true;
-      shutdown.done();
-    }
-
-    @Override
-    public ServiceProperties getLoadBalancedServiceProperties(String serviceName)
-        throws ServiceUnavailableException
-    {
-      return null;
-    }
-  }
-
-  public static class TestDirectory implements Directory
-  {
-
-    @Override
-    public void getServiceNames(Callback<List<String>> callback)
-    {
-
-    }
-
-    @Override
-    public void getClusterNames(Callback<List<String>> callback)
-    {
-
-    }
-  }
-
-  public static class TestKeyMapper implements KeyMapper
-  {
-    @Override
-    public <K> MapKeyResult<URI, K> mapKeysV2(URI serviceUri, Iterable<K> keys)
-        throws ServiceUnavailableException
-    {
-      return null;
-    }
-
-    @Override
-    public <K> HostToKeyMapper<K> mapKeysV3(URI serviceUri, Collection<K> keys, int limitNumHostsPerPartition)
-        throws ServiceUnavailableException
-    {
-      return null;
-    }
-
-    @Override
-    public <K, S> HostToKeyMapper<K> mapKeysV3(URI serviceUri,
-                                                 Collection<K> keys,
-                                                 int limitNumHostsPerPartition,
-                                                 S stickyKey)
-        throws ServiceUnavailableException
-    {
-      return null;
-    }
-
-    @Override
-    public HostToKeyMapper<Integer> getAllPartitionsMultipleHosts(URI serviceUri, int numHostPerPartition) throws ServiceUnavailableException
-    {
-      return null;
-    }
-
-    @Override
-    public <S> HostToKeyMapper<Integer> getAllPartitionsMultipleHosts(URI serviceUri, int limitHostPerPartition, S stickyKey) throws ServiceUnavailableException
-    {
-      return null;
-    }
-
-  }
-
-  public static class TestDirectoryProvider implements DirectoryProvider
-  {
-
-    @Override
-    public Directory getDirectory()
-    {
-      return new TestDirectory();
-    }
-  }
-
-  public static class TestKeyMapperProvider implements KeyMapperProvider
-  {
-
-    @Override
-    public KeyMapper getKeyMapper()
-    {
-      return new TestKeyMapper();
-    }
-  }
-
-  public static class TestClientFactoryProvider implements ClientFactoryProvider
-  {
-    @Override
-    public TransportClientFactory getClientFactory(String scheme)
-    {
-      return null;
-    }
   }
 
   @DataProvider(name="restOverStreamSwitch")

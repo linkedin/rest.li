@@ -16,7 +16,6 @@
 
 package com.linkedin.d2.balancer.clients;
 
-
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.D2Client;
@@ -25,7 +24,6 @@ import com.linkedin.d2.balancer.LoadBalancer;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.util.LoadBalancerUtil;
-import com.linkedin.d2.discovery.event.PropertyEventThread.PropertyEventShutdownCallback;
 import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
@@ -36,11 +34,9 @@ import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.transport.common.AbstractClient;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
-
 import java.net.URI;
 import java.util.Collections;
 import java.util.Map;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,7 +76,6 @@ public class DynamicClient extends AbstractClient implements D2Client
     if (!_restOverStream)
     {
       Callback<RestResponse> transportCallback = decorateCallback(callback, request, "rest");
-
       try
       {
         TransportClient client = _balancer.getClient(request, requestContext);
@@ -150,15 +145,10 @@ public class DynamicClient extends AbstractClient implements D2Client
   {
     info(_log, "shutting down dynamic client");
 
-    _balancer.shutdown(new PropertyEventShutdownCallback()
-    {
-      @Override
-      public void done()
-      {
-        info(_log, "dynamic client shutdown complete");
+    _balancer.shutdown(() -> {
+      info(_log, "dynamic client shutdown complete");
 
-        callback.onSuccess(None.none());
-      }
+      callback.onSuccess(None.none());
     });
   }
 

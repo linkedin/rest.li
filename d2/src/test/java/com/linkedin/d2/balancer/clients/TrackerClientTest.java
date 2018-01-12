@@ -16,13 +16,13 @@
 
 package com.linkedin.d2.balancer.clients;
 
-
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import com.linkedin.data.ByteString;
 import com.linkedin.r2.RemoteInvocationException;
+import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
@@ -43,19 +43,18 @@ import com.linkedin.r2.transport.common.bridge.common.TransportResponse;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
 import com.linkedin.util.clock.Clock;
 import com.linkedin.util.clock.SettableClock;
-
+import com.linkedin.util.degrader.CallTracker;
 import com.linkedin.util.degrader.DegraderControl;
 import com.linkedin.util.degrader.DegraderImpl;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import com.linkedin.util.clock.Time;
-import com.linkedin.util.degrader.CallTracker;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -312,21 +311,36 @@ public class TrackerClientTest
 
   public static class TestClient implements TransportClient
   {
+    public static final int DEFAULT_REQUEST_TIMEOUT = 500;
     public StreamRequest                   streamRequest;
     public RestRequest                     restRequest;
     public RequestContext                  restRequestContext;
     public Map<String, String>             restWireAttrs;
     public TransportCallback<StreamResponse> streamCallback;
     public TransportCallback<RestResponse>   restCallback;
+    public ScheduledExecutorService _scheduler;
 
     public boolean                         shutdownCalled;
     private final boolean _emptyResponse;
+    private boolean _dontCallCallback;
+    private int _minRequestTimeout;
 
     public TestClient() { this(true);}
 
     public TestClient(boolean emptyResponse)
     {
+      this(emptyResponse, false, DEFAULT_REQUEST_TIMEOUT);
+    }
+
+    public TestClient(boolean emptyResponse, boolean dontCallCallback, int minRequestTimeout)
+    {
       _emptyResponse = emptyResponse;
+      _dontCallCallback = dontCallCallback;
+
+      // this parameter is important to respect the contract between R2 and D2 to never have a connection shorter than
+      // the request timeout to not affect the D2 loadbalancing/degrading
+      _minRequestTimeout = minRequestTimeout;
+      _scheduler = Executors.newSingleThreadScheduledExecutor();
     }
 
     @Override
@@ -342,6 +356,11 @@ public class TrackerClientTest
       RestResponseBuilder builder = new RestResponseBuilder();
       RestResponse response = _emptyResponse ? builder.build() :
           builder.setEntity("This is not empty".getBytes()).build();
+      if (_dontCallCallback)
+      {
+        scheduleTimeout(requestContext, callback);
+        return;
+      }
       callback.onResponse(TransportResponseImpl.success(response));
     }
 
@@ -359,7 +378,30 @@ public class TrackerClientTest
       StreamResponseBuilder builder = new StreamResponseBuilder();
       StreamResponse response = _emptyResponse ? builder.build(EntityStreams.emptyStream())
           : builder.build(EntityStreams.newEntityStream(new ByteStringWriter(ByteString.copy("This is not empty".getBytes()))));
+      if (_dontCallCallback)
+      {
+        scheduleTimeout(requestContext, callback);
+        return;
+      }
       callback.onResponse(TransportResponseImpl.success(response, wireAttrs));
+    }
+
+    private <T> void scheduleTimeout(RequestContext requestContext, TransportCallback<T> callback)
+    {
+      Integer requestTimeout = (Integer) requestContext.getLocalAttr(R2Constants.REQUEST_TIMEOUT);
+      if (requestTimeout == null)
+      {
+        return;
+      }
+      if (requestTimeout < _minRequestTimeout)
+      {
+        throw new RuntimeException(
+            "The timeout is always supposed to be greater than the timeout defined by the service."
+                + " This error is enforced in the tests");
+      }
+      _scheduler.schedule(() -> callback.onResponse(
+          TransportResponseImpl.error(new TimeoutException("Timeout expired after " + requestTimeout + "ms"))),
+          requestTimeout, TimeUnit.MILLISECONDS);
     }
 
     @Override

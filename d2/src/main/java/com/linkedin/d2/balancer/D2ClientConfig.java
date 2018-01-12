@@ -74,6 +74,7 @@ public class D2ClientConfig
   PartitionAccessorRegistry partitionAccessorRegistry = null;
   Function<ZooKeeper, ZooKeeper> zooKeeperDecorator = null;
   Map<String, LoadBalancerStrategyFactory<?>> loadBalancerStrategyFactories = Collections.emptyMap();
+  boolean requestTimeoutHandlerEnabled = false;
 
   private static final int DEAULT_RETRY_LIMIT = 3;
 
@@ -116,7 +117,8 @@ public class D2ClientConfig
                  PartitionAccessorRegistry partitionAccessorRegistry,
                  Function<ZooKeeper, ZooKeeper> zooKeeperDecorator,
                  boolean enableSaveUriDataOnDisk,
-                 Map<String, LoadBalancerStrategyFactory<?>> loadBalancerStrategyFactories)
+                 Map<String, LoadBalancerStrategyFactory<?>> loadBalancerStrategyFactories,
+                 boolean requestTimeoutHandlerEnabled)
   {
     this.zkHosts = zkHosts;
     this.zkSessionTimeoutInMs = zkSessionTimeoutInMs;
@@ -154,5 +156,6 @@ public class D2ClientConfig
     this.zooKeeperDecorator = zooKeeperDecorator;
     this.enableSaveUriDataOnDisk = enableSaveUriDataOnDisk;
     this.loadBalancerStrategyFactories = loadBalancerStrategyFactories;
+    this.requestTimeoutHandlerEnabled = requestTimeoutHandlerEnabled;
   }
 }

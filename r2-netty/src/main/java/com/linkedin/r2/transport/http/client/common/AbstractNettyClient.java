@@ -80,10 +80,9 @@ public abstract class AbstractNettyClient<Req extends Request, Res extends Respo
 
   protected final ScheduledExecutorService _scheduler;
 
-  protected final long _requestTimeout;
-  protected final long _shutdownTimeout;
+  private final long _requestTimeout;
+  private final long _shutdownTimeout;
 
-  private final String _requestTimeoutMessage;
   private final AbstractJmxManager _jmxManager;
 
   /**
@@ -113,7 +112,6 @@ public abstract class AbstractNettyClient<Req extends Request, Res extends Respo
     _scheduler = executor;
     _requestTimeout = requestTimeout;
     _shutdownTimeout = shutdownTimeout;
-    _requestTimeoutMessage = "Exceeded request timeout of " + _requestTimeout + "ms";
     _jmxManager = jmxManager;
     _channelPoolManager = channelPoolManager;
     _sslChannelPoolManager = sslChannelPoolManager;
@@ -127,7 +125,6 @@ public abstract class AbstractNettyClient<Req extends Request, Res extends Respo
     _scheduler = executor;
     _requestTimeout = requestTimeout;
     _shutdownTimeout = shutdownTimeout;
-    _requestTimeoutMessage = "Exceeded request timeout of " + _requestTimeout + "ms";
     _jmxManager = AbstractJmxManager.NULL_JMX_MANAGER;
     DefaultChannelGroup allChannels = new DefaultChannelGroup("R2 client channels", GlobalEventExecutor.INSTANCE);
 
@@ -151,7 +148,8 @@ public abstract class AbstractNettyClient<Req extends Request, Res extends Respo
    * @param callback Callback invoked after request is sent
    */
   protected abstract void doWriteRequest(final Req request, final RequestContext context, final SocketAddress address,
-                                         Map<String, String> wireAttrs, final TimeoutTransportCallback<Res> callback);
+                                         Map<String, String> wireAttrs, final TimeoutTransportCallback<Res> callback,
+                                         long requestTimeout);
 
   @Override
   @SuppressWarnings("unchecked")
@@ -186,7 +184,7 @@ public abstract class AbstractNettyClient<Req extends Request, Res extends Respo
   }
 
   /**
-   * This method calls the user defined method {@link AbstractNettyClient#doWriteRequest(Request, RequestContext, SocketAddress, Map, TimeoutTransportCallback)}
+   * This method calls the user defined method {@link AbstractNettyClient#doWriteRequest(Request, RequestContext, SocketAddress, Map, TimeoutTransportCallback, long)}
    * after having checked that the client is still running and resolved the DNS
    */
   private void writeRequest(Req request, RequestContext requestContext, Map<String, String> wireAttrs,
@@ -195,16 +193,27 @@ public abstract class AbstractNettyClient<Req extends Request, Res extends Respo
     TransportCallback<Res> executionCallback = getExecutionCallback(callback);
     TransportCallback<Res> shutdownAwareCallback = getShutdownAwareCallback(executionCallback);
 
+    Number requestTimeoutRaw = ((Number) requestContext.getLocalAttr(R2Constants.REQUEST_TIMEOUT));
+    long requestTimeout;
+    if (requestTimeoutRaw == null)
+    {
+      requestTimeout = _requestTimeout;
+    }
+    else
+    {
+      requestTimeout = requestTimeoutRaw.longValue();
+    }
+
     // By wrapping the callback in a Timeout callback before passing it along, we deny the rest
     // of the code access to the unwrapped callback.  This ensures two things:
     // 1. The user callback will always be invoked, since the Timeout will eventually expire
     // 2. The user callback is never invoked more than once
     TimeoutTransportCallback<Res> timeoutCallback =
       new TimeoutTransportCallback<>(_scheduler,
-        _requestTimeout,
+        requestTimeout,
         TimeUnit.MILLISECONDS,
         shutdownAwareCallback,
-        _requestTimeoutMessage);
+        "Exceeded request timeout of " + requestTimeout + "ms");
 
     // check lifecycle
     State state = _state.get();
@@ -226,7 +235,7 @@ public abstract class AbstractNettyClient<Req extends Request, Res extends Respo
       return;
     }
 
-    doWriteRequest(request, requestContext, address, wireAttrs, timeoutCallback);
+    doWriteRequest(request, requestContext, address, wireAttrs, timeoutCallback, requestTimeout);
   }
 
   private static boolean isSslRequest(Request request)

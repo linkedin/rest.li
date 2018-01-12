@@ -30,11 +30,11 @@ import java.util.concurrent.Future;
 /**
  * Abstract class implementing the delegating methods for D2Client
  */
-abstract class D2ClientDelegator implements D2Client
+public abstract class D2ClientDelegator implements D2Client
 {
   protected D2Client _d2Client;
 
-  D2ClientDelegator(D2Client d2Client)
+  public D2ClientDelegator(D2Client d2Client)
   {
     _d2Client = d2Client;
   }

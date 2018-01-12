@@ -102,11 +102,13 @@ public abstract class AbstractNettyStreamClient extends AbstractNettyClient<Stre
   }
 
   protected abstract void doWriteRequestWithWireAttrHeaders(Request request, final RequestContext requestContext, SocketAddress address,
-                                                            Map<String, String> wireAttrs, TimeoutTransportCallback<StreamResponse> callback);
+                                                            Map<String, String> wireAttrs, TimeoutTransportCallback<StreamResponse> callback,
+                                                            long requestTimeout);
 
   @Override
   protected void doWriteRequest(StreamRequest request, final RequestContext requestContext, SocketAddress address,
-                                Map<String, String> wireAttrs, TimeoutTransportCallback<StreamResponse> callback)
+                                Map<String, String> wireAttrs, TimeoutTransportCallback<StreamResponse> callback,
+                                long requestTimeout)
   {
     final StreamRequest requestWithWireAttrHeaders = request.builder()
         .overwriteHeaders(WireAttributeHelper.toWireAttributes(wireAttrs))
@@ -130,13 +132,13 @@ public abstract class AbstractNettyStreamClient extends AbstractNettyClient<Stre
         @Override
         public void onSuccess(RestRequest restRequest)
         {
-          doWriteRequestWithWireAttrHeaders(restRequest, requestContext, address, wireAttrs, callback);
+          doWriteRequestWithWireAttrHeaders(restRequest, requestContext, address, wireAttrs, callback, requestTimeout);
         }
       });
     }
     else
     {
-      doWriteRequestWithWireAttrHeaders(requestWithWireAttrHeaders, requestContext, address, wireAttrs, callback);
+      doWriteRequestWithWireAttrHeaders(requestWithWireAttrHeaders, requestContext, address, wireAttrs, callback, requestTimeout);
     }
   }
 

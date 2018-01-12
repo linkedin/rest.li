@@ -108,7 +108,8 @@ public class HttpNettyClient extends AbstractNettyClient<RestRequest, RestRespon
 
   @Override
   protected void doWriteRequest(RestRequest request, RequestContext requestContext, SocketAddress address,
-                                Map<String, String> wireAttrs, TimeoutTransportCallback<RestResponse> callback) {
+                                Map<String, String> wireAttrs, TimeoutTransportCallback<RestResponse> callback,
+                                long requestTimeout) {
 
     final RestRequest newRequest = new RestRequestBuilder(request)
         .overwriteHeaders(WireAttributeHelper.toWireAttributes(wireAttrs))
