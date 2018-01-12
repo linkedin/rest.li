@@ -1,7 +1,14 @@
+18.0.2
+------
+
 18.0.1
 ------
 (RB=1178824)
 Exposes PartitionDegraderLoadBalancerStateListener through constructors of D2 classes
+(RB=1188873)
+Add SSL support for netty server.
+(RB=1178824)
+Adding the ability to set the request timeout on a per-request basis
 
 18.0.0
 ------
