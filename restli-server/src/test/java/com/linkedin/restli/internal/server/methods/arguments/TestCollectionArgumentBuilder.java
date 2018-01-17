@@ -42,6 +42,7 @@ import com.linkedin.restli.server.RoutingException;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -224,6 +225,7 @@ public class TestCollectionArgumentBuilder
     ServerResourceContext context = createMock(ServerResourceContext.class);
     for (String key : contextParams.keySet())
     {
+      expect(context.hasParameter(key)).andReturn(true).anyTimes();
       expect(context.getParameter(key)).andReturn(contextParams.get(key));
     }
     replay(context);
@@ -348,6 +350,12 @@ public class TestCollectionArgumentBuilder
                 "ints",
                 Arrays.asList("101", "102", "103"),
                 new Object[]{new int[]{101, 102, 103}}
+            },
+            {
+                getIntArrayParam(),
+                "ints",
+                Collections.EMPTY_LIST,
+                new Object[]{new int[]{}}
             }
         };
   }
@@ -478,7 +486,7 @@ public class TestCollectionArgumentBuilder
     //We cannot use RestLiArgumentBuilderTestHelper's getMockResourceContext since this is a failure scenario and
     //getRequestAttachmentReader() will not be called.
     ServerResourceContext context = createMock(ServerResourceContext.class);
-    expect(context.getParameter(parameterKey)).andReturn(parameterValues.get(0));
+    expect(context.hasParameter(parameterKey)).andReturn(true);
     expect(context.getParameterValues(parameterKey)).andReturn(parameterValues);
     replay(context);
 

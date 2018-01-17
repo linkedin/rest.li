@@ -1,5 +1,12 @@
+18.0.4
+------
+
+
 18.0.3
 ------
+(RB=1195782)
+Allow empty lists to be passed as a value for a required array query parameter.
+
 (RB=1194414)
 Log AsyncPool instance ID and not reset active streams during channel pool shutdown
 
@@ -10,7 +17,7 @@ Added javadocs and renamed field variables in PagingContext to avoid ambiguities
 
 (RB=1196197)
 Update scala version to 2.10.6
-    
+
 18.0.1
 ------
 (RB=1178824)

@@ -176,9 +176,7 @@ public class ResourceContextImpl implements ServerResourceContext
 
     if (_parameters.containsKey(RestConstants.FIELDS_PARAM))
     {
-      _projectionMask =
-          ArgumentUtils.parseProjectionParameter(ArgumentUtils.argumentAsString(getParameter(RestConstants.FIELDS_PARAM),
-                                                                                RestConstants.FIELDS_PARAM));
+      _projectionMask = ArgumentUtils.parseProjectionParameter(getParameter(RestConstants.FIELDS_PARAM));
     }
     else
     {
@@ -187,8 +185,7 @@ public class ResourceContextImpl implements ServerResourceContext
 
     if (_parameters.containsKey(RestConstants.METADATA_FIELDS_PARAM))
     {
-      _metadataProjectionMask = ArgumentUtils.parseProjectionParameter(ArgumentUtils
-          .argumentAsString(getParameter(RestConstants.METADATA_FIELDS_PARAM), RestConstants.METADATA_FIELDS_PARAM));
+      _metadataProjectionMask = ArgumentUtils.parseProjectionParameter(getParameter(RestConstants.METADATA_FIELDS_PARAM));
     }
     else
     {
@@ -197,8 +194,7 @@ public class ResourceContextImpl implements ServerResourceContext
 
     if (_parameters.containsKey(RestConstants.PAGING_FIELDS_PARAM))
     {
-      _pagingProjectionMask = ArgumentUtils.parseProjectionParameter(ArgumentUtils
-          .argumentAsString(getParameter(RestConstants.PAGING_FIELDS_PARAM), RestConstants.PAGING_FIELDS_PARAM));
+      _pagingProjectionMask = ArgumentUtils.parseProjectionParameter(getParameter(RestConstants.PAGING_FIELDS_PARAM));
     }
     else
     {
@@ -226,14 +222,13 @@ public class ResourceContextImpl implements ServerResourceContext
   @Override
   public String getRequestActionName()
   {
-    return ArgumentUtils.argumentAsString(getParameter(RestConstants.ACTION_PARAM), RestConstants.ACTION_PARAM);
+    return getParameter(RestConstants.ACTION_PARAM);
   }
 
   @Override
   public String getRequestFinderName()
   {
-    return ArgumentUtils.argumentAsString(getParameter(RestConstants.QUERY_TYPE_PARAM),
-                                          RestConstants.QUERY_TYPE_PARAM);
+    return getParameter(RestConstants.QUERY_TYPE_PARAM);
   }
 
   @Override

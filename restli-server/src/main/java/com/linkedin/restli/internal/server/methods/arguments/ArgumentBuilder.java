@@ -413,20 +413,23 @@ public class ArgumentBuilder
   private static Object buildRegularArgument(final ResourceContext context,
                                              final Parameter<?> param)
   {
-    String value =
-        ArgumentUtils.argumentAsString(context.getParameter(param.getName()),
-                                       param.getName());
-
-    final Object convertedValue;
-    if (value == null)
+    if (!context.hasParameter(param.getName()))
     {
       return null;
     }
+
+    final Object convertedValue;
+    if (param.isArray())
+    {
+      convertedValue = buildArrayArgument(context, param);
+    }
     else
     {
-      if (param.isArray())
+      String value = context.getParameter(param.getName());
+
+      if (value == null)
       {
-        convertedValue = buildArrayArgument(context, param);
+        return null;
       }
       else
       {

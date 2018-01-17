@@ -309,6 +309,7 @@ public class RestLiArgumentBuilderTestHelper
     ServerResourceContext context = createMock(ServerResourceContext.class);
     for (String key : parameters.keySet())
     {
+      expect(context.hasParameter(key)).andReturn(true).anyTimes();
       expect(context.getParameter(key)).andReturn(parameters.get(key));
     }
     if (attachmentReaderGetExpected)
@@ -326,6 +327,7 @@ public class RestLiArgumentBuilderTestHelper
     ServerResourceContext context = createMock(ServerResourceContext.class);
     for (String key : parameters.keySet())
     {
+      expect(context.hasParameter(key)).andReturn(true).anyTimes();
       expect(context.getParameter(key)).andReturn(parameters.get(key));
     }
     expect(context.getProjectionMask()).andReturn(projectionMask);
@@ -343,7 +345,7 @@ public class RestLiArgumentBuilderTestHelper
                                                              boolean attachmentReaderGetExpected)
   {
     ServerResourceContext context = createMock(ServerResourceContext.class);
-    expect(context.getParameter(parameterKey)).andReturn(parameterValues.get(0));
+    expect(context.hasParameter(parameterKey)).andReturn(true);
     expect(context.getParameterValues(parameterKey)).andReturn(parameterValues);
     if (attachmentReaderGetExpected)
     {
@@ -358,7 +360,7 @@ public class RestLiArgumentBuilderTestHelper
                                                                                     boolean attachmentReaderGetExpected)
   {
     ServerResourceContext context = createMock(ServerResourceContext.class);
-    expect(context.getParameter(parameterKey)).andReturn(parameterValue);
+    expect(context.hasParameter(parameterKey)).andReturn(true);
     expect(context.getStructuredParameter(parameterKey)).andReturn(structuredParameter);
     if (attachmentReaderGetExpected)
     {

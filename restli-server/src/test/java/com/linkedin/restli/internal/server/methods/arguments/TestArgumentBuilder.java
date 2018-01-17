@@ -183,6 +183,7 @@ public class TestArgumentBuilder
     EasyMock.expect(mockPathKeys.get(EasyMock.capture(param1Capture))).andReturn(param1Value);
     EasyMock.expect(mockResourceContext.getPathKeys()).andReturn(mockPathKeys);
     //easy mock for processing param2
+    EasyMock.expect(mockResourceContext.hasParameter(EasyMock.capture(param2Capture))).andReturn(true);
     EasyMock.expect(mockResourceContext.getParameter(EasyMock.capture(param2Capture))).andReturn(param2Value);
     //easy mock for processing param3
     EasyMock.expect(mockResourceContext.getStructuredParameter(EasyMock.capture(param3Capture))).andReturn(param3Value);
@@ -534,6 +535,7 @@ public class TestArgumentBuilder
     String expectedTestParamValue = "testParamValue";
 
     ServerResourceContext mockResourceContext = EasyMock.createMock(ServerResourceContext.class);
+    EasyMock.expect(mockResourceContext.hasParameter(testParamKey)).andReturn(true).times(1);
     EasyMock.expect(mockResourceContext.getParameter(testParamKey)).andReturn(expectedTestParamValue).anyTimes();
     EasyMock.expect(mockResourceContext.getRequestAttachmentReader()).andReturn(null);
     EasyMock.replay(mockResourceContext);
@@ -598,6 +600,7 @@ public class TestArgumentBuilder
       EasyMock.expect(mockPathKeys.get(paramKey)).andReturn(null);
       EasyMock.expect(mockResourceContext.getPathKeys()).andReturn(mockPathKeys);
       EasyMock.expect(mockResourceContext.getRequestAttachmentReader()).andReturn(null);
+      EasyMock.expect(mockResourceContext.hasParameter(paramKey)).andReturn(false);
       if (DataTemplate.class.isAssignableFrom(dataType))
       {
         EasyMock.expect(mockResourceContext.getStructuredParameter(paramKey)).andReturn(null);

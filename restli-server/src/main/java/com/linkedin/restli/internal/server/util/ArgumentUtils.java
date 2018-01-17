@@ -531,7 +531,10 @@ public class ArgumentUtils
    * @param obj value to cast to string
    * @param paramName param name to return in the exception
    * @return input value cast to String
+   *
+   * @deprecated Deprecated with no recommended replacement. This method will be removed in the later major versions.
    */
+  @Deprecated
   public static String argumentAsString(final Object obj, final String paramName)
   {
     if (obj != null && !(obj instanceof String))
