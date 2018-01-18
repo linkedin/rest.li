@@ -78,31 +78,4 @@ public final class Http2PipelinePropertyUtil
     }
     return function.apply(stream, propertyKey);
   }
-
-  public static void releaseChannelHandles(Channel channel)
-  {
-    Http2Connection connection = channel.attr(Http2ClientPipelineInitializer.HTTP2_CONNECTION_ATTR_KEY).get();
-    if (connection != null)
-    {
-      Http2Connection.PropertyKey handleKey =
-        channel.attr(Http2ClientPipelineInitializer.CHANNEL_POOL_HANDLE_ATTR_KEY).get();
-      try
-      {
-        connection.forEachActiveStream(stream ->
-        {
-          AsyncPoolHandle<Channel> handle = stream.getProperty(handleKey);
-          if (handle != null)
-          {
-            handle.release();
-          }
-          return true;
-        });
-      }
-      catch (Http2Exception e)
-      {
-        // Errors are not expected here since no operation is done on the HTTP/2 connection
-        LOG.warn("Unexpected HTTP/2 error when releasing handles", e);
-      }
-    }
-  }
 }

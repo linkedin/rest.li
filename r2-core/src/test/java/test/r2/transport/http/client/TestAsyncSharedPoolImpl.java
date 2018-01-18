@@ -90,7 +90,7 @@ public class TestAsyncSharedPoolImpl
   {
     AsyncSharedPoolImpl<Object> pool = new AsyncSharedPoolImpl<>(
         POOL_NAME, LIFECYCLE, SCHEDULER, LIMITER, NO_POOL_TIMEOUT, MAX_WAITERS);
-    Assert.assertEquals(pool.getName(), POOL_NAME);
+    Assert.assertTrue(pool.getName().startsWith(POOL_NAME));
   }
 
   @Test

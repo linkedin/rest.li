@@ -183,7 +183,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
     ArgumentUtil.notNull(strategy, "strategy");
     ArgumentUtil.notNull(rateLimiter, "rateLimiter");
 
-    _poolName = name;
+    _poolName = name + "/" + Integer.toHexString(hashCode());
     _lifecycle = lifecycle;
     _maxSize = maxSize;
     _idleTimeout = idleTimeout;

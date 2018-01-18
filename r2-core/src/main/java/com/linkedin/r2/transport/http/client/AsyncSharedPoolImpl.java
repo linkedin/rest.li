@@ -110,7 +110,7 @@ public class AsyncSharedPoolImpl<T> implements AsyncPool<T>
     ArgumentUtil.notNull(scheduler, "scheduler");
     ArgumentUtil.notNull(rateLimiter, "rateLimiter");
 
-    _name = name;
+    _name = name + "/" + Integer.toHexString(hashCode());
     _lifecycle = lifecycle;
     _scheduler = scheduler;
     _rateLimiter = rateLimiter;

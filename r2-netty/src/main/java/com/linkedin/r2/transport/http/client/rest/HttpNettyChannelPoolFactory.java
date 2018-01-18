@@ -80,7 +80,7 @@ public class HttpNettyChannelPoolFactory implements ChannelPoolFactory
   @Override
   public AsyncPool<Channel> getPool(SocketAddress address)
   {
-    return new AsyncPoolImpl<Channel>(address.toString() + " HTTP connection pool",
+    return new AsyncPoolImpl<Channel>(address.toString(),
       new ChannelPoolLifecycle(address,
         _bootstrap,
         _allChannels,

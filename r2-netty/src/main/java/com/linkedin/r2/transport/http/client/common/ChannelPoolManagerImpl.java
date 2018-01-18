@@ -97,9 +97,6 @@ public class ChannelPoolManagerImpl implements ChannelPoolManager
           // Timeout any waiters which haven't received a Channel yet
           cancelWaiters();
 
-          // Release all the Http2 Channel Handlers
-          _allChannels.forEach(Http2PipelinePropertyUtil::releaseChannelHandles);
-
           // Close all active and idle Channels
           final TimeoutRunnable afterClose = new TimeoutRunnable(
             _scheduler, deadline - System.currentTimeMillis(), TimeUnit.MILLISECONDS, () ->

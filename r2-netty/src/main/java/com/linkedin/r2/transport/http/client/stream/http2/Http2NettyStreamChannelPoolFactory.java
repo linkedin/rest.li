@@ -80,7 +80,7 @@ public class Http2NettyStreamChannelPoolFactory implements ChannelPoolFactory
   public AsyncPool<Channel> getPool(SocketAddress address)
   {
     return new AsyncSharedPoolImpl<>(
-      address.toString() + " HTTP connection pool",
+      address.toString(),
       new ChannelPoolLifecycle(
         address,
         _bootstrap,

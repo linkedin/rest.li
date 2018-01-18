@@ -1,5 +1,7 @@
 18.0.3
 ------
+(RB=1194414)
+Log AsyncPool instance ID and not reset active streams during channel pool shutdown
 
 18.0.2
 ------
