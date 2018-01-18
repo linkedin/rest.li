@@ -1,7 +1,13 @@
+18.0.3
+------
+
 18.0.2
 ------
 (RB=1194362)
 Added javadocs and renamed field variables in PagingContext to avoid ambiguities.
+
+(RB=1196197)
+Update scala version to 2.10.6
     
 18.0.1
 ------
