@@ -29,7 +29,7 @@ class TestScalaDocsProvider {
     val projectDir = System.getProperty("test.projectDir");
     val files = JavaCollections.singleton(projectDir + "/../restli-int-test-server/src/main/scala/com/linkedin/restli/examples/greetings/server/ScalaGreetingsResource.scala")
 
-    Assert.assertEquals("version 2.10.3", util.Properties.versionString)
+    Assert.assertEquals("version 2.10.6", util.Properties.versionString)
     val provider = new ScalaDocsProvider(null)
     provider.registerSourceFiles(files)
 
