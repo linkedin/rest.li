@@ -64,6 +64,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -758,9 +759,12 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     {
       if (clientsToLoadBalance == null || clientsToLoadBalance.isEmpty())
       {
+        String requestedSchemes = orderedStrategies.stream()
+          .map(LoadBalancerState.SchemeStrategyPair::getScheme).collect(Collectors.joining(","));
+
         die(serviceName, "Service: " + serviceName + " unable to find a host to route the request"
-            + " in partition: " + partitionId + " cluster: " + clusterName
-            + ". Check what cluster your servers are announcing to.");
+          + " in partition: " + partitionId + " cluster: " + clusterName + " scheme: [" + requestedSchemes + "]"
+            + ". Check what cluster and scheme your servers are announcing to.");
       }
       else
       {
