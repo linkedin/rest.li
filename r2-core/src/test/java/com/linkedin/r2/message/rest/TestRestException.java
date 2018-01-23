@@ -34,6 +34,7 @@ import java.io.StringWriter;
 
 public class TestRestException
 {
+  private static final boolean WRITABLE_STACKTRACE_DISABLED = false;
 
   @Test
   public void testNoEntity()
@@ -60,5 +61,23 @@ public class TestRestException
     Assert.assertSame(restException.getCause(), throwable);
     Assert.assertTrue(restException.getMessage().contains(message));
     Assert.assertEquals(restException.getResponse().getStatus(), expectedStatus);
+  }
+
+  @Test
+  public void testWritableStacktraceDisabled()
+  {
+    Throwable throwable = new Exception("Inner exception message");
+    int expectedStatus = 400;
+
+    RestException restException = RestException.forError(expectedStatus,
+        "Outer exception message", throwable, WRITABLE_STACKTRACE_DISABLED);
+
+    Assert.assertEquals(restException.getMessage(), "Outer exception message");
+    Assert.assertEquals(restException.getStackTrace().length, 0);
+    Assert.assertEquals(restException.getResponse().getStatus(), expectedStatus);
+    Assert.assertNotNull(restException.getCause());
+    Assert.assertSame(restException.getCause(), throwable);
+    Assert.assertTrue(restException.getCause().getStackTrace().length > 0);
+    Assert.assertEquals(restException.getCause().getMessage(), "Inner exception message");
   }
 }

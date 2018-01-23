@@ -1,6 +1,7 @@
 18.0.4
 ------
-
+(RB=1200965)
+Add writableException option to RestException, StreamException, and RemoteInvocationException
 
 18.0.3
 ------

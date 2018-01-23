@@ -66,6 +66,22 @@ public class StreamException extends RemoteInvocationException
   }
 
   /**
+   * Construct a new instance using the specified response message, exception message, cause, and an option
+   * to disable stack trace. Consider setting {@code writableStackTrace} to {@code false} to conserve computation
+   * cost if the stacktrace does not contribute meaningful insights.
+   *
+   * @param response the {@link StreamException} message for this exception.
+   * @param message the exception message for this exception.
+   * @param cause the cause of this exception.
+   * @param writableStackTrace the exception stacktrace is filled in if true; false otherwise.
+   */
+  public StreamException(StreamResponse response, String message, Throwable cause, boolean writableStackTrace)
+  {
+    super(message, cause, writableStackTrace);
+    _response = response;
+  }
+
+  /**
    * Construct a new instance using the specified response message and exception message.
    *
    * @param response the {@link StreamResponse} message for this exception.

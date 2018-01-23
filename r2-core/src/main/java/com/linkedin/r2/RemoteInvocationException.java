@@ -34,6 +34,11 @@ public class RemoteInvocationException extends Exception
   private static final long serialVersionUID = 1L;
 
   /**
+   * Exception suppression is enabled by default.
+   */
+  private static final boolean SUPPRESSION_ALLOWED = true;
+
+  /**
    * Construct a new instance.
    */
   public RemoteInvocationException()
@@ -59,6 +64,19 @@ public class RemoteInvocationException extends Exception
   public RemoteInvocationException(String message, Throwable cause)
   {
     super(message, cause);
+  }
+
+  /**
+   * Construct a new instance with the option to disable stack trace. Consider setting {@code writableStackTrace}
+   * to {@code false} to conserve computation cost if the stacktrace does not contribute meaningful insights.
+   *
+   * @param message the message to be used for this exception.
+   * @param cause the cause to be used for this exception.
+   * @param writableStackTrace the exception stacktrace is filled in if true; false otherwise.
+   */
+  public RemoteInvocationException(String message, Throwable cause, boolean writableStackTrace)
+  {
+    super(message, cause, SUPPRESSION_ALLOWED, writableStackTrace);
   }
 
   /**

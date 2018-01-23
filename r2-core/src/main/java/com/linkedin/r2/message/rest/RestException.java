@@ -69,6 +69,22 @@ public class RestException extends RemoteInvocationException
   }
 
   /**
+   * Construct a new instance using the specified response message, exception message, cause, and an option
+   * to disable stack trace. Consider setting {@code writableStackTrace} to {@code false} to conserve computation
+   * cost if the stacktrace does not contribute meaningful insights.
+   *
+   * @param response the {@link RestResponse} message for this exception.
+   * @param message the exception message for this exception.
+   * @param cause the cause of this exception.
+   * @param writableStackTrace the exception stacktrace is filled in if true; false otherwise.
+   */
+  public RestException(RestResponse response, String message, Throwable cause, boolean writableStackTrace)
+  {
+    super(message, cause, writableStackTrace);
+    _response = response;
+  }
+
+  /**
    * Construct a new instance using the specified response message and exception message.
    *
    * @param response the {@link RestResponse} message for this exception.
@@ -108,6 +124,22 @@ public class RestException extends RemoteInvocationException
   public static RestException forError(int status, Throwable throwable)
   {
     return new RestException(RestStatus.responseForError(status, throwable), throwable);
+  }
+
+  /**
+   * Factory method to obtain a new instance for a specified HTTP status code with the given cause, and an option
+   * to disable stack trace. Consider setting {@code writableStackTrace} to {@code false} to conserve computation
+   * cost if the stacktrace does not contribute meaningful insights.
+   *
+   * @param status the HTTP status code for the exception.
+   * @param message the exception message for this exception.
+   * @param throwable the throwable to be used as the cause for this exception.
+   * @return a new instance, as described above.
+   * @param writableStackTrace the exception stacktrace is filled in if true; false otherwise.
+   */
+  public static RestException forError(int status, String message, Throwable throwable, boolean writableStackTrace)
+  {
+    return new RestException(RestStatus.responseForError(status, throwable), message, throwable, writableStackTrace);
   }
 
   /**
