@@ -20,8 +20,9 @@ package com.linkedin.d2.balancer.clients;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.LoadBalancerClient;
+import com.linkedin.d2.balancer.transportadaptor.D2URIRewriter;
+import com.linkedin.d2.balancer.transportadaptor.TransportAdaptor;
 import com.linkedin.d2.balancer.util.LoadBalancerUtil;
-import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
@@ -45,13 +46,14 @@ public class RewriteClient implements LoadBalancerClient
   private final String          _serviceName;
   private final URI             _uri;
   private final TransportClient _wrappedClient;
+  private final TransportAdaptor _transportAdaptor;
 
   public RewriteClient(String serviceName, URI uri, TransportClient wrappedClient)
   {
     _serviceName = serviceName;
     _uri = uri;
     _wrappedClient = wrappedClient;
-
+    _transportAdaptor = new TransportAdaptor(_wrappedClient, new D2URIRewriter(uri));
     debug(_log, "created rewrite client: ", this);
   }
 
@@ -61,7 +63,8 @@ public class RewriteClient implements LoadBalancerClient
                    Map<String, String> wireAttrs,
                    TransportCallback<RestResponse> callback)
   {
-    _wrappedClient.restRequest(rewriteRequest(request), requestContext, wireAttrs, callback);
+    assert _serviceName.equals(LoadBalancerUtil.getServiceNameFromUri(request.getURI()));
+    _transportAdaptor.restRequest(request, requestContext, wireAttrs, callback);
   }
 
   @Override
@@ -70,7 +73,8 @@ public class RewriteClient implements LoadBalancerClient
                           Map<String, String> wireAttrs,
                           TransportCallback<StreamResponse> callback)
   {
-    _wrappedClient.streamRequest(rewriteRequest(request), requestContext, wireAttrs, callback);
+    assert _serviceName.equals(LoadBalancerUtil.getServiceNameFromUri(request.getURI()));
+    _transportAdaptor.streamRequest(request, requestContext, wireAttrs, callback);
   }
 
   @Override
@@ -82,36 +86,6 @@ public class RewriteClient implements LoadBalancerClient
   public TransportClient getWrappedClient()
   {
     return _wrappedClient;
-  }
-
-  private StreamRequest rewriteRequest(StreamRequest req)
-  {
-    return req.builder().setURI(rewriteUri(req.getURI())).build(req.getEntityStream());
-  }
-
-  private RestRequest rewriteRequest(RestRequest req)
-  {
-    return req.builder().setURI(rewriteUri(req.getURI())).build();
-  }
-
-  private URI rewriteUri(URI uri)
-  {
-    assert _serviceName.equals(LoadBalancerUtil.getServiceNameFromUri(uri));
-
-    String path = LoadBalancerUtil.getRawPathFromUri(uri);
-
-    UriBuilder builder = UriBuilder.fromUri(_uri);
-    if (path != null)
-    {
-      builder.path(path);
-    }
-    builder.replaceQuery(uri.getRawQuery());
-    builder.fragment(uri.getRawFragment());
-    URI rewrittenUri = builder.build();
-
-    debug(_log, "rewrite uri ", uri, " -> ", rewrittenUri);
-
-    return rewrittenUri;
   }
 
   @Override
