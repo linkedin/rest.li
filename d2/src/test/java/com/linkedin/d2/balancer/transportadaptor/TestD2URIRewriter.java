@@ -40,17 +40,4 @@ public class TestD2URIRewriter
     URI finalURI = URIRewriter.rewriteURI(d2URI);
     Assert.assertEquals(finalURI.toString(), expectURL);
   }
-
-  @Test
-  public void testHttpRewriteNoWrite() throws URISyntaxException
-  {
-    final URI httpURI = new URIBuilder("http://www.linkedin.com:1234/test").build();
-    final String expectURL = "http://www.fake.com:5678/request/query?q=5678";
-    final URI d2URI = new URIBuilder(expectURL).build();
-
-    URIRewriter URIRewriter = new D2URIRewriter(httpURI);
-
-    URI finalURI = URIRewriter.rewriteURI(d2URI);
-    Assert.assertEquals(finalURI.toString(), expectURL);
-  }
 }
