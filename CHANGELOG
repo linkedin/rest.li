@@ -1,7 +1,14 @@
+18.0.7
+------
+
+
+18.0.6
+-------	
+(RB=1205573)
+Add TransportAdaptor for easy request rewriting and reusing
+
 18.0.5
 ------
-(RB=1205573)	
-Add TransportAdaptor for easy request rewriting and reusing
 
 18.0.4
 ------
