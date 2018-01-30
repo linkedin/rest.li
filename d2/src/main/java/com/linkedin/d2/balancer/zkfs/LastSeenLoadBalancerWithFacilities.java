@@ -22,7 +22,6 @@ import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.Directory;
 import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.LoadBalancerWithFacilities;
-import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.properties.UriProperties;
@@ -127,13 +126,15 @@ public class LastSeenLoadBalancerWithFacilities implements LoadBalancerWithFacil
   // #################### delegation ####################
 
   @Override
-  public TransportClient getClient(Request request, RequestContext requestContext) throws ServiceUnavailableException {
-    return _loadBalancer.getClient(request, requestContext);
+  public void getClient(Request request, RequestContext requestContext, Callback<TransportClient> clientCallback)
+  {
+    _loadBalancer.getClient(request, requestContext, clientCallback);
   }
 
   @Override
-  public ServiceProperties getLoadBalancedServiceProperties(String serviceName) throws ServiceUnavailableException {
-    return _loadBalancer.getLoadBalancedServiceProperties(serviceName);
+  public void getLoadBalancedServiceProperties(String serviceName, Callback<ServiceProperties> clientCallback)
+  {
+    _loadBalancer.getLoadBalancedServiceProperties(serviceName, clientCallback);
   }
 
   /**

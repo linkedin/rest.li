@@ -17,6 +17,7 @@
 /* $Id$ */
 package com.linkedin.d2.balancer.clients;
 
+import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.LoadBalancerState;
 import com.linkedin.d2.balancer.PartitionedLoadBalancerTestState;
@@ -38,6 +39,7 @@ import com.linkedin.r2.message.stream.entitystream.ByteStringWriter;
 import com.linkedin.r2.message.stream.entitystream.EntityStreams;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.concurrent.ExecutionException;
 import org.testng.annotations.Test;
 
 import java.net.URI;
@@ -128,7 +130,7 @@ public class RetryClientTest
 
     assertNull(streamCallback.t);
     assertNotNull(streamCallback.e);
-    assertTrue(streamCallback.e.getMessage().contains("exception happens"));
+    assertTrue(streamCallback.e.getMessage().contains("exception happens"), streamCallback.e.getMessage());
   }
 
   @Test
@@ -191,12 +193,17 @@ public class RetryClientTest
     RetryClient client = new RetryClient(dynamicClient, 3);
     URI uri = URI.create("d2://retryService?arg1=empty&arg2=empty");
     StreamRequest streamRequest = new StreamRequestBuilder(uri).build(EntityStreams.emptyStream());
-    TrackerClientTest.TestCallback<StreamResponse> streamCallback = new TrackerClientTest.TestCallback<StreamResponse>();
+    FutureCallback<StreamResponse> streamCallback = new FutureCallback<>();
     client.streamRequest(streamRequest, streamCallback);
 
-    assertNull(streamCallback.t);
-    assertNotNull(streamCallback.e);
-    assertTrue(streamCallback.e.toString().contains("retryService is in a bad state"));
+    try
+    {
+      streamCallback.get();
+    }
+    catch (ExecutionException e)
+    {
+      assertTrue(e.toString().contains("retryService is in a bad state"), e.getMessage());
+    }
   }
 
   public SimpleLoadBalancer prepareLoadBalancer(List<String> uris) throws URISyntaxException

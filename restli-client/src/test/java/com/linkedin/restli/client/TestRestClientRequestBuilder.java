@@ -46,9 +46,8 @@ import com.linkedin.restli.common.ResourceSpecImpl;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.common.TypeSpec;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
-import com.linkedin.restli.internal.testutils.RestLiTestAttachmentDataSource;
 import com.linkedin.restli.internal.common.ResourcePropertiesImpl;
-
+import com.linkedin.restli.internal.testutils.RestLiTestAttachmentDataSource;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
@@ -56,15 +55,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
+import org.easymock.Capture;
+import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-
-import org.easymock.Capture;
-import org.easymock.EasyMock;
 
 
 /**
@@ -1139,8 +1137,8 @@ public class TestRestClientRequestBuilder
 
     Capture<RestRequest> restRequestCapture = new Capture<RestRequest>();
 
-    EasyMock.expect(mockClient.getMetadata(new URI(HOST + SERVICE_NAME)))
-        .andReturn(Collections.<String, Object>emptyMap()).once();
+    Capture<Callback<Map<String, Object>>> callbackMetadataCapture = new Capture<>();
+    mockClient.getMetadata(EasyMock.anyObject(), EasyMock.capture(callbackMetadataCapture));
 
     mockClient.restRequest(EasyMock.capture(restRequestCapture),
                            (RequestContext) EasyMock.anyObject(),
@@ -1163,7 +1161,7 @@ public class TestRestClientRequestBuilder
     }
 
     restClient.sendRequest(mockRequest);
-
+    callbackMetadataCapture.getValue().onSuccess(Collections.emptyMap());
     return restRequestCapture.getValue();
   }
 
@@ -1273,8 +1271,8 @@ public class TestRestClientRequestBuilder
 
     Capture<StreamRequest> streamRequestCapture = new Capture<StreamRequest>();
 
-    EasyMock.expect(mockClient.getMetadata(new URI(HOST + SERVICE_NAME)))
-        .andReturn(Collections.<String, Object>emptyMap()).once();
+    Capture<Callback<Map<String, Object>>> callbackMetadataCapture = new Capture<>();
+    mockClient.getMetadata(EasyMock.anyObject(), EasyMock.capture(callbackMetadataCapture));
 
     mockClient.streamRequest(EasyMock.capture(streamRequestCapture), (RequestContext) EasyMock.anyObject(),
                              (Callback<StreamResponse>) EasyMock.anyObject());
@@ -1296,7 +1294,7 @@ public class TestRestClientRequestBuilder
     }
 
     restClient.sendRequest(mockRequest);
-
+    callbackMetadataCapture.getValue().onSuccess(Collections.emptyMap());
     return streamRequestCapture.getValue();
   }
 

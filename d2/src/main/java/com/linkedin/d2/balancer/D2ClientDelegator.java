@@ -94,8 +94,8 @@ public abstract class D2ClientDelegator implements D2Client
   }
 
   @Override
-  public Map<String, Object> getMetadata(URI uri)
+  public void getMetadata(URI uri, Callback<Map<String, Object>> callback)
   {
-    return _d2Client.getMetadata(uri);
+    _d2Client.getMetadata(uri, callback);
   }
 }

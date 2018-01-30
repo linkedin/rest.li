@@ -15,24 +15,6 @@
 */
 package com.linkedin.d2.balancer.clients;
 
-import java.net.URI;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
-
-import org.HdrHistogram.AbstractHistogram;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
@@ -42,7 +24,7 @@ import com.linkedin.d2.backuprequests.BackupRequestsStrategyStatsProvider;
 import com.linkedin.d2.backuprequests.TrackingBackupRequestsStrategy;
 import com.linkedin.d2.balancer.D2Client;
 import com.linkedin.d2.balancer.D2ClientConfig;
-import com.linkedin.d2.balancer.Facilities;
+import com.linkedin.d2.balancer.D2ClientDelegator;
 import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.LoadBalancer;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
@@ -58,6 +40,22 @@ import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.util.NamedThreadFactory;
+import java.net.URI;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
+import org.HdrHistogram.AbstractHistogram;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -67,13 +65,12 @@ import com.linkedin.r2.util.NamedThreadFactory;
  *
  * @author Jaroslaw Odzga (jodzga@linkedin.com)
  */
-public class BackupRequestsClient implements D2Client
+public class BackupRequestsClient extends D2ClientDelegator
 {
   private static final Logger LOG = LoggerFactory.getLogger(BackupRequestsClient.class);
 
   public static final String BACKUP_REQUEST_ATTRIBUTE_NAME = "BackupRequest";
 
-  private final D2Client _d2Client;
   private final LoadBalancer _loadBalancer;
   private final ScheduledExecutorService _executorService;
   private final ScheduledThreadPoolExecutor _latenciesNotifierExecutor;
@@ -101,7 +98,7 @@ public class BackupRequestsClient implements D2Client
   public BackupRequestsClient(D2Client d2Client, LoadBalancer loadBalancer, ScheduledExecutorService executorService,
       BackupRequestsStrategyStatsConsumer statsConsumer, long notifyLatencyInterval, TimeUnit notifyLatencyIntervalUnit)
   {
-    _d2Client = d2Client;
+    super(d2Client);
     _loadBalancer = loadBalancer;
     _executorService = executorService;
     _statsConsumer = Optional.ofNullable(statsConsumer).map(BackupRequestsClient::toSafeConsumer);
@@ -397,24 +394,6 @@ public class BackupRequestsClient implements D2Client
     _latenciesNotifier.cancel(false);
     _latenciesNotifierExecutor.shutdown();
     _d2Client.shutdown(callback);
-  }
-
-  @Override
-  public Map<String, Object> getMetadata(URI uri)
-  {
-    return _d2Client.getMetadata(uri);
-  }
-
-  @Override
-  public Facilities getFacilities()
-  {
-    return _d2Client.getFacilities();
-  }
-
-  @Override
-  public void start(Callback<None> callback)
-  {
-    _d2Client.start(callback);
   }
 
   @FunctionalInterface

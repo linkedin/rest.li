@@ -232,9 +232,9 @@ public class ZKFSLoadBalancer
   }
 
   @Override
-  public TransportClient getClient(Request request, RequestContext requestContext) throws ServiceUnavailableException
+  public void getClient(Request request, RequestContext requestContext, Callback<TransportClient> clientCallback)
   {
-    return _currentLoadBalancer.getClient(request, requestContext);
+    _currentLoadBalancer.getClient(request, requestContext, clientCallback);
   }
 
   @Override
@@ -267,14 +267,14 @@ public class ZKFSLoadBalancer
   }
 
   @Override
-  public ServiceProperties getLoadBalancedServiceProperties(String serviceName)
-      throws ServiceUnavailableException
+  public void getLoadBalancedServiceProperties(String serviceName, Callback<ServiceProperties> clientCallback)
   {
     if (_currentLoadBalancer == null)
     {
-      return null;
+      clientCallback.onSuccess(null);
+      return;
     }
-    return _currentLoadBalancer.getLoadBalancedServiceProperties(serviceName);
+    _currentLoadBalancer.getLoadBalancedServiceProperties(serviceName, clientCallback);
   }
 
   @Override

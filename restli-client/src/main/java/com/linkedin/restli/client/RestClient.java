@@ -59,7 +59,6 @@ import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.AttachmentUtils;
 import com.linkedin.restli.internal.common.CookieUtil;
 import com.linkedin.util.ArgumentUtil;
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -68,7 +67,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-
 import javax.activation.MimeTypeParseException;
 
 
@@ -239,23 +237,36 @@ public class RestClient implements Client {
                                      Callback<StreamResponse> callback)
   {
     RecordTemplate input = request.getInputRecord();
-    ProtocolVersion protocolVersion = getProtocolVersionForService(request);
-    URI requestUri = RestliUriBuilderUtil.createUriBuilder(request, _uriPrefix, protocolVersion).build();
+    getProtocolVersionForService(request, new Callback<ProtocolVersion>()
+    {
+      @Override
+      public void onError(Throwable e)
+      {
+        callback.onError(e);
+      }
 
-    final ResourceMethod method = request.getMethod();
-    final String methodName = request.getMethodName();
-    addDisruptContext(request.getBaseUriTemplate(), method, methodName, requestContext);
-    sendStreamRequestImpl(requestContext,
-                          requestUri,
-                          method,
-                          input != null ? RequestBodyTransformer.transform(request, protocolVersion) : null,
-                          request.getHeaders(),
-                          CookieUtil.encodeCookies(request.getCookies()),
-                          methodName,
-                          protocolVersion,
-                          request.getRequestOptions(),
-                          request.getStreamingAttachments(),
-                          callback);
+      @Override
+      public void onSuccess(ProtocolVersion protocolVersion)
+      {
+        URI requestUri = RestliUriBuilderUtil.createUriBuilder(request, _uriPrefix, protocolVersion).build();
+
+        final ResourceMethod method = request.getMethod();
+        final String methodName = request.getMethodName();
+        addDisruptContext(request.getBaseUriTemplate(), method, methodName, requestContext);
+        sendStreamRequestImpl(requestContext,
+          requestUri,
+          method,
+          input != null ? RequestBodyTransformer.transform(request, protocolVersion) : null,
+          request.getHeaders(),
+          CookieUtil.encodeCookies(request.getCookies()),
+          methodName,
+          protocolVersion,
+          request.getRequestOptions(),
+          request.getStreamingAttachments(),
+          callback);
+      }
+    });
+
   }
 
   /**
@@ -285,37 +296,48 @@ public class RestClient implements Client {
     }
 
     RecordTemplate input = request.getInputRecord();
-    ProtocolVersion protocolVersion = getProtocolVersionForService(request);
-    URI requestUri = RestliUriBuilderUtil.createUriBuilder(request, _uriPrefix, protocolVersion).build();
+    getProtocolVersionForService(request, new Callback<ProtocolVersion>()
+    {
+      @Override
+      public void onError(Throwable e)
+      {
+        callback.onError(e);
+      }
 
-    final ResourceMethod method = request.getMethod();
-    final String methodName = request.getMethodName();
-    addDisruptContext(request.getBaseUriTemplate(), method, methodName, requestContext);
-    sendRestRequestImpl(requestContext,
-                        requestUri,
-                        method,
-                        input != null ? RequestBodyTransformer.transform(request, protocolVersion) : null, request.getHeaders(),
-                        CookieUtil.encodeCookies(request.getCookies()),
-                        methodName,
-                        protocolVersion,
-                        request.getRequestOptions(),
-                        callback);
+      @Override
+      public void onSuccess(ProtocolVersion protocolVersion)
+      {
+        URI requestUri = RestliUriBuilderUtil.createUriBuilder(request, _uriPrefix, protocolVersion).build();
+
+        final ResourceMethod method = request.getMethod();
+        final String methodName = request.getMethodName();
+        addDisruptContext(request.getBaseUriTemplate(), method, methodName, requestContext);
+        sendRestRequestImpl(requestContext,
+          requestUri,
+          method,
+          input != null ? RequestBodyTransformer.transform(request, protocolVersion) : null, request.getHeaders(),
+          CookieUtil.encodeCookies(request.getCookies()),
+          methodName,
+          protocolVersion,
+          request.getRequestOptions(),
+          callback);
+      }
+    });
+
   }
 
-  /**
-   * @param request
-   */
-  private ProtocolVersion getProtocolVersionForService(final Request<?> request)
+  private void getProtocolVersionForService(final Request<?> request, Callback<ProtocolVersion> callback)
   {
     try
     {
-      return getProtocolVersion(AllProtocolVersions.BASELINE_PROTOCOL_VERSION,
-                                AllProtocolVersions.PREVIOUS_PROTOCOL_VERSION,
-                                AllProtocolVersions.LATEST_PROTOCOL_VERSION,
-                                AllProtocolVersions.NEXT_PROTOCOL_VERSION,
-                                getAnnouncedVersion(_client.getMetadata(new URI(_uriPrefix + request.getServiceName()))),
-                                request.getRequestOptions().getProtocolVersionOption(),
-                                _forceUseNextVersionOverride);
+      _client.getMetadata(new URI(_uriPrefix + request.getServiceName()), Callbacks.handle(metadata ->
+        callback.onSuccess(getProtocolVersion(AllProtocolVersions.BASELINE_PROTOCOL_VERSION,
+          AllProtocolVersions.PREVIOUS_PROTOCOL_VERSION,
+          AllProtocolVersions.LATEST_PROTOCOL_VERSION,
+          AllProtocolVersions.NEXT_PROTOCOL_VERSION,
+          getAnnouncedVersion(metadata),
+          request.getRequestOptions().getProtocolVersionOption(),
+          _forceUseNextVersionOverride)), callback));
     }
     catch (URISyntaxException e)
     {

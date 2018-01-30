@@ -31,7 +31,6 @@ import com.linkedin.d2.backuprequests.LatencyMetric;
 import com.linkedin.d2.backuprequests.PoissonEventsArrival;
 import com.linkedin.d2.backuprequests.ResponseTimeDistribution;
 import com.linkedin.d2.balancer.LoadBalancer;
-import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.util.JacksonUtil;
 import com.linkedin.d2.discovery.event.PropertyEventThread.PropertyEventShutdownCallback;
@@ -47,12 +46,6 @@ import com.linkedin.r2.message.rest.RestResponseBuilder;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
-import org.HdrHistogram.AbstractHistogram;
-import org.HdrHistogram.Histogram;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
-
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
@@ -70,6 +63,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
+import org.HdrHistogram.AbstractHistogram;
+import org.HdrHistogram.Histogram;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
@@ -533,9 +531,9 @@ public class TestBackupRequestsClient
     }
 
     @Override
-    public TransportClient getClient(Request request, RequestContext requestContext) throws ServiceUnavailableException
+    public void getClient(Request request, RequestContext requestContext, Callback<TransportClient> clientCallback)
     {
-      return _transportClient;
+      clientCallback.onSuccess(_transportClient);
     }
 
     @Override
@@ -549,11 +547,10 @@ public class TestBackupRequestsClient
     }
 
     @Override
-    public ServiceProperties getLoadBalancedServiceProperties(String serviceName) throws ServiceUnavailableException
+    public void getLoadBalancedServiceProperties(String serviceName, Callback<ServiceProperties> clientCallback)
     {
-      return _servicePropertiesSupplier.get();
+      clientCallback.onSuccess(_servicePropertiesSupplier.get());
     }
-
   }
 
   @SuppressWarnings("unchecked")

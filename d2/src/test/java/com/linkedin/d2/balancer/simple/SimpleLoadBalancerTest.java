@@ -709,12 +709,12 @@ public class SimpleLoadBalancerTest
   {
     URIRequest uriRequest = new URIRequest("d2://NonExistentService");
     LoadBalancerTestState state = new LoadBalancerTestState();
-    SimpleLoadBalancer balancer = new SimpleLoadBalancer(state, 5, TimeUnit.SECONDS);
+    SimpleLoadBalancer balancer = new SimpleLoadBalancer(state, 2, TimeUnit.SECONDS);
 
     try
     {
       balancer.getClient(uriRequest, new RequestContext());
-      fail("should have received a service unavailable exception");
+      fail("should have received a service unavailable exception, case 1");
     }
     catch (ServiceUnavailableException e)
     {
@@ -725,7 +725,7 @@ public class SimpleLoadBalancerTest
     try
     {
       balancer.getClient(uriRequest, new RequestContext());
-      fail("should have received a service unavailable exception");
+      fail("should have received a service unavailable exception, case 2");
     }
     catch (ServiceUnavailableException e)
     {
@@ -736,7 +736,7 @@ public class SimpleLoadBalancerTest
     try
     {
       balancer.getClient(uriRequest, new RequestContext());
-      fail("should have received a service unavailable exception");
+      fail("should have received a service unavailable exception, case 3");
     }
     catch (ServiceUnavailableException e)
     {
@@ -747,7 +747,7 @@ public class SimpleLoadBalancerTest
     try
     {
       balancer.getClient(uriRequest, new RequestContext());
-      fail("should have received a service unavailable exception");
+      fail("should have received a service unavailable exception, case 4");
     }
     catch (ServiceUnavailableException e)
     {
@@ -758,7 +758,7 @@ public class SimpleLoadBalancerTest
     try
     {
       balancer.getClient(uriRequest, new RequestContext());
-      fail("should have received a service unavailable exception");
+      fail("should have received a service unavailable exception, case 5");
     }
     catch (ServiceUnavailableException e)
     {
@@ -769,7 +769,7 @@ public class SimpleLoadBalancerTest
     try
     {
       balancer.getClient(uriRequest, new RequestContext());
-      fail("should have received a service unavailable exception");
+      fail("should have received a service unavailable exception, case 6");
     }
     catch (ServiceUnavailableException e)
     {
@@ -780,7 +780,7 @@ public class SimpleLoadBalancerTest
     try
     {
       balancer.getClient(uriRequest, new RequestContext());
-      fail("should have received a service unavailable exception");
+      fail("should have received a service unavailable exception, case 7");
     }
     catch (ServiceUnavailableException e)
     {
@@ -791,7 +791,7 @@ public class SimpleLoadBalancerTest
     try
     {
       balancer.getClient(uriRequest, new RequestContext());
-      fail("should have received a service unavailable exception");
+      fail("should have received a service unavailable exception, case 8");
     }
     catch (ServiceUnavailableException e)
     {
@@ -802,7 +802,9 @@ public class SimpleLoadBalancerTest
     try
     {
       balancer.getClient(uriRequest, new RequestContext());
-      fail("should have received a service unavailable exception");
+      fail("should have received a service unavailable exception, case 9" +
+        "" +
+        "");
     }
     catch (ServiceUnavailableException e)
     {
@@ -813,7 +815,7 @@ public class SimpleLoadBalancerTest
     try
     {
       balancer.getClient(uriRequest, new RequestContext());
-      fail("should have received a service unavailable exception");
+      fail("should have received a service unavailable exception, case 10");
     }
     catch (ServiceUnavailableException e)
     {

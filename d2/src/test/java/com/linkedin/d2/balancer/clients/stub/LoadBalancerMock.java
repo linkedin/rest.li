@@ -52,14 +52,15 @@ public class LoadBalancerMock implements LoadBalancer
   }
 
   @Override
-  public TransportClient getClient(Request request, RequestContext requestContext) throws ServiceUnavailableException
+  public void getClient(Request request, RequestContext requestContext, Callback<TransportClient> clientCallback)
   {
     if (_serviceUnavailable)
     {
-      throw new ServiceUnavailableException("bad", "bad");
+      clientCallback.onError(new ServiceUnavailableException("bad", "bad"));
+      return;
     }
 
-    return new TrackerClientTest.TestClient(true, _dontCallCallback, TrackerClientTest.TestClient.DEFAULT_REQUEST_TIMEOUT);
+    clientCallback.onSuccess(new TrackerClientTest.TestClient(true, _dontCallCallback, TrackerClientTest.TestClient.DEFAULT_REQUEST_TIMEOUT));
   }
 
   @Override
@@ -76,14 +77,14 @@ public class LoadBalancerMock implements LoadBalancer
   }
 
   @Override
-  public ServiceProperties getLoadBalancedServiceProperties(String serviceName)
-      throws ServiceUnavailableException
+  public void getLoadBalancedServiceProperties(String serviceName, Callback<ServiceProperties> clientCallback)
   {
     Map<String, Object> transportClientProperties = new HashMap<>();
     transportClientProperties.put(PropertyKeys.HTTP_REQUEST_TIMEOUT, TrackerClientTest.TestClient.DEFAULT_REQUEST_TIMEOUT);
 
-    return new ServiceProperties(serviceName, serviceName + "Cluster", "/" + serviceName,
-        Collections.singletonList("test"), Collections.emptyMap(), transportClientProperties, Collections.emptyMap(),
-        Collections.emptyList(), Collections.emptySet());
+    ServiceProperties test = new ServiceProperties(serviceName, serviceName + "Cluster", "/" + serviceName,
+      Collections.singletonList("test"), Collections.emptyMap(), transportClientProperties, Collections.emptyMap(),
+      Collections.emptyList(), Collections.emptySet());
+    clientCallback.onSuccess(test);
   }
 }

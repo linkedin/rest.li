@@ -222,5 +222,4 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator
     _outstandingRequests.clear();
     _loadBalancer.shutdown(shutdown);
   }
-
 }

@@ -68,14 +68,15 @@ public class PartitionedLoadBalancerTestState implements LoadBalancerState
   @Override
   public void listenToService(String serviceName, LoadBalancerStateListenerCallback callback)
   {
-    //do nothing
+    // trigger callback
+    callback.done(LoadBalancerStateListenerCallback.SERVICE, null);
   }
 
   @Override
   public void listenToCluster(String clusterName, LoadBalancerStateListenerCallback callback)
   {
-    //do nothing
-  }
+    // trigger callback
+    callback.done(LoadBalancerStateListenerCallback.SERVICE, null);  }
 
   @Override
   public void start(Callback<None> callback)

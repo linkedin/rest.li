@@ -18,10 +18,9 @@ package com.linkedin.d2.balancer.clients;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.FutureCallback;
-import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.D2Client;
 import com.linkedin.d2.balancer.D2ClientConfig;
-import com.linkedin.d2.balancer.Facilities;
+import com.linkedin.d2.balancer.D2ClientDelegator;
 import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy.ExcludedHostHints;
 import com.linkedin.data.ByteString;
@@ -38,7 +37,6 @@ import com.linkedin.r2.message.stream.entitystream.EntityStream;
 import com.linkedin.r2.message.stream.entitystream.EntityStreams;
 import com.linkedin.r2.message.stream.entitystream.FullEntityObserver;
 import java.net.URI;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Future;
 import org.slf4j.Logger;
@@ -57,17 +55,15 @@ import org.slf4j.LoggerFactory;
  *
  * @author Xialin Zhu
  */
-public class RetryClient implements D2Client
+public class RetryClient extends D2ClientDelegator
 {
   private static final Logger LOG = LoggerFactory.getLogger(RetryClient.class);
-
-  private final D2Client _d2Client;
 
   private final int _limit;
 
   public RetryClient(D2Client d2Client, int limit)
   {
-    _d2Client = d2Client;
+    super(d2Client);
     _limit = limit;
     LOG.debug("Retry client created with limit set to: ", _limit);
   }
@@ -112,30 +108,6 @@ public class RetryClient implements D2Client
   {
     final Callback<StreamResponse> transportCallback = new StreamRetryRequestCallback(request, requestContext, callback);
     _d2Client.streamRequest(request, requestContext, transportCallback);
-  }
-
-  @Override
-  public void shutdown(Callback<None> callback)
-  {
-    _d2Client.shutdown(callback);
-  }
-
-  @Override
-  public Map<String, Object> getMetadata(URI uri)
-  {
-    return _d2Client.getMetadata(uri);
-  }
-
-  @Override
-  public Facilities getFacilities()
-  {
-    return _d2Client.getFacilities();
-  }
-
-  @Override
-  public void start(Callback<None> callback)
-  {
-    _d2Client.start(callback);
   }
 
   /**

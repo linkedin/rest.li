@@ -55,15 +55,8 @@ public class TimeoutCallback<T> implements Callback<T>, TimeoutExecutor
   public TimeoutCallback(ScheduledExecutorService executor, long timeout, TimeUnit timeoutUnit,
                          final Callback<T> callback, final String timeoutMessage)
   {
-    _timeout = new Timeout<Callback<T>>(executor, timeout, timeoutUnit, callback);
-    _timeout.addTimeoutTask(new Runnable()
-    {
-      @Override
-      public void run()
-      {
-        callback.onError(new TimeoutException(timeoutMessage));
-      }
-    });
+    _timeout = new Timeout<>(executor, timeout, timeoutUnit, callback);
+    _timeout.addTimeoutTask(() -> callback.onError(new TimeoutException(timeoutMessage)));
   }
 
   @Override

@@ -19,14 +19,15 @@ package com.linkedin.r2.transport.common;
 
 
 import com.linkedin.common.callback.Callback;
+import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamResponse;
-
 import java.net.URI;
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.Future;
 
@@ -124,8 +125,25 @@ public interface Client
    *
    * THE MAP RETURNED FROM THIS METHOD MUST NOT BE NULL!
    *
+   * The callback must be guaranteed to return after a certain time
+   *
    * @param uri the URI to get metadata for
    * @return metadata for the URI
    */
-  Map<String, Object> getMetadata(URI uri);
+  void getMetadata(URI uri, Callback<Map<String, Object>> callback);
+
+  @Deprecated
+  default Map<String, Object> getMetadata(URI uri){
+    FutureCallback<Map<String, Object>> callback = new FutureCallback<>();
+    getMetadata(uri, callback);
+    try
+    {
+      // this call is guaranteed to return in a time bounded manner
+      return callback.get();
+    }
+    catch (Exception e)
+    {
+      return Collections.emptyMap();
+    }
+  }
 }

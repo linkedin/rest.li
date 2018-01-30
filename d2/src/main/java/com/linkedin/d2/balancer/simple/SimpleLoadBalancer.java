@@ -17,6 +17,7 @@
 package com.linkedin.d2.balancer.simple;
 
 import com.linkedin.common.callback.Callback;
+import com.linkedin.common.callback.Callbacks;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.KeyMapper;
@@ -50,6 +51,7 @@ import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
+import com.linkedin.r2.transport.http.client.TimeoutCallback;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -63,6 +65,8 @@ import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -83,6 +87,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   private final Stats _serviceAvailableStats;
   private final long              _timeout;
   private final TimeUnit          _unit;
+  private final ScheduledExecutorService _executor;
   private final Random            _random = new Random();
 
   public SimpleLoadBalancer(LoadBalancerState state)
@@ -90,6 +95,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     this(state, new Stats(1000), new Stats(1000), 0, TimeUnit.SECONDS);
   }
 
+  @Deprecated
   public SimpleLoadBalancer(LoadBalancerState state, long timeout)
   {
     this(state, new Stats(1000), new Stats(1000), timeout, TimeUnit.MILLISECONDS);
@@ -100,6 +106,12 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     this(state, new Stats(1000), new Stats(1000), timeout, unit);
   }
 
+  public SimpleLoadBalancer(LoadBalancerState state, long timeout, TimeUnit unit, ScheduledExecutorService executor)
+  {
+    this(state, new Stats(1000), new Stats(1000), timeout, unit, executor);
+  }
+
+  @Deprecated()
   public SimpleLoadBalancer(LoadBalancerState state,
                             Stats serviceAvailableStats,
                             Stats serviceUnavailableStats)
@@ -107,17 +119,26 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     this(state, serviceAvailableStats, serviceUnavailableStats, 0, TimeUnit.SECONDS);
   }
 
+  public SimpleLoadBalancer(LoadBalancerState state, Stats serviceAvailableStats, Stats serviceUnavailableStats,
+                            long timeout, TimeUnit unit)
+  {
+    this(state, serviceAvailableStats, serviceUnavailableStats, timeout, unit, Executors.newSingleThreadScheduledExecutor());
+
+  }
+
   public SimpleLoadBalancer(LoadBalancerState state,
                             Stats serviceAvailableStats,
                             Stats serviceUnavailableStats,
                             long timeout,
-                            TimeUnit unit)
+                            TimeUnit unit,
+                            ScheduledExecutorService executor)
   {
     _state = state;
     _serviceUnavailableStats = serviceUnavailableStats;
     _serviceAvailableStats = serviceAvailableStats;
     _timeout = timeout;
     _unit = unit;
+    _executor = executor;
   }
 
   public Stats getServiceUnavailableStats()
@@ -155,51 +176,65 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
    *           URN, an ServiceUnavailableException will be thrown.
    */
   @Override
-  public TransportClient getClient(Request request, RequestContext requestContext) throws ServiceUnavailableException
+  public void getClient(Request request, RequestContext requestContext, Callback<TransportClient> clientCallback)
   {
-    TransportClient client;
     URI uri = request.getURI();
     debug(_log, "get client for uri: ", uri);
 
-    ServiceProperties service = listenToServiceAndCluster(uri);
-
-    String serviceName = service.getServiceName();
-    String clusterName = service.getClusterName();
-    ClusterProperties cluster = getClusterProperties(serviceName, clusterName);
-
-    // Check if we want to override the service URL and bypass choosing among the existing
-    // tracker clients. This is useful when the service we want is not announcing itself to
-    // the cluster, ie a private service for a set of clients.
-    URI targetService = LoadBalancerUtil.TargetHints.getRequestContextTargetService(requestContext);
-
-    if (targetService == null)
+    if (!D2_SCHEME_NAME.equalsIgnoreCase(uri.getScheme()))
     {
-      LoadBalancerStateItem<UriProperties> uriItem = getUriItem(serviceName, clusterName, cluster);
-      UriProperties uris = uriItem.getProperty();
-
-      List<LoadBalancerState.SchemeStrategyPair> orderedStrategies =
-              _state.getStrategiesForService(serviceName,
-                                             service.getPrioritizedSchemes());
-
-      TrackerClient trackerClient = chooseTrackerClient(request, requestContext, serviceName, clusterName, cluster,
-                                                        uriItem, uris, orderedStrategies, service);
-
-      String clusterAndServiceUriString = trackerClient.getUri() + service.getPath();
-      client = new RewriteLoadBalancerClient(serviceName,
-                                               URI.create(clusterAndServiceUriString),
-                                               trackerClient);
-
-      _serviceAvailableStats.inc();
+      throw new IllegalArgumentException("Unsupported scheme in URI " + uri);
     }
-    else
-    {
-      _log.debug("service hint found, using generic client for target: {}", targetService);
 
-      TransportClient transportClient = _state.getClient(serviceName, targetService.getScheme());
-      client = new RewriteLoadBalancerClient(serviceName,targetService,transportClient);
-    }
-    return client;
+    // get the service for this uri
+    String extractedServiceName = LoadBalancerUtil.getServiceNameFromUri(uri);
+
+    listenToServiceAndCluster(extractedServiceName, Callbacks.handle(service -> {
+      String serviceName = service.getServiceName();
+      String clusterName = service.getClusterName();
+      try
+      {
+        ClusterProperties cluster = getClusterProperties(serviceName, clusterName);
+
+        // Check if we want to override the service URL and bypass choosing among the existing
+        // tracker clients. This is useful when the service we want is not announcing itself to
+        // the cluster, ie a private service for a set of clients.
+        URI targetService = LoadBalancerUtil.TargetHints.getRequestContextTargetService(requestContext);
+
+        if (targetService == null)
+        {
+          LoadBalancerStateItem<UriProperties> uriItem = getUriItem(serviceName, clusterName, cluster);
+          UriProperties uris = uriItem.getProperty();
+
+          List<LoadBalancerState.SchemeStrategyPair> orderedStrategies =
+            _state.getStrategiesForService(serviceName,
+              service.getPrioritizedSchemes());
+
+          TrackerClient trackerClient = chooseTrackerClient(request, requestContext, serviceName, clusterName, cluster,
+            uriItem, uris, orderedStrategies, service);
+
+          String clusterAndServiceUriString = trackerClient.getUri() + service.getPath();
+          _serviceAvailableStats.inc();
+          clientCallback.onSuccess(new RewriteLoadBalancerClient(serviceName,
+            URI.create(clusterAndServiceUriString),
+            trackerClient));
+
+        }
+        else
+        {
+          _log.debug("service hint found, using generic client for target: {}", targetService);
+
+          TransportClient transportClient = _state.getClient(serviceName, targetService.getScheme());
+          clientCallback.onSuccess(new RewriteLoadBalancerClient(serviceName, targetService, transportClient));
+        }
+      }
+      catch (ServiceUnavailableException e)
+      {
+        clientCallback.onError(e);
+      }
+    }, clientCallback));
   }
+
 
   @Override
   public <K> MapKeyResult<Ring<URI>, K> getRings(URI serviceUri, Iterable<K> keys) throws ServiceUnavailableException
@@ -307,6 +342,33 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     }
   }
 
+  private void listenToServiceAndCluster(String serviceName, Callback<ServiceProperties> callback)
+  {
+
+    boolean waitForUpdatedValue = _timeout > 0;
+
+    // if timeout is 0, we must not add the timeout callback, otherwise it would trigger immediately
+    if (waitForUpdatedValue)
+    {
+      Callback<ServiceProperties> finalCallback = callback;
+      callback = new TimeoutCallback<>(_executor, _timeout, _unit, new Callback<ServiceProperties>()
+      {
+        @Override
+        public void onError(Throwable e)
+        {
+          finalCallback.onError(new ServiceUnavailableException(serviceName, e.getMessage(), e));
+        }
+
+        @Override
+        public void onSuccess(ServiceProperties result)
+        {
+          finalCallback.onSuccess(result);
+        }
+      }, "Timeout while fetching service");
+    }
+    listenToServiceAndCluster(serviceName, waitForUpdatedValue, callback);
+  }
+
   private ServiceProperties listenToServiceAndCluster(URI uri)
           throws ServiceUnavailableException
   {
@@ -339,21 +401,11 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
 
   private void listenToServiceAndCluster(String serviceName, boolean waitForUpdatedValue, Callback<ServiceProperties> callback)
   {
-    getLoadBalancedServiceProperties(serviceName, waitForUpdatedValue, new Callback<ServiceProperties>()
-    {
-      @Override
-      public void onError(Throwable e)
-      {
-        callback.onError(e);
-      }
-
-      @Override
-      public void onSuccess(ServiceProperties service)
+    getLoadBalancedServiceProperties(serviceName, waitForUpdatedValue, Callbacks.handle(service ->
       {
         String clusterName = service.getClusterName();
         listenToCluster(clusterName, waitForUpdatedValue, (type, name) -> callback.onSuccess(service));
-      }
-    });
+      }, callback));
   }
 
   public void listenToCluster(String clusterName, boolean waitForUpdatedValue, LoadBalancerStateListenerCallback callback)
@@ -372,20 +424,8 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   @Override
   public void warmUpService(String serviceName, Callback<None> callback)
   {
-    listenToServiceAndCluster(serviceName, true, new Callback<ServiceProperties>()
-    {
-      @Override
-      public void onError(Throwable e)
-      {
-        callback.onError(e);
-      }
-
-      @Override
-      public void onSuccess(ServiceProperties result)
-      {
-        callback.onSuccess(None.none());
-      }
-    });
+    listenToServiceAndCluster(serviceName, true,
+      Callbacks.handle(service -> callback.onSuccess(None.none()), callback));
   }
 
   private LoadBalancerStateItem<UriProperties> getUriItem(String serviceName,
@@ -569,22 +609,29 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   }
 
   @Override
-  public ServiceProperties getLoadBalancedServiceProperties(String serviceName)
-    throws ServiceUnavailableException
+  public void getLoadBalancedServiceProperties(String serviceName, Callback<ServiceProperties> callback)
   {
-    FutureCallback<ServiceProperties> futureCallback = new FutureCallback<>();
     boolean waitForUpdatedValue = _timeout > 0;
-
-    getLoadBalancedServiceProperties(serviceName, waitForUpdatedValue, futureCallback);
-
-    try
+    // if timeout is 0, we must not add the timeout callback, otherwise it would trigger immediately
+    if (waitForUpdatedValue)
     {
-      return futureCallback.get(_timeout, _unit);
+      Callback<ServiceProperties> finalCallback = callback;
+      callback = new TimeoutCallback<>(_executor, _timeout, _unit, new Callback<ServiceProperties>()
+      {
+        @Override
+        public void onError(Throwable e)
+        {
+          finalCallback.onError(new ServiceUnavailableException(serviceName, e.getMessage(), e));
+        }
+
+        @Override
+        public void onSuccess(ServiceProperties result)
+        {
+          finalCallback.onSuccess(result);
+        }
+      }, "Timeout while fetching service");
     }
-    catch (Exception e)
-    {
-      throw new ServiceUnavailableException(serviceName, e.getMessage(), e);
-    }
+    getLoadBalancedServiceProperties(serviceName, waitForUpdatedValue, callback);
   }
 
   public void getLoadBalancedServiceProperties(String serviceName, boolean waitForUpdatedValue, Callback<ServiceProperties> servicePropertiesCallback)

@@ -617,7 +617,7 @@ public class SimpleLoadBalancerSimulation
 
             // if we didn't receive service unavailable, we should
             // get a client back
-            assertNotNull(client);
+            assertNotNull(client, "Not found client for: d2://" + possibleService + random(_possiblePaths));
           }
           catch (ServiceUnavailableException e)
           {

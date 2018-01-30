@@ -24,7 +24,6 @@ import com.linkedin.d2.balancer.Directory;
 import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.LoadBalancer;
 import com.linkedin.d2.balancer.LoadBalancerWithFacilities;
-import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.WarmUpService;
 import com.linkedin.d2.balancer.clients.TrackerClientTest.TestClient;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
@@ -35,11 +34,6 @@ import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
-import org.junit.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -53,6 +47,10 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 
 public class WarmUpLoadBalancerTest
@@ -226,9 +224,9 @@ public class WarmUpLoadBalancerTest
     warmUpLoadBalancer.start(callback);
 
     callback.get();
-    Assert.assertTrue("Expected # of requests between " + expectedRequests + " +/-" + deviation + ", found:" + requestCount.get(),
-      expectedRequests - deviation < requestCount.get()
-        && expectedRequests + deviation > requestCount.get());
+    Assert.assertTrue(expectedRequests - deviation < requestCount.get()
+            && expectedRequests + deviation > requestCount.get(),
+      "Expected # of requests between " + expectedRequests + " +/-" + deviation + ", found:" + requestCount.get());
   }
 
 
@@ -331,9 +329,9 @@ public class WarmUpLoadBalancerTest
     }
 
     @Override
-    public TransportClient getClient(Request request, RequestContext requestContext) throws ServiceUnavailableException
+    public void getClient(Request request, RequestContext requestContext, Callback<TransportClient> clientCallback)
     {
-      return new TestClient();
+      clientCallback.onSuccess(new TestClient());
     }
 
     @Override
@@ -362,10 +360,9 @@ public class WarmUpLoadBalancerTest
     }
 
     @Override
-    public ServiceProperties getLoadBalancedServiceProperties(String serviceName)
-      throws ServiceUnavailableException
+    public void getLoadBalancedServiceProperties(String serviceName, Callback<ServiceProperties> clientCallback)
     {
-      return null;
+      clientCallback.onSuccess(new ServiceProperties(serviceName, "clustername", "/foo", Arrays.asList("rr")));
     }
 
     AtomicInteger getRequestCount()

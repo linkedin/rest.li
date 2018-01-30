@@ -38,7 +38,6 @@ import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
-
 import java.net.URI;
 import java.util.Collection;
 import java.util.Map;
@@ -105,16 +104,15 @@ public class TogglingLoadBalancer implements LoadBalancer, HashRingProvider, Cli
   }
 
   @Override
-  public ServiceProperties getLoadBalancedServiceProperties(String serviceName)
-      throws ServiceUnavailableException
+  public void getLoadBalancedServiceProperties(String serviceName, Callback<ServiceProperties> clientCallback)
   {
-    return _balancer.getLoadBalancedServiceProperties(serviceName);
+    _balancer.getLoadBalancedServiceProperties(serviceName, clientCallback);
   }
 
   @Override
-  public TransportClient getClient(Request request, RequestContext requestContext) throws ServiceUnavailableException
+  public void getClient(Request request, RequestContext requestContext, Callback<TransportClient> clientCallback)
   {
-    return _balancer.getClient(request, requestContext);
+     _balancer.getClient(request, requestContext, clientCallback);
   }
 
   @Override

@@ -93,8 +93,8 @@ public abstract class AbstractClient implements Client
   }
 
   @Override
-  public Map<String, Object> getMetadata(URI uri)
+  public void getMetadata(URI uri, Callback<Map<String, Object>> callback)
   {
-    return Collections.emptyMap();
+    callback.onSuccess(Collections.emptyMap());
   }
 }
