@@ -14,7 +14,7 @@
    limitations under the License.
 */
 
-package com.linkedin.d2.balancer.transportadaptor;
+package com.linkedin.d2.balancer.util;
 
 import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.util.ArgumentUtil;

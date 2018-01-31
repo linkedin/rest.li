@@ -4,7 +4,7 @@ import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
-import com.linkedin.d2.balancer.clients.RewriteClient;
+import com.linkedin.d2.balancer.clients.RewriteLoadBalancerClient;
 import com.linkedin.d2.balancer.event.EventEmitter;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
@@ -392,10 +392,10 @@ public class LoadBalancerSimulator
         RestRequest restRequest = new RestRequestBuilder(uriRequest.getURI()).build();
         RequestContext requestContext = new RequestContext();
 
-        RewriteClient client = null;
+        RewriteLoadBalancerClient client = null;
         try
         {
-          client = (RewriteClient) _loadBalancer.getClient(restRequest, requestContext);
+          client = (RewriteLoadBalancerClient) _loadBalancer.getClient(restRequest, requestContext);
         }
         catch (ServiceUnavailableException e)
         {

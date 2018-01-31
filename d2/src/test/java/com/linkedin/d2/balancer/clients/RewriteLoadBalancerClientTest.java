@@ -33,7 +33,7 @@ import java.util.Map;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 
-public class RewriteClientTest
+public class RewriteLoadBalancerClientTest
 {
   @Test(groups = { "small", "back-end" })
   public void testClient() throws URISyntaxException
@@ -41,11 +41,10 @@ public class RewriteClientTest
     URI uri = URI.create("http://test.linkedin.com/test");
     String serviceName = "HistoryService";
     TestClient wrappedClient = new TestClient();
-    RewriteClient client = new RewriteClient(serviceName, uri, wrappedClient);
+    RewriteLoadBalancerClient client = new RewriteLoadBalancerClient(serviceName, uri, wrappedClient);
 
     assertEquals(client.getUri(), uri);
     assertEquals(client.getServiceName(), serviceName);
-    assertEquals(client.getWrappedClient(), wrappedClient);
 
     RestRequest restRequest = new RestRequestBuilder(URI.create("d2://HistoryService/getCube")).build();
     Map<String, String> restWireAttrs = new HashMap<String, String>();
@@ -71,11 +70,10 @@ public class RewriteClientTest
     URI uri = URI.create("http://test.linkedin.com/test");
     String serviceName = "HistoryService";
     TestClient wrappedClient = new TestClient();
-    RewriteClient client = new RewriteClient(serviceName, uri, wrappedClient);
+    RewriteLoadBalancerClient client = new RewriteLoadBalancerClient(serviceName, uri, wrappedClient);
 
     assertEquals(client.getUri(), uri);
     assertEquals(client.getServiceName(), serviceName);
-    assertEquals(client.getWrappedClient(), wrappedClient);
 
     RestRequest restRequest = new RestRequestBuilder(URI.create("d2://HistoryService/getCube?bar=baz#fragId")).build();
     Map<String, String> restWireAttrs = new HashMap<String, String>();
@@ -123,11 +121,10 @@ public class RewriteClientTest
   {
     URI uri = URI.create(hostUri);
     TestClient wrappedClient = new TestClient();
-    RewriteClient client = new RewriteClient(serviceName, uri, wrappedClient);
+    RewriteLoadBalancerClient client = new RewriteLoadBalancerClient(serviceName, uri, wrappedClient);
 
     assertEquals(client.getUri(), uri);
     assertEquals(client.getServiceName(), serviceName);
-    assertEquals(client.getWrappedClient(), wrappedClient);
 
     RestRequest restRequest = new RestRequestBuilder(URI.create("d2://" + serviceName + path)).build();
     Map<String, String> restWireAttrs = new HashMap<String, String>();
@@ -150,11 +147,10 @@ public class RewriteClientTest
     URI uri = URI.create("http://username:password@test.linkedin.com:9876/test");
     String serviceName = "HistoryService";
     TestClient wrappedClient = new TestClient();
-    RewriteClient client = new RewriteClient(serviceName, uri, wrappedClient);
+    RewriteLoadBalancerClient client = new RewriteLoadBalancerClient(serviceName, uri, wrappedClient);
 
     assertEquals(client.getUri(), uri);
     assertEquals(client.getServiceName(), serviceName);
-    assertEquals(client.getWrappedClient(), wrappedClient);
 
     RestRequest restRequest = new RestRequestBuilder(URI.create("d2://HistoryService/getCube?bar=baz#fragId")).build();
     Map<String, String> restWireAttrs = new HashMap<String, String>();
@@ -176,11 +172,10 @@ public class RewriteClientTest
     URI uri = URI.create("http://test.linkedin.com:9876/test");
     String serviceName = "HistoryService";
     TestClient wrappedClient = new TestClient();
-    RewriteClient client = new RewriteClient(serviceName, uri, wrappedClient);
+    RewriteLoadBalancerClient client = new RewriteLoadBalancerClient(serviceName, uri, wrappedClient);
 
     assertEquals(client.getUri(), uri);
     assertEquals(client.getServiceName(), serviceName);
-    assertEquals(client.getWrappedClient(), wrappedClient);
 
     RestRequest restRequest;
     Map<String, String> restWireAttrs = new HashMap<String, String>();

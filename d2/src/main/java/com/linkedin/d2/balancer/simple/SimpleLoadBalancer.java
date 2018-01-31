@@ -27,7 +27,7 @@ import com.linkedin.d2.balancer.LoadBalancerState.NullStateListenerCallback;
 import com.linkedin.d2.balancer.LoadBalancerStateItem;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.WarmUpService;
-import com.linkedin.d2.balancer.clients.RewriteClient;
+import com.linkedin.d2.balancer.clients.RewriteLoadBalancerClient;
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.PartitionData;
@@ -185,7 +185,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
                                                         uriItem, uris, orderedStrategies, service);
 
       String clusterAndServiceUriString = trackerClient.getUri() + service.getPath();
-      client = new RewriteClient(serviceName,
+      client = new RewriteLoadBalancerClient(serviceName,
                                                URI.create(clusterAndServiceUriString),
                                                trackerClient);
 
@@ -196,7 +196,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
       _log.debug("service hint found, using generic client for target: {}", targetService);
 
       TransportClient transportClient = _state.getClient(serviceName, targetService.getScheme());
-      client = new RewriteClient(serviceName,targetService,transportClient);
+      client = new RewriteLoadBalancerClient(serviceName,targetService,transportClient);
     }
     return client;
   }

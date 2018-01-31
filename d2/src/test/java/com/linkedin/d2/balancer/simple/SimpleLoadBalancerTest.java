@@ -26,6 +26,7 @@ import com.linkedin.d2.balancer.LoadBalancerTestState;
 import com.linkedin.d2.balancer.PartitionedLoadBalancerTestState;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.clients.RewriteClient;
+import com.linkedin.d2.balancer.clients.RewriteLoadBalancerClient;
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ClusterPropertiesJsonSerializer;
@@ -209,8 +210,8 @@ public class SimpleLoadBalancerTest
 
       for (int i = 0; i < 100; ++i)
       {
-        RewriteClient client =
-            (RewriteClient) loadBalancer.getClient(new URIRequest("d2://foo/52"),
+        RewriteLoadBalancerClient client =
+            (RewriteLoadBalancerClient) loadBalancer.getClient(new URIRequest("d2://foo/52"),
                                                    new RequestContext());
 
         assertTrue(expectedUris.contains(client.getUri()));
@@ -543,8 +544,8 @@ public class SimpleLoadBalancerTest
       for (int i = 0; i < 1000; ++i)
       {
         int ii = i % 100;
-        RewriteClient client =
-            (RewriteClient) loadBalancer.getClient(new URIRequest("d2://foo/id=" + ii), new RequestContext());
+        RewriteLoadBalancerClient client =
+            (RewriteLoadBalancerClient) loadBalancer.getClient(new URIRequest("d2://foo/id=" + ii), new RequestContext());
         String clientUri = client.getUri().toString();
         HashFunction<String[]> hashFunction = null;
         String[] str = new String[1];
@@ -552,10 +553,11 @@ public class SimpleLoadBalancerTest
         // test KeyMapper target host hint: request is always to target host regardless of what's in d2 URI and whether it's hash-based or range-based partitions
         RequestContext requestContextWithHint = new RequestContext();
         KeyMapper.TargetHostHints.setRequestContextTargetHost(requestContextWithHint, uri1);
-        RewriteClient hintedClient1 = (RewriteClient)loadBalancer.getClient(new URIRequest("d2://foo/id=" + ii), requestContextWithHint);
+        RewriteLoadBalancerClient
+            hintedClient1 = (RewriteLoadBalancerClient)loadBalancer.getClient(new URIRequest("d2://foo/id=" + ii), requestContextWithHint);
         String hintedUri1 = hintedClient1.getUri().toString();
         Assert.assertEquals(hintedUri1, uri1.toString() + "/foo");
-        RewriteClient hintedClient2 = (RewriteClient)loadBalancer.getClient(new URIRequest("d2://foo/action=purge-all"), requestContextWithHint);
+        RewriteLoadBalancerClient hintedClient2 = (RewriteLoadBalancerClient)loadBalancer.getClient(new URIRequest("d2://foo/action=purge-all"), requestContextWithHint);
         String hintedUri2 = hintedClient2.getUri().toString();
         Assert.assertEquals(hintedUri2, uri1.toString() + "/foo");
         // end test KeyMapper target host hint
@@ -1205,9 +1207,12 @@ public class SimpleLoadBalancerTest
       {
         try
         {
-          RewriteClient client =
-                  (RewriteClient) loadBalancer.getClient(new URIRequest("d2://foo/52"), new RequestContext());
-          TrackerClient tClient = (TrackerClient) client.getWrappedClient();
+          RewriteLoadBalancerClient client =
+                  (RewriteLoadBalancerClient) loadBalancer.getClient(new URIRequest("d2://foo/52"), new RequestContext());
+          assertTrue(client.getDecoratedClient() instanceof RewriteClient);
+          RewriteClient rewriteClient = (RewriteClient) client.getDecoratedClient();
+          assertTrue(rewriteClient.getDecoratedClient() instanceof TrackerClient);
+          TrackerClient tClient = (TrackerClient) rewriteClient.getDecoratedClient();
           DegraderImpl degrader = (DegraderImpl)tClient.getDegrader(DefaultPartitionAccessor.DEFAULT_PARTITION_ID);
           DegraderImpl.Config cfg = new DegraderImpl.Config(degrader.getConfig());
           // Change DropRate to 0.0 at the rate of 1/3

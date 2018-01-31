@@ -14,7 +14,7 @@
    limitations under the License.
 */
 
-package com.linkedin.d2.balancer.transportadaptor;
+package com.linkedin.d2.balancer.util;
 
 import java.net.URI;
 import java.net.URISyntaxException;
