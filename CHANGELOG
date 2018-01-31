@@ -1,10 +1,14 @@
+18.0.8
+------
+
+
 18.0.7
 ------
 (RB=1207799)
 Rename RewriteClient and TransportAdaptor
 
 18.0.6
--------	
+-------
 (RB=1205573)
 Add TransportAdaptor for easy request rewriting and reusing
 
