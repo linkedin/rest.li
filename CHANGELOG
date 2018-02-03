@@ -1,12 +1,13 @@
 18.0.9
 ------
-(RB=1212053)
-Add check and debug information to workaround NPE issue during #logState
+
 
 18.0.8
 ------
 (RB=1194168)
 Cutdown d2 INFO/WARN messages when a lot of hosts are put into recoveryMap
+(RB=1212053)
+Add check and debug information to workaround NPE issue during #logState
 
 18.0.7
 ------
