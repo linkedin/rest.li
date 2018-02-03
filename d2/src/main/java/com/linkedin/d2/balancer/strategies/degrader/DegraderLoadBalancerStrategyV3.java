@@ -350,7 +350,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     {
       return false;
     }
-    return getUnhealthyTrackerClients(trackerClientUpdaters, newState.getPointsMap(), config, partitionId).isEmpty();
+    return getUnhealthyTrackerClients(trackerClientUpdaters, newState.getPointsMap(), newState.getQuarantineMap(), config, partitionId).isEmpty();
   }
 
   private static boolean isNewStateHealthy(PartitionDegraderLoadBalancerState newState,
@@ -441,6 +441,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
 
   private static List<TrackerClient> getUnhealthyTrackerClients(List<TrackerClientUpdater> trackerClientUpdaters,
                                                          Map<URI, Integer> pointsMap,
+                                                         Map<TrackerClient, DegraderLoadBalancerQuarantine> quarantineMap,
                                                          DegraderLoadBalancerStrategyConfig config,
                                                          int partitionId)
   {
@@ -449,7 +450,14 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     {
       TrackerClient client = clientUpdater.getTrackerClient();
       int perfectHealth = (int) (client.getPartitionWeight(partitionId) * config.getPointsPerWeight());
-      Integer point = pointsMap.get(client.getUri());
+      URI uri = client.getUri();
+      if (!pointsMap.containsKey(uri))
+      {
+        _log.warn("Client with URI {} is absent in point map, pointMap={}, quarantineMap={}",
+            new Object[] {uri, pointsMap, quarantineMap});
+        continue;
+      }
+      Integer point = pointsMap.get(uri);
       if (point < perfectHealth)
       {
         unhealthyClients.add(client);
@@ -765,7 +773,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     {
       // atomic overwrite
       // try Call Dropping next time we updatePartitionState.
-      List<TrackerClient> unHealthyClients = getUnhealthyTrackerClients(trackerClientUpdaters, points, config, partitionId);
+      List<TrackerClient> unHealthyClients = getUnhealthyTrackerClients(trackerClientUpdaters, points, quarantineMap, config, partitionId);
       newState =
           new PartitionDegraderLoadBalancerState(clusterGenerationId,
                                                  config.getClock().currentTimeMillis(),
@@ -802,7 +810,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       // don't change the points map, but try load balancing strategy next time.
       // recoveryMap needs to update if quarantine or fastRecovery is enabled. This is because the client will not
       // have chance to get in in next interval (already evicted from quarantine or not a new client anymore).
-      List<TrackerClient> unHealthyClients = getUnhealthyTrackerClients(trackerClientUpdaters, oldPointsMap, config, partitionId);
+      List<TrackerClient> unHealthyClients = getUnhealthyTrackerClients(trackerClientUpdaters, oldPointsMap, quarantineMap, config, partitionId);
       newState =
               new PartitionDegraderLoadBalancerState(clusterGenerationId, config.getClock().currentTimeMillis(), true,
                                             oldState.getRingFactory(),
