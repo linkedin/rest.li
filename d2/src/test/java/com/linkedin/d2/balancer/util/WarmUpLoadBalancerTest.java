@@ -24,9 +24,12 @@ import com.linkedin.d2.balancer.Directory;
 import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.LoadBalancer;
 import com.linkedin.d2.balancer.LoadBalancerWithFacilities;
+import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.WarmUpService;
 import com.linkedin.d2.balancer.clients.TrackerClientTest.TestClient;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
+import com.linkedin.d2.balancer.util.downstreams.DownstreamServicesFetcher;
+import com.linkedin.d2.balancer.util.downstreams.FSBasedDownstreamServicesFetcher;
 import com.linkedin.d2.balancer.util.partitions.PartitionInfoProvider;
 import com.linkedin.d2.discovery.event.PropertyEventThread.PropertyEventShutdownCallback;
 import com.linkedin.d2.discovery.stores.file.FileStoreTest;
@@ -39,6 +42,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
@@ -66,6 +70,7 @@ public class WarmUpLoadBalancerTest
   );
 
   private static final List<String> VALID_AND_UNVALID_FILES = new ArrayList<>();
+  private FSBasedDownstreamServicesFetcher _FSBasedDownstreamServicesFetcher;
 
   static
   {
@@ -83,7 +88,8 @@ public class WarmUpLoadBalancerTest
     TestLoadBalancer balancer = new TestLoadBalancer();
     AtomicInteger requestCount = balancer.getRequestCount();
     LoadBalancer warmUpLoadBalancer = new WarmUpLoadBalancer(balancer, balancer, Executors.newSingleThreadScheduledExecutor(),
-      _tmpdir.getAbsolutePath(), MY_SERVICES_FS, WarmUpLoadBalancer.DEFAULT_SEND_REQUESTS_TIMEOUT_SECONDS,
+      _tmpdir.getAbsolutePath(), MY_SERVICES_FS, _FSBasedDownstreamServicesFetcher,
+      WarmUpLoadBalancer.DEFAULT_SEND_REQUESTS_TIMEOUT_SECONDS,
       WarmUpLoadBalancer.DEFAULT_CONCURRENT_REQUESTS);
 
     FutureCallback<None> callback = new FutureCallback<>();
@@ -91,6 +97,101 @@ public class WarmUpLoadBalancerTest
     callback.get(5000, TimeUnit.MILLISECONDS);
 
     Assert.assertEquals(VALID_FILES.size(), requestCount.get());
+  }
+
+  @Test(timeOut = 10000)
+  public void testDeletingFilesAfterShutdown() throws InterruptedException, ExecutionException, TimeoutException
+  {
+    createDefaultServicesIniFiles();
+    TestLoadBalancer balancer = new TestLoadBalancer();
+
+    List<String> allServicesBeforeShutdown = getAllDownstreamServices();
+    List<String> partialServices = getPartialDownstreams();
+
+    DownstreamServicesFetcher returnPartialDownstreams = callback -> callback.onSuccess(partialServices);
+
+    LoadBalancer warmUpLoadBalancer = new WarmUpLoadBalancer(balancer, balancer, Executors.newSingleThreadScheduledExecutor(),
+      _tmpdir.getAbsolutePath(), MY_SERVICES_FS, returnPartialDownstreams,
+      WarmUpLoadBalancer.DEFAULT_SEND_REQUESTS_TIMEOUT_SECONDS,
+      WarmUpLoadBalancer.DEFAULT_CONCURRENT_REQUESTS);
+
+    FutureCallback<None> callback = new FutureCallback<>();
+    warmUpLoadBalancer.start(callback);
+    callback.get(5000, TimeUnit.MILLISECONDS);
+
+    FutureCallback<None> shutdownCallback = new FutureCallback<>();
+    warmUpLoadBalancer.shutdown(() -> shutdownCallback.onSuccess(None.none()));
+    shutdownCallback.get(5000, TimeUnit.MILLISECONDS);
+
+    List<String> allServicesAfterShutdown = getAllDownstreamServices();
+
+    Assert.assertTrue(allServicesBeforeShutdown.size() > partialServices.size(),
+      "After shutdown the unused services should have been deleted. Expected lower number of:" + allServicesBeforeShutdown.size()
+        + ", actual " + partialServices.size());
+
+    Assert.assertTrue(partialServices.containsAll(allServicesAfterShutdown)
+        && allServicesAfterShutdown.containsAll(partialServices),
+      "There should be just the services that were passed by the partial fetcher");
+  }
+
+  /**
+   * Since the list might from the fetcher might not be complete (update service, old data, etc.., and the user might
+   * require additional services at runtime, we have to check that those services are not cleared from the cache
+   * otherwise it would incur in a penalty at the next deployment
+   */
+  @Test(timeOut = 10000)
+  public void testNotDeletingFilesGetClient() throws InterruptedException, ExecutionException, TimeoutException, ServiceUnavailableException
+  {
+    createDefaultServicesIniFiles();
+    TestLoadBalancer balancer = new TestLoadBalancer();
+
+    List<String> allServicesBeforeShutdown = getAllDownstreamServices();
+    DownstreamServicesFetcher returnNoDownstreams = callback -> callback.onSuccess(Collections.emptyList());
+
+    String pickOneService = allServicesBeforeShutdown.get(0);
+
+    LoadBalancer warmUpLoadBalancer = new WarmUpLoadBalancer(balancer, balancer, Executors.newSingleThreadScheduledExecutor(),
+      _tmpdir.getAbsolutePath(), MY_SERVICES_FS, returnNoDownstreams,
+      WarmUpLoadBalancer.DEFAULT_SEND_REQUESTS_TIMEOUT_SECONDS,
+      WarmUpLoadBalancer.DEFAULT_CONCURRENT_REQUESTS);
+
+    FutureCallback<None> callback = new FutureCallback<>();
+    warmUpLoadBalancer.start(callback);
+    callback.get(5000, TimeUnit.MILLISECONDS);
+
+    warmUpLoadBalancer.getClient(new URIRequest("d2://" + pickOneService), new RequestContext());
+
+    FutureCallback<None> shutdownCallback = new FutureCallback<>();
+    warmUpLoadBalancer.shutdown(() -> shutdownCallback.onSuccess(None.none()));
+    shutdownCallback.get(5000, TimeUnit.MILLISECONDS);
+
+    List<String> allServicesAfterShutdown = getAllDownstreamServices();
+
+    Assert.assertEquals(1, allServicesAfterShutdown.size(), "After shutdown there should be just one service, the one that we 'get the client' on");
+  }
+
+  private List<String> getAllDownstreamServices() throws InterruptedException, ExecutionException, TimeoutException
+  {
+    FutureCallback<List<String>> services = new FutureCallback<>();
+    _FSBasedDownstreamServicesFetcher.getServiceNames(services);
+    return services.get(5, TimeUnit.SECONDS);
+  }
+
+  /**
+   * Return a partial list of the downstreams
+   */
+  private List<String> getPartialDownstreams() throws InterruptedException, ExecutionException, TimeoutException
+  {
+    List<String> allServices = getAllDownstreamServices();
+
+    // if there are less than 2 services, it doesn't remove anything
+    assert allServices.size() >= 2;
+    //remove half of the services
+    for (int i = 0; i < allServices.size() / 2; i++)
+    {
+      allServices.remove(0);
+    }
+    return allServices;
   }
 
   /**
@@ -104,7 +205,8 @@ public class WarmUpLoadBalancerTest
     TestLoadBalancer balancer = new TestLoadBalancer();
     AtomicInteger requestCount = balancer.getRequestCount();
     LoadBalancer warmUpLoadBalancer = new WarmUpLoadBalancer(balancer, balancer, Executors.newSingleThreadScheduledExecutor(),
-      _tmpdir.getAbsolutePath(), MY_SERVICES_FS, WarmUpLoadBalancer.DEFAULT_SEND_REQUESTS_TIMEOUT_SECONDS,
+      _tmpdir.getAbsolutePath(), MY_SERVICES_FS, _FSBasedDownstreamServicesFetcher,
+      WarmUpLoadBalancer.DEFAULT_SEND_REQUESTS_TIMEOUT_SECONDS,
       WarmUpLoadBalancer.DEFAULT_CONCURRENT_REQUESTS);
 
     FutureCallback<None> callback = new FutureCallback<>();
@@ -141,7 +243,8 @@ public class WarmUpLoadBalancerTest
     TestLoadBalancer balancer = new TestLoadBalancer(50);
     AtomicInteger requestCount = balancer.getRequestCount();
     LoadBalancer warmUpLoadBalancer = new WarmUpLoadBalancer(balancer, balancer, Executors.newSingleThreadScheduledExecutor(),
-      _tmpdir.getAbsolutePath(), MY_SERVICES_FS, WarmUpLoadBalancer.DEFAULT_SEND_REQUESTS_TIMEOUT_SECONDS,
+      _tmpdir.getAbsolutePath(), MY_SERVICES_FS, _FSBasedDownstreamServicesFetcher,
+      WarmUpLoadBalancer.DEFAULT_SEND_REQUESTS_TIMEOUT_SECONDS,
       WarmUpLoadBalancer.DEFAULT_CONCURRENT_REQUESTS);
 
     FutureCallback<None> callback = new FutureCallback<>();
@@ -179,7 +282,8 @@ public class WarmUpLoadBalancerTest
     TestLoadBalancer balancer = new TestLoadBalancer(50);
     AtomicInteger requestCount = balancer.getRequestCount();
     LoadBalancer warmUpLoadBalancer = new WarmUpLoadBalancer(balancer, balancer, Executors.newSingleThreadScheduledExecutor(),
-      _tmpdir.getAbsolutePath(), MY_SERVICES_FS, WarmUpLoadBalancer.DEFAULT_SEND_REQUESTS_TIMEOUT_SECONDS,
+      _tmpdir.getAbsolutePath(), MY_SERVICES_FS, _FSBasedDownstreamServicesFetcher,
+      WarmUpLoadBalancer.DEFAULT_SEND_REQUESTS_TIMEOUT_SECONDS,
       concurrentRequestsHugeNumber);
 
     FutureCallback<None> callback = new FutureCallback<>();
@@ -217,15 +321,14 @@ public class WarmUpLoadBalancerTest
     TestLoadBalancer balancer = new TestLoadBalancer(requestTime);
     AtomicInteger requestCount = balancer.getRequestCount();
     LoadBalancer warmUpLoadBalancer = new WarmUpLoadBalancer(balancer, balancer, Executors.newSingleThreadScheduledExecutor(),
-      _tmpdir.getAbsolutePath(), MY_SERVICES_FS, warmUpTimeout,
-      concurrentRequests);
+      _tmpdir.getAbsolutePath(), MY_SERVICES_FS, _FSBasedDownstreamServicesFetcher, warmUpTimeout, concurrentRequests);
 
     FutureCallback<None> callback = new FutureCallback<>();
     warmUpLoadBalancer.start(callback);
 
     callback.get();
     Assert.assertTrue(expectedRequests - deviation < requestCount.get()
-            && expectedRequests + deviation > requestCount.get(),
+        && expectedRequests + deviation > requestCount.get(),
       "Expected # of requests between " + expectedRequests + " +/-" + deviation + ", found:" + requestCount.get());
   }
 
@@ -234,6 +337,7 @@ public class WarmUpLoadBalancerTest
   public void createTempdir() throws IOException
   {
     _tmpdir = LoadBalancerUtil.createTempDirectory("d2FileStore");
+    _FSBasedDownstreamServicesFetcher = new FSBasedDownstreamServicesFetcher(_tmpdir.getAbsolutePath(), MY_SERVICES_FS);
   }
 
   @AfterMethod
@@ -245,6 +349,8 @@ public class WarmUpLoadBalancerTest
       _tmpdir = null;
     }
   }
+
+  // ############################# Util Section #############################
 
   private void rmrf(File f) throws IOException
   {

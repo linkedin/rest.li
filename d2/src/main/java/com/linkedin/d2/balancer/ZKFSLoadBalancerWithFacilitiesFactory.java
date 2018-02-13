@@ -53,7 +53,8 @@ public class ZKFSLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFa
     if (config.warmUp)
     {
       balancer = new WarmUpLoadBalancer(balancer, zkfsLoadBalancer, config._executorService, config.fsBasePath,
-        config.d2ServicePath, config.warmUpTimeoutSeconds, config.warmUpConcurrentRequests);
+        config.d2ServicePath, config.downstreamServicesFetcher, config.warmUpTimeoutSeconds,
+        config.warmUpConcurrentRequests);
     }
     return balancer;
   }

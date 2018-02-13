@@ -20,13 +20,21 @@ import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.LoadBalancerWithFacilities;
 import com.linkedin.d2.balancer.LoadBalancerWithFacilitiesDelegator;
+import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.WarmUpService;
+import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancer;
+import com.linkedin.d2.balancer.util.downstreams.DownstreamServicesFetcher;
 import com.linkedin.d2.discovery.event.PropertyEventThread;
+import com.linkedin.r2.message.Request;
+import com.linkedin.r2.message.RequestContext;
+import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.http.client.TimeoutCallback;
 import com.linkedin.util.clock.SystemClock;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -39,9 +47,6 @@ import org.slf4j.LoggerFactory;
 /**
  * The WarmUpLoadBalancer warms up the internal {@link SimpleLoadBalancer} services/cluster list
  * before the client is announced as "started".
- * <p>
- * It relies on the internal FileStore, which keeps a list of the called services in the previous runs.
- * As a consequence, if the service has not run previously on the current machine, there will be no warm up.
  *
  * @author Francesco Capponi (fcapponi@linkedin.com)
  */
@@ -58,24 +63,35 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator
   private final ConcurrentLinkedDeque<Future<?>> _outstandingRequests;
 
   private WarmUpService _serviceWarmupper;
-  private final String _d2FsPath;
+  private final String _d2FsDirPath;
   private final String _d2ServicePath;
   private final int _warmUpTimeoutSeconds;
   private final int _concurrentRequests;
   private final ScheduledExecutorService _executorService;
+  private final DownstreamServicesFetcher _downstreamServicesFetcher;
   private volatile boolean _shuttingDown = false;
 
+  /**
+   * Since the list might from the fetcher might not be complete (new behavior, old data, etc..), and the user might
+   * require additional services at runtime, we have to store those services in such a way they are not cleared from the
+   * cache at shutdown, otherwise it would incur in a penalty at the next deployment
+   */
+  private final Set<String> _usedServices;
+
   public WarmUpLoadBalancer(LoadBalancerWithFacilities balancer, WarmUpService serviceWarmupper, ScheduledExecutorService executorService,
-                            String d2FsDirPath, String d2ServicePath, int warmUpTimeoutSeconds, int concurrentRequests)
+                            String d2FsDirPath, String d2ServicePath, DownstreamServicesFetcher downstreamServicesFetcher,
+                            int warmUpTimeoutSeconds, int concurrentRequests)
   {
     super(balancer);
     _serviceWarmupper = serviceWarmupper;
     _executorService = executorService;
-    _d2FsPath = d2FsDirPath;
+    _d2FsDirPath = d2FsDirPath;
     _d2ServicePath = d2ServicePath;
+    _downstreamServicesFetcher = downstreamServicesFetcher;
     _warmUpTimeoutSeconds = warmUpTimeoutSeconds;
     _concurrentRequests = concurrentRequests;
     _outstandingRequests = new ConcurrentLinkedDeque<>();
+    _usedServices = new HashSet<>();
   }
 
   @Override
@@ -109,7 +125,7 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator
       @Override
       public void onError(Throwable e)
       {
-        LOG.info("D2 WarmUp hit timeout, continuing startup. The WarmUp will continue in background");
+        LOG.info("D2 WarmUp hit timeout, continuing startup. The WarmUp will continue in background", e);
         startUpCallback.onSuccess(None.none());
       }
 
@@ -121,31 +137,33 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator
       }
     }, "This message will never be used, even in case of timeout, no exception should be passed up");
 
-    try
-    {
-      FileSystemDirectory fsDirectory = new FileSystemDirectory(_d2FsPath, _d2ServicePath);
-      List<String> serviceNames = fsDirectory.getServiceNames();
-
-      LOG.info("Trying to warmup {} services: [{}]", serviceNames.size(), String.join(", ", serviceNames));
-
-      if (serviceNames.size() == 0)
+    _downstreamServicesFetcher.getServiceNames(serviceNames -> {
+      try
       {
-        timeoutCallback.onSuccess(None.none());
-        return;
+        // The downstreamServicesFetcher is the core group of the services that will be used during the lifecycle
+        _usedServices.addAll(serviceNames);
+
+        LOG.info("Trying to warmup {} services: [{}]", serviceNames.size(), String.join(", ", serviceNames));
+
+        if (serviceNames.size() == 0)
+        {
+          timeoutCallback.onSuccess(None.none());
+          return;
+        }
+
+        WarmUpTask warmUpTask = new WarmUpTask(serviceNames, timeoutCallback);
+
+        // get the min value because it makes no sense have an higher concurrency than the number of request to be made
+        int concurrentRequests = Math.min(serviceNames.size(), _concurrentRequests);
+        IntStream.range(0, concurrentRequests)
+          .forEach(i -> _outstandingRequests.add(_executorService.submit(warmUpTask::execute)));
       }
-
-      WarmUpTask warmUpTask = new WarmUpTask(serviceNames, timeoutCallback);
-
-      // get the min value because it makes no sense have an higher concurrency than the number of request to be made
-      int concurrentRequests = Math.min(serviceNames.size(), _concurrentRequests);
-      IntStream.range(0, concurrentRequests)
-        .forEach(i -> _outstandingRequests.add(_executorService.submit(warmUpTask::execute)));
-    }
-    catch (Exception e)
-    {
-      LOG.error("D2 WarmUp Failed", e);
-      timeoutCallback.onSuccess(None.none());
-    }
+      catch (Exception e)
+      {
+        LOG.error("D2 WarmUp Failed, continuing start up.", e);
+        timeoutCallback.onSuccess(None.none());
+      }
+    });
   }
 
   private class WarmUpTask
@@ -217,9 +235,49 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator
   @Override
   public void shutdown(PropertyEventThread.PropertyEventShutdownCallback shutdown)
   {
+    // avoid cleaning when you risk to have partial results since some of the services have not loaded yet
+    if (_outstandingRequests.size() == 0)
+    {
+      // cleanup from unused services
+      FileSystemDirectory fsDirectory = new FileSystemDirectory(_d2FsDirPath, _d2ServicePath);
+      fsDirectory.removeAllServicesWithExcluded(_usedServices);
+      fsDirectory.removeAllClustersWithExcluded(getUsedClusters());
+    }
+
     _shuttingDown = true;
     _outstandingRequests.forEach(future -> future.cancel(true));
     _outstandingRequests.clear();
     _loadBalancer.shutdown(shutdown);
+  }
+
+  private Set<String> getUsedClusters()
+  {
+    Set<String> usedClusters = new HashSet<>();
+    for (String usedService : _usedServices)
+    {
+      try
+      {
+        ServiceProperties loadBalancedServiceProperties = getLoadBalancedServiceProperties(usedService);
+
+        usedClusters.add(
+          loadBalancedServiceProperties
+            .getClusterName());
+      }
+      catch (ServiceUnavailableException e)
+      {
+        LOG.error("This exception shouldn't happen at this point because all the data should be valid", e);
+      }
+    }
+    return usedClusters;
+  }
+
+  @Override
+  public TransportClient getClient(Request request, RequestContext requestContext) throws ServiceUnavailableException
+  {
+    TransportClient client = _loadBalancer.getClient(request, requestContext);
+
+    String serviceName = LoadBalancerUtil.getServiceNameFromUri(request.getURI());
+    _usedServices.add(serviceName);
+    return client;
   }
 }

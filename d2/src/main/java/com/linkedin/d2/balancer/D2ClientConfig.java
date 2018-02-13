@@ -19,6 +19,7 @@ import com.linkedin.d2.backuprequests.BackupRequestsStrategyStatsConsumer;
 import com.linkedin.d2.balancer.event.EventEmitter;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.util.WarmUpLoadBalancer;
+import com.linkedin.d2.balancer.util.downstreams.DownstreamServicesFetcher;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessorRegistry;
 import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl;
@@ -66,6 +67,7 @@ public class D2ClientConfig
   boolean warmUp = false;
   int warmUpTimeoutSeconds = WarmUpLoadBalancer.DEFAULT_SEND_REQUESTS_TIMEOUT_SECONDS;
   int warmUpConcurrentRequests = WarmUpLoadBalancer.DEFAULT_CONCURRENT_REQUESTS;
+  DownstreamServicesFetcher downstreamServicesFetcher = null;
   boolean backupRequestsEnabled = true;
   BackupRequestsStrategyStatsConsumer backupRequestsStrategyStatsConsumer = null;
   long backupRequestsLatencyNotificationInterval = 1;
@@ -108,6 +110,7 @@ public class D2ClientConfig
                  boolean warmUp,
                  int warmUpTimeoutSeconds,
                  int warmUpConcurrentRequests,
+                 DownstreamServicesFetcher downstreamServicesFetcher,
                  boolean backupRequestsEnabled,
                  BackupRequestsStrategyStatsConsumer backupRequestsStrategyStatsConsumer,
                  long backupRequestsLatencyNotificationInterval,
@@ -146,6 +149,7 @@ public class D2ClientConfig
     this.warmUp = warmUp;
     this.warmUpTimeoutSeconds = warmUpTimeoutSeconds;
     this.warmUpConcurrentRequests = warmUpConcurrentRequests;
+    this.downstreamServicesFetcher = downstreamServicesFetcher;
     this.backupRequestsEnabled = backupRequestsEnabled;
     this.backupRequestsStrategyStatsConsumer = backupRequestsStrategyStatsConsumer;
     this.backupRequestsLatencyNotificationInterval = backupRequestsLatencyNotificationInterval;

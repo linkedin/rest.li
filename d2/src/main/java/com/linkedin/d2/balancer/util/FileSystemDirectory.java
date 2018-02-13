@@ -17,10 +17,16 @@
 package com.linkedin.d2.balancer.util;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * FileSystemDirectory retrieves the list of cluster and service names saved on the local disk. There is no guarantee of being
@@ -30,6 +36,8 @@ import java.util.stream.Collectors;
  */
 public class FileSystemDirectory
 {
+  private static final Logger LOG = LoggerFactory.getLogger(FileSystemDirectory.class);
+
   public static final String FILE_STORE_EXTENSION = ".ini";
   public static final String CLUSTER_DIRECTORY = "clusters";
   public static final String DEFAULT_SERVICES_DIRECTORY = "services";
@@ -48,6 +56,34 @@ public class FileSystemDirectory
     return getFileListWithoutExtension(getServiceDirectory(_d2FsDirPath, _d2ServicePath));
   }
 
+  public void removeAllServicesWithExcluded(Set<String> excludedServices)
+  {
+    List<String> serviceNames = getServiceNames();
+    serviceNames.removeAll(excludedServices);
+    removeAllPropertiesFromDirectory(getServiceDirectory(_d2FsDirPath, _d2ServicePath), serviceNames);
+  }
+
+  public void removeAllClustersWithExcluded(Set<String> excludedClusters)
+  {
+    List<String> serviceNames = getClusterNames();
+    serviceNames.removeAll(excludedClusters);
+    removeAllPropertiesFromDirectory(getServiceDirectory(_d2FsDirPath, _d2ServicePath), serviceNames);
+  }
+
+  public static void removeAllPropertiesFromDirectory(String path, List<String> properties)
+  {
+    for (String property : properties)
+    {
+      try
+      {
+        Files.deleteIfExists(Paths.get(path + File.separator + property + FileSystemDirectory.FILE_STORE_EXTENSION));
+      } catch (IOException e)
+      {
+        LOG.warn("IO Error, continuing deletion", e);
+      }
+    }
+  }
+
   public List<String> getClusterNames()
   {
     return getFileListWithoutExtension(getClusterDirectory(_d2ServicePath));
@@ -63,7 +99,8 @@ public class FileSystemDirectory
     }
 
     // cleaning the list from the extension
-    return Arrays.stream(files).map(file -> file.getName().replace(FILE_STORE_EXTENSION, ""))
+    return Arrays.stream(files)
+      .map(file -> file.getName().replace(FILE_STORE_EXTENSION, ""))
       .collect(Collectors.toList());
   }
 

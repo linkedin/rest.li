@@ -30,6 +30,8 @@ import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyFactoryV3;
 import com.linkedin.d2.balancer.strategies.random.RandomLoadBalancerStrategyFactory;
+import com.linkedin.d2.balancer.util.downstreams.DownstreamServicesFetcher;
+import com.linkedin.d2.balancer.util.downstreams.FSBasedDownstreamServicesFetcher;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessorRegistry;
 import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl;
@@ -84,6 +86,11 @@ public class D2ClientBuilder
       executorsToShutDown.add(_config._executorService);
     }
 
+    if (_config.downstreamServicesFetcher == null)
+    {
+      _config.downstreamServicesFetcher = new FSBasedDownstreamServicesFetcher(_config.fsBasePath, _config.d2ServicePath);
+    }
+
     final Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories =
         createDefaultLoadBalancerStrategyFactories();
 
@@ -113,6 +120,7 @@ public class D2ClientBuilder
                   _config.warmUp,
                   _config.warmUpTimeoutSeconds,
                   _config.warmUpConcurrentRequests,
+                  _config.downstreamServicesFetcher,
                   _config.backupRequestsEnabled,
                   _config.backupRequestsStrategyStatsConsumer,
                   _config.backupRequestsLatencyNotificationInterval,
@@ -369,6 +377,12 @@ public class D2ClientBuilder
 
   public D2ClientBuilder setWarmUpConcurrentRequests(int warmUpConcurrentRequests){
     _config.warmUpConcurrentRequests = warmUpConcurrentRequests;
+    return this;
+  }
+
+  public D2ClientBuilder setDownstreamServicesFetcher(DownstreamServicesFetcher downstreamServicesFetcher)
+  {
+    _config.downstreamServicesFetcher = downstreamServicesFetcher;
     return this;
   }
 
