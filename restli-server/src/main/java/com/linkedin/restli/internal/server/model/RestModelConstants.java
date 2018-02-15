@@ -29,9 +29,7 @@ import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.server.ActionResult;
 import com.linkedin.restli.server.PagingContext;
-import com.linkedin.restli.server.annotations.Context;
 import com.linkedin.restli.server.annotations.PagingContextParam;
-import com.linkedin.restli.server.annotations.ParSeqContext;
 import com.linkedin.restli.server.annotations.ParSeqContextParam;
 import com.linkedin.restli.server.resources.AssociationResource;
 import com.linkedin.restli.server.resources.AssociationResourceAsync;
@@ -200,13 +198,13 @@ public interface RestModelConstants
   Map<DataSchema.Type, Class<?>[]> PRIMITIVE_DATA_SCHEMA_TYPE_ALLOWED_TYPES = new HashMap<DataSchema.Type, Class<?>[]>()
   {
     {
-      put(DataSchema.Type.BOOLEAN, new Class[] { boolean.class, Boolean.class });
-      put(DataSchema.Type.INT, new Class[] { int.class, Integer.class });
-      put(DataSchema.Type.LONG, new Class[] { long.class, Long.class });
-      put(DataSchema.Type.FLOAT, new Class[] { float.class, Float.class});
-      put(DataSchema.Type.DOUBLE, new Class[] { double.class, Double.class});
-      put(DataSchema.Type.STRING, new Class[] { String.class });
-      put(DataSchema.Type.BYTES, new Class[] { ByteString.class });
+      put(DataSchema.Type.BOOLEAN, new Class<?>[] { boolean.class, Boolean.class });
+      put(DataSchema.Type.INT, new Class<?>[] { int.class, Integer.class });
+      put(DataSchema.Type.LONG, new Class<?>[] { long.class, Long.class });
+      put(DataSchema.Type.FLOAT, new Class<?>[] { float.class, Float.class});
+      put(DataSchema.Type.DOUBLE, new Class<?>[] { double.class, Double.class});
+      put(DataSchema.Type.STRING, new Class<?>[] { String.class });
+      put(DataSchema.Type.BYTES, new Class<?>[] { ByteString.class });
     }
   };
 
@@ -244,15 +242,16 @@ public interface RestModelConstants
       UnstructuredDataSimpleResourceReactive.class
   };
 
-  Set<Class<?>> CLASSES_WITHOUT_SCHEMAS = new HashSet<Class<?>>(
-          Arrays.<Class<?>>asList(
+  @SuppressWarnings("deprecation")
+  Set<Class<?>> CLASSES_WITHOUT_SCHEMAS = new HashSet<>(
+          Arrays.asList(
                           ComplexResourceKey.class,
                           CompoundKey.class,
-                          Context.class,
+                          com.linkedin.restli.server.annotations.Context.class,
                           PagingContextParam.class,
                           Callback.class,
                           PagingContext.class,
-                          ParSeqContext.class,
+                          com.linkedin.restli.server.annotations.ParSeqContext.class,
                           ParSeqContextParam.class)
   );
 

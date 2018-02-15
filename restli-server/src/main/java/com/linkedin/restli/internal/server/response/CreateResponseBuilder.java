@@ -29,7 +29,6 @@ import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.HeaderUtil;
 import com.linkedin.restli.internal.common.URIParamUtils;
 import com.linkedin.restli.internal.server.RoutingResult;
-import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.internal.server.methods.AnyRecord;
 import com.linkedin.restli.internal.server.util.RestUtils;
 import com.linkedin.restli.server.CreateKVResponse;
@@ -75,7 +74,7 @@ public class CreateResponseBuilder implements RestLiResponseBuilder<RestLiRespon
     if (createResponse.hasId())
     {
       id = ResponseUtils.translateCanonicalKeyToAlternativeKeyIfNeeded(createResponse.getId(), routingResult);
-      final ProtocolVersion protocolVersion = ((ServerResourceContext) routingResult.getContext()).getRestliProtocolVersion();
+      final ProtocolVersion protocolVersion = routingResult.getContext().getRestliProtocolVersion();
       String stringKey = URIParamUtils.encodeKeyForUri(id, UriComponent.Type.PATH_SEGMENT, protocolVersion);
       UriBuilder uribuilder = UriBuilder.fromUri(request.getURI());
       uribuilder.path(stringKey);

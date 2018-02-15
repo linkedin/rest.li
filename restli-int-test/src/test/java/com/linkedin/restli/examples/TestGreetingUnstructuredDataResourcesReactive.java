@@ -27,7 +27,6 @@ import static com.linkedin.restli.examples.greetings.server.GreetingUnstructured
 import static com.linkedin.restli.examples.greetings.server.GreetingUnstructuredDataUtils.MIME_TYPE;
 import static com.linkedin.restli.examples.greetings.server.GreetingUnstructuredDataUtils.UNSTRUCTURED_DATA_BYTES;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNull;
 
 
 /**

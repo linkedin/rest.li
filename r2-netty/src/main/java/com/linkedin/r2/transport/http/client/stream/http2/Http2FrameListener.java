@@ -47,7 +47,6 @@ import io.netty.handler.codec.http2.Http2Headers;
 import io.netty.handler.codec.http2.Http2LifecycleManager;
 import io.netty.handler.codec.http2.Http2Settings;
 import io.netty.handler.codec.http2.Http2Stream;
-import io.netty.util.internal.ObjectUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

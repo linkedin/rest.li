@@ -27,7 +27,7 @@ import com.linkedin.parseq.promise.Promises;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.RestConstants;
-import com.linkedin.restli.common.streaming.FlowBridge;
+import com.linkedin.entitystream.adapter.FlowAdapters;
 import com.linkedin.restli.internal.server.response.ErrorResponseBuilder;
 import com.linkedin.restli.server.UnstructuredDataReactiveResult;
 import com.linkedin.restli.internal.server.methods.arguments.RestLiArgumentBuilder;
@@ -116,7 +116,7 @@ public class RestLiMethodInvoker
               if (result instanceof UnstructuredDataReactiveResult)
               {
                 UnstructuredDataReactiveResult reactiveResult = (UnstructuredDataReactiveResult) result;
-                resourceContext.setEntityStream(FlowBridge.fromPublisher(reactiveResult.getPublisher()));
+                resourceContext.setEntityStream(FlowAdapters.fromPublisher(reactiveResult.getPublisher()));
                 resourceContext.setResponseHeader(RestConstants.HEADER_CONTENT_TYPE, reactiveResult.getContentType());
                 callback.onSuccess(new EmptyRecord());
               }

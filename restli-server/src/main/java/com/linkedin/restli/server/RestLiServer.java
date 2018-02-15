@@ -37,9 +37,10 @@ import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.message.stream.StreamResponseBuilder;
 import com.linkedin.r2.message.stream.entitystream.ByteStringWriter;
-import com.linkedin.r2.message.stream.entitystream.EntityStream;
+import com.linkedin.r2.message.stream.entitystream.adapter.EntityStreamAdapters;
 import com.linkedin.r2.transport.common.RestRequestHandler;
 import com.linkedin.r2.transport.common.StreamRequestHandler;
+import com.linkedin.entitystream.EntityStream;
 import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ProtocolVersion;
@@ -745,7 +746,7 @@ public class RestLiServer implements RestRequestHandler, StreamRequestHandler
     public void onSuccess(final RestResponse result)
     {
       RestLiResponseAttachments responseAttachments = _context.getResponseAttachments();
-      EntityStream entityStream = _context.getEntityStream();
+      EntityStream<ByteString> entityStream = _context.getEntityStream();
       if (entityStream != null)
       {
         /* This is a unstructured data response */
@@ -762,7 +763,7 @@ public class RestLiServer implements RestRequestHandler, StreamRequestHandler
         builder.setCookies(result.getCookies());
         builder.setStatus(result.getStatus());
         builder.setHeaders(result.getHeaders());
-        StreamResponse response = builder.build(entityStream);
+        StreamResponse response = builder.build(EntityStreamAdapters.fromGenericEntityStream(entityStream));
 
         _callback.onSuccess(response);
       }

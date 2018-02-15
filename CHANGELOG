@@ -1,6 +1,8 @@
 20.0.4
 ------
-
+(RB=1223876)
+Moved Entity Stream implementation to a new entity-stream module and made it generic. Added adapters between generic
+Entity Stream and ByteString-specific Entity Stream so that existing R2 Streaming API didn't change.
 
 20.0.3
 ------

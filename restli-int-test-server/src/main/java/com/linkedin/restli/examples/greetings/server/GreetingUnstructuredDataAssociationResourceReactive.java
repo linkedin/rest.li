@@ -20,10 +20,10 @@ package com.linkedin.restli.examples.greetings.server;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.data.ByteString;
 import com.linkedin.java.util.concurrent.Flow;
-import com.linkedin.r2.message.stream.entitystream.ByteStringWriter;
-import com.linkedin.r2.message.stream.entitystream.Writer;
+import com.linkedin.entitystream.SingletonWriter;
+import com.linkedin.entitystream.Writer;
 import com.linkedin.restli.common.CompoundKey;
-import com.linkedin.restli.common.streaming.FlowBridge;
+import com.linkedin.entitystream.adapter.FlowAdapters;
 import com.linkedin.restli.server.UnstructuredDataReactiveResult;
 import com.linkedin.restli.server.annotations.CallbackParam;
 import com.linkedin.restli.server.annotations.Key;
@@ -52,8 +52,8 @@ public class GreetingUnstructuredDataAssociationResourceReactive extends Unstruc
   @Override
   public void get(CompoundKey key, @CallbackParam Callback<UnstructuredDataReactiveResult> callback)
   {
-    Writer writer = new ByteStringWriter(ByteString.copy(UNSTRUCTURED_DATA_BYTES));
-    Flow.Publisher<ByteString> publisher = FlowBridge.toPublisher(writer);
+    Writer<ByteString> writer = new SingletonWriter<>(ByteString.copy(UNSTRUCTURED_DATA_BYTES));
+    Flow.Publisher<ByteString> publisher = FlowAdapters.toPublisher(writer);
     callback.onSuccess(new UnstructuredDataReactiveResult(publisher, MIME_TYPE));
   }
 }

@@ -28,7 +28,7 @@ import com.linkedin.restli.server.resources.BaseResource;
 /**
  * A version of {@link UnstructuredDataAssociationResource} with {@link Promise} async interface
  */
-public interface UnstructuredDataAssociationResourcePromise extends BaseResource, KeyUnstructuredDataResource
+public interface UnstructuredDataAssociationResourcePromise extends BaseResource, KeyUnstructuredDataResource<CompoundKey>
 {
   default Promise<Void> get(CompoundKey key, @UnstructuredDataWriterParam UnstructuredDataWriter writer)
   {

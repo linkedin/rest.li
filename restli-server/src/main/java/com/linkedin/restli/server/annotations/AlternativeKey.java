@@ -38,7 +38,7 @@ public @interface AlternativeKey
   /**
    * Class that can convert the alternative key to the canonical key and the canonical key to the alternative key.
    */
-  Class<? extends KeyCoercer> keyCoercer();
+  Class<? extends KeyCoercer<?, ?>> keyCoercer();
 
   /**
    * Type of the alternative key.  Must be a String, primitive, or a custom type with a registered coercer.

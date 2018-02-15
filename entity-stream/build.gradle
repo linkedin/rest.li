@@ -1,0 +1,6 @@
+dependencies {
+  compile project(':pegasus-common')
+  compile project(':li-java9-flow')
+
+  testCompile externalDependency.testng
+}

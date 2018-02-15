@@ -6,6 +6,7 @@ dependencies {
   compile project(path: ':restli-int-test-api', configuration: 'dataTemplate')
   compile project(':restli-server-standalone') // for task startServerStandaloneLauncher
   compile project(':data')
+  compile project(':data-testutils')
   compile project(':pegasus-common')
   compile project(':r2-core')
   compile project(':r2-filter-compression')

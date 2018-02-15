@@ -27,7 +27,6 @@ import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.UpdateStatus;
 import com.linkedin.restli.internal.common.URIParamUtils;
 import com.linkedin.restli.internal.server.RoutingResult;
-import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.internal.server.methods.AnyRecord;
 import com.linkedin.restli.server.BatchUpdateResult;
 import com.linkedin.restli.server.RestLiResponseData;
@@ -64,8 +63,7 @@ public abstract class BatchResponseBuilder<D extends RestLiResponseData<? extend
     generateResultEntityResponse(routingResult, responses, mergedResults);
 
     PartialRestResponse.Builder builder = new PartialRestResponse.Builder();
-    final ProtocolVersion protocolVersion =
-        ((ServerResourceContext) routingResult.getContext()).getRestliProtocolVersion();
+    final ProtocolVersion protocolVersion = routingResult.getContext().getRestliProtocolVersion();
 
     @SuppressWarnings("unchecked")
     final BatchResponse<AnyRecord> response = toBatchResponse(mergedResults, protocolVersion);
@@ -104,7 +102,7 @@ public abstract class BatchResponseBuilder<D extends RestLiResponseData<? extend
                                    List<HttpCookie> cookies)
   {
     @SuppressWarnings({ "unchecked" })
-    /** constrained by signature of {@link com.linkedin.restli.server.resources.CollectionResource#batchUpdate(java.util.Map)} */
+    /* constrained by signature of {@link com.linkedin.restli.server.resources.CollectionResource#batchUpdate(java.util.Map)} */
     final BatchUpdateResult<Object, ?> updateResult = (BatchUpdateResult<Object, ?>) result;
     final Map<Object, UpdateResponse> results = updateResult.getResults();
 
@@ -153,7 +151,7 @@ public abstract class BatchResponseBuilder<D extends RestLiResponseData<? extend
       batchResponseMap.put(finalKey, new BatchResponseEntry(entry.getValue().getStatus(), entry.getValue()));
     }
 
-    for (Map.Entry<Object, RestLiServiceException> entry : ((ServerResourceContext) routingResult.getContext()).getBatchKeyErrors().entrySet())
+    for (Map.Entry<Object, RestLiServiceException> entry : routingResult.getContext().getBatchKeyErrors().entrySet())
     {
       Object finalKey = ResponseUtils.translateCanonicalKeyToAlternativeKeyIfNeeded(entry.getKey(), routingResult);
       batchResponseMap.put(finalKey, new BatchResponseEntry(entry.getValue().getStatus(), entry.getValue()));

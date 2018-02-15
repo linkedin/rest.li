@@ -21,9 +21,10 @@
 package com.linkedin.restli.internal.server;
 
 
+import com.linkedin.data.ByteString;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.transform.filter.request.MaskTree;
-import com.linkedin.r2.message.stream.entitystream.EntityStream;
+import com.linkedin.entitystream.EntityStream;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
 import com.linkedin.restli.server.ResourceContext;
@@ -33,8 +34,6 @@ import java.net.HttpCookie;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 
 /**
@@ -45,8 +44,6 @@ import org.slf4j.LoggerFactory;
  */
 public interface ServerResourceContext extends ResourceContext
 {
-  Logger LOG = LoggerFactory.getLogger(ServerResourceContext.class);
-
   /**
    * @return {@link DataMap} of request parameters.
    */
@@ -127,12 +124,12 @@ public interface ServerResourceContext extends ResourceContext
   /**
    * Set a {@link EntityStream} for this request.
    */
-  void setEntityStream(EntityStream entityStream);
+  void setEntityStream(EntityStream<ByteString> entityStream);
 
   /**
    * Returns the {@link EntityStream}. For any other cases, this returns null.
    */
-  EntityStream getEntityStream();
+  EntityStream<ByteString> getEntityStream();
 
   /**
    * Sets the specified projection mask for root object entities in the response. Setting the projection mask to

@@ -2,7 +2,6 @@ dependencies {
   compile project(':data')
   compile project(':data-transform')
   compile project(':li-jersey-uri')
-  compile project(':li-java9-flow')
   compile project(':pegasus-common')
   compile project(':r2-core')
   compile project(':multipart-mime')

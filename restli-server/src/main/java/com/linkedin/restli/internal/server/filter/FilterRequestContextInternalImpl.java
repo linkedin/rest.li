@@ -41,6 +41,7 @@ import java.util.Optional;
 /**
  * @author nshankar
  */
+@SuppressWarnings("deprecation")
 // TODO: Change to implementing FilterRequestContext and rename to FilterRequestContextImpl
 public class FilterRequestContextInternalImpl implements FilterRequestContextInternal
 {

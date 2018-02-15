@@ -29,7 +29,6 @@ import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.internal.common.URIParamUtils;
 import com.linkedin.restli.internal.server.response.BatchResponseEnvelope.BatchResponseEntry;
 import com.linkedin.restli.internal.server.RoutingResult;
-import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.internal.server.methods.AnyRecord;
 import com.linkedin.restli.internal.server.util.RestUtils;
 import com.linkedin.restli.server.BatchResult;
@@ -62,7 +61,7 @@ public class BatchGetResponseBuilder implements RestLiResponseBuilder<RestLiResp
     Map<Object, EntityResponse<RecordTemplate>> entityBatchResponse = buildEntityResponse(routingResult, responses);
 
     PartialRestResponse.Builder builder = new PartialRestResponse.Builder();
-    final ProtocolVersion protocolVersion = ((ServerResourceContext) routingResult.getContext()).getRestliProtocolVersion();
+    final ProtocolVersion protocolVersion = routingResult.getContext().getRestliProtocolVersion();
 
     @SuppressWarnings("unchecked")
     final BatchResponse<AnyRecord> response = toBatchResponse(entityBatchResponse, protocolVersion);
@@ -128,7 +127,7 @@ public class BatchGetResponseBuilder implements RestLiResponseBuilder<RestLiResp
                                                       List<HttpCookie> cookies)
   {
     @SuppressWarnings({ "unchecked" })
-    /** constrained by signature of {@link com.linkedin.restli.server.resources.CollectionResource#batchGet(java.util.Set)} */
+    /* constrained by signature of {@link com.linkedin.restli.server.resources.CollectionResource#batchGet(java.util.Set)} */
     final Map<Object, RecordTemplate> entities = (Map<Object, RecordTemplate>) result;
     Map<Object, HttpStatus> statuses = Collections.emptyMap();
     Map<Object, RestLiServiceException> serviceErrors = Collections.emptyMap();
@@ -136,7 +135,7 @@ public class BatchGetResponseBuilder implements RestLiResponseBuilder<RestLiResp
     if (result instanceof BatchResult)
     {
       @SuppressWarnings({ "unchecked" })
-      /** constrained by signature of {@link com.linkedin.restli.server.resources.CollectionResource#batchGet(java.util.Set)} */
+      /* constrained by signature of {@link com.linkedin.restli.server.resources.CollectionResource#batchGet(java.util.Set)} */
       final BatchResult<Object, RecordTemplate> batchResult = (BatchResult<Object, RecordTemplate>) result;
       statuses = batchResult.getStatuses();
       serviceErrors = batchResult.getErrors();
@@ -187,7 +186,7 @@ public class BatchGetResponseBuilder implements RestLiResponseBuilder<RestLiResp
       batchResult.put(finalKey, new BatchResponseEntry(statuses.get(entity.getKey()), entity.getValue()));
     }
 
-    final Map<Object, RestLiServiceException> contextErrors = ((ServerResourceContext) routingResult.getContext()).getBatchKeyErrors();
+    final Map<Object, RestLiServiceException> contextErrors = routingResult.getContext().getBatchKeyErrors();
     for (Map.Entry<Object, RestLiServiceException> entry : contextErrors.entrySet())
     {
       Object finalKey = ResponseUtils.translateCanonicalKeyToAlternativeKeyIfNeeded(entry.getKey(), routingResult);

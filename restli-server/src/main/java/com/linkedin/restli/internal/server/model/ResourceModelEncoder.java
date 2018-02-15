@@ -871,6 +871,7 @@ public class ResourceModelEncoder
     return findersArray;
   }
 
+  @SuppressWarnings("deprecation")
   private StringArray createAssocKeyParameters(final ResourceMethodDescriptor resourceMethodDescriptor)
   {
     StringArray assocKeys = new StringArray();
@@ -894,6 +895,7 @@ public class ResourceModelEncoder
     return metadataSchema;
   }
 
+  @SuppressWarnings("deprecation")
   private ParameterSchemaArray createParameters(final ResourceMethodDescriptor resourceMethodDescriptor)
   {
     ParameterSchemaArray parameterSchemaArray = new ParameterSchemaArray();

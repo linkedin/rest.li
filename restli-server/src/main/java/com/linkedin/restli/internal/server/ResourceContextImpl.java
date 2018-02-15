@@ -17,6 +17,7 @@
 package com.linkedin.restli.internal.server;
 
 
+import com.linkedin.data.ByteString;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.StringArray;
@@ -27,7 +28,7 @@ import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.stream.StreamRequest;
-import com.linkedin.r2.message.stream.entitystream.EntityStream;
+import com.linkedin.entitystream.EntityStream;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
@@ -103,7 +104,7 @@ public class ResourceContextImpl implements ServerResourceContext
   private Map<String, Object>                       _customRequestContext;
 
   // Response entity stream
-  private EntityStream _entityStream;
+  private EntityStream<ByteString> _entityStream;
 
   /**
    * Default constructor.
@@ -497,13 +498,13 @@ public class ResourceContextImpl implements ServerResourceContext
   }
 
   @Override
-  public void setEntityStream(EntityStream entityStream)
+  public void setEntityStream(EntityStream<ByteString> entityStream)
   {
     _entityStream = entityStream;
   }
 
   @Override
-  public EntityStream getEntityStream()
+  public EntityStream<ByteString> getEntityStream()
   {
     return _entityStream;
   }

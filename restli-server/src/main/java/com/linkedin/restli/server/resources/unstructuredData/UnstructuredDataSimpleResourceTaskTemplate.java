@@ -26,6 +26,6 @@ import com.linkedin.restli.server.resources.ResourceContextHolder;
  * Base {@link UnstructuredDataSimpleResourceTask} implementation. All implementations should extend this.
  */
 @RestLiTemplate(expectedAnnotation = RestLiSimpleResource.class)
-public class UnstructuredDataSimpleResourceTaskTemplate extends ResourceContextHolder implements UnstructuredDataSimpleResourceTask
+public class UnstructuredDataSimpleResourceTaskTemplate<K> extends ResourceContextHolder implements UnstructuredDataSimpleResourceTask<K>
 {
 }

@@ -36,7 +36,6 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import com.linkedin.common.callback.FutureCallback;
-import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.transport.common.bridge.client.TransportCallbackAdapter;

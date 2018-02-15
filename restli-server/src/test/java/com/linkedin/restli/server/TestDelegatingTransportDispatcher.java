@@ -21,7 +21,7 @@ import com.linkedin.r2.transport.common.StreamRequestHandler;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponse;
 import com.linkedin.restli.common.HttpStatus;
-import com.linkedin.restli.server.DelegatingTransportDispatcher;
+
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.util.List;

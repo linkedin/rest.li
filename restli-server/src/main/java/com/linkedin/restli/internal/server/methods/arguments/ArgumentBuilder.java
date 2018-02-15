@@ -36,9 +36,9 @@ import com.linkedin.data.template.TemplateRuntimeException;
 import com.linkedin.internal.common.util.CollectionUtils;
 import com.linkedin.r2.message.rest.RestMessage;
 import com.linkedin.r2.message.rest.RestRequest;
-import com.linkedin.r2.message.stream.entitystream.EntityStreams;
-import com.linkedin.r2.message.stream.entitystream.WriteHandle;
-import com.linkedin.r2.message.stream.entitystream.Writer;
+import com.linkedin.entitystream.EntityStreams;
+import com.linkedin.entitystream.WriteHandle;
+import com.linkedin.entitystream.Writer;
 import com.linkedin.restli.common.BatchRequest;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
@@ -71,11 +71,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 
 /**
@@ -349,7 +349,7 @@ public class ArgumentBuilder
     else
     {
       final List<String> itemStringValues = context.getParameterValues(param.getName());
-      ArrayDataSchema parameterSchema = null;
+      ArrayDataSchema parameterSchema;
       if (param.getDataSchema() instanceof ArrayDataSchema)
       {
         parameterSchema = (ArrayDataSchema)param.getDataSchema();
@@ -488,7 +488,7 @@ public class ArgumentBuilder
     {
       @SuppressWarnings("unchecked")
       final Class<? extends RecordTemplate> paramType = (Class<? extends RecordTemplate>) param.getType();
-      /**
+      /*
        * It is possible for the paramValue provided by ResourceContext to be coerced to the wrong type.
        * If a query param is a single value param for example www.domain.com/resource?foo=1.
        * Then ResourceContext will parse foo as a String with value = 1.
@@ -500,7 +500,7 @@ public class ArgumentBuilder
        */
       if (AbstractArrayTemplate.class.isAssignableFrom(paramType) && paramValue.getClass() != DataList.class)
       {
-        paramRecordTemplate = DataTemplateUtil.wrap(new DataList(Arrays.asList(paramValue)), paramType);
+        paramRecordTemplate = DataTemplateUtil.wrap(new DataList(Collections.singletonList(paramValue)), paramType);
       }
       else
       {
@@ -579,10 +579,10 @@ public class ArgumentBuilder
       return null;
     }
 
-    BatchRequest<R> batchRequest = new BatchRequest<R>(data, new TypeSpec<R>(valueClass));
+    BatchRequest<R> batchRequest = new BatchRequest<>(data, new TypeSpec<R>(valueClass));
 
     Map<Object, R> result =
-      new HashMap<Object, R>(CollectionUtils.getMapInitialCapacity(batchRequest.getEntities().size(), 0.75f), 0.75f);
+        new HashMap<>(CollectionUtils.getMapInitialCapacity(batchRequest.getEntities().size(), 0.75f), 0.75f);
     for (Map.Entry<String, R> entry : batchRequest.getEntities().entrySet())
     {
       Object typedKey = parseEntityStringKey(entry.getKey(), routingResult, version);
@@ -625,7 +625,8 @@ public class ArgumentBuilder
    * @param version {@link ProtocolVersion} instance of the current request
    * @return An instance of key's corresponding type
    */
-  static Object parseEntityStringKey(final String stringKey, final RoutingResult routingResult,
+  private static Object parseEntityStringKey(final String stringKey,
+      final RoutingResult routingResult,
       final ProtocolVersion version)
   {
     ResourceModel resourceModel = routingResult.getResourceMethod().getResourceModel();
@@ -669,10 +670,10 @@ public class ArgumentBuilder
   /**
    * A reactive Writer that writes out all the bytes written to a ByteArrayOutputStream as one data chunk.
    */
-  private static class ByteArrayOutputStreamWriter implements Writer
+  private static class ByteArrayOutputStreamWriter implements Writer<ByteString>
   {
     private final ByteArrayOutputStream _out;
-    private WriteHandle _wh;
+    private WriteHandle<? super ByteString> _wh;
 
 
     ByteArrayOutputStreamWriter(ByteArrayOutputStream out)
@@ -681,7 +682,7 @@ public class ArgumentBuilder
     }
 
     @Override
-    public void onInit(WriteHandle wh)
+    public void onInit(WriteHandle<? super ByteString> wh)
     {
       _wh = wh;
     }

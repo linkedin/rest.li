@@ -19,12 +19,13 @@ package com.linkedin.restli.examples.greetings.server;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.data.ByteString;
+import com.linkedin.data.ByteChunkWriter;
 import com.linkedin.java.util.concurrent.Flow;
-import com.linkedin.r2.message.stream.entitystream.ByteStringWriter;
-import com.linkedin.r2.message.stream.entitystream.WriteHandle;
-import com.linkedin.r2.message.stream.entitystream.Writer;
+import com.linkedin.entitystream.SingletonWriter;
+import com.linkedin.entitystream.WriteHandle;
+import com.linkedin.entitystream.Writer;
 import com.linkedin.restli.common.HttpStatus;
-import com.linkedin.restli.common.streaming.FlowBridge;
+import com.linkedin.entitystream.adapter.FlowAdapters;
 import com.linkedin.restli.server.UnstructuredDataReactiveResult;
 import com.linkedin.restli.server.RestLiResponseDataException;
 import com.linkedin.restli.server.RestLiServiceException;
@@ -55,8 +56,8 @@ public class GreetingUnstructuredDataCollectionResourceReactive extends Unstruct
       return;
     }
 
-    Writer writer = chooseGreetingWriter(key);
-    Flow.Publisher<ByteString> publisher = FlowBridge.toPublisher(writer);
+    Writer<ByteString> writer = chooseGreetingWriter(key);
+    Flow.Publisher<ByteString> publisher = FlowAdapters.toPublisher(writer);
 
     String contentType;
     if (key.equals("goodNullContentType"))
@@ -74,18 +75,18 @@ public class GreetingUnstructuredDataCollectionResourceReactive extends Unstruct
   /**
    * Choose a writer based on the test key
    */
-  private Writer chooseGreetingWriter(String key)
+  private Writer<ByteString> chooseGreetingWriter(String key)
   {
     switch (key)
     {
       case "good":
       case "goodNullContentType":
-        return new ByteStringWriter(ByteString.copy(UNSTRUCTURED_DATA_BYTES));
+        return new SingletonWriter<>(ByteString.copy(UNSTRUCTURED_DATA_BYTES));
       case "goodMultiWrites":
-        return new MultiByteStringWriter(ByteString.copy(UNSTRUCTURED_DATA_BYTES));
+        return new ByteChunkWriter(UNSTRUCTURED_DATA_BYTES, 2);
       case "goodInline":
         getContext().setResponseHeader(HEADER_CONTENT_DISPOSITION, CONTENT_DISPOSITION_VALUE);
-        return new ByteStringWriter(ByteString.copy(UNSTRUCTURED_DATA_BYTES));
+        return new SingletonWriter<>(ByteString.copy(UNSTRUCTURED_DATA_BYTES));
       case "bad":
         return new BadWriter();
       case "exception":
@@ -99,12 +100,12 @@ public class GreetingUnstructuredDataCollectionResourceReactive extends Unstruct
   /**
    * A writer that fail to read data from source.
    */
-  private class BadWriter implements Writer
+  private class BadWriter implements Writer<ByteString>
   {
-    private WriteHandle _wh;
+    private WriteHandle<? super ByteString> _wh;
 
     @Override
-    public void onInit(WriteHandle wh)
+    public void onInit(WriteHandle<? super ByteString> wh)
     {
       _wh = wh;
     }

@@ -12,10 +12,15 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-*/
+ */
 package com.linkedin.r2.message.stream.entitystream;
 
 /**
+ * This exception is used and only used to notify the {@link Writer} and {@link Observer}s that the {@link Reader} has
+ * cancelled reading. When {@link Reader} signals its intention to cancel reading
+ * by invoking {@link ReadHandle#cancel()}. Then {@link Writer#onAbort(Throwable)} and {@link Observer#onError(Throwable)}
+ * will be invoked with an AbortedException.
+ *
  * @author Zhenkai Zhu
  */
 public class AbortedException extends Exception

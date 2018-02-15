@@ -155,7 +155,7 @@ public class RestLiResponseHandler
         new RestResponseBuilder().setHeaders(partialResponse.getHeaders()).setCookies(cookies).setStatus(partialResponse.getStatus()
                                                      .getCode());
 
-    ServerResourceContext context = (ServerResourceContext) routingResult.getContext();
+    ServerResourceContext context = routingResult.getContext();
     ResourceEntityType resourceEntityType = routingResult.getResourceMethod()
                                                          .getResourceModel()
                                                          .getResourceEntityType();
@@ -207,7 +207,7 @@ public class RestLiResponseHandler
                                                        final RoutingResult routingResult,
                                                        final Object responseObject) throws IOException
   {
-    ServerResourceContext context = (ServerResourceContext) routingResult.getContext();
+    ServerResourceContext context = routingResult.getContext();
     final ProtocolVersion protocolVersion = context.getRestliProtocolVersion();
     Map<String, String> responseHeaders = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     responseHeaders.putAll(context.getResponseHeaders());

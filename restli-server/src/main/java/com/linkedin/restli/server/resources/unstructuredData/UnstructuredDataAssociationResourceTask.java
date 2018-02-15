@@ -28,7 +28,7 @@ import com.linkedin.restli.server.resources.BaseResource;
 /**
  * A version of {@link UnstructuredDataAssociationResource} with {@link Task} async interface
  */
-public interface UnstructuredDataAssociationResourceTask extends BaseResource, KeyUnstructuredDataResource
+public interface UnstructuredDataAssociationResourceTask extends BaseResource, KeyUnstructuredDataResource<CompoundKey>
 {
   default Task<Void> get(CompoundKey key, @UnstructuredDataWriterParam UnstructuredDataWriter writer)
   {

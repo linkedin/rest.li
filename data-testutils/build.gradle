@@ -1,0 +1,7 @@
+dependencies {
+  compile project(':pegasus-common')
+  compile project(':entity-stream')
+  compile project(':data')
+
+  testCompile externalDependency.testng
+}

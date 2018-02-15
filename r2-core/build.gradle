@@ -1,4 +1,5 @@
 dependencies {
+  compile project(':entity-stream')
   compile project(':data')
   compile project(':pegasus-common')
   compile externalDependency.servletApi

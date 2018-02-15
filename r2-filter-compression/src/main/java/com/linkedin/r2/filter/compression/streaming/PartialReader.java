@@ -26,7 +26,6 @@ import com.linkedin.r2.message.stream.entitystream.WriteHandle;
 import com.linkedin.r2.message.stream.entitystream.Writer;
 import java.util.LinkedList;
 import java.util.Queue;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 
 /**

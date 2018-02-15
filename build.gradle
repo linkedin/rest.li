@@ -328,7 +328,7 @@ subprojects {
     }
   }
 
-  task testJar(type: Jar){
+  task testJar(type: Jar) {
     from sourceSets.test.output
     classifier = 'tests'
   }

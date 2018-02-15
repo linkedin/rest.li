@@ -1,27 +1,26 @@
 /*
- * Copyright (c) 2017 LinkedIn Corp.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+   Copyright (c) 2018 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
  */
 
-package com.linkedin.restli.common.streaming;
+package com.linkedin.entitystream.adapter;
 
-import com.linkedin.data.ByteString;
 import com.linkedin.java.util.concurrent.Flow.Subscriber;
 import com.linkedin.java.util.concurrent.Flow.Subscription;
-import com.linkedin.r2.message.stream.entitystream.Observer;
-import com.linkedin.r2.message.stream.entitystream.ReadHandle;
-import com.linkedin.r2.message.stream.entitystream.Reader;
+import com.linkedin.entitystream.Observer;
+import com.linkedin.entitystream.ReadHandle;
+import com.linkedin.entitystream.Reader;
 
 import java.util.Collections;
 import java.util.List;
@@ -31,16 +30,16 @@ import java.util.List;
  * A {@link Subscriber} that relays data from its subscription to
  * a {@link Reader} and optionally a list of {@link Observer}
  */
-class ReaderSubscriber implements Subscriber<ByteString>
+class ReaderSubscriber<T> implements Subscriber<T>
 {
-  private final Reader _reader;
-  private List<Observer> _observers = Collections.emptyList();
+  private final Reader<? super T> _reader;
+  private List<Observer<? super T>> _observers = Collections.emptyList();
 
   /**
    * Create an instance that relays data to a {@link Reader} and
    * a list of readonly {@link Observer}, which could be null or empty
    */
-  ReaderSubscriber(Reader reader, List<Observer> observers)
+  ReaderSubscriber(Reader<? super T> reader, List<Observer<? super T>> observers)
   {
     _reader = reader;
     if (observers != null && observers.size() > 0)
@@ -52,7 +51,7 @@ class ReaderSubscriber implements Subscriber<ByteString>
   /**
    * Create an instance that relays data to a {@link Reader} only
    */
-  ReaderSubscriber(Reader reader)
+  ReaderSubscriber(Reader<T> reader)
   {
     this(reader, null);
   }
@@ -77,9 +76,9 @@ class ReaderSubscriber implements Subscriber<ByteString>
   }
 
   @Override
-  public void onNext(ByteString data)
+  public void onNext(T data)
   {
-    for (Observer observer : _observers)
+    for (Observer<? super T> observer : _observers)
     {
       observer.onDataAvailable(data);
     }
@@ -89,7 +88,7 @@ class ReaderSubscriber implements Subscriber<ByteString>
   @Override
   public void onError(Throwable throwable)
   {
-    for (Observer observer : _observers)
+    for (Observer<? super T> observer : _observers)
     {
       observer.onError(throwable);
     }
@@ -99,7 +98,7 @@ class ReaderSubscriber implements Subscriber<ByteString>
   @Override
   public void onComplete()
   {
-    for (Observer observer : _observers)
+    for (Observer<? super T> observer : _observers)
     {
       observer.onDone();
     }
