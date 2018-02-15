@@ -81,16 +81,7 @@ import java.util.Map;
   @Override
   public String toString()
   {
-    StringBuilder builder = new StringBuilder();
-    builder.append("StreamRequest[headers=")
-        .append(getHeaders())
-        .append("cookies=")
-        .append(getCookies())
-        .append(",uri=")
-        .append(getURI())
-        .append(",method=")
-        .append(getMethod())
-        .append("]");
-    return builder.toString();
+    return "StreamRequest[headers=" + getHeaders() + ",cookies=" + getCookies() + ",uri=" + getURI() + ",method="
+        + getMethod() + "]";
   }
 }

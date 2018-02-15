@@ -80,19 +80,8 @@ import java.util.Map;
   @Override
   public String toString()
   {
-    StringBuilder builder = new StringBuilder();
-    builder.append("RestRequest[headers=")
-        .append(getHeaders())
-        .append("cookies=")
-        .append(getCookies())
-        .append(",uri=")
-        .append(getURI())
-        .append(",method=")
-        .append(getMethod())
-        .append(",entityLength=")
-        .append(_entity.length())
-        .append("]");
-    return builder.toString();
+    return "RestRequest[headers=" + getHeaders() + ",cookies=" + getCookies() + ",uri=" + getURI() + ",method="
+        + getMethod() + ",entityLength=" + _entity.length() + "]";
   }
 
 }

@@ -82,16 +82,7 @@ import java.util.Map;
   @Override
   public String toString()
   {
-    StringBuilder builder = new StringBuilder();
-    builder.append("RestResponse[headers=")
-        .append(getHeaders())
-        .append("cookies=")
-        .append(getCookies())
-        .append(",status=")
-        .append(getStatus())
-        .append(",entityLength=")
-        .append(_entity.length())
-        .append("]");
-    return builder.toString();
+    return "RestResponse[headers=" + getHeaders() + ",cookies=" + getCookies() + ",status=" + getStatus()
+        + ",entityLength=" + _entity.length() + "]";
   }
 }

@@ -84,14 +84,6 @@ import java.util.Map;
   @Override
   public String toString()
   {
-    StringBuilder builder = new StringBuilder();
-    builder.append("StreamResponse[headers=")
-        .append(getHeaders())
-        .append("cookies=")
-        .append(getCookies())
-        .append(",status=")
-        .append(getStatus())
-        .append("]");
-    return builder.toString();
+    return "StreamResponse[headers=" + getHeaders() + ",cookies=" + getCookies() + ",status=" + getStatus() + "]";
   }
 }
