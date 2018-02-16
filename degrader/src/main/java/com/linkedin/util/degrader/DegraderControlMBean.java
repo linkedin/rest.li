@@ -76,6 +76,7 @@ public interface DegraderControlMBean
   long getLowOutstanding();
   int getMinOutstandingCount();
   default double getInitialDropRate() {return 0.0;}
+  default double getLogThreshold() { return 0.0; }
 
   void setLogEnabled(boolean logEnabled);
   void setLatencyToUse(String latencyToUse);
@@ -91,6 +92,7 @@ public interface DegraderControlMBean
   void setHighOutstanding(long highOutstanding);
   void setLowOutstanding(long lowOutstanding);
   void setMinOutstandingCount(int minOutstandingCount);
+  default void setLogThreshold(double threshold) {};
 
   void reset();
 }

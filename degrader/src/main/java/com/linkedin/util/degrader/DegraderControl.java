@@ -236,6 +236,12 @@ public class DegraderControl implements DegraderControlMBean
   }
 
   @Override
+  public double getLogThreshold()
+  {
+    return _degrader.getConfig().getLogThreshold();
+  }
+
+  @Override
   public int getMinOutstandingCount()
   {
     return _degrader.getConfig().getMinOutstandingCount();
@@ -369,6 +375,14 @@ public class DegraderControl implements DegraderControlMBean
   {
     DegraderImpl.Config config = new DegraderImpl.Config(_degrader.getConfig());
     config.setOverrideMinCallCount(overrideMinCallCount);
+    _degrader.setConfig(config);
+  }
+
+  @Override
+  public void setLogThreshold(double logThreshold)
+  {
+    DegraderImpl.Config config = new DegraderImpl.Config(_degrader.getConfig());
+    config.setLogThreshold(logThreshold);
     _degrader.setConfig(config);
   }
 

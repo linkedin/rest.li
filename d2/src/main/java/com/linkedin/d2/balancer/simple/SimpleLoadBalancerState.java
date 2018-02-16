@@ -83,7 +83,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
 {
   private static final Logger                                                            _log =
                                                                                                   LoggerFactory.getLogger(SimpleLoadBalancerState.class);
-  private static final int DEGRADER_RATELIMITEDLOG_RATE_MS = 10000;
+  private static final int DEGRADER_RATELIMITEDLOG_RATE_MS = 20000;
 
   private final UriLoadBalancerSubscriber _uriSubscriber;
   private final ClusterLoadBalancerSubscriber _clusterSubscriber;

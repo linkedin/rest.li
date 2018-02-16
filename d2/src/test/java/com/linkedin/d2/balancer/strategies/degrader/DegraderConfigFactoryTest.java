@@ -24,6 +24,7 @@ import java.util.Map;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 
 /**
@@ -52,6 +53,7 @@ public class DegraderConfigFactoryTest
     Long lowOutstanding = 3000l;
     Integer minOutstandingCount = 10;
     Integer overrideMinCallCount = 5;
+    Double logThreshold = 0.8;
     properties.put(PropertyKeys.DEGRADER_LOG_ENABLED, logEnabled.toString());
     properties.put(PropertyKeys.DEGRADER_LATENCY_TO_USE, latencyToUse.toString());
     properties.put(PropertyKeys.DEGRADER_MAX_DROP_RATE, maxDropRate.toString());
@@ -67,6 +69,7 @@ public class DegraderConfigFactoryTest
     properties.put(PropertyKeys.DEGRADER_LOW_OUTSTANDING, lowOutstanding.toString());
     properties.put(PropertyKeys.DEGRADER_MIN_OUTSTANDING_COUNT, minOutstandingCount.toString());
     properties.put(PropertyKeys.DEGRADER_OVERRIDE_MIN_CALL_COUNT, overrideMinCallCount.toString());
+    properties.put(PropertyKeys.DEGRADER_LOG_THRESHOLD, logThreshold.toString());
     DegraderImpl.Config config = DegraderConfigFactory.toDegraderConfig(properties);
     assertEquals(config.isLogEnabled(), logEnabled.booleanValue());
     assertEquals(config.getLatencyToUse(), latencyToUse);
@@ -83,5 +86,6 @@ public class DegraderConfigFactoryTest
     assertEquals(config.getLowOutstanding(), lowOutstanding.longValue());
     assertEquals(config.getMinOutstandingCount(), minOutstandingCount.longValue());
     assertEquals(config.getOverrideMinCallCount(), overrideMinCallCount.intValue());
+    assertEquals(config.getLogThreshold(), logThreshold);
   }
 }

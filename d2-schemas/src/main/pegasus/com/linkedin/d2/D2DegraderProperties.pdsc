@@ -122,6 +122,12 @@
       "type": "double",
       "doc": "The drop rate threshold that controls whether the degrader should perform slow start(by doubling the transmission rate) or the normal stepUp/Down operation. Defaults to 0.0 which means no slow start phase will be performed.",
       "optional": true
+    },
+    {
+      "name": "logThreshold",
+      "type": "double",
+      "doc": "The computed drop rate threshold to log degrader state changes. The log is enabled only when current drop rate higher than or equal to the threshold value.",
+      "optional": true
     }
   ]
 }

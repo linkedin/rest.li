@@ -51,6 +51,9 @@ public class DegraderConfigFactory
                                                   PropertyKeys.DEGRADER_LOG_ENABLED,
                                                   DegraderImpl.DEFAULT_LOG_ENABLED));
 
+      config.setLogThreshold(MapUtil.getWithDefault(properties, PropertyKeys.DEGRADER_LOG_THRESHOLD,
+          DegraderImpl.DEFAULT_LOG_THRESHOLD));
+
       if (properties.get(PropertyKeys.DEGRADER_LATENCY_TO_USE) != null)
       {
         try

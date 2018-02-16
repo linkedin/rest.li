@@ -105,6 +105,10 @@ public class DegraderPropertiesConverter
     {
       map.put(PropertyKeys.DEGRADER_SLOW_START_THRESHOLD, config.getSlowStartThreshold().toString());
     }
+    if (config.hasLogThreshold())
+    {
+      map.put(PropertyKeys.DEGRADER_LOG_THRESHOLD, config.getLogThreshold().toString());
+    }
     return map;
   }
 
@@ -176,6 +180,10 @@ public class DegraderPropertiesConverter
     if (properties.containsKey(PropertyKeys.DEGRADER_SLOW_START_THRESHOLD))
     {
       config.setSlowStartThreshold(coerce(properties.get(PropertyKeys.DEGRADER_SLOW_START_THRESHOLD), Double.class));
+    }
+    if (properties.containsKey(PropertyKeys.DEGRADER_LOG_THRESHOLD))
+    {
+      config.setLogThreshold(coerce(properties.get(PropertyKeys.DEGRADER_LOG_THRESHOLD), Double.class));
     }
     return config;
   }

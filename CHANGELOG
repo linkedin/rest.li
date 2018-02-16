@@ -1,5 +1,7 @@
 19.0.1
 ------
+(RB=1226019)
+Add LogThreshold property to degrader
 
 
 19.0.0

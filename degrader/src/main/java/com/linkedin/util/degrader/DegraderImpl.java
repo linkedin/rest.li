@@ -143,6 +143,7 @@ public class DegraderImpl implements Degrader
   public static final Integer  DEFAULT_OVERRIDE_MIN_CALL_COUNT = -1;
   public static final double   DEFAULT_INITIAL_DROP_RATE = 0.0d;
   public static final double   DEFAULT_SLOW_START_THRESHOLD = 0.0d;
+  public static final double   DEFAULT_LOG_THRESHOLD = 0.5d;
 
   private ImmutableConfig _config;
   private String _name;
@@ -279,11 +280,12 @@ public class DegraderImpl implements Degrader
   }
 
   /**
-   * choose logger to use: always use the default logger if isHigh() return true, otherwise go with rateLimitedLogger
+   * choose logger to use: always use the default logger if isHigh() return true, logEnabled flag is set, or debug
+   * is enabled. Otherwise go with rateLimitedLogger
    */
   public Logger getLogger()
   {
-    if (isHigh())
+    if (isHigh() || _config.isLogEnabled() || LOG.isDebugEnabled())
     {
       return LOG;
     }
@@ -372,24 +374,21 @@ public class DegraderImpl implements Degrader
       }
     }
 
-    if (oldDropRate != newDropRate)
+    if (oldDropRate != newDropRate && log.isWarnEnabled() && newDropRate >= _config.getLogThreshold())
     {
-      if (log.isWarnEnabled())
-      {
-        log.warn(_config.getName() + " ComputedDropRate " +
-                 (oldDropRate > newDropRate ? "decreased" : "increased") +
-                 " from " + oldDropRate + " to " + newDropRate +
-                 ", OverrideDropRate=" + _config.getOverrideDropRate() +
-                 ", AdjustedMinCallCount=" + adjustedMinCallCount() +
-                 ", CallCount=" + _callTrackerStats.getCallCount() +
-                 ", Latency=" + _latency +
-                 ", ErrorRate=" + getErrorRateToDegrade() +
-                 ", OutstandingLatency=" + _outstandingLatency +
-                 ", OutstandingCount=" + stats.getOutstandingCount() +
-                 ", NoOverrideDropCountTotal=" + noOverrideDropCountTotal +
-                 ", DroppedCountTotal=" + droppedCountTotal +
-                 ", LastIntervalDroppedRate=" + lastIntervalDroppedRate);
-      }
+      log.warn(_config.getName() + " ComputedDropRate " +
+          (oldDropRate > newDropRate ? "decreased" : "increased") +
+          " from " + oldDropRate + " to " + newDropRate +
+          ", OverrideDropRate=" + _config.getOverrideDropRate() +
+          ", AdjustedMinCallCount=" + adjustedMinCallCount() +
+          ", CallCount=" + _callTrackerStats.getCallCount() +
+          ", Latency=" + _latency +
+          ", ErrorRate=" + getErrorRateToDegrade() +
+          ", OutstandingLatency=" + _outstandingLatency +
+          ", OutstandingCount=" + stats.getOutstandingCount() +
+          ", NoOverrideDropCountTotal=" + noOverrideDropCountTotal +
+          ", DroppedCountTotal=" + droppedCountTotal +
+          ", LastIntervalDroppedRate=" + lastIntervalDroppedRate);
     }
     else
     {
@@ -680,6 +679,7 @@ public class DegraderImpl implements Degrader
     protected double _initialDropRate = DEFAULT_INITIAL_DROP_RATE;
     protected double _slowStartThreshold = DEFAULT_SLOW_START_THRESHOLD;
     protected Logger _logger = LoggerFactory.getLogger(ImmutableConfig.class);
+    protected double _logThreshold = DEFAULT_LOG_THRESHOLD;
 
     public ImmutableConfig()
     {
@@ -820,6 +820,11 @@ public class DegraderImpl implements Degrader
     {
       return _logger;
     }
+
+    public double getLogThreshold()
+    {
+      return _logThreshold;
+    }
   }
 
   public static class Config extends ImmutableConfig
@@ -942,6 +947,11 @@ public class DegraderImpl implements Degrader
     public void setLogger(Logger logger)
     {
       _logger = logger;
+    }
+
+    public void setLogThreshold(double threshold)
+    {
+      _logThreshold = threshold;
     }
   }
 }
