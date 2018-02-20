@@ -176,6 +176,14 @@ public class TestUtil
     return codec.stringToMap(json);
   }
 
+  public static byte[] dataComplexToBytes(DataComplex dataComplex)
+      throws IOException
+  {
+    return dataComplex instanceof DataMap
+        ? codec.mapToBytes((DataMap) dataComplex)
+        : codec.listToBytes((DataList) dataComplex);
+  }
+
   public static boolean deleteRecursive(String path, boolean debug) throws FileNotFoundException
   {
     return deleteRecursive(new File(path), debug);

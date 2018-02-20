@@ -17,27 +17,11 @@
 package com.linkedin.data;
 
 
-import com.fasterxml.jackson.core.JsonEncoding;
-import com.linkedin.data.codec.BsonDataCodec;
-import com.linkedin.data.codec.DataCodec;
-import com.linkedin.data.codec.DataDecodingException;
-import com.linkedin.data.codec.JacksonDataCodec;
-import com.linkedin.data.codec.PsonDataCodec;
-import com.linkedin.data.codec.TextDataCodec;
 import com.linkedin.data.collections.CheckedMap;
+
 import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.FileDescriptor;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.io.StringReader;
-import java.io.StringWriter;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -48,57 +32,102 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
-import java.util.TreeMap;
-import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static com.linkedin.data.TestUtil.asMap;
-import static com.linkedin.data.TestUtil.assertEquivalent;
-import static com.linkedin.data.TestUtil.dataMapFromString;
 import static com.linkedin.data.TestUtil.noCommonDataComplex;
 import static org.testng.Assert.*;
 
 public class TestData
 {
-  static final PrintStream out = new PrintStream(new FileOutputStream(FileDescriptor.out));
+  final static List<Object> referenceList1 = new ArrayList<Object>();
+  final static int RL1_BOOLEAN_INDEX = 0;
+  final static int RL1_INTEGER_INDEX = 1;
+  final static int RL1_LONG_INDEX = 2;
+  final static int RL1_FLOAT_INDEX = 3;
+  final static int RL1_DOUBLE_INDEX = 4;
+  final static int RL1_STRING_INDEX = 5;
+  final static int RL1_BYTES_INDEX = 6;
+  final static Boolean RL1_BOOLEAN_VALUE = true;
+  final static Integer RL1_INTEGER_VALUE = 123;
+  final static Long RL1_LONG_VALUE = 345L;
+  final static Float RL1_FLOAT_VALUE = 567.5f;
+  final static Double RL1_DOUBLE_VALUE = 9.99;
+  final static String RL1_STRING_VALUE = "foobar";
+  final static ByteString RL1_BYTES_VALUE = ByteString.copyAvroString("byte_string", false);
+  static
+  {
+    referenceList1.add(RL1_BOOLEAN_INDEX, RL1_BOOLEAN_VALUE);
+    referenceList1.add(RL1_INTEGER_INDEX, RL1_INTEGER_VALUE);
+    referenceList1.add(RL1_LONG_INDEX, RL1_LONG_VALUE);
+    referenceList1.add(RL1_FLOAT_INDEX, RL1_FLOAT_VALUE);
+    referenceList1.add(RL1_DOUBLE_INDEX, RL1_DOUBLE_VALUE);
+    referenceList1.add(RL1_STRING_INDEX, RL1_STRING_VALUE);
+    referenceList1.add(RL1_BYTES_INDEX, RL1_BYTES_VALUE);
+  }
 
-  final List<Object> referenceList1 = new ArrayList<Object>();
-  final int RL1_BOOLEAN_INDEX = 0;
-  final int RL1_INTEGER_INDEX = 1;
-  final int RL1_LONG_INDEX = 2;
-  final int RL1_FLOAT_INDEX = 3;
-  final int RL1_DOUBLE_INDEX = 4;
-  final int RL1_STRING_INDEX = 5;
-  final int RL1_BYTES_INDEX = 6;
-  final Boolean RL1_BOOLEAN_VALUE = true;
-  final Integer RL1_INTEGER_VALUE = 123;
-  final Long RL1_LONG_VALUE = 345L;
-  final Float RL1_FLOAT_VALUE = 567.5f;
-  final Double RL1_DOUBLE_VALUE = 9.99;
-  final String RL1_STRING_VALUE = "foobar";
-  final ByteString RL1_BYTES_VALUE = ByteString.copyAvroString("byte_string", false);
+  final static Map<String,Object> referenceMap1 = new HashMap<String,Object>();
+  final static String RM1_BOOLEAN_KEY = "boolean_key";
+  final static String RM1_INTEGER_KEY = "integer_key";
+  final static String RM1_LONG_KEY = "long_key";
+  final static String RM1_FLOAT_KEY = "float_key";
+  final static String RM1_DOUBLE_KEY = "double_key";
+  final static String RM1_STRING_KEY = "string_key";
+  final static String RM1_BYTES_KEY = "bytes_key";
+  final static Boolean RM1_BOOLEAN_VALUE = true;
+  final static Integer RM1_INTEGER_VALUE = 12;
+  final static Long RM1_LONG_VALUE = 34L;
+  final static Float RM1_FLOAT_VALUE = 56.5f;
+  final static Double RM1_DOUBLE_VALUE = 7.89;
+  final static String RM1_STRING_VALUE = "baz";
+  final static ByteString RM1_BYTES_VALUE = ByteString.copyAvroString("bytes", false);
+  static
+  {
+    referenceMap1.put(RM1_BOOLEAN_KEY, RM1_BOOLEAN_VALUE);
+    referenceMap1.put(RM1_INTEGER_KEY, RM1_INTEGER_VALUE);
+    referenceMap1.put(RM1_LONG_KEY, RM1_LONG_VALUE);
+    referenceMap1.put(RM1_FLOAT_KEY, RM1_FLOAT_VALUE);
+    referenceMap1.put(RM1_DOUBLE_KEY, RM1_DOUBLE_VALUE);
+    referenceMap1.put(RM1_STRING_KEY, RM1_STRING_VALUE);
+    referenceMap1.put(RM1_BYTES_KEY, RM1_BYTES_VALUE);
+  }
 
-  final Map<String,Object> referenceMap1 = new HashMap<String,Object>();
-  final String RM1_BOOLEAN_KEY = "boolean_key";
-  final String RM1_INTEGER_KEY = "integer_key";
-  final String RM1_LONG_KEY = "long_key";
-  final String RM1_FLOAT_KEY = "float_key";
-  final String RM1_DOUBLE_KEY = "double_key";
-  final String RM1_STRING_KEY = "string_key";
-  final String RM1_BYTES_KEY = "bytes_key";
-  final Boolean RM1_BOOLEAN_VALUE = true;
-  final Integer RM1_INTEGER_VALUE = 12;
-  final Long RM1_LONG_VALUE = 34L;
-  final Float RM1_FLOAT_VALUE = 56.5f;
-  final Double RM1_DOUBLE_VALUE = 7.89;
-  final String RM1_STRING_VALUE = "baz";
-  final ByteString RM1_BYTES_VALUE = ByteString.copyAvroString("bytes", false);
+  final static List<Object> illegalObjects = new ArrayList<Object>();
+  static {
+    illegalObjects.add(new AtomicInteger(-13));
+    illegalObjects.add(new AtomicLong(-13));
+    illegalObjects.add(new BigDecimal(13));
+    illegalObjects.add(new BigInteger("13"));
+    illegalObjects.add(new Byte("13"));
+    illegalObjects.add(new Short("13"));
 
-  List<Object> illegalObjects = new ArrayList<Object>();
-  Map<String,Object> illegalMap = new HashMap<String,Object>();
+    illegalObjects.add(new ArrayList<Object>());
+    illegalObjects.add(new HashMap<String,String>());
+    illegalObjects.add(new HashSet<String>());
+  }
 
-  final DataMap referenceDataMap1 = new DataMap();
+  final static Map<String,Object> illegalMap = new HashMap<String,Object>();
+  static
+  {
+    for (Object o : illegalObjects)
+    {
+      illegalMap.put("Illegal-" + o.getClass().getName(), o);
+    }
+  }
+
+  public final static DataMap referenceDataMap1 = new DataMap();
+  static
+  {
+    referenceDataMap1.putAll(referenceMap1);
+    DataMap map1_1 = new DataMap(referenceMap1);
+    DataList list1_1 = new DataList(referenceList1);
+    referenceDataMap1.put("map1_1", map1_1);
+    referenceDataMap1.put("list1_1", list1_1);
+    referenceDataMap1.put("map1_2", new DataMap());
+    referenceDataMap1.put("list1_2", new DataList());
+    referenceDataMap1.makeReadOnly();
+  }
   final String referenceDump1 =
     "  map : {\n" +
     "    boolean_key : true\n" +
@@ -130,215 +159,13 @@ public class TestData
     "    string_key : baz\n" +
     "  }\n";
 
-  final DataList referenceDataList1 = new DataList();
-
-  final Map<String, DataComplex> inputs = new TreeMap<String, DataComplex>();
-
-  @BeforeTest
-  public void setup()
+  public final static DataList referenceDataList1 = new DataList();
+  static
   {
-    referenceList1.add(RL1_BOOLEAN_INDEX, RL1_BOOLEAN_VALUE);
-    referenceList1.add(RL1_INTEGER_INDEX, RL1_INTEGER_VALUE);
-    referenceList1.add(RL1_LONG_INDEX, RL1_LONG_VALUE);
-    referenceList1.add(RL1_FLOAT_INDEX, RL1_FLOAT_VALUE);
-    referenceList1.add(RL1_DOUBLE_INDEX, RL1_DOUBLE_VALUE);
-    referenceList1.add(RL1_STRING_INDEX, RL1_STRING_VALUE);
-    referenceList1.add(RL1_BYTES_INDEX, RL1_BYTES_VALUE);
-
-    referenceMap1.put(RM1_BOOLEAN_KEY, RM1_BOOLEAN_VALUE);
-    referenceMap1.put(RM1_INTEGER_KEY, RM1_INTEGER_VALUE);
-    referenceMap1.put(RM1_LONG_KEY, RM1_LONG_VALUE);
-    referenceMap1.put(RM1_FLOAT_KEY, RM1_FLOAT_VALUE);
-    referenceMap1.put(RM1_DOUBLE_KEY, RM1_DOUBLE_VALUE);
-    referenceMap1.put(RM1_STRING_KEY, RM1_STRING_VALUE);
-    referenceMap1.put(RM1_BYTES_KEY, RM1_BYTES_VALUE);
-
-    illegalObjects.add(new AtomicInteger(-13));
-    illegalObjects.add(new AtomicLong(-13));
-    illegalObjects.add(new BigDecimal(13));
-    illegalObjects.add(new BigInteger("13"));
-    illegalObjects.add(new Byte("13"));
-    illegalObjects.add(new Short("13"));
-
-    illegalObjects.add(new ArrayList<Object>());
-    illegalObjects.add(new HashMap<String,String>());
-    illegalObjects.add(new HashSet<String>());
-
-    for (Object o : illegalObjects)
-    {
-      illegalMap.put("Illegal-" + o.getClass().getName(), o);
-    }
-
-    referenceDataMap1.putAll(referenceMap1);
-    DataMap map1_1 = new DataMap(referenceMap1);
-    DataList list1_1 = new DataList(referenceList1);
-    referenceDataMap1.put("map1_1", map1_1);
-    referenceDataMap1.put("list1_1", list1_1);
-    referenceDataMap1.put("map1_2", new DataMap());
-    referenceDataMap1.put("list1_2", new DataList());
-    referenceDataMap1.makeReadOnly();
-
     referenceDataList1.addAll(referenceList1);
     referenceDataList1.add(0, new DataList(referenceList1));
     referenceDataList1.add(1, new DataMap(referenceMap1));
     referenceDataList1.makeReadOnly();
-
-    inputs.put("Reference DataMap1", referenceDataMap1);
-
-    {
-      DataMap map1 = new DataMap();
-      for (int i = 0; i < 100; ++i)
-      {
-        String key = "key_" + i;
-        map1.put(key, new Boolean(i % 2 == 1));
-      }
-      inputs.put("Map of 100 booleans", map1);
-    }
-
-    {
-      DataMap map1 = new DataMap();
-      DataList list1 = new DataList();
-      map1.put("list", list1);
-      for (int i = 0; i < 100; ++i)
-      {
-        list1.add(new Integer(i));
-      }
-      inputs.put("List of 100 32-bit integers", map1);
-    }
-
-    {
-      DataMap map1 = new DataMap();
-      DataList list1 = new DataList();
-      map1.put("list", list1);
-      for (int i = 0; i < 100; ++i)
-      {
-        list1.add(new Double(i + 0.5));
-      }
-      inputs.put("List of 100 doubles", map1);
-    }
-
-    {
-      DataMap map1 = new DataMap();
-      for (int i = 0; i < 100; ++i)
-      {
-        String key = "key_" + i;
-        map1.put(key, "12345678901234567890");
-      }
-      inputs.put("Map of 100 20-character strings", map1);
-    }
-
-    {
-      DataMap map1 = new DataMap();
-      for (int i = 0; i < 100; ++i)
-      {
-        String key = "key_" + i;
-        map1.put(key, new Integer(i));
-      }
-      inputs.put("Map of 100 32-bit integers", map1);
-    }
-
-    {
-      DataMap map1 = new DataMap();
-      for (int i = 0; i < 100; ++i)
-      {
-        String key = "key_" + i;
-        map1.put(key, new Double(i + 0.5));
-      }
-      inputs.put("Map of 100 doubles", map1);
-    }
-
-    {
-      DataMap map1 = new DataMap();
-      DataList list1 = new DataList();
-      map1.put("list", list1);
-      for (int i = 0; i < 100; ++i)
-      {
-        list1.add("12345678901234567890");
-      }
-      inputs.put("List of 100 20-character strings", list1);
-      inputs.put("Map containing list of 100 20-character strings", map1);
-    }
-
-    {
-      DataMap map1 = new DataMap();
-      DataList list1 = new DataList();
-      map1.put("list", list1);
-      for (int i = 0; i < 100; ++i)
-      {
-        list1.add(ByteString.copyAvroString("12345678901234567890", false));
-      }
-      inputs.put("List of 100 20-byte bytes", list1);
-      inputs.put("Map containing list of 100 20-byte bytes", map1);
-    }
-
-    {
-      DataMap map1 = new DataMap();
-      DataMap map11 = new DataMap();
-      DataList list11 = new DataList();
-      map1.put("map11", map11);
-      map1.put("list11", list11);
-      inputs.put("Map with empty map and list", map1);
-    }
-
-    {
-      DataMap dataMap = new DataMap();
-      dataMap.put("test", "Fourscore and seven years ago our fathers brought forth on this continent " +
-                          "a new nation, conceived in liberty and dedicated to the proposition that all men are created " +
-                          "equal. Now we are engaged in a great civil war, testing whether that nation or any nation so " +
-                          "conceived and so dedicated can long endure. We are met on a great battlefield of that war. " +
-                          "We have come to dedicate a portion of that field as a final resting-place for those who here " +
-                          "gave their lives that that nation might live. It is altogether fitting and proper that we " +
-                          "should do this. But in a larger sense, we cannot dedicate, we cannot consecrate, we cannot " +
-                          "hallow this ground. The brave men, living and dead who struggled here have consecrated it " +
-                          "far above our poor power to add or detract. The world will little note nor long remember " +
-                          "what we say here, but it can never forget what they did here. It is for us the living rather " +
-                          "to be dedicated here to the unfinished work which they who fought here have thus far so " +
-                          "nobly advanced. It is rather for us to be here dedicated to the great task remaining before " +
-                          "us--that from these honored dead we take increased devotion to that cause for which they " +
-                          "gave the last full measure of devotion--that we here highly resolve that these dead shall " +
-                          "not have died in vain, that this nation under God shall have a new birth of freedom, and " +
-                          "that government of the people, by the people, for the people shall not perish from the earth."
-      );
-      inputs.put("Map of long string", dataMap);
-    }
-
-    {
-      DataMap mapOfStrings = new DataMap();
-
-      ArrayList<Integer> lengths = new ArrayList<Integer>();
-
-      for (int stringLength = 0; stringLength < 1024; stringLength += 113)
-      {
-        lengths.add(stringLength);
-      }
-      for (int stringLength = 1024; stringLength < (Short.MAX_VALUE * 4); stringLength *= 2)
-      {
-        lengths.add(stringLength);
-      }
-
-      for (int stringLength : lengths)
-      {
-        DataMap dataMap = new DataMap();
-
-        StringBuilder stringBuilder = new StringBuilder(stringLength);
-        char character = 32;
-        for (int pos = 0; pos < stringLength; pos++)
-        {
-          if (character > 16384) character = 32;
-          stringBuilder.append(character);
-          character += 3;
-        }
-        // out.println("" + stringLength + " : " + (int) character);
-        String key = "test" + stringLength;
-        String value = stringBuilder.toString();
-        dataMap.put(key, value);
-        mapOfStrings.put(key, value);
-
-        inputs.put("Map of " + stringLength + " character string", dataMap);
-      }
-
-      inputs.put("Map of variable length strings", mapOfStrings);
-    }
   }
 
   public void testDataMapChecker(Map<String,Object> map)
@@ -1187,372 +1014,6 @@ public class TestData
     assertEquals(s3, "[]\n");
   }
 
-  public void testDataCodec(DataCodec codec, DataMap map) throws IOException
-  {
-    boolean debug = false;
-
-    StringBuilder sb1 = new StringBuilder();
-    Data.dump("map", map, "", sb1);
-    if (debug) out.print(sb1);
-
-    // test mapToBytes
-
-    byte[] bytes = codec.mapToBytes(map);
-    if (debug) TestUtil.dumpBytes(out, bytes);
-
-    // test bytesToMap
-
-    DataMap map2 = codec.bytesToMap(bytes);
-    StringBuilder sb2 = new StringBuilder();
-    Data.dump("map", map2, "", sb2);
-    if (debug) out.print(sb2);
-    assertEquivalent(map2, map);
-
-    // test writeMap
-
-    ByteArrayOutputStream outputStream = new ByteArrayOutputStream(bytes.length * 2);
-    codec.writeMap(map, outputStream);
-    byte[] outputStreamBytes = outputStream.toByteArray();
-    assertEquals(outputStreamBytes, bytes);
-
-    // test readMap
-
-    ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStreamBytes);
-    DataMap map3 = codec.readMap(inputStream);
-    StringBuilder sb3 = new StringBuilder();
-    Data.dump("map", map3, "", sb3);
-    if (debug) out.print(sb3);
-
-    assertEquivalent(map3, map);
-    assertEquivalent(map3, map2);
-
-    if (codec instanceof TextDataCodec)
-    {
-      TextDataCodec textCodec = (TextDataCodec) codec;
-
-      // test mapToString
-
-      String string = textCodec.mapToString(map);
-      if (debug) out.println(string);
-
-      // test stringToMap
-
-      DataMap map4 = textCodec.stringToMap(string);
-      StringBuilder sb4 = new StringBuilder();
-      Data.dump("map", map4, "", sb4);
-      assertEquals(sb4.toString(), sb1.toString());
-
-      // test writeMap
-
-      StringWriter writer = new StringWriter();
-      textCodec.writeMap(map, writer);
-      assertEquals(writer.toString(), string);
-
-      // test readMap
-
-      StringReader reader = new StringReader(string);
-      DataMap map5 = textCodec.readMap(reader);
-      StringBuilder sb5 = new StringBuilder();
-      Data.dump("map", map5, "", sb5);
-    }
-  }
-
-  public void testDataCodec(DataCodec codec, DataList list) throws IOException
-  {
-    boolean debug = false;
-
-    StringBuilder sb1 = new StringBuilder();
-    Data.dump("list", list, "", sb1);
-    if (debug) out.print(sb1);
-
-    // test listToBytes
-
-    byte[] bytes = codec.listToBytes(list);
-    if (debug) TestUtil.dumpBytes(out, bytes);
-
-    // test bytesToList
-
-    DataList list2 = codec.bytesToList(bytes);
-    StringBuilder sb2 = new StringBuilder();
-    Data.dump("list", list2, "", sb2);
-    assertEquals(sb2.toString(), sb1.toString());
-
-    // test writeList
-
-    ByteArrayOutputStream outputStream = new ByteArrayOutputStream(bytes.length * 2);
-    codec.writeList(list, outputStream);
-    byte[] outputStreamBytes = outputStream.toByteArray();
-    assertEquals(outputStreamBytes, bytes);
-
-    // test readList
-
-    ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStreamBytes);
-    DataList list3 = codec.readList(inputStream);
-    StringBuilder sb3 = new StringBuilder();
-    Data.dump("list", list3, "", sb3);
-
-    assertEquals(sb3.toString(), sb1.toString());
-
-
-    if (codec instanceof TextDataCodec)
-    {
-      TextDataCodec textCodec = (TextDataCodec) codec;
-
-      // test listToString
-
-      String string = textCodec.listToString(list);
-      if (debug) out.println(string);
-
-      // test stringToList
-
-      DataList list4 = textCodec.stringToList(string);
-      StringBuilder sb4 = new StringBuilder();
-      Data.dump("list", list4, "", sb4);
-      assertEquals(sb4.toString(), sb1.toString());
-
-      // test writeList
-
-      StringWriter writer = new StringWriter();
-      textCodec.writeList(list, writer);
-      assertEquals(writer.toString(), string);
-
-      // test readList
-
-      StringReader reader = new StringReader(string);
-      DataList list5 = textCodec.readList(reader);
-      StringBuilder sb5 = new StringBuilder();
-      Data.dump("list", list5, "", sb5);
-    }
-  }
-
-  public void testDataCodec(DataCodec codec) throws IOException
-  {
-    // out.println(codec.getClass().getName());
-    for (Map.Entry<String, DataComplex> e : inputs.entrySet())
-    {
-      // out.println(e.getKey());
-      DataComplex value = e.getValue();
-      if (value.getClass() == DataMap.class)
-      {
-        testDataCodec(codec, (DataMap) value);
-      }
-      else
-      {
-        testDataCodec(codec, (DataList) value);
-      }
-    }
-  }
-
-  private DataMap getMapFromJson(JacksonDataCodec codec, String input) throws IOException
-  {
-    return codec.stringToMap(input);
-  }
-
-  @Test
-  public void testJacksonDataCodec() throws IOException
-  {
-    JacksonDataCodec codec = new JacksonDataCodec();
-    testDataCodec(codec, referenceDataMap1);
-
-    DataList list1 = codec.bytesToList("[7,27,279]".getBytes());
-    assertEquals(list1, new DataList(Arrays.asList(7, 27, 279)));
-
-    DataList list2 = new DataList(Arrays.asList(321, 21, 1));
-    assertEquals(codec.listToBytes(list2), "[321,21,1]".getBytes());
-
-    DataMap map3 = getMapFromJson(codec, "{ \"a\" : null }");
-    // out.println(map3.getError());
-    assertSame(map3.get("a"), Data.NULL);
-
-    DataMap map4 = getMapFromJson(codec, "{ \"b\" : 123456789012345678901234567890 }");
-    // out.println(map4.getError());
-    assertTrue(map4.getError().indexOf(" value: 123456789012345678901234567890, token: VALUE_NUMBER_INT, number type: BIG_INTEGER not parsed.") != -1);
-
-    DataMap map5 = getMapFromJson(codec, "{ \"a\" : null, \"b\" : 123456789012345678901234567890 }");
-    // out.println(map5.getError());
-    assertTrue(map5.getError().indexOf(" value: 123456789012345678901234567890, token: VALUE_NUMBER_INT, number type: BIG_INTEGER not parsed.") != -1);
-
-    // Test comments
-    codec.setAllowComments(true);
-    DataMap map6 = getMapFromJson(codec, "/* abc */ { \"a\" : \"b\" }");
-    assertEquals(map6.get("a"), "b");
-
-    // Test getStringEncoding
-    String encoding = codec.getStringEncoding();
-    assertEquals(encoding, "UTF-8");
-    assertEquals(encoding, JsonEncoding.UTF8.getJavaName());
-  }
-
-  @Test
-  public void testJacksonCodecNumbers() throws IOException
-  {
-    JacksonDataCodec codec = new JacksonDataCodec();
-    testCodecNumbers(codec);
-  }
-
-  public void testCodecNumbers(DataCodec codec) throws IOException
-  {
-    Object input[][] =
-      {
-        {
-          "{ \"intMax\" : " + Integer.MAX_VALUE + "}",
-          asMap("intMax", Integer.MAX_VALUE)
-        },
-        {
-          "{ \"intMin\" : " + Integer.MIN_VALUE + "}",
-          asMap("intMin", Integer.MIN_VALUE)
-        },
-        {
-          "{ \"longMax\" : " + Long.MAX_VALUE + "}",
-          asMap("longMax", Long.MAX_VALUE)
-        },
-        {
-          "{ \"longMin\" : " + Long.MIN_VALUE + "}",
-          asMap("longMin", Long.MIN_VALUE)
-        },
-        {
-          "{ \"long\" : 5573478247682805760 }",
-          asMap("long", 5573478247682805760l)
-        },
-      };
-
-    for (Object[] row : input)
-    {
-      String json = (String) row[0];
-      DataMap dataMap = dataMapFromString(json);
-      @SuppressWarnings("unchecked")
-      Map<String, Object> map = (Map<String, Object>) row[1];
-      for (Map.Entry<String, Object> entry : map.entrySet())
-      {
-        Object value = dataMap.get(entry.getKey());
-        assertEquals(value, entry.getValue());
-        assertEquals(value.getClass(), entry.getValue().getClass());
-      }
-    }
-
-    // more JACKSON-targeted int value tests
-    int inc = (Integer.MAX_VALUE - Integer.MAX_VALUE/100) / 10000;
-    for (int i = Integer.MAX_VALUE/100 ; i <= Integer.MAX_VALUE && i > 0; i += inc)
-    {
-      String json = "{ \"int\" : " + i + " }";
-      DataMap dataMap = dataMapFromString(json);
-      assertEquals(dataMap.getInteger("int"), Integer.valueOf(i));
-    }
-    for (int i = Integer.MIN_VALUE ; i <= Integer.MIN_VALUE/100 && i < 0; i += inc)
-    {
-      String json = "{ \"int\" : " + i + " }";
-      DataMap dataMap = dataMapFromString(json);
-      assertEquals(dataMap.getInteger("int"), Integer.valueOf(i));
-    }
-
-    // more JACKSON long value tests
-    long longInc = (Long.MAX_VALUE - Long.MAX_VALUE/100l) / 10000l;
-    for (long i = Long.MAX_VALUE/100l ; i <= Long.MAX_VALUE && i > 0; i += longInc)
-    {
-      String json = "{ \"long\" : " + i + " }";
-      DataMap dataMap = dataMapFromString(json);
-      assertEquals(dataMap.getLong("long"), Long.valueOf(i));
-    }
-    for (long i = Long.MIN_VALUE ; i <= Long.MIN_VALUE/100l && i < 0; i += longInc)
-    {
-      String json = "{ \"long\" : " + i + " }";
-      DataMap dataMap = dataMapFromString(json);
-      assertEquals(dataMap.getLong("long"), Long.valueOf(i));
-    }
-  }
-
-  @Test(expectedExceptions = IOException.class)
-  public void testJacksonDataCodecErrorEmptyInput() throws IOException
-  {
-    final JacksonDataCodec codec = new JacksonDataCodec();
-    final ByteArrayInputStream in = new ByteArrayInputStream(new byte[0]);
-    codec.readMap(in);
-  }
-
-  @Test(expectedExceptions = DataDecodingException.class)
-  public void testJacksonDataCodecErrorToList() throws IOException
-  {
-    final JacksonDataCodec codec = new JacksonDataCodec();
-    codec.bytesToList("{\"A\": 1}".getBytes());
-  }
-
-  @Test(expectedExceptions = DataDecodingException.class)
-  public void testJacksonDataCodecErrorToMap() throws IOException
-  {
-    final JacksonDataCodec codec = new JacksonDataCodec();
-    codec.bytesToMap("[1, 2, 3]".getBytes());
-  }
-
-  /*
-  @Test
-  public void testBson4JacksonDataCodec() throws IOException
-  {
-    Bson4JacksonDataCodec codec = new Bson4JacksonDataCodec();
-    testDataCodec(codec);
-  }
-  */
-
-  @Test
-  public void testBsonDataCodec() throws IOException
-  {
-    BsonDataCodec codec = new BsonDataCodec();
-    testDataCodec(codec);
-  }
-
-  @Test
-  public void testBsonStressBufferSizeDataCodec() throws IOException
-  {
-    for (int i = 16; i < 32; ++i)
-    {
-      BsonDataCodec codec = new BsonDataCodec(i, true);
-      testDataCodec(codec);
-    }
-  }
-
-  @Test
-  public void testPsonDataCodec() throws IOException
-  {
-    int[] bufferSizesToTest = { 17, 19, 23, 29, 31, 37, 41, 43, 47, 0 };
-    Boolean[] booleanValues = new Boolean[] { Boolean.TRUE, Boolean.FALSE };
-
-    PsonDataCodec codec = new PsonDataCodec(true);
-
-    PsonDataCodec.Options lastOption = null;
-    for (int bufferSize : bufferSizesToTest)
-    {
-      for (boolean encodeCollectionCount : booleanValues)
-      {
-        for (boolean encodeStringLength : booleanValues)
-        {
-          PsonDataCodec.Options option = new PsonDataCodec.Options();
-          option.setEncodeCollectionCount(encodeCollectionCount).setEncodeStringLength(encodeStringLength);
-          if (bufferSize != 0)
-          {
-            option.setBufferSize(bufferSize);
-          }
-
-          codec.setOptions(option);
-          testDataCodec(codec);
-
-          if (lastOption != null)
-          {
-            assertFalse(option.equals(lastOption));
-            assertNotSame(option.hashCode(), lastOption.hashCode());
-            assertFalse(option.toString().equals(lastOption.toString()));
-          }
-          lastOption = option;
-        }
-      }
-    }
-  }
-
-  @Test
-  public void testPsonCodecNumbers() throws IOException
-  {
-    PsonDataCodec codec = new PsonDataCodec();
-    testCodecNumbers(codec);
-  }
-
   @Test
   public void testObjectIsAcyclic()
   {
@@ -2281,98 +1742,6 @@ public class TestData
     assertEquals(instrumentedData.get("prefix.map.a").get("value"), "v_a");
     assertEquals(instrumentedData.get("prefix.map.b").get("value"), "99");
     assertEquals(instrumentedData.get("prefix.int").get("value"), "123");
-  }
-
-  private void timePerfTest(int count, Callable<?> func)
-  {
-    System.gc();
-    long start = System.currentTimeMillis();
-    int errors = 0;
-    for (int i = 0; i < count; ++i)
-    {
-      try
-      {
-        func.call();
-      }
-      catch (Exception e)
-      {
-        errors++;
-      }
-    }
-    long end = System.currentTimeMillis();
-    long duration = end - start;
-    double avgLatencyMsec = (double) duration / count;
-    out.println(func + ", " + count + " calls in " + duration + " ms, latency per call " + avgLatencyMsec + " ms");
-  }
-
-  private void dataMapToBytesPerfTest(int count, final DataCodec codec, final DataMap map)
-  {
-    timePerfTest(count, new Callable<byte[]>()
-    {
-      public byte[] call() throws IOException
-      {
-        return codec.mapToBytes(map);
-      }
-      public String toString()
-      {
-        return "DataMap-to-bytes, " + codec.getClass().getName();
-      }
-    });
-  }
-
-  private void bytesToDataMapPerfTest(int count, final DataCodec codec, final byte[] bytes)
-  {
-    timePerfTest(count, new Callable<DataMap>()
-    {
-      public DataMap call() throws IOException
-      {
-        return codec.bytesToMap(bytes);
-      }
-      public String toString()
-      {
-        return"Bytes-to-DataMap, " + codec.getClass().getName();
-      }
-    });
-  }
-
-  private void perfTest(int count, DataMap map) throws IOException
-  {
-    List<DataCodec> codecs = new ArrayList<DataCodec>();
-    codecs.add(new JacksonDataCodec());
-    //codecs.add(new Bson4JacksonDataCodec());
-    codecs.add(new BsonDataCodec());
-
-    for (DataCodec codec : codecs)
-    {
-      byte[] bytes = codec.mapToBytes(map);
-      out.println(codec.getClass().getName() + " serialized size " + bytes.length);
-    }
-
-    for (DataCodec codec : codecs)
-    {
-      dataMapToBytesPerfTest(count, codec, map);
-    }
-
-    for (DataCodec codec : codecs)
-    {
-      byte[] bytes = codec.mapToBytes(map);
-      bytesToDataMapPerfTest(count, codec, bytes);
-    }
-  }
-
-  //@Test
-  @Parameters("count")
-  public void perfTest(@Optional("1000") int count) throws IOException
-  {
-    for (Map.Entry<String, DataComplex> e : inputs.entrySet())
-    {
-      Object value = e.getValue();
-      if (value.getClass() == DataMap.class)
-      {
-        out.println("------------- " + e.getKey() + " -------------");
-        perfTest(count, (DataMap) value);
-      }
-    }
   }
 
   @Test

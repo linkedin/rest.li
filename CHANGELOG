@@ -3,6 +3,9 @@
 (RB=1259113)
 Updated Javadoc regarding concurrent use of PrettyPrinter in JacksonDataCodec.
 
+(RB=1239620)
+Added reactive streaming JSON parser.
+
 20.0.13
 -------
 (RB=1258283)
