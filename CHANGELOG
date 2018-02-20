@@ -1,6 +1,11 @@
-19.0.2
+19.0.3
 ------
 
+
+19.0.2
+------
+(RB=1229260)
+Removed logging for replaced error in RestLiFilterChainIterator
 
 19.0.1
 ------

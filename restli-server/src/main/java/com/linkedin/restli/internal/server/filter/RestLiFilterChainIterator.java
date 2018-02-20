@@ -21,15 +21,10 @@ import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.HeaderUtil;
 import com.linkedin.restli.internal.common.ProtocolVersionUtil;
 import com.linkedin.restli.internal.server.RestLiCallback;
-import com.linkedin.restli.internal.server.response.RestLiResponseEnvelope;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.filter.Filter;
 import com.linkedin.restli.server.filter.FilterRequestContext;
 import com.linkedin.restli.server.filter.FilterResponseContext;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -42,8 +37,6 @@ import java.util.concurrent.CompletableFuture;
  */
 public class RestLiFilterChainIterator
 {
-  private static final Logger LOG = LoggerFactory.getLogger(RestLiFilterChainIterator.class);
-
   private List<Filter> _filters;
   private FilterChainDispatcher _filterChainDispatcher;
   private FilterChainCallback _filterChainCallback;
@@ -157,22 +150,18 @@ public class RestLiFilterChainIterator
     }
   }
 
+  // There are two cases that are handled by this method. In one case, the filter completes exceptionally with an
+  // intended error; in another, the filter unexpectedly throws a runtime exception.
   private void updateResponseContextWithError(Throwable throwable, FilterResponseContext responseContext)
   {
     assert throwable != null;
 
     setErrorResponseHeader(responseContext);
 
-    RestLiResponseEnvelope responseEnvelope = responseContext.getResponseData().getResponseEnvelope();
-    if (responseEnvelope.isErrorResponse())
-    {
-      // Log the original exception that's about to be replaced.
-      RestLiServiceException original = responseEnvelope.getException();
-      LOG.error("Encountered new exception " + throwable + ". The original exception is " + original, original);
-    }
-
+    // Note: The original exception, if there were one, is replaced silently. Be careful in logging the original
+    // exception, though, as it may cause excessive logging in existing applications.
     RestLiServiceException restLiServiceException = RestLiServiceException.fromThrowable(throwable);
-    responseEnvelope.setExceptionInternal(restLiServiceException);
+    responseContext.getResponseData().getResponseEnvelope().setExceptionInternal(restLiServiceException);
   }
 
   private void setErrorResponseHeader(FilterResponseContext responseContext)
