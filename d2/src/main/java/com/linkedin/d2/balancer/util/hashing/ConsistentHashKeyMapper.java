@@ -26,21 +26,17 @@ import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.util.HostToKeyMapper;
 import com.linkedin.d2.balancer.util.MapKeyResult;
 import com.linkedin.d2.balancer.util.URIRequest;
-import com.linkedin.d2.balancer.util.partitions.PartitionAccessException;
 import com.linkedin.d2.balancer.util.partitions.PartitionInfoProvider;
 
 import com.linkedin.r2.message.Request;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import org.apache.http.client.utils.URIBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,7 +57,7 @@ public class ConsistentHashKeyMapper implements KeyMapper
 
   public ConsistentHashKeyMapper(HashRingProvider ringProvider, PartitionInfoProvider partitionInfoProvider)
   {
-    this(ringProvider, partitionInfoProvider, null);
+    this(ringProvider, partitionInfoProvider, new DefaultHashFunctionProvider());
   }
 
   public ConsistentHashKeyMapper(HashRingProvider ringProvider, PartitionInfoProvider partitionInfoProvider,

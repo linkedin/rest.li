@@ -151,7 +151,7 @@ public class ConsistentHashKeyMapperTest
     HostToKeyMapper<Integer> result = mapper.mapKeysV3(serviceURI, keys, numHost, null);
     Map<Integer, List<URI>> originalOrderingOfHost = getOrderingOfHostsForEachKey(result, numHost);
 
-    // repeat 100 times. The ordering of the hosts should always be the same because of sticky key
+    // repeat 100 times. The ordering of the hosts should not be the same as stickyKey is not provided
     int numOfMatch = 0;
     for (int i = 0; i < 100; i++)
     {
@@ -195,7 +195,7 @@ public class ConsistentHashKeyMapperTest
   public void testMapKeysV3StickKeyURI(RingFactory<URI> ringFactory) throws URISyntaxException, ServiceUnavailableException
   {
     int numHost = 2;
-    URI serviceURI = new URI("d2://articles/(12345)");
+    URI serviceURI = new URI("d2://articles/12345");
     ConsistentHashKeyMapper mapper = getConsistentHashKeyMapper(ringFactory, PropertyKeys.HASH_METHOD_URI_REGEX);
 
     List<Integer> keys = Arrays.asList(1, 2, 3, 4, 9, 10, 13, 15, 16);
@@ -373,7 +373,7 @@ public class ConsistentHashKeyMapperTest
 
     if (PropertyKeys.HASH_METHOD_URI_REGEX.equals(method))
     {
-      hashConfig.put("regexes", Collections.singletonList("(.+)"));
+      hashConfig.put("regexes", Collections.singletonList("(\\d{5,8})"));
       lbStrategyProperties.put(PropertyKeys.HTTP_LB_HASH_CONFIG, hashConfig);
       lbStrategyProperties.put(PropertyKeys.HTTP_LB_HASH_METHOD, PropertyKeys.HASH_METHOD_URI_REGEX);
     }
