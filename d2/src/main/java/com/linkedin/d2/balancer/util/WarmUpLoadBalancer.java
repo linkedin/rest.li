@@ -18,24 +18,13 @@ package com.linkedin.d2.balancer.util;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
-import com.linkedin.d2.balancer.Directory;
-import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.LoadBalancerWithFacilities;
-import com.linkedin.d2.balancer.ServiceUnavailableException;
+import com.linkedin.d2.balancer.LoadBalancerWithFacilitiesDelegator;
 import com.linkedin.d2.balancer.WarmUpService;
-import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancer;
-import com.linkedin.d2.balancer.util.partitions.PartitionInfoProvider;
 import com.linkedin.d2.discovery.event.PropertyEventThread;
-import com.linkedin.r2.message.Request;
-import com.linkedin.r2.message.RequestContext;
-import com.linkedin.r2.transport.common.TransportClientFactory;
-import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.http.client.TimeoutCallback;
 import com.linkedin.util.clock.SystemClock;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedDeque;
@@ -44,6 +33,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The WarmUpLoadBalancer warms up the internal {@link SimpleLoadBalancer} services/cluster list
@@ -54,7 +45,7 @@ import java.util.stream.IntStream;
  *
  * @author Francesco Capponi (fcapponi@linkedin.com)
  */
-public class WarmUpLoadBalancer implements LoadBalancerWithFacilities
+public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator
 {
   private static final Logger LOG = LoggerFactory.getLogger(WarmUpLoadBalancer.class);
 
@@ -64,7 +55,6 @@ public class WarmUpLoadBalancer implements LoadBalancerWithFacilities
   public static final int DEFAULT_CONCURRENT_REQUESTS = 20;
   public static final int DEFAULT_SEND_REQUESTS_TIMEOUT_SECONDS = 30;
 
-  private final LoadBalancerWithFacilities _balancer;
   private final ConcurrentLinkedDeque<Future<?>> _outstandingRequests;
 
   private WarmUpService _serviceWarmupper;
@@ -78,7 +68,7 @@ public class WarmUpLoadBalancer implements LoadBalancerWithFacilities
   public WarmUpLoadBalancer(LoadBalancerWithFacilities balancer, WarmUpService serviceWarmupper, ScheduledExecutorService executorService,
                             String d2FsDirPath, String d2ServicePath, int warmUpTimeoutSeconds, int concurrentRequests)
   {
-    _balancer = balancer;
+    super(balancer);
     _serviceWarmupper = serviceWarmupper;
     _executorService = executorService;
     _d2FsPath = d2FsDirPath;
@@ -92,7 +82,7 @@ public class WarmUpLoadBalancer implements LoadBalancerWithFacilities
   public void start(Callback<None> callback)
   {
     LOG.info("D2 WarmUp enabled");
-    _balancer.start(new Callback<None>()
+    _loadBalancer.start(new Callback<None>()
     {
       @Override
       public void onError(Throwable e)
@@ -224,51 +214,13 @@ public class WarmUpLoadBalancer implements LoadBalancerWithFacilities
     }
   }
 
-  // ############# delegating section ##############
-
   @Override
   public void shutdown(PropertyEventThread.PropertyEventShutdownCallback shutdown)
   {
     _shuttingDown = true;
     _outstandingRequests.forEach(future -> future.cancel(true));
     _outstandingRequests.clear();
-    _balancer.shutdown(shutdown);
+    _loadBalancer.shutdown(shutdown);
   }
 
-  @Override
-  public ServiceProperties getLoadBalancedServiceProperties(String serviceName)
-    throws ServiceUnavailableException
-  {
-    return _balancer.getLoadBalancedServiceProperties(serviceName);
-  }
-
-  @Override
-  public TransportClient getClient(Request request, RequestContext requestContext) throws ServiceUnavailableException
-  {
-    return _balancer.getClient(request, requestContext);
-  }
-
-  @Override
-  public Directory getDirectory()
-  {
-    return _balancer.getDirectory();
-  }
-
-  @Override
-  public PartitionInfoProvider getPartitionInfoProvider()
-  {
-    return _balancer.getPartitionInfoProvider();
-  }
-
-  @Override
-  public KeyMapper getKeyMapper()
-  {
-    return _balancer.getKeyMapper();
-  }
-
-  @Override
-  public TransportClientFactory getClientFactory(String scheme)
-  {
-    return _balancer.getClientFactory(scheme);
-  }
 }
