@@ -29,6 +29,7 @@ apply from: "${buildScriptDirPath}/configBuildScript.gradle"
 
 project.ext.externalDependency = [
   'antlr': 'org.antlr:antlr4:4.5',
+  'antlrRuntime': 'org.antlr:antlr4-runtime:4.5',
   'avro': 'org.apache.avro:avro:1.4.0',
   'avro_1_6': 'org.apache.avro:avro:1.6.3',
   'cglib': 'cglib:cglib-nodep:2.2',

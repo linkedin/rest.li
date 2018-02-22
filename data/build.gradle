@@ -1,7 +1,7 @@
 apply plugin: 'antlr'
 
 dependencies {
-  compile externalDependency.antlr
+  compile externalDependency.antlrRuntime
   compile externalDependency.commonsLang3
   compile externalDependency.guava
   compile externalDependency.jacksonCore
