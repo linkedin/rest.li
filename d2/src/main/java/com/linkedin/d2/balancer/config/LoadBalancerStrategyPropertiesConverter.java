@@ -19,6 +19,7 @@ package com.linkedin.d2.balancer.config;
 import com.linkedin.d2.ConsistentHashAlgorithmEnum;
 import com.linkedin.d2.D2LoadBalancerStrategyProperties;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
+import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyV3;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderRingFactory;
 import com.linkedin.d2.balancer.util.hashing.URIRegexHash;
 import com.linkedin.d2.hashConfigType;
@@ -97,14 +98,14 @@ public class LoadBalancerStrategyPropertiesConverter
       switch (config.getHashMethod())
       {
         case RANDOM:
-          map.put(PropertyKeys.HTTP_LB_HASH_METHOD, PropertyKeys.HASH_METHOD_NONE);
+          map.put(PropertyKeys.HTTP_LB_HASH_METHOD, DegraderLoadBalancerStrategyV3.HASH_METHOD_NONE);
           break;
         case URI_REGEX:
-          map.put(PropertyKeys.HTTP_LB_HASH_METHOD, PropertyKeys.HASH_METHOD_URI_REGEX);
+          map.put(PropertyKeys.HTTP_LB_HASH_METHOD, DegraderLoadBalancerStrategyV3.HASH_METHOD_URI_REGEX);
           break;
         default:
           // default to random hash method.
-          map.put(PropertyKeys.HTTP_LB_HASH_METHOD, PropertyKeys.HASH_METHOD_NONE);
+          map.put(PropertyKeys.HTTP_LB_HASH_METHOD, DegraderLoadBalancerStrategyV3.HASH_METHOD_NONE);
       }
     }
     if (config.hasHashConfig())
@@ -226,11 +227,11 @@ public class LoadBalancerStrategyPropertiesConverter
     if (properties.containsKey(PropertyKeys.HTTP_LB_HASH_METHOD))
     {
       String hashMethodString = coerce(properties.get(PropertyKeys.HTTP_LB_HASH_METHOD), String.class);
-      if (PropertyKeys.HASH_METHOD_NONE.equalsIgnoreCase(hashMethodString))
+      if (DegraderLoadBalancerStrategyV3.HASH_METHOD_NONE.equalsIgnoreCase(hashMethodString))
       {
         config.setHashMethod(hashMethodEnum.RANDOM);
       }
-      else if (PropertyKeys.HASH_METHOD_URI_REGEX.equalsIgnoreCase(hashMethodString))
+      else if (DegraderLoadBalancerStrategyV3.HASH_METHOD_URI_REGEX.equalsIgnoreCase(hashMethodString))
       {
         config.setHashMethod(hashMethodEnum.URI_REGEX);
       }

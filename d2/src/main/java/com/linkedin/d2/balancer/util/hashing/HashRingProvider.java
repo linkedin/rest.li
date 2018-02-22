@@ -41,7 +41,7 @@ public interface HashRingProvider
    * @throws ServiceUnavailableException - if the service identified by the given URI is not available, i.e. map is empty.
    * @throws IllegalStateException - if this HashRingProvider is not configured with a valid hash rings.                                                                                                     L
    */
-  <K> MapKeyResult<Ring<URI>, K> getRings(URI serviceUri, Iterable<K> keys) throws ServiceUnavailableException;
+  public <K> MapKeyResult<Ring<URI>, K> getRings(URI serviceUri, Iterable<K> keys) throws ServiceUnavailableException;
 
   /**
    * Obtain the hash ring for a given service URI.
@@ -51,6 +51,6 @@ public interface HashRingProvider
    * @throws ServiceUnavailableException - if the service identified by the given URI is not available.
    * @throws IllegalStateException - if this HashRingProvider is not configured with a valid hash ring.
    */
-  Map<Integer, Ring<URI>> getRings(URI serviceUri) throws ServiceUnavailableException;
+  public Map<Integer, Ring<URI>> getRings(URI serviceUri) throws ServiceUnavailableException;
 
 }

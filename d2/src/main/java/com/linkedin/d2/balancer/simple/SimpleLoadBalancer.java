@@ -18,7 +18,6 @@ package com.linkedin.d2.balancer.simple;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.FutureCallback;
-import com.linkedin.common.util.MapUtil;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.LoadBalancer;
@@ -32,7 +31,6 @@ import com.linkedin.d2.balancer.clients.RewriteLoadBalancerClient;
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.PartitionData;
-import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
@@ -41,9 +39,6 @@ import com.linkedin.d2.balancer.util.HostToKeyMapper;
 import com.linkedin.d2.balancer.util.KeysAndHosts;
 import com.linkedin.d2.balancer.util.LoadBalancerUtil;
 import com.linkedin.d2.balancer.util.MapKeyResult;
-import com.linkedin.d2.balancer.util.hashing.HashFunction;
-import com.linkedin.d2.balancer.util.hashing.HashFunctionBuilder;
-import com.linkedin.d2.balancer.util.hashing.HashFunctionProvider;
 import com.linkedin.d2.balancer.util.hashing.HashRingProvider;
 import com.linkedin.d2.balancer.util.hashing.Ring;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessException;
@@ -58,7 +53,6 @@ import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -78,8 +72,7 @@ import static com.linkedin.d2.discovery.util.LogUtil.debug;
 import static com.linkedin.d2.discovery.util.LogUtil.info;
 import static com.linkedin.d2.discovery.util.LogUtil.warn;
 
-public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, ClientFactoryProvider, PartitionInfoProvider,
-                                           WarmUpService, HashFunctionProvider
+public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, ClientFactoryProvider, PartitionInfoProvider, WarmUpService
 {
   private static final Logger     _log =
                                            LoggerFactory.getLogger(SimpleLoadBalancer.class);
@@ -427,22 +420,6 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     }
 
     return clusterItem.getProperty();
-  }
-
-  @Override
-  public HashFunction<Request> getHashFunction(URI uri)
-      throws ServiceUnavailableException
-  {
-    ServiceProperties service = listenToServiceAndCluster(uri);
-    Map<String, Object> lbStrategyProperties = service.getLoadBalancerStrategyProperties();
-
-    @SuppressWarnings("unchecked")
-    Map<String, Object> hashConfig = MapUtil.getWithDefault(lbStrategyProperties, PropertyKeys.HTTP_LB_HASH_CONFIG,
-        Collections.emptyMap(), Map.class);
-    String hashMethod = MapUtil.getWithDefault(lbStrategyProperties, PropertyKeys.HTTP_LB_HASH_METHOD, null,
-        String.class);
-
-    return new HashFunctionBuilder().setHashMethod(hashMethod).setHashConfig(hashConfig).build();
   }
 
   /**

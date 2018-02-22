@@ -26,7 +26,6 @@ import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancer;
 import com.linkedin.d2.balancer.util.HostToKeyMapper;
-import com.linkedin.d2.balancer.util.KeysAndHosts;
 import com.linkedin.d2.balancer.util.hashing.ConsistentHashKeyMapper;
 import com.linkedin.d2.balancer.util.hashing.ConsistentHashRing;
 import com.linkedin.d2.balancer.util.hashing.Ring;
@@ -1000,44 +999,8 @@ public class TestScatterGather extends RestLiIntegrationTest
       rings.add(ring);
     }
 
-    PartitionInfoProvider testPartitionProvider = new PartitionInfoProvider()
-    {
-      @Override
-      public <K> HostToKeyMapper<K> getPartitionInformation(URI serviceUri, Collection<K> keys,
-          int limitHostPerPartition, int hash) throws ServiceUnavailableException
-      {
-        List<K> unmappedKeys = new ArrayList<>();
-        Map<Integer, KeysAndHosts<K>> partitionDataMap = new HashMap<>();
-        for (K key: keys) {
-          Integer keyValue = Integer.parseInt(key.toString());
-          if (keyValue >= n) {
-            unmappedKeys.add(key);
-          }
-          else
-          {
-            try
-            {
-              URI uri = new URI(serviceUri + key.toString());
-              partitionDataMap.put(keyValue, new KeysAndHosts<>(Collections.singleton(key), Collections.singletonList(uri)));
-            }
-            catch (URISyntaxException e)
-            {
-              Assert.fail("failed to parse URI:" + serviceUri + key.toString());
-            }
-          }
-        }
-        return new HostToKeyMapper<>(unmappedKeys, partitionDataMap, 1, partitionNum,
-            Collections.emptyMap());
-      }
-
-      @Override
-      public PartitionAccessor getPartitionAccessor(URI serviceUri) throws ServiceUnavailableException
-      {
-        throw new UnsupportedOperationException();
-      }
-    };
-
-    return new ConsistentHashKeyMapper(new StaticRingProvider(rings), testPartitionProvider);
+    return new ConsistentHashKeyMapper(new StaticRingProvider(rings),
+                                       new TestPartitionInfoProvider());
   }
 
   @DataProvider

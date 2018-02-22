@@ -53,7 +53,6 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
 {
   private final KeyMapper _mapper;
   private final String D2_URI_PREFIX = "d2://";
-  private static final int HOST_LIMIT = 1;
 
   public ScatterGatherBuilder(KeyMapper mapper)
   {
@@ -246,7 +245,7 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
       throw new IllegalArgumentException(e);
     }
 
-    return _mapper.mapKeysV3(serviceUri, ids, HOST_LIMIT, null).toMapKeyResult();
+    return _mapper.mapKeysV2(serviceUri, ids);
   }
 
   /**

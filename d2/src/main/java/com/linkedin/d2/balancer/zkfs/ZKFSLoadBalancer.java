@@ -37,8 +37,6 @@ import com.linkedin.d2.balancer.util.KeyMapperProvider;
 import com.linkedin.d2.balancer.util.MapKeyResult;
 import com.linkedin.d2.balancer.util.TogglingLoadBalancer;
 import com.linkedin.d2.balancer.util.hashing.ConsistentHashKeyMapper;
-import com.linkedin.d2.balancer.util.hashing.HashFunction;
-import com.linkedin.d2.balancer.util.hashing.HashFunctionProvider;
 import com.linkedin.d2.balancer.util.hashing.HashRingProvider;
 import com.linkedin.d2.balancer.util.hashing.Ring;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
@@ -77,7 +75,7 @@ import org.slf4j.LoggerFactory;
 
 public class ZKFSLoadBalancer
         implements LoadBalancerWithFacilities, DirectoryProvider, KeyMapperProvider, HashRingProvider, PartitionInfoProvider,
-                   ClientFactoryProvider, WarmUpService, HashFunctionProvider
+        ClientFactoryProvider, WarmUpService
 {
   private static final Logger LOG = LoggerFactory.getLogger(ZKFSLoadBalancer.class);
 
@@ -410,14 +408,7 @@ public class ZKFSLoadBalancer
   public Map<Integer, Ring<URI>> getRings(URI serviceUri) throws ServiceUnavailableException
   {
     checkLoadBalancer();
-    return _currentLoadBalancer.getRings(serviceUri);
-  }
-
-  @Override
-  public HashFunction<Request> getHashFunction(URI uri) throws ServiceUnavailableException
-  {
-    checkLoadBalancer();
-    return _currentLoadBalancer.getHashFunction(uri);
+    return ((HashRingProvider)_currentLoadBalancer).getRings(serviceUri);
   }
 
   @Override

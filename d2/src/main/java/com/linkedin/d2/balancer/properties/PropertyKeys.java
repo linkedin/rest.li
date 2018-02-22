@@ -164,9 +164,4 @@ public class PropertyKeys
   public static final String PROPERTIES = "properties";
   public static final String STRATEGY = "strategy";
   public static final String OPERATION = "operation";
-
-  // HashMethod definitions
-  public static final String HASH_METHOD_NONE = "none";
-  public static final String HASH_METHOD_URI_REGEX = "uriRegex";
-  public static final String HASH_SEED = "hashSeed";
 }

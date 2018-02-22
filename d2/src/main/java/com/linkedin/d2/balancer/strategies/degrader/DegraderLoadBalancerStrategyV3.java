@@ -17,14 +17,17 @@
 package com.linkedin.d2.balancer.strategies.degrader;
 
 import com.linkedin.common.callback.Callback;
+import com.linkedin.common.util.MapUtil;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.util.RateLimitedLogger;
 import com.linkedin.d2.balancer.util.hashing.HashFunction;
-import com.linkedin.d2.balancer.util.hashing.HashFunctionBuilder;
+import com.linkedin.d2.balancer.util.hashing.RandomHash;
+import com.linkedin.d2.balancer.util.hashing.SeededRandomHash;
 import com.linkedin.d2.balancer.util.hashing.Ring;
+import com.linkedin.d2.balancer.util.hashing.URIRegexHash;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheck;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckClientBuilder;
 import com.linkedin.r2.message.Request;
@@ -60,6 +63,10 @@ import static com.linkedin.d2.discovery.util.LogUtil.warn;
  */
 public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
 {
+  public static final String HASH_METHOD_NONE = "none";
+  public static final String HASH_METHOD_URI_REGEX = "uriRegex";
+  public static final String HASH_SEED = "hashSeed";
+  public static final long DEFAULT_SEED = 123456789L;
   public static final double EPSILON = 10e-6;
 
   private static final Logger _log = LoggerFactory.getLogger(DegraderLoadBalancerStrategyV3.class);
@@ -979,7 +986,20 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     _config = config;
     String hashMethod = _config.getHashMethod();
     Map<String,Object> hashConfig = _config.getHashConfig();
-    _hashFunction = new HashFunctionBuilder().setHashMethod(hashMethod).setHashConfig(hashConfig).build();
+    if (hashMethod == null || hashMethod.equals(HASH_METHOD_NONE))
+    {
+      _hashFunction = hashConfig.containsKey(HASH_SEED)
+          ? new SeededRandomHash(MapUtil.getWithDefault(hashConfig, HASH_SEED, DEFAULT_SEED)) : new RandomHash();
+    }
+    else if (HASH_METHOD_URI_REGEX.equals(hashMethod))
+    {
+      _hashFunction  =  new URIRegexHash(hashConfig);
+    }
+    else
+    {
+      _log.warn("Unknown hash method {}, falling back to random", hashMethod);
+      _hashFunction = new RandomHash();
+    }
   }
 
   @Override

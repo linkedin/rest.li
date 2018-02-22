@@ -26,7 +26,6 @@ import com.linkedin.d2.balancer.PartitionedLoadBalancerTestState;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.properties.PartitionData;
-import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancer;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyConfig;
@@ -140,84 +139,6 @@ public class ConsistentHashKeyMapperTest
   }
 
   @Test(dataProvider = "ringFactories")
-  public void testMapKeysV3NoStickKeyToHosts(RingFactory<URI> ringFactory) throws URISyntaxException, ServiceUnavailableException
-  {
-    int numHost = 2;
-    URI serviceURI = new URI("d2://articles");
-    ConsistentHashKeyMapper mapper = getConsistentHashKeyMapper(ringFactory);
-
-    List<Integer> keys = Arrays.asList(1, 2, 3, 4, 9, 10, 13, 15, 16);
-
-    HostToKeyMapper<Integer> result = mapper.mapKeysV3(serviceURI, keys, numHost, null);
-    Map<Integer, List<URI>> originalOrderingOfHost = getOrderingOfHostsForEachKey(result, numHost);
-
-    // repeat 100 times. The ordering of the hosts should not be the same as stickyKey is not provided
-    int numOfMatch = 0;
-    for (int i = 0; i < 100; i++)
-    {
-      result = mapper.mapKeysV3(serviceURI, keys, numHost, null);
-      Map<Integer, List<URI>> newOrderingOfHost = getOrderingOfHostsForEachKey(result, 2);
-      if (newOrderingOfHost.equals(originalOrderingOfHost))
-      {
-        numOfMatch++;
-      }
-    }
-    Assert.assertNotEquals(100, numOfMatch);
-  }
-
-  @Test(dataProvider = "ringFactories")
-  public void testMapKeysV3RegexHashMethodNoKey(RingFactory<URI> ringFactory) throws URISyntaxException, ServiceUnavailableException
-  {
-    int numHost = 2;
-    URI serviceURI = new URI("d2://articles");
-    ConsistentHashKeyMapper mapper = getConsistentHashKeyMapper(ringFactory, PropertyKeys.HASH_METHOD_URI_REGEX);
-
-    List<Integer> keys = Arrays.asList(1, 2, 3, 4, 9, 10, 13, 15, 16);
-
-    HostToKeyMapper<Integer> result = mapper.mapKeysV3(serviceURI, keys, numHost, null);
-    Map<Integer, List<URI>> originalOrderingOfHost = getOrderingOfHostsForEachKey(result, numHost);
-
-    // repeat 100 times. Even though the hash uriRegex hash method used, URI does not contain the key so no matches
-    int numOfMatch = 0;
-    for (int i = 0; i < 100; i++)
-    {
-      result = mapper.mapKeysV3(serviceURI, keys, numHost, null);
-      Map<Integer, List<URI>> newOrderingOfHost = getOrderingOfHostsForEachKey(result, 2);
-      if (newOrderingOfHost.equals(originalOrderingOfHost))
-      {
-        numOfMatch++;
-      }
-    }
-    Assert.assertNotEquals(100, numOfMatch);
-  }
-
-  @Test(dataProvider = "ringFactories")
-  public void testMapKeysV3StickKeyURI(RingFactory<URI> ringFactory) throws URISyntaxException, ServiceUnavailableException
-  {
-    int numHost = 2;
-    URI serviceURI = new URI("d2://articles/12345");
-    ConsistentHashKeyMapper mapper = getConsistentHashKeyMapper(ringFactory, PropertyKeys.HASH_METHOD_URI_REGEX);
-
-    List<Integer> keys = Arrays.asList(1, 2, 3, 4, 9, 10, 13, 15, 16);
-
-    HostToKeyMapper<Integer> result = mapper.mapKeysV3(serviceURI, keys, numHost, null);
-    Map<Integer, List<URI>> originalOrderingOfHost = getOrderingOfHostsForEachKey(result, numHost);
-
-    // repeat 100 times. The ordering of the hosts should always be the same because they have the same key in the URI
-    int numOfMatch = 0;
-    for (int i = 0; i < 100; i++)
-    {
-      result = mapper.mapKeysV3(serviceURI, keys, numHost, null);
-      Map<Integer, List<URI>> newOrderingOfHost = getOrderingOfHostsForEachKey(result, 2);
-      if (newOrderingOfHost.equals(originalOrderingOfHost))
-      {
-        numOfMatch++;
-      }
-    }
-    Assert.assertEquals(100, numOfMatch);
-  }
-
-  @Test(dataProvider = "ringFactories")
   public void testAllPartitionMultipleHosts(RingFactory<URI> ringFactory)
       throws URISyntaxException, ServiceUnavailableException
   {
@@ -254,12 +175,8 @@ public class ConsistentHashKeyMapperTest
     Assert.assertEquals(100, numOfMatch);
   }
 
-  private ConsistentHashKeyMapper getConsistentHashKeyMapper(RingFactory<URI> ringFactory) throws URISyntaxException
-  {
-    return getConsistentHashKeyMapper(ringFactory, null);
-  }
 
-  private ConsistentHashKeyMapper getConsistentHashKeyMapper(RingFactory<URI> ringFactory, String hashMethod) throws URISyntaxException
+  private ConsistentHashKeyMapper getConsistentHashKeyMapper(RingFactory<URI> ringFactory) throws URISyntaxException
   {
     String serviceName = "articles";
     String clusterName = "cluster";
@@ -309,11 +226,13 @@ public class ConsistentHashKeyMapperTest
     //setup the partition accessor which is used to get partitionId -> keys
     PartitionAccessor accessor = new TestPartitionAccessor();
 
+    URI serviceURI = new URI("d2://" + serviceName);
     SimpleLoadBalancer balancer = new SimpleLoadBalancer(new PartitionedLoadBalancerTestState(
             clusterName, serviceName, path, strategyName, partitionDescriptions, orderedStrategies,
-            accessor, createLBStrategyProperties(hashMethod)));
+            accessor
+    ));
 
-    ConsistentHashKeyMapper mapper = new ConsistentHashKeyMapper(balancer, balancer, balancer);
+    ConsistentHashKeyMapper mapper = new ConsistentHashKeyMapper(balancer, balancer);
 
     return mapper;
   }
@@ -350,7 +269,7 @@ public class ConsistentHashKeyMapperTest
             clusterName, serviceName, path, strategyName, partitionDescriptions, orderedStrategies,
             accessor
     ));
-    ConsistentHashKeyMapper mapper = new ConsistentHashKeyMapper(balancer, balancer, balancer);
+    ConsistentHashKeyMapper mapper = new ConsistentHashKeyMapper(balancer, balancer);
 
     CountDownLatch latch = new CountDownLatch(numPartitions);
     List<Runnable> runnables = createRunnables(numPartitions, mapper, serviceName, latch);
@@ -364,26 +283,6 @@ public class ConsistentHashKeyMapperTest
     for (Future future : futures) {
       future.get(30, TimeUnit.SECONDS);
     }
-  }
-
-  private Map<String, Object> createLBStrategyProperties(final String method)
-  {
-    Map<String, Object> hashConfig = new HashMap<>();
-    Map<String, Object> lbStrategyProperties = new HashMap<>();
-
-    if (PropertyKeys.HASH_METHOD_URI_REGEX.equals(method))
-    {
-      hashConfig.put("regexes", Collections.singletonList("(\\d{5,8})"));
-      lbStrategyProperties.put(PropertyKeys.HTTP_LB_HASH_CONFIG, hashConfig);
-      lbStrategyProperties.put(PropertyKeys.HTTP_LB_HASH_METHOD, PropertyKeys.HASH_METHOD_URI_REGEX);
-    }
-    else if (PropertyKeys.HASH_METHOD_NONE.equals(method))
-    {
-      hashConfig.put(PropertyKeys.HASH_SEED, "12345");
-      lbStrategyProperties.put(PropertyKeys.HTTP_LB_HASH_CONFIG, hashConfig);
-      lbStrategyProperties.put(PropertyKeys.HTTP_LB_HASH_METHOD, PropertyKeys.HASH_METHOD_NONE);
-    }
-    return lbStrategyProperties;
   }
 
   /**
@@ -822,7 +721,6 @@ public class ConsistentHashKeyMapperTest
         return _ringFactory.createRing(Collections.emptyMap());
       }
     }
-
   }
 
   public static class TestPartitionAccessor implements PartitionAccessor
@@ -832,13 +730,7 @@ public class ConsistentHashKeyMapperTest
     public int getPartitionId(URI uri)
         throws PartitionAccessException
     {
-      String partitionKey = uri.getPath();
-      if (partitionKey.startsWith("/"))
-      {
-        partitionKey = partitionKey.substring(1);
-      }
-
-      return getPartitionId(partitionKey);
+      throw new UnsupportedOperationException();
     }
 
     @Override

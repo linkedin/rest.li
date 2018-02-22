@@ -30,7 +30,7 @@ public interface BasePartitionAccessor
    *
    * @param uri input URI
    * @return partitionID
-   * @throws PartitionAccessException see {@link PartitionAccessException}
+   * @throws PartitionAccessException see {@Link PartitionAccessException}
    */
   int getPartitionId(URI uri) throws PartitionAccessException;
 }

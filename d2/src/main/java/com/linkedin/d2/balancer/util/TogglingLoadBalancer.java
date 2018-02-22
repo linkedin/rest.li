@@ -28,11 +28,8 @@ import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.WarmUpService;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancer;
-import com.linkedin.d2.balancer.util.hashing.HashFunction;
-import com.linkedin.d2.balancer.util.hashing.HashFunctionProvider;
 import com.linkedin.d2.balancer.util.hashing.HashRingProvider;
 import com.linkedin.d2.balancer.util.hashing.Ring;
-import com.linkedin.d2.balancer.util.partitions.PartitionAccessException;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
 import com.linkedin.d2.balancer.util.partitions.PartitionInfoProvider;
 import com.linkedin.d2.discovery.event.PropertyEventThread;
@@ -53,8 +50,7 @@ import java.util.Map;
  * @version $Revision: $
  */
 
-public class TogglingLoadBalancer implements LoadBalancer, HashRingProvider, ClientFactoryProvider, PartitionInfoProvider,
-                                             WarmUpService, HashFunctionProvider
+public class TogglingLoadBalancer implements LoadBalancer, HashRingProvider, ClientFactoryProvider, PartitionInfoProvider, WarmUpService
 {
   private final LoadBalancer _balancer;
   private final WarmUpService _warmUpService;
@@ -62,7 +58,6 @@ public class TogglingLoadBalancer implements LoadBalancer, HashRingProvider, Cli
   private final PartitionInfoProvider _partitionInfoProvider;
   private final ClientFactoryProvider _clientFactoryProvider;
   private final TogglingPublisher<?>[] _toggles;
-  private final HashFunctionProvider _hashFunctionProvider;
 
   public TogglingLoadBalancer(SimpleLoadBalancer balancer, TogglingPublisher<?>... toggles)
   {
@@ -72,7 +67,6 @@ public class TogglingLoadBalancer implements LoadBalancer, HashRingProvider, Cli
     _partitionInfoProvider = balancer;
     _clientFactoryProvider = balancer;
     _toggles = toggles;
-    _hashFunctionProvider = balancer;
   }
 
   public TogglingLoadBalancer(LoadBalancer balancer, TogglingPublisher<?>... toggles)
@@ -135,13 +129,6 @@ public class TogglingLoadBalancer implements LoadBalancer, HashRingProvider, Cli
   {
     checkLoadBalancer();
     return _hashRingProvider.getRings(serviceUri);
-  }
-
-  @Override
-  public HashFunction<Request> getHashFunction(URI uri) throws ServiceUnavailableException
-  {
-    checkLoadBalancer();
-    return _hashFunctionProvider.getHashFunction(uri);
   }
 
   @Override

@@ -25,10 +25,8 @@ import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.util.HostToKeyMapper;
 import com.linkedin.d2.balancer.util.MapKeyResult;
-import com.linkedin.d2.balancer.util.URIRequest;
 import com.linkedin.d2.balancer.util.partitions.PartitionInfoProvider;
 
-import com.linkedin.r2.message.Request;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -53,15 +51,8 @@ public class ConsistentHashKeyMapper implements KeyMapper
   private final PartitionInfoProvider _partitionInfoProvider;
   private final Random _random;
   private final Logger _log = LoggerFactory.getLogger(ConsistentHashKeyMapper.class);
-  private final HashFunctionProvider _hashFunctionProvider;
 
   public ConsistentHashKeyMapper(HashRingProvider ringProvider, PartitionInfoProvider partitionInfoProvider)
-  {
-    this(ringProvider, partitionInfoProvider, new DefaultHashFunctionProvider());
-  }
-
-  public ConsistentHashKeyMapper(HashRingProvider ringProvider, PartitionInfoProvider partitionInfoProvider,
-      HashFunctionProvider hashFunctionProvider)
   {
     _hashFunction = new MD5Hash();
     if (ringProvider == null)
@@ -72,7 +63,6 @@ public class ConsistentHashKeyMapper implements KeyMapper
     {
       throw new UnsupportedOperationException("partitionInfoProvider must not be null");
     }
-    _hashFunctionProvider = hashFunctionProvider;
     _ringProvider = ringProvider;
     _partitionInfoProvider = partitionInfoProvider;
     _random = new Random();
@@ -114,7 +104,7 @@ public class ConsistentHashKeyMapper implements KeyMapper
   public <K, S> HostToKeyMapper<K> getHostToKeyMapper(URI serviceUri, Collection<K> keys, int limitHostPerPartition, final S stickyKey)
           throws ServiceUnavailableException
   {
-    final int hash = stickyKey == null ? getHashCode(serviceUri) : stickyKey.hashCode();
+    final int hash = (stickyKey == null ? _random.nextInt() : stickyKey.hashCode());
     return _partitionInfoProvider.getPartitionInformation(serviceUri, keys, limitHostPerPartition, hash);
   }
 
@@ -187,16 +177,4 @@ public class ConsistentHashKeyMapper implements KeyMapper
     }
     return new MapKeyResult<URI, K>(result, unmappedKeys);
   }
-
-  private int getHashCode(URI uri) throws ServiceUnavailableException
-  {
-    if (_hashFunctionProvider == null)
-    {
-      throw new IllegalArgumentException("hashFunctionProvider must not be null");
-    }
-    HashFunction<Request> hashFunction = _hashFunctionProvider.getHashFunction(uri);
-    URIRequest uriRequest = new URIRequest(uri);
-    return hashFunction.hash(uriRequest);
-  }
 }
-

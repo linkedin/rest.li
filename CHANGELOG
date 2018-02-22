@@ -11,8 +11,7 @@ Removed logging for replaced error in RestLiFilterChainIterator
 ------
 (RB=1226019)
 Add LogThreshold property to degrader
-(RB=1171966)
-Enhance keyMapV3 to honor affinity routing configuration in d2.src
+
 
 19.0.0
 ------
