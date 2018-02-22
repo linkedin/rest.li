@@ -84,6 +84,7 @@ public class TestFilterRequestContextInternalImpl
     final ProjectionMode projectionMode = ProjectionMode.AUTOMATIC;
     final MaskTree maskTree = new MaskTree();
     final MaskTree metadataMaskTree = new MaskTree();
+    final MaskTree pagingMaskTree = new MaskTree();
     final MutablePathKeys pathKeys = new PathKeysImpl();
     final Map<String, String> requestHeaders = new HashMap<String, String>();
     requestHeaders.put("Key1", "Value1");
@@ -111,6 +112,7 @@ public class TestFilterRequestContextInternalImpl
     when(context.getProjectionMode()).thenReturn(projectionMode);
     when(context.getProjectionMask()).thenReturn(maskTree);
     when(context.getMetadataProjectionMask()).thenReturn(metadataMaskTree);
+    when(context.getPagingProjectionMask()).thenReturn(pagingMaskTree);
     when(context.getPathKeys()).thenReturn(pathKeys);
     when(context.getRequestHeaders()).thenReturn(requestHeaders);
     when(context.getRequestURI()).thenReturn(requestUri);
@@ -120,6 +122,10 @@ public class TestFilterRequestContextInternalImpl
 
     FilterRequestContext filterContext = new FilterRequestContextInternalImpl(context, resourceMethod, null);
 
+    filterContext.setProjectionMask(maskTree);
+    filterContext.setMetadataProjectionMask(metadataMaskTree);
+    filterContext.setPagingProjectionMask(pagingMaskTree);
+
     assertEquals(filterContext.getFilterResourceModel().getResourceName(), resourceName);
     assertEquals(filterContext.getFilterResourceModel().getResourceNamespace(), resourceNamespace);
     assertEquals(filterContext.getMethodType(), methodType);
@@ -127,6 +133,7 @@ public class TestFilterRequestContextInternalImpl
     assertEquals(filterContext.getProjectionMode(), projectionMode);
     assertEquals(filterContext.getProjectionMask(), maskTree);
     assertEquals(filterContext.getMetadataProjectionMask(), metadataMaskTree);
+    assertEquals(filterContext.getPagingProjectionMask(), pagingMaskTree);
     assertEquals(filterContext.getPathKeys(), pathKeys);
     assertEquals(filterContext.getRequestHeaders(), requestHeaders);
     assertEquals(filterContext.getRequestURI(), requestUri);
@@ -148,8 +155,12 @@ public class TestFilterRequestContextInternalImpl
     verify(resourceMethod).getActionName();
     verify(resourceMethod).getMethod();
     verify(context).getProjectionMode();
+    verify(context).setProjectionMask(maskTree);
     verify(context).getProjectionMask();
+    verify(context).setMetadataProjectionMask(metadataMaskTree);
     verify(context).getMetadataProjectionMask();
+    verify(context).setPagingProjectionMask(pagingMaskTree);
+    verify(context).getPagingProjectionMask();
     verify(context).getPathKeys();
     verify(context, times(2)).getRequestHeaders();
     verify(context).getRequestURI();

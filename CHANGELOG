@@ -1,6 +1,11 @@
-19.0.3
+19.0.4
 ------
 
+
+19.0.3
+------
+(RB=1229115)
+Exposing setter methods in FilterRequestContext to set the projection mask for CollectionResponse's METADATA and PAGING fields.
 
 19.0.2
 ------

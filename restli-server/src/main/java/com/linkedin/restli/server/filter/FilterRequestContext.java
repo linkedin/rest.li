@@ -75,12 +75,35 @@ public interface FilterRequestContext extends CustomRequestContext
   MaskTree getMetadataProjectionMask();
 
   /**
+   * Get the projection mask parsed from the query for paging (CollectionMetadata)
+   *
+   * @return MaskTree parsed from query, or null if no paging projection mask was requested.
+   */
+  MaskTree getPagingProjectionMask();
+
+  /**
    * Sets the specified projection mask for root entity in the response. Setting the projection mask to {@code null}
    * implies all fields should be projected.
    *
    * @param projectionMask Projection mask to use for root entity
    */
   void setProjectionMask(MaskTree projectionMask);
+
+  /**
+   * Sets the specified projection mask for CollectionResult metadata in the response. Setting the projection mask to
+   * {@code null} implies all fields should be projected.
+   *
+   * @param metadataProjectionMask Projection mask to use for CollectionResult metadata
+   */
+  void setMetadataProjectionMask(MaskTree metadataProjectionMask);
+
+  /**
+   * Sets the specified projection mask for paging metadata in the response (applies only for collection responses).
+   * Setting the projection mask to {@code null} implies all fields should be projected.
+   *
+   * @param pagingProjectionMask Projection mask to use for paging metadata
+   */
+  void setPagingProjectionMask(MaskTree pagingProjectionMask);
 
   /**
    * Get all query parameters from the request.

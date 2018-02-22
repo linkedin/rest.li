@@ -102,9 +102,27 @@ public class FilterRequestContextInternalImpl implements FilterRequestContextInt
   }
 
   @Override
+  public MaskTree getPagingProjectionMask()
+  {
+    return _context.getPagingProjectionMask();
+  }
+
+  @Override
   public void setProjectionMask(MaskTree projectionMask)
   {
     _context.setProjectionMask(projectionMask);
+  }
+
+  @Override
+  public void setMetadataProjectionMask(MaskTree metadataProjectionMask)
+  {
+    _context.setMetadataProjectionMask(metadataProjectionMask);
+  }
+
+  @Override
+  public void setPagingProjectionMask(MaskTree pagingProjectionMask)
+  {
+    _context.setPagingProjectionMask(pagingProjectionMask);
   }
 
   @Override
