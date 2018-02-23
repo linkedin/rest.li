@@ -1884,6 +1884,37 @@ public class TestSchemaTranslator
   }
 
   @DataProvider
+  public Object[][] schemaWithNamespaceOverride()
+  {
+    return new Object[][]
+        {
+            {
+                // no namespace
+                "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ]}",
+                "{ \"type\" : \"record\", \"name\" : \"foo\", \"namespace\" : \"avro\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ] }"
+            },
+            {
+                // namespace inside name
+                "{ \"type\" : \"record\", \"name\" : \"x.y.foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ]}",
+                "{ \"type\" : \"record\", \"name\" : \"foo\", \"namespace\" : \"avro.x.y\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ] }"
+            },
+            {
+                // exist namespace
+                "{ \"type\" : \"record\", \"name\" : \"foo\", \"namespace\" : \"x.y\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ]}",
+                "{ \"type\" : \"record\", \"name\" : \"foo\", \"namespace\" : \"avro.x.y\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ] }"
+            }
+        };
+  }
+
+  @Test(dataProvider = "schemaWithNamespaceOverride")
+  public void testSchemaWithNamespaceOverride(String schemaText, String expected) throws IOException
+  {
+    DataToAvroSchemaTranslationOptions options = new DataToAvroSchemaTranslationOptions(JsonBuilder.Pretty.SPACES).setOverrideNamespace(true);
+    String avroSchemaJson = SchemaTranslator.dataToAvroSchemaJson(TestUtil.dataSchemaFromString(schemaText), options);
+    assertEquals(avroSchemaJson, expected);
+  }
+
+  @DataProvider
   public Object[][] fromAvroSchemaData()
   {
     return new Object[][]

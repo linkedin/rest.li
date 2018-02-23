@@ -225,7 +225,7 @@ public class SchemaToJsonEncoder extends AbstractSchemaEncoder
 
     _builder.writeStartObject();
     _builder.writeStringField(TYPE_KEY, schema.getType().toString().toLowerCase(), true);
-    encodeName(NAME_KEY, schema);
+    encodeName(schema);
     final String packageName = schema.getPackage();
     if (packageName != null && !_currentPackage.equals(packageName))
     {
@@ -489,23 +489,34 @@ public class SchemaToJsonEncoder extends AbstractSchemaEncoder
    * It also adds the fully qualified name to the set of names already dumped
    * and updates the current namespace.
    *
-   * @param nameKey provides the key used for the name.
    * @param schema provides the {@link NamedDataSchema}.
    * @throws IOException if there is an error while encoding.
    */
-  protected void encodeName(String nameKey, Named schema) throws IOException
+  protected void encodeName(Named schema) throws IOException
   {
     String fullName = schema.getFullName();
     if (fullName.isEmpty() == false)
     {
-      String namespace = schema.getNamespace();
-      _builder.writeStringField(nameKey, schema.getName(), true);
+      String namespace = encodeNamespace(schema);
+      _builder.writeStringField(NAME_KEY, schema.getName(), true);
       if (_currentNamespace.equals(namespace) == false)
       {
         _builder.writeStringField(NAMESPACE_KEY, namespace, true);
       }
       _currentNamespace = namespace;
     }
+  }
+
+  /**
+   * Encode namespace in the {@link Named}.
+   *
+   * This method encodes the namespace fields.
+   *
+   * @param schema provides the {@link NamedDataSchema}.
+   */
+  protected String encodeNamespace(Named schema)
+  {
+    return schema.getNamespace();
   }
 
   /**

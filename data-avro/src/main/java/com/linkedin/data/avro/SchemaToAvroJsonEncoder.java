@@ -23,6 +23,8 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaConstants;
 import com.linkedin.data.schema.JsonBuilder;
+import com.linkedin.data.schema.Named;
+import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.SchemaToJsonEncoder;
 import com.linkedin.data.schema.UnionDataSchema;
@@ -37,9 +39,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static com.linkedin.data.avro.SchemaTranslator.AVRO_PREFIX;
 import static com.linkedin.data.schema.DataSchemaConstants.DEFAULT_KEY;
 import static com.linkedin.data.schema.DataSchemaConstants.TYPE_KEY;
-
 
 /**
  * Serializes and outputs {@link DataSchema}s in
@@ -385,6 +387,32 @@ class SchemaToAvroJsonEncoder extends SchemaToJsonEncoder
     _builder.writeProperties(Maps.filterKeys(field.getProperties(), property -> !RESERVED_DATA_PROPERTIES.contains(property)));
   }
 
+  /**
+   * Encode namespace in the {@link Named}.
+   *
+   * This method encodes the namespace fields.
+   * If the override namespace option is true, the namespace will be prefixed with AVRO_PREFIX.
+   *
+   * @param schema provides the {@link NamedDataSchema}.
+   */
+  @Override
+  protected String encodeNamespace(Named schema)
+  {
+    String namespace = schema.getNamespace();
+    if (_options.isOverrideNamespace())
+    {
+      if (!namespace.isEmpty())
+      {
+        namespace = AVRO_PREFIX + "." + namespace;
+      }
+      else {
+        namespace = AVRO_PREFIX;
+      }
+    }
+    return namespace;
+  }
+
+  @Override
   protected void encodeField(RecordDataSchema.Field field) throws IOException
   {
     super.encodeField(field);

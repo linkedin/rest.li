@@ -45,6 +45,8 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static com.linkedin.data.avro.SchemaTranslator.AVRO_PREFIX;
+
 
 /**
  * Generate Avro avsc files from {@link RecordDataSchema}s.
@@ -62,6 +64,7 @@ import org.slf4j.LoggerFactory;
 public class AvroSchemaGenerator extends AbstractGenerator
 {
   public static final String GENERATOR_AVRO_TRANSLATE_OPTIONAL_DEFAULT = "generator.avro.optional.default";
+  public static final String GENERATOR_AVRO_NAMESPACE_OVERRIDE = "generator.avro.namespace.override";
 
   private static final Logger _log = LoggerFactory.getLogger(AvroSchemaGenerator.class);
 
@@ -109,6 +112,7 @@ public class AvroSchemaGenerator extends AbstractGenerator
 
     run(System.getProperty(GENERATOR_RESOLVER_PATH),
         System.getProperty(GENERATOR_AVRO_TRANSLATE_OPTIONAL_DEFAULT),
+        Boolean.parseBoolean(System.getProperty(GENERATOR_AVRO_NAMESPACE_OVERRIDE)),
         args[0],
         Arrays.copyOfRange(args, 1, args.length));
   }
@@ -119,7 +123,7 @@ public class AvroSchemaGenerator extends AbstractGenerator
     _config = config;
   }
 
-  public static void run(String resolverPath, String optionalDefault, String targetDirectoryPath, String[] sources) throws IOException
+  public static void run(String resolverPath, String optionalDefault, boolean overrideNamespace, String targetDirectoryPath, String[] sources) throws IOException
   {
     final AvroSchemaGenerator generator = new AvroSchemaGenerator(new Config(resolverPath));
 
@@ -128,7 +132,11 @@ public class AvroSchemaGenerator extends AbstractGenerator
       final OptionalDefaultMode optionalDefaultMode = OptionalDefaultMode.valueOf(optionalDefault.toUpperCase());
       generator.getDataToAvroSchemaTranslationOptions().setOptionalDefaultMode(optionalDefaultMode);
     }
-
+    generator.getDataToAvroSchemaTranslationOptions().setOverrideNamespace(overrideNamespace);
+    if (overrideNamespace)
+    {
+      targetDirectoryPath += "/" + AVRO_PREFIX;
+    }
     generator.generate(targetDirectoryPath, sources);
   }
 

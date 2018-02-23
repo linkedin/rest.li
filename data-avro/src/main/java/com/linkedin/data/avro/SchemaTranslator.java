@@ -51,6 +51,7 @@ public class SchemaTranslator
   public static final String SCHEMA_PROPERTY = "schema";
   public static final String OPTIONAL_DEFAULT_MODE_PROPERTY = "optionalDefaultMode";
   public static final String AVRO_FILE_EXTENSION = ".avsc";
+  public static final String AVRO_PREFIX = "avro";
 
   public static final String CONTAINER_RECORD_DISCRIMINATOR_ENUM_SUFFIX = "Discriminator";
   public static final String TRANSLATED_UNION_MEMBER_PROPERTY = "translatedUnionMember";

@@ -1,5 +1,7 @@
 19.0.4
 ------
+(RB=1220188)
+PDSC to AVSC translator supports namespace override based on cmd option.
 (RB=1230599)
 Replace dependency on antlr with antlr-runtime.
 (RB=1230938)
