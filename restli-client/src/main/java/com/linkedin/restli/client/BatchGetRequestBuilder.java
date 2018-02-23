@@ -34,6 +34,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -212,7 +213,7 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
 
     Map<String, Object> queryParams = new HashMap<String, Object>(request.getQueryParamsObjects());
     queryParams.put(RestConstants.QUERY_BATCH_IDS_PARAM,
-                    new ArrayList<Object>(Arrays.asList(id)));
+                    new HashSet<>(Arrays.asList(id)));
 
     return new BatchGetKVRequest<K, RT>(getReadOnlyHeaders(request.getHeaders()),
                                         getReadOnlyCookies(request.getCookies()),
@@ -265,7 +266,7 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
 
     Map<String, Object> queryParams = new HashMap<String, Object>(request.getQueryParamsObjects());
     queryParams.put(RestConstants.QUERY_BATCH_IDS_PARAM,
-                    new ArrayList<Object>(Arrays.asList(id)));
+                    new HashSet<>(Arrays.asList(id)));
 
     return new BatchGetRequest<RT>(getReadOnlyHeaders(request.getHeaders()),
                                    getReadOnlyCookies(request.getCookies()),

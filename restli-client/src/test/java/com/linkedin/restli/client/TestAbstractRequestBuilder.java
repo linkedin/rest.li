@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Collections;
 
+import java.util.Set;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -368,23 +369,23 @@ public class TestAbstractRequestBuilder
     final AbstractRequestBuilder<?, ?, ?> builder = new DummyAbstractRequestBuilder();
 
     builder.addFields(new PathSpec("firstField"), new PathSpec("secondField", PathSpec.WILDCARD, "thirdField"));
-    Assert.assertTrue(builder.getParam(RestConstants.FIELDS_PARAM) instanceof PathSpec[]);
-    final PathSpec[] fieldsPathSpecs = (PathSpec[])builder.getParam(RestConstants.FIELDS_PARAM);
-    Assert.assertEquals(fieldsPathSpecs[0].toString(), "/firstField", "The path spec(s) should match!");
-    Assert.assertEquals(fieldsPathSpecs[1].toString(), "/secondField/*/thirdField", "The path spec(s) should match!");
+    Assert.assertTrue(builder.getParam(RestConstants.FIELDS_PARAM) instanceof Set<?>);
+    final Set<?> fieldsPathSpecs = (Set<?>) builder.getParam(RestConstants.FIELDS_PARAM);
+    Assert.assertTrue(fieldsPathSpecs.contains("/firstField"), "The path spec(s) should match!");
+    Assert.assertTrue(fieldsPathSpecs.contains("/secondField/*/thirdField"), "The path spec(s) should match!");
 
     builder.addMetadataFields(new PathSpec(PathSpec.WILDCARD, "fourthField"), new PathSpec("fifthField"));
-    Assert.assertTrue(builder.getParam(RestConstants.METADATA_FIELDS_PARAM) instanceof PathSpec[]);
-    final PathSpec[] metadataFieldsPathSpecs = (PathSpec[])builder.getParam(RestConstants.METADATA_FIELDS_PARAM);
-    Assert.assertEquals(metadataFieldsPathSpecs[0].toString(), "/*/fourthField", "The path spec(s) should match!");
-    Assert.assertEquals(metadataFieldsPathSpecs[1].toString(), "/fifthField", "The path spec(s) should match!");
+    Assert.assertTrue(builder.getParam(RestConstants.METADATA_FIELDS_PARAM) instanceof Set<?>);
+    final Set<?> metadataFieldsPathSpecs = (Set<?>) builder.getParam(RestConstants.METADATA_FIELDS_PARAM);
+    Assert.assertTrue(metadataFieldsPathSpecs.contains("/*/fourthField"), "The path spec(s) should match!");
+    Assert.assertTrue(metadataFieldsPathSpecs.contains("/fifthField"), "The path spec(s) should match!");
 
     builder.addPagingFields(new PathSpec("sixthField", PathSpec.WILDCARD), new PathSpec("seventhField"),
         new PathSpec(PathSpec.WILDCARD));
-    Assert.assertTrue(builder.getParam(RestConstants.PAGING_FIELDS_PARAM) instanceof PathSpec[]);
-    final PathSpec[] pagingFieldsPathSpecs = (PathSpec[])builder.getParam(RestConstants.PAGING_FIELDS_PARAM);
-    Assert.assertEquals(pagingFieldsPathSpecs[0].toString(), "/sixthField/*", "The path spec(s) should match!");
-    Assert.assertEquals(pagingFieldsPathSpecs[1].toString(), "/seventhField", "The path spec(s) should match!");
+    Assert.assertTrue(builder.getParam(RestConstants.PAGING_FIELDS_PARAM) instanceof Set);
+    final Set<?> pagingFieldsPathSpecs = (Set<?>) builder.getParam(RestConstants.PAGING_FIELDS_PARAM);
+    Assert.assertTrue(pagingFieldsPathSpecs.contains("/sixthField/*"), "The path spec(s) should match!");
+    Assert.assertTrue(pagingFieldsPathSpecs.contains("/seventhField"), "The path spec(s) should match!");
 
     Assert.assertEquals(builder.buildReadOnlyQueryParameters().size(), 3,
                         "We should have 3 query parameters, one for each projection type");
@@ -552,9 +553,9 @@ public class TestAbstractRequestBuilder
     builder.addPagingFields(originalFields);
 
     Map<String, Object> parameters = builder.buildReadOnlyQueryParameters();
-    List<Object> fields = (List<Object>) parameters.get(RestConstants.FIELDS_PARAM);
-    List<Object> metadataFields = (List<Object>) parameters.get(RestConstants.METADATA_FIELDS_PARAM);
-    List<Object> pagingFields = (List<Object>) parameters.get(RestConstants.PAGING_FIELDS_PARAM);
+    Set<Object> fields = (Set<Object>) parameters.get(RestConstants.FIELDS_PARAM);
+    Set<Object> metadataFields = (Set<Object>) parameters.get(RestConstants.METADATA_FIELDS_PARAM);
+    Set<Object> pagingFields = (Set<Object>) parameters.get(RestConstants.PAGING_FIELDS_PARAM);
 
     PathSpec field2 = new PathSpec("def");
     originalFields[0] = field2;

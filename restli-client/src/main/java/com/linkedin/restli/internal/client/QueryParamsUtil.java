@@ -33,9 +33,11 @@ import com.linkedin.restli.internal.common.URIParamUtils;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -66,7 +68,7 @@ public class QueryParamsUtil
       if (RestConstants.PROJECTION_PARAMETERS.contains(key))
       {
         @SuppressWarnings("unchecked")
-        List<PathSpec> pathSpecs = (List<PathSpec>)value;
+        Set<PathSpec> pathSpecs = (Set<PathSpec>)value;
         result.put(key, MaskCreator.createPositiveMask(pathSpecs).getDataMap());
       }
       else
@@ -111,9 +113,9 @@ public class QueryParamsUtil
     {
       return param;
     }
-    else if (param instanceof List)
+    else if (param instanceof List || param instanceof Set)
     {
-      return coerceList((List) param, paramClass, version);
+      return coerceCollection((Collection<?>) param, paramClass, version);
     }
     else
     {
@@ -122,10 +124,10 @@ public class QueryParamsUtil
   }
 
   /**
-   * given a list of objects returns the objects either in a DataList, or, if
+   * given a collection of objects returns the objects either in a DataList, or, if
    * they are PathSpecs (projections), encode them and return a String.
    */
-  private static Object coerceList(List<?> values, Class<?> elementClass, ProtocolVersion version)
+  private static Object coerceCollection(Collection<?> values, Class<?> elementClass, ProtocolVersion version)
   {
     assert values != null;
     DataList dataList = new DataList();

@@ -39,7 +39,7 @@ public abstract class BatchKVRequestBuilder<K, V extends RecordTemplate, R exten
   {
     if (!hasParam(RestConstants.QUERY_BATCH_IDS_PARAM))
     {
-      addKeys(Collections.<K>emptyList());
+      addKeys(Collections.<K>emptySet());
     }
   }
 }

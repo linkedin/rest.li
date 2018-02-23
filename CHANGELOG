@@ -1,3 +1,11 @@
+20.0.1
+------
+
+20.0.0
+------
+(RB=1224742)
+Request object should store the projection fields <PathSpec> in Set
+
 19.0.4
 ------
 (RB=1220188)

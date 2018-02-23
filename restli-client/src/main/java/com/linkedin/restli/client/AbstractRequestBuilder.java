@@ -35,6 +35,7 @@ import com.linkedin.util.ArgumentUtil;
 import java.lang.reflect.Array;
 import java.net.HttpCookie;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -347,7 +348,7 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> extends
       throw new IllegalStateException("Entity projection fields already set on this request: "
                                           + _queryParams.get(RestConstants.FIELDS_PARAM));
     }
-    setParam(RestConstants.FIELDS_PARAM, fieldPaths);
+    setParam(RestConstants.FIELDS_PARAM, new HashSet<>(Arrays.asList(fieldPaths)));
   }
 
   protected void addMetadataFields(PathSpec... fieldPaths)
@@ -357,7 +358,7 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> extends
       throw new IllegalStateException("Metadata projection fields already set on this request: "
           + _queryParams.get(RestConstants.METADATA_FIELDS_PARAM));
     }
-    setParam(RestConstants.METADATA_FIELDS_PARAM, fieldPaths);
+    setParam(RestConstants.METADATA_FIELDS_PARAM, new HashSet<>(Arrays.asList(fieldPaths)));
   }
 
   protected void addPagingFields(PathSpec... fieldPaths)
@@ -367,7 +368,7 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> extends
       throw new IllegalStateException("Paging projection fields already set on this request: "
           + _queryParams.get(RestConstants.PAGING_FIELDS_PARAM));
     }
-    setParam(RestConstants.PAGING_FIELDS_PARAM, fieldPaths);
+    setParam(RestConstants.PAGING_FIELDS_PARAM, new HashSet<>(Arrays.asList(fieldPaths)));
   }
 
   /**
@@ -538,6 +539,15 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> extends
     else if (value instanceof DataTemplate)
     {
       return getReadOnlyOrCopyDataTemplateObject((DataTemplate) value);
+    }
+    else if (value instanceof Set)
+    {
+      Set<Object> set = new HashSet<>();
+      for (Object o: (Set)value)
+      {
+        set.add(getReadOnlyJavaObject(o));
+      }
+      return Collections.unmodifiableSet(set);
     }
     else if (value instanceof Iterable)
     {

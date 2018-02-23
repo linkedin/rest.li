@@ -253,12 +253,12 @@ public class Request<T>
   protected Set<PathSpec> getFields()
   {
     @SuppressWarnings("unchecked")
-    List<PathSpec> fieldsList = (List<PathSpec>) _queryParams.get(RestConstants.FIELDS_PARAM);
-    if (fieldsList == null)
+    Set<PathSpec> fieldsSet = (Set<PathSpec>) _queryParams.get(RestConstants.FIELDS_PARAM);
+    if (fieldsSet == null)
     {
       return Collections.emptySet();
     }
-    return Collections.unmodifiableSet(new HashSet<PathSpec>(fieldsList));
+    return fieldsSet;
   }
 
   /**

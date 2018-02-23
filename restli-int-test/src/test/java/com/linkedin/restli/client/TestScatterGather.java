@@ -73,6 +73,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 
+import java.util.stream.Collectors;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -335,7 +336,7 @@ public class TestScatterGather extends RestLiIntegrationTest
       expectedParams.add(RestConstants.FIELDS_PARAM);
       Set<PathSpec> expectedFields = Collections.singleton(new PathSpec("message"));
 
-      testGetEntityRequest(request, expectedParams, expectedFields, null, requestIdSets, requestIds);
+      testRequest(request, expectedParams, expectedFields, null, requestIdSets, requestIds);
     }
     Assert.assertTrue(requestIds.containsAll(Arrays.asList(ids)));
     Assert.assertEquals(requestIds.size(), ids.length);
@@ -379,18 +380,11 @@ public class TestScatterGather extends RestLiIntegrationTest
 
     if (expectedFields != null)
     {
-      Collection<PathSpec> actualFields = (Collection<PathSpec>) request.getQueryParamsObjects().get(RestConstants.FIELDS_PARAM);
-      for (PathSpec field : actualFields)
-      {
-        Assert.assertTrue(expectedFields.contains(field));
-      }
+      Set<PathSpec> actualFields = request.getFields();
+      Assert.assertTrue(expectedFields.equals(actualFields));
     }
 
-    Set<String> uriIds = new HashSet<String>();
-    for (Long id : (Collection<Long>) request.getQueryParamsObjects().get(RestConstants.QUERY_BATCH_IDS_PARAM))
-    {
-      uriIds.add(id.toString());
-    }
+    Set<String> uriIds = request.getObjectIds().stream().map(Object::toString).collect(Collectors.toSet());
 
     if (expectedInput != null)
     {
@@ -416,79 +410,7 @@ public class TestScatterGather extends RestLiIntegrationTest
                  uriIds);
     }
 
-    Set<Object> idObjects = request.getObjectIds();
-    Set<String> theseIds = new HashSet<String>(idObjects.size());
-    for (Object o : idObjects)
-    {
-      theseIds.add(o.toString());
-    }
-
-    Assert.assertEquals(uriIds, theseIds);
-
-    Assert.assertFalse(requestIdSets.contains(theseIds)); //no duplicate requests
-    for (String id : theseIds)
-    {
-      Assert.assertFalse(requestIds.contains(Long.parseLong(id))); //no duplicate ids
-      requestIds.add(Long.parseLong(id));
-    }
-    requestIdSets.add(theseIds);
-  }
-
-  @SuppressWarnings({"unchecked", "rawtypes"})
-  private static void testGetEntityRequest(BatchRequest<BatchKVResponse<Long, EntityResponse<Greeting>>> request,
-                                           Set<String> expectedParams,
-                                           Set<PathSpec> expectedFields,
-                                           Map<Long, Greeting> expectedInput,
-                                           Set<Set<String>> requestIdSets,
-                                           Set<Long> requestIds)
-  {
-    Assert.assertEquals(request.getQueryParamsObjects().keySet(), expectedParams);
-
-    if (expectedFields != null)
-    {
-      Collection<PathSpec> actualFields = (Collection<PathSpec>) request.getQueryParamsObjects().get(RestConstants.FIELDS_PARAM);
-      for (PathSpec field : actualFields)
-      {
-        Assert.assertTrue(expectedFields.contains(field));
-      }
-    }
-
-    Set<String> uriIds = new HashSet<String>();
-    for (Long id : (Collection<Long>) request.getQueryParamsObjects().get(RestConstants.QUERY_BATCH_IDS_PARAM))
-    {
-      uriIds.add(id.toString());
-    }
-
-    if (expectedInput != null)
-    {
-      RecordTemplate inputRecordTemplate;
-      if (request instanceof BatchUpdateRequest)
-      {
-        ResourceProperties resourceProperties = request.getResourceProperties();
-
-        CollectionRequest inputRecord = (CollectionRequest)request.getInputRecord();
-
-        inputRecordTemplate = CollectionRequestUtil.convertToBatchRequest(inputRecord,
-                                                                          resourceProperties.getKeyType(),
-                                                                          resourceProperties.getComplexKeyType(),
-                                                                          resourceProperties.getKeyParts(),
-                                                                          resourceProperties.getValueType());
-      }
-      else
-      {
-        inputRecordTemplate = request.getInputRecord();
-      }
-      checkInput(inputRecordTemplate.data().getDataMap(com.linkedin.restli.common.BatchRequest.ENTITIES),
-                 expectedInput,
-                 uriIds);
-    }
-
-    Set<Object> idObjects = request.getObjectIds();
-    Set<String> theseIds = new HashSet<String>(idObjects.size());
-    for (Object o : idObjects)
-    {
-      theseIds.add(o.toString());
-    }
+    Set<String> theseIds = request.getObjectIds().stream().map(Object::toString).collect(Collectors.toSet());
 
     Assert.assertEquals(uriIds, theseIds);
 

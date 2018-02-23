@@ -87,7 +87,7 @@ public class BatchGetRequestUtil
     // add the fields back to the queryParams
     if (fields != null && !fields.isEmpty())
     {
-      queryParams.put(RestConstants.FIELDS_PARAM, fields.toArray(new PathSpec[fields.size()]));
+      queryParams.put(RestConstants.FIELDS_PARAM, fields);
     }
 
     return queryParams;
