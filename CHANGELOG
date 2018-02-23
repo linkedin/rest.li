@@ -2,6 +2,8 @@
 ------
 (RB=1230599)
 Replace dependency on antlr with antlr-runtime.
+(RB=1230938)
+Update Apache commons-lang to 2.6.
 
 19.0.3
 ------

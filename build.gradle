@@ -39,7 +39,7 @@ project.ext.externalDependency = [
   'commonsCompress': 'org.apache.commons:commons-compress:1.2',
   'commonsHttpClient': 'commons-httpclient:commons-httpclient:3.1',
   'commonsIo': 'commons-io:commons-io:2.4',
-  'commonsLang': 'commons-lang:commons-lang:2.4',
+  'commonsLang': 'commons-lang:commons-lang:2.6',
   'commonsLang3': 'org.apache.commons:commons-lang3:3.4',
   'disruptor': 'com.lmax:disruptor:3.2.0',
   'easymock': 'org.easymock:easymock:3.1',
