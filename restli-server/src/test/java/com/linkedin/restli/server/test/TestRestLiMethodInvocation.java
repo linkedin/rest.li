@@ -2986,6 +2986,27 @@ public class TestRestLiMethodInvocation
     checkInvocation(repliesResource,  methodDescriptor, "GET", version, uri);
   }
 
+  @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "customLongDefault")
+  public Object[][] customLongDefault() throws Exception
+  {
+    return new Object[][]
+        {
+            { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "/statuses/1/replies?query=customLongDefault&l=100" },
+            { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/statuses/1/replies?query=customLongDefault&l=100" }
+        };
+  }
+
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "customLongDefault")
+  public void testCustomTypeParametersCustomLongWithDefault(ProtocolVersion version, String uri) throws Exception
+  {
+    ResourceModel repliesResourceModel = buildResourceModel(RepliesCollectionResource.class);
+    ResourceMethodDescriptor methodDescriptor = repliesResourceModel.findNamedMethod("customLongDefault");
+    RepliesCollectionResource repliesResource = getMockResource(RepliesCollectionResource.class);
+    repliesResource.customLongDefault(new CustomLong(100L), new CustomLong(1235L));
+    EasyMock.expectLastCall().andReturn(null).once();
+    checkInvocation(repliesResource,  methodDescriptor, "GET", version, uri);
+  }
+
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "customLongArray")
   public Object[][] customLongArray() throws Exception
   {
@@ -3004,6 +3025,29 @@ public class TestRestLiMethodInvocation
     RepliesCollectionResource repliesResource = getMockResource(RepliesCollectionResource.class);
     CustomLong[] longs = {new CustomLong(100L), new CustomLong(200L)};
     repliesResource.customLongArray(EasyMock.aryEq(longs));
+    EasyMock.expectLastCall().andReturn(null).once();
+    checkInvocation(repliesResource, methodDescriptor, "GET", version, uri);
+  }
+
+  @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "customLongArrayDefault")
+  public Object[][] customLongArrayDefault() throws Exception
+  {
+    return new Object[][]
+        {
+            { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "/statuses/1/replies?query=customLongArrayDefault&longs=100&longs=200" },
+            { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/statuses/1/replies?query=customLongArrayDefault&longs=List(100,200)" }
+        };
+  }
+
+  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "customLongArrayDefault")
+  public void testCustomTypeParametersCustomLongArrayWithDefault(ProtocolVersion version, String uri) throws Exception
+  {
+    ResourceModel repliesResourceModel = buildResourceModel(RepliesCollectionResource.class);
+    ResourceMethodDescriptor methodDescriptor = repliesResourceModel.findNamedMethod("customLongArrayDefault");
+    RepliesCollectionResource repliesResource = getMockResource(RepliesCollectionResource.class);
+    CustomLong[] longs = {new CustomLong(100L), new CustomLong(200L)};
+    CustomLong[] longsFromDefault = {new CustomLong(1235L), new CustomLong(6789L)};
+    repliesResource.customLongArrayDefault(EasyMock.aryEq(longs), EasyMock.aryEq(longsFromDefault));
     EasyMock.expectLastCall().andReturn(null).once();
     checkInvocation(repliesResource, methodDescriptor, "GET", version, uri);
   }

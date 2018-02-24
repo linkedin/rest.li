@@ -116,6 +116,19 @@ public class DataSchemaUtil
     return null;
   }
 
+  /**
+   * Returns the java class representing the de-referenced type of the input schema.
+   */
+  public static Class<?> getDataClassFromSchema(DataSchema schema)
+  {
+    if (schema == null)
+    {
+      return null;
+    }
+    return dataSchemaTypeToPrimitiveDataSchemaClass(schema.getDereferencedType());
+  }
+
+
   private DataSchemaUtil() {}
 
   static final Map<String, PrimitiveDataSchema> _TYPE_STRING_TO_PRIMITIVE_DATA_SCHEMA_MAP;

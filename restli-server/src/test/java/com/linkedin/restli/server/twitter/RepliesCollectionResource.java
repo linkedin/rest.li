@@ -16,6 +16,7 @@
 
 package com.linkedin.restli.server.twitter;
 
+import com.linkedin.restli.server.annotations.Optional;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -74,8 +75,23 @@ public class RepliesCollectionResource extends CollectionResourceTemplate<Long, 
     return null;
   }
 
+  @Finder("customLongDefault")
+  public List<Status> customLongDefault(@QueryParam(value="l", typeref=CustomLongRef.class) CustomLong l,
+      @Optional("1235") @QueryParam(value="longWithDefault", typeref=CustomLongRef.class) CustomLong longWithDefault)
+  {
+    return null;
+  }
+
   @Finder("customLongArray")
   public List<Status> customLongArray(@QueryParam(value="longs", typeref=CustomLongRef.class) CustomLong[] longs)
+  {
+    return null;
+  }
+
+  @Finder("customLongArrayDefault")
+  public List<Status> customLongArrayDefault(
+      @QueryParam(value="longs", typeref=CustomLongRef.class) CustomLong[] longs,
+      @Optional("[1235, 6789]") @QueryParam(value="longsWithDefault", typeref=CustomLongRef.class) CustomLong[] longsWithDefault)
   {
     return null;
   }

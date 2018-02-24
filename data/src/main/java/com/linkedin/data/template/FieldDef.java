@@ -21,6 +21,9 @@ import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaUtil;
 import com.linkedin.data.schema.RecordDataSchema;
 
+import static com.linkedin.data.schema.DataSchemaUtil.*;
+
+
 /**
  * A dynamic record template field definition.
  *
@@ -45,27 +48,15 @@ public class FieldDef<T>
     _name = name;
     _type = type;
     _dataSchema = dataSchema;
+    /**
+     * FieldDefs representing context, pagination, or things relating to synchronization will not
+     * have schemas, so dataSchema and thus dataClass can be null.
+     */
     _dataClass = getDataClassFromSchema(_dataSchema);
 
     StringBuilder errorMessageBuilder = new StringBuilder();
     _field = new RecordDataSchema.Field(_dataSchema);
     _field.setName(_name, errorMessageBuilder);
-  }
-
-  private static Class<?> getDataClassFromSchema(DataSchema schema)
-  {
-    /**
-     * FieldDefs representing context, pagination, or things relating to synchronization will not
-     * have schemas, so we must allow for null schemas.
-     * See RestModelConstants.CLASSES_WITHOUT_SCHEMAS for a list.
-     *
-     * All other FieldDefs should have schemas, however.
-     */
-    if (schema == null)
-    {
-      return null;
-    }
-    return DataSchemaUtil.dataSchemaTypeToPrimitiveDataSchemaClass(schema.getDereferencedType());
   }
 
   public String getName()

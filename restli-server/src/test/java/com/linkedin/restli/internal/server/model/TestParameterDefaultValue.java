@@ -19,10 +19,14 @@ package com.linkedin.restli.internal.server.model;
 
 import com.linkedin.data.ByteString;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.schema.ArrayDataSchema;
+import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.template.BooleanArray;
 import com.linkedin.data.template.BooleanMap;
 import com.linkedin.data.template.BytesArray;
 import com.linkedin.data.template.BytesMap;
+import com.linkedin.data.template.Custom;
+import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.DoubleArray;
 import com.linkedin.data.template.DoubleMap;
 import com.linkedin.data.template.FloatArray;
@@ -38,12 +42,17 @@ import com.linkedin.pegasus.generator.test.EnumFruits;
 import com.linkedin.pegasus.generator.test.EnumFruitsArray;
 import com.linkedin.pegasus.generator.test.FixedMD5;
 import com.linkedin.pegasus.generator.test.FixedMD5Array;
+import com.linkedin.pegasus.generator.test.LongRef;
 import com.linkedin.pegasus.generator.test.RecordBar;
 import com.linkedin.pegasus.generator.test.RecordBarArray;
 import com.linkedin.pegasus.generator.test.RecordBarMap;
 import com.linkedin.pegasus.generator.test.Union;
+import com.linkedin.restli.server.CustomLongRef;
+import com.linkedin.restli.server.CustomStringRef;
 import com.linkedin.restli.server.ResourceConfigException;
 
+import com.linkedin.restli.server.custom.types.CustomLong;
+import com.linkedin.restli.server.custom.types.CustomString;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -248,9 +257,44 @@ public class TestParameterDefaultValue
     Assert.assertSame(result.getClass(), Union.class);
   }
 
+  @Test
+  public void testCustomParams()
+  {
+    // Initialize the custom class to ensure the coercer is registered.
+    Custom.initializeCustomClass(CustomString.class);
+
+    Object result = test("custom string ref", CustomString.class, new CustomStringRef().getSchema());
+    final CustomString expectedCustomString = new CustomString("custom string ref");
+    Assert.assertEquals(result, expectedCustomString);
+    Assert.assertSame(result.getClass(), CustomString.class);
+
+    result = test("12345", CustomLong.class, new CustomLongRef().getSchema());
+    final CustomLong expectedCustomLong = new CustomLong(12345L);
+    Assert.assertEquals(result, expectedCustomLong);
+    Assert.assertSame(result.getClass(), CustomLong.class);
+  }
+
+  @Test
+  public void testCustomParamArray()
+  {
+    // Initialize the custom class to ensure the coercer is registered.
+    Custom.initializeCustomClass(CustomLong.class);
+
+    final ArrayDataSchema customLongRefArraySchema = ((ArrayDataSchema) DataTemplateUtil.parseSchema("{\"type\":\"array\",\"items\":{\"type\":\"typeref\",\"name\":\"CustomLongRef\",\"namespace\":\"com.linkedin.restli.examples.typeref.api\",\"ref\":\"long\",\"java\":{\"class\":\"com.linkedin.restli.examples.custom.types.CustomLong\"}}}"));
+    Object result = test("[12345, 6789]", CustomLong[].class, customLongRefArraySchema);
+    final CustomLong[] expectedCustomLongs = { new CustomLong(12345L), new CustomLong(6789L)};
+    Assert.assertEquals(result, expectedCustomLongs);
+    Assert.assertSame(result.getClass(), CustomLong[].class);
+  }
+
   private static <T> Object test(String value, Class<T> type)
   {
     return new Parameter<T>("", type, null, true, value, null, false, AnnotationSet.EMPTY).getDefaultValue();
+  }
+
+  private static <T> Object test(String value, Class<T> type, DataSchema typrefSchema)
+  {
+    return new Parameter<T>("", type, typrefSchema, true, value, null, false, AnnotationSet.EMPTY).getDefaultValue();
   }
 
   private final String _bytes16 = "\u0001\u0002\u0003\u0004" +
