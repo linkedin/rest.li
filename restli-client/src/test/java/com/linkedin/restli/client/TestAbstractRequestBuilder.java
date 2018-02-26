@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -364,28 +365,31 @@ public class TestAbstractRequestBuilder
   }
 
   @Test
+  @SuppressWarnings("unchecked")
   public void testProjectionFields()
   {
     final AbstractRequestBuilder<?, ?, ?> builder = new DummyAbstractRequestBuilder();
 
-    builder.addFields(new PathSpec("firstField"), new PathSpec("secondField", PathSpec.WILDCARD, "thirdField"));
-    Assert.assertTrue(builder.getParam(RestConstants.FIELDS_PARAM) instanceof Set<?>);
-    final Set<?> fieldsPathSpecs = (Set<?>) builder.getParam(RestConstants.FIELDS_PARAM);
-    Assert.assertTrue(fieldsPathSpecs.contains("/firstField"), "The path spec(s) should match!");
-    Assert.assertTrue(fieldsPathSpecs.contains("/secondField/*/thirdField"), "The path spec(s) should match!");
+    PathSpec pathSpec1 = new PathSpec("firstField");
+    PathSpec pathSpec23 = new PathSpec("secondField", PathSpec.WILDCARD, "thirdField");
+    builder.addFields(pathSpec1, pathSpec23);
+    Assert.assertTrue(builder.getParam(RestConstants.FIELDS_PARAM) instanceof Set);
+    final Set<PathSpec> fieldsPathSpecs = (Set<PathSpec>) builder.getParam(RestConstants.FIELDS_PARAM);
+    Assert.assertEquals(fieldsPathSpecs, new HashSet<>(Arrays.asList(pathSpec1, pathSpec23)), "The path spec(s) should match!") ;
 
-    builder.addMetadataFields(new PathSpec(PathSpec.WILDCARD, "fourthField"), new PathSpec("fifthField"));
-    Assert.assertTrue(builder.getParam(RestConstants.METADATA_FIELDS_PARAM) instanceof Set<?>);
-    final Set<?> metadataFieldsPathSpecs = (Set<?>) builder.getParam(RestConstants.METADATA_FIELDS_PARAM);
-    Assert.assertTrue(metadataFieldsPathSpecs.contains("/*/fourthField"), "The path spec(s) should match!");
-    Assert.assertTrue(metadataFieldsPathSpecs.contains("/fifthField"), "The path spec(s) should match!");
+    PathSpec pathSpec4 = new PathSpec(PathSpec.WILDCARD, "fourthField");
+    PathSpec pathSpec5 = new PathSpec("fifthField");
+    builder.addMetadataFields(pathSpec4, pathSpec5);
+    Assert.assertTrue(builder.getParam(RestConstants.METADATA_FIELDS_PARAM) instanceof Set);
+    final Set<PathSpec> metadataFieldsPathSpecs = (Set<PathSpec>)  builder.getParam(RestConstants.METADATA_FIELDS_PARAM);
+    Assert.assertEquals(metadataFieldsPathSpecs, new HashSet<>(Arrays.asList(pathSpec4, pathSpec5)), "The path spec(s) should match!") ;
 
-    builder.addPagingFields(new PathSpec("sixthField", PathSpec.WILDCARD), new PathSpec("seventhField"),
-        new PathSpec(PathSpec.WILDCARD));
+    PathSpec pathSpec6 = new PathSpec("sixthField", PathSpec.WILDCARD);
+    PathSpec pathSpec7 = new PathSpec("seventhField");
+    builder.addPagingFields(pathSpec6, pathSpec7);
     Assert.assertTrue(builder.getParam(RestConstants.PAGING_FIELDS_PARAM) instanceof Set);
-    final Set<?> pagingFieldsPathSpecs = (Set<?>) builder.getParam(RestConstants.PAGING_FIELDS_PARAM);
-    Assert.assertTrue(pagingFieldsPathSpecs.contains("/sixthField/*"), "The path spec(s) should match!");
-    Assert.assertTrue(pagingFieldsPathSpecs.contains("/seventhField"), "The path spec(s) should match!");
+    final Set<PathSpec> pagingFieldsPathSpecs = (Set<PathSpec>) builder.getParam(RestConstants.PAGING_FIELDS_PARAM);
+    Assert.assertEquals(pagingFieldsPathSpecs, new HashSet<>(Arrays.asList(pathSpec6, pathSpec7)), "The path spec(s) should match!") ;
 
     Assert.assertEquals(builder.buildReadOnlyQueryParameters().size(), 3,
                         "We should have 3 query parameters, one for each projection type");
@@ -435,7 +439,7 @@ public class TestAbstractRequestBuilder
 
     builder.addKey(originalKey);
     Map<String, Object> parameters = builder.buildReadOnlyQueryParameters();
-    Object key = ((List<Object>)parameters.get("ids")).get(0);
+    Object key = ((Set<Object>)parameters.get(RestConstants.QUERY_BATCH_IDS_PARAM)).iterator().next();
     Assert.assertNotSame(key, originalKey);
     Assert.assertTrue(((ComplexResourceKey<TestRecord, TestRecord>)key).isReadOnly());
 
@@ -451,7 +455,7 @@ public class TestAbstractRequestBuilder
 
     originalKey.makeReadOnly();
     parameters = builder.buildReadOnlyQueryParameters();
-    key = ((List<Object>)parameters.get("ids")).get(0);
+    key = ((Set<Object>)parameters.get(RestConstants.QUERY_BATCH_IDS_PARAM)).iterator().next();
     Assert.assertSame(key, originalKey);
   }
 

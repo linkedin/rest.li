@@ -3395,9 +3395,9 @@ public class TestClientBuilders
             {
               ((ComplexResourceKey) readOnlyTarget).getKey().data().put("abc", "abc");
             }
-            else if (readOnlyTarget instanceof List)
+            else if (readOnlyTarget instanceof List || readOnlyTarget instanceof Set)
             {
-              ((List<Object>) readOnlyTarget).add("abc");
+              ((Collection<Object>) readOnlyTarget).add("abc");
             }
           }
         });
@@ -3408,10 +3408,10 @@ public class TestClientBuilders
   @SuppressWarnings("unchecked")
   private void collectReadOnlyQueryParamObjectTargets(Object queryParamObject, List<Object> readOnlyTargets)
   {
-    if (queryParamObject instanceof List)
+    if (queryParamObject instanceof List || queryParamObject instanceof Set)
     {
       readOnlyTargets.add(queryParamObject);
-      for (Object item: ((List<Object>) queryParamObject))
+      for (Object item: ((Collection<Object>) queryParamObject))
       {
         collectReadOnlyQueryParamObjectTargets(item, readOnlyTargets);
       }

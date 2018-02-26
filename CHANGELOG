@@ -5,6 +5,8 @@
 ------
 (RB=1224742)
 Request object should store the projection fields <PathSpec> in Set
+(RB=1232556)
+Tests fix for SI-5482(Request object should store the projection fields <PathSpec> in Set)
 
 19.0.4
 ------
