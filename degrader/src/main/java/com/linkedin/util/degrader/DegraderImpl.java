@@ -376,7 +376,7 @@ public class DegraderImpl implements Degrader
 
     if (oldDropRate != newDropRate && log.isWarnEnabled() && newDropRate >= _config.getLogThreshold())
     {
-      log.warn(_config.getName() + " ComputedDropRate " +
+      String logMessage = _config.getName() + " ComputedDropRate " +
           (oldDropRate > newDropRate ? "decreased" : "increased") +
           " from " + oldDropRate + " to " + newDropRate +
           ", OverrideDropRate=" + _config.getOverrideDropRate() +
@@ -388,7 +388,16 @@ public class DegraderImpl implements Degrader
           ", OutstandingCount=" + stats.getOutstandingCount() +
           ", NoOverrideDropCountTotal=" + noOverrideDropCountTotal +
           ", DroppedCountTotal=" + droppedCountTotal +
-          ", LastIntervalDroppedRate=" + lastIntervalDroppedRate);
+          ", LastIntervalDroppedRate=" + lastIntervalDroppedRate;
+      if (oldDropRate < newDropRate)
+      {
+        // Log as 'warn' only if dropRate is increasing
+        log.warn(logMessage);
+      }
+      else
+      {
+        log.info(logMessage);
+      }
     }
     else
     {
