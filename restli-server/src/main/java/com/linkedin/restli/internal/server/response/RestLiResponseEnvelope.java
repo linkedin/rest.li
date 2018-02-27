@@ -17,6 +17,7 @@
 package com.linkedin.restli.internal.server.response;
 
 
+import com.linkedin.data.DataMap;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.internal.server.ResponseType;
@@ -36,6 +37,9 @@ public abstract class RestLiResponseEnvelope
   // Only one of _status and _exception is non-null. Setting value to one of them sets the other to null.
   private HttpStatus _status;
   private RestLiServiceException _exception;
+
+  // Custom metadata for the response.
+  private final DataMap _responseMetadata = new DataMap();
 
   RestLiResponseEnvelope(HttpStatus status)
   {
@@ -97,6 +101,16 @@ public abstract class RestLiResponseEnvelope
     _exception = exception;
     _status = null;
     clearData();
+    _responseMetadata.clear();
+  }
+
+  /**
+   * Map that will become the $metadata field of the response.
+   *
+   * @return DataMap containing the metadata values.
+   */
+  public final DataMap getResponseMetadata() {
+    return _responseMetadata;
   }
 
   /**

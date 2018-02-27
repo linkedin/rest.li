@@ -1,5 +1,8 @@
 20.0.5
 ------
+(RB=1239452)
+Support for injecting metadata in Rest.Li response
+
 (RB=1227286)
 Refactoring internal LoadBalancer interfaces to async model
 

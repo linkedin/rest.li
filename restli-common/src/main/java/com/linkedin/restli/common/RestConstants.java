@@ -70,6 +70,8 @@ public interface RestConstants
   String DEFAULT_CHARSET_NAME = "UTF-8";
   Charset DEFAULT_CHARSET = Charset.forName(DEFAULT_CHARSET_NAME);
 
+  String METADATA_RESERVED_FIELD = "$metadata";
+
   String RESOURCE_MODEL_FILENAME_EXTENSION = ".restspec.json";
   String SNAPSHOT_FILENAME_EXTENTION = ".snapshot.json";
   Set<ResourceMethod> SIMPLE_RESOURCE_METHODS = Collections.unmodifiableSet(

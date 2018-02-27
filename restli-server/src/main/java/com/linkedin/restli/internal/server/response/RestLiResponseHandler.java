@@ -19,6 +19,7 @@ package com.linkedin.restli.internal.server.response;
 
 import com.linkedin.data.ByteString;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
@@ -187,7 +188,21 @@ public class RestLiResponseHandler
     @SuppressWarnings("unchecked")
     RestLiResponseBuilder<D> responseBuilder = (RestLiResponseBuilder<D>) _methodAdapterRegistry.getResponseBuilder(
         routingResult.getResourceMethod().getType());
-    return responseBuilder.buildResponse(routingResult, responseData);
+    PartialRestResponse partialRestResponse = responseBuilder.buildResponse(routingResult, responseData);
+    injectResponseMetadata(partialRestResponse.getEntity(), responseData.getResponseEnvelope().getResponseMetadata());
+    return partialRestResponse;
+  }
+
+  private void injectResponseMetadata(RecordTemplate entity, DataMap responseMetadata) {
+    // Inject the metadata map into the response entity if they both exist
+    if (entity != null) {
+      DataMap rawEntityData = entity.data();
+      if (rawEntityData != null) {
+        if (responseMetadata != null && responseMetadata.size() > 0) {
+          rawEntityData.put(RestConstants.METADATA_RESERVED_FIELD, responseMetadata);
+        }
+      }
+    }
   }
 
   /**
