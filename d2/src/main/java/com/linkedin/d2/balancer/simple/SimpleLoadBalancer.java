@@ -260,7 +260,8 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     }
     else
     {
-      throw new ServiceUnavailableException(serviceName, "Unable to find a load balancer strategy");
+      throw new ServiceUnavailableException(serviceName, "Unable to find a load balancer strategy. " +
+        "Server Schemes: [" + String.join(", ", service.getPrioritizedSchemes()) + ']');
     }
   }
 
@@ -301,7 +302,8 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     }
     else
     {
-      throw new ServiceUnavailableException(serviceName, "Unable to find a load balancer strategy");
+      throw new ServiceUnavailableException(serviceName, "Unable to find a load balancer strategy" +
+        "Server Schemes: [" + String.join(", ", service.getPrioritizedSchemes()) + ']');
     }
   }
 
@@ -398,7 +400,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     {
       warn(_log, "unable to find uris: ", clusterName);
 
-      die(serviceName, "no uri properties in lb state");
+      die(serviceName, "no uri properties in lb state. Check your service being announced correctly to ZK");
     }
 
     debug(_log, "got uris: ", cluster);
@@ -416,7 +418,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     {
       warn(_log, "unable to find cluster: ", clusterName);
 
-      die(serviceName, "no cluster properties in lb state");
+      die(serviceName, "no cluster properties in lb state for cluster: " + clusterName);
     }
 
     return clusterItem.getProperty();
@@ -500,7 +502,8 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     }
     else
     {
-      throw new ServiceUnavailableException(serviceName, "Unable to find a load balancer strategy");
+      throw new ServiceUnavailableException(serviceName, "Unable to find a load balancer strategy" +
+        "Server Schemes: [" + String.join(", ", service.getPrioritizedSchemes()) + ']');
     }
   }
 
@@ -692,7 +695,8 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
       }
       catch (PartitionAccessException e)
       {
-        die(serviceName, "Error in finding the partition for URI: " + requestUri + ", " + e.getMessage());
+        die(serviceName, "Error in finding the partition for URI: " + requestUri + ", " +
+          "in cluster: " + clusterName + ", " + e.getMessage());
       }
     }
     else
@@ -763,14 +767,15 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
           .map(LoadBalancerState.SchemeStrategyPair::getScheme).collect(Collectors.joining(","));
 
         die(serviceName, "Service: " + serviceName + " unable to find a host to route the request"
-          + " in partition: " + partitionId + " cluster: " + clusterName + " scheme: [" + requestedSchemes + "]"
-            + ". Check what cluster and scheme your servers are announcing to.");
+          + " in partition: " + partitionId + " cluster: " + clusterName + " scheme: [" + requestedSchemes + "]," +
+          " total hosts in cluster: " + uris.Uris().size() + "."
+          + " Check what cluster and scheme your servers are announcing to.");
       }
       else
       {
         die(serviceName, "Service: " + serviceName + " is in a bad state (high latency/high error). "
             + "Dropping request. Cluster: " + clusterName + ", partitionId:" + partitionId
-            + " (" + clientsToLoadBalance.size() + " hosts)");
+          + " (choosable: " + clientsToLoadBalance.size() + " hosts, total in cluster: " + uris.Uris().size() + ")");
       }
     }
     return trackerClient;
