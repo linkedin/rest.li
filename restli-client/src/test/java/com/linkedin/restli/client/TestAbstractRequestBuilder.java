@@ -386,13 +386,33 @@ public class TestAbstractRequestBuilder
 
     PathSpec pathSpec6 = new PathSpec("sixthField", PathSpec.WILDCARD);
     PathSpec pathSpec7 = new PathSpec("seventhField");
-    builder.addPagingFields(pathSpec6, pathSpec7);
+    builder.addPagingFields(pathSpec6, pathSpec7, null);
     Assert.assertTrue(builder.getParam(RestConstants.PAGING_FIELDS_PARAM) instanceof Set);
     final Set<PathSpec> pagingFieldsPathSpecs = (Set<PathSpec>) builder.getParam(RestConstants.PAGING_FIELDS_PARAM);
-    Assert.assertEquals(pagingFieldsPathSpecs, new HashSet<>(Arrays.asList(pathSpec6, pathSpec7)), "The path spec(s) should match!") ;
+    Assert.assertEquals(pagingFieldsPathSpecs, new HashSet<>(Arrays.asList(pathSpec6, pathSpec7, null)), "The path spec(s) should match!") ;
 
     Assert.assertEquals(builder.buildReadOnlyQueryParameters().size(), 3,
                         "We should have 3 query parameters, one for each projection type");
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testNullProjectionFields()
+  {
+    final AbstractRequestBuilder<?, ?, ?> builder = new DummyAbstractRequestBuilder();
+
+    PathSpec[] pathSpecs = null;
+    builder.addFields(pathSpecs);
+    Assert.assertTrue(builder.getParam(RestConstants.FIELDS_PARAM) == null);
+
+    builder.addMetadataFields(pathSpecs);
+    Assert.assertTrue(builder.getParam(RestConstants.METADATA_FIELDS_PARAM) == null);
+
+    builder.addPagingFields(pathSpecs);
+    Assert.assertTrue(builder.getParam(RestConstants.PAGING_FIELDS_PARAM) == null);
+
+    Assert.assertEquals(builder.buildReadOnlyQueryParameters().size(), 0,
+        "We should not have query parameters");
   }
 
   @Test

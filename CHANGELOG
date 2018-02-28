@@ -1,5 +1,10 @@
+20.0.2
+------
+
 20.0.1
 ------
+(RB=1234289)
+Fix NPE for addFields, addMetadataFields, addPagingFields
 
 20.0.0
 ------
