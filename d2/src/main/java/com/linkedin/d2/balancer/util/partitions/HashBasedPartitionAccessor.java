@@ -57,7 +57,10 @@ public class HashBasedPartitionAccessor extends AbstractPartitionAccessor
     }
     catch (Exception ex)
     {
-      throw new PartitionAccessException("Failed to getPartitionId", ex);
+      throw new PartitionAccessException("Failed to getPartitionId for " +
+        "algorithm = '" + _properties.getHashAlgorithm().toString() + "', " +
+        "key = '" + key + "', " +
+        "partitionCount = '" + _properties.getPartitionCount() + "' ", ex);
     }
   }
 
