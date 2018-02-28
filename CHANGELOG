@@ -1,5 +1,11 @@
+20.0.4
+------
+
+
 20.0.3
 ------
+(RB=1235367)
+Improving error logging in hash functions
 
 20.0.2
 ------
