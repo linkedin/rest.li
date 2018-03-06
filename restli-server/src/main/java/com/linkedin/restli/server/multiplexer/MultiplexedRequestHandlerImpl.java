@@ -123,6 +123,9 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
     try
     {
       individualRequests = extractIndividualRequests(request);
+      if (_multiplexerSingletonFilter != null) {
+        individualRequests = _multiplexerSingletonFilter.filterRequests(individualRequests);
+      }
     }
     catch (RestException e)
     {

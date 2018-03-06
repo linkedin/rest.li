@@ -216,9 +216,15 @@ public class TestMultiplexedRequestHandlerImpl
     expect(mockHandler.handleRequestSync(individualRestRequest, requestContext)).andReturn(individualRestResponse);
 
     // Set mock/expectation for multiplexer filter
-    // Map request from /urlNeedToBeRemapped to FOO_URL so that mock handler will be able to handle the request.
+    // Map the input request to a different request.
+    IndividualRequest modifiedRequest = fakeIndRequest("/modifiedRequest");
+    IndividualRequestMap individualRequestMap = new IndividualRequestMap();
+    individualRequestMap.put("0", modifiedRequest);
+    expect(mockMuxFilter.filterRequests(EasyMock.anyObject(IndividualRequestMap.class)))
+        .andReturn(individualRequestMap);
+    // Map request from /modifiedRequest to FOO_URL so that mock handler will be able to handle the request.
     // Map response's body from FOO_ENTITY to BAR_JSON_BODY to simulate filtering on response
-    expect(mockMuxFilter.filterIndividualRequest(EasyMock.anyObject(IndividualRequest.class)))
+    expect(mockMuxFilter.filterIndividualRequest(EasyMock.same(modifiedRequest)))
                         .andReturn(fakeIndRequest(FOO_URL))
                         .once();
     expect(mockMuxFilter.filterIndividualResponse(EasyMock.anyObject(IndividualResponse.class)))
@@ -238,6 +244,34 @@ public class TestMultiplexedRequestHandlerImpl
 
     assertEquals(muxRestResponse, expectedMuxRestResponse);
     verify(mockMuxFilter);
+  }
+
+  @Test(dataProvider = "multiplexerConfigurations")
+  public void testCustomFilterFailsForAllRequest(MultiplexerRunMode multiplexerRunMode) throws Exception
+  {
+    SynchronousRequestHandler mockHandler = createMockHandler();
+    MultiplexerSingletonFilter mockMuxFilter = EasyMock.createMock(MultiplexerSingletonFilter.class);
+
+    MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(mockHandler, mockMuxFilter, multiplexerRunMode);
+    RequestContext requestContext = new RequestContext();
+
+    // Create multiplexer request with 1 individual request
+    RestRequest request = fakeMuxRestRequest(ImmutableMap.of("0", fakeIndRequest("/urlNeedToBeRemapped")));
+
+    // Set mock/expectation for multiplexer filter
+    // Fail the request when handling all requests in the filter.
+    expect(mockMuxFilter.filterRequests(EasyMock.anyObject(IndividualRequestMap.class)))
+        .andThrow(RestException.forError(HttpStatus.S_400_BAD_REQUEST.getCode(), "Invalid combination of individual requests"));
+
+    // Switch into replay mode
+    replay(mockHandler);
+    replay(mockMuxFilter);
+
+    FutureCallback<RestResponse> callback = new FutureCallback<RestResponse>();
+
+    multiplexer.handleRequest(request, requestContext, callback);
+
+    assertEquals(getErrorStatus(callback), HttpStatus.S_400_BAD_REQUEST);
   }
 
   @Test(dataProvider = "multiplexerConfigurations")

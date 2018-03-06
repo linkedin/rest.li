@@ -17,7 +17,9 @@
 package com.linkedin.restli.server.multiplexer;
 
 
+import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.restli.common.multiplexer.IndividualRequest;
+import com.linkedin.restli.common.multiplexer.IndividualRequestMap;
 import com.linkedin.restli.common.multiplexer.IndividualResponse;
 
 
@@ -29,6 +31,17 @@ import com.linkedin.restli.common.multiplexer.IndividualResponse;
  */
 public interface MultiplexerSingletonFilter
 {
+  /**
+   * This method is called with all the individual requests after multiplexer extracts them from the multiplexed payload.
+   *
+   * @param individualRequests All of the individual requests.
+   * @return filtered requests.
+   * @throws RestException if the individual requests cannot be handled together.
+   */
+  default IndividualRequestMap filterRequests(IndividualRequestMap individualRequests) throws RestException
+  {
+    return individualRequests;
+  }
   /**
    * This method is called after multiplexer extracts each of the IndividualRequest(s) from the multiplexed request payload.
    * The returned IndividualRequest object is used to constructed the synthetic request, which will then be sent to the

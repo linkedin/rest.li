@@ -4,6 +4,10 @@
 Moved Entity Stream implementation to a new entity-stream module and made it generic. Added adapters between generic
 Entity Stream and ByteString-specific Entity Stream so that existing R2 Streaming API didn't change.
 
+(RB=1240888)
+Add filter method in Multiplexer custom filter to filter all individual requests. This can be used to filter/check
+if the combination of individual requests can be handled.
+
 20.0.3
 ------
 (RB=1235367)
