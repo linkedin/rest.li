@@ -53,6 +53,7 @@ public class PropertyKeys
   public static final String DEGRADER_OVERRIDE_MIN_CALL_COUNT = "degrader.overrideMinCallCount";
   public static final String DEGRADER_SLOW_START_THRESHOLD = "degrader.slowStartThreshold";
   public static final String DEGRADER_LOG_THRESHOLD = "degrader.logThreshold";
+  public static final String DEGRADER_PREEMPTIVE_REQUEST_TIMEOUT_RATE = "degrader.preemptiveRequestTimeoutRate";
 
   //used by service properties
   public static final String PATH = "path";

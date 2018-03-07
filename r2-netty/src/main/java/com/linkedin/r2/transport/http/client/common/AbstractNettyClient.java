@@ -190,19 +190,12 @@ public abstract class AbstractNettyClient<Req extends Request, Res extends Respo
   private void writeRequest(Req request, RequestContext requestContext, Map<String, String> wireAttrs,
                             TransportCallback<Res> callback)
   {
+    // Decorates callback
     TransportCallback<Res> executionCallback = getExecutionCallback(callback);
     TransportCallback<Res> shutdownAwareCallback = getShutdownAwareCallback(executionCallback);
 
-    Number requestTimeoutRaw = ((Number) requestContext.getLocalAttr(R2Constants.REQUEST_TIMEOUT));
-    long requestTimeout;
-    if (requestTimeoutRaw == null)
-    {
-      requestTimeout = _requestTimeout;
-    }
-    else
-    {
-      requestTimeout = requestTimeoutRaw.longValue();
-    }
+    // Resolves request timeout
+    long requestTimeout = resolveRequestTimeout(requestContext);
 
     // By wrapping the callback in a Timeout callback before passing it along, we deny the rest
     // of the code access to the unwrapped callback.  This ensures two things:
@@ -271,6 +264,35 @@ public abstract class AbstractNettyClient<Req extends Request, Res extends Respo
     requestContext.putLocalAttr(R2Constants.REMOTE_SERVER_PORT, port);
 
     return address;
+  }
+
+  /**
+   * Resolves the request timeout based on the client configured timeout, request timeout, and preemptive
+   * request timeout rate.
+   *
+   * @param context Request context
+   * @return Resolve request timeout
+   */
+  private long resolveRequestTimeout(RequestContext context)
+  {
+    Number requestTimeoutRaw = (Number)context.getLocalAttr(R2Constants.REQUEST_TIMEOUT);
+    long requestTimeout;
+    if (requestTimeoutRaw == null)
+    {
+      requestTimeout = _requestTimeout;
+    }
+    else
+    {
+      requestTimeout = requestTimeoutRaw.longValue();
+    }
+
+    Double preemptiveTimeoutRate = (Double)context.getLocalAttr(R2Constants.PREEMPTIVE_TIMEOUT_RATE);
+    if (preemptiveTimeoutRate != null)
+    {
+      requestTimeout *= preemptiveTimeoutRate;
+    }
+
+    return requestTimeout;
   }
 
   @Override

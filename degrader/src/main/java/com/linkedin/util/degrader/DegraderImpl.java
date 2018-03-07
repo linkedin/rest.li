@@ -121,8 +121,7 @@ import com.linkedin.common.util.ConfigHelper;
 
 public class DegraderImpl implements Degrader
 {
-  public static final String MODULE = Degrader.class.getName();
-  private static final Logger LOG = LoggerFactory.getLogger(MODULE);
+  private static final Logger LOG = LoggerFactory.getLogger(Degrader.class.getName());
 
   public static final Clock    DEFAULT_CLOCK = SystemClock.instance();
   public static final Boolean  DEFAULT_LOG_ENABLED = false;
@@ -144,6 +143,7 @@ public class DegraderImpl implements Degrader
   public static final double   DEFAULT_INITIAL_DROP_RATE = 0.0d;
   public static final double   DEFAULT_SLOW_START_THRESHOLD = 0.0d;
   public static final double   DEFAULT_LOG_THRESHOLD = 0.5d;
+  public static final double   DEFAULT_PREEMPTIVE_REQUEST_TIMEOUT_RATE = 1.0d;
 
   private ImmutableConfig _config;
   private String _name;
@@ -157,6 +157,7 @@ public class DegraderImpl implements Degrader
   private long _outstandingLatency;
   private long _lastIntervalCountTotal;
   private long _lastIntervalDroppedCountTotal;
+  private boolean _preemptiveRequestTimeout;
   private double _lastIntervalDroppedRate;
   private volatile long _lastResetTime;
   private final AtomicLong _lastNotDroppedTime = new AtomicLong();
@@ -198,6 +199,7 @@ public class DegraderImpl implements Degrader
     _countTotal.set(0);
     _noOverrideDropCountTotal.set(0);
     _droppedCountTotal.set(0);
+    _preemptiveRequestTimeout = false;
   }
 
   public String getName()
@@ -228,11 +230,7 @@ public class DegraderImpl implements Degrader
     setComputedDropRate(_computedDropRate); // overrideDropRate may have changed
   }
 
-  /**
-   * Determine if a request should be dropped to reduce load.
-   *
-   * @see Degrader#checkDrop(double)
-   */
+  @Override
   public boolean checkDrop(double code)
   {
     long now = _clock.currentTimeMillis();
@@ -269,14 +267,16 @@ public class DegraderImpl implements Degrader
     return drop;
   }
 
-  /**
-   * Same as checkDrop but uses internally generated random number.
-   *
-   * @see Degrader#checkDrop()
-   */
+  @Override
   public boolean checkDrop()
   {
     return checkDrop(ThreadLocalRandom.current().nextDouble());
+  }
+
+  @Override
+  public boolean checkPreemptiveTimeout()
+  {
+    return _preemptiveRequestTimeout;
   }
 
   /**
@@ -339,24 +339,11 @@ public class DegraderImpl implements Degrader
     snapLatency();
     snapOutstandingLatency();
 
-    Logger log = getLogger();
-    if (_config.isLogEnabled())
-    {
-      log.info(_config.getName() + " " + _callTrackerStats);
-    }
-
-    long countTotal = _countTotal.get();
-    long noOverrideDropCountTotal = _noOverrideDropCountTotal.get();
-    long droppedCountTotal = _droppedCountTotal.get();
-    long dropped = droppedCountTotal - _lastIntervalDroppedCountTotal;
-    long count = countTotal - _lastIntervalCountTotal;
-
-    double lastIntervalDroppedRate = count == 0 ? 0.0 : (double) dropped / (double) count;
-
     double oldDropRate = _computedDropRate;
     double newDropRate = oldDropRate;
     if (oldDropRate < _config.getMaxDropRate() && isHigh())
     {
+      _preemptiveRequestTimeout = true;
       newDropRate = Math.min(_config.getMaxDropRate(), oldDropRate + _config.getUpStep());
     }
     else if (oldDropRate > 0.0 && isLow())
@@ -372,73 +359,93 @@ public class DegraderImpl implements Degrader
       {
         newDropRate = Math.max(0.0, oldDropRate - _config.getDownStep());
       }
+
+      // we can do exact double comparison here because the logic above will eventually set newDropRate to 0.0
+      if (newDropRate == 0.0)
+      {
+        _preemptiveRequestTimeout = false;
+      }
     }
 
-    if (oldDropRate != newDropRate && log.isWarnEnabled() && newDropRate >= _config.getLogThreshold())
-    {
-      String logMessage = _config.getName() + " ComputedDropRate " +
-          (oldDropRate > newDropRate ? "decreased" : "increased") +
-          " from " + oldDropRate + " to " + newDropRate +
-          ", OverrideDropRate=" + _config.getOverrideDropRate() +
-          ", AdjustedMinCallCount=" + adjustedMinCallCount() +
-          ", CallCount=" + _callTrackerStats.getCallCount() +
-          ", Latency=" + _latency +
-          ", ErrorRate=" + getErrorRateToDegrade() +
-          ", OutstandingLatency=" + _outstandingLatency +
-          ", OutstandingCount=" + stats.getOutstandingCount() +
-          ", NoOverrideDropCountTotal=" + noOverrideDropCountTotal +
-          ", DroppedCountTotal=" + droppedCountTotal +
-          ", LastIntervalDroppedRate=" + lastIntervalDroppedRate;
-      if (oldDropRate < newDropRate)
-      {
-        // Log as 'warn' only if dropRate is increasing
-        log.warn(logMessage);
-      }
-      else
-      {
-        log.info(logMessage);
-      }
-    }
-    else
-    {
-      if (_config.isLogEnabled() && log.isInfoEnabled())
-      {
-        log.info(_config.getName() +
-                " ComputedDropRate=" + newDropRate +
-                ", OverrideDropRate=" + _config.getOverrideDropRate() +
-                ", AdjustedMinCallCount=" + adjustedMinCallCount() +
-                ", CallCount=" + _callTrackerStats.getCallCount() +
-                ", Latency=" + _latency +
-                ", ErrorRate=" + getErrorRateToDegrade() +
-                ", OutstandingLatency=" + _outstandingLatency +
-                ", OutstandingCount=" + stats.getOutstandingCount() +
-                ", CountTotal=" + countTotal +
-                ", NoOverrideDropCountTotal=" + noOverrideDropCountTotal +
-                ", DroppedCountTotal=" + droppedCountTotal +
-                ", LastIntervalDroppedRate=" + lastIntervalDroppedRate);
-      }
-      else if (log.isDebugEnabled())
-      {
-        log.debug(_config.getName() +
-                         " ComputedDropRate=" + newDropRate +
-                         ", OverrideDropRate=" + _config.getOverrideDropRate() +
-                         ", AdjustedMinCallCount=" + adjustedMinCallCount() +
-                         ", CallCount=" + _callTrackerStats.getCallCount() +
-                         ", Latency=" + _latency +
-                         ", ErrorRate=" + getErrorRateToDegrade() +
-                         ", OutstandingLatency=" + _outstandingLatency +
-                         ", OutstandingCount=" + stats.getOutstandingCount() +
-                         ", CountTotal=" + countTotal +
-                         ", NoOverrideDropCountTotal=" + noOverrideDropCountTotal +
-                         ", DroppedCountTotal=" + droppedCountTotal +
-                         ", LastIntervalDroppedRate=" + lastIntervalDroppedRate);
-      }
-    }
+    long countTotal = _countTotal.get();
+    long noOverrideDropCountTotal = _noOverrideDropCountTotal.get();
+    long droppedCountTotal = _droppedCountTotal.get();
+    long dropped = droppedCountTotal - _lastIntervalDroppedCountTotal;
+    long count = countTotal - _lastIntervalCountTotal;
+    double lastIntervalDroppedRate = count == 0 ? 0.0 : (double) dropped / (double) count;
+
+    logState(oldDropRate, newDropRate, noOverrideDropCountTotal, droppedCountTotal, lastIntervalDroppedRate);
 
     _lastIntervalCountTotal = countTotal;
     _lastIntervalDroppedCountTotal = droppedCountTotal;
     _lastIntervalDroppedRate = lastIntervalDroppedRate;
+
     setComputedDropRate(newDropRate);
+  }
+
+  private void logState(double oldDropRate, double newDropRate, long noOverrideDropCountTotal,
+      long droppedCountTotal, double lastIntervalDroppedRate)
+  {
+    Logger log = getLogger();
+    if (_config.isLogEnabled())
+    {
+      log.info(_config.getName() + " " + _callTrackerStats);
+    }
+
+    if (oldDropRate != newDropRate && newDropRate >= _config.getLogThreshold())
+    {
+      if (oldDropRate < newDropRate)
+      {
+        // Log as 'warn' only if dropRate is increasing
+        if (log.isWarnEnabled())
+        {
+          log.warn(createLogMessage(oldDropRate, newDropRate, noOverrideDropCountTotal, droppedCountTotal, lastIntervalDroppedRate));
+        }
+      }
+      else
+      {
+        if (log.isInfoEnabled())
+        {
+          log.info(createLogMessage(oldDropRate, newDropRate, noOverrideDropCountTotal, droppedCountTotal, lastIntervalDroppedRate));
+        }
+      }
+    }
+    else
+    {
+      if (_config.isLogEnabled())
+      {
+        if (log.isInfoEnabled())
+        {
+          log.info(createLogMessage(oldDropRate, newDropRate, noOverrideDropCountTotal, droppedCountTotal, lastIntervalDroppedRate));
+        }
+      }
+      else
+      {
+        if (log.isDebugEnabled())
+        {
+          log.debug(createLogMessage(oldDropRate, newDropRate, noOverrideDropCountTotal, droppedCountTotal, lastIntervalDroppedRate));
+        }
+      }
+    }
+  }
+
+  private String createLogMessage(double oldDropRate, double newDropRate, long noOverrideDropCountTotal,
+      long droppedCountTotal, double lastIntervalDroppedRate)
+  {
+    return _config.getName() + " ComputedDropRate " +
+        (oldDropRate > newDropRate ? "decreased" : "increased") +
+        " from " + oldDropRate + " to " + newDropRate +
+        ", OverrideDropRate=" + _config.getOverrideDropRate() +
+        ", AdjustedMinCallCount=" + adjustedMinCallCount() +
+        ", CallCount=" + _callTrackerStats.getCallCount() +
+        ", Latency=" + _latency +
+        ", ErrorRate=" + getErrorRateToDegrade() +
+        ", OutstandingLatency=" + _outstandingLatency +
+        ", OutstandingCount=" + _callTrackerStats.getOutstandingCount() +
+        ", NoOverrideDropCountTotal=" + noOverrideDropCountTotal +
+        ", DroppedCountTotal=" + droppedCountTotal +
+        ", LastIntervalDroppedRate=" + lastIntervalDroppedRate +
+        ", PreemptiveRequestTimeout=" + _preemptiveRequestTimeout;
   }
 
   private void setComputedDropRate(double newDropRate)
@@ -542,7 +549,8 @@ public class DegraderImpl implements Degrader
     builder.append(" outstandingLatency = " + _outstandingLatency + ",");
     builder.append(" lastIntervalDroppedRate = " + _lastIntervalDroppedRate + ",");
     builder.append(" callCount = " + _callTrackerStats.getCallCount() + ",");
-    builder.append(" droppedCountTotal = " + _droppedCountTotal + "]");
+    builder.append(" droppedCountTotal = " + _droppedCountTotal + ",");
+    builder.append(" preemptiveRequestTimeout = " + _preemptiveRequestTimeout + "]");
     return builder.toString();
   }
 
@@ -689,6 +697,7 @@ public class DegraderImpl implements Degrader
     protected double _slowStartThreshold = DEFAULT_SLOW_START_THRESHOLD;
     protected Logger _logger = LoggerFactory.getLogger(ImmutableConfig.class);
     protected double _logThreshold = DEFAULT_LOG_THRESHOLD;
+    protected double _preemptiveRequestTimeoutRate = DEFAULT_PREEMPTIVE_REQUEST_TIMEOUT_RATE;
 
     public ImmutableConfig()
     {
@@ -696,28 +705,30 @@ public class DegraderImpl implements Degrader
 
     public ImmutableConfig(ImmutableConfig config)
     {
-      this._name = config._name;
-      this._callTracker = config._callTracker;
-      this._clock = config._clock;
-      this._logEnabled = config._logEnabled;
-      this._latencyToUse = config._latencyToUse;
-      this._overrideDropRate = config._overrideDropRate;
-      this._maxDropRate = config._maxDropRate;
-      this._maxDropDuration = config._maxDropDuration;
-      this._upStep = config._upStep;
-      this._downStep = config._downStep;
-      this._minCallCount = config._minCallCount;
-      this._highLatency = config._highLatency;
-      this._lowLatency = config._lowLatency;
-      this._highErrorRate = config._highErrorRate;
-      this._lowErrorRate = config._lowErrorRate;
-      this._highOutstanding = config._highOutstanding;
-      this._lowOutstanding = config._lowOutstanding;
-      this._minOutstandingCount = config._minOutstandingCount;
-      this._overrideMinCallCount = config._overrideMinCallCount;
-      this._initialDropRate = config._initialDropRate;
-      this._slowStartThreshold = config._slowStartThreshold;
-      this._logger = config._logger;
+      _name = config._name;
+      _callTracker = config._callTracker;
+      _clock = config._clock;
+      _logEnabled = config._logEnabled;
+      _latencyToUse = config._latencyToUse;
+      _overrideDropRate = config._overrideDropRate;
+      _maxDropRate = config._maxDropRate;
+      _maxDropDuration = config._maxDropDuration;
+      _upStep = config._upStep;
+      _downStep = config._downStep;
+      _minCallCount = config._minCallCount;
+      _highLatency = config._highLatency;
+      _lowLatency = config._lowLatency;
+      _highErrorRate = config._highErrorRate;
+      _lowErrorRate = config._lowErrorRate;
+      _highOutstanding = config._highOutstanding;
+      _lowOutstanding = config._lowOutstanding;
+      _minOutstandingCount = config._minOutstandingCount;
+      _overrideMinCallCount = config._overrideMinCallCount;
+      _initialDropRate = config._initialDropRate;
+      _slowStartThreshold = config._slowStartThreshold;
+      _logger = config._logger;
+      _preemptiveRequestTimeoutRate = config._preemptiveRequestTimeoutRate;
+
     }
 
     public String getName()
@@ -833,6 +844,11 @@ public class DegraderImpl implements Degrader
     public double getLogThreshold()
     {
       return _logThreshold;
+    }
+
+    public double getPreemptiveRequestTimeoutRate()
+    {
+      return _preemptiveRequestTimeoutRate;
     }
   }
 
@@ -961,6 +977,11 @@ public class DegraderImpl implements Degrader
     public void setLogThreshold(double threshold)
     {
       _logThreshold = threshold;
+    }
+
+    public void setPreemptiveRequestTimeoutRate(double preemptiveRequestTimeoutRate)
+    {
+      _preemptiveRequestTimeoutRate = preemptiveRequestTimeoutRate;
     }
   }
 }

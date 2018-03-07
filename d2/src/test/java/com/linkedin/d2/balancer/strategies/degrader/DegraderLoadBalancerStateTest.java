@@ -1,13 +1,17 @@
 package com.linkedin.d2.balancer.strategies.degrader;
 
 import com.linkedin.d2.balancer.clients.TrackerClient;
+import com.linkedin.d2.balancer.event.EventEmitter;
+import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
 import com.linkedin.util.clock.SettableClock;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import org.testng.annotations.Test;
@@ -31,27 +35,85 @@ public class DegraderLoadBalancerStateTest
   private static final List<PartitionDegraderLoadBalancerStateListener.Factory> DEGRADER_STATE_LISTENER_FACTORIES =
       Collections.emptyList();
 
+  private static final long UPDATE_INTERVAL = 5000L;
+  private static final boolean UPDATE_ONLY_AT_INTERVAL = true;
+  private static final int POINT_PER_WEIGHT = 1;
+  private static final String HASH_METHOD = null;
+  private static final Map<String, Object> HASH_CONFIG = Collections.<String, Object>emptyMap();
+
+  private static final double INITIAL_RECOVERY_LEVEL = 1.0D;
+  private static final double RING_RAMP_FACTOR = 1.0D;
+  private static final double HIGH_WATER_MARK = 1.0D;
+  private static final double LOW_WATER_MARK = 1.0D;
+  private static final double GLOBAL_STEP_UP = 1.0D;
+  private static final double GLOBAL_STEP_DOWN = 1.0D;
+
+  private static final long MIN_CALL_COUNT_HIGH_WATERMARK = 1L;
+  private static final long MIN_CALL_COUNT_LOW_WATERMARK = 1L;
+  private static final double HASH_RING_POINT_CLEAN_UP_RATE = 0.2D;
+  private static final String CONSISTENT_HASH_ALGORITHM = null;
+  private static final int NUM_PROBES = 21;
+  private static final int POINTS_PER_HOST = 1;
+  private static final String PATH = null;
+  private static final double QUARANTINE_MAX_PERCENT = 0.1D;
+  private static final ScheduledExecutorService EXECUTOR_SERVICE = null;
+  private static final HealthCheckOperations HEALTH_CHECK_OPERATIONS = null;
+  private static final String HEALTH_CHECK_METHOD = null;
+  private static final String HEALTH_CHECK_PATH = null;
+  private static final long QUARANTINE_LATENCY = 100L;
+  private static final EventEmitter EMITTER = null;
+  private static final long LOW_EVENT_EMITTING_INTERVAL = 0;
+  private static final long HIGH_EVENT_EMITTING_INTERVAL = 0;
+  private static final String CLUSTER_NAME = "Unknown";
+
   /**
    * Resizing the array of partitions doesn't interfere with setting partition state.
+   *
+   * This test aims to reproduce a specific bug, which occurs when one thread sets a
+   * partition state while another thread is in the middle of resizing the array of states.
+   * To reproduce this, we inject a tricky Clock, which pauses execution of the latter
+   * thread in the middle of resizing (when constructing the new partition state).
+   *
+   * This depends on DegraderLoadBalancerState to call the clock at least once to initialize
+   * partition 1. If that changes, you'll have to change clock-related constants below.
    */
   @Test(groups = {"small", "back-end"})
   public void testConcurrentResizeAndSet()
       throws InterruptedException
   {
-    // This test aims to reproduce a specific bug, which occurs when one thread sets a
-    // partition state while another thread is in the middle of resizing the array of states.
-    // To reproduce this, we inject a tricky Clock, which pauses execution of the latter
-    // thread in the middle of resizing (when constructing the new partition state).
-
-    // This depends on DegraderLoadBalancerState to call the clock at least once to initialize
-    // partition 1. If that changes, you'll have to change clock-related constants below.
     final PauseClock clock = new PauseClock();
-    final DegraderLoadBalancerState subject
-        = new DegraderLoadBalancerStrategyV3
-            (new DegraderLoadBalancerStrategyConfig(5000, true, 1, null, Collections.<String, Object>emptyMap(),
-                                                    clock, 1, 1, 1, 1, 1, 1, 1, 1, 0.2, null, 21, 1, null,
-                                                    0.1, null, null, null, null, 100, null, 0, 0, "Unknown"),
-             SERVICE_NAME, null, DEGRADER_STATE_LISTENER_FACTORIES).getState();
+    DegraderLoadBalancerStrategyConfig config = new DegraderLoadBalancerStrategyConfig(
+        UPDATE_INTERVAL,
+        UPDATE_ONLY_AT_INTERVAL,
+        POINT_PER_WEIGHT,
+        HASH_METHOD,
+        HASH_CONFIG,
+        clock,
+        INITIAL_RECOVERY_LEVEL,
+        RING_RAMP_FACTOR,
+        HIGH_WATER_MARK,
+        LOW_WATER_MARK,
+        GLOBAL_STEP_UP,
+        GLOBAL_STEP_DOWN,
+        MIN_CALL_COUNT_HIGH_WATERMARK,
+        MIN_CALL_COUNT_LOW_WATERMARK,
+        HASH_RING_POINT_CLEAN_UP_RATE,
+        CONSISTENT_HASH_ALGORITHM,
+        NUM_PROBES,
+        POINTS_PER_HOST,
+        PATH,
+        QUARANTINE_MAX_PERCENT,
+        EXECUTOR_SERVICE,
+        HEALTH_CHECK_OPERATIONS,
+        HEALTH_CHECK_METHOD,
+        HEALTH_CHECK_PATH,
+        QUARANTINE_LATENCY,
+        EMITTER,
+        LOW_EVENT_EMITTING_INTERVAL,
+        HIGH_EVENT_EMITTING_INTERVAL,
+        CLUSTER_NAME);
+    final DegraderLoadBalancerState subject = new DegraderLoadBalancerStrategyV3(
+        config, SERVICE_NAME, null, DEGRADER_STATE_LISTENER_FACTORIES).getState();
     Thread getPartition1 = new Thread()
     {
       @Override

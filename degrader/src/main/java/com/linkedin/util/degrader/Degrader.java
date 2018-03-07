@@ -61,5 +61,14 @@ public interface Degrader
    *
    * @return whether the request should be dropped to reduce load.
    */
-  public boolean checkDrop();
+  boolean checkDrop();
+
+  /**
+   * Determines if a request should be timed out earlier in order to release resources acquired
+   * by both the underlying transport client and application logic in order to make the client more
+   * durable in the event of downstream latency and timeout.
+   *
+   * @return {@code true} if request should be timeout early; {@code false} otherwise.
+   */
+  boolean checkPreemptiveTimeout();
 }

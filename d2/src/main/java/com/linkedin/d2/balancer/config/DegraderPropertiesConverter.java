@@ -109,6 +109,10 @@ public class DegraderPropertiesConverter
     {
       map.put(PropertyKeys.DEGRADER_LOG_THRESHOLD, config.getLogThreshold().toString());
     }
+    if (config.hasPreemptiveRequestTimeoutRate())
+    {
+      map.put(PropertyKeys.DEGRADER_PREEMPTIVE_REQUEST_TIMEOUT_RATE, config.getPreemptiveRequestTimeoutRate().toString());
+    }
     return map;
   }
 
@@ -184,6 +188,10 @@ public class DegraderPropertiesConverter
     if (properties.containsKey(PropertyKeys.DEGRADER_LOG_THRESHOLD))
     {
       config.setLogThreshold(coerce(properties.get(PropertyKeys.DEGRADER_LOG_THRESHOLD), Double.class));
+    }
+    if (properties.containsKey(PropertyKeys.DEGRADER_PREEMPTIVE_REQUEST_TIMEOUT_RATE))
+    {
+      config.setPreemptiveRequestTimeoutRate(coerce(properties.get(PropertyKeys.DEGRADER_PREEMPTIVE_REQUEST_TIMEOUT_RATE), Double.class));
     }
     return config;
   }

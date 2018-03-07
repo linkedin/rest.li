@@ -242,6 +242,12 @@ public class DegraderControl implements DegraderControlMBean
   }
 
   @Override
+  public double getPreemptiveRequestTimeoutRate()
+  {
+    return _degrader.getConfig().getPreemptiveRequestTimeoutRate();
+  }
+
+  @Override
   public int getMinOutstandingCount()
   {
     return _degrader.getConfig().getMinOutstandingCount();
@@ -383,6 +389,14 @@ public class DegraderControl implements DegraderControlMBean
   {
     DegraderImpl.Config config = new DegraderImpl.Config(_degrader.getConfig());
     config.setLogThreshold(logThreshold);
+    _degrader.setConfig(config);
+  }
+
+  @Override
+  public void setPreemptiveRequestTimeoutRate(double preemptiveRequestTimeoutRate)
+  {
+    DegraderImpl.Config config = new DegraderImpl.Config(_degrader.getConfig());
+    config.setPreemptiveRequestTimeoutRate(preemptiveRequestTimeoutRate);
     _degrader.setConfig(config);
   }
 

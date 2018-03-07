@@ -30,8 +30,10 @@ import com.linkedin.d2.balancer.util.hashing.Ring;
 import com.linkedin.d2.balancer.util.hashing.URIRegexHash;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheck;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckClientBuilder;
+import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
+import com.linkedin.util.degrader.Degrader;
 import com.linkedin.util.degrader.DegraderControl;
 import com.linkedin.util.degrader.DegraderImpl;
 import java.net.URI;
@@ -148,23 +150,29 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       }
     }
 
-    boolean dropCall = client == null;
-
-    if (!dropCall)
+    if (client == null)
     {
-      dropCall = client.getDegrader(partitionId).checkDrop();
-
-      if (dropCall)
-      {
-        warn(_log, "client's degrader is dropping call for: ", client);
-      }
-      else
-      {
-        debug(_log, "returning client: ", client);
-      }
+      return null;
     }
 
-    return (!dropCall) ? client : null;
+    // Decides whether to drop the call
+    Degrader degrader = client.getDegrader(partitionId);
+    if (degrader.checkDrop())
+    {
+      warn(_log, "client's degrader is dropping call for: ", client);
+      return null;
+    }
+
+    debug(_log, "returning client: ", client);
+
+    // Decides whether to degrade call at the transport layer
+    if (degrader.checkPreemptiveTimeout())
+    {
+      DegraderControl degraderControl = client.getDegraderControl(partitionId);
+      requestContext.putLocalAttr(R2Constants.PREEMPTIVE_TIMEOUT_RATE, degraderControl.getPreemptiveRequestTimeoutRate());
+    }
+
+    return client;
   }
 
   private TrackerClient findValidClientFromRing(Request request, Ring<URI> ring, List<TrackerClient> trackerClients, Set<URI> excludedUris, RequestContext requestContext)

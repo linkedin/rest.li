@@ -59,4 +59,5 @@ public class R2Constants
   public static final String EXPECTED_SERVER_CERT_PRINCIPAL_NAME = "EXPECTED_SERVER_CERT_PRINCIPAL_NAME";
   public static final String REQUESTED_SSL_SESSION_VALIDATOR = "REQUESTED_SSL_SESSION_VALIDATOR";
   public static final String REQUEST_TIMEOUT = "REQUEST_TIMEOUT";
+  public static final String PREEMPTIVE_TIMEOUT_RATE = "PREEMPTIVE_TIMEOUT_RATE";
 }
