@@ -1,5 +1,8 @@
 20.0.5
 ------
+(RB=1229750)
+Added XXHash as an alternative to MD5 for PartitionAccessor
+
 
 20.0.4
 ------
