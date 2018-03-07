@@ -34,7 +34,7 @@ public class HashBasedPartitionProperties implements PartitionProperties
 
   public enum HashAlgorithm
   {
-    MODULO, MD5
+    MODULO, MD5, XXHASH
   }
   public HashBasedPartitionProperties(String partitionKeyRegex, int partitionCount, HashAlgorithm hashAlgorithm)
   {

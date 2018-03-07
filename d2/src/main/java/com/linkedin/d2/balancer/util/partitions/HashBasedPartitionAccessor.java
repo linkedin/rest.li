@@ -19,6 +19,8 @@ package com.linkedin.d2.balancer.util.partitions;
 import com.linkedin.d2.balancer.properties.HashBasedPartitionProperties;
 import com.linkedin.d2.balancer.util.hashing.HashFunction;
 import com.linkedin.d2.balancer.util.hashing.MD5Hash;
+import com.linkedin.d2.balancer.util.hashing.XXHash;
+
 
 public class HashBasedPartitionAccessor extends AbstractPartitionAccessor
 {
@@ -38,6 +40,9 @@ public class HashBasedPartitionAccessor extends AbstractPartitionAccessor
         break;
       case MD5:
         _hashFunction = new MD5Hash();
+        break;
+      case XXHASH:
+        _hashFunction = new XXHash();
         break;
       default:
         // impossible to happen
