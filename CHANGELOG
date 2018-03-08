@@ -4,6 +4,8 @@
 Added XXHash as an alternative to MD5 for PartitionAccessor
 (RB=1231618)
 Enable setting default values for custom type parameters.
+(RB=1236289)
+Set proper default for HttpServerBuilder class
 
 20.0.4
 ------

@@ -55,16 +55,30 @@ public class HttpServerBuilder
   private int _status = 200;
   private int _minThreads = 0;
   private int _maxThreads = 150;
-  private long _idleTimeout = 30000;
+  private long _idleTimeout = 35000;
   private long _stopTimeout = 30000;
+  private long _blockingTimeout = 30000;
   private CountDownLatch _responseLatch = null;
   private Consumer<Throwable> _exceptionListener = null;
   private HttpServerStatsProvider _serverStatsProvider = new HttpServerStatsProvider();
 
-  // HTTP/2 settings
+  /**
+   * Max concurrent streams is the maximum number of streams allowed in a HTTP/2 session, 256 streams by default.
+   */
   private int _maxConcurrentStreams = 256;
-  private int _initialSessionRecvWindow = 64 * 1024;
-  private int _initialStreamRecvWindow = 256 * 64 * 1024;
+
+  /**
+   * Flow control window size of an individual HTTP/2 stream, 64KiB by default.
+   */
+  private int _initialStreamRecvWindow = 64 * 1024;
+
+  /**
+   * Flow control window size of the entire HTTP/2 session. The value is set to the product of stream window and
+   * and the number streams and multiply by two, to effectively disable session level flow control. Session level
+   * flow control is undesirable because the server is synchronous and the number of threads is fewer than the
+   * number of streams.
+   */
+  private int _initialSessionRecvWindow = _maxConcurrentStreams * _initialStreamRecvWindow * 2;
 
   public HttpServerBuilder status(int status)
   {
@@ -87,6 +101,12 @@ public class HttpServerBuilder
   public HttpServerBuilder idleTimeout(long idleTimeout)
   {
     _idleTimeout = idleTimeout;
+    return this;
+  }
+
+  public HttpServerBuilder blockingTimeout(long blockingTimeout)
+  {
+    _blockingTimeout = blockingTimeout;
     return this;
   }
 
@@ -162,6 +182,7 @@ public class HttpServerBuilder
     configuration.setSendXPoweredBy(false);
     configuration.setSendServerVersion(false);
     configuration.setSendDateHeader(false);
+    configuration.setBlockingTimeout(_blockingTimeout);
 
     // HTTP connection factory
     HttpConnectionFactory httpConnectionFactory = new HttpConnectionFactory(configuration);
