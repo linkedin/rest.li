@@ -36,9 +36,12 @@ public class SslHandlerUtil
   private static final Logger LOG = LoggerFactory.getLogger(SslHandlerUtil.class);
   public final static String PIPELINE_SSL_HANDLER = "sslHandler";
 
-  public static SslHandler getClientSslHandler(SSLContext sslContext, SSLParameters sslParameters)
+  /**
+   * @param host and port: specifying them, will enable the SSL session resumption features
+   */
+  public static SslHandler getClientSslHandler(SSLContext sslContext, SSLParameters sslParameters, String host, int port)
   {
-    return getSslHandler(sslContext, sslParameters, true);
+    return getSslHandler(sslContext, sslParameters, true, host, port);
   }
 
   public static SslHandler getServerSslHandler(SSLContext sslContext, SSLParameters sslParameters)
@@ -48,7 +51,23 @@ public class SslHandlerUtil
 
   private static SslHandler getSslHandler(SSLContext sslContext, SSLParameters sslParameters, boolean clientMode)
   {
-    SSLEngine sslEngine = sslContext.createSSLEngine();
+    return getSslHandler(sslContext, sslParameters, clientMode, null, -1);
+  }
+
+  /**
+   * @param host and port: specifying them, will enable the SSL session resumption features
+   */
+  private static SslHandler getSslHandler(SSLContext sslContext, SSLParameters sslParameters, boolean clientMode, String host, int port)
+  {
+    SSLEngine sslEngine;
+    if (host == null || port == -1)
+    {
+      sslEngine = sslContext.createSSLEngine();
+    }
+    else
+    {
+      sslEngine = sslContext.createSSLEngine(host, port);
+    }
     sslEngine.setUseClientMode(clientMode);
     if (sslParameters != null)
     {

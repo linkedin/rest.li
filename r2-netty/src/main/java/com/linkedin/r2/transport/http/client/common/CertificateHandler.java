@@ -34,9 +34,10 @@ public class CertificateHandler extends ChannelOutboundHandlerAdapter
 {
   private final SslHandler _sslHandler;
 
+  public static final String PIPELINE_CERTIFICATE_HANDLER = "CertificateHandler";
+
   public static final AttributeKey<SslSessionValidator> REQUESTED_SSL_SESSION_VALIDATOR
     = AttributeKey.valueOf("requestedSslSessionValidator");
-
 
   public CertificateHandler(SslHandler sslHandler)
   {

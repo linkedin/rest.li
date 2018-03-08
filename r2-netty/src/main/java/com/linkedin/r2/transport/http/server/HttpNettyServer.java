@@ -20,40 +20,33 @@
 
 package com.linkedin.r2.transport.http.server;
 
-import java.net.InetSocketAddress;
 import com.linkedin.r2.filter.R2Constants;
-import com.linkedin.r2.transport.http.util.SslHandlerUtil;
-
 import com.linkedin.r2.util.NamedThreadFactory;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.util.concurrent.DefaultEventExecutorGroup;
 import io.netty.util.concurrent.EventExecutorGroup;
+import java.net.InetSocketAddress;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 
 /**
- * TODO: Do we still need this?
  *
  * @author Steven Ihde
  * @author Ang Xu
- * @version $Revision: $
  */
 
 /* package private */ class HttpNettyServer implements HttpServer
 {
-  private static final Logger LOG = LoggerFactory.getLogger(HttpNettyServer.class);
-
   private final int _port;
   private final int _threadPoolSize;
   private final HttpDispatcher _dispatcher;
   private final boolean _restOverStream;
   private final SSLContext _sslContext;
   private final SSLParameters _sslParameters;
+  private final int _startupTimeoutMillis;
 
   private NioEventLoopGroup _bossGroup;
   private NioEventLoopGroup _workerGroup;
@@ -78,12 +71,19 @@ import org.slf4j.LoggerFactory;
   public HttpNettyServer(int port, int threadPoolSize, HttpDispatcher dispatcher, boolean restOverStream,
       SSLContext sslContext, SSLParameters sslParameters)
   {
+    this(port, threadPoolSize, dispatcher, restOverStream, sslContext, sslParameters, 10000);
+  }
+
+  public HttpNettyServer(int port, int threadPoolSize, HttpDispatcher dispatcher, boolean restOverStream,
+                         SSLContext sslContext, SSLParameters sslParameters, int startupTimeoutMillis)
+  {
     _port = port;
     _threadPoolSize = threadPoolSize;
     _dispatcher = dispatcher;
     _restOverStream = restOverStream;
     _sslContext = sslContext;
     _sslParameters = sslParameters;
+    _startupTimeoutMillis = startupTimeoutMillis;
   }
 
   @Override
@@ -99,7 +99,7 @@ import org.slf4j.LoggerFactory;
                                       .group(_bossGroup, _workerGroup)
                                       .channel(NioServerSocketChannel.class)
                                       .childHandler(pipelineInitializer);
-    bootstrap.bind(new InetSocketAddress(_port));
+    bootstrap.bind(new InetSocketAddress(_port)).awaitUninterruptibly(_startupTimeoutMillis);
   }
 
   @Override
@@ -109,6 +109,7 @@ import org.slf4j.LoggerFactory;
     // shut down Netty thread pool and close all channels associated with.
     _bossGroup.shutdownGracefully();
     _workerGroup.shutdownGracefully();
+    _eventExecutors.shutdownGracefully();
   }
 
   @Override
@@ -116,6 +117,6 @@ import org.slf4j.LoggerFactory;
   {
     _bossGroup.terminationFuture().await();
     _workerGroup.terminationFuture().await();
-
+    _eventExecutors.terminationFuture().await();
   }
 }

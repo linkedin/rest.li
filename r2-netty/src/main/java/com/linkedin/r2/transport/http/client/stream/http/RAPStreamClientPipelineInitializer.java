@@ -16,12 +16,10 @@
 
 package com.linkedin.r2.transport.http.client.stream.http;
 
-import com.linkedin.r2.transport.http.client.common.CertificateHandler;
-import com.linkedin.r2.transport.http.util.SslHandlerUtil;
+import com.linkedin.r2.transport.http.client.common.SessionResumptionSslHandler;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.HttpClientCodec;
-import io.netty.handler.ssl.SslHandler;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -123,22 +121,17 @@ public class RAPStreamClientPipelineInitializer extends ChannelInitializer<NioSo
   }
 
   @Override
-  protected void initChannel(NioSocketChannel ch) throws Exception
+  protected void initChannel(NioSocketChannel ch)
   {
-    SslHandler sslHandler = null;
     if (_sslContext != null)
     {
-      sslHandler = SslHandlerUtil.getClientSslHandler(_sslContext,_sslParameters);
-      ch.pipeline().addLast(SslHandlerUtil.PIPELINE_SSL_HANDLER, sslHandler);
+      ch.pipeline().addLast(SessionResumptionSslHandler.PIPELINE_SESSION_RESUMPTION_HANDLER,
+        new SessionResumptionSslHandler(_sslContext, _sslParameters));
     }
     ch.pipeline().addLast("codec", new HttpClientCodec(4096, _maxHeaderSize, _maxChunkSize));
     ch.pipeline().addLast("rapFullRequestEncoder", new RAPStreamFullRequestEncoder());
     ch.pipeline().addLast("rapEncoder", new RAPStreamRequestEncoder());
     ch.pipeline().addLast("rapDecoder", new RAPStreamResponseDecoder(_maxResponseSize));
-    if (sslHandler != null)
-    {
-      ch.pipeline().addLast("certificateHandler", new CertificateHandler(sslHandler));
-    }
     // the response handler catches the exceptions thrown by other layers. By consequence no handlers that throw exceptions
     // should be after this one, otherwise the exception won't be caught and managed by R2
     ch.pipeline().addLast("responseHandler", new RAPStreamResponseHandler());

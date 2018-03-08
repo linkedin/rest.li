@@ -57,7 +57,7 @@ public class TestSslHandlerUtil
     sslParameters.setNeedClientAuth(NEED_CLIENT_AUTH);
     sslParameters.setProtocols(PROTOCOLS);
 
-    final SslHandler sslHandler = SslHandlerUtil.getClientSslHandler(sslContext, sslParameters);
+    final SslHandler sslHandler = SslHandlerUtil.getClientSslHandler(sslContext, sslParameters, "localhost", 1234);
     Assert.assertNotNull(sslHandler);
 
     final SSLEngine sslEngine = sslHandler.engine();
