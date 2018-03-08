@@ -16,7 +16,6 @@
 
 package com.linkedin.reactivestreams;
 
-import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.entitystream.CollectingReader;
 import com.linkedin.entitystream.EntityStream;
 import com.linkedin.entitystream.EntityStreams;
@@ -39,11 +38,11 @@ public class TestSingletonWriter
       throws ExecutionException, InterruptedException
   {
     String singleton = "singleton";
-    Writer<Object> singltonWriter = new SingletonWriter<>(singleton);
-    EntityStream<Object> singletonStream = EntityStreams.newEntityStream(singltonWriter);
-    FutureCallback<Set<?>> singletonFuture = new FutureCallback<>();
-    singletonStream.setReader(new CollectingReader<>(Collectors.toSet(), singletonFuture));
+    Writer<Object> singletonWriter = new SingletonWriter<>(singleton);
+    EntityStream<Object> singletonStream = EntityStreams.newEntityStream(singletonWriter);
+    CollectingReader<Object, ?, Set<Object>> reader = new CollectingReader<>(Collectors.toSet());
+    singletonStream.setReader(reader);
 
-    Assert.assertEquals(singletonFuture.get(), Collections.singleton(singleton));
+    Assert.assertEquals(reader.getResult().toCompletableFuture().get(), Collections.singleton(singleton));
   }
 }

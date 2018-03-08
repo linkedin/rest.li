@@ -25,25 +25,24 @@ import java.nio.charset.StandardCharsets;
 
 
 /**
- * This {@link Writer} implementation writes the byte chunks as @{link ByteString}s of a fixed chunk size. This is
+ * This {@link Writer} implementation writes the bytes as @{link ByteString}s of a fixed size. This is
  * useful in testing to allow {@link Reader}s to receive data in multiple chunks.
- *
  */
-public class ByteChunkWriter implements Writer<ByteString>
+public class ChunkedByteStringWriter implements Writer<ByteString>
 {
   private byte[] _bytes;
   private int _offset;
   private int _chunkSize;
   private WriteHandle<? super ByteString> _writeHandle;
 
-  public ByteChunkWriter(byte[] bytes, int chunkSize)
+  public ChunkedByteStringWriter(byte[] bytes, int chunkSize)
   {
     _bytes = bytes;
     _chunkSize = chunkSize;
     _offset = 0;
   }
 
-  public ByteChunkWriter(String s, int chunkSize)
+  public ChunkedByteStringWriter(String s, int chunkSize)
   {
     this(s.getBytes(StandardCharsets.UTF_8), chunkSize);
   }

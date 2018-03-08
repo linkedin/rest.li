@@ -19,7 +19,7 @@ package com.linkedin.restli.examples.greetings.server;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.data.ByteString;
-import com.linkedin.data.ByteChunkWriter;
+import com.linkedin.data.ChunkedByteStringWriter;
 import com.linkedin.java.util.concurrent.Flow;
 import com.linkedin.entitystream.SingletonWriter;
 import com.linkedin.entitystream.WriteHandle;
@@ -83,7 +83,7 @@ public class GreetingUnstructuredDataCollectionResourceReactive extends Unstruct
       case "goodNullContentType":
         return new SingletonWriter<>(ByteString.copy(UNSTRUCTURED_DATA_BYTES));
       case "goodMultiWrites":
-        return new ByteChunkWriter(UNSTRUCTURED_DATA_BYTES, 2);
+        return new ChunkedByteStringWriter(UNSTRUCTURED_DATA_BYTES, 2);
       case "goodInline":
         getContext().setResponseHeader(HEADER_CONTENT_DISPOSITION, CONTENT_DISPOSITION_VALUE);
         return new SingletonWriter<>(ByteString.copy(UNSTRUCTURED_DATA_BYTES));

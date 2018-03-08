@@ -16,7 +16,6 @@
 
 package com.linkedin.data.codec.entitystream;
 
-import com.linkedin.common.callback.Callback;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.Data;
 import com.linkedin.data.DataComplex;
@@ -34,6 +33,7 @@ import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Deque;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 
 import static com.linkedin.data.codec.entitystream.JacksonJsonDataDecoder.Token.END_ARRAY;
@@ -281,19 +281,9 @@ public class JacksonJsonDataDecoder<T extends DataComplex> implements JsonDataDe
   }
 
   @Override
-  public void getResult(Callback<T> callback)
+  public CompletionStage<T> getResult()
   {
-    _completable.whenComplete((result, e) ->
-    {
-      if (e != null)
-      {
-        callback.onError(e);
-      }
-      else
-      {
-        callback.onSuccess(result);
-      }
-    });
+    return _completable;
   }
 
   private void handleException(Throwable e)

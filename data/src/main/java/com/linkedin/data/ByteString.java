@@ -80,6 +80,25 @@ public final class ByteString
   }
 
   /**
+   * Returns a new {@link ByteString} that wraps the supplied bytes. Changes to the supplied bytes will be reflected
+   * in the returned {@link ByteString}.
+   *
+   * WARNING: Please exercise caution when using this. Care must be taken to ensure that bytes are not changed
+   * after construction.
+   *
+   * @param bytes the bytes to back the ByteString.
+   * @param offset the offset of the actual data.
+   * @param length the length of the actual data.
+   * @return a {@link ByteString} that wraps the supplied bytes.
+   * @throws NullPointerException if {@code bytes} is {@code null}.
+   */
+  public static ByteString unsafeWrap(byte[] bytes, int offset, int length)
+  {
+    ArgumentUtil.notNull(bytes, "bytes");
+    return bytes.length == 0 ? empty() : new ByteString(bytes, offset, length);
+  }
+
+  /**
    * Returns a new {@link ByteString} that wraps a copy of the supplied bytes. Changes to the supplied bytes
    * will not be reflected in the returned {@link ByteString}.
    *

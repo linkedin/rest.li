@@ -17,19 +17,9 @@
 package com.linkedin.data.codec.entitystream;
 
 import com.linkedin.data.ByteString;
-import com.linkedin.data.DataComplex;
-import com.linkedin.entitystream.Reader;
-
-import java.util.concurrent.CompletionStage;
+import com.linkedin.entitystream.Writer;
 
 
-/**
- * A DataDecoder parses bytes to a {@link DataComplex}. It is an entity stream {@link Reader} and reads {@link ByteString}
- * from an {@link com.linkedin.entitystream.EntityStream} in reactive streaming fashion.
- *
- * @param <T> The type of DataComplex. It can be a DataMap or a DataList.
- */
-public interface DataDecoder<T extends DataComplex> extends Reader<ByteString>
+public interface DataEncoder extends Writer<ByteString>
 {
-  CompletionStage<T> getResult();
 }

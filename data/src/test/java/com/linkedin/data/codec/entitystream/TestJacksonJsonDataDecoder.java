@@ -16,8 +16,7 @@
 
 package com.linkedin.data.codec.entitystream;
 
-import com.linkedin.common.callback.FutureCallback;
-import com.linkedin.data.ByteChunkWriter;
+import com.linkedin.data.ChunkedByteStringWriter;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.Data;
 import com.linkedin.data.DataComplex;
@@ -229,13 +228,10 @@ public class TestJacksonJsonDataDecoder
   private static <T extends DataComplex> T decode(byte[] bytes, JacksonJsonDataDecoder<T> decoder)
       throws Exception
   {
-    Writer<ByteString> writer = new ByteChunkWriter(bytes, 3);
+    Writer<ByteString> writer = new ChunkedByteStringWriter(bytes, 3);
     EntityStream<ByteString> entityStream = EntityStreams.newEntityStream(writer);
-
     entityStream.setReader(decoder);
 
-    FutureCallback<T> futureCallback = new FutureCallback<>();
-    decoder.getResult(futureCallback);
-    return futureCallback.get();
+    return decoder.getResult().toCompletableFuture().get();
   }
 }

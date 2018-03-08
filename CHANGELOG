@@ -18,10 +18,13 @@ This change fix the NPE and throw ServiceUnavailableException instead.
 (RB=1275957)
 Fix distributionBased ring creation with an empty pointsMap
 
+(RB=1265252)
+Added implementation for reactive streaming JSON encoder.
+
 20.0.16
 ------
 (RB=1269478)
-Temprorily downgrade timings warning to debug to satisfy EKG
+Temporarily downgrade timings warning to debug to satisfy EKG
 
 20.0.15
 ------

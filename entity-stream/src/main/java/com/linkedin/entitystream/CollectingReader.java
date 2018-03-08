@@ -16,8 +16,8 @@
 
 package com.linkedin.entitystream;
 
-import com.linkedin.common.callback.Callback;
-
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.stream.Collector;
 
 
@@ -32,21 +32,31 @@ import java.util.stream.Collector;
 public class CollectingReader<T, A, R> implements Reader<T>
 {
   private final Collector<? super T, A, ? extends R> _collector;
-  private final Callback<R> _callback;
-  private ReadHandle _readHandle;
-  private A _resultContainer;
 
-  public CollectingReader(Collector<? super T, A, ? extends R> collector, Callback<R> callback)
+  private ReadHandle _readHandle;
+  private CompletableFuture<R> _completable;
+  private A _intermediateResult;
+
+  public CollectingReader(Collector<? super T, A, ? extends R> collector)
   {
     _collector = collector;
-    _callback = callback;
   }
 
   @Override
   public void onInit(ReadHandle rh)
   {
     _readHandle = rh;
-    _resultContainer = _collector.supplier().get();
+    _completable = new CompletableFuture<>();
+
+    try
+    {
+      _intermediateResult = _collector.supplier().get();
+    }
+    catch (Throwable e)
+    {
+      handleException(e);
+    }
+
     rh.request(1);
   }
 
@@ -55,34 +65,48 @@ public class CollectingReader<T, A, R> implements Reader<T>
   {
     try
     {
-      _collector.accumulator().accept(_resultContainer, data);
-      _readHandle.request(1);
+      _collector.accumulator().accept(_intermediateResult, data);
     }
     catch (Throwable e)
     {
-      _readHandle.cancel();
-      _callback.onError(e);
+      handleException(e);
     }
+
+    _readHandle.request(1);
   }
 
   @Override
   public void onDone()
   {
+    R result;
     try
     {
-      R result = _collector.finisher().apply(_resultContainer);
-      _callback.onSuccess(result);
+      result = _collector.finisher().apply(_intermediateResult);
     }
     catch (Throwable e)
     {
-      _readHandle.cancel();
-      _callback.onError(e);
+      handleException(e);
+      return;
     }
+
+    _completable.complete(result);
   }
 
   @Override
   public void onError(Throwable e)
   {
-    _callback.onError(e);
+    // No need to cancel reading.
+    _completable.completeExceptionally(e);
+  }
+
+  private void handleException(Throwable e)
+  {
+    _readHandle.cancel();
+    _completable.completeExceptionally(e);
+  }
+
+  public CompletionStage<R> getResult()
+  {
+    return _completable;
   }
 }
