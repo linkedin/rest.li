@@ -29,6 +29,8 @@ public class DegraderRingFactory<T> implements RingFactory<T>
 {
   public static final String POINT_BASED_CONSISTENT_HASH = "pointBased";
   public static final String MULTI_PROBE_CONSISTENT_HASH = "multiProbe";
+  public static final String DISTRIBUTION_NON_HASH = "distributionBased";
+
   private static final Logger _log = LoggerFactory.getLogger(DegraderRingFactory.class);
 
   private final RingFactory<T> _ringFactory;
@@ -43,6 +45,9 @@ public class DegraderRingFactory<T> implements RingFactory<T>
     else if (MULTI_PROBE_CONSISTENT_HASH.equalsIgnoreCase(consistentHashAlgorithm))
     {
       _ringFactory = new MPConsistentHashRingFactory<>(config.getNumProbes());
+    }
+    else if (DISTRIBUTION_NON_HASH.equalsIgnoreCase(consistentHashAlgorithm)) {
+      _ringFactory = new DistributionNonDiscreteRingFactory<>();
     }
     else
     {

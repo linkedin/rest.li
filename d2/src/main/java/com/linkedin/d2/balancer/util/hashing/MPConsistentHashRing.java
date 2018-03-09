@@ -173,6 +173,11 @@ public class MPConsistentHashRing<T> implements Ring<T>
     return "MPConsistentHashRing [" + _buckets + "]";
   }
 
+  @Override
+  public boolean isStickyRoutingCapable() {
+    return true;
+  }
+
   private class Bucket
   {
     private final T _t;
