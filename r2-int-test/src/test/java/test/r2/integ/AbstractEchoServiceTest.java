@@ -138,7 +138,7 @@ public abstract class AbstractEchoServiceTest
     }
   }
 
-  @Test
+  @Test(enabled = false)
   public void testBadRestURI()
   {
     final EchoService client = getEchoClient(_client, URI.create("/unknown-service"));
