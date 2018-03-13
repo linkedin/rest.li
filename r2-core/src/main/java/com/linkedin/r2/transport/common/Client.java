@@ -123,6 +123,11 @@ public interface Client
    * This metadata could be the data returned from the server by making an HTTP OPTIONS request to it, metadata about
    * the {@code uri} stored in a static config file, metadata about the {@code uri} stored in a key-value store etc.
    *
+   * @implNote We declare the default implementation to be backward compatible with
+   *            classes that didn't implement this method yet. Note that at least one
+   *            of the two implementation of getMetadata (async
+   *            or sync) should be implemented
+   *
    * THE MAP RETURNED FROM THIS METHOD MUST NOT BE NULL!
    *
    * The callback must be guaranteed to return after a certain time
@@ -130,8 +135,25 @@ public interface Client
    * @param uri the URI to get metadata for
    * @return metadata for the URI
    */
-  void getMetadata(URI uri, Callback<Map<String, Object>> callback);
+  default void getMetadata(URI uri, Callback<Map<String, Object>> callback)
+  {
+    callback.onSuccess(getMetadata(uri));
+  }
 
+  // ################## Methods to deprecate Section ##################
+
+  /**
+   * This method is deprecated but kept for backward compatibility.
+   * We need a default implementation since every Client should implement the
+   * asynchronous version of this to fallback (@link {@link #getMetadata(URI, Callback)} )})
+   * <p>
+   * This method will be removed once all the use cases are moved to the async version
+   *
+   * @implNote The default implementation allows to fallback on the async implementation and therefore delete the
+   * the implementation of this method from inheriting classes
+   *
+   * @deprecated use #getMetadata(uri, callback) instead
+   */
   @Deprecated
   default Map<String, Object> getMetadata(URI uri){
     FutureCallback<Map<String, Object>> callback = new FutureCallback<>();
