@@ -19,6 +19,9 @@ Enable setting default values for custom type parameters.
 (RB=1236289)
 Set proper default for HttpServerBuilder class
 
+(RB=1246492)
+Add DistrbutionNonDiscreteRing for distribution-based routing
+
 20.0.4
 ------
 (RB=1223876)

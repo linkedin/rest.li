@@ -390,4 +390,9 @@ public class ConsistentHashRing<T> implements Ring<T>
   {
     return _points == null ? 1 : _points.hashCode();
   }
+
+  @Override
+  public boolean isStickyRoutingCapable() {
+    return true;
+  }
 }

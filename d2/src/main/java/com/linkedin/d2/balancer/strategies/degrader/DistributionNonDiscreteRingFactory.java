@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2012 LinkedIn Corp.
+   Copyright (c) 2018 LinkedIn Corp.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -14,13 +14,16 @@
    limitations under the License.
 */
 
-package com.linkedin.d2.balancer.util.hashing;
+package com.linkedin.d2.balancer.strategies.degrader;
 
-import java.util.Iterator;
+import com.linkedin.d2.balancer.util.hashing.DistributionNonDiscreteRing;
+import com.linkedin.d2.balancer.util.hashing.Ring;
+import java.util.Map;
 
-public interface Ring<T>
-{
-  T get(int key);
-  Iterator<T> getIterator(int key);
-  boolean isStickyRoutingCapable();
+
+public class DistributionNonDiscreteRingFactory<T> implements RingFactory<T> {
+  @Override
+  public Ring<T> createRing(Map<T, Integer> points) {
+    return new DistributionNonDiscreteRing<>(points);
+  }
 }
