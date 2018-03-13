@@ -1,6 +1,11 @@
-20.0.6
+20.0.7
 ------
 
+
+20.0.6
+------
+(RB=1248284)
+Fix Client class to be backward compatible
 
 20.0.5
 ------
