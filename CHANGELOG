@@ -1,6 +1,7 @@
 20.0.7
 ------
-
+(RB=1246458)
+Allow configurable number of hash ring points per host to improve traffic balance
 
 20.0.6
 ------

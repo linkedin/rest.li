@@ -52,9 +52,13 @@
         {
           "name": "HashAlgorithm",
           "type" : "enum",
-          "symbols" : ["MODULO", "MD5"],
+          "symbols" : ["MODULO", "MD5", "XXHASH"],
           "doc": "The hashing algorithm used in HASH based partitioning. Supported algorithms are: MODULO or MD5. Not used for RANGE based partition.",
-          "symbolDocs": {"MODULO":"Mod the key with partitionCount to get the partitionKey", "MD5":"Hash the key and mod it with partitionCount to get the partitionKey"}
+          "symbolDocs": {
+            "MODULO": "Mod the key with partitionCount to get the partitionKey",
+            "MD5": "Hash the key and mod it with partitionCount to get the partitionKey",
+            "XXHASH": "Hash the key with xxhash and mod it with partitionCount to get the partitionKey"
+          }
         },
         {
           "name": "PartitionAccessorList",

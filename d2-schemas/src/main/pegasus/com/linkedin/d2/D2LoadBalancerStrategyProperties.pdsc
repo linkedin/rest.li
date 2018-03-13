@@ -126,11 +126,13 @@
         "type": "enum",
         "symbols": [
           "POINT_BASED",
-          "MULTI_PROBE"
+          "MULTI_PROBE",
+          "DISTRIBUTION_BASED"
         ],
         "symbolDocs": {
           "POINT_BASED": "Point-based consistent hash ring. The more points the ring has, the more balanced it is.",
-          "MULTI_PROBE": "Multi-probe consistent hash. The more probes to use, the more balanced the ring is."
+          "MULTI_PROBE": "Multi-probe consistent hash. The more probes to use, the more balanced the ring is.",
+          "DISTRIBUTION_BASED": "Use points of hosts to build a distribution and make randomized host selection. NOTE: this algorithm DOES NOT support sticky routing"
         }
       },
       "doc": "Consistent hash algorithm the d2 load balancer should use. Defaults to POINT_BASED.",
@@ -140,6 +142,12 @@
       "name": "numberOfProbes",
       "type": "int",
       "doc": "The number of probes used to look up a key in consistent hash ring. Defaults to 21.",
+      "optional": true
+    },
+    {
+      "name": "numberOfPointsPerHost",
+      "type": "int",
+      "doc": "The number of points on MultiProbe hash ring for each host. Defaults to 1.",
       "optional": true
     },
     {

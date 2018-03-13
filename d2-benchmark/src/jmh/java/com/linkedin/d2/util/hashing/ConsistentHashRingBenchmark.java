@@ -46,7 +46,7 @@ public class ConsistentHashRingBenchmark {
 
   @State(Scope.Benchmark)
   public static class MPCHash_10Hosts_11Probes_State {
-    Ring<URI> _ring = new MPConsistentHashRing<>(buildPointsMap(10, 100), 11);
+    Ring<URI> _ring = new MPConsistentHashRing<>(buildPointsMap(10, 100), 11, 1);
     Random _random = new Random();
   }
 
@@ -59,7 +59,7 @@ public class ConsistentHashRingBenchmark {
 
   @State(Scope.Benchmark)
   public static class MPCHash_10Hosts_21Probes_State {
-    Ring<URI> _ring = new MPConsistentHashRing<>(buildPointsMap(10, 100), 21);
+    Ring<URI> _ring = new MPConsistentHashRing<>(buildPointsMap(10, 100), 21, 1);
     Random _random = new Random();
   }
 
@@ -72,7 +72,7 @@ public class ConsistentHashRingBenchmark {
 
   @State(Scope.Benchmark)
   public static class MPCHash_100Hosts_11Probes_State {
-    Ring<URI> _ring = new MPConsistentHashRing<>(buildPointsMap(100, 100), 11);
+    Ring<URI> _ring = new MPConsistentHashRing<>(buildPointsMap(100, 100), 11, 1);
     Random _random = new Random();
   }
 
@@ -85,7 +85,7 @@ public class ConsistentHashRingBenchmark {
 
   @State(Scope.Benchmark)
   public static class MPCHash_100Hosts_21Probes_State {
-    Ring<URI> _ring = new MPConsistentHashRing<>(buildPointsMap(100, 100), 21);
+    Ring<URI> _ring = new MPConsistentHashRing<>(buildPointsMap(100, 100), 21, 1);
     Random _random = new Random();
   }
 

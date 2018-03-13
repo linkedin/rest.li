@@ -57,6 +57,7 @@ public class LoadBalancerStrategyPropertiesConverterTest
     final Double hashringPointCleanupRate = 0.2;
     final ConsistentHashAlgorithmEnum consistentHashAlgorithm = ConsistentHashAlgorithmEnum.MULTI_PROBE;
     final Integer numProbes = 1024;
+    final Integer numPointsPerHost = 1;
     final Double quarantineMaxPercent = 0.2;
     final String quarantineMethod = "OPTIONS:/test/path";
     final quarantineInfo quarantineInfo = new quarantineInfo()
@@ -86,6 +87,8 @@ public class LoadBalancerStrategyPropertiesConverterTest
     loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_HASHRING_POINT_CLEANUP_RATE, hashringPointCleanupRate.toString());
     loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_CONSISTENT_HASH_ALGORITHM, DegraderRingFactory.MULTI_PROBE_CONSISTENT_HASH);
     loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_CONSISTENT_HASH_NUM_PROBES, numProbes.toString());
+    loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_CONSISTENT_HASH_POINTS_PER_HOST, numPointsPerHost.toString());
+
     Map<String, Object> hashConfigMap = new HashMap<>();
     hashConfigMap.put(URIRegexHash.KEY_REGEXES, regexes.stream().collect(Collectors.toList()));
     hashConfigMap.put(URIRegexHash.KEY_WARN_ON_NO_MATCH, "false");
@@ -114,6 +117,7 @@ public class LoadBalancerStrategyPropertiesConverterTest
             .setHashRingPointCleanupRate(hashringPointCleanupRate)
             .setConsistentHashAlgorithm(consistentHashAlgorithm)
             .setNumberOfProbes(numProbes)
+            .setNumberOfPointsPerHost(numPointsPerHost)
             .setQuarantineCfg(quarantineInfo)
             .setErrorStatusRegex(errorStatusRegex)
             .setLowEmittingInterval(lowEmittingInterval)

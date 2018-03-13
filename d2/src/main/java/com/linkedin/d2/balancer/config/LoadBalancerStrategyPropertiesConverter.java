@@ -138,11 +138,17 @@ public class LoadBalancerStrategyPropertiesConverter
         case POINT_BASED:
           map.put(PropertyKeys.HTTP_LB_CONSISTENT_HASH_ALGORITHM, DegraderRingFactory.POINT_BASED_CONSISTENT_HASH);
           break;
+        case DISTRIBUTION_BASED:
+          map.put(PropertyKeys.HTTP_LB_CONSISTENT_HASH_ALGORITHM, DegraderRingFactory.DISTRIBUTION_NON_HASH);
       }
     }
     if (config.hasNumberOfProbes())
     {
       map.put(PropertyKeys.HTTP_LB_CONSISTENT_HASH_NUM_PROBES, config.getNumberOfProbes().toString());
+    }
+    if (config.hasNumberOfPointsPerHost())
+    {
+      map.put(PropertyKeys.HTTP_LB_CONSISTENT_HASH_POINTS_PER_HOST, config.getNumberOfPointsPerHost().toString());
     }
     if (config.hasQuarantineCfg())
     {
@@ -271,10 +277,18 @@ public class LoadBalancerStrategyPropertiesConverter
       {
         config.setConsistentHashAlgorithm(ConsistentHashAlgorithmEnum.MULTI_PROBE);
       }
+      else if (DegraderRingFactory.DISTRIBUTION_NON_HASH.equalsIgnoreCase(consistentHashAlgorithm))
+      {
+        config.setConsistentHashAlgorithm(ConsistentHashAlgorithmEnum.DISTRIBUTION_BASED);
+      }
     }
     if (properties.containsKey(PropertyKeys.HTTP_LB_CONSISTENT_HASH_NUM_PROBES))
     {
       config.setNumberOfProbes(coerce(properties.get(PropertyKeys.HTTP_LB_CONSISTENT_HASH_NUM_PROBES), Integer.class));
+    }
+    if (properties.containsKey(PropertyKeys.HTTP_LB_CONSISTENT_HASH_POINTS_PER_HOST))
+    {
+      config.setNumberOfPointsPerHost(coerce(properties.get(PropertyKeys.HTTP_LB_CONSISTENT_HASH_POINTS_PER_HOST), Integer.class));
     }
     if (properties.containsKey(PropertyKeys.HTTP_LB_QUARANTINE_MAX_PERCENT) ||
         properties.containsKey(PropertyKeys.HTTP_LB_QUARANTINE_METHOD))

@@ -47,6 +47,7 @@ import org.slf4j.LoggerFactory;
 public class MPConsistentHashRing<T> implements Ring<T>
 {
   public static final int DEFAULT_NUM_PROBES = 21;
+  public static final int DEFAULT_POINTS_PER_HOST = 1;
 
   private static final Logger LOG = LoggerFactory.getLogger(ConsistentHashRing.class);
   private static final LongHashFunction HASH_FUNCTION_0 = LongHashFunction.xx_r39(0xDEADBEEF);
@@ -63,7 +64,7 @@ public class MPConsistentHashRing<T> implements Ring<T>
    */
   public MPConsistentHashRing(Map<T, Integer> pointsMap)
   {
-    this(pointsMap, DEFAULT_NUM_PROBES);
+    this(pointsMap, DEFAULT_NUM_PROBES, DEFAULT_POINTS_PER_HOST);
   }
 
   /**
@@ -74,7 +75,7 @@ public class MPConsistentHashRing<T> implements Ring<T>
    * @param numProbes Number of probes need to perform. The higher the number is, the more balanced
    *                  the hash ring is.
    */
-  public MPConsistentHashRing(Map<T, Integer> pointsMap, int numProbes)
+  public MPConsistentHashRing(Map<T, Integer> pointsMap, int numProbes, int pointsPerHost)
   {
     _buckets = new ArrayList<>(pointsMap.size());
     for (Map.Entry<T, Integer> entry : pointsMap.entrySet())
@@ -85,6 +86,13 @@ public class MPConsistentHashRing<T> implements Ring<T>
         byte[] bytesToHash = entry.getKey().toString().getBytes(UTF8);
         long hash = HASH_FUNCTION_0.hashBytes(bytesToHash) & MASK;
         _buckets.add(new Bucket(entry.getKey(), hash, entry.getValue()));
+
+        long hashOfHash = hash;
+        int duplicate = pointsPerHost - 1;
+        while (--duplicate > 0) {
+          hashOfHash = HASH_FUNCTION_0.hashLong(hashOfHash) & MASK;
+          _buckets.add(new Bucket(entry.getKey(), hashOfHash, entry.getValue()));
+        }
       }
     }
     _numProbes = numProbes;

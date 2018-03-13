@@ -62,6 +62,9 @@ public class PartitionPropertiesConverter
           case MD5:
             algorithm = HashBasedPartitionProperties.HashAlgorithm.MD5;
             break;
+          case XXHASH:
+            algorithm = HashBasedPartitionProperties.HashAlgorithm.XXHASH;
+            break;
           default:
             throw new IllegalArgumentException("Unsupported hash algorithm: " +
                 config.getPartitionTypeSpecificData().getHashAlgorithm());

@@ -184,9 +184,9 @@ public class TestAllPartitionsRequestBuilder extends RestLiIntegrationTest
     return new Object[][]
       {
         { RestliRequestOptions.DEFAULT_OPTIONS, new PointBasedConsistentHashRingFactory<>(new DegraderLoadBalancerStrategyConfig(5000)) },
-        { RestliRequestOptions.DEFAULT_OPTIONS, new MPConsistentHashRingFactory<>(21) },
+        { RestliRequestOptions.DEFAULT_OPTIONS, new MPConsistentHashRingFactory<>(21, 1) },
         { TestConstants.FORCE_USE_NEXT_OPTIONS, new PointBasedConsistentHashRingFactory<>(new DegraderLoadBalancerStrategyConfig(5000)) },
-        { TestConstants.FORCE_USE_NEXT_OPTIONS, new MPConsistentHashRingFactory<>(21) }
+        { TestConstants.FORCE_USE_NEXT_OPTIONS, new MPConsistentHashRingFactory<>(21, 1) }
       };
   }
 }

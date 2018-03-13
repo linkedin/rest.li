@@ -95,7 +95,7 @@ public class ConsistentHashKeyMapperTest
     return new Object[][]
         {
             {new PointBasedConsistentHashRingFactory<>(new DegraderLoadBalancerStrategyConfig(5000))},
-            {new MPConsistentHashRingFactory<>(21)}
+            {new MPConsistentHashRingFactory<>(21, 1)}
         };
   }
 

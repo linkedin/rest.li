@@ -44,7 +44,7 @@ public class DegraderRingFactory<T> implements RingFactory<T>
     }
     else if (MULTI_PROBE_CONSISTENT_HASH.equalsIgnoreCase(consistentHashAlgorithm))
     {
-      _ringFactory = new MPConsistentHashRingFactory<>(config.getNumProbes());
+      _ringFactory = new MPConsistentHashRingFactory<>(config.getNumProbes(), config.getPointsPerHost());
     }
     else if (DISTRIBUTION_NON_HASH.equalsIgnoreCase(consistentHashAlgorithm)) {
       _ringFactory = new DistributionNonDiscreteRingFactory<>();

@@ -74,6 +74,7 @@ public class DegraderLoadBalancerStrategyConfig
 
   private final String _consistentHashAlgorithm;
   private final int _numProbes;
+  private final int _pointsPerHost;
 
   // The servicePath that is used to construct the URI for quarantine probing
   private final String _servicePath;
@@ -118,6 +119,7 @@ public class DegraderLoadBalancerStrategyConfig
   public static final double DEFAULT_HASHRING_POINT_CLEANUP_RATE = 0.20;
 
   public static final int DEFAULT_NUM_PROBES = MPConsistentHashRing.DEFAULT_NUM_PROBES;
+  public static final int DEFAULT_POINTS_PER_HOST = MPConsistentHashRing.DEFAULT_POINTS_PER_HOST;
 
   public static final double DEFAULT_QUARANTINE_MAXPERCENT = 0.0;  // 0 means disable quarantine
   public static final long DEFAULT_QUARANTINE_REENTRY_TIME = 30000;  // Milliseconds
@@ -140,7 +142,7 @@ public class DegraderLoadBalancerStrategyConfig
          DEFAULT_CLUSTER_MIN_CALL_COUNT_HIGH_WATER_MARK,
          DEFAULT_CLUSTER_MIN_CALL_COUNT_LOW_WATER_MARK,
          DEFAULT_HASHRING_POINT_CLEANUP_RATE, null,
-         DEFAULT_NUM_PROBES, null,
+         DEFAULT_NUM_PROBES, DEFAULT_POINTS_PER_HOST, null,
          DEFAULT_QUARANTINE_MAXPERCENT,
          null, null, DEFAULT_QUARANTINE_METHOD, null, DegraderImpl.DEFAULT_LOW_LATENCY,
          null, DEFAULT_LOW_EVENT_EMITTING_INTERVAL, DEFAULT_HIGH_EVENT_EMITTING_INTERVAL, DEFAULT_CLUSTER_NAME);
@@ -165,6 +167,7 @@ public class DegraderLoadBalancerStrategyConfig
          config.getHashRingPointCleanUpRate(),
          config.getConsistentHashAlgorithm(),
          config.getNumProbes(),
+         config.getPointsPerHost(),
          config.getServicePath(),
          config.getQuarantineMaxPercent(),
          config.getExecutorService(),
@@ -195,6 +198,7 @@ public class DegraderLoadBalancerStrategyConfig
                                             double hashRingPointCleanUpRate,
                                             String consistentHashAlgorithm,
                                             int numProbes,
+                                            int pointsPerHost,
                                             String path,
                                             double quarantineMaxPercent,
                                             ScheduledExecutorService executorService,
@@ -224,6 +228,7 @@ public class DegraderLoadBalancerStrategyConfig
     _hashRingPointCleanUpRate = hashRingPointCleanUpRate;
     _consistentHashAlgorithm = consistentHashAlgorithm;
     _numProbes = numProbes;
+    _pointsPerHost = pointsPerHost;
     _servicePath = path;
     _quarantineMaxPercent = quarantineMaxPercent;
     _executorService = executorService;
@@ -319,6 +324,9 @@ public class DegraderLoadBalancerStrategyConfig
     Integer numProbes = MapUtil.getWithDefault(map, PropertyKeys.HTTP_LB_CONSISTENT_HASH_NUM_PROBES,
         DEFAULT_NUM_PROBES);
 
+    Integer pointsPerHost =
+        MapUtil.getWithDefault(map, PropertyKeys.HTTP_LB_CONSISTENT_HASH_POINTS_PER_HOST, DEFAULT_POINTS_PER_HOST);
+
     String servicePath = MapUtil.getWithDefault(map, PropertyKeys.PATH, null, String.class);
 
     Double quarantineMaxPercent = MapUtil.getWithDefault(map, PropertyKeys.HTTP_LB_QUARANTINE_MAX_PERCENT,
@@ -379,7 +387,7 @@ public class DegraderLoadBalancerStrategyConfig
         clock, initialRecoveryLevel, ringRampFactor, highWaterMark, lowWaterMark,
         globalStepUp, globalStepDown, minClusterCallCountHighWaterMark,
         minClusterCallCountLowWaterMark, hashRingPointCleanUpRate,
-        consistentHashAlgorithm, numProbes,
+        consistentHashAlgorithm, numProbes, pointsPerHost,
         servicePath, quarantineMaxPercent,
         overrideExecutorService != null ? overrideExecutorService : executorService,
         healthCheckOperations, healthCheckMethod, healthCheckPath, quarantineLatency,
@@ -475,6 +483,11 @@ public class DegraderLoadBalancerStrategyConfig
   public int getNumProbes()
   {
     return _numProbes;
+  }
+
+  public int getPointsPerHost()
+  {
+    return _pointsPerHost;
   }
 
   public String getServicePath()

@@ -49,7 +49,7 @@ public class DegraderLoadBalancerStateTest
     final DegraderLoadBalancerState subject
         = new DegraderLoadBalancerStrategyV3
             (new DegraderLoadBalancerStrategyConfig(5000, true, 1, null, Collections.<String, Object>emptyMap(),
-                                                    clock, 1, 1, 1, 1, 1, 1, 1, 1, 0.2, null, 21, null,
+                                                    clock, 1, 1, 1, 1, 1, 1, 1, 1, 0.2, null, 21, 1, null,
                                                     0.1, null, null, null, null, 100, null, 0, 0, "Unknown"),
              SERVICE_NAME, null, DEGRADER_STATE_LISTENER_FACTORIES).getState();
     Thread getPartition1 = new Thread()

@@ -29,15 +29,17 @@ import java.util.Map;
 public class MPConsistentHashRingFactory<T> implements RingFactory<T>
 {
   private final int _numProbes;
+  private final int _pointsPerHost;
 
-  public MPConsistentHashRingFactory(int numProbes)
+  public MPConsistentHashRingFactory(int numProbes, int pointsPerHost)
   {
     _numProbes = numProbes;
+    _pointsPerHost = pointsPerHost;
   }
 
   @Override
   public Ring<T> createRing(Map<T, Integer> points)
   {
-    return new MPConsistentHashRing<>(points, _numProbes);
+    return new MPConsistentHashRing<>(points, _numProbes, _pointsPerHost);
   }
 }
