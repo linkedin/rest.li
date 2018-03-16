@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
@@ -56,6 +57,7 @@ public class MPConsistentHashRing<T> implements Ring<T>
   private static final long MASK = 0x00000000FFFFFFFFL;
 
   private final List<Bucket> _buckets;
+  private final List<T> _hosts;
   private final LongHashFunction[] _hashFunctions;
   private final int _numProbes;
 
@@ -78,6 +80,7 @@ public class MPConsistentHashRing<T> implements Ring<T>
   public MPConsistentHashRing(Map<T, Integer> pointsMap, int numProbes, int pointsPerHost)
   {
     _buckets = new ArrayList<>(pointsMap.size());
+    _hosts = new ArrayList<>(pointsMap.size());
     for (Map.Entry<T, Integer> entry : pointsMap.entrySet())
     {
       // ignore items whose point is equal to zero
@@ -86,10 +89,11 @@ public class MPConsistentHashRing<T> implements Ring<T>
         byte[] bytesToHash = entry.getKey().toString().getBytes(UTF8);
         long hash = HASH_FUNCTION_0.hashBytes(bytesToHash) & MASK;
         _buckets.add(new Bucket(entry.getKey(), hash, entry.getValue()));
+        _hosts.add(entry.getKey());
 
         long hashOfHash = hash;
         int duplicate = pointsPerHost - 1;
-        while (--duplicate > 0) {
+        while (duplicate-- > 0) {
           hashOfHash = HASH_FUNCTION_0.hashLong(hashOfHash) & MASK;
           _buckets.add(new Bucket(entry.getKey(), hashOfHash, entry.getValue()));
         }
@@ -119,6 +123,13 @@ public class MPConsistentHashRing<T> implements Ring<T>
   @Override
   public Iterator<T> getIterator(int key)
   {
+    return new QuasiMPConsistentHashRingIterator(key, _hosts);
+  }
+
+
+  public Iterator<T> getOrderedIterator(int key)
+  {
+    //Return an iterator that will return the hosts in ranked order based on their points.
     return new Iterator<T>()
     {
       private final Set<T> _iterated = new HashSet<>();
@@ -126,7 +137,7 @@ public class MPConsistentHashRing<T> implements Ring<T>
       @Override
       public boolean hasNext()
       {
-        return _iterated.size() < _buckets.size();
+        return _iterated.size() < _hosts.size();
       }
 
       @Override
@@ -143,7 +154,6 @@ public class MPConsistentHashRing<T> implements Ring<T>
         return item;
       }
     };
-
   }
 
   private int getIndex(int key)
@@ -218,6 +228,35 @@ public class MPConsistentHashRing<T> implements Ring<T>
     public String toString()
     {
       return "Bucket [_hash=" + _hash + ", _t=" + _t + ", _points=" + _points + "]";
+    }
+  }
+
+  /**
+   * Other than returning the most wanted host when called for the FIRST time,
+   * this iterator DOES NOT follow the ranking based on the points of the host.
+   * This is a performance optimization based on use cases.
+   */
+  private class QuasiMPConsistentHashRingIterator implements Iterator<T> {
+
+    private final List<T> _rankedList;
+    private final Iterator<T> _rankedListIter;
+
+    public QuasiMPConsistentHashRingIterator(int startKey, List<T> hosts) {
+      _rankedList = new ArrayList<T>();
+      _rankedList.addAll(hosts);
+      Collections.shuffle(_rankedList);// DOES not guarantee the ranking order of hosts after the first one.
+      _rankedList.add(0, get(startKey));
+      _rankedListIter = _rankedList.listIterator();
+    }
+
+    @Override
+    public boolean hasNext() {
+      return _rankedListIter.hasNext();
+    }
+
+    @Override
+    public T next() {
+      return _rankedListIter.next();
     }
   }
 }
