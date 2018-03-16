@@ -26,6 +26,7 @@ import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.transport.common.bridge.common.RequestWithCallback;
+import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
 import com.linkedin.r2.transport.http.client.AbstractJmxManager;
 import com.linkedin.r2.transport.http.client.AsyncPool;
@@ -34,6 +35,7 @@ import com.linkedin.r2.transport.http.client.TimeoutTransportCallback;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManager;
 import com.linkedin.r2.transport.http.client.common.ssl.SslSessionValidator;
 import com.linkedin.r2.transport.http.client.stream.AbstractNettyStreamClient;
+import com.linkedin.r2.transport.http.client.stream.SslHandshakeTimingHandler;
 import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
 import com.linkedin.r2.util.Cancellable;
 import io.netty.channel.Channel;
@@ -165,8 +167,10 @@ public class Http2NettyStreamClient extends AbstractNettyStreamClient
       TimeoutAsyncPoolHandle<Channel> handle = new TimeoutAsyncPoolHandle<>(
         _pool, _scheduler, _requestTimeout, TimeUnit.MILLISECONDS, channel);
 
-      RequestWithCallback<Request, TimeoutTransportCallback<StreamResponse>, TimeoutAsyncPoolHandle<Channel>> request =
-        new RequestWithCallback<>(_request, _callback, handle);
+      TransportCallback<StreamResponse> sslTimingCallback = SslHandshakeTimingHandler.getSslTimingCallback(channel, _requestContext, _callback);
+
+      RequestWithCallback<Request, TransportCallback<StreamResponse>, TimeoutAsyncPoolHandle<Channel>> request =
+        new RequestWithCallback<>(_request, sslTimingCallback, handle);
 
       // here we want the exception in outbound operations to be passed back through pipeline so that
       // the user callback would be invoked with the exception and the channel can be put back into the pool

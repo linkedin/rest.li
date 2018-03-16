@@ -33,6 +33,8 @@ import com.linkedin.d2.balancer.util.healthcheck.HealthCheckClientBuilder;
 import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
+import com.linkedin.r2.message.timing.TimingContextUtil;
+import com.linkedin.r2.message.timing.TimingKey;
 import com.linkedin.util.degrader.Degrader;
 import com.linkedin.util.degrader.DegraderControl;
 import com.linkedin.util.degrader.DegraderImpl;
@@ -77,6 +79,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
   private static final double SLOW_START_THRESHOLD = 0.0;
   private static final double FAST_RECOVERY_THRESHOLD = 1.0;
   private static final double FAST_RECOVERY_MAX_DROPRATE = 0.5;
+  private static final TimingKey TIMING_KEY = TimingKey.registerNewKey("d2_update_partition");
 
   private boolean                                     _updateEnabled;
   private volatile DegraderLoadBalancerStrategyConfig _config;
@@ -124,7 +127,10 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     }
 
     // only one thread will be allowed to enter updatePartitionState for any partition
+    TimingContextUtil.markTiming(requestContext, TIMING_KEY);
     checkUpdatePartitionState(clusterGenerationId, partitionId, trackerClients);
+    TimingContextUtil.markTiming(requestContext, TIMING_KEY);
+
     Ring<URI> ring =  _state.getRing(partitionId);
 
     URI targetHostUri = KeyMapper.TargetHostHints.getRequestContextTargetHost(requestContext);

@@ -29,6 +29,8 @@ import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.Response;
+import com.linkedin.r2.message.timing.TimingContextUtil;
+import com.linkedin.r2.message.timing.TimingKey;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.stream.StreamRequest;
@@ -53,6 +55,8 @@ import static com.linkedin.d2.discovery.util.LogUtil.warn;
 public class DynamicClient extends AbstractClient implements D2Client
 {
   private static final Logger _log = LoggerFactory.getLogger(DynamicClient.class);
+
+  private static final TimingKey TIMING_KEY = TimingKey.registerNewKey("d2-total");
 
   private final LoadBalancer  _balancer;
   private final Facilities    _facilities;
@@ -79,8 +83,9 @@ public class DynamicClient extends AbstractClient implements D2Client
     if (!_restOverStream)
     {
       Callback<RestResponse> loggerCallback = decorateLoggingCallback(callback, request, "rest");
+      TimingContextUtil.markTiming(requestContext, TIMING_KEY);
       _balancer.getClient(request, requestContext,
-        getClientCallback(request, false, callback, client -> client.restRequest(request, requestContext, loggerCallback))
+        getClientCallback(request, requestContext, false, callback, client -> client.restRequest(request, requestContext, loggerCallback))
       );
     }
     else
@@ -98,18 +103,19 @@ public class DynamicClient extends AbstractClient implements D2Client
     Callback<StreamResponse> loggerCallback = decorateLoggingCallback(callback, request, "stream");
 
     _balancer.getClient(request, requestContext,
-      getClientCallback(request, true, callback, client -> client.streamRequest(request, requestContext, loggerCallback))
+      getClientCallback(request, requestContext, true, callback, client -> client.streamRequest(request, requestContext, loggerCallback))
     );
 
   }
 
-  private Callback<TransportClient> getClientCallback(Request request, final boolean restOverStream, Callback<? extends Response> callback, SuccessCallback<Client> clientSuccessCallback)
+  private Callback<TransportClient> getClientCallback(Request request, RequestContext requestContext, final boolean restOverStream, Callback<? extends Response> callback, SuccessCallback<Client> clientSuccessCallback)
   {
     return new Callback<TransportClient>()
     {
       @Override
       public void onError(Throwable e)
       {
+        TimingContextUtil.markTiming(requestContext, TIMING_KEY);
         callback.onError(e);
 
         warn(_log, "unable to find service for: ", extractLogInfo(request));
@@ -118,6 +124,7 @@ public class DynamicClient extends AbstractClient implements D2Client
       @Override
       public void onSuccess(TransportClient client)
       {
+        TimingContextUtil.markTiming(requestContext, TIMING_KEY);
         if (client != null)
         {
           clientSuccessCallback.onSuccess(new TransportClientAdapter(client, restOverStream));

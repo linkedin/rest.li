@@ -23,6 +23,8 @@ import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.Response;
+import com.linkedin.r2.message.timing.TimingContextUtil;
+import com.linkedin.r2.message.timing.TimingKey;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.stream.StreamRequest;
@@ -70,6 +72,7 @@ public abstract class AbstractNettyClient<Req extends Request, Res extends Respo
   private static final Logger LOG = LoggerFactory.getLogger(AbstractNettyClient.class);
   private static final int HTTP_DEFAULT_PORT = 80;
   private static final int HTTPS_DEFAULT_PORT = 443;
+  private static final TimingKey TIMING_KEY = TimingKey.registerNewKey("dns_resolution");
 
   private final ChannelPoolManager _channelPoolManager;
   private final ChannelPoolManager _sslChannelPoolManager;
@@ -220,7 +223,9 @@ public abstract class AbstractNettyClient<Req extends Request, Res extends Respo
     final SocketAddress address;
     try
     {
+      TimingContextUtil.markTiming(requestContext, TIMING_KEY);
       address = resolveAddress(request, requestContext);
+      TimingContextUtil.markTiming(requestContext, TIMING_KEY);
     }
     catch (UnknownHostException | UnknownSchemeException e)
     {

@@ -54,28 +54,38 @@ import java.util.Map;
   public FilterChain addFirstRest(RestFilter filter)
   {
     notNull(filter, "filter");
-    return new FilterChainImpl(doAddFirst(_restFilters, filter), _streamFilters);
+    return new FilterChainImpl(doAddFirst(_restFilters, decorateRestFilter(filter)), _streamFilters);
   }
 
   @Override
   public FilterChain addLastRest(RestFilter filter)
   {
     notNull(filter, "filter");
-    return new FilterChainImpl(doAddLast(_restFilters, filter), _streamFilters);
+    return new FilterChainImpl(doAddLast(_restFilters, decorateRestFilter(filter)), _streamFilters);
   }
 
   @Override
   public FilterChain addFirst(StreamFilter filter)
   {
     notNull(filter, "filter");
-    return new FilterChainImpl(_restFilters, doAddFirst(_streamFilters, filter));
+    return new FilterChainImpl(_restFilters, doAddFirst(_streamFilters, decorateStreamFilter(filter)));
   }
 
   @Override
   public FilterChain addLast(StreamFilter filter)
   {
     notNull(filter, "filter");
-    return new FilterChainImpl(_restFilters, doAddLast(_streamFilters, filter));
+    return new FilterChainImpl(_restFilters, doAddLast(_streamFilters, decorateStreamFilter(filter)));
+  }
+
+  private RestFilter decorateRestFilter(RestFilter filter)
+  {
+    return new TimedRestFilter(filter);
+  }
+
+  private StreamFilter decorateStreamFilter(StreamFilter filter)
+  {
+    return new TimedStreamFilter(filter);
   }
 
   @Override

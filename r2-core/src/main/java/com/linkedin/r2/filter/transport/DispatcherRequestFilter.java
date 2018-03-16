@@ -31,9 +31,7 @@ import com.linkedin.r2.message.stream.entitystream.BaseConnector;
 import com.linkedin.r2.message.stream.entitystream.EntityStream;
 import com.linkedin.r2.message.stream.entitystream.EntityStreams;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
-import com.linkedin.r2.transport.common.bridge.common.TransportResponse;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -79,20 +77,15 @@ public class DispatcherRequestFilter implements StreamFilter, RestFilter
       final RequestContext requestContext,
       final NextFilter<REQ, RES> nextFilter)
   {
-    return new TransportCallback<RES>()
-    {
-      @Override
-      public void onResponse(TransportResponse<RES> res)
+    return res -> {
+      final Map<String, String> wireAttrs = res.getWireAttributes();
+      if (res.hasError())
       {
-        final Map<String, String> wireAttrs = res.getWireAttributes();
-        if (res.hasError())
-        {
-          nextFilter.onError(res.getError(), requestContext, wireAttrs);
-        }
-        else
-        {
-          nextFilter.onResponse(res.getResponse(), requestContext, wireAttrs);
-        }
+        nextFilter.onError(res.getError(), requestContext, wireAttrs);
+      }
+      else
+      {
+        nextFilter.onResponse(res.getResponse(), requestContext, wireAttrs);
       }
     };
   }
@@ -127,22 +120,17 @@ public class DispatcherRequestFilter implements StreamFilter, RestFilter
           final NextFilter<REQ, RES> nextFilter,
           final AtomicBoolean responded)
   {
-    return new TransportCallback<RES>()
-    {
-      @Override
-      public void onResponse(TransportResponse<RES> res)
+    return res -> {
+      if (responded.compareAndSet(false, true))
       {
-        if (responded.compareAndSet(false, true))
+        final Map<String, String> wireAttrs = res.getWireAttributes();
+        if (res.hasError())
         {
-          final Map<String, String> wireAttrs = res.getWireAttributes();
-          if (res.hasError())
-          {
-            nextFilter.onError(res.getError(), requestContext, wireAttrs);
-          }
-          else
-          {
-            nextFilter.onResponse(res.getResponse(), requestContext, wireAttrs);
-          }
+          nextFilter.onError(res.getError(), requestContext, wireAttrs);
+        }
+        else
+        {
+          nextFilter.onResponse(res.getResponse(), requestContext, wireAttrs);
         }
       }
     };

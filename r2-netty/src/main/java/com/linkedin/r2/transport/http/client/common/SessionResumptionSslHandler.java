@@ -16,6 +16,7 @@
 
 package com.linkedin.r2.transport.http.client.common;
 
+import com.linkedin.r2.transport.http.client.stream.SslHandshakeTimingHandler;
 import com.linkedin.r2.transport.http.util.SslHandlerUtil;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOutboundHandlerAdapter;
@@ -25,6 +26,8 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
+
+import static com.linkedin.r2.transport.http.client.stream.SslHandshakeTimingHandler.SSL_HANDSHAKE_TIMING_HANDLER;
 
 
 /**
@@ -62,6 +65,7 @@ public class SessionResumptionSslHandler extends ChannelOutboundHandlerAdapter
       address.getHostName(), address.getPort());
 
     ctx.pipeline().addAfter(PIPELINE_SESSION_RESUMPTION_HANDLER, SslHandlerUtil.PIPELINE_SSL_HANDLER, sslHandler);
+    ctx.pipeline().addAfter(SslHandlerUtil.PIPELINE_SSL_HANDLER, SSL_HANDSHAKE_TIMING_HANDLER, new SslHandshakeTimingHandler(sslHandler.handshakeFuture()));
 
     // the certificate handler should be run only after the handshake is completed (and therefore after the ssl handler)
     ctx.pipeline().addAfter(SslHandlerUtil.PIPELINE_SSL_HANDLER, CertificateHandler.PIPELINE_CERTIFICATE_HANDLER, new CertificateHandler(sslHandler));

@@ -35,10 +35,10 @@ import org.slf4j.LoggerFactory;
 
 
 /**
-* @author Chris Pettitt
-* @author Zhenkai Zhu
-* @version $Revision$
-*/
+ * @author Chris Pettitt
+ * @author Zhenkai Zhu
+ * @version $Revision$
+ */
 /* package private */ abstract class FilterChainIterator<F, REQ extends Request, RES extends Response>
         implements NextFilter<REQ, RES>
 {

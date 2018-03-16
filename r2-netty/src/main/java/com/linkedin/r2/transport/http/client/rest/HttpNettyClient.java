@@ -34,6 +34,7 @@ import com.linkedin.r2.transport.http.client.common.CertificateHandler;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolFactory;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManager;
 import com.linkedin.r2.transport.http.client.common.ssl.SslSessionValidator;
+import com.linkedin.r2.transport.http.client.stream.SslHandshakeTimingHandler;
 import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
 import com.linkedin.r2.util.Cancellable;
 import io.netty.channel.Channel;
@@ -108,7 +109,7 @@ public class HttpNettyClient extends AbstractNettyClient<RestRequest, RestRespon
 
   @Override
   protected void doWriteRequest(RestRequest request, RequestContext requestContext, SocketAddress address,
-                                Map<String, String> wireAttrs, TimeoutTransportCallback<RestResponse> callback,
+                                Map<String, String> wireAttrs, final TimeoutTransportCallback<RestResponse> callback,
                                 long requestTimeout) {
 
     final RestRequest newRequest = new RestRequestBuilder(request)
@@ -145,8 +146,10 @@ public class HttpNettyClient extends AbstractNettyClient<RestRequest, RestRespon
           }
         });
 
+        TransportCallback<RestResponse> sslTimingCallback = SslHandshakeTimingHandler.getSslTimingCallback(channel, requestContext, callback);
+
         // This handler invokes the callback with the response once it arrives.
-        channel.attr(RAPResponseHandler.CALLBACK_ATTR_KEY).set(callback);
+        channel.attr(RAPResponseHandler.CALLBACK_ATTR_KEY).set(sslTimingCallback);
 
         // Set the session validator requested by the user
         SslSessionValidator sslSessionValidator = (SslSessionValidator) requestContext.getLocalAttr(R2Constants.REQUESTED_SSL_SESSION_VALIDATOR);
@@ -160,7 +163,7 @@ public class HttpNettyClient extends AbstractNettyClient<RestRequest, RestRespon
           // all the channels for pending requests before we set the callback as the channel
           // attachment.  The TimeoutTransportCallback ensures the user callback in never
           // invoked more than once, so it is safe to invoke it unconditionally.
-          errorResponse(callback,
+          errorResponse(sslTimingCallback,
             new TimeoutException("Operation did not complete before shutdown"));
 
           // The channel is usually release in two places: timeout or in the netty pipeline.

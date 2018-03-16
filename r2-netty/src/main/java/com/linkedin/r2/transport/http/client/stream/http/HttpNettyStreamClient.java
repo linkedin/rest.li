@@ -27,6 +27,7 @@ import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.stream.StreamResponse;
+import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
 import com.linkedin.r2.transport.http.client.AbstractJmxManager;
 import com.linkedin.r2.transport.http.client.AsyncPool;
@@ -36,6 +37,7 @@ import com.linkedin.r2.transport.http.client.common.ChannelPoolFactory;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManager;
 import com.linkedin.r2.transport.http.client.common.ssl.SslSessionValidator;
 import com.linkedin.r2.transport.http.client.stream.AbstractNettyStreamClient;
+import com.linkedin.r2.transport.http.client.stream.SslHandshakeTimingHandler;
 import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
 import com.linkedin.r2.util.Cancellable;
 import com.linkedin.r2.util.Timeout;
@@ -162,8 +164,10 @@ import java.util.concurrent.TimeoutException;
         }
       });
 
+      TransportCallback<StreamResponse> sslTimingCallback = SslHandshakeTimingHandler.getSslTimingCallback(channel, _requestContext, _callback);
+
       // This handler invokes the callback with the response once it arrives.
-      channel.attr(RAPStreamResponseHandler.CALLBACK_ATTR_KEY).set(_callback);
+      channel.attr(RAPStreamResponseHandler.CALLBACK_ATTR_KEY).set(sslTimingCallback);
       channel.attr(RAPStreamResponseDecoder.TIMEOUT_ATTR_KEY).set(streamingTimeout);
 
       // Set the session validator requested by the user

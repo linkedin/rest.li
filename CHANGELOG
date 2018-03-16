@@ -1,5 +1,11 @@
+20.0.15
+------
+
 20.0.14
 -------
+(RB=1206036)
+Add timings to d2 and r2 stages
+
 (RB=1259113)
 Updated Javadoc regarding concurrent use of PrettyPrinter in JacksonDataCodec.
 

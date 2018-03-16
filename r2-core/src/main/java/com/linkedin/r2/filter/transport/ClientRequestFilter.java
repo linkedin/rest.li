@@ -29,8 +29,6 @@ import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
-import com.linkedin.r2.transport.common.bridge.common.TransportResponse;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -40,7 +38,6 @@ import java.util.Map;
  * @author Chris Pettitt
  * @version $Revision$
  */
-
 public class ClientRequestFilter implements StreamFilter, RestFilter
 {
   private final TransportClient _client;
@@ -90,20 +87,15 @@ public class ClientRequestFilter implements StreamFilter, RestFilter
           final RequestContext requestContext,
           final NextFilter<REQ, RES> nextFilter)
   {
-    return new TransportCallback<RES>()
-    {
-      @Override
-      public void onResponse(TransportResponse<RES> res)
+    return res -> {
+      final Map<String, String> wireAttrs = new HashMap<String, String>(res.getWireAttributes());
+      if (res.hasError())
       {
-        final Map<String, String> wireAttrs = new HashMap<String, String>(res.getWireAttributes());
-        if (res.hasError())
-        {
-          nextFilter.onError(res.getError(), requestContext, wireAttrs);
-        }
-        else
-        {
-          nextFilter.onResponse(res.getResponse(), requestContext, wireAttrs);
-        }
+        nextFilter.onError(res.getError(), requestContext, wireAttrs);
+      }
+      else
+      {
+        nextFilter.onResponse(res.getResponse(), requestContext, wireAttrs);
       }
     };
   }
