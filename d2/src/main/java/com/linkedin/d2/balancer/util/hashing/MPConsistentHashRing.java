@@ -21,10 +21,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Random;
 import java.util.Set;
 import net.openhft.hashing.LongHashFunction;
 import org.slf4j.Logger;
@@ -240,12 +242,15 @@ public class MPConsistentHashRing<T> implements Ring<T>
 
     private final List<T> _rankedList;
     private final Iterator<T> _rankedListIter;
-
     public QuasiMPConsistentHashRingIterator(int startKey, List<T> hosts) {
-      _rankedList = new ArrayList<T>();
+      _rankedList = new LinkedList<>();
       _rankedList.addAll(hosts);
-      Collections.shuffle(_rankedList);// DOES not guarantee the ranking order of hosts after the first one.
-      _rankedList.add(0, get(startKey));
+      Collections.shuffle(_rankedList,
+          new Random(startKey));// DOES not guarantee the ranking order of hosts after the first one.
+
+      T mostWantedHost = get(startKey);
+      _rankedList.remove(mostWantedHost);
+      _rankedList.add(0, mostWantedHost);
       _rankedListIter = _rankedList.listIterator();
     }
 

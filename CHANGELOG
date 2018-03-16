@@ -3,6 +3,9 @@
 (RB=1253124)
 modified MPConsistentHashRing iterator
 
+(RB=1253858)
+updated tests due to changing behavior of MPConsistentHashRing iterator
+
 20.0.8
 ------
 (RB=1244383)

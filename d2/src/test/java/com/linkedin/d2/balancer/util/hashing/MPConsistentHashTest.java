@@ -127,7 +127,7 @@ public class MPConsistentHashTest
     pointsMap.put(URI.create("www.microsoft.com"), 15);
     MPConsistentHashRing<URI> hashRing = new MPConsistentHashRing<>(pointsMap);
     int key = new Random().nextInt();
-    Iterator<URI> iter = hashRing.getIterator(key);
+    Iterator<URI> iter = hashRing.getOrderedIterator(key);
 
     while (iter.hasNext()) {
       URI nextUri = iter.next();
@@ -136,7 +136,7 @@ public class MPConsistentHashTest
       pointsMap.remove(nextUri);
       hashRing = new MPConsistentHashRing<>(pointsMap);
     }
-    
+
     Assert.assertTrue(pointsMap.isEmpty());
   }
 

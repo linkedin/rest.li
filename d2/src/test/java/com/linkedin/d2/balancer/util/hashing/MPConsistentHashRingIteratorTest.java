@@ -62,8 +62,8 @@ public class MPConsistentHashRingIteratorTest {
       iterations++;
     }
 
-    //test iteration should equal to 1 + number of hosts so no duplicates
-    Assert.assertTrue(iterations == 101);
+    //test iteration should equal to number of hosts so no duplicates
+    Assert.assertTrue(iterations == 100);
 
     for (URI uri : pointsMap.keySet()) {
       Assert.assertTrue(iterResults.contains(uri));
