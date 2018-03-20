@@ -14,7 +14,7 @@
    limitations under the License.
 */
 
-package com.linkedin.r2.transport.http.client;
+package com.linkedin.r2.testutils.server;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;

@@ -18,7 +18,7 @@ package com.linkedin.r2.transport.http.client.stream.http2;
 
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
-import com.linkedin.r2.transport.http.client.HttpServerBuilder;
+import com.linkedin.r2.testutils.server.HttpServerBuilder;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManager;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerFactoryImpl;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerKey;

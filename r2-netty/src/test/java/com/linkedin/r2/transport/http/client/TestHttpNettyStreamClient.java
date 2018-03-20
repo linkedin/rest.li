@@ -38,6 +38,7 @@ import com.linkedin.r2.message.stream.entitystream.ByteStringWriter;
 import com.linkedin.r2.message.stream.entitystream.EntityStreams;
 import com.linkedin.r2.message.stream.entitystream.ReadHandle;
 import com.linkedin.r2.message.stream.entitystream.Reader;
+import com.linkedin.r2.testutils.server.HttpServerBuilder;
 import com.linkedin.r2.transport.common.bridge.client.TransportCallbackAdapter;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;

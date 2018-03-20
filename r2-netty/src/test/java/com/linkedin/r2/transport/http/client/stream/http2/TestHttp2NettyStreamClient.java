@@ -32,7 +32,7 @@ import com.linkedin.r2.message.stream.entitystream.Writer;
 import com.linkedin.r2.transport.common.bridge.common.FutureTransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponse;
 import com.linkedin.r2.transport.http.client.HttpClientBuilder;
-import com.linkedin.r2.transport.http.client.HttpServerBuilder;
+import com.linkedin.r2.testutils.server.HttpServerBuilder;
 import com.linkedin.test.util.ExceptionTestUtil;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.handler.codec.http.HttpHeaderNames;

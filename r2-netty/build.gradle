@@ -19,5 +19,5 @@ dependencies {
   testCompile externalDependency.servletApi
   testCompile externalDependency.testng
   testCompile project (':test-util')
-
+  testCompile project (':r2-testutils')
 }
