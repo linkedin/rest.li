@@ -153,6 +153,8 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
    */
   private final Map<String, Map<String, Object>> _clientServicesConfig;
 
+  private final SslSessionValidatorFactory _sslSessionValidatorFactory;
+
   /*
    * Concurrency considerations:
    *
@@ -200,8 +202,10 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
          sslParameters,
          isSSLEnabled,
          Collections.<String, Map<String, Object>>emptyMap(),
-         new PartitionAccessorRegistryImpl());
+         new PartitionAccessorRegistryImpl(),
+         validationStrings -> null);
   }
+
 
   public SimpleLoadBalancerState(ScheduledExecutorService executorService,
                                  PropertyEventBus<UriProperties> uriBus,
@@ -223,7 +227,8 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
          sslParameters,
          isSSLEnabled,
          Collections.<String, Map<String, Object>>emptyMap(),
-         new PartitionAccessorRegistryImpl());
+         new PartitionAccessorRegistryImpl(),
+         validationStrings -> null);
   }
 
   public SimpleLoadBalancerState(ScheduledExecutorService executorService,
@@ -236,7 +241,8 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
                                  SSLParameters sslParameters,
                                  boolean isSSLEnabled,
                                  Map<String, Map<String, Object>> clientServicesConfig,
-                                 PartitionAccessorRegistry partitionAccessorRegistry)
+                                 PartitionAccessorRegistry partitionAccessorRegistry,
+                                 SslSessionValidatorFactory sessionValidatorFactory)
   {
     _executor = executorService;
     _uriProperties =
@@ -278,6 +284,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     _sslParameters = sslParameters;
     _isSSLEnabled = isSSLEnabled;
     _clientServicesConfig = validateClientServicesConfig(clientServicesConfig);
+    _sslSessionValidatorFactory = sessionValidatorFactory;
   }
 
   /**
@@ -866,9 +873,12 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
 
         if (factory != null)
         {
+          final String clusterName = serviceProperties.getClusterName();
           transportClientProperties.put(HttpClientFactory.HTTP_SERVICE_NAME, serviceProperties.getServiceName());
-          transportClientProperties.put(HttpClientFactory.HTTP_POOL_STATS_NAME_PREFIX, serviceProperties.getClusterName());
-          TransportClient client = factory.getClient(transportClientProperties);
+          transportClientProperties.put(HttpClientFactory.HTTP_POOL_STATS_NAME_PREFIX, clusterName);
+          TransportClient client = _sslSessionValidatorFactory == null ? factory.getClient(transportClientProperties)
+              : new ClusterAwareTransportClient(clusterName, factory.getClient(transportClientProperties),
+                  getClusterInfo(), _sslSessionValidatorFactory);
           newTransportClients.put(scheme.toLowerCase(), client);
         }
         else

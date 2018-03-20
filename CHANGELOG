@@ -1,8 +1,13 @@
-21.0.4
+21.0.5
 -------
 
+
+21.0.4
+-------
 (RB=1294454)
 Adding session resumption and certificate checker for http2
+(RB=1260841)
+Add application Principals to cluster for server authentication
 
 21.0.3
 -------

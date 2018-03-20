@@ -82,7 +82,8 @@ public class LastSeenBalancerWithFacilitiesFactory implements LoadBalancerWithFa
     // create the simple load balancer
     SimpleLoadBalancerState state = new SimpleLoadBalancerState(
       config._executorService, uriBus, clusterBus, serviceBus, config.clientFactories, config.loadBalancerStrategyFactories,
-      config.sslContext, config.sslParameters, config.isSSLEnabled, config.clientServicesConfig, config.partitionAccessorRegistry);
+      config.sslContext, config.sslParameters, config.isSSLEnabled, config.clientServicesConfig, config.partitionAccessorRegistry,
+      config.sslSessionValidatorFactory);
     SimpleLoadBalancer simpleLoadBalancer = new SimpleLoadBalancer(state, config.lbWaitTimeout, config.lbWaitUnit, config._executorService);
 
     // add facilities

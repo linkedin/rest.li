@@ -17,6 +17,7 @@ package com.linkedin.d2.balancer;
 
 import com.linkedin.d2.backuprequests.BackupRequestsStrategyStatsConsumer;
 import com.linkedin.d2.balancer.event.EventEmitter;
+import com.linkedin.d2.balancer.simple.SslSessionValidatorFactory;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.util.WarmUpLoadBalancer;
@@ -80,6 +81,7 @@ public class D2ClientConfig
   Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories = Collections.emptyMap();
   boolean requestTimeoutHandlerEnabled = false;
   ZkConnectionDealer connectionDealer = null;
+  SslSessionValidatorFactory sslSessionValidatorFactory = null;
 
   private static final int DEAULT_RETRY_LIMIT = 3;
 
@@ -125,7 +127,8 @@ public class D2ClientConfig
                  boolean enableSaveUriDataOnDisk,
                  Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories,
                  boolean requestTimeoutHandlerEnabled,
-                 ZkConnectionDealer connectionDealer)
+                 ZkConnectionDealer connectionDealer,
+                 SslSessionValidatorFactory sslSessionValidatorFactory)
   {
     this.zkHosts = zkHosts;
     this.zkSessionTimeoutInMs = zkSessionTimeoutInMs;
@@ -166,5 +169,6 @@ public class D2ClientConfig
     this.loadBalancerStrategyFactories = loadBalancerStrategyFactories;
     this.requestTimeoutHandlerEnabled = requestTimeoutHandlerEnabled;
     this.connectionDealer = connectionDealer;
+    this.sslSessionValidatorFactory = sslSessionValidatorFactory;
   }
 }

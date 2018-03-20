@@ -28,6 +28,7 @@ public class ClusterProperties
   private final String                _clusterName;
   private final Map<String, String>   _properties;
   private final PartitionProperties   _partitionProperties;
+  private final List<String> _sslSessionValidationStrings;
 
   //deprecated because we are moving these properties down to ServiceProperties
   @Deprecated
@@ -66,6 +67,17 @@ public class ClusterProperties
                            Set<URI> banned,
                            PartitionProperties partitionProperties)
   {
+    this(clusterName, prioritizedSchemes, properties, banned, partitionProperties, Collections.emptyList());
+  }
+
+  public ClusterProperties(String clusterName,
+      List<String> prioritizedSchemes,
+      Map<String, String> properties,
+      Set<URI> banned,
+      PartitionProperties partitionProperties,
+      List<String> sslSessionValidationStrings)
+
+  {
     _clusterName = clusterName;
     _prioritizedSchemes =
         (prioritizedSchemes != null) ? Collections.unmodifiableList(prioritizedSchemes)
@@ -73,6 +85,8 @@ public class ClusterProperties
     _properties = (properties == null) ? Collections.<String,String>emptyMap() : Collections.unmodifiableMap(properties);
     _banned = Collections.unmodifiableSet(banned);
     _partitionProperties = partitionProperties;
+    _sslSessionValidationStrings = sslSessionValidationStrings == null ? Collections.emptyList() : Collections.unmodifiableList(
+        sslSessionValidationStrings);
   }
 
   public boolean isBanned(URI uri)
@@ -105,12 +119,18 @@ public class ClusterProperties
     return _partitionProperties;
   }
 
+  public List<String> getSslSessionValidationStrings()
+  {
+    return _sslSessionValidationStrings;
+  }
+
   @Override
   public String toString()
   {
     return "ClusterProperties [_clusterName=" + _clusterName + ", _prioritizedSchemes="
         + _prioritizedSchemes + ", _properties=" + _properties + ", _banned=" + _banned
-        + ", _partitionProperties=" + _partitionProperties + "]";
+        + ", _partitionProperties=" + _partitionProperties + ", _sslSessionValidationStrings=" + _sslSessionValidationStrings
+        + "]";
   }
 
   @Override
@@ -125,6 +145,7 @@ public class ClusterProperties
             + ((_prioritizedSchemes == null) ? 0 : _prioritizedSchemes.hashCode());
     result = prime * result + ((_properties == null) ? 0 : _properties.hashCode());
     result = prime * result + ((_partitionProperties == null) ? 0 : _partitionProperties.hashCode());
+    result = prime * result + ((_sslSessionValidationStrings == null) ? 0 : _sslSessionValidationStrings.hashCode());
     return result;
   }
 
@@ -138,44 +159,18 @@ public class ClusterProperties
     if (getClass() != obj.getClass())
       return false;
     ClusterProperties other = (ClusterProperties) obj;
-    if (_banned == null)
-    {
-      if (other._banned != null)
-        return false;
-    }
-    else if (!_banned.equals(other._banned))
+    if (!_banned.equals(other._banned))
       return false;
-    if (_clusterName == null)
-    {
-      if (other._clusterName != null)
-        return false;
-    }
-    else if (!_clusterName.equals(other._clusterName))
+    if (!_clusterName.equals(other._clusterName))
       return false;
-    if (_prioritizedSchemes == null)
-    {
-      if (other._prioritizedSchemes != null)
-        return false;
-    }
-    else if (!_prioritizedSchemes.equals(other._prioritizedSchemes))
+    if (!_prioritizedSchemes.equals(other._prioritizedSchemes))
       return false;
-    if (_properties == null)
-    {
-      if (other._properties != null)
-        return false;
-    }
-    else if (!_properties.equals(other._properties))
+    if (!_properties.equals(other._properties))
       return false;
-    if (_partitionProperties == null)
-    {
-      if (other._partitionProperties != null)
-        return false;
-    }
-    else if (!_partitionProperties.equals(other._partitionProperties))
+    if (!_partitionProperties.equals(other._partitionProperties))
     {
       return false;
     }
-
-    return true;
+    return _sslSessionValidationStrings.equals(other._sslSessionValidationStrings);
   }
 }

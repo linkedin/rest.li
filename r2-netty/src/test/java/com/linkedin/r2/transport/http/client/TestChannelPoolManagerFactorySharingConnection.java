@@ -87,7 +87,7 @@ public class TestChannelPoolManagerFactorySharingConnection
         // with parameter that should NOT create a new ChannelPoolManager
         properties = new HashMap<>();
         properties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, protocolVersion);
-        properties.put(HttpClientFactory.HTTP_REQUEST_TIMEOUT, String.valueOf(100)); // property NOT of the ChannelPoolManager
+        properties.put(HttpClientFactory.HTTP_REQUEST_TIMEOUT, String.valueOf(2000)); // property NOT of the ChannelPoolManager
         clients.add(new TransportClientAdapter(clientFactory.getClient(properties), restOverStream));
       },
       // since the two clients have the same settings, with sharing, it should just open 1 connections

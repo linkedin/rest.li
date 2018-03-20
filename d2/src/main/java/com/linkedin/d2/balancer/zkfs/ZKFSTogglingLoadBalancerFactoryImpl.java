@@ -31,6 +31,7 @@ import com.linkedin.d2.balancer.properties.UriPropertiesJsonSerializer;
 import com.linkedin.d2.balancer.properties.UriPropertiesMerger;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancer;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancerState;
+import com.linkedin.d2.balancer.simple.SslSessionValidatorFactory;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.util.FileSystemDirectory;
@@ -82,6 +83,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
   private final Map<String, Map<String, Object>> _clientServicesConfig;
   private final boolean _useNewEphemeralStoreWatcher;
   private final PartitionAccessorRegistry _partitionAccessorRegistry;
+  private final SslSessionValidatorFactory _sslSessionValidatorFactory;
 
   private static final Logger _log = LoggerFactory.getLogger(ZKFSTogglingLoadBalancerFactoryImpl.class);
 
@@ -145,7 +147,8 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
       Collections.emptyMap(),
       false,
       new PartitionAccessorRegistryImpl(),
-      false);
+      false,
+      validationStrings -> null);
   }
 
   public ZKFSTogglingLoadBalancerFactoryImpl(ComponentFactory factory,
@@ -162,7 +165,8 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
                                              Map<String, Map<String, Object>> clientServicesConfig,
                                              boolean useNewEphemeralStoreWatcher,
                                              PartitionAccessorRegistry partitionAccessorRegistry,
-                                             boolean enableSaveUriDataOnDisk)
+                                             boolean enableSaveUriDataOnDisk,
+                                             SslSessionValidatorFactory sslSessionValidatorFactory)
   {
     _factory = factory;
     _lbTimeout = timeout;
@@ -187,6 +191,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
     _clientServicesConfig = clientServicesConfig;
     _useNewEphemeralStoreWatcher = useNewEphemeralStoreWatcher;
     _partitionAccessorRegistry = partitionAccessorRegistry;
+    _sslSessionValidatorFactory = sslSessionValidatorFactory;
   }
 
   @Override
@@ -232,7 +237,8 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
 
     SimpleLoadBalancerState state = new SimpleLoadBalancerState(
             executorService, uriBus, clusterBus, serviceBus, _clientFactories, _loadBalancerStrategyFactories,
-            _sslContext, _sslParameters, _isSSLEnabled, _clientServicesConfig, _partitionAccessorRegistry);
+            _sslContext, _sslParameters, _isSSLEnabled, _clientServicesConfig, _partitionAccessorRegistry,
+            _sslSessionValidatorFactory);
     SimpleLoadBalancer balancer = new SimpleLoadBalancer(state, _lbTimeout, _lbTimeoutUnit, executorService);
 
     TogglingLoadBalancer togLB = _factory.createBalancer(balancer, state, clusterToggle, serviceToggle, uriToggle);

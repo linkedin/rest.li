@@ -22,7 +22,7 @@ import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
 
 /**
  * We put together the cluster properties and the partition accessor for a cluster so that we don't have to
- * maintain two seperate maps (which have to be in sync all the time)
+ * maintain two separate maps (which have to be in sync all the time)
  */
 class ClusterInfoItem
 {

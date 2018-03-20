@@ -32,6 +32,7 @@ import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ClusterPropertiesJsonSerializer;
 import com.linkedin.d2.balancer.properties.HashBasedPartitionProperties;
 import com.linkedin.d2.balancer.properties.PartitionData;
+import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.properties.RangeBasedPartitionProperties;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.properties.ServicePropertiesJsonSerializer;
@@ -62,6 +63,7 @@ import com.linkedin.d2.discovery.stores.PropertyStore;
 import com.linkedin.d2.discovery.stores.file.FileStore;
 import com.linkedin.d2.discovery.stores.file.FileStoreTest;
 import com.linkedin.d2.discovery.stores.mock.MockStore;
+import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
@@ -1179,6 +1181,7 @@ public class SimpleLoadBalancerTest
   {
     private final AtomicLong _count = new AtomicLong();
 
+    @SuppressWarnings("unchecked")
     @Override
     public TransportClient getClient(Map<String, ? extends Object> properties)
     {

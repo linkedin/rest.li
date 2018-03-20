@@ -94,6 +94,7 @@ public class ClusterPropertiesJsonSerializer implements
     Map<String, Object> partitionPropertiesMap = mapGet(map, PropertyKeys.PARTITION_PROPERTIES);
     PartitionProperties partitionProperties;
     String scope = "cluster: " + clusterName;
+    List<String> validationList = mapGet(map, PropertyKeys.SSL_VALIDATION_STRINGS);
     if (partitionPropertiesMap != null)
     {
       PartitionProperties.PartitionType partitionType =
@@ -152,6 +153,6 @@ public class ClusterPropertiesJsonSerializer implements
       partitionProperties = NullPartitionProperties.getInstance();
     }
 
-    return new ClusterProperties(clusterName, prioritizedSchemes, properties, banned, partitionProperties);
+    return new ClusterProperties(clusterName, prioritizedSchemes, properties, banned, partitionProperties, validationList);
   }
 }

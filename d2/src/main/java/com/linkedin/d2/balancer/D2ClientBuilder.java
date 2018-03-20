@@ -26,6 +26,7 @@ import com.linkedin.d2.balancer.clients.DynamicClient;
 import com.linkedin.d2.balancer.clients.RequestTimeoutClient;
 import com.linkedin.d2.balancer.clients.RetryClient;
 import com.linkedin.d2.balancer.event.EventEmitter;
+import com.linkedin.d2.balancer.simple.SslSessionValidatorFactory;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyFactoryV3;
@@ -35,12 +36,12 @@ import com.linkedin.d2.balancer.util.downstreams.FSBasedDownstreamServicesFetche
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessorRegistry;
 import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl;
-import com.linkedin.d2.discovery.stores.zk.ZKConnectionBuilder;
 import com.linkedin.d2.discovery.stores.zk.ZkConnectionDealer;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeper;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.util.NamedThreadFactory;
+import com.linkedin.util.ArgumentUtil;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -134,7 +135,8 @@ public class D2ClientBuilder
                   _config.enableSaveUriDataOnDisk,
                   loadBalancerStrategyFactories,
                   _config.requestTimeoutHandlerEnabled,
-                  _config.connectionDealer);
+                  _config.connectionDealer,
+                  _config.sslSessionValidatorFactory);
 
     final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?
       new ZKFSLoadBalancerWithFacilitiesFactory() :
@@ -421,6 +423,13 @@ public class D2ClientBuilder
   public D2ClientBuilder setZKConnectionDealer(ZkConnectionDealer connectionDealer)
   {
     _config.connectionDealer = connectionDealer;
+    return this;
+  }
+
+  public D2ClientBuilder setSslSessionValidatorFactory(SslSessionValidatorFactory sslSessionValidatorFactory)
+  {
+    _config.sslSessionValidatorFactory = ArgumentUtil.ensureNotNull(sslSessionValidatorFactory,
+        "sslSessionValidatorFactor");
     return this;
   }
 

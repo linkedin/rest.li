@@ -23,6 +23,7 @@ import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.util.AttributeKey;
+import java.util.List;
 
 
 /**
@@ -37,7 +38,7 @@ public class CertificateHandler extends ChannelOutboundHandlerAdapter
   public static final String PIPELINE_CERTIFICATE_HANDLER = "CertificateHandler";
 
   public static final AttributeKey<SslSessionValidator> REQUESTED_SSL_SESSION_VALIDATOR
-    = AttributeKey.valueOf("requestedSslSessionValidator");
+      = AttributeKey.valueOf("requestedSslSessionValidator");
 
   public CertificateHandler(SslHandler sslHandler)
   {
@@ -48,14 +49,14 @@ public class CertificateHandler extends ChannelOutboundHandlerAdapter
   public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception
   {
     _sslHandler.handshakeFuture().addListener(future -> {
-      SslSessionValidator _sslSessionValidator = ctx.channel().attr(REQUESTED_SSL_SESSION_VALIDATOR).getAndSet(null);
+      SslSessionValidator sslSessionValidator = ctx.channel().attr(REQUESTED_SSL_SESSION_VALIDATOR).getAndSet(null);
 
       // if cert is empty, the check is disabled and not needed by the user, therefore don't check
-      if (future.isSuccess() && _sslSessionValidator != null)
+      if (future.isSuccess() && sslSessionValidator != null)
       {
         try
         {
-          _sslSessionValidator.validatePeerSession(_sslHandler.engine().getSession());
+          sslSessionValidator.validatePeerSession(_sslHandler.engine().getSession());
         }
         catch (SslSessionNotTrustedException e)
         {

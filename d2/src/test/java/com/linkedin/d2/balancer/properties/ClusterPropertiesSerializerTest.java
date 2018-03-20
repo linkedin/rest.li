@@ -17,6 +17,7 @@
 package com.linkedin.d2.balancer.properties;
 
 import com.linkedin.d2.discovery.PropertySerializationException;
+import java.util.Arrays;
 import org.testng.annotations.Test;
 
 import java.net.URI;
@@ -63,6 +64,10 @@ public class ClusterPropertiesSerializerTest
 
     HashBasedPartitionProperties hbp = new HashBasedPartitionProperties("blah", 150, HashBasedPartitionProperties.HashAlgorithm.valueOf("md5".toUpperCase()));
     property = new ClusterProperties("test", schemes, supProperties, new HashSet<URI>(), hbp);
+    assertEquals(foo.fromBytes(foo.toBytes(property)), property);
+
+    property = new ClusterProperties("test", schemes, supProperties, new HashSet<URI>(), NullPartitionProperties.getInstance(),
+        Arrays.asList("principal1", "principal2"));
     assertEquals(foo.fromBytes(foo.toBytes(property)), property);
 
     try

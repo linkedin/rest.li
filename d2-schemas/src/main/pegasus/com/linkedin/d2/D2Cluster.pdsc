@@ -33,6 +33,15 @@
       "type": "D2ClusterPartitionConfiguration",
       "optional": true,
       "doc": "If this cluster has partitioning, then this is the partition config of this cluster"
+    },
+    {
+      "name": "sslSessionValidationStrings",
+      "type": {
+        "type": "array",
+        "items": "string"
+      },
+      "default": [],
+      "doc": "List of validation strings. SSL session validator use this information to verify the host it connects to. The name is generically defined because it can be used by any type SSLSessionValidator in open source world."
     }
   ]
 }

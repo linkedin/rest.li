@@ -24,6 +24,7 @@ import com.linkedin.d2.balancer.LoadBalancerState.LoadBalancerStateListenerCallb
 import com.linkedin.d2.balancer.LoadBalancerState.NullStateListenerCallback;
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
+import com.linkedin.d2.balancer.properties.NullPartitionProperties;
 import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.properties.RangeBasedPartitionProperties;
@@ -38,9 +39,11 @@ import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerTest;
 import com.linkedin.d2.balancer.strategies.random.RandomLoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.random.RandomLoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
+import com.linkedin.d2.discovery.event.PropertyEventBusImpl;
 import com.linkedin.d2.discovery.event.PropertyEventThread.PropertyEventShutdownCallback;
 import com.linkedin.d2.discovery.event.SynchronousExecutorService;
 import com.linkedin.d2.discovery.stores.mock.MockStore;
+import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
@@ -51,10 +54,13 @@ import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportCallbackAdapter;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
+import com.linkedin.r2.transport.http.client.common.ssl.SslSessionNotTrustedException;
+import com.linkedin.r2.transport.http.client.common.ssl.SslSessionValidator;
 import com.linkedin.util.clock.SystemClock;
 
 import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.ScheduledExecutorService;
+import javax.net.ssl.SSLSession;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -98,6 +104,13 @@ public class SimpleLoadBalancerStateTest
   private SSLContext                                                               _sslContext;
   private SSLParameters _sslParameters;
   private boolean                                                                  isSslEnabled;
+  private static final SslSessionValidatorFactory                                  SSL_SESSION_VALIDATOR_FACTORY =
+      validationStrings -> sslSession -> {
+        if (validationStrings == null || validationStrings.isEmpty())
+        {
+          throw new SslSessionNotTrustedException("no validation string");
+        }
+      };
 
   public static void main(String[] args) throws Exception
   {
@@ -145,14 +158,15 @@ public class SimpleLoadBalancerStateTest
       _clientFactories.put("https", new SimpleLoadBalancerTest.DoNothingClientFactory());
       _state =
           new SimpleLoadBalancerState(_executorService,
-                                      _uriRegistry,
-                                      _clusterRegistry,
-                                      _serviceRegistry,
-                                      _clientFactories,
-                                      _loadBalancerStrategyFactories,
-                                      _sslContext,
-                                      _sslParameters,
-                                      true);
+              new PropertyEventBusImpl<>(_executorService, _uriRegistry),
+              new PropertyEventBusImpl<>(_executorService, _clusterRegistry),
+              new PropertyEventBusImpl<>(_executorService, _serviceRegistry),
+              _clientFactories,
+              _loadBalancerStrategyFactories,
+              _sslContext,
+              _sslParameters,
+              true, Collections.emptyMap(), null,
+              SSL_SESSION_VALIDATOR_FACTORY);
     }
     else
     {
@@ -1176,6 +1190,50 @@ public class SimpleLoadBalancerStateTest
     _state.getStrategy("service-1", "http");
 
     assertEquals(_state.getVersion(), expectedVersion);
+  }
+
+  @Test(groups = { "small", "back-end" })
+  public void testGetClientWithSSLValidation() throws URISyntaxException
+  {
+    reset(true);
+
+    URI uri = URI.create("https://cluster-1/test");
+    List<String> schemes = new ArrayList<String>();
+    Map<Integer, PartitionData> partitionData = new HashMap<Integer, PartitionData>(1);
+    partitionData.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
+    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<URI, Map<Integer, PartitionData>>();
+    uriData.put(uri, partitionData);
+
+    schemes.add("https");
+
+    // set up state
+    _state.listenToCluster("cluster-1", new NullStateListenerCallback());
+    _state.listenToService("service-1", new NullStateListenerCallback());
+
+    Map<String,Object> transportClientProperties = new HashMap<String,Object>();
+    transportClientProperties.put(HttpClientFactory.HTTP_SSL_CONTEXT, _sslContext);
+    transportClientProperties.put(HttpClientFactory.HTTP_SSL_PARAMS, _sslParameters);
+    transportClientProperties = Collections.unmodifiableMap(transportClientProperties);
+
+    final List<String> sslValidationList = Arrays.asList("validation1", "validation2");
+    _clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1", Collections.emptyList(),
+        Collections.emptyMap(), Collections.emptySet(), NullPartitionProperties.getInstance(), sslValidationList));
+    _serviceRegistry.put("service-1", new ServiceProperties("service-1", "cluster-1",
+        "/test", Arrays.asList("random"), Collections.<String, Object>emptyMap(),
+        transportClientProperties, null, schemes, null));
+    _uriRegistry.put("cluster-1", new UriProperties("cluster-1", uriData));
+
+    TrackerClient client = _state.getClient("service-1", uri);
+    assertNotNull(client);
+    assertEquals(client.getUri(), uri);
+
+
+    RequestContext requestContext = new RequestContext();
+    client.restRequest(new RestRequestBuilder(URI.create("http://cluster-1/test")).build(), requestContext, new HashMap<>(),
+        response -> {});
+    @SuppressWarnings("unchecked")
+    final SslSessionValidator validator = (SslSessionValidator) requestContext.getLocalAttr(R2Constants.REQUESTED_SSL_SESSION_VALIDATOR);
+    assertNotNull(validator);
   }
 
   @Test(groups = { "small", "back-end" })

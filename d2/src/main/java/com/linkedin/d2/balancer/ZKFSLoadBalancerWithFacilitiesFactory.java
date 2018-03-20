@@ -86,7 +86,8 @@ public class ZKFSLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFa
                                                    config.clientServicesConfig,
                                                    config.useNewEphemeralStoreWatcher,
                                                    config.partitionAccessorRegistry,
-                                                   config.enableSaveUriDataOnDisk
+                                                   config.enableSaveUriDataOnDisk,
+                                                   config.sslSessionValidatorFactory
     );
   }
 }
