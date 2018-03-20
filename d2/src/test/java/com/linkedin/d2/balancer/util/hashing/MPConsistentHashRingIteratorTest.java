@@ -42,7 +42,7 @@ public class MPConsistentHashRingIteratorTest {
 
   @Test
   public void testFirstItem() {
-    Ring<URI> ring = new MPConsistentHashRing<URI>(buildPointsMap(100, 100));
+    Ring<URI> ring = new MPConsistentHashRing<URI>(buildPointsMap(100, 100), 21, 10);
     int key = _random.nextInt();
     Iterator<URI> iter = ring.getIterator(key);
     Assert.assertTrue(iter.hasNext());
@@ -52,7 +52,7 @@ public class MPConsistentHashRingIteratorTest {
   @Test
   public void testOtherItems() {
     Map<URI, Integer> pointsMap = buildPointsMap(100, 100);
-    Ring<URI> ring = new MPConsistentHashRing<URI>(pointsMap);
+    Ring<URI> ring = new MPConsistentHashRing<URI>(pointsMap, 21, 10);
     int key = _random.nextInt();
     Iterator<URI> iter = ring.getIterator(key);
     int iterations = 0;
@@ -73,13 +73,51 @@ public class MPConsistentHashRingIteratorTest {
   @Test
   public void testAgainstOldIterator() {
     Map<URI, Integer> pointsMap = buildPointsMap(100, 100);
-    Ring<URI> ring = new MPConsistentHashRing<URI>(pointsMap);
+    Ring<URI> ring = new MPConsistentHashRing<URI>(pointsMap, 21, 10);
     int key = _random.nextInt();
 
     Iterator<URI> oldIter = ((MPConsistentHashRing<URI>) ring).getOrderedIterator(key);
     Iterator<URI> newIter = ring.getIterator(key);
 
     Assert.assertTrue(oldIter.next() == newIter.next());
+  }
+
+  @Test
+  /**
+   * same host names and points should produce two iterators that generate the same host ordering.
+   */ public void testStickyOrdering() {
+    Map<URI, Integer> pointsMap = buildPointsMap(100, 100);
+    int key = 123456;
+
+    Ring<URI> firstRing = new MPConsistentHashRing<URI>(pointsMap, 21, 10);
+    Iterator<URI> firstIter = firstRing.getIterator(key);
+
+    Ring<URI> secondRing = new MPConsistentHashRing<URI>(pointsMap, 21, 10);
+    Iterator<URI> secondIter = secondRing.getIterator(key);
+
+    while (firstIter.hasNext() || secondIter.hasNext()) {
+      Assert.assertTrue(firstIter.next() == secondIter.next());
+    }
+  }
+
+  @Test
+  /**
+   * The number of iteration allowed should be equal to the number of hosts no matter how many points on the ring
+   */ public void testNoDeadloop() {
+    int repeat = 20;
+    for (int i = 0; i < repeat; i++) {
+      int numHosts = Math.abs(_random.nextInt()) % 100;
+      Map<URI, Integer> pointsMap = buildPointsMap(numHosts, 100);
+      Ring<URI> ring = new MPConsistentHashRing<URI>(pointsMap, 21, 10);
+
+      Iterator<URI> iter = ring.getIterator(_random.nextInt());
+      int iteration = 0;
+      while (iter.hasNext()) {
+        iter.next();
+        iteration++;
+      }
+      Assert.assertTrue(numHosts == iteration);
+    }
   }
 
   @Test(enabled = false)

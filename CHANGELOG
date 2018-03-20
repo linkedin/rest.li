@@ -1,5 +1,7 @@
 20.0.11
 -------
+(RB=1255476)
+add more tests for MPConsistentHashRing iterator
 
 
 20.0.10
