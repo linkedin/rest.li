@@ -29,9 +29,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import org.junit.Test;
+import org.testng.annotations.Test;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.fail;
 
 
 /**
@@ -51,7 +51,7 @@ public class LastSeenZKStoreTest
    * 3) Restart ZKServer and see if this LastSeenZKStore which could never access to disk will retrieve latest
    *    information from there
    */
-  @Test
+  @Test(timeOut = 10000)
   public void testLastSeenLifeCycle()
       throws InterruptedException, ExecutionException, TimeoutException, IOException, PropertyStoreException
   {
@@ -68,7 +68,7 @@ public class LastSeenZKStoreTest
 
     CountDownLatch initializedLatch = new CountDownLatch(1);
     propertyEventBus.register(Collections.singleton(TEST_ZK_PROP_NAME), new LatchSubscriber(initializedLatch, null));
-    initializedLatch.await(50, TimeUnit.SECONDS);
+    initializedLatch.await(5, TimeUnit.SECONDS);
     if (initializedLatch.getCount() != 0)
     {
       fail("Initialized not received");

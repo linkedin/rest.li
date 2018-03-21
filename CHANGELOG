@@ -1,8 +1,14 @@
+20.0.13
+-------
+
+
 20.0.12
 -------
 (RB=1257038)
 fix MPConsistentHashRing iterator bug when the host list is empty
 
+(RB=1257667)
+Fixing ZooKeeperConnectionAwareStore unneeded exception. Improving error logs in SimpleLoadBalancer
 
 20.0.11
 -------

@@ -68,6 +68,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -393,9 +394,13 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     {
       return servicePropertiesFutureCallback.get(_timeout, _unit);
     }
+    catch (TimeoutException e)
+    {
+      throw new ServiceUnavailableException(serviceName, "Timeout occurred while fetching property. Timeout:" + _timeout, e);
+    }
     catch (Exception e)
     {
-      throw new ServiceUnavailableException(serviceName, e.getMessage(), e);
+      throw new ServiceUnavailableException(serviceName, "Exception while fetching property. Message:" + e.getMessage(), e);
     }
   }
 

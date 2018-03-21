@@ -72,7 +72,7 @@ public class ZooKeeperConnectionAwareStoreTest
     ZooKeeperConnectionAwareStore<String, ZooKeeperEphemeralStore<String>> store = ZkStoreTestOnlyUtil.getZKAwareStore(PORT);
 
     PropertyEventBusImpl<String> propertyEventBus = new PropertyEventBusImpl<>(Executors.newSingleThreadExecutor());
-    store.setBus(propertyEventBus);
+    store.setBusImpl(propertyEventBus);
 
     // the first time it is written, the this countdown will go down
     CountDownLatch initializedLatch = new CountDownLatch(1);

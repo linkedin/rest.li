@@ -62,7 +62,7 @@ public class ZooKeeperConnectionAwareStore<TYPE, STORE extends ZooKeeperStore<TY
     _zkStoreBuilder = zooKeeperStoreBuilder;
   }
 
-  public void setBus(PropertyEventBusImpl<TYPE> bus)
+  public void setBusImpl(PropertyEventBusImpl<TYPE> bus)
   {
     _bus = bus;
     if (_wrappedZkStore != null)
@@ -83,31 +83,31 @@ public class ZooKeeperConnectionAwareStore<TYPE, STORE extends ZooKeeperStore<TY
       throw new IllegalArgumentException(
           "The bus used in LastSeenZKStore should be a PropertyEventBusImpl and not a " + bus.getClass().getName());
     }
-    setBus(bus);
+    setBusImpl((PropertyEventBusImpl<TYPE>) bus);
   }
 
   /**
-   * This method is not supposed to be called directly.
-   * Every call to startPublishing to the store should go through the PropertyEventBus.
-   * Therefore, once the PropertyEventBus has been set, it will call the startPublishing method
+   * This method is not supposed to be called directly if not from the PropertyEventBus.
+   * In that case, the call will have no effect. As soon as a connection establishes
+   * the bus will be set on the new store and the startPublishing method will be called
    * directly on the wrapped zk store
    */
   @Override
   public void startPublishing(String prop)
   {
-    throw new UnsupportedOperationException("This method should be called through the EventBus associated with this class");
+    // empty method
   }
 
   /**
-   * This method is not supposed to be called directly.
-   * Every call to stopPublishing to the store should go through the PropertyEventBus.
-   * Therefore, once the PropertyEventBus has been set, it will call the stopPublishing method
+   * This method is not supposed to be called directly if not from the PropertyEventBus.
+   * In that case, the call will have no effect. As soon as a connection establishes
+   * the bus will be set on the new store and the startPublishing method will be called
    * directly on the wrapped zk store
    */
   @Override
   public void stopPublishing(String prop)
   {
-    throw new UnsupportedOperationException("This method should be called through the EventBus associated with this class");
+    // empty method
   }
 
   // ################## life cycle section #####################
