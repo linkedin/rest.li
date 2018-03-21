@@ -243,14 +243,14 @@ public class MPConsistentHashRing<T> implements Ring<T>
     private final List<T> _rankedList;
     private final Iterator<T> _rankedListIter;
     public QuasiMPConsistentHashRingIterator(int startKey, List<T> hosts) {
-      _rankedList = new LinkedList<>();
-      _rankedList.addAll(hosts);
+      _rankedList = new LinkedList<>(hosts);
       Collections.shuffle(_rankedList,
           new Random(startKey));// DOES not guarantee the ranking order of hosts after the first one.
-
-      T mostWantedHost = get(startKey);
-      _rankedList.remove(mostWantedHost);
-      _rankedList.add(0, mostWantedHost);
+      if (!hosts.isEmpty()) {
+        T mostWantedHost = get(startKey);
+        _rankedList.remove(mostWantedHost);
+        _rankedList.add(0, mostWantedHost);
+      }
       _rankedListIter = _rankedList.listIterator();
     }
 

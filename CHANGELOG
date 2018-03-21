@@ -1,5 +1,8 @@
 20.0.12
 -------
+(RB=1257038)
+fix MPConsistentHashRing iterator bug when the host list is empty
+
 
 20.0.11
 -------
