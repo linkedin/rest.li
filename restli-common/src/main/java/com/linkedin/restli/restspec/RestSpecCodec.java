@@ -67,7 +67,7 @@ public class RestSpecCodec
    */
   public RestSpecCodec()
   {
-    _templateCodec.setPrettyPrinter(new DefaultPrettyPrinter());
+    _templateCodec.setPrettyPrinter(DefaultPrettyPrinter::new);
   }
 
   /**
@@ -100,7 +100,7 @@ public class RestSpecCodec
 
   /**
    * Generate a DataSchema from a JSON representation and a DataSchemaResolver.
-   * 
+   *
    * @param typeText a String JSON representation of a DataSchema
    * @param schemaResolver the schemaResolver to use to resolve the typeText
    * @return a DataSchema

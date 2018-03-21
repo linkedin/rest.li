@@ -25,7 +25,6 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.collections.CheckedUtil;
 import com.linkedin.util.FastByteArrayOutputStream;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -38,6 +37,7 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.function.Supplier;
 
 import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonFactory;
@@ -74,14 +74,18 @@ public class JacksonDataCodec implements TextDataCodec
     _allowComments = allowComments;
   }
 
-  public PrettyPrinter getPrettyPrinter()
-  {
-    return _prettyPrinter;
-  }
-
+  /**
+   * @deprecated Use {@link #setPrettyPrinter(Supplier)}
+   */
+  @Deprecated
   public void setPrettyPrinter(PrettyPrinter prettyPrinter)
   {
-    _prettyPrinter = prettyPrinter;
+    _prettyPrinterSupplier = () -> prettyPrinter;
+  }
+
+  public void setPrettyPrinter(Supplier<PrettyPrinter> prettyPrinterSupplier)
+  {
+    _prettyPrinterSupplier = prettyPrinterSupplier;
   }
 
   @Override
@@ -235,9 +239,9 @@ public class JacksonDataCodec implements TextDataCodec
   protected JsonGenerator createJsonGenerator(OutputStream out) throws IOException
   {
     final JsonGenerator generator = _jsonFactory.createGenerator(out, _jsonEncoding);
-    if (_prettyPrinter != null)
+    if (_prettyPrinterSupplier != null)
     {
-      generator.setPrettyPrinter(_prettyPrinter);
+      generator.setPrettyPrinter(_prettyPrinterSupplier.get());
     }
     return generator;
   }
@@ -245,9 +249,9 @@ public class JacksonDataCodec implements TextDataCodec
   protected JsonGenerator createJsonGenerator(Writer out) throws IOException
   {
     final JsonGenerator generator = _jsonFactory.createGenerator(out);
-    if (_prettyPrinter != null)
+    if (_prettyPrinterSupplier != null)
     {
-      generator.setPrettyPrinter(_prettyPrinter);
+      generator.setPrettyPrinter(_prettyPrinterSupplier.get());
     }
     return generator;
   }
@@ -882,7 +886,7 @@ public class JacksonDataCodec implements TextDataCodec
   }
 
   protected boolean _allowComments;
-  protected PrettyPrinter _prettyPrinter;
+  protected Supplier<PrettyPrinter> _prettyPrinterSupplier;
   protected JsonFactory _jsonFactory;
   protected int _defaultBufferSize = 4096;
   protected JsonEncoding _jsonEncoding = JsonEncoding.UTF8;

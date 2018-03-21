@@ -1,6 +1,11 @@
-20.0.13
+20.0.14
 -------
 
+
+20.0.13
+-------
+(RB=1258283)
+Fixed thread safety issue for JacksonDataCodec due to its PrettyPrinter.
 
 20.0.12
 -------
