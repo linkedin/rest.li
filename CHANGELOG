@@ -1,6 +1,7 @@
 20.0.14
 -------
-
+(RB=1259113)
+Updated Javadoc regarding concurrent use of PrettyPrinter in JacksonDataCodec.
 
 20.0.13
 -------

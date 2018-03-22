@@ -52,6 +52,9 @@ import com.fasterxml.jackson.core.PrettyPrinter;
 /**
  * A JSON codec that uses Jackson for serialization and de-serialization.
  *
+ * The codec itself doesn't keep state in JSON parsing or JSON generation. Once properly initialized, it's safe to use
+ * the same instance of the codec concurrently.
+ *
  * @author slim
  */
 public class JacksonDataCodec implements TextDataCodec
@@ -75,7 +78,12 @@ public class JacksonDataCodec implements TextDataCodec
   }
 
   /**
-   * @deprecated Use {@link #setPrettyPrinter(Supplier)}
+   * Sets a PrettyPrinter to be used for JSON generation. The PrettyPrinter instance set is going to be used for all
+   * subsequent JSON generations.
+   *
+   * @deprecated Use {@link #setPrettyPrinter(Supplier)}. If the PrettyPrinter keeps state during JSON generation,
+   *             this JacksonDataCodec can't be used concurrently for JSON generation. If the PrettyPrinter doesn't clean up its state
+   *             after each JSON generation, this JacksonDataCodec can't be used repeatedly for JSON generation.
    */
   @Deprecated
   public void setPrettyPrinter(PrettyPrinter prettyPrinter)
@@ -83,6 +91,14 @@ public class JacksonDataCodec implements TextDataCodec
     _prettyPrinterSupplier = () -> prettyPrinter;
   }
 
+  /**
+   * Sets a Supplier of PrettyPrinter. If set, every JSON generation will retrieve an instance of PrettyPrinter from
+   * the Supplier.
+   *
+   * If the PrettyPrinter keeps state during JSON generation, or if it doesn't clean up its state after JSON generation,
+   * the Supplier should supply a new instance of PrettyPrinter each time to allow this JacksonDataCodec to operate in
+   * a stateless manner.
+   */
   public void setPrettyPrinter(Supplier<PrettyPrinter> prettyPrinterSupplier)
   {
     _prettyPrinterSupplier = prettyPrinterSupplier;
