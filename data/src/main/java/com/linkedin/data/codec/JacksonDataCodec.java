@@ -37,7 +37,6 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.function.Supplier;
 
 import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonFactory;
@@ -47,6 +46,7 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.core.PrettyPrinter;
+import com.fasterxml.jackson.core.util.Instantiatable;
 
 
 /**
@@ -78,30 +78,25 @@ public class JacksonDataCodec implements TextDataCodec
   }
 
   /**
-   * Sets a PrettyPrinter to be used for JSON generation. The PrettyPrinter instance set is going to be used for all
-   * subsequent JSON generations.
-   *
-   * @deprecated Use {@link #setPrettyPrinter(Supplier)}. If the PrettyPrinter keeps state during JSON generation,
-   *             this JacksonDataCodec can't be used concurrently for JSON generation. If the PrettyPrinter doesn't clean up its state
-   *             after each JSON generation, this JacksonDataCodec can't be used repeatedly for JSON generation.
+   * Gets an instance of {@link PrettyPrinter}. If the PrettyPrinter is stateless and doesn't implement {@link Instantiatable},
+   * the same instance is returned every time. Otherwise, an instance created by {@link Instantiatable#createInstance()}
+   * is returned.
    */
-  @Deprecated
-  public void setPrettyPrinter(PrettyPrinter prettyPrinter)
+  @SuppressWarnings("unchecked")
+  private PrettyPrinter getPrettyPrinter()
   {
-    _prettyPrinterSupplier = () -> prettyPrinter;
+    return _prettyPrinter instanceof Instantiatable
+        ? ((Instantiatable<? extends PrettyPrinter>) _prettyPrinter).createInstance()
+        : _prettyPrinter;
   }
 
   /**
-   * Sets a Supplier of PrettyPrinter. If set, every JSON generation will retrieve an instance of PrettyPrinter from
-   * the Supplier.
-   *
-   * If the PrettyPrinter keeps state during JSON generation, or if it doesn't clean up its state after JSON generation,
-   * the Supplier should supply a new instance of PrettyPrinter each time to allow this JacksonDataCodec to operate in
-   * a stateless manner.
+   * Sets a PrettyPrinter. Note that a stateful PrettyPrinter should implement Instantiatable to allow a new instance
+   * to be used for every JSON generation.
    */
-  public void setPrettyPrinter(Supplier<PrettyPrinter> prettyPrinterSupplier)
+  public void setPrettyPrinter(PrettyPrinter prettyPrinter)
   {
-    _prettyPrinterSupplier = prettyPrinterSupplier;
+    _prettyPrinter = prettyPrinter;
   }
 
   @Override
@@ -255,9 +250,9 @@ public class JacksonDataCodec implements TextDataCodec
   protected JsonGenerator createJsonGenerator(OutputStream out) throws IOException
   {
     final JsonGenerator generator = _jsonFactory.createGenerator(out, _jsonEncoding);
-    if (_prettyPrinterSupplier != null)
+    if (_prettyPrinter != null)
     {
-      generator.setPrettyPrinter(_prettyPrinterSupplier.get());
+      generator.setPrettyPrinter(getPrettyPrinter());
     }
     return generator;
   }
@@ -265,9 +260,9 @@ public class JacksonDataCodec implements TextDataCodec
   protected JsonGenerator createJsonGenerator(Writer out) throws IOException
   {
     final JsonGenerator generator = _jsonFactory.createGenerator(out);
-    if (_prettyPrinterSupplier != null)
+    if (_prettyPrinter != null)
     {
-      generator.setPrettyPrinter(_prettyPrinterSupplier.get());
+      generator.setPrettyPrinter(getPrettyPrinter());
     }
     return generator;
   }
@@ -902,7 +897,7 @@ public class JacksonDataCodec implements TextDataCodec
   }
 
   protected boolean _allowComments;
-  protected Supplier<PrettyPrinter> _prettyPrinterSupplier;
+  protected PrettyPrinter _prettyPrinter;
   protected JsonFactory _jsonFactory;
   protected int _defaultBufferSize = 4096;
   protected JsonEncoding _jsonEncoding = JsonEncoding.UTF8;

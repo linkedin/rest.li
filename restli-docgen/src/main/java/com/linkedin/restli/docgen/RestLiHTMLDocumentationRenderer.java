@@ -393,6 +393,6 @@ public class RestLiHTMLDocumentationRenderer implements RestLiDocumentationRende
     _restMethodDocsMapForSimpleResource.put(ResourceMethod.GET.toString(), "Gets the entity");
     _restMethodDocsMapForSimpleResource.put(ResourceMethod.UPDATE.toString(), "Replaces the entity");
 
-    _codec.setPrettyPrinter(DefaultPrettyPrinter::new);
+    _codec.setPrettyPrinter(new DefaultPrettyPrinter());
   }
 }

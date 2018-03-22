@@ -67,7 +67,7 @@ public class RestSpecCodec
    */
   public RestSpecCodec()
   {
-    _templateCodec.setPrettyPrinter(DefaultPrettyPrinter::new);
+    _templateCodec.setPrettyPrinter(new DefaultPrettyPrinter());
   }
 
   /**

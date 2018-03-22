@@ -26,6 +26,9 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.TestData;
 import com.linkedin.data.TestUtil;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.PrettyPrinter;
+import com.fasterxml.jackson.core.util.Instantiatable;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -37,6 +40,7 @@ import java.util.Map;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotEquals;
 import static org.testng.Assert.assertNotSame;
 import static org.testng.Assert.assertSame;
 import static org.testng.Assert.assertTrue;
@@ -207,5 +211,75 @@ public class TestJacksonCodec extends TestCodec
   {
     final JacksonDataCodec codec = new JacksonDataCodec();
     codec.bytesToMap("[1, 2, 3]".getBytes());
+  }
+
+  @Test
+  public void testPrettyPrinter()
+      throws IOException
+  {
+    JacksonDataCodec codec = new JacksonDataCodec();
+    codec.setPrettyPrinter(new StatefulPrettyPrinter());
+
+    DataMap dataMap = new DataMap();
+    String s1 = codec.mapToString(dataMap);
+    String s2 = codec.mapToString(dataMap);
+
+    assertNotEquals(s1, s2);
+
+    codec.setPrettyPrinter(new InstantiableStatefulPrettyPrinter());
+
+    s1 = codec.mapToString(dataMap);
+    s2 = codec.mapToString(dataMap);
+
+    assertEquals(s1, s2);
+  }
+
+  class StatefulPrettyPrinter implements PrettyPrinter
+  {
+    private int _count;
+
+    @Override
+    public void writeRootValueSeparator(JsonGenerator gen) {}
+
+    @Override
+    public void writeStartObject(JsonGenerator gen)
+        throws IOException
+    {
+      gen.writeRaw(String.valueOf(_count++));
+    }
+
+    @Override
+    public void writeEndObject(JsonGenerator gen, int nrOfEntries) {}
+
+    @Override
+    public void writeObjectEntrySeparator(JsonGenerator gen) {}
+
+    @Override
+    public void writeObjectFieldValueSeparator(JsonGenerator gen) {}
+
+    @Override
+    public void writeStartArray(JsonGenerator gen) {}
+
+    @Override
+    public void writeEndArray(JsonGenerator gen, int nrOfValues) {}
+
+    @Override
+    public void writeArrayValueSeparator(JsonGenerator gen) {}
+
+    @Override
+    public void beforeArrayValues(JsonGenerator gen) {}
+
+    @Override
+    public void beforeObjectEntries(JsonGenerator gen) {}
+  }
+
+  class InstantiableStatefulPrettyPrinter extends StatefulPrettyPrinter implements Instantiatable<InstantiableStatefulPrettyPrinter>
+  {
+
+    @Override
+    public InstantiableStatefulPrettyPrinter createInstance()
+    {
+      return new InstantiableStatefulPrettyPrinter();
+    }
   }
 }

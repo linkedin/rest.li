@@ -31,12 +31,12 @@ public class PrettyPrinterJacksonDataCodec extends JacksonDataCodec
   public PrettyPrinterJacksonDataCodec()
   {
     super();
-    setPrettyPrinter(DefaultPrettyPrinter::new);
+    setPrettyPrinter(new DefaultPrettyPrinter());
   }
 
   public PrettyPrinterJacksonDataCodec(JsonFactory jsonFactory)
   {
     super(jsonFactory);
-    setPrettyPrinter(DefaultPrettyPrinter::new);
+    setPrettyPrinter(new DefaultPrettyPrinter());
   }
 }
