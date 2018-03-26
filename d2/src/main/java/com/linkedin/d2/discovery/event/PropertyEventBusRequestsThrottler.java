@@ -106,7 +106,7 @@ public class PropertyEventBusRequestsThrottler<T>
     HashSet<String> keys = new HashSet<>(_keysToFetch.subList(initial, initial + n));
     if (_logStatusEnabled || LOG.isDebugEnabled())
     {
-      LOG.info("EventBus throttler fetching keys: {}", String.join(", ", keys));
+      LOG.debug("EventBus throttler fetching keys: {}", String.join(", ", keys));
     }
     for (String key : keys)
     {
