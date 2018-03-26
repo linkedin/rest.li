@@ -9,6 +9,9 @@ Added reactive streaming JSON parser.
 (RB=1259576)
 Use Instantiable.createInstance for stateful PrettyPrinter in JacksonDataCodec.
 
+(RB=1262053)
+add debug information to warn users about the distributionRing not supporting stickiness
+
 20.0.13
 -------
 (RB=1258283)

@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.balancer.strategies.degrader;
 
+import com.linkedin.d2.balancer.util.hashing.MPConsistentHashRing;
 import com.linkedin.d2.balancer.util.hashing.Ring;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -47,12 +48,20 @@ public class DegraderRingFactory<T> implements RingFactory<T>
       _ringFactory = new MPConsistentHashRingFactory<>(config.getNumProbes(), config.getPointsPerHost());
     }
     else if (DISTRIBUTION_NON_HASH.equalsIgnoreCase(consistentHashAlgorithm)) {
-      _ringFactory = new DistributionNonDiscreteRingFactory<>();
+      if (config.getHashMethod().equalsIgnoreCase(DegraderLoadBalancerStrategyV3.HASH_METHOD_URI_REGEX))
+      {
+        _log.warn("URI Regex hash is specified but distribution based ring is picked, falling back to multiProbe ring");
+        _ringFactory = new MPConsistentHashRingFactory<>(config.getNumProbes(), config.getPointsPerHost());
+      }
+      else
+      {
+        _ringFactory = new DistributionNonDiscreteRingFactory<>();
+      }
     }
     else
     {
-      _log.warn("Unknown consistent hash algorithm {}, falling back to point-based hash ring", consistentHashAlgorithm);
-      _ringFactory = new PointBasedConsistentHashRingFactory<>(config);
+      _log.warn("Unknown consistent hash algorithm {}, falling back to multiprobe hash ring with default settings", consistentHashAlgorithm);
+      _ringFactory = new MPConsistentHashRingFactory<>(MPConsistentHashRing.DEFAULT_NUM_PROBES, MPConsistentHashRing.DEFAULT_POINTS_PER_HOST);
     }
   }
 
