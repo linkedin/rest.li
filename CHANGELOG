@@ -6,7 +6,8 @@ Updated Javadoc regarding concurrent use of PrettyPrinter in JacksonDataCodec.
 (RB=1239620)
 Added reactive streaming JSON parser.
 
-(RB=)
+(RB=1259576)
+Use Instantiable.createInstance for stateful PrettyPrinter in JacksonDataCodec.
 
 20.0.13
 -------
