@@ -47,6 +47,7 @@ import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
 import com.linkedin.d2.balancer.util.partitions.PartitionInfoProvider;
 import com.linkedin.d2.discovery.event.PropertyEventThread.PropertyEventShutdownCallback;
 import com.linkedin.d2.discovery.util.Stats;
+import com.linkedin.d2.scheme;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.transport.common.TransportClientFactory;
@@ -226,6 +227,12 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
           _log.debug("service hint found, using generic client for target: {}", targetService);
 
           TransportClient transportClient = _state.getClient(serviceName, targetService.getScheme());
+          if (transportClient == null)
+          {
+            throw new ServiceUnavailableException(serviceName,
+                "Cannot find transportClient for service " + serviceName + " and scheme: " + targetService.getScheme()
+                    + " with service hint" + targetService);
+          }
           clientCallback.onSuccess(new RewriteLoadBalancerClient(serviceName, targetService, transportClient));
         }
       }

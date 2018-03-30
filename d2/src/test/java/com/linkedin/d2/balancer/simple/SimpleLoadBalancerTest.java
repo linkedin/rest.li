@@ -242,6 +242,77 @@ public class SimpleLoadBalancerTest
   }
 
   /**
+   * This tests getClient(). When TargetHints and scheme does not match, throw ServiceUnavailableException
+   * @throws Exception
+   */
+  @Test (expectedExceptions = ServiceUnavailableException.class)
+  public void testGetClient() throws Exception
+  {
+
+    Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories =
+        new HashMap<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>>();
+    Map<String, TransportClientFactory> clientFactories =
+        new HashMap<String, TransportClientFactory>();
+    List<String> prioritizedSchemes = new ArrayList<String>();
+
+    MockStore<ServiceProperties> serviceRegistry = new MockStore<ServiceProperties>();
+    MockStore<ClusterProperties> clusterRegistry = new MockStore<ClusterProperties>();
+    MockStore<UriProperties> uriRegistry = new MockStore<UriProperties>();
+
+    ScheduledExecutorService executorService = new SynchronousExecutorService();
+
+    //loadBalancerStrategyFactories.put("rr", new RandomLoadBalancerStrategyFactory());
+    loadBalancerStrategyFactories.put("degrader", new DegraderLoadBalancerStrategyFactoryV3());
+    // PrpcClientFactory();
+    clientFactories.put("https", new DoNothingClientFactory()); // new
+    // HttpClientFactory();
+
+    SimpleLoadBalancerState state =
+        new SimpleLoadBalancerState(executorService,
+            uriRegistry,
+            clusterRegistry,
+            serviceRegistry,
+            clientFactories,
+            loadBalancerStrategyFactories);
+
+    SimpleLoadBalancer loadBalancer =
+        new SimpleLoadBalancer(state, 5, TimeUnit.SECONDS);
+
+    FutureCallback<None> balancerCallback = new FutureCallback<None>();
+    loadBalancer.start(balancerCallback);
+    balancerCallback.get(5, TimeUnit.SECONDS);
+
+    Map<Integer, PartitionData> partitionData = new HashMap<Integer, PartitionData>(1);
+    partitionData.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
+    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<URI, Map<Integer, PartitionData>>(3);
+
+    prioritizedSchemes.add("https");
+
+    clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1"));
+
+    serviceRegistry.put("foo", new ServiceProperties("foo",
+        "cluster-1",
+        "/foo",
+        Arrays.asList("degrader"),
+        Collections.<String,Object>emptyMap(),
+        null,
+        null,
+        prioritizedSchemes,
+        null));
+    uriRegistry.put("cluster-1", new UriProperties("cluster-1", uriData));
+
+
+
+    URI uri = URI.create("http://test.qd.com:1234/foo");
+
+    RequestContext requestContextWithHint = new RequestContext();
+    LoadBalancerUtil.TargetHints.setRequestContextTargetService(requestContextWithHint, uri);
+
+    URIRequest uriRequest = new URIRequest("d2://foo");
+    loadBalancer.getClient(uriRequest, requestContextWithHint);
+  }
+
+  /**
    * This tests the getPartitionInfo() when given a collection of keys (actually a test for KeyMapper.mapKeysV3()).
    */
   @Test
