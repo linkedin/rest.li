@@ -44,7 +44,6 @@ import org.testng.annotations.Test;
  */
 public class TestHttpsEarlyHandshake extends AbstractTestHttps
 {
-
   @Factory(dataProvider = "configs")
   public TestHttpsEarlyHandshake(boolean clientROS, boolean serverROS, int port)
   {
@@ -57,7 +56,8 @@ public class TestHttpsEarlyHandshake extends AbstractTestHttps
     NioEventLoopGroup eventLoopGroup = new NioEventLoopGroup();
     ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
-    ChannelPoolManagerFactoryImpl channelPoolManagerFactory = new ChannelPoolManagerFactoryImpl(eventLoopGroup, scheduler);
+    ChannelPoolManagerFactoryImpl channelPoolManagerFactory =
+        new ChannelPoolManagerFactoryImpl(eventLoopGroup, scheduler);
     SSLContext context = getContext();
 
     ChannelPoolManagerKey key = new ChannelPoolManagerKeyBuilder()

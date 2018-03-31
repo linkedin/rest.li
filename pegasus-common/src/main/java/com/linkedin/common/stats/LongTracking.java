@@ -36,7 +36,7 @@ import com.linkedin.common.util.ConfigHelper;
  * This class implementation is not synchronized. If concurrent access is required, it
  * must be synchronized externally.
  */
-public class LongTracking
+public class LongTracking implements LongTracker
 {
   private static final int    DEFAULT_INITIAL_CAPACITY = 1000;
   private static final double DEFAULT_GROWTH_FACTOR    = 2.0;
@@ -88,6 +88,7 @@ public class LongTracking
     reset();
   }
 
+  @Override
   public void reset()
   {
     _count = 0;
@@ -101,6 +102,7 @@ public class LongTracking
     _keepRatio = 1;
   }
 
+  @Override
   public void addValue(long value)
   {
     if (_count == 0)
@@ -159,6 +161,7 @@ public class LongTracking
     return _maxCapacity;
   }
 
+  @Override
   public LongStats getStats()
   {
     return new LongStats(getCount(), getAverage(), getStandardDeviation(),

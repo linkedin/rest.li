@@ -22,12 +22,15 @@ package com.linkedin.r2.transport.http.client;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.SimpleCallback;
+import com.linkedin.common.stats.LongTracker;
+import com.linkedin.common.stats.LongTracking;
 import com.linkedin.common.util.None;
 import com.linkedin.r2.SizeLimitExceededException;
 import com.linkedin.r2.util.Cancellable;
-
 import com.linkedin.r2.util.LinkedDeque;
 import com.linkedin.util.ArgumentUtil;
+import com.linkedin.util.clock.Clock;
+import com.linkedin.util.clock.SystemClock;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -97,13 +100,15 @@ public class AsyncSharedPoolImpl<T> implements AsyncPool<T>
   // ========================================================
 
   public AsyncSharedPoolImpl(String name, AsyncPool.Lifecycle<T> lifecycle, ScheduledExecutorService scheduler,
-                             RateLimiter rateLimiter, long timeoutMills, int maxWaiters)
+      RateLimiter rateLimiter, long timeoutMills, int maxWaiters)
   {
-    this(name, lifecycle, scheduler, rateLimiter, timeoutMills, false, maxWaiters);
+    this(name, lifecycle, scheduler, rateLimiter, timeoutMills, false, maxWaiters,
+        SystemClock.instance(), new LongTracking());
   }
 
   public AsyncSharedPoolImpl(String name, AsyncPool.Lifecycle<T> lifecycle, ScheduledExecutorService scheduler,
-                             RateLimiter rateLimiter, long timeoutMills, boolean createImmediately, int maxWaiters)
+      RateLimiter rateLimiter, long timeoutMills, boolean createImmediately, int maxWaiters, Clock clock,
+      LongTracker waitTimeTracker)
   {
     ArgumentUtil.notNull(name, "name");
     ArgumentUtil.notNull(lifecycle, "lifecycle");
@@ -144,7 +149,9 @@ public class AsyncSharedPoolImpl<T> implements AsyncPool<T>
             }
             return _item.get() == null ? 0 : 1;
           }
-        });
+        },
+        clock,
+        waitTimeTracker);
     _waiters = new LinkedDeque<>();
   }
 
@@ -734,9 +741,11 @@ public class AsyncSharedPoolImpl<T> implements AsyncPool<T>
     @Override
     public void onError(Throwable e)
     {
+      long waitTime = System.currentTimeMillis() - _startTime;
       synchronized (_lock)
       {
-        _statsTracker.trackWaitTime(System.currentTimeMillis() - _startTime);
+        _statsTracker.trackWaitTime(waitTime);
+        _statsTracker.sampleMaxWaitTime(waitTime);
       }
       _callback.onError(e);
     }
@@ -744,9 +753,11 @@ public class AsyncSharedPoolImpl<T> implements AsyncPool<T>
     @Override
     public void onSuccess(T item)
     {
+      long waitTime = System.currentTimeMillis() - _startTime;
       synchronized (_lock)
       {
-        _statsTracker.trackWaitTime(System.currentTimeMillis() - _startTime);
+        _statsTracker.trackWaitTime(waitTime);
+        _statsTracker.sampleMaxWaitTime(waitTime);
       }
       _callback.onSuccess(item);
     }

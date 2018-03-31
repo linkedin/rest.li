@@ -210,4 +210,24 @@ public class TestLongTrackingAndLongStats
         + sortsPerSecond + " sorts/second, latency " + avgLatencyMillis + " milliseconds");
 
   }
+
+  @Test
+  public void testNoOpLongTracker()
+  {
+    NoopLongTracker tracker = NoopLongTracker.instance();
+    tracker.reset();
+    tracker.addValue(42L);
+    LongStats stats = tracker.getStats();
+    Assert.assertEquals(stats.get50Pct(), 0L);
+    Assert.assertEquals(stats.get90Pct(), 0L);
+    Assert.assertEquals(stats.get95Pct(), 0L);
+    Assert.assertEquals(stats.get99Pct(), 0L);
+    Assert.assertEquals(stats.getAverage(), 0.0D);
+    Assert.assertEquals(stats.getCount(), 0);
+    Assert.assertEquals(stats.getMaximum(), 0L);
+    Assert.assertEquals(stats.getMinimum(), 0L);
+    Assert.assertEquals(stats.getStandardDeviation(), 0.0D);
+
+
+  }
 }

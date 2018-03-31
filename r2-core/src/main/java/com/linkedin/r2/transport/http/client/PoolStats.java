@@ -113,6 +113,15 @@ public interface PoolStats
   int getSampleMaxPoolSize();
 
   /**
+   * Get the maximum waiting time of pool requests
+   * @return The maximum wait time
+   */
+  default long getSampleMaxWaitTime()
+  {
+    return 0;
+  }
+
+  /**
    * Get the number of objects that are idle(not checked out)
    * in the pool.
    * @return The number of idle objects

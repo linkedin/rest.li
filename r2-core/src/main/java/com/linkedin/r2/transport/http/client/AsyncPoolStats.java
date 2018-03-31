@@ -44,6 +44,7 @@ public class AsyncPoolStats implements PoolStats
 
   private final int _sampleMaxCheckedOut;
   private final int _sampleMaxPoolSize;
+  private final long _sampleMaxWaitTime;
 
   private final int _idleCount;
   private final double _waitTimeAvg;
@@ -71,6 +72,7 @@ public class AsyncPoolStats implements PoolStats
 
       int sampleMaxCheckedOut,
       int sampleMaxPoolSize,
+      long sampleMaxWaitTime,
 
       int idleCount,
       double waitTimeAvg,
@@ -94,6 +96,7 @@ public class AsyncPoolStats implements PoolStats
 
     _sampleMaxCheckedOut = sampleMaxCheckedOut;
     _sampleMaxPoolSize = sampleMaxPoolSize;
+    _sampleMaxWaitTime = sampleMaxWaitTime;
 
     _idleCount = idleCount;
     _waitTimeAvg = waitTimeAvg;
@@ -235,6 +238,12 @@ public class AsyncPoolStats implements PoolStats
   public int getSampleMaxPoolSize()
   {
     return _sampleMaxPoolSize;
+  }
+
+  @Override
+  public long getSampleMaxWaitTime()
+  {
+    return _sampleMaxWaitTime;
   }
 
   /**

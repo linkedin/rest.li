@@ -43,7 +43,6 @@ import org.testng.annotations.Test;
 @SuppressWarnings("rawtypes")
 public class TestEarlyUpgrade
 {
-
   private NioEventLoopGroup _eventLoopGroup;
   private ScheduledExecutorService _scheduler;
 
@@ -67,7 +66,8 @@ public class TestEarlyUpgrade
   @Test
   public void testEarlyUpgrade() throws Exception
   {
-    ChannelPoolManagerFactoryImpl channelPoolManagerFactory = new ChannelPoolManagerFactoryImpl(_eventLoopGroup, _scheduler);
+    ChannelPoolManagerFactoryImpl channelPoolManagerFactory =
+        new ChannelPoolManagerFactoryImpl(_eventLoopGroup, _scheduler);
 
     ChannelPoolManagerKey key = new ChannelPoolManagerKeyBuilder()
       // min pool set to one in such a way a connection is opened before the request

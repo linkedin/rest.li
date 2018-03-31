@@ -22,10 +22,14 @@ package test.r2.transport.http.client;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.FutureCallback;
+import com.linkedin.common.stats.LongTracking;
 import com.linkedin.r2.transport.http.client.AsyncPool;
 import com.linkedin.r2.transport.http.client.AsyncPoolImpl;
 import com.linkedin.common.util.None;
+import com.linkedin.r2.transport.http.client.NoopRateLimiter;
 import com.linkedin.r2.transport.http.client.PoolStats;
+import com.linkedin.util.clock.SettableClock;
+import com.linkedin.util.clock.Time;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
@@ -46,6 +50,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TestAsyncPool
 {
+  private static final long SAMPLING_DURATION_INCREMENT = Time.minutes(2L);
+
   private ScheduledExecutorService _executor = Executors.newSingleThreadScheduledExecutor();
 
   @AfterClass
@@ -290,6 +296,11 @@ public class TestAsyncPool
   public void testGetStats() throws Exception
   {
     final int POOL_SIZE = 25;
+    final int MIN_SIZE = 0;
+    final int MAX_WAITER_SIZE = Integer.MAX_VALUE;
+    final SettableClock clock = new SettableClock();
+    final LongTracking waitTimeTracker = new LongTracking();
+
     final int GET = 20;
     final int PUT_GOOD = 2;
     final int PUT_BAD = 3;
@@ -299,8 +310,8 @@ public class TestAsyncPool
 
     final UnreliableLifecycle lifecycle = new UnreliableLifecycle();
     final AsyncPool<AtomicBoolean> pool = new AsyncPoolImpl<AtomicBoolean>(
-        "object pool", lifecycle, POOL_SIZE, TIMEOUT, _executor
-    );
+        "object pool", lifecycle, POOL_SIZE, TIMEOUT, _executor, MAX_WAITER_SIZE, AsyncPoolImpl.Strategy.MRU,
+        MIN_SIZE, new NoopRateLimiter(), clock, waitTimeTracker);
     PoolStats stats;
     final List<AtomicBoolean> objects = new ArrayList<AtomicBoolean>();
 
@@ -329,6 +340,7 @@ public class TestAsyncPool
       AtomicBoolean obj = cb.get();
       objects.add(obj);
     }
+    clock.addDuration(SAMPLING_DURATION_INCREMENT);
     stats = pool.getStats();
     Assert.assertEquals(stats.getTotalCreated(), GET);
     Assert.assertEquals(stats.getTotalDestroyed(), 0);
@@ -349,7 +361,7 @@ public class TestAsyncPool
       AtomicBoolean obj = objects.remove(objects.size()-1);
       pool.put(obj);
     }
-
+    clock.addDuration(SAMPLING_DURATION_INCREMENT);
     stats = pool.getStats();
     Assert.assertEquals(stats.getTotalCreated(), GET);
     Assert.assertEquals(stats.getTotalDestroyed(), 0);
@@ -371,7 +383,7 @@ public class TestAsyncPool
       obj.set(false); // invalidate the object
       pool.put(obj);
     }
-
+    clock.addDuration(SAMPLING_DURATION_INCREMENT);
     stats = pool.getStats();
     Assert.assertEquals(stats.getTotalCreated(), GET);
     Assert.assertEquals(stats.getTotalDestroyed(), PUT_BAD);
@@ -392,7 +404,7 @@ public class TestAsyncPool
       AtomicBoolean obj = objects.remove(objects.size() - 1);
       pool.dispose(obj);
     }
-
+    clock.addDuration(SAMPLING_DURATION_INCREMENT);
     stats = pool.getStats();
     Assert.assertEquals(stats.getTotalCreated(), GET);
     Assert.assertEquals(stats.getTotalDestroyed(), PUT_BAD + DISPOSE);
@@ -410,6 +422,7 @@ public class TestAsyncPool
     // wait for a reap -- should destroy the PUT_GOOD objects
     Thread.sleep(DELAY);
 
+    clock.addDuration(SAMPLING_DURATION_INCREMENT);
     stats = pool.getStats();
     Assert.assertEquals(stats.getTotalCreated(), GET);
     Assert.assertEquals(stats.getTotalDestroyed(), PUT_GOOD + PUT_BAD + DISPOSE);
@@ -492,6 +505,9 @@ public class TestAsyncPool
     Assert.assertEquals(stats.getTotalCreateErrors(), 2*CREATE_BAD);
   }
 
+  /**
+   * Wait time percentile, average, and maximum tracking is deprecated in {@link AsyncPool} implementations.
+   */
   @Test
   public void testWaitTimeStats() throws Exception
   {

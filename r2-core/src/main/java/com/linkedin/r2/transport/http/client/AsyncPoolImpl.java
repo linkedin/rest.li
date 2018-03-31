@@ -20,7 +20,10 @@
 
 package com.linkedin.r2.transport.http.client;
 
+import com.linkedin.common.stats.LongTracker;
 import com.linkedin.util.ArgumentUtil;
+import com.linkedin.util.clock.Clock;
+import com.linkedin.util.clock.SystemClock;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -139,6 +142,20 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
         maxWaiters, strategy, minSize, new NoopRateLimiter());
   }
 
+  public AsyncPoolImpl(String name,
+      Lifecycle<T> lifecycle,
+      int maxSize,
+      long idleTimeout,
+      ScheduledExecutorService timeoutExecutor,
+      int maxWaiters,
+      Strategy strategy,
+      int minSize,
+      RateLimiter rateLimiter)
+  {
+    this(name, lifecycle, maxSize, idleTimeout, timeoutExecutor,
+        maxWaiters, strategy, minSize, rateLimiter, SystemClock.instance(), new LongTracking());
+  }
+
   /**
    * Creates an AsyncPoolImpl with a specified strategy of
    * returning pool objects and a minimum pool size.
@@ -166,6 +183,9 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
    *                no minimum.
    * @param rateLimiter an optional {@link RateLimiter} that controls the
    *                    object creation rate.
+   * @param clock a clock object used in tracking async pool stats
+   * @param waitTimeTracker tracker used to track pool stats such as percentile
+   *                        latency, max, min, standard deviation is enabled.
    *
    */
   public AsyncPoolImpl(String name,
@@ -176,7 +196,9 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
       int maxWaiters,
       Strategy strategy,
       int minSize,
-      RateLimiter rateLimiter)
+      RateLimiter rateLimiter,
+      Clock clock,
+      LongTracker waitTimeTracker)
   {
     ArgumentUtil.notNull(lifecycle, "lifecycle");
     ArgumentUtil.notNull(timeoutExecutor, "timeoutExecutor");
@@ -212,7 +234,9 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
           {
             return _idle.size();
           }
-        });
+        },
+        clock,
+        waitTimeTracker);
   }
 
   @Override
@@ -756,9 +780,11 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
     @Override
     public void onError(Throwable e)
     {
+      long waitTime = System.currentTimeMillis() - _startTime;
       synchronized (_lock)
       {
-        _statsTracker.trackWaitTime(System.currentTimeMillis() - _startTime);
+        _statsTracker.trackWaitTime(waitTime);
+        _statsTracker.sampleMaxWaitTime(waitTime);
       }
       _callback.onError(e);
     }
@@ -766,9 +792,11 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
     @Override
     public void onSuccess(T result)
     {
+      long waitTime = System.currentTimeMillis() - _startTime;
       synchronized (_lock)
       {
-        _statsTracker.trackWaitTime(System.currentTimeMillis() - _startTime);
+        _statsTracker.trackWaitTime(waitTime);
+        _statsTracker.sampleMaxWaitTime(waitTime);
       }
       _callback.onSuccess(result);
     }

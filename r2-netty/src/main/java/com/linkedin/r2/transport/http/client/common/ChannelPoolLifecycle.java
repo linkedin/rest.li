@@ -60,12 +60,16 @@ public class ChannelPoolLifecycle implements AsyncPool.Lifecycle<Channel>
    */
   public static final int INITIAL_PERIOD_BEFORE_RETRY_CONNECTIONS = 100;
 
+  /**
+   * The default channel pool lifecycle stats returned when getStats() is called. Detailed stats is no longer
+   * being tracked for performance reasons.
+   */
+  private static final AsyncPoolLifecycleStats DEFAULT_LIFECYCLE_STATS = new AsyncPoolLifecycleStats(0D, 0L, 0L, 0L);
+
   private final SocketAddress _remoteAddress;
   private final Bootstrap _bootstrap;
   private final ChannelGroup _channelGroup;
   private final boolean _tcpNoDelay;
-  private final LongTracking _createTimeTracker = new LongTracking();
-
 
   public ChannelPoolLifecycle(SocketAddress address, Bootstrap bootstrap, ChannelGroup channelGroup, boolean tcpNoDelay)
   {
@@ -78,14 +82,9 @@ public class ChannelPoolLifecycle implements AsyncPool.Lifecycle<Channel>
   @Override
   public void create(final Callback<Channel> channelCallback)
   {
-    final long start = System.currentTimeMillis();
     _bootstrap.connect(_remoteAddress).addListener((ChannelFutureListener) channelFuture -> {
       if (channelFuture.isSuccess())
       {
-        synchronized (_createTimeTracker)
-        {
-          _createTimeTracker.addValue(System.currentTimeMillis() - start);
-        }
         Channel c = channelFuture.channel();
         if (_tcpNoDelay)
         {
@@ -149,14 +148,6 @@ public class ChannelPoolLifecycle implements AsyncPool.Lifecycle<Channel>
   @Override
   public PoolStats.LifecycleStats getStats()
   {
-    synchronized (_createTimeTracker)
-    {
-      LongStats stats = _createTimeTracker.getStats();
-      _createTimeTracker.reset();
-      return new AsyncPoolLifecycleStats(stats.getAverage(),
-                                         stats.get50Pct(),
-                                         stats.get95Pct(),
-                                         stats.get99Pct());
-    }
+    return DEFAULT_LIFECYCLE_STATS;
   }
 }

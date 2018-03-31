@@ -16,6 +16,7 @@
 
 package com.linkedin.r2.transport.http.client.rest;
 
+import com.linkedin.common.stats.NoopLongTracker;
 import com.linkedin.r2.transport.http.client.AsyncPool;
 import com.linkedin.r2.transport.http.client.AsyncPoolImpl;
 import com.linkedin.r2.transport.http.client.ExponentialBackOffRateLimiter;
@@ -23,6 +24,7 @@ import com.linkedin.r2.transport.http.client.common.ChannelPoolFactory;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolLifecycle;
 import com.linkedin.r2.transport.http.client.common.SessionResumptionSslHandler;
 import com.linkedin.r2.transport.http.util.SslHandlerUtil;
+import com.linkedin.util.clock.SystemClock;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
@@ -54,8 +56,9 @@ public class HttpNettyChannelPoolFactory implements ChannelPoolFactory
   private final int _maxConcurrentConnectionInitializations;
 
   public HttpNettyChannelPoolFactory(int maxPoolSize, long idleTimeout, int maxPoolWaiterSize, AsyncPoolImpl.Strategy strategy,
-                                  int minPoolSize, EventLoopGroup eventLoopGroup, SSLContext sslContext, SSLParameters sslParameters, int maxHeaderSize,
-                                  int maxChunkSize, int maxResponseSize, ScheduledExecutorService scheduler, int maxConcurrentConnectionInitializations, ChannelGroup allChannels)
+      int minPoolSize, EventLoopGroup eventLoopGroup, SSLContext sslContext, SSLParameters sslParameters, int maxHeaderSize,
+      int maxChunkSize, int maxResponseSize, ScheduledExecutorService scheduler, int maxConcurrentConnectionInitializations,
+      ChannelGroup allChannels)
   {
 
     _allChannels = allChannels;
@@ -76,7 +79,7 @@ public class HttpNettyChannelPoolFactory implements ChannelPoolFactory
   @Override
   public AsyncPool<Channel> getPool(SocketAddress address)
   {
-    return new AsyncPoolImpl<Channel>(address.toString(),
+    return new AsyncPoolImpl<>(address.toString(),
       new ChannelPoolLifecycle(address,
         _bootstrap,
         _allChannels,
@@ -91,7 +94,9 @@ public class HttpNettyChannelPoolFactory implements ChannelPoolFactory
         ChannelPoolLifecycle.MAX_PERIOD_BEFORE_RETRY_CONNECTIONS,
         ChannelPoolLifecycle.INITIAL_PERIOD_BEFORE_RETRY_CONNECTIONS,
         _scheduler,
-        _maxConcurrentConnectionInitializations)
+        _maxConcurrentConnectionInitializations),
+      SystemClock.instance(),
+      NoopLongTracker.instance()
     );
   }
 

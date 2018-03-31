@@ -17,7 +17,11 @@
 package com.linkedin.r2.transport.http.client;
 
 import com.linkedin.common.stats.LongStats;
+import com.linkedin.common.stats.LongTracker;
 import com.linkedin.common.stats.LongTracking;
+import com.linkedin.util.clock.Clock;
+import com.linkedin.util.clock.SystemClock;
+import com.linkedin.util.clock.Time;
 import java.util.function.Supplier;
 
 
@@ -31,7 +35,17 @@ import java.util.function.Supplier;
  */
 public class AsyncPoolStatsTracker
 {
-  // These are total counts over the entire lifetime of the pool
+  /**
+   * The default minimum sampling period. Calls to getStats() within the same sample period will
+   * obtain the same sampled results. A minimum is enforced to ensure a reasonable result. The
+   * alternative is to enforce a minimum sample size. We chose a time based solution since many
+   * monitoring systems are also time based.
+   */
+  private static final long MINIMUM_SAMPLING_PERIOD = Time.minutes(1L);
+
+  /**
+   * These are total counts over the entire lifetime of the pool
+   */
   private int _totalCreated = 0;
   private int _totalDestroyed = 0;
   private int _totalCreateErrors = 0;
@@ -39,9 +53,15 @@ public class AsyncPoolStatsTracker
   private int _totalBadDestroyed = 0;
   private int _totalTimedOut = 0;
 
-  // These counters reset on each call to getStats()
+  /**
+   * These counters are sampled and reset based on sampling rules
+   */
   private int _sampleMaxCheckedOut = 0;
   private int _sampleMaxPoolSize = 0;
+  private long _sampleMaxWaitTime = 0;
+  private int _currentMaxCheckedOut = 0;
+  private int _currentMaxPoolSize = 0;
+  private long _currentMaxWaitTime = 0;
 
   private final Supplier<PoolStats.LifecycleStats> _lifecycleStatsSupplier;
   private final Supplier<Integer> _maxSizeSupplier;
@@ -49,8 +69,12 @@ public class AsyncPoolStatsTracker
   private final Supplier<Integer> _poolSizeSupplier;
   private final Supplier<Integer> _checkedOutSupplier;
   private final Supplier<Integer> _idleSizeSupplier;
-  private final LongTracking _waitTimeTracker;
+  private final LongTracker _waitTimeTracker;
 
+  private final Clock _clock;
+  private long _lastSamplingTime = 0L;
+
+  @Deprecated
   public AsyncPoolStatsTracker(
       Supplier<PoolStats.LifecycleStats> lifecycleStatsSupplier,
       Supplier<Integer> maxSizeSupplier,
@@ -59,13 +83,34 @@ public class AsyncPoolStatsTracker
       Supplier<Integer> checkedOutSupplier,
       Supplier<Integer> idleSizeSupplier)
   {
+    this(lifecycleStatsSupplier,
+        maxSizeSupplier,
+        minSizeSupplier,
+        poolSizeSupplier,
+        checkedOutSupplier,
+        idleSizeSupplier,
+        SystemClock.instance(),
+        new LongTracking());
+  }
+
+  public AsyncPoolStatsTracker(
+      Supplier<PoolStats.LifecycleStats> lifecycleStatsSupplier,
+      Supplier<Integer> maxSizeSupplier,
+      Supplier<Integer> minSizeSupplier,
+      Supplier<Integer> poolSizeSupplier,
+      Supplier<Integer> checkedOutSupplier,
+      Supplier<Integer> idleSizeSupplier,
+      Clock clock,
+      LongTracker waitTimeTracker)
+  {
     _lifecycleStatsSupplier = lifecycleStatsSupplier;
     _maxSizeSupplier = maxSizeSupplier;
     _minSizeSupplier = minSizeSupplier;
     _poolSizeSupplier = poolSizeSupplier;
     _checkedOutSupplier = checkedOutSupplier;
     _idleSizeSupplier = idleSizeSupplier;
-    _waitTimeTracker = new LongTracking();
+    _clock = clock;
+    _waitTimeTracker = waitTimeTracker;
   }
 
   public void incrementCreated()
@@ -100,12 +145,17 @@ public class AsyncPoolStatsTracker
 
   public void sampleMaxPoolSize()
   {
-    _sampleMaxPoolSize = Math.max(_poolSizeSupplier.get(), _sampleMaxPoolSize);
+    _currentMaxPoolSize = Math.max(_poolSizeSupplier.get(), _currentMaxPoolSize);
   }
 
   public void sampleMaxCheckedOut()
   {
-    _sampleMaxCheckedOut = Math.max(_checkedOutSupplier.get(), _sampleMaxCheckedOut);
+    _currentMaxCheckedOut = Math.max(_checkedOutSupplier.get(), _currentMaxCheckedOut);
+  }
+
+  public void sampleMaxWaitTime(long waitTimeMillis)
+  {
+    _currentMaxWaitTime = Math.max(waitTimeMillis, _currentMaxWaitTime);
   }
 
   public void trackWaitTime(long waitTimeMillis)
@@ -115,6 +165,20 @@ public class AsyncPoolStatsTracker
 
   public AsyncPoolStats getStats()
   {
+    long now = _clock.currentTimeMillis();
+    if (now - _lastSamplingTime > MINIMUM_SAMPLING_PERIOD)
+    {
+      _sampleMaxCheckedOut = _currentMaxCheckedOut;
+      _sampleMaxPoolSize = _currentMaxPoolSize;
+      _sampleMaxWaitTime = _currentMaxWaitTime;
+
+      _currentMaxCheckedOut = _checkedOutSupplier.get();
+      _currentMaxPoolSize = _poolSizeSupplier.get();
+      _currentMaxWaitTime = 0L;
+
+      _lastSamplingTime = now;
+    }
+
     LongStats waitTimeStats = _waitTimeTracker.getStats();
     AsyncPoolStats stats = new AsyncPoolStats(
         _totalCreated,
@@ -129,6 +193,7 @@ public class AsyncPoolStatsTracker
         _poolSizeSupplier.get(),
         _sampleMaxCheckedOut,
         _sampleMaxPoolSize,
+        _sampleMaxWaitTime,
         _idleSizeSupplier.get(),
         waitTimeStats.getAverage(),
         waitTimeStats.get50Pct(),
@@ -136,8 +201,7 @@ public class AsyncPoolStatsTracker
         waitTimeStats.get99Pct(),
         _lifecycleStatsSupplier.get()
     );
-    _sampleMaxCheckedOut = _checkedOutSupplier.get();
-    _sampleMaxPoolSize = _poolSizeSupplier.get();
+
     _waitTimeTracker.reset();
     return stats;
   }

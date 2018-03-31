@@ -16,12 +16,14 @@
 
 package com.linkedin.r2.transport.http.client.stream.http2;
 
+import com.linkedin.common.stats.NoopLongTracker;
 import com.linkedin.r2.transport.http.client.AsyncPool;
 import com.linkedin.r2.transport.http.client.AsyncSharedPoolImpl;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolFactory;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolLifecycle;
 import com.linkedin.r2.transport.http.client.NoopRateLimiter;
 import com.linkedin.r2.transport.http.client.stream.http.HttpNettyStreamClient;
+import com.linkedin.util.clock.SystemClock;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
@@ -90,6 +92,8 @@ public class Http2NettyStreamChannelPoolFactory implements ChannelPoolFactory
       new NoopRateLimiter(),
       _idleTimeout,
       _createChannelImmediately,
-      _maxPoolWaiterSize);
+      _maxPoolWaiterSize,
+      SystemClock.instance(),
+      NoopLongTracker.instance());
   }
 }

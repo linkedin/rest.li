@@ -22,6 +22,7 @@ package com.linkedin.r2.transport.http.client;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.FutureCallback;
+import com.linkedin.common.stats.LongTracking;
 import com.linkedin.common.util.None;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.filter.R2Constants;
@@ -34,6 +35,7 @@ import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolFactory;
 import com.linkedin.r2.transport.http.client.rest.HttpNettyClient;
 import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
+import com.linkedin.util.clock.SettableClock;
 import io.netty.channel.Channel;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.handler.codec.EncoderException;
@@ -715,7 +717,9 @@ public class TestHttpNettyClient
         new ExponentialBackOffRateLimiter(0,
             MAX_RATE_LIMITING_PERIOD,
             Math.max(10, MAX_RATE_LIMITING_PERIOD / 32),
-            _scheduler)
+            _scheduler),
+        new SettableClock(),
+        new LongTracking()
      );
     HttpNettyClient client = new HttpNettyClient(address -> testPool, _scheduler, 500, 500);
 
