@@ -57,7 +57,6 @@ import static com.linkedin.r2.filter.TimedRestFilter.ON_RESPONSE_SUFFIX;
   {
     TimingContextUtil.markTiming(requestContext, _onRequestTimingKey);
     _streamFilter.onStreamRequest(req, requestContext, wireAttrs, new TimedNextFilter<>(_onRequestTimingKey, nextFilter));
-    TimingContextUtil.markTiming(requestContext, _onRequestTimingKey);
   }
 
   @Override
@@ -68,7 +67,6 @@ import static com.linkedin.r2.filter.TimedRestFilter.ON_RESPONSE_SUFFIX;
   {
     TimingContextUtil.markTiming(requestContext, _onResponseTimingKey);
     _streamFilter.onStreamResponse(res, requestContext, wireAttrs, new TimedNextFilter<>(_onResponseTimingKey, nextFilter));
-    TimingContextUtil.markTiming(requestContext, _onResponseTimingKey);
   }
 
   @Override
@@ -79,6 +77,5 @@ import static com.linkedin.r2.filter.TimedRestFilter.ON_RESPONSE_SUFFIX;
   {
     TimingContextUtil.markTiming(requestContext, _onErrorTimingKey);
     _streamFilter.onStreamError(ex, requestContext, wireAttrs, new TimedNextFilter<>(_onErrorTimingKey, nextFilter));
-    TimingContextUtil.markTiming(requestContext, _onErrorTimingKey);
   }
 }

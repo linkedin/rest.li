@@ -52,7 +52,7 @@ public class TimingKey
   {
     if (_pool.containsKey(name))
     {
-      return _pool.get(name);
+      throw new IllegalStateException("Timing key " + name + " has already been registered!");
     }
     TimingKey timingKey = new TimingKey(name);
     _pool.put(name, timingKey);

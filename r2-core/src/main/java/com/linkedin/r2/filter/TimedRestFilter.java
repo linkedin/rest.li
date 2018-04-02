@@ -57,7 +57,6 @@ import java.util.Map;
   {
     TimingContextUtil.markTiming(requestContext, _onRequestTimingKey);
     _restFilter.onRestRequest(req, requestContext, wireAttrs, new TimedNextFilter<>(_onRequestTimingKey, nextFilter));
-    TimingContextUtil.markTiming(requestContext, _onRequestTimingKey);
   }
 
   @Override
@@ -68,7 +67,6 @@ import java.util.Map;
   {
     TimingContextUtil.markTiming(requestContext, _onResponseTimingKey);
     _restFilter.onRestResponse(res, requestContext, wireAttrs, new TimedNextFilter<>(_onResponseTimingKey, nextFilter));
-    TimingContextUtil.markTiming(requestContext, _onResponseTimingKey);
   }
 
   @Override
@@ -79,6 +77,5 @@ import java.util.Map;
   {
     TimingContextUtil.markTiming(requestContext, _onErrorTimingKey);
     _restFilter.onRestError(ex, requestContext, wireAttrs, new TimedNextFilter<>(_onErrorTimingKey, nextFilter));
-    TimingContextUtil.markTiming(requestContext, _onErrorTimingKey);
   }
 }
