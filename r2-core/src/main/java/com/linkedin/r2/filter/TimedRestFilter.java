@@ -44,7 +44,7 @@ import java.util.Map;
   public TimedRestFilter(RestFilter restFilter)
   {
     _restFilter = restFilter;
-    String timingKeyPrefix = _restFilter.getClass().getName() + "-" + hashCode() + "-";
+    String timingKeyPrefix = _restFilter.getClass().getSimpleName() + "-" + hashCode() + "-";
     _onRequestTimingKey = TimingKey.registerNewKey(timingKeyPrefix + ON_REQUEST_SUFFIX);
     _onResponseTimingKey = TimingKey.registerNewKey(timingKeyPrefix + ON_RESPONSE_SUFFIX);
     _onErrorTimingKey = TimingKey.registerNewKey(timingKeyPrefix + ON_ERROR_SUFFIX);

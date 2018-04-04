@@ -43,7 +43,7 @@ import static com.linkedin.r2.filter.TimedRestFilter.ON_RESPONSE_SUFFIX;
   public TimedStreamFilter(StreamFilter restFilter)
   {
     _streamFilter = restFilter;
-    String timingKeyPrefix = _streamFilter.getClass().getName() + "-" + hashCode() + "-";
+    String timingKeyPrefix =  _streamFilter.getClass().getSimpleName() + "-" + hashCode() + "-";
     _onRequestTimingKey = TimingKey.registerNewKey(timingKeyPrefix + ON_REQUEST_SUFFIX);
     _onResponseTimingKey = TimingKey.registerNewKey(timingKeyPrefix + ON_RESPONSE_SUFFIX);
     _onErrorTimingKey = TimingKey.registerNewKey(timingKeyPrefix + ON_ERROR_SUFFIX);

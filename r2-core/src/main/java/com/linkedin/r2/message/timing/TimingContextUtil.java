@@ -148,7 +148,7 @@ public class TimingContextUtil
       }
       else
       {
-        LOG.warn("Trying to complete an already completed timing. This call will have no effects.");
+        LOG.debug("Trying to complete an already completed timing with key " + _timingKey.getName() + ". This call will have no effects.");
       }
     }
   }
