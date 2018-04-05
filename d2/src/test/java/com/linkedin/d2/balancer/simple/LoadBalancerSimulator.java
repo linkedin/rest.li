@@ -31,6 +31,7 @@ import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
+import com.linkedin.r2.util.NamedThreadFactory;
 import com.linkedin.util.clock.Clock;
 import java.net.URI;
 import java.util.Collection;
@@ -95,7 +96,7 @@ public class LoadBalancerSimulator
   private final QPSGenerator _qpsGenerator;
 
   private final ClockedExecutor _clockedExecutor;
-  private final ScheduledExecutorService _executorService;
+  private final ScheduledExecutorService _syncExecutorService;
 
   private final Map<URI, Integer> _clientCounters = new HashMap<>();
 
@@ -103,6 +104,8 @@ public class LoadBalancerSimulator
   private final int INIT_SCHEDULE_DELAY = 10;
   // How often to reschedule next set of requests
   private final long SCHEDULE_INTERVAL = DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS;
+  private final ScheduledExecutorService _d2Executor;
+
   /**
    * Return the expected delay at the given time
    */
@@ -131,8 +134,9 @@ public class LoadBalancerSimulator
       UriProperties uriProperties, TimedValueGenerator<String, Long> delayGenerator,
       QPSGenerator qpsGenerator, EventEmitter eventEmitter) throws ExecutionException, InterruptedException
   {
-    _executorService = new SynchronousExecutorService();
+    _syncExecutorService = new SynchronousExecutorService();
     _clockedExecutor = new ClockedExecutor();
+    _d2Executor = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("ZK properties D2 for Test"));
 
     // mock the properties to pass in simulation info
     Map<String, Object> transportProperty = new HashMap<>(serviceProperties.getTransportClientProperties());
@@ -168,14 +172,14 @@ public class LoadBalancerSimulator
     clientFactories.put("http", delayClientFactory);
     clientFactories.put("https", delayClientFactory);
 
-    _loadBalancerState = new SimpleLoadBalancerState(_executorService,
+    _loadBalancerState = new SimpleLoadBalancerState(_syncExecutorService,
             _uriRegistry,
             _clusterRegistry,
             _serviceRegistry,
             clientFactories,
             loadBalancerStrategyFactories);
 
-    _loadBalancer = new SimpleLoadBalancer(_loadBalancerState, 5, TimeUnit.SECONDS);
+    _loadBalancer = new SimpleLoadBalancer(_loadBalancerState, 5, TimeUnit.SECONDS, _d2Executor);
 
     FutureCallback<None> balancerCallback = new FutureCallback<None>();
     _loadBalancer.start(balancerCallback);

@@ -158,7 +158,8 @@ public class ZKFSTest
             5, TimeUnit.SECONDS, BASE_PATH, _tmpdir.getAbsolutePath(),
             clientFactories,
             loadBalancerStrategyFactories);
-    ZKFSLoadBalancer balancer = new ZKFSLoadBalancer("localhost:"+PORT, 60000, 5000, f2, null, BASE_PATH);
+    ZKFSLoadBalancer balancer = new ZKFSLoadBalancer("localhost:"+PORT, 60000, 5000, f2,
+      null, BASE_PATH);
     return balancer;
   }
 

@@ -71,13 +71,8 @@ import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
+import com.linkedin.r2.util.NamedThreadFactory;
 import com.linkedin.util.degrader.DegraderImpl;
-import org.apache.commons.io.FileUtils;
-import org.testng.Assert;
-import org.testng.annotations.AfterSuite;
-import org.testng.annotations.BeforeSuite;
-import org.testng.annotations.Test;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -98,6 +93,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import org.apache.commons.io.FileUtils;
+import org.testng.Assert;
+import org.testng.annotations.AfterSuite;
+import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
@@ -107,6 +107,20 @@ import static org.testng.Assert.fail;
 public class SimpleLoadBalancerTest
 {
   private List<File> _dirsToDelete;
+
+  private ScheduledExecutorService _d2Executor;
+
+  @BeforeSuite
+  public void initialize()
+  {
+    _d2Executor = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("D2 PropertyEventExecutor for Tests"));
+  }
+
+  @AfterSuite
+  public void shutdown()
+  {
+    _d2Executor.shutdown();
+  }
 
   public static void main(String[] args) throws ServiceUnavailableException,
       URISyntaxException,
@@ -166,7 +180,7 @@ public class SimpleLoadBalancerTest
                                       loadBalancerStrategyFactories);
 
       SimpleLoadBalancer loadBalancer =
-          new SimpleLoadBalancer(state, 5, TimeUnit.SECONDS);
+        new SimpleLoadBalancer(state, 5, TimeUnit.SECONDS, _d2Executor);
 
       FutureCallback<None> balancerCallback = new FutureCallback<None>();
       loadBalancer.start(balancerCallback);
@@ -276,7 +290,7 @@ public class SimpleLoadBalancerTest
             loadBalancerStrategyFactories);
 
     SimpleLoadBalancer loadBalancer =
-        new SimpleLoadBalancer(state, 5, TimeUnit.SECONDS);
+      new SimpleLoadBalancer(state, 5, TimeUnit.SECONDS, _d2Executor);
 
     FutureCallback<None> balancerCallback = new FutureCallback<None>();
     loadBalancer.start(balancerCallback);
@@ -359,7 +373,7 @@ public class SimpleLoadBalancerTest
     SimpleLoadBalancer balancer = new SimpleLoadBalancer(new PartitionedLoadBalancerTestState(
             clusterName, serviceName, path, strategyName, partitionDescriptions, orderedStrategies,
             accessor
-    ));
+    ), _d2Executor);
 
     List<Integer> keys = new ArrayList<Integer>();
     keys.add(1);
@@ -457,7 +471,7 @@ public class SimpleLoadBalancerTest
     SimpleLoadBalancer balancer = new SimpleLoadBalancer(new PartitionedLoadBalancerTestState(
             clusterName, serviceName, path, strategyName, partitionDescriptions, orderedStrategies,
             accessor
-    ));
+    ), _d2Executor);
 
     HostToKeyMapper<URI> result = balancer.getPartitionInformation(serviceURI, null, 3, 123);
 
@@ -522,7 +536,7 @@ public class SimpleLoadBalancerTest
               loadBalancerStrategyFactories);
 
       SimpleLoadBalancer loadBalancer =
-          new SimpleLoadBalancer(state, 5, TimeUnit.SECONDS);
+        new SimpleLoadBalancer(state, 5, TimeUnit.SECONDS, _d2Executor);
 
       FutureCallback<None> balancerCallback = new FutureCallback<None>();
       loadBalancer.start(balancerCallback);
@@ -780,7 +794,7 @@ public class SimpleLoadBalancerTest
   {
     URIRequest uriRequest = new URIRequest("d2://NonExistentService");
     LoadBalancerTestState state = new LoadBalancerTestState();
-    SimpleLoadBalancer balancer = new SimpleLoadBalancer(state, 2, TimeUnit.SECONDS);
+    SimpleLoadBalancer balancer = new SimpleLoadBalancer(state, 2, TimeUnit.SECONDS, _d2Executor);
 
     try
     {
@@ -1233,7 +1247,7 @@ public class SimpleLoadBalancerTest
                       loadBalancerStrategyFactories);
 
       SimpleLoadBalancer loadBalancer =
-              new SimpleLoadBalancer(state, 5, TimeUnit.SECONDS);
+        new SimpleLoadBalancer(state, 5, TimeUnit.SECONDS, _d2Executor);
 
       FutureCallback<None> balancerCallback = new FutureCallback<None>();
       loadBalancer.start(balancerCallback);

@@ -37,17 +37,21 @@ import com.linkedin.r2.message.stream.StreamRequestBuilder;
 import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.message.stream.entitystream.ByteStringWriter;
 import com.linkedin.r2.message.stream.entitystream.EntityStreams;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.concurrent.ExecutionException;
-import org.testng.annotations.Test;
-
+import com.linkedin.r2.util.NamedThreadFactory;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import org.testng.annotations.AfterSuite;
+import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
@@ -60,6 +64,20 @@ import static org.testng.Assert.assertTrue;
 public class RetryClientTest
 {
   private static final ByteString CONTENT = ByteString.copy(new byte[8092]);
+
+  private ScheduledExecutorService _executor;
+
+  @BeforeSuite
+  public void initialize()
+  {
+    _executor = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("D2 PropertyEventExecutor for Tests"));
+  }
+
+  @AfterSuite
+  public void shutdown()
+  {
+    _executor.shutdown();
+  }
 
   @Test
   public void testRestRetry() throws Exception
@@ -234,7 +252,7 @@ public class RetryClientTest
     SimpleLoadBalancer balancer = new SimpleLoadBalancer(new PartitionedLoadBalancerTestState(
             clusterName, serviceName, path, strategyName, partitionDescriptions, orderedStrategies,
             accessor
-    ));
+    ), _executor);
 
     return balancer;
   }

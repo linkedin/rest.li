@@ -43,17 +43,13 @@ import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
 import com.linkedin.d2.balancer.util.partitions.PartitionInfoProvider;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.concurrent.TimeUnit;
-import org.testng.Assert;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
-
+import com.linkedin.r2.util.NamedThreadFactory;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -64,6 +60,13 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import org.testng.Assert;
+import org.testng.annotations.AfterSuite;
+import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 /**
  * @author Josh Walker
@@ -76,6 +79,19 @@ public class ConsistentHashKeyMapperTest
   private static final long RANDOM_SEED = 42;
   private static final List<PartitionDegraderLoadBalancerStateListener.Factory> DEGRADER_STATE_LISTENER_FACTORIES =
       Collections.emptyList();
+  private ScheduledExecutorService _d2Executor;
+
+  @BeforeSuite
+  public void initialize()
+  {
+    _d2Executor =  Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("D2 PropertyEventExecutor for Tests"));
+  }
+
+  @AfterSuite
+  public void shutdown()
+  {
+    _d2Executor.shutdown();
+  }
 
   static Map<URI, Set<Integer>> mapKeys(KeyMapper mapper, URI uri, Set<Integer> keys) throws ServiceUnavailableException
   {
@@ -230,7 +246,7 @@ public class ConsistentHashKeyMapperTest
     SimpleLoadBalancer balancer = new SimpleLoadBalancer(new PartitionedLoadBalancerTestState(
             clusterName, serviceName, path, strategyName, partitionDescriptions, orderedStrategies,
             accessor
-    ));
+    ), _d2Executor);
 
     ConsistentHashKeyMapper mapper = new ConsistentHashKeyMapper(balancer, balancer);
 
@@ -268,7 +284,7 @@ public class ConsistentHashKeyMapperTest
     SimpleLoadBalancer balancer = new SimpleLoadBalancer(new PartitionedLoadBalancerTestState(
             clusterName, serviceName, path, strategyName, partitionDescriptions, orderedStrategies,
             accessor
-    ));
+    ), _d2Executor);
     ConsistentHashKeyMapper mapper = new ConsistentHashKeyMapper(balancer, balancer);
 
     CountDownLatch latch = new CountDownLatch(numPartitions);

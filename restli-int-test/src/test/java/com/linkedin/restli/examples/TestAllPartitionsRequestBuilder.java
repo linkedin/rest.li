@@ -16,8 +16,10 @@
 
 package com.linkedin.restli.examples;
 
+import com.linkedin.common.callback.Callback;
 import com.linkedin.d2.balancer.LoadBalancerState;
 import com.linkedin.d2.balancer.PartitionedLoadBalancerTestState;
+import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancer;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
@@ -26,9 +28,25 @@ import com.linkedin.d2.balancer.strategies.degrader.MPConsistentHashRingFactory;
 import com.linkedin.d2.balancer.strategies.degrader.PointBasedConsistentHashRingFactory;
 import com.linkedin.d2.balancer.strategies.degrader.RingFactory;
 import com.linkedin.d2.balancer.util.HostSet;
+import com.linkedin.d2.balancer.util.hashing.ConsistentHashKeyMapper;
 import com.linkedin.d2.balancer.util.hashing.ConsistentHashKeyMapperTest;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
+import com.linkedin.data.template.DataTemplateUtil;
+import com.linkedin.data.template.DynamicRecordMetadata;
+import com.linkedin.data.template.FieldDef;
+import com.linkedin.r2.message.RequestContext;
+import com.linkedin.r2.message.rest.RestException;
+import com.linkedin.r2.util.NamedThreadFactory;
+import com.linkedin.restli.client.ActionRequest;
+import com.linkedin.restli.client.ActionRequestBuilder;
+import com.linkedin.restli.client.AllPartitionsRequestBuilder;
+import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.RestliRequestOptions;
+import com.linkedin.restli.common.ResourceMethod;
+import com.linkedin.restli.common.ResourceSpec;
+import com.linkedin.restli.common.ResourceSpecImpl;
+import com.linkedin.restli.examples.greetings.api.Greeting;
+import com.linkedin.restli.examples.greetings.api.Tone;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -39,30 +57,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
-
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-
-import com.linkedin.common.callback.Callback;
-import com.linkedin.d2.balancer.ServiceUnavailableException;
-import com.linkedin.d2.balancer.util.hashing.ConsistentHashKeyMapper;
-import com.linkedin.data.template.DataTemplateUtil;
-import com.linkedin.data.template.DynamicRecordMetadata;
-import com.linkedin.data.template.FieldDef;
-import com.linkedin.r2.message.RequestContext;
-import com.linkedin.r2.message.rest.RestException;
-import com.linkedin.restli.client.ActionRequest;
-import com.linkedin.restli.client.ActionRequestBuilder;
-import com.linkedin.restli.client.AllPartitionsRequestBuilder;
-import com.linkedin.restli.client.Response;
-import com.linkedin.restli.common.ResourceMethod;
-import com.linkedin.restli.common.ResourceSpec;
-import com.linkedin.restli.common.ResourceSpecImpl;
-import com.linkedin.restli.examples.greetings.api.Greeting;
-import com.linkedin.restli.examples.greetings.api.Tone;
 
 /**
 * @author Zhenkai Zhu
@@ -80,6 +83,20 @@ public class TestAllPartitionsRequestBuilder extends RestLiIntegrationTest
           null,
           Greeting.class,
           Collections.<String, Class<?>> emptyMap());
+
+  private ScheduledExecutorService _d2Executor;
+
+  @BeforeSuite
+  public void initialize()
+  {
+    _d2Executor =  Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("D2 PropertyEventExecutor for Tests"));
+  }
+
+  @AfterSuite
+  public void shutdown()
+  {
+    _d2Executor.shutdown();
+  }
 
   @BeforeClass
   public void initClass() throws Exception
@@ -173,7 +190,7 @@ public class TestAllPartitionsRequestBuilder extends RestLiIntegrationTest
     SimpleLoadBalancer balancer = new SimpleLoadBalancer(new PartitionedLoadBalancerTestState(
             "clusterName", "serviceName", "path", "strategyName", partitionDescriptions, orderedStrategies,
             accessor
-    ));
+    ), _d2Executor );
 
     return new ConsistentHashKeyMapper(balancer, balancer);
   }

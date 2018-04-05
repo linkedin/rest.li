@@ -76,7 +76,7 @@ public class SimpleLoadBalancerStrawMan
 
 
     // create the load balancer
-    SimpleLoadBalancer loadBalancer = new SimpleLoadBalancer(state);
+    SimpleLoadBalancer loadBalancer = new SimpleLoadBalancer(state, executorService);
 
     final TransportClient tc = loadBalancer.getClient(new URIRequest("d2://browsemaps/52"),
                                                       new RequestContext());

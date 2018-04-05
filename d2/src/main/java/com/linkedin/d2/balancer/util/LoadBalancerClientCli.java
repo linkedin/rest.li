@@ -733,7 +733,7 @@ public class LoadBalancerClientCli
                                     loadBalancerStrategyFactories,
                                     null, null, false);
 
-    SimpleLoadBalancer balancer = new SimpleLoadBalancer(state, 5, TimeUnit.SECONDS);
+    SimpleLoadBalancer balancer = new SimpleLoadBalancer(state, 5, TimeUnit.SECONDS, executor);
     FutureCallback<None> callback = new FutureCallback<None>();
     balancer.start(callback);
     callback.get(5, TimeUnit.SECONDS);

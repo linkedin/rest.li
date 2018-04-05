@@ -115,7 +115,7 @@ public class MockLBFactory
     uriRegistry.put("testcluster", new UriProperties("testcluster", createUriData("http://localhost:1338")));
     uriRegistry.put("badcluster", new UriProperties("badcluster", createUriData("http://localhost:1337")));
     // create the load balancer
-    return new SimpleLoadBalancer(state);
+    return new SimpleLoadBalancer(state, executorService);
   }
 
   private static Map<URI, Map<Integer, PartitionData>> createUriData(String uriString)

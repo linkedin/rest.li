@@ -230,7 +230,7 @@ public class LoadBalancerEchoClient
                                     loadBalancerStrategyFactories,
                                     null, null, false);
 
-    SimpleLoadBalancer balancer = new SimpleLoadBalancer(state, 5, TimeUnit.SECONDS);
+    SimpleLoadBalancer balancer = new SimpleLoadBalancer(state, 5, TimeUnit.SECONDS, executorService);
 
     new JmxManager().registerLoadBalancer("balancer", balancer)
                     .registerLoadBalancerState("state", state);

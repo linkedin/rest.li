@@ -198,7 +198,7 @@ public class SimpleLoadBalancerSimulation
                                     _serviceRegistry,
                                     _clientFactories,
                                     _loadBalancerStrategyFactories);
-    _loadBalancer = new SimpleLoadBalancer(_state, 10, TimeUnit.SECONDS);
+    _loadBalancer = new SimpleLoadBalancer(_state, 10, TimeUnit.SECONDS, _executorService);
 
     FutureCallback<None> callback = new FutureCallback<None>();
     _loadBalancer.start(callback);
@@ -578,7 +578,7 @@ public class SimpleLoadBalancerSimulation
     // exist,
     // and a load balancer with non-zero timeout will just timeout waiting for them to be
     // registered, which will never happen because the PropertyEventThread is shut down.
-    _loadBalancer = new SimpleLoadBalancer(_state, 0, TimeUnit.SECONDS);
+    _loadBalancer = new SimpleLoadBalancer(_state, 0, TimeUnit.SECONDS, _executorService);
     // verify services are as we expect
     for (String possibleService : _possibleServices)
     {

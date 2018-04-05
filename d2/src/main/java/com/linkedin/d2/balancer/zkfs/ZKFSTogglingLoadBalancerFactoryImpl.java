@@ -233,7 +233,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
     SimpleLoadBalancerState state = new SimpleLoadBalancerState(
             executorService, uriBus, clusterBus, serviceBus, _clientFactories, _loadBalancerStrategyFactories,
             _sslContext, _sslParameters, _isSSLEnabled, _clientServicesConfig, _partitionAccessorRegistry);
-    SimpleLoadBalancer balancer = new SimpleLoadBalancer(state, _lbTimeout, _lbTimeoutUnit);
+    SimpleLoadBalancer balancer = new SimpleLoadBalancer(state, _lbTimeout, _lbTimeoutUnit, executorService);
 
     TogglingLoadBalancer togLB = _factory.createBalancer(balancer, state, clusterToggle, serviceToggle, uriToggle);
     togLB.start(new Callback<None>() {

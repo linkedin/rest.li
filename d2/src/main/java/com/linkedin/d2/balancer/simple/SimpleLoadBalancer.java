@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.balancer.simple;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.Callbacks;
 import com.linkedin.common.callback.FutureCallback;
@@ -47,7 +48,6 @@ import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
 import com.linkedin.d2.balancer.util.partitions.PartitionInfoProvider;
 import com.linkedin.d2.discovery.event.PropertyEventThread.PropertyEventShutdownCallback;
 import com.linkedin.d2.discovery.util.Stats;
-import com.linkedin.d2.scheme;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.transport.common.TransportClientFactory;
@@ -66,7 +66,6 @@ import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -92,40 +91,15 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   private final ScheduledExecutorService _executor;
   private final Random            _random = new Random();
 
-  public SimpleLoadBalancer(LoadBalancerState state)
+  @VisibleForTesting
+  public SimpleLoadBalancer(LoadBalancerState state, ScheduledExecutorService executorService)
   {
-    this(state, new Stats(1000), new Stats(1000), 0, TimeUnit.SECONDS);
-  }
-
-  @Deprecated
-  public SimpleLoadBalancer(LoadBalancerState state, long timeout)
-  {
-    this(state, new Stats(1000), new Stats(1000), timeout, TimeUnit.MILLISECONDS);
-  }
-
-  public SimpleLoadBalancer(LoadBalancerState state, long timeout, TimeUnit unit)
-  {
-    this(state, new Stats(1000), new Stats(1000), timeout, unit);
+    this(state, new Stats(1000), new Stats(1000), 0, TimeUnit.SECONDS, executorService);
   }
 
   public SimpleLoadBalancer(LoadBalancerState state, long timeout, TimeUnit unit, ScheduledExecutorService executor)
   {
     this(state, new Stats(1000), new Stats(1000), timeout, unit, executor);
-  }
-
-  @Deprecated()
-  public SimpleLoadBalancer(LoadBalancerState state,
-                            Stats serviceAvailableStats,
-                            Stats serviceUnavailableStats)
-  {
-    this(state, serviceAvailableStats, serviceUnavailableStats, 0, TimeUnit.SECONDS);
-  }
-
-  public SimpleLoadBalancer(LoadBalancerState state, Stats serviceAvailableStats, Stats serviceUnavailableStats,
-                            long timeout, TimeUnit unit)
-  {
-    this(state, serviceAvailableStats, serviceUnavailableStats, timeout, unit, Executors.newSingleThreadScheduledExecutor());
-
   }
 
   public SimpleLoadBalancer(LoadBalancerState state,
