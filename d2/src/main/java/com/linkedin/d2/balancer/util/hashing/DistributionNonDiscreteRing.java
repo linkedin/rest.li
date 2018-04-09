@@ -16,38 +16,44 @@
 
 package com.linkedin.d2.balancer.util.hashing;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
+/**
+ * A distribution based implementation of {@code Ring<T>} interface. This ring takes in a map of hosts and its points and construct a cumulative distribution function.
+ * Host selection is based on this probability distribution instead of the given key.
+ *
+ * NOTE: this ring does not support sticky routing!
+ */
 public class DistributionNonDiscreteRing<T> implements Ring<T>
 {
   private static final Logger LOG = LoggerFactory.getLogger(DistributionNonDiscreteRing.class);
   private final TreeMap<Integer, T> _cumulativePointsMap;
   private final int _totalPoints;
-  private final int _totalHosts;
 
   public DistributionNonDiscreteRing(Map<T, Integer> pointsMap)
   {
     _cumulativePointsMap = calculateCDF(pointsMap);
     _totalPoints = _cumulativePointsMap.isEmpty() ? 0 : _cumulativePointsMap.lastKey();
-    _totalHosts = pointsMap.size();
   }
 
   @Override
   public T get(int unused)
   {
-    if (unused != 0)
-    {
-      LOG.warn("Distribution based ring does not support sticky routing, but non-null key is passed in");
-    }
     if (_cumulativePointsMap.isEmpty())
     {
       LOG.warn("Calling get on an empty ring, null value will be returned");
@@ -57,15 +63,26 @@ public class DistributionNonDiscreteRing<T> implements Ring<T>
     return _cumulativePointsMap.higherEntry(rand).getValue();
   }
 
+  /**
+   * This iterator does not honor the points of the hosts except the first one. This is acceptable because the other two real rings behave this way.
+   */
   @Override
   public Iterator<T> getIterator(int unused)
   {
-    if (unused != 0)
+    List<T> hosts = new ArrayList<>(_cumulativePointsMap.values());
+    if (!hosts.isEmpty())
     {
-      LOG.warn("Distribution based ring does not support sticky routing, but non-zero key is passed in");
+      Collections.shuffle(hosts);
+      //we try to put host with higher probability as the first by calling get. This avoids the situation where unhealthy host is returned first.
+      try
+      {
+        Collections.swap(hosts, 0, hosts.indexOf(get(0)));
+      } catch (IndexOutOfBoundsException e)
+      {
+        LOG.warn("Got indexOutOfBound when trying to shuffle list:" + e.getMessage());
+      }
     }
-
-    return new DistributionBasedIterator();
+    return hosts.iterator();
   }
 
   @Override
@@ -89,29 +106,5 @@ public class DistributionNonDiscreteRing<T> implements Ring<T>
       cumulativePointsMap.put(cumulativeSum, entry.getKey());
     }
     return cumulativePointsMap;
-  }
-
-  class DistributionBasedIterator implements Iterator<T>
-  {
-    private Set<T> _visitedHosts = ConcurrentHashMap.newKeySet();
-
-    @Override
-    public boolean hasNext()
-    {
-      return _visitedHosts.size() < _totalHosts;
-    }
-
-    @Override
-    public T next()
-    {
-      T pickedHost = get(0);//argument is not used, keep redrawing from the distribution
-      while (_visitedHosts.contains(pickedHost))
-      {
-        //Potential problem: since we are using randomized selection here, we might encounter prolonged drawing
-        pickedHost = get(0);
-      }
-      _visitedHosts.add(pickedHost);
-      return pickedHost;
-    }
   }
 }

@@ -48,7 +48,7 @@ public class DegraderRingFactory<T> implements RingFactory<T>
       _ringFactory = new MPConsistentHashRingFactory<>(config.getNumProbes(), config.getPointsPerHost());
     }
     else if (DISTRIBUTION_NON_HASH.equalsIgnoreCase(consistentHashAlgorithm)) {
-      if (config.getHashMethod().equalsIgnoreCase(DegraderLoadBalancerStrategyV3.HASH_METHOD_URI_REGEX))
+      if (config.getHashMethod() != null && config.getHashMethod().equalsIgnoreCase(DegraderLoadBalancerStrategyV3.HASH_METHOD_URI_REGEX))
       {
         _log.warn("URI Regex hash is specified but distribution based ring is picked, falling back to multiProbe ring");
         _ringFactory = new MPConsistentHashRingFactory<>(config.getNumProbes(), config.getPointsPerHost());
