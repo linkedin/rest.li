@@ -1,6 +1,7 @@
 21.0.5
 -------
-
+(RB=1277357)
+Add support for coercing Maps to DataMaps in QueryParamsUtil.convertToDataMap()
 
 21.0.4
 -------

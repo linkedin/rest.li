@@ -38,6 +38,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 
 /**
@@ -88,6 +89,7 @@ public class QueryParamsUtil
     return result;
   }
 
+  @SuppressWarnings("unchecked")
   private static Object paramToDataObject(Object param, Class<?> paramClass, ProtocolVersion version)
   {
     if (param == null)
@@ -117,6 +119,10 @@ public class QueryParamsUtil
     {
       return coerceCollection((Collection<?>) param, paramClass, version);
     }
+    else if (param instanceof Map)
+    {
+      return coerceMap((Map<?, ?>) param, paramClass, version);
+    }
     else
     {
       return DataTemplateUtil.stringify(param, paramClass);
@@ -124,7 +130,7 @@ public class QueryParamsUtil
   }
 
   /**
-   * given a collection of objects returns the objects either in a DataList, or, if
+   * Given a collection of objects returns the objects either in a DataList, or, if
    * they are PathSpecs (projections), encode them and return a String.
    */
   private static Object coerceCollection(Collection<?> values, Class<?> elementClass, ProtocolVersion version)
@@ -139,6 +145,35 @@ public class QueryParamsUtil
       }
     }
     return dataList;
+  }
+
+  /**
+   * Given a map of objects returns the objects in a DataMap.  All key values must be strings.
+   */
+  private static DataMap coerceMap(Map<?, ?> inputMap, Class<?> elementClass, ProtocolVersion version)
+  {
+    assert inputMap != null;
+
+    return inputMap.entrySet()
+        .stream()
+        .collect(Collectors.<Map.Entry<?, ?>, String, Object, DataMap>toMap(
+            entry ->
+            {
+              try
+              {
+                return (String) entry.getKey();
+              }
+              catch (ClassCastException e)
+              {
+                throw new IllegalArgumentException(String.format("Map key '%s' is not of type String",  entry.getKey().toString()));
+              }
+            },
+            entry -> paramToDataObject(entry.getValue(), elementClass, version),
+            (older, newer) ->
+            {
+              throw new IllegalStateException("Multiple mappings for the same key");
+            },
+            DataMap::new));
   }
 
   /**
