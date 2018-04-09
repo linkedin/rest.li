@@ -5,6 +5,9 @@ Fix NPE in d2 caused by QD.
 When QD doesn't contain required schema(https), transportClient will be null and through NPE.
 This change fix the NPE and throw ServiceUnavailableException instead.
 
+(RB=1275957)
+Fix distributionBased ring creation with an empty pointsMap
+
 20.0.16
 ------
 (RB=1269478)

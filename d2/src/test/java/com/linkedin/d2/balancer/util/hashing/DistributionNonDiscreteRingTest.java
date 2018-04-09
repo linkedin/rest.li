@@ -149,4 +149,13 @@ public class DistributionNonDiscreteRingTest {
     long duration = endTime - startTime;
     Assert.assertTrue(results.size() == 10);
   }
+
+  @Test
+  public void testEmptyMap() throws Exception {
+    Map<URI, Integer> pointsMap = new HashMap<>();
+    Ring<URI> ring = new DistributionNonDiscreteRingFactory<URI>().createRing(pointsMap);
+    Iterator<URI> iter = ring.getIterator(0);
+    Assert.assertFalse(iter.hasNext());
+    Assert.assertNull(ring.get(0));
+  }
  }
