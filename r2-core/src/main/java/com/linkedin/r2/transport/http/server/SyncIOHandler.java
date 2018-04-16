@@ -126,25 +126,52 @@ public class SyncIOHandler implements Writer, Reader
 
   public void loop() throws ServletException, IOException
   {
+    try
+    {
+      eventLoop();
+    }
+    catch (ServletException | IOException ex)
+    {
+      handleException(ex);
+      throw ex;
+    }
+    catch (Exception ex)
+    {
+      handleException(ex);
+      throw new ServletException(ex);
+    }
+  }
+
+  private void handleException(Exception ex)
+  {
+    if (_logServletExceptions || ex instanceof RuntimeException)
+    {
+      final String message = String.format("Encountered exception, remote=%s", _remoteAddress);
+      LOG.info(message, ex);
+    }
+    if (_wh != null)
+    {
+      _wh.error(ex);
+    }
+    if (_rh != null)
+    {
+      _rh.cancel();
+    }
+  }
+
+  private void eventLoop() throws ServletException, IOException, InterruptedException, TimeoutException
+  {
     final long startTime = System.currentTimeMillis();
     byte[] buf = new byte[DEFAULT_DATA_CHUNK_SIZE];
 
     while(shouldContinue() && !_forceExit)
     {
-      Event event;
-      try
+      long timeSpent = System.currentTimeMillis() - startTime;
+      long maxWaitTime = timeSpent < _timeout ? _timeout - timeSpent : 0;
+      Event event = _eventQueue.poll(maxWaitTime, TimeUnit.MILLISECONDS);
+      if (event == null)
       {
-        long timeSpent = System.currentTimeMillis() - startTime;
-        long maxWaitTime = timeSpent < _timeout ? _timeout - timeSpent : 0;
-        event = _eventQueue.poll(maxWaitTime, TimeUnit.MILLISECONDS);
-        if (event == null)
-        {
-          throw new TimeoutException("Timeout after " + _timeout + " milliseconds.");
-        }
-      }
-      catch (Exception ex)
-      {
-        throw new ServletException(ex);
+        throw new TimeoutException("Timeout after " + _timeout + " milliseconds.");
       }
 
       switch (event.getEventType())
@@ -152,24 +179,7 @@ public class SyncIOHandler implements Writer, Reader
         case ResponseDataAvailable:
         {
           ByteString data =  (ByteString) event.getData();
-          long startWriteTime = System.currentTimeMillis();
-          try
-          {
-            data.write(_os);
-          }
-          catch (Exception e)
-          {
-            long writeDuration = System.currentTimeMillis() - startWriteTime;
-            if (_logServletExceptions)
-            {
-              final String message = String.format(
-                  "Encountered servlet exception, state=ResponseDataAvailable,remote=%s,duration=%dms",
-                  _remoteAddress, writeDuration);
-              LOG.info(message, e);
-            }
-            throw e;
-          }
-
+          data.write(_os);
           _rh.request(1);
           break;
         }
@@ -177,25 +187,7 @@ public class SyncIOHandler implements Writer, Reader
         {
           while (_wh.remaining() > 0)
           {
-            final int actualLen;
-
-            long startWriteTime = System.currentTimeMillis();
-            try
-            {
-              actualLen = _is.read(buf);
-            }
-            catch (Exception e)
-            {
-              long writeDuration = System.currentTimeMillis() - startWriteTime;
-              if (_logServletExceptions)
-              {
-                final String message = String.format(
-                    "Encountered servlet exception, state=WriteRequestPossible,remote=%s,duration=%dms",
-                    _remoteAddress, writeDuration);
-                LOG.info(message, e);
-              }
-              throw e;
-            }
+            final int actualLen = _is.read(buf);
 
             if (actualLen < 0)
             {
@@ -241,24 +233,7 @@ public class SyncIOHandler implements Writer, Reader
         {
           for (int i = 0; i < 10; i++)
           {
-            final int actualLen;
-
-            long startWriteTime = System.currentTimeMillis();
-            try
-            {
-              actualLen = _is.read(buf);
-            }
-            catch (Exception e)
-            {
-              long writeDuration = System.currentTimeMillis() - startWriteTime;
-              if (_logServletExceptions) {
-                final String message = String.format(
-                    "Encountered servlet exception, state=DrainRequest,remote=%s,duration=%dms",
-                    _remoteAddress, writeDuration);
-                LOG.info(message, e);
-              }
-              throw e;
-            }
+            final int actualLen = _is.read(buf);
 
             if (actualLen < 0)
             {

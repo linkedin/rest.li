@@ -1,6 +1,10 @@
-20.0.22
+20.0.23
 -------
 
+20.0.22
+-------
+(RB=1283017)
+SyncIoHandler should notify its reader/writer when exception happends
 
 20.0.21
 -------
