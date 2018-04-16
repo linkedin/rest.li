@@ -1124,7 +1124,8 @@ public class TestClientBuilders
                .build();
     Assert.assertEquals(request.isSafe(), true);
     Assert.assertEquals(request.isIdempotent(), true);
-
+    Assert.assertEquals(request.getFields(), new HashSet<PathSpec>(Arrays.asList(
+        TestRecord.fields().id(), TestRecord.fields().message())));
     checkBasicRequest(request,
                       expectedURIDetails,
                       ResourceMethod.FINDER,
@@ -1266,6 +1267,8 @@ public class TestClientBuilders
                .build();
     Assert.assertEquals(request.isSafe(), true);
     Assert.assertEquals(request.isIdempotent(), true);
+    Assert.assertEquals(request.getFields(), new HashSet<PathSpec>(Arrays.asList(
+        TestRecord.fields().id(), TestRecord.fields().message())));
     checkBasicRequest(request,
                       expectedURIDetails,
                       ResourceMethod.GET_ALL,

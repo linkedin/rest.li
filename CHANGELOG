@@ -1,3 +1,11 @@
+20.0.19
+-------
+
+20.0.18
+-------
+(RB=1281573)
+Expose getFields() to FindRequest/GetAllRequest/CreateIdEntityRequest
+
 20.0.17
 -------
 (RB=1266681)

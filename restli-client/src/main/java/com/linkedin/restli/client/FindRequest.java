@@ -17,6 +17,7 @@
 package com.linkedin.restli.client;
 
 
+import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.CompoundKey;
@@ -27,6 +28,7 @@ import com.linkedin.restli.internal.client.CollectionResponseDecoder;
 import java.net.HttpCookie;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -109,5 +111,11 @@ public class FindRequest<T extends RecordTemplate>
     sb.append(_assocKey);
     sb.append("}");
     return sb.toString();
+  }
+
+  @Override
+  public Set<PathSpec> getFields()
+  {
+    return super.getFields();
   }
 }
