@@ -83,16 +83,22 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+import javax.annotation.Nonnull;
 import org.apache.commons.io.FileUtils;
 import org.testng.Assert;
 import org.testng.annotations.AfterSuite;
@@ -331,7 +337,7 @@ public class SimpleLoadBalancerTest
    */
   @Test
   public void testGetPartitionInfoOrdering()
-      throws Exception
+    throws Exception
   {
     String serviceName = "articles";
     String clusterName = "cluster";
@@ -371,8 +377,8 @@ public class SimpleLoadBalancerTest
 
     URI serviceURI = new URI("d2://" + serviceName);
     SimpleLoadBalancer balancer = new SimpleLoadBalancer(new PartitionedLoadBalancerTestState(
-            clusterName, serviceName, path, strategyName, partitionDescriptions, orderedStrategies,
-            accessor
+      clusterName, serviceName, path, strategyName, partitionDescriptions, orderedStrategies,
+      accessor
     ), _d2Executor);
 
     List<Integer> keys = new ArrayList<Integer>();
@@ -421,6 +427,100 @@ public class SimpleLoadBalancerTest
     Assert.assertEquals((int)result.getPartitionsWithoutEnoughHosts().get(3), 2);
   }
 
+  private static Map<Integer, PartitionData> generatePartitionData(Integer... partitions)
+  {
+    Map<Integer, PartitionData> server1Data = new HashMap<>();
+    Arrays.asList(partitions).forEach(partitionId -> server1Data.put(partitionId, new PartitionData(1.0)));
+    return server1Data;
+  }
+
+  private static <T> Set<T> iteratorToSet(Iterator<T> iterator)
+  {
+    return StreamSupport.stream(
+      Spliterators.spliteratorUnknownSize(iterator, Spliterator.ORDERED),
+      false).collect(Collectors.toSet());
+  }
+
+  /**
+   * Test falling back of strategy if partition can't be found in the original one
+   */
+  @Test
+  public void testStrategyFallbackInGetPartitionInformationAndRing() throws Exception
+  {
+    // setup 3 partitions. Partition 1 and Partition 2 both have server1 - server3. Partition 3 only has server1.
+
+    // create HTTP strategy
+    Map<URI, Map<Integer, PartitionData>> partitionDescriptionsPlain = new HashMap<>();
+    final URI server1Plain = new URI("http://foo1.com");
+    partitionDescriptionsPlain.put(server1Plain, generatePartitionData(1, 2, 3));
+    LoadBalancerStrategy plainStrategy = new TestLoadBalancerStrategy(partitionDescriptionsPlain);
+
+    // create HTTPS strategy
+    Map<URI, Map<Integer, PartitionData>> partitionDescriptionsSSL = new HashMap<>();
+    final URI server2Https = new URI("https://foo2.com");
+    partitionDescriptionsSSL.put(server2Https, generatePartitionData(1, 2));
+
+    final URI server3Https = new URI("https://foo3.com");
+    partitionDescriptionsSSL.put(server3Https, generatePartitionData(1, 2));
+    LoadBalancerStrategy SSLStrategy = new TestLoadBalancerStrategy(partitionDescriptionsSSL);
+
+    // Prioritize HTTPS over HTTP
+    List<LoadBalancerState.SchemeStrategyPair> orderedStrategies = new ArrayList<>();
+    orderedStrategies.add(new LoadBalancerState.SchemeStrategyPair("https", SSLStrategy));
+    orderedStrategies.add(new LoadBalancerState.SchemeStrategyPair("http", plainStrategy));
+
+    // setup the partition accessor which can only map keys from 1 - 3.
+    PartitionAccessor accessor = new TestPartitionAccessor();
+
+    HashMap<URI, Map<Integer, PartitionData>> allUris = new HashMap<>();
+    allUris.putAll(partitionDescriptionsSSL);
+    allUris.putAll(partitionDescriptionsPlain);
+
+    String serviceName = "articles";
+    String clusterName = "cluster";
+    String path = "path";
+    String strategyName = "degrader";
+    URI serviceURI = new URI("d2://" + serviceName);
+    SimpleLoadBalancer balancer = new SimpleLoadBalancer(new PartitionedLoadBalancerTestState(
+      clusterName, serviceName, path, strategyName, allUris, orderedStrategies,
+      accessor
+    ), _d2Executor);
+
+    List<Integer> keys = Arrays.asList(1, 2, 3, 123);
+    HostToKeyMapper<Integer> resultPartInfo = balancer.getPartitionInformation(serviceURI, keys, 3, 123);
+    MapKeyResult<Ring<URI>, Integer> resultRing = balancer.getRings(serviceURI, keys);
+    Assert.assertEquals(resultPartInfo.getLimitHostPerPartition(), 3);
+    Assert.assertEquals(resultRing.getMapResult().size(), 3);
+
+    Map<Integer, Ring<URI>> ringPerKeys = new HashMap<>();
+    resultRing.getMapResult().forEach((uriRing, keysAssociated) -> keysAssociated.forEach(key -> ringPerKeys.put(key, uriRing)));
+
+    // Important section
+
+    // partition 1 and 2
+    List<URI> ordering1 = resultPartInfo.getPartitionInfoMap().get(1).getHosts();
+    Set<URI> ordering1Ring = iteratorToSet(ringPerKeys.get(1).getIterator(0));
+
+    List<URI> ordering2 = resultPartInfo.getPartitionInfoMap().get(2).getHosts();
+    Set<URI> ordering2Ring = iteratorToSet(ringPerKeys.get(2).getIterator(0));
+
+    // partition 1 and 2. check that the HTTPS hosts are there
+    // all the above variables should be the same, since all the hosts are in both partitions
+    Assert.assertEqualsNoOrder(ordering1.toArray(), ordering2.toArray());
+    Assert.assertEqualsNoOrder(ordering1.toArray(), ordering1Ring.toArray());
+    Assert.assertEqualsNoOrder(ordering1.toArray(), ordering2Ring.toArray());
+    Assert.assertEqualsNoOrder(ordering1.toArray(), Arrays.asList(server2Https, server3Https).toArray());
+
+
+    // partition 3, test that is falling back to HTTP
+    List<URI> ordering3 = resultPartInfo.getPartitionInfoMap().get(3).getHosts();
+    Set<URI> ordering3Ring = iteratorToSet(ringPerKeys.get(3).getIterator(0));
+
+    Assert.assertEquals(ordering3.size(), 1, "There should be just 1 http client in partition 3 (falling back from https)");
+    Assert.assertEqualsNoOrder(ordering3.toArray(), ordering3Ring.toArray());
+    Assert.assertEquals(ordering3.get(0), server1Plain);
+  }
+
   /**
    * This tests the getPartitionInfo() when keys are null (actually a test for KeyMapper.getAllPartitionMultipleHosts()).
    */
@@ -428,7 +528,6 @@ public class SimpleLoadBalancerTest
   public void testGetAllPartitionMultipleHostsOrdering()
       throws Exception
   {
-
     String serviceName = "articles";
     String clusterName = "cluster";
     String path = "path";
@@ -536,7 +635,7 @@ public class SimpleLoadBalancerTest
               loadBalancerStrategyFactories);
 
       SimpleLoadBalancer loadBalancer =
-        new SimpleLoadBalancer(state, 5, TimeUnit.SECONDS, _d2Executor);
+        new SimpleLoadBalancer(state, 5, TimeUnit.SECONDS, executorService);
 
       FutureCallback<None> balancerCallback = new FutureCallback<None>();
       loadBalancer.start(balancerCallback);
@@ -1133,7 +1232,8 @@ public class SimpleLoadBalancerTest
   {
     Map<Integer, Map<URI, Integer>> _partitionData;
 
-    public TestLoadBalancerStrategy(Map<URI, Map<Integer, PartitionData>> partitionDescriptions) {
+    public TestLoadBalancerStrategy(Map<URI, Map<Integer, PartitionData>> partitionDescriptions)
+    {
       _partitionData = new HashMap<Integer, Map<URI, Integer>>();
       for (Map.Entry<URI, Map<Integer, PartitionData>> uriPartitionPair : partitionDescriptions.entrySet())
       {
@@ -1158,6 +1258,7 @@ public class SimpleLoadBalancerTest
       throw new UnsupportedOperationException();
     }
 
+    @Nonnull
     @Override
     public Ring<URI> getRing(long clusterGenerationId, int partitionId, List<TrackerClient> trackerClients)
     {

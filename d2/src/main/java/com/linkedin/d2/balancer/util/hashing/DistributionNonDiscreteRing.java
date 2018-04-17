@@ -17,18 +17,13 @@
 package com.linkedin.d2.balancer.util.hashing;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,6 +61,7 @@ public class DistributionNonDiscreteRing<T> implements Ring<T>
   /**
    * This iterator does not honor the points of the hosts except the first one. This is acceptable because the other two real rings behave this way.
    */
+  @Nonnull
   @Override
   public Iterator<T> getIterator(int unused)
   {
@@ -89,6 +85,12 @@ public class DistributionNonDiscreteRing<T> implements Ring<T>
   public boolean isStickyRoutingCapable()
   {
     return false;
+  }
+
+  @Override
+  public boolean isEmpty()
+  {
+    return _cumulativePointsMap.isEmpty();
   }
 
   private TreeMap<Integer, T> calculateCDF(Map<T, Integer> pointsMap)

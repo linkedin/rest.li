@@ -25,8 +25,8 @@ import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.util.RateLimitedLogger;
 import com.linkedin.d2.balancer.util.hashing.HashFunction;
 import com.linkedin.d2.balancer.util.hashing.RandomHash;
-import com.linkedin.d2.balancer.util.hashing.SeededRandomHash;
 import com.linkedin.d2.balancer.util.hashing.Ring;
+import com.linkedin.d2.balancer.util.hashing.SeededRandomHash;
 import com.linkedin.d2.balancer.util.hashing.URIRegexHash;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheck;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckClientBuilder;
@@ -50,6 +50,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -1016,11 +1017,18 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     }
   }
 
+  @Nonnull
   @Override
   public Ring<URI> getRing(long clusterGenerationId, int partitionId, List<TrackerClient> trackerClients)
   {
-    checkUpdatePartitionState(clusterGenerationId, partitionId, trackerClients);
+    if (trackerClients.isEmpty())
+    {
+      // returning empty ring (any implementation) and preventing to update the state with no trackers
+      // to be consistent with the behavior in getTrackerClient
+      return new DegraderRingFactory<URI>(_config).createRing(Collections.emptyMap());
+    }
 
+    checkUpdatePartitionState(clusterGenerationId, partitionId, trackerClients);
     return _state.getRing(partitionId);
   }
 

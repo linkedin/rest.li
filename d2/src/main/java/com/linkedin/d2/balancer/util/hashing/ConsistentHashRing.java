@@ -16,10 +16,6 @@
 
 package com.linkedin.d2.balancer.util.hashing;
 
-import static com.linkedin.d2.discovery.util.LogUtil.debug;
-import static com.linkedin.d2.discovery.util.LogUtil.error;
-import static com.linkedin.d2.discovery.util.LogUtil.warn;
-
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -30,9 +26,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-
+import javax.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static com.linkedin.d2.discovery.util.LogUtil.debug;
+import static com.linkedin.d2.discovery.util.LogUtil.error;
+import static com.linkedin.d2.discovery.util.LogUtil.warn;
 
 /**
  * Implements a point-based consistent hash ring. When an object is added to the ring, an
@@ -200,6 +200,7 @@ public class ConsistentHashRing<T> implements Ring<T>
    * @param key The iteration will start from the point corresponded by this key
    * @return An Iterator with no objects when the hash ring is empty
    */
+  @Nonnull
   @Override
   public Iterator<T> getIterator(int key)
   {
@@ -316,6 +317,17 @@ public class ConsistentHashRing<T> implements Ring<T>
     }
   }
 
+  @Override
+  public boolean isStickyRoutingCapable() {
+    return true;
+  }
+
+  @Override
+  public boolean isEmpty()
+  {
+    return _points.isEmpty();
+  }
+
   /**
    * A wrapper class that associates an object with a given point (hash) in the ring.
    */
@@ -371,28 +383,5 @@ public class ConsistentHashRing<T> implements Ring<T>
       hashCode = 31 * hashCode * _hash;
       return hashCode;
     }
-  }
-
-  @SuppressWarnings("unchecked")
-  @Override
-  public boolean equals(Object o)
-  {
-    if (o == null || !(o instanceof  ConsistentHashRing))
-    {
-      return false;
-    }
-    ConsistentHashRing<T> ring = (ConsistentHashRing<T>) o;
-    return this._points.equals(ring._points);
-  }
-
-  @Override
-  public int hashCode()
-  {
-    return _points == null ? 1 : _points.hashCode();
-  }
-
-  @Override
-  public boolean isStickyRoutingCapable() {
-    return true;
   }
 }

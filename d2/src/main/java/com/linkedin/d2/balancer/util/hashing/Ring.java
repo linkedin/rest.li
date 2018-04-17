@@ -17,10 +17,24 @@
 package com.linkedin.d2.balancer.util.hashing;
 
 import java.util.Iterator;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
+/**
+ * @implNote The implementation of this interface should not override equal and hashCode
+ */
 public interface Ring<T>
 {
+  @Nullable
   T get(int key);
+
+  /**
+   * @param key parameter might specify the starting point of the map on the ring or just be ignored
+   */
+  @Nonnull
   Iterator<T> getIterator(int key);
+
   boolean isStickyRoutingCapable();
+
+  boolean isEmpty();
 }

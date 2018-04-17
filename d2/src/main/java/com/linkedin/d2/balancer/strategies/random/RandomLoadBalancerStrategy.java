@@ -25,6 +25,7 @@ import com.linkedin.r2.message.RequestContext;
 import java.net.URI;
 import java.util.List;
 import java.util.Random;
+import javax.annotation.Nonnull;
 
 public class RandomLoadBalancerStrategy implements LoadBalancerStrategy
 {
@@ -35,6 +36,7 @@ public class RandomLoadBalancerStrategy implements LoadBalancerStrategy
     _random = new Random();
   }
 
+  @Nonnull
   @Override
   public Ring<URI> getRing(long clusterGenerationId, int partitionId, List<TrackerClient> trackerClients)
   {

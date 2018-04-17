@@ -39,7 +39,6 @@ import com.linkedin.d2.balancer.util.ClientFactoryProvider;
 import com.linkedin.d2.balancer.util.LoadBalancerUtil;
 import com.linkedin.d2.balancer.util.RateLimitedLogger;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
-import com.linkedin.d2.balancer.util.partitions.PartitionAccessorFactory;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessorRegistry;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessorRegistryImpl;
 import com.linkedin.d2.discovery.event.PropertyEventBus;
@@ -55,9 +54,6 @@ import com.linkedin.r2.util.ConfigValueExtractor;
 import com.linkedin.util.clock.Clock;
 import com.linkedin.util.clock.SystemClock;
 import com.linkedin.util.degrader.DegraderImpl;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -73,6 +69,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.linkedin.d2.discovery.util.LogUtil.debug;
 import static com.linkedin.d2.discovery.util.LogUtil.info;
@@ -1086,6 +1084,10 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     if (factory != null && serviceProperties.getPrioritizedSchemes() != null &&
         !serviceProperties.getPrioritizedSchemes().isEmpty())
     {
+      // if switching from HTTP_ONLY to HTTPS_ONLY or vice versa and the service has a high QPS,
+      // it could experience ServiceUnavailable exception for a limited period of time given by the fact
+      // that clients are not replaced atomically and that the request accesses shared data structures in different
+      // moments in time and not atomically
       List<String> schemes = serviceProperties.getPrioritizedSchemes();
       for (String scheme : schemes)
       {

@@ -68,6 +68,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import javax.annotation.Nonnull;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -2059,6 +2060,50 @@ public class DegraderLoadBalancerTest
     assertEquals(totalSuccessfulInitialization, 20000);
   }
 
+  /**
+   * The test checks the behavior is consistent with getTrackerClient, avoiding to recalculate the state if
+   * no clients are passed in, since we also already know that it will be an emtpy Ring
+   * This test aims at solving a concurrency problem that would otherwise show up when switching the prioritized
+   * scheme from HTTP_ONLY to HTTPS
+   */
+  @Test(groups = {"small", "back-end"})
+  public void testAvoidUpdatingStateIfGetRingWithEmptyClients()
+  {
+    final int PARTITION_ID = 0;
+    Map<String, Object> myMap = new HashMap<>();
+    Long timeInterval = 5000L;
+    TestClock clock = new TestClock();
+    myMap.put(PropertyKeys.CLOCK, clock);
+    DegraderImpl.Config degraderConfig = DegraderConfigFactory.toDegraderConfig(null);
+    double qps = 0.3;
+
+    // set up strategy
+    List<TrackerClient> clients = createTrackerClient(10, clock, degraderConfig);
+    DegraderLoadBalancerStrategyConfig config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(myMap);
+    DegraderLoadBalancerStrategyV3 strategyV3 = new DegraderLoadBalancerStrategyV3(config,
+      "DegraderLoadBalancerTest", null, DEGRADER_STATE_LISTENER_FACTORIES);
+    DegraderLoadBalancerStrategyAdapter strategy = new DegraderLoadBalancerStrategyAdapter(strategyV3);
+
+
+    // get tracker passing some clients
+    strategy.getRing(1, PARTITION_ID, clients);
+    String strategyState = strategyV3.getState().getPartition(PARTITION_ID).toString();
+
+    // making some calls to enable the properties to update the strategy
+    callClients(10, qps, clients, clock, timeInterval, true, false);
+
+    // make another call that should not trigger update state since no clients are passed, even if we made some
+    // calls and the clientGenerationId changed
+    Ring<URI> emptyRing = strategy.getRing(2, PARTITION_ID, Collections.emptyList());
+
+    String strategyStateEmptyClients = strategyV3.getState().getPartition(PARTITION_ID).toString();
+
+    Assert.assertEquals(strategyStateEmptyClients, strategyState, "We should not update the strategy if we pass" +
+      " an empty client list.");
+    Assert.assertEquals(emptyRing.getIterator(0).hasNext(), false, "It should return an empty Ring" +
+      " since no clients have been passed");
+  }
+
   private static class EvilClient extends TrackerClient
   {
     private final CountDownLatch _latch;
@@ -2272,6 +2317,7 @@ public class DegraderLoadBalancerTest
       return _strategy.getTrackerClient(request, requestContext, clusterGenerationId, partitionId, trackerClients);
     }
 
+    @Nonnull
     public Ring<URI> getRing(long clusterGenerationId, int partitionId, List<TrackerClient> trackerClients)
     {
       return _strategy.getRing(clusterGenerationId, partitionId, trackerClients);

@@ -62,6 +62,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nonnull;
 import org.testng.Assert;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
@@ -725,6 +726,7 @@ public class ConsistentHashKeyMapperTest
       throw new UnsupportedOperationException();
     }
 
+    @Nonnull
     @Override
     public Ring<URI> getRing(long clusterGenerationId, int partitionId, List<TrackerClient> trackerClients)
     {

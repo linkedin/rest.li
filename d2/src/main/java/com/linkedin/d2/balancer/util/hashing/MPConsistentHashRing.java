@@ -23,11 +23,11 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Random;
 import java.util.Set;
+import javax.annotation.Nonnull;
 import net.openhft.hashing.LongHashFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -122,6 +122,7 @@ public class MPConsistentHashRing<T> implements Ring<T>
     return _buckets.get(index).getT();
   }
 
+  @Nonnull
   @Override
   public Iterator<T> getIterator(int key)
   {
@@ -196,6 +197,12 @@ public class MPConsistentHashRing<T> implements Ring<T>
   @Override
   public boolean isStickyRoutingCapable() {
     return true;
+  }
+
+  @Override
+  public boolean isEmpty()
+  {
+    return _hosts.isEmpty();
   }
 
   private class Bucket

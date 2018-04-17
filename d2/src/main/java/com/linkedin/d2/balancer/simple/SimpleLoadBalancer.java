@@ -58,7 +58,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -233,12 +232,11 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
 
     if (! orderedStrategies.isEmpty())
     {
-      LoadBalancerState.SchemeStrategyPair pair = orderedStrategies.get(0);
       PartitionAccessor accessor = getPartitionAccessor(serviceName, clusterName);
 
       // first distribute keys to partitions
-      Map<Integer, Set<K>> partitionSet = new HashMap<Integer, Set<K>>();
-      List<MapKeyResult.UnmappedKey<K>> unmappedKeys = new ArrayList<MapKeyResult.UnmappedKey<K>>();
+      Map<Integer, Set<K>> partitionSet = new HashMap<>();
+      List<MapKeyResult.UnmappedKey<K>> unmappedKeys = new ArrayList<>();
       for (final K key : keys)
       {
         int partitionId;
@@ -252,28 +250,32 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
           continue;
         }
 
-        Set<K> set = partitionSet.get(partitionId);
-        if (set == null)
-        {
-          set = new HashSet<K>();
-          partitionSet.put(partitionId, set);
-        }
+        Set<K> set = partitionSet.computeIfAbsent(partitionId, k -> new HashSet<>());
         set.add(key);
       }
 
       // then we find the ring for each partition and create a map of Ring<URI> to Set<K>
-      final Map<Ring<URI>, Collection<K>> ringMap = new IdentityHashMap<Ring<URI>, Collection<K>>(partitionSet.size()* 2);
+      final Map<Ring<URI>, Collection<K>> ringMap = new HashMap<>(partitionSet.size() * 2);
       for (Map.Entry<Integer, Set<K>> entry : partitionSet.entrySet())
       {
         int partitionId = entry.getKey();
-        List<TrackerClient> clients = getPotentialClients(serviceName, service, uris, pair.getScheme(), partitionId);
-        Ring<URI> ring = pair.getStrategy().getRing(uriItem.getVersion(), partitionId, clients);
+        Ring<URI> ring = null;
+        for (LoadBalancerState.SchemeStrategyPair pair : orderedStrategies)
+        {
+          List<TrackerClient> clients = getPotentialClients(serviceName, service, uris, pair.getScheme(), partitionId);
+          ring = pair.getStrategy().getRing(uriItem.getVersion(), partitionId, clients);
+
+          if (!ring.isEmpty())
+          {
+            // don't fallback to the next strategy if there are already hosts in the current one
+            break;
+          }
+        }
         // make sure the same ring is not used in other partition
-        Object oldValue = ringMap.put(ring, entry.getValue());
-        assert(oldValue == null);
+        ringMap.put(ring, entry.getValue());
       }
 
-      return new MapKeyResult<Ring<URI>, K>(ringMap, unmappedKeys);
+      return new MapKeyResult<>(ringMap, unmappedKeys);
     }
     else
     {
@@ -299,21 +301,29 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     UriProperties uris = uriItem.getProperty();
 
     List<LoadBalancerState.SchemeStrategyPair> orderedStrategies =
-        _state.getStrategiesForService(serviceName, service.getPrioritizedSchemes());
+      _state.getStrategiesForService(serviceName, service.getPrioritizedSchemes());
 
     if (! orderedStrategies.isEmpty())
     {
-      final LoadBalancerState.SchemeStrategyPair pair = orderedStrategies.get(0);
       final PartitionAccessor accessor = getPartitionAccessor(serviceName, clusterName);
       int maxPartitionId = accessor.getMaxPartitionId();
-      Map<Integer, Ring<URI>> ringMap = new HashMap<Integer, Ring<URI>>((maxPartitionId + 1) * 2);
+      Map<Integer, Ring<URI>> ringMap = new HashMap<>((maxPartitionId + 1) * 2);
+
       for (int partitionId = 0; partitionId <= maxPartitionId; partitionId++)
       {
-        Set<URI> possibleUris = uris.getUriBySchemeAndPartition(pair.getScheme(), partitionId);
-        List<TrackerClient> trackerClients = getPotentialClients(serviceName, service, possibleUris);
-        Ring<URI> ring = pair.getStrategy().getRing(uriItem.getVersion(), partitionId, trackerClients);
-        // ring will never be null; it can be empty
-        ringMap.put(partitionId, ring);
+        for (LoadBalancerState.SchemeStrategyPair pair : orderedStrategies)
+        {
+          List<TrackerClient> trackerClients = getPotentialClients(serviceName, service, uris, pair.getScheme(), partitionId);
+          Ring<URI> ring = pair.getStrategy().getRing(uriItem.getVersion(), partitionId, trackerClients);
+          // ring will never be null; it can be empty
+          ringMap.put(partitionId, ring);
+
+          if (!ring.isEmpty())
+          {
+            // don't fallback to the next strategy if there are already hosts in the current one
+            break;
+          }
+        }
       }
       return ringMap;
     }
@@ -493,35 +503,40 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
       List<K> unmappedKeys = new ArrayList<K>();
       Map<Integer, Set<K>> partitionSet = getPartitionSet(keys, accessor, unmappedKeys);
 
-      final LoadBalancerState.SchemeStrategyPair pair = orderedStrategies.get(0);
-
-      //get the partitionId -> host URIs list
+      // get the partitionId -> host URIs list
       Map<Integer, KeysAndHosts<K>> partitionDataMap = new HashMap<Integer, KeysAndHosts<K>>();
       for (Integer partitionId : partitionSet.keySet())
       {
-        Set<URI> possibleUris = uris.getUriBySchemeAndPartition(pair.getScheme(), partitionId);
-        List<TrackerClient> trackerClients = getPotentialClients(serviceName, service, possibleUris);
-        int size = trackerClients.size() <= limitHostPerPartition ? trackerClients.size() : limitHostPerPartition;
-        List<URI> rankedUri = new ArrayList<URI>(size);
-
-        Ring<URI> ring = pair.getStrategy().getRing(uriItem.getVersion(), partitionId, trackerClients);
-        Iterator<URI> iterator = ring.getIterator(hash);
-
-        while (iterator.hasNext() && rankedUri.size() < size)
+        for (LoadBalancerState.SchemeStrategyPair pair : orderedStrategies)
         {
-          URI uri = iterator.next();
-          if (!rankedUri.contains(uri))
+          List<TrackerClient> trackerClients = getPotentialClients(serviceName, service, uris, pair.getScheme(), partitionId);
+          int size = trackerClients.size() <= limitHostPerPartition ? trackerClients.size() : limitHostPerPartition;
+          List<URI> rankedUri = new ArrayList<>(size);
+
+          Ring<URI> ring = pair.getStrategy().getRing(uriItem.getVersion(), partitionId, trackerClients);
+          Iterator<URI> iterator = ring.getIterator(hash);
+
+          while (iterator.hasNext() && rankedUri.size() < size)
           {
-            rankedUri.add(uri);
+            URI uri = iterator.next();
+            if (!rankedUri.contains(uri))
+            {
+              rankedUri.add(uri);
+            }
+          }
+          if (rankedUri.size() < limitHostPerPartition)
+          {
+            partitionWithoutEnoughHost.put(partitionId, limitHostPerPartition - rankedUri.size());
+          }
+
+          KeysAndHosts<K> keysAndHosts = new KeysAndHosts<>(partitionSet.get(partitionId), rankedUri);
+          partitionDataMap.put(partitionId, keysAndHosts);
+          if (!rankedUri.isEmpty())
+          {
+            // don't go to the next strategy if there are already hosts in the current one
+            break;
           }
         }
-        if (rankedUri.size() < limitHostPerPartition)
-        {
-          partitionWithoutEnoughHost.put(partitionId, limitHostPerPartition - rankedUri.size());
-        }
-
-        KeysAndHosts<K> keysAndHosts = new KeysAndHosts<K>(partitionSet.get(partitionId), rankedUri);
-        partitionDataMap.put(partitionId, keysAndHosts);
       }
 
       return new HostToKeyMapper<K>(unmappedKeys, partitionDataMap, limitHostPerPartition, maxPartitionId + 1, partitionWithoutEnoughHost);

@@ -25,6 +25,8 @@ import java.net.URI;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 
 /**
@@ -46,6 +48,7 @@ public interface LoadBalancerStrategy
    * @param trackerClients
    * @return TrackerClient
    */
+  @Nullable
   TrackerClient getTrackerClient(Request request,
                                  RequestContext requestContext,
                                  long clusterGenerationId,
@@ -65,6 +68,7 @@ public interface LoadBalancerStrategy
    * @param trackerClients
    * @return Ring
    */
+  @Nonnull
   Ring<URI> getRing(long clusterGenerationId,
                     int partitionId,
                     List<TrackerClient> trackerClients);
