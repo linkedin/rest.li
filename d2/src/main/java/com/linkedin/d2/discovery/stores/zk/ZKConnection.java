@@ -293,6 +293,16 @@ public class ZKConnection
     return zk();
   }
 
+  public String getConnectString()
+  {
+    return _connectString;
+  }
+
+  public int getTimeout()
+  {
+    return _timeout;
+  }
+
   public void waitForState(KeeperState state, long timeout, TimeUnit timeUnit)
     throws InterruptedException, TimeoutException
   {

@@ -1,5 +1,7 @@
 20.0.19
 -------
+(RB=1260149)
+add zookeeper connection sharing feature
 
 20.0.18
 -------

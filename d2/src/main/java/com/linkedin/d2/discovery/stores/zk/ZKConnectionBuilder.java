@@ -17,6 +17,7 @@
 package com.linkedin.d2.discovery.stores.zk;
 
 import com.linkedin.util.ArgumentUtil;
+import java.util.Objects;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Function;
 
@@ -54,6 +55,19 @@ public class ZKConnectionBuilder
     _connectString = connectString;
   }
 
+  public ZKConnectionBuilder(ZKConnectionBuilder builder)
+  {
+    _connectString = builder._connectString;
+    _sessionTimeout = builder._sessionTimeout;
+    _shutdownAsynchronously = builder._shutdownAsynchronously;
+    _retryLimit = builder._retryLimit;
+    _isSymlinkAware = builder._isSymlinkAware;
+    _exponentialBackoff = builder._exponentialBackoff;
+    _retryScheduler = builder._retryScheduler;
+    _initInterval = builder._initInterval;
+    _zkDecorator = builder._zkDecorator;
+  }
+
   /**
    * @param sessionTimeout session timeout in milliseconds
    */
@@ -80,7 +94,6 @@ public class ZKConnectionBuilder
     _retryLimit = retryLimit;
     return this;
   }
-
   /**
    * @param isSymlinkAware Resolves znodes whose name is prefixed with a
    *                       dollar sign '$' (eg. /$symlink1, /foo/bar/$symlink2)
@@ -132,5 +145,28 @@ public class ZKConnectionBuilder
   {
     return new ZKConnection(_connectString, _sessionTimeout, _retryLimit, _exponentialBackoff,
       _retryScheduler, _initInterval, _shutdownAsynchronously, _isSymlinkAware, _zkDecorator);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    ZKConnectionBuilder that = (ZKConnectionBuilder) o;
+    return _sessionTimeout == that._sessionTimeout && _shutdownAsynchronously == that._shutdownAsynchronously
+        && _retryLimit == that._retryLimit && _isSymlinkAware == that._isSymlinkAware
+        && _exponentialBackoff == that._exponentialBackoff && _initInterval == that._initInterval && Objects.equals(
+        _connectString, that._connectString) && Objects.equals(_retryScheduler, that._retryScheduler) && Objects.equals(
+        _zkDecorator, that._zkDecorator);
+  }
+
+  @Override
+  public int hashCode() {
+
+    return Objects.hash(_connectString, _sessionTimeout, _shutdownAsynchronously, _retryLimit, _isSymlinkAware,
+        _exponentialBackoff, _retryScheduler, _initInterval, _zkDecorator);
   }
 }

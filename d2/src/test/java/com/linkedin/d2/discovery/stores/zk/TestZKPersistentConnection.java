@@ -20,11 +20,23 @@
 
 package com.linkedin.d2.discovery.stores.zk;
 
+import com.linkedin.common.callback.Callback;
+import com.linkedin.common.callback.Callbacks;
+import com.linkedin.common.callback.FutureCallback;
+import com.linkedin.common.util.None;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
+import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -32,6 +44,7 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
 import org.testng.Assert;
+import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.fail;
@@ -191,6 +204,86 @@ public class TestZKPersistentConnection
       server.shutdown();
     }
   }
+
+  @Test
+  public void testMultipleUsersOnSingleConnection() throws Exception {
+    int port = 2120;
+    int numUsers = 10;
+    Random random = new Random();
+    ZKServer server = new ZKServer(port);
+    server.startup();
+    ZKPersistentConnection c =
+        new ZKPersistentConnection(new ZKConnectionBuilder("localhost:" + port).setTimeout(15000));
+    ExecutorService executor = Executors.newFixedThreadPool(numUsers);
+    AtomicInteger notificationCount = new AtomicInteger(0);
+
+    for (int i = 0; i < numUsers; i++) {
+      ZKPersistentConnection.EventListener listener = new ZKPersistentConnection.EventListener() {
+        @Override
+        public void notifyEvent(ZKPersistentConnection.Event event) {
+          notificationCount.getAndIncrement();
+        }
+      };
+      c.addListeners(Collections.singletonList(listener));
+      c.incrementShareCount();
+    }
+
+    FutureCallback<None> callback = new FutureCallback<None>();
+    Callback<None> multiCallback = Callbacks.countDown(callback, numUsers);
+    for (int i = 0; i < numUsers; i++) {
+      final int userIndex = i;
+      executor.submit(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            // start after indeterminate delay to simulate interleaved startup and shutdown
+            Thread.sleep(Math.abs(random.nextInt()) % 100);
+            c.start();
+
+            //test live connection
+            c.getZooKeeper().exists("/test", false);
+
+            c.shutdown();
+            multiCallback.onSuccess(None.none());
+          } catch (Exception e) {
+            multiCallback.onError(e);
+          }
+        }
+      });
+    }
+
+    callback.get(5000, TimeUnit.MILLISECONDS);
+    Assert.assertTrue(notificationCount.get() == 10);
+    Assert.assertTrue(c.isConnectionStopped());
+    server.shutdown();
+    executor.shutdown();
+  }
+
+  @Test
+  public void testNormalUsercaseWithoutSharing() throws IOException, InterruptedException, KeeperException
+  {
+    int port = 2120;
+    int numUsers = 10;
+    Random random = new Random();
+    ZKServer server = new ZKServer(port);
+    server.startup();
+
+    ZKConnectionBuilder builder = new ZKConnectionBuilder("localhost:" + port);
+    builder.setTimeout(15000);
+    ZKPersistentConnection connection = new ZKPersistentConnection(builder);
+
+    connection.start();
+    Assert.assertTrue(connection.isConnectionStarted());
+
+    connection.getZooKeeper().exists("/test", false);
+
+    connection.shutdown();
+    Assert.assertTrue(connection.isConnectionStopped());
+    server.shutdown();
+  }
+
+
+
 
   private static class TestListener implements ZKPersistentConnection.EventListener
   {

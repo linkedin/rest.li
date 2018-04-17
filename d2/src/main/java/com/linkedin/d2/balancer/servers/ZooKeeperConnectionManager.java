@@ -32,7 +32,10 @@ import com.linkedin.d2.discovery.stores.zk.ZKPersistentConnection;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperStore;
 import java.util.Collections;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,9 +58,36 @@ public class ZooKeeperConnectionManager
   private final ZKStoreFactory<UriProperties,ZooKeeperEphemeralStore<UriProperties>> _factory;
   private final ZooKeeperAnnouncer[] _servers;
   private final AtomicReference<Callback<None>> _startupCallback = new AtomicReference<Callback<None>>();
+
   private final ZKPersistentConnection _zkConnection;
 
+  /**
+   * a boolean flag to indicate whether _store is successfully started or not
+   */
+  private volatile boolean _storeStarted = false;
+
+  /**
+   * Two preconditions have to be met before actual announcing
+   */
+  private volatile boolean _managerStarted = false;
+  private volatile boolean _storeReady = false;
+
   private volatile ZooKeeperEphemeralStore<UriProperties> _store;
+
+  public ZooKeeperConnectionManager(ZKPersistentConnection zkConnection,
+                                    String zkBasePath,
+                                    ZKStoreFactory<UriProperties,ZooKeeperEphemeralStore<UriProperties>> factory,
+                                    ZooKeeperAnnouncer... servers)
+  {
+    _zkBasePath = zkBasePath;
+    _zkConnection = zkConnection;
+    _factory = factory;
+    _servers = servers;
+    _zkConnection.addListeners(Collections.singletonList(new Listener()));
+
+    _zkConnectString = zkConnection.getZKConnection().getConnectString();
+    _zkSessionTimeout = zkConnection.getZKConnection().getTimeout();
+  }
 
   public ZooKeeperConnectionManager(String zkConnectString, int zkSessionTimeout,
                                     String zkBasePath,
@@ -104,6 +134,7 @@ public class ZooKeeperConnectionManager
 
   public void start(Callback<None> callback)
   {
+    _managerStarted = true;
     if (!_startupCallback.compareAndSet(null, callback))
     {
       throw new IllegalStateException("Already starting");
@@ -111,6 +142,9 @@ public class ZooKeeperConnectionManager
     try
     {
       _zkConnection.start();
+      //Trying to start store here. If the connection is not ready, will return immediately.
+      //The connection event will trigger the actual store startup
+      tryStartStore();
       LOG.info("Started ZooKeeper connection to {}", _zkConnectString);
     }
     catch (Exception e)
@@ -122,6 +156,7 @@ public class ZooKeeperConnectionManager
 
   public void shutdown(final Callback<None> callback)
   {
+    _managerStarted = false;
     Callback<None> zkCloseCallback = new CallbackAdapter<None,None>(callback)
     {
       @Override
@@ -205,11 +240,8 @@ public class ZooKeeperConnectionManager
 
   private class Listener implements ZKPersistentConnection.EventListener
   {
-    /**
-     * a boolean flag to indicate whether _store is successfully started or not
-     */
-    private volatile boolean _storeStarted = false;
 
+    private volatile boolean _sessionEstablished = false;
     @Override
     public void notifyEvent(ZKPersistentConnection.Event event)
     {
@@ -219,7 +251,9 @@ public class ZooKeeperConnectionManager
         case SESSION_ESTABLISHED:
         {
           _store = _factory.createStore(_zkConnection.getZKConnection(), ZKFSUtil.uriPath(_zkBasePath));
-          startStore();
+          _storeReady = true;
+          //Trying to start the store. If the manager itself is not started yet, the start will be deferred until start is called.
+          tryStartStore();
           break;
         }
         case SESSION_EXPIRED:
@@ -232,7 +266,7 @@ public class ZooKeeperConnectionManager
         {
           if (!_storeStarted)
           {
-            startStore();
+            tryStartStore();
           }
           else
           {
@@ -248,54 +282,66 @@ public class ZooKeeperConnectionManager
           break;
       }
     }
+  }
 
-    private void startStore()
-    {
-      final Callback<None> callback = _startupCallback.getAndSet(null);
-      final Callback<None> multiCallback = callback != null ?
-          Callbacks.countDown(callback, _servers.length) :
-          Callbacks.<None>empty();
-      _store.start(new Callback<None>()
-      {
-        @Override
-        public void onError(Throwable e)
-        {
-          LOG.error("Failed to start ZooKeeperEphemeralStore", e);
-          if (callback != null)
-          {
-            callback.onError(e);
-          }
-        }
-
-        @Override
-        public void onSuccess(None result)
-        {
-          /* mark store as started */
-          _storeStarted = true;
-          for (ZooKeeperAnnouncer server : _servers)
-          {
-            server.setStore(_store);
-            server.start(new Callback<None>()
-            {
-              @Override
-              public void onError(Throwable e)
-              {
-                LOG.error("Failed to start server", e);
-                multiCallback.onError(e);
-              }
-
-              @Override
-              public void onSuccess(None result)
-              {
-                LOG.info("Started an announcer");
-                multiCallback.onSuccess(result);
-              }
-            });
-          }
-          LOG.info("Starting {} announcers", (_servers.length));
-        }
-      });
+  /**
+   * Store should only be started if two conditions are satisfied
+   *  1. store is ready. store is ready when connection is established
+   *  2. ZookeeperConnectionManager is started.
+   */
+  private void tryStartStore()
+  {
+    if (_managerStarted && _storeReady) {
+      startStore();
     }
+  }
+
+  private void startStore()
+  {
+    final Callback<None> callback = _startupCallback.getAndSet(null);
+    final Callback<None> multiCallback = callback != null ?
+        Callbacks.countDown(callback, _servers.length) :
+        Callbacks.<None>empty();
+    _store.start(new Callback<None>()
+    {
+      @Override
+      public void onError(Throwable e)
+      {
+        LOG.error("Failed to start ZooKeeperEphemeralStore", e);
+        if (callback != null)
+        {
+          callback.onError(e);
+        }
+      }
+
+      @Override
+      public void onSuccess(None result)
+      {
+        /* mark store as started */
+        _storeStarted = true;
+        for (ZooKeeperAnnouncer server : _servers)
+        {
+          server.setStore(_store);
+          server.start(new Callback<None>()
+          {
+            @Override
+            public void onError(Throwable e)
+            {
+              LOG.error("Failed to start server", e);
+              multiCallback.onError(e);
+            }
+
+            @Override
+            public void onSuccess(None result)
+            {
+              LOG.info("Started an announcer");
+              multiCallback.onSuccess(result);
+            }
+          });
+        }
+        LOG.info("Starting {} announcers", (_servers.length));
+      }
+    });
   }
 
   public interface ZKStoreFactory<P, Z extends ZooKeeperStore<P>>

@@ -17,6 +17,7 @@ package com.linkedin.d2.balancer;
 
 import com.linkedin.d2.backuprequests.BackupRequestsStrategyStatsConsumer;
 import com.linkedin.d2.balancer.event.EventEmitter;
+import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.util.WarmUpLoadBalancer;
 import com.linkedin.d2.balancer.util.downstreams.DownstreamServicesFetcher;
@@ -24,6 +25,7 @@ import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessorRegistry;
 import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl;
 import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl.ComponentFactory;
+import com.linkedin.d2.discovery.stores.zk.ZkConnectionDealer;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeper;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import java.util.Collections;
@@ -75,8 +77,9 @@ public class D2ClientConfig
   EventEmitter eventEmitter = null;
   PartitionAccessorRegistry partitionAccessorRegistry = null;
   Function<ZooKeeper, ZooKeeper> zooKeeperDecorator = null;
-  Map<String, LoadBalancerStrategyFactory<?>> loadBalancerStrategyFactories = Collections.emptyMap();
+  Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories = Collections.emptyMap();
   boolean requestTimeoutHandlerEnabled = false;
+  ZkConnectionDealer connectionDealer = null;
 
   private static final int DEAULT_RETRY_LIMIT = 3;
 
@@ -120,8 +123,9 @@ public class D2ClientConfig
                  PartitionAccessorRegistry partitionAccessorRegistry,
                  Function<ZooKeeper, ZooKeeper> zooKeeperDecorator,
                  boolean enableSaveUriDataOnDisk,
-                 Map<String, LoadBalancerStrategyFactory<?>> loadBalancerStrategyFactories,
-                 boolean requestTimeoutHandlerEnabled)
+                 Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories,
+                 boolean requestTimeoutHandlerEnabled,
+                 ZkConnectionDealer connectionDealer)
   {
     this.zkHosts = zkHosts;
     this.zkSessionTimeoutInMs = zkSessionTimeoutInMs;
@@ -161,5 +165,6 @@ public class D2ClientConfig
     this.enableSaveUriDataOnDisk = enableSaveUriDataOnDisk;
     this.loadBalancerStrategyFactories = loadBalancerStrategyFactories;
     this.requestTimeoutHandlerEnabled = requestTimeoutHandlerEnabled;
+    this.connectionDealer = connectionDealer;
   }
 }

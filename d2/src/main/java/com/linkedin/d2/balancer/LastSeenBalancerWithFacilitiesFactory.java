@@ -58,7 +58,13 @@ public class LastSeenBalancerWithFacilitiesFactory implements LoadBalancerWithFa
     zkConnectionBuilder.setShutdownAsynchronously(config.shutdownAsynchronously)
       .setIsSymlinkAware(config.isSymlinkAware).setTimeout((int) config.zkSessionTimeoutInMs);
 
-    ZKPersistentConnection zkPersistentConnection = new ZKPersistentConnection(zkConnectionBuilder);
+    ZKPersistentConnection zkPersistentConnection;
+    if (config.connectionDealer != null)
+    {
+      zkPersistentConnection = config.connectionDealer.getZKPersistentConnection(zkConnectionBuilder);
+    } else {
+      zkPersistentConnection = new ZKPersistentConnection(zkConnectionBuilder);
+    }
 
     // init all the stores
     LastSeenZKStore<ClusterProperties> lsClusterStore = getClusterPropertiesLastSeenZKStore(config, zkPersistentConnection);
