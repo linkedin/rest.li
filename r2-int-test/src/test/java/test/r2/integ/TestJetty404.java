@@ -25,11 +25,6 @@ import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.transport.http.server.HttpServer;
 import com.linkedin.r2.transport.http.server.HttpServerFactory;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
 import java.io.IOException;
 import java.net.URI;
 import java.util.Collections;
@@ -37,6 +32,11 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+import test.r2.integ.helper.BytesWriter;
 
 /**
  * @author Zhenkai Zhu
@@ -99,7 +99,7 @@ public class TestJetty404
     latch.await(5000, TimeUnit.MILLISECONDS);
     Assert.assertTrue(writer.isDone());
     Throwable ex = exRef.get();
-    Assert.assertTrue(ex instanceof StreamException);
+    Assert.assertTrue( ex instanceof StreamException, "Expected StreamException but found: " + ex);
     StreamResponse response = ((StreamException) ex).getResponse();
     Assert.assertEquals(response.getStatus(), RestStatus.NOT_FOUND);
     response.getEntityStream().setReader(new DrainReader());

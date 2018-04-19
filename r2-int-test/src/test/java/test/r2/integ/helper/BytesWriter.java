@@ -1,4 +1,4 @@
-package test.r2.integ;
+package test.r2.integ.helper;
 
 /**
  * @author Zhenkai Zhu
@@ -11,7 +11,7 @@ import com.linkedin.r2.message.stream.entitystream.Writer;
 
 import java.util.Arrays;
 
-/** package private */ class BytesWriter implements Writer
+public class BytesWriter implements Writer
 {
   private final long _total;
   private final byte _fill;
@@ -20,7 +20,7 @@ import java.util.Arrays;
   private volatile boolean _error = false;
   private volatile boolean _isDone = false;
 
-  BytesWriter(long total, byte fill)
+  public BytesWriter(long total, byte fill)
   {
     _total = total;
     _fill = fill;

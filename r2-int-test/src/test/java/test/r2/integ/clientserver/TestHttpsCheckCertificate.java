@@ -14,7 +14,7 @@
    limitations under the License.
 */
 
-package test.r2.integ;
+package test.r2.integ.clientserver;
 
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.r2.RemoteInvocationException;
@@ -30,28 +30,32 @@ import javax.net.ssl.SSLSession;
 import org.testng.Assert;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
+import test.r2.integ.clientserver.providers.AbstractEchoServiceTest;
+import test.r2.integ.clientserver.providers.ClientServerConfiguration;
+import test.r2.integ.clientserver.providers.client.ClientProvider;
+import test.r2.integ.clientserver.providers.server.ServerProvider;
 
 /**
  * @author Francesco Capponi (fcapponi@linkedin.com)
  */
-public class TestHttpsCheckCertificate extends AbstractTestHttps
+public class TestHttpsCheckCertificate extends AbstractEchoServiceTest
 {
 
-  @Factory(dataProvider = "configs")
-  public TestHttpsCheckCertificate(boolean clientROS, boolean serverROS, int port)
+  @Factory(dataProvider = "allHttps", dataProviderClass = ClientServerConfiguration.class)
+  public TestHttpsCheckCertificate(ClientProvider clientProvider, ServerProvider serverProvider, int port)
   {
-    super(clientROS, serverROS, port);
+    super(clientProvider, serverProvider, port);
   }
 
   @Test
-  public void testHttpsEchoWithUnvalidSession() throws Exception
+  public void testHttpsEchoWithUnvalidSession()
   {
     try
     {
       testHttpsEchoWithSessionValidator(sslSession -> {
         throw new SslSessionNotTrustedException();
       });
-      Assert.fail();
+      Assert.fail("Certificate was trusted even if it wasn't supped to be");
     }
     catch (Exception e)
     {
@@ -74,7 +78,7 @@ public class TestHttpsCheckCertificate extends AbstractTestHttps
     testHttpsEchoWithSessionValidator(null);
   }
 
-  public void testHttpsEchoWithSessionValidator(SslSessionValidator sslSessionValidator) throws Exception
+  private void testHttpsEchoWithSessionValidator(SslSessionValidator sslSessionValidator) throws Exception
   {
     final RestEchoClient client = getEchoClient(_client, Bootstrap.getEchoURI());
 
@@ -84,7 +88,7 @@ public class TestHttpsCheckCertificate extends AbstractTestHttps
     requestContext.putLocalAttr(R2Constants.REQUESTED_SSL_SESSION_VALIDATOR, sslSessionValidator);
     client.echo(msg, requestContext, callback);
 
-    String actual = callback.get(2, TimeUnit.SECONDS);
+    String actual = callback.get(20, TimeUnit.SECONDS);
     Assert.assertEquals(actual, msg);
   }
 

@@ -1,4 +1,4 @@
-package test.r2.integ;
+package test.r2.integ.helper;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
@@ -12,7 +12,7 @@ public class TimedBytesReader extends BytesReader
   private long _startTime;
   private long _stopTime;
 
-  TimedBytesReader(byte b, Callback<None> callback)
+  public TimedBytesReader(byte b, Callback<None> callback)
   {
     super(b, callback);
   }

@@ -37,6 +37,9 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import test.r2.integ.helper.BytesReader;
+import test.r2.integ.helper.TimedBytesReader;
+import test.r2.integ.helper.TimedBytesWriter;
 
 /**
  * @author Zhenkai Zhu

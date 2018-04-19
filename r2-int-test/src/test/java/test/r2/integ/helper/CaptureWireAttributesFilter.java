@@ -15,7 +15,7 @@
 */
 
 /* $Id$ */
-package test.r2.integ;
+package test.r2.integ.helper;
 
 import com.linkedin.r2.filter.NextFilter;
 import com.linkedin.r2.filter.message.rest.RestFilter;
@@ -26,46 +26,41 @@ import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamResponse;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
  * @author Chris Pettitt
  * @version $Revision$
  */
-public class SendWireAttributeFilter implements RestFilter, StreamFilter
+public class CaptureWireAttributesFilter implements RestFilter, StreamFilter
 {
-  private final String _key;
-  private final String _value;
-  private final boolean _onRequest;
+  private volatile Map<String, String> _request;
+  private volatile Map<String, String> _response;
 
-  public SendWireAttributeFilter(String key, String value, boolean onRequest)
+  public Map<String, String> getResponse()
   {
-    _key = key;
-    _value = value;
-    _onRequest = onRequest;
+    return _response;
+  }
+
+  public Map<String, String> getRequest()
+  {
+    return _request;
   }
 
   @Override
-  public void onRestRequest(RestRequest req,
-                        RequestContext requestContext, Map<String, String> wireAttrs,
+  public void onRestRequest(RestRequest req, RequestContext requestContext, Map<String, String> wireAttrs,
                         NextFilter<RestRequest, RestResponse> nextFilter)
   {
-    if (_onRequest)
-    {
-      wireAttrs.put(_key, _value);
-    }
+    _request = new HashMap<String, String>(wireAttrs);
     nextFilter.onRequest(req, requestContext, wireAttrs);
   }
 
   @Override
-  public void onRestResponse(RestResponse res,
-                         RequestContext requestContext, Map<String, String> wireAttrs,
+  public void onRestResponse(RestResponse res, RequestContext requestContext, Map<String, String> wireAttrs,
                          NextFilter<RestRequest, RestResponse> nextFilter)
   {
-    if (!_onRequest)
-    {
-      wireAttrs.put(_key, _value);
-    }
+    _response = new HashMap<String, String>(wireAttrs);
     nextFilter.onResponse(res, requestContext, wireAttrs);
   }
 
@@ -73,10 +68,7 @@ public class SendWireAttributeFilter implements RestFilter, StreamFilter
   public void onRestError(Throwable ex, RequestContext requestContext, Map<String, String> wireAttrs,
                       NextFilter<RestRequest, RestResponse> nextFilter)
   {
-    if (!_onRequest)
-    {
-      wireAttrs.put(_key, _value);
-    }
+    _response = new HashMap<String, String>(wireAttrs);
     nextFilter.onError(ex, requestContext, wireAttrs);
   }
 
@@ -86,10 +78,7 @@ public class SendWireAttributeFilter implements RestFilter, StreamFilter
                               Map<String, String> wireAttrs,
                               NextFilter<StreamRequest, StreamResponse> nextFilter)
   {
-    if (_onRequest)
-    {
-      wireAttrs.put(_key, _value);
-    }
+    _request = new HashMap<String, String>(wireAttrs);
     nextFilter.onRequest(req, requestContext, wireAttrs);
   }
 
@@ -99,10 +88,7 @@ public class SendWireAttributeFilter implements RestFilter, StreamFilter
                                Map<String, String> wireAttrs,
                                NextFilter<StreamRequest, StreamResponse> nextFilter)
   {
-    if (!_onRequest)
-    {
-      wireAttrs.put(_key, _value);
-    }
+    _response = new HashMap<String, String>(wireAttrs);
     nextFilter.onResponse(res, requestContext, wireAttrs);
   }
 
@@ -112,10 +98,7 @@ public class SendWireAttributeFilter implements RestFilter, StreamFilter
                             Map<String, String> wireAttrs,
                             NextFilter<StreamRequest, StreamResponse> nextFilter)
   {
-    if (!_onRequest)
-    {
-      wireAttrs.put(_key, _value);
-    }
+    _response = new HashMap<String, String>(wireAttrs);
     nextFilter.onError(ex, requestContext, wireAttrs);
   }
 

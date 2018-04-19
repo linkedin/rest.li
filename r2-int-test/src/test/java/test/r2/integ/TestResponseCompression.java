@@ -61,6 +61,8 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
+import test.r2.integ.helper.BytesReader;
+import test.r2.integ.helper.TimedBytesWriter;
 
 
 /**

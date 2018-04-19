@@ -24,12 +24,14 @@ import com.linkedin.r2.transport.common.bridge.common.RequestWithCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
 import com.linkedin.r2.transport.http.client.TimeoutAsyncPoolHandle;
+import com.linkedin.r2.transport.http.client.common.SessionResumptionSslHandler;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelException;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import io.netty.handler.ssl.ApplicationProtocolNames;
+import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.ssl.SslHandshakeCompletionEvent;
 import io.netty.util.internal.ObjectUtil;
@@ -48,28 +50,30 @@ import org.slf4j.LoggerFactory;
 class Http2AlpnHandler extends ChannelDuplexHandler
 {
   private static final Logger LOG = LoggerFactory.getLogger(Http2AlpnHandler.class);
+  public static final String PIPELINE_ALPN_HANDLER = "alpnHandler";
 
-  private final SslHandler _sslHandler;
+  private final SslContext _sslContext;
   private final Http2StreamCodec _http2Handler;
 
   private ChannelPromise _alpnPromise;
 
-  public Http2AlpnHandler(SslHandler sslHandler, Http2StreamCodec http2Handler)
+  public Http2AlpnHandler(SslContext sslContext, Http2StreamCodec http2Handler)
   {
-    ObjectUtil.checkNotNull(sslHandler, "sslHandler");
+    ObjectUtil.checkNotNull(sslContext, "sslContext");
     ObjectUtil.checkNotNull(http2Handler, "http2Handler");
 
-    _sslHandler = sslHandler;
+    _sslContext = sslContext;
     _http2Handler = http2Handler;
   }
 
   @Override
-  public void handlerAdded(ChannelHandlerContext ctx) throws Exception
+  public void handlerAdded(ChannelHandlerContext ctx)
   {
     _alpnPromise = ctx.channel().newPromise();
 
-    /** Note: {@link SslHandler} will initiate a handshake upon being added to the pipeline. */
-    ctx.pipeline().addFirst("sslHandler", _sslHandler);
+    // the class will take care of establishing the SSL connection
+    ctx.pipeline().addFirst(SessionResumptionSslHandler.PIPELINE_SESSION_RESUMPTION_HANDLER,
+      new SessionResumptionSslHandler(_sslContext));
 
     // Fail the ALPN promise when channel is closed
     ctx.channel().closeFuture().addListener(future -> {
@@ -142,7 +146,10 @@ class Http2AlpnHandler extends ChannelDuplexHandler
           LOG.debug("HTTP/2 is negotiated");
 
           // Add HTTP/2 handler
-          ctx.pipeline().addAfter("sslHandler", "http2Handler", _http2Handler);
+          // by "adding before" the alpn handler, we guarantee that once the alpnPromise is completed
+          // the request will be handled by the codec and all the possible exceptions thrown will be
+          // handled by a single stream instead of the whole channel
+          ctx.pipeline().addBefore(PIPELINE_ALPN_HANDLER, Http2StreamCodec.PIPELINE_HTTP2_CODEC_HANDLER, _http2Handler);
 
           // Remove handler from pipeline after negotiation is complete
           ctx.pipeline().remove(this);

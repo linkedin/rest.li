@@ -1,4 +1,4 @@
-package test.r2.integ;
+package test.r2.integ.helper;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
@@ -9,7 +9,7 @@ import com.linkedin.r2.message.stream.entitystream.Reader;
 /**
  * @author Zhenkai Zhu
  */
-class BytesReader implements Reader
+public class BytesReader implements Reader
 {
   private final byte _b;
   private final Callback<None> _callback;
@@ -17,7 +17,7 @@ class BytesReader implements Reader
   private boolean _bytesCorrect;
   private ReadHandle _rh;
 
-  BytesReader(byte b, Callback<None> callback)
+  public BytesReader(byte b, Callback<None> callback)
   {
     _b = b;
     _callback = callback;

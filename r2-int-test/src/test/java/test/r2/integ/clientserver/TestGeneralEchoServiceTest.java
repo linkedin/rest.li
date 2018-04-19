@@ -18,35 +18,30 @@
  * $Id: $
  */
 
-package test.r2.integ;
+package test.r2.integ.clientserver;
 
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.r2.RemoteInvocationException;
-import com.linkedin.r2.filter.FilterChain;
-import com.linkedin.r2.filter.FilterChains;
-import com.linkedin.r2.filter.message.stream.StreamFilterAdapters;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestStatus;
 import com.linkedin.r2.sample.Bootstrap;
 import com.linkedin.r2.sample.echo.EchoService;
 import com.linkedin.r2.sample.echo.rest.RestEchoClient;
-import com.linkedin.r2.transport.common.Client;
-import com.linkedin.r2.transport.common.Server;
-import com.linkedin.common.util.None;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
 import java.net.URI;
 import java.util.concurrent.ExecutionException;
+import org.testng.Assert;
+import org.testng.annotations.Factory;
+import org.testng.annotations.Test;
+import test.r2.integ.clientserver.providers.AbstractEchoServiceTest;
+import test.r2.integ.clientserver.providers.ClientServerConfiguration;
+import test.r2.integ.clientserver.providers.client.ClientProvider;
+import test.r2.integ.clientserver.providers.server.ServerProvider;
 
 /**
  * @author Steven Ihde
  * @version $Revision: $
  */
-
-public abstract class AbstractEchoServiceTest
+public class TestGeneralEchoServiceTest extends AbstractEchoServiceTest
 {
   private final String _toServerKey = "to-server";
   private final String _toServerValue = "this value goes to the server";
@@ -54,50 +49,10 @@ public abstract class AbstractEchoServiceTest
   private final String _toClientKey = "to-client";
   private final String _toClientValue = "this value goes to the client";
 
-  protected final static String ECHO_MSG = "This is a simple echo message";
-
-  protected Client _client;
-  protected Server _server;
-
-  private CaptureWireAttributesFilter _serverCaptureFilter;
-  private CaptureWireAttributesFilter _clientCaptureFilter;
-  private LogEntityLengthFilter _serverLengthFilter;
-  private LogEntityLengthFilter _clientLengthFilter;
-
-  @BeforeClass
-  protected void setUp() throws Exception
+  @Factory(dataProvider = "allCombinations", dataProviderClass = ClientServerConfiguration.class)
+  public TestGeneralEchoServiceTest(ClientProvider clientProvider, ServerProvider serverProvider, int port)
   {
-    final FilterChain clientFilters = getClientFilters();
-    final FilterChain serverFilters = getServerFilters();
-
-    _client = createClient(clientFilters);
-    _server = createServer(serverFilters);
-    _server.start();
-  }
-
-  @AfterClass
-  protected void tearDown() throws Exception
-  {
-    tearDown(_client, _server);
-  }
-
-  protected void tearDown(Client client, Server server) throws Exception
-  {
-    final FutureCallback<None> callback = new FutureCallback<None>();
-    client.shutdown(callback);
-
-    try
-    {
-      callback.get();
-    }
-    finally
-    {
-      if (server != null)
-      {
-        server.stop();
-        server.waitForStop();
-      }
-    }
+    super(clientProvider, serverProvider, port);
   }
 
   @Test
@@ -119,7 +74,7 @@ public abstract class AbstractEchoServiceTest
   }
 
   @Test
-  public void testUnknownServiceUri() throws Exception
+  public void testUnknownServiceUri()
   {
     final EchoService client = getEchoClient(_client, URI.create("/unknown-service"));
 
@@ -160,7 +115,7 @@ public abstract class AbstractEchoServiceTest
     {
       Assert.assertTrue(e instanceof ExecutionException);
       Assert.assertTrue(e.getCause() instanceof RestException);
-      RestException re = (RestException)e.getCause();
+      RestException re = (RestException) e.getCause();
       Assert.assertEquals(re.getResponse().getStatus(), RestStatus.NOT_FOUND);
     }
   }
@@ -246,49 +201,13 @@ public abstract class AbstractEchoServiceTest
     }
 
     // Make sure the server got its wire attribute
-    Assert.assertEquals(_serverCaptureFilter.getRequest().get(_toServerKey), _toServerValue);
+    Assert.assertEquals(_serverCaptureFilter
+      .getRequest()
+      .get(_toServerKey), _toServerValue);
 
     // Make sure the client got its wire attribute, but not the server's wire attribute
     Assert.assertEquals(_clientCaptureFilter.getResponse().get(_toClientKey), _toClientValue);
     Assert.assertNull(_clientCaptureFilter.getResponse().get(_toServerKey));
   }
-
-  protected FilterChain getClientFilters()
-  {
-    _clientCaptureFilter = new CaptureWireAttributesFilter();
-    _clientLengthFilter = new LogEntityLengthFilter();
-    final SendWireAttributeFilter clientWireFilter = new SendWireAttributeFilter(_toServerKey, _toServerValue, true);
-
-    return FilterChains.empty()
-        .addFirstRest(_clientCaptureFilter)
-        .addLastRest(_clientLengthFilter)
-        .addLastRest(clientWireFilter)
-        .addFirst(_clientCaptureFilter)
-        // test adapted rest filter works fine in rest over stream setting
-        .addLast(StreamFilterAdapters.adaptRestFilter(_clientLengthFilter))
-        .addLast(clientWireFilter);
-  }
-
-  protected FilterChain getServerFilters()
-  {
-    _serverCaptureFilter = new CaptureWireAttributesFilter();
-    _serverLengthFilter = new LogEntityLengthFilter();
-    final SendWireAttributeFilter serverWireFilter = new SendWireAttributeFilter(_toClientKey, _toClientValue, false);
-
-    return FilterChains.empty()
-        .addFirstRest(_serverCaptureFilter)
-        .addLastRest(_serverLengthFilter)
-        .addLastRest(serverWireFilter)
-        .addFirst(_serverCaptureFilter)
-        // test adapted rest filter works fine in rest over stream setting
-        .addLast(StreamFilterAdapters.adaptRestFilter(_serverLengthFilter))
-        .addLast(serverWireFilter);
-  }
-
-  protected abstract EchoService getEchoClient(Client client, URI uri);
-
-  protected abstract Client createClient(FilterChain filters) throws Exception;
-
-  protected abstract Server createServer(FilterChain filters) throws Exception;
 
 }

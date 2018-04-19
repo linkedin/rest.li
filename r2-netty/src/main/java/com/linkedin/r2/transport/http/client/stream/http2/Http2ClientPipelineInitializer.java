@@ -34,7 +34,6 @@ import io.netty.handler.ssl.ApplicationProtocolNames;
 import io.netty.handler.ssl.ClientAuth;
 import io.netty.handler.ssl.IdentityCipherSuiteFilter;
 import io.netty.handler.ssl.JdkSslContext;
-import io.netty.handler.ssl.SslHandler;
 import io.netty.util.AttributeKey;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -172,7 +171,6 @@ class Http2ClientPipelineInitializer extends ChannelInitializer<NioSocketChannel
         ApplicationProtocolNames.HTTP_2,
         ApplicationProtocolNames.HTTP_1_1),
       _sslParameters.getNeedClientAuth() ? ClientAuth.REQUIRE : ClientAuth.OPTIONAL);
-    SslHandler sslHandler = context.newHandler(ctx.alloc());
 
     Http2StreamCodec http2Codec = new Http2StreamCodecBuilder()
       .connection(connection)
@@ -180,11 +178,11 @@ class Http2ClientPipelineInitializer extends ChannelInitializer<NioSocketChannel
       .gracefulShutdownTimeoutMillis(_gracefulShutdownTimeout)
       .build();
 
-    Http2AlpnHandler alpnHandler = new Http2AlpnHandler(sslHandler, http2Codec);
+    Http2AlpnHandler alpnHandler = new Http2AlpnHandler(context, http2Codec);
     Http2SchemeHandler schemeHandler = new Http2SchemeHandler(HttpScheme.HTTPS.toString());
     Http2StreamResponseHandler responseHandler = new Http2StreamResponseHandler();
 
-    ctx.pipeline().addLast("alpnHandler", alpnHandler);
+    ctx.pipeline().addLast(Http2AlpnHandler.PIPELINE_ALPN_HANDLER, alpnHandler);
     ctx.pipeline().addLast("schemeHandler", schemeHandler);
     ctx.pipeline().addLast("responseHandler", responseHandler);
 

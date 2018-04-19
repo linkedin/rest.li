@@ -21,6 +21,7 @@ import com.linkedin.r2.transport.http.util.SslHandlerUtil;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
+import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -35,12 +36,14 @@ import static com.linkedin.r2.transport.http.client.stream.SslHandshakeTimingHan
  * past connections.
  * <p>
  * The {@link javax.net.ssl.SSLEngine} once created doesn't have context about connections or addresses,
- * but if host and port are specified at it's creation, can use the session resumption feature.
+ * but if host and port are specified at its creation, can use the session resumption feature.
  * <p>
  * This class just initialize the pipeline, adding the SSL handlers. It cannot be in the #initChannel of the
  * PipelineInitializer, because when initiating the channel, we are not yet aware of the remote address.
  * Only once connected we can know the remote address and create the SSLEngine with it to take advantage of the
  * session resumption
+ *
+ * The class will initiate a SSL handshake upon the connection takes place.
  *
  * @author Francesco Capponi (fcapponi@linkedin.com)
  */
@@ -48,21 +51,29 @@ public class SessionResumptionSslHandler extends ChannelOutboundHandlerAdapter
 {
   public static final String PIPELINE_SESSION_RESUMPTION_HANDLER = "SessionResumptionSslHandler";
 
-  private final SSLContext _sslContext;
-  private final SSLParameters _sslParameters;
+  private final SslHandlerGenerator _hostPortToSslHandler;
 
+  /**
+   * @param sslContext note that the type is SslContext (netty implementation) and not SSLContext (JDK implementation)
+   */
+  public SessionResumptionSslHandler(SslContext sslContext)
+  {
+    _hostPortToSslHandler = (ctx, host, port) -> sslContext.newHandler(ctx.alloc(), host, port);
+  }
+
+  /**
+   * @param sslContext note that the type is SSLContext (JDK implementation) and not SslContext (netty implementation)
+   */
   public SessionResumptionSslHandler(SSLContext sslContext, SSLParameters sslParameters)
   {
-    _sslContext = sslContext;
-    _sslParameters = sslParameters;
+    _hostPortToSslHandler = (ctx, host, port) -> SslHandlerUtil.getClientSslHandler(sslContext, sslParameters, host, port);
   }
 
   @Override
   public void connect(ChannelHandlerContext ctx, SocketAddress remoteAddress, SocketAddress localAddress, ChannelPromise promise) throws Exception
   {
     InetSocketAddress address = ((InetSocketAddress) remoteAddress);
-    SslHandler sslHandler = SslHandlerUtil.getClientSslHandler(_sslContext, _sslParameters,
-      address.getHostName(), address.getPort());
+    SslHandler sslHandler = _hostPortToSslHandler.create(ctx, address.getHostName(), address.getPort());
 
     ctx.pipeline().addAfter(PIPELINE_SESSION_RESUMPTION_HANDLER, SslHandlerUtil.PIPELINE_SSL_HANDLER, sslHandler);
     ctx.pipeline().addAfter(SslHandlerUtil.PIPELINE_SSL_HANDLER, SSL_HANDSHAKE_TIMING_HANDLER, new SslHandshakeTimingHandler(sslHandler.handshakeFuture()));
@@ -73,5 +84,11 @@ public class SessionResumptionSslHandler extends ChannelOutboundHandlerAdapter
     ctx.pipeline().remove(PIPELINE_SESSION_RESUMPTION_HANDLER);
 
     super.connect(ctx, remoteAddress, localAddress, promise);
+  }
+
+  @FunctionalInterface
+  interface SslHandlerGenerator
+  {
+    SslHandler create(ChannelHandlerContext ctx, String host, int port);
   }
 }

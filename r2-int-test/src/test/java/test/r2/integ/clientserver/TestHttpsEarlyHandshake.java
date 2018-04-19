@@ -14,10 +14,11 @@
    limitations under the License.
 */
 
-package test.r2.integ;
+package test.r2.integ.clientserver;
 
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
+import com.linkedin.r2.transport.http.client.AsyncPool;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManager;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerFactoryImpl;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerKey;
@@ -36,18 +37,24 @@ import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLContext;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
+import test.r2.integ.clientserver.providers.AbstractEchoServiceTest;
+import test.r2.integ.clientserver.providers.ClientServerConfiguration;
+import test.r2.integ.clientserver.providers.client.ClientProvider;
+import test.r2.integ.clientserver.providers.common.SslContextUtil;
+import test.r2.integ.clientserver.providers.server.ServerProvider;
 
 /**
- * Test Http1.1 early handshake connection before first request comes in
+ * Test Http1.1 and 2 early handshake connection before first request comes in
  *
  * @author Francesco Capponi (fcapponi@linkedin.com)
  */
-public class TestHttpsEarlyHandshake extends AbstractTestHttps
+public class TestHttpsEarlyHandshake extends AbstractEchoServiceTest
 {
-  @Factory(dataProvider = "configs")
-  public TestHttpsEarlyHandshake(boolean clientROS, boolean serverROS, int port)
+
+  @Factory(dataProvider = "allHttps", dataProviderClass = ClientServerConfiguration.class)
+  public TestHttpsEarlyHandshake(ClientProvider clientProvider, ServerProvider serverProvider, int port)
   {
-    super(clientROS, serverROS, port);
+    super(clientProvider, serverProvider, port);
   }
 
   @Test
@@ -58,7 +65,7 @@ public class TestHttpsEarlyHandshake extends AbstractTestHttps
 
     ChannelPoolManagerFactoryImpl channelPoolManagerFactory =
         new ChannelPoolManagerFactoryImpl(eventLoopGroup, scheduler);
-    SSLContext context = getContext();
+    SSLContext context = SslContextUtil.getContext();
 
     ChannelPoolManagerKey key = new ChannelPoolManagerKeyBuilder()
       // min pool set to one in such a way a connection is opened before the request
@@ -68,22 +75,15 @@ public class TestHttpsEarlyHandshake extends AbstractTestHttps
       .setSSLParameters(context.getDefaultSSLParameters())
       .build();
 
-    ChannelPoolManager channelPoolManager;
-    if (_clientROS)
-    {
-      channelPoolManager = channelPoolManagerFactory.buildStream(key);
-    }
-    else
-    {
-      channelPoolManager = channelPoolManagerFactory.buildRest(key);
-    }
+    ChannelPoolManager channelPoolManager = channelPoolManagerFactory.buildRest(key);
 
     InetAddress inetAddress = InetAddress.getByName("localhost");
     final SocketAddress address = new InetSocketAddress(inetAddress, _port);
 
     // get the channel, when it is returned it might not be active yet
     FutureCallback<Channel> futureCallback = new FutureCallback<>();
-    channelPoolManager.getPoolForAddress(address).get(futureCallback);
+    AsyncPool<Channel> poolForAddress = channelPoolManager.getPoolForAddress(address);
+    poolForAddress.get(futureCallback);
     final Channel channel = futureCallback.get(5, TimeUnit.SECONDS);
 
     // wait until it gets active
@@ -111,9 +111,10 @@ public class TestHttpsEarlyHandshake extends AbstractTestHttps
       // retrieve the channel
       .get(5, TimeUnit.SECONDS);
 
+    poolForAddress.dispose(channel);
     // shutdown the pool
     FutureCallback<None> futureShutdownCallback = new FutureCallback<>();
-    channelPoolManager.shutdown(futureShutdownCallback, () -> {}, () -> {}, 5);
+    channelPoolManager.shutdown(futureShutdownCallback, () -> {}, () -> {}, 5000);
     futureShutdownCallback.get(5, TimeUnit.SECONDS);
 
     // shutdown the client executors

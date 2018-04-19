@@ -32,9 +32,9 @@ import com.linkedin.r2.transport.common.bridge.common.RequestWithCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
 import com.linkedin.r2.transport.http.client.AsyncPoolHandle;
-import com.linkedin.r2.transport.http.client.stream.NettyRequestAdapter;
 import com.linkedin.r2.transport.http.client.TimeoutAsyncPoolHandle;
 import com.linkedin.r2.transport.http.client.TimeoutTransportCallback;
+import com.linkedin.r2.transport.http.client.stream.NettyRequestAdapter;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
@@ -48,17 +48,10 @@ import io.netty.handler.codec.http2.Http2Error;
 import io.netty.handler.codec.http2.Http2Exception;
 import io.netty.handler.codec.http2.Http2Headers;
 import io.netty.handler.codec.http2.Http2Settings;
-import io.netty.handler.codec.http2.Http2Stream;
-import io.netty.util.concurrent.Future;
-import io.netty.util.concurrent.GenericFutureListener;
-import io.netty.util.concurrent.PromiseCombiner;
+import java.util.Collections;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Collections;
-
-import static io.netty.handler.codec.http2.Http2CodecUtil.getEmbeddedHttp2Exception;
 
 
 /**
@@ -70,6 +63,7 @@ import static io.netty.handler.codec.http2.Http2CodecUtil.getEmbeddedHttp2Except
 class Http2StreamCodec extends Http2ConnectionHandler
 {
   private static final Logger LOG = LoggerFactory.getLogger(Http2StreamCodec.class);
+  public static final String PIPELINE_HTTP2_CODEC_HANDLER = "http2Handler";
 
   private static final int NO_PADDING = 0;
   private static final int NO_DATA = 0;

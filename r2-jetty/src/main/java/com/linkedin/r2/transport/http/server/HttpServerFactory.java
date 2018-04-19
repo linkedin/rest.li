@@ -185,6 +185,29 @@ public class HttpServerFactory
                                 restOverStream);
   }
 
+  public HttpServer createHttpsH2cServer(int port,
+                                      int sslPort,
+                                      String keyStore,
+                                      String keyStorePassword,
+                                      TransportDispatcher transportDispatcher,
+                                      HttpJettyServer.ServletType servletType,
+                                      boolean restOverStream)
+  {
+    final TransportDispatcher filterDispatcher =
+      new FilterChainDispatcher(transportDispatcher, _filters);
+    final HttpDispatcher dispatcher = new HttpDispatcher(filterDispatcher);
+    return new HttpsH2JettyServer(port,
+      sslPort,
+      keyStore,
+      keyStorePassword,
+      DEFAULT_CONTEXT_PATH,
+      DEFAULT_THREAD_POOL_SIZE,
+      dispatcher,
+      servletType,
+      DEFAULT_ASYNC_TIMEOUT,
+      restOverStream);
+  }
+
   public HttpServer createH2cServer(int port, TransportDispatcher transportDispatcher, boolean restOverStream)
   {
     return createH2cServer(port, DEFAULT_CONTEXT_PATH, DEFAULT_THREAD_POOL_SIZE, transportDispatcher, restOverStream);

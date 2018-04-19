@@ -14,7 +14,6 @@
    limitations under the License.
 */
 
-/* $Id$ */
 package com.linkedin.r2.sample;
 
 
@@ -33,9 +32,7 @@ import com.linkedin.r2.transport.common.bridge.server.TransportDispatcherBuilder
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
 import com.linkedin.r2.transport.http.server.HttpServerFactory;
-
 import java.net.URI;
-import java.util.Collections;
 import java.util.HashMap;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
@@ -47,17 +44,16 @@ import javax.net.ssl.SSLParameters;
  */
 public class Bootstrap
 {
-  private static final int HTTP_PORT = 8877;
+  private static final int HTTP_FREE_PORT = 0;
   private static final int HTTPS_PORT = 8443;
 
   private static final URI ECHO_URI = URI.create("/echo");
   private static final URI ON_EXCEPTION_ECHO_URI = URI.create("/on-exception-echo");
   private static final URI THROWING_ECHO_URI = URI.create("/throwing-echo");
 
-  public static Server createHttpServer(FilterChain filters)
-  {
-    return createHttpServer(HTTP_PORT, filters);
-  }
+  // ##################### Server Section #####################
+
+  // ############# HTTP1.1 Clear Section #############
 
   public static Server createHttpServer(int port, FilterChain filters)
   {
@@ -70,11 +66,15 @@ public class Bootstrap
         .createServer(port, createDispatcher(), restOverStream);
   }
 
+  // ############# HTTP2 Clear Section #############
+
   public static Server createH2cServer(int port, FilterChain filters, boolean restOverStream)
   {
     return new HttpServerFactory(filters)
         .createH2cServer(port, createDispatcher(), restOverStream);
   }
+
+  // ############# HTTPS 1.1 Section #############
 
   public static Server createHttpsServer(String keyStore, String keyStorePassword, FilterChain filters)
   {
@@ -89,9 +89,29 @@ public class Bootstrap
   public static Server createHttpsServer(int sslPort, String keyStore, String keyStorePassword, FilterChain filters, boolean restOverStream)
   {
     return new HttpServerFactory(filters)
-        .createHttpsServer(HTTP_PORT, sslPort, keyStore, keyStorePassword, createDispatcher(),
-            HttpServerFactory.DEFAULT_SERVLET_TYPE, restOverStream);
+      .createHttpsServer(HTTP_FREE_PORT, sslPort, keyStore, keyStorePassword, createDispatcher(),
+        HttpServerFactory.DEFAULT_SERVLET_TYPE, restOverStream);
   }
+
+  public static Server createHttpsServer(int httpPort, int sslPort, String keyStore, String keyStorePassword, FilterChain filters, boolean restOverStream)
+  {
+    return new HttpServerFactory(filters)
+      .createHttpsServer(httpPort, sslPort, keyStore, keyStorePassword, createDispatcher(),
+        HttpServerFactory.DEFAULT_SERVLET_TYPE, restOverStream);
+  }
+
+  // ############# HTTPS 2 Section #############
+
+  public static Server createHttpsH2cServer(int httpPort, int sslPort, String keyStore, String keyStorePassword, FilterChain filters, boolean restOverStream)
+  {
+    return new HttpServerFactory(filters)
+      .createHttpsH2cServer(httpPort, sslPort, keyStore, keyStorePassword, createDispatcher(),
+        HttpServerFactory.DEFAULT_SERVLET_TYPE, restOverStream);
+  }
+
+  // ##################### Client Section #####################
+
+  // ############# HTTP1.1 Clear Section #############
 
   public static Client createHttpClient(FilterChain filters, boolean restOverStream)
   {
@@ -104,6 +124,14 @@ public class Bootstrap
         .getClient(properties);
     return new TransportClientAdapter(client, restOverStream);
   }
+
+  public static Client createHttpClient(FilterChain filters)
+  {
+    return createHttpClient(filters, R2Constants.DEFAULT_REST_OVER_STREAM);
+  }
+
+
+  // ############# HTTPS 1.1 Section #############
 
   public static Client createHttpsClient(FilterChain filters, boolean restOverStream, SSLContext sslContext, SSLParameters sslParameters)
   {
@@ -119,6 +147,8 @@ public class Bootstrap
     return new TransportClientAdapter(client, restOverStream);
   }
 
+  // ############# HTTP2 Clear Section #############
+
   public static Client createHttp2Client(FilterChain filters, boolean restOverStream)
   {
     HashMap<String, String> properties = new HashMap<>();
@@ -131,19 +161,33 @@ public class Bootstrap
     return new TransportClientAdapter(client, restOverStream);
   }
 
-  public static Client createHttpClient(FilterChain filters)
+  // ############# HTTPS 2 Section #############
+
+  public static Client createHttps2Client(FilterChain filters, boolean restOverStream, SSLContext sslContext, SSLParameters sslParameters)
   {
-    return createHttpClient(filters, R2Constants.DEFAULT_REST_OVER_STREAM);
+    HashMap<String, Object> properties = new HashMap<>();
+    properties.put(HttpClientFactory.HTTP_SSL_CONTEXT, sslContext);
+    properties.put(HttpClientFactory.HTTP_SSL_PARAMS, sslParameters);
+    properties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, HttpProtocolVersion.HTTP_2.name());
+    final TransportClient client = new HttpClientFactory.Builder()
+      .setFilterChain(filters)
+      .build()
+      .getClient(properties);
+    return new TransportClientAdapter(client, restOverStream);
   }
 
-  public static URI createHttpURI(URI relativeURI)
+  // ############# Tools Section #############
+
+  public static URI createURI(int port, URI relativeURI, boolean isSsl)
   {
-    return createHttpURI(HTTP_PORT, relativeURI);
+    String scheme = isSsl ? "https" : "http";
+    return URI.create(scheme + "://localhost:" + port + relativeURI);
   }
+
 
   public static URI createHttpURI(int port, URI relativeURI)
   {
-    return URI.create("http://localhost:" + port + relativeURI);
+    return createURI(port, relativeURI, false);
   }
 
   public static URI createHttpsURI(URI relativeURI)
@@ -153,7 +197,7 @@ public class Bootstrap
 
   public static URI createHttpsURI(int port, URI relativeURI)
   {
-    return URI.create("https://localhost:" + port + relativeURI);
+    return createURI(port, relativeURI, true);
   }
 
   public static URI getEchoURI()

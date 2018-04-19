@@ -18,7 +18,7 @@
  * $Id: $
  */
 
-package test.r2.integ;
+package test.r2.integ.clientserver;
 
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.r2.sample.Bootstrap;
@@ -27,18 +27,23 @@ import com.linkedin.r2.sample.echo.rest.RestEchoClient;
 import org.testng.Assert;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
+import test.r2.integ.clientserver.providers.AbstractEchoServiceTest;
+import test.r2.integ.clientserver.providers.ClientServerConfiguration;
+import test.r2.integ.clientserver.providers.client.ClientProvider;
+import test.r2.integ.clientserver.providers.common.SslContextUtil;
+import test.r2.integ.clientserver.providers.server.ServerProvider;
 
 
 /**
  * @author Ang Xu
  */
-public class TestHttpsEcho extends AbstractTestHttps
+public class TestHttpsEcho extends AbstractEchoServiceTest
 {
 
-  @Factory(dataProvider = "configs")
-  public TestHttpsEcho(boolean clientROS, boolean serverROS, int port)
+  @Factory(dataProvider = "allHttps", dataProviderClass = ClientServerConfiguration.class)
+  public TestHttpsEcho(ClientProvider clientProvider, ServerProvider serverProvider, int port)
   {
-    super(clientROS, serverROS, port);
+    super(clientProvider, serverProvider, port);
   }
 
   /**
@@ -47,7 +52,8 @@ public class TestHttpsEcho extends AbstractTestHttps
   @Test
   public void testHttpEcho() throws Exception
   {
-    final EchoService client = new RestEchoClient(Bootstrap.createHttpURI(Bootstrap.getEchoURI()), _client);
+    final EchoService client = new RestEchoClient(
+      Bootstrap.createURI(SslContextUtil.getHttpPortFromHttps(_port), Bootstrap.getEchoURI(), false), createClient());
 
     final String msg = "This is a simple http echo message";
     final FutureCallback<String> callback = new FutureCallback<String>();

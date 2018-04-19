@@ -21,7 +21,7 @@ import com.linkedin.r2.transport.common.bridge.common.TransportResponse;
 import com.linkedin.r2.transport.http.client.TimeoutAsyncPoolHandle;
 import com.linkedin.r2.transport.http.client.TimeoutTransportCallback;
 import io.netty.channel.embedded.EmbeddedChannel;
-import io.netty.handler.ssl.SslHandler;
+import io.netty.handler.ssl.SslContext;
 import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -36,10 +36,10 @@ public class TestHttp2AlpnHandler
   @Test
   public void testWriteBeforeNegotiation() throws Exception
   {
-    SslHandler sslHandler = Mockito.mock(SslHandler.class);
+    SslContext sslContext = Mockito.mock(SslContext.class);
     Http2StreamCodec http2StreamCodec = Mockito.mock(Http2StreamCodec.class);
 
-    Http2AlpnHandler handler = new Http2AlpnHandler(sslHandler, http2StreamCodec);
+    Http2AlpnHandler handler = new Http2AlpnHandler(sslContext, http2StreamCodec);
     EmbeddedChannel channel = new EmbeddedChannel(handler);
 
     // Write should not succeed before negotiation completes
@@ -51,10 +51,10 @@ public class TestHttp2AlpnHandler
   @Test(timeOut = 10000)
   @SuppressWarnings("unchecked")
   public void testChannelCloseBeforeNegotiation() throws Exception {
-    SslHandler sslHandler = Mockito.mock(SslHandler.class);
+    SslContext sslContext = Mockito.mock(SslContext.class);
     Http2StreamCodec http2StreamCodec = Mockito.mock(Http2StreamCodec.class);
 
-    Http2AlpnHandler handler = new Http2AlpnHandler(sslHandler, http2StreamCodec);
+    Http2AlpnHandler handler = new Http2AlpnHandler(sslContext, http2StreamCodec);
     EmbeddedChannel channel = new EmbeddedChannel(handler);
 
     RequestWithCallback request = Mockito.mock(RequestWithCallback.class);
@@ -69,7 +69,6 @@ public class TestHttp2AlpnHandler
     Assert.assertFalse(channel.finish());
 
     // Synchronously waiting for channel to close
-    channel.pipeline().remove(sslHandler);
     channel.close().sync();
 
     Mockito.verify(request).handle();

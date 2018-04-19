@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2012 LinkedIn Corp.
+   Copyright (c) 2018 LinkedIn Corp.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -14,40 +14,31 @@
    limitations under the License.
 */
 
-/* $Id$ */
-package test.r2.integ;
+package test.r2.integ.clientserver.providers.client;
 
 import com.linkedin.r2.filter.FilterChain;
 import com.linkedin.r2.sample.Bootstrap;
 import com.linkedin.r2.transport.common.Client;
-import com.linkedin.r2.transport.common.Server;
 
-/**
- * @author Chris Pettitt
- * @version $Revision$
- */
-public abstract class AbstractHttpEchoServiceTest extends AbstractEchoServiceTest
+public class Http2ClientProvider implements ClientProvider
 {
-  private final boolean _clientROS;
-  private final boolean _serverROS;
-  private final int _port;
 
-  protected AbstractHttpEchoServiceTest(boolean clientROS, boolean serverROS, int port)
+  private final boolean _clientROS;
+
+  public Http2ClientProvider(boolean clientROS)
   {
     _clientROS = clientROS;
-    _serverROS = serverROS;
-    _port = port;
   }
 
   @Override
-  protected Client createClient(FilterChain filters)
+  public Client createClient(FilterChain filters)
   {
-    return Bootstrap.createHttpClient(filters, _clientROS);
+    return Bootstrap.createHttp2Client(filters, _clientROS);
   }
 
   @Override
-  protected Server createServer(FilterChain filters)
+  public String toString()
   {
-    return Bootstrap.createHttpServer(_port, filters, _serverROS);
+    return "[" + getClass().getName() + ", stream=" + _clientROS + "]";
   }
 }

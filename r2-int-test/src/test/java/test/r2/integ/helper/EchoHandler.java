@@ -1,4 +1,4 @@
-package test.r2.integ;
+package test.r2.integ.helper;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.r2.message.RequestContext;

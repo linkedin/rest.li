@@ -1,16 +1,16 @@
-package test.r2.integ;
+package test.r2.integ.helper;
 
 import com.linkedin.r2.message.stream.entitystream.WriteHandle;
 
 /**
  * @author Zhenkai Zhu
  */
-class TimedBytesWriter extends BytesWriter
+public class TimedBytesWriter extends BytesWriter
 {
   private long _startTime;
   private long _stopTime;
 
-  TimedBytesWriter(long total, byte fill)
+  public TimedBytesWriter(long total, byte fill)
   {
     super(total, fill);
   }

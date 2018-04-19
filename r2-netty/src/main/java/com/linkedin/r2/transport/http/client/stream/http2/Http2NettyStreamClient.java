@@ -32,6 +32,7 @@ import com.linkedin.r2.transport.http.client.AbstractJmxManager;
 import com.linkedin.r2.transport.http.client.AsyncPool;
 import com.linkedin.r2.transport.http.client.TimeoutAsyncPoolHandle;
 import com.linkedin.r2.transport.http.client.TimeoutTransportCallback;
+import com.linkedin.r2.transport.http.client.common.CertificateHandler;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManager;
 import com.linkedin.r2.transport.http.client.common.ssl.SslSessionValidator;
 import com.linkedin.r2.transport.http.client.stream.AbstractNettyStreamClient;
@@ -152,12 +153,8 @@ public class Http2NettyStreamClient extends AbstractNettyStreamClient
         return;
       }
 
-      SslSessionValidator expectedCertPrincipal = (SslSessionValidator) _requestContext.getLocalAttr(R2Constants.REQUESTED_SSL_SESSION_VALIDATOR);
-      if (expectedCertPrincipal != null)
-      {
-        LOG.warn("Verification of server's certificate is not supported yet on a Http2 connection and SSL, " +
-          "the requirement will be ignored");
-      }
+      SslSessionValidator sslSessionValidator = (SslSessionValidator) _requestContext.getLocalAttr(R2Constants.REQUESTED_SSL_SESSION_VALIDATOR);
+      channel.attr(CertificateHandler.REQUESTED_SSL_SESSION_VALIDATOR).set(sslSessionValidator);
 
       // By wrapping the channel and the pool in a timeout handle we can guarantee the following
       // 1. using the handle is the only mean to return a channel back to the pool because the reference to the

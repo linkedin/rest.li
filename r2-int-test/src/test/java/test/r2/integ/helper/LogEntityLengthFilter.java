@@ -1,16 +1,10 @@
-package test.r2.integ;
+package test.r2.integ.helper;
 
-import com.linkedin.data.ByteString;
 import com.linkedin.r2.filter.NextFilter;
 import com.linkedin.r2.filter.message.rest.RestFilter;
-import com.linkedin.r2.filter.message.stream.StreamFilter;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
-import com.linkedin.r2.message.stream.StreamRequest;
-import com.linkedin.r2.message.stream.StreamResponse;
-import com.linkedin.r2.message.stream.entitystream.Observer;
-
 import java.util.Map;
 
 /**
