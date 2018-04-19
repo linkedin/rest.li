@@ -58,7 +58,7 @@ public class StaticRingProvider implements HashRingProvider
   {
     if (_rings.size() < 1)
     {
-      throw new ServiceUnavailableException("Ring not configured:", serviceUri.toString());
+      throw new ServiceUnavailableException("PEGA_1030. Ring not configured:", serviceUri.toString());
     }
 
     Map<Ring<URI>, Collection<K>> result = new HashMap<Ring<URI>, Collection<K>>();

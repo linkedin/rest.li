@@ -131,7 +131,7 @@ public class DynamicClient extends AbstractClient implements D2Client
         }
         else
         {
-          callback.onError(new ServiceUnavailableException("unknown: " + request.getURI(),
+          callback.onError(new ServiceUnavailableException("PEGA_1000. Unknown: " + request.getURI(),
             "got null client from load balancer"));
         }
       }

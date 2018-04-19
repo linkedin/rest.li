@@ -203,7 +203,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
           if (transportClient == null)
           {
             throw new ServiceUnavailableException(serviceName,
-                "Cannot find transportClient for service " + serviceName + " and scheme: " + targetService.getScheme()
+                "PEGA_1001. Cannot find transportClient for service " + serviceName + " and scheme: " + targetService.getScheme()
                     + " with service hint" + targetService);
           }
           clientCallback.onSuccess(new RewriteLoadBalancerClient(serviceName, targetService, transportClient));
@@ -279,7 +279,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     }
     else
     {
-      throw new ServiceUnavailableException(serviceName, "Unable to find a load balancer strategy. " +
+      throw new ServiceUnavailableException(serviceName, "PEGA_1002. Unable to find a load balancer strategy. " +
         "Server Schemes: [" + String.join(", ", service.getPrioritizedSchemes()) + ']');
     }
   }
@@ -329,7 +329,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     }
     else
     {
-      throw new ServiceUnavailableException(serviceName, "Unable to find a load balancer strategy" +
+      throw new ServiceUnavailableException(serviceName, "PEGA_1003. Unable to find a load balancer strategy" +
         "Server Schemes: [" + String.join(", ", service.getPrioritizedSchemes()) + ']');
     }
   }
@@ -348,7 +348,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
         @Override
         public void onError(Throwable e)
         {
-          finalCallback.onError(new ServiceUnavailableException(serviceName, e.getMessage(), e));
+          finalCallback.onError(new ServiceUnavailableException(serviceName, "PEGA_1004. " +e.getMessage(), e));
         }
 
         @Override
@@ -387,11 +387,11 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     }
     catch (TimeoutException e)
     {
-      throw new ServiceUnavailableException(serviceName, "Timeout occurred while fetching property. Timeout:" + _timeout, e);
+      throw new ServiceUnavailableException(serviceName, "PEGA_1005. Timeout occurred while fetching property. Timeout:" + _timeout, e);
     }
     catch (Exception e)
     {
-      throw new ServiceUnavailableException(serviceName, "Exception while fetching property. Message:" + e.getMessage(), e);
+      throw new ServiceUnavailableException(serviceName, "PEGA_1006. Exception while fetching property. Message:" + e.getMessage(), e);
     }
   }
 
@@ -436,7 +436,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     {
       warn(_log, "unable to find uris: ", clusterName);
 
-      die(serviceName, "no uri properties in lb state. Check your service being announced correctly to ZK");
+      die(serviceName, "PEGA_1007. no uri properties in lb state. Check your service being announced correctly to ZK");
     }
 
     debug(_log, "got uris: ", cluster);
@@ -454,7 +454,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     {
       warn(_log, "unable to find cluster: ", clusterName);
 
-      die(serviceName, "no cluster properties in lb state for cluster: " + clusterName);
+      die(serviceName, "PEGA_1008. no cluster properties in lb state for cluster: " + clusterName);
     }
 
     return clusterItem.getProperty();
@@ -543,7 +543,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     }
     else
     {
-      throw new ServiceUnavailableException(serviceName, "Unable to find a load balancer strategy" +
+      throw new ServiceUnavailableException(serviceName, "PEGA_1009. Unable to find a load balancer strategy" +
         "Server Schemes: [" + String.join(", ", service.getPrioritizedSchemes()) + ']');
     }
   }
@@ -603,7 +603,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     if (partitionAccessorItem == null || partitionAccessorItem.getProperty() == null)
     {
       warn(_log, "unable to find partition accessor for cluster: ", clusterName);
-      die(serviceName, "No partition accessor available for cluster: " + clusterName);
+      die(serviceName, "PEGA_1010. No partition accessor available for cluster: " + clusterName);
     }
 
     return partitionAccessorItem.getProperty();
@@ -622,7 +622,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
         @Override
         public void onError(Throwable e)
         {
-          finalCallback.onError(new ServiceUnavailableException(serviceName, e.getMessage(), e));
+          finalCallback.onError(new ServiceUnavailableException(serviceName, "PEGA_1011. "+e.getMessage(), e));
         }
 
         @Override
@@ -646,7 +646,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
       {
         warn(_log, "unable to find service: ", serviceName);
 
-        die(servicePropertiesCallback, serviceName, "no service properties in lb state");
+        die(servicePropertiesCallback, serviceName, "PEGA_1012. no service properties in lb state");
         return;
       }
 
@@ -743,7 +743,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
       }
       catch (PartitionAccessException e)
       {
-        die(serviceName, "Error in finding the partition for URI: " + requestUri + ", " +
+        die(serviceName, "PEGA_1013. Error in finding the partition for URI: " + requestUri + ", " +
           "in cluster: " + clusterName + ", " + e.getMessage());
       }
     }
@@ -768,7 +768,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
       Map<Integer, PartitionData> partitionDataMap = uris.getPartitionDataMap(targetHost);
       if (partitionDataMap == null || partitionDataMap.isEmpty())
       {
-        die(serviceName, "There is no partition data for server host: " + targetHost + ". URI: " + requestUri);
+        die(serviceName, "PEGA_1014. There is no partition data for server host: " + targetHost + ". URI: " + requestUri);
       }
 
       Set<Integer> partitions = partitionDataMap.keySet();
@@ -814,14 +814,14 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
         String requestedSchemes = orderedStrategies.stream()
           .map(LoadBalancerState.SchemeStrategyPair::getScheme).collect(Collectors.joining(","));
 
-        die(serviceName, "Service: " + serviceName + " unable to find a host to route the request"
+        die(serviceName, "PEGA_1015. Service: " + serviceName + " unable to find a host to route the request"
           + " in partition: " + partitionId + " cluster: " + clusterName + " scheme: [" + requestedSchemes + "]," +
           " total hosts in cluster: " + uris.Uris().size() + "."
           + " Check what cluster and scheme your servers are announcing to.");
       }
       else
       {
-        die(serviceName, "Service: " + serviceName + " is in a bad state (high latency/high error). "
+        die(serviceName, "PEGA_1016. Service: " + serviceName + " is in a bad state (high latency/high error). "
             + "Dropping request. Cluster: " + clusterName + ", partitionId:" + partitionId
           + " (choosable: " + clientsToLoadBalance.size() + " hosts, total in cluster: " + uris.Uris().size() + ")");
       }
