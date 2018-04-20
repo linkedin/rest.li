@@ -1,0 +1,6 @@
+title: rest.li
+description: > 
+  A REST framework for building scalable service architectures using dynamic discovery and simple asynchronous APIs
+
+sass:
+    style: compressed

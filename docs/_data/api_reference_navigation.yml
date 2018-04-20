@@ -1,0 +1,9 @@
+toc:
+  - title: API reference
+    subfolderitems:
+      - page: Architecture
+        url: /reference/architecture
+      - page: Server
+        url: /
+      - page: Client
+        url: /

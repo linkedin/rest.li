@@ -1,0 +1,9 @@
+items:
+  - page: Getting Started
+    url: /get_started/quick_start
+  - page: User guide
+    url: /user_guide/server_architecture
+  - page: API reference
+    url: /reference/architecture
+  - page: Contribute
+    url: /contribute/howto

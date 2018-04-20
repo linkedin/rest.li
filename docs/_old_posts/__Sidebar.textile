@@ -1,0 +1,29 @@
+*Quick Access:*
+* Tutorials
+** "Rest.li Quickstart":https://github.com/linkedin/rest.li/wiki/Quickstart:-A-Tutorial-Introduction-to-Rest.li
+** "Dynamic Discovery Quickstart":https://github.com/linkedin/rest.li/wiki/D2-Quickstart-Tutorial
+** "Unstructured Data Quickstart":https://github.com/linkedin/rest.li/wiki/Quickstart:-Unstructured-Data-in-Rest.li
+* "Dynamic Discovery":https://github.com/linkedin/rest.li/wiki/Dynamic-Discovery (D2)
+* "Request Response API":https://github.com/linkedin/rest.li/wiki/Request---Response-API-(R2)
+* "Rest.li User Guide":https://github.com/linkedin/rest.li/wiki/Rest.li-User-Guide
+** "Rest.li Server":https://github.com/linkedin/rest.li/wiki/Rest.li-User-Guide#chapter-2-restli-server
+** "Resources":https://github.com/linkedin/rest.li/wiki/Rest.li-User-Guide#writing-resources
+** "Resource Types":https://github.com/linkedin/rest.li/wiki/Rest.li-User-Guide#resource-annotations
+** Resource Methods
+*** "Create":https://github.com/linkedin/rest.li/wiki/Rest.li-User-Guide#create
+*** "Get":https://github.com/linkedin/rest.li/wiki/Rest.li-User-Guide#get
+*** "Update":https://github.com/linkedin/rest.li/wiki/Rest.li-User-Guide#update
+*** "Delete":https://github.com/linkedin/rest.li/wiki/Rest.li-User-Guide#delete
+*** "Finders":https://github.com/linkedin/rest.li/wiki/Rest.li-User-Guide#finder
+*** "Actions":https://github.com/linkedin/rest.li/wiki/Rest.li-User-Guide#action
+** "Rest.li Client":https://github.com/linkedin/rest.li/wiki/Rest.li-User-Guide#chapter-3-restli-client-framework
+* "Projections":https://github.com/linkedin/rest.li/wiki/Projections
+* "Filters":https://github.com/linkedin/rest.li/wiki/Rest.li-Filters
+* "Wire Protocol":https://github.com/linkedin/rest.li/wiki/Rest.li-Protocol
+* "Data Schema and Templates":https://github.com/linkedin/rest.li/wiki/DATA-Data-Schema-and-Templates
+* "Unstructured Data":https://github.com/linkedin/rest.li/wiki/Unstructured-Data-User-Guide
+* Tools
+** "IDL generation":https://github.com/linkedin/rest.li/wiki/Rest.li-User-Guide#idl-generator-tool
+** "Client binding generation":https://github.com/linkedin/rest.li/wiki/Rest.li-User-Guide#client-code-generator-tool
+* FAQ
+** "Data FAQ":https://github.com/linkedin/rest.li/wiki/Data-FAQ

@@ -1,0 +1,1881 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0"/>
+
+    <title>User guide</title>
+    <meta name="description" content="A REST framework for building scalable service architectures using dynamic discovery and simple asynchronous APIs" />
+
+  
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" media="screen,projection" href="/assets/materialize.css" />
+    <link rel="stylesheet" type="text/css" media="screen,projection" href="/assets/main.css">
+    <link rel="canonical" href="http://localhost:4000/spec/protocol" />
+    <link rel="alternate" type="application/rss+xml" title="rest.li" href="/feed.xml" />
+  
+    
+</head>
+
+
+  <body>
+
+    <nav class="dark-grey" role="navigation">
+    <div class="nav-wrapper container"><a id="logo-container" class="brand-logo" href="/">Rest.li</a>
+
+
+          <ul class="right hide-on-med-and-down">
+               
+      
+        <li>
+          <a href="/get_started/quick_start" >
+            Getting Started
+          </a>
+        </li>
+        
+        <li>
+          <a href="/user_guide/server_architecture" >
+            User guide
+          </a>
+        </li>
+        
+        <li>
+          <a href="/reference/architecture" >
+            API reference
+          </a>
+        </li>
+        
+        <li>
+          <a href="/contribute/howto" >
+            Contribute
+          </a>
+        </li>
+        
+          </ul>
+
+
+      <a href="#" data-activates="nav-mobile" class="button-collapse"><i class="material-icons">menu</i></a>
+    </div>
+</nav>
+
+
+        <div class="container">
+        <div class="row">
+                <div class="col s12 m4 l2"> 
+               
+                    
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">User Guide</span></li>
+                        <ul>
+                       
+                         <li><a href="/user_guide/server_architecture">Rest.li Architecture</a></li>
+                       
+                         <li><a href="/user_guide/restli_server">Rest.li Server</a></li>
+                       
+                         <li><a href="/user_guide/restli_client">Rest.li Client Framework</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Spec</span></li>
+                        <ul>
+                       
+                         <li><a href="/spec/protocol">Rest.li Protocol</a></li>
+                       
+                         <li><a href="/spec/restspec_format">Restspec json format</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Modeling Resources</span></li>
+                        <ul>
+                       
+                         <li><a href="/modeling/modeling">Modeling Resources</a></li>
+                       
+                         <li><a href="/modeling/compatibiltiy_check">Snapshots and Resource Compatibility Checking</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                    </div>
+                     <div class="col s12 m3 l10">
+                            <h1 id="restli-protocol">Rest.li Protocol</h1>
+
+<h2 id="contents">Contents</h2>
+
+<ul>
+  <li><a href="#uri-syntax">URI Syntax</a></li>
+  <li><a href="#online-documentation">Online Documentation</a></li>
+  <li><a href="#content-types">Content Types</a></li>
+  <li><a href="#restli-protocol-20-object-and-listarray-representation">Rest.li Protocol 2.0 Object and List/Array
+Representation</a></li>
+  <li><a href="#complex-types-complex-keys-and-compound-keys-in-the-restli-20-protocol">Complex types, complex keys, and compound keys in the Rest.li 2.0
+Protocol</a></li>
+  <li><a href="#collection-resources">Collection Resources</a></li>
+  <li><a href="#simple-resources">Simple Resources</a></li>
+  <li><a href="#association-resources">Association Resources</a></li>
+  <li><a href="#finders">Finders</a></li>
+  <li><a href="#actions">Actions</a></li>
+  <li><a href="#uri-modifiers">URI Modifiers</a></li>
+  <li><a href="#response-status-codes">Response Status Codes</a></li>
+  <li><a href="#message-headers">Message Headers</a></li>
+  <li><a href="#request-message-body">Request Message Body</a></li>
+  <li><a href="#response-message-body">Response Message Body</a></li>
+  <li><a href="#complex-types">Complex Types</a></li>
+  <li><a href="#empty-string-parameters">Empty List Parameters</a></li>
+</ul>
+
+<p><strong>Note</strong> - Any time there is a difference between Rest.li protocol 1.0
+and Rest.li protocol 2.0 it will be explicitly mentioned. If nothing is
+said, that means that there is no difference.</p>
+
+<h2 id="uri-syntax">URI Syntax</h2>
+
+<p>URIs are described using URI templates as defined in the <a href="http://tools.ietf.org/html/draft-gregorio-uritemplate-07">IETF Draft
+Spec</a>.</p>
+
+<h2 id="online-documentation">Online Documentation</h2>
+
+<p>Rest.li provides <a href="https://github.com/linkedin/rest.li/wiki/Rest.li-User-Guide#online-documentation">online
+documentation</a>
+for any loaded resource. The documentation shows example request and
+response for the resource methods, finders, and actions. Use it to
+document the Rest.li protocols.</p>
+
+<h2 id="content-types">Content Types</h2>
+
+<p>The content types of Rest.li data are <code class="highlighter-rouge">application/json</code> and
+<code class="highlighter-rouge">application/pson</code>. PSON is a compressed version of JSON.</p>
+
+<h2 id="restli-protocol-20-object-and-listarray-representation">Rest.li Protocol 2.0 Object and List/Array Representation</h2>
+
+<h3 id="definitions">Definitions</h3>
+
+<p>An object, as used in this document, is a map or a dictionary. It is
+simply a collection of key-value pairs, where the keys are strings and
+the values are primitives, arrays, or an object. The terms object and
+map are used interchangeably throughout this document to refer to the
+same concept.</p>
+
+<p>Consider the following functions:</p>
+
+<p><code>encoded(v)</code> is defined as follows -</p>
+
+<ul>
+  <li>if <code class="highlighter-rouge">v</code> is a primitive then <code class="highlighter-rouge">encoded(v)</code> = the URL encoded value for
+<code class="highlighter-rouge">v</code></li>
+  <li>if <code class="highlighter-rouge">v</code> is a map then <code class="highlighter-rouge">encoded(v)</code> = the URL encoding for a map as
+described in the <a href="https://github.com/linkedin/rest.li/wiki/Rest.li-Protocol#url-representation">Rest.li 2.0 protocol object URL
+representation</a></li>
+  <li>if <code class="highlighter-rouge">v</code> is an array then <code class="highlighter-rouge">encoded(v)</code> = the URL encoding for an array
+as described in the <a href="https://github.com/linkedin/rest.li/wiki/Rest.li-Protocol#url-representation-1">Rest.li 2.0 protocol array URL
+representation</a></li>
+</ul>
+
+<p><code class="highlighter-rouge">reducedEncoded(v)</code> is defined as follows -</p>
+
+<ul>
+  <li>if <code class="highlighter-rouge">v</code> is a primitive then <code class="highlighter-rouge">reducedEncoded(v)</code> = <code class="highlighter-rouge">v</code> with the
+characters <code class="highlighter-rouge">,</code>, <code class="highlighter-rouge">(</code>, <code class="highlighter-rouge">)</code>, <code class="highlighter-rouge">'</code>, and <code class="highlighter-rouge">:</code> URL encoded</li>
+  <li>if <code class="highlighter-rouge">v</code> is a map then <code class="highlighter-rouge">reducedEncoded(v)</code> = the HTTP body/header
+encoding for a map as described in the <a href="https://github.com/linkedin/rest.li/wiki/Rest.li-Protocol#http-body-and-headers-representation">Rest.li 2.0 protocol object
+HTTP body and headers
+representation</a></li>
+  <li>if <code class="highlighter-rouge">v</code> is an array then <code class="highlighter-rouge">reducedEncoded(v)</code> = the HTTP body/header
+encoding for an array as described in the <a href="https://github.com/linkedin/rest.li/wiki/Rest.li-Protocol#http-body-and-headers-representation-1">Rest.li 2.0 protocol
+array HTTP body and headers
+representation</a></li>
+</ul>
+
+<p><code class="highlighter-rouge">encoded</code> and <code class="highlighter-rouge">reducedEncoded</code> will be used in the sections below.</p>
+
+<h3 id="json-serialization-of-data-schema">JSON Serialization of Data Schema</h3>
+
+<p>Rest.li objects defined using Pegasus Data Schema (PDSC) is serialized
+as JSON representation for transportation over the wire. For detailed
+transport serialization, please see <a href="https://github.com/linkedin/rest.li/wiki/DATA-Data-Schema-and-Templates#how-data-is-serialized-for-transport">How Data is Serialized for
+Transport</a>.</p>
+
+<h3 id="restli-protocol-20-object-representation">Rest.li Protocol 2.0 Object Representation</h3>
+
+<h4 id="url-representation">URL Representation</h4>
+
+<p>In Rest.li 2.0, the way to represent an object in the URL is using
+<code>key:value</code> pairs. More concretely -</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+(encoded(k1):encoded(v1),encoded(k2):encoded(v2),...)
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p>Note that all keys are strings.</p>
+
+<h4 id="http-body-and-headers-representation">HTTP body and headers representation</h4>
+
+<h5 id="header-representation">Header representation</h5>
+
+<p>An object can be present as values for the following headers -</p>
+
+<ul>
+  <li><code>Location</code> - if present here we simply use the
+<a href="https://github.com/linkedin/rest.li/wiki/Rest.li-Protocol#url-representation">Rest.li 2.0 protocol object URL
+representation</a></li>
+  <li><code>X-RestLi-Id</code> or <code>X-LinkedIn-Id</code> - we use the
+<a href="https://github.com/linkedin/rest.li/wiki/Rest.li-Protocol#http-body-and-headers-representation">Rest.li 2.0 protocol object HTTP body and headers
+representation</a></li>
+</ul>
+
+<h5 id="body-representation">Body representation</h5>
+
+<p>If present in the HTTP body a <code class="highlighter-rouge">key:value</code> representation is used. More
+concretely -</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+(reducedEncoded(k1):reducedEncoded(v1),reducedEncoded(k2):reducedEncoded(v2),...)
+&lt;/code&gt;
+</code></pre></div></div>
+
+<h3 id="restli-20-protocol-array-notation">Rest.li 2.0 Protocol Array Notation</h3>
+
+<h4 id="url-representation-1">URL Representation</h4>
+
+<p>An array <code>\[a1, a2, a3, …\]</code> is encoded in the URL as -</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+List(encoded(a1),encoded(a2),encoded(a3),...)
+&lt;/code&gt;
+</code></pre></div></div>
+
+<h4 id="http-body-and-headers-representation-1">HTTP body and headers representation</h4>
+
+<h5 id="header-representation-1">Header representation</h5>
+
+<p>An array can be present as values for the following headers -</p>
+
+<ul>
+  <li><code>Location</code> - if present here we simply use the
+<a href="https://github.com/linkedin/rest.li/wiki/Rest.li-Protocol#url-representation-1">Rest.li 2.0 protocol array URL
+representation</a></li>
+  <li><code>X-RestLi-Id</code> or <code>X-LinkedIn-Id</code> - we use the
+<a href="https://github.com/linkedin/rest.li/wiki/Rest.li-Protocol#http-body-and-headers-representation-1">Rest.li 2.0 protocol array HTTP body and headers
+representation</a></li>
+</ul>
+
+<h5 id="body-representation-1">Body representation</h5>
+
+<p>An array <code class="highlighter-rouge">[a1, a2, a3, ...]</code> is encoded as follows -</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+List(reducedEncoded(a1),reducedEncoded(a2),reducedEncoded(a3),...)
+&lt;/code&gt;
+</code></pre></div></div>
+
+<h3 id="example">Example</h3>
+
+<p>Consider the object, which we will call <code class="highlighter-rouge">exampleObject</code>, expressed in a
+JSON notation here -</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+{
+  "k1": "v1",
+  "k2": "value with spaces",
+  "k3": [1, 2, 3],
+  "k4": "value:with:reserved:char"
+  "k5":
+  {
+    "k51": "v51",
+    "k52": "v52"
+  }
+}
+</code></pre></div></div>
+
+<p>&lt;/code&gt;</p>
+
+<p>Here is how <code class="highlighter-rouge">exampleObject</code> would look if present in the URL -</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+(k1:v1,k2:value%20with%20spaces,k3:List(1,2,3),k4:value%3Awith%3Areserved%3Achar,k5:(k51:v51,k52:v52))
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p>Here is how <code class="highlighter-rouge">exampleObject</code> would look if present in the HTTP headers -</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+Location: ...(k1:v1,k2:value%20with%20spaces,k3:List(1,2,3),k4:value%3Awith%3Areserved%3Achar,k5:(k51:v51,k52:v52))
+X-RestLi-Id: (k1:v1,k2:value with spaces,k3:List(1,2,3),k4:value%3Awith%3Areserved%3Achar,k5:(k51:v51,k52:v52))
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p>If we were doing a BATCH_GET request and <code class="highlighter-rouge">exampleObject</code> was one of the
+keys requested here is how the HTTP body would look -</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+...
+"entities": {
+  "(k1:v1,k2:value with spaces,k3:List(1,2,3),k4:value%3Awith%3Areserved%3Achar,k5:(k51:v51,k52:v52))": {
+    ...
+  }
+  ...
+}
+...
+&lt;/code&gt;
+</code></pre></div></div>
+
+<h2 id="complex-types-complex-keys-and-compound-keys-in-the-restli-20-protocol">Complex types, complex keys, and compound keys in the Rest.li 2.0 Protocol</h2>
+
+<p>A complex type is simply a map.</p>
+
+<p>A complex key is a key made up of two parts, <code class="highlighter-rouge">key</code> and <code class="highlighter-rouge">$params</code>, each
+of which is a complex type.</p>
+
+<p>A compound key is a complex type with the restriction that all the
+values are primitives. A compound key cannot have maps or arrays as
+values for the keys making up its map.</p>
+
+<p>Complex and compound keys have a similar structure: they are essentially
+a collection of key-value pairs. Because of this similarity in structure
+we decided to represent both using the Rest.li 2.0 object notation. Any
+list present as a value in the complex key uses the Rest.li 2.0 list
+notation. Details can be found in the <a href="https://github.com/linkedin/rest.li/wiki/Rest.li-Protocol#association-keys">Association
+keys</a>
+and <a href="https://github.com/linkedin/rest.li/wiki/Rest.li-Protocol#complex-types-as-keys-in-protocol-20">complex
+keys</a>
+sections.</p>
+
+<h2 id="collection-resources">Collection Resources</h2>
+
+<p>The URI templates below assume variables with types as follows:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+collection : simple string or "complex key"
+entity_id : simple string
+ids : list
+finder : simple string
+params : associative array
+&lt;/code&gt;
+</code></pre></div></div>
+
+<h3 id="collection-uris">Collection URIs</h3>
+
+<table>
+<thead>
+<tr class="header">
+<th>Resource</th>
+<th>URI Template</th>
+<th>Example</th>
+<th>Method</th>
+<th>Semantics</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Collection</td>
+<td>/{collection}</td>
+<td>/statuses</td>
+<td>POST</td>
+<td>CREATE - creates an entity in the collection</td>
+</tr>
+<tr class="even">
+<td>Collection</td>
+<td>/{collection}/{entity_id}</td>
+<td>/statuses/1</td>
+<td>GET</td>
+<td>READ - returns the referenced entity</td>
+</tr>
+<tr class="odd">
+<td>Collection</td>
+<td>/{collection}/{entity_id}</td>
+<td>/statuses/1</td>
+<td>PUT</td>
+<td>UPDATE - updates the referenced entity</td>
+</tr>
+<tr class="even">
+<td>Collection</td>
+<td>/{collection}/{entity_id}</td>
+<td>/statuses/1</td>
+<td>POST</td>
+<td>PARTIAL UPDATE - partially updates the referenced entity</td>
+</tr>
+<tr class="odd">
+<td>Collection</td>
+<td>/{collection}/{entity_id}</td>
+<td>/statuses/1</td>
+<td>DELETE</td>
+<td>DELETE - deletes the referenced entity</td>
+</tr>
+<tr class="even">
+<td>Collection</td>
+<td>/{collection}?{ids}</td>
+<td>Protocol 1.0 - /statuses?ids=1&amp;ids=2&amp;ids=3<br />
+Protocol 2.0 - /statuses?ids=List(1,2,3)</td>
+<td>GET</td>
+<td>BATCH_GET - returns a map containing the referenced entities</td>
+</tr>
+<tr class="odd">
+<td>Collection</td>
+<td>/{collection}</td>
+<td>/statuses</td>
+<td>GET</td>
+<td>GET_ALL - returns all entities in the collection</td>
+</tr>
+<tr class="even">
+<td>Collection</td>
+<td>/{collection}?q={finder}</td>
+<td>/statuses?q=search</td>
+<td>GET</td>
+<td>FINDER - returns a list containing entities satisfying the query</td>
+</tr>
+<tr class="odd">
+<td>Collection</td>
+<td>/{collection}?q={finder}{&amp;params*}</td>
+<td>/statuses?q=search&amp;keywords=linkedin</td>
+<td>GET</td>
+<td>FINDER - returns a list containing entities satisfying the query</td>
+</tr>
+<tr class="even">
+<td>Collection</td>
+<td>/{collection}?action={action}</td>
+<td>/statuses?action=purge</td>
+<td>POST</td>
+<td>ACTION - some operation, rest.li does not specify any standard behavior</td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="simple-resources">Simple Resources</h2>
+
+<p>The URI templates below assume variables with types as follows:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+simple : simple string
+params : associative array
+&lt;/code&gt;
+</code></pre></div></div>
+
+<h3 id="simple-uris">Simple URIs</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Resource</th>
+      <th>URI Template</th>
+      <th>Example</th>
+      <th>Method</th>
+      <th>Semantics</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Simple</td>
+      <td>/{simple}</td>
+      <td>/selectedItem</td>
+      <td>GET</td>
+      <td>READ - returns the entity</td>
+    </tr>
+    <tr>
+      <td>Simple</td>
+      <td>/{simple}</td>
+      <td>/selectedItem</td>
+      <td>PUT</td>
+      <td>UPDATE - updates the entity</td>
+    </tr>
+    <tr>
+      <td>Simple</td>
+      <td>/{simple}</td>
+      <td>/selectedItem</td>
+      <td>DELETE</td>
+      <td>DELETE - deletes the entity</td>
+    </tr>
+    <tr>
+      <td>Simple</td>
+      <td>/{simple}?action={action}</td>
+      <td>/selectedItem?action=investigate</td>
+      <td>POST</td>
+      <td>ACTION - some operation, rest.li does not specify any standard behavior</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="association-resources">Association Resources</h2>
+
+<p>Associations contain entities referenced by compound keys, referred to
+here as assockeys</p>
+
+<p>The URI templates below assume variables with types as follows:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+firstkey : associative array containing a single element
+keys : associative array
+association : simple string
+assockey : simple string conforming to the assockey syntax described below
+assockeys : list of strings conforming to the assockey syntax
+finder : simple string
+params : associative array
+&lt;/code&gt;
+</code></pre></div></div>
+
+<h3 id="association-keys">Association Keys</h3>
+
+<p>Association keys are composed of one or more named assocKey parts.</p>
+
+<p>In protocol 1.0 the key is represented over the wire in the form:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;{firstkey}{&amp;keys*}
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p>In protocol 2.0 the key is represented using the protocol 2.0 object
+notation, with each assocKey being a key in the map.</p>
+
+<p>For example, a two part key identifying an edge in a following graph in
+protocol 1.0 might be:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;followerID=1&amp;followeeID=3
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p>In protocol 2.0 the key would be</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;(followerID:1,followeeID:3)
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p>Here’s an example association GET request/response. In protocol 1.0:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;GET /associations/src=KEY1&amp;desk=KEY2
+{
+    "message": "Hi!",
+    "id": "1"
+}
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p>In protocol 2.0:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;GET /associations/(src:KEY1,desk:KEY2)
+{
+    "message": "Hi!",
+    "id": "1"
+}
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p>In finders, only some keys from the full association key might be
+required. For example, in protocol 1.0:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;followerID=1
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p>In protocol 2.0:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;(followerID:1)
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p>All string values for association keys are url encoded. E.g. for the
+association key composed of code=“1=2b” and widget=“xyz widget”, a GET
+request in protocol 1.0 using the key would be:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;GET /resourceName/code=1%32b&amp;widget=xyz%20widget
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p>In protocol 2.0 it would be:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;GET /resourceName/(code:1%32b,widget:xyz%20widget)
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p>When association keys are used in a batch operation, each key is url
+encoded. For protocol 1.0 the form is:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+ids=urlencoded(associationKey1)&amp;ids=urlencoded(associationKey2)...
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p>For protocol 2.0 is ids use the protocol 2.0 array notation.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+ids=List((encoded(associationKey1)),(encoded(associationKey2)),...)
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p>For example, in protocol 1.0 a batch get for the keys:
+<code>src=KEY1\&amp;dest=KEY3</code> and <code>src=KEY1\&amp;dest=KEY2</code>,
+would
+    be:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;GET /associations?ids=src%3DKEY1%26dest%3DKEY2&amp;ids=src%3DKEY1%26dest%3DKEY3
+
+{
+  "errors": {},
+    "results": {
+        "dest=KEY3&amp;src=KEY1": {
+            "message": "Hi!",
+            "id": "1"
+        },
+        "dest=KEY2&amp;src=KEY1": {
+            "message": "Hello!",
+            "id": "2"
+        }
+    }
+}
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p>In protocol 2.0 a batch get for the keys:
+<code>(src:KEY1,dest:KEY3)</code> and <code>(src:KEY1,dest:KEY2)</code>,
+would
+    be:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;GET /associations?ids=List((src:KEY1,dest:KEY3),(src:KEY1,dest:KEY2))
+
+{
+  "errors": {},
+    "results": {
+        "(dest:KEY3,src:KEY1)": {
+            "message": "Hi!",
+            "id": "1"
+        },
+        "(dest:KEY2,src:KEY1)": {
+            "message": "Hello!",
+            "id": "2"
+        }
+    }
+}
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p>Here’s the basic form of a batch update request using association keys.
+In protocol 1.0:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+PUT /resourceName?ids=urlencoded(key1=urlencoded(value)&amp;key2=urlencoded(value)&amp;...)&amp;ids=...
+
+{
+  "entities": {
+    "key=urlencoded(value)&amp;key2...": { ... },
+    ...
+  }
+}
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p>Note that in the URL the ids are url encoded AND any strings values for
+the assocKey parts are double url encoded.</p>
+
+<p>In protocol 2.0 the protocol 2.0 array representation is used for the
+ids.</p>
+
+<p>For example, for a batch update for the association keys: (code=“1=2b”,
+name=“xyz widget”) and (code=“567”, name=“rachet”)</p>
+
+<p>The batch update request in protocol 1.0 would be:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+PUT /widgets?ids=code%3D1%2532b%26widget%3Dxyz%2520widget&amp;ids=code%3D567%26widget%3Drachet
+
+{
+  "entities": {
+     "code=1%32b&amp;name=xyz%20widget": {...},
+     "code=567&amp;name=rachet": {...}
+  }
+}
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p>In protocol 2.0 the request would be:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+PUT /widgets?ids=List((code:1%202b,name:xyz%20widget),(code:567,name:rachet))
+
+{
+  "entities": {
+     "(code:1=2b,name:xyz widget)": {...},
+     "(code:567,name:rachet)": {...}
+  }
+}
+&lt;/code&gt;
+</code></pre></div></div>
+
+<h3 id="association-uris">Association URIs</h3>
+
+<table>
+<thead>
+<tr class="header">
+<th>Resource</th>
+<th>URI Template</th>
+<th>Example</th>
+<th>Method</th>
+<th>Semantics</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Association</td>
+<td>/{association}/{+assockey}</td>
+<td>Protocol 1.0 - /follows/followerID=1&amp;followeeID=1<br />
+Protocol 2.0 - /follows/(followerID:1,followeeID:1)</td>
+<td>GET</td>
+<td>READ - returns the referenced association entity</td>
+</tr>
+<tr class="even">
+<td>Association</td>
+<td>/{association}/{+assockey}</td>
+<td>Protocol 1.0 - /follows/followerID=1&amp;followeeID=1<br />
+Protocol 2.0 - /follows/(followerID:1,followeeID:1)</td>
+<td>PUT</td>
+<td>UPDATE - updates the referenced association entity</td>
+</tr>
+<tr class="odd">
+<td>Association</td>
+<td>/{association}/{+assockey}</td>
+<td>Protocol 1.0 - /follows/followerID=1&amp;followeeID=1<br />
+Protocol 2.0 - /follows/(followerID:1,followeeID:1)</td>
+<td>DELETE</td>
+<td>DELETE - deletes the referenced association entity</td>
+</tr>
+<tr class="even">
+<td>Association</td>
+<td>/{association}/{+assockeys*}</td>
+<td>Protocol 1.0 - /follows/?ids=followerID%3D1%26followeeID%3D1&amp; ids=followerID%3D1%26followeeID%3D3&amp; ids=followerID%3D1%26followeeID%3D2 \\<br />
+Note: followerID%3D1%26followeeID%3D1 unescapes to followerID=1&amp;followeeID=1<br />
+Protocol 2.0 - /follows/?ids=List((followerID:1,followeeID:1),(followerID:1,followeeID:2))</td>
+<td>GET</td>
+<td>BATCH_GET - returns a map containing the referenced association entities</td>
+</tr>
+<tr class="odd">
+<td>Association</td>
+<td>/{association}</td>
+<td>/follows</td>
+<td>GET</td>
+<td>GET_ALL - returns all the association entities</td>
+</tr>
+<tr class="even">
+<td>Association</td>
+<td>/{association}?q={finder}</td>
+<td>/follows?q=search</td>
+<td>GET</td>
+<td>FINDER - returns a list containing entities satisfying the query</td>
+</tr>
+<tr class="odd">
+<td>Association</td>
+<td>/{association}?q={finder}{&amp;params*}</td>
+<td>/follows?q=followers&amp;userID=1</td>
+<td>GET</td>
+<td>FINDER - returns a list containing entities satisfying the query</td>
+</tr>
+<tr class="even">
+<td>Association</td>
+<td>/{association}/{+assockey}</td>
+<td>Protocol 1.0 - /follows/followerID=1?q=other<br />
+Protocol 2.0 - /follows/(followerID:1)?q=other</td>
+<td>GET</td>
+<td>FINDER - returns a list containing the entities satisfying the query</td>
+</tr>
+<tr class="odd">
+<td>Association</td>
+<td>/{association}/{+assockey}?q={finder}{&amp;params*}</td>
+<td>Protocol 1.0 - /follows/followerID=1?q=other&amp;someParam=value<br />
+Protocol 2.0 - /follows/(followerID:1)?q=other&amp;someParam=value</td>
+<td>GET</td>
+<td>FINDER - returns a list containing the entities satisfying the query</td>
+</tr>
+<tr class="even">
+<td>Association</td>
+<td>/{association}?action={action}</td>
+<td>/follows?action=purge</td>
+<td>POST</td>
+<td>ACTION - some operation, Rest.li does not specify any standard behavior</td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="finders">Finders</h2>
+
+<p>The URI templates below assume variables with types as follows:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+finder : simple string identifying a finder
+&lt;/code&gt;
+</code></pre></div></div>
+
+<h3 id="finder-uris">Finder URIs</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Resource</th>
+      <th>URI Template</th>
+      <th>Example</th>
+      <th>Method</th>
+      <th>Semantics</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Collection, Association, ActionSet</td>
+      <td>{resource}?q={finder}</td>
+      <td>/accounts?q=keywordSearch</td>
+      <td>GET</td>
+      <td>invokes the specified finder</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="actions">Actions</h2>
+
+<p>The URI templates below assume variables with types as follows:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+action : simple string
+&lt;/code&gt;
+</code></pre></div></div>
+
+<h3 id="action-uris">Action URIs</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Resource</th>
+      <th>URI Template</th>
+      <th>Example</th>
+      <th>Method</th>
+      <th>Semantics</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Collection, Simple, Association, ActionSet</td>
+      <td>{resource}?action={action}</td>
+      <td>/accounts?action=register</td>
+      <td>POST</td>
+      <td>invokes the specified action</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="uri-modifiers">URI Modifiers</h2>
+
+<p>The URI templates below assume variables with types as follows:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+finder_uri : simple string ...
+base_uri : simple string generated via one of the uri templates above
+start : simple string
+count : simple string
+fields : list
+&lt;/code&gt;
+</code></pre></div></div>
+
+<h3 id="uris">URIs</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Feature</th>
+      <th>Base URI Type</th>
+      <th>URI Template</th>
+      <th>Example</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Paging</td>
+      <td>Finder</td>
+      <td>{+finder_uri}{\&amp;start,count}</td>
+      <td>/statuses?q=search\&amp;start=0\&amp;count=10</td>
+    </tr>
+    <tr>
+      <td>Projection</td>
+      <td>Get, BatchGet, Finder</td>
+      <td>{+base_uri}{\&amp;fields}</td>
+      <td>Protocol 1 - /groups?q=emailDomain\&amp;fields=locale,state Protocol 2 - /groups?q=emailDomain\&amp;fields=List(locale,state)</td>
+    </tr>
+    <tr>
+      <td>Schema Return</td>
+      <td>Any</td>
+      <td>{+base_uri}\&amp;metaDesc</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>Links</td>
+      <td>Any</td>
+      <td>{+base_uri}\&amp;metaLinks</td>
+      <td> </td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="response-status-codes">Response Status Codes</h2>
+
+<p>Status codes should be interpreted according to the <a href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html">HTTP
+specification</a></p>
+
+<p>Common status codes used in Rest.li:</p>
+
+<ul>
+  <li>200 OK</li>
+  <li>201 Created</li>
+  <li>204 No Content</li>
+  <li>400 Bad Request</li>
+  <li>404 Not Found</li>
+  <li>405 Method Not Allowed</li>
+  <li>500 Internal Server
+Error</li>
+</ul>
+
+<h2 id="message-headers">Message Headers</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Message Type</th>
+      <th>Header</th>
+      <th>Semantics</th>
+      <th>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Response</td>
+      <td>X-LinkedIn-Error-Response</td>
+      <td>indicates whether the message body contains a JSON-serialized ErrorResponse object</td>
+      <td>The header value is set to “true” when an error response is returned. The header is omitted otherwise. <strong>Only used in protocol 1.0</strong></td>
+    </tr>
+    <tr>
+      <td>Response</td>
+      <td>X-RestLi-Error-Response</td>
+      <td>indicates whether the message body contains a JSON-serialized ErrorResponse object</td>
+      <td>The header value is set to “true” when an error response is returned. The header is omitted otherwise. <strong>Only used in protocol 2.0</strong></td>
+    </tr>
+    <tr>
+      <td>Response</td>
+      <td>X-LinkedIn-Id</td>
+      <td>indicates the id assigned by the server to a new entity created in a collection.</td>
+      <td>set on response messages resulting from a successful POST request to create an entity. The header value is set to the entity id, represented as a string. <strong>Only used in protocol 1.0</strong></td>
+    </tr>
+    <tr>
+      <td>Response</td>
+      <td>X-RestLi-Id</td>
+      <td>indicates the id assigned by the server to a new entity created in a collection.</td>
+      <td>set on response messages resulting from a successful POST request to create an entity. The header value is set to the entity id, represented as a string. <strong>Only used in protocol 2.0</strong></td>
+    </tr>
+    <tr>
+      <td>Response</td>
+      <td>Location</td>
+      <td>indicates the URI of a new entity created in a collection.</td>
+      <td>Location is set on response messages resulting from a successful POST request to create an entity. The header value is set to a URI referencing the newly created entity</td>
+    </tr>
+    <tr>
+      <td>Response</td>
+      <td>Content-Type</td>
+      <td> </td>
+      <td>The Content-Type is always set to “application/json”</td>
+    </tr>
+    <tr>
+      <td>Request</td>
+      <td>X-RestLi-Method</td>
+      <td>Set whenever content is POSTed. Can be “GET_ALL”, “GET”, “BATCH_GET”, “CREATE”, “BATCH_CREATE”, “UPDATE”, “PARTIAL_UPDATE”, “DELETE”, “BATCH_DELETE”, “ACTION”, “FINDER”, “BATCH_PARTIAL_UPDATE”</td>
+      <td>Is only required for “BATCH_CREATE”, “BATCH_PARTIAL_UPDATE”, all other method types can be inferred by a RestLi server from the URI string and HTTP Method.</td>
+    </tr>
+    <tr>
+      <td>Request and Response</td>
+      <td>X-RestLi-Protocol-Version</td>
+      <td>Version of the Rest.li protocol used to generate the request or response. Example value: “2.0.0”</td>
+      <td>The version that we get back in the response is dictated by the version sent in the request. They will always be the same.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="request-message-body">Request Message Body</h2>
+
+<h3 id="single-entity">Single Entity</h3>
+
+<p>Single entities are sent as the JSON serialized DataMap representing
+that entity. The <code class="highlighter-rouge">"Content-Type: application/json"</code> header may be
+included for PUT and POST requests, if omitted, the server will assume
+the request is content type is <code class="highlighter-rouge">"application/json"</code>.</p>
+
+<p>Create:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+POST /widgets
+Content-Type: application/json
+
+{"widgetName":"Lever"}
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p>Read:</p>
+
+<p>for collection and association resources:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+GET /widgets/1
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p>for simple resources:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+GET /currentWidget
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p>Update:</p>
+
+<p>for collection and association resources:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+PUT /widgets/1
+Content-Type: application/json
+
+{"widgetName":"Lever"}
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p>for simple resources:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+PUT /currentWidget
+Content-Type: application/json
+
+{"widgetName":"Lever"}
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p>Delete:</p>
+
+<p>for collection and association resources:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+DELETE /widgets/1
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p>for simple resources:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+DELETE /currentWidget
+&lt;/code&gt;
+</code></pre></div></div>
+
+<h3 id="batch-create">Batch Create</h3>
+
+<p>A DataMap with field</p>
+
+<ul>
+  <li>“elements”: A JSON array of the resources to batch create/update and
+the objects are the json serialized values of each resource to
+create.</li>
+</ul>
+
+<p>E.g.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+POST /widgets HTTP/1.1
+Content-Type: application/json
+X-RestLi-Method: BATCH_CREATE
+
+{
+  "elements": [
+    {"widgetName":"Ratchet"},
+    {"widgetName":"Cog"},
+    {"widgetName":"!@&amp;%@$#"}
+  ]
+}
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p>Response:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+{
+  "elements": [
+    {
+      "status": 201,
+      "id": "100"
+    },
+    {
+      "status": 201,
+      "id": "101"
+    },
+    {
+      "status": 406,
+      "error": {
+        "status": 406,
+        "stackTrace": "...",
+        "errorDetails": { ... },
+        "serviceErrorCode": 999, 
+        "exceptionClass": "...", 
+        "message": "..."
+      }
+  ]
+}
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p>Responses are associated to the request by array index. E.g. “Rachet”
+was assigned id 100, “Cog” was assigned id 101 and “!<code class="highlighter-rouge">&amp;%</code>$#” resulted
+on a 406 response code and was not assigned an id.</p>
+
+<p>Note: Batch create requests must include the HTTP Header:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;X-RestLi-Method: BATCH_CREATE&lt;/code&gt;
+</code></pre></div></div>
+
+<h3 id="batch-update">Batch Update</h3>
+
+<p>A DataMap with field</p>
+
+<ul>
+  <li>“entities”: A JSON serialized map where the keys are keys of the
+resources to update and the objects are the json serialized
+replacement values of each resource to update.</li>
+</ul>
+
+<p>E.g.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+PUT /widgets?ids=1&amp;ids=2 HTTP/1.1
+Content-Type: application/json
+X-RestLi-Method: BATCH_UPDATE
+
+{
+  "entities": {
+    "1": {"widgetName":"Trebuchet"},
+    "2": {"widgetName":"Gear"}
+   }
+}
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p>Response:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+{
+  "errors": {},
+  "results": {
+    "1": {
+      "status": 204
+    },
+    "2": {
+      "status": 204
+    }
+  ]
+}
+&lt;/code&gt;
+</code></pre></div></div>
+
+<h3 id="partial-update">Partial Update</h3>
+
+<p>Partial update is a set of operations on data object, which is also an
+instance of DataMap. Operations are expressed using fields with reserved
+word names. Every operation relates to the object that contains it,
+i.e., it’s parent. The following is an example of setting the <code class="highlighter-rouge">zipCode</code>
+of the <code class="highlighter-rouge">businessAddress</code>, setting <code class="highlighter-rouge">name</code> and <code class="highlighter-rouge">homeAddress</code>, and deleting
+<code class="highlighter-rouge">note</code> and <code class="highlighter-rouge">birthday</code> of a record.</p>
+
+<p>E.g.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+POST /widgets/1 HTTP/1.1
+Content-Type: application/json
+
+{
+  "patch": {
+    "businessAddress": {
+      "$set": {
+        "zipCode": "94086"
+      }
+    },
+    "$set": {
+      "name": "John",
+      "homeAddress": {
+        "street": "10th",
+        "city": "Sunnyvale"
+      }
+    },
+    "$delete": ["note", "birthday"]
+  }
+}
+&lt;/code&gt;
+</code></pre></div></div>
+
+<h4 id="patch">Patch</h4>
+
+<p>A patch object describes the operations needed to change one map to
+another, which are the underlying data structure for record, union and
+map. A patch object is represented by a map itself. It has three types
+keys.</p>
+
+<ul>
+  <li>“$set” indicates a set operation. Its value is a map, indicating the
+keys and values to be set. This is usually used to set fields in a
+record.</li>
+  <li>“$delete” indicates a delete operation. Its value is a string array,
+indicating the map entries to be deleted. This is usually used to
+delete fields in a record.</li>
+  <li>Other key indicates a patch operation. It must be an existing key,
+whose value must be a map, of the map to be changed. Its value is
+another patch object. This is usually used to update a field in a
+nested record.</li>
+</ul>
+
+<h3 id="batch-partial-update">Batch Partial Update</h3>
+
+<p>See Partial Update and Batch Update above for details, here the two are
+combined.</p>
+
+<p>E.g.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+POST /widgets?ids=1&amp;ids=2 HTTP/1.1
+Content-Type: application/json
+X-RestLi-Method: BATCH_PARTIAL_UPDATE
+
+{
+  "entities": {
+    "1": {"patch": { "$set": { "name":"Sam"}}},
+    "2": {"patch": { "$delete": ["name"]}}
+   }
+}
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p><a id="ActionRequest"></a></p>
+
+<h3 id="action">Action</h3>
+
+<p>Action params are provided in the request body which must contain a data
+map keyed by param names. E.g.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+POST /widgets?action=purge HTTP/1.1
+Content-Type: application/json
+{
+  "reason": "spam",
+  "purgedByAdminId": 1
+}
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p>The <code class="highlighter-rouge">X-RestLi-Method: ACTION</code> may optionally be included, but is not
+required because rest.li is able to determine the request is an action
+based on the “action” query param key.</p>
+
+<h2 id="response-message-body">Response Message Body</h2>
+
+<h3 id="single-entity-1">Single Entity</h3>
+
+<p>Single entities are returned as the JSON serialized DataMap representing
+that entity</p>
+
+<h3 id="list-of-entities">List of Entities</h3>
+
+<p>Lists of entities are returned in a com.linkedin.rest.CollectionResponse
+wrapper. They are returned by finders and getAll.</p>
+
+<p>CollectionResponse fields:</p>
+
+<ul>
+  <li>“elements” : JSON serialized list of entity types</li>
+  <li>(optional) “paging” : JSON serialized CollectionMetadata object</li>
+</ul>
+
+<p>E.g.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+{
+  "elements: [
+    { "id": 1, "message": "Good morning!", "tone": "FRIENDLY" }
+    // ...
+  ],
+  "metadata" { // only returned by finders that define a metadata schema as part of the interface
+    // ...
+  },
+  "paging": {
+    "count": 10,
+    "links": [
+      "href": "/greetings?count=10&amp;start=10&amp;q=search",
+      "rel": "next",
+      "type": "application/json"
+    ],
+    "start": 0
+  }
+}
+&lt;/code&gt;
+</code></pre></div></div>
+
+<h3 id="map-of-entities">Map of Entities</h3>
+
+<p>Maps of entities are returned in a
+<code>com.linkedin.restli.common.BatchResponse</code> or
+<code>com.linkedin.restli.client.response.BatchKVResponse</code>
+wrapper.</p>
+
+<p>BatchResponse fields:</p>
+
+<ul>
+  <li>“results” : JSON object containing name/value pairs
+    <ul>
+      <li>name is the string value of each map key. This is serialized
+according to the protocol version.</li>
+      <li>value is the JSON serialized entity for each map value. This is
+serialized according to the protocol version.</li>
+    </ul>
+  </li>
+  <li>“errors”: another map mapping keys which failed to generate a 2xx
+response to the reason, which is a <code>ErrorResponse</code></li>
+</ul>
+
+<p>Protocol 1 example -</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+GET /fortunes?ids=1&amp;ids=2&amp;ids=unacceptableKey&amp;ids=faultyKey
+{
+  "errors": {
+     "unacceptableKey": {
+       "status": 416,
+       "message": "Not Acceptable"
+     },
+     "faultyKey": {
+       "status": 500,
+       "exceptionClass": "org.example.SomeServerException",
+       "stacktrace": "SomeServerException at org.example.SomeClass.someMethod(SomeClass.java:1)\n..."
+     }
+   },
+  "results": {
+    "1": {...},
+    "2": {...}
+    }
+  }
+}
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p>Protocol 2 example -</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+GET /fortunes?ids=List(1,2,unacceptableKey,faultyKey)
+{
+  "errors": {
+     "unacceptableKey": {
+       "status": 416,
+       "message": "Not Acceptable"
+     },
+     "faultyKey": {
+       "status": 500,
+       "exceptionClass": "org.example.SomeServerException",
+       "stacktrace": "SomeServerException at org.example.SomeClass.someMethod(SomeClass.java:1)\n..."
+     }
+   },
+  "results": {
+    "1": {...},
+    "2": {...}
+    }
+  }
+}
+&lt;/code&gt;
+</code></pre></div></div>
+
+<h3 id="collection-metadata">Collection Metadata</h3>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+{"type":"record",
+ "name":"CollectionMetadata",
+ "namespace":"com.linkedin.common.rest",
+ "doc":"Metadata and pagination links for this collection",
+ "fields":[
+ {
+   "name":"start",
+   "type":"int",
+   "doc":"The start index of this collection"
+ },{
+   "name":"count",
+   "type":"int",
+   "doc":"The number of elements in this collection segment"
+ },{
+   "name":"total",
+   "type":"int",
+   "doc":"The total number of elements in the entire collection (not just this segment)",
+   "default":0
+ },{
+   "name":"links",
+   "type":{
+     "type":"array",
+     "items":{
+       "type":"record",
+       "name":"Link",
+       "doc":"A atom:link-inspired link",
+       "fields":[
+       {
+         "name":"rel",
+         "type":"string",
+         "doc":"The link relation e.g. 'self' or 'next'"
+       },{
+         "name":"href",
+         "type":"string",
+         "doc":"The link URI"
+       },{
+         "name":"type",
+         "type":"string",
+         "doc":"The type (media type) of the resource"
+       }]
+     }
+   },
+   "doc":"Previous and next links for this collection"
+}]}
+&lt;/code&gt;
+</code></pre></div></div>
+
+<h3 id="error-response">Error Response</h3>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+{
+  "type":"record",
+  "name":"ErrorResponse",
+  "namespace":"com.linkedin.common.rest",
+  "doc":"A generic ErrorResponse",
+  "fields":[
+  {
+    "name":"status",
+    "type":"int",
+    "doc":"The HTTP status code"
+  },{
+    "name":"serviceErrorCode",
+    "type":"int",
+    "doc":"An service-specific error code (documented in prose)"
+  },{
+    "name":"message",
+    "type":"string",
+    "doc":"A human-readable explanation of the error"
+  },{
+    "name":"exceptionClass",
+    "type":"string",
+    "doc":"The FQCN of the exception thrown by the server (included the case of a server fault)"
+  },{
+    "name":"stackTrace",
+    "type":"string",
+    "doc":"The full (??) stack trace (included the case of a server fault)"
+  }]
+}
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p><a id="ActionResponse"></a></p>
+
+<h3 id="action-response">Action Response</h3>
+
+<p>Actions may optionally return a response body. If they do, it must
+contain a data map with a single “value” key, where the value of the key
+is either a primitive type, e.g.:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+{
+  "value": 1
+}
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p>or complex data type, e.g.:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+{
+  "value": {
+    "firstName": "John",
+    "lastName": "Smith"
+  }
+}
+&lt;/code&gt;
+</code></pre></div></div>
+
+<h2 id="complex-types">Complex Types</h2>
+
+<h3 id="complex-types-as-keys-in-protocol-10">Complex types as keys in protocol 1.0</h3>
+
+<p>The serialized form of a complex key uses path keys to specify the
+values of data elements in a complex data type. For example, given the
+complex data:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+{
+  "key": {
+    "x": [
+      "a1",
+      "a2"
+    ],
+    "y": 123,
+    "key.with.dots": "val"
+  }
+}
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p>Its serialized form is:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+// Complex key as a serialized string:
+key.x[0]=a1&amp;key.x[1]=a2&amp;key.y=123&amp;key~2Ewith~2Edots=val
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p>If this serialized form is put into a URI (as it usually is), the ‘[’
+must be escaped as ‘%5B’ and the ‘]’ must be escaped as ‘%5D’ (URIs
+require this), so you have the URI form:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+// Complex key as a serialized string, escaped for URI:
+key.x%5B0%5D=a1&amp;key.x%5B1%5D=a2&amp;key.y=123&amp;key~2Ewith~2Edots=val
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p>Where, in the values of the query params, the chars ‘.[]’ are “~
+encoded” to their ascii values. This encoding is the same as “%
+encoding” except that the escape char is ‘~’ and the only reserved
+chars are ‘.[]’.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+. -&gt; ~2E
+[ -&gt; ~5B
+] -&gt; ~5D
+~ -&gt; ~7E
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p>The <code class="highlighter-rouge">Params</code> of a <code class="highlighter-rouge">ComplexResourceKey</code> are always prefixed with
+“$params.” when represented in a URI, e.g.:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+$params.x=a1
+&lt;/code&gt;
+</code></pre></div></div>
+
+<h3 id="complex-types-as-keys-in-protocol-20">Complex types as keys in protocol 2.0</h3>
+
+<p>The serialized form of a complex key uses the <a href="https://github.com/linkedin/rest.li/wiki/Rest.li-Protocol#restli-protocol-20-object-representation">Rest.li 2.0 protocol
+object
+notation</a>
+. For example, given the complex data:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+{
+  "key": {
+    "x": [
+      "a1",
+      "a2"
+    ],
+    "y": 123,
+    "key.with.dots": "val"
+  }
+}
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p>Its serialized form is:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+// Complex key as a serialized string:
+(key:(x:List(a1,a2)),y:123,key.with.dots:val)
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p>The <code class="highlighter-rouge">Params</code> of a <code class="highlighter-rouge">ComplexResourceKey</code> are always prefixed with
+“$params.” when represented in a URI, e.g.:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+$params:(x:a1)
+&lt;/code&gt;
+</code></pre></div></div>
+
+<h3 id="complex-keys-in-batch-requests-in-protocol-10">Complex keys in batch requests in protocol 1.0</h3>
+
+<p>If used in batch requests, each key in the batch is represented as a
+element in an array, the complex data representation is:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+[
+  { &lt;complekey1&gt; }, { &lt;complexkey2&gt; }
+]
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p>And it’s serialized representation is just the list flattened using the
+same rules as with any complex key, and with the same “~ encoding”
+applied.</p>
+
+<p>For example,</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+[
+  { "keypart1":"v1", "keypart2":"v2" }, { "keypart1":"v3", "keypart2":"v4" }
+]
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p>It’s serialized form is:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+// Complex key as a serialized string:
+ids[0].keypart1=v1&amp;ids[0].keypart2=v2&amp;ids[1].keypart1=v3&amp;ids[1].keypart2=v4
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p>If this serialized form is put into a URI (as it usually is), the ‘[’
+must be escaped as ‘%5B’ and the ‘]’ must be escaped as ‘%5D’ (URIs
+require this), so you have the URI form:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+// Complex key as a serialized string, escaped for URI:
+ids%5B0%5D.keypart1=v1&amp;ids%5B0%5D.keypart2=v2&amp;ids%5B1%5D.keypart1=v3&amp;ids%5B1%5D.keypart2=v4
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p>If $params are in a batch complex key key, they are also prefixed by
+their key’s position in the ids array, e.g.
+“ids[0].$params.parmkeypart1=v5”</p>
+
+<p>When complex keys are used in batch requests, they are often included
+both in the URI and in the json body.</p>
+
+<p>For example, a batch update request has the ids in the URI as well as
+the “entities” part of the body:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+PUT /widgets?ids%5B0%5D.keypart1=v1&amp;ids%5B0%5D.keypart2=v2&amp;ids%5B1%5D.keypart1=v3&amp;ids%5B1%5D.keypart2=v4
+
+{
+  "entities": {
+    "keypart1=v1&amp;keypart2=v2": { &lt;content to put for v1,v2&gt; }
+    "keypart1=v3&amp;keypart2=v4": { &lt;content to put for v3,v4&gt; }
+  }
+}
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p>Note how the paths for the keys in the URI are prefixed by an ids array
+position, but the paths for the keys in the JSON body are not.</p>
+
+<h3 id="complex-keys-in-batch-requests-in-protocol-20">Complex keys in batch requests in protocol 2.0</h3>
+
+<p>If used in batch requests, each key in the batch is represented as an
+element in the <code>ids</code> array using the <a href="https://github.com/linkedin/rest.li/wiki/Rest.li-Protocol#restli-20-protocol-array-notation">protocol 2.0 array
+notation</a>
+.</p>
+
+<p>For example,</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+[
+  { "keypart1":"v1", "keypart2":"v2" }, { "keypart1":"v3", "keypart2":"v4" }
+]
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p>It’s serialized form is:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+// Complex key as a serialized string:
+ids=List((keypart1:v1,keypart2:v2),(keypart1:v3,keypart2:v4))
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p>If <code>$params</code> are in a batch complex key key, they included in
+the same object as their id portion. e.g.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+ids=List(($params:(parmkeypart1:v5),keypart1:v1,keypart2:v2),($params:(parmkeypart1:v55),keypart1:v11,keypart2:v22))
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p>When complex keys are used in batch requests, they are often included
+both in the URI and in the JSON body.</p>
+
+<p>For example, a batch update request has the ids in the URI as well as
+the “entities” part of the body:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+PUT /widgets?ids=List((keypart1:v1,keypart2:v2),(keypart1:v3,keypart2:v4))
+
+{
+  "entities": {
+    "(keypart1:v1,keypart2:v2)": { &lt;content to put for v1,v2&gt; }
+    "(keypart1:v3,keypart2:v4)": { &lt;content to put for v3,v4&gt; }
+  }
+}
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p>As long as the <a href="https://github.com/linkedin/rest.li/wiki/Rest.li-Protocol#restli-20-protocol-array-notation">protocol 2.0 array
+notation</a>
+is being adhered to no addional escaping is required for complex keys in
+a batch request.</p>
+
+<h3 id="query-parameters-as-complex-types-in-protocol-10">Query parameters as complex types in protocol 1.0</h3>
+
+<p>Complex types work the same for query params as they do for keys. See
+the above sections for details. E.g. for a complex type:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+{
+  "a": 1,
+  "b": 2
+}
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p>In protocol 1.0 a query param named “param1” of this type would be:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+...?param1.a=1&amp;param1.b=2
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p>In protocol 2.0 a query param named “param1” of this type would be:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+...?param1=(a:1,b:2)
+&lt;/code&gt;
+</code></pre></div></div>
+
+<h2 id="empty-list-parameters">Empty List Parameters</h2>
+
+<p>Suppose you have a finder called <code>search</code> with a parameter
+called <code>filters</code> which is a list of some type.</p>
+
+<p>In protocol 1, if a client attempted to send an empty list the URL would
+look as follows -</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+/resource?q=search
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p>Note that the parameter is lost in this case, and on the server side it
+would be treated as a null or uninitialized field. This was a bug in
+protocol 1!</p>
+
+<p>We have fixed this in protocol 2. Here is how the URL looks in protocol
+2 when you send in an empty list -</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+/resource?q=search&amp;filters=List()
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p>In other words, <code>List()</code> denotes an empty list in protocol 2.
+This applies to all cases in protocol 2 where lists are being used.</p>
+
+<h2 id="empty-map-parameters">Empty map parameters</h2>
+
+<p>Suppose you have a finder called <code>search</code> with a parameter
+called <code>preferences</code> which is a map of some type.</p>
+
+<p>In protocol 1, if a client attempted to send an empty map the URL would
+look as follows -</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+/resource?q=search
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p>Note that the parameter is lost in this case, and on the server side it
+would be treated as a null or uninitialized field. This was a bug in
+protocol 1!</p>
+
+<p>We have fixed this in protocol 2. Here is how the URL looks in protocol
+2 when you send in an empty map -</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+/resource?q=search&amp;preferences=()
+&lt;/code&gt;
+</code></pre></div></div>
+
+<p>In other words, <code>()</code> denotes an empty map in protocol 2. This
+applies to all cases in protocol 2 where maps are being used.</p>
+
+<h2 id="empty-string-parameters">Empty string parameters</h2>
+
+<p>Empty strings are a special case in Rest.li Protocol 2.0. They must be
+represented with two single quotes <code>’’</code>. This applies if the
+empty string is a value or a map key. In Rest.li 1.0, empty strings
+would simply appear as
+nothing.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Request Details</th>
+      <th>Protocol 1.0 URL</th>
+      <th>Protocol 2.0 URL</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>FINDER with string param; client attempts to send empty string</td>
+      <td>/resource?q=finderWithString\&amp;myStringParam=</td>
+      <td>/resource?q=finderWithString\&amp;myStringParam=’’</td>
+    </tr>
+    <tr>
+      <td>FINDER with list param; client attempts to send list containing a single empty string</td>
+      <td>/resource?q=finderWithList\&amp;myListParam[ 0 ]=</td>
+      <td>/resource?q=finderWithList\&amp;myListParam=List(’’)</td>
+    </tr>
+  </tbody>
+</table>
+
+                     </div>
+                   </div>
+</div>
+
+
+
+      <footer class="page-footer">
+    <div class="container">
+      <div class="row">
+        <div class="col s6">
+          <h5>Rest.li</h5>
+          <p class="text-lighten-4">Rest.li is an open source REST framework for building robust, scalable RESTful architectures using type-safe bindings and asynchronous, non-blocking IO. Rest.li fills a niche for applying RESTful principles at scale with an end-to-end developer workflow for building REST APIs, which promotes clean REST practices, uniform interface design and consistent data modeling.</p>
+        </div>
+        <div class="col s3 offset-s2">
+          <h5 class="black-text">Community</h5>
+          <ul>
+              <li>Github <a class="" href="https://github.com/linkedin/rest.li">Rest.li</a></li>
+              <li>Linkedin <a class="" href="http://www.linkedin.com/groups/Restli-4855943">Rest.li Group</a></li>
+            <li>Follow us on twitter: <a class="" href="https://twitter.com/rest_li"> @rest_li</a></li>
+            <li>Issue Tracking: <a class="" href="https://github.com/linkedin/rest.li/issues">github issue tracking</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="footer-copyright">
+        <div class="container">
+            <div>
+                <span style="text-align: right; float: left">
+                Copyright © 2018. Powered by <a target="_blank" href="http://jekyllrb.com/" class="black-text text-lighten-3">Jekyll</a>
+                </span> 
+            </div>
+        </div>  
+    </div>
+</footer>
+      
+    <!--  Scripts-->                                                                               
+<script src="/js/jquery.min.js"></script>
+<script src="/js/materialize.min.js"></script>
+<script src="/js/init.js"></script>
+
+  </body>
+
+</html>
