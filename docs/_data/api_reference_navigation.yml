@@ -4,6 +4,6 @@ toc:
       - page: Architecture
         url: /rest.li/reference/architecture
       - page: Server
-        url: /
+        url: /rest.li
       - page: Client
-        url: /
+        url: /rest.li
