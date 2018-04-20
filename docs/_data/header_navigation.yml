@@ -1,9 +1,9 @@
 items:
   - page: Getting Started
-    url: /get_started/quick_start
+    url: /rest.li/get_started/quick_start
   - page: User guide
-    url: /user_guide/server_architecture
+    url: /rest.li/user_guide/server_architecture
   - page: API reference
-    url: /reference/architecture
+    url: /rest.li/reference/architecture
   - page: Contribute
-    url: /contribute/howto
+    url: /rest.li/contribute/howto

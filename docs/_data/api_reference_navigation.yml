@@ -2,7 +2,7 @@ toc:
   - title: API reference
     subfolderitems:
       - page: Architecture
-        url: /reference/architecture
+        url: /rest.li/reference/architecture
       - page: Server
         url: /
       - page: Client

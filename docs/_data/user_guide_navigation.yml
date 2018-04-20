@@ -2,20 +2,20 @@ toc:
   - title: User Guide
     subfolderitems:
       - page: Rest.li Architecture
-        url: /user_guide/server_architecture
+        url: /rest.li/user_guide/server_architecture
       - page: Rest.li Server
-        url: /user_guide/restli_server
+        url: /rest.li/user_guide/restli_server
       - page: Rest.li Client Framework
-        url: /user_guide/restli_client
+        url: /rest.li/user_guide/restli_client
   - title: Spec
     subfolderitems:
       - page: Rest.li Protocol
-        url: /spec/protocol
+        url: /rest.li/spec/protocol
       - page: Restspec json format
-        url: /spec/restspec_format
+        url: /rest.li/spec/restspec_format
   - title: Modeling Resources
     subfolderitems:
       - page: Modeling Resources
-        url: /modeling/modeling
+        url: /rest.li/modeling/modeling
       - page: Snapshots and Resource Compatibility Checking
-        url: /modeling/compatibiltiy_check
+        url: /rest.li/modeling/compatibiltiy_check

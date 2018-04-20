@@ -2,15 +2,15 @@ toc:
   - title: Getting Started
     subfolderitems:
       - page: Quick-start guide
-        url: /get_started/quick_start
+        url: /rest.li/get_started/quick_start
       - page: Dynamic discovery
-        url: /start/d2_quick_start
+        url: /rest.li/start/d2_quick_start
       - page: Unstructured Data (BLOB)
-        url: /start/unstructured 
+        url: /rest.li/start/unstructured 
   - title: Installation
     subfolderitems:
       - page: Building Rest.li from Source
-        url: /setup/building
+        url: /rest.li/setup/building
       - page: Gradle build integration
-        url: /setup/gradle
+        url: /rest.li/setup/gradle
     
