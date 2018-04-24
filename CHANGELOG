@@ -2,6 +2,8 @@
 -------
 (RB=1288205)
 Remove Flow API
+(RB=1278581)
+Emits R2 channel pool events
 
 20.0.20
 -------

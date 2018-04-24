@@ -64,7 +64,7 @@ public class TestUnstructuredDataClient extends RestLiIntegrationTest
     throws Exception
   {
     super.init();
-    _clientFactory = new HttpClientFactory();
+    _clientFactory = new HttpClientFactory.Builder().build();
     _client = new TransportClientAdapter(_clientFactory.getClient(Collections.emptyMap()), true);
   }
 

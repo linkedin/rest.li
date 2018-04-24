@@ -53,7 +53,7 @@ public class TestMockHttpServerFactory
   private static final PhotosRequestBuilders PHOTOS_BUILDERS = new PhotosRequestBuilders();
   private static final AlbumsRequestBuilders ALBUMS_BUILDERS = new AlbumsRequestBuilders();
   private static final TransportClient TRANSPORT_CLIENT =
-      new HttpClientFactory().getClient(Collections.<String, Object>emptyMap());
+      new HttpClientFactory.Builder().build().getClient(Collections.<String, Object>emptyMap());
   private static final RestClient REST_CLIENT =
       new RestClient(new TransportClientAdapter(TRANSPORT_CLIENT), "http://localhost:" + PORT + "/");
 

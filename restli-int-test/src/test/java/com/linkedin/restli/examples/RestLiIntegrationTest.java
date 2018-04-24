@@ -129,7 +129,7 @@ public class RestLiIntegrationTest
 
   private void initClient(String uriPrefix)
   {
-    _clientFactory = new HttpClientFactory();
+    _clientFactory = new HttpClientFactory.Builder().build();
     _transportClients = new ArrayList<Client>();
     Client client = newTransportClient(Collections.<String, String>emptyMap());
     _restClient = new RestClient(client, uriPrefix);

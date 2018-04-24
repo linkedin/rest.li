@@ -63,7 +63,7 @@ public class RestLiExampleBasicClient
   public static void main(String[] args) throws Exception
   {
     // create HTTP Netty client with default properties
-    final HttpClientFactory http = new HttpClientFactory();
+    final HttpClientFactory http = new HttpClientFactory.Builder().build();
     final TransportClient transportClient = http.getClient(Collections.<String, String>emptyMap());
     // create an abstraction layer over the actual client, which supports both REST and RPC
     final Client r2Client = new TransportClientAdapter(transportClient);

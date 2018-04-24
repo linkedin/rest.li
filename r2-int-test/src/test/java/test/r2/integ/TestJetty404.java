@@ -25,7 +25,7 @@ import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.transport.http.server.HttpServer;
 import com.linkedin.r2.transport.http.server.HttpServerFactory;
-import junit.framework.Assert;
+import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -51,7 +51,7 @@ public class TestJetty404
   @BeforeClass
   public void setup() throws IOException
   {
-    _clientFactory = new HttpClientFactory();
+    _clientFactory = new HttpClientFactory.Builder().build();
     _client = new TransportClientAdapter(_clientFactory.getClient(Collections.<String, String>emptyMap()), true);
     _server = new HttpServerFactory().createH2cServer(PORT, "/correct-path", 50, new TransportDispatcher()
     {

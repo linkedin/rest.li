@@ -200,18 +200,19 @@ public class TestResponseCompression extends RestLiIntegrationTest
     {
       responseCompressionConfigs.put(SERVICE_NAME, responseCompressionConfig);
     }
-    HttpClientFactory httpClientFactory = new HttpClientFactory(FilterChains.empty(),
-                                                                new NioEventLoopGroup(0 /* use default settings */, new NamedThreadFactory("R2 Nio Event Loop")),
-                                                                true,
-                                                                executor,
-                                                                true,
-                                                                executor,
-                                                                false,
-                                                                AbstractJmxManager.NULL_JMX_MANAGER,
-                                                                Integer.MAX_VALUE,
-                                                                Collections.<String, CompressionConfig>emptyMap(),
-                                                                responseCompressionConfigs,
-                                                                true);
+    HttpClientFactory httpClientFactory = new HttpClientFactory.Builder()
+        .setNioEventLoopGroup(new NioEventLoopGroup(0 /* use default settings */, new NamedThreadFactory("R2 Nio Event Loop")))
+        .setShutDownFactory(true)
+        .setScheduleExecutorService(executor)
+        .setShutdownScheduledExecutorService(true)
+        .setCallbackExecutor(executor)
+        .setShutdownCallbackExecutor(false)
+        .setJmxManager(AbstractJmxManager.NULL_JMX_MANAGER)
+        .setRequestCompressionThresholdDefault(Integer.MAX_VALUE)
+        .setRequestCompressionConfigs(Collections.<String, CompressionConfig>emptyMap())
+        .setResponseCompressionConfigs(responseCompressionConfigs)
+        .setUseClientCompression(true)
+        .build();
     Map<String, Object> properties = new HashMap<String, Object>();
     properties.put(HttpClientFactory.HTTP_SERVICE_NAME, SERVICE_NAME);
     if (useResponseCompression != null)

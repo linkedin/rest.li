@@ -55,7 +55,7 @@ public class TestClientShutdown
   @Test(dataProvider = "configs")
   public void testShutdown(boolean clientROS, boolean serverROS, String protocolVersion) throws Exception
   {
-    _clientFactory = new HttpClientFactory();
+    _clientFactory = new HttpClientFactory.Builder().build();
     Map<String, String> clientProperties = new HashMap<String, String>();
     // very long shutdown timeout
     clientProperties.put(HttpClientFactory.HTTP_SHUTDOWN_TIMEOUT, "60000");

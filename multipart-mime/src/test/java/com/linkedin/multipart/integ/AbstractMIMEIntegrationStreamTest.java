@@ -83,7 +83,7 @@ public abstract class AbstractMIMEIntegrationStreamTest
 
   protected TransportClientFactory getClientFactory()
   {
-    return new HttpClientFactory();
+    return new HttpClientFactory.Builder().build();
   }
 
   protected Map<String, String> getClientProperties()

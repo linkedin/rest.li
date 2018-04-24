@@ -22,6 +22,7 @@ import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.MultiCallback;
 import com.linkedin.common.util.None;
 import com.linkedin.r2.disruptor.DisruptFilter;
+import com.linkedin.r2.event.EventProviderRegistry;
 import com.linkedin.r2.filter.CompressionConfig;
 import com.linkedin.r2.filter.FilterChain;
 import com.linkedin.r2.filter.FilterChains;
@@ -45,6 +46,7 @@ import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerFactoryImp
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerKey;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerKeyBuilder;
 import com.linkedin.r2.transport.http.client.common.ConnectionSharingChannelPoolManagerFactory;
+import com.linkedin.r2.transport.http.client.common.EventAwareChannelPoolManagerFactory;
 import com.linkedin.r2.transport.http.client.rest.HttpNettyClient;
 import com.linkedin.r2.transport.http.client.stream.http.HttpNettyStreamClient;
 import com.linkedin.r2.transport.http.client.stream.http2.Http2NettyStreamClient;
@@ -187,7 +189,10 @@ public class HttpClientFactory implements TransportClientFactory
 
   /**
    * Construct a new instance using an empty filter chain.
+   *
+   * @deprecated Use {@link Builder} instead.
    */
+  @Deprecated
   public HttpClientFactory()
   {
     this(FilterChains.empty());
@@ -200,7 +205,9 @@ public class HttpClientFactory implements TransportClientFactory
    *          will be invoked by scheduler executor.
    * @param shutdownCallbackExecutor if true, the callback executor will be shut down when
    *          this factory is shut down
+   * @deprecated Use {@link Builder} instead.
    */
+  @Deprecated
   public HttpClientFactory(ExecutorService callbackExecutor,
                            boolean shutdownCallbackExecutor)
   {
@@ -217,7 +224,9 @@ public class HttpClientFactory implements TransportClientFactory
    * Construct a new instance using the specified filter chain.
    *
    * @param filters the {@link FilterChain} shared by all Clients created by this factory.
+   * @deprecated Use {@link Builder} instead.
    */
+  @Deprecated
   public HttpClientFactory(FilterChain filters)
   {
     // TODO Disable Netty's thread renaming so that the names below are the ones that actually
@@ -241,7 +250,9 @@ public class HttpClientFactory implements TransportClientFactory
    *          tasks
    * @param shutdownExecutor if true, the executor will be shut down when this factory is
    *          shut down
+   * @deprecated Use {@link Builder} instead.
    */
+  @Deprecated
   public HttpClientFactory(FilterChain filters,
                            NioEventLoopGroup eventLoopGroup,
                            boolean shutdownFactory,
@@ -273,7 +284,9 @@ public class HttpClientFactory implements TransportClientFactory
    *          will be executed by eventLoopGroup.
    * @param shutdownCallbackExecutor if true, the callback executor will be shut down when
    *          this factory is shut down
+   * @deprecated Use {@link Builder} instead.
    */
+  @Deprecated
   public HttpClientFactory(FilterChain filters,
                            NioEventLoopGroup eventLoopGroup,
                            boolean shutdownFactory,
@@ -292,6 +305,10 @@ public class HttpClientFactory implements TransportClientFactory
          AbstractJmxManager.NULL_JMX_MANAGER);
   }
 
+  /**
+   * @deprecated Use {@link Builder} instead.
+   */
+  @Deprecated
   public HttpClientFactory(FilterChain filters,
                            NioEventLoopGroup eventLoopGroup,
                            boolean shutdownFactory,
@@ -305,6 +322,10 @@ public class HttpClientFactory implements TransportClientFactory
       shutdownCallbackExecutor, jmxManager, true);
   }
 
+  /**
+   * @deprecated Use {@link Builder} instead.
+   */
+  @Deprecated
   public HttpClientFactory(FilterChain filters,
                            NioEventLoopGroup eventLoopGroup,
                            boolean shutdownFactory,
@@ -321,6 +342,10 @@ public class HttpClientFactory implements TransportClientFactory
         true);
   }
 
+  /**
+   * @deprecated Use {@link Builder} instead.
+   */
+  @Deprecated
   public HttpClientFactory(FilterChain filters,
                            NioEventLoopGroup eventLoopGroup,
                            boolean shutdownFactory,
@@ -338,6 +363,10 @@ public class HttpClientFactory implements TransportClientFactory
       Collections.emptyMap(), useClientCompression);
   }
 
+  /**
+   * @deprecated Use {@link Builder} instead.
+   */
+  @Deprecated
   public HttpClientFactory(FilterChain filters,
                            NioEventLoopGroup eventLoopGroup,
                            boolean shutdownFactory,
@@ -357,6 +386,10 @@ public class HttpClientFactory implements TransportClientFactory
       useClientCompression ? Executors.newCachedThreadPool() : null, HttpProtocolVersion.HTTP_1_1);
   }
 
+  /**
+   * @deprecated Use {@link Builder} instead.
+   */
+  @Deprecated
   public HttpClientFactory(FilterChain filters,
                            NioEventLoopGroup eventLoopGroup,
                            boolean shutdownFactory,
@@ -371,6 +404,10 @@ public class HttpClientFactory implements TransportClientFactory
       jmxManager, deprecatedTcpNoDelay, Integer.MAX_VALUE, Collections.emptyMap(), Executors.newCachedThreadPool());
   }
 
+  /**
+   * @deprecated Use {@link Builder} instead.
+   */
+  @Deprecated
   public HttpClientFactory(FilterChain filters,
                            NioEventLoopGroup eventLoopGroup,
                            boolean shutdownFactory,
@@ -389,6 +426,10 @@ public class HttpClientFactory implements TransportClientFactory
       Collections.emptyMap(), deprecatedTcpNoDelay, compressionExecutor, HttpProtocolVersion.HTTP_1_1);
   }
 
+  /**
+   * @deprecated Use {@link Builder} instead.
+   */
+  @Deprecated
   public HttpClientFactory(FilterChain filters,
                            NioEventLoopGroup eventLoopGroup,
                            boolean shutdownFactory,
@@ -408,6 +449,10 @@ public class HttpClientFactory implements TransportClientFactory
       deprecatedTcpNoDelay, compressionExecutor, HttpProtocolVersion.HTTP_1_1);
   }
 
+  /**
+   * @deprecated Use {@link Builder} instead.
+   */
+  @Deprecated
   public HttpClientFactory(FilterChain filters,
                            NioEventLoopGroup eventLoopGroup,
                            boolean shutdownFactory,
@@ -428,6 +473,10 @@ public class HttpClientFactory implements TransportClientFactory
       compressionExecutor, defaultHttpVersion);
   }
 
+  /**
+   * @deprecated Use {@link Builder} instead.
+   */
+  @Deprecated
   public HttpClientFactory(FilterChain filters,
                            NioEventLoopGroup eventLoopGroup,
                            boolean shutdownFactory,
@@ -447,7 +496,31 @@ public class HttpClientFactory implements TransportClientFactory
       compressionExecutor, defaultHttpVersion, DEFAULT_SHARE_CONNECTION);
   }
 
+  /**
+   * @deprecated Use {@link Builder} instead.
+   */
+  @Deprecated
   public HttpClientFactory(FilterChain filters,
+                          NioEventLoopGroup eventLoopGroup,
+                          boolean shutdownFactory,
+                          ScheduledExecutorService executor,
+                          boolean shutdownExecutor,
+                          ExecutorService callbackExecutorGroup,
+                          boolean shutdownCallbackExecutor,
+                          AbstractJmxManager jmxManager,
+                          final int requestCompressionThresholdDefault,
+                          final Map<String, CompressionConfig> requestCompressionConfigs,
+                          final Map<String, CompressionConfig> responseCompressionConfigs,
+                          Executor compressionExecutor,
+                          HttpProtocolVersion defaultHttpVersion,
+                          boolean shareConnection)
+  {
+    this(filters, eventLoopGroup, shutdownFactory, executor, shutdownExecutor, callbackExecutorGroup, shutdownCallbackExecutor,
+        jmxManager, requestCompressionThresholdDefault, requestCompressionConfigs, responseCompressionConfigs,
+        compressionExecutor, defaultHttpVersion, shareConnection, new EventProviderRegistry());
+  }
+
+  private HttpClientFactory(FilterChain filters,
                            NioEventLoopGroup eventLoopGroup,
                            boolean shutdownFactory,
                            ScheduledExecutorService executor,
@@ -460,7 +533,8 @@ public class HttpClientFactory implements TransportClientFactory
                            final Map<String, CompressionConfig> responseCompressionConfigs,
                            Executor compressionExecutor,
                            HttpProtocolVersion defaultHttpVersion,
-                           boolean shareConnection)
+                           boolean shareConnection,
+                           EventProviderRegistry eventProviderRegistry)
   {
     _filters = filters;
     _eventLoopGroup = eventLoopGroup;
@@ -485,6 +559,13 @@ public class HttpClientFactory implements TransportClientFactory
     _useClientCompression = _compressionExecutor != null;
     _defaultHttpVersion = defaultHttpVersion;
     _channelPoolManagerFactory = new ChannelPoolManagerFactoryImpl(_eventLoopGroup, _executor);
+
+    if (eventProviderRegistry != null)
+    {
+      _channelPoolManagerFactory = new EventAwareChannelPoolManagerFactory(
+          _channelPoolManagerFactory, eventProviderRegistry);
+    }
+
     if (shareConnection)
     {
       _channelPoolManagerFactory = new ConnectionSharingChannelPoolManagerFactory(_channelPoolManagerFactory);
@@ -509,6 +590,7 @@ public class HttpClientFactory implements TransportClientFactory
     private Map<String, CompressionConfig> _requestCompressionConfigs = Collections.emptyMap();
     private Map<String, CompressionConfig> _responseCompressionConfigs = Collections.emptyMap();
     private HttpProtocolVersion        _defaultHttpVersion = HttpProtocolVersion.HTTP_1_1;
+    private EventProviderRegistry _eventProviderRegistry = null;
 
     /**
      * @param nioEventLoopGroup the {@link NioEventLoopGroup} that all Clients created by this
@@ -637,6 +719,12 @@ public class HttpClientFactory implements TransportClientFactory
       return this;
     }
 
+    public Builder setEventProviderRegistry(EventProviderRegistry eventProviderRegistry)
+    {
+      _eventProviderRegistry = eventProviderRegistry;
+      return this;
+    }
+
     public HttpClientFactory build()
     {
       NioEventLoopGroup eventLoopGroup = _eventLoopGroup != null ? _eventLoopGroup
@@ -650,10 +738,13 @@ public class HttpClientFactory implements TransportClientFactory
         compressionExecutor = _customCompressionExecutor != null ? _customCompressionExecutor : Executors.newCachedThreadPool();
       }
 
+      EventProviderRegistry eventProviderRegistry =  _eventProviderRegistry
+          == null ? new EventProviderRegistry() : _eventProviderRegistry;
+
       return new HttpClientFactory(_filters, eventLoopGroup, _shutdownFactory, scheduledExecutorService,
         _shutdownExecutor, _callbackExecutorGroup, _shutdownCallbackExecutor, _jmxManager,
         _requestCompressionThresholdDefault, _requestCompressionConfigs, _responseCompressionConfigs,
-        compressionExecutor, _defaultHttpVersion, _shareConnection);
+        compressionExecutor, _defaultHttpVersion, _shareConnection, eventProviderRegistry);
     }
   }
 

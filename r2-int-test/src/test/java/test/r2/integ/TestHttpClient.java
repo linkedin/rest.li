@@ -105,7 +105,7 @@ public class TestHttpClient
   @BeforeClass
   private void init() throws Exception
   {
-    _clientFactory = new HttpClientFactory();
+    _clientFactory = new HttpClientFactory.Builder().build();
   }
 
   @AfterClass

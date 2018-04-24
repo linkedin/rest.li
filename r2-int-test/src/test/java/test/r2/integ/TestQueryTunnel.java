@@ -96,7 +96,7 @@ public class TestQueryTunnel
     Map<String, String> clientProperties = new HashMap<String, String>();
     clientProperties.put(HttpClientFactory.HTTP_QUERY_POST_THRESHOLD, String.valueOf(QUERY_TUNNEL_THRESHOLD));
     clientProperties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, _httpProtocolVersion);
-    _clientFactory = new HttpClientFactory();
+    _clientFactory = new HttpClientFactory.Builder().build();
     final TransportClient transportClient = _clientFactory
         .getClient(clientProperties);
 

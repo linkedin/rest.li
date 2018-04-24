@@ -100,7 +100,7 @@ public class TestMIMEChainingMultipleSources
   public void setup() throws IOException
   {
     _scheduledExecutorService = Executors.newScheduledThreadPool(30);
-    _clientFactory = new HttpClientFactory();
+    _clientFactory = new HttpClientFactory.Builder().build();
     _client = new TransportClientAdapter(_clientFactory.getClient(Collections.<String, String>emptyMap()));
     _server_A_client = new TransportClientAdapter(_clientFactory.getClient(Collections.<String, String>emptyMap()));
 

@@ -71,7 +71,7 @@ public class TestServerTimeout
   @BeforeClass
   public void setup() throws IOException
   {
-    _clientFactory = new HttpClientFactory();
+    _clientFactory = new HttpClientFactory.Builder().build();
     Map<String, Object> clientProperties = new HashMap<String, Object>();
     clientProperties.put(HttpClientFactory.HTTP_REQUEST_TIMEOUT, String.valueOf(SERVER_IOHANDLER_TIMEOUT * 20));
     clientProperties.put(HttpClientFactory.HTTP_POOL_MIN_SIZE, "1");

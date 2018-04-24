@@ -227,7 +227,7 @@ public class TestHttpClientFactory
   @Test
   public void testNewSSLProperties() throws Exception
   {
-    HttpClientFactory factory = new HttpClientFactory();
+    HttpClientFactory factory = new HttpClientFactory.Builder().build();
     Map<String,Object> params = new HashMap<String, Object>();
     SSLParameters sslParameters = new SSLParameters();
     sslParameters.setProtocols(new String[]{ "Unsupported" });
@@ -249,7 +249,7 @@ public class TestHttpClientFactory
   @Test
   public void testSSLParams() throws Exception
   {
-    HttpClientFactory factory = new HttpClientFactory();
+    HttpClientFactory factory = new HttpClientFactory.Builder().build();
     Map<String,Object> params = new HashMap<String, Object>();
     SSLParameters sslParameters = new SSLParameters();
     sslParameters.setProtocols(new String[]{ "Unsupported" });
@@ -423,7 +423,7 @@ public class TestHttpClientFactory
   public void testClientShutdownBeingCalledMultipleTimes()
       throws InterruptedException, ExecutionException, TimeoutException
   {
-    HttpClientFactory factory = new HttpClientFactory();
+    HttpClientFactory factory = new HttpClientFactory.Builder().build();
     TransportClient client = factory.getClient(Collections.<String, Object>emptyMap());
     // first shutdown call
     FutureCallback<None> clientShutdown = new FutureCallback<None>();

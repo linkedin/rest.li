@@ -427,7 +427,7 @@ public class D2ClientBuilder
   private Map<String, TransportClientFactory> createDefaultTransportClientFactories()
   {
     final Map<String, TransportClientFactory> clientFactories = new HashMap<String, TransportClientFactory>();
-    TransportClientFactory transportClientFactory = new HttpClientFactory();
+    TransportClientFactory transportClientFactory = new HttpClientFactory.Builder().build();
     clientFactories.put("http", transportClientFactory);
     clientFactories.put("https", transportClientFactory);
     return clientFactories;
