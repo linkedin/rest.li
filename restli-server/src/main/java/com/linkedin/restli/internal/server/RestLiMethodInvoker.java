@@ -27,18 +27,16 @@ import com.linkedin.parseq.promise.Promises;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.RestConstants;
-import com.linkedin.entitystream.adapter.FlowAdapters;
-import com.linkedin.restli.internal.server.response.ErrorResponseBuilder;
-import com.linkedin.restli.server.UnstructuredDataReactiveResult;
 import com.linkedin.restli.internal.server.methods.arguments.RestLiArgumentBuilder;
 import com.linkedin.restli.internal.server.model.Parameter.ParamType;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
+import com.linkedin.restli.internal.server.response.ErrorResponseBuilder;
 import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiRequestData;
 import com.linkedin.restli.server.RestLiServiceException;
+import com.linkedin.restli.server.UnstructuredDataReactiveResult;
 import com.linkedin.restli.server.resources.BaseResource;
 import com.linkedin.restli.server.resources.ResourceFactory;
-
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
@@ -116,7 +114,7 @@ public class RestLiMethodInvoker
               if (result instanceof UnstructuredDataReactiveResult)
               {
                 UnstructuredDataReactiveResult reactiveResult = (UnstructuredDataReactiveResult) result;
-                resourceContext.setEntityStream(FlowAdapters.fromPublisher(reactiveResult.getPublisher()));
+                resourceContext.setEntityStream(reactiveResult.getEntityStream());
                 resourceContext.setResponseHeader(RestConstants.HEADER_CONTENT_TYPE, reactiveResult.getContentType());
                 callback.onSuccess(new EmptyRecord());
               }

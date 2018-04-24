@@ -16,29 +16,28 @@
 
 package com.linkedin.restli.server;
 
-
 import com.linkedin.data.ByteString;
-import com.linkedin.java.util.concurrent.Flow;
+import com.linkedin.entitystream.EntityStream;
 
 
 /**
- * A wrapper of {@link com.linkedin.java.util.concurrent.Flow.Publisher} and ContentType, represents
+ * A wrapper of {@link com.linkedin.entitystream.EntityStream} and ContentType, represents
  * an result of unstructured data that supports reactive streaming.
  */
 public class UnstructuredDataReactiveResult
 {
-  private final Flow.Publisher<ByteString> _publisher;
+  private final EntityStream<ByteString> _entityStream;
   private String _contentType;
 
-  public UnstructuredDataReactiveResult(Flow.Publisher<ByteString> publisher, String contentType)
+  public UnstructuredDataReactiveResult(EntityStream<ByteString> entityStream, String contentType)
   {
-    _publisher = publisher;
+    _entityStream = entityStream;
     _contentType = contentType;
   }
 
-  public Flow.Publisher<ByteString> getPublisher()
+  public EntityStream<ByteString> getEntityStream()
   {
-    return _publisher;
+    return _entityStream;
   }
 
   public String getContentType()

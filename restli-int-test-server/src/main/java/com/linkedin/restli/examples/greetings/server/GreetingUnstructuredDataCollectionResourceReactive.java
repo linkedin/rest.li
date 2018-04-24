@@ -20,19 +20,17 @@ package com.linkedin.restli.examples.greetings.server;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.ChunkedByteStringWriter;
-import com.linkedin.java.util.concurrent.Flow;
+import com.linkedin.entitystream.EntityStreams;
 import com.linkedin.entitystream.SingletonWriter;
 import com.linkedin.entitystream.WriteHandle;
 import com.linkedin.entitystream.Writer;
 import com.linkedin.restli.common.HttpStatus;
-import com.linkedin.entitystream.adapter.FlowAdapters;
-import com.linkedin.restli.server.UnstructuredDataReactiveResult;
 import com.linkedin.restli.server.RestLiResponseDataException;
 import com.linkedin.restli.server.RestLiServiceException;
+import com.linkedin.restli.server.UnstructuredDataReactiveResult;
 import com.linkedin.restli.server.annotations.CallbackParam;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataCollectionResourceReactiveTemplate;
-
 import javax.naming.NoPermissionException;
 
 import static com.linkedin.restli.common.RestConstants.HEADER_CONTENT_DISPOSITION;
@@ -57,7 +55,6 @@ public class GreetingUnstructuredDataCollectionResourceReactive extends Unstruct
     }
 
     Writer<ByteString> writer = chooseGreetingWriter(key);
-    Flow.Publisher<ByteString> publisher = FlowAdapters.toPublisher(writer);
 
     String contentType;
     if (key.equals("goodNullContentType"))
@@ -68,7 +65,7 @@ public class GreetingUnstructuredDataCollectionResourceReactive extends Unstruct
     {
       contentType = MIME_TYPE;
     }
-    UnstructuredDataReactiveResult result = new UnstructuredDataReactiveResult(publisher, contentType);
+    UnstructuredDataReactiveResult result = new UnstructuredDataReactiveResult(EntityStreams.newEntityStream(writer), contentType);
     callback.onSuccess(result);
   }
 

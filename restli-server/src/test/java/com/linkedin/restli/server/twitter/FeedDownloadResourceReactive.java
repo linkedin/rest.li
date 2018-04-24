@@ -18,10 +18,8 @@ package com.linkedin.restli.server.twitter;
 
 
 import com.linkedin.common.callback.Callback;
-import com.linkedin.data.ByteString;
 import com.linkedin.data.ChunkedByteStringWriter;
-import com.linkedin.java.util.concurrent.Flow;
-import com.linkedin.entitystream.adapter.FlowAdapters;
+import com.linkedin.entitystream.EntityStreams;
 import com.linkedin.restli.server.UnstructuredDataReactiveResult;
 import com.linkedin.restli.server.annotations.CallbackParam;
 import com.linkedin.restli.server.annotations.RestLiCollection;
@@ -41,7 +39,6 @@ public class FeedDownloadResourceReactive extends UnstructuredDataCollectionReso
   public void get(Long key, @CallbackParam Callback<UnstructuredDataReactiveResult> callback)
   {
     ChunkedByteStringWriter writer = new ChunkedByteStringWriter(CONTENT, 2);
-    Flow.Publisher<ByteString> publisher = FlowAdapters.toPublisher(writer);
-    callback.onSuccess(new UnstructuredDataReactiveResult(publisher, CONTENT_TYPE));
+    callback.onSuccess(new UnstructuredDataReactiveResult(EntityStreams.newEntityStream(writer), CONTENT_TYPE));
   }
 }
