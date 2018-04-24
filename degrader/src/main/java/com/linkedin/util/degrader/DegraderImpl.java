@@ -130,10 +130,10 @@ public class DegraderImpl implements Degrader
   public static final Double   DEFAULT_MAX_DROP_RATE = 1.00;
   public static final long     DEFAULT_MAX_DROP_DURATION = Time.milliseconds(60000);
   public static final Double   DEFAULT_UP_STEP = 0.20;
-  public static final Double   DEFAULT_DOWN_STEP = 0.20;
-  public static final Integer  DEFAULT_MIN_CALL_COUNT = 10;
-  public static final long     DEFAULT_HIGH_LATENCY = Time.milliseconds(3000);
-  public static final long     DEFAULT_LOW_LATENCY  = Time.milliseconds( 500);
+  public static final Double   DEFAULT_DOWN_STEP = 0.05;
+  public static final Integer  DEFAULT_MIN_CALL_COUNT = 1;
+  public static final long     DEFAULT_HIGH_LATENCY = Time.milliseconds(400);
+  public static final long     DEFAULT_LOW_LATENCY  = Time.milliseconds(200);
   public static final Double   DEFAULT_HIGH_ERROR_RATE = 1.1;
   public static final Double   DEFAULT_LOW_ERROR_RATE  = 1.1;
   public static final long     DEFAULT_HIGH_OUTSTANDING = Time.milliseconds(10000);

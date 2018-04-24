@@ -1,5 +1,18 @@
+20.0.24
+-------	
+
 20.0.23
 -------
+(RB=1290394)
+Update default values of the following properties:
+	DEFAULT_RAMP_FACTOR = 2.0;
+	DEFAULT_HIGH_WATER_MARK = 600;
+	DEFAULT_LOW_WATER_MARK = 200;
+	DEFAULT_DOWN_STEP = 0.05;
+	DEFAULT_MIN_CALL_COUNT = 1;
+	DEFAULT_HIGH_LATENCY = Time.milliseconds(400);
+	DEFAULT_LOW_LATENCY  = Time.milliseconds(200);
+	DEFAULT_REQUEST_TIMEOUT = 1000;
 
 20.0.22
 -------

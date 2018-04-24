@@ -100,14 +100,12 @@ public class DegraderLoadBalancerStrategyConfig
 
   public static final Clock DEFAULT_CLOCK = SystemClock.instance();
   public static final double DEFAULT_INITIAL_RECOVERY_LEVEL = 0.01;
-  public static final double DEFAULT_RAMP_FACTOR = 1.0;
+  public static final double DEFAULT_RAMP_FACTOR = 2.0;
   public static final long DEFAULT_UPDATE_INTERVAL_MS = 5000L;
   public static final boolean DEFAULT_UPDATE_ONLY_AT_INTERVAL = false;
   public static final int DEFAULT_POINTS_PER_WEIGHT = 100;
-  // I think that these two will require tuning, based upon the service SLA.
-  // Using degrader's defaults.
-  public static final double DEFAULT_HIGH_WATER_MARK = 3000;
-  public static final double DEFAULT_LOW_WATER_MARK = 500;
+  public static final double DEFAULT_HIGH_WATER_MARK = 600;
+  public static final double DEFAULT_LOW_WATER_MARK = 200;
 
   // even though the degrader has it's own stepUp and stepDown, we need new knobs to turn for
   // the globalStepUp and globalStepDown drop rates.
