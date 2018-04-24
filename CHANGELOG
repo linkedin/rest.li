@@ -6,8 +6,12 @@
 -------
 (RB=1288205)
 Remove Flow API
+
 (RB=1278581)
 Emits R2 channel pool events
+
+(RB=1289790)
+SslHandshakeTimingHandler only produces a TransportCallback
 
 20.0.20
 -------

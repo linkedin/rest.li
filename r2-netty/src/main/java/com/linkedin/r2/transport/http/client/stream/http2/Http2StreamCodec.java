@@ -235,7 +235,7 @@ class Http2StreamCodec extends Http2ConnectionHandler
   private void doOnStreamError(ChannelHandlerContext ctx, int streamId, Throwable cause)
   {
     // Invokes the call back with error
-    final TimeoutTransportCallback<StreamResponse> callback = Http2PipelinePropertyUtil.remove(
+    final TransportCallback<StreamResponse> callback = Http2PipelinePropertyUtil.remove(
         ctx, connection(), streamId, Http2ClientPipelineInitializer.CALLBACK_ATTR_KEY);
     if (callback != null)
     {
