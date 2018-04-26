@@ -103,6 +103,7 @@ public class TestAsyncSharedPoolImpl
     Assert.assertEquals(stats.getMaxPoolSize(), 1);
     Assert.assertEquals(stats.getMinPoolSize(), 0);
     Assert.assertEquals(stats.getIdleCount(), 0);
+    Assert.assertEquals(stats.getWaitersCount(), 0);
 
     Assert.assertEquals(stats.getTotalDestroyErrors(), 0);
     Assert.assertEquals(stats.getTotalDestroyed(), 0);
@@ -128,14 +129,14 @@ public class TestAsyncSharedPoolImpl
     AsyncSharedPoolImpl<Object> pool = new AsyncSharedPoolImpl<>
         (POOL_NAME, LIFECYCLE, SCHEDULER, LIMITER, NO_POOL_TIMEOUT, MAX_WAITERS);
     pool.start();
-    verifyStats(pool.getStats(), 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    verifyStats(pool.getStats(), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
     FutureCallback<None> callback = new FutureCallback<>();
     pool.shutdown(callback);
     None none = callback.get(SHUTDOWN_TIMEOUT, TIME_UNIT);
     Assert.assertNotNull(none);
     Assert.assertSame(none, None.none());
-    verifyStats(pool.getStats(), 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    verifyStats(pool.getStats(), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
   }
 
   @Test
@@ -152,7 +153,7 @@ public class TestAsyncSharedPoolImpl
     // Waits for twice the timeout amount of time for reaper to kick-in
     Thread.sleep(SHORT_POOL_TIMEOUT * 2);
 
-    verifyStats(pool.getStats(), 0, 0, 0, 1, 0, 0, 1, 0, 1);
+    verifyStats(pool.getStats(), 0, 0, 0, 0, 1, 0, 0, 1, 0, 1);
 
     FutureCallback<None> shutdownCallback = new FutureCallback<>();
     pool.shutdown(shutdownCallback);
@@ -173,7 +174,7 @@ public class TestAsyncSharedPoolImpl
     // Waits for twice the timeout amount of time for reaper to kick-in
     Thread.sleep(SHORT_POOL_TIMEOUT * 2);
 
-    verifyStats(pool.getStats(), 1, 1, 0, 0, 0, 0, 1, 0, 0);
+    verifyStats(pool.getStats(), 1, 1, 0, 0, 0, 0, 0, 1, 0, 0);
 
     pool.put(item);
     FutureCallback<None> shutdownCallback = new FutureCallback<>();
@@ -208,11 +209,11 @@ public class TestAsyncSharedPoolImpl
     FutureCallback<None> callback = new FutureCallback<>();
     pool.shutdown(callback);
 
-    verifyStats(pool.getStats(), 1, 1, 0, 0, 0, 0, 1, 0, 0);
+    verifyStats(pool.getStats(), 1, 1, 0, 0, 0, 0, 0, 1, 0, 0);
 
     // Return the item back the to the pool
     pool.put(item);
-    verifyStats(pool.getStats(), 1, 0, 1, 0, 0, 0, 1, 0, 0);
+    verifyStats(pool.getStats(), 1, 0, 1, 0, 0, 0, 0, 1, 0, 0);
 
     callback.get(SHUTDOWN_TIMEOUT, TIME_UNIT);
   }
@@ -249,7 +250,7 @@ public class TestAsyncSharedPoolImpl
 
     Assert.assertEquals(items.size(), GET_COUNT);
 
-    verifyStats(pool.getStats(), 1, GET_COUNT, 0, 0, 0, 0, 1, 0, 0);
+    verifyStats(pool.getStats(), 1, GET_COUNT, 0, 0, 0, 0, 0, 1, 0, 0);
 
     FutureCallback<None> shutdownCallback = new FutureCallback<>();
     pool.shutdown(shutdownCallback);
@@ -295,7 +296,7 @@ public class TestAsyncSharedPoolImpl
     });
     Assert.assertEquals(items.size(), GET_COUNT);
 
-    verifyStats(pool.getStats(), 1, GET_COUNT, 0, 0, 0, 0, 1, 0, 0);
+    verifyStats(pool.getStats(), 1, GET_COUNT, 0, 0, 0, 0, 0, 1, 0, 0);
 
     FutureCallback<None> shutdownCallback = new FutureCallback<>();
     pool.shutdown(shutdownCallback);
@@ -322,11 +323,11 @@ public class TestAsyncSharedPoolImpl
     // Shutdown while the item is still outstanding
     FutureCallback<None> callback = new FutureCallback<>();
     pool.shutdown(callback);
-    verifyStats(pool.getStats(), 1, 1, 0, 0, 0, 0, 1, 0, 0);
+    verifyStats(pool.getStats(), 1, 1, 0, 0, 0, 0, 0, 1, 0, 0);
 
     // Return the item back the to the pool
     pool.dispose(item);
-    verifyStats(pool.getStats(), 0, 0, 0, 1, 0, 1, 1, 0, 0);
+    verifyStats(pool.getStats(), 0, 0, 0, 0, 1, 0, 1, 1, 0, 0);
 
     callback.get(SHUTDOWN_TIMEOUT, TIME_UNIT);
   }
@@ -362,7 +363,7 @@ public class TestAsyncSharedPoolImpl
     });
 
     Assert.assertEquals(items.size(), GET_COUNT);
-    verifyStats(pool.getStats(), 1, GET_COUNT, 0, 0, 0, 0, 1, 0, 0);
+    verifyStats(pool.getStats(), 1, GET_COUNT, 0, 0, 0, 0, 0, 1, 0, 0);
 
     FutureCallback<None> shutdownCallback = new FutureCallback<>();
     pool.shutdown(shutdownCallback);
@@ -389,17 +390,17 @@ public class TestAsyncSharedPoolImpl
     Assert.assertNotNull(item1);
     Assert.assertNotNull(item2);
     Assert.assertSame(item1, item2);
-    verifyStats(pool.getStats(), 1, 2, 0, 0, 0, 0, 1, 0, 0);
+    verifyStats(pool.getStats(), 1, 2, 0, 0, 0, 0, 0, 1, 0, 0);
 
     pool.dispose(item1);
-    verifyStats(pool.getStats(), 0, 0, 0, 0, 0, 0, 1, 0, 0);
+    verifyStats(pool.getStats(), 0, 0, 0, 0, 0, 0, 0, 1, 0, 0);
 
     FutureCallback<None> shutdownCallback = new FutureCallback<>();
     pool.shutdown(shutdownCallback);
 
     // Put items back to the pool
     pool.dispose(item2);
-    verifyStats(pool.getStats(), 0, 0, 0, 1, 0, 1, 1, 0, 0);
+    verifyStats(pool.getStats(), 0, 0, 0, 0, 1, 0, 1, 1, 0, 0);
 
     shutdownCallback.get(SHUTDOWN_TIMEOUT, TIME_UNIT);
   }
@@ -437,7 +438,7 @@ public class TestAsyncSharedPoolImpl
     Collection<Callback<Object>> waiters = pool.cancelWaiters();
     Assert.assertNotNull(waiters);
     Assert.assertEquals(waiters.size(), GET_COUNT);
-    verifyStats(pool.getStats(), 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    verifyStats(pool.getStats(), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
     latch.countDown();
     FutureCallback<None> shutdownCallback = new FutureCallback<>();
@@ -458,10 +459,10 @@ public class TestAsyncSharedPoolImpl
 
     Object item = getCallback.get(GET_TIMEOUT, TIME_UNIT);
     Assert.assertNotNull(item);
-    verifyStats(pool.getStats(), 1, 1, 0, 0, 0, 0, 1, 0, 0);
+    verifyStats(pool.getStats(), 1, 1, 0, 0, 0, 0, 0, 1, 0, 0);
 
     pool.put(item);
-    verifyStats(pool.getStats(), 1, 0, 1, 0, 0, 0, 1, 0, 0);
+    verifyStats(pool.getStats(), 1, 0, 1, 0, 0, 0, 0, 1, 0, 0);
 
     FutureCallback<None> shutdownCallback = new FutureCallback<>();
     pool.shutdown(shutdownCallback);
@@ -493,7 +494,7 @@ public class TestAsyncSharedPoolImpl
     // All items should essentially be the same instance
     Assert.assertEquals(items.size(), GET_COUNT);
     items.stream().forEach(item -> Assert.assertSame(item, items.get(0)));
-    verifyStats(pool.getStats(), 1, GET_COUNT, 0, 0, 0, 0, 1, 0, 0);
+    verifyStats(pool.getStats(), 1, GET_COUNT, 0, 0, 0, 0, 0, 1, 0, 0);
 
     // Put items back to the pool
     IntStream.range(0, GET_COUNT).forEach(i -> pool.put(items.get(i)));
@@ -528,7 +529,7 @@ public class TestAsyncSharedPoolImpl
     // All items should essentially be the same instance
     Assert.assertEquals(items.size(), GET_COUNT);
     items.stream().forEach(item -> Assert.assertSame(item, items.get(0)));
-    verifyStats(pool.getStats(), 1, GET_COUNT, 0, 0, 0, 0, 1, 0, 0);
+    verifyStats(pool.getStats(), 1, GET_COUNT, 0, 0, 0, 0, 0, 1, 0, 0);
 
     // Put items back to the pool
     IntStream.range(0, GET_COUNT).forEach(i -> pool.dispose(items.get(i)));
@@ -563,7 +564,7 @@ public class TestAsyncSharedPoolImpl
     // All items should essentially be the same instance
     Assert.assertEquals(items.size(), GET_COUNT);
     items.stream().forEach(item -> Assert.assertSame(item, items.get(0)));
-    verifyStats(pool.getStats(), 1, GET_COUNT, 0, 0, 0, 0, 1, 0, 0);
+    verifyStats(pool.getStats(), 1, GET_COUNT, 0, 0, 0, 0, 0, 1, 0, 0);
 
     FutureCallback<None> shutdownCallback = new FutureCallback<>();
     pool.shutdown(shutdownCallback);
@@ -703,7 +704,7 @@ public class TestAsyncSharedPoolImpl
     FutureCallback<Object> getCallback = new FutureCallback<>();
     Cancellable cancellable = pool.get(getCallback);
     Assert.assertNotNull(cancellable);
-    verifyStats(pool.getStats(), 0, 0, 0, 0, 0, 0, 0, 1, 0);
+    verifyStats(pool.getStats(), 0, 0, 0, 0, 0, 0, 0, 0, 1, 0);
 
     getCallback.get(GET_TIMEOUT, TIME_UNIT);
   }
@@ -816,22 +817,22 @@ public class TestAsyncSharedPoolImpl
     pool.get(getCallback1);
     Object item1 = getCallback1.get(GET_TIMEOUT, TIME_UNIT);
     Assert.assertNotNull(item1);
-    verifyStats(pool.getStats(), 1, 1, 0, 0, 0, 0, 1, 0, 0);
+    verifyStats(pool.getStats(), 1, 1, 0, 0, 0, 0, 0, 1, 0, 0);
 
     FutureCallback<Object> getCallback2 = new FutureCallback<>();
     pool.get(getCallback2);
     Object item2 = getCallback2.get(GET_TIMEOUT, TIME_UNIT);
     Assert.assertNotNull(item2);
-    verifyStats(pool.getStats(), 1, 1, 0, 0, 0, 0, 2, 0, 0);
+    verifyStats(pool.getStats(), 1, 1, 0, 0, 0, 0, 0, 2, 0, 0);
 
     FutureCallback<None> shutdownCallback = new FutureCallback<>();
     pool.shutdown(shutdownCallback);
 
     pool.put(item1);
-    verifyStats(pool.getStats(), 1, 1, 0, 1, 0, 1, 2, 0, 0);
+    verifyStats(pool.getStats(), 1, 1, 0, 0, 1, 0, 1, 2, 0, 0);
 
     pool.put(item2);
-    verifyStats(pool.getStats(), 1, 0, 1, 1, 0, 1, 2, 0, 0);
+    verifyStats(pool.getStats(), 1, 0, 1, 0, 1, 0, 1, 2, 0, 0);
 
     shutdownCallback.get(SHUTDOWN_TIMEOUT, TIME_UNIT);
   }
@@ -851,7 +852,7 @@ public class TestAsyncSharedPoolImpl
     Assert.assertNotNull(item);
 
     pool.put(item);
-    verifyStats(pool.getStats(), 0, 0, 0, 1, 0, 1, 1, 0, 0);
+    verifyStats(pool.getStats(), 0, 0, 0, 0, 1, 0, 1, 1, 0, 0);
 
     FutureCallback<None> shutdownCallback = new FutureCallback<>();
     pool.shutdown(shutdownCallback);
@@ -871,7 +872,7 @@ public class TestAsyncSharedPoolImpl
     Assert.assertNotNull(item);
 
     pool.dispose(item);
-    verifyStats(pool.getStats(), 0, 0, 0, 1, 0, 1, 1, 0, 0);
+    verifyStats(pool.getStats(), 0, 0, 0, 0, 1, 0, 1, 1, 0, 0);
 
     FutureCallback<None> shutdownCallback = new FutureCallback<>();
     pool.shutdown(shutdownCallback);
@@ -894,13 +895,13 @@ public class TestAsyncSharedPoolImpl
     Assert.assertNotNull(item1);
     Assert.assertNotNull(item2);
     Assert.assertSame(item1, item2);
-    verifyStats(pool.getStats(), 1, 2, 0, 0, 0, 0, 1, 0, 0);
+    verifyStats(pool.getStats(), 1, 2, 0, 0, 0, 0, 0, 1, 0, 0);
 
     pool.dispose(item1);
-    verifyStats(pool.getStats(), 0, 0, 0, 0, 0, 0, 1, 0, 0);
+    verifyStats(pool.getStats(), 0, 0, 0, 0, 0, 0, 0, 1, 0, 0);
 
     pool.dispose(item2);
-    verifyStats(pool.getStats(), 0, 0, 0, 1, 0, 1, 1, 0, 0);
+    verifyStats(pool.getStats(), 0, 0, 0, 0, 1, 0, 1, 1, 0, 0);
 
     FutureCallback<None> shutdownCallback = new FutureCallback<>();
     pool.shutdown(shutdownCallback);
@@ -922,7 +923,7 @@ public class TestAsyncSharedPoolImpl
     Assert.assertNotNull(item);
 
     pool.dispose(item);
-    verifyStats(pool.getStats(), 0, 0, 0, 0, 1, 1, 1, 0, 0);
+    verifyStats(pool.getStats(), 0, 0, 0, 0, 0, 1, 1, 1, 0, 0);
 
     FutureCallback<None> shutdownCallback = new FutureCallback<>();
     pool.shutdown(shutdownCallback);
@@ -945,13 +946,13 @@ public class TestAsyncSharedPoolImpl
     Object item2 = getCallback2.get(GET_TIMEOUT, TIME_UNIT);
 
     Assert.assertSame(item1, item2);
-    verifyStats(pool.getStats(), 1, 2, 0, 0, 0, 0, 1, 0, 0);
+    verifyStats(pool.getStats(), 1, 2, 0, 0, 0, 0, 0, 1, 0, 0);
 
     pool.dispose(item1);
-    verifyStats(pool.getStats(), 0, 0, 0, 0, 0, 0, 1, 0, 0);
+    verifyStats(pool.getStats(), 0, 0, 0, 0, 0, 0, 0, 1, 0, 0);
 
     pool.put(item2);
-    verifyStats(pool.getStats(), 0, 0, 0, 1, 0, 1, 1, 0, 0);
+    verifyStats(pool.getStats(), 0, 0, 0, 0, 1, 0, 1, 1, 0, 0);
 
     FutureCallback<None> shutdownCallback = new FutureCallback<>();
     pool.shutdown(shutdownCallback);
@@ -989,13 +990,13 @@ public class TestAsyncSharedPoolImpl
     Object item2 = getCallback2.get(GET_TIMEOUT, TIME_UNIT);
 
     Assert.assertSame(item1, item2);
-    verifyStats(pool.getStats(), 1, 2, 0, 0, 0, 0, 1, 0, 0);
+    verifyStats(pool.getStats(), 1, 2, 0, 0, 0, 0, 0, 1, 0, 0);
 
     pool.dispose(item1);
-    verifyStats(pool.getStats(), 0, 0, 0, 0, 0, 0, 1, 0, 0);
+    verifyStats(pool.getStats(), 0, 0, 0, 0, 0, 0, 0, 1, 0, 0);
 
     pool.dispose(item2);
-    verifyStats(pool.getStats(), 0, 0, 0, 1, 0, 1, 1, 0, 0);
+    verifyStats(pool.getStats(), 0, 0, 0, 0, 1, 0, 1, 1, 0, 0);
 
     FutureCallback<None> shutdownCallback = new FutureCallback<>();
     pool.shutdown(shutdownCallback);
@@ -1127,13 +1128,14 @@ public class TestAsyncSharedPoolImpl
     shutdownCallback.get(SHUTDOWN_TIMEOUT, TIME_UNIT);
   }
 
-  private static void verifyStats(PoolStats stats, int poolSize, int checkedOut, int idles, int destroyed,
+  private static void verifyStats(PoolStats stats, int poolSize, int checkedOut, int idles, int waiters, int destroyed,
       int destroyErrors, int badDestroyed, int created, int createErrors, int timeout)
   {
     Assert.assertNotNull(stats);
     Assert.assertEquals(stats.getPoolSize(), poolSize);
     Assert.assertEquals(stats.getCheckedOut(), checkedOut);
     Assert.assertEquals(stats.getIdleCount(), idles);
+    Assert.assertEquals(stats.getWaitersCount(), waiters);
     Assert.assertEquals(stats.getTotalDestroyed(), destroyed);
     Assert.assertEquals(stats.getTotalDestroyErrors(), destroyErrors);
     Assert.assertEquals(stats.getTotalBadDestroyed(), badDestroyed);

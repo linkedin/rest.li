@@ -212,6 +212,12 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
           {
             return _idle.size();
           }
+        },
+        () -> {
+          synchronized (_lock)
+          {
+            return _waiters.size();
+          }
         });
   }
 

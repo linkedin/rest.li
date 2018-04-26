@@ -119,6 +119,7 @@ public class AsyncSharedPoolImpl<T> implements AsyncPool<T>
     _maxWaiters = maxWaiters;
 
     _item = new TimedObject<>();
+    _waiters = new LinkedDeque<>();
     _statsTracker = new AsyncPoolStatsTracker(
         () -> _lifecycle.getStats(),
         () -> 1,
@@ -144,8 +145,13 @@ public class AsyncSharedPoolImpl<T> implements AsyncPool<T>
             }
             return _item.get() == null ? 0 : 1;
           }
+        },
+        () -> {
+          synchronized (_lock)
+          {
+            return _waiters.size();
+          }
         });
-    _waiters = new LinkedDeque<>();
   }
 
   @Override
