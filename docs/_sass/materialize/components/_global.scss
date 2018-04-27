@@ -17,6 +17,22 @@ main {
   // flex: 1 0 auto;
 }
 
+// ul.nav_items {
+//     padding-left: 0;
+//     list-style-type: none;
+
+//     & > li {
+//       list-style-type: none;
+//     }
+// }
+
+// ul.nav_items li {
+//   list-style-type: none;
+//   padding-left: 0;
+// }
+
+
+
 ul {
   &:not(.browser-default) {
     padding-left: 0;

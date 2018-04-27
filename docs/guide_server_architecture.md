@@ -6,7 +6,6 @@ index: 2
 ---
 
 # Rest.li Client/Server Architecture
-----------------------------------
 
 Rest.li is a Java framework that allows you to easily create clients and
 servers that use a REST style of communication. Rest.li is based on an
@@ -54,7 +53,7 @@ classes:
 
 <center>
 <b>Data and Control Flow Between a Rest.li Server and
-Client</b><br><img src=https://github.com/linkedin/rest.li/wiki/RestLiClientServerFlow.png>
+Client</b><br><img src="https://github.com/linkedin/rest.li/wiki/RestLiClientServerFlow.png">
 
 </center>
 <a id="wiki-ServerDataFlow"></a>
@@ -101,21 +100,21 @@ implementation.
 Starting with the server (on the right in the diagram above), the
 following steps occur when a request is submitted to a Rest.li server:
 
-\# The R2 transport layer receives a request (HTTP + JSON) and sends it
+ - The R2 transport layer receives a request (HTTP + JSON) and sends it
 on to Rest.li. (R2 is a separate library that provides HTTP transport
 services. It is independent of Rest.li but is included with the Rest.li
 code base. It's designed to work well with Rest.li.)\
-\# Rest.li's routing logic inspects the request's URI path and
+- Rest.li's routing logic inspects the request's URI path and
 determines which target *resource* (a Java class) the server has defined
 to handle that request.\
-\# Rest.li parses the request to extract any parameters.\
-\# Rest.li creates a new instance of the resource class designated to
+- Rest.li parses the request to extract any parameters.\
+- Rest.li creates a new instance of the resource class designated to
 handle the request.\
-\# Rest.li invokes the appropriate methods of the resource object,
+- Rest.li invokes the appropriate methods of the resource object,
 passing in any necessary Java parameters.\
-\# The resource object instantiates and returns a response, in the form
+- The resource object instantiates and returns a response, in the form
 of a RecordTemplate object.\
-\# Rest.li serializes the response object and passes it back to the
+- Rest.li serializes the response object and passes it back to the
 requesting client through the R2 transport layer.
 
 We'll look at what you, as a developer, need to do to support this data
@@ -174,7 +173,7 @@ allow a server and clients to exchange data.
 
 <center>
 <b>Rest.li Development
-Flow</b><br><img src=https://github.com/linkedin/rest.li/wiki/RestLiCodeGen.png>
+Flow</b><br><img src="https://github.com/linkedin/rest.li/wiki/RestLiCodeGen.png">
 
 </center>
 Let's look at each step:

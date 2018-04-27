@@ -61,26 +61,23 @@ We will create a basic client server application in Java. We use gradle
 for our build process. The top level structure of our project will have
 3 subdirectories:
 
-    <code>/server
+    /server
     /client
     /config
-    </code>
 
 You also need a settings.gradle and build.gradle file in the root
 directory.  
 —- For settings.gradle —-
 
-    <code> 
     include 'server'
     include 'client'
     include 'config'
-    </code>
+
 
 This will tell gradle that gradle should search for ‘server’, ‘client’,
 ‘config’ directories and mark them as part of the project.  
 —- For build.gradle —-
 
-    <code> 
     allprojects {
         apply plugin: 'idea'
         apply plugin: 'eclipse'
@@ -102,7 +99,6 @@ This will tell gradle that gradle should search for ‘server’, ‘client’,
             mavenCentral()
         }
     }
-    </code>
 
 This tells gradle that it should use pegasus artifact version 1.20.0
 from maven central repository. This also tells gradle we have
@@ -135,7 +131,6 @@ and prints to stdout when a request comes in.
 
 First we add our compile dependencies to the server’s build.gradle
 
-    <code>
     apply plugin: 'java'
     
     dependencies {
@@ -144,11 +139,9 @@ First we add our compile dependencies to the server’s build.gradle
         compile spec.product.pegasus.d2
     }
     
-    </code>
 
 Here is the implementation of the echo server
 
-    <code>
     package com.example.d2.server;
     
     import com.sun.net.httpserver.HttpExchange;
@@ -214,12 +207,10 @@ Here is the implementation of the echo server
       }
     
     }
-    </code>
 
 We store the configuration for the servers in server.json. Here is the
 content of server.json:
 
-    <code>
     {
         "echoServers" :
             [
@@ -339,7 +330,6 @@ content of server.json:
         "announcerStartTimeout" : 5000,
         "announcerShutdownTimeout" : 5000
     }
-    </code>
 
 In the configuration above we have 6 echo servers and 6 d2 announcers.
 The first 3 echo servers belong to RecommendationService and the
@@ -348,7 +338,6 @@ remaining echo servers belong to NewsService.
 Finally, we add the task of running this server to the server’s
 build.gradle.
 
-    <code>
     
     task runServer(type: JavaExec) {
         main = 'com.example.d2.server.ExampleD2Server'
@@ -356,10 +345,10 @@ build.gradle.
         standardInput = System.in
     }
     
-    </code>
 
 In order to run the server you run this command  
-<code>../../gradlew runServer</code>
+
+```../../gradlew runServer```
 
 ## Step 2. Create a Config Runner
 
@@ -389,7 +378,7 @@ and sticky routings.
 But for simplicity we won’t include all these in this example. Here is
 how our d2Config.json going to look like:
 
-    <code>
+    
     {
         "d2Clusters" : {
             "RecommendationService": {
@@ -440,7 +429,7 @@ how our d2Config.json going to look like:
         "zkBasePath" : "/d2",
         "zkRetryLimit" : 10
     }
-    </code>
+    
 
 From reading the configuration above you probably have questions about
 these properties. So here are some explanation for some non-obvious
@@ -461,14 +450,14 @@ Properties](https://github.com/linkedin/rest.li/wiki/D2-Zookeeper-Properties)
 
 Then we modify the config’s build.gradle to add our java dependencies.
 
-    <code>
+    
     apply plugin: 'java'
     
     dependencies {
         compile 'com.googlecode.json-simple:json-simple:1.1.1'
         compile spec.product.pegasus.d2
     }
-    </code>
+    
 
 Next we will create a java class that reads this config and publish it
 to zookeeper. We have a utility class called D2Config that does this for
@@ -477,7 +466,7 @@ work.
 
 Here’s the java class for running the D2Config.
 
-    <code>
+    
     package com.example.d2.config;
     import com.linkedin.d2.discovery.util.D2Config;
     import org.json.simple.JSONObject;
@@ -531,20 +520,20 @@ Here’s the java class for running the D2Config.
         System.out.println("Finished populating zookeeper with d2 configuration");
       }
     }
-    </code>
+    
 
 Finally, we add a task in config’s build.gradle to run the above Java
 class.
 
-    <code>
+    
     task runConfigRunner(type: JavaExec) {
         main = 'com.example.d2.config.ConfigRunner'
         classpath = sourceSets.main.runtimeClasspath
         standardInput = System.in
     }
-    </code>
+    
 
-In order to run D2Config run <code>../../gradlew runConfigRunner</code>
+In order to run D2Config run ../../gradlew runConfigRunner
 
 ## Step 3. Create a Client
 
@@ -568,19 +557,19 @@ Create the following project structure in the ‘client’ subdirectory:
 
 First we create build.gradle to declare our java dependencies
 
-    <code>
+    
     apply plugin: 'java'
     dependencies {
         compile 'com.googlecode.json-simple:json-simple:1.1.1'
         compile spec.product.pegasus.d2
     }
-    </code>
+    
 
 Then we need the client code to instantiate D2 client and to send
 traffic through the D2 client. Here’s how our ExampleD2Client looks
 like:
 
-    <code>
+    
     package com.example.d2.client;
     
     import com.linkedin.common.callback.Callback;
@@ -796,7 +785,7 @@ like:
         }
       }
     }
-    </code>
+    
 
 In the above code, sendTraffic() will send request based on the
 trafficProportion configured in client.json. Let’s configure the config
@@ -808,7 +797,7 @@ so that the client sends:
 
 Here’s our client.json:
 
-    <code>
+    
     {
         "zkConnectString" : "localhost:2181",
         "zkSessionTimeout" : 5000,
@@ -826,20 +815,20 @@ Here’s our client.json:
         },
         "rateMillisecond" : 1000
     }
-    </code>
+    
 
 Now we are ready to add the following task to build.gradle
 
-    <code>
+    
     task runClient(type: JavaExec) {
         main = 'com.example.d2.client.ExampleD2Client'
         classpath = sourceSets.main.runtimeClasspath
         standardInput = System.in
     }
-    </code>
+    
 
 To run the client, run the following command in a different terminal
-console: <code>../../gradlew runClient</code>
+console: ../../gradlew runClient
 
 # Next Steps
 

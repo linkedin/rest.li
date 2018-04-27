@@ -29,25 +29,25 @@
                
       
         <li>
-          <a href="/get_started/quick_start" >
+          <a href="/rest.li/get_started/quick_start" >
             Getting Started
           </a>
         </li>
         
         <li>
-          <a href="/user_guide/server_architecture" >
+          <a href="/rest.li/user_guide/server_architecture" >
             User guide
           </a>
         </li>
         
         <li>
-          <a href="/reference/architecture" >
+          <a href="/rest.li/reference/architecture" >
             API reference
           </a>
         </li>
         
         <li>
-          <a href="/contribute/howto" >
+          <a href="/rest.li/contribute/howto" >
             Contribute
           </a>
         </li>
@@ -62,7 +62,7 @@
 
         <div class="container">
         <div class="row">
-                <div class="col s12 m4 l2"> 
+                <div class="col s12 m4 l3"> 
                
                     
                    
@@ -71,11 +71,11 @@
                         <li><span class="nav_sub-title">Getting Started</span></li>
                         <ul>
                        
-                         <li><a href="/get_started/quick_start">Quick-start guide</a></li>
+                         <li><a href="/rest.li/get_started/quick_start">Quick-start guide</a></li>
                        
-                         <li><a href="/start/d2_quick_start">Dynamic discovery</a></li>
+                         <li><a href="/rest.li/start/d2_quick_start">Dynamic discovery</a></li>
                        
-                         <li><a href="/start/unstructured">Unstructured Data (BLOB)</a></li>
+                         <li><a href="/rest.li/start/unstructured">Unstructured Data (BLOB)</a></li>
                        
                         </ul>
                      </ul>
@@ -86,15 +86,15 @@
                         <li><span class="nav_sub-title">Installation</span></li>
                         <ul>
                        
-                         <li><a href="/setup/building">Building Rest.li from Source</a></li>
+                         <li><a href="/rest.li/setup/building">Building Rest.li from Source</a></li>
                        
-                         <li><a href="/setup/gradle">Gradle build integration</a></li>
+                         <li><a href="/rest.li/setup/gradle">Gradle build integration</a></li>
                        
                         </ul>
                      </ul>
                         
                     </div>
-                     <div class="col s12 m3 l10">
+                     <div class="markdown-body col s12 m3 l9">
                             <h1 id="dynamic-discovery-quickstart">Dynamic discovery quickstart</h1>
 
 <p>In this tutorial, we will explain the basic concepts of D2 using a
@@ -157,29 +157,25 @@ choose a server to send the request to.</p>
 for our build process. The top level structure of our project will have
 3 subdirectories:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;/server
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/server
 /client
 /config
-&lt;/code&gt;
 </code></pre></div></div>
 
 <p>You also need a settings.gradle and build.gradle file in the root
 directory.<br />
 —- For settings.gradle —-</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt; 
-include 'server'
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>include 'server'
 include 'client'
 include 'config'
-&lt;/code&gt;
 </code></pre></div></div>
 
 <p>This will tell gradle that gradle should search for ‘server’, ‘client’,
 ‘config’ directories and mark them as part of the project.<br />
 —- For build.gradle —-</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt; 
-allprojects {
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>allprojects {
     apply plugin: 'idea'
     apply plugin: 'eclipse'
 }
@@ -200,7 +196,6 @@ subprojects {
         mavenCentral()
     }
 }
-&lt;/code&gt;
 </code></pre></div></div>
 
 <p>This tells gradle that it should use pegasus artifact version 1.20.0
@@ -266,22 +261,18 @@ and prints to stdout when a request comes in.</p>
 
 <p>First we add our compile dependencies to the server’s build.gradle</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-apply plugin: 'java'
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>apply plugin: 'java'
 
 dependencies {
     compile 'com.googlecode.json-simple:json-simple:1.1.1'
     compile spec.product.pegasus.r2
     compile spec.product.pegasus.d2
 }
-
-&lt;/code&gt;
 </code></pre></div></div>
 
 <p>Here is the implementation of the echo server</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&lt;</span><span class="n">code</span><span class="p">&gt;</span>
-<span class="k">package</span> <span class="n">com</span><span class="p">.</span><span class="n">example</span><span class="p">.</span><span class="n">d2</span><span class="p">.</span><span class="n">server</span><span class="p">;</span>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">package</span> <span class="n">com</span><span class="p">.</span><span class="n">example</span><span class="p">.</span><span class="n">d2</span><span class="p">.</span><span class="n">server</span><span class="p">;</span>
 
 <span class="n">import</span> <span class="n">com</span><span class="p">.</span><span class="n">sun</span><span class="p">.</span><span class="n">net</span><span class="p">.</span><span class="n">httpserver</span><span class="p">.</span><span class="n">HttpExchange</span><span class="p">;</span>
 <span class="n">import</span> <span class="n">com</span><span class="p">.</span><span class="n">sun</span><span class="p">.</span><span class="n">net</span><span class="p">.</span><span class="n">httpserver</span><span class="p">.</span><span class="n">HttpHandler</span><span class="p">;</span>
@@ -346,14 +337,12 @@ dependencies {
   <span class="p">}</span>
 
 <span class="p">}</span>
-<span class="p">&lt;/</span><span class="n">code</span><span class="p">&gt;</span>
 </code></pre></div></div>
 
 <p>We store the configuration for the servers in server.json. Here is the
 content of server.json:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-{
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
     "echoServers" :
         [
             {
@@ -472,7 +461,6 @@ content of server.json:</p>
     "announcerStartTimeout" : 5000,
     "announcerShutdownTimeout" : 5000
 }
-&lt;/code&gt;
 </code></pre></div></div>
 
 <p>In the configuration above we have 6 echo servers and 6 d2 announcers.
@@ -482,19 +470,16 @@ remaining echo servers belong to NewsService.</p>
 <p>Finally, we add the task of running this server to the server’s
 build.gradle.</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-
-task runServer(type: JavaExec) {
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>task runServer(type: JavaExec) {
     main = 'com.example.d2.server.ExampleD2Server'
     classpath = sourceSets.main.runtimeClasspath
     standardInput = System.in
 }
-
-&lt;/code&gt;
 </code></pre></div></div>
 
-<p>In order to run the server you run this command<br />
-<code>../../gradlew runServer</code></p>
+<p>In order to run the server you run this command</p>
+
+<p><code class="highlighter-rouge">../../gradlew runServer</code></p>
 
 <h2 id="step-2-create-a-config-runner">Step 2. Create a Config Runner</h2>
 
@@ -556,8 +541,7 @@ and sticky routings.</p>
 <p>But for simplicity we won’t include all these in this example. Here is
 how our d2Config.json going to look like:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-{
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
     "d2Clusters" : {
         "RecommendationService": {
             "services":
@@ -607,7 +591,6 @@ how our d2Config.json going to look like:</p>
     "zkBasePath" : "/d2",
     "zkRetryLimit" : 10
 }
-&lt;/code&gt;
 </code></pre></div></div>
 
 <p>From reading the configuration above you probably have questions about
@@ -631,14 +614,12 @@ Properties</a></p>
 
 <p>Then we modify the config’s build.gradle to add our java dependencies.</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-apply plugin: 'java'
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>apply plugin: 'java'
 
 dependencies {
     compile 'com.googlecode.json-simple:json-simple:1.1.1'
     compile spec.product.pegasus.d2
 }
-&lt;/code&gt;
 </code></pre></div></div>
 
 <p>Next we will create a java class that reads this config and publish it
@@ -648,8 +629,7 @@ work.</p>
 
 <p>Here’s the java class for running the D2Config.</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&lt;</span><span class="n">code</span><span class="p">&gt;</span>
-<span class="k">package</span> <span class="n">com</span><span class="p">.</span><span class="n">example</span><span class="p">.</span><span class="n">d2</span><span class="p">.</span><span class="n">config</span><span class="p">;</span>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">package</span> <span class="n">com</span><span class="p">.</span><span class="n">example</span><span class="p">.</span><span class="n">d2</span><span class="p">.</span><span class="n">config</span><span class="p">;</span>
 <span class="n">import</span> <span class="n">com</span><span class="p">.</span><span class="n">linkedin</span><span class="p">.</span><span class="n">d2</span><span class="p">.</span><span class="n">discovery</span><span class="p">.</span><span class="n">util</span><span class="p">.</span><span class="n">D2Config</span><span class="p">;</span>
 <span class="n">import</span> <span class="n">org</span><span class="p">.</span><span class="n">json</span><span class="p">.</span><span class="n">simple</span><span class="p">.</span><span class="n">JSONObject</span><span class="p">;</span>
 <span class="n">import</span> <span class="n">org</span><span class="p">.</span><span class="n">json</span><span class="p">.</span><span class="n">simple</span><span class="p">.</span><span class="n">parser</span><span class="p">.</span><span class="n">JSONParser</span><span class="p">;</span>
@@ -702,22 +682,19 @@ work.</p>
     <span class="nf">System</span><span class="p">.</span><span class="n">out</span><span class="p">.</span><span class="n">println</span><span class="p">(</span><span class="s2">"Finished populating zookeeper with d2 configuration"</span><span class="p">);</span>
   <span class="p">}</span>
 <span class="p">}</span>
-<span class="p">&lt;/</span><span class="n">code</span><span class="p">&gt;</span>
 </code></pre></div></div>
 
 <p>Finally, we add a task in config’s build.gradle to run the above Java
 class.</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-task runConfigRunner(type: JavaExec) {
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>task runConfigRunner(type: JavaExec) {
     main = 'com.example.d2.config.ConfigRunner'
     classpath = sourceSets.main.runtimeClasspath
     standardInput = System.in
 }
-&lt;/code&gt;
 </code></pre></div></div>
 
-<p>In order to run D2Config run <code>../../gradlew runConfigRunner</code></p>
+<p>In order to run D2Config run ../../gradlew runConfigRunner</p>
 
 <h2 id="step-3-create-a-client">Step 3. Create a Client</h2>
 
@@ -773,21 +750,18 @@ task runConfigRunner(type: JavaExec) {
 
 <p>First we create build.gradle to declare our java dependencies</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-apply plugin: 'java'
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>apply plugin: 'java'
 dependencies {
     compile 'com.googlecode.json-simple:json-simple:1.1.1'
     compile spec.product.pegasus.d2
 }
-&lt;/code&gt;
 </code></pre></div></div>
 
 <p>Then we need the client code to instantiate D2 client and to send
 traffic through the D2 client. Here’s how our ExampleD2Client looks
 like:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&lt;</span><span class="n">code</span><span class="p">&gt;</span>
-<span class="k">package</span> <span class="n">com</span><span class="p">.</span><span class="n">example</span><span class="p">.</span><span class="n">d2</span><span class="p">.</span><span class="n">client</span><span class="p">;</span>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">package</span> <span class="n">com</span><span class="p">.</span><span class="n">example</span><span class="p">.</span><span class="n">d2</span><span class="p">.</span><span class="n">client</span><span class="p">;</span>
 
 <span class="n">import</span> <span class="n">com</span><span class="p">.</span><span class="n">linkedin</span><span class="p">.</span><span class="n">common</span><span class="p">.</span><span class="n">callback</span><span class="p">.</span><span class="n">Callback</span><span class="p">;</span>
 <span class="n">import</span> <span class="n">com</span><span class="p">.</span><span class="n">linkedin</span><span class="p">.</span><span class="n">common</span><span class="p">.</span><span class="n">util</span><span class="p">.</span><span class="n">None</span><span class="p">;</span>
@@ -1002,7 +976,6 @@ like:</p>
     }
   }
 }
-&lt;/code&gt;
 </span></code></pre></div></div>
 
 <p>In the above code, sendTraffic() will send request based on the
@@ -1017,8 +990,7 @@ so that the client sends:</p>
 
 <p>Here’s our client.json:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-{
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
     "zkConnectString" : "localhost:2181",
     "zkSessionTimeout" : 5000,
     "zkStartupTimeout" : 5000,
@@ -1035,22 +1007,19 @@ so that the client sends:</p>
     },
     "rateMillisecond" : 1000
 }
-&lt;/code&gt;
 </code></pre></div></div>
 
 <p>Now we are ready to add the following task to build.gradle</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-task runClient(type: JavaExec) {
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>task runClient(type: JavaExec) {
     main = 'com.example.d2.client.ExampleD2Client'
     classpath = sourceSets.main.runtimeClasspath
     standardInput = System.in
 }
-&lt;/code&gt;
 </code></pre></div></div>
 
 <p>To run the client, run the following command in a different terminal
-console: <code>../../gradlew runClient</code></p>
+console: ../../gradlew runClient</p>
 
 <h1 id="next-steps">Next Steps</h1>
 

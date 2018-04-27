@@ -29,25 +29,25 @@
                
       
         <li>
-          <a href="/get_started/quick_start" >
+          <a href="/rest.li/get_started/quick_start" >
             Getting Started
           </a>
         </li>
         
         <li>
-          <a href="/user_guide/server_architecture" >
+          <a href="/rest.li/user_guide/server_architecture" >
             User guide
           </a>
         </li>
         
         <li>
-          <a href="/reference/architecture" >
+          <a href="/rest.li/reference/architecture" >
             API reference
           </a>
         </li>
         
         <li>
-          <a href="/contribute/howto" >
+          <a href="/rest.li/contribute/howto" >
             Contribute
           </a>
         </li>
@@ -62,7 +62,7 @@
 
         <div class="container">
         <div class="row">
-                <div class="col s12 m4 l2"> 
+                <div class="col s12 m4 l3"> 
                
                     
                    
@@ -71,11 +71,11 @@
                         <li><span class="nav_sub-title">Getting Started</span></li>
                         <ul>
                        
-                         <li><a href="/get_started/quick_start">Quick-start guide</a></li>
+                         <li><a href="/rest.li/get_started/quick_start">Quick-start guide</a></li>
                        
-                         <li><a href="/start/d2_quick_start">Dynamic discovery</a></li>
+                         <li><a href="/rest.li/start/d2_quick_start">Dynamic discovery</a></li>
                        
-                         <li><a href="/start/unstructured">Unstructured Data (BLOB)</a></li>
+                         <li><a href="/rest.li/start/unstructured">Unstructured Data (BLOB)</a></li>
                        
                         </ul>
                      </ul>
@@ -86,15 +86,15 @@
                         <li><span class="nav_sub-title">Installation</span></li>
                         <ul>
                        
-                         <li><a href="/setup/building">Building Rest.li from Source</a></li>
+                         <li><a href="/rest.li/setup/building">Building Rest.li from Source</a></li>
                        
-                         <li><a href="/setup/gradle">Gradle build integration</a></li>
+                         <li><a href="/rest.li/setup/gradle">Gradle build integration</a></li>
                        
                         </ul>
                      </ul>
                         
                     </div>
-                     <div class="col s12 m3 l10">
+                     <div class="markdown-body col s12 m3 l9">
                             <h1 id="building-restli-from-source">Building Rest.li from Source</h1>
 <p>You can use the latest released version of Rest.li or build your own
 local version.</p>
@@ -119,24 +119,24 @@ repository</a></p>
 
 <p>You can get your own copy of the Rest.li repository with:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;git clone git@github.com:linkedin/rest.li.wiki&lt;/code&gt;
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git clone git@github.com:linkedin/rest.li.wiki
 </code></pre></div></div>
 
 <p>Or if you already have a copy of the repository, you can update it with:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;git pull&lt;/code&gt;
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git pull
 </code></pre></div></div>
 
 <h3 id="building-restli">Building Rest.li</h3>
 
 <p>To do a clean build type, do this:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;gradle clean build&lt;/code&gt;
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>gradle clean build
 </code></pre></div></div>
 
 <p>To install the gradle JARs in your own local repository, do this:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;gradle install&lt;/code&gt;
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>gradle install
 </code></pre></div></div>
 
 <h4 id="out-of-memory-while-trying-to-build">Out of Memory While Trying to Build?</h4>
@@ -144,10 +144,9 @@ repository</a></p>
 <p>If the build fails with an error message saying that there isn’t enough
 memory, increase the memory using the following command and try again:</p>
 
-<p>```<br />
-export GRADLE_OPTS=“-Xms512M -Xmx1536M -Xss1M
--XX:+CMSClassUnloadingEnabled -XX:MaxPermSize=1024M”<br />
-```</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>export GRADLE\_OPTS=“-Xms512M -Xmx1536M -Xss1M
+-XX:+CMSClassUnloadingEnabled -XX:MaxPermSize=1024M”  
+</code></pre></div></div>
 
                      </div>
                      <!-- <div class="col l3">

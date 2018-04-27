@@ -29,25 +29,25 @@
                
       
         <li>
-          <a href="/get_started/quick_start" >
+          <a href="/rest.li/get_started/quick_start" >
             Getting Started
           </a>
         </li>
         
         <li>
-          <a href="/user_guide/server_architecture" >
+          <a href="/rest.li/user_guide/server_architecture" >
             User guide
           </a>
         </li>
         
         <li>
-          <a href="/reference/architecture" >
+          <a href="/rest.li/reference/architecture" >
             API reference
           </a>
         </li>
         
         <li>
-          <a href="/contribute/howto" >
+          <a href="/rest.li/contribute/howto" >
             Contribute
           </a>
         </li>
@@ -62,7 +62,7 @@
 
         <div class="container">
         <div class="row">
-                <div class="col s12 m4 l2"> 
+                <div class="col s12 m4 l3"> 
                
                     
                    
@@ -71,11 +71,11 @@
                         <li><span class="nav_sub-title">Getting Started</span></li>
                         <ul>
                        
-                         <li><a href="/get_started/quick_start">Quick-start guide</a></li>
+                         <li><a href="/rest.li/get_started/quick_start">Quick-start guide</a></li>
                        
-                         <li><a href="/start/d2_quick_start">Dynamic discovery</a></li>
+                         <li><a href="/rest.li/start/d2_quick_start">Dynamic discovery</a></li>
                        
-                         <li><a href="/start/unstructured">Unstructured Data (BLOB)</a></li>
+                         <li><a href="/rest.li/start/unstructured">Unstructured Data (BLOB)</a></li>
                        
                         </ul>
                      </ul>
@@ -86,23 +86,25 @@
                         <li><span class="nav_sub-title">Installation</span></li>
                         <ul>
                        
-                         <li><a href="/setup/building">Building Rest.li from Source</a></li>
+                         <li><a href="/rest.li/setup/building">Building Rest.li from Source</a></li>
                        
-                         <li><a href="/setup/gradle">Gradle build integration</a></li>
+                         <li><a href="/rest.li/setup/gradle">Gradle build integration</a></li>
                        
                         </ul>
                      </ul>
                         
                     </div>
-                     <div class="col s12 m3 l10">
+                     <div class="markdown-body col s12 m3 l9">
                             <h1 id="quickstart-unstructured-data-in-restli">Quickstart: Unstructured Data in Rest.li</h1>
 
-<p>##Contents</p>
+<h2 id="contents">Contents</h2>
 
-<p>Introduction
-Serve Unstructured Data
-Consume Unstructured Data
-Recap</p>
+<ul>
+  <li>Introduction</li>
+  <li>Serve Unstructured Data</li>
+  <li>Consume Unstructured Data</li>
+  <li>Recap</li>
+</ul>
 
 <h2 id="introduction">Introduction</h2>
 <p>This tutorial demonstrates how to serve unstructured binary data such as blob in a Rest.li server. We’ll define a Rest.li resource that responds with fortune reports (in PDF format) for GET requests and show you how to consume the GET response from a HTTP client.</p>
@@ -112,9 +114,8 @@ Recap</p>
 <h2 id="serve-unstructured-data">Serve Unstructured Data</h2>
 <p>We start by defining a resource class on the server side by extending the provided CollectionUnstructuredDataResourceTemplate with the generic type of our resource key as String. Notice that, different from a regular Rest.li resource interface/template that also requires a value type, an unstructured data resource doesn’t require one. Next, we annotate the resource with @RestLiCollection and specify the required resource name and namespace.</p>
 
-<p><code>
-@RestLiCollection(name = "fortuneReports", namespace = "com.example.fortune")
-public class FortuneReportsResource extends CollectionUnstructuredDataResourceTemplate<String>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>@RestLiCollection(name = "fortuneReports", namespace = "com.example.fortune")
+public class FortuneReportsResource extends CollectionUnstructuredDataResourceTemplate&lt;String&gt;
 {
   @Override
   public void get(String key, @UnstructuredDataWriterParam UnstructuredDataWriter writer)
@@ -124,8 +125,9 @@ public class FortuneReportsResource extends CollectionUnstructuredDataResourceTe
     writer.getOutputStream().write(fortuneReportPDF);    // Output the data into response
   }
 }
-&lt;/code&gt;
-We then implement the GET method simply by overriding from the template class. We obtain the requested fortune report PDF from source (in bytes) and use the UnstructuredDataWriter instance given by the method parameter to return the response.</String></code></p>
+</code></pre></div></div>
+
+<p>We then implement the GET method simply by overriding from the template class. We obtain the requested fortune report PDF from source (in bytes) and use the UnstructuredDataWriter instance given by the method parameter to return the response.</p>
 
 <p>UnstructuredDataWriter provides a setter for the required Content-Type header and an OutputStream instance for writing the binary data that goes into the response content. The final response will then be sent to the client after the GET method is successfully returned.</p>
 
@@ -134,21 +136,19 @@ We then implement the GET method simply by overriding from the template class. W
 
 <p>Example: Using the GET endpoint in a HTML anchor</p>
 
-<p>&lt;/code&gt;
-<a src="d2://fortuneReports/1">
-&lt;/code&gt;</a></p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;a src="d2://fortuneReports/1"&gt;
+</code></pre></div></div>
 
 <p>When the link is clicked, the browser receive the PDF response and render the PDF inline or as file-download depends on the resource implementation.</p>
 
-<p>Example: Calling a local deployed GET endpoint with curl
-<code>
-$ curl -v http://localhost:1338/fortuneReports/1
+<p>Example: Calling a local deployed GET endpoint with curl</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ curl -v http://localhost:1338/fortuneReports/1
 ...
 HTTP/1.1 200 OK
 Content-Type: application/pdf
 Content-Length: 5
 Content: &lt;&lt;&lt; binary data of the PDF report &gt;&gt;&gt;
-</code></p>
+</code></pre></div></div>
 
 <p>Currently, Rest.li client doesn’t have support for unstructured data resource. Request builders aren’t generated for unstructured data resources.</p>
 

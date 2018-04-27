@@ -29,25 +29,25 @@
                
       
         <li>
-          <a href="/get_started/quick_start" >
+          <a href="/rest.li/get_started/quick_start" >
             Getting Started
           </a>
         </li>
         
         <li>
-          <a href="/user_guide/server_architecture" >
+          <a href="/rest.li/user_guide/server_architecture" >
             User guide
           </a>
         </li>
         
         <li>
-          <a href="/reference/architecture" >
+          <a href="/rest.li/reference/architecture" >
             API reference
           </a>
         </li>
         
         <li>
-          <a href="/contribute/howto" >
+          <a href="/rest.li/contribute/howto" >
             Contribute
           </a>
         </li>
@@ -62,7 +62,7 @@
 
         <div class="container">
         <div class="row">
-                <div class="col s12 m4 l2"> 
+                <div class="col s12 m4 l3"> 
                
                     
                    
@@ -71,11 +71,11 @@
                         <li><span class="nav_sub-title">User Guide</span></li>
                         <ul>
                        
-                         <li><a href="/user_guide/server_architecture">Rest.li Architecture</a></li>
+                         <li><a href="/rest.li/user_guide/server_architecture">Rest.li Architecture</a></li>
                        
-                         <li><a href="/user_guide/restli_server">Rest.li Server</a></li>
+                         <li><a href="/rest.li/user_guide/restli_server">Rest.li Server</a></li>
                        
-                         <li><a href="/user_guide/restli_client">Rest.li Client Framework</a></li>
+                         <li><a href="/rest.li/user_guide/restli_client">Rest.li Client Framework</a></li>
                        
                         </ul>
                      </ul>
@@ -86,9 +86,9 @@
                         <li><span class="nav_sub-title">Spec</span></li>
                         <ul>
                        
-                         <li><a href="/spec/protocol">Rest.li Protocol</a></li>
+                         <li><a href="/rest.li/spec/protocol">Rest.li Protocol</a></li>
                        
-                         <li><a href="/spec/restspec_format">Restspec json format</a></li>
+                         <li><a href="/rest.li/spec/restspec_format">Restspec json format</a></li>
                        
                         </ul>
                      </ul>
@@ -99,17 +99,16 @@
                         <li><span class="nav_sub-title">Modeling Resources</span></li>
                         <ul>
                        
-                         <li><a href="/modeling/modeling">Modeling Resources</a></li>
+                         <li><a href="/rest.li/modeling/modeling">Modeling Resources</a></li>
                        
-                         <li><a href="/modeling/compatibiltiy_check">Snapshots and Resource Compatibility Checking</a></li>
+                         <li><a href="/rest.li/modeling/compatibiltiy_check">Snapshots and Resource Compatibility Checking</a></li>
                        
                         </ul>
                      </ul>
                         
                     </div>
-                     <div class="col s12 m3 l10">
+                     <div class="markdown-body col s12 m3 l9">
                             <h1 id="restli-server">Rest.li Server</h1>
-<hr />
 
 <p>This section describes Rest.li support for implementing servers:</p>
 
@@ -153,16 +152,13 @@ a look at
 <a href="https://github.com/linkedin/rest.li/wiki/Compression">the
 compression wiki page</a> to see how we can configure a server for
 compression. Another example is to add a
-<code>SimpleLoggingFilter</code> with Spring, which requires you to do
+<code class="highlighter-rouge">SimpleLoggingFilter</code> with Spring, which requires you to do
 the following (full file
 <a href="https://github.com/linkedin/rest.li/blob/master/examples/spring-server/server/src/main/webapp/WEB-INF/beans.xml">here</a>):</p>
 
-<p>```xml</p>
-
-<!-- Example of how to add filters,  here we'll enable logging and snappy compression support -->
-<bean id="loggingFilter" class="com.linkedin.r2.filter.logging.SimpleLoggingFilter" />
-<p>\
-```</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;!-- Example of how to add filters,  here we'll enable logging and snappy compression support --&gt;
+&lt;bean id="loggingFilter" class="com.linkedin.r2.filter.logging.SimpleLoggingFilter" /&gt;\
+</code></pre></div></div>
 
 <p><a href="https://github.com/linkedin/rest.li/wiki/List-of-R2-filters">Other R2
 filters</a>
@@ -229,33 +225,28 @@ base class, uses an annotation to define a REST end-point (“fortunes”),
 and provides a GET endpoint by overriding the standard signature of the
 <code class="highlighter-rouge">get()</code> method of the base class:</p>
 
-<p>```java\
-/\
-* A collection of fortunes, keyed by random number.\
-*/\
-`RestLiCollection(name = “fortunes”, namespace = “com.example.fortune”)
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/\
+\* A collection of fortunes, keyed by random number.\
+\*/\
+`RestLiCollection(name = "fortunes", namespace = "com.example.fortune")
 public class FortunesResource extends CollectionResourceTemplate&lt;Long, Fortune&gt;
 {
-  /**</p>
-<ul>
-  <li>Gets a fortune for a random number.
+  /**
+   * Gets a fortune for a random number.
    */
-  <code class="highlighter-rouge">Override\
+  `Override\
 public Fortune get(Long key)\
 {\
 // retrieve data and return a Fortune object ...\
 }\
 }\
-\</code>``</li>
-</ul>
+</code></pre></div></div>
 
 <p>This interface implements an HTTP GET:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-&gt; GET /fortunes/1
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&gt; GET /fortunes/1
 ...
 &lt; { "fortune": "Your lucky color is purple" }
-&lt;/code&gt;
 </code></pre></div></div>
 
 <p>Note that Rest.li does not automatically use the names of your Java
@@ -366,15 +357,14 @@ subclass of <code class="highlighter-rouge">RecordTemplate</code> generated from
 
 <p>For example:</p>
 
-<p>```java\
-\@RestLiCollection(name = “fortunes”, namespace = “com.example.fortune”,
-keyName = “fortuneId”)\
-public class FortunesResource extends CollectionResourceTemplate&lt;Long,
-Fortune&gt;\
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>\@RestLiCollection(name = "fortunes", namespace = "com.example.fortune",
+keyName = "fortuneId")\
+public class FortunesResource extends CollectionResourceTemplate\&lt;Long,
+Fortune\&gt;\
 {\
-…\
+...\
 }\
-```</p>
+</code></pre></div></div>
 
 <h2 id="sub-resources">Sub-Resources</h2>
 
@@ -385,38 +375,34 @@ the sub-resource.</p>
 <p>For example, a sub-resource of the fortunes resource would have a URI
 path of the form:</p>
 
-<p>```\
-/fortunes/{fortuneId}/subresource\
-```</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/fortunes/{fortuneId}/subresource\
+</code></pre></div></div>
 
 <p>Parent resource keys can be accessed by sub-resources, as shown in the
 following example:</p>
 
-<p>```java\
-<code class="highlighter-rouge">RestLiCollection(name = "subresource", namespace = "com.example.fortune", parent = FortunesResource.class)
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>`RestLiCollection(name = "subresource", namespace = "com.example.fortune", parent = FortunesResource.class)
 public class SubResource extends CollectionResourceTemplate&lt;Long, SubResourceEntity&gt;
 {
-  </code>RestMethod.Get\
+  `RestMethod.Get\
 public Greeting get(Long key, \@Keys PathKeys keys) {\
-Long parentId = keys.getAsLong(“fortuneId”);\
-…\
+Long parentId = keys.getAsLong("fortuneId");\
+...\
 }\
-…\
+...\
 }\
-```</p>
+</code></pre></div></div>
 
 <p>Alternatively, if not using free form methods, the path key can
 retrieved from the resource context. This approach may be deprecated in
 future versions in favor of <code>\@Keys</code>.</p>
 
-<p>```java\
-public SubResourceEntity get(Long subresourceKey)\
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public SubResourceEntity get(Long subresourceKey)\
 {\
-Long parentId = getContext().getPathKeys().getAsLong(“fortuneId”);\
-…\
-}</p>
-
-<p>```</p>
+Long parentId = getContext().getPathKeys().getAsLong("fortuneId");\
+...\
+}
+</code></pre></div></div>
 
 <p>For details on how to make requests to sub-resources from a client, see
 <a href="#wiki-calling-sub-resources">Calling Sub-resources</a></p>
@@ -430,11 +416,10 @@ support primitive type keys (or typerefs to primitive types).
 <code class="highlighter-rouge">ComplexKeyResourceTemplate</code> is a convenient base class to extend when
 implementing a <code class="highlighter-rouge">ComplexKeyResource</code>.</p>
 
-<p>The full interface is:\
-```java\
-public interface ComplexKeyResource&lt;K extends RecordTemplate, P extends
-RecordTemplate, V extends RecordTemplate&gt; …\
-```</p>
+<p>The full interface is:\</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public interface ComplexKeyResource\&lt;K extends RecordTemplate, P extends
+RecordTemplate, V extends RecordTemplate\&gt; ...\
+</code></pre></div></div>
 
 <p>A complex key consists of a <code class="highlighter-rouge">Key</code> and <code class="highlighter-rouge">Parameter</code> part. The <code class="highlighter-rouge">Key</code> should
 uniquely identify the entities of the collection while the parameters
@@ -447,12 +432,11 @@ indicate that no “Parameters” are used to key the collection.</p>
 
 <p>Example:</p>
 
-<p>```java\
-\@RestLiCollection(name = “widgets”, namespace = “com.example.widgets”)\
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>\@RestLiCollection(name = "widgets", namespace = "com.example.widgets")\
 public class WidgetResource implements extends
-ComplexKeyResourceTemplate&lt;WidgetKey, EmptyRecord, Widget&gt;\
+ComplexKeyResourceTemplate\&lt;WidgetKey, EmptyRecord, Widget\&gt;\
 {\
-public Widget get(ComplexResourceKey&lt;WidgetKey, EmptyRecord&gt; ck)\
+public Widget get(ComplexResourceKey\&lt;WidgetKey, EmptyRecord\&gt; ck)\
 {\
 WidgetKey key = ck.getKey();\
 int number = key.getNumber();\
@@ -461,24 +445,23 @@ String model = key.getThing().getModel();\
 return lookupWidget(number, make, model);\
 }\
 }\
-```</p>
+\`\`\`
 
-<p>To use <code>EmptyRecord</code>, <code>restli-common</code> must be in
-the <code>dataModel</code> dependencies for the api project where client
-bindings are generated, as shown in the following example:</p>
+To use &lt;code&gt;EmptyRecord&lt;/code&gt;, &lt;code&gt;restli-common&lt;/code&gt; must be in
+the &lt;code&gt;dataModel&lt;/code&gt; dependencies for the api project where client
+bindings are generated, as shown in the following example:
 
-<p>api/build.gradle:\
-```groovy\
+api/build.gradle:\
+\`\`\`groovy\
 dependencies {\
-…\
+...\
 dataModel spec.product.pegasus.restliCommon\
 }\
-```</p>
+</code></pre></div></div>
 
-<p>Where <code>WidgetKey.pdsc</code> is defined by the schema:</p>
+<p>Where <code class="highlighter-rouge">WidgetKey.pdsc</code> is defined by the schema:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-{
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
   "type": "record",
   "name": "WidgetKey",
   "namespace": "com.example.widget",
@@ -496,22 +479,17 @@ dataModel spec.product.pegasus.restliCommon\
     }
   ]
 }
-&lt;/code&gt;
 </code></pre></div></div>
 
 <p>Example request:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-curl "http://&lt;hostname:port&gt;/widgets/number=1&amp;thing.make=adruino&amp;thing.model=uno
-&lt;/code&gt;
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>curl "http://&lt;hostname:port&gt;/widgets/number=1&amp;thing.make=adruino&amp;thing.model=uno
 </code></pre></div></div>
 
 <p>If params are added, they are represented in the url under the
 “$params” prefix like this:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-curl "http://&lt;hostname:port&gt;/widgets/number=1&amp;thing.make=adruino&amp;thing.model=uno&amp;$params.version=1
-&lt;/code&gt;
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>curl "http://&lt;hostname:port&gt;/widgets/number=1&amp;thing.make=adruino&amp;thing.model=uno&amp;$params.version=1
 </code></pre></div></div>
 
 <p>The implementation of complex key collection is identical to the regular

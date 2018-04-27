@@ -6,7 +6,6 @@ index: 2
 ---
 
 # Rest.li Server
---------------
 
 This section describes Rest.li support for implementing servers:
 
@@ -46,15 +45,14 @@ a look at
 <a href="https://github.com/linkedin/rest.li/wiki/Compression">the
 compression wiki page</a> to see how we can configure a server for
 compression. Another example is to add a
-<code>SimpleLoggingFilter</code> with Spring, which requires you to do
+`SimpleLoggingFilter` with Spring, which requires you to do
 the following (full file
 <a href="https://github.com/linkedin/rest.li/blob/master/examples/spring-server/server/src/main/webapp/WEB-INF/beans.xml">here</a>):
 
-\`\`\`xml
-
+```
 <!-- Example of how to add filters,  here we'll enable logging and snappy compression support -->
 <bean id="loggingFilter" class="com.linkedin.r2.filter.logging.SimpleLoggingFilter" />\
-\`\`\`
+```
 
 [Other R2
 filters](https://github.com/linkedin/rest.li/wiki/List-of-R2-filters)
@@ -113,7 +111,7 @@ base class, uses an annotation to define a REST end-point ("fortunes"),
 and provides a GET endpoint by overriding the standard signature of the
 `get()` method of the base class:
 
-\`\`\`java\
+```
 /\
 \* A collection of fortunes, keyed by random number.\
 \*/\
@@ -129,15 +127,15 @@ public Fortune get(Long key)\
 // retrieve data and return a Fortune object ...\
 }\
 }\
-\`\`\`
+```
 
 This interface implements an HTTP GET:
 
-    <code>
+   
     > GET /fortunes/1
     ...
     < { "fortune": "Your lucky color is purple" }
-    </code>
+   
 
 Note that Rest.li does not automatically use the names of your Java
 identifiers. Class names, method names, and parameter names have no
@@ -241,7 +239,7 @@ For convenience, Collection resources may extend
 
 For example:
 
-\`\`\`java\
+```
 \@RestLiCollection(name = "fortunes", namespace = "com.example.fortune",
 keyName = "fortuneId")\
 public class FortunesResource extends CollectionResourceTemplate\<Long,
@@ -249,7 +247,7 @@ Fortune\>\
 {\
 ...\
 }\
-\`\`\`
+```
 
 ## Sub-Resources
 
@@ -260,14 +258,14 @@ the sub-resource.
 For example, a sub-resource of the fortunes resource would have a URI
 path of the form:
 
-\`\`\`\
+```
 /fortunes/{fortuneId}/subresource\
-\`\`\`
+```
 
 Parent resource keys can be accessed by sub-resources, as shown in the
 following example:
 
-\`\`\`java\
+```
 `RestLiCollection(name = "subresource", namespace = "com.example.fortune", parent = FortunesResource.class)
 public class SubResource extends CollectionResourceTemplate<Long, SubResourceEntity>
 {
@@ -278,20 +276,19 @@ Long parentId = keys.getAsLong("fortuneId");\
 }\
 ...\
 }\
-\`\`\`
+```
 
 Alternatively, if not using free form methods, the path key can
 retrieved from the resource context. This approach may be deprecated in
 future versions in favor of <code>\@Keys</code>.
 
-\`\`\`java\
+```
 public SubResourceEntity get(Long subresourceKey)\
 {\
 Long parentId = getContext().getPathKeys().getAsLong("fortuneId");\
 ...\
 }
-
-\`\`\`
+```
 
 For details on how to make requests to sub-resources from a client, see
 <a href="#wiki-calling-sub-resources">Calling Sub-resources</a>
@@ -306,10 +303,10 @@ support primitive type keys (or typerefs to primitive types).
 implementing a `ComplexKeyResource`.
 
 The full interface is:\
-\`\`\`java\
+```
 public interface ComplexKeyResource\<K extends RecordTemplate, P extends
 RecordTemplate, V extends RecordTemplate\> ...\
-\`\`\`
+```
 
 A complex key consists of a `Key` and `Parameter` part. The `Key` should
 uniquely identify the entities of the collection while the parameters
@@ -322,7 +319,7 @@ indicate that no "Parameters" are used to key the collection.
 
 Example:
 
-\`\`\`java\
+```
 \@RestLiCollection(name = "widgets", namespace = "com.example.widgets")\
 public class WidgetResource implements extends
 ComplexKeyResourceTemplate\<WidgetKey, EmptyRecord, Widget\>\
@@ -348,11 +345,11 @@ dependencies {\
 ...\
 dataModel spec.product.pegasus.restliCommon\
 }\
-\`\`\`
+```
 
-Where <code>WidgetKey.pdsc</code> is defined by the schema:
+Where `WidgetKey.pdsc` is defined by the schema:
 
-    <code>
+    
     {
       "type": "record",
       "name": "WidgetKey",
@@ -371,20 +368,20 @@ Where <code>WidgetKey.pdsc</code> is defined by the schema:
         }
       ]
     }
-    </code>
+
 
 Example request:
 
-    <code>
+    
     curl "http://<hostname:port>/widgets/number=1&thing.make=adruino&thing.model=uno
-    </code>
+    
 
 If params are added, they are represented in the url under the
 "\$params" prefix like this:
 
-    <code>
+    
     curl "http://<hostname:port>/widgets/number=1&thing.make=adruino&thing.model=uno&$params.version=1
-    </code>
+    
 
 The implementation of complex key collection is identical to the regular
 `RestLiCollection` with the exception that it extends

@@ -29,28 +29,28 @@ You can also checkout, modify, or build your own copy of Rest.li.
 
 You can get your own copy of the Rest.li repository with:
 
-    <code>git clone git@github.com:linkedin/rest.li.wiki</code>
+    git clone git@github.com:linkedin/rest.li.wiki
 
 Or if you already have a copy of the repository, you can update it with:
 
-    <code>git pull</code>
+    git pull
 
 ### Building Rest.li
 
 To do a clean build type, do this:
 
-    <code>gradle clean build</code>
+    gradle clean build
 
 To install the gradle JARs in your own local repository, do this:
 
-    <code>gradle install</code>
+    gradle install
 
 #### Out of Memory While Trying to Build?
 
 If the build fails with an error message saying that there isn’t enough
 memory, increase the memory using the following command and try again:
 
-\`\`\`  
+```
 export GRADLE\_OPTS=“-Xms512M -Xmx1536M -Xss1M
 -XX:+CMSClassUnloadingEnabled -XX:MaxPermSize=1024M”  
-\`\`\`
+```

@@ -29,25 +29,25 @@
                
       
         <li>
-          <a href="/get_started/quick_start" >
+          <a href="/rest.li/get_started/quick_start" >
             Getting Started
           </a>
         </li>
         
         <li>
-          <a href="/user_guide/server_architecture" class="active">
+          <a href="/rest.li/user_guide/server_architecture" >
             User guide
           </a>
         </li>
         
         <li>
-          <a href="/reference/architecture" >
+          <a href="/rest.li/reference/architecture" >
             API reference
           </a>
         </li>
         
         <li>
-          <a href="/contribute/howto" >
+          <a href="/rest.li/contribute/howto" >
             Contribute
           </a>
         </li>
@@ -62,7 +62,7 @@
 
         <div class="container">
         <div class="row">
-                <div class="col s12 m4 l2"> 
+                <div class="col s12 m4 l3"> 
                
                     
                    
@@ -71,11 +71,11 @@
                         <li><span class="nav_sub-title">User Guide</span></li>
                         <ul>
                        
-                         <li><a href="/user_guide/server_architecture">Rest.li Architecture</a></li>
+                         <li><a href="/rest.li/user_guide/server_architecture">Rest.li Architecture</a></li>
                        
-                         <li><a href="/user_guide/restli_server">Rest.li Server</a></li>
+                         <li><a href="/rest.li/user_guide/restli_server">Rest.li Server</a></li>
                        
-                         <li><a href="/user_guide/restli_client">Rest.li Client Framework</a></li>
+                         <li><a href="/rest.li/user_guide/restli_client">Rest.li Client Framework</a></li>
                        
                         </ul>
                      </ul>
@@ -86,9 +86,9 @@
                         <li><span class="nav_sub-title">Spec</span></li>
                         <ul>
                        
-                         <li><a href="/spec/protocol">Rest.li Protocol</a></li>
+                         <li><a href="/rest.li/spec/protocol">Rest.li Protocol</a></li>
                        
-                         <li><a href="/spec/restspec_format">Restspec json format</a></li>
+                         <li><a href="/rest.li/spec/restspec_format">Restspec json format</a></li>
                        
                         </ul>
                      </ul>
@@ -99,17 +99,16 @@
                         <li><span class="nav_sub-title">Modeling Resources</span></li>
                         <ul>
                        
-                         <li><a href="/modeling/modeling">Modeling Resources</a></li>
+                         <li><a href="/rest.li/modeling/modeling">Modeling Resources</a></li>
                        
-                         <li><a href="/modeling/compatibiltiy_check">Snapshots and Resource Compatibility Checking</a></li>
+                         <li><a href="/rest.li/modeling/compatibiltiy_check">Snapshots and Resource Compatibility Checking</a></li>
                        
                         </ul>
                      </ul>
                         
                     </div>
-                     <div class="col s12 m3 l10">
+                     <div class="markdown-body col s12 m3 l9">
                             <h1 id="restli-clientserver-architecture">Rest.li Client/Server Architecture</h1>
-<hr />
 
 <p>Rest.li is a Java framework that allows you to easily create clients and
 servers that use a REST style of communication. Rest.li is based on an
@@ -156,7 +155,7 @@ classes:</p>
 
 <center>
 <b>Data and Control Flow Between a Rest.li Server and
-Client</b><br />&lt;img src=https://github.com/linkedin/rest.li/wiki/RestLiClientServerFlow.png&gt;
+Client</b><br /><img src="https://github.com/linkedin/rest.li/wiki/RestLiClientServerFlow.png" />
 
 </center>
 <p><a id="wiki-ServerDataFlow"></a></p>
@@ -205,22 +204,24 @@ implementation.</p>
 <p>Starting with the server (on the right in the diagram above), the
 following steps occur when a request is submitted to a Rest.li server:</p>
 
-<p># The R2 transport layer receives a request (HTTP + JSON) and sends it
+<ul>
+  <li>The R2 transport layer receives a request (HTTP + JSON) and sends it
 on to Rest.li. (R2 is a separate library that provides HTTP transport
 services. It is independent of Rest.li but is included with the Rest.li
-code base. It’s designed to work well with Rest.li.)\
-# Rest.li’s routing logic inspects the request’s URI path and
+code base. It’s designed to work well with Rest.li.)\</li>
+  <li>Rest.li’s routing logic inspects the request’s URI path and
 determines which target <em>resource</em> (a Java class) the server has defined
-to handle that request.\
-# Rest.li parses the request to extract any parameters.\
-# Rest.li creates a new instance of the resource class designated to
-handle the request.\
-# Rest.li invokes the appropriate methods of the resource object,
-passing in any necessary Java parameters.\
-# The resource object instantiates and returns a response, in the form
-of a RecordTemplate object.\
-# Rest.li serializes the response object and passes it back to the
-requesting client through the R2 transport layer.</p>
+to handle that request.\</li>
+  <li>Rest.li parses the request to extract any parameters.\</li>
+  <li>Rest.li creates a new instance of the resource class designated to
+handle the request.\</li>
+  <li>Rest.li invokes the appropriate methods of the resource object,
+passing in any necessary Java parameters.\</li>
+  <li>The resource object instantiates and returns a response, in the form
+of a RecordTemplate object.\</li>
+  <li>Rest.li serializes the response object and passes it back to the
+requesting client through the R2 transport layer.</li>
+</ul>
 
 <p>We’ll look at what you, as a developer, need to do to support this data
 flow shortly. Although, you probably noticed that Rest.li does most of
@@ -278,7 +279,7 @@ allow a server and clients to exchange data.</p>
 
 <center>
 <b>Rest.li Development
-Flow</b><br />&lt;img src=https://github.com/linkedin/rest.li/wiki/RestLiCodeGen.png&gt;
+Flow</b><br /><img src="https://github.com/linkedin/rest.li/wiki/RestLiCodeGen.png" />
 
 </center>
 <p>Let’s look at each step:</p>
