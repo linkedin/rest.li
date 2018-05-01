@@ -102,10 +102,10 @@
 <p>Follow the steps below to try Pegasus quickly and get a basic idea of how it works:</p>
 
 <ul>
-  <li><a href="https://github.com/linkedin/rest.li/wiki/Quick-Start-Guide#build">Build</a></li>
-  <li><a href="https://github.com/linkedin/rest.li/wiki/Quick-Start-Guide#run-the-examples">Run the Examples</a></li>
-  <li><a href="https://github.com/linkedin/rest.li/wiki/Quick-Start-Guide#api">API</a></li>
-  <li><a href="https://github.com/linkedin/rest.li/wiki/Quick-Start-Guide#code-generator">Code Generator</a></li>
+  <li><a href="#Build">Build</a></li>
+  <li><a href="#run-the-examples">Run the Examples</a></li>
+  <li><a href="#api">API</a></li>
+  <li><a href="#code-generator">Code Generator</a></li>
 </ul>
 
 <h2 id="build">Build</h2>
@@ -147,20 +147,20 @@
   </li>
 </ol>
 
-<p>Tasks can be executed on a per-module basis. For example, do this to only build restli-server and its dependencies:</p>
+<p>Tasks can be executed on a per-module basis. For example, do this to only build <a href="https://github.com/linkedin/rest.li/tree/master/restli-server">restli-server</a> and its dependencies:</p>
 
 <div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>./gradlew :restli-server:build
 </code></pre></div></div>
 
 <h2 id="run-the-examples">Run the Examples</h2>
 
-<p>Pegasus comes with a set of examples to illustrate how server and client interact. We have created Gradle tasks to run the server and client. There are 4 variants; all of them reside in restli-example-server and restli-example-client modules:</p>
+<p>Pegasus comes with a set of examples to illustrate how server and client interact. We have created Gradle tasks to run the server and client. There are 4 variants; all of them reside in <a href="https://github.com/linkedin/rest.li/tree/master/restli-example-server">restli-example-server</a> and <a href="https://github.com/linkedin/rest.li/tree/master/restli-example-client">restli-example-client</a> modules:</p>
 
 <ul>
-  <li>Basic example server without D2 (startExampleBasicServer)</li>
-  <li>Example server with D2 (startExampleD2Server)</li>
-  <li>Basic example client without D2 (startExampleBasicClient)</li>
-  <li>Example client with D2 (startExampleD2Client)</li>
+  <li>Basic example server without D2 <a href="https://github.com/linkedin/rest.li/blob/master/restli-example-server/src/main/java/com/linkedin/restli/example/RestLiExampleBasicServer.java">RestLiExampleBasicServer</a></li>
+  <li>Example server with D2 <a href="https://github.com/linkedin/rest.li/blob/master/restli-example-server/src/main/java/com/linkedin/restli/example/RestLiExampleD2Server.java">RestLiExampleD2Server</a></li>
+  <li>Basic example client without D2 <a href="https://github.com/linkedin/rest.li/blob/master/restli-example-client/src/main/java/com/linkedin/restli/example/RestLiExampleBasicClient.java">RestLiExampleBasicClient</a></li>
+  <li>Example client with D2 <a href="https://github.com/linkedin/rest.li/blob/master/restli-example-client/src/main/java/com/linkedin/restli/example/RestLiExampleD2Client.java">RestLiExampleD2Client.java</a></li>
 </ul>
 
 <h3 id="basic">Basic</h3>
@@ -183,14 +183,14 @@
 
 <h3 id="d2">D2</h3>
 
-<p>To use the D2 variants, you need <a href="http://zookeeper.apache.org/">ZooKeeper</a> 3.3.4 and upward to be downloaded and running on port 2121. Before starting the server, some D2 related data need to be initialized in ZooKeeper:</p>
+<p>To use the D2 variants, you need <a href="http://zookeeper.apache.org/">ZooKeeper</a> 3.3.4 and upward to be downloaded and running on port 2121. Before starting the server, some D2 related data need to be initialized in ZooKeeper with <a href="https://github.com/linkedin/rest.li/blob/master/restli-example-server/src/main/java/com/linkedin/restli/example/D2ConfigDiscovery.java">D2ConfigDiscovery</a>:</p>
 
 <div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>./gradlew exampleConfigDiscovery
 </code></pre></div></div>
 
 <p>The D2 example server and client are started by:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>./gradlew startExampleD2Server  
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>./gradlew startExampleD2Server
 ./gradlew startExampleD2Client
 </code></pre></div></div>
 
@@ -198,11 +198,11 @@
 
 <h2 id="api">API</h2>
 
-<p>Throughout the examples, we can frequently see “photo” and “album” object. These data schemas are defined in the restli-example-api module. API module are the interface modules with contents shared by or exchanged between the server and client. Generally speaking, we usually put 3 kinds of files in API:</p>
+<p>Throughout the examples, we can frequently see “photo” and “album” object. These data schemas are defined in the <a href="https://github.com/linkedin/rest.li/tree/master/restli-example-api">restli-example-api</a> module. API module are the interface modules with contents shared by or exchanged between the server and client. Generally speaking, we usually put 3 kinds of files in API:</p>
 
 <ul>
-  <li>pdsc files: these files define the data schemas such as “photo” and “album” above. The syntax of pdsc resembles <a href="http://avro.apache.org/">Apache Avro</a>. Take a look at <a href="restli-example-api/src/main/pegasus/com/linkedin/restli/example/Photo.pdsc">Photo.pdsc</a> and the comments inside could be useful. For more information, check <a href="DATA-Data-Schema-and-Templates">DATA</a>.</li>
-  <li>restspc.json: these files are Rest.li <a href="http://en.wikipedia.org/wiki/Interface_description_language">IDL</a> that defines the interface and protocol a Rest.li resource exposes. You can find the “photo” resource idl at <a href="restli-example-api/src/main/idl/com.linkedin.restli.example.photos.photos.restspec.json">com.linkedin.restli.example.photos.photos.restspec.json</a>. For more information, check <a href="Rest.li-User-Guide">Rest.li User Guide</a>.</li>
+  <li>pdsc files: these files define the data schemas such as “photo” and “album” above. The syntax of pdsc resembles <a href="http://avro.apache.org/">Apache Avro</a>. Take a look at <a href="https://github.com/linkedin/rest.li/blob/master/restli-example-api/src/main/pegasus/com/linkedin/restli/example/Photo.pdsc">Photo.pdsc</a> and the comments inside could be useful. For more information, check <a href="https://github.com/linkedin/rest.li/wiki/DATA-Data-Schema-and-Templates">DATA</a>.</li>
+  <li>restspc.json: these files are Rest.li <a href="http://en.wikipedia.org/wiki/Interface_description_language">IDL</a> that defines the interface and protocol a Rest.li resource exposes. You can find the “photo” resource idl at <a href="https://github.com/linkedin/rest.li/blob/master/restli-example-api/src/main/idl/com.linkedin.restli.example.photos.photos.restspec.json">com.linkedin.restli.example.photos.photos.restspec.json</a>. For more information, check <a href="/rest.li/user_guide/server_architecture">Rest.li User Guide</a>.</li>
   <li>Common Java classes shared by server and client.</li>
 </ul>
 
@@ -212,11 +212,11 @@
 
 <ul>
   <li>Schema(pdsc) binding generator. Java classes can be generated from all pdsc files. These generated classes come with methods and fields to interact with the underlying data object and provide native Java interop interface.</li>
-  <li>restspec.json generator. While pdsc files are usually handwritten, restspec.json files are generated from the resource class using <code class="highlighter-rouge">com.linkedin.restli.tools.idlgen.RestLiResourceModelExporterCmdLineApp</code> class.</li>
+  <li>restspec.json generator. While pdsc files are usually handwritten, restspec.json files are generated from the resource class using <a href="https://github.com/linkedin/rest.li/blob/master/restli-tools/src/main/java/com/linkedin/restli/tools/idlgen/RestLiResourceModelExporterCmdLineApp.java">com.linkedin.restli.tools.idlgen.RestLiResourceModelExporterCmdLineApp</a> class.</li>
   <li>Builder generator. Java classes can also be generated from all .restspec.json files. These <a href="http://en.wikipedia.org/wiki/Builder_pattern">builder</a> classes provide convenient method to construct Rest.li request with various parameters.</li>
 </ul>
 
-<p>You can find example Gradle scripts of how to call the generators in the “build_script” directory.</p>
+<p>You can find example Gradle scripts of how to call the generators in the <a href="https://github.com/linkedin/rest.li/tree/master/build_script">build_script</a> directory.</p>
 
                      </div>
                      <!-- <div class="col l3">
