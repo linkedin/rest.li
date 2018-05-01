@@ -333,14 +333,14 @@ String model = key.getThing().getModel();\
 return lookupWidget(number, make, model);\
 }\
 }\
-\`\`\`
+```
 
 To use <code>EmptyRecord</code>, <code>restli-common</code> must be in
 the <code>dataModel</code> dependencies for the api project where client
 bindings are generated, as shown in the following example:
 
 api/build.gradle:\
-\`\`\`groovy\
+```groovy\
 dependencies {\
 ...\
 dataModel spec.product.pegasus.restliCommon\
@@ -425,7 +425,7 @@ rather than directly implementing the `SimpleResource` interface.
 
 Examples:
 
-\`\`\`java\
+```
 \@RestLiSimpleResource(name = "todaysPromotedProduct", namespace =
 "com.example.product")\
 public class TodaysPromotedProductResource extends
@@ -433,7 +433,7 @@ SimpleResourceTemplate<Product>\
 {\
 ...\
 }\
-\`\`\`
+```
 
 #### \@RestLiAssociation
 
@@ -447,7 +447,7 @@ for more details.
 
 For Example:
 
-\`\`\`java\
+```
 `RestLiAssociation(name = "memberships", namespace = "com.example",
   assocKeys = {
     `Key(name = "memberId", type = Long.class),\
@@ -463,7 +463,7 @@ return lookup(key.getPartAsLong("memberId",
 key.getPartAsLong("groupId"));\
 }\
 }\
-\`\`\`
+```
 
     <code>
     curl http://<hostname:port>/memberships/memberId=1&groupId=10
@@ -508,7 +508,7 @@ actions.
 
 For example:
 
-\`\`\`java\
+```
 \@RestLiActions(name = "simpleActions",\
 namespace = "com.example")\
 public class SimpleActionsResource {
@@ -519,7 +519,7 @@ public class SimpleActionsResource {
 return input;\
 }\
 }\
-\`\`\`
+```
 
 The supported annotation parameters are:
 
@@ -581,37 +581,37 @@ Resources providing the GET resource method must override one of the
 following method signatures.
 
 For collection and association resources:\
-\`\`\`java\
+```
 public V get(K key);\
-\`\`\`
+```
 
 For simple resources:\
-\`\`\`java\
+```
 public V get();\
-\`\`\`
+```
 
 Get methods can also be annotated if not overriding a base class method.
 GET supports a method signature with a wrapper return type.
 
 For collection and association resources:\
-\`\`\`java\
+```
 \@RestMethod.Get\
 public GetResult<V> getWithStatus(K key);\
-\`\`\`
+```
 
 For simple resources:\
-\`\`\`java\
+```
 \@RestMethod.Get\
 public GetResult<V> getWithStatus();\
-\`\`\`
+```
 
 An annotated get method may also have arbitrary query params added:
 
-\`\`\`java\
+```
 `RestMethod.Get
 public GetResult<V> get(K key, `QueryParam("viewerId") String
 viewerId);\
-\`\`\`
+```
 
 The return type `GetResult<V>` allows users to set an arbitrary HTTP
 status code for the response. For more information about the
@@ -630,9 +630,9 @@ to the application developer that there are no side effects.
 
 Resources providing the BATCH\_GET resource method must override the
 following method signature:\
-\`\`\`java\
+```
 public Map\<K, V\> batchGet(Set<K> ids);\
-\`\`\`
+```
 
 @`RestMethod.BatchGet` may be used to indicate a batch get method
 instead of overriding the batchGet method of a base class.
@@ -641,7 +641,7 @@ Resources may also return `BatchResult`, which allows errors to be
 returned along with entities that were successfully retrieved.
 
 Example of a batch get:\
-\`\`\`java\
+```
 public BatchResult\<Long, Greeting\> batchGet(Set<Long> ids)\
 {\
 Map\<Long, Greeting\> batch = new HashMap\<Long, Greeting\>();\
@@ -662,14 +662,14 @@ RestLiServiceException(HttpStatus.S\_404\_NOT\_FOUND));\
 }\
 return new BatchResult\<Long, Greeting\>(batch, errors);\
 }\
-\`\`\`
+```
 
 Clients should make requests to a batch resource using `buildKV()` (not
 `build()`, it is deprecated), for example:
 
-\`\`\`java\
+```
 new FortunesBuilders().batchGet().ids(...).buildKV()\
-\`\`\`
+```
 
 <a id="GET_ALL"></a>
 
@@ -681,9 +681,9 @@ invoked, if present. The GET\_ALL resource method retrieves all entities
 for the collection and supports the same pagination facilities as a
 finder.
 
-\`\`\`java\
+```
 public List<V> getAll(\@Context PagingContext pagingContext);\
-\`\`\`
+```
 
 @`RestMethod.GetAll` may be used to indicate a get all method instead of
 overriding the getAll method of a base class.
@@ -693,7 +693,7 @@ do not override getAll, instead create a new method with the
 @`RestMethod.GetAll` annotation and return a `CollectionResult` rather
 than a list, for example:
 
-\`\`\`java\
+```
 `RestMethod.GetAll
 public CollectionResult<Widgets, WidgetsMetadata> getAllWidgets(`Context
 PagingContext pagingContext)\
@@ -702,7 +702,7 @@ PagingContext pagingContext)\
 return new CollectionResult\<Widgets, WidgetsMetadata\>(pageOfWidgets,
 total, metadata);\
 }\
-\`\`\`
+```
 
 When returning a CollectionResult from GetAll, the behavior is identical
 to a finder. See the below finder documentation for additional details
@@ -729,7 +729,7 @@ indicates the name of the finder method.
 
 For example:
 
-\`\`\`java\
+```
 /\*\
 You can access this FINDER method via
 /resources/order?q=findOrder&buyerType=1&buyerId=309&orderId=1208210101\
@@ -747,7 +747,7 @@ throws InternalException\
 ...\
 }\
 ...\
-\`\`\`
+```
 
 Finder methods must return either:
 
@@ -795,7 +795,7 @@ Valid types for query parameters are:
     from a `.pdsc` schema)
 -   Arrays of one of the types above, e.g. `String[]`, `long[]`, ...
 
-\`\`\`java\
+```
 `Finder("simpleFinder")
 public List<V> simpleFind(`Context PagingContext context);
 
@@ -807,7 +807,7 @@ PagingContext context,\
                                                       `QueryParam("param1")
 String requiredParam,\
 `QueryParam("param2") `Optional String optionalParam);\
-\`\`\`
+```
 
 <a id="TyperefSchema"></a>
 
@@ -832,10 +832,10 @@ class like Date or URI as a custom type) then you can write a separate
 coercer class and register the coercer with the private variable
 declaration:
 
-\`\`\`java\
+```
 private static final Object REGISTER\_COERCER =
 Custom.registerCoercer(new ObjectCoercer(), CustomObject.class);\
-\`\`\`
+```
 
 Typeref Schema
 
@@ -874,39 +874,39 @@ This typeref can then be referenced in other schemas:
 And the generated Java data templates will automatically coerce from
 CustomObjectRef to CustomObject when accessing the member field:
 
-\`\`\`java\
+```
 CustomObject o = exampleRecord.getMember();\
-\`\`\`
+```
 
 Once Java data templates are generated, the typeref may also be used in
 Keys, query parameters, or action parameters:
 
 Keys:
 
-\`\`\`java\
+```
 \@RestLiCollection(name="entities",\
 namespace = "com.example",\
 keyTyperefClass = CustomObjectRef.class)\
 public class EntitiesResource extends CollectionResourceTemplate\<Urn,
 CustomObject\>\
-\`\`\`
+```
 
 Compound keys:
 
-\`\`\`java\
+```
 `RestLiAssociation(name="entities", namespace="com.example",
                                         assocKeys={`Key(name="o",
 type=CustomObject.class, typeref=CustomObjectRef.class)})\
-\`\`\`
+```
 
 Query parameters:
 
-\`\`\`java\
+```
 \@QueryParam(value="o", typeref=CustomObjectRef.class) CustomObject o
 
 \@QueryParam(value="oArray", typeref=CustomObjectRef.class)
 CustomObject\[\] oArray\
-\`\`\`
+```
 
 <a id="CREATE"></a>
 
@@ -919,9 +919,9 @@ neither safe nor idempotent.
 
 Resources providing the CREATE resource method must override the
 following method signature:\
-\`\`\`java\
+```
 public CreateResponse create(V entity);\
-\`\`\`
+```
 
 The returned `CreateResponse` object indicates the HTTP status code to
 be returned (defaults to 201 CREATED), as well as an optional ID for the
@@ -943,7 +943,7 @@ Starting in Rest.li version 2.10.3, we provide developer the option to
 return newly created entity. To use this feature, add @`ReturnEntity`
 annotation to the method that implements CREATE. The return type of
 method must be `CreateKVResponse`.\
-\`\`\`java\
+```
 ```` ReturnEntity
 public CreateKVResponse create(V entity);
 ```
@@ -956,7 +956,7 @@ Long id = 1L;\
 entity.setId(id);\
 return new CreateKVResponse\<Long, Greeting\>(entity.getId(), entity);\
 }\
-\`\`\`\
+```\
 <a id="BATCH_CREATE"></a>
 
 #### BATCH\_CREATE
@@ -968,10 +968,10 @@ BATCH\_CREATE methods are neither safe nor idempotent.
 
 Resources providing the BATCH\_CREATE resource method must override the
 following method signature:\
-\`\`\`java\
+```
 public BatchCreateResult\<K, V\> batchCreate(BatchCreateRequest\<K, V\>
 entities);\
-\`\`\`
+```
 
 The `BatchCreateRequest` object wraps a list of entity representations
 of type `V`.
@@ -988,7 +988,7 @@ instead of overriding the batchCreate method of a base class.
 
 Example of a batch create:
 
-\`\`\`java\
+```
 public BatchCreateResult\<Long, Greeting\>
 batchCreate(BatchCreateRequest\<Long, Greeting\> entities)\
 {\
@@ -1008,12 +1008,12 @@ entity.setId(\_idSeq.incrementAndGet());\
 \_db.put(entity.getId(), entity);\
 return new CreateResponse(entity.getId());\
 }\
-\`\`\`
+```
 
 Error details can be returned in any CreateResponse by providing a
 RestLiServiceException, for example:
 
-\`\`\`java\
+```
 public BatchCreateResult\<Long, Greeting\>
 batchCreate(BatchCreateRequest\<Long, Greeting\> entities) {\
 List<CreateResponse> responses = new
@@ -1031,7 +1031,7 @@ responses.add(new CreateResponse(exception));\
 
 return new BatchCreateResult\<Long, Greeting\>(responses);\
 }\
-\`\`\`
+```
 
 #### Returning entities in BATCH\_CREATE response
 
@@ -1039,15 +1039,15 @@ Similar to CREATE, BATCH\_CREATE also could return the newly created
 entities in the response. To do that, add @`ReturnEntity` annotation to
 the method implementing BATCH\_CREATE. The return type of the method
 must be `BatchCreateKVResult`.\
-\`\`\`java\
+```
 \@ReturnEntity\
 public BatchCreateKVResult\<K, V\> batchCreate(BatchCreateRequest\<K,
 V\> entities);\
-\`\`\`
+```
 
 An example implementation for resource is like below, note that the
 return type will be `BatchCreateKVResult`:\
-\`\`\`java\
+```
 \@ReturnEntity\
 public BatchCreateKVResult\<Long, Greeting\>
 batchCreate(BatchCreateRequest\<Long, Greeting\> entities)\
@@ -1062,7 +1062,7 @@ CreateKVResponse\
 }\
 return BatchCreateKVResult\<Long, Greeting\>(responses);\
 }\
-\`\`\`
+```
 
 <a id="UPDATE"></a>
 
@@ -1083,14 +1083,14 @@ Resources providing the UPDATE resource method must override one of the
 following method signatures.
 
 For collection and association resources:\
-\`\`\`java\
+```
 public UpdateResponse update(K key, V entity);\
-\`\`\`
+```
 
 For simple resources:\
-\`\`\`java\
+```
 public UpdateResponse update(V entity);\
-\`\`\`
+```
 
 The returned `UpdateResponse` object indicates the HTTP status code to
 be returned.
@@ -1114,10 +1114,10 @@ the entities to be created.
 
 Resources providing the BATCH\_UPDATE resource method must override the
 following method signature:\
-\`\`\`java\
+```
 public BatchUpdateResult\<K, V\> batchUpdate(BatchUpdateRequest\<K, V\>
 entities);\
-\`\`\`
+```
 
 `BatchUpdateRequest` contains a map of entity key to entity value.
 
@@ -1131,7 +1131,7 @@ instead of overriding the batchUpdate method of a base class.
 
 Example of a batch update:
 
-\`\`\`java\
+```
 public BatchUpdateResult\<Long, Greeting\>
 batchUpdate(BatchUpdateRequest\<Long, Greeting\> entities)\
 {\
@@ -1157,7 +1157,7 @@ return new UpdateResponse(HttpStatus.S\_404\_NOT\_FOUND);\
 
 return new UpdateResponse(HttpStatus.S\_204\_NO\_CONTENT);\
 }\
-\`\`\`
+```
 
 <a id="PARTIAL_UPDATE"></a>
 
@@ -1169,9 +1169,9 @@ to be idempotent.
 
 Resources providing the PARTIAL\_UPDATE resource method must override
 the following method signature:\
-\`\`\`java\
+```
 public UpdateResponse update(K key, PatchRequest<V> patch);\
-\`\`\`
+```
 
 The returned `UpdateResponse` object indicates the HTTP status code to
 be returned.
@@ -1179,7 +1179,7 @@ be returned.
 Rest.li provides tools to make it easy to handle partial updates to your
 resources. A typical update function should look something like this:
 
-\`\`\`java\
+```
 \@Override\
 public UpdateResponse update(String key, PatchRequest<YourResource>
 patch )\
@@ -1201,7 +1201,7 @@ return new UpdateResponse(HttpStatus.S\_400\_BAD\_REQUEST);\
 }\
 return new UpdateResponse(HttpStatus.S\_204\_NO\_CONTENT);\
 }\
-\`\`\`
+```
 
 The PatchApplier automatically updates resources defined using the
 Pegasus Data format. The Rest.li client classes provide support for
@@ -1250,7 +1250,7 @@ UPDATE addresses SET street=:street WHERE key=:key). The partial update
 can be inspected and the selective update if only the street field is
 changed:
 
-\`\`\`java\
+```
 \@Override\
 public UpdateResponse update(String key, PatchRequest<YourResource>
 patchRequest)\
@@ -1285,19 +1285,19 @@ return new UpdateResponse(HttpStatus.S\_400\_BAD\_REQUEST);\
 }\
 return new UpdateResponse(HttpStatus.S\_204\_NO\_CONTENT);\
 }\
-\`\`\`
+```
 
 #### Creating Partial Updates
 
 To create a request to modify field(s), PatchGenerator can be used, for
 example:
 
-\`\`\`java\
+```
 Fortune fortune = new Fortune().setMessage("Today's your lucky day.");\
 PatchRequest<Fortune> patch = PatchGenerator.diffEmpty(fortune);\
 Request<Fortune> request = new
 FortunesBuilders().partialUpdate().id(1L).input(patch).build();\
-\`\`\`
+```
 
 \`PatchGenerator.diff(original, revised)\` can also be used to create a
 minimal partial update.
@@ -1312,10 +1312,10 @@ general, it is not guaranteed to be idempotent.
 
 Resources providing the BATCH\_PARTIAL\_UPDATE resource method must
 override the following method signature:\
-\`\`\`java\
+```
 public BatchUpdateResult\<K, V\> batchUpdate(BatchPatchRequest\<K, V\>
 patches);\
-\`\`\`
+```
 
 The `BatchPatchRequest` input contains a map of entity key to
 `PatchRequest`.
@@ -1331,7 +1331,7 @@ base class.
 
 Example of a batch partial update:
 
-\`\`\`java\
+```
 public BatchUpdateResult\<Long, Greeting\>
 batchUpdate(BatchPatchRequest\<Long, Greeting\> entityUpdates)\
 {\
@@ -1367,7 +1367,7 @@ return new UpdateResponse(HttpStatus.S\_400\_BAD\_REQUEST);\
 
 return new UpdateResponse(HttpStatus.S\_204\_NO\_CONTENT);\
 }\
-\`\`\`
+```
 
 <a id="DELETE"></a>
 
@@ -1381,14 +1381,14 @@ Resources providing the DELETE resource method must override one of the
 following method signatures.
 
 For collection and association resources:\
-\`\`\`java\
+```
 public UpdateResponse delete(K key);\
-\`\`\`
+```
 
 For simple resources:\
-\`\`\`java\
+```
 public UpdateResponse delete();\
-\`\`\`
+```
 
 The returned `UpdateResponse` object indicates the HTTP status code to
 be returned.
@@ -1405,10 +1405,10 @@ their keys. BATCH\_DELETE has side effects but is idempotent.
 
 Resources providing the BATCH\_DELETE resource method must override the
 following method signature:\
-\`\`\`java\
+```
 public BatchUpdateResult\<K, V\> batchDelete(BatchDeleteRequest\<K, V\>
 ids);\
-\`\`\`
+```
 
 The `BatchDeleteRequest` input contains the list of keys to be deleted.
 `BatchDeleteRequest` accepts a generic type parameter `V` for future
@@ -1424,7 +1424,7 @@ instead of overriding the batchDelete method of a base class.
 
 Example of a batch delete:
 
-\`\`\`java\
+```
 public BatchUpdateResult\<Long, Greeting\>
 batchDelete(BatchDeleteRequest\<Long, Greeting\> deleteRequest)\
 {\
@@ -1444,7 +1444,7 @@ boolean removed = \_db.remove(key) != null;
 return new UpdateResponse(removed ? HttpStatus.S\_204\_NO\_CONTENT :
 HttpStatus.S\_404\_NOT\_FOUND);\
 }\
-\`\`\`
+```
 
 <a id="ACTION"></a>
 
@@ -1515,13 +1515,13 @@ Similar to `GetResult<V>`, since 1.5.8, Rest.li supports an
 arbitrary HTTP status code for the response.
 
 Simple example:\
-\`\`\`java\
+```
 \@Action(name="action")\
 public void doAction();\
-\`\`\`
+```
 
 A more complex example, illustrating multiple parameters:\
-\`\`\`java\
+```
 `Action(name="sendTestAnnouncement",
         resourceLevel= ResourceLevel.ENTITY)
 public void sendTestAnnouncement(`ActionParam("subject") String
@@ -1529,7 +1529,7 @@ subject,\
 `ActionParam("message") String message,
                                   `ActionParam("emailAddress") String
 emailAddress)\
-\`\`\`
+```
 
 <a id="ActionParamVQueryParam"></a>
 
@@ -1614,7 +1614,7 @@ collection resources. `CollectionResourceTemplate` defines methods for
 all of the CRUD operations. Subclasses may also implement FINDER and
 ACTION methods by annotating as described above.
 
-\`\`\`java\
+```
 public CreateResponse create(V entity);\
 public BatchCreateResult\<K, V\> batchCreate(BatchCreateRequest\<K, V\>
 entities);\
@@ -1629,7 +1629,7 @@ patches);\
 public UpdateResponse delete(K key);\
 public BatchUpdateResult\<K, V\> batchDelete(BatchDeleteRequest\<K, V\>
 ids);\
-\`\`\`
+```
 
 #### SimpleResourceTemplate
 
@@ -1638,11 +1638,11 @@ resources. `SimpleResourceTemplate` defines methods for GET, UPDATE, and
 DELETE methods. Subclasses may also implement ACTION methods by
 annotating as described above.
 
-\`\`\`java\
+```
 public V get();\
 public UpdateResponse update(V entity);\
 public UpdateResponse delete();\
-\`\`\`
+```
 
 #### AssociationResourceTemplate
 
@@ -1653,7 +1653,7 @@ implement CREATE by providing up-sert semantics on UPDATE. Subclasses
 may also implement FINDER and ACTION methods by annotating as described
 above.
 
-\`\`\`java\
+```
 public CreateResponse create(V entity);\
 public BatchCreateResult\<CompoundKey, V\>
 batchCreate(BatchCreateRequest\<CompoundKey, V\> entities);\
@@ -1668,7 +1668,7 @@ batchUpdate(BatchPatchRequest\<CompoundKey, V\> patches);\
 public UpdateResponse delete(CompoundKey key);\
 public BatchUpdateResult\<CompoundKey, V\>
 batchDelete(BatchDeleteRequest\<CompoundKey, V\> ids);\
-\`\`\`
+```
 
 <a id="wiki-FreeFormResources"></a>
 
@@ -1689,7 +1689,7 @@ annotating CRUD methods with @`RestMethod.*` annotations.The
 association resources where the `SingleObjectResource` interface is the
 marker interface for simple resources.
 
-\`\`\`java\
+```
 public class FreeFormCollectionResource implements KeyValueResource\<K,
 V\>\
 {\
@@ -1731,9 +1731,9 @@ public UpdateResponse myDelete(K key);
 public BatchUpdateResult\<K, V\> myBatchDelete(BatchDeleteRequest\<K,
 V\> ids);\
 }\
-\`\`\`
+```
 
-\`\`\`java\
+```
 public class FreeFormSimpleResource implements SingleObjectResource<V>\
 {\
 \@RestMethod.Get\
@@ -1745,7 +1745,7 @@ public UpdateResponse myUpdate(V entity);
 \@RestMethod.Delete\
 public UpdateResponse myDelete();\
 }\
-\`\`\`
+```
 
 The advantage of explicitly annotating each resource method is that you
 can add custom query parameters (see description of @`QueryParam` for
@@ -1753,13 +1753,13 @@ FINDER resource method) and take advantage of wrapper return types.
 Custom query parameters must be defined **after** the fixed parameters
 shown above.
 
-\`\`\`java\
+```
 `RestMethod.Get
 public V myGet(K key, `QueryParam("myParam") String myParam);
 
 \@RestMethod.Get\
 public GetResult<V> getWithStatus(K key);\
-\`\`\`
+```
 
 Note that each resource may only provide one implementation of each CRUD
 method, e.g., it is invalid to annotate two different methods with
@@ -1837,7 +1837,7 @@ BATCH\_GET methods may return errors for individual items as part of a
 `RestLiServiceException` object. In this case, the overall status will
 still be an HTTP `200`.
 
-\`\`\`java\
+```
 public BatchResult\<K, V\> batchGet((Set<K> ids)\
 {\
 Map\<K, V\> results = ...\
@@ -1845,17 +1845,17 @@ Map\<K, RestLiServiceException\> errors = ...\
 ...\
 return new BatchResult(results, errors);\
 }\
-\`\`\`
+```
 
 ### Handling Errors on the Client
 
 When making requests using `RestClient`, a `ResponseFuture` is always
 returned, as shown in this example:
 
-\`\`\`java\
+```
 ResponseFuture<Greeting> future = restClient.sendRequest(new
 GreetingsBuilders.get().id(1L));\
-\`\`\`
+```
 
 This future might contain an error response. When calling
 `ResponseFuture.getResponse()`, the default behavior is for a
@@ -1863,7 +1863,7 @@ This future might contain an error response. When calling
 response. Error responses are all 400 and 500 series HTTP status code,
 as shown in this example:
 
-\`\`\`java\
+```
 try\
 {\
 Greeting greeting = restClient.sendRequest(new
@@ -1878,14 +1878,14 @@ if(e.getStatus() == 400) {\
 // ... handle other status codes or rethrow\
 }\
 }\
-\`\`\`
+```
 
 Alternatively, `ErrorHandlingBehavior.TREAT_SERVER_ERROR_AS_SUCCESS` can
 be set when making a request. If set, `.getResponse()` will **not**
 throw `RestLiResponseException` even if the response contains a 400 or
 500 series HTTP status code, as shown in this example:
 
-\`\`\`java
+```java
 
 Response<Greeting> response = restClient.sendRequest(new
 GreetingsBuilders.get().id(1L),\
@@ -1902,7 +1902,7 @@ else\
 {\
 // ... handle other status codes or rethrow\
 }\
-\`\`\`
+```
 
 However because error responses do not contain an entity, calling
 `ResponseFuture.getResponseEntity()` or `Response.getEntity()` will
@@ -1925,9 +1925,9 @@ includes:
 The error response format configured to return only a subset of these
 parts using RestLiConfig, as shown in this example:
 
-\`\`\`java\
+```
 restliConfig.setErrorResponseFormat(ErrorResponseFormat.MESSAGE\_AND\_DETAILS);\
-\`\`\`
+```
 
 When Rest.li server application code throws an exception, if the
 exception is of type RestLiServiceException, then the error message
@@ -1937,10 +1937,10 @@ Rest.li automatically provides a default error message of "Error in
 application code" in the error response. This default error message may
 be customized via RestLiConfig as well, as shown in this example:
 
-\`\`\`java\
+```
 restliConfig.setInternalErrorMessage("Internal error, please try again
 later.");\
-\`\`\`
+```
 
 <a id="wiki-Projections"></a>
 
@@ -2087,30 +2087,30 @@ Rest.li allows resources to return results asynchronously through a
 [ParSeq](https://github.com/linkedin/parseq/wiki) `Promise`, `Task`, or
 `Callback`. For example, a getter can be declared in any of the
 following ways:\
-\`\`\`java\
+```
 \@RestMethod.Get\
 public Promise<Greeting> get(Long key)\
 {\
 // return a promise (e.g. SettablePromise) and set it asynchronously\
 }\
-\`\`\`
+```
 
-\`\`\`java\
+```
 \@RestMethod.Get\
 public Task<Greeting> get(Long key)\
 {\
 // set up some ParSeq tasks and return the final Task\
 return Tasks.seq(Tasks.par(...), ...);\
 }\
-\`\`\`
+```
 
-\`\`\`java\
+```
 `RestMethod.Get
 public void get(Long key, `CallbackParam Callback<Greeting> callback)\
 {\
 // use the callback asynchronously\
 }\
-\`\`\`
+```
 
 These method signatures can be mixed arbitrarily with the synchronous
 signatures, including in the same resource class. For instance, simple
