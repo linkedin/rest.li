@@ -295,12 +295,37 @@ the resource is intended to implement. Briefly, here are the options:</p>
 
 <p><a id="wiki-ResourceTypes"></a></p>
 
-<p>Resource Type   Annotation               Interface or Base Class
-  ————— ———————— ————————————————————————————————————————————————————————————————————————————————————–
-  Collection      \@RestLiCollection       For simple keys, implement <code class="highlighter-rouge">CollectionResource</code> or extend <code class="highlighter-rouge">CollectionResourceTemplate</code>. For complex key implement <code class="highlighter-rouge">ComplexKeyResource</code>, extend <code class="highlighter-rouge">ComplexKeyResourceTemplate</code>, or implement <code class="highlighter-rouge">KeyValueResource</code> for use cases requiring extensive customization
-  Simple          \@RestLiSimpleResource   Implement <code class="highlighter-rouge">SimpleResource</code>, extend <code class="highlighter-rouge">SimpleResourceTemplate</code> or implement <code class="highlighter-rouge">SingleObjectResource</code> for use cases requiring extensive customization
-  Association     \@RestLiAssociation      Implement <code class="highlighter-rouge">AssociationResource</code>, extend <code class="highlighter-rouge">AssociationResourceTemplate</code>, or implement <code class="highlighter-rouge">KeyValueResource</code> for use cases requiring extensive customization
-  Actions         \@RestLiActions          N/A</p>
+<table>
+  <thead>
+    <tr>
+      <th>Resource Type</th>
+      <th>Annotation</th>
+      <th>Interface or Base Class</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Collection</td>
+      <td>@RestLiCollection</td>
+      <td>For simple keys, implement <code class="highlighter-rouge">CollectionResource</code> or extend <code class="highlighter-rouge">CollectionResourceTemplate</code>. For complex key implement <code class="highlighter-rouge">ComplexKeyResource</code>, extend <code class="highlighter-rouge">ComplexKeyResourceTemplate</code>, or implement <code class="highlighter-rouge">KeyValueResource</code> for use cases requiring extensive customization</td>
+    </tr>
+    <tr>
+      <td>Simple</td>
+      <td>@RestLiSimpleResource</td>
+      <td>Implement <code class="highlighter-rouge">SimpleResource</code>, extend <code class="highlighter-rouge">SimpleResourceTemplate</code> or implement <code class="highlighter-rouge">SingleObjectResource</code> for use cases requiring extensive customization</td>
+    </tr>
+    <tr>
+      <td>Association</td>
+      <td>@RestLiAssociation</td>
+      <td>Implement <code class="highlighter-rouge">AssociationResource</code>, extend <code class="highlighter-rouge">AssociationResourceTemplate</code>, or implement <code class="highlighter-rouge">KeyValueResource</code> for use cases requiring extensive customization</td>
+    </tr>
+    <tr>
+      <td>Actions</td>
+      <td>@RestLiActions</td>
+      <td>N/A</td>
+    </tr>
+  </tbody>
+</table>
 
 <h4 id="restlicollection">\@RestLiCollection</h4>
 
@@ -2307,7 +2332,7 @@ generate links. Usually, this should be an absolute path.</li>
           <h5>Rest.li</h5>
           <p class="text-lighten-4">Rest.li is an open source REST framework for building robust, scalable RESTful architectures using type-safe bindings and asynchronous, non-blocking IO. Rest.li fills a niche for applying RESTful principles at scale with an end-to-end developer workflow for building REST APIs, which promotes clean REST practices, uniform interface design and consistent data modeling.</p>
         </div>
-        <div class="col s3 offset-s2">
+        <div class="col s5 offset-s1">
           <h5 class="black-text">Community</h5>
           <ul>
               <li>Github <a class="" href="https://github.com/linkedin/rest.li">Rest.li</a></li>

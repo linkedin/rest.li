@@ -456,12 +456,19 @@ options:
 
 <a id="wiki-ResourceTypes"></a>
 
-| Resource Type | Annotation            | Interface or Base Class                                                                                                                                                                                                                                      |
-| ------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| First Header  | Second Header |
+| ------------- | ------------- |
+| Content Cell  | Content Cell  |
+| Content Cell  | Content Cell  |
+
+
+
+| Resource Type | Annotation | Interface or Base Class |
+| ------------- | -----------| ------------------------|
 | Collection    | @RestLiCollection     | For simple keys, implement `CollectionResource` or extend `CollectionResourceTemplate`. For complex key implement `ComplexKeyResource`, extend `ComplexKeyResourceTemplate`, or implement `KeyValueResource` for use cases requiring extensive customization |
-| Simple        | @RestLiSimpleResource | Implement `SimpleResource`, extend `SimpleResourceTemplate` or implement `SingleObjectResource` for use cases requiring extensive customization                                                                                                              |
-| Association   | @RestLiAssociation    | Implement `AssociationResource`, extend `AssociationResourceTemplate`, or implement `KeyValueResource` for use cases requiring extensive customization                                                                                                       |
-| Actions       | @RestLiActions        | N/A                                                                                                                                                                                                                                                          |
+| Simple        | @RestLiSimpleResource | Implement `SimpleResource`, extend `SimpleResourceTemplate` or implement `SingleObjectResource` for use cases requiring extensive customization |
+| Association   | @RestLiAssociation    | Implement `AssociationResource`, extend `AssociationResourceTemplate`, or implement `KeyValueResource` for use cases requiring extensive customization  |
+| Actions       | @RestLiActions        | N/A |
 
 ##### @RestLiCollection
 
