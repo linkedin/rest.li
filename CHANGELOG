@@ -1,5 +1,8 @@
 21.0.1
 -------
+(RB=1299505)
+Remove request query params from response location header for CREATE and BATCH_CREATE
+
 (RB=1301460)
 Bump up parseq version to non EOLed version.
 

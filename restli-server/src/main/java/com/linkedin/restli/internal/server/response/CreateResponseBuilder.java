@@ -78,6 +78,7 @@ public class CreateResponseBuilder implements RestLiResponseBuilder<RestLiRespon
       String stringKey = URIParamUtils.encodeKeyForUri(id, UriComponent.Type.PATH_SEGMENT, protocolVersion);
       UriBuilder uribuilder = UriBuilder.fromUri(request.getURI());
       uribuilder.path(stringKey);
+      uribuilder.replaceQuery(null);
       if (routingResult.getContext().hasParameter(RestConstants.ALT_KEY_PARAM))
       {
         // add altkey param to location URI

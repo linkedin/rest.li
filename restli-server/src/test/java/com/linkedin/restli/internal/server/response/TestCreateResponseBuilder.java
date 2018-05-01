@@ -70,15 +70,18 @@ public class TestCreateResponseBuilder
     alternativeKeyMap.put("alt", new AlternativeKey<String, CompoundKey>(new TestKeyCoercer(), String.class, new StringDataSchema()));
     return new Object[][]
         {
-            { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), compoundKey, "/foo/a=a&b=1", "a=a&b=1", null, null },
-            { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), compoundKey, "/foo/(a:a,b:1)", "(a:a,b:1)", null,  null },
-            { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "aaxb1", "/foo/aaxb1?altkey=alt", "aaxb1", "alt", alternativeKeyMap },
-            { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "aaxb1", "/foo/aaxb1?altkey=alt", "aaxb1", "alt", alternativeKeyMap },
+            { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "/foo", compoundKey, "/foo/a=a&b=1", "a=a&b=1", null, null },
+            { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/foo", compoundKey, "/foo/(a:a,b:1)", "(a:a,b:1)", null,  null },
+            { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "/foo", "aaxb1", "/foo/aaxb1?altkey=alt", "aaxb1", "alt", alternativeKeyMap },
+            { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/foo", "aaxb1", "/foo/aaxb1?altkey=alt", "aaxb1", "alt", alternativeKeyMap },
+            { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "/foo?uselessParam=true", compoundKey, "/foo/a=a&b=1", "a=a&b=1", null, null },
+            { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/foo?uselessParam=true", compoundKey, "/foo/(a:a,b:1)", "(a:a,b:1)", null,  null },
         };
   }
 
   @Test(dataProvider = "testData")
   public void testBuilder(ProtocolVersion protocolVersion,
+                          String uriString,
                           Object expectedId,
                           String expectedLocation,
                           String expectedHeaderId,
@@ -88,7 +91,7 @@ public class TestCreateResponseBuilder
     CompoundKey compoundKey = new CompoundKey().append("a", "a").append("b", 1);
     CreateResponse createResponse = new CreateResponse(compoundKey);
     IdResponse<?> expectedIdResponse = new IdResponse<Object>(expectedId);
-    RestRequest restRequest = new RestRequestBuilder(new URI("/foo")).build();
+    RestRequest restRequest = new RestRequestBuilder(new URI(uriString)).build();
     Map<String, String> headers = ResponseBuilderUtil.getHeaders();
     headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, protocolVersion.toString());
     // the headers passed in are modified

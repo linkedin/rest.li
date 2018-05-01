@@ -55,6 +55,7 @@ import com.linkedin.restli.common.Link;
 import com.linkedin.restli.common.OptionsResponse;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ProtocolVersion;
+import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.common.UpdateStatus;
 import com.linkedin.restli.examples.greetings.api.Empty;
 import com.linkedin.restli.examples.greetings.api.Greeting;
@@ -841,7 +842,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
   {
     List<Greeting> greetings = generateBatchTestData(3, "BatchCreate", Tone.FRIENDLY);
 
-    List<CreateIdStatus<Long>> statuses = BatchCreateHelper.batchCreate(getClient(), builders, greetings);
+    List<CreateIdStatus<Long>> statuses = BatchCreateHelper.batchCreate(getClient(), builders, greetings, false);
     List<Long> createdIds = new ArrayList<Long>(statuses.size());
 
     for (CreateIdStatus<Long> status: statuses)
@@ -857,6 +858,21 @@ public class TestGreetingsClient extends RestLiIntegrationTest
 
     getAndVerifyBatchTestDataSerially(builders, createdIds, greetings, Arrays.asList("id"));
     deleteAndVerifyBatchTestDataSerially(builders, createdIds);
+  }
+
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderWithResourceNameQueryParamsDataProvider")
+  public void testBatchCreateLocationHeader(RootBuilderWrapper<Long, Greeting> builders, String resourceName,
+      ProtocolVersion protocolVersion) throws RemoteInvocationException
+  {
+    List<Greeting> greetings = generateBatchTestData(3, "BatchCreate", Tone.FRIENDLY);
+
+    List<CreateIdStatus<Long>> statuses = BatchCreateHelper.batchCreate(getClient(), builders, greetings, true);
+
+    for (CreateIdStatus<Long> status: statuses)
+    {
+      String expectedLocation = "/" + resourceName + "/" + status.getKey();
+      Assert.assertEquals(status.getLocation(), expectedLocation);
+    }
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
@@ -1113,6 +1129,19 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     Assert.assertNull(response.getId());
   }
 
+  @SuppressWarnings("deprecation")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
+  public void testCreateLocationHeader(RootBuilderWrapper<Long, Greeting> builders)
+      throws RemoteInvocationException
+  {
+    Request<EmptyRecord> request = builders.create()
+        .input(new Greeting().setId(1L).setMessage("foo"))
+        .setQueryParam("isNullId", false)
+        .build();
+    Response<EmptyRecord> response = getClient().sendRequest(request).getResponse();
+    Assert.assertEquals(response.getHeader(RestConstants.HEADER_LOCATION), "/" + request.getBaseUriTemplate() + "/" + response.getId());
+  }
+
   @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestOptionsDataProvider")
   private static Object[][] requestOptionsDataProvider()
   {
@@ -1247,6 +1276,20 @@ public class TestGreetingsClient extends RestLiIntegrationTest
           AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion()},
       { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), "greetingsTask",
           AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()},
+    };
+  }
+
+  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderWithResourceNameQueryParamsDataProvider")
+  private static Object[][] requestBuilderWithResourceNameQueryParamsDataProvider() {
+    return new Object[][] {
+        { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()), "greetings",
+            AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion()},
+        { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), "greetings",
+            AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()},
+        { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()), "greetings",
+            AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion()},
+        { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), "greetings",
+            AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()},
     };
   }
 

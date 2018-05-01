@@ -84,14 +84,17 @@ public class TestBatchCreateResponseBuilder
 
     return new Object[][]
         {
-          { null, null, expectedStatuses },
-          { "alt", alternativeKeyMap, expectedAltStatuses }
+          { "/foo", null, null, expectedStatuses },
+          { "/foo", "alt", alternativeKeyMap, expectedAltStatuses },
+          { "/foo?uselessParam=true", null, null, expectedStatuses },
+          { "/foo?uselessParam=true", "alt", alternativeKeyMap, expectedAltStatuses },
         };
   }
 
   @Test(dataProvider = "createResultBuilderTestData")
   @SuppressWarnings("unchecked")
-  public void testCreateResultBuilder(String altKeyName,
+  public void testCreateResultBuilder(String uriString,
+                                      String altKeyName,
                                       Map<String, AlternativeKey<?, ?>> alternativeKeyMap,
                                       List<CreateIdStatus<Object>> expectedStatuses) throws URISyntaxException
   {
@@ -104,7 +107,7 @@ public class TestBatchCreateResponseBuilder
     ServerResourceContext mockContext = getMockResourceContext(altKeyName);
     RoutingResult routingResult = new RoutingResult(mockContext, mockDescriptor);
 
-    RestRequest request = new RestRequestBuilder(new URI("/foo")).build();
+    RestRequest request = new RestRequestBuilder(new URI(uriString)).build();
     BatchCreateResponseBuilder responseBuilder = new BatchCreateResponseBuilder(null);
     RestLiResponseData<BatchCreateResponseEnvelope> responseData = responseBuilder.buildRestLiResponseData(request,
                                                                                    routingResult,

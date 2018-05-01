@@ -591,7 +591,7 @@ public class TestNullGreetingsClient extends RestLiIntegrationTest
   {
     try
     {
-      BatchCreateHelper.batchCreate(getClient(), builders, greetingList);
+      BatchCreateHelper.batchCreate(getClient(), builders, greetingList, false);
       Assert.fail("We should not reach here!");
     }
     catch (final RestLiResponseException responseException)

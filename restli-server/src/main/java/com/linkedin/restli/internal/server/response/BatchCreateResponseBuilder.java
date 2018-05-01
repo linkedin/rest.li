@@ -208,6 +208,7 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder<RestLiR
     String stringKey = URIParamUtils.encodeKeyForUri(id, UriComponent.Type.PATH_SEGMENT, protocolVersion);
     UriBuilder uribuilder = UriBuilder.fromUri(request.getURI());
     uribuilder.path(stringKey);
+    uribuilder.replaceQuery(null);
     if (altKey != null)
     {
       // add altkey param to location URI
