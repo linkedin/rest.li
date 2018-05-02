@@ -3,6 +3,8 @@ toc:
     subfolderitems:
       - page: Quick-start guide
         url: /rest.li/get_started/quick_start
+      - page: Step by step tutorial
+        url: /rest.li/start/step_by_step
       - page: Dynamic discovery
         url: /rest.li/start/d2_quick_start
       - page: Unstructured Data (BLOB)

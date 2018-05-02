@@ -8,8 +8,8 @@
     <title>Dynamic discovery</title>
     <meta name="description" content="A REST framework for building scalable service architectures using dynamic discovery and simple asynchronous APIs" />
 
-    <link rel="icon" 
-      type="image/png" 
+    <link rel="icon"
+      type="image/png"
       href="/images/icon_pegasus.png">
   
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -75,6 +75,8 @@
                         <ul>
                        
                          <li><a href="/rest.li/get_started/quick_start">Quick-start guide</a></li>
+                       
+                         <li><a href="/rest.li/start/step_by_step">Step by step tutorial</a></li>
                        
                          <li><a href="/rest.li/start/d2_quick_start">Dynamic discovery</a></li>
                        
@@ -166,8 +168,9 @@ for our build process. The top level structure of our project will have
 </code></pre></div></div>
 
 <p>You also need a settings.gradle and build.gradle file in the root
-directory.<br />
-—- For settings.gradle —-</p>
+directory.</p>
+
+<p>— For settings.gradle —</p>
 
 <div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>include 'server'
 include 'client'
@@ -176,7 +179,7 @@ include 'config'
 
 <p>This will tell gradle that gradle should search for ‘server’, ‘client’,
 ‘config’ directories and mark them as part of the project.<br />
-—- For build.gradle —-</p>
+— For build.gradle —</p>
 
 <div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>allprojects {
     apply plugin: 'idea'
@@ -1038,7 +1041,7 @@ features of D2 examples like the following:</p>
 </ul>
 
 <p>To do so, please check out the examples in restli source code. Go to
-/example/d2-advanced-examples.</p>
+<a href="https://github.com/linkedin/rest.li/tree/master/examples/d2-advanced-example">/example/d2-advanced-examples</a>.</p>
 
                      </div>
                      <!-- <div class="col l3">

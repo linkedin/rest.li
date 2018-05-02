@@ -8,8 +8,8 @@
     <title>Unstructured data</title>
     <meta name="description" content="A REST framework for building scalable service architectures using dynamic discovery and simple asynchronous APIs" />
 
-    <link rel="icon" 
-      type="image/png" 
+    <link rel="icon"
+      type="image/png"
       href="/images/icon_pegasus.png">
   
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -76,6 +76,8 @@
                        
                          <li><a href="/rest.li/get_started/quick_start">Quick-start guide</a></li>
                        
+                         <li><a href="/rest.li/start/step_by_step">Step by step tutorial</a></li>
+                       
                          <li><a href="/rest.li/start/d2_quick_start">Dynamic discovery</a></li>
                        
                          <li><a href="/rest.li/start/unstructured">Unstructured Data (BLOB)</a></li>
@@ -103,16 +105,16 @@
 <h2 id="contents">Contents</h2>
 
 <ul>
-  <li>Introduction</li>
-  <li>Serve Unstructured Data</li>
-  <li>Consume Unstructured Data</li>
-  <li>Recap</li>
+  <li><a href="#introduction">Introduction</a></li>
+  <li><a href="#serve-unstructured-data">Serve Unstructured Data</a></li>
+  <li><a href="#consume-unstructured-data">Consume Unstructured Data</a></li>
+  <li><a href="#recap">Recap</a></li>
 </ul>
 
 <h2 id="introduction">Introduction</h2>
 <p>This tutorial demonstrates how to serve unstructured binary data such as blob in a Rest.li server. We’ll define a Rest.li resource that responds with fortune reports (in PDF format) for GET requests and show you how to consume the GET response from a HTTP client.</p>
 
-<p>This tutorial assumes that you already have a working Rest.li server. Otherwise, please follow the Rest.li Quickstart before you continue.</p>
+<p>This tutorial assumes that you already have a working Rest.li server. Otherwise, please follow the <a href="/rest.li/get_started/quick_start">Rest.li Quickstart</a> before you continue.</p>
 
 <h2 id="serve-unstructured-data">Serve Unstructured Data</h2>
 <p>We start by defining a resource class on the server side by extending the provided CollectionUnstructuredDataResourceTemplate with the generic type of our resource key as String. Notice that, different from a regular Rest.li resource interface/template that also requires a value type, an unstructured data resource doesn’t require one. Next, we annotate the resource with @RestLiCollection and specify the required resource name and namespace.</p>
@@ -158,7 +160,7 @@ Content: &lt;&lt;&lt; binary data of the PDF report &gt;&gt;&gt;
 <h2 id="recap">Recap</h2>
 <p>As you can see, serving unstructured data in Rest.li is very easy. Defining a resource for unstructured data is similar to how you define a regular Rest.li resource for Records, except that, instead of returning records, you respond with writing the data to an OutputStream.</p>
 
-<p>You can learn more about unstructured data support in Rest.li User Guide.</p>
+<p>You can learn more about unstructured data support in <a href="rest.li/user_guide/restli_server">Rest.li User Guide</a>.</p>
 
                      </div>
                      <!-- <div class="col l3">

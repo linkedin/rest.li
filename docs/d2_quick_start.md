@@ -67,7 +67,8 @@ for our build process. The top level structure of our project will have
 
 You also need a settings.gradle and build.gradle file in the root
 directory.  
-—- For settings.gradle —-
+
+— For settings.gradle —
 
     include 'server'
     include 'client'
@@ -76,7 +77,7 @@ directory.
 
 This will tell gradle that gradle should search for ‘server’, ‘client’,
 ‘config’ directories and mark them as part of the project.  
-—- For build.gradle —-
+— For build.gradle —
 
     allprojects {
         apply plugin: 'idea'
@@ -842,4 +843,4 @@ features of D2 examples like the following:
   - and many more.
 
 To do so, please check out the examples in restli source code. Go to
-/example/d2-advanced-examples.
+[/example/d2-advanced-examples](https://github.com/linkedin/rest.li/tree/master/examples/d2-advanced-example).
