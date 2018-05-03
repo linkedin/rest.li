@@ -3,6 +3,9 @@
 (RB=1301460)
 Bump up parseq version to non EOLed version.
 
+(RB=1297701)
+Define ZKAclProvider interface
+
 21.0.0
 -------
 
