@@ -235,7 +235,7 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
         tasks.add(individualRequestTask.andThen(dependentRequestsTask));
       }
     }
-    return Tasks.par(tasks);
+    return Task.par(tasks);
   }
 
   @SuppressWarnings("deprecation")

@@ -236,9 +236,12 @@ public class ParSeqRestClientTest
     headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, protocolVersion.toString());
     headers.put(errorResponseHeaderName, RestConstants.HEADER_VALUE_ERROR);
 
-    return new ParSeqRestClient(new RestClient(new MockClient(httpCode, headers, mapBytes),
-                                               "http://localhost"),
-        RequestConfigProvider.build(new ParSeqRestliClientConfigBuilder().build(), () -> Optional.empty()));
+    RestClient restClient = new RestClient(new MockClient(httpCode, headers, mapBytes),
+        "http://localhost");
+    return new ParSeqRestliClientBuilder()
+        .setClient(restClient)
+        .setConfig(new ParSeqRestliClientConfigBuilder().build())
+        .build();
   }
 
   /**
@@ -263,9 +266,12 @@ public class ParSeqRestClientTest
     final Map<String, String> headers = new HashMap<>();
     headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, protocolVersion.toString());
 
-    return new ParSeqRestClient(new RestClient(new MockClient(httpCode, headers, mapBytes),
-                                               "http://localhost"),
-        RequestConfigProvider.build(new ParSeqRestliClientConfigBuilder().build(), () -> Optional.empty()));
+    RestClient restClient = new RestClient(new MockClient(httpCode, headers, mapBytes),
+        "http://localhost");
+    return new ParSeqRestliClientBuilder()
+        .setClient(restClient)
+        .setConfig(new ParSeqRestliClientConfigBuilder().build())
+        .build();
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "protocolVersions")
