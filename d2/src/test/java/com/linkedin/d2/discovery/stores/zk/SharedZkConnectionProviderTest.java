@@ -19,7 +19,6 @@ package com.linkedin.d2.discovery.stores.zk;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.Callbacks;
 import com.linkedin.common.callback.FutureCallback;
-import com.linkedin.common.callback.MultiCallback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.D2Client;
 import com.linkedin.d2.balancer.D2ClientBuilder;
@@ -50,24 +49,19 @@ import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponse;
 import java.io.IOException;
 import java.net.URI;
-import java.sql.Blob;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.apache.zookeeper.KeeperException;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import org.testng.annotations.BeforeMethod;
@@ -80,8 +74,8 @@ import static org.testng.Assert.fail;
 
 
 
-public class ZkConnectionDealerTest {
-  private ZkConnectionDealer _dealer;
+public class SharedZkConnectionProviderTest {
+  private SharedZkConnectionProvider _provider;
   private ZKServer _zkServer;
 
   private int NUM_DEFAULT_SHAREABLE_BUILDERS = 5;
@@ -100,7 +94,7 @@ public class ZkConnectionDealerTest {
 
   @BeforeMethod
   public void setUp() throws Exception {
-    _dealer = new ZkConnectionDealer();
+    _provider = new SharedZkConnectionProvider();
     try {
       _zkServer = new ZKServer(ZK_PORT);
       _zkServer.startup();
@@ -200,7 +194,7 @@ public class ZkConnectionDealerTest {
       ZooKeeperConnectionManager.ZKStoreFactory<UriProperties,ZooKeeperEphemeralStore<UriProperties>> factory = new ZKUriStoreFactory();
       ZKConnectionBuilder connectionBuilder = new ZKConnectionBuilder("localhost:" + ZK_PORT);
       connectionBuilder.setTimeout(ZK_TIMEOUT);
-      ZKPersistentConnection connection = _dealer.getZKPersistentConnection(connectionBuilder);
+      ZKPersistentConnection connection = _provider.getZKPersistentConnection(connectionBuilder);
       ZooKeeperConnectionManager connectionManager =
           new ZooKeeperConnectionManager(connection, ZKBASE_PATH, factory, announcer);
       connectionManagers.add(connectionManager);
@@ -257,10 +251,13 @@ public class ZkConnectionDealerTest {
    * Obtain the d2client with the same setup.
    */
   private D2Client getD2Client(Map<String, TransportClientFactory> transportClientFactoryMap) {
+    ZKConnectionBuilder connectionBuilder = new ZKConnectionBuilder("localhost:" + ZK_PORT);
+    connectionBuilder.setTimeout(ZK_TIMEOUT);
+    ZKPersistentConnection zkConnectionToUse = _provider.getZKPersistentConnection(connectionBuilder);
     D2ClientBuilder d2ClientBuilder = new D2ClientBuilder();
     d2ClientBuilder.setZkHosts("localhost:" + ZK_PORT)
         .setZkSessionTimeout(ZK_TIMEOUT, TimeUnit.MILLISECONDS)
-        .setZKConnectionDealer(_dealer)
+        .setZKConnectionForloadBalancer(zkConnectionToUse)
         .setLoadBalancerWithFacilitiesFactory(new LastSeenBalancerWithFacilitiesFactory())
         .setClientFactories(transportClientFactoryMap);
     return d2ClientBuilder.build();
@@ -278,11 +275,11 @@ public class ZkConnectionDealerTest {
    */
 
   @Test
-  public void TestZkConnectionDealerBasic() {
+  public void TestZkConnectionProviderBasic() {
     List<ZKConnectionBuilder> builders = identicalBuildersSetUp();
     List<ZKPersistentConnection> connections = new ArrayList<>();
     for (int i = 0; i < NUM_DEFAULT_SHAREABLE_BUILDERS; i++) {
-      connections.add(_dealer.getZKPersistentConnection(builders.get(i)));
+      connections.add(_provider.getZKPersistentConnection(builders.get(i)));
     }
     ZKPersistentConnection firstConn = connections.get(0);
     for (ZKPersistentConnection conn : connections) {
@@ -290,10 +287,10 @@ public class ZkConnectionDealerTest {
     }
 
     ZKConnectionBuilder differentBuilder = new ZKConnectionBuilder("localhost:2122");
-    ZKPersistentConnection differentConnection = _dealer.getZKPersistentConnection(differentBuilder);
+    ZKPersistentConnection differentConnection = _provider.getZKPersistentConnection(differentBuilder);
     Assert.assertTrue(differentConnection != firstConn);
 
-    Assert.assertTrue(_dealer.getZkConnectionCount() == 2);
+    Assert.assertTrue(_provider.getZkConnectionCount() == 2);
   }
 
   /**
@@ -372,7 +369,7 @@ public class ZkConnectionDealerTest {
     D2Client client = getD2Client(transportClientMap);
 
     //there should only be one connection
-    Assert.assertTrue(_dealer.getZkConnectionCount() == 1);
+    Assert.assertTrue(_provider.getZkConnectionCount() == 1);
 
 
     //start both announcers and client
@@ -479,7 +476,7 @@ public class ZkConnectionDealerTest {
     clientShutdownCallback.get(BLOCKING_CALL_TIMEOUT, TimeUnit.MILLISECONDS);
 
     //make sure the connection is properly stopped.
-    ZKPersistentConnection connection = _dealer.getZKPersistentConnection(new ZKConnectionBuilder("localhost:" + ZK_PORT).setTimeout(ZK_TIMEOUT));
+    ZKPersistentConnection connection = _provider.getZKPersistentConnection(new ZKConnectionBuilder("localhost:" + ZK_PORT).setTimeout(ZK_TIMEOUT));
     Assert.assertNotNull(connection);
     Assert.assertTrue(connection.isConnectionStopped());
   }
@@ -550,7 +547,7 @@ public class ZkConnectionDealerTest {
     List<URI> hosts = prepareHostNames(5, "testAnnouncerNoStartup");
     List<ZooKeeperConnectionManager> connectionManagers = prepareConnectionManagers(hosts);
     List<ZooKeeperConnectionManager> managersToStart = connectionManagers.subList(0,3);
-    Assert.assertTrue(_dealer.getZkConnectionCount() == 1);
+    Assert.assertTrue(_provider.getZkConnectionCount() == 1);
 
     startConnectionManagers(connectionManagers.subList(0,3));
 

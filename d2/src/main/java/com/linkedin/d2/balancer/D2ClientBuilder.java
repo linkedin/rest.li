@@ -36,7 +36,8 @@ import com.linkedin.d2.balancer.util.downstreams.FSBasedDownstreamServicesFetche
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessorRegistry;
 import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl;
-import com.linkedin.d2.discovery.stores.zk.ZkConnectionDealer;
+import com.linkedin.d2.discovery.stores.zk.ZKConnectionBuilder;
+import com.linkedin.d2.discovery.stores.zk.ZKPersistentConnection;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeper;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
@@ -135,8 +136,8 @@ public class D2ClientBuilder
                   _config.enableSaveUriDataOnDisk,
                   loadBalancerStrategyFactories,
                   _config.requestTimeoutHandlerEnabled,
-                  _config.connectionDealer,
-                  _config.sslSessionValidatorFactory);
+                  _config.sslSessionValidatorFactory,
+                  _config.zkConnectionToUseForLB);
 
     final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?
       new ZKFSLoadBalancerWithFacilitiesFactory() :
@@ -420,9 +421,9 @@ public class D2ClientBuilder
     return this;
   }
 
-  public D2ClientBuilder setZKConnectionDealer(ZkConnectionDealer connectionDealer)
+  public D2ClientBuilder setZKConnectionForloadBalancer(ZKPersistentConnection connection)
   {
-    _config.connectionDealer = connectionDealer;
+    _config.zkConnectionToUseForLB = connection;
     return this;
   }
 

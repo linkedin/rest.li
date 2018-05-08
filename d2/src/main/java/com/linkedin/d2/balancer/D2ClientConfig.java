@@ -26,7 +26,7 @@ import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessorRegistry;
 import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl;
 import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl.ComponentFactory;
-import com.linkedin.d2.discovery.stores.zk.ZkConnectionDealer;
+import com.linkedin.d2.discovery.stores.zk.ZKPersistentConnection;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeper;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import java.util.Collections;
@@ -80,8 +80,8 @@ public class D2ClientConfig
   Function<ZooKeeper, ZooKeeper> zooKeeperDecorator = null;
   Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories = Collections.emptyMap();
   boolean requestTimeoutHandlerEnabled = false;
-  ZkConnectionDealer connectionDealer = null;
   SslSessionValidatorFactory sslSessionValidatorFactory = null;
+  ZKPersistentConnection zkConnectionToUseForLB = null;
 
   private static final int DEAULT_RETRY_LIMIT = 3;
 
@@ -127,8 +127,8 @@ public class D2ClientConfig
                  boolean enableSaveUriDataOnDisk,
                  Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories,
                  boolean requestTimeoutHandlerEnabled,
-                 ZkConnectionDealer connectionDealer,
-                 SslSessionValidatorFactory sslSessionValidatorFactory)
+                 SslSessionValidatorFactory sslSessionValidatorFactory,
+                 ZKPersistentConnection zkConnection)
   {
     this.zkHosts = zkHosts;
     this.zkSessionTimeoutInMs = zkSessionTimeoutInMs;
@@ -168,7 +168,7 @@ public class D2ClientConfig
     this.enableSaveUriDataOnDisk = enableSaveUriDataOnDisk;
     this.loadBalancerStrategyFactories = loadBalancerStrategyFactories;
     this.requestTimeoutHandlerEnabled = requestTimeoutHandlerEnabled;
-    this.connectionDealer = connectionDealer;
     this.sslSessionValidatorFactory = sslSessionValidatorFactory;
+    this.zkConnectionToUseForLB = zkConnection;
   }
 }

@@ -1,3 +1,7 @@
+21.0.7
+-------
+
+
 21.0.6
 -------
 (RB=1312972)
@@ -5,6 +9,9 @@ Build validating schema on request if using projections, return HTTP 400 for pro
 
 (RB=1325295)
 use retryZookeeper in AclAwareZookeeperTest to improve test stability
+
+(RB=1295192)
+refactored zkConnectionDealer to SharedZkConnectionProvider
 
 21.0.5
 -------

@@ -52,7 +52,7 @@ public class ZKPersistentConnection
 
   //the number of users currently having the connection running
   private AtomicInteger _activeUserCount;
-  //the number of users who obtained the connection from the ZKConnectionDealer during construction.
+  //the number of users who obtained the connection from the SharedZkConnectionProvider during construction.
   private AtomicInteger _registeredUserCount;
   //the flag to indicate that the connection has been forcefully shutdown by framework
   private volatile boolean _hasForcefullyShutdown;

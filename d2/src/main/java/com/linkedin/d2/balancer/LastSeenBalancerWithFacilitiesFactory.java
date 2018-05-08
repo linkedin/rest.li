@@ -59,10 +59,12 @@ public class LastSeenBalancerWithFacilitiesFactory implements LoadBalancerWithFa
       .setIsSymlinkAware(config.isSymlinkAware).setTimeout((int) config.zkSessionTimeoutInMs);
 
     ZKPersistentConnection zkPersistentConnection;
-    if (config.connectionDealer != null)
+    if (config.zkConnectionToUseForLB != null)
     {
-      zkPersistentConnection = config.connectionDealer.getZKPersistentConnection(zkConnectionBuilder);
+      LOG.info("LastSeenLoadBalancer using shared connection to zookeeper");
+      zkPersistentConnection = config.zkConnectionToUseForLB;
     } else {
+      LOG.info("LastSeenLoadBalancer using its own connection to zookeeper");
       zkPersistentConnection = new ZKPersistentConnection(zkConnectionBuilder);
     }
 

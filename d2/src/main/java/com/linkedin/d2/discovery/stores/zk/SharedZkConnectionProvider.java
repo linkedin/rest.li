@@ -17,14 +17,13 @@
 package com.linkedin.d2.discovery.stores.zk;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.LongAdder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.w3c.dom.Entity;
 
 
 /**
@@ -34,15 +33,29 @@ import org.w3c.dom.Entity;
  *
  * NOTE: this class is intended to be used during object initialization phase before starting/running the application.
  * This is because connection event listeners can only be added before connection start.
+ *
+ * Note on shared connection lifecycle:
+ *
+ * Shared connections to zookeeper are started by the first user trying to start it, after which new users trying to start it
+ * will increase the active user count for that connection.
+ *
+ * To shutdown a connection, it is ensured that
+ *  1. no active users are using it
+ *  2. all the original connection requesters have finished using it.
+ * Normally the last user would shutdown connection when it calls shutdown/close. If for some reason that one user who has obtained the connection
+ * but never starts/uses it, {@code ensureConnectionClosed} should be called to ensure clean shutdown
  */
-public class ZkConnectionDealer {
-  private static final Logger LOG = LoggerFactory.getLogger(ZkConnectionDealer.class);
+public class SharedZkConnectionProvider implements ZkConnectionProvider {
+  private static final Logger LOG = LoggerFactory.getLogger(SharedZkConnectionProvider.class);
 
   private Map<ZKConnectionBuilder, ZKPersistentConnection> _sharedConnections;
+  private LongAdder _requestCount;
+  private volatile boolean _sharingEnabled;
 
-
-  public ZkConnectionDealer() {
+  public SharedZkConnectionProvider() {
     _sharedConnections = new HashMap<>();
+    _requestCount = new LongAdder();
+    _sharingEnabled = true;
   }
 
   /**
@@ -51,6 +64,13 @@ public class ZkConnectionDealer {
    * @return a ZKPersistentConnection
    */
   public ZKPersistentConnection getZKPersistentConnection(ZKConnectionBuilder zkConnectionBuilder) {
+    if (!_sharingEnabled) {
+      LOG.warn("Trying to obtain connections after application has been started!");
+      return new ZKPersistentConnection(zkConnectionBuilder);
+    }
+
+    _requestCount.increment();
+
     final ZKConnectionBuilder builder= new ZKConnectionBuilder(zkConnectionBuilder);
     ZKPersistentConnection connection;
 
@@ -73,20 +93,42 @@ public class ZkConnectionDealer {
 
   /**
    * Since connections are shared, if registered users did not use the connection, the connection can't be closed unless we manually close it.
-   * @throws InterruptedException
+   * @Throws InterruptedException
    */
   public void ensureConnectionClosed() throws InterruptedException
   {
-    Collection<ZKPersistentConnection> connectionList = _sharedConnections.values();
-    for (ZKPersistentConnection connection : connectionList) {
-      if (!connection.isConnectionStopped())
-      {
-        connection.forceShutdown();
+    synchronized (_sharedConnections) {
+      Collection<ZKPersistentConnection> connectionList = _sharedConnections.values();
+      for (ZKPersistentConnection connection : connectionList) {
+        if (!connection.isConnectionStopped())
+        {
+          connection.forceShutdown();
+        }
       }
     }
   }
 
+  /**
+   * Disable sharing from SharedZkConnectionProvider.
+   */
+  public void disableSharing() {
+    _sharingEnabled = false;
+  }
+
+  /**
+   * Returns the number of connections initialized by the SharedZkConnectionProvider
+   */
   public int getZkConnectionCount() {
-    return _sharedConnections.size();
+    synchronized (_sharedConnections) {
+      return _sharedConnections.size();
+    }
+  }
+
+  /**
+   * Returns number of connection requests received by SharedZkConnectionProvider
+   */
+  public int getRequestCount()
+  {
+    return _requestCount.intValue();
   }
 }
