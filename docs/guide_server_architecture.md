@@ -5,7 +5,7 @@ permalink: /user_guide/server_architecture
 index: 2
 ---
 
-# Rest.li Client/Server Architecture
+# Rest.li Architecture
 
 Rest.li is a Java framework that allows you to easily create clients and
 servers that use a REST style of communication. Rest.li is based on an
@@ -22,7 +22,7 @@ understand the basic principles, you can refer to specific sections in
 this guide when you have questions. If you just want to get started
 exploring a simple sample implementation, go to [Quickstart Guide - a
 step-by-step tutorial on the
-basics](./Quickstart:-A-Tutorial-Introduction-to-Rest.li).
+basics](/rest.li/start/step_by_step).
 
 
 ## Introduction
@@ -220,7 +220,7 @@ Let's look at each step:
     Rest.li to issue requests to a server.
 
 The [Quickstart
-Guide](/linkedin/rest.li/wiki/Quickstart:-A-Tutorial-Introduction-to-Rest.li)
+Guide](/rest.li/start/step_by_step)
 provides a step-by-step walk through of this development process and
 demonstrates the nuts and bolts, including build scripts and other
 infrastructure required to execute these steps.

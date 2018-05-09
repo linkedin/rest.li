@@ -5,12 +5,12 @@ permalink: /setup/gradle
 index: 1
 ---
 # Gradle build integration
-* [Introduction](https://github.com/linkedin/rest.li/wiki/Gradle-build-integration#introduction)
-* [An Example](https://github.com/linkedin/rest.li/wiki/Gradle-build-integration#an-example)
-* [Compatibility](https://github.com/linkedin/rest.li/wiki/Gradle-build-integration#compatibility)
-* [Publishing Maven Artifacts](https://github.com/linkedin/rest.li/wiki/Gradle-build-integration#publishing-maven-artifacts)
-* [Pegasus Plugin in Detail](https://github.com/linkedin/rest.li/wiki/Gradle-build-integration#pegasus-plugin-in-detail)
-* [Underlying Java Classes for Build Integration](https://github.com/linkedin/rest.li/wiki/Gradle-build-integration#underlying-java-classes-for-build-integration)
+* [Introduction](#introduction)
+* [An Example](#an-example)
+* [Compatibility](#compatibility)
+* [Publishing Maven Artifacts](#publishing-maven-artifacts)
+* [Pegasus Plugin in Detail](#pegasus-plugin-in-detail)
+* [Underlying Java Classes for Build Integration](#underlying-java-classes-for-build-integration)
 
 # Introduction
 Gradle integration is provided as part of Rest.li.  Pegasus simplifies use of Rest.li's code generators and compatibility checking by fully integrating them into the build system. (Note 'pegasus' is also the code name for the Rest.li project).

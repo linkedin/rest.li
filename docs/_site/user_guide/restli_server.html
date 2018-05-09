@@ -160,10 +160,10 @@ the following (full file
 <a href="https://github.com/linkedin/rest.li/blob/master/examples/spring-server/server/src/main/webapp/WEB-INF/beans.xml">here</a>):</p>
 
 <div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;!-- Example of how to add filters,  here we'll enable logging and snappy compression support --&gt;
-&lt;bean id="loggingFilter" class="com.linkedin.r2.filter.logging.SimpleLoggingFilter" /&gt;\
+&lt;bean id="loggingFilter" class="com.linkedin.r2.filter.logging.SimpleLoggingFilter" /&gt;
 </code></pre></div></div>
 
-<p><a href="https://github.com/linkedin/rest.li/wiki/List-of-R2-filters">Other R2
+<p><a href="https://github.com/linkedin/rest.li/tree/master/r2-core/src/main/java/com/linkedin/r2/filter">Other R2
 filters</a>
 can also be configured in a similar way.</p>
 
@@ -228,21 +228,21 @@ base class, uses an annotation to define a REST end-point (“fortunes”),
 and provides a GET endpoint by overriding the standard signature of the
 <code class="highlighter-rouge">get()</code> method of the base class:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/\
-\* A collection of fortunes, keyed by random number.\
-\*/\
-`RestLiCollection(name = "fortunes", namespace = "com.example.fortune")
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/*
+ * A collection of fortunes, keyed by random number.
+ **/
+RestLiCollection(name = "fortunes", namespace = "com.example.fortune")
 public class FortunesResource extends CollectionResourceTemplate&lt;Long, Fortune&gt;
 {
   /**
    * Gets a fortune for a random number.
    */
-  `Override\
-public Fortune get(Long key)\
-{\
-// retrieve data and return a Fortune object ...\
-}\
-}\
+    Override
+    public Fortune get(Long key)
+    {
+    // retrieve data and return a Fortune object ...
+    }
+}
 </code></pre></div></div>
 
 <p>This interface implements an HTTP GET:</p>
@@ -281,10 +281,6 @@ easily gain access to the documentation. For example, <a href="https://github.co
 Hub</a> is an opensource web
 UI that displays REST API documentation, including all javadoc, for
 Rest.li APIs.</p>
-
-<p>Scaladoc is also supported. See <a href="https://github.com/linkedin/rest.li/wiki/Scala-Integration">Scala
-Integration</a>
-for details.</p>
 
 <p><a id="wiki-ResourceAnnotations"></a></p>
 
@@ -330,7 +326,7 @@ the resource is intended to implement. Briefly, here are the options:</p>
   </tbody>
 </table>
 
-<h4 id="restlicollection">\@RestLiCollection</h4>
+<h4 id="restlicollection">@RestLiCollection</h4>
 
 <p>The @<code class="highlighter-rouge">RestLiCollection</code> annotation is applied to classes to mark them as
 providing a Rest.li collection resource. Collection resources model a
@@ -385,19 +381,19 @@ subclass of <code class="highlighter-rouge">RecordTemplate</code> generated from
 
 <p>For example:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>\@RestLiCollection(name = "fortunes", namespace = "com.example.fortune",
-keyName = "fortuneId")\
-public class FortunesResource extends CollectionResourceTemplate\&lt;Long,
-Fortune\&gt;\
-{\
-...\
-}\
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>@RestLiCollection(name = "fortunes", namespace = "com.example.fortune",
+keyName = "fortuneId")
+public class FortunesResource extends CollectionResourceTemplate&lt;Long,
+Fortune&gt;
+{
+...
+}
 </code></pre></div></div>
 
 <h2 id="sub-resources">Sub-Resources</h2>
 
 <p>Sub-resources may be defined by setting the “parent” field on
-<code>\@RestLiCollection</code> to the class of the parent resource of
+<code>@RestLiCollection</code> to the class of the parent resource of
 the sub-resource.</p>
 
 <p>For example, a sub-resource of the fortunes resource would have a URI
@@ -409,33 +405,33 @@ path of the form:</p>
 <p>Parent resource keys can be accessed by sub-resources, as shown in the
 following example:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>`RestLiCollection(name = "subresource", namespace = "com.example.fortune", parent = FortunesResource.class)
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>RestLiCollection(name = "subresource", namespace = "com.example.fortune", parent = FortunesResource.class)
 public class SubResource extends CollectionResourceTemplate&lt;Long, SubResourceEntity&gt;
 {
-  `RestMethod.Get\
-public Greeting get(Long key, \@Keys PathKeys keys) {\
-Long parentId = keys.getAsLong("fortuneId");\
-...\
-}\
-...\
-}\
+RestMethod.Get
+public Greeting get(Long key, @Keys PathKeys keys) {
+    Long parentId = keys.getAsLong("fortuneId");
+    ...
+}
+...
+}
 </code></pre></div></div>
 
 <p>Alternatively, if not using free form methods, the path key can
 retrieved from the resource context. This approach may be deprecated in
-future versions in favor of <code>\@Keys</code>.</p>
+future versions in favor of <code>@Keys</code>.</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public SubResourceEntity get(Long subresourceKey)\
-{\
-Long parentId = getContext().getPathKeys().getAsLong("fortuneId");\
-...\
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public SubResourceEntity get(Long subresourceKey)
+{
+    Long parentId = getContext().getPathKeys().getAsLong("fortuneId");
+    ...
 }
 </code></pre></div></div>
 
 <p>For details on how to make requests to sub-resources from a client, see
 <a href="#wiki-calling-sub-resources">Calling Sub-resources</a></p>
 
-<h4 id="restlicollection-with-complex-key">\@RestLiCollection with Complex Key</h4>
+<h4 id="restlicollection-with-complex-key">@RestLiCollection with Complex Key</h4>
 
 <p>Classes implementing <code class="highlighter-rouge">ComplexKeyResource</code> can use a record type as key.
 This allows for arbitrary complex hierarchical structures to be used to
@@ -444,9 +440,9 @@ support primitive type keys (or typerefs to primitive types).
 <code class="highlighter-rouge">ComplexKeyResourceTemplate</code> is a convenient base class to extend when
 implementing a <code class="highlighter-rouge">ComplexKeyResource</code>.</p>
 
-<p>The full interface is:\</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public interface ComplexKeyResource\&lt;K extends RecordTemplate, P extends
-RecordTemplate, V extends RecordTemplate\&gt; ...\
+<p>The full interface is:</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public interface ComplexKeyResource&lt;K extends RecordTemplate, P extends
+RecordTemplate, V extends RecordTemplate&gt; ...
 </code></pre></div></div>
 
 <p>A complex key consists of a <code class="highlighter-rouge">Key</code> and <code class="highlighter-rouge">Parameter</code> part. The <code class="highlighter-rouge">Key</code> should
@@ -460,31 +456,31 @@ indicate that no “Parameters” are used to key the collection.</p>
 
 <p>Example:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>\@RestLiCollection(name = "widgets", namespace = "com.example.widgets")\
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>@RestLiCollection(name = "widgets", namespace = "com.example.widgets")
 public class WidgetResource implements extends
-ComplexKeyResourceTemplate\&lt;WidgetKey, EmptyRecord, Widget\&gt;\
-{\
-public Widget get(ComplexResourceKey\&lt;WidgetKey, EmptyRecord\&gt; ck)\
-{\
-WidgetKey key = ck.getKey();\
-int number = key.getNumber();\
-String make = key.getThing().getMake();\
-String model = key.getThing().getModel();\
-return lookupWidget(number, make, model);\
-}\
-}\
+ComplexKeyResourceTemplate&lt;WidgetKey, EmptyRecord, Widget&gt;
+{
+    public Widget get(ComplexResourceKey&lt;WidgetKey, EmptyRecord&gt; ck)
+    {
+        WidgetKey key = ck.getKey();
+        int number = key.getNumber();
+        String make = key.getThing().getMake();
+        String model = key.getThing().getModel();
+        return lookupWidget(number, make, model);
+    }
+}
 </code></pre></div></div>
 
 <p>To use <code>EmptyRecord</code>, <code>restli-common</code> must be in
 the <code>dataModel</code> dependencies for the api project where client
 bindings are generated, as shown in the following example:</p>
 
-<p>api/build.gradle:\</p>
-<pre><code class="language-groovy\">dependencies {\
-...\
-dataModel spec.product.pegasus.restliCommon\
-}\
-</code></pre>
+<p>api/build.gradle:</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>dependencies {
+...
+dataModel spec.product.pegasus.restliCommon
+}
+</code></pre></div></div>
 
 <p>Where <code class="highlighter-rouge">WidgetKey.pdsc</code> is defined by the schema:</p>
 
@@ -524,13 +520,13 @@ dataModel spec.product.pegasus.restliCommon\
 <code class="highlighter-rouge">ComplexKeyResourceTemplate</code> (or directly implements
 <code class="highlighter-rouge">ComplexKeyResource</code>) and takes three ﻿type parameters instead of two:
 key type, key parameter type, and value type — each extending
-\@RecordTemplate.</p>
+@RecordTemplate.</p>
 
 <p>For details on how a complex key is represented in a request URL see
 <a href="/linkedin/rest.li/wiki/Rest.li-Protocol#complex-types">Rest.li Protocol: Complex
 Types</a></p>
 
-<h4 id="restlisimpleresource">\@RestLiSimpleResource</h4>
+<h4 id="restlisimpleresource">@RestLiSimpleResource</h4>
 
 <p>The @<code class="highlighter-rouge">RestLiSimpleResource</code> annotation is applied to classes to mark
 them as providing a Rest.li simple resource. Simple resources model an
@@ -563,16 +559,16 @@ rather than directly implementing the <code class="highlighter-rouge">SimpleReso
 
 <p>Examples:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>\@RestLiSimpleResource(name = "todaysPromotedProduct", namespace =
-"com.example.product")\
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>@RestLiSimpleResource(name = "todaysPromotedProduct", namespace =
+"com.example.product")
 public class TodaysPromotedProductResource extends
-SimpleResourceTemplate&lt;Product&gt;\
-{\
-...\
-}\
+SimpleResourceTemplate&lt;Product&gt;
+{
+    ...
+}
 </code></pre></div></div>
 
-<h4 id="restliassociation">\@RestLiAssociation</h4>
+<h4 id="restliassociation">@RestLiAssociation</h4>
 
 <p>The @<code class="highlighter-rouge">RestLiAssociation</code> annotation is applied to classes to mark them
 as providing a Rest.li association resource. Association resources model
@@ -584,21 +580,20 @@ for more details.</p>
 
 <p>For Example:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>`RestLiAssociation(name = "memberships", namespace = "com.example",
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>RestLiAssociation(name = "memberships", namespace = "com.example",
   assocKeys = {
-    `Key(name = "memberId", type = Long.class),\
-`Key(name = "groupId", type = Long.class)
+    Key(name = "memberId", type = Long.class), Key(name = "groupId", type = Long.class)
   }
 )
 public class MembershipsAssociation extends AssociationResourceTemplate&lt;Membership&gt;
 {
-  `Override\
-public Membership get(CompoundKey key)\
-{\
-return lookup(key.getPartAsLong("memberId",
-key.getPartAsLong("groupId"));\
-}\
-}\
+    Override
+    public Membership get(CompoundKey key)
+    {
+        return lookup(key.getPartAsLong("memberId",
+        key.getPartAsLong("groupId"));
+    }
+}
 </code></pre></div></div>
 
 <div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
@@ -640,7 +635,7 @@ the class’ annotation.</p>
 <code class="highlighter-rouge">AssociationResourceTemplate</code> rather than directly implementing the
 <code class="highlighter-rouge">AssociationResource</code> interface.</p>
 
-<h4 id="restliactions">\@RestLiActions</h4>
+<h4 id="restliactions">@RestLiActions</h4>
 
 <p>The @<code class="highlighter-rouge">RestLiActions</code> annotation is applied to classes to mark them as
 providing a Rest.li action set resource. Action set resources do not
@@ -649,16 +644,16 @@ actions.</p>
 
 <p>For example:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>\@RestLiActions(name = "simpleActions",\
-namespace = "com.example")\
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>@RestLiActions(name = "simpleActions",
+namespace = "com.example")
 public class SimpleActionsResource {
 
-`Action(name="echo")
-  public String echo(`ActionParam("input") String input)\
-{\
-return input;\
-}\
-}\
+    Action(name="echo")
+    public String echo(ActionParam("input") String input)
+    {
+        return input;
+    }
+}
 </code></pre></div></div>
 
 <p>The supported annotation parameters are:</p>
@@ -683,28 +678,98 @@ and intended semantics.</p>
 <p>The set of possible resource methods is constrained by the resource
 type, as described in the table below:</p>
 
-<hr />
-<p>Resource Type              Collection   Simple   Association   Action Set
-  ————————– ———— ——– ————- ————
-  GET                        x            x        x</p>
-
-<p>BATCH_GET / GET_ALL      x                     x</p>
-
-<p>FINDER                     x                     x</p>
-
-<p>CREATE / BATCH_CREATE     x</p>
-
-<p>UPDATE / PARTIAL_UPDATE   x            x        x</p>
-
-<p>BATCH_UPDATE /\           x                     x           <br />
-  BATCH_PARTIAL_UPDATE</p>
-
-<p>DELETE                     x            x        x</p>
-
-<p>BATCH_DELETE              x                     x</p>
-
-<p>ACTION                     x            x        x             x
-  —————————————————————————</p>
+<table>
+  <thead>
+    <tr>
+      <th>Resource Type</th>
+      <th>Collection</th>
+      <th>Simple</th>
+      <th>Association</th>
+      <th>Action Set</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>GET</td>
+      <td>x</td>
+      <td>x</td>
+      <td>x</td>
+      <td> </td>
+    </tr>
+  </tbody>
+  <tbody>
+    <tr>
+      <td>BATCH_GET / GET_ALL</td>
+      <td>x</td>
+      <td> </td>
+      <td>x</td>
+      <td> </td>
+    </tr>
+  </tbody>
+  <tbody>
+    <tr>
+      <td>FINDER</td>
+      <td>x</td>
+      <td> </td>
+      <td>x</td>
+      <td> </td>
+    </tr>
+  </tbody>
+  <tbody>
+    <tr>
+      <td>CREATE / BATCH_CREATE</td>
+      <td>x</td>
+      <td> </td>
+      <td> </td>
+      <td> </td>
+    </tr>
+  </tbody>
+  <tbody>
+    <tr>
+      <td>UPDATE / PARTIAL_UPDATE</td>
+      <td>x</td>
+      <td>x</td>
+      <td>x</td>
+      <td> </td>
+    </tr>
+  </tbody>
+  <tbody>
+    <tr>
+      <td>BATCH_UPDATE \ BATCH_PARTIAL_UPDATE</td>
+      <td>x</td>
+      <td> </td>
+      <td>x</td>
+      <td> </td>
+    </tr>
+  </tbody>
+  <tbody>
+    <tr>
+      <td>DELETE</td>
+      <td>x</td>
+      <td>x</td>
+      <td>x</td>
+      <td> </td>
+    </tr>
+  </tbody>
+  <tbody>
+    <tr>
+      <td>BATCH_DELETE</td>
+      <td>x</td>
+      <td> </td>
+      <td>x</td>
+      <td> </td>
+    </tr>
+  </tbody>
+  <tbody>
+    <tr>
+      <td>ACTION</td>
+      <td>x</td>
+      <td>x</td>
+      <td>x</td>
+      <td>x</td>
+    </tr>
+  </tbody>
+</table>
 
 <p>In the section below, <code class="highlighter-rouge">K</code> is used to denote the resource’s key type, and
 <code class="highlighter-rouge">V</code> is used to denote the resource’s value type. Remember that for
@@ -722,32 +787,32 @@ should be safe to call whenever the client wishes.</p>
 <p>Resources providing the GET resource method must override one of the
 following method signatures.</p>
 
-<p>For collection and association resources:\</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public V get(K key);\
+<p>For collection and association resources:</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    public V get(K key);
 </code></pre></div></div>
 
-<p>For simple resources:\</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public V get();\
+<p>For simple resources:</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    public V get();
 </code></pre></div></div>
 
 <p>Get methods can also be annotated if not overriding a base class method.
 GET supports a method signature with a wrapper return type.</p>
 
-<p>For collection and association resources:\</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>\@RestMethod.Get\
-public GetResult&lt;V&gt; getWithStatus(K key);\
+<p>For collection and association resources:</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>@RestMethod.Get
+public GetResult&lt;V&gt; getWithStatus(K key);
 </code></pre></div></div>
 
-<p>For simple resources:\</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>\@RestMethod.Get\
-public GetResult&lt;V&gt; getWithStatus();\
+<p>For simple resources:</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>@RestMethod.Get
+public GetResult&lt;V&gt; getWithStatus();
 </code></pre></div></div>
 
 <p>An annotated get method may also have arbitrary query params added:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>`RestMethod.Get
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>RestMethod.Get
 public GetResult&lt;V&gt; get(K key, `QueryParam("viewerId") String
-viewerId);\
+viewerId);
 </code></pre></div></div>
 
 <p>The return type <code class="highlighter-rouge">GetResult&lt;V&gt;</code> allows users to set an arbitrary HTTP
@@ -766,8 +831,8 @@ However, this is not something enforced by the framework, and it is up
 to the application developer that there are no side effects.</p>
 
 <p>Resources providing the BATCH_GET resource method must override the
-following method signature:\</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public Map\&lt;K, V\&gt; batchGet(Set&lt;K&gt; ids);\
+following method signature:</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    public Map&lt;K, V&gt; batchGet(Set&lt;K&gt; ids);
 </code></pre></div></div>
 
 <p>@<code class="highlighter-rouge">RestMethod.BatchGet</code> may be used to indicate a batch get method
@@ -776,33 +841,33 @@ instead of overriding the batchGet method of a base class.</p>
 <p>Resources may also return <code class="highlighter-rouge">BatchResult</code>, which allows errors to be
 returned along with entities that were successfully retrieved.</p>
 
-<p>Example of a batch get:\</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public BatchResult\&lt;Long, Greeting\&gt; batchGet(Set&lt;Long&gt; ids)\
-{\
-Map\&lt;Long, Greeting\&gt; batch = new HashMap\&lt;Long, Greeting\&gt;();\
-Map\&lt;Long, RestLiServiceException\&gt; errors = new HashMap\&lt;Long,
-RestLiServiceException\&gt;();\
-for (long id : ids)\
-{\
-Greeting g = \_db.get(id);\
-if (g != null)\
-{\
-batch.put(id, g);\
-}\
-else\
-{\
-errors.put(id, new
-RestLiServiceException(HttpStatus.S\_404\_NOT\_FOUND));\
-}\
-}\
-return new BatchResult\&lt;Long, Greeting\&gt;(batch, errors);\
-}\
+<p>Example of a batch get:</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public BatchResult&lt;Long, Greeting&gt; batchGet(Set&lt;Long&gt; ids)
+{
+    Map&lt;Long, Greeting&gt; batch = new HashMap&lt;Long, Greeting&gt;();
+    Map&lt;Long, RestLiServiceException&gt; errors = new HashMap&lt;Long,
+    RestLiServiceException&gt;();
+    for (long id : ids)
+    {
+        Greeting g = _db.get(id);
+        if (g != null)
+        {
+            batch.put(id, g);
+        }
+        else
+        {
+            errors.put(id, new
+            RestLiServiceException(HttpStatus.S_404_NOT_FOUND));
+        }
+    }
+    return new BatchResult&lt;Long, Greeting&gt;(batch, errors);
+}
 </code></pre></div></div>
 
 <p>Clients should make requests to a batch resource using <code class="highlighter-rouge">buildKV()</code> (not
 <code class="highlighter-rouge">build()</code>, it is deprecated), for example:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>new FortunesBuilders().batchGet().ids(...).buildKV()\
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    new FortunesBuilders().batchGet().ids(...).buildKV();
 </code></pre></div></div>
 
 <p><a id="GET_ALL"></a></p>
@@ -815,7 +880,7 @@ invoked, if present. The GET_ALL resource method retrieves all entities
 for the collection and supports the same pagination facilities as a
 finder.</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public List&lt;V&gt; getAll(\@Context PagingContext pagingContext);\
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public List&lt;V&gt; getAll(@Context PagingContext pagingContext);
 </code></pre></div></div>
 
 <p>@<code class="highlighter-rouge">RestMethod.GetAll</code> may be used to indicate a get all method instead of
@@ -826,14 +891,14 @@ do not override getAll, instead create a new method with the
 @<code class="highlighter-rouge">RestMethod.GetAll</code> annotation and return a <code class="highlighter-rouge">CollectionResult</code> rather
 than a list, for example:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>`RestMethod.GetAll
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>RestMethod.GetAll
 public CollectionResult&lt;Widgets, WidgetsMetadata&gt; getAllWidgets(`Context
-PagingContext pagingContext)\
-{\
-// ...\
-return new CollectionResult\&lt;Widgets, WidgetsMetadata\&gt;(pageOfWidgets,
-total, metadata);\
-}\
+PagingContext pagingContext)
+{
+    // ...
+    return new CollectionResult&lt;Widgets, WidgetsMetadata&gt;(pageOfWidgets,
+    total, metadata);
+}
 </code></pre></div></div>
 
 <p>When returning a CollectionResult from GetAll, the behavior is identical
@@ -861,23 +926,23 @@ indicates the name of the finder method.</p>
 
 <p>For example:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/\*\
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/*
 You can access this FINDER method via
 /resources/order?q=findOrder&amp;buyerType=1&amp;buyerId=309&amp;orderId=1208210101\
-\*/\
-`RestLiCollection(name="order",keyName="orderId")
+*/
+RestLiCollection(name="order",keyName="orderId")
 public class OrderResource extends CollectionResourceTemplate&lt;Integer,Order&gt;
 {
-  `Finder("findOrder")\
-public List&lt;Order&gt; findOrder(`Context PagingContext context,
-                               `QueryParam("buyerId") Integer buyerId,\
-`QueryParam("buyerType") Integer buyerType,
-                               `QueryParam("orderId") Integer orderId)\
-throws InternalException\
-{\
-...\
-}\
-...\
+    Finder("findOrder")
+    public List&lt;Order&gt; findOrder(Context PagingContext context,
+                                 QueryParam("buyerId") Integer buyerId,
+                                 QueryParam("buyerType") Integer buyerType,
+                                 QueryParam("orderId") Integer orderId)
+                                throws InternalException
+    {
+    ...
+    }
+}
 </code></pre></div></div>
 
 <p>Finder methods must return either:</p>
@@ -932,17 +997,14 @@ from a <code class="highlighter-rouge">.pdsc</code> schema)</li>
   <li>Arrays of one of the types above, e.g. <code class="highlighter-rouge">String[]</code>, <code class="highlighter-rouge">long[]</code>, …</li>
 </ul>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>`Finder("simpleFinder")
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Finder("simpleFinder")
 public List&lt;V&gt; simpleFind(`Context PagingContext context);
 
-`Finder("complexFinder")
-public CollectionResult&lt;V, MyMetaData&gt; complexFinder(`Context(defaultStart
-= 10, defaultCount = 100)\
-PagingContext context,\
-`AssocKey("key1") Long key,
-                                                      `QueryParam("param1")
-String requiredParam,\
-`QueryParam("param2") `Optional String optionalParam);\
+Finder("complexFinder")
+public CollectionResult&lt;V, MyMetaData&gt; complexFinder(Context(defaultStart
+= 10, defaultCount = 100) PagingContext context,AssocKey("key1") Long key,
+                          QueryParam("param1") String requiredParam,
+                          QueryParam("param2") Optional String optionalParam);
 </code></pre></div></div>
 
 <p><a id="TyperefSchema"></a></p>
@@ -968,8 +1030,8 @@ class like Date or URI as a custom type) then you can write a separate
 coercer class and register the coercer with the private variable
 declaration:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>private static final Object REGISTER\_COERCER =
-Custom.registerCoercer(new ObjectCoercer(), CustomObject.class);\
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>private static final Object REGISTER_COERCER =
+Custom.registerCoercer(new ObjectCoercer(), CustomObject.class);
 </code></pre></div></div>
 
 <p>Typeref Schema</p>
@@ -979,7 +1041,7 @@ type of the custom Type and the location of the custom type’s class,
 and, if necessary, the location of its coercer. The basic appearance of
 the typeref schema is shown below:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;{
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
    "type" : "typeref",
    "name" : "CustomObjectRef",
    "namespace" : "com.linkedin.example"  // namespace of the typeref
@@ -991,12 +1053,11 @@ the typeref schema is shown below:</p>
                                                                   // the coercer as an internal class.
    }
 }
-&lt;/code&gt;
 </code></pre></div></div>
 
 <p>This typeref can then be referenced in other schemas:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;{
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
   "type": "record",
   "name": "ExampleRecord",
    ...
@@ -1005,13 +1066,12 @@ the typeref schema is shown below:</p>
               ...
   ]
 }
-&lt;/code&gt;
 </code></pre></div></div>
 
 <p>And the generated Java data templates will automatically coerce from
 CustomObjectRef to CustomObject when accessing the member field:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>CustomObject o = exampleRecord.getMember();\
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>CustomObject o = exampleRecord.getMember();
 </code></pre></div></div>
 
 <p>Once Java data templates are generated, the typeref may also be used in
@@ -1019,26 +1079,26 @@ Keys, query parameters, or action parameters:</p>
 
 <p>Keys:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>\@RestLiCollection(name="entities",\
-namespace = "com.example",\
-keyTyperefClass = CustomObjectRef.class)\
-public class EntitiesResource extends CollectionResourceTemplate\&lt;Urn,
-CustomObject\&gt;\
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>@RestLiCollection(name="entities",
+namespace = "com.example",
+keyTyperefClass = CustomObjectRef.class)
+public class EntitiesResource extends CollectionResourceTemplate&lt;Urn,
+CustomObject&gt;
 </code></pre></div></div>
 
 <p>Compound keys:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>`RestLiAssociation(name="entities", namespace="com.example",
-                                        assocKeys={`Key(name="o",
-type=CustomObject.class, typeref=CustomObjectRef.class)})\
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>RestLiAssociation(name="entities", namespace="com.example",
+                                   assocKeys={`Key(name="o",
+    type=CustomObject.class, typeref=CustomObjectRef.class)})
 </code></pre></div></div>
 
 <p>Query parameters:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>\@QueryParam(value="o", typeref=CustomObjectRef.class) CustomObject o
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>@QueryParam(value="o", typeref=CustomObjectRef.class) CustomObject o
 
-\@QueryParam(value="oArray", typeref=CustomObjectRef.class)
-CustomObject\[\] oArray\
+@QueryParam(value="oArray", typeref=CustomObjectRef.class)
+CustomObject[] oArray
 </code></pre></div></div>
 
 <p><a id="CREATE"></a></p>
@@ -1051,8 +1111,8 @@ for assigning a new key to the created entity. CREATE methods are
 neither safe nor idempotent.</p>
 
 <p>Resources providing the CREATE resource method must override the
-following method signature:\</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public CreateResponse create(V entity);\
+following method signature:</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    public CreateResponse create(V entity);
 </code></pre></div></div>
 
 <p>The returned <code class="highlighter-rouge">CreateResponse</code> object indicates the HTTP status code to
@@ -1074,934 +1134,944 @@ CREATE response saves client another GET request.</p>
 <p>Starting in Rest.li version 2.10.3, we provide developer the option to
 return newly created entity. To use this feature, add @<code class="highlighter-rouge">ReturnEntity</code>
 annotation to the method that implements CREATE. The return type of
-method must be <code class="highlighter-rouge">CreateKVResponse</code>.\</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>```` ReturnEntity
+method must be <code class="highlighter-rouge">CreateKVResponse</code>.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>@ReturnEntity
 public CreateKVResponse create(V entity);
 </code></pre></div></div>
 <p>An example implementation for resource is like below, note that the return type will be  <code class="highlighter-rouge">CreateKVResponse</code> :</p>
-<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="err">````</span><span class="n">ReturnEntity</span><span class="err">\</span>
-<span class="kd">public</span> <span class="n">CreateKVResponse</span><span class="err">\</span><span class="o">&lt;</span><span class="n">Long</span><span class="o">,</span> <span class="n">Greeting</span><span class="err">\</span><span class="o">&gt;</span> <span class="n">create</span><span class="o">(</span><span class="n">Greeting</span> <span class="n">entity</span><span class="o">)</span><span class="err">\</span>
-<span class="o">{</span><span class="err">\</span>
-<span class="n">Long</span> <span class="n">id</span> <span class="o">=</span> <span class="mi">1L</span><span class="o">;</span><span class="err">\</span>
-<span class="n">entity</span><span class="o">.</span><span class="na">setId</span><span class="o">(</span><span class="n">id</span><span class="o">);</span><span class="err">\</span>
-<span class="k">return</span> <span class="k">new</span> <span class="n">CreateKVResponse</span><span class="err">\</span><span class="o">&lt;</span><span class="n">Long</span><span class="o">,</span> <span class="n">Greeting</span><span class="err">\</span><span class="o">&gt;(</span><span class="n">entity</span><span class="o">.</span><span class="na">getId</span><span class="o">(),</span> <span class="n">entity</span><span class="o">);</span><span class="err">\</span>
-<span class="o">}</span><span class="err">\</span>
-<span class="err">```\</span>
-<span class="o">&lt;</span><span class="n">a</span> <span class="n">id</span><span class="o">=</span><span class="s">"BATCH_CREATE"</span><span class="o">&gt;&lt;/</span><span class="n">a</span><span class="o">&gt;</span>
 
-<span class="err">####</span> <span class="n">BATCH</span><span class="err">\</span><span class="n">_CREATE</span>
-
-<span class="n">BATCH</span><span class="err">\</span><span class="n">_CREATE</span> <span class="n">methods</span> <span class="n">model</span> <span class="n">the</span> <span class="n">creation</span> <span class="n">of</span> <span class="n">a</span> <span class="n">group</span> <span class="n">of</span> <span class="k">new</span> <span class="n">entities</span> <span class="n">from</span>
-<span class="n">their</span> <span class="n">representations</span><span class="o">.</span> <span class="n">In</span> <span class="n">BATCH</span><span class="err">\</span><span class="n">_CREATE</span><span class="o">,</span> <span class="n">the</span> <span class="n">resource</span> <span class="n">implementation</span> <span class="n">is</span>
-<span class="n">responsible</span> <span class="k">for</span> <span class="n">assigning</span> <span class="n">a</span> <span class="k">new</span> <span class="n">key</span> <span class="n">to</span> <span class="n">each</span> <span class="n">created</span> <span class="n">entity</span><span class="o">.</span>
-<span class="n">BATCH</span><span class="err">\</span><span class="n">_CREATE</span> <span class="n">methods</span> <span class="n">are</span> <span class="n">neither</span> <span class="n">safe</span> <span class="n">nor</span> <span class="n">idempotent</span><span class="o">.</span>
-
-<span class="n">Resources</span> <span class="n">providing</span> <span class="n">the</span> <span class="n">BATCH</span><span class="err">\</span><span class="n">_CREATE</span> <span class="n">resource</span> <span class="n">method</span> <span class="n">must</span> <span class="n">override</span> <span class="n">the</span>
-<span class="n">following</span> <span class="n">method</span> <span class="nl">signature:</span><span class="err">\</span>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="nd">@ReturnEntity</span>
+<span class="kd">public</span> <span class="n">CreateKVResponse</span><span class="o">&lt;</span><span class="n">Long</span><span class="o">,</span> <span class="n">Greeting</span><span class="o">&gt;</span> <span class="nf">create</span><span class="o">(</span><span class="n">Greeting</span> <span class="n">entity</span><span class="o">)</span>
+<span class="o">{</span>
+    <span class="n">Long</span> <span class="n">id</span> <span class="o">=</span> <span class="mi">1L</span><span class="o">;</span>
+    <span class="n">entity</span><span class="o">.</span><span class="na">setId</span><span class="o">(</span><span class="n">id</span><span class="o">);</span>
+    <span class="k">return</span> <span class="k">new</span> <span class="n">CreateKVResponse</span><span class="o">&lt;</span><span class="n">Long</span><span class="o">,</span> <span class="n">Greeting</span><span class="o">&gt;(</span><span class="n">entity</span><span class="o">.</span><span class="na">getId</span><span class="o">(),</span> <span class="n">entity</span><span class="o">);</span>
+<span class="o">}</span>
 </code></pre></div></div>
-<p>public BatchCreateResult&lt;K, V&gt; batchCreate(BatchCreateRequest&lt;K, V&gt;
-entities);\</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
-The `BatchCreateRequest` object wraps a list of entity representations
-of type `V`.
+<p><a id="BATCH_CREATE"></a></p>
 
-The returned `BatchCreateResult` object wraps a list of `CreateResponse`
-objects (see CREATE). The `CreateResponse` objects are expected to be
-returned in the same order and position as the respective input objects.
+<h4 id="batch_create">BATCH_CREATE</h4>
 
-`BatchCreateRequest` and `BatchCreateResult` support the generic type
-parameter `K` to allow for future extension.
+<p>BATCH_CREATE methods model the creation of a group of new entities from
+their representations. In BATCH_CREATE, the resource implementation is
+responsible for assigning a new key to each created entity.
+BATCH_CREATE methods are neither safe nor idempotent.</p>
 
-@`RestMethod.BatchCreate` may be used to indicate a batch create method
-instead of overriding the batchCreate method of a base class.
-
-Example of a batch create:
-
+<p>Resources providing the BATCH_CREATE resource method must override the
+following method signature:</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    public BatchCreateResult&lt;K, V&gt; batchCreate(BatchCreateRequest&lt;K, V&gt;
+entities);
 </code></pre></div></div>
-<p>public BatchCreateResult&lt;Long, Greeting&gt;
-batchCreate(BatchCreateRequest&lt;Long, Greeting&gt; entities)\
-{\
-List<CreateResponse> responses = new
-ArrayList<CreateResponse>(entities.getInput().size());</CreateResponse></CreateResponse></p>
 
-<p>for (Greeting g : entities.getInput())\
-{\
-responses.add(create(g));\
-}\
-return new BatchCreateResult&lt;Long, Greeting&gt;(responses);\
-}</p>
+<p>The <code class="highlighter-rouge">BatchCreateRequest</code> object wraps a list of entity representations
+of type <code class="highlighter-rouge">V</code>.</p>
 
-<p>public CreateResponse create(Greeting entity)\
-{\
-entity.setId(_idSeq.incrementAndGet());\
-_db.put(entity.getId(), entity);\
-return new CreateResponse(entity.getId());\
-}\</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
-Error details can be returned in any CreateResponse by providing a
-RestLiServiceException, for example:
+<p>The returned <code class="highlighter-rouge">BatchCreateResult</code> object wraps a list of <code class="highlighter-rouge">CreateResponse</code>
+objects (see CREATE). The <code class="highlighter-rouge">CreateResponse</code> objects are expected to be
+returned in the same order and position as the respective input objects.</p>
 
+<p><code class="highlighter-rouge">BatchCreateRequest</code> and <code class="highlighter-rouge">BatchCreateResult</code> support the generic type
+parameter <code class="highlighter-rouge">K</code> to allow for future extension.</p>
+
+<p>@<code class="highlighter-rouge">RestMethod.BatchCreate</code> may be used to indicate a batch create method
+instead of overriding the batchCreate method of a base class.</p>
+
+<p>Example of a batch create:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public BatchCreateResult&lt;Long, Greeting&gt;
+batchCreate(BatchCreateRequest&lt;Long, Greeting&gt; entities)
+{
+    List&lt;CreateResponse&gt; responses = new
+    ArrayList&lt;CreateResponse&gt;(entities.getInput().size());
+
+    for (Greeting g : entities.getInput())
+    {
+        responses.add(create(g));
+    }
+    return new BatchCreateResult&lt;Long, Greeting&gt;(responses);
+}
+
+public CreateResponse create(Greeting entity)
+{
+        entity.setId(_idSeq.incrementAndGet());
+        _db.put(entity.getId(), entity);
+        return new CreateResponse(entity.getId());
+}
 </code></pre></div></div>
-<p>public BatchCreateResult&lt;Long, Greeting&gt;
-batchCreate(BatchCreateRequest&lt;Long, Greeting&gt; entities) {\
-List<CreateResponse> responses = new
-ArrayList<CreateResponse>(entities.getInput().size());</CreateResponse></CreateResponse></p>
 
-<p>…\
-if (…) {\
-RestLiServiceException exception = new
-RestLiServiceException(HttpStatus.S_406_NOT_ACCEPTABLE, “…”);\
-exception.setServiceErrorCode(…);\
-exception.setErrorDetails(…);\
-responses.add(new CreateResponse(exception));\
-}\
-…</p>
+<p>Error details can be returned in any CreateResponse by providing a
+RestLiServiceException, for example:</p>
 
-<p>return new BatchCreateResult&lt;Long, Greeting&gt;(responses);\
-}\</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
-#### Returning entities in BATCH\_CREATE response
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public BatchCreateResult&lt;Long, Greeting&gt;
+batchCreate(BatchCreateRequest&lt;Long, Greeting&gt; entities) 
+{
+    List&lt;CreateResponse&gt; responses = new
+    ArrayList&lt;CreateResponse&gt;(entities.getInput().size());
 
-Similar to CREATE, BATCH\_CREATE also could return the newly created
-entities in the response. To do that, add @`ReturnEntity` annotation to
-the method implementing BATCH\_CREATE. The return type of the method
-must be `BatchCreateKVResult`.\
+    ...
+    if (...)
+    {
+        RestLiServiceException exception = new
+        RestLiServiceException(HttpStatus.S_406_NOT_ACCEPTABLE, "...");
+        exception.setServiceErrorCode(...);
+        exception.setErrorDetails(...);
+        responses.add(new CreateResponse(exception));
+    }
+    ...
+
+    return new BatchCreateResult&lt;Long, Greeting&gt;(responses);
+}
 </code></pre></div></div>
-<p>\@ReturnEntity\
+
+<h4 id="returning-entities-in-batch_create-response">Returning entities in BATCH_CREATE response</h4>
+
+<p>Similar to CREATE, BATCH_CREATE also could return the newly created
+entities in the response. To do that, add @<code class="highlighter-rouge">ReturnEntity</code> annotation to
+the method implementing BATCH_CREATE. The return type of the method
+must be <code class="highlighter-rouge">BatchCreateKVResult</code>.</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>@ReturnEntity
 public BatchCreateKVResult&lt;K, V&gt; batchCreate(BatchCreateRequest&lt;K,
-V&gt; entities);\</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
-An example implementation for resource is like below, note that the
-return type will be `BatchCreateKVResult`:\
+V&gt; entities);
 </code></pre></div></div>
-<p>\@ReturnEntity\
+
+<p>An example implementation for resource is like below, note that the
+return type will be <code class="highlighter-rouge">BatchCreateKVResult</code>:</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>@ReturnEntity
 public BatchCreateKVResult&lt;Long, Greeting&gt;
-batchCreate(BatchCreateRequest&lt;Long, Greeting&gt; entities)\
-{\
-List&lt;CreateKVResponse&lt;Long, Greeting&gt;&gt; responses = new
-ArrayList&lt;CreateKVResponse&lt;Long,
-Greeting&gt;&gt;(entities.getInput().size());\
-for (Greeting greeting : entities.getInput())\
-{\
-responses.add(create(greeting)); // Create function should return
-CreateKVResponse\
-}\
-return BatchCreateKVResult&lt;Long, Greeting&gt;(responses);\
-}\</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
-&lt;a id="UPDATE"&gt;&lt;/a&gt;
+batchCreate(BatchCreateRequest&lt;Long, Greeting&gt; entities)
+{
+    List&lt;CreateKVResponse&lt;Long, Greeting&gt;&gt; responses = new
+    ArrayList&lt;CreateKVResponse&lt;Long,
+    Greeting&gt;&gt;(entities.getInput().size());
+    for (Greeting greeting : entities.getInput())
+    {
+        responses.add(create(greeting)); // Create function should return
+        CreateKVResponse\
+    }
+    return BatchCreateKVResult&lt;Long, Greeting&gt;(responses);
+}
+</code></pre></div></div>
 
-#### UPDATE
+<p><a id="UPDATE"></a></p>
 
-UPDATE methods model updating an entity with a given key by setting its
+<h4 id="update">UPDATE</h4>
+
+<p>UPDATE methods model updating an entity with a given key by setting its
 value (overwriting the entire entity). UPDATE has side effects but is
 idempotent. For example, repeating the same update operation has the
-same effect as calling it once.
+same effect as calling it once.</p>
 
-Resources may choose whether to allow an UPDATE of an entity that does
+<p>Resources may choose whether to allow an UPDATE of an entity that does
 not already exist, in which case it should be created. This is different
 from CREATE because the client specifies the key for the entity to be
 created. Simple resources use UPDATE as a way to create the singleton
-entity.
+entity.</p>
 
-Resources providing the UPDATE resource method must override one of the
-following method signatures.
+<p>Resources providing the UPDATE resource method must override one of the
+following method signatures.</p>
 
-For collection and association resources:\
+<p>For collection and association resources:</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    public UpdateResponse update(K key, V entity);
 </code></pre></div></div>
-<p>public UpdateResponse update(K key, V entity);\</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
-For simple resources:\
+
+<p>For simple resources:</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    public UpdateResponse update(V entity);
 </code></pre></div></div>
-<p>public UpdateResponse update(V entity);\</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
-The returned `UpdateResponse` object indicates the HTTP status code to
-be returned.
 
-@`RestMethod.Update` may be used to indicate a update method instead of
-overriding the update method of a base class.
+<p>The returned <code class="highlighter-rouge">UpdateResponse</code> object indicates the HTTP status code to
+be returned.</p>
 
-&lt;a id="BATCH_UPDATE"&gt;&lt;/a&gt;
+<p>@<code class="highlighter-rouge">RestMethod.Update</code> may be used to indicate a update method instead of
+overriding the update method of a base class.</p>
 
-#### BATCH\_UPDATE
+<p><a id="BATCH_UPDATE"></a></p>
 
-BATCH\_UPDATE methods model updating a set of entities with specified
+<h4 id="batch_update">BATCH_UPDATE</h4>
+
+<p>BATCH_UPDATE methods model updating a set of entities with specified
 keys by setting their values (overwriting each entity entirely).
-BATCH\_UPDATE has side effects but is idempotent. For example, repeating
-the same batch update operation has the same effect as calling it once.
+BATCH_UPDATE has side effects but is idempotent. For example, repeating
+the same batch update operation has the same effect as calling it once.</p>
 
-Resources may choose whether to allow BATCH\_UPDATE for entities that do
+<p>Resources may choose whether to allow BATCH_UPDATE for entities that do
 not already exist, in which case each entity should be created. This is
-different from BATCH\_CREATE because the client specifies the keys for
-the entities to be created.
+different from BATCH_CREATE because the client specifies the keys for
+the entities to be created.</p>
 
-Resources providing the BATCH\_UPDATE resource method must override the
-following method signature:\
+<p>Resources providing the BATCH_UPDATE resource method must override the
+following method signature:</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    public BatchUpdateResult&lt;K, V&gt; batchUpdate(BatchUpdateRequest&lt;K, V&gt;
+entities);
 </code></pre></div></div>
-<p>public BatchUpdateResult&lt;K, V&gt; batchUpdate(BatchUpdateRequest&lt;K, V&gt;
-entities);\</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
-`BatchUpdateRequest` contains a map of entity key to entity value.
 
-The returned `BatchUpdateResult` object indicates the `UpdateResponse`
-for each key in the `BatchUpdateRequest`. In the case of failures,
-`RestLiServiceException` objects may be added to the `BatchUpdateResult`
-for the failed keys.
+<p><code class="highlighter-rouge">BatchUpdateRequest</code> contains a map of entity key to entity value.</p>
 
-@`RestMethod.BatchUpdate` may be used to indicate a batch update method
-instead of overriding the batchUpdate method of a base class.
+<p>The returned <code class="highlighter-rouge">BatchUpdateResult</code> object indicates the <code class="highlighter-rouge">UpdateResponse</code>
+for each key in the <code class="highlighter-rouge">BatchUpdateRequest</code>. In the case of failures,
+<code class="highlighter-rouge">RestLiServiceException</code> objects may be added to the <code class="highlighter-rouge">BatchUpdateResult</code>
+for the failed keys.</p>
 
-Example of a batch update:
+<p>@<code class="highlighter-rouge">RestMethod.BatchUpdate</code> may be used to indicate a batch update method
+instead of overriding the batchUpdate method of a base class.</p>
 
+<p>Example of a batch update:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public BatchUpdateResult&lt;Long, Greeting&gt;
+batchUpdate(BatchUpdateRequest&lt;Long, Greeting&gt; entities)
+{
+    Map&lt;Long, UpdateResponse&gt; responseMap = new HashMap&lt;Long,
+    UpdateResponse&gt;();
+    for (Map.Entry&lt;Long, Greeting&gt; entry : entities.getData().entrySet())
+    {
+    responseMap.put(entry.getKey(), update(entry.getKey(),
+    entry.getValue()));
+    }
+    return new BatchUpdateResult&lt;Long, Greeting&gt;(responseMap);
+}
+
+public UpdateResponse update(Long key, Greeting entity)
+{
+    Greeting g = _db.get(key);
+    if (g == null)
+    {
+    return new UpdateResponse(HttpStatus.S_404_NOT_FOUND);
+    }
+
+    _db.put(key, entity);
+
+    return new UpdateResponse(HttpStatus.S_204_NO_CONTENT);
+}
 </code></pre></div></div>
-<p>public BatchUpdateResult&lt;Long, Greeting&gt;
-batchUpdate(BatchUpdateRequest&lt;Long, Greeting&gt; entities)\
-{\
-Map&lt;Long, UpdateResponse&gt; responseMap = new HashMap&lt;Long,
-UpdateResponse&gt;();\
-for (Map.Entry&lt;Long, Greeting&gt; entry : entities.getData().entrySet())\
-{\
-responseMap.put(entry.getKey(), update(entry.getKey(),
-entry.getValue()));\
-}\
-return new BatchUpdateResult&lt;Long, Greeting&gt;(responseMap);\
-}</p>
 
-<p>public UpdateResponse update(Long key, Greeting entity)\
-{\
-Greeting g = _db.get(key);\
-if (g == null)\
-{\
-return new UpdateResponse(HttpStatus.S_404_NOT_FOUND);\
-}</p>
+<p><a id="PARTIAL_UPDATE"></a></p>
 
-<p>_db.put(key, entity);</p>
+<h4 id="partial_update">PARTIAL_UPDATE</h4>
 
-<p>return new UpdateResponse(HttpStatus.S_204_NO_CONTENT);\
-}\</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
-&lt;a id="PARTIAL_UPDATE"&gt;&lt;/a&gt;
+<p>PARTIAL_UPDATE methods model updating part of the entity with a given
+key. PARTIAL_UPDATE has side effects. In general, it is not guaranteed
+to be idempotent.</p>
 
-#### PARTIAL\_UPDATE
-
-PARTIAL\_UPDATE methods model updating part of the entity with a given
-key. PARTIAL\_UPDATE has side effects. In general, it is not guaranteed
-to be idempotent.
-
-Resources providing the PARTIAL\_UPDATE resource method must override
-the following method signature:\
+<p>Resources providing the PARTIAL_UPDATE resource method must override
+the following method signature:</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    public UpdateResponse update(K key, PatchRequest&lt;V&gt; patch);
 </code></pre></div></div>
-<p>public UpdateResponse update(K key, PatchRequest<V> patch);\</V></p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
-The returned `UpdateResponse` object indicates the HTTP status code to
-be returned.
 
-Rest.li provides tools to make it easy to handle partial updates to your
-resources. A typical update function should look something like this:
+<p>The returned <code class="highlighter-rouge">UpdateResponse</code> object indicates the HTTP status code to
+be returned.</p>
 
+<p>Rest.li provides tools to make it easy to handle partial updates to your
+resources. A typical update function should look something like this:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>@Override
+public UpdateResponse update(String key, PatchRequest&lt;YourResource&gt;
+patch )
+{
+    YourResource resource = _db.get(key); // Retrieve the resource object
+    from somewhere
+    if (resource == null)
+    {
+        return new UpdateResponse(HttpStatus.S_404_NOT_FOUND);
+    }
+    try
+    {
+        PatchApplier.applyPatch(resource, patch); // Apply the patch.\
+        // Be sure to save the resource if necessary\
+    }
+    catch (DataProcessingException e)
+    {
+        return new UpdateResponse(HttpStatus.S_400_BAD_REQUEST);
+    }
+    return new UpdateResponse(HttpStatus.S_204_NO_CONTENT);
+}
 </code></pre></div></div>
-<p>\@Override\
-public UpdateResponse update(String key, PatchRequest<YourResource>
-patch )\
-{\
-YourResource resource = \_db.get(key); // Retrieve the resource object
-from somewhere\
-if (resource == null)\
-{\
-return new UpdateResponse(HttpStatus.S\_404\_NOT\_FOUND);\
-}\
-try\
-{\
-PatchApplier.applyPatch(resource, patch); // Apply the patch.\
-// Be sure to save the resource if necessary\
-}\
-catch (DataProcessingException e)\
-{\
-return new UpdateResponse(HttpStatus.S\_400\_BAD\_REQUEST);\
-}\
-return new UpdateResponse(HttpStatus.S\_204\_NO\_CONTENT);\
-}\</YourResource></p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
-The PatchApplier automatically updates resources defined using the
+
+<p>The PatchApplier automatically updates resources defined using the
 Pegasus Data format. The Rest.li client classes provide support for
 constructing patch requests, but here is an example update request using
-curl:
+curl:</p>
 
-    &lt;code&gt;
-    curl -X POST localhost:/fortunes/1 -d '{"patch": {"$set": {"fortune": "you will strike it rich!"}}}'
-    &lt;/code&gt;
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
+curl -X POST localhost:/fortunes/1 -d '{"patch": {"$set": {"fortune": "you will strike it rich!"}}}'
+&lt;/code&gt;
+</code></pre></div></div>
 
-@`RestMethod.PartialUpdate` may be used to indicate a partial update
-method instead of overriding the partialUpdate method of a base class.
+<p>@<code class="highlighter-rouge">RestMethod.PartialUpdate</code> may be used to indicate a partial update
+method instead of overriding the partialUpdate method of a base class.</p>
 
-#### Inspecting Partial Updates to Selectively Update Fields in a Backing Store
+<h4 id="inspecting-partial-updates-to-selectively-update-fields-in-a-backing-store">Inspecting Partial Updates to Selectively Update Fields in a Backing Store</h4>
 
-It is possible to inspect the partial update and selectively write only
-the changed fields to a store.
+<p>It is possible to inspect the partial update and selectively write only
+the changed fields to a store.</p>
 
-For example, to update only the street field of this address entity:
+<p>For example, to update only the street field of this address entity:</p>
 
-    &lt;code&gt;
-    {
-      "address": {
-            "street": "10th",
-            "city": "Sunnyvale"
-        }
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
+  "address": {
+        "street": "10th",
+        "city": "Sunnyvale"
     }
-    &lt;/code&gt;
+}
+</code></pre></div></div>
 
-The partial update to change just the street field is:
+<p>The partial update to change just the street field is:</p>
 
-    &lt;code&gt;
-    {
-      "patch": {
-        "address": {
-          "$set": {
-            "street": "9th"
-          }
-        }
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
+  "patch": {
+    "address": {
+      "$set": {
+        "street": "9th"
       }
     }
-    &lt;/code&gt;
+  }
+}
+</code></pre></div></div>
 
-For the service code to selectively update just the street field (e.g.
+<p>For the service code to selectively update just the street field (e.g.
 UPDATE addresses SET street=:street WHERE key=:key). The partial update
 can be inspected and the selective update if only the street field is
-changed:
+changed:</p>
 
-</code></pre></div></div>
-<p>\@Override\
-public UpdateResponse update(String key, PatchRequest<YourResource>
-patchRequest)\
-{\
-try\
-{\
-DataMap patch = patchRequest.getPatchDocument();\
-boolean selectivePartialUpdateApplied = false;\
-if(patch.containsKey("address") &amp;&amp; patch.size()  1)
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>@Override
+public UpdateResponse update(String key, PatchRequest&lt;YourResource&gt;
+patchRequest)
+{
+    try
     {
-      DataMap address = patch.getDataMap(\"address\");
-      if(address.containsKey(\"\$set\") &amp;&amp; address.size()  1)\
-{\
-DataMap set = address.getDataMap("\$set");\
-if(address.containsKey("street") &amp;&amp; address.size()  1)
+        DataMap patch = patchRequest.getPatchDocument();
+        boolean selectivePartialUpdateApplied = false;
+        if(patch.containsKey("address") &amp;&amp; patch.size() &gt;= 1)
         {
-          String street = address.getString(\"street\");
-          selectivePartialUpdateApplied = true;
-          // update only the street, since its the only thing this patch requests to change
+            DataMap address = patch.getDataMap("address");
+            if(address.containsKey(\"\$set\") &amp;&amp; address.size()  1)
+            {
+                DataMap set = address.getDataMap("\$set");
+                if(address.containsKey("street") &amp;&amp; address.size()  1)
+                {
+                    String street = address.getString(\"street\");
+                    selectivePartialUpdateApplied = true;
+                    // update only the street, since its the only thing this patch requests to change
+                }
+            }
         }
-      }
+        if(selectivePartialUpdateApplied  false)
+        {
+            // no selective update available, update the whole record with
+            PatchApplier and return the result\
+        }
     }
-    if(selectivePartialUpdateApplied  false)\
-{\
-// no selective update available, update the whole record with
-PatchApplier and return the result\
-}\
-}\
-catch (DataProcessingException e)\
-{\
-return new UpdateResponse(HttpStatus.S\_400\_BAD\_REQUEST);\
-}\
-return new UpdateResponse(HttpStatus.S\_204\_NO\_CONTENT);\
-}\</YourResource></p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
-#### Creating Partial Updates
+    catch (DataProcessingException e)
+    {
+        return new UpdateResponse(HttpStatus.S_400_BAD_REQUEST);
+    }
 
-To create a request to modify field(s), PatchGenerator can be used, for
-example:
-
+    return new UpdateResponse(HttpStatus.S_204_NO_CONTENT);
+}
 </code></pre></div></div>
-<p>Fortune fortune = new Fortune().setMessage(“Today’s your lucky day.”);\
-PatchRequest<Fortune> patch = PatchGenerator.diffEmpty(fortune);\
-Request<Fortune> request = new
-FortunesBuilders().partialUpdate().id(1L).input(patch).build();\</Fortune></Fortune></p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
-\`PatchGenerator.diff(original, revised)\` can also be used to create a
-minimal partial update.
 
-&lt;a id="BATCH_PARTIAL_UPDATE"&gt;&lt;/a&gt;
+<h4 id="creating-partial-updates">Creating Partial Updates</h4>
 
-#### BATCH\_PARTIAL\_UPDATE
+<p>To create a request to modify field(s), PatchGenerator can be used, for
+example:</p>
 
-BATCH\_PARTIAL\_UPDATE methods model partial updates of multiple
-entities given their keys. BATCH\_PARTIAL\_UPDATE has side effects. In
-general, it is not guaranteed to be idempotent.
-
-Resources providing the BATCH\_PARTIAL\_UPDATE resource method must
-override the following method signature:\
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Fortune fortune = new Fortune().setMessage("Today's your lucky day.");
+PatchRequest&lt;Fortune&gt; patch = PatchGenerator.diffEmpty(fortune);
+Request&lt;Fortune&gt; request = new
+FortunesBuilders().partialUpdate().id(1L).input(patch).build();
 </code></pre></div></div>
-<p>public BatchUpdateResult&lt;K, V&gt; batchUpdate(BatchPatchRequest&lt;K, V&gt;
-patches);\</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
-The `BatchPatchRequest` input contains a map of entity key to
-`PatchRequest`.
 
-The returned `BatchUpdateResult` object indicates the `UpdateResponse`
-for each key in the `BatchPatchRequest`. In the case of failures,
-`RestLiServiceException` objects may be added to the `BatchUpdateResult`
-for the failed keys.
+<p><code class="highlighter-rouge">PatchGenerator.diff(original, revised)</code> can also be used to create a
+minimal partial update.</p>
 
-@`RestMethod.BatchPartialUpdate` may be used to indicate a batch partial
+<p><a id="BATCH_PARTIAL_UPDATE"></a></p>
+
+<h4 id="batch_partial_update">BATCH_PARTIAL_UPDATE</h4>
+
+<p>BATCH_PARTIAL_UPDATE methods model partial updates of multiple
+entities given their keys. BATCH_PARTIAL_UPDATE has side effects. In
+general, it is not guaranteed to be idempotent.</p>
+
+<p>Resources providing the BATCH_PARTIAL_UPDATE resource method must
+override the following method signature:</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public BatchUpdateResult&lt;K, V&gt; batchUpdate(BatchPatchRequest&lt;K, V&gt;
+patches);
+</code></pre></div></div>
+
+<p>The <code class="highlighter-rouge">BatchPatchRequest</code> input contains a map of entity key to
+<code class="highlighter-rouge">PatchRequest</code>.</p>
+
+<p>The returned <code class="highlighter-rouge">BatchUpdateResult</code> object indicates the <code class="highlighter-rouge">UpdateResponse</code>
+for each key in the <code class="highlighter-rouge">BatchPatchRequest</code>. In the case of failures,
+<code class="highlighter-rouge">RestLiServiceException</code> objects may be added to the <code class="highlighter-rouge">BatchUpdateResult</code>
+for the failed keys.</p>
+
+<p>@<code class="highlighter-rouge">RestMethod.BatchPartialUpdate</code> may be used to indicate a batch partial
 update method instead of overriding the batchPartialUpdate method of a
-base class.
+base class.</p>
 
-Example of a batch partial update:
+<p>Example of a batch partial update:</p>
 
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public BatchUpdateResult&lt;Long, Greeting&gt;
+batchUpdate(BatchPatchRequest&lt;Long, Greeting&gt; entityUpdates)
+{
+    Map&lt;Long, UpdateResponse&gt; responseMap = new HashMap&lt;Long,
+    UpdateResponse&gt;();
+    for (Map.Entry&lt;Long, PatchRequest&lt;Greeting&gt;&gt; entry :
+    entityUpdates.getData().entrySet())
+    {
+        responseMap.put(entry.getKey(), update(entry.getKey(),
+        entry.getValue()));
+    }
+    return new BatchUpdateResult&lt;Long, Greeting&gt;(responseMap);
+}
+
+public UpdateResponse update(Long key, PatchRequest&lt;Greeting&gt; patch)
+{
+    Greeting g = _db.get(key);
+    if (g == null)
+    {
+        return new UpdateResponse(HttpStatus.S_404_NOT_FOUND);
+    }
+
+    try
+    {
+        PatchApplier.applyPatch(g, patch);
+    }
+    catch (DataProcessingException e)
+    {
+        return new UpdateResponse(HttpStatus.S_400_BAD_REQUEST);
+    }
+
+    _db.put(key, g);
+
+    return new UpdateResponse(HttpStatus.S_204_NO_CONTENT);
+}
 </code></pre></div></div>
-<p>public BatchUpdateResult&lt;Long, Greeting&gt;
-batchUpdate(BatchPatchRequest&lt;Long, Greeting&gt; entityUpdates)\
-{\
-Map&lt;Long, UpdateResponse&gt; responseMap = new HashMap&lt;Long,
-UpdateResponse&gt;();\
-for (Map.Entry&lt;Long, PatchRequest<Greeting>\&gt; entry :
-entityUpdates.getData().entrySet())\
-{\
-responseMap.put(entry.getKey(), update(entry.getKey(),
-entry.getValue()));\
-}\
-return new BatchUpdateResult\&lt;Long, Greeting\&gt;(responseMap);\
-}</Greeting></p>
 
-<p>public UpdateResponse update(Long key, PatchRequest<Greeting> patch)\
-{\
-Greeting g = \_db.get(key);\
-if (g == null)\
-{\
-return new UpdateResponse(HttpStatus.S\_404\_NOT\_FOUND);\
-}</Greeting></p>
+<p><a id="DELETE"></a></p>
 
-<p>try\
-{\
-PatchApplier.applyPatch(g, patch);\
-}\
-catch (DataProcessingException e)\
-{\
-return new UpdateResponse(HttpStatus.S_400_BAD_REQUEST);\
-}</p>
+<h4 id="delete">DELETE</h4>
 
-<p>_db.put(key, g);</p>
-
-<p>return new UpdateResponse(HttpStatus.S_204_NO_CONTENT);\
-}\</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
-&lt;a id="DELETE"&gt;&lt;/a&gt;
-
-#### DELETE
-
-DELETE methods model deleting (removing) an entity with a given key on
+<p>DELETE methods model deleting (removing) an entity with a given key on
 collection and association resources or without a key on simple
-resources. DELETE has side effects but is idempotent.
+resources. DELETE has side effects but is idempotent.</p>
 
-Resources providing the DELETE resource method must override one of the
-following method signatures.
+<p>Resources providing the DELETE resource method must override one of the
+following method signatures.</p>
 
-For collection and association resources:\
+<p>For collection and association resources:</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    public UpdateResponse delete(K key);
 </code></pre></div></div>
-<p>public UpdateResponse delete(K key);\</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
-For simple resources:\
+
+<p>For simple resources:</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    public UpdateResponse delete();
 </code></pre></div></div>
-<p>public UpdateResponse delete();\</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
-The returned `UpdateResponse` object indicates the HTTP status code to
-be returned.
 
-@`RestMethod.Delete` may be used to indicate a delete method instead of
-overriding the delete method of a base class.
+<p>The returned <code class="highlighter-rouge">UpdateResponse</code> object indicates the HTTP status code to
+be returned.</p>
 
-&lt;a id="BATCH_DELETE"&gt;&lt;/a&gt;
+<p>@<code class="highlighter-rouge">RestMethod.Delete</code> may be used to indicate a delete method instead of
+overriding the delete method of a base class.</p>
 
-#### BATCH\_DELETE
+<p><a id="BATCH_DELETE"></a></p>
 
-BATCH\_DELETE methods model deleting (removing) multiple entities given
-their keys. BATCH\_DELETE has side effects but is idempotent.
+<h4 id="batch_delete">BATCH_DELETE</h4>
 
-Resources providing the BATCH\_DELETE resource method must override the
-following method signature:\
+<p>BATCH_DELETE methods model deleting (removing) multiple entities given
+their keys. BATCH_DELETE has side effects but is idempotent.</p>
+
+<p>Resources providing the BATCH_DELETE resource method must override the
+following method signature:</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public BatchUpdateResult&lt;K, V&gt; batchDelete(BatchDeleteRequest&lt;K, V&gt;
+ids);
 </code></pre></div></div>
-<p>public BatchUpdateResult&lt;K, V&gt; batchDelete(BatchDeleteRequest&lt;K, V&gt;
-ids);\</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
-The `BatchDeleteRequest` input contains the list of keys to be deleted.
-`BatchDeleteRequest` accepts a generic type parameter `V` for future
-extension.
 
-The returned `BatchUpdateResult` object indicates the `UpdateResponse`
-for each key in the `BatchDeleteRequest`. In the case of failures,
-`RestLiServiceException` objects may be added to the `BatchUpdateResult`
-for the failed keys.
+<p>The <code class="highlighter-rouge">BatchDeleteRequest</code> input contains the list of keys to be deleted.
+<code class="highlighter-rouge">BatchDeleteRequest</code> accepts a generic type parameter <code class="highlighter-rouge">V</code> for future
+extension.</p>
 
-@`RestMethod.BatchDelete` may be used to indicate a batch delete method
-instead of overriding the batchDelete method of a base class.
+<p>The returned <code class="highlighter-rouge">BatchUpdateResult</code> object indicates the <code class="highlighter-rouge">UpdateResponse</code>
+for each key in the <code class="highlighter-rouge">BatchDeleteRequest</code>. In the case of failures,
+<code class="highlighter-rouge">RestLiServiceException</code> objects may be added to the <code class="highlighter-rouge">BatchUpdateResult</code>
+for the failed keys.</p>
 
-Example of a batch delete:
+<p>@<code class="highlighter-rouge">RestMethod.BatchDelete</code> may be used to indicate a batch delete method
+instead of overriding the batchDelete method of a base class.</p>
 
+<p>Example of a batch delete:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public BatchUpdateResult&lt;Long, Greeting&gt;
+batchDelete(BatchDeleteRequest&lt;Long, Greeting&gt; deleteRequest)
+{
+    Map&lt;Long, UpdateResponse&gt; responseMap = new HashMap&lt;Long,
+    UpdateResponse&gt;();
+    for (Long id : deleteRequest.getKeys())
+    {
+        responseMap.put(id, delete(id));
+    }
+    return new BatchUpdateResult&lt;Long, Greeting&gt;(responseMap);
+}
+
+public UpdateResponse delete(Long key)
+{
+    boolean removed = _db.remove(key) != null;
+
+    return new UpdateResponse(removed ? HttpStatus.S_204_NO_CONTENT :
+    HttpStatus.S_404_NOT_FOUND);
+}
 </code></pre></div></div>
-<p>public BatchUpdateResult&lt;Long, Greeting&gt;
-batchDelete(BatchDeleteRequest&lt;Long, Greeting&gt; deleteRequest)\
-{\
-Map&lt;Long, UpdateResponse&gt; responseMap = new HashMap&lt;Long,
-UpdateResponse&gt;();\
-for (Long id : deleteRequest.getKeys())\
-{\
-responseMap.put(id, delete(id));\
-}\
-return new BatchUpdateResult&lt;Long, Greeting&gt;(responseMap);\
-}</p>
 
-<p>public UpdateResponse delete(Long key)\
-{\
-boolean removed = _db.remove(key) != null;</p>
+<p><a id="ACTION"></a></p>
 
-<p>return new UpdateResponse(removed ? HttpStatus.S_204_NO_CONTENT :
-HttpStatus.S_404_NOT_FOUND);\
-}\</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
-&lt;a id="ACTION"&gt;&lt;/a&gt;
+<h4 id="action">ACTION</h4>
 
-#### ACTION
+<p>ACTION methods are very flexible and do not specify any standard
+behavior.</p>
 
-ACTION methods are very flexible and do not specify any standard
-behavior.
+<p>Resources may provide zero or more ACTION resource methods. Each action
+must be annotated with the @<code class="highlighter-rouge">Action</code> annotation.</p>
 
-Resources may provide zero or more ACTION resource methods. Each action
-must be annotated with the @`Action` annotation.
+<p>The @<code class="highlighter-rouge">Action</code> annotation supports the following parameters:</p>
 
-The @`Action` annotation supports the following parameters:
+<ul>
+  <li><code class="highlighter-rouge">name</code> Required, the name of the action resource method.</li>
+  <li><code class="highlighter-rouge">resourceLevel</code> Optional, defaults to <code class="highlighter-rouge">ResourceLevel.ANY</code>, which
+indicates that the action is defined directly on the containing
+resource and does not support an entity key as a URI parameter.
+<code class="highlighter-rouge">ResourceLevel.COLLECTION</code> indicates that the action is defined on
+the containing association or collection resource and does not
+support an entity key as a URI parameter. <code class="highlighter-rouge">ResourceLevel.ENTITY</code>
+indicates that the action is defined on the entity and it requires
+an entity key as a URI parameter when the containing resource is an
+association or collection resource. If the containing resource is a
+simple resource <code class="highlighter-rouge">ResourceLevel.ENTITY</code> indicates that the action is
+defined directly on the resource and does not support an entity key
+as a URI parameter.</li>
+  <li><code class="highlighter-rouge">returnTyperef</code> Optional, defaults to no typeref. Indicates a
+Typeref to be used in the IDL for the action’s return parameter.
+Useful for actions that return primitive types.</li>
+</ul>
 
--   `name` Required, the name of the action resource method.
--   `resourceLevel` Optional, defaults to `ResourceLevel.ANY`, which
-    indicates that the action is defined directly on the containing
-    resource and does not support an entity key as a URI parameter.
-    `ResourceLevel.COLLECTION` indicates that the action is defined on
-    the containing association or collection resource and does not
-    support an entity key as a URI parameter. `ResourceLevel.ENTITY`
-    indicates that the action is defined on the entity and it requires
-    an entity key as a URI parameter when the containing resource is an
-    association or collection resource. If the containing resource is a
-    simple resource `ResourceLevel.ENTITY` indicates that the action is
-    defined directly on the resource and does not support an entity key
-    as a URI parameter.
--   `returnTyperef` Optional, defaults to no typeref. Indicates a
-    Typeref to be used in the IDL for the action's return parameter.
-    Useful for actions that return primitive types.
+<p>Each parameter to an action method must be annotated with
+@<code class="highlighter-rouge">ActionParam</code>, which takes the following annotation parameters:</p>
 
-Each parameter to an action method must be annotated with
-@`ActionParam`, which takes the following annotation parameters:
+<ul>
+  <li><code class="highlighter-rouge">value</code> Required, string name for the action parameter. If this is
+the only annotation, parameter, it may be specified without being
+explicitly named, for example, @<code class="highlighter-rouge">ActionParam("paramName")</code>.</li>
+  <li><code class="highlighter-rouge">typeref</code> Optional, Typeref to be used in the IDL for the parameter.</li>
+</ul>
 
--   `value` Required, string name for the action parameter. If this is
-    the only annotation, parameter, it may be specified without being
-    explicitly named, for example, @`ActionParam("paramName")`.
--   `typeref` Optional, Typeref to be used in the IDL for the parameter.
-
-Parameters of action methods may also be annotated with @`Optional`,
+<p>Parameters of action methods may also be annotated with @<code class="highlighter-rouge">Optional</code>,
 which indicates that the parameter is not required in the request. The
-@`Optional` annotation may specify a String value, which specifies the
+@<code class="highlighter-rouge">Optional</code> annotation may specify a String value, which specifies the
 default value to be used if the parameter is not provided in the
 request. If the method parameter is of primitive type, a default value
-must be specified in the @`Optional` annotation.
+must be specified in the @<code class="highlighter-rouge">Optional</code> annotation.</p>
 
-Valid parameter types and return types for action are:
+<p>Valid parameter types and return types for action are:</p>
 
--   `String`
--   `boolean` / `Boolean`
--   `int` / `Integer`
--   `long` / `Long`
--   `float` / `Float`
--   `double` / `Double`
--   `ByteString`
--   A Pegasus Enum (any enum defined in a `.pdsc` schema)
--   `RecordTemplate` or a subclass of `RecordTemplate` generated from a
-    record schema
--   `FixedTemplate` or a subclass of `FixedTemplate` generated from a
-    fixed schema
--   `AbstractArrayTemplate` or a subclass of `AbstractArrayTemplate`,
-    for example, `StringArray`, `LongArray`, and so on.
--   `AbstractMapTemplate` or a subclass of `AbstractMapTemplate`, for
-    example, `StringMap`, `LongMap`, and so on.
--   Custom types
+<ul>
+  <li><code class="highlighter-rouge">String</code></li>
+  <li><code class="highlighter-rouge">boolean</code> / <code class="highlighter-rouge">Boolean</code></li>
+  <li><code class="highlighter-rouge">int</code> / <code class="highlighter-rouge">Integer</code></li>
+  <li><code class="highlighter-rouge">long</code> / <code class="highlighter-rouge">Long</code></li>
+  <li><code class="highlighter-rouge">float</code> / <code class="highlighter-rouge">Float</code></li>
+  <li><code class="highlighter-rouge">double</code> / <code class="highlighter-rouge">Double</code></li>
+  <li><code class="highlighter-rouge">ByteString</code></li>
+  <li>A Pegasus Enum (any enum defined in a <code class="highlighter-rouge">.pdsc</code> schema)</li>
+  <li><code class="highlighter-rouge">RecordTemplate</code> or a subclass of <code class="highlighter-rouge">RecordTemplate</code> generated from a
+record schema</li>
+  <li><code class="highlighter-rouge">FixedTemplate</code> or a subclass of <code class="highlighter-rouge">FixedTemplate</code> generated from a
+fixed schema</li>
+  <li><code class="highlighter-rouge">AbstractArrayTemplate</code> or a subclass of <code class="highlighter-rouge">AbstractArrayTemplate</code>,
+for example, <code class="highlighter-rouge">StringArray</code>, <code class="highlighter-rouge">LongArray</code>, and so on.</li>
+  <li><code class="highlighter-rouge">AbstractMapTemplate</code> or a subclass of <code class="highlighter-rouge">AbstractMapTemplate</code>, for
+example, <code class="highlighter-rouge">StringMap</code>, <code class="highlighter-rouge">LongMap</code>, and so on.</li>
+  <li>Custom types</li>
+</ul>
 
-Similar to `GetResult&lt;V&gt;`, since 1.5.8, Rest.li supports an
-`ActionResult&lt;V&gt;` wrapper return type that allows you to specify an
-arbitrary HTTP status code for the response.
+<p>Similar to <code class="highlighter-rouge">GetResult&lt;V&gt;</code>, since 1.5.8, Rest.li supports an
+<code class="highlighter-rouge">ActionResult&lt;V&gt;</code> wrapper return type that allows you to specify an
+arbitrary HTTP status code for the response.</p>
 
-Simple example:\
+<p>Simple example:</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>@Action(name="action")
+public void doAction();
 </code></pre></div></div>
-<p>\@Action(name=”action”)\
-public void doAction();\</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
-A more complex example, illustrating multiple parameters:\
+
+<p>A more complex example, illustrating multiple parameters:</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Action(name="sendTestAnnouncement",resourceLevel= ResourceLevel.ENTITY)
+public void sendTestAnnouncement(`ActionParam("subject") String
+subject, ActionParam("message") String message, ActionParam("emailAddress") String
+emailAddress)
 </code></pre></div></div>
-<p><code class="highlighter-rouge">Action(name="sendTestAnnouncement",
-        resourceLevel= ResourceLevel.ENTITY)
-public void sendTestAnnouncement(</code>ActionParam(“subject”) String
-subject,\
-<code class="highlighter-rouge">ActionParam("message") String message,
-                                  </code>ActionParam(“emailAddress”) String
-emailAddress)\</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
-&lt;a id="ActionParamVQueryParam"&gt;&lt;/a&gt;
 
-#### `ActionParam vs. `QueryParam
+<p><a id="ActionParamVQueryParam"></a></p>
 
-@`ActionParam` and @`QueryParam` are used in different methods.
-@`ActionParam` is only allowed in Action methods, while @`QueryParam` is
+<h4 id="actionparam-vs-queryparam"><code class="highlighter-rouge">ActionParam vs. </code>QueryParam</h4>
+
+<p>@<code class="highlighter-rouge">ActionParam</code> and @<code class="highlighter-rouge">QueryParam</code> are used in different methods.
+@<code class="highlighter-rouge">ActionParam</code> is only allowed in Action methods, while @<code class="highlighter-rouge">QueryParam</code> is
 allowed in all non-Action methods. Besides, they are also different in
 terms of how the parameter data is sent to the server. If a parameter is
-annotated with @`QueryParam`, the information will be sent in the
-request url. If a parameter is annotated with @`ActionParam`, the
+annotated with @<code class="highlighter-rouge">QueryParam</code>, the information will be sent in the
+request url. If a parameter is annotated with @<code class="highlighter-rouge">ActionParam</code>, the
 information will be sent in the request body. Therefore, one advantage
-of using @`ActionParam` would be that the sent parameter can be encoded.
+of using @<code class="highlighter-rouge">ActionParam</code> would be that the sent parameter can be encoded.
 One disadvantage is that the purpose of the request itself can become
-less clear if one only examines the url.
+less clear if one only examines the url.</p>
 
-&lt;a id="wiki-ReturningNulls"&gt;&lt;/a&gt;
+<p><a id="wiki-ReturningNulls"></a></p>
 
-#### Returning Nulls
+<h4 id="returning-nulls">Returning Nulls</h4>
 
-Resource methods should never explicitly return `null`. If the Rest.li
-framework detects this, it will return an HTTP `500` back to the client
-with a message indicating 'Unexpected null encountered'. The only
+<p>Resource methods should never explicitly return <code class="highlighter-rouge">null</code>. If the Rest.li
+framework detects this, it will return an HTTP <code class="highlighter-rouge">500</code> back to the client
+with a message indicating ‘Unexpected null encountered’. The only
 exceptions to this rule are ACTION and GET. If an ACTION resource method
-returns `null`, the rest.li framework will return an HTTP `200`. If a
-GET returns `null`, the Rest.li framework will return an HTTP `404`.
+returns <code class="highlighter-rouge">null</code>, the rest.li framework will return an HTTP <code class="highlighter-rouge">200</code>. If a
+GET returns <code class="highlighter-rouge">null</code>, the Rest.li framework will return an HTTP <code class="highlighter-rouge">404</code>.</p>
 
-Also note that the HTTP `500` will also be generated by the Rest.li
+<p>Also note that the HTTP <code class="highlighter-rouge">500</code> will also be generated by the Rest.li
 framework if subsequent data structures inside of resource method
 responses are null or contain null. This applies to any data structure
 that is not a RecordTemplate. For example, all of the the following
-would cause an HTTP `500` to be returned. Note this list is not
-exhaustive:
+would cause an HTTP <code class="highlighter-rouge">500</code> to be returned. Note this list is not
+exhaustive:</p>
 
--   A `BatchCreateResult` returning a `null` results list.
--   A `BatchCreateResult` returning a valid list that as a `null`
-    element inside of it.
--   A `CreateResponse` returning a `null` for the `HttpStatus`.
--   A `BatchUpdateResult` returning a `null` key in the results map.
--   A `BatchUpdateResult` returning a `null` errors map.
--   A `BatchUpdateResult` returning a valid errors map, but with a
-    `null` key or `null` value inside of it.
+<ul>
+  <li>A <code class="highlighter-rouge">BatchCreateResult</code> returning a <code class="highlighter-rouge">null</code> results list.</li>
+  <li>A <code class="highlighter-rouge">BatchCreateResult</code> returning a valid list that as a <code class="highlighter-rouge">null</code>
+element inside of it.</li>
+  <li>A <code class="highlighter-rouge">CreateResponse</code> returning a <code class="highlighter-rouge">null</code> for the <code class="highlighter-rouge">HttpStatus</code>.</li>
+  <li>A <code class="highlighter-rouge">BatchUpdateResult</code> returning a <code class="highlighter-rouge">null</code> key in the results map.</li>
+  <li>A <code class="highlighter-rouge">BatchUpdateResult</code> returning a <code class="highlighter-rouge">null</code> errors map.</li>
+  <li>A <code class="highlighter-rouge">BatchUpdateResult</code> returning a valid errors map, but with a
+<code class="highlighter-rouge">null</code> key or <code class="highlighter-rouge">null</code> value inside of it.</li>
+</ul>
 
-It is good practice to make sure that `null` is never returned in any
+<p>It is good practice to make sure that <code class="highlighter-rouge">null</code> is never returned in any
 part of resource method responses, with the exception of RecordTemplate
-classes, ACTION methods and GET methods.
+classes, ACTION methods and GET methods.</p>
 
-&lt;a id="wiki-ResourceContext"&gt;&lt;/a&gt;
+<p><a id="wiki-ResourceContext"></a></p>
 
-## ResourceContext
+<h2 id="resourcecontext">ResourceContext</h2>
 
-`ResourceContext` provides access to the context of the current request.
-`ResourceContext` is injected into resources that implement the
-`BaseResource` interface, by calling `setContext()`.
+<p><code class="highlighter-rouge">ResourceContext</code> provides access to the context of the current request.
+<code class="highlighter-rouge">ResourceContext</code> is injected into resources that implement the
+<code class="highlighter-rouge">BaseResource</code> interface, by calling <code class="highlighter-rouge">setContext()</code>.</p>
 
-For resources extending `CollectionResourceTemplate`,
-`AssociationResourceTemplate`, or `ResourceContextHolder`, the current
-context is available by calling `getContext()`.
+<p>For resources extending <code class="highlighter-rouge">CollectionResourceTemplate</code>,
+<code class="highlighter-rouge">AssociationResourceTemplate</code>, or <code class="highlighter-rouge">ResourceContextHolder</code>, the current
+context is available by calling <code class="highlighter-rouge">getContext()</code>.</p>
 
-`ResourceContext` provides methods to access the raw request, as well as
-parsed values from the request. `ResourceContext` also provides some
+<p><code class="highlighter-rouge">ResourceContext</code> provides methods to access the raw request, as well as
+parsed values from the request. <code class="highlighter-rouge">ResourceContext</code> also provides some
 control over the generated response, such as the ability to set response
-headers.
+headers.</p>
 
-&lt;a id="wiki-ResourceTemplates"&gt;&lt;/a&gt;
+<p><a id="wiki-ResourceTemplates"></a></p>
 
-## Resource Templates
+<h2 id="resource-templates">Resource Templates</h2>
 
-Resource Templates provide convenient methods for implementing resource
+<p>Resource Templates provide convenient methods for implementing resource
 classes by extending them. Subclasses may selectively override relevant
 methods and for methods that are not overridden, the framework will
 recognize that your resource does not support this method and will
 return a 404 if clients attempt to invoke it. Note that unsupported
-methods will be omitted from your resources IDL (see [Restspec
-IDL](https://github.com/linkedin/rest.li/wiki/Rest.li-User-Guide#wiki-RestspecIDL)
-for details).
+methods will be omitted from your resources IDL (see <a href="https://github.com/linkedin/rest.li/wiki/Rest.li-User-Guide#wiki-RestspecIDL">Restspec
+IDL</a>
+for details).</p>
 
-#### CollectionResourceTemplate
+<h4 id="collectionresourcetemplate">CollectionResourceTemplate</h4>
 
-`CollectionResourceTemplate` provides a convenient base class for
-collection resources. `CollectionResourceTemplate` defines methods for
+<p><code class="highlighter-rouge">CollectionResourceTemplate</code> provides a convenient base class for
+collection resources. <code class="highlighter-rouge">CollectionResourceTemplate</code> defines methods for
 all of the CRUD operations. Subclasses may also implement FINDER and
-ACTION methods by annotating as described above.
+ACTION methods by annotating as described above.</p>
 
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public CreateResponse create(V entity);
+    public BatchCreateResult&lt;K, V&gt; batchCreate(BatchCreateRequest&lt;K, V&gt;
+    entities);
+    public V get(K key);
+    public Map&lt;K, V&gt; batchGet(Set&lt;K&gt; ids);
+    public UpdateResponse update(K key, V entity);
+    public BatchUpdateResult&lt;K, V&gt; batchUpdate(BatchUpdateRequest&lt;K, V&gt;
+    entities);
+    public UpdateResponse update(K key, PatchRequest&lt;V&gt; patch);
+    public BatchUpdateResult&lt;K, V&gt; batchUpdate(BatchPatchRequest&lt;K, V&gt;
+    patches);
+    public UpdateResponse delete(K key);
+    public BatchUpdateResult&lt;K, V&gt; batchDelete(BatchDeleteRequest&lt;K, V&gt;
+    ids);
 </code></pre></div></div>
-<p>public CreateResponse create(V entity);\
-public BatchCreateResult&lt;K, V&gt; batchCreate(BatchCreateRequest&lt;K, V&gt;
-entities);\
-public V get(K key);\
-public Map&lt;K, V&gt; batchGet(Set<K> ids);\
-public UpdateResponse update(K key, V entity);\
-public BatchUpdateResult\&lt;K, V\&gt; batchUpdate(BatchUpdateRequest\&lt;K, V\&gt;
-entities);\
-public UpdateResponse update(K key, PatchRequest<V> patch);\
-public BatchUpdateResult\&lt;K, V\&gt; batchUpdate(BatchPatchRequest\&lt;K, V\&gt;
-patches);\
-public UpdateResponse delete(K key);\
-public BatchUpdateResult\&lt;K, V\&gt; batchDelete(BatchDeleteRequest\&lt;K, V\&gt;
-ids);\</V></K></p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
-#### SimpleResourceTemplate
 
-`SimpleResourceTemplate` provides a convenient base class for simple
-resources. `SimpleResourceTemplate` defines methods for GET, UPDATE, and
+<h4 id="simpleresourcetemplate">SimpleResourceTemplate</h4>
+
+<p><code class="highlighter-rouge">SimpleResourceTemplate</code> provides a convenient base class for simple
+resources. <code class="highlighter-rouge">SimpleResourceTemplate</code> defines methods for GET, UPDATE, and
 DELETE methods. Subclasses may also implement ACTION methods by
-annotating as described above.
+annotating as described above.</p>
 
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public V get();
+public UpdateResponse update(V entity);
+public UpdateResponse delete();
 </code></pre></div></div>
-<p>public V get();\
-public UpdateResponse update(V entity);\
-public UpdateResponse delete();\</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
-#### AssociationResourceTemplate
 
-`AssociationResourceTemplate` provides a convenient base class for
-association resources. `AssociationResourceTemplate` defines methods for
+<h4 id="associationresourcetemplate">AssociationResourceTemplate</h4>
+
+<p><code class="highlighter-rouge">AssociationResourceTemplate</code> provides a convenient base class for
+association resources. <code class="highlighter-rouge">AssociationResourceTemplate</code> defines methods for
 all of the CRUD operations except CREATE. Association resources should
 implement CREATE by providing up-sert semantics on UPDATE. Subclasses
 may also implement FINDER and ACTION methods by annotating as described
-above.
+above.</p>
 
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public CreateResponse create(V entity);
+    public BatchCreateResult&lt;CompoundKey, V&gt;
+    batchCreate(BatchCreateRequest&lt;CompoundKey, V&gt; entities);
+    public V get(CompoundKey key);
+    public Map&lt;CompoundKey, V&gt; batchGet(Set&lt;CompoundKey&gt; ids);
+    public UpdateResponse update(CompoundKey key, V entity);
+    public BatchUpdateResult&lt;CompoundKey, V&gt;
+    batchUpdate(BatchUpdateRequest&lt;CompoundKey, V&gt; entities);
+    public UpdateResponse update(CompoundKey key, PatchRequest&lt;V&gt; patch);
+    public BatchUpdateResult&lt;CompoundKey, V&gt;
+    batchUpdate(BatchPatchRequest&lt;CompoundKey, V&gt; patches);
+    public UpdateResponse delete(CompoundKey key);
+    public BatchUpdateResult&lt;CompoundKey, V&gt;
+    batchDelete(BatchDeleteRequest&lt;CompoundKey, V&gt; ids);
 </code></pre></div></div>
-<p>public CreateResponse create(V entity);\
-public BatchCreateResult&lt;CompoundKey, V&gt;
-batchCreate(BatchCreateRequest&lt;CompoundKey, V&gt; entities);\
-public V get(CompoundKey key);\
-public Map&lt;CompoundKey, V&gt; batchGet(Set<CompoundKey> ids);\
-public UpdateResponse update(CompoundKey key, V entity);\
-public BatchUpdateResult\&lt;CompoundKey, V\&gt;
-batchUpdate(BatchUpdateRequest\&lt;CompoundKey, V\&gt; entities);\
-public UpdateResponse update(CompoundKey key, PatchRequest<V> patch);\
-public BatchUpdateResult\&lt;CompoundKey, V\&gt;
-batchUpdate(BatchPatchRequest\&lt;CompoundKey, V\&gt; patches);\
-public UpdateResponse delete(CompoundKey key);\
-public BatchUpdateResult\&lt;CompoundKey, V\&gt;
-batchDelete(BatchDeleteRequest\&lt;CompoundKey, V\&gt; ids);\</V></CompoundKey></p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
-&lt;a id="wiki-FreeFormResources"&gt;&lt;/a&gt;
 
-## Free-Form Resources
+<p><a id="wiki-FreeFormResources"></a></p>
 
-Resource Templates provide a convenient way to implement the recommended
+<h2 id="free-form-resources">Free-Form Resources</h2>
+
+<p>Resource Templates provide a convenient way to implement the recommended
 signatures for the basic CRUD operations (CREATE, GET, UPDATE,
-PARTIAL\_UPDATE, DELETE, and respective batch operations). When
+PARTIAL_UPDATE, DELETE, and respective batch operations). When
 possible, we recommend using the resource templates to ensure that your
-interface remains simple and uniform.
+interface remains simple and uniform.</p>
 
-However, it is sometimes necessary to add custom parameters to CRUD
+<p>However, it is sometimes necessary to add custom parameters to CRUD
 operations. In these cases, the fixed signatures of resource templates
 are too constraining. The solution is to create a free-form resource by
 implementing the corresponding marker interface for your resource and
-annotating CRUD methods with @`RestMethod.*` annotations.The
-`KeyValueResource` interface is the marker interface for collection and
-association resources where the `SingleObjectResource` interface is the
-marker interface for simple resources.
+annotating CRUD methods with @<code class="highlighter-rouge">RestMethod.*</code> annotations.The
+<code class="highlighter-rouge">KeyValueResource</code> interface is the marker interface for collection and
+association resources where the <code class="highlighter-rouge">SingleObjectResource</code> interface is the
+marker interface for simple resources.</p>
 
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public class FreeFormCollectionResource implements KeyValueResource&lt;K,
+V&gt;
+{
+    @RestMethod.Create
+    public CreateResponse myCreate(V entity);
+
+    @RestMethod.BatchCreate
+    public BatchCreateResult&lt;K, V&gt; myBatchCreate(BatchCreateRequest&lt;K,
+    V&gt; entities);
+
+    @RestMethod.Get
+    public V myGet(K key);
+
+    @RestMethod.GetAll
+    public CollectionResult&lt;V, M&gt; myGetAll(`Context PagingContext
+    pagingContex);
+
+    @RestMethod.BatchGet
+    public Map&lt;K, V&gt; myBatchGet(Set&lt;K&gt; ids);
+
+    @RestMethod.Update
+    public UpdateResponse myUpdate(K key, V entity);
+
+    @RestMethod.BatchUpdate
+    public BatchUpdateResult&lt;K, V&gt; myBatchUpdate(BatchUpdateRequest&lt;K,
+    V&gt; entities);
+
+    @RestMethod.PartialUpdate
+    public UpdateResponse myUpdate(K key, PatchRequest&lt;V&gt; patch);
+
+    @RestMethod.BatchPartialUpdate
+    public BatchUpdateResult&lt;K, V&gt; myBatchUpdate(BatchPatchRequest&lt;K, V&gt;
+    patches);
+
+    @RestMethod.Delete
+    public UpdateResponse myDelete(K key);
+
+    @RestMethod.BatchDelete
+    public BatchUpdateResult&lt;K, V&gt; myBatchDelete(BatchDeleteRequest&lt;K,
+    V&gt; ids);
+}
 </code></pre></div></div>
-<p>public class FreeFormCollectionResource implements KeyValueResource&lt;K,
-V&gt;\
-{\
-\@RestMethod.Create\
-public CreateResponse myCreate(V entity);</p>
 
-<p>\@RestMethod.BatchCreate\
-public BatchCreateResult&lt;K, V&gt; myBatchCreate(BatchCreateRequest&lt;K,
-V&gt; entities);</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public class FreeFormSimpleResource implements SingleObjectResource&lt;V&gt;
+{
+    @RestMethod.Get
+    public V myGet();
 
-<p>\@RestMethod.Get\
-public V myGet(K key);</p>
+    @RestMethod.Update
+    public UpdateResponse myUpdate(V entity);
 
-<p><code class="highlighter-rouge">RestMethod.GetAll
-  public CollectionResult&lt;V, M&gt; myGetAll(</code>Context PagingContext
-pagingContex);</p>
-
-<p>\@RestMethod.BatchGet\
-public Map&lt;K, V&gt; myBatchGet(Set<K> ids);</K></p>
-
-<p>\@RestMethod.Update\
-public UpdateResponse myUpdate(K key, V entity);</p>
-
-<p>\@RestMethod.BatchUpdate\
-public BatchUpdateResult&lt;K, V&gt; myBatchUpdate(BatchUpdateRequest&lt;K,
-V&gt; entities);</p>
-
-<p>\@RestMethod.PartialUpdate\
-public UpdateResponse myUpdate(K key, PatchRequest<V> patch);</V></p>
-
-<p>\@RestMethod.BatchPartialUpdate\
-public BatchUpdateResult&lt;K, V&gt; myBatchUpdate(BatchPatchRequest&lt;K, V&gt;
-patches);</p>
-
-<p>\@RestMethod.Delete\
-public UpdateResponse myDelete(K key);</p>
-
-<p>\@RestMethod.BatchDelete\
-public BatchUpdateResult&lt;K, V&gt; myBatchDelete(BatchDeleteRequest&lt;K,
-V&gt; ids);\
-}\</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+    @RestMethod.Delete
+    public UpdateResponse myDelete();
+}
 </code></pre></div></div>
-<p>public class FreeFormSimpleResource implements SingleObjectResource<V>\
-{\
-\@RestMethod.Get\
-public V myGet();</V></p>
 
-<p>\@RestMethod.Update\
-public UpdateResponse myUpdate(V entity);</p>
-
-<p>\@RestMethod.Delete\
-public UpdateResponse myDelete();\
-}\</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
-The advantage of explicitly annotating each resource method is that you
-can add custom query parameters (see description of @`QueryParam` for
+<p>The advantage of explicitly annotating each resource method is that you
+can add custom query parameters (see description of @<code class="highlighter-rouge">QueryParam</code> for
 FINDER resource method) and take advantage of wrapper return types.
-Custom query parameters must be defined **after** the fixed parameters
-shown above.
+Custom query parameters must be defined <strong>after</strong> the fixed parameters
+shown above.</p>
 
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>@RestMethod.Get
+public V myGet(K key, `QueryParam("myParam") String myParam);
+
+@RestMethod.Get
+public GetResult&lt;V&gt; getWithStatus(K key);
 </code></pre></div></div>
-<p><code class="highlighter-rouge">RestMethod.Get
-public V myGet(K key, </code>QueryParam(“myParam”) String myParam);</p>
 
-<p>\@RestMethod.Get\
-public GetResult<V> getWithStatus(K key);\</V></p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
-Note that each resource may only provide one implementation of each CRUD
+<p>Note that each resource may only provide one implementation of each CRUD
 method, e.g., it is invalid to annotate two different methods with
-@`RestMethod.Get`.
+@<code class="highlighter-rouge">RestMethod.Get</code>.</p>
 
-### Things to Remember about Free-Form Resources
+<h3 id="things-to-remember-about-free-form-resources">Things to Remember about Free-Form Resources</h3>
 
--   Free-form resources allow you to add query parameters to CRUD
-    methods
--   Resource Templates should be used whenever possible
--   Free-form resources must implement one of the `KeyValueResource` and
-    `SingleObjectResource` marker interfaces
--   Methods in free-form resources must be annotated with appropriate
-    @`RestMethod.*` annotations.
--   Methods in free-form resources must use the same return type and
-    initial signature as the corresponding Resource Template method
--   Methods in free-form resources may add additional parameters
-    **after** the fixed parameters
--   Free-form resources may not define multiple implementations of the
-    same resource method.
+<ul>
+  <li>Free-form resources allow you to add query parameters to CRUD
+methods</li>
+  <li>Resource Templates should be used whenever possible</li>
+  <li>Free-form resources must implement one of the <code class="highlighter-rouge">KeyValueResource</code> and
+<code class="highlighter-rouge">SingleObjectResource</code> marker interfaces</li>
+  <li>Methods in free-form resources must be annotated with appropriate
+@<code class="highlighter-rouge">RestMethod.*</code> annotations.</li>
+  <li>Methods in free-form resources must use the same return type and
+initial signature as the corresponding Resource Template method</li>
+  <li>Methods in free-form resources may add additional parameters
+<strong>after</strong> the fixed parameters</li>
+  <li>Free-form resources may not define multiple implementations of the
+same resource method.</li>
+</ul>
 
-&lt;a id="wiki-ReturningErrors"&gt;&lt;/a&gt;
+<p><a id="wiki-ReturningErrors"></a></p>
 
-## Returning Errors
+<h2 id="returning-errors">Returning Errors</h2>
 
-There are several mechanisms available for resources to report errors to
+<p>There are several mechanisms available for resources to report errors to
 be returned to the caller. Regardless of which mechanism is used,
 resources should be aware of the resulting HTTP status code and ensure
-that meaningful status codes are used. Remember that `4xx` codes should
+that meaningful status codes are used. Remember that <code class="highlighter-rouge">4xx</code> codes should
 be used to report client errors (errors that the client may be able to
-resolve), and `5xx` codes should be used to report server errors.
+resolve), and <code class="highlighter-rouge">5xx</code> codes should be used to report server errors.</p>
 
-#### Return `null` for GET
+<h4 id="return-null-for-get">Return <code class="highlighter-rouge">null</code> for GET</h4>
 
-If a resource method returns `null` for GET, the framework will
-automatically generate a `404` response to be sent to the client.
+<p>If a resource method returns <code class="highlighter-rouge">null</code> for GET, the framework will
+automatically generate a <code class="highlighter-rouge">404</code> response to be sent to the client.</p>
 
-Note that returning `null` for resource methods is generally forbidden
-with the exception of GET and ACTION. Returning a `null` for a GET
-returns a 404 and returning a `null` for an ACTION returns 200.
+<p>Note that returning <code class="highlighter-rouge">null</code> for resource methods is generally forbidden
+with the exception of GET and ACTION. Returning a <code class="highlighter-rouge">null</code> for a GET
+returns a 404 and returning a <code class="highlighter-rouge">null</code> for an ACTION returns 200.</p>
 
-Returning a `null` for any other type of resource method will cause the
-rest.li framework to return an HTTP `500` to be sent back to the client
-with a message indicating 'Unexpected null encountered'. This is
-described in detail above at &lt;a href="#returning-nulls"&gt;Returning
-Nulls&lt;/a&gt;
+<p>Returning a <code class="highlighter-rouge">null</code> for any other type of resource method will cause the
+rest.li framework to return an HTTP <code class="highlighter-rouge">500</code> to be sent back to the client
+with a message indicating ‘Unexpected null encountered’. This is
+described in detail above at <a href="#returning-nulls">Returning
+Nulls</a></p>
 
-#### Return Any HTTP Status Code in a CreateResponse/UpdateResponse
+<h4 id="return-any-http-status-code-in-a-createresponseupdateresponse">Return Any HTTP Status Code in a CreateResponse/UpdateResponse</h4>
 
-`CreateResponse` and `UpdateResponse` allow an [Http Status
-Code](http://en.wikipedia.org/wiki/List_of_HTTP_status_codes) to be
-provided. Status codes in the `4xx` and `5xx` ranges may be used to
-report errors.
+<p><code class="highlighter-rouge">CreateResponse</code> and <code class="highlighter-rouge">UpdateResponse</code> allow an <a href="http://en.wikipedia.org/wiki/List_of_HTTP_status_codes">Http Status
+Code</a> to be
+provided. Status codes in the <code class="highlighter-rouge">4xx</code> and <code class="highlighter-rouge">5xx</code> ranges may be used to
+report errors.</p>
 
-#### Throw RestLiServiceException to Return a 4xx/5xx HTTP Status Code
+<h4 id="throw-restliserviceexception-to-return-a-4xx5xx-http-status-code">Throw RestLiServiceException to Return a 4xx/5xx HTTP Status Code</h4>
 
-The framework defines a special exception class,
-`RestLiServiceException`, which contains an [Http Status
-Code](http://en.wikipedia.org/wiki/List_of_HTTP_status_codes) field, as
+<p>The framework defines a special exception class,
+<code class="highlighter-rouge">RestLiServiceException</code>, which contains an <a href="http://en.wikipedia.org/wiki/List_of_HTTP_status_codes">Http Status
+Code</a> field, as
 well as other fields that are returned to the client in the body of the
-HTTP response. Resources may throw `RestLiServiceException` or a
-subclass to prompt the framework to return an HTTP error response.
+HTTP response. Resources may throw <code class="highlighter-rouge">RestLiServiceException</code> or a
+subclass to prompt the framework to return an HTTP error response.</p>
 
-#### Throw Another Exception
+<h4 id="throw-another-exception">Throw Another Exception</h4>
 
-All exceptions originating in application code are caught by the
+<p>All exceptions originating in application code are caught by the
 framework and used to generate an HTTP response. If the exception does
-not extend `RestLiServiceException`, an HTTP `500` response will be
-sent.
+not extend <code class="highlighter-rouge">RestLiServiceException</code>, an HTTP <code class="highlighter-rouge">500</code> response will be
+sent.</p>
 
-#### Return Errors as Part of a BatchResult
+<h4 id="return-errors-as-part-of-a-batchresult">Return Errors as Part of a BatchResult</h4>
 
-BATCH\_GET methods may return errors for individual items as part of a
-`BatchResult` object. Each error is represented as a
-`RestLiServiceException` object. In this case, the overall status will
-still be an HTTP `200`.
+<p>BATCH_GET methods may return errors for individual items as part of a
+<code class="highlighter-rouge">BatchResult</code> object. Each error is represented as a
+<code class="highlighter-rouge">RestLiServiceException</code> object. In this case, the overall status will
+still be an HTTP <code class="highlighter-rouge">200</code>.</p>
 
-</code></pre></div></div>
-<p>public BatchResult&lt;K, V&gt; batchGet((Set<K> ids)\
-{\
-Map\&lt;K, V\&gt; results = ...\
-Map\&lt;K, RestLiServiceException\&gt; errors = ...\
-...\
-return new BatchResult(results, errors);\
-}\</K></p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
-### Handling Errors on the Client
-
-When making requests using `RestClient`, a `ResponseFuture` is always
-returned, as shown in this example:
-
-</code></pre></div></div>
-<p>ResponseFuture<Greeting> future = restClient.sendRequest(new
-GreetingsBuilders.get().id(1L));\</Greeting></p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
-This future might contain an error response. When calling
-`ResponseFuture.getResponse()`, the default behavior is for a
-`RestLiResponseException` to be thrown if the response contains an error
-response. Error responses are all 400 and 500 series HTTP status code,
-as shown in this example:
-
-</code></pre></div></div>
-<p>try\
-{\
-Greeting greeting = restClient.sendRequest(new
-GreetingsBuilders.get().id(1L)).getResponseEntity();\
-// handle successful response\
-}\
-catch (RestLiResponseException e)\
-{\
-if(e.getStatus() == 400) {\
-// handle 400\
-} else {\
-// … handle other status codes or rethrow\
-}\
-}\</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
-Alternatively, `ErrorHandlingBehavior.TREAT_SERVER_ERROR_AS_SUCCESS` can
-be set when making a request. If set, `.getResponse()` will **not**
-throw `RestLiResponseException` even if the response contains a 400 or
-500 series HTTP status code, as shown in this example:
-
-```java
-
-Response&lt;Greeting&gt; response = restClient.sendRequest(new
-GreetingsBuilders.get().id(1L),\
-ErrorHandlingBehavior.TREAT\_SERVER\_ERROR\_AS\_SUCCESS).getResponse();\
-if(response.getStatus()  200)
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public BatchResult&lt;K, V&gt; batchGet((Set&lt;K&gt; ids)
 {
-  // handle successful response
+    Map&lt;K, V&gt; results = ...
+    Map&lt;K, RestLiServiceException&gt; errors = ...
+    ...
+    return new BatchResult(results, errors);
 }
-else if (response.getStatus()  404)\
-{\
-// handle 404\
-}\
-else\
-{\
-// ... handle other status codes or rethrow\
-}\
+</code></pre></div></div>
+
+<h3 id="handling-errors-on-the-client">Handling Errors on the Client</h3>
+
+<p>When making requests using <code class="highlighter-rouge">RestClient</code>, a <code class="highlighter-rouge">ResponseFuture</code> is always
+returned, as shown in this example:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    ResponseFuture&lt;Greeting&gt; future = restClient.sendRequest(new
+    GreetingsBuilders.get().id(1L));
+</code></pre></div></div>
+
+<p>This future might contain an error response. When calling
+<code class="highlighter-rouge">ResponseFuture.getResponse()</code>, the default behavior is for a
+<code class="highlighter-rouge">RestLiResponseException</code> to be thrown if the response contains an error
+response. Error responses are all 400 and 500 series HTTP status code,
+as shown in this example:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>try
+{
+    Greeting greeting = restClient.sendRequest(new
+    GreetingsBuilders.get().id(1L)).getResponseEntity();
+    // handle successful response
+}
+catch (RestLiResponseException e)
+{
+    if(e.getStatus() == 400) {
+        // handle 400\
+    } else {
+        // ... handle other status codes or rethrow\
+    }
+}
+</code></pre></div></div>
+
+<p>Alternatively, <code class="highlighter-rouge">ErrorHandlingBehavior.TREAT_SERVER_ERROR_AS_SUCCESS</code> can
+be set when making a request. If set, <code class="highlighter-rouge">.getResponse()</code> will <strong>not</strong>
+throw <code class="highlighter-rouge">RestLiResponseException</code> even if the response contains a 400 or
+500 series HTTP status code, as shown in this example:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="n">Response</span><span class="o">&lt;</span><span class="n">Greeting</span><span class="o">&gt;</span> <span class="n">response</span> <span class="o">=</span> <span class="n">restClient</span><span class="o">.</span><span class="na">sendRequest</span><span class="o">(</span><span class="k">new</span>
+<span class="n">GreetingsBuilders</span><span class="o">.</span><span class="na">get</span><span class="o">().</span><span class="na">id</span><span class="o">(</span><span class="mi">1L</span><span class="o">),</span>
+<span class="n">ErrorHandlingBehavior</span><span class="o">.</span><span class="na">TREAT_SERVER_ERROR_AS_SUCCESS</span><span class="o">).</span><span class="na">getResponse</span><span class="o">();</span>
+<span class="k">if</span><span class="o">(</span><span class="n">response</span><span class="o">.</span><span class="na">getStatus</span><span class="o">()</span> <span class="o">==</span> <span class="mi">200</span><span class="o">)</span>
+<span class="o">{</span>
+  <span class="c1">// handle successful response</span>
+<span class="o">}</span>
+<span class="k">else</span> <span class="nf">if</span> <span class="o">(</span><span class="n">response</span><span class="o">.</span><span class="na">getStatus</span><span class="o">()</span> <span class="o">==</span> <span class="mi">404</span><span class="o">)</span>
+<span class="o">{</span>
+<span class="c1">// handle 404\</span>
+<span class="o">}</span>
+<span class="k">else</span>
+<span class="o">{</span>
+<span class="c1">// ... handle other status codes or rethrow\</span>
+<span class="o">}</span>
 </code></pre></div></div>
 
 <p>However because error responses do not contain an entity, calling
@@ -2030,7 +2100,7 @@ X-RestLi-Error-Response shortly)</li>
 <p>The error response format configured to return only a subset of these
 parts using RestLiConfig, as shown in this example:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>restliConfig.setErrorResponseFormat(ErrorResponseFormat.MESSAGE\_AND\_DETAILS);\
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    restliConfig.setErrorResponseFormat(ErrorResponseFormat.MESSAGE_AND_DETAILS);
 </code></pre></div></div>
 
 <p>When Rest.li server application code throws an exception, if the
@@ -2041,8 +2111,8 @@ Rest.li automatically provides a default error message of “Error in
 application code” in the error response. This default error message may
 be customized via RestLiConfig as well, as shown in this example:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>restliConfig.setInternalErrorMessage("Internal error, please try again
-later.");\
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    restliConfig.setInternalErrorMessage("Internal error, please try again
+later.");
 </code></pre></div></div>
 
 <p><a id="wiki-Projections"></a></p>
@@ -2122,8 +2192,7 @@ results).</p>
 <p>Example request illustrating use of start &amp; count pagination parameters,
 and resulting links in CollectionMetadata:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-$ curl "http://localhost:1338/greetings?q=search&amp;start=4&amp;count=2"
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ curl "http://localhost:1338/greetings?q=search&amp;start=4&amp;count=2"
 {
     "elements": [ ... ],
     "paging": {
@@ -2136,11 +2205,9 @@ $ curl "http://localhost:1338/greetings?q=search&amp;start=4&amp;count=2"
         "start": 4
     }
 }
-&lt;/code&gt;
 </code></pre></div></div>
 
-<p>\
-NOTE that “start” and “count” returned in CollectionMetadata is REQUEST
+<p>NOTE that “start” and “count” returned in CollectionMetadata is REQUEST
 start and REQUEST count, that is​, the paging parameter passed from
 incoming REQUEST, not metadata for the returned response. If start and
 count is not passed in Finder or GetAll request, it will return default
@@ -2194,27 +2261,27 @@ must be in the root Spring context.</p>
 <p>Rest.li allows resources to return results asynchronously through a
 <a href="https://github.com/linkedin/parseq/wiki">ParSeq</a> <code class="highlighter-rouge">Promise</code>, <code class="highlighter-rouge">Task</code>, or
 <code class="highlighter-rouge">Callback</code>. For example, a getter can be declared in any of the
-following ways:\</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>\@RestMethod.Get\
-public Promise&lt;Greeting&gt; get(Long key)\
-{\
-// return a promise (e.g. SettablePromise) and set it asynchronously\
-}\
+following ways:</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>@RestMethod.Get\
+public Promise&lt;Greeting&gt; get(Long key)
+{
+    // return a promise (e.g. SettablePromise) and set it asynchronously\
+}
 </code></pre></div></div>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>\@RestMethod.Get\
-public Task&lt;Greeting&gt; get(Long key)\
-{\
-// set up some ParSeq tasks and return the final Task\
-return Tasks.seq(Tasks.par(...), ...);\
-}\
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>@RestMethod.Get\
+public Task&lt;Greeting&gt; get(Long key)
+{
+    // set up some ParSeq tasks and return the final Task\
+    return Tasks.seq(Tasks.par(...), ...);
+}
 </code></pre></div></div>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>`RestMethod.Get
-public void get(Long key, `CallbackParam Callback&lt;Greeting&gt; callback)\
-{\
-// use the callback asynchronously\
-}\
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>@RestMethod.Get
+public void get(Long key, `CallbackParam Callback&lt;Greeting&gt; callback)
+{
+    // use the callback asynchronously\
+}
 </code></pre></div></div>
 
 <p>These method signatures can be mixed arbitrarily with the synchronous
@@ -2292,8 +2359,7 @@ the special <code class="highlighter-rouge">restli/docs/</code> path. For exampl
 
 <p>The JSON format is structured as following:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-{
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
   "models": {
     "&lt;full_name_of_data_schema_1&gt;": { &lt;pdsc_of_data_schema_1&gt; },
     "&lt;full_name_of_data_schema_2&gt;": { &lt;pdsc_of_data_schema_2&gt; }
@@ -2303,7 +2369,6 @@ the special <code class="highlighter-rouge">restli/docs/</code> path. For exampl
     "&lt;resource_2&gt;": { &lt;idl_of_resource_2&gt; }
   }
 }
-&lt;/code&gt;
 </code></pre></div></div>
 
 <p>When accessing the JSON format of data schema, the <code class="highlighter-rouge">resources</code> key

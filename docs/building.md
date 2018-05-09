@@ -19,7 +19,7 @@ repository](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.linkedin.pegas
 The current latest version in Maven Central is 2.2.5.
 
 For details on how to use Rest.li from its maven central artifacts, see:
-[Quickstart](https://github.com/linkedin/rest.li/wiki/Quickstart:-A-Tutorial-Introduction-to-Rest.li)
+[Quickstart](/rest.li/start/step_by_step)
 
 ## Building Your Own Copy of Rest.li
 
@@ -29,7 +29,8 @@ You can also checkout, modify, or build your own copy of Rest.li.
 
 You can get your own copy of the Rest.li repository with:
 
-    git clone git@github.com:linkedin/rest.li.wiki
+    git clone https://github.com/linkedin/rest.li.git
+    
 
 Or if you already have a copy of the repository, you can update it with:
 
