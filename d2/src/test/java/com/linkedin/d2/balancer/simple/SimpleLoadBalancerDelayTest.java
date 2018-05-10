@@ -26,6 +26,7 @@ import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyConfig;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyV3;
+import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerTest;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderRingFactory;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import java.net.URI;
@@ -80,9 +81,11 @@ public class SimpleLoadBalancerDelayTest
     delayMaps.put("test.qa3.com:6789", Arrays.asList(80l, 3000l, 3000l, 3000l, 5000l, 80l, 50l, 50l));
     LoadBalancerSimulator.TimedValueGenerator<String, Long> delayGenerator = new DelayValueGenerator<>(
         delayMaps, DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS);
-    Map<String, String> degraderProperties = new HashMap<>();
+    Map<String, String> degraderProperties = DegraderLoadBalancerTest.degraderDefaultConfig();
     degraderProperties.put(PropertyKeys.DEGRADER_DOWN_STEP, "0.2");
     degraderProperties.put(PropertyKeys.DEGRADER_UP_STEP, "0.2");
+    Map<String, Object> lbProperties = DegraderLoadBalancerTest.lbDefaultConfig();
+    lbProperties.put(PropertyKeys.HTTP_LB_HASH_CONFIG, HASH_CONFIG_MAP);
 
     Map<String, Object> transportClientProperties = Collections.singletonMap("DelayGenerator", delayGenerator);
 
@@ -91,7 +94,7 @@ public class SimpleLoadBalancerDelayTest
         "cluster-1",
         "/foo",
         Arrays.asList("degraderV3"),
-        Collections.singletonMap(PropertyKeys.HTTP_LB_HASH_CONFIG, HASH_CONFIG_MAP),
+        lbProperties,
         null,
         degraderProperties,
         prioritizedSchemes,
@@ -102,7 +105,7 @@ public class SimpleLoadBalancerDelayTest
     // Construct the QPS generator
     LoadBalancerSimulator.QPSGenerator qpsGenerator = new ConstantQPSGenerator(1000);
     LoadBalancerSimulator loadBalancerSimulator = LoadBalancerSimulationBuilder.build(
-        "cluster-1", "foo", uris, null, null, degraderProperties, delayGenerator, qpsGenerator);
+        "cluster-1", "foo", uris, lbProperties, null, degraderProperties, delayGenerator, qpsGenerator);
 
     // Start the simulation
     loadBalancerSimulator.runWait(DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS);
@@ -161,7 +164,7 @@ public class SimpleLoadBalancerDelayTest
     lbStrategyProperties.put(PropertyKeys.HTTP_LB_CONSISTENT_HASH_ALGORITHM, DegraderRingFactory.MULTI_PROBE_CONSISTENT_HASH);
     lbStrategyProperties.put(PropertyKeys.HTTP_LB_HASH_CONFIG, HASH_CONFIG_MAP);
     // set initial drop rate and slow start threshold
-    Map<String, String> degraderProperties = new HashMap<>();
+    Map<String, String> degraderProperties = DegraderLoadBalancerTest.degraderDefaultConfig();
     degraderProperties.put(PropertyKeys.DEGRADER_INITIAL_DROP_RATE, "0.99");
     degraderProperties.put(PropertyKeys.DEGRADER_SLOW_START_THRESHOLD, "0.1");
 
@@ -415,7 +418,7 @@ public class SimpleLoadBalancerDelayTest
     // Construct the QPS generator
     LoadBalancerSimulator.QPSGenerator qpsGenerator = new ConstantQPSGenerator(1000);
     // use the default up/down steps for degrading/recovering
-    Map<String, String> degraderProperties = new HashMap<>();
+    Map<String, String> degraderProperties = DegraderLoadBalancerTest.degraderDefaultConfig();
     degraderProperties.put(PropertyKeys.DEGRADER_DOWN_STEP, "0.05");
     degraderProperties.put(PropertyKeys.DEGRADER_UP_STEP, "0.2");
 
@@ -496,13 +499,15 @@ public class SimpleLoadBalancerDelayTest
     delayMaps.put("test.qa2.com:2345", Arrays.asList(680l, 680l, 660l, 780l, 650l, 980l, 80l, 80l, 60l, 80l, 60l, 80l));
     LoadBalancerSimulator.TimedValueGenerator<String, Long> delayGenerator = new DelayValueGenerator<>(delayMaps,
         DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS);
+    Map<String, String> degraderConfig = DegraderLoadBalancerTest.degraderDefaultConfig();
 
     // Construct the QPS generator
     LoadBalancerSimulator.QPSGenerator qpsGenerator = new ConstantQPSGenerator(1000);
 
     // Create the simulator
     LoadBalancerSimulator loadBalancerSimulator = LoadBalancerSimulationBuilder.build(
-        "cluster-1", "foo", uris, lbStrategyPropertiesWithQuarantine(), null, null, delayGenerator, qpsGenerator);
+        "cluster-1", "foo", uris, lbStrategyPropertiesWithQuarantine(), null,
+        degraderConfig, delayGenerator, qpsGenerator);
     URI expectedUri1 = LoadBalancerSimulationBuilder.getExpectedUri("test.qa1.com:1234", "foo");
 
     // Start the simulation
@@ -520,10 +525,10 @@ public class SimpleLoadBalancerDelayTest
     // wait for 2 intervals due to call dropping involved
     loadBalancerSimulator.runWait(DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS * 2);
     printStates(loadBalancerSimulator);
-    // the points for uri1 should be 60
+    // the points for uri1 should be 80 -- ringMap will not update during callDropping phase
     // Also if the loadbalancing strategy changed, the numbers could be lower
     assertEquals(loadBalancerSimulator.getPoint("foo", DefaultPartitionAccessor.DEFAULT_PARTITION_ID,
-        uri1), 60);
+        uri1), 80);
     // assertTrue(loadBalancerSimulator.getCountPercent(expectedUri1) <= 0.65);
     // assertTrue(loadBalancerSimulator.getCountPercent(expectedUri1) >= 0.25);
 
@@ -990,7 +995,7 @@ public class SimpleLoadBalancerDelayTest
     LoadBalancerSimulator.TimedValueGenerator<String, Long> delayGenerator = new DelayValueGenerator<>(delayMaps,
         DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS);
 
-    Map<String, Object> strategyProperties = new HashMap<String, Object>();
+    Map<String, Object> strategyProperties = DegraderLoadBalancerTest.lbDefaultConfig();
     // setting the event emitting interval to 10s vs 40s
     strategyProperties.put(PropertyKeys.HTTP_LB_LOW_EVENT_EMITTING_INTERVAL, "10000");
     strategyProperties.put(PropertyKeys.HTTP_LB_HIGH_EVENT_EMITTING_INTERVAL, "40000");
@@ -1120,7 +1125,7 @@ public class SimpleLoadBalancerDelayTest
     LoadBalancerSimulator.TimedValueGenerator<String, Long> delayGenerator = new DelayValueGenerator<>(delayMaps,
         DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS);
 
-    Map<String, Object> strategyProperties = new HashMap<String, Object>();
+    Map<String, Object> strategyProperties = DegraderLoadBalancerTest.lbDefaultConfig();
     // setting the event emitting interval to 10s vs 40s
     strategyProperties.put(PropertyKeys.HTTP_LB_LOW_EVENT_EMITTING_INTERVAL, "10000");
     strategyProperties.put(PropertyKeys.HTTP_LB_HIGH_EVENT_EMITTING_INTERVAL, "40000");
@@ -1245,7 +1250,7 @@ public class SimpleLoadBalancerDelayTest
 
     List<String> prioritizedSchemes = Collections.singletonList("http");
     // set initial drop rate and slow start threshold
-    Map<String, String> degraderProperties = new HashMap<>();
+    Map<String, String> degraderProperties = DegraderLoadBalancerTest.degraderDefaultConfig();
     degraderProperties.put(PropertyKeys.DEGRADER_INITIAL_DROP_RATE, "0.99");
     degraderProperties.put(PropertyKeys.DEGRADER_SLOW_START_THRESHOLD, "0.1");
     degraderProperties.put(PropertyKeys.DEGRADER_MIN_CALL_COUNT, "1");
@@ -1326,7 +1331,7 @@ public class SimpleLoadBalancerDelayTest
 
     List<String> prioritizedSchemes = Collections.singletonList("http");
     // set initial drop rate and slow start threshold
-    Map<String, String> degraderProperties = new HashMap<>();
+    Map<String, String> degraderProperties = DegraderLoadBalancerTest.degraderDefaultConfig();
     degraderProperties.put(PropertyKeys.DEGRADER_MIN_CALL_COUNT, "1");
     degraderProperties.put(PropertyKeys.DEGRADER_DOWN_STEP, "0.3");
 
@@ -1395,7 +1400,7 @@ public class SimpleLoadBalancerDelayTest
 
     List<String> prioritizedSchemes = Collections.singletonList("http");
     // set initial drop rate and slow start threshold
-    Map<String, String> degraderProperties = new HashMap<>();
+    Map<String, String> degraderProperties = DegraderLoadBalancerTest.degraderDefaultConfig();
     degraderProperties.put(PropertyKeys.DEGRADER_INITIAL_DROP_RATE, "0.99");
     degraderProperties.put(PropertyKeys.DEGRADER_SLOW_START_THRESHOLD, "0.1");
     degraderProperties.put(PropertyKeys.DEGRADER_MIN_CALL_COUNT, "1");
@@ -1471,7 +1476,7 @@ public class SimpleLoadBalancerDelayTest
 
     List<String> prioritizedSchemes = Collections.singletonList("http");
     // set initial drop rate and slow start threshold
-    Map<String, String> degraderProperties = new HashMap<>();
+    Map<String, String> degraderProperties = DegraderLoadBalancerTest.degraderDefaultConfig();
     degraderProperties.put(PropertyKeys.DEGRADER_INITIAL_DROP_RATE, "0.99");
     degraderProperties.put(PropertyKeys.DEGRADER_SLOW_START_THRESHOLD, "0.1");
     degraderProperties.put(PropertyKeys.DEGRADER_MIN_CALL_COUNT, "1");
@@ -1557,7 +1562,7 @@ public class SimpleLoadBalancerDelayTest
 
     List<String> prioritizedSchemes = Collections.singletonList("http");
     // set initial drop rate and slow start threshold
-    Map<String, String> degraderProperties = new HashMap<>();
+    Map<String, String> degraderProperties = DegraderLoadBalancerTest.degraderDefaultConfig();
     degraderProperties.put(PropertyKeys.DEGRADER_MIN_CALL_COUNT, "1");
     // degraderProperties.put(PropertyKeys.DEGRADER_DOWN_STEP, "0.3");
     degraderProperties.put(PropertyKeys.DEGRADER_UP_STEP, "0.3");
@@ -1649,7 +1654,7 @@ public class SimpleLoadBalancerDelayTest
   private static Map<String, Object> lbStrategyPropertiesWithQuarantine()
   {
     // Enable quarantine by setting the max percent to 0.05
-    Map<String, Object> lbStrategyProperties = new HashMap<>();
+    Map<String, Object> lbStrategyProperties = DegraderLoadBalancerTest.lbDefaultConfig();
     lbStrategyProperties.put(PropertyKeys.HTTP_LB_QUARANTINE_MAX_PERCENT, 0.05);
     lbStrategyProperties.put(PropertyKeys.HTTP_LB_HASH_CONFIG, HASH_CONFIG_MAP);
 
@@ -1659,7 +1664,7 @@ public class SimpleLoadBalancerDelayTest
   private static Map<String, Object> lbStrategyPropertiesWithSlowstart()
   {
     // Enable slowStart by setting ramp_factor > 1.0
-    Map<String, Object> lbStrategyProperties = new HashMap<>();
+    Map<String, Object> lbStrategyProperties = DegraderLoadBalancerTest.lbDefaultConfig();
     lbStrategyProperties.put(PropertyKeys.HTTP_LB_RING_RAMP_FACTOR, "2.0");
     lbStrategyProperties.put(PropertyKeys.HTTP_LB_HASH_CONFIG, HASH_CONFIG_MAP);
 

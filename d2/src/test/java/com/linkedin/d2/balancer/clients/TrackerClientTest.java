@@ -306,6 +306,7 @@ public class TrackerClientTest
     config.setHighErrorRate(0.1);
     config.setLowErrorRate(0.0);
     config.setMinCallCount(1);
+    config.setDownStep(0.20);
     return new TrackerClient(uri, partitionDataMap, tc, clock, config);
   }
 

@@ -516,12 +516,12 @@ public class DegraderLoadBalancerTest
   @Test(groups = { "small", "back-end" })
   public void testDegraderLoadBalancerHandlingExceptionInUpdate()
   {
-    Map<String, Object> myMap = new HashMap<String, Object>();
+    Map<String, Object> myMap = lbDefaultConfig();
     Long timeInterval = 5000L;
     TestClock clock = new TestClock();
     myMap.put(PropertyKeys.CLOCK, clock);
     myMap.put(PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS , timeInterval);
-    Map<String, String> degraderProperties = new HashMap<String,String>();
+    Map<String, String> degraderProperties = degraderDefaultConfig();
     degraderProperties.put(PropertyKeys.DEGRADER_HIGH_ERROR_RATE, "0.5");
     degraderProperties.put(PropertyKeys.DEGRADER_LOW_ERROR_RATE, "0.2");
     DegraderImpl.Config degraderConfig = DegraderConfigFactory.toDegraderConfig(degraderProperties);
@@ -903,7 +903,7 @@ public class DegraderLoadBalancerTest
   @Test(groups = { "small", "back-end" })
   public void testLoadBalancerCallDroppingMode()
   {
-    Map<String, Object> myMap = new HashMap<String, Object>();
+    Map<String, Object> myMap = lbDefaultConfig();
     Long timeInterval = 5000L;
     double highWaterMark = 1000;
     double lowWaterMark = 500;
@@ -1063,7 +1063,7 @@ public class DegraderLoadBalancerTest
   @Test(groups = { "small", "back-end" })
   public void testWeightedBalancingWithDeadClient() throws URISyntaxException
   {
-    Map<String,Object> myMap = new HashMap<String, Object>();
+    Map<String,Object> myMap = lbDefaultConfig();
     myMap.put(PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS, 5000L);
     myMap.put(PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_MAX_CLUSTER_LATENCY_WITHOUT_DEGRADING, 100.0);
     // this test expected the dead tracker client to not recover through the
@@ -1898,7 +1898,7 @@ public class DegraderLoadBalancerTest
   @Test(groups = { "small", "back-end" })
   public void testClusterRecoveryFast1TC()
   {
-    Map<String, Object> myMap = new HashMap<String, Object>();
+    Map<String, Object> myMap = lbDefaultConfig();
     Long timeInterval = 5000L;
     TestClock clock = new TestClock();
     myMap.put(PropertyKeys.CLOCK, clock);
@@ -1921,7 +1921,7 @@ public class DegraderLoadBalancerTest
   @Test(groups = { "small", "back-end" })
   public void testClusterRecoverySlow1TC()
   {
-    Map<String, Object> myMap = new HashMap<String, Object>();
+    Map<String, Object> myMap = lbDefaultConfig();
     Long timeInterval = 5000L;
     TestClock clock = new TestClock();
     myMap.put(PropertyKeys.CLOCK, clock);
@@ -2070,7 +2070,7 @@ public class DegraderLoadBalancerTest
   public void testAvoidUpdatingStateIfGetRingWithEmptyClients()
   {
     final int PARTITION_ID = 0;
-    Map<String, Object> myMap = new HashMap<>();
+    Map<String, Object> myMap = lbDefaultConfig();
     Long timeInterval = 5000L;
     TestClock clock = new TestClock();
     myMap.put(PropertyKeys.CLOCK, clock);
@@ -2358,7 +2358,7 @@ public class DegraderLoadBalancerTest
   @Test(groups = { "small", "back-end" }, enabled = false)
   public void testClusterRecoveryAfter100PercentDropCall()
   {
-    Map<String, Object> myMap = new HashMap<String, Object>();
+    Map<String, Object> myMap = lbDefaultConfig();
     Long timeInterval = 5000L;
     TestClock clock = new TestClock();
     myMap.put(PropertyKeys.CLOCK, clock);
@@ -2745,7 +2745,7 @@ public class DegraderLoadBalancerTest
   @Test(groups = { "small", "back-end" })
   public void testLowTrafficHighLatency1Client()
   {
-    Map<String, Object> myMap = new HashMap<String, Object>();
+    Map<String, Object> myMap = lbDefaultConfig();
     Long timeInterval = 5000L;
     TestClock clock = new TestClock();
     myMap.put(PropertyKeys.CLOCK, clock);
@@ -2755,7 +2755,7 @@ public class DegraderLoadBalancerTest
     //we need to override the min call count to 0 because we're testing a service with low traffic.
     //if we don't do this, the computedDropRate will not change and we will never be able to recover
     //after we degraded the cluster.
-    Map<String,String> degraderImplProperties = new HashMap<String, String>();
+    Map<String,String> degraderImplProperties = degraderDefaultConfig();
     degraderImplProperties.put(PropertyKeys.DEGRADER_MIN_CALL_COUNT, "1");
     degraderImplProperties.put(PropertyKeys.DEGRADER_HIGH_ERROR_RATE, "0.5");
     degraderImplProperties.put(PropertyKeys.DEGRADER_LOW_ERROR_RATE, "0.2");
@@ -2774,7 +2774,7 @@ public class DegraderLoadBalancerTest
   @Test(groups = { "small", "back-end" })
   public void testLowTrafficHighLatency10Clients()
   {
-    Map<String, Object> myMap = new HashMap<String, Object>();
+    Map<String, Object> myMap = lbDefaultConfig();
     Long timeInterval = 5000L;
     TestClock clock = new TestClock();
     myMap.put(PropertyKeys.CLOCK, clock);
@@ -2782,7 +2782,7 @@ public class DegraderLoadBalancerTest
     //we need to override the min call count to 0 because we're testing a service with low traffic.
     //if we don't do this, the computedDropRate will not change and we will never be able to recover
     //after we degraded the cluster.
-    Map<String,String> degraderImplProperties = new HashMap<String, String>();
+    Map<String,String> degraderImplProperties = degraderDefaultConfig();
     degraderImplProperties.put(PropertyKeys.DEGRADER_MIN_CALL_COUNT, "1");
     degraderImplProperties.put(PropertyKeys.DEGRADER_HIGH_ERROR_RATE, "0.5");
     degraderImplProperties.put(PropertyKeys.DEGRADER_LOW_ERROR_RATE, "0.2");
@@ -2802,7 +2802,7 @@ public class DegraderLoadBalancerTest
   @Test(groups = { "small", "back-end" })
   public void testLowTrafficHighLatency100Clients()
   {
-    Map<String, Object> myMap = new HashMap<String, Object>();
+    Map<String, Object> myMap = lbDefaultConfig();
     Long timeInterval = 5000L;
     TestClock clock = new TestClock();
     myMap.put(PropertyKeys.CLOCK, clock);
@@ -2810,7 +2810,7 @@ public class DegraderLoadBalancerTest
     //we need to override the min call count to 0 because we're testing a service with low traffic.
     //if we don't do this, the computedDropRate will not change and we will never be able to recover
     //after we degraded the cluster.
-    Map<String,String> degraderImplProperties = new HashMap<String, String>();
+    Map<String,String> degraderImplProperties = degraderDefaultConfig();
     degraderImplProperties.put(PropertyKeys.DEGRADER_MIN_CALL_COUNT, "1");
     degraderImplProperties.put(PropertyKeys.DEGRADER_HIGH_ERROR_RATE, "0.5");
     degraderImplProperties.put(PropertyKeys.DEGRADER_LOW_ERROR_RATE, "0.2");
@@ -2830,12 +2830,12 @@ public class DegraderLoadBalancerTest
   @Test(groups = { "small", "back-end" })
   public void testMediumTrafficHighLatency1Client()
   {
-    Map<String, Object> myMap = new HashMap<String, Object>();
+    Map<String, Object> myMap = lbDefaultConfig();
     Long timeInterval = 5000L;
     TestClock clock = new TestClock();
     myMap.put(PropertyKeys.CLOCK, clock);
     myMap.put(PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS , timeInterval);
-    Map<String, String> degraderProperties = new HashMap<String,String>();
+    Map<String, String> degraderProperties = degraderDefaultConfig();
     degraderProperties.put(PropertyKeys.DEGRADER_HIGH_ERROR_RATE, "0.5");
     degraderProperties.put(PropertyKeys.DEGRADER_LOW_ERROR_RATE, "0.2");
     DegraderImpl.Config degraderConfig = DegraderConfigFactory.toDegraderConfig(degraderProperties);
@@ -2853,12 +2853,12 @@ public class DegraderLoadBalancerTest
   @Test(groups = { "small", "back-end" })
   public void testMediumTrafficHighLatency10Clients()
   {
-    Map<String, Object> myMap = new HashMap<String, Object>();
+    Map<String, Object> myMap = lbDefaultConfig();
     Long timeInterval = 5000L;
     TestClock clock = new TestClock();
     myMap.put(PropertyKeys.CLOCK, clock);
     myMap.put(PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS , timeInterval);
-    Map<String, String> degraderProperties = new HashMap<String,String>();
+    Map<String, String> degraderProperties = degraderDefaultConfig();
     degraderProperties.put(PropertyKeys.DEGRADER_HIGH_ERROR_RATE, "0.5");
     degraderProperties.put(PropertyKeys.DEGRADER_LOW_ERROR_RATE, "0.2");
     DegraderImpl.Config degraderConfig = DegraderConfigFactory.toDegraderConfig(degraderProperties);
@@ -2877,13 +2877,12 @@ public class DegraderLoadBalancerTest
   @Test(groups = { "small", "back-end" })
   public void testMediumTrafficHighLatency100Clients()
   {
-    Map<String, Object> myMap = new HashMap<String, Object>();
+    Map<String, Object> myMap = lbDefaultConfig();
     Long timeInterval = 5000L;
     TestClock clock = new TestClock();
     myMap.put(PropertyKeys.CLOCK, clock);
     myMap.put(PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS , timeInterval);
-    myMap.put(PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS , timeInterval);
-    Map<String, String> degraderProperties = new HashMap<String,String>();
+    Map<String, String> degraderProperties = degraderDefaultConfig();
     degraderProperties.put(PropertyKeys.DEGRADER_HIGH_ERROR_RATE, "0.5");
     degraderProperties.put(PropertyKeys.DEGRADER_LOW_ERROR_RATE, "0.2");
     DegraderImpl.Config degraderConfig = DegraderConfigFactory.toDegraderConfig(degraderProperties);
@@ -2902,12 +2901,12 @@ public class DegraderLoadBalancerTest
   @Test(groups = { "small", "back-end" })
   public void testHighTrafficHighLatency1Client()
   {
-    Map<String, Object> myMap = new HashMap<String, Object>();
+    Map<String, Object> myMap = lbDefaultConfig();
     Long timeInterval = 5000L;
     TestClock clock = new TestClock();
     myMap.put(PropertyKeys.CLOCK, clock);
     myMap.put(PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS , timeInterval);
-    Map<String, String> degraderProperties = new HashMap<String,String>();
+    Map<String, String> degraderProperties = degraderDefaultConfig();
     degraderProperties.put(PropertyKeys.DEGRADER_HIGH_ERROR_RATE, "0.5");
     degraderProperties.put(PropertyKeys.DEGRADER_LOW_ERROR_RATE, "0.2");
     DegraderImpl.Config degraderConfig = DegraderConfigFactory.toDegraderConfig(degraderProperties);
@@ -2925,12 +2924,12 @@ public class DegraderLoadBalancerTest
   @Test(groups = { "small", "back-end" })
   public void testHighTrafficHighLatency10Clients()
   {
-    Map<String, Object> myMap = new HashMap<String, Object>();
+    Map<String, Object> myMap = lbDefaultConfig();
     Long timeInterval = 5000L;
     TestClock clock = new TestClock();
     myMap.put(PropertyKeys.CLOCK, clock);
     myMap.put(PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS , timeInterval);
-    Map<String, String> degraderProperties = new HashMap<String,String>();
+    Map<String, String> degraderProperties = degraderDefaultConfig();
     degraderProperties.put(PropertyKeys.DEGRADER_HIGH_ERROR_RATE, "0.5");
     degraderProperties.put(PropertyKeys.DEGRADER_LOW_ERROR_RATE, "0.2");
     DegraderImpl.Config degraderConfig = DegraderConfigFactory.toDegraderConfig(degraderProperties);
@@ -2949,12 +2948,12 @@ public class DegraderLoadBalancerTest
   @Test(groups = { "small", "back-end" })
   public void testHighTrafficHighLatency100Clients()
   {
-    Map<String, Object> myMap = new HashMap<String, Object>();
+    Map<String, Object> myMap = lbDefaultConfig();
     Long timeInterval = 5000L;
     TestClock clock = new TestClock();
     myMap.put(PropertyKeys.CLOCK, clock);
     myMap.put(PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS , timeInterval);
-    Map<String, String> degraderProperties = new HashMap<String,String>();
+    Map<String, String> degraderProperties = degraderDefaultConfig();
     degraderProperties.put(PropertyKeys.DEGRADER_HIGH_ERROR_RATE, "0.5");
     degraderProperties.put(PropertyKeys.DEGRADER_LOW_ERROR_RATE, "0.2");
     DegraderImpl.Config degraderConfig = DegraderConfigFactory.toDegraderConfig(degraderProperties);
@@ -3188,7 +3187,7 @@ public class DegraderLoadBalancerTest
   public void testHighLowWatermarks()
   {
     final int NUM_CHECKS = 5;
-    Map<String, Object> myMap = new HashMap<String, Object>();
+    Map<String, Object> myMap = lbDefaultConfig();
     Long timeInterval = 5000L;
     double globalStepUp = 0.4;
     double globalStepDown = 0.4;
@@ -3311,7 +3310,7 @@ public class DegraderLoadBalancerTest
   {
     final int NUM_CHECKS = 5;
     final Long TIME_INTERVAL = 5000L;
-    Map<String, Object> myMap = new HashMap<String, Object>();
+    Map<String, Object> myMap = lbDefaultConfig();
     // 1,2,4,8,16,32,64,100% steps, given a 2x recovery step coefficient
     int localStepsToFullRecovery = 8;
     myMap.put(PropertyKeys.HTTP_LB_INITIAL_RECOVERY_LEVEL, 0.005);
@@ -3445,7 +3444,7 @@ public class DegraderLoadBalancerTest
   {
     final int NUM_CHECKS = 5;
     final Long TIME_INTERVAL = 5000L;
-    Map<String, Object> myMap = new HashMap<String, Object>();
+    Map<String, Object> myMap = lbDefaultConfig();
     //myMap.put(PropertyKeys.LB_INITIAL_RECOVERY_LEVEL, 0.01);
     //myMap.put("rampFactor", 2d);
     myMap.put(PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS, TIME_INTERVAL);
@@ -3522,7 +3521,7 @@ public class DegraderLoadBalancerTest
   {
     // check if the inconsistent Hash ring and trackerlients can be handled
     TestClock clock = new TestClock();
-    Map<String, Object> myMap = new HashMap<String, Object>();
+    Map<String, Object> myMap = lbDefaultConfig();
     myMap.put(PropertyKeys.CLOCK, clock);
     myMap.put(PropertyKeys.HTTP_LB_CONSISTENT_HASH_ALGORITHM, consistentHashAlgorithm);
     DegraderLoadBalancerStrategyConfig config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(myMap);
@@ -3626,6 +3625,33 @@ public class DegraderLoadBalancerTest
     Assert.assertTrue(restRequest.getMethod().equals("OPTIONS"));
   }
 
+  /**
+   * return the default old default degrader configs that the tests expect
+   */
+  public static Map<String, String> degraderDefaultConfig()
+  {
+    Map<String, String> degraderProperties = new HashMap<>();
+    degraderProperties.put(PropertyKeys.DEGRADER_DOWN_STEP, "0.2");
+    degraderProperties.put(PropertyKeys.DEGRADER_HIGH_LATENCY, "3000");
+    degraderProperties.put(PropertyKeys.DEGRADER_LOW_LATENCY, "500");
+    degraderProperties.put(PropertyKeys.DEGRADER_MIN_CALL_COUNT, "10");
+
+    return degraderProperties;
+  }
+
+  /**
+   * return the default old default loadbalancer configs that the tests expect
+   */
+  public static Map<String, Object> lbDefaultConfig()
+  {
+    Map<String, Object> lbProperties = new HashMap<>();
+
+    lbProperties.put(PropertyKeys.HTTP_LB_HIGH_WATER_MARK, "3000");
+    lbProperties.put(PropertyKeys.HTTP_LB_LOW_WATER_MARK, "500");
+    lbProperties.put(PropertyKeys.HTTP_LB_RING_RAMP_FACTOR, "1.0");
+
+    return lbProperties;
+  }
 
   public static DegraderLoadBalancerStrategyV3 getStrategy()
   {

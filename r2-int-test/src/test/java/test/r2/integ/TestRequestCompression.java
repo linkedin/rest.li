@@ -129,6 +129,7 @@ public class TestRequestCompression
                 .build();
         HashMap<String, String> properties = new HashMap<>();
         properties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, protocol);
+        properties.put(HttpClientFactory.HTTP_REQUEST_TIMEOUT, "10000");
         Client client = new TransportClientAdapter(factory.getClient(properties), true);
         args[cur][0] = client;
         args[cur][1] = URI.create("/" + requestEncoding.getHttpName());

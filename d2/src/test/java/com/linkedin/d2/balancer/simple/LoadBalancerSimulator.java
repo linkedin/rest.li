@@ -257,7 +257,7 @@ public class LoadBalancerSimulator
       }
       catch (InterruptedException | ExecutionException e)
       {
-        _log.error("Simulation error: " + e);
+        _log.error("Simulation error: ", e);
       }
     }
   }
@@ -403,7 +403,7 @@ public class LoadBalancerSimulator
         }
         catch (ServiceUnavailableException e)
         {
-          _log.error("Could not find service for request {}", restRequest.getURI());
+          _log.error("Could not find service for request " + restRequest.getURI(), e);
           Assert.fail("Failed to find the service");
         }
 

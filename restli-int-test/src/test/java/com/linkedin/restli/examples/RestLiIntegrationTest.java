@@ -131,7 +131,8 @@ public class RestLiIntegrationTest
   {
     _clientFactory = new HttpClientFactory.Builder().build();
     _transportClients = new ArrayList<Client>();
-    Client client = newTransportClient(Collections.<String, String>emptyMap());
+    Map<String, String> transportProperties = Collections.singletonMap(HttpClientFactory.HTTP_REQUEST_TIMEOUT, "10000");
+    Client client = newTransportClient(transportProperties);
     _restClient = new RestClient(client, uriPrefix);
   }
 

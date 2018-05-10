@@ -97,6 +97,7 @@ public class Bootstrap
   {
     HashMap<String, String> properties = new HashMap<>();
     properties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, HttpProtocolVersion.HTTP_1_1.name());
+    properties.put(HttpClientFactory.HTTP_REQUEST_TIMEOUT, "10000");
     final TransportClient client = new HttpClientFactory.Builder()
         .setFilterChain(filters)
         .build()
@@ -110,6 +111,7 @@ public class Bootstrap
     properties.put(HttpClientFactory.HTTP_SSL_CONTEXT, sslContext);
     properties.put(HttpClientFactory.HTTP_SSL_PARAMS, sslParameters);
     properties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, HttpProtocolVersion.HTTP_1_1.name());
+    properties.put(HttpClientFactory.HTTP_REQUEST_TIMEOUT, "10000");
     final TransportClient client = new HttpClientFactory.Builder()
         .setFilterChain(filters)
         .build()
@@ -121,6 +123,7 @@ public class Bootstrap
   {
     HashMap<String, String> properties = new HashMap<>();
     properties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, HttpProtocolVersion.HTTP_2.name());
+    properties.put(HttpClientFactory.HTTP_REQUEST_TIMEOUT, "10000");
     final TransportClient client = new HttpClientFactory.Builder()
         .setFilterChain(filters)
         .build()
