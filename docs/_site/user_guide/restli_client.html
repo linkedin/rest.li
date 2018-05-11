@@ -425,7 +425,7 @@ additional <code class="highlighter-rouge">CreateAndGet</code> request builder w
     <span class="n">Greeting</span> <span class="n">resultEntity</span> <span class="o">=</span> <span class="n">idEntityResponse</span><span class="o">.</span><span class="na">getEntity</span><span class="o">();</span>
 </code></pre></div></div>
 
-<p>The projection for returned entity is supported.\</p>
+<p>The projection for returned entity is supported.</p>
 <div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">...</span>
     <span class="c1">// "greeting" is defined in previous context\</span>
     <span class="n">CreateIdEntityRequest</span><span class="err">\</span><span class="o">&lt;</span><span class="n">Long</span><span class="o">,</span> <span class="n">Greeting</span><span class="err">\</span><span class="o">&gt;</span> <span class="n">createIdEntityRequest</span> <span class="o">=</span>
@@ -467,40 +467,36 @@ compatible for a Java client.</p>
 <p>The response will be of type <code class="highlighter-rouge">BatchCreateIdEntityResponse</code> whose
 elements are <code class="highlighter-rouge">CreateIdEntityStatus</code> object containing the returned
 entity. Here is a code example.</p>
-<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="o">...</span>
-    <span class="c1">// "greetings" is defined in previous context</span>
-    <span class="n">BatchCreateIdEntityRequest</span><span class="o">&lt;</span><span class="n">Long</span><span class="o">,</span> <span class="n">Greeting</span><span class="o">&gt;</span> <span class="n">batchCreateIdEntityRequest</span> <span class="o">=</span> <span class="n">builders</span><span class="o">.</span><span class="na">batchCreateAndGet</span><span class="o">().</span><span class="na">inputs</span><span class="o">(</span><span class="n">greetings</span><span class="o">).</span><span class="na">build</span><span class="o">();</span>
-    <span class="n">Response</span><span class="err">\</span><span class="o">&lt;</span><span class="n">BatchCreateIdEntityResponse</span><span class="o">&lt;</span><span class="n">Long</span><span class="o">,</span> <span class="n">Greeting</span><span class="o">&gt;&gt;</span> <span class="n">response</span> <span class="o">=</span> <span class="n">restClient</span><span class="o">.</span><span class="na">sendRequest</span><span class="o">(</span><span class="n">batchCreateIdEntityRequest</span><span class="o">).</span><span class="na">getResponse</span><span class="o">();</span>
-    <span class="n">BatchCreateIdEntityResponse</span><span class="o">&lt;</span><span class="n">Long</span><span class="o">,</span> <span class="n">Greeting</span><span class="o">&gt;</span> <span class="n">entityResponses</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="na">getEntity</span><span class="o">();</span>
-    <span class="k">for</span> <span class="o">(</span><span class="n">CreateIdEntityStatus</span><span class="o">&lt;?,</span> <span class="o">?&gt;</span> <span class="n">individualResponse</span> <span class="o">:</span> <span class="n">entityResponses</span><span class="o">.</span><span class="na">getElements</span><span class="o">())</span>
-    <span class="o">{</span>
-        <span class="n">Greeting</span> <span class="n">entity</span> <span class="o">=</span> <span class="o">(</span><span class="n">Greeting</span><span class="o">)</span><span class="n">individualResponse</span><span class="o">.</span><span class="na">getEntity</span><span class="o">();</span><span class="c1">// The returned individual entity from server</span>
-    <span class="o">}</span>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// "greetings" is defined in previous context</span>
+<span class="n">BatchCreateIdEntityRequest</span><span class="o">&lt;</span><span class="n">Long</span><span class="o">,</span> <span class="n">Greeting</span><span class="o">&gt;</span> <span class="n">batchCreateIdEntityRequest</span> <span class="o">=</span> <span class="n">builders</span><span class="o">.</span><span class="na">batchCreateAndGet</span><span class="o">().</span><span class="na">inputs</span><span class="o">(</span><span class="n">greetings</span><span class="o">).</span><span class="na">build</span><span class="o">();</span>
+<span class="n">Response</span><span class="err">\</span><span class="o">&lt;</span><span class="n">BatchCreateIdEntityResponse</span><span class="o">&lt;</span><span class="n">Long</span><span class="o">,</span> <span class="n">Greeting</span><span class="o">&gt;&gt;</span> <span class="n">response</span> <span class="o">=</span> <span class="n">restClient</span><span class="o">.</span><span class="na">sendRequest</span><span class="o">(</span><span class="n">batchCreateIdEntityRequest</span><span class="o">).</span><span class="na">getResponse</span><span class="o">();</span>
+<span class="n">BatchCreateIdEntityResponse</span><span class="o">&lt;</span><span class="n">Long</span><span class="o">,</span> <span class="n">Greeting</span><span class="o">&gt;</span> <span class="n">entityResponses</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="na">getEntity</span><span class="o">();</span>
+<span class="k">for</span> <span class="o">(</span><span class="n">CreateIdEntityStatus</span><span class="o">&lt;?,</span> <span class="o">?&gt;</span> <span class="n">individualResponse</span> <span class="o">:</span> <span class="n">entityResponses</span><span class="o">.</span><span class="na">getElements</span><span class="o">())</span>
+<span class="o">{</span>
+    <span class="n">Greeting</span> <span class="n">entity</span> <span class="o">=</span> <span class="o">(</span><span class="n">Greeting</span><span class="o">)</span><span class="n">individualResponse</span><span class="o">.</span><span class="na">getEntity</span><span class="o">();</span><span class="c1">// The returned individual entity from server</span>
+<span class="o">}</span>
 </code></pre></div></div>
 
 <p>The projection for returned entities is supported.</p>
 
-<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="o">...</span>
-    <span class="c1">// "greetings" is defined as a list of greeting in previous context\</span>
-    <span class="n">BatchCreateIdEntityRequest</span><span class="o">&lt;</span><span class="n">Long</span><span class="o">,</span> <span class="n">Greeting</span><span class="o">&gt;</span> <span class="n">batchCreateIdEntityRequest</span> <span class="o">=</span> <span class="n">builders</span><span class="o">.</span><span class="na">batchCreateAndGet</span><span class="o">().</span><span class="na">fields</span><span class="o">(</span><span class="n">Greeting</span><span class="o">.</span><span class="na">fields</span><span class="o">().</span><span class="na">tone</span><span class="o">(),</span>
-    <span class="n">Greeting</span><span class="o">.</span><span class="na">fields</span><span class="o">().</span><span class="na">id</span><span class="o">()).</span><span class="na">inputs</span><span class="o">(</span><span class="n">greetings</span><span class="o">).</span><span class="na">build</span><span class="o">();</span>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">...</span>
+<span class="c1">// "greetings" is defined as a list of greeting in previous context\</span>
+<span class="n">BatchCreateIdEntityRequest</span><span class="o">&lt;</span><span class="n">Long</span><span class="o">,</span> <span class="n">Greeting</span><span class="o">&gt;</span> <span class="n">batchCreateIdEntityRequest</span> <span class="o">=</span> <span class="n">builders</span><span class="o">.</span><span class="na">batchCreateAndGet</span><span class="o">().</span><span class="na">fields</span><span class="o">(</span><span class="n">Greeting</span><span class="o">.</span><span class="na">fields</span><span class="o">().</span><span class="na">tone</span><span class="o">(),</span>
+<span class="n">Greeting</span><span class="o">.</span><span class="na">fields</span><span class="o">().</span><span class="na">id</span><span class="o">()).</span><span class="na">inputs</span><span class="o">(</span><span class="n">greetings</span><span class="o">).</span><span class="na">build</span><span class="o">();</span>
 </code></pre></div></div>
 
 <h3 id="partial_update-request-builder">PARTIAL_UPDATE Request Builder</h3>
 
 <p>In Rest.li &lt; 1.24.4, the generated PARTIAL_UPDATE request builder for
-a resource is named <code class="highlighter-rouge">&lt;Resource&gt;PartialUpdateBuilder</code>. Whereas in Rest.li</p>
-<blockquote>
-  <p>= 1.24.4, it is called <code class="highlighter-rouge">&lt;Resource&gt;PartialUpdateRequestBuilder</code>. Both
+a resource is named <code class="highlighter-rouge">&lt;Resource&gt;PartialUpdateBuilder</code>. Whereas in Rest.li &gt;= 1.24.4, it is called <code class="highlighter-rouge">&lt;Resource&gt;PartialUpdateRequestBuilder</code>. Both
 builders support the full interface of the built-in
 <code class="highlighter-rouge">PartialUpdateRequestBuilder</code>.</p>
-</blockquote>
 
 <p>If the resource class is a child resource, the generated builder will
 include a type-safe path-key binding method for each of the resource’s
 ancestors (recursively following parent resources). Each binding method
 is declared as:</p>
-<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="kd">public</span> <span class="o">&lt;</span><span class="n">BuilderType</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">pathKeyName</span><span class="o">&gt;</span><span class="n">Key</span><span class="o">(&lt;</span><span class="n">KeyType</span><span class="o">&gt;</span> <span class="n">key</span><span class="o">);</span>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="o">&lt;</span><span class="n">BuilderType</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">pathKeyName</span><span class="o">&gt;</span><span class="n">Key</span><span class="o">(&lt;</span><span class="n">KeyType</span><span class="o">&gt;</span> <span class="n">key</span><span class="o">);</span>
 </code></pre></div></div>
 
 <p>See <a href="https://github.com/linkedin/rest.li/wiki/Rest.li-User-Guide#wiki-creating-partial-updates">Creating partial
@@ -519,7 +515,7 @@ interface of the built-in <code class="highlighter-rouge">BatchPartialUpdateRequ
 include a type-safe path-key binding method for each of the resource’s
 ancestors (recursively following parent resources). Each binding method
 is declared as:</p>
-<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="kd">public</span> <span class="o">&lt;</span><span class="n">BuilderType</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">pathKeyName</span><span class="o">&gt;</span><span class="n">Key</span><span class="o">(&lt;</span><span class="n">KeyType</span><span class="o">&gt;</span> <span class="n">key</span><span class="o">);</span>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="o">&lt;</span><span class="n">BuilderType</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">pathKeyName</span><span class="o">&gt;</span><span class="n">Key</span><span class="o">(&lt;</span><span class="n">KeyType</span><span class="o">&gt;</span> <span class="n">key</span><span class="o">);</span>
 </code></pre></div></div>
 
 <h3 id="update-request-builder">UPDATE Request Builder</h3>
@@ -533,7 +529,7 @@ support the full interface of the built-in <code class="highlighter-rouge">Updat
 include a type-safe path-key binding method for each of the resource’s
 ancestors (recursively following parent resources). Each binding method
 is declared as:</p>
-<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="kd">public</span> <span class="o">&lt;</span><span class="n">BuilderType</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">pathKeyName</span><span class="o">&gt;</span><span class="n">Key</span><span class="o">(&lt;</span><span class="n">KeyType</span><span class="o">&gt;</span> <span class="n">key</span><span class="o">);</span>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="o">&lt;</span><span class="n">BuilderType</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">pathKeyName</span><span class="o">&gt;</span><span class="n">Key</span><span class="o">(&lt;</span><span class="n">KeyType</span><span class="o">&gt;</span> <span class="n">key</span><span class="o">);</span>
 </code></pre></div></div>
 
 <h3 id="batch_update-request-builder">BATCH_UPDATE Request Builder</h3>
@@ -547,7 +543,7 @@ support the full interface of the built-in <code class="highlighter-rouge">Batch
 include a type-safe path-key binding method for each of the resource’s
 ancestors (recursively following parent resources). Each binding method
 is declared as:</p>
-<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="kd">public</span> <span class="o">&lt;</span><span class="n">BuilderType</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">pathKeyName</span><span class="o">&gt;</span><span class="n">Key</span><span class="o">(&lt;</span><span class="n">KeyType</span><span class="o">&gt;</span> <span class="n">key</span><span class="o">);</span>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="o">&lt;</span><span class="n">BuilderType</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">pathKeyName</span><span class="o">&gt;</span><span class="n">Key</span><span class="o">(&lt;</span><span class="n">KeyType</span><span class="o">&gt;</span> <span class="n">key</span><span class="o">);</span>
 </code></pre></div></div>
 
 <h3 id="delete-request-builder">DELETE Request Builder</h3>
@@ -560,7 +556,7 @@ interface of the built-in <code class="highlighter-rouge">DeleteRequestBuilder</
 include a type-safe path-key binding method for each of the resource’s
 ancestors (recursively following parent resources). Each binding method
 is declared as:</p>
-<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="kd">public</span> <span class="o">&lt;</span><span class="n">BuilderType</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">pathKeyName</span><span class="o">&gt;</span><span class="n">Key</span><span class="o">(&lt;</span><span class="n">KeyType</span><span class="o">&gt;</span> <span class="n">key</span><span class="o">);</span>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="o">&lt;</span><span class="n">BuilderType</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">pathKeyName</span><span class="o">&gt;</span><span class="n">Key</span><span class="o">(&lt;</span><span class="n">KeyType</span><span class="o">&gt;</span> <span class="n">key</span><span class="o">);</span>
 </code></pre></div></div>
 
 <h3 id="batch_delete-request-builder">BATCH_DELETE Request Builder</h3>
@@ -575,7 +571,7 @@ Both builders support the full interface of the built-in
 include a type-safe path-key binding method for each of the resource’s
 ancestors (recursively following parent resources). Each binding method
 is declared as:</p>
-<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="kd">public</span> <span class="o">&lt;</span><span class="n">BuilderType</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">pathKeyName</span><span class="o">&gt;</span><span class="n">Key</span><span class="o">(&lt;</span><span class="n">KeyType</span><span class="o">&gt;</span> <span class="n">key</span><span class="o">);</span>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="o">&lt;</span><span class="n">BuilderType</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">pathKeyName</span><span class="o">&gt;</span><span class="n">Key</span><span class="o">(&lt;</span><span class="n">KeyType</span><span class="o">&gt;</span> <span class="n">key</span><span class="o">);</span>
 </code></pre></div></div>
 
 <h3 id="action-request-builder">ACTION Request Builder</h3>
@@ -592,16 +588,16 @@ builders support the full interface of the built-in
 include a type-safe path-key binding method for each of the resource’s
 ancestors (recursively following parent resources). Each binding method
 is declared as:</p>
-<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="kd">public</span> <span class="o">&lt;</span><span class="n">BuilderType</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">pathKeyName</span><span class="o">&gt;</span><span class="n">Key</span><span class="o">(&lt;</span><span class="n">KeyType</span><span class="o">&gt;</span> <span class="n">key</span><span class="o">);</span>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="o">&lt;</span><span class="n">BuilderType</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">pathKeyName</span><span class="o">&gt;</span><span class="n">Key</span><span class="o">(&lt;</span><span class="n">KeyType</span><span class="o">&gt;</span> <span class="n">key</span><span class="o">);</span>
 </code></pre></div></div>
 
 <p>The generated builder will contain a method to set each of the action’s
 parameters. It Rest.li &lt; 1.24.4, it is of the form:</p>
-<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="kd">public</span> <span class="o">&lt;</span><span class="n">BuilderType</span><span class="o">&gt;</span> <span class="n">param</span><span class="o">&lt;</span><span class="n">ParamName</span><span class="o">&gt;(&lt;</span><span class="n">ParamType</span><span class="o">&gt;</span> <span class="n">value</span><span class="o">);</span>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="o">&lt;</span><span class="n">BuilderType</span><span class="o">&gt;</span> <span class="n">param</span><span class="o">&lt;</span><span class="n">ParamName</span><span class="o">&gt;(&lt;</span><span class="n">ParamType</span><span class="o">&gt;</span> <span class="n">value</span><span class="o">);</span>
 </code></pre></div></div>
 
 <p>In Rest.li &gt;= 1.24.4, it is of the form:</p>
-<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="kd">public</span> <span class="o">&lt;</span><span class="n">BuilderType</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">paramName</span><span class="o">&gt;</span><span class="n">Param</span><span class="o">(&lt;</span><span class="n">ParamType</span><span class="o">&gt;</span> <span class="n">value</span><span class="o">);</span>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="o">&lt;</span><span class="n">BuilderType</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">paramName</span><span class="o">&gt;</span><span class="n">Param</span><span class="o">(&lt;</span><span class="n">ParamType</span><span class="o">&gt;</span> <span class="n">value</span><span class="o">);</span>
 </code></pre></div></div>
 
 <p>The value <strong>must</strong> be non-null.</p>
@@ -612,19 +608,19 @@ parameters. It Rest.li &lt; 1.24.4, it is of the form:</p>
 
 <p>To call a subresource of the fortunes resource, for example:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    GET /fortunes/1/subresource/100
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>GET /fortunes/1/subresource/100
 </code></pre></div></div>
 
 <p>The parent keys can be specified by calling generated setters on the
 builder. In this case, the <code class="highlighter-rouge">fortunesIdKey()</code> method, for example:</p>
 
-<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">new</span> <span class="n">SubresourceBuilders</span><span class="o">().</span><span class="na">get</span><span class="o">().</span><span class="na">fortunesIdKey</span><span class="o">(</span><span class="mi">1</span><span class="n">l</span><span class="o">).</span><span class="na">id</span><span class="o">(</span><span class="mi">100</span><span class="n">l</span><span class="o">).</span><span class="na">build</span><span class="o">()</span>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">new</span> <span class="n">SubresourceBuilders</span><span class="o">().</span><span class="na">get</span><span class="o">().</span><span class="na">fortunesIdKey</span><span class="o">(</span><span class="mi">1</span><span class="n">l</span><span class="o">).</span><span class="na">id</span><span class="o">(</span><span class="mi">100</span><span class="n">l</span><span class="o">).</span><span class="na">build</span><span class="o">()</span>
 </code></pre></div></div>
 
 <p>Parent path keys can also be set directly builder classes using the
 <code class="highlighter-rouge">setPathKey()</code> method on the builders classes, for example:</p>
 
-<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="o">.</span><span class="na">setPathKey</span><span class="o">(</span><span class="s">"dest"</span><span class="o">,</span> <span class="s">"dest"</span><span class="o">).</span><span class="na">setPathKey</span><span class="o">(</span><span class="s">"src"</span><span class="o">,</span> <span class="s">"src"</span><span class="o">)</span>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">.</span><span class="na">setPathKey</span><span class="o">(</span><span class="s">"dest"</span><span class="o">,</span> <span class="s">"dest"</span><span class="o">).</span><span class="na">setPathKey</span><span class="o">(</span><span class="s">"src"</span><span class="o">,</span> <span class="s">"src"</span><span class="o">)</span>
 </code></pre></div></div>
 
 <p><a id="wiki-BuiltinRequestBuilders"></a></p>
@@ -672,22 +668,207 @@ requests</li>
 <p>The following table summarizes the methods supported by each
 RequestBuilder type.</p>
 
-<p>|<em>. Request Builder |</em>. header |<em>. id |</em>. ids |<em>. name |</em>.
-setParam |<em>. addParam |</em>. assocKey |<em>. pathKey |</em>. paginate |<em>.
-fields |</em>. input |_. inputs |\
-| Action | - | - | | - | - | - | | - | | | | |\
-| Find | - | | | - | - | - | - | - | - | - | | |\
-| Get | - | <del>* | | |</del> | - | | - | | - | | |\
-| Create | - | | | | - | - | | - | | | - | |\
-| Delete | - | <del>* | | |</del> | - | | - | | | | |\
-| PartialUpdate | - | - | | | - | - | | - | | | - | |\
-| Update | - | <del>* | | |</del> | - | | - | | | - | |\
-| BatchGet | - | | - | | - | - | | - | | - | | |\
-| BatchCreate | - | | | | - | - | | - | | | | - |\
-| BatchDelete | - | | - | | - | - | | - | | | | |\
-| BatchPartialUpdate | - | | | | - | - | | - | | | | - |\
-| BatchUpdate | - | | | | - | - | | - | | | | - |\
-*:It is not supported, if the method is defined on a simple resource.</p>
+<table>
+  <tbody>
+    <tr>
+      <td>Request Builder</td>
+      <td>header</td>
+      <td>id</td>
+      <td>ids</td>
+      <td>name</td>
+      <td>setParam</td>
+      <td>addParam</td>
+      <td>assocKey</td>
+      <td>pathKey</td>
+      <td>paginate</td>
+      <td>fields</td>
+      <td>input</td>
+      <td>inputs</td>
+    </tr>
+    <tr>
+      <td>Action</td>
+      <td>-</td>
+      <td>-</td>
+      <td> </td>
+      <td>-</td>
+      <td>-</td>
+      <td>-</td>
+      <td> </td>
+      <td>-</td>
+      <td> </td>
+      <td> </td>
+      <td> </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>Find</td>
+      <td>-</td>
+      <td> </td>
+      <td> </td>
+      <td>-</td>
+      <td>-</td>
+      <td>-</td>
+      <td>-</td>
+      <td>-</td>
+      <td>-</td>
+      <td>-</td>
+      <td> </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>Get</td>
+      <td>-</td>
+      <td>-*</td>
+      <td> </td>
+      <td> </td>
+      <td>-</td>
+      <td>-</td>
+      <td> </td>
+      <td>-</td>
+      <td> </td>
+      <td>-</td>
+      <td> </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>Create</td>
+      <td>-</td>
+      <td> </td>
+      <td> </td>
+      <td> </td>
+      <td>-</td>
+      <td>-</td>
+      <td> </td>
+      <td>-</td>
+      <td> </td>
+      <td> </td>
+      <td>-</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>Delete</td>
+      <td>-</td>
+      <td>-*</td>
+      <td> </td>
+      <td> </td>
+      <td>-</td>
+      <td>-</td>
+      <td> </td>
+      <td>-</td>
+      <td> </td>
+      <td> </td>
+      <td> </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>PartialUpdate</td>
+      <td>-</td>
+      <td>-</td>
+      <td> </td>
+      <td> </td>
+      <td>-</td>
+      <td>-</td>
+      <td> </td>
+      <td>-</td>
+      <td> </td>
+      <td> </td>
+      <td>-</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>Update</td>
+      <td>-</td>
+      <td>-*</td>
+      <td> </td>
+      <td> </td>
+      <td>-</td>
+      <td>-</td>
+      <td> </td>
+      <td>-</td>
+      <td> </td>
+      <td> </td>
+      <td>-</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>BatchGet</td>
+      <td>-</td>
+      <td> </td>
+      <td>-</td>
+      <td> </td>
+      <td>-</td>
+      <td>-</td>
+      <td> </td>
+      <td>-</td>
+      <td> </td>
+      <td>-</td>
+      <td> </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>BatchCreate</td>
+      <td>-</td>
+      <td> </td>
+      <td> </td>
+      <td> </td>
+      <td>-</td>
+      <td>-</td>
+      <td> </td>
+      <td>-</td>
+      <td> </td>
+      <td> </td>
+      <td> </td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>BatchDelete</td>
+      <td>-</td>
+      <td> </td>
+      <td>-</td>
+      <td> </td>
+      <td>-</td>
+      <td>-</td>
+      <td> </td>
+      <td>-</td>
+      <td> </td>
+      <td> </td>
+      <td> </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>BatchPartialUpdate</td>
+      <td>-</td>
+      <td> </td>
+      <td> </td>
+      <td> </td>
+      <td>-</td>
+      <td>-</td>
+      <td> </td>
+      <td>-</td>
+      <td> </td>
+      <td> </td>
+      <td> </td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>BatchUpdate</td>
+      <td>-</td>
+      <td> </td>
+      <td> </td>
+      <td> </td>
+      <td>-</td>
+      <td>-</td>
+      <td> </td>
+      <td>-</td>
+      <td> </td>
+      <td> </td>
+      <td> </td>
+      <td>-</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>*It is not supported, if the method is defined on a simple resource.</p>
 
 <p>Refer to the JavaDocs for specific details of RequestBuilder and Request
 interfaces.</p>
@@ -756,7 +937,7 @@ class.</p>
 <p>For details on how to use the IDL Generator, see <a href="https://github.com/linkedin/rest.li/wiki/Gradle-build-integration">Gradle build
 integration</a>.</p>
 
-<p><a id="Client"></a>\
+<p><a id="Client"></a>
 <a id="RestClient"></a></p>
 
 <p><a id="wiki-RestClient"></a></p>
@@ -845,7 +1026,7 @@ BATCH_CREATE request builders, now returns a
 <h4 id="response-from-a-create-and-batch_create-request">Response from a CREATE and BATCH_CREATE Request</h4>
 
 <p>As mentioned in the section above, calling <code class="highlighter-rouge">build()</code> on a
-<code class="highlighter-rouge">CreateIdRequestBuilder</code> gives us a <code class="highlighter-rouge">CreateIdRequest&lt;K, V&gt;</code>.\
+<code class="highlighter-rouge">CreateIdRequestBuilder</code> gives us a <code class="highlighter-rouge">CreateIdRequest&lt;K, V&gt;</code>.
 When this is sent using a <code class="highlighter-rouge">RestClient</code> we get back (after calling
 <code class="highlighter-rouge">sendRequest(...).getResponse().getEntity()</code>) an <code class="highlighter-rouge">IdResponse&lt;K&gt;</code> that
 gives us a single, strongly-typed key.</p>
@@ -980,16 +1161,16 @@ option is to be used. The available ProtocolVersionOption(s) are:</p>
 <p>Use the next version of the Rest.li protocol to encode requests,
 regardless of the version running on the server. The next version of the
 Rest.li protocol is the version currently under development. This option
-should typically NOT be used for production services.\
+should typically NOT be used for production services.
 <strong>CAUTION</strong>: this can cause requests to fail if the server does not
-understand the next version of the protocol.\
+understand the next version of the protocol.
 “Next version” is defined as
 <code class="highlighter-rouge">com.linkedin.restli.internal.common.AllProtocolVersions.NEXT_PROTOCOL_VERSION</code>.</p>
 
 <h4 id="force_use_latest">FORCE_USE_LATEST</h4>
 
 <p>Use the latest version of the Rest.li protocol to encode requests,
-regardless of the version running on the server.\
+regardless of the version running on the server.
 <strong>CAUTION</strong>: this can cause requests to fail if the server does not
 understand the latest\
 version of the protocol. “Latest version” is defined as
@@ -1056,7 +1237,7 @@ to be used. The specified value will be set to the HTTP header
 contentType parameter (as shown below), which will apply to all requests
 sent through that client instance.</p>
 
-<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="kd">public</span> <span class="nf">RestClient</span><span class="o">(</span><span class="n">Client</span> <span class="n">client</span><span class="o">,</span> <span class="n">String</span> <span class="n">uriPrefix</span><span class="o">,</span> <span class="n">ContentType</span> <span class="n">contentType</span><span class="o">,</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">AcceptType</span><span class="o">&gt;</span> <span class="n">acceptTypes</span><span class="o">)</span>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="nf">RestClient</span><span class="o">(</span><span class="n">Client</span> <span class="n">client</span><span class="o">,</span> <span class="n">String</span> <span class="n">uriPrefix</span><span class="o">,</span> <span class="n">ContentType</span> <span class="n">contentType</span><span class="o">,</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">AcceptType</span><span class="o">&gt;</span> <span class="n">acceptTypes</span><span class="o">)</span>
 </code></pre></div></div>
 
 <p>However, this form of configuration has been DEPRECATED. Please use
@@ -1082,11 +1263,10 @@ for the request. If more than one AcceptType is specified, we will
 generate an Accept header by appending each media type by a “q”
 parameter for indicating a relative quality factor. For example:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;Accept: application/*; q=0.2, application/json&lt;/code&gt;
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Accept: application/*; q=0.2, application/json
 </code></pre></div></div>
 
-<p>\
-Quality factors allow the user or user agent to indicate the relative
+<p>Quality factors allow the user or user agent to indicate the relative
 degree of preference for that media type, using the scale from 0 to 1.
 The default value is q=1. In our case, the quality factor generated is
 based on the order of each accept type we specified in the list. See
@@ -1109,8 +1289,8 @@ AcceptType through the <code class="highlighter-rouge">RestClient</code> constru
 acceptTypes parameter (as shown below), which will apply to all requests
 sent through that client instance.</p>
 
-<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="kd">public</span> <span class="nf">RestClient</span><span class="o">(</span><span class="n">Client</span> <span class="n">client</span><span class="o">,</span> <span class="n">String</span> <span class="n">uriPrefix</span><span class="o">,</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">AcceptType</span><span class="o">&gt;</span> <span class="n">acceptTypes</span><span class="o">)</span>
-    <span class="kd">public</span> <span class="nf">RestClient</span><span class="o">(</span><span class="n">Client</span> <span class="n">client</span><span class="o">,</span> <span class="n">String</span> <span class="n">uriPrefix</span><span class="o">,</span> <span class="n">ContentType</span> <span class="n">contentType</span><span class="o">,</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">AcceptType</span><span class="o">&gt;</span> <span class="n">acceptTypes</span><span class="o">)</span>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="nf">RestClient</span><span class="o">(</span><span class="n">Client</span> <span class="n">client</span><span class="o">,</span> <span class="n">String</span> <span class="n">uriPrefix</span><span class="o">,</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">AcceptType</span><span class="o">&gt;</span> <span class="n">acceptTypes</span><span class="o">)</span>
+<span class="kd">public</span> <span class="nf">RestClient</span><span class="o">(</span><span class="n">Client</span> <span class="n">client</span><span class="o">,</span> <span class="n">String</span> <span class="n">uriPrefix</span><span class="o">,</span> <span class="n">ContentType</span> <span class="n">contentType</span><span class="o">,</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">AcceptType</span><span class="o">&gt;</span> <span class="n">acceptTypes</span><span class="o">)</span>
 </code></pre></div></div>
 <p>However, this form of configuration has been DEPRECATED. Please use
 <code class="highlighter-rouge">RestliRequestOptions</code> instead to set such custom options. In cases

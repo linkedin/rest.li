@@ -461,9 +461,9 @@ public class MembershipsAssociation extends AssociationResourceTemplate<Membersh
 }
 ```
 
-    <code>
+
     curl http://<hostname:port>/memberships/memberId=1&groupId=10
-    </code>
+
 
 The supported annotation parameters are:
 

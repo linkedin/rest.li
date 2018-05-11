@@ -331,7 +331,7 @@ The response will be of type `IdEntityResponse<K, V>` which has a
     Greeting resultEntity = idEntityResponse.getEntity();
 ```
 
-The projection for returned entity is supported.\
+The projection for returned entity is supported.
 ```java
 ...
     // "greeting" is defined in previous context\
@@ -377,31 +377,29 @@ The response will be of type `BatchCreateIdEntityResponse` whose
 elements are `CreateIdEntityStatus` object containing the returned
 entity. Here is a code example.
 ```java
-    ...
-    // "greetings" is defined in previous context
-    BatchCreateIdEntityRequest<Long, Greeting> batchCreateIdEntityRequest = builders.batchCreateAndGet().inputs(greetings).build();
-    Response\<BatchCreateIdEntityResponse<Long, Greeting>> response = restClient.sendRequest(batchCreateIdEntityRequest).getResponse();
-    BatchCreateIdEntityResponse<Long, Greeting> entityResponses = response.getEntity();
-    for (CreateIdEntityStatus<?, ?> individualResponse : entityResponses.getElements())
-    {
-        Greeting entity = (Greeting)individualResponse.getEntity();// The returned individual entity from server
-    }
+// "greetings" is defined in previous context
+BatchCreateIdEntityRequest<Long, Greeting> batchCreateIdEntityRequest = builders.batchCreateAndGet().inputs(greetings).build();
+Response\<BatchCreateIdEntityResponse<Long, Greeting>> response = restClient.sendRequest(batchCreateIdEntityRequest).getResponse();
+BatchCreateIdEntityResponse<Long, Greeting> entityResponses = response.getEntity();
+for (CreateIdEntityStatus<?, ?> individualResponse : entityResponses.getElements())
+{
+    Greeting entity = (Greeting)individualResponse.getEntity();// The returned individual entity from server
+}
 ```
 
 The projection for returned entities is supported.
 
 ```java
-    ...
-    // "greetings" is defined as a list of greeting in previous context\
-    BatchCreateIdEntityRequest<Long, Greeting> batchCreateIdEntityRequest = builders.batchCreateAndGet().fields(Greeting.fields().tone(),
-    Greeting.fields().id()).inputs(greetings).build();
+...
+// "greetings" is defined as a list of greeting in previous context\
+BatchCreateIdEntityRequest<Long, Greeting> batchCreateIdEntityRequest = builders.batchCreateAndGet().fields(Greeting.fields().tone(),
+Greeting.fields().id()).inputs(greetings).build();
 ```
 
 ### PARTIAL_UPDATE Request Builder
 
 In Rest.li < 1.24.4, the generated PARTIAL_UPDATE request builder for
-a resource is named `<Resource>PartialUpdateBuilder`. Whereas in Rest.li
->= 1.24.4, it is called `<Resource>PartialUpdateRequestBuilder`. Both
+a resource is named `<Resource>PartialUpdateBuilder`. Whereas in Rest.li >= 1.24.4, it is called `<Resource>PartialUpdateRequestBuilder`. Both
 builders support the full interface of the built-in
 `PartialUpdateRequestBuilder`.
 
@@ -410,7 +408,7 @@ include a type-safe path-key binding method for each of the resource's
 ancestors (recursively following parent resources). Each binding method
 is declared as:
 ```java
-    public <BuilderType> <pathKeyName>Key(<KeyType> key);
+public <BuilderType> <pathKeyName>Key(<KeyType> key);
 ```
 
 See [Creating partial
@@ -430,7 +428,7 @@ include a type-safe path-key binding method for each of the resource's
 ancestors (recursively following parent resources). Each binding method
 is declared as:
 ```java
-    public <BuilderType> <pathKeyName>Key(<KeyType> key);
+public <BuilderType> <pathKeyName>Key(<KeyType> key);
 ```
 
 ### UPDATE Request Builder
@@ -445,7 +443,7 @@ include a type-safe path-key binding method for each of the resource's
 ancestors (recursively following parent resources). Each binding method
 is declared as:
 ```java
-    public <BuilderType> <pathKeyName>Key(<KeyType> key);
+public <BuilderType> <pathKeyName>Key(<KeyType> key);
 ```
 
 ### BATCH_UPDATE Request Builder
@@ -460,7 +458,7 @@ include a type-safe path-key binding method for each of the resource's
 ancestors (recursively following parent resources). Each binding method
 is declared as:
 ```java
-    public <BuilderType> <pathKeyName>Key(<KeyType> key);
+public <BuilderType> <pathKeyName>Key(<KeyType> key);
 ```
 
 ### DELETE Request Builder
@@ -474,7 +472,7 @@ include a type-safe path-key binding method for each of the resource's
 ancestors (recursively following parent resources). Each binding method
 is declared as:
 ```java
-    public <BuilderType> <pathKeyName>Key(<KeyType> key);
+public <BuilderType> <pathKeyName>Key(<KeyType> key);
 ```
 
 ### BATCH_DELETE Request Builder
@@ -490,7 +488,7 @@ include a type-safe path-key binding method for each of the resource's
 ancestors (recursively following parent resources). Each binding method
 is declared as:
 ```java
-    public <BuilderType> <pathKeyName>Key(<KeyType> key);
+public <BuilderType> <pathKeyName>Key(<KeyType> key);
 ```
 
 ### ACTION Request Builder
@@ -506,18 +504,18 @@ include a type-safe path-key binding method for each of the resource's
 ancestors (recursively following parent resources). Each binding method
 is declared as:
 ```java
-    public <BuilderType> <pathKeyName>Key(<KeyType> key);
+public <BuilderType> <pathKeyName>Key(<KeyType> key);
 ```
 
 The generated builder will contain a method to set each of the action's
 parameters. It Rest.li < 1.24.4, it is of the form:
 ```java
-    public <BuilderType> param<ParamName>(<ParamType> value);
+public <BuilderType> param<ParamName>(<ParamType> value);
 ```
 
 In Rest.li >= 1.24.4, it is of the form:
 ```java
-    public <BuilderType> <paramName>Param(<ParamType> value);
+public <BuilderType> <paramName>Param(<ParamType> value);
 ```
 
 The value **must** be non-null.
@@ -529,21 +527,21 @@ The value **must** be non-null.
 To call a subresource of the fortunes resource, for example:
 
 ```
-    GET /fortunes/1/subresource/100
+GET /fortunes/1/subresource/100
 ```
 
 The parent keys can be specified by calling generated setters on the
 builder. In this case, the `fortunesIdKey()` method, for example:
 
 ```java
-    new SubresourceBuilders().get().fortunesIdKey(1l).id(100l).build()
+new SubresourceBuilders().get().fortunesIdKey(1l).id(100l).build()
 ```
 
 Parent path keys can also be set directly builder classes using the
 `setPathKey()` method on the builders classes, for example:
 
 ```java
-    .setPathKey("dest", "dest").setPathKey("src", "src")
+.setPathKey("dest", "dest").setPathKey("src", "src")
 ```
 
 <a id="wiki-BuiltinRequestBuilders"></a>
@@ -589,22 +587,21 @@ appropriate for the corresponding resource method:
 The following table summarizes the methods supported by each
 RequestBuilder type.
 
-\|*. Request Builder \|*. header \|*. id \|*. ids \|*. name \|*.
-setParam \|*. addParam \|*. assocKey \|*. pathKey \|*. paginate \|*.
-fields \|*. input \|_. inputs \|\
-\| Action \| - \| - \| \| - \| - \| - \| \| - \| \| \| \| \|\
-\| Find \| - \| \| \| - \| - \| - \| - \| - \| - \| - \| \| \|\
-\| Get \| - \| ~~\* \| \| \|~~ \| - \| \| - \| \| - \| \| \|\
-\| Create \| - \| \| \| \| - \| - \| \| - \| \| \| - \| \|\
-\| Delete \| - \| ~~\* \| \| \|~~ \| - \| \| - \| \| \| \| \|\
-\| PartialUpdate \| - \| - \| \| \| - \| - \| \| - \| \| \| - \| \|\
-\| Update \| - \| ~~\* \| \| \|~~ \| - \| \| - \| \| \| - \| \|\
-\| BatchGet \| - \| \| - \| \| - \| - \| \| - \| \| - \| \| \|\
-\| BatchCreate \| - \| \| \| \| - \| - \| \| - \| \| \| \| - \|\
-\| BatchDelete \| - \| \| - \| \| - \| - \| \| - \| \| \| \| \|\
-\| BatchPartialUpdate \| - \| \| \| \| - \| - \| \| - \| \| \| \| - \|\
-\| BatchUpdate \| - \| \| \| \| - \| - \| \| - \| \| \| \| - \|\
-\*:It is not supported, if the method is defined on a simple resource.
+| Request Builder | header | id | ids | name | setParam | addParam | assocKey | pathKey | paginate | fields | input | inputs |
+| Action | - | - | | - | - | - | | - | | | | |
+| Find | - | | | - | - | - | - | - | - | - | | |
+| Get | - | -\* | | |- | - | | - | | - | | |
+| Create | - | | | | - | - | | - | | | - | |
+| Delete | - | -\* | | |- | - | | - | | | | |
+| PartialUpdate | - | - | | | - | - | | - | | | - | |
+| Update | - | -\* | | |- | - | | - | | | - | |
+| BatchGet | - | | - | | - | - | | - | | - | | |
+| BatchCreate | - | | | | - | - | | - | | | | - |
+| BatchDelete | - | | - | | - | - | | - | | | | |
+| BatchPartialUpdate | - | | | | - | - | | - | | | | - |
+| BatchUpdate | - | | | | - | - | | - | | | | - |
+
+*It is not supported, if the method is defined on a simple resource.
 
 Refer to the JavaDocs for specific details of RequestBuilder and Request
 interfaces.
@@ -647,7 +644,7 @@ At a high level, the restspec contains the following information:
 Additional details on the Restspec format may be found in the [design
 documents](https://github.com/linkedin/rest.li/wiki/Rest.li-.restspec.json-Format).
 The Restspec format is formally described by the .pdsc schema files in
-"com.linkedin.restli.restspec.\* " distributed in the restli-common
+"com.linkedin.restli.restspec.* " distributed in the restli-common
 module.
 
 <a id="IDLGeneratorTool"></a>
@@ -665,7 +662,7 @@ class.
 For details on how to use the IDL Generator, see [Gradle build
 integration](https://github.com/linkedin/rest.li/wiki/Gradle-build-integration).
 
-<a id="Client"></a>\
+<a id="Client"></a>
 <a id="RestClient"></a>
 
 <a id="wiki-RestClient"></a>
@@ -751,7 +748,7 @@ Starting with Rest.li 1.24.4, we have introduced a few changes to the
 #### Response from a CREATE and BATCH_CREATE Request
 
 As mentioned in the section above, calling `build()` on a
-`CreateIdRequestBuilder` gives us a `CreateIdRequest<K, V>`.\
+`CreateIdRequestBuilder` gives us a `CreateIdRequest<K, V>`.
 When this is sent using a `RestClient` we get back (after calling
 `sendRequest(...).getResponse().getEntity()`) an `IdResponse<K>` that
 gives us a single, strongly-typed key.
@@ -861,16 +858,16 @@ option is to be used. The available ProtocolVersionOption(s) are:
 Use the next version of the Rest.li protocol to encode requests,
 regardless of the version running on the server. The next version of the
 Rest.li protocol is the version currently under development. This option
-should typically NOT be used for production services.\
+should typically NOT be used for production services.
 **CAUTION**: this can cause requests to fail if the server does not
-understand the next version of the protocol.\
+understand the next version of the protocol.
 "Next version" is defined as
 `com.linkedin.restli.internal.common.AllProtocolVersions.NEXT_PROTOCOL_VERSION`.
 
 #### FORCE_USE_LATEST
 
 Use the latest version of the Rest.li protocol to encode requests,
-regardless of the version running on the server.\
+regardless of the version running on the server.
 **CAUTION**: this can cause requests to fail if the server does not
 understand the latest\
 version of the protocol. "Latest version" is defined as
@@ -936,7 +933,7 @@ contentType parameter (as shown below), which will apply to all requests
 sent through that client instance.
 
 ```java
-    public RestClient(Client client, String uriPrefix, ContentType contentType, List<AcceptType> acceptTypes)
+public RestClient(Client client, String uriPrefix, ContentType contentType, List<AcceptType> acceptTypes)
 ```
 
 However, this form of configuration has been DEPRECATED. Please use
@@ -960,9 +957,8 @@ for the request. If more than one AcceptType is specified, we will
 generate an Accept header by appending each media type by a "q"
 parameter for indicating a relative quality factor. For example:
 
-    <code>Accept: application/*; q=0.2, application/json</code>
+    Accept: application/*; q=0.2, application/json
 
-\
 Quality factors allow the user or user agent to indicate the relative
 degree of preference for that media type, using the scale from 0 to 1.
 The default value is q=1. In our case, the quality factor generated is
@@ -987,8 +983,8 @@ acceptTypes parameter (as shown below), which will apply to all requests
 sent through that client instance.
 
 ```java
-    public RestClient(Client client, String uriPrefix, List<AcceptType> acceptTypes)
-    public RestClient(Client client, String uriPrefix, ContentType contentType, List<AcceptType> acceptTypes)
+public RestClient(Client client, String uriPrefix, List<AcceptType> acceptTypes)
+public RestClient(Client client, String uriPrefix, ContentType contentType, List<AcceptType> acceptTypes)
 ```
 However, this form of configuration has been DEPRECATED. Please use
 `RestliRequestOptions` instead to set such custom options. In cases
