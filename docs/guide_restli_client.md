@@ -412,7 +412,7 @@ public <BuilderType> <pathKeyName>Key(<KeyType> key);
 ```
 
 See [Creating partial
-updates](https://github.com/linkedin/rest.li/wiki/Rest.li-User-Guide#wiki-creating-partial-updates)
+updates](/rest.li/user_guide/restli_server#creating-partial-updates)
 for details on how to create a request for a partial update.
 
 ### BATCH_PARTIAL_UPDATE Request Builder

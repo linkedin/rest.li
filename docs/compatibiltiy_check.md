@@ -8,14 +8,14 @@ index: 2
 
 ## Contents
 
-* [Introduction](https://github.com/linkedin/rest.li/wiki/Snapshots-and-Resource-Compatibility-Checking#introduction)
-* [Running the Compatibility Checker](https://github.com/linkedin/rest.li/wiki/Snapshots-and-Resource-Compatibility-Checking#running-the-compatibility-checker)
-* [Compatibility Levels](https://github.com/linkedin/rest.li/wiki/Snapshots-and-Resource-Compatibility-Checking#compatibility-levels)
-* [Why is Adding to an Enum Considered Backwards Incompatible?](https://github.com/linkedin/rest.li/wiki/Snapshots-and-Resource-Compatibility-Checking#why-is-adding-to-an-enum-considered-backwards-incompatible)
-* [Error Messages](https://github.com/linkedin/rest.li/wiki/Snapshots-and-Resource-Compatibility-Checking#error-messages)
-* [Location of Snapshots/IDLs](https://github.com/linkedin/rest.li/wiki/Snapshots-and-Resource-Compatibility-Checking#location-of-snapshotsidls)
-* [The Compatibility Checker and IDLs](https://github.com/linkedin/rest.li/wiki/Snapshots-and-Resource-Compatibility-Checking#the-compatibility-checker-and-idls)
-* [Continuous Integration Environments](https://github.com/linkedin/rest.li/wiki/Snapshots-and-Resource-Compatibility-Checking#continuous-integration-environments)
+* [Introduction](#introduction)
+* [Running the Compatibility Checker](#running-the-compatibility-checker)
+* [Compatibility Levels](#compatibility-levels)
+* [Why is Adding to an Enum Considered Backwards Incompatible?](#why-is-adding-to-an-enum-considered-backwards-incompatible)
+* [Error Messages](#error-messages)
+* [Location of Snapshots/IDLs](#location-of-snapshotsidls)
+* [The Compatibility Checker and IDLs](#the-compatibility-checker-and-idls)
+* [Continuous Integration Environments](#continuous-integration-environments)
 
 ## Introduction
 
