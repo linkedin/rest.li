@@ -112,7 +112,6 @@
                     </div>
                      <div class="markdown-body col s12 m3 l9">
                             <h1 id="modeling-resources-with-restli">Modeling Resources with Rest.li</h1>
-<hr />
 
 <h2 id="contents">Contents</h2>
 
@@ -219,35 +218,31 @@ keys, see below for details).</p>
 
 <p>For example:</p>
 
-<p>```java<br />
-@RestLiCollection(name=“items”, …)<br />
-public class ItemsResource extends CollectionResourceTemplate&lt;Long,
-Item&gt;<br />
-```</p>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@RestLiCollection</span><span class="o">(</span><span class="n">name</span><span class="o">=</span><span class="err">“</span><span class="n">items</span><span class="err">”</span><span class="o">,</span> <span class="err">…</span><span class="o">)</span>  
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">ItemsResource</span> <span class="kd">extends</span> <span class="n">CollectionResourceTemplate</span><span class="err">\</span><span class="o">&lt;</span><span class="n">Long</span><span class="o">,</span>
+<span class="n">Item</span><span class="err">\</span><span class="o">&gt;</span>  
+</code></pre></div></div>
 
 <p>Defines a resource with a URI of the form:</p>
 
-<p>```<br />
-/items/{longKey}<br />
-```</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/items/{longKey}  
+</code></pre></div></div>
 
 <p>For keys with complex hierarchical data structures, use
 ComplexKeyResourceTemplate.</p>
 
 <p>For Example:</p>
 
-<p>```java<br />
-@RestLiCollection(name=“widgets”, …)<br />
-public class WidgetResource implements extends
-ComplexKeyResourceTemplate&lt;WidgetKey, EmptyRecord, Widget&gt;<br />
-```</p>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@RestLiCollection</span><span class="o">(</span><span class="n">name</span><span class="o">=</span><span class="err">“</span><span class="n">widgets</span><span class="err">”</span><span class="o">,</span> <span class="err">…</span><span class="o">)</span>  
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">WidgetResource</span> <span class="kd">implements</span> <span class="kd">extends</span>
+<span class="n">ComplexKeyResourceTemplate</span><span class="err">\</span><span class="o">&lt;</span><span class="n">WidgetKey</span><span class="o">,</span> <span class="n">EmptyRecord</span><span class="o">,</span> <span class="n">Widget</span><span class="err">\</span><span class="o">&gt;</span>  
+</code></pre></div></div>
 
 <p>Defines a resource with a URI of the
 form:</p>
 
-<p>```<br />
-/widgets/number={number}\&amp;thing.make={thing.make}\&amp;thing.model={thing.model}<br />
-```</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/widgets/number={number}\&amp;thing.make={thing.make}\&amp;thing.model={thing.model}  
+</code></pre></div></div>
 
 <h4 id="simple">Simple</h4>
 
@@ -260,16 +255,14 @@ SimpleResourceTemplate.</p>
 
 <p>For example:</p>
 
-<p>```java<br />
-@RestLiSimple(name=“selectedItem”, …)<br />
-public class SelectedItemResource extends SimpleResourceTemplate<Item>  
-\`\`\`</Item></p>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@RestLiSimple</span><span class="o">(</span><span class="n">name</span><span class="o">=</span><span class="err">“</span><span class="n">selectedItem</span><span class="err">”</span><span class="o">,</span> <span class="err">…</span><span class="o">)</span>  
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">SelectedItemResource</span> <span class="kd">extends</span> <span class="n">SimpleResourceTemplate</span><span class="o">&lt;</span><span class="n">Item</span><span class="o">&gt;</span>  
+</code></pre></div></div>
 
 <p>Defines a resource with a URI of the form:</p>
 
-<p>```<br />
-/selectedItem<br />
-```</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/selectedItem  
+</code></pre></div></div>
 
 <h4 id="association">Association</h4>
 
@@ -291,18 +284,14 @@ allows the client to provide the resource identifier.</p>
 
 <p>For example:</p>
 
-<p>```java<br />
-<code class="highlighter-rouge">RestLiAssociation(name="myRelations", assocKeys={</code>Key(name=“key1”,
-type=long.class), @Key(name=“key2”, type=long.class)}, …)<br />
-public class MyRelationResource extends
-AssociationResourceTemplate<Relation> { … }  
-\`\`\`</Relation></p>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@RestLiAssociation</span><span class="o">(</span><span class="n">name</span><span class="o">=</span><span class="s">"myRelations"</span><span class="o">,</span> <span class="n">assocKeys</span><span class="o">={</span><span class="err">`</span><span class="n">Key</span><span class="o">(</span><span class="n">name</span><span class="o">=</span><span class="err">“</span><span class="n">key1</span><span class="err">”</span><span class="o">,</span> <span class="n">type</span><span class="o">=</span><span class="kt">long</span><span class="o">.</span><span class="na">class</span><span class="o">),</span> <span class="nd">@Key</span><span class="o">(</span><span class="n">name</span><span class="o">=</span><span class="err">“</span><span class="n">key2</span><span class="err">”</span><span class="o">,</span> <span class="n">type</span><span class="o">=</span><span class="kt">long</span><span class="o">.</span><span class="na">class</span><span class="o">)},</span> <span class="err">…</span><span class="o">)</span>  
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">MyRelationResource</span> <span class="kd">extends</span> <span class="n">AssociationResourceTemplate</span><span class="o">&lt;</span><span class="n">Relation</span><span class="o">&gt;</span> <span class="o">{</span> <span class="err">…</span> <span class="o">}</span>  
+</code></pre></div></div>
 
 <p>Defines a child resource with a URI of the form:</p>
 
-<p>```<br />
-/myRelations/key1={longKey1}\&amp;key2={longKey2}<br />
-```</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/myRelations/key1={longKey1}\&amp;key2={longKey2}  
+</code></pre></div></div>
 
 <h4 id="child-resources-sub-resources">Child Resources (Sub-resources)</h4>
 
@@ -316,18 +305,14 @@ requires the key of another collection (the parent resource).</p>
 
 <p>For example:</p>
 
-<p>```java<br />
-@RestLiCollection(parent=MyParentResource.class, name=“mySubResources”,
-…)<br />
-public class MySubResource extends CollectionResourceTemplate&lt;String,
-MySub&gt; { … }<br />
-```</p>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@RestLiCollection</span><span class="o">(</span><span class="n">parent</span><span class="o">=</span><span class="n">MyParentResource</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="n">name</span><span class="o">=</span><span class="err">“</span><span class="n">mySubResources</span><span class="err">”</span><span class="o">,</span><span class="err">…</span><span class="o">)</span>  
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">MySubResource</span> <span class="kd">extends</span> <span class="n">CollectionResourceTemplate</span><span class="err">\</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span><span class="n">MySub</span><span class="err">\</span><span class="o">&gt;</span> <span class="o">{</span> <span class="err">…</span> <span class="o">}</span>  
+</code></pre></div></div>
 
 <p>Defines a child resource with a URI of the form:</p>
 
-<p>```<br />
-/myParentResources/{parentResourceKey}/mySubResources/{stringKey}<br />
-```</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/myParentResources/{parentResourceKey}/mySubResources/{stringKey}  
+</code></pre></div></div>
 
 <h3 id="resources-customizations">Resources Customizations</h3>
 

@@ -6,7 +6,6 @@ index: 2
 ---
 
 # Modeling Resources with Rest.li
-----------------------------------
 
 ## Contents
 
@@ -107,35 +106,35 @@ keys, see below for details).
 
 For example:
 
-\`\`\`java  
+```java  
 @RestLiCollection(name=“items”, …)  
 public class ItemsResource extends CollectionResourceTemplate\<Long,
 Item\>  
-\`\`\`
+```
 
 Defines a resource with a URI of the form:
 
-\`\`\`  
+```  
 /items/{longKey}  
-\`\`\`
+```
 
 For keys with complex hierarchical data structures, use
 ComplexKeyResourceTemplate.
 
 For Example:
 
-\`\`\`java  
+```java  
 @RestLiCollection(name=“widgets”, …)  
 public class WidgetResource implements extends
 ComplexKeyResourceTemplate\<WidgetKey, EmptyRecord, Widget\>  
-\`\`\`
+```
 
 Defines a resource with a URI of the
 form:
 
-\`\`\`  
+```  
 /widgets/number={number}\&thing.make={thing.make}\&thing.model={thing.model}  
-\`\`\`
+```
 
 #### Simple
 
@@ -148,16 +147,16 @@ SimpleResourceTemplate.
 
 For example:
 
-\`\`\`java  
+```java  
 @RestLiSimple(name=“selectedItem”, …)  
 public class SelectedItemResource extends SimpleResourceTemplate<Item>  
-\`\`\`
+```
 
 Defines a resource with a URI of the form:
 
-\`\`\`  
+```  
 /selectedItem  
-\`\`\`
+```
 
 #### Association
 
@@ -179,18 +178,16 @@ allows the client to provide the resource identifier.
 
 For example:
 
-\`\`\`java  
-`RestLiAssociation(name="myRelations", assocKeys={`Key(name=“key1”,
-type=long.class), @Key(name=“key2”, type=long.class)}, …)  
-public class MyRelationResource extends
-AssociationResourceTemplate<Relation> { … }  
-\`\`\`
+```java  
+@RestLiAssociation(name="myRelations", assocKeys={`Key(name=“key1”, type=long.class), @Key(name=“key2”, type=long.class)}, …)  
+public class MyRelationResource extends AssociationResourceTemplate<Relation> { … }  
+```
 
 Defines a child resource with a URI of the form:
 
-\`\`\`  
+```  
 /myRelations/key1={longKey1}\&key2={longKey2}  
-\`\`\`
+```
 
 #### Child Resources (Sub-resources)
 
@@ -204,18 +201,16 @@ requires the key of another collection (the parent resource).
 
 For example:
 
-\`\`\`java  
-@RestLiCollection(parent=MyParentResource.class, name=“mySubResources”,
-…)  
-public class MySubResource extends CollectionResourceTemplate\<String,
-MySub\> { … }  
-\`\`\`
+```java  
+@RestLiCollection(parent=MyParentResource.class, name=“mySubResources”,…)  
+public class MySubResource extends CollectionResourceTemplate\<String,MySub\> { … }  
+```
 
 Defines a child resource with a URI of the form:
 
-\`\`\`  
+```  
 /myParentResources/{parentResourceKey}/mySubResources/{stringKey}  
-\`\`\`
+```
 
 ### Resources Customizations
 
