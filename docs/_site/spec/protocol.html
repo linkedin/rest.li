@@ -215,9 +215,7 @@ Transport</a>.</p>
 <p>In Rest.li 2.0, the way to represent an object in the URL is using
 <code>key:value</code> pairs. More concretely -</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-(encoded(k1):encoded(v1),encoded(k2):encoded(v2),...)
-&lt;/code&gt;
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>(encoded(k1):encoded(v1),encoded(k2):encoded(v2),...)
 </code></pre></div></div>
 
 <p>Note that all keys are strings.</p>
@@ -242,9 +240,7 @@ representation</a></li>
 <p>If present in the HTTP body a <code class="highlighter-rouge">key:value</code> representation is used. More
 concretely -</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-(reducedEncoded(k1):reducedEncoded(v1),reducedEncoded(k2):reducedEncoded(v2),...)
-&lt;/code&gt;
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>(reducedEncoded(k1):reducedEncoded(v1),reducedEncoded(k2):reducedEncoded(v2),...)
 </code></pre></div></div>
 
 <h3 id="restli-20-protocol-array-notation">Rest.li 2.0 Protocol Array Notation</h3>
@@ -253,9 +249,7 @@ concretely -</p>
 
 <p>An array <code>\[a1, a2, a3, …\]</code> is encoded in the URL as -</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-List(encoded(a1),encoded(a2),encoded(a3),...)
-&lt;/code&gt;
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>List(encoded(a1),encoded(a2),encoded(a3),...)
 </code></pre></div></div>
 
 <h4 id="http-body-and-headers-representation-1">HTTP body and headers representation</h4>
@@ -277,9 +271,7 @@ representation</a></li>
 
 <p>An array <code class="highlighter-rouge">[a1, a2, a3, ...]</code> is encoded as follows -</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-List(reducedEncoded(a1),reducedEncoded(a2),reducedEncoded(a3),...)
-&lt;/code&gt;
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>List(reducedEncoded(a1),reducedEncoded(a2),reducedEncoded(a3),...)
 </code></pre></div></div>
 
 <h3 id="example">Example</h3>
@@ -287,8 +279,7 @@ List(reducedEncoded(a1),reducedEncoded(a2),reducedEncoded(a3),...)
 <p>Consider the object, which we will call <code class="highlighter-rouge">exampleObject</code>, expressed in a
 JSON notation here -</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-{
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
   "k1": "v1",
   "k2": "value with spaces",
   "k3": [1, 2, 3],
@@ -301,28 +292,21 @@ JSON notation here -</p>
 }
 </code></pre></div></div>
 
-<p>&lt;/code&gt;</p>
-
 <p>Here is how <code class="highlighter-rouge">exampleObject</code> would look if present in the URL -</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-(k1:v1,k2:value%20with%20spaces,k3:List(1,2,3),k4:value%3Awith%3Areserved%3Achar,k5:(k51:v51,k52:v52))
-&lt;/code&gt;
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>(k1:v1,k2:value%20with%20spaces,k3:List(1,2,3),k4:value%3Awith%3Areserved%3Achar,k5:(k51:v51,k52:v52))
 </code></pre></div></div>
 
 <p>Here is how <code class="highlighter-rouge">exampleObject</code> would look if present in the HTTP headers -</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-Location: ...(k1:v1,k2:value%20with%20spaces,k3:List(1,2,3),k4:value%3Awith%3Areserved%3Achar,k5:(k51:v51,k52:v52))
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Location: ...(k1:v1,k2:value%20with%20spaces,k3:List(1,2,3),k4:value%3Awith%3Areserved%3Achar,k5:(k51:v51,k52:v52))
 X-RestLi-Id: (k1:v1,k2:value with spaces,k3:List(1,2,3),k4:value%3Awith%3Areserved%3Achar,k5:(k51:v51,k52:v52))
-&lt;/code&gt;
 </code></pre></div></div>
 
 <p>If we were doing a BATCH_GET request and <code class="highlighter-rouge">exampleObject</code> was one of the
 keys requested here is how the HTTP body would look -</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-...
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>...
 "entities": {
   "(k1:v1,k2:value with spaces,k3:List(1,2,3),k4:value%3Awith%3Areserved%3Achar,k5:(k51:v51,k52:v52))": {
     ...
@@ -330,7 +314,6 @@ keys requested here is how the HTTP body would look -</p>
   ...
 }
 ...
-&lt;/code&gt;
 </code></pre></div></div>
 
 <h2 id="complex-types-complex-keys-and-compound-keys-in-the-restli-20-protocol">Complex types, complex keys, and compound keys in the Rest.li 2.0 Protocol</h2>
@@ -358,110 +341,103 @@ sections.</p>
 
 <p>The URI templates below assume variables with types as follows:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-collection : simple string or "complex key"
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>collection : simple string or "complex key"
 entity_id : simple string
 ids : list
 finder : simple string
 params : associative array
-&lt;/code&gt;
 </code></pre></div></div>
 
 <h3 id="collection-uris">Collection URIs</h3>
 
 <table>
-<thead>
-<tr class="header">
-<th>Resource</th>
-<th>URI Template</th>
-<th>Example</th>
-<th>Method</th>
-<th>Semantics</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>Collection</td>
-<td>/{collection}</td>
-<td>/statuses</td>
-<td>POST</td>
-<td>CREATE - creates an entity in the collection</td>
-</tr>
-<tr class="even">
-<td>Collection</td>
-<td>/{collection}/{entity_id}</td>
-<td>/statuses/1</td>
-<td>GET</td>
-<td>READ - returns the referenced entity</td>
-</tr>
-<tr class="odd">
-<td>Collection</td>
-<td>/{collection}/{entity_id}</td>
-<td>/statuses/1</td>
-<td>PUT</td>
-<td>UPDATE - updates the referenced entity</td>
-</tr>
-<tr class="even">
-<td>Collection</td>
-<td>/{collection}/{entity_id}</td>
-<td>/statuses/1</td>
-<td>POST</td>
-<td>PARTIAL UPDATE - partially updates the referenced entity</td>
-</tr>
-<tr class="odd">
-<td>Collection</td>
-<td>/{collection}/{entity_id}</td>
-<td>/statuses/1</td>
-<td>DELETE</td>
-<td>DELETE - deletes the referenced entity</td>
-</tr>
-<tr class="even">
-<td>Collection</td>
-<td>/{collection}?{ids}</td>
-<td>Protocol 1.0 - /statuses?ids=1&amp;ids=2&amp;ids=3<br />
-Protocol 2.0 - /statuses?ids=List(1,2,3)</td>
-<td>GET</td>
-<td>BATCH_GET - returns a map containing the referenced entities</td>
-</tr>
-<tr class="odd">
-<td>Collection</td>
-<td>/{collection}</td>
-<td>/statuses</td>
-<td>GET</td>
-<td>GET_ALL - returns all entities in the collection</td>
-</tr>
-<tr class="even">
-<td>Collection</td>
-<td>/{collection}?q={finder}</td>
-<td>/statuses?q=search</td>
-<td>GET</td>
-<td>FINDER - returns a list containing entities satisfying the query</td>
-</tr>
-<tr class="odd">
-<td>Collection</td>
-<td>/{collection}?q={finder}{&amp;params*}</td>
-<td>/statuses?q=search&amp;keywords=linkedin</td>
-<td>GET</td>
-<td>FINDER - returns a list containing entities satisfying the query</td>
-</tr>
-<tr class="even">
-<td>Collection</td>
-<td>/{collection}?action={action}</td>
-<td>/statuses?action=purge</td>
-<td>POST</td>
-<td>ACTION - some operation, rest.li does not specify any standard behavior</td>
-</tr>
-</tbody>
+  <tbody>
+    <tr>
+      <td>Resource</td>
+      <td>URI Template</td>
+      <td>Example</td>
+      <td>Method</td>
+      <td>Semantics</td>
+    </tr>
+    <tr>
+      <td>Collection</td>
+      <td>/{collection}</td>
+      <td>/statuses</td>
+      <td>POST</td>
+      <td>CREATE - creates an entity in the collection</td>
+    </tr>
+    <tr>
+      <td>Collection</td>
+      <td>/{collection}/{entity_id}</td>
+      <td>/statuses/1</td>
+      <td>GET</td>
+      <td>READ - returns the referenced entity</td>
+    </tr>
+    <tr>
+      <td>Collection</td>
+      <td>/{collection}/{entity_id}</td>
+      <td>/statuses/1</td>
+      <td>PUT</td>
+      <td>UPDATE - updates the referenced entity</td>
+    </tr>
+    <tr>
+      <td>Collection</td>
+      <td>/{collection}/{entity_id}</td>
+      <td>/statuses/1</td>
+      <td>POST</td>
+      <td>PARTIAL UPDATE - partially updates the referenced entity</td>
+    </tr>
+    <tr>
+      <td>Collection</td>
+      <td>/{collection}/{entity_id}</td>
+      <td>/statuses/1</td>
+      <td>DELETE</td>
+      <td>DELETE - deletes the referenced entity</td>
+    </tr>
+    <tr>
+      <td>Collection</td>
+      <td>/{collection}?{ids}</td>
+      <td>Protocol 1.0 - /statuses?ids=1&amp;ids=2&amp;ids=3<br />Protocol 2.0 - /statuses?ids=List(1,2,3)</td>
+      <td>GET</td>
+      <td>BATCH_GET - returns a map containing the referenced entities</td>
+    </tr>
+    <tr>
+      <td>Collection</td>
+      <td>/{collection}</td>
+      <td>/statuses</td>
+      <td>GET</td>
+      <td>GET_ALL - returns all entities in the collection</td>
+    </tr>
+    <tr>
+      <td>Collection</td>
+      <td>/{collection}?q={finder}</td>
+      <td>/statuses?q=search</td>
+      <td>GET</td>
+      <td>FINDER - returns a list containing entities satisfying the query</td>
+    </tr>
+    <tr>
+      <td>Collection</td>
+      <td>/{collection}?q={finder}{&amp;params*}</td>
+      <td>/statuses?q=search&amp;keywords=linkedin</td>
+      <td>GET</td>
+      <td>FINDER - returns a list containing entities satisfying the query</td>
+    </tr>
+    <tr>
+      <td>Collection</td>
+      <td>/{collection}?action={action}</td>
+      <td>/statuses?action=purge</td>
+      <td>POST</td>
+      <td>ACTION - some operation, rest.li does not specify any standard behavior</td>
+    </tr>
+  </tbody>
 </table>
 
 <h2 id="simple-resources">Simple Resources</h2>
 
 <p>The URI templates below assume variables with types as follows:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-simple : simple string
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>simple : simple string
 params : associative array
-&lt;/code&gt;
 </code></pre></div></div>
 
 <h3 id="simple-uris">Simple URIs</h3>
@@ -515,15 +491,13 @@ here as assockeys</p>
 
 <p>The URI templates below assume variables with types as follows:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-firstkey : associative array containing a single element
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>firstkey : associative array containing a single element
 keys : associative array
 association : simple string
 assockey : simple string conforming to the assockey syntax described below
 assockeys : list of strings conforming to the assockey syntax
 finder : simple string
 params : associative array
-&lt;/code&gt;
 </code></pre></div></div>
 
 <h3 id="association-keys">Association Keys</h3>
@@ -532,8 +506,7 @@ params : associative array
 
 <p>In protocol 1.0 the key is represented over the wire in the form:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;{firstkey}{&amp;keys*}
-&lt;/code&gt;
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{firstkey}{&amp;keys*}
 </code></pre></div></div>
 
 <p>In protocol 2.0 the key is represented using the protocol 2.0 object
@@ -542,76 +515,64 @@ notation, with each assocKey being a key in the map.</p>
 <p>For example, a two part key identifying an edge in a following graph in
 protocol 1.0 might be:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;followerID=1&amp;followeeID=3
-&lt;/code&gt;
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>followerID=1&amp;followeeID=3
 </code></pre></div></div>
 
 <p>In protocol 2.0 the key would be</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;(followerID:1,followeeID:3)
-&lt;/code&gt;
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>(followerID:1,followeeID:3)
 </code></pre></div></div>
 
 <p>Here’s an example association GET request/response. In protocol 1.0:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;GET /associations/src=KEY1&amp;desk=KEY2
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>GET /associations/src=KEY1&amp;desk=KEY2
 {
     "message": "Hi!",
     "id": "1"
 }
-&lt;/code&gt;
 </code></pre></div></div>
 
 <p>In protocol 2.0:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;GET /associations/(src:KEY1,desk:KEY2)
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>GET /associations/(src:KEY1,desk:KEY2)
 {
     "message": "Hi!",
     "id": "1"
 }
-&lt;/code&gt;
 </code></pre></div></div>
 
 <p>In finders, only some keys from the full association key might be
 required. For example, in protocol 1.0:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;followerID=1
-&lt;/code&gt;
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>followerID=1
 </code></pre></div></div>
 
 <p>In protocol 2.0:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;(followerID:1)
-&lt;/code&gt;
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>(followerID:1)
 </code></pre></div></div>
 
 <p>All string values for association keys are url encoded. E.g. for the
 association key composed of code=“1=2b” and widget=“xyz widget”, a GET
 request in protocol 1.0 using the key would be:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;GET /resourceName/code=1%32b&amp;widget=xyz%20widget
-&lt;/code&gt;
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>GET /resourceName/code=1%32b&amp;widget=xyz%20widget
 </code></pre></div></div>
 
 <p>In protocol 2.0 it would be:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;GET /resourceName/(code:1%32b,widget:xyz%20widget)
-&lt;/code&gt;
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>GET /resourceName/(code:1%32b,widget:xyz%20widget)
 </code></pre></div></div>
 
 <p>When association keys are used in a batch operation, each key is url
 encoded. For protocol 1.0 the form is:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-ids=urlencoded(associationKey1)&amp;ids=urlencoded(associationKey2)...
-&lt;/code&gt;
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ids=urlencoded(associationKey1)&amp;ids=urlencoded(associationKey2)...
 </code></pre></div></div>
 
 <p>For protocol 2.0 is ids use the protocol 2.0 array notation.</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-ids=List((encoded(associationKey1)),(encoded(associationKey2)),...)
-&lt;/code&gt;
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ids=List((encoded(associationKey1)),(encoded(associationKey2)),...)
 </code></pre></div></div>
 
 <p>For example, in protocol 1.0 a batch get for the keys:
@@ -619,7 +580,7 @@ ids=List((encoded(associationKey1)),(encoded(associationKey2)),...)
 would
     be:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;GET /associations?ids=src%3DKEY1%26dest%3DKEY2&amp;ids=src%3DKEY1%26dest%3DKEY3
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>GET /associations?ids=src%3DKEY1%26dest%3DKEY2&amp;ids=src%3DKEY1%26dest%3DKEY3
 
 {
   "errors": {},
@@ -634,7 +595,6 @@ would
         }
     }
 }
-&lt;/code&gt;
 </code></pre></div></div>
 
 <p>In protocol 2.0 a batch get for the keys:
@@ -642,7 +602,7 @@ would
 would
     be:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;GET /associations?ids=List((src:KEY1,dest:KEY3),(src:KEY1,dest:KEY2))
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>GET /associations?ids=List((src:KEY1,dest:KEY3),(src:KEY1,dest:KEY2))
 
 {
   "errors": {},
@@ -657,14 +617,12 @@ would
         }
     }
 }
-&lt;/code&gt;
 </code></pre></div></div>
 
 <p>Here’s the basic form of a batch update request using association keys.
 In protocol 1.0:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-PUT /resourceName?ids=urlencoded(key1=urlencoded(value)&amp;key2=urlencoded(value)&amp;...)&amp;ids=...
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>PUT /resourceName?ids=urlencoded(key1=urlencoded(value)&amp;key2=urlencoded(value)&amp;...)&amp;ids=...
 
 {
   "entities": {
@@ -672,7 +630,6 @@ PUT /resourceName?ids=urlencoded(key1=urlencoded(value)&amp;key2=urlencoded(valu
     ...
   }
 }
-&lt;/code&gt;
 </code></pre></div></div>
 
 <p>Note that in the URL the ids are url encoded AND any strings values for
@@ -686,8 +643,7 @@ name=“xyz widget”) and (code=“567”, name=“rachet”)</p>
 
 <p>The batch update request in protocol 1.0 would be:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-PUT /widgets?ids=code%3D1%2532b%26widget%3Dxyz%2520widget&amp;ids=code%3D567%26widget%3Drachet
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>PUT /widgets?ids=code%3D1%2532b%26widget%3Dxyz%2520widget&amp;ids=code%3D567%26widget%3Drachet
 
 {
   "entities": {
@@ -695,13 +651,11 @@ PUT /widgets?ids=code%3D1%2532b%26widget%3Dxyz%2520widget&amp;ids=code%3D567%26w
      "code=567&amp;name=rachet": {...}
   }
 }
-&lt;/code&gt;
 </code></pre></div></div>
 
 <p>In protocol 2.0 the request would be:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-PUT /widgets?ids=List((code:1%202b,name:xyz%20widget),(code:567,name:rachet))
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>PUT /widgets?ids=List((code:1%202b,name:xyz%20widget),(code:567,name:rachet))
 
 {
   "entities": {
@@ -709,109 +663,97 @@ PUT /widgets?ids=List((code:1%202b,name:xyz%20widget),(code:567,name:rachet))
      "(code:567,name:rachet)": {...}
   }
 }
-&lt;/code&gt;
 </code></pre></div></div>
 
 <h3 id="association-uris">Association URIs</h3>
 
 <table>
-<thead>
-<tr class="header">
-<th>Resource</th>
-<th>URI Template</th>
-<th>Example</th>
-<th>Method</th>
-<th>Semantics</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>Association</td>
-<td>/{association}/{+assockey}</td>
-<td>Protocol 1.0 - /follows/followerID=1&amp;followeeID=1<br />
-Protocol 2.0 - /follows/(followerID:1,followeeID:1)</td>
-<td>GET</td>
-<td>READ - returns the referenced association entity</td>
-</tr>
-<tr class="even">
-<td>Association</td>
-<td>/{association}/{+assockey}</td>
-<td>Protocol 1.0 - /follows/followerID=1&amp;followeeID=1<br />
-Protocol 2.0 - /follows/(followerID:1,followeeID:1)</td>
-<td>PUT</td>
-<td>UPDATE - updates the referenced association entity</td>
-</tr>
-<tr class="odd">
-<td>Association</td>
-<td>/{association}/{+assockey}</td>
-<td>Protocol 1.0 - /follows/followerID=1&amp;followeeID=1<br />
-Protocol 2.0 - /follows/(followerID:1,followeeID:1)</td>
-<td>DELETE</td>
-<td>DELETE - deletes the referenced association entity</td>
-</tr>
-<tr class="even">
-<td>Association</td>
-<td>/{association}/{+assockeys*}</td>
-<td>Protocol 1.0 - /follows/?ids=followerID%3D1%26followeeID%3D1&amp; ids=followerID%3D1%26followeeID%3D3&amp; ids=followerID%3D1%26followeeID%3D2 \\<br />
-Note: followerID%3D1%26followeeID%3D1 unescapes to followerID=1&amp;followeeID=1<br />
-Protocol 2.0 - /follows/?ids=List((followerID:1,followeeID:1),(followerID:1,followeeID:2))</td>
-<td>GET</td>
-<td>BATCH_GET - returns a map containing the referenced association entities</td>
-</tr>
-<tr class="odd">
-<td>Association</td>
-<td>/{association}</td>
-<td>/follows</td>
-<td>GET</td>
-<td>GET_ALL - returns all the association entities</td>
-</tr>
-<tr class="even">
-<td>Association</td>
-<td>/{association}?q={finder}</td>
-<td>/follows?q=search</td>
-<td>GET</td>
-<td>FINDER - returns a list containing entities satisfying the query</td>
-</tr>
-<tr class="odd">
-<td>Association</td>
-<td>/{association}?q={finder}{&amp;params*}</td>
-<td>/follows?q=followers&amp;userID=1</td>
-<td>GET</td>
-<td>FINDER - returns a list containing entities satisfying the query</td>
-</tr>
-<tr class="even">
-<td>Association</td>
-<td>/{association}/{+assockey}</td>
-<td>Protocol 1.0 - /follows/followerID=1?q=other<br />
-Protocol 2.0 - /follows/(followerID:1)?q=other</td>
-<td>GET</td>
-<td>FINDER - returns a list containing the entities satisfying the query</td>
-</tr>
-<tr class="odd">
-<td>Association</td>
-<td>/{association}/{+assockey}?q={finder}{&amp;params*}</td>
-<td>Protocol 1.0 - /follows/followerID=1?q=other&amp;someParam=value<br />
-Protocol 2.0 - /follows/(followerID:1)?q=other&amp;someParam=value</td>
-<td>GET</td>
-<td>FINDER - returns a list containing the entities satisfying the query</td>
-</tr>
-<tr class="even">
-<td>Association</td>
-<td>/{association}?action={action}</td>
-<td>/follows?action=purge</td>
-<td>POST</td>
-<td>ACTION - some operation, Rest.li does not specify any standard behavior</td>
-</tr>
-</tbody>
+  <tbody>
+    <tr>
+      <td>Resource</td>
+      <td>URI Template</td>
+      <td>Example</td>
+      <td>Method</td>
+      <td>Semantics</td>
+    </tr>
+    <tr>
+      <td>Association</td>
+      <td>/{association}/{+assockey}</td>
+      <td>Protocol 1.0 - /follows/followerID=1&amp;followeeID=1<br /> Protocol 2.0 - /follows/(followerID:1,followeeID:1)</td>
+      <td>GET</td>
+      <td>READ - returns the referenced association entity</td>
+    </tr>
+    <tr>
+      <td>Association</td>
+      <td>/{association}/{+assockey}</td>
+      <td>Protocol 1.0 - /follows/followerID=1&amp;followeeID=1<br />Protocol 2.0 - /follows/(followerID:1,followeeID:1)</td>
+      <td>PUT</td>
+      <td>UPDATE - updates the referenced association entity</td>
+    </tr>
+    <tr>
+      <td>Association</td>
+      <td>/{association}/{+assockey}</td>
+      <td>Protocol 1.0 - /follows/followerID=1&amp;followeeID=1<br />Protocol 2.0 - /follows/(followerID:1,followeeID:1)</td>
+      <td>DELETE</td>
+      <td>DELETE - deletes the referenced association entity</td>
+    </tr>
+    <tr>
+      <td>Association</td>
+      <td>/{association}/{+assockeys*}</td>
+      <td>Protocol 1.0 - /follows/?ids=followerID%3D1%26followeeID%3D1&amp; ids=followerID%3D1%26followeeID%3D3&amp;ids=followerID%3D1%26followeeID%3D2 \<br />Note: followerID%3D1%26followeeID%3D1 unescapes to followerID=1&amp;followeeID=1<br />Protocol 2.0 - /follows/?ids=List((followerID:1,followeeID:1),(followerID:1,followeeID:2))</td>
+      <td>GET</td>
+      <td>BATCH_GET - returns a map containing the referenced association entities</td>
+    </tr>
+    <tr>
+      <td>Association</td>
+      <td>/{association}</td>
+      <td>/follows</td>
+      <td>GET</td>
+      <td>GET_ALL - returns all the association entities</td>
+    </tr>
+    <tr>
+      <td>Association</td>
+      <td>/{association}?q={finder}</td>
+      <td>/follows?q=search</td>
+      <td>GET</td>
+      <td>FINDER - returns a list containing entities satisfying the query</td>
+    </tr>
+    <tr>
+      <td>Association</td>
+      <td>/{association}?q={finder}{&amp;params*}</td>
+      <td>/follows?q=followers&amp;userID=1</td>
+      <td>GET</td>
+      <td>FINDER - returns a list containing entities satisfying the query</td>
+    </tr>
+    <tr>
+      <td>Association</td>
+      <td>/{association}/{+assockey}</td>
+      <td>Protocol 1.0 - /follows/followerID=1?q=other<br />Protocol 2.0 - /follows/(followerID:1)?q=other</td>
+      <td>GET</td>
+      <td>FINDER - returns a list containing the entities satisfying the query</td>
+    </tr>
+    <tr>
+      <td>Association</td>
+      <td>/{association}/{+assockey}?q={finder}{&amp;params*}</td>
+      <td>Protocol 1.0 - /follows/followerID=1?q=other&amp;someParam=value<br />Protocol 2.0 - /follows/(followerID:1)?q=other&amp;someParam=value</td>
+      <td>GET</td>
+      <td>FINDER - returns a list containing the entities satisfying the query</td>
+    </tr>
+    <tr>
+      <td>Association</td>
+      <td>/{association}?action={action}</td>
+      <td>/follows?action=purge</td>
+      <td>POST</td>
+      <td>ACTION - some operation, Rest.li does not specify any standard behavior</td>
+    </tr>
+  </tbody>
 </table>
 
 <h2 id="finders">Finders</h2>
 
 <p>The URI templates below assume variables with types as follows:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-finder : simple string identifying a finder
-&lt;/code&gt;
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>finder : simple string identifying a finder
 </code></pre></div></div>
 
 <h3 id="finder-uris">Finder URIs</h3>
@@ -841,9 +783,7 @@ finder : simple string identifying a finder
 
 <p>The URI templates below assume variables with types as follows:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-action : simple string
-&lt;/code&gt;
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>action : simple string
 </code></pre></div></div>
 
 <h3 id="action-uris">Action URIs</h3>
@@ -873,13 +813,11 @@ action : simple string
 
 <p>The URI templates below assume variables with types as follows:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-finder_uri : simple string ...
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>finder_uri : simple string ...
 base_uri : simple string generated via one of the uri templates above
 start : simple string
 count : simple string
 fields : list
-&lt;/code&gt;
 </code></pre></div></div>
 
 <h3 id="uris">URIs</h3>
@@ -1013,66 +951,52 @@ the request is content type is <code class="highlighter-rouge">"application/json
 
 <p>Create:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-POST /widgets
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>POST /widgets
 Content-Type: application/json
 
 {"widgetName":"Lever"}
-&lt;/code&gt;
 </code></pre></div></div>
 
 <p>Read:</p>
 
 <p>for collection and association resources:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-GET /widgets/1
-&lt;/code&gt;
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>GET /widgets/1
 </code></pre></div></div>
 
 <p>for simple resources:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-GET /currentWidget
-&lt;/code&gt;
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>GET /currentWidget
 </code></pre></div></div>
 
 <p>Update:</p>
 
 <p>for collection and association resources:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-PUT /widgets/1
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>PUT /widgets/1
 Content-Type: application/json
 
 {"widgetName":"Lever"}
-&lt;/code&gt;
 </code></pre></div></div>
 
 <p>for simple resources:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-PUT /currentWidget
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>PUT /currentWidget
 Content-Type: application/json
 
 {"widgetName":"Lever"}
-&lt;/code&gt;
 </code></pre></div></div>
 
 <p>Delete:</p>
 
 <p>for collection and association resources:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-DELETE /widgets/1
-&lt;/code&gt;
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>DELETE /widgets/1
 </code></pre></div></div>
 
 <p>for simple resources:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-DELETE /currentWidget
-&lt;/code&gt;
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>DELETE /currentWidget
 </code></pre></div></div>
 
 <h3 id="batch-create">Batch Create</h3>
@@ -1087,8 +1011,7 @@ create.</li>
 
 <p>E.g.</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-POST /widgets HTTP/1.1
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>POST /widgets HTTP/1.1
 Content-Type: application/json
 X-RestLi-Method: BATCH_CREATE
 
@@ -1099,13 +1022,11 @@ X-RestLi-Method: BATCH_CREATE
     {"widgetName":"!@&amp;%@$#"}
   ]
 }
-&lt;/code&gt;
 </code></pre></div></div>
 
 <p>Response:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-{
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
   "elements": [
     {
       "status": 201,
@@ -1127,7 +1048,6 @@ X-RestLi-Method: BATCH_CREATE
       }
   ]
 }
-&lt;/code&gt;
 </code></pre></div></div>
 
 <p>Responses are associated to the request by array index. E.g. “Rachet”
@@ -1136,8 +1056,7 @@ on a 406 response code and was not assigned an id.</p>
 
 <p>Note: Batch create requests must include the HTTP Header:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;X-RestLi-Method: BATCH_CREATE&lt;/code&gt;
-</code></pre></div></div>
+<p><code class="highlighter-rouge">X-RestLi-Method: BATCH_CREATE</code></p>
 
 <h3 id="batch-update">Batch Update</h3>
 
@@ -1151,8 +1070,7 @@ replacement values of each resource to update.</li>
 
 <p>E.g.</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-PUT /widgets?ids=1&amp;ids=2 HTTP/1.1
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>PUT /widgets?ids=1&amp;ids=2 HTTP/1.1
 Content-Type: application/json
 X-RestLi-Method: BATCH_UPDATE
 
@@ -1162,13 +1080,11 @@ X-RestLi-Method: BATCH_UPDATE
     "2": {"widgetName":"Gear"}
    }
 }
-&lt;/code&gt;
 </code></pre></div></div>
 
 <p>Response:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-{
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
   "errors": {},
   "results": {
     "1": {
@@ -1179,7 +1095,6 @@ X-RestLi-Method: BATCH_UPDATE
     }
   ]
 }
-&lt;/code&gt;
 </code></pre></div></div>
 
 <h3 id="partial-update">Partial Update</h3>
@@ -1193,8 +1108,7 @@ of the <code class="highlighter-rouge">businessAddress</code>, setting <code cla
 
 <p>E.g.</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-POST /widgets/1 HTTP/1.1
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>POST /widgets/1 HTTP/1.1
 Content-Type: application/json
 
 {
@@ -1214,7 +1128,6 @@ Content-Type: application/json
     "$delete": ["note", "birthday"]
   }
 }
-&lt;/code&gt;
 </code></pre></div></div>
 
 <h4 id="patch">Patch</h4>
@@ -1244,8 +1157,7 @@ combined.</p>
 
 <p>E.g.</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-POST /widgets?ids=1&amp;ids=2 HTTP/1.1
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>POST /widgets?ids=1&amp;ids=2 HTTP/1.1
 Content-Type: application/json
 X-RestLi-Method: BATCH_PARTIAL_UPDATE
 
@@ -1255,7 +1167,6 @@ X-RestLi-Method: BATCH_PARTIAL_UPDATE
     "2": {"patch": { "$delete": ["name"]}}
    }
 }
-&lt;/code&gt;
 </code></pre></div></div>
 
 <p><a id="ActionRequest"></a></p>
@@ -1265,14 +1176,12 @@ X-RestLi-Method: BATCH_PARTIAL_UPDATE
 <p>Action params are provided in the request body which must contain a data
 map keyed by param names. E.g.</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-POST /widgets?action=purge HTTP/1.1
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>POST /widgets?action=purge HTTP/1.1
 Content-Type: application/json
 {
   "reason": "spam",
   "purgedByAdminId": 1
 }
-&lt;/code&gt;
 </code></pre></div></div>
 
 <p>The <code class="highlighter-rouge">X-RestLi-Method: ACTION</code> may optionally be included, but is not
@@ -1300,8 +1209,7 @@ wrapper. They are returned by finders and getAll.</p>
 
 <p>E.g.</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-{
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
   "elements: [
     { "id": 1, "message": "Good morning!", "tone": "FRIENDLY" }
     // ...
@@ -1319,7 +1227,6 @@ wrapper. They are returned by finders and getAll.</p>
     "start": 0
   }
 }
-&lt;/code&gt;
 </code></pre></div></div>
 
 <h3 id="map-of-entities">Map of Entities</h3>
@@ -1346,8 +1253,7 @@ response to the reason, which is a <code>ErrorResponse</code></li>
 
 <p>Protocol 1 example -</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-GET /fortunes?ids=1&amp;ids=2&amp;ids=unacceptableKey&amp;ids=faultyKey
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>GET /fortunes?ids=1&amp;ids=2&amp;ids=unacceptableKey&amp;ids=faultyKey
 {
   "errors": {
      "unacceptableKey": {
@@ -1366,13 +1272,11 @@ GET /fortunes?ids=1&amp;ids=2&amp;ids=unacceptableKey&amp;ids=faultyKey
     }
   }
 }
-&lt;/code&gt;
 </code></pre></div></div>
 
 <p>Protocol 2 example -</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-GET /fortunes?ids=List(1,2,unacceptableKey,faultyKey)
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>GET /fortunes?ids=List(1,2,unacceptableKey,faultyKey)
 {
   "errors": {
      "unacceptableKey": {
@@ -1391,13 +1295,11 @@ GET /fortunes?ids=List(1,2,unacceptableKey,faultyKey)
     }
   }
 }
-&lt;/code&gt;
 </code></pre></div></div>
 
 <h3 id="collection-metadata">Collection Metadata</h3>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-{"type":"record",
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{"type":"record",
  "name":"CollectionMetadata",
  "namespace":"com.linkedin.common.rest",
  "doc":"Metadata and pagination links for this collection",
@@ -1441,13 +1343,11 @@ GET /fortunes?ids=List(1,2,unacceptableKey,faultyKey)
    },
    "doc":"Previous and next links for this collection"
 }]}
-&lt;/code&gt;
 </code></pre></div></div>
 
 <h3 id="error-response">Error Response</h3>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-{
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
   "type":"record",
   "name":"ErrorResponse",
   "namespace":"com.linkedin.common.rest",
@@ -1475,7 +1375,6 @@ GET /fortunes?ids=List(1,2,unacceptableKey,faultyKey)
     "doc":"The full (??) stack trace (included the case of a server fault)"
   }]
 }
-&lt;/code&gt;
 </code></pre></div></div>
 
 <p><a id="ActionResponse"></a></p>
@@ -1486,23 +1385,19 @@ GET /fortunes?ids=List(1,2,unacceptableKey,faultyKey)
 contain a data map with a single “value” key, where the value of the key
 is either a primitive type, e.g.:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-{
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
   "value": 1
 }
-&lt;/code&gt;
 </code></pre></div></div>
 
 <p>or complex data type, e.g.:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-{
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
   "value": {
     "firstName": "John",
     "lastName": "Smith"
   }
 }
-&lt;/code&gt;
 </code></pre></div></div>
 
 <h2 id="complex-types">Complex Types</h2>
@@ -1513,8 +1408,7 @@ is either a primitive type, e.g.:</p>
 values of data elements in a complex data type. For example, given the
 complex data:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-{
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
   "key": {
     "x": [
       "a1",
@@ -1524,25 +1418,20 @@ complex data:</p>
     "key.with.dots": "val"
   }
 }
-&lt;/code&gt;
 </code></pre></div></div>
 
 <p>Its serialized form is:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-// Complex key as a serialized string:
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// Complex key as a serialized string:
 key.x[0]=a1&amp;key.x[1]=a2&amp;key.y=123&amp;key~2Ewith~2Edots=val
-&lt;/code&gt;
 </code></pre></div></div>
 
 <p>If this serialized form is put into a URI (as it usually is), the ‘[’
 must be escaped as ‘%5B’ and the ‘]’ must be escaped as ‘%5D’ (URIs
 require this), so you have the URI form:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-// Complex key as a serialized string, escaped for URI:
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// Complex key as a serialized string, escaped for URI:
 key.x%5B0%5D=a1&amp;key.x%5B1%5D=a2&amp;key.y=123&amp;key~2Ewith~2Edots=val
-&lt;/code&gt;
 </code></pre></div></div>
 
 <p>Where, in the values of the query params, the chars ‘.[]’ are “~
@@ -1550,20 +1439,16 @@ encoded” to their ascii values. This encoding is the same as “%
 encoding” except that the escape char is ‘~’ and the only reserved
 chars are ‘.[]’.</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-. -&gt; ~2E
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>. -&gt; ~2E
 [ -&gt; ~5B
 ] -&gt; ~5D
 ~ -&gt; ~7E
-&lt;/code&gt;
 </code></pre></div></div>
 
 <p>The <code class="highlighter-rouge">Params</code> of a <code class="highlighter-rouge">ComplexResourceKey</code> are always prefixed with
 “$params.” when represented in a URI, e.g.:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-$params.x=a1
-&lt;/code&gt;
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$params.x=a1
 </code></pre></div></div>
 
 <h3 id="complex-types-as-keys-in-protocol-20">Complex types as keys in protocol 2.0</h3>
@@ -1573,8 +1458,7 @@ object
 notation</a>
 . For example, given the complex data:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-{
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
   "key": {
     "x": [
       "a1",
@@ -1584,23 +1468,18 @@ notation</a>
     "key.with.dots": "val"
   }
 }
-&lt;/code&gt;
 </code></pre></div></div>
 
 <p>Its serialized form is:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-// Complex key as a serialized string:
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// Complex key as a serialized string:
 (key:(x:List(a1,a2)),y:123,key.with.dots:val)
-&lt;/code&gt;
 </code></pre></div></div>
 
 <p>The <code class="highlighter-rouge">Params</code> of a <code class="highlighter-rouge">ComplexResourceKey</code> are always prefixed with
 “$params.” when represented in a URI, e.g.:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-$params:(x:a1)
-&lt;/code&gt;
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$params:(x:a1)
 </code></pre></div></div>
 
 <h3 id="complex-keys-in-batch-requests-in-protocol-10">Complex keys in batch requests in protocol 1.0</h3>
@@ -1608,11 +1487,9 @@ $params:(x:a1)
 <p>If used in batch requests, each key in the batch is represented as a
 element in an array, the complex data representation is:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-[
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[
   { &lt;complekey1&gt; }, { &lt;complexkey2&gt; }
 ]
-&lt;/code&gt;
 </code></pre></div></div>
 
 <p>And it’s serialized representation is just the list flattened using the
@@ -1621,29 +1498,23 @@ applied.</p>
 
 <p>For example,</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-[
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[
   { "keypart1":"v1", "keypart2":"v2" }, { "keypart1":"v3", "keypart2":"v4" }
 ]
-&lt;/code&gt;
 </code></pre></div></div>
 
 <p>It’s serialized form is:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-// Complex key as a serialized string:
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// Complex key as a serialized string:
 ids[0].keypart1=v1&amp;ids[0].keypart2=v2&amp;ids[1].keypart1=v3&amp;ids[1].keypart2=v4
-&lt;/code&gt;
 </code></pre></div></div>
 
 <p>If this serialized form is put into a URI (as it usually is), the ‘[’
 must be escaped as ‘%5B’ and the ‘]’ must be escaped as ‘%5D’ (URIs
 require this), so you have the URI form:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-// Complex key as a serialized string, escaped for URI:
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// Complex key as a serialized string, escaped for URI:
 ids%5B0%5D.keypart1=v1&amp;ids%5B0%5D.keypart2=v2&amp;ids%5B1%5D.keypart1=v3&amp;ids%5B1%5D.keypart2=v4
-&lt;/code&gt;
 </code></pre></div></div>
 
 <p>If $params are in a batch complex key key, they are also prefixed by
@@ -1656,8 +1527,7 @@ both in the URI and in the json body.</p>
 <p>For example, a batch update request has the ids in the URI as well as
 the “entities” part of the body:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-PUT /widgets?ids%5B0%5D.keypart1=v1&amp;ids%5B0%5D.keypart2=v2&amp;ids%5B1%5D.keypart1=v3&amp;ids%5B1%5D.keypart2=v4
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>PUT /widgets?ids%5B0%5D.keypart1=v1&amp;ids%5B0%5D.keypart2=v2&amp;ids%5B1%5D.keypart1=v3&amp;ids%5B1%5D.keypart2=v4
 
 {
   "entities": {
@@ -1665,7 +1535,6 @@ PUT /widgets?ids%5B0%5D.keypart1=v1&amp;ids%5B0%5D.keypart2=v2&amp;ids%5B1%5D.ke
     "keypart1=v3&amp;keypart2=v4": { &lt;content to put for v3,v4&gt; }
   }
 }
-&lt;/code&gt;
 </code></pre></div></div>
 
 <p>Note how the paths for the keys in the URI are prefixed by an ids array
@@ -1680,27 +1549,21 @@ notation</a>
 
 <p>For example,</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-[
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[
   { "keypart1":"v1", "keypart2":"v2" }, { "keypart1":"v3", "keypart2":"v4" }
 ]
-&lt;/code&gt;
 </code></pre></div></div>
 
 <p>It’s serialized form is:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-// Complex key as a serialized string:
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// Complex key as a serialized string:
 ids=List((keypart1:v1,keypart2:v2),(keypart1:v3,keypart2:v4))
-&lt;/code&gt;
 </code></pre></div></div>
 
 <p>If <code>$params</code> are in a batch complex key key, they included in
 the same object as their id portion. e.g.</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-ids=List(($params:(parmkeypart1:v5),keypart1:v1,keypart2:v2),($params:(parmkeypart1:v55),keypart1:v11,keypart2:v22))
-&lt;/code&gt;
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ids=List(($params:(parmkeypart1:v5),keypart1:v1,keypart2:v2),($params:(parmkeypart1:v55),keypart1:v11,keypart2:v22))
 </code></pre></div></div>
 
 <p>When complex keys are used in batch requests, they are often included
@@ -1709,8 +1572,7 @@ both in the URI and in the JSON body.</p>
 <p>For example, a batch update request has the ids in the URI as well as
 the “entities” part of the body:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-PUT /widgets?ids=List((keypart1:v1,keypart2:v2),(keypart1:v3,keypart2:v4))
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>PUT /widgets?ids=List((keypart1:v1,keypart2:v2),(keypart1:v3,keypart2:v4))
 
 {
   "entities": {
@@ -1718,7 +1580,6 @@ PUT /widgets?ids=List((keypart1:v1,keypart2:v2),(keypart1:v3,keypart2:v4))
     "(keypart1:v3,keypart2:v4)": { &lt;content to put for v3,v4&gt; }
   }
 }
-&lt;/code&gt;
 </code></pre></div></div>
 
 <p>As long as the <a href="https://github.com/linkedin/rest.li/wiki/Rest.li-Protocol#restli-20-protocol-array-notation">protocol 2.0 array
@@ -1731,26 +1592,20 @@ a batch request.</p>
 <p>Complex types work the same for query params as they do for keys. See
 the above sections for details. E.g. for a complex type:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-{
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
   "a": 1,
   "b": 2
 }
-&lt;/code&gt;
 </code></pre></div></div>
 
 <p>In protocol 1.0 a query param named “param1” of this type would be:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-...?param1.a=1&amp;param1.b=2
-&lt;/code&gt;
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>...?param1.a=1&amp;param1.b=2
 </code></pre></div></div>
 
 <p>In protocol 2.0 a query param named “param1” of this type would be:</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-...?param1=(a:1,b:2)
-&lt;/code&gt;
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>...?param1=(a:1,b:2)
 </code></pre></div></div>
 
 <h2 id="empty-list-parameters">Empty List Parameters</h2>
@@ -1761,9 +1616,7 @@ called <code>filters</code> which is a list of some type.</p>
 <p>In protocol 1, if a client attempted to send an empty list the URL would
 look as follows -</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-/resource?q=search
-&lt;/code&gt;
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/resource?q=search
 </code></pre></div></div>
 
 <p>Note that the parameter is lost in this case, and on the server side it
@@ -1773,9 +1626,7 @@ protocol 1!</p>
 <p>We have fixed this in protocol 2. Here is how the URL looks in protocol
 2 when you send in an empty list -</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-/resource?q=search&amp;filters=List()
-&lt;/code&gt;
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/resource?q=search&amp;filters=List()
 </code></pre></div></div>
 
 <p>In other words, <code>List()</code> denotes an empty list in protocol 2.
@@ -1789,9 +1640,7 @@ called <code>preferences</code> which is a map of some type.</p>
 <p>In protocol 1, if a client attempted to send an empty map the URL would
 look as follows -</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-/resource?q=search
-&lt;/code&gt;
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/resource?q=search
 </code></pre></div></div>
 
 <p>Note that the parameter is lost in this case, and on the server side it
@@ -1801,9 +1650,7 @@ protocol 1!</p>
 <p>We have fixed this in protocol 2. Here is how the URL looks in protocol
 2 when you send in an empty map -</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;code&gt;
-/resource?q=search&amp;preferences=()
-&lt;/code&gt;
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/resource?q=search&amp;preferences=()
 </code></pre></div></div>
 
 <p>In other words, <code>()</code> denotes an empty map in protocol 2. This

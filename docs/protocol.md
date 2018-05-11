@@ -103,9 +103,7 @@ Transport](https://github.com/linkedin/rest.li/wiki/DATA-Data-Schema-and-Templat
 In Rest.li 2.0, the way to represent an object in the URL is using
 <code>key:value</code> pairs. More concretely -
 
-    <code>
     (encoded(k1):encoded(v1),encoded(k2):encoded(v2),...)
-    </code>
 
 Note that all keys are strings.
 
@@ -127,9 +125,7 @@ An object can be present as values for the following headers -
 If present in the HTTP body a `key:value` representation is used. More
 concretely -
 
-    <code>
     (reducedEncoded(k1):reducedEncoded(v1),reducedEncoded(k2):reducedEncoded(v2),...)
-    </code>
 
 ### Rest.li 2.0 Protocol Array Notation
 
@@ -137,9 +133,7 @@ concretely -
 
 An array <code>\[a1, a2, a3, …\]</code> is encoded in the URL as -
 
-    <code>
     List(encoded(a1),encoded(a2),encoded(a3),...)
-    </code>
 
 #### HTTP body and headers representation
 
@@ -158,16 +152,13 @@ An array can be present as values for the following headers -
 
 An array `[a1, a2, a3, ...]` is encoded as follows -
 
-    <code>
     List(reducedEncoded(a1),reducedEncoded(a2),reducedEncoded(a3),...)
-    </code>
 
 ### Example
 
 Consider the object, which we will call `exampleObject`, expressed in a
 JSON notation here -
 
-    <code>
     {
       "k1": "v1",
       "k2": "value with spaces",
@@ -180,25 +171,19 @@ JSON notation here -
       }
     }
 
-</code>
 
 Here is how `exampleObject` would look if present in the URL -
 
-    <code>
     (k1:v1,k2:value%20with%20spaces,k3:List(1,2,3),k4:value%3Awith%3Areserved%3Achar,k5:(k51:v51,k52:v52))
-    </code>
 
 Here is how `exampleObject` would look if present in the HTTP headers -
 
-    <code>
     Location: ...(k1:v1,k2:value%20with%20spaces,k3:List(1,2,3),k4:value%3Awith%3Areserved%3Achar,k5:(k51:v51,k52:v52))
     X-RestLi-Id: (k1:v1,k2:value with spaces,k3:List(1,2,3),k4:value%3Awith%3Areserved%3Achar,k5:(k51:v51,k52:v52))
-    </code>
 
 If we were doing a BATCH\_GET request and `exampleObject` was one of the
 keys requested here is how the HTTP body would look -
 
-    <code>
     ...
     "entities": {
       "(k1:v1,k2:value with spaces,k3:List(1,2,3),k4:value%3Awith%3Areserved%3Achar,k5:(k51:v51,k52:v52))": {
@@ -207,7 +192,6 @@ keys requested here is how the HTTP body would look -
       ...
     }
     ...
-    </code>
 
 ## Complex types, complex keys, and compound keys in the Rest.li 2.0 Protocol
 
@@ -234,109 +218,34 @@ sections.
 
 The URI templates below assume variables with types as follows:
 
-    <code>
     collection : simple string or "complex key"
     entity_id : simple string
     ids : list
     finder : simple string
     params : associative array
-    </code>
 
 ### Collection URIs
 
-<table>
-<thead>
-<tr class="header">
-<th>Resource</th>
-<th>URI Template</th>
-<th>Example</th>
-<th>Method</th>
-<th>Semantics</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>Collection</td>
-<td>/{collection}</td>
-<td>/statuses</td>
-<td>POST</td>
-<td>CREATE - creates an entity in the collection</td>
-</tr>
-<tr class="even">
-<td>Collection</td>
-<td>/{collection}/{entity_id}</td>
-<td>/statuses/1</td>
-<td>GET</td>
-<td>READ - returns the referenced entity</td>
-</tr>
-<tr class="odd">
-<td>Collection</td>
-<td>/{collection}/{entity_id}</td>
-<td>/statuses/1</td>
-<td>PUT</td>
-<td>UPDATE - updates the referenced entity</td>
-</tr>
-<tr class="even">
-<td>Collection</td>
-<td>/{collection}/{entity_id}</td>
-<td>/statuses/1</td>
-<td>POST</td>
-<td>PARTIAL UPDATE - partially updates the referenced entity</td>
-</tr>
-<tr class="odd">
-<td>Collection</td>
-<td>/{collection}/{entity_id}</td>
-<td>/statuses/1</td>
-<td>DELETE</td>
-<td>DELETE - deletes the referenced entity</td>
-</tr>
-<tr class="even">
-<td>Collection</td>
-<td>/{collection}?{ids}</td>
-<td>Protocol 1.0 - /statuses?ids=1&amp;ids=2&amp;ids=3<br />
-Protocol 2.0 - /statuses?ids=List(1,2,3)</td>
-<td>GET</td>
-<td>BATCH_GET - returns a map containing the referenced entities</td>
-</tr>
-<tr class="odd">
-<td>Collection</td>
-<td>/{collection}</td>
-<td>/statuses</td>
-<td>GET</td>
-<td>GET_ALL - returns all entities in the collection</td>
-</tr>
-<tr class="even">
-<td>Collection</td>
-<td>/{collection}?q={finder}</td>
-<td>/statuses?q=search</td>
-<td>GET</td>
-<td>FINDER - returns a list containing entities satisfying the query</td>
-</tr>
-<tr class="odd">
-<td>Collection</td>
-<td>/{collection}?q={finder}{&amp;params*}</td>
-<td>/statuses?q=search&amp;keywords=linkedin</td>
-<td>GET</td>
-<td>FINDER - returns a list containing entities satisfying the query</td>
-</tr>
-<tr class="even">
-<td>Collection</td>
-<td>/{collection}?action={action}</td>
-<td>/statuses?action=purge</td>
-<td>POST</td>
-<td>ACTION - some operation, rest.li does not specify any standard behavior</td>
-</tr>
-</tbody>
-</table>
+| Resource | URI Template |Example |Method |Semantics|
+|Collection|/{collection}|/statuses|POST |CREATE - creates an entity in the collection
+|Collection|/{collection}/{entity_id}|/statuses/1|GET|READ - returns the referenced entity
+|Collection|/{collection}/{entity_id}|/statuses/1|PUT|UPDATE - updates the referenced entity
+|Collection|/{collection}/{entity_id}|/statuses/1|POST|PARTIAL UPDATE - partially updates the referenced entity
+|Collection|/{collection}/{entity_id}|/statuses/1|DELETE|DELETE - deletes the referenced entity
+|Collection|/{collection}?{ids}|Protocol 1.0 - /statuses?ids=1&amp;ids=2&amp;ids=3<br />Protocol 2.0 - /statuses?ids=List(1,2,3)|GET|BATCH_GET - returns a map containing the referenced entities
+|Collection|/{collection}|/statuses|GET|GET_ALL - returns all entities in the collection
+|Collection|/{collection}?q={finder}|/statuses?q=search|GET|FINDER - returns a list containing entities satisfying the query
+|Collection|/{collection}?q={finder}{&amp;params*}|/statuses?q=search&amp;keywords=linkedin|GET|FINDER - returns a list containing entities satisfying the query
+|Collection|/{collection}?action={action}|/statuses?action=purge|POST|ACTION - some operation, rest.li does not specify any standard behavior
+
 
 ## Simple Resources
 
 The URI templates below assume variables with types as follows:
 
-    <code>
     simple : simple string
     params : associative array
-    </code>
+
 
 ### Simple URIs
 
@@ -354,7 +263,6 @@ here as assockeys
 
 The URI templates below assume variables with types as follows:
 
-    <code>
     firstkey : associative array containing a single element
     keys : associative array
     association : simple string
@@ -362,7 +270,6 @@ The URI templates below assume variables with types as follows:
     assockeys : list of strings conforming to the assockey syntax
     finder : simple string
     params : associative array
-    </code>
 
 ### Association Keys
 
@@ -370,8 +277,7 @@ Association keys are composed of one or more named assocKey parts.
 
 In protocol 1.0 the key is represented over the wire in the form:
 
-    <code>{firstkey}{&keys*}
-    </code>
+    {firstkey}{&keys*}
 
 In protocol 2.0 the key is represented using the protocol 2.0 object
 notation, with each assocKey being a key in the map.
@@ -379,74 +285,62 @@ notation, with each assocKey being a key in the map.
 For example, a two part key identifying an edge in a following graph in
 protocol 1.0 might be:
 
-    <code>followerID=1&followeeID=3
-    </code>
+    followerID=1&followeeID=3
 
 In protocol 2.0 the key would be
 
-    <code>(followerID:1,followeeID:3)
-    </code>
+    (followerID:1,followeeID:3)
 
 Here’s an example association GET request/response. In protocol 1.0:
 
-    <code>GET /associations/src=KEY1&desk=KEY2
+    GET /associations/src=KEY1&desk=KEY2
     {
         "message": "Hi!",
         "id": "1"
     }
-    </code>
 
 In protocol 2.0:
 
-    <code>GET /associations/(src:KEY1,desk:KEY2)
+    GET /associations/(src:KEY1,desk:KEY2)
     {
         "message": "Hi!",
         "id": "1"
     }
-    </code>
 
 In finders, only some keys from the full association key might be
 required. For example, in protocol 1.0:
 
-    <code>followerID=1
-    </code>
+    followerID=1
 
 In protocol 2.0:
 
-    <code>(followerID:1)
-    </code>
+    (followerID:1)
 
 All string values for association keys are url encoded. E.g. for the
 association key composed of code=“1=2b” and widget=“xyz widget”, a GET
 request in protocol 1.0 using the key would be:
 
-    <code>GET /resourceName/code=1%32b&widget=xyz%20widget
-    </code>
+    GET /resourceName/code=1%32b&widget=xyz%20widget
 
 In protocol 2.0 it would be:
 
-    <code>GET /resourceName/(code:1%32b,widget:xyz%20widget)
-    </code>
+    GET /resourceName/(code:1%32b,widget:xyz%20widget)
 
 When association keys are used in a batch operation, each key is url
 encoded. For protocol 1.0 the form is:
 
-    <code>
     ids=urlencoded(associationKey1)&ids=urlencoded(associationKey2)...
-    </code>
 
 For protocol 2.0 is ids use the protocol 2.0 array notation.
 
-    <code>
     ids=List((encoded(associationKey1)),(encoded(associationKey2)),...)
-    </code>
 
 For example, in protocol 1.0 a batch get for the keys:
 <code>src=KEY1\&dest=KEY3</code> and <code>src=KEY1\&dest=KEY2</code>,
 would
     be:
 
-    <code>GET /associations?ids=src%3DKEY1%26dest%3DKEY2&ids=src%3DKEY1%26dest%3DKEY3
+    GET /associations?ids=src%3DKEY1%26dest%3DKEY2&ids=src%3DKEY1%26dest%3DKEY3
     
     {
       "errors": {},
@@ -461,14 +355,13 @@ would
             }
         }
     }
-    </code>
 
 In protocol 2.0 a batch get for the keys:
 <code>(src:KEY1,dest:KEY3)</code> and <code>(src:KEY1,dest:KEY2)</code>,
 would
     be:
 
-    <code>GET /associations?ids=List((src:KEY1,dest:KEY3),(src:KEY1,dest:KEY2))
+    GET /associations?ids=List((src:KEY1,dest:KEY3),(src:KEY1,dest:KEY2))
     
     {
       "errors": {},
@@ -483,12 +376,10 @@ would
             }
         }
     }
-    </code>
 
 Here’s the basic form of a batch update request using association keys.
 In protocol 1.0:
 
-    <code>
     PUT /resourceName?ids=urlencoded(key1=urlencoded(value)&key2=urlencoded(value)&...)&ids=...
     
     {
@@ -497,7 +388,6 @@ In protocol 1.0:
         ...
       }
     }
-    </code>
 
 Note that in the URL the ids are url encoded AND any strings values for
 the assocKey parts are double url encoded.
@@ -510,7 +400,6 @@ name=“xyz widget”) and (code=“567”, name=“rachet”)
 
 The batch update request in protocol 1.0 would be:
 
-    <code>
     PUT /widgets?ids=code%3D1%2532b%26widget%3Dxyz%2520widget&ids=code%3D567%26widget%3Drachet
     
     {
@@ -519,11 +408,9 @@ The batch update request in protocol 1.0 would be:
          "code=567&name=rachet": {...}
       }
     }
-    </code>
 
 In protocol 2.0 the request would be:
 
-    <code>
     PUT /widgets?ids=List((code:1%202b,name:xyz%20widget),(code:567,name:rachet))
     
     {
@@ -532,108 +419,27 @@ In protocol 2.0 the request would be:
          "(code:567,name:rachet)": {...}
       }
     }
-    </code>
 
 ### Association URIs
 
-<table>
-<thead>
-<tr class="header">
-<th>Resource</th>
-<th>URI Template</th>
-<th>Example</th>
-<th>Method</th>
-<th>Semantics</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>Association</td>
-<td>/{association}/{+assockey}</td>
-<td>Protocol 1.0 - /follows/followerID=1&amp;followeeID=1<br />
-Protocol 2.0 - /follows/(followerID:1,followeeID:1)</td>
-<td>GET</td>
-<td>READ - returns the referenced association entity</td>
-</tr>
-<tr class="even">
-<td>Association</td>
-<td>/{association}/{+assockey}</td>
-<td>Protocol 1.0 - /follows/followerID=1&amp;followeeID=1<br />
-Protocol 2.0 - /follows/(followerID:1,followeeID:1)</td>
-<td>PUT</td>
-<td>UPDATE - updates the referenced association entity</td>
-</tr>
-<tr class="odd">
-<td>Association</td>
-<td>/{association}/{+assockey}</td>
-<td>Protocol 1.0 - /follows/followerID=1&amp;followeeID=1<br />
-Protocol 2.0 - /follows/(followerID:1,followeeID:1)</td>
-<td>DELETE</td>
-<td>DELETE - deletes the referenced association entity</td>
-</tr>
-<tr class="even">
-<td>Association</td>
-<td>/{association}/{+assockeys*}</td>
-<td>Protocol 1.0 - /follows/?ids=followerID%3D1%26followeeID%3D1&amp; ids=followerID%3D1%26followeeID%3D3&amp; ids=followerID%3D1%26followeeID%3D2 \\<br />
-Note: followerID%3D1%26followeeID%3D1 unescapes to followerID=1&amp;followeeID=1<br />
-Protocol 2.0 - /follows/?ids=List((followerID:1,followeeID:1),(followerID:1,followeeID:2))</td>
-<td>GET</td>
-<td>BATCH_GET - returns a map containing the referenced association entities</td>
-</tr>
-<tr class="odd">
-<td>Association</td>
-<td>/{association}</td>
-<td>/follows</td>
-<td>GET</td>
-<td>GET_ALL - returns all the association entities</td>
-</tr>
-<tr class="even">
-<td>Association</td>
-<td>/{association}?q={finder}</td>
-<td>/follows?q=search</td>
-<td>GET</td>
-<td>FINDER - returns a list containing entities satisfying the query</td>
-</tr>
-<tr class="odd">
-<td>Association</td>
-<td>/{association}?q={finder}{&amp;params*}</td>
-<td>/follows?q=followers&amp;userID=1</td>
-<td>GET</td>
-<td>FINDER - returns a list containing entities satisfying the query</td>
-</tr>
-<tr class="even">
-<td>Association</td>
-<td>/{association}/{+assockey}</td>
-<td>Protocol 1.0 - /follows/followerID=1?q=other<br />
-Protocol 2.0 - /follows/(followerID:1)?q=other</td>
-<td>GET</td>
-<td>FINDER - returns a list containing the entities satisfying the query</td>
-</tr>
-<tr class="odd">
-<td>Association</td>
-<td>/{association}/{+assockey}?q={finder}{&amp;params*}</td>
-<td>Protocol 1.0 - /follows/followerID=1?q=other&amp;someParam=value<br />
-Protocol 2.0 - /follows/(followerID:1)?q=other&amp;someParam=value</td>
-<td>GET</td>
-<td>FINDER - returns a list containing the entities satisfying the query</td>
-</tr>
-<tr class="even">
-<td>Association</td>
-<td>/{association}?action={action}</td>
-<td>/follows?action=purge</td>
-<td>POST</td>
-<td>ACTION - some operation, Rest.li does not specify any standard behavior</td>
-</tr>
-</tbody>
-</table>
+
+|Resource|URI Template|Example|Method|Semantics|
+|Association|/{association}/{+assockey}|Protocol 1.0 - /follows/followerID=1&amp;followeeID=1<br /> Protocol 2.0 - /follows/(followerID:1,followeeID:1)|GET|READ - returns the referenced association entity
+|Association|/{association}/{+assockey}|Protocol 1.0 - /follows/followerID=1&amp;followeeID=1<br />Protocol 2.0 - /follows/(followerID:1,followeeID:1)|PUT|UPDATE - updates the referenced association entity
+|Association|/{association}/{+assockey}|Protocol 1.0 - /follows/followerID=1&amp;followeeID=1<br />Protocol 2.0 - /follows/(followerID:1,followeeID:1)|DELETE|DELETE - deletes the referenced association entity
+|Association|/{association}/{+assockeys*}|Protocol 1.0 - /follows/?ids=followerID%3D1%26followeeID%3D1&amp; ids=followerID%3D1%26followeeID%3D3&amp;ids=followerID%3D1%26followeeID%3D2 \\<br />Note: followerID%3D1%26followeeID%3D1 unescapes to followerID=1&amp;followeeID=1<br />Protocol 2.0 - /follows/?ids=List((followerID:1,followeeID:1),(followerID:1,followeeID:2))|GET|BATCH_GET - returns a map containing the referenced association entities
+|Association|/{association}|/follows|GET|GET_ALL - returns all the association entities
+|Association|/{association}?q={finder}|/follows?q=search|GET|FINDER - returns a list containing entities satisfying the query
+|Association|/{association}?q={finder}{&amp;params*}|/follows?q=followers&amp;userID=1|GET|FINDER - returns a list containing entities satisfying the query
+|Association|/{association}/{+assockey}|Protocol 1.0 - /follows/followerID=1?q=other<br />Protocol 2.0 - /follows/(followerID:1)?q=other|GET|FINDER - returns a list containing the entities satisfying the query
+|Association|/{association}/{+assockey}?q={finder}{&amp;params*}|Protocol 1.0 - /follows/followerID=1?q=other&amp;someParam=value<br />Protocol 2.0 - /follows/(followerID:1)?q=other&amp;someParam=value|GET|FINDER - returns a list containing the entities satisfying the query
+|Association|/{association}?action={action}|/follows?action=purge|POST|ACTION - some operation, Rest.li does not specify any standard behavior
 
 ## Finders
 
 The URI templates below assume variables with types as follows:
 
-    <code>
     finder : simple string identifying a finder
-    </code>
 
 ### Finder URIs
 
@@ -645,9 +451,7 @@ The URI templates below assume variables with types as follows:
 
 The URI templates below assume variables with types as follows:
 
-    <code>
     action : simple string
-    </code>
 
 ### Action URIs
 
@@ -659,13 +463,11 @@ The URI templates below assume variables with types as follows:
 
 The URI templates below assume variables with types as follows:
 
-    <code>
     finder_uri : simple string ...
     base_uri : simple string generated via one of the uri templates above
     start : simple string
     count : simple string
     fields : list
-    </code>
 
 ### URIs
 
@@ -716,60 +518,49 @@ the request is content type is `"application/json"`.
 
 Create:
 
-    <code>
     POST /widgets
     Content-Type: application/json
     
     {"widgetName":"Lever"}
-    </code>
 
 Read:
 
 for collection and association resources:
 
-    <code>
+
     GET /widgets/1
-    </code>
 
 for simple resources:
 
-    <code>
     GET /currentWidget
-    </code>
+
 
 Update:
 
 for collection and association resources:
 
-    <code>
     PUT /widgets/1
     Content-Type: application/json
     
     {"widgetName":"Lever"}
-    </code>
 
 for simple resources:
 
-    <code>
     PUT /currentWidget
     Content-Type: application/json
     
     {"widgetName":"Lever"}
-    </code>
+
 
 Delete:
 
 for collection and association resources:
 
-    <code>
     DELETE /widgets/1
-    </code>
 
 for simple resources:
 
-    <code>
     DELETE /currentWidget
-    </code>
 
 ### Batch Create
 
@@ -781,7 +572,6 @@ A DataMap with field
 
 E.g.
 
-    <code>
     POST /widgets HTTP/1.1
     Content-Type: application/json
     X-RestLi-Method: BATCH_CREATE
@@ -793,11 +583,9 @@ E.g.
         {"widgetName":"!@&%@$#"}
       ]
     }
-    </code>
 
 Response:
 
-    <code>
     {
       "elements": [
         {
@@ -820,7 +608,6 @@ Response:
           }
       ]
     }
-    </code>
 
 Responses are associated to the request by array index. E.g. “Rachet”
 was assigned id 100, “Cog” was assigned id 101 and “\!`&%`$\#” resulted
@@ -828,7 +615,7 @@ on a 406 response code and was not assigned an id.
 
 Note: Batch create requests must include the HTTP Header:
 
-    <code>X-RestLi-Method: BATCH_CREATE</code>
+```X-RestLi-Method: BATCH_CREATE```
 
 ### Batch Update
 
@@ -840,7 +627,6 @@ A DataMap with field
 
 E.g.
 
-    <code>
     PUT /widgets?ids=1&ids=2 HTTP/1.1
     Content-Type: application/json
     X-RestLi-Method: BATCH_UPDATE
@@ -851,11 +637,10 @@ E.g.
         "2": {"widgetName":"Gear"}
        }
     }
-    </code>
 
 Response:
 
-    <code>
+
     {
       "errors": {},
       "results": {
@@ -867,7 +652,7 @@ Response:
         }
       ]
     }
-    </code>
+    
 
 ### Partial Update
 
@@ -880,7 +665,7 @@ of the `businessAddress`, setting `name` and `homeAddress`, and deleting
 
 E.g.
 
-    <code>
+
     POST /widgets/1 HTTP/1.1
     Content-Type: application/json
     
@@ -901,7 +686,7 @@ E.g.
         "$delete": ["note", "birthday"]
       }
     }
-    </code>
+    
 
 #### Patch
 
@@ -928,7 +713,6 @@ combined.
 
 E.g.
 
-    <code>
     POST /widgets?ids=1&ids=2 HTTP/1.1
     Content-Type: application/json
     X-RestLi-Method: BATCH_PARTIAL_UPDATE
@@ -939,7 +723,7 @@ E.g.
         "2": {"patch": { "$delete": ["name"]}}
        }
     }
-    </code>
+    
 
 <a id="ActionRequest"></a>
 
@@ -948,14 +732,14 @@ E.g.
 Action params are provided in the request body which must contain a data
 map keyed by param names. E.g.
 
-    <code>
+
     POST /widgets?action=purge HTTP/1.1
     Content-Type: application/json
     {
       "reason": "spam",
       "purgedByAdminId": 1
     }
-    </code>
+    
 
 The `X-RestLi-Method: ACTION` may optionally be included, but is not
 required because rest.li is able to determine the request is an action
@@ -980,7 +764,7 @@ CollectionResponse fields:
 
 E.g.
 
-    <code>
+
     {
       "elements: [
         { "id": 1, "message": "Good morning!", "tone": "FRIENDLY" }
@@ -999,7 +783,6 @@ E.g.
         "start": 0
       }
     }
-    </code>
 
 ### Map of Entities
 
@@ -1020,7 +803,7 @@ BatchResponse fields:
 
 Protocol 1 example -
 
-    <code>
+
     GET /fortunes?ids=1&ids=2&ids=unacceptableKey&ids=faultyKey
     {
       "errors": {
@@ -1040,11 +823,11 @@ Protocol 1 example -
         }
       }
     }
-    </code>
+    
 
 Protocol 2 example -
 
-    <code>
+
     GET /fortunes?ids=List(1,2,unacceptableKey,faultyKey)
     {
       "errors": {
@@ -1064,11 +847,11 @@ Protocol 2 example -
         }
       }
     }
-    </code>
+    
 
 ### Collection Metadata
 
-    <code>
+
     {"type":"record",
      "name":"CollectionMetadata",
      "namespace":"com.linkedin.common.rest",
@@ -1113,11 +896,11 @@ Protocol 2 example -
        },
        "doc":"Previous and next links for this collection"
     }]}
-    </code>
+    
 
 ### Error Response
 
-    <code>
+
     {
       "type":"record",
       "name":"ErrorResponse",
@@ -1146,7 +929,7 @@ Protocol 2 example -
         "doc":"The full (??) stack trace (included the case of a server fault)"
       }]
     }
-    </code>
+    
 
 <a id="ActionResponse"></a>
 
@@ -1156,22 +939,22 @@ Actions may optionally return a response body. If they do, it must
 contain a data map with a single “value” key, where the value of the key
 is either a primitive type, e.g.:
 
-    <code>
+
     {
       "value": 1
     }
-    </code>
+    
 
 or complex data type, e.g.:
 
-    <code>
+
     {
       "value": {
         "firstName": "John",
         "lastName": "Smith"
       }
     }
-    </code>
+    
 
 ## Complex Types
 
@@ -1181,7 +964,7 @@ The serialized form of a complex key uses path keys to specify the
 values of data elements in a complex data type. For example, given the
 complex data:
 
-    <code>
+
     {
       "key": {
         "x": [
@@ -1192,42 +975,42 @@ complex data:
         "key.with.dots": "val"
       }
     }
-    </code>
+    
 
 Its serialized form is:
 
-    <code>
+
     // Complex key as a serialized string:
     key.x[0]=a1&key.x[1]=a2&key.y=123&key~2Ewith~2Edots=val
-    </code>
+    
 
 If this serialized form is put into a URI (as it usually is), the ‘\[’
 must be escaped as ‘%5B’ and the ‘\]’ must be escaped as ‘%5D’ (URIs
 require this), so you have the URI form:
 
-    <code>
+
     // Complex key as a serialized string, escaped for URI:
     key.x%5B0%5D=a1&key.x%5B1%5D=a2&key.y=123&key~2Ewith~2Edots=val
-    </code>
+    
 
 Where, in the values of the query params, the chars ‘.\[\]’ are “~
 encoded” to their ascii values. This encoding is the same as “%
 encoding” except that the escape char is ‘~’ and the only reserved
 chars are ‘.\[\]’.
 
-    <code>
+
     . -> ~2E
     [ -> ~5B
     ] -> ~5D
     ~ -> ~7E
-    </code>
+    
 
 The `Params` of a `ComplexResourceKey` are always prefixed with
 “$params.” when represented in a URI, e.g.:
 
-    <code>
+
     $params.x=a1
-    </code>
+    
 
 ### Complex types as keys in protocol 2.0
 
@@ -1236,7 +1019,7 @@ object
 notation](https://github.com/linkedin/rest.li/wiki/Rest.li-Protocol#restli-protocol-20-object-representation)
 . For example, given the complex data:
 
-    <code>
+
     {
       "key": {
         "x": [
@@ -1247,32 +1030,32 @@ notation](https://github.com/linkedin/rest.li/wiki/Rest.li-Protocol#restli-proto
         "key.with.dots": "val"
       }
     }
-    </code>
+    
 
 Its serialized form is:
 
-    <code>
+
     // Complex key as a serialized string:
     (key:(x:List(a1,a2)),y:123,key.with.dots:val)
-    </code>
+    
 
 The `Params` of a `ComplexResourceKey` are always prefixed with
 “$params.” when represented in a URI, e.g.:
 
-    <code>
+
     $params:(x:a1)
-    </code>
+    
 
 ### Complex keys in batch requests in protocol 1.0
 
 If used in batch requests, each key in the batch is represented as a
 element in an array, the complex data representation is:
 
-    <code>
+
     [
       { <complekey1> }, { <complexkey2> }
     ]
-    </code>
+    
 
 And it’s serialized representation is just the list flattened using the
 same rules as with any complex key, and with the same “~ encoding”
@@ -1280,27 +1063,27 @@ applied.
 
 For example,
 
-    <code>
+
     [
       { "keypart1":"v1", "keypart2":"v2" }, { "keypart1":"v3", "keypart2":"v4" }
     ]
-    </code>
+    
 
 It’s serialized form is:
 
-    <code>
+
     // Complex key as a serialized string:
     ids[0].keypart1=v1&ids[0].keypart2=v2&ids[1].keypart1=v3&ids[1].keypart2=v4
-    </code>
+    
 
 If this serialized form is put into a URI (as it usually is), the ‘\[’
 must be escaped as ‘%5B’ and the ‘\]’ must be escaped as ‘%5D’ (URIs
 require this), so you have the URI form:
 
-    <code>
+
     // Complex key as a serialized string, escaped for URI:
     ids%5B0%5D.keypart1=v1&ids%5B0%5D.keypart2=v2&ids%5B1%5D.keypart1=v3&ids%5B1%5D.keypart2=v4
-    </code>
+    
 
 If $params are in a batch complex key key, they are also prefixed by
 their key’s position in the ids array, e.g.
@@ -1312,7 +1095,7 @@ both in the URI and in the json body.
 For example, a batch update request has the ids in the URI as well as
 the “entities” part of the body:
 
-    <code>
+
     PUT /widgets?ids%5B0%5D.keypart1=v1&ids%5B0%5D.keypart2=v2&ids%5B1%5D.keypart1=v3&ids%5B1%5D.keypart2=v4
     
     {
@@ -1321,7 +1104,7 @@ the “entities” part of the body:
         "keypart1=v3&keypart2=v4": { <content to put for v3,v4> }
       }
     }
-    </code>
+    
 
 Note how the paths for the keys in the URI are prefixed by an ids array
 position, but the paths for the keys in the JSON body are not.
@@ -1335,25 +1118,25 @@ notation](https://github.com/linkedin/rest.li/wiki/Rest.li-Protocol#restli-20-pr
 
 For example,
 
-    <code>
+
     [
       { "keypart1":"v1", "keypart2":"v2" }, { "keypart1":"v3", "keypart2":"v4" }
     ]
-    </code>
+    
 
 It’s serialized form is:
 
-    <code>
+
     // Complex key as a serialized string:
     ids=List((keypart1:v1,keypart2:v2),(keypart1:v3,keypart2:v4))
-    </code>
+    
 
 If <code>$params</code> are in a batch complex key key, they included in
 the same object as their id portion. e.g.
 
-    <code>
+
     ids=List(($params:(parmkeypart1:v5),keypart1:v1,keypart2:v2),($params:(parmkeypart1:v55),keypart1:v11,keypart2:v22))
-    </code>
+    
 
 When complex keys are used in batch requests, they are often included
 both in the URI and in the JSON body.
@@ -1361,7 +1144,7 @@ both in the URI and in the JSON body.
 For example, a batch update request has the ids in the URI as well as
 the “entities” part of the body:
 
-    <code>
+
     PUT /widgets?ids=List((keypart1:v1,keypart2:v2),(keypart1:v3,keypart2:v4))
     
     {
@@ -1370,7 +1153,7 @@ the “entities” part of the body:
         "(keypart1:v3,keypart2:v4)": { <content to put for v3,v4> }
       }
     }
-    </code>
+    
 
 As long as the [protocol 2.0 array
 notation](https://github.com/linkedin/rest.li/wiki/Rest.li-Protocol#restli-20-protocol-array-notation)
@@ -1382,24 +1165,24 @@ a batch request.
 Complex types work the same for query params as they do for keys. See
 the above sections for details. E.g. for a complex type:
 
-    <code>
+
     {
       "a": 1,
       "b": 2
     }
-    </code>
+    
 
 In protocol 1.0 a query param named “param1” of this type would be:
 
-    <code>
+
     ...?param1.a=1&param1.b=2
-    </code>
+    
 
 In protocol 2.0 a query param named “param1” of this type would be:
 
-    <code>
+
     ...?param1=(a:1,b:2)
-    </code>
+    
 
 ## Empty List Parameters
 
@@ -1409,9 +1192,9 @@ called <code>filters</code> which is a list of some type.
 In protocol 1, if a client attempted to send an empty list the URL would
 look as follows -
 
-    <code>
+
     /resource?q=search
-    </code>
+    
 
 Note that the parameter is lost in this case, and on the server side it
 would be treated as a null or uninitialized field. This was a bug in
@@ -1420,9 +1203,9 @@ protocol 1\!
 We have fixed this in protocol 2. Here is how the URL looks in protocol
 2 when you send in an empty list -
 
-    <code>
+
     /resource?q=search&filters=List()
-    </code>
+    
 
 In other words, <code>List()</code> denotes an empty list in protocol 2.
 This applies to all cases in protocol 2 where lists are being used.
@@ -1435,9 +1218,8 @@ called <code>preferences</code> which is a map of some type.
 In protocol 1, if a client attempted to send an empty map the URL would
 look as follows -
 
-    <code>
+
     /resource?q=search
-    </code>
 
 Note that the parameter is lost in this case, and on the server side it
 would be treated as a null or uninitialized field. This was a bug in
@@ -1446,9 +1228,9 @@ protocol 1\!
 We have fixed this in protocol 2. Here is how the URL looks in protocol
 2 when you send in an empty map -
 
-    <code>
+
     /resource?q=search&preferences=()
-    </code>
+    
 
 In other words, <code>()</code> denotes an empty map in protocol 2. This
 applies to all cases in protocol 2 where maps are being used.
