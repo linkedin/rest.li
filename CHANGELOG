@@ -1,8 +1,11 @@
+21.0.2
+-------
+
 21.0.1
 -------
 (RB=1306976)
 Update tests to use old property values
-	
+
 (RB=1299505)
 Remove request query params from response location header for CREATE and BATCH_CREATE
 
