@@ -81,6 +81,7 @@ public class TestChannelPoolManagerFactorySharingConnection
         // standard
         HashMap<String, String> properties = new HashMap<>();
         properties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, protocolVersion);
+        properties.put(HttpClientFactory.HTTP_REQUEST_TIMEOUT, String.valueOf(10000));
         clients.add(new TransportClientAdapter(clientFactory.getClient(properties), restOverStream));
 
         // with parameter that should NOT create a new ChannelPoolManager
@@ -105,6 +106,7 @@ public class TestChannelPoolManagerFactorySharingConnection
         // standard
         HashMap<String, String> properties = new HashMap<>();
         properties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, protocolVersion);
+        properties.put(HttpClientFactory.HTTP_REQUEST_TIMEOUT, String.valueOf(10000));
         clients.add(new TransportClientAdapter(clientFactory.getClient(properties), restOverStream));
 
 
@@ -112,6 +114,7 @@ public class TestChannelPoolManagerFactorySharingConnection
         properties = new HashMap<>();
         properties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, protocolVersion);
         properties.put(HttpClientFactory.HTTP_MAX_CHUNK_SIZE, String.valueOf(100)); // property of the ChannelPoolManager
+        properties.put(HttpClientFactory.HTTP_REQUEST_TIMEOUT, String.valueOf(10000));
         clients.add(new TransportClientAdapter(clientFactory.getClient(properties), restOverStream));
       },
       // since the two clients have different settings, with sharing, it should just open 2 connections
