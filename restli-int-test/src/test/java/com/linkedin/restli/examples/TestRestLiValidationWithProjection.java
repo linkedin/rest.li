@@ -16,8 +16,14 @@
 
 package com.linkedin.restli.examples;
 
-
+import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.template.DataTemplateUtil;
+import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.examples.greetings.api.Message;
+import com.linkedin.restli.examples.greetings.api.Tone;
+import com.linkedin.restli.examples.greetings.client.ActionsBuilders;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 
 import org.testng.Assert;
@@ -49,7 +55,7 @@ import com.linkedin.restli.test.util.RootBuilderWrapper;
  *
  * @author jnchen
  */
-public class TestResLiValidationWithProjection extends RestLiIntegrationTest
+public class TestRestLiValidationWithProjection extends RestLiIntegrationTest
 {
   private RestClient _restClientAuto;
 
@@ -176,5 +182,76 @@ public class TestResLiValidationWithProjection extends RestLiIntegrationTest
                               "ERROR :: /MapWithTyperefs/foo/tone :: field is required but not found and has no default value\n" +
                               "ERROR :: /stringA :: field is required but not found and has no default value\n");
     }
+  }
+
+  @DataProvider
+  private Object[][] provideProjectionWithNonexistentFieldsData()
+  {
+    RootBuilderWrapper<Integer, ValidationDemo> wrapper =
+        new RootBuilderWrapper<>(new AutoValidationWithProjectionBuilders());
+
+    Request<ValidationDemo> getRequest =
+        wrapper.get().id(1).fields(new PathSpec("nonexistentFieldFooBar")).build();
+
+    Request<CollectionResponse<ValidationDemo>> getAllRequest =
+        wrapper.getAll().fields(new PathSpec("nonexistentFieldFooBar")).build();
+
+    Request<CollectionResponse<ValidationDemo>> findRequest =
+        wrapper.findBy("searchWithProjection").fields(new PathSpec("nonexistentFieldFooBar")).build();
+
+    return new Object[][]
+    {
+        { getRequest },
+        { getAllRequest },
+        { findRequest }
+    };
+  }
+
+  @Test(dataProvider = "provideProjectionWithNonexistentFieldsData")
+  public void testProjectionWithNonexistentFields(Request<?> request) throws RemoteInvocationException
+  {
+    RecordDataSchema schema = (RecordDataSchema) DataTemplateUtil.getSchema(ValidationDemo.class);
+    try
+    {
+      _restClientAuto.sendRequest(request).getResponse();
+      Assert.fail("Building schema by projection with nonexistent fields should return an HTTP 400 error");
+    }
+    catch (RestLiResponseException e)
+    {
+      Assert.assertEquals(e.getStatus(), HttpStatus.S_400_BAD_REQUEST.getCode());
+      Assert.assertEquals(e.getServiceErrorMessage(), "Projected field \"nonexistentFieldFooBar\" not present in schema \"" + schema.getFullName() + "\"");
+    }
+  }
+
+  /**
+   * Ensures that projections are ignored completely in the validating filter and do not result in any errors for
+   * actions resource ACTION requests.
+   *
+   * This test is motivated by an NPE that occurred when a {@link com.linkedin.restli.server.annotations.RestLiActions}
+   * resource was queried with an ACTION request containing a projection. In this case, since the resource has
+   * no value class and since a previous implementation of {@link RestLiValidationFilter} relied on the value class
+   * for all resource methods, an NPE would be thrown. Now, the value class will only be accessed for resource methods
+   * that require validation on response.
+   * @throws RemoteInvocationException from the client
+   */
+  @Test
+  public void testActionsResourceIgnoreProjection() throws RemoteInvocationException
+  {
+    Message.Fields fields = Message.fields();
+
+    Message message = new Message()
+        .setId("ktvz")
+        .setMessage("Cheesecake")
+        .setTone(Tone.SINCERE);
+
+    Request<Message> req = new ActionsBuilders()
+        .actionEchoMessage()
+        .paramMessage(message)
+        .setParam(RestConstants.FIELDS_PARAM, new HashSet<>(Arrays.asList(fields.message(), fields.tone())))
+        .build();
+
+    Message result = _restClientAuto.sendRequest(req).getResponseEntity();
+
+    Assert.assertEquals(result, message);
   }
 }

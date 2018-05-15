@@ -17,7 +17,6 @@
 package com.linkedin.restli.examples;
 
 
-
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.StringArray;
 import com.linkedin.r2.RemoteInvocationException;
