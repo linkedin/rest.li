@@ -16,13 +16,17 @@
 
 package com.linkedin.restli.server.validation;
 
+import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.validation.ValidationResult;
+import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.data.template.TemplateRuntimeException;
 import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.restli.common.CreateIdEntityStatus;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ResourceMethod;
+import com.linkedin.restli.common.validation.RestLiDataSchemaDataValidator;
 import com.linkedin.restli.common.validation.RestLiDataValidator;
 import com.linkedin.restli.internal.server.response.BatchCreateResponseEnvelope;
 import com.linkedin.restli.internal.server.response.BatchGetResponseEnvelope;
@@ -42,6 +46,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
+import static com.linkedin.restli.common.util.ProjectionMaskApplier.*;
+
+
 /**
  * Rest.li validation filter that validates incoming data automatically,
  * and sends an error response back to the client if the data is invalid.
@@ -50,15 +57,47 @@ import java.util.concurrent.CompletableFuture;
  */
 public class RestLiValidationFilter implements Filter
 {
+  private static final String VALIDATING_SCHEMA_KEY = "validatingSchema";
+
+  private static final String TEMPLATE_RUNTIME_EXCEPTION_MESSAGE = "Could not find schema for entity during validation";
+
   @Override
   public CompletableFuture<Void> onRequest(final FilterRequestContext requestContext)
   {
+    MaskTree projectionMask = requestContext.getProjectionMask();
+
+    // If a projection is defined, build the validating schema now
+    // so that invalid projections are spotted early
+    if (projectionMask != null)
+    {
+      try
+      {
+        // Value class from resource model is the only source of truth for record schema.
+        // Schema from the record template itself should not be used.
+        DataSchema originalSchema = DataTemplateUtil.getSchema(requestContext.getFilterResourceModel().getValueClass());
+
+        DataSchema validatingSchema = buildSchemaByProjection(originalSchema, projectionMask.getDataMap());
+
+        // Put validating schema in scratchpad for use in onResponse
+        requestContext.getFilterScratchpad().put(VALIDATING_SCHEMA_KEY, validatingSchema);
+      }
+      catch (InvalidProjectionException e)
+      {
+        throw new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST, e.getMessage());
+      }
+      catch (TemplateRuntimeException e)
+      {
+        throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, TEMPLATE_RUNTIME_EXCEPTION_MESSAGE);
+      }
+    }
+
     Class<?> resourceClass = requestContext.getFilterResourceModel().getResourceClass();
     ResourceMethod method = requestContext.getMethodType();
     RestLiDataValidator validator = new RestLiDataValidator(resourceClass.getAnnotations(),
-                                                            requestContext.getFilterResourceModel().getValueClass(),
-                                                            method);
+        requestContext.getFilterResourceModel().getValueClass(),
+        method);
     RestLiRequestData requestData = requestContext.getRequestData();
+
     if (method == ResourceMethod.CREATE || method == ResourceMethod.UPDATE)
     {
       ValidationResult result = validator.validateInput(requestData.getEntity());
@@ -125,12 +164,29 @@ public class RestLiValidationFilter implements Filter
   public CompletableFuture<Void> onResponse(final FilterRequestContext requestContext,
                                             final FilterResponseContext responseContext)
   {
+    // Get validating schema if it was already built in onRequest
+    DataSchema validatingSchema =  (DataSchema) requestContext.getFilterScratchpad().get(VALIDATING_SCHEMA_KEY);
+
+    // Otherwise, build validating schema from original schema
+    if (validatingSchema == null)
+    {
+      try
+      {
+        // Value class from resource model is the only source of truth for record schema.
+        // Schema from the record template itself should not be used.
+        validatingSchema = DataTemplateUtil.getSchema(requestContext.getFilterResourceModel().getValueClass());
+      }
+      catch (TemplateRuntimeException e)
+      {
+        throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, TEMPLATE_RUNTIME_EXCEPTION_MESSAGE);
+      }
+    }
+
     Class<?> resourceClass = requestContext.getFilterResourceModel().getResourceClass();
     ResourceMethod method = requestContext.getMethodType();
-    RestLiDataValidator
-        validator = new RestLiDataValidator(resourceClass.getAnnotations(), requestContext.getFilterResourceModel().getValueClass(), method);
+    RestLiDataSchemaDataValidator
+        validator = new RestLiDataSchemaDataValidator(resourceClass.getAnnotations(), method, validatingSchema);
     RestLiResponseData<?> responseData = responseContext.getResponseData();
-    MaskTree projectionMask = requestContext.getProjectionMask();
 
     if (responseData.getResponseEnvelope().isErrorResponse())
     {
@@ -139,48 +195,48 @@ public class RestLiValidationFilter implements Filter
     switch (method)
     {
       case GET:
-        validateSingleResponse(validator, ((GetResponseEnvelope) responseData.getResponseEnvelope()).getRecord(), projectionMask);
+        validateSingleResponse(validator, ((GetResponseEnvelope) responseData.getResponseEnvelope()).getRecord());
         break;
       case CREATE:
         if (requestContext.getCustomAnnotations().containsKey("returnEntity"))
         {
-          validateSingleResponse(validator, ((CreateResponseEnvelope) responseData.getResponseEnvelope()).getRecord(), projectionMask);
+          validateSingleResponse(validator, ((CreateResponseEnvelope) responseData.getResponseEnvelope()).getRecord());
         }
         break;
       case GET_ALL:
-        validateCollectionResponse(validator, ((GetAllResponseEnvelope) responseData.getResponseEnvelope()).getCollectionResponse(), projectionMask);
+        validateCollectionResponse(validator, ((GetAllResponseEnvelope) responseData.getResponseEnvelope()).getCollectionResponse());
         break;
       case FINDER:
-        validateCollectionResponse(validator, ((FinderResponseEnvelope) responseData.getResponseEnvelope()).getCollectionResponse(), projectionMask);
+        validateCollectionResponse(validator, ((FinderResponseEnvelope) responseData.getResponseEnvelope()).getCollectionResponse());
         break;
       case BATCH_GET:
-        validateBatchResponse(validator, ((BatchGetResponseEnvelope) responseData.getResponseEnvelope()).getBatchResponseMap(), projectionMask);
+        validateBatchResponse(validator, ((BatchGetResponseEnvelope) responseData.getResponseEnvelope()).getBatchResponseMap());
         break;
       case BATCH_CREATE:
         if (requestContext.getCustomAnnotations().containsKey("returnEntity"))
         {
-          validateCreateCollectionResponse(validator, ((BatchCreateResponseEnvelope) responseData.getResponseEnvelope()).getCreateResponses(), projectionMask);
+          validateCreateCollectionResponse(validator, ((BatchCreateResponseEnvelope) responseData.getResponseEnvelope()).getCreateResponses());
         }
         break;
     }
     return CompletableFuture.completedFuture(null);
   }
 
-  private void validateSingleResponse(RestLiDataValidator validator, RecordTemplate entity, MaskTree projectionMask)
+  private void validateSingleResponse(RestLiDataValidator validator, RecordTemplate entity)
   {
-    ValidationResult result = validator.validateOutput(entity, projectionMask);
+    ValidationResult result = validator.validateOutput(entity);
     if (!result.isValid())
     {
       throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, result.getMessages().toString());
     }
   }
 
-  private void validateCollectionResponse(RestLiDataValidator validator, List<? extends RecordTemplate> entities, MaskTree projectionMask)
+  private void validateCollectionResponse(RestLiDataValidator validator, List<? extends RecordTemplate> entities)
   {
     StringBuilder sb = new StringBuilder();
     for (RecordTemplate entity : entities)
     {
-      ValidationResult result = validator.validateOutput(entity, projectionMask);
+      ValidationResult result = validator.validateOutput(entity);
       if (!result.isValid())
       {
         sb.append(result.getMessages().toString());
@@ -193,8 +249,7 @@ public class RestLiValidationFilter implements Filter
   }
 
   private void validateBatchResponse(RestLiDataValidator validator,
-                                     Map<?, BatchResponseEnvelope.BatchResponseEntry> batchResponseMap,
-                                     MaskTree projectionMask)
+                                     Map<?, BatchResponseEnvelope.BatchResponseEntry> batchResponseMap)
   {
     StringBuilder sb = new StringBuilder();
     for (Map.Entry<?, ? extends BatchResponseEnvelope.BatchResponseEntry> entry : batchResponseMap.entrySet())
@@ -203,7 +258,7 @@ public class RestLiValidationFilter implements Filter
       {
         continue;
       }
-      ValidationResult result = validator.validateOutput(entry.getValue().getRecord(), projectionMask);
+      ValidationResult result = validator.validateOutput(entry.getValue().getRecord());
       if (!result.isValid())
       {
         sb.append("Key: ");
@@ -219,8 +274,7 @@ public class RestLiValidationFilter implements Filter
   }
 
   private void validateCreateCollectionResponse(RestLiDataValidator validator,
-                                                List<BatchCreateResponseEnvelope.CollectionCreateResponseItem> responses,
-                                                MaskTree projectionMask)
+                                                List<BatchCreateResponseEnvelope.CollectionCreateResponseItem> responses)
   {
     StringBuilder sb = new StringBuilder();
     for (BatchCreateResponseEnvelope.CollectionCreateResponseItem item : responses)
@@ -230,7 +284,7 @@ public class RestLiValidationFilter implements Filter
         continue;
       }
       ValidationResult
-          result = validator.validateOutput(((CreateIdEntityStatus<?, ?>) item.getRecord()).getEntity(), projectionMask);
+          result = validator.validateOutput(((CreateIdEntityStatus<?, ?>) item.getRecord()).getEntity());
       if (!result.isValid())
       {
         sb.append(result.getMessages().toString());

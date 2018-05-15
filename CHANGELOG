@@ -1,5 +1,7 @@
 21.0.6
 -------
+(RB=1312972)
+Build validating schema on request if using projections, return HTTP 400 for projections with nonexistent fields
 
 21.0.5
 -------

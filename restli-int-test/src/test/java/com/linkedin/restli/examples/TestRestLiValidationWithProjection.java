@@ -16,7 +16,8 @@
 
 package com.linkedin.restli.examples;
 
-
+import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.template.DataTemplateUtil;
 import java.util.Arrays;
 import java.util.List;
 
@@ -49,7 +50,7 @@ import com.linkedin.restli.test.util.RootBuilderWrapper;
  *
  * @author jnchen
  */
-public class TestResLiValidationWithProjection extends RestLiIntegrationTest
+public class TestRestLiValidationWithProjection extends RestLiIntegrationTest
 {
   private RestClient _restClientAuto;
 
@@ -175,6 +176,45 @@ public class TestResLiValidationWithProjection extends RestLiIntegrationTest
                               "ERROR :: /ArrayWithInlineRecord/0/bar2 :: field is required but not found and has no default value\n" +
                               "ERROR :: /MapWithTyperefs/foo/tone :: field is required but not found and has no default value\n" +
                               "ERROR :: /stringA :: field is required but not found and has no default value\n");
+    }
+  }
+
+  @DataProvider
+  private Object[][] provideProjectionWithNonexistentFieldsData()
+  {
+    RootBuilderWrapper<Integer, ValidationDemo> wrapper =
+        new RootBuilderWrapper<>(new AutoValidationWithProjectionBuilders());
+
+    Request<ValidationDemo> getRequest =
+        wrapper.get().id(1).fields(new PathSpec("nonexistentFieldFooBar")).build();
+
+    Request<CollectionResponse<ValidationDemo>> getAllRequest =
+        wrapper.getAll().fields(new PathSpec("nonexistentFieldFooBar")).build();
+
+    Request<CollectionResponse<ValidationDemo>> findRequest =
+        wrapper.findBy("searchWithProjection").fields(new PathSpec("nonexistentFieldFooBar")).build();
+
+    return new Object[][]
+    {
+        { getRequest },
+        { getAllRequest },
+        { findRequest }
+    };
+  }
+
+  @Test(dataProvider = "provideProjectionWithNonexistentFieldsData")
+  public void testProjectionWithNonexistentFields(Request<?> request) throws RemoteInvocationException
+  {
+    RecordDataSchema schema = (RecordDataSchema) DataTemplateUtil.getSchema(ValidationDemo.class);
+    try
+    {
+      _restClientAuto.sendRequest(request).getResponse();
+      Assert.fail("Building schema by projection with nonexistent fields should return an HTTP 400 error");
+    }
+    catch (RestLiResponseException e)
+    {
+      Assert.assertEquals(e.getStatus(), HttpStatus.S_400_BAD_REQUEST.getCode());
+      Assert.assertEquals(e.getServiceErrorMessage(), "Projected field \"nonexistentFieldFooBar\" not present in schema \"" + schema.getFullName() + "\"");
     }
   }
 }

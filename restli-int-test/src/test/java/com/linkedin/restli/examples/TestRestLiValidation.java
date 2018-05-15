@@ -16,7 +16,6 @@
 
 package com.linkedin.restli.examples;
 
-
 import com.linkedin.data.DataMap;
 import com.linkedin.data.element.DataElement;
 import com.linkedin.data.message.Message;
