@@ -31,6 +31,7 @@ import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ClusterPropertiesJsonSerializer;
 import com.linkedin.d2.balancer.properties.HashBasedPartitionProperties;
+import com.linkedin.d2.balancer.properties.NullPartitionProperties;
 import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.properties.RangeBasedPartitionProperties;
@@ -261,6 +262,74 @@ public class SimpleLoadBalancerTest
       executorService.shutdownNow();
 
       assertTrue(executorService.isShutdown(), "ExecutorService should have shut down!");
+    }
+  }
+
+  @Test
+  public void testGetClientWithBannedURI() throws Exception
+  {
+    Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories =
+        new HashMap<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>>();
+    Map<String, TransportClientFactory> clientFactories = new HashMap<String, TransportClientFactory>();
+    List<String> prioritizedSchemes = new ArrayList<String>();
+
+    MockStore<ServiceProperties> serviceRegistry = new MockStore<ServiceProperties>();
+    MockStore<ClusterProperties> clusterRegistry = new MockStore<ClusterProperties>();
+    MockStore<UriProperties> uriRegistry = new MockStore<UriProperties>();
+
+    ScheduledExecutorService executorService = new SynchronousExecutorService();
+
+    loadBalancerStrategyFactories.put("degrader", new DegraderLoadBalancerStrategyFactoryV3());
+    clientFactories.put("http", new DoNothingClientFactory());
+
+    SimpleLoadBalancerState state =
+        new SimpleLoadBalancerState(executorService,
+            uriRegistry,
+            clusterRegistry,
+            serviceRegistry,
+            clientFactories,
+            loadBalancerStrategyFactories);
+
+    SimpleLoadBalancer loadBalancer =
+      new SimpleLoadBalancer(state, 5, TimeUnit.SECONDS, _d2Executor);
+
+    FutureCallback<None> balancerCallback = new FutureCallback<None>();
+    loadBalancer.start(balancerCallback);
+    balancerCallback.get();
+
+    URI uri1Banned = URI.create("http://test.qd.com:1234");
+    URI uri2Usable = URI.create("http://test.qd.com:5678");
+    Map<Integer, PartitionData> partitionData = new HashMap<Integer, PartitionData>(1);
+    partitionData.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
+    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<URI, Map<Integer, PartitionData>>(2);
+    uriData.put(uri1Banned, partitionData);
+    uriData.put(uri2Usable, partitionData);
+
+    prioritizedSchemes.add("http");
+
+    Set<URI> bannedSet = new HashSet<>();
+    bannedSet.add(uri1Banned);
+    clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1", Collections.emptyList(),
+        Collections.emptyMap(), bannedSet, NullPartitionProperties.getInstance()));
+
+    serviceRegistry.put("foo", new ServiceProperties("foo",
+        "cluster-1",
+        "/foo",
+        Arrays.asList("degrader"),
+        Collections.<String,Object>emptyMap(),
+        null,
+        null,
+        prioritizedSchemes,
+        null));
+    uriRegistry.put("cluster-1", new UriProperties("cluster-1", uriData));
+
+    URI expectedUri = URI.create("http://test.qd.com:5678/foo");
+    URIRequest uriRequest = new URIRequest("d2://foo/52");
+    for (int i = 0; i < 10; ++i)
+    {
+      RewriteLoadBalancerClient client =
+          (RewriteLoadBalancerClient) loadBalancer.getClient(uriRequest, new RequestContext());
+      Assert.assertEquals(client.getUri(), expectedUri);
     }
   }
 

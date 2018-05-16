@@ -18,6 +18,8 @@ package com.linkedin.d2.balancer.properties;
 
 import com.linkedin.d2.discovery.PropertySerializationException;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Set;
 import org.testng.annotations.Test;
 
 import java.net.URI;
@@ -43,6 +45,10 @@ public class ClusterPropertiesSerializerTest
     ClusterPropertiesJsonSerializer foo = new ClusterPropertiesJsonSerializer();
     List<String> schemes = new ArrayList<String>();
     Map<String, String> supProperties = new HashMap<String, String>();
+    Set<URI> bannedSet = new HashSet<>();
+    bannedSet.add(URI.create("https://test1.linkedin.com:12345/test"));
+    bannedSet.add(URI.create("https://test2.linkedin.com:56789/test"));
+
 
     ClusterProperties property = new ClusterProperties("test");
     assertEquals(foo.fromBytes(foo.toBytes(property)), property);
@@ -59,11 +65,11 @@ public class ClusterPropertiesSerializerTest
 
 
     RangeBasedPartitionProperties rbp = new RangeBasedPartitionProperties("blah", 0, 5000000, 100);
-    property = new ClusterProperties("test", schemes, supProperties, new HashSet<URI>(), rbp);
+    property = new ClusterProperties("test", schemes, supProperties, bannedSet, rbp);
     assertEquals(foo.fromBytes(foo.toBytes(property)), property);
 
     HashBasedPartitionProperties hbp = new HashBasedPartitionProperties("blah", 150, HashBasedPartitionProperties.HashAlgorithm.valueOf("md5".toUpperCase()));
-    property = new ClusterProperties("test", schemes, supProperties, new HashSet<URI>(), hbp);
+    property = new ClusterProperties("test", schemes, supProperties, bannedSet, hbp);
     assertEquals(foo.fromBytes(foo.toBytes(property)), property);
 
     property = new ClusterProperties("test", schemes, supProperties, new HashSet<URI>(), NullPartitionProperties.getInstance(),

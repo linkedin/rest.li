@@ -179,7 +179,7 @@ public class TestLoadBalancerClientCli
     {
       assertContains(clusterProps,"Cluster '" + clusterName +"':ClusterProperties [_clusterName=" + clusterName);
       assertContains(clusterProps,"_prioritizedSchemes=[http]");
-      assertContains(clusterProps,"_banned=[]");
+      assertContains(clusterProps,"_bannedUris=[]");
       assertContains(clusterProps,"_partitionProperties=com.linkedin.d2.balancer.properties.NullPartitionProperties");
     }
   }

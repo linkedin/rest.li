@@ -59,6 +59,7 @@ import com.linkedin.r2.transport.http.client.TimeoutCallback;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -265,7 +266,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
         Ring<URI> ring = null;
         for (LoadBalancerState.SchemeStrategyPair pair : orderedStrategies)
         {
-          List<TrackerClient> clients = getPotentialClients(serviceName, service, uris, pair.getScheme(), partitionId);
+          List<TrackerClient> clients = getPotentialClients(serviceName, service, cluster, uris, pair.getScheme(), partitionId);
           ring = pair.getStrategy().getRing(uriItem.getVersion(), partitionId, clients);
 
           if (!ring.isEmpty())
@@ -316,7 +317,8 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
       {
         for (LoadBalancerState.SchemeStrategyPair pair : orderedStrategies)
         {
-          List<TrackerClient> trackerClients = getPotentialClients(serviceName, service, uris, pair.getScheme(), partitionId);
+          List<TrackerClient> trackerClients = getPotentialClients(serviceName, service, cluster, uris,
+              pair.getScheme(), partitionId);
           Ring<URI> ring = pair.getStrategy().getRing(uriItem.getVersion(), partitionId, trackerClients);
           // ring will never be null; it can be empty
           ringMap.put(partitionId, ring);
@@ -529,7 +531,8 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
       {
         for (LoadBalancerState.SchemeStrategyPair pair : orderedStrategies)
         {
-          List<TrackerClient> trackerClients = getPotentialClients(serviceName, service, uris, pair.getScheme(), partitionId);
+          List<TrackerClient> trackerClients = getPotentialClients(serviceName, service, cluster, uris,
+              pair.getScheme(), partitionId);
           int size = trackerClients.size() <= limitHostPerPartition ? trackerClients.size() : limitHostPerPartition;
           List<URI> rankedUri = new ArrayList<>(size);
 
@@ -689,13 +692,14 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   // supports partitioning
   private List<TrackerClient> getPotentialClients(String serviceName,
                                                   ServiceProperties serviceProperties,
+                                                  ClusterProperties clusterProperties,
                                                   UriProperties uris,
                                                   String scheme,
                                                   int partitionId)
   {
     Set<URI> possibleUris = uris.getUriBySchemeAndPartition(scheme, partitionId);
 
-    List<TrackerClient> clientsToBalance = getPotentialClients(serviceName, serviceProperties, possibleUris);
+    List<TrackerClient> clientsToBalance = getPotentialClients(serviceName, serviceProperties, clusterProperties, possibleUris);
     if (clientsToBalance.isEmpty())
     {
       info(_log, "Can not find a host for service: ", serviceName, ", scheme: ", scheme, ", partition: ", partitionId);
@@ -705,6 +709,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
 
   private List<TrackerClient> getPotentialClients(String serviceName,
                                                   ServiceProperties serviceProperties,
+                                                  ClusterProperties clusterProperties,
                                                   Set<URI> possibleUris)
   {
     List<TrackerClient> clientsToLoadBalance = new ArrayList<TrackerClient>();
@@ -714,7 +719,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
       for (URI possibleUri : possibleUris)
       {
         // don't pay attention to this uri if it's banned
-        if (!serviceProperties.isBanned(possibleUri))
+        if (!serviceProperties.isBanned(possibleUri) && !clusterProperties.isBanned(possibleUri))
         {
           TrackerClient possibleTrackerClient = _state.getClient(serviceName, possibleUri);
 
@@ -807,8 +812,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
       String scheme = pair.getScheme();
 
 
-      clientsToLoadBalance = getPotentialClients(serviceName, serviceProperties, uris, scheme,
-                                                                     partitionId);
+      clientsToLoadBalance = getPotentialClients(serviceName, serviceProperties, cluster, uris, scheme, partitionId);
 
       trackerClient =
           strategy.getTrackerClient(request, requestContext, uriItem.getVersion(), partitionId, clientsToLoadBalance);

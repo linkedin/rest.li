@@ -62,7 +62,7 @@ public class PropertyKeys
   public static final String SERVICES = "services";
   public static final String TRANSPORT_CLIENT_PROPERTIES = "transportClientProperties";
   public static final String PRIORITIZED_SCHEMES = "prioritizedSchemes";
-  public static final String BANNED_URIS = "bannedUri";
+  public static final String BANNED_URIS = "bannedUris";
   public static final String DEFAULT_ROUTING = "defaultRouting";
   public static final String ALLOWED_CLIENT_OVERRIDE_KEYS = "allowedClientOverrideKeys";
   public static final String SERVICE_METADATA_PROPERTIES = "serviceMetadataProperties";

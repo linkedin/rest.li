@@ -1252,7 +1252,7 @@ public class TestD2Config
     assertEquals(clusterprops.getClusterName(), cluster);
     assertEquals(clusterprops.getPrioritizedSchemes(), Arrays.asList(new String[] {"http"}));
     assertEquals(clusterprops.getProperties().get("requestTimeout"), String.valueOf(10000));
-    assertEquals(clusterprops.getBanned(), new TreeSet<URI>());
+    assertEquals(clusterprops.getBannedUris(), new TreeSet<URI>());
   }
 
   @SuppressWarnings("unchecked")

@@ -12,6 +12,10 @@ Retry markUp/Down in event of KeeperException.SessionExpiredException
 (RB=1360221)
 Fix warnings in ZooKeeperAnnouncerTest resulting in failed compile.
 
+(RB=1317765)
+Support BannedUris property for cluster
+
+
 23.0.2
 ------
 (RB=1351456)

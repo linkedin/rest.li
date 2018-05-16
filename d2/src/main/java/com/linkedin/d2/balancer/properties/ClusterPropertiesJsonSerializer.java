@@ -22,6 +22,7 @@ import com.linkedin.d2.balancer.util.JacksonUtil;
 import com.linkedin.d2.discovery.PropertyBuilder;
 import com.linkedin.d2.discovery.PropertySerializationException;
 import com.linkedin.d2.discovery.PropertySerializer;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,12 +82,9 @@ public class ClusterPropertiesJsonSerializer implements
   @Override
   public ClusterProperties fromMap(Map<String, Object> map)
   {
-    List<URI> bannedList = mapGet(map, PropertyKeys.BANNED_URIS);
-    if (bannedList == null)
-    {
-      bannedList = Collections.emptyList();
-    }
-    Set<URI> banned = new HashSet<URI>(bannedList);
+    List<String> bannedList = mapGet(map, PropertyKeys.BANNED_URIS);
+    Set<URI> banned = (bannedList == null) ? Collections.emptySet()
+        : bannedList.stream().map(URI::create).collect(Collectors.toSet());
 
     String clusterName = PropertyUtil.checkAndGetValue(map, PropertyKeys.CLUSTER_NAME, String.class, "ClusterProperties");
     List<String> prioritizedSchemes = mapGet(map, PropertyKeys.PRIORITIZED_SCHEMES);

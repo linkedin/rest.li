@@ -30,9 +30,7 @@ public class ClusterProperties
   private final PartitionProperties   _partitionProperties;
   private final List<String> _sslSessionValidationStrings;
 
-  //deprecated because we are moving these properties down to ServiceProperties
-  @Deprecated
-  private final Set<URI>              _banned;
+  private final Set<URI> _bannedUris;
   @Deprecated
   private final List<String>          _prioritizedSchemes;
 
@@ -50,30 +48,30 @@ public class ClusterProperties
                            List<String> prioritizedSchemes,
                            Map<String, String> properties)
   {
-    this(clusterName, prioritizedSchemes, properties, new HashSet<URI>());
+    this(clusterName, prioritizedSchemes, properties, new HashSet<>());
   }
 
   public ClusterProperties(String clusterName,
                            List<String> prioritizedSchemes,
                            Map<String, String> properties,
-                           Set<URI> banned)
+                           Set<URI> bannedUris)
   {
-    this(clusterName, prioritizedSchemes, properties, banned, NullPartitionProperties.getInstance());
+    this(clusterName, prioritizedSchemes, properties, bannedUris, NullPartitionProperties.getInstance());
   }
 
   public ClusterProperties(String clusterName,
                            List<String> prioritizedSchemes,
                            Map<String, String> properties,
-                           Set<URI> banned,
+                           Set<URI> bannedUris,
                            PartitionProperties partitionProperties)
   {
-    this(clusterName, prioritizedSchemes, properties, banned, partitionProperties, Collections.emptyList());
+    this(clusterName, prioritizedSchemes, properties, bannedUris, partitionProperties, Collections.emptyList());
   }
 
   public ClusterProperties(String clusterName,
       List<String> prioritizedSchemes,
       Map<String, String> properties,
-      Set<URI> banned,
+      Set<URI> bannedUris,
       PartitionProperties partitionProperties,
       List<String> sslSessionValidationStrings)
 
@@ -83,7 +81,7 @@ public class ClusterProperties
         (prioritizedSchemes != null) ? Collections.unmodifiableList(prioritizedSchemes)
             : Collections.<String>emptyList();
     _properties = (properties == null) ? Collections.<String,String>emptyMap() : Collections.unmodifiableMap(properties);
-    _banned = Collections.unmodifiableSet(banned);
+    _bannedUris = bannedUris != null ? Collections.unmodifiableSet(bannedUris) : Collections.emptySet();
     _partitionProperties = partitionProperties;
     _sslSessionValidationStrings = sslSessionValidationStrings == null ? Collections.emptyList() : Collections.unmodifiableList(
         sslSessionValidationStrings);
@@ -91,12 +89,12 @@ public class ClusterProperties
 
   public boolean isBanned(URI uri)
   {
-    return _banned.contains(uri);
+    return _bannedUris.contains(uri);
   }
 
-  public Set<URI> getBanned()
+  public Set<URI> getBannedUris()
   {
-    return _banned;
+    return _bannedUris;
   }
 
   public String getClusterName()
@@ -128,7 +126,7 @@ public class ClusterProperties
   public String toString()
   {
     return "ClusterProperties [_clusterName=" + _clusterName + ", _prioritizedSchemes="
-        + _prioritizedSchemes + ", _properties=" + _properties + ", _banned=" + _banned
+        + _prioritizedSchemes + ", _properties=" + _properties + ", _bannedUris=" + _bannedUris
         + ", _partitionProperties=" + _partitionProperties + ", _sslSessionValidationStrings=" + _sslSessionValidationStrings
         + "]";
   }
@@ -138,7 +136,7 @@ public class ClusterProperties
   {
     final int prime = 31;
     int result = 1;
-    result = prime * result + ((_banned == null) ? 0 : _banned.hashCode());
+    result = prime * result + ((_bannedUris == null) ? 0 : _bannedUris.hashCode());
     result = prime * result + ((_clusterName == null) ? 0 : _clusterName.hashCode());
     result =
         prime * result
@@ -153,20 +151,34 @@ public class ClusterProperties
   public boolean equals(Object obj)
   {
     if (this == obj)
+    {
       return true;
+    }
     if (obj == null)
+    {
       return false;
+    }
     if (getClass() != obj.getClass())
+    {
       return false;
+    }
     ClusterProperties other = (ClusterProperties) obj;
-    if (!_banned.equals(other._banned))
+    if (!_bannedUris.equals(other._bannedUris))
+    {
       return false;
+    }
     if (!_clusterName.equals(other._clusterName))
+    {
       return false;
+    }
     if (!_prioritizedSchemes.equals(other._prioritizedSchemes))
+    {
       return false;
+    }
     if (!_properties.equals(other._properties))
+    {
       return false;
+    }
     if (!_partitionProperties.equals(other._partitionProperties))
     {
       return false;

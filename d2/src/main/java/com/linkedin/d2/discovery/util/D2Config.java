@@ -235,6 +235,8 @@ public class D2Config
       final String masterColo = (String)clusterConfig.remove(PropertyKeys.MASTER_COLO);
       final String enableSymlinkString = (String)clusterConfig.remove(PropertyKeys.ENABLE_SYMLINK);
       final boolean enableSymlink;
+      @SuppressWarnings("unchecked")
+      final List<String> bannedUris = (List<String>) clusterConfig.remove(PropertyKeys.BANNED_URIS);
 
       regularClusterToServicesMapping.put(clusterName, servicesConfigs.keySet().stream().collect(Collectors.toList()));
 
@@ -275,6 +277,10 @@ public class D2Config
         clusterProperties.put(PropertyKeys.CLUSTER_VARIANTS, String.join(LIST_SEPARATOR, clusterVariantConfig.keySet()));
       }
       clusterConfig.put(PropertyKeys.CLUSTER_PROPERTIES, clusterProperties);
+      if (bannedUris != null)
+      {
+        clusterConfig.put(PropertyKeys.BANNED_URIS, bannedUris);
+      }
 
       // rather than handling the coloVariant case separately from the regular cluster case, we will
       // treat regular clusters as having an empty-string coloVariant list. This allows us to have a
