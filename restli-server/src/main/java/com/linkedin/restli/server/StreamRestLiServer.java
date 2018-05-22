@@ -11,6 +11,7 @@ import com.linkedin.r2.message.Messages;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.stream.StreamException;
 import com.linkedin.r2.message.stream.StreamRequest;
@@ -31,7 +32,7 @@ import com.linkedin.restli.internal.server.response.RestLiResponseException;
 import com.linkedin.restli.internal.server.response.ResponseUtils;
 import com.linkedin.restli.restspec.ResourceEntityType;
 import com.linkedin.restli.server.resources.ResourceFactory;
-
+import com.linkedin.restli.server.util.UnstructuredDataUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -313,6 +314,8 @@ class StreamRestLiServer extends BaseRestLiServer implements StreamRequestHandle
       RoutingResult routingResult,
       Callback<StreamResponse> callback)
   {
+    routingResult.getContext().setRequestEntityStream(
+        EntityStreamAdapters.toGenericEntityStream(request.getEntityStream()));
     handleResourceRequest(request,
         routingResult,
         null,
@@ -339,7 +342,7 @@ class StreamRestLiServer extends BaseRestLiServer implements StreamRequestHandle
           .setCookies(CookieUtil.encodeSetCookies(restLiResponse.getCookies()))
           .setStatus(restLiResponse.getStatus().getCode());
 
-      EntityStream<ByteString> entityStream = _context.getEntityStream();
+      EntityStream<ByteString> entityStream = _context.getResponseEntityStream();
       if (entityStream != null)
       {
         // Unstructured data response
@@ -370,5 +373,4 @@ class StreamRestLiServer extends BaseRestLiServer implements StreamRequestHandle
       }
     }
   }
-
 }

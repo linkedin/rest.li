@@ -87,7 +87,8 @@ public class Parameter<T> extends FieldDef<T>
     PAGING_PROJECTION_PARAM,      // @PagingProjectionParam
     VALIDATOR_PARAM,              // @ValidatorParam
     RESTLI_ATTACHMENTS_PARAM,     // @RestLiAttachmentsParam
-    UNSTRUCTURED_DATA_WRITER_PARAM // @UnstructuredDataWriterParam
+    UNSTRUCTURED_DATA_WRITER_PARAM, // @UnstructuredDataWriterParam
+    UNSTRUCTURED_DATA_REACTIVE_READER_PARAM  // @UnstructuredDataReactiveReaderParam
   }
 
   private final boolean _optional;

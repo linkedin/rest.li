@@ -132,14 +132,25 @@ public interface ServerResourceContext extends ResourceContext
   RestLiAttachmentReader getRequestAttachmentReader();
 
   /**
-   * Set a {@link EntityStream} for this request.
+   * Set a {@link EntityStream} for this response.
    */
-  void setEntityStream(EntityStream<ByteString> entityStream);
+  void setResponseEntityStream(EntityStream<ByteString> entityStream);
 
   /**
-   * Returns the {@link EntityStream}. For any other cases, this returns null.
+   * Returns the response's {@link EntityStream}. For any other cases, this returns null.
    */
-  EntityStream<ByteString> getEntityStream();
+  EntityStream<ByteString> getResponseEntityStream();
+
+  /**
+   * Set a {@link EntityStream} for this request.
+   */
+  void setRequestEntityStream(EntityStream<ByteString> entityStream);
+
+  /**
+   * Returns the request's {@link EntityStream}. For any other cases, this returns null.
+   */
+  EntityStream<ByteString> getRequestEntityStream();
+
 
   /**
    * Sets the specified projection mask for root object entities in the response. Setting the projection mask to

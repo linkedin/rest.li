@@ -13,8 +13,10 @@
       "name" : "src",
       "type" : "string"
     } ],
-    "supports" : [ "get" ],
+    "supports" : [ "create", "get" ],
     "methods" : [ {
+      "method" : "create"
+    }, {
       "method" : "get"
     } ],
     "entity" : {

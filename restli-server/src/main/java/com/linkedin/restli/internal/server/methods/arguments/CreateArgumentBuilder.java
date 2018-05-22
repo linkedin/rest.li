@@ -20,7 +20,6 @@
 
 package com.linkedin.restli.internal.server.methods.arguments;
 
-
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
@@ -28,6 +27,7 @@ import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.util.ArgumentUtils;
 import com.linkedin.restli.server.RestLiRequestData;
 import com.linkedin.restli.server.RestLiRequestDataImpl;
+import com.linkedin.restli.server.util.UnstructuredDataUtil;
 
 
 /**
@@ -39,7 +39,8 @@ public class CreateArgumentBuilder implements RestLiArgumentBuilder
   @Override
   public Object[] buildArguments(RestLiRequestData requestData, RoutingResult routingResult)
   {
-    Object[] positionalArgs = { requestData.getEntity() };
+    Object[] positionalArgs = requestData.getEntity() != null ? new Object[]{requestData.getEntity()} : new Object[]{};
+
     return ArgumentBuilder.buildArgs(positionalArgs,
                                      routingResult.getResourceMethod(),
                                      routingResult.getContext(),
@@ -49,6 +50,11 @@ public class CreateArgumentBuilder implements RestLiArgumentBuilder
   @Override
   public RestLiRequestData extractRequestData(RoutingResult routingResult, DataMap dataMap)
   {
+    // Unstructured data is not available in the Rest.Li filters
+    if (UnstructuredDataUtil.isUnstructuredDataRouting(routingResult))
+    {
+      return new RestLiRequestDataImpl.Builder().build();
+    }
     RecordTemplate inputEntity = DataTemplateUtil.wrap(dataMap, ArgumentUtils.getValueClass(routingResult));
     return new RestLiRequestDataImpl.Builder().entity(inputEntity).build();
   }

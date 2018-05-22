@@ -16,7 +16,6 @@
 
 package com.linkedin.restli.server.resources.unstructuredData;
 
-
 import com.linkedin.restli.server.RoutingException;
 import com.linkedin.restli.server.UnstructuredDataWriter;
 import com.linkedin.restli.server.annotations.UnstructuredDataWriterParam;

@@ -105,7 +105,9 @@ public class ResourceContextImpl implements ServerResourceContext
   private Map<String, Object>                       _customRequestContext;
 
   // Response entity stream
-  private EntityStream<ByteString> _entityStream;
+  private EntityStream<ByteString> _responseEntityStream;
+  // Request entity stream
+  private EntityStream<ByteString> _requestEntityStream;
 
   /**
    * Default constructor.
@@ -511,15 +513,25 @@ public class ResourceContextImpl implements ServerResourceContext
   }
 
   @Override
-  public void setEntityStream(EntityStream<ByteString> entityStream)
+  public void setResponseEntityStream(EntityStream<ByteString> entityStream)
   {
-    _entityStream = entityStream;
+    _responseEntityStream = entityStream;
   }
 
   @Override
-  public EntityStream<ByteString> getEntityStream()
+  public EntityStream<ByteString> getResponseEntityStream()
   {
-    return _entityStream;
+    return _responseEntityStream;
+  }
+
+  @Override
+  public void setRequestEntityStream(EntityStream<ByteString> entityStream) {
+    _requestEntityStream = entityStream;
+  }
+
+  @Override
+  public EntityStream<ByteString> getRequestEntityStream() {
+    return _requestEntityStream;
   }
 
   @Override

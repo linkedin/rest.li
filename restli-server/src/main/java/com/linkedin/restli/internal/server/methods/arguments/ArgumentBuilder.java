@@ -16,7 +16,6 @@
 
 package com.linkedin.restli.internal.server.methods.arguments;
 
-
 import com.linkedin.data.ByteString;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
@@ -45,6 +44,7 @@ import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.common.TypeSpec;
+import com.linkedin.restli.common.validation.RestLiDataValidator;
 import com.linkedin.restli.internal.common.PathSegment;
 import com.linkedin.restli.internal.common.QueryParamsDataMap;
 import com.linkedin.restli.internal.server.RoutingResult;
@@ -56,16 +56,15 @@ import com.linkedin.restli.internal.server.util.AlternativeKeyCoercerException;
 import com.linkedin.restli.internal.server.util.ArgumentUtils;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.internal.server.util.RestUtils;
-import com.linkedin.restli.common.validation.RestLiDataValidator;
-import com.linkedin.restli.server.UnstructuredDataWriter;
 import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.PagingContext;
 import com.linkedin.restli.server.ResourceConfigException;
 import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.RoutingException;
+import com.linkedin.restli.server.UnstructuredDataReactiveReader;
+import com.linkedin.restli.server.UnstructuredDataWriter;
 import com.linkedin.restli.server.annotations.HeaderParam;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Array;
@@ -197,9 +196,14 @@ public class ArgumentBuilder
           // contained all the bytes by the time data is requested. The ownership of the OutputStream is passed to
           // the ByteArrayOutputStreamWriter, which is responsible of closing the OutputStream if necessary.
           ByteArrayOutputStream out = new ByteArrayOutputStream();
-          context.setEntityStream(EntityStreams.newEntityStream(new ByteArrayOutputStreamWriter(out)));
+          context.setResponseEntityStream(EntityStreams.newEntityStream(new ByteArrayOutputStreamWriter(out)));
 
           arguments[i] = new UnstructuredDataWriter(out, context);
+          continue;
+        }
+        else if (param.getParamType() == Parameter.ParamType.UNSTRUCTURED_DATA_REACTIVE_READER_PARAM)
+        {
+          arguments[i] = new UnstructuredDataReactiveReader(context.getRequestEntityStream(), context.getRawRequest().getHeader(RestConstants.HEADER_CONTENT_TYPE));
           continue;
         }
         else if (param.getParamType() == Parameter.ParamType.POST)

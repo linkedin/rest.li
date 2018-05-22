@@ -356,7 +356,7 @@ public class TestArgumentBuilder
   {
     ServerResourceContext mockResourceContext = EasyMock.createMock(ServerResourceContext.class);
 
-    mockResourceContext.setEntityStream(EasyMock.anyObject());
+    mockResourceContext.setResponseEntityStream(EasyMock.anyObject());
     EasyMock.expectLastCall().once();
     EasyMock.expect(mockResourceContext.getRequestAttachmentReader()).andReturn(null);
     EasyMock.replay(mockResourceContext);

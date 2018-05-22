@@ -23,10 +23,13 @@ import com.linkedin.entitystream.EntityStreams;
 import com.linkedin.entitystream.SingletonWriter;
 import com.linkedin.entitystream.Writer;
 import com.linkedin.restli.common.CompoundKey;
+import com.linkedin.restli.server.CreateResponse;
+import com.linkedin.restli.server.UnstructuredDataReactiveReader;
 import com.linkedin.restli.server.UnstructuredDataReactiveResult;
 import com.linkedin.restli.server.annotations.CallbackParam;
 import com.linkedin.restli.server.annotations.Key;
 import com.linkedin.restli.server.annotations.RestLiAssociation;
+import com.linkedin.restli.server.annotations.UnstructuredDataReactiveReaderParam;
 import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataAssociationResourceReactiveTemplate;
 
 import static com.linkedin.restli.examples.greetings.server.GreetingUnstructuredDataUtils.MIME_TYPE;
@@ -53,5 +56,11 @@ public class GreetingUnstructuredDataAssociationResourceReactive extends Unstruc
   {
     Writer<ByteString> writer = new SingletonWriter<>(ByteString.copy(UNSTRUCTURED_DATA_BYTES));
     callback.onSuccess(new UnstructuredDataReactiveResult(EntityStreams.newEntityStream(writer), MIME_TYPE));
+  }
+
+  @Override
+  public void create(@UnstructuredDataReactiveReaderParam UnstructuredDataReactiveReader reader, @CallbackParam Callback<CreateResponse> responseCallback)
+  {
+    reader.getEntityStream().setReader(new GreetingUnstructuredDataReader(responseCallback));
   }
 }

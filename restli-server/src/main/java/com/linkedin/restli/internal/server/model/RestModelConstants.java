@@ -229,16 +229,16 @@ public interface RestModelConstants
       UnstructuredDataCollectionResourceAsync.class,
       UnstructuredDataCollectionResourcePromise.class,
       UnstructuredDataCollectionResourceTask.class,
+      UnstructuredDataCollectionResourceReactive.class,
       UnstructuredDataAssociationResource.class,
       UnstructuredDataAssociationResourceAsync.class,
       UnstructuredDataAssociationResourcePromise.class,
       UnstructuredDataAssociationResourceTask.class,
+      UnstructuredDataAssociationResourceReactive.class,
       UnstructuredDataSimpleResource.class,
       UnstructuredDataSimpleResourceAsync.class,
       UnstructuredDataSimpleResourcePromise.class,
       UnstructuredDataSimpleResourceTask.class,
-      UnstructuredDataCollectionResourceReactive.class,
-      UnstructuredDataAssociationResourceReactive.class,
       UnstructuredDataSimpleResourceReactive.class
   };
 

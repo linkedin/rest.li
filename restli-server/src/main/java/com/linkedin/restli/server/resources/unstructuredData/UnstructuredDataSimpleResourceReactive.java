@@ -18,13 +18,14 @@ package com.linkedin.restli.server.resources.unstructuredData;
 
 
 import com.linkedin.common.callback.Callback;
-import com.linkedin.restli.server.UnstructuredDataReactiveResult;
 import com.linkedin.restli.server.RoutingException;
+import com.linkedin.restli.server.UnstructuredDataReactiveResult;
+import com.linkedin.restli.server.annotations.CallbackParam;
 import com.linkedin.restli.server.resources.BaseResource;
 
 
 /**
- * This is a counterpart of {@link SimpleUnstructuredDataResource} with reactive streaming interface.
+ * This is a counterpart of {@link UnstructuredDataSimpleResource} with reactive streaming interface.
  */
 public interface UnstructuredDataSimpleResourceReactive extends BaseResource, SingleUnstructuredDataResource
 {
@@ -33,7 +34,7 @@ public interface UnstructuredDataSimpleResourceReactive extends BaseResource, Si
    *
    * @param callback The response callback
    */
-  default void get(Callback<UnstructuredDataReactiveResult> callback)
+  default void get(@CallbackParam Callback<UnstructuredDataReactiveResult> callback)
   {
     throw new RoutingException("'get' is not implemented", 400);
   }

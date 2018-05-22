@@ -13,22 +13,20 @@ import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.internal.server.response.ErrorResponseBuilder;
+import com.linkedin.restli.internal.server.response.ResponseUtils;
 import com.linkedin.restli.internal.server.response.RestLiResponse;
 import com.linkedin.restli.internal.server.response.RestLiResponseException;
-import com.linkedin.restli.internal.server.response.ResponseUtils;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.server.multiplexer.MultiplexedRequestHandlerImpl;
 import com.linkedin.restli.server.resources.ResourceFactory;
-
-import jdk.nashorn.internal.codegen.CompilerConstants;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import com.linkedin.restli.server.util.UnstructuredDataUtil;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -151,6 +149,11 @@ class RestRestLiServer extends BaseRestLiServer implements RestRequestHandler
     DataMap entityDataMap = null;
     if (request.getEntity() != null && request.getEntity().length() > 0)
     {
+      if (UnstructuredDataUtil.isUnstructuredDataRouting(routingResult))
+      {
+        callback.onError(new RoutingException("Unstructured Data is not supported in non-streaming Rest.li server", HttpStatus.S_400_BAD_REQUEST.getCode()));
+        return;
+      }
       try
       {
         entityDataMap = DataMapUtils.readMapWithExceptions(request);

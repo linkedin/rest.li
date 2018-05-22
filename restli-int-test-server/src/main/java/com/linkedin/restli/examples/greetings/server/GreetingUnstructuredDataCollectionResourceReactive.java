@@ -16,7 +16,6 @@
 
 package com.linkedin.restli.examples.greetings.server;
 
-
 import com.linkedin.common.callback.Callback;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.ChunkedByteStringWriter;
@@ -25,11 +24,14 @@ import com.linkedin.entitystream.SingletonWriter;
 import com.linkedin.entitystream.WriteHandle;
 import com.linkedin.entitystream.Writer;
 import com.linkedin.restli.common.HttpStatus;
+import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.RestLiResponseDataException;
 import com.linkedin.restli.server.RestLiServiceException;
+import com.linkedin.restli.server.UnstructuredDataReactiveReader;
 import com.linkedin.restli.server.UnstructuredDataReactiveResult;
 import com.linkedin.restli.server.annotations.CallbackParam;
 import com.linkedin.restli.server.annotations.RestLiCollection;
+import com.linkedin.restli.server.annotations.UnstructuredDataReactiveReaderParam;
 import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataCollectionResourceReactiveTemplate;
 import javax.naming.NoPermissionException;
 
@@ -117,5 +119,11 @@ public class GreetingUnstructuredDataCollectionResourceReactive extends Unstruct
     public void onAbort(Throwable ex)
     {
     }
+  }
+
+  @Override
+  public void create(@UnstructuredDataReactiveReaderParam UnstructuredDataReactiveReader reader, @CallbackParam final Callback<CreateResponse> responseCallback)
+  {
+    reader.getEntityStream().setReader(new GreetingUnstructuredDataReader(responseCallback));
   }
 }

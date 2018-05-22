@@ -17,19 +17,24 @@
 package com.linkedin.restli.internal.server.model;
 
 
+import com.linkedin.common.callback.Callback;
 import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.parseq.promise.Promise;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
 import com.linkedin.restli.server.BatchDeleteRequest;
 import com.linkedin.restli.server.BatchUpdateResult;
+import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.PagingContext;
 import com.linkedin.restli.server.PathKeys;
 import com.linkedin.restli.server.ResourceConfigException;
 import com.linkedin.restli.server.ResourceContext;
+import com.linkedin.restli.server.UnstructuredDataReactiveReader;
+import com.linkedin.restli.server.UnstructuredDataReactiveResult;
 import com.linkedin.restli.server.UpdateResponse;
 import com.linkedin.restli.server.annotations.Action;
 import com.linkedin.restli.server.annotations.AssocKeyParam;
+import com.linkedin.restli.server.annotations.CallbackParam;
 import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.Key;
 import com.linkedin.restli.server.annotations.MetadataProjectionParam;
@@ -43,14 +48,14 @@ import com.linkedin.restli.server.annotations.RestLiAssociation;
 import com.linkedin.restli.server.annotations.RestLiAttachmentsParam;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.annotations.RestMethod;
+import com.linkedin.restli.server.annotations.UnstructuredDataReactiveReaderParam;
 import com.linkedin.restli.server.resources.AssociationResourceTemplate;
 import com.linkedin.restli.server.resources.CollectionResourceTemplate;
-
+import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataCollectionResourceReactiveTemplate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -153,6 +158,15 @@ public class TestRestLiParameterAnnotations
     {
       return null;
     }
+  }
+
+  @RestLiCollection(name = "UnstructuredDataParams")
+  private static class UnstructuredDataParams extends UnstructuredDataCollectionResourceReactiveTemplate<String> {
+    @Override
+    public void get(String key, @CallbackParam Callback<UnstructuredDataReactiveResult> callback) { }
+
+    @Override
+    public void create(@UnstructuredDataReactiveReaderParam UnstructuredDataReactiveReader reader, @CallbackParam Callback<CreateResponse> callback) { }
   }
 
   @RestLiCollection(name="CollectionDeleteAttachmentParams")
@@ -351,7 +365,8 @@ public class TestRestLiParameterAnnotations
     return new Object[][]
     {
       { CollectionSuccessResource.class },
-      { AssociationAsyncSuccessResource.class}
+      { AssociationAsyncSuccessResource.class},
+      { UnstructuredDataParams.class}
     };
   }
 

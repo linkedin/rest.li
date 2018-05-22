@@ -16,17 +16,24 @@
 
 package com.linkedin.restli.examples;
 
-
+import com.linkedin.data.ByteString;
+import com.linkedin.r2.message.rest.RestMethod;
+import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.rest.RestRequestBuilder;
+import com.linkedin.r2.message.rest.RestResponse;
+import com.linkedin.r2.transport.common.Client;
+import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.restli.common.RestConstants;
-
+import java.net.URI;
+import java.util.Collections;
+import java.util.Map;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import static com.linkedin.restli.common.RestConstants.HEADER_CONTENT_DISPOSITION;
-import static com.linkedin.restli.examples.greetings.server.GreetingUnstructuredDataUtils.CONTENT_DISPOSITION_VALUE;
-import static com.linkedin.restli.examples.greetings.server.GreetingUnstructuredDataUtils.MIME_TYPE;
-import static com.linkedin.restli.examples.greetings.server.GreetingUnstructuredDataUtils.UNSTRUCTURED_DATA_BYTES;
-import static org.testng.Assert.assertEquals;
+import static com.linkedin.restli.common.RestConstants.*;
+import static com.linkedin.restli.examples.RestLiIntTestServer.*;
+import static com.linkedin.restli.examples.greetings.server.GreetingUnstructuredDataUtils.*;
+import static org.testng.Assert.*;
 
 
 /**
@@ -162,5 +169,40 @@ public class TestGreetingUnstructuredDataResourcesReactive extends UnstructuredD
       assertEquals(conn.getHeaderField(RestConstants.HEADER_CONTENT_TYPE), MIME_TYPE);
       assertUnstructuredDataResponse(conn.getInputStream(), "".getBytes());
     });
+  }
+
+  @DataProvider(name = "createSuccess")
+  private static Object[][] createSuccess()
+  {
+    byte[] testBytes = "Hello World!".getBytes();
+    return new Object[][] {
+        { "/reactiveGreetingCollectionUnstructuredData" , ByteString.empty()},
+        { "/reactiveGreetingAssociationUnstructuredData", ByteString.empty()},
+        { "/reactiveGreetingCollectionUnstructuredData" , ByteString.copy(testBytes)},
+        { "/reactiveGreetingAssociationUnstructuredData", ByteString.copy(testBytes)}
+    };
+  }
+
+  @Test(dataProvider = "createSuccess")
+  public void testCreate(String resourceURL, ByteString entity) throws Throwable
+  {
+    RestResponse response = sentCreateRequest(resourceURL, entity);
+    assertEquals(response.getStatus(), 201);
+    assertEquals(response.getHeader(RestConstants.HEADER_ID),"1");
+  }
+
+  private Client getR2Client()
+  {
+    Map<String, String>
+        transportProperties = Collections.singletonMap(HttpClientFactory.HTTP_REQUEST_TIMEOUT, "10000");
+    return newTransportClient(transportProperties);
+  }
+
+  private RestResponse sentCreateRequest(String getPartialUrl, ByteString entity) throws Throwable
+  {
+    Client client = getR2Client();
+    URI uri = URI.create("http://localhost:" + DEFAULT_PORT + getPartialUrl);
+    RestRequest r = new RestRequestBuilder(uri).setEntity(entity).setMethod(RestMethod.POST).build();
+    return client.restRequest(r).get();
   }
 }

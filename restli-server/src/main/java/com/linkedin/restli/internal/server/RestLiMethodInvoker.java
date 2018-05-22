@@ -16,7 +16,6 @@
 
 package com.linkedin.restli.internal.server;
 
-
 import com.linkedin.common.callback.Callback;
 import com.linkedin.parseq.Context;
 import com.linkedin.parseq.Engine;
@@ -108,7 +107,7 @@ public class RestLiMethodInvoker
               if (result instanceof UnstructuredDataReactiveResult)
               {
                 UnstructuredDataReactiveResult reactiveResult = (UnstructuredDataReactiveResult) result;
-                resourceContext.setEntityStream(reactiveResult.getEntityStream());
+                resourceContext.setResponseEntityStream(reactiveResult.getEntityStream());
                 resourceContext.setResponseHeader(RestConstants.HEADER_CONTENT_TYPE, reactiveResult.getContentType());
                 callback.onSuccess(new EmptyRecord());
               }
@@ -170,7 +169,6 @@ public class RestLiMethodInvoker
             runTask(task, toPlanClass(descriptor));
           }
           break;
-
         default:
           throw new AssertionError("Unexpected interface type "
                                        + descriptor.getInterfaceType());

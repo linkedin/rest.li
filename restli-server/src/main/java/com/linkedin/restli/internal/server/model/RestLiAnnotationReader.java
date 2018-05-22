@@ -16,7 +16,6 @@
 
 package com.linkedin.restli.internal.server.model;
 
-
 import com.linkedin.common.callback.Callback;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.element.DataElement;
@@ -52,6 +51,7 @@ import com.linkedin.restli.internal.common.ReflectionUtils;
 import com.linkedin.restli.internal.server.PathKeysImpl;
 import com.linkedin.restli.internal.server.RestLiInternalException;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor.InterfaceType;
+import com.linkedin.restli.restspec.ResourceEntityType;
 import com.linkedin.restli.server.ActionResult;
 import com.linkedin.restli.server.BatchCreateRequest;
 import com.linkedin.restli.server.BatchDeleteRequest;
@@ -65,6 +65,7 @@ import com.linkedin.restli.server.PathKeys;
 import com.linkedin.restli.server.ResourceConfigException;
 import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.ResourceLevel;
+import com.linkedin.restli.server.UnstructuredDataReactiveReader;
 import com.linkedin.restli.server.UnstructuredDataWriter;
 import com.linkedin.restli.server.annotations.Action;
 import com.linkedin.restli.server.annotations.ActionParam;
@@ -92,6 +93,7 @@ import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.annotations.RestLiSimpleResource;
 import com.linkedin.restli.server.annotations.RestLiTemplate;
 import com.linkedin.restli.server.annotations.RestMethod;
+import com.linkedin.restli.server.annotations.UnstructuredDataReactiveReaderParam;
 import com.linkedin.restli.server.annotations.UnstructuredDataWriterParam;
 import com.linkedin.restli.server.annotations.ValidatorParam;
 import com.linkedin.restli.server.resources.ComplexKeyResource;
@@ -103,7 +105,6 @@ import com.linkedin.restli.server.resources.SingleObjectResource;
 import com.linkedin.restli.server.resources.unstructuredData.KeyUnstructuredDataResource;
 import com.linkedin.restli.server.resources.unstructuredData.SingleUnstructuredDataResource;
 import com.linkedin.util.CustomTypeUtil;
-
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Method;
@@ -119,7 +120,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -758,6 +758,10 @@ public final class RestLiAnnotationReader
       case CREATE:
         if (idx == 0)
         {
+          if (model.getResourceEntityType() == ResourceEntityType.UNSTRUCTURED_DATA)
+          {
+            return null;
+          }
           return makeValueParam(model);
         }
         break;
@@ -1055,13 +1059,18 @@ public final class RestLiAnnotationReader
         {
           param = buildUnstructuredDataWriterParam(paramAnnotations, paramType);
         }
+        else if (paramAnnotations.contains(UnstructuredDataReactiveReaderParam.class))
+        {
+          param = buildUnstructuredDataReactiveReader(paramAnnotations, paramType);
+        }
         else
         {
           throw new ResourceConfigException(buildMethodMessage(method)
               + " must annotate each parameter with @QueryParam, @ActionParam, @AssocKeyParam, @PagingContextParam, " +
               "@ProjectionParam, @MetadataProjectionParam, @PagingProjectionParam, @PathKeysParam, @PathKeyParam, " +
               "@HeaderParam, @CallbackParam, @ResourceContext, @ParSeqContextParam, @ValidatorParam, " +
-              "@RestLiAttachmentsParam, @UnstructuredDataWriterParam, or @ValidateParam");
+              "@RestLiAttachmentsParam, @UnstructuredDataWriterParam, @UnstructuredDataReactiveReaderParam, " +
+              "or @ValidateParam");
         }
       }
 
@@ -1081,7 +1090,6 @@ public final class RestLiAnnotationReader
     return queryParameters;
   }
 
-  @SuppressWarnings({ "unchecked", "rawtypes" })
   private static Parameter<ResourceContext> buildResourceContextParam(AnnotationSet annotations, final Class<?> paramType)
   {
       if (!paramType.equals(ResourceContext.class))
@@ -1089,8 +1097,8 @@ public final class RestLiAnnotationReader
         throw new ResourceConfigException("Incorrect data type for param: @" + ResourceContextParam.class.getSimpleName() + " parameter annotation must be of type " +  ResourceContext.class.getName());
       }
       Optional optional = annotations.get(Optional.class);
-      return new Parameter("",
-                           paramType,
+      return new Parameter<>("",
+                            ResourceContext.class,
                            null,
                            optional != null,
                            null,
@@ -1099,15 +1107,14 @@ public final class RestLiAnnotationReader
                            annotations);
     }
 
-  @SuppressWarnings({ "unchecked", "rawtypes" })
   private static Parameter<RestLiDataValidator> buildValidatorParam(AnnotationSet annotations, final Class<?> paramType)
   {
     if (!paramType.equals(RestLiDataValidator.class))
     {
       throw new ResourceConfigException("Incorrect data type for param: @" + ValidatorParam.class.getSimpleName() + " parameter annotation must be of type " +  RestLiDataValidator.class.getName());
     }
-    return new Parameter("validator",
-                         paramType,
+    return new Parameter<>("validator",
+                          RestLiDataValidator.class,
                          null,
                          false,
                          null,
@@ -1116,7 +1123,6 @@ public final class RestLiAnnotationReader
                          annotations);
   }
 
-  @SuppressWarnings({ "unchecked", "rawtypes" })
   private static Parameter<RestLiAttachmentReader> buildRestLiAttachmentsParam(AnnotationSet annotations, final Class<?> paramType)
   {
     if (!paramType.equals(RestLiAttachmentReader.class))
@@ -1124,8 +1130,8 @@ public final class RestLiAnnotationReader
       throw new ResourceConfigException("Incorrect data type for param: @" + RestLiAttachmentsParam.class.getSimpleName() + " parameter annotation must be of type " +  RestLiAttachmentReader.class.getName());
     }
 
-    return new Parameter("RestLi Attachment Reader",
-                         paramType,
+    return new Parameter<>("RestLi Attachment Reader",
+                          RestLiAttachmentReader.class,
                          null,
                          false, //RestLiAttachments cannot be optional. If its in the request we provide it, otherwise it's null.
                          null,
@@ -1134,7 +1140,6 @@ public final class RestLiAnnotationReader
                          annotations);
   }
 
-  @SuppressWarnings({ "unchecked", "rawtypes" })
   private static Parameter<UnstructuredDataWriter> buildUnstructuredDataWriterParam(AnnotationSet annotations, final Class<?> paramType)
   {
     if (!paramType.equals(UnstructuredDataWriter.class))
@@ -1142,14 +1147,31 @@ public final class RestLiAnnotationReader
       throw new ResourceConfigException("Incorrect data type for param: @" + UnstructuredDataWriterParam.class.getSimpleName() + " parameter annotation must be of type " +  UnstructuredDataWriter.class.getName());
     }
 
-    return new Parameter("RestLi Unstructured Data Writer",
-                         paramType,
+    return new Parameter<>("RestLi Unstructured Data Writer",
+                          UnstructuredDataWriter.class,
                          null,
                          false,
                          null,
                          Parameter.ParamType.UNSTRUCTURED_DATA_WRITER_PARAM,
                          false, //Not going to be persisted into the IDL at this time.
                          annotations);
+  }
+
+  private static Parameter<UnstructuredDataReactiveReader> buildUnstructuredDataReactiveReader(AnnotationSet annotations, final Class<?> paramType)
+  {
+    if (!paramType.equals(UnstructuredDataReactiveReader.class))
+    {
+      throw new ResourceConfigException("Incorrect data type for param: @" + UnstructuredDataReactiveReaderParam.class.getSimpleName() + " parameter annotation must be of type " +  UnstructuredDataReactiveReader.class.getName());
+    }
+
+    return new Parameter<>("RestLi Unstructured Data Reactive Reader",
+                          UnstructuredDataReactiveReader.class,
+                          null,
+                          false,
+                          null,
+                          Parameter.ParamType.UNSTRUCTURED_DATA_REACTIVE_READER_PARAM,
+                          false, //Not going to be persisted into the IDL at this time.
+                          annotations);
   }
 
   @SuppressWarnings({"unchecked", "rawtypes"})
@@ -1261,6 +1283,15 @@ public final class RestLiAnnotationReader
                                             + "resource methods: " + ResourceMethod.GET);
     }
 
+    //Only CREATE can have @UnstructuredDataReactiveReaderParam
+    if (methodType != ResourceMethod.CREATE && annotations.contains(UnstructuredDataReactiveReaderParam.class)
+        && annotations.contains(CallbackParam.class))
+    {
+      throw new ResourceConfigException("Parameter '" + paramName + "' on "
+          + buildMethodMessage(method) + " is only allowed within the following "
+          + "resource methods: " + ResourceMethod.CREATE);
+    }
+
     if (methodType == ResourceMethod.ACTION)
     {
       if (annotations.contains(QueryParam.class))
@@ -1317,6 +1348,7 @@ public final class RestLiAnnotationReader
                           CallbackParam.class,
                           ParSeqContextParam.class,
                           UnstructuredDataWriterParam.class,
+                          UnstructuredDataReactiveReaderParam.class,
                           RestLiAttachmentsParam.class) > 1)
     {
       throw new ResourceConfigException(buildMethodMessage(method)
@@ -1327,7 +1359,8 @@ public final class RestLiAnnotationReader
           + "@CallbackParam, "
           + "@ParSeqContextParam, "
           + "@RestLiAttachmentsParam, "
-          + "@UnstructuredDataWriterParam");
+          + "@UnstructuredDataWriterParam"
+          + "@UnstructuredDataReactiveReaderParam");
     }
   }
 
@@ -1689,6 +1722,11 @@ public final class RestLiAnnotationReader
 
   private static DataSchema getDataSchema(Class<?> type, TyperefDataSchema typerefDataSchema)
   {
+    // Unstructured data does not have data schema and corresponding class type
+    if (type == null)
+    {
+      return null;
+    }
     if (type == Void.TYPE)
     {
       return null;
@@ -2494,8 +2532,7 @@ public final class RestLiAnnotationReader
 
     if (callback && !isVoid)
     {
-      throw new ResourceConfigException(String.format("%s has both callback and return value",
-                                                      method));
+      throw new ResourceConfigException(String.format("%s has both callback and return value", method));
       // note that !callback && !isVoid is a legal synchronous action method
     }
 

@@ -39,7 +39,6 @@ import com.linkedin.restli.internal.server.util.RestUtils;
 import com.linkedin.restli.server.filter.Filter;
 import com.linkedin.restli.server.filter.FilterRequestContext;
 import com.linkedin.restli.server.resources.ResourceFactory;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -181,8 +180,8 @@ abstract class BaseRestLiServer
     RestLiArgumentBuilder argumentBuilder;
     try
     {
-      ProtocolVersion version = ProtocolVersionUtil.extractProtocolVersion(request.getHeaders());
       argumentBuilder = lookupArgumentBuilder(method, _errorResponseBuilder);
+      // Unstructured data is not available in the Rest.Li filters
       RestLiRequestData requestData = argumentBuilder.extractRequestData(routingResult, entityDataMap);
       filterContext = new FilterRequestContextInternalImpl(context, method, requestData);
     }

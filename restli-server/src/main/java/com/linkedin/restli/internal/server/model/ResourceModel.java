@@ -28,9 +28,7 @@ import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.ResourceDefinition;
 import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.resources.ComplexKeyResource;
-import com.linkedin.restli.server.resources.unstructuredData.KeyUnstructuredDataResource;
-import com.linkedin.restli.server.resources.unstructuredData.SingleUnstructuredDataResource;
-
+import com.linkedin.restli.server.util.UnstructuredDataUtil;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -352,12 +350,7 @@ public class ResourceModel implements ResourceDefinition
 
   public ResourceEntityType getResourceEntityType()
   {
-    if (KeyUnstructuredDataResource.class.isAssignableFrom(getResourceClass()) ||
-        SingleUnstructuredDataResource.class.isAssignableFrom(getResourceClass()))
-    {
-      return ResourceEntityType.UNSTRUCTURED_DATA;
-    }
-    return ResourceEntityType.STRUCTURED_DATA;
+    return UnstructuredDataUtil.getResourceEntityType(getResourceClass());
   }
 
   /**
