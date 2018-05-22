@@ -31,6 +31,38 @@ import java.util.Map;
 public class TestWireAttributeHelper
 {
   @Test
+  public void testNewInstanceCreations()
+  {
+    final Map<String, String> attrs = new HashMap<>();
+    final Map<String, String> toAttrs = WireAttributeHelper.toWireAttributes(attrs);
+    final Map<String, String> removeAttrs = WireAttributeHelper.removeWireAttributes(attrs);
+
+    Assert.assertNotSame(attrs, toAttrs);
+    Assert.assertNotSame(attrs, removeAttrs);
+    Assert.assertNotSame(toAttrs, removeAttrs);
+  }
+
+  @Test
+  public void testCaseInsensitivity()
+  {
+    Map<String, String> attrs = new HashMap<>();
+    attrs.put("key1", "val1");
+    attrs.put("key2", "val2");
+    attrs.put("key3", "val3");
+
+    attrs = WireAttributeHelper.toWireAttributes(attrs);
+    Assert.assertTrue(attrs.containsKey("X-LI-R2-W-KEY1"));
+    Assert.assertTrue(attrs.containsKey("x-li-r2-w-key2"));
+    Assert.assertTrue(attrs.containsKey("X-LI-R2-W-Key3"));
+
+    attrs = WireAttributeHelper.removeWireAttributes(attrs);
+
+    Assert.assertTrue(attrs.containsKey("KeY1"));
+    Assert.assertTrue(attrs.containsKey("KEY2"));
+    Assert.assertTrue(attrs.containsKey("KEY3"));
+  }
+
+  @Test
   public void testReversible()
   {
     final Map<String, String> attrs = new HashMap<String, String>();

@@ -1,7 +1,9 @@
 21.0.2
 -------
 (RB=1309804)
-Update test to use old property values	
+Update test to use old property values
+(RB=1315578)
+Make R2 wire attribute key implementation case-insensitive
 
 21.0.1
 -------

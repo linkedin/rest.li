@@ -66,7 +66,7 @@ public class TestHttp2NettyStreamClient
   private static final String HOST = "127.0.0.1";
   private static final String SCHEME = "http";
   private static final int PORT = 8080;
-  private static final String URL = SCHEME + "://" + HOST + ":" + PORT + "/echo";
+  private static final String URL = SCHEME + "://" + HOST + ":" + PORT + "/any";
   private static final AsciiString HOST_NAME = new AsciiString(HOST + ':' + PORT);
 
   private NioEventLoopGroup _eventLoop;

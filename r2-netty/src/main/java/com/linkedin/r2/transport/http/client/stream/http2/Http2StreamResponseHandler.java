@@ -31,6 +31,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,8 +62,10 @@ class Http2StreamResponseHandler extends ChannelInboundHandlerAdapter
       StreamResponse response = responseWithCallback.response();
       TransportCallback<StreamResponse> callback = responseWithCallback.callback();
 
-      Map<String, String> headers = new HashMap<>(response.getHeaders());
-      Map<String, String> wireAttrs = new HashMap<>(WireAttributeHelper.removeWireAttributes(headers));
+      Map<String, String> headers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+      headers.putAll(response.getHeaders());
+
+      Map<String, String> wireAttrs = WireAttributeHelper.removeWireAttributes(headers);
       StreamResponse newResponse = new StreamResponseBuilder(response)
           .unsafeSetHeaders(headers)
           .build(response.getEntityStream());

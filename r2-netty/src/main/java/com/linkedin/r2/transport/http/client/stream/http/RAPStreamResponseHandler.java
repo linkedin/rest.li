@@ -34,6 +34,7 @@ import java.nio.channels.ClosedChannelException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,9 +62,10 @@ class RAPStreamResponseHandler extends SimpleChannelInboundHandler<StreamRespons
   @Override
   protected void channelRead0(ChannelHandlerContext ctx, StreamResponse response) throws Exception
   {
-    final Map<String, String> headers = new HashMap<String, String>(response.getHeaders());
-    final Map<String, String> wireAttrs =
-      new HashMap<String, String>(WireAttributeHelper.removeWireAttributes(headers));
+    final Map<String, String> headers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+    headers.putAll(response.getHeaders());
+
+    final Map<String, String> wireAttrs = WireAttributeHelper.removeWireAttributes(headers);
 
     final StreamResponse newResponse = new StreamResponseBuilder(response)
         .unsafeSetHeaders(headers)

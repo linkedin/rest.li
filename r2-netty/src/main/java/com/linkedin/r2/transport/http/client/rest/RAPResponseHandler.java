@@ -60,10 +60,10 @@ class RAPResponseHandler extends SimpleChannelInboundHandler<RestResponse>
   @Override
   protected void channelRead0(ChannelHandlerContext ctx, RestResponse response) throws Exception
   {
-    final Map<String, String> headers = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
-    final Map<String, String> wireAttrs = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+    final Map<String, String> headers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     headers.putAll(response.getHeaders());
-    wireAttrs.putAll(WireAttributeHelper.removeWireAttributes(headers));
+
+    final Map<String, String> wireAttrs = WireAttributeHelper.removeWireAttributes(headers);
 
     final RestResponse newResponse = new RestResponseBuilder(response)
         .unsafeSetHeaders(headers)

@@ -33,10 +33,10 @@ public class WireAttributeHelper
 
   /**
    * Removes the wire attributes from the specified map of message attributes (headers)
-   * and returns a case insensitive map of wire attributes with prefix removed.
+   * and returns a new instance of case insensitive map of wire attributes with prefix removed.
    *
    * @param map the map containing wire attributes to be removed.
-   * @return a case insensitive map of the wire attributes from the input map,
+   * @return a new instance of case insensitive map of the wire attributes from the input map,
    *         with any key prefixes removed.
    */
   public static Map<String, String> removeWireAttributes(Map<String, String> map)
@@ -60,11 +60,12 @@ public class WireAttributeHelper
   }
 
   /**
-   * Convert the specified map of wire attributes to a case insensitive map of wire attributes of
-   * message attribute format (by adding a namespace prefix).
+   * Convert the specified map of wire attributes to a new instance of case insensitive map of wire
+   * attributes of message attribute format (by adding a namespace prefix).
    *
    * @param attrs wire attributes to be converted.
-   * @return a case insensitive map of message attributes constructed from specified wire attributes.
+   * @return a new instance case insensitive map of message attributes constructed from specified
+   *         wire attributes.
    */
   public static Map<String, String> toWireAttributes(Map<String, String> attrs)
   {

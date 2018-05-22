@@ -17,8 +17,9 @@
 /* $Id$ */
 package com.linkedin.r2.transport.common.bridge.common;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
+
 
 /**
  * @author Chris Pettitt
@@ -39,7 +40,7 @@ public class TransportResponseImpl<T> implements TransportResponse<T>
    */
   public static <T> TransportResponse<T> success(T response)
   {
-    return new TransportResponseImpl<T>(response, null, new HashMap<String, String>());
+    return new TransportResponseImpl<T>(response, null, new TreeMap<>(String.CASE_INSENSITIVE_ORDER));
   }
 
   /**
@@ -52,7 +53,9 @@ public class TransportResponseImpl<T> implements TransportResponse<T>
    */
   public static <T> TransportResponse<T> success(T response, Map<String, String> wireAttrs)
   {
-    return new TransportResponseImpl<T>(response, null, wireAttrs);
+    Map<String, String> caseInsensitiveWireAttrs = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+    caseInsensitiveWireAttrs.putAll(wireAttrs);
+    return new TransportResponseImpl<T>(response, null, caseInsensitiveWireAttrs);
   }
 
   /**
@@ -65,7 +68,9 @@ public class TransportResponseImpl<T> implements TransportResponse<T>
    */
   public static <T> TransportResponse<T> error(Throwable error, Map<String, String> wireAttrs)
   {
-    return new TransportResponseImpl<T>(null, error, wireAttrs);
+    Map<String, String> caseInsensitiveWireAttrs = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+    caseInsensitiveWireAttrs.putAll(wireAttrs);
+    return new TransportResponseImpl<T>(null, error, caseInsensitiveWireAttrs);
   }
 
   /**
@@ -77,7 +82,7 @@ public class TransportResponseImpl<T> implements TransportResponse<T>
    */
   public static <T> TransportResponse<T> error(Throwable error)
   {
-    return new TransportResponseImpl<T>(null, error, new HashMap<String, String>());
+    return new TransportResponseImpl<T>(null, error, new TreeMap<>(String.CASE_INSENSITIVE_ORDER));
   }
 
   private TransportResponseImpl(T response, Throwable error, Map<String, String> wireAttrs)
