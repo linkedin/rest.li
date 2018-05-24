@@ -1,6 +1,7 @@
 21.0.3
 -------
-
+(RB=1319738)
+Make ClientRequestFilter implementatino of wire attributes case-insensitive
 
 21.0.2
 -------

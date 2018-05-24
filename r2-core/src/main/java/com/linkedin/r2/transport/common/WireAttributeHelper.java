@@ -17,7 +17,6 @@
 /* $Id$ */
 package com.linkedin.r2.transport.common;
 
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
@@ -30,6 +29,15 @@ import java.util.TreeMap;
 public class WireAttributeHelper
 {
   private static final String WIRE_ATTR_PREFIX = "X-LI-R2-W-";
+
+  /**
+   * Creates a new instance of wire attributes implementation.
+   * @return A new instance of wire attributes
+   */
+  public static Map<String, String> newWireAttributes()
+  {
+    return new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+  }
 
   /**
    * Removes the wire attributes from the specified map of message attributes (headers)

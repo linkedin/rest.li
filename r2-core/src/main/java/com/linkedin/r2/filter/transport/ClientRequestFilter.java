@@ -27,10 +27,11 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamResponse;
+import com.linkedin.r2.transport.common.WireAttributeHelper;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
-import java.util.HashMap;
 import java.util.Map;
+
 
 /**
  * Filter implementation which sends requests through a specified {@link TransportClient}.
@@ -64,7 +65,7 @@ public class ClientRequestFilter implements StreamFilter, RestFilter
     }
     catch (Exception e)
     {
-      nextFilter.onError(e, requestContext, new HashMap<String, String>());
+      nextFilter.onError(e, requestContext, WireAttributeHelper.newWireAttributes());
     }
   }
 
@@ -79,7 +80,7 @@ public class ClientRequestFilter implements StreamFilter, RestFilter
     }
     catch (Exception e)
     {
-      nextFilter.onError(e, requestContext, new HashMap<String, String>());
+      nextFilter.onError(e, requestContext, WireAttributeHelper.newWireAttributes());
     }
   }
 
@@ -88,7 +89,7 @@ public class ClientRequestFilter implements StreamFilter, RestFilter
           final NextFilter<REQ, RES> nextFilter)
   {
     return res -> {
-      final Map<String, String> wireAttrs = new HashMap<String, String>(res.getWireAttributes());
+      final Map<String, String> wireAttrs = res.getWireAttributes();
       if (res.hasError())
       {
         nextFilter.onError(res.getError(), requestContext, wireAttrs);
