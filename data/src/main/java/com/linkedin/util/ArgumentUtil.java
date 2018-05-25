@@ -71,6 +71,13 @@ public class ArgumentUtil
     return obj;
   }
 
+  /**
+   * Checks the length of an array based on an offset and the actual array length. An
+   * {@link ArrayIndexOutOfBoundsException} is thrown if {@code offset + length > arrayLength}.
+   * @param arrayLength Actual length of the array
+   * @param offset Starting offset of the array
+   * @param length Required length starting from the offset
+   */
   public static void checkBounds(int arrayLength, int offset, int length)
   {
     if (offset < 0)
@@ -86,6 +93,20 @@ public class ArgumentUtil
     if (offset + length > arrayLength)
     {
       throw new IndexOutOfBoundsException("index out of bound: " + (offset + length));
+    }
+  }
+
+  /**
+   * Checks the validity of an argument based on an expression. An {@link IllegalArgumentException}
+   * is thrown if {@code expression == false}.
+   * @param expression Expression to evaluate
+   * @param name Name of the argument
+   */
+  public static void checkArgument(boolean expression, String name)
+  {
+    if (!expression)
+    {
+      throw new IllegalArgumentException("Argument " + name + " value is invalid");
     }
   }
 }
