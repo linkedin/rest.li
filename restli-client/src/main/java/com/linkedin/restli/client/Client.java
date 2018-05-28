@@ -36,6 +36,11 @@ public interface Client
   String MULTIPLEXER_RESOURCE = "mux";
 
   /**
+   * Batching strategy for partition and sticky routine support
+   */
+  String SCATTER_GATHER_STRATEGY = "SCATTER_GATHER_STRATEGY";
+
+  /**
    * Shuts down the underlying {@link com.linkedin.r2.transport.common.Client} which this RestClient wraps.
    * @param callback
    */

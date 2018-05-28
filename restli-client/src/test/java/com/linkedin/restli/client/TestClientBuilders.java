@@ -732,6 +732,8 @@ public class TestClientBuilders
     testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
     Assert.assertEquals(request.isSafe(), false);
     Assert.assertEquals(request.isIdempotent(), false);
+    Assert.assertNotNull(request.getPartialUpdateInputMap());
+    Assert.assertEquals(request.getPartialUpdateInputMap(), inputs);
 
     @SuppressWarnings({"unchecked","rawtypes"})
     BatchRequest<PatchRequest<TestRecord>> expectedRequest = new BatchRequest(new DataMap(), PatchRequest.class);
@@ -868,6 +870,13 @@ public class TestClientBuilders
     Assert.assertEquals(request.getObjectIds(), new HashSet<Long>(Arrays.asList(1L, 2L, 3L)));
     Assert.assertEquals(request.isSafe(), false);
     Assert.assertEquals(request.isIdempotent(), false);
+    // verify partialUpdateInputMap
+    Map<Long, PatchRequest<TestRecord>> expectedPartialUpdateMap = new HashMap<>();
+    expectedPartialUpdateMap.put(1L, new PatchRequest<TestRecord>());
+    expectedPartialUpdateMap.put(2L, new PatchRequest<TestRecord>());
+    expectedPartialUpdateMap.put(3L, new PatchRequest<TestRecord>());
+    Assert.assertNotNull(request.getPartialUpdateInputMap());
+    Assert.assertEquals(request.getPartialUpdateInputMap(), expectedPartialUpdateMap);
 
     @SuppressWarnings({"unchecked","rawtypes"})
     BatchRequest<PatchRequest<TestRecord>> expectedRequest = new BatchRequest(new DataMap(), PatchRequest.class);

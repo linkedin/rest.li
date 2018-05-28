@@ -69,7 +69,7 @@ public class URIMapperVSKeyMapperBenchmark
     {
       try {
         HashRingProvider hashRingProvider = createStaticHashRingProvider(100, 10, getHashFunction(true));
-        PartitionInfoProvider infoProvider = createPartitionInfoProvider(10);
+        PartitionInfoProvider infoProvider = createRangeBasedPartitionInfoProvider(10);
 
         _uriMapper = new RingBasedUriMapper(hashRingProvider, infoProvider);
         _uriMapperRequests = testUtil.generateRequests(10, 100);
@@ -118,7 +118,7 @@ public class URIMapperVSKeyMapperBenchmark
     {
       try {
         HashRingProvider hashRingProvider = createStaticHashRingProvider(100, 1, getHashFunction(true));
-        PartitionInfoProvider infoProvider = createPartitionInfoProvider(1);
+        PartitionInfoProvider infoProvider = createRangeBasedPartitionInfoProvider(1);
 
         _uriMapper = new RingBasedUriMapper(hashRingProvider, infoProvider);
         _uriMapperRequests = testUtil.generateRequests(1, 10000);
@@ -167,7 +167,7 @@ public class URIMapperVSKeyMapperBenchmark
     {
       try {
         HashRingProvider hashRingProvider = createStaticHashRingProvider(100, 10, getHashFunction(false));
-        PartitionInfoProvider infoProvider = createPartitionInfoProvider(10);
+        PartitionInfoProvider infoProvider = createRangeBasedPartitionInfoProvider(10);
 
         _uriMapper = new RingBasedUriMapper(hashRingProvider, infoProvider);
         _uriMapperRequests = testUtil.generateRequests(10, 1000);

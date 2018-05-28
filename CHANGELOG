@@ -1,5 +1,7 @@
 23.0.9
 ------
+(RB=1371503)
+Support scatter-gather in rest.li client using ScatterGatherStrategy.
 
 23.0.8
 ------

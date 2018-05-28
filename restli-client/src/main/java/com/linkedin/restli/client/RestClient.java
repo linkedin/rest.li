@@ -21,6 +21,10 @@ import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.Callbacks;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
+import com.linkedin.d2.balancer.KeyMapper;
+import com.linkedin.d2.balancer.ServiceUnavailableException;
+import com.linkedin.d2.balancer.util.URIKeyPair;
+import com.linkedin.d2.balancer.util.URIMappingResult;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
@@ -71,6 +75,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.activation.MimeTypeParseException;
 
 
@@ -179,6 +186,7 @@ public class RestClient implements Client {
     _restLiClientConfig = restLiClientConfig == null ? new RestLiClientConfig() : restLiClientConfig;
   }
 
+
   @Override
   public void shutdown(Callback<None> callback)
   {
@@ -194,10 +202,15 @@ public class RestClient implements Client {
     return _uriPrefix;
   }
 
+  public RestLiClientConfig getClientConfig()
+  {
+    return _restLiClientConfig;
+  }
+
   @Override
   public <T> ResponseFuture<T> sendRequest(Request<T> request, RequestContext requestContext)
   {
-    FutureCallback<Response<T>> callback = new FutureCallback<Response<T>>();
+    FutureCallback<Response<T>> callback = new FutureCallback<>();
     sendRequest(request, requestContext, callback);
     return new ResponseFutureImpl<T>(callback);
   }
@@ -227,6 +240,22 @@ public class RestClient implements Client {
 
   @Override
   public <T> void sendRequest(final Request<T> request, final RequestContext requestContext,
+      final Callback<Response<T>> callback)
+  {
+    ScatterGatherStrategy strategy = getScatterGatherStrategy(requestContext);
+    if (needScatterGather(request, requestContext, strategy))
+    {
+      // scatter gather case
+      handleScatterGatherRequest(request, requestContext, strategy, callback);
+    }
+    else
+    {
+      // default non scatter-gather case
+      sendRequestNoScatterGather(request, requestContext, callback);
+    }
+  }
+
+  private <T> void sendRequestNoScatterGather(final Request<T> request, final RequestContext requestContext,
       final Callback<Response<T>> callback)
   {
     //Here we need to decide if we want to use StreamRequest/StreamResponse or RestRequest/RestResponse.
@@ -270,7 +299,6 @@ public class RestClient implements Client {
       public void onSuccess(ProtocolVersion protocolVersion)
       {
         URI requestUri = RestliUriBuilderUtil.createUriBuilder(request, _uriPrefix, protocolVersion).build();
-
         final ResourceMethod method = request.getMethod();
         final String methodName = request.getMethodName();
         addDisruptContext(request.getBaseUriTemplate(), method, methodName, requestContext);
@@ -577,6 +605,7 @@ public class RestClient implements Client {
     return sendRequest(request, new RequestContext());
   }
 
+
   @Override
   public <T> ResponseFuture<T> sendRequest(Request<T> request, ErrorHandlingBehavior errorHandlingBehavior)
   {
@@ -611,7 +640,7 @@ public class RestClient implements Client {
   @Override
   public void sendRequest(MultiplexedRequest multiplexedRequest)
   {
-    sendRequest(multiplexedRequest, Callbacks.<MultiplexedResponse>empty());
+    sendRequest(multiplexedRequest, Callbacks.empty());
   }
 
   @Override
@@ -847,7 +876,7 @@ public class RestClient implements Client {
 
       final String contentTypeHeader =
           MultiPartMIMEUtils.buildMIMEContentTypeHeader(AttachmentUtils.RESTLI_MULTIPART_SUBTYPE, multiPartMIMEWriter.getBoundary(),
-                                                        Collections.<String, String> emptyMap());
+                                                        Collections.emptyMap());
 
       requestBuilder.setHeader(MultiPartMIMEUtils.CONTENT_TYPE_HEADER, contentTypeHeader);
       return requestBuilder.build(multiPartMIMEWriter.getEntityStream());
@@ -936,5 +965,104 @@ public class RestClient implements Client {
     {
       requestContext.putLocalAttr(DisruptContext.DISRUPT_CONTEXT_KEY, disruptContext);
     }
+  }
+
+  // Return the scatter gather strategy for the given request, and per-request strategy takes precedence
+  // over per-client strategy.
+  private <T> ScatterGatherStrategy getScatterGatherStrategy(final RequestContext requestContext)
+  {
+    return requestContext.getLocalAttr(SCATTER_GATHER_STRATEGY) != null ?
+            (ScatterGatherStrategy)requestContext.removeLocalAttr(SCATTER_GATHER_STRATEGY)
+            : _restLiClientConfig.getScatterGatherStrategy();
+  }
+
+  // Custom RestClient can override this behavior for testing purpose or other cases.
+  protected <T> boolean needScatterGather(final Request<T> request,
+                                          final RequestContext requestContext,
+                                          final ScatterGatherStrategy scatterGatherStrategy)
+  {
+    if (!RestConstants.D2_URI_PREFIX.equals(_uriPrefix) ||
+            (KeyMapper.TargetHostHints.getRequestContextTargetHost(requestContext) != null))
+    {
+      // We don't do scatter gather if it is not D2 request or request context already has target host hint set.
+      return false;
+    }
+    return (scatterGatherStrategy != null) && scatterGatherStrategy.needScatterGather(request);
+  }
+
+
+  @SuppressWarnings("unchecked")
+  private <K, T> void handleScatterGatherRequest(final Request<T> request,
+      final RequestContext requestContext,
+      final ScatterGatherStrategy strategy,
+      final Callback<Response<T>> callback)
+  {
+    getProtocolVersionForService(request, new Callback<ProtocolVersion>()
+    {
+      @Override
+      public void onError(Throwable e)
+      {
+        callback.onError(e);
+      }
+
+      @Override
+      public void onSuccess(ProtocolVersion protocolVersion)
+      {
+        List<URIKeyPair<K>> scatteredKeys = strategy.getUris(request, protocolVersion);
+        URIMappingResult<K> mappingResults;
+        try
+        {
+          mappingResults = strategy.mapUris(scatteredKeys);
+        }
+        catch (ServiceUnavailableException e)
+        {
+          callback.onError(e);
+          return;
+        }
+        if (mappingResults == null || mappingResults.getMappedKeys().isEmpty())
+        {
+          // Strategy returns null URIMappingResult or empty mapped hosts, assuming no scatter is needed
+          callback.onError(new RestLiScatterGatherException("ScatterGatherStrategy cannot map URIs, this should not happen!"));
+          return;
+        }
+        // for mapped keys, we will send scattered requests
+        List<RequestInfo> scatteredRequests =
+            strategy.scatterRequest(request, requestContext, mappingResults.getMappedKeys());
+        // we are using counter instead of CountDownLatch to avoid blocking this thread in CountDownLatch.await
+        final AtomicInteger reqCount = new AtomicInteger(scatteredRequests.size());
+        final Map<RequestInfo, Response<T>> successResponses = new ConcurrentHashMap<>();
+        final Map<RequestInfo, Throwable> failureResponses = new ConcurrentHashMap<>();
+        for (RequestInfo requestInfo : scatteredRequests)
+        {
+          Callback<Response<T>> cb = new Callback<Response<T>>()
+          {
+            @Override
+            public void onSuccess(Response<T> response)
+            {
+              successResponses.put(requestInfo, response);
+              if (reqCount.decrementAndGet() == 0)
+              {
+                // all scattered requests are handled
+                strategy.onAllResponsesReceived(request, protocolVersion, successResponses, failureResponses,
+                        mappingResults.getUnmappedKeys(), callback);
+              }
+            }
+
+            @Override
+            public void onError(Throwable e)
+            {
+              failureResponses.put(requestInfo, e);
+              if (reqCount.decrementAndGet() == 0)
+              {
+                // all scattered requests are handled
+                strategy.onAllResponsesReceived(request, protocolVersion, successResponses, failureResponses,
+                        mappingResults.getUnmappedKeys(), callback);
+              }
+            }
+          };
+          sendRequestNoScatterGather((Request<T>)requestInfo.getRequest(), requestInfo.getRequestContext(), cb);
+        }
+      }
+    });
   }
 }

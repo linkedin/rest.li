@@ -18,8 +18,10 @@ package com.linkedin.d2.balancer.util.hashing;
 
 import com.google.common.collect.Lists;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
+import com.linkedin.d2.balancer.properties.HashBasedPartitionProperties;
 import com.linkedin.d2.balancer.properties.RangeBasedPartitionProperties;
 import com.linkedin.d2.balancer.util.URIKeyPair;
+import com.linkedin.d2.balancer.util.partitions.HashBasedPartitionAccessor;
 import com.linkedin.d2.balancer.util.partitions.PartitionInfoProvider;
 import com.linkedin.d2.balancer.util.partitions.RangeBasedPartitionAccessor;
 import com.linkedin.r2.message.Request;
@@ -86,12 +88,25 @@ public class URIMapperTestUtil
   /**
    * Create a mock PartitionInfoProvider that returns {@link RangeBasedPartitionAccessor} for testing
    */
-  public static PartitionInfoProvider createPartitionInfoProvider(int partitionCount) throws ServiceUnavailableException
+  public static PartitionInfoProvider createRangeBasedPartitionInfoProvider(int partitionCount) throws ServiceUnavailableException
   {
     PartitionInfoProvider infoProvider = Mockito.mock(PartitionInfoProvider.class);
     RangeBasedPartitionProperties properties =
-        new RangeBasedPartitionProperties(PARTITION_KEY_REGEX, 0, 1, partitionCount);
+            new RangeBasedPartitionProperties(PARTITION_KEY_REGEX, 0, 1, partitionCount);
     RangeBasedPartitionAccessor accessor = new RangeBasedPartitionAccessor(properties);
+    Mockito.when(infoProvider.getPartitionAccessor(anyObject())).thenReturn(accessor);
+    return infoProvider;
+  }
+
+  /**
+   * Create a mock PartitionInfoProvider that returns {@link HashBasedPartitionAccessor} for testing
+   */
+  public static PartitionInfoProvider createHashBasedPartitionInfoProvider(int partitionCount, String regex) throws ServiceUnavailableException
+  {
+    PartitionInfoProvider infoProvider = Mockito.mock(PartitionInfoProvider.class);
+    HashBasedPartitionProperties properties =
+            new HashBasedPartitionProperties(regex, partitionCount, HashBasedPartitionProperties.HashAlgorithm.MODULO);
+    HashBasedPartitionAccessor accessor = new HashBasedPartitionAccessor(properties);
     Mockito.when(infoProvider.getPartitionAccessor(anyObject())).thenReturn(accessor);
     return infoProvider;
   }

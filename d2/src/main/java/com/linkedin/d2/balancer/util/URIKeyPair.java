@@ -19,6 +19,7 @@ package com.linkedin.d2.balancer.util;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import com.linkedin.util.ArgumentUtil;
 import java.net.URI;
+import java.util.Objects;
 
 
 /**
@@ -53,5 +54,21 @@ public class URIKeyPair<KEY>
   public URI getRequestUri()
   {
     return _requestUri;
+  }
+
+  @Override
+  public boolean equals(Object o)
+  {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    URIKeyPair<?> that = (URIKeyPair<?>) o;
+    return Objects.equals(_key, that._key) &&
+            Objects.equals(_requestUri, that._requestUri);
+  }
+
+  @Override
+  public int hashCode()
+  {
+    return Objects.hash(_key, _requestUri);
   }
 }

@@ -33,6 +33,7 @@ import com.linkedin.restli.common.UpdateStatus;
 import com.linkedin.restli.internal.client.BatchUpdateResponseDecoder;
 
 import java.net.HttpCookie;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -45,6 +46,8 @@ import java.util.Map;
 public class BatchPartialUpdateRequest<K, V extends RecordTemplate> extends
     com.linkedin.restli.client.BatchRequest<BatchKVResponse<K, UpdateStatus>>
 {
+  private final Map<K, PatchRequest<V>> _partialUpdateInputMap;
+
   @SuppressWarnings("unchecked")
   BatchPartialUpdateRequest(Map<String, String> headers,
                             List<HttpCookie> cookies,
@@ -55,6 +58,7 @@ public class BatchPartialUpdateRequest<K, V extends RecordTemplate> extends
                             String baseUriTemplate,
                             Map<String, Object> pathKeys,
                             RestliRequestOptions requestOptions,
+                            Map<K, PatchRequest<V>> patchInputMap,
                             List<Object> streamingAttachments)
   {
     super(ResourceMethod.BATCH_PARTIAL_UPDATE,
@@ -71,5 +75,11 @@ public class BatchPartialUpdateRequest<K, V extends RecordTemplate> extends
           pathKeys,
           requestOptions,
           streamingAttachments);
+    _partialUpdateInputMap = Collections.unmodifiableMap(patchInputMap);
+  }
+
+  public Map<K, PatchRequest<V>> getPartialUpdateInputMap()
+  {
+    return _partialUpdateInputMap;
   }
 }

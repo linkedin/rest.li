@@ -19,6 +19,7 @@ package com.linkedin.d2.balancer.util;
 import java.net.URI;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 
@@ -41,7 +42,7 @@ public class URIMappingResult<KEY>
     _unmappedKeys = Collections.unmodifiableSet(unmappedKeys);
   }
 
-  public Map<URI, Set<KEY>> getMappedResults()
+  public Map<URI, Set<KEY>> getMappedKeys()
   {
     return _mappedKeys;
   }
@@ -49,5 +50,21 @@ public class URIMappingResult<KEY>
   public Set<KEY> getUnmappedKeys()
   {
     return _unmappedKeys;
+  }
+
+  @Override
+  public boolean equals(Object o)
+  {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    URIMappingResult<?> that = (URIMappingResult<?>) o;
+    return Objects.equals(_mappedKeys, that._mappedKeys) &&
+            Objects.equals(_unmappedKeys, that._unmappedKeys);
+  }
+
+  @Override
+  public int hashCode()
+  {
+    return Objects.hash(_mappedKeys, _unmappedKeys);
   }
 }

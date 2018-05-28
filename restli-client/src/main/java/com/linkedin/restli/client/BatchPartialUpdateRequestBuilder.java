@@ -23,6 +23,7 @@ package com.linkedin.restli.client;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.internal.common.util.CollectionUtils;
 import com.linkedin.restli.common.CollectionRequest;
 import com.linkedin.restli.common.KeyValueRecord;
 import com.linkedin.restli.common.KeyValueRecordFactory;
@@ -166,19 +167,24 @@ public class BatchPartialUpdateRequestBuilder<K, V extends RecordTemplate> exten
   {
     ensureBatchKeys();
 
+    Map<K, PatchRequest<V>> readOnlyPartialUpdateInputMap = new HashMap<>(
+            CollectionUtils.getMapInitialCapacity(_partialUpdateInputMap.size(), 0.75f), 0.75f);
+    CollectionRequest<KeyValueRecord<K, PatchRequest<V>>> readOnlyInput = buildReadOnlyInput(readOnlyPartialUpdateInputMap);
+
     return new BatchPartialUpdateRequest<K, V>(buildReadOnlyHeaders(),
                                                buildReadOnlyCookies(),
-                                               buildReadOnlyInput(),
+                                               readOnlyInput,
                                                buildReadOnlyQueryParameters(),
                                                getQueryParamClasses(),
                                                _resourceSpec,
                                                getBaseUriTemplate(),
                                                buildReadOnlyPathKeys(),
                                                getRequestOptions(),
+                                               readOnlyPartialUpdateInputMap,
                                                _streamingAttachments == null ? null : Collections.unmodifiableList(_streamingAttachments));
   }
 
-  private CollectionRequest<KeyValueRecord<K, PatchRequest<V>>> buildReadOnlyInput()
+  private CollectionRequest<KeyValueRecord<K, PatchRequest<V>>> buildReadOnlyInput(Map<K, PatchRequest<V>> readOnlyInputEntities)
   {
     try
     {
@@ -190,6 +196,7 @@ public class BatchPartialUpdateRequestBuilder<K, V extends RecordTemplate> exten
       {
         K key = getReadOnlyOrCopyKey(inputEntityEntry.getKey());
         PatchRequest<V> entity = getReadOnlyOrCopyDataTemplate(inputEntityEntry.getValue());
+        readOnlyInputEntities.put(key, entity);
         KeyValueRecord<K, PatchRequest<V>> keyValueRecord = _keyValueRecordFactory.create(key, entity);
         keyValueRecord.data().setReadOnly();
         input.getElements().add(keyValueRecord);

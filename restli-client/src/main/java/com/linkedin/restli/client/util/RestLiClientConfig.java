@@ -16,6 +16,8 @@
 package com.linkedin.restli.client.util;
 
 
+import com.linkedin.restli.client.ScatterGatherStrategy;
+
 /**
  * Configuration for rest.li clients.
  *
@@ -24,6 +26,7 @@ package com.linkedin.restli.client.util;
 
 public class RestLiClientConfig {
   private Boolean _useStreaming = false;
+  private ScatterGatherStrategy _scatterGatherStrategy = null;
 
   public boolean isUseStreaming() {
     return _useStreaming;
@@ -31,6 +34,16 @@ public class RestLiClientConfig {
 
   public void setUseStreaming(boolean useStreaming) {
     _useStreaming = useStreaming;
+  }
+
+  public ScatterGatherStrategy getScatterGatherStrategy()
+  {
+    return _scatterGatherStrategy;
+  }
+
+  public void setScatterGatherStrategy(ScatterGatherStrategy scatterGatherStrategy)
+  {
+    _scatterGatherStrategy = scatterGatherStrategy;
   }
 
   @Override

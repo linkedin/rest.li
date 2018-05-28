@@ -51,25 +51,25 @@ public class RingBasedURIMapperTest
   {
     // Both sticky and partitioned
     HashRingProvider ringProvider = createStaticHashRingProvider(100, 10, getHashFunction(true));
-    PartitionInfoProvider infoProvider = createPartitionInfoProvider(10);
+    PartitionInfoProvider infoProvider = createRangeBasedPartitionInfoProvider(10);
     URIMapper mapper = new RingBasedUriMapper(ringProvider, infoProvider);
     Assert.assertTrue(mapper.needScatterGather(TEST_SERVICE));
 
     // Only sticky
     ringProvider = createStaticHashRingProvider(100, 1, getHashFunction(true));
-    infoProvider = createPartitionInfoProvider(1);
+    infoProvider = createRangeBasedPartitionInfoProvider(1);
     mapper = new RingBasedUriMapper(ringProvider, infoProvider);
     Assert.assertTrue(mapper.needScatterGather(TEST_SERVICE));
 
     // Only partitioned
     ringProvider = createStaticHashRingProvider(100, 10, getHashFunction(false));
-    infoProvider = createPartitionInfoProvider(10);
+    infoProvider = createRangeBasedPartitionInfoProvider(10);
     mapper = new RingBasedUriMapper(ringProvider, infoProvider);
     Assert.assertTrue(mapper.needScatterGather(TEST_SERVICE));
 
     // neither
     ringProvider = createStaticHashRingProvider(100, 1, getHashFunction(false));
-    infoProvider = createPartitionInfoProvider(1);
+    infoProvider = createRangeBasedPartitionInfoProvider(1);
     mapper = new RingBasedUriMapper(ringProvider, infoProvider);
     Assert.assertFalse(mapper.needScatterGather(TEST_SERVICE));
   }
@@ -83,13 +83,13 @@ public class RingBasedURIMapperTest
 
     HashRingProvider ringProvider =
         createStaticHashRingProvider(totalHostCount, partitionCount, getHashFunction(false));
-    PartitionInfoProvider infoProvider = createPartitionInfoProvider(partitionCount);
+    PartitionInfoProvider infoProvider = createRangeBasedPartitionInfoProvider(partitionCount);
     URIMapper mapper = new RingBasedUriMapper(ringProvider, infoProvider);
 
     List<URIKeyPair<Integer>> requests = testUtil.generateRequests(partitionCount, requestPerPartition);
 
     URIMappingResult<Integer> results = mapper.mapUris(requests);
-    Map<URI, Set<Integer>> mapping = results.getMappedResults();
+    Map<URI, Set<Integer>> mapping = results.getMappedKeys();
 
     // No unmapped keys
     Assert.assertTrue(results.getUnmappedKeys().isEmpty());
@@ -117,7 +117,7 @@ public class RingBasedURIMapperTest
     int totalHostCount = 100;
 
     HashRingProvider ringProvider = createStaticHashRingProvider(totalHostCount, partitionCount, getHashFunction(true));
-    PartitionInfoProvider infoProvider = createPartitionInfoProvider(partitionCount);
+    PartitionInfoProvider infoProvider = createRangeBasedPartitionInfoProvider(partitionCount);
     URIMapper mapper = new RingBasedUriMapper(ringProvider, infoProvider);
 
     List<URIKeyPair<Integer>> requests = testUtil.generateRequests(partitionCount, requestPerPartition);
@@ -126,10 +126,10 @@ public class RingBasedURIMapperTest
     URIMappingResult<Integer> results2 = mapper.mapUris(requests);
 
     // Sticky routing between two runs
-    Assert.assertEquals(results1.getMappedResults(), results2.getMappedResults());
+    Assert.assertEquals(results1.getMappedKeys(), results2.getMappedKeys());
     Assert.assertEquals(results1.getUnmappedKeys(), results2.getUnmappedKeys());
 
-    Map<URI, Set<Integer>> mapping = results1.getMappedResults();
+    Map<URI, Set<Integer>> mapping = results1.getMappedKeys();
 
     // Testing universal stickiness, take out 50 requests randomly and make sure they would be resolved to the same host as does URIMapper
     Collections.shuffle(requests);
@@ -151,13 +151,13 @@ public class RingBasedURIMapperTest
     int totalHostCount = 100;
 
     HashRingProvider ringProvider = createStaticHashRingProvider(totalHostCount, partitionCount, getHashFunction(true));
-    PartitionInfoProvider infoProvider = createPartitionInfoProvider(partitionCount);
+    PartitionInfoProvider infoProvider = createRangeBasedPartitionInfoProvider(partitionCount);
     URIMapper mapper = new RingBasedUriMapper(ringProvider, infoProvider);
 
     List<URIKeyPair<Integer>> requests = testUtil.generateRequests(partitionCount, requestPerPartition);
 
     URIMappingResult<Integer> results = mapper.mapUris(requests);
-    Map<URI, Set<Integer>> mapping = results.getMappedResults();
+    Map<URI, Set<Integer>> mapping = results.getMappedKeys();
     Set<Integer> unmappedKeys = results.getUnmappedKeys();
 
     Assert.assertTrue(unmappedKeys.isEmpty());
@@ -173,13 +173,13 @@ public class RingBasedURIMapperTest
 
     HashRingProvider ringProvider =
         createStaticHashRingProvider(totalHostCount, partitionCount, getHashFunction(false));
-    PartitionInfoProvider infoProvider = createPartitionInfoProvider(partitionCount);
+    PartitionInfoProvider infoProvider = createRangeBasedPartitionInfoProvider(partitionCount);
     URIMapper mapper = new RingBasedUriMapper(ringProvider, infoProvider);
 
     List<URIKeyPair<Integer>> requests = testUtil.generateRequests(partitionCount, requestPerPartition);
 
     URIMappingResult<Integer> results = mapper.mapUris(requests);
-    Map<URI, Set<Integer>> mapping = results.getMappedResults();
+    Map<URI, Set<Integer>> mapping = results.getMappedKeys();
     Set<Integer> unmappedKeys = results.getUnmappedKeys();
 
     Assert.assertTrue(unmappedKeys.isEmpty());
@@ -206,13 +206,13 @@ public class RingBasedURIMapperTest
     StaticRingProvider ringProvider = new StaticRingProvider(rings);
     ringProvider.setHashFunction(new RandomHash());
 
-    PartitionInfoProvider infoProvider = createPartitionInfoProvider(partitionCount);
+    PartitionInfoProvider infoProvider = createRangeBasedPartitionInfoProvider(partitionCount);
     URIMapper mapper = new RingBasedUriMapper(ringProvider, infoProvider);
 
     List<URIKeyPair<Integer>> requests = testUtil.generateRequests(partitionCount, requestPerPartition);
 
     URIMappingResult<Integer> results = mapper.mapUris(requests);
-    Map<URI, Set<Integer>> mapping = results.getMappedResults();
+    Map<URI, Set<Integer>> mapping = results.getMappedKeys();
     Set<Integer> unmappedKeys = results.getUnmappedKeys();
 
     Assert.assertTrue(unmappedKeys.isEmpty());
@@ -227,7 +227,7 @@ public class RingBasedURIMapperTest
     int totalHostCount = 100;
 
     HashRingProvider ringProvider = createStaticHashRingProvider(totalHostCount, partitionCount, getHashFunction(true));
-    PartitionInfoProvider infoProvider = createPartitionInfoProvider(partitionCount);
+    PartitionInfoProvider infoProvider = createRangeBasedPartitionInfoProvider(partitionCount);
     URIMapper mapper = new RingBasedUriMapper(ringProvider, infoProvider);
 
     URIKeyPair<Integer> requestWithoutPartitionId = new URIKeyPair<>(42, new URI("d2://badService/2"));
@@ -238,7 +238,7 @@ public class RingBasedURIMapperTest
         Arrays.asList(requestWithoutKey, requestWithoutPartitionId, requestWithoutBoth);
 
     URIMappingResult<Integer> result = mapper.mapUris(requests);
-    Assert.assertTrue(result.getMappedResults().isEmpty());
+    Assert.assertTrue(result.getMappedKeys().isEmpty());
     Assert.assertTrue(result.getUnmappedKeys().contains(42));
     Assert.assertTrue(result.getUnmappedKeys().contains(43));
     Assert.assertTrue(result.getUnmappedKeys().contains(44));
@@ -252,7 +252,7 @@ public class RingBasedURIMapperTest
 
     HashRingProvider ringProvider = createStaticHashRingProvider(totalHostCount, partitionCount, getHashFunction(true));
     HashFunction<Request> hashFunction = ringProvider.getRequestHashFunction(TEST_SERVICE);
-    PartitionInfoProvider infoProvider = createPartitionInfoProvider(partitionCount);
+    PartitionInfoProvider infoProvider = createRangeBasedPartitionInfoProvider(partitionCount);
     URIMapper mapper = new RingBasedUriMapper(ringProvider, infoProvider);
 
     URIKeyPair<Integer> request1 = new URIKeyPair<>(1, new URI("d2://testService/1")); // no partition, will be unmapped
@@ -289,7 +289,7 @@ public class RingBasedURIMapperTest
 
     // they should have the same results
     Assert.assertEquals(uriMapperResult.getUnmappedKeys(), normalUnmapped);
-    for (Map.Entry<URI, Set<Integer>> resolvedKeys : uriMapperResult.getMappedResults().entrySet()) {
+    for (Map.Entry<URI, Set<Integer>> resolvedKeys : uriMapperResult.getMappedKeys().entrySet()) {
       Set<Integer> uriMapperKeySet = resolvedKeys.getValue();
       Assert.assertTrue(normalHostToKeySet.containsKey(resolvedKeys.getKey()));
       Set<Integer> normalKeySet = normalHostToKeySet.get(resolvedKeys.getKey());
