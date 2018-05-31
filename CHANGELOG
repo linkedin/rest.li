@@ -1,6 +1,7 @@
 21.0.7
 -------
-
+(RB=1325995)
+Added enums to TestQueryParamsUtil to prove it works since we have production use cases that depend on it
 
 21.0.6
 -------

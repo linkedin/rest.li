@@ -16,8 +16,10 @@
 
 package com.linkedin.restli.internal.client;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.schema.DataSchema.Type;
 import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.restli.internal.common.URIParamUtils;
 import java.util.ArrayList;
@@ -41,16 +43,19 @@ public class TestQueryParamsUtil
     hashMapParam.put("someField", "someValue");
     hashMapParam.put("foo", "bar");
     hashMapParam.put("notifications", ImmutableMap.of("a", "b"));
+    hashMapParam.put("type", Type.BOOLEAN);
 
     List<Object> subList = new ArrayList<>();
     subList.add("first");
     subList.add(ImmutableMap.of("x", "1", "y", 2));
+    subList.add(ImmutableList.of(Type.ARRAY, Type.BYTES, Type.MAP));
     hashMapParam.put("subList", subList);
 
     List<Object> arrayListParam = new ArrayList<>();
     arrayListParam.add("x");
     arrayListParam.add("y");
     arrayListParam.add(hashMapParam);
+    arrayListParam.add(Type.DOUBLE);
 
     queryParams.put("hashMapParam", hashMapParam);
     queryParams.put("arrayListParam", arrayListParam);
@@ -61,8 +66,8 @@ public class TestQueryParamsUtil
     URIParamUtils.addSortedParams(uriBuilder, dataMapQueryParams);
     String query = uriBuilder.build().getQuery();
     Assert.assertEquals(query,
-        "arrayListParam=List(x,y,(foo:bar,notifications:(a:b),someField:someValue,subList:List(first,(x:1,y:2))))"
-        + "&hashMapParam=(foo:bar,notifications:(a:b),someField:someValue,subList:List(first,(x:1,y:2)))");
+        "arrayListParam=List(x,y,(foo:bar,notifications:(a:b),someField:someValue,subList:List(first,(x:1,y:2),List(ARRAY,BYTES,MAP)),type:BOOLEAN),DOUBLE)"
+        + "&hashMapParam=(foo:bar,notifications:(a:b),someField:someValue,subList:List(first,(x:1,y:2),List(ARRAY,BYTES,MAP)),type:BOOLEAN)");
   }
 
   @Test (expectedExceptions = IllegalArgumentException.class,
