@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
@@ -40,6 +42,7 @@ public class AclAwareZookeeperTest
 {
   private final int ZK_PORT = 2120;
   private final int ZK_TIMEOUT = 2000;
+  private final int ZK_RETRY_LIMIT = 10;
 
   private ZKServer _zkServer;
   private ZooKeeper _verificationZKClient;
@@ -65,7 +68,8 @@ public class AclAwareZookeeperTest
     aclProvider.setAuthScheme(scheme);
     aclProvider.setAuthInfo(authInfo);
     ZooKeeper newSession = new VanillaZooKeeperAdapter("localhost:" + ZK_PORT, ZK_TIMEOUT, new TestWatcher());
-    ZooKeeper aclAwareZk = new AclAwareZookeeper(newSession, aclProvider);
+    ZooKeeper retryZk = new RetryZooKeeper(newSession, ZK_RETRY_LIMIT);
+    ZooKeeper aclAwareZk = new AclAwareZookeeper(retryZk, aclProvider);
     return aclAwareZk;
   }
 
