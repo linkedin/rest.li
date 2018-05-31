@@ -81,6 +81,14 @@ public class D2ClientBuilder
 
     List<ScheduledExecutorService> executorsToShutDown= new ArrayList<>();
 
+    if (_config.startUpExecutorService == null)
+    {
+      // creating an executor that when there are no tasks to execute doesn't create any thread.
+      _config.startUpExecutorService =
+        Executors.newScheduledThreadPool(0, new NamedThreadFactory("D2 StartupOnlyExecutor"));
+      executorsToShutDown.add(_config.startUpExecutorService);
+    }
+
     if (_config._executorService == null)
     {
       LOG.warn("No executor service passed as argument. Pass it for " +
@@ -137,7 +145,8 @@ public class D2ClientBuilder
                   loadBalancerStrategyFactories,
                   _config.requestTimeoutHandlerEnabled,
                   _config.sslSessionValidatorFactory,
-                  _config.zkConnectionToUseForLB);
+                  _config.zkConnectionToUseForLB,
+                  _config.startUpExecutorService);
 
     final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?
       new ZKFSLoadBalancerWithFacilitiesFactory() :

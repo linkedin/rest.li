@@ -3,6 +3,9 @@
 (RB=1325995)
 Added enums to TestQueryParamsUtil to prove it works since we have production use cases that depend on it
 
+(RB=1325557)
+Creating a startupExecutor to use in the first phases of startup to not re-use/conflict with the internal usages of other executors
+
 21.0.6
 -------
 (RB=1312972)

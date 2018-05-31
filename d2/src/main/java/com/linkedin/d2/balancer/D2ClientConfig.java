@@ -82,6 +82,7 @@ public class D2ClientConfig
   boolean requestTimeoutHandlerEnabled = false;
   SslSessionValidatorFactory sslSessionValidatorFactory = null;
   ZKPersistentConnection zkConnectionToUseForLB = null;
+  ScheduledExecutorService startUpExecutorService = null;
 
   private static final int DEAULT_RETRY_LIMIT = 3;
 
@@ -128,7 +129,8 @@ public class D2ClientConfig
                  Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories,
                  boolean requestTimeoutHandlerEnabled,
                  SslSessionValidatorFactory sslSessionValidatorFactory,
-                 ZKPersistentConnection zkConnection)
+                 ZKPersistentConnection zkConnection,
+                 ScheduledExecutorService startUpExecutorService)
   {
     this.zkHosts = zkHosts;
     this.zkSessionTimeoutInMs = zkSessionTimeoutInMs;
@@ -170,5 +172,6 @@ public class D2ClientConfig
     this.requestTimeoutHandlerEnabled = requestTimeoutHandlerEnabled;
     this.sslSessionValidatorFactory = sslSessionValidatorFactory;
     this.zkConnectionToUseForLB = zkConnection;
+    this.startUpExecutorService = startUpExecutorService;
   }
 }

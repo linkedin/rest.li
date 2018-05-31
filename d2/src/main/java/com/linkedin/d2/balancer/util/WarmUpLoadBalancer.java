@@ -109,7 +109,10 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator
       @Override
       public void onSuccess(None result)
       {
-        warmUpServices(callback);
+        // guaranteeing that we are going to use a thread that is not going to cause a deadlock
+        // the caller might call this method on other threads (e.g. the ZK thread) creating possible circular dependencies
+        // resulting in malfunctions
+        _executorService.execute(() -> warmUpServices(callback));
       }
     });
   }
