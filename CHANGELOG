@@ -3,6 +3,9 @@
 (RB=1312972)
 Build validating schema on request if using projections, return HTTP 400 for projections with nonexistent fields
 
+(RB=1325295)
+use retryZookeeper in AclAwareZookeeperTest to improve test stability
+
 21.0.5
 -------
 (RB=1277357)
