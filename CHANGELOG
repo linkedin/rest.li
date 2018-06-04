@@ -1,5 +1,12 @@
+22.0.3
+------
+
+
 22.0.2
 ------
+(RB=1328278)
+Removed _declaredIncline property from equals and hashCode methods on UnionDataSchema.Member class.
+
 (RB=1328802)
 Add default value for HTTP_QUERY_POST_THRESHOLD
 

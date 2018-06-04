@@ -2621,4 +2621,46 @@ public class TestDataSchema
       }
     }
   }
+
+  @Test
+  public void testMemberComparisionWithoutTypeDeclarationInfo()
+  {
+    StringBuilder errorMessages = new StringBuilder();
+
+    UnionDataSchema.Member memberWithInclinedType = new UnionDataSchema.Member(new StringDataSchema());
+    memberWithInclinedType.setDeclaredInline(true);
+    memberWithInclinedType.setAlias("foo", errorMessages);
+    assertEquals(errorMessages.length(), 0);
+    memberWithInclinedType.setDoc("Foo member");
+
+    UnionDataSchema.Member memberWithReferencedType = new UnionDataSchema.Member(new StringDataSchema());
+    memberWithReferencedType.setDeclaredInline(false);
+    memberWithReferencedType.setAlias("foo", errorMessages);
+    assertEquals(errorMessages.length(), 0);
+    memberWithReferencedType.setDoc("Foo member");
+
+    assertTrue(memberWithInclinedType.equals(memberWithReferencedType));
+    assertTrue(memberWithInclinedType.hashCode() == memberWithReferencedType.hashCode());
+  }
+
+  @Test
+  public void testFieldComparisionWithoutTypeDeclarationInfo()
+  {
+    StringBuilder errorMessages = new StringBuilder();
+
+    RecordDataSchema.Field fieldWithInclinedType = new RecordDataSchema.Field(new StringDataSchema());
+    fieldWithInclinedType.setDeclaredInline(true);
+    fieldWithInclinedType.setName("bar", errorMessages);
+    assertEquals(errorMessages.length(), 0);
+    fieldWithInclinedType.setDoc("Bar field");
+
+    RecordDataSchema.Field fieldWithReferencedType = new RecordDataSchema.Field(new StringDataSchema());
+    fieldWithReferencedType.setDeclaredInline(false);
+    fieldWithReferencedType.setName("bar", errorMessages);
+    assertEquals(errorMessages.length(), 0);
+    fieldWithReferencedType.setDoc("Bar field");
+
+    assertTrue(fieldWithInclinedType.equals(fieldWithReferencedType));
+    assertTrue(fieldWithInclinedType.hashCode() == fieldWithReferencedType.hashCode());
+  }
 }

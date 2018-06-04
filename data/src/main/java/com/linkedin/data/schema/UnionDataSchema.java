@@ -221,7 +221,6 @@ public final class UnionDataSchema extends ComplexDataSchema
             _type.equals(other._type) &&
             _doc.equals(other._doc) &&
             _properties.equals(other._properties) &&
-            _declaredInline == other._declaredInline &&
             _hasError == other._hasError;
       }
 
@@ -235,7 +234,6 @@ public final class UnionDataSchema extends ComplexDataSchema
           _type.hashCode() ^
           _doc.hashCode() ^
           _properties.hashCode() ^
-          (_declaredInline ? 0xAAAAAAAA : 0x55555555) ^
           (_hasError ? 0xAAAAAAAA : 0x55555555);
     }
 
