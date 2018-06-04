@@ -125,6 +125,7 @@ public class HttpClientFactory implements TransportClientFactory
   public static final String HTTP_TCP_NO_DELAY = "http.tcpNoDelay";
   public static final String HTTP_PROTOCOL_VERSION = "http.protocolVersion";
 
+  public static final int DEFAULT_QUERY_POST_THRESHOLD = Integer.MAX_VALUE;
   public static final int DEFAULT_POOL_WAITER_SIZE = Integer.MAX_VALUE;
   public static final int DEFAULT_POOL_SIZE = 200;
   public static final int DEFAULT_REQUEST_TIMEOUT = 1000;
@@ -893,7 +894,7 @@ public class HttpClientFactory implements TransportClientFactory
       }
     }
 
-    Integer queryPostThreshold = chooseNewOverDefault(getIntValue(properties, HTTP_QUERY_POST_THRESHOLD), Integer.MAX_VALUE);
+    Integer queryPostThreshold = chooseNewOverDefault(getIntValue(properties, HTTP_QUERY_POST_THRESHOLD), DEFAULT_QUERY_POST_THRESHOLD);
     ClientQueryTunnelFilter clientQueryTunnelFilter = new ClientQueryTunnelFilter(queryPostThreshold);
     filters = filters.addLastRest(clientQueryTunnelFilter);
     filters = filters.addLast(clientQueryTunnelFilter);
