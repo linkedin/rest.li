@@ -1,6 +1,7 @@
 22.0.1
 -------
-
+(RB=1328701)
+Fix pdsc to avro transform issue when record type is union with alias
 
 22.0.0
 -------

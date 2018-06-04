@@ -425,7 +425,7 @@ public class DataTranslator implements DataTranslatorContext
 
         DataMap result = new DataMap(1);
         _path.add(fieldDiscriminator);
-        result.put(fieldDiscriminatorValue.toString(), translate(fieldValue, memberDataSchema, fieldAvroSchema));
+        result.put(fieldDiscriminator, translate(fieldValue, memberDataSchema, extractNonnullSchema(fieldAvroSchema)));
         _path.removeLast();
         return result;
       }
@@ -674,8 +674,9 @@ public class DataTranslator implements DataTranslatorContext
           return BAD_RESULT;
         }
         _path.add(memberKey);
-        Object translatedValue = translate(memberValue, memberDataSchema, avroField.schema());
-        avroRecord.put(memberKey, translatedValue);
+
+        Schema fieldAvroSchema = avroField.schema();
+        avroRecord.put(memberKey, translate(memberValue, memberDataSchema, extractNonnullSchema(fieldAvroSchema)));
         _path.removeLast();
       }
 

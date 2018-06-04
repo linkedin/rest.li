@@ -981,6 +981,47 @@ public class TestDataTranslator
           "Error processing /unionOptional"
         },
       },
+      {
+        // record with optional union field with alias, union types are RECORD
+        {
+            "{\n" +
+                "  \"type\" : \"record\",\n" +
+                "  \"name\" : \"Foo\",\n" +
+                "  \"fields\" : [\n" +
+                "    {\n" +
+                "      \"name\" : \"unionOptionalAlias\",\n" +
+                "      \"type\" : ##T_START [\n" +
+                "        { " +
+                "          \"type\" : { \"type\" : \"record\", \"name\" : \"R1\", \"fields\" : [ { \"name\" : \"r1\", \"type\" : \"string\" } ] },  " +
+                "          \"alias\": \"success\"" +
+                "        },\n" +
+                "        { " +
+                "          \"type\": { \"type\" : \"record\", \"name\" : \"R2\", \"fields\" : [ { \"name\" : \"r2\", \"type\" : \"int\" } ] }, " +
+                "          \"alias\": \"failure\"" +
+                "        }\n" +
+                "      ] ##T_END,\n" +
+                "      \"optional\" : true\n" +
+                "    }\n" +
+                "  ]\n" +
+                "}\n"
+        },
+        {
+            "{ \"unionOptionalAlias\" : { \"success\" : { \"r1\" : \"value\" } } }",
+            "{\"unionOptionalAlias\":{\"FooUnionOptionalAlias\":{\"success\":{\"R1\":{\"r1\":\"value\"}},\"failure\":null,\"fieldDiscriminator\":\"success\"}}}"
+        },
+        {
+            "{}",
+            "{\"unionOptionalAlias\":null}"
+        },
+        {
+            "{ \"unionOptionalAlias\" : {} }",
+            "Error processing /unionOptionalAlias"
+        },
+        {
+            "{ \"unionOptionalAlias\" : { \"success\" : { \"r1\" : 123 } } }",
+            "Error processing /unionOptionalAlias/success"
+        }
+      }
     };
 
     // test translation of Pegasus DataMap to Avro GenericRecord.
