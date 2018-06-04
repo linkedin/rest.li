@@ -19,6 +19,9 @@ import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
 import com.linkedin.r2.transport.http.common.HttpConstants;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+
 
 /**
  * A helper class that holds static convenience methods for conversion between rest messages and stream messages
@@ -53,6 +56,29 @@ public class Messages
       }
     };
     streamRequest.getEntityStream().setReader(new FullEntityReader(assemblyCallback));
+  }
+
+  public static CompletionStage<RestRequest> toRestRequest(StreamRequest streamRequest)
+  {
+    CompletableFuture<RestRequest> completable = new CompletableFuture<>();
+    final RestRequestBuilder builder = new RestRequestBuilder(streamRequest);
+    streamRequest.getEntityStream().setReader(new FullEntityReader(new Callback<ByteString>()
+    {
+      @Override
+      public void onError(Throwable e)
+      {
+        completable.completeExceptionally(e);
+      }
+
+      @Override
+      public void onSuccess(ByteString result)
+      {
+        RestRequest restRequest = builder.setEntity(result).build();
+        completable.complete(restRequest);
+      }
+    }));
+
+    return completable;
   }
 
   /**

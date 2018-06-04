@@ -18,7 +18,6 @@ package com.linkedin.restli.internal.server.methods.arguments;
 
 
 import com.linkedin.r2.message.rest.RestRequest;
-import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.test.MyComplexKey;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.ServerResourceContext;
@@ -26,14 +25,14 @@ import com.linkedin.restli.internal.server.model.AnnotationSet;
 import com.linkedin.restli.internal.server.model.Parameter;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.model.ResourceModel;
+import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.server.BatchCreateRequest;
 import com.linkedin.restli.server.RestLiRequestData;
 
-import com.linkedin.restli.server.RoutingException;
+import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.util.List;
 
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import static org.easymock.EasyMock.verify;
@@ -49,8 +48,9 @@ public class TestBatchCreateArgumentBuilder
 {
   @Test
   public void testArgumentBuilderSuccess()
+      throws IOException
   {
-    RestRequest request = RestLiArgumentBuilderTestHelper.getMockRequest(false, "{\"elements\":[{\"b\":123,\"a\":\"abc\"},{\"b\":5678,\"a\":\"xyzw\"}]}", 1);
+    RestRequest request = RestLiArgumentBuilderTestHelper.getMockRequest(false, "{\"elements\":[{\"b\":123,\"a\":\"abc\"},{\"b\":5678,\"a\":\"xyzw\"}]}");
     ResourceModel model = RestLiArgumentBuilderTestHelper.getMockResourceModel(MyComplexKey.class, null, false);
     @SuppressWarnings("rawtypes")
     Parameter<BatchCreateRequest> param = new Parameter<>("",
@@ -66,7 +66,8 @@ public class TestBatchCreateArgumentBuilder
     RoutingResult routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(descriptor, 2, context, 1);
 
     RestLiArgumentBuilder argumentBuilder = new BatchCreateArgumentBuilder();
-    RestLiRequestData requestData = argumentBuilder.extractRequestData(routingResult, request);
+    RestLiRequestData requestData = argumentBuilder.extractRequestData(routingResult,
+        DataMapUtils.readMapWithExceptions(request));
     Object[] args = argumentBuilder.buildArguments(requestData, routingResult);
 
     assertEquals(args.length, 1);
@@ -80,44 +81,5 @@ public class TestBatchCreateArgumentBuilder
     assertEquals((long) entities.get(1).getB(), 5678L);
 
     verify(request, model, descriptor, context, routingResult);
-  }
-
-  @DataProvider
-  private Object[][] failureData()
-  {
-    return new Object[][]
-        {
-            {"{\"elements\":{\"b\":123,\"a\":\"abc\"},{\"b\":5678,\"a\":\"xyzw\"}]}", "Cannot parse request"},
-            {"{\"elements\":1234}", "Cannot parse request"},
-            {"{\"elements\":", "Cannot parse request"},
-            {"{\"elements\":[{\"b\":123,\"a\":\"abc\"},{1234:5678,\"a\":\"xyzw\"}]}", "Cannot parse request"}
-        };
-  }
-
-  @Test(dataProvider = "failureData")
-  public void testFailure(String entity, String expectedExceptionMessage)
-  {
-    RestRequest request = RestLiArgumentBuilderTestHelper.getMockRequest(false, entity, 1);
-    ResourceModel model = RestLiArgumentBuilderTestHelper.getMockResourceModel(MyComplexKey.class, null, false);
-    ResourceMethodDescriptor descriptor = RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor(model, 1, null);
-    RoutingResult routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(descriptor, 1, null, 0);
-
-    RestLiArgumentBuilder argumentBuilder = new BatchCreateArgumentBuilder();
-    try
-    {
-      argumentBuilder.extractRequestData(routingResult, request);
-      fail("Expected RestLiInternalException or ClassCastException");
-    }
-    catch (RoutingException e)
-    {
-      assertTrue(e.getMessage().contains(expectedExceptionMessage));
-      assertEquals(HttpStatus.S_400_BAD_REQUEST.getCode(), e.getStatus());
-    }
-    catch (ClassCastException e)
-    {
-      assertTrue(e.getMessage().contains("java.lang.Integer cannot be cast to com.linkedin.data.DataList"));
-    }
-
-    verify(request, model, descriptor, routingResult);
   }
 }

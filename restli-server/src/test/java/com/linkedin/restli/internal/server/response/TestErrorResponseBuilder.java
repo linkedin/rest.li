@@ -75,7 +75,7 @@ public class TestErrorResponseBuilder
                                                                                    serviceException,
                                                                                    headers,
                                                                                    Collections.emptyList());
-    PartialRestResponse restResponse = errorResponseBuilder.buildResponse(responseData);
+    RestLiResponse restResponse = errorResponseBuilder.buildResponse(responseData);
 
     EasyMock.verify(mockDescriptor);
     ErrorResponse errorResponse = (ErrorResponse)restResponse.getEntity();

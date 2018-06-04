@@ -12,15 +12,27 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
-
  */
 
-package com.linkedin.restli.server;
+package com.linkedin.restli.internal.server.response;
 
 /**
- * @deprecated Use {@link NonResourceRequestHandler}.
+ * This is an exception that wraps a {@link RestLiResponse}. It is used to provide a custom error for a
+ * <code>Callback&lt;RestLiResponse&gt;</code>.
  */
-@Deprecated
-public interface RequestHandler extends NonResourceRequestHandler
+@SuppressWarnings("serial")
+public class RestLiResponseException extends Exception
 {
+  private RestLiResponse _restLiResponse;
+
+  public RestLiResponseException(Throwable cause, RestLiResponse restLiResponse)
+  {
+    super(cause);
+    _restLiResponse = restLiResponse;
+  }
+
+  public RestLiResponse getRestLiResponse()
+  {
+    return _restLiResponse;
+  }
 }

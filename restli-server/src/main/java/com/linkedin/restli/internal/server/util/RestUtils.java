@@ -287,20 +287,6 @@ public class RestUtils
    *           if any of the headers are invalid.
    */
   public static void validateRequestHeadersAndUpdateResourceContext(final Map<String, String> headers,
-      ServerResourceContext resourceContext)
-  {
-    validateRequestHeadersAndUpdateResourceContext(headers, Collections.emptySet(), resourceContext);
-  }
-
-  /**
-   * Validate request headers.
-   *
-   * @param headers
-   *          Request headers.
-   * @throws RestLiServiceException
-   *           if any of the headers are invalid.
-   */
-  public static void validateRequestHeadersAndUpdateResourceContext(final Map<String, String> headers,
                                                                     final Set<String> customMimeTypesSupported,
                                                                     ServerResourceContext resourceContext)
   {

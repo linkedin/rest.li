@@ -22,7 +22,6 @@ package com.linkedin.restli.internal.server.methods.arguments;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.CollectionRequest;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.util.ArgumentUtils;
@@ -50,10 +49,9 @@ public class BatchCreateArgumentBuilder implements RestLiArgumentBuilder
   }
 
   @Override
-  public RestLiRequestData extractRequestData(RoutingResult routingResult, RestRequest request)
+  public RestLiRequestData extractRequestData(RoutingResult routingResult, DataMap dataMap)
   {
     Class<? extends RecordTemplate> valueClass = ArgumentUtils.getValueClass(routingResult);
-    DataMap dataMap = ArgumentBuilder.extractEntity(request);
     @SuppressWarnings({ "unchecked", "rawtypes" })
     CollectionRequest<RecordTemplate> collectionRequest = new CollectionRequest(dataMap, valueClass);
     return new RestLiRequestDataImpl.Builder().batchEntities(collectionRequest.getElements()).build();

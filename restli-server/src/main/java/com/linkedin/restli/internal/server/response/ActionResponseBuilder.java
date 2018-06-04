@@ -19,7 +19,7 @@ package com.linkedin.restli.internal.server.response;
 
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.template.FieldDef;
-import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.Request;
 import com.linkedin.restli.common.ActionResponse;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.internal.server.RoutingResult;
@@ -36,18 +36,24 @@ public class ActionResponseBuilder implements RestLiResponseBuilder<RestLiRespon
 {
 
   @Override
-  public PartialRestResponse buildResponse(RoutingResult routingResult,
+  public RestLiResponse buildResponse(RoutingResult routingResult,
                                            RestLiResponseData<ActionResponseEnvelope> responseData)
   {
-    return new PartialRestResponse.Builder().status(responseData.getResponseEnvelope().getStatus())
+    return new RestLiResponse.Builder().status(responseData.getResponseEnvelope().getStatus())
                                             .entity(responseData.getResponseEnvelope().getRecord())
                                             .headers(responseData.getHeaders())
                                             .cookies(responseData.getCookies())
                                             .build();
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * @param result The result for a Rest.li ACTION method. It can be the return value for the ACTION itself, or the
+   *               return value wrapped in an {@link ActionResult}.
+   */
   @Override
-  public RestLiResponseData<ActionResponseEnvelope> buildRestLiResponseData(RestRequest request,
+  public RestLiResponseData<ActionResponseEnvelope> buildRestLiResponseData(Request request,
                                                     RoutingResult routingResult,
                                                     Object result,
                                                     Map<String, String> headers,

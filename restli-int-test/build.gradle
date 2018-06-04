@@ -35,3 +35,20 @@ dependencies {
 test {
   systemProperties['test.projectDir'] = project.projectDir.path
 }
+
+task streamCodecTest(type: Test) {
+  maxHeapSize = '4g'
+  systemProperties['test.projectDir'] = project.projectDir.path
+  systemProperties['test.useStreamCodec'] = 'true'
+
+  useTestNG() {
+    excludeGroups 'not_implemented'
+    excludeGroups 'integration'
+    excludeGroups 'd2integration'
+    excludeGroups 'integration_external_product_dependent'
+    excludeGroups 'known_issue'
+    excludeGroups 'withoutAssertion'
+  }
+}
+
+project.tasks.test.dependsOn(streamCodecTest)

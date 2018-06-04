@@ -18,13 +18,13 @@ package com.linkedin.restli.internal.server.filter;
 
 
 import com.linkedin.common.callback.Callback;
-import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.HeaderUtil;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.response.ErrorResponseBuilder;
-import com.linkedin.restli.internal.server.response.PartialRestResponse;
+import com.linkedin.restli.internal.server.response.RestLiResponse;
+import com.linkedin.restli.internal.server.response.RestLiResponseException;
 import com.linkedin.restli.internal.server.response.RestLiResponseHandler;
 import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
@@ -43,12 +43,12 @@ public class FilterChainCallbackImpl implements FilterChainCallback
   private static final Logger LOGGER = LoggerFactory.getLogger(FilterChainCallbackImpl.class);
   private RoutingResult _method;
   private RestLiResponseHandler _responseHandler;
-  private Callback<RestResponse> _wrappedCallback;
+  private Callback<RestLiResponse> _wrappedCallback;
   private final ErrorResponseBuilder _errorResponseBuilder;
 
   public FilterChainCallbackImpl(RoutingResult method,
       RestLiResponseHandler responseHandler,
-      Callback<RestResponse> wrappedCallback,
+      Callback<RestLiResponse> wrappedCallback,
       ErrorResponseBuilder errorResponseBuilder)
   {
     _method = method;
@@ -60,20 +60,19 @@ public class FilterChainCallbackImpl implements FilterChainCallback
   @Override
   public void onResponseSuccess(final RestLiResponseData<?> responseData)
   {
-    RestResponse response;
+    RestLiResponse partialResponse;
     try
     {
-      final PartialRestResponse partialResponse = _responseHandler.buildPartialResponse(_method, responseData);
-      response = _responseHandler.buildResponse(_method, partialResponse);
+      partialResponse = _responseHandler.buildPartialResponse(_method, responseData);
     }
     catch (Throwable th)
     {
       LOGGER.error("Unexpected error while building the success response. Converting to error response.", th);
-      _wrappedCallback.onError(_responseHandler.buildRestException(th, buildErrorResponse(th, responseData)));
+      _wrappedCallback.onError(new RestLiResponseException(th, buildErrorResponse(th, responseData)));
       return;
     }
 
-    _wrappedCallback.onSuccess(response);
+    _wrappedCallback.onSuccess(partialResponse);
   }
 
   @Override
@@ -86,8 +85,8 @@ public class FilterChainCallbackImpl implements FilterChainCallback
     try
     {
       RestLiServiceException serviceException = responseData.getResponseEnvelope().getException();
-      final PartialRestResponse response = _responseHandler.buildPartialResponse(_method, responseData);
-      error = _responseHandler.buildRestException(serviceException, response);
+      final RestLiResponse response = _responseHandler.buildPartialResponse(_method, responseData);
+      error = new RestLiResponseException(serviceException, response);
     }
     catch (Throwable throwable)
     {
@@ -98,7 +97,7 @@ public class FilterChainCallbackImpl implements FilterChainCallback
     _wrappedCallback.onError(error);
   }
 
-  private PartialRestResponse buildErrorResponse(Throwable th, RestLiResponseData<?> responseData)
+  private RestLiResponse buildErrorResponse(Throwable th, RestLiResponseData<?> responseData)
   {
     Map<String, String> responseHeaders = responseData.getHeaders();
     responseHeaders.put(HeaderUtil.getErrorResponseHeaderName(responseHeaders), RestConstants.HEADER_VALUE_ERROR);
@@ -112,7 +111,7 @@ public class FilterChainCallbackImpl implements FilterChainCallback
       ex = new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, th.getMessage(), th);
     }
 
-    return new PartialRestResponse.Builder().headers(responseHeaders).cookies(responseData.getCookies())
+    return new RestLiResponse.Builder().headers(responseHeaders).cookies(responseData.getCookies())
         .status(ex.getStatus())
         .entity(_errorResponseBuilder.buildErrorResponse(ex))
         .build();

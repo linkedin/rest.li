@@ -18,15 +18,12 @@ package com.linkedin.data.codec.entitystream;
 
 import com.linkedin.data.DataList;
 
-import java.io.IOException;
-
 import static com.linkedin.data.codec.entitystream.JacksonJsonDataDecoder.Token.START_ARRAY;
 
 
 public class JacksonJsonDataListDecoder extends JacksonJsonDataDecoder<DataList>
 {
   public JacksonJsonDataListDecoder()
-      throws IOException
   {
     super(START_ARRAY.bitPattern);
   }

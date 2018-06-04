@@ -210,7 +210,7 @@ public class TestCollectionResponseBuilder
     CollectionResponseBuilder<D> responseBuilder = (CollectionResponseBuilder<D>) BUILDERS.get(resourceMethod);
     D responseData =
         responseBuilder.buildRestLiResponseData(getRestRequest(), routingResult, results, headers, Collections.emptyList());
-    PartialRestResponse restResponse = responseBuilder.buildResponse(routingResult, responseData);
+    RestLiResponse restResponse = responseBuilder.buildResponse(routingResult, responseData);
 
     Assert.assertEquals(responseData.getResourceMethod(), resourceMethod);
     Assert.assertEquals(responseData.getResponseEnvelope().getResourceMethod(), resourceMethod);

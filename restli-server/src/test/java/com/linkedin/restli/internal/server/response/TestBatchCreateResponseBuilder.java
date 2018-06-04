@@ -114,7 +114,7 @@ public class TestBatchCreateResponseBuilder
                                                                                    results,
                                                                                    headers,
                                                                                    Collections.emptyList());
-    PartialRestResponse restResponse = responseBuilder.buildResponse(routingResult, responseData);
+    RestLiResponse restResponse = responseBuilder.buildResponse(routingResult, responseData);
 
     EasyMock.verify(mockDescriptor);
     ResponseBuilderUtil.validateHeaders(restResponse, headers);
@@ -190,7 +190,7 @@ public class TestBatchCreateResponseBuilder
                                                                               results,
                                                                               headers,
                                                                               Collections.emptyList());
-    PartialRestResponse restResponse = responseBuilder.buildResponse(routingResult, responseData);
+    RestLiResponse restResponse = responseBuilder.buildResponse(routingResult, responseData);
 
     EasyMock.verify(mockDescriptor);
     ResponseBuilderUtil.validateHeaders(restResponse, headers);

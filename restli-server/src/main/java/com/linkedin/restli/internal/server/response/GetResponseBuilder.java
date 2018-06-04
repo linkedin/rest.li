@@ -14,16 +14,12 @@
    limitations under the License.
  */
 
-/**
- * $Id: $
- */
-
 package com.linkedin.restli.internal.server.response;
 
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.Request;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.methods.AnyRecord;
@@ -40,9 +36,9 @@ import java.util.Map;
 public class GetResponseBuilder implements RestLiResponseBuilder<RestLiResponseData<GetResponseEnvelope>>
 {
   @Override
-  public PartialRestResponse buildResponse(RoutingResult routingResult, RestLiResponseData<GetResponseEnvelope> responseData)
+  public RestLiResponse buildResponse(RoutingResult routingResult, RestLiResponseData<GetResponseEnvelope> responseData)
   {
-    return new PartialRestResponse.Builder()
+    return new RestLiResponse.Builder()
         .headers(responseData.getHeaders())
         .cookies(responseData.getCookies())
         .status(responseData.getResponseEnvelope().getStatus())
@@ -50,8 +46,14 @@ public class GetResponseBuilder implements RestLiResponseBuilder<RestLiResponseD
         .build();
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * @param result The result of a Rest.li GET method. It can be the entity itself, or the entity wrapped in a
+   *               {@link GetResult}.
+   */
   @Override
-  public RestLiResponseData<GetResponseEnvelope> buildRestLiResponseData(RestRequest request,
+  public RestLiResponseData<GetResponseEnvelope> buildRestLiResponseData(Request request,
                                                         RoutingResult routingResult,
                                                         Object result,
                                                         Map<String, String> headers,

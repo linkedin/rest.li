@@ -17,8 +17,7 @@
 package com.linkedin.restli.server.multiplexer;
 
 
-import com.linkedin.r2.message.Request;
-import com.linkedin.restli.server.RequestHandler;
+import com.linkedin.restli.server.NonResourceRequestHandler;
 
 
 /**
@@ -26,6 +25,6 @@ import com.linkedin.restli.server.RequestHandler;
  *
  * @author Dmitriy Yefremov
  */
-public interface MultiplexedRequestHandler extends RequestHandler
+public interface MultiplexedRequestHandler extends NonResourceRequestHandler
 {
 }

@@ -107,7 +107,7 @@ public class RestLiIntegrationTest
                                          -1,
                                          filters,
                                          filterChain,
-                                         !forceUseStreamServer());
+                                         forceUseStreamServer());
     _serverWithFilters.start();
     // If requested, also start no compression server
     if (includeNoCompression)

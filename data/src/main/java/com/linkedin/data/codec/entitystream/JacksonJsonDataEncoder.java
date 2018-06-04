@@ -35,7 +35,13 @@ import java.util.Map;
 
 
 /**
- * This encoder encodes a DataComplex object to JSON and writes ByteString to an EntityStream when data is requested.
+ * An JSON encoder for a {@link com.linkedin.data.DataComplex} object implemented as a {@link com.linkedin.entitystream.Writer}
+ * writing to an {@link com.linkedin.entitystream.EntityStream} of {@link ByteString}. The implementation is backed by
+ * Jackson's {@link JsonGenerator}. The <code>JsonGenerator</code> writes to an internal non-blocking <code>OutputStream</code>
+ * implementation that has a fixed-size primary buffer and an unbounded overflow buffer. Because the bytes are pulled
+ * from the encoder asynchronously, it needs to keep the state in a stack.
+ *
+ * @author Xiao Ma
  */
 public class JacksonJsonDataEncoder implements JsonDataEncoder
 {
@@ -53,39 +59,50 @@ public class JacksonJsonDataEncoder implements JsonDataEncoder
   private boolean _done;
 
   private JacksonJsonDataEncoder(int bufferSize)
-      throws IOException
   {
     _out = new QueueBufferedOutputStream(bufferSize);
-    _generator = JSON_FACTORY.createGenerator(_out);
     _stack = new ArrayDeque<>();
     _typeStack = new ArrayDeque<>();
     _done = false;
   }
 
   public JacksonJsonDataEncoder(DataMap dataMap, int bufferSize)
-      throws IOException
   {
     this(bufferSize);
 
     _stack.push(dataMap.entrySet().iterator());
     _typeStack.push(MAP);
-    _generator.writeStartObject();
   }
 
   public JacksonJsonDataEncoder(DataList dataList, int bufferSize)
-      throws IOException
   {
     this(bufferSize);
 
     _stack.push(dataList.iterator());
     _typeStack.push(LIST);
-    _generator.writeStartArray();
   }
 
   @Override
   public void onInit(WriteHandle<? super ByteString> wh)
   {
     _writeHandle = wh;
+
+    try
+    {
+      _generator = JSON_FACTORY.createGenerator(_out);
+      if (_typeStack.peek() == MAP)
+      {
+        _generator.writeStartObject();
+      }
+      else
+      {
+        _generator.writeStartArray();
+      }
+    }
+    catch (IOException e)
+    {
+      _writeHandle.error(e);
+    }
   }
 
   @Override
@@ -235,7 +252,7 @@ public class JacksonJsonDataEncoder implements JsonDataEncoder
   }
 
   /**
-   * This OutputStream has a fixed-size primary buffer and an overflow buffer. When the primary buffer is full, the
+   * This OutputStream is non-blocking and has a fixed-size primary buffer and an unbounded overflow buffer. When the primary buffer is full, the
    * remaining bytes are written to the overflow buffer. It supports getting the bytes in the primary buffer as a
    * ByteString. Once the bytes from the primary buffer are retrieved, the bytes from the overflow buffer will fill in
    * the primary buffer.

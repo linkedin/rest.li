@@ -35,11 +35,13 @@ import com.linkedin.restli.internal.server.model.AnnotationSet;
 import com.linkedin.restli.internal.server.model.Parameter;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.model.ResourceModel;
+import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.server.BatchPatchRequest;
 import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.RestLiRequestData;
 import com.linkedin.restli.server.RoutingException;
 
+import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.Collections;
@@ -91,8 +93,8 @@ public class TestBatchPatchArgumentBuilder
     Object[] compoundKeys = new Object[]{new CompoundKey().append("string1", "apples").append("string2", "oranges"),
         new CompoundKey().append("string1", "simple").append("string2", "(s:pe%cial)")};
     Object[] complexResourceKeys = new Object[]{
-        new ComplexResourceKey<MyComplexKey, EmptyRecord>(new MyComplexKey().setA("simple").setB(111L), new EmptyRecord()),
-        new ComplexResourceKey<MyComplexKey, EmptyRecord>(new MyComplexKey().setA("(s:pe%cial)").setB(222L), new EmptyRecord())};
+        new ComplexResourceKey<>(new MyComplexKey().setA("simple").setB(111L), new EmptyRecord()),
+        new ComplexResourceKey<>(new MyComplexKey().setA("(s:pe%cial)").setB(222L), new EmptyRecord())};
 
     return new Object[][]
         {
@@ -156,8 +158,9 @@ public class TestBatchPatchArgumentBuilder
   @Test(dataProvider = "argumentData")
   public void testArgumentBuilderSuccess(ProtocolVersion version, Key primaryKey, Key[] associationKeys,
       String requestEntity, Object[] keys, PatchRequest<MyComplexKey>[] patches)
+      throws IOException
   {
-    Set<Object> batchKeys = new HashSet<Object>(Arrays.asList(keys));
+    Set<Object> batchKeys = new HashSet<>(Arrays.asList(keys));
     RestRequest request = RestLiArgumentBuilderTestHelper.getMockRequest(requestEntity, version);
     ResourceModel model = RestLiArgumentBuilderTestHelper.getMockResourceModel(MyComplexKey.class, primaryKey, associationKeys, batchKeys);
 
@@ -173,11 +176,12 @@ public class TestBatchPatchArgumentBuilder
       new AnnotationSet(new Annotation[]{}));
     ResourceMethodDescriptor descriptor = RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor(
         model, 2, Collections.singletonList(param));
-    ServerResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(batchKeys, true, false);
+    ServerResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(batchKeys, version, true, false);
     RoutingResult routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(descriptor, context);
 
     RestLiArgumentBuilder argumentBuilder = new BatchPatchArgumentBuilder();
-    RestLiRequestData requestData = argumentBuilder.extractRequestData(routingResult, request);
+    RestLiRequestData requestData = argumentBuilder.extractRequestData(routingResult,
+        DataMapUtils.readMapWithExceptions(request));
     Object[] args = argumentBuilder.buildArguments(requestData, routingResult);
 
     assertEquals(args.length, 1);
@@ -199,8 +203,8 @@ public class TestBatchPatchArgumentBuilder
         new CompoundKey().append("string1", "XYZ").append("string2", "tea")};
 
     Object[] complexResourceKeys = new Object[]{
-        new ComplexResourceKey<MyComplexKey, EmptyRecord>(new MyComplexKey().setA("XYZ").setB(111L), new EmptyRecord()),
-        new ComplexResourceKey<MyComplexKey, EmptyRecord>(new MyComplexKey().setA("A2").setB(222L), new EmptyRecord())};
+        new ComplexResourceKey<>(new MyComplexKey().setA("XYZ").setB(111L), new EmptyRecord()),
+        new ComplexResourceKey<>(new MyComplexKey().setA("A2").setB(222L), new EmptyRecord())};
 
     return new Object[][]
         {
@@ -306,34 +310,25 @@ public class TestBatchPatchArgumentBuilder
                     "\"($params:(),b:222,a:A2)\":{\"patch\":{\"$set\":{\"a\":\"someString\"}}}}}",
                 complexResourceKeys,
                 ERROR_MESSAGE_DUPLICATE_BATCH_KEYS
-            },
-            {
-                // Duplicate key in the entities body
-                AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
-                new Key("compoundKey", CompoundKey.class, null),
-                new Key[] { new Key("string1", String.class), new Key("string2", String.class) },
-                "{\"entities\":{\"(string1:apples,string2:oranges)\":{\"patch\":{\"$set\":{\"a\":\"someString\"}}}," +
-                    "(string2:oranges,string1:apples)\":{\"patch\":{\"$set\":{\"a\":\"someOtherString\"}}}}}",
-                compoundKeys,
-                "Cannot parse request"
             }
         };
   }
 
   @Test(dataProvider = "failureData")
   public void testFailure(ProtocolVersion version, Key primaryKey, Key[] associationKeys, String requestEntity, Object[] keys, String errorMessage)
+      throws IOException
   {
-    Set<Object> batchKeys = new HashSet<Object>(Arrays.asList(keys));
+    Set<Object> batchKeys = new HashSet<>(Arrays.asList(keys));
     RestRequest request = RestLiArgumentBuilderTestHelper.getMockRequest(requestEntity, version);
     ResourceModel model = RestLiArgumentBuilderTestHelper.getMockResourceModel(MyComplexKey.class, primaryKey, associationKeys, batchKeys);
     ResourceMethodDescriptor descriptor = RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor(model);
-    ServerResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(batchKeys, false, false);
+    ServerResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(batchKeys, version, false, false);
     RoutingResult routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(descriptor, context);
 
     RestLiArgumentBuilder argumentBuilder = new BatchPatchArgumentBuilder();
     try
     {
-      argumentBuilder.extractRequestData(routingResult, request);
+      argumentBuilder.extractRequestData(routingResult, DataMapUtils.readMapWithExceptions(request));
       fail("Expected RoutingException");
     }
     catch (RoutingException e)

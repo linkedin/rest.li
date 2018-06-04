@@ -139,8 +139,7 @@ public class TestRestLiFilterResponseContextFactory
     ArgumentCaptor<RestLiServiceException> exceptionArgumentCaptor = ArgumentCaptor.forClass(RestLiServiceException.class);
 
     // Setup.
-    when(_responseHandler.buildExceptionResponseData(eq(_restRequest),
-                                                     eq(_routingResult),
+    when(_responseHandler.buildExceptionResponseData(eq(_routingResult),
                                                      exceptionArgumentCaptor.capture(),
                                                      anyMap(),
                                                      anyList())).thenReturn(responseData);
@@ -150,8 +149,7 @@ public class TestRestLiFilterResponseContextFactory
     FilterResponseContext responseContext = _filterResponseContextFactory.fromThrowable(e);
 
     // Verify.
-    verify(_responseHandler).buildExceptionResponseData(eq(_restRequest),
-                                                        eq(_routingResult),
+    verify(_responseHandler).buildExceptionResponseData(eq(_routingResult),
                                                         exceptionArgumentCaptor.capture(),
                                                         anyMap(),
                                                         anyList());

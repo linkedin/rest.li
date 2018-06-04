@@ -27,7 +27,6 @@ import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
 import com.linkedin.data.schema.validation.ValidationOptions;
 import com.linkedin.data.schema.validation.ValidationResult;
 import com.linkedin.data.template.DynamicRecordTemplate;
-import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
@@ -53,17 +52,12 @@ public class ActionArgumentBuilder implements RestLiArgumentBuilder
   }
 
   @Override
-  public RestLiRequestData extractRequestData(RoutingResult routingResult, RestRequest request)
+  public RestLiRequestData extractRequestData(RoutingResult routingResult, DataMap data)
   {
     ResourceMethodDescriptor resourceMethodDescriptor = routingResult.getResourceMethod();
-    final DataMap data;
-    if (request.getEntity() == null || request.getEntity().length() == 0)
+    if (data == null)
     {
       data = new DataMap();
-    }
-    else
-    {
-      data = ArgumentBuilder.extractEntity(request);
     }
     DynamicRecordTemplate template = new DynamicRecordTemplate(data, resourceMethodDescriptor.getRequestDataSchema());
     ValidationResult result =

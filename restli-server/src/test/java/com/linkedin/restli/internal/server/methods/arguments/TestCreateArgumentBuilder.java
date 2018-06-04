@@ -26,9 +26,10 @@ import com.linkedin.restli.internal.server.model.AnnotationSet;
 import com.linkedin.restli.internal.server.model.Parameter;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.model.ResourceModel;
+import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.server.RestLiRequestData;
-import com.linkedin.restli.server.RoutingException;
 
+import java.io.IOException;
 import java.lang.annotation.Annotation;
 
 import org.testng.annotations.Test;
@@ -45,8 +46,9 @@ public class TestCreateArgumentBuilder
 {
   @Test
   public void testArgumentBuilderSuccess()
+      throws IOException
   {
-    RestRequest request = RestLiArgumentBuilderTestHelper.getMockRequest(false, "{\"a\":\"xyz\",\"b\":123}", 1);
+    RestRequest request = RestLiArgumentBuilderTestHelper.getMockRequest(false, "{\"a\":\"xyz\",\"b\":123}");
     ResourceModel model = RestLiArgumentBuilderTestHelper.getMockResourceModel(MyComplexKey.class, null, false);
     Parameter<MyComplexKey> param = new Parameter<>("",
         MyComplexKey.class,
@@ -61,7 +63,8 @@ public class TestCreateArgumentBuilder
     RoutingResult routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(descriptor, 2, context, 1);
 
     RestLiArgumentBuilder argumentBuilder = new CreateArgumentBuilder();
-    RestLiRequestData requestData = argumentBuilder.extractRequestData(routingResult, request);
+    RestLiRequestData requestData = argumentBuilder.extractRequestData(routingResult,
+        DataMapUtils.readMapWithExceptions(request));
     Object[] args = argumentBuilder.buildArguments(requestData, routingResult);
     assertEquals(args.length, 1);
     assertTrue(args[0] instanceof MyComplexKey);
@@ -69,27 +72,5 @@ public class TestCreateArgumentBuilder
     assertEquals((long) ((MyComplexKey)args[0]).getB(), 123L);
 
     verify(request, model, descriptor, context, routingResult);
-  }
-
-  @Test(dataProvider = "failureEntityData", dataProviderClass = RestLiArgumentBuilderTestHelper.class)
-  public void testFailure(String entity)
-  {
-    RestRequest request = RestLiArgumentBuilderTestHelper.getMockRequest(false, entity, 1);
-    ResourceModel model = RestLiArgumentBuilderTestHelper.getMockResourceModel(MyComplexKey.class, null, false);
-    ResourceMethodDescriptor descriptor = RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor(model, 1, null);
-    RoutingResult routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(descriptor, 1, null, 0);
-
-    RestLiArgumentBuilder argumentBuilder = new CreateArgumentBuilder();
-    try
-    {
-      argumentBuilder.extractRequestData(routingResult, request);
-      fail("Expected RoutingException");
-    }
-    catch (RoutingException e)
-    {
-      assertTrue(e.getMessage().contains("Error parsing entity body"));
-    }
-
-    verify(request, model, descriptor, routingResult);
   }
 }

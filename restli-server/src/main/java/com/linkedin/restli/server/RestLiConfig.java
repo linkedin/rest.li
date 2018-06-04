@@ -55,7 +55,7 @@ public class RestLiConfig
    *  and {@link com.linkedin.restli.internal.common.AllProtocolVersions#NEXT_PROTOCOL_VERSION}
    */
   @Deprecated
-  public static enum RestliProtocolCheck
+  public enum RestliProtocolCheck
   {
     /**
      * Check that the client supplied protocol version lies between
@@ -87,6 +87,7 @@ public class RestLiConfig
   private MultiplexerRunMode _multiplexerRunMode = MultiplexerRunMode.MULTIPLE_PLANS;
   private final List<ContentType> _customContentTypes = new LinkedList<>();
   private final List<ResourceDefinitionListener> _resourceDefinitionListeners = new ArrayList<>();
+  private boolean _useStreamCodec = false;
 
   /**
    * Constructor.
@@ -429,5 +430,25 @@ public class RestLiConfig
   List<ResourceDefinitionListener> getResourceDefinitionListeners()
   {
     return _resourceDefinitionListeners;
+  }
+
+  /**
+   * Gets whether or not to use {@link com.linkedin.data.codec.entitystream.StreamDataCodec} to decode {@link com.linkedin.r2.message.stream.StreamRequest}
+   * and encode {@link com.linkedin.r2.message.stream.StreamResponse}. If not, the implementation falls back to use
+   * {@link DataCodec} on adapted {@link com.linkedin.r2.message.rest.RestRequest} and {@link com.linkedin.r2.message.rest.RestResponse}.
+   */
+  public boolean isUseStreamCodec()
+  {
+    return _useStreamCodec;
+  }
+
+  /**
+   * Sets whether or not to use {@link com.linkedin.data.codec.entitystream.StreamDataCodec} to decode {@link com.linkedin.r2.message.stream.StreamRequest}
+   * and encode {@link com.linkedin.r2.message.stream.StreamResponse}. If not, the implementation falls back to use
+   * {@link DataCodec} on adapted {@link com.linkedin.r2.message.rest.RestRequest} and {@link com.linkedin.r2.message.rest.RestResponse}.
+   */
+  public void setUseStreamCodec(boolean useStreamCodec)
+  {
+    _useStreamCodec = useStreamCodec;
   }
 }

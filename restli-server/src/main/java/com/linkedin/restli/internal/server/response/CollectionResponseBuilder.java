@@ -20,7 +20,7 @@ package com.linkedin.restli.internal.server.response;
 import com.linkedin.data.DataList;
 import com.linkedin.data.collections.CheckedUtil;
 import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.Request;
 import com.linkedin.restli.common.CollectionMetadata;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.HttpStatus;
@@ -43,10 +43,10 @@ import java.util.Map;
 public abstract class CollectionResponseBuilder<D extends RestLiResponseData<? extends CollectionResponseEnvelope>> implements RestLiResponseBuilder<D>
 {
   @Override
-  public PartialRestResponse buildResponse(RoutingResult routingResult, D responseData)
+  public RestLiResponse buildResponse(RoutingResult routingResult, D responseData)
   {
     CollectionResponseEnvelope response = responseData.getResponseEnvelope();
-    PartialRestResponse.Builder builder = new PartialRestResponse.Builder();
+    RestLiResponse.Builder builder = new RestLiResponse.Builder();
     CollectionResponse<AnyRecord> collectionResponse = new CollectionResponse<>(AnyRecord.class);
     collectionResponse.setPaging(response.getCollectionResponsePaging());
     DataList elementsMap = (DataList) collectionResponse.data().get(CollectionResponse.ELEMENTS);
@@ -62,8 +62,14 @@ public abstract class CollectionResponseBuilder<D extends RestLiResponseData<? e
     return builder.headers(responseData.getHeaders()).cookies(responseData.getCookies()).build();
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * @param object The result of a Rest.li FINDER or GET_ALL method. It is a <code>List</code> of entities, or a
+   *               {@link CollectionResult}.
+   */
   @Override
-  public D buildRestLiResponseData(RestRequest request,
+  public D buildRestLiResponseData(Request request,
       RoutingResult routingResult,
       Object object,
       Map<String, String> headers,
@@ -99,7 +105,7 @@ public abstract class CollectionResponseBuilder<D extends RestLiResponseData<? e
   }
 
   @SuppressWarnings("unchecked")
-  private D buildRestLiResponseData(final RestRequest request,
+  private D buildRestLiResponseData(final Request request,
                                     final RoutingResult routingResult,
                                     final List<? extends RecordTemplate> elements,
                                     final PageIncrement pageIncrement,

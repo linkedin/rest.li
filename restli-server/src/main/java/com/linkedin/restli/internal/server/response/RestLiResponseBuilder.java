@@ -14,14 +14,10 @@
    limitations under the License.
  */
 
-/**
- * $Id: $
- */
-
 package com.linkedin.restli.internal.server.response;
 
 
-import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.Request;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.server.RestLiResponseData;
 
@@ -31,17 +27,35 @@ import java.util.Map;
 
 
 /**
- * {@link RestLiResponseBuilder} returns a {@link PartialRestResponse} so that rest.li can fill in
- * other response data and metadata (headers, links, field projection, etc).
+ * A Rest.li response is built in three steps.
+ * <ol>
+ *   <li>Build a {@link RestLiResponseData} from the result object returned by the server application resource
+ *   implementation. The <code>RestLiResponseData</code> object is then sent through the response filter chain.</li>
+ *   <li>Build a {@link RestLiResponse} from the <code>RestLiResponseData</code></li> after it has been processed
+ *   by the Rest.li filters.
+ *   <li>Build a {@link com.linkedin.r2.message.rest.RestResponse} or {@link com.linkedin.r2.message.stream.StreamResponse}
+ *   from the <code>RestLiResponse</code>.</li>
+ * </ol>
+ *
+ * <code>RestLiResponseBuilder</code> is responsible for the first two steps and contains methods for each of them.
  *
  * @author dellamag
  */
 public interface RestLiResponseBuilder<D extends RestLiResponseData<?>>
 {
-  PartialRestResponse buildResponse(RoutingResult routingResult,
+  /**
+   * Executes {@linkplain RestLiResponseBuilder the second step} of building the response.
+   */
+  RestLiResponse buildResponse(RoutingResult routingResult,
                                     D responseData);
 
-  D buildRestLiResponseData(RestRequest request,
+  /**
+   * Executes {@linkplain RestLiResponseBuilder the first step} of building the response.
+   *
+   * @param result The result object returned from the respective Rest.li method implementation. See concrete implementation
+   *               classes for the expect result object types.
+   */
+  D buildRestLiResponseData(Request request,
                             RoutingResult routingResult,
                             Object result,
                             Map<String, String> headers,

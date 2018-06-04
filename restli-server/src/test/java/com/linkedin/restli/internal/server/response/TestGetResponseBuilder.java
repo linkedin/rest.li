@@ -97,18 +97,18 @@ public class TestGetResponseBuilder
                                                                               headers,
                                                                               Collections.emptyList());
 
-    PartialRestResponse partialRestResponse = getResponseBuilder.buildResponse(null, responseData);
+    RestLiResponse restLiResponse = getResponseBuilder.buildResponse(null, responseData);
 
     EasyMock.verify(mockContext, mockDescriptor);
-    ResponseBuilderUtil.validateHeaders(partialRestResponse, headers);
-    Assert.assertEquals(partialRestResponse.getStatus(), expectedHttpStatus);
+    ResponseBuilderUtil.validateHeaders(restLiResponse, headers);
+    Assert.assertEquals(restLiResponse.getStatus(), expectedHttpStatus);
     if (maskTree == null || projectionMode == ProjectionMode.MANUAL)
     {
-      Assert.assertEquals(partialRestResponse.getEntity(), getRecord());
+      Assert.assertEquals(restLiResponse.getEntity(), getRecord());
     }
     else
     {
-      Assert.assertEquals(partialRestResponse.getEntity(), getProjectedRecord());
+      Assert.assertEquals(restLiResponse.getEntity(), getProjectedRecord());
     }
   }
 

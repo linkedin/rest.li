@@ -30,9 +30,9 @@ import com.linkedin.common.Version;
  */
 public class ProtocolVersion extends Version
 {
-  public ProtocolVersion(String Version)
+  public ProtocolVersion(String version)
   {
-    super(Version);
+    super(version);
   }
 
   public ProtocolVersion(int major, int minor, int patch)

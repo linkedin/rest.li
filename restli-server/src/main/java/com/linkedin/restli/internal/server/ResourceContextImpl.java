@@ -79,7 +79,8 @@ public class ResourceContextImpl implements ServerResourceContext
   private final Map<Object, RestLiServiceException> _batchKeyErrors;
   private final RequestContext                      _requestContext;
   private final ProtocolVersion                     _protocolVersion;
-  private String                                    _mimeType;
+  private String                                    _requestMimeType;
+  private String                                    _responseMimeType;
 
   //For root object entities
   private ProjectionMode                            _projectionMode;
@@ -468,15 +469,27 @@ public class ResourceContextImpl implements ServerResourceContext
   }
 
   @Override
+  public void setRequestMimeType(String type)
+  {
+    _requestMimeType = type;
+  }
+
+  @Override
+  public String getRequestMimeType()
+  {
+    return _requestMimeType;
+  }
+
+  @Override
   public void setResponseMimeType(String type)
   {
-    _mimeType = type;
+    _responseMimeType = type;
   }
 
   @Override
   public String getResponseMimeType()
   {
-    return _mimeType;
+    return _responseMimeType;
   }
 
   @Override

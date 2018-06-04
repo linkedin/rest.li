@@ -19,7 +19,7 @@ package com.linkedin.restli.internal.server.response;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.collections.CheckedUtil;
-import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.Request;
 import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.internal.server.response.BatchResponseEnvelope.BatchResponseEntry;
 import com.linkedin.restli.common.HttpStatus;
@@ -55,14 +55,14 @@ public abstract class BatchResponseBuilder<D extends RestLiResponseData<? extend
 
   @Override
   @SuppressWarnings("unchecked")
-  public PartialRestResponse buildResponse(RoutingResult routingResult, D responseData)
+  public RestLiResponse buildResponse(RoutingResult routingResult, D responseData)
   {
     Map<Object, UpdateStatus> mergedResults = new HashMap<>();
 
     final Map<Object, BatchResponseEntry> responses = (Map<Object, BatchResponseEntry>) responseData.getResponseEnvelope().getBatchResponseMap();
     generateResultEntityResponse(routingResult, responses, mergedResults);
 
-    PartialRestResponse.Builder builder = new PartialRestResponse.Builder();
+    RestLiResponse.Builder builder = new RestLiResponse.Builder();
     final ProtocolVersion protocolVersion = routingResult.getContext().getRestliProtocolVersion();
 
     @SuppressWarnings("unchecked")
@@ -93,9 +93,15 @@ public abstract class BatchResponseBuilder<D extends RestLiResponseData<? extend
     }
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * @param result The result of a Rest.li BATCH_UPDATE, BATCH_PARTIAL_UPDATE, or BATCH_DELETE method. It is a
+   *               {@link BatchUpdateResult} object.
+   */
   @SuppressWarnings("unchecked")
   @Override
-  public D buildRestLiResponseData(RestRequest request,
+  public D buildRestLiResponseData(Request request,
                                    RoutingResult routingResult,
                                    Object result,
                                    Map<String, String> headers,

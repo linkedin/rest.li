@@ -21,7 +21,7 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.jersey.api.uri.UriComponent;
-import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.Request;
 import com.linkedin.restli.common.BatchCreateIdResponse;
 import com.linkedin.restli.common.CreateIdEntityStatus;
 import com.linkedin.restli.common.CreateIdStatus;
@@ -59,7 +59,7 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder<RestLiR
 
   @Override
   @SuppressWarnings("unchecked")
-  public PartialRestResponse buildResponse(RoutingResult routingResult, RestLiResponseData<BatchCreateResponseEnvelope> responseData)
+  public RestLiResponse buildResponse(RoutingResult routingResult, RestLiResponseData<BatchCreateResponseEnvelope> responseData)
   {
     List<BatchCreateResponseEnvelope.CollectionCreateResponseItem> collectionCreateResponses =
                                                 responseData.getResponseEnvelope().getCreateResponses();
@@ -83,13 +83,20 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder<RestLiR
       }
     }
 
-    PartialRestResponse.Builder builder = new PartialRestResponse.Builder();
+    RestLiResponse.Builder builder = new RestLiResponse.Builder();
     BatchCreateIdResponse<Object> batchCreateIdResponse = new BatchCreateIdResponse<>(formattedResponses);
     return builder.headers(responseData.getHeaders()).cookies(responseData.getCookies()).entity(batchCreateIdResponse).build();
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * @param result The result for a Rest.li BATCH_CREATE method. It's an instance of {@link BatchCreateResult}, if the
+   *               BATCH_CREATE method doesn't return the entity; or an instance of {@link BatchCreateKVResult}, if it
+   *               does.
+   */
   @Override
-  public RestLiResponseData<BatchCreateResponseEnvelope> buildRestLiResponseData(RestRequest request,
+  public RestLiResponseData<BatchCreateResponseEnvelope> buildRestLiResponseData(Request request,
                                                     RoutingResult routingResult,
                                                     Object result,
                                                     Map<String, String> headers,
@@ -198,7 +205,7 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder<RestLiR
   }
 
   // construct location uri for each created entity id
-  private String getLocationUri(RestRequest request, Object id, Object altKey, ProtocolVersion protocolVersion)
+  private String getLocationUri(Request request, Object id, Object altKey, ProtocolVersion protocolVersion)
   {
     if (id == null)
     {

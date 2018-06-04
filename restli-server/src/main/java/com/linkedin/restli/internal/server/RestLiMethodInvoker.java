@@ -27,14 +27,14 @@ import com.linkedin.parseq.promise.Promises;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.server.NonResourceRequestHandler;
+import com.linkedin.restli.server.UnstructuredDataReactiveResult;
 import com.linkedin.restli.internal.server.methods.arguments.RestLiArgumentBuilder;
 import com.linkedin.restli.internal.server.model.Parameter.ParamType;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
-import com.linkedin.restli.internal.server.response.ErrorResponseBuilder;
 import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiRequestData;
 import com.linkedin.restli.server.RestLiServiceException;
-import com.linkedin.restli.server.UnstructuredDataReactiveResult;
 import com.linkedin.restli.server.resources.BaseResource;
 import com.linkedin.restli.server.resources.ResourceFactory;
 import java.lang.reflect.InvocationTargetException;
@@ -51,7 +51,7 @@ public class RestLiMethodInvoker
 {
   /**
    * Through a local attribute in RequestContext, application customization like filters and
-   * {@link com.linkedin.restli.server.RequestHandler} can provide a PromiseListener to be registered to the
+   * {@link NonResourceRequestHandler} can provide a PromiseListener to be registered to the
    * ParSeq execution task provided by the resource.
    *
    * This feature is internal and is only used by ParseqTraceDebugRequestHandler.
@@ -60,7 +60,7 @@ public class RestLiMethodInvoker
 
   private final ResourceFactory _resourceFactory;
   private final Engine _engine;
-  private final ErrorResponseBuilder _errorResponseBuilder;
+  private final String _internalErrorMessage;
 
   // This ThreadLocal stores Context of task that is currently being executed.
   // When it is set, new tasks do not start new plans but instead are scheduled
@@ -69,19 +69,13 @@ public class RestLiMethodInvoker
   // allow optimizations e.g. automatic batching.
   public static final ThreadLocal<Context> TASK_CONTEXT = new ThreadLocal<>();
 
-  /**
-   * Constructor.
-   * @param resourceFactory {@link ResourceFactory}
-   * @param engine {@link Engine}
-   * @param errorResponseBuilder {@link ErrorResponseBuilder}
-   */
   public RestLiMethodInvoker(final ResourceFactory resourceFactory,
                              final Engine engine,
-                             final ErrorResponseBuilder errorResponseBuilder)
+                             final String internalErrorMessage)
   {
     _resourceFactory = resourceFactory;
     _engine = engine;
-    _errorResponseBuilder = errorResponseBuilder;
+    _internalErrorMessage = internalErrorMessage;
   }
 
   @SuppressWarnings("deprecation")
@@ -195,7 +189,7 @@ public class RestLiMethodInvoker
       else
       {
         callback.onError(new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
-                                                    _errorResponseBuilder.getInternalErrorMessage(),
+                                                    _internalErrorMessage,
                                                     e.getCause()));
       }
     }

@@ -109,7 +109,7 @@ public class TestCreateResponseBuilder
                                                                                     Collections.emptyList());
     Assert.assertFalse(responseData.getResponseEnvelope().isGetAfterCreate());
 
-    PartialRestResponse partialRestResponse = createResponseBuilder.buildResponse(routingResult, responseData);
+    RestLiResponse restLiResponse = createResponseBuilder.buildResponse(routingResult, responseData);
 
     expectedHeaders.put(RestConstants.HEADER_LOCATION, expectedLocation);
     if (protocolVersion.equals(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion()))
@@ -122,9 +122,9 @@ public class TestCreateResponseBuilder
     }
 
     EasyMock.verify(mockContext, mockDescriptor);
-    ResponseBuilderUtil.validateHeaders(partialRestResponse, expectedHeaders);
-    Assert.assertEquals(partialRestResponse.getStatus(), HttpStatus.S_201_CREATED);
-    Assert.assertEquals(partialRestResponse.getEntity(), expectedIdResponse);
+    ResponseBuilderUtil.validateHeaders(restLiResponse, expectedHeaders);
+    Assert.assertEquals(restLiResponse.getStatus(), HttpStatus.S_201_CREATED);
+    Assert.assertEquals(restLiResponse.getEntity(), expectedIdResponse);
   }
 
   @Test

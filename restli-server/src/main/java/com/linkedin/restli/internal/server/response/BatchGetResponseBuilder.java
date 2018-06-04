@@ -21,7 +21,7 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.collections.CheckedUtil;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.SetMode;
-import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.Request;
 import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.EntityResponse;
 import com.linkedin.restli.common.HttpStatus;
@@ -53,14 +53,14 @@ public class BatchGetResponseBuilder implements RestLiResponseBuilder<RestLiResp
 
   @Override
   @SuppressWarnings("unchecked")
-  public PartialRestResponse buildResponse(RoutingResult routingResult, RestLiResponseData<BatchGetResponseEnvelope> responseData)
+  public RestLiResponse buildResponse(RoutingResult routingResult, RestLiResponseData<BatchGetResponseEnvelope> responseData)
   {
     final Map<Object, BatchResponseEntry> responses = (Map<Object, BatchResponseEntry>) responseData.getResponseEnvelope().getBatchResponseMap();
 
     // Build the EntityResponse for each key from the merged map with mask from routingResult.
     Map<Object, EntityResponse<RecordTemplate>> entityBatchResponse = buildEntityResponse(routingResult, responses);
 
-    PartialRestResponse.Builder builder = new PartialRestResponse.Builder();
+    RestLiResponse.Builder builder = new RestLiResponse.Builder();
     final ProtocolVersion protocolVersion = routingResult.getContext().getRestliProtocolVersion();
 
     @SuppressWarnings("unchecked")
@@ -119,8 +119,15 @@ public class BatchGetResponseBuilder implements RestLiResponseBuilder<RestLiResp
     return entityResponse;
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * @param result The result of the Rest.li BATCH_GET method. It is <code>Map</code> of the entities to return keyed by
+   *               the IDs of the entities. Optionally, it may be a {@link BatchResult} object that contains more
+   *               information.
+   */
   @Override
-  public RestLiResponseData<BatchGetResponseEnvelope> buildRestLiResponseData(RestRequest request,
+  public RestLiResponseData<BatchGetResponseEnvelope> buildRestLiResponseData(Request request,
                                                       RoutingResult routingResult,
                                                       Object result,
                                                       Map<String, String> headers,

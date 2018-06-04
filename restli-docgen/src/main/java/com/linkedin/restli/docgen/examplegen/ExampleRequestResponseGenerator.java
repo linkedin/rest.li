@@ -92,6 +92,8 @@ import com.linkedin.restli.common.util.RichResourceSchema;
 import com.linkedin.restli.internal.client.RequestBodyTransformer;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.server.ResourceContextImpl;
+import com.linkedin.restli.internal.server.response.RestLiResponse;
+import com.linkedin.restli.internal.server.response.ResponseUtils;
 import com.linkedin.restli.internal.server.response.RestLiResponseHandler;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.ServerResourceContext;
@@ -114,6 +116,7 @@ import com.linkedin.restli.server.BatchUpdateResult;
 import com.linkedin.restli.server.CollectionResult;
 import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.ResourceLevel;
+import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.UpdateResponse;
 
@@ -150,7 +153,7 @@ public class ExampleRequestResponseGenerator
   private final DataSchemaResolver _schemaResolver;
   private final DataGenerator _dataGenerator;
 
-  private final RestLiResponseHandler _responseHandler = new RestLiResponseHandler.Builder().build();
+  private final RestLiResponseHandler _responseHandler = new RestLiResponseHandler();
   private final String _uriTemplate;
 
   public ExampleRequestResponseGenerator(ResourceSchema resourceSchema,
@@ -551,7 +554,9 @@ public class ExampleRequestResponseGenerator
           Collections.emptyMap(), Collections.emptySet(), context);
       method.setResourceModel(_resourceModel);
       final RoutingResult routingResult = new RoutingResult(context, method);
-      return _responseHandler.buildResponse(restRequest, routingResult, responseEntity);
+      RestLiResponseData<?> responseData = _responseHandler.buildRestLiResponseData(restRequest, routingResult, responseEntity);
+      RestLiResponse restLiResponse = _responseHandler.buildPartialResponse(routingResult, responseData);
+      return ResponseUtils.buildResponse(routingResult, restLiResponse);
     }
     catch (RestLiSyntaxException e)
     {

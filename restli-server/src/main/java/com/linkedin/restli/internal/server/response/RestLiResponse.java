@@ -14,12 +14,7 @@
    limitations under the License.
  */
 
-/**
- * $Id: $
- */
-
 package com.linkedin.restli.internal.server.response;
-
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
@@ -37,13 +32,14 @@ import java.util.Map;
 import java.util.TreeMap;
 
 
-
 /**
+ * This class represents a Rest.li response object model before encoding with the payload represented by a
+ * {@link RecordTemplate}.
+ *
  * @author Josh Walker
  * @author nshankar
- * @version $Revision: $
  */
-public class PartialRestResponse
+public class RestLiResponse
 {
   private final HttpStatus _status;
   private final RecordTemplate _record;
@@ -52,7 +48,7 @@ public class PartialRestResponse
 
   /**
    * Constructor is made private intentionally. Use builder to construct a new object of
-   * PartialRestResponse.
+   * RestLiResponse.
    *
    * @param status
    *          http response status
@@ -62,19 +58,15 @@ public class PartialRestResponse
    *          Response headers.
    * @param cookies
    */
-  private PartialRestResponse(final HttpStatus status, final RecordTemplate record, final Map<String, String> headers, final List<HttpCookie> cookies)
+  private RestLiResponse(final HttpStatus status, final RecordTemplate record, final Map<String, String> headers, final List<HttpCookie> cookies)
   {
     _record = record;
     _status = status;
-    _cookies = cookies == null ? new ArrayList<HttpCookie>() : cookies;
+    _cookies = cookies == null ? new ArrayList<>() : cookies;
+    _headers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     if (headers != null)
     {
-      _headers = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
       _headers.putAll(headers);
-    }
-    else
-    {
-      _headers = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
     }
   }
 
@@ -207,11 +199,11 @@ public class PartialRestResponse
     }
 
     /**
-     * Construct a {@link PartialRestResponse} based on the builder configuration.
+     * Construct a {@link RestLiResponse} based on the builder configuration.
      *
-     * @return reference to the newly minted {@link PartialRestResponse} object.
+     * @return reference to the newly minted {@link RestLiResponse} object.
      */
-    public PartialRestResponse build()
+    public RestLiResponse build()
     {
       if (_record instanceof IdResponse)
       {
@@ -224,7 +216,7 @@ public class PartialRestResponse
         }
       }
 
-      return new PartialRestResponse(_status, _record, _headers, _cookies);
+      return new RestLiResponse(_status, _record, _headers, _cookies);
     }
   }
 }

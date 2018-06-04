@@ -66,6 +66,8 @@ public class DataMapConverter
    */
   public static ByteString dataMapToByteString(String contentTypeHeaderValue, DataMap dataMap) throws MimeTypeParseException, IOException
   {
+    // TODO: We should throw an exception instead of using JSON for an unknown content type. This behavior was introduced
+    // in commit d149605e4181349b64180bdfe0b4d24a294dc6f6 when this logic is refactored from DataMapUtils.readMapWithExceptions.
     ContentType contentType  = ContentType.getContentType(contentTypeHeaderValue).orElse(ContentType.JSON);
 
     return ByteString.unsafeWrap(contentType.getCodec().mapToBytes(dataMap));

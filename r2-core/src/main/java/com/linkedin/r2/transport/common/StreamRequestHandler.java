@@ -20,9 +20,11 @@ public interface StreamRequestHandler
    * {@link com.linkedin.r2.message.rest.RestStatus#NOT_FOUND} if no handler can be found for the
    * request.
    *
-   * @param request the request to process
+   * @param request The stream request to process.
    * @param requestContext {@link com.linkedin.r2.message.RequestContext} context for the request
-   * @param callback the callback to notify when request processing has completed
+   * @param callback The callback to notify when request processing has completed. When callback with an error, use
+   *                 {@link com.linkedin.r2.message.stream.StreamException} to provide custom response status code,
+   *                 headers, and response body.
    */
   void handleRequest(StreamRequest request, RequestContext requestContext, Callback<StreamResponse> callback);
 }

@@ -16,31 +16,29 @@
 
 package com.linkedin.restli.internal.server.methods.arguments;
 
-import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.data.DataMap;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.server.RestLiRequestData;
 
+
+/**
+ * A builder of the arguments used for resource method invocation. The arguments to build depends on the Rest.li
+ * method and resource method definition.
+ */
 public interface RestLiArgumentBuilder
 {
   /**
-   * Build an array of resource method arguments for a request.
+   * Builds arguments used for resource method invocation. The argument definitions are encapsulated in {@link com.linkedin.restli.internal.server.model.ResourceMethodDescriptor}
+   * which is available through {@link RoutingResult#getResourceMethod()}.
    *
-   * @param requestData
-   *          {@link RestLiRequestData}
-   * @param routingResult
-   *          {@link RoutingResult}
-   * @return
+   * @param requestData The request data built by {@link #buildArguments(RestLiRequestData, RoutingResult)} and processed
+   *                    by Rest.li filter.
    */
   Object[] buildArguments(RestLiRequestData requestData, RoutingResult routingResult);
 
   /**
-   * Extract request data from the incoming request into a {@link RestLiRequestData}.
-   *
-   * @param routingResult
-   *          {@link RoutingResult}
-   * @param request
-   *          Incoming {@link RestRequest}.
-   * @return {@link RestLiRequestData} structure representing the data from the incoming request.
+   * Builds the {@link RestLiRequestData} from the {@link DataMap} parsed from the request body. The <code>RestLiRequestData</code>
+   * is processed by Rest.li filters.
    */
-  RestLiRequestData extractRequestData(RoutingResult routingResult, RestRequest request);
+  RestLiRequestData extractRequestData(RoutingResult routingResult, DataMap dataMap);
 }

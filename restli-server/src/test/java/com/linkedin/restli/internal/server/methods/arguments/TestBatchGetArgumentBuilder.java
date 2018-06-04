@@ -29,6 +29,7 @@ import com.linkedin.restli.internal.server.model.Parameter;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.server.RestLiRequestData;
 
+import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -50,26 +51,26 @@ public class TestBatchGetArgumentBuilder
   private Object[][] argumentData()
   {
     @SuppressWarnings("unchecked")
-    Set<Object> complexResourceKeys = new HashSet<Object>(Arrays.asList(
-        new ComplexResourceKey<MyComplexKey, EmptyRecord>(
+    Set<Object> complexResourceKeys = new HashSet<>(Arrays.asList(
+        new ComplexResourceKey<>(
             new MyComplexKey().setA("A1").setB(111L), new EmptyRecord()),
-        new ComplexResourceKey<MyComplexKey, EmptyRecord>(
+        new ComplexResourceKey<>(
             new MyComplexKey().setA("A2").setB(222L), new EmptyRecord())
     ));
 
     return new Object[][]
         {
             {
-                new HashSet<Object>(Arrays.asList(1, 2, 3))
+                new HashSet<>(Arrays.asList(1, 2, 3))
             },
             {
-                new HashSet<Object>(Arrays.asList(
+                new HashSet<>(Arrays.asList(
                     new CompoundKey().append("string1", "a").append("string2", "b"),
                     new CompoundKey().append("string1", "x").append("string2", "y")
                 ))
             },
             {
-                new HashSet<Object>()
+                new HashSet<>()
             },
             {
                 complexResourceKeys
@@ -79,16 +80,17 @@ public class TestBatchGetArgumentBuilder
 
   @Test(dataProvider = "argumentData")
   public void testArgumentBuilderSuccess(Set<Object> batchKeys)
+      throws IOException
   {
     @SuppressWarnings("rawtypes")
-    Parameter<Set> param = new Parameter<Set>("", Set.class, null, false, null, Parameter.ParamType.BATCH, false, new AnnotationSet(new Annotation[]{}));
+    Parameter<Set> param = new Parameter<>("", Set.class, null, false, null, Parameter.ParamType.BATCH, false, new AnnotationSet(new Annotation[]{}));
     ResourceMethodDescriptor descriptor = RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor(null, param);
     ServerResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(null, null, batchKeys, true);
     RoutingResult routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(descriptor, 1, context, 2);
 
-    RestRequest request = RestLiArgumentBuilderTestHelper.getMockRequest(false, null, 0);
+    RestRequest request = RestLiArgumentBuilderTestHelper.getMockRequest(false, null);
     RestLiArgumentBuilder argumentBuilder = new BatchGetArgumentBuilder();
-    RestLiRequestData requestData = argumentBuilder.extractRequestData(routingResult, request);
+    RestLiRequestData requestData = argumentBuilder.extractRequestData(routingResult, null);
     Object[] args = argumentBuilder.buildArguments(requestData, routingResult);
     Object[] expectedArgs = new Object[]{batchKeys};
     assertEquals(args, expectedArgs);

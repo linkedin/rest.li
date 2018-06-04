@@ -28,9 +28,7 @@ import com.linkedin.restli.server.UpdateResponse;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.easymock.EasyMock;
 import org.testng.Assert;
@@ -68,13 +66,13 @@ public class TestUpdateResponseBuilder
         updateResponse,
         headers,
         Collections.emptyList());
-    PartialRestResponse partialRestResponse = updateResponseBuilder.buildResponse(routingResult, responseData);
+    RestLiResponse restLiResponse = updateResponseBuilder.buildResponse(routingResult, responseData);
 
     EasyMock.verify(mockDescriptor);
     Assert.assertEquals(responseData.getResourceMethod(), resourceMethod);
     Assert.assertEquals(responseData.getResponseEnvelope().getResourceMethod(), resourceMethod);
-    ResponseBuilderUtil.validateHeaders(partialRestResponse, headers);
-    Assert.assertEquals(partialRestResponse.getStatus(), status);
+    ResponseBuilderUtil.validateHeaders(restLiResponse, headers);
+    Assert.assertEquals(restLiResponse.getStatus(), status);
   }
 
   @DataProvider

@@ -30,10 +30,11 @@ import com.linkedin.restli.internal.server.model.AnnotationSet;
 import com.linkedin.restli.internal.server.model.Parameter;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.model.ResourceModel;
+import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.RestLiRequestData;
-import com.linkedin.restli.server.RoutingException;
 
+import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -56,7 +57,7 @@ public class TestPatchArgumentBuilder
   private Object[][] argumentData()
   {
     @SuppressWarnings("rawtypes")
-    Parameter<?> patchParam = new Parameter<PatchRequest>(
+    Parameter<?> patchParam = new Parameter<>(
         "",
         PatchRequest.class,
         null,
@@ -66,8 +67,8 @@ public class TestPatchArgumentBuilder
         false,
         new AnnotationSet(new Annotation[]{}));
 
-    List<Parameter<?>> collectionResourceParams = new ArrayList<Parameter<?>>();
-    collectionResourceParams.add(new Parameter<Integer>(
+    List<Parameter<?>> collectionResourceParams = new ArrayList<>();
+    collectionResourceParams.add(new Parameter<>(
         "myComplexKeyCollectionId",
         Integer.class,
         new IntegerDataSchema(),
@@ -78,11 +79,11 @@ public class TestPatchArgumentBuilder
         new AnnotationSet(new Annotation[]{})));
     collectionResourceParams.add(patchParam);
 
-    List<Parameter<?>> simpleResourceParams = new ArrayList<Parameter<?>>();
+    List<Parameter<?>> simpleResourceParams = new ArrayList<>();
     simpleResourceParams.add(patchParam);
 
-    List<Parameter<?>> associationResourceParams = new ArrayList<Parameter<?>>();
-    associationResourceParams.add(new Parameter<CompoundKey>(
+    List<Parameter<?>> associationResourceParams = new ArrayList<>();
+    associationResourceParams.add(new Parameter<>(
         "myComplexKeyAssociationId",
         CompoundKey.class,
         null,
@@ -93,9 +94,9 @@ public class TestPatchArgumentBuilder
         new AnnotationSet(new Annotation[]{})));
     associationResourceParams.add(patchParam);
 
-    List<Parameter<?>> complexResourceKeyParams = new ArrayList<Parameter<?>>();
+    List<Parameter<?>> complexResourceKeyParams = new ArrayList<>();
     @SuppressWarnings("rawtypes")
-    Parameter<ComplexResourceKey> complexResourceKeyParam = new Parameter<ComplexResourceKey>(
+    Parameter<ComplexResourceKey> complexResourceKeyParam = new Parameter<>(
         "complexKeyTestId",
         ComplexResourceKey.class,
         null,
@@ -131,7 +132,7 @@ public class TestPatchArgumentBuilder
                 complexResourceKeyParams,
                 new Key("complexKeyTestId", ComplexResourceKey.class, null),
                 "complexKeyTestId",
-                new ComplexResourceKey<MyComplexKey, EmptyRecord>(
+                new ComplexResourceKey<>(
                     new MyComplexKey().setA("keyString").setB(1234L), new EmptyRecord())
             }
         };
@@ -139,8 +140,9 @@ public class TestPatchArgumentBuilder
 
   @Test(dataProvider = "argumentData")
   public void testArgumentBuilderSuccess(List<Parameter<?>> params, Key key, String keyName, Object keyValue)
+      throws IOException
   {
-    RestRequest request = RestLiArgumentBuilderTestHelper.getMockRequest(false, "{\"patch\":{\"$set\":{\"a\":\"someString\"}}}", 1);
+    RestRequest request = RestLiArgumentBuilderTestHelper.getMockRequest(false, "{\"patch\":{\"$set\":{\"a\":\"someString\"}}}");
     ResourceModel model = RestLiArgumentBuilderTestHelper.getMockResourceModel(null, key, true);
     ResourceMethodDescriptor descriptor;
     if (key != null)
@@ -163,7 +165,8 @@ public class TestPatchArgumentBuilder
     }
 
     RestLiArgumentBuilder argumentBuilder = new PatchArgumentBuilder();
-    RestLiRequestData requestData = argumentBuilder.extractRequestData(routingResult, request);
+    RestLiRequestData requestData = argumentBuilder.extractRequestData(routingResult,
+        DataMapUtils.readMapWithExceptions(request));
     Object[] args = argumentBuilder.buildArguments(requestData, routingResult);
 
     if (keyValue != null)
@@ -179,41 +182,9 @@ public class TestPatchArgumentBuilder
     setMap.put("$set", new DataMap(aMap));
     Map<String, Object> data = new HashMap<>();
     data.put("patch", new DataMap(setMap));
-    PatchRequest<MyComplexKey> patch = new PatchRequest<MyComplexKey>(new DataMap(data));
+    PatchRequest<MyComplexKey> patch = new PatchRequest<>(new DataMap(data));
     Assert.assertEquals(args[args.length - 1], patch);
 
     verify(request, model, descriptor, context, routingResult);
-  }
-
-  @DataProvider
-  private Object[][] failurePatchData()
-  {
-    return new Object[][]
-        {
-            {"{\"patch\":{\"$set\":{\"a\":\"someString\"}}"},
-            {"{\"patch\":{\"$set\":{1:\"someString\"}}}"},
-            {"{\"patch:{\"$set\":{\"a\":\"someString\"}}}"},
-            {"random string"}
-        };
-  }
-
-  @Test(dataProvider = "failurePatchData")
-  public void testFailure(String entity)
-  {
-    RestRequest request = RestLiArgumentBuilderTestHelper.getMockRequest(false, entity, 1);
-    RoutingResult routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult();
-
-    RestLiArgumentBuilder argumentBuilder = new PatchArgumentBuilder();
-    try
-    {
-      argumentBuilder.extractRequestData(routingResult, request);
-      Assert.fail("Expected RoutingException");
-    }
-    catch (RoutingException e)
-    {
-      Assert.assertTrue(e.getMessage().contains("Error parsing entity body"));
-    }
-
-    verify(request, routingResult);
   }
 }

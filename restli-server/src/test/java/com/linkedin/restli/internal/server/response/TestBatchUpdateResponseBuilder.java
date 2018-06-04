@@ -150,7 +150,7 @@ public class TestBatchUpdateResponseBuilder
         results,
         headers,
         Collections.emptyList());
-    PartialRestResponse restResponse = batchUpdateResponseBuilder.buildResponse(routingResult, responseData);
+    RestLiResponse restResponse = batchUpdateResponseBuilder.buildResponse(routingResult, responseData);
 
     @SuppressWarnings("unchecked")
     BatchResponse<UpdateStatus> batchResponse = (BatchResponse<UpdateStatus>) restResponse.getEntity();
@@ -233,7 +233,7 @@ public class TestBatchUpdateResponseBuilder
     RestLiResponseData<BatchUpdateResponseEnvelope> responseData = batchUpdateResponseBuilder.buildRestLiResponseData(null, routingResult, results,
                                                                         headers,
                                                                         Collections.emptyList());
-    PartialRestResponse restResponse = batchUpdateResponseBuilder.buildResponse(routingResult, responseData);
+    RestLiResponse restResponse = batchUpdateResponseBuilder.buildResponse(routingResult, responseData);
 
     BatchResponse<UpdateStatus> batchResponse = (BatchResponse<UpdateStatus>) restResponse.getEntity();
     EasyMock.verify(mockContext, mockDescriptor);
@@ -248,7 +248,7 @@ public class TestBatchUpdateResponseBuilder
     ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor(null);
     RoutingResult routingResult = new RoutingResult(mockContext, mockDescriptor);
 
-    PartialRestResponse response = new BatchUpdateResponseBuilder(new ErrorResponseBuilder())
+    RestLiResponse response = new BatchUpdateResponseBuilder(new ErrorResponseBuilder())
         .buildResponse(routingResult, responseData);
     Assert.assertEquals(((BatchResponse<?>) response.getEntity()).getResults().get("key"), expectedResult);
   }

@@ -16,58 +16,44 @@
 
 package com.linkedin.restli.internal.server.response;
 
-
-import com.linkedin.data.ByteString;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.r2.message.rest.RestException;
-import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.rest.RestResponse;
-import com.linkedin.r2.message.rest.RestResponseBuilder;
-import com.linkedin.restli.common.ActionResponse;
-import com.linkedin.restli.common.ContentType;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.RestConstants;
-import com.linkedin.restli.internal.common.CookieUtil;
 import com.linkedin.restli.internal.server.RestLiInternalException;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.internal.server.methods.MethodAdapterRegistry;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
-import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.restspec.ResourceEntityType;
-import com.linkedin.restli.server.CollectionResult;
-import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
-import com.linkedin.restli.server.UpdateResponse;
-import com.linkedin.restli.server.resources.CollectionResource;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.HttpCookie;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import javax.activation.MimeTypeParseException;
 
 
 /**
- * Interprets the method response to generate a {@link RestResponse}. Per methods on
- * {@link CollectionResource}, response can be any of the following:
+ * A Rest.li response is built in three steps.
+ * <ol>
+ *   <li>Build a {@link RestLiResponseData} from the result object returned by the server application resource
+ *   implementation. The <code>RestLiResponseData</code> object is then sent through the response filter chain.</li>
+ *   <li>Build a {@link RestLiResponse} from the <code>RestLiResponseData</code></li> after it has been processed
+ *   by the Rest.li filters.
+ *   <li>Build a {@link com.linkedin.r2.message.rest.RestResponse} or {@link com.linkedin.r2.message.stream.StreamResponse}
+ *   from the <code>RestLiResponse</code>.</li>
+ * </ol>
  *
- * <ul>
- * <li> V extends RecordTemplate  - get response, custom response
- * <li> Map&lt;K, RecordTemplate&gt; - batch get response
- * <li> List&lt;RecordTemplate&gt; - collection response (no total)
- * <li> {@link CollectionResult} - collection response (includes total)
- * <li> {@link CreateResponse} - create response
- * <li> {@link UpdateResponse} - update response
- * <li> {@link ActionResponse} - action response
- * </ul>
+ * <code>RestLiResponseHandler</code> uses appropriate {@link RestLiResponseBuilder} implementation to execute the
+ * first two steps.
  *
  * @author dellamag
  * @author nshankar
@@ -77,17 +63,30 @@ public class RestLiResponseHandler
   private final MethodAdapterRegistry _methodAdapterRegistry;
   private final ErrorResponseBuilder _errorResponseBuilder;
 
+  public RestLiResponseHandler()
+  {
+    this(new ErrorResponseBuilder());
+  }
+
+  public RestLiResponseHandler(ErrorResponseBuilder errorResponseBuilder)
+  {
+    this(new MethodAdapterRegistry(errorResponseBuilder), errorResponseBuilder);
+  }
+
   public RestLiResponseHandler(MethodAdapterRegistry methodAdapterRegistry, ErrorResponseBuilder errorResponseBuilder)
   {
     _methodAdapterRegistry = methodAdapterRegistry;
     _errorResponseBuilder = errorResponseBuilder;
   }
 
+  /**
+   * @deprecated Use appropriate constructors.
+   */
+  @Deprecated
   public static class Builder
   {
     private MethodAdapterRegistry _methodAdapterRegistry = null;
     private ErrorResponseBuilder _errorResponseBuilder = null;
-    private boolean _permissiveEncoding = false;
 
     public Builder setMethodAdapterRegistry(MethodAdapterRegistry methodAdapterRegistry)
     {
@@ -116,67 +115,26 @@ public class RestLiResponseHandler
   }
 
   /**
-   * Build a RestResponse from response object, incoming RestRequest and RoutingResult.
-   *
-   * TODO: Can zap this method since we have the other two methods.
-   *
-   * @param request
-   *          {@link RestRequest}
-   * @param routingResult
-   *          {@link RoutingResult}
-   * @param responseObject
-   *          response value
-   * @return {@link RestResponse}
-   * @throws IOException
-   *           if cannot build response
-   */
-  public RestResponse buildResponse(final RestRequest request,
-                                    final RoutingResult routingResult,
-                                    final Object responseObject) throws IOException
-  {
-    return buildResponse(routingResult,
-                         buildPartialResponse(routingResult,
-                                              buildRestLiResponseData(request, routingResult, responseObject)));
-  }
-
-
-  /**
    * Build a RestResponse from PartialRestResponse and RoutingResult.
    *
    * @param routingResult
    *          {@link RoutingResult}
-   * @param partialResponse
-   *          {@link PartialRestResponse}
+   * @param restLiResponse
+   *          {@link RestLiResponse}
+   *
+   * @deprecated Internal to Rest.li implementation. Use {@link ResponseUtils#buildResponse(RoutingResult, RestLiResponse)}.
    */
+  @Deprecated
   public RestResponse buildResponse(final RoutingResult routingResult,
-                                     PartialRestResponse partialResponse)
+                                    RestLiResponse restLiResponse)
   {
-    List<String> cookies = CookieUtil.encodeSetCookies(partialResponse.getCookies());
-    RestResponseBuilder builder =
-        new RestResponseBuilder().setHeaders(partialResponse.getHeaders()).setCookies(cookies).setStatus(partialResponse.getStatus()
-                                                     .getCode());
-
-    ServerResourceContext context = routingResult.getContext();
-    ResourceEntityType resourceEntityType = routingResult.getResourceMethod()
-                                                         .getResourceModel()
-                                                         .getResourceEntityType();
-    if (partialResponse.hasData() && ResourceEntityType.STRUCTURED_DATA == resourceEntityType)
-    {
-      DataMap dataMap = partialResponse.getDataMap();
-      String mimeType = context.getResponseMimeType();
-      builder = encodeResult(mimeType, builder, dataMap);
-    }
-    return builder.build();
+    return ResponseUtils.buildResponse(routingResult, restLiResponse);
   }
 
   /**
-   * Build a ParialRestResponse from RestLiResponseDataInternal and RoutingResult.
-   *
-   * @param routingResult {@link RoutingResult}
-   * @param responseData response value
-   * @return {@link PartialRestResponse}
+   * Executes {@linkplain RestLiResponseHandler the second step} of building the response.
    */
-  public <D extends RestLiResponseData<?>> PartialRestResponse buildPartialResponse(final RoutingResult routingResult,
+  public <D extends RestLiResponseData<?>> RestLiResponse buildPartialResponse(final RoutingResult routingResult,
                                                                                     final D responseData)
   {
     if (responseData.getResponseEnvelope().isErrorResponse())
@@ -188,9 +146,9 @@ public class RestLiResponseHandler
     @SuppressWarnings("unchecked")
     RestLiResponseBuilder<D> responseBuilder = (RestLiResponseBuilder<D>) _methodAdapterRegistry.getResponseBuilder(
         routingResult.getResourceMethod().getType());
-    PartialRestResponse partialRestResponse = responseBuilder.buildResponse(routingResult, responseData);
-    injectResponseMetadata(partialRestResponse.getEntity(), responseData.getResponseEnvelope().getResponseMetadata());
-    return partialRestResponse;
+    RestLiResponse restLiResponse = responseBuilder.buildResponse(routingResult, responseData);
+    injectResponseMetadata(restLiResponse.getEntity(), responseData.getResponseEnvelope().getResponseMetadata());
+    return restLiResponse;
   }
 
   private void injectResponseMetadata(RecordTemplate entity, DataMap responseMetadata) {
@@ -206,19 +164,9 @@ public class RestLiResponseHandler
   }
 
   /**
-   * Build a RestLiResponseDataInternal from response object, incoming RestRequest and RoutingResult.
-   *
-   * @param request
-   *          {@link RestRequest}
-   * @param routingResult
-   *          {@link RoutingResult}
-   * @param responseObject
-   *          response value
-   * @return {@link RestLiResponseEnvelope}
-   * @throws IOException
-   *           if cannot build response
+   * Executes {@linkplain RestLiResponseHandler the first step} of building the response.
    */
-  public RestLiResponseData<?> buildRestLiResponseData(final RestRequest request,
+  public RestLiResponseData<?> buildRestLiResponseData(final Request request,
                                                        final RoutingResult routingResult,
                                                        final Object responseObject) throws IOException
   {
@@ -284,50 +232,11 @@ public class RestLiResponseHandler
     return responseBuilder.buildRestLiResponseData(request, routingResult, responseObject, responseHeaders, responseCookies);
   }
 
-  public RestLiResponseData<?> buildExceptionResponseData(final RestRequest request,
-                                                           final RoutingResult routingResult,
-                                                           final RestLiServiceException exception,
-                                                           final Map<String, String> headers,
-                                                           final List<HttpCookie> cookies)
+  public RestLiResponseData<?> buildExceptionResponseData(final RoutingResult routingResult,
+      final RestLiServiceException exception,
+      final Map<String, String> headers,
+      final List<HttpCookie> cookies)
   {
     return _errorResponseBuilder.buildRestLiResponseData(routingResult, exception, headers, cookies);
-  }
-
-  public RestException buildRestException(final Throwable e, PartialRestResponse partialResponse)
-  {
-    List<String> cookies = CookieUtil.encodeSetCookies(partialResponse.getCookies());
-    RestResponseBuilder builder =
-        new RestResponseBuilder().setHeaders(partialResponse.getHeaders()).setCookies(cookies).setStatus(partialResponse.getStatus()
-                .getCode());
-    if (partialResponse.hasData())
-    {
-      DataMap dataMap = partialResponse.getDataMap();
-      ByteArrayOutputStream baos = new ByteArrayOutputStream(4096);
-      DataMapUtils.write(dataMap, null, baos, true); // partialResponse.getSchema()
-      builder.setEntity(ByteString.unsafeWrap(baos.toByteArray()));
-      builder.setHeader(RestConstants.HEADER_CONTENT_TYPE, ContentType.JSON.getHeaderKey());
-    }
-    RestResponse restResponse = builder.build();
-    return new RestException(restResponse, e);
-  }
-
-  private RestResponseBuilder encodeResult(String mimeType, RestResponseBuilder builder, DataMap dataMap)
-  {
-    try
-    {
-      ContentType type = ContentType.getContentType(mimeType).orElseThrow(
-          () -> new RestLiServiceException(HttpStatus.S_406_NOT_ACCEPTABLE,
-              "Requested mime type for encoding is not supported. Mimetype: " + mimeType));
-      assert type != null;
-      builder.setHeader(RestConstants.HEADER_CONTENT_TYPE, type.getHeaderKey());
-      // Use unsafe wrap to avoid copying the bytes when request builder creates ByteString.
-      builder.setEntity(ByteString.unsafeWrap(DataMapUtils.mapToBytes(dataMap, type.getCodec())));
-    }
-    catch (MimeTypeParseException e)
-    {
-      throw new RestLiServiceException(HttpStatus.S_406_NOT_ACCEPTABLE, "Invalid mime type: " + mimeType);
-    }
-
-    return builder;
   }
 }

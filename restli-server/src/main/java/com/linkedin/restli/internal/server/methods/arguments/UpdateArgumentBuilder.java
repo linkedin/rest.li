@@ -21,8 +21,9 @@
 package com.linkedin.restli.internal.server.methods.arguments;
 
 
+import com.linkedin.data.DataMap;
+import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.util.ArgumentUtils;
 import com.linkedin.restli.server.RestLiRequestData;
@@ -54,9 +55,9 @@ public class UpdateArgumentBuilder implements RestLiArgumentBuilder
   }
 
   @Override
-  public RestLiRequestData extractRequestData(RoutingResult routingResult, RestRequest request)
+  public RestLiRequestData extractRequestData(RoutingResult routingResult, DataMap dataMap)
   {
-    RecordTemplate record = ArgumentBuilder.extractEntity(request, ArgumentUtils.getValueClass(routingResult));
+    RecordTemplate record = DataTemplateUtil.wrap(dataMap, ArgumentUtils.getValueClass(routingResult));
     RestLiRequestDataImpl.Builder builder = new RestLiRequestDataImpl.Builder().entity(record);
     if (ArgumentUtils.hasResourceKey(routingResult))
     {

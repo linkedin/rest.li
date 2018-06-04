@@ -55,7 +55,7 @@ public class ResponseBuilderUtil
    * @param response Partial rest response to validate
    * @param headers Headers to validate against
    */
-  public static void validateHeaders(PartialRestResponse response, Map<String, String> headers)
+  public static void validateHeaders(RestLiResponse response, Map<String, String> headers)
   {
     Assert.assertEquals(response.getHeaders(), headers);
     for (String key : headers.keySet())

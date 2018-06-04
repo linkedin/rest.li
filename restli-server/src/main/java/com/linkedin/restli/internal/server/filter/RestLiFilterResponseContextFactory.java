@@ -17,7 +17,7 @@
 package com.linkedin.restli.internal.server.filter;
 
 
-import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.Request;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.HeaderUtil;
 import com.linkedin.restli.internal.common.ProtocolVersionUtil;
@@ -28,7 +28,6 @@ import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.filter.FilterResponseContext;
 
 import java.io.IOException;
-import java.net.HttpCookie;
 import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
@@ -43,9 +42,9 @@ public class RestLiFilterResponseContextFactory
 {
   private final RoutingResult _method;
   private final RestLiResponseHandler _responseHandler;
-  private final RestRequest _request;
+  private final Request _request;
 
-  public RestLiFilterResponseContextFactory(final RestRequest request,
+  public RestLiFilterResponseContextFactory(final Request request,
                                             final RoutingResult method,
                                             final RestLiResponseHandler responseHandler)
   {
@@ -91,8 +90,7 @@ public class RestLiFilterResponseContextFactory
                 ProtocolVersionUtil.extractProtocolVersion(requestHeaders).toString());
     headers.put(HeaderUtil.getErrorResponseHeaderName(requestHeaders), RestConstants.HEADER_VALUE_ERROR);
 
-    final RestLiResponseData<?> responseData = _responseHandler.buildExceptionResponseData(_request,
-                                                                                           _method,
+    final RestLiResponseData<?> responseData = _responseHandler.buildExceptionResponseData(_method,
                                                                                            RestLiServiceException.fromThrowable(throwable),
                                                                                            headers,
                                                                                            Collections.emptyList());

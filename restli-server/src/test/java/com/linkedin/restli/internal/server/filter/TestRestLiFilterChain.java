@@ -151,7 +151,7 @@ public class TestRestLiFilterChain
     _restLiFilterChain = new RestLiFilterChain(Arrays.asList(_filters),
         _mockFilterChainDispatcher, _mockFilterChainCallback);
     _filters[1] = new CountFilterRequestOnError();
-    when(_responseHandler.buildExceptionResponseData(eq(_request), eq(_method), any(RestLiServiceException.class), anyMap(), anyList()))
+    when(_responseHandler.buildExceptionResponseData(eq(_method), any(RestLiServiceException.class), anyMap(), anyList()))
         .thenReturn(_mockRestLiResponseData);
     when(_mockFilterResponseContextFactory.fromThrowable(any(Throwable.class))).thenReturn(_mockFilterResponseContext);
     when(_mockFilterResponseContext.getResponseData()).thenReturn(_mockRestLiResponseData);
@@ -170,7 +170,7 @@ public class TestRestLiFilterChain
     _restLiFilterChain = new RestLiFilterChain(Arrays.asList(_filters),
         _mockFilterChainDispatcher, _mockFilterChainCallback);
     _filters[1] = new CountFilterRequestErrorOnError();
-    when(_responseHandler.buildExceptionResponseData(eq(_request), eq(_method), any(RestLiServiceException.class), anyMap(), anyList()))
+    when(_responseHandler.buildExceptionResponseData(eq(_method), any(RestLiServiceException.class), anyMap(), anyList()))
         .thenReturn(_mockRestLiResponseData);
     when(_mockRestLiResponseData.getResponseEnvelope()).thenReturn(mock(RestLiResponseEnvelope.class));
 
@@ -187,7 +187,7 @@ public class TestRestLiFilterChain
     _restLiFilterChain = new RestLiFilterChain(Arrays.asList(_filters),
         _mockFilterChainDispatcher, _mockFilterChainCallback);
     _filters[1] = new CountFilterRequestThrowsError();
-    when(_responseHandler.buildExceptionResponseData(eq(_request), eq(_method), any(RestLiServiceException.class), anyMap(), anyList()))
+    when(_responseHandler.buildExceptionResponseData(eq(_method), any(RestLiServiceException.class), anyMap(), anyList()))
         .thenReturn(_mockRestLiResponseData);
     when(_mockRestLiResponseData.getResponseEnvelope()).thenReturn(mock(RestLiResponseEnvelope.class));
     _restLiFilterChain.onRequest(_mockFilterRequestContext,
@@ -203,7 +203,7 @@ public class TestRestLiFilterChain
     _restLiFilterChain = new RestLiFilterChain(Arrays.asList(_filters),
         _mockFilterChainDispatcher, _mockFilterChainCallback);
     _filters[1] = new CountFilterRequestErrorThrowsError();
-    when(_responseHandler.buildExceptionResponseData(eq(_request), eq(_method), any(RestLiServiceException.class), anyMap(), anyList()))
+    when(_responseHandler.buildExceptionResponseData(eq(_method), any(RestLiServiceException.class), anyMap(), anyList()))
         .thenReturn(_mockRestLiResponseData);
     when(_mockRestLiResponseData.getResponseEnvelope()).thenReturn(mock(RestLiResponseEnvelope.class));
     _restLiFilterChain.onRequest(_mockFilterRequestContext,
@@ -270,7 +270,7 @@ public class TestRestLiFilterChain
 
     when(_mockFilterRequestContext.getRequestData()).thenReturn(_mockRestLiRequestData);
     when(_mockFilterResponseContext.getResponseData()).thenReturn(_mockRestLiResponseData);
-    when(_responseHandler.buildExceptionResponseData(eq(_request), eq(_method), any(RestLiServiceException.class), anyMap(), anyList()))
+    when(_responseHandler.buildExceptionResponseData(eq(_method), any(RestLiServiceException.class), anyMap(), anyList()))
         .thenReturn(_mockRestLiResponseData);
     when(_mockFilterResponseContextFactory.fromThrowable(any(Throwable.class))).thenReturn(_mockFilterResponseContext);
     when(_mockRestLiResponseData.getResponseEnvelope()).thenReturn(mock(RestLiResponseEnvelope.class));

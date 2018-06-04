@@ -95,6 +95,16 @@ public interface ServerResourceContext extends ResourceContext
   ProtocolVersion getRestliProtocolVersion();
 
   /**
+   * Sets the MIME type of the request. This is the value from the Content-Type header.
+   */
+  void setRequestMimeType(String type);
+
+  /**
+   * Gets the MIME type of the request. This is the value from the Content-Type header and it can be null.
+   */
+  String getRequestMimeType();
+
+  /**
    * Set the MIME type that that has been chosen as the response MIME type.
    * @param type Selected MIME type.
    */

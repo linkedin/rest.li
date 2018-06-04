@@ -17,7 +17,7 @@
 package com.linkedin.restli.internal.server.response;
 
 
-import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.Request;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.server.RestLiResponseData;
@@ -32,17 +32,23 @@ import java.util.Map;
 public abstract class EmptyResponseBuilder<D extends RestLiResponseData<?>> implements RestLiResponseBuilder<D>
 {
   @Override
-  public PartialRestResponse buildResponse(RoutingResult routingResult, D responseData)
+  public RestLiResponse buildResponse(RoutingResult routingResult, D responseData)
   {
-    return new PartialRestResponse.Builder().headers(responseData.getHeaders())
+    return new RestLiResponse.Builder().headers(responseData.getHeaders())
                                             .cookies(responseData.getCookies())
                                             .status(responseData.getResponseEnvelope().getStatus())
                                             .build();
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * @param result The result of a Rest.li UPDATE, PARTIAL_UPDATE, or DELETE method. It is a {@link UpdateResponse}
+   *               object.
+   */
   @Override
   @SuppressWarnings("unchecked")
-  public D buildRestLiResponseData(RestRequest request, RoutingResult routingResult,
+  public D buildRestLiResponseData(Request request, RoutingResult routingResult,
                                    Object result, Map<String, String> headers,
                                    List<HttpCookie> cookies)
   {

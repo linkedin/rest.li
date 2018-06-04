@@ -64,8 +64,6 @@ import org.testng.annotations.Test;
 
 
 /**
- * Unit tests for {@See ArgumentBuilder}
- *
  * @author Oby Sumampouw
  */
 public class TestArgumentBuilder
@@ -224,7 +222,7 @@ public class TestArgumentBuilder
     AnnotationSet annotationSet = EasyMock.createMock(AnnotationSet.class);
     EasyMock.expect(annotationSet.getAll()).andReturn(new Annotation[]{});
     EasyMock.expect(annotationSet.get(HeaderParam.class)).andReturn(annotation);
-    Map<String, String> headers = new HashMap<String, String>();
+    Map<String, String> headers = new HashMap<>();
     headers.put(testParamKey, expectedTestParamValue);
     EasyMock.expect(mockResourceContext.getRequestHeaders()).andReturn(headers);
     EasyMock.expect(mockResourceContext.getRequestAttachmentReader()).andReturn(null);

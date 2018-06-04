@@ -164,7 +164,7 @@ public class TestBatchGetResponseBuilder
                                                                                 results,
                                                                                 headers,
                                                                                 Collections.emptyList());
-    PartialRestResponse restResponse = responseBuilder.buildResponse(routingResult, responseData);
+    RestLiResponse restResponse = responseBuilder.buildResponse(routingResult, responseData);
 
     EasyMock.verify(mockContext, mockDescriptor);
     ResponseBuilderUtil.validateHeaders(restResponse, headers);
@@ -243,7 +243,7 @@ public class TestBatchGetResponseBuilder
                                                                                       rawResults,
                                                                                       headers,
                                                                                       Collections.emptyList());
-    PartialRestResponse restResponse = batchGetResponseBuilder.buildResponse(routingResult, responseData);
+    RestLiResponse restResponse = batchGetResponseBuilder.buildResponse(routingResult, responseData);
 
     EasyMock.verify(mockContext, mockDescriptor);
     ResponseBuilderUtil.validateHeaders(restResponse, headers);
@@ -354,7 +354,7 @@ public class TestBatchGetResponseBuilder
                                                                               results,
                                                                               headers,
                                                                               Collections.emptyList());
-    PartialRestResponse restResponse = responseBuilder.buildResponse(routingResult, responseData);
+    RestLiResponse restResponse = responseBuilder.buildResponse(routingResult, responseData);
 
     ResponseBuilderUtil.validateHeaders(restResponse, headers);
     Assert.assertEquals(restResponse.getStatus(), HttpStatus.S_200_OK);

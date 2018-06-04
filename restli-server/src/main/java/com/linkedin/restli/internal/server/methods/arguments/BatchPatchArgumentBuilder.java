@@ -22,9 +22,7 @@ package com.linkedin.restli.internal.server.methods.arguments;
 
 
 import com.linkedin.data.DataMap;
-import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.PatchRequest;
-import com.linkedin.restli.internal.common.ProtocolVersionUtil;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.server.BatchPatchRequest;
 import com.linkedin.restli.server.RestLiRequestData;
@@ -54,17 +52,15 @@ public class BatchPatchArgumentBuilder implements RestLiArgumentBuilder
 
   @SuppressWarnings("unchecked")
   @Override
-  public RestLiRequestData extractRequestData(RoutingResult routingResult, RestRequest request)
+  public RestLiRequestData extractRequestData(RoutingResult routingResult, DataMap dataMap)
   {
-    DataMap dataMap = ArgumentBuilder.extractEntity(request);
     Set<?> ids = routingResult.getContext().getPathKeys().getBatchIds();
     @SuppressWarnings({ "rawtypes" })
     Map inputMap =
         ArgumentBuilder.buildBatchRequestMap(routingResult,
                                              dataMap,
                                              PatchRequest.class,
-                                             ids,
-                                             ProtocolVersionUtil.extractProtocolVersion(request.getHeaders()));
+                                             ids);
 
     final RestLiRequestDataImpl.Builder builder = new RestLiRequestDataImpl.Builder();
     if (inputMap != null)

@@ -99,13 +99,13 @@ public class TestResponseMetadata {
     when(mockContext.getRestliProtocolVersion()).thenReturn(mockProtocolVersion);
 
 
-    final RestLiResponseHandler responseHandler = new RestLiResponseHandler.Builder().build();
+    final RestLiResponseHandler responseHandler = new RestLiResponseHandler();
 
     // Test success path
 
     RestLiResponseData<?> responseData = responseHandler.buildRestLiResponseData(mockRequest, mockRoutingResult, responseObject);
     responseData.getResponseEnvelope().getResponseMetadata().put(TEST_META_DATA_ELEMENT_KEY, TEST_META_DATA_ELEMENT);
-    PartialRestResponse response = responseHandler.buildPartialResponse(mockRoutingResult, responseData);
+    RestLiResponse response = responseHandler.buildPartialResponse(mockRoutingResult, responseData);
 
     assertEquals(response.getEntity() != null, hasEntity);
 
@@ -124,12 +124,12 @@ public class TestResponseMetadata {
     responseData.getResponseEnvelope().setExceptionInternal(new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR));
     assertEquals(responseData.getResponseEnvelope().getResponseMetadata().size(), 0);
 
-    PartialRestResponse errorResponse = responseHandler.buildPartialResponse(mockRoutingResult, responseData);
+    RestLiResponse errorResponse = responseHandler.buildPartialResponse(mockRoutingResult, responseData);
     assertNull(errorResponse.getEntity().data().get(RestConstants.METADATA_RESERVED_FIELD));
 
     // Test case where resource method returns exception path
 
-    RestLiResponseData<?> errorResponseData = responseHandler.buildExceptionResponseData(mockRequest, mockRoutingResult,
+    RestLiResponseData<?> errorResponseData = responseHandler.buildExceptionResponseData(mockRoutingResult,
         new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR), new HashMap<>(), new ArrayList<>());
     responseData.getResponseEnvelope().getResponseMetadata().put(TEST_META_DATA_ELEMENT_KEY, TEST_META_DATA_ELEMENT);
     errorResponse = responseHandler.buildPartialResponse(mockRoutingResult, responseData);

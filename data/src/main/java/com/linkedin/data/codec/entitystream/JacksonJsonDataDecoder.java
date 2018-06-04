@@ -44,8 +44,16 @@ import static com.linkedin.data.codec.entitystream.JacksonJsonDataDecoder.Token.
 import static com.linkedin.data.codec.entitystream.JacksonJsonDataDecoder.Token.START_OBJECT;
 
 
+/**
+ * A JSON decoder for a {@link DataComplex} object implemented as a {@link com.linkedin.entitystream.Reader} reading from an {@link com.linkedin.entitystream.EntityStream}
+ * of ByteString. The implementation is backed by Jackson's {@link NonBlockingJsonParser}. Because the raw bytes are
+ * pushed to the decoder, it keeps the partially built data structure in a stack.
+ */
 public class JacksonJsonDataDecoder<T extends DataComplex> implements JsonDataDecoder<T>
 {
+  /**
+   * Internal tokens. Each token is presented by a bit in a byte.
+   */
   enum Token
   {
     START_OBJECT(0b00000001),
@@ -73,25 +81,23 @@ public class JacksonJsonDataDecoder<T extends DataComplex> implements JsonDataDe
   private T _result;
   private ReadHandle _readHandle;
 
-  private final NonBlockingJsonParser _parser;
+  private NonBlockingJsonParser _parser;
 
   private Deque<DataComplex> _stack;
   private String _currField;
+  // Expected tokens represented by a bit pattern. Every bit represents a token.
   private byte _expectedTokens;
   private boolean _isCurrList;
 
   protected JacksonJsonDataDecoder(byte expectedFirstToken)
-      throws IOException
   {
     _completable = new CompletableFuture<>();
     _result = null;
-    _parser = (NonBlockingJsonParser) JSON_FACTORY.createNonBlockingByteArrayParser();
     _stack = new ArrayDeque<>();
     _expectedTokens = expectedFirstToken;
   }
 
   public JacksonJsonDataDecoder()
-      throws IOException
   {
     this((byte) (START_OBJECT.bitPattern | START_ARRAY.bitPattern));
   }
@@ -100,6 +106,16 @@ public class JacksonJsonDataDecoder<T extends DataComplex> implements JsonDataDe
   public void onInit(ReadHandle rh)
   {
     _readHandle = rh;
+
+    try
+    {
+      _parser = (NonBlockingJsonParser) JSON_FACTORY.createNonBlockingByteArrayParser();
+    }
+    catch (IOException e)
+    {
+      handleException(e);
+    }
+
     _readHandle.request(1);
   }
 
@@ -110,12 +126,13 @@ public class JacksonJsonDataDecoder<T extends DataComplex> implements JsonDataDe
     try
     {
       _parser.feedInput(bytes, 0, bytes.length);
-      processTokens();
     }
     catch (IOException e)
     {
       handleException(e);
     }
+
+    processTokens();
   }
 
   private void processTokens()
@@ -229,6 +246,7 @@ public class JacksonJsonDataDecoder<T extends DataComplex> implements JsonDataDe
     if (_stack.isEmpty())
     {
       _result = (T) tmp;
+      // No more tokens is expected.
       _expectedTokens = 0;
     }
     else
@@ -264,7 +282,11 @@ public class JacksonJsonDataDecoder<T extends DataComplex> implements JsonDataDe
   @Override
   public void onDone()
   {
-    if (_result != null)
+    // We must signal to the parser the end of the input and pull any remaining token, even if it's unexpected.
+    _parser.endOfInput();
+    processTokens();
+
+    if (_stack.isEmpty())
     {
       _completable.complete(_result);
     }

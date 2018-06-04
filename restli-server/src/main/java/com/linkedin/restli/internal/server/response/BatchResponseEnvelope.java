@@ -113,7 +113,7 @@ public abstract class BatchResponseEnvelope extends RestLiResponseEnvelope
     // underlying data map will be preserved.
     // For BatchUpdate, it must be an instanceof UpdateStatus;
     // otherwise, the content will be overwritten upon building
-    // the PartialRestResponse. The instance of UpdateStatus
+    // the RestLiResponse. The instance of UpdateStatus
     // will not actually honor the status code or error response
     // fields since there are corresponding sources of truth in
     // this class, but any other items in the underlying data map

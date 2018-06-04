@@ -21,7 +21,7 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.jersey.api.uri.UriComponent;
-import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.Request;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.common.ProtocolVersion;
@@ -45,17 +45,23 @@ import java.util.Map;
 public class CreateResponseBuilder implements RestLiResponseBuilder<RestLiResponseData<CreateResponseEnvelope>>
 {
   @Override
-  public PartialRestResponse buildResponse(RoutingResult routingResult, RestLiResponseData<CreateResponseEnvelope> responseData)
+  public RestLiResponse buildResponse(RoutingResult routingResult, RestLiResponseData<CreateResponseEnvelope> responseData)
   {
-    return new PartialRestResponse.Builder().entity(responseData.getResponseEnvelope().getRecord())
+    return new RestLiResponse.Builder().entity(responseData.getResponseEnvelope().getRecord())
                                             .headers(responseData.getHeaders())
                                             .cookies(responseData.getCookies())
                                             .status(responseData.getResponseEnvelope().getStatus())
                                             .build();
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * @param result The result of a Rest.li CREATE method. It is an instance of {@link CreateResponse}; or subclass
+   *               {@link CreateKVResponse}, if the CREATE method returns the entity.
+   */
   @Override
-  public RestLiResponseData<CreateResponseEnvelope> buildRestLiResponseData(RestRequest request,
+  public RestLiResponseData<CreateResponseEnvelope> buildRestLiResponseData(Request request,
                                                     RoutingResult routingResult,
                                                     Object result,
                                                     Map<String, String> headers,

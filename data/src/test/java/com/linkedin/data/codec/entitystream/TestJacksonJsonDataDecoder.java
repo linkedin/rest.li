@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNull;
 import static org.testng.Assert.fail;
 
 
@@ -202,6 +203,14 @@ public class TestJacksonJsonDataDecoder
     {
       // Expected.
     }
+  }
+
+  @Test
+  public void testEmptySource()
+      throws Exception
+  {
+    assertNull(decode(new byte[0]));
+    assertNull(decode(" \n".getBytes()));
   }
 
   private static DataComplex decode(byte[] bytes)

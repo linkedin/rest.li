@@ -18,15 +18,12 @@ package com.linkedin.data.codec.entitystream;
 
 import com.linkedin.data.DataMap;
 
-import java.io.IOException;
-
 import static com.linkedin.data.codec.entitystream.JacksonJsonDataDecoder.Token.START_OBJECT;
 
 
 public class JacksonJsonDataMapDecoder extends JacksonJsonDataDecoder<DataMap>
 {
   public JacksonJsonDataMapDecoder()
-      throws IOException
   {
     super(START_OBJECT.bitPattern);
   }

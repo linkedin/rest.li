@@ -34,7 +34,6 @@ import com.linkedin.data.template.InvalidAlternativeKeyException;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.TemplateRuntimeException;
 import com.linkedin.internal.common.util.CollectionUtils;
-import com.linkedin.r2.message.rest.RestMessage;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.entitystream.EntityStreams;
 import com.linkedin.entitystream.WriteHandle;
@@ -195,7 +194,8 @@ public class ArgumentBuilder
         {
           // The OutputStream is passed to the resource implementation in a synchronous call. Upon return of the
           // resource method, all the bytes would haven't written to the OutputStream. The EntityStream would have
-          // contained all the bytes by the time data is requested.
+          // contained all the bytes by the time data is requested. The ownership of the OutputStream is passed to
+          // the ByteArrayOutputStreamWriter, which is responsible of closing the OutputStream if necessary.
           ByteArrayOutputStream out = new ByteArrayOutputStream();
           context.setEntityStream(EntityStreams.newEntityStream(new ByteArrayOutputStreamWriter(out)));
 
@@ -537,25 +537,6 @@ public class ArgumentBuilder
 
 
   /**
-   * Extracts the entity from the request body of {@link com.linkedin.r2.message.rest.RestMessage}
-   *
-   * @param message {@link com.linkedin.r2.message.rest.RestMessage}
-   * @return {@link DataMap} representing the body of the message.
-   * @throws RoutingException with 400_BAD_REQUEST as status if the message cannot be parsed.
-   */
-  static DataMap extractEntity(final RestMessage message)
-  {
-    try
-    {
-      return DataMapUtils.readMapWithExceptions(message);
-    }
-    catch (IOException e)
-    {
-      throw new RoutingException("Cannot parse request entity", HttpStatus.S_400_BAD_REQUEST.getCode(), e);
-    }
-  }
-
-  /**
    * Convert a DataMap representation of a BatchRequest (string->record) into a Java Map
    * appropriate for passing into application code. Note that compound/complex keys are
    * represented as their string encoding in the DataMap. This method will parse the string
@@ -568,11 +549,10 @@ public class ArgumentBuilder
    * @param ids The parsed batch ids from the request URI
    * @return A map using appropriate key and value classes, or null if ids is null
    */
-  static <R extends RecordTemplate> Map<Object, R> buildBatchRequestMap(final RoutingResult routingResult,
-                                                                               final DataMap data,
-                                                                               final Class<R> valueClass,
-                                                                               final Set<?> ids,
-                                                                               final ProtocolVersion version)
+  static <R extends RecordTemplate> Map<Object, R> buildBatchRequestMap(RoutingResult routingResult,
+      DataMap data,
+      Class<R> valueClass,
+      Set<?> ids)
   {
     if (ids == null)
     {
@@ -585,7 +565,7 @@ public class ArgumentBuilder
         new HashMap<>(CollectionUtils.getMapInitialCapacity(batchRequest.getEntities().size(), 0.75f), 0.75f);
     for (Map.Entry<String, R> entry : batchRequest.getEntities().entrySet())
     {
-      Object typedKey = parseEntityStringKey(entry.getKey(), routingResult, version);
+      Object typedKey = parseEntityStringKey(entry.getKey(), routingResult);
 
       if (result.containsKey(typedKey))
       {
@@ -622,15 +602,13 @@ public class ArgumentBuilder
    *
    * @param stringKey Key string from the entity body
    * @param routingResult {@link RoutingResult} instance for the current request
-   * @param version {@link ProtocolVersion} instance of the current request
    * @return An instance of key's corresponding type
    */
-  private static Object parseEntityStringKey(final String stringKey,
-      final RoutingResult routingResult,
-      final ProtocolVersion version)
+  private static Object parseEntityStringKey(final String stringKey, final RoutingResult routingResult)
   {
     ResourceModel resourceModel = routingResult.getResourceMethod().getResourceModel();
-    ResourceContext resourceContext = routingResult.getContext();
+    ServerResourceContext resourceContext = routingResult.getContext();
+    ProtocolVersion version = resourceContext.getRestliProtocolVersion();
 
     try
     {
@@ -675,7 +653,6 @@ public class ArgumentBuilder
     private final ByteArrayOutputStream _out;
     private WriteHandle<? super ByteString> _wh;
 
-
     ByteArrayOutputStreamWriter(ByteArrayOutputStream out)
     {
       _out = out;
@@ -700,7 +677,9 @@ public class ArgumentBuilder
     @Override
     public void onAbort(Throwable ex)
     {
-      // do nothing
+      // Closing ByteArrayOutputStream is unnecessary because it doesn't hold any internal resource that needs to
+      // be released. However, if the implementation changes to use a different backing OutputStream, this needs to be
+      // re-evaluated. OutputStream may need to be called here, after _wh.done(), and in finalize().
     }
   }
 }

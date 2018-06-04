@@ -21,8 +21,9 @@
 package com.linkedin.restli.internal.server.methods.arguments;
 
 
+import com.linkedin.data.DataMap;
+import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.util.ArgumentUtils;
@@ -57,9 +58,9 @@ public class PatchArgumentBuilder implements RestLiArgumentBuilder
   }
 
   @Override
-  public RestLiRequestData extractRequestData(RoutingResult routingResult, RestRequest request)
+  public RestLiRequestData extractRequestData(RoutingResult routingResult, DataMap dataMap)
   {
-    RecordTemplate record = ArgumentBuilder.extractEntity(request, PatchRequest.class);
+    RecordTemplate record = DataTemplateUtil.wrap(dataMap, PatchRequest.class);
     RestLiRequestDataImpl.Builder builder = new RestLiRequestDataImpl.Builder().entity(record);
     if (ArgumentUtils.hasResourceKey(routingResult))
     {

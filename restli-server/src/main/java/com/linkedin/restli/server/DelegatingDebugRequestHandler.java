@@ -31,14 +31,14 @@ import com.linkedin.r2.util.URIUtil;
  *
  * @author xma
  */
-class DelegatingDebugRequestHandler implements RequestHandler
+class DelegatingDebugRequestHandler implements NonResourceRequestHandler
 {
   static final String DEBUG_PATH_SEGMENT = "__debug";
 
   private final RestLiDebugRequestHandler _delegate;
-  private final RestLiServer _restLiServer;
+  private final RestRestLiServer _restLiServer;
 
-  DelegatingDebugRequestHandler(RestLiDebugRequestHandler delegate, RestLiServer restLiServer)
+  DelegatingDebugRequestHandler(RestLiDebugRequestHandler delegate, RestRestLiServer restLiServer)
   {
     _delegate = delegate;
     _restLiServer = restLiServer;

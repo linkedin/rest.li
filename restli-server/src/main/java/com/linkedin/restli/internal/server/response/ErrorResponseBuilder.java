@@ -14,10 +14,6 @@
    limitations under the License.
  */
 
-/**
- * $Id: $
- */
-
 package com.linkedin.restli.internal.server.response;
 
 
@@ -48,7 +44,6 @@ public final class ErrorResponseBuilder
 {
   public static final String DEFAULT_INTERNAL_ERROR_MESSAGE = "INTERNAL SERVER ERROR";
   private final ErrorResponseFormat _errorResponseFormat;
-  private final String _internalErrorMessage;
 
   public ErrorResponseBuilder()
   {
@@ -57,18 +52,16 @@ public final class ErrorResponseBuilder
 
   public ErrorResponseBuilder(ErrorResponseFormat errorResponseFormat)
   {
-    this(errorResponseFormat, DEFAULT_INTERNAL_ERROR_MESSAGE);
+    _errorResponseFormat = errorResponseFormat;
   }
 
+  /**
+   * @deprecated internalErrorMessage is ignored. Use {@link #ErrorResponseBuilder(ErrorResponseFormat)}.
+   */
+  @Deprecated
   public ErrorResponseBuilder(ErrorResponseFormat errorResponseFormat, String internalErrorMessage)
   {
     _errorResponseFormat = errorResponseFormat;
-    _internalErrorMessage = internalErrorMessage;
-  }
-
-  public String getInternalErrorMessage()
-  {
-    return _internalErrorMessage;
   }
 
   public ErrorResponseFormat getErrorResponseFormat()
@@ -120,10 +113,10 @@ public final class ErrorResponseBuilder
     return er;
   }
 
-  public PartialRestResponse buildResponse(RestLiResponseData<?> responseData)
+  public RestLiResponse buildResponse(RestLiResponseData<?> responseData)
   {
     ErrorResponse errorResponse = buildErrorResponse(responseData.getResponseEnvelope().getException());
-    return new PartialRestResponse.Builder()
+    return new RestLiResponse.Builder()
         .headers(responseData.getHeaders())
         .cookies(responseData.getCookies())
         .status(responseData.getResponseEnvelope().getStatus())

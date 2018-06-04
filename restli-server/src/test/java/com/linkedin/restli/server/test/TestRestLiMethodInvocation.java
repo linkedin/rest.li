@@ -59,6 +59,8 @@ import com.linkedin.restli.internal.server.RestLiCallback;
 import com.linkedin.restli.internal.server.RestLiMethodInvoker;
 import com.linkedin.restli.internal.server.filter.FilterChainDispatcher;
 import com.linkedin.restli.internal.server.filter.FilterChainDispatcherImpl;
+import com.linkedin.restli.internal.server.response.RestLiResponse;
+import com.linkedin.restli.internal.server.response.ResponseUtils;
 import com.linkedin.restli.internal.server.response.RestLiResponseHandler;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.ServerResourceContext;
@@ -73,6 +75,7 @@ import com.linkedin.restli.internal.server.response.ErrorResponseBuilder;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.internal.server.util.ArgumentUtils;
+import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.internal.server.util.RestLiSyntaxException;
 import com.linkedin.restli.internal.server.util.RestUtils;
 import com.linkedin.restli.server.BatchCreateRequest;
@@ -131,7 +134,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -199,7 +201,7 @@ public class TestRestLiMethodInvocation
     _methodAdapterRegistry = new MethodAdapterRegistry(_errorResponseBuilder);
 
     // Add filters to the invoker.
-    _invoker = new RestLiMethodInvoker(_resourceFactory, _engine, _errorResponseBuilder);
+    _invoker = new RestLiMethodInvoker(_resourceFactory, _engine, ErrorResponseBuilder.DEFAULT_INTERNAL_ERROR_MESSAGE);
   }
 
   @AfterTest
@@ -229,7 +231,7 @@ public class TestRestLiMethodInvocation
     FilterRequestContext mockFilterContext = createMock(FilterRequestContext.class);
     RestLiRequestData requestData = new RestLiRequestDataImpl.Builder().key("Key").build();
     RestLiMethodInvoker invokerWithFilters =
-        new RestLiMethodInvoker(_resourceFactory, _engine, new ErrorResponseBuilder());
+        new RestLiMethodInvoker(_resourceFactory, _engine, ErrorResponseBuilder.DEFAULT_INTERNAL_ERROR_MESSAGE);
     Map<String, ResourceModel> resourceModelMap =
         buildResourceModels(StatusCollectionResource.class, LocationResource.class, DiscoveredItemsResource.class);
     ResourceModel statusResourceModel = resourceModelMap.get("/statuses");
@@ -315,13 +317,14 @@ public class TestRestLiMethodInvocation
     }
     replay(resource, mockArgumentBuilder, mockFilterContext, mockFilter, mockCallback);
 
-    RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(), routingResult.getContext());
+    RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(),
+        Collections.emptySet(),
+        routingResult.getContext());
 
     RestLiFilterChain filterChain = new RestLiFilterChain(Arrays.asList(mockFilter, mockFilter), filterChainDispatcher,
         filterChainCallback);
     filterChain.onRequest(mockFilterContext,
-                          new RestLiFilterResponseContextFactory(request, routingResult,
-                                                                         new RestLiResponseHandler.Builder().build()));
+                          new RestLiFilterResponseContextFactory(request, routingResult, new RestLiResponseHandler()));
 
     verify(mockArgumentBuilder, mockFilterContext, mockFilter);
     if (throwExceptionFromFirstFilter)
@@ -1665,7 +1668,7 @@ public class TestRestLiMethodInvocation
                       "{");
       fail("Expected exception");
     }
-    catch (RoutingException e)
+    catch (Exception e)
     {
       // expected
       EasyMock.reset(statusResource);
@@ -2508,7 +2511,7 @@ public class TestRestLiMethodInvocation
                       "{");
       fail("Expected exception");
     }
-    catch (RoutingException e)
+    catch (Exception e)
     {
       // expected
       EasyMock.reset(statusResource);
@@ -2805,9 +2808,11 @@ public class TestRestLiMethodInvocation
                                                                             new RequestContext()), methodDescriptor);
 
     try {
-      RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(), routingResult.getContext());
+      RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(),
+          Collections.emptySet(),
+          routingResult.getContext());
       _methodAdapterRegistry.getArgumentBuilder(methodDescriptor.getMethodType())
-          .extractRequestData(routingResult, request);
+          .extractRequestData(routingResult, DataMapUtils.readMapWithExceptions(request));
       _invoker.invoke(null, routingResult, _methodAdapterRegistry.getArgumentBuilder(methodDescriptor.getMethodType()),
                       null);
       Assert.fail("expected routing exception");
@@ -2841,8 +2846,11 @@ public class TestRestLiMethodInvocation
     RestLiArgumentBuilder argumentBuilder = _methodAdapterRegistry.getArgumentBuilder(methodDescriptor.getType());
 
     try {
-      RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(), routingResult.getContext());
-      RestLiRequestData requestData = argumentBuilder.extractRequestData(routingResult, request);
+      RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(),
+          Collections.emptySet(),
+          routingResult.getContext());
+      RestLiRequestData requestData = argumentBuilder.extractRequestData(routingResult,
+          DataMapUtils.readMapWithExceptions(request));
       _invoker.invoke(requestData, routingResult,
                       _methodAdapterRegistry.getArgumentBuilder(methodDescriptor.getMethodType()), null);
       Assert.fail("expected routing exception");
@@ -3284,7 +3292,7 @@ public class TestRestLiMethodInvocation
   }
 
   @Test
-  public void testParseqTraceSync() throws RestLiSyntaxException, URISyntaxException
+  public void testParseqTraceSync() throws Exception
   {
     Map<String, ResourceModel> resourceModelMap = buildResourceModels(
         StatusCollectionResource.class);
@@ -3323,7 +3331,7 @@ public class TestRestLiMethodInvocation
   }
 
   @Test
-  public void testParseqTraceAsync() throws RestLiSyntaxException, URISyntaxException
+  public void testParseqTraceAsync() throws Exception
   {
     Map<String, ResourceModel> resourceModelMap = buildResourceModels(
         AsyncStatusCollectionResource.class);
@@ -3357,7 +3365,7 @@ public class TestRestLiMethodInvocation
   }
 
   @Test
-  public void testParseqTracePromise() throws RestLiSyntaxException, URISyntaxException
+  public void testParseqTracePromise() throws Exception
   {
     Map<String, ResourceModel> resourceModelMap = buildResourceModels(
         PromiseStatusCollectionResource.class);
@@ -3395,7 +3403,7 @@ public class TestRestLiMethodInvocation
   }
 
   @Test
-  public void testParseqTraceTask() throws RestLiSyntaxException, URISyntaxException
+  public void testParseqTraceTask() throws Exception
   {
     Map<String, ResourceModel> resourceModelMap = buildResourceModels(
         TaskStatusCollectionResource.class);
@@ -4287,7 +4295,7 @@ public class TestRestLiMethodInvocation
     RestRequest request = builder.build();
     final RestLiAttachmentReader attachmentReader = new RestLiAttachmentReader(null);
     final CountDownLatch latch = new CountDownLatch(1);
-    RestLiResponseHandler restLiResponseHandler = new RestLiResponseHandler.Builder().build();
+    RestLiResponseHandler restLiResponseHandler = new RestLiResponseHandler();
 
     ServerResourceContext resourceContext = new ResourceContextImpl(new PathKeysImpl(),
         new RestRequestBuilder(URI.create(""))
@@ -4296,7 +4304,7 @@ public class TestRestLiMethodInvocation
         new RequestContext());
     resourceContext.setRequestAttachmentReader(attachmentReader);
 
-    Callback<RestResponse> executionCallback = new Callback<RestResponse>()
+    Callback<RestLiResponse> executionCallback = new Callback<RestLiResponse>()
     {
       @Override
       public void onError(Throwable e)
@@ -4310,7 +4318,7 @@ public class TestRestLiMethodInvocation
         Assert.assertNull(resourceContext.getResponseAttachments());
       }
       @Override
-      public void onSuccess(RestResponse result)
+      public void onSuccess(RestLiResponse result)
       {
         Assert.fail();
       }
@@ -4319,7 +4327,9 @@ public class TestRestLiMethodInvocation
     try
     {
       RoutingResult routingResult = new RoutingResult(resourceContext, null);
-      RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(), routingResult.getContext());
+      RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(),
+          Collections.emptySet(),
+          routingResult.getContext());
 
       FilterChainDispatcher filterChainDispatcher = new FilterChainDispatcherImpl(routingResult, _invoker, null);
       FilterChainCallback filterChainCallback = new FilterChainCallbackImpl(null,
@@ -4349,9 +4359,9 @@ public class TestRestLiMethodInvocation
         .setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, version.toString());
     RestRequest request = builder.build();
     final CountDownLatch latch = new CountDownLatch(1);
-    RestLiResponseHandler restLiResponseHandler = new RestLiResponseHandler.Builder().build();
+    RestLiResponseHandler restLiResponseHandler = new RestLiResponseHandler();
 
-    Callback<RestResponse> executionCallback = new Callback<RestResponse>()
+    Callback<RestLiResponse> executionCallback = new Callback<RestLiResponse>()
     {
       @Override
       public void onError(Throwable e)
@@ -4363,7 +4373,7 @@ public class TestRestLiMethodInvocation
                             HttpStatus.S_400_BAD_REQUEST.getCode());
       }
       @Override
-      public void onSuccess(RestResponse result)
+      public void onSuccess(RestLiResponse result)
       {
       }
     };
@@ -4372,7 +4382,9 @@ public class TestRestLiMethodInvocation
     try
     {
       RoutingResult routingResult = new RoutingResult(context, null);
-      RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(), routingResult.getContext());
+      RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(),
+          Collections.emptySet(),
+          routingResult.getContext());
       FilterChainDispatcher filterChainDispatcher = new FilterChainDispatcherImpl(routingResult, _invoker, null);
       FilterChainCallback filterChainCallback = new FilterChainCallbackImpl(null,
                                                                             restLiResponseHandler, executionCallback,
@@ -4427,7 +4439,7 @@ public class TestRestLiMethodInvocation
   }
 
   @Test
-  public void testStreaming() throws RestLiSyntaxException, URISyntaxException
+  public void testStreaming() throws Exception
   {
     Map<String, ResourceModel> resourceModelMap = buildResourceModels(
         StatusCollectionResource.class,
@@ -4927,7 +4939,7 @@ public class TestRestLiMethodInvocation
                                       Object statusResource,
                                       String httpMethod,
                                       String uri,
-                                      ProtocolVersion version) throws URISyntaxException, RestLiSyntaxException
+                                      ProtocolVersion version) throws Exception
   {
     checkInvocation(statusResource, methodDescriptor, httpMethod, version, uri, true);
     reset(statusResource);
@@ -4952,7 +4964,7 @@ public class TestRestLiMethodInvocation
                                String httpMethod,
                                ProtocolVersion version,
                                String uri, boolean expectRoutingException)
-      throws URISyntaxException, RestLiSyntaxException
+      throws Exception
   {
     checkInvocation(resource, new RequestContext(), resourceMethodDescriptor, httpMethod,
                     version, uri, null, null, null, false, expectRoutingException);
@@ -4963,7 +4975,7 @@ public class TestRestLiMethodInvocation
                                String httpMethod,
                                ProtocolVersion version,
                                String uri)
-      throws URISyntaxException, RestLiSyntaxException
+      throws Exception
   {
     checkInvocation(resource, new RequestContext(), resourceMethodDescriptor, httpMethod,
                     version, uri, null, null, null, false, false);
@@ -4975,7 +4987,7 @@ public class TestRestLiMethodInvocation
                                ProtocolVersion version,
                                String uri,
                                String entityBody)
-      throws URISyntaxException, RestLiSyntaxException
+      throws Exception
   {
     checkInvocation(resource, new RequestContext(), resourceMethodDescriptor, httpMethod,
                     version, uri, entityBody, null, null, false, false);
@@ -4987,7 +4999,7 @@ public class TestRestLiMethodInvocation
                                ProtocolVersion version,
                                String uri,
                                MutablePathKeys pathkeys)
-      throws URISyntaxException, RestLiSyntaxException
+      throws Exception
   {
     checkInvocation(resource, new RequestContext(), resourceMethodDescriptor, httpMethod,
                     version, uri, null, pathkeys, null, false, false);
@@ -5000,7 +5012,7 @@ public class TestRestLiMethodInvocation
                                String uri,
                                String entityBody,
                                MutablePathKeys pathkeys)
-      throws URISyntaxException, RestLiSyntaxException
+      throws Exception
   {
     checkInvocation(resource, new RequestContext(), resourceMethodDescriptor, httpMethod,
                     version, uri, entityBody, pathkeys, null, false, false);
@@ -5017,7 +5029,7 @@ public class TestRestLiMethodInvocation
       final Callback<RestResponse> callback,
       final boolean isDebugMode,
       final boolean expectRoutingException)
-      throws URISyntaxException, RestLiSyntaxException
+      throws Exception
   {
     checkInvocation(resource, requestContext, resourceMethodDescriptor, httpMethod, version,
                     uri, entityBody, pathkeys, callback, isDebugMode, expectRoutingException, null, null);
@@ -5036,7 +5048,7 @@ public class TestRestLiMethodInvocation
       final boolean expectRoutingException,
       final RestLiAttachmentReader expectedRequestAttachments,
       final RestLiResponseAttachments expectedResponseAttachments)
-      throws URISyntaxException, RestLiSyntaxException
+      throws Exception
   {
     assertNotNull(resource);
     assertNotNull(resourceMethodDescriptor);
@@ -5082,13 +5094,17 @@ public class TestRestLiMethodInvocation
       }
       RoutingResult routingResult = new RoutingResult(resourceContext, resourceMethodDescriptor);
       RestLiArgumentBuilder argumentBuilder = _methodAdapterRegistry.getArgumentBuilder(resourceMethodDescriptor.getType());
-      FilterRequestContext filterContext = new FilterRequestContextInternalImpl(routingResult
-          .getContext(), resourceMethodDescriptor, argumentBuilder.extractRequestData(routingResult, request));
+      RestLiRequestData requestData = argumentBuilder.extractRequestData(
+          routingResult,
+          entityBody != null && !entityBody.isEmpty() ? DataMapUtils.readMapWithExceptions(request) : null);
+      FilterRequestContext filterContext = new FilterRequestContextInternalImpl(routingResult.getContext(),
+          resourceMethodDescriptor,
+          requestData);
       final CountDownLatch latch = new CountDownLatch(1);
       final CountDownLatch expectedRoutingExceptionLatch = new CountDownLatch(1);
-      RestLiResponseHandler restLiResponseHandler = new RestLiResponseHandler.Builder().build();
+      RestLiResponseHandler restLiResponseHandler = new RestLiResponseHandler();
 
-      Callback<RestResponse> executionCallback = new Callback<RestResponse>()
+      Callback<RestLiResponse> executionCallback = new Callback<RestLiResponse>()
       {
         @Override
         public void onError(Throwable e)
@@ -5109,11 +5125,11 @@ public class TestRestLiMethodInvocation
         }
 
         @Override
-        public void onSuccess(final RestResponse result)
+        public void onSuccess(final RestLiResponse result)
         {
           if (callback != null)
           {
-            callback.onSuccess(result);
+            callback.onSuccess(ResponseUtils.buildResponse(routingResult, result));
           }
 
           Assert.assertEquals(resourceContext.getResponseAttachments(), expectedResponseAttachments);
@@ -5132,8 +5148,10 @@ public class TestRestLiMethodInvocation
           new RestLiCallback(filterContext,
                                      new RestLiFilterResponseContextFactory(request, routingResult, restLiResponseHandler),
                                      new RestLiFilterChain(null, filterChainDispatcher, filterChainCallback));
-      RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(),routingResult.getContext());
-      _invoker.invoke(argumentBuilder.extractRequestData(routingResult, request), routingResult, argumentBuilder, outerCallback);
+      RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(),
+          Collections.emptySet(),
+          routingResult.getContext());
+      _invoker.invoke(requestData, routingResult, argumentBuilder, outerCallback);
       try
       {
         latch.await();
@@ -5178,7 +5196,7 @@ public class TestRestLiMethodInvocation
                                     String httpMethod,
                                     ProtocolVersion version,
                                     String uri,
-                                    MutablePathKeys pathkeys) throws URISyntaxException
+                                    MutablePathKeys pathkeys) throws Exception
   {
     checkAsyncInvocation(resource,
                          callback,
@@ -5200,7 +5218,7 @@ public class TestRestLiMethodInvocation
                                     ProtocolVersion version,
                                     String uri,
                                     String entityBody,
-                                    MutablePathKeys pathkeys) throws URISyntaxException
+                                    MutablePathKeys pathkeys) throws Exception
   {
     checkAsyncInvocation(resource,
                          callback,
@@ -5222,7 +5240,7 @@ public class TestRestLiMethodInvocation
                                     String uri,
                                     String entityBody,
                                     MutablePathKeys pathkeys,
-                                    boolean isDebugMode) throws URISyntaxException
+                                    boolean isDebugMode) throws Exception
   {
     try
     {
@@ -5240,9 +5258,12 @@ public class TestRestLiMethodInvocation
                                                     new RequestContext()), methodDescriptor);
 
       RestLiArgumentBuilder argumentBuilder = _methodAdapterRegistry.getArgumentBuilder(methodDescriptor.getType());
-      RestLiRequestData requestData = argumentBuilder.extractRequestData(routingResult, request);
+      RestLiRequestData requestData = argumentBuilder.extractRequestData(
+          routingResult, entityBody != null ? DataMapUtils.readMapWithExceptions(request) : null);
 
-      RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(), routingResult.getContext());
+      RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(),
+          Collections.emptySet(),
+          routingResult.getContext());
       _invoker.invoke(requestData, routingResult, argumentBuilder, callback);
       EasyMock.verify(resource);
       EasyMock.verify(callback);

@@ -65,7 +65,7 @@ public class TestActionResponseBuilder
                                                                                     result,
                                                                                     headers,
                                                                                     Collections.emptyList());
-    PartialRestResponse restResponse = actionResponseBuilder.buildResponse(routingResult, responseData);
+    RestLiResponse restResponse = actionResponseBuilder.buildResponse(routingResult, responseData);
 
     EasyMock.verify(mockDescriptor);
     ResponseBuilderUtil.validateHeaders(restResponse, headers);

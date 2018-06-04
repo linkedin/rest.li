@@ -27,7 +27,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
-public class TestPartialRestResponse
+public class TestRestLiResponse
 {
   @Test
   public void testHeaders()
@@ -35,7 +35,7 @@ public class TestPartialRestResponse
     Map<String, String> inputHeaderMap = new HashMap<String, String>();
     inputHeaderMap.put("foo", "bar");
     inputHeaderMap.put("bar", "baz");
-    PartialRestResponse response = new PartialRestResponse.Builder().headers(inputHeaderMap).build();
+    RestLiResponse response = new RestLiResponse.Builder().headers(inputHeaderMap).build();
     assertEquals(response.getHeaders(), inputHeaderMap);
     assertEquals(response.getHeader("FOO"), "bar");
     assertEquals(response.getHeader("BAR"), "baz");
@@ -48,7 +48,7 @@ public class TestPartialRestResponse
   @Test
   public void testHttpStatus()
   {
-    PartialRestResponse response = new PartialRestResponse.Builder().status(HttpStatus.S_200_OK).build();
+    RestLiResponse response = new RestLiResponse.Builder().status(HttpStatus.S_200_OK).build();
     assertEquals(response.getStatus(), HttpStatus.S_200_OK);
   }
 
@@ -57,7 +57,7 @@ public class TestPartialRestResponse
   {
     DataMap data = new DataMap();
     RecordTemplate record = new Foo(data);
-    PartialRestResponse response = new PartialRestResponse.Builder().entity(record).build();
+    RestLiResponse response = new RestLiResponse.Builder().entity(record).build();
     assertEquals(response.getEntity(), record);
     assertTrue(response.hasData());
     assertEquals(response.getDataMap(), data);

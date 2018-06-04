@@ -1,5 +1,12 @@
-21.0.7
+22.0.1
 -------
+
+
+22.0.0
+-------
+(RB=1266400)
+Integrated streaming codec with RestLiServer. This change also includes substantial refactoring of RestLiServer.
+
 (RB=1325995)
 Added enums to TestQueryParamsUtil to prove it works since we have production use cases that depend on it
 

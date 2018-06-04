@@ -44,8 +44,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.testng.annotations.DataProvider;
-
 import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
@@ -57,34 +55,17 @@ import static org.easymock.EasyMock.replay;
 // TODO : Use builder pattern for getMock* methods
 public class RestLiArgumentBuilderTestHelper
 {
-  @DataProvider
-  private static Object[][] failureEntityData()
-  {
-    return new Object[][]
-        {
-            {
-                "{\"a\":\"xyz\",\"b\":123"
-            },
-            {
-                "{\"a\":\"xyz\",\"b\"123}"
-            },
-            {
-                "{a\":\"xyz\",\"b\"123}"
-            }
-        };
-  }
-
-  public static RestRequest getMockRequest(boolean returnHeaders, String entity, int getEntityCount)
+  public static RestRequest getMockRequest(boolean returnHeaders, String entity)
   {
     RestRequest mockRequest = createMock(RestRequest.class);
     if (returnHeaders)
     {
-      expect(mockRequest.getHeaders()).andReturn(Collections.<String, String>emptyMap());
+      expect(mockRequest.getHeaders()).andReturn(Collections.emptyMap());
     }
     if (entity != null)
     {
       expect(mockRequest.getHeader("Content-Type")).andReturn("application/json");
-      expect(mockRequest.getEntity()).andReturn(ByteString.copy(entity.getBytes())).times(getEntityCount);
+      expect(mockRequest.getEntity()).andReturn(ByteString.copy(entity.getBytes())).anyTimes();
     }
     replay(mockRequest);
     return mockRequest;
@@ -93,7 +74,7 @@ public class RestLiArgumentBuilderTestHelper
   public static RestRequest getMockRequest(String entity, ProtocolVersion version)
   {
     RestRequest mockRequest = createMock(RestRequest.class);
-    Map<String, String> headers = new HashMap<String, String>();
+    Map<String, String> headers = new HashMap<>();
     headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, version.toString());
     expect(mockRequest.getHeaders()).andReturn(headers).anyTimes();
     if (entity != null)
@@ -161,7 +142,7 @@ public class RestLiArgumentBuilderTestHelper
 
   public static ResourceMethodDescriptor getMockResourceMethodDescriptor(ResourceModel model, Parameter<?> param)
   {
-    List<Parameter<?>> paramList = new ArrayList<Parameter<?>>();
+    List<Parameter<?>> paramList = new ArrayList<>();
     if (param != null)
     {
       paramList.add(param);
@@ -224,9 +205,12 @@ public class RestLiArgumentBuilderTestHelper
     return context;
   }
 
-  static ServerResourceContext getMockResourceContext(Set<Object> batchKeys, boolean attachmentReaderGetExpected, boolean hasAlternateKeyParam)
+  static ServerResourceContext getMockResourceContext(Set<Object> batchKeys, ProtocolVersion version, boolean attachmentReaderGetExpected,
+      boolean hasAlternateKeyParam)
   {
     ServerResourceContext context = createMock(ServerResourceContext.class);
+    expect(context.getRestliProtocolVersion()).andReturn(version).anyTimes();
+
     if (batchKeys != null)
     {
       PathKeysImpl pathKeys = new PathKeysImpl();

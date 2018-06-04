@@ -109,16 +109,16 @@ public class RestLiIntTestServer
     final FilterChain fc = FilterChains.empty().addLastRest(new ServerCompressionFilter(supportedCompression,
                                                                                         new CompressionConfig(0)))
         .addLastRest(new SimpleLoggingFilter());
-    return createServer(engine, port, useAsyncServletApi, asyncTimeOut, null, fc, false);
+    return createServer(engine, port, useAsyncServletApi, asyncTimeOut, null, fc, true);
   }
 
-  public static HttpServer createServer(final Engine engine,
+  public static HttpServer createServer(Engine engine,
                                         int port,
                                         boolean useAsyncServletApi,
                                         int asyncTimeOut,
                                         List<? extends Filter> filters,
-                                        final FilterChain filterChain,
-                                        final boolean forceUseRestServer)
+                                        FilterChain filterChain,
+                                        boolean restOverStream)
   {
     RestLiConfig config = new RestLiConfig();
     config.addResourcePackageNames(RESOURCE_PACKAGE_NAMES);
@@ -126,6 +126,7 @@ public class RestLiIntTestServer
     config.setDocumentationRequestHandler(new DefaultDocumentationRequestHandler());
     config.addDebugRequestHandlers(new ParseqTraceDebugRequestHandler());
     config.setFilters(filters);
+    config.setUseStreamCodec(Boolean.parseBoolean(System.getProperty("test.useStreamCodec", "false")));
 
     GroupMembershipMgr membershipMgr = new HashGroupMembershipMgr();
     GroupMgr groupMgr = new HashMapGroupMgr(membershipMgr);
@@ -135,41 +136,8 @@ public class RestLiIntTestServer
     //using InjectMockResourceFactory to keep examples spring-free
     ResourceFactory factory = new InjectMockResourceFactory(beanProvider);
 
-    //Todo this will have to change further to accomodate streaming tests - this is temporary
-    final TransportDispatcher dispatcher;
-    if (forceUseRestServer)
-    {
-      final RestLiServer restLiServer = new RestLiServer(config, factory, engine);
-      dispatcher = new DelegatingTransportDispatcher(restLiServer, restLiServer);
-    }
-    else
-    {
-      final StreamRequestHandler streamRequestHandler = new RestLiServer(config, factory, engine);
-      dispatcher = new TransportDispatcher()
-      {
-        @Override
-        public void handleRestRequest(RestRequest req, Map<String, String> wireAttrs, RequestContext requestContext,
-                                      TransportCallback<RestResponse> callback)
-        {
-          throw new UnsupportedOperationException("This server only accepts streaming");
-        }
-
-        @Override
-        public void handleStreamRequest(StreamRequest req, Map<String, String> wireAttrs, RequestContext requestContext,
-                                        TransportCallback<StreamResponse> callback)
-        {
-          try
-          {
-            streamRequestHandler.handleRequest(req, requestContext, new TransportCallbackAdapter<>(callback));
-          }
-          catch (Exception e)
-          {
-            final Exception ex = RestException.forError(RestStatus.INTERNAL_SERVER_ERROR, e);
-            callback.onResponse(TransportResponseImpl.<StreamResponse>error(ex));
-          }
-        }
-      };
-    }
+    RestLiServer restLiServer = new RestLiServer(config, factory, engine);
+    TransportDispatcher dispatcher = new DelegatingTransportDispatcher(restLiServer, restLiServer);
 
     return new HttpServerFactory(filterChain).createServer(port,
                                                            HttpServerFactory.DEFAULT_CONTEXT_PATH,
@@ -178,6 +146,7 @@ public class RestLiIntTestServer
                                                            useAsyncServletApi ?
                                                                HttpJettyServer.ServletType.ASYNC_EVENT :
                                                                HttpJettyServer.ServletType.RAP,
-                                                           asyncTimeOut, !forceUseRestServer);
+                                                           asyncTimeOut,
+                                                           restOverStream);
   }
 }
