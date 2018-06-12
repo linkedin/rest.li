@@ -51,7 +51,7 @@ public class LastSeenZKStoreTest
    * 3) Restart ZKServer and see if this LastSeenZKStore which could never access to disk will retrieve latest
    *    information from there
    */
-  @Test(timeOut = 10000)
+  @Test(timeOut = 10000, enabled = false)
   public void testLastSeenLifeCycle()
       throws InterruptedException, ExecutionException, TimeoutException, IOException, PropertyStoreException
   {

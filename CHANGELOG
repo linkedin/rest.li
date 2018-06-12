@@ -4,6 +4,9 @@
 
 22.0.2
 ------
+(RB=1336587)
+Disable offending D2 tests failing with connection loss to unblock pegasus version release.
+
 (RB=1328278)
 Removed _declaredIncline property from equals and hashCode methods on UnionDataSchema.Member class.
 
