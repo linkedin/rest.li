@@ -1,6 +1,11 @@
-22.0.3
+22.0.4
 ------
 
+
+22.0.3
+------
+(RB=1338284)
+Revert "Build validating schema on request if using projections, return HTTP 400 for projections with nonexistent fields"
 
 22.0.2
 ------

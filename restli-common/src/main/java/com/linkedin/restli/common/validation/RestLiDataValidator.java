@@ -16,6 +16,9 @@
 
 package com.linkedin.restli.common.validation;
 
+
+import com.google.common.collect.Sets;
+import com.linkedin.data.DataMap;
 import com.linkedin.data.element.DataElement;
 import com.linkedin.data.element.DataElementUtil;
 import com.linkedin.data.element.SimpleDataElement;
@@ -25,10 +28,15 @@ import com.linkedin.data.it.Predicates;
 import com.linkedin.data.it.Wildcard;
 import com.linkedin.data.message.Message;
 import com.linkedin.data.message.MessageList;
+import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaUtil;
+import com.linkedin.data.schema.MapDataSchema;
+import com.linkedin.data.schema.Name;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.schema.TyperefDataSchema;
+import com.linkedin.data.schema.UnionDataSchema;
 import com.linkedin.data.schema.validation.RequiredMode;
 import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
 import com.linkedin.data.schema.validation.ValidationOptions;
@@ -42,6 +50,8 @@ import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.TemplateRuntimeException;
 import com.linkedin.data.transform.DataComplexProcessor;
 import com.linkedin.data.transform.DataProcessingException;
+import com.linkedin.data.transform.filter.FilterConstants;
+import com.linkedin.data.transform.filter.request.MaskOperation;
 import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.data.transform.patch.Patch;
 import com.linkedin.data.transform.patch.PatchConstants;
@@ -59,9 +69,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import static com.linkedin.restli.common.util.ProjectionMaskApplier.*;
-
 
 /**
  * The Rest.li data validator validates Rest.li data using information from the data schema
@@ -123,6 +130,8 @@ public class RestLiDataValidator
   private static final String INSTANTIATION_ERROR = "InstantiationException while trying to instantiate the record template class";
   private static final String ILLEGAL_ACCESS_ERROR = "IllegalAccessException while trying to instantiate the record template class";
   private static final String TEMPLATE_RUNTIME_ERROR = "TemplateRuntimeException while trying to find the schema class";
+
+  private static final Set<String> ARRAY_RANGE_PARAMS = Sets.newHashSet(FilterConstants.START, FilterConstants.COUNT);
 
   private static PathMatchesPatternPredicate stringToPredicate(String path, boolean includeDescendants)
   {
@@ -394,44 +403,7 @@ public class RestLiDataValidator
     return validateOutput(dataTemplate, null);
   }
 
-  /**
-   * Validate Rest.li output data (single entity) using a projection mask.
-   * If a projection mask is provided, a validating schema will be built to validate only the projected fields.
-   * Otherwise, the entity will be validated without any projection.
-   *
-   * @param dataTemplate data to validate
-   * @param projectionMask projection mask used to build validating schema
-   * @return validation result
-   */
   public ValidationResult validateOutput(RecordTemplate dataTemplate, MaskTree projectionMask)
-  {
-    try
-    {
-      // Value class from resource model is the only source of truth for record schema.
-      // Schema from the record template itself should not be used.
-      DataSchema originalSchema = DataTemplateUtil.getSchema(_valueClass);
-
-      // If existing validating schema not provided, build it here
-      DataSchema validatingSchema =
-          (projectionMask != null) ? buildSchemaByProjection(originalSchema, projectionMask.getDataMap()) : originalSchema;
-
-      return validateOutputAgainstSchema(dataTemplate, validatingSchema);
-    }
-    catch (TemplateRuntimeException e)
-    {
-      return validationResultWithErrorMessage(TEMPLATE_RUNTIME_ERROR);
-    }
-  }
-
-  /**
-   * Validate Rest.li output data (single entity) against a validating schema.
-   *
-   * @param dataTemplate data to validate
-   * @param validatingSchema schema to use when validating
-   * @return validation result
-   * @throws IllegalArgumentException if any argument is null or if the provided data template has no data
-   */
-  protected ValidationResult validateOutputAgainstSchema(RecordTemplate dataTemplate, DataSchema validatingSchema)
   {
     if (dataTemplate == null)
     {
@@ -441,11 +413,6 @@ public class RestLiDataValidator
     {
       throw new IllegalArgumentException("Record template does not have data.");
     }
-    if (validatingSchema == null)
-    {
-      throw new IllegalArgumentException("Validating schema is null");
-    }
-
     switch (_resourceMethod)
     {
       case CREATE:
@@ -454,7 +421,7 @@ public class RestLiDataValidator
       case BATCH_GET:
       case FINDER:
       case GET_ALL:
-        return validateOutputEntity(dataTemplate, validatingSchema);
+        return validateOutputEntity(dataTemplate, projectionMask);
       default:
         throw new IllegalArgumentException("Cannot perform Rest.li output validation for " + _resourceMethod.toString());
     }
@@ -602,10 +569,223 @@ public class RestLiDataValidator
     return result;
   }
 
-  private ValidationResult validateOutputEntity(RecordTemplate entity, DataSchema validatingSchema)
+  private ValidationResult validateOutputEntity(RecordTemplate entity, MaskTree projectionMask)
   {
-    DataSchemaAnnotationValidator validator = new DataSchemaAnnotationValidator(validatingSchema);
-    return ValidateDataAgainstSchema.validate(entity.data(), validatingSchema, new ValidationOptions(), validator);
+    try
+    {
+      // Value class from resource model is the only source of truth for record schema.
+      // Schema from the record template itself should not be used.
+      DataSchema originalSchema = DataTemplateUtil.getSchema(_valueClass);
+
+      // When a projection is defined, we only need to validate the projected fields.
+      DataSchema validatingSchema = (projectionMask != null) ?
+        buildSchemaByProjection(originalSchema, projectionMask.getDataMap()) : originalSchema;
+
+      DataSchemaAnnotationValidator validator = new DataSchemaAnnotationValidator(validatingSchema);
+      return ValidateDataAgainstSchema.validate(entity.data(), validatingSchema, new ValidationOptions(), validator);
+    }
+    catch (TemplateRuntimeException e)
+    {
+      return validationResultWithErrorMessage(TEMPLATE_RUNTIME_ERROR);
+    }
+  }
+
+  /**
+   * Build a new schema that contains only the projected fields from the original schema recursively.
+   * @param schema schema to build from
+   * @param maskMap projection mask data map
+   * @return new schema containing only projected fields
+   */
+  private static DataSchema buildSchemaByProjection(DataSchema schema, DataMap maskMap) {
+    if (maskMap == null || maskMap.isEmpty()) {
+      throw new IllegalArgumentException("Invalid projection masks.");
+    }
+
+    if (schema instanceof RecordDataSchema) {
+      return buildRecordDataSchemaByProjection((RecordDataSchema) schema, maskMap);
+    } else if (schema instanceof UnionDataSchema) {
+      return buildUnionDataSchemaByProjection((UnionDataSchema) schema, maskMap);
+    } else if (schema instanceof ArrayDataSchema) {
+      return buildArrayDataSchemaByProjection((ArrayDataSchema) schema, maskMap);
+    } else if (schema instanceof MapDataSchema) {
+      return buildMapDataSchemaByProjection((MapDataSchema) schema, maskMap);
+    } else if (schema instanceof TyperefDataSchema) {
+      return buildTyperefDataSchemaByProjection((TyperefDataSchema) schema, maskMap);
+    }
+
+    throw new IllegalArgumentException("Unexpected data schema type: " + schema);
+  }
+
+  /**
+   * Build a new {@link TyperefDataSchema} schema that contains only the masked fields.
+   */
+  private static TyperefDataSchema buildTyperefDataSchemaByProjection(TyperefDataSchema originalSchema, DataMap maskMap) {
+    TyperefDataSchema newSchema = new TyperefDataSchema(new Name(originalSchema.getFullName()));
+    if (originalSchema.getProperties() != null) {
+      newSchema.setProperties(originalSchema.getProperties());
+    }
+    if (originalSchema.getDoc() != null) {
+      newSchema.setDoc(originalSchema.getDoc());
+    }
+    if (originalSchema.getAliases() != null) {
+      newSchema.setAliases(originalSchema.getAliases());
+    }
+    DataSchema newRefSchema = buildSchemaByProjection(originalSchema.getRef(), maskMap);
+    newSchema.setReferencedType(newRefSchema);
+    return newSchema;
+  }
+
+  /**
+   * Build a new {@link MapDataSchema} schema that contains only the masked fields.
+   */
+  private static MapDataSchema buildMapDataSchemaByProjection(MapDataSchema originalSchema, DataMap maskMap) {
+    if (maskMap.containsKey(FilterConstants.WILDCARD)) {
+      DataSchema newValuesSchema = reuseOrBuildDataSchema(originalSchema.getValues(), maskMap.get(FilterConstants.WILDCARD));
+      MapDataSchema newSchema = new MapDataSchema(newValuesSchema);
+      if (originalSchema.getProperties() != null) {
+        newSchema.setProperties(originalSchema.getProperties());
+      }
+      return newSchema;
+    }
+
+    throw new IllegalArgumentException("Missing wildcard key in projection mask: " + maskMap.keySet());
+  }
+
+  /**
+   * Build a new {@link ArrayDataSchema} schema that contains only the masked fields.
+   */
+  private static ArrayDataSchema buildArrayDataSchemaByProjection(ArrayDataSchema originalSchema, DataMap maskMap) {
+    if (maskMap.containsKey(FilterConstants.WILDCARD)) {
+      DataSchema newItemsSchema = reuseOrBuildDataSchema(originalSchema.getItems(), maskMap.get(FilterConstants.WILDCARD));
+      ArrayDataSchema newSchema = new ArrayDataSchema(newItemsSchema);
+      if (originalSchema.getProperties() != null) {
+        newSchema.setProperties(originalSchema.getProperties());
+      }
+      return newSchema;
+    } else if (ARRAY_RANGE_PARAMS.containsAll(maskMap.keySet())) {
+      // If the mask contains array range parameters without a WILDCARD, return the original schema
+      return originalSchema;
+    }
+
+    throw new IllegalArgumentException("Missing wildcard key in projection mask: " + maskMap.keySet());
+  }
+
+  /**
+   * Build a new {@link UnionDataSchema} schema that contains only the masked fields.
+   */
+  private static UnionDataSchema buildUnionDataSchemaByProjection(UnionDataSchema unionDataSchema, DataMap maskMap) {
+    List<UnionDataSchema.Member> newUnionMembers = new ArrayList<>();
+
+    StringBuilder errorMessageBuilder = new StringBuilder();
+    // Get the wildcard mask if one is available
+    Object wildcardMask = maskMap.get(FilterConstants.WILDCARD);
+
+    for (UnionDataSchema.Member member: unionDataSchema.getMembers()) {
+      Object maskValue = maskMap.get(member.getUnionMemberKey());
+
+      // If a mask is available for this specific member use that, else use the wildcard mask if that is available
+      UnionDataSchema.Member newMember = null;
+      if (maskValue != null) {
+        newMember = new UnionDataSchema.Member(reuseOrBuildDataSchema(member.getType(), maskValue));
+      } else if (wildcardMask != null) {
+        newMember = new UnionDataSchema.Member(reuseOrBuildDataSchema(member.getType(), wildcardMask));
+      }
+
+      if (newMember != null)
+      {
+        if (member.hasAlias())
+        {
+          newMember.setAlias(member.getAlias(), errorMessageBuilder);
+        }
+        newMember.setDeclaredInline(member.isDeclaredInline());
+        newMember.setDoc(member.getDoc());
+        newMember.setProperties(member.getProperties());
+        newUnionMembers.add(newMember);
+      }
+    }
+
+    UnionDataSchema newUnionDataSchema = new UnionDataSchema();
+    newUnionDataSchema.setMembers(newUnionMembers, errorMessageBuilder);
+    if (unionDataSchema.getProperties() != null)
+    {
+      newUnionDataSchema.setProperties(unionDataSchema.getProperties());
+    }
+    return newUnionDataSchema;
+  }
+
+  /**
+   * Build a new {@link RecordDataSchema} schema that contains only the masked fields.
+   */
+  private static RecordDataSchema buildRecordDataSchemaByProjection(RecordDataSchema originalSchema, DataMap maskMap) {
+    RecordDataSchema newRecordSchema = new RecordDataSchema(new Name(originalSchema.getFullName()), RecordDataSchema.RecordType.RECORD);
+    List<RecordDataSchema.Field> newFields = new ArrayList<RecordDataSchema.Field>();
+    for (Map.Entry<String, Object> maskEntry : maskMap.entrySet()) {
+      RecordDataSchema.Field originalField = originalSchema.getField(maskEntry.getKey());
+      DataSchema fieldSchemaToUse = reuseOrBuildDataSchema(originalField.getType(), maskEntry.getValue());
+      RecordDataSchema.Field newField = buildRecordField(originalField, fieldSchemaToUse, newRecordSchema);
+      newFields.add(newField);
+    }
+
+    // Fields from 'include' are no difference from other fields from original schema,
+    // therefore, we are not calling newRecordSchema.setInclude() here.
+    newRecordSchema.setFields(newFields, new StringBuilder()); // No errors are expected here, as the new schema is merely subset of the original
+    if (originalSchema.getAliases() != null) {
+      newRecordSchema.setAliases(originalSchema.getAliases());
+    }
+    if (originalSchema.getDoc() != null) {
+      newRecordSchema.setDoc(originalSchema.getDoc());
+    }
+    if (originalSchema.getProperties() != null) {
+      newRecordSchema.setProperties(originalSchema.getProperties());
+    }
+    return newRecordSchema;
+  }
+
+  /**
+   * The maskValue from a rest.li projection mask is expected to be either:
+   * 1) Integer that has value 1, which means all fields in the original schema are projected (negative projection not supported)
+   * 2) DataMap, which means only selected fields in the original schema are projected
+   */
+  private static DataSchema reuseOrBuildDataSchema(DataSchema originalSchema, Object maskValue) {
+    if (maskValue instanceof Integer && maskValue.equals(FilterConstants.POSITIVE)) {
+      return originalSchema;
+    } else if (maskValue instanceof DataMap) {
+      return buildSchemaByProjection(originalSchema, (DataMap) maskValue);
+    }
+    throw new IllegalArgumentException("Expected mask value to be either positive mask op or DataMap: " + maskValue);
+  }
+
+  /**
+   * Build a new record field with a new projected field schema.
+   * All other properties are copied over from the originalField.
+   */
+  private static RecordDataSchema.Field buildRecordField(RecordDataSchema.Field originalField,
+                                                         DataSchema fieldSchemaToReplace,
+                                                         RecordDataSchema recordSchemaToReplace) {
+    RecordDataSchema.Field newField = new RecordDataSchema.Field(fieldSchemaToReplace);
+    if (originalField.getAliases() != null) {
+      // No errors are expected here, as the new schema is merely subset of the original
+      newField.setAliases(originalField.getAliases(), new StringBuilder());
+    }
+    if (originalField.getDefault() != null) {
+      newField.setDefault(originalField.getDefault());
+    }
+    if (originalField.getDoc() != null) {
+      newField.setDoc(originalField.getDoc());
+    }
+    if (originalField.getName() != null) {
+      // No errors are expected here, as the new schema is merely subset of the original
+      newField.setName(originalField.getName(), new StringBuilder());
+    }
+    if (originalField.getOrder() != null) {
+      newField.setOrder(originalField.getOrder());
+    }
+    if (originalField.getProperties() != null) {
+      newField.setProperties(originalField.getProperties());
+    }
+    newField.setRecord(recordSchemaToReplace);
+    newField.setOptional(originalField.getOptional());
+    return newField;
   }
 
   private static ValidationErrorResult validationResultWithErrorMessage(String errorMessage)
@@ -659,6 +839,4 @@ public class RestLiDataValidator
       return _messages;
     }
   }
-
-
 }
