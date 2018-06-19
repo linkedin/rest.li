@@ -21,7 +21,7 @@ package com.linkedin.r2.transport.http.client.common.ssl;
  *
  * @author Francesco Capponi (fcapponi@linkedin.com)
  */
-public class SslSessionNotTrustedException extends Exception
+public class SslSessionNotTrustedException extends RuntimeException
 {
   static final long serialVersionUID = 1L;
 

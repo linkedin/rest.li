@@ -1,7 +1,13 @@
+22.0.6
+------
+
 22.0.5
 ------
 (RB=1318132)
 Unstructured Data Post Reactive
+
+(RB=1342823)
+Allow SslSessionNotTrustedException to extend RuntimeException
 
 22.0.4
 ------
