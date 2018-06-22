@@ -4,11 +4,13 @@ plugins {
 
 jmh {
   include = '.*ConsistentHashRingBenchmark.*'
+  include = '.*URIMapperVSKeyMapperBenchmark.*'
   zip64 = true
 }
 
 
 dependencies {
+  testCompile project(':d2').sourceSets.test.output
   jmh project(':d2')
   jmh externalDependency.jmhCore
   jmh externalDependency.jmhAnnotations

@@ -27,6 +27,7 @@ import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.util.URIRequest;
+import com.linkedin.d2.balancer.util.hashing.HashFunction;
 import com.linkedin.d2.balancer.util.hashing.Ring;
 import com.linkedin.d2.balancer.util.hashing.URIRegexHash;
 import com.linkedin.d2.balancer.util.healthcheck.TransportHealthCheck;
@@ -2321,6 +2322,12 @@ public class DegraderLoadBalancerTest
     public Ring<URI> getRing(long clusterGenerationId, int partitionId, List<TrackerClient> trackerClients)
     {
       return _strategy.getRing(clusterGenerationId, partitionId, trackerClients);
+    }
+
+    @Override
+    public HashFunction<Request> getHashFunction()
+    {
+      return _strategyV3.getHashFunction();
     }
 
     public void setStrategyV3(int partitionID, PartitionDegraderLoadBalancerState.Strategy strategy)

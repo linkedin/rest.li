@@ -20,6 +20,7 @@
 
 package com.linkedin.d2.balancer;
 
+import com.linkedin.d2.balancer.util.hashing.HashRingProvider;
 import com.linkedin.d2.balancer.util.partitions.PartitionInfoProvider;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 
@@ -42,6 +43,12 @@ public interface Facilities
    * @return PartitionInfoProvider
    */
   PartitionInfoProvider getPartitionInfoProvider();
+
+  /**
+   * Obtain hashRing provider
+   * @return HashRingProvider
+   */
+  HashRingProvider getHashRingProvider();
 
   /**
    * Obtain d2 key mapping facility

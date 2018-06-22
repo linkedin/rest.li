@@ -52,6 +52,7 @@ import com.linkedin.d2.balancer.util.URIRequest;
 import com.linkedin.d2.balancer.util.hashing.ConsistentHashRing;
 import com.linkedin.d2.balancer.util.hashing.HashFunction;
 import com.linkedin.d2.balancer.util.hashing.MD5Hash;
+import com.linkedin.d2.balancer.util.hashing.RandomHash;
 import com.linkedin.d2.balancer.util.hashing.Ring;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessException;
@@ -1273,6 +1274,12 @@ public class SimpleLoadBalancerTest
       {
         return new ConsistentHashRing<URI>(new HashMap<URI, Integer>());
       }
+    }
+
+    @Override
+    public HashFunction<Request> getHashFunction()
+    {
+      return new RandomHash();
     }
   }
 

@@ -28,6 +28,7 @@ import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.WarmUpService;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancer;
+import com.linkedin.d2.balancer.util.hashing.HashFunction;
 import com.linkedin.d2.balancer.util.hashing.HashRingProvider;
 import com.linkedin.d2.balancer.util.hashing.Ring;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
@@ -130,6 +131,13 @@ public class TogglingLoadBalancer implements LoadBalancer, HashRingProvider, Cli
   }
 
   @Override
+  public HashFunction<Request> getRequestHashFunction(String serviceName) throws ServiceUnavailableException
+  {
+    checkLoadBalancer();
+    return _hashRingProvider.getRequestHashFunction(serviceName);
+  }
+
+  @Override
   public <K> HostToKeyMapper<K> getPartitionInformation(URI serviceUri, Collection<K> keys, int limitHostPerPartition, int hash) throws ServiceUnavailableException
   {
     checkPartitionInfoProvider();
@@ -137,10 +145,10 @@ public class TogglingLoadBalancer implements LoadBalancer, HashRingProvider, Cli
   }
 
   @Override
-  public PartitionAccessor getPartitionAccessor(URI serviceUri) throws ServiceUnavailableException
+  public PartitionAccessor getPartitionAccessor(String serviceName) throws ServiceUnavailableException
   {
     checkPartitionInfoProvider();
-    return _partitionInfoProvider.getPartitionAccessor(serviceUri);
+    return _partitionInfoProvider.getPartitionAccessor(serviceName);
   }
 
   private void checkLoadBalancer()

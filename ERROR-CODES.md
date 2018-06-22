@@ -10,6 +10,7 @@ No error code can be repeated, and no error code can be referenced more than onc
 
 ## D2 10
 PEGA_1000 to PEGA_1016 ServiceUnavailableException
+PEGA_1017 ServiceUnavailableException
 PEGA_1030 ServiceUnavailableException
 
 ## R2 11

@@ -1058,6 +1058,14 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     _updateEnabled = enabled;
   }
 
+  /**
+   * @return hashfunction used on requests to determine sticky routing key (if enabled).
+   */
+  public HashFunction<Request> getHashFunction()
+  {
+    return _hashFunction;
+  }
+
   @Override
   public void shutdown()
   {

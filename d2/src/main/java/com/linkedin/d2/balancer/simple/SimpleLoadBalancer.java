@@ -36,12 +36,15 @@ import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
+import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyV3;
 import com.linkedin.d2.balancer.util.ClientFactoryProvider;
 import com.linkedin.d2.balancer.util.HostToKeyMapper;
 import com.linkedin.d2.balancer.util.KeysAndHosts;
 import com.linkedin.d2.balancer.util.LoadBalancerUtil;
 import com.linkedin.d2.balancer.util.MapKeyResult;
+import com.linkedin.d2.balancer.util.hashing.HashFunction;
 import com.linkedin.d2.balancer.util.hashing.HashRingProvider;
+import com.linkedin.d2.balancer.util.hashing.RandomHash;
 import com.linkedin.d2.balancer.util.hashing.Ring;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessException;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
@@ -334,6 +337,23 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     }
   }
 
+  @Override
+  public HashFunction<Request> getRequestHashFunction(String serviceName) throws ServiceUnavailableException
+  {
+    ServiceProperties service = listenToServiceAndCluster(serviceName);
+    List<LoadBalancerState.SchemeStrategyPair> orderedStrategies =
+        _state.getStrategiesForService(serviceName, service.getPrioritizedSchemes());
+    if (!orderedStrategies.isEmpty())
+    {
+      return orderedStrategies.get(0).getStrategy().getHashFunction();
+    }
+    else
+    {
+      throw new ServiceUnavailableException(serviceName, "PEGA_1017. Unable to find a load balancer strategy" +
+        "Server Schemes: [" + String.join(", ", service.getPrioritizedSchemes()) + ']');
+    }
+  }
+
   private void listenToServiceAndCluster(String serviceName, Callback<ServiceProperties> callback)
   {
 
@@ -586,11 +606,10 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   }
 
   @Override
-  public PartitionAccessor getPartitionAccessor(URI serviceUri)
+  public PartitionAccessor getPartitionAccessor(String serviceName)
           throws ServiceUnavailableException
   {
-    ServiceProperties service = listenToServiceAndCluster(serviceUri);
-    String serviceName = service.getServiceName();
+    ServiceProperties service = listenToServiceAndCluster(serviceName);
     String clusterName = service.getClusterName();
     return getPartitionAccessor(serviceName, clusterName);
   }

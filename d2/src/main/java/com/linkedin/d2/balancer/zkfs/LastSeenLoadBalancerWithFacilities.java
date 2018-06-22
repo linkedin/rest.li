@@ -27,6 +27,7 @@ import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancer;
 import com.linkedin.d2.balancer.util.hashing.ConsistentHashKeyMapper;
+import com.linkedin.d2.balancer.util.hashing.HashRingProvider;
 import com.linkedin.d2.balancer.util.partitions.PartitionInfoProvider;
 import com.linkedin.d2.discovery.event.PropertyEventThread;
 import com.linkedin.d2.discovery.stores.zk.LastSeenZKStore;
@@ -151,6 +152,11 @@ public class LastSeenLoadBalancerWithFacilities implements LoadBalancerWithFacil
 
   @Override
   public PartitionInfoProvider getPartitionInfoProvider() {
+    return _loadBalancer;
+  }
+
+  @Override
+  public HashRingProvider getHashRingProvider() {
     return _loadBalancer;
   }
 

@@ -106,7 +106,7 @@ public class TestScatterGather extends RestLiIntegrationTest
     }
 
     @Override
-    public PartitionAccessor getPartitionAccessor(URI serviceUri) throws ServiceUnavailableException
+    public PartitionAccessor getPartitionAccessor(String serviceName) throws ServiceUnavailableException
     {
       throw new UnsupportedOperationException();
     }

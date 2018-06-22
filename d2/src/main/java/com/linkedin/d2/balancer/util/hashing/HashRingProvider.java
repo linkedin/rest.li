@@ -23,11 +23,18 @@ package com.linkedin.d2.balancer.util.hashing;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.util.MapKeyResult;
 
+import com.linkedin.r2.message.Request;
 import java.net.URI;
 import java.util.Map;
 
 /**
+ * This API provides the ability to select host(s) from hash ring given a request.
+ *
+ * The request is hashed to a hashcode using the function returned by {@code getRequestHashFunction}. The hashcode can be used to
+ * select hosts on the ring returned by {@code getRings}
+ *
  * @author Josh Walker
+ * @author Alex Jing
  * @version $Revision: $
  */
 
@@ -41,7 +48,7 @@ public interface HashRingProvider
    * @throws ServiceUnavailableException - if the service identified by the given URI is not available, i.e. map is empty.
    * @throws IllegalStateException - if this HashRingProvider is not configured with a valid hash rings.                                                                                                     L
    */
-  public <K> MapKeyResult<Ring<URI>, K> getRings(URI serviceUri, Iterable<K> keys) throws ServiceUnavailableException;
+  <K> MapKeyResult<Ring<URI>, K> getRings(URI serviceUri, Iterable<K> keys) throws ServiceUnavailableException;
 
   /**
    * Obtain the hash ring for a given service URI.
@@ -51,6 +58,16 @@ public interface HashRingProvider
    * @throws ServiceUnavailableException - if the service identified by the given URI is not available.
    * @throws IllegalStateException - if this HashRingProvider is not configured with a valid hash ring.
    */
-  public Map<Integer, Ring<URI>> getRings(URI serviceUri) throws ServiceUnavailableException;
+  Map<Integer, Ring<URI>> getRings(URI serviceUri) throws ServiceUnavailableException;
+
+  /**
+   * Obtain the hashFunction used to hash requests. The value returned by the hashFunction can be used to make host
+   * selection on the rings retrieved from above uris.
+   *
+   * @param serviceName for which we want to retrieve the corresponding hashFunction
+   * @return the hashFunction used to hash requests to the given service.
+   * @Throws ServiceUnavailableException - if the requested service is not available.
+   */
+  HashFunction<Request> getRequestHashFunction(String serviceName) throws ServiceUnavailableException;
 
 }

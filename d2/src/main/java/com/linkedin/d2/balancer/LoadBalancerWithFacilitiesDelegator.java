@@ -3,6 +3,7 @@ package com.linkedin.d2.balancer;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
+import com.linkedin.d2.balancer.util.hashing.HashRingProvider;
 import com.linkedin.d2.balancer.util.partitions.PartitionInfoProvider;
 import com.linkedin.d2.discovery.event.PropertyEventThread;
 import com.linkedin.r2.message.Request;
@@ -34,6 +35,12 @@ public abstract class LoadBalancerWithFacilitiesDelegator implements LoadBalance
   public PartitionInfoProvider getPartitionInfoProvider()
   {
     return _loadBalancer.getPartitionInfoProvider();
+  }
+
+  @Override
+  public HashRingProvider getHashRingProvider()
+  {
+    return _loadBalancer.getHashRingProvider();
   }
 
   @Override

@@ -24,12 +24,18 @@ import com.linkedin.d2.balancer.Directory;
 import com.linkedin.d2.balancer.Facilities;
 import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
+import com.linkedin.d2.balancer.util.hashing.HashFunction;
+import com.linkedin.d2.balancer.util.hashing.HashRingProvider;
+import com.linkedin.d2.balancer.util.hashing.Ring;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
 import com.linkedin.d2.balancer.util.partitions.PartitionInfoProvider;
+import com.linkedin.r2.message.Request;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 
 import java.net.URI;
 import java.util.Collection;
+import java.util.Map;
+
 
 /**
  * @author Josh Walker
@@ -42,6 +48,7 @@ public class DelegatingFacilities implements Facilities
   private final KeyMapperProvider _keyMapperProvider;
   private final ClientFactoryProvider _clientFactoryProvider;
   private final PartitionInfoProvider _partitionInfoProvider;
+  private final HashRingProvider _hashRingProvider;
 
   @Deprecated
   public DelegatingFacilities(DirectoryProvider directoryProvider,
@@ -51,17 +58,34 @@ public class DelegatingFacilities implements Facilities
     this(directoryProvider, keyMapperProvider, clientFactoryProvider, new PartitionInfoProvider()
     {
       @Override
-      public <K> HostToKeyMapper<K> getPartitionInformation (URI serviceUri,
-                                                                       Collection<K> keys,
-                                                                       int limitHostPerPartition,
-                                                                       int hash)
+      public <K> HostToKeyMapper<K> getPartitionInformation(URI serviceUri, Collection<K> keys,
+          int limitHostPerPartition, int hash) throws ServiceUnavailableException
+      {
+        return null;
+      }
+
+      @Override
+      public PartitionAccessor getPartitionAccessor(String serviceName) throws ServiceUnavailableException
+      {
+        return null;
+      }
+    }, new HashRingProvider()
+    {
+      @Override
+      public <K> MapKeyResult<Ring<URI>, K> getRings(URI serviceUri, Iterable<K> keys)
           throws ServiceUnavailableException
       {
         return null;
       }
 
       @Override
-      public PartitionAccessor getPartitionAccessor(URI serviceUri) throws ServiceUnavailableException
+      public Map<Integer, Ring<URI>> getRings(URI serviceUri) throws ServiceUnavailableException
+      {
+        return null;
+      }
+
+      @Override
+      public HashFunction<Request> getRequestHashFunction(String serviceName) throws ServiceUnavailableException
       {
         return null;
       }
@@ -71,12 +95,14 @@ public class DelegatingFacilities implements Facilities
   public DelegatingFacilities(DirectoryProvider directoryProvider,
                               KeyMapperProvider keyMapperProvider,
                               ClientFactoryProvider clientFactoryProvider,
-                              PartitionInfoProvider partitionInfoProvider)
+                              PartitionInfoProvider partitionInfoProvider,
+                              HashRingProvider hashRingProvider)
   {
     _directoryProvider = directoryProvider;
     _keyMapperProvider = keyMapperProvider;
     _clientFactoryProvider = clientFactoryProvider;
     _partitionInfoProvider = partitionInfoProvider;
+    _hashRingProvider = hashRingProvider;
   }
 
   @Override
@@ -89,6 +115,12 @@ public class DelegatingFacilities implements Facilities
   public PartitionInfoProvider getPartitionInfoProvider ()
   {
     return _partitionInfoProvider;
+  }
+
+  @Override
+  public HashRingProvider getHashRingProvider()
+  {
+    return _hashRingProvider;
   }
 
   @Override

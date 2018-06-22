@@ -23,6 +23,7 @@ package com.linkedin.d2.balancer.util.hashing;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.util.MapKeyResult;
 
+import com.linkedin.r2.message.Request;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -39,17 +40,20 @@ import java.util.Map;
 public class StaticRingProvider implements HashRingProvider
 {
   private final List<Ring<URI>> _rings;
+  private HashFunction<Request> _hashFunction;
 
   public StaticRingProvider(Ring<URI> ring)
   {
     List<Ring<URI>> rings = new ArrayList<Ring<URI>>();
     rings.add(ring);
     _rings = Collections.unmodifiableList(rings);
+    _hashFunction = null;
   }
 
   public StaticRingProvider(List<Ring<URI>> rings)
   {
     _rings = Collections.unmodifiableList(new ArrayList<Ring<URI>>(rings));
+    _hashFunction = null;
   }
 
   @Override
@@ -100,4 +104,18 @@ public class StaticRingProvider implements HashRingProvider
     return ringMap;
   }
 
+  public void setHashFunction(HashFunction<Request> func)
+  {
+    _hashFunction = func;
+  }
+
+  @Override
+  public HashFunction<Request> getRequestHashFunction(String serviceName) throws ServiceUnavailableException
+  {
+    if (_hashFunction == null)
+    {
+      throw new RuntimeException("HashFunction is not set for StaticRingProvider");
+    }
+    return _hashFunction;
+  }
 }

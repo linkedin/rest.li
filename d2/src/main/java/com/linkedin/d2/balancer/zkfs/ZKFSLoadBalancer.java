@@ -37,6 +37,7 @@ import com.linkedin.d2.balancer.util.KeyMapperProvider;
 import com.linkedin.d2.balancer.util.MapKeyResult;
 import com.linkedin.d2.balancer.util.TogglingLoadBalancer;
 import com.linkedin.d2.balancer.util.hashing.ConsistentHashKeyMapper;
+import com.linkedin.d2.balancer.util.hashing.HashFunction;
 import com.linkedin.d2.balancer.util.hashing.HashRingProvider;
 import com.linkedin.d2.balancer.util.hashing.Ring;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
@@ -347,6 +348,12 @@ public class ZKFSLoadBalancer
     return this;
   }
 
+  @Override
+  public HashRingProvider getHashRingProvider()
+  {
+    return this;
+  }
+
   /**
    * Get a {@link KeyMapper} associated with this load balancer's strategies.  The
    * KeyMapper will not operate until the load balancer is started.  The KeyMapper is
@@ -374,6 +381,11 @@ public class ZKFSLoadBalancer
   }
 
   @Override
+  public HashFunction<Request> getRequestHashFunction(String serviceName) throws ServiceUnavailableException {
+    return ((HashRingProvider)_currentLoadBalancer).getRequestHashFunction(serviceName);
+  }
+
+  @Override
   public <K> HostToKeyMapper<K> getPartitionInformation(URI serviceUri, Collection<K> keys, int limitHostPerPartition, int hash) throws ServiceUnavailableException
   {
     checkPartitionInfoProvider();
@@ -381,10 +393,10 @@ public class ZKFSLoadBalancer
   }
 
   @Override
-  public PartitionAccessor getPartitionAccessor(URI serviceUri) throws ServiceUnavailableException
+  public PartitionAccessor getPartitionAccessor(String serviceName) throws ServiceUnavailableException
   {
     checkPartitionInfoProvider();
-    return ((PartitionInfoProvider)_currentLoadBalancer).getPartitionAccessor(serviceUri);
+    return ((PartitionInfoProvider)_currentLoadBalancer).getPartitionAccessor(serviceName);
   }
 
   public void checkLoadBalancer()

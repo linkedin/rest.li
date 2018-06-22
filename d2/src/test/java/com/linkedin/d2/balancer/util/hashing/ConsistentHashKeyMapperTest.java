@@ -659,7 +659,7 @@ public class ConsistentHashKeyMapperTest
     }
 
     @Override
-    public PartitionAccessor getPartitionAccessor(URI serviceUri) throws ServiceUnavailableException
+    public PartitionAccessor getPartitionAccessor(String serviceName) throws ServiceUnavailableException
     {
       throw new UnsupportedOperationException();
     }
@@ -738,6 +738,12 @@ public class ConsistentHashKeyMapperTest
       {
         return _ringFactory.createRing(Collections.emptyMap());
       }
+    }
+
+    @Override
+    public HashFunction<Request> getHashFunction()
+    {
+      return new RandomHash();
     }
   }
 

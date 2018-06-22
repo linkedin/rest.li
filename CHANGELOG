@@ -1,5 +1,10 @@
-22.0.6
+23.0.1
 ------
+
+23.0.0
+------
+(RB=1332535)
+Add URIMapper class and changed getPartitionAccessor API (backwards incompatible)
 
 22.0.5
 ------

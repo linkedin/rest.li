@@ -17,6 +17,7 @@
 package com.linkedin.d2.balancer.strategies;
 
 import com.linkedin.d2.balancer.clients.TrackerClient;
+import com.linkedin.d2.balancer.util.hashing.HashFunction;
 import com.linkedin.d2.balancer.util.hashing.Ring;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
@@ -72,6 +73,12 @@ public interface LoadBalancerStrategy
   Ring<URI> getRing(long clusterGenerationId,
                     int partitionId,
                     List<TrackerClient> trackerClients);
+
+  /**
+   * Return the hashFunction which will be applied on {@code Request} to find the host for routing purpose
+   * @return the hashFunction
+   */
+  HashFunction<Request> getHashFunction();
 
   /**
    * Shutdown loadBalanceStrategy

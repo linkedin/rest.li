@@ -18,6 +18,8 @@ package com.linkedin.d2.balancer.strategies.random;
 
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
+import com.linkedin.d2.balancer.util.hashing.HashFunction;
+import com.linkedin.d2.balancer.util.hashing.RandomHash;
 import com.linkedin.d2.balancer.util.hashing.Ring;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
@@ -41,6 +43,12 @@ public class RandomLoadBalancerStrategy implements LoadBalancerStrategy
   public Ring<URI> getRing(long clusterGenerationId, int partitionId, List<TrackerClient> trackerClients)
   {
     throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public HashFunction<Request> getHashFunction()
+  {
+    return new RandomHash();
   }
 
   @Override

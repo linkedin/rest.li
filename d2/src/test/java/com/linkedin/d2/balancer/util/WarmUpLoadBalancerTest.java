@@ -30,6 +30,7 @@ import com.linkedin.d2.balancer.clients.TrackerClientTest.TestClient;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.util.downstreams.DownstreamServicesFetcher;
 import com.linkedin.d2.balancer.util.downstreams.FSBasedDownstreamServicesFetcher;
+import com.linkedin.d2.balancer.util.hashing.HashRingProvider;
 import com.linkedin.d2.balancer.util.partitions.PartitionInfoProvider;
 import com.linkedin.d2.discovery.event.PropertyEventThread.PropertyEventShutdownCallback;
 import com.linkedin.d2.discovery.stores.file.FileStoreTest;
@@ -489,6 +490,12 @@ public class WarmUpLoadBalancerTest
 
     @Override
     public PartitionInfoProvider getPartitionInfoProvider()
+    {
+      return null;
+    }
+
+    @Override
+    public HashRingProvider getHashRingProvider()
     {
       return null;
     }
