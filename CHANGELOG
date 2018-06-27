@@ -1,5 +1,9 @@
+25.0.8
+------
+
 25.0.7
 ------
+add R2Constants.CLINET_REQUEST_METRIC_GROUP_NAME and r2 client delegator
 
 25.0.6
 ------

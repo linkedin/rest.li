@@ -68,6 +68,11 @@ public class R2Constants
    */
   public static final String CLIENT_REQUEST_TIMEOUT_VIEW = "CLIENT_REQUEST_TIMEOUT_VIEW";
   public static final String PREEMPTIVE_TIMEOUT_RATE = "PREEMPTIVE_TIMEOUT_RATE";
-
   public static final String PROJECTION_INFO = "PROJECTION_INFO";
+
+  /**
+   * Client uses this key to designate a request as belonging to a group of requests that will be monitored in a
+   * single aggregation and monitored from client's perspective.
+   */
+  public static final String CLIENT_REQUEST_METRIC_GROUP_NAME = "CLIENT_REQUEST_METRIC_GROUP_NAME";
 }
