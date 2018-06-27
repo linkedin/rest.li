@@ -33,33 +33,26 @@ import com.linkedin.restli.server.annotations.PagingContextParam;
 import com.linkedin.restli.server.annotations.ParSeqContextParam;
 import com.linkedin.restli.server.resources.AssociationResource;
 import com.linkedin.restli.server.resources.AssociationResourceAsync;
-import com.linkedin.restli.server.resources.AssociationResourcePromise;
 import com.linkedin.restli.server.resources.AssociationResourceTask;
 import com.linkedin.restli.server.resources.CollectionResource;
 import com.linkedin.restli.server.resources.CollectionResourceAsync;
-import com.linkedin.restli.server.resources.CollectionResourcePromise;
 import com.linkedin.restli.server.resources.CollectionResourceTask;
 import com.linkedin.restli.server.resources.ComplexKeyResource;
 import com.linkedin.restli.server.resources.ComplexKeyResourceAsync;
-import com.linkedin.restli.server.resources.ComplexKeyResourcePromise;
 import com.linkedin.restli.server.resources.ComplexKeyResourceTask;
 import com.linkedin.restli.server.resources.SimpleResource;
 import com.linkedin.restli.server.resources.SimpleResourceAsync;
-import com.linkedin.restli.server.resources.SimpleResourcePromise;
 import com.linkedin.restli.server.resources.SimpleResourceTask;
 import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataAssociationResource;
 import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataAssociationResourceAsync;
-import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataAssociationResourcePromise;
 import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataAssociationResourceReactive;
 import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataAssociationResourceTask;
 import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataCollectionResource;
 import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataCollectionResourceAsync;
-import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataCollectionResourcePromise;
 import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataCollectionResourceReactive;
 import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataCollectionResourceTask;
 import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataSimpleResource;
 import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataSimpleResourceAsync;
-import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataSimpleResourcePromise;
 import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataSimpleResourceReactive;
 import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataSimpleResourceTask;
 
@@ -208,36 +201,38 @@ public interface RestModelConstants
     }
   };
 
+  @SuppressWarnings("deprecation")
   Class<?>[] FIXED_RESOURCE_CLASSES = {
       CollectionResource.class,
       CollectionResourceAsync.class,
-      CollectionResourcePromise.class,
+      // Use full-qualified classname here since we cannot add @SuppressWarnings("deprecation") in import
+      com.linkedin.restli.server.resources.CollectionResourcePromise.class,
       CollectionResourceTask.class,
       AssociationResource.class,
       AssociationResourceAsync.class,
-      AssociationResourcePromise.class,
+      com.linkedin.restli.server.resources.AssociationResourcePromise.class,
       AssociationResourceTask.class,
       ComplexKeyResource.class,
       ComplexKeyResourceAsync.class,
-      ComplexKeyResourcePromise.class,
+      com.linkedin.restli.server.resources.ComplexKeyResourcePromise.class,
       ComplexKeyResourceTask.class,
       SimpleResource.class,
       SimpleResourceAsync.class,
-      SimpleResourcePromise.class,
+      com.linkedin.restli.server.resources.SimpleResourcePromise.class,
       SimpleResourceTask.class,
       UnstructuredDataCollectionResource.class,
       UnstructuredDataCollectionResourceAsync.class,
-      UnstructuredDataCollectionResourcePromise.class,
+      com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataCollectionResourcePromise.class,
       UnstructuredDataCollectionResourceTask.class,
       UnstructuredDataCollectionResourceReactive.class,
       UnstructuredDataAssociationResource.class,
       UnstructuredDataAssociationResourceAsync.class,
-      UnstructuredDataAssociationResourcePromise.class,
+      com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataAssociationResourcePromise.class,
       UnstructuredDataAssociationResourceTask.class,
       UnstructuredDataAssociationResourceReactive.class,
       UnstructuredDataSimpleResource.class,
       UnstructuredDataSimpleResourceAsync.class,
-      UnstructuredDataSimpleResourcePromise.class,
+      com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataSimpleResourcePromise.class,
       UnstructuredDataSimpleResourceTask.class,
       UnstructuredDataSimpleResourceReactive.class
   };

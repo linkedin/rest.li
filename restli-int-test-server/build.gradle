@@ -1,3 +1,6 @@
+import org.apache.tools.ant.types.LogLevel
+
+
 apply plugin: 'pegasus'
 apply plugin: 'scala'
 
@@ -99,6 +102,9 @@ sourceSets {
 // need to reference GreetingsResourceImpl, which is in runtime classpath
 sourceSets.generated.compileClasspath = sourceSets.main.compileClasspath + sourceSets.main.runtimeClasspath
 compileGeneratedJava.dependsOn(generateGreetings)
+// One of the generated test implements a deprecated class "CollectionResourcePromiseTemplate",
+// Since the test classes are generated, they cannot be marked with @SuppressWarnings("deprecation"), we must disable the 'deprecation' compiler warnings.
+compileGeneratedJava.options.compilerArgs += '-Xlint:-deprecation'
 test.dependsOn(compileGeneratedJava)
 jar.dependsOn(compileGeneratedJava)
 compileTestJava.dependsOn(compileGeneratedJava)

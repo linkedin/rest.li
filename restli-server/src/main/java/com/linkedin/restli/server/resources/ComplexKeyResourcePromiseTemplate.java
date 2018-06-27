@@ -39,11 +39,13 @@ import java.util.Set;
 
 
 /**
+ * @deprecated Use {@link ComplexKeyResourceTaskTemplate} instead.
  * Base template class for async collection resources that use {@link com.linkedin.restli.common.ComplexResourceKey}s
  * and return {@link com.linkedin.parseq.promise.Promise}s
  *
  * @author kparikh
  */
+@Deprecated
 @RestLiTemplate(expectedAnnotation = RestLiCollection.class)
 public class ComplexKeyResourcePromiseTemplate<K extends RecordTemplate, P extends RecordTemplate, V extends RecordTemplate>
     extends ResourceContextHolder implements ComplexKeyResourcePromise<K, P, V>

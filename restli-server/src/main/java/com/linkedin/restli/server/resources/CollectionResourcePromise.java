@@ -35,8 +35,10 @@ import java.util.Set;
 
 
 /**
+ * @deprecated  Use {@link CollectionResourceTask} instead.
  * @author kparikh
  */
+@Deprecated
 public interface CollectionResourcePromise<K, V extends RecordTemplate> extends
                                                                              BaseResource,
                                                                              KeyValueResource<K, V>

@@ -36,10 +36,12 @@ import java.util.Set;
 
 
 /**
+ * @deprecated Use {@link AssociationResourceTaskTemplate} instead.
  * Base template class for async Rest.li associations that return {@link Promise}s
  *
  * @author kparikh
  */
+@Deprecated
 @RestLiTemplate(expectedAnnotation = RestLiAssociation.class)
 public class AssociationResourcePromiseTemplate<V extends RecordTemplate>
     extends ResourceContextHolder implements AssociationResourcePromise<V>

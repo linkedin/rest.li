@@ -98,7 +98,6 @@ import com.linkedin.restli.server.annotations.UnstructuredDataWriterParam;
 import com.linkedin.restli.server.annotations.ValidatorParam;
 import com.linkedin.restli.server.resources.ComplexKeyResource;
 import com.linkedin.restli.server.resources.ComplexKeyResourceAsync;
-import com.linkedin.restli.server.resources.ComplexKeyResourcePromise;
 import com.linkedin.restli.server.resources.ComplexKeyResourceTask;
 import com.linkedin.restli.server.resources.KeyValueResource;
 import com.linkedin.restli.server.resources.SingleObjectResource;
@@ -456,7 +455,8 @@ public final class RestLiAnnotationReader
     }
   }
 
-  @SuppressWarnings("unchecked")
+
+  @SuppressWarnings({"unchecked","deprecation"})
   private static ResourceModel processCollection(final Class<?> collectionResourceClass,
                                                  ResourceModel parentResourceModel)
   {
@@ -479,9 +479,9 @@ public final class RestLiAnnotationReader
     {
       complexKeyResourceBase = ComplexKeyResourceTask.class;
     }
-    else if (ComplexKeyResourcePromise.class.isAssignableFrom(collectionResourceClass))
+    else if (com.linkedin.restli.server.resources.ComplexKeyResourcePromise.class.isAssignableFrom(collectionResourceClass))
     {
-      complexKeyResourceBase = ComplexKeyResourcePromise.class;
+      complexKeyResourceBase = com.linkedin.restli.server.resources.ComplexKeyResourcePromise.class;
     }
 
     if (complexKeyResourceBase != null)
@@ -504,8 +504,8 @@ public final class RestLiAnnotationReader
       }
       else
       {
-        kvParams = ReflectionUtils.getTypeArguments(ComplexKeyResourcePromise.class,
-                                                    (Class<? extends ComplexKeyResourcePromise<?, ?, ?>>) collectionResourceClass);
+        kvParams = ReflectionUtils.getTypeArguments(com.linkedin.restli.server.resources.ComplexKeyResourcePromise.class,
+                                                    (Class<? extends com.linkedin.restli.server.resources.ComplexKeyResourcePromise<?, ?, ?>>) collectionResourceClass);
       }
 
       keyClass = ComplexResourceKey.class;

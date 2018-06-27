@@ -23,8 +23,10 @@ import com.linkedin.restli.server.resources.ResourceContextHolder;
 
 
 /**
+ * @deprecated Use {@link UnstructuredDataAssociationResourceTaskTemplate} instead.
  * Base {@link UnstructuredDataAssociationResourcePromise} implementation. All implementations should extend this.
  */
+@Deprecated
 @RestLiTemplate(expectedAnnotation = RestLiAssociation.class)
 public class UnstructuredDataAssociationResourcePromiseTemplate extends ResourceContextHolder implements UnstructuredDataAssociationResourcePromise
 {

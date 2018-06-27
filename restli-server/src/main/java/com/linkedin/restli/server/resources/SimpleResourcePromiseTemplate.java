@@ -27,10 +27,12 @@ import com.linkedin.restli.server.annotations.RestLiTemplate;
 
 
 /**
+ * @deprecated Use {@link SimpleResourceTaskTemplate} instead.
  * Base class for async simple resources that return {@link com.linkedin.parseq.promise.Promise}s.
  *
  * @author kparikh
  */
+@Deprecated
 @RestLiTemplate(expectedAnnotation = RestLiSimpleResource.class)
 public class SimpleResourcePromiseTemplate<V extends RecordTemplate>
     extends ResourceContextHolder implements SimpleResourcePromise<V>

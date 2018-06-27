@@ -22,8 +22,10 @@ import com.linkedin.restli.common.ComplexResourceKey;
 
 
 /**
+ * @deprecated Use {@link ComplexKeyResourceTask} instead.
  * @author kparikh
  */
+@Deprecated
 public interface ComplexKeyResourcePromise<K extends RecordTemplate, P extends RecordTemplate, V extends RecordTemplate>
     extends CollectionResourcePromise<ComplexResourceKey<K, P>, V>
 {

@@ -23,16 +23,15 @@ import com.linkedin.parseq.promise.SettablePromise;
 import com.linkedin.restli.server.UnstructuredDataWriter;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.annotations.UnstructuredDataWriterParam;
-import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataCollectionResourcePromiseTemplate;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-
+@SuppressWarnings("deprecation")
 @RestLiCollection(name = "greetingCollectionUnstructuredDataPromise", namespace = "com.linkedin.restli.examples.greetings.client")
-public class GreetingUnstructuredDataCollectionResourcePromise extends UnstructuredDataCollectionResourcePromiseTemplate<String>
-{
+public class GreetingUnstructuredDataCollectionResourcePromise extends com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataCollectionResourcePromiseTemplate<String>
+{ // Use full-qualified classname here since we cannot add @SuppressWarnings("deprecation") in import
   private static final ScheduledExecutorService _scheduler = Executors.newScheduledThreadPool(1);
   private static final int DELAY = 100;
 

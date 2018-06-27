@@ -24,19 +24,15 @@ import com.linkedin.restli.server.annotations.RestLiAssociation;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.annotations.RestLiSimpleResource;
 import com.linkedin.restli.server.resources.AssociationResourceAsyncTemplate;
-import com.linkedin.restli.server.resources.AssociationResourcePromiseTemplate;
 import com.linkedin.restli.server.resources.AssociationResourceTaskTemplate;
 import com.linkedin.restli.server.resources.AssociationResourceTemplate;
 import com.linkedin.restli.server.resources.CollectionResourceAsyncTemplate;
-import com.linkedin.restli.server.resources.CollectionResourcePromiseTemplate;
 import com.linkedin.restli.server.resources.CollectionResourceTaskTemplate;
 import com.linkedin.restli.server.resources.CollectionResourceTemplate;
 import com.linkedin.restli.server.resources.ComplexKeyResourceAsyncTemplate;
-import com.linkedin.restli.server.resources.ComplexKeyResourcePromiseTemplate;
 import com.linkedin.restli.server.resources.ComplexKeyResourceTaskTemplate;
 import com.linkedin.restli.server.resources.ComplexKeyResourceTemplate;
 import com.linkedin.restli.server.resources.SimpleResourceAsyncTemplate;
-import com.linkedin.restli.server.resources.SimpleResourcePromiseTemplate;
 import com.linkedin.restli.server.resources.SimpleResourceTaskTemplate;
 import com.linkedin.restli.server.resources.SimpleResourceTemplate;
 
@@ -83,7 +79,7 @@ public class TestRestLiTemplate
 
   @RestLiCollection(name="collectionComplexKey")
   private static class CollectionComplexKeyResource extends ComplexKeyResourceTemplate<EmptyRecord, EmptyRecord, EmptyRecord>
-  {
+  {// Use full-qualified classname here since we cannot add @SuppressWarnings("deprecation") in import
   }
 
   @RestLiCollection(name="collectionComplexKeyAsync")
@@ -101,8 +97,9 @@ public class TestRestLiTemplate
   {
   }
 
+  @SuppressWarnings("deprecation")
   @RestLiCollection(name="collectionAssociationPromise")
-  private static class CollectionAssociationPromiseResource extends AssociationResourcePromiseTemplate<EmptyRecord>
+  private static class CollectionAssociationPromiseResource extends com.linkedin.restli.server.resources.AssociationResourcePromiseTemplate<EmptyRecord>
   {
   }
 
@@ -126,8 +123,9 @@ public class TestRestLiTemplate
   {
   }
 
+  @SuppressWarnings("deprecation")
   @RestLiCollection(name="collectionSimplePromise")
-  private static class CollectionSimplePromiseResource extends SimpleResourcePromiseTemplate<EmptyRecord>
+  private static class CollectionSimplePromiseResource extends com.linkedin.restli.server.resources.SimpleResourcePromiseTemplate<EmptyRecord>
   {
   }
 
@@ -146,8 +144,9 @@ public class TestRestLiTemplate
   {
   }
 
+  @SuppressWarnings("deprecation")
   @RestLiAssociation(name="associationCollectionPromise", assocKeys = {})
-  private static class AssociationCollectionPromiseResource extends CollectionResourcePromiseTemplate<String, EmptyRecord>
+  private static class AssociationCollectionPromiseResource extends com.linkedin.restli.server.resources.CollectionResourcePromiseTemplate<String, EmptyRecord>
   {
   }
 
@@ -161,8 +160,9 @@ public class TestRestLiTemplate
   {
   }
 
+  @SuppressWarnings("deprecation")
   @RestLiAssociation(name="associationComplexKeyPromise", assocKeys = {})
-  private static class AssociationComplexKeyPromiseResource extends ComplexKeyResourcePromiseTemplate<EmptyRecord, EmptyRecord, EmptyRecord>
+  private static class AssociationComplexKeyPromiseResource extends com.linkedin.restli.server.resources.ComplexKeyResourcePromiseTemplate<EmptyRecord, EmptyRecord, EmptyRecord>
   {
   }
 
@@ -196,11 +196,12 @@ public class TestRestLiTemplate
   {
   }
 
+  @SuppressWarnings("deprecation")
   @RestLiAssociation(name="associationAssociationPromise", assocKeys = {
       @Key(name="src", type=String.class),
       @Key(name="dest", type=String.class)
   })
-  private static class AssociationAssociationPromiseResource extends AssociationResourcePromiseTemplate<EmptyRecord>
+  private static class AssociationAssociationPromiseResource extends com.linkedin.restli.server.resources.AssociationResourcePromiseTemplate<EmptyRecord>
   {
   }
 
@@ -219,8 +220,9 @@ public class TestRestLiTemplate
   {
   }
 
+  @SuppressWarnings("deprecation")
   @RestLiAssociation(name="associationSimplePromise", assocKeys = {})
-  private static class AssociationSimplePromiseResource extends SimpleResourcePromiseTemplate<EmptyRecord>
+  private static class AssociationSimplePromiseResource extends com.linkedin.restli.server.resources.SimpleResourcePromiseTemplate<EmptyRecord>
   {
   }
 
@@ -239,8 +241,9 @@ public class TestRestLiTemplate
   {
   }
 
+  @SuppressWarnings("deprecation")
   @RestLiSimpleResource(name="simpleCollectionPromise")
-  private static class SimpleCollectionPromiseResource extends CollectionResourcePromiseTemplate<String, EmptyRecord>
+  private static class SimpleCollectionPromiseResource extends com.linkedin.restli.server.resources.CollectionResourcePromiseTemplate<String, EmptyRecord>
   {
   }
 
@@ -254,8 +257,9 @@ public class TestRestLiTemplate
   {
   }
 
+  @SuppressWarnings("deprecation")
   @RestLiSimpleResource(name="simpleComplexKeyPromise")
-  private static class SimpleComplexKeyPromiseResource extends ComplexKeyResourcePromiseTemplate<EmptyRecord, EmptyRecord, EmptyRecord>
+  private static class SimpleComplexKeyPromiseResource extends com.linkedin.restli.server.resources.ComplexKeyResourcePromiseTemplate<EmptyRecord, EmptyRecord, EmptyRecord>
   {
   }
 
@@ -274,8 +278,9 @@ public class TestRestLiTemplate
   {
   }
 
+  @SuppressWarnings("deprecation")
   @RestLiSimpleResource(name="simpleAssociationPromise")
-  private static class SimpleAssociationPromiseResource extends AssociationResourcePromiseTemplate<EmptyRecord>
+  private static class SimpleAssociationPromiseResource extends com.linkedin.restli.server.resources.AssociationResourcePromiseTemplate<EmptyRecord>
   {
   }
 
@@ -294,8 +299,9 @@ public class TestRestLiTemplate
   {
   }
 
+  @SuppressWarnings("deprecation")
   @RestLiSimpleResource(name="simpleSimplePromise")
-  private static class SimpleSimplePromiseResource extends SimpleResourcePromiseTemplate<EmptyRecord>
+  private static class SimpleSimplePromiseResource extends com.linkedin.restli.server.resources.SimpleResourcePromiseTemplate<EmptyRecord>
   {
   }
 
@@ -304,8 +310,9 @@ public class TestRestLiTemplate
   {
   }
 
+  @SuppressWarnings("deprecation")
   @RestLiCollection(name = "collectionPromise")
-  private static class CollectionCollectionPromise extends CollectionResourcePromiseTemplate<String, EmptyRecord>
+  private static class CollectionCollectionPromise extends com.linkedin.restli.server.resources.CollectionResourcePromiseTemplate<String, EmptyRecord>
   {
   }
 
@@ -314,8 +321,9 @@ public class TestRestLiTemplate
   {
   }
 
+  @SuppressWarnings("deprecation")
   @RestLiCollection(name = "collectionComplexKeyPromise")
-  private static class CollectionComplexKeyPromise extends ComplexKeyResourcePromiseTemplate<EmptyRecord, EmptyRecord, EmptyRecord>
+  private static class CollectionComplexKeyPromise extends com.linkedin.restli.server.resources.ComplexKeyResourcePromiseTemplate<EmptyRecord, EmptyRecord, EmptyRecord>
   {
   }
 

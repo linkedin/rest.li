@@ -24,8 +24,10 @@ import com.linkedin.restli.server.UpdateResponse;
 
 
 /**
+ * @deprecated Use {@link SimpleResourceTask} instead.
  * @author kparikh
  */
+@Deprecated
 public interface SimpleResourcePromise<V extends RecordTemplate> extends BaseResource, SingleObjectResource<V>
 {
   /**

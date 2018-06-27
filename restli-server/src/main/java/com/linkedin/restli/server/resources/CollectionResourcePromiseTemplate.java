@@ -38,10 +38,12 @@ import java.util.Set;
 
 
 /**
+ * @deprecated Use {@link CollectionResourceTaskTemplate} instead.
  * Base template class for async Rest.li collections that return {@link Promise}s.
  *
  * @author kparikh
  */
+@Deprecated
 @RestLiTemplate(expectedAnnotation = RestLiCollection.class)
 public class CollectionResourcePromiseTemplate<K, V extends RecordTemplate>
     extends ResourceContextHolder

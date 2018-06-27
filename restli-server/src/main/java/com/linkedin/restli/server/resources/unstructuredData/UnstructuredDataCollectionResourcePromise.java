@@ -25,8 +25,10 @@ import com.linkedin.restli.server.resources.BaseResource;
 
 
 /**
+ * @deprecated Use {@link UnstructuredDataCollectionResourceTask} instead.
  * A version of {@link UnstructuredDataCollectionResource} with {@link Promise} async interface
  */
+@Deprecated
 public interface UnstructuredDataCollectionResourcePromise<K> extends BaseResource, KeyUnstructuredDataResource<K>
 {
   default Promise<Void> get(K key, @UnstructuredDataWriterParam UnstructuredDataWriter writer)

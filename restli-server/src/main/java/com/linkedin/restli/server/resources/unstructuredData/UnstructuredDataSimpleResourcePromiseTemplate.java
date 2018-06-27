@@ -23,8 +23,10 @@ import com.linkedin.restli.server.resources.ResourceContextHolder;
 
 
 /**
+ * @deprecated Use {@link UnstructuredDataSimpleResourceTaskTemplate} instead.
  * Base {@link UnstructuredDataSimpleResourcePromise} implementation. All implementations should extend this.
  */
+@Deprecated
 @RestLiTemplate(expectedAnnotation = RestLiSimpleResource.class)
 public class UnstructuredDataSimpleResourcePromiseTemplate<K> extends ResourceContextHolder implements UnstructuredDataSimpleResourcePromise<K>
 {

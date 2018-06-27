@@ -33,8 +33,10 @@ import java.util.Set;
 
 
 /**
+ * @deprecated Use {@link AssociationResourceTask} instead.
  * @author kparikh
  */
+@Deprecated
 public interface AssociationResourcePromise<V extends RecordTemplate> extends
                                                                            BaseResource,
                                                                            KeyValueResource<CompoundKey, V>
