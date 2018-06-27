@@ -38,7 +38,8 @@ import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -46,6 +47,8 @@ import java.util.concurrent.TimeoutException;
  */
 public class RequestTimeoutClient extends D2ClientDelegator
 {
+  private static final Logger LOG = LoggerFactory.getLogger(RequestTimeoutClient.class);
+
   private final D2Client _d2Client;
   private final LoadBalancer _balancer;
   private final ScheduledExecutorService _scheduler;
@@ -118,10 +121,22 @@ public class RequestTimeoutClient extends D2ClientDelegator
   private <RES> Callback<RES> decorateCallbackWithRequestTimeout(Callback<RES> callback, Request request,
       RequestContext requestContext)
   {
-    Number requestTimeout = ((Number) requestContext.getLocalAttr(R2Constants.REQUEST_TIMEOUT));
+    Object requestTimeoutObject = requestContext.getLocalAttr(R2Constants.REQUEST_TIMEOUT);
 
-    if (requestTimeout == null)
+    if (requestTimeoutObject == null)
     {
+      return callback;
+    }
+
+    int requestTimeout;
+    try
+    {
+      requestTimeout = ((Number) requestTimeoutObject).intValue();
+    } catch (Throwable e)
+    {
+      LOG.error(
+          "Trying to set custom timeout with a value that is not an Integer/Long: " + requestTimeoutObject.getClass()
+              .getCanonicalName());
       return callback;
     }
 
@@ -140,7 +155,7 @@ public class RequestTimeoutClient extends D2ClientDelegator
     int defaultRequestTimeout = MapUtil.getWithDefault(transportClientProperties, PropertyKeys.HTTP_REQUEST_TIMEOUT,
         HttpClientFactory.DEFAULT_REQUEST_TIMEOUT, Integer.class);
 
-    if (requestTimeout.intValue() >= defaultRequestTimeout)
+    if (requestTimeout >= defaultRequestTimeout)
     {
       return callback;
     }
@@ -149,13 +164,6 @@ public class RequestTimeoutClient extends D2ClientDelegator
     // simulate its behavior and remove it from the context read by the layer below
     requestContext.removeLocalAttr(R2Constants.REQUEST_TIMEOUT);
 
-    String timeoutMessage = "Exceeded request timeout of " + requestTimeout + "ms";
-    TimeoutCallback<RES> timeoutCallback =
-        new TimeoutCallback<>(_scheduler, requestTimeout.longValue(), TimeUnit.MILLISECONDS, callback,
-            timeoutMessage);
-
-    timeoutCallback.addTimeoutTask(() -> timeoutCallback.onError(new TimeoutException(timeoutMessage)));
-
-    return timeoutCallback;
+    return new TimeoutCallback<>(_scheduler, requestTimeout, TimeUnit.MILLISECONDS, callback);
   }
 }

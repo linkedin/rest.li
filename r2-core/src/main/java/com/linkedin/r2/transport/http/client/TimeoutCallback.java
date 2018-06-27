@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2012 LinkedIn Corp.
+   Copyright (c) 2018 LinkedIn Corp.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -14,33 +14,33 @@
    limitations under the License.
 */
 
-/**
- * $Id: $
- */
-
 package com.linkedin.r2.transport.http.client;
 
+import com.linkedin.common.callback.Callback;
+import com.linkedin.r2.util.SingleTimeout;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import com.linkedin.common.callback.Callback;
-import com.linkedin.r2.util.Timeout;
-import com.linkedin.r2.util.TimeoutExecutor;
 
 /**
- * A Callback wrapper with associated timeout.  If the TimeoutCallback's onSuccess or onError
+ * A Callback wrapper with associated timeout. If the TimeoutCallback's onSuccess or onError
  * method is invoked before the timeout expires, the timeout is cancelled.  Otherwise, when
  * the timeout expires, the wrapped Callback's onError method is invoked with a
- * {@link java.util.concurrent.TimeoutException}.
+ * {@link TimeoutException}.
  *
  * @author Steven Ihde
- * @version $Revision: $
  */
 
-public class TimeoutCallback<T> implements Callback<T>, TimeoutExecutor
+public class TimeoutCallback<T> implements Callback<T>
 {
-  private final Timeout<Callback<T>> _timeout;
+  private final SingleTimeout<Callback<T>> _timeout;
+
+  public TimeoutCallback(ScheduledExecutorService executor, long timeout, TimeUnit timeoutUnit,
+                               final Callback<T> callback)
+  {
+    this(executor, timeout, timeoutUnit, callback, null);
+  }
 
   /**
    * Construct a new instance.
@@ -53,10 +53,11 @@ public class TimeoutCallback<T> implements Callback<T>, TimeoutExecutor
    *                       timeout occurs.
    */
   public TimeoutCallback(ScheduledExecutorService executor, long timeout, TimeUnit timeoutUnit,
-                         final Callback<T> callback, final String timeoutMessage)
+                               final Callback<T> callback, final String timeoutMessage)
   {
-    _timeout = new Timeout<>(executor, timeout, timeoutUnit, callback);
-    _timeout.addTimeoutTask(() -> callback.onError(new TimeoutException(timeoutMessage)));
+    _timeout = new SingleTimeout<>(executor, timeout, timeoutUnit, callback, () -> callback.onError(
+      new TimeoutException(
+        "Exceeded request timeout of " + timeoutUnit.toMillis(timeout) + "ms: " + timeoutMessage)));
   }
 
   @Override
@@ -77,11 +78,5 @@ public class TimeoutCallback<T> implements Callback<T>, TimeoutExecutor
     {
       callback.onError(e);
     }
-  }
-
-  @Override
-  public void addTimeoutTask(Runnable action)
-  {
-    _timeout.addTimeoutTask(action);
   }
 }

@@ -23,14 +23,10 @@ import com.linkedin.r2.transport.http.client.AsyncPool;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.transport.http.client.PoolStats;
 import com.linkedin.r2.transport.http.client.TimeoutCallback;
-import com.linkedin.r2.transport.http.client.stream.http2.Http2PipelinePropertyUtil;
 import com.linkedin.r2.util.TimeoutRunnable;
 import io.netty.channel.Channel;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.ChannelGroupFutureListener;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -40,6 +36,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Steven Ihde
@@ -86,7 +84,7 @@ public class ChannelPoolManagerImpl implements ChannelPoolManager
   public void shutdown(final Callback<None> callback, final Runnable callbackStopRequest, final Runnable callbackShutdown, long shutdownTimeout)
   {
     final long deadline = System.currentTimeMillis() + shutdownTimeout;
-    TimeoutCallback<None> closeChannels =
+    Callback<None> closeChannels =
       new TimeoutCallback<>(_scheduler,
         shutdownTimeout,
         TimeUnit.MILLISECONDS, new Callback<None>()
@@ -128,7 +126,7 @@ public class ChannelPoolManagerImpl implements ChannelPoolManager
           LOG.warn("Error shutting down HTTP connection pools, ignoring and continuing shutdown", e);
           finishShutdown();
         }
-      }, "Connection pool shutdown timeout exceeded (" + shutdownTimeout + "ms)");
+      }, "Connection pool shutdown timeout exceeded");
     shutdownPool(closeChannels);
   }
 
@@ -236,7 +234,7 @@ public class ChannelPoolManagerImpl implements ChannelPoolManager
   @Override
   public Map<String, PoolStats> getPoolStats()
   {
-    final Map<String, PoolStats> stats = new HashMap<String, PoolStats>();
+    final Map<String, PoolStats> stats = new HashMap<>();
     for(AsyncPool<Channel> pool : _pool.values())
     {
       stats.put(pool.getName(), pool.getStats());

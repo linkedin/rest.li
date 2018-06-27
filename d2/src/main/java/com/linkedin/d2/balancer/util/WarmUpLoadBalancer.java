@@ -123,7 +123,7 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator
    */
   private void warmUpServices(Callback<None> startUpCallback)
   {
-    TimeoutCallback<None> timeoutCallback = new TimeoutCallback<>(_executorService, _warmUpTimeoutSeconds, TimeUnit.SECONDS, new Callback<None>()
+    Callback<None> timeoutCallback = new TimeoutCallback<>(_executorService, _warmUpTimeoutSeconds, TimeUnit.SECONDS, new Callback<None>()
     {
       @Override
       public void onError(Throwable e)
@@ -174,7 +174,7 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator
     private final AtomicInteger _requestCompletedCount;
     private final AtomicInteger _requestStartedCount;
     private Queue<String> _serviceNamesQueue;
-    private TimeoutCallback<None> _callback;
+    private Callback<None> _callback;
     private List<String> _serviceNames;
 
     /**
@@ -182,7 +182,7 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator
      * @param callback     the callback must be a timeoutCallback which guarantees that the onSuccess method is called only once
      */
     WarmUpTask(List<String> serviceNames,
-               TimeoutCallback<None> callback)
+               Callback<None> callback)
     {
       _serviceNames = serviceNames;
       _requestStartedCount = new AtomicInteger(0);

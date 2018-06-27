@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2012 LinkedIn Corp.
+   Copyright (c) 2018 LinkedIn Corp.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -14,37 +14,30 @@
    limitations under the License.
 */
 
-/**
- * $Id: $
- */
-
 package com.linkedin.r2.util;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.List;
+import com.linkedin.util.ArgumentUtil;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 /**
- * A timeout that stores a reference.  If the reference is not retrieved within
- * the specified timeout, any timeout tasks specified by {@link #addTimeoutTask(Runnable)}
- * are executed.
+ * A timeout that stores a reference of an object and the action that must be executed if the reference
+ * is not retrieved within the specified timeout.
  *
- * @author Steven Ihde
- * @version $Revision: $
+ * @author Francesco Capponi (fcapponi@linkedin.com)
  */
 
-public class Timeout<T> implements TimeoutExecutor
+public class SingleTimeout<T>
 {
-  private static final Logger LOG = LoggerFactory.getLogger(Timeout.class);
+  private static final Logger LOG = LoggerFactory.getLogger(SingleTimeout.class);
 
   private final AtomicReference<T> _item;
   private final ScheduledFuture<?> _future;
-  private final ClosableQueue<Runnable> _queue = new ClosableQueue<Runnable>();
 
   /**
    * Construct a new instance with the specified parameters.
@@ -53,33 +46,24 @@ public class Timeout<T> implements TimeoutExecutor
    * @param timeout the timeout delay, in the specified {@link TimeUnit}.
    * @param timeoutUnit the {@link TimeUnit} for the timeout parameter.
    * @param item the item to be retrieved.
+   * @param timeoutAction the action to be executed in case of timeout.
    */
-  public Timeout(ScheduledExecutorService executor, long timeout, TimeUnit timeoutUnit, T item)
+  public SingleTimeout(ScheduledExecutorService executor, long timeout, TimeUnit timeoutUnit, T item, Runnable timeoutAction)
   {
-    if (item == null)
-    {
-      throw new NullPointerException();
-    }
+    ArgumentUtil.ensureNotNull(item,"item");
+    ArgumentUtil.ensureNotNull(timeoutAction,"timeoutAction");
+
     _item = new AtomicReference<>(item);
     _future = executor.schedule(() -> {
       T item1 = _item.getAndSet(null);
       if (item1 != null)
       {
-        List<Runnable> actions = _queue.close();
-        if (actions.isEmpty())
+        try
         {
-          LOG.warn("Timeout elapsed but no action was specified");
-        }
-        for (Runnable action : actions)
+          timeoutAction.run();
+        } catch (Throwable e)
         {
-          try
-          {
-            action.run();
-          }
-          catch (Exception e)
-          {
-            LOG.error("Failed to execute timeout action", e);
-          }
+          LOG.error("Failed to execute timeout action", e);
         }
       }
     }, timeout, timeoutUnit);
@@ -98,15 +82,5 @@ public class Timeout<T> implements TimeoutExecutor
       _future.cancel(false);
     }
     return item;
-  }
-
-  @Override
-  public void addTimeoutTask(Runnable action)
-  {
-    if (!_queue.offer(action))
-    {
-      // If the queue was closed, the timeout has already occurred.
-      action.run();
-    }
   }
 }

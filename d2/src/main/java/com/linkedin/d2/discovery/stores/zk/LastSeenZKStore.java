@@ -199,7 +199,7 @@ public class LastSeenZKStore<T> implements PropertyEventPublisher<T>
   private void warmUp(Callback<None> callback)
   {
     // we want to be certain that the warm up doesn't take more than warmUpTimeoutSeconds
-    TimeoutCallback<None> timeoutCallback =
+    Callback<None> timeoutCallback =
         new TimeoutCallback<>(_executorService, _warmUpTimeoutSeconds, TimeUnit.SECONDS, new Callback<None>()
         {
           @Override
