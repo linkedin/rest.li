@@ -54,6 +54,7 @@ public class DegraderConfigFactoryTest
     Integer minOutstandingCount = 10;
     Integer overrideMinCallCount = 5;
     Double logThreshold = 0.8;
+    Double preemptiveRequestTimeoutRate = 0.5;
     properties.put(PropertyKeys.DEGRADER_LOG_ENABLED, logEnabled.toString());
     properties.put(PropertyKeys.DEGRADER_LATENCY_TO_USE, latencyToUse.toString());
     properties.put(PropertyKeys.DEGRADER_MAX_DROP_RATE, maxDropRate.toString());
@@ -70,6 +71,7 @@ public class DegraderConfigFactoryTest
     properties.put(PropertyKeys.DEGRADER_MIN_OUTSTANDING_COUNT, minOutstandingCount.toString());
     properties.put(PropertyKeys.DEGRADER_OVERRIDE_MIN_CALL_COUNT, overrideMinCallCount.toString());
     properties.put(PropertyKeys.DEGRADER_LOG_THRESHOLD, logThreshold.toString());
+    properties.put(PropertyKeys.DEGRADER_PREEMPTIVE_REQUEST_TIMEOUT_RATE, preemptiveRequestTimeoutRate.toString());
     DegraderImpl.Config config = DegraderConfigFactory.toDegraderConfig(properties);
     assertEquals(config.isLogEnabled(), logEnabled.booleanValue());
     assertEquals(config.getLatencyToUse(), latencyToUse);
@@ -87,5 +89,6 @@ public class DegraderConfigFactoryTest
     assertEquals(config.getMinOutstandingCount(), minOutstandingCount.longValue());
     assertEquals(config.getOverrideMinCallCount(), overrideMinCallCount.intValue());
     assertEquals(config.getLogThreshold(), logThreshold);
+    assertEquals(config.getPreemptiveRequestTimeoutRate(), preemptiveRequestTimeoutRate);
   }
 }

@@ -125,6 +125,10 @@ public class DegraderConfigFactory
       config.setSlowStartThreshold(MapUtil.getWithDefault(properties,
                                                           PropertyKeys.DEGRADER_SLOW_START_THRESHOLD,
                                                           DegraderImpl.DEFAULT_SLOW_START_THRESHOLD));
+
+      config.setPreemptiveRequestTimeoutRate(MapUtil.getWithDefault(properties,
+                                                                    PropertyKeys.DEGRADER_PREEMPTIVE_REQUEST_TIMEOUT_RATE,
+                                                                    DegraderImpl.DEFAULT_PREEMPTIVE_REQUEST_TIMEOUT_RATE));
     }
     return config;
   }

@@ -2,6 +2,8 @@
 ------
 (RB=1340631)
 Safely build validating schema on request if using projections, return HTTP 400 for projections with nonexistent fields
+(RB=1352061)
+Add serialization of degrader.preemptiveRequestTimeoutRate
 
 23.0.0
 ------
