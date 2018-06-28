@@ -1,9 +1,14 @@
+23.0.3
+------
+
 23.0.2
 ------
 (RB=1351456)
 Remove/Deprecate Promised based API support
 (RB=1344180)
 Unstructured Data update and delete Reactive
+(RB=1352732)
+Fix DataTranslator for ARRAY field types when converting a GenericRecord to DataMap
 
 23.0.1
 ------

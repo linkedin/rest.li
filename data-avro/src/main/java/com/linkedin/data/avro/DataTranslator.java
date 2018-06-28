@@ -269,7 +269,7 @@ public class DataTranslator implements DataTranslatorContext
           result = dataMap;
           break;
         case ARRAY:
-          GenericArray<?> list = (GenericArray<?>) value;
+          List<?> list = (List<?>) value;
           DataSchema elementDataSchema = ((ArrayDataSchema) dereferencedDataSchema).getItems();
           Schema elementAvroSchema = avroSchema.getElementType();
           DataList dataList = new DataList(list.size());

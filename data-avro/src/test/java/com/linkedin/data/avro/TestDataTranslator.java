@@ -16,6 +16,7 @@
 
 package com.linkedin.data.avro;
 
+import com.google.common.collect.ImmutableList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.TestUtil;
 import com.linkedin.data.avro.util.AvroUtil;
@@ -29,9 +30,16 @@ import java.io.FileDescriptor;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Supplier;
 import org.apache.avro.Schema;
+import org.apache.avro.generic.GenericArray;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
@@ -1190,6 +1198,90 @@ public class TestDataTranslator
     GenericRecord record = DataTranslator.dataMapToGenericRecord(dataMap, pegasusSchema, avroShema);
     assertEquals(record.get("field2"),  new GenericData.Array<>(0, Schema.createArray(
         Schema.create(Schema.Type.STRING))));
+  }
+
+  private List<String> getList(Supplier<List<String>> supplier) {
+    return supplier.get();
+  }
+
+  // can't have unchecked casts
+  private static <T> T safeCast(Object toCast, Class<T> clazz) {
+    if (toCast == null) {
+      return null;
+    }
+
+    return Optional.of(toCast)
+        .filter(clazz::isInstance)
+        .map(clazz::cast)
+        .orElseThrow(() -> new ClassCastException(String.format("Cast failed to class: %s for object: %s", clazz.getCanonicalName(), toCast)));
+  }
+
+  @DataProvider()
+  public Object[][] arrayFieldProvider() {
+    return new Object[][] {
+        {
+            null
+        },
+        {
+            ImmutableList.of()
+        },
+        {
+            ImmutableList.of("foo", "bar", "baz")
+        },
+        {
+            getList(() -> {
+              ArrayList<String> list = new ArrayList<>();
+              list.addAll(ImmutableList.of("foo", "bar"));
+              return list;
+            })
+        },
+        {
+            getList(() -> {
+              LinkedList<String> list = new LinkedList<>();
+              list.addAll(ImmutableList.of("foo", "bar"));
+              return list;
+            })
+        },
+        {
+           getList(() -> {
+              GenericArray<String> array = new GenericData.Array<>(1, Schema.createArray(Schema.create(Schema.Type.STRING)));
+              array.add("foo");
+              return array;
+            })
+        }
+    };
+  }
+
+  @Test(dataProvider = "arrayFieldProvider", description = "generic record to data map should not care about the specific list implementation")
+  public void testArrayDataTranslation(List<String> arrayFieldValue) throws IOException {
+    final String arrayField = "arrayField";
+    final String SCHEMA =
+        "{" +
+            "   \"type\":\"record\"," +
+            "   \"name\":\"Foo\"," +
+            "   \"fields\":[" +
+            "      {" +
+            "         \"name\":\"arrayField\"," +
+            "         \"type\":{" +
+            "            \"type\":\"array\"," +
+            "            \"items\":\"string\"" +
+            "         }," +
+            "         \"default\":[ ]" +
+            "      }" +
+            "   ]" +
+            "}";
+
+    // generate generic record from data map and pegasus schema
+    RecordDataSchema pegasusSchema = (RecordDataSchema)TestUtil.dataSchemaFromString(SCHEMA);
+    Schema avroShema = Schema.parse(SCHEMA);
+    DataMap dataMap = new DataMap();
+    GenericRecord record = DataTranslator.dataMapToGenericRecord(dataMap, pegasusSchema, avroShema);
+
+    // set array field after the fact to prevent the type from being set as GenericArray in dataMapToGenericRecord
+    record.put(arrayField, arrayFieldValue);
+    DataMap toTest = DataTranslator.genericRecordToDataMap(record, pegasusSchema, avroShema);
+
+    assertEquals(safeCast(toTest.get(arrayField), List.class), arrayFieldValue);
   }
 }
 
