@@ -772,6 +772,10 @@ public final class RestLiAnnotationReader
         }
         else if (idx == 1)
         {
+          if (model.getResourceEntityType() == ResourceEntityType.UNSTRUCTURED_DATA)
+          {
+            return null;
+          }
           return makeValueParam(model);
         }
         break;
@@ -890,6 +894,10 @@ public final class RestLiAnnotationReader
       case UPDATE:
         if (idx == 0)
         {
+          if (model.getResourceEntityType() == ResourceEntityType.UNSTRUCTURED_DATA)
+          {
+            return null;
+          }
           return makeValueParam(model);
         }
 

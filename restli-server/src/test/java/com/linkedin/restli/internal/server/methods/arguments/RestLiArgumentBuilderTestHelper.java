@@ -16,7 +16,6 @@
 
 package com.linkedin.restli.internal.server.methods.arguments;
 
-
 import com.linkedin.data.ByteString;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.template.RecordTemplate;
@@ -35,6 +34,7 @@ import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.ResourceContext;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -141,12 +141,17 @@ public class RestLiArgumentBuilderTestHelper
 
   public static ResourceMethodDescriptor getMockResourceMethodDescriptor(ResourceModel model, Parameter<?> param)
   {
+    return getMockResourceMethodDescriptor(model, param, null);
+  }
+
+  public static ResourceMethodDescriptor getMockResourceMethodDescriptor(ResourceModel model, Parameter<?> param, Method method)
+  {
     List<Parameter<?>> paramList = new ArrayList<>();
     if (param != null)
     {
       paramList.add(param);
     }
-    return getMockResourceMethodDescriptor(model, 1, paramList);
+    return getMockResourceMethodDescriptor(model, 1, paramList, method);
   }
 
   static ResourceMethodDescriptor getMockResourceMethodDescriptor(ResourceModel model)
@@ -162,6 +167,11 @@ public class RestLiArgumentBuilderTestHelper
 
   public static ResourceMethodDescriptor getMockResourceMethodDescriptor(ResourceModel model, int getResourceModelCount, List<Parameter<?>> paramList)
   {
+    return getMockResourceMethodDescriptor(model, getResourceModelCount, paramList, null);
+  }
+
+  public static ResourceMethodDescriptor getMockResourceMethodDescriptor(ResourceModel model, int getResourceModelCount, List<Parameter<?>> paramList, Method method)
+  {
     ResourceMethodDescriptor descriptor = createMock(ResourceMethodDescriptor.class);
     if (model != null)
     {
@@ -170,6 +180,10 @@ public class RestLiArgumentBuilderTestHelper
     if (paramList != null)
     {
       expect(descriptor.getParameters()).andReturn(paramList);
+    }
+    if (method != null)
+    {
+      expect(descriptor.getMethod()).andReturn(method);
     }
     replay(descriptor);
     return descriptor;

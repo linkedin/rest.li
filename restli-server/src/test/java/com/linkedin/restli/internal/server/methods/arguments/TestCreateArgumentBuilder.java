@@ -35,12 +35,9 @@ import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataAss
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
-import java.util.List;
 import org.testng.annotations.Test;
 
-import static org.easymock.EasyMock.createMock;
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.replay;
+import static com.linkedin.restli.internal.server.methods.arguments.RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor;
 import static org.easymock.EasyMock.verify;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
@@ -63,7 +60,7 @@ public class TestCreateArgumentBuilder
         Parameter.ParamType.POST,
         false,
         new AnnotationSet(new Annotation[]{}));
-    ResourceMethodDescriptor descriptor = getMockResourceMethodDescriptor(model, 1, param, false);
+    ResourceMethodDescriptor descriptor = getMockResourceMethodDescriptor(model, param, CollectionResourceAsyncTemplate.class.getMethod("create", RecordTemplate.class, Callback.class));
     ServerResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(null, null, null, true);
     RoutingResult routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(descriptor, 3, context, 1);
 
@@ -85,7 +82,8 @@ public class TestCreateArgumentBuilder
     RestRequest request = RestLiArgumentBuilderTestHelper.getMockRequest(false, "{}");
     ResourceModel model = RestLiArgumentBuilderTestHelper.getMockResourceModel(MyComplexKey.class, null, false);
 
-    ResourceMethodDescriptor descriptor = getMockResourceMethodDescriptor(model, 2, null, true);
+    ResourceMethodDescriptor descriptor = getMockResourceMethodDescriptor(model, 2, new ArrayList<>(), UnstructuredDataAssociationResourceReactive.class.getMethod("create", UnstructuredDataReactiveReader.class,
+        Callback.class));
     ServerResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(null, null, null, true);
     RoutingResult routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(descriptor, 2, context, 1);
     RestLiArgumentBuilder argumentBuilder = new CreateArgumentBuilder();
@@ -94,38 +92,5 @@ public class TestCreateArgumentBuilder
     Object[] args = argumentBuilder.buildArguments(requestData, routingResult);
     assertEquals(args.length, 0);
     assertEquals(requestData.hasEntity(), false);
-  }
-
-  private ResourceMethodDescriptor getMockResourceMethodDescriptor(ResourceModel model, int getResourceModelCount, Parameter<?> param, boolean isUnstructuredDataTemplate)
-      throws NoSuchMethodException
-  {
-    List<Parameter<?>> paramList = new ArrayList<>();
-    if (param != null)
-    {
-      paramList.add(param);
-    }
-
-    ResourceMethodDescriptor descriptor = createMock(ResourceMethodDescriptor.class);
-    if (model != null)
-    {
-      expect(descriptor.getResourceModel()).andReturn(model).times(getResourceModelCount);
-    }
-    if (paramList != null)
-    {
-      expect(descriptor.getParameters()).andReturn(paramList);
-    }
-    if (isUnstructuredDataTemplate)
-    {
-      expect(descriptor.getMethod()).andReturn(
-          UnstructuredDataAssociationResourceReactive.class.getMethod("create", UnstructuredDataReactiveReader.class,
-              Callback.class));
-    }
-    else
-    {
-      expect(descriptor.getMethod()).andReturn(
-          CollectionResourceAsyncTemplate.class.getMethod("create", RecordTemplate.class, Callback.class));
-    }
-    replay(descriptor);
-    return descriptor;
   }
 }

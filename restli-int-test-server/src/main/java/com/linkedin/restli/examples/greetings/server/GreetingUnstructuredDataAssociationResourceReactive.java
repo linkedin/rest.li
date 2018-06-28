@@ -23,9 +23,11 @@ import com.linkedin.entitystream.EntityStreams;
 import com.linkedin.entitystream.SingletonWriter;
 import com.linkedin.entitystream.Writer;
 import com.linkedin.restli.common.CompoundKey;
+import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.UnstructuredDataReactiveReader;
 import com.linkedin.restli.server.UnstructuredDataReactiveResult;
+import com.linkedin.restli.server.UpdateResponse;
 import com.linkedin.restli.server.annotations.CallbackParam;
 import com.linkedin.restli.server.annotations.Key;
 import com.linkedin.restli.server.annotations.RestLiAssociation;
@@ -61,6 +63,32 @@ public class GreetingUnstructuredDataAssociationResourceReactive extends Unstruc
   @Override
   public void create(@UnstructuredDataReactiveReaderParam UnstructuredDataReactiveReader reader, @CallbackParam Callback<CreateResponse> responseCallback)
   {
-    reader.getEntityStream().setReader(new GreetingUnstructuredDataReader(responseCallback));
+    reader.getEntityStream().setReader(new GreetingUnstructuredDataReader<CreateResponse>(responseCallback)
+    {
+      @Override
+      CreateResponse buildResponse()
+      {
+        return new CreateResponse(1);
+      }
+    });
+  }
+
+  @Override
+  public void update(CompoundKey key, @UnstructuredDataReactiveReaderParam UnstructuredDataReactiveReader reader, @CallbackParam final Callback<UpdateResponse> responseCallback)
+  {
+    reader.getEntityStream().setReader(new GreetingUnstructuredDataReader<UpdateResponse>(responseCallback)
+    {
+      @Override
+      UpdateResponse buildResponse()
+      {
+        return new UpdateResponse(HttpStatus.S_200_OK);
+      }
+    });
+  }
+
+  @Override
+  public void delete(CompoundKey key, @CallbackParam Callback<UpdateResponse> callback)
+  {
+    callback.onSuccess(new UpdateResponse(HttpStatus.S_200_OK));
   }
 }

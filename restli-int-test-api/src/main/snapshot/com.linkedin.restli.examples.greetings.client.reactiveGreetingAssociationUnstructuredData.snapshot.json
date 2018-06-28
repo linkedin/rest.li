@@ -15,11 +15,15 @@
         "name" : "src",
         "type" : "string"
       } ],
-      "supports" : [ "create", "get" ],
+      "supports" : [ "create", "delete", "get", "update" ],
       "methods" : [ {
         "method" : "create"
       }, {
         "method" : "get"
+      }, {
+        "method" : "update"
+      }, {
+        "method" : "delete"
       } ],
       "entity" : {
         "path" : "/reactiveGreetingAssociationUnstructuredData/{reactiveGreetingAssociationUnstructuredDataId}"

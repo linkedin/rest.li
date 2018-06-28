@@ -19,7 +19,6 @@ import com.linkedin.common.callback.Callback;
 import com.linkedin.data.ByteString;
 import com.linkedin.entitystream.ReadHandle;
 import com.linkedin.entitystream.Reader;
-import com.linkedin.restli.server.CreateResponse;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -27,15 +26,15 @@ import java.nio.ByteBuffer;
 
 /**
  * A {@link Reader} implementation that uses a {@link ByteBuffer} to collect the entities in a stream and build a
- * {@link CreateResponse} object.
+ * Response object.
  */
-public class GreetingUnstructuredDataReader implements Reader<ByteString>
+abstract class GreetingUnstructuredDataReader<R> implements Reader<ByteString>
 {
   private ReadHandle _rh;
   private ByteArrayOutputStream _dataStorage = new ByteArrayOutputStream();
-  private Callback<CreateResponse> _callback;
+  private Callback<R> _callback;
 
-  public GreetingUnstructuredDataReader(Callback<CreateResponse> cb)
+  public GreetingUnstructuredDataReader(Callback<R> cb)
   {
     _callback = cb;
   }
@@ -62,10 +61,12 @@ public class GreetingUnstructuredDataReader implements Reader<ByteString>
     _rh.request(1);
   }
 
+  abstract R buildResponse();
+
   @Override
   public void onDone()
   {
-    _callback.onSuccess(new CreateResponse(1));
+    _callback.onSuccess(buildResponse());
   }
 
   @Override

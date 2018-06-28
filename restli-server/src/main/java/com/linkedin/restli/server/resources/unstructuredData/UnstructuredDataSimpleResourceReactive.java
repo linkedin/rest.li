@@ -19,8 +19,11 @@ package com.linkedin.restli.server.resources.unstructuredData;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.restli.server.RoutingException;
+import com.linkedin.restli.server.UnstructuredDataReactiveReader;
 import com.linkedin.restli.server.UnstructuredDataReactiveResult;
+import com.linkedin.restli.server.UpdateResponse;
 import com.linkedin.restli.server.annotations.CallbackParam;
+import com.linkedin.restli.server.annotations.UnstructuredDataReactiveReaderParam;
 import com.linkedin.restli.server.resources.BaseResource;
 
 
@@ -37,5 +40,15 @@ public interface UnstructuredDataSimpleResourceReactive extends BaseResource, Si
   default void get(@CallbackParam Callback<UnstructuredDataReactiveResult> callback)
   {
     throw new RoutingException("'get' is not implemented", 400);
+  }
+
+  default void update(@UnstructuredDataReactiveReaderParam UnstructuredDataReactiveReader reader, @CallbackParam Callback<UpdateResponse> callback)
+  {
+    throw new RoutingException("'update' is not implemented", 400);
+  }
+
+  default void delete(@CallbackParam Callback<UpdateResponse> callback)
+  {
+    throw new RoutingException("'delete' is not implemented", 400);
   }
 }

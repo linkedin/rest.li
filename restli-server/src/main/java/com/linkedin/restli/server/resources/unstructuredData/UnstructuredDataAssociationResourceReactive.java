@@ -23,6 +23,7 @@ import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.RoutingException;
 import com.linkedin.restli.server.UnstructuredDataReactiveReader;
 import com.linkedin.restli.server.UnstructuredDataReactiveResult;
+import com.linkedin.restli.server.UpdateResponse;
 import com.linkedin.restli.server.annotations.CallbackParam;
 import com.linkedin.restli.server.annotations.UnstructuredDataReactiveReaderParam;
 import com.linkedin.restli.server.resources.BaseResource;
@@ -47,5 +48,15 @@ public interface UnstructuredDataAssociationResourceReactive extends BaseResourc
   default void create(@UnstructuredDataReactiveReaderParam UnstructuredDataReactiveReader reader, @CallbackParam Callback<CreateResponse> callback)
   {
     throw new RoutingException("'create' is not implemented", 400);
+  }
+
+  default void update(CompoundKey key, @UnstructuredDataReactiveReaderParam UnstructuredDataReactiveReader reader, @CallbackParam Callback<UpdateResponse> callback)
+  {
+    throw new RoutingException("'update' is not implemented", 400);
+  }
+
+  default void delete(CompoundKey key, @CallbackParam Callback<UpdateResponse> callback)
+  {
+    throw new RoutingException("'delete' is not implemented", 400);
   }
 }

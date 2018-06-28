@@ -16,12 +16,14 @@
 
 package com.linkedin.restli.internal.server.methods.arguments;
 
+import com.linkedin.common.callback.Callback;
 import com.linkedin.data.schema.IntegerDataSchema;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.EmptyRecord;
+import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.test.MyComplexKey;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.ServerResourceContext;
@@ -32,19 +34,19 @@ import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.RestLiRequestData;
-
+import com.linkedin.restli.server.UnstructuredDataReactiveReader;
+import com.linkedin.restli.server.resources.CollectionResourceAsyncTemplate;
+import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataCollectionResourceReactive;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import static org.easymock.EasyMock.verify;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
 
 
 /**
@@ -138,28 +140,27 @@ public class TestUpdateArgumentBuilder
 
   @Test(dataProvider = "argumentData")
   public void testArgumentBuilderSuccess(List<Parameter<?>> params, Key key, String keyName, Object keyValue)
-      throws IOException
-  {
+      throws IOException, NoSuchMethodException {
     RestRequest request = RestLiArgumentBuilderTestHelper.getMockRequest(false, "{\"a\":\"xyz\",\"b\":123}");
     ResourceModel model = RestLiArgumentBuilderTestHelper.getMockResourceModel(MyComplexKey.class, key, true);
     ResourceMethodDescriptor descriptor;
     if (key != null)
     {
-      descriptor = RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor(model, 3, params);
+      descriptor = RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor(model, 3, params, CollectionResourceAsyncTemplate.class.getMethod("update", Object.class, PatchRequest.class, Callback.class));
     }
     else
     {
-      descriptor = RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor(model, 2, params);
+      descriptor = RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor(model, 2, params, CollectionResourceAsyncTemplate.class.getMethod("update", Object.class, PatchRequest.class, Callback.class));
     }
     ServerResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(keyName, keyValue, null, true);
     RoutingResult routingResult;
     if (key != null)
     {
-      routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(descriptor, 4, context, 2);
+      routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(descriptor, 5, context, 2);
     }
     else
     {
-      routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(descriptor, 3, context, 1);
+      routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(descriptor, 4, context, 1);
     }
 
     RestLiArgumentBuilder argumentBuilder = new UpdateArgumentBuilder();
@@ -178,5 +179,43 @@ public class TestUpdateArgumentBuilder
     assertEquals((long) ((MyComplexKey)args[args.length - 1]).getB(), 123L);
 
     verify(request, model, descriptor, context, routingResult);
+  }
+
+  @Test(dataProvider = "argumentData")
+  public void testUnstructuredDataArgumentBuilder(List<Parameter<?>> params, Key key, String keyName, Object keyValue) throws IOException, NoSuchMethodException
+  {
+    params.remove(0);
+    RestRequest request = RestLiArgumentBuilderTestHelper.getMockRequest(false, "{\"a\":\"xyz\",\"b\":123}");
+    ResourceModel model = RestLiArgumentBuilderTestHelper.getMockResourceModel(MyComplexKey.class, key, true);
+    ResourceMethodDescriptor descriptor;
+    if (key != null)
+    {
+      descriptor = RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor(model, 3, params, UnstructuredDataCollectionResourceReactive.class.getMethod("update", Object.class, UnstructuredDataReactiveReader.class, Callback.class));
+    }
+    else
+    {
+      descriptor = RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor(model, 2, params, UnstructuredDataCollectionResourceReactive.class.getMethod("update", Object.class, UnstructuredDataReactiveReader.class, Callback.class));
+    }
+    ServerResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(keyName, keyValue, null, true);
+    RoutingResult routingResult;
+    if (key != null)
+    {
+      routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(descriptor, 5, context, 2);
+    }
+    else
+    {
+      routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(descriptor, 4, context, 1);
+    }
+
+    RestLiArgumentBuilder argumentBuilder = new UpdateArgumentBuilder();
+    RestLiRequestData requestData = argumentBuilder.extractRequestData(routingResult,
+        DataMapUtils.readMapWithExceptions(request));
+    Object[] args = argumentBuilder.buildArguments(requestData, routingResult);
+    if (keyValue != null)
+    {
+      assertEquals(args.length, 1);
+      assertEquals(args[0], keyValue);
+    }
+    assertEquals(requestData.hasEntity(), false);
   }
 }

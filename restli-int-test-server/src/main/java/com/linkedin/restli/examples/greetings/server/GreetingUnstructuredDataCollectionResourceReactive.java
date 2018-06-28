@@ -29,6 +29,7 @@ import com.linkedin.restli.server.RestLiResponseDataException;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.UnstructuredDataReactiveReader;
 import com.linkedin.restli.server.UnstructuredDataReactiveResult;
+import com.linkedin.restli.server.UpdateResponse;
 import com.linkedin.restli.server.annotations.CallbackParam;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.annotations.UnstructuredDataReactiveReaderParam;
@@ -124,6 +125,32 @@ public class GreetingUnstructuredDataCollectionResourceReactive extends Unstruct
   @Override
   public void create(@UnstructuredDataReactiveReaderParam UnstructuredDataReactiveReader reader, @CallbackParam final Callback<CreateResponse> responseCallback)
   {
-    reader.getEntityStream().setReader(new GreetingUnstructuredDataReader(responseCallback));
+    reader.getEntityStream().setReader(new GreetingUnstructuredDataReader<CreateResponse>(responseCallback)
+    {
+      @Override
+      CreateResponse buildResponse()
+      {
+        return new CreateResponse(1);
+      }
+    });
+  }
+
+  @Override
+  public void update(String key, @UnstructuredDataReactiveReaderParam UnstructuredDataReactiveReader reader, @CallbackParam final Callback<UpdateResponse> responseCallback)
+  {
+    reader.getEntityStream().setReader(new GreetingUnstructuredDataReader<UpdateResponse>(responseCallback)
+    {
+      @Override
+      UpdateResponse buildResponse()
+      {
+        return new UpdateResponse(HttpStatus.S_200_OK);
+      }
+    });
+  }
+
+  @Override
+  public void delete(String key, @CallbackParam Callback<UpdateResponse> callback)
+  {
+    callback.onSuccess(new UpdateResponse(HttpStatus.S_200_OK));
   }
 }

@@ -186,9 +186,51 @@ public class TestGreetingUnstructuredDataResourcesReactive extends UnstructuredD
   @Test(dataProvider = "createSuccess")
   public void testCreate(String resourceURL, ByteString entity) throws Throwable
   {
-    RestResponse response = sentCreateRequest(resourceURL, entity);
+    RestResponse response = sentRequest(resourceURL, entity, RestMethod.POST);
     assertEquals(response.getStatus(), 201);
     assertEquals(response.getHeader(RestConstants.HEADER_ID),"1");
+  }
+
+  @DataProvider(name = "updateSuccess")
+  private static Object[][] updateSuccess()
+  {
+    byte[] testBytes = "Hello World!".getBytes();
+    return new Object[][] {
+        { "/reactiveGreetingCollectionUnstructuredData/1" , ByteString.empty()},
+        { "/reactiveGreetingAssociationUnstructuredData/src=good&dest=bar", ByteString.empty()},
+        { "/reactiveGreetingCollectionUnstructuredData/1" , ByteString.copy(testBytes)},
+        { "/reactiveGreetingAssociationUnstructuredData/src=good&dest=bar", ByteString.copy(testBytes)},
+        { "/reactiveGreetingSimpleUnstructuredData" , ByteString.empty()},
+        { "/reactiveGreetingSimpleUnstructuredData", ByteString.copy(testBytes)}
+    };
+  }
+
+  @Test(dataProvider = "updateSuccess")
+  public void testUpdate(String resourceURL, ByteString entity) throws Throwable
+  {
+    RestResponse response = sentRequest(resourceURL, entity, RestMethod.PUT);
+    assertEquals(response.getStatus(), 200);
+  }
+
+  @DataProvider(name = "deleteSuccess")
+  private static Object[][] deleteSuccess()
+  {
+    byte[] testBytes = "Hello World!".getBytes();
+    return new Object[][] {
+        { "/reactiveGreetingCollectionUnstructuredData/1" , ByteString.empty()},
+        { "/reactiveGreetingAssociationUnstructuredData/src=good&dest=bar", ByteString.empty()},
+        { "/reactiveGreetingCollectionUnstructuredData/1" , ByteString.copy(testBytes)},
+        { "/reactiveGreetingAssociationUnstructuredData/src=good&dest=bar", ByteString.copy(testBytes)},
+        { "/reactiveGreetingSimpleUnstructuredData" , ByteString.empty()},
+        { "/reactiveGreetingSimpleUnstructuredData", ByteString.copy(testBytes)}
+    };
+  }
+
+  @Test(dataProvider = "deleteSuccess")
+  public void testDelete(String resourceURL, ByteString entity) throws Throwable
+  {
+    RestResponse response = sentRequest(resourceURL, entity, RestMethod.DELETE);
+    assertEquals(response.getStatus(), 200);
   }
 
   private Client getR2Client()
@@ -198,11 +240,11 @@ public class TestGreetingUnstructuredDataResourcesReactive extends UnstructuredD
     return newTransportClient(transportProperties);
   }
 
-  private RestResponse sentCreateRequest(String getPartialUrl, ByteString entity) throws Throwable
+  private RestResponse sentRequest(String getPartialUrl, ByteString entity, String restMethod) throws Throwable
   {
     Client client = getR2Client();
     URI uri = URI.create("http://localhost:" + DEFAULT_PORT + getPartialUrl);
-    RestRequest r = new RestRequestBuilder(uri).setEntity(entity).setMethod(RestMethod.POST).build();
+    RestRequest r = new RestRequestBuilder(uri).setEntity(entity).setMethod(restMethod).build();
     return client.restRequest(r).get();
   }
 }

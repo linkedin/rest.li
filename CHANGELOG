@@ -2,6 +2,8 @@
 ------
 (RB=1351456)
 Remove/Deprecate Promised based API support
+(RB=1344180)
+Unstructured Data update and delete Reactive
 
 23.0.1
 ------
