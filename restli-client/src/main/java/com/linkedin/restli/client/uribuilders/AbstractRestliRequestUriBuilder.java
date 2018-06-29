@@ -98,14 +98,7 @@ abstract class AbstractRestliRequestUriBuilder<R extends Request<?>> implements 
     DataMap params = QueryParamsUtil.convertToDataMap(_request.getQueryParamsObjects(),
                                                       _request.getQueryParamClasses(),
                                                       _version);
-    if (_version.compareTo(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()) >= 0)
-    {
-      URIParamUtils.addSortedParams(b, params);
-    }
-    else
-    {
-      QueryParamsDataMap.addSortedParams(b, params);
-    }
+    URIParamUtils.addSortedParams(b, params, _version);
   }
 
   protected final void appendAssocKeys(UriBuilder uriBuilder)

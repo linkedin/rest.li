@@ -413,17 +413,12 @@ public abstract class RecordTemplate implements DataTemplate<DataMap>
   private Object obtainValueOrDefault(RecordDataSchema.Field field, GetMode mode)
       throws RequiredFieldNotPresentException
   {
-    Object defaultValue = field.getDefault();
     String fieldName = field.getName();
-    Object found = _map.get(field.getName());
+    Object found = _map.get(fieldName);
     if (found == null && mode != GetMode.NULL)
     {
-      if (defaultValue != null)
-      {
-        // return default value, which is usually read-only
-        found = defaultValue;
-      }
-      else if (field.getOptional() == false && mode == GetMode.STRICT)
+      found = field.getDefault();
+      if (found == null && field.getOptional() == false && mode == GetMode.STRICT)
       {
         throw new RequiredFieldNotPresentException(fieldName);
       }

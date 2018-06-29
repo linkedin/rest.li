@@ -55,6 +55,7 @@ import com.linkedin.restli.restspec.ResourceEntityType;
 import com.linkedin.restli.server.ActionResult;
 import com.linkedin.restli.server.BatchCreateRequest;
 import com.linkedin.restli.server.BatchDeleteRequest;
+import com.linkedin.restli.server.BatchFinderResult;
 import com.linkedin.restli.server.BatchPatchRequest;
 import com.linkedin.restli.server.BatchUpdateRequest;
 import com.linkedin.restli.server.CollectionResult;
@@ -72,6 +73,7 @@ import com.linkedin.restli.server.annotations.ActionParam;
 import com.linkedin.restli.server.annotations.AlternativeKey;
 import com.linkedin.restli.server.annotations.AlternativeKeys;
 import com.linkedin.restli.server.annotations.AssocKeyParam;
+import com.linkedin.restli.server.annotations.BatchFinder;
 import com.linkedin.restli.server.annotations.CallbackParam;
 import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.HeaderParam;
@@ -105,6 +107,7 @@ import com.linkedin.restli.server.resources.unstructuredData.KeyUnstructuredData
 import com.linkedin.restli.server.resources.unstructuredData.SingleUnstructuredDataResource;
 import com.linkedin.util.CustomTypeUtil;
 import java.lang.annotation.Annotation;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -131,6 +134,9 @@ import static com.linkedin.restli.internal.server.model.ResourceModelEncoder.DEP
  */
 public final class RestLiAnnotationReader
 {
+  private static final int DEFAULT_METADATA_PARAMETER_INDEX = 1;
+  private static final int BATCH_FINDER_METADATA_PARAMETER_INDEX = 2;
+  private static final int BATCH_FINDER_MISSING_PARAMETER_INDEX = -1;
   private static final Logger log = LoggerFactory.getLogger(RestLiAnnotationReader.class);
   private static final Pattern INVALID_CHAR_PATTERN = Pattern.compile("\\W");
   private static final Set<ResourceMethod> POST_OR_PUT_RESOURCE_METHODS = new HashSet<>(Arrays.asList(ResourceMethod.ACTION,
@@ -1948,6 +1954,7 @@ public final class RestLiAnnotationReader
 
       addActionResourceMethod(model, method);
       addFinderResourceMethod(model, method);
+      addBatchFinderResourceMethod(model, method);
       addTemplateResourceMethod(resourceClass, model, method);
       addCrudResourceMethod(resourceClass, model, method);
     }
@@ -2012,6 +2019,8 @@ public final class RestLiAnnotationReader
           continue;
         case FINDER:
           continue;
+        case BATCH_FINDER:
+          continue;
         default:
           if (crudMethods.containsKey(type))
           {
@@ -2029,7 +2038,7 @@ public final class RestLiAnnotationReader
     }
   }
 
-  private static Class<? extends RecordTemplate> getCustomCollectionMetadata(final Method method)
+  private static Class<? extends RecordTemplate> getCustomCollectionMetadata(final Method method, int metadataIndex)
   {
     Class<? extends RecordTemplate> metadataType = null;
     final Class<?> returnClass = getLogicalReturnClass(method);
@@ -2037,14 +2046,14 @@ public final class RestLiAnnotationReader
     {
       final List<Class<?>> typeArguments = ReflectionUtils.getTypeArguments(CollectionResult.class, returnClass.asSubclass(CollectionResult.class));
       final Class<?> metadataClass;
-      if (typeArguments == null || typeArguments.get(1) == null)
+      if (typeArguments == null || typeArguments.get(metadataIndex) == null)
       {
         // the return type may leave metadata type as parameterized and specify in runtime
-        metadataClass = ((Class<?>) ((ParameterizedType) getLogicalReturnType(method)).getActualTypeArguments()[1]);
+        metadataClass = ((Class<?>) ((ParameterizedType) getLogicalReturnType(method)).getActualTypeArguments()[metadataIndex]);
       }
       else
       {
-        metadataClass = typeArguments.get(1);
+        metadataClass = typeArguments.get(metadataIndex);
       }
 
       if (!metadataClass.equals(NoMetadata.class))
@@ -2065,12 +2074,19 @@ public final class RestLiAnnotationReader
 
     String queryType = finderAnno.value();
 
-    List<Parameter<?>> queryParameters =
-        getParameters(model, method, ResourceMethod.FINDER);
-
     if (queryType != null)
     {
-      Class<? extends RecordTemplate> metadataType = getCustomCollectionMetadata(method);
+      if (!Modifier.isPublic(method.getModifiers()))
+      {
+        throw new ResourceConfigException(String.format("Resource '%s' contains non-public finder method '%s'.",
+            model.getName(),
+            method.getName()));
+      }
+
+      List<Parameter<?>> queryParameters =
+          getParameters(model, method, ResourceMethod.FINDER);
+
+      Class<? extends RecordTemplate> metadataType = getCustomCollectionMetadata(method, DEFAULT_METADATA_PARAMETER_INDEX);
 
       DataMap annotationsMap = ResourceModelAnnotation.getAnnotationsMap(method.getAnnotations());
       addDeprecatedAnnotation(annotationsMap, method);
@@ -2084,15 +2100,60 @@ public final class RestLiAnnotationReader
                                                    annotationsMap);
       validateFinderMethod(finderMethodDescriptor, model);
 
+      model.addResourceMethodDescriptor(finderMethodDescriptor);
+    }
+  }
+
+  private static void addBatchFinderResourceMethod(final ResourceModel model, final Method method)
+  {
+    BatchFinder finderAnno = method.getAnnotation(BatchFinder.class);
+    if (finderAnno == null)
+    {
+      return;
+    }
+
+    String queryType = finderAnno.value();
+    if (queryType != null)
+    {
       if (!Modifier.isPublic(method.getModifiers()))
       {
-        throw new ResourceConfigException(String.format("Resource '%s' contains non-public finder method '%s'.",
+        throw new ResourceConfigException(String.format("Resource '%s' contains non-public batch finder method '%s'.",
                                                         model.getName(),
                                                         method.getName()));
       }
 
-      model.addResourceMethodDescriptor(finderMethodDescriptor);
+      List<Parameter<?>> queryParameters = getParameters(model, method, ResourceMethod.BATCH_FINDER);
+
+      Class<? extends RecordTemplate> metadataType = getCustomCollectionMetadata(method,
+                                                                                 BATCH_FINDER_METADATA_PARAMETER_INDEX);
+      DataMap annotationsMap = ResourceModelAnnotation.getAnnotationsMap(method.getAnnotations());
+      addDeprecatedAnnotation(annotationsMap, method);
+
+      Integer criteriaIndex = getCriteriaParametersIndex(finderAnno,queryParameters);
+      ResourceMethodDescriptor batchFinderMethodDescriptor =
+          ResourceMethodDescriptor.createForBatchFinder(method,
+                                                        queryParameters,
+                                                        queryType,
+                                                        criteriaIndex,
+                                                        metadataType,
+                                                        getInterfaceType(method),
+                                                        annotationsMap);
+      validateBatchFinderMethod(batchFinderMethodDescriptor, model);
+      model.addResourceMethodDescriptor(batchFinderMethodDescriptor);
     }
+  }
+
+  private static Integer getCriteriaParametersIndex(BatchFinder annotation, List<Parameter<?>> parameters)
+  {
+    for (int i=0; i < parameters.size(); i++)
+    {
+      if (parameters.get(i).getName().equals(annotation.batchParam()))
+      {
+        return i;
+      }
+    }
+
+    return ResourceMethodDescriptor.BATCH_FINDER_NULL_CRITERIA_INDEX;
   }
 
   /**
@@ -2213,7 +2274,7 @@ public final class RestLiAnnotationReader
         Class<? extends RecordTemplate> metadataType = null;
         if (ResourceMethod.GET_ALL.equals(resourceMethod))
         {
-          metadataType = getCustomCollectionMetadata(method);
+          metadataType = getCustomCollectionMetadata(method, DEFAULT_METADATA_PARAMETER_INDEX);
         }
 
         DataMap annotationsMap = ResourceModelAnnotation.getAnnotationsMap(method.getAnnotations());
@@ -2413,6 +2474,92 @@ public final class RestLiAnnotationReader
     }
   }
 
+  private static void validateBatchFinderMethod(final ResourceMethodDescriptor batchFinderMethodDescriptor,
+      final ResourceModel resourceModel)
+  {
+    Method method = batchFinderMethodDescriptor.getMethod();
+
+    BatchFinder finderAnno = batchFinderMethodDescriptor.getMethod().getAnnotation(BatchFinder.class);
+    if(finderAnno.batchParam().length() == 0){
+      throw new ResourceConfigException("The batchParam annotation is required and can't be empty"
+          + " on the @BatchFinder method '" + method.getName()
+          + "' on class '" + resourceModel.getResourceClass().getName());
+    }
+
+    if(batchFinderMethodDescriptor.getBatchFinderCriteriaParamIndex() == BATCH_FINDER_MISSING_PARAMETER_INDEX) {
+      throw new ResourceConfigException("The batchParam annotation doesn't match any parameter name"
+          + " on the @BatchFinder method '" + method.getName()
+          + "' on class '" + resourceModel.getResourceClass().getName());
+    }
+
+    Parameter<?> batchParam = batchFinderMethodDescriptor.getParameter(finderAnno.batchParam());
+
+    if (!batchParam.isArray() || !DataTemplate.class.isAssignableFrom(batchParam.getItemType()))
+    {
+      throw new ResourceConfigException("The batchParam '" + finderAnno.batchParam()
+          + "' on the @BatchFinder method '" + method.getName()
+          + "' on class '" + resourceModel.getResourceClass().getName() + "' must be a array of RecordTemplate");
+    }
+
+    Class<?> valueClass = resourceModel.getValueClass();
+
+    Class<?> returnType, elementType, criteriaType, metadataType;
+    try
+    {
+      returnType = getLogicalReturnClass(method);
+      final List<Class<?>> typeArguments;
+      if (!BatchFinderResult.class.isAssignableFrom(returnType))
+      {
+        throw new ResourceConfigException("@BatchFinder method '" + method.getName()
+            + "' on class '" + resourceModel.getResourceClass().getName()
+            + "' has an unsupported return type");
+      }
+
+      final ParameterizedType collectionType = (ParameterizedType) getLogicalReturnType(method);
+      criteriaType = (Class<?>) collectionType.getActualTypeArguments()[0];
+      elementType = (Class<?>) collectionType.getActualTypeArguments()[1];
+      metadataType = (Class<?>) collectionType.getActualTypeArguments()[2];
+    }
+    catch (ClassCastException e)
+    {
+      throw new ResourceConfigException("@BatchFinder method '" + method.getName()
+          + "' on class '" + resourceModel.getResourceClass().getName()
+          + "' has an invalid return or a data template type", e);
+    }
+
+    if (!RecordTemplate.class.isAssignableFrom(elementType)
+        || !valueClass.equals(elementType))
+    {
+      String collectionClassName = returnType.getSimpleName();
+      throw new ResourceConfigException("@BatchFinder method '" + method.getName()
+          + "' on class '" + resourceModel.getResourceClass().getName()
+          + "' has an invalid return type. Expected " + collectionClassName + "<"
+          + valueClass.getName() + ">, but found " + collectionClassName + "<"
+          + elementType + '>');
+    }
+
+    if (!RecordTemplate.class.isAssignableFrom(metadataType) ||
+        !RecordTemplate.class.isAssignableFrom(criteriaType))
+    {
+      String collectionClassName = returnType.getSimpleName();
+      throw new ResourceConfigException("@BatchFinder method '" + method.getName()
+          + "' on class '" + resourceModel.getResourceClass().getName()
+          + "' has an invalid return type. The criteria and the metadata parameterized types "
+          + "must be a RecordTemplate");
+    }
+
+
+    ResourceMethodDescriptor existingBatchFinder =
+        resourceModel.findBatchFinderMethod(batchFinderMethodDescriptor.getBatchFinderName());
+    if (existingBatchFinder != null)
+    {
+      throw new ResourceConfigException("Found duplicate @BatchFinder method named '"
+          + batchFinderMethodDescriptor.getFinderName() + "' on class '"
+          + resourceModel.getResourceClass().getName() + '\'');
+    }
+
+  }
+
   private static void validateFinderMethod(final ResourceMethodDescriptor finderMethodDescriptor,
                                            final ResourceModel resourceModel)
   {
@@ -2469,7 +2616,7 @@ public final class RestLiAnnotationReader
 
     String collectionClassName = returnType.getSimpleName();
     if (!RecordTemplate.class.isAssignableFrom(elementType)
-        || !resourceModel.getValueClass().equals(elementType))
+        || !valueClass.equals(elementType))
     {
       throw new ResourceConfigException("@Finder method '" + method.getName()
           + "' on class '" + resourceModel.getResourceClass().getName()
@@ -2479,7 +2626,7 @@ public final class RestLiAnnotationReader
     }
 
     ResourceMethodDescriptor existingFinder =
-        resourceModel.findNamedMethod(finderMethodDescriptor.getFinderName());
+        resourceModel.findFinderMethod(finderMethodDescriptor.getFinderName());
     if (existingFinder != null)
     {
       throw new ResourceConfigException("Found duplicate @Finder method named '"

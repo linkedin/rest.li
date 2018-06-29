@@ -1,0 +1,103 @@
+{
+  "models" : [ {
+    "type" : "record",
+    "name" : "Greeting",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "doc" : "A greeting",
+    "fields" : [ {
+      "name" : "id",
+      "type" : "long"
+    }, {
+      "name" : "message",
+      "type" : "string"
+    }, {
+      "name" : "tone",
+      "type" : {
+        "type" : "enum",
+        "name" : "Tone",
+        "symbols" : [ "FRIENDLY", "SINCERE", "INSULTING" ]
+      },
+      "doc" : "tone"
+    }, {
+      "name" : "senders",
+      "type" : {
+        "type" : "array",
+        "items" : "string"
+      },
+      "doc" : "Sender(s) of the message",
+      "optional" : true
+    } ]
+  }, {
+    "type" : "record",
+    "name" : "GreetingCriteria",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "doc" : "A search criteria to filter greetings.",
+    "fields" : [ {
+      "name" : "id",
+      "type" : "long",
+      "doc" : "Greeting ID to filter on"
+    }, {
+      "name" : "tone",
+      "type" : "Tone",
+      "doc" : "Greeting tone to filter on"
+    } ]
+  }, {
+    "type" : "record",
+    "name" : "SearchMetadata",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "doc" : "metadata for greetings search results",
+    "fields" : [ {
+      "name" : "facets",
+      "type" : {
+        "type" : "array",
+        "items" : {
+          "type" : "record",
+          "name" : "ToneFacet",
+          "doc" : "metadata for greetings search results",
+          "fields" : [ {
+            "name" : "tone",
+            "type" : "Tone"
+          }, {
+            "name" : "count",
+            "type" : "int"
+          } ]
+        }
+      }
+    } ]
+  }, "com.linkedin.restli.examples.greetings.api.Tone", "com.linkedin.restli.examples.greetings.api.ToneFacet" ],
+  "schema" : {
+    "name" : "batchfinders",
+    "namespace" : "com.linkedin.restli.examples.greetings.client",
+    "path" : "/batchfinders",
+    "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
+    "doc" : "This resource models a collection resource that exposes both a finder and a batch finder method.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.BatchFinderResource",
+    "collection" : {
+      "identifier" : {
+        "name" : "batchfindersId",
+        "type" : "long"
+      },
+      "supports" : [ ],
+      "finders" : [ {
+        "name" : "searchWithMetadata",
+        "metadata" : {
+          "type" : "com.linkedin.restli.examples.greetings.api.SearchMetadata"
+        }
+      } ],
+      "batchFinders" : [ {
+        "name" : "findUsers",
+        "parameters" : [ {
+          "name" : "criteria",
+          "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.greetings.api.GreetingCriteria\" }"
+        }, {
+          "name" : "first_name",
+          "type" : "string"
+        } ],
+        "pagingSupported" : true,
+        "batchParam" : "criteria"
+      } ],
+      "entity" : {
+        "path" : "/batchfinders/{batchfindersId}"
+      }
+    }
+  }
+}

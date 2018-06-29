@@ -41,6 +41,9 @@ public class OperationNameGenerator
       case FINDER:
         operation += (ACTION_AND_FINDER_SEPARATOR + methodName);
         break;
+      case BATCH_FINDER:
+        operation += (ACTION_AND_FINDER_SEPARATOR + methodName);
+        break;
     }
     return operation;
   }

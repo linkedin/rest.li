@@ -31,6 +31,7 @@ import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.entitystream.EntityStream;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ProtocolVersion;
+import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
@@ -237,6 +238,47 @@ public class ResourceContextImpl implements ServerResourceContext
   public String getRequestFinderName()
   {
     return getParameter(RestConstants.QUERY_TYPE_PARAM);
+  }
+
+  @Override
+  public String getRequestBatchFinderName()
+  {
+    return getParameter(RestConstants.BATCH_FINDER_QUERY_TYPE_PARAM);
+  }
+
+  @Override
+  public String getMethodName()
+  {
+    String methodName = getRequestActionName();
+    if (methodName == null)
+    {
+      methodName = getRequestFinderName();
+    }
+    if (methodName == null)
+    {
+      methodName = getRequestBatchFinderName();
+    }
+
+    return methodName;
+  }
+
+  @Override
+  public String getMethodName(ResourceMethod type)
+  {
+    if (type.equals(ResourceMethod.ACTION))
+    {
+      return getRequestActionName();
+    }
+    else if (type.equals(ResourceMethod.FINDER))
+    {
+      return getRequestFinderName();
+    }
+    else if (type.equals(ResourceMethod.BATCH_FINDER))
+    {
+      return getRequestBatchFinderName();
+    }
+
+    return null;
   }
 
   @Override

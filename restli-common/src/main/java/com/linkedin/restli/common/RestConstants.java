@@ -56,6 +56,7 @@ public interface RestConstants
   String COUNT_PARAM = "count";
   String ACTION_PARAM = "action";
   String QUERY_TYPE_PARAM = "q";
+  String BATCH_FINDER_QUERY_TYPE_PARAM = "bq";
   String QUERY_BATCH_IDS_PARAM = "ids";
   String FIELDS_PARAM = "fields";
   String ALT_KEY_PARAM = "altkey";

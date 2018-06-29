@@ -11,6 +11,7 @@ import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.server.ResponseType;
 import com.linkedin.restli.internal.server.methods.AnyRecord;
 import com.linkedin.restli.server.RestLiServiceException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -76,6 +77,11 @@ public class TestRestLiResponseEnvelope
           BatchResponseEnvelope batchResponseEnvelope = (BatchResponseEnvelope)responseEnvelope;
           Assert.assertNotNull(batchResponseEnvelope.getBatchResponseMap());
           Assert.assertTrue(batchResponseEnvelope.getBatchResponseMap().isEmpty());
+          break;
+        case BATCH_COLLECTION:
+          BatchFinderResponseEnvelope batchFinderResponseEnvelope = (BatchFinderResponseEnvelope) responseEnvelope;
+          Assert.assertNotNull(batchFinderResponseEnvelope.getItems());
+          Assert.assertTrue(batchFinderResponseEnvelope.getItems().isEmpty());
           break;
         case STATUS_ONLY:
           // status only envelopes are blank by default since they have no data fields
@@ -247,6 +253,32 @@ public class TestRestLiResponseEnvelope
           Assert.assertTrue(id2Entry.hasException());
           Assert.assertEquals(id2Entry.getException(), newResponseException);
           break;
+        case BATCH_COLLECTION:
+          BatchFinderResponseEnvelope batchFinderResponseEnvelope = (BatchFinderResponseEnvelope)responseEnvelope;
+
+          List<BatchFinderResponseEnvelope.BatchFinderEntry> oldItems = batchFinderResponseEnvelope.getItems();
+
+          List<BatchFinderResponseEnvelope.BatchFinderEntry> newItems = new ArrayList<BatchFinderResponseEnvelope.BatchFinderEntry>(2);
+
+          RestLiServiceException newBFResponseException = new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR);
+          newItems.add(new BatchFinderResponseEnvelope.BatchFinderEntry(newBFResponseException));
+
+          RecordTemplate newBFResponseRecord = new EmptyRecord();
+          List<RecordTemplate> elements = Arrays.asList(newBFResponseRecord);
+          RecordTemplate newBFResponseMetadata = new AnyRecord(new DataMap());
+          newBFResponseMetadata.data().put("test", "testing");
+          CollectionMetadata newBFResponsesPaging = new CollectionMetadata();
+          newItems.add(new BatchFinderResponseEnvelope.BatchFinderEntry(elements, newBFResponsesPaging, newBFResponseMetadata));
+
+          batchFinderResponseEnvelope.setItems(newItems);
+
+          Assert.assertNotEquals(batchFinderResponseEnvelope.getItems(), oldItems);
+          Assert.assertEquals(batchFinderResponseEnvelope.getItems(), newItems);
+          Assert.assertEquals(batchFinderResponseEnvelope.getItems().get(0).getException(), newBFResponseException);
+          Assert.assertEquals(batchFinderResponseEnvelope.getItems().get(1).getElements(), elements);
+          Assert.assertEquals(batchFinderResponseEnvelope.getItems().get(1).getPaging(), newBFResponsesPaging);
+          Assert.assertEquals(batchFinderResponseEnvelope.getItems().get(1).getCustomMetadata(), newBFResponseMetadata);
+          break;
         case STATUS_ONLY:
           // status only envelopes are blank by default since they have no data fields
           break;
@@ -302,6 +334,10 @@ public class TestRestLiResponseEnvelope
           BatchResponseEnvelope batchResponseEnvelope = (BatchResponseEnvelope) responseEnvelope;
           Assert.assertNull(batchResponseEnvelope.getBatchResponseMap());
           break;
+        case BATCH_COLLECTION:
+          BatchFinderResponseEnvelope batchFinderResponseEnvelope = (BatchFinderResponseEnvelope) responseEnvelope;
+          Assert.assertNull(batchFinderResponseEnvelope.getItems());
+          break;
         case STATUS_ONLY:
           // status only envelopes don't have data fields
           break;
@@ -339,6 +375,8 @@ public class TestRestLiResponseEnvelope
         return new GetAllResponseEnvelope(HttpStatus.S_200_OK, Collections.emptyList(), null, new EmptyRecord());
       case FINDER:
         return new FinderResponseEnvelope(HttpStatus.S_200_OK, Collections.emptyList(), null, new EmptyRecord());
+      case BATCH_FINDER:
+        return new BatchFinderResponseEnvelope(HttpStatus.S_200_OK, Collections.emptyList());
       case BATCH_CREATE:
         return new BatchCreateResponseEnvelope(HttpStatus.S_200_OK, Collections.emptyList(), false);
       case BATCH_GET:

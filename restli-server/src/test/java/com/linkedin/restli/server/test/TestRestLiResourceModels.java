@@ -797,7 +797,7 @@ public class TestRestLiResourceModels
                                            String finderName,
                                            int numParameters)
   {
-    ResourceMethodDescriptor methodDescriptor = model.findNamedMethod(finderName);
+    ResourceMethodDescriptor methodDescriptor = model.findFinderMethod(finderName);
     assertNotNull(methodDescriptor);
     assertNull(methodDescriptor.getActionName());
     assertEquals(finderName, methodDescriptor.getFinderName());

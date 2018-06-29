@@ -364,7 +364,7 @@ public class TestRestLiResponseHandler
                               String errorResponseHeaderName) throws Exception
   {
     ResourceModel resourceModel = buildResourceModel(StatusCollectionResource.class);
-    ResourceMethodDescriptor methodDescriptor = resourceModel.findNamedMethod("search");
+    ResourceMethodDescriptor methodDescriptor = resourceModel.findFinderMethod("search");
 
     RestLiResponse response;
     // #1 check datamap/entity structure
@@ -1055,7 +1055,7 @@ public class TestRestLiResponseHandler
     String testHeaderValue = "test";
 
     ResourceModel resourceModel = buildResourceModel(StatusCollectionResource.class);
-    ResourceMethodDescriptor methodDescriptor = resourceModel.findNamedMethod("search");
+    ResourceMethodDescriptor methodDescriptor = resourceModel.findFinderMethod("search");
     ResourceContextImpl context = new ResourceContextImpl();
     context.setResponseHeader(testHeaderName, testHeaderValue);
     RestUtils.validateRequestHeadersAndUpdateResourceContext(acceptTypeData.acceptHeaders,
@@ -1182,7 +1182,7 @@ public class TestRestLiResponseHandler
     String testHeaderValue = "head";
 
     ResourceModel resourceModel = buildResourceModel(StatusCollectionResource.class);
-    ResourceMethodDescriptor methodDescriptor = resourceModel.findNamedMethod("search");
+    ResourceMethodDescriptor methodDescriptor = resourceModel.findFinderMethod("search");
     ResourceContextImpl context = new ResourceContextImpl();
     context.setResponseHeader(testHeaderName, testHeaderValue);
     context.addResponseCookie(new HttpCookie("cook1", "value1"));

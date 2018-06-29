@@ -31,6 +31,7 @@ public class ResourceMethodMatchKey
   private final String  _restliMethod;
   private final boolean _hasActionParam;
   private final boolean _hasQueryParam;
+  private final boolean _hasBatchFinderParam;
   private final boolean _hasBatchKeys;
   private final boolean _hasEntitySegment;
 
@@ -41,6 +42,7 @@ public class ResourceMethodMatchKey
                                 final String restliMethod,
                                 final boolean hasActionParam,
                                 final boolean hasQueryParam,
+                                final boolean hasBatchFinderParam,
                                 final boolean hasBatchKeys,
                                 final boolean hasEntitySegment)
   {
@@ -50,6 +52,7 @@ public class ResourceMethodMatchKey
     _hasQueryParam = hasQueryParam;
     _hasBatchKeys = hasBatchKeys;
     _hasEntitySegment = hasEntitySegment;
+    _hasBatchFinderParam = hasBatchFinderParam;
   }
 
   @Override
@@ -66,6 +69,7 @@ public class ResourceMethodMatchKey
             _restliMethod.equals(ref._restliMethod) &&
             _hasActionParam == ref._hasActionParam &&
             _hasQueryParam == ref._hasQueryParam &&
+            _hasBatchFinderParam == ref._hasBatchFinderParam &&
             _hasBatchKeys == ref._hasBatchKeys &&
             _hasEntitySegment == ref._hasEntitySegment;
   }
@@ -78,6 +82,7 @@ public class ResourceMethodMatchKey
     result = prime * result + (_restliMethod.hashCode());
     result = prime * result + (_hasActionParam ? 0 : 1);
     result = prime * result + (_hasQueryParam ? 0 : 1);
+    result = prime * result + (_hasBatchFinderParam ? 0 : 1);
     result = prime * result + (_hasBatchKeys ? 0 : 1);
     result = prime * result + (_hasEntitySegment ? 0 : 1);
     return result;

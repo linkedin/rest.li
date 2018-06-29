@@ -44,6 +44,7 @@ import com.linkedin.restli.restspec.ActionsSetSchema;
 import com.linkedin.restli.restspec.AlternativeKeySchema;
 import com.linkedin.restli.restspec.AssocKeySchema;
 import com.linkedin.restli.restspec.AssociationSchema;
+import com.linkedin.restli.restspec.BatchFinderSchema;
 import com.linkedin.restli.restspec.CollectionSchema;
 import com.linkedin.restli.restspec.CustomAnnotationContentSchema;
 import com.linkedin.restli.restspec.CustomAnnotationContentSchemaMap;
@@ -416,6 +417,10 @@ public class ResourceCompatibilityChecker
     {
       checkFinderSchema((FinderSchema) prevRec, (FinderSchema) currRec);
     }
+    else if (prevClass == BatchFinderSchema.class)
+    {
+      checkBatchFinderSchema((BatchFinderSchema) prevRec, (BatchFinderSchema) currRec);
+    }
     else if (prevClass == ParameterSchema.class)
     {
       checkParameterSchema((ParameterSchema) prevRec, (ParameterSchema) currRec);
@@ -710,8 +715,13 @@ public class ResourceCompatibilityChecker
                            prevRec.getMethods(GetMode.DEFAULT),
                            currRec.getMethods(GetMode.DEFAULT));
 
-    checkComplexArrayField(prevRec.schema().getField("finders"),
+    checkComplexArrayField(prevRec.schema().getField("batchFinders"),
                            "name",
+                           prevRec.getBatchFinders(GetMode.DEFAULT),
+                           currRec.getBatchFinders(GetMode.DEFAULT));
+
+    checkComplexArrayField(prevRec.schema().getField("finders"),
+                          "name",
                            prevRec.getFinders(GetMode.DEFAULT),
                            currRec.getFinders(GetMode.DEFAULT));
 
@@ -760,11 +770,56 @@ public class ResourceCompatibilityChecker
     checkPagingSupport(prevRec.isPagingSupported(GetMode.DEFAULT),
         currRec.isPagingSupported(GetMode.DEFAULT));
 
-    final String prevAssocKey = prevRec.getAssocKey(GetMode.DEFAULT);
-    final String currAssocKey = currRec.getAssocKey(GetMode.DEFAULT);
-    final StringArray prevAssocKeys = prevRec.getAssocKeys(GetMode.DEFAULT);
-    final StringArray currAssocKeys = currRec.getAssocKeys(GetMode.DEFAULT);
+    checkFindersAssocKey(prevRec.getAssocKey(GetMode.DEFAULT),
+        currRec.getAssocKey(GetMode.DEFAULT),
+        prevRec.getAssocKeys(GetMode.DEFAULT),
+        currRec.getAssocKeys(GetMode.DEFAULT),
+        prevRec.schema().getField("assocKey"),
+        prevRec.schema().getField("assocKeys"));
+  }
 
+  private void checkBatchFinderSchema(BatchFinderSchema prevRec, BatchFinderSchema currRec)
+  {
+    checkEqualSingleValue(prevRec.schema().getField("name"),
+        prevRec.getName(GetMode.DEFAULT),
+        currRec.getName(GetMode.DEFAULT));
+
+    checkDoc(prevRec.schema().getField("doc"), prevRec.getDoc(GetMode.DEFAULT), currRec.getDoc(GetMode.DEFAULT));
+
+    checkAnnotationsMap(prevRec.schema().getField("annotations"),
+        prevRec.getAnnotations(GetMode.DEFAULT),
+        currRec.getAnnotations(GetMode.DEFAULT));
+
+    checkParameterArrayField(prevRec.schema().getField("parameters"),
+        prevRec.getParameters(GetMode.DEFAULT),
+        currRec.getParameters(GetMode.DEFAULT));
+
+    checkComplexField(prevRec.schema().getField("metadata"),
+        prevRec.getMetadata(GetMode.DEFAULT),
+        currRec.getMetadata(GetMode.DEFAULT));
+
+    checkPagingSupport(prevRec.isPagingSupported(GetMode.DEFAULT),
+        currRec.isPagingSupported(GetMode.DEFAULT));
+
+    checkEqualSingleValue(prevRec.schema().getField("batchParam"),
+        prevRec.getBatchParam(GetMode.DEFAULT),
+        currRec.getBatchParam(GetMode.DEFAULT));
+
+    checkFindersAssocKey(prevRec.getAssocKey(GetMode.DEFAULT),
+        currRec.getAssocKey(GetMode.DEFAULT),
+        prevRec.getAssocKeys(GetMode.DEFAULT),
+        currRec.getAssocKeys(GetMode.DEFAULT),
+        prevRec.schema().getField("assocKey"),
+        prevRec.schema().getField("assocKeys"));
+  }
+
+  private void checkFindersAssocKey(String prevAssocKey,
+                                    String currAssocKey,
+                                    StringArray prevAssocKeys,
+                                    StringArray currAssocKeys,
+                                    RecordDataSchema.Field assocKey,
+                                    RecordDataSchema.Field assocKeys)
+  {
     // assocKey and assocKeys are mutually exclusive
     assert((prevAssocKey == null || prevAssocKeys == null) && (currAssocKey == null || currAssocKeys == null));
 
@@ -774,11 +829,11 @@ public class ResourceCompatibilityChecker
 
     if (prevAssocKeys == null && currAssocKeys == null)
     {
-      checkEqualSingleValue(prevRec.schema().getField("assocKey"), prevAssocKey, currAssocKey);
+      checkEqualSingleValue(assocKey, prevAssocKey, currAssocKey);
     }
     else if (prevAssocKey == null && currAssocKey == null)
     {
-      checkEqualSingleValue(prevRec.schema().getField("assocKeys"), prevAssocKeys, currAssocKeys);
+      checkEqualSingleValue(assocKeys, prevAssocKeys, currAssocKeys);
     }
     else if (prevAssocKeys == null)
     {
@@ -786,12 +841,11 @@ public class ResourceCompatibilityChecker
 
       final StringArray upgradedPrevAssocKeys = new StringArray();
       upgradedPrevAssocKeys.add(prevAssocKey);
-      checkEqualSingleValue(prevRec.schema().getField("assocKey"), upgradedPrevAssocKeys, currAssocKeys);
+      checkEqualSingleValue(assocKey, upgradedPrevAssocKeys, currAssocKeys);
     }
     else
     {
       // downgrade case
-
       _infoMap.addRestSpecInfo("assocKeys", CompatibilityInfo.Type.FINDER_ASSOCKEYS_DOWNGRADE,
                                _infoPath);
     }
@@ -1057,6 +1111,11 @@ public class ResourceCompatibilityChecker
                            "name",
                            prevRec.getFinders(GetMode.DEFAULT),
                            currRec.getFinders(GetMode.DEFAULT));
+
+    checkComplexArrayField(prevRec.schema().getField("batchFinders"),
+                          "name",
+                          prevRec.getBatchFinders(GetMode.DEFAULT),
+                          currRec.getBatchFinders(GetMode.DEFAULT));
 
     checkComplexArrayField(prevRec.schema().getField("actions"),
                            "name",

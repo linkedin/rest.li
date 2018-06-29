@@ -96,6 +96,18 @@ public final class ResponseDataBuilderUtil
     return new RestLiResponseDataImpl<>(new FinderResponseEnvelope(exception), new HashMap<>(), new ArrayList<>());
   }
 
+  public static RestLiResponseData<BatchFinderResponseEnvelope> buildBatchFinderResponseData(HttpStatus status,
+      List<BatchFinderResponseEnvelope.BatchFinderEntry> items)
+  {
+    return new RestLiResponseDataImpl<>(new BatchFinderResponseEnvelope(status, items),
+        new HashMap<>(), new ArrayList<>());
+  }
+
+  public static RestLiResponseData<BatchFinderResponseEnvelope> buildBatchFinderResponseData(RestLiServiceException exception)
+  {
+    return new RestLiResponseDataImpl<>(new BatchFinderResponseEnvelope(exception), new HashMap<>(), new ArrayList<>());
+  }
+
   public static RestLiResponseData<GetAllResponseEnvelope> buildGetAllResponseData(HttpStatus status,
                                                            List<? extends RecordTemplate> collectionResponse,
                                                            CollectionMetadata collectionResponsePaging,

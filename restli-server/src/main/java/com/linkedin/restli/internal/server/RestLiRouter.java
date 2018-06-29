@@ -222,20 +222,14 @@ public class RestLiRouter
                                              final ServerResourceContext context)
   {
     ResourceMethod type = mapResourceMethod(context, resourceLevel);
-
-    String methodName = context.getRequestActionName();
-    if (methodName == null)
-    {
-      methodName = context.getRequestFinderName();
-    }
-
+    String methodName = context.getMethodName(type);
     ResourceMethodDescriptor methodDescriptor = resource.matchMethod(type, methodName, resourceLevel);
 
     if (methodDescriptor != null)
     {
       context.getRawRequestContext().putLocalAttr(R2Constants.OPERATION,
                                                   OperationNameGenerator.generate(methodDescriptor.getMethodType(),
-                                                                                  methodName));
+                                                                                  methodDescriptor.getMethodName()));
       return methodDescriptor;
     }
 
@@ -272,41 +266,43 @@ public class RestLiRouter
   private static Map<ResourceMethodMatchKey, ResourceMethod> setupResourceMethodLookup()
   {
     HashMap<ResourceMethodMatchKey, ResourceMethod> result = new HashMap<ResourceMethodMatchKey, ResourceMethod>();
-    //                                 METHOD    RMETHOD                    ACTION   QUERY   BATCH   ENTITY
+    //                                 METHOD    RMETHOD                    ACTION   QUERY BATCHFINDER  BATCH   ENTITY
     Object[] config =
     {
-            new ResourceMethodMatchKey("GET",    "",                        false,   false,  false,  true),  ResourceMethod.GET,
-            new ResourceMethodMatchKey("GET",    "",                        false,   true,   false,  false), ResourceMethod.FINDER,
-            new ResourceMethodMatchKey("PUT",    "",                        false,   false,  false,  true),  ResourceMethod.UPDATE,
-            new ResourceMethodMatchKey("POST",   "",                        false,   false,  false,  true),  ResourceMethod.PARTIAL_UPDATE,
-            new ResourceMethodMatchKey("DELETE", "",                        false,   false,  false,  true),  ResourceMethod.DELETE,
-            new ResourceMethodMatchKey("POST",   "",                        true,    false,  false,  true),  ResourceMethod.ACTION,
-            new ResourceMethodMatchKey("POST",   "",                        true,    false,  false,  false), ResourceMethod.ACTION,
-            new ResourceMethodMatchKey("POST",   "",                        false,   false,  false,  false), ResourceMethod.CREATE,
-            new ResourceMethodMatchKey("GET",    "",                        false,   false,  false,  false), ResourceMethod.GET_ALL,
+            new ResourceMethodMatchKey("GET",    "",                        false,   false, false, false,  true),  ResourceMethod.GET,
+            new ResourceMethodMatchKey("GET",    "",                        false,   true,  false,  false,  false), ResourceMethod.FINDER,
+            new ResourceMethodMatchKey("PUT",    "",                        false,   false, false, false,  true),  ResourceMethod.UPDATE,
+            new ResourceMethodMatchKey("POST",   "",                        false,   false, false, false,  true),  ResourceMethod.PARTIAL_UPDATE,
+            new ResourceMethodMatchKey("DELETE", "",                        false,   false, false, false,  true),  ResourceMethod.DELETE,
+            new ResourceMethodMatchKey("POST",   "",                        true,    false, false,false,  true),  ResourceMethod.ACTION,
+            new ResourceMethodMatchKey("POST",   "",                        true,    false, false, false,  false), ResourceMethod.ACTION,
+            new ResourceMethodMatchKey("POST",   "",                        false,   false, false, false,  false), ResourceMethod.CREATE,
+            new ResourceMethodMatchKey("GET",    "",                        false,   false, false, false,  false), ResourceMethod.GET_ALL,
 
-            new ResourceMethodMatchKey("GET",    "GET",                     false,   false,  false,  true),  ResourceMethod.GET,
-            new ResourceMethodMatchKey("GET",    "FINDER",                  false,   true,   false,  false), ResourceMethod.FINDER,
-            new ResourceMethodMatchKey("PUT",    "UPDATE",                  false,   false,  false,  true),  ResourceMethod.UPDATE,
-            new ResourceMethodMatchKey("POST",   "PARTIAL_UPDATE",          false,   false,  false,  true),  ResourceMethod.PARTIAL_UPDATE,
-            new ResourceMethodMatchKey("DELETE", "DELETE",                  false,   false,  false,  true),  ResourceMethod.DELETE,
-            new ResourceMethodMatchKey("POST",   "ACTION",                  true,    false,  false,  true),  ResourceMethod.ACTION,
-            new ResourceMethodMatchKey("POST",   "ACTION",                  true,    false,  false,  false), ResourceMethod.ACTION,
-            new ResourceMethodMatchKey("POST",   "CREATE",                  false,   false,  false,  false), ResourceMethod.CREATE,
-            new ResourceMethodMatchKey("GET",    "GET_ALL",                 false,   false,  false,  false), ResourceMethod.GET_ALL,
+            new ResourceMethodMatchKey("GET",    "GET",                     false,   false, false, false,  true),  ResourceMethod.GET,
+            new ResourceMethodMatchKey("GET",    "FINDER",                  false,   true,  false, false,  false), ResourceMethod.FINDER,
+            new ResourceMethodMatchKey("PUT",    "UPDATE",                  false,   false, false, false,  true),  ResourceMethod.UPDATE,
+            new ResourceMethodMatchKey("POST",   "PARTIAL_UPDATE",          false,   false, false, false,  true),  ResourceMethod.PARTIAL_UPDATE,
+            new ResourceMethodMatchKey("DELETE", "DELETE",                  false,   false, false, false,  true),  ResourceMethod.DELETE,
+            new ResourceMethodMatchKey("POST",   "ACTION",                  true,    false, false, false,  true),  ResourceMethod.ACTION,
+            new ResourceMethodMatchKey("POST",   "ACTION",                  true,    false, false, false,  false), ResourceMethod.ACTION,
+            new ResourceMethodMatchKey("POST",   "CREATE",                  false,   false, false, false,  false), ResourceMethod.CREATE,
+            new ResourceMethodMatchKey("GET",    "GET_ALL",                 false,   false, false, false,  false), ResourceMethod.GET_ALL,
 
-            new ResourceMethodMatchKey("GET",    "",                        false,   false,  true,   false), ResourceMethod.BATCH_GET,
-            new ResourceMethodMatchKey("DELETE", "",                        false,   false,  true,   false), ResourceMethod.BATCH_DELETE,
-            new ResourceMethodMatchKey("PUT",    "",                        false,   false,  true,   false), ResourceMethod.BATCH_UPDATE,
-            new ResourceMethodMatchKey("POST",   "",                        false,   false,  true,   false), ResourceMethod.BATCH_PARTIAL_UPDATE,
+            new ResourceMethodMatchKey("GET",    "",                        false,   false, false, true,   false), ResourceMethod.BATCH_GET,
+            new ResourceMethodMatchKey("GET",    "",                        false,   false,  true,  false,  false), ResourceMethod.BATCH_FINDER,
+            new ResourceMethodMatchKey("DELETE", "",                        false,   false, false, true,   false), ResourceMethod.BATCH_DELETE,
+            new ResourceMethodMatchKey("PUT",    "",                        false,   false, false, true,   false), ResourceMethod.BATCH_UPDATE,
+            new ResourceMethodMatchKey("POST",   "",                        false,   false, false, true,   false), ResourceMethod.BATCH_PARTIAL_UPDATE,
 
-            new ResourceMethodMatchKey("GET",    "BATCH_GET",               false,   false,  true,   false), ResourceMethod.BATCH_GET,
-            new ResourceMethodMatchKey("DELETE", "BATCH_DELETE",            false,   false,  true,   false), ResourceMethod.BATCH_DELETE,
-            new ResourceMethodMatchKey("PUT",    "BATCH_UPDATE",            false,   false,  true,   false), ResourceMethod.BATCH_UPDATE,
-            new ResourceMethodMatchKey("POST",   "BATCH_PARTIAL_UPDATE",    false,   false,  true,   false), ResourceMethod.BATCH_PARTIAL_UPDATE,
+            new ResourceMethodMatchKey("GET",    "BATCH_GET",               false,   false, false, true,   false), ResourceMethod.BATCH_GET,
+            new ResourceMethodMatchKey("GET",    "BATCH_FINDER",            false,   false, true,  false,  false), ResourceMethod.BATCH_FINDER,
+            new ResourceMethodMatchKey("DELETE", "BATCH_DELETE",            false,   false, false, true,   false), ResourceMethod.BATCH_DELETE,
+            new ResourceMethodMatchKey("PUT",    "BATCH_UPDATE",            false,   false, false, true,   false), ResourceMethod.BATCH_UPDATE,
+            new ResourceMethodMatchKey("POST",   "BATCH_PARTIAL_UPDATE",    false,   false, false,  true,   false), ResourceMethod.BATCH_PARTIAL_UPDATE,
 
             // batch create signature collides with non-batch create. requires RMETHOD header to distinguish
-            new ResourceMethodMatchKey("POST",   "BATCH_CREATE",            false,   false,  false,  false), ResourceMethod.BATCH_CREATE
+            new ResourceMethodMatchKey("POST",   "BATCH_CREATE",            false,   false,  false, false, false), ResourceMethod.BATCH_CREATE
     };
 
     for (int ii = 0; ii < config.length; ii += 2)
@@ -332,6 +328,7 @@ public class RestLiRouter
                                    context.getRestLiRequestMethod(),
                                    context.getRequestActionName() != null,
                                    context.getRequestFinderName() != null,
+                                   context.getRequestBatchFinderName() != null,
                                    context.getPathKeys().getBatchIds() != null,
                                    resourceLevel.equals(ResourceLevel.ENTITY));
 

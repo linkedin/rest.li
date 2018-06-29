@@ -37,6 +37,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.net.URI;
 
 
 /**
@@ -435,6 +436,45 @@ public class URIParamUtils
       dataMap.put(key, value);
     }
     return dataMap;
+  }
+
+  /**
+   * Add the given parameters to the UriBuilder, in sorted order.
+   *
+   * @param uriBuilder the {@link UriBuilder}
+   * @param params The {@link DataMap} representing the parameters
+   * @param version The {@link ProtocolVersion}
+   */
+  public static void addSortedParams(UriBuilder uriBuilder, DataMap params, ProtocolVersion version)
+  {
+    if(version.compareTo(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()) >= 0)
+    {
+      addSortedParams(uriBuilder, params);
+    }
+    else
+    {
+      QueryParamsDataMap.addSortedParams(uriBuilder, params);
+    }
+  }
+
+  /**
+   * replace the values of the given queryParam with new ones
+   * @param uri initial URI
+   * @param queryParam name of the queryParam
+   * @param values values of the queryParam
+   * @param parameters all parameters
+   * @param version The {@link ProtocolVersion}
+   */
+
+  public static URI replaceQueryParam(URI uri, String queryParam, DataComplex values, DataMap parameters, ProtocolVersion version)
+  {
+    UriBuilder builder = UriBuilder.fromPath(uri.getPath());
+    DataMap newQueryParams = new DataMap();
+    newQueryParams.putAll(parameters);
+    newQueryParams.put(queryParam, values);
+    URIParamUtils.addSortedParams(builder, newQueryParams, version);
+
+    return builder.build();
   }
 
   /**

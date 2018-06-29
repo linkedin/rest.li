@@ -358,7 +358,7 @@ public class TestRestLiMethodInvocation
     ResourceMethodDescriptor methodDescriptor;
     RestLiCallback callback = getCallback();
 
-    methodDescriptor = statusResourceModel.findNamedMethod("public_timeline");
+    methodDescriptor = statusResourceModel.findFinderMethod("public_timeline");
     statusResource = getMockResource(AsyncStatusCollectionResource.class);
     statusResource.getPublicTimeline(EasyMock.anyObject(), EasyMock.anyObject());
     // the goal of below lines is that to make sure that we are getting callback in the resource
@@ -459,7 +459,7 @@ public class TestRestLiMethodInvocation
   {
     RestLiCallback callback = getCallback();
     ResourceModel statusResourceModel = buildResourceModel(AsyncStatusCollectionResource.class);
-    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findNamedMethod("search");
+    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findFinderMethod("search");
     AsyncStatusCollectionResource statusResource = getMockResource(AsyncStatusCollectionResource.class);
     statusResource.search(EasyMock.anyObject(), eq("linkedin"), eq(1L),
                           eq(StatusType.REPLY), (Callback<List<Status>>) EasyMock.anyObject());
@@ -481,7 +481,7 @@ public class TestRestLiMethodInvocation
   {
     RestLiCallback callback = getCallback();
     ResourceModel statusResourceModel = buildResourceModel(AsyncStatusCollectionResource.class);
-    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findNamedMethod("search");
+    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findFinderMethod("search");
     AsyncStatusCollectionResource statusResource = getMockResource(AsyncStatusCollectionResource.class);
     statusResource.search(EasyMock.anyObject(), eq("linkedin"), eq(-1L), eq(null),
                           EasyMock.anyObject());
@@ -504,7 +504,7 @@ public class TestRestLiMethodInvocation
   {
     RestLiCallback callback = getCallback();
     ResourceModel statusResourceModel = buildResourceModel(AsyncStatusCollectionResource.class);
-    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findNamedMethod("user_timeline");
+    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findFinderMethod("user_timeline");
     AsyncStatusCollectionResource statusResource = getMockResource(AsyncStatusCollectionResource.class);
     statusResource.getUserTimeline(EasyMock.anyObject(), eq(false),
                                    EasyMock.anyObject());
@@ -528,7 +528,7 @@ public class TestRestLiMethodInvocation
   {
     RestLiCallback callback = getCallback();
     ResourceModel discoveredItemsResourceModel = buildResourceModel(AsyncDiscoveredItemsResource.class);
-    ResourceMethodDescriptor methodDescriptor = discoveredItemsResourceModel.findNamedMethod("user");
+    ResourceMethodDescriptor methodDescriptor = discoveredItemsResourceModel.findFinderMethod("user");
     AsyncDiscoveredItemsResource discoveredItemsResource = getMockResource(AsyncDiscoveredItemsResource.class);
     discoveredItemsResource.getDiscoveredItemsForUser(
         EasyMock.anyObject(), eq(1L), EasyMock.anyObject());
@@ -1293,7 +1293,7 @@ public class TestRestLiMethodInvocation
     PromiseDiscoveredItemsResource discoveredItemsResource;
 
     // #1: simple filter
-    methodDescriptor = statusResourceModel.findNamedMethod("public_timeline");
+    methodDescriptor = statusResourceModel.findFinderMethod("public_timeline");
     statusResource = getMockResource(PromiseStatusCollectionResource.class);
     EasyMock.expect(statusResource.getPublicTimeline(EasyMock.anyObject()))
         .andReturn(Promises.value(null))
@@ -1353,7 +1353,7 @@ public class TestRestLiMethodInvocation
   public void testPromiseFinderError(ProtocolVersion version, String uri) throws Exception
   {
     ResourceModel statusResourceModel = buildResourceModel(PromiseStatusCollectionResource.class);
-    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findNamedMethod("search");
+    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findFinderMethod("search");
     PromiseStatusCollectionResource statusResource = getMockResource(PromiseStatusCollectionResource.class);
     expectRoutingException(methodDescriptor, statusResource, "GET", uri, version);
   }
@@ -1362,7 +1362,7 @@ public class TestRestLiMethodInvocation
   public void testPromiseFinder(ProtocolVersion version, String query) throws Exception
   {
     ResourceModel statusResourceModel = buildResourceModel(PromiseStatusCollectionResource.class);
-    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findNamedMethod("search");
+    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findFinderMethod("search");
     PromiseStatusCollectionResource statusResource = getMockResource(PromiseStatusCollectionResource.class);
     EasyMock.expect(statusResource.search(eq("linkedin"), eq(1L), eq(StatusType.REPLY))).andReturn(Promises.value(null)).once();
     checkInvocation(statusResource, methodDescriptor, "GET", version, "/promiseStatuses" + query);
@@ -1372,7 +1372,7 @@ public class TestRestLiMethodInvocation
   public void testPromiseFinderOptionalParam(ProtocolVersion version, String query) throws Exception
   {
     ResourceModel statusResourceModel = buildResourceModel(PromiseStatusCollectionResource.class);
-    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findNamedMethod("search");
+    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findFinderMethod("search");
     PromiseStatusCollectionResource statusResource = getMockResource(PromiseStatusCollectionResource.class);
     EasyMock.expect(statusResource.search(eq("linkedin"), eq(-1L), eq((StatusType) null))).andReturn(Promises.value(null)).once();
     checkInvocation(statusResource, methodDescriptor, "GET", version, "/promiseStatuses" + query);
@@ -1382,7 +1382,7 @@ public class TestRestLiMethodInvocation
   public void testPromiseFinderOptionalBooleanParam(ProtocolVersion version, String query) throws Exception
   {
     ResourceModel statusResourceModel = buildResourceModel(PromiseStatusCollectionResource.class);
-    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findNamedMethod("user_timeline");
+    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findFinderMethod("user_timeline");
     PromiseStatusCollectionResource statusResource = getMockResource(PromiseStatusCollectionResource.class);
     EasyMock.expect(statusResource.getUserTimeline(eq(false), EasyMock.anyObject())).andReturn(Promises.value(null)).once();
     checkInvocation(statusResource, methodDescriptor, "GET", version, "/promiseStatuses" + query);
@@ -1392,7 +1392,7 @@ public class TestRestLiMethodInvocation
   public void testPromiseFinderOnComplexKey(ProtocolVersion version, String query) throws Exception
   {
     ResourceModel discoveredItemsResourceModel = buildResourceModel(PromiseDiscoveredItemsResource.class);
-    ResourceMethodDescriptor methodDescriptor = discoveredItemsResourceModel.findNamedMethod("user");
+    ResourceMethodDescriptor methodDescriptor = discoveredItemsResourceModel.findFinderMethod("user");
     PromiseDiscoveredItemsResource discoveredItemsResource = getMockResource(PromiseDiscoveredItemsResource.class);
     EasyMock.expect(
         discoveredItemsResource.getDiscoveredItemsForUser(eq(1L), EasyMock.anyObject())).andReturn(Promises.value(null)).once();
@@ -1430,7 +1430,7 @@ public class TestRestLiMethodInvocation
   public void testPromisePagingContextDefault(ProtocolVersion version, String query) throws Exception
   {
     ResourceModel statusResourceModel = buildResourceModel(PromiseStatusCollectionResource.class);
-    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findNamedMethod("public_timeline");
+    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findFinderMethod("public_timeline");
     PromiseStatusCollectionResource statusResource = getMockResource(PromiseStatusCollectionResource.class);
     EasyMock.expect(statusResource.getPublicTimeline(eq(buildPagingContext(null, null)))).andReturn(Promises.value(null)).once();
     checkInvocation(statusResource,
@@ -1444,7 +1444,7 @@ public class TestRestLiMethodInvocation
   public void testPromisePagingContextStartOnly(ProtocolVersion version, String query) throws Exception
   {
     ResourceModel statusResourceModel = buildResourceModel(PromiseStatusCollectionResource.class);
-    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findNamedMethod("public_timeline");
+    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findFinderMethod("public_timeline");
     PromiseStatusCollectionResource statusResource = getMockResource(PromiseStatusCollectionResource.class);
     EasyMock.expect(statusResource.getPublicTimeline(eq(buildPagingContext(5, null)))).andReturn(Promises.value(null)).once();
     checkInvocation(statusResource,
@@ -1458,7 +1458,7 @@ public class TestRestLiMethodInvocation
   public void testPromisePagingContextCountOnly(ProtocolVersion version, String query) throws Exception
   {
     ResourceModel statusResourceModel = buildResourceModel(PromiseStatusCollectionResource.class);
-    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findNamedMethod("public_timeline");
+    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findFinderMethod("public_timeline");
     PromiseStatusCollectionResource statusResource = getMockResource(PromiseStatusCollectionResource.class);
     EasyMock.expect(statusResource.getPublicTimeline(eq(buildPagingContext(null, 4)))).andReturn(Promises.value(null)).once();
     checkInvocation(statusResource, methodDescriptor, "GET", version, "/promisestatuses" + query);
@@ -1468,7 +1468,7 @@ public class TestRestLiMethodInvocation
   public void testPromisePagingContextBadCount(ProtocolVersion version, String query) throws Exception
   {
     ResourceModel statusResourceModel = buildResourceModel(PromiseStatusCollectionResource.class);
-    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findNamedMethod("public_timeline");
+    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findFinderMethod("public_timeline");
     PromiseStatusCollectionResource statusResource = getMockResource(PromiseStatusCollectionResource.class);
     expectRoutingException(methodDescriptor,
                            statusResource, "GET",
@@ -1480,7 +1480,7 @@ public class TestRestLiMethodInvocation
   public void testPromisePagingContextBadStart(ProtocolVersion version, String query) throws Exception
   {
     ResourceModel statusResourceModel = buildResourceModel(PromiseStatusCollectionResource.class);
-    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findNamedMethod("public_timeline");
+    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findFinderMethod("public_timeline");
     PromiseStatusCollectionResource statusResource = getMockResource(PromiseStatusCollectionResource.class);
     expectRoutingException(methodDescriptor,
                            statusResource,
@@ -1493,7 +1493,7 @@ public class TestRestLiMethodInvocation
   public void testPromisePagingContextNegativeCount(ProtocolVersion version, String query) throws Exception
   {
     ResourceModel statusResourceModel = buildResourceModel(PromiseStatusCollectionResource.class);
-    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findNamedMethod("public_timeline");
+    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findFinderMethod("public_timeline");
     PromiseStatusCollectionResource statusResource = getMockResource(PromiseStatusCollectionResource.class);
     expectRoutingException(methodDescriptor,
                            statusResource,
@@ -1506,7 +1506,7 @@ public class TestRestLiMethodInvocation
   public void testPromisePagingContextNegativeStart(ProtocolVersion version, String query) throws Exception
   {
     ResourceModel statusResourceModel = buildResourceModel(PromiseStatusCollectionResource.class);
-    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findNamedMethod("public_timeline");
+    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findFinderMethod("public_timeline");
     PromiseStatusCollectionResource statusResource = getMockResource(PromiseStatusCollectionResource.class);
     expectRoutingException(methodDescriptor, statusResource, "GET", "/promisestatuses" + query, version);
   }
@@ -1515,7 +1515,7 @@ public class TestRestLiMethodInvocation
   public void testPromisePagingContextUserTimelineDefault(ProtocolVersion version, String query) throws Exception
   {
     ResourceModel statusResourceModel = buildResourceModel(PromiseStatusCollectionResource.class);
-    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findNamedMethod("user_timeline");
+    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findFinderMethod("user_timeline");
     PromiseStatusCollectionResource statusResource = getMockResource(PromiseStatusCollectionResource.class);
     EasyMock.expect(statusResource.getUserTimeline(eq(true), eq(new PagingContext(10, 100, false, false))))
         .andReturn(Promises.value(null)).once();
@@ -1530,7 +1530,7 @@ public class TestRestLiMethodInvocation
   public void testPromisePagingContextUserTimelineStartAndCount(ProtocolVersion version, String query) throws Exception
   {
     ResourceModel statusResourceModel = buildResourceModel(PromiseStatusCollectionResource.class);
-    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findNamedMethod("user_timeline");
+    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findFinderMethod("user_timeline");
     PromiseStatusCollectionResource statusResource = getMockResource(PromiseStatusCollectionResource.class);
     EasyMock.expect(statusResource.getUserTimeline(eq(true), eq(new PagingContext(0, 20, true, true))))
         .andReturn(Promises.value(null)).once();
@@ -2126,7 +2126,7 @@ public class TestRestLiMethodInvocation
     DiscoveredItemsResource discoveredItemsResource;
 
     // #1: simple filter
-    methodDescriptor = statusResourceModel.findNamedMethod("public_timeline");
+    methodDescriptor = statusResourceModel.findFinderMethod("public_timeline");
     statusResource = getMockResource(StatusCollectionResource.class);
     EasyMock.expect(statusResource.getPublicTimeline(EasyMock.anyObject())).andReturn(null).once();
     checkInvocation(statusResource,
@@ -2197,7 +2197,7 @@ public class TestRestLiMethodInvocation
   public void testFinder(ProtocolVersion version, String query) throws Exception
   {
     ResourceModel statusResourceModel = buildResourceModel(StatusCollectionResource.class);
-    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findNamedMethod("search");
+    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findFinderMethod("search");
     StatusCollectionResource statusResource = getMockResource(StatusCollectionResource.class);
     EasyMock.expect(statusResource.search(eq("linkedin"), eq(1L), eq(StatusType.REPLY))).andReturn(null).once();
     checkInvocation(statusResource, methodDescriptor, "GET", version, "/statuses" + query);
@@ -2207,7 +2207,7 @@ public class TestRestLiMethodInvocation
   public void testFinderOptionalParam(ProtocolVersion version, String query) throws Exception
   {
     ResourceModel statusResourceModel = buildResourceModel(StatusCollectionResource.class);
-    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findNamedMethod("search");
+    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findFinderMethod("search");
     StatusCollectionResource statusResource = getMockResource(StatusCollectionResource.class);
     EasyMock.expect(statusResource.search(eq("linkedin"), eq(-1L), eq((StatusType) null))).andReturn(null).once();
     checkInvocation(statusResource, methodDescriptor, "GET", version, "/statuses" + query);
@@ -2217,7 +2217,7 @@ public class TestRestLiMethodInvocation
   public void testFinderOptionalBooleanParam(ProtocolVersion version, String query) throws Exception
   {
     ResourceModel statusResourceModel = buildResourceModel(StatusCollectionResource.class);
-    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findNamedMethod("user_timeline");
+    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findFinderMethod("user_timeline");
     StatusCollectionResource statusResource = getMockResource(StatusCollectionResource.class);
     EasyMock.expect(statusResource.getUserTimeline(eq(false), EasyMock.anyObject())).andReturn(null).once();
     checkInvocation(statusResource, methodDescriptor, "GET", version, "/statuses" + query);
@@ -2227,7 +2227,7 @@ public class TestRestLiMethodInvocation
   public void testFinderOnComplexKey(ProtocolVersion version, String query) throws Exception
   {
     ResourceModel discoveredItemsResourceModel = buildResourceModel(DiscoveredItemsResource.class);
-    ResourceMethodDescriptor methodDescriptor = discoveredItemsResourceModel.findNamedMethod("user");
+    ResourceMethodDescriptor methodDescriptor = discoveredItemsResourceModel.findFinderMethod("user");
     DiscoveredItemsResource discoveredItemsResource = getMockResource(DiscoveredItemsResource.class);
     EasyMock.expect(discoveredItemsResource.findByUser(eq(1L))).andReturn(null).once();
     checkInvocation(discoveredItemsResource, methodDescriptor, "GET", version, "/discoveredItems" + query);
@@ -2264,7 +2264,7 @@ public class TestRestLiMethodInvocation
   public void testPagingContextDefault(ProtocolVersion version, String query) throws Exception
   {
     ResourceModel statusResourceModel = buildResourceModel(StatusCollectionResource.class);
-    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findNamedMethod("public_timeline");
+    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findFinderMethod("public_timeline");
     StatusCollectionResource statusResource = getMockResource(StatusCollectionResource.class);
     EasyMock.expect(statusResource.getPublicTimeline(eq(buildPagingContext(null, null)))).andReturn(null).once();
     checkInvocation(statusResource,
@@ -2278,7 +2278,7 @@ public class TestRestLiMethodInvocation
   public void testPagingContextStartOnly(ProtocolVersion version, String query) throws Exception
   {
     ResourceModel statusResourceModel = buildResourceModel(StatusCollectionResource.class);
-    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findNamedMethod("public_timeline");
+    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findFinderMethod("public_timeline");
     StatusCollectionResource statusResource = getMockResource(StatusCollectionResource.class);
     EasyMock.expect(statusResource.getPublicTimeline(eq(buildPagingContext(5, null)))).andReturn(null).once();
     checkInvocation(statusResource,
@@ -2292,7 +2292,7 @@ public class TestRestLiMethodInvocation
   public void testPagingContextCountOnly(ProtocolVersion version, String query) throws Exception
   {
     ResourceModel statusResourceModel = buildResourceModel(StatusCollectionResource.class);
-    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findNamedMethod("public_timeline");
+    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findFinderMethod("public_timeline");
     StatusCollectionResource statusResource = getMockResource(StatusCollectionResource.class);
     EasyMock.expect(statusResource.getPublicTimeline(eq(buildPagingContext(null, 4)))).andReturn(null).once();
     checkInvocation(statusResource,
@@ -2306,7 +2306,7 @@ public class TestRestLiMethodInvocation
   public void testPagingContextBadCount(ProtocolVersion version, String query) throws Exception
   {
     ResourceModel statusResourceModel = buildResourceModel(StatusCollectionResource.class);
-    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findNamedMethod("public_timeline");
+    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findFinderMethod("public_timeline");
     StatusCollectionResource statusResource = getMockResource(StatusCollectionResource.class);
     expectRoutingException(methodDescriptor,
                            statusResource, "GET",
@@ -2318,7 +2318,7 @@ public class TestRestLiMethodInvocation
   public void testPagingContextBadStart(ProtocolVersion version, String query) throws Exception
   {
     ResourceModel statusResourceModel = buildResourceModel(StatusCollectionResource.class);
-    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findNamedMethod("public_timeline");
+    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findFinderMethod("public_timeline");
     StatusCollectionResource statusResource = getMockResource(StatusCollectionResource.class);
     expectRoutingException(methodDescriptor,
                            statusResource,
@@ -2331,7 +2331,7 @@ public class TestRestLiMethodInvocation
   public void testPagingContextNegativeCount(ProtocolVersion version, String query) throws Exception
   {
     ResourceModel statusResourceModel = buildResourceModel(StatusCollectionResource.class);
-    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findNamedMethod("public_timeline");
+    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findFinderMethod("public_timeline");
     StatusCollectionResource statusResource = getMockResource(StatusCollectionResource.class);
     expectRoutingException(methodDescriptor,
                            statusResource,
@@ -2344,7 +2344,7 @@ public class TestRestLiMethodInvocation
   public void testPagingContextNegativeStart(ProtocolVersion version, String query) throws Exception
   {
     ResourceModel statusResourceModel = buildResourceModel(StatusCollectionResource.class);
-    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findNamedMethod("public_timeline");
+    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findFinderMethod("public_timeline");
     StatusCollectionResource statusResource = getMockResource(StatusCollectionResource.class);
     expectRoutingException(methodDescriptor,
                            statusResource,
@@ -2357,7 +2357,7 @@ public class TestRestLiMethodInvocation
   public void testPagingContextUserTimelineDefault(ProtocolVersion version, String query) throws Exception
   {
     ResourceModel statusResourceModel = buildResourceModel(StatusCollectionResource.class);
-    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findNamedMethod("user_timeline");
+    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findFinderMethod("user_timeline");
     StatusCollectionResource statusResource = getMockResource(StatusCollectionResource.class);
     EasyMock.expect(statusResource.getUserTimeline(eq(true), eq(new PagingContext(10, 100, false, false)))).andReturn(null).once();
     checkInvocation(statusResource,
@@ -2371,7 +2371,7 @@ public class TestRestLiMethodInvocation
   public void testPagingContextUserTimelineStartAndCount(ProtocolVersion version, String query) throws Exception
   {
     ResourceModel statusResourceModel = buildResourceModel(StatusCollectionResource.class);
-    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findNamedMethod("user_timeline");
+    ResourceMethodDescriptor methodDescriptor = statusResourceModel.findFinderMethod("user_timeline");
     StatusCollectionResource statusResource = getMockResource(StatusCollectionResource.class);
     EasyMock.expect(statusResource.getUserTimeline(eq(true), eq(new PagingContext(0, 20, true, true)))).andReturn(null).once();
     checkInvocation(statusResource,
@@ -2900,7 +2900,7 @@ public class TestRestLiMethodInvocation
   public void testCustomTypeParameters_NoCoercer(ProtocolVersion version, String uri) throws Exception
   {
     ResourceModel repliesResourceModel = buildResourceModel(RepliesCollectionResource.class);
-    ResourceMethodDescriptor methodDescriptor = repliesResourceModel.findNamedMethod("noCoercerCustomString");
+    ResourceMethodDescriptor methodDescriptor = repliesResourceModel.findFinderMethod("noCoercerCustomString");
     expectRoutingException(methodDescriptor,
                            getMockResource(RepliesCollectionResource.class),
                            "GET",
@@ -2922,7 +2922,7 @@ public class TestRestLiMethodInvocation
   public void testCustomTypeParameters_WrongType(ProtocolVersion version, String uri) throws Exception
   {
     ResourceModel repliesResourceModel = buildResourceModel(RepliesCollectionResource.class);
-    ResourceMethodDescriptor methodDescriptor = repliesResourceModel.findNamedMethod("customLong");
+    ResourceMethodDescriptor methodDescriptor = repliesResourceModel.findFinderMethod("customLong");
     expectRoutingException(methodDescriptor,
                            getMockResource(RepliesCollectionResource.class),
                            "GET",
@@ -2944,7 +2944,7 @@ public class TestRestLiMethodInvocation
   public void testCustomTypeParameters_CoercerError(ProtocolVersion version, String uri) throws Exception
   {
     ResourceModel repliesResourceModel = buildResourceModel(CustomStatusCollectionResource.class);
-    ResourceMethodDescriptor methodDescriptor = repliesResourceModel.findNamedMethod("search");
+    ResourceMethodDescriptor methodDescriptor = repliesResourceModel.findFinderMethod("search");
     expectRoutingException(methodDescriptor,
                            getMockResource(CustomStatusCollectionResource.class),
                            "GET",
@@ -2966,7 +2966,7 @@ public class TestRestLiMethodInvocation
   public void testCustomTypeParametersCustomString(ProtocolVersion version, String uri) throws Exception
   {
     ResourceModel repliesResourceModel = buildResourceModel(RepliesCollectionResource.class);
-    ResourceMethodDescriptor methodDescriptor = repliesResourceModel.findNamedMethod("customString");
+    ResourceMethodDescriptor methodDescriptor = repliesResourceModel.findFinderMethod("customString");
     RepliesCollectionResource repliesResource =  getMockResource(RepliesCollectionResource.class);
     repliesResource.customString(new CustomString("foo"));
     EasyMock.expectLastCall().andReturn(null).once();
@@ -2987,7 +2987,7 @@ public class TestRestLiMethodInvocation
   public void testCustomTypeParametersCustomLong(ProtocolVersion version, String uri) throws Exception
   {
     ResourceModel repliesResourceModel = buildResourceModel(RepliesCollectionResource.class);
-    ResourceMethodDescriptor methodDescriptor = repliesResourceModel.findNamedMethod("customLong");
+    ResourceMethodDescriptor methodDescriptor = repliesResourceModel.findFinderMethod("customLong");
     RepliesCollectionResource repliesResource = getMockResource(RepliesCollectionResource.class);
     repliesResource.customLong(new CustomLong(100L));
     EasyMock.expectLastCall().andReturn(null).once();
@@ -3008,7 +3008,7 @@ public class TestRestLiMethodInvocation
   public void testCustomTypeParametersCustomLongWithDefault(ProtocolVersion version, String uri) throws Exception
   {
     ResourceModel repliesResourceModel = buildResourceModel(RepliesCollectionResource.class);
-    ResourceMethodDescriptor methodDescriptor = repliesResourceModel.findNamedMethod("customLongDefault");
+    ResourceMethodDescriptor methodDescriptor = repliesResourceModel.findFinderMethod("customLongDefault");
     RepliesCollectionResource repliesResource = getMockResource(RepliesCollectionResource.class);
     repliesResource.customLongDefault(new CustomLong(100L), new CustomLong(1235L));
     EasyMock.expectLastCall().andReturn(null).once();
@@ -3029,7 +3029,7 @@ public class TestRestLiMethodInvocation
   public void testCustomTypeParametersCustomLongArray(ProtocolVersion version, String uri) throws Exception
   {
     ResourceModel repliesResourceModel = buildResourceModel(RepliesCollectionResource.class);
-    ResourceMethodDescriptor methodDescriptor = repliesResourceModel.findNamedMethod("customLongArray");
+    ResourceMethodDescriptor methodDescriptor = repliesResourceModel.findFinderMethod("customLongArray");
     RepliesCollectionResource repliesResource = getMockResource(RepliesCollectionResource.class);
     CustomLong[] longs = {new CustomLong(100L), new CustomLong(200L)};
     repliesResource.customLongArray(EasyMock.aryEq(longs));
@@ -3051,7 +3051,7 @@ public class TestRestLiMethodInvocation
   public void testCustomTypeParametersCustomLongArrayWithDefault(ProtocolVersion version, String uri) throws Exception
   {
     ResourceModel repliesResourceModel = buildResourceModel(RepliesCollectionResource.class);
-    ResourceMethodDescriptor methodDescriptor = repliesResourceModel.findNamedMethod("customLongArrayDefault");
+    ResourceMethodDescriptor methodDescriptor = repliesResourceModel.findFinderMethod("customLongArrayDefault");
     RepliesCollectionResource repliesResource = getMockResource(RepliesCollectionResource.class);
     CustomLong[] longs = {new CustomLong(100L), new CustomLong(200L)};
     CustomLong[] longsFromDefault = {new CustomLong(1235L), new CustomLong(6789L)};

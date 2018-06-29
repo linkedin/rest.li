@@ -2980,6 +2980,9 @@ public class TestRestLiRouting
         case FINDER:
           expectedOperationName = "finder:" + methodDescriptor.getFinderName();
           break;
+        case BATCH_FINDER:
+          expectedOperationName = "batch_finder:" + methodDescriptor.getBatchFinderName();
+          break;
         default:
           expectedOperationName = method.toString().toLowerCase();
       }

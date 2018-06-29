@@ -23,6 +23,7 @@ import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.server.ResourceLevel;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -38,11 +39,16 @@ public class ResourceMethodDescriptor
     SYNC, CALLBACK, PROMISE, TASK
   }
 
+  public static final Integer BATCH_FINDER_NULL_CRITERIA_INDEX = null;
+
   private ResourceModel                                 _resourceModel;
   private final ResourceMethod                          _type;
   private final Method                                  _method;
   private final List<Parameter<?>>                      _parameters;
   private final String                                  _finderName;
+  private final String                                  _batchFinderName;
+  // The input parameter index that represents the batch criteria in the resource method.
+  private final Integer                                 _batchFinderCriteriaIndex;
   private final Class<? extends RecordTemplate>         _collectionCustomMetadataType;
   // only applies to actions
   private final String                                  _actionName;
@@ -75,6 +81,8 @@ public class ResourceMethodDescriptor
                                         parameters,
                                         finderName,
                                         null,
+                                        BATCH_FINDER_NULL_CRITERIA_INDEX,
+                                        null,
                                         null,
                                         null,
                                         null,
@@ -84,6 +92,40 @@ public class ResourceMethodDescriptor
                                         customAnnotations);
   }
 
+  /**
+   * Batch Finder resource method descriptor factory.
+   *
+   * @param method resource {@link Method}
+   * @param parameters rest.li method {@link Parameter}s
+   * @param batchFinderName finder name
+   * @param batchFinderCriteriaIndex parameter index of the criteria in the batch finder method
+   * @param metadataType finder metadata type
+   * @param interfaceType method {@link InterfaceType}
+   * @return finder {@link ResourceMethodDescriptor}
+   */
+  public static ResourceMethodDescriptor createForBatchFinder(final Method method,
+                                                              final List<Parameter<?>> parameters,
+                                                              final String batchFinderName,
+                                                              final Integer batchFinderCriteriaIndex,
+                                                              final Class<? extends RecordTemplate> metadataType,
+                                                              final InterfaceType interfaceType,
+                                                              final DataMap customAnnotations)
+  {
+    return new ResourceMethodDescriptor(ResourceMethod.BATCH_FINDER,
+                                        method,
+                                        parameters,
+                                        null,
+                                        batchFinderName,
+                                        batchFinderCriteriaIndex,
+                                        null,
+                                        null,
+                                        null,
+                                        null,
+                                        null,
+                                        metadataType,
+                                        interfaceType,
+                                        customAnnotations);
+  }
 
   /**
    * Action resource method descriptor factory.
@@ -113,6 +155,8 @@ public class ResourceMethodDescriptor
                                         method,
                                         parameters,
                                         null,
+                                        null,
+                                        BATCH_FINDER_NULL_CRITERIA_INDEX,
                                         actionName,
                                         actionResourceType,
                                         actionReturnType,
@@ -166,6 +210,8 @@ public class ResourceMethodDescriptor
                                         parameters,
                                         null,
                                         null,
+                                         BATCH_FINDER_NULL_CRITERIA_INDEX,
+                                        null,
                                         null,
                                         null,
                                         null,
@@ -182,6 +228,8 @@ public class ResourceMethodDescriptor
                                    final Method method,
                                    final List<Parameter<?>> parameters,
                                    final String finderName,
+                                   final String batchFinderName,
+                                   final Integer batchFinderCriteriaIndex,
                                    final String actionName,
                                    final ResourceLevel actionResourceLevel,
                                    final FieldDef<?> actionReturnType,
@@ -196,6 +244,7 @@ public class ResourceMethodDescriptor
     _method = method;
     _parameters = parameters;
     _finderName = finderName;
+    _batchFinderName = batchFinderName;
     _actionName = actionName;
     _actionResourceLevel = actionResourceLevel;
     _actionReturnFieldDef = actionReturnType;
@@ -204,6 +253,7 @@ public class ResourceMethodDescriptor
     _collectionCustomMetadataType = collectionCustomMetadataType;
     _interfaceType = interfaceType;
     _customAnnotations = customAnnotations;
+    _batchFinderCriteriaIndex = batchFinderCriteriaIndex;
   }
 
   /**
@@ -244,6 +294,25 @@ public class ResourceMethodDescriptor
   public Method getMethod()
   {
     return _method;
+  }
+
+  /**
+   * Get resource method name.
+   *
+   * @return String
+   */
+  public String getMethodName()
+  {
+    switch (_type) {
+      case ACTION:
+        return getActionName();
+      case FINDER:
+        return getFinderName();
+      case BATCH_FINDER:
+        return getBatchFinderName();
+    }
+
+    return _type.toString();
   }
 
   /**
@@ -303,6 +372,22 @@ public class ResourceMethodDescriptor
   public String getFinderName()
   {
     return _finderName;
+  }
+
+  /**
+   * @return method batch finder name
+   */
+  public String getBatchFinderName()
+  {
+    return _batchFinderName;
+  }
+
+  /**
+   * @return the batch finder criteria parameter index
+   */
+  public Integer getBatchFinderCriteriaParamIndex()
+  {
+    return _batchFinderCriteriaIndex;
   }
 
   public Class<? extends RecordTemplate> getCollectionCustomMetadataType()
@@ -388,6 +473,11 @@ public class ResourceMethodDescriptor
   public DataMap getCustomAnnotationData()
   {
     return _customAnnotations;
+  }
+
+  public <T extends Annotation> T getAnnotation(Class<T> annotationClass)
+  {
+    return this.getMethod().getAnnotation(annotationClass);
   }
 
   public boolean isPagingSupported()

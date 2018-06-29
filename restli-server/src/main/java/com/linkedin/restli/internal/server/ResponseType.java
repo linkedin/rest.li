@@ -17,6 +17,7 @@
 package com.linkedin.restli.internal.server;
 
 
+
 /**
  * This enum type is a wrapper enum type that describes the
  * type of response. The intended use case is to determine
@@ -38,6 +39,11 @@ public enum ResponseType
    * Used for {@link com.linkedin.restli.internal.server.response.CollectionResponseEnvelope}.
    */
   GET_COLLECTION,
+
+  /**
+   * Used for {@link com.linkedin.restli.internal.server.response.BatchFinderResponseEnvelope}.
+   */
+  BATCH_COLLECTION,
 
   /**
    * Used for {@link com.linkedin.restli.internal.server.response.BatchCreateResponseEnvelope}.

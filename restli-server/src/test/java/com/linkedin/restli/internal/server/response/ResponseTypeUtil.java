@@ -49,6 +49,7 @@ public class ResponseTypeUtil
     BY_RESOURCE_METHOD.put(ResourceMethod.BATCH_UPDATE,         ResponseType.BATCH_ENTITIES);
     BY_RESOURCE_METHOD.put(ResourceMethod.BATCH_PARTIAL_UPDATE, ResponseType.BATCH_ENTITIES);
     BY_RESOURCE_METHOD.put(ResourceMethod.BATCH_DELETE,         ResponseType.BATCH_ENTITIES);
+    BY_RESOURCE_METHOD.put(ResourceMethod.BATCH_FINDER,         ResponseType.BATCH_COLLECTION);
     BY_RESOURCE_METHOD.put(ResourceMethod.UPDATE,               ResponseType.STATUS_ONLY);
     BY_RESOURCE_METHOD.put(ResourceMethod.DELETE,               ResponseType.STATUS_ONLY);
     BY_RESOURCE_METHOD.put(ResourceMethod.OPTIONS,              ResponseType.STATUS_ONLY);

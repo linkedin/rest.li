@@ -46,6 +46,8 @@ import com.linkedin.restli.restspec.AlternativeKeySchemaArray;
 import com.linkedin.restli.restspec.AssocKeySchema;
 import com.linkedin.restli.restspec.AssocKeySchemaArray;
 import com.linkedin.restli.restspec.AssociationSchema;
+import com.linkedin.restli.restspec.BatchFinderSchema;
+import com.linkedin.restli.restspec.BatchFinderSchemaArray;
 import com.linkedin.restli.restspec.CollectionSchema;
 import com.linkedin.restli.restspec.CustomAnnotationContentSchemaMap;
 import com.linkedin.restli.restspec.EntitySchema;
@@ -64,7 +66,7 @@ import com.linkedin.restli.restspec.SimpleSchema;
 import com.linkedin.restli.server.AlternativeKey;
 import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.ResourceLevel;
-
+import com.linkedin.restli.server.annotations.BatchFinder;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
@@ -493,19 +495,10 @@ public class ResourceModelEncoder
     }
 
     appendAlternativeKeys(collectionSchema, collectionModel);
-
     appendSupportsNodeToCollectionSchema(collectionSchema, collectionModel);
     appendMethodsToCollectionSchema(collectionSchema, collectionModel);
-    FinderSchemaArray finders = createFinders(collectionModel);
-    if (finders.size() > 0)
-    {
-      collectionSchema.setFinders(finders);
-    }
-    ActionSchemaArray actions = createActions(collectionModel, ResourceLevel.COLLECTION);
-    if (actions.size() > 0)
-    {
-      collectionSchema.setActions(actions);
-    }
+    // Finders, BatchFinders and Actions
+    appendCollections(collectionSchema, collectionModel);
     appendEntityToCollectionSchema(collectionSchema, collectionModel);
 
     switch(collectionModel.getResourceType())
@@ -656,40 +649,13 @@ public class ResourceModelEncoder
   }
 
 
+
   private ActionSchemaArray createActions(final ResourceModel resourceModel,
                                           final ResourceLevel resourceLevel)
   {
+    List<ResourceMethodDescriptor> resourceMethodDescriptors = resourceModel.getResourceMethodDescriptors();
+    Collections.sort(resourceMethodDescriptors, RESOURCE_METHOD_COMPARATOR);
     ActionSchemaArray actionsArray = new ActionSchemaArray();
-
-    List<ResourceMethodDescriptor> resourceMethodDescriptors =
-        resourceModel.getResourceMethodDescriptors();
-    Collections.sort(resourceMethodDescriptors, new Comparator<ResourceMethodDescriptor>()
-    {
-      @Override
-      public int compare(final ResourceMethodDescriptor o1, final ResourceMethodDescriptor o2)
-      {
-        if (o1.getType().equals(ResourceMethod.ACTION))
-        {
-          if (o2.getType().equals(ResourceMethod.ACTION))
-          {
-            return o1.getActionName().compareTo(o2.getActionName());
-          }
-          else
-          {
-            return 1;
-          }
-        }
-        else if (o2.getType().equals(ResourceMethod.ACTION))
-        {
-          return -1;
-        }
-        else
-        {
-          return 0;
-        }
-      }
-    });
-
     for (ResourceMethodDescriptor resourceMethodDescriptor : resourceMethodDescriptors)
     {
       if (ResourceMethod.ACTION.equals(resourceMethodDescriptor.getType()))
@@ -700,61 +666,64 @@ public class ResourceModelEncoder
           continue;
         }
 
-        ActionSchema action = new ActionSchema();
-
-        action.setName(resourceMethodDescriptor.getActionName());
-
-        //We have to construct the method doc for the action which includes the action return type
-        final String methodDoc = _docsProvider.getMethodDoc(resourceMethodDescriptor.getMethod());
-        if (methodDoc != null)
-        {
-          final StringBuilder methodDocBuilder = new StringBuilder(methodDoc.trim());
-          if (methodDocBuilder.length() > 0)
-          {
-            final String returnDoc = sanitizeDoc(_docsProvider.getReturnDoc(resourceMethodDescriptor.getMethod()));
-            if (returnDoc != null && !returnDoc.isEmpty())
-            {
-              methodDocBuilder.append("\n");
-              methodDocBuilder.append("Service Returns: ");
-              //Capitalize the first character
-              methodDocBuilder.append(returnDoc.substring(0, 1).toUpperCase());
-              methodDocBuilder.append(returnDoc.substring(1));
-            }
-          }
-          action.setDoc(methodDocBuilder.toString());
-        }
-
-        ParameterSchemaArray parameters = createParameters(resourceMethodDescriptor);
-        if (parameters.size() > 0)
-        {
-          action.setParameters(parameters);
-        }
-
-        Class<?> returnType = resourceMethodDescriptor.getActionReturnType();
-        if (returnType != Void.TYPE)
-        {
-          String returnTypeString =
-              buildDataSchemaType(returnType,
-                                  resourceMethodDescriptor.getActionReturnRecordDataSchema().getField(ActionResponse.VALUE_NAME).getType());
-          action.setReturns(returnTypeString);
-        }
-
-        final DataMap customAnnotation = resourceMethodDescriptor.getCustomAnnotationData();
-        String deprecatedDoc = _docsProvider.getMethodDeprecatedTag(resourceMethodDescriptor.getMethod());
-        if(deprecatedDoc != null)
-        {
-          customAnnotation.put(DEPRECATED_ANNOTATION_NAME, deprecateDocToAnnotationMap(deprecatedDoc));
-        }
-
-        if (!customAnnotation.isEmpty())
-        {
-          action.setAnnotations(new CustomAnnotationContentSchemaMap(customAnnotation));
-        }
-
+        ActionSchema action = createActionSchema(resourceMethodDescriptor);
         actionsArray.add(action);
       }
     }
     return actionsArray;
+  }
+
+  private ActionSchema createActionSchema(ResourceMethodDescriptor resourceMethodDescriptor) {
+    ActionSchema action = new ActionSchema();
+    action.setName(resourceMethodDescriptor.getActionName());
+
+    //We have to construct the method doc for the action which includes the action return type
+    final String methodDoc = _docsProvider.getMethodDoc(resourceMethodDescriptor.getMethod());
+    if (methodDoc != null)
+    {
+      final StringBuilder methodDocBuilder = new StringBuilder(methodDoc.trim());
+      if (methodDocBuilder.length() > 0)
+      {
+        final String returnDoc = sanitizeDoc(_docsProvider.getReturnDoc(resourceMethodDescriptor.getMethod()));
+        if (returnDoc != null && !returnDoc.isEmpty())
+        {
+          methodDocBuilder.append("\n");
+          methodDocBuilder.append("Service Returns: ");
+          //Capitalize the first character
+          methodDocBuilder.append(returnDoc.substring(0, 1).toUpperCase());
+          methodDocBuilder.append(returnDoc.substring(1));
+        }
+      }
+      action.setDoc(methodDocBuilder.toString());
+    }
+
+    ParameterSchemaArray parameters = createParameters(resourceMethodDescriptor);
+    if (parameters.size() > 0)
+    {
+      action.setParameters(parameters);
+    }
+
+    Class<?> returnType = resourceMethodDescriptor.getActionReturnType();
+    if (returnType != Void.TYPE)
+    {
+      String returnTypeString =
+          buildDataSchemaType(returnType,
+                              resourceMethodDescriptor.getActionReturnRecordDataSchema().getField(ActionResponse.VALUE_NAME).getType());
+      action.setReturns(returnTypeString);
+    }
+
+    final DataMap customAnnotation = resourceMethodDescriptor.getCustomAnnotationData();
+    String deprecatedDoc = _docsProvider.getMethodDeprecatedTag(resourceMethodDescriptor.getMethod());
+    if(deprecatedDoc != null)
+    {
+      customAnnotation.put(DEPRECATED_ANNOTATION_NAME, deprecateDocToAnnotationMap(deprecatedDoc));
+    }
+
+    if (!customAnnotation.isEmpty())
+    {
+      action.setAnnotations(new CustomAnnotationContentSchemaMap(customAnnotation));
+    }
+    return action;
   }
 
   /**
@@ -794,81 +763,160 @@ public class ResourceModelEncoder
 
   static Comparator<ResourceMethodDescriptor> RESOURCE_METHOD_COMPARATOR = (ResourceMethodDescriptor o1, ResourceMethodDescriptor o2) ->
   {
-    if (o1.getFinderName() == o2.getFinderName())
+    if (o1.getMethodName() == o2.getMethodName())
     {
       return 0;
     }
 
-    if (o1.getFinderName() == null)
+    if (o1.getMethodName() == null)
     {
       return -1;
     }
-    else if (o2.getFinderName() == null)
+    else if (o2.getMethodName() == null)
     {
       return 1;
     }
 
-    return o1.getFinderName().compareTo(o2.getFinderName());
+    return o1.getMethodName().compareTo(o2.getMethodName());
   };
 
-  private FinderSchemaArray createFinders(final ResourceModel resourceModel)
+  private void appendCollections(final CollectionSchema collectionSchema,
+                                 final ResourceModel resourceModel)
   {
+    ActionSchemaArray actionsArray = new ActionSchemaArray();
     FinderSchemaArray findersArray = new FinderSchemaArray();
+    BatchFinderSchemaArray batchFindersArray = new BatchFinderSchemaArray();
 
-    List<ResourceMethodDescriptor> resourceMethodDescriptors =
-        resourceModel.getResourceMethodDescriptors();
+    List<ResourceMethodDescriptor> resourceMethodDescriptors = resourceModel.getResourceMethodDescriptors();
     Collections.sort(resourceMethodDescriptors, RESOURCE_METHOD_COMPARATOR);
 
     for (ResourceMethodDescriptor resourceMethodDescriptor : resourceMethodDescriptors)
     {
-      if (ResourceMethod.FINDER.equals(resourceMethodDescriptor.getType()))
+      if (ResourceMethod.ACTION.equals(resourceMethodDescriptor.getType()))
       {
-        FinderSchema finder = new FinderSchema();
-
-        finder.setName(resourceMethodDescriptor.getFinderName());
-
-        String doc = _docsProvider.getMethodDoc(resourceMethodDescriptor.getMethod());
-        if (doc != null)
+        //do not apply entity-level actions at collection level or vice-versa
+        if (resourceMethodDescriptor.getActionResourceLevel() != ResourceLevel.COLLECTION)
         {
-          finder.setDoc(doc);
+          continue;
         }
 
-        ParameterSchemaArray parameters = createParameters(resourceMethodDescriptor);
-        if (parameters.size() > 0)
-        {
-          finder.setParameters(parameters);
-        }
-        StringArray assocKeys = createAssocKeyParameters(resourceMethodDescriptor);
-        if (assocKeys.size() > 0)
-        {
-          finder.setAssocKeys(assocKeys);
-        }
-        if (resourceMethodDescriptor.getCollectionCustomMetadataType() != null)
-        {
-          finder.setMetadata(createMetadataSchema(resourceMethodDescriptor));
-        }
-
-        final DataMap customAnnotation = resourceMethodDescriptor.getCustomAnnotationData();
-
-        String deprecatedDoc = _docsProvider.getMethodDeprecatedTag(resourceMethodDescriptor.getMethod());
-        if(deprecatedDoc != null)
-        {
-          customAnnotation.put(DEPRECATED_ANNOTATION_NAME, deprecateDocToAnnotationMap(deprecatedDoc));
-        }
-
-        if (!customAnnotation.isEmpty())
-        {
-          finder.setAnnotations(new CustomAnnotationContentSchemaMap(customAnnotation));
-        }
-
-        if (resourceMethodDescriptor.isPagingSupported()) {
-          finder.setPagingSupported(true);
-        }
-
+        ActionSchema action = createActionSchema(resourceMethodDescriptor);
+        actionsArray.add(action);
+      }
+      else if (ResourceMethod.FINDER.equals(resourceMethodDescriptor.getType()))
+      {
+        FinderSchema finder = createFinderSchema(resourceMethodDescriptor);
         findersArray.add(finder);
       }
+      else if (ResourceMethod.BATCH_FINDER.equals(resourceMethodDescriptor.getType()))
+      {
+        BatchFinderSchema finder = createBatchFinderSchema(resourceMethodDescriptor);
+        batchFindersArray.add(finder);
+      }
     }
-    return findersArray;
+
+    if (actionsArray.size() > 0)
+    {
+      collectionSchema.setActions(actionsArray);
+    }
+
+    if (findersArray.size() > 0)
+    {
+      collectionSchema.setFinders(findersArray);
+    }
+
+    if (batchFindersArray.size() > 0)
+    {
+      collectionSchema.setBatchFinders(batchFindersArray);
+    }
+
+  }
+
+  private FinderSchema createFinderSchema(ResourceMethodDescriptor resourceMethodDescriptor) {
+    FinderSchema finder = new FinderSchema();
+
+    finder.setName(resourceMethodDescriptor.getFinderName());
+
+    String doc = _docsProvider.getMethodDoc(resourceMethodDescriptor.getMethod());
+    if (doc != null)
+    {
+      finder.setDoc(doc);
+    }
+
+    ParameterSchemaArray parameters = createParameters(resourceMethodDescriptor);
+    if (parameters.size() > 0)
+    {
+      finder.setParameters(parameters);
+    }
+    StringArray assocKeys = createAssocKeyParameters(resourceMethodDescriptor);
+    if (assocKeys.size() > 0)
+    {
+      finder.setAssocKeys(assocKeys);
+    }
+    if (resourceMethodDescriptor.getCollectionCustomMetadataType() != null)
+    {
+      finder.setMetadata(createMetadataSchema(resourceMethodDescriptor));
+    }
+
+    final DataMap customAnnotation = resourceMethodDescriptor.getCustomAnnotationData();
+
+    String deprecatedDoc = _docsProvider.getMethodDeprecatedTag(resourceMethodDescriptor.getMethod());
+    if(deprecatedDoc != null)
+    {
+      customAnnotation.put(DEPRECATED_ANNOTATION_NAME, deprecateDocToAnnotationMap(deprecatedDoc));
+    }
+
+    if (!customAnnotation.isEmpty())
+    {
+      finder.setAnnotations(new CustomAnnotationContentSchemaMap(customAnnotation));
+    }
+
+    if (resourceMethodDescriptor.isPagingSupported()) {
+      finder.setPagingSupported(true);
+    }
+    return finder;
+  }
+
+
+  private BatchFinderSchema createBatchFinderSchema(ResourceMethodDescriptor resourceMethodDescriptor) {
+    BatchFinderSchema batchFinder = new BatchFinderSchema();
+    batchFinder.setName(resourceMethodDescriptor.getBatchFinderName());
+    String doc = _docsProvider.getMethodDoc(resourceMethodDescriptor.getMethod());
+    if (doc != null) {
+      batchFinder.setDoc(doc);
+    }
+
+    ParameterSchemaArray parameters = createParameters(resourceMethodDescriptor);
+    if (parameters.size() > 0) {
+      batchFinder.setParameters(parameters);
+    }
+
+    StringArray assocKeys = createAssocKeyParameters(resourceMethodDescriptor);
+    if (assocKeys.size() > 0) {
+      batchFinder.setAssocKeys(assocKeys);
+    }
+
+    if (resourceMethodDescriptor.getCollectionCustomMetadataType() != null) {
+      batchFinder.setMetadata(createMetadataSchema(resourceMethodDescriptor));
+    }
+
+    final DataMap customAnnotation = resourceMethodDescriptor.getCustomAnnotationData();
+    String deprecatedDoc = _docsProvider.getMethodDeprecatedTag(resourceMethodDescriptor.getMethod());
+    if (deprecatedDoc != null) {
+      customAnnotation.put(DEPRECATED_ANNOTATION_NAME, deprecateDocToAnnotationMap(deprecatedDoc));
+    }
+
+    if (!customAnnotation.isEmpty()) {
+      batchFinder.setAnnotations(new CustomAnnotationContentSchemaMap(customAnnotation));
+    }
+
+    if (resourceMethodDescriptor.isPagingSupported()) {
+      batchFinder.setPagingSupported(true);
+    }
+
+    BatchFinder batchFinderAnnotation = resourceMethodDescriptor.getMethod().getAnnotation(BatchFinder.class);
+    batchFinder.setBatchParam(batchFinderAnnotation.batchParam());
+    return batchFinder;
   }
 
   @SuppressWarnings("deprecation")
@@ -1073,6 +1121,7 @@ public class ResourceModelEncoder
     {
       ResourceMethod type = resourceMethodDescriptor.getType();
       if (! type.equals(ResourceMethod.FINDER) &&
+          ! type.equals(ResourceMethod.BATCH_FINDER) &&
           ! type.equals(ResourceMethod.ACTION))
       {
         supportsStrings.add(type.toString());

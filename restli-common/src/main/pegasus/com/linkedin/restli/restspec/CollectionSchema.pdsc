@@ -32,6 +32,12 @@
       "optional" : true
     },
     {
+      "name" : "batchFinders",
+      "doc" : "list of batch finders supported by this collection",
+      "type" : { "type" : "array", "items" : "BatchFinderSchema" },
+      "optional" : true
+    },
+    {
       "name" : "actions",
       "doc" : "list of actions supported by this collection",
       "type" : { "type" : "array", "items" : "ActionSchema" },

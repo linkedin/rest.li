@@ -1,0 +1,13 @@
+{
+  "type" : "record",
+  "name" : "BatchFinderSchema",
+  "namespace" : "com.linkedin.restli.restspec",
+  "include" : [ "FinderSchema" ],
+  "fields" : [
+    {
+      "name" : "batchParam",
+      "doc" : "Indicates the paramater name that contains the criteria list",
+      "type" : "string"
+    }
+  ]
+}

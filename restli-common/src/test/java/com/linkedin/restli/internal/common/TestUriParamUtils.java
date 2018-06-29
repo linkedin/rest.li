@@ -292,8 +292,70 @@ public class TestUriParamUtils
     UriBuilder uriBuilder = new UriBuilder();
     URIParamUtils.addSortedParams(uriBuilder, queryParams);
     String query = uriBuilder.build().getQuery();
+
     Assert.assertEquals(query, "aParam=(empty:(),foo:bar,someField:someValue)&bParam=List(x,y,z)");
   }
+
+  @Test
+  public void replaceQueryParam()
+  {
+    DataMap queryParams = new DataMap();
+    queryParams.put("bq", "batch_finder");
+    queryParams.put("page", "1");
+    queryParams.put("count", "10");
+
+
+
+    DataMap criteria1 = new DataMap();
+    criteria1.put("criteria1_fieldA", "valueA");
+    criteria1.put("criteria1_fieldB", "valueB");
+    criteria1.put("criteria1_fieldC", "valueC");
+    DataMap criteria2 = new DataMap();
+    criteria2.put("criteria2_fieldA", "valueA");
+    criteria2.put("criteria2_fieldB", "valueB");
+    criteria2.put("criteria2_fieldC", "valueC");
+
+    DataList paramList = new DataList();
+    paramList.add(criteria1);
+    paramList.add(criteria2);
+    queryParams.put("criteria", paramList);
+
+    UriBuilder uriBuilder = new UriBuilder();
+    URIParamUtils.addSortedParams(uriBuilder, queryParams);
+    URI uri = uriBuilder.build();
+
+
+    DataList newParamList = new DataList();
+    newParamList.add(criteria1);
+
+    URI replacedURIV1 = URIParamUtils.replaceQueryParam(uri,
+                                             "criteria",
+                                                        newParamList,
+                                                        queryParams,
+                                                        AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion());
+
+
+    URI replacedURIV2 = URIParamUtils.replaceQueryParam(uri,
+                                            "criteria",
+                                                        newParamList,
+                                                        queryParams,
+                                                        AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion());
+
+
+
+    String expectedURI = "bq=batch_finder&count=10&criteria=List((criteria1_fieldA:valueA,criteria1_fieldB:valueB,"
+        + "criteria1_fieldC:valueC),(criteria2_fieldA:valueA,criteria2_fieldB:valueB,criteria2_fieldC:valueC))&page=1";
+    String expectedNewURIV2 = "bq=batch_finder&count=10&criteria=List((criteria1_fieldA:valueA,criteria1_fieldB:valueB,"
+        + "criteria1_fieldC:valueC))&page=1";
+    String expectedNewURIV1 = "bq=batch_finder&count=10&criteria[0].criteria1_fieldA=valueA"
+        + "&criteria[0].criteria1_fieldB=valueB&criteria[0].criteria1_fieldC=valueC&page=1";
+
+
+    Assert.assertEquals(uri.getQuery(), expectedURI);
+    Assert.assertEquals(replacedURIV2.getQuery(), expectedNewURIV2);
+    Assert.assertEquals(replacedURIV1.getQuery(), expectedNewURIV1);
+  }
+
 
   @Test
   public void testProjectionMask()

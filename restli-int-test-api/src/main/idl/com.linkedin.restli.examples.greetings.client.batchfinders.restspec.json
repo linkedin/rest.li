@@ -1,0 +1,35 @@
+{
+  "name" : "batchfinders",
+  "namespace" : "com.linkedin.restli.examples.greetings.client",
+  "path" : "/batchfinders",
+  "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
+  "doc" : "This resource models a collection resource that exposes both a finder and a batch finder method.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.BatchFinderResource",
+  "collection" : {
+    "identifier" : {
+      "name" : "batchfindersId",
+      "type" : "long"
+    },
+    "supports" : [ ],
+    "finders" : [ {
+      "name" : "searchWithMetadata",
+      "metadata" : {
+        "type" : "com.linkedin.restli.examples.greetings.api.SearchMetadata"
+      }
+    } ],
+    "batchFinders" : [ {
+      "name" : "findUsers",
+      "parameters" : [ {
+        "name" : "criteria",
+        "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.greetings.api.GreetingCriteria\" }"
+      }, {
+        "name" : "first_name",
+        "type" : "string"
+      } ],
+      "pagingSupported" : true,
+      "batchParam" : "criteria"
+    } ],
+    "entity" : {
+      "path" : "/batchfinders/{batchfindersId}"
+    }
+  }
+}

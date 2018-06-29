@@ -25,6 +25,7 @@ public enum ResourceMethod
   GET             (HttpMethod.GET),
   BATCH_GET       (HttpMethod.GET),
   FINDER          (HttpMethod.GET),
+  BATCH_FINDER    (HttpMethod.GET),
   CREATE          (HttpMethod.POST),
   BATCH_CREATE    (HttpMethod.POST),
   PARTIAL_UPDATE  (HttpMethod.POST),

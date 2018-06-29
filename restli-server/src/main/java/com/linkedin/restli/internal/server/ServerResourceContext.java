@@ -26,6 +26,7 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.entitystream.EntityStream;
 import com.linkedin.restli.common.ProtocolVersion;
+import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
 import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiServiceException;
@@ -63,6 +64,21 @@ public interface ServerResourceContext extends ResourceContext
    * @return rest.li request finder name
    */
   String getRequestFinderName();
+
+  /**
+   * @return rest.li request batch finder name
+   */
+  String getRequestBatchFinderName();
+
+  /**
+   * @return rest.li request method name from the Method type
+   */
+  String getMethodName(ResourceMethod type);
+
+  /**
+   * @return rest.li request method name
+   */
+  String getMethodName();
 
   @Override
   MutablePathKeys getPathKeys();

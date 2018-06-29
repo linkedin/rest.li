@@ -22,6 +22,7 @@ import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.internal.common.util.CollectionUtils;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.ResourceMethod;
+import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.restspec.ResourceEntityType;
 import com.linkedin.restli.server.AlternativeKey;
 import com.linkedin.restli.server.Key;
@@ -370,7 +371,11 @@ public class ResourceModel implements ResourceDefinition
     }
     else if (type.equals(ResourceMethod.FINDER))
     {
-      return findNamedMethod(name);
+      return findFinderMethod(name);
+    }
+    else if (type.equals(ResourceMethod.BATCH_FINDER))
+    {
+      return findBatchFinderMethod(name);
     }
     else
     {
@@ -419,15 +424,33 @@ public class ResourceModel implements ResourceDefinition
   }
 
   /**
-   * @param name method name
+   * @param batchFinderName method name
    * @return {@link ResourceMethodDescriptor} matching the name, null if none match
    */
-  public final ResourceMethodDescriptor findNamedMethod(final String name)
+  public final ResourceMethodDescriptor findBatchFinderMethod(final String batchFinderName)
+  {
+    for (ResourceMethodDescriptor methodDescriptor : _resourceMethodDescriptors)
+    {
+      if ((ResourceMethod.BATCH_FINDER.equals(methodDescriptor.getType()))
+          && batchFinderName.equals(methodDescriptor.getBatchFinderName()))
+      {
+        return methodDescriptor;
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * @param finderName method name
+   * @return {@link ResourceMethodDescriptor} matching the name, null if none match
+   */
+  public final ResourceMethodDescriptor findFinderMethod(final String finderName)
   {
     for (ResourceMethodDescriptor methodDescriptor : _resourceMethodDescriptors)
     {
       if ((ResourceMethod.FINDER.equals(methodDescriptor.getType()))
-          && name.equals(methodDescriptor.getFinderName()))
+          && finderName.equals(methodDescriptor.getFinderName()))
       {
         return methodDescriptor;
       }

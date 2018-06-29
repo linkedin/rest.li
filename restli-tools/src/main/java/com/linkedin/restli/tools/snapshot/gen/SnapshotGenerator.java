@@ -32,6 +32,7 @@ import com.linkedin.restli.restspec.ActionSchema;
 import com.linkedin.restli.restspec.ActionsSetSchema;
 import com.linkedin.restli.restspec.AssocKeySchema;
 import com.linkedin.restli.restspec.AssociationSchema;
+import com.linkedin.restli.restspec.BatchFinderSchema;
 import com.linkedin.restli.restspec.CollectionSchema;
 import com.linkedin.restli.restspec.EntitySchema;
 import com.linkedin.restli.restspec.FinderSchema;
@@ -145,14 +146,21 @@ public class SnapshotGenerator
       {
         for (FinderSchema restMethodSchema: collection.getFinders())
         {
-          findModelsFinder(restMethodSchema, foundTypes, typeOrder);
+          findModels(restMethodSchema.getParameters(), restMethodSchema.getMetadata(), foundTypes, typeOrder);
+        }
+      }
+      if (collection.hasBatchFinders())
+      {
+        for (BatchFinderSchema restMethodSchema: collection.getBatchFinders())
+        {
+          findModels(restMethodSchema.getParameters(), restMethodSchema.getMetadata(), foundTypes, typeOrder);
         }
       }
       if (collection.hasMethods())
       {
         for (RestMethodSchema restMethodSchema : collection.getMethods())
         {
-          findModelsMethod(restMethodSchema, foundTypes, typeOrder);
+          findModels(restMethodSchema.getParameters(), restMethodSchema.getMetadata(), foundTypes, typeOrder);
         }
       }
       if (collection.hasActions())
@@ -214,14 +222,14 @@ public class SnapshotGenerator
       {
         for (FinderSchema restMethodSchema: association.getFinders())
         {
-          findModelsFinder(restMethodSchema, foundTypes, typeOrder);
+          findModels(restMethodSchema.getParameters(),restMethodSchema.getMetadata(), foundTypes, typeOrder);
         }
       }
       if (association.hasMethods())
       {
         for (RestMethodSchema restMethodSchema: association.getMethods())
         {
-          findModelsMethod(restMethodSchema, foundTypes, typeOrder);
+          findModels(restMethodSchema.getParameters(),restMethodSchema.getMetadata(), foundTypes, typeOrder);
         }
       }
       if (association.hasActions())
@@ -248,7 +256,7 @@ public class SnapshotGenerator
       {
         for (RestMethodSchema restMethodSchema : simple.getMethods())
         {
-          findModelsMethod(restMethodSchema, foundTypes, typeOrder);
+          findModels(restMethodSchema.getParameters(), restMethodSchema.getMetadata(), foundTypes, typeOrder);
         }
       }
       if (simple.hasActions())
@@ -298,9 +306,8 @@ public class SnapshotGenerator
     }
   }
 
-  private void findModelsFinder(FinderSchema finderSchema, Map<String, NamedDataSchema> foundTypes, List<NamedDataSchema> typeOrder)
+  private void findModels(ParameterSchemaArray parameters ,MetadataSchema metadata , Map<String, NamedDataSchema> foundTypes, List<NamedDataSchema> typeOrder)
   {
-    ParameterSchemaArray parameters = finderSchema.getParameters();
     if (parameters != null)
     {
       for(ParameterSchema parameterSchema : parameters)
@@ -308,25 +315,7 @@ public class SnapshotGenerator
         findModelsParameter(parameterSchema, foundTypes, typeOrder);
       }
     }
-    MetadataSchema metadata = finderSchema.getMetadata();
-    if (metadata != null)
-    {
-      String type = metadata.getType();
-      recordType(type, foundTypes, typeOrder);
-    }
-  }
 
-  private void findModelsMethod(RestMethodSchema restMethodSchema, Map<String, NamedDataSchema> foundTypes, List<NamedDataSchema> typeOrder)
-  {
-    ParameterSchemaArray parameters = restMethodSchema.getParameters();
-    if (parameters != null)
-    {
-      for(ParameterSchema parameterSchema : parameters)
-      {
-        findModelsParameter(parameterSchema, foundTypes, typeOrder);
-      }
-    }
-    MetadataSchema metadata = restMethodSchema.getMetadata();
     if (metadata != null)
     {
       String type = metadata.getType();

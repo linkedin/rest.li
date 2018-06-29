@@ -157,6 +157,8 @@ public final class ErrorResponseBuilder
         return new RestLiResponseDataImpl<>(new GetAllResponseEnvelope(exception), headers, cookies);
       case FINDER:
         return new RestLiResponseDataImpl<>(new FinderResponseEnvelope(exception), headers, cookies);
+      case BATCH_FINDER:
+        return new RestLiResponseDataImpl<>(new BatchFinderResponseEnvelope(exception), headers, cookies);
       case BATCH_CREATE:
         return new RestLiResponseDataImpl<>(new BatchCreateResponseEnvelope(exception, false), headers, cookies);
       case BATCH_GET:

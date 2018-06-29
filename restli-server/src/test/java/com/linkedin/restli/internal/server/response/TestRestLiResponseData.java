@@ -424,6 +424,10 @@ public class TestRestLiResponseData
         Assert.assertTrue(responseData.getBatchDeleteResponseEnvelope().getClass()
                               .equals(BatchDeleteResponseEnvelope.class));
         break;
+      case BATCH_FINDER:
+        Assert.assertTrue(responseData.getResponseEnvelope().getClass()
+            .equals(BatchFinderResponseEnvelope.class));
+        break;
       case UPDATE:
         Assert.assertTrue(responseData.getUpdateResponseEnvelope().getClass().equals(UpdateResponseEnvelope.class));
         break;
@@ -666,6 +670,8 @@ public class TestRestLiResponseData
         return ResponseDataBuilderUtil.buildGetAllResponseData(status, Collections.emptyList(), new CollectionMetadata(), new EmptyRecord());
       case FINDER:
         return ResponseDataBuilderUtil.buildFinderResponseData(status, Collections.emptyList(), new CollectionMetadata(), new EmptyRecord());
+      case BATCH_FINDER:
+        return ResponseDataBuilderUtil.buildBatchFinderResponseData(status, Collections.emptyList());
       case BATCH_CREATE:
         return ResponseDataBuilderUtil.buildBatchCreateResponseData(status, Collections.emptyList());
       case BATCH_GET:

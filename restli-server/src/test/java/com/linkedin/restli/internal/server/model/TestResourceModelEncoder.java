@@ -33,7 +33,7 @@ public class TestResourceModelEncoder {
   private ResourceMethodDescriptor mockResourceMethodDescriptor(String name)
   {
     ResourceMethodDescriptor resourceMethodDescriptor = Mockito.mock(ResourceMethodDescriptor.class);
-    Mockito.when(resourceMethodDescriptor.getFinderName()).thenReturn(name);
+    Mockito.when(resourceMethodDescriptor.getMethodName()).thenReturn(name);
     return resourceMethodDescriptor;
   }
 }
