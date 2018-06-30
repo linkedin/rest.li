@@ -158,7 +158,7 @@ To acknowledge a backwards compatible interface change use:
 
     gradle build -Prest.model.compatibility=backwards
 
-For additional details on compatibility checking, see [Resource Compatibility Checking](https://github.com/linkedin/rest.li/wiki/Snapshots-and-Resource-Compatibility-Checking).
+For additional details on compatibility checking, see [Resource Compatibility Checking](https://maximelamure.github.io/rest.li/modeling/compatibiltiy_check).
 
 # Publishing Maven Artifacts
 

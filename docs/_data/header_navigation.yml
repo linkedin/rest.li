@@ -3,9 +3,7 @@ items:
     url: /rest.li/get_started/quick_start
   - page: User guide
     url: /rest.li/user_guide/server_architecture
-  - page: Wiki
-    url: https://github.com/linkedin/rest.li/wiki
-  # - page: API reference
-  #   url: /rest.li/reference/architecture
+  - page: API reference
+    url: /rest.li/reference/architecture
   - page: Contribute
     url: /rest.li/contribute/howto
