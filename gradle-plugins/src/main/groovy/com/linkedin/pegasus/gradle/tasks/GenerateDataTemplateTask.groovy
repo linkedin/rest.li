@@ -100,13 +100,15 @@ class GenerateDataTemplateTask extends JavaExec
       final String[] inputDataSchemaFilenames = inputDataSchemaFiles.collect { File it -> it.path } as String[]
       if (inputDataSchemaFilenames.length == 0)
       {
-        LOG.lifecycle(
+        LOG.info(
             "{} - disabling task {} because no input data data schema files found in ${target.inputDir}", getPath(), target.getPath())
         target.enabled = false;
       }
-
-      LOG.lifecycle(
-          "There are ${inputDataSchemaFilenames.length} data schema input files. Using input root folder: ${target.inputDir}")
+      else
+      {
+        LOG.lifecycle(
+            "There are ${inputDataSchemaFilenames.length} data schema input files. Using input root folder: ${target.inputDir}")
+      }
 
       final String resolverPathStr = (target.resolverPath + project.files(target.inputDir)).asPath
 
