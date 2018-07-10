@@ -25,10 +25,17 @@ import com.linkedin.restli.server.annotations.RestLiAssociation;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.annotations.RestLiSimpleResource;
 import java.lang.annotation.Annotation;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Hashtable;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,8 +65,10 @@ public class RestLiApiBuilder implements RestApiBuilder
   @Override
   public Map<String, ResourceModel> build()
   {
+//    RestLiClasspathScanner scanner =
+//        new RestLiClasspathScanner(_packageNames, _classNames, Thread.currentThread().getContextClassLoader());
     RestLiClasspathScanner scanner =
-        new RestLiClasspathScanner(_packageNames, _classNames, Thread.currentThread().getContextClassLoader());
+        new ParallelRestLiClasspathScanner(_packageNames, _classNames, Thread.currentThread().getContextClassLoader());
     scanner.scanPackages();
     final String errorMessage = scanner.scanClasses();
     if (!errorMessage.isEmpty())
@@ -107,11 +116,11 @@ public class RestLiApiBuilder implements RestApiBuilder
 
     Class<?> parentClass = getParentResourceClass(annotatedClass);
 
-    // If we need to create the parent class, do it before the child class. Recurse, in case of grandparents.
-    if (parentClass != RestAnnotations.ROOT.class)
-    {
-      processResourceInOrder(parentClass, resourceModels, rootResourceModels);
-    }
+//     If we need to create the parent class, do it before the child class. Recurse, in case of grandparents.
+//    if (parentClass != RestAnnotations.ROOT.class)
+//    {
+//      processResourceInOrder(parentClass, resourceModels, rootResourceModels);
+//    }
 
     ResourceModel model = RestLiAnnotationReader.processResource(annotatedClass, resourceModels.get(parentClass));
 
@@ -133,17 +142,110 @@ public class RestLiApiBuilder implements RestApiBuilder
     resourceModels.put(annotatedClass, model);
   }
 
-  public static Map<String, ResourceModel> buildResourceModels(
-          final Set<Class<?>> restliAnnotatedClasses)
-  {
-    Map<String, ResourceModel> rootResourceModels = new HashMap<String, ResourceModel>();
-    Map<Class<?>, ResourceModel> resourceModels = new HashMap<Class<?>, ResourceModel>();
+//  public static Map<String, ResourceModel> buildResourceModels(
+//          final Set<Class<?>> restliAnnotatedClasses)
+//  {
+//    Map<String, ResourceModel> rootResourceModels = new HashMap<String, ResourceModel>();
+//    Map<Class<?>, ResourceModel> resourceModels = new HashMap<Class<?>, ResourceModel>();
+//
+//    for (Class<?> annotatedClass : restliAnnotatedClasses)
+//    {
+//      processResourceInOrder(annotatedClass, resourceModels, rootResourceModels);
+//    }
+//
+//    return rootResourceModels;
+//  }
 
-    for (Class<?> annotatedClass : restliAnnotatedClasses)
-    {
-      processResourceInOrder(annotatedClass, resourceModels, rootResourceModels);
+  public static Map<String, ResourceModel> buildResourceModels(
+      final Set<Class<?>> restliAnnotatedClasses) {
+    Map<String, ResourceModel> rootResourceModels = new ConcurrentHashMap<>();
+    Map<Class<?>, ResourceModel> resourceModels = new ConcurrentHashMap<>();
+    Map<Class<?>, ProcessTask> rootClazzes = new HashMap<>();
+    Map<Class<?>, ClazzGraph> clazzMap = new HashMap<>();
+    ExecutorService executorService = Executors.newCachedThreadPool();
+
+    for (Class<?> clazz : restliAnnotatedClasses) {
+      if (clazzMap.containsKey(clazz)) {
+        continue;
+      }
+
+      clazzMap.put(clazz, new ClazzGraph(clazz));
+      Class<?> parentClass = getParentResourceClass(clazz);
+      boolean isParentExisted = false;
+      while (parentClass != RestAnnotations.ROOT.class && !isParentExisted) {
+        ClazzGraph subClazzGraph = clazzMap.get(clazz);
+        ClazzGraph parentClazzGraph;
+        if (clazzMap.containsKey(parentClass)) {
+          parentClazzGraph = clazzMap.get(parentClass);
+          isParentExisted = true;
+        } else {
+          parentClazzGraph = new ClazzGraph(parentClass);
+          clazzMap.put(parentClass, parentClazzGraph);
+        }
+
+        parentClazzGraph._subClazzes.add(subClazzGraph);
+        clazz = parentClass;
+        parentClass = getParentResourceClass(clazz);
+      }
+
+      if (!isParentExisted && !rootClazzes.containsKey(clazz)) {
+        rootClazzes.put(clazz, new ProcessTask(executorService, clazzMap.get(clazz), rootResourceModels, resourceModels));
+      }
+    }
+
+    try {
+      executorService.invokeAll(rootClazzes.values());
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    } finally {
+      executorService.shutdown();
     }
 
     return rootResourceModels;
   }
+
+  private static class ClazzGraph {
+    private Class<?> _clazz;
+    private List<ClazzGraph> _subClazzes;
+
+    private ClazzGraph(Class<?> clazz) {
+      _clazz = clazz;
+      _subClazzes = new ArrayList<>();
+    }
+
+  }
+
+  private static class ProcessTask implements Callable<Object> {
+    private Map<String, ResourceModel> _rootResourceModels;
+    private Map<Class<?>, ResourceModel> _resourceModels;
+    private ExecutorService _executorService;
+    private ClazzGraph _clazz;
+
+    private ProcessTask(ExecutorService executorService, ClazzGraph clazz,
+        Map<String, ResourceModel> rootResourceModels, Map<Class<?>, ResourceModel> resourceModels) {
+      _executorService = executorService;
+      _rootResourceModels = rootResourceModels;
+      _resourceModels = resourceModels;
+      _clazz = clazz;
+    }
+
+    @Override
+    public Object call() {
+      processResourceInOrder(_clazz._clazz, _resourceModels, _rootResourceModels);
+      List<ProcessTask> subTasks = new ArrayList<>();
+      for (ClazzGraph clazz : _clazz._subClazzes) {
+        subTasks.add(new ProcessTask(_executorService, clazz, _rootResourceModels, _resourceModels));
+      }
+
+      try {
+        _executorService.invokeAll(subTasks);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+
+      return null;
+    }
+
+  }
+
 }

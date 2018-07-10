@@ -187,6 +187,14 @@ class RestLiClasspathScanner
     return errorBuilder.toString();
   }
 
+  protected void jarScannerAdapter(final URI u) throws IOException {
+    scanJar(u);
+  }
+
+  protected void dirScannerAdapter(final File root) throws IOException {
+    scanDirectory(root);
+  }
+
   private void scanJar(final URI u) throws IOException
   {
     String ssp = u.getRawSchemeSpecificPart();

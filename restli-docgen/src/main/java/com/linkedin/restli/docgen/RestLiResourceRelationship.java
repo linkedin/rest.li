@@ -44,6 +44,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentSkipListMap;
+
 
 /**
  * Compute the adjacency relationship in a collection of {@link ResourceSchema}.
@@ -339,6 +341,6 @@ public class RestLiResourceRelationship
   private final ResourceSchemaCollection _resourceSchemas;
   private final DataSchemaResolver _schemaResolver;
   private final PegasusSchemaParser _schemaParser;
-  private final SortedMap<String, NamedDataSchema> _dataModels = new TreeMap<String, NamedDataSchema>();
+  private final SortedMap<String, NamedDataSchema> _dataModels = new ConcurrentSkipListMap<>();
   private final Graph _relationships = new Graph();
 }

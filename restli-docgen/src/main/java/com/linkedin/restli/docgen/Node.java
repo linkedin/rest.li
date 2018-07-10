@@ -39,7 +39,7 @@ public class Node<T>
   /**
    * @param node adjacent Node of the current Node
    */
-  public void addAdjacentNode(Node<?> node)
+  public synchronized void addAdjacentNode(Node<?> node)
   {
     _neighbors.add(node);
   }

@@ -51,6 +51,13 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.RecursiveAction;
+
 
 /**
  * A collection of ResourceSchema, supporting visitor-style iteration. Each ResourceSchema
@@ -61,8 +68,8 @@ import java.util.TreeMap;
 public class ResourceSchemaCollection
 {
   /**
-   * For each given {@link ResourceModel}, the classpath is checked for a .restspec.json 
-   * matching the name of the {@link ResourceModel},  if found it is loaded.  If a .restspec.json file 
+   * For each given {@link ResourceModel}, the classpath is checked for a .restspec.json
+   * matching the name of the {@link ResourceModel},  if found it is loaded.  If a .restspec.json file
    * is not found, one is created {@link ResourceSchemaCollection} from specified root {@link ResourceModel}.
    * All resources will be recursively traversed to discover subresources.
    * Root resources not specified are excluded.
@@ -131,10 +138,37 @@ public class ResourceSchemaCollection
    */
   public static void visitResources(Collection<ResourceSchema> resources, ResourceSchemaVisitior visitor)
   {
-    for (ResourceSchema schema : resources)
-    {
-      processResourceSchema(visitor, new ArrayList<ResourceSchema>(), schema);
+//    List<ResourceSchema> reverseList = new ArrayList<>(resources);
+//    Collections.reverse(reverseList);
+//    for (ResourceSchema schema : reverseList)
+//    {
+//      processResourceSchema(visitor, new ArrayList<ResourceSchema>(), schema);
+//    }
+
+
+//    for (ResourceSchema schema : resources)
+//    {
+//      processResourceSchema(visitor, new ArrayList<ResourceSchema>(), schema);
+//    }
+
+    ExecutorService executorService = Executors.newCachedThreadPool();
+    List<ProcessTask> tasks = new ArrayList<>();
+    for (ResourceSchema schema : resources) {
+      tasks.add(new ProcessTask(visitor, new ArrayList<>(), schema));
     }
+
+    try {
+      executorService.invokeAll(tasks);
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+
+    executorService.shutdown();
+
+//    ForkJoinPool pool = new ForkJoinPool(1);
+//    List<ResourceSchema> resourceSchemas = new ArrayList<>(resources);
+//    pool.invoke(new ForkJoinProcessTask(resourceSchemas, visitor));
+//    pool.shutdown();
   }
 
   /**
@@ -146,7 +180,7 @@ public class ResourceSchemaCollection
     _allResources = new TreeMap<String, ResourceSchema>(rootResources);
     _subResources = new IdentityHashMap<ResourceSchema, List<ResourceSchema>>();
     _parentResources = new IdentityHashMap<ResourceSchema, List<ResourceSchema>>();
-    final Map<String, ResourceSchema> flattenSubResources = new TreeMap<String, ResourceSchema>();
+    final Map<String, ResourceSchema> flattenSubResources = new TreeMap<>();
 
     final ResourceSchemaVisitior visitor = new BaseResourceSchemaVisitor()
     {
@@ -157,22 +191,27 @@ public class ResourceSchemaCollection
         final String qualifiedResourceName = context.getResourcePath();
         if (!_allResources.containsKey(qualifiedResourceName))
         {
-          flattenSubResources.put(qualifiedResourceName, resourceSchema);
+          synchronized (this) {
+            flattenSubResources.put(qualifiedResourceName, resourceSchema);
+          }
 
           final List<ResourceSchema> hierarchy = context.getResourceSchemaHierarchy();
 
           ArrayList<ResourceSchema> parents = new ArrayList<ResourceSchema>(hierarchy);
           parents.remove(parents.size()-1);
-          _parentResources.put(resourceSchema, parents);
+          synchronized (this) {
+            _parentResources.put(resourceSchema, parents);
 
-          final ResourceSchema directParent = parents.get(parents.size() - 1);
-          List<ResourceSchema> subList = _subResources.get(directParent);
-          if (subList == null)
-          {
-            subList = new ArrayList<ResourceSchema>();
-            _subResources.put(directParent, subList);
+            final ResourceSchema directParent = parents.get(parents.size() - 1);
+            List<ResourceSchema> subList = _subResources.get(directParent);
+            if (subList == null) {
+              subList = new ArrayList<>();
+              _subResources.put(directParent, subList);
+            }
+
+            subList.add(resourceSchema);
           }
-          subList.add(resourceSchema);
+
         }
       }
     };
@@ -300,6 +339,62 @@ public class ResourceSchemaCollection
     }
 
     hierarchy.remove(hierarchy.size() - 1);
+  }
+
+  private static class ProcessTask implements Callable<Object> {
+    private ResourceSchemaVisitior _visitor;
+    private List<ResourceSchema> _hierarchy;
+    private ResourceSchema _resourceSchem;
+
+    private ProcessTask(ResourceSchemaVisitior visitor, List<ResourceSchema> hierarchy, ResourceSchema resourceSchema) {
+      _visitor = visitor;
+      _hierarchy = hierarchy;
+      _resourceSchem = resourceSchema;
+    }
+
+    @Override
+    public Object call() {
+      processResourceSchema(_visitor, _hierarchy, _resourceSchem);
+      return null;
+    }
+
+  }
+
+  private static class ForkJoinProcessTask extends RecursiveAction {
+    private static final int _SIZE = 4;
+    private List<ResourceSchema> _schemas;
+    private ResourceSchemaVisitior _visitor;
+    private static final long serialVersionUID = 100003;
+
+    private ForkJoinProcessTask(List<ResourceSchema> schemas, ResourceSchemaVisitior visitor) {
+      _schemas = schemas;
+      _visitor = visitor;
+    }
+
+    @Override
+    protected void compute() {
+      if (_schemas.size() <= _SIZE) {
+        for (ResourceSchema schema : _schemas) {
+          processResourceSchema(_visitor, new ArrayList<>(), schema);
+        }
+
+      } else {
+        int delimiter = _schemas.size() / 4;
+        List<ResourceSchema> subList1 = _schemas.subList(0, delimiter);
+        List<ResourceSchema> subList2 = _schemas.subList(delimiter, delimiter * 2);
+        List<ResourceSchema> subList3 = _schemas.subList(delimiter * 2, delimiter * 3);
+        List<ResourceSchema> subList4 = _schemas.subList(delimiter * 3, _schemas.size());
+
+        ForkJoinProcessTask subTask1 = new ForkJoinProcessTask(subList1, _visitor);
+        ForkJoinProcessTask subTask2 = new ForkJoinProcessTask(subList2, _visitor);
+        ForkJoinProcessTask subTask3 = new ForkJoinProcessTask(subList3, _visitor);
+        ForkJoinProcessTask subTask4 = new ForkJoinProcessTask(subList4, _visitor);
+
+        invokeAll(subTask1, subTask2, subTask3, subTask4);
+      }
+
+    }
+
   }
 
 
