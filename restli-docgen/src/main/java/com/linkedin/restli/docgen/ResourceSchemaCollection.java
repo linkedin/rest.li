@@ -79,6 +79,7 @@ public class ResourceSchemaCollection
    */
   public static ResourceSchemaCollection loadOrCreateResourceSchema(Map<String, ResourceModel> rootResources)
   {
+    isNeedParallel = false;
     final ResourceModelEncoder encoder = new ResourceModelEncoder(new NullDocsProvider());
     final Map<String, ResourceSchema> schemaMap = new TreeMap<String, ResourceSchema>();
     for (ResourceModel resource : rootResources.values())
@@ -138,34 +139,28 @@ public class ResourceSchemaCollection
    */
   public static void visitResources(Collection<ResourceSchema> resources, ResourceSchemaVisitior visitor)
   {
-//    List<ResourceSchema> reverseList = new ArrayList<>(resources);
-//    Collections.reverse(reverseList);
-//    for (ResourceSchema schema : reverseList)
-//    {
-//      processResourceSchema(visitor, new ArrayList<ResourceSchema>(), schema);
-//    }
+    if (!isNeedParallel) {
+      for (ResourceSchema schema : resources)
+      {
+        processResourceSchema(visitor, new ArrayList<ResourceSchema>(), schema);
+      }
+    } else {
+      ExecutorService executorService = Executors.newWorkStealingPool();
+      List<ProcessTask> tasks = new ArrayList<>();
+      for (ResourceSchema schema : resources) {
+        tasks.add(new ProcessTask(visitor, new ArrayList<>(), schema));
+      }
 
+      try {
+        executorService.invokeAll(tasks);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
 
-//    for (ResourceSchema schema : resources)
-//    {
-//      processResourceSchema(visitor, new ArrayList<ResourceSchema>(), schema);
-//    }
-
-    ExecutorService executorService = Executors.newCachedThreadPool();
-    List<ProcessTask> tasks = new ArrayList<>();
-    for (ResourceSchema schema : resources) {
-      tasks.add(new ProcessTask(visitor, new ArrayList<>(), schema));
+      executorService.shutdown();
     }
 
-    try {
-      executorService.invokeAll(tasks);
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
-
-    executorService.shutdown();
-
-//    ForkJoinPool pool = new ForkJoinPool(1);
+//    ForkJoinPool pool = new ForkJoinPool(16);
 //    List<ResourceSchema> resourceSchemas = new ArrayList<>(resources);
 //    pool.invoke(new ForkJoinProcessTask(resourceSchemas, visitor));
 //    pool.shutdown();
@@ -191,26 +186,22 @@ public class ResourceSchemaCollection
         final String qualifiedResourceName = context.getResourcePath();
         if (!_allResources.containsKey(qualifiedResourceName))
         {
-          synchronized (this) {
-            flattenSubResources.put(qualifiedResourceName, resourceSchema);
-          }
+          flattenSubResources.put(qualifiedResourceName, resourceSchema);
 
           final List<ResourceSchema> hierarchy = context.getResourceSchemaHierarchy();
 
           ArrayList<ResourceSchema> parents = new ArrayList<ResourceSchema>(hierarchy);
           parents.remove(parents.size()-1);
-          synchronized (this) {
-            _parentResources.put(resourceSchema, parents);
+          _parentResources.put(resourceSchema, parents);
 
-            final ResourceSchema directParent = parents.get(parents.size() - 1);
-            List<ResourceSchema> subList = _subResources.get(directParent);
-            if (subList == null) {
-              subList = new ArrayList<>();
-              _subResources.put(directParent, subList);
-            }
-
-            subList.add(resourceSchema);
+          final ResourceSchema directParent = parents.get(parents.size() - 1);
+          List<ResourceSchema> subList = _subResources.get(directParent);
+          if (subList == null) {
+            subList = new ArrayList<>();
+            _subResources.put(directParent, subList);
           }
+
+          subList.add(resourceSchema);
 
         }
       }
@@ -511,4 +502,5 @@ public class ResourceSchemaCollection
   private final Map<String, ResourceSchema> _allResources;
   private final Map<ResourceSchema, List<ResourceSchema>> _subResources;
   private final Map<ResourceSchema, List<ResourceSchema>> _parentResources;
+  public static boolean isNeedParallel = true;
 }

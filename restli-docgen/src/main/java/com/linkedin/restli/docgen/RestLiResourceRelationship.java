@@ -311,7 +311,9 @@ public class RestLiResourceRelationship
       private void connectSchemaToResource(VisitContext visitContext, final NamedDataSchema schema)
       {
         final Node<NamedDataSchema> schemaNode = _relationships.get(schema);
-        _dataModels.put(schema.getFullName(), schema);
+        synchronized (this) {
+          _dataModels.put(schema.getFullName(), schema);
+        }
 
         final DataSchemaTraverse traveler = new DataSchemaTraverse();
         traveler.traverse(schema, new DataSchemaTraverse.Callback()
@@ -322,7 +324,10 @@ public class RestLiResourceRelationship
             if (nestedSchema instanceof RecordDataSchema && nestedSchema != schema)
             {
               final RecordDataSchema nestedRecordSchema = (RecordDataSchema) nestedSchema;
-              _dataModels.put(nestedRecordSchema.getFullName(), nestedRecordSchema);
+              synchronized (this) {
+                _dataModels.put(nestedRecordSchema.getFullName(), nestedRecordSchema);
+              }
+
               final Node<RecordDataSchema> node = _relationships.get(nestedRecordSchema);
               schemaNode.addAdjacentNode(node);
             }
@@ -335,12 +340,13 @@ public class RestLiResourceRelationship
       }
     };
 
+    ResourceSchemaCollection.isNeedParallel = true;
     ResourceSchemaCollection.visitResources(_resourceSchemas.getResources().values(), visitor);
   }
 
   private final ResourceSchemaCollection _resourceSchemas;
   private final DataSchemaResolver _schemaResolver;
   private final PegasusSchemaParser _schemaParser;
-  private final SortedMap<String, NamedDataSchema> _dataModels = new ConcurrentSkipListMap<>();
+  private final SortedMap<String, NamedDataSchema> _dataModels = new TreeMap<>();
   private final Graph _relationships = new Graph();
 }
