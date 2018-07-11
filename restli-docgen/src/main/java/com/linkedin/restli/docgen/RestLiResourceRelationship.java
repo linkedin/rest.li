@@ -311,7 +311,7 @@ public class RestLiResourceRelationship
       private void connectSchemaToResource(VisitContext visitContext, final NamedDataSchema schema)
       {
         final Node<NamedDataSchema> schemaNode = _relationships.get(schema);
-        synchronized (this) {
+        synchronized (_outerLock) {
           _dataModels.put(schema.getFullName(), schema);
         }
 
@@ -324,7 +324,7 @@ public class RestLiResourceRelationship
             if (nestedSchema instanceof RecordDataSchema && nestedSchema != schema)
             {
               final RecordDataSchema nestedRecordSchema = (RecordDataSchema) nestedSchema;
-              synchronized (this) {
+              synchronized (_innerLock) {
                 _dataModels.put(nestedRecordSchema.getFullName(), nestedRecordSchema);
               }
 
@@ -340,6 +340,7 @@ public class RestLiResourceRelationship
       }
     };
 
+    // explained this in its definition
     ResourceSchemaCollection.isNeedParallel = true;
     ResourceSchemaCollection.visitResources(_resourceSchemas.getResources().values(), visitor);
   }
@@ -349,4 +350,6 @@ public class RestLiResourceRelationship
   private final PegasusSchemaParser _schemaParser;
   private final SortedMap<String, NamedDataSchema> _dataModels = new TreeMap<>();
   private final Graph _relationships = new Graph();
+  private final Byte[] _outerLock = new Byte[0];
+  private final Byte[] _innerLock = new Byte[0];
 }

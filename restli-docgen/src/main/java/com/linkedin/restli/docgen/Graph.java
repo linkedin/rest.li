@@ -18,8 +18,6 @@ package com.linkedin.restli.docgen;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 
 /**
  * Directed graph for capturing relationships between resource endpoints and data models.
@@ -47,5 +45,5 @@ public class Graph
     return node;
   }
 
-  private final Map<Object, Node<?>> _nodes = new ConcurrentHashMap<>();
+  private final Map<Object, Node<?>> _nodes = new HashMap<Object, Node<?>>();
 }

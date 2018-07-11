@@ -160,10 +160,6 @@ public class ResourceSchemaCollection
       executorService.shutdown();
     }
 
-//    ForkJoinPool pool = new ForkJoinPool(16);
-//    List<ResourceSchema> resourceSchemas = new ArrayList<>(resources);
-//    pool.invoke(new ForkJoinProcessTask(resourceSchemas, visitor));
-//    pool.shutdown();
   }
 
   /**
@@ -351,44 +347,6 @@ public class ResourceSchemaCollection
 
   }
 
-  private static class ForkJoinProcessTask extends RecursiveAction {
-    private static final int _SIZE = 4;
-    private List<ResourceSchema> _schemas;
-    private ResourceSchemaVisitior _visitor;
-    private static final long serialVersionUID = 100003;
-
-    private ForkJoinProcessTask(List<ResourceSchema> schemas, ResourceSchemaVisitior visitor) {
-      _schemas = schemas;
-      _visitor = visitor;
-    }
-
-    @Override
-    protected void compute() {
-      if (_schemas.size() <= _SIZE) {
-        for (ResourceSchema schema : _schemas) {
-          processResourceSchema(_visitor, new ArrayList<>(), schema);
-        }
-
-      } else {
-        int delimiter = _schemas.size() / 4;
-        List<ResourceSchema> subList1 = _schemas.subList(0, delimiter);
-        List<ResourceSchema> subList2 = _schemas.subList(delimiter, delimiter * 2);
-        List<ResourceSchema> subList3 = _schemas.subList(delimiter * 2, delimiter * 3);
-        List<ResourceSchema> subList4 = _schemas.subList(delimiter * 3, _schemas.size());
-
-        ForkJoinProcessTask subTask1 = new ForkJoinProcessTask(subList1, _visitor);
-        ForkJoinProcessTask subTask2 = new ForkJoinProcessTask(subList2, _visitor);
-        ForkJoinProcessTask subTask3 = new ForkJoinProcessTask(subList3, _visitor);
-        ForkJoinProcessTask subTask4 = new ForkJoinProcessTask(subList4, _visitor);
-
-        invokeAll(subTask1, subTask2, subTask3, subTask4);
-      }
-
-    }
-
-  }
-
-
   private static void processEntitySchema(ResourceSchemaVisitior visitor,
                                           ResourceSchemaVisitior.VisitContext context,
                                           EntitySchema entitySchema)
@@ -502,5 +460,9 @@ public class ResourceSchemaCollection
   private final Map<String, ResourceSchema> _allResources;
   private final Map<ResourceSchema, List<ResourceSchema>> _subResources;
   private final Map<ResourceSchema, List<ResourceSchema>> _parentResources;
+
+  // ResourceSchemaCollection.loadOrCreateResourceSchema process originally doesn't take too much of time
+  // Parallel that will just make thing worse. Thus we only want to parallel build relationship.
+  // However, visitResources is a static method, I have to set this in such a ugly way.
   public static boolean isNeedParallel = true;
 }

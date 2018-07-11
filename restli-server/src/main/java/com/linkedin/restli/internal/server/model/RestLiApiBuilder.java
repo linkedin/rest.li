@@ -65,6 +65,7 @@ public class RestLiApiBuilder implements RestApiBuilder
   @Override
   public Map<String, ResourceModel> build()
   {
+    //Previous code
 //    RestLiClasspathScanner scanner =
 //        new RestLiClasspathScanner(_packageNames, _classNames, Thread.currentThread().getContextClassLoader());
     RestLiClasspathScanner scanner =
@@ -116,6 +117,7 @@ public class RestLiApiBuilder implements RestApiBuilder
 
     Class<?> parentClass = getParentResourceClass(annotatedClass);
 
+//  Sequentially, we need to process parent firstly, however, I manually structure them based on their relationships. Thus no need to do this
 //     If we need to create the parent class, do it before the child class. Recurse, in case of grandparents.
 //    if (parentClass != RestAnnotations.ROOT.class)
 //    {
@@ -142,6 +144,7 @@ public class RestLiApiBuilder implements RestApiBuilder
     resourceModels.put(annotatedClass, model);
   }
 
+  // previous code
 //  public static Map<String, ResourceModel> buildResourceModels(
 //          final Set<Class<?>> restliAnnotatedClasses)
 //  {
