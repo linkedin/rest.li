@@ -2,6 +2,8 @@
 ------
 (RB=1356168)
 Remove logs when data template task is disabled.
+(RB=1359131)
+Introduce RestLiClientConfig
 
 23.0.2
 ------

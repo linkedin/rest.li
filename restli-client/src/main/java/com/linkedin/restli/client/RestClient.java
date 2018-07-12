@@ -43,6 +43,7 @@ import com.linkedin.restli.client.multiplexer.MultiplexedRequest;
 import com.linkedin.restli.client.multiplexer.MultiplexedResponse;
 import com.linkedin.restli.client.uribuilders.MultiplexerUriBuilder;
 import com.linkedin.restli.client.uribuilders.RestliUriBuilderUtil;
+import com.linkedin.restli.client.util.RestLiClientConfig;
 import com.linkedin.restli.common.ContentType;
 import com.linkedin.restli.common.HttpMethod;
 import com.linkedin.restli.common.OperationNameGenerator;
@@ -124,6 +125,7 @@ public class RestClient implements Client {
   private final String _uriPrefix;
   private final List<ContentType> _acceptTypes;
   private final ContentType _contentType;
+  private final RestLiClientConfig _restLiClientConfig;
   // This is a system property that a user can set to override the protocol version handshake mechanism and always
   // use FORCE_USE_NEXT as the ProtocolVersionOption. If this system property is "true" (ignoring case) the override
   // is set. THIS SHOULD NOT BE USED IN PRODUCTION!
@@ -135,6 +137,11 @@ public class RestClient implements Client {
     this(client, uriPrefix, DEFAULT_CONTENT_TYPE, DEFAULT_ACCEPT_TYPES);
   }
 
+  public RestClient(com.linkedin.r2.transport.common.Client client, String uriPrefix, RestLiClientConfig restLiClientConfig)
+  {
+    this(client, uriPrefix, DEFAULT_CONTENT_TYPE, DEFAULT_ACCEPT_TYPES, restLiClientConfig);
+  }
+
   /**
    * @deprecated please use {@link RestliRequestOptions} to configure accept types.
    */
@@ -142,7 +149,7 @@ public class RestClient implements Client {
   public RestClient(com.linkedin.r2.transport.common.Client client,
       String uriPrefix, List<ContentType> acceptTypes)
   {
-    this(client, uriPrefix, DEFAULT_CONTENT_TYPE, acceptTypes);
+    this(client, uriPrefix, DEFAULT_CONTENT_TYPE, acceptTypes, new RestLiClientConfig());
   }
 
   /**
@@ -152,10 +159,21 @@ public class RestClient implements Client {
   public RestClient(com.linkedin.r2.transport.common.Client client,
       String uriPrefix, ContentType contentType, List<ContentType> acceptTypes)
   {
+    this(client, uriPrefix, contentType, acceptTypes, new RestLiClientConfig());
+  }
+
+  /**
+   * @deprecated please use {@link RestliRequestOptions} to configure content type and accept types.
+   */
+  @Deprecated
+  public RestClient(com.linkedin.r2.transport.common.Client client,
+      String uriPrefix, ContentType contentType, List<ContentType> acceptTypes, RestLiClientConfig restLiClientConfig)
+  {
     _client = client;
     _uriPrefix = (uriPrefix == null) ? null : uriPrefix.trim();
     _acceptTypes = acceptTypes;
     _contentType = contentType;
+    _restLiClientConfig = restLiClientConfig == null ? new RestLiClientConfig() : restLiClientConfig;
   }
 
   @Override
@@ -221,7 +239,7 @@ public class RestClient implements Client {
     //Note that it is not possible for the list of streaming attachments to be non-null and have 0 elements. If the
     //list of streaming attachments is non null then it must have at least one attachment. The request builders enforce
     //this invariant.
-    if (request.getStreamingAttachments() != null || request.getRequestOptions().getAcceptResponseAttachments())
+    if (_restLiClientConfig.isUseStreaming() || request.getStreamingAttachments() != null || request.getRequestOptions().getAcceptResponseAttachments())
     {
       //Set content type and accept type correctly and use StreamRequest/StreamResponse
       sendStreamRequest(request, requestContext, new RestLiStreamCallbackAdapter<T>(request.getResponseDecoder(), callback));
