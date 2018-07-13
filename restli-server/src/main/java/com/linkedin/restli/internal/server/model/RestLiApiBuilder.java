@@ -34,8 +34,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,8 +65,7 @@ public class RestLiApiBuilder implements RestApiBuilder
   }
 
   @Override
-  public Map<String, ResourceModel> build()
-  {
+  public Map<String, ResourceModel> build() {
     //Previous code
 //    RestLiClasspathScanner scanner =
 //        new RestLiClasspathScanner(_packageNames, _classNames, Thread.currentThread().getContextClassLoader());
@@ -129,16 +130,20 @@ public class RestLiApiBuilder implements RestApiBuilder
     if (model.isRoot())
     {
       String path = "/" + model.getName();
-      final ResourceModel existingResource = rootResourceModels.get(path);
-      if (existingResource != null)
-      {
-        String errorMessage = String.format("Resource classes \"%s\" and \"%s\" clash on the resource name \"%s\".",
-                                            existingResource.getResourceClass().getCanonicalName(),
-                                            model.getResourceClass().getCanonicalName(),
-                                            existingResource.getName());
-        throw new ResourceConfigException(errorMessage);
+      synchronized (RestLiApiBuilder.class) {
+        final ResourceModel existingResource = rootResourceModels.get(path);
+        if (existingResource != null)
+        {
+          String errorMessage = String.format("Resource classes \"%s\" and \"%s\" clash on the resource name \"%s\".",
+              existingResource.getResourceClass().getCanonicalName(),
+              model.getResourceClass().getCanonicalName(),
+              existingResource.getName());
+          throw new ResourceConfigException(errorMessage);
+        }
+
+        rootResourceModels.put(path, model);
       }
-      rootResourceModels.put(path, model);
+
     }
 
     resourceModels.put(annotatedClass, model);
@@ -161,11 +166,11 @@ public class RestLiApiBuilder implements RestApiBuilder
 
   public static Map<String, ResourceModel> buildResourceModels(
       final Set<Class<?>> restliAnnotatedClasses) {
-    Map<String, ResourceModel> rootResourceModels = new ConcurrentHashMap<>();
-    Map<Class<?>, ResourceModel> resourceModels = new ConcurrentHashMap<>();
+    Map<String, ResourceModel> rootResourceModels = new HashMap<>();
+    Map<Class<?>, ResourceModel> resourceModels = new HashMap<>();
     Map<Class<?>, ProcessTask> rootClazzes = new HashMap<>();
     Map<Class<?>, ClazzGraph> clazzMap = new HashMap<>();
-    ExecutorService executorService = Executors.newCachedThreadPool();
+    ExecutorService executorService = Executors.newWorkStealingPool();
 
     for (Class<?> clazz : restliAnnotatedClasses) {
       if (clazzMap.containsKey(clazz)) {
@@ -196,14 +201,33 @@ public class RestLiApiBuilder implements RestApiBuilder
       }
     }
 
+    List<Future<Object>> res = null;
     try {
-      executorService.invokeAll(rootClazzes.values());
+       res = executorService.invokeAll(rootClazzes.values());
     } catch (InterruptedException e) {
       e.printStackTrace();
-    } finally {
-      executorService.shutdown();
     }
 
+    if (res != null && !res.isEmpty()) {
+      for (Future<Object> future : res) {
+        try {
+          future.get();
+        } catch (InterruptedException e) {
+          e.printStackTrace();
+        } catch (ExecutionException e) {
+          if (e.getCause() instanceof ResourceConfigException) {
+            throw (ResourceConfigException) e.getCause();
+          } else {
+            e.printStackTrace();
+          }
+
+        }
+
+      }
+
+    }
+
+    executorService.shutdown();
     return rootResourceModels;
   }
 
@@ -233,17 +257,15 @@ public class RestLiApiBuilder implements RestApiBuilder
     }
 
     @Override
-    public Object call() {
+    public Object call() throws InterruptedException {
       processResourceInOrder(_clazz._clazz, _resourceModels, _rootResourceModels);
       List<ProcessTask> subTasks = new ArrayList<>();
       for (ClazzGraph clazz : _clazz._subClazzes) {
         subTasks.add(new ProcessTask(_executorService, clazz, _rootResourceModels, _resourceModels));
       }
 
-      try {
+      if (!subTasks.isEmpty()) {
         _executorService.invokeAll(subTasks);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
       }
 
       return null;
