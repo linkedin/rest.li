@@ -23,7 +23,7 @@ package com.linkedin.restli.client.util;
  */
 
 public class RestLiClientConfig {
-  private boolean _useStreaming = false;
+  private Boolean _useStreaming = false;
 
   public boolean isUseStreaming() {
     return _useStreaming;
@@ -31,5 +31,27 @@ public class RestLiClientConfig {
 
   public void setUseStreaming(boolean useStreaming) {
     _useStreaming = useStreaming;
+  }
+
+  @Override
+  public boolean equals(Object obj)
+  {
+    if (obj == this)
+    {
+      return true;
+    }
+    if (!(obj instanceof RestLiClientConfig))
+    {
+      return false;
+    }
+    RestLiClientConfig c = (RestLiClientConfig) obj;
+    return _useStreaming == c.isUseStreaming();
+  }
+
+  @Override
+  public int hashCode()
+  {
+    int hashCode = _useStreaming.hashCode();
+    return hashCode;
   }
 }
