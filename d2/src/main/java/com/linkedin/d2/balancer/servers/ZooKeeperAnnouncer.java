@@ -149,13 +149,13 @@ public class ZooKeeperAnnouncer
       @Override
       public void onError(Throwable e)
       {
-        if (e instanceof KeeperException.ConnectionLossException)
+        if (e instanceof KeeperException.ConnectionLossException || e instanceof KeeperException.SessionExpiredException)
         {
           synchronized (ZooKeeperAnnouncer.this)
           {
             _pendingMarkUp.add(callback);
           }
-          _log.warn("failed to mark up uri {} due to ConnectionLossException.", _uri);
+          _log.warn("failed to mark up uri {} due to {}.", _uri, e.getClass().getSimpleName());
         }
         else
         {
@@ -192,13 +192,13 @@ public class ZooKeeperAnnouncer
       @Override
       public void onError(Throwable e)
       {
-        if (e instanceof KeeperException.ConnectionLossException)
+        if (e instanceof KeeperException.ConnectionLossException || e instanceof KeeperException.SessionExpiredException)
         {
           synchronized (ZooKeeperAnnouncer.this)
           {
             _pendingMarkDown.add(callback);
           }
-          _log.warn("failed to mark down uri {} due to ConnectionLossException.", _uri);
+          _log.warn("failed to mark down uri {} due to {}.", _uri, e.getClass().getSimpleName());
         }
         else
         {

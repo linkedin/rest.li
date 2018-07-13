@@ -336,6 +336,7 @@ public class ZooKeeperConnectionManager
             {
               LOG.info("Started an announcer");
               multiCallback.onSuccess(result);
+              server.retry(Callbacks.<None>empty());
             }
           });
         }

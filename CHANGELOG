@@ -2,8 +2,12 @@
 ------
 (RB=1356168)
 Remove logs when data template task is disabled.
+
 (RB=1359131)
 Introduce RestLiClientConfig
+
+(RB=1342900)
+Retry markUp/Down in event of KeeperException.SessionExpiredException
 
 23.0.2
 ------
