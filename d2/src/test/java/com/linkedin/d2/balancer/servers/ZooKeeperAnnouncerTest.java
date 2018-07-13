@@ -2,8 +2,10 @@ package com.linkedin.d2.balancer.servers;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.FutureCallback;
+import com.linkedin.common.util.None;
 import org.apache.zookeeper.KeeperException;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
@@ -19,7 +21,9 @@ import static org.mockito.Mockito.verify;
 public class ZooKeeperAnnouncerTest
 {
   private ZooKeeperAnnouncer _zooKeeperAnnouncer;
-  private ArgumentCaptor<Callback> _captor;
+
+  @Captor
+  private ArgumentCaptor<Callback<None>> _captor;
 
   @Mock
   private ZooKeeperServer _zooKeeperServer;
@@ -30,7 +34,6 @@ public class ZooKeeperAnnouncerTest
     MockitoAnnotations.initMocks(this);
 
     _zooKeeperAnnouncer = new ZooKeeperAnnouncer(_zooKeeperServer);
-    _captor = ArgumentCaptor.forClass(Callback.class);
   }
 
   @Test
@@ -39,7 +42,7 @@ public class ZooKeeperAnnouncerTest
     _zooKeeperAnnouncer.markUp(new FutureCallback<>());
     verify(_zooKeeperServer, times(1)).markUp(any(), any(), any(), any(), _captor.capture());
 
-    Callback callback = _captor.getValue();
+    Callback<None> callback = _captor.getValue();
     callback.onError(new KeeperException.ConnectionLossException());
 
     _zooKeeperAnnouncer.retry(new FutureCallback<>());
@@ -52,7 +55,7 @@ public class ZooKeeperAnnouncerTest
     _zooKeeperAnnouncer.markDown(new FutureCallback<>());
     verify(_zooKeeperServer, times(1)).markDown(any(), any(), _captor.capture());
 
-    Callback callback = _captor.getValue();
+    Callback<None> callback = _captor.getValue();
     callback.onError(new KeeperException.ConnectionLossException());
 
     _zooKeeperAnnouncer.retry(new FutureCallback<>());
@@ -65,7 +68,7 @@ public class ZooKeeperAnnouncerTest
     _zooKeeperAnnouncer.markUp(new FutureCallback<>());
     verify(_zooKeeperServer, times(1)).markUp(any(), any(), any(), any(), _captor.capture());
 
-    Callback callback = _captor.getValue();
+    Callback<None> callback = _captor.getValue();
     callback.onError(new KeeperException.SessionExpiredException());
 
     _zooKeeperAnnouncer.retry(new FutureCallback<>());
@@ -78,7 +81,7 @@ public class ZooKeeperAnnouncerTest
     _zooKeeperAnnouncer.markDown(new FutureCallback<>());
     verify(_zooKeeperServer, times(1)).markDown(any(), any(), _captor.capture());
 
-    Callback callback = _captor.getValue();
+    Callback<None> callback = _captor.getValue();
     callback.onError(new KeeperException.SessionExpiredException());
 
     _zooKeeperAnnouncer.retry(new FutureCallback<>());

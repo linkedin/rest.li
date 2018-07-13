@@ -9,6 +9,9 @@ Introduce RestLiClientConfig
 (RB=1342900)
 Retry markUp/Down in event of KeeperException.SessionExpiredException
 
+(RB=1360221)
+Fix warnings in ZooKeeperAnnouncerTest resulting in failed compile.
+
 23.0.2
 ------
 (RB=1351456)
