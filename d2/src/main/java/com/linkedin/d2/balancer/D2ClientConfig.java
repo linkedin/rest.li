@@ -55,7 +55,7 @@ public class D2ClientConfig
   SSLParameters sslParameters = null;
   boolean isSSLEnabled = false;
   boolean shutdownAsynchronously = false;
-  boolean isSymlinkAware = false;
+  boolean isSymlinkAware = true;
   Map<String, Map<String, Object>> clientServicesConfig = Collections.<String, Map<String, Object>>emptyMap();
   boolean useNewEphemeralStoreWatcher = false;
   HealthCheckOperations healthCheckOperations = null;
