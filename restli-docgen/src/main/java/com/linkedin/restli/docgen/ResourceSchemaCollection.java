@@ -52,11 +52,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.RecursiveAction;
 
 
 /**
@@ -79,7 +76,6 @@ public class ResourceSchemaCollection
    */
   public static ResourceSchemaCollection loadOrCreateResourceSchema(Map<String, ResourceModel> rootResources)
   {
-    isNeedParallel = false;
     final ResourceModelEncoder encoder = new ResourceModelEncoder(new NullDocsProvider());
     final Map<String, ResourceSchema> schemaMap = new TreeMap<String, ResourceSchema>();
     for (ResourceModel resource : rootResources.values())
@@ -134,30 +130,30 @@ public class ResourceSchemaCollection
     return new ResourceSchemaCollection(resourceSchemaMap);
   }
 
+  public static void parallelVisitResource(Collection<ResourceSchema> resources, ResourceSchemaVisitior visitor) {
+    ExecutorService executorService = Executors.newWorkStealingPool();
+    List<ProcessTask> tasks = new ArrayList<>();
+    for (ResourceSchema schema : resources) {
+      tasks.add(new ProcessTask(visitor, new ArrayList<>(), schema));
+    }
+
+    try {
+      executorService.invokeAll(tasks);
+    } catch (InterruptedException e) {
+      throw new RestLiInternalException(e);
+    }
+
+    executorService.shutdown();
+  }
+
   /**
    * @param visitor {@link ResourceSchemaVisitior} to visit all resource schemas with the specified visitor
    */
   public static void visitResources(Collection<ResourceSchema> resources, ResourceSchemaVisitior visitor)
   {
-    if (!isNeedParallel) {
-      for (ResourceSchema schema : resources)
-      {
-        processResourceSchema(visitor, new ArrayList<ResourceSchema>(), schema);
-      }
-    } else {
-      ExecutorService executorService = Executors.newWorkStealingPool();
-      List<ProcessTask> tasks = new ArrayList<>();
-      for (ResourceSchema schema : resources) {
-        tasks.add(new ProcessTask(visitor, new ArrayList<>(), schema));
-      }
-
-      try {
-        executorService.invokeAll(tasks);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-
-      executorService.shutdown();
+    for (ResourceSchema schema : resources)
+    {
+      processResourceSchema(visitor, new ArrayList<ResourceSchema>(), schema);
     }
 
   }
@@ -328,20 +324,23 @@ public class ResourceSchemaCollection
     hierarchy.remove(hierarchy.size() - 1);
   }
 
-  private static class ProcessTask implements Callable<Object> {
+  private static class ProcessTask implements Callable<Object>
+  {
     private ResourceSchemaVisitior _visitor;
     private List<ResourceSchema> _hierarchy;
-    private ResourceSchema _resourceSchem;
+    private ResourceSchema _resourceSchema;
 
-    private ProcessTask(ResourceSchemaVisitior visitor, List<ResourceSchema> hierarchy, ResourceSchema resourceSchema) {
+    private ProcessTask(ResourceSchemaVisitior visitor, List<ResourceSchema> hierarchy, ResourceSchema resourceSchema)
+    {
       _visitor = visitor;
       _hierarchy = hierarchy;
-      _resourceSchem = resourceSchema;
+      _resourceSchema = resourceSchema;
     }
 
     @Override
-    public Object call() {
-      processResourceSchema(_visitor, _hierarchy, _resourceSchem);
+    public Object call()
+    {
+      processResourceSchema(_visitor, _hierarchy, _resourceSchema);
       return null;
     }
 
@@ -461,8 +460,4 @@ public class ResourceSchemaCollection
   private final Map<ResourceSchema, List<ResourceSchema>> _subResources;
   private final Map<ResourceSchema, List<ResourceSchema>> _parentResources;
 
-  // ResourceSchemaCollection.loadOrCreateResourceSchema process originally doesn't take too much of time
-  // Parallel that will just make thing worse. Thus we only want to parallel build relationship.
-  // However, visitResources is a static method, I have to set this in such a ugly way.
-  public static boolean isNeedParallel = true;
 }

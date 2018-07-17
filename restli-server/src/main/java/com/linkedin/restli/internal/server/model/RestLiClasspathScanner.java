@@ -27,10 +27,14 @@ import java.lang.annotation.Annotation;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.RecursiveAction;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 
@@ -62,6 +66,7 @@ class RestLiClasspathScanner
   public static final String SCHEME_ZIP = "zip";
   public static final char JAR_ENTRY_DELIMITER = '!';
   private static final Set<Class<? extends Annotation>> _annotations = buildAnnotations();
+  private final static int DEFAULT_THREADS_NUM = 16;
 
   private static Set<Class<? extends Annotation>> buildAnnotations()
   {
@@ -74,10 +79,11 @@ class RestLiClasspathScanner
   }
 
   private final Set<Class<?>> _matchedClasses;
-
   private final ClassLoader _classLoader;
   private final Set<String> _packagePaths;
   private final Set<String> _classNames;
+
+  private boolean _isParallel;
 
   public RestLiClasspathScanner(final Set<String> packageNames, final Set<String> classNames, final ClassLoader classLoader)
   {
@@ -89,7 +95,14 @@ class RestLiClasspathScanner
       _packagePaths.add(nameToPath(packageName));
     }
     _classNames = classNames;
-    _matchedClasses = new HashSet<Class<?>>();
+    _matchedClasses = Collections.synchronizedSet(new HashSet<Class<?>>());
+    _isParallel = false;
+  }
+
+  public RestLiClasspathScanner(final Set<String> packageNames, final Set<String> classNames, final ClassLoader classLoader, final boolean isParallel)
+  {
+    this(packageNames, classNames, classLoader);
+    _isParallel = isParallel;
   }
 
   private String nameToPath(final String name)
@@ -125,6 +138,45 @@ class RestLiClasspathScanner
 
   public void scanPackages()
   {
+    if (_isParallel)
+    {
+      parallelScan();
+    }
+    else
+    {
+      sequentiallyScan();
+    }
+
+  }
+
+  public String scanClasses()
+  {
+    final StringBuilder errorBuilder = new StringBuilder();
+
+    for (String c : _classNames)
+    {
+      try
+      {
+        final Class<?> candidateClass = classForName(c);
+        for (Annotation a : candidateClass.getAnnotations())
+        {
+          if (_annotations.contains(a.annotationType()))
+          {
+            _matchedClasses.add(candidateClass);
+            break;
+          }
+        }
+      }
+      catch (ClassNotFoundException e)
+      {
+        errorBuilder.append(String.format("Failed to load class %s\n", c));
+      }
+    }
+
+    return errorBuilder.toString();
+  }
+
+  private void sequentiallyScan() {
     try
     {
       for (String p : _packagePaths)
@@ -160,40 +212,88 @@ class RestLiClasspathScanner
     }
   }
 
-  public String scanClasses()
+  private void parallelScan()
   {
-    final StringBuilder errorBuilder = new StringBuilder();
-
-    for (String c : _classNames)
+    try
     {
+      int threadNum;
       try
       {
-        final Class<?> candidateClass = classForName(c);
-        for (Annotation a : candidateClass.getAnnotations())
-        {
-          if (_annotations.contains(a.annotationType()))
-          {
-            _matchedClasses.add(candidateClass);
-            break;
-          }
-        }
+        String numStr = System.getProperty("parallel");
+        threadNum = Integer.parseInt(numStr);
       }
-      catch (ClassNotFoundException e)
+      catch (NumberFormatException | NullPointerException e)
       {
-        errorBuilder.append(String.format("Failed to load class %s\n", c));
+        threadNum = DEFAULT_THREADS_NUM;
       }
+
+      ForkJoinPool pool = new ForkJoinPool(threadNum);
+      List<URL> resourceList = new ArrayList<>();
+      for (String p : _packagePaths)
+      {
+        resourceList.addAll(Collections.list(_classLoader.getResources(toUnixPath(p))));
+      }
+
+      pool.invoke(new ScanJarOrDirTask(resourceList));
+      pool.shutdown();
+    }
+    catch (IOException e) {
+      throw new ResourceConfigException("Unable to scan resources", e);
     }
 
-    return errorBuilder.toString();
   }
 
-  protected void jarScannerAdapter(final URI u) throws IOException {
-    scanJar(u);
+  private class ScanJarOrDirTask extends RecursiveAction
+  {
+    private static final long serialVersionUID = 10002;
+    private List<URL> _list;
+
+    private ScanJarOrDirTask(List<URL> list)
+    {
+      _list = list;
+    }
+
+    @Override
+    protected void compute()
+    {
+      if (_list.size() == 1)
+      {
+        try
+        {
+          URL url = _list.get(0);
+          URI u = url.toURI();
+          String scheme = u.getScheme();
+          switch (scheme) {
+            case SCHEME_JAR:
+            case SCHEME_ZIP:
+              scanJar(u);
+              break;
+            case SCHEME_FILE:
+              scanDirectory(new File(u.getPath()));
+              break;
+            default:
+              throw new ResourceConfigException(
+                  "Unable to scan resource '" + u.toString() + "'. URI scheme not supported by scanner.");
+          }
+        }
+        catch (IOException | URISyntaxException e)
+        {
+          throw new ResourceConfigException("Unable to scan resource", e);
+        }
+      }
+      else if (_list.size() > 1)
+      {
+        int mid = _list.size() / 2;
+        List<URL> headList = _list.subList(0, mid);
+        List<URL> tailList = _list.subList(mid, _list.size());
+        ScanJarOrDirTask headSubTask = new ScanJarOrDirTask(headList);
+        ScanJarOrDirTask tailSubTask = new ScanJarOrDirTask(tailList);
+        invokeAll(headSubTask, tailSubTask);
+      }
+    }
   }
 
-  protected void dirScannerAdapter(final File root) throws IOException {
-    scanDirectory(root);
-  }
+
 
   private void scanJar(final URI u) throws IOException
   {

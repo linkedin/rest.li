@@ -340,9 +340,7 @@ public class RestLiResourceRelationship
       }
     };
 
-    // explained this in its definition
-    ResourceSchemaCollection.isNeedParallel = true;
-    ResourceSchemaCollection.visitResources(_resourceSchemas.getResources().values(), visitor);
+    ResourceSchemaCollection.parallelVisitResource(_resourceSchemas.getResources().values(), visitor);
   }
 
   private final ResourceSchemaCollection _resourceSchemas;
