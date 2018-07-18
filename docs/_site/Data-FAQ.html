@@ -5,7 +5,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0"/>
 
-    <title>Rest.li-with-Netty</title>
+    <title>Data-FAQ</title>
     <meta name="description" content="A REST framework for building scalable service architectures using dynamic discovery and simple asynchronous APIs" />
 
     <link rel="icon"
@@ -15,7 +15,7 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" type="text/css" media="screen,projection" href="/assets/materialize.css" />
     <link rel="stylesheet" type="text/css" media="screen,projection" href="/assets/main.css">
-    <link rel="canonical" href="http://localhost:4000/rest.li/Rest_li-with-Netty" />
+    <link rel="canonical" href="http://localhost:4000/Data-FAQ" />
     <link rel="alternate" type="application/rss+xml" title="rest.li" href="/feed.xml" />
   
     
@@ -174,44 +174,127 @@
                         
                     </div>
                      <div class="markdown-body col s12 m3 l9">
-                            <p>Rest.li may be run in a variety of HTTP frameworks. Out of the box, Rest.li supports both Netty and Servlet containers, such as Jetty.</p>
+                            <h4 id="how-do-i-validate-a-record-with-default-values-filled-in"><strong>How do I validate a record with default values filled in?</strong></h4>
 
-<p>This page describes how to run Rest.li with Netty.</p>
-
-<h3 id="basics">Basics</h3>
-
-<p>Rest.li includes a <code class="highlighter-rouge">restli-netty-standalone</code> artifact containing a single class: <code class="highlighter-rouge">com.linkedin.restli.server.NettyStandaloneLauncher</code>.  This launcher class configures a Netty server to dispatch requests to all Rest.li resources that are both in the current classpath and in the list of package names the launcher is provided when it is created.</p>
-
-<h3 id="programmatically-calling-the-netty-launcher">Programmatically calling the Netty Launcher</h3>
-
-<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="kn">import</span> <span class="nn">com.linkedin.restli.server.NettyStandaloneLauncher</span><span class="o">;</span>
-    <span class="o">...</span>
-    <span class="n">NettyStandaloneLauncher</span> <span class="n">launcher</span> <span class="o">=</span> <span class="k">new</span> <span class="n">NettyStandaloneLauncher</span><span class="o">(</span>
-      <span class="mi">8080</span> <span class="cm">/*port*/</span><span class="o">,</span>
-      <span class="s">"com.example.fortunes"</span> <span class="cm">/* resource package(s) */</span>
-    <span class="o">);</span>
-    <span class="n">launcher</span><span class="o">.</span><span class="na">start</span><span class="o">();</span>
-    <span class="c1">// ... server is running.  launcher.stop() can be called to stop it.</span>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Foo</span> <span class="n">foo</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Foo</span><span class="o">();</span>  
+<span class="n">ValidationResult</span> <span class="n">result</span> <span class="o">=</span> <span class="n">ValidateDataAgainstSchema</span><span class="o">.</span><span class="na">validate</span><span class="o">(</span><span class="n">foo</span><span class="o">.</span><span class="na">data</span><span class="o">(),</span>
+<span class="n">foo</span><span class="o">.</span><span class="na">schema</span><span class="o">(),</span> <span class="k">new</span>
+<span class="n">ValidationOptions</span><span class="o">(</span><span class="n">RequiredMode</span><span class="o">.</span><span class="na">FIXUP_ABSENT_WITH_DEFAULT</span><span class="o">));</span>  
+<span class="k">assert</span><span class="o">(</span><span class="n">result</span><span class="o">.</span><span class="na">isValid</span><span class="o">());</span>  
 </code></pre></div></div>
 
-<p>Thread pool sizes may also optionally be configured using the overloaded constructor.</p>
+<p>This will fail if the underlying data is read-only and default values
+cannot be set for absent fields.</p>
 
-<h3 id="calling-the-netty-launcher-from-the-command-line">Calling the Netty Launcher from the Command Line</h3>
+<p>This will also work for partially filled in records. It will only add
+default values to fields that are absent.</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>java -cp &lt;classpath&gt; com.linkedin.restli.server.NettyStandaloneLauncher 8080 com.example.fortunes
+<h4 id="how-do-i-convert-a-pegasus-data-schema-to-an-avro-data-schema">How do I convert a Pegasus data schema to an Avro data schema</h4>
+
+<p>It requires the data-avro module, or data-avro-*.jar.</p>
+
+<p>At runtime, use:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Foo</span> <span class="n">foo</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Foo</span><span class="o">();</span>  
+<span class="n">DataSchema</span> <span class="n">pegasusSchema</span> <span class="o">=</span> <span class="n">foo</span><span class="o">.</span><span class="na">schema</span><span class="o">();</span>  
+<span class="n">org</span><span class="o">.</span><span class="na">apache</span><span class="o">.</span><span class="na">avro</span><span class="o">.</span><span class="na">Schema</span> <span class="n">avroSchema</span> <span class="o">=</span>
+<span class="n">SchemaTranslator</span><span class="o">.</span><span class="na">dataToAvroSchema</span><span class="o">(</span><span class="n">pegasusSchema</span><span class="o">);</span>  
+<span class="n">String</span> <span class="n">avsoSchemaInJson</span> <span class="o">=</span> <span class="n">avroSchema</span><span class="o">.</span><span class="na">toString</span><span class="o">();</span>  
 </code></pre></div></div>
 
-<h3 id="calling-the-netty-launcher-from-a-gradle-task">Calling the Netty Launcher from a Gradle Task</h3>
+<p>From the command line, to create text files with Avro schema from pdsc
+files (version 0.17.1 or higher):</p>
 
-<div class="language-groovy highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="n">task</span> <span class="nf">startFortunesServer</span><span class="o">(</span><span class="nl">type:</span> <span class="n">JavaExec</span><span class="o">)</span> <span class="o">{</span>
-      <span class="n">main</span> <span class="o">=</span> <span class="s1">'com.linkedin.restli.server.NettyStandaloneLauncher'</span>
-      <span class="n">args</span> <span class="o">=</span> <span class="o">[</span><span class="s1">'-port'</span><span class="o">,</span> <span class="s1">'8080'</span><span class="o">,</span> <span class="s1">'-packages'</span><span class="o">,</span> <span class="s1">'com.example.fortune.impl'</span><span class="o">]</span>
-      <span class="n">classpath</span> <span class="o">=</span> <span class="n">sourceSets</span><span class="o">.</span><span class="na">main</span><span class="o">.</span><span class="na">runtimeClasspath</span>
-      <span class="n">standardInput</span> <span class="o">=</span> <span class="n">System</span><span class="o">.</span><span class="na">in</span>
-    <span class="o">}</span>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>```# syntax:
+# java [-Dgenerator.resolver.path=&lt;path&gt;] com.linkedin.data.avro.AvroSchemaGenerator &lt;targetDir&gt; [&lt;pdscFile|schemaFullName&gt;]...
+java -Dgenerator.resolver.path=src/main/pegasus com.linkedin.data.avro.generator.AvroSchemaGenerator ../build/main/codegen/avro src/main/pegasus/com/linkedin/foo/*.pdsc
+# or
+java -Dgenerator.resolver.path=src/main/pegasus com.linkedin.data.avro.generator.AvroSchemaGenerator ../build/main/codegen/avro com.linkedin.foo.Foo
+```
 </code></pre></div></div>
 
-<p>Thread pool sizes may also optionally be configured by providing a number to the ‘-thread’ and ‘-parseqthreads’ args.</p>
+<p>Classpath must be setup to include data-avro.jar and its dependencies.</p>
+
+<h4 id="how-do-i-use-a-data-type-embedded-inside-a-pdsc-file">How do I use a data type embedded inside a pdsc file?</h4>
+
+<p>You may experience errors, such as the
+    following:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>```Type cannot be resolved: 1,1: "a.b.D" cannot be resolved.```
+</code></pre></div></div>
+
+<p>when <code class="highlighter-rouge">a.b.D</code>’s definition is embedded in another type, for
+example, <code class="highlighter-rouge">a.b.C</code>.</p>
+
+<p>Embedded data types do not have their own pdsc file. As a result, such
+data type can only be referenced within the containing pdsc file. It can
+not be referenced externally. To change this behavior, pull out the
+definition of the internal type to a separate pdsc file.</p>
+
+<p>Internally, this behavior is due to reason that the schema parser
+references the data types by filenames. pdsc file for <code class="highlighter-rouge">a.b.C</code>
+should be expected at <code class="highlighter-rouge">pegasus/a/b/C.pdsc</code>. Since Rest.li
+does not prefix the containing data type’s name to the embedded type’s
+name, when code&gt;a.b.D<code class="highlighter-rouge">is embedded in</code>C.pdsc<code class="highlighter-rouge">, the
+schema parser will not be able to find
+</code>pegasus/a/b/D.pdsc```.</p>
+
+<h4 id="why-is-my-java-8-build-generating-all-sorts-of-javadoc-warningserrors-due-to-doclint">Why is my Java 8 build generating all sorts of Javadoc warnings/errors due to doclint?</h4>
+
+<p>When using Java 8, you may experience build failures due to the
+following:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>```[error] /home/myuser/data-template/src/main/codegen/com/linkedin/PegasusFormSchema.java:192: error: malformed HTML
+* return type: java.util.Set&lt;java.lang.Integer&gt;
+[error] /home/myuser/data-template/src/main/codegen/com/linkedin/PegasusFormSchema.java:192: error: bad use of '&gt;'
+* return type: java.util.Set&lt;java.lang.Integer&gt;
+```
+</code></pre></div></div>
+
+<p>The root cause is incorrectly formatted string values for anything
+within the <code class="highlighter-rouge">doc</code> or <code class="highlighter-rouge">symbolDocs</code> attributes within your pdscs. Due to
+the addition of doclint in JDK8, anything under the doc or symbolDocs
+attribute must be W3C HTML 4.01 compliant. This is because the contents
+of this string will appear as Javadocs in the generated Java ‘data
+template’ classes later. Please take this into consideration when
+writing your documentation.</p>
+
+<p>The alternative is to disable doclint altogether:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>```  
+if (JavaVersion.current().isJava8Compatible()) {
+  allprojects {
+    tasks.withType(Javadoc) {
+      options.addStringOption('Xdoclint:none', '-quiet')
+    }
+  }
+}
+```
+</code></pre></div></div>
+
+<p>More details on doclint can be found here: <a href="http://stackoverflow.com/questions/22528767/jdk8-and-javadoc-has-become-very-strict">Javadoc has become very
+strict</a></p>
+
+<p>More details on <code class="highlighter-rouge">doc</code> and <code class="highlighter-rouge">symbolDocs</code> can be found here: <a href="https://github.com/linkedin/rest.li/wiki/DATA-Data-Schema-and-Templates">Data Schemas
+and
+Templates</a></p>
+
+<h4 id="how-does-restli-full-update-method-work-with-schema-evolution">How does rest.li full update method work with schema evolution?</h4>
+
+<p>There is a potential pitfall to be aware of. Consider the following
+scenario:</p>
+
+<ol>
+  <li>Suppose a schema begins on version 0 with a single optional field A.
+We write a client that sends an update request with the field A
+populated.</li>
+  <li>At some point, we add an optional field B in version 1.</li>
+  <li>Our old client still sends a request with A populated, but it is not
+clear how to interpret its request. From the server’s perspective,
+we cannot distinguish a new client that wants to null out field B
+(e.g. schema version 1) vs. a client that is not aware of field B
+(e.g. version 0).</li>
+</ol>
 
                      </div>
                    </div>

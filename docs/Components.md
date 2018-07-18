@@ -1,7 +1,7 @@
 ---
 layout: guide
 title: Components
-permalink: /rest.li/Components
+permalink: /Components
 ---
 
 Rest.li is the top layer of a larger software stack code named 'pegasus'.  Pegasus is comprised of the following major components.

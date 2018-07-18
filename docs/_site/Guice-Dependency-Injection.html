@@ -5,7 +5,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0"/>
 
-    <title>Components</title>
+    <title>Guice-Dependency-Injection</title>
     <meta name="description" content="A REST framework for building scalable service architectures using dynamic discovery and simple asynchronous APIs" />
 
     <link rel="icon"
@@ -15,7 +15,7 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" type="text/css" media="screen,projection" href="/assets/materialize.css" />
     <link rel="stylesheet" type="text/css" media="screen,projection" href="/assets/main.css">
-    <link rel="canonical" href="http://localhost:4000/rest.li/Components" />
+    <link rel="canonical" href="http://localhost:4000/Guice-Dependency-Injection" />
     <link rel="alternate" type="application/rss+xml" title="rest.li" href="/feed.xml" />
   
     
@@ -174,36 +174,24 @@
                         
                     </div>
                      <div class="markdown-body col s12 m3 l9">
-                            <p>Rest.li is the top layer of a larger software stack code named ‘pegasus’.  Pegasus is comprised of the following major components.</p>
+                            <p>Guice dependency injection may be used with Rest.li by using the <a href="https://github.com/linkedin/rest.li/tree/master/restli-guice-bridge">restli-guice-bridge</a> module.</p>
 
-<h3 id="data">data/</h3>
+<p>An example project using guice dependency injection is available in the Rest.li codebase:</p>
 
-<p>The pegasus data layer provides an in-memory data
-representation structurally equivalent to JSON, serialization to/from JSON
-format, and a schema-definition language for specifying data format.</p>
+<p>https://github.com/linkedin/rest.li/tree/master/examples/guice-server</p>
 
-<h3 id="generator">generator/</h3>
+<p>This example shows how Rest.li’s GuiceRestliServlet may be used to run Rest.li servers with full guice dependency injection.</p>
 
-<p>The pegasus data template code generation tool generates
-type-safe Java APIs for manipulating pegasus data objects.</p>
+<p>To use it, first add a dependency to the restli-guice-bridge module, for example:</p>
 
-<h3 id="r2">r2/</h3>
+<div class="language-groovy highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">dependencies</span> <span class="o">{</span>
+  <span class="n">compile</span> <span class="s2">"com.linkedin.pegasus:restli-guice-bridge:1.9.23"</span>
+<span class="o">}</span>
+</code></pre></div></div>
 
-<p>The pegasus request/response layer provides fully asynchronous
-abstractions for transport protocols, along with implementations
-for HTTP based on Netty and Jetty.</p>
+<p>Next, set up a <a href="https://code.google.com/p/google-guice/wiki/Servlets">guice servlet</a>, defining a guice GuiceServletContextListener for your application.  For an example, see <a href="https://github.com/linkedin/rest.li/blob/master/examples/guice-server/server/src/main/java/com/example/fortune/inject/FortunesGuiceServletConfig.java">/examples/guice-server/server/src/main/java/com/example/fortune/inject/FortunesGuiceServletConfig.java</a></p>
 
-<h3 id="d2">d2/</h3>
-
-<p>The pegasus dynamic discovery layer uses Apache Zookeeper to
-maintain cluster information.  D2 provides client-side software load balancing.</p>
-
-<h3 id="restli-">restli-*/</h3>
-
-<p>The pegasus Rest.li framework provides a simple framework
-for building and consuming RESTful resources.  Rest.li provides resource
-patterns that streamline common CRUD use cases for collections of entities and
-associations between entities.</p>
+<p>Lastly, configure your web.xml. For an example, see <a href="https://github.com/linkedin/rest.li/blob/master/examples/guice-server/server/src/main/webapp/WEB-INF/web.xml">/examples/guice-server/server/src/main/webapp/WEB-INF/web.xml</a></p>
 
                      </div>
                    </div>

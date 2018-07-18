@@ -1,7 +1,7 @@
 ---
 layout: guide
 title: Compression
-permalink: /rest.li/Compression
+permalink: /Compression
 ---
 
 Contents:

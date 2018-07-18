@@ -1,7 +1,7 @@
 ---
 layout: guide
 title: Dynamic_Discovery
-permalink: /rest.li/Dynamic_Discovery
+permalink: /Dynamic_Discovery
 ---
 
 ## Contents

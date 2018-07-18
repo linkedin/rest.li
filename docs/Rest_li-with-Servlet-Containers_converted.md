@@ -1,7 +1,7 @@
 ---
 layout: guide
 title: Rest.li-with-Servlet-Containers
-permalink: /rest.li/Rest_li-with-Servlet-Containers
+permalink: /Rest_li-with-Servlet-Containers
 ---
 
 ## Contents

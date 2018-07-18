@@ -5,7 +5,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0"/>
 
-    <title>Rest.li-2.0-response-API</title>
+    <title>Spring-Dependency-Injection</title>
     <meta name="description" content="A REST framework for building scalable service architectures using dynamic discovery and simple asynchronous APIs" />
 
     <link rel="icon"
@@ -15,7 +15,7 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" type="text/css" media="screen,projection" href="/assets/materialize.css" />
     <link rel="stylesheet" type="text/css" media="screen,projection" href="/assets/main.css">
-    <link rel="canonical" href="http://localhost:4000/rest.li/Rest_li-2_0-response-API" />
+    <link rel="canonical" href="http://localhost:4000/Spring-Dependency-Injection" />
     <link rel="alternate" type="application/rss+xml" title="rest.li" href="/feed.xml" />
   
     
@@ -174,57 +174,30 @@
                         
                     </div>
                      <div class="markdown-body col s12 m3 l9">
-                            <p>Pegasus 1.17.2 features a new set of response APIs for various batch operations. The motivation of this change is to simplify the old response APIs. This change focuses on two sets of operations: <code class="highlighter-rouge">BatchGet</code> and <code class="highlighter-rouge">BatchUpdate</code>/<code class="highlighter-rouge">BatchPartialUpdate</code>/<code class="highlighter-rouge">BatchDelete</code>.</p>
+                            <p>Spring dependency injection may be used with Rest.li by using the
+<a href="https://github.com/linkedin/rest.li/tree/master/restli-spring-bridge">restli-spring-bridge</a>
+module.</p>
 
-<h2 id="batchget">BatchGet</h2>
-<p>The following table summarizes the Rest.li response types:</p>
+<p>An example project using spring dependency injection is available in the
+Rest.li codebase:</p>
 
-<table>
-  <thead>
-    <tr>
-      <th>Response name</th>
-      <th>Returned by</th>
-      <th>Strong-typed key?</th>
-      <th>Value type</th>
-      <th>New in 1.17.2?</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>BatchResponse</td>
-      <td>BatchGetRequestBuilder.build()</td>
-      <td>No</td>
-      <td>T</td>
-      <td>No</td>
-    </tr>
-    <tr>
-      <td>BatchKVResponse</td>
-      <td>BatchGetRequestBuilder.buildKV()</td>
-      <td>Yes</td>
-      <td>T</td>
-      <td>No</td>
-    </tr>
-    <tr>
-      <td>BatchEntityResponse</td>
-      <td>BatchGetEntityRequestBuilder.build()</td>
-      <td>Yes</td>
-      <td>EntityResponse<T></T></td>
-      <td>Yes</td>
-    </tr>
-  </tbody>
-</table>
+<p><a href="https://github.com/linkedin/rest.li/tree/master/examples/spring-server">https://github.com/linkedin/rest.li/tree/master/examples/spring-server</a></p>
 
-<p><code class="highlighter-rouge">EntityResponse</code> is a new <code class="highlighter-rouge">RecordTemplate</code> class, which contains three fields:</p>
-<ul>
-  <li><code class="highlighter-rouge">entity</code> provides an entity record if the server resource finds a corresponding value for the key.</li>
-  <li><code class="highlighter-rouge">status</code> provides an optional status code.</li>
-  <li><code class="highlighter-rouge">error</code> provides the error detail from the server resource (generally <code class="highlighter-rouge">entity</code> and <code class="highlighter-rouge">error</code> are mutually exclusive as <code class="highlighter-rouge">null</code>, but it is ultimately up to the server resource).</li>
-</ul>
+<p>To use it, first add a dependency to the restli-spring-bridge module,
+for example:</p>
 
-<p>Note that since <code class="highlighter-rouge">EntityResponse</code> contains <code class="highlighter-rouge">error</code> field, the <code class="highlighter-rouge">Map&lt;K, V&gt;</code> returned by <code class="highlighter-rouge">BatchEntityResponse.getResults()</code> contains both successful as well as failed entries. <code class="highlighter-rouge">BatchEntityResponse.getErrors()</code> will only return failed entries.</p>
+<div class="language-groovy highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">dependencies</span> <span class="o">{</span>  
+<span class="n">compile</span> <span class="err">“</span><span class="n">com</span><span class="o">.</span><span class="na">linkedin</span><span class="o">.</span><span class="na">pegasus</span><span class="o">:</span><span class="n">restli</span><span class="o">-</span><span class="n">spring</span><span class="o">-</span><span class="nl">bridge:</span><span class="mf">1.9</span><span class="o">.</span><span class="mi">23</span><span class="err">”</span>  
+<span class="o">}</span>  
+</code></pre></div></div>
 
-<h2 id="batchupdatebatchpartialupdatebatchdelete">BatchUpdate/BatchPartialUpdate/BatchDelete</h2>
-<p>The response type of the BatchUpdate series methods are not changed. However, similar to <code class="highlighter-rouge">EntityResponse</code>, we added a new <code class="highlighter-rouge">error</code> field to <code class="highlighter-rouge">UpdateStatus</code> (the value type of the <code class="highlighter-rouge">BatchUpdate</code> series methods). Furthermore, <code class="highlighter-rouge">BatchKVResponse&lt;K, UpdateStatus&gt;.getResults()</code> will returns both successful as well as failed entries. <code class="highlighter-rouge">getErrors()</code> will only return failed entries.</p>
+<p>Then, wire in a Rest.li server and a RestliHttpRequestHandler. For an
+example, see
+<a href="https://github.com/linkedin/rest.li/blob/master/examples/spring-server/server/src/main/webapp/WEB-INF/beans.xml">/examples/spring-server/server/src/main/webapp/WEB-INF/beans.xml</a></p>
+
+<p>Lastly, use Spring’s HttpRequestHandlerServlet to run the
+RestliHttpRequestHandler as a servlet. For an example, see
+<a href="https://github.com/linkedin/rest.li/blob/master/examples/spring-server/server/src/main/webapp/WEB-INF/web.xml">examples/spring-server/server/src/main/webapp/WEB-INF/web.xml</a></p>
 
                      </div>
                    </div>

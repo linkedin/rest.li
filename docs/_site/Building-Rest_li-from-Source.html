@@ -5,7 +5,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0"/>
 
-    <title>Guice-Dependency-Injection</title>
+    <title>Building-Rest.li-from-Source</title>
     <meta name="description" content="A REST framework for building scalable service architectures using dynamic discovery and simple asynchronous APIs" />
 
     <link rel="icon"
@@ -15,7 +15,7 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" type="text/css" media="screen,projection" href="/assets/materialize.css" />
     <link rel="stylesheet" type="text/css" media="screen,projection" href="/assets/main.css">
-    <link rel="canonical" href="http://localhost:4000/rest.li/Guice-Dependency-Injection" />
+    <link rel="canonical" href="http://localhost:4000/Building-Rest_li-from-Source" />
     <link rel="alternate" type="application/rss+xml" title="rest.li" href="/feed.xml" />
   
     
@@ -174,24 +174,57 @@
                         
                     </div>
                      <div class="markdown-body col s12 m3 l9">
-                            <p>Guice dependency injection may be used with Rest.li by using the <a href="https://github.com/linkedin/rest.li/tree/master/restli-guice-bridge">restli-guice-bridge</a> module.</p>
+                            <p>You can use the latest released version of Rest.li or build your own
+local version.</p>
 
-<p>An example project using guice dependency injection is available in the Rest.li codebase:</p>
+<h2 id="using-restli-jars">Using Rest.li JARs</h2>
 
-<p>https://github.com/linkedin/rest.li/tree/master/examples/guice-server</p>
+<p>If you are not modifying the Rest.li source code, you don’t need to
+build Rest.li. You can simply depend on the <a href="http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.linkedin.pegasus%22">artifacts in the maven
+central
+repository</a></p>
 
-<p>This example shows how Rest.li’s GuiceRestliServlet may be used to run Rest.li servers with full guice dependency injection.</p>
+<p>The current latest version in Maven Central is 2.2.5.</p>
 
-<p>To use it, first add a dependency to the restli-guice-bridge module, for example:</p>
+<p>For details on how to use Rest.li from its maven central artifacts, see:
+<a href="https://github.com/linkedin/rest.li/wiki/Quickstart:-A-Tutorial-Introduction-to-Rest.li">Quickstart</a></p>
 
-<div class="language-groovy highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">dependencies</span> <span class="o">{</span>
-  <span class="n">compile</span> <span class="s2">"com.linkedin.pegasus:restli-guice-bridge:1.9.23"</span>
-<span class="o">}</span>
+<h2 id="building-your-own-copy-of-restli">Building Your Own Copy of Rest.li</h2>
+
+<p>You can also checkout, modify, or build your own copy of Rest.li.</p>
+
+<h3 id="checking-out-source">Checking Out Source</h3>
+
+<p>You can get your own copy of the Rest.li repository with:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>```git clone git@github.com:linkedin/rest.li.wiki```
 </code></pre></div></div>
 
-<p>Next, set up a <a href="https://code.google.com/p/google-guice/wiki/Servlets">guice servlet</a>, defining a guice GuiceServletContextListener for your application.  For an example, see <a href="https://github.com/linkedin/rest.li/blob/master/examples/guice-server/server/src/main/java/com/example/fortune/inject/FortunesGuiceServletConfig.java">/examples/guice-server/server/src/main/java/com/example/fortune/inject/FortunesGuiceServletConfig.java</a></p>
+<p>Or if you already have a copy of the repository, you can update it with:</p>
 
-<p>Lastly, configure your web.xml. For an example, see <a href="https://github.com/linkedin/rest.li/blob/master/examples/guice-server/server/src/main/webapp/WEB-INF/web.xml">/examples/guice-server/server/src/main/webapp/WEB-INF/web.xml</a></p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>```git pull```
+</code></pre></div></div>
+
+<h3 id="building-restli">Building Rest.li</h3>
+
+<p>To do a clean build type, do this:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>```gradle clean build```
+</code></pre></div></div>
+
+<p>To install the gradle JARs in your own local repository, do this:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>```gradle install```
+</code></pre></div></div>
+
+<h4 id="out-of-memory-while-trying-to-build">Out of Memory While Trying to Build?</h4>
+
+<p>If the build fails with an error message saying that there isn’t enough
+memory, increase the memory using the following command and try again:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>export GRADLE_OPTS=“-Xms512M -Xmx1536M -Xss1M
+-XX:+CMSClassUnloadingEnabled -XX:MaxPermSize=1024M”  
+</code></pre></div></div>
 
                      </div>
                    </div>

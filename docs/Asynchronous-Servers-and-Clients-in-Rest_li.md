@@ -1,7 +1,7 @@
 ---
 layout: guide
 title: Asynchronous-Servers-and-Clients-in-Rest.li
-permalink: /rest.li/Asynchronous-Servers-and-Clients-in-Rest_li
+permalink: /Asynchronous-Servers-and-Clients-in-Rest_li
 ---
 
 This page contains the following sections and assumes that the reader is familiar with [ParSeq](https://github.com/linkedin/parseq) and its [key concepts](https://github.com/linkedin/parseq/wiki/User's-Guide#key-concepts):

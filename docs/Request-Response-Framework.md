@@ -1,7 +1,7 @@
 ---
 layout: guide
 title: Request-Response-Framework
-permalink: /rest.li/Request-Response-Framework
+permalink: /Request-Response-Framework
 ---
 
 Pegasus's request/response framework, often called R2,  includes abstractions for REST and RPC requests and responses, filter chains for customized processing, and transport abstraction. 

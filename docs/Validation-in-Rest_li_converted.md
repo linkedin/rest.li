@@ -1,7 +1,7 @@
 ---
 layout: guide
 title: Validation-in-Rest.li
-permalink: /rest.li/Validation-in-Rest_li
+permalink: /Validation-in-Rest_li
 ---
 
 There are many situations in which incoming or outgoing data should be

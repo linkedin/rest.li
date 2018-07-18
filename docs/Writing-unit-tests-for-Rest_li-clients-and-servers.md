@@ -1,7 +1,7 @@
 ---
 layout: guide
 title: Writing-unit-tests-for-Rest.li-clients-and-servers
-permalink: /rest.li/Writing-unit-tests-for-Rest_li-clients-and-servers
+permalink: /Writing-unit-tests-for-Rest_li-clients-and-servers
 ---
 
 ### Contents

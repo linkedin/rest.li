@@ -1,7 +1,7 @@
 ---
 layout: guide
 title: Rest.li-with-Netty
-permalink: /rest.li/Rest_li-with-Netty
+permalink: /Rest_li-with-Netty
 ---
 
 Rest.li may be run in a variety of HTTP frameworks. Out of the box, Rest.li supports both Netty and Servlet containers, such as Jetty.

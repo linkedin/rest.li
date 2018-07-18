@@ -1,7 +1,7 @@
 ---
 layout: guide
 title: Data-FAQ
-permalink: /rest.li/Data-FAQ
+permalink: /Data-FAQ
 ---
 
 #### **How do I validate a record with default values filled in?**

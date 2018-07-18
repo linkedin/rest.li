@@ -1,7 +1,7 @@
 ---
 layout: guide
 title: How_To:Rest.li_Avro_conversions
-permalink: /rest.li/How_To:Rest_li_Avro_conversions
+permalink: /How_To:Rest_li_Avro_conversions
 ---
 
 ## Contents

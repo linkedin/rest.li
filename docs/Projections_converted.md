@@ -1,7 +1,7 @@
 ---
 layout: guide
 title: Projections
-permalink: /rest.li/Projections
+permalink: /Projections
 ---
 
 ## Contents

@@ -1,7 +1,7 @@
 ---
 layout: guide
 title: Rest.li-2.0-response-API
-permalink: /rest.li/Rest_li-2_0-response-API
+permalink: /Rest_li-2_0-response-API
 ---
 
 Pegasus 1.17.2 features a new set of response APIs for various batch operations. The motivation of this change is to simplify the old response APIs. This change focuses on two sets of operations: `BatchGet` and `BatchUpdate`/`BatchPartialUpdate`/`BatchDelete`.

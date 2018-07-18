@@ -1,7 +1,7 @@
 ---
 layout: guide
 title: Request-Response-API-(R2)
-permalink: /rest.li/Request-Response-API-(R2)
+permalink: /Request-Response-API-(R2)
 ---
 
 ## Introduction	

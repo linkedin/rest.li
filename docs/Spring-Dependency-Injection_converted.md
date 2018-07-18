@@ -1,7 +1,7 @@
 ---
 layout: guide
 title: Spring-Dependency-Injection
-permalink: /rest.li/Spring-Dependency-Injection
+permalink: /Spring-Dependency-Injection
 ---
 
 Spring dependency injection may be used with Rest.li by using the

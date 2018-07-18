@@ -5,7 +5,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0"/>
 
-    <title>Request-Response-Framework</title>
+    <title>Rest.li-with-Netty</title>
     <meta name="description" content="A REST framework for building scalable service architectures using dynamic discovery and simple asynchronous APIs" />
 
     <link rel="icon"
@@ -15,7 +15,7 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" type="text/css" media="screen,projection" href="/assets/materialize.css" />
     <link rel="stylesheet" type="text/css" media="screen,projection" href="/assets/main.css">
-    <link rel="canonical" href="http://localhost:4000/rest.li/Request-Response-Framework" />
+    <link rel="canonical" href="http://localhost:4000/Rest_li-with-Netty" />
     <link rel="alternate" type="application/rss+xml" title="rest.li" href="/feed.xml" />
   
     
@@ -174,56 +174,44 @@
                         
                     </div>
                      <div class="markdown-body col s12 m3 l9">
-                            <p>Pegasus’s request/response framework, often called R2,  includes abstractions for REST and RPC requests and responses, filter chains for customized processing, and transport abstraction.</p>
+                            <p>Rest.li may be run in a variety of HTTP frameworks. Out of the box, Rest.li supports both Netty and Servlet containers, such as Jetty.</p>
 
-<p>R2 can be used in conjunction with the Dynamic Discovery system (also known as D2). The combined stack can be referred to as “R2D2”. R2 can be used independently as well.</p>
+<p>This page describes how to run Rest.li with Netty.</p>
 
-<h3 id="filters">Filters</h3>
-<p>The R2 framework in Rest.li contains a filter chain layer. This allows developers to process and modify the content, the associated wire attributes, and the local attributes for each request/response.</p>
+<h3 id="basics">Basics</h3>
 
-<p>To implement a filter, simply implement the relevant Filter interface (for REST, this is <code class="highlighter-rouge">RestFilter</code>; for RPC, use <code class="highlighter-rouge">RpcFilter</code>).</p>
+<p>Rest.li includes a <code class="highlighter-rouge">restli-netty-standalone</code> artifact containing a single class: <code class="highlighter-rouge">com.linkedin.restli.server.NettyStandaloneLauncher</code>.  This launcher class configures a Netty server to dispatch requests to all Rest.li resources that are both in the current classpath and in the list of package names the launcher is provided when it is created.</p>
 
-<p>To use a filter, instantiate a Rest.li server/client with a <code class="highlighter-rouge">FilterChain</code> that contains the filters you want to use in the order that you would like to use them in. Note that the order of processing is as follows:</p>
-<ul>
-  <li>Requests are processed <strong>starting from the beginning of the chain and move towards the end</strong> of the filter chain.</li>
-  <li>Responses are processed <strong>from the end of the filter chain and move back towards the beginning</strong> of the filter chain.</li>
-</ul>
+<h3 id="programmatically-calling-the-netty-launcher">Programmatically calling the Netty Launcher</h3>
 
-<h3 id="filter-example">Filter Example</h3>
-
-<p>Consider the example given in the Rest.li client tutorial:</p>
-
-<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">final</span> <span class="n">HttpClientFactory</span> <span class="n">http</span> <span class="o">=</span> <span class="k">new</span> <span class="n">HttpClientFactory</span><span class="o">();</span>
-<span class="kd">final</span> <span class="n">Client</span> <span class="n">r2Client</span> <span class="o">=</span> <span class="k">new</span> <span class="n">TransportClientAdapter</span><span class="o">(</span>
-                                      <span class="n">http</span><span class="o">.</span><span class="na">getClient</span><span class="o">(</span><span class="n">Collections</span><span class="o">.&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">String</span><span class="o">&gt;</span><span class="n">emptyMap</span><span class="o">()));</span>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="kn">import</span> <span class="nn">com.linkedin.restli.server.NettyStandaloneLauncher</span><span class="o">;</span>
+    <span class="o">...</span>
+    <span class="n">NettyStandaloneLauncher</span> <span class="n">launcher</span> <span class="o">=</span> <span class="k">new</span> <span class="n">NettyStandaloneLauncher</span><span class="o">(</span>
+      <span class="mi">8080</span> <span class="cm">/*port*/</span><span class="o">,</span>
+      <span class="s">"com.example.fortunes"</span> <span class="cm">/* resource package(s) */</span>
+    <span class="o">);</span>
+    <span class="n">launcher</span><span class="o">.</span><span class="na">start</span><span class="o">();</span>
+    <span class="c1">// ... server is running.  launcher.stop() can be called to stop it.</span>
 </code></pre></div></div>
 
-<p>Suppose your filter was implemented in some class <code class="highlighter-rouge">MyClientFilter</code>. To add this filter, you might do something like this:</p>
+<p>Thread pool sizes may also optionally be configured using the overloaded constructor.</p>
 
-<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">FilterChain</span> <span class="n">fc</span> <span class="o">=</span> <span class="n">FilterChains</span><span class="o">.</span><span class="na">empty</span><span class="o">().</span><span class="na">addFilter</span><span class="o">(</span><span class="k">new</span> <span class="n">MyClientFilter</span><span class="o">());</span>
-<span class="kd">final</span> <span class="n">HttpClientFactory</span> <span class="n">http</span> <span class="o">=</span> <span class="k">new</span> <span class="n">HttpClientFactory</span><span class="o">(</span><span class="n">fc</span><span class="o">);</span>
-<span class="kd">final</span> <span class="n">Client</span> <span class="n">r2Client</span> <span class="o">=</span> <span class="k">new</span> <span class="n">TransportClientAdapter</span><span class="o">(</span>
-                                      <span class="n">http</span><span class="o">.</span><span class="na">getClient</span><span class="o">(</span><span class="n">Collections</span><span class="o">.&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">String</span><span class="o">&gt;</span><span class="n">emptyMap</span><span class="o">()));</span>
+<h3 id="calling-the-netty-launcher-from-the-command-line">Calling the Netty Launcher from the Command Line</h3>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>java -cp &lt;classpath&gt; com.linkedin.restli.server.NettyStandaloneLauncher 8080 com.example.fortunes
 </code></pre></div></div>
 
-<p>So how would one go about writing a filter?
-As an example, suppose we wanted to use filters to compress the responses we receive from the server.</p>
+<h3 id="calling-the-netty-launcher-from-a-gradle-task">Calling the Netty Launcher from a Gradle Task</h3>
 
-<p>A client filter could do this:</p>
-<ul>
-  <li>Add an HTTP Accept-Encoding header to its outbound requests.</li>
-  <li>On inbound responses, the filter would read the Content-Encoding header and decompress the payload accordingly.</li>
-</ul>
+<div class="language-groovy highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="n">task</span> <span class="nf">startFortunesServer</span><span class="o">(</span><span class="nl">type:</span> <span class="n">JavaExec</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">main</span> <span class="o">=</span> <span class="s1">'com.linkedin.restli.server.NettyStandaloneLauncher'</span>
+      <span class="n">args</span> <span class="o">=</span> <span class="o">[</span><span class="s1">'-port'</span><span class="o">,</span> <span class="s1">'8080'</span><span class="o">,</span> <span class="s1">'-packages'</span><span class="o">,</span> <span class="s1">'com.example.fortune.impl'</span><span class="o">]</span>
+      <span class="n">classpath</span> <span class="o">=</span> <span class="n">sourceSets</span><span class="o">.</span><span class="na">main</span><span class="o">.</span><span class="na">runtimeClasspath</span>
+      <span class="n">standardInput</span> <span class="o">=</span> <span class="n">System</span><span class="o">.</span><span class="na">in</span>
+    <span class="o">}</span>
+</code></pre></div></div>
 
-<p>A corresponding server might do this:</p>
-<ul>
-  <li>The server’s compression filter can read the inbound request’s Accept-Encoding header and store it as a local attribute.</li>
-  <li>When the server response is ready to go, the filter can intercept the outbound response, compress it, and send the compressed payload off with the corresponding HTTP Content-Encoding header.</li>
-</ul>
-
-<p>See an implementation example here: https://github.com/linkedin/rest.li/tree/master/r2/src/main/java/com/linkedin/r2/filter/compression</p>
-
-<p>For a full list of filters, see: https://github.com/linkedin/rest.li/wiki/List-of-R2-filters</p>
+<p>Thread pool sizes may also optionally be configured by providing a number to the ‘-thread’ and ‘-parseqthreads’ args.</p>
 
                      </div>
                    </div>

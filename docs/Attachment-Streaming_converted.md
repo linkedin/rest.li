@@ -1,7 +1,7 @@
 ---
 layout: guide
 title: Attachment-Streaming
-permalink: /rest.li/Attachment-Streaming
+permalink: /Attachment-Streaming
 ---
 
 **This is an experimental feature at this point. Please consult Rest.li

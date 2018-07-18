@@ -1,7 +1,7 @@
 ---
 layout: guide
 title: Scala-Integration
-permalink: /rest.li/Scala-Integration
+permalink: /Scala-Integration
 ---
 
 ## Contents

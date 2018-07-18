@@ -1,7 +1,7 @@
 ---
 layout: guide
 title: Rest.li-Filters
-permalink: /rest.li/Rest_li-Filters
+permalink: /Rest_li-Filters
 ---
 
 # Contents

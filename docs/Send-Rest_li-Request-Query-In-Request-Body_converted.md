@@ -1,7 +1,7 @@
 ---
 layout: guide
 title: Send-Rest.li-Request-Query-In-Request-Body
-permalink: /rest.li/Send-Rest_li-Request-Query-In-Request-Body
+permalink: /Send-Rest_li-Request-Query-In-Request-Body
 ---
 
 ## Contents

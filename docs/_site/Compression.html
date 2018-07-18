@@ -5,7 +5,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0"/>
 
-    <title>Send-Rest.li-Request-Query-In-Request-Body</title>
+    <title>Compression</title>
     <meta name="description" content="A REST framework for building scalable service architectures using dynamic discovery and simple asynchronous APIs" />
 
     <link rel="icon"
@@ -15,7 +15,7 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" type="text/css" media="screen,projection" href="/assets/materialize.css" />
     <link rel="stylesheet" type="text/css" media="screen,projection" href="/assets/main.css">
-    <link rel="canonical" href="http://localhost:4000/rest.li/Send-Rest_li-Request-Query-In-Request-Body" />
+    <link rel="canonical" href="http://localhost:4000/Compression" />
     <link rel="alternate" type="application/rss+xml" title="rest.li" href="/feed.xml" />
   
     
@@ -174,144 +174,84 @@
                         
                     </div>
                      <div class="markdown-body col s12 m3 l9">
-                            <h2 id="contents">Contents</h2>
-
+                            <p>Contents:</p>
 <ul>
-  <li><a href="#introduction">Introduction</a></li>
-  <li><a href="#clientquerytunnelfilter-and-serverquerytunnelfilter">ClientQueryTunnelFilter and
-ServerQueryTunnelFilter</a></li>
-  <li><a href="#request-without-body">Request Without Body</a></li>
-  <li><a href="#request-with-body">Request With Body</a></li>
+  <li><a href="https://github.com/linkedin/rest.li/wiki/Compression#supported-algorithms">Supported Algorithms</a></li>
+  <li><a href="https://github.com/linkedin/rest.li/wiki/Compression#using-guice">Using Guice</a></li>
+  <li><a href="https://github.com/linkedin/rest.li/wiki/Compression#using-spring">Using Spring</a></li>
 </ul>
 
-<h2 id="introduction">Introduction</h2>
+<h2 id="supported-algorithms">Supported Algorithms</h2>
 
-<p><a href="https://github.com/linkedin/rest.li/wiki/Rest.li-Protocol">Rest.li
-protocol</a>
-specifies what HTTP method will be used for each type of Rest.li
-request. However, sometimes due to security constraint (i.e. not wanting
-to send some sensitive information in URI) or jetty buffer limitation
-(i.e. there may pose a threshold on the longest query that can go
-through), we may want to customize the HTTP method used to send a
-particular Rest.li request to a Rest.li server.</p>
+<p>The list of supported algorithms are posted here https://github.com/linkedin/rest.li/blob/master/r2/src/main/java/com/linkedin/r2/filter/compression/EncodingType.java.</p>
 
-<h2 id="clientquerytunnelfilter-and-serverquerytunnelfilter">ClientQueryTunnelFilter and ServerQueryTunnelFilter</h2>
+<p><em><strong>Note</strong>: There is no hand-shake protocol between the server and the client to make sure that the server supports a particular compression algorithm. If the client sends a request compressed using an algorithm that the server is not configured with, then the client request will fail as the server will not be able to decompress it.</em></p>
 
-<p>Rest.li has provided
-<a href="https://github.com/linkedin/rest.li/blob/master/r2-core/src/main/java/com/linkedin/r2/filter/transport/ClientQueryTunnelFilter.java">ClientQueryTunnelFilter</a>
-(R2 client filter) and
-<a href="https://github.com/linkedin/rest.li/blob/master/r2-core/src/main/java/com/linkedin/r2/filter/transport/ServerQueryTunnelFilter.java">ServerQueryTunnelFilter</a>
-(R2 server filter) to support such HTTP method customization. These two
-filters behaves as follows:</p>
+<h2 id="using-guice">Using Guice</h2>
 
-<ul>
-  <li>On sending a rest request from client, ClientQueryTunnelFilter will
-invoke
-<a href="https://github.com/linkedin/rest.li/blob/master/r2-core/src/main/java/com/linkedin/r2/message/QueryTunnelUtil.java">QueryTunnelUtil</a>
-encoding function to encode a standard non-POST rest.li request by
-moving the query param line into the body, and reformulating the
-request as a POST. The original method is specified by the
-<code class="highlighter-rouge">X-HTTP-Method-Override</code> header. This header is important to
-indicate that on the server side we should invoke QueryTunnelUtil
-decoding function to get back original request so that this
-conversion looks completely transparent to users. User can indicate
-whether they want to perform such encoding in two ways:</li>
-</ul>
+<h3 id="server-configuration">Server Configuration</h3>
 
-<!-- end list -->
+<p>To see how the server must be configured, see https://github.com/linkedin/rest.li/blob/master/examples/guice-server/server/src/main/java/com/example/fortune/inject/FortunesGuiceServletConfig.java.</p>
 
-<ol>
-  <li>Either by specifying a queryPostThreshold in initializing
-ClientQueryTunnelFilter. That means if the rest request raw query
-length is greater than this specified queryPostTreshold,
-ClientQueryTunnelFilter will automatically convert this request to
-POST.</li>
-  <li>Or by forcing request conversion to specify in request context
-    <code class="highlighter-rouge">
-       requestContext.putLocalAttr(R2Constants.FORCE_QUERY_TUNNEL, true);
-   </code></li>
-</ol>
-
-<!-- end list -->
-
-<ul>
-  <li>On receiving a rest request at server, ServerQueryTunnelFilter will
-invoke QueryTunnelUtil.decode to convert request back to its
-original form based on a special header set by
-ClientQueryTunnelFilter, that is, <code class="highlighter-rouge">X-HTTP-Method-Override</code>.</li>
-</ul>
-
-<h2 id="request-without-body">Request Without Body</h2>
-
-<p>For a rest.li request without body, for example, a BATCH_GET request
-like this <code class="highlighter-rouge">http://localhost?ids=List(1,2,3)</code>, the transformed POST
-request is x-www-form-urlencoded with query params stored in the body,
-as follows:</p>
-
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>```
-   curl -X POST -H "X-HTTP-Method-Override: GET" -H "Content-Type: application/x-www-form-urlencoded" 
-               --data $'ids=1,2,3' http://localhost 
-```
+<p>In particular:</p>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">FilterChain</span> <span class="n">filterChain</span> <span class="o">=</span> <span class="n">FilterChains</span><span class="o">.</span><span class="na">create</span><span class="o">(</span>
+    <span class="k">new</span> <span class="nf">ServerCompressionFilter</span><span class="o">(</span><span class="k">new</span> <span class="n">EncodingType</span><span class="o">[]</span> <span class="o">{</span> <span class="n">EncodingType</span><span class="o">.</span><span class="na">SNAPPY</span> <span class="o">}),</span>
+    <span class="k">new</span> <span class="nf">SimpleLoggingFilter</span><span class="o">());</span>
 </code></pre></div></div>
 
-<p>Basically,</p>
-
-<ul>
-  <li>change GET to POST (<code class="highlighter-rouge">-X POST</code>)</li>
-  <li>add X-HTTP-Method-Override header for original HTTP method (<code class="highlighter-rouge">-H
-"X-HTTP-Method-Override: GET"</code>)</li>
-  <li>add Content-Type header (<code class="highlighter-rouge">-H "Content-Type:
-application/x-www-form-urlencoded"</code>)</li>
-  <li>move all the query string to body (@—data $’ids=List(1,2,3)’)<br />
-Note that if QueryTunnelUtil need to do actual encoding or decoding,
-the request would be fully buffered first,<br />
-even if it’s streaming.<br />
-We believe QueryTunnelUtil is almost exclusively for GET requests,
-practically no use case would require<br />
-excessively long query for POST &amp; PUT, and we’d be surprised if
-anyone is using QueryTunnelUtil for PUT &amp; GET.<br />
-Hence, fully buffering request that has to be encoded/decoded is
-practically not a problem and gives up the best<br />
-return for the investment of our efforts.</li>
-</ul>
-
-<h2 id="request-with-body">Request With Body</h2>
-
-<p>For a rest.li request with body, for example, a BATCH_UPDATE request
-like this <code class="highlighter-rouge">http://localhost?ids=List(1,2,3)</code>, the transformed POST
-request will be of Content-Type of multipart/mixed with 2 sections:</p>
-
-<ol>
-  <li>The first section should be of type x-www-form-urlencoded and
-contain the query params</li>
-  <li>The second should contain what would have been the original body,
-along with it’s associated content-type.</li>
-</ol>
-
-<p>It will look as follows:</p>
-
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>```
-    curl -X POST -H "X-HTTP-Method-Override: PUT" -H "Content-Type: multipart/mixed; boundary=xyz" 
-       --data $'--xyz\r\nContent-Type: application/x-www-form-urlencoded\r\n\r\nids=List(1,2,3)\r\n--xyz\r\n 
-              Content-Type: application/json\r\n\r\n{"foo":"bar"}\r\n--xyz--' 
-              http://localhost 
-```
+<p>This instantiates a Rest.li server that supports SNAPPY compression. To support SNAPPY and GZIP, for example, you would have to instantiate your server as follows:</p>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">FilterChain</span> <span class="n">filterChain</span> <span class="o">=</span> <span class="n">FilterChains</span><span class="o">.</span><span class="na">create</span><span class="o">(</span>
+    <span class="k">new</span> <span class="nf">ServerCompressionFilter</span><span class="o">(</span><span class="k">new</span> <span class="n">EncodingType</span><span class="o">[]</span> <span class="o">{</span> <span class="n">EncodingType</span><span class="o">.</span><span class="na">SNAPPY</span><span class="o">,</span> <span class="n">EncodingType</span><span class="o">.</span><span class="na">GZIP</span> <span class="o">}),</span>
+    <span class="k">new</span> <span class="nf">SimpleLoggingFilter</span><span class="o">());</span>
 </code></pre></div></div>
 
-<p>Here,</p>
+<p>When we say that a server supports a particular algorithm for compression, it means that the server can compress and decompress using that algorithm. When to compress and decompress is governed by the client request.</p>
+
+<h3 id="client-configuration">Client Configuration</h3>
+
+<p>To see how the client must be configured, see https://github.com/linkedin/rest.li/blob/master/examples/guice-server/client/src/main/java/com/example/fortune/RestLiFortunesClient.java.</p>
+
+<p>In particular:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="kd">final</span> <span class="n">HttpClientFactory</span> <span class="n">http</span> <span class="o">=</span> <span class="k">new</span> <span class="n">HttpClientFactory</span><span class="o">(</span><span class="n">FilterChains</span><span class="o">.</span><span class="na">create</span><span class="o">(</span>
+        <span class="k">new</span> <span class="nf">ClientCompressionFilter</span><span class="o">(</span><span class="n">EncodingType</span><span class="o">.</span><span class="na">IDENTITY</span><span class="o">,</span> <span class="k">new</span> <span class="n">EncodingType</span><span class="o">[]{</span> <span class="n">EncodingType</span><span class="o">.</span><span class="na">SNAPPY</span><span class="o">},</span> <span class="s">"*"</span><span class="o">)</span>
+    <span class="o">));</span>
+</code></pre></div></div>
+
+<p>This snippet instructs Rest.li to use IDENTITY (also known as no compression) for requests to the server. In other words, the HTTP “Content-Encoding” header will be set to “identity”. Thus, the first argument dictates the value of the “Content-Encoding” header.</p>
+
+<p>The second argument dictates the value of the “Accept-Encoding” header. In the snippet above, each request to the server will have “Accept-Encoding” set to “snappy”. Why every request? Because the third argument is set to “*”. “*” means that each and every request to the server will have an “Accept-Encoding” header present. The third argument is a String of comma separated values, where the values can be “*”, a method name, or a family.</p>
 
 <ul>
-  <li>change GET to POST (<code class="highlighter-rouge">-X POST</code>)</li>
-  <li>add X-HTTP-Method-Override header for original HTTP method (<code class="highlighter-rouge">-H
-"X-HTTP-Method-Override: GET"</code>)</li>
-  <li>add Content-Type header (<code class="highlighter-rouge">-H "Content-Type: multipart/mixed;
-boundary=xyz"</code>). Note that here we need to specify a boundary
-delimiter (here we use <code class="highlighter-rouge">xyz</code> for illustration) for multipart body,
-this delimiter needs to be unique and not appearing in your request
-content body or url.</li>
-  <li>move all the query string and original request body to body as two
-sections explained above.</li>
+  <li>“*”: add the “Accept-Encoding” header to all outgoing requests.</li>
+  <li>a method name: add the “Accept-Encoding” header only for requests for the particular method. E.g. “get” would add it for get requests, “get, batch_get” would add it for get and batch_get requests etc.</li>
+  <li>a family: add the “Accept-Encoding” header only for requests for a method that matches the family. A family is specified as method:*. E.g. “action:*” would add it for all actions, “finder:*” would add it for all finder requests etc.</li>
 </ul>
+
+<p>The above three can be mixed. For example, to have compression on get, batch_get and all finders, the third argument would be “get, batch_get, finder:*”</p>
+
+<h2 id="using-spring">Using Spring</h2>
+
+<h3 id="server-configuration-1">Server Configuration</h3>
+
+<p>To see how the server must be configured, see https://github.com/linkedin/rest.li/blob/master/examples/spring-server/server/src/main/webapp/WEB-INF/beans.xml.</p>
+
+<p>The following snippet from the above file configures the server side compression filter</p>
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;bean</span> <span class="na">id=</span><span class="s">"compressionFilter"</span> <span class="na">class=</span><span class="s">"com.linkedin.r2.filter.compression.ServerCompressionFilter"</span> <span class="nt">&gt;</span>
+    <span class="nt">&lt;constructor-arg</span> <span class="na">value=</span><span class="s">"snappy"</span> <span class="nt">/&gt;</span>
+<span class="nt">&lt;/bean&gt;</span>
+</code></pre></div></div>
+
+<p>The <code class="highlighter-rouge">constructor-arg</code> is a comma separated list of algorithms you want to support on the server. For example to support gzip and snappy, you would do the following:</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;bean</span> <span class="na">id=</span><span class="s">"compressionFilter"</span> <span class="na">class=</span><span class="s">"com.linkedin.r2.filter.compression.ServerCompressionFilter"</span> <span class="nt">&gt;</span>
+    <span class="nt">&lt;constructor-arg</span> <span class="na">value=</span><span class="s">"snappy, gzip"</span> <span class="nt">/&gt;</span>
+<span class="nt">&lt;/bean&gt;</span>
+</code></pre></div></div>
+
+<h3 id="client-configuration-1">Client Configuration</h3>
+
+<p>It’s the same as the configuration for Guice.</p>
 
                      </div>
                    </div>

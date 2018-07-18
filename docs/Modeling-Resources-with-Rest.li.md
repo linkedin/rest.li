@@ -1,7 +1,7 @@
 ---
 layout: guide
 title: Modeling-Resources-with-Rest.li
-permalink: /rest.li/Modeling-Resources-with-Rest_li
+permalink: /Modeling-Resources-with-Rest_li
 ---
 
 ### Contents

@@ -5,7 +5,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0"/>
 
-    <title>Building-Rest.li-from-Source</title>
+    <title>Send-Rest.li-Request-Query-In-Request-Body</title>
     <meta name="description" content="A REST framework for building scalable service architectures using dynamic discovery and simple asynchronous APIs" />
 
     <link rel="icon"
@@ -15,7 +15,7 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" type="text/css" media="screen,projection" href="/assets/materialize.css" />
     <link rel="stylesheet" type="text/css" media="screen,projection" href="/assets/main.css">
-    <link rel="canonical" href="http://localhost:4000/rest.li/Building-Rest_li-from-Source" />
+    <link rel="canonical" href="http://localhost:4000/Send-Rest_li-Request-Query-In-Request-Body" />
     <link rel="alternate" type="application/rss+xml" title="rest.li" href="/feed.xml" />
   
     
@@ -174,57 +174,144 @@
                         
                     </div>
                      <div class="markdown-body col s12 m3 l9">
-                            <p>You can use the latest released version of Rest.li or build your own
-local version.</p>
+                            <h2 id="contents">Contents</h2>
 
-<h2 id="using-restli-jars">Using Rest.li JARs</h2>
+<ul>
+  <li><a href="#introduction">Introduction</a></li>
+  <li><a href="#clientquerytunnelfilter-and-serverquerytunnelfilter">ClientQueryTunnelFilter and
+ServerQueryTunnelFilter</a></li>
+  <li><a href="#request-without-body">Request Without Body</a></li>
+  <li><a href="#request-with-body">Request With Body</a></li>
+</ul>
 
-<p>If you are not modifying the Rest.li source code, you don’t need to
-build Rest.li. You can simply depend on the <a href="http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.linkedin.pegasus%22">artifacts in the maven
-central
-repository</a></p>
+<h2 id="introduction">Introduction</h2>
 
-<p>The current latest version in Maven Central is 2.2.5.</p>
+<p><a href="https://github.com/linkedin/rest.li/wiki/Rest.li-Protocol">Rest.li
+protocol</a>
+specifies what HTTP method will be used for each type of Rest.li
+request. However, sometimes due to security constraint (i.e. not wanting
+to send some sensitive information in URI) or jetty buffer limitation
+(i.e. there may pose a threshold on the longest query that can go
+through), we may want to customize the HTTP method used to send a
+particular Rest.li request to a Rest.li server.</p>
 
-<p>For details on how to use Rest.li from its maven central artifacts, see:
-<a href="https://github.com/linkedin/rest.li/wiki/Quickstart:-A-Tutorial-Introduction-to-Rest.li">Quickstart</a></p>
+<h2 id="clientquerytunnelfilter-and-serverquerytunnelfilter">ClientQueryTunnelFilter and ServerQueryTunnelFilter</h2>
 
-<h2 id="building-your-own-copy-of-restli">Building Your Own Copy of Rest.li</h2>
+<p>Rest.li has provided
+<a href="https://github.com/linkedin/rest.li/blob/master/r2-core/src/main/java/com/linkedin/r2/filter/transport/ClientQueryTunnelFilter.java">ClientQueryTunnelFilter</a>
+(R2 client filter) and
+<a href="https://github.com/linkedin/rest.li/blob/master/r2-core/src/main/java/com/linkedin/r2/filter/transport/ServerQueryTunnelFilter.java">ServerQueryTunnelFilter</a>
+(R2 server filter) to support such HTTP method customization. These two
+filters behaves as follows:</p>
 
-<p>You can also checkout, modify, or build your own copy of Rest.li.</p>
+<ul>
+  <li>On sending a rest request from client, ClientQueryTunnelFilter will
+invoke
+<a href="https://github.com/linkedin/rest.li/blob/master/r2-core/src/main/java/com/linkedin/r2/message/QueryTunnelUtil.java">QueryTunnelUtil</a>
+encoding function to encode a standard non-POST rest.li request by
+moving the query param line into the body, and reformulating the
+request as a POST. The original method is specified by the
+<code class="highlighter-rouge">X-HTTP-Method-Override</code> header. This header is important to
+indicate that on the server side we should invoke QueryTunnelUtil
+decoding function to get back original request so that this
+conversion looks completely transparent to users. User can indicate
+whether they want to perform such encoding in two ways:</li>
+</ul>
 
-<h3 id="checking-out-source">Checking Out Source</h3>
+<!-- end list -->
 
-<p>You can get your own copy of the Rest.li repository with:</p>
+<ol>
+  <li>Either by specifying a queryPostThreshold in initializing
+ClientQueryTunnelFilter. That means if the rest request raw query
+length is greater than this specified queryPostTreshold,
+ClientQueryTunnelFilter will automatically convert this request to
+POST.</li>
+  <li>Or by forcing request conversion to specify in request context
+    <code class="highlighter-rouge">
+       requestContext.putLocalAttr(R2Constants.FORCE_QUERY_TUNNEL, true);
+   </code></li>
+</ol>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>```git clone git@github.com:linkedin/rest.li.wiki```
+<!-- end list -->
+
+<ul>
+  <li>On receiving a rest request at server, ServerQueryTunnelFilter will
+invoke QueryTunnelUtil.decode to convert request back to its
+original form based on a special header set by
+ClientQueryTunnelFilter, that is, <code class="highlighter-rouge">X-HTTP-Method-Override</code>.</li>
+</ul>
+
+<h2 id="request-without-body">Request Without Body</h2>
+
+<p>For a rest.li request without body, for example, a BATCH_GET request
+like this <code class="highlighter-rouge">http://localhost?ids=List(1,2,3)</code>, the transformed POST
+request is x-www-form-urlencoded with query params stored in the body,
+as follows:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>```
+   curl -X POST -H "X-HTTP-Method-Override: GET" -H "Content-Type: application/x-www-form-urlencoded" 
+               --data $'ids=1,2,3' http://localhost 
+```
 </code></pre></div></div>
 
-<p>Or if you already have a copy of the repository, you can update it with:</p>
+<p>Basically,</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>```git pull```
+<ul>
+  <li>change GET to POST (<code class="highlighter-rouge">-X POST</code>)</li>
+  <li>add X-HTTP-Method-Override header for original HTTP method (<code class="highlighter-rouge">-H
+"X-HTTP-Method-Override: GET"</code>)</li>
+  <li>add Content-Type header (<code class="highlighter-rouge">-H "Content-Type:
+application/x-www-form-urlencoded"</code>)</li>
+  <li>move all the query string to body (@—data $’ids=List(1,2,3)’)<br />
+Note that if QueryTunnelUtil need to do actual encoding or decoding,
+the request would be fully buffered first,<br />
+even if it’s streaming.<br />
+We believe QueryTunnelUtil is almost exclusively for GET requests,
+practically no use case would require<br />
+excessively long query for POST &amp; PUT, and we’d be surprised if
+anyone is using QueryTunnelUtil for PUT &amp; GET.<br />
+Hence, fully buffering request that has to be encoded/decoded is
+practically not a problem and gives up the best<br />
+return for the investment of our efforts.</li>
+</ul>
+
+<h2 id="request-with-body">Request With Body</h2>
+
+<p>For a rest.li request with body, for example, a BATCH_UPDATE request
+like this <code class="highlighter-rouge">http://localhost?ids=List(1,2,3)</code>, the transformed POST
+request will be of Content-Type of multipart/mixed with 2 sections:</p>
+
+<ol>
+  <li>The first section should be of type x-www-form-urlencoded and
+contain the query params</li>
+  <li>The second should contain what would have been the original body,
+along with it’s associated content-type.</li>
+</ol>
+
+<p>It will look as follows:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>```
+    curl -X POST -H "X-HTTP-Method-Override: PUT" -H "Content-Type: multipart/mixed; boundary=xyz" 
+       --data $'--xyz\r\nContent-Type: application/x-www-form-urlencoded\r\n\r\nids=List(1,2,3)\r\n--xyz\r\n 
+              Content-Type: application/json\r\n\r\n{"foo":"bar"}\r\n--xyz--' 
+              http://localhost 
+```
 </code></pre></div></div>
 
-<h3 id="building-restli">Building Rest.li</h3>
+<p>Here,</p>
 
-<p>To do a clean build type, do this:</p>
-
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>```gradle clean build```
-</code></pre></div></div>
-
-<p>To install the gradle JARs in your own local repository, do this:</p>
-
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>```gradle install```
-</code></pre></div></div>
-
-<h4 id="out-of-memory-while-trying-to-build">Out of Memory While Trying to Build?</h4>
-
-<p>If the build fails with an error message saying that there isn’t enough
-memory, increase the memory using the following command and try again:</p>
-
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>export GRADLE_OPTS=“-Xms512M -Xmx1536M -Xss1M
--XX:+CMSClassUnloadingEnabled -XX:MaxPermSize=1024M”  
-</code></pre></div></div>
+<ul>
+  <li>change GET to POST (<code class="highlighter-rouge">-X POST</code>)</li>
+  <li>add X-HTTP-Method-Override header for original HTTP method (<code class="highlighter-rouge">-H
+"X-HTTP-Method-Override: GET"</code>)</li>
+  <li>add Content-Type header (<code class="highlighter-rouge">-H "Content-Type: multipart/mixed;
+boundary=xyz"</code>). Note that here we need to specify a boundary
+delimiter (here we use <code class="highlighter-rouge">xyz</code> for illustration) for multipart body,
+this delimiter needs to be unique and not appearing in your request
+content body or url.</li>
+  <li>move all the query string and original request body to body as two
+sections explained above.</li>
+</ul>
 
                      </div>
                    </div>

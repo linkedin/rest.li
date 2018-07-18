@@ -1,7 +1,7 @@
 ---
 layout: guide
 title: Building-Rest.li-from-Source
-permalink: /rest.li/Building-Rest_li-from-Source
+permalink: /Building-Rest_li-from-Source
 ---
 
 You can use the latest released version of Rest.li or build your own

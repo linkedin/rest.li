@@ -1,7 +1,7 @@
 ---
 layout: guide
 title: DATA-Data-Schema-and-Templates
-permalink: /rest.li/DATA-Data-Schema-and-Templates
+permalink: /DATA-Data-Schema-and-Templates
 ---
 
 # Contents

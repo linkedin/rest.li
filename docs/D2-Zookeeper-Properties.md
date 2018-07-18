@@ -1,7 +1,7 @@
 ---
 layout: guide
 title: D2-Zookeeper-Properties
-permalink: /rest.li/D2-Zookeeper-Properties
+permalink: /D2-Zookeeper-Properties
 ---
 
 <h3>D2 configuration properties</h3>

@@ -1,7 +1,7 @@
 ---
 layout: guide
 title: Rest.li-2.x-upgrade-instructions
-permalink: /rest.li/Rest_li-2_x-upgrade-instructions
+permalink: /Rest_li-2_x-upgrade-instructions
 ---
 
 ## Contents

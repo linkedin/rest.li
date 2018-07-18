@@ -5,7 +5,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0"/>
 
-    <title>Compression</title>
+    <title>Request-Response-Framework</title>
     <meta name="description" content="A REST framework for building scalable service architectures using dynamic discovery and simple asynchronous APIs" />
 
     <link rel="icon"
@@ -15,7 +15,7 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" type="text/css" media="screen,projection" href="/assets/materialize.css" />
     <link rel="stylesheet" type="text/css" media="screen,projection" href="/assets/main.css">
-    <link rel="canonical" href="http://localhost:4000/rest.li/Compression" />
+    <link rel="canonical" href="http://localhost:4000/Request-Response-Framework" />
     <link rel="alternate" type="application/rss+xml" title="rest.li" href="/feed.xml" />
   
     
@@ -174,84 +174,56 @@
                         
                     </div>
                      <div class="markdown-body col s12 m3 l9">
-                            <p>Contents:</p>
+                            <p>Pegasus’s request/response framework, often called R2,  includes abstractions for REST and RPC requests and responses, filter chains for customized processing, and transport abstraction.</p>
+
+<p>R2 can be used in conjunction with the Dynamic Discovery system (also known as D2). The combined stack can be referred to as “R2D2”. R2 can be used independently as well.</p>
+
+<h3 id="filters">Filters</h3>
+<p>The R2 framework in Rest.li contains a filter chain layer. This allows developers to process and modify the content, the associated wire attributes, and the local attributes for each request/response.</p>
+
+<p>To implement a filter, simply implement the relevant Filter interface (for REST, this is <code class="highlighter-rouge">RestFilter</code>; for RPC, use <code class="highlighter-rouge">RpcFilter</code>).</p>
+
+<p>To use a filter, instantiate a Rest.li server/client with a <code class="highlighter-rouge">FilterChain</code> that contains the filters you want to use in the order that you would like to use them in. Note that the order of processing is as follows:</p>
 <ul>
-  <li><a href="https://github.com/linkedin/rest.li/wiki/Compression#supported-algorithms">Supported Algorithms</a></li>
-  <li><a href="https://github.com/linkedin/rest.li/wiki/Compression#using-guice">Using Guice</a></li>
-  <li><a href="https://github.com/linkedin/rest.li/wiki/Compression#using-spring">Using Spring</a></li>
+  <li>Requests are processed <strong>starting from the beginning of the chain and move towards the end</strong> of the filter chain.</li>
+  <li>Responses are processed <strong>from the end of the filter chain and move back towards the beginning</strong> of the filter chain.</li>
 </ul>
 
-<h2 id="supported-algorithms">Supported Algorithms</h2>
+<h3 id="filter-example">Filter Example</h3>
 
-<p>The list of supported algorithms are posted here https://github.com/linkedin/rest.li/blob/master/r2/src/main/java/com/linkedin/r2/filter/compression/EncodingType.java.</p>
+<p>Consider the example given in the Rest.li client tutorial:</p>
 
-<p><em><strong>Note</strong>: There is no hand-shake protocol between the server and the client to make sure that the server supports a particular compression algorithm. If the client sends a request compressed using an algorithm that the server is not configured with, then the client request will fail as the server will not be able to decompress it.</em></p>
-
-<h2 id="using-guice">Using Guice</h2>
-
-<h3 id="server-configuration">Server Configuration</h3>
-
-<p>To see how the server must be configured, see https://github.com/linkedin/rest.li/blob/master/examples/guice-server/server/src/main/java/com/example/fortune/inject/FortunesGuiceServletConfig.java.</p>
-
-<p>In particular:</p>
-<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">FilterChain</span> <span class="n">filterChain</span> <span class="o">=</span> <span class="n">FilterChains</span><span class="o">.</span><span class="na">create</span><span class="o">(</span>
-    <span class="k">new</span> <span class="nf">ServerCompressionFilter</span><span class="o">(</span><span class="k">new</span> <span class="n">EncodingType</span><span class="o">[]</span> <span class="o">{</span> <span class="n">EncodingType</span><span class="o">.</span><span class="na">SNAPPY</span> <span class="o">}),</span>
-    <span class="k">new</span> <span class="nf">SimpleLoggingFilter</span><span class="o">());</span>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">final</span> <span class="n">HttpClientFactory</span> <span class="n">http</span> <span class="o">=</span> <span class="k">new</span> <span class="n">HttpClientFactory</span><span class="o">();</span>
+<span class="kd">final</span> <span class="n">Client</span> <span class="n">r2Client</span> <span class="o">=</span> <span class="k">new</span> <span class="n">TransportClientAdapter</span><span class="o">(</span>
+                                      <span class="n">http</span><span class="o">.</span><span class="na">getClient</span><span class="o">(</span><span class="n">Collections</span><span class="o">.&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">String</span><span class="o">&gt;</span><span class="n">emptyMap</span><span class="o">()));</span>
 </code></pre></div></div>
 
-<p>This instantiates a Rest.li server that supports SNAPPY compression. To support SNAPPY and GZIP, for example, you would have to instantiate your server as follows:</p>
-<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">FilterChain</span> <span class="n">filterChain</span> <span class="o">=</span> <span class="n">FilterChains</span><span class="o">.</span><span class="na">create</span><span class="o">(</span>
-    <span class="k">new</span> <span class="nf">ServerCompressionFilter</span><span class="o">(</span><span class="k">new</span> <span class="n">EncodingType</span><span class="o">[]</span> <span class="o">{</span> <span class="n">EncodingType</span><span class="o">.</span><span class="na">SNAPPY</span><span class="o">,</span> <span class="n">EncodingType</span><span class="o">.</span><span class="na">GZIP</span> <span class="o">}),</span>
-    <span class="k">new</span> <span class="nf">SimpleLoggingFilter</span><span class="o">());</span>
+<p>Suppose your filter was implemented in some class <code class="highlighter-rouge">MyClientFilter</code>. To add this filter, you might do something like this:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">FilterChain</span> <span class="n">fc</span> <span class="o">=</span> <span class="n">FilterChains</span><span class="o">.</span><span class="na">empty</span><span class="o">().</span><span class="na">addFilter</span><span class="o">(</span><span class="k">new</span> <span class="n">MyClientFilter</span><span class="o">());</span>
+<span class="kd">final</span> <span class="n">HttpClientFactory</span> <span class="n">http</span> <span class="o">=</span> <span class="k">new</span> <span class="n">HttpClientFactory</span><span class="o">(</span><span class="n">fc</span><span class="o">);</span>
+<span class="kd">final</span> <span class="n">Client</span> <span class="n">r2Client</span> <span class="o">=</span> <span class="k">new</span> <span class="n">TransportClientAdapter</span><span class="o">(</span>
+                                      <span class="n">http</span><span class="o">.</span><span class="na">getClient</span><span class="o">(</span><span class="n">Collections</span><span class="o">.&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">String</span><span class="o">&gt;</span><span class="n">emptyMap</span><span class="o">()));</span>
 </code></pre></div></div>
 
-<p>When we say that a server supports a particular algorithm for compression, it means that the server can compress and decompress using that algorithm. When to compress and decompress is governed by the client request.</p>
+<p>So how would one go about writing a filter?
+As an example, suppose we wanted to use filters to compress the responses we receive from the server.</p>
 
-<h3 id="client-configuration">Client Configuration</h3>
-
-<p>To see how the client must be configured, see https://github.com/linkedin/rest.li/blob/master/examples/guice-server/client/src/main/java/com/example/fortune/RestLiFortunesClient.java.</p>
-
-<p>In particular:</p>
-
-<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="kd">final</span> <span class="n">HttpClientFactory</span> <span class="n">http</span> <span class="o">=</span> <span class="k">new</span> <span class="n">HttpClientFactory</span><span class="o">(</span><span class="n">FilterChains</span><span class="o">.</span><span class="na">create</span><span class="o">(</span>
-        <span class="k">new</span> <span class="nf">ClientCompressionFilter</span><span class="o">(</span><span class="n">EncodingType</span><span class="o">.</span><span class="na">IDENTITY</span><span class="o">,</span> <span class="k">new</span> <span class="n">EncodingType</span><span class="o">[]{</span> <span class="n">EncodingType</span><span class="o">.</span><span class="na">SNAPPY</span><span class="o">},</span> <span class="s">"*"</span><span class="o">)</span>
-    <span class="o">));</span>
-</code></pre></div></div>
-
-<p>This snippet instructs Rest.li to use IDENTITY (also known as no compression) for requests to the server. In other words, the HTTP “Content-Encoding” header will be set to “identity”. Thus, the first argument dictates the value of the “Content-Encoding” header.</p>
-
-<p>The second argument dictates the value of the “Accept-Encoding” header. In the snippet above, each request to the server will have “Accept-Encoding” set to “snappy”. Why every request? Because the third argument is set to “*”. “*” means that each and every request to the server will have an “Accept-Encoding” header present. The third argument is a String of comma separated values, where the values can be “*”, a method name, or a family.</p>
-
+<p>A client filter could do this:</p>
 <ul>
-  <li>“*”: add the “Accept-Encoding” header to all outgoing requests.</li>
-  <li>a method name: add the “Accept-Encoding” header only for requests for the particular method. E.g. “get” would add it for get requests, “get, batch_get” would add it for get and batch_get requests etc.</li>
-  <li>a family: add the “Accept-Encoding” header only for requests for a method that matches the family. A family is specified as method:*. E.g. “action:*” would add it for all actions, “finder:*” would add it for all finder requests etc.</li>
+  <li>Add an HTTP Accept-Encoding header to its outbound requests.</li>
+  <li>On inbound responses, the filter would read the Content-Encoding header and decompress the payload accordingly.</li>
 </ul>
 
-<p>The above three can be mixed. For example, to have compression on get, batch_get and all finders, the third argument would be “get, batch_get, finder:*”</p>
+<p>A corresponding server might do this:</p>
+<ul>
+  <li>The server’s compression filter can read the inbound request’s Accept-Encoding header and store it as a local attribute.</li>
+  <li>When the server response is ready to go, the filter can intercept the outbound response, compress it, and send the compressed payload off with the corresponding HTTP Content-Encoding header.</li>
+</ul>
 
-<h2 id="using-spring">Using Spring</h2>
+<p>See an implementation example here: https://github.com/linkedin/rest.li/tree/master/r2/src/main/java/com/linkedin/r2/filter/compression</p>
 
-<h3 id="server-configuration-1">Server Configuration</h3>
-
-<p>To see how the server must be configured, see https://github.com/linkedin/rest.li/blob/master/examples/spring-server/server/src/main/webapp/WEB-INF/beans.xml.</p>
-
-<p>The following snippet from the above file configures the server side compression filter</p>
-<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;bean</span> <span class="na">id=</span><span class="s">"compressionFilter"</span> <span class="na">class=</span><span class="s">"com.linkedin.r2.filter.compression.ServerCompressionFilter"</span> <span class="nt">&gt;</span>
-    <span class="nt">&lt;constructor-arg</span> <span class="na">value=</span><span class="s">"snappy"</span> <span class="nt">/&gt;</span>
-<span class="nt">&lt;/bean&gt;</span>
-</code></pre></div></div>
-
-<p>The <code class="highlighter-rouge">constructor-arg</code> is a comma separated list of algorithms you want to support on the server. For example to support gzip and snappy, you would do the following:</p>
-
-<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;bean</span> <span class="na">id=</span><span class="s">"compressionFilter"</span> <span class="na">class=</span><span class="s">"com.linkedin.r2.filter.compression.ServerCompressionFilter"</span> <span class="nt">&gt;</span>
-    <span class="nt">&lt;constructor-arg</span> <span class="na">value=</span><span class="s">"snappy, gzip"</span> <span class="nt">/&gt;</span>
-<span class="nt">&lt;/bean&gt;</span>
-</code></pre></div></div>
-
-<h3 id="client-configuration-1">Client Configuration</h3>
-
-<p>It’s the same as the configuration for Guice.</p>
+<p>For a full list of filters, see: https://github.com/linkedin/rest.li/wiki/List-of-R2-filters</p>
 
                      </div>
                    </div>

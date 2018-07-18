@@ -1,7 +1,7 @@
 ---
 layout: guide
 title: Rest.li-Protocol
-permalink: /rest.li/Rest_li-Protocol
+permalink: /Rest_li-Protocol
 ---
 
 ## Contents

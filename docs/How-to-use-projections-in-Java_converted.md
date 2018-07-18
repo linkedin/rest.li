@@ -1,7 +1,7 @@
 ---
 layout: guide
 title: How-to-use-projections-in-Java
-permalink: /rest.li/How-to-use-projections-in-Java
+permalink: /How-to-use-projections-in-Java
 ---
 
 ## Contents
