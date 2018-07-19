@@ -83,6 +83,7 @@ public class RestRequestBuilderGenerator
 
     RestRequestBuilderGenerator.run(System.getProperty(AbstractGenerator.GENERATOR_RESOLVER_PATH),
                                     System.getProperty(JavaCodeGeneratorBase.GENERATOR_DEFAULT_PACKAGE),
+                                    System.getProperty(JavaCodeGeneratorBase.ROOT_PATH),
                                     generateImported == null ? true : Boolean.parseBoolean(generateImported),
                                     generateDataTemplates == null ? true : Boolean.parseBoolean(generateDataTemplates),
                                     version,
@@ -117,10 +118,32 @@ public class RestRequestBuilderGenerator
                                     RestliVersion deprecatedByVersion,
                                     String targetDirectoryPath,
                                     String[] sources)
+                                    throws IOException
+  {
+    return run(resolverPath,
+               defaultPackage,
+               null,
+               generateImported,
+               generateDataTemplates,
+               version,
+               deprecatedByVersion,
+               targetDirectoryPath,
+               sources);
+  }
+
+  public static GeneratorResult run(String resolverPath,
+                                    String defaultPackage,
+                                    String rootPath,
+                                    final boolean generateImported,
+                                    final boolean generateDataTemplates,
+                                    RestliVersion version,
+                                    RestliVersion deprecatedByVersion,
+                                    String targetDirectoryPath,
+                                    String[] sources)
       throws IOException
   {
     final RestSpecParser parser = new RestSpecParser();
-    final JavaRequestBuilderGenerator generator = new JavaRequestBuilderGenerator(resolverPath, defaultPackage, generateDataTemplates, version, deprecatedByVersion);
+    final JavaRequestBuilderGenerator generator = new JavaRequestBuilderGenerator(resolverPath, defaultPackage, generateDataTemplates, version, deprecatedByVersion, rootPath);
     final ClassLoader classLoader = JavaCodeUtil.classLoaderFromResolverPath(resolverPath);
 
     final RestSpecParser.ParseResult parseResult = parser.parseSources(sources);
@@ -138,7 +161,7 @@ public class RestRequestBuilderGenerator
 
       try
       {
-        final JDefinedClass clazz = generator.generate(resourceSchema, pair.second);
+        final JDefinedClass clazz = generator.generate(resourceSchema, pair.second, rootPath);
       }
       catch (Exception e)
       {

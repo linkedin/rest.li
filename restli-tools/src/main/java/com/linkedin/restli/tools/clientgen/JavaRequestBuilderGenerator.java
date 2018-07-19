@@ -179,6 +179,32 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
    * @param version {@link RestliVersion} of the generated builder format
    * @param deprecatedByVersion this version of builder format will be generated, but will be annotated as deprecated.
    *                            also will reference to the non-deprecated version.
+   * @param rootPath root path to relativize
+   */
+  public JavaRequestBuilderGenerator(String resolverPath,
+                                     String defaultPackage,
+                                     boolean generateDataTemplates,
+                                     RestliVersion version,
+                                     RestliVersion deprecatedByVersion,
+                                     String rootPath)
+  {
+    super(defaultPackage);
+    _schemaResolver = CodeUtil.createSchemaResolver(resolverPath);
+    _specGenerator = new TemplateSpecGenerator(_schemaResolver);
+    _javaDataTemplateGenerator = new JavaDataTemplateGenerator(defaultPackage, rootPath);
+    _generateDataTemplates = generateDataTemplates;
+    _version = version;
+    _deprecatedByVersion = deprecatedByVersion;
+  }
+
+  /**
+   * @param resolverPath colon-separated string containing all paths of schema source to resolve
+   * @param defaultPackage package to be used when a {@link NamedDataSchema} does not specify a namespace
+   * @param generateDataTemplates true if the related data template source files will be generated as well, false otherwise.
+   *                              if null is assigned to this value, by default it returns true.
+   * @param version {@link RestliVersion} of the generated builder format
+   * @param deprecatedByVersion this version of builder format will be generated, but will be annotated as deprecated.
+   *                            also will reference to the non-deprecated version.
    */
   public JavaRequestBuilderGenerator(String resolverPath,
                                      String defaultPackage,
@@ -186,13 +212,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
                                      RestliVersion version,
                                      RestliVersion deprecatedByVersion)
   {
-    super(defaultPackage);
-    _schemaResolver = CodeUtil.createSchemaResolver(resolverPath);
-    _specGenerator = new TemplateSpecGenerator(_schemaResolver);
-    _javaDataTemplateGenerator = new JavaDataTemplateGenerator(defaultPackage);
-    _generateDataTemplates = generateDataTemplates;
-    _version = version;
-    _deprecatedByVersion = deprecatedByVersion;
+    this(resolverPath, defaultPackage, generateDataTemplates, version, deprecatedByVersion, null);
   }
 
   public boolean isGeneratedArrayClass(JClass clazz)
@@ -212,10 +232,15 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
 
   public JDefinedClass generate(ResourceSchema resource, File sourceFile)
   {
+    return generate(resource, sourceFile, null);
+  }
+
+  public JDefinedClass generate(ResourceSchema resource, File sourceFile, String rootPath)
+  {
     _currentSourceFile = sourceFile;
     try
     {
-      return generateResourceFacade(resource, sourceFile, new HashMap<String, JClass>(), new HashMap<String, JClass>(), new HashMap<String, List<String>>());
+      return generateResourceFacade(resource, sourceFile, new HashMap<String, JClass>(), new HashMap<String, JClass>(), new HashMap<String, List<String>>(), rootPath);
     }
     catch (JClassAlreadyExistsException e)
     {
@@ -465,12 +490,12 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
     }
   }
 
-  private void annotate(JDefinedClass requestBuilderClass, String sourceFilePath)
+  private void annotate(JDefinedClass requestBuilderClass, String sourceFilePath, String rootPath)
   {
-    JavaCodeUtil.annotate(requestBuilderClass, "Request Builder", sourceFilePath);
+    JavaCodeUtil.annotate(requestBuilderClass, "Request Builder", sourceFilePath, rootPath);
   }
 
-  private JDefinedClass generateResourceFacade(ResourceSchema resource, File sourceFile, Map<String, JClass> pathKeyTypes, Map<String, JClass> assocKeyTypes, Map<String, List<String>> pathToAssocKeys)
+  private JDefinedClass generateResourceFacade(ResourceSchema resource, File sourceFile, Map<String, JClass> pathKeyTypes, Map<String, JClass> assocKeyTypes, Map<String, List<String>> pathToAssocKeys, String rootPath)
       throws JClassAlreadyExistsException, IOException
   {
     final ValidationResult validationResult = ValidateDataAgainstSchema.validate(resource.data(), resource.schema(), new ValidationOptions());
@@ -492,7 +517,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
       className = getBuilderClassNameByVersion(RestliVersion.RESTLI_1_0_0, null, resource.getName(), true);
     }
     final JDefinedClass facadeClass = clientPackage._class(className);
-    annotate(facadeClass, sourceFile.getAbsolutePath());
+    annotate(facadeClass, sourceFile.getAbsolutePath(), rootPath);
 
     final JFieldVar baseUriField;
     final JFieldVar requestOptionsField;
@@ -759,7 +784,8 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
                            assocKeyTypes,
                            pathToAssocKeys,
                            requestOptionsGetter,
-                           resource.data().getDataMap("annotations"));
+                           resource.data().getDataMap("annotations"),
+                           rootPath);
 
       if (resourceSchemaClass == CollectionSchema.class || resourceSchemaClass == AssociationSchema.class)
       {
@@ -775,10 +801,11 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
                         pathKeyTypes,
                         assocKeyTypes,
                         pathToAssocKeys,
-                        requestOptionsGetter);
+                        requestOptionsGetter,
+                        rootPath);
       }
 
-      generateSubResources(sourceFile, subresources, pathKeyTypes, assocKeyTypes, pathToAssocKeys);
+      generateSubResources(sourceFile, subresources, pathKeyTypes, assocKeyTypes, pathToAssocKeys, rootPath);
     }
     else //action set
     {
@@ -802,7 +829,8 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
                     pathKeyTypes,
                     assocKeyTypes,
                     pathToAssocKeys,
-                    requestOptionsGetter);
+                    requestOptionsGetter,
+                    rootPath);
 
     generateClassJavadoc(facadeClass, resource);
 
@@ -953,7 +981,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
     finderMethod.body()._return(JExpr._new(builderClass).arg(baseUriExpr).arg(requestOptionsExpr));
   }
 
-  private void generateSubResources(File sourceFile, ResourceSchemaArray subresources, Map<String, JClass> pathKeyTypes, Map<String, JClass> assocKeyTypes, Map<String, List<String>> pathToAssocKeys)
+  private void generateSubResources(File sourceFile, ResourceSchemaArray subresources, Map<String, JClass> pathKeyTypes, Map<String, JClass> assocKeyTypes, Map<String, List<String>> pathToAssocKeys, String rootPath)
       throws JClassAlreadyExistsException, IOException
   {
     if (subresources == null)
@@ -963,7 +991,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
 
     for (ResourceSchema resource : subresources)
     {
-      generateResourceFacade(resource, sourceFile, pathKeyTypes, assocKeyTypes, pathToAssocKeys);
+      generateResourceFacade(resource, sourceFile, pathKeyTypes, assocKeyTypes, pathToAssocKeys, rootPath);
     }
   }
 
@@ -979,7 +1007,8 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
                                Map<String, JClass> pathKeyTypes,
                                Map<String, JClass> assocKeyTypes,
                                Map<String, List<String>> pathToAssocKeys,
-                               JExpression requestOptionsExpr)
+                               JExpression requestOptionsExpr,
+                               String rootPath)
       throws JClassAlreadyExistsException
   {
     if (finderSchemas != null)
@@ -996,7 +1025,8 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
                                                                                                                                                                                                                           builderName,
                                                                                                                                                                                                                           facadeClass.getPackage(),
                                                                                                                                                                                                                           ResourceMethod.FINDER,
-                                                                                                                                                                                                                          null);
+                                                                                                                                                                                                                          null,
+                                                                                                                                                                                                                          rootPath);
 
         final JMethod finderMethod = facadeClass.method(JMod.PUBLIC, finderBuilderClass, "findBy" + CodeUtil.capitalize(finderName));
 
@@ -1075,13 +1105,14 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
                                                String derivedBuilderName,
                                                JPackage clientPackage,
                                                ResourceMethod resourceMethod,
-                                               DataMap annotations)
+                                               DataMap annotations,
+                                               String rootPath)
       throws JClassAlreadyExistsException
   {
     // this method applies to REST methods and finder
 
     final JDefinedClass derivedBuilderClass = clientPackage._class(JMod.PUBLIC, derivedBuilderName);
-    annotate(derivedBuilderClass, null);
+    annotate(derivedBuilderClass, null, rootPath);
     checkVersionAndDeprecateBuilderClass(derivedBuilderClass, false);
     derivedBuilderClass._extends(baseBuilderClass.narrow(derivedBuilderClass));
     final JMethod derivedBuilderConstructor = derivedBuilderClass.constructor(JMod.PUBLIC);
@@ -1214,14 +1245,15 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
                                Map<String, JClass> pathKeyTypes,
                                Map<String, JClass> assocKeyTypes,
                                Map<String, List<String>> pathToAssocKeys,
-                               JExpression requestOptionsExpr)
+                               JExpression requestOptionsExpr,
+                               String rootPath)
       throws JClassAlreadyExistsException
   {
     if (resourceActions != null)
     {
       for (ActionSchema action : resourceActions)
       {
-        generateActionMethod(facadeClass, baseUriExpr, _voidClass, action, resourceSpecField, resourceName, pathKeys, pathKeyTypes, assocKeyTypes, pathToAssocKeys, requestOptionsExpr);
+        generateActionMethod(facadeClass, baseUriExpr, _voidClass, action, resourceSpecField, resourceName, pathKeys, pathKeyTypes, assocKeyTypes, pathToAssocKeys, requestOptionsExpr, rootPath);
       }
     }
 
@@ -1229,7 +1261,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
     {
       for (ActionSchema action : entityActions)
       {
-        generateActionMethod(facadeClass, baseUriExpr, keyClass, action, resourceSpecField, resourceName, pathKeys, pathKeyTypes, assocKeyTypes, pathToAssocKeys, requestOptionsExpr);
+        generateActionMethod(facadeClass, baseUriExpr, keyClass, action, resourceSpecField, resourceName, pathKeys, pathKeyTypes, assocKeyTypes, pathToAssocKeys, requestOptionsExpr, rootPath);
       }
     }
   }
@@ -1244,7 +1276,8 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
                                     Map<String, JClass> pathKeyTypes,
                                     Map<String, JClass> assocKeysTypes,
                                     Map<String, List<String>> pathToAssocKeys,
-                                    JExpression requestOptionsExpr)
+                                    JExpression requestOptionsExpr,
+                                    String rootPath)
       throws JClassAlreadyExistsException
   {
     final JClass returnType = getActionReturnType(facadeClass, action.getReturns());
@@ -1253,7 +1286,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
 
     final String actionBuilderClassName = CodeUtil.capitalize(resourceName) + "Do" + CodeUtil.capitalize(actionName) + METHOD_BUILDER_SUFFIX.get(_version);
     final JDefinedClass actionBuilderClass = facadeClass.getPackage()._class(JMod.PUBLIC, actionBuilderClassName);
-    annotate(actionBuilderClass, null);
+    annotate(actionBuilderClass, null, rootPath);
     checkVersionAndDeprecateBuilderClass(actionBuilderClass, false);
     actionBuilderClass._extends(vanillaActionBuilderClass.narrow(actionBuilderClass));
     final JMethod actionBuilderConstructor = actionBuilderClass.constructor(JMod.PUBLIC);
@@ -1312,7 +1345,8 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
                                     Map<String, JClass> assocKeyTypes,
                                     Map<String, List<String>> pathToAssocKeys,
                                     JExpression requestOptionsExpr,
-                                    DataMap annotations)
+                                    DataMap annotations,
+                                    String rootPath)
       throws JClassAlreadyExistsException
   {
     final Map<ResourceMethod, RestMethodSchema> schemaMap = new HashMap<ResourceMethod, RestMethodSchema>();
@@ -1388,7 +1422,8 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
                                          method,
                                          refModel,
                                          methodName,
-                                         schema);
+                                         schema,
+                                         rootPath);
         if ((method == ResourceMethod.CREATE || method == ResourceMethod.BATCH_CREATE) && schema != null && schema.getAnnotations() != null && schema.getAnnotations().containsKey("returnEntity"))
         {
           Class<?> newBuildClass = methodName.equals("create") ? CreateIdEntityRequestBuilderBase.class : BatchCreateIdEntityRequestBuilderBase.class;
@@ -1408,7 +1443,8 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
                                            method,
                                            newBuildClass,
                                            requestName,
-                                           schema);
+                                           schema,
+                                           rootPath);
         }
       }
     }
@@ -1429,7 +1465,8 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
                                                 ResourceMethod method,
                                                 Class<?> refModel,
                                                 String methodName,
-                                                RestMethodSchema schema) throws JClassAlreadyExistsException
+                                                RestMethodSchema schema,
+                                                String rootPath) throws JClassAlreadyExistsException
   {
     final JClass builderClass = getCodeModel().ref(refModel).narrow(keyClass, valueClass);
     JDefinedClass derivedBuilder = generateDerivedBuilder(builderClass,
@@ -1439,7 +1476,8 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
                                                               METHOD_BUILDER_SUFFIX.get(_version),
                                                           facadeClass.getPackage(),
                                                           method,
-                                                          annotations);
+                                                          annotations,
+                                                          rootPath);
     generatePathKeyBindingMethods(pathKeys, derivedBuilder, pathKeyTypes, assocKeyTypes, pathToAssocKeys);
 
     final JMethod factoryMethod = facadeClass.method(JMod.PUBLIC,

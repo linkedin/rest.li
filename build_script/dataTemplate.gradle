@@ -36,7 +36,7 @@ project.sourceSets.all { SourceSet sourceSet ->
     classpath generatorConfig
     args outputDirPath
     args inputDataSchemaFiles
-    systemProperties(['generator.resolver.path': inputDataSchemaDirPath])
+    systemProperties(['generator.resolver.path': inputDataSchemaDirPath, 'root.path': project.rootDir])
     doFirst {
       project.mkdir(outputDirPath)
     }

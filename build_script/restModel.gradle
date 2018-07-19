@@ -48,7 +48,7 @@ project.sourceSets.all { SourceSet sourceSet ->
       classpath generatorConfig
       args outputDataTemplateDirPath
       args inputDataSchemaFiles
-      systemProperties(['generator.resolver.path': inputDataSchemaDirPath])
+      systemProperties(['generator.resolver.path': inputDataSchemaDirPath, 'root.path': project.rootDir])
       doFirst {
         project.mkdir(outputDataTemplateDirPath)
       }
@@ -70,7 +70,7 @@ project.sourceSets.all { SourceSet sourceSet ->
       classpath restGeneratorConfig
       args outputRestModelDirPath
       args inputIdlFiles
-      systemProperties(['generator.resolver.path': inputDataSchemaDirPath, "generator.rest.generate.version": "2.0.0", "generator.rest.generate.datatemplates": "false", "generator.generate.imported": "false"])
+      systemProperties(['generator.resolver.path': inputDataSchemaDirPath, 'generator.rest.generate.version': '2.0.0', 'generator.rest.generate.datatemplates': 'false', 'generator.generate.imported': 'false', 'root.path': project.rootDir])
       doFirst {
         project.mkdir(outputRestModelDirPath)
       }

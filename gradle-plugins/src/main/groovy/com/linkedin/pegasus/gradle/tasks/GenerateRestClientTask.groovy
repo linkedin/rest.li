@@ -9,7 +9,6 @@ import org.gradle.api.file.FileCollection
 import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.Classpath
 import org.gradle.api.tasks.InputDirectory
-import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
@@ -125,6 +124,7 @@ class GenerateRestClientTask extends DefaultTask
         //RestRequestBuilderGenerator.run(generateDataTemplates)
         it.jvmArgs '-Dgenerator.rest.generate.version=1.0.0'  //RestRequestBuilderGenerator.run(version)
         it.jvmArgs '-Dgenerator.rest.generate.deprecated.version=' + deprecatedVersion
+        it.jvmArgs '-Droot.path=' + project.rootDir.path
         //RestRequestBuilderGenerator.run(deprecatedByVersion)
         it.args destinationDir.absolutePath
         it.args files
@@ -143,6 +143,7 @@ class GenerateRestClientTask extends DefaultTask
           it.jvmArgs '-Dgenerator.rest.generate.datatemplates=false'
           //RestRequestBuilderGenerator.run(generateDataTemplates)
           it.jvmArgs '-Dgenerator.rest.generate.version=2.0.0'  //RestRequestBuilderGenerator.run(version)
+          it.jvmArgs '-Droot.path=' + project.rootDir.path
           it.args destinationDir.absolutePath
           it.args files
         }.assertNormalExitValue()

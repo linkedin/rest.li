@@ -157,12 +157,14 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
   private final boolean _recordFieldRemove;
   private final boolean _pathSpecMethods;
   private final boolean _copierMethods;
+  private final String _rootPath;
 
   private JavaDataTemplateGenerator(String defaultPackage,
                                     boolean recordFieldAccessorWithMode,
                                     boolean recordFieldRemove,
                                     boolean pathSpecMethods,
-                                    boolean copierMethods)
+                                    boolean copierMethods,
+                                    String rootPath)
   {
     super(defaultPackage);
 
@@ -177,6 +179,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     _recordFieldRemove = recordFieldRemove;
     _pathSpecMethods = pathSpecMethods;
     _copierMethods = copierMethods;
+    _rootPath = rootPath;
   }
 
   public JavaDataTemplateGenerator(Config config)
@@ -185,7 +188,8 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
          config.getRecordFieldAccessorWithMode(),
          config.getRecordFieldRemove(),
          config.getPathSpecMethods(),
-         config.getCopierMethods());
+         config.getCopierMethods(),
+         config.getRootPath());
   }
 
   /**
@@ -194,10 +198,21 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
   public JavaDataTemplateGenerator(String defaultPackage)
   {
     this(defaultPackage,
+         null);
+  }
+
+  /**
+   * @param defaultPackage package to be used when a {@link NamedDataSchema} does not specify a namespace
+   * @param rootPath root path to relativize the location
+   */
+  public JavaDataTemplateGenerator(String defaultPackage, String rootPath)
+  {
+    this(defaultPackage,
          true,
          true,
          true,
-         true);
+         true,
+         rootPath);
   }
 
   public Map<JDefinedClass, ClassTemplateSpec> getGeneratedClasses()
@@ -984,7 +999,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     {
       _generatedClasses.put(definedClass, classTemplateSpec);
 
-      JavaCodeUtil.annotate(definedClass, "Data Template", classTemplateSpec.getLocation());
+      JavaCodeUtil.annotate(definedClass, "Data Template", classTemplateSpec.getLocation(), _rootPath);
 
       if (classTemplateSpec instanceof ArrayTemplateSpec)
       {
@@ -1136,6 +1151,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     private boolean _recordFieldRemove;
     private boolean _pathSpecMethods;
     private boolean _copierMethods;
+    private String _rootPath;
 
     public Config()
     {
@@ -1144,6 +1160,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
       _recordFieldRemove = true;
       _pathSpecMethods = true;
       _copierMethods = true;
+      _rootPath = null;
     }
 
     public void setDefaultPackage(String defaultPackage)
@@ -1194,6 +1211,16 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     public boolean getCopierMethods()
     {
       return _copierMethods;
+    }
+
+    public void setRootPath(String rootPath)
+    {
+      _rootPath = rootPath;
+    }
+
+    public String getRootPath()
+    {
+      return _rootPath;
     }
   }
 }

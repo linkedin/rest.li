@@ -2,6 +2,8 @@ package com.linkedin.pegasus.gradle.tasks
 
 
 import com.linkedin.pegasus.gradle.PegasusPlugin
+import com.linkedin.pegasus.gradle.internal.DataTemplateArgumentProvider
+import com.linkedin.pegasus.gradle.internal.DataTemplateJvmArgumentProvider
 import groovy.transform.CompileStatic
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.FileCollection
@@ -11,13 +13,13 @@ import org.gradle.api.logging.Logging
 import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.Classpath
 import org.gradle.api.tasks.InputDirectory
-import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.JavaExec
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.SkipWhenEmpty
 import org.gradle.api.tasks.TaskAction
+import org.gradle.util.GradleVersion
 
 import static com.linkedin.pegasus.gradle.SharedFileUtils.getSuffixedFiles
 
@@ -114,9 +116,20 @@ class GenerateDataTemplateTask extends JavaExec
 
       target.main = 'com.linkedin.pegasus.generator.PegasusDataTemplateGenerator'
       target.classpath target.codegenClasspath //needed for backwards compatibility, we need to keep the existing API (codegenClasspath method)
-      target.jvmArgs '-Dgenerator.resolver.path=' + resolverPathStr
-      target.args target.destinationDir.path
-      target.args target.inputDir
+      if (GradleVersion.current().compareTo(GradleVersion.version("4.6")) < 0)
+      {
+        //Maintain backwards compatibility
+        target.jvmArgs '-Dgenerator.resolver.path=' + resolverPathStr
+        target.jvmArgs '-Droot.path=' + project.rootDir.path
+        target.args target.destinationDir.path
+        target.args target.inputDir
+      }
+      else
+      {
+        //Use the new provider API to better leverage the build cache
+        target.jvmArgumentProviders.add(new DataTemplateJvmArgumentProvider(resolverPathStr, project.rootDir))
+        target.argumentProviders.add(new DataTemplateArgumentProvider([target.destinationDir.path, target.inputDir.path]))
+      }
 
       LOG.info("""$path - finished configuring task $target.path:
   - main: $target.main

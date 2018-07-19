@@ -17,6 +17,7 @@
 package com.linkedin.pegasus.generator;
 
 
+import java.nio.file.Paths;
 import javax.annotation.Generated;
 import java.io.File;
 import java.net.MalformedURLException;
@@ -24,7 +25,6 @@ import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -61,17 +61,36 @@ public class JavaCodeUtil
    */
   public static void annotate(JDefinedClass cls, String classType, String location)
   {
+    annotate(cls, classType, location, null);
+  }
+
+  /**
+   * Create Java {@link Generated} annotation for a class.
+   *
+   * @param cls CodeModel class to annotate
+   * @param classType type of the specified class
+   * @param location location of where the specified class is generated from
+   * @param rootPath root path to relativize the location
+   */
+  public static void annotate(JDefinedClass cls, String classType, String location, String rootPath)
+  {
     final JAnnotationUse generatedAnnotation = cls.annotate(Generated.class);
     generatedAnnotation.param("value", JavaCodeUtil.class.getName());
     String comments = "Rest.li " + classType;
 
     if (location != null)
     {
-      comments += ". Generated from " + location + '.';
+      if (rootPath == null)
+      {
+        comments += ". Generated from " + location + '.';
+      }
+      else
+      {
+        comments += ". Generated from " + Paths.get(rootPath).relativize(Paths.get(location)) + '.';
+      }
     }
 
     generatedAnnotation.param("comments", comments);
-    generatedAnnotation.param("date", new Date().toString());
   }
 
   /**

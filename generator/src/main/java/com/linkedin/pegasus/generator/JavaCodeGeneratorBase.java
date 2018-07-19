@@ -50,6 +50,7 @@ public class JavaCodeGeneratorBase
    * Package to be used when a {@link NamedDataSchema} does not specify a namespace
    */
   public static final String GENERATOR_DEFAULT_PACKAGE = "generator.default.package";
+  public static final String ROOT_PATH = "root.path";
 
   protected static final String SUPER = "super";
   protected static final String THIS = "this";

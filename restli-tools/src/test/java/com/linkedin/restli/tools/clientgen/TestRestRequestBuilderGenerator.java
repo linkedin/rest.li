@@ -45,6 +45,7 @@ public class TestRestRequestBuilderGenerator
     final String outPath = outdir.getPath();
     RestRequestBuilderGenerator.run(pegasusDir,
                                     null,
+                                    moduleDir,
                                     true,
                                     false,
                                     version,
@@ -53,6 +54,7 @@ public class TestRestRequestBuilderGenerator
                                     new String[] { moduleDir + FS + RESOURCES_DIR + FS + "idls" + FS + "arrayDuplicateA.restspec.json" });
     RestRequestBuilderGenerator.run(pegasusDir,
                                     null,
+                                    moduleDir,
                                     true,
                                     false,
                                     version,
@@ -64,6 +66,11 @@ public class TestRestRequestBuilderGenerator
     final File bBuilderFile = new File(outPath + FS + BBuildersName);
     Assert.assertTrue(aBuilderFile.exists());
     Assert.assertTrue(bBuilderFile.exists());
+
+    final String aBuilderFileContent = IOUtils.toString(new FileInputStream(aBuilderFile));
+    Assert.assertTrue(aBuilderFileContent.contains("Generated from " + RESOURCES_DIR + FS + "idls" + FS + "arrayDuplicateA.restspec.json"));
+    final String bBuilderFileContent = IOUtils.toString(new FileInputStream(bBuilderFile));
+    Assert.assertTrue(bBuilderFileContent.contains("Generated from " + RESOURCES_DIR + FS + "idls" + FS + "arrayDuplicateB.restspec.json"));
   }
 
   @Test(dataProvider = "deprecatedByVersionDataProvider")
@@ -73,6 +80,7 @@ public class TestRestRequestBuilderGenerator
     final String outPath = outdir.getPath();
     RestRequestBuilderGenerator.run(pegasusDir,
                                     null,
+                                    moduleDir,
                                     true,
                                     false,
                                     RestliVersion.RESTLI_1_0_0,
@@ -86,6 +94,7 @@ public class TestRestRequestBuilderGenerator
     final String fileContent = IOUtils.toString(new FileInputStream(builderFile));
     final Pattern regex = Pattern.compile(".*@deprecated$.*\\{@link " + substituteClassName + "\\}.*^@Deprecated$\n^public class .*", Pattern.MULTILINE | Pattern.DOTALL);
     Assert.assertTrue(regex.matcher(fileContent).matches());
+    Assert.assertTrue(fileContent.contains("Generated from " + RESOURCES_DIR + FS + "idls" + FS + idlName));
   }
 
   @Test(dataProvider = "oldNewStyleDataProvider")

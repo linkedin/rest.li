@@ -104,17 +104,18 @@ public class PegasusDataTemplateGenerator
     final boolean generateImported = generateImportedProperty == null ? true : Boolean.parseBoolean(generateImportedProperty);
     PegasusDataTemplateGenerator.run(System.getProperty(AbstractGenerator.GENERATOR_RESOLVER_PATH),
                                      System.getProperty(JavaCodeGeneratorBase.GENERATOR_DEFAULT_PACKAGE),
+                                     System.getProperty(JavaCodeGeneratorBase.ROOT_PATH),
                                      generateImported,
                                      args[0],
                                      Arrays.copyOfRange(args, 1, args.length));
   }
 
-  public static GeneratorResult run(String resolverPath, String defaultPackage, final boolean generateImported, String targetDirectoryPath, String[] sources)
+  public static GeneratorResult run(String resolverPath, String defaultPackage, String rootPath, final boolean generateImported, String targetDirectoryPath, String[] sources)
       throws IOException
   {
     final DataSchemaParser schemaParser = new DataSchemaParser(resolverPath);
     final TemplateSpecGenerator specGenerator = new TemplateSpecGenerator(schemaParser.getSchemaResolver());
-    final JavaDataTemplateGenerator dataTemplateGenerator = new JavaDataTemplateGenerator(defaultPackage);
+    final JavaDataTemplateGenerator dataTemplateGenerator = new JavaDataTemplateGenerator(defaultPackage, rootPath);
 
     for (DataSchema predefinedSchema : JavaDataTemplateGenerator.PredefinedJavaClasses.keySet())
     {
