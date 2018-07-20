@@ -53,7 +53,7 @@ classes:
 
 <center>
 <b>Data and Control Flow Between a Rest.li Server and
-Client</b><br><img src="https://github.com/linkedin/rest.li/wiki/RestLiClientServerFlow.png">
+Client</b><br><img src="/images/RestLiClientServerFlow.png">
 
 </center>
 <a id="wiki-ServerDataFlow"></a>
@@ -75,20 +75,20 @@ construct complex asynchronous request flows.
 
 There are several server implementations:
 
--   [Servlet](https://github.com/linkedin/rest.li/wiki/Rest.li-with-Servlet-Containers)
+-   [Servlet](Rest.li-with-Servlet-Containers)
     --- Battle tested and ready for production use. Containers
     supporting [Servlet 3.0
     API](http://download.oracle.com/otndocs/jcp/servlet-3.0-fr-eval-oth-JSpec/)
     are required to benefit from asynchronous, non-blocking request
     processing. Jetty 8.x supports Servlet 3.0 and has been used in
     large production environments.
--   [Netty](https://github.com/linkedin/rest.li/wiki/Rest.li-with-Netty)
+-   [Netty](Rest.li-with-Netty)
     --- Experimental
 -   Embedded Jetty --- Primarily for integration testing as it's trivial
     to spin up as part of a test suite
 
 See [Asynchronous
-Resources](https://github.com/linkedin/rest.li/wiki/Rest.li-User-Guide#asynchronous-resources)
+Resources](Rest.li-User-Guide#asynchronous-resources)
 for more details on how to handle requests using non-blocking request
 processing.
 
@@ -173,7 +173,7 @@ allow a server and clients to exchange data.
 
 <center>
 <b>Rest.li Development
-Flow</b><br><img src="https://github.com/linkedin/rest.li/wiki/RestLiCodeGen.png">
+Flow</b><br><img src="/images/RestLiCodeGen.png">
 
 </center>
 Let's look at each step:

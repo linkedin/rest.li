@@ -1,5 +1,5 @@
 ---
-layout: guide
+layout: api_reference
 title: Request-Response-API-(R2)
 permalink: /Request-Response-API-(R2)
 ---
@@ -16,7 +16,7 @@ R2 can be used independently, with D2 (our Dynamic Discovery system), or with bo
 The following diagram shows the layers involved in the R2 system. Each layer will be described in detail below.
 
 
-<p><img src=https://github.com/linkedin/rest.li/wiki/r2.png></p>
+<p><img src="/images/r2.png"></p>
 
 ## Requests and Responses
 
@@ -363,4 +363,4 @@ In the HTTP transport there is a standard transformation of our REST messages to
 Wire attributes are transported as headers, using the attribute name.
 
 ### Transport Protocol
-Under the hood, request will be encoded based on [Rest.li protocol](https://github.com/linkedin/rest.li/wiki/Rest.li-Protocol), and sent over the wire to the server.
+Under the hood, request will be encoded based on [Rest.li protocol](Rest.li-Protocol), and sent over the wire to the server.

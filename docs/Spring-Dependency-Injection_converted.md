@@ -1,5 +1,5 @@
 ---
-layout: guide
+layout: api_reference
 title: Spring-Dependency-Injection
 permalink: /Spring-Dependency-Injection
 ---

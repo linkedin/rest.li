@@ -1,5 +1,5 @@
 ---
-layout: guide
+layout: api_reference
 title: Rest.li-2.0-response-API
 permalink: /Rest_li-2_0-response-API
 ---

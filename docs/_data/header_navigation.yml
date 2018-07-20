@@ -4,6 +4,6 @@ items:
   - page: User guide
     url: /rest.li/user_guide/server_architecture
   - page: API reference
-    url: /rest.li/reference/architecture
+    url: /rest.li/spec/protocol
   - page: Contribute
     url: /rest.li/contribute/howto

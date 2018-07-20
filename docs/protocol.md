@@ -1,6 +1,6 @@
 ---
-layout: guide
-title: User guide
+layout: api_reference
+title: API Reference
 permalink: /spec/protocol
 index: 2
 ---
@@ -41,7 +41,7 @@ Spec](http://tools.ietf.org/html/draft-gregorio-uritemplate-07).
 ## Online Documentation
 
 Rest.li provides [online
-documentation](https://github.com/linkedin/rest.li/wiki/Rest.li-User-Guide#online-documentation)
+documentation](Rest.li-User-Guide#online-documentation)
 for any loaded resource. The documentation shows example request and
 response for the resource methods, finders, and actions. Use it to
 document the Rest.li protocols.
@@ -69,10 +69,10 @@ Consider the following functions:
     `v`
   - if `v` is a map then `encoded(v)` = the URL encoding for a map as
     described in the [Rest.li 2.0 protocol object URL
-    representation](https://github.com/linkedin/rest.li/wiki/Rest.li-Protocol#url-representation)
+    representation](Rest.li-Protocol#url-representation)
   - if `v` is an array then `encoded(v)` = the URL encoding for an array
     as described in the [Rest.li 2.0 protocol array URL
-    representation](https://github.com/linkedin/rest.li/wiki/Rest.li-Protocol#url-representation-1)
+    representation](Rest.li-Protocol#url-representation-1)
 
 `reducedEncoded(v)` is defined as follows -
 
@@ -81,11 +81,11 @@ Consider the following functions:
   - if `v` is a map then `reducedEncoded(v)` = the HTTP body/header
     encoding for a map as described in the [Rest.li 2.0 protocol object
     HTTP body and headers
-    representation](https://github.com/linkedin/rest.li/wiki/Rest.li-Protocol#http-body-and-headers-representation)
+    representation](Rest.li-Protocol#http-body-and-headers-representation)
   - if `v` is an array then `reducedEncoded(v)` = the HTTP body/header
     encoding for an array as described in the [Rest.li 2.0 protocol
     array HTTP body and headers
-    representation](https://github.com/linkedin/rest.li/wiki/Rest.li-Protocol#http-body-and-headers-representation-1)
+    representation](Rest.li-Protocol#http-body-and-headers-representation-1)
 
 `encoded` and `reducedEncoded` will be used in the sections below.
 
@@ -94,7 +94,7 @@ Consider the following functions:
 Rest.li objects defined using Pegasus Data Schema (PDSC) is serialized
 as JSON representation for transportation over the wire. For detailed
 transport serialization, please see [How Data is Serialized for
-Transport](https://github.com/linkedin/rest.li/wiki/DATA-Data-Schema-and-Templates#how-data-is-serialized-for-transport).
+Transport](DATA-Data-Schema-and-Templates#how-data-is-serialized-for-transport).
 
 ### Rest.li Protocol 2.0 Object Representation
 
@@ -115,10 +115,10 @@ An object can be present as values for the following headers -
 
   - <code>Location</code> - if present here we simply use the
     [Rest.li 2.0 protocol object URL
-    representation](https://github.com/linkedin/rest.li/wiki/Rest.li-Protocol#url-representation)
+    representation](Rest.li-Protocol#url-representation)
   - <code>X-RestLi-Id</code> or <code>X-LinkedIn-Id</code> - we use the
     [Rest.li 2.0 protocol object HTTP body and headers
-    representation](https://github.com/linkedin/rest.li/wiki/Rest.li-Protocol#http-body-and-headers-representation)
+    representation](Rest.li-Protocol#http-body-and-headers-representation)
 
 ##### Body representation
 
@@ -143,10 +143,10 @@ An array can be present as values for the following headers -
 
   - <code>Location</code> - if present here we simply use the
     [Rest.li 2.0 protocol array URL
-    representation](https://github.com/linkedin/rest.li/wiki/Rest.li-Protocol#url-representation-1)
+    representation](Rest.li-Protocol#url-representation-1)
   - <code>X-RestLi-Id</code> or <code>X-LinkedIn-Id</code> - we use the
     [Rest.li 2.0 protocol array HTTP body and headers
-    representation](https://github.com/linkedin/rest.li/wiki/Rest.li-Protocol#http-body-and-headers-representation-1)
+    representation](Rest.li-Protocol#http-body-and-headers-representation-1)
 
 ##### Body representation
 
@@ -209,9 +209,9 @@ a collection of key-value pairs. Because of this similarity in structure
 we decided to represent both using the Rest.li 2.0 object notation. Any
 list present as a value in the complex key uses the Rest.li 2.0 list
 notation. Details can be found in the [Association
-keys](https://github.com/linkedin/rest.li/wiki/Rest.li-Protocol#association-keys)
+keys](Rest.li-Protocol#association-keys)
 and [complex
-keys](https://github.com/linkedin/rest.li/wiki/Rest.li-Protocol#complex-types-as-keys-in-protocol-20)
+keys](Rest.li-Protocol#complex-types-as-keys-in-protocol-20)
 sections.
 
 ## Collection Resources
@@ -1016,7 +1016,7 @@ The `Params` of a `ComplexResourceKey` are always prefixed with
 
 The serialized form of a complex key uses the [Rest.li 2.0 protocol
 object
-notation](https://github.com/linkedin/rest.li/wiki/Rest.li-Protocol#restli-protocol-20-object-representation)
+notation](Rest.li-Protocol#restli-protocol-20-object-representation)
 . For example, given the complex data:
 
 
@@ -1113,7 +1113,7 @@ position, but the paths for the keys in the JSON body are not.
 
 If used in batch requests, each key in the batch is represented as an
 element in the <code>ids</code> array using the [protocol 2.0 array
-notation](https://github.com/linkedin/rest.li/wiki/Rest.li-Protocol#restli-20-protocol-array-notation)
+notation](Rest.li-Protocol#restli-20-protocol-array-notation)
 .
 
 For example,
@@ -1156,7 +1156,7 @@ the “entities” part of the body:
     
 
 As long as the [protocol 2.0 array
-notation](https://github.com/linkedin/rest.li/wiki/Rest.li-Protocol#restli-20-protocol-array-notation)
+notation](Rest.li-Protocol#restli-20-protocol-array-notation)
 is being adhered to no addional escaping is required for complex keys in
 a batch request.
 

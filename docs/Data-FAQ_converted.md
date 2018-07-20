@@ -105,7 +105,7 @@ strict](http://stackoverflow.com/questions/22528767/jdk8-and-javadoc-has-become-
 
 More details on `doc` and `symbolDocs` can be found here: [Data Schemas
 and
-Templates](https://github.com/linkedin/rest.li/wiki/DATA-Data-Schema-and-Templates)
+Templates](DATA-Data-Schema-and-Templates)
 
 #### How does rest.li full update method work with schema evolution?
 

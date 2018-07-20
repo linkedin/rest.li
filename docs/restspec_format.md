@@ -1,6 +1,6 @@
 ---
-layout: guide
-title: User guide
+layout: api_reference
+title: RestSpec format
 permalink: /spec/restspec_format
 index: 2
 ---

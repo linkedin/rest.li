@@ -15,7 +15,7 @@ permalink: /Send-Rest_li-Request-Query-In-Request-Body
 ## Introduction
 
 [Rest.li
-protocol](https://github.com/linkedin/rest.li/wiki/Rest.li-Protocol)
+protocol](Rest.li-Protocol)
 specifies what HTTP method will be used for each type of Rest.li
 request. However, sometimes due to security constraint (i.e. not wanting
 to send some sensitive information in URI) or jetty buffer limitation

@@ -7,72 +7,50 @@ toc:
         url: /rest.li/user_guide/restli_server
       - page: Rest.li Client Framework
         url: /rest.li/user_guide/restli_client
-  - title: Spec
-    subfolderitems:
-      - page: Rest.li Protocol
-        url: /rest.li/spec/protocol
-      - page: Restspec json format
-        url: /rest.li/spec/restspec_format
+      - page: Components
+        url: /rest.li/Components
+      - page: Asynchronous-Servers-and-Clients-in-Rest.li
+        url: /rest.li/Asynchronous-Servers-and-Clients-in-Rest_li
   - title: Modeling Resources
     subfolderitems:
+      - page: DATA-Data-Schema-and-Templates
+        url: /rest.li/DATA-Data-Schema-and-Templates
       - page: Modeling Resources
         url: /rest.li/modeling/modeling
       - page: Snapshots and Resource Compatibility Checking
         url: /rest.li/modeling/compatibiltiy_check
-  - title: wiki
+  - title: Main concepts
     subfolderitems:
-      - page: Asynchronous-Servers-and-Clients-in-Rest.li
-        url: /rest.li/Asynchronous-Servers-and-Clients-in-Rest_li
-      - page: Attachment-Streaming
-        url: /rest.li/Attachment-Streaming
-      - page: Building-Rest.li-from-Source
-        url: /rest.li/Building-Rest_li-from-Source
-      - page: Components
-        url: /rest.li/Components
-      - page: Compression
-        url: /rest.li/Compression
-      - page: D2-Zookeeper-Properties
-        url: /rest.li/D2-Zookeeper-Properties
-      - page: DATA-Data-Schema-and-Templates
-        url: /rest.li/DATA-Data-Schema-and-Templates
-      - page: Data-FAQ
-        url: /rest.li/Data-FAQ
-      - page: Dynamic_Discovery
-        url: /rest.li/Dynamic_Discovery
-      - page: Guice-Dependency-Injection
-        url: /rest.li/Guice-Dependency-Injection
-      - page: How_To:Rest.li_Avro_conversions
-        url: /rest.li/How_To:Rest_li_Avro_conversions
-      - page: How-to-use-projections-in-Java
-        url: /rest.li/How-to-use-projections-in-Java
-      - page: Modeling-Resources-with-Rest.li
-        url: /rest.li/Modeling-Resources-with-Rest_li
+      - page: Filters
+        url: /rest.li/Rest_li-Filters
       - page: Projections
         url: /rest.li/Projections
-      - page: Request-Response-API-(R2)
-        url: /rest.li/Request-Response-API-(R2)
-      - page: Request-Response-Framework
-        url: /rest.li/Request-Response-Framework
-      - page: Rest.li-2.0-response-API
-        url: /rest.li/Rest_li-2_0-response-API
-      - page: Rest.li-2.x-upgrade-instructions
-        url: /rest.li/Rest_li-2_x-upgrade-instructions
-      - page: Rest.li-Filters
-        url: /rest.li/Rest_li-Filters
-      - page: Rest.li-Protocol
-        url: /rest.li/Rest_li-Protocol
-      - page: Rest.li-with-Netty
-        url: /rest.li/Rest_li-with-Netty
-      - page: Rest.li-with-Servlet-Containers
-        url: /rest.li/Rest_li-with-Servlet-Containers
+      - page: Validation
+        url: /rest.li/Validation-in-Rest_li
+      - page: Attachment-Streaming
+        url: /rest.li/Attachment-Streaming
+  - title: Mutli-language
+    subfolderitems:
       - page: Scala-Integration
         url: /rest.li/Scala-Integration
-      - page: Send-Rest.li-Request-Query-In-Request-Body
-        url: /rest.li/Send-Rest_li-Request-Query-In-Request-Body
-      - page: Spring-Dependency-Injection
-        url: /rest.li/Spring-Dependency-Injection
-      - page: Validation-in-Rest.li
-        url: /rest.li/Validation-in-Rest_li
-      - page: Writing-unit-tests-for-Rest.li-clients-and-servers
+      - page: C#
+        url: https://github.com/mchen07/restli-csharp
+  - title: Testing
+    subfolderitems:
+      - page: Writing unit tests
         url: /rest.li/Writing-unit-tests-for-Rest_li-clients-and-servers
+  - title: How to
+    subfolderitems:    
+      - page: Send Rest.li request query in request body
+        url: /rest.li/Send-Rest_li-Request-Query-In-Request-Body
+      - page: How to use projections
+        url: /rest.li/How-to-use-projections-in-Java
+      - page: Rest.li to Avro conversion
+        url: /rest.li/How_To:Rest_li_Avro_conversions
+      - page: Compression
+        url: /rest.li/Compression
+      - page: How to migrate to Rest.li 2.x
+        url: /rest.li/Rest_li-2_x-upgrade-instructions
+      - page: FAQ
+        url: /rest.li/Data-FAQ
     

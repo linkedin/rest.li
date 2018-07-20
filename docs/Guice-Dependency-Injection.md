@@ -1,5 +1,5 @@
 ---
-layout: guide
+layout: api_reference
 title: Guice-Dependency-Injection
 permalink: /Guice-Dependency-Injection
 ---

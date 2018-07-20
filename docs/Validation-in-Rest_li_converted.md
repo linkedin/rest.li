@@ -49,7 +49,7 @@ characters, a patch setting the username to “AA” is invalid.
 
 You can read more about required and optional fields in [Data Schema and
 Templates - Optional
-Fields](https://github.com/linkedin/rest.li/wiki/DATA-Data-Schema-and-Templates#optional-fields).
+Fields](DATA-Data-Schema-and-Templates#optional-fields).
 
 ## Custom Validation Rules
 
@@ -259,7 +259,7 @@ value
 ```
 
 [Rest.li Filters -
-Configuration](https://github.com/linkedin/rest.li/wiki/Rest.li-Filters#configuring-filters)
+Configuration](Rest.li-Filters#configuring-filters)
 explains how to install the filter.
 
 ### Request validation during resource handling
@@ -385,12 +385,12 @@ When validating data returned by the server, clients have to use the
 When ReadOnly or CreateOnly annotations are used, Rest.li context
 (method type, request vs response) is necessary to validate the data.
 Otherwise the data and the schema information is enough. [Data to Schema
-Validation](https://github.com/linkedin/rest.li/wiki/DATA-Data-Schema-and-Templates#data-to-schema-validation)
+Validation](DATA-Data-Schema-and-Templates#data-to-schema-validation)
 explains how to validate data using the `ValidateDataAgainstSchema`
 class. If it is used with `DataSchemaAnnotationValidator`, it will
 consider the first two types of rules out of three listed in [Specifying
 Validation
-Rules](https://github.com/linkedin/rest.li/wiki/Validation-in-Rest.li#specifying-validation-rules).
+Rules](Validation-in-Rest.li#specifying-validation-rules).
 
 For example:  
 ```java  

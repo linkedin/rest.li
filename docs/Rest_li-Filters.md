@@ -6,13 +6,13 @@ permalink: /Rest_li-Filters
 
 # Contents
 
-* [Introduction](https://github.com/linkedin/rest.li/wiki/Rest.li-Filters#introduction)
-* [How Filters Work](https://github.com/linkedin/rest.li/wiki/Rest.li-Filters#how-filters-work)
-* [Using Filters](https://github.com/linkedin/rest.li/wiki/Rest.li-Filters#using-filters)
-* [Filter Chaining](https://github.com/linkedin/rest.li/wiki/Rest.li-Filters#filter-chaining)
-* [Transferring State Between Filters](https://github.com/linkedin/rest.li/wiki/Rest.li-Filters#transferring-state-between-filters)
-* [Exception Handing and Filter Chains](https://github.com/linkedin/rest.li/wiki/Rest.li-Filters#exception-handling-and-filter-chains)
-* [Making Asynchronous Blocking Calls from Filters](https://github.com/linkedin/rest.li/wiki/Rest.li-Filters#making-asynchronous-blocking-calls-from-filters)
+* [Introduction](Rest.li-Filters#introduction)
+* [How Filters Work](Rest.li-Filters#how-filters-work)
+* [Using Filters](Rest.li-Filters#using-filters)
+* [Filter Chaining](Rest.li-Filters#filter-chaining)
+* [Transferring State Between Filters](Rest.li-Filters#transferring-state-between-filters)
+* [Exception Handing and Filter Chains](Rest.li-Filters#exception-handling-and-filter-chains)
+* [Making Asynchronous Blocking Calls from Filters](Rest.li-Filters#making-asynchronous-blocking-calls-from-filters)
 
 # Introduction
 On the server side, Rest.li provides a mechanism to intercept incoming requests and outgoing responses via filters. Each Rest.li filter contains methods that handle both requests and responses.

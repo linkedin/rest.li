@@ -5,9 +5,9 @@ permalink: /Compression
 ---
 
 Contents:
-* [Supported Algorithms](https://github.com/linkedin/rest.li/wiki/Compression#supported-algorithms)
-* [Using Guice](https://github.com/linkedin/rest.li/wiki/Compression#using-guice)
-* [Using Spring](https://github.com/linkedin/rest.li/wiki/Compression#using-spring)
+* [Supported Algorithms](Compression#supported-algorithms)
+* [Using Guice](Compression#using-guice)
+* [Using Spring](Compression#using-spring)
 
 ## Supported Algorithms
 

@@ -187,7 +187,7 @@ The basic steps you will follow to create a Rest.li server are:
 
 1.  Define data schema. Rest.li uses an Avro-like format known as
     [Pegasus Data
-    Schema](https://github.com/linkedin/rest.li/wiki/DATA-Data-Schema-and-Templates) to
+    Schema](DATA-Data-Schema-and-Templates) to
     define the resource data.
 
 2. Generate language bindings. Rest.li will generate java class
@@ -241,7 +241,7 @@ it in a path corresponding to your namespace, under
 namespace. The record has one field, a string whose name is `fortune`.
 Fields as well as the record itself can have optional documentation
 strings. This is, of course, a very simple schema. See [Data Schema and
-Templates](https://github.com/linkedin/rest.li/wiki/DATA-Data-Schema-and-Templates) for
+Templates](DATA-Data-Schema-and-Templates) for
 details on the syntax and more complex examples.
 
 ### Step 2. Generate Java Bindings
@@ -410,7 +410,7 @@ our application logic. We will use Netty, an excellent framework that
 works great with Rest.li to build fully async services. For details on
 how to configure Rest.li with other servlet containers see [Rest.li with
 Servlet
-Containers](https://github.com/linkedin/rest.li/wiki/Rest.li-with-Servlet-Containers).
+Containers](Rest.li-with-Servlet-Containers).
 
 Rest.li also includes a Request Response layer (R2) that provides a
 transport abstraction and other services.
@@ -451,7 +451,7 @@ Next, create a `gradle.properties` file containing the following line:
     rest.model.compatibility=ignore
 
 This disables some [compatibility
-checks](https://github.com/linkedin/rest.li/wiki/Gradle-build-integration#compatibility)
+checks](Gradle-build-integration#compatibility)
 on the generated files. You will need these checks in a real project but
 to keep this example simple we are disabling these checks.
 

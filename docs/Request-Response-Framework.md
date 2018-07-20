@@ -1,5 +1,5 @@
 ---
-layout: guide
+layout: api_reference
 title: Request-Response-Framework
 permalink: /Request-Response-Framework
 ---
@@ -49,4 +49,4 @@ A corresponding server might do this:
 
 See an implementation example here: https://github.com/linkedin/rest.li/tree/master/r2/src/main/java/com/linkedin/r2/filter/compression
 
-For a full list of filters, see: https://github.com/linkedin/rest.li/wiki/List-of-R2-filters
+For a full list of filters, see: List-of-R2-filters

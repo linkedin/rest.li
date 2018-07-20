@@ -1,6 +1,6 @@
 ---
-layout: guide
-title: D2-Zookeeper-Properties
+layout: api_reference
+title: D2 Zookeeper Properties
 permalink: /D2-Zookeeper-Properties
 ---
 

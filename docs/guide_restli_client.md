@@ -642,7 +642,7 @@ At a high level, the restspec contains the following information:
     described above
 
 Additional details on the Restspec format may be found in the [design
-documents](https://github.com/linkedin/rest.li/wiki/Rest.li-.restspec.json-Format).
+documents](Rest.li-.restspec.json-Format).
 The Restspec format is formally described by the .pdsc schema files in
 "com.linkedin.restli.restspec.* " distributed in the restli-common
 module.
@@ -660,7 +660,7 @@ The IDL generator is available as part of the restli-tools JAR, as the
 class.
 
 For details on how to use the IDL Generator, see [Gradle build
-integration](https://github.com/linkedin/rest.li/wiki/Gradle-build-integration).
+integration](Gradle-build-integration).
 
 <a id="Client"></a>
 <a id="RestClient"></a>
@@ -794,7 +794,7 @@ The following diagram illustrates the request/response flow for a
 client/server interaction. The call may fail at any point during this
 flow, as described below.
 
-![Rest.li Request Flow](https://github.com/linkedin/rest.li/wiki/RequestFlow.png "Rest.li Request Flow")
+![Rest.li Request Flow]("/images/RequestFlow.png" "Rest.li Request Flow")
 
 The following list describes the failures scenarios as observed by a
 client calling `ResponseFuture.getResponse()`
@@ -1054,7 +1054,7 @@ In addition, the generator recognizes the following system properties:
 
 The Rest.li client code generator is integrated as part of the `pegasus`
 gradle plugin. For details, see [Gradle build
-integration](https://github.com/linkedin/rest.li/wiki/Gradle-build-integration).
+integration](Gradle-build-integration).
 
 <a id="wiki-Extras"></a>
 

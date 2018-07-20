@@ -96,7 +96,7 @@ classes:
 <center>
 
 <b>Data and Control Flow Between a Rest.li Server and
-Client</b><br><img src=https://github.com/linkedin/rest.li/wiki/RestLiClientServerFlow.png>
+Client</b><br><img src=RestLiClientServerFlow.png>
 
 </center>
 
@@ -120,20 +120,20 @@ construct complex asynchronous request flows.
 There are several server
     implementations:
 
-  - [Servlet](https://github.com/linkedin/rest.li/wiki/Rest.li-with-Servlet-Containers)
+  - [Servlet](Rest.li-with-Servlet-Containers)
     — Battle tested and ready for production use. Containers supporting
     [Servlet 3.0
     API](http://download.oracle.com/otndocs/jcp/servlet-3.0-fr-eval-oth-JSpec/)
     are required to benefit from asynchronous, non-blocking request
     processing. Jetty 8.x supports Servlet 3.0 and has been used in
     large production environments.
-  - [Netty](https://github.com/linkedin/rest.li/wiki/Rest.li-with-Netty)
+  - [Netty](Rest.li-with-Netty)
     — Experimental
   - Embedded Jetty — Primarily for integration testing as it’s trivial
     to spin up as part of a test suite
 
 See [Asynchronous
-Resources](https://github.com/linkedin/rest.li/wiki/Rest.li-User-Guide#asynchronous-resources)
+Resources](Rest.li-User-Guide#asynchronous-resources)
 for more details on how to handle requests using non-blocking request
 processing.
 
@@ -219,7 +219,7 @@ allow a server and clients to exchange data.
 <center>
 
 <b>Rest.li Development
-Flow</b><br><img src=https://github.com/linkedin/rest.li/wiki/RestLiCodeGen.png>
+Flow</b><br><img src=/images/RestLiCodeGen.png>
 
 </center>
 
@@ -301,9 +301,9 @@ This section describes Rest.li support for implementing servers:
 Rest.li supports the following runtimes:
 
 1.  [Servlet
-    containers](https://github.com/linkedin/rest.li/wiki/Rest.li-with-Servlet-Containers)
+    containers](Rest.li-with-Servlet-Containers)
     (for example, Jetty)
-2.  [Netty](https://github.com/linkedin/rest.li/wiki/Rest.li-with-Netty)
+2.  [Netty](Rest.li-with-Netty)
 
 ### R2 Filter Configuration
 
@@ -311,7 +311,7 @@ Rest.li servers can be configured with different R2 filters, according
 to your use case. How the filters are configured depends on which
 dependency injection framework (if any) you are using. For example, take
 a look at
-<a href="https://github.com/linkedin/rest.li/wiki/Compression">the
+<a href="Compression">the
 compression wiki page</a> to see how we can configure a server for
 compression. Another example is to add a
 <code>SimpleLoggingFilter</code> with Spring, which requires you to do
@@ -326,7 +326,7 @@ the following (full file
 \`\`\`
 
 [Other R2
-filters](https://github.com/linkedin/rest.li/wiki/List-of-R2-filters)
+filters](List-of-R2-filters)
 can also be configured in a similar way.
 
 <a id="wiki-DefiningDataModels"></a>
@@ -440,7 +440,7 @@ UI that displays REST API documentation, including all javadoc, for
 Rest.li APIs.
 
 Scaladoc is also supported. See [Scala
-Integration](https://github.com/linkedin/rest.li/wiki/Scala-Integration)
+Integration](Scala-Integration)
 for details.
 
 <a id="wiki-ResourceAnnotations"></a>
@@ -450,7 +450,7 @@ for details.
 Resource annotations are used to mark and register a class as providing
 as Rest.li resource. One of a number of annotations may be used,
 depending on the [Interface
-Pattern](https://github.com/linkedin/rest.li/wiki/Modeling-Resources-with-Rest.li)
+Pattern](Modeling-Resources-with-Rest.li)
 the resource is intended to implement. Briefly, here are the
 options:
 
@@ -476,7 +476,7 @@ The @`RestLiCollection` annotation is applied to classes to mark them as
 providing a Rest.li collection resource. Collection resources model a
 collection of entities, where each entity is referenced by a key. See
 [Collection Resource
-Pattern](https://github.com/linkedin/rest.li/wiki/Modeling-Resources-with-Rest.li#wiki-Collection)
+Pattern](Modeling-Resources-with-Rest.li#wiki-Collection)
 for more details.
 
 The supported annotation parameters are:
@@ -683,7 +683,7 @@ The @`RestLiSimpleResource` annotation is applied to classes to mark
 them as providing a Rest.li simple resource. Simple resources model an
 entity which is a singleton in a particular scope. See the description
 of the [Simple Resource
-Pattern](https://github.com/linkedin/rest.li/wiki/Modeling-Resources-with-Rest.li#wiki-Simple)
+Pattern](Modeling-Resources-with-Rest.li#wiki-Simple)
 for more details.
 
 The supported annotation parameters are:
@@ -725,7 +725,7 @@ as providing a Rest.li association resource. Association resources model
 a collection of relationships between entities. Each relationship is
 referenced by the keys of the entities it relates and may define
 attributes on the relation itself. See [Association Resource
-Pattern](https://github.com/linkedin/rest.li/wiki/Modeling-Resources-with-Rest.li#wiki-Association)
+Pattern](Modeling-Resources-with-Rest.li#wiki-Association)
 for more details.
 
 For Example:
@@ -1157,7 +1157,7 @@ typeref schema, even java classes from libraries such as Date. To create
 a query parameter that uses a custom type, you will need to write a
 coercer and a typeref schema for the type you want to use. See the
 [typeref
-documentation](https://github.com/linkedin/rest.li/wiki/DATA-Data-Schema-and-Templates)
+documentation](DATA-Data-Schema-and-Templates)
 for details.
 
 First, for the coercer you will need to write an implementation of
@@ -1946,7 +1946,7 @@ methods and for methods that are not overridden, the framework will
 recognize that your resource does not support this method and will
 return a 404 if clients attempt to invoke it. Note that unsupported
 methods will be omitted from your resources IDL (see [Restspec
-IDL](https://github.com/linkedin/rest.li/wiki/Rest.li-User-Guide#wiki-RestspecIDL)
+IDL](Rest.li-User-Guide#wiki-RestspecIDL)
 for details).
 
 ##### CollectionResourceTemplate
@@ -2291,9 +2291,9 @@ later.”);
 
 Rest.li provides built-in support for field projections, for example the
 structural filtering of responses. The support includes [Java Projection
-Bindings](https://github.com/linkedin/rest.li/wiki/How-to-use-projections-in-Java)
+Bindings](How-to-use-projections-in-Java)
 and a [JSON Projection wire
-protocol](https://github.com/linkedin/rest.li/wiki/Projections). The
+protocol](Projections). The
 projection is applied separately to each entity object in the response,
 i.e., to the value-type of the CollectionResource or
 AssociationResource. If the invoked method is a FINDER that returns a
@@ -2319,7 +2319,7 @@ latter precludes the Rest.li framework from performing any projection
 while the former forces the Rest.li framework to perform the projection.
 
 Additional details are described in [How to use projections in
-Java](https://github.com/linkedin/rest.li/wiki/How-to-use-projections-in-Java)
+Java](How-to-use-projections-in-Java)
 
 <a id="wiki-Pagination"></a>
 
@@ -2402,10 +2402,10 @@ Rest.li includes direct support for the following dependency injection
 frameworks:
 
   - [Spring](http://www.springsource.org/) via the [rest.li/spring
-    bridge](https://github.com/linkedin/rest.li/wiki/Spring-Dependency-Injection)
+    bridge](Spring-Dependency-Injection)
   - [Guice](https://code.google.com/p/google-guice/) via the
     [rest.li/guice
-    bridge](https://github.com/linkedin/rest.li/wiki/Guice-Dependency-Injection)
+    bridge](Guice-Dependency-Injection)
 
 Other dependency injection frameworks can be used as well. Rest.li
 provides an extensible dependency-injection mechanism, through the
@@ -2964,7 +2964,7 @@ public <BuilderType> <pathKeyName>Key(<KeyType> key);
 \`\`\`
 
 See [Creating partial
-updates](https://github.com/linkedin/rest.li/wiki/Rest.li-User-Guide#wiki-creating-partial-updates)
+updates](Rest.li-User-Guide#wiki-creating-partial-updates)
 for details on how to create a request for a partial update.
 
 #### BATCH\_PARTIAL\_UPDATE Request Builder
@@ -3195,7 +3195,7 @@ At a high level, the restspec contains the following information:
     described above
 
 Additional details on the Restspec format may be found in the [design
-documents](https://github.com/linkedin/rest.li/wiki/Rest.li-.restspec.json-Format).
+documents](Rest.li-.restspec.json-Format).
 The Restspec format is formally described by the .pdsc schema files in
 “com.linkedin.restli.restspec.\* ” distributed in the restli-common
 module.
@@ -3213,7 +3213,7 @@ The IDL generator is available as part of the restli-tools JAR, as the
 class.
 
 For details on how to use the IDL Generator, see [Gradle build
-integration](https://github.com/linkedin/rest.li/wiki/Gradle-build-integration).
+integration](Gradle-build-integration).
 
 <a id="Client"></a>  
 <a id="RestClient"></a>
@@ -3353,7 +3353,7 @@ client/server interaction. The call may fail at any point during this
 flow, as described below.
 
 ![Rest.li Request
-Flow](https://github.com/linkedin/rest.li/wiki/RequestFlow.png
+Flow](/images/RequestFlow.png
 "Rest.li Request Flow")
 
 The following list describes the failures scenarios as observed by a
@@ -3620,7 +3620,7 @@ In addition, the generator recognizes the following system properties:
 
 The Rest.li client code generator is integrated as part of the `pegasus`
 gradle plugin. For details, see [Gradle build
-integration](https://github.com/linkedin/rest.li/wiki/Gradle-build-integration).
+integration](Gradle-build-integration).
 
 <a id="wiki-Extras"></a>
 

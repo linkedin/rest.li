@@ -5,9 +5,9 @@ permalink: /How_To:Rest_li_Avro_conversions
 ---
 
 ## Contents
-* [Converting Schemas](https://github.com/linkedin/rest.li/wiki/How-To%3A-rest.li-Avro-conversions#converting-schemas)
-* [Converting Data](https://github.com/linkedin/rest.li/wiki/How-To%3A-rest.li-Avro-conversions#converting-data)
-* [FAQ](https://github.com/linkedin/rest.li/wiki/How-To%3A-rest.li-Avro-conversions#faq)
+* [Converting Schemas](How-To%3A-rest.li-Avro-conversions#converting-schemas)
+* [Converting Data](How-To%3A-rest.li-Avro-conversions#converting-data)
+* [FAQ](How-To%3A-rest.li-Avro-conversions#faq)
 
 Sometimes it is necessary to convert between Avro and Rest.li formats. That is, either converting schemas (Rest.li `DataSchema`s to Avro `Schema`s and vice versa) or converting data (Rest.li `DataMap`s to Avro `GenericRecord`s and vice versa). Rest.li provides ways to do this using the data-avro module.
 
@@ -59,7 +59,7 @@ com.linkedin.data.avro.DataTranslator(dataMap, dataSchema, avroSchema);
 
 Rest.li will generate avro schemas for all your pegasus schemas (.pdsc files) automatically if the build is configured to enable this.
 
-See [Gradle generateAvroSchema Task](https://github.com/linkedin/rest.li/wiki/Gradle-build-integration#wiki-generateavroschema) for details on how to enable.
+See [Gradle generateAvroSchema Task](Gradle-build-integration#wiki-generateavroschema) for details on how to enable.
 
 ## FAQ
 ### How do I get the RecordDataSchema of a particular Record type?

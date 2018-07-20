@@ -44,7 +44,7 @@
         </li>
         
         <li>
-          <a href="/rest.li/reference/architecture" >
+          <a href="/rest.li/spec/protocol" >
             API reference
           </a>
         </li>
@@ -293,7 +293,7 @@ responds to GET requests.</p>
 <ol>
   <li>
     <p>Define data schema. Rest.li uses an Avro-like format known as
-<a href="https://github.com/linkedin/rest.li/wiki/DATA-Data-Schema-and-Templates">Pegasus Data
+<a href="DATA-Data-Schema-and-Templates">Pegasus Data
 Schema</a> to
 define the resource data.</p>
   </li>
@@ -352,7 +352,7 @@ it in a path corresponding to your namespace, under
 <p><code class="highlighter-rouge">Fortune.pdsc</code> defines a record named Fortune, with an associated
 namespace. The record has one field, a string whose name is <code class="highlighter-rouge">fortune</code>.
 Fields as well as the record itself can have optional documentation
-strings. This is, of course, a very simple schema. See <a href="https://github.com/linkedin/rest.li/wiki/DATA-Data-Schema-and-Templates">Data Schema and
+strings. This is, of course, a very simple schema. See <a href="DATA-Data-Schema-and-Templates">Data Schema and
 Templates</a> for
 details on the syntax and more complex examples.</p>
 
@@ -522,7 +522,7 @@ that can respond to a GET request by returning data according to the
 model. The only thing remaining is to configure a HTTP framework to call
 our application logic. We will use Netty, an excellent framework that
 works great with Rest.li to build fully async services. For details on
-how to configure Rest.li with other servlet containers see <a href="https://github.com/linkedin/rest.li/wiki/Rest.li-with-Servlet-Containers">Rest.li with
+how to configure Rest.li with other servlet containers see <a href="Rest.li-with-Servlet-Containers">Rest.li with
 Servlet
 Containers</a>.</p>
 
@@ -565,7 +565,7 @@ task startFortunesServer(type: JavaExec) {
 <div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>rest.model.compatibility=ignore
 </code></pre></div></div>
 
-<p>This disables some <a href="https://github.com/linkedin/rest.li/wiki/Gradle-build-integration#compatibility">compatibility
+<p>This disables some <a href="Gradle-build-integration#compatibility">compatibility
 checks</a>
 on the generated files. You will need these checks in a real project but
 to keep this example simple we are disabling these checks.</p>

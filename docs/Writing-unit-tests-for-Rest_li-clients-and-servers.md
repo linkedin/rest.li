@@ -6,10 +6,10 @@ permalink: /Writing-unit-tests-for-Rest_li-clients-and-servers
 
 ### Contents
 
-* [Introduction](https://github.com/linkedin/rest.li/wiki/Writing-unit-tests-for-Rest.li-clients-and-servers#introduction)
-* [Writing Unit Tests for Rest.li Clients](https://github.com/linkedin/rest.li/wiki/Writing-unit-tests-for-Rest.li-clients-and-servers#writing-unit-tests-for-restli-clients)
-* [Writing Unit Tests for Rest.li Servers](https://github.com/linkedin/rest.li/wiki/Writing-unit-tests-for-Rest.li-clients-and-servers#writing-unit-tests-for-restli-servers)
-* [Writing Unit Tests for Rest.li Data (RecordTemplates and DataMaps)](https://github.com/linkedin/rest.li/wiki/Writing-unit-tests-for-Rest.li-clients-and-servers#writing-unit-tests-for-restli-data-recordtemplates-and-datamaps)
+* [Introduction](Writing-unit-tests-for-Rest.li-clients-and-servers#introduction)
+* [Writing Unit Tests for Rest.li Clients](Writing-unit-tests-for-Rest.li-clients-and-servers#writing-unit-tests-for-restli-clients)
+* [Writing Unit Tests for Rest.li Servers](Writing-unit-tests-for-Rest.li-clients-and-servers#writing-unit-tests-for-restli-servers)
+* [Writing Unit Tests for Rest.li Data (RecordTemplates and DataMaps)](Writing-unit-tests-for-Rest.li-clients-and-servers#writing-unit-tests-for-restli-data-recordtemplates-and-datamaps)
 
 ### Introduction
 
@@ -87,7 +87,7 @@ MockSuccessfulResponseFutureBuilder<CollectionResponse<Greeting>> responseFuture
 
 #### MockHttpServerFactory
 
-The `MockHttpServerFactory` class is used to create a stand-alone Rest.li server easily that you can then write tests against. The primary use case for this class would be to bring up a Rest.li server at the start of the test, and then each test can test a different endpoint that this server supports. This factory also allows us to pass in beans that would have been injected into your Rest.li server by the Rest.li framework. For more information on bean injection in a Rest.li server, see the [documentation on Dependency Injection](https://github.com/linkedin/rest.li/wiki/Rest.li-User-Guide#dependency-injection). 
+The `MockHttpServerFactory` class is used to create a stand-alone Rest.li server easily that you can then write tests against. The primary use case for this class would be to bring up a Rest.li server at the start of the test, and then each test can test a different endpoint that this server supports. This factory also allows us to pass in beans that would have been injected into your Rest.li server by the Rest.li framework. For more information on bean injection in a Rest.li server, see the [documentation on Dependency Injection](Rest.li-User-Guide#dependency-injection). 
 
 Suppose we want to test that we have implemented the GET method correctly for our resource `GreetingsResource`. Let's assume that `GreetingsResource` needs one bean named "db" of type `DataBase` to be injected. Here is what our test might look like (assuming we are using TestNG):
 

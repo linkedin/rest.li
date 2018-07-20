@@ -447,7 +447,7 @@ ones.
 
 The rest of the config values should be pretty obvious. For the list of
 all configuration please see [D2 Zookeeper
-Properties](https://github.com/linkedin/rest.li/wiki/D2-Zookeeper-Properties)
+Properties](D2-Zookeeper-Properties)
 
 Then we modify the config’s build.gradle to add our java dependencies.
 

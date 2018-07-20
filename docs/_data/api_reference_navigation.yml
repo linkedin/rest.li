@@ -1,9 +1,39 @@
 toc:
-  - title: API reference
+  # - title: API reference
+  #   subfolderitems:
+  #     - page: Architecture
+  #       url: /rest.li/reference/architecture
+  #     - page: Server
+  #       url: /rest.li
+  #     - page: Client
+  #       url: /rest.li
+  - title: Spec
     subfolderitems:
-      - page: Architecture
-        url: /rest.li/reference/architecture
-      - page: Server
-        url: /rest.li
-      - page: Client
-        url: /rest.li
+      - page: Rest.li Protocol
+        url: /rest.li/spec/protocol
+      - page: Restspec json format
+        url: /rest.li/spec/restspec_format
+      - page: Rest.li-2.0-response-API
+        url: /rest.li/Rest_li-2_0-response-API
+  - title: R2D2
+    subfolderitems:
+      - page: D2-Zookeeper-Properties
+        url: /rest.li/D2-Zookeeper-Properties
+      - page: Request-Response-API-(R2)
+        url: /rest.li/Request-Response-API-(R2)
+      - page: Dynamic_Discovery
+        url: /rest.li/Dynamic_Discovery
+      - page: Request-Response-Framework
+        url: /rest.li/Request-Response-Framework
+  - title: HTTP Frameworks
+    subfolderitems:
+      - page: Rest.li-with-Netty
+        url: /rest.li/Rest_li-with-Netty
+      - page: Rest.li-with-Servlet-Containers
+        url: /rest.li/Rest_li-with-Servlet-Containers
+  - title: Dependency injection
+    subfolderitems:    
+      - page: Spring dependency injection
+        url: /rest.li/Spring-Dependency-Injection
+      - page: Guice dependency injection
+        url: /rest.li/Guice-Dependency-Injection

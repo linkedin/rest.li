@@ -1,5 +1,5 @@
 ---
-layout: guide
+layout: api_reference
 title: Rest.li-with-Netty
 permalink: /Rest_li-with-Netty
 ---

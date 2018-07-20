@@ -3,12 +3,13 @@ layout: guide
 title: Scala-Integration
 permalink: /Scala-Integration
 ---
+# Scala integration
 
 ## Contents
 
-* [SBT Plugin](https://github.com/linkedin/rest.li/wiki/Scala-Integration#sbt-plugin)
-* [Writing Resources in Scala](https://github.com/linkedin/rest.li/wiki/Scala-Integration#writing-resources-in-scala)
-* [Scaladoc](https://github.com/linkedin/rest.li/wiki/Scala-Integration#scaladoc)
+* [SBT Plugin](#sbt-plugin)
+* [Writing Resources in Scala](#writing-resources-in-scala)
+* [Scaladoc](#scaladoc)
 
 ## SBT Plugin
 
