@@ -219,7 +219,7 @@ allow a server and clients to exchange data.
 <center>
 
 <b>Rest.li Development
-Flow</b><br><img src=/images/RestLiCodeGen.png>
+Flow</b><br><img src=/rest.li/images/RestLiCodeGen.png>
 
 </center>
 
@@ -3353,7 +3353,7 @@ client/server interaction. The call may fail at any point during this
 flow, as described below.
 
 ![Rest.li Request
-Flow](/images/RequestFlow.png
+Flow](/rest.li/images/RequestFlow.png
 "Rest.li Request Flow")
 
 The following list describes the failures scenarios as observed by a

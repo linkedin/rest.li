@@ -794,7 +794,7 @@ The following diagram illustrates the request/response flow for a
 client/server interaction. The call may fail at any point during this
 flow, as described below.
 
-![Rest.li Request Flow]("/images/RequestFlow.png" "Rest.li Request Flow")
+![Rest.li Request Flow]("/rest.li/images/RequestFlow.png" "Rest.li Request Flow")
 
 The following list describes the failures scenarios as observed by a
 client calling `ResponseFuture.getResponse()`

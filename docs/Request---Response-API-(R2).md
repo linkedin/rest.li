@@ -16,7 +16,7 @@ R2 can be used independently, with D2 (our Dynamic Discovery system), or with bo
 The following diagram shows the layers involved in the R2 system. Each layer will be described in detail below.
 
 
-<p><img src="/images/r2.png"></p>
+<p><img src="/rest.li/images/r2.png"></p>
 
 ## Requests and Responses
 
