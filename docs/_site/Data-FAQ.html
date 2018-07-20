@@ -17,8 +17,17 @@
     <link rel="stylesheet" type="text/css" media="screen,projection" href="/assets/main.css">
     <link rel="canonical" href="http://localhost:4000/Data-FAQ" />
     <link rel="alternate" type="application/rss+xml" title="rest.li" href="/feed.xml" />
+
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
   
     
+    <script>
+       $(function() {
+          $("h1").addClass("no_toc");
+       });
+    </script>
 </head>
 
 
@@ -82,7 +91,7 @@
                        
                          <li><a href="/rest.li/Components">Components</a></li>
                        
-                         <li><a href="/rest.li/Asynchronous-Servers-and-Clients-in-Rest_li">Asynchronous-Servers-and-Clients-in-Rest.li</a></li>
+                         <li><a href="/rest.li/Asynchronous-Servers-and-Clients-in-Rest_li">Asynchronous in Rest.li</a></li>
                        
                         </ul>
                      </ul>
@@ -93,7 +102,7 @@
                         <li><span class="nav_sub-title">Modeling Resources</span></li>
                         <ul>
                        
-                         <li><a href="/rest.li/DATA-Data-Schema-and-Templates">DATA-Data-Schema-and-Templates</a></li>
+                         <li><a href="/rest.li/DATA-Data-Schema-and-Templates">Data schema and templates</a></li>
                        
                          <li><a href="/rest.li/modeling/modeling">Modeling Resources</a></li>
                        
@@ -114,7 +123,7 @@
                        
                          <li><a href="/rest.li/Validation-in-Rest_li">Validation</a></li>
                        
-                         <li><a href="/rest.li/Attachment-Streaming">Attachment-Streaming</a></li>
+                         <li><a href="/rest.li/Attachment-Streaming">Attachment Streaming</a></li>
                        
                         </ul>
                      </ul>
@@ -125,7 +134,7 @@
                         <li><span class="nav_sub-title">Mutli-language</span></li>
                         <ul>
                        
-                         <li><a href="/rest.li/Scala-Integration">Scala-Integration</a></li>
+                         <li><a href="/rest.li/Scala-Integration">Scala integration</a></li>
                        
                          <li><a href="https://github.com/mchen07/restli-csharp">C#</a></li>
                        
@@ -166,7 +175,20 @@
                         
                     </div>
                      <div class="markdown-body col s12 m3 l9">
-                            <h4 id="how-do-i-validate-a-record-with-default-values-filled-in"><strong>How do I validate a record with default values filled in?</strong></h4>
+                            <h1 id="faq">FAQ</h1>
+
+<ul id="markdown-toc">
+  <li><a href="#faq" id="markdown-toc-faq">FAQ</a>    <ul>
+      <li><a href="#how-do-i-validate-a-record-with-default-values-filled-in" id="markdown-toc-how-do-i-validate-a-record-with-default-values-filled-in"><strong>How do I validate a record with default values filled in?</strong></a></li>
+      <li><a href="#how-do-i-convert-a-pegasus-data-schema-to-an-avro-data-schema" id="markdown-toc-how-do-i-convert-a-pegasus-data-schema-to-an-avro-data-schema">How do I convert a Pegasus data schema to an Avro data schema</a></li>
+      <li><a href="#how-do-i-use-a-data-type-embedded-inside-a-pdsc-file" id="markdown-toc-how-do-i-use-a-data-type-embedded-inside-a-pdsc-file">How do I use a data type embedded inside a pdsc file?</a></li>
+      <li><a href="#why-is-my-java-8-build-generating-all-sorts-of-javadoc-warningserrors-due-to-doclint" id="markdown-toc-why-is-my-java-8-build-generating-all-sorts-of-javadoc-warningserrors-due-to-doclint">Why is my Java 8 build generating all sorts of Javadoc warnings/errors due to doclint?</a></li>
+      <li><a href="#how-does-restli-full-update-method-work-with-schema-evolution" id="markdown-toc-how-does-restli-full-update-method-work-with-schema-evolution">How does rest.li full update method work with schema evolution?</a></li>
+    </ul>
+  </li>
+</ul>
+
+<h2 id="how-do-i-validate-a-record-with-default-values-filled-in"><strong>How do I validate a record with default values filled in?</strong></h2>
 
 <div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Foo</span> <span class="n">foo</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Foo</span><span class="o">();</span>  
 <span class="n">ValidationResult</span> <span class="n">result</span> <span class="o">=</span> <span class="n">ValidateDataAgainstSchema</span><span class="o">.</span><span class="na">validate</span><span class="o">(</span><span class="n">foo</span><span class="o">.</span><span class="na">data</span><span class="o">(),</span>
@@ -181,7 +203,7 @@ cannot be set for absent fields.</p>
 <p>This will also work for partially filled in records. It will only add
 default values to fields that are absent.</p>
 
-<h4 id="how-do-i-convert-a-pegasus-data-schema-to-an-avro-data-schema">How do I convert a Pegasus data schema to an Avro data schema</h4>
+<h2 id="how-do-i-convert-a-pegasus-data-schema-to-an-avro-data-schema">How do I convert a Pegasus data schema to an Avro data schema</h2>
 
 <p>It requires the data-avro module, or data-avro-*.jar.</p>
 
@@ -207,7 +229,7 @@ java -Dgenerator.resolver.path=src/main/pegasus com.linkedin.data.avro.generator
 
 <p>Classpath must be setup to include data-avro.jar and its dependencies.</p>
 
-<h4 id="how-do-i-use-a-data-type-embedded-inside-a-pdsc-file">How do I use a data type embedded inside a pdsc file?</h4>
+<h2 id="how-do-i-use-a-data-type-embedded-inside-a-pdsc-file">How do I use a data type embedded inside a pdsc file?</h2>
 
 <p>You may experience errors, such as the
     following:</p>
@@ -231,7 +253,7 @@ name, when code&gt;a.b.D<code class="highlighter-rouge">is embedded in</code>C.p
 schema parser will not be able to find
 </code>pegasus/a/b/D.pdsc```.</p>
 
-<h4 id="why-is-my-java-8-build-generating-all-sorts-of-javadoc-warningserrors-due-to-doclint">Why is my Java 8 build generating all sorts of Javadoc warnings/errors due to doclint?</h4>
+<h2 id="why-is-my-java-8-build-generating-all-sorts-of-javadoc-warningserrors-due-to-doclint">Why is my Java 8 build generating all sorts of Javadoc warnings/errors due to doclint?</h2>
 
 <p>When using Java 8, you may experience build failures due to the
 following:</p>
@@ -271,7 +293,7 @@ strict</a></p>
 and
 Templates</a></p>
 
-<h4 id="how-does-restli-full-update-method-work-with-schema-evolution">How does rest.li full update method work with schema evolution?</h4>
+<h2 id="how-does-restli-full-update-method-work-with-schema-evolution">How does rest.li full update method work with schema evolution?</h2>
 
 <p>There is a potential pitfall to be aware of. Consider the following
 scenario:</p>
@@ -321,6 +343,19 @@ we cannot distinguish a new client that wants to null out field B
             </div>
         </div>  
     </div>
+    <script>
+      $(function() {
+        return $("h2, h3, h4, h5, h6").each(function(i, el) {
+          var $el, icon, id;
+          $el = $(el);
+          id = $el.attr('id');
+          icon = '<i class="fa fa-link"></i>';
+          if (id) {
+            return $el.append($("<a />").addClass("header-link").attr("href", "#" + id).html(icon));
+          }
+        });
+      });
+      </script>
 </footer>
       
     <!--  Scripts-->                                                                               

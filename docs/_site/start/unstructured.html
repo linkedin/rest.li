@@ -17,8 +17,17 @@
     <link rel="stylesheet" type="text/css" media="screen,projection" href="/assets/main.css">
     <link rel="canonical" href="http://localhost:4000/start/unstructured" />
     <link rel="alternate" type="application/rss+xml" title="rest.li" href="/feed.xml" />
+
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
   
     
+    <script>
+       $(function() {
+          $("h1").addClass("no_toc");
+       });
+    </script>
 </head>
 
 
@@ -94,6 +103,17 @@
                          <li><a href="/rest.li/setup/building">Building Rest.li from Source</a></li>
                        
                          <li><a href="/rest.li/setup/gradle">Gradle build integration</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Presentations</span></li>
+                        <ul>
+                       
+                         <li><a href="https://www.slideshare.net/minchencm/saturn-2018-restli">Rest.li, R2D2, Deco and ParSeq on Saturn 2018.</a></li>
                        
                         </ul>
                      </ul>
@@ -212,6 +232,19 @@ Content: &lt;&lt;&lt; binary data of the PDF report &gt;&gt;&gt;
             </div>
         </div>  
     </div>
+    <script>
+      $(function() {
+        return $("h2, h3, h4, h5, h6").each(function(i, el) {
+          var $el, icon, id;
+          $el = $(el);
+          id = $el.attr('id');
+          icon = '<i class="fa fa-link"></i>';
+          if (id) {
+            return $el.append($("<a />").addClass("header-link").attr("href", "#" + id).html(icon));
+          }
+        });
+      });
+      </script>
 </footer>
       
     <!--  Scripts-->                                                                               

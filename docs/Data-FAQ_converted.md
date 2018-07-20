@@ -4,7 +4,15 @@ title: Data-FAQ
 permalink: /Data-FAQ
 ---
 
-#### **How do I validate a record with default values filled in?**
+
+
+# FAQ
+
+* Toc
+{:toc}
+
+
+## **How do I validate a record with default values filled in?**
 
 ```java  
 Foo foo = new Foo();  
@@ -20,7 +28,7 @@ cannot be set for absent fields.
 This will also work for partially filled in records. It will only add
 default values to fields that are absent.
 
-#### How do I convert a Pegasus data schema to an Avro data schema
+## How do I convert a Pegasus data schema to an Avro data schema
 
 It requires the data-avro module, or data-avro-\*.jar.
 
@@ -46,7 +54,7 @@ files (version 0.17.1 or higher):
 
 Classpath must be setup to include data-avro.jar and its dependencies.
 
-#### How do I use a data type embedded inside a pdsc file?
+## How do I use a data type embedded inside a pdsc file?
 
 You may experience errors, such as the
     following:
@@ -69,7 +77,7 @@ name, when code\>a.b.D``` is embedded in ```C.pdsc```, the
 schema parser will not be able to find
 ```pegasus/a/b/D.pdsc```.
 
-#### Why is my Java 8 build generating all sorts of Javadoc warnings/errors due to doclint?
+## Why is my Java 8 build generating all sorts of Javadoc warnings/errors due to doclint?
 
 When using Java 8, you may experience build failures due to the
 following:
@@ -107,7 +115,7 @@ More details on `doc` and `symbolDocs` can be found here: [Data Schemas
 and
 Templates](DATA-Data-Schema-and-Templates)
 
-#### How does rest.li full update method work with schema evolution?
+## How does rest.li full update method work with schema evolution?
 
 There is a potential pitfall to be aware of. Consider the following
 scenario:

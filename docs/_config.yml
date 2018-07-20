@@ -4,3 +4,7 @@ description: >
 
 sass:
     style: compressed
+
+toc:
+  min_level: 2 # default: 1
+  max_level: 5 # default: 6

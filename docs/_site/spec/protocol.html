@@ -17,8 +17,17 @@
     <link rel="stylesheet" type="text/css" media="screen,projection" href="/assets/main.css">
     <link rel="canonical" href="http://localhost:4000/spec/protocol" />
     <link rel="alternate" type="application/rss+xml" title="rest.li" href="/feed.xml" />
+
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
   
     
+    <script>
+       $(function() {
+          $("h1").addClass("no_toc");
+       });
+    </script>
 </head>
 
 
@@ -76,9 +85,9 @@
                        
                          <li><a href="/rest.li/spec/protocol">Rest.li Protocol</a></li>
                        
-                         <li><a href="/rest.li/spec/restspec_format">Restspec json format</a></li>
+                         <li><a href="/rest.li/spec/restspec_format">Restspec JSON format</a></li>
                        
-                         <li><a href="/rest.li/Rest_li-2_0-response-API">Rest.li-2.0-response-API</a></li>
+                         <li><a href="/rest.li/Rest_li-2_0-response-API">Rest.li 2.0 response-API</a></li>
                        
                         </ul>
                      </ul>
@@ -89,13 +98,13 @@
                         <li><span class="nav_sub-title">R2D2</span></li>
                         <ul>
                        
-                         <li><a href="/rest.li/D2-Zookeeper-Properties">D2-Zookeeper-Properties</a></li>
+                         <li><a href="/rest.li/D2-Zookeeper-Properties">D2 Zookeeper properties</a></li>
                        
-                         <li><a href="/rest.li/Request-Response-API-(R2)">Request-Response-API-(R2)</a></li>
+                         <li><a href="/rest.li/Request-Response-API-(R2)">Request-Response API</a></li>
                        
-                         <li><a href="/rest.li/Dynamic_Discovery">Dynamic_Discovery</a></li>
+                         <li><a href="/rest.li/Dynamic_Discovery">Dynamic Discovery</a></li>
                        
-                         <li><a href="/rest.li/Request-Response-Framework">Request-Response-Framework</a></li>
+                         <li><a href="/rest.li/Request-Response-Framework">Request-Response framework</a></li>
                        
                         </ul>
                      </ul>
@@ -106,9 +115,9 @@
                         <li><span class="nav_sub-title">HTTP Frameworks</span></li>
                         <ul>
                        
-                         <li><a href="/rest.li/Rest_li-with-Netty">Rest.li-with-Netty</a></li>
+                         <li><a href="/rest.li/Rest_li-with-Netty">Netty</a></li>
                        
-                         <li><a href="/rest.li/Rest_li-with-Servlet-Containers">Rest.li-with-Servlet-Containers</a></li>
+                         <li><a href="/rest.li/Rest_li-with-Servlet-Containers">Servlet containers</a></li>
                        
                         </ul>
                      </ul>
@@ -1736,6 +1745,19 @@ nothing.</p>
             </div>
         </div>  
     </div>
+    <script>
+      $(function() {
+        return $("h2, h3, h4, h5, h6").each(function(i, el) {
+          var $el, icon, id;
+          $el = $(el);
+          id = $el.attr('id');
+          icon = '<i class="fa fa-link"></i>';
+          if (id) {
+            return $el.append($("<a />").addClass("header-link").attr("href", "#" + id).html(icon));
+          }
+        });
+      });
+      </script>
 </footer>
       
     <!--  Scripts-->                                                                               

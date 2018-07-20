@@ -3,6 +3,7 @@
 h1, h2, h3, h4, h5, h6 {
     -webkit-font-smoothing: antialiased;
 }
+
 .icon-block {
   padding: 0px 15px;
   margin-left: 15px;
@@ -91,3 +92,20 @@ hr {
     margin: 0;
     font-size: 1.25rem;
 }
+
+.header-link {
+    margin-left: 0.5em;
+    opacity: 0;
+  
+    \-webkit-transition: opacity 0.2s ease-in-out 0.1s;
+    \-moz-transition: opacity 0.2s ease-in-out 0.1s;
+    \-ms-transition: opacity 0.2s ease-in-out 0.1s;
+  }
+  
+  h2:hover .header-link,
+  h3:hover .header-link,
+  h4:hover .header-link,
+  h5:hover .header-link,
+  h6:hover .header-link {
+    opacity: 1;
+  }

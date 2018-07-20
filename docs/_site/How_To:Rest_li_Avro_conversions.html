@@ -17,8 +17,17 @@
     <link rel="stylesheet" type="text/css" media="screen,projection" href="/assets/main.css">
     <link rel="canonical" href="http://localhost:4000/How_To:Rest_li_Avro_conversions" />
     <link rel="alternate" type="application/rss+xml" title="rest.li" href="/feed.xml" />
+
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
   
     
+    <script>
+       $(function() {
+          $("h1").addClass("no_toc");
+       });
+    </script>
 </head>
 
 
@@ -82,7 +91,7 @@
                        
                          <li><a href="/rest.li/Components">Components</a></li>
                        
-                         <li><a href="/rest.li/Asynchronous-Servers-and-Clients-in-Rest_li">Asynchronous-Servers-and-Clients-in-Rest.li</a></li>
+                         <li><a href="/rest.li/Asynchronous-Servers-and-Clients-in-Rest_li">Asynchronous in Rest.li</a></li>
                        
                         </ul>
                      </ul>
@@ -93,7 +102,7 @@
                         <li><span class="nav_sub-title">Modeling Resources</span></li>
                         <ul>
                        
-                         <li><a href="/rest.li/DATA-Data-Schema-and-Templates">DATA-Data-Schema-and-Templates</a></li>
+                         <li><a href="/rest.li/DATA-Data-Schema-and-Templates">Data schema and templates</a></li>
                        
                          <li><a href="/rest.li/modeling/modeling">Modeling Resources</a></li>
                        
@@ -114,7 +123,7 @@
                        
                          <li><a href="/rest.li/Validation-in-Rest_li">Validation</a></li>
                        
-                         <li><a href="/rest.li/Attachment-Streaming">Attachment-Streaming</a></li>
+                         <li><a href="/rest.li/Attachment-Streaming">Attachment Streaming</a></li>
                        
                         </ul>
                      </ul>
@@ -125,7 +134,7 @@
                         <li><span class="nav_sub-title">Mutli-language</span></li>
                         <ul>
                        
-                         <li><a href="/rest.li/Scala-Integration">Scala-Integration</a></li>
+                         <li><a href="/rest.li/Scala-Integration">Scala integration</a></li>
                        
                          <li><a href="https://github.com/mchen07/restli-csharp">C#</a></li>
                        
@@ -259,6 +268,19 @@ The default method takes in only the Avro schema you wish to convert as input:</
             </div>
         </div>  
     </div>
+    <script>
+      $(function() {
+        return $("h2, h3, h4, h5, h6").each(function(i, el) {
+          var $el, icon, id;
+          $el = $(el);
+          id = $el.attr('id');
+          icon = '<i class="fa fa-link"></i>';
+          if (id) {
+            return $el.append($("<a />").addClass("header-link").attr("href", "#" + id).html(icon));
+          }
+        });
+      });
+      </script>
 </footer>
       
     <!--  Scripts-->                                                                               

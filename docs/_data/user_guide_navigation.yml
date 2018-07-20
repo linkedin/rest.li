@@ -9,11 +9,11 @@ toc:
         url: /rest.li/user_guide/restli_client
       - page: Components
         url: /rest.li/Components
-      - page: Asynchronous-Servers-and-Clients-in-Rest.li
+      - page: Asynchronous in Rest.li
         url: /rest.li/Asynchronous-Servers-and-Clients-in-Rest_li
   - title: Modeling Resources
     subfolderitems:
-      - page: DATA-Data-Schema-and-Templates
+      - page: Data schema and templates
         url: /rest.li/DATA-Data-Schema-and-Templates
       - page: Modeling Resources
         url: /rest.li/modeling/modeling
@@ -27,11 +27,11 @@ toc:
         url: /rest.li/Projections
       - page: Validation
         url: /rest.li/Validation-in-Rest_li
-      - page: Attachment-Streaming
+      - page: Attachment Streaming
         url: /rest.li/Attachment-Streaming
   - title: Mutli-language
     subfolderitems:
-      - page: Scala-Integration
+      - page: Scala integration
         url: /rest.li/Scala-Integration
       - page: C#
         url: https://github.com/mchen07/restli-csharp
