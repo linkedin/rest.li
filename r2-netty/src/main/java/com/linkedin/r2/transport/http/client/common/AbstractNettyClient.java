@@ -18,6 +18,7 @@ package com.linkedin.r2.transport.http.client.common;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.MultiCallback;
+import com.linkedin.r2.util.RequestTimeoutUtil;
 import com.linkedin.common.util.None;
 import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.Request;
@@ -294,7 +295,7 @@ public abstract class AbstractNettyClient<Req extends Request, Res extends Respo
     Double preemptiveTimeoutRate = (Double)context.getLocalAttr(R2Constants.PREEMPTIVE_TIMEOUT_RATE);
     if (preemptiveTimeoutRate != null)
     {
-      requestTimeout *= preemptiveTimeoutRate;
+      requestTimeout = RequestTimeoutUtil.applyPreemptiveTimeoutRate(requestTimeout, preemptiveTimeoutRate);
     }
 
     return requestTimeout;

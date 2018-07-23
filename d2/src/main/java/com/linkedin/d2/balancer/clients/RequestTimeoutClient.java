@@ -43,6 +43,20 @@ import org.slf4j.LoggerFactory;
 
 
 /**
+ * This class is responsible for determining the timeout value for requests.
+ * There are three sources of timeout at this level, arranged in increasing precedence
+ *
+ * 1. The default value in {@link HttpClientFactory}
+ * 2. The value configured by user in transportClientProperties. When present, it will clobber item 1.
+ * 3. Per request timeout passed for each request. When present, it will clobber item 1 or 2.
+ *
+ * This class will pick the correct timeout value and set it in {@link RequestContext} under {@code R2Constants.REQUEST_TIME}
+ *
+ * One peculiarity is when the per request timeout is set to be shorter than the standard timeout (item 1&2). In this case,
+ * the standard timeout value will be passed down in RequestContext under {@code R2Constants.REQUEST_TIME} and the shorter per request timeout
+ * will be passed down in RequestContext under {@code R2Constants.DEFAULT_REQUEST_TIMEOUT}. A {@link TimeoutCallback} will be used to simulate
+ * the behavior of tighter timeout.
+ *
  * @author Francesco Capponi (fcapponi@linkedin.com)
  */
 public class RequestTimeoutClient extends D2ClientDelegator
@@ -121,26 +135,7 @@ public class RequestTimeoutClient extends D2ClientDelegator
   private <RES> Callback<RES> decorateCallbackWithRequestTimeout(Callback<RES> callback, Request request,
       RequestContext requestContext)
   {
-    Object requestTimeoutObject = requestContext.getLocalAttr(R2Constants.REQUEST_TIMEOUT);
-
-    if (requestTimeoutObject == null)
-    {
-      return callback;
-    }
-
-    int requestTimeout;
-    try
-    {
-      requestTimeout = ((Number) requestTimeoutObject).intValue();
-    } catch (Throwable e)
-    {
-      LOG.error(
-          "Trying to set custom timeout with a value that is not an Integer/Long: " + requestTimeoutObject.getClass()
-              .getCanonicalName());
-      return callback;
-    }
-
-    // get the service properties for this uri
+    // First, find default timeout value. We get the service properties for this uri
     String serviceName = LoadBalancerUtil.getServiceNameFromUri(request.getURI());
     Map<String, Object> transportClientProperties;
     try
@@ -155,15 +150,34 @@ public class RequestTimeoutClient extends D2ClientDelegator
     int defaultRequestTimeout = MapUtil.getWithDefault(transportClientProperties, PropertyKeys.HTTP_REQUEST_TIMEOUT,
         HttpClientFactory.DEFAULT_REQUEST_TIMEOUT, Integer.class);
 
-    if (requestTimeout >= defaultRequestTimeout)
+    // Start handling per request timeout
+    Number requestTimeout = ((Number) requestContext.getLocalAttr(R2Constants.REQUEST_TIMEOUT));
+
+    if (requestTimeout == null)
     {
+      // if no per request timeout is specified, update requestContext with timeout to use and return
+      requestContext.putLocalAttr(R2Constants.REQUEST_TIMEOUT, defaultRequestTimeout);
       return callback;
     }
 
-    // if the request timeout is lower than the one set in d2, we we will create a timeout callback which will
-    // simulate its behavior and remove it from the context read by the layer below
-    requestContext.removeLocalAttr(R2Constants.REQUEST_TIMEOUT);
+    if (requestTimeout.intValue() >= defaultRequestTimeout)
+    {
+      // if per request is longer than default, just return. The R2 client further down will pick up the longer timeout.
+      return callback;
+    }
 
-    return new TimeoutCallback<>(_scheduler, requestTimeout, TimeUnit.MILLISECONDS, callback);
+    // if the request timeout is lower than the one set in d2, we will put the default request timeout in its place for R2 client to use.
+    requestContext.putLocalAttr(R2Constants.REQUEST_TIMEOUT, defaultRequestTimeout);
+
+    // we put the client experienced timeout in requestContext for bookkeeping
+    requestContext.putLocalAttr(R2Constants.CLIENT_REQUEST_TIMEOUT_VIEW, requestTimeout);
+
+    // we will create a timeout callback which will simulate its behavior
+    String timeoutMessage = "Exceeded request timeout of " + requestTimeout + "ms";
+    TimeoutCallback<RES> timeoutCallback =
+        new TimeoutCallback<>(_scheduler, requestTimeout.longValue(), TimeUnit.MILLISECONDS, callback,
+            timeoutMessage);
+
+    return timeoutCallback;
   }
 }

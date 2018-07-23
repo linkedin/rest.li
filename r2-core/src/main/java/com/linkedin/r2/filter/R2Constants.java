@@ -59,5 +59,9 @@ public class R2Constants
   public static final String EXPECTED_SERVER_CERT_PRINCIPAL_NAME = "EXPECTED_SERVER_CERT_PRINCIPAL_NAME";
   public static final String REQUESTED_SSL_SESSION_VALIDATOR = "REQUESTED_SSL_SESSION_VALIDATOR";
   public static final String REQUEST_TIMEOUT = "REQUEST_TIMEOUT";
+  /**
+   * CLIENT_REQUEST_TIMEOUT_VIEW should only be set when per request timeout is lower than the default value
+   */
+  public static final String CLIENT_REQUEST_TIMEOUT_VIEW = "CLIENT_REQUEST_TIMEOUT_VIEW";
   public static final String PREEMPTIVE_TIMEOUT_RATE = "PREEMPTIVE_TIMEOUT_RATE";
 }

@@ -1,5 +1,7 @@
 23.0.4
 ------
+(RB=1345119)
+add R2Constants.CLIENT_REQUEST_TIMEOUT_VIEW and refactor requestTimeoutClient to always pass timeout value down
 
 23.0.3
 ------
