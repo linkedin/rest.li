@@ -1,11 +1,19 @@
-23.0.5
+23.0.6
 ------
 
 
-23.0.4
+23.0.5
 ------
 (RB=1345119)
 add R2Constants.CLIENT_REQUEST_TIMEOUT_VIEW and refactor requestTimeoutClient to always pass timeout value down
+
+(RB=1359940)
+Enable ZK SymLink redirection by default
+
+23.0.4
+------
+(RB=1356919)
+Improve cache ability of data template and request builder generating task
 
 23.0.3
 ------
