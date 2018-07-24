@@ -1,6 +1,11 @@
-23.0.6
+23.0.7
 ------
 
+
+23.0.6
+------
+(RB=1373158)
+Cache SessionValidator to save validating time
 
 23.0.5
 ------

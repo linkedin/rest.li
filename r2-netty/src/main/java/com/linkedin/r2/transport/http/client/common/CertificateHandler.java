@@ -23,7 +23,6 @@ import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.util.AttributeKey;
-import java.util.List;
 
 
 /**
@@ -34,6 +33,7 @@ import java.util.List;
 public class CertificateHandler extends ChannelOutboundHandlerAdapter
 {
   private final SslHandler _sslHandler;
+  private SslSessionValidator _cachedSessionValidator;
 
   public static final String PIPELINE_CERTIFICATE_HANDLER = "CertificateHandler";
 
@@ -43,6 +43,7 @@ public class CertificateHandler extends ChannelOutboundHandlerAdapter
   public CertificateHandler(SslHandler sslHandler)
   {
     _sslHandler = sslHandler;
+    _cachedSessionValidator = null;
   }
 
   @Override
@@ -51,9 +52,11 @@ public class CertificateHandler extends ChannelOutboundHandlerAdapter
     _sslHandler.handshakeFuture().addListener(future -> {
       SslSessionValidator sslSessionValidator = ctx.channel().attr(REQUESTED_SSL_SESSION_VALIDATOR).getAndSet(null);
 
-      // if cert is empty, the check is disabled and not needed by the user, therefore don't check
-      if (future.isSuccess() && sslSessionValidator != null)
+      // If cert is empty, the check is disabled and not needed by the user, therefore don't check.
+      // Also if sslSessionValidator is the same as the previous one we cached, skipping the check.
+      if (future.isSuccess() && sslSessionValidator != null && !sslSessionValidator.equals(_cachedSessionValidator))
       {
+        _cachedSessionValidator = sslSessionValidator;
         try
         {
           sslSessionValidator.validatePeerSession(_sslHandler.engine().getSession());
