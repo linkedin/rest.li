@@ -100,7 +100,7 @@ public class RingBasedUriMapper implements URIMapper
     Map<Integer, List<URIKeyPair<KEY>>> requestsByPartition = distributeToPartitions(requestUriKeyPairs, accessor, unmapped);
 
     // Pass Two
-    Map<Set<KEY>, URI> keySetToHost = distributeToHosts(requestsByPartition, rings, hashFunction, unmapped);
+    Map<URI, Set<KEY>> keySetToHost = distributeToHosts(requestsByPartition, rings, hashFunction, unmapped);
 
     return new URIMappingResult<KEY>(keySetToHost, unmapped);
   }
@@ -173,7 +173,7 @@ public class RingBasedUriMapper implements URIMapper
     return Collections.singletonMap(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, requestUriKeyPairs);
   }
 
-  private <KEY> Map<Set<KEY>, URI> distributeToHosts(
+  private <KEY> Map<URI, Set<KEY>> distributeToHosts(
       Map<Integer, List<URIKeyPair<KEY>>> requestsByParititonId, Map<Integer, Ring<URI>> rings,
       HashFunction<Request> hashFunction, Set<KEY> unmapped)
   {
@@ -201,15 +201,14 @@ public class RingBasedUriMapper implements URIMapper
       }
     }
 
-    // Simply reverse the mapping between host and keySet since the keySets and hosts have one-to-one mapping
-    return hostToKeySet.entrySet().stream().collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
+    return hostToKeySet;
   }
 
   /**
    * if sticky is not enabled, map all uris of the same partition to ONE host. If the same host is picked for multiple partitions,
    * keys to those partitions will be merged into one set.
    */
-  private <KEY> Map<Set<KEY>, URI> distributeToHostNonSticky(
+  private <KEY> Map<URI, Set<KEY>> distributeToHostNonSticky(
       Map<Integer, List<URIKeyPair<KEY>>> requestsByParititonId, Map<Integer, Ring<URI>> rings)
   {
     Map<URI, Set<KEY>> hostToKeySet = new HashMap<>();
@@ -219,8 +218,7 @@ public class RingBasedUriMapper implements URIMapper
       hostToKeySet.get(resolvedHost).addAll(convertURIKeyPairListToKeySet(entry.getValue()));
     }
 
-    // Simply reverse the mapping between host and keySet since the keySets and hosts have one-to-one mapping
-    return hostToKeySet.entrySet().stream().collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
+    return hostToKeySet;
   }
 
   private static <KEY> Set<KEY> convertURIKeyPairListToKeySet(List<URIKeyPair<KEY>> list)

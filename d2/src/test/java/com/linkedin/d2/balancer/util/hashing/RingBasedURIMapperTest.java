@@ -89,7 +89,7 @@ public class RingBasedURIMapperTest
     List<URIKeyPair<Integer>> requests = testUtil.generateRequests(partitionCount, requestPerPartition);
 
     URIMappingResult<Integer> results = mapper.mapUris(requests);
-    Map<Set<Integer>, URI> mapping = results.getMappedResults();
+    Map<URI, Set<Integer>> mapping = results.getMappedResults();
 
     // No unmapped keys
     Assert.assertTrue(results.getUnmappedKeys().isEmpty());
@@ -97,12 +97,12 @@ public class RingBasedURIMapperTest
     // Without sticky routing, one host should be returned for each partition
     Assert.assertEquals(10, mapping.size());
 
-    Set<Integer> mappedKeys = mapping.keySet().stream().reduce(new HashSet<>(), (e1, e2) -> {
+    Set<Integer> mappedKeys = mapping.values().stream().reduce(new HashSet<>(), (e1, e2) -> {
       e1.addAll(e2);
       return e1;
     });
 
-    int mappedKeyCount = mapping.keySet().stream().map(Set::size).reduce(Integer::sum).get();
+    int mappedKeyCount = mapping.values().stream().map(Set::size).reduce(Integer::sum).get();
 
     // Collective exhaustiveness and mutual exclusiveness
     Assert.assertEquals(partitionCount * requestPerPartition, mappedKeys.size());
@@ -129,7 +129,7 @@ public class RingBasedURIMapperTest
     Assert.assertEquals(results1.getMappedResults(), results2.getMappedResults());
     Assert.assertEquals(results1.getUnmappedKeys(), results2.getUnmappedKeys());
 
-    Map<Set<Integer>, URI> mapping = results1.getMappedResults();
+    Map<URI, Set<Integer>> mapping = results1.getMappedResults();
 
     // Testing universal stickiness, take out 50 requests randomly and make sure they would be resolved to the same host as does URIMapper
     Collections.shuffle(requests);
@@ -139,7 +139,7 @@ public class RingBasedURIMapperTest
       int partitionId = infoProvider.getPartitionAccessor(TEST_SERVICE).getPartitionId(request.getRequestUri());
       Ring<URI> ring = ringProvider.getRings(request.getRequestUri()).get(partitionId);
       URI uri = ring.get(hashFunction.hash(new URIRequest(request.getRequestUri())));
-      Assert.assertTrue(mapping.values().contains(uri));
+      Assert.assertTrue(mapping.keySet().contains(uri));
     }
   }
 
@@ -157,7 +157,7 @@ public class RingBasedURIMapperTest
     List<URIKeyPair<Integer>> requests = testUtil.generateRequests(partitionCount, requestPerPartition);
 
     URIMappingResult<Integer> results = mapper.mapUris(requests);
-    Map<Set<Integer>, URI> mapping = results.getMappedResults();
+    Map<URI, Set<Integer>> mapping = results.getMappedResults();
     Set<Integer> unmappedKeys = results.getUnmappedKeys();
 
     Assert.assertTrue(unmappedKeys.isEmpty());
@@ -165,7 +165,7 @@ public class RingBasedURIMapperTest
   }
 
   @Test
-  public void testNonSticyAndNonPartitioning() throws ServiceUnavailableException
+  public void testNonStickyAndNonPartitioning() throws ServiceUnavailableException
   {
     int partitionCount = 1;
     int requestPerPartition = 1000;
@@ -179,12 +179,12 @@ public class RingBasedURIMapperTest
     List<URIKeyPair<Integer>> requests = testUtil.generateRequests(partitionCount, requestPerPartition);
 
     URIMappingResult<Integer> results = mapper.mapUris(requests);
-    Map<Set<Integer>, URI> mapping = results.getMappedResults();
+    Map<URI, Set<Integer>> mapping = results.getMappedResults();
     Set<Integer> unmappedKeys = results.getUnmappedKeys();
 
     Assert.assertTrue(unmappedKeys.isEmpty());
     Assert.assertEquals(1, mapping.size());
-    Assert.assertEquals(1000, mapping.keySet().iterator().next().size());
+    Assert.assertEquals(1000, mapping.values().iterator().next().size());
   }
 
   /**
@@ -212,12 +212,12 @@ public class RingBasedURIMapperTest
     List<URIKeyPair<Integer>> requests = testUtil.generateRequests(partitionCount, requestPerPartition);
 
     URIMappingResult<Integer> results = mapper.mapUris(requests);
-    Map<Set<Integer>, URI> mapping = results.getMappedResults();
+    Map<URI, Set<Integer>> mapping = results.getMappedResults();
     Set<Integer> unmappedKeys = results.getUnmappedKeys();
 
     Assert.assertTrue(unmappedKeys.isEmpty());
     Assert.assertEquals(1, mapping.size());
-    Assert.assertEquals(1000, mapping.keySet().iterator().next().size());
+    Assert.assertEquals(1000, mapping.values().iterator().next().size());
   }
 
   @Test
@@ -289,10 +289,10 @@ public class RingBasedURIMapperTest
 
     // they should have the same results
     Assert.assertEquals(uriMapperResult.getUnmappedKeys(), normalUnmapped);
-    for (Map.Entry<Set<Integer>, URI> resolvedKeys : uriMapperResult.getMappedResults().entrySet()) {
-      Set<Integer> uriMapperKeySet = resolvedKeys.getKey();
-      Assert.assertTrue(normalHostToKeySet.containsKey(resolvedKeys.getValue()));
-      Set<Integer> normalKeySet = normalHostToKeySet.get(resolvedKeys.getValue());
+    for (Map.Entry<URI, Set<Integer>> resolvedKeys : uriMapperResult.getMappedResults().entrySet()) {
+      Set<Integer> uriMapperKeySet = resolvedKeys.getValue();
+      Assert.assertTrue(normalHostToKeySet.containsKey(resolvedKeys.getKey()));
+      Set<Integer> normalKeySet = normalHostToKeySet.get(resolvedKeys.getKey());
       Assert.assertEquals(uriMapperKeySet, normalKeySet);
     }
   }

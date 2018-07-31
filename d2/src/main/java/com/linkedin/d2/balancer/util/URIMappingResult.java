@@ -32,18 +32,18 @@ import java.util.Set;
  */
 public class URIMappingResult<KEY>
 {
-  private final Map<Set<KEY>, URI> _hostToKeyMapping;
+  private final Map<URI, Set<KEY>> _mappedKeys;
   private final Set<KEY> _unmappedKeys;
 
-  public URIMappingResult(Map<Set<KEY>, URI> mappingResults, Set<KEY> unmappedKeys)
+  public URIMappingResult(Map<URI, Set<KEY>> mappingResults, Set<KEY> unmappedKeys)
   {
-    _hostToKeyMapping = Collections.unmodifiableMap(mappingResults);
+    _mappedKeys = Collections.unmodifiableMap(mappingResults);
     _unmappedKeys = Collections.unmodifiableSet(unmappedKeys);
   }
 
-  public Map<Set<KEY>, URI> getMappedResults()
+  public Map<URI, Set<KEY>> getMappedResults()
   {
-    return _hostToKeyMapping;
+    return _mappedKeys;
   }
 
   public Set<KEY> getUnmappedKeys()
