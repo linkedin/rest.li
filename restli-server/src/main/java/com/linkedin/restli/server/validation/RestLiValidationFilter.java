@@ -41,6 +41,7 @@ import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.filter.Filter;
 import com.linkedin.restli.server.filter.FilterRequestContext;
 import com.linkedin.restli.server.filter.FilterResponseContext;
+import com.linkedin.restli.server.util.UnstructuredDataUtil;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -101,6 +102,11 @@ public class RestLiValidationFilter implements Filter
     }
 
     Class<?> resourceClass = requestContext.getFilterResourceModel().getResourceClass();
+    if (UnstructuredDataUtil.isUnstructuredDataClass(resourceClass))
+    {
+      return CompletableFuture.completedFuture(null);
+    }
+
     ResourceMethod method = requestContext.getMethodType();
     RestLiDataValidator validator = new RestLiDataValidator(resourceClass.getAnnotations(),
         requestContext.getFilterResourceModel().getValueClass(),

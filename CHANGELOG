@@ -1,7 +1,12 @@
+23.0.8
+------
+
 23.0.7
 ------
 (RB=1375493)
 Flipping the map order from Set<KEY> -> URI to URI -> Set<KEY> in URIMapper results
+(RB=1373478)
+Skip unstructured data check in RestLiValidationFilter
 
 23.0.6
 ------

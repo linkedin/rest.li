@@ -243,7 +243,7 @@ public class TestGreetingUnstructuredDataResourcesReactive extends UnstructuredD
   private RestResponse sentRequest(String getPartialUrl, ByteString entity, String restMethod) throws Throwable
   {
     Client client = getR2Client();
-    URI uri = URI.create("http://localhost:" + DEFAULT_PORT + getPartialUrl);
+    URI uri = URI.create("http://localhost:" + FILTERS_PORT + getPartialUrl);
     RestRequest r = new RestRequestBuilder(uri).setEntity(entity).setMethod(restMethod).build();
     return client.restRequest(r).get();
   }

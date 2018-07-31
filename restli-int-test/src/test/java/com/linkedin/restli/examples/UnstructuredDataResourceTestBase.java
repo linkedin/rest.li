@@ -19,16 +19,18 @@ package com.linkedin.restli.examples;
 
 import com.linkedin.restli.common.HttpMethod;
 
+import com.linkedin.restli.server.validation.RestLiValidationFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.function.Consumer;
 
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 
-import static com.linkedin.restli.examples.RestLiIntTestServer.DEFAULT_PORT;
+import static com.linkedin.restli.examples.RestLiIntTestServer.FILTERS_PORT;
 import static org.testng.Assert.assertEquals;
 
 
@@ -37,7 +39,7 @@ abstract class UnstructuredDataResourceTestBase extends RestLiIntegrationTest
   @BeforeClass
   public void initClass() throws Exception
   {
-    super.init();
+    super.init(Arrays.asList(new RestLiValidationFilter()));
   }
 
   @AfterClass
@@ -57,7 +59,7 @@ abstract class UnstructuredDataResourceTestBase extends RestLiIntegrationTest
     HttpURLConnection connection = null;
     try
     {
-      URL url = new URL("http://localhost:" + DEFAULT_PORT + getPartialUrl);
+      URL url = new URL("http://localhost:" + FILTERS_PORT + getPartialUrl);
       connection = (HttpURLConnection) url.openConnection();
       connection.setRequestMethod(HttpMethod.GET.name());
       connection.setUseCaches(false);
@@ -91,5 +93,10 @@ abstract class UnstructuredDataResourceTestBase extends RestLiIntegrationTest
   interface Validator<T>
   {
     void validate(T input) throws Throwable;
+  }
+
+  protected boolean forceUseStreamServer()
+  {
+    return true;
   }
 }
