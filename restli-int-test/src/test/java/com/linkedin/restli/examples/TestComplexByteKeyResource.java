@@ -23,7 +23,6 @@ import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.ResponseFuture;
 import com.linkedin.restli.common.ComplexResourceKey;
-import com.linkedin.restli.examples.greetings.api.Message;
 import com.linkedin.restli.examples.greetings.api.TwoPartKey;
 import com.linkedin.restli.examples.greetings.client.ComplexByteKeysBuilders;
 import com.linkedin.restli.examples.greetings.client.ComplexByteKeysRequestBuilders;

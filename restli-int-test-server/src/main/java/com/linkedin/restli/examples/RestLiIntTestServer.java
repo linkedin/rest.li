@@ -126,7 +126,7 @@ public class RestLiIntTestServer
     config.setDocumentationRequestHandler(new DefaultDocumentationRequestHandler());
     config.addDebugRequestHandlers(new ParseqTraceDebugRequestHandler());
     config.setFilters(filters);
-    config.setUseStreamCodec(Boolean.parseBoolean(System.getProperty("test.useStreamCodec", "false")));
+    config.setUseStreamCodec(Boolean.parseBoolean(System.getProperty("test.useStreamCodecServer", "false")));
 
     GroupMembershipMgr membershipMgr = new HashGroupMembershipMgr();
     GroupMgr groupMgr = new HashMapGroupMgr(membershipMgr);

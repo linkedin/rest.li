@@ -18,11 +18,9 @@ package com.linkedin.restli.client;
 
 
 import com.linkedin.common.callback.Callback;
-import com.linkedin.common.callback.CallbackAdapter;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.message.Messages;
 import com.linkedin.r2.message.rest.RestException;
-import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.stream.StreamException;
 import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.restli.internal.client.ExceptionUtil;

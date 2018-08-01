@@ -18,7 +18,6 @@
 package com.linkedin.restli.examples;
 
 
-import com.linkedin.data.ByteString;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.restli.client.ActionRequest;
 import com.linkedin.restli.client.BatchCreateIdRequest;

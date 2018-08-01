@@ -38,6 +38,9 @@ import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamRequestBuilder;
 import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.message.stream.entitystream.ByteStringWriter;
+import com.linkedin.r2.message.stream.entitystream.EntityStreams;
+import com.linkedin.r2.message.stream.entitystream.Writer;
+import com.linkedin.r2.message.stream.entitystream.adapter.EntityStreamAdapters;
 import com.linkedin.restli.client.multiplexer.MultiplexedCallback;
 import com.linkedin.restli.client.multiplexer.MultiplexedRequest;
 import com.linkedin.restli.client.multiplexer.MultiplexedResponse;
@@ -797,7 +800,6 @@ public class RestClient implements Client {
                                            List<Object> streamingAttachments) throws Exception
   {
     StreamRequestBuilder requestBuilder = new StreamRequestBuilder(uri).setMethod(method.getHttpMethod().toString());
-
     requestBuilder.setHeaders(headers);
     requestBuilder.setCookies(cookies);
 
@@ -809,13 +811,14 @@ public class RestClient implements Client {
       requestBuilder.setHeader(RestConstants.HEADER_RESTLI_REQUEST_METHOD, method.toString());
     }
 
+    final ContentType type = resolveContentType(requestBuilder, dataMap, contentType);
+
     //If we have attachments outbound we use multipart related. If we don't, we just stream out our traditional
     //wire protocol. Also note that it is not possible for streaming attachments to be non-null and have 0 attachments.
     //This request builders enforce this invariant.
     if (streamingAttachments != null)
     {
       final ByteStringWriter firstPartWriter;
-      final ContentType type = resolveContentType(requestBuilder, dataMap, contentType);
       //This assertion holds true since there will be a non null dataMap (payload) for all requests which are are
       //eligible to have attachments. This is because all such requests are POST or PUTs. Even an action request
       //with empty action parameters will have an empty JSON ({}) as the body.
@@ -851,14 +854,16 @@ public class RestClient implements Client {
     }
     else
     {
-      //Note that for it to reach this state, acceptResponseAttachments must be true. Otherwise there are no request
-      //attachments and there is no desire to receive response attachments, which means this request should have directly
-      //taken the RestRequest code path.
-      assert(acceptResponseAttachments == true);
-
-      return Messages.toStreamRequest(buildRestRequest(uri, method, dataMap, headers, cookies,
-                                                       protocolVersion, contentType, acceptTypes,
-                                                       acceptResponseAttachments));
+      if (dataMap != null && type != null && type.getStreamCodec() != null)
+      {
+        return requestBuilder.build(EntityStreamAdapters.fromGenericEntityStream(type.getStreamCodec().encodeMap(dataMap)));
+      }
+      else
+      {
+        return Messages.toStreamRequest(
+            buildRestRequest(uri, method, dataMap, headers, cookies, protocolVersion, contentType, acceptTypes,
+                acceptResponseAttachments));
+      }
     }
   }
 

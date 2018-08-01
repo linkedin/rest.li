@@ -35,6 +35,7 @@ import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.transport.http.server.HttpServer;
 import com.linkedin.restli.client.RestClient;
 
+import com.linkedin.restli.client.util.RestLiClientConfig;
 import com.linkedin.restli.server.filter.Filter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -133,7 +134,9 @@ public class RestLiIntegrationTest
     _transportClients = new ArrayList<Client>();
     Map<String, String> transportProperties = Collections.singletonMap(HttpClientFactory.HTTP_REQUEST_TIMEOUT, "10000");
     Client client = newTransportClient(transportProperties);
-    _restClient = new RestClient(client, uriPrefix);
+    RestLiClientConfig restLiClientConfig = new RestLiClientConfig();
+    restLiClientConfig.setUseStreaming(Boolean.parseBoolean(System.getProperty("test.useStreamCodecClient", "false")));
+    _restClient = new RestClient(client, uriPrefix, restLiClientConfig);
   }
 
   public void shutdown() throws Exception

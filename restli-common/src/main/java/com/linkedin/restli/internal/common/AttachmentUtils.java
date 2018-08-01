@@ -23,6 +23,7 @@ import com.linkedin.multipart.MultiPartMIMEDataSourceWriter;
 import com.linkedin.multipart.MultiPartMIMEWriter;
 import com.linkedin.r2.message.stream.entitystream.ByteStringWriter;
 import com.linkedin.r2.message.stream.entitystream.WriteHandle;
+import com.linkedin.r2.message.stream.entitystream.Writer;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.common.attachments.RestLiAttachmentDataSourceWriter;
 import com.linkedin.restli.common.attachments.RestLiDataSourceIterator;
@@ -169,7 +170,7 @@ public class AttachmentUtils
    * @param streamingAttachments Any developer provided attachments to be added onto the outgoing request.
    * @return
    */
-  public static MultiPartMIMEWriter createMultiPartMIMEWriter(final ByteStringWriter firstPartWriter,
+  public static MultiPartMIMEWriter createMultiPartMIMEWriter(final Writer firstPartWriter,
                                                               final String firstPartContentType,
                                                               final MultiPartMIMEWriter.Builder streamingAttachments)
   {

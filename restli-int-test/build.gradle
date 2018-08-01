@@ -36,10 +36,10 @@ test {
   systemProperties['test.projectDir'] = project.projectDir.path
 }
 
-task streamCodecTest(type: Test) {
+task serverStreamCodecTest(type: Test) {
   maxHeapSize = '4g'
   systemProperties['test.projectDir'] = project.projectDir.path
-  systemProperties['test.useStreamCodec'] = 'true'
+  systemProperties['test.useStreamCodecServer'] = 'true'
 
   useTestNG() {
     excludeGroups 'not_implemented'
@@ -50,5 +50,37 @@ task streamCodecTest(type: Test) {
     excludeGroups 'withoutAssertion'
   }
 }
+project.tasks.test.dependsOn(serverStreamCodecTest)
 
-project.tasks.test.dependsOn(streamCodecTest)
+task clientServerStreamCodecTest(type: Test) {
+  maxHeapSize = '4g'
+  systemProperties['test.projectDir'] = project.projectDir.path
+  systemProperties['test.useStreamCodecServer'] = 'true'
+  systemProperties['test.useStreamCodecClient'] = 'true'
+
+  useTestNG() {
+    excludeGroups 'not_implemented'
+    excludeGroups 'integration'
+    excludeGroups 'd2integration'
+    excludeGroups 'integration_external_product_dependent'
+    excludeGroups 'known_issue'
+    excludeGroups 'withoutAssertion'
+  }
+}
+project.tasks.test.dependsOn(clientServerStreamCodecTest)
+
+task clientStreamCodecTest(type: Test) {
+  maxHeapSize = '4g'
+  systemProperties['test.projectDir'] = project.projectDir.path
+  systemProperties['test.useStreamCodecClient'] = 'true'
+
+  useTestNG() {
+    excludeGroups 'not_implemented'
+    excludeGroups 'integration'
+    excludeGroups 'd2integration'
+    excludeGroups 'integration_external_product_dependent'
+    excludeGroups 'known_issue'
+    excludeGroups 'withoutAssertion'
+  }
+}
+project.tasks.test.dependsOn(clientStreamCodecTest)

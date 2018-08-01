@@ -17,7 +17,6 @@
 package com.linkedin.restli.examples;
 
 
-import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.parseq.Engine;
 import com.linkedin.parseq.EngineBuilder;
 import com.linkedin.parseq.Task;

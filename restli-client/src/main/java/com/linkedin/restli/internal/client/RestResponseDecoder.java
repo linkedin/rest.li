@@ -24,6 +24,7 @@ package com.linkedin.restli.internal.client;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.codec.entitystream.StreamDataCodec;
 import com.linkedin.multipart.MultiPartMIMEReader;
 import com.linkedin.multipart.MultiPartMIMEReaderCallback;
 import com.linkedin.multipart.SinglePartMIMEReaderCallback;
@@ -31,6 +32,7 @@ import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.message.stream.entitystream.FullEntityReader;
+import com.linkedin.r2.message.stream.entitystream.adapter.EntityStreamAdapters;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.RestLiDecodingException;
 import com.linkedin.restli.common.ProtocolVersion;
@@ -48,9 +50,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import java.util.concurrent.CompletionStage;
 import javax.activation.MimeTypeParseException;
 import javax.mail.internet.ContentType;
 import javax.mail.internet.ParseException;
+
+import static com.linkedin.restli.common.ContentType.getContentType;
+import static com.linkedin.restli.common.ContentType.JSON;
 
 
 /**
@@ -93,29 +99,65 @@ public abstract class RestResponseDecoder<T>
     }
 
     //Otherwise if the whole body is json/pson then read everything in.
-    //This will not have an extra copy due to assembly since FullEntityReader uses a compound ByteString.
-    final FullEntityReader fullEntityReader = new FullEntityReader(new Callback<ByteString>()
+    StreamDataCodec streamDataCodec = null;
+    try
     {
-      @Override
-      public void onError(Throwable e)
-      {
-        responseCallback.onError(e);
-      }
+       streamDataCodec = getContentType(streamResponse.getHeaders().get(RestConstants.HEADER_CONTENT_TYPE)).orElse(JSON).getStreamCodec();
+    }
+    catch (MimeTypeParseException e)
+    {
+      responseCallback.onError(e);
+      return;
+    }
 
-      @Override
-      public void onSuccess(ByteString result)
+    if (streamDataCodec != null)
+    {
+      CompletionStage<DataMap> dataMapCompletionStage = streamDataCodec.decodeMap(EntityStreamAdapters.toGenericEntityStream(streamResponse.getEntityStream()));
+      dataMapCompletionStage.handle((dataMap, e) ->
       {
+        if (e != null)
+        {
+          responseCallback.onError(e);
+          return null;
+        }
+
         try
         {
-          responseCallback.onSuccess(createResponse(streamResponse.getHeaders(), streamResponse.getStatus(), result, streamResponse.getCookies()));
+          responseCallback.onSuccess(createResponse(streamResponse.getHeaders(), streamResponse.getStatus(), dataMap, streamResponse.getCookies()));
         }
-        catch (Exception exception)
+        catch (Throwable throwable)
         {
-          onError(exception);
+          responseCallback.onError(throwable);
         }
-      }
-    });
-    streamResponse.getEntityStream().setReader(fullEntityReader);
+
+        return null; // handle function requires a return statement although there is no more completion stage.
+      });
+    }
+    else
+    {
+      final FullEntityReader fullEntityReader = new FullEntityReader(new Callback<ByteString>()
+      {
+        @Override
+        public void onError(Throwable e)
+        {
+          responseCallback.onError(e);
+        }
+
+        @Override
+        public void onSuccess(ByteString result)
+        {
+          try
+          {
+            responseCallback.onSuccess(createResponse(streamResponse.getHeaders(), streamResponse.getStatus(), result, streamResponse.getCookies()));
+          }
+          catch (Exception exception)
+          {
+            onError(exception);
+          }
+        }
+      });
+      streamResponse.getEntityStream().setReader(fullEntityReader);
+    }
   }
 
   public Response<T> decodeResponse(RestResponse restResponse) throws RestLiDecodingException
@@ -126,17 +168,30 @@ public abstract class RestResponseDecoder<T>
   private ResponseImpl<T> createResponse(Map<String, String> headers, int status, ByteString entity, List<String> cookies)
       throws RestLiDecodingException
   {
+    try
+    {
+      DataMap dataMap = (entity.isEmpty()) ? null : DataMapConverter.bytesToDataMap(headers, entity);
+      return createResponse(headers, status, dataMap, cookies);
+    }
+    catch (MimeTypeParseException e)
+    {
+      throw new IllegalStateException(e);
+    }
+    catch (IOException e)
+    {
+      throw new IllegalStateException(e);
+    }
+  }
+
+  private ResponseImpl<T> createResponse(Map<String, String> headers, int status, DataMap dataMap, List<String> cookies)
+      throws RestLiDecodingException
+  {
     ResponseImpl<T> response = new ResponseImpl<T>(status, headers, CookieUtil.decodeSetCookies(cookies));
 
     try
     {
-      DataMap dataMap = (entity.isEmpty()) ? null : DataMapConverter.bytesToDataMap(headers, entity);
       response.setEntity(wrapResponse(dataMap, headers, ProtocolVersionUtil.extractProtocolVersion(response.getHeaders())));
       return response;
-    }
-    catch (MimeTypeParseException e)
-    {
-      throw new RestLiDecodingException("Could not decode REST response", e);
     }
     catch (IOException e)
     {
