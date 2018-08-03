@@ -168,16 +168,35 @@ public abstract class RestResponseDecoder<T>
   private ResponseImpl<T> createResponse(Map<String, String> headers, int status, ByteString entity, List<String> cookies)
       throws RestLiDecodingException
   {
+    ResponseImpl<T> response = new ResponseImpl<T>(status, headers, CookieUtil.decodeSetCookies(cookies));
+
     try
     {
       DataMap dataMap = (entity.isEmpty()) ? null : DataMapConverter.bytesToDataMap(headers, entity);
-      return createResponse(headers, status, dataMap, cookies);
+      response.setEntity(wrapResponse(dataMap, headers, ProtocolVersionUtil.extractProtocolVersion(response.getHeaders())));
+      return response;
     }
     catch (MimeTypeParseException e)
     {
-      throw new IllegalStateException(e);
+      throw new RestLiDecodingException("Could not decode REST response", e);
     }
     catch (IOException e)
+    {
+      throw new RestLiDecodingException("Could not decode REST response", e);
+    }
+    catch (InstantiationException e)
+    {
+      throw new IllegalStateException(e);
+    }
+    catch (IllegalAccessException e)
+    {
+      throw new IllegalStateException(e);
+    }
+    catch (InvocationTargetException e)
+    {
+      throw new IllegalStateException(e);
+    }
+    catch (NoSuchMethodException e)
     {
       throw new IllegalStateException(e);
     }
