@@ -116,6 +116,34 @@
       "type" : { "type" : "map",   "values" : "RecordBarRef" }
     },
     {
+      "name": "recordRefArray",
+      "type": {
+        "type": "typeref",
+        "name": "RecordRefArray",
+        "ref": {
+          "type": "array",
+          "items": {
+            "type": "typeref",
+            "name": "RecordBarRefs",
+            "ref": {
+              "type": "array",
+              "items": "RecordBarRef"
+            }
+          }
+        }
+      },
+      "optional" : true
+    },
+    {
+      "name": "nestedArrayRefRecord",
+      "type": {
+        "type": "typeref",
+        "name": "NestedArrayRefRecordRef",
+        "ref": "NestedArrayRefRecord"
+      },
+      "optional" : true
+    },
+    {
       "name" : "union",
       "type" : { "type" : "typeref", "name" : "Union", "ref" : [ "int", "string" ] },
       "optional" : true

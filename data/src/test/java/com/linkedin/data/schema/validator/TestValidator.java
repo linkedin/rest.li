@@ -334,15 +334,17 @@ public class TestValidator
   public void checkValidationResult(Object value, ValidationResult result, Object[] row, VisitedTrackingValidator visitedValidator) throws IOException
   {
     Collection<Message> messages = result.getMessages();
-    String resultString =
-      dataMapToString((DataMap)result.getFixed()) + "\n" +
-      messages.toString();
+    StringBuilder resultStringBuilder = new StringBuilder(dataMapToString((DataMap)result.getFixed()));
+    if (messages.size() > 0) {
+      resultStringBuilder.append("\n").append(messages.toString());
+    }
+    String resultString = resultStringBuilder.toString();
     if (debug) out.println("value: " + value.toString() + "\nresult:\n" + resultString);
     for (int col = 1; col < row.length; col++)
     {
       String checkString = (String) row[col];
       boolean ok = resultString.contains(checkString);
-      assertTrue(ok);
+      assertTrue(ok, resultString + " does not contain " + checkString);
     }
     Set<String> visitedMoreThanOnce = visitedValidator.getVisitedMoreThanOnce();
     assertTrue(visitedMoreThanOnce.isEmpty(), visitedMoreThanOnce + " is visited more than once");

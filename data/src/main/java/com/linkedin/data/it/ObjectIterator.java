@@ -311,20 +311,19 @@ public class ObjectIterator implements DataIterator
 
     private DataSchema currentSchema()
     {
-      DataSchema schema;
+      DataSchema schema = null;
+
       DataSchema listSchema = _element.getSchema();
-      if (listSchema == null)
+      if (listSchema != null)
       {
-        schema = null;
+        DataSchema dereferencedListSchema = listSchema.getDereferencedDataSchema();
+
+        if (dereferencedListSchema.getType() == DataSchema.Type.ARRAY)
+        {
+          schema = ((ArrayDataSchema) dereferencedListSchema).getItems();
+        }
       }
-      else if (listSchema.getType() == DataSchema.Type.ARRAY)
-      {
-        schema = ((ArrayDataSchema) listSchema).getItems();
-      }
-      else
-      {
-        schema = null;
-      }
+
       return schema;
     }
 

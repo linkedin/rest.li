@@ -24,8 +24,11 @@ import com.linkedin.data.template.LongMap;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.transform.filter.request.MaskOperation;
 import com.linkedin.data.transform.filter.request.MaskTree;
+import com.linkedin.pegasus.generator.test.NestedArrayRefRecord;
+import com.linkedin.pegasus.generator.test.NestedRecordRefArray;
 import com.linkedin.pegasus.generator.test.RecordBar;
 import com.linkedin.pegasus.generator.test.RecordBarArray;
+import com.linkedin.pegasus.generator.test.RecordBarArrayArray;
 import com.linkedin.pegasus.generator.test.RecordBarMap;
 import com.linkedin.pegasus.generator.test.TyperefTest;
 import com.linkedin.pegasus.generator.test.UnionTest;
@@ -274,6 +277,83 @@ public class TestRestUtils
     Assert.assertEquals(test.getRecordArray().get(0).data().size(), 3);
     Assert.assertEquals(test.getRecordArray().get(1).data().size(), 3);
     RestUtils.trimRecordTemplate(test, false);
+    Assert.assertEquals(test, expected);
+  }
+
+  @Test
+  public void testRecordRefArrayTrim() throws CloneNotSupportedException
+  {
+    TyperefTest test = new TyperefTest();
+
+    RecordBarArrayArray recordBarArrayArray = new RecordBarArrayArray();
+
+    RecordBarArray recordBarArray = new RecordBarArray();
+    RecordBar recordBar = new RecordBar();
+    recordBar.setLocation("mountain view");
+    recordBarArray.add(recordBar);
+
+    RecordBar recordBar2 = new RecordBar();
+    recordBar2.setLocation("palo alto");
+    recordBarArray.add(recordBar2);
+
+    recordBarArrayArray.add(recordBarArray);
+
+    test.setRecordRefArray(recordBarArrayArray);
+
+    // Generate expected copy.
+    TyperefTest expected = test.copy();
+
+    // Introduce bad elements.
+    test.getRecordRefArray().get(0).get(0).data().put("evil", "bar");
+    test.getRecordRefArray().get(0).get(0).data().put("evil2", "bar");
+    test.getRecordRefArray().get(0).get(1).data().put("evil", "foo");
+    test.getRecordRefArray().get(0).get(1).data().put("evil2", "foo");
+
+    Assert.assertEquals(test.getRecordRefArray().get(0).get(0).data().size(), 3);
+    Assert.assertEquals(test.getRecordRefArray().get(0).get(1).data().size(), 3);
+
+    RestUtils.trimRecordTemplate(test, false);
+
+    Assert.assertEquals(test, expected);
+  }
+
+  @Test
+  public void testNestedArrayRefRecord() throws CloneNotSupportedException
+  {
+    TyperefTest test = new TyperefTest();
+
+    NestedArrayRefRecord nestedArrayRefRecord = new NestedArrayRefRecord();
+
+    RecordBarArray recordBarArray = new RecordBarArray();
+    RecordBar recordBar = new RecordBar();
+    recordBar.setLocation("mountain view");
+    recordBarArray.add(recordBar);
+
+    RecordBar recordBar2 = new RecordBar();
+    recordBar2.setLocation("palo alto");
+    recordBarArray.add(recordBar2);
+
+    RecordBarArrayArray recordBarArrayArray = new RecordBarArrayArray();
+    recordBarArrayArray.add(recordBarArray);
+
+    nestedArrayRefRecord.setNestedRecordRefArray(recordBarArrayArray);
+
+    test.setNestedArrayRefRecord(nestedArrayRefRecord);
+
+    // Generate expected copy.
+    TyperefTest expected = test.copy();
+
+    // Introduce bad elements.
+    test.getNestedArrayRefRecord().getNestedRecordRefArray().get(0).get(0).data().put("evil", "bar");
+    test.getNestedArrayRefRecord().getNestedRecordRefArray().get(0).get(0).data().put("evil2", "bar");
+    test.getNestedArrayRefRecord().getNestedRecordRefArray().get(0).get(1).data().put("evil", "foo");
+    test.getNestedArrayRefRecord().getNestedRecordRefArray().get(0).get(1).data().put("evil2", "foo");
+
+    Assert.assertEquals(test.getNestedArrayRefRecord().getNestedRecordRefArray().get(0).get(0).data().size(), 3);
+    Assert.assertEquals(test.getNestedArrayRefRecord().getNestedRecordRefArray().get(0).get(1).data().size(), 3);
+
+    RestUtils.trimRecordTemplate(test, false);
+
     Assert.assertEquals(test, expected);
   }
 

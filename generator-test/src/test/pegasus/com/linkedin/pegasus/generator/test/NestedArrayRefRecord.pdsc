@@ -1,0 +1,26 @@
+{
+  "type" : "record",
+  "name" : "NestedArrayRefRecord",
+  "namespace" : "com.linkedin.pegasus.generator.test",
+  "fields" : [
+    {
+      "name": "nestedRecordRefArray",
+      "type": {
+        "type": "typeref",
+        "name": "NestedRecordRefArray",
+        "ref": {
+          "type": "array",
+          "items": {
+            "type": "typeref",
+            "name": "NestedRecordBarRefs",
+            "ref": {
+              "type": "array",
+              "items": "RecordBarRef"
+            }
+          }
+        }
+      },
+      "optional" : true
+    }
+  ]
+}
