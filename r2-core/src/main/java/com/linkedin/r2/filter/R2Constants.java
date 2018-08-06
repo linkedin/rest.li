@@ -64,4 +64,6 @@ public class R2Constants
    */
   public static final String CLIENT_REQUEST_TIMEOUT_VIEW = "CLIENT_REQUEST_TIMEOUT_VIEW";
   public static final String PREEMPTIVE_TIMEOUT_RATE = "PREEMPTIVE_TIMEOUT_RATE";
+
+  public static final String PROJECTION_INFO = "PROJECTION_INFO";
 }

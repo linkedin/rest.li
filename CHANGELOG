@@ -2,6 +2,8 @@
 ------
 (RB=1371503)
 Support scatter-gather in rest.li client using ScatterGatherStrategy.
+(RB=1382408)
+Add ProjectionInfo to prepare for emitting projection data into SCE.
 
 23.0.8
 ------
