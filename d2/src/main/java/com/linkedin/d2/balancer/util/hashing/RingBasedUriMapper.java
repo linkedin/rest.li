@@ -35,9 +35,13 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -51,6 +55,9 @@ import java.util.stream.Collectors;
 
 public class RingBasedUriMapper implements URIMapper
 {
+  private static final Logger LOG = LoggerFactory.getLogger(RingBasedUriMapper.class);
+  private static final int PARTITION_NOT_FOUND_ID = -1;
+
   private final HashRingProvider _hashRingProvider;
   private final PartitionInfoProvider _partitionInfoProvider;
 
@@ -85,6 +92,11 @@ public class RingBasedUriMapper implements URIMapper
   public <KEY> URIMappingResult<KEY> mapUris(List<URIKeyPair<KEY>> requestUriKeyPairs)
       throws ServiceUnavailableException
   {
+    if (requestUriKeyPairs == null || requestUriKeyPairs.isEmpty())
+    {
+      return new URIMappingResult<>(Collections.emptyMap(), Collections.emptyMap());
+    }
+
     // API assumes that all requests will be made to the same service, just use the first request to get the service name and act as sample uri
     URI sampleURI = requestUriKeyPairs.get(0).getRequestUri();
     String serviceName = LoadBalancerUtil.getServiceNameFromUri(sampleURI);
@@ -94,10 +106,11 @@ public class RingBasedUriMapper implements URIMapper
     Map<Integer, Ring<URI>> rings = _hashRingProvider.getRings(sampleURI);
     HashFunction<Request> hashFunction = _hashRingProvider.getRequestHashFunction(serviceName);
 
-    Set<KEY> unmapped = new HashSet<>();
+    Map<Integer, Set<KEY>> unmapped = new HashMap<>();
 
     // Pass One
-    Map<Integer, List<URIKeyPair<KEY>>> requestsByPartition = distributeToPartitions(requestUriKeyPairs, accessor, unmapped);
+    Map<Integer, List<URIKeyPair<KEY>>> requestsByPartition =
+        distributeToPartitions(requestUriKeyPairs, accessor, unmapped);
 
     // Pass Two
     Map<URI, Set<KEY>> keySetToHost = distributeToHosts(requestsByPartition, rings, hashFunction, unmapped);
@@ -140,24 +153,30 @@ public class RingBasedUriMapper implements URIMapper
   }
 
   private <KEY> Map<Integer, List<URIKeyPair<KEY>>> distributeToPartitions(List<URIKeyPair<KEY>> requestUriKeyPairs,
-      PartitionAccessor accessor, Set<KEY> unmapped)
+      PartitionAccessor accessor, Map<Integer, Set<KEY>> unmapped)
   {
     if (accessor.getMaxPartitionId() == 0)
     {
       return distributeToPartitionsUnpartitioned(requestUriKeyPairs);
     }
 
+    if (checkPartitionIdOverride(requestUriKeyPairs))
+    {
+      return doPartitionIdOverride(requestUriKeyPairs.get(0));
+    }
+
     Map<Integer, List<URIKeyPair<KEY>>> requestListsByPartitionId = new HashMap<>();
 
-    requestUriKeyPairs.stream().forEach(request -> {
+    requestUriKeyPairs.forEach(request -> {
       try
       {
         int partitionId = accessor.getPartitionId(request.getRequestUri());
         requestListsByPartitionId.putIfAbsent(partitionId, new ArrayList<>());
         requestListsByPartitionId.get(partitionId).add(request);
-      } catch (PartitionAccessException e)
+      }
+      catch (PartitionAccessException e)
       {
-        unmapped.add(request.getKey());
+        unmapped.computeIfAbsent(PARTITION_NOT_FOUND_ID, k -> new HashSet<>()).add(request.getKey());
       }
     });
 
@@ -173,30 +192,38 @@ public class RingBasedUriMapper implements URIMapper
     return Collections.singletonMap(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, requestUriKeyPairs);
   }
 
-  private <KEY> Map<URI, Set<KEY>> distributeToHosts(
-      Map<Integer, List<URIKeyPair<KEY>>> requestsByParititonId, Map<Integer, Ring<URI>> rings,
-      HashFunction<Request> hashFunction, Set<KEY> unmapped)
+  private <KEY> Map<URI, Set<KEY>> distributeToHosts(Map<Integer, List<URIKeyPair<KEY>>> requestsByParititonId,
+      Map<Integer, Ring<URI>> rings, HashFunction<Request> hashFunction, Map<Integer, Set<KEY>> unmapped)
   {
     if (hashFunction instanceof RandomHash)
     {
-      return distributeToHostNonSticky(requestsByParititonId, rings);
+      return distributeToHostNonSticky(requestsByParititonId, rings, unmapped);
     }
 
     Map<URI, Set<KEY>> hostToKeySet = new HashMap<>();
     for (Map.Entry<Integer, List<URIKeyPair<KEY>>> entry : requestsByParititonId.entrySet())
     {
+      int partitionId = entry.getKey();
       for (URIKeyPair<KEY> request : entry.getValue())
       {
         int hashcode = hashFunction.hash(new URIRequest(request.getRequestUri()));
-        URI resolvedHost = rings.get(entry.getKey()).get(hashcode);
+        URI resolvedHost = rings.get(partitionId).get(hashcode);
+
         if (resolvedHost == null)
         {
-          unmapped.add(request.getKey());
+          // under custom use case, key will be null, in which case we will just return a map from partition id to empty set
+          Set<KEY> unmappedKeys = convertURIKeyPairListToKeySet(entry.getValue());
+          unmapped.computeIfAbsent(entry.getKey(), k -> new HashSet<>()).addAll(unmappedKeys);
+          break;
         }
         else
         {
-          hostToKeySet.computeIfAbsent(resolvedHost, host -> new HashSet<>());
-          hostToKeySet.get(resolvedHost).add(request.getKey());
+          // under custom use case, key will be null, in which case we will just return a map from uri to empty set
+          Set<KEY> newSet = hostToKeySet.computeIfAbsent(resolvedHost, host -> new HashSet<>());
+          if (request.getKey() != null)
+          {
+            newSet.add(request.getKey());
+          }
         }
       }
     }
@@ -208,14 +235,23 @@ public class RingBasedUriMapper implements URIMapper
    * if sticky is not enabled, map all uris of the same partition to ONE host. If the same host is picked for multiple partitions,
    * keys to those partitions will be merged into one set.
    */
-  private <KEY> Map<URI, Set<KEY>> distributeToHostNonSticky(
-      Map<Integer, List<URIKeyPair<KEY>>> requestsByParititonId, Map<Integer, Ring<URI>> rings)
+  private <KEY> Map<URI, Set<KEY>> distributeToHostNonSticky(Map<Integer, List<URIKeyPair<KEY>>> requestsByParititonId,
+      Map<Integer, Ring<URI>> rings, Map<Integer, Set<KEY>> unmapped)
   {
     Map<URI, Set<KEY>> hostToKeySet = new HashMap<>();
-    for (Map.Entry<Integer, List<URIKeyPair<KEY>>> entry : requestsByParititonId.entrySet()) {
+    for (Map.Entry<Integer, List<URIKeyPair<KEY>>> entry : requestsByParititonId.entrySet())
+    {
       URI resolvedHost = rings.get(entry.getKey()).get(ThreadLocalRandom.current().nextInt());
-      hostToKeySet.computeIfAbsent(resolvedHost, host -> new HashSet<>());
-      hostToKeySet.get(resolvedHost).addAll(convertURIKeyPairListToKeySet(entry.getValue()));
+      Set<KEY> allKeys = convertURIKeyPairListToKeySet(entry.getValue());
+
+      if (resolvedHost == null)
+      {
+        unmapped.computeIfAbsent(entry.getKey(), k -> new HashSet<>()).addAll(allKeys);
+      }
+      else
+      {
+        hostToKeySet.computeIfAbsent(resolvedHost, host -> new HashSet<>()).addAll(allKeys);
+      }
     }
 
     return hostToKeySet;
@@ -223,6 +259,51 @@ public class RingBasedUriMapper implements URIMapper
 
   private static <KEY> Set<KEY> convertURIKeyPairListToKeySet(List<URIKeyPair<KEY>> list)
   {
+    if (list.stream().anyMatch(uriKeyPair -> uriKeyPair.getKey() == null))
+    {
+      // under custom use case, key will be null, in which case we will just return a map from uri to empty set
+      return Collections.emptySet();
+    }
     return list.stream().map(URIKeyPair::getKey).collect(Collectors.toSet());
+  }
+
+  /**
+   * Check for custom use case of URIMapper. Custom use case allows user to specify a set of partition ids to scatter the request to.
+   * Under custom use case, only ONE URIKeyPair is allowed; all overridden partition ids should be put in it.
+   * @param requests requests to be scattered
+   * @param <KEY> request key, which should be Null under custom use case
+   * @return true if d2 partitioning should be bypassed
+   */
+  private <KEY> boolean checkPartitionIdOverride(List<URIKeyPair<KEY>> requests)
+  {
+    if (requests.stream().anyMatch(URIKeyPair::hasOverriddenPartitionIds))
+    {
+      if (requests.size() == 1)
+      {
+        LOG.debug("Use partition ids provided by custom scatter gather strategy");
+        return true;
+      }
+      else
+      {
+        throw new IllegalStateException(
+            "More than one request with overridden partition ids are provided. "
+                + "Consider put all partition ids in one set or send different request if URI is different");
+      }
+    }
+    return false;
+  }
+
+  /**
+   *  when partition ids are overridden, this function will return a map from each partition id to ONE URIKeyPair, where the
+   *  URIKeyPair has Null as key and its request uri is used to determine sticky routing.
+   * @param request request with overridden partition ids
+   * @param <KEY> should be null in this case
+   * @return a map from partition ids to one URIKeyPair, whose uri will be used to determine stickiness later on.
+   */
+  private <KEY> Map<Integer, List<URIKeyPair<KEY>>> doPartitionIdOverride(URIKeyPair<KEY> request)
+  {
+    return request.getOverriddenPartitionIds()
+        .stream()
+        .collect(Collectors.toMap(Function.identity(), partitionId -> Collections.singletonList(request)));
   }
 }

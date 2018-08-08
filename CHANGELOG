@@ -1,5 +1,11 @@
+23.0.20
+-------
+
+
 23.0.19
 -------
+(RB=1398083)
+Allow custom users to set overridden partition ids to URIMapper
 
 23.0.18
 -------

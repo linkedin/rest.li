@@ -16,16 +16,22 @@
 
 package com.linkedin.d2.balancer.util;
 
-import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import com.linkedin.util.ArgumentUtil;
 import java.net.URI;
 import java.util.Objects;
+import java.util.Collections;
+import java.util.Set;
 
 
 /**
  * This is the input to {@link com.linkedin.d2.balancer.URIMapper}.
  *
  * The input is {@code KEY}, which is the resource key, and {@code uri}, which is the request uri for d2 request.
+ *
+ * Alternatively, under custom use case, user can provide a set of partition ids for a given uri. If this is the case,
+ * d2 partitioning will be bypassed and the provided partition ids will be used.
+ *
+ * NOTE: if partitions ids are provided, {@code KEY} is not allowed
  *
  * @param <KEY> the type of the resource key
  *
@@ -35,6 +41,7 @@ public class URIKeyPair<KEY>
 {
   private final KEY _key;
   private final URI _requestUri;
+  private final Set<Integer> _overriddenPartitionIds;
 
   public URIKeyPair(KEY key, URI uri)
   {
@@ -44,6 +51,16 @@ public class URIKeyPair<KEY>
 
     _key = key;
     _requestUri = uri;
+    _overriddenPartitionIds = Collections.emptySet();
+  }
+
+  public URIKeyPair(URI uri, Set<Integer> overriddenPartitionIds)
+  {
+    ArgumentUtil.notNull(overriddenPartitionIds, "overridden partition ids");
+    ArgumentUtil.notNull(uri, "uri");
+    _key = null;
+    _requestUri = uri;
+    _overriddenPartitionIds = Collections.unmodifiableSet(overriddenPartitionIds);
   }
 
   public KEY getKey()
@@ -63,12 +80,23 @@ public class URIKeyPair<KEY>
     if (o == null || getClass() != o.getClass()) return false;
     URIKeyPair<?> that = (URIKeyPair<?>) o;
     return Objects.equals(_key, that._key) &&
-            Objects.equals(_requestUri, that._requestUri);
+            Objects.equals(_requestUri, that._requestUri) &&
+            Objects.equals(_overriddenPartitionIds, that._overriddenPartitionIds);
   }
 
   @Override
   public int hashCode()
   {
-    return Objects.hash(_key, _requestUri);
+    return Objects.hash(_key, _requestUri, _overriddenPartitionIds);
+  }
+
+  public boolean hasOverriddenPartitionIds()
+  {
+    return !_overriddenPartitionIds.isEmpty();
+  }
+
+  public Set<Integer> getOverriddenPartitionIds()
+  {
+    return _overriddenPartitionIds;
   }
 }

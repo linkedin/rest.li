@@ -26,7 +26,9 @@ import com.linkedin.d2.balancer.util.partitions.PartitionInfoProvider;
 import com.linkedin.r2.message.Request;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -35,7 +37,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import org.junit.Assert;
+import java.util.stream.Stream;
+import org.testng.Assert;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import static com.linkedin.d2.balancer.util.hashing.URIMapperTestUtil.*;
@@ -134,7 +138,8 @@ public class RingBasedURIMapperTest
     // Testing universal stickiness, take out 50 requests randomly and make sure they would be resolved to the same host as does URIMapper
     Collections.shuffle(requests);
     HashFunction<Request> hashFunction = ringProvider.getRequestHashFunction(TEST_SERVICE);
-    for (int i = 0; i < 50; i++) {
+    for (int i = 0; i < 50; i++)
+    {
       URIKeyPair<Integer> request = requests.get(i);
       int partitionId = infoProvider.getPartitionAccessor(TEST_SERVICE).getPartitionId(request.getRequestUri());
       Ring<URI> ring = ringProvider.getRings(request.getRequestUri()).get(partitionId);
@@ -158,7 +163,7 @@ public class RingBasedURIMapperTest
 
     URIMappingResult<Integer> results = mapper.mapUris(requests);
     Map<URI, Set<Integer>> mapping = results.getMappedKeys();
-    Set<Integer> unmappedKeys = results.getUnmappedKeys();
+    Map<Integer, Set<Integer>> unmappedKeys = results.getUnmappedKeys();
 
     Assert.assertTrue(unmappedKeys.isEmpty());
     Assert.assertEquals(100, mapping.size());
@@ -180,7 +185,7 @@ public class RingBasedURIMapperTest
 
     URIMappingResult<Integer> results = mapper.mapUris(requests);
     Map<URI, Set<Integer>> mapping = results.getMappedKeys();
-    Set<Integer> unmappedKeys = results.getUnmappedKeys();
+    Map<Integer, Set<Integer>> unmappedKeys = results.getUnmappedKeys();
 
     Assert.assertTrue(unmappedKeys.isEmpty());
     Assert.assertEquals(1, mapping.size());
@@ -213,7 +218,7 @@ public class RingBasedURIMapperTest
 
     URIMappingResult<Integer> results = mapper.mapUris(requests);
     Map<URI, Set<Integer>> mapping = results.getMappedKeys();
-    Set<Integer> unmappedKeys = results.getUnmappedKeys();
+    Map<Integer, Set<Integer>> unmappedKeys = results.getUnmappedKeys();
 
     Assert.assertTrue(unmappedKeys.isEmpty());
     Assert.assertEquals(1, mapping.size());
@@ -239,9 +244,9 @@ public class RingBasedURIMapperTest
 
     URIMappingResult<Integer> result = mapper.mapUris(requests);
     Assert.assertTrue(result.getMappedKeys().isEmpty());
-    Assert.assertTrue(result.getUnmappedKeys().contains(42));
-    Assert.assertTrue(result.getUnmappedKeys().contains(43));
-    Assert.assertTrue(result.getUnmappedKeys().contains(44));
+    Assert.assertTrue(result.getUnmappedKeys().get(-1).contains(42));
+    Assert.assertTrue(result.getUnmappedKeys().get(-1).contains(43));
+    Assert.assertTrue(result.getUnmappedKeys().get(-1).contains(44));
   }
 
   @Test
@@ -260,26 +265,37 @@ public class RingBasedURIMapperTest
     URIKeyPair<Integer> request3 = new URIKeyPair<>(3, new URI("d2://testService/3?partition=1")); // partition 1
     URIKeyPair<Integer> request4 = new URIKeyPair<>(4, new URI("d2://testService/4?partition=2")); // partition 2
     URIKeyPair<Integer> request5 = new URIKeyPair<>(5, new URI("d2://testService/5?partition=3")); // partition 3
-    URIKeyPair<Integer> request6 = new URIKeyPair<>(6, new URI("d2://testService/6?partition=0")); // partition 0 with different sticky key
-    URIKeyPair<Integer> request7 = new URIKeyPair<>(7, new URI("d2://testService/7?partition=1")); // partition 1 with different sticky key
-    URIKeyPair<Integer> request8 = new URIKeyPair<>(8, new URI("d2://testService/8?partition=2")); // partition 2 with different sticky key
-    URIKeyPair<Integer> request9 = new URIKeyPair<>(9, new URI("d2://testService/9?partition=3")); // partition 3 with different sticky key
-    URIKeyPair<Integer> request10 = new URIKeyPair<>(10, new URI("d2://testService/10?partition=0&uuid=1"));// with extra parameters
+    URIKeyPair<Integer> request6 =
+        new URIKeyPair<>(6, new URI("d2://testService/6?partition=0")); // partition 0 with different sticky key
+    URIKeyPair<Integer> request7 =
+        new URIKeyPair<>(7, new URI("d2://testService/7?partition=1")); // partition 1 with different sticky key
+    URIKeyPair<Integer> request8 =
+        new URIKeyPair<>(8, new URI("d2://testService/8?partition=2")); // partition 2 with different sticky key
+    URIKeyPair<Integer> request9 =
+        new URIKeyPair<>(9, new URI("d2://testService/9?partition=3")); // partition 3 with different sticky key
+    URIKeyPair<Integer> request10 =
+        new URIKeyPair<>(10, new URI("d2://testService/10?partition=0&uuid=1"));// with extra parameters
 
-    List<URIKeyPair<Integer>> requests = Arrays.asList(request1, request2, request3, request4, request5, request6, request7, request8, request9, request10);
+    List<URIKeyPair<Integer>> requests =
+        Arrays.asList(request1, request2, request3, request4, request5, request6, request7, request8, request9,
+            request10);
 
     // uriMapper mapping
     URIMappingResult<Integer> uriMapperResult = mapper.mapUris(requests);
 
     // normal mapping
-    Set<Integer> normalUnmapped = new HashSet<>();
+    Map<Integer, Set<Integer>> normalUnmapped = new HashMap<>();
     Map<URI, Set<Integer>> normalHostToKeySet = new HashMap<>();
-    for (URIKeyPair<Integer> request : requests) {
+    for (URIKeyPair<Integer> request : requests)
+    {
       int partitionId = 0;
-      try {
+      try
+      {
         partitionId = infoProvider.getPartitionAccessor(TEST_SERVICE).getPartitionId(request.getRequestUri());
-      } catch (PartitionAccessException e) {
-        normalUnmapped.add(request.getKey());
+      }
+      catch (PartitionAccessException e)
+      {
+        normalUnmapped.computeIfAbsent(-1, k -> new HashSet<>()).add(request.getKey());
       }
       Ring<URI> ring = ringProvider.getRings(request.getRequestUri()).get(partitionId);
       URI uri = ring.get(hashFunction.hash(new URIRequest(request.getRequestUri())));
@@ -289,11 +305,81 @@ public class RingBasedURIMapperTest
 
     // they should have the same results
     Assert.assertEquals(uriMapperResult.getUnmappedKeys(), normalUnmapped);
-    for (Map.Entry<URI, Set<Integer>> resolvedKeys : uriMapperResult.getMappedKeys().entrySet()) {
+    for (Map.Entry<URI, Set<Integer>> resolvedKeys : uriMapperResult.getMappedKeys().entrySet())
+    {
       Set<Integer> uriMapperKeySet = resolvedKeys.getValue();
       Assert.assertTrue(normalHostToKeySet.containsKey(resolvedKeys.getKey()));
       Set<Integer> normalKeySet = normalHostToKeySet.get(resolvedKeys.getKey());
       Assert.assertEquals(uriMapperKeySet, normalKeySet);
     }
+  }
+
+  @Test(dataProvider = "stickyPartitionPermutation")
+  public void testPartitionIdOverride(boolean sticky, boolean partitioned) throws Exception
+  {
+    int partitionCount = partitioned ? 10 : 1;
+    int totalHostCount = 100;
+
+    HashRingProvider ringProvider = createStaticHashRingProvider(totalHostCount, partitionCount, getHashFunction(sticky));
+    PartitionInfoProvider infoProvider = createRangeBasedPartitionInfoProvider(partitionCount);
+    URIMapper mapper = new RingBasedUriMapper(ringProvider, infoProvider);
+
+    URIKeyPair<Integer> request = new URIKeyPair<>(new URI("d2://testService/1"),
+        IntStream.range(0, partitionCount).boxed().collect(Collectors.toSet()));
+
+    if (partitioned)
+    {
+      Assert.assertThrows(() -> mapper.mapUris(Arrays.asList(request, request)));
+    }
+
+    URIMappingResult<Integer> uriMapperResult = mapper.mapUris(Collections.singletonList(request));
+    Map<URI, Set<Integer>> mappedKeys = uriMapperResult.getMappedKeys();
+    Assert.assertTrue(uriMapperResult.getUnmappedKeys().isEmpty());
+    Assert.assertEquals(mappedKeys.size(), partitionCount);
+    Assert.assertEquals(
+        mappedKeys.keySet().stream().map(URIMapperTestUtil::getPartitionIdForURI).collect(Collectors.toSet()).size(),
+        partitionCount);
+    for (Set<Integer> keys : mappedKeys.values())
+    {
+      Assert.assertTrue(keys.isEmpty());
+    }
+  }
+
+  @Test(dataProvider = "stickyPartitionPermutation")
+  public void testUnmappedKeys(boolean sticky, boolean partitioned) throws Exception
+  {
+    int partitionCount = partitioned ? 10 : 1;
+    int requestPerPartition = 100;
+
+    List<Ring<URI>> rings = new ArrayList<>();
+    IntStream.range(0, partitionCount).forEach(i -> rings.add(new MPConsistentHashRing<>(Collections.emptyMap())));
+    StaticRingProvider ringProvider = new StaticRingProvider(rings);
+    ringProvider.setHashFunction(getHashFunction(sticky));
+    PartitionInfoProvider infoProvider = createRangeBasedPartitionInfoProvider(partitionCount);
+    URIMapper mapper = new RingBasedUriMapper(ringProvider, infoProvider);
+
+    List<URIKeyPair<Integer>> requests = testUtil.generateRequests(partitionCount, requestPerPartition);
+    URIMappingResult<Integer> uriMapperResultNormal = mapper.mapUris(requests);
+    Assert.assertTrue(uriMapperResultNormal.getUnmappedKeys().size() == partitionCount);
+    uriMapperResultNormal.getUnmappedKeys()
+        .forEach((key, value) -> Assert.assertTrue(value.size() == requestPerPartition));
+
+    URIKeyPair<Integer> request = new URIKeyPair<>(new URI("d2://testService/1"),
+        IntStream.range(0, partitionCount).boxed().collect(Collectors.toSet()));
+    URIMappingResult<Integer> uriMapperResultCustom = mapper.mapUris(Collections.singletonList(request));
+    Assert.assertTrue(uriMapperResultCustom.getUnmappedKeys().size() == partitionCount);
+    uriMapperResultCustom.getUnmappedKeys()
+        .forEach((key, value) -> Assert.assertTrue(value.isEmpty()));
+  }
+
+  @DataProvider
+  public Object[][] stickyPartitionPermutation()
+  {
+    return new Object[][]{
+        {true, true},
+        {true, false},
+        {false, true},
+        {false, false}
+    };
   }
 }

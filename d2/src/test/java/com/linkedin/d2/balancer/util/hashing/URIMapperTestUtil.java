@@ -32,6 +32,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.mockito.Mockito;
@@ -50,7 +52,7 @@ public class URIMapperTestUtil
   private static final String URI_KEY_REGEX = "/(\\d+)";
   private static final String D2_PREFIX = "d2://";
   private static final String HOST_NAME_TEMPLATE = "http://test-%d-partition-%d/resources";
-
+  private static final String HOST_NAME_PARTITION_REGEX = "partition-(\\d+)/";
   public static final String TEST_SERVICE = "testService";
 
   /**
@@ -147,6 +149,18 @@ public class URIMapperTestUtil
       // won't happen
     }
     return uri;
+  }
+
+  public static int getPartitionIdForURI(URI uri)
+  {
+    final Matcher matcher = Pattern.compile(HOST_NAME_PARTITION_REGEX).matcher(uri.toString());
+    if (matcher.find())
+    {
+      final String key = matcher.group(matcher.groupCount());
+      return Integer.valueOf(key);
+    }
+    return 0;
+
   }
 
   /**

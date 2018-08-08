@@ -34,6 +34,7 @@ import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.RestConstants;;
 import com.linkedin.restli.internal.client.ResponseImpl;
+import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -173,8 +174,8 @@ public class DefaultScatterGatherStrategy implements ScatterGatherStrategy
    * {@inheritDoc}
    *
    * Note that if the custom ScatterGatherStrategy overrides this method to associate each URI with a set of partition
-   * Ids to bypass the partitioning by D2 later, it should also override {@link #onAllResponsesReceived(Request,
-   * ProtocolVersion, Map, Map, Set, Callback)} to handle custom response gathering.
+   * Ids to bypass the partitioning by D2 later, it should also override {@link ScatterGatherStrategy#onAllResponsesReceived(Request,
+   * ProtocolVersion, Map, Map, Map, Callback)} to handle custom response gathering.
    */
   @Override
   @SuppressWarnings("rawtypes")
@@ -486,7 +487,7 @@ public class DefaultScatterGatherStrategy implements ScatterGatherStrategy
   public <K, T> void onAllResponsesReceived(Request<T> request, ProtocolVersion protocolVersion,
                                             Map<RequestInfo, Response<T>> successResponses,
                                             Map<RequestInfo, Throwable> failureResponses,
-                                            Set<K> unmappedKeys,
+                                            Map<Integer, Set<K>> unmappedKeys,
                                             Callback<Response<T>> callback)
   {
     BatchRequest<T> batchRequest = safeCastRequest(request);
@@ -503,8 +504,9 @@ public class DefaultScatterGatherStrategy implements ScatterGatherStrategy
     // gather unmapped keys
     if (unmappedKeys != null && !unmappedKeys.isEmpty())
     {
-      gatherException(gatheredResponseDataMap, unmappedKeys,
-              new RestLiScatterGatherException("Unable to find a host for keys :" + unmappedKeys),
+      Set<K> unmapped = unmappedKeys.values().stream().flatMap(Collection::stream).collect(Collectors.toSet());
+      gatherException(gatheredResponseDataMap, unmapped,
+              new RestLiScatterGatherException("Unable to find a host for keys :" + unmapped),
               protocolVersion);
     }
     T gatheredResponse = constructResponseFromDataMap(batchRequest, protocolVersion, gatheredResponseDataMap);

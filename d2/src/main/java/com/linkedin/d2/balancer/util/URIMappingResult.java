@@ -33,13 +33,15 @@ import java.util.Set;
  */
 public class URIMappingResult<KEY>
 {
+  // mapping from host to all keys that will be sent to that host
   private final Map<URI, Set<KEY>> _mappedKeys;
-  private final Set<KEY> _unmappedKeys;
+  // mapping from partition ids to all keys that are failed to be mapped in that partition
+  private final Map<Integer, Set<KEY>> _unmappedKeys;
 
-  public URIMappingResult(Map<URI, Set<KEY>> mappingResults, Set<KEY> unmappedKeys)
+  public URIMappingResult(Map<URI, Set<KEY>> mappingResults, Map<Integer, Set<KEY>> unmappedKeys)
   {
     _mappedKeys = Collections.unmodifiableMap(mappingResults);
-    _unmappedKeys = Collections.unmodifiableSet(unmappedKeys);
+    _unmappedKeys = Collections.unmodifiableMap(unmappedKeys);
   }
 
   public Map<URI, Set<KEY>> getMappedKeys()
@@ -47,7 +49,7 @@ public class URIMappingResult<KEY>
     return _mappedKeys;
   }
 
-  public Set<KEY> getUnmappedKeys()
+  public Map<Integer, Set<KEY>> getUnmappedKeys()
   {
     return _unmappedKeys;
   }

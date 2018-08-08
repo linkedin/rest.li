@@ -81,7 +81,7 @@ public class TestDefaultScatterGatherStrategy
   private static BatchPartialUpdateRequest<Long, TestRecord> _batchPartialUpdateRequest;
   private static List<URIKeyPair<Long>> _batchToUris;
   private static Map<URI, Set<Long>> _mappedKeys;
-  private static Set<Long> _unmappedKeys;
+  private static Map<Integer, Set<Long>> _unmappedKeys;
   private static URI _host1URI;
   private static URI _host2URI;
 
@@ -110,7 +110,7 @@ public class TestDefaultScatterGatherStrategy
     _mappedKeys = new HashMap<>();
     _mappedKeys.put(_host1URI, new HashSet<>(Arrays.asList(1L, 2L)));
     _mappedKeys.put(_host2URI, new HashSet<>(Arrays.asList(3L)));
-    _unmappedKeys = Collections.singleton(4L);
+    _unmappedKeys = Collections.singletonMap(0, Collections.singleton(4L));
   }
 
   @DataProvider
@@ -184,7 +184,7 @@ public class TestDefaultScatterGatherStrategy
     Request<?> request = mock(Request.class);
     when(request.getMethod()).thenReturn(requestMethod);
     _sgStrategy.onAllResponsesReceived(request, AllProtocolVersions.LATEST_PROTOCOL_VERSION, Collections.emptyMap(),
-            Collections.emptyMap(), Collections.emptySet(), Callbacks.empty());
+            Collections.emptyMap(), Collections.emptyMap(), Callbacks.empty());
   }
 
 

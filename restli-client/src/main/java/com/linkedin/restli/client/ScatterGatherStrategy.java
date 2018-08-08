@@ -33,7 +33,7 @@ import java.util.Set;
  * default scatter-gather strategy for non BATCH_CREATE batch request. Users can implement customized strategy to
  * handle their own special partition needs. In most cases, custom ScatterGatherStrategy can be implemented by
  * override {@link DefaultScatterGatherStrategy#getUris(Request, ProtocolVersion)} and
- * {@link DefaultScatterGatherStrategy#onAllResponsesReceived(Request, ProtocolVersion, Map, Map, Set, Callback)}.
+ * {@link ScatterGatherStrategy#onAllResponsesReceived(Request, ProtocolVersion, Map, Map, Map, Callback)}.
  *
  * @author mnchen
  */
@@ -95,18 +95,18 @@ public interface ScatterGatherStrategy
    * <li>Accumulate unmapped keys and handle them</li>
    * <li>Invoke callback when all scattered responses arrive</li>
    * </ul></p>
+   * @param <K> resource key type
+   * @param <T> response type
    * @param request original request
    * @param protocolVersion rest.li protocol version
    * @param successResponses map of successful scattered request and its response
    * @param failureResponses map of failure scattered request and its error
    * @param unmappedKeys unmapped keys (may be empty for non-batch requests)
    * @param callback callback to invoke on completion
-   * @param <K> resource key type
-   * @param <T> response type
    */
   <K, T> void onAllResponsesReceived(Request<T> request, ProtocolVersion protocolVersion,
                                      Map<RequestInfo, Response<T>> successResponses,
                                      Map<RequestInfo, Throwable> failureResponses,
-                                     Set<K> unmappedKeys,
+                                     Map<Integer, Set<K>> unmappedKeys,
                                      Callback<Response<T>> callback);
 }
