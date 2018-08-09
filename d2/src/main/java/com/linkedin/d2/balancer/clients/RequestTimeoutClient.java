@@ -155,19 +155,19 @@ public class RequestTimeoutClient extends D2ClientDelegator
 
     if (requestTimeout == null)
     {
-      // if no per request timeout is specified, update requestContext with timeout to use and return
-      requestContext.putLocalAttr(R2Constants.REQUEST_TIMEOUT, defaultRequestTimeout);
+      // if no per request timeout is specified, update client experienced timeout with timeout to use and return
+      requestContext.putLocalAttr(R2Constants.CLIENT_REQUEST_TIMEOUT_VIEW, defaultRequestTimeout);
       return callback;
     }
 
-    if (requestTimeout.intValue() >= defaultRequestTimeout)
+    if (requestTimeout.longValue() >= defaultRequestTimeout)
     {
       // if per request is longer than default, just return. The R2 client further down will pick up the longer timeout.
       return callback;
     }
 
-    // if the request timeout is lower than the one set in d2, we will put the default request timeout in its place for R2 client to use.
-    requestContext.putLocalAttr(R2Constants.REQUEST_TIMEOUT, defaultRequestTimeout);
+    // if the request timeout is lower than the one set in d2, we will remove the timeout value to prevent R2 client from picking it up
+    requestContext.removeLocalAttr(R2Constants.REQUEST_TIMEOUT);
 
     // we put the client experienced timeout in requestContext for bookkeeping
     requestContext.putLocalAttr(R2Constants.CLIENT_REQUEST_TIMEOUT_VIEW, requestTimeout);
