@@ -1,5 +1,7 @@
 23.0.11
 ------
+(RB=1386020)
+Fix a race condition in AsyncSharedPoolImpl with createImmediately enabled
 
 23.0.10
 ------

@@ -22,6 +22,7 @@ package test.r2.transport.http.client;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.FutureCallback;
+import com.linkedin.common.stats.NoopLongTracker;
 import com.linkedin.common.util.None;
 import com.linkedin.r2.transport.http.client.AsyncPool;
 import com.linkedin.r2.transport.http.client.AsyncPoolLifecycleStats;
@@ -30,6 +31,7 @@ import com.linkedin.r2.transport.http.client.NoopRateLimiter;
 import com.linkedin.r2.transport.http.client.PoolStats;
 import com.linkedin.r2.transport.http.client.RateLimiter;
 import com.linkedin.r2.util.Cancellable;
+import com.linkedin.util.clock.SystemClock;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -136,6 +138,30 @@ public class TestAsyncSharedPoolImpl
     Assert.assertNotNull(none);
     Assert.assertSame(none, None.none());
     verifyStats(pool.getStats(), 0, 0, 0, 0, 0, 0, 0, 0, 0);
+  }
+
+  /**
+   * Tests the option to create an object as soon as the {@link AsyncSharedPoolImpl} is started. While
+   * the object is being created, calls to #get should not trigger another object creation through the
+   * {@link AsyncPool.Lifecycle}. Calls to #get should be aware an object creation is already in progress
+   * and wait for the creation to complete instead.
+   */
+  @Test
+  public void testCreateImmediately() throws Exception
+  {
+    List<Runnable> runnables = new ArrayList<>();
+    LifecycleMock lifecycle = new LifecycleMock();
+    lifecycle.setCreateConsumer(callback -> runnables.add(() -> callback.onSuccess(new Object())));
+    AsyncSharedPoolImpl<Object> pool = new AsyncSharedPoolImpl<>(POOL_NAME, lifecycle, SCHEDULER, LIMITER,
+        NO_POOL_TIMEOUT, true, MAX_WAITERS, SystemClock.instance(), NoopLongTracker.instance());
+    pool.start();
+
+    FutureCallback<Object> callback = new FutureCallback<>();
+    pool.get(callback);
+
+    runnables.forEach(Runnable::run);
+
+    pool.put(callback.get());
   }
 
   @Test

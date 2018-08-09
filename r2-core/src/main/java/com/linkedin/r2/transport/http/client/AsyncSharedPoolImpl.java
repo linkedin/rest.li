@@ -179,6 +179,7 @@ public class AsyncSharedPoolImpl<T> implements AsyncPool<T>
       }
       if (_createImmediately)
       {
+        _isCreateInProgress = true;
         doCreate();
       }
     }
