@@ -21,5 +21,8 @@ public interface PatchConstants
 {
   final String SET_COMMAND = "$set";
   final String DELETE_COMMAND = "$delete";
+  final String REORDER_COMMAND = "$reorder";
+  final String FROM_INDEX = "$fromIndex";
+  final String TO_INDEX = "$toIndex";
   final String COMMAND_PREFIX = "$";
 }

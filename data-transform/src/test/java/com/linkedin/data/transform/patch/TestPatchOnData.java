@@ -14,16 +14,13 @@
    limitations under the License.
 */
 
-/**
- * $id$
- */
 package com.linkedin.data.transform.patch;
 
 
-import com.fasterxml.jackson.core.JsonParseException;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.transform.DataComplexProcessor;
 import com.linkedin.data.transform.DataProcessingException;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -45,7 +42,10 @@ public class TestPatchOnData
    * replaced by " before parsing. THIS IS ONLY RELATED TO THIS TEST CLASS
    * TO MAKE TESTS CASES MORE CLEAR, PEGASUS DOESN'T DO ANYTHING LIKE THAT.
    */
-  public static final String[][] TESTS = new String[][] {
+  @DataProvider
+  public Object[][] patch()
+  {
+    return new String[][] {
     {
       /*description:*/"Patch is empty. Data object should not be modified.",
       /*data:*/       "{'a': 10, 'b': {'c': 'aaa'}}",
@@ -126,13 +126,42 @@ public class TestPatchOnData
       "     }"                  +
       "   }"                    +
       "}",
-
-    }
-
-  };
+    },
+    {
+      /*description:*/"Reorder an array item (move forward)",
+      /*data:*/       "{'arrayField': [" +
+                      "  {'foo': 1, 'bar': 'a'}," +
+                      "  {'foo': 2, 'bar': 'b'}" +
+                      "]}",
+      /*patch:*/      "{'arrayField': {'$reorder': [{'$fromIndex': 1, '$toIndex': 0}]}}",
+      /*expected:*/   "{'arrayField': [" +
+                      "  {'foo': 2, 'bar': 'b'}," +
+                      "  {'foo': 1, 'bar': 'a'}" +
+                      "]}",
+    },
+    {
+      /*description:*/"Reorder an array item (move back)",
+      /*data:*/       "{'arrayField': [" +
+                      "  {'foo': 1, 'bar': 'a'}," +
+                      "  {'foo': 2, 'bar': 'b'}" +
+                      "]}",
+      /*patch:*/      "{'arrayField': {'$reorder': [{'$fromIndex': 0, '$toIndex': 1}]}}",
+      /*expected:*/   "{'arrayField': [" +
+                      "  {'foo': 2, 'bar': 'b'}," +
+                      "  {'foo': 1, 'bar': 'a'}" +
+                      "]}",
+    },
+    {
+      /*description:*/"Reorder two arrays",
+      /*data:*/       "{'arrayField': [0, 1, 2, 3, 4, 5], 'containerField': {'nestedArrayField': ['0', '1', '2', '3', '4', '5']}}",
+      /*patch:*/      "{'arrayField': {'$reorder': [{'$fromIndex': 0, '$toIndex': 3}]}, 'containerField': {'nestedArrayField': {'$reorder': [{'$fromIndex': 5, '$toIndex': 2}]}}}",
+      /*expected:*/   "{'arrayField': [1, 2, 3, 0, 4, 5], 'containerField': {'nestedArrayField': ['0', '1', '5', '2', '3', '4']}}",
+    }};
+  }
 
   private void genericPatchTest(DataMap data, DataMap patch,
-                                        DataMap expected, String description) throws DataProcessingException {
+                                        DataMap expected, String description) throws DataProcessingException
+  {
     String dataBefore = data.toString();
     DataComplexProcessor processor = new DataComplexProcessor(new Patch(), patch, data);
     processor.run(false);
@@ -141,24 +170,89 @@ public class TestPatchOnData
                  "\nExpected: " + expected + "\nActual result: " + data);
   }
 
-  @Test
-  public void testPatchOnData() throws JsonParseException,
-      IOException,
-      DataProcessingException
+  @Test(dataProvider = "patch")
+  public void testPatchOnData(String description, String data, String patch, String expected)
+      throws IOException, DataProcessingException
   {
-    for (String[] testCase : TESTS) {
-      genericPatchTest(dataMapFromString(testCase[1].replace('\'', '"')),
-                               dataMapFromString(testCase[2].replace('\'', '"')),
-                               dataMapFromString(testCase[3].replace('\'', '"')),
-                               testCase[0]);
-    }
+    genericPatchTest(dataMapFromString(data.replace('\'', '"')),
+                     dataMapFromString(patch.replace('\'', '"')),
+                     dataMapFromString(expected.replace('\'', '"')),
+                     description);
   }
 
-  @Test
-  public void testImplicitSetOperationInPatchIsNotSupported() throws JsonParseException, IOException, DataProcessingException {
+  @DataProvider
+  public Object[][] invalidPatch()
+  {
+    return new String[][] {
+        {
+            "ImplicitSetOperationInPatchIsNotSupported",
+            "{}",
+            "{ \"a\": 1 }"
+        },
+        {
+            "MergingSimpleTypeValueWithComplexPatchNotSupported",
+            "{\"a\": 1}",
+            "{ \"a\": { \"b\": 1} }"
+        },
+        {
+            "DeleteAndSetSameField",
+            "{\"a\": 1}",
+            "{ \"$set\": { \"b\": 1}, \"$delete\": [\"b\"] }"
+        },
+        {
+            "DeleteAndBeBranchAtSameTime",
+            "{\"a\": 1}",
+            "{ \"b\": { \"$set\": { \"b\": 1} }, \"$delete\": [\"b\"] }"
+        },
+        {
+            "SetAndBeBranchAtSameTime",
+            "{\"a\": 1}",
+            "{ \"b\": { \"$set\": { \"b\": 1} }, \"$set\": {\"b\": 1} }"
+        },
+        {
+            "SetAndReorderAtSameTime",
+            "{\"a\": [1, 2]}",
+            "{\"a\": {\"$reorder\": [{\"$fromIndex\": 1, \"$toIndex\": 0}]}, \"$set\": {\"a\": [100, 200]} }"
+        },
+        {
+            "DeleteAndReorderAtSameTime",
+            "{\"a\": [1, 2]}",
+            "{\"a\": {\"$reorder\": [{\"$fromIndex\": 1, \"$toIndex\": 0}]}, \"$delete\": [\"a\"] }"
+        },
+        {
+            "ReorderMultipleArrayItems",
+            "{\"a\": [1, 2, 3, 4]}",
+            "{\"a\": {\"$reorder\": [{\"$fromIndex\": 1, \"$toIndex\": 0}, {\"$fromIndex\": 2, \"$toIndex\": 3}]}}"
+        },
+        {
+            "ReorderInvalidFromIndex",
+            "{\"a\": [1, 2, 3, 4]}",
+            "{\"a\": {\"$reorder\": [{\"$fromIndex\": -2, \"$toIndex\": 0}]}}"
+        },
+        {
+            "ReorderInvalidFromIndex",
+            "{\"a\": [1, 2, 3, 4]}",
+            "{\"a\": {\"$reorder\": [{\"$fromIndex\": 4, \"$toIndex\": 0}]}}"
+        },
+        {
+            "ReorderInvalidToIndex",
+            "{\"a\": [1, 2, 3, 4]}",
+            "{\"a\": {\"$reorder\": [{\"$fromIndex\": 0, \"$toIndex\": -1}]}}"
+        },
+        {
+            "ReorderInvalidToIndex",
+            "{\"a\": [1, 2, 3, 4]}",
+            "{\"a\": {\"$reorder\": [{\"$fromIndex\": 0, \"$toIndex\": 5}]}}"
+        },
+    };
+  }
+
+  @Test(dataProvider = "invalidPatch")
+  public void testInvalidPatch(String description, String data, String patch) throws IOException, DataProcessingException
+  {
     DataComplexProcessor processor = new DataComplexProcessor(new Patch(),
-                                                      dataMapFromString("{ \"a\": 1 }"),  //command $set should be used
-                                                      dataMapFromString("{}"));
+        dataMapFromString(patch),
+        dataMapFromString(data));
     boolean thrown = false;
     try
     {
@@ -169,83 +263,9 @@ public class TestPatchOnData
       thrown = true;
     }
     if (!thrown)
-      fail("expected DataProcessingException to be thrown");
-
-  }
-
-  @Test
-  public void testMergingSimpleTypeValueWithComplexPatchNotSupported() throws JsonParseException, IOException, DataProcessingException {
-    DataComplexProcessor processor = new DataComplexProcessor(new Patch(),
-                                                      dataMapFromString("{ \"a\": { \"b\": 1} }"),  //command $set should be used
-                                                      dataMapFromString("{\"a\": 1}"));
-    boolean thrown = false;
-    try
     {
-      processor.run(false);
+      fail(description + " - expected DataProcessingException to be thrown");
     }
-    catch (DataProcessingException e)
-    {
-      thrown = true;
-    }
-    if (!thrown)
-      fail("expected DataProcessingException to be thrown");
-  }
-
-  @Test
-  public void testDeleteAndSetSameField() throws JsonParseException, IOException, DataProcessingException {
-    DataComplexProcessor processor = new DataComplexProcessor(new Patch(),
-                                                      dataMapFromString(
-                                                        "{ \"$set\": { \"b\": 1}, \"$delete\": [\"b\"] }"),  //command $set should be used
-                                                      dataMapFromString("{\"a\": 1}"));
-    boolean thrown = false;
-    try
-    {
-      processor.run(false);
-    }
-    catch (DataProcessingException e)
-    {
-      thrown = true;
-    }
-    if (!thrown)
-      fail("expected DataProcessingException to be thrown");
-  }
-
-  @Test
-  public void testDeleteAndBeBranchAtSameTime() throws JsonParseException, IOException, DataProcessingException {
-    DataComplexProcessor processor = new DataComplexProcessor(new Patch(),
-                                                      dataMapFromString(
-                                                        "{ \"b\": { \"$set\": { \"b\": 1} }, \"$delete\": [\"b\"] }"),  //command $set should be used
-                                                      dataMapFromString("{\"a\": 1}"));
-    boolean thrown = false;
-    try
-    {
-      processor.run(false);
-    }
-    catch (DataProcessingException e)
-    {
-      thrown = true;
-    }
-    if (!thrown)
-      fail("expected DataProcessingException to be thrown");
-  }
-
-  @Test
-  public void testSetAndBeBranchAtSameTime() throws JsonParseException, IOException, DataProcessingException {
-    DataComplexProcessor processor = new DataComplexProcessor(new Patch(),
-                                                      dataMapFromString(
-                                                        "{ \"b\": { \"$set\": { \"b\": 1} }, \"$set\": {\"b\": 1} }"),  //command $set should be used
-                                                      dataMapFromString("{\"a\": 1}"));
-    boolean thrown = false;
-    try
-    {
-      processor.run(false);
-    }
-    catch (DataProcessingException e)
-    {
-      thrown = true;
-    }
-    if (!thrown)
-      fail("expected DataProcessingException to be thrown");
   }
 
 }

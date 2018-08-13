@@ -3,6 +3,9 @@
 (RB=1393433)
 Add "$returnEntity" query parameter to support returning the entity on demand
 
+(RB=1392687)
+Added $reorder command for array items to Rest.li patch format.
+
 23.0.15
 -------
 (RB=1394375)

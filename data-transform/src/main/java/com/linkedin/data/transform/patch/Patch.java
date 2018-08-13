@@ -14,14 +14,14 @@
    limitations under the License.
 */
 
-/**
- * $id$
- */
 package com.linkedin.data.transform.patch;
 
 import static com.linkedin.data.transform.patch.PatchConstants.COMMAND_PREFIX;
 import static com.linkedin.data.transform.patch.PatchConstants.DELETE_COMMAND;
+import static com.linkedin.data.transform.patch.PatchConstants.FROM_INDEX;
+import static com.linkedin.data.transform.patch.PatchConstants.REORDER_COMMAND;
 import static com.linkedin.data.transform.patch.PatchConstants.SET_COMMAND;
+import static com.linkedin.data.transform.patch.PatchConstants.TO_INDEX;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -31,8 +31,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.linkedin.data.DataComplex;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.collections.CheckedUtil;
 import com.linkedin.data.transform.Instruction;
 import com.linkedin.data.transform.Interpreter;
 import com.linkedin.data.transform.InterpreterContext;
@@ -45,8 +47,7 @@ public class Patch implements Interpreter
   private static final String CHILD_PROCESS_PSEUDOCOMMAND = "$child-process";
 
   // list of operations that do data manipulation other than just removing data
-  private static final List<String>         NON_DELETE_OPERATIONS =
-                                                                      Arrays.asList(new String[] { SET_COMMAND });
+  private static final List<String> NON_DELETE_MAP_OPERATIONS = Arrays.asList(SET_COMMAND);
 
   // used for memoization of types of operations down the tree, contains true if down the
   // operations tree are only $delete operations the reason for using IdentityHashMap is
@@ -81,8 +82,6 @@ public class Patch implements Interpreter
     // preconditions:
     // operation's node is always DataMap
     assert instruction.getOperation().getClass() == DataMap.class;
-    // data's node is always DataMap
-    assert instruction.getData().getClass() == DataMap.class;
 
     //_usedFields variable is used to keep track of fields, which were already used
     //at this nodes. The reason for it is that if field should not be used in more than
@@ -91,22 +90,38 @@ public class Patch implements Interpreter
     final Map<String, String> usedFields = new HashMap<String, String>();
 
     DataMap opNode = (DataMap) instruction.getOperation();
-    DataMap dataNode = (DataMap) instruction.getData();
+    DataComplex dataComplex = instruction.getData();
 
-    /**
-     * Apply all supported operations here. _usedFields is used to keep track of fields
-     * that operations were applied to.
-     */
-    executeSetCommand(opNode.get(SET_COMMAND), dataNode, usedFields, instrCtx);
-    executeDeleteCommand(opNode.get(DELETE_COMMAND), dataNode, usedFields, instrCtx);
+    if (dataComplex.getClass() == DataMap.class)
+    {
+      DataMap dataNode = (DataMap) dataComplex;
 
-    // iterate over children
-    for (Entry<String, Object> entry : opNode.entrySet())
-      processChild(dataNode, entry.getKey(), entry.getValue(), usedFields, instrCtx);
+      /**
+       * Apply all supported operations here. _usedFields is used to keep track of fields
+       * that operations were applied to.
+       */
+      executeSetCommand(opNode.get(SET_COMMAND), dataNode, usedFields, instrCtx);
+      executeDeleteCommand(opNode.get(DELETE_COMMAND), dataNode, usedFields, instrCtx);
+
+      // iterate over children
+      for (Entry<String, Object> entry : opNode.entrySet())
+      {
+        processChild(dataNode, entry.getKey(), entry.getValue(), usedFields, instrCtx);
+      }
+    }
+    else if (dataComplex.getClass() == DataList.class)
+    {
+      DataList dataNode = (DataList) dataComplex;
+      executeReorderCommand(opNode.get(REORDER_COMMAND), dataNode, usedFields, instrCtx);
+    }
+    else
+    {
+      instrCtx.addErrorMessage("Unexpected data type %1$s at %2$s.", dataComplex.getClass(), instrCtx.getPath());
+    }
 
   }
 
-  private boolean processChild(DataMap dataNode,
+  private void processChild(DataMap dataNode,
                             String name,
                             Object opChild,
                             Map<String, String> usedFields,
@@ -121,7 +136,6 @@ public class Patch implements Interpreter
       {
         instrCtx.addErrorMessage("field %1$s can not be used in both %2$s operation and " +
             "be a branch in Patch at the same time", name, usedFields.get(name));
-        return false;
       }
       else if (opChild.getClass() == DataMap.class)
       {
@@ -150,15 +164,20 @@ public class Patch implements Interpreter
         {
           // equivalent object exists in data tree
           if (dataChild.getClass() == DataMap.class)
+          {
             // if it's of proper type, then create new instruction
-            instrCtx.scheduleInstruction(new Instruction(opChild, (DataMap)dataChild, instrCtx.getPath()));
+            instrCtx.scheduleInstruction(new Instruction(opChild, (DataMap) dataChild, instrCtx.getPath()));
+          }
+          else if (dataChild.getClass() == DataList.class)
+          {
+            instrCtx.scheduleInstruction(new Instruction(opChild, (DataList) dataChild, instrCtx.getPath()));
+          }
           else
             // incorrect type in data object - it means that patch is
             // incompatible with data
           {
-            instrCtx.addErrorMessage("patch incopatible with data object, expected %1$s"
+            instrCtx.addErrorMessage("patch incompatible with data object, expected %1$s"
                 + " field to be of type DataMap, but found: %2$s", name, dataChild.getClass().getName());
-            return false;
           }
         }
       }
@@ -166,13 +185,11 @@ public class Patch implements Interpreter
       {
         instrCtx.addErrorMessage("incorrect wire format of patch, simple type values are "
             + "allowed only as children of commands; node name: %1$s, value: %2$s", name, opChild);
-        return false;
       }
     }
-    return true;
   }
 
-  private boolean executeDeleteCommand(Object deleteCommand, Object data, Map<String, String> usedFields, final InterpreterContext instrCtx)
+  private void executeDeleteCommand(Object deleteCommand, Object data, Map<String, String> usedFields, final InterpreterContext instrCtx)
   {
     instrCtx.setCurrentField(DELETE_COMMAND);
     if (deleteCommand != null)
@@ -192,7 +209,7 @@ public class Patch implements Interpreter
         {
           instrCtx.addErrorMessage("field %1$s can not be used in both %2$s operation and " +
           		DELETE_COMMAND + " operation at the same time", key, usedFields.get(key));
-          return false;
+          return;
         }
         else
         {
@@ -205,13 +222,12 @@ public class Patch implements Interpreter
         }
       }
     }
-    return true;
   }
 
   /**
    * Executes $set command and returns true is it was successful and false otherwise.
    */
-  private boolean executeSetCommand(Object setCommand, Object data, Map<String, String> usedFields, final InterpreterContext instrCtx)
+  private void executeSetCommand(Object setCommand, Object data, Map<String, String> usedFields, final InterpreterContext instrCtx)
   {
     instrCtx.setCurrentField(SET_COMMAND);
     if (setCommand != null)
@@ -232,11 +248,11 @@ public class Patch implements Interpreter
         {
           instrCtx.addErrorMessage("field %1$s can not be used in both %2$s operation and " +
               SET_COMMAND + " operation at the same time", key, usedFields.get(key));
-          return false;
+          return;
         }
         else
         {
-          usedFields.put(key.toString(), SET_COMMAND);
+          usedFields.put(key, SET_COMMAND);
           dataDataMap.put(key, entry.getValue());
           if (_logOperations)
           {
@@ -245,7 +261,54 @@ public class Patch implements Interpreter
         }
       }
     }
-    return true;
+  }
+
+  private void executeReorderCommand(Object reorderCommand,
+      DataList dataList,
+      Map<String, String> usedFields,
+      InterpreterContext instrCtx)
+  {
+    if (reorderCommand != null)
+    {
+      assert reorderCommand.getClass() == DataList.class : reorderCommand.getClass();
+
+      DataList reorders = (DataList) reorderCommand;
+      if (reorders.size() > 1)
+      {
+        instrCtx.addErrorMessage("Reordering more than one array item is not supported.");
+        return;
+      }
+
+      if (reorders.size() == 1)
+      {
+        assert reorders.get(0).getClass() == DataMap.class;
+
+        DataMap reorder = (DataMap) reorders.get(0);
+        int fromIndex = reorder.getInteger(FROM_INDEX);
+        int toIndex = reorder.getInteger(TO_INDEX);
+
+        int size = dataList.size();
+        if (fromIndex < 0 || toIndex < 0 || fromIndex >= size || toIndex >= size)
+        {
+          instrCtx.addErrorMessage("$fromIndex %1$d and $toIndex %2$d must be between 0 and %3$d.", fromIndex, toIndex, size);
+          return;
+        }
+
+        if (fromIndex != toIndex)
+        {
+          int direction = Integer.signum(toIndex - fromIndex);
+          Object fromObject = dataList.get(fromIndex);
+          int i = fromIndex;
+          while (i != toIndex)
+          {
+            // Shift the items between fromIndex and toIndex by one place.
+            CheckedUtil.setWithoutChecking(dataList, i, dataList.get(i + direction));
+            i += direction;
+          }
+          CheckedUtil.setWithoutChecking(dataList, toIndex, fromObject);
+        }
+      }
+    }
   }
 
   /**
@@ -268,7 +331,7 @@ public class Patch implements Interpreter
       // if value has not been computed yet
       // patch has deletes only unless:
       // - current node contains non delete operation
-      Iterator<String> it = NON_DELETE_OPERATIONS.iterator();
+      Iterator<String> it = NON_DELETE_MAP_OPERATIONS.iterator();
       while (hdo == null && it.hasNext())
       {
         if (opNode.containsKey(it.next()))

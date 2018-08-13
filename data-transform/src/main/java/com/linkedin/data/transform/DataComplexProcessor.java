@@ -14,9 +14,6 @@
    limitations under the License.
 */
 
-/**
- * $id$
- */
 package com.linkedin.data.transform;
 
 import com.linkedin.data.DataComplex;
@@ -25,7 +22,7 @@ import com.linkedin.data.message.Message;
 import com.linkedin.data.message.MessageList;
 
 /**
- * DataMapProcessor abstracts DataMap processing when it can be described as an
+ * This class abstracts DataMap processing when it can be described as an
  * object with layout similar to data object it operates on with additional information
  * how data should be modified. Examples of data processing that fit this description are:
  * patch, projections.
@@ -44,7 +41,7 @@ public class DataComplexProcessor
   private static final ImmutableList<Object> _rootPath              = ImmutableList.empty();
 
   /**
-   * Creates new DataMapProcessor.
+   * Creates new DataComplexProcessor.
    */
   public DataComplexProcessor(final InstructionScheduler instructionScheduler, final Interpreter interpreter, final DataMap program, final DataComplex data)
   {
