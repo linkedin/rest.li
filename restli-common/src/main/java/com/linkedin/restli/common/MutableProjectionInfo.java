@@ -18,14 +18,15 @@ package com.linkedin.restli.common;
 
 
 /**
- * Interface for immutable request projection meta data.
+ * Interface for mutable request projection meta data.
  *
  * @author mnchen
  */
-public interface ProjectionInfo
+public interface MutableProjectionInfo extends ProjectionInfo
 {
   /**
-   * @return true if request has projection specified.
+   * Update projection present flag.
+   * @param projectionPresent flag for projection present or not.
    */
-  boolean isProjectionPresent();
+  void setProjectionPresent(boolean projectionPresent);
 }
