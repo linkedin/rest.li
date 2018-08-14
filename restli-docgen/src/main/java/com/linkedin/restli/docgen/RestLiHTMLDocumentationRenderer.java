@@ -26,6 +26,7 @@ import com.linkedin.data.schema.generator.SchemaSampleDataGenerator;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.restli.common.HttpStatus;
+import com.linkedin.restli.common.Node;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.docgen.examplegen.ExampleRequestResponse;
 import com.linkedin.restli.docgen.examplegen.ExampleRequestResponseGenerator;

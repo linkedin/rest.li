@@ -88,6 +88,7 @@ public class RestLiConfig
   private final List<ContentType> _customContentTypes = new LinkedList<>();
   private final List<ResourceDefinitionListener> _resourceDefinitionListeners = new ArrayList<>();
   private boolean _useStreamCodec = false;
+  private boolean _isParallelBuild = false;
 
   /**
    * Constructor.
@@ -114,6 +115,19 @@ public class RestLiConfig
   public Set<String> getResourceClassNamesSet()
   {
     return Collections.unmodifiableSet(_resourceClassNames);
+  }
+
+  /**
+   * @param isParallelBuild set building procedure in a parallel way
+   */
+  public void setParallelBuild(boolean isParallelBuild)
+  {
+    _isParallelBuild = isParallelBuild;
+  }
+
+  public boolean getParallelBuildChoice()
+  {
+    return _isParallelBuild;
   }
 
   /**

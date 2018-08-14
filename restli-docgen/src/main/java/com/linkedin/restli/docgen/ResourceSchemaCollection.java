@@ -51,6 +51,10 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 
 /**
  * A collection of ResourceSchema, supporting visitor-style iteration. Each ResourceSchema
@@ -61,8 +65,8 @@ import java.util.TreeMap;
 public class ResourceSchemaCollection
 {
   /**
-   * For each given {@link ResourceModel}, the classpath is checked for a .restspec.json 
-   * matching the name of the {@link ResourceModel},  if found it is loaded.  If a .restspec.json file 
+   * For each given {@link ResourceModel}, the classpath is checked for a .restspec.json
+   * matching the name of the {@link ResourceModel},  if found it is loaded.  If a .restspec.json file
    * is not found, one is created {@link ResourceSchemaCollection} from specified root {@link ResourceModel}.
    * All resources will be recursively traversed to discover subresources.
    * Root resources not specified are excluded.
@@ -124,6 +128,27 @@ public class ResourceSchemaCollection
     }
 
     return new ResourceSchemaCollection(resourceSchemaMap);
+  }
+
+  public static void parallelVisitResource(Collection<ResourceSchema> resources, ResourceSchemaVisitior visitor)
+  {
+    ExecutorService executorService = Executors.newWorkStealingPool();
+    List<ProcessTask> tasks = new ArrayList<>();
+    for (ResourceSchema schema : resources)
+    {
+      tasks.add(new ProcessTask(visitor, new ArrayList<>(), schema));
+    }
+
+    try
+    {
+      executorService.invokeAll(tasks);
+    }
+    catch (InterruptedException e)
+    {
+      throw new RestLiInternalException(e);
+    }
+
+    executorService.shutdown();
   }
 
   /**
@@ -302,6 +327,27 @@ public class ResourceSchemaCollection
     hierarchy.remove(hierarchy.size() - 1);
   }
 
+  private static class ProcessTask implements Callable<Object>
+  {
+    private ResourceSchemaVisitior _visitor;
+    private List<ResourceSchema> _hierarchy;
+    private ResourceSchema _resourceSchema;
+
+    private ProcessTask(ResourceSchemaVisitior visitor, List<ResourceSchema> hierarchy, ResourceSchema resourceSchema)
+    {
+      _visitor = visitor;
+      _hierarchy = hierarchy;
+      _resourceSchema = resourceSchema;
+    }
+
+    @Override
+    public Object call()
+    {
+      processResourceSchema(_visitor, _hierarchy, _resourceSchema);
+      return null;
+    }
+
+  }
 
   private static void processEntitySchema(ResourceSchemaVisitior visitor,
                                           ResourceSchemaVisitior.VisitContext context,

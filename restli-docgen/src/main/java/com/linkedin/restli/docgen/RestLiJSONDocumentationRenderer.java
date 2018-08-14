@@ -17,10 +17,10 @@
 package com.linkedin.restli.docgen;
 
 
-import com.linkedin.data.Data;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.schema.NamedDataSchema;
+import com.linkedin.restli.common.Node;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.server.RestLiInternalException;
 import com.linkedin.restli.restspec.ResourceSchema;

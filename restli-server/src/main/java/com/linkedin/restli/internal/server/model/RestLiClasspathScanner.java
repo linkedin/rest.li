@@ -27,10 +27,17 @@ import java.lang.annotation.Annotation;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 
@@ -74,10 +81,11 @@ class RestLiClasspathScanner
   }
 
   private final Set<Class<?>> _matchedClasses;
-
   private final ClassLoader _classLoader;
   private final Set<String> _packagePaths;
   private final Set<String> _classNames;
+
+  private boolean _isParallel;
 
   public RestLiClasspathScanner(final Set<String> packageNames, final Set<String> classNames, final ClassLoader classLoader)
   {
@@ -89,7 +97,14 @@ class RestLiClasspathScanner
       _packagePaths.add(nameToPath(packageName));
     }
     _classNames = classNames;
-    _matchedClasses = new HashSet<Class<?>>();
+    _matchedClasses = Collections.synchronizedSet(new HashSet<Class<?>>());
+    _isParallel = false;
+  }
+
+  public RestLiClasspathScanner(final Set<String> packageNames, final Set<String> classNames, final ClassLoader classLoader, final boolean isParallel)
+  {
+    this(packageNames, classNames, classLoader);
+    _isParallel = isParallel;
   }
 
   private String nameToPath(final String name)
@@ -125,6 +140,45 @@ class RestLiClasspathScanner
 
   public void scanPackages()
   {
+    if (_isParallel)
+    {
+      parallelScan();
+    }
+    else
+    {
+      sequentiallyScan();
+    }
+
+  }
+
+  public String scanClasses()
+  {
+    final StringBuilder errorBuilder = new StringBuilder();
+
+    for (String c : _classNames)
+    {
+      try
+      {
+        final Class<?> candidateClass = classForName(c);
+        for (Annotation a : candidateClass.getAnnotations())
+        {
+          if (_annotations.contains(a.annotationType()))
+          {
+            _matchedClasses.add(candidateClass);
+            break;
+          }
+        }
+      }
+      catch (ClassNotFoundException e)
+      {
+        errorBuilder.append(String.format("Failed to load class %s\n", c));
+      }
+    }
+
+    return errorBuilder.toString();
+  }
+
+  private void sequentiallyScan() {
     try
     {
       for (String p : _packagePaths)
@@ -160,31 +214,94 @@ class RestLiClasspathScanner
     }
   }
 
-  public String scanClasses()
+  private void parallelScan()
   {
-    final StringBuilder errorBuilder = new StringBuilder();
+    List<Future<Object>> result = null;
 
-    for (String c : _classNames)
+    try
+    {
+      ExecutorService executor = Executors.newWorkStealingPool();
+      List<AsyncScanTask> taskList = new ArrayList<>();
+      for (String p : _packagePaths)
+      {
+        Enumeration<URL> enumeration = _classLoader.getResources(toUnixPath(p));
+        while (enumeration.hasMoreElements())
+        {
+          taskList.add(new AsyncScanTask(enumeration.nextElement()));
+        }
+
+        result = executor.invokeAll(taskList);
+      }
+
+    }
+    catch (IOException | InterruptedException e)
+    {
+      e.printStackTrace();
+    }
+
+    if (result != null)
     {
       try
       {
-        final Class<?> candidateClass = classForName(c);
-        for (Annotation a : candidateClass.getAnnotations())
+        for (Future<Object> future : result)
         {
-          if (_annotations.contains(a.annotationType()))
-          {
-            _matchedClasses.add(candidateClass);
-            break;
-          }
+          future.get();
         }
+
       }
-      catch (ClassNotFoundException e)
+      catch (ExecutionException e)
       {
-        errorBuilder.append(String.format("Failed to load class %s\n", c));
+        // We only need to throw the exception which occupied during the execution
+        throw new RuntimeException(e.getCause());
       }
+      catch (InterruptedException e)
+      {
+        e.printStackTrace();
+      }
+
     }
 
-    return errorBuilder.toString();
+  }
+
+  private class AsyncScanTask implements Callable<Object>
+  {
+    private URL _url;
+
+    private AsyncScanTask(URL url)
+    {
+      _url = url;
+    }
+
+    @Override
+    public Object call()
+    {
+      try
+      {
+        URI u = _url.toURI();
+        String scheme = u.getScheme();
+        switch (scheme)
+        {
+          case SCHEME_JAR:
+          case SCHEME_ZIP:
+            scanJar(u);
+            break;
+          case SCHEME_FILE:
+            scanDirectory(new File(u.getPath()));
+            break;
+          default:
+            throw new ResourceConfigException(
+                "Unable to scan resource '" + u.toString() + "'. URI scheme not supported by scanner.");
+        }
+
+      }
+      catch (IOException | URISyntaxException e)
+      {
+        throw new ResourceConfigException("Unable to scan resource", e);
+      }
+
+      return null;
+    }
+
   }
 
   private void scanJar(final URI u) throws IOException

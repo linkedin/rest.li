@@ -14,10 +14,11 @@
    limitations under the License.
 */
 
-package com.linkedin.restli.docgen;
+package com.linkedin.restli.common;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 
 /**
  * Directed graph for capturing relationships between resource endpoints and data models.
@@ -45,5 +46,5 @@ public class Graph
     return node;
   }
 
-  private final Map<Object, Node<?>> _nodes = new HashMap<Object, Node<?>>();
+  private final Map<Object, Node<?>> _nodes = new ConcurrentHashMap<>();
 }

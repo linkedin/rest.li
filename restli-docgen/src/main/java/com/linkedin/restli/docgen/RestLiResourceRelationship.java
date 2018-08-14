@@ -28,6 +28,8 @@ import com.linkedin.data.schema.PegasusSchemaParser;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.StringArray;
+import com.linkedin.restli.common.Graph;
+import com.linkedin.restli.common.Node;
 import com.linkedin.restli.restspec.ActionSchema;
 import com.linkedin.restli.restspec.AssocKeySchema;
 import com.linkedin.restli.restspec.AssociationSchema;
@@ -52,6 +54,7 @@ import java.util.TreeMap;
  */
 public class RestLiResourceRelationship
 {
+
   /**
    * @param resourceSchemas collection of {@link ResourceSchema} to be processed
    * @param schemaResolver resolver that resolves the resource schemas in {@code resourceSchemas}
@@ -62,6 +65,28 @@ public class RestLiResourceRelationship
     _resourceSchemas = resourceSchemas;
     _schemaResolver = schemaResolver;
     _schemaParser = null;
+    _dataModels = new TreeMap<>();
+
+    findDataModels();
+  }
+
+  public RestLiResourceRelationship(ResourceSchemaCollection resourceSchemas,
+                                    DataSchemaResolver schemaResolver,
+                                    boolean isParallel)
+  {
+    _isParallel = isParallel;
+    _resourceSchemas = resourceSchemas;
+    _schemaResolver = schemaResolver;
+    _schemaParser = null;
+
+    if (_isParallel)
+    {
+      _dataModels = Collections.synchronizedSortedMap(new TreeMap<>());
+    }
+    else
+    {
+      _dataModels = new TreeMap<>();
+    }
 
     findDataModels();
   }
@@ -76,6 +101,7 @@ public class RestLiResourceRelationship
     _resourceSchemas = resourceSchemas;
     _schemaResolver = null;
     _schemaParser = schemaParser;
+    _dataModels = new TreeMap<>();
 
     findDataModels();
   }
@@ -120,7 +146,20 @@ public class RestLiResourceRelationship
     {
       // 'online mode': resolve data schema from RecordTemplate Class SCHEMA field
       final StringBuilder errorMessage = new StringBuilder();
-      final NamedDataSchema schema = _schemaResolver.findDataSchema(className, errorMessage);
+      final NamedDataSchema schema;
+      if (_isParallel)
+      {
+        synchronized (_extractSchemaLock)
+        {
+          schema = _schemaResolver.findDataSchema(className, errorMessage);
+        }
+
+      }
+      else
+      {
+        schema = _schemaResolver.findDataSchema(className, errorMessage);
+      }
+
       if (errorMessage.length() > 0)
       {
         return null;
@@ -306,8 +345,36 @@ public class RestLiResourceRelationship
         }
       }
 
-      private void connectSchemaToResource(VisitContext visitContext, final NamedDataSchema schema)
-      {
+      private void threadSafeConnecting(VisitContext visitContext, final NamedDataSchema schema) {
+        final Node<NamedDataSchema> schemaNode = _relationships.get(schema);
+        _dataModels.put(schema.getFullName(), schema);
+
+        final DataSchemaTraverse traveler = new DataSchemaTraverse();
+        traveler.traverse(schema, new DataSchemaTraverse.Callback()
+        {
+          @Override
+          public void callback(List<String> path, DataSchema nestedSchema)
+          {
+            if (nestedSchema instanceof RecordDataSchema && nestedSchema != schema)
+            {
+              final RecordDataSchema nestedRecordSchema = (RecordDataSchema) nestedSchema;
+              _dataModels.put(nestedRecordSchema.getFullName(), nestedRecordSchema);
+              final Node<RecordDataSchema> node = _relationships.get(nestedRecordSchema);
+              synchronized (_connectResourceLock) {
+                schemaNode.addAdjacentNode(node);
+              }
+            }
+          }
+        });
+
+        final Node<ResourceSchema> resourceNode = _relationships.get(visitContext.getParentSchema());
+        synchronized (_connectResourceLock) {
+          resourceNode.addAdjacentNode(schemaNode);
+          schemaNode.addAdjacentNode(resourceNode);
+        }
+      }
+
+      private void unthreadSafeConnecting(VisitContext visitContext, final NamedDataSchema schema) {
         final Node<NamedDataSchema> schemaNode = _relationships.get(schema);
         _dataModels.put(schema.getFullName(), schema);
 
@@ -331,14 +398,39 @@ public class RestLiResourceRelationship
         resourceNode.addAdjacentNode(schemaNode);
         schemaNode.addAdjacentNode(resourceNode);
       }
+
+      private void connectSchemaToResource(VisitContext visitContext, final NamedDataSchema schema)
+      {
+        if (_isParallel)
+        {
+          threadSafeConnecting(visitContext, schema);
+        }
+        else
+        {
+          unthreadSafeConnecting(visitContext, schema);
+        }
+
+      }
+
     };
 
-    ResourceSchemaCollection.visitResources(_resourceSchemas.getResources().values(), visitor);
+    if (_isParallel)
+    {
+      ResourceSchemaCollection.parallelVisitResource(_resourceSchemas.getResources().values(), visitor);
+    }
+    else
+    {
+      ResourceSchemaCollection.visitResources(_resourceSchemas.getResources().values(), visitor);
+    }
+
   }
 
+  private boolean _isParallel = false;
   private final ResourceSchemaCollection _resourceSchemas;
   private final DataSchemaResolver _schemaResolver;
   private final PegasusSchemaParser _schemaParser;
-  private final SortedMap<String, NamedDataSchema> _dataModels = new TreeMap<String, NamedDataSchema>();
+  private final SortedMap<String, NamedDataSchema> _dataModels;
   private final Graph _relationships = new Graph();
+  private final Byte[] _extractSchemaLock = new Byte[0];
+  private final Byte[] _connectResourceLock = new Byte[0];
 }
