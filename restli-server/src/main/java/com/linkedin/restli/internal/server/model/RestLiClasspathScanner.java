@@ -128,7 +128,7 @@ class RestLiClasspathScanner
   }
 
   public Class<?> classForName(final String name)
-          throws ClassNotFoundException
+      throws ClassNotFoundException
   {
     return Class.forName(name, false, _classLoader);
   }
@@ -220,7 +220,7 @@ class RestLiClasspathScanner
 
     try
     {
-      ExecutorService executor = Executors.newWorkStealingPool();
+      ExecutorService executor = Executors.newWorkStealingPool();s
       List<AsyncScanTask> taskList = new ArrayList<>();
       for (String p : _packagePaths)
       {

@@ -60,7 +60,7 @@ public class RestLiResourceRelationship
    * @param schemaResolver resolver that resolves the resource schemas in {@code resourceSchemas}
    */
   public RestLiResourceRelationship(ResourceSchemaCollection resourceSchemas,
-                                    DataSchemaResolver schemaResolver)
+      DataSchemaResolver schemaResolver)
   {
     _resourceSchemas = resourceSchemas;
     _schemaResolver = schemaResolver;
@@ -71,8 +71,8 @@ public class RestLiResourceRelationship
   }
 
   public RestLiResourceRelationship(ResourceSchemaCollection resourceSchemas,
-                                    DataSchemaResolver schemaResolver,
-                                    boolean isParallel)
+      DataSchemaResolver schemaResolver,
+      boolean isParallel)
   {
     _isParallel = isParallel;
     _resourceSchemas = resourceSchemas;
@@ -96,7 +96,7 @@ public class RestLiResourceRelationship
    * @param schemaParser parser that parses text into {@link DataSchema}
    */
   public RestLiResourceRelationship(ResourceSchemaCollection resourceSchemas,
-                                    PegasusSchemaParser schemaParser)
+      PegasusSchemaParser schemaParser)
   {
     _resourceSchemas = resourceSchemas;
     _schemaResolver = null;
@@ -182,7 +182,7 @@ public class RestLiResourceRelationship
     {
       @Override
       public void visitResourceSchema(VisitContext visitContext,
-                                      ResourceSchema resourceSchema)
+          ResourceSchema resourceSchema)
       {
         final String schema = resourceSchema.getSchema();
         // ActionSet resources do not have a schema
@@ -198,7 +198,7 @@ public class RestLiResourceRelationship
 
       @Override
       public void visitCollectionResource(VisitContext visitContext,
-                                          CollectionSchema collectionSchema)
+          CollectionSchema collectionSchema)
       {
         final IdentifierSchema id = collectionSchema.getIdentifier();
 
@@ -221,7 +221,7 @@ public class RestLiResourceRelationship
 
       @Override
       public void visitAssociationResource(VisitContext visitContext,
-                                           AssociationSchema associationSchema)
+          AssociationSchema associationSchema)
       {
         for (AssocKeySchema key : associationSchema.getAssocKeys())
         {
@@ -235,9 +235,9 @@ public class RestLiResourceRelationship
 
       @Override
       public void visitParameter(VisitContext visitContext,
-                                 RecordTemplate parentResource,
-                                 Object parentMethodSchema,
-                                 ParameterSchema parameterSchema)
+          RecordTemplate parentResource,
+          Object parentMethodSchema,
+          ParameterSchema parameterSchema)
       {
         String parameterTypeString = parameterSchema.getType();
         if (isInlineSchema(parameterTypeString)) // the parameter type field contains a inline schema, so we traverse into it
@@ -268,8 +268,8 @@ public class RestLiResourceRelationship
 
       @Override
       public void visitFinder(VisitContext visitContext,
-                              RecordTemplate parentResource,
-                              FinderSchema finderSchema)
+          RecordTemplate parentResource,
+          FinderSchema finderSchema)
       {
         final MetadataSchema metadata = finderSchema.getMetadata();
         if (metadata != null)
@@ -284,9 +284,9 @@ public class RestLiResourceRelationship
 
       @Override
       public void visitAction(VisitContext visitContext,
-                              RecordTemplate parentResource,
-                              ResourceLevel resourceLevel,
-                              ActionSchema actionSchema)
+          RecordTemplate parentResource,
+          ResourceLevel resourceLevel,
+          ActionSchema actionSchema)
       {
         final String returns = actionSchema.getReturns();
         if (returns != null)

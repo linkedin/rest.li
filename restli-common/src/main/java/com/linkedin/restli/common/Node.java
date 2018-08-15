@@ -16,7 +16,6 @@
 
 package com.linkedin.restli.common;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.NoSuchElementException;

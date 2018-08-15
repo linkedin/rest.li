@@ -177,7 +177,7 @@ public class ResourceSchemaCollection
     {
       @Override
       public void visitResourceSchema(VisitContext context,
-                                      ResourceSchema resourceSchema)
+          ResourceSchema resourceSchema)
       {
         final String qualifiedResourceName = context.getResourcePath();
         if (!_allResources.containsKey(qualifiedResourceName))
@@ -258,7 +258,7 @@ public class ResourceSchemaCollection
   }
 
   private List<ResourceSchema> getAllSubResourcesRecursive(ResourceSchema parentSchema,
-                                                           List<ResourceSchema> accumulator)
+      List<ResourceSchema> accumulator)
   {
     final List<ResourceSchema> subResources = getSubResources(parentSchema);
     if (subResources == null)
@@ -276,8 +276,8 @@ public class ResourceSchemaCollection
   }
 
   private static void processResourceSchema(ResourceSchemaVisitior visitor,
-                                            List<ResourceSchema> hierarchy,
-                                            ResourceSchema resourceSchema)
+      List<ResourceSchema> hierarchy,
+      ResourceSchema resourceSchema)
   {
     hierarchy.add(resourceSchema);
 
@@ -350,8 +350,8 @@ public class ResourceSchemaCollection
   }
 
   private static void processEntitySchema(ResourceSchemaVisitior visitor,
-                                          ResourceSchemaVisitior.VisitContext context,
-                                          EntitySchema entitySchema)
+      ResourceSchemaVisitior.VisitContext context,
+      EntitySchema entitySchema)
   {
     visitor.visitEntityResource(context, entitySchema);
 
@@ -367,9 +367,9 @@ public class ResourceSchemaCollection
   }
 
   private static void processRestMethods(ResourceSchemaVisitior visitor,
-                                         ResourceSchemaVisitior.VisitContext context,
-                                         RecordTemplate containingResourceType,
-                                         RestMethodSchemaArray methods)
+      ResourceSchemaVisitior.VisitContext context,
+      RecordTemplate containingResourceType,
+      RestMethodSchemaArray methods)
   {
     if (methods != null)
     {
@@ -382,9 +382,9 @@ public class ResourceSchemaCollection
           for (ParameterSchema parameterSchema : restMethodSchema.getParameters())
           {
             visitor.visitParameter(context,
-                                   containingResourceType,
-                                   restMethodSchema,
-                                   parameterSchema);
+                containingResourceType,
+                restMethodSchema,
+                parameterSchema);
           }
         }
       }
@@ -392,9 +392,9 @@ public class ResourceSchemaCollection
   }
 
   private static void processFinders(ResourceSchemaVisitior visitor,
-                                     ResourceSchemaVisitior.VisitContext context,
-                                     RecordTemplate containingResourceType,
-                                     FinderSchemaArray finders)
+      ResourceSchemaVisitior.VisitContext context,
+      RecordTemplate containingResourceType,
+      FinderSchemaArray finders)
   {
     if (finders != null)
     {
@@ -407,9 +407,9 @@ public class ResourceSchemaCollection
           for (ParameterSchema parameterSchema : finderSchema.getParameters())
           {
             visitor.visitParameter(context,
-                                   containingResourceType,
-                                   finderSchema,
-                                   parameterSchema);
+                containingResourceType,
+                finderSchema,
+                parameterSchema);
           }
         }
       }
@@ -418,16 +418,16 @@ public class ResourceSchemaCollection
 
 
   private static void processActions(ResourceSchemaVisitior visitor,
-                                     ResourceSchemaVisitior.VisitContext context,
-                                     RecordTemplate containingResourceType,
-                                     ActionSchemaArray actions)
+      ResourceSchemaVisitior.VisitContext context,
+      RecordTemplate containingResourceType,
+      ActionSchemaArray actions)
   {
     if (actions != null)
     {
       final ResourceLevel resourceLevel = ((EntitySchema.class.equals(containingResourceType.getClass()) ||
-                                           SimpleSchema.class.equals(containingResourceType.getClass())) ?
-                                           ResourceLevel.ENTITY :
-                                           ResourceLevel.COLLECTION);
+          SimpleSchema.class.equals(containingResourceType.getClass())) ?
+          ResourceLevel.ENTITY :
+          ResourceLevel.COLLECTION);
 
       for (ActionSchema actionSchema : actions)
       {
@@ -438,9 +438,9 @@ public class ResourceSchemaCollection
           for (ParameterSchema parameterSchema : actionSchema.getParameters())
           {
             visitor.visitParameter(context,
-                                   containingResourceType,
-                                   actionSchema,
-                                   parameterSchema);
+                containingResourceType,
+                actionSchema,
+                parameterSchema);
           }
         }
       }

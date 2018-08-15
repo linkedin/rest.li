@@ -171,9 +171,9 @@ public class RestLiApiBuilder implements RestApiBuilder
         if (existingResource != null)
         {
           String errorMessage = String.format("Resource classes \"%s\" and \"%s\" clash on the resource name \"%s\".",
-                                              existingResource.getResourceClass().getCanonicalName(),
-                                              model.getResourceClass().getCanonicalName(),
-                                              existingResource.getName());
+              existingResource.getResourceClass().getCanonicalName(),
+              model.getResourceClass().getCanonicalName(),
+              existingResource.getName());
           throw new ResourceConfigException(errorMessage);
         }
 
