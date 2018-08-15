@@ -5,6 +5,8 @@
 -------
 (RB=1391132)
 Clean up ProjectionInfo interfaces to hide mutable API.
+(RB=1391602)
+Fix for reference to internal record.
 
 23.0.12
 ------

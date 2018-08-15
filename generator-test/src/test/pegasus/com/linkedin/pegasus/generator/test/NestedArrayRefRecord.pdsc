@@ -15,7 +15,7 @@
             "name": "NestedRecordBarRefs",
             "ref": {
               "type": "array",
-              "items": "RecordBarRef"
+              "items": "RecordBar"
             }
           }
         }
