@@ -72,8 +72,8 @@ public class RestLiValidationFilter implements Filter
   @Override
   public CompletableFuture<Void> onRequest(final FilterRequestContext requestContext)
   {
-    // If the resource method requires validation on response and a projection is defined,
-    // build the validating schema now so that invalid projections are spotted early
+    // If the request requires validation on the response, build the validating schema now so that invalid projections
+    // are spotted early
     if (shouldValidateOnResponse(requestContext))
     {
       MaskTree projectionMask = requestContext.getProjectionMask();
@@ -319,7 +319,13 @@ public class RestLiValidationFilter implements Filter
 
   private boolean shouldValidateOnResponse(FilterRequestContext requestContext)
   {
-    return METHODS_VALIDATED_ON_RESPONSE.contains(requestContext.getMethodType());
+    MaskTree projectionMask = requestContext.getProjectionMask();
+
+    // Make sure the request is for one of the methods to be validated and has either null or a non-empty projection
+    // mask. For context, null projection mask means everything is projected while an empty projection mask means
+    // nothing is projected. So the validation can be skipped when an empty projection mask is specified.
+    return METHODS_VALIDATED_ON_RESPONSE.contains(requestContext.getMethodType()) &&
+        (projectionMask == null || !projectionMask.getDataMap().isEmpty());
   }
 
   public CompletableFuture<Void> onError(Throwable t, final FilterRequestContext requestContext,

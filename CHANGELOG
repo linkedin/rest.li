@@ -1,5 +1,10 @@
+23.0.15
+-------
+
 23.0.14
 -------
+(RB=1393838)
+Skip schema validation when the projection mask is empty.
 
 23.0.13
 -------

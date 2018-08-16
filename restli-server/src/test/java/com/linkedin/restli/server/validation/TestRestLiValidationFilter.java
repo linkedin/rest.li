@@ -143,26 +143,33 @@ public class TestRestLiValidationFilter
     return new Object[][]
     {
         { RestLiAnnotationReader.processResource(ActionsResource.class),      actionResponseData(),  null,                                  false },
+        { RestLiAnnotationReader.processResource(ActionsResource.class),      actionResponseData(),  new MaskTree(),                        false },
         { RestLiAnnotationReader.processResource(ActionsResource.class),      actionResponseData(),  makeMask("ignoreMePlease"),   false },
         { RestLiAnnotationReader.processResource(CollectionResource.class),   getResponseData(),     null,                                  false },
-        { RestLiAnnotationReader.processResource(CollectionResource.class),   getResponseData(),     makeMask("nonexistentField"), true },
+        { RestLiAnnotationReader.processResource(CollectionResource.class),   getResponseData(),     new MaskTree(),                        false },
+        { RestLiAnnotationReader.processResource(CollectionResource.class),   getResponseData(),     makeMask("nonexistentField"), true  },
         { RestLiAnnotationReader.processResource(CollectionResource.class),   getResponseData(),     makeMask("intField"),         false },
         { RestLiAnnotationReader.processResource(CollectionResource.class),   actionResponseData(),  null,                                  false },
+        { RestLiAnnotationReader.processResource(CollectionResource.class),   actionResponseData(),  new MaskTree(),                        false },
         { RestLiAnnotationReader.processResource(CollectionResource.class),   actionResponseData(),  makeMask("ignoreMePlease"),   false },
         { RestLiAnnotationReader.processResource(SimpleResource.class),       getResponseData(),     null,                                  false },
-        { RestLiAnnotationReader.processResource(SimpleResource.class),       getResponseData(),     makeMask("nonexistentField"), true },
+        { RestLiAnnotationReader.processResource(SimpleResource.class),       getResponseData(),     new MaskTree(),                        false },
+        { RestLiAnnotationReader.processResource(SimpleResource.class),       getResponseData(),     makeMask("nonexistentField"), true  },
         { RestLiAnnotationReader.processResource(SimpleResource.class),       getResponseData(),     makeMask("intField"),         false },
         { RestLiAnnotationReader.processResource(SimpleResource.class),       createResponseData(),  null,                                  false },
-        { RestLiAnnotationReader.processResource(SimpleResource.class),       createResponseData(),  makeMask("nonexistentField"), true },
+        { RestLiAnnotationReader.processResource(SimpleResource.class),       createResponseData(),  new MaskTree(),                        false },
+        { RestLiAnnotationReader.processResource(SimpleResource.class),       createResponseData(),  makeMask("nonexistentField"), true  },
         { RestLiAnnotationReader.processResource(SimpleResource.class),       createResponseData(),  makeMask("intField"),         false },
         { RestLiAnnotationReader.processResource(SimpleResource.class),       actionResponseData(),  null,                                  false },
+        { RestLiAnnotationReader.processResource(SimpleResource.class),       actionResponseData(),  new MaskTree(),                        false },
         { RestLiAnnotationReader.processResource(SimpleResource.class),       actionResponseData(),  makeMask("ignoreMePlease"),   false },
         { RestLiAnnotationReader.processResource(AssociationResource.class),  getResponseData(),     null,                                  false },
-        { RestLiAnnotationReader.processResource(AssociationResource.class),  getResponseData(),     makeMask("nonexistentField"), true },
+        { RestLiAnnotationReader.processResource(AssociationResource.class),  getResponseData(),     new MaskTree(),                        false },
+        { RestLiAnnotationReader.processResource(AssociationResource.class),  getResponseData(),     makeMask("nonexistentField"), true  },
         { RestLiAnnotationReader.processResource(AssociationResource.class),  getResponseData(),     makeMask("intField"),         false },
         { RestLiAnnotationReader.processResource(AssociationResource.class),  actionResponseData(),  null,                                  false },
-        { RestLiAnnotationReader.processResource(AssociationResource.class),  actionResponseData(),  makeMask("ignoreMePlease"),   false },
-
+        { RestLiAnnotationReader.processResource(AssociationResource.class),  actionResponseData(),  new MaskTree(),                        false },
+        { RestLiAnnotationReader.processResource(AssociationResource.class),  actionResponseData(),  makeMask("ignoreMePlease"),   false }
     };
   }
 
