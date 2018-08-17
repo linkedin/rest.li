@@ -1,5 +1,7 @@
 23.0.15
 -------
+(RB=1394375)
+Populate internal DataMap for gathered batch response.
 
 23.0.14
 -------

@@ -381,12 +381,14 @@ public class TestDefaultScatterGatherStrategy
               {
                 Assert.assertNotNull(result.getEntity());
                 Assert.assertEquals(result.getStatus(), HttpStatus.S_200_OK.getCode());
+                Assert.assertTrue(result.getEntity().data().getDataMap(BatchResponse.RESULTS).size() == 1);
                 Assert.assertTrue(result.getEntity().getResults().size() == 1);
                 Assert.assertTrue(result.getEntity().getResults().containsKey(1L));
                 // merged error can come from 3 cases:
                 // - errored keys in successfully returned scattered batch response
                 // - RemoteInvocationException from a scattered request
                 // - unmapped keys
+                Assert.assertTrue(result.getEntity().data().getDataMap(BatchResponse.ERRORS).size() == 3);
                 Assert.assertTrue(result.getEntity().getErrors().size() == 3);
                 ErrorResponse keyError = result.getEntity().getErrors().get(2L);
                 Assert.assertEquals(keyError.getStatus().intValue(), HttpStatus.S_404_NOT_FOUND.getCode());
@@ -467,24 +469,28 @@ public class TestDefaultScatterGatherStrategy
   private static Response<BatchKVResponse<Long, EntityResponse<TestRecord>>>
   createBatchEntityResponse(ProtocolVersion version, Set<Long> resultKeys, Set<Long> errorKeys)
   {
-    BatchEntityResponse<Long, TestRecord> response = new BatchEntityResponse<>(new DataMap(),
+    DataMap resultMap = new DataMap();
+    for (Long id: resultKeys)
+    {
+      resultMap.put(id.toString(), new EntityResponse<>(TestRecord.class)
+                      .setEntity(new TestRecord().setId(id))
+                      .setStatus(HttpStatus.S_200_OK).data());
+    }
+    DataMap errorMap = new DataMap();
+    for (Long id: errorKeys)
+    {
+      errorMap.put(id.toString(),
+              new ErrorResponse().setStatus(HttpStatus.S_404_NOT_FOUND.getCode()).data());
+    }
+    DataMap responseMap = new DataMap();
+    responseMap.put(BatchResponse.RESULTS, resultMap);
+    responseMap.put(BatchResponse.ERRORS, errorMap);
+    BatchEntityResponse<Long, TestRecord> response = new BatchEntityResponse<>(responseMap,
             new TypeSpec<>(Long.class),
             new TypeSpec<>(TestRecord.class),
             Collections.emptyMap(),
             null,
             version);
-    for (Long id: resultKeys)
-    {
-      response.getResults().put(id,
-              new EntityResponse<>(TestRecord.class)
-                      .setEntity(new TestRecord().setId(id))
-                      .setStatus(HttpStatus.S_200_OK));
-    }
-    for (Long id: errorKeys)
-    {
-      response.getErrors().put(id,
-              new ErrorResponse().setStatus(HttpStatus.S_404_NOT_FOUND.getCode()));
-    }
     return new ResponseImpl<>(HttpStatus.S_200_OK.getCode(),
             Collections.emptyMap(), Collections.emptyList(), response, null);
   }
@@ -493,23 +499,26 @@ public class TestDefaultScatterGatherStrategy
                                                                                      Set<Long> resultKeys,
                                                                                      Set<Long> errorKeys)
   {
-    BatchKVResponse<Long, UpdateStatus> response = new BatchKVResponse<>(new DataMap(),
-            new TypeSpec<>(Long.class),
-            new TypeSpec<>(UpdateStatus.class),
-            Collections.emptyMap(),
-            version);
+    DataMap resultMap = new DataMap();
     for (Long id: resultKeys)
     {
-      response.getResults().put(id,
-              new UpdateStatus().setStatus(HttpStatus.S_200_OK.getCode()));
+      resultMap.put(id.toString(), new UpdateStatus().setStatus(HttpStatus.S_200_OK.getCode()).data());
     }
+    DataMap errorMap = new DataMap();
     for (Long id: errorKeys)
     {
       // simulate a response from a scattered request that is still successful but
       // contains error for individual key
-      response.getErrors().put(id,
-              new ErrorResponse().setStatus(HttpStatus.S_404_NOT_FOUND.getCode()));
+      errorMap.put(id.toString(), new ErrorResponse().setStatus(HttpStatus.S_404_NOT_FOUND.getCode()).data());
     }
+    DataMap responseMap = new DataMap();
+    responseMap.put(BatchResponse.RESULTS, resultMap);
+    responseMap.put(BatchResponse.ERRORS, errorMap);
+    BatchKVResponse<Long, UpdateStatus> response = new BatchKVResponse<>(responseMap,
+            new TypeSpec<>(Long.class),
+            new TypeSpec<>(UpdateStatus.class),
+            Collections.emptyMap(),
+            version);
     return new ResponseImpl<>(HttpStatus.S_200_OK.getCode(),
             Collections.emptyMap(), Collections.emptyList(), response, null);
   }

@@ -23,6 +23,7 @@ import com.linkedin.d2.balancer.URIMapper;
 import com.linkedin.d2.balancer.util.URIKeyPair;
 import com.linkedin.d2.balancer.util.URIMappingResult;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.restli.client.response.BatchKVResponse;
 import com.linkedin.restli.client.uribuilders.RestliUriBuilderUtil;
@@ -386,102 +387,95 @@ public class DefaultScatterGatherStrategy implements ScatterGatherStrategy
   }
 
   /**
-   * Initialize a final response object for gathering responses from scattered requests from original request.
+   * Initialize final batch response data map container.
+   * @return an empty data map for batch response.
+   */
+  private DataMap initializeResponseContainer()
+  {
+    DataMap result = new DataMap();
+    result.put(BatchResponse.RESULTS, new DataMap());
+    result.put(BatchResponse.ERRORS, new DataMap());
+    result.put(BatchResponse.STATUSES, new DataMap());
+    return result;
+  }
+
+  /**
+   * Construct a final response object from accumulated data map gathered from scattered requests from original request.
+   * For BatchRequest, it can be either BatchResponse (only for BatchGetRequest) or BatchKVResponse. For non-batch
+   * request, it should be customized by individual application.
    * @param request original request to be scattered.
    * @param protocolVersion rest.li protocol version.
-   * @param <T> gathered response type.
-   * @return a response object used to gather responses from scattered requests.
+   * @param data gathered response data map.
+   * @return final response object from gathered data map.
    */
   @SuppressWarnings({"unchecked", "rawtypes", "deprecation"})
-  private <T> T initializeResponseContainer(BatchRequest<T> request, ProtocolVersion protocolVersion) {
+  private <T> T constructResponseFromDataMap(BatchRequest<T> request, ProtocolVersion protocolVersion, DataMap data) {
     if (request instanceof BatchGetRequest)
     {
-      DataMap emptyData = new DataMap();
-      // this is to make sure that BatchResponse.getStatus can return empty map instead of null.
-      emptyData.put(BatchResponse.STATUSES, new DataMap());
-      return (T) new BatchResponse(emptyData,
-          request.getResponseDecoder().getEntityClass());
+      return (T) new BatchResponse(data,
+              request.getResponseDecoder().getEntityClass());
     }
     else
     {
-      return (T) new BatchKVResponse(new DataMap(),
-          request.getResourceSpec().getKeyType(),
-          request.getResourceSpec().getValueType(), request.getResourceSpec().getKeyParts(),
-          request.getResourceSpec().getComplexKeyType(), protocolVersion);
+      return (T) new BatchKVResponse(data,
+              request.getResourceSpec().getKeyType(),
+              request.getResourceSpec().getValueType(), request.getResourceSpec().getKeyParts(),
+              request.getResourceSpec().getComplexKeyType(), protocolVersion);
     }
   }
 
   /**
    * Gather an incoming scattered request response and merge it into currently accumulated response.
-   * @param accumulatedResponse currently accumulated response, For BatchRequest, it can be either BatchResponse (only for
-   *                            BatchGetRequest) or BatchKVResponse. For non-batch request, it should be customized by
-   *                            individual application.
+   * @param accumulatedDataMap currently accumulated response data map.
    * @param requestInfo request which result in the incoming response.
    * @param newResponse incoming response from a scattered request.
    * @param <T> response type.
    */
   @SuppressWarnings({"unchecked", "rawtypes"})
-  private <T> void gatherResponse(T accumulatedResponse, RequestInfo requestInfo, T newResponse)
+  private <T> void gatherResponse(DataMap accumulatedDataMap, RequestInfo requestInfo, T newResponse)
   {
     if (!(newResponse instanceof BatchResponse) && !(newResponse instanceof BatchKVResponse))
     {
       throw new IllegalArgumentException("Unsupported response for scatter-gather: " + newResponse.getClass());
     }
 
-    if (newResponse instanceof BatchResponse)
+    DataMap newResponseDataMap = ((RecordTemplate)newResponse).data();
+    if (newResponseDataMap.containsKey(BatchResponse.RESULTS))
     {
-      // BatchResponse
-      BatchResponse batchResponse = (BatchResponse)newResponse;
-      BatchResponse accumulatedBatchResponse = (BatchResponse)accumulatedResponse;
-      accumulatedBatchResponse.getResults().putAll(batchResponse.getResults());
-      accumulatedBatchResponse.getErrors().putAll(batchResponse.getErrors());
+      accumulatedDataMap.getDataMap(BatchResponse.RESULTS).putAll(newResponseDataMap.getDataMap(BatchResponse.RESULTS));
     }
-    else
+    if (newResponseDataMap.containsKey(BatchResponse.ERRORS))
     {
-      // BatchKVResponse
-      BatchKVResponse batchKVResponse = (BatchKVResponse)newResponse;
-      BatchKVResponse accumulatedBatchKVResponse = (BatchKVResponse)accumulatedResponse;
-      accumulatedBatchKVResponse.getResults().putAll(batchKVResponse.getResults());
-      accumulatedBatchKVResponse.getErrors().putAll(batchKVResponse.getErrors());
+      accumulatedDataMap.getDataMap(BatchResponse.ERRORS).putAll(newResponseDataMap.getDataMap(BatchResponse.ERRORS));
+    }
+    if (newResponseDataMap.containsKey(BatchResponse.STATUSES))
+    {
+      accumulatedDataMap.getDataMap(BatchResponse.STATUSES).putAll(newResponseDataMap.getDataMap(BatchResponse.STATUSES));
     }
   }
 
   /**
    * Gather an incoming scattered request error and merge it into currently accumulated batch response.
-   * @param accumulatedResponse currently accumulated response, For BatchRequest, it can be either BatchResponse (only for
-   *                            BatchGetRequest) or BatchKVResponse. For non-batch request, it should be customized by
-   *                            individual application.
+   * @param accumulatedDataMap currently accumulated response data map.
    * @param keys keys which result in the error.
    * @param e error exception.
    * @param version protocol version.
    * @param <K> request key type
-   * @param <T> response type.
    */
   @SuppressWarnings({"unchecked", "rawtypes"})
-  private <K, T> void gatherException(T accumulatedResponse, Set<K> keys, Throwable e,
-                                      ProtocolVersion version)
+  private <K> void gatherException(DataMap accumulatedDataMap, Set<K> keys, Throwable e,
+                                   ProtocolVersion version)
   {
-    if (!(accumulatedResponse instanceof BatchResponse) && !(accumulatedResponse instanceof BatchKVResponse))
-    {
-      throw new IllegalArgumentException("Unsupported response for scatter-gather: " + accumulatedResponse.getClass());
-    }
-
     ErrorResponse errorResponse = new ErrorResponse();
     errorResponse.setMessage(e.getMessage());
     errorResponse.setStatus(HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode());
     errorResponse.setExceptionClass(e.getClass().getName());
-    if (accumulatedResponse instanceof BatchResponse)
+
+    keys.forEach(key ->
     {
-      keys.forEach(key ->
-      {
-        String keyString = BatchResponse.keyToString(key, version);
-        ((BatchResponse)accumulatedResponse).getErrors().put(keyString, errorResponse);
-      });
-    }
-    else
-    {
-      keys.forEach(key -> ((BatchKVResponse)accumulatedResponse).getErrors().put(key, errorResponse));
-    }
+      String keyString = BatchResponse.keyToString(key, version);
+      accumulatedDataMap.getDataMap(BatchResponse.ERRORS).put(keyString, errorResponse.data());
+    });
   }
 
   /**
@@ -496,23 +490,24 @@ public class DefaultScatterGatherStrategy implements ScatterGatherStrategy
                                             Callback<Response<T>> callback)
   {
     BatchRequest<T> batchRequest = safeCastRequest(request);
-    // initialize a container for final response entity
-    T gatheredResponse = initializeResponseContainer(batchRequest, protocolVersion);
+    // initialize an empty dataMap for final response entity
+    DataMap gatheredResponseDataMap = initializeResponseContainer();
     // gather success response
-    successResponses.forEach((req, response) -> gatherResponse(gatheredResponse, req, response.getEntity()));
+    successResponses.forEach((req, response) -> gatherResponse(gatheredResponseDataMap, req, response.getEntity()));
     // gather failure response
     failureResponses.forEach((req, e) ->
             {
               Set<K> failedKeys = (Set<K>)((BatchRequest<T>)req.getRequest()).getObjectIds();
-              gatherException(gatheredResponse, failedKeys, e, protocolVersion);
+              gatherException(gatheredResponseDataMap, failedKeys, e, protocolVersion);
             });
     // gather unmapped keys
     if (unmappedKeys != null && !unmappedKeys.isEmpty())
     {
-      gatherException(gatheredResponse, unmappedKeys,
+      gatherException(gatheredResponseDataMap, unmappedKeys,
               new RestLiScatterGatherException("Unable to find a host for keys :" + unmappedKeys),
               protocolVersion);
     }
+    T gatheredResponse = constructResponseFromDataMap(batchRequest, protocolVersion, gatheredResponseDataMap);
     if (!successResponses.isEmpty())
     {
       Response<T> firstResponse = successResponses.values().iterator().next();
