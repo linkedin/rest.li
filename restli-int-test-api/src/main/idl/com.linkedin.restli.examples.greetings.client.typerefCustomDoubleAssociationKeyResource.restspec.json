@@ -8,7 +8,7 @@
     "identifier" : "typerefCustomDoubleAssociationKeyResourceId",
     "assocKeys" : [ {
       "name" : "dest",
-      "type" : "com.linkedin.restli.examples.typeref.api.CustomDoubleRef"
+      "type" : "com.linkedin.restli.examples.typeref.api.UriRef"
     }, {
       "name" : "src",
       "type" : "com.linkedin.restli.examples.typeref.api.CustomDoubleRef"

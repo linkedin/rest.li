@@ -9,6 +9,8 @@ dependencies {
   testCompile project(path: project.path, configuration: 'restClient')
 }
 
+sourceSets.mainGeneratedDataTemplate.java.srcDirs('src/main/java/')
+
 test {
   systemProperties['test.projectDir'] = project.projectDir.path
 }

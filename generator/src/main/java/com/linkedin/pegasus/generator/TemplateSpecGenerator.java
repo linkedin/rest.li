@@ -716,6 +716,10 @@ public class TemplateSpecGenerator
     typerefClass.setClassName(schema.getName());
     typerefClass.setModifiers(ModifierSpec.PUBLIC);
     registerClassTemplateSpec(schema, typerefClass);
+
+    final CustomInfoSpec customInfo = getImmediateCustomInfo(schema);
+    typerefClass.setCustomInfo(customInfo);
+
     return typerefClass;
   }
 

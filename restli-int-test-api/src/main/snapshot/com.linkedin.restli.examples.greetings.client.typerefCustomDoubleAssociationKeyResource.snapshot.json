@@ -35,6 +35,15 @@
     "java" : {
       "class" : "com.linkedin.restli.examples.custom.types.CustomString"
     }
+  }, {
+    "type" : "typeref",
+    "name" : "UriRef",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "ref" : "string",
+    "java" : {
+      "coercerClass" : "com.linkedin.restli.examples.custom.types.UriCoercer",
+      "class" : "java.net.URI"
+    }
   } ],
   "schema" : {
     "name" : "typerefCustomDoubleAssociationKeyResource",
@@ -46,7 +55,7 @@
       "identifier" : "typerefCustomDoubleAssociationKeyResourceId",
       "assocKeys" : [ {
         "name" : "dest",
-        "type" : "com.linkedin.restli.examples.typeref.api.CustomDoubleRef"
+        "type" : "com.linkedin.restli.examples.typeref.api.UriRef"
       }, {
         "name" : "src",
         "type" : "com.linkedin.restli.examples.typeref.api.CustomDoubleRef"

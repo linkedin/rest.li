@@ -860,6 +860,8 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
 
     final JVar schemaField = generateSchemaField(typerefClass, typerefSpec.getSchema());
 
+    generateCustomClassInitialization(typerefClass, typerefSpec.getCustomInfo());
+
     final JMethod constructor = typerefClass.constructor(JMod.PUBLIC);
     constructor.body().invoke(SUPER).arg(schemaField);
   }

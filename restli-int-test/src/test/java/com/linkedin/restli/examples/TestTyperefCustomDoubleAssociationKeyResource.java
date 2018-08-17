@@ -30,9 +30,14 @@ import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpecImpl;
+import com.linkedin.restli.examples.custom.types.CustomDouble;
 import com.linkedin.restli.examples.greetings.api.Message;
+import com.linkedin.restli.examples.typeref.api.CustomDoubleRef;
+import com.linkedin.restli.examples.typeref.api.UriRef;
 import com.linkedin.restli.internal.common.TestConstants;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -74,11 +79,11 @@ public class TestTyperefCustomDoubleAssociationKeyResource extends RestLiIntegra
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestOptionsDataProvider")
-  public void testGet(RestliRequestOptions requestOptions) throws RemoteInvocationException
+  public void testGet(RestliRequestOptions requestOptions) throws RemoteInvocationException, URISyntaxException
   {
     HashMap<String, CompoundKey.TypeInfo> keyParts = new HashMap<String, CompoundKey.TypeInfo>();
-    keyParts.put("src", new CompoundKey.TypeInfo(Double.class, Double.class));
-    keyParts.put("dest", new CompoundKey.TypeInfo(Double.class, Double.class));
+    keyParts.put("src", new CompoundKey.TypeInfo(CustomDouble.class, CustomDoubleRef.class));
+    keyParts.put("dest", new CompoundKey.TypeInfo(URI.class, UriRef.class));
     GetRequestBuilder<CompoundKey, Message> getBuilder = new GetRequestBuilder<CompoundKey, Message>(
         "typerefCustomDoubleAssociationKeyResource",
         Message.class,
@@ -93,12 +98,15 @@ public class TestTyperefCustomDoubleAssociationKeyResource extends RestLiIntegra
         requestOptions);
 
     final String[] stringArray = {"foo"};
-    GetRequest<Message> req = getBuilder.id(new CompoundKey().append("src", 100.0).append("dest", 200.0))
-                                        .setReqParam("array", stringArray)
-                                        .build();
+    GetRequest<Message> req = getBuilder
+        .id(new CompoundKey()
+            .append("src", new CustomDouble(100.0))
+            .append("dest", new URI("http://www.linkedin.com/")))
+        .setReqParam("array", stringArray)
+        .build();
     Response<Message> resp = REST_CLIENT.sendRequest(req).getResponse();
     Message result = resp.getEntity();
-    Assert.assertEquals(result.getId(), "100.0->200.0");
+    Assert.assertEquals(result.getId(), "100.0->www.linkedin.com");
     Assert.assertEquals(result.getMessage(),
                         String.format("I need some $20. Array contents %s.", Arrays.asList(stringArray)));
   }

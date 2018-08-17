@@ -25,6 +25,8 @@ import com.linkedin.data.schema.TyperefDataSchema;
  */
 public class TyperefTemplateSpec extends ClassTemplateSpec
 {
+  private CustomInfoSpec _customInfo;
+
   public TyperefTemplateSpec(TyperefDataSchema schema)
   {
     setSchema(schema);
@@ -34,5 +36,15 @@ public class TyperefTemplateSpec extends ClassTemplateSpec
   public TyperefDataSchema getSchema()
   {
     return (TyperefDataSchema) super.getSchema();
+  }
+
+  public CustomInfoSpec getCustomInfo()
+  {
+    return _customInfo;
+  }
+
+  public void setCustomInfo(CustomInfoSpec customInfo)
+  {
+    _customInfo = customInfo;
   }
 }
