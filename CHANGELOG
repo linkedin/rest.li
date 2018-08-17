@@ -3,6 +3,9 @@
 (RB=1344653)
 Support returning the entity for PARTIAL_UPDATE resource methods
 
+(RB=1394500)
+D2 merging clientOverridesProperties into the serviceProperties at deserialization time.
+
 23.0.19
 -------
 (RB=1398083)

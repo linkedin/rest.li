@@ -201,7 +201,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
     ZooKeeperPermanentStore<ClusterProperties> zkClusterRegistry = createPermanentStore(
             zkConnection, ZKFSUtil.clusterPath(_baseZKPath), new ClusterPropertiesJsonSerializer());
     ZooKeeperPermanentStore<ServiceProperties> zkServiceRegistry = createPermanentStore(
-            zkConnection, ZKFSUtil.servicePath(_baseZKPath, _d2ServicePath), new ServicePropertiesJsonSerializer());
+            zkConnection, ZKFSUtil.servicePath(_baseZKPath, _d2ServicePath), new ServicePropertiesJsonSerializer(_clientServicesConfig));
 
     String backupStoreFilePath = null;
     if (_enableSaveUriDataOnDisk)
@@ -237,7 +237,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
 
     SimpleLoadBalancerState state = new SimpleLoadBalancerState(
             executorService, uriBus, clusterBus, serviceBus, _clientFactories, _loadBalancerStrategyFactories,
-            _sslContext, _sslParameters, _isSSLEnabled, _clientServicesConfig, _partitionAccessorRegistry,
+            _sslContext, _sslParameters, _isSSLEnabled, _partitionAccessorRegistry,
             _sslSessionValidatorFactory);
     SimpleLoadBalancer balancer = new SimpleLoadBalancer(state, _lbTimeout, _lbTimeoutUnit, executorService);
 

@@ -24,8 +24,6 @@ import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.LoadBalancerState;
 import com.linkedin.d2.balancer.LoadBalancerStateItem;
 import com.linkedin.d2.balancer.clients.TrackerClient;
-import com.linkedin.d2.balancer.properties.AllowedClientPropertyKeys;
-import com.linkedin.d2.balancer.properties.ClientServiceConfigValidator;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
@@ -50,7 +48,6 @@ import com.linkedin.internal.common.util.CollectionUtils;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
-import com.linkedin.r2.util.ConfigValueExtractor;
 import com.linkedin.util.clock.Clock;
 import com.linkedin.util.clock.SystemClock;
 import com.linkedin.util.degrader.DegraderImpl;
@@ -143,15 +140,6 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   private final SSLParameters _sslParameters;
   private final boolean       _isSSLEnabled;
 
-  private static final String LIST_SEPARATOR = ",";
-
-  /**
-   * Map from service name => Map of properties for that service. This map is supplied by the client and will
-   * override any server supplied config values. The inner map is a flat map (property name => property value) which
-   * can include transport client properties, degrader properties etc. Our namespacing rules for property names
-   * (e.g. http.loadBalancer.hashMethod, degrader.maxDropRate) allow the inner map to be flat.
-   */
-  private final Map<String, Map<String, Object>> _clientServicesConfig;
 
   private final SslSessionValidatorFactory _sslSessionValidatorFactory;
 
@@ -226,7 +214,6 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
          sslContext,
          sslParameters,
          isSSLEnabled,
-         Collections.<String, Map<String, Object>>emptyMap(),
          new PartitionAccessorRegistryImpl(),
          validationStrings -> null);
   }
@@ -244,13 +231,38 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
                                  PartitionAccessorRegistry partitionAccessorRegistry,
                                  SslSessionValidatorFactory sessionValidatorFactory)
   {
+    this(executorService,
+      uriBus,
+      clusterBus,
+      serviceBus,
+      clientFactories,
+      loadBalancerStrategyFactories,
+      sslContext,
+      sslParameters,
+      isSSLEnabled,
+      partitionAccessorRegistry,
+      sessionValidatorFactory);
+  }
+
+  public SimpleLoadBalancerState(ScheduledExecutorService executorService,
+                                 PropertyEventBus<UriProperties> uriBus,
+                                 PropertyEventBus<ClusterProperties> clusterBus,
+                                 PropertyEventBus<ServiceProperties> serviceBus,
+                                 Map<String, TransportClientFactory> clientFactories,
+                                 Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories,
+                                 SSLContext sslContext,
+                                 SSLParameters sslParameters,
+                                 boolean isSSLEnabled,
+                                 PartitionAccessorRegistry partitionAccessorRegistry,
+                                 SslSessionValidatorFactory sessionValidatorFactory)
+  {
     _executor = executorService;
     _uriProperties =
-        new ConcurrentHashMap<String, LoadBalancerStateItem<UriProperties>>();
+      new ConcurrentHashMap<String, LoadBalancerStateItem<UriProperties>>();
     _clusterInfo =
-        new ConcurrentHashMap<String, ClusterInfoItem>();
+      new ConcurrentHashMap<String, ClusterInfoItem>();
     _serviceProperties =
-        new ConcurrentHashMap<String, LoadBalancerStateItem<ServiceProperties>>();
+      new ConcurrentHashMap<String, LoadBalancerStateItem<ServiceProperties>>();
     _version = new AtomicLong(0);
 
     _uriBus = uriBus;
@@ -266,54 +278,24 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     // maps
     // should be a completely immutable data structure.
     _clientFactories =
-        Collections.unmodifiableMap(new HashMap<String, TransportClientFactory>(clientFactories));
+      Collections.unmodifiableMap(new HashMap<String, TransportClientFactory>(clientFactories));
     _loadBalancerStrategyFactories =
-        Collections.unmodifiableMap(new HashMap<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>>(loadBalancerStrategyFactories));
+      Collections.unmodifiableMap(new HashMap<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>>(loadBalancerStrategyFactories));
 
     _servicesPerCluster = new ConcurrentHashMap<String, Set<String>>();
     _serviceStrategies =
-        new ConcurrentHashMap<String, Map<String, LoadBalancerStrategy>>();
+      new ConcurrentHashMap<String, Map<String, LoadBalancerStrategy>>();
     _serviceStrategiesCache =
-        new ConcurrentHashMap<String, List<SchemeStrategyPair>>();
+      new ConcurrentHashMap<String, List<SchemeStrategyPair>>();
     _trackerClients = new ConcurrentHashMap<String, Map<URI, TrackerClient>>();
     _serviceClients = new ConcurrentHashMap<String, Map<String, TransportClient>>();
     _listeners =
-        Collections.synchronizedList(new ArrayList<SimpleLoadBalancerStateListener>());
+      Collections.synchronizedList(new ArrayList<SimpleLoadBalancerStateListener>());
     _delayedExecution = 1000;
     _sslContext = sslContext;
     _sslParameters = sslParameters;
     _isSSLEnabled = isSSLEnabled;
-    _clientServicesConfig = validateClientServicesConfig(clientServicesConfig);
     _sslSessionValidatorFactory = sessionValidatorFactory;
-  }
-
-  /**
-   * Validates the keys in the inner map for the client supplied per service config.
-   */
-  private Map<String, Map<String, Object>> validateClientServicesConfig(Map<String, Map<String, Object>> clientServicesConfig)
-  {
-    Map<String, Map<String, Object>> validatedClientServicesConfig = new HashMap<String, Map<String, Object>>();
-    for (Map.Entry<String, Map<String, Object>> entry: clientServicesConfig.entrySet())
-    {
-      String serviceName = entry.getKey();
-      Map<String, Object> clientConfigForSingleService = entry.getValue();
-      Map<String, Object> validatedClientConfigForSingleService = new HashMap<String, Object>();
-      for (Map.Entry<String, Object> innerMapEntry: clientConfigForSingleService.entrySet())
-      {
-        String clientSuppliedConfigKey = innerMapEntry.getKey();
-        Object clientSuppliedConfigValue = innerMapEntry.getValue();
-        if (AllowedClientPropertyKeys.isAllowedConfigKey(clientSuppliedConfigKey))
-        {
-          validatedClientConfigForSingleService.put(clientSuppliedConfigKey, clientSuppliedConfigValue);
-          _log.info("Client supplied config key {} for service {}", new Object[]{clientSuppliedConfigKey, serviceName});
-        }
-      }
-      if (!validatedClientConfigForSingleService.isEmpty())
-      {
-        validatedClientServicesConfig.put(serviceName, validatedClientConfigForSingleService);
-      }
-    }
-    return validatedClientServicesConfig;
   }
 
   public void register(final SimpleLoadBalancerStateListener listener)
@@ -796,40 +778,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
 
   private Map<String, TransportClient> createAndInsertTransportClientTo(ServiceProperties serviceProperties)
   {
-    Map<String, Object> transportClientProperties = new HashMap<String,Object>(serviceProperties.getTransportClientProperties());
-
-    Object allowedClientOverrideKeysObj = transportClientProperties.remove(PropertyKeys.ALLOWED_CLIENT_OVERRIDE_KEYS);
-    Set<String> allowedClientOverrideKeys = new HashSet<String>(ConfigValueExtractor.buildList(allowedClientOverrideKeysObj, LIST_SEPARATOR));
-
-    Map<String, Object> clientSuppliedServiceProperties = _clientServicesConfig.get(serviceProperties.getServiceName());
-    if (clientSuppliedServiceProperties != null)
-    {
-      _log.debug("Client supplied configs for service {}", new Object[]{serviceProperties.getServiceName()});
-
-      // check for overrides
-      for (String clientSuppliedKey: clientSuppliedServiceProperties.keySet())
-      {
-        // clients can only override config properties which have been allowed by the service
-        if (allowedClientOverrideKeys.contains(clientSuppliedKey))
-        {
-          if (ClientServiceConfigValidator.isValidValue(transportClientProperties,
-                                                        clientSuppliedServiceProperties,
-                                                        clientSuppliedKey))
-          {
-            transportClientProperties.put(clientSuppliedKey, clientSuppliedServiceProperties.get(clientSuppliedKey));
-            _log.info("Client overrode config property {} for service {}. This is being used to instantiate the Transport Client",
-                 new Object[]{clientSuppliedKey, serviceProperties.getServiceName()});
-          }
-          else
-          {
-            _log.warn("Client supplied config property {} with an invalid value {} for service {}",
-                 new Object[]{clientSuppliedKey,
-                     clientSuppliedServiceProperties.get(clientSuppliedKey),
-                     serviceProperties.getServiceName()});
-          }
-        }
-      }
-    }
+    Map<String, Object> transportClientProperties = new HashMap<>(serviceProperties.getTransportClientProperties());
     List<String> schemes = serviceProperties.getPrioritizedSchemes();
     Map<String,TransportClient> newTransportClients = new HashMap<String, TransportClient>();
     if (schemes != null && !schemes.isEmpty())

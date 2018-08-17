@@ -17,6 +17,11 @@
 package com.linkedin.d2.balancer.properties;
 
 
+import com.linkedin.d2.balancer.util.JacksonUtil;
+import com.linkedin.d2.discovery.PropertyBuilder;
+import com.linkedin.d2.discovery.PropertySerializationException;
+import com.linkedin.d2.discovery.PropertySerializer;
+import com.linkedin.r2.util.ConfigValueExtractor;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -27,20 +32,103 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.linkedin.d2.balancer.util.JacksonUtil;
-import com.linkedin.d2.discovery.PropertyBuilder;
-import com.linkedin.d2.discovery.PropertySerializationException;
-import com.linkedin.d2.discovery.PropertySerializer;
 
 
 public class ServicePropertiesJsonSerializer implements
     PropertySerializer<ServiceProperties>, PropertyBuilder<ServiceProperties>
 {
-  private static final Logger _log = LoggerFactory.getLogger(ServicePropertiesJsonSerializer.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ServicePropertiesJsonSerializer.class);
+  private static final String LIST_SEPARATOR = ",";
+
+  /**
+   * Map from service name => Map of properties for that service. This map is supplied by the client and will
+   * override any server supplied config values. The inner map is a flat map (property name => property value) which
+   * can include transport client properties, degrader properties etc. Our namespacing rules for property names
+   * (e.g. http.loadBalancer.hashMethod, degrader.maxDropRate) allow the inner map to be flat.
+   */
+
+  private final Map<String, Map<String, Object>> _clientServicesConfig;
+
+
+  public ServicePropertiesJsonSerializer()
+  {
+    this(Collections.emptyMap());
+  }
+
+  public ServicePropertiesJsonSerializer(Map<String, Map<String, Object>> clientServicesConfig)
+  {
+    _clientServicesConfig = validateClientServicesConfig(clientServicesConfig);
+  }
+
+  /**
+   * Validates the keys in the inner map for the client supplied per service config.
+   */
+  private Map<String, Map<String, Object>> validateClientServicesConfig(Map<String, Map<String, Object>> clientServicesConfig)
+  {
+    Map<String, Map<String, Object>> validatedClientServicesConfig = new HashMap<>();
+    for (Map.Entry<String, Map<String, Object>> entry : clientServicesConfig.entrySet())
+    {
+      String serviceName = entry.getKey();
+      Map<String, Object> clientConfigForSingleService = entry.getValue();
+      Map<String, Object> validatedClientConfigForSingleService = new HashMap<>();
+      for (Map.Entry<String, Object> innerMapEntry : clientConfigForSingleService.entrySet())
+      {
+        String clientSuppliedConfigKey = innerMapEntry.getKey();
+        Object clientSuppliedConfigValue = innerMapEntry.getValue();
+        if (AllowedClientPropertyKeys.isAllowedConfigKey(clientSuppliedConfigKey))
+        {
+          validatedClientConfigForSingleService.put(clientSuppliedConfigKey, clientSuppliedConfigValue);
+          LOG.info("Client supplied config key {} for service {}", new Object[]{clientSuppliedConfigKey, serviceName});
+        }
+      }
+      if (!validatedClientConfigForSingleService.isEmpty())
+      {
+        validatedClientServicesConfig.put(serviceName, validatedClientConfigForSingleService);
+      }
+    }
+    return validatedClientServicesConfig;
+  }
+
+
+  private Map<String, Object> getTransportClientPropertiesWithClientOverrides(String serviceName, Map<String, Object> transportClientProperties)
+  {
+    Object allowedClientOverrideKeysObj = transportClientProperties.remove(PropertyKeys.ALLOWED_CLIENT_OVERRIDE_KEYS);
+    Set<String> allowedClientOverrideKeys = new HashSet<>(ConfigValueExtractor.buildList(allowedClientOverrideKeysObj, LIST_SEPARATOR));
+
+    Map<String, Object> clientSuppliedServiceProperties = _clientServicesConfig.get(serviceName);
+    if (clientSuppliedServiceProperties != null)
+    {
+      LOG.debug("Client supplied configs for service {}", new Object[]{serviceName});
+
+      // check for overrides
+      for (String clientSuppliedKey : clientSuppliedServiceProperties.keySet())
+      {
+        // clients can only override config properties which have been allowed by the service
+        if (allowedClientOverrideKeys.contains(clientSuppliedKey))
+        {
+          if (ClientServiceConfigValidator.isValidValue(transportClientProperties,
+            clientSuppliedServiceProperties,
+            clientSuppliedKey))
+          {
+            transportClientProperties.put(clientSuppliedKey, clientSuppliedServiceProperties.get(clientSuppliedKey));
+            LOG.info("Client overrode config property {} for service {}. This is being used to instantiate the Transport Client",
+              new Object[]{clientSuppliedKey, serviceName});
+          }
+          else
+          {
+            LOG.warn("Client supplied config property {} with an invalid value {} for service {}",
+              new Object[]{clientSuppliedKey,
+                clientSuppliedServiceProperties.get(clientSuppliedKey),
+                serviceName});
+          }
+        }
+      }
+    }
+    return transportClientProperties;
+  }
+
 
   public static void main(String[] args) throws UnsupportedEncodingException,
       URISyntaxException, PropertySerializationException
@@ -67,7 +155,7 @@ public class ServicePropertiesJsonSerializer implements
     }
     catch (Exception e)
     {
-      _log.error("Failed to serialize ServiceProperties: " + property, e);
+      LOG.error("Failed to serialize ServiceProperties: " + property, e);
     }
 
     return null;
@@ -165,7 +253,7 @@ public class ServicePropertiesJsonSerializer implements
                                  (String) map.get(PropertyKeys.PATH),
                                  loadBalancerStrategyList,
                                  loadBalancerStrategyProperties,
-                                 transportClientProperties,
+                                 getTransportClientPropertiesWithClientOverrides((String) map.get(PropertyKeys.SERVICE_NAME), transportClientProperties),
                                  degraderProperties,
                                  prioritizedSchemes,
                                  banned,

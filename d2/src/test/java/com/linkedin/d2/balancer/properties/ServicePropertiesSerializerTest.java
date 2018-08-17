@@ -24,12 +24,17 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
 
 public class ServicePropertiesSerializerTest
 {
+
+  public static final String TEST_SERVICE_NAME = "serviceName";
+  public static final String TEST_CLUSTER_NAME = "clusterName";
+
   public static void main(String[] args) throws URISyntaxException, PropertySerializationException
   {
     new ServicePropertiesSerializerTest().testServicePropertiesSerializer();
@@ -42,7 +47,7 @@ public class ServicePropertiesSerializerTest
     ServicePropertiesJsonSerializer serializer = new ServicePropertiesJsonSerializer();
 
     ServiceProperties property =
-      new ServiceProperties("servicename", "clustername", "/foo", Arrays.asList("rr"));
+      new ServiceProperties(TEST_SERVICE_NAME, TEST_CLUSTER_NAME, "/foo", Arrays.asList("rr"));
     assertEquals(serializer.fromBytes(serializer.toBytes(property)), property);
 
     property = new ServiceProperties("servicename2", "clustername2", "/path2", Arrays.asList("strategy2"),
@@ -51,8 +56,8 @@ public class ServicePropertiesSerializerTest
 
     Map<String, Object> arbitraryProperties = new HashMap<String, Object>();
     arbitraryProperties.put("foo", "bar");
-    property = new ServiceProperties("serviceName",
-                                     "clusterName",
+    property = new ServiceProperties(TEST_SERVICE_NAME,
+      TEST_CLUSTER_NAME,
                                      "/service",
                                      Arrays.asList("strategyName"),
                                      arbitraryProperties,
@@ -72,8 +77,8 @@ public class ServicePropertiesSerializerTest
 
     Map<String, Object> arbitraryProperties = new HashMap<String, Object>();
     arbitraryProperties.put("foo", "bar");
-    ServiceProperties badServiceProp = new ServiceProperties("serviceName",
-        "clusterName",
+    ServiceProperties badServiceProp = new ServiceProperties(TEST_SERVICE_NAME,
+      TEST_CLUSTER_NAME,
         "/service",
         Arrays.asList("strategyName"),
         arbitraryProperties,
@@ -83,8 +88,8 @@ public class ServicePropertiesSerializerTest
         Collections.<URI>emptySet(),
         arbitraryProperties);
 
-    ServiceProperties goodServiceProp = new ServiceProperties("serviceName",
-        "clusterName",
+    ServiceProperties goodServiceProp = new ServiceProperties(TEST_SERVICE_NAME,
+      TEST_CLUSTER_NAME,
         "/service",
         Arrays.asList("strategyName"),
         arbitraryProperties,
@@ -97,4 +102,48 @@ public class ServicePropertiesSerializerTest
     assertEquals(serializer.fromBytes(serializer.toBytes(badServiceProp)), goodServiceProp);
   }
 
+  @Test
+  public void testServicePropertiesClientOverride() throws PropertySerializationException
+  {
+    Map<String, Object> transportPropertiesClientSide = new HashMap<>();
+    transportPropertiesClientSide.put(PropertyKeys.ALLOWED_CLIENT_OVERRIDE_KEYS, "http.requestTimeout, http.useResponseCompression, http.responseContentEncodings");
+    transportPropertiesClientSide.put(PropertyKeys.HTTP_REQUEST_TIMEOUT, "10000");
+    transportPropertiesClientSide.put(PropertyKeys.HTTP_USE_RESPONSE_COMPRESSION, true);
+    transportPropertiesClientSide.put(PropertyKeys.HTTP_RESPONSE_CONTENT_ENCODINGS, "1000");
+    transportPropertiesClientSide.put(PropertyKeys.HTTP_IDLE_TIMEOUT, "100000");
+    ServicePropertiesJsonSerializer serializerWithClientProperties = new ServicePropertiesJsonSerializer(Collections.singletonMap(TEST_SERVICE_NAME, transportPropertiesClientSide));
+
+    Map<String, Object> transportPropertiesServerSide = new HashMap<>();
+    transportPropertiesServerSide.put(PropertyKeys.ALLOWED_CLIENT_OVERRIDE_KEYS, "http.requestTimeout, http.useResponseCompression, http.responseContentEncodings");
+    transportPropertiesServerSide.put(PropertyKeys.HTTP_REQUEST_TIMEOUT, "5000");
+    transportPropertiesServerSide.put(PropertyKeys.HTTP_USE_RESPONSE_COMPRESSION, false);
+    transportPropertiesServerSide.put(PropertyKeys.HTTP_RESPONSE_CONTENT_ENCODINGS, "5000");
+
+
+    ServiceProperties servicePropertiesServerSide =
+      new ServiceProperties(TEST_SERVICE_NAME, TEST_CLUSTER_NAME, "/foo",
+        Arrays.asList("strategyName"), Collections.emptyMap(),
+        transportPropertiesServerSide, Collections.emptyMap(),
+        Collections.emptyList(), Collections.emptySet());
+    ServiceProperties servicePropertiesWithClientCfg = serializerWithClientProperties.fromBytes(serializerWithClientProperties.toBytes(servicePropertiesServerSide));
+
+    boolean atLeastOneConfigFromCfg2 = false;
+    boolean atLeastOneConfigFromZk = false;
+    for (Map.Entry<String, Object> compiledProperty : servicePropertiesWithClientCfg.getTransportClientProperties().entrySet())
+    {
+      if (AllowedClientPropertyKeys.isAllowedConfigKey(compiledProperty.getKey()))
+      {
+        atLeastOneConfigFromCfg2 = true;
+        Assert.assertEquals(compiledProperty.getValue(), transportPropertiesClientSide.get(compiledProperty.getKey()));
+      }
+      else
+      {
+        atLeastOneConfigFromZk = true;
+        Assert.assertEquals(compiledProperty.getValue(), transportPropertiesServerSide.get(compiledProperty.getKey()));
+      }
+    }
+
+    Assert.assertTrue(atLeastOneConfigFromCfg2);
+    Assert.assertTrue(atLeastOneConfigFromZk);
+  }
 }
