@@ -16,20 +16,6 @@
 
 package com.linkedin.data.schema.validator;
 
-
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
-import java.lang.reflect.Constructor;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.IdentityHashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-
 import com.linkedin.data.DataMap;
 import com.linkedin.data.element.DataElement;
 import com.linkedin.data.message.Message;
@@ -40,6 +26,17 @@ import com.linkedin.data.schema.DataSchemaTraverse;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.TyperefDataSchema;
+import java.lang.reflect.Constructor;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.IdentityHashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 /**
@@ -197,8 +194,7 @@ public class DataSchemaAnnotationValidator implements Validator
     }
   };
 
-  private static final Cache<String, Class<? extends Validator>> VALIDATOR_CLASS_CACHE =
-      CacheBuilder.newBuilder().maximumSize(500).build();
+  private static final Map<String, Class<? extends Validator>> VALIDATOR_CLASS_CACHE = new ConcurrentHashMap<>();
 
   // No-op {@link Validator} implementation to denote a negative cache value in {@link #VALIDATOR_CLASS_CACHE}
   private static final Validator NULL_VALIDATOR = (context) -> {};
@@ -474,7 +470,7 @@ public class DataSchemaAnnotationValidator implements Validator
     }
 
     // If we have already seen this key before, use the cached Validator class
-    clazz = VALIDATOR_CLASS_CACHE.getIfPresent(key);
+    clazz = VALIDATOR_CLASS_CACHE.get(key);
     if (clazz != null)
     {
       return (NULL_VALIDATOR.getClass().equals(clazz) ? null : clazz);

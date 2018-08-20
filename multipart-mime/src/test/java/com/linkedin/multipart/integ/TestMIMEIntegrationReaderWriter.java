@@ -42,13 +42,12 @@ import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcherBuilder;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 
-import com.google.common.collect.ImmutableList;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -170,7 +169,7 @@ public class TestMIMEIntegrationReaderWriter extends AbstractMIMEIntegrationStre
 
     final MultiPartMIMEWriter writer = new MultiPartMIMEWriter.Builder("some preamble", "").appendDataSource(inputStreamDataSource).build();
 
-    executeRequestAndAssert(writer, ImmutableList.of(bodyPart));
+    executeRequestAndAssert(writer, Collections.unmodifiableList(Collections.singletonList(bodyPart)));
   }
 
   @Test(dataProvider = "eachSingleBodyDataSource", enabled = false)
@@ -188,7 +187,7 @@ public class TestMIMEIntegrationReaderWriter extends AbstractMIMEIntegrationStre
 
     final MultiPartMIMEWriter writer = new MultiPartMIMEWriter.Builder("some preamble", "").appendDataSources(dataSources).build();
 
-    executeRequestAndAssert(writer, ImmutableList.of(bodyPart, bodyPart, bodyPart, bodyPart));
+    executeRequestAndAssert(writer, Collections.unmodifiableList(Arrays.asList(bodyPart, bodyPart, bodyPart, bodyPart)));
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////
@@ -227,7 +226,8 @@ public class TestMIMEIntegrationReaderWriter extends AbstractMIMEIntegrationStre
             .appendDataSource(headerLessBodyInputStream).appendDataSource(bodyLessBodyInputStream)
             .appendDataSource(purelyEmptyBodyInputStream).build();
 
-    executeRequestAndAssert(writer, ImmutableList.of(_normalBody, _headerLessBody, _bodyLessBody, _purelyEmptyBody));
+    executeRequestAndAssert(writer, Collections.unmodifiableList(Arrays.asList(_normalBody, _headerLessBody,
+        _bodyLessBody, _purelyEmptyBody)));
   }
 
   @Test

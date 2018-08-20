@@ -57,8 +57,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
 
-import com.google.common.base.Strings;
-
 
 /**
  * @author Josh Walker
@@ -553,7 +551,7 @@ public class ResourceContextImpl implements ServerResourceContext
   @Override
   public Optional<Object> getCustomContextData(String key)
   {
-    if (_customRequestContext != null && !Strings.isNullOrEmpty(key) && _customRequestContext.containsKey(key))
+    if (_customRequestContext != null && key != null && !key.isEmpty() && _customRequestContext.containsKey(key))
     {
       return Optional.of(_customRequestContext.get(key));
     }
@@ -563,7 +561,7 @@ public class ResourceContextImpl implements ServerResourceContext
   @Override
   public void putCustomContextData(String key, Object data)
   {
-    if (!Strings.isNullOrEmpty(key) && data != null)
+    if (key != null && !key.isEmpty() && data != null)
     {
       if (_customRequestContext == null)
       {

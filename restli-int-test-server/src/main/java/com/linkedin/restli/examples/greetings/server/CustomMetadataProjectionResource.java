@@ -17,7 +17,6 @@
 package com.linkedin.restli.examples.greetings.server;
 
 
-import com.google.common.collect.ImmutableList;
 import com.linkedin.data.transform.filter.request.MaskOperation;
 import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.restli.examples.greetings.api.Greeting;
@@ -35,6 +34,8 @@ import com.linkedin.restli.server.annotations.RestMethod;
 import com.linkedin.restli.server.resources.CollectionResourceTemplate;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 
@@ -183,7 +184,7 @@ public class CustomMetadataProjectionResource extends CollectionResourceTemplate
       //However since we are testing to make sure that manual root object projection works as intended, we will
       //intentionally apply an incorrect projection by hand to verify restli doesn't interfere with it.
     }
-    return ImmutableList.of(clonedGreetingOne, clonedGreetingTwo);
+    return Collections.unmodifiableList(Arrays.asList(clonedGreetingOne, clonedGreetingTwo));
   }
 
   private Greeting applyMetadataProjection(final MaskTree metadataProjection) throws CloneNotSupportedException

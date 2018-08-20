@@ -17,7 +17,6 @@
 package com.linkedin.data.avro;
 
 
-import com.google.common.collect.Maps;
 import com.linkedin.data.Data;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.DataSchema;
@@ -384,7 +383,10 @@ class SchemaToAvroJsonEncoder extends SchemaToJsonEncoder
   @Override
   protected void encodeFieldProperties(RecordDataSchema.Field field) throws IOException
   {
-    _builder.writeProperties(Maps.filterKeys(field.getProperties(), property -> !RESERVED_DATA_PROPERTIES.contains(property)));
+    final Map<String, ?> filteredMap = field.getProperties().entrySet().stream()
+        .filter(entry -> !RESERVED_DATA_PROPERTIES.contains(entry.getKey()))
+        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    _builder.writeProperties(filteredMap);
   }
 
   /**

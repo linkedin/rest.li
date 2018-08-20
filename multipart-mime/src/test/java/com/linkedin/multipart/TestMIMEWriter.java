@@ -23,8 +23,6 @@ import com.linkedin.multipart.utils.MIMEDataPart;
 import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.entitystream.FullEntityReader;
 
-import com.google.common.collect.ImmutableList;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,6 +30,7 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -259,7 +258,8 @@ public class TestMIMEWriter extends AbstractMIMEUnitTest
                                              Collections.<String, String>emptyMap()).build();
 
     final List<MultiPartMIMEDataSourceWriter> withPreambleDataSourceWriterList =
-        ImmutableList.of(purelyEmptyBodyWriterPreamble, headerLessBodyWriterPreamble, normalWriterPreamble);
+        Collections.unmodifiableList(Arrays.asList(purelyEmptyBodyWriterPreamble, headerLessBodyWriterPreamble,
+            normalWriterPreamble));
 
     final MultiPartMIMEWriter.Builder multiPartMIMEWriterWithPreamble = new MultiPartMIMEWriter.Builder("preamble", "epilogue");
 
@@ -277,7 +277,8 @@ public class TestMIMEWriter extends AbstractMIMEUnitTest
                                              Collections.<String, String>emptyMap()).build();
 
     final List<MultiPartMIMEDataSourceWriter> withoutPreambleDataSourceWriterList =
-        ImmutableList.of(purelyEmptyBodyWriterNoPreamble, headerLessBodyWriterNoPreamble, normalWriterNoPreamble);
+        Collections.unmodifiableList(Arrays.asList(purelyEmptyBodyWriterNoPreamble, headerLessBodyWriterNoPreamble,
+            normalWriterNoPreamble));
 
     final MultiPartMIMEWriter.Builder multiPartMIMEWriterWithoutPreamble = new MultiPartMIMEWriter.Builder("", "epilogue");
 

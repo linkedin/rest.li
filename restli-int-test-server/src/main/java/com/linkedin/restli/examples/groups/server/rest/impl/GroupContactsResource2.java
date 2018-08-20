@@ -16,10 +16,10 @@
 
 package com.linkedin.restli.examples.groups.server.rest.impl;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import com.google.common.collect.Maps;
 import static com.linkedin.restli.common.HttpStatus.*;
 
 import com.linkedin.restli.common.PatchRequest;
@@ -52,7 +52,7 @@ public class GroupContactsResource2 extends CollectionResourceTemplate<Integer, 
   @Override
   public Map<Integer, GroupContact> batchGet(Set<Integer> ids)
   {
-    Map<Integer, GroupContact> map = Maps.newHashMap();
+    Map<Integer, GroupContact> map = new HashMap<>();
     for (int id : ids)
     {
       map.put(id, createContact(id));

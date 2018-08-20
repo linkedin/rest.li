@@ -4,7 +4,6 @@ dependencies {
   compile project(':entity-stream')
   compile externalDependency.antlrRuntime
   compile externalDependency.commonsLang3
-  compile externalDependency.guava
   compile externalDependency.jacksonCore
 
   testCompile project(':data-testutils')

@@ -16,7 +16,6 @@
 
 package com.linkedin.data.avro;
 
-import com.google.common.collect.ImmutableList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.TestUtil;
 import com.linkedin.data.avro.util.AvroUtil;
@@ -31,6 +30,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -1223,24 +1224,16 @@ public class TestDataTranslator
             null
         },
         {
-            ImmutableList.of()
+            Collections.emptyList()
         },
         {
-            ImmutableList.of("foo", "bar", "baz")
+            Collections.unmodifiableList(Arrays.asList("foo", "bar", "baz"))
         },
         {
-            getList(() -> {
-              ArrayList<String> list = new ArrayList<>();
-              list.addAll(ImmutableList.of("foo", "bar"));
-              return list;
-            })
+            getList(() -> new ArrayList<>(Arrays.asList("foo", "bar")))
         },
         {
-            getList(() -> {
-              LinkedList<String> list = new LinkedList<>();
-              list.addAll(ImmutableList.of("foo", "bar"));
-              return list;
-            })
+            getList(() -> new LinkedList<>(Arrays.asList("foo", "bar")))
         },
         {
            getList(() -> {

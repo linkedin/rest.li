@@ -17,7 +17,6 @@
 package com.linkedin.restli.examples.groups.server.rest.impl;
 
 
-import com.google.common.collect.Sets;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.template.IntegerArray;
 import com.linkedin.data.template.IntegerMap;
@@ -162,7 +161,7 @@ public class GroupsResource2 extends CollectionResourceTemplate<Integer, Group>
   @Override
   public Group get(Integer id)
   {
-    Group group = getGroupMgr().batchGet(Sets.newHashSet(id)).get(id);
+    Group group = getGroupMgr().batchGet(Collections.singleton(id)).get(id);
     return group;
 
   }

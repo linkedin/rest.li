@@ -24,8 +24,6 @@ import com.linkedin.multipart.MultiPartMIMEReader;
 import com.linkedin.multipart.MultiPartMIMEReaderCallback;
 import com.linkedin.multipart.SinglePartMIMEReaderCallback;
 
-import com.google.common.collect.ImmutableMap;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -156,11 +154,11 @@ public final class MIMETestUtils
   {
     //Non javax mail sources:
     final byte[] bodyAbytes = "BODY_A".getBytes();
-    final Map<String, String> bodyAHeaders = ImmutableMap.of("headerA", "valueA");
+    final Map<String, String> bodyAHeaders = Collections.unmodifiableMap(Collections.singletonMap("headerA", "valueA"));
     BODY_A = new MIMEDataPart(ByteString.copy(bodyAbytes), bodyAHeaders);
 
     final byte[] bodyBbytes = "BODY_B".getBytes();
-    final Map<String, String> bodyBHeaders = ImmutableMap.of("headerB", "valueB");
+    final Map<String, String> bodyBHeaders = Collections.unmodifiableMap(Collections.singletonMap("headerB", "valueB"));
     BODY_B = new MIMEDataPart(ByteString.copy(bodyBbytes), bodyBHeaders);
 
     //body c has no headers
@@ -168,26 +166,26 @@ public final class MIMETestUtils
     BODY_C = new MIMEDataPart(ByteString.copy(bodyCbytes), Collections.<String, String>emptyMap());
 
     final byte[] bodyDbytes = "BODY_D".getBytes();
-    final Map<String, String> bodyDHeaders = ImmutableMap.of("headerD", "valueD");
+    final Map<String, String> bodyDHeaders = Collections.unmodifiableMap(Collections.singletonMap("headerD", "valueD"));
     BODY_D = new MIMEDataPart(ByteString.copy(bodyDbytes), bodyDHeaders);
 
     final byte[] body1bytes = "BODY_1".getBytes();
-    final Map<String, String> body1Headers = ImmutableMap.of("header1", "value1");
+    final Map<String, String> body1Headers = Collections.unmodifiableMap(Collections.singletonMap("header1", "value1"));
     BODY_1 = new MIMEDataPart(ByteString.copy(body1bytes), body1Headers);
 
     final byte[] body2bytes = "BODY_2".getBytes();
-    final Map<String, String> body2Headers = ImmutableMap.of("header2", "value2");
+    final Map<String, String> body2Headers = Collections.unmodifiableMap(Collections.singletonMap("header2", "value2"));
     BODY_2 = new MIMEDataPart(ByteString.copy(body2bytes), body2Headers);
 
     //body 3 is completely empty
     BODY_3 = new MIMEDataPart(ByteString.empty(), Collections.<String, String>emptyMap());
 
     final byte[] body4bytes = "BODY_4".getBytes();
-    final Map<String, String> body4Headers = ImmutableMap.of("header4", "value4");
+    final Map<String, String> body4Headers = Collections.unmodifiableMap(Collections.singletonMap("header4", "value4"));
     BODY_4 = new MIMEDataPart(ByteString.copy(body4bytes), body4Headers);
 
     final byte[] localInputStreamBytes = "local input stream".getBytes();
-    final Map<String, String> localInputStreamHeaders = ImmutableMap.of("local1", "local2");
+    final Map<String, String> localInputStreamHeaders = Collections.unmodifiableMap(Collections.singletonMap("local1", "local2"));
     BODY_5 = new MIMEDataPart(ByteString.copy(localInputStreamBytes), localInputStreamHeaders);
   }
 

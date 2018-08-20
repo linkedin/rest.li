@@ -16,7 +16,6 @@
 
 package com.linkedin.d2.balancer.simple;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.Callbacks;
 import com.linkedin.common.callback.FutureCallback;
@@ -94,7 +93,6 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   private final ScheduledExecutorService _executor;
   private final Random            _random = new Random();
 
-  @VisibleForTesting
   public SimpleLoadBalancer(LoadBalancerState state, ScheduledExecutorService executorService)
   {
     this(state, new Stats(1000), new Stats(1000), 0, TimeUnit.SECONDS, executorService);

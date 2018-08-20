@@ -1,9 +1,9 @@
 package com.linkedin.restli.tools.data;
 
-import com.google.common.io.Files;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.resolver.MultiFormatDataSchemaResolver;
 import java.io.File;
+import java.nio.file.Files;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.*;
@@ -15,7 +15,7 @@ public class TestSchemaFormatTranslator {
 
   @Test
   public void testTranslatePdscToPdl() throws Exception {
-    String temp = Files.createTempDir().getAbsolutePath();
+    String temp = Files.createTempDirectory("restli").toFile().getAbsolutePath();
     SchemaFormatTranslator.main(new String[] {RESOLVER_DIR, RESOLVER_DIR, temp});
     MultiFormatDataSchemaResolver sourceResolver = MultiFormatDataSchemaResolver.withBuiltinFormats(RESOLVER_DIR);
     MultiFormatDataSchemaResolver translatedResolver = MultiFormatDataSchemaResolver.withBuiltinFormats(temp);

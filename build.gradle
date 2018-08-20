@@ -147,8 +147,7 @@ subprojects {
   apply plugin: 'eclipse'
 
   afterEvaluate {
-    if (project.plugins.hasPlugin('pegasus'))
-    {
+    if (project.plugins.hasPlugin('pegasus')) {
       configurations {
         pluginsRuntime {
           visible = false
@@ -165,9 +164,7 @@ subprojects {
         pegasusPlugin project(':generator')
         pegasusPlugin project(':restli-tools')
       }
-    }
-    else
-    {
+    } else {
       apply from: "${buildScriptDirPath}/cleanGenerated.gradle", to: it
     }
   }
@@ -189,6 +186,19 @@ subprojects {
 
   if (it.name == 'd2') {
     configurations.testArtifacts.visible = true
+  }
+
+  if (!(it.name in ['data-avro', 'restli-int-test'])) {
+    configurations {
+      // Prevent Guava from creeping in to avoid incompatibilities in multiple classloader environments.
+      compile.resolutionStrategy {
+        eachDependency { DependencyResolveDetails details ->
+          if (details.requested.group == 'com.google.guava' && details.requested.name == 'guava') {
+            throw new GradleException('Cannot directly or transitively depend on Guava.')
+          }
+        }
+      }
+    }
   }
 
   // Default dependencies for all subprojects

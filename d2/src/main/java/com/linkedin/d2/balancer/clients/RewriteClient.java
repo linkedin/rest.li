@@ -16,7 +16,6 @@
 
 package com.linkedin.d2.balancer.clients;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.util.URIRewriter;
@@ -90,7 +89,6 @@ public class RewriteClient implements TransportClient
     _transportClient.shutdown(callback);
   }
 
-  @VisibleForTesting
   public TransportClient getDecoratedClient()
   {
     return _transportClient;

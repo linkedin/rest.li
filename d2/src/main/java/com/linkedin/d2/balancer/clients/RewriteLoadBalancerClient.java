@@ -17,7 +17,6 @@
 package com.linkedin.d2.balancer.clients;
 
 
-import com.google.common.annotations.VisibleForTesting;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.LoadBalancerClient;
@@ -87,7 +86,6 @@ public class RewriteLoadBalancerClient implements LoadBalancerClient
     return _client;
   }
 
-  @VisibleForTesting
   public TransportClient getDecoratedClient()
   {
     return _client;

@@ -7,5 +7,4 @@ dependencies {
   testCompile externalDependency.mail
   testCompile externalDependency.easymock
   testCompile externalDependency.mockito
-  testCompile externalDependency.guava
 }

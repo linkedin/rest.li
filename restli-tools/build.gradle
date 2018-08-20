@@ -14,7 +14,6 @@ dependencies {
   compile externalDependency.jacksonCore
   compile externalDependency.jacksonDataBind
   compile externalDependency.jdkTools
-  testCompile externalDependency.guava
   testCompile externalDependency.testng
   testCompile externalDependency.commonsHttpClient
 }

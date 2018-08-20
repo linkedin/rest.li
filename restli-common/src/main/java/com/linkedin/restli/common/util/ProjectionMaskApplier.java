@@ -16,7 +16,6 @@
 
 package com.linkedin.restli.common.util;
 
-import com.google.common.collect.Sets;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
@@ -27,6 +26,8 @@ import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.schema.UnionDataSchema;
 import com.linkedin.data.transform.filter.FilterConstants;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -41,7 +42,8 @@ import java.util.Set;
  */
 public class ProjectionMaskApplier
 {
-  private static final Set<String> ARRAY_RANGE_PARAMS = Sets.newHashSet(FilterConstants.START, FilterConstants.COUNT);
+  private static final Set<String> ARRAY_RANGE_PARAMS =
+      new HashSet<>(Arrays.asList(FilterConstants.START, FilterConstants.COUNT));
 
   /**
    * Build a new schema that contains only the projected fields from the original schema recursively.
