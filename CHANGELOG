@@ -3,6 +3,9 @@
 (RB=1394375)
 Populate internal DataMap for gathered batch response.
 
+(RB=1396585)
+Updated gradle wrapper to version 4.6.
+
 23.0.14
 -------
 (RB=1393838)
