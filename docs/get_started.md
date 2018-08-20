@@ -76,7 +76,7 @@ To use the D2 variants, you need [ZooKeeper](http://zookeeper.apache.org/) 3.3.4
 
     ./gradlew exampleConfigDiscovery
 
-The D2 example server and client are started by:
+The D2 example server and client are started by this:
 
     ./gradlew startExampleD2Server
     ./gradlew startExampleD2Client
