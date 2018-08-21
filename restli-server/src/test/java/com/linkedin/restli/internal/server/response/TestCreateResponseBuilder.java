@@ -37,6 +37,7 @@ import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.ServerResourceContext;
+import com.linkedin.restli.internal.server.methods.AnyRecord;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.server.AlternativeKey;
@@ -166,13 +167,93 @@ public class TestCreateResponseBuilder
     }
   }
 
+  @DataProvider(name = "returnEntityData")
+  public Object[][] returnEntityDataProvider()
+  {
+    CreateResponse createResponse = new CreateResponse(null, HttpStatus.S_201_CREATED);
+    Foo entity = new Foo().setStringField("value").setFruitsField(Fruits.APPLE);
+    CreateKVResponse<Integer, Foo> createKVResponse = new CreateKVResponse<>(null, entity);
+    return new Object[][]
+        {
+            { createResponse, true, false },
+            { createResponse, false, false },
+            { createKVResponse, true, true },
+            { createKVResponse, false, false }
+        };
+  }
+
+  @Test(dataProvider = "returnEntityData")
+  public void testReturnEntityInBuildRestLiResponseData(CreateResponse createResponse, boolean shouldReturnEntity, boolean expectEntityReturned) throws URISyntaxException
+  {
+    ServerResourceContext mockContext = EasyMock.createMock(ServerResourceContext.class);
+    EasyMock.expect(mockContext.shouldReturnEntity()).andReturn(shouldReturnEntity);
+    EasyMock.expect(mockContext.getProjectionMask()).andReturn(null);
+    EasyMock.expect(mockContext.getProjectionMode()).andReturn(ProjectionMode.AUTOMATIC);
+    EasyMock.replay(mockContext);
+    RoutingResult routingResult = new RoutingResult(mockContext, null);
+
+    CreateResponseBuilder responseBuilder = new CreateResponseBuilder();
+    RestLiResponseData<CreateResponseEnvelope> envelope = responseBuilder.buildRestLiResponseData(new RestRequestBuilder(new URI("/foo")).build(),
+        routingResult,
+        createResponse,
+        Collections.emptyMap(),
+        Collections.emptyList());
+
+    RecordTemplate record = envelope.getResponseEnvelope().getRecord();
+
+    if (expectEntityReturned)
+    {
+      Assert.assertTrue(record instanceof AnyRecord, "Entity in response envelope should be of type AnyRecord.");
+      Assert.assertEquals(record, ((CreateKVResponse) createResponse).getEntity(), "Entity in response envelope should match the original.");
+      Assert.assertTrue(envelope.getResponseEnvelope().isGetAfterCreate(), "Response envelope should be get after create.");
+    }
+    else
+    {
+      Assert.assertTrue(record instanceof IdResponse, "Entity in response envelope should be of type IdResponse.");
+      Assert.assertNull(((IdResponse) record).getId(), "IdResponse in response envelope should have same ID.");
+    }
+  }
+
+  /**
+   * We want to ensure that trying to create a Rest.li response from an empty {@link CreateKVResponse} causes an exception.
+   */
+  @Test
+  public void testReturnEntityException() throws URISyntaxException
+  {
+    ServerResourceContext mockContext = EasyMock.createMock(ServerResourceContext.class);
+    EasyMock.expect(mockContext.shouldReturnEntity()).andReturn(true);
+    EasyMock.expect(mockContext.getProjectionMask()).andReturn(null);
+    EasyMock.expect(mockContext.getProjectionMode()).andReturn(ProjectionMode.AUTOMATIC);
+    EasyMock.replay(mockContext);
+    RoutingResult routingResult = new RoutingResult(mockContext, null);
+
+    CreateKVResponse<Integer, Foo> createKVResponse = new CreateKVResponse<>(null, null);
+    try
+    {
+      CreateResponseBuilder responseBuilder = new CreateResponseBuilder();
+      RestLiResponseData<CreateResponseEnvelope> envelope = responseBuilder.buildRestLiResponseData(new RestRequestBuilder(new URI("/foo")).build(),
+          routingResult,
+          createKVResponse,
+          Collections.emptyMap(),
+          Collections.emptyList());
+
+      Assert.fail("Attempting to build RestLi response data with a null entity here should cause an exception.");
+    }
+    catch (RestLiServiceException e)
+    {
+      Assert.assertEquals(e.getStatus(), HttpStatus.S_500_INTERNAL_SERVER_ERROR, "");
+      Assert.assertTrue(e.getMessage().contains("Unexpected null encountered. Entity is null inside of a CreateKVResponse"), "Invalid exception message: \"" + e.getMessage() + "\"");
+    }
+  }
 
   @Test
-  public void testProjectionInBuildRestliResponseData() throws URISyntaxException {
+  public void testProjectionInBuildRestLiResponseData() throws URISyntaxException
+  {
     MaskTree maskTree = new MaskTree();
     maskTree.addOperation(new PathSpec("fruitsField"), MaskOperation.POSITIVE_MASK_OP);
 
     ServerResourceContext mockContext = EasyMock.createMock(ServerResourceContext.class);
+    EasyMock.expect(mockContext.shouldReturnEntity()).andReturn(true);
     EasyMock.expect(mockContext.getProjectionMask()).andReturn(maskTree);
     EasyMock.expect(mockContext.getProjectionMode()).andReturn(ProjectionMode.AUTOMATIC);
     EasyMock.replay(mockContext);

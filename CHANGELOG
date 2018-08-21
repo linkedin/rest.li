@@ -1,5 +1,7 @@
 23.0.16
 -------
+(RB=1393433)
+Add "$returnEntity" query parameter to support returning the entity on demand
 
 23.0.15
 -------

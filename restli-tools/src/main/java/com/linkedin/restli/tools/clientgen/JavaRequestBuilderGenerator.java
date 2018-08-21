@@ -90,6 +90,7 @@ import com.linkedin.restli.restspec.RestMethodSchema;
 import com.linkedin.restli.restspec.RestMethodSchemaArray;
 import com.linkedin.restli.restspec.RestSpecCodec;
 import com.linkedin.restli.restspec.SimpleSchema;
+import com.linkedin.restli.server.annotations.ReturnEntity;
 import com.linkedin.util.CustomTypeUtil;
 
 import java.io.File;
@@ -1424,7 +1425,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
                                          methodName,
                                          schema,
                                          rootPath);
-        if ((method == ResourceMethod.CREATE || method == ResourceMethod.BATCH_CREATE) && schema != null && schema.getAnnotations() != null && schema.getAnnotations().containsKey("returnEntity"))
+        if ((method == ResourceMethod.CREATE || method == ResourceMethod.BATCH_CREATE) && schema != null && schema.getAnnotations() != null && schema.getAnnotations().containsKey(ReturnEntity.NAME))
         {
           Class<?> newBuildClass = methodName.equals("create") ? CreateIdEntityRequestBuilderBase.class : BatchCreateIdEntityRequestBuilderBase.class;
           String requestName = methodName.equals("create") ? "createAndGet" : "batchCreateAndGet";

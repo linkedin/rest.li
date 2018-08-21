@@ -109,10 +109,11 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder<RestLiR
     }
     final ProtocolVersion protocolVersion = ProtocolVersionUtil.extractProtocolVersion(headers);
 
+    final ResourceContext resourceContext = routingResult.getContext();
 
-    if (result instanceof BatchCreateKVResult)
+    if (result instanceof BatchCreateKVResult && resourceContext.shouldReturnEntity())
     {
-      BatchCreateKVResult<?, ?> list = (BatchCreateKVResult<?, ?>)result;
+      BatchCreateKVResult<?, ?> list = (BatchCreateKVResult<?, ?>) result;
       if (list.getResults() == null)
       {
         throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
@@ -134,7 +135,6 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder<RestLiR
           Object id = ResponseUtils.translateCanonicalKeyToAlternativeKeyIfNeeded(createKVResponse.getId(), routingResult);
           if (createKVResponse.getError() == null)
           {
-            final ResourceContext resourceContext = routingResult.getContext();
             DataMap entityData = createKVResponse.getEntity() != null ? createKVResponse.getEntity().data() : null;
             final DataMap data = RestUtils.projectFields(entityData,
                                                          resourceContext.getProjectionMode(),
@@ -160,18 +160,18 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder<RestLiR
     }
     else
     {
-      BatchCreateResult<?, ?> list = (BatchCreateResult<?, ?>) result;
+      List<? extends CreateResponse> createResponses = extractCreateResponseList(result);
 
       //Verify that a null list was not passed into the BatchCreateResult. If so, this is a developer error.
-      if (list.getResults() == null)
+      if (createResponses == null)
       {
         throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
                                          "Unexpected null encountered. Null List inside of a BatchCreateResult returned by the resource method: " + routingResult
                                              .getResourceMethod());
       }
 
-      List<BatchCreateResponseEnvelope.CollectionCreateResponseItem> collectionCreateList = new ArrayList<>(list.getResults().size());
-      for (CreateResponse createResponse : list.getResults())
+      List<BatchCreateResponseEnvelope.CollectionCreateResponseItem> collectionCreateList = new ArrayList<>(createResponses.size());
+      for (CreateResponse createResponse : createResponses)
       {
         //Verify that a null element was not passed into the BatchCreateResult list. If so, this is a developer error.
         if (createResponse == null)
@@ -224,4 +224,27 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder<RestLiR
     return uribuilder.build((Object) null).toString();
   }
 
+  /**
+   * Extracts a list of {@link CreateResponse} objects from the given object. This helper method is needed
+   * because {@link BatchCreateResult} and {@link BatchCreateKVResult} do not share a common superclass or interface.
+   *
+   * @param result object of type {@link BatchCreateResult} or {@link BatchCreateKVResult}.
+   * @return list of objects extending {@link CreateResponse} extracted from the parameter object.
+   */
+  private List<? extends CreateResponse> extractCreateResponseList(Object result)
+  {
+    if (result instanceof BatchCreateKVResult)
+    {
+      return ((BatchCreateKVResult<?, ?>) result).getResults();
+    }
+    else if (result instanceof BatchCreateResult)
+    {
+      return ((BatchCreateResult<?, ?>) result).getResults();
+    }
+    else
+    {
+      throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
+          "BatchCreateResponseBuilder expects input of type BatchCreateResult or BatchCreateKVResult. Encountered type: " + result.getClass().getName());
+    }
+  }
 }

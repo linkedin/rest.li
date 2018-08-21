@@ -16,27 +16,24 @@
 
 package com.linkedin.restli.tools.idlgen;
 
-import java.io.BufferedReader;
+
+import com.linkedin.restli.tools.ExporterTestUtils;
 import java.io.File;
-import java.io.FileDescriptor;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintStream;
 
 import com.linkedin.pegasus.generator.GeneratorResult;
 import org.apache.commons.io.FileUtils;
+import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
 
 /**
+ * Tests to ensure that {@link RestLiResourceModelExporter} generates IDL files correctly.
+ *
  * @author dellamag
  */
 public class TestRestLiResourceModelExporter
@@ -46,181 +43,75 @@ public class TestRestLiResourceModelExporter
   private static final String IDLS_DIR = "src" + FS + "test" + FS + "resources" + FS + "idls";
   private static final String IDL_DIR = "src" + FS + "test" + FS + "idl";
 
-  private static final String STATUSES_FILE = "twitter-statuses.restspec.json";
-  private static final String STATUSES_PARAMS_FILE = "twitter-statusesParams.restspec.json";
-  private static final String FOLLOWS_FILE = "twitter-follows.restspec.json";
-  private static final String ACCOUNTS_FILE = "twitter-accounts.restspec.json";
-  private static final String TRENDING_FILE = "twitter-trending.restspec.json";
-
-  private static final String GREETING_FILE = "com.linkedin.restli.tools.sample.greetings.restspec.json";
-
   private File outdir;
   // Gradle by default will use the module directory as the working directory
-  // IDE such as IntelliJ IDEA may use the project directory instead
+  // IDEs such as IntelliJ IDEA may use the project directory instead
   // If you create test in IDE, make sure the working directory is always the module directory
   private String moduleDir;
 
   @BeforeClass
   public void setUp() throws IOException
   {
-    outdir = createTmpDir();
+    outdir = ExporterTestUtils.createTmpDir();
     moduleDir = System.getProperty("user.dir");
   }
 
   @AfterClass
-  public void tearDown() throws IOException
+  public void tearDown()
   {
-    rmdir(outdir);
+    ExporterTestUtils.rmdir(outdir);
   }
 
   @BeforeMethod
-  public void testSetup() throws IOException {
+  public void testSetup() throws IOException
+  {
     FileUtils.cleanDirectory(outdir);
   }
 
-  @Test
-  public void testSimpleModel() throws Exception
+  @DataProvider(name = "resourceModelData")
+  public Object[][] provideResourceModelData()
   {
-    RestLiResourceModelExporter exporter = new RestLiResourceModelExporter();
-
-    assertEquals(outdir.list().length, 0);
-    GeneratorResult result = exporter.export("twitter",
-                                             null,
-                                             new String[] {moduleDir + FS + TEST_DIR},
-                                             new String[] {"com.linkedin.restli.tools.twitter"},
-                                             null,
-                                             outdir.getAbsolutePath());
-
-    String[] expectedFiles = {STATUSES_FILE, FOLLOWS_FILE, ACCOUNTS_FILE, STATUSES_PARAMS_FILE, TRENDING_FILE};
-
-    assertEquals(outdir.list().length, expectedFiles.length);
-    assertEquals(result.getModifiedFiles().size(), expectedFiles.length);
-    assertEquals(result.getTargetFiles().size(), expectedFiles.length);
-
-    for (String file : expectedFiles)
-    {
-      String actualFile = outdir + FS + file;
-      String expectedFile = moduleDir + FS + IDLS_DIR + FS + file;
-
-      compareFiles(actualFile, expectedFile);
-      assertTrue(result.getModifiedFiles().contains(new File(actualFile)));
-      assertTrue(result.getTargetFiles().contains(new File(actualFile)));
-    }
-  }
-
-  @Test
-  public void testSampleGreeting() throws Exception
-  {
-    RestLiResourceModelExporter exporter = new RestLiResourceModelExporter();
-
-    assertEquals(outdir.list().length, 0);
-    GeneratorResult result = exporter.export(null,
-            null,
-            new String[] {moduleDir + FS + TEST_DIR},
-            new String[] {"com.linkedin.restli.tools.sample"},
-            null,
-            outdir.getAbsolutePath());
-
-    String[] expectedFiles = {GREETING_FILE};
-
-    assertEquals(outdir.list().length, expectedFiles.length);
-    assertEquals(result.getModifiedFiles().size(), expectedFiles.length);
-    assertEquals(result.getTargetFiles().size(), expectedFiles.length);
-
-    for (String file : expectedFiles)
-    {
-      String actualFile = outdir + FS + file;
-      String expectedFile = moduleDir + FS + IDL_DIR + FS + file;
-
-      compareFiles(actualFile, expectedFile);
-      assertTrue(result.getModifiedFiles().contains(new File(actualFile)));
-      assertTrue(result.getTargetFiles().contains(new File(actualFile)));
-    }
-  }
-
-  private void compareFiles(String actualFileName, String expectedFileName)
-      throws Exception
-  {
-    String actualContent = readFile(actualFileName);
-    String expectedContent = readFile(expectedFileName);
-    if (! actualContent.trim().equals(expectedContent.trim()))
-    {
-      // Ugh... gradle
-      PrintStream actualStdout = new PrintStream(new FileOutputStream(FileDescriptor.out));
-      actualStdout.println("ERROR " + actualFileName + " does not match " + expectedFileName + " . Printing diff...");
-      try
-      {
-        // TODO environment dependent, not cross platform
-        ProcessBuilder pb = new ProcessBuilder("diff", expectedFileName, actualFileName);
-        pb.redirectErrorStream();
-        Process p = pb.start();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
-        String line = null;
-
-        while ((line = reader.readLine()) != null)
+    return new Object[][]
         {
-          actualStdout.println(line);
-//          System.out.println(line);
-        }
-      }
-      catch (Exception e)
-      {
-        // TODO Setup log4j, find appropriate test harness used in R2D2
-        actualStdout.println("Error printing diff: " + e.getMessage());
-      }
-      fail(actualFileName + " does not match " + expectedFileName);
-    }
+            { "twitter", new String[] { "com.linkedin.restli.tools.twitter" }, IDLS_DIR, new String[] {
+                "twitter-statuses.restspec.json",
+                "twitter-statusesParams.restspec.json",
+                "twitter-follows.restspec.json",
+                "twitter-accounts.restspec.json",
+                "twitter-trending.restspec.json" } },
+            { null, new String[] { "com.linkedin.restli.tools.sample" }, IDL_DIR, new String[] {
+                "com.linkedin.restli.tools.sample.greetings.restspec.json" } },
+            { "returnEntity", new String[] { "com.linkedin.restli.tools.returnentity" }, IDLS_DIR, new String[] {
+                "returnEntity-annotation.restspec.json"} }
+        };
   }
 
-  private String readFile(String fileName) throws IOException
+  @Test(dataProvider = "resourceModelData")
+  @SuppressWarnings("Duplicates")
+  public void testExportResourceModel(String apiName, String[] resourcePackages, String idlPath, String[] expectedFiles) throws Exception
   {
-    File file = new File(fileName);
-    assertTrue(file.exists() && file.canRead(), "Cannot find file: " + fileName);
-    BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+    RestLiResourceModelExporter exporter = new RestLiResourceModelExporter();
 
-    StringBuilder sb = new StringBuilder();
-    String line = null;
-    try
+    Assert.assertEquals(outdir.list().length, 0);
+    GeneratorResult result = exporter.export(apiName,
+        null,
+        new String[] {moduleDir + FS + TEST_DIR},
+        resourcePackages,
+        null,
+        outdir.getAbsolutePath());
+
+    Assert.assertEquals(outdir.list().length, expectedFiles.length);
+    Assert.assertEquals(result.getModifiedFiles().size(), expectedFiles.length);
+    Assert.assertEquals(result.getTargetFiles().size(), expectedFiles.length);
+
+    for (String file : expectedFiles)
     {
-      while ((line = reader.readLine()) != null)
-      {
-        sb.append(line);
-      }
-    }
-    finally
-    {
-      reader.close();
-    }
-    return sb.toString();
-  }
+      String actualFile = outdir + FS + file;
+      String expectedFile = moduleDir + FS + idlPath + FS + file;
 
-  public static void rmdir(File dir)
-  {
-    if (dir.listFiles() != null)
-    {
-      for (File f : dir.listFiles())
-      {
-        f.delete();
-      }
+      ExporterTestUtils.compareFiles(actualFile, expectedFile);
+      Assert.assertTrue(result.getModifiedFiles().contains(new File(actualFile)));
+      Assert.assertTrue(result.getTargetFiles().contains(new File(actualFile)));
     }
-    dir.delete();
-  }
-
-  public static File createTmpDir() throws IOException
-  {
-    File temp = File.createTempFile("temp", Long.toString(System.nanoTime()));
-    if(! temp.delete())
-    {
-      throw new IOException("Could not delete temp file: " + temp.getAbsolutePath());
-    }
-
-    temp = new File(temp.getAbsolutePath() + ".d");
-
-    if(! temp.mkdir())
-    {
-      throw new IOException("Could not create temp directory: " + temp.getAbsolutePath());
-    }
-
-    return temp;
   }
 }

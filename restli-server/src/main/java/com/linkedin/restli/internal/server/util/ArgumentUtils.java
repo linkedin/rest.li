@@ -45,6 +45,7 @@ import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.server.AlternativeKey;
 import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.ResourceContext;
+import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.RoutingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -542,5 +543,23 @@ public class ArgumentUtils
       throw new RestLiInternalException("Invalid value type for parameter " + paramName);
     }
     return (String) obj;
+  }
+
+  /**
+   * Parse the "return entity" parameter of a request. This strictly expects a true or false value.
+   *
+   * @param value the "return entity" query parameter.
+   * @return the parsed value of the "return entity" query parameter.
+   */
+  public static boolean parseReturnEntityParameter(final String value)
+  {
+    switch (value.toLowerCase()) {
+      case "true":
+        return true;
+      case "false":
+        return false;
+      default:
+        throw new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST, String.format("Invalid \"%s\" parameter: %s", RestConstants.RETURN_ENTITY_PARAM, value));
+    }
   }
 }

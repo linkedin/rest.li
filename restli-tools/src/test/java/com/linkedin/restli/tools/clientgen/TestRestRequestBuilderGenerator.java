@@ -2,6 +2,7 @@ package com.linkedin.restli.tools.clientgen;
 
 
 import com.linkedin.restli.internal.common.RestliVersion;
+import com.linkedin.restli.tools.ExporterTestUtils;
 import com.linkedin.restli.tools.idlgen.TestRestLiResourceModelExporter;
 
 import java.io.BufferedReader;
@@ -26,16 +27,16 @@ public class TestRestRequestBuilderGenerator
   @BeforeClass
   public void setUp() throws IOException
   {
-    outdir = TestRestLiResourceModelExporter.createTmpDir();
-    outdir2 = TestRestLiResourceModelExporter.createTmpDir();
+    outdir = ExporterTestUtils.createTmpDir();
+    outdir2 = ExporterTestUtils.createTmpDir();
     moduleDir = System.getProperty("user.dir");
   }
 
   @AfterClass
-  public void tearDown() throws IOException
+  public void tearDown()
   {
-    TestRestLiResourceModelExporter.rmdir(outdir);
-    TestRestLiResourceModelExporter.rmdir(outdir2);
+    ExporterTestUtils.rmdir(outdir);
+    ExporterTestUtils.rmdir(outdir2);
   }
 
   @Test(dataProvider = "arrayDuplicateDataProvider")

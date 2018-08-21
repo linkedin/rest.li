@@ -243,6 +243,72 @@ public class TestBatchCreateResponseBuilder
     }
   }
 
+  @DataProvider(name = "returnEntityData")
+  public Object[][] provideReturnEntityData()
+  {
+    CreateResponse createResponse = new CreateResponse(1L, HttpStatus.S_201_CREATED);
+    List<CreateResponse> createResponses = new ArrayList<>();
+    createResponses.add(createResponse);
+    BatchCreateResult<Long, Foo> batchCreateResult = new BatchCreateResult<>(createResponses);
+
+    Foo entity = new Foo().setStringField("value").setFruitsField(Fruits.APPLE);
+    CreateKVResponse<Long, Foo> createKVResponse = new CreateKVResponse<>(1L, entity);
+    List<CreateKVResponse<Long, Foo>> createKVResponses = new ArrayList<>();
+    createKVResponses.add(createKVResponse);
+    BatchCreateKVResult<Long, Foo> batchCreateKVResult = new BatchCreateKVResult<>(createKVResponses);
+
+    return new Object[][]
+        {
+            { batchCreateResult, createResponses, true, false },
+            { batchCreateResult, createResponses, false, false },
+            { batchCreateKVResult, createKVResponses, true, true },
+            { batchCreateKVResult, createKVResponses, false, false }
+        };
+  }
+
+  @Test(dataProvider = "returnEntityData")
+  @SuppressWarnings({"Duplicates", "unchecked"})
+  public void testReturnEntityInBuildRestLiResponseData(Object batchCreateResult, List<CreateResponse> createResponses, boolean shouldReturnEntity, boolean expectEntityReturned) throws URISyntaxException
+  {
+    ServerResourceContext mockContext = EasyMock.createMock(ServerResourceContext.class);
+    EasyMock.expect(mockContext.hasParameter(RestConstants.ALT_KEY_PARAM)).andReturn(false).atLeastOnce();
+    EasyMock.expect(mockContext.shouldReturnEntity()).andReturn(shouldReturnEntity);
+    EasyMock.expect(mockContext.getProjectionMode()).andReturn(ProjectionMode.AUTOMATIC);
+    EasyMock.expect(mockContext.getProjectionMask()).andReturn(null);
+    EasyMock.replay(mockContext);
+
+    ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor(null);
+    RoutingResult routingResult = new RoutingResult(mockContext, mockDescriptor);
+
+    BatchCreateResponseBuilder responseBuilder = new BatchCreateResponseBuilder(new ErrorResponseBuilder());
+    RestRequest request = new RestRequestBuilder(new URI("/foo")).build();
+    RestLiResponseData<BatchCreateResponseEnvelope> responseData = responseBuilder.buildRestLiResponseData(request,
+        routingResult,
+        batchCreateResult,
+        Collections.emptyMap(),
+        Collections.emptyList());
+
+    BatchCreateResponseEnvelope responseEnvelope = responseData.getResponseEnvelope();
+
+    Assert.assertEquals(responseEnvelope.isGetAfterCreate(), expectEntityReturned);
+    Assert.assertEquals(responseEnvelope.getCreateResponses().size(), createResponses.size());
+
+    for (int i = 0; i < createResponses.size(); i++)
+    {
+      CreateIdStatus<Long> createIdStatus = (CreateIdStatus<Long>) responseEnvelope.getCreateResponses().get(i).getRecord();
+      CreateResponse createResponse = createResponses.get(i);
+
+      Assert.assertEquals(createIdStatus.getStatus().intValue(), HttpStatus.S_201_CREATED.getCode());
+      Assert.assertEquals(createIdStatus.getLocation(), "/foo/" + createResponse.getId());
+
+      if (expectEntityReturned)
+      {
+        CreateIdEntityStatus<Long, Foo> createIdEntityStatus = (CreateIdEntityStatus<Long, Foo>) createIdStatus;
+        Assert.assertEquals(createIdEntityStatus.getEntity(), ((CreateKVResponse) createResponse).getEntity());
+      }
+    }
+  }
+
   @Test
   @SuppressWarnings("unchecked")
   public void testProjectionInBuildRestLiResponseData() throws URISyntaxException
@@ -252,6 +318,7 @@ public class TestBatchCreateResponseBuilder
 
     ServerResourceContext mockContext = EasyMock.createMock(ServerResourceContext.class);
     EasyMock.expect(mockContext.hasParameter(RestConstants.ALT_KEY_PARAM)).andReturn(false).atLeastOnce();
+    EasyMock.expect(mockContext.shouldReturnEntity()).andReturn(true);
     EasyMock.expect(mockContext.getProjectionMode()).andReturn(ProjectionMode.AUTOMATIC);
     EasyMock.expect(mockContext.getProjectionMask()).andReturn(maskTree);
     EasyMock.replay(mockContext);
@@ -326,6 +393,7 @@ public class TestBatchCreateResponseBuilder
     }
 
     // not testing the diversity of options here.
+    EasyMock.expect(mockContext.shouldReturnEntity()).andReturn(true);
     EasyMock.expect(mockContext.getProjectionMode()).andReturn(ProjectionMode.getDefault()).atLeastOnce();
     EasyMock.expect(mockContext.getProjectionMask()).andReturn(null).atLeastOnce();
     Map<String, String> protocolVersionOnlyHeaders = Collections.singletonMap(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion().toString());

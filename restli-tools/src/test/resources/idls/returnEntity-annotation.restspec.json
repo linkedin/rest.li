@@ -1,0 +1,27 @@
+{
+  "name" : "annotation",
+  "path" : "/annotation",
+  "schema" : "com.linkedin.restli.tools.returnentity.ReturnMe",
+  "doc" : "Simple resource to test IDL generation with \"return entity\" methods using annotations as indicators.\n\ngenerated from: com.linkedin.restli.tools.returnentity.AnnotationResource",
+  "collection" : {
+    "identifier" : {
+      "name" : "annotationId",
+      "type" : "long"
+    },
+    "supports" : [ "batch_create", "create" ],
+    "methods" : [ {
+      "annotations" : {
+        "returnEntity" : { }
+      },
+      "method" : "create"
+    }, {
+      "annotations" : {
+        "returnEntity" : { }
+      },
+      "method" : "batch_create"
+    } ],
+    "entity" : {
+      "path" : "/annotation/{annotationId}"
+    }
+  }
+}

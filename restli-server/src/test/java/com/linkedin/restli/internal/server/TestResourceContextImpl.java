@@ -22,8 +22,11 @@ import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.transform.filter.request.MaskOperation;
 import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.r2.message.RequestContext;
+import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.server.util.RestLiSyntaxException;
+import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.test.TestResourceContext;
 
 import java.net.URI;
@@ -184,6 +187,46 @@ public class TestResourceContextImpl
         return resourceContext.getProjectionMask();
       default:
         throw new IllegalArgumentException("Invalid projection type");
+    }
+  }
+
+  @DataProvider(name = "returnEntityParameterData")
+  public Object[][] provideReturnEntityParameterData()
+  {
+    return new Object[][]
+        {
+            { "/foo?" + RestConstants.RETURN_ENTITY_PARAM + "=true", true, false },
+            { "/foo?" + RestConstants.RETURN_ENTITY_PARAM + "=false", false, false },
+            { "/foo", true, false },
+            { "/foo?" + RestConstants.RETURN_ENTITY_PARAM + "=bar", false, true }
+        };
+  }
+
+  @Test(dataProvider = "returnEntityParameterData")
+  public void testReturnEntityParameter(String uri, boolean expectReturnEntity, boolean expectException) throws RestLiSyntaxException
+  {
+    final ResourceContextImpl context = new ResourceContextImpl(new PathKeysImpl(),
+        new RestRequestBuilder(URI.create(uri))
+            .setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, AllProtocolVersions.LATEST_PROTOCOL_VERSION.toString())
+            .build(),
+        new RequestContext());
+
+    try
+    {
+      final boolean returnEntity = context.shouldReturnEntity();
+
+      if (expectException)
+      {
+        Assert.fail("Exception should be thrown for URI: " + uri);
+      }
+      Assert.assertEquals(returnEntity, expectReturnEntity, "Resource context was wrong about whether the URI \"" + uri + "\" indicates that the entity should be returned.");
+    }
+    catch (RestLiServiceException e)
+    {
+      if (!expectException)
+      {
+        Assert.fail("Exception should not be thrown for URI: " + uri);
+      }
     }
   }
 }

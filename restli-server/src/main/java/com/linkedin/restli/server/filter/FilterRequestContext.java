@@ -228,4 +228,13 @@ public interface FilterRequestContext extends CustomRequestContext
    * @return the attributes contained by RequestContext.
    */
   Map<String, Object> getRequestContextLocalAttrs();
+
+  /**
+   * Returns whether the resource method being queried is a "return entity" method, meaning that it's
+   * annotated with the {@link com.linkedin.restli.server.annotations.ReturnEntity} annotation.
+   * This is used primarily for methods that don't normally return an entity (e.g. CREATE).
+   *
+   * @return true if the method being queried is a "return entity" method.
+   */
+  boolean isReturnEntityMethod();
 }

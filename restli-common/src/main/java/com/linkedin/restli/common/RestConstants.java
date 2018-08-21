@@ -60,6 +60,7 @@ public interface RestConstants
   String ALT_KEY_PARAM = "altkey";
   String METADATA_FIELDS_PARAM = "metadataFields";
   String PAGING_FIELDS_PARAM = "pagingFields";
+  String RETURN_ENTITY_PARAM = "$returnEntity";
   Set<String> PROJECTION_PARAMETERS = Collections.unmodifiableSet(new LinkedHashSet<String>(
       Arrays.asList(FIELDS_PARAM, METADATA_FIELDS_PARAM, PAGING_FIELDS_PARAM)));
 

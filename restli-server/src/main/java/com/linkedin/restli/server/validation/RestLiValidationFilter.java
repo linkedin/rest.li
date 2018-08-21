@@ -217,7 +217,7 @@ public class RestLiValidationFilter implements Filter
           validateSingleResponse(validator, ((GetResponseEnvelope) responseData.getResponseEnvelope()).getRecord());
           break;
         case CREATE:
-          if (requestContext.getCustomAnnotations().containsKey("returnEntity"))
+          if (requestContext.isReturnEntityMethod())
           {
             validateSingleResponse(validator, ((CreateResponseEnvelope) responseData.getResponseEnvelope()).getRecord());
           }
@@ -232,7 +232,7 @@ public class RestLiValidationFilter implements Filter
           validateBatchResponse(validator, ((BatchGetResponseEnvelope) responseData.getResponseEnvelope()).getBatchResponseMap());
           break;
         case BATCH_CREATE:
-          if (requestContext.getCustomAnnotations().containsKey("returnEntity"))
+          if (requestContext.isReturnEntityMethod())
           {
             validateCreateCollectionResponse(validator, ((BatchCreateResponseEnvelope) responseData.getResponseEnvelope()).getCreateResponses());
           }

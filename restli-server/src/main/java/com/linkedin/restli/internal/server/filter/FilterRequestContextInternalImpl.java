@@ -28,6 +28,7 @@ import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.server.PathKeys;
 import com.linkedin.restli.server.ProjectionMode;
 import com.linkedin.restli.server.RestLiRequestData;
+import com.linkedin.restli.server.annotations.ReturnEntity;
 import com.linkedin.restli.server.filter.FilterResourceModel;
 
 import java.lang.reflect.Method;
@@ -257,5 +258,11 @@ public class FilterRequestContextInternalImpl implements FilterRequestContextInt
   public Optional<Object> removeCustomContextData(String key)
   {
     return _context.removeCustomContextData(key);
+  }
+
+  @Override
+  public boolean isReturnEntityMethod()
+  {
+    return _resourceMethod.getCustomAnnotationData().containsKey(ReturnEntity.NAME);
   }
 }

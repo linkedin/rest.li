@@ -549,6 +549,18 @@ public class ResourceContextImpl implements ServerResourceContext
   }
 
   @Override
+  public boolean shouldReturnEntity()
+  {
+    String returnEntityValue = getParameter(RestConstants.RETURN_ENTITY_PARAM);
+    if (returnEntityValue == null)
+    {
+      // Default to true for backward compatibility so that existing clients can receive entity without using parameter
+      return true;
+    }
+    return ArgumentUtils.parseReturnEntityParameter(returnEntityValue);
+  }
+
+  @Override
   public Optional<Object> getCustomContextData(String key)
   {
     if (_customRequestContext != null && key != null && !key.isEmpty() && _customRequestContext.containsKey(key))

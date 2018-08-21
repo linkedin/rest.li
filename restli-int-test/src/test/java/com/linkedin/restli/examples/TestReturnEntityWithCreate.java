@@ -23,6 +23,7 @@ import com.linkedin.restli.client.CreateIdEntityRequest;
 import com.linkedin.restli.client.CreateIdRequest;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.RestClient;
+import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.common.BatchCreateIdEntityResponse;
 import com.linkedin.restli.common.BatchCreateIdResponse;
 import com.linkedin.restli.common.ContentType;
@@ -34,6 +35,8 @@ import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.Tone;
+import com.linkedin.restli.examples.greetings.client.CreateGreetingBatchCreateAndGetRequestBuilder;
+import com.linkedin.restli.examples.greetings.client.CreateGreetingCreateAndGetRequestBuilder;
 import com.linkedin.restli.examples.greetings.client.CreateGreetingRequestBuilders;
 
 import org.testng.Assert;
@@ -489,5 +492,142 @@ public class TestReturnEntityWithCreate extends RestLiIntegrationTest
           new CreateGreetingRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)
       }
     };
+  }
+
+  @Test(dataProvider = "returnEntityOnDemandData")
+  public void testReturnEntityOnDemand(Object paramValue, Boolean expectReturnEntity, boolean expectException) throws RemoteInvocationException
+  {
+    Greeting greeting = new Greeting();
+    greeting.setMessage("second time!");
+    greeting.setTone(Tone.FRIENDLY);
+
+    CreateGreetingRequestBuilders builders = new CreateGreetingRequestBuilders();
+
+    CreateGreetingCreateAndGetRequestBuilder builder = builders.createAndGet().input(greeting);
+    if (paramValue != null)
+    {
+      builder.addParam(RestConstants.RETURN_ENTITY_PARAM, paramValue);
+    }
+    CreateIdEntityRequest<Long, Greeting> createIdEntityRequest = builder.build();
+
+    try
+    {
+      Response<IdEntityResponse<Long, Greeting>> response = getClient().sendRequest(createIdEntityRequest).getResponse();
+
+      if (expectException)
+      {
+        Assert.fail(String.format("Query parameter should cause an exception: %s=%s", RestConstants.RETURN_ENTITY_PARAM, paramValue));
+      }
+
+      long id = response.getEntity().getId();
+      @SuppressWarnings("deprecation")
+      String stringId = response.getId();
+      Assert.assertEquals(response.getStatus(), HttpStatus.S_201_CREATED.getCode());
+      Assert.assertEquals(response.getHeader(RestConstants.HEADER_LOCATION), "/" + CreateGreetingRequestBuilders.getPrimaryResource() + "/" + id);
+      Assert.assertEquals(id, Long.parseLong(stringId));
+
+      if (expectReturnEntity)
+      {
+        Greeting returnedEntity = response.getEntity().getEntity();
+        Assert.assertNotNull(returnedEntity, "RecordTemplate entity in response should not be null.");
+        Assert.assertEquals(returnedEntity.getMessage(), greeting.getMessage(), "Expect returned entity message to match original.");
+        Assert.assertEquals(returnedEntity.getTone(), greeting.getTone(), "Expect returned entity tone to match original.");
+      }
+      else
+      {
+        Assert.assertNull(response.getEntity().getEntity(), "RecordTemplate entity in response should be null.");
+      }
+    }
+    catch (RestLiResponseException e)
+    {
+      if (!expectException)
+      {
+        Assert.fail(String.format("Query parameter shouldn't cause an exception: %s=%s", RestConstants.RETURN_ENTITY_PARAM, paramValue));
+      }
+
+      Assert.assertEquals(e.getStatus(), HttpStatus.S_400_BAD_REQUEST.getCode(), "Invalid response status.");
+      Assert.assertTrue(e.getServiceErrorMessage().contains(String.format("Invalid \"%s\" parameter: %s", RestConstants.RETURN_ENTITY_PARAM, paramValue)), "Invalid error response message");
+    }
+  }
+
+  @Test(dataProvider = "returnEntityOnDemandData")
+  public void testBatchCreateReturnEntityOnDemand(Object paramValue, Boolean expectReturnEntity, boolean expectException) throws RemoteInvocationException
+  {
+    Greeting greeting = new Greeting();
+    greeting.setMessage("second time!");
+    greeting.setTone(Tone.FRIENDLY);
+
+    Greeting greeting2 = new Greeting();
+    greeting2.setMessage("first time!");
+    greeting2.setTone(Tone.FRIENDLY);
+    List<Greeting> greetings = new ArrayList<Greeting>();
+    greetings.add(greeting);
+    greetings.add(greeting2);
+
+    CreateGreetingRequestBuilders builders = new CreateGreetingRequestBuilders();
+
+    CreateGreetingBatchCreateAndGetRequestBuilder builder = builders.batchCreateAndGet().inputs(greetings);
+    if (paramValue != null)
+    {
+      builder.addParam(RestConstants.RETURN_ENTITY_PARAM, paramValue);
+    }
+    BatchCreateIdEntityRequest<Long, Greeting> batchCreateIdEntityRequest = builder.build();
+
+    try
+    {
+      Response<BatchCreateIdEntityResponse<Long, Greeting>> response = getClient().sendRequest(batchCreateIdEntityRequest).getResponse();
+
+      if (expectException)
+      {
+        Assert.fail(String.format("Query parameter should cause an exception: %s=%s", RestConstants.RETURN_ENTITY_PARAM, paramValue));
+      }
+
+      List<CreateIdEntityStatus<Long, Greeting>> createIdEntityStatuses = response.getEntity().getElements();
+      Assert.assertEquals(createIdEntityStatuses.size(), greetings.size(), "Expected size of batch response list to match size of input entity list.");
+
+      for (int i = 0; i < createIdEntityStatuses.size(); i++)
+      {
+        CreateIdEntityStatus<Long, Greeting> createIdEntityStatus = createIdEntityStatuses.get(i);
+        Greeting expectedGreeting = greetings.get(i);
+
+        long id = createIdEntityStatus.getKey();
+        Assert.assertEquals((int) createIdEntityStatus.getStatus(), HttpStatus.S_201_CREATED.getCode());
+        Assert.assertEquals(createIdEntityStatus.getLocation(), "/" + CreateGreetingRequestBuilders.getPrimaryResource() + "/" + id);
+
+        if (expectReturnEntity)
+        {
+          Greeting returnedEntity = createIdEntityStatus.getEntity();
+          Assert.assertNotNull(returnedEntity, "RecordTemplate entity in response should not be null.");
+          Assert.assertEquals(returnedEntity.getMessage(), expectedGreeting.getMessage(), "Expect returned entity message to match original.");
+          Assert.assertEquals(returnedEntity.getTone(), expectedGreeting.getTone(), "Expect returned entity tone to match original.");
+        }
+        else
+        {
+          Assert.assertNull(createIdEntityStatus.getEntity(), "RecordTemplate entity in response should be null.");
+        }
+      }
+    }
+    catch (RestLiResponseException e)
+    {
+      if (!expectException)
+      {
+        Assert.fail(String.format("Query parameter shouldn't cause an exception: %s=%s", RestConstants.RETURN_ENTITY_PARAM, paramValue));
+      }
+
+      Assert.assertEquals(e.getStatus(), HttpStatus.S_400_BAD_REQUEST.getCode(), "Invalid response status.");
+      Assert.assertTrue(e.getServiceErrorMessage().contains(String.format("Invalid \"%s\" parameter: %s", RestConstants.RETURN_ENTITY_PARAM, paramValue)), "Invalid error response message");
+    }
+  }
+
+  @DataProvider(name = "returnEntityOnDemandData")
+  public Object[][] provideReturnEntityOnDemandData()
+  {
+    return new Object[][]
+        {
+            { true, true, false },
+            { false, false, false },
+            { "foo", null, true },
+            { null, true, false }
+        };
   }
 }

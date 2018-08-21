@@ -94,7 +94,7 @@ public class CreateResponseBuilder implements RestLiResponseBuilder<RestLiRespon
       headers.put(HeaderUtil.getIdHeaderName(protocolVersion), URIParamUtils.encodeKeyForHeader(id, protocolVersion));
     }
 
-    //Verify that a null status was not passed into the CreateResponse. If so, this is a developer error.
+    // Verify that a null status was not passed into the CreateResponse. If so, this is a developer error.
     if (createResponse.getStatus() == null)
     {
       throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
@@ -102,11 +102,21 @@ public class CreateResponseBuilder implements RestLiResponseBuilder<RestLiRespon
               + routingResult.getResourceMethod());
     }
 
+    final ResourceContext resourceContext = routingResult.getContext();
+
     RecordTemplate idResponse;
-    if (createResponse instanceof CreateKVResponse)
+    if (createResponse instanceof CreateKVResponse && resourceContext.shouldReturnEntity())
     {
-      final ResourceContext resourceContext = routingResult.getContext();
-      DataMap entityData = ((CreateKVResponse<?, ?>) createResponse).getEntity().data();
+      RecordTemplate entity = ((CreateKVResponse<?, ?>) createResponse).getEntity();
+
+      // Verify that a null entity was not passed into the CreateKVResponse. If so, this is a developer error.
+      if (entity == null)
+      {
+        throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
+            "Unexpected null encountered. Entity is null inside of a CreateKVResponse when the entity should be returned. In resource method: " + routingResult.getResourceMethod());
+      }
+
+      DataMap entityData = entity.data();
       final DataMap data = RestUtils.projectFields(entityData, resourceContext.getProjectionMode(), resourceContext.getProjectionMask());
       idResponse = new AnyRecord(data);
       // Ideally, we should set an IdEntityResponse to the envelope. But we are keeping AnyRecord

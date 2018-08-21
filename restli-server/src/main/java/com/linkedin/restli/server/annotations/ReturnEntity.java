@@ -13,8 +13,9 @@ import java.lang.annotation.Target;
  * @author Boyang Chen
  */
 @Retention(RetentionPolicy.RUNTIME)
-@RestSpecAnnotation(name = "returnEntity")
+@RestSpecAnnotation(name = ReturnEntity.NAME)
 @Target(ElementType.METHOD)
 public @interface ReturnEntity
 {
+  String NAME = "returnEntity";
 }
