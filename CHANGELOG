@@ -5,11 +5,15 @@
 -------
 (RB=1394375)
 Populate internal DataMap for gathered batch response.
-(RB=1396146)
-Remove Guava dependency from compile in all modules except data-avro and restli-int-test
 
 (RB=1396585)
 Updated gradle wrapper to version 4.6.
+
+(RB=1396146)
+Remove Guava dependency from compile in all modules except data-avro and restli-int-test
+
+(RB=1395504)
+Register coercers for custom typed typerefs in the generated TyperefInfo class.
 
 23.0.14
 -------
