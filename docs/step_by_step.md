@@ -5,7 +5,7 @@ permalink: /start/step_by_step
 index: 1
 ---
 
-# Step by step tutorial
+# Step by Step Tutorial
 
 ## Contents
 
@@ -31,14 +31,11 @@ index: 1
 
 ## Introduction
 
-In this tutorial, we’ll take a first look at Rest.li and learn about
-some of its most basic features. We’ll construct a server that responds
-with *Fortunes* for GET requests and also create a client that sends a
-request to the server and prints a fortune returned by the server.
+In this tutorial, we’ll take a first look at Rest.li and learn about some of its most basic features. We’ll construct a server that responds with *Fortunes* for GET requests and also creates a client that sends a request to the server and prints a fortune returned by the server.
 
 Rest.li uses an inversion of control model in which Rest.li defines the
 client and server architecture and handles many details of constructing,
-receiving, and processing RESTful requests. On the server-side, Rest.li
+receiving, and processing RESTful requests. On the server side, Rest.li
 calls your code at the appropriate time to respond to requests. You only
 need to worry about your application-specific response to requests. On
 the client side, Rest.li helps send type-safe requests to the server and
@@ -47,7 +44,7 @@ receives type-safe responses.
 To allow Rest.li to perform its tasks, you need to conform to a simple
 architecture, in which you define a schema for your data, and classes
 that support REST operations on that data. Your classes will designate
-handlers for REST operations using Annotations, and return objects that
+handlers for REST operations using Annotations and return objects that
 represent your data schema. Rest.li will handle mostly everything else.
 
 We’ll see how Rest.li helps you perform these actions using automatic
@@ -159,7 +156,7 @@ The file `build.gradle` should contain:
 This gradle build file pulls all required jars from a global Maven
 repository. It also loads some plugins that facilitate the build process
 and various code generation steps. Notice that plugins are also provided
-for IntelliJ Idea and Eclipse. For example, executing
+for IntelliJ Idea and Eclipse. For example, executing:
 
     $ gradle idea
 
@@ -216,9 +213,9 @@ the API or interface between the server and clients.
 
 All Rest.li data models are defined in Pegasus Data Schema files, which
 have a `.pdsc` suffix. We’ll define a Fortune data model in
-`Fortune.pdsc`. The location of this file is important, be sure to place
+`Fortune.pdsc`. The location of this file is important. Be sure to place
 it in a path corresponding to your namespace, under
-`api/src/main/pegasus/`
+`api/src/main/pegasus/`:
 
 ##### file: example-standalone-app/api/src/main/pegasus/com/example/fortune/Fortune.pdsc
 
@@ -320,7 +317,7 @@ modified.
 ### Step 3. Implement Rest.li Server Resource
 
 Now that we have defined our data model, the next step is to define a
-‘resource’ class that will be invoked by the Rest.li server in
+`resource` class that will be invoked by the Rest.li server in
 response to requests from clients. We’ll create a class named
 `FortunesResource`. This class is written by hand, and implements any
 REST operations you want to support, returning data using the java data
@@ -375,28 +372,16 @@ other methods. See the [Rest.li User
 Guide](/rest.li/user_guide/server_architecture) for more details about
 supporting additional REST methods and other types of resources.
 
-Notice that if this GET were to perform any IO it would be ‘blocking’,
+Notice that if this GET were to perform any IO it would be `blocking`,
 meaning that the thread handling this request will wait for that IO to
 complete. Later we will show how we can build async GET methods that
 return [ParSeq](https://github.com/linkedin/parseq) `Promise` and `Task` 
 classes so that we do not block while performing IO operations.
 
-The `RestLiCollection` annotation at the top of the file marks this
-class as a REST collection, and declares that this resource handles the
-`/fortunes` URI. The result is that calling
-http://localhost/fortunes/<id> (assuming your server is running on
-localhost) will call `FortunesResource.get()`, which should return a
-`Fortune` object corresponding to the given fortune identifier. For this
-simple implementation, we will create a static HashMap that maps several
-fortune strings to ids. If a requested id is found in the HashMap, we
-will construct a `Fortune` object, set the message and id, and return
-the object. If the requested id is not found, we’ll return a default
-message. Rest.li will handle delivering the result to the calling client
-as a JSON object. (Recall that Fortune.java was generated in a previous
-step and is found under the `api` directory)
+The `RestLiCollection` annotation at the top of the file marks this class as a REST collection, and declares that this resource handles the `/fortunes` URI. The result is that calling `http://localhost/fortunes/<id>` (assuming your server is running on localhost) will call `FortunesResource.get()`, which should return a `Fortune` object corresponding to the given fortune identifier. For this simple implementation, we will create a static HashMap that maps several fortune strings to ids. If a requested id is found in the HashMap, we will construct a `Fortune` object, set the message and id, and return the object. If the requested id is not found, we’ll return a default message. Rest.li will handle delivering the result to the calling client as a JSON object. (Recall that Fortune.java was generated in a previous step and is found under the `api` directory.)
 
-In a real implementation, you would, of course, perform whatever steps
-are required to retrieve or construct your response to the request, but
+In a real implementation, you would perform whatever steps
+are required to retrieve or construct your response to the request. But
 ultimately, you will return an instance of your data model class that
 represents the data defined in your schema.
 
@@ -450,10 +435,7 @@ Next, create a `gradle.properties` file containing the following line:
 
     rest.model.compatibility=ignore
 
-This disables some [compatibility
-checks](Gradle-build-integration#compatibility)
-on the generated files. You will need these checks in a real project but
-to keep this example simple we are disabling these checks.
+This disables some [compatibility checks](/rest.li/setup/gradle#compatibility) on the generated files. You will need these checks in a real project but to keep this example simple we are disabling these checks.
 
 With these files in place, your server directory structure should look
 like this:
@@ -481,7 +463,7 @@ Now you can build the server from the `server/` directory with:
 
     $ gradle build
 
-Note: If prompted, run the build command a second time. The first build
+**Note:** If prompted, run the build command a second time. The first build
 runs a bootstrapping code generation process, requiring a second build
 to compile the generated code.
 
@@ -650,7 +632,7 @@ provides tools to generate these classes. Let’s start by creating a
     
 
 To generate the interface classes used by the client, change to the
-`client/` directory and type the command.
+`client/` directory and type the command:
 
     $ gradle build
 
@@ -685,8 +667,7 @@ The following lines of code instantiate a `FortunesRequestBuilders`
 factory, and then call its `get()` method to create a
 `FortunesGetRequestBuilder` object. Finally, the
 `FortunesGetRequestBuilder` instance lets you supply the information
-that needs to be passed in the request and builds a `Request`
-    object.
+that needs to be passed in the request and builds a `Request` object:
 
     FortunesRequestBuilders fortunesBuilders = new FortunesRequestBuilders();
     FortunesGetRequestBuilder getBuilder = fortunesBuilders.get();
@@ -832,19 +813,19 @@ We’ve now completed a quick tour of a few of the most basic features of
 Rest.li. Let’s review the steps we took to create a server and a
 corresponding client:
 
-1.  Define a data model (Fortune.pdsc)
-2.  Generate Java language bindings (Fortune.java RecordTemplate class)
+1.  Define a data model (`Fortune.pdsc`)
+2.  Generate Java language bindings (`Fortune.java RecordTemplate class`)
 3.  Create a Resource that responds to REST requests
-    (FortuneResource.java) by subclassing `CollectionResourceTemplate`
+    (`FortuneResource.java`) by subclassing `CollectionResourceTemplate`
     and using `RestLiAnnotations` to define operations and entry points
 4.  Create a server that locates our Resource classes and uses Netty to
     dispatch requests
-5.  Generate IDL (fortune.restpec.json) and Java client request builders
-    from the server Resource file (FortunesRequestBuilders.java and
-    FortunesGetRequestBuilder.java)
+5.  Generate IDL (`fortune.restpec.json`) and Java client request builders
+    from the server Resource file (`FortunesRequestBuilders.java` and
+    `FortunesGetRequestBuilder.java`)
 6.  Create a client that uses the `RestClient` to send requests
     constructed by calling the builder classes
-    (RestLiFortuneClient.java)
+    (`RestLiFortuneClient.java`)
 
 Notice that (ignoring Gradle build files) there are only three files in
 this example that you had to create:

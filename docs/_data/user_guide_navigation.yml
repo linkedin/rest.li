@@ -46,7 +46,7 @@ toc:
       - page: How to use projections
         url: /rest.li/How-to-use-projections-in-Java
       - page: Rest.li to Avro conversion
-        url: /rest.li/How_To:Rest_li_Avro_conversions
+        url: /rest.li/How_To_Rest_li_Avro_conversions
       - page: Compression
         url: /rest.li/Compression
       - page: How to migrate to Rest.li 2.x

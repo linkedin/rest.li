@@ -1,11 +1,11 @@
 toc:
   - title: Getting Started
     subfolderitems:
-      - page: Quick-start guide
+      - page: Quick Start Guide
         url: /rest.li/get_started/quick_start
-      - page: Step by step tutorial
+      - page: Step by Step Tutorial
         url: /rest.li/start/step_by_step
-      - page: Dynamic discovery
+      - page: Dynamic Discovery
         url: /rest.li/start/d2_quick_start
       - page: Unstructured Data (BLOB)
         url: /rest.li/start/unstructured 
@@ -13,7 +13,7 @@ toc:
     subfolderitems:
       - page: Building Rest.li from Source
         url: /rest.li/setup/building
-      - page: Gradle build integration
+      - page: Gradle Build Integration
         url: /rest.li/setup/gradle
   - title: Presentations
     subfolderitems:

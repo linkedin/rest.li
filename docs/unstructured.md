@@ -5,7 +5,7 @@ permalink: /start/unstructured
 index: 1
 ---
 
-# Quickstart: Unstructured Data in Rest.li
+# Quick Start: Unstructured Data in Rest.li
 
 ## Contents
 
@@ -15,7 +15,7 @@ index: 1
  - [Recap](#recap)
 
 ## Introduction
-This tutorial demonstrates how to serve unstructured binary data such as blob in a Rest.li server. We’ll define a Rest.li resource that responds with fortune reports (in PDF format) for GET requests and show you how to consume the GET response from a HTTP client.
+This tutorial demonstrates how to serve unstructured binary data, such as blob, in a Rest.li server. We’ll define a Rest.li resource that responds with fortune reports (in PDF format) for GET requests and show you how to consume the GET response from a HTTP client.
 
 This tutorial assumes that you already have a working Rest.li server. Otherwise, please follow the [Rest.li Quickstart](/rest.li/get_started/quick_start) before you continue.
 

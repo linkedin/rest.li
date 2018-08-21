@@ -4,7 +4,7 @@ title: Gradle build integration
 permalink: /setup/gradle
 index: 1
 ---
-# Gradle build integration
+# Gradle Build Integration
 * [Introduction](#introduction)
 * [An Example](#an-example)
 * [Compatibility](#compatibility)
