@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.testng.Assert;
+import org.testng.SkipException;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -289,11 +290,24 @@ public class TestRestLiResponseData
     Assert.assertEquals(responseData.getResourceMethod(), resourceMethod);
   }
 
+  /**
+   * Skips testing resource methods with dynamically determined response types.
+   * See {@link #testDynamicallyDeterminedResponseType} for equivalent test.
+   */
   @Test(dataProvider = "envelopeResourceMethodDataProvider")
   public void testResponseType(RestLiResponseData<?> responseData, ResourceMethod resourceMethod)
   {
-    ResponseType responseType = ResponseType.fromMethodType(resourceMethod);
-    Assert.assertEquals(responseData.getResponseType(), responseType);
+    if (!ResponseTypeUtil.isDynamicallyDetermined(resourceMethod))
+    {
+      ResponseType responseType = ResponseTypeUtil.fromMethodType(resourceMethod);
+      Assert.assertEquals(responseData.getResponseType(), responseType);
+    }
+  }
+
+  @Test(dataProvider = "getDynamicallyDeterminedResponseTypeData")
+  public void testDynamicallyDeterminedResponseType(RestLiResponseData<?> responseData, ResponseType expectedResponseType)
+  {
+    Assert.assertEquals(responseData.getResponseType(), expectedResponseType);
   }
 
   @Test(dataProvider = "envelopeResourceMethodDataProvider")
@@ -314,36 +328,52 @@ public class TestRestLiResponseData
   @SuppressWarnings("deprecation")
   public void testSetNullStatus(RestLiResponseData<?> responseData, ResourceMethod resourceMethod)
   {
-    ResponseType responseType = ResponseType.fromMethodType(resourceMethod);
     try
     {
-      switch (responseType)
+      // If response type is dynamically determined, set HTTP status through resource method response envelope
+      if (ResponseTypeUtil.isDynamicallyDetermined(resourceMethod))
       {
-        case SINGLE_ENTITY:
-          responseData.getRecordResponseEnvelope().setRecord(new EmptyRecord(), null);
-          Assert.fail();
-          break;
-        case BATCH_ENTITIES:
-          responseData.getBatchResponseEnvelope()
-              .setBatchResponseMap(Collections.emptyMap(), null);
-          Assert.fail();
-          break;
-        case CREATE_COLLECTION:
-          responseData.getBatchCreateResponseEnvelope()
-              .setCreateResponse(Collections.emptyList(),
-                                 null);
-          Assert.fail();
-          break;
-        case GET_COLLECTION:
-          responseData.getCollectionResponseEnvelope()
-              .setCollectionResponse(Collections.emptyList(), new CollectionMetadata(),
-                                     new EmptyRecord(), null);
-          break;
-        case STATUS_ONLY:
-          responseData.getEmptyResponseEnvelope().setStatus(null);
-          break;
-        default:
-          Assert.fail();
+        switch (resourceMethod)
+        {
+          case PARTIAL_UPDATE:
+            responseData.getPartialUpdateResponseEnvelope().setStatus(null);
+            break;
+          default:
+            Assert.fail();
+        }
+      }
+      // Otherwise, set HTTP status through response type response envelope
+      else
+      {
+        ResponseType responseType = ResponseTypeUtil.fromMethodType(resourceMethod);
+        switch (responseType)
+        {
+          case SINGLE_ENTITY:
+            responseData.getRecordResponseEnvelope().setRecord(new EmptyRecord(), null);
+            Assert.fail();
+            break;
+          case BATCH_ENTITIES:
+            responseData.getBatchResponseEnvelope()
+                .setBatchResponseMap(Collections.emptyMap(), null);
+            Assert.fail();
+            break;
+          case CREATE_COLLECTION:
+            responseData.getBatchCreateResponseEnvelope()
+                .setCreateResponse(Collections.emptyList(),
+                    null);
+            Assert.fail();
+            break;
+          case GET_COLLECTION:
+            responseData.getCollectionResponseEnvelope()
+                .setCollectionResponse(Collections.emptyList(), new CollectionMetadata(),
+                    new EmptyRecord(), null);
+            break;
+          case STATUS_ONLY:
+            responseData.getEmptyResponseEnvelope().setStatus(null);
+            break;
+          default:
+            Assert.fail();
+        }
       }
       Assert.fail();
     }
@@ -416,7 +446,18 @@ public class TestRestLiResponseData
   @SuppressWarnings("deprecation")
   public void testRestLiResponseEnvelopesGetterException(RestLiResponseData<?> responseData, ResourceMethod method)
   {
-    ResponseType responseType = ResponseType.fromMethodType(method);
+    ResponseType responseType;
+    if (ResponseTypeUtil.isDynamicallyDetermined(method))
+    {
+      // If ResponseType is dynamically determined for this resource method, it should be left null so that the test
+      // expects it to fail for all calls except the direct getter of the resource method response envelope.
+      responseType = null;
+    }
+    else
+    {
+      responseType = ResponseTypeUtil.fromMethodType(method);
+    }
+
     try
     {
       responseData.getRecordResponseEnvelope();
@@ -646,5 +687,15 @@ public class TestRestLiResponseData
       default:
         throw new IllegalArgumentException("Unexpected Rest.li resource method: " + method);
     }
+  }
+
+  @DataProvider
+  private Object[][] getDynamicallyDeterminedResponseTypeData()
+  {
+    return new Object[][]
+    {
+        { ResponseDataBuilderUtil.buildPartialUpdateResponseData(HttpStatus.S_200_OK), ResponseType.STATUS_ONLY },
+        { ResponseDataBuilderUtil.buildPartialUpdateResponseData(HttpStatus.S_200_OK, new EmptyRecord()), ResponseType.SINGLE_ENTITY }
+    };
   }
 }

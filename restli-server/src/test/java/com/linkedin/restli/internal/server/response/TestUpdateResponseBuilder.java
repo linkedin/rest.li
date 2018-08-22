@@ -45,7 +45,6 @@ public class TestUpdateResponseBuilder
   static
   {
     BUILDERS.put(ResourceMethod.UPDATE, new UpdateResponseBuilder());
-    BUILDERS.put(ResourceMethod.PARTIAL_UPDATE, new PartialUpdateResponseBuilder());
     BUILDERS.put(ResourceMethod.DELETE, new DeleteResponseBuilder());
   }
 

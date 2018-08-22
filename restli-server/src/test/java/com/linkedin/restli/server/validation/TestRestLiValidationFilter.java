@@ -20,15 +20,20 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.transform.filter.request.MaskCreator;
 import com.linkedin.data.transform.filter.request.MaskTree;
+import com.linkedin.restli.common.CreateIdEntityStatus;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.IdResponse;
+import com.linkedin.restli.common.ProtocolVersion;
+import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.internal.server.filter.FilterResourceModelImpl;
 import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.internal.server.model.RestLiAnnotationReader;
 import com.linkedin.restli.internal.server.response.ActionResponseEnvelope;
+import com.linkedin.restli.internal.server.response.BatchCreateResponseEnvelope;
 import com.linkedin.restli.internal.server.response.CreateResponseEnvelope;
 import com.linkedin.restli.internal.server.response.GetResponseEnvelope;
+import com.linkedin.restli.internal.server.response.PartialUpdateResponseEnvelope;
 import com.linkedin.restli.internal.server.response.ResponseDataBuilderUtil;
 import com.linkedin.restli.internal.server.response.RestLiResponseEnvelope;
 import com.linkedin.restli.server.RestLiRequestDataImpl;
@@ -45,13 +50,15 @@ import com.linkedin.restli.server.filter.FilterResponseContext;
 import com.linkedin.restli.server.resources.AssociationResourceTemplate;
 import com.linkedin.restli.server.resources.CollectionResourceTemplate;
 import com.linkedin.restli.server.resources.SimpleResourceTemplate;
+import java.util.Collections;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.Assert;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import static com.linkedin.restli.common.ResourceMethod.*;
 import static org.mockito.Mockito.*;
 
 
@@ -88,12 +95,13 @@ public class TestRestLiValidationFilter
   {
   }
 
-  @BeforeTest
+  @BeforeMethod
   public void setUpMocks()
   {
     MockitoAnnotations.initMocks(this);
-    when(filterRequestContext.getRequestData()).thenReturn(new RestLiRequestDataImpl.Builder().entity(makeTestRecord()).build());
+    when(filterRequestContext.getFilterResourceModel()).thenReturn(new FilterResourceModelImpl(RestLiAnnotationReader.processResource(CollectionResource.class)));
     when(filterRequestContext.getCustomAnnotations()).thenReturn(new DataMap());
+    when(filterRequestContext.isReturnEntityMethod()).thenReturn(false);
   }
 
   /**
@@ -105,7 +113,10 @@ public class TestRestLiValidationFilter
   @SuppressWarnings({"unchecked"})
   public void testHandleProjection(ResourceModel resourceModel, RestLiResponseData<RestLiResponseEnvelope> responseData, MaskTree projectionMask, boolean expectError)
   {
-    when(filterRequestContext.getMethodType()).thenReturn(responseData.getResourceMethod());
+    ResourceMethod resourceMethod = responseData.getResourceMethod();
+
+    when(filterRequestContext.getRequestData()).thenReturn(new RestLiRequestDataImpl.Builder().entity(makeTestRecord()).build());
+    when(filterRequestContext.getMethodType()).thenReturn(resourceMethod);
     when(filterRequestContext.getFilterResourceModel()).thenReturn(new FilterResourceModelImpl(resourceModel));
     when(filterRequestContext.getProjectionMask()).thenReturn(projectionMask);
     when(filterResponseContext.getResponseData()).thenReturn((RestLiResponseData) responseData);
@@ -140,52 +151,99 @@ public class TestRestLiValidationFilter
   @DataProvider(name = "validateWithProjectionData")
   public Object[][] validateWithProjectionData()
   {
+    RestLiResponseData<GetResponseEnvelope> getResponseData = ResponseDataBuilderUtil.buildGetResponseData(HttpStatus.S_200_OK, makeTestRecord());
+    RestLiResponseData<CreateResponseEnvelope> createResponseData = ResponseDataBuilderUtil.buildCreateResponseData(HttpStatus.S_201_CREATED, new IdResponse<>(123L));
+    RestLiResponseData<ActionResponseEnvelope> actionResponseData = ResponseDataBuilderUtil.buildActionResponseData(HttpStatus.S_200_OK, new EmptyRecord());
+
     return new Object[][]
     {
-        { RestLiAnnotationReader.processResource(ActionsResource.class),      actionResponseData(),  null,                                  false },
-        { RestLiAnnotationReader.processResource(ActionsResource.class),      actionResponseData(),  new MaskTree(),                        false },
-        { RestLiAnnotationReader.processResource(ActionsResource.class),      actionResponseData(),  makeMask("ignoreMePlease"),   false },
-        { RestLiAnnotationReader.processResource(CollectionResource.class),   getResponseData(),     null,                                  false },
-        { RestLiAnnotationReader.processResource(CollectionResource.class),   getResponseData(),     new MaskTree(),                        false },
-        { RestLiAnnotationReader.processResource(CollectionResource.class),   getResponseData(),     makeMask("nonexistentField"), true  },
-        { RestLiAnnotationReader.processResource(CollectionResource.class),   getResponseData(),     makeMask("intField"),         false },
-        { RestLiAnnotationReader.processResource(CollectionResource.class),   actionResponseData(),  null,                                  false },
-        { RestLiAnnotationReader.processResource(CollectionResource.class),   actionResponseData(),  new MaskTree(),                        false },
-        { RestLiAnnotationReader.processResource(CollectionResource.class),   actionResponseData(),  makeMask("ignoreMePlease"),   false },
-        { RestLiAnnotationReader.processResource(SimpleResource.class),       getResponseData(),     null,                                  false },
-        { RestLiAnnotationReader.processResource(SimpleResource.class),       getResponseData(),     new MaskTree(),                        false },
-        { RestLiAnnotationReader.processResource(SimpleResource.class),       getResponseData(),     makeMask("nonexistentField"), true  },
-        { RestLiAnnotationReader.processResource(SimpleResource.class),       getResponseData(),     makeMask("intField"),         false },
-        { RestLiAnnotationReader.processResource(SimpleResource.class),       createResponseData(),  null,                                  false },
-        { RestLiAnnotationReader.processResource(SimpleResource.class),       createResponseData(),  new MaskTree(),                        false },
-        { RestLiAnnotationReader.processResource(SimpleResource.class),       createResponseData(),  makeMask("nonexistentField"), true  },
-        { RestLiAnnotationReader.processResource(SimpleResource.class),       createResponseData(),  makeMask("intField"),         false },
-        { RestLiAnnotationReader.processResource(SimpleResource.class),       actionResponseData(),  null,                                  false },
-        { RestLiAnnotationReader.processResource(SimpleResource.class),       actionResponseData(),  new MaskTree(),                        false },
-        { RestLiAnnotationReader.processResource(SimpleResource.class),       actionResponseData(),  makeMask("ignoreMePlease"),   false },
-        { RestLiAnnotationReader.processResource(AssociationResource.class),  getResponseData(),     null,                                  false },
-        { RestLiAnnotationReader.processResource(AssociationResource.class),  getResponseData(),     new MaskTree(),                        false },
-        { RestLiAnnotationReader.processResource(AssociationResource.class),  getResponseData(),     makeMask("nonexistentField"), true  },
-        { RestLiAnnotationReader.processResource(AssociationResource.class),  getResponseData(),     makeMask("intField"),         false },
-        { RestLiAnnotationReader.processResource(AssociationResource.class),  actionResponseData(),  null,                                  false },
-        { RestLiAnnotationReader.processResource(AssociationResource.class),  actionResponseData(),  new MaskTree(),                        false },
-        { RestLiAnnotationReader.processResource(AssociationResource.class),  actionResponseData(),  makeMask("ignoreMePlease"),   false }
+        { RestLiAnnotationReader.processResource(ActionsResource.class),      actionResponseData,   null,                                  false },
+        { RestLiAnnotationReader.processResource(ActionsResource.class),      actionResponseData,   new MaskTree(),                        false },
+        { RestLiAnnotationReader.processResource(ActionsResource.class),      actionResponseData,   makeMask("ignoreMePlease"),   false },
+        { RestLiAnnotationReader.processResource(CollectionResource.class),   getResponseData,      null,                                  false },
+        { RestLiAnnotationReader.processResource(CollectionResource.class),   getResponseData,      new MaskTree(),                        false },
+        { RestLiAnnotationReader.processResource(CollectionResource.class),   getResponseData,      makeMask("nonexistentField"), true  },
+        { RestLiAnnotationReader.processResource(CollectionResource.class),   getResponseData,      makeMask("intField"),         false },
+        { RestLiAnnotationReader.processResource(CollectionResource.class),   actionResponseData,   null,                                  false },
+        { RestLiAnnotationReader.processResource(CollectionResource.class),   actionResponseData,   new MaskTree(),                        false },
+        { RestLiAnnotationReader.processResource(CollectionResource.class),   actionResponseData,   makeMask("ignoreMePlease"),   false },
+        { RestLiAnnotationReader.processResource(SimpleResource.class),       getResponseData,      null,                                  false },
+        { RestLiAnnotationReader.processResource(SimpleResource.class),       getResponseData,      new MaskTree(),                        false },
+        { RestLiAnnotationReader.processResource(SimpleResource.class),       getResponseData,      makeMask("nonexistentField"), true  },
+        { RestLiAnnotationReader.processResource(SimpleResource.class),       getResponseData,      makeMask("intField"),         false },
+        { RestLiAnnotationReader.processResource(SimpleResource.class),       createResponseData,   null,                                  false },
+        { RestLiAnnotationReader.processResource(SimpleResource.class),       createResponseData,   new MaskTree(),                        false },
+        { RestLiAnnotationReader.processResource(SimpleResource.class),       createResponseData,   makeMask("nonexistentField"), true  },
+        { RestLiAnnotationReader.processResource(SimpleResource.class),       createResponseData,   makeMask("intField"),         false },
+        { RestLiAnnotationReader.processResource(SimpleResource.class),       actionResponseData,   null,                                  false },
+        { RestLiAnnotationReader.processResource(SimpleResource.class),       actionResponseData,   new MaskTree(),                        false },
+        { RestLiAnnotationReader.processResource(SimpleResource.class),       actionResponseData,   makeMask("ignoreMePlease"),   false },
+        { RestLiAnnotationReader.processResource(AssociationResource.class),  getResponseData,      null,                                  false },
+        { RestLiAnnotationReader.processResource(AssociationResource.class),  getResponseData,      new MaskTree(),                        false },
+        { RestLiAnnotationReader.processResource(AssociationResource.class),  getResponseData,      makeMask("nonexistentField"), true  },
+        { RestLiAnnotationReader.processResource(AssociationResource.class),  getResponseData,      makeMask("intField"),         false },
+        { RestLiAnnotationReader.processResource(AssociationResource.class),  actionResponseData,   null,                                  false },
+        { RestLiAnnotationReader.processResource(AssociationResource.class),  actionResponseData,   new MaskTree(),                        false },
+        { RestLiAnnotationReader.processResource(AssociationResource.class),  actionResponseData,   makeMask("ignoreMePlease"),   false }
     };
   }
 
-  private RestLiResponseData<GetResponseEnvelope> getResponseData()
+  /**
+   * Ensures that validation appropriately occurs on response for "return entity" methods, and that validation does not
+   * occur on response for methods that are not "return entity" methods.
+   */
+  @Test(dataProvider = "returnEntityValidateOnResponseData")
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  public void testReturnEntityValidateOnResponse(ResourceMethod resourceMethod, RestLiResponseData responseData, boolean isReturnEntityMethod)
   {
-    return ResponseDataBuilderUtil.buildGetResponseData(HttpStatus.S_200_OK, makeTestRecord());
+    when(filterRequestContext.getMethodType()).thenReturn(resourceMethod);
+    when(filterRequestContext.isReturnEntityMethod()).thenReturn(isReturnEntityMethod);
+    when(filterResponseContext.getResponseData()).thenReturn(responseData);
+
+    RestLiValidationFilter validationFilter = new RestLiValidationFilter();
+
+    try
+    {
+      // Check if validation occurred by catching exceptions for invalid entities
+      validationFilter.onResponse(filterRequestContext, filterResponseContext);
+
+      if (isReturnEntityMethod)
+      {
+        Assert.fail("Expected validation to occur and cause an exception, but no exception was encountered.");
+      }
+    }
+    catch (RestLiServiceException e)
+    {
+      if (!isReturnEntityMethod)
+      {
+        Assert.fail("Expected validation to be skipped without exceptions, but encountered exception: " + e.getMessage());
+      }
+
+      Assert.assertEquals(e.getStatus().getCode(), HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode(), "Expected HTTP status code 500 for this validation failure.");
+      Assert.assertTrue(e.getMessage().contains("/intField :: notAnInt cannot be coerced to Integer"), "Expected validation error for field \"intField\", but found another error.");
+    }
   }
 
-  private RestLiResponseData<CreateResponseEnvelope> createResponseData()
+  @DataProvider(name = "returnEntityValidateOnResponseData")
+  private Object[][] provideReturnEntityValidateOnResponseData()
   {
-    return ResponseDataBuilderUtil.buildCreateResponseData(HttpStatus.S_201_CREATED, new IdResponse<>(123L));
-  }
+    RestLiResponseData<CreateResponseEnvelope> createResponseData = ResponseDataBuilderUtil.buildCreateResponseData(HttpStatus.S_201_CREATED, makeInvalidTestRecord());
+    RestLiResponseData<PartialUpdateResponseEnvelope> partialUpdateResponseData = ResponseDataBuilderUtil.buildPartialUpdateResponseData(HttpStatus.S_200_OK, makeInvalidTestRecord());
+    RestLiResponseData<BatchCreateResponseEnvelope> batchCreateResponseData = ResponseDataBuilderUtil.buildBatchCreateResponseData(HttpStatus.S_200_OK,
+        Collections.singletonList(new BatchCreateResponseEnvelope.CollectionCreateResponseItem(
+            new CreateIdEntityStatus<>(HttpStatus.S_201_CREATED.getCode(), 1L, makeInvalidTestRecord(), null, new ProtocolVersion(2, 0, 0)))));
 
-  private RestLiResponseData<ActionResponseEnvelope> actionResponseData()
-  {
-    return ResponseDataBuilderUtil.buildActionResponseData(HttpStatus.S_200_OK, new EmptyRecord());
+    // The last argument indicates whether the resource method is a "return entity" method,
+    // but is also used to determine if validation is expected on response.
+    return new Object[][]
+        {
+            { CREATE, createResponseData, true },
+            { CREATE, createResponseData, false },
+            { PARTIAL_UPDATE, partialUpdateResponseData, true },
+            { PARTIAL_UPDATE, partialUpdateResponseData, false },
+            { BATCH_CREATE, batchCreateResponseData, true },
+            { BATCH_CREATE, batchCreateResponseData, false }
+        };
   }
 
   private TestRecord makeTestRecord()
@@ -193,7 +251,19 @@ public class TestRestLiValidationFilter
     return new TestRecord().setIntField(123).setLongField(456L).setFloatField(7.89F).setDoubleField(1.2345);
   }
 
-  private MaskTree makeMask(String segment) {
+  private TestRecord makeInvalidTestRecord()
+  {
+    DataMap dataMap = new DataMap();
+    dataMap.put("intField", "notAnInt");
+    dataMap.put("longField", 123L);
+    dataMap.put("floatField", 4.56F);
+    dataMap.put("doubleField", 7.89);
+
+    return new TestRecord(dataMap);
+  }
+
+  private MaskTree makeMask(String segment)
+  {
     return MaskCreator.createPositiveMask(new PathSpec(segment));
   }
 }

@@ -8,12 +8,17 @@
       "name" : "annotationId",
       "type" : "long"
     },
-    "supports" : [ "batch_create", "create" ],
+    "supports" : [ "batch_create", "create", "partial_update" ],
     "methods" : [ {
       "annotations" : {
         "returnEntity" : { }
       },
       "method" : "create"
+    }, {
+      "annotations" : {
+        "returnEntity" : { }
+      },
+      "method" : "partial_update"
     }, {
       "annotations" : {
         "returnEntity" : { }

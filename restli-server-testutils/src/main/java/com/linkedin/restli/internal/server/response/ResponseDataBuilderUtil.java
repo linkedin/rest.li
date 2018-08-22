@@ -125,6 +125,11 @@ public final class ResponseDataBuilderUtil
     return new RestLiResponseDataImpl<>(new PartialUpdateResponseEnvelope(status), new HashMap<>(), new ArrayList<>());
   }
 
+  public static RestLiResponseData<PartialUpdateResponseEnvelope> buildPartialUpdateResponseData(HttpStatus status, RecordTemplate entity)
+  {
+    return new RestLiResponseDataImpl<>(new PartialUpdateResponseEnvelope(status, entity), new HashMap<>(), new ArrayList<>());
+  }
+
   public static RestLiResponseData<PartialUpdateResponseEnvelope> buildPartialUpdateResponseData(RestLiServiceException exception)
   {
     return new RestLiResponseDataImpl<>(new PartialUpdateResponseEnvelope(exception), new HashMap<>(), new ArrayList<>());

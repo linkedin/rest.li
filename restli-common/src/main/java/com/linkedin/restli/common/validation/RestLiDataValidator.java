@@ -47,6 +47,7 @@ import com.linkedin.data.transform.patch.Patch;
 import com.linkedin.data.transform.patch.PatchConstants;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ResourceMethod;
+import com.linkedin.restli.common.util.ProjectionMaskApplier;
 import com.linkedin.restli.restspec.RestSpecAnnotation;
 
 import java.lang.annotation.Annotation;
@@ -59,8 +60,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import static com.linkedin.restli.common.util.ProjectionMaskApplier.*;
 
 
 /**
@@ -98,14 +97,21 @@ import static com.linkedin.restli.common.util.ProjectionMaskApplier.*;
 public class RestLiDataValidator
 {
   // ReadOnly fields should not be specified for these types of requests
-  private static final Set<ResourceMethod> readOnlyRestrictedMethods = new HashSet<ResourceMethod>(
-      Arrays.asList(ResourceMethod.CREATE, ResourceMethod.PARTIAL_UPDATE, ResourceMethod.BATCH_CREATE, ResourceMethod.BATCH_PARTIAL_UPDATE));
+  private static final Set<ResourceMethod> readOnlyRestrictedMethods = new HashSet<>(Arrays.asList(
+      ResourceMethod.CREATE, ResourceMethod.PARTIAL_UPDATE, ResourceMethod.BATCH_CREATE, ResourceMethod.BATCH_PARTIAL_UPDATE));
+
   // CreateOnly fields should not be specified for these types of requests
-  private static final Set<ResourceMethod> createOnlyRestrictedMethods = new HashSet<ResourceMethod>(
-      Arrays.asList(ResourceMethod.PARTIAL_UPDATE, ResourceMethod.BATCH_PARTIAL_UPDATE));
+  private static final Set<ResourceMethod> createOnlyRestrictedMethods = new HashSet<>(Arrays.asList(
+      ResourceMethod.PARTIAL_UPDATE, ResourceMethod.BATCH_PARTIAL_UPDATE));
+
   // ReadOnly fields are treated as optional for these types of requests
-  private static final Set<ResourceMethod> readOnlyOptional = new HashSet<ResourceMethod>(
-      Arrays.asList(ResourceMethod.CREATE, ResourceMethod.BATCH_CREATE));
+  private static final Set<ResourceMethod> readOnlyOptional = new HashSet<>(Arrays.asList(
+      ResourceMethod.CREATE, ResourceMethod.BATCH_CREATE));
+
+  // Resource methods that require validation on response
+  public static final Set<ResourceMethod>  METHODS_VALIDATED_ON_RESPONSE = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
+      ResourceMethod.GET, ResourceMethod.CREATE, ResourceMethod.PARTIAL_UPDATE, ResourceMethod.GET_ALL,
+      ResourceMethod.FINDER, ResourceMethod.BATCH_GET, ResourceMethod.BATCH_CREATE)));
 
   // A path is ReadOnly if it satisfies this predicate
   private final Predicate _readOnlyPredicate;
@@ -413,7 +419,7 @@ public class RestLiDataValidator
 
       // If existing validating schema not provided, build it here
       DataSchema validatingSchema =
-          (projectionMask != null) ? buildSchemaByProjection(originalSchema, projectionMask.getDataMap()) : originalSchema;
+          (projectionMask != null) ? ProjectionMaskApplier.buildSchemaByProjection(originalSchema, projectionMask.getDataMap()) : originalSchema;
 
       return validateOutputAgainstSchema(dataTemplate, validatingSchema);
     }
@@ -446,17 +452,13 @@ public class RestLiDataValidator
       throw new IllegalArgumentException("Validating schema is null");
     }
 
-    switch (_resourceMethod)
+    if (METHODS_VALIDATED_ON_RESPONSE.contains(_resourceMethod))
     {
-      case CREATE:
-      case BATCH_CREATE:
-      case GET:
-      case BATCH_GET:
-      case FINDER:
-      case GET_ALL:
-        return validateOutputEntity(dataTemplate, validatingSchema);
-      default:
-        throw new IllegalArgumentException("Cannot perform Rest.li output validation for " + _resourceMethod.toString());
+      return validateOutputEntity(dataTemplate, validatingSchema);
+    }
+    else
+    {
+      throw new IllegalArgumentException("Cannot perform Rest.li output validation for " + _resourceMethod.toString());
     }
   }
 

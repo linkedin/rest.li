@@ -62,6 +62,7 @@ public class TestResourceSchemaCollection
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.customTypes3", ResourceType.ASSOCIATION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.chainedTyperefs", ResourceType.ASSOCIATION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.createGreeting", ResourceType.COLLECTION);
+    expectedTypes.put("com.linkedin.restli.examples.greetings.client.partialUpdateGreeting", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.projectMessage", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.validationCreateAndGet", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.customMetadataProjections", ResourceType.COLLECTION);

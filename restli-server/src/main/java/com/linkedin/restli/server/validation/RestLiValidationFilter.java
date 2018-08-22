@@ -26,6 +26,8 @@ import com.linkedin.restli.common.CreateIdEntityStatus;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ResourceMethod;
+import com.linkedin.restli.common.util.ProjectionMaskApplier;
+import com.linkedin.restli.common.util.ProjectionMaskApplier.InvalidProjectionException;
 import com.linkedin.restli.common.validation.RestLiDataSchemaDataValidator;
 import com.linkedin.restli.common.validation.RestLiDataValidator;
 import com.linkedin.restli.internal.server.response.BatchCreateResponseEnvelope;
@@ -35,6 +37,7 @@ import com.linkedin.restli.internal.server.response.CreateResponseEnvelope;
 import com.linkedin.restli.internal.server.response.FinderResponseEnvelope;
 import com.linkedin.restli.internal.server.response.GetAllResponseEnvelope;
 import com.linkedin.restli.internal.server.response.GetResponseEnvelope;
+import com.linkedin.restli.internal.server.response.PartialUpdateResponseEnvelope;
 import com.linkedin.restli.server.RestLiRequestData;
 import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
@@ -42,15 +45,9 @@ import com.linkedin.restli.server.filter.Filter;
 import com.linkedin.restli.server.filter.FilterRequestContext;
 import com.linkedin.restli.server.filter.FilterResponseContext;
 import com.linkedin.restli.server.util.UnstructuredDataUtil;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-
-import static com.linkedin.restli.common.ResourceMethod.*;
-import static com.linkedin.restli.common.util.ProjectionMaskApplier.*;
 
 
 /**
@@ -63,9 +60,6 @@ public class RestLiValidationFilter implements Filter
 {
   // The key we'll use to store the validating schema in the filter scratchpad
   private static final String VALIDATING_SCHEMA_KEY = "validatingSchema";
-
-  // Resource methods that require validation on response
-  private static final Set<ResourceMethod>  METHODS_VALIDATED_ON_RESPONSE = new HashSet<>(Arrays.asList(GET, CREATE, GET_ALL, FINDER, BATCH_GET, BATCH_CREATE));
 
   private static final String TEMPLATE_RUNTIME_EXCEPTION_MESSAGE = "Could not find schema for entity during validation";
 
@@ -85,7 +79,7 @@ public class RestLiValidationFilter implements Filter
           // Schema from the record template itself should not be used.
           DataSchema originalSchema = DataTemplateUtil.getSchema(requestContext.getFilterResourceModel().getValueClass());
 
-          DataSchema validatingSchema = buildSchemaByProjection(originalSchema, projectionMask.getDataMap());
+          DataSchema validatingSchema = ProjectionMaskApplier.buildSchemaByProjection(originalSchema, projectionMask.getDataMap());
 
           // Put validating schema in scratchpad for use in onResponse
           requestContext.getFilterScratchpad().put(VALIDATING_SCHEMA_KEY, validatingSchema);
@@ -113,7 +107,7 @@ public class RestLiValidationFilter implements Filter
         method);
     RestLiRequestData requestData = requestContext.getRequestData();
 
-    if (method == CREATE || method == UPDATE)
+    if (method == ResourceMethod.CREATE || method == ResourceMethod.UPDATE)
     {
       ValidationResult result = validator.validateInput(requestData.getEntity());
       if (!result.isValid())
@@ -121,7 +115,7 @@ public class RestLiValidationFilter implements Filter
         throw new RestLiServiceException(HttpStatus.S_422_UNPROCESSABLE_ENTITY, result.getMessages().toString());
       }
     }
-    else if (method == PARTIAL_UPDATE)
+    else if (method == ResourceMethod.PARTIAL_UPDATE)
     {
       ValidationResult result = validator.validateInput((PatchRequest<?>) requestData.getEntity());
       if (!result.isValid())
@@ -129,49 +123,49 @@ public class RestLiValidationFilter implements Filter
         throw new RestLiServiceException(HttpStatus.S_422_UNPROCESSABLE_ENTITY, result.getMessages().toString());
       }
     }
-    else if (method == BATCH_CREATE)
+    else if (method == ResourceMethod.BATCH_CREATE)
+    {
+      StringBuilder sb = new StringBuilder();
+      for (RecordTemplate entity : requestData.getBatchEntities())
       {
-        StringBuilder sb = new StringBuilder();
-        for (RecordTemplate entity : requestData.getBatchEntities())
+        ValidationResult result = validator.validateInput(entity);
+        if (!result.isValid())
         {
-          ValidationResult result = validator.validateInput(entity);
-          if (!result.isValid())
-          {
-            sb.append(result.getMessages().toString());
-          }
-        }
-        if (sb.length() > 0)
-        {
-          throw new RestLiServiceException(HttpStatus.S_422_UNPROCESSABLE_ENTITY, sb.toString());
+          sb.append(result.getMessages().toString());
         }
       }
-      else if (method == BATCH_UPDATE || method == BATCH_PARTIAL_UPDATE)
+      if (sb.length() > 0)
+      {
+        throw new RestLiServiceException(HttpStatus.S_422_UNPROCESSABLE_ENTITY, sb.toString());
+      }
+    }
+    else if (method == ResourceMethod.BATCH_UPDATE || method == ResourceMethod.BATCH_PARTIAL_UPDATE)
+    {
+      StringBuilder sb = new StringBuilder();
+      for (Map.Entry<?, ? extends RecordTemplate> entry : requestData.getBatchKeyEntityMap().entrySet())
+      {
+        ValidationResult result;
+        if (method == ResourceMethod.BATCH_UPDATE)
         {
-          StringBuilder sb = new StringBuilder();
-          for (Map.Entry<?, ? extends RecordTemplate> entry : requestData.getBatchKeyEntityMap().entrySet())
-          {
-            ValidationResult result;
-            if (method == BATCH_UPDATE)
-            {
-              result = validator.validateInput(entry.getValue());
-            }
-            else
-            {
-              result = validator.validateInput((PatchRequest<?>) entry.getValue());
-            }
-            if (!result.isValid())
-            {
-              sb.append("Key: ");
-              sb.append(entry.getKey());
-              sb.append(", ");
-              sb.append(result.getMessages().toString());
-            }
-          }
-          if (sb.length() > 0)
-          {
-            throw new RestLiServiceException(HttpStatus.S_422_UNPROCESSABLE_ENTITY, sb.toString());
-          }
+          result = validator.validateInput(entry.getValue());
         }
+        else
+        {
+          result = validator.validateInput((PatchRequest<?>) entry.getValue());
+        }
+        if (!result.isValid())
+        {
+          sb.append("Key: ");
+          sb.append(entry.getKey());
+          sb.append(", ");
+          sb.append(result.getMessages().toString());
+        }
+      }
+      if (sb.length() > 0)
+      {
+        throw new RestLiServiceException(HttpStatus.S_422_UNPROCESSABLE_ENTITY, sb.toString());
+      }
+    }
     return CompletableFuture.completedFuture(null);
   }
 
@@ -220,6 +214,12 @@ public class RestLiValidationFilter implements Filter
           if (requestContext.isReturnEntityMethod())
           {
             validateSingleResponse(validator, ((CreateResponseEnvelope) responseData.getResponseEnvelope()).getRecord());
+          }
+          break;
+        case PARTIAL_UPDATE:
+          if (requestContext.isReturnEntityMethod())
+          {
+            validateSingleResponse(validator, ((PartialUpdateResponseEnvelope) responseData.getResponseEnvelope()).getRecord());
           }
           break;
         case GET_ALL:
@@ -324,7 +324,7 @@ public class RestLiValidationFilter implements Filter
     // Make sure the request is for one of the methods to be validated and has either null or a non-empty projection
     // mask. For context, null projection mask means everything is projected while an empty projection mask means
     // nothing is projected. So the validation can be skipped when an empty projection mask is specified.
-    return METHODS_VALIDATED_ON_RESPONSE.contains(requestContext.getMethodType()) &&
+    return RestLiDataValidator.METHODS_VALIDATED_ON_RESPONSE.contains(requestContext.getMethodType()) &&
         (projectionMask == null || !projectionMask.getDataMap().isEmpty());
   }
 

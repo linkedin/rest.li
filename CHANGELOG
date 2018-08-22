@@ -1,6 +1,7 @@
 23.0.20
 -------
-
+(RB=1344653)
+Support returning the entity for PARTIAL_UPDATE resource methods
 
 23.0.19
 -------

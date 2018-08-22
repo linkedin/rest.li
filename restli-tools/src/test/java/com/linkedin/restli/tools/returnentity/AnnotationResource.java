@@ -17,8 +17,10 @@
 package com.linkedin.restli.tools.returnentity;
 
 
+import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.server.BatchCreateKVResult;
 import com.linkedin.restli.server.CreateKVResponse;
+import com.linkedin.restli.server.UpdateEntityResponse;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.annotations.RestMethod;
 import com.linkedin.restli.server.annotations.ReturnEntity;
@@ -44,6 +46,13 @@ public class AnnotationResource implements KeyValueResource<Long, ReturnMe>
   @RestMethod.BatchCreate
   @ReturnEntity
   public BatchCreateKVResult<Long, ReturnMe> batchCreate()
+  {
+    return null;
+  }
+
+  @RestMethod.PartialUpdate
+  @ReturnEntity
+  public UpdateEntityResponse<ReturnMe> update(Long id, PatchRequest<ReturnMe> patch)
   {
     return null;
   }

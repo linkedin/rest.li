@@ -1142,7 +1142,7 @@ public class TestRestLiCallback
         // filter. Verify incoming data.
         assertEquals(responseContext.getResponseData().getStatus(), HttpStatus.S_500_INTERNAL_SERVER_ERROR);
 
-        switch (ResponseType.fromMethodType(resourceMethod))
+        switch (ResponseTypeUtil.fromMethodType(resourceMethod))
         {
           case SINGLE_ENTITY:
             assertNull(responseContext.getResponseData().getRecordResponseEnvelope().getRecord());
