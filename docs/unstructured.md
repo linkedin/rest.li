@@ -5,7 +5,7 @@ permalink: /start/unstructured
 index: 1
 ---
 
-# Quick Start: Unstructured Data in Rest.li
+#  Unstructured Data in Rest.li Quick Start
 
 ## Contents
 
@@ -15,12 +15,12 @@ index: 1
  - [Recap](#recap)
 
 ## Introduction
-This tutorial demonstrates how to serve unstructured binary data, such as blob, in a Rest.li server. We’ll define a Rest.li resource that responds with fortune reports (in PDF format) for GET requests and show you how to consume the GET response from a HTTP client.
+This tutorial demonstrates how to serve unstructured binary data, such as Binary Large Object (BLOB), in a Rest.li server. We’ll define a Rest.li resource that responds with fortune reports (in PDF format) for GET requests and show you how to consume the GET response from a HTTP client.
 
-This tutorial assumes that you already have a working Rest.li server. Otherwise, please follow the [Rest.li Quickstart](/rest.li/get_started/quick_start) before you continue.
+This tutorial assumes that you already have a working Rest.li server. Otherwise, follow the [Rest.li Quick Start Guide](/rest.li/get_started/quick_start) before you continue.
 
 ## Serve Unstructured Data
-We start by defining a resource class on the server side by extending the provided CollectionUnstructuredDataResourceTemplate with the generic type of our resource key as String. Notice that, different from a regular Rest.li resource interface/template that also requires a value type, an unstructured data resource doesn’t require one. Next, we annotate the resource with @RestLiCollection and specify the required resource name and namespace.
+We start by defining a resource class on the server side by extending the provided CollectionUnstructuredDataResourceTemplate with the generic type of our resource key as String. Notice that, different from a regular Rest.li resource interface/template that also requires a value type, an unstructured data resource doesn’t require one. Next, we annotate the resource with @RestLiCollection and specify the required resource name and namespace:
 
 ```
 @RestLiCollection(name = "fortuneReports", namespace = "com.example.fortune")
@@ -41,7 +41,7 @@ We then implement the GET method simply by overriding from the template class. W
 UnstructuredDataWriter provides a setter for the required Content-Type header and an OutputStream instance for writing the binary data that goes into the response content. The final response will then be sent to the client after the GET method is successfully returned.
 
 ## Consume Unstructured Data
-The response wire format contains the Content-Type header and content payload exactly as they were specified in the GET method without any alterations from Rest.li framework. That means the response can be consumed directly by any http client with no special client-side handling required.
+The response wire format contains the Content-Type header and content payload exactly as they were specified in the GET method without any alterations from the Rest.li framework. This means the response can be consumed directly by any HTTP client with no special client-side handling required.
 
 Example: Using the GET endpoint in a HTML anchor
 
@@ -61,10 +61,10 @@ Content-Length: 5
 Content: <<< binary data of the PDF report >>>
 ```
 
-Currently, Rest.li client doesn’t have support for unstructured data resource. Request builders aren’t generated for unstructured data resources.
+Currently, the Rest.li client doesn’t have support for unstructured data resource. Request builders aren’t generated for unstructured data resources.
 
 
 ## Recap
-As you can see, serving unstructured data in Rest.li is very easy. Defining a resource for unstructured data is similar to how you define a regular Rest.li resource for Records, except that, instead of returning records, you respond with writing the data to an OutputStream.
+As you can see, serving unstructured data in Rest.li is very easy. Defining a resource for unstructured data is similar to how you define a regular Rest.li resource for Records with one exception. Instead of returning records, you respond with writing the data to an OutputStream.
 
-You can learn more about unstructured data support in [Rest.li User Guide](rest.li/user_guide/restli_server).
+You can learn more about unstructured data support in [Rest.li User Guide](/rest.li/user_guide/restli_server).

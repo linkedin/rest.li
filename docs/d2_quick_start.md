@@ -4,12 +4,12 @@ title: Dynamic discovery
 permalink: /start/d2_quick_start
 index: 1
 ---
-# Dynamic discovery quickstart 
+# Dynamic Discovery Quick Start 
 
 In this tutorial, we will explain the basic concepts of D2 using a
 simple client server project. [Apache
 Zookeeper](http://zookeeper.apache.org/) is required for doing this
-tutorial. The completed code for this tutorial is available in rest.li’s
+tutorial. The completed code for this tutorial is available in Rest.li’s
 examples/d2-quickstart.
 
 Contents:
@@ -25,32 +25,31 @@ Contents:
 
 Imagine we have a Service Oriented Architecture. Let’s say we have
 hundreds of servers. Each server can host different set of services.
-Some of those services maybe partitioned so a server may belong to some
+Some of those services may be partitioned, so a server may belong to some
 specific partitions for those services. We use D2 to store information
 about which server can serve what service. So this means with D2, a
 client requesting a particular service doesn’t need to know where the
 physical servers are. The client can ask D2 to route a request to the
-right server. So D2 is similar to DNS in some ways. At the core, what D2
-does is nothing but a layer of indirection between a client and a
-server. But D2 supports many other goodies like client side load
-balancing, partitioning and multi-data-center routing.
+right server. D2 is similar to DNS in some ways. At the core, D2 is a layer of indirection between a client and a
+server. However, D2 supports many other goodies like client side load
+balancing, partitioning, and multi-data-center routing.
 
 Our smallest unit of indirection is called a **service**. A service can
-be a URL endpoint, a restli resource, it can be anything as long as the
-name of the service *unique*. A collection of services is called a
+be a URL endpoint, a Rest.li resource, or anything else as long as the
+name of the service is *unique*. A collection of services is called a
 **cluster**. A service that belongs to one cluster cannot belong to a
 different cluster. A cluster has *one-to-many* relationship to a
 service. All this information about clusters and services is stored in
-zookeeper.
+Zookeeper.
 
-A server joins a cluster by creating an ephemeral node in zookeeper.
-When a server dies, zookeeper will notice because the heart beat message
-is not refreshed, then the ephemeral node is automatically removed.
+A server joins a cluster by creating an ephemeral node in Zookeeper.
+When a server dies, Zookeeper will notice because the heart beat message
+is not refreshed. Then, the ephemeral node is automatically removed.
 
-A client attempting to send request to a service first consults
-zookeeper to find out which cluster owns the service. Then the client
-queries zookeeper for all the ephemeral nodes (servers) for that
-cluster. Given a list of ephemeral node, the client will deliberately
+A client attempting to send a request to a service first consults
+Zookeeper to find out which cluster owns the service. Then, the client
+queries Zookeeper for all the ephemeral nodes (servers) for that
+cluster. Given a list of ephemeral nodes, the client will deliberately
 choose a server to send the request to.
 
 That is all you need to know about D2 in a nutshell.
@@ -66,18 +65,18 @@ for our build process. The top level structure of our project will have
     /config
 
 You also need a settings.gradle and build.gradle file in the root
-directory.  
+directory. 
 
-— For settings.gradle —
+For settings.gradle:
 
     include 'server'
     include 'client'
     include 'config'
 
+This will tell gradle that gradle should search for `server`, `client`,
+`config` directories and mark them as part of the project.
 
-This will tell gradle that gradle should search for ‘server’, ‘client’,
-‘config’ directories and mark them as part of the project.  
-— For build.gradle —
+For build.gradle:
 
     allprojects {
         apply plugin: 'idea'
@@ -102,12 +101,12 @@ This will tell gradle that gradle should search for ‘server’, ‘client’,
     }
 
 This tells gradle that it should use pegasus artifact version 1.20.0
-from maven central repository. This also tells gradle we have
+from the maven central repository. This also tells gradle we have
 dependencies to r2 and d2 libraries.
 
 ## Step 1. Create a Server
 
-Create the following project structure in the ‘server’ sub-directory:
+Create the following project structure in the `server` sub-directory:
 
   - **d2-quickstart/**
       - **client/**
@@ -126,11 +125,11 @@ Create the following project structure in the ‘server’ sub-directory:
                   - **config/**
                       - **server.json**
 
-In this example we are creating an echo server to illustrate a real
-production server. The echo server always returns http status code 200
+In this example, we are creating an echo server to illustrate a real
+production server. The echo server always returns HTTP status code 200
 and prints to stdout when a request comes in.
 
-First we add our compile dependencies to the server’s build.gradle
+First, we add our compile dependencies to the server’s build.gradle:
 
     apply plugin: 'java'
     
@@ -141,7 +140,7 @@ First we add our compile dependencies to the server’s build.gradle
     }
     
 
-Here is the implementation of the echo server
+Here is the implementation of the echo server:
 
     package com.example.d2.server;
     
@@ -332,12 +331,12 @@ content of server.json:
         "announcerShutdownTimeout" : 5000
     }
 
-In the configuration above we have 6 echo servers and 6 d2 announcers.
-The first 3 echo servers belong to RecommendationService and the
+In the configuration, above we have 6 echo servers and 6 d2 announcers.
+The first 3 echo servers belong to RecommendationService, and the
 remaining echo servers belong to NewsService.
 
 Finally, we add the task of running this server to the server’s
-build.gradle.
+build.gradle:
 
     
     task runServer(type: JavaExec) {
@@ -347,9 +346,10 @@ build.gradle.
     }
     
 
-In order to run the server you run this command  
+In order to run the server, you run this command:
 
-```../../gradlew runServer```
+```../../gradlew runServer
+```
 
 ## Step 2. Create a Config Runner
 
@@ -818,7 +818,7 @@ Here’s our client.json:
     }
     
 
-Now we are ready to add the following task to build.gradle
+Now we are ready to add the following task to build.gradle:
 
     
     task runClient(type: JavaExec) {
@@ -829,18 +829,20 @@ Now we are ready to add the following task to build.gradle
     
 
 To run the client, run the following command in a different terminal
-console: ../../gradlew runClient
+console: 
+
+    ../../gradlew runClient
 
 # Next Steps
 
-Congratulations\! You have finished this tutorial. Now you can build
-your own d2 client/server applications. Next, you can learn the advanced
+Congratulations! You have finished this tutorial. Now you can build
+your own D2 client/server applications. Next, you can learn the advanced
 features of D2 examples like the following:
 
-  - Partitioning and sticky routing. 
-  - Tuning load balancer.
+  - Partitioning and sticky routing
+  - Tuning load balancer
   - Overriding client properties
-  - and many more.
+  - And many more
 
-To do so, please check out the examples in restli source code. Go to
+To do so, check out the examples in the Res.tli source code. Go to
 [/example/d2-advanced-examples](https://github.com/linkedin/rest.li/tree/master/examples/d2-advanced-example).

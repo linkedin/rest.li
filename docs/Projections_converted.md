@@ -4,6 +4,8 @@ title: Projections
 permalink: /Projections
 ---
 
+# Projections
+
 ## Contents
 
   - [Motivation](#motivation)
@@ -90,17 +92,18 @@ agnostic.
 Positive mask is a JSON object, with number 1 assigned to selected
 fields, for example:
 
-    ```{
-      "person": {
-        "phone": 1,
-        "firstname": 1,
-        "lastname": 1,
-        "current_position": {
-          "job_title": 1
-        }
-      }
+```
+{
+  "person": {
+    "phone": 1,
+    "firstname": 1,
+    "lastname": 1,
+    "current_position": {
+      "job_title": 1
     }
-    ```
+  }
+}
+```
 
 is a mask, which selects only phone, first name, last name and current
 position’s job title from User Profile.
@@ -110,12 +113,13 @@ position’s job title from User Profile.
 Negative mask is a JSON object, with number 0 assigned to selected
 fields, for example:
 
-    ```{
-      "profile": {
-        "phone": 0
-      }
-    }
-    ```
+```
+{
+  "profile": {
+    "phone": 0
+  }
+}
+```
 
 is a mask, which hides phone number in the User Profile.
 
@@ -125,14 +129,15 @@ is a mask, which hides phone number in the User Profile.
 
 Syntax for array is the following:
 
-    ```"array_field": {
-        "$start": 10,
-        "$count": 15,
-        "$*": {
-          (...)
-        }
-      }
-    ```
+```
+"array_field": {
+  "$start": 10,
+  "$count": 15,
+  "$*": {
+    (...)
+  }
+}
+```
 
 where $\* is a wildcard mask, applied to every element in Array. $start
 and $count are optional fields which specify range of array that will be
@@ -153,13 +158,15 @@ If mask contains only $count, then $start is implicitly evaluated to 0.
 
 If entire array needs to be masked, then syntax is simply:
 
-    ```"array_field": 1
-    ```
+```
+"array_field": 1
+```
 
 for positive mask or
 
-    ```"array_field": 0
-    ```
+```
+"array_field": 0
+```
 
 for negative mask.
 
@@ -167,19 +174,20 @@ for negative mask.
 
 Syntax for the map is the following:
 
-    ```"map_field": {
-          "$*": {
-            /* mask for every values in the map */
-          },
-          "key1": {
-            /* mask for value of key1 */
-          },
-          "key2": {
-            /* mask for value of key1 */
-          }
-        }
-      }
-    ```
+```
+"map_field": {
+    "$*": {
+      /* mask for every values in the map */
+    },
+    "key1": {
+      /* mask for value of key1 */
+    },
+    "key2": {
+      /* mask for value of key1 */
+    }
+  }
+}
+```
 
 where $\* is a wildcard mask, applied to every value in Map.
 
@@ -190,31 +198,35 @@ semantics of mask composition.
 
 If entire value for a specific key needs to be masked, syntax is:
 
-    ```"map_field": {
-      "key1": 1,
-      "key2": 1
-    }
-    ```
+```
+"map_field": {
+  "key1": 1,
+  "key2": 1
+}
+```
 
 for positive mask and:
 
-    ```"map_field": {
-      "key1": 0,
-      "key2": 0
-    }
-    ```
+```
+"map_field": {
+  "key1": 0,
+  "key2": 0
+}
+```
 
 for negative mask.
 
 Finally, if entire map needs to be masked, syntax is:
 
-    ```"map_field": 1
-    ```
+```
+"map_field": 1
+```
 
 for positive mask and:
 
-    ```"map_field": 0
-    ```
+```
+"map_field": 0
+```
 
 for negative mask.
 
@@ -226,10 +238,11 @@ special semantics. In order to be able to represent mask for fields,
 which names start with ‘$’ character, ‘$’ character is escaped in all
 field names e.g.:
 
-    ```{
-      "$$field": 1
-    }
-    ```
+```
+{
+  "$$field": 1
+}
+```
 
   
 is a mask, which selects only field with name “$field”.
@@ -307,29 +320,32 @@ For example, composition of two positive masks:
 
 mask1:
 
-    ```{
-      "a": 1,
-      "c": 1
-    }
-    ```
+```
+{
+  "a": 1,
+  "c": 1
+}
+```
 
 mask2:
 
-    ```{
-      "b": 1,
-      "d": 1
-    }
-    ```
+```
+{
+  "b": 1,
+  "d": 1
+}
+```
 
 composition of mask1 and mask2:
 
-    ```{
-      "a": 1,
-      "b": 1,
-      "c": 1,
-      "d": 1
-    }
-    ```
+```
+{
+  "a": 1,
+  "b": 1,
+  "c": 1,
+  "d": 1
+}
+```
 
 Case of array’s $start and $count meta-fields requires extra
 explanation. Since $start and $count are treated as a positive mask, for
@@ -338,73 +354,79 @@ smallest range that contains both ranges:
 
 mask1:
 
-    ```"array_field": {
-        "$start": 15,
-        "$count": 20,
-        "$*": {
-          (...)
-        }
-      }
-    ```
+```
+"array_field": {
+  "$start": 15,
+  "$count": 20,
+  "$*": {
+    (...)
+  }
+}
+```
 
 mask2:
 
-    ```"array_field": {
-        "$start": 20,
-        "$count": 30,
-        "$*": {
-          (...)
-        }
-      }
-    ```
+```
+"array_field": {
+  "$start": 20,
+  "$count": 30,
+  "$*": {
+    (...)
+  }
+}
+```
 
 composition of mask1 and mask2:
 
-    ```"array_field": {
-        "$start": 15,
-        "$count": 35,
-        "$*": {
-          /* composition of masks from mask1 and mask2 */
-          (...)
-        }
-      }
-    ```
+```
+"array_field": {
+  "$start": 15,
+  "$count": 35,
+  "$*": {
+    /* composition of masks from mask1 and mask2 */
+    (...)
+  }
+}
+```
 
 another example, when ranges are disjoint:
 
 mask1:
 
-    ```"array_field": {
-        "$start": 10
-        "$count": 5,
-        "$*": {
-          (...)
-        }
-      }
-    ```
+```
+"array_field": {
+  "$start": 10
+  "$count": 5,
+  "$*": {
+    (...)
+  }
+}
+```
 
 mask2:
 
-    ```"array_field": {
-        "$start": 20,
-        "$count": 5,
-        "$*": {
-          (...)
-        }
-      }
-    ```
+```
+"array_field": {
+  "$start": 20,
+  "$count": 5,
+  "$*": {
+    (...)
+  }
+}
+```
 
 composition of mask1 and mask2:
 
-    ```"array_field": {
-        "$start": 10,
-        "$count": 15,
-        "$*": {
-          /* composition of masks from mask1 and mask2 */
-          (...)
-        }
-      }
-    ```
+```
+"array_field": {
+  "$start": 10,
+  "$count": 15,
+  "$*": {
+    /* composition of masks from mask1 and mask2 */
+    (...)
+  }
+}
+```
 
 #### Masks of different kinds
 
@@ -424,40 +446,44 @@ in an object after applying mask, - means that field is missing):
 | 1             | \-            | v      |
 | 1             | 0             | \-     |
 
-Few examples:
+Here's a few examples.
 
 mask1 (positive):
 
-    ```{
-      "a": 1,
-      "b": 1
-    }
-    ```
+```
+{
+  "a": 1,
+  "b": 1
+}
+```
 
 mask2 (negative):
 
-    ```{
-      "b": 0,
-      "c": 0
-    }
-    ```
+```
+{
+  "b": 0,
+  "c": 0
+}
+```
 
 input object:
 
-    ```{
-      "a": "value1",
-      "b": "value2",
-      "c": "value3",
-      "d": "value4"
-    }
-    ```
+```
+{
+  "a": "value1",
+  "b": "value2",
+  "c": "value3",
+  "d": "value4"
+}
+```
 
 result after applying composition of mask1 and mask2:
 
-    ```{
-      "a": "value1"
-    }
-    ```
+```
+{
+  "a": "value1"
+}
+```
 
 #### Composition of simple mask with complex mask
 
@@ -470,44 +496,49 @@ Since negative mask (0) has the higher priority than positive mask, then
 result of composition of mask equal to 0 with any other mask is 0 e.g.
 composition of mask:
 
-    ```{
-      "a": 0
-    }
-    ```
+```
+{
+  "a": 0
+}
+```
 
 with
 
-    ```{
-      "a": {
-        "$*": 1
-        "b": 0,
-      }
-    }
-    ```
+```
+{
+  "a": {
+    "$*": 1
+    "b": 0,
+  }
+}
+```
 
 is equal to:
 
-    ```{
-      "a": 0
-    }
-    ```
+```
+{
+  "a": 0
+}
+```
 
 ##### Composition of positive mask 1 with complex mask
 
 The semantics of positive mask is: select this field and all it’s
 children. Hence, the following two masks are semantically equivalent:
 
-    ```{
-      "a": 1
-    }
-    ```
+```
+{
+  "a": 1
+}
+```
 
-    ```{
-      "a": {
-        "$*": 1
-      }
-    }
-    ```
+```
+{
+  "a": {
+    "$*": 1
+  }
+}
+```
 
 In other words, positive mask is recursive. If positive mask was not
 recursive, then it would not be possible to express the following
@@ -517,61 +548,67 @@ of all available fields in field “a”.
 Composition of positive mask with a complex mask propagates positive
 mask recursively e.g. composition of:
 
-    ```{
-      "a": 1
-    }
-    ```
+```
+{
+  "a": 1
+}
+```
 
 with:
 
-    ```{
-      "a": {
-        "b": 0
-      }
-    }
-    ```
+```
+{
+  "a": {
+    "b": 0
+  }
+}
+```
 
 yields result:
 
-    ```{
-      "a": {
-        "$*": 1,
-        "b": 0
-      }
-    }
-    ```
+```
+{
+  "a": {
+    "$*": 1,
+    "b": 0
+  }
+}
+```
 
 If complex mask already contains wildcard mask, then $\*=1 is
 recursively pushed down to the wildcard of the wildcard e.g. composition
 of positive mask:
 
-    ```{
-      "profile": 1
-    }
-    ```
+```
+{
+  "profile": 1
+}
+```
 
 with negative mask:
 
-    ```{
-      "profile": {
-        "$*": {
-          "password": 0
-        }
-      }
+```
+{
+  "profile": {
+    "$*": {
+      "password": 0
     }
-    ```
+  }
+}
+```
 
 yields result:
 
-    ```{
-      "profile": {
-        "$*": {
-          "$*": 1,
-          "password": 0
-        }
-      }
+```
+{
+  "profile": {
+    "$*": {
+      "$*": 1,
+      "password": 0
     }
-    ```
+  }
+}
+```
 
 The reason why pushing down the $\*=1 mask preserves correct semantics
 is because simple mask 1 is equivalent to the complex mask: { “$\*”: 1
@@ -579,19 +616,21 @@ is because simple mask 1 is equivalent to the complex mask: { “$\*”: 1
 
 It means that the following masks are equivalent:
 
-    ```{
-      "a": 1
-    }
-    ```
+```
+{
+  "a": 1
+}
+```
 
 and
 
-    ```{
-      "a": {
-        "$*": 1
-      }
-    }
-    ```
+```
+{
+  "a": {
+    "$*": 1
+  }
+}
+```
 
 #### Mask composition properties
 
@@ -602,25 +641,28 @@ operation. Consider the following example:
 
 mask1:
 
-    ```{
-      "a": 1
-    }
-    ```
+```
+{
+  "a": 1
+}
+```
 
 mask2:
 
-    ```{
-      "b": 1
-    }
-    ```
+```
+{
+  "b": 1
+}
+```
 
 input object:
 
-    ```{
-      "a": "value1",
-      "b": "value2"
-    }
-    ```
+```
+{
+  "a": "value1",
+  "b": "value2"
+}
+```
 
 If we first compose masks and apply mask obtained from composition on
 input object the result will contain both fields “a” and “b”. However,
@@ -665,24 +707,27 @@ experimenting, debugging and so on.
 
 For example, the following JSON positive mask:
 
-    ```{
-      "person": {
-        "firstname": 1,
-        "lastname": 1
-      }
-    }
-    ```
+```
+{
+  "person": {
+    "firstname": 1,
+    "lastname": 1
+  }
+}
+```
 
 would translate to the following expression:
 
-    ```:(person:(firstname,lastname))
-    ```
+```
+:(person:(firstname,lastname))
+```
 
 Projections are passed as a value of ‘fields’ request parameter in URL
 e.g.
 
-    ```http://host:port/context/resource/id?fields=person:(firstname,lastname)
-    ```
+```
+http://host:port/context/resource/id?fields=person:(firstname,lastname)
+```
 
 Please note that, as mentioned above, negative projections **should
 not** be used.
@@ -691,50 +736,55 @@ not** be used.
 
 The syntax for array representation is the following:
 
-    ```"array_field": {
-        "$start": 10,
-        "$count": 15,
-        "$*": {
-          "field1": 1,
-          "field2": 1
-        }
-      }
-    ```
+```
+"array_field": {
+"$start": 10,
+"$count": 15,
+"$*": {
+  "field1": 1,
+  "field2": 1
+  }
+}
+```
 
 will be represented as:
 
-    ```array_field:($*:(field1,field2),$start=10,$count=15)
-    ```
+```
+array_field:($*:(field1,field2),$start=10,$count=15)
+```
 
 ### Map
 
 The syntax for map representation follows similarity between Object and
 Map data structure. The syntax is the following, for mask on map:
 
-    ```"map_field": {
-          "$*": {
-            "field1": 1
-          },
-          "key1": {
-            "field2": 1
-          },
-          "key2": {
-            "field3": 1
-          }
-        }
-      }
-    ```
+```
+ "map_field": {
+    "$*": {
+      "field1": 1
+    },
+    "key1": {
+      "field2": 1
+    },
+    "key2": {
+      "field3": 1
+    }
+  }
+}
+```
 
 will be represented as:
 
-    ```map_field:($*:(field1),key1:(field2),key2:(field3))
-    ```
+```
+map_field:($*:(field1),key1:(field2),key2:(field3))
+```
 
 ## Client API
 
 Java client should use helper classes in:
 
-    ```com.linkedin.data.transform.filter.request
-    ```
+```
+com.linkedin.data.transform.filter.request
+```
 
 to build and manipulate projections.

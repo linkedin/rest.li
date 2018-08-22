@@ -5,7 +5,7 @@ permalink: /start/step_by_step
 index: 1
 ---
 
-# Step by Step Tutorial
+# Tutorial to Create a Server and Client
 
 ## Contents
 

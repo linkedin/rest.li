@@ -5,7 +5,7 @@ permalink: /get_started/quick_start
 index: 1
 ---
 
-# Quick Start Guide
+# Rest.li Quick Start Guide
 
 ## Contents
 
