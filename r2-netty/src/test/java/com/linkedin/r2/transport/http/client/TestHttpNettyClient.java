@@ -37,6 +37,7 @@ import com.linkedin.r2.transport.http.client.rest.HttpNettyClient;
 import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
 import com.linkedin.util.clock.SettableClock;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelException;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.handler.codec.EncoderException;
 import io.netty.handler.codec.TooLongFrameException;
@@ -367,7 +368,7 @@ public class TestHttpNettyClient
     }
     catch (ExecutionException ex)
     {
-      verifyCauseChain(ex, RemoteInvocationException.class, EncoderException.class, IllegalArgumentException.class);
+      verifyCauseChain(ex, RemoteInvocationException.class, ChannelException.class, EncoderException.class, IllegalArgumentException.class);
     }
     testServer.shutdown();
   }

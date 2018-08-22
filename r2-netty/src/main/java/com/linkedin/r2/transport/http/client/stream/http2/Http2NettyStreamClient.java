@@ -34,6 +34,7 @@ import com.linkedin.r2.transport.http.client.TimeoutAsyncPoolHandle;
 import com.linkedin.r2.transport.http.client.TimeoutTransportCallback;
 import com.linkedin.r2.transport.http.client.common.CertificateHandler;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManager;
+import com.linkedin.r2.transport.http.client.common.ErrorChannelFutureListener;
 import com.linkedin.r2.transport.http.client.common.ssl.SslSessionValidator;
 import com.linkedin.r2.transport.http.client.stream.AbstractNettyStreamClient;
 import com.linkedin.r2.transport.http.client.stream.SslHandshakeTimingHandler;
@@ -171,7 +172,7 @@ public class Http2NettyStreamClient extends AbstractNettyStreamClient
 
       // here we want the exception in outbound operations to be passed back through pipeline so that
       // the user callback would be invoked with the exception and the channel can be put back into the pool
-      channel.writeAndFlush(request).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
+      channel.writeAndFlush(request).addListener(new ErrorChannelFutureListener());
     }
 
     @Override

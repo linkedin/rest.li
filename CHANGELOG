@@ -6,6 +6,9 @@ Add "$returnEntity" query parameter to support returning the entity on demand
 (RB=1392687)
 Added $reorder command for array items to Rest.li patch format.
 
+(RB=1399487)
+Log channel inception time when exception is thrown during writeAndFlush
+
 23.0.15
 -------
 (RB=1394375)

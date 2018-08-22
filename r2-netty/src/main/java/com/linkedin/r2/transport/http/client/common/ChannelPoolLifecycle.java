@@ -28,12 +28,15 @@ import com.linkedin.r2.transport.http.client.AsyncPool;
 import com.linkedin.r2.transport.http.client.AsyncPoolLifecycleStats;
 import com.linkedin.r2.transport.http.client.PoolStats;
 import com.linkedin.r2.transport.http.client.stream.http.HttpNettyStreamClient;
+import com.linkedin.util.clock.Clock;
+import com.linkedin.util.clock.SystemClock;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.group.ChannelGroup;
+import io.netty.util.AttributeKey;
 
 import java.net.ConnectException;
 import java.net.SocketAddress;
@@ -48,6 +51,8 @@ import org.slf4j.LoggerFactory;
 public class ChannelPoolLifecycle implements AsyncPool.Lifecycle<Channel>
 {
   private static final Logger LOG = LoggerFactory.getLogger(ChannelPoolLifecycle.class);
+
+  public static final AttributeKey<Long> CHANNEL_CREATION_TIME_KEY = AttributeKey.valueOf("channelCreationTime");
 
   /**
    * Maximum period in ms between retries for creating a channel in back-off policies
@@ -65,6 +70,8 @@ public class ChannelPoolLifecycle implements AsyncPool.Lifecycle<Channel>
    * being tracked for performance reasons.
    */
   private static final AsyncPoolLifecycleStats DEFAULT_LIFECYCLE_STATS = new AsyncPoolLifecycleStats(0D, 0L, 0L, 0L);
+
+  private final Clock _clock = SystemClock.instance();
 
   private final SocketAddress _remoteAddress;
   private final Bootstrap _bootstrap;
@@ -86,6 +93,7 @@ public class ChannelPoolLifecycle implements AsyncPool.Lifecycle<Channel>
       if (channelFuture.isSuccess())
       {
         Channel c = channelFuture.channel();
+        c.attr(CHANNEL_CREATION_TIME_KEY).set(_clock.currentTimeMillis());
         if (_tcpNoDelay)
         {
           c.config().setOption(ChannelOption.TCP_NODELAY, true);
