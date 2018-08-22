@@ -35,6 +35,11 @@
     "java" : {
       "class" : "com.linkedin.restli.examples.custom.types.CustomLong"
     }
+  }, {
+    "type" : "typeref",
+    "name" : "UnionRefInline",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "ref" : [ "int", "string" ]
   } ],
   "schema" : {
     "name" : "customTypes2",
@@ -49,7 +54,12 @@
       },
       "supports" : [ "batch_create", "batch_delete", "batch_get", "batch_partial_update", "batch_update", "create", "get" ],
       "methods" : [ {
-        "method" : "create"
+        "method" : "create",
+        "parameters" : [ {
+          "name" : "unionRefParam",
+          "type" : "com.linkedin.restli.examples.typeref.api.UnionRefInline",
+          "optional" : true
+        } ]
       }, {
         "method" : "get"
       }, {

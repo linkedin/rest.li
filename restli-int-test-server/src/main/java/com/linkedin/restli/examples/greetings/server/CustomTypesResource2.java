@@ -16,18 +16,11 @@
 
 package com.linkedin.restli.examples.greetings.server;
 
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.examples.custom.types.CustomLong;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.typeref.api.CustomLongRef;
+import com.linkedin.restli.examples.typeref.api.UnionRefInline;
 import com.linkedin.restli.server.BatchCreateRequest;
 import com.linkedin.restli.server.BatchCreateResult;
 import com.linkedin.restli.server.BatchDeleteRequest;
@@ -36,8 +29,16 @@ import com.linkedin.restli.server.BatchUpdateRequest;
 import com.linkedin.restli.server.BatchUpdateResult;
 import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.UpdateResponse;
+import com.linkedin.restli.server.annotations.Optional;
+import com.linkedin.restli.server.annotations.QueryParam;
 import com.linkedin.restli.server.annotations.RestLiCollection;
+import com.linkedin.restli.server.annotations.RestMethod;
 import com.linkedin.restli.server.resources.CollectionResourceTemplate;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -103,8 +104,8 @@ public class CustomTypesResource2 extends CollectionResourceTemplate<CustomLong,
     return new BatchUpdateResult<CustomLong, Greeting>(results);
   }
 
-  @Override
-  public CreateResponse create(final Greeting greeting)
+  @RestMethod.Create
+  public CreateResponse create(final Greeting greeting, @QueryParam(value="unionRefParam") @Optional UnionRefInline unionRef)
   {
     // just echo back the provided id (for testing only, this would not a be correct implementation of POST)
     return new CreateResponse(new CustomLong(greeting.getId()));

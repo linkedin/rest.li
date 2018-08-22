@@ -369,7 +369,7 @@ public class ResourceModelEncoder
     else if (dataSchema instanceof UnionDataSchema && HasTyperefInfo.class.isAssignableFrom(type))
     {
       final TyperefInfo unionRef = DataTemplateUtil.getTyperefInfo(type.asSubclass(DataTemplate.class));
-      schemaToEncode = unionRef.getSchema();
+      return unionRef.getSchema().getFullName();
     }
     else
     {

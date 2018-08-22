@@ -50,7 +50,7 @@
         "default" : "\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000B\f\r\u000E\u000F\u0010"
       }, {
         "name" : "union",
-        "type" : "\"com.linkedin.restli.examples.typeref.api.Union\"",
+        "type" : "com.linkedin.restli.examples.typeref.api.Union",
         "default" : "{\"string\": \"I'm String\"}"
       }, {
         "name" : "unionArray",

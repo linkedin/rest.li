@@ -1,6 +1,7 @@
 23.0.17
 -------
-
+(RB=1399099)
+Avoid double encoding typeref names in resource model encoder.
 
 23.0.16
 -------
