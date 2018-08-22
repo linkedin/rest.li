@@ -14,22 +14,22 @@
    limitations under the License.
  */
 
-/**
- * $Id: $
- */
-
 package com.linkedin.restli.internal.server.methods.arguments;
 
 
 import com.linkedin.data.DataMap;
 import com.linkedin.restli.common.PatchRequest;
+import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.server.BatchPatchRequest;
 import com.linkedin.restli.server.RestLiRequestData;
 import com.linkedin.restli.server.RestLiRequestDataImpl;
 
+import com.linkedin.restli.server.util.UnstructuredDataUtil;
 import java.util.Map;
 import java.util.Set;
+
+import static com.linkedin.restli.internal.server.methods.arguments.ArgumentBuilder.checkEntityNotNull;
 
 
 /**
@@ -54,19 +54,27 @@ public class BatchPatchArgumentBuilder implements RestLiArgumentBuilder
   @Override
   public RestLiRequestData extractRequestData(RoutingResult routingResult, DataMap dataMap)
   {
-    Set<?> ids = routingResult.getContext().getPathKeys().getBatchIds();
-    @SuppressWarnings({ "rawtypes" })
-    Map inputMap =
-        ArgumentBuilder.buildBatchRequestMap(routingResult,
-                                             dataMap,
-                                             PatchRequest.class,
-                                             ids);
-
     final RestLiRequestDataImpl.Builder builder = new RestLiRequestDataImpl.Builder();
-    if (inputMap != null)
+    Set<?> ids = routingResult.getContext().getPathKeys().getBatchIds();
+    // No entity for unstructured data requests
+    if (UnstructuredDataUtil.isUnstructuredDataRouting(routingResult))
     {
-      builder.batchKeyEntityMap(inputMap);
+      if (ids != null)
+      {
+        builder.batchKeys(ids);
+      }
+      return builder.build();
     }
-    return builder.build();
+    else
+    {
+      checkEntityNotNull(dataMap, ResourceMethod.BATCH_PARTIAL_UPDATE);
+      @SuppressWarnings({"rawtypes"})
+      Map inputMap = ArgumentBuilder.buildBatchRequestMap(routingResult, dataMap, PatchRequest.class, ids);
+      if (inputMap != null)
+      {
+        builder.batchKeyEntityMap(inputMap);
+      }
+      return builder.build();
+    }
   }
 }

@@ -14,15 +14,12 @@
    limitations under the License.
  */
 
-/**
- * $Id: $
- */
-
 package com.linkedin.restli.internal.server.methods.arguments;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.util.ArgumentUtils;
 import com.linkedin.restli.server.RestLiRequestData;
@@ -30,6 +27,8 @@ import com.linkedin.restli.server.RestLiRequestDataImpl;
 import com.linkedin.restli.server.util.UnstructuredDataUtil;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.linkedin.restli.internal.server.methods.arguments.ArgumentBuilder.checkEntityNotNull;
 
 
 /**
@@ -69,6 +68,7 @@ public class UpdateArgumentBuilder implements RestLiArgumentBuilder
     // Unstructured data is not available in the Rest.Li filters
     if (!UnstructuredDataUtil.isUnstructuredDataRouting(routingResult))
     {
+      checkEntityNotNull(dataMap, ResourceMethod.UPDATE);
       RecordTemplate record = DataTemplateUtil.wrap(dataMap, ArgumentUtils.getValueClass(routingResult));
       builder.entity(record);
     }

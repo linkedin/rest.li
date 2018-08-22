@@ -188,7 +188,7 @@ abstract class BaseRestLiServer
     catch (Exception e)
     {
       // would not trigger response filters because request filters haven't run yet
-      callback.onError(e);
+      callback.onError(buildPreRoutingError(e, request));
       return;
     }
 

@@ -1,7 +1,13 @@
+23.0.18
+-------
+
 23.0.17
 -------
 (RB=1399099)
 Avoid double encoding typeref names in resource model encoder.
+
+(RB=1399474)
+Fix bug introduced in 22.0.0 during the server refactor which results in NPE for empty request body.
 
 23.0.16
 -------

@@ -170,12 +170,19 @@ public class RestLiArgumentBuilderTestHelper
     return getMockResourceMethodDescriptor(model, getResourceModelCount, paramList, null);
   }
 
-  public static ResourceMethodDescriptor getMockResourceMethodDescriptor(ResourceModel model, int getResourceModelCount, List<Parameter<?>> paramList, Method method)
+  public static ResourceMethodDescriptor getMockResourceMethodDescriptor(ResourceModel model, Integer getResourceModelCount, List<Parameter<?>> paramList, Method method)
   {
     ResourceMethodDescriptor descriptor = createMock(ResourceMethodDescriptor.class);
     if (model != null)
     {
-      expect(descriptor.getResourceModel()).andReturn(model).times(getResourceModelCount);
+      if (getResourceModelCount != null)
+      {
+        expect(descriptor.getResourceModel()).andReturn(model).times(getResourceModelCount);
+      }
+      else
+      {
+        expect(descriptor.getResourceModel()).andReturn(model).anyTimes();
+      }
     }
     if (paramList != null)
     {

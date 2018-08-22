@@ -14,10 +14,6 @@
    limitations under the License.
  */
 
-/**
- * $Id: $
- */
-
 package com.linkedin.restli.internal.server.methods.arguments;
 
 
@@ -25,10 +21,14 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.PatchRequest;
+import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.util.ArgumentUtils;
 import com.linkedin.restli.server.RestLiRequestData;
 import com.linkedin.restli.server.RestLiRequestDataImpl;
+import com.linkedin.restli.server.util.UnstructuredDataUtil;
+
+import static com.linkedin.restli.internal.server.methods.arguments.ArgumentBuilder.checkEntityNotNull;
 
 
 /**
@@ -60,12 +60,22 @@ public class PatchArgumentBuilder implements RestLiArgumentBuilder
   @Override
   public RestLiRequestData extractRequestData(RoutingResult routingResult, DataMap dataMap)
   {
-    RecordTemplate record = DataTemplateUtil.wrap(dataMap, PatchRequest.class);
-    RestLiRequestDataImpl.Builder builder = new RestLiRequestDataImpl.Builder().entity(record);
+    RestLiRequestDataImpl.Builder builder = new RestLiRequestDataImpl.Builder();
     if (ArgumentUtils.hasResourceKey(routingResult))
     {
       builder.key(ArgumentUtils.getResourceKey(routingResult));
     }
-    return builder.build();
+    // No entity for unstructured data requests
+    if (UnstructuredDataUtil.isUnstructuredDataRouting(routingResult))
+    {
+      return builder.build();
+    }
+    else
+    {
+      checkEntityNotNull(dataMap, ResourceMethod.PARTIAL_UPDATE);
+      RecordTemplate record = DataTemplateUtil.wrap(dataMap, PatchRequest.class);
+      builder.entity(record);
+      return builder.build();
+    }
   }
 }

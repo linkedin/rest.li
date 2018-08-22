@@ -16,6 +16,7 @@
 
 package com.linkedin.restli.internal.server.methods.arguments;
 
+import com.linkedin.common.callback.Callback;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.IntegerDataSchema;
 import com.linkedin.r2.message.rest.RestRequest;
@@ -33,19 +34,17 @@ import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.RestLiRequestData;
-
-import java.io.IOException;
+import com.linkedin.restli.server.resources.CollectionResourceAsyncTemplate;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import static org.easymock.EasyMock.verify;
+import static org.easymock.EasyMock.*;
 
 
 /**
@@ -140,28 +139,30 @@ public class TestPatchArgumentBuilder
 
   @Test(dataProvider = "argumentData")
   public void testArgumentBuilderSuccess(List<Parameter<?>> params, Key key, String keyName, Object keyValue)
-      throws IOException
+      throws Exception
   {
     RestRequest request = RestLiArgumentBuilderTestHelper.getMockRequest(false, "{\"patch\":{\"$set\":{\"a\":\"someString\"}}}");
     ResourceModel model = RestLiArgumentBuilderTestHelper.getMockResourceModel(null, key, true);
     ResourceMethodDescriptor descriptor;
     if (key != null)
     {
-      descriptor = RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor(model, 2, params);
+      descriptor = RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor(model, 2, params,
+          CollectionResourceAsyncTemplate.class.getMethod("update", Object.class, PatchRequest.class, Callback.class));
     }
     else
     {
-      descriptor = RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor(model, 1, params);
+      descriptor = RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor(model, 1, params,
+          CollectionResourceAsyncTemplate.class.getMethod("update", Object.class, PatchRequest.class, Callback.class));
     }
     ServerResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(keyName, keyValue, null, true);
     RoutingResult routingResult;
     if (key != null)
     {
-      routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(descriptor, 3, context, 2);
+      routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(descriptor, 4, context, 2);
     }
     else
     {
-      routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(descriptor, 2, context, 1);
+      routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(descriptor, 3, context, 1);
     }
 
     RestLiArgumentBuilder argumentBuilder = new PatchArgumentBuilder();

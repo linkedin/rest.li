@@ -14,20 +14,19 @@
    limitations under the License.
  */
 
-/**
- * $Id: $
- */
-
 package com.linkedin.restli.internal.server.methods.arguments;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.util.ArgumentUtils;
 import com.linkedin.restli.server.RestLiRequestData;
 import com.linkedin.restli.server.RestLiRequestDataImpl;
 import com.linkedin.restli.server.util.UnstructuredDataUtil;
+
+import static com.linkedin.restli.internal.server.methods.arguments.ArgumentBuilder.checkEntityNotNull;
 
 
 /**
@@ -55,7 +54,11 @@ public class CreateArgumentBuilder implements RestLiArgumentBuilder
     {
       return new RestLiRequestDataImpl.Builder().build();
     }
-    RecordTemplate inputEntity = DataTemplateUtil.wrap(dataMap, ArgumentUtils.getValueClass(routingResult));
-    return new RestLiRequestDataImpl.Builder().entity(inputEntity).build();
+    else
+    {
+      checkEntityNotNull(dataMap, ResourceMethod.CREATE);
+      RecordTemplate inputEntity = DataTemplateUtil.wrap(dataMap, ArgumentUtils.getValueClass(routingResult));
+      return new RestLiRequestDataImpl.Builder().entity(inputEntity).build();
+    }
   }
 }

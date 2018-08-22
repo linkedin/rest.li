@@ -42,6 +42,7 @@ import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ProtocolVersion;
+import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.common.TypeSpec;
 import com.linkedin.restli.common.validation.RestLiDataValidator;
@@ -684,6 +685,14 @@ public class ArgumentBuilder
       // Closing ByteArrayOutputStream is unnecessary because it doesn't hold any internal resource that needs to
       // be released. However, if the implementation changes to use a different backing OutputStream, this needs to be
       // re-evaluated. OutputStream may need to be called here, after _wh.done(), and in finalize().
+    }
+  }
+
+  static void checkEntityNotNull(DataMap dataMap, ResourceMethod method) {
+    if (dataMap == null) {
+      throw new RoutingException(
+          String.format("Empty entity body is not allowed for %s method request", method),
+          HttpStatus.S_400_BAD_REQUEST.getCode());
     }
   }
 }

@@ -17,6 +17,7 @@
 package com.linkedin.restli.internal.server.methods.arguments;
 
 
+import com.linkedin.common.callback.Callback;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.IntegerDataSchema;
 import com.linkedin.data.schema.StringDataSchema;
@@ -41,7 +42,7 @@ import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.RestLiRequestData;
 import com.linkedin.restli.server.RoutingException;
 
-import java.io.IOException;
+import com.linkedin.restli.server.resources.CollectionResourceAsyncTemplate;
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.Collections;
@@ -158,7 +159,7 @@ public class TestBatchPatchArgumentBuilder
   @Test(dataProvider = "argumentData")
   public void testArgumentBuilderSuccess(ProtocolVersion version, Key primaryKey, Key[] associationKeys,
       String requestEntity, Object[] keys, PatchRequest<MyComplexKey>[] patches)
-      throws IOException
+      throws Exception
   {
     Set<Object> batchKeys = new HashSet<>(Arrays.asList(keys));
     RestRequest request = RestLiArgumentBuilderTestHelper.getMockRequest(requestEntity, version);
@@ -175,7 +176,8 @@ public class TestBatchPatchArgumentBuilder
       false,
       new AnnotationSet(new Annotation[]{}));
     ResourceMethodDescriptor descriptor = RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor(
-        model, 2, Collections.singletonList(param));
+        model, 2, Collections.singletonList(param),
+        CollectionResourceAsyncTemplate.class.getMethod("batchUpdate", BatchPatchRequest.class, Callback.class));
     ServerResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(batchKeys, version, true, false);
     RoutingResult routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(descriptor, context);
 
@@ -316,12 +318,13 @@ public class TestBatchPatchArgumentBuilder
 
   @Test(dataProvider = "failureData")
   public void testFailure(ProtocolVersion version, Key primaryKey, Key[] associationKeys, String requestEntity, Object[] keys, String errorMessage)
-      throws IOException
+      throws Exception
   {
     Set<Object> batchKeys = new HashSet<>(Arrays.asList(keys));
     RestRequest request = RestLiArgumentBuilderTestHelper.getMockRequest(requestEntity, version);
     ResourceModel model = RestLiArgumentBuilderTestHelper.getMockResourceModel(MyComplexKey.class, primaryKey, associationKeys, batchKeys);
-    ResourceMethodDescriptor descriptor = RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor(model);
+    ResourceMethodDescriptor descriptor = RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor(
+        model, 2,null, CollectionResourceAsyncTemplate.class.getMethod("batchUpdate", BatchPatchRequest.class, Callback.class));
     ServerResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(batchKeys, version, false, false);
     RoutingResult routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(descriptor, context);
 

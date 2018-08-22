@@ -14,23 +14,23 @@
    limitations under the License.
  */
 
-/**
- * $Id: $
- */
-
 package com.linkedin.restli.internal.server.methods.arguments;
 
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.util.ArgumentUtils;
 import com.linkedin.restli.server.BatchUpdateRequest;
 import com.linkedin.restli.server.RestLiRequestData;
 import com.linkedin.restli.server.RestLiRequestDataImpl;
 
+import com.linkedin.restli.server.util.UnstructuredDataUtil;
 import java.util.Map;
 import java.util.Set;
+
+import static com.linkedin.restli.internal.server.methods.arguments.ArgumentBuilder.checkEntityNotNull;
 
 
 /**
@@ -55,20 +55,30 @@ public class BatchUpdateArgumentBuilder implements RestLiArgumentBuilder
   @Override
   public RestLiRequestData extractRequestData(RoutingResult routingResult, DataMap dataMap)
   {
-    Class<? extends RecordTemplate> valueClass = ArgumentUtils.getValueClass(routingResult);
-    Set<?> ids = routingResult.getContext().getPathKeys().getBatchIds();
-    @SuppressWarnings({ "rawtypes" })
-    Map inputMap =
-        ArgumentBuilder.buildBatchRequestMap(routingResult,
-                                             dataMap,
-                                             valueClass,
-                                             ids);
-
     final RestLiRequestDataImpl.Builder builder = new RestLiRequestDataImpl.Builder();
-    if (inputMap != null)
+    Set<?> ids = routingResult.getContext().getPathKeys().getBatchIds();
+    // No entity for unstructured data requests
+    if (UnstructuredDataUtil.isUnstructuredDataRouting(routingResult))
     {
-      builder.batchKeyEntityMap(inputMap);
+      if (ids != null)
+      {
+        builder.batchKeys(ids);
+      }
+      return builder.build();
     }
-    return builder.build();
+    else
+    {
+      checkEntityNotNull(dataMap, ResourceMethod.BATCH_UPDATE);
+
+      Class<? extends RecordTemplate> valueClass = ArgumentUtils.getValueClass(routingResult);
+      @SuppressWarnings({"rawtypes"})
+      Map inputMap = ArgumentBuilder.buildBatchRequestMap(routingResult, dataMap, valueClass, ids);
+
+      if (inputMap != null)
+      {
+        builder.batchKeyEntityMap(inputMap);
+      }
+      return builder.build();
+    }
   }
 }

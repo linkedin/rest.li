@@ -17,7 +17,10 @@
 package com.linkedin.restli.internal.server.methods.arguments;
 
 
+import com.linkedin.common.callback.Callback;
+import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.test.MyComplexKey;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.ServerResourceContext;
@@ -29,6 +32,7 @@ import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.server.BatchCreateRequest;
 import com.linkedin.restli.server.RestLiRequestData;
 
+import com.linkedin.restli.server.resources.CollectionResourceAsyncTemplate;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.util.List;
@@ -47,8 +51,7 @@ import static org.testng.Assert.fail;
 public class TestBatchCreateArgumentBuilder
 {
   @Test
-  public void testArgumentBuilderSuccess()
-      throws IOException
+  public void testArgumentBuilderSuccess() throws Exception
   {
     RestRequest request = RestLiArgumentBuilderTestHelper.getMockRequest(false, "{\"elements\":[{\"b\":123,\"a\":\"abc\"},{\"b\":5678,\"a\":\"xyzw\"}]}");
     ResourceModel model = RestLiArgumentBuilderTestHelper.getMockResourceModel(MyComplexKey.class, null, false);
@@ -61,9 +64,10 @@ public class TestBatchCreateArgumentBuilder
         Parameter.ParamType.BATCH,
         false,
         new AnnotationSet(new Annotation[]{}));
-    ResourceMethodDescriptor descriptor = RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor(model, param);
+    ResourceMethodDescriptor descriptor = RestLiArgumentBuilderTestHelper.getMockResourceMethodDescriptor(model, param,
+        CollectionResourceAsyncTemplate.class.getMethod("batchCreate", BatchCreateRequest.class, Callback.class));
     ServerResourceContext context = RestLiArgumentBuilderTestHelper.getMockResourceContext(null, null, null, true);
-    RoutingResult routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(descriptor, 2, context, 1);
+    RoutingResult routingResult = RestLiArgumentBuilderTestHelper.getMockRoutingResult(descriptor, 3, context, 1);
 
     RestLiArgumentBuilder argumentBuilder = new BatchCreateArgumentBuilder();
     RestLiRequestData requestData = argumentBuilder.extractRequestData(routingResult,
