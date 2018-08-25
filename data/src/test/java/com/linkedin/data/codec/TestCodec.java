@@ -16,14 +16,13 @@
 
 package com.linkedin.data.codec;
 
+import com.fasterxml.jackson.dataformat.smile.SmileFactory;
+import com.fasterxml.jackson.dataformat.smile.SmileGenerator;
 import com.linkedin.data.Data;
 import com.linkedin.data.DataComplex;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.TestUtil;
-
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -36,6 +35,7 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
+import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
 
@@ -239,6 +239,10 @@ public class TestCodec
     List<DataCodec> codecs = new ArrayList<DataCodec>();
     codecs.add(new JacksonDataCodec());
     codecs.add(new BsonDataCodec());
+    codecs.add(new JacksonSmileDataCodec());
+    codecs.add(new JacksonSmileStringShareOffDataCodec());
+    codecs.add(new JacksonSmileNameShareOffDataCodec());
+    codecs.add(new JacksonSmileNameStringShareOffDataCodec());
 
     for (DataCodec codec : codecs)
     {
@@ -258,14 +262,53 @@ public class TestCodec
     }
   }
 
-  //@Test(dataProvider = "codecData")
-  @Parameters("count")
-  public void perfTest(String testName, DataComplex value, @Optional("1000") int count) throws IOException
+  private static class JacksonSmileStringShareOffDataCodec extends JacksonSmileDataCodec
+  {
+    public JacksonSmileStringShareOffDataCodec()
+    {
+      super();
+
+      SmileFactory smileFactory = (SmileFactory)_factory;
+
+      // Disable string sharing
+      smileFactory.disable(SmileGenerator.Feature.CHECK_SHARED_STRING_VALUES);
+    }
+  }
+
+  private static class JacksonSmileNameShareOffDataCodec extends JacksonSmileDataCodec
+  {
+    public JacksonSmileNameShareOffDataCodec()
+    {
+      super();
+
+      SmileFactory smileFactory = (SmileFactory)_factory;
+
+      // Disable name sharing
+      smileFactory.disable(SmileGenerator.Feature.CHECK_SHARED_NAMES);
+    }
+  }
+
+  private static class JacksonSmileNameStringShareOffDataCodec extends JacksonSmileDataCodec
+  {
+    public JacksonSmileNameStringShareOffDataCodec()
+    {
+      super();
+
+      SmileFactory smileFactory = (SmileFactory)_factory;
+
+      // Disable name and string sharing
+      smileFactory.disable(SmileGenerator.Feature.CHECK_SHARED_NAMES);
+      smileFactory.disable(SmileGenerator.Feature.CHECK_SHARED_STRING_VALUES);
+    }
+  }
+
+  //@Test(dataProvider = "codecData", dataProviderClass = CodecDataProviders.class)
+  public void perfTest(String testName, DataComplex value) throws IOException
   {
     if (value.getClass() == DataMap.class)
     {
       out.println("------------- " + testName + " -------------");
-      perfTest(count, (DataMap) value);
+      perfTest(1000, (DataMap) value);
     }
   }
 

@@ -16,29 +16,25 @@
 
 package com.linkedin.data.codec.entitystream;
 
+import com.fasterxml.jackson.dataformat.smile.SmileFactory;
+import com.fasterxml.jackson.dataformat.smile.async.NonBlockingByteArrayParser;
 import com.linkedin.data.DataComplex;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.json.async.NonBlockingJsonParser;
-
-
 /**
- * A JSON decoder for a {@link DataComplex} object implemented as a {@link com.linkedin.entitystream.Reader} reading
+ * A SMILE decoder for a {@link DataComplex} object implemented as a {@link com.linkedin.entitystream.Reader} reading
  * from an {@link com.linkedin.entitystream.EntityStream} of ByteString. The implementation is backed by Jackson's
- * {@link NonBlockingJsonParser}. Because the raw bytes are pushed to the decoder, it keeps the partially built data
- * structure in a stack.
+ * {@link NonBlockingByteArrayParser}. Because the raw bytes are pushed to the decoder, it keeps the partially built
+ * data structure in a stack.
  */
-public class JacksonJsonDataDecoder<T extends DataComplex> extends AbstractJacksonDataDecoder<T> implements JsonDataDecoder<T>
+public class JacksonSmileDataDecoder<T extends DataComplex> extends AbstractJacksonDataDecoder<T>
 {
-  private static final JsonFactory JSON_FACTORY = new JsonFactory();
-
-  protected JacksonJsonDataDecoder(byte expectedFirstToken)
+  protected JacksonSmileDataDecoder(SmileFactory smileFactory, byte expectedFirstToken)
   {
-    super(JSON_FACTORY, expectedFirstToken);
+    super(smileFactory, expectedFirstToken);
   }
 
-  public JacksonJsonDataDecoder()
+  public JacksonSmileDataDecoder(SmileFactory smileFactory)
   {
-    super(JSON_FACTORY);
+    super(smileFactory);
   }
 }

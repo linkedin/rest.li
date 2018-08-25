@@ -815,13 +815,53 @@ public class Data
    */
   public static String bytesToString(byte[] input, int offset, int length)
   {
-    ArgumentUtil.checkBounds(input.length, offset, length);
+    return new String(bytesToCharArray(input, offset, length));
+  }
+
+  /**
+   * Get character array from bytes following Avro convention.
+   *
+   * This method expands each byte into a character in the output array by encoding
+   * the byte's value into the least significant 8-bits of the character. The returned
+   * array will have the same length as the byte array, i.e. if there are 8 bytes in
+   * the byte array, the array will have 8 characters.
+   *
+   * @param input byte array to get characters from.
+   * @param offset the offset to read in the input byte array
+   * @param length the length to read in the input byte array
+   * @return array whose least significant 8-bits of each character represents one byte.
+   */
+  public static char[] bytesToCharArray(byte[] input, int offset, int length)
+  {
     char[] charArray = new char[length];
-    for (int i = 0; i < length; ++i)
+    bytesToCharArray(input, offset, length, charArray, 0);
+
+    return charArray;
+  }
+
+  /**
+   * Store character array retrieved from bytes following Avro convention.
+   *
+   * This method expands each byte into a character in the output array by encoding
+   * the byte's value into the least significant 8-bits of the character. The returned
+   * array will have the same length as the byte array, i.e. if there are 8 bytes in
+   * the byte array, the array will have 8 characters.
+   *
+   * @param input byte array to get characters from.
+   * @param offset the offset to read in the input byte array
+   * @param length the length to read in the input byte array
+   * @param dest the destination character array.
+   * @param destOffset the offset to start writing from in the destination character array.
+   */
+  public static void bytesToCharArray(byte[] input, int offset, int length, char[] dest, int destOffset)
+  {
+    ArgumentUtil.checkBounds(input.length, offset, length);
+    ArgumentUtil.checkBounds(dest.length, destOffset, length);
+
+    for (int i = 0; i < length; i++)
     {
-      charArray[i] = (char) (((char) input[i + offset]) & 0x00ff);
+      dest[destOffset++] = (char) (((char) input[i + offset]) & 0x00ff);
     }
-    return new String(charArray);
   }
 
   /**

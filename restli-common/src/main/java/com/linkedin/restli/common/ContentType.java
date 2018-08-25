@@ -19,7 +19,9 @@ package com.linkedin.restli.common;
 import com.linkedin.data.codec.DataCodec;
 import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.codec.PsonDataCodec;
+import com.linkedin.data.codec.JacksonSmileDataCodec;
 import com.linkedin.data.codec.entitystream.JacksonStreamDataCodec;
+import com.linkedin.data.codec.entitystream.JacksonSmileStreamDataCodec;
 import com.linkedin.data.codec.entitystream.StreamDataCodec;
 import com.linkedin.r2.filter.R2Constants;
 
@@ -41,11 +43,15 @@ public class ContentType
   private static final JacksonDataCodec JACKSON_DATA_CODEC = new JacksonDataCodec();
   private static final JacksonStreamDataCodec JACKSON_STREAM_DATA_CODEC = new JacksonStreamDataCodec(R2Constants.DEFAULT_DATA_CHUNK_SIZE);
   private static final PsonDataCodec PSON_DATA_CODEC = new PsonDataCodec();
+  private static final JacksonSmileDataCodec SMILE_DATA_CODEC = new JacksonSmileDataCodec();
+  private static final JacksonSmileStreamDataCodec SMILE_STREAM_DATA_CODEC = new JacksonSmileStreamDataCodec(R2Constants.DEFAULT_DATA_CHUNK_SIZE);
 
   public static final ContentType PSON =
       new ContentType(RestConstants.HEADER_VALUE_APPLICATION_PSON, PSON_DATA_CODEC, null);
   public static final ContentType JSON =
       new ContentType(RestConstants.HEADER_VALUE_APPLICATION_JSON, JACKSON_DATA_CODEC, JACKSON_STREAM_DATA_CODEC);
+  public static final ContentType SMILE =
+      new ContentType(RestConstants.HEADER_VALUE_APPLICATION_SMILE, SMILE_DATA_CODEC, SMILE_STREAM_DATA_CODEC);
   // Content type to be used only as an accept type.
   public static final ContentType ACCEPT_TYPE_ANY =
       new ContentType(RestConstants.HEADER_VALUE_ACCEPT_ANY, JACKSON_DATA_CODEC, null);
@@ -56,6 +62,7 @@ public class ContentType
     // Include content types supported by Rest.Li by default.
     SUPPORTED_TYPES.put(PSON.getHeaderKey(), PSON);
     SUPPORTED_TYPES.put(JSON.getHeaderKey(), JSON);
+    SUPPORTED_TYPES.put(SMILE.getHeaderKey(), SMILE);
   }
 
   /**
@@ -130,5 +137,11 @@ public class ContentType
   public StreamDataCodec getStreamCodec()
   {
     return _streamCodec;
+  }
+
+  @Override
+  public String toString()
+  {
+    return _headerKey;
   }
 }

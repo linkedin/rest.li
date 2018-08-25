@@ -14,17 +14,18 @@
    limitations under the License.
  */
 
-package com.linkedin.data.codec.entitystream;
+package com.linkedin.data.codec;
 
-import com.linkedin.data.DataList;
+import com.linkedin.data.DataComplex;
+import java.io.IOException;
+import org.testng.annotations.Test;
 
-import static com.linkedin.data.codec.entitystream.AbstractJacksonDataDecoder.Token.START_ARRAY;
-
-
-public class JacksonJsonDataListDecoder extends JacksonJsonDataDecoder<DataList>
+public class TestSmileCodec extends TestCodec
 {
-  public JacksonJsonDataListDecoder()
+  @Test(dataProvider = "codecData", dataProviderClass = CodecDataProviders.class)
+  public void testSmileDataCodec(String testName, DataComplex dataComplex) throws IOException
   {
-    super(START_ARRAY.bitPattern);
+    JacksonSmileDataCodec codec = new JacksonSmileDataCodec();
+    testDataCodec(codec, dataComplex);
   }
 }

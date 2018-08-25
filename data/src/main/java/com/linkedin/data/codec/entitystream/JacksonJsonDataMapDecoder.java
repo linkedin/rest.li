@@ -18,7 +18,7 @@ package com.linkedin.data.codec.entitystream;
 
 import com.linkedin.data.DataMap;
 
-import static com.linkedin.data.codec.entitystream.JacksonJsonDataDecoder.Token.START_OBJECT;
+import static com.linkedin.data.codec.entitystream.AbstractJacksonDataDecoder.Token.START_OBJECT;
 
 
 public class JacksonJsonDataMapDecoder extends JacksonJsonDataDecoder<DataMap>

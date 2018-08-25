@@ -5,6 +5,7 @@ dependencies {
   compile externalDependency.antlrRuntime
   compile externalDependency.commonsLang3
   compile externalDependency.jacksonCore
+  compile externalDependency.jacksonSmile
 
   testCompile project(':data-testutils')
   testCompile externalDependency.commonsIo

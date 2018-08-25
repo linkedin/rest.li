@@ -16,6 +16,7 @@
 
 package com.linkedin.data;
 
+import com.linkedin.data.codec.DataCodec;
 import com.linkedin.data.codec.DataLocation;
 import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.schema.DataSchema;
@@ -153,7 +154,7 @@ public class TestUtil
     return parser.topLevelDataSchemas().get(parser.topLevelDataSchemas().size() - 1);
   }
 
-  private static final JacksonDataCodec codec = new JacksonDataCodec();
+  private static final JacksonDataCodec JACKSON_DATA_CODEC = new JacksonDataCodec();
 
   public static List<Object> objectsFromString(String string) throws IOException
   {
@@ -163,7 +164,7 @@ public class TestUtil
   public static List<Object> objectsFromInputStream(InputStream inputStream) throws IOException
   {
     StringBuilder errorMessageBuilder = new StringBuilder();
-    List<Object> objects = codec.parse(inputStream, errorMessageBuilder, new HashMap<Object, DataLocation>());
+    List<Object> objects = JACKSON_DATA_CODEC.parse(inputStream, errorMessageBuilder, new HashMap<>());
     if (errorMessageBuilder.length() > 0)
     {
       throw new IOException(errorMessageBuilder.toString());
@@ -173,10 +174,16 @@ public class TestUtil
 
   public static DataMap dataMapFromString(String json) throws IOException
   {
-    return codec.stringToMap(json);
+    return JACKSON_DATA_CODEC.stringToMap(json);
   }
 
   public static byte[] dataComplexToBytes(DataComplex dataComplex)
+      throws IOException
+  {
+    return dataComplexToBytes(JACKSON_DATA_CODEC, dataComplex);
+  }
+
+  public static byte[] dataComplexToBytes(DataCodec codec, DataComplex dataComplex)
       throws IOException
   {
     return dataComplex instanceof DataMap

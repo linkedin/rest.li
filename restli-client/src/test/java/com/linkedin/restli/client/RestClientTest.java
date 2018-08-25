@@ -20,7 +20,6 @@
 
 package com.linkedin.restli.client;
 
-
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
@@ -34,6 +33,7 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestResponseBuilder;
 import com.linkedin.r2.transport.common.Client;
+import com.linkedin.restli.common.ContentType;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.ErrorDetails;
 import com.linkedin.restli.common.ErrorResponse;
@@ -43,7 +43,6 @@ import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.client.EntityResponseDecoder;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.TestConstants;
-
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpCookie;
@@ -53,7 +52,6 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.testng.Assert;
@@ -165,29 +163,51 @@ public class RestClientTest
     private final TimeUnit _timeUnit;
   }
 
+  private enum ContentTypeOption
+  {
+    JSON(ContentType.JSON),
+    PSON(ContentType.PSON),
+    SMILE(ContentType.SMILE);
+
+    private ContentTypeOption(ContentType contentType)
+    {
+      _contentType = contentType;
+    }
+
+    private final ContentType _contentType;
+  }
+
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "sendRequestOptions")
   private Object[][] sendRequestOptions()
   {
-    Object[][] result = new Object[SendRequestOption.values().length * TimeoutOption.values().length * 2][];
+    Object[][] result = new Object[SendRequestOption.values().length *
+                                   TimeoutOption.values().length *
+                                   ContentTypeOption.values().length *
+                                   2][];
     int i = 0;
     for (SendRequestOption sendRequestOption : SendRequestOption.values())
     {
       for (TimeoutOption timeoutOption : TimeoutOption.values())
       {
-        result[i++] = new Object[] {
-            sendRequestOption,
-            timeoutOption,
-            ProtocolVersionOption.USE_LATEST_IF_AVAILABLE,
-            AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
-            RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE
-        };
-        result[i++] = new Object[] {
-            sendRequestOption,
-            timeoutOption,
-            ProtocolVersionOption.FORCE_USE_NEXT,
-            AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
-            RestConstants.HEADER_RESTLI_ERROR_RESPONSE
-        };
+        for (ContentTypeOption contentTypeOption : ContentTypeOption.values())
+        {
+          result[i++] = new Object[] {
+              sendRequestOption,
+              timeoutOption,
+              ProtocolVersionOption.USE_LATEST_IF_AVAILABLE,
+              AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+              RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE,
+              contentTypeOption._contentType
+          };
+          result[i++] = new Object[] {
+              sendRequestOption,
+              timeoutOption,
+              ProtocolVersionOption.FORCE_USE_NEXT,
+              AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+              RestConstants.HEADER_RESTLI_ERROR_RESPONSE,
+              contentTypeOption._contentType
+          };
+        }
       }
     }
     return result;
@@ -199,6 +219,7 @@ public class RestClientTest
     Object[][] result = new Object[SendRequestOption.values().length *
                                    GetResponseOption.values().length *
                                    TimeoutOption.values().length *
+                                   ContentTypeOption.values().length *
                                    2][];
     int i = 0;
     for (SendRequestOption sendRequestOption : SendRequestOption.values())
@@ -207,22 +228,26 @@ public class RestClientTest
       {
         for (TimeoutOption timeoutOption : TimeoutOption.values())
         {
-          result[i++] = new Object[] {
-              sendRequestOption,
-              getResponseOption,
-              timeoutOption,
-              ProtocolVersionOption.USE_LATEST_IF_AVAILABLE,
-              AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
-              RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE
-          };
-          result[i++] = new Object[] {
-              sendRequestOption,
-              getResponseOption,
-              timeoutOption,
-              ProtocolVersionOption.FORCE_USE_NEXT,
-              AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
-              RestConstants.HEADER_RESTLI_ERROR_RESPONSE
-          };
+          for (ContentTypeOption contentTypeOption : ContentTypeOption.values())
+          {
+            result[i++] = new Object[]{
+                sendRequestOption,
+                getResponseOption,
+                timeoutOption,
+                ProtocolVersionOption.USE_LATEST_IF_AVAILABLE,
+                AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+                RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE,
+                contentTypeOption._contentType};
+            result[i++] =
+                new Object[]{
+                    sendRequestOption,
+                    getResponseOption,
+                    timeoutOption,
+                    ProtocolVersionOption.FORCE_USE_NEXT,
+                    AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+                    RestConstants.HEADER_RESTLI_ERROR_RESPONSE,
+                    contentTypeOption._contentType};
+          }
         }
       }
     }
@@ -233,46 +258,53 @@ public class RestClientTest
   private Object[][] sendRequestAndNoThrowGetResponseOptions()
   {
     Object[][] result = new Object[SendRequestOption.values().length *
-                                   2 *
                                    TimeoutOption.values().length *
-                                   2][];
+                                   ContentTypeOption.values().length *
+                                   4][];
     int i = 0;
     for (SendRequestOption sendRequestOption : SendRequestOption.values())
     {
       for (TimeoutOption timeoutOption : TimeoutOption.values())
       {
-        result[i++] = new Object[] {
-            sendRequestOption,
-            GetResponseOption.GET_RESPONSE_ENTITY_EXPLICIT_NO_THROW,
-            timeoutOption,
-            ProtocolVersionOption.USE_LATEST_IF_AVAILABLE,
-            AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
-            RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE
-        };
-        result[i++] = new Object[] {
-            sendRequestOption,
-            GetResponseOption.GET_RESPONSE_ENTITY_EXPLICIT_NO_THROW,
-            timeoutOption,
-            ProtocolVersionOption.FORCE_USE_NEXT,
-            AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
-            RestConstants.HEADER_RESTLI_ERROR_RESPONSE
-        };
-        result[i++] = new Object[] {
-            sendRequestOption,
-            GetResponseOption.GET_RESPONSE_EXPLICIT_NO_THROW,
-            timeoutOption,
-            ProtocolVersionOption.USE_LATEST_IF_AVAILABLE,
-            AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
-            RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE
-        };
-        result[i++] = new Object[] {
-            sendRequestOption,
-            GetResponseOption.GET_RESPONSE_EXPLICIT_NO_THROW,
-            timeoutOption,
-            ProtocolVersionOption.FORCE_USE_NEXT,
-            AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
-            RestConstants.HEADER_RESTLI_ERROR_RESPONSE
-        };
+        for (ContentTypeOption contentTypeOption : ContentTypeOption.values())
+        {
+          result[i++] = new Object[] {
+              sendRequestOption,
+              GetResponseOption.GET_RESPONSE_ENTITY_EXPLICIT_NO_THROW,
+              timeoutOption,
+              ProtocolVersionOption.USE_LATEST_IF_AVAILABLE,
+              AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+              RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE,
+              contentTypeOption._contentType
+          };
+          result[i++] = new Object[] {
+              sendRequestOption,
+              GetResponseOption.GET_RESPONSE_ENTITY_EXPLICIT_NO_THROW,
+              timeoutOption,
+              ProtocolVersionOption.FORCE_USE_NEXT,
+              AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+              RestConstants.HEADER_RESTLI_ERROR_RESPONSE,
+              contentTypeOption._contentType
+          };
+          result[i++] = new Object[] {
+              sendRequestOption,
+              GetResponseOption.GET_RESPONSE_EXPLICIT_NO_THROW,
+              timeoutOption,
+              ProtocolVersionOption.USE_LATEST_IF_AVAILABLE,
+              AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+              RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE,
+              contentTypeOption._contentType
+          };
+          result[i++] = new Object[] {
+              sendRequestOption,
+              GetResponseOption.GET_RESPONSE_EXPLICIT_NO_THROW,
+              timeoutOption,
+              ProtocolVersionOption.FORCE_USE_NEXT,
+              AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+              RestConstants.HEADER_RESTLI_ERROR_RESPONSE,
+              contentTypeOption._contentType
+          };
+        }
       }
     }
 
@@ -285,7 +317,8 @@ public class RestClientTest
                                        TimeoutOption timeoutOption,
                                        ProtocolVersionOption versionOption,
                                        ProtocolVersion protocolVersion,
-                                       String errorResponseHeaderName)
+                                       String errorResponseHeaderName,
+                                       ContentType contentType)
     throws ExecutionException, RemoteInvocationException,
            TimeoutException, InterruptedException, IOException
   {
@@ -296,7 +329,7 @@ public class RestClientTest
     final int APP_CODE = 666;
 
     RestClient client = mockClient(ERR_KEY, ERR_VALUE, ERR_MSG, HTTP_CODE, APP_CODE, protocolVersion, errorResponseHeaderName);
-    Request<ErrorResponse> request = mockRequest(ErrorResponse.class, versionOption);
+    Request<ErrorResponse> request = mockRequest(ErrorResponse.class, versionOption, contentType);
     RequestBuilder<Request<ErrorResponse>> requestBuilder = mockRequestBuilder(request);
 
     ResponseFuture<ErrorResponse> future = sendRequest(sendRequestOption,
@@ -321,7 +354,8 @@ public class RestClientTest
                                                 TimeoutOption timeoutOption,
                                                 ProtocolVersionOption versionOption,
                                                 ProtocolVersion protocolVersion,
-                                                String errorResponseHeaderName)
+                                                String errorResponseHeaderName,
+                                                ContentType contentType)
     throws RemoteInvocationException, TimeoutException, InterruptedException, IOException
   {
     final String ERR_KEY = "someErr";
@@ -331,7 +365,7 @@ public class RestClientTest
     final int APP_CODE = 666;
 
     RestClient client = mockClient(ERR_KEY, ERR_VALUE, ERR_MSG, HTTP_CODE, APP_CODE, protocolVersion, errorResponseHeaderName);
-    Request<EmptyRecord> request = mockRequest(EmptyRecord.class, versionOption);
+    Request<EmptyRecord> request = mockRequest(EmptyRecord.class, versionOption, contentType);
     RequestBuilder<Request<EmptyRecord>> requestBuilder = mockRequestBuilder(request);
 
     ResponseFuture<EmptyRecord> future = sendRequest(sendRequestOption,
@@ -361,7 +395,8 @@ public class RestClientTest
                                                        TimeoutOption timeoutOption,
                                                        ProtocolVersionOption versionOption,
                                                        ProtocolVersion protocolVersion,
-                                                       String errorResponseHeaderName)
+                                                       String errorResponseHeaderName,
+                                                       ContentType contentType)
       throws RemoteInvocationException, ExecutionException, TimeoutException, InterruptedException, IOException
   {
     final String ERR_KEY = "someErr";
@@ -370,9 +405,9 @@ public class RestClientTest
     final int HTTP_CODE = 400;
     final int APP_CODE = 666;
 
-    RestClient client = mockClient(ERR_KEY, ERR_VALUE, ERR_MSG, HTTP_CODE, APP_CODE, protocolVersion,
-                                   errorResponseHeaderName);
-    Request<EmptyRecord> request = mockRequest(EmptyRecord.class, versionOption);
+    RestClient client =
+        mockClient(ERR_KEY, ERR_VALUE, ERR_MSG, HTTP_CODE, APP_CODE, protocolVersion, errorResponseHeaderName);
+    Request<EmptyRecord> request = mockRequest(EmptyRecord.class, versionOption, contentType);
     RequestBuilder<Request<EmptyRecord>> requestBuilder = mockRequestBuilder(request);
 
     ResponseFuture<EmptyRecord> future = sendRequest(sendRequestOption,
@@ -398,7 +433,8 @@ public class RestClientTest
                                                   TimeoutOption timeoutOption,
                                                   ProtocolVersionOption versionOption,
                                                   ProtocolVersion protocolVersion,
-                                                  String errorResponseHeaderName)
+                                                  String errorResponseHeaderName,
+                                                  ContentType contentType)
           throws ExecutionException, TimeoutException, InterruptedException, RestLiDecodingException
   {
     final String ERR_KEY = "someErr";
@@ -408,7 +444,7 @@ public class RestClientTest
     final int APP_CODE = 666;
 
     RestClient client = mockClient(ERR_KEY, ERR_VALUE, ERR_MSG, HTTP_CODE, APP_CODE, protocolVersion, errorResponseHeaderName);
-    Request<EmptyRecord> request = mockRequest(EmptyRecord.class, versionOption);
+    Request<EmptyRecord> request = mockRequest(EmptyRecord.class, versionOption, contentType);
     RequestBuilder<Request<EmptyRecord>> requestBuilder = mockRequestBuilder(request);
 
     FutureCallback<Response<EmptyRecord>> callback = new FutureCallback<Response<EmptyRecord>>();
@@ -452,14 +488,15 @@ public class RestClientTest
                                                   TimeoutOption timeoutOption,
                                                   ProtocolVersionOption versionOption,
                                                   ProtocolVersion protocolVersion,
-                                                  String errorResponseHeaderName)
+                                                  String errorResponseHeaderName,
+                                                  ContentType contentType)
       throws ExecutionException, TimeoutException, InterruptedException, RestLiDecodingException
   {
     final int HTTP_CODE = 404;
     final String ERR_MSG = "WHOOPS!";
 
     RestClient client = mockClient(HTTP_CODE, ERR_MSG, protocolVersion);
-    Request<EmptyRecord> request = mockRequest(EmptyRecord.class, versionOption);
+    Request<EmptyRecord> request = mockRequest(EmptyRecord.class, versionOption, contentType);
     RequestBuilder<Request<EmptyRecord>> requestBuilder = mockRequestBuilder(request);
 
     FutureCallback<Response<EmptyRecord>> callback = new FutureCallback<Response<EmptyRecord>>();
@@ -685,8 +722,15 @@ public class RestClientTest
     };
   }
 
-  private <T extends RecordTemplate> Request<T> mockRequest(Class<T> clazz, ProtocolVersionOption versionOption)
+  private <T extends RecordTemplate> Request<T> mockRequest(Class<T> clazz,
+      ProtocolVersionOption versionOption, ContentType contentType)
   {
+    RestliRequestOptions restliRequestOptions = new RestliRequestOptionsBuilder()
+        .setProtocolVersionOption(versionOption)
+        .setContentType(contentType)
+        .setAcceptTypes(Collections.singletonList(contentType))
+        .build();
+
     return new GetRequest<T>(Collections.<String, String> emptyMap(),
                              Collections.<HttpCookie>emptyList(),
                              clazz,
@@ -696,7 +740,7 @@ public class RestClientTest
                              new ResourceSpecImpl(),
                              "/foo",
                              Collections.<String, Object>emptyMap(),
-                             new RestliRequestOptionsBuilder().setProtocolVersionOption(versionOption).build());
+                             restliRequestOptions);
   }
 
   private static class MyMockClient extends MockClient
@@ -733,7 +777,13 @@ public class RestClientTest
     }
   }
 
-  private RestClient mockClient(String errKey, String errValue, String errMsg, int httpCode, int appCode, ProtocolVersion protocolVersion, String errorResponseHeaderName)
+  private RestClient mockClient(String errKey,
+                                String errValue,
+                                String errMsg,
+                                int httpCode,
+                                int appCode,
+                                ProtocolVersion protocolVersion,
+                                String errorResponseHeaderName)
   {
     ErrorResponse er = new ErrorResponse();
 
@@ -747,7 +797,7 @@ public class RestClientTest
     byte[] mapBytes;
     try
     {
-      mapBytes = new JacksonDataCodec().mapToBytes(er.data());
+      mapBytes = ContentType.JSON.getCodec().mapToBytes(er.data());
     }
     catch (IOException e)
     {

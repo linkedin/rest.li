@@ -18,6 +18,7 @@
 package com.linkedin.data;
 
 
+import com.fasterxml.jackson.core.async.ByteArrayFeeder;
 import com.linkedin.util.ArgumentUtil;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -398,10 +399,26 @@ public final class ByteString
    */
   public String asAvroString()
   {
-    // we cannot supply an array of byte array to String, so we have to copy to a new larger continuous byte array
-    // if needed
-    ByteArray byteArray = assembleIfNeeded();
-    return Data.bytesToString(byteArray.getArray(), byteArray.getOffset(), byteArray.getLength());
+    return new String(asAvroCharArray());
+  }
+
+  /**
+   * Return an Avro representation of the bytes in this {@link ByteString}.
+   *
+   * @return the character array representation of this {@link ByteString}
+   */
+  public char[] asAvroCharArray()
+  {
+    char[] charArray = new char[_byteArrays.getBytesNum()];
+    int charArrayOffset = 0;
+    for (ByteArray byteArray : _byteArrays._byteArrays)
+    {
+      Data.bytesToCharArray(byteArray.getArray(), byteArray.getOffset(), byteArray.getLength(), charArray,
+          charArrayOffset);
+      charArrayOffset += byteArray.getLength();
+    }
+
+    return charArray;
   }
 
   /**
@@ -513,6 +530,24 @@ public final class ByteString
     }
 
     return slice(0, prefixBytes.length).equals(new ByteString(prefixBytes));
+  }
+
+  /**
+   * Feed this ByteString to the given non blocking byte array feeder.
+   *
+   * @param   feeder the given {@link ByteArrayFeeder} instance.
+   *
+   * @throws IOException if an exception occurred when feeding data to the feeder.
+   *
+   * <p>This method is useful to parse ByteString instances using non blocking asynchronous parsers without
+   * copying the underlying data.</p>
+   */
+  public void feedToNonBlockingFeeder(ByteArrayFeeder feeder) throws IOException
+  {
+    for (ByteArray byteArray : _byteArrays._byteArrays)
+    {
+      feeder.feedInput(byteArray._bytes, byteArray._offset, byteArray._length);
+    }
   }
 
   //Private class to abstract away iteration over bytes in a compound ByteString. Note that we don't implement

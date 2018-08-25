@@ -6,13 +6,11 @@ import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.TestData;
 import com.linkedin.data.TestUtil;
-
-import org.testng.annotations.DataProvider;
-
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
+import org.testng.annotations.DataProvider;
 
 
 public class CodecDataProviders
@@ -229,9 +227,15 @@ public class CodecDataProviders
             },
             {
                 "{ \"long\" : 5573478247682805760 }",
-                TestUtil.asMap("long", 5573478247682805760l)
+                TestUtil.asMap("long", 5573478247682805760L)
             },
         };
+  }
+
+  @DataProvider
+  public static Object[][] numbersData()
+  {
+    return new Object[][]{{Integer.MAX_VALUE}, {Integer.MIN_VALUE}, {Long.MAX_VALUE}, {Long.MIN_VALUE}, {5573478247682805760L}};
   }
 
   /**

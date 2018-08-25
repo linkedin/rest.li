@@ -82,7 +82,7 @@ public class JacksonDataTemplateCodec extends JacksonDataCodec
   {
     if (order)
     {
-      JsonTraverseCallback callback = new SchemaOrderTraverseCallback(schema, generator);
+      JacksonTraverseCallback callback = new SchemaOrderTraverseCallback(schema, generator);
       Data.traverse(data, callback);
     }
     else
@@ -136,7 +136,7 @@ public class JacksonDataTemplateCodec extends JacksonDataCodec
   {
     if (order)
     {
-      JsonTraverseCallback callback = new SchemaOrderTraverseCallback(schema, generator);
+      JacksonTraverseCallback callback = new SchemaOrderTraverseCallback(schema, generator);
       Data.traverse(data, callback);
       generator.flush();
       generator.close();
@@ -273,7 +273,7 @@ public class JacksonDataTemplateCodec extends JacksonDataCodec
   {
     if (order)
     {
-      ByteArrayOutputStream out = new ByteArrayOutputStream(_defaultBufferSize);
+      ByteArrayOutputStream out = new ByteArrayOutputStream(DEFAULT_BUFFER_SIZE);
       writeDataTemplate(template, out, order);
       return out.toByteArray();
     }
@@ -297,7 +297,7 @@ public class JacksonDataTemplateCodec extends JacksonDataCodec
   {
     if (order)
     {
-      StringWriter out = new StringWriter(_defaultBufferSize);
+      StringWriter out = new StringWriter(DEFAULT_BUFFER_SIZE);
       writeDataTemplate(template, out, order);
       return out.toString();
     }
@@ -338,7 +338,7 @@ public class JacksonDataTemplateCodec extends JacksonDataCodec
    * order the fields are defined by the {@link RecordDataSchema} and
    * output each map sorted by the map's keys.
    */
-  public static class SchemaOrderTraverseCallback extends JsonTraverseCallback
+  public static class SchemaOrderTraverseCallback extends JacksonTraverseCallback
   {
     /**
      * Constructor.
