@@ -86,7 +86,7 @@ public class AclAwareZookeeperTest
     acls.addAll(ZooDefs.Ids.READ_ACL_UNSAFE);
     acls.addAll(ZooDefs.Ids.CREATOR_ALL_ACL);
     ZooKeeper aclAwareZk = getAclAwareZookeeper(acls, "test:123".getBytes(), "digest");
-    aclAwareZk.create("/d2", "data".getBytes(), null, CreateMode.PERSISTENT);
+    aclAwareZk.create("/d2", "data".getBytes(), null, CreateMode.EPHEMERAL);
 
     // now try getting the Acls from a bystander
     Stat stat = new Stat();
@@ -103,9 +103,24 @@ public class AclAwareZookeeperTest
     List<ACL> acls = new ArrayList<>();
     acls.addAll(ZooDefs.Ids.OPEN_ACL_UNSAFE);
     ZooKeeper aclAwareZk = getAclAwareZookeeper(acls, null, null);
-    aclAwareZk.create("/d2", "data".getBytes(), null, CreateMode.PERSISTENT);
+    aclAwareZk.create("/d2", "data".getBytes(), null, CreateMode.EPHEMERAL);
 
     List<ACL> retrievedAcls = _verificationZKClient.getACL("/d2", new Stat());
+    Assert.assertTrue(retrievedAcls.equals(ZooDefs.Ids.OPEN_ACL_UNSAFE));
+  }
+
+  @Test
+  public void TestAclNoApply() throws IOException, KeeperException, InterruptedException
+  {
+    List<ACL> acls = new ArrayList<>();
+    acls.addAll(ZooDefs.Ids.READ_ACL_UNSAFE);
+    acls.addAll(ZooDefs.Ids.CREATOR_ALL_ACL);
+    ZooKeeper aclAwareZk = getAclAwareZookeeper(acls, null, null);
+    aclAwareZk.create("/d2", "data".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+    // if createMode is persistent, the user provided acl will be used
+    List<ACL> retrievedAcls = _verificationZKClient.getACL("/d2", new Stat());
+    Assert.assertTrue(retrievedAcls.size() == 1);
     Assert.assertTrue(retrievedAcls.equals(ZooDefs.Ids.OPEN_ACL_UNSAFE));
   }
 
@@ -115,7 +130,7 @@ public class AclAwareZookeeperTest
     List<ACL> acls = new ArrayList<>();
     acls.add(getACLItem("ip", "127.0.0.1", ZooDefs.Perms.ALL));
     ZooKeeper aclAwareZk = getAclAwareZookeeper(acls, null, null);
-    aclAwareZk.create("/d2", "data".getBytes(), null, CreateMode.PERSISTENT);
+    aclAwareZk.create("/d2", "data".getBytes(), null, CreateMode.EPHEMERAL);
 
     Stat stat = new Stat();
     List<ACL> retrievedAcls = _verificationZKClient.getACL("/d2", stat);
@@ -134,7 +149,7 @@ public class AclAwareZookeeperTest
     ACL readOnlyAcl = getACLItem("world", "anyone", ZooDefs.Perms.READ);
     ZooKeeper aclAwareZk =
         getAclAwareZookeeper(Collections.singletonList(readOnlyAcl), "test:123".getBytes(), "digest");
-    aclAwareZk.create("/d2", "data".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+    aclAwareZk.create("/d2", "data".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
 
     List<ACL> acls = _verificationZKClient.getACL("/d2", new Stat());
     Assert.assertTrue(acls.equals(Collections.singletonList(readOnlyAcl)));

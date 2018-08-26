@@ -17,6 +17,7 @@
 package com.linkedin.d2.discovery.stores.zk.acl;
 
 import com.linkedin.d2.discovery.stores.zk.AbstractZooKeeper;
+import com.linkedin.d2.discovery.stores.zk.ZKPersistentConnection;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeper;
 import java.util.List;
 import org.antlr.v4.runtime.misc.NotNull;
@@ -27,15 +28,18 @@ import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
  * Zookeeper wrapper that applies ACL from {@link ZKAclProvider} and add authentication information to zookeeper session.
  *
- * NOTE: If the method call carries Acl, it will be discarded if this wrapper is applied!
+ * NOTE: If the method call carries Acl and the node created is ephemeral, it will be discarded if this wrapper is applied!
  */
 public class AclAwareZookeeper extends AbstractZooKeeper
 {
+  private static final Logger LOG = LoggerFactory.getLogger(ZKPersistentConnection.class);
   private static final String DIGEST_AUTH_SCHEME = "digest";
 
   private final ZKAclProvider _aclProvider;
@@ -48,7 +52,9 @@ public class AclAwareZookeeper extends AbstractZooKeeper
     String authScheme = _aclProvider.getAuthScheme();
     byte[] authInfo = _aclProvider.getAuthInfo();
 
-    if (authScheme != null && authScheme.equals(DIGEST_AUTH_SCHEME) && authInfo != null) {
+    if (authScheme != null && authScheme.equals(DIGEST_AUTH_SCHEME) && authInfo != null)
+    {
+      LOG.info("Adding authentication info when initiate connection to zookeeper");
       super.addAuthInfo(authScheme, authInfo);
     }
   }
@@ -64,14 +70,28 @@ public class AclAwareZookeeper extends AbstractZooKeeper
   public String create(String path, byte[] data, List<ACL> acl, CreateMode createMode)
       throws KeeperException, InterruptedException
   {
-    return super.create(path, data, _aclProvider.getACL(), createMode);
+    if (createMode == CreateMode.EPHEMERAL_SEQUENTIAL || createMode == CreateMode.EPHEMERAL)
+    {
+      return super.create(path, data, _aclProvider.getACL(), createMode);
+    }
+    else
+    {
+      return super.create(path, data, acl, createMode);
+    }
   }
 
   @Override
   public void create(String path, byte[] data, List<ACL> acl, CreateMode createMode, AsyncCallback.StringCallback cb,
       Object ctx)
   {
-    super.create(path, data, _aclProvider.getACL(), createMode, cb, ctx);
+    if (createMode == CreateMode.EPHEMERAL_SEQUENTIAL || createMode == CreateMode.EPHEMERAL)
+    {
+      super.create(path, data, _aclProvider.getACL(), createMode, cb, ctx);
+    }
+    else
+    {
+      super.create(path, data, acl, createMode, cb, ctx);
+    }
   }
 
   @Override
