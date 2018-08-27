@@ -43,19 +43,20 @@ import org.slf4j.LoggerFactory;
 
 
 /**
- * This class is responsible for determining the timeout value for requests.
- * There are three sources of timeout at this level, arranged in increasing precedence
+ * This class is responsible for:
+ * 1) give the guarantee to the caller that the call will always return within the
+ *    time HE/SHE specified, even if internals will behave differently
+ * 2) adjusting the Internal REQUEST_TIMEOUT coming from the caller if it wouldn't be
+ *    an acceptable value for the Internal layers. (see implementation details description below)
+ * 3) in the case caller's point of view on the REQUEST_TIMEOUT, and the Internal's one are different,
+ *    set CLIENT_REQUEST_TIMEOUT_VIEW to reflect the caller's one in the internal stack
  *
- * 1. The default value in {@link HttpClientFactory}
- * 2. The value configured by user in transportClientProperties. When present, it will clobber item 1.
- * 3. Per request timeout passed for each request. When present, it will clobber item 1 or 2.
- *
- * This class will pick the correct timeout value and set it in {@link RequestContext} under {@code R2Constants.REQUEST_TIME}
- *
- * One peculiarity is when the per request timeout is set to be shorter than the standard timeout (item 1&2). In this case,
- * the standard timeout value will be passed down in RequestContext under {@code R2Constants.REQUEST_TIME} and the shorter per request timeout
- * will be passed down in RequestContext under {@code R2Constants.DEFAULT_REQUEST_TIMEOUT}. A {@link TimeoutCallback} will be used to simulate
- * the behavior of tighter timeout.
+ * Parameters: setting the following parameters in the RequestContext, will trigger behaviors in the following class:
+ * 1) {@code R2Constants.REQUEST_TIMEOUT} to set an higher/lower timeout than default
+ * 2) {@code R2Constants.REQUEST_TIMEOUT_IGNORE_IF_HIGHER_THAN_DEFAULT} to enforce never passing to the lower
+ *    layers the caller's REQUEST_TIMEOUT value if it is higher than default one.
+ *    E.g. in the case some caller have a deadline within a function has to return, it never wants
+ *    the rest calls to take longer than the default max value the downstream service has set
  *
  * @author Francesco Capponi (fcapponi@linkedin.com)
  */
@@ -131,6 +132,11 @@ public class RequestTimeoutClient extends D2ClientDelegator
    * triggering) which could cause a melt down.
    *
    * The callback has the guarantee to be called at most once, no matter if the call succeeds or times out
+   *
+   * Note: CLIENT_REQUEST_TIMEOUT_VIEW or REQUEST_TIMEOUT, one of the two or both should always be set,
+   *       to guarantee that any part in code can know the client expectation on the request timeout.
+   *       CLIENT_REQUEST_TIMEOUT_VIEW always reflects the caller point of view and takes precedence
+   *       over REQUEST_TIMEOUT's value if the goal is determining the client expectation
    */
   private <RES> Callback<RES> decorateCallbackWithRequestTimeout(Callback<RES> callback, Request request,
       RequestContext requestContext)
@@ -151,32 +157,38 @@ public class RequestTimeoutClient extends D2ClientDelegator
         HttpClientFactory.DEFAULT_REQUEST_TIMEOUT, Integer.class);
 
     // Start handling per request timeout
-    Number requestTimeout = ((Number) requestContext.getLocalAttr(R2Constants.REQUEST_TIMEOUT));
+    Number perRequestTimeout = ((Number) requestContext.getLocalAttr(R2Constants.REQUEST_TIMEOUT));
 
-    if (requestTimeout == null)
+    if (perRequestTimeout == null)
     {
-      // if no per request timeout is specified, update client experienced timeout with timeout to use and return
       requestContext.putLocalAttr(R2Constants.CLIENT_REQUEST_TIMEOUT_VIEW, defaultRequestTimeout);
       return callback;
     }
 
-    if (requestTimeout.longValue() >= defaultRequestTimeout)
+    if (perRequestTimeout.longValue() >= defaultRequestTimeout)
     {
-      // if per request is longer than default, just return. The R2 client further down will pick up the longer timeout.
+      // if higher value is not allowed, let's just remove the REQUEST_TIMEOUT
+      Boolean requestTimeoutIgnoreIfHigher = ((Boolean) requestContext.getLocalAttr(R2Constants.REQUEST_TIMEOUT_IGNORE_IF_HIGHER_THAN_DEFAULT));
+      if (requestTimeoutIgnoreIfHigher != null && requestTimeoutIgnoreIfHigher)
+      {
+        // client has no intention to adjust default timeout in R2 layer
+        requestContext.putLocalAttr(R2Constants.CLIENT_REQUEST_TIMEOUT_VIEW, defaultRequestTimeout);
+        requestContext.removeLocalAttr(R2Constants.REQUEST_TIMEOUT);
+      }
+      // if REQUEST_TIMEOUT_IGNORE_IF_HIGHER_THAN_DEFAULT is not true, just return. The R2 client further down will pick up the longer timeout.
       return callback;
     }
 
     // if the request timeout is lower than the one set in d2, we will remove the timeout value to prevent R2 client from picking it up
     requestContext.removeLocalAttr(R2Constants.REQUEST_TIMEOUT);
 
-    // we put the client experienced timeout in requestContext for bookkeeping
-    requestContext.putLocalAttr(R2Constants.CLIENT_REQUEST_TIMEOUT_VIEW, requestTimeout);
+    // we put the client experienced timeout in requestContext so client further down will always be aware of the client expectation
+    requestContext.putLocalAttr(R2Constants.CLIENT_REQUEST_TIMEOUT_VIEW, perRequestTimeout);
 
-    // we will create a timeout callback which will simulate its behavior
-    String timeoutMessage = "Exceeded request timeout of " + requestTimeout + "ms";
+    // we will create a timeout callback which will simulate a shorter timeout behavior
     TimeoutCallback<RES> timeoutCallback =
-        new TimeoutCallback<>(_scheduler, requestTimeout.longValue(), TimeUnit.MILLISECONDS, callback,
-            timeoutMessage);
+      new TimeoutCallback<>(_scheduler, perRequestTimeout.longValue(), TimeUnit.MILLISECONDS, callback,
+        "per request timeout");
 
     return timeoutCallback;
   }

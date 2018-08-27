@@ -335,13 +335,18 @@ public class TrackerClientTest
 
     public TestClient(boolean emptyResponse, boolean dontCallCallback, int minRequestTimeout)
     {
+      this(emptyResponse, dontCallCallback, minRequestTimeout, Executors.newSingleThreadScheduledExecutor());
+    }
+
+    public TestClient(boolean emptyResponse, boolean dontCallCallback, int minRequestTimeout, ScheduledExecutorService scheduler)
+    {
       _emptyResponse = emptyResponse;
       _dontCallCallback = dontCallCallback;
 
       // this parameter is important to respect the contract between R2 and D2 to never have a connection shorter than
       // the request timeout to not affect the D2 loadbalancing/degrading
       _minRequestTimeout = minRequestTimeout;
-      _scheduler = Executors.newSingleThreadScheduledExecutor();
+      _scheduler = scheduler;
     }
 
     @Override
@@ -392,7 +397,7 @@ public class TrackerClientTest
       Integer requestTimeout = (Integer) requestContext.getLocalAttr(R2Constants.REQUEST_TIMEOUT);
       if (requestTimeout == null)
       {
-        return;
+        requestTimeout = DEFAULT_REQUEST_TIMEOUT;
       }
       if (requestTimeout < _minRequestTimeout)
       {
@@ -400,8 +405,9 @@ public class TrackerClientTest
             "The timeout is always supposed to be greater than the timeout defined by the service."
                 + " This error is enforced in the tests");
       }
+      Integer finalRequestTimeout = requestTimeout;
       _scheduler.schedule(() -> callback.onResponse(
-          TransportResponseImpl.error(new TimeoutException("Timeout expired after " + requestTimeout + "ms"))),
+        TransportResponseImpl.error(new TimeoutException("Timeout expired after " + finalRequestTimeout + "ms"))),
           requestTimeout, TimeUnit.MILLISECONDS);
     }
 

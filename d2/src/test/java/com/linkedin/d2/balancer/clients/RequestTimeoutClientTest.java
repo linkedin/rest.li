@@ -21,6 +21,7 @@ import com.linkedin.d2.balancer.Facilities;
 import com.linkedin.d2.balancer.clients.stub.DirectoryProviderMock;
 import com.linkedin.d2.balancer.clients.stub.KeyMapperProviderMock;
 import com.linkedin.d2.balancer.clients.stub.LoadBalancerMock;
+import com.linkedin.d2.balancer.simple.LoadBalancerSimulator;
 import com.linkedin.d2.balancer.util.ClientFactoryProvider;
 import com.linkedin.d2.balancer.util.DelegatingFacilities;
 import com.linkedin.d2.balancer.util.DirectoryProvider;
@@ -30,18 +31,15 @@ import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
-import com.linkedin.test.util.AssertionMethods;
-import com.linkedin.test.util.DataGeneration;
 import java.net.URI;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeoutException;
 import org.mockito.Mockito;
+import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import static com.linkedin.d2.balancer.clients.TrackerClientTest.TestClient.DEFAULT_REQUEST_TIMEOUT;
 import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertTrue;
 
 
 /**
@@ -50,28 +48,36 @@ import static org.testng.Assert.assertTrue;
 public class RequestTimeoutClientTest
 {
   @DataProvider
-  public static Object[][] allCombinations2x()
+  public static Object[][] allCombinations3x()
   {
-    return DataGeneration.generateAllBooleanCombinationMatrix(2);
+    return new Object[][]{
+      // isHigherThanDefault, ignoreTimeoutIfHigher, expectedTimeout
+      {false, false, 400},
+      {false, true, 400},
+      {true, false, 600},
+      {true, true, 500},
+    };
   }
 
   /**
-   * It's expected to be able to make a request with any request timeout
+   * Check that the timeout are the expected ones
    */
-  @Test(groups = {"small"}, dataProvider = "allCombinations2x")
+  @Test(groups = {"small"}, dataProvider = "allCombinations3x")
   @SuppressWarnings("deprecation")
-  public void testRequestTimeoutAllowed(boolean restOverStream, boolean isHigherThanDefault) throws Exception
+  public void testRequestTimeoutAllowed(boolean isHigherThanDefault, boolean ignoreTimeoutIfHigher, int expectedTimeout) throws Exception
   {
-    LoadBalancerMock balancer = new LoadBalancerMock(false, true);
+    LoadBalancerSimulator.ClockedExecutor clockedExecutor = new LoadBalancerSimulator.ClockedExecutor();
+
+    LoadBalancerMock balancer = new LoadBalancerMock(false, true, clockedExecutor);
     DirectoryProvider dirProvider = new DirectoryProviderMock();
     KeyMapperProvider keyMapperProvider = new KeyMapperProviderMock();
     ClientFactoryProvider clientFactoryProvider = Mockito.mock(ClientFactoryProvider.class);
     Facilities facilities = new DelegatingFacilities(dirProvider, keyMapperProvider, clientFactoryProvider);
-    D2Client client = new DynamicClient(balancer, facilities, restOverStream);
+    D2Client client = new DynamicClient(balancer, facilities, true);
     URI uri = URI.create("d2://test");
     RestRequest restRequest = new RestRequestBuilder(uri).build();
 
-    client = new RequestTimeoutClient(client, balancer, Executors.newSingleThreadScheduledExecutor());
+    client = new RequestTimeoutClient(client, balancer, clockedExecutor);
 
     RequestContext requestContext = new RequestContext();
 
@@ -79,10 +85,34 @@ public class RequestTimeoutClientTest
 
     TrackerClientTest.TestCallback<RestResponse> restCallback = new TrackerClientTest.TestCallback<>();
     requestContext.putLocalAttr(R2Constants.REQUEST_TIMEOUT, requestTimeout);
+    if (ignoreTimeoutIfHigher)
+    {
+      requestContext.putLocalAttr(R2Constants.REQUEST_TIMEOUT_IGNORE_IF_HIGHER_THAN_DEFAULT, ignoreTimeoutIfHigher);
+    }
     client.restRequest(restRequest, requestContext, restCallback);
 
-    // it should always throw a timeout exception
-    AssertionMethods.assertWithTimeout(2000, () -> assertTrue(restCallback.e instanceof TimeoutException));
+    clockedExecutor.run(expectedTimeout - 10).get();
+    Assert.assertFalse(checkTimeoutFired(restCallback));
+    checkRequestTimeoutOrViewSet(requestContext);
+
+    clockedExecutor.run(expectedTimeout + 10).get();
+    Assert.assertTrue(checkTimeoutFired(restCallback));
+    checkRequestTimeoutOrViewSet(requestContext);
+
+  }
+
+  boolean checkTimeoutFired(TrackerClientTest.TestCallback<RestResponse> restCallback)
+  {
     assertNull(restCallback.t);
+    return restCallback.e instanceof TimeoutException;
+  }
+
+  void checkRequestTimeoutOrViewSet(RequestContext restCallback)
+  {
+    Assert.assertTrue(restCallback.getLocalAttr(R2Constants.REQUEST_TIMEOUT) != null
+        || restCallback.getLocalAttr(R2Constants.CLIENT_REQUEST_TIMEOUT_VIEW) != null,
+      "Either the REQUEST_TIMEOUT or CLIENT_REQUEST_TIMEOUT_VIEW should always be set," +
+        " in such a way that parts of code that don't have access to the default timeout, can still know " +
+        "the expected timeout");
   }
 }

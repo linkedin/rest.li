@@ -60,6 +60,10 @@ public class R2Constants
   public static final String REQUESTED_SSL_SESSION_VALIDATOR = "REQUESTED_SSL_SESSION_VALIDATOR";
   public static final String REQUEST_TIMEOUT = "REQUEST_TIMEOUT";
   /**
+   * Ignore overriding the REQUEST_TIMEOUT if it is higher than the current value in the LB
+   */
+  public static final String REQUEST_TIMEOUT_IGNORE_IF_HIGHER_THAN_DEFAULT = "REQUEST_TIMEOUT_IGNORE_IF_HIGHER";
+  /**
    * CLIENT_REQUEST_TIMEOUT_VIEW should only be set when per request timeout is lower than the default value
    */
   public static final String CLIENT_REQUEST_TIMEOUT_VIEW = "CLIENT_REQUEST_TIMEOUT_VIEW";

@@ -30,6 +30,8 @@ import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 
 public class LoadBalancerMock implements LoadBalancer
@@ -37,6 +39,7 @@ public class LoadBalancerMock implements LoadBalancer
 
   private boolean _serviceUnavailable;
   private boolean _dontCallCallback;
+  private final ScheduledExecutorService _scheduledExecutorService;
   public boolean  shutdown = false;
 
 
@@ -47,8 +50,14 @@ public class LoadBalancerMock implements LoadBalancer
 
   public LoadBalancerMock(boolean serviceUnavailable, boolean dontCallCallback)
   {
+    this(serviceUnavailable, dontCallCallback, Executors.newSingleThreadScheduledExecutor());
+  }
+
+  public LoadBalancerMock(boolean serviceUnavailable, boolean dontCallCallback, ScheduledExecutorService scheduledExecutorService)
+  {
     _serviceUnavailable = serviceUnavailable;
     _dontCallCallback = dontCallCallback;
+    _scheduledExecutorService = scheduledExecutorService;
   }
 
   @Override
@@ -60,7 +69,8 @@ public class LoadBalancerMock implements LoadBalancer
       return;
     }
 
-    clientCallback.onSuccess(new TrackerClientTest.TestClient(true, _dontCallCallback, TrackerClientTest.TestClient.DEFAULT_REQUEST_TIMEOUT));
+    clientCallback.onSuccess(new TrackerClientTest.TestClient(true, _dontCallCallback,
+      TrackerClientTest.TestClient.DEFAULT_REQUEST_TIMEOUT, _scheduledExecutorService));
   }
 
   @Override

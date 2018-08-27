@@ -25,7 +25,6 @@ import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.transform.filter.request.MaskOperation;
 import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.pegasus.generator.test.NestedArrayRefRecord;
-import com.linkedin.pegasus.generator.test.NestedRecordRefArray;
 import com.linkedin.pegasus.generator.test.RecordBar;
 import com.linkedin.pegasus.generator.test.RecordBarArray;
 import com.linkedin.pegasus.generator.test.RecordBarArrayArray;
@@ -37,11 +36,9 @@ import com.linkedin.restli.internal.server.ResourceContextImpl;
 import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.server.LinkedListNode;
 import com.linkedin.restli.server.RestLiServiceException;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -146,7 +143,7 @@ public class TestRestUtils
     {
       Assert.assertEquals(e.getStatus(), HttpStatus.S_406_NOT_ACCEPTABLE);
       Assert.assertEquals(e.getMessage(),
-                          "None of the types in the request's 'Accept' header are supported. Supported MIME types are: [application/x-pson, application/json][]");
+                          "None of the types in the request's 'Accept' header are supported. Supported MIME types are: [application/x-smile, application/x-pson, application/json][]");
       Assert.assertEquals(resourceContext.getResponseMimeType(), null);
     }
   }

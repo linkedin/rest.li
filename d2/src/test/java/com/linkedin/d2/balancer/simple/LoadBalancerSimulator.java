@@ -513,7 +513,7 @@ public class LoadBalancerSimulator
   /**
    * A simulated service executor and clock
    */
-  public class ClockedExecutor implements Clock, ScheduledExecutorService
+  public static class ClockedExecutor implements Clock, ScheduledExecutorService
   {
     private volatile long _currentTimeMillis = 0l;
     private volatile Boolean _stopped = true;
@@ -644,7 +644,7 @@ public class LoadBalancerSimulator
     @Override
     public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException
     {
-      runUntil(unit.convert(timeout, TimeUnit.MILLISECONDS));
+      run(unit.convert(timeout, TimeUnit.MILLISECONDS));
       return true;
     }
 

@@ -6,6 +6,9 @@ Support returning the entity for PARTIAL_UPDATE resource methods
 (RB=1394500)
 D2 merging clientOverridesProperties into the serviceProperties at deserialization time.
 
+(RB=1402795)
+D2 adding REQUEST_TIMEOUT_IGNORE_IF_HIGHER_THAN_DEFAULT parameter to request context's request
+
 23.0.19
 -------
 (RB=1398083)
