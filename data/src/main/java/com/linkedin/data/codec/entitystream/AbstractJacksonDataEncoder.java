@@ -19,6 +19,7 @@ package com.linkedin.data.codec.entitystream;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.linkedin.data.ByteString;
+import com.linkedin.data.Data;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.entitystream.WriteHandle;
@@ -47,19 +48,6 @@ abstract class AbstractJacksonDataEncoder implements DataEncoder
 
   private static final Object MAP = new Object();
   private static final Object LIST = new Object();
-
-  private static final Map<Class<?>, Integer> TYPE_MAP = new HashMap<>();
-  static {
-    TYPE_MAP.put(String.class, 1);
-    TYPE_MAP.put(Integer.class, 2);
-    TYPE_MAP.put(DataMap.class, 3);
-    TYPE_MAP.put(DataList.class, 4);
-    TYPE_MAP.put(Boolean.class, 5);
-    TYPE_MAP.put(Long.class, 6);
-    TYPE_MAP.put(Float.class, 7);
-    TYPE_MAP.put(Double.class, 8);
-    TYPE_MAP.put(ByteString.class, 9);
-  }
 
   private JsonFactory _jsonFactory;
   private JsonGenerator _generator;
@@ -202,7 +190,7 @@ abstract class AbstractJacksonDataEncoder implements DataEncoder
   private void writeValue(Object value)
       throws Exception
   {
-    switch (TYPE_MAP.get(value.getClass()))
+    switch (Data.TYPE_MAP.get(value.getClass()))
     {
       case 1:
         _generator.writeString((String) value);

@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -113,6 +114,22 @@ public class Data
   public static final Charset UTF_8_CHARSET = Charset.forName("UTF-8");
 
   /**
+   * A map of all underlying types supported by Data objects.
+   */
+  public static final Map<Class<?>, Integer> TYPE_MAP = new HashMap<>();
+  static {
+    TYPE_MAP.put(String.class, 1);
+    TYPE_MAP.put(Integer.class, 2);
+    TYPE_MAP.put(DataMap.class, 3);
+    TYPE_MAP.put(DataList.class, 4);
+    TYPE_MAP.put(Boolean.class, 5);
+    TYPE_MAP.put(Long.class, 6);
+    TYPE_MAP.put(Float.class, 7);
+    TYPE_MAP.put(Double.class, 8);
+    TYPE_MAP.put(ByteString.class, 9);
+  }
+
+  /**
    * Callback interface invoked by traverse method.
    *
    * This interface contains callback methods that are invoked when
@@ -137,7 +154,7 @@ public class Data
      * @param map provides the {@link DataMap}.
      * @return entries of the {@link DataMap} entries in the desired output order.
      */
-    Iterable<Map.Entry<String,Object>> orderMap(DataMap map);
+    Iterable<Map.Entry<String, Object>> orderMap(DataMap map);
 
     /**
      * Invoked when a null value is traversed.
@@ -273,80 +290,73 @@ public class Data
       return;
     }
 
-    /* Expecting string and integer to be most popular */
-    Class<?> clas = obj.getClass();
-    if (clas == String.class)
+    switch (Data.TYPE_MAP.get(obj.getClass()))
     {
-      callback.stringValue((String) obj);
-    }
-    else if (clas == Integer.class)
-    {
-      callback.integerValue((Integer) obj);
-    }
-    else if (clas == DataMap.class)
-    {
-      DataMap map = (DataMap) obj;
-      if (map.isEmpty())
+      case 1:
+        callback.stringValue((String) obj);
+        return;
+      case 2:
+        callback.integerValue((Integer) obj);
+        return;
+      case 3:
       {
-        callback.emptyMap();
-      }
-      else
-      {
-        callback.startMap(map);
-        Iterable<Map.Entry<String,Object>> orderedEntrySet = callback.orderMap(map);
-        for (Map.Entry<String,Object> e : orderedEntrySet)
+        DataMap map = (DataMap) obj;
+        if (map.isEmpty())
         {
-          String key = e.getKey();
-          callback.key(key);
-          traverse(e.getValue(), callback);
+          callback.emptyMap();
         }
-        callback.endMap();
-      }
-    }
-    else if (clas == DataList.class)
-    {
-      DataList list = (DataList) obj;
-      if (list.isEmpty())
-      {
-        callback.emptyList();
-      }
-      else
-      {
-        callback.startList(list);
-        int index = 0;
-        for (Object o : list)
+        else
         {
-          callback.index(index);
-          ++index;
-          traverse(o, callback);
+          callback.startMap(map);
+          Iterable<Map.Entry<String, Object>> orderedEntrySet = callback.orderMap(map);
+          for (Map.Entry<String, Object> entry : orderedEntrySet)
+          {
+            callback.key(entry.getKey());
+            traverse(entry.getValue(), callback);
+          }
+          callback.endMap();
         }
-        callback.endList();
+
+        return;
       }
+      case 4:
+      {
+        DataList list = (DataList) obj;
+        if (list.isEmpty())
+        {
+          callback.emptyList();
+        }
+        else
+        {
+          callback.startList(list);
+          for (int index = 0; index < list.size(); index++)
+          {
+            callback.index(index);
+            traverse(list.get(index), callback);
+          }
+          callback.endList();
+        }
+
+        return;
+      }
+      case 5:
+        callback.booleanValue((Boolean) obj);
+        return;
+      case 6:
+        callback.longValue((Long) obj);
+        return;
+      case 7:
+        callback.floatValue((Float) obj);
+        return;
+      case 8:
+        callback.doubleValue((Double) obj);
+        return;
+      case 9:
+        callback.byteStringValue((ByteString) obj);
+        return;
     }
-    else if (clas == Boolean.class)
-    {
-      callback.booleanValue((Boolean) obj);
-    }
-    else if (clas == Long.class)
-    {
-      callback.longValue((Long) obj);
-    }
-    else if (clas == Float.class)
-    {
-      callback.floatValue((Float) obj);
-    }
-    else if (clas == Double.class)
-    {
-      callback.doubleValue((Double) obj);
-    }
-    else if (clas == ByteString.class)
-    {
-      callback.byteStringValue((ByteString) obj);
-    }
-    else
-    {
-      callback.illegalValue(obj);
-    }
+
+    callback.illegalValue(obj);
   }
 
   /**
@@ -664,7 +674,7 @@ public class Data
    */
   static boolean isAllowedClass(Class<?> clas)
   {
-    return (isPrimitiveClass(clas) || isComplexClass(clas));
+    return isPrimitiveClass(clas) || isComplexClass(clas);
   }
   /**
    * Return whether the input object is primitive object.

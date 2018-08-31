@@ -1,3 +1,11 @@
+23.0.21
+-------
+(RB=1408119)
+Fix test relying on string error message
+
+(RB=1402300)
+Implement blocking and non blocking smile data codec
+
 23.0.20
 -------
 (RB=1344653)

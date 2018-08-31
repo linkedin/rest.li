@@ -32,6 +32,7 @@ import com.linkedin.pegasus.generator.test.RecordBarMap;
 import com.linkedin.pegasus.generator.test.TyperefTest;
 import com.linkedin.pegasus.generator.test.UnionTest;
 import com.linkedin.restli.common.HttpStatus;
+import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.server.ResourceContextImpl;
 import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.server.LinkedListNode;
@@ -143,7 +144,8 @@ public class TestRestUtils
     {
       Assert.assertEquals(e.getStatus(), HttpStatus.S_406_NOT_ACCEPTABLE);
       Assert.assertEquals(e.getMessage(),
-                          "None of the types in the request's 'Accept' header are supported. Supported MIME types are: [application/x-smile, application/x-pson, application/json][]");
+                          "None of the types in the request's 'Accept' header are supported. " +
+                          "Supported MIME types are: " + RestConstants.SUPPORTED_MIME_TYPES + "[]");
       Assert.assertEquals(resourceContext.getResponseMimeType(), null);
     }
   }
