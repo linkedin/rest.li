@@ -1,0 +1,19 @@
+<nav class="dark-grey" role="navigation">
+    <div class="nav-wrapper container"><a id="logo-container" class="brand-logo" href="{{ "/" | relative_url }}">Rest.li</a>
+
+
+          <ul class="right hide-on-med-and-down">
+               
+      {% for item in site.data.header_navigation.items %}
+        <li>
+          <a href="{{ item.url }}" {% if item.url == page.url %}class="active"{% endif %}>
+            {{ item.page }}
+          </a>
+        </li>
+        {% endfor %}
+          </ul>
+
+
+      <a href="#" data-activates="nav-mobile" class="button-collapse"><i class="material-icons">menu</i></a>
+    </div>
+</nav>

@@ -1,0 +1,10 @@
+title: rest.li
+description: > 
+  A REST framework for building scalable service architectures using dynamic discovery and simple asynchronous APIs
+
+sass:
+    style: compressed
+
+toc:
+  min_level: 2 # default: 1
+  max_level: 5 # default: 6

@@ -1,0 +1,44 @@
+---
+layout: default
+---
+
+<div class="container">
+        <div class="row">
+                <div class="col s12 m4 l3"> 
+               
+                    {% for item in site.data.started_navigation.toc %}
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">{{ item.title }}</span></li>
+                        <ul>
+                       {% for entry in item.subfolderitems %}
+                         <li><a href="{{ entry.url }}">{{ entry.page }}</a></li>
+                       {% endfor %}
+                        </ul>
+                     </ul>
+                        {% endfor %}
+                    </div>
+                     <div class="markdown-body col s12 m3 l9">
+                            {{ content }}
+                     </div>
+                     <!-- <div class="col l3">
+                            <div class="row">
+                                    <div class="col l12">
+                                      <div class="card blue-grey darken-1">
+                                        <div class="card-content white-text">
+                                          <span class="card-title">Card Title</span>
+                                          <p>I am a very simple card. I am good at containing small bits of information.
+                                          I am convenient because I require little markup to use effectively.</p>
+                                        </div>
+                                        <div class="card-action">
+                                          <a href="#">This is a link</a>
+                                          <a href="#">This is a link</a>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                     </div> -->
+                   </div>
+</div>
+

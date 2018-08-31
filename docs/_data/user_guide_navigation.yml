@@ -1,0 +1,56 @@
+toc:
+  - title: User Guide
+    subfolderitems:
+      - page: Rest.li Architecture
+        url: /rest.li/user_guide/server_architecture
+      - page: Rest.li Server
+        url: /rest.li/user_guide/restli_server
+      - page: Rest.li Client Framework
+        url: /rest.li/user_guide/restli_client
+      - page: Components
+        url: /rest.li/Components
+      - page: Asynchronous in Rest.li
+        url: /rest.li/Asynchronous-Servers-and-Clients-in-Rest_li
+  - title: Modeling Resources
+    subfolderitems:
+      - page: Data schema and templates
+        url: /rest.li/DATA-Data-Schema-and-Templates
+      - page: Modeling Resources
+        url: /rest.li/modeling/modeling
+      - page: Snapshots and Resource Compatibility Checking
+        url: /rest.li/modeling/compatibiltiy_check
+  - title: Main concepts
+    subfolderitems:
+      - page: Filters
+        url: /rest.li/Rest_li-Filters
+      - page: Projections
+        url: /rest.li/Projections
+      - page: Validation
+        url: /rest.li/Validation-in-Rest_li
+      - page: Attachment Streaming
+        url: /rest.li/Attachment-Streaming
+  - title: Mutli-language
+    subfolderitems:
+      - page: Scala integration
+        url: /rest.li/Scala-Integration
+      - page: C#
+        url: https://github.com/mchen07/restli-csharp
+  - title: Testing
+    subfolderitems:
+      - page: Writing unit tests
+        url: /rest.li/Writing-unit-tests-for-Rest_li-clients-and-servers
+  - title: How to
+    subfolderitems:    
+      - page: Send Rest.li request query in request body
+        url: /rest.li/Send-Rest_li-Request-Query-In-Request-Body
+      - page: How to use projections
+        url: /rest.li/How-to-use-projections-in-Java
+      - page: Rest.li to Avro conversion
+        url: /rest.li/How_To_Rest_li_Avro_conversions
+      - page: Compression
+        url: /rest.li/Compression
+      - page: How to migrate to Rest.li 2.x
+        url: /rest.li/Rest_li-2_x-upgrade-instructions
+      - page: FAQ
+        url: /rest.li/Data-FAQ
+    
