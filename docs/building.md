@@ -6,8 +6,14 @@ index: 1
 ---
 
 # Building Rest.li from Source
+
+## Contents
+
 You can use the latest released version of Rest.li or build your own
-local version.
+local version:
+
+ - [Using Rest.li JARs](#using-restli-jars)
+ - [Building Your Own Copy of Rest.li](#building-your-own-copy-of-restli)
 
 ## Using Rest.li JARs
 

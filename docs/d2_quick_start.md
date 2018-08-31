@@ -6,13 +6,13 @@ index: 1
 ---
 # Dynamic Discovery Quick Start 
 
+## Contents
+
 In this tutorial, we will explain the basic concepts of D2 using a
 simple client server project. [Apache
 Zookeeper](http://zookeeper.apache.org/) is required for doing this
 tutorial. The completed code for this tutorial is available in Rest.li’s
-examples/d2-quickstart.
-
-Contents:
+examples/d2-quickstart:
 
   - [What is D2 in a Nutshell](#what-is-d2-in-a-nutshell)
   - [The Tutorial](#the-tutorial)
@@ -21,7 +21,7 @@ Contents:
       - [Step 3. Create a Client](#step-3-create-a-client)
   - [Next Steps](#next-steps)
 
-# What is D2 in a Nutshell
+## What is D2 in a Nutshell
 
 Imagine we have a Service Oriented Architecture. Let’s say we have
 hundreds of servers. Each server can host different set of services.
@@ -54,7 +54,7 @@ choose a server to send the request to.
 
 That is all you need to know about D2 in a nutshell.
 
-# The Tutorial
+## The Tutorial
 
 We will create a basic client server application in Java. We use gradle
 for our build process. The top level structure of our project will have
@@ -104,7 +104,7 @@ This tells gradle that it should use pegasus artifact version 1.20.0
 from the maven central repository. This also tells gradle we have
 dependencies to r2 and d2 libraries.
 
-## Step 1. Create a Server
+### Step 1. Create a Server
 
 Create the following project structure in the `server` sub-directory:
 
@@ -351,7 +351,7 @@ In order to run the server, you run this command:
 ```../../gradlew runServer
 ```
 
-## Step 2. Create a Config Runner
+### Step 2. Create a Config Runner
 
 Create the following project structure in the ‘config’ sub-directory:
 
@@ -536,7 +536,7 @@ class.
 
 In order to run D2Config run ../../gradlew runConfigRunner
 
-## Step 3. Create a Client
+### Step 3. Create a Client
 
 Create the following project structure in the ‘client’ subdirectory:
 
@@ -833,7 +833,7 @@ console:
 
     ../../gradlew runClient
 
-# Next Steps
+## Next Steps
 
 Congratulations! You have finished this tutorial. Now you can build
 your own D2 client/server applications. Next, you can learn the advanced
