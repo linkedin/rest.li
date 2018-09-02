@@ -49,7 +49,7 @@ import java.util.TreeMap;
  *
  * @author kramgopa, slim
  */
-abstract class AbstractJacksonDataCodec implements DataCodec
+public abstract class AbstractJacksonDataCodec implements DataCodec
 {
   protected static final int DEFAULT_BUFFER_SIZE = 4096;
 
@@ -117,7 +117,7 @@ abstract class AbstractJacksonDataCodec implements DataCodec
   {
     try
     {
-      JacksonTraverseCallback callback = new JacksonTraverseCallback(generator);
+      Data.TraverseCallback callback = createTraverseCallback(generator);
       Data.traverse(object, callback);
       generator.flush();
     }
@@ -129,6 +129,11 @@ abstract class AbstractJacksonDataCodec implements DataCodec
     {
       closeQuietly(generator);
     }
+  }
+
+  protected Data.TraverseCallback createTraverseCallback(JsonGenerator generator)
+  {
+    return new JacksonTraverseCallback(generator);
   }
 
   @Override
@@ -210,11 +215,11 @@ abstract class AbstractJacksonDataCodec implements DataCodec
 
   public void objectToJsonGenerator(Object object, JsonGenerator generator) throws IOException
   {
-    JacksonTraverseCallback callback = new JacksonTraverseCallback(generator);
+    Data.TraverseCallback callback = createTraverseCallback(generator);
     Data.traverse(object, callback);
   }
 
-  protected static class JacksonTraverseCallback implements Data.TraverseCallback
+  public static class JacksonTraverseCallback implements Data.TraverseCallback
   {
     private final JsonGenerator _generator;
 
