@@ -1,5 +1,11 @@
-23.0.20
+24.0.1
+------
+
+24.0.0
 -------
+(RB=1410320)
+Bump major version and update gradle.properties for release
+
 (RB=1409272)
 Refactor some code for ease of access in pemberly-api
 
