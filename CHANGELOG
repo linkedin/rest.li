@@ -1,5 +1,10 @@
+24.0.2
+------
+
 24.0.1
 ------
+(RB=1411239)
+Make bannedUris field optional
 
 24.0.0
 -------

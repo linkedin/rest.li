@@ -34,6 +34,7 @@
         "type": "array",
         "items": "string"
       },
+      "default": [],
       "doc": "banned Uris for this cluster"
     },
     {
