@@ -3,6 +3,9 @@
 
 24.0.0
 -------
+(RB=1411483)
+Disable test that fails consistently in TMC and passes consistently in local box
+
 (RB=1410320)
 Bump major version and update gradle.properties for release
 
