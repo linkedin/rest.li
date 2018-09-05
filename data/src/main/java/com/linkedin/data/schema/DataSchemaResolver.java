@@ -16,6 +16,8 @@
 
 package com.linkedin.data.schema;
 
+import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -100,4 +102,30 @@ public interface DataSchemaResolver
    * @return true if the specified {@link DataSchemaLocation} has been associated with a name.
    */
   boolean locationResolved(DataSchemaLocation location);
+
+  /**
+   * Add a record that is currently being parsed to the pending schema list. This is used to detect and disallow
+   * circular references involving includes.
+   * @param name Full name of the record.
+   */
+  void addPendingSchema(String name);
+
+  /**
+   * Update a pending schema to indicate the status of parsing includes for that schema.
+   * @param name Schema name
+   * @param isParsingInclude status of parsing include. Set to true before parsing includes and cleared after include
+   *                         list is processed.
+   */
+  void updatePendingSchema(String name, Boolean isParsingInclude);
+
+  /**
+   * Remove a record from the pending list.
+   * @param name Full name of the record.
+   */
+  void removePendingSchema(String name);
+
+  /**
+   * Return the list of records currently in the state of parsing.
+   */
+  LinkedHashMap<String, Boolean> getPendingSchemas();
 }

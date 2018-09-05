@@ -39,6 +39,7 @@ import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -181,8 +182,44 @@ abstract public class AbstractSchemaParser implements PegasusSchemaParser
     if (schema == null)
     {
       schema = getResolver().findDataSchema(fullName, errorMessageBuilder());
+      if (schema != null)
+      {
+        checkForCycleWithInclude(((NamedDataSchema) schema).getFullName());
+      }
     }
     return schema;
+  }
+
+  private void checkForCycleWithInclude(String fullName)
+  {
+    LinkedHashMap<String, Boolean> pendingSchemas = getResolver().getPendingSchemas();
+    // Return if there is no cycle.
+    if (!pendingSchemas.containsKey(fullName))
+    {
+      return;
+    }
+
+    boolean cycleFound = false;
+    List<String> schemasInCycle = new ArrayList<>(pendingSchemas.size());
+    for (Map.Entry<String, Boolean> pendingSchema : pendingSchemas.entrySet())
+    {
+      // Lookup the schema that started the cycle.
+      if (cycleFound || pendingSchema.getKey().equals(fullName))
+      {
+        cycleFound = true;
+        // Get all the schemas that form the cycle.
+        schemasInCycle.add(pendingSchema.getKey());
+      }
+    }
+    // Add error message if there is an include in the cycle.
+    if (schemasInCycle.stream().anyMatch(pendingSchemas::get))
+    {
+      startErrorMessage(fullName)
+          .append("\"").append(fullName).append("\"")
+          .append(" cannot be parsed as it is part of circular reference involving includes.")
+          .append(" Record(s) with include in the cycle: ")
+          .append(schemasInCycle);
+    }
   }
 
   /**

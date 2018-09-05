@@ -35,6 +35,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -235,6 +236,29 @@ public abstract class AbstractDataSchemaResolver implements DataSchemaResolver
   }
 
   @Override
+  public void addPendingSchema(String name)
+  {
+    _pendingSchemas.put(name, false);
+  }
+
+  @Override
+  public void updatePendingSchema(String name, Boolean isParsingInclude)
+  {
+    _pendingSchemas.computeIfPresent(name, (key, oldValue) -> isParsingInclude);
+  }
+
+  @Override
+  public void removePendingSchema(String name)
+  {
+    _pendingSchemas.remove(name);
+  }
+
+  @Override
+  public LinkedHashMap<String, Boolean> getPendingSchemas() {
+    return _pendingSchemas;
+  }
+
+  @Override
   public boolean locationResolved(DataSchemaLocation location)
   {
     return _resolvedLocations.contains(location);
@@ -344,6 +368,8 @@ public abstract class AbstractDataSchemaResolver implements DataSchemaResolver
   private final DataSchemaParserFactory _parserFactory;
   private final Set<DataSchemaLocation> _badLocations = new HashSet<DataSchemaLocation>();
   private final Set<DataSchemaLocation> _resolvedLocations = new HashSet<DataSchemaLocation>();
+  // Map of pending records with the boolean flag indicating if includes are being processed for that schema.
+  private final LinkedHashMap<String, Boolean> _pendingSchemas = new LinkedHashMap<>();
 
   protected static final PrintStream out = new PrintStream(new FileOutputStream(FileDescriptor.out));
 }

@@ -620,25 +620,33 @@ public class PdlSchemaParser extends AbstractSchemaParser
     Name name = toName(record.name);
     RecordDataSchema schema = new RecordDataSchema(name, RecordDataSchema.RecordType.RECORD);
 
-    bindNameToSchema(name, schema);
-    FieldsAndIncludes fieldsAndIncludes = parseIncludes(record.beforeIncludes);
-    boolean hasBeforeIncludes = fieldsAndIncludes.includes.size() > 0;
-    fieldsAndIncludes.fields.addAll(parseFields(schema, record.recordDecl));
-    FieldsAndIncludes afterIncludes = parseIncludes(record.afterIncludes);
-    boolean hasAfterIncludes = afterIncludes.includes.size() > 0;
-    if (hasBeforeIncludes && hasAfterIncludes)
+    getResolver().addPendingSchema(schema.getFullName());
+    try
     {
-      startErrorMessage(record)
-          .append("Record may have includes before or after fields, but not both: ")
-          .append(record).append(NEWLINE);
+      bindNameToSchema(name, schema);
+      FieldsAndIncludes fieldsAndIncludes = parseIncludes(schema, record.beforeIncludes);
+      boolean hasBeforeIncludes = fieldsAndIncludes.includes.size() > 0;
+      fieldsAndIncludes.fields.addAll(parseFields(schema, record.recordDecl));
+      FieldsAndIncludes afterIncludes = parseIncludes(schema, record.afterIncludes);
+      boolean hasAfterIncludes = afterIncludes.includes.size() > 0;
+      if (hasBeforeIncludes && hasAfterIncludes)
+      {
+        startErrorMessage(record).append("Record may have includes before or after fields, but not both: ")
+            .append(record)
+            .append(NEWLINE);
+      }
+      fieldsAndIncludes.addAll(afterIncludes);
+      schema.setFields(fieldsAndIncludes.fields, errorMessageBuilder());
+      schema.setInclude(fieldsAndIncludes.includes);
+      schema.setIncludesDeclaredInline(fieldsAndIncludes.includesDeclaredInline);
+      schema.setFieldsBeforeIncludes(hasAfterIncludes);
+      validateDefaults(schema);
+      setProperties(context, schema);
     }
-    fieldsAndIncludes.addAll(afterIncludes);
-    schema.setFields(fieldsAndIncludes.fields, errorMessageBuilder());
-    schema.setInclude(fieldsAndIncludes.includes);
-    schema.setIncludesDeclaredInline(fieldsAndIncludes.includesDeclaredInline);
-    schema.setFieldsBeforeIncludes(hasAfterIncludes);
-    validateDefaults(schema);
-    setProperties(context, schema);
+    finally
+    {
+      getResolver().removePendingSchema(schema.getFullName());
+    }
     return schema;
   }
 
@@ -781,13 +789,15 @@ public class PdlSchemaParser extends AbstractSchemaParser
     }
   }
 
-  private FieldsAndIncludes parseIncludes(PdlParser.FieldIncludesContext includeSet) throws ParseException
+  private FieldsAndIncludes parseIncludes(RecordDataSchema recordDataSchema,
+      PdlParser.FieldIncludesContext includeSet) throws ParseException
   {
     List<NamedDataSchema> includes = new ArrayList<>();
     Set<NamedDataSchema> includesDeclaredInline = new HashSet<>();
     List<Field> fields = new ArrayList<>();
     if (includeSet != null)
     {
+      getResolver().updatePendingSchema(recordDataSchema.getFullName(), true);
       List<TypeAssignmentContext> includeTypes = includeSet.typeAssignment();
       for (TypeAssignmentContext includeRef : includeTypes)
       {
@@ -821,6 +831,7 @@ public class PdlSchemaParser extends AbstractSchemaParser
               .append(includeRef).append(NEWLINE);
         }
       }
+      getResolver().updatePendingSchema(recordDataSchema.getFullName(), false);
     }
     return new FieldsAndIncludes(fields, includes, includesDeclaredInline);
   }

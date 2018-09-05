@@ -27,6 +27,7 @@ import com.linkedin.data.schema.grammar.PdlSchemaParser;
 import com.linkedin.data.schema.grammar.PdlSchemaParserFactory;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -156,5 +157,42 @@ public class MultiFormatDataSchemaResolver implements DataSchemaResolver
       }
     }
     return false;
+  }
+
+  @Override
+  public void addPendingSchema(String name)
+  {
+    for (DataSchemaResolver resolver : resolvers)
+    {
+      resolver.addPendingSchema(name);
+    }
+  }
+
+  @Override
+  public void updatePendingSchema(String name, Boolean isParsingInclude) {
+    for (DataSchemaResolver resolver : resolvers)
+    {
+      resolver.updatePendingSchema(name, isParsingInclude);
+    }
+  }
+
+  @Override
+  public void removePendingSchema(String name)
+  {
+    for (DataSchemaResolver resolver: resolvers)
+    {
+      resolver.removePendingSchema(name);
+    }
+  }
+
+  @Override
+  public LinkedHashMap<String, Boolean> getPendingSchemas()
+  {
+    LinkedHashMap<String, Boolean> results = new LinkedHashMap<>();
+    for (DataSchemaResolver resolver: resolvers)
+    {
+      results.putAll(resolver.getPendingSchemas());
+    }
+    return results;
   }
 }

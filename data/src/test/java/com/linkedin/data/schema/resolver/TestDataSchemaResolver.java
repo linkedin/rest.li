@@ -41,6 +41,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import org.testng.annotations.BeforeTest;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import static com.linkedin.data.TestUtil.asMap;
@@ -226,6 +227,167 @@ public class TestDataSchemaResolver
 
     DataSchemaResolver resolver = new MapDataSchemaResolver(SchemaParserFactory.instance(), _testPaths, ".pdsc", _testSchemas);
     lookup(resolver, _testLookupAndExpectedResults, File.separatorChar, debug);
+  }
+
+  @DataProvider
+  public Object[][] circularIncludeData()
+  {
+    return new Object[][]
+    {
+        {
+          "Two records including each other",
+            asMap(buildSystemIndependentPath("a1", "include1.pdsc"), "{ \"name\" : \"include1\", \"type\" : \"record\", \"include\": [\"include2\"], \"fields\" : [ { \"name\" : \"member1\", \"type\" : \"string\" } ] }",
+                  buildSystemIndependentPath("a1", "include2.pdsc"), "{ \"name\" : \"include2\", \"type\" : \"record\", \"include\": [\"include1\"], \"fields\" : [ { \"name\" : \"member2\", \"type\" : \"string\" } ] }"
+            ),
+            new String[][]
+            {
+                {
+                  "include1",
+                    ERROR,
+                    "circular reference involving includes"
+                },
+                { "include2",
+                    ERROR,
+                    "circular reference involving includes"
+                }
+            }
+        },
+        {
+            "Two records including each other using aliases",
+            asMap(buildSystemIndependentPath("a1", "include1.pdsc"), "{ \"name\" : \"include1\", \"aliases\" : [\"includeAlias1\"], \"type\" : \"record\", \"include\": [\"include2\"], \"fields\" : [ { \"name\" : \"member1\", \"type\" : \"string\" } ] }",
+                buildSystemIndependentPath("a1", "include2.pdsc"), "{ \"name\" : \"include2\", \"type\" : \"record\", \"include\": [\"includeAlias1\"], \"fields\" : [ { \"name\" : \"member2\", \"type\" : \"string\" } ] }"
+            ),
+            new String[][]
+                {
+                    {
+                        "include1",
+                        ERROR,
+                        "circular reference involving includes"
+                    }
+                }
+        },
+        {
+            "First record has a record field, and that record includes the first record",
+            asMap(buildSystemIndependentPath("a1", "record1.pdsc"), "{ \"name\" : \"record1\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"member1\", \"type\" : \"include1\" } ] }",
+                buildSystemIndependentPath("a1", "include1.pdsc"), "{ \"name\" : \"include1\", \"type\" : \"record\", \"include\": [\"record1\"], \"fields\" : [ { \"name\" : \"member2\", \"type\" : \"string\" } ] }"
+            ),
+            new String[][]
+            {
+                {
+                    "record1",
+                    ERROR,
+                    "circular reference involving includes"
+                },
+                {
+                    "include1",
+                    ERROR,
+                    "circular reference involving includes"
+                }
+            }
+        },
+        {
+            "Circular reference involving only fields",
+            asMap(buildSystemIndependentPath("a1", "record1.pdsc"), "{ \"name\" : \"record1\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"member1\", \"type\" : \"record2\" } ] }",
+                buildSystemIndependentPath("a1", "record2.pdsc"), "{ \"name\" : \"record2\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"member2\", \"type\" : \"record1\" } ] }"
+            ),
+            new String[][]
+            {
+                {
+                    "record1",
+                    FOUND,
+                    "\"name\" : \"record1\"",
+                    buildSystemIndependentPath("a1", "record1.pdsc")
+                },
+                {
+                    "record2",
+                    FOUND,
+                    "\"name\" : \"record2\"",
+                    buildSystemIndependentPath("a1", "record2.pdsc")
+                }
+            }
+        },
+        {
+            "Three records with one include in the cycle",
+            asMap(buildSystemIndependentPath("a1", "include1.pdsc"), "{ \"name\" : \"include1\", \"type\" : \"record\", \"include\": [\"record1\"], \"fields\" : [ { \"name\" : \"member2\", \"type\" : \"string\" } ] }",
+                buildSystemIndependentPath("a1", "record1.pdsc"), "{ \"name\" : \"record1\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"member1\", \"type\" : \"record2\" } ] }",
+                buildSystemIndependentPath("a1", "record2.pdsc"), "{ \"name\" : \"record2\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"member1\", \"type\" : \"include1\" } ] }"
+            ),
+            new String[][]
+                {
+                    {
+                        "include1",
+                        ERROR,
+                        "circular reference involving includes"
+                    },
+                    {
+                        "record1",
+                        ERROR,
+                        "circular reference involving includes"
+                    },
+                    {
+                        "record2",
+                        ERROR,
+                        "circular reference involving includes"
+                    }
+                }
+        },
+        {
+            "Three records with one include not in the cycle",
+            asMap(buildSystemIndependentPath("a1", "include1.pdsc"), "{ \"name\" : \"include1\", \"type\" : \"record\", \"include\": [\"record1\"], \"fields\" : [ { \"name\" : \"member2\", \"type\" : \"string\" } ] }",
+                buildSystemIndependentPath("a1", "record1.pdsc"), "{ \"name\" : \"record1\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"member1\", \"type\" : \"record2\" } ] }",
+                buildSystemIndependentPath("a1", "record2.pdsc"), "{ \"name\" : \"record2\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"member1\", \"type\" : \"record1\" } ] }"
+            ),
+            new String[][]
+                {
+                    {
+                        "include1",
+                        FOUND,
+                        "\"name\" : \"include1\"",
+                        buildSystemIndependentPath("a1", "include1.pdsc")
+                    },
+                    {
+                        "record1",
+                        FOUND,
+                        "\"name\" : \"record1\"",
+                        buildSystemIndependentPath("a1", "record1.pdsc")
+                    },
+                    {
+                        "record2",
+                        FOUND,
+                        "\"name\" : \"record2\"",
+                        buildSystemIndependentPath("a1", "record2.pdsc")
+                    }
+                }
+        },
+        {
+            "Self including record",
+            asMap(buildSystemIndependentPath("a1", "include.pdsc"), "{ \"name\" : \"include\", \"type\" : \"record\", \"include\": [\"include\"], \"fields\" : [ { \"name\" : \"member2\", \"type\" : \"string\" } ] }"
+            ),
+            new String[][]
+                {
+                    {
+                        "include",
+                        ERROR,
+                        "circular reference involving includes"
+                    }
+                }
+        }
+    };
+  }
+
+  @Test(dataProvider = "circularIncludeData")
+  public void testCircularIncludes(String desc, Map<String, String> testSchemas, String[][] testLookupAndExpectedResults)
+  {
+    boolean debug = false;
+
+    for (String[] testLookupAndExpectedResult : testLookupAndExpectedResults)
+    {
+      DataSchemaResolver resolver = new MapDataSchemaResolver(
+          SchemaParserFactory.instance(),
+          Arrays.asList(buildSystemIndependentPath("a1")),
+          ".pdsc", testSchemas);
+      lookup(resolver, new String[][] { testLookupAndExpectedResult}, File.separatorChar, debug);
+    }
   }
 
   @Test

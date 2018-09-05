@@ -402,35 +402,43 @@ public class SchemaParser extends AbstractSchemaParser
         RecordDataSchema.RecordType recordType = RecordDataSchema.RecordType.valueOf(typeUpper);
         RecordDataSchema recordSchema = new RecordDataSchema(name, recordType);
         schema = namedSchema = recordSchema;
-        bindNameToSchema(name, aliasNames, recordSchema);
-        List<RecordDataSchema.Field> fields = new ArrayList<RecordDataSchema.Field>();
-
-        DataList includeList = getDataList(map, INCLUDE_KEY, false);
-        DataList fieldsList = getDataList(map, FIELDS_KEY, true);
-
-        // the parser must parse fields and include in the same order that they appear in the input.
-        // determine whether to process fields first or include first
-        boolean fieldsBeforeInclude = fieldsBeforeIncludes(includeList, fieldsList);
-
-        if (fieldsBeforeInclude)
+        getResolver().addPendingSchema(recordSchema.getFullName());
+        try
         {
-          // fields is before include
-          fields.addAll(parseFields(recordSchema, fieldsList));
-          fields.addAll(parseInclude(recordSchema, includeList));
-          recordSchema.setFieldsBeforeIncludes(true);
+          bindNameToSchema(name, aliasNames, recordSchema);
+          List<RecordDataSchema.Field> fields = new ArrayList<RecordDataSchema.Field>();
+
+          DataList includeList = getDataList(map, INCLUDE_KEY, false);
+          DataList fieldsList = getDataList(map, FIELDS_KEY, true);
+
+          // the parser must parse fields and include in the same order that they appear in the input.
+          // determine whether to process fields first or include first
+          boolean fieldsBeforeInclude = fieldsBeforeIncludes(includeList, fieldsList);
+
+          if (fieldsBeforeInclude)
+          {
+            // fields is before include
+            fields.addAll(parseFields(recordSchema, fieldsList));
+            fields.addAll(parseInclude(recordSchema, includeList));
+            recordSchema.setFieldsBeforeIncludes(true);
+          }
+          else
+          {
+            // include is before fields
+            fields.addAll(parseInclude(recordSchema, includeList));
+            fields.addAll(parseFields(recordSchema, fieldsList));
+          }
+
+          recordSchema.setFields(fields, startCalleeMessageBuilder());
+          appendCalleeMessage(fieldsList);
+
+          // does this need to be after setAliases? not for now since aliases don't affect validation.
+          validateDefaults(recordSchema);
         }
-        else
+        finally
         {
-          // include is before fields
-          fields.addAll(parseInclude(recordSchema, includeList));
-          fields.addAll(parseFields(recordSchema, fieldsList));
+          getResolver().removePendingSchema(recordSchema.getFullName());
         }
-
-        recordSchema.setFields(fields, startCalleeMessageBuilder());
-        appendCalleeMessage(fieldsList);
-
-        // does this need to be after setAliases? not for now since aliases don't affect validation.
-        validateDefaults(recordSchema);
         break;
       case TYPEREF:
         TyperefDataSchema typerefSchema = new TyperefDataSchema(name);
@@ -608,13 +616,14 @@ public class SchemaParser extends AbstractSchemaParser
   {
     List<RecordDataSchema.Field> fields = Collections.emptyList();
 
+    getResolver().updatePendingSchema(recordSchema.getFullName(), true);
     // handle include
     // only includes fields, does not include any attributes of the included record
     // should consider whether mechanisms for including other attributes.
     if (includeList != null && includeList.isEmpty() == false)
     {
-      fields = new ArrayList<RecordDataSchema.Field>();
-      List<NamedDataSchema> include = new ArrayList<NamedDataSchema>(includeList.size());
+      fields = new ArrayList<>();
+      List<NamedDataSchema> include = new ArrayList<>(includeList.size());
       for (Object anInclude : includeList)
       {
         DataSchema includedSchema = parseObject(anInclude);
@@ -640,6 +649,7 @@ public class SchemaParser extends AbstractSchemaParser
       }
       recordSchema.setInclude(include);
     }
+    getResolver().updatePendingSchema(recordSchema.getFullName(), false);
     return fields;
   }
 
