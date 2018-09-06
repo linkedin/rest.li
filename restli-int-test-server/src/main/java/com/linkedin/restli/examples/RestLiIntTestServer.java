@@ -24,17 +24,6 @@ import com.linkedin.r2.filter.FilterChain;
 import com.linkedin.r2.filter.FilterChains;
 import com.linkedin.r2.filter.compression.ServerCompressionFilter;
 import com.linkedin.r2.filter.logging.SimpleLoggingFilter;
-import com.linkedin.r2.message.RequestContext;
-import com.linkedin.r2.message.rest.RestException;
-import com.linkedin.r2.message.rest.RestRequest;
-import com.linkedin.r2.message.rest.RestResponse;
-import com.linkedin.r2.message.rest.RestStatus;
-import com.linkedin.r2.message.stream.StreamRequest;
-import com.linkedin.r2.message.stream.StreamResponse;
-import com.linkedin.r2.transport.common.StreamRequestHandler;
-import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
-import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
-import com.linkedin.r2.transport.common.bridge.server.TransportCallbackAdapter;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
 import com.linkedin.r2.transport.http.server.HttpJettyServer;
 import com.linkedin.r2.transport.http.server.HttpServer;
@@ -57,7 +46,6 @@ import com.linkedin.restli.server.resources.ResourceFactory;
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -120,11 +108,31 @@ public class RestLiIntTestServer
                                         FilterChain filterChain,
                                         boolean restOverStream)
   {
+    return createServer(engine, port, useAsyncServletApi, asyncTimeOut, filters, filterChain, restOverStream,
+            true, true);
+  }
+
+  public static HttpServer createServer(Engine engine,
+                                        int port,
+                                        boolean useAsyncServletApi,
+                                        int asyncTimeOut,
+                                        List<? extends Filter> filters,
+                                        FilterChain filterChain,
+                                        boolean restOverStream,
+                                        boolean useDocumentHandler,
+                                        boolean useDebugHandler)
+  {
     RestLiConfig config = new RestLiConfig();
     config.addResourcePackageNames(RESOURCE_PACKAGE_NAMES);
     config.setServerNodeUri(URI.create("http://localhost:" + port));
-    config.setDocumentationRequestHandler(new DefaultDocumentationRequestHandler());
-    config.addDebugRequestHandlers(new ParseqTraceDebugRequestHandler());
+    if (useDocumentHandler)
+    {
+      config.setDocumentationRequestHandler(new DefaultDocumentationRequestHandler());
+    }
+    if (useDebugHandler)
+    {
+      config.addDebugRequestHandlers(new ParseqTraceDebugRequestHandler());
+    }
     config.setFilters(filters);
     config.setUseStreamCodec(Boolean.parseBoolean(System.getProperty("test.useStreamCodecServer", "false")));
 
@@ -140,13 +148,13 @@ public class RestLiIntTestServer
     TransportDispatcher dispatcher = new DelegatingTransportDispatcher(restLiServer, restLiServer);
 
     return new HttpServerFactory(filterChain).createServer(port,
-                                                           HttpServerFactory.DEFAULT_CONTEXT_PATH,
-                                                           HttpServerFactory.DEFAULT_THREAD_POOL_SIZE,
-                                                           dispatcher,
-                                                           useAsyncServletApi ?
-                                                               HttpJettyServer.ServletType.ASYNC_EVENT :
-                                                               HttpJettyServer.ServletType.RAP,
-                                                           asyncTimeOut,
-                                                           restOverStream);
+            HttpServerFactory.DEFAULT_CONTEXT_PATH,
+            HttpServerFactory.DEFAULT_THREAD_POOL_SIZE,
+            dispatcher,
+            useAsyncServletApi ?
+                    HttpJettyServer.ServletType.ASYNC_EVENT :
+                    HttpJettyServer.ServletType.RAP,
+            asyncTimeOut,
+            restOverStream);
   }
 }

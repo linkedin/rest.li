@@ -1,5 +1,7 @@
 24.0.2
 ------
+(RB=1413596)
+Support starting rest.li integration test server without document handler.
 
 24.0.1
 ------
