@@ -230,7 +230,7 @@ public class TestDataSchemaResolver
   }
 
   @DataProvider
-  public Object[][] circularIncludeData()
+  public Object[][] circularReferenceData()
   {
     return new Object[][]
     {
@@ -371,12 +371,101 @@ public class TestDataSchemaResolver
                         "circular reference involving includes"
                     }
                 }
+        },
+        {
+            "Circular reference involving include, typeref and a record",
+            asMap(buildSystemIndependentPath("a1", "include1.pdsc"), "{ \"name\" : \"include1\", \"type\" : \"record\", \"include\": [\"record1\"], \"fields\" : [ { \"name\" : \"member2\", \"type\" : \"string\" } ] }",
+                buildSystemIndependentPath("a1", "record1.pdsc"), "{ \"name\" : \"record1\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"member1\", \"type\" : \"typeref1\" } ] }",
+                buildSystemIndependentPath("a1", "typeref1.pdsc"), "{ \"name\" : \"typeref1\", \"type\" : \"typeref\", \"ref\" : \"include1\" }"
+            ),
+            new String[][]
+                {
+                    {
+                        "include1",
+                        ERROR,
+                        "circular reference involving includes"
+                    },
+                    {
+                        "typeref1",
+                        ERROR,
+                        "circular reference involving includes"
+                    },
+                    {
+                        "record1",
+                        ERROR,
+                        "circular reference involving includes"
+                    }
+                }
+        },
+        {
+            "Circular reference involving typerefs",
+            asMap(buildSystemIndependentPath("a1", "typeref1.pdsc"), "{ \"name\" : \"typeref1\", \"type\" : \"typeref\", \"ref\": \"typeref2\" }",
+                buildSystemIndependentPath("a1", "typeref2.pdsc"), "{ \"name\" : \"typeref2\", \"type\" : \"typeref\", \"ref\" : \"typeref3\" }",
+                buildSystemIndependentPath("a1", "typeref3.pdsc"), "{ \"name\" : \"typeref3\", \"type\" : \"typeref\", \"ref\" : { \"type\" : \"array\", \"items\" : \"typeref1\" } }"
+            ),
+            new String[][]
+                {
+                    {
+                        "typeref1",
+                        ERROR,
+                        "typeref has a circular reference to itself"
+                    },
+                    {
+                        "typeref2",
+                        ERROR,
+                        "typeref has a circular reference to itself"
+                    },
+                    {
+                        "typeref3",
+                        ERROR,
+                        "typeref has a circular reference to itself"
+                    }
+                }
+        },
+        {
+            "Circular reference involving typerefs, with a record outside cycle",
+            asMap(buildSystemIndependentPath("a1", "record1.pdsc"), "{ \"name\" : \"record1\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"member1\", \"type\" : \"typeref1\" } ] }",
+                buildSystemIndependentPath("a1", "typeref1.pdsc"), "{ \"name\" : \"typeref1\", \"type\" : \"typeref\", \"ref\" : \"typeref2\" }",
+                buildSystemIndependentPath("a1", "typeref2.pdsc"), "{ \"name\" : \"typeref2\", \"type\" : \"typeref\", \"ref\" : \"typeref1\" }"
+            ),
+            new String[][]
+                {
+                    {
+                        "record1",
+                        ERROR,
+                        "typeref has a circular reference to itself"
+                    },
+                    {
+                        "typeref1",
+                        ERROR,
+                        "typeref has a circular reference to itself"
+                    },
+                    {
+                        "typeref2",
+                        ERROR,
+                        "typeref has a circular reference to itself"
+                    }
+                }
+        },
+        {
+            "Circular reference involving typerefs, using alias",
+            asMap(buildSystemIndependentPath("a1", "typeref1.pdsc"), "{ \"name\" : \"typeref1\", \"aliases\" : [\"typerefAlias1\"], \"type\" : \"typeref\", \"ref\" : \"typeref2\" }",
+                buildSystemIndependentPath("a1", "typeref2.pdsc"), "{ \"name\" : \"typeref2\", \"type\" : \"typeref\", \"ref\" : \"typerefAlias1\" }"
+            ),
+            new String[][]
+                {
+                    {
+                        "typeref1",
+                        ERROR,
+                        "typeref has a circular reference to itself"
+                    }
+                }
         }
     };
   }
 
-  @Test(dataProvider = "circularIncludeData")
-  public void testCircularIncludes(String desc, Map<String, String> testSchemas, String[][] testLookupAndExpectedResults)
+  @Test(dataProvider = "circularReferenceData")
+  public void testCircularReferences(String desc, Map<String, String> testSchemas, String[][] testLookupAndExpectedResults)
   {
     boolean debug = false;
 
@@ -506,7 +595,7 @@ public class TestDataSchemaResolver
       if (expectFound == ERROR)
       {
         assertTrue(parser.hasError());
-        assertTrue(expected == null || errorMessage.contains(expected));
+        assertTrue(expected == null || errorMessage.contains(expected), "Expected: " + expected +"\n Actual: " + errorMessage);
       }
       else if (expectFound == FOUND)
       {

@@ -898,6 +898,43 @@ abstract public class AbstractSchemaParser implements PegasusSchemaParser
     }
   }
 
+  protected void checkTyperefCycle(TyperefDataSchema sourceSchema, DataSchema refSchema)
+  {
+    if (refSchema == null)
+    {
+      return;
+    }
+    if (refSchema.getType() == DataSchema.Type.TYPEREF)
+    {
+      if (sourceSchema.getFullName().equals(((TyperefDataSchema) refSchema).getFullName()))
+      {
+        startErrorMessage(sourceSchema.getFullName()).append("\"")
+            .append(sourceSchema.getFullName())
+            .append("\"")
+            .append(" cannot be parsed as the typeref has a circular reference to itself.");
+      }
+      else
+      {
+        checkTyperefCycle(sourceSchema, ((TyperefDataSchema) refSchema).getRef());
+      }
+    }
+    else if (refSchema.getType() == DataSchema.Type.UNION)
+    {
+      for (UnionDataSchema.Member member : ((UnionDataSchema) refSchema).getMembers())
+      {
+        checkTyperefCycle(sourceSchema, member.getType());
+      }
+    }
+    else if (refSchema.getType() == DataSchema.Type.ARRAY)
+    {
+      checkTyperefCycle(sourceSchema, ((ArrayDataSchema) refSchema).getItems());
+    }
+    else if (refSchema.getType() == DataSchema.Type.MAP)
+    {
+      checkTyperefCycle(sourceSchema, ((MapDataSchema) refSchema).getValues());
+    }
+  }
+
   /**
    * Used to store the message returned by a callee.
    *

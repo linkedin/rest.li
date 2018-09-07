@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.testng.Assert;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import static com.linkedin.data.TestUtil.*;
@@ -453,6 +454,24 @@ public class TestDataSchema
           "  ] " +
           "}",
           "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"map\", \"values\" : { \"type\" : \"typeref\", \"name\" : \"IntRef\", \"ref\" : \"int\" } } }, { \"name\" : \"intRef\", \"type\" : \"IntRef\" } ] }"
+        },
+        // circular typeref through a record field
+        {
+          "{ " +
+              "  \"type\" : \"record\", " +
+              "  \"name\" : \"foo\", " +
+              "  \"fields\" : [ " +
+              "    { " +
+              "      \"name\" : \"bar\", " +
+              "      \"type\" : { \"type\" : \"map\", \"values\" : { \"type\" : \"typeref\", \"name\" : \"FooRef\", \"ref\" : \"foo\" } } " +
+              "    }, " +
+              "    { " +
+              "      \"name\" : \"baz\", " +
+              "      \"type\" : \"string\" " +
+              "    } "+
+              "  ] " +
+              "}",
+          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"map\", \"values\" : { \"type\" : \"typeref\", \"name\" : \"FooRef\", \"ref\" : \"foo\" } } }, { \"name\" : \"baz\", \"type\" : \"string\" } ] }"
         },
         // typeref in union
         {
@@ -1845,554 +1864,572 @@ public class TestDataSchema
     assertTrue(exc != null);
   }
 
-  @Test
-  public void testBadSchemas() throws UnsupportedEncodingException, IOException
-  {
-    String[][] badInputs =
-    {
-        {
-          // bad type
-          "{ \"type\" : 4 }",
-          "not a string"
-        },
-        {
-          // bad name, empty string
-          "{ \"type\" : \"fixed\", \"name\" : \"\", \"size\" : 4 }",
-          "invalid name"
-        },
-        {
-          // bad name, starts with number
-          "{ \"type\" : \"fixed\", \"name\" : \"67\", \"size\" : 4 }",
-          "invalid name"
-        },
-        {
-          // bad name, 2nd component starts with number
-          "{ \"type\" : \"fixed\", \"name\" : \"foo.67\", \"size\" : 4 }",
-          "invalid name"
-        },
-        {
-          // bad namespace, starts with number
-          "{ \"type\" : \"fixed\", \"name\" : \"foo\", \"namespace\" : \"67\", \"size\" : 4 }",
-          "invalid namespace"
-        },
-        {
-          // bad namespace, 2nd component starts with number
-          "{ \"type\" : \"fixed\", \"name\" : \"foo\", \"namespace\" : \"bar.67\", \"size\" : 4 }",
-          "invalid namespace"
-        },
-        {
-          // bad alias, empty string
-          "{ \"aliases\" : [ \"\" ], \"type\" : \"fixed\", \"name\" : \"foo\", \"size\" : 4 }",
-          "invalid name"
-        },
-        {
-          // bad alias, starts with number
-          "{ \"aliases\" : [ \"67\" ], \"type\" : \"fixed\", \"name\" : \"foo\", \"size\" : 4 }",
-          "invalid name"
-        },
-        {
-          // bad alias, 2nd component starts with number
-          "{ \"aliases\" : [ \"foo.67\" ], \"type\" : \"fixed\", \"name\" : \"foo\", \"size\" : 4 }",
-          "invalid name"
-        },
-        {
-          // bad alias, starts with number
-          "{ \"aliases\" : [ \"67.foo\" ], \"type\" : \"fixed\", \"name\" : \"foo\", \"size\" : 4 }",
-          "invalid name"
-        },
-        {
-          // bad alias, bad alias not 1st alias
-          "{ \"aliases\" : [ \"bar\", \"foo.bar\", \"67.foo\" ], \"type\" : \"fixed\", \"name\" : \"foo\", \"size\" : 4 }",
-          "invalid name"
-        },
-        {
-          // bad properties
-          "{ \"name\" : \"foo\", \"type\" : \"record\", \"fields\" : [], \"p1\" : null }",
-          "is a property and its value must not be null"
-        },
-        {
-          // redefine boolean
-          "{ \"type\" : \"fixed\", \"name\" : \"boolean\", \"size\" : 4 }",
-          "cannot be redefined"
-        },
-        {
-          // redefine int
-          "{ \"type\" : \"fixed\", \"name\" : \"int\", \"size\" : 4 }",
-          "cannot be redefined"
-        },
-        {
-          // redefine long
-          "{ \"type\" : \"fixed\", \"name\" : \"long\", \"size\" : 4 }",
-          "cannot be redefined"
-        },
-        {
-          // redefine float
-          "{ \"type\" : \"fixed\", \"name\" : \"float\", \"size\" : 4 }",
-          "cannot be redefined"
-        },
-        {
-          // redefine double
-          "{ \"type\" : \"fixed\", \"name\" : \"double\", \"size\" : 4 }",
-          "cannot be redefined"
-        },
-        {
-          // redefine bytes
-          "{ \"type\" : \"fixed\", \"name\" : \"bytes\", \"size\" : 4 }",
-          "cannot be redefined"
-        },
-        {
-          // redefine string
-          "{ \"type\" : \"fixed\", \"name\" : \"string\", \"size\" : 4 }",
-          "cannot be redefined"
-        },
-        {
-          // redefine the same name
-          "{ \"type\" : \"fixed\", \"name\" : \"fixed4\", \"size\" : 4 }" +
-          "{ \"type\" : \"fixed\", \"name\" : \"fixed4\", \"size\" : 4 }",
-          "already defined"
-        },
-        {
-          // redefine the same name with namespace
-          "{ \"type\" : \"fixed\", \"name\" : \"foo.fixed4\", \"size\" : 4 }" +
-          "{ \"type\" : \"fixed\", \"name\" : \"fixed4\", \"namespace\" : \"foo\", \"size\" : 4 }",
-          "already defined"
-        },
-        {
-          // array must have items
-          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
-          "{ \"name\" : \"bar\", \"type\" : { \"type\" : \"array\" } } \n" +
-          "] }",
-          "is required but it is not present"
-        },
-        {
-          // array must not have name
-          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
-          "{ \"name\" : \"bar\", \"type\" : { \"name\" : \"notgood\", \"type\" : \"array\" } } \n" +
-          "] }",
-          "must not have name"
-        },
-        {
-          // array must not have namespace
-          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
-          "{ \"name\" : \"bar\", \"type\" : { \"namespace\" : \"notgood\", \"type\" : \"array\" } } \n" +
-          "] }",
-          "must not have namespace"
-        },
-        {
-          // array must not have aliases
-          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
-          "{ \"name\" : \"bar\", \"type\" : { \"aliases\" : [ ], \"type\" : \"array\" } } \n" +
-          "] }",
-          "must not have aliases"
-        },
-        {
-          // enum must have name
-          "{ \"type\" : \"enum\", \"symbols\" : [ \"apple\" ] }",
-          "is required but it is not present"
-        },
-        {
-          // enum must have symbols
-          "{ \"type\" : \"enum\", \"name\" : \"foo\" }",
-          "is required but it is not present"
-        },
-        {
-          // enum with invalid symbols
-          "{ \"type\" : \"enum\", \"name\" : \"foo\", \"symbols\" : \"apple\" }",
-          "is not an array"
-        },
-        {
-          // enum with invalid symbols
-          "{ \"type\" : \"enum\", \"name\" : \"foo\", \"symbols\" : [ 67 ] }",
-          "is not a string"
-        },
-        {
-          // enum with invalid symbols
-          "{ \"type\" : \"enum\", \"name\" : \"foo\", \"symbols\" : [ \"67\" ] }",
-          "is an invalid enum symbol"
-        },
-        {
-          // enum with duplicate symbols
-          "{ \"type\" : \"enum\", \"name\" : \"foo\", \"symbols\" : [ \"apple\", \"banana\", \"apple\" ] }",
-          "defined more than once in enum symbols"
-        },
-        {
-          // enum with invalid symbol docs
-          "{ \"type\" : \"enum\", \"name\" : \"foo\", \"symbols\" : [ \"apple\", \"banana\" ], \"symbolDocs\" : \"docs\" }",
-          "is not a map"
-        },
-        {
-          // enum with invalid symbol docs
-          "{ \"type\" : \"enum\", \"name\" : \"foo\", \"symbols\" : [ \"apple\", \"banana\" ], \"symbolDocs\" : { \"apple\" : \"doc_apple\", \"banana\" : 5 } }",
-          "symbol has an invalid documentation value"
-        },
-        {
-          // enum with invalid symbol docs
-          "{ \"type\" : \"enum\", \"name\" : \"foo\", \"symbols\" : [ \"apple\", \"banana\" ], \"symbolDocs\" : { \"apple\" : \"doc_apple\", \"orange\" : \"doc_orange\" } }",
-          "This symbol does not exist"
-        },
-        {
-          // fixed must have name
-          "{ \"type\" : \"fixed\", \"size\" : 4 }",
-          "is required but it is not present"
-        },
-        {
-          // fixed must have size
-          "{ \"type\" : \"fixed\", \"name\" : \"foo\" }",
-          "is required but it is not present"
-        },
-        {
-          // fixed size must not be negative
-          "{ \"type\" : \"fixed\", \"name\" : \"foo\", \"size\" : -1 }",
-          "size must not be negative"
-        },
-        {
-          // map must have values
-          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
-          "{ \"name\" : \"bar\", \"type\" : { \"type\" : \"map\" } } \n" +
-          "] }",
-          "is required but it is not present"
-        },
-        {
-          // map must not have name
-          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
-          "{ \"name\" : \"bar\", \"type\" : { \"type\" : \"map\", \"name\" : \"notgood\", \"values\" : \"int\" } } \n" +
-          "] }",
-          "must not have name"
-        },
-        {
-          // map must not have namespace
-          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
-          "{ \"name\" : \"bar\", \"type\" : { \"type\" : \"map\", \"namespace\" : \"notgood\", \"values\" : \"int\" } } \n" +
-          "] }",
-          "must not have namespace"
-        },
-        {
-          // map must not have aliases
-          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
-          "{ \"name\" : \"bar\", \"type\" : { \"type\" : \"map\", \"aliases\" : [ ], \"values\" : \"int\" } } \n" +
-          "] }",
-          "must not have aliases"
-        },
-        {
-          // record must have name
-          "{ \"type\" : \"record\", \"fields\" : [ ] }",
-          "is required but it is not present"
-        },
-        {
-          // record must have fields
-          "{ \"type\" : \"record\", \"name\" : \"foo\" }",
-          "is required but it is not present"
-        },
-        {
-          // field must have name
-          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
-          "{ \"type\" : \"int\" } \n" +
-          "] }",
-          "is required but it is not present"
-        },
-        {
-          // field must have type
-          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
-          "{ \"name\" : \"bar\" } \n" +
-          "] }",
-          "is required but it is not present"
-        },
-        {
-          // field name defined more than once
-          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
-          "{ \"name\" : \"bar\", \"type\" : \"int\" }, \n" +
-          "{ \"name\" : \"bar\", \"type\" : \"string\" } \n" +
-          "] }",
-          "defined more than once"
-        },
-        {
-          // field type invalid
-          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
-          "{ \"name\" : \"bar\", \"type\" : \"undefined\" } \n" +
-          "] }",
-          "cannot be resolved"
-        },
-        {
-          // field order invalid
-          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
-          "{ \"name\" : \"bar\", \"type\" : \"int\", \"order\" : \"xxx\" } \n" +
-          "] }",
-          "invalid sort order"
-        },
-        {
-          // union within union
-          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
-          "{ \"name\" : \"u1\", \"type\" : [ \"null\", \"int\", [ \"null\", \"string\" ] ] } \n" +
-          "] }",
-          "union cannot be inside another union"
-        },
-        {
-          // union with duplicate types
-          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
-          "{ \"name\" : \"u1\", \"type\" : [ \"int\", \"string\", \"int\" ] } \n" +
-          "] }",
-          "appears more than once in a union"
-        },
-        {
-          // union with duplicate named types
-          "{ \"type\" : \"fixed\", \"name\" : \"fixed4\", \"size\" : 4 } \n" +
-          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
-          "{ \"name\" : \"u1\", \"type\" : [ \"fixed4\", \"string\", \"int\", \"fixed4\" ] } \n" +
-          "] }",
-          "appears more than once in a union"
-        },
-        {
-          // union with member that cannot be resolved
-          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
-          "{ \"name\" : \"u1\", \"type\" : [ \"undefined\", \"string\", \"int\" ] } \n" +
-          "] }",
-          "cannot be resolved"
-        },
-        {
-          // circular typeref - direct
-          "{ \"type\" : \"typeref\", \"name\" : \"foo\", \"ref\" : \"foo\" }",
-          "cannot be resolved"
-        },
-        {
-          // circular typeref - indirect
-          "{ \"type\" : \"typeref\", \"name\" : \"foo\", \"ref\" : { \"type\" : \"array\", \"items\" : \"foo\" } }",
-          "cannot be resolved"
-        },
-        {
-          // union with typeref and same type appears twice in union
-          "{ " +
-          "  \"type\" : \"record\", " +
-          "  \"name\" : \"foo\", " +
-          "  \"fields\" : [ " +
-          "    { " +
-          "      \"name\" : \"bar\", " +
-          "      \"type\" : [ " +
-          "        { \"type\" : \"typeref\", \"name\" : \"IntRef\", \"ref\" : \"int\" }, " +
-          "        \"int\" " +
-          "      ] " +
-          "    } "+
-          "  ] " +
-          "}",
-          "appears more than once in a union"
-        },
-        {
-          // union with typeref of union as member
-          "{ " +
-          "  \"type\" : \"record\", " +
-          "  \"name\" : \"foo\", " +
-          "  \"fields\" : [ " +
-          "    { " +
-          "      \"name\" : \"bar\", " +
-          "      \"type\" : [ " +
-          "        { \"type\" : \"typeref\", \"name\" : \"unionRef\", \"ref\" : [ \"int\", \"string\" ] }, " +
-          "        \"int\" " +
-          "      ] " +
-          "    } "+
-          "  ] " +
-          "}",
-          "union cannot be inside another union"
-        },
-        {
-          // union with duplicate aliases
-          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
-            "{ \"name\" : \"u1\", \"type\" : [ \n" +
-              "{ \"alias\" : \"count\", \"type\" : \"int\" }," +
-              "{ \"alias\" : \"count\", \"type\" : \"long\" }" +
-            "] } \n" +
-          "] }",
-          "alias count appears more than once in a union"
-        },
-        {
-          // union with aliases for partial members
-          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
-            "{ \"name\" : \"u1\", \"type\" : [ \n" +
-              "\"long\", \"string\", " +
-              "{ \"alias\" : \"count\", \"type\" : \"int\" }" +
-            "] } \n" +
-          "] }",
-          "Union definition should have aliases specified for either all or zero members."
-        },
-        {
-          // union with invalid alias
-          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
-            "{ \"name\" : \"u1\", \"type\" : [ \n" +
-              "{ \"alias\" : \"$aL!@s\", \"type\" : \"int\" }" +
-            "] } \n" +
-          "] }",
-          "is an invalid member alias"
-        },
-        {
-          // union with restricted keyword as alias
-          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
-            "{ \"name\" : \"u1\", \"type\" : [ \n" +
-              "{ \"alias\" : \"fieldDiscriminator\", \"type\" : \"string\" }" +
-            "] } \n" +
-          "] }",
-          "is restricted keyword for a member alias."
-        },
-        {
-          // union with empty alias
-          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
-            "{ \"name\" : \"u1\", \"type\" : [ \n" +
-              "{ \"alias\" : \"\", \"type\" : \"int\" }" +
-            "] } \n" +
-          "] }",
-          "is an invalid member alias"
-        },
-        {
-          // union with alias for null member type
-          "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
-            "{ \"name\" : \"u1\", \"type\" : [ \n" +
-              "{ \"alias\" : \"nothing\", \"type\" : \"null\" }" +
-            "] } \n" +
-          "] }",
-          "member should not have an alias"
-        },
-        {
-          // typeref with with invalid referenced type
-          "{ " +
-          "  \"type\" : \"typeref\", " +
-          "  \"name\" : \"foo\", " +
-          "  \"ref\" : \"xxx\" " +
-          "}",
-          "\"xxx\" cannot be resolved"
-        },
-        {
-          // array with invalid items type
-          "{ " +
-          "  \"type\" : \"record\", " +
-          "  \"name\" : \"foo\", " +
-          "  \"fields\" : [ " +
-          "    { " +
-          "      \"name\" : \"field1\", " +
-          "      \"type\" : { " +
-          "         \"type\" : \"array\", " +
-          "         \"items\" : \"xxx\" " +
-          "      }" +
-          "    } " +
-          "  ]" +
-          "}",
-          "\"xxx\" cannot be resolved"
-        },
-        {
-          // map with invalid values type
-          "{ " +
-          "  \"type\" : \"record\", " +
-          "  \"name\" : \"foo\", " +
-          "  \"fields\" : [ " +
-          "    { " +
-          "      \"name\" : \"field1\", " +
-          "      \"type\" : { " +
-          "         \"type\" : \"map\", " +
-          "         \"values\" : \"xxx\" " +
-          "      }" +
-          "    } " +
-          "  ]" +
-          "}",
-          "\"xxx\" cannot be resolved"
-        },
-        {
-          // field with invalid type
-          "{ " +
-          "  \"type\" : \"record\", " +
-          "  \"name\" : \"foo\", " +
-          "  \"fields\" : [ " +
-          "    { " +
-          "      \"name\" : \"field1\", " +
-          "      \"type\" : \"xxx\" " +
-          "    } " +
-          "  ]" +
-          "}",
-          "\"xxx\" cannot be resolved"
-        },
-        {
-          // invalid referenced type
-          // duplicate definition of type
-          "{ " +
-          "  \"type\" : \"record\", " +
-          "  \"name\" : \"foo\", " +
-          "  \"fields\" : [ " +
-          "    { " +
-          "      \"name\" : \"field1\", " +
-          "      \"type\" : { " +
-          "         \"type\" : \"typeref\", " +
-          "         \"name\" : \"ref1\", " +
-          "         \"ref\" : \"xxx\" " +
-          "      }" +
-          "    }, " +
-          "    { " +
-          "      \"name\" : \"field2\", " +
-          "      \"type\" : { " +
-          "         \"type\" : \"typeref\", " +
-          "         \"name\" : \"ref1\", " +
-          "         \"ref\" : \"int\" " +
-          "      }" +
-          "    } " +
-          "  ]" +
-          "}",
-          "\"ref1\" already defined as { \"type\" : \"typeref\", \"name\" : \"ref1\", \"ref\" : \"null\" }",
-          "\"xxx\" cannot be resolved"
-        },
-        // include of non-record type
-        {
-          "{ " +
-          "  \"type\" : \"record\", " +
-          "  \"name\" : \"foo\", " +
-          "  \"include\" : [ \"int\" ], " +
-          "  \"fields\" : [ " +
-          "    { " +
-          "      \"name\" : \"f1\", " +
-          "      \"type\" : \"double\" " +
-          "    } "+
-          "  ] " +
-          "}",
-          "\"foo\" cannot include \"int\" because it is not a record"
-        },
-        // include with duplicate fields
-        {
-          "{ " +
-          "  \"type\" : \"record\", " +
-          "  \"name\" : \"bar\", " +
-          "  \"fields\" : [ " +
-          "    { \"name\" : \"b1\", \"type\" : \"int\" } " +
-          "  ] " +
-          "} " +
-          "{ " +
-          "  \"type\" : \"record\", " +
-          "  \"name\" : \"foo\", " +
-          "  \"include\" : [ " +
-          "    \"bar\" " +
-          "  ], " +
-          "  \"fields\" : [ " +
-          "    { " +
-          "      \"name\" : \"b1\", " +
-          "      \"type\" : \"double\" " +
-          "    } "+
-          "  ] " +
-          "}",
-          "Field \"b1\" defined more than once, with \"int\" defined in \"bar\" and \"double\" defined in \"foo\""
-        },
-      // include non-existent schema
-      {
-        "{ " +
-        "  \"type\" : \"record\", " +
-        "  \"name\" : \"foo\", " +
-        "  \"include\" : [ " +
-        "    \"crap\" " +
-        "  ], " +
-        "  \"fields\" : [ " +
-        "  ] " +
-        "}",
-        "\"crap\" cannot be resolved"
-      },
-    };
+  @DataProvider(parallel = true)
+  private Object[][] badSchemas() {
+      return new Object[][]
+          {
+              {
+                  // bad type
+                  "{ \"type\" : 4 }",
+                  new String[] {"not a string"}
+              },
+              {
+                  // bad name, empty string
+                  "{ \"type\" : \"fixed\", \"name\" : \"\", \"size\" : 4 }",
+                  new String[] {"invalid name"}
+              },
+              {
+                  // bad name, starts with number
+                  "{ \"type\" : \"fixed\", \"name\" : \"67\", \"size\" : 4 }",
+                  new String[] {"invalid name"}
+              },
+              {
+                  // bad name, 2nd component starts with number
+                  "{ \"type\" : \"fixed\", \"name\" : \"foo.67\", \"size\" : 4 }",
+                  new String[] {"invalid name"}
+              },
+              {
+                  // bad namespace, starts with number
+                  "{ \"type\" : \"fixed\", \"name\" : \"foo\", \"namespace\" : \"67\", \"size\" : 4 }",
+                  new String[] {"invalid namespace"}
+              },
+              {
+                  // bad namespace, 2nd component starts with number
+                  "{ \"type\" : \"fixed\", \"name\" : \"foo\", \"namespace\" : \"bar.67\", \"size\" : 4 }",
+                  new String[] {"invalid namespace"}
+              },
+              {
+                  // bad alias, empty string
+                  "{ \"aliases\" : [ \"\" ], \"type\" : \"fixed\", \"name\" : \"foo\", \"size\" : 4 }",
+                  new String[] {"invalid name"}
+              },
+              {
+                  // bad alias, starts with number
+                  "{ \"aliases\" : [ \"67\" ], \"type\" : \"fixed\", \"name\" : \"foo\", \"size\" : 4 }",
+                  new String[] {"invalid name"}
+              },
+              {
+                  // bad alias, 2nd component starts with number
+                  "{ \"aliases\" : [ \"foo.67\" ], \"type\" : \"fixed\", \"name\" : \"foo\", \"size\" : 4 }",
+                  new String[] {"invalid name"}
+              },
+              {
+                  // bad alias, starts with number
+                  "{ \"aliases\" : [ \"67.foo\" ], \"type\" : \"fixed\", \"name\" : \"foo\", \"size\" : 4 }",
+                  new String[] {"invalid name"}
+              },
+              {
+                  // bad alias, bad alias not 1st alias
+                  "{ \"aliases\" : [ \"bar\", \"foo.bar\", \"67.foo\" ], \"type\" : \"fixed\", \"name\" : \"foo\", \"size\" : 4 }",
+                  new String[] {"invalid name"}
+              },
+              {
+                  // bad properties
+                  "{ \"name\" : \"foo\", \"type\" : \"record\", \"fields\" : [], \"p1\" : null }",
+                  new String[] {"is a property and its value must not be null"}
+              },
+              {
+                  // redefine boolean
+                  "{ \"type\" : \"fixed\", \"name\" : \"boolean\", \"size\" : 4 }",
+                  new String[] {"cannot be redefined"}
+              },
+              {
+                  // redefine int
+                  "{ \"type\" : \"fixed\", \"name\" : \"int\", \"size\" : 4 }",
+                  new String[] {"cannot be redefined"}
+              },
+              {
+                  // redefine long
+                  "{ \"type\" : \"fixed\", \"name\" : \"long\", \"size\" : 4 }",
+                  new String[] {"cannot be redefined"}
+              },
+              {
+                  // redefine float
+                  "{ \"type\" : \"fixed\", \"name\" : \"float\", \"size\" : 4 }",
+                  new String[] {"cannot be redefined"}
+              },
+              {
+                  // redefine double
+                  "{ \"type\" : \"fixed\", \"name\" : \"double\", \"size\" : 4 }",
+                  new String[] {"cannot be redefined"}
+              },
+              {
+                  // redefine bytes
+                  "{ \"type\" : \"fixed\", \"name\" : \"bytes\", \"size\" : 4 }",
+                  new String[] {"cannot be redefined"}
+              },
+              {
+                  // redefine string
+                  "{ \"type\" : \"fixed\", \"name\" : \"string\", \"size\" : 4 }",
+                  new String[] {"cannot be redefined"}
+              },
+              {
+                  // redefine the same name
+                  "{ \"type\" : \"fixed\", \"name\" : \"fixed4\", \"size\" : 4 }" +
+                      "{ \"type\" : \"fixed\", \"name\" : \"fixed4\", \"size\" : 4 }",
+                  new String[] {"already defined"}
+              },
+              {
+                  // redefine the same name with namespace
+                  "{ \"type\" : \"fixed\", \"name\" : \"foo.fixed4\", \"size\" : 4 }" +
+                      "{ \"type\" : \"fixed\", \"name\" : \"fixed4\", \"namespace\" : \"foo\", \"size\" : 4 }",
+                  new String[] {"already defined"}
+              },
+              {
+                  // array must have items
+                  "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
+                      "{ \"name\" : \"bar\", \"type\" : { \"type\" : \"array\" } } \n" +
+                      "] }",
+                  new String[] {"is required but it is not present"}
+              },
+              {
+                  // array must not have name
+                  "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
+                      "{ \"name\" : \"bar\", \"type\" : { \"name\" : \"notgood\", \"type\" : \"array\" } } \n" +
+                      "] }",
+                  new String[] {"must not have name"}
+              },
+              {
+                  // array must not have namespace
+                  "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
+                      "{ \"name\" : \"bar\", \"type\" : { \"namespace\" : \"notgood\", \"type\" : \"array\" } } \n" +
+                      "] }",
+                  new String[] {"must not have namespace"}
+              },
+              {
+                  // array must not have aliases
+                  "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
+                      "{ \"name\" : \"bar\", \"type\" : { \"aliases\" : [ ], \"type\" : \"array\" } } \n" +
+                      "] }",
+                  new String[] {"must not have aliases"}
+              },
+              {
+                  // enum must have name
+                  "{ \"type\" : \"enum\", \"symbols\" : [ \"apple\" ] }",
+                  new String[] {"is required but it is not present"}
+              },
+              {
+                  // enum must have symbols
+                  "{ \"type\" : \"enum\", \"name\" : \"foo\" }",
+                  new String[] {"is required but it is not present"}
+              },
+              {
+                  // enum with invalid symbols
+                  "{ \"type\" : \"enum\", \"name\" : \"foo\", \"symbols\" : \"apple\" }",
+                  new String[] {"is not an array"}
+              },
+              {
+                  // enum with invalid symbols
+                  "{ \"type\" : \"enum\", \"name\" : \"foo\", \"symbols\" : [ 67 ] }",
+                  new String[] {"is not a string"}
+              },
+              {
+                  // enum with invalid symbols
+                  "{ \"type\" : \"enum\", \"name\" : \"foo\", \"symbols\" : [ \"67\" ] }",
+                  new String[] {"is an invalid enum symbol"}
+              },
+              {
+                  // enum with duplicate symbols
+                  "{ \"type\" : \"enum\", \"name\" : \"foo\", \"symbols\" : [ \"apple\", \"banana\", \"apple\" ] }",
+                  new String[] {"defined more than once in enum symbols"}
+              },
+              {
+                  // enum with invalid symbol docs
+                  "{ \"type\" : \"enum\", \"name\" : \"foo\", \"symbols\" : [ \"apple\", \"banana\" ], \"symbolDocs\" : \"docs\" }",
+                  new String[] {"is not a map"}
+              },
+              {
+                  // enum with invalid symbol docs
+                  "{ \"type\" : \"enum\", \"name\" : \"foo\", \"symbols\" : [ \"apple\", \"banana\" ], \"symbolDocs\" : { \"apple\" : \"doc_apple\", \"banana\" : 5 } }",
+                  new String[] {"symbol has an invalid documentation value"}
+              },
+              {
+                  // enum with invalid symbol docs
+                  "{ \"type\" : \"enum\", \"name\" : \"foo\", \"symbols\" : [ \"apple\", \"banana\" ], \"symbolDocs\" : { \"apple\" : \"doc_apple\", \"orange\" : \"doc_orange\" } }",
+                  new String[] {"This symbol does not exist"}
+              },
+              {
+                  // fixed must have name
+                  "{ \"type\" : \"fixed\", \"size\" : 4 }",
+                  new String[] {"is required but it is not present"}
+              },
+              {
+                  // fixed must have size
+                  "{ \"type\" : \"fixed\", \"name\" : \"foo\" }",
+                  new String[] {"is required but it is not present"}
+              },
+              {
+                  // fixed size must not be negative
+                  "{ \"type\" : \"fixed\", \"name\" : \"foo\", \"size\" : -1 }",
+                  new String[] {"size must not be negative"}
+              },
+              {
+                  // map must have values
+                  "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
+                      "{ \"name\" : \"bar\", \"type\" : { \"type\" : \"map\" } } \n" +
+                      "] }",
+                  new String[] {"is required but it is not present"}
+              },
+              {
+                  // map must not have name
+                  "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
+                      "{ \"name\" : \"bar\", \"type\" : { \"type\" : \"map\", \"name\" : \"notgood\", \"values\" : \"int\" } } \n" +
+                      "] }",
+                  new String[] {"must not have name"}
+              },
+              {
+                  // map must not have namespace
+                  "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
+                      "{ \"name\" : \"bar\", \"type\" : { \"type\" : \"map\", \"namespace\" : \"notgood\", \"values\" : \"int\" } } \n" +
+                      "] }",
+                  new String[] {"must not have namespace"}
+              },
+              {
+                  // map must not have aliases
+                  "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
+                      "{ \"name\" : \"bar\", \"type\" : { \"type\" : \"map\", \"aliases\" : [ ], \"values\" : \"int\" } } \n" +
+                      "] }",
+                  new String[] {"must not have aliases"}
+              },
+              {
+                  // record must have name
+                  "{ \"type\" : \"record\", \"fields\" : [ ] }",
+                  new String[] {"is required but it is not present"}
+              },
+              {
+                  // record must have fields
+                  "{ \"type\" : \"record\", \"name\" : \"foo\" }",
+                  new String[] {"is required but it is not present"}
+              },
+              {
+                  // field must have name
+                  "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
+                      "{ \"type\" : \"int\" } \n" +
+                      "] }",
+                  new String[] {"is required but it is not present"}
+              },
+              {
+                  // field must have type
+                  "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
+                      "{ \"name\" : \"bar\" } \n" +
+                      "] }",
+                  new String[] {"is required but it is not present"}
+              },
+              {
+                  // field name defined more than once
+                  "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
+                      "{ \"name\" : \"bar\", \"type\" : \"int\" }, \n" +
+                      "{ \"name\" : \"bar\", \"type\" : \"string\" } \n" +
+                      "] }",
+                  new String[] {"defined more than once"}
+              },
+              {
+                  // field type invalid
+                  "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
+                      "{ \"name\" : \"bar\", \"type\" : \"undefined\" } \n" +
+                      "] }",
+                  new String[] {"cannot be resolved"}
+              },
+              {
+                  // field order invalid
+                  "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
+                      "{ \"name\" : \"bar\", \"type\" : \"int\", \"order\" : \"xxx\" } \n" +
+                      "] }",
+                  new String[] {"invalid sort order"}
+              },
+              {
+                  // union within union
+                  "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
+                      "{ \"name\" : \"u1\", \"type\" : [ \"null\", \"int\", [ \"null\", \"string\" ] ] } \n" +
+                      "] }",
+                  new String[] {"union cannot be inside another union"}
+              },
+              {
+                  // union with duplicate types
+                  "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
+                      "{ \"name\" : \"u1\", \"type\" : [ \"int\", \"string\", \"int\" ] } \n" +
+                      "] }",
+                  new String[] {"appears more than once in a union"}
+              },
+              {
+                  // union with duplicate named types
+                  "{ \"type\" : \"fixed\", \"name\" : \"fixed4\", \"size\" : 4 } \n" +
+                      "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
+                      "{ \"name\" : \"u1\", \"type\" : [ \"fixed4\", \"string\", \"int\", \"fixed4\" ] } \n" +
+                      "] }",
+                  new String[] {"appears more than once in a union"}
+              },
+              {
+                  // union with member that cannot be resolved
+                  "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
+                      "{ \"name\" : \"u1\", \"type\" : [ \"undefined\", \"string\", \"int\" ] } \n" +
+                      "] }",
+                  new String[] {"cannot be resolved"}
+              },
+              {
+                  // circular typeref - direct
+                  "{ \"type\" : \"typeref\", \"name\" : \"foo\", \"ref\" : \"foo\" }",
+                  new String[] {"typeref has a circular reference to itself"}
+              },
+              {
+                  // circular typeref - indirect
+                  "{ \"type\" : \"typeref\", \"name\" : \"foo\", \"ref\" : { \"type\" : \"array\", \"items\" : \"foo\" } }",
+                  new String[] {"typeref has a circular reference to itself"}
+              },
+              {
+                  // circular typeref - indirect
+                  "{ \"type\" : \"typeref\", \"name\" : \"foo\", \"ref\" : { \"type\" : \"typeref\", \"name\": \"bar\", \"ref\" : { \"type\" : \"array\", \"items\" : \"foo\" } } }",
+                  new String[] {"typeref has a circular reference to itself"}
+              },
+              // circular typeref through a union
+              {
+                  "{ " +
+                      "  \"type\" : \"typeref\", " +
+                      "  \"name\" : \"foo\", " +
+                      "  \"ref\" : [ " +
+                      "    \"foo\", " +
+                      "    \"double\" " +
+                      "  ] " +
+                      "}",
+                  new String[] {"typeref has a circular reference to itself"}
+              },
+              {
+                  // union with typeref and same type appears twice in union
+                  "{ " +
+                      "  \"type\" : \"record\", " +
+                      "  \"name\" : \"foo\", " +
+                      "  \"fields\" : [ " +
+                      "    { " +
+                      "      \"name\" : \"bar\", " +
+                      "      \"type\" : [ " +
+                      "        { \"type\" : \"typeref\", \"name\" : \"IntRef\", \"ref\" : \"int\" }, " +
+                      "        \"int\" " +
+                      "      ] " +
+                      "    } "+
+                      "  ] " +
+                      "}",
+                  new String[] {"appears more than once in a union"}
+              },
+              {
+                  // union with typeref of union as member
+                  "{ " +
+                      "  \"type\" : \"record\", " +
+                      "  \"name\" : \"foo\", " +
+                      "  \"fields\" : [ " +
+                      "    { " +
+                      "      \"name\" : \"bar\", " +
+                      "      \"type\" : [ " +
+                      "        { \"type\" : \"typeref\", \"name\" : \"unionRef\", \"ref\" : [ \"int\", \"string\" ] }, " +
+                      "        \"int\" " +
+                      "      ] " +
+                      "    } "+
+                      "  ] " +
+                      "}",
+                  new String[] {"union cannot be inside another union"}
+              },
+              {
+                  // union with duplicate aliases
+                  "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
+                      "{ \"name\" : \"u1\", \"type\" : [ \n" +
+                      "{ \"alias\" : \"count\", \"type\" : \"int\" }," +
+                      "{ \"alias\" : \"count\", \"type\" : \"long\" }" +
+                      "] } \n" +
+                      "] }",
+                  new String[] {"alias count appears more than once in a union"}
+              },
+              {
+                  // union with aliases for partial members
+                  "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
+                      "{ \"name\" : \"u1\", \"type\" : [ \n" +
+                      "\"long\", \"string\", " +
+                      "{ \"alias\" : \"count\", \"type\" : \"int\" }" +
+                      "] } \n" +
+                      "] }",
+                  new String[] {"Union definition should have aliases specified for either all or zero members."}
+              },
+              {
+                  // union with invalid alias
+                  "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
+                      "{ \"name\" : \"u1\", \"type\" : [ \n" +
+                      "{ \"alias\" : \"$aL!@s\", \"type\" : \"int\" }" +
+                      "] } \n" +
+                      "] }",
+                  new String[] {"is an invalid member alias"}
+              },
+              {
+                  // union with restricted keyword as alias
+                  "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
+                      "{ \"name\" : \"u1\", \"type\" : [ \n" +
+                      "{ \"alias\" : \"fieldDiscriminator\", \"type\" : \"string\" }" +
+                      "] } \n" +
+                      "] }",
+                  new String[] {"is restricted keyword for a member alias."}
+              },
+              {
+                  // union with empty alias
+                  "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
+                      "{ \"name\" : \"u1\", \"type\" : [ \n" +
+                      "{ \"alias\" : \"\", \"type\" : \"int\" }" +
+                      "] } \n" +
+                      "] }",
+                  new String[] {"is an invalid member alias"}
+              },
+              {
+                  // union with alias for null member type
+                  "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ \n" +
+                      "{ \"name\" : \"u1\", \"type\" : [ \n" +
+                      "{ \"alias\" : \"nothing\", \"type\" : \"null\" }" +
+                      "] } \n" +
+                      "] }",
+                  new String[] {"member should not have an alias"}
+              },
+              {
+                  // typeref with with invalid referenced type
+                  "{ " +
+                      "  \"type\" : \"typeref\", " +
+                      "  \"name\" : \"foo\", " +
+                      "  \"ref\" : \"xxx\" " +
+                      "}",
+                  new String[] {"\"xxx\" cannot be resolved"}
+              },
+              {
+                  // array with invalid items type
+                  "{ " +
+                      "  \"type\" : \"record\", " +
+                      "  \"name\" : \"foo\", " +
+                      "  \"fields\" : [ " +
+                      "    { " +
+                      "      \"name\" : \"field1\", " +
+                      "      \"type\" : { " +
+                      "         \"type\" : \"array\", " +
+                      "         \"items\" : \"xxx\" " +
+                      "      }" +
+                      "    } " +
+                      "  ]" +
+                      "}",
+                  new String[] {"\"xxx\" cannot be resolved"}
+              },
+              {
+                  // map with invalid values type
+                  "{ " +
+                      "  \"type\" : \"record\", " +
+                      "  \"name\" : \"foo\", " +
+                      "  \"fields\" : [ " +
+                      "    { " +
+                      "      \"name\" : \"field1\", " +
+                      "      \"type\" : { " +
+                      "         \"type\" : \"map\", " +
+                      "         \"values\" : \"xxx\" " +
+                      "      }" +
+                      "    } " +
+                      "  ]" +
+                      "}",
+                  new String[] {"\"xxx\" cannot be resolved"}
+              },
+              {
+                  // field with invalid type
+                  "{ " +
+                      "  \"type\" : \"record\", " +
+                      "  \"name\" : \"foo\", " +
+                      "  \"fields\" : [ " +
+                      "    { " +
+                      "      \"name\" : \"field1\", " +
+                      "      \"type\" : \"xxx\" " +
+                      "    } " +
+                      "  ]" +
+                      "}",
+                  new String[] {"\"xxx\" cannot be resolved"}
+              },
+              {
+                  // invalid referenced type
+                  // duplicate definition of type
+                  "{ " +
+                      "  \"type\" : \"record\", " +
+                      "  \"name\" : \"foo\", " +
+                      "  \"fields\" : [ " +
+                      "    { " +
+                      "      \"name\" : \"field1\", " +
+                      "      \"type\" : { " +
+                      "         \"type\" : \"typeref\", " +
+                      "         \"name\" : \"ref1\", " +
+                      "         \"ref\" : \"xxx\" " +
+                      "      }" +
+                      "    }, " +
+                      "    { " +
+                      "      \"name\" : \"field2\", " +
+                      "      \"type\" : { " +
+                      "         \"type\" : \"typeref\", " +
+                      "         \"name\" : \"ref1\", " +
+                      "         \"ref\" : \"int\" " +
+                      "      }" +
+                      "    } " +
+                      "  ]" +
+                      "}",
+                  new String[]
+                      {
+                          "\"ref1\" already defined as { \"type\" : \"typeref\", \"name\" : \"ref1\", \"ref\" : \"null\" }",
+                          "\"xxx\" cannot be resolved"
+                      }
+              },
+              // include of non-record type
+              {
+                  "{ " +
+                      "  \"type\" : \"record\", " +
+                      "  \"name\" : \"foo\", " +
+                      "  \"include\" : [ \"int\" ], " +
+                      "  \"fields\" : [ " +
+                      "    { " +
+                      "      \"name\" : \"f1\", " +
+                      "      \"type\" : \"double\" " +
+                      "    } "+
+                      "  ] " +
+                      "}",
+                  new String[] {"\"foo\" cannot include \"int\" because it is not a record"}
+              },
+              // include with duplicate fields
+              {
+                  "{ " +
+                      "  \"type\" : \"record\", " +
+                      "  \"name\" : \"bar\", " +
+                      "  \"fields\" : [ " +
+                      "    { \"name\" : \"b1\", \"type\" : \"int\" } " +
+                      "  ] " +
+                      "} " +
+                      "{ " +
+                      "  \"type\" : \"record\", " +
+                      "  \"name\" : \"foo\", " +
+                      "  \"include\" : [ " +
+                      "    \"bar\" " +
+                      "  ], " +
+                      "  \"fields\" : [ " +
+                      "    { " +
+                      "      \"name\" : \"b1\", " +
+                      "      \"type\" : \"double\" " +
+                      "    } "+
+                      "  ] " +
+                      "}",
+                  new String[] {"Field \"b1\" defined more than once, with \"int\" defined in \"bar\" and \"double\" defined in \"foo\""}
+              },
+              // include non-existent schema
+              {
+                  "{ " +
+                      "  \"type\" : \"record\", " +
+                      "  \"name\" : \"foo\", " +
+                      "  \"include\" : [ " +
+                      "    \"crap\" " +
+                      "  ], " +
+                      "  \"fields\" : [ " +
+                      "  ] " +
+                      "}",
+                  new String[] {"\"crap\" cannot be resolved"}
+              },
+          };
+  }
 
-    for (String[] input : badInputs)
-    {
-      int i = 0;
-      String schema = input[i++];
-      checkBadSchema(schema, input, i);
-    }
+  @Test(dataProvider = "badSchemas")
+  public void testBadSchemas(String schema, String[] expected) throws IOException
+  {
+    checkBadSchema(schema, expected);
   }
 
   @Test

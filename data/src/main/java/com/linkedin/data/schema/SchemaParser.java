@@ -443,40 +443,19 @@ public class SchemaParser extends AbstractSchemaParser
       case TYPEREF:
         TyperefDataSchema typerefSchema = new TyperefDataSchema(name);
         schema = namedSchema = typerefSchema;
-        DataSchema referencedTypeSchema = getSchemaData(map, REF_KEY);
-        typerefSchema.setReferencedType(referencedTypeSchema);
-        typerefSchema.setRefDeclaredInline(isDeclaredInline(map.get(REF_KEY)));
-        // Bind the typeref name after constructing and setting the referenced schema. That means this typeref schema
-        // is not available during construction of the referenced schema. We cannot bind the typeref before setting
-        // its referenced schema. In one case, this would allow creating circular reference between typeref schemas.
-        // In another the referenced schema is required to compute included fields if a record schema includes the
-        // typeref. In the following example, TyperefA is included by RecordB. See parseInclude
-        // method.
-        //  {
-        //     "type":"typeref",
-        //     "name":"TyperefA",
-        //     "ref":{
-        //        "type":"record",
-        //        "name":"RecordA",
-        //        "fields":[
-        //           {
-        //              "name":"child",
-        //              "type":{
-        //                 "type":"record",
-        //                 "name":"RecordB",
-        //                 "fields":[
-        //
-        //                 ],
-        //                 "include":[
-        //                    "TyperefA"
-        //                 ]
-        //              },
-        //              "optional":true
-        //           }
-        //        ]
-        //     }
-        //  }
-        bindNameToSchema(name, aliasNames, typerefSchema);
+        getResolver().addPendingSchema(typerefSchema.getFullName());
+        try
+        {
+          bindNameToSchema(name, aliasNames, typerefSchema);
+          DataSchema referencedTypeSchema = getSchemaData(map, REF_KEY);
+          checkTyperefCycle(typerefSchema, referencedTypeSchema);
+          typerefSchema.setReferencedType(referencedTypeSchema);
+          typerefSchema.setRefDeclaredInline(isDeclaredInline(map.get(REF_KEY)));
+        }
+        finally
+        {
+          getResolver().removePendingSchema(typerefSchema.getFullName());
+        }
         break;
       default:
         startErrorMessage(map).append(type).append(" is not expected within ").append(map).append(".\n");

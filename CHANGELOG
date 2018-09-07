@@ -9,6 +9,10 @@ Improve how circular references involving includes are handled in schema parser.
 (RB=1417886)
 Change backupRequest so that it can work when d2 host hint is given
 
+(RB=1415236)
+Relax typeref circular references, disallowing typeref-only cycles.
+Provide better error message when cycles are detected.
+
 25.0.0
 ------
 (RB=1425050)

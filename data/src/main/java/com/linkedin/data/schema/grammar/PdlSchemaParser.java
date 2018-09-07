@@ -534,12 +534,20 @@ public class PdlSchemaParser extends AbstractSchemaParser
   {
     Name name = toName(typeref.name);
     TyperefDataSchema schema = new TyperefDataSchema(name);
-    bindNameToSchema(name, schema);
-    DataSchema refSchema = toDataSchema(typeref.ref);
-    schema.setReferencedType(refSchema);
-    schema.setRefDeclaredInline(isDeclaredInline(typeref.ref));
+    getResolver().addPendingSchema(schema.getFullName());
+    try
+    {
+      bindNameToSchema(name, schema);
+      DataSchema refSchema = toDataSchema(typeref.ref);
+      schema.setReferencedType(refSchema);
+      schema.setRefDeclaredInline(isDeclaredInline(typeref.ref));
 
-    setProperties(context, schema);
+      setProperties(context, schema);
+    }
+    finally
+    {
+      getResolver().removePendingSchema(schema.getFullName());
+    }
     return schema;
   }
 
