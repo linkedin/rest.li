@@ -27,7 +27,6 @@ import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.PrimitiveDataSchema;
 import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.schema.resolver.FileDataSchemaLocation;
-import com.linkedin.data.schema.validation.RequiredMode;
 import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
 import com.linkedin.data.schema.validation.ValidationOptions;
 import com.linkedin.data.schema.validation.ValidationResult;
@@ -59,6 +58,7 @@ import com.linkedin.restli.client.base.DeleteRequestBuilderBase;
 import com.linkedin.restli.client.base.FindRequestBuilderBase;
 import com.linkedin.restli.client.base.GetAllRequestBuilderBase;
 import com.linkedin.restli.client.base.GetRequestBuilderBase;
+import com.linkedin.restli.client.base.PartialUpdateEntityRequestBuilderBase;
 import com.linkedin.restli.client.base.PartialUpdateRequestBuilderBase;
 import com.linkedin.restli.client.base.UpdateRequestBuilderBase;
 import com.linkedin.restli.common.ComplexResourceKey;
@@ -101,6 +101,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -153,6 +154,16 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
     METHOD_BUILDER_SUFFIX = new HashMap<RestliVersion, String>();
     METHOD_BUILDER_SUFFIX.put(RestliVersion.RESTLI_1_0_0, "Builder");
     METHOD_BUILDER_SUFFIX.put(RestliVersion.RESTLI_2_0_0, "RequestBuilder");
+  }
+
+  // "Return entity" request builder base classes for each supported method
+  private static final Map<ResourceMethod, Class<?>> RETURN_ENTITY_BUILDER_CLASSES;
+  static
+  {
+    RETURN_ENTITY_BUILDER_CLASSES = new LinkedHashMap<>();
+    RETURN_ENTITY_BUILDER_CLASSES.put(ResourceMethod.CREATE, CreateIdEntityRequestBuilderBase.class);
+    RETURN_ENTITY_BUILDER_CLASSES.put(ResourceMethod.PARTIAL_UPDATE, PartialUpdateEntityRequestBuilderBase.class);
+    RETURN_ENTITY_BUILDER_CLASSES.put(ResourceMethod.BATCH_CREATE, BatchCreateIdEntityRequestBuilderBase.class);
   }
 
   private final JClass _voidClass = getCodeModel().ref(Void.class);
@@ -1425,27 +1436,37 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
                                          methodName,
                                          schema,
                                          rootPath);
-        if ((method == ResourceMethod.CREATE || method == ResourceMethod.BATCH_CREATE) && schema != null && schema.getAnnotations() != null && schema.getAnnotations().containsKey(ReturnEntity.NAME))
+        if (schema != null && schema.getAnnotations() != null && schema.getAnnotations().containsKey(ReturnEntity.NAME))
         {
-          Class<?> newBuildClass = methodName.equals("create") ? CreateIdEntityRequestBuilderBase.class : BatchCreateIdEntityRequestBuilderBase.class;
-          String requestName = methodName.equals("create") ? "createAndGet" : "batchCreateAndGet";
-          generateDerivedBuilderAndJavaDoc(facadeClass,
-                                           baseUriExpr,
-                                           keyClass,
-                                           valueClass,
-                                           resourceSpecField,
-                                           resourceName,
-                                           pathKeys,
-                                           pathKeyTypes,
-                                           assocKeyTypes,
-                                           pathToAssocKeys,
-                                           requestOptionsExpr,
-                                           annotations,
-                                           method,
-                                           newBuildClass,
-                                           requestName,
-                                           schema,
-                                           rootPath);
+          if (RETURN_ENTITY_BUILDER_CLASSES.containsKey(method))
+          {
+            final Class<?> newBuildClass = RETURN_ENTITY_BUILDER_CLASSES.get(method);
+            final String requestName = methodName + "AndGet";
+            generateDerivedBuilderAndJavaDoc(facadeClass,
+                                             baseUriExpr,
+                                             keyClass,
+                                             valueClass,
+                                             resourceSpecField,
+                                             resourceName,
+                                             pathKeys,
+                                             pathKeyTypes,
+                                             assocKeyTypes,
+                                             pathToAssocKeys,
+                                             requestOptionsExpr,
+                                             annotations,
+                                             method,
+                                             newBuildClass,
+                                             requestName,
+                                             schema,
+                                             rootPath);
+          }
+          else
+          {
+            throw new UnsupportedOperationException(String.format(
+                "Error while generating request builder for method '%s' in resource '%s'. " +
+                "@ReturnEntity annotation is only supported for methods: %s",
+                method.toString(), resourceName, RETURN_ENTITY_BUILDER_CLASSES.keySet()));
+          }
         }
       }
     }

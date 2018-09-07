@@ -1,5 +1,8 @@
 24.0.2
 ------
+(RB=1407938)
+Add client-side support for returning the entity with PARTIAL_UPDATE
+
 (RB=1413596)
 Support starting rest.li integration test server without document handler.
 

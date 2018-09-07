@@ -34,7 +34,8 @@ import java.util.Map;
 /**
  * @author Boyang Chen
  */
-public class CreateIdEntityRequestBuilder<K, V extends RecordTemplate> extends SingleEntityRequestBuilder<K, V, CreateIdEntityRequest<K, V>>
+public class CreateIdEntityRequestBuilder<K, V extends RecordTemplate>
+    extends SingleEntityRequestBuilder<K, V, CreateIdEntityRequest<K, V>> implements ReturnEntityRequestBuilder
 {
   private List<Object> _streamingAttachments; //We initialize only when we need to.
 
@@ -134,6 +135,13 @@ public class CreateIdEntityRequestBuilder<K, V extends RecordTemplate> extends S
   public CreateIdEntityRequestBuilder<K, V> fields(PathSpec... fieldPaths)
   {
     addFields(fieldPaths);
+    return this;
+  }
+
+  @Override
+  public CreateIdEntityRequestBuilder<K, V> returnEntity(boolean value)
+  {
+    setReturnEntityParam(value);
     return this;
   }
 

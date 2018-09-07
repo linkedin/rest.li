@@ -317,6 +317,17 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> extends
     }
   }
 
+  /**
+   * To be called from the extending "return entity" request builder classes
+   * that implement returnEntity(boolean).
+   *
+   * @param value boolean indicating whether to return the entity
+   */
+  protected final void setReturnEntityParam(boolean value)
+  {
+    setParam(RestConstants.RETURN_ENTITY_PARAM, value);
+  }
+
   protected boolean hasParam(String parameterName)
   {
     return _queryParams.containsKey(parameterName);

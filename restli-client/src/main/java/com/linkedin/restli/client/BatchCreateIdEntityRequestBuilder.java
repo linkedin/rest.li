@@ -38,7 +38,8 @@ import java.util.Map;
  *
  * @author  Boyang Chen
  */
-public class BatchCreateIdEntityRequestBuilder<K, V extends RecordTemplate> extends RestfulRequestBuilder<K, V, BatchCreateIdEntityRequest<K, V>>
+public class BatchCreateIdEntityRequestBuilder<K, V extends RecordTemplate>
+    extends RestfulRequestBuilder<K, V, BatchCreateIdEntityRequest<K, V>> implements ReturnEntityRequestBuilder
 {
   private final List<V> _entities = new ArrayList<V>();
   private final Class<V> _valueClass;
@@ -146,6 +147,13 @@ public class BatchCreateIdEntityRequestBuilder<K, V extends RecordTemplate> exte
   public BatchCreateIdEntityRequestBuilder<K, V> fields(PathSpec... fieldPaths)
   {
     addFields(fieldPaths);
+    return this;
+  }
+
+  @Override
+  public BatchCreateIdEntityRequestBuilder<K, V> returnEntity(boolean value)
+  {
+    setReturnEntityParam(value);
     return this;
   }
 

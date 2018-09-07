@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2015 LinkedIn Corp.
+   Copyright (c) 2018 LinkedIn Corp.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -16,32 +16,33 @@
 
 package com.linkedin.restli.client.base;
 
-
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.restli.client.CreateIdEntityRequestBuilder;
+import com.linkedin.restli.client.PartialUpdateEntityRequestBuilder;
 import com.linkedin.restli.client.RestliRequestOptions;
+import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.attachments.RestLiAttachmentDataSourceWriter;
 import com.linkedin.restli.common.attachments.RestLiDataSourceIterator;
 
 
 /**
- * Base class for create id entity request builders.
+ * Base class for generated partial update entity request builders.
  *
- * @author Boyang Chen
+ * @author Evan Williams
  */
-public class CreateIdEntityRequestBuilderBase<K,
-    V extends RecordTemplate,
-    RB extends CreateIdEntityRequestBuilderBase<K, V, RB>>
-    extends CreateIdEntityRequestBuilder<K, V>
+public abstract class PartialUpdateEntityRequestBuilderBase<
+        K,
+        V extends RecordTemplate,
+        RB extends PartialUpdateEntityRequestBuilderBase<K, V, RB>>
+    extends PartialUpdateEntityRequestBuilder<K, V>
 {
-  public CreateIdEntityRequestBuilderBase(String baseURITemplate,
-                                          Class<V> valueClass,
-                                          ResourceSpec resourceSpec,
-                                          RestliRequestOptions requestOptions)
+  protected PartialUpdateEntityRequestBuilderBase(String baseUriTemplate,
+                                            Class<V> valueClass,
+                                            ResourceSpec resourceSpec,
+                                            RestliRequestOptions requestOptions)
   {
-    super(baseURITemplate, valueClass, resourceSpec, requestOptions);
+    super(baseUriTemplate, valueClass, resourceSpec, requestOptions);
   }
 
   @SuppressWarnings({"unchecked"})
@@ -60,23 +61,9 @@ public class CreateIdEntityRequestBuilderBase<K,
 
   @SuppressWarnings({"unchecked"})
   @Override
-  public RB input(V entity)
-  {
-    return (RB) super.input(entity);
-  }
-
-  @SuppressWarnings({"unchecked"})
-  @Override
   public RB setHeader(String key, String value)
   {
     return (RB) super.setHeader(key, value);
-  }
-
-  @SuppressWarnings({"unchecked"})
-  @Override
-  public RB pathKey(String name, Object value)
-  {
-    return (RB) super.pathKey(name, value);
   }
 
   @SuppressWarnings({"unchecked"})
@@ -109,9 +96,30 @@ public class CreateIdEntityRequestBuilderBase<K,
 
   @SuppressWarnings({"unchecked"})
   @Override
+  public RB pathKey(String name, Object value)
+  {
+    return (RB) super.pathKey(name, value);
+  }
+
+  @SuppressWarnings({"unchecked"})
+  @Override
+  public RB id(K id)
+  {
+    return (RB) super.id(id);
+  }
+
+  @SuppressWarnings({"unchecked"})
+  @Override
+  public RB input(PatchRequest<V> entity)
+  {
+    return (RB) super.input(entity);
+  }
+
+  @SuppressWarnings({"unchecked"})
+  @Override
   public RB fields(PathSpec... fieldPaths)
   {
-      return (RB) super.fields(fieldPaths);
+    return (RB) super.fields(fieldPaths);
   }
 
   @SuppressWarnings({"unchecked"})

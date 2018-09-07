@@ -35,6 +35,7 @@ import com.linkedin.restli.client.FindRequest;
 import com.linkedin.restli.client.GetAllRequest;
 import com.linkedin.restli.client.GetRequest;
 import com.linkedin.restli.client.OptionsRequest;
+import com.linkedin.restli.client.PartialUpdateEntityRequest;
 import com.linkedin.restli.client.PartialUpdateRequest;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.UpdateRequest;
@@ -120,7 +121,18 @@ public class RestliUriBuilderUtil
           throw new IllegalArgumentException("batch create request of unknown type: " + request.getClass());
         }
       case PARTIAL_UPDATE:
-        return new PartialUpdateRequestUriBuilder((PartialUpdateRequest)request, uriPrefix, version);
+        if (request instanceof PartialUpdateRequest)
+        {
+          return new PartialUpdateRequestUriBuilder((PartialUpdateRequest)request, uriPrefix, version);
+        }
+        else if (request instanceof PartialUpdateEntityRequest)
+        {
+          return new PartialUpdateEntityRequestUriBuilder((PartialUpdateEntityRequest)request, uriPrefix, version);
+        }
+        else
+        {
+          throw new IllegalArgumentException("Partial Update request of unknown type: " + request.getClass());
+        }
       case UPDATE:
         return new UpdateRequestUriBuilder((UpdateRequest)request, uriPrefix, version);
       case BATCH_UPDATE:

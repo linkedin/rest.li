@@ -119,4 +119,11 @@ public class BatchCreateIdEntityRequestBuilderBase<K, V extends RecordTemplate, 
   {
     return (RB) super.fields(fieldPaths);
   }
+
+  @SuppressWarnings({"unchecked"})
+  @Override
+  public RB returnEntity(boolean value)
+  {
+    return (RB) super.returnEntity(value);
+  }
 }

@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2015 LinkedIn Corp.
+   Copyright (c) 2018 LinkedIn Corp.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -14,24 +14,15 @@
    limitations under the License.
 */
 
-package com.linkedin.restli.server.annotations;
+package com.linkedin.restli.client;
 
-import com.linkedin.restli.restspec.RestSpecAnnotation;
-
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
 
 /**
- * Annotation indicating an entity is returned for the Rest.li method.
+ * Interface that defines methods provided by "return entity" request builders.
  *
- * @author Boyang Chen
+ * @author Evan Williams
  */
-@Retention(RetentionPolicy.RUNTIME)
-@RestSpecAnnotation(name = ReturnEntity.NAME)
-@Target(ElementType.METHOD)
-public @interface ReturnEntity
+public interface ReturnEntityRequestBuilder
 {
-  String NAME = "returnEntity";
+  ReturnEntityRequestBuilder returnEntity(boolean value);
 }
