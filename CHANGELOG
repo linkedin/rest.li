@@ -1,5 +1,8 @@
 24.0.2
 ------
+(RB=1415193)
+Generating fat jar for restli-int-test-api to maven.
+
 (RB=1407938)
 Add client-side support for returning the entity with PARTIAL_UPDATE
 

@@ -14,3 +14,18 @@ sourceSets.mainGeneratedDataTemplate.java.srcDirs('src/main/java/')
 test {
   systemProperties['test.projectDir'] = project.projectDir.path
 }
+
+task fatjar(type: Jar) {
+  description 'Creating a fat jar from 3 sources: src/main, src/mainGeneratedTemplate, src/mainGeneratedRest.'
+  classifier = 'all'
+  from sourceSets.main.output
+  from sourceSets.mainGeneratedDataTemplate.output
+  from sourceSets.mainGeneratedRest.output
+  manifest {
+    attributes 'Implementation-Title': 'Restli Integration Test API'
+  }
+}
+
+artifacts {
+  archives fatjar
+}
