@@ -21,6 +21,7 @@ import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.BackupRequestsConfiguration;
 import com.linkedin.d2.BoundedCostBackupRequests;
+import com.linkedin.d2.backuprequests.BackupRequestsStrategy;
 import com.linkedin.d2.backuprequests.BackupRequestsStrategyStatsConsumer;
 import com.linkedin.d2.backuprequests.BackupRequestsStrategyStatsProvider;
 import com.linkedin.d2.backuprequests.ConstantResponseTimeDistribution;
@@ -30,8 +31,14 @@ import com.linkedin.d2.backuprequests.GaussianWithHiccupResponseTimeDistribution
 import com.linkedin.d2.backuprequests.LatencyMetric;
 import com.linkedin.d2.backuprequests.PoissonEventsArrival;
 import com.linkedin.d2.backuprequests.ResponseTimeDistribution;
+import com.linkedin.d2.backuprequests.TestTrackingBackupRequestsStrategy;
+import com.linkedin.d2.backuprequests.TrackingBackupRequestsStrategy;
+import com.linkedin.d2.balancer.KeyMapper;
+import com.linkedin.d2.balancer.StaticLoadBalancerState;
 import com.linkedin.d2.balancer.LoadBalancer;
+import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
+import com.linkedin.d2.balancer.simple.SimpleLoadBalancer;
 import com.linkedin.d2.balancer.util.JacksonUtil;
 import com.linkedin.d2.discovery.event.PropertyEventThread.PropertyEventShutdownCallback;
 import com.linkedin.data.ByteString;
@@ -51,10 +58,14 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Deque;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -109,6 +120,57 @@ public class TestBackupRequestsClient
     RestRequest restRequest = new RestRequestBuilder(uri).setEntity(CONTENT).build();
     Future<RestResponse> response = client.restRequest(restRequest);
     assertEquals(response.get().getStatus(), 200);
+  }
+
+  /**
+   * Backup Request should still work when a hint is given together with the flag indicating that the hint is only a preference, not requirement.
+   */
+  @Test(invocationCount = 3)
+  public void testRequestWithHint() throws Exception
+  {
+    int responseDelayNano = 100000000; //1s till response comes back
+    int backupDelayNano = 50000000; // make backup request after 0.5 second
+    Deque<URI> hostsReceivingRequest = new ConcurrentLinkedDeque<>();
+    BackupRequestsClient client = createAlwaysBackupClientWithHosts(
+            Arrays.asList("http://test1.com:123", "http://test2.com:123"),
+            hostsReceivingRequest,
+            responseDelayNano,
+            backupDelayNano
+        );
+
+    URI uri = URI.create("d2://testService");
+    RestRequest restRequest = new RestRequestBuilder(uri).setEntity(CONTENT).build();
+    RequestContext context = new RequestContext();
+    context.putLocalAttr(R2Constants.OPERATION, "get");
+
+    // case 1: no hint, backup request should be made normally
+    RequestContext context1 = context.clone();
+    Future<RestResponse> response1 = client.restRequest(restRequest, context1);
+    assertEquals(response1.get().getStatus(), 200);
+    assertEquals(hostsReceivingRequest.size(), 2);
+    assertEquals(new HashSet<>(hostsReceivingRequest).size(), 2);
+    hostsReceivingRequest.clear();
+
+    // case 2: hint specified but won't accept other host, backup request will not be made.
+    RequestContext context2 = context.clone();
+    URI hint = new URI("http://test1.com:123");
+    KeyMapper.TargetHostHints.setRequestContextTargetHost(context2, hint);
+    Future<RestResponse> response2 = client.restRequest(restRequest, context2);
+    assertEquals(response2.get().getStatus(), 200);
+    assertEquals(hostsReceivingRequest.size(), 1);
+    assertEquals(hostsReceivingRequest.poll(), hint);
+    hostsReceivingRequest.clear();
+
+    // case 3: hint specified and set flag to accept other host, backup request will be made to a different host.
+    RequestContext context3 = context.clone();
+    KeyMapper.TargetHostHints.setRequestContextTargetHost(context3, hint);
+    KeyMapper.TargetHostHints.setRequestContextOtherHostAcceptable(context3, true);
+    Future<RestResponse> response3 = client.restRequest(restRequest, context3);
+    assertEquals(response3.get().getStatus(), 200);
+    assertEquals(hostsReceivingRequest.size(), 2);
+    // The first request should be made to the hinted host while the second should go to the other.
+    assertEquals(hostsReceivingRequest.toArray(), new URI[]{new URI("http://test1.com:123"), new URI("http://test2.com:123")});
+    assertEquals(new HashSet<>(hostsReceivingRequest).size(), 2);
   }
 
   // @Test - Disabled due to flakiness. See SI-3077 to track and resolve this.
@@ -499,6 +561,54 @@ public class TestBackupRequestsClient
     TestLoadBalancer loadBalancer = new TestLoadBalancer(responseTime, servicePropertiesSupplier);
     DynamicClient dynamicClient = new DynamicClient(loadBalancer, null);
     return new BackupRequestsClient(dynamicClient, loadBalancer, _executor, statsConsumer, 10, TimeUnit.SECONDS);
+  }
+
+  private BackupRequestsClient createAlwaysBackupClientWithHosts(List<String> uris, Deque<URI> hostsReceivingRequestList, int responseDelayNano, int backupDelayNano)
+      throws IOException
+  {
+    Map<URI,Map<Integer, PartitionData>> partitionDescriptions = new HashMap<URI, Map<Integer, PartitionData>>();
+    uris.forEach(uri -> partitionDescriptions.put(URI.create(uri), Collections.singletonMap(0, new PartitionData(1))));
+
+    StaticLoadBalancerState LbState = new StaticLoadBalancerState()
+    {
+      @Override
+      public TrackerClient getClient(String serviceName, URI uri)
+      {
+        return new TrackerClient(uri, partitionDescriptions.get(uri), null) {
+          @Override
+          public void restRequest(RestRequest request,
+              RequestContext requestContext,
+              Map<String, String> wireAttrs,
+              TransportCallback<RestResponse> callback)
+          {
+            // whenever a trackerClient is used to make request, record down it's hostname
+            hostsReceivingRequestList.add(uri);
+            // delay response to allow backup request to happen
+            _executor.schedule(
+                () -> callback.onResponse(TransportResponseImpl.success(new RestResponseBuilder().build())), responseDelayNano,
+                TimeUnit.NANOSECONDS);
+          }
+        };
+      }
+    };
+    LbState.TEST_URIS_PARTITIONDESCRIPTIONS.putAll(partitionDescriptions);
+    LbState.TEST_SERVICE_BACKUP_REQUEST_PROPERTIES.add(createBackupRequestsConfiguration(5, "get"));
+    LbState.refreshDefaultProperties();
+    LoadBalancer loadBalancer = new SimpleLoadBalancer(LbState, _executor);
+    DynamicClient dynamicClient = new DynamicClient(loadBalancer, null);
+
+    return new BackupRequestsClient(dynamicClient, loadBalancer, _executor, null, 10, TimeUnit.SECONDS) {
+      @Override
+      Optional<TrackingBackupRequestsStrategy> getStrategy(final String serviceName, final String operation)
+      {
+        // constantly enable backup request after backupDelayNano time.
+        BackupRequestsStrategy alwaysBackup = new TestTrackingBackupRequestsStrategy.MockBackupRequestsStrategy(
+            () -> Optional.of((long) backupDelayNano),
+            () -> true
+        );
+        return Optional.of(new TrackingBackupRequestsStrategy(alwaysBackup));
+      }
+    };
   }
 
   class TestLoadBalancer implements LoadBalancer

@@ -173,7 +173,7 @@ public class BackupRequestsClient extends D2ClientDelegator
         decorateCallback(request, requestContext, _d2Client::restRequest, callback));
   }
 
-  private Optional<TrackingBackupRequestsStrategy> getStrategy(final String serviceName, final String operation)
+  /*private*/ Optional<TrackingBackupRequestsStrategy> getStrategy(final String serviceName, final String operation)
   {
     updateIfNeeded(serviceName);
 
@@ -327,7 +327,8 @@ public class BackupRequestsClient extends D2ClientDelegator
           final long startNano = System.nanoTime();
 
           URI targetHostUri = KeyMapper.TargetHostHints.getRequestContextTargetHost(requestContext);
-          if (targetHostUri == null)
+          Boolean backupRequestAcceptable = KeyMapper.TargetHostHints.getRequestContextOtherHostAcceptable(requestContext);
+          if (targetHostUri == null || (backupRequestAcceptable != null && backupRequestAcceptable))
           {
             Optional<Long> delayNano = st.getTimeUntilBackupRequestNano();
             if (delayNano.isPresent())
@@ -336,8 +337,9 @@ public class BackupRequestsClient extends D2ClientDelegator
                   _executorService, startNano, serviceName, operation);
             }
           }
-          // if caller specified concrete target host or backup strategy is not ready yet then return
-          // callback that updates backup strategy about latency
+          // return callback that updates backup strategy about latency if
+          // 1. caller specified concrete target host but didn't set the flag to accept other hosts
+          // 2. backup strategy is not ready yet
           return new Callback<T>()
           {
             @Override
@@ -426,6 +428,8 @@ public class BackupRequestsClient extends D2ClientDelegator
       _requestContext = requestContext;
       _backupRequestContext = requestContext.clone();
       _backupRequestContext.putLocalAttr(BACKUP_REQUEST_ATTRIBUTE_NAME, delayNano);
+      // when making backup request, we would never want to go to the affinity routing host; we would have gone there in the primary request.
+      KeyMapper.TargetHostHints.removeRequestContextTargetHost(_backupRequestContext);
       _client = client;
       _callback = callback;
       _strategy = strategy;

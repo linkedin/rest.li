@@ -384,6 +384,12 @@ public class DefaultScatterGatherStrategy implements ScatterGatherStrategy
     // we cannot update the give request context since that will be shared by scattered request.
     RequestContext context = requestContext.clone();
     KeyMapper.TargetHostHints.setRequestContextTargetHost(context, targetHost);
+    Boolean OtherHostAcceptable = KeyMapper.TargetHostHints.getRequestContextOtherHostAcceptable(requestContext);
+    if (OtherHostAcceptable == null)
+    {
+      // only enable backup request if user does not disable it explicitly for this request
+      KeyMapper.TargetHostHints.setRequestContextOtherHostAcceptable(context, true);
+    }
     return context;
   }
 

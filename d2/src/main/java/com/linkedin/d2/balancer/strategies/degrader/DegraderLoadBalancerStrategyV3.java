@@ -155,6 +155,15 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       {
         warn(_log, "No client found for ", targetHostUri, ". Target host specified is no longer part of cluster");
       }
+      else
+      {
+        // if this flag is set to be true, that means affinity routing is preferred but backup requests are still acceptable
+        Boolean otherHostAcceptable = KeyMapper.TargetHostHints.getRequestContextOtherHostAcceptable(requestContext);
+        if (otherHostAcceptable != null && otherHostAcceptable)
+        {
+          ExcludedHostHints.addRequestContextExcludedHost(requestContext, targetHostUri);
+        }
+      }
     }
 
     if (client == null)

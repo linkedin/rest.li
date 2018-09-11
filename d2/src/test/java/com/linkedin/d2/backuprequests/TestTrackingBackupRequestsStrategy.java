@@ -278,7 +278,7 @@ public class TestTrackingBackupRequestsStrategy
     }
   }
 
-  private static class MockBackupRequestsStrategy implements BackupRequestsStrategy
+  public static class MockBackupRequestsStrategy implements BackupRequestsStrategy
   {
 
     private final Supplier<Optional<Long>> _timeUntilBackupRequestNano;

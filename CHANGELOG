@@ -1,7 +1,13 @@
+25.0.2
+------
+
 25.0.1
 ------
 (RB=1413782)
 Improve how circular references involving includes are handled in schema parser.
+
+(RB=1417886)
+Change backupRequest so that it can work when d2 host hint is given
 
 25.0.0
 ------
