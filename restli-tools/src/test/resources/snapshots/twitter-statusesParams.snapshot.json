@@ -17,10 +17,12 @@
         "parameters" : [ {
           "default" : "en_US",
           "name" : "locale",
-          "type" : "string"
+          "type" : "string",
+          "doc" : "query parameter has same name as method parameter"
         }, {
           "name" : "auth",
-          "type" : "long"
+          "type" : "long",
+          "doc" : "query parameter has different name from method parameter"
         } ]
       }, {
         "doc" : "Gets a single status resource",
@@ -28,10 +30,12 @@
         "parameters" : [ {
           "default" : "en_US",
           "name" : "locale",
-          "type" : "string"
+          "type" : "string",
+          "doc" : "query parameter has same name as method parameter"
         }, {
           "name" : "auth",
-          "type" : "long"
+          "type" : "long",
+          "doc" : "query parameter has different name from method parameter"
         } ]
       }, {
         "doc" : "Updates a single status resource",
@@ -39,10 +43,12 @@
         "parameters" : [ {
           "default" : "en_US",
           "name" : "locale",
-          "type" : "string"
+          "type" : "string",
+          "doc" : "query parameter has same name as method parameter"
         }, {
           "name" : "auth",
-          "type" : "long"
+          "type" : "long",
+          "doc" : "query parameter has different name from method parameter"
         } ]
       }, {
         "doc" : "Deletes a status resource",
@@ -50,10 +56,12 @@
         "parameters" : [ {
           "default" : "en_US",
           "name" : "locale",
-          "type" : "string"
+          "type" : "string",
+          "doc" : "query parameter has same name as method parameter"
         }, {
           "name" : "auth",
-          "type" : "long"
+          "type" : "long",
+          "doc" : "query parameter has different name from method parameter"
         } ]
       }, {
         "doc" : "Gets a batch of statuses",
@@ -61,16 +69,55 @@
         "parameters" : [ {
           "default" : "en_US",
           "name" : "locale",
-          "type" : "string"
+          "type" : "string",
+          "doc" : "query parameter has same name as method parameter"
         }, {
           "name" : "auth",
-          "type" : "long"
+          "type" : "long",
+          "doc" : "query parameter has different name from method parameter"
+        } ]
+      }, {
+        "method" : "get_all",
+        "parameters" : [ {
+          "default" : "en_US",
+          "name" : "locale",
+          "type" : "string",
+          "doc" : "query parameter has same name as method parameter"
+        }, {
+          "name" : "auth",
+          "type" : "long",
+          "doc" : "query parameter has different name from method parameter"
+        } ]
+      } ],
+      "finders" : [ {
+        "name" : "criteria",
+        "parameters" : [ {
+          "name" : "locale",
+          "type" : "string",
+          "default" : "en_US",
+          "doc" : "query parameter has same name as method parameter"
+        }, {
+          "name" : "auth",
+          "type" : "long",
+          "doc" : "query parameter has different name from method parameter"
+        } ]
+      } ],
+      "actions" : [ {
+        "name" : "forward",
+        "parameters" : [ {
+          "name" : "to",
+          "type" : "long",
+          "doc" : "action parameter has same name as method parameter"
+        }, {
+          "name" : "auth",
+          "type" : "long",
+          "doc" : "action parameter has different name from method parameter"
         } ]
       } ],
       "entity" : {
         "path" : "/statusesParams/{statusID}"
       },
-      "supports" : [ "batch_get", "create", "delete", "get", "partial_update" ],
+      "supports" : [ "batch_get", "create", "delete", "get", "get_all", "partial_update" ],
       "identifier" : {
         "name" : "statusID",
         "type" : "long"

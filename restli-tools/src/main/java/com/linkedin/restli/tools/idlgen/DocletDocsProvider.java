@@ -18,6 +18,8 @@ package com.linkedin.restli.tools.idlgen;
 
 
 import com.linkedin.restli.internal.server.model.ResourceModelEncoder.DocsProvider;
+import com.linkedin.restli.server.annotations.ActionParam;
+import com.linkedin.restli.server.annotations.QueryParam;
 
 import java.io.PrintWriter;
 import java.lang.reflect.Method;
@@ -28,10 +30,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import com.sun.javadoc.AnnotationDesc;
 import com.sun.javadoc.ClassDoc;
 import com.sun.javadoc.Doc;
 import com.sun.javadoc.MethodDoc;
 import com.sun.javadoc.ParamTag;
+import com.sun.javadoc.Parameter;
 import com.sun.javadoc.Tag;
 import org.apache.commons.io.output.NullWriter;
 import org.apache.commons.lang.StringUtils;
@@ -134,7 +138,7 @@ public class DocletDocsProvider implements DocsProvider
     return formatDeprecatedTags(doc);
   }
 
-  private String formatDeprecatedTags(Doc doc)
+  private static String formatDeprecatedTags(Doc doc)
   {
     Tag[] deprecatedTags = doc.tags("deprecated");
     if(deprecatedTags.length > 0)
@@ -184,14 +188,44 @@ public class DocletDocsProvider implements DocsProvider
   public String getParamDoc(Method method, String name)
   {
     final MethodDoc methodDoc = _doclet.getMethodDoc(method);
-    if (methodDoc != null)
+
+    if (methodDoc == null)
     {
-      for (ParamTag tag: methodDoc.paramTags())
+      return null;
+    }
+
+    for (Parameter parameter : methodDoc.parameters())
+    {
+      for (AnnotationDesc annotationDesc : parameter.annotations())
       {
-        if (name.equals(tag.parameterName()))
+        if (annotationDesc.isSynthesized())
         {
-          return buildDoc(tag.parameterComment());
+          continue;
         }
+
+        if (isQueryParamAnnotation(annotationDesc) || isActionParamAnnotation(annotationDesc))
+        {
+          for (AnnotationDesc.ElementValuePair pair : annotationDesc.elementValues())
+          {
+            if ("value".equals(pair.element().name()) && name.equals(pair.value().value()))
+            {
+              return getParamTagDoc(methodDoc, parameter.name());
+            }
+          }
+        }
+      }
+    }
+
+    return null;
+  }
+
+  private static String getParamTagDoc(MethodDoc methodDoc, String name)
+  {
+    for (ParamTag tag : methodDoc.paramTags())
+    {
+      if (name.equals(tag.parameterName()))
+      {
+        return buildDoc(tag.parameterComment());
       }
     }
 
@@ -216,7 +250,7 @@ public class DocletDocsProvider implements DocsProvider
     return null;
   }
 
-  private String buildDoc(String docText)
+  private static String buildDoc(String docText)
   {
     if (docText != null && !docText.isEmpty())
     {
@@ -224,5 +258,16 @@ public class DocletDocsProvider implements DocsProvider
     }
 
     return null;
+  }
+
+
+  private static boolean isQueryParamAnnotation(AnnotationDesc annotationDesc)
+  {
+    return QueryParam.class.getCanonicalName().equals(annotationDesc.annotationType().qualifiedName());
+  }
+
+  private static boolean isActionParamAnnotation(AnnotationDesc annotationDesc)
+  {
+    return ActionParam.class.getCanonicalName().equals(annotationDesc.annotationType().qualifiedName());
   }
 }

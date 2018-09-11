@@ -151,14 +151,16 @@
         "doc" : "Simulates a delay in an asynchronous resource caused by ParSeq execution plan creation. The delay is simulated as\n {@link Thread#sleep(long)} because execution plan creation is a synchronous operation.\nService Returns: Nothing",
         "parameters" : [ {
           "name" : "delay",
-          "type" : "int"
+          "type" : "int",
+          "doc" : "the number of milliseconds it will take this resource to create an execution plan"
         } ]
       }, {
         "name" : "taskExecutionDelay",
         "doc" : "Simulates a delay in an asynchronous resource. The delay is simulated using a scheduled task (asynchronously).\n That is how a typical async resource looks like in terms of delays.\nService Returns: Nothing",
         "parameters" : [ {
           "name" : "delay",
-          "type" : "int"
+          "type" : "int",
+          "doc" : "the number of milliseconds it will take this resource to create an execution plan"
         } ]
       }, {
         "name" : "timeout"

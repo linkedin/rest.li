@@ -8,17 +8,19 @@
       "name" : "statusID",
       "type" : "long"
     },
-    "supports" : [ "batch_get", "create", "delete", "get", "partial_update" ],
+    "supports" : [ "batch_get", "create", "delete", "get", "get_all", "partial_update" ],
     "methods" : [ {
       "method" : "create",
       "doc" : "Creates a new Status",
       "parameters" : [ {
         "name" : "locale",
         "type" : "string",
-        "default" : "en_US"
+        "default" : "en_US",
+        "doc" : "query parameter has same name as method parameter"
       }, {
         "name" : "auth",
-        "type" : "long"
+        "type" : "long",
+        "doc" : "query parameter has different name from method parameter"
       } ]
     }, {
       "method" : "get",
@@ -26,10 +28,12 @@
       "parameters" : [ {
         "name" : "locale",
         "type" : "string",
-        "default" : "en_US"
+        "default" : "en_US",
+        "doc" : "query parameter has same name as method parameter"
       }, {
         "name" : "auth",
-        "type" : "long"
+        "type" : "long",
+        "doc" : "query parameter has different name from method parameter"
       } ]
     }, {
       "method" : "partial_update",
@@ -37,10 +41,12 @@
       "parameters" : [ {
         "name" : "locale",
         "type" : "string",
-        "default" : "en_US"
+        "default" : "en_US",
+        "doc" : "query parameter has same name as method parameter"
       }, {
         "name" : "auth",
-        "type" : "long"
+        "type" : "long",
+        "doc" : "query parameter has different name from method parameter"
       } ]
     }, {
       "method" : "delete",
@@ -48,10 +54,12 @@
       "parameters" : [ {
         "name" : "locale",
         "type" : "string",
-        "default" : "en_US"
+        "default" : "en_US",
+        "doc" : "query parameter has same name as method parameter"
       }, {
         "name" : "auth",
-        "type" : "long"
+        "type" : "long",
+        "doc" : "query parameter has different name from method parameter"
       } ]
     }, {
       "method" : "batch_get",
@@ -59,10 +67,49 @@
       "parameters" : [ {
         "name" : "locale",
         "type" : "string",
-        "default" : "en_US"
+        "default" : "en_US",
+        "doc" : "query parameter has same name as method parameter"
       }, {
         "name" : "auth",
-        "type" : "long"
+        "type" : "long",
+        "doc" : "query parameter has different name from method parameter"
+      } ]
+    }, {
+      "method" : "get_all",
+      "parameters" : [ {
+        "name" : "locale",
+        "type" : "string",
+        "default" : "en_US",
+        "doc" : "query parameter has same name as method parameter"
+      }, {
+        "name" : "auth",
+        "type" : "long",
+        "doc" : "query parameter has different name from method parameter"
+      } ]
+    } ],
+    "finders" : [ {
+      "name" : "criteria",
+      "parameters" : [ {
+        "name" : "locale",
+        "type" : "string",
+        "default" : "en_US",
+        "doc" : "query parameter has same name as method parameter"
+      }, {
+        "name" : "auth",
+        "type" : "long",
+        "doc" : "query parameter has different name from method parameter"
+      } ]
+    } ],
+    "actions" : [ {
+      "name" : "forward",
+      "parameters" : [ {
+        "name" : "to",
+        "type" : "long",
+        "doc" : "action parameter has same name as method parameter"
+      }, {
+        "name" : "auth",
+        "type" : "long",
+        "doc" : "action parameter has different name from method parameter"
       } ]
     } ],
     "entity" : {
