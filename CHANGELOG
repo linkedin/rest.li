@@ -1,5 +1,8 @@
-24.0.3
+25.0.0
 ------
+(RB=1418767)
+Preserve order of sets added to request builders.
+
 (RB=1417423)
 Look up Javadoc by correct custom parameter name.
 

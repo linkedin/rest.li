@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Collections;
@@ -362,6 +363,26 @@ public class TestAbstractRequestBuilder
     {
 
     }
+  }
+
+  @Test
+  public void testQueryParameterCopyPreservesSetOrder()
+  {
+    // Experimentally, this order of inputs into LinkedHashSet will be different
+    // when copied into a HashSet and iterated over. This _is_ subject to change
+    // as the JDK changes, so this is a best effort test only.
+    LinkedHashSet<String> initialSetParameter = new LinkedHashSet<>(Arrays.asList("4", "3", "2", "1"));
+
+    Map<String, Object> initialQueryParameters = new HashMap<>();
+    initialQueryParameters.put("set", initialSetParameter);
+
+    Map<String, Object> readOnlyQueryParameters =
+        AbstractRequestBuilder.getReadOnlyQueryParameters(initialQueryParameters);
+
+    @SuppressWarnings("unchecked")
+    List<String> orderedReadOnlySetParameter = new ArrayList<>((Set<String>) readOnlyQueryParameters.get("set"));
+
+    Assert.assertEquals(orderedReadOnlySetParameter, new ArrayList<>(initialSetParameter));
   }
 
   @Test

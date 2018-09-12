@@ -40,6 +40,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -553,7 +554,8 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> extends
     }
     else if (value instanceof Set)
     {
-      Set<Object> set = new HashSet<>();
+      // SI-7963: preserves order of the input set
+      Set<Object> set = new LinkedHashSet<>();
       for (Object o: (Set)value)
       {
         set.add(getReadOnlyJavaObject(o));
