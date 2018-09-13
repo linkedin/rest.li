@@ -80,6 +80,7 @@ public class TestActionResponseBuilder
 
     EasyMock.expect(mockDescriptor.getActionReturnRecordDataSchema()).andReturn(LONG_RETURN.getField().getRecord()).once();
     EasyMock.expect(((FieldDef<Long>)mockDescriptor.getActionReturnFieldDef())).andReturn(LONG_RETURN).once();
+    EasyMock.expect(((Class<Long>)mockDescriptor.getActionReturnType())).andReturn(Long.TYPE).anyTimes();
     EasyMock.replay(mockDescriptor);
     return mockDescriptor;
   }

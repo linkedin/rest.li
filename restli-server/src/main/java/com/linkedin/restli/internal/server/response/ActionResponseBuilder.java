@@ -72,9 +72,15 @@ public class ActionResponseBuilder implements RestLiResponseBuilder<RestLiRespon
             "Unexpected null encountered. Null HttpStatus inside of an ActionResult returned by the resource method: "
                 + routingResult.getResourceMethod());
       }
+
+      // When it has an ActionResult<Void> type response, it should return null but not empty body record
+      if (routingResult.getResourceMethod().getActionReturnType() == Void.TYPE) {
+        return new RestLiResponseDataImpl<>(new ActionResponseEnvelope(status, null), headers, cookies);
+      }
     }
     else
     {
+      // when value == null and return type is void, it is handled outside in RestLiResponseHandler
       value = result;
       status = HttpStatus.S_200_OK;
     }

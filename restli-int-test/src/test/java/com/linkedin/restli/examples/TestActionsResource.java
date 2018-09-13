@@ -20,6 +20,12 @@ package com.linkedin.restli.examples;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.StringArray;
 import com.linkedin.r2.RemoteInvocationException;
+import com.linkedin.r2.message.rest.RestMethod;
+import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.rest.RestRequestBuilder;
+import com.linkedin.r2.message.rest.RestResponse;
+import com.linkedin.r2.transport.common.Client;
+import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.RestLiResponseException;
@@ -32,11 +38,15 @@ import com.linkedin.restli.examples.greetings.client.ActionsBuilders;
 import com.linkedin.restli.examples.greetings.client.ActionsRequestBuilders;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
+import java.net.URI;
+import java.util.Collections;
+import java.util.Map;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+
 
 
 public class TestActionsResource extends RestLiIntegrationTest
@@ -237,6 +247,20 @@ public class TestActionsResource extends RestLiIntegrationTest
     Assert.assertFalse(response.hasError());
     Assert.assertEquals(response.getStatus(), HttpStatus.S_200_OK.getCode());
     Assert.assertNull(response.getEntity());
+  }
+
+  // Test whether the entity record is empty without braces by using r2 client
+  @Test
+  public void testActionNamedReturnVoid() throws Throwable
+  {
+    Map<String, String> transportProperties = Collections.singletonMap(HttpClientFactory.HTTP_REQUEST_TIMEOUT, "10000");
+
+    Client client = newTransportClient(transportProperties);
+    URI uri = URI.create("http://localhost:" + RestLiIntTestServer.DEFAULT_PORT + "/actions?action=returnVoid");
+    RestRequest r = new RestRequestBuilder(uri).setMethod(RestMethod.POST).build();
+    RestResponse response = client.restRequest(r).get();
+
+    Assert.assertTrue(response.getEntity().isEmpty());
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProviderForParseqActions")

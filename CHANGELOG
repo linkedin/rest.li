@@ -1,5 +1,8 @@
 25.0.0
 ------
+(RB=1414869)
+Fix ActionResult bug to return an empty response body
+
 (RB=1418767)
 Preserve order of sets added to request builders.
 
