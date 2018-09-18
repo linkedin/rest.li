@@ -1,5 +1,12 @@
+25.0.1
+------
+
+
 25.0.0
 ------
+(RB=1425050)
+Making RestLiResponseException constructor public.
+
 (RB=1414869)
 Fix ActionResult bug to return an empty response body
 

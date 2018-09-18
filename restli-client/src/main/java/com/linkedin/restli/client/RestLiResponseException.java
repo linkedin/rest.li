@@ -69,7 +69,7 @@ public class RestLiResponseException extends RestException
     _decodedResponse = decodedResponse;
   }
 
-  RestLiResponseException(ErrorResponse errorResponse)
+  public RestLiResponseException(ErrorResponse errorResponse)
   {
     super(createErrorRestResponse(errorResponse));
     _status = errorResponse.getStatus();
