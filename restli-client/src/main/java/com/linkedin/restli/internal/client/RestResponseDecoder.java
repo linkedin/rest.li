@@ -117,7 +117,7 @@ public abstract class RestResponseDecoder<T>
       {
         if (e != null)
         {
-          responseCallback.onError(e);
+          responseCallback.onError(new RestLiDecodingException("Could not decode REST response", e));
           return null;
         }
 

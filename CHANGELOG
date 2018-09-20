@@ -1,5 +1,7 @@
 25.0.2
 ------
+(RB=1427726)
+Fix an integration test to test client side streaming correctly. Also updating the error created when stream decoding fails.
 
 25.0.1
 ------

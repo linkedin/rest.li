@@ -46,6 +46,7 @@ import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.client.response.BatchKVResponse;
 import com.linkedin.restli.client.util.PatchGenerator;
+import com.linkedin.restli.client.util.RestLiClientConfig;
 import com.linkedin.restli.common.BatchCreateIdResponse;
 import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CollectionMetadata;
@@ -145,6 +146,13 @@ public class TestCompressionServer extends RestLiIntegrationTest
         };
   }
 
+  private RestLiClientConfig getClientConfig()
+  {
+    RestLiClientConfig restLiClientConfig = new RestLiClientConfig();
+    restLiClientConfig.setUseStreaming(Boolean.parseBoolean(System.getProperty("test.useStreamCodecClient", "false")));
+    return  restLiClientConfig;
+  }
+
   //Returns a combination of all possible request/response compression combinations
   @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "clientsCompressedResponsesBatchDataProvider")
   public Object[][] clientsCompressedResponsesBatchDataProvider()
@@ -164,7 +172,7 @@ public class TestCompressionServer extends RestLiIntegrationTest
     {
       Map<String, String> clientProperties = new HashMap<String, String>();
       clientProperties.put(HttpClientFactory.HTTP_RESPONSE_COMPRESSION_OPERATIONS, operation);
-      RestClient client = new RestClient(newTransportClient(clientProperties), URI_PREFIX);
+      RestClient client = new RestClient(newTransportClient(clientProperties), URI_PREFIX, getClientConfig());
       result[index--] = new Object[]{ client, operation, RestliRequestOptions.DEFAULT_OPTIONS, Arrays.asList(1000L, 2000L), 0 };
       result[index--] = new Object[]{ client, operation, TestConstants.FORCE_USE_NEXT_OPTIONS, Arrays.asList(1000L, 2000L), 0 };
       result[index--] = new Object[]{ client, operation, RestliRequestOptions.DEFAULT_OPTIONS, Arrays.asList(1L, 2L, 3L, 4L), 4 };
@@ -193,7 +201,7 @@ public class TestCompressionServer extends RestLiIntegrationTest
     {
       Map<String, String> clientProperties = new HashMap<String, String>();
       clientProperties.put(HttpClientFactory.HTTP_RESPONSE_COMPRESSION_OPERATIONS, operation);
-      RestClient client = new RestClient(newTransportClient(clientProperties), URI_PREFIX);
+      RestClient client = new RestClient(newTransportClient(clientProperties), URI_PREFIX, getClientConfig());
       result[index--] = new Object[]{ client, operation, new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()),
           AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion()};
       result[index--] = new Object[]{ client, operation, new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)),
@@ -214,8 +222,8 @@ public class TestCompressionServer extends RestLiIntegrationTest
   {
     return new Object[][]
         {
-            { new RestClient(getDefaultTransportClient(), URI_PREFIX), RestliRequestOptions.DEFAULT_OPTIONS },
-            { new RestClient(getDefaultTransportClient(), URI_PREFIX), TestConstants.FORCE_USE_NEXT_OPTIONS },
+            { new RestClient(getDefaultTransportClient(), URI_PREFIX, getClientConfig()), RestliRequestOptions.DEFAULT_OPTIONS },
+            { new RestClient(getDefaultTransportClient(), URI_PREFIX, getClientConfig()), TestConstants.FORCE_USE_NEXT_OPTIONS },
         };
   }
 
@@ -227,10 +235,10 @@ public class TestCompressionServer extends RestLiIntegrationTest
   {
     return new Object[][]
         {
-            { new RestClient(getDefaultTransportClient(), URI_PREFIX), new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()) },
-            { new RestClient(getDefaultTransportClient(), URI_PREFIX), new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
-            { new RestClient(getDefaultTransportClient(), URI_PREFIX), new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()) },
-            { new RestClient(getDefaultTransportClient(), URI_PREFIX), new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
+            { new RestClient(getDefaultTransportClient(), URI_PREFIX, getClientConfig()), new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()) },
+            { new RestClient(getDefaultTransportClient(), URI_PREFIX, getClientConfig()), new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
+            { new RestClient(getDefaultTransportClient(), URI_PREFIX, getClientConfig()), new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()) },
+            { new RestClient(getDefaultTransportClient(), URI_PREFIX, getClientConfig()), new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
         };
   }
 
