@@ -1,3 +1,5 @@
+apply plugin: 'antlr'
+
 dependencies {
   compile project(':data')
   compile project(':data-testutils')
@@ -14,6 +16,9 @@ dependencies {
   compile externalDependency.jacksonCore
   compile externalDependency.parseq
   compile externalDependency.servletApi
+  compile externalDependency.antlrRuntime
+
+  antlr externalDependency.antlr
 
   testCompile project(path: ':generator-test', configuration: 'testArtifacts')
   testCompile project(path: ':restli-common', configuration: 'testArtifacts')
@@ -29,8 +34,29 @@ dependencies {
   testRuntime externalDependency.objenesis
 }
 
+def generatedAntlrDir = file("src/mainGeneratedAntlr")
+def generatedAntlrJavaDir = file("${generatedAntlrDir}/java")
+
+generateGrammarSource {
+  outputDirectory = file("${generatedAntlrJavaDir}")
+}
+
+sourceSets.main.java {
+  srcDir generatedAntlrJavaDir
+}
+
+idea.module {
+  generatedSourceDirs += generatedAntlrJavaDir
+}
+
+clean {
+  delete generatedAntlrDir
+}
+
 apply from: "${buildScriptDirPath}/dataTemplate.gradle"
 
 test {
   systemProperties['test.projectDir'] = projectDir.toString()
 }
+
+

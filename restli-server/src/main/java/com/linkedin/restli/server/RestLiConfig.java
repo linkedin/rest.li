@@ -20,6 +20,7 @@ package com.linkedin.restli.server;
 import com.linkedin.data.codec.DataCodec;
 import com.linkedin.restli.common.ContentType;
 import com.linkedin.restli.internal.server.response.ErrorResponseBuilder;
+import com.linkedin.restli.server.config.RestLiMethodConfig;
 import com.linkedin.restli.server.filter.Filter;
 import com.linkedin.restli.server.multiplexer.MultiplexerRunMode;
 import com.linkedin.restli.server.multiplexer.MultiplexerSingletonFilter;
@@ -29,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -88,6 +90,9 @@ public class RestLiConfig
   private final List<ContentType> _customContentTypes = new LinkedList<>();
   private final List<ResourceDefinitionListener> _resourceDefinitionListeners = new ArrayList<>();
   private boolean _useStreamCodec = false;
+
+  // resource method level configuration
+  private RestLiMethodConfig _methodConfig;
 
   /**
    * Constructor.
@@ -450,5 +455,23 @@ public class RestLiConfig
   public void setUseStreamCodec(boolean useStreamCodec)
   {
     _useStreamCodec = useStreamCodec;
+  }
+
+  /**
+   * Get resource method level configurations.
+   * @return Resource method level configurations.
+   */
+  public RestLiMethodConfig getMethodConfig()
+  {
+    return _methodConfig;
+  }
+
+  /**
+   * Set resource method level configurations.
+   * @param methodConfig method level configurations.
+   */
+  public void setMethodConfig(RestLiMethodConfig methodConfig)
+  {
+    _methodConfig = methodConfig;
   }
 }

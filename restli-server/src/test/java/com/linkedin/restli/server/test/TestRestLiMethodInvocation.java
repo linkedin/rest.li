@@ -36,6 +36,7 @@ import com.linkedin.parseq.promise.Promise;
 import com.linkedin.parseq.promise.PromiseListener;
 import com.linkedin.parseq.promise.Promises;
 import com.linkedin.parseq.promise.SettablePromise;
+import com.linkedin.parseq.trace.Trace;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
@@ -98,6 +99,10 @@ import com.linkedin.restli.server.TestRecord;
 import com.linkedin.restli.server.UpdateResponse;
 import com.linkedin.restli.server.combined.CombinedResources;
 import com.linkedin.restli.server.combined.CombinedTestDataModels;
+import com.linkedin.restli.server.config.ResourceMethodConfig;
+import com.linkedin.restli.server.config.ResourceMethodConfigProvider;
+import com.linkedin.restli.server.config.RestLiMethodConfig;
+import com.linkedin.restli.server.config.RestLiMethodConfigBuilder;
 import com.linkedin.restli.server.custom.types.CustomLong;
 import com.linkedin.restli.server.custom.types.CustomString;
 import com.linkedin.restli.server.filter.Filter;
@@ -158,7 +163,6 @@ import org.easymock.IAnswer;
 
 import static com.linkedin.restli.server.test.RestLiTestHelper.buildResourceModel;
 import static com.linkedin.restli.server.test.RestLiTestHelper.buildResourceModels;
-import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
@@ -178,7 +182,8 @@ import static org.testng.Assert.fail;
 public class TestRestLiMethodInvocation
 {
   private static final ProtocolVersion version = AllProtocolVersions.NEXT_PROTOCOL_VERSION;
-  private static final String ATTRIBUTE_PARSEQ_TRACE = "parseqTrace";
+  public static final String ATTRIBUTE_PARSEQ_TRACE = "parseqTrace";
+
   private ScheduledExecutorService _scheduler;
   private Engine _engine;
   private EasyMockResourceFactory _resourceFactory;
@@ -3449,6 +3454,200 @@ public class TestRestLiMethodInvocation
         }, true, false);
   }
 
+
+
+  @DataProvider
+  public Object[][] promiseMethodConfigProviders()
+  {
+    return new Object[][]
+        {
+          {
+            new RestLiMethodConfigBuilder().build(),
+            null
+          }, // empty map
+          {
+            new RestLiMethodConfigBuilder().addTimeoutMs("*.*", 1000L).build(),
+            "withTimeout 1000ms src: *.*"
+          }, // override default
+          {
+            new RestLiMethodConfigBuilder()
+                    .addTimeoutMs("promisestatuses.*", 1100L)
+                    .addTimeoutMs("greetings.*", 2000L).build(),
+            "withTimeout 1100ms src: promisestatuses.*"
+          }, // resource name
+          {
+            new RestLiMethodConfigBuilder()
+                    .addTimeoutMs("*.GET", 1200L)
+                    .addTimeoutMs("*.DELETE", 2000L).build(),
+            "withTimeout 1200ms src: *.GET"
+          }, // operation name
+          {
+            new RestLiMethodConfigBuilder()
+                    .addTimeoutMs("promisestatuses.GET", 1200L)
+                    .addTimeoutMs("promisestatuses.FINDER-public_timeline", 2000L).build(),
+            "withTimeout 1200ms src: promisestatuses.GET"
+          }, // operation type
+          {
+            new RestLiMethodConfigBuilder()
+                    .addTimeoutMs("*.*", 500L)
+                    .addTimeoutMs("*.GET", 1000L)
+                    .addTimeoutMs("promisestatuses.*", 2000L)
+                    .addTimeoutMs("promisestatuses.GET", 2500L).build(),
+            "withTimeout 2500ms src: promisestatuses.GET"
+          } // multiple configuration precedence
+        };
+  }
+
+  @Test(dataProvider = "promiseMethodConfigProviders")
+  public void testTimeoutParseqTracePromise(RestLiMethodConfig restliMethodConfig, String timeoutTaskName) throws Exception
+  {
+    Map<String, ResourceModel> resourceModelMap = buildResourceModels(
+            PromiseStatusCollectionResource.class);
+    ResourceModel promiseStatusResourceModel = resourceModelMap.get("/promisestatuses");
+
+    // Promise based Async Method Execution
+    RequestContext promiseRequestContext = new RequestContext();
+    ResourceMethodDescriptor methodDescriptor = promiseStatusResourceModel.findMethod(ResourceMethod.GET);
+    PromiseStatusCollectionResource promiseStatusResource = getMockResource(PromiseStatusCollectionResource.class);
+    EasyMock.expect(promiseStatusResource.get(eq(1L))).andReturn(Promises.value(new Status())).once();
+
+    // configure method-level timeout
+    ResourceMethodConfigProvider methodConfigProvider = ResourceMethodConfigProvider.build(restliMethodConfig);
+    ResourceMethodConfig methodConfig = methodConfigProvider.apply(methodDescriptor);
+    checkInvocation(promiseStatusResource,
+            promiseRequestContext,
+            methodDescriptor,
+            methodConfig,
+            "GET",
+            version,
+            "/promisestatuses/1",
+            null,
+            buildPathKeys("statusID", 1L),
+            new Callback<RestResponse>()
+            {
+              @Override
+              public void onError(Throwable e)
+              {
+                Assert.fail("Request failed unexpectedly.");
+              }
+
+              @Override
+              public void onSuccess(RestResponse result)
+              {
+                Trace parseqTrace = (Trace)promiseRequestContext.getLocalAttr(ATTRIBUTE_PARSEQ_TRACE);
+                Assert.assertNotNull(parseqTrace);
+                if (timeoutTaskName != null)
+                {
+                  Assert.assertTrue(hasTask(timeoutTaskName, parseqTrace));
+                }
+              }
+            },
+            true, false, null, null);
+  }
+
+  @DataProvider
+  public Object[][] taskMethodConfigProviders()
+  {
+    return new Object[][]
+        {
+          {
+            new RestLiMethodConfigBuilder().build(),
+            null
+          }, // empty map
+          {
+            new RestLiMethodConfigBuilder().addTimeoutMs("*.*", 1000L).build(),
+            "withTimeout 1000ms src: *.*"
+          }, // override default
+          {
+            new RestLiMethodConfigBuilder()
+                    .addTimeoutMs("taskstatuses.*", 1100L)
+                    .addTimeoutMs("greetings.*", 2000L).build(),
+            "withTimeout 1100ms src: taskstatuses.*"
+          }, // resource name
+          {
+            new RestLiMethodConfigBuilder()
+                    .addTimeoutMs("*.GET", 1200L)
+                    .addTimeoutMs("*.DELETE", 2000L).build(),
+            "withTimeout 1200ms src: *.GET"
+          }, // operation name
+          {
+            new RestLiMethodConfigBuilder()
+                    .addTimeoutMs("taskstatuses.GET", 1200L)
+                    .addTimeoutMs("taskstatuses.ACTION-streamingAction", 2000L).build(),
+            "withTimeout 1200ms src: taskstatuses.GET"
+          }, // operation type
+          {
+            new RestLiMethodConfigBuilder()
+                    .addTimeoutMs("*.*", 500L)
+                    .addTimeoutMs("*.GET", 1000L)
+                    .addTimeoutMs("taskstatuses.*", 2000L)
+                    .addTimeoutMs("taskstatuses.GET", 2500L).build(),
+            "withTimeout 2500ms src: taskstatuses.GET"
+          } // multiple configuration precedence
+        };
+  }
+
+  @Test(dataProvider = "taskMethodConfigProviders")
+  public void testTimeoutParseqTraceTask(RestLiMethodConfig restliMethodConfig, String timeoutTaskName) throws Exception
+  {
+    Map<String, ResourceModel> resourceModelMap = buildResourceModels(
+            TaskStatusCollectionResource.class);
+    ResourceModel taskStatusResourceModel = resourceModelMap.get("/taskstatuses");
+
+    // #4: Task based Async Method Execution
+    RequestContext taskRequestContext = new RequestContext();
+    ResourceMethodDescriptor methodDescriptor = taskStatusResourceModel.findMethod(ResourceMethod.GET);
+    TaskStatusCollectionResource taskStatusResource = getMockResource(TaskStatusCollectionResource.class);
+    EasyMock.expect(taskStatusResource.get(eq(1L))).andReturn(
+            Task.callable(
+                    "myTask",
+                    new Callable<Status>()
+                    {
+                      @Override
+                      public Status call() throws Exception
+                      {
+                        return new Status();
+                      }
+                    })).once();
+
+    // configure method-level timeout
+    ResourceMethodConfigProvider methodConfigProvider = ResourceMethodConfigProvider.build(restliMethodConfig);
+    ResourceMethodConfig methodConfig = methodConfigProvider.apply(methodDescriptor);
+    checkInvocation(taskStatusResource,
+            taskRequestContext,
+            methodDescriptor,
+            methodConfig,
+            "GET",
+            version,
+            "/taskstatuses/1",
+            null,
+            buildPathKeys("statusID", 1L),
+            new Callback<RestResponse>()
+            {
+              @Override
+              public void onError(Throwable e)
+              {
+                Assert.fail("Request failed unexpectedly.");
+              }
+
+              @Override
+              public void onSuccess(RestResponse result)
+              {
+                Trace parseqTrace = (Trace)taskRequestContext.getLocalAttr(ATTRIBUTE_PARSEQ_TRACE);
+                Assert.assertNotNull(parseqTrace);
+                if (timeoutTaskName != null)
+                {
+                  Assert.assertTrue(hasTask(timeoutTaskName, parseqTrace));
+                }
+              }
+            }, true, false, null, null);
+  }
+
+  public static boolean hasTask(final String name, final Trace trace)
+  {
+    return trace.getTraceMap().values().stream().anyMatch(shallowTrace -> shallowTrace.getName().equals(name));
+  }
+
   @Test
   @SuppressWarnings({"unchecked"})
   public void testBatchUpdateCollection() throws Exception
@@ -5036,8 +5235,28 @@ public class TestRestLiMethodInvocation
   }
 
   private void checkInvocation(Object resource,
+                               RequestContext requestContext,
+                               ResourceMethodDescriptor resourceMethodDescriptor,
+                               String httpMethod,
+                               ProtocolVersion version,
+                               String uri,
+                               String entityBody,
+                               MutablePathKeys pathkeys,
+                               final Callback<RestResponse> callback,
+                               final boolean isDebugMode,
+                               final boolean expectRoutingException,
+                               final RestLiAttachmentReader expectedRequestAttachments,
+                               final RestLiResponseAttachments expectedResponseAttachments)
+          throws Exception
+  {
+    checkInvocation(resource, requestContext, resourceMethodDescriptor, null, httpMethod, version,
+            uri, entityBody, pathkeys, callback, isDebugMode, expectRoutingException, expectedRequestAttachments, expectedResponseAttachments);
+  }
+
+  private void checkInvocation(Object resource,
       RequestContext requestContext,
       ResourceMethodDescriptor resourceMethodDescriptor,
+      ResourceMethodConfig resourceMethodConfig,
       String httpMethod,
       ProtocolVersion version,
       String uri,
@@ -5092,7 +5311,7 @@ public class TestRestLiMethodInvocation
       {
         resourceContext.setResponseAttachments(expectedResponseAttachments);
       }
-      RoutingResult routingResult = new RoutingResult(resourceContext, resourceMethodDescriptor);
+      RoutingResult routingResult = new RoutingResult(resourceContext, resourceMethodDescriptor, resourceMethodConfig);
       RestLiArgumentBuilder argumentBuilder = _methodAdapterRegistry.getArgumentBuilder(resourceMethodDescriptor.getType());
       RestLiRequestData requestData = argumentBuilder.extractRequestData(
           routingResult,

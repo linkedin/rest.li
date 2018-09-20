@@ -23,6 +23,7 @@ import com.linkedin.parseq.Task;
 import com.linkedin.parseq.promise.Promise;
 import com.linkedin.parseq.promise.PromiseListener;
 import com.linkedin.parseq.promise.Promises;
+import com.linkedin.restli.common.ConfigValue;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.RestConstants;
@@ -34,10 +35,12 @@ import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiRequestData;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.UnstructuredDataReactiveResult;
+import com.linkedin.restli.server.config.ResourceMethodConfig;
 import com.linkedin.restli.server.resources.BaseResource;
 import com.linkedin.restli.server.resources.ResourceFactory;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -79,6 +82,7 @@ public class RestLiMethodInvoker
 
   @SuppressWarnings("deprecation")
   private void doInvoke(final ResourceMethodDescriptor descriptor,
+      final ResourceMethodConfig methodConfig,
       final RestLiCallback callback,
       final Object resource,
       final ServerResourceContext resourceContext,
@@ -139,7 +143,8 @@ public class RestLiMethodInvoker
             contextIndex = descriptor.indexOfParameterType(ParamType.PARSEQ_CONTEXT);
           }
           // run through the engine to get the context
-          Task<Object> restliTask = createRestLiParSeqTask(arguments, contextIndex, method, resource);
+          Task<Object> restliTask = withTimeout(createRestLiParSeqTask(arguments, contextIndex, method, resource),
+                  methodConfig);
 
           // propagate the result to the callback
           restliTask.addListener(new CallbackPromiseAdapter<>(callback));
@@ -156,7 +161,8 @@ public class RestLiMethodInvoker
 
           //addListener requires Task<Object> in this case
           @SuppressWarnings("unchecked")
-          Task<Object> task = (Task<Object>) method.invoke(resource, arguments);
+          Task<Object> task = withTimeout((Task<Object>) method.invoke(resource, arguments),
+                  methodConfig);
           if (task == null)
           {
             callback.onError(new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
@@ -191,6 +197,27 @@ public class RestLiMethodInvoker
                                                     e.getCause()));
       }
     }
+  }
+
+  // Apply timeout to parseq task if timeout configuration is specified for this method.
+  private Task<Object> withTimeout(final Task<Object> task, ResourceMethodConfig config)
+  {
+    if (config != null)
+    {
+      ConfigValue<Long> timeout = config.getTimeoutMs();
+      if (timeout.getValue() != null && timeout.getValue() > 0)
+      {
+        if (timeout.getSource().isPresent())
+        {
+          return task.withTimeout("src: " + timeout.getSource().get(), timeout.getValue(), TimeUnit.MILLISECONDS);
+        }
+        else
+        {
+          return task.withTimeout(timeout.getValue(), TimeUnit.MILLISECONDS);
+        }
+      }
+    }
+    return task;
   }
 
   private void addListenerFromContext(Task<Object> task, ResourceContext resourceContext)
@@ -275,6 +302,7 @@ public class RestLiMethodInvoker
     try
     {
       ResourceMethodDescriptor resourceMethodDescriptor = invokableMethod.getResourceMethod();
+      ResourceMethodConfig resourceMethodConfig = invokableMethod.getResourceMethodConfig();
       Object resource = _resourceFactory.create(resourceMethodDescriptor.getResourceModel().getResourceClass());
 
       //Acquire a handle on the ResourceContext when setting it in order to obtain any response attachments that need to
@@ -287,7 +315,7 @@ public class RestLiMethodInvoker
 
       Object[] args = restLiArgumentBuilder.buildArguments(requestData, invokableMethod);
       // Now invoke the resource implementation.
-      doInvoke(resourceMethodDescriptor, callback, resource, resourceContext, args);
+      doInvoke(resourceMethodDescriptor, resourceMethodConfig, callback, resource, resourceContext, args);
     }
     catch (Exception e)
     {

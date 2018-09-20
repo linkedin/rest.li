@@ -36,6 +36,8 @@ import com.linkedin.restli.internal.server.response.RestLiResponseException;
 import com.linkedin.restli.internal.server.response.RestLiResponseHandler;
 import com.linkedin.restli.internal.server.util.RestLiSyntaxException;
 import com.linkedin.restli.internal.server.util.RestUtils;
+import com.linkedin.restli.server.config.ResourceMethodConfig;
+import com.linkedin.restli.server.config.ResourceMethodConfigProvider;
 import com.linkedin.restli.server.filter.Filter;
 import com.linkedin.restli.server.filter.FilterRequestContext;
 import com.linkedin.restli.server.resources.ResourceFactory;
@@ -64,6 +66,7 @@ abstract class BaseRestLiServer
   private final ErrorResponseBuilder _errorResponseBuilder;
   private final List<Filter> _filters;
   private final Set<String> _customContentTypes;
+  private final ResourceMethodConfigProvider _methodConfigProvider;
 
   BaseRestLiServer(RestLiConfig config,
       ResourceFactory resourceFactory,
@@ -83,6 +86,7 @@ abstract class BaseRestLiServer
     _responseHandler = new RestLiResponseHandler(_errorResponseBuilder);
 
     _filters = config.getFilters() != null ? config.getFilters() : new ArrayList<>();
+    _methodConfigProvider = ResourceMethodConfigProvider.build(config.getMethodConfig());
   }
 
   private boolean isSupportedProtocolVersion(ProtocolVersion clientProtocolVersion,
@@ -131,8 +135,9 @@ abstract class BaseRestLiServer
           context);
 
       ResourceMethodDescriptor method = _router.process(context);
+      ResourceMethodConfig methodConfig = _methodConfigProvider.apply(method);
 
-      return new RoutingResult(context, method);
+      return new RoutingResult(context, method, methodConfig);
     }
     catch (RestLiSyntaxException e)
     {

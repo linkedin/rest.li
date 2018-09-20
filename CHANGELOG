@@ -1,5 +1,10 @@
+25.0.6
+------
+
 25.0.5
 ------
+(RB=1427447)
+Support ParSeq task resource method level timeout configuration.
 
 25.0.4
 ------

@@ -18,11 +18,13 @@ package com.linkedin.restli.internal.server;
 
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.server.ResourceContext;
+import com.linkedin.restli.server.config.ResourceMethodConfig;
 
 public class RoutingResult
 {
   private final ServerResourceContext          _context;
   private final ResourceMethodDescriptor _methodDescriptor;
+  private final ResourceMethodConfig  _methodConfig;
 
   /**
    * Constructor.
@@ -32,8 +34,22 @@ public class RoutingResult
    */
   public RoutingResult(ServerResourceContext context, ResourceMethodDescriptor methodDescriptor)
   {
+    this(context, methodDescriptor, null);
+  }
+
+  /**
+   * Constructor
+   * @param context {@link ResourceContext}
+   * @param methodDescriptor {@link ResourceMethodDescriptor}
+   * @param methodConfig {@link ResourceMethodConfig}
+   */
+  public RoutingResult(ServerResourceContext context,
+                       ResourceMethodDescriptor methodDescriptor,
+                       ResourceMethodConfig methodConfig)
+  {
     _context = context;
     _methodDescriptor = methodDescriptor;
+    _methodConfig = methodConfig;
   }
 
   public ServerResourceContext getContext()
@@ -44,6 +60,11 @@ public class RoutingResult
   public ResourceMethodDescriptor getResourceMethod()
   {
     return _methodDescriptor;
+  }
+
+  public ResourceMethodConfig getResourceMethodConfig()
+  {
+    return _methodConfig;
   }
 
   @Override
