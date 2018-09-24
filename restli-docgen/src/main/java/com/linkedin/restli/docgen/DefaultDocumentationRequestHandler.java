@@ -53,15 +53,8 @@ public class DefaultDocumentationRequestHandler implements RestLiDocumentationRe
   @Override
   public void initialize(RestLiConfig config, Map<String, ResourceModel> rootResources)
   {
-    final DataSchemaResolver schemaResolver = new ClasspathResourceDataSchemaResolver(SchemaParserFactory.instance());
-    final ResourceSchemaCollection resourceSchemas = ResourceSchemaCollection.loadOrCreateResourceSchema(rootResources);
-    final RestLiResourceRelationship relationships = new RestLiResourceRelationship(resourceSchemas, schemaResolver);
-
-    _htmlRenderer = new RestLiHTMLDocumentationRenderer(config.getServerNodeUri(),
-                                                        relationships,
-                                                        new VelocityTemplatingEngine(),
-                                                        schemaResolver);
-    _jsonRenderer = new RestLiJSONDocumentationRenderer(relationships);
+    _config = config;
+    _rootResources = rootResources;
   }
 
   @Override
@@ -78,6 +71,17 @@ public class DefaultDocumentationRequestHandler implements RestLiDocumentationRe
   @Override
   public void handleRequest(RestRequest request, RequestContext requestContext, Callback<RestResponse> callback)
   {
+    if (!_initialized)
+    {
+      synchronized (this)
+      {
+        if (!_initialized)
+        {
+          initializeRenderers();
+          _initialized = true;
+        }
+      }
+    }
     try
     {
       RestResponse response = processDocumentationRequest(request);
@@ -87,6 +91,19 @@ public class DefaultDocumentationRequestHandler implements RestLiDocumentationRe
     {
       callback.onError(e);
     }
+  }
+
+  private void initializeRenderers()
+  {
+    final DataSchemaResolver schemaResolver = new ClasspathResourceDataSchemaResolver(SchemaParserFactory.instance());
+    final ResourceSchemaCollection resourceSchemas = ResourceSchemaCollection.loadOrCreateResourceSchema(_rootResources);
+    final RestLiResourceRelationship relationships = new RestLiResourceRelationship(resourceSchemas, schemaResolver);
+
+    _htmlRenderer = new RestLiHTMLDocumentationRenderer(_config.getServerNodeUri(),
+        relationships,
+        new VelocityTemplatingEngine(),
+        schemaResolver);
+    _jsonRenderer = new RestLiJSONDocumentationRenderer(relationships);
   }
 
   @SuppressWarnings("fallthrough")
@@ -224,4 +241,7 @@ public class DefaultDocumentationRequestHandler implements RestLiDocumentationRe
 
   private RestLiHTMLDocumentationRenderer _htmlRenderer;
   private RestLiJSONDocumentationRenderer _jsonRenderer;
+  private RestLiConfig _config;
+  private Map<String, ResourceModel> _rootResources;
+  private boolean _initialized = false;
 }
