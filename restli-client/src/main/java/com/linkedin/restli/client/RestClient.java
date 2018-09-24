@@ -202,11 +202,6 @@ public class RestClient implements Client {
     return _uriPrefix;
   }
 
-  public RestLiClientConfig getClientConfig()
-  {
-    return _restLiClientConfig;
-  }
-
   @Override
   public <T> ResponseFuture<T> sendRequest(Request<T> request, RequestContext requestContext)
   {
