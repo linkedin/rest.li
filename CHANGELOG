@@ -1,5 +1,7 @@
 25.0.3
 ------
+(RB=1432090)
+Add a new constructor for RestLiServiceException to disable stacktrace inclusion.
 
 25.0.2
 ------

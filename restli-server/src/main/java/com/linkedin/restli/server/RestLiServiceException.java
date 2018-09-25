@@ -58,6 +58,23 @@ public class RestLiServiceException extends RuntimeException
     _status = status;
   }
 
+  /**
+   * Construct a new instance using the specified HTTP status, exception message, cause, and an option to disable
+   * stacktrace. Consider setting {@code writableStackTrace} to {@code false} to conserve computation cost if the
+   * stacktrace does not contribute meaningful insights.
+   *
+   * @param status the HTTP status to use along with the exception
+   * @param message the exception message for this exception.
+   * @param cause the cause of this exception.
+   * @param writableStackTrace the exception stacktrace is filled in if true; false otherwise.
+   */
+  public RestLiServiceException(final HttpStatus status,
+      final String message, final Throwable cause, boolean writableStackTrace)
+  {
+    super(message, cause, true, writableStackTrace);
+    _status = status;
+  }
+
   public HttpStatus getStatus()
   {
     return _status;
