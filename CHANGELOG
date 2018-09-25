@@ -1,7 +1,13 @@
+25.0.3
+------
+
 25.0.2
 ------
 (RB=1427726)
 Fix an integration test to test client side streaming correctly. Also updating the error created when stream decoding fails.
+
+(RB=1430734)
+Don't expose rest.li client config and run scatter gather tests in parallel.
 
 25.0.1
 ------
