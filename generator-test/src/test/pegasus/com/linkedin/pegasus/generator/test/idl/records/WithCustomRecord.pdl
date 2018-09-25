@@ -1,9 +1,0 @@
-namespace com.linkedin.pegasus.generator.test.idl.records
-
-import com.linkedin.pegasus.generator.test.idl.customtypes.CustomRecord
-
-record WithCustomRecord {
-  custom: CustomRecord = { "title": "defaultTitle", "body": "defaultBody" }
-  customArray: array[CustomRecord] = []
-  // customMap: map[CustomRecord, CustomRecord] = {} // disabled until we support typed map keys
-}

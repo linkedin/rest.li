@@ -1,9 +1,0 @@
-namespace com.linkedin.pegasus.generator.test.idl.arrays
-
-import com.linkedin.pegasus.generator.test.idl.enums.Fruits
-import com.linkedin.pegasus.generator.test.idl.records.Empty
-
-record WithRecordArray {
-  empties: array[Empty]
-  fruits: array[Fruits]
-}

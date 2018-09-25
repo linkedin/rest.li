@@ -1,9 +1,0 @@
-namespace com.linkedin.pegasus.generator.test.idl.unions
-
-import com.linkedin.pegasus.generator.test.idl.enums.Fruits
-import com.linkedin.pegasus.generator.test.idl.records.Empty
-import com.linkedin.pegasus.generator.test.idl.records.Simple
-
-record WithComplexTypesUnion {
-  `union`: union[Empty, Fruits, array[Simple], map[string, Simple]]
-}

@@ -1,9 +1,0 @@
-{
-  "telling": {
-    "org.example.MagicEightBall": {
-      "question": "A question",
-      "answer": "IT_IS_CERTAIN"
-    }
-  },
-  "createdAt": "2015-01-01T00:00:00.000Z"
-}

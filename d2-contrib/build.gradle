@@ -1,7 +1,0 @@
-dependencies {
-  compile project(':d2')
-  compile project(':r2-core')
-  compile project(':pegasus-common')
-  compile project(':li-jersey-uri')
-  testCompile externalDependency.testng
-}

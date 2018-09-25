@@ -1,7 +1,0 @@
-namespace com.linkedin.pegasus.generator.test.idl.interop
-
-import com.linkedin.pegasus.generator.test.Certification
-
-record WithPdscReference {
-  cert: Certification
-}

@@ -1,7 +1,0 @@
-dependencies {
-  compile project(':data')
-  compile project(':data-avro')
-  compile externalDependency.avro
-  testCompile project(path: ':data', configuration: 'testArtifacts')
-  testCompile externalDependency.testng
-}

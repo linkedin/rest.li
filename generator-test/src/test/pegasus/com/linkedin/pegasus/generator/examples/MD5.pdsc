@@ -1,6 +1,0 @@
-{
-  "type" : "fixed",
-  "name" : "MD5",
-  "namespace" : "com.linkedin.pegasus.generator.examples",
-  "size" : 16
-}

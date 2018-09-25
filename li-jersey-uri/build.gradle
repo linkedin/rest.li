@@ -1,4 +1,0 @@
-// Jersey code has lots of warnings
-compileJava.options.compilerArgs = [ '-nowarn' ]
-
-jar.metaInf.from 'src/main/META-INF'

@@ -1,5 +1,0 @@
-{
-  "union" : {
-    "array" : [ { "message": "a1" } ]
-  }
-}

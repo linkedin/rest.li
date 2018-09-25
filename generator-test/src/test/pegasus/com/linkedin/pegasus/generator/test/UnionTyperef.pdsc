@@ -1,6 +1,0 @@
-{
-  "type" : "typeref",
-  "name" : "UnionTyperef",
-  "namespace" : "com.linkedin.pegasus.generator.test",
-  "ref"  : [ "Date", "CustomPoint" ]
-}

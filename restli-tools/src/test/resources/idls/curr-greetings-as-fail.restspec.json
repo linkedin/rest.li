@@ -1,6 +1,0 @@
-{
-  "name" : "greetings",
-  "path" : "/greetings",
-  "schema" : "com.linkedin.greetings.api.Greeting",
-  "doc" : "A richer \"Hello world\" example"
-}

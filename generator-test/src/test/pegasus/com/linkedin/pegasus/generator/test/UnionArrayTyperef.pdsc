@@ -1,9 +1,0 @@
-{
-  "type" : "typeref",
-  "name" : "UnionArrayTyperef",
-  "namespace" : "com.linkedin.pegasus.generator.test",
-  "ref"  : {
-    "type" : "array",
-    "items" : "UnionTyperef"
-  }
-}

@@ -1,5 +1,0 @@
-namespace com.linkedin.pegasus.generator.test.idl.typerefs
-
-import com.linkedin.pegasus.generator.test.idl.records.Empty
-
-typeref RecordTyperef = Empty

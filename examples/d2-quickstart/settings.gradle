@@ -1,3 +1,0 @@
-include 'server'
-include 'client'
-include 'config'

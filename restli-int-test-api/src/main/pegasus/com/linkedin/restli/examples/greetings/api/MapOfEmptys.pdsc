@@ -1,5 +1,0 @@
-{
-  "type" : "map",
-  "values" : "com.linkedin.restli.examples.greetings.api.Empty",
-  "doc" : "The name of this file is intentionally chosen to not follow naming convention and test if generator will correctly process"
-}

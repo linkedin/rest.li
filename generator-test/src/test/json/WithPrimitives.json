@@ -1,9 +1,0 @@
-{
-  "floatField" : 3.3,
-  "doubleField" : 4.4,
-  "intField" : 1,
-  "bytesField" : "\u0000\u0001\u0002",
-  "longField" : 2,
-  "booleanField" : true,
-  "stringField" : "str"
-}

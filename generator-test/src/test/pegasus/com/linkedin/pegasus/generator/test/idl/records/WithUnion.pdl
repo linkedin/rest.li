@@ -1,7 +1,0 @@
-namespace com.linkedin.pegasus.generator.test.idl.records
-
-import com.linkedin.pegasus.generator.test.idl.typerefs.Union
-
-record WithUnion {
-  value: Union
-}

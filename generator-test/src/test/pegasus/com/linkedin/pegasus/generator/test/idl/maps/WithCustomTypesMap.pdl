@@ -1,7 +1,0 @@
-namespace com.linkedin.pegasus.generator.test.idl.maps
-
-import com.linkedin.pegasus.generator.test.idl.customtypes.CustomInt
-
-record WithCustomTypesMap {
-  ints: map[string, CustomInt]
-}

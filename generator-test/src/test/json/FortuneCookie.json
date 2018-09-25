@@ -1,7 +1,0 @@
-{
-  "message": " a message",
-  "certainty": 0.1,
-  "luckyNumbers": [1, 2, 3],
-  "map": {"x": 1, "y": 2},
-  "simple": { "message": "a simple message" }
-}

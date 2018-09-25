@@ -1,6 +1,0 @@
-{
-  "type" : "enum",
-  "name" : "EmailDigestFrequency",
-  "namespace" : "com.linkedin.restli.examples.groups.api",
-  "symbols" : [ "NONE", "DAILY", "WEEKLY" ]
-}

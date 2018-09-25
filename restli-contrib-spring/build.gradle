@@ -1,6 +1,0 @@
-/*
- * Spring integration from restli-contrib-spring has been moved to the pegasus-restli-spring-bridge sub-project in container.
- * General dependency injection functionality (JSR-330) has been moved to restli-server sub-project. Empty restli-contrib-spring
- * project is not removed from Pegasus to preserve backwards compatibility with integration tests. All dependencies on this projects
- * should be removed.
- */

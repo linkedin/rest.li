@@ -1,8 +1,0 @@
-namespace com.linkedin.pegasus.generator.test.idl.records
-
-record WithPrimitiveCustomTypes {
-  intField:
-    @java.class = "com.linkedin.pegasus.generator.test.pdl.fixtures.CustomInt"
-    @java.coercerClass = "com.linkedin.pegasus.generator.test.pdl.fixtures.CustomIntCoercer"
-    typeref IntCustomType = int
-}

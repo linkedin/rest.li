@@ -1,5 +1,0 @@
-GET http://localhost:1234 HTTP/1.1
-cookie:cookie-name1=cookie-value1
-Cookie: cookie-name2=cookie-value2
-header-field1: header-value1
-

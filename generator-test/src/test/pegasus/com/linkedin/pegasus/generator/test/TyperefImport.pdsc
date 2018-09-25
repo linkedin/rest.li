@@ -1,6 +1,0 @@
-{
-  "type" : "typeref",
-  "name" : "TyperefImport",
-  "namespace" : "com.linkedin.pegasus.generator.test",
-  "ref"  : "double"
-}

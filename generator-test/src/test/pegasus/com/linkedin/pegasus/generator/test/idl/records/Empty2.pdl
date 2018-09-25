@@ -1,3 +1,0 @@
-namespace com.linkedin.pegasus.generator.test.idl.records
-
-record Empty2 {}

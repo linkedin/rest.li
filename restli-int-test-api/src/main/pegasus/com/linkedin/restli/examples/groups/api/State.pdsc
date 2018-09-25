@@ -1,6 +1,0 @@
-{
-  "type" : "enum",
-  "name" : "State",
-  "namespace" : "com.linkedin.restli.examples.groups.api",
-  "symbols" : [ "ACTIVE", "LOCKED", "INACTIVE", "PROPOSED" ]
-}

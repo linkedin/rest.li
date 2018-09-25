@@ -1,8 +1,0 @@
-{
-  "value": {
-    "com.linkedin.pegasus.generator.test.idl.records.Message": {
-      "title": "title",
-      "body": "Hello, Courier."
-    }
-  }
-}

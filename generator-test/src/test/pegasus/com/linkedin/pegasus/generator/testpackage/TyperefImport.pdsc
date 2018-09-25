@@ -1,8 +1,0 @@
-{
-  "doc"  : "Test generation of Java bindings for typerefs with package override",
-  "type" : "typeref",
-  "name" : "TyperefImport",
-  "namespace" : "com.linkedin.pegasus.generator.testpackage",
-  "package" : "com.linkedin.pegasus.generator.override",
-  "ref"  : "double"
-}

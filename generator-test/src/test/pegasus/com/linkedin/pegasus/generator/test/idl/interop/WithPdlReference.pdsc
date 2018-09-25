@@ -1,8 +1,0 @@
-{
-  "type" : "record",
-  "name" : "WithPdlReference",
-  "namespace" : "com.linkedin.pegasus.generator.test.idl.interop",
-  "fields" : [
-    { "name" : "simple", "type" : "com.linkedin.pegasus.generator.test.idl.records.Simple" }
-  ]
-}

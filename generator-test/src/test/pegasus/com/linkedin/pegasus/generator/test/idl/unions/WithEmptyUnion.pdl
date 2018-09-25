@@ -1,5 +1,0 @@
-namespace com.linkedin.pegasus.generator.test.idl.unions
-
-record WithEmptyUnion {
-  `union`: union[]
-}

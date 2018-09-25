@@ -1,3 +1,0 @@
-import com.linkedin.pegasus.generator.test.idl.arrays.Element
-
-array[Element]

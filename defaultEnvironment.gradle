@@ -1,7 +1,0 @@
-subprojects {
-  repositories {
-    mavenCentral()
-  }
-
-  project.buildDir = new File(project.rootProject.buildDir, project.name)
-}

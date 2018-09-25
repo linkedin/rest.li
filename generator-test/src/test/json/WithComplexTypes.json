@@ -1,9 +1,0 @@
-{
-  "record": { "message": "record"},
-  "enum": "APPLE",
-  "union": { "com.linkedin.pegasus.generator.test.idl.records.Simple": { "message": "union" }},
-  "array": [1, 2],
-  "map": { "a": 1, "b": 2},
-  "complexMap": { "x": { "message": "complexMap"}},
-  "custom": 100
-}

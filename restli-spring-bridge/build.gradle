@@ -1,9 +1,0 @@
-dependencies {
-  compile project (':restli-server')
-  compile project (':r2-core')
-  compile externalDependency.servletApi
-  compile externalDependency.springCore
-  compile externalDependency.springContext
-  compile externalDependency.springWeb
-  compile externalDependency.springBeans
-}

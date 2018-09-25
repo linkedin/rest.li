@@ -1,7 +1,0 @@
-namespace com.linkedin.pegasus.generator.test.idl.customtypes
-
-import com.linkedin.pegasus.generator.test.idl.records.Message
-
-@java.class = "com.linkedin.pegasus.generator.test.pdl.fixtures.CustomRecord"
-@java.coercerClass = "com.linkedin.pegasus.generator.test.pdl.fixtures.CustomRecordCoercer"
-typeref CustomRecord = Message

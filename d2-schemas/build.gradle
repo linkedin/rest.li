@@ -1,6 +1,0 @@
-dependencies {
-  compile project(':data')
-  testCompile externalDependency.testng
-}
-
-apply from: "${buildScriptDirPath}/dataTemplate.gradle"

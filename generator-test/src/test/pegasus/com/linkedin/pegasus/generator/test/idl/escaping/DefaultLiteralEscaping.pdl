@@ -1,5 +1,0 @@
-namespace com.linkedin.pegasus.generator.test.idl.escaping
-
-record DefaultLiteralEscaping {
-  stringField: string = "tripleQuote: \"\"\" "
-}

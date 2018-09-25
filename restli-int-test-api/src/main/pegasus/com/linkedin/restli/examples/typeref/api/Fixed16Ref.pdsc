@@ -1,6 +1,0 @@
-{
-  "type" : "typeref",
-  "name" : "Fixed16Ref",
-  "namespace" : "com.linkedin.restli.examples.typeref.api",
-  "ref" : "Fixed16"
-}

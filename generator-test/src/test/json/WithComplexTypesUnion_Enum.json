@@ -1,5 +1,0 @@
-{
-  "union" : {
-    "com.linkedin.pegasus.generator.test.idl.enums.Fruits" : "APPLE"
-  }
-}

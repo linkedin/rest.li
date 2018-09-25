@@ -1,6 +1,0 @@
-namespace com.linkedin.pegasus.generator.test.idl.arrays
-
-record WithAnonymousUnionArray {
-  unionsArray: array[union[int, string]]
-  unionsMap: map[string, union[string, int]]
-}

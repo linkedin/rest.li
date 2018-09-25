@@ -1,6 +1,0 @@
-namespace com.linkedin.pegasus.generator.test.idl.records
-
-record Message {
-  title: optional string
-  body: optional string
-}

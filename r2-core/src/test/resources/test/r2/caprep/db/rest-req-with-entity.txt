@@ -1,5 +1,0 @@
-GET http://localhost:1234 HTTP/1.1
-field-name1:field-val1
-field-name2: field-val2
-
-This is a simple entity!
