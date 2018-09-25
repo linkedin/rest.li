@@ -1,0 +1,22 @@
+toc:
+  - title: Getting Started
+    subfolderitems:
+      - page: Quick Start Guide
+        url: /rest.li/get_started/quick_start
+      - page: Step by Step Tutorial
+        url: /rest.li/start/step_by_step
+      - page: Dynamic Discovery
+        url: /rest.li/start/d2_quick_start
+      - page: Unstructured Data (BLOB)
+        url: /rest.li/start/unstructured 
+  - title: Installation
+    subfolderitems:
+      - page: Building Rest.li from Source
+        url: /rest.li/setup/building
+      - page: Gradle Build Integration
+        url: /rest.li/setup/gradle
+  - title: Presentations
+    subfolderitems:
+      - page: Rest.li, R2D2, Deco and ParSeq on Saturn 2018. 
+        url: https://www.slideshare.net/minchencm/saturn-2018-restli
+    

@@ -1,0 +1,56 @@
+#!/bin/sh
+
+# shell script to convert textile content to markdown using sed, awk and pandoc.
+# copy this file and tomd_pre.awk and tomd_post.awk into your local jekyll project folder
+# then `chmod +x tomd` and invoke with `tomd [_posts] [_old_posts]`
+# remember to keep a backup of everything, and USE THIS AT YOUR OWN RISK.
+
+set -e
+set -o pipefail
+
+# make sure the following exist
+echo "checking for sed, awk, and pandoc"
+which sed     | sed '1 q'
+awk --version | sed '1 q'
+pandoc -v     | sed '1 q'
+
+# script dir
+DIR=`dirname $0`
+
+# posts dir
+if [ $1 ] ; then
+  POSTSDIR=$1
+else
+  POSTSDIR=_posts
+fi
+
+# archive dir
+if [ $2 ] ; then
+  OLDDIR=$1
+else
+  OLDDIR=_old_posts
+fi
+
+echo "looking for .textile files in $POSTSDIR moving them to $OLDDIR"
+mkdir -p -v $OLDDIR
+
+# find all the textile files
+find $POSTSDIR -name \*.textile | sed 's/\.textile$//' >tomd_files.txt
+
+while read foo; do
+
+  # save YAML header
+  sed -n '1,/^---/ p' $foo.textile >tomd_head.txt
+
+  # textile (minus header) | tomd_pre | pandoc | tomd_post
+  sed '1,/^---/ d' $foo.textile | awk -f $DIR/tomd_pre.awk | pandoc -B tomd_head.txt -f textile -t markdown_github | awk -f $DIR/tomd_post.awk >$foo.md
+
+  # archive
+  mv $foo.textile $OLDDIR
+
+done <tomd_files.txt
+
+echo `wc -l <tomd_files.txt` textile files converted
+
+# clean up
+rm -f tomd_files.txt tomd_head.txt tomd-include-*.txt

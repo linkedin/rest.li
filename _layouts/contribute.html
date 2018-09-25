@@ -1,0 +1,27 @@
+---
+layout: default
+---
+
+<div class="container">
+        <div class="row">
+                <div class="col s12 m4 l3"> 
+               
+                    {% for item in site.data.contribute_navigation.toc %}
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">{{ item.title }}</span></li>
+                        <ul>
+                       {% for entry in item.subfolderitems %}
+                         <li><a href="{{ entry.url }}">{{ entry.page }}</a></li>
+                       {% endfor %}
+                        </ul>
+                     </ul>
+                        {% endfor %}
+                    </div>
+                     <div class="markdown-body col s12 m3 l9">
+                            {{ content }}
+                     </div>
+                   </div>
+</div>
+
