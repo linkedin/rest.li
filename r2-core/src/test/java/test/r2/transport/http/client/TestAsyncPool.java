@@ -28,6 +28,7 @@ import com.linkedin.r2.transport.http.client.AsyncPoolImpl;
 import com.linkedin.common.util.None;
 import com.linkedin.r2.transport.http.client.NoopRateLimiter;
 import com.linkedin.r2.transport.http.client.PoolStats;
+import com.linkedin.r2.util.Cancellable;
 import com.linkedin.util.clock.SettableClock;
 import com.linkedin.util.clock.Time;
 import org.testng.Assert;
@@ -216,6 +217,37 @@ public class TestAsyncPool
     {
       Assert.fail("unexpected error", e);
     }
+  }
+
+  /**
+   * Tests {@link AsyncPool}'s shutdown sequence is properly triggered when outstanding
+   * waiters cancel the previous get calls.
+   */
+  @Test
+  public void testCancelTriggerShutdown() throws Exception
+  {
+    SynchronousLifecycle lifecycle = new SynchronousLifecycle();
+    AsyncPool<Object> pool = new AsyncPoolImpl<Object>("object pool", lifecycle, 1, 100, _executor);
+    pool.start();
+
+    FutureCallback<Object> callback1 = new FutureCallback<>();
+    Cancellable cancellable1 = pool.get(callback1);
+
+    FutureCallback<Object> callback2 = new FutureCallback<>();
+    Cancellable cancellable2 = pool.get(callback2);
+
+    FutureCallback<None> shutdownCallback = new FutureCallback<>();
+    pool.shutdown(shutdownCallback);
+
+    // Disposes the previously checked out object. The pool now has no outstanding checkouts but waiter
+    // size is still one due to the second #get call above.
+    pool.dispose(callback1.get(5, TimeUnit.SECONDS));
+
+    // Caller cancels the second #get call. The pool should be in the right condition and initiate shutdown.
+    cancellable2.cancel();
+
+    // Pool should shutdown successfully without the callback timeout
+    shutdownCallback.get(5, TimeUnit.SECONDS);
   }
 
   @Test

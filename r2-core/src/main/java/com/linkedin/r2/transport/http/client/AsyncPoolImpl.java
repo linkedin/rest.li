@@ -401,7 +401,12 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
       {
         synchronized (_lock)
         {
-          return _waiters.removeNode(node) != null;
+          boolean cancelled = _waiters.removeNode(node) != null;
+          if (cancelled)
+          {
+            shutdownIfNeeded();
+          }
+          return cancelled;
         }
       }
     };

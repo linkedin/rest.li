@@ -3,6 +3,9 @@
 (RB=1432090)
 Add a new constructor for RestLiServiceException to disable stacktrace inclusion.
 
+(RB=1415623)
+Fix a AsyncPoolImpl bug where cancel calls did not trigger shutdown
+
 25.0.2
 ------
 (RB=1427726)
