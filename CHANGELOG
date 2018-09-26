@@ -13,6 +13,9 @@ Fix a AsyncPoolImpl bug where cancel calls did not trigger shutdown
 (RB=1430605)
 Making documentation request handling lazy.
 
+(RB=1429578)
+Add ForwardingRestClient implementation to ease transition to Client
+
 25.0.2
 ------
 (RB=1427726)
