@@ -1319,7 +1319,7 @@ simply doesn't have the whole entity. Returning the entity in the PARTIAL_UPDATE
 another GET request.
 
 Starting in Rest.li version 24.0.0, we provide the developer the option to
-return the newly created entity. To use this feature, add a @`ReturnEntity`
+return the patched entity. To use this feature, add a @`ReturnEntity`
 annotation to the method that implements PARTIAL_UPDATE. The return type of the
 method must be `UpdateEntityResponse`.
 
@@ -1428,6 +1428,56 @@ public UpdateResponse update(Long key, PatchRequest<Greeting> patch)
     return new UpdateResponse(HttpStatus.S_204_NO_CONTENT);
 }
 ```
+
+#### Returning entities in BATCH_PARTIAL_UPDATE response
+
+By default, the patched entities are not returned in the BATCH_PARTIAL_UPDATE response because
+the client already has the patch data and possibly has the rest of the entities as well.
+However, there are use cases where the server will attach additional data to the new entities or the user
+simply doesn't have the whole entities. Returning the entities in the BATCH_PARTIAL_UPDATE response saves the client
+another GET request.
+
+Starting in Rest.li version 25.0.5, we provide the developer the option to
+return the patched entities. To use this feature, add a @`ReturnEntity`
+annotation to the method that implements BATCH_PARTIAL_UPDATE. The return type of the
+method must be `BatchUpdateEntityResult`.
+
+```java
+@ReturnEntity
+@RestMethod.BatchPartialUpdate
+public BatchUpdateEntityResult<K, V> batchPartialUpdate(BatchPatchRequest<Long, Greeting> patches);
+```
+An example resource method implementation is as follows, note that the return type will be  ````BatchUpdateEntityResult```` :
+
+```java
+@ReturnEntity
+@RestMethod.BatchPartialUpdate
+public BatchUpdateEntityResult<Long, Greeting> batchPartialUpdate(BatchPatchRequest<Long, Greeting> patches)
+{
+    Map<Long, UpdateEntityResponse<Greeting>> responseMap = new HashMap<>();
+    Map<Long, RestLiServiceException> errorMap = new HashMap<>();
+    for (Map.Entry<Long, PatchRequest<Greeting>> entry : patches.getData().entrySet())
+    {
+      try
+      {
+        UpdateEntityResponse<Greeting> updateEntityResponse = partialUpdate(entry.getKey(), entry.getValue());
+        responseMap.put(entry.getKey(), updateEntityResponse);
+      }
+      catch (RestLiServiceException e)
+      {
+        errorMap.put(entry.getKey(), e);
+      }
+    }
+    return new BatchUpdateEntityResult<>(responseMap, errorMap);
+}
+```
+
+There may be circumstances in which you want to prevent the server from returning the entities, for example to reduce network traffic.
+Here is an example curl request that makes use of the [`$returnEntity` query parameter](/rest.li/spec/return_entity#client-specified-behavior) to indicate that the entity should not be returned:
+
+<code>
+curl -X POST localhost:/greetings?ids=List(1)&$returnEntity=false -d '{"entities":{"1":{"patch": {"$set": {"message": "Hello, world!"}}}}}' -H 'X-RestLi-Method: BATCH_PARTIAL_UPDATE' -H 'X-RestLi-Protocol-Version: 2.0.0'
+</code>
 
 <a id="DELETE"></a>
 
