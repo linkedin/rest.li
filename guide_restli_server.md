@@ -1890,9 +1890,8 @@ sent.
 #### Return Errors as Part of a BatchResult
 
 BATCH_GET methods may return errors for individual items as part of a
-`BatchResult` object. Each error is represented as a
-`RestLiServiceException` object. In this case, the overall status will
-still be an HTTP `200`.
+`BatchResult` object. Each error is represented as a `RestLiServiceException`
+object. In this case, the overall status will still be an HTTP `200`.
 
 ```
 public BatchResult<K, V> batchGet((Set<K> ids)
@@ -1903,6 +1902,20 @@ public BatchResult<K, V> batchGet((Set<K> ids)
     return new BatchResult(results, errors);
 }
 ```
+
+If you want to return an error response with an overall status of `4xx` or `5xx`,
+then you can do this by throwing a `RestLiServiceException` in the resource method.
+In this case, the response will be an error response and won't contain any batch
+information.
+
+```
+public BatchResult<K, V> batchGet((Set<K> ids)
+{
+    throw new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST);
+}
+```
+
+The same logic applies to BATCH_UPDATE, BATCH_PARTIAL_UPDATE, and BATCH_DELETE.
 
 ### Handling Errors on the Client
 
