@@ -27,8 +27,7 @@ git commit -m 'your comment'
 git push origin [your_branch]
 ```
 
-Create a pull request from `[your_branch]` into `gh-pages` using the ["New pull request"](https://github.com/linkedin/rest.li/compare/gh-pages...) tool on GitHub.
-Have someone review, approve, and merge your PR into `gh-pages`. Clean up by deleting your branch on GitHub, unless whoever merged your branch did so already.
+Create a [pull request](https://github.com/linkedin/rest.li/compare/gh-pages...) from `[your_branch]` into `gh-pages`, have someone review, approve, and merge your PR into `gh-pages`. Clean up by deleting your branch on GitHub, unless whoever merged your branch did so already.
 
 Now you're done, and the documentation change should be live!
 
