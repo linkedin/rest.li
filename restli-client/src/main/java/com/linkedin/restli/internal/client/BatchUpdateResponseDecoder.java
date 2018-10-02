@@ -30,7 +30,7 @@ import java.util.Set;
 
 
 /**
- * Converts a raw batch update response {@link DataMap} into a {@link BatchKVResponse}.
+ * Converts a raw batch update/partial_update/delete response {@link DataMap} into a {@link BatchKVResponse}.
  *
  * @author Keren Jin
  */
@@ -71,60 +71,8 @@ public class BatchUpdateResponseDecoder<K> extends RestResponseDecoder<BatchKVRe
       return null;
     }
 
-    DataMap responseData = buildBatchUpdateResponseData(dataMap);
+    DataMap responseData = ResponseDecoderUtil.mergeUpdateStatusResponseData(dataMap);
 
     return new BatchKVResponse<>(responseData, _keyType, new TypeSpec<>(UpdateStatus.class), _keyParts, _complexKeyType, version);
-  }
-
-  /**
-   * Helper method to assist BATCH_UPDATE, BATCH_PARTIAL_UPDATE, and BATCH_DELETE response decoders in transforming the
-   * raw payload data map received over-the-wire to a data map suitable for instantiation of a {@link BatchKVResponse}.
-   * @param dataMap received in the response payload
-   * @return data map suitable for {@link BatchKVResponse}
-   */
-  static DataMap buildBatchUpdateResponseData(DataMap dataMap)
-  {
-    final DataMap mergedResults = new DataMap();
-    final DataMap inputResults = dataMap.containsKey(BatchResponse.RESULTS) ? dataMap.getDataMap(BatchResponse.RESULTS)
-        : new DataMap();
-    final DataMap inputErrors = dataMap.containsKey(BatchResponse.ERRORS) ? dataMap.getDataMap(BatchResponse.ERRORS)
-        : new DataMap();
-
-    final Set<String> mergedKeys = new HashSet<>(inputResults.keySet());
-    mergedKeys.addAll(inputErrors.keySet());
-
-    for (String key : mergedKeys)
-    {
-      // DataMap for UpdateStatus
-      final DataMap updateData;
-
-      // status field is mandatory
-      if (inputResults.containsKey(key))
-      {
-        updateData = inputResults.getDataMap(key);
-      }
-      else
-      {
-        updateData = new DataMap();
-      }
-
-      // DataMap for ErrorResponse
-      final DataMap errorData = (DataMap) inputErrors.get(key);
-      if (errorData != null)
-      {
-        // The status from ErrorResponse overwrites the one in UpdateResponse. However, results and
-        // errors are not expected to have overlapping key. See BatchUpdateResponseBuilder.
-        updateData.put("status", errorData.get("status"));
-        updateData.put("error", errorData);
-      }
-
-      mergedResults.put(key, updateData);
-    }
-
-    final DataMap responseData = new DataMap();
-    responseData.put(BatchKVResponse.RESULTS, mergedResults);
-    responseData.put(BatchKVResponse.ERRORS, inputErrors);
-
-    return responseData;
   }
 }

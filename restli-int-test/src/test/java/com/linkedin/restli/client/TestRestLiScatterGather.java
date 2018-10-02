@@ -149,6 +149,7 @@ public class TestRestLiScatterGather extends RestLiIntegrationTest
             new GreetingsBuilders().batchGet().ids(requestIds).fields(Greeting.fields().message()).setParam("foo", "bar").build();
     BatchResponse<Greeting> result = restClient.sendRequest(request).getResponse().getEntity();
     Assert.assertEquals(result.getResults().size(), requestIds.length);
+    Assert.assertTrue(result.getResults().values().iterator().next() instanceof Greeting);
     Assert.assertEquals(result.getErrors().size(), 0);
   }
 
@@ -158,6 +159,7 @@ public class TestRestLiScatterGather extends RestLiIntegrationTest
             new GreetingsRequestBuilders().batchGet().ids(requestIds).fields(Greeting.fields().message()).setParam("foo", "bar").build();
     BatchKVResponse<Long, EntityResponse<Greeting>> result = restClient.sendRequest(request).getResponse().getEntity();
     Assert.assertEquals(result.getResults().size(), requestIds.length);
+    Assert.assertTrue(result.getResults().values().iterator().next().getEntity() instanceof Greeting);
     Assert.assertEquals(result.getErrors().size(), 0);
   }
 
@@ -171,6 +173,7 @@ public class TestRestLiScatterGather extends RestLiIntegrationTest
             (BatchUpdateRequest<Long, Greeting>) builders.batchUpdate().inputs(inputs).setParam("foo", "bar").build();
     BatchKVResponse<Long, UpdateStatus> result = restClient.sendRequest(request).getResponse().getEntity();
     Assert.assertEquals(result.getResults().size(), inputs.size());
+    Assert.assertFalse(result.getResults().values().iterator().next().hasError());
     Assert.assertEquals(result.getErrors().size(), 0);
   }
 
@@ -184,6 +187,7 @@ public class TestRestLiScatterGather extends RestLiIntegrationTest
             (BatchPartialUpdateRequest<Long, Greeting>) builders.batchPartialUpdate().patchInputs(inputs).setParam("foo", "bar").build();
     BatchKVResponse<Long, UpdateStatus> result = restClient.sendRequest(request).getResponse().getEntity();
     Assert.assertEquals(result.getResults().size(), inputs.size());
+    Assert.assertFalse(result.getResults().values().iterator().next().hasError());
     Assert.assertEquals(result.getErrors().size(), 0);
   }
 
@@ -197,6 +201,7 @@ public class TestRestLiScatterGather extends RestLiIntegrationTest
             (BatchDeleteRequest<Long, Greeting>) builders.batchDelete().ids(requestIds).setParam("foo", "bar").build();
     BatchKVResponse<Long, UpdateStatus> result = restClient.sendRequest(request).getResponse().getEntity();
     Assert.assertEquals(result.getResults().size(), requestIds.length);
+    Assert.assertFalse(result.getResults().values().iterator().next().hasError());
     Assert.assertEquals(result.getErrors().size(), 0);
   }
 

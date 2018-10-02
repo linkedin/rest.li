@@ -33,8 +33,13 @@ import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.RestConstants;;
+import com.linkedin.restli.common.TypeSpec;
+import com.linkedin.restli.common.UpdateStatus;
+import com.linkedin.restli.internal.client.ResponseDecoderUtil;
 import com.linkedin.restli.internal.client.ResponseImpl;
-import java.util.stream.Stream;
+
+
+import com.linkedin.restli.internal.client.response.BatchEntityResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -422,11 +427,20 @@ public class DefaultScatterGatherStrategy implements ScatterGatherStrategy
       return (T) new BatchResponse(data,
               request.getResponseDecoder().getEntityClass());
     }
-    else
+    else if (request instanceof BatchGetEntityRequest)
     {
-      return (T) new BatchKVResponse(data,
+      return (T) new BatchEntityResponse<>(data,
               request.getResourceSpec().getKeyType(),
               request.getResourceSpec().getValueType(), request.getResourceSpec().getKeyParts(),
+              request.getResourceSpec().getComplexKeyType(), protocolVersion);
+    }
+    else
+    {
+      // BatchKVResponse results map contains all entries including both success and failure.
+      DataMap mergedData = ResponseDecoderUtil.mergeUpdateStatusResponseData(data);
+      return (T) new BatchKVResponse(mergedData,
+              request.getResourceSpec().getKeyType(),
+              new TypeSpec<UpdateStatus>(UpdateStatus.class), request.getResourceSpec().getKeyParts(),
               request.getResourceSpec().getComplexKeyType(), protocolVersion);
     }
   }

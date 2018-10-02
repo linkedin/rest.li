@@ -1,5 +1,10 @@
+25.0.7
+------
+
 25.0.6
 ------
+(RB=1439251)
+Fix a bug in constructing gathered batch response in scatter-gather.
 
 25.0.5
 ------

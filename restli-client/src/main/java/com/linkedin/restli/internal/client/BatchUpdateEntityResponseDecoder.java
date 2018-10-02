@@ -78,7 +78,7 @@ public class BatchUpdateEntityResponseDecoder<K, V extends RecordTemplate>
       return null;
     }
 
-    DataMap responseData = BatchUpdateResponseDecoder.buildBatchUpdateResponseData(dataMap);
+    DataMap responseData = ResponseDecoderUtil.mergeUpdateStatusResponseData(dataMap);
 
     return new BatchUpdateEntityResponse<>(responseData, _keyType, _entityType, _keyParts, _complexKeyType, version);
   }

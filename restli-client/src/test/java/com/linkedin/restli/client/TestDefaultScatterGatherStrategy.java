@@ -38,6 +38,7 @@ import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.ResourceSpecImpl;
 import com.linkedin.restli.common.TypeSpec;
 import com.linkedin.restli.common.UpdateStatus;
+import com.linkedin.restli.internal.client.ResponseDecoderUtil;
 import com.linkedin.restli.internal.client.ResponseImpl;
 import com.linkedin.restli.internal.client.response.BatchEntityResponse;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
@@ -331,21 +332,21 @@ public class TestDefaultScatterGatherStrategy
     Set<Long> errorKeys = Collections.singleton(2L);
     return new Object[][] {
             { _batchGetEntityRequest, v1, createBatchGetEntityRequest(1L, 2L), _host1URI,
-                    createBatchEntityResponse(v1, resultKeys, errorKeys), createBatchGetEntityRequest(3L), _host2URI},
+                    createBatchEntityResponse(v1, resultKeys, errorKeys), createBatchGetEntityRequest(3L), _host2URI, 1},
             { _batchDeleteRequest, v1, createBatchDeleteRequest(1L, 2L), _host1URI,
-                    createBatchKVResponse(v1, resultKeys, errorKeys), createBatchDeleteRequest(3L), _host2URI},
+                    createBatchKVResponse(v1, resultKeys, errorKeys), createBatchDeleteRequest(3L), _host2URI, 4},
             { _batchUpdateRequest, v1, createBatchUpdateRequest(1L, 2L), _host1URI,
-                    createBatchKVResponse(v1, resultKeys, errorKeys), createBatchUpdateRequest(3L), _host2URI},
+                    createBatchKVResponse(v1, resultKeys, errorKeys), createBatchUpdateRequest(3L), _host2URI, 4},
             { _batchPartialUpdateRequest, v1, createBatchPartialUpdateRequest(1L), _host1URI,
-                    createBatchKVResponse(v1, resultKeys, errorKeys), createBatchPartialUpdateRequest(3L), _host2URI},
+                    createBatchKVResponse(v1, resultKeys, errorKeys), createBatchPartialUpdateRequest(3L), _host2URI, 4},
             { _batchGetEntityRequest, v2, createBatchGetEntityRequest(1L, 2L), _host1URI,
-                    createBatchEntityResponse(v1, resultKeys, errorKeys), createBatchGetEntityRequest(3L), _host2URI},
+                    createBatchEntityResponse(v1, resultKeys, errorKeys), createBatchGetEntityRequest(3L), _host2URI, 1},
             { _batchDeleteRequest, v2, createBatchDeleteRequest(1L, 2L), _host1URI,
-                    createBatchKVResponse(v2, resultKeys, errorKeys), createBatchDeleteRequest(3L), _host2URI},
+                    createBatchKVResponse(v2, resultKeys, errorKeys), createBatchDeleteRequest(3L), _host2URI, 4},
             { _batchUpdateRequest, v2, createBatchUpdateRequest(1L, 2L), _host1URI,
-                    createBatchKVResponse(v2, resultKeys, errorKeys), createBatchUpdateRequest(3L), _host2URI},
+                    createBatchKVResponse(v2, resultKeys, errorKeys), createBatchUpdateRequest(3L), _host2URI, 4},
             { _batchPartialUpdateRequest, v2, createBatchPartialUpdateRequest(1L, 2L), _host1URI,
-                    createBatchKVResponse(v2, resultKeys, errorKeys), createBatchPartialUpdateRequest(3L), _host2URI},
+                    createBatchKVResponse(v2, resultKeys, errorKeys), createBatchPartialUpdateRequest(3L), _host2URI, 4},
     };
   }
 
@@ -357,7 +358,8 @@ public class TestDefaultScatterGatherStrategy
                                         URI successHost,
                                         Response successResponse,
                                         Request<?> failRequest,
-                                        URI failHost)
+                                        URI failHost,
+                                        int resultDataMapSize)
   {
     Map<RequestInfo, Response<BatchKVResponse<Long, ?>>> successResponses = new HashMap<>();
     successResponses.put(
@@ -381,8 +383,9 @@ public class TestDefaultScatterGatherStrategy
               {
                 Assert.assertNotNull(result.getEntity());
                 Assert.assertEquals(result.getStatus(), HttpStatus.S_200_OK.getCode());
-                Assert.assertTrue(result.getEntity().data().getDataMap(BatchResponse.RESULTS).size() == 1);
-                Assert.assertTrue(result.getEntity().getResults().size() == 1);
+                Assert.assertTrue(result.getEntity().data().getDataMap(BatchResponse.RESULTS).size() == resultDataMapSize);
+                // BatchKVResponse.getResults() contains all entries including both successful and failed ones.
+                Assert.assertTrue(result.getEntity().getResults().size() == 4);
                 Assert.assertTrue(result.getEntity().getResults().containsKey(1L));
                 // merged error can come from 3 cases:
                 // - errored keys in successfully returned scattered batch response
@@ -500,21 +503,22 @@ public class TestDefaultScatterGatherStrategy
                                                                                      Set<Long> errorKeys)
   {
     DataMap resultMap = new DataMap();
+    DataMap errorMap = new DataMap();
+
     for (Long id: resultKeys)
     {
       resultMap.put(id.toString(), new UpdateStatus().setStatus(HttpStatus.S_200_OK.getCode()).data());
     }
-    DataMap errorMap = new DataMap();
     for (Long id: errorKeys)
     {
-      // simulate a response from a scattered request that is still successful but
-      // contains error for individual key
-      errorMap.put(id.toString(), new ErrorResponse().setStatus(HttpStatus.S_404_NOT_FOUND.getCode()).data());
+      ErrorResponse err = new ErrorResponse().setStatus(HttpStatus.S_404_NOT_FOUND.getCode());
+      errorMap.put(id.toString(), err.data());
     }
     DataMap responseMap = new DataMap();
     responseMap.put(BatchResponse.RESULTS, resultMap);
     responseMap.put(BatchResponse.ERRORS, errorMap);
-    BatchKVResponse<Long, UpdateStatus> response = new BatchKVResponse<>(responseMap,
+    DataMap mergedMap = ResponseDecoderUtil.mergeUpdateStatusResponseData(responseMap);
+    BatchKVResponse<Long, UpdateStatus> response = new BatchKVResponse<>(mergedMap,
             new TypeSpec<>(Long.class),
             new TypeSpec<>(UpdateStatus.class),
             Collections.emptyMap(),
