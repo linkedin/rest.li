@@ -1,19 +1,21 @@
-# Rest.li github pages 
+# Rest.li GitHub Pages 
 
 ## Install 
 
  - Install jekyll: https://jekyllrb.com/docs/installation/
  - Get the code: `git clone`
- - Go to the `docs` directory
- - Run `jekyll serve`
- - Open a browser `http://127.0.0.1:4000`
+ - Check out the `gh-pages` branch:
+   - `git fetch origin`
+   - `git checkout --track origin/gh-pages`
+ - Run `jekyll serve -b /rest.li`
+ - Open a browser `http://127.0.0.1:4000/rest.li`
 
 ## Contribute
 
-Create a local branch:
+Create a local branch off the `gh-pages` branch:
 
 ```
-git clone 
+git checkout gh-pages
 git checkout -b [your_branch]
 ```
 
@@ -25,7 +27,10 @@ git commit -m 'your comment'
 git push origin [your_branch]
 ```
 
-Create a PullRequest
+Create a pull request from `[your_branch]` into `gh-pages` using the ["New pull request"](https://github.com/linkedin/rest.li/compare/gh-pages...) tool on GitHub.
+Have someone review, approve, and merge your PR into `gh-pages`. Clean up by deleting your branch on GitHub, unless whoever merged your branch did so already.
+
+Now you're done, and the documentation change should be live!
 
 ### How to
 
@@ -35,3 +40,4 @@ The navigation menus use YAML files to generate navigation items. More info
 [here](https://jekyllrb.com/tutorials/navigation/)
 
 Jekyll tutorial: https://jekyllrb.com/tutorials/home/
+
