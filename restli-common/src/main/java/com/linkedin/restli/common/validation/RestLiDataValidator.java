@@ -111,7 +111,7 @@ public class RestLiDataValidator
   // Resource methods that require validation on response
   public static final Set<ResourceMethod>  METHODS_VALIDATED_ON_RESPONSE = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
       ResourceMethod.GET, ResourceMethod.CREATE, ResourceMethod.PARTIAL_UPDATE, ResourceMethod.GET_ALL,
-      ResourceMethod.FINDER, ResourceMethod.BATCH_GET, ResourceMethod.BATCH_CREATE)));
+      ResourceMethod.FINDER, ResourceMethod.BATCH_GET, ResourceMethod.BATCH_CREATE, ResourceMethod.BATCH_PARTIAL_UPDATE)));
 
   // A path is ReadOnly if it satisfies this predicate
   private final Predicate _readOnlyPredicate;

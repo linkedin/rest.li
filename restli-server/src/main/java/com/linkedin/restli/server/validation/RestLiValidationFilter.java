@@ -26,12 +26,14 @@ import com.linkedin.restli.common.CreateIdEntityStatus;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ResourceMethod;
+import com.linkedin.restli.common.UpdateEntityStatus;
 import com.linkedin.restli.common.util.ProjectionMaskApplier;
 import com.linkedin.restli.common.util.ProjectionMaskApplier.InvalidProjectionException;
 import com.linkedin.restli.common.validation.RestLiDataSchemaDataValidator;
 import com.linkedin.restli.common.validation.RestLiDataValidator;
 import com.linkedin.restli.internal.server.response.BatchCreateResponseEnvelope;
 import com.linkedin.restli.internal.server.response.BatchGetResponseEnvelope;
+import com.linkedin.restli.internal.server.response.BatchPartialUpdateResponseEnvelope;
 import com.linkedin.restli.internal.server.response.BatchResponseEnvelope;
 import com.linkedin.restli.internal.server.response.CreateResponseEnvelope;
 import com.linkedin.restli.internal.server.response.FinderResponseEnvelope;
@@ -155,10 +157,7 @@ public class RestLiValidationFilter implements Filter
         }
         if (!result.isValid())
         {
-          sb.append("Key: ");
-          sb.append(entry.getKey());
-          sb.append(", ");
-          sb.append(result.getMessages().toString());
+          sb.append("Key: ").append(entry.getKey()).append(", ").append(result.getMessages().toString());
         }
       }
       if (sb.length() > 0)
@@ -237,6 +236,12 @@ public class RestLiValidationFilter implements Filter
             validateCreateCollectionResponse(validator, ((BatchCreateResponseEnvelope) responseData.getResponseEnvelope()).getCreateResponses());
           }
           break;
+        case BATCH_PARTIAL_UPDATE:
+          if (requestContext.isReturnEntityMethod())
+          {
+            validateBatchResponse(validator, ((BatchPartialUpdateResponseEnvelope) responseData.getResponseEnvelope()).getBatchResponseMap());
+          }
+          break;
       }
     }
 
@@ -279,13 +284,22 @@ public class RestLiValidationFilter implements Filter
       {
         continue;
       }
-      ValidationResult result = validator.validateOutput(entry.getValue().getRecord());
+
+      // The "entity" in the results map may be the raw record entity, or a wrapper containing the record entity
+      final RecordTemplate entity = entry.getValue().getRecord();
+      ValidationResult result;
+      if (entity instanceof UpdateEntityStatus)
+      {
+        result = validator.validateOutput(((UpdateEntityStatus<? extends RecordTemplate>) entity).getEntity());
+      }
+      else
+      {
+        result = validator.validateOutput(entity);
+      }
+
       if (!result.isValid())
       {
-        sb.append("Key: ");
-        sb.append(entry.getKey());
-        sb.append(", ");
-        sb.append(result.getMessages().toString());
+        sb.append("Key: ").append(entry.getKey()).append(", ").append(result.getMessages().toString());
       }
     }
     if (sb.length() > 0)

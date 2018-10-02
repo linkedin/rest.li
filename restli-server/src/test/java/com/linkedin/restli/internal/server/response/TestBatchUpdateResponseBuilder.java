@@ -56,6 +56,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 
 /**
+ * Tests for the response builders of BATCH_UPDATE and BATCH_DELETE, since both resource methods use response builders
+ * that are just simple subclasses of {@link BatchResponseBuilder}.
+ *
  * @author kparikh
  */
 public class TestBatchUpdateResponseBuilder
@@ -64,7 +67,6 @@ public class TestBatchUpdateResponseBuilder
   static
   {
     BUILDERS.put(ResourceMethod.BATCH_UPDATE, new BatchUpdateResponseBuilder(new ErrorResponseBuilder()));
-    BUILDERS.put(ResourceMethod.BATCH_PARTIAL_UPDATE, new BatchPartialUpdateResponseBuilder(new ErrorResponseBuilder()));
     BUILDERS.put(ResourceMethod.BATCH_DELETE, new BatchDeleteResponseBuilder(new ErrorResponseBuilder()));
   }
 

@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2012 LinkedIn Corp.
+   Copyright (c) 2018 LinkedIn Corp.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -14,13 +14,9 @@
    limitations under the License.
  */
 
-/**
- * $Id: $
- */
-
 package com.linkedin.restli.client;
 
-
+import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.internal.common.util.CollectionUtils;
 import com.linkedin.restli.common.CollectionRequest;
@@ -31,7 +27,6 @@ import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.TypeSpec;
 import com.linkedin.restli.common.attachments.RestLiAttachmentDataSourceWriter;
 import com.linkedin.restli.common.attachments.RestLiDataSourceIterator;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -40,21 +35,26 @@ import java.util.Map;
 
 
 /**
- * @author Josh Walker
- * @version $Revision: $
+ * Request Builder for BATCH_PARTIAL_UPDATE requests where the patched entities can be returned.
+ * Builds {@link BatchPartialUpdateEntityRequest} objects.
+ *
+ * @param <K> key class
+ * @param <V> entity class
+ *
+ * @author Evan Williams
  */
-public class BatchPartialUpdateRequestBuilder<K, V extends RecordTemplate> extends
-    BatchKVRequestBuilder<K, V, BatchPartialUpdateRequest<K, V>>
+public class BatchPartialUpdateEntityRequestBuilder<K, V extends RecordTemplate> extends
+    BatchKVRequestBuilder<K, V, BatchPartialUpdateEntityRequest<K, V>> implements ReturnEntityRequestBuilder
 {
   private final KeyValueRecordFactory<K, PatchRequest<V>> _keyValueRecordFactory;
   private final Map<K, PatchRequest<V>> _partialUpdateInputMap;
   private List<Object> _streamingAttachments; //We initialize only when we need to.
 
   @SuppressWarnings({"unchecked", "rawtypes"})
-  public BatchPartialUpdateRequestBuilder(String baseUriTemplate,
-                                          Class<V> valueClass,
-                                          ResourceSpec resourceSpec,
-                                          RestliRequestOptions requestOptions)
+  public BatchPartialUpdateEntityRequestBuilder(String baseUriTemplate,
+                                                Class<V> valueClass,
+                                                ResourceSpec resourceSpec,
+                                                RestliRequestOptions requestOptions)
   {
     super(baseUriTemplate, resourceSpec, requestOptions);
     _partialUpdateInputMap = new HashMap<>();
@@ -64,14 +64,14 @@ public class BatchPartialUpdateRequestBuilder<K, V extends RecordTemplate> exten
                                     new TypeSpec<>(PatchRequest.class));
   }
 
-  public BatchPartialUpdateRequestBuilder<K, V> input(K id, PatchRequest<V> patch)
+  public BatchPartialUpdateEntityRequestBuilder<K, V> input(K id, PatchRequest<V> patch)
   {
     _partialUpdateInputMap.put(id, patch);
     addKey(id);
     return this;
   }
 
-  public BatchPartialUpdateRequestBuilder<K, V> inputs(Map<K, PatchRequest<V>> patches)
+  public BatchPartialUpdateEntityRequestBuilder<K, V> inputs(Map<K, PatchRequest<V>> patches)
   {
     addKeys(patches.keySet());
     for (Map.Entry<K, PatchRequest<V>> entry : patches.entrySet())
@@ -83,7 +83,7 @@ public class BatchPartialUpdateRequestBuilder<K, V extends RecordTemplate> exten
     return this;
   }
 
-  public BatchPartialUpdateRequestBuilder<K, V> appendSingleAttachment(final RestLiAttachmentDataSourceWriter streamingAttachment)
+  public BatchPartialUpdateEntityRequestBuilder<K, V> appendSingleAttachment(final RestLiAttachmentDataSourceWriter streamingAttachment)
   {
     if (_streamingAttachments == null)
     {
@@ -94,7 +94,7 @@ public class BatchPartialUpdateRequestBuilder<K, V extends RecordTemplate> exten
     return this;
   }
 
-  public BatchPartialUpdateRequestBuilder<K, V> appendMultipleAttachments(final RestLiDataSourceIterator dataSourceIterator)
+  public BatchPartialUpdateEntityRequestBuilder<K, V> appendMultipleAttachments(final RestLiDataSourceIterator dataSourceIterator)
   {
     if (_streamingAttachments == null)
     {
@@ -106,63 +106,76 @@ public class BatchPartialUpdateRequestBuilder<K, V extends RecordTemplate> exten
   }
 
   @Override
-  public BatchPartialUpdateRequestBuilder<K, V> setParam(String key, Object value)
+  public BatchPartialUpdateEntityRequestBuilder<K, V> setParam(String key, Object value)
   {
     super.setParam(key, value);
     return this;
   }
 
   @Override
-  public BatchPartialUpdateRequestBuilder<K, V> setReqParam(String key, Object value)
+  public BatchPartialUpdateEntityRequestBuilder<K, V> setReqParam(String key, Object value)
   {
     super.setReqParam(key, value);
     return this;
   }
 
   @Override
-  public BatchPartialUpdateRequestBuilder<K, V> addParam(String key, Object value)
+  public BatchPartialUpdateEntityRequestBuilder<K, V> addParam(String key, Object value)
   {
     super.addParam(key, value);
     return this;
   }
 
   @Override
-  public BatchPartialUpdateRequestBuilder<K, V> addReqParam(String key, Object value)
+  public BatchPartialUpdateEntityRequestBuilder<K, V> addReqParam(String key, Object value)
   {
     super.addReqParam(key, value);
     return this;
   }
 
   @Override
-  public BatchPartialUpdateRequestBuilder<K, V> setHeader(String key, String value)
+  public BatchPartialUpdateEntityRequestBuilder<K, V> setHeader(String key, String value)
   {
     super.setHeader(key, value);
     return this;
   }
 
   @Override
-  public BatchPartialUpdateRequestBuilder<K, V> setHeaders(Map<String, String> headers)
+  public BatchPartialUpdateEntityRequestBuilder<K, V> setHeaders(Map<String, String> headers)
   {
     super.setHeaders(headers);
     return this;
   }
 
   @Override
-  public BatchPartialUpdateRequestBuilder<K, V> addHeader(String name, String value)
+  public BatchPartialUpdateEntityRequestBuilder<K, V> addHeader(String name, String value)
   {
     super.addHeader(name, value);
     return this;
   }
 
   @Override
-  public BatchPartialUpdateRequestBuilder<K, V> pathKey(String name, Object value)
+  public BatchPartialUpdateEntityRequestBuilder<K, V> pathKey(String name, Object value)
   {
     super.pathKey(name, value);
     return this;
   }
 
+  public BatchPartialUpdateEntityRequestBuilder<K, V> fields(PathSpec... fieldPaths)
+  {
+    addFields(fieldPaths);
+    return this;
+  }
+
   @Override
-  public BatchPartialUpdateRequest<K, V> build()
+  public BatchPartialUpdateEntityRequestBuilder<K, V> returnEntity(boolean value)
+  {
+    setReturnEntityParam(value);
+    return this;
+  }
+
+  @Override
+  public BatchPartialUpdateEntityRequest<K, V> build()
   {
     ensureBatchKeys();
 
@@ -170,16 +183,16 @@ public class BatchPartialUpdateRequestBuilder<K, V extends RecordTemplate> exten
             CollectionUtils.getMapInitialCapacity(_partialUpdateInputMap.size(), 0.75f), 0.75f);
     CollectionRequest<KeyValueRecord<K, PatchRequest<V>>> readOnlyInput = buildReadOnlyInput(readOnlyPartialUpdateInputMap, _partialUpdateInputMap, _keyValueRecordFactory);
 
-    return new BatchPartialUpdateRequest<>(buildReadOnlyHeaders(),
-                                           buildReadOnlyCookies(),
-                                           readOnlyInput,
-                                           buildReadOnlyQueryParameters(),
-                                           getQueryParamClasses(),
-                                           _resourceSpec,
-                                           getBaseUriTemplate(),
-                                           buildReadOnlyPathKeys(),
-                                           getRequestOptions(),
-                                           readOnlyPartialUpdateInputMap,
-                                           _streamingAttachments == null ? null : Collections.unmodifiableList(_streamingAttachments));
+    return new BatchPartialUpdateEntityRequest<>(buildReadOnlyHeaders(),
+                                                 buildReadOnlyCookies(),
+                                                 readOnlyInput,
+                                                 buildReadOnlyQueryParameters(),
+                                                 getQueryParamClasses(),
+                                                 _resourceSpec,
+                                                 getBaseUriTemplate(),
+                                                 buildReadOnlyPathKeys(),
+                                                 getRequestOptions(),
+                                                 readOnlyPartialUpdateInputMap,
+                                                 _streamingAttachments == null ? null : Collections.unmodifiableList(_streamingAttachments));
   }
 }

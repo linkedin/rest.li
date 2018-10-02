@@ -3,18 +3,23 @@
   "namespace" : "com.linkedin.restli.examples.greetings.client",
   "path" : "/partialUpdateGreeting",
   "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
-  "doc" : "Resource for testing a PARTIAL_UPDATE method that returns the patched entity.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.PartialUpdateGreetingResource",
+  "doc" : "Resource for testing PARTIAL_UPDATE and BATCH_PARTIAL_UPDATE methods that return\n the patched entity and entities, respectively.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.PartialUpdateGreetingResource",
   "collection" : {
     "identifier" : {
       "name" : "key",
       "type" : "long"
     },
-    "supports" : [ "partial_update" ],
+    "supports" : [ "batch_partial_update", "partial_update" ],
     "methods" : [ {
       "annotations" : {
         "returnEntity" : { }
       },
       "method" : "partial_update"
+    }, {
+      "annotations" : {
+        "returnEntity" : { }
+      },
+      "method" : "batch_partial_update"
     } ],
     "entity" : {
       "path" : "/partialUpdateGreeting/{key}"

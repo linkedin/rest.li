@@ -29,6 +29,7 @@ import com.linkedin.restli.internal.common.URIParamUtils;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.methods.AnyRecord;
 import com.linkedin.restli.server.BatchUpdateResult;
+import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.UpdateResponse;
@@ -57,40 +58,21 @@ public abstract class BatchResponseBuilder<D extends RestLiResponseData<? extend
   @SuppressWarnings("unchecked")
   public RestLiResponse buildResponse(RoutingResult routingResult, D responseData)
   {
-    Map<Object, UpdateStatus> mergedResults = new HashMap<>();
-
+    // extract BatchResponseEntry objects from the response envelope
     final Map<Object, BatchResponseEntry> responses = (Map<Object, BatchResponseEntry>) responseData.getResponseEnvelope().getBatchResponseMap();
-    generateResultEntityResponse(routingResult, responses, mergedResults);
+
+    // map BatchResponseEntry objects to UpdateStatus objects
+    Map<Object, UpdateStatus> mergedResults = generateResultEntityResponse(routingResult, responses);
+
+    // split the merged UpdateStatus map to the properly formatted over-the-wire data map
+    final ProtocolVersion protocolVersion = routingResult.getContext().getRestliProtocolVersion();
+    final BatchResponse<AnyRecord> response = toBatchResponse(mergedResults, protocolVersion);
 
     RestLiResponse.Builder builder = new RestLiResponse.Builder();
-    final ProtocolVersion protocolVersion = routingResult.getContext().getRestliProtocolVersion();
-
-    @SuppressWarnings("unchecked")
-    final BatchResponse<AnyRecord> response = toBatchResponse(mergedResults, protocolVersion);
-    return builder.entity(response).headers(responseData.getHeaders()).cookies(responseData.getCookies()).build();
-  }
-
-  // Updates the merged results with context errors and build map of UpdateStatus.
-  private void generateResultEntityResponse(RoutingResult routingResult, Map<Object, BatchResponseEntry> responses , Map<Object, UpdateStatus> mergedResults)
-  {
-    for (Map.Entry<?, BatchResponseEntry> entry : responses.entrySet())
-    {
-      if (entry.getKey() == null || entry.getValue() == null)
-      {
-        throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
-            "Unexpected null encountered. Null errors Map found inside of the result returned by the resource method: "
-                + routingResult.getResourceMethod());
-      }
-
-      UpdateStatus status = entry.getValue().getRecord() instanceof UpdateStatus ?
-                              (UpdateStatus) entry.getValue().getRecord() : new UpdateStatus();
-      status.setStatus(entry.getValue().getStatus().getCode());
-      if (entry.getValue().hasException())
-      {
-        status.setError(_errorResponseBuilder.buildErrorResponse(entry.getValue().getException()));
-      }
-      mergedResults.put(entry.getKey(), status);
-    }
+    return builder.entity(response)
+                  .headers(responseData.getHeaders())
+                  .cookies(responseData.getCookies())
+                  .build();
   }
 
   /**
@@ -141,7 +123,8 @@ public abstract class BatchResponseBuilder<D extends RestLiResponseData<? extend
       if (!serviceErrors.containsKey(entry.getKey()))
       {
         Object finalKey = ResponseUtils.translateCanonicalKeyToAlternativeKeyIfNeeded(entry.getKey(), routingResult);
-        batchResponseMap.put(finalKey, new BatchResponseEntry(entry.getValue().getStatus(), new UpdateStatus()));
+        UpdateStatus updateStatus = buildUpdateStatus(routingResult.getContext(), entry.getValue());
+        batchResponseMap.put(finalKey, new BatchResponseEntry(entry.getValue().getStatus(), updateStatus));
       }
     }
 
@@ -170,10 +153,61 @@ public abstract class BatchResponseBuilder<D extends RestLiResponseData<? extend
       Map<?, BatchResponseEntry> batchResponseMap,
       Map<String, String> headers, List<HttpCookie> cookies);
 
+  /**
+   * Defines how to build an {@link UpdateStatus} (or subclass) for a given {@link UpdateResponse} (or subclass).
+   * Subclass response builders can override this with their own implementation.
+   * @param resourceContext current resource context
+   * @param updateResponse update response returned by the resource method
+   * @return update status for the given update response
+   */
+  protected UpdateStatus buildUpdateStatus(ResourceContext resourceContext, UpdateResponse updateResponse)
+  {
+    return new UpdateStatus();
+  }
+
+  /**
+   * Helper method for {@link #buildResponse} that produces a merged mapping of {@link UpdateStatus} objects given a
+   * mapping of {@link BatchResponseEntry} objects.
+   * @param routingResult
+   * @param responses
+   * @return merged update status map
+   */
+  private Map<Object, UpdateStatus> generateResultEntityResponse(RoutingResult routingResult, Map<Object, BatchResponseEntry> responses)
+  {
+    Map<Object, UpdateStatus> mergedResults = new HashMap<>();
+    for (Map.Entry<?, BatchResponseEntry> entry : responses.entrySet())
+    {
+      if (entry.getKey() == null || entry.getValue() == null)
+      {
+        throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
+            "Unexpected null encountered. Null errors Map found inside of the result returned by the resource method: "
+                + routingResult.getResourceMethod());
+      }
+
+      UpdateStatus status = entry.getValue().getRecord() instanceof UpdateStatus ?
+          (UpdateStatus) entry.getValue().getRecord() : new UpdateStatus();
+      status.setStatus(entry.getValue().getStatus().getCode());
+      if (entry.getValue().hasException())
+      {
+        status.setError(_errorResponseBuilder.buildErrorResponse(entry.getValue().getException()));
+      }
+      mergedResults.put(entry.getKey(), status);
+    }
+    return mergedResults;
+  }
+
+  /**
+   * Helper method for {@link #buildResponse} that splits the merged {@link UpdateStatus} map into a "statuses" map and
+   * an "errors" map, uses this to construct a data map that properly matches the over-the-wire format, and wraps it
+   * in a {@link BatchResponse}.
+   * @param statuses map of {@link UpdateStatus} objects
+   * @param protocolVersion
+   * @param <K> key type
+   * @return batch response
+   */
   private static <K> BatchResponse<AnyRecord> toBatchResponse(Map<K, UpdateStatus> statuses,
                                                               ProtocolVersion protocolVersion)
   {
-    final DataMap splitResponseData = new DataMap();
     final DataMap splitStatuses = new DataMap();
     final DataMap splitErrors = new DataMap();
 
@@ -194,6 +228,7 @@ public abstract class BatchResponseBuilder<D extends RestLiResponseData<? extend
       }
     }
 
+    final DataMap splitResponseData = new DataMap();
     CheckedUtil.putWithoutChecking(splitResponseData, BatchResponse.RESULTS, splitStatuses);
     CheckedUtil.putWithoutChecking(splitResponseData, BatchResponse.ERRORS, splitErrors);
 

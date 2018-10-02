@@ -1,5 +1,10 @@
+25.0.7
+------
+
 25.0.6
 ------
+(RB=1424134)
+Support returning the entities for BATCH_PARTIAL_UPDATE resource methods
 
 25.0.5
 ------

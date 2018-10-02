@@ -34,7 +34,7 @@ public class BatchUpdateResult<K, V>
 
   public BatchUpdateResult(final Map<K, UpdateResponse> results)
   {
-    this(results, Collections.<K, RestLiServiceException> emptyMap());
+    this(results, Collections.emptyMap());
   }
 
   /**

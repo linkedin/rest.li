@@ -25,6 +25,7 @@ import com.linkedin.restli.client.BatchDeleteRequest;
 import com.linkedin.restli.client.BatchGetEntityRequest;
 import com.linkedin.restli.client.BatchGetKVRequest;
 import com.linkedin.restli.client.BatchGetRequest;
+import com.linkedin.restli.client.BatchPartialUpdateEntityRequest;
 import com.linkedin.restli.client.BatchPartialUpdateRequest;
 import com.linkedin.restli.client.BatchUpdateRequest;
 import com.linkedin.restli.client.CreateIdEntityRequest;
@@ -104,7 +105,7 @@ public class RestliUriBuilderUtil
           throw new IllegalArgumentException("Create request of unknown type: " + request.getClass());
         }
       case BATCH_CREATE:
-        if(request instanceof BatchCreateRequest)
+        if (request instanceof BatchCreateRequest)
         {
           return new BatchCreateRequestUriBuilder((BatchCreateRequest)request, uriPrefix, version);
         }
@@ -140,7 +141,18 @@ public class RestliUriBuilderUtil
       case DELETE:
         return new DeleteRequestUriBuilder((DeleteRequest)request, uriPrefix, version);
       case BATCH_PARTIAL_UPDATE:
-        return new BatchPartialUpdateRequestUriBuilder((BatchPartialUpdateRequest)request, uriPrefix, version);
+        if (request instanceof BatchPartialUpdateRequest)
+        {
+          return new BatchPartialUpdateRequestUriBuilder((BatchPartialUpdateRequest)request, uriPrefix, version);
+        }
+        else if (request instanceof BatchPartialUpdateEntityRequest)
+        {
+          return new BatchPartialUpdateEntityRequestUriBuilder((BatchPartialUpdateEntityRequest)request, uriPrefix, version);
+        }
+        else
+        {
+          throw new IllegalArgumentException("Batch Partial Update request of unknown type: " + request.getClass());
+        }
       case BATCH_DELETE:
         return new BatchDeleteRequestUriBuilder((BatchDeleteRequest)request, uriPrefix, version);
       case GET_ALL:

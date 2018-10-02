@@ -26,11 +26,14 @@ import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.ResourceMethod;
+import com.linkedin.restli.common.UpdateEntityStatus;
 import com.linkedin.restli.internal.server.filter.FilterResourceModelImpl;
 import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.internal.server.model.RestLiAnnotationReader;
 import com.linkedin.restli.internal.server.response.ActionResponseEnvelope;
 import com.linkedin.restli.internal.server.response.BatchCreateResponseEnvelope;
+import com.linkedin.restli.internal.server.response.BatchPartialUpdateResponseEnvelope;
+import com.linkedin.restli.internal.server.response.BatchResponseEnvelope;
 import com.linkedin.restli.internal.server.response.CreateResponseEnvelope;
 import com.linkedin.restli.internal.server.response.GetResponseEnvelope;
 import com.linkedin.restli.internal.server.response.PartialUpdateResponseEnvelope;
@@ -157,6 +160,7 @@ public class TestRestLiValidationFilter
 
     return new Object[][]
     {
+        // Resource model                                                     Response data         Projection mask                        Expect error?
         { RestLiAnnotationReader.processResource(ActionsResource.class),      actionResponseData,   null,                                  false },
         { RestLiAnnotationReader.processResource(ActionsResource.class),      actionResponseData,   new MaskTree(),                        false },
         { RestLiAnnotationReader.processResource(ActionsResource.class),      actionResponseData,   makeMask("ignoreMePlease"),   false },
@@ -232,6 +236,9 @@ public class TestRestLiValidationFilter
     RestLiResponseData<BatchCreateResponseEnvelope> batchCreateResponseData = ResponseDataBuilderUtil.buildBatchCreateResponseData(HttpStatus.S_200_OK,
         Collections.singletonList(new BatchCreateResponseEnvelope.CollectionCreateResponseItem(
             new CreateIdEntityStatus<>(HttpStatus.S_201_CREATED.getCode(), 1L, makeInvalidTestRecord(), null, new ProtocolVersion(2, 0, 0)))));
+    RestLiResponseData<BatchPartialUpdateResponseEnvelope> batchPartialUpdateResponseData = ResponseDataBuilderUtil.buildBatchPartialUpdateResponseData(HttpStatus.S_200_OK,
+        Collections.singletonMap(1L, new BatchResponseEnvelope.BatchResponseEntry(HttpStatus.S_200_OK,
+            new UpdateEntityStatus<>(HttpStatus.S_200_OK.getCode(), makeInvalidTestRecord()))));
 
     // The last argument indicates whether the resource method is a "return entity" method,
     // but is also used to determine if validation is expected on response.
@@ -242,7 +249,9 @@ public class TestRestLiValidationFilter
             { PARTIAL_UPDATE, partialUpdateResponseData, true },
             { PARTIAL_UPDATE, partialUpdateResponseData, false },
             { BATCH_CREATE, batchCreateResponseData, true },
-            { BATCH_CREATE, batchCreateResponseData, false }
+            { BATCH_CREATE, batchCreateResponseData, false },
+            { BATCH_PARTIAL_UPDATE, batchPartialUpdateResponseData, true },
+            { BATCH_PARTIAL_UPDATE, batchPartialUpdateResponseData, false }
         };
   }
 

@@ -21,6 +21,8 @@ import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.Tone;
+import com.linkedin.restli.server.BatchPatchRequest;
+import com.linkedin.restli.server.BatchUpdateEntityResult;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.UpdateEntityResponse;
 import com.linkedin.restli.server.annotations.RestLiCollection;
@@ -33,7 +35,8 @@ import java.util.Map;
 
 
 /**
- * Resource for testing a PARTIAL_UPDATE method that returns the patched entity.
+ * Resource for testing PARTIAL_UPDATE and BATCH_PARTIAL_UPDATE methods that return
+ * the patched entity and entities, respectively.
  *
  * @author Evan Williams
  */
@@ -57,14 +60,21 @@ public class PartialUpdateGreetingResource implements KeyValueResource<Long, Gre
 
   @ReturnEntity
   @RestMethod.PartialUpdate
-  public UpdateEntityResponse<Greeting> partialUpdate(Long key, PatchRequest<Greeting> patch)
+  public UpdateEntityResponse<Greeting> update(Long key, PatchRequest<Greeting> patch)
   {
+    // used to test individual errors per id
     if (!_db.containsKey(key))
     {
       throw new RestLiServiceException(HttpStatus.S_404_NOT_FOUND);
     }
 
     Greeting greeting = _db.get(key);
+
+    // used to test whole request failures
+    if (patch.toString().contains(";DROP TABLE"))
+    {
+      throw new RuntimeException("Oops! You broke Rest.li");
+    }
 
     try
     {
@@ -76,5 +86,26 @@ public class PartialUpdateGreetingResource implements KeyValueResource<Long, Gre
     }
 
     return new UpdateEntityResponse<>(HttpStatus.S_200_OK, greeting);
+  }
+
+  @ReturnEntity
+  @RestMethod.BatchPartialUpdate
+  public BatchUpdateEntityResult<Long, Greeting> batchUpdate(BatchPatchRequest<Long, Greeting> entityUpdates)
+  {
+    Map<Long, UpdateEntityResponse<Greeting>> responseMap = new HashMap<>();
+    Map<Long, RestLiServiceException> errorMap = new HashMap<>();
+    for (Map.Entry<Long, PatchRequest<Greeting>> entry : entityUpdates.getData().entrySet())
+    {
+      try
+      {
+        UpdateEntityResponse<Greeting> updateEntityResponse = update(entry.getKey(), entry.getValue());
+        responseMap.put(entry.getKey(), updateEntityResponse);
+      }
+      catch (RestLiServiceException e)
+      {
+        errorMap.put(entry.getKey(), e);
+      }
+    }
+    return new BatchUpdateEntityResult<>(responseMap, errorMap);
   }
 }

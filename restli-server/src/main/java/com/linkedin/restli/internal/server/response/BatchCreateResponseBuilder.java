@@ -127,7 +127,7 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder<RestLiR
         if (createKVResponse == null)
         {
           throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
-                                           "Unexpected null encountered. Null element inside of List inside of a BatchCreateResult returned by the resource method: "
+                                           "Unexpected null encountered. Null element inside of List inside of a BatchCreateKVResult returned by the resource method: "
                                                + routingResult.getResourceMethod());
         }
         else

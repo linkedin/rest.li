@@ -49,6 +49,7 @@ import com.linkedin.restli.client.base.BatchCreateIdEntityRequestBuilderBase;
 import com.linkedin.restli.client.base.BatchCreateIdRequestBuilderBase;
 import com.linkedin.restli.client.base.BatchDeleteRequestBuilderBase;
 import com.linkedin.restli.client.base.BatchGetEntityRequestBuilderBase;
+import com.linkedin.restli.client.base.BatchPartialUpdateEntityRequestBuilderBase;
 import com.linkedin.restli.client.base.BatchPartialUpdateRequestBuilderBase;
 import com.linkedin.restli.client.base.BatchUpdateRequestBuilderBase;
 import com.linkedin.restli.client.base.BuilderBase;
@@ -164,6 +165,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
     RETURN_ENTITY_BUILDER_CLASSES.put(ResourceMethod.CREATE, CreateIdEntityRequestBuilderBase.class);
     RETURN_ENTITY_BUILDER_CLASSES.put(ResourceMethod.PARTIAL_UPDATE, PartialUpdateEntityRequestBuilderBase.class);
     RETURN_ENTITY_BUILDER_CLASSES.put(ResourceMethod.BATCH_CREATE, BatchCreateIdEntityRequestBuilderBase.class);
+    RETURN_ENTITY_BUILDER_CLASSES.put(ResourceMethod.BATCH_PARTIAL_UPDATE, BatchPartialUpdateEntityRequestBuilderBase.class);
   }
 
   private final JClass _voidClass = getCodeModel().ref(Void.class);

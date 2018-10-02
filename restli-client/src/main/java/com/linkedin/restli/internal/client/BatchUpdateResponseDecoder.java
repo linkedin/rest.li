@@ -16,7 +16,6 @@
 
 package com.linkedin.restli.internal.client;
 
-
 import com.linkedin.data.DataMap;
 import com.linkedin.restli.client.response.BatchKVResponse;
 import com.linkedin.restli.common.BatchResponse;
@@ -25,9 +24,6 @@ import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.TypeSpec;
 import com.linkedin.restli.common.UpdateStatus;
-
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -69,20 +65,32 @@ public class BatchUpdateResponseDecoder<K> extends RestResponseDecoder<BatchKVRe
 
   @Override
   public BatchKVResponse<K, UpdateStatus> wrapResponse(DataMap dataMap, Map<String, String> headers, ProtocolVersion version)
-    throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, IOException
   {
     if (dataMap == null)
     {
       return null;
     }
 
+    DataMap responseData = buildBatchUpdateResponseData(dataMap);
+
+    return new BatchKVResponse<>(responseData, _keyType, new TypeSpec<>(UpdateStatus.class), _keyParts, _complexKeyType, version);
+  }
+
+  /**
+   * Helper method to assist BATCH_UPDATE, BATCH_PARTIAL_UPDATE, and BATCH_DELETE response decoders in transforming the
+   * raw payload data map received over-the-wire to a data map suitable for instantiation of a {@link BatchKVResponse}.
+   * @param dataMap received in the response payload
+   * @return data map suitable for {@link BatchKVResponse}
+   */
+  static DataMap buildBatchUpdateResponseData(DataMap dataMap)
+  {
     final DataMap mergedResults = new DataMap();
     final DataMap inputResults = dataMap.containsKey(BatchResponse.RESULTS) ? dataMap.getDataMap(BatchResponse.RESULTS)
-                                                                            : new DataMap();
+        : new DataMap();
     final DataMap inputErrors = dataMap.containsKey(BatchResponse.ERRORS) ? dataMap.getDataMap(BatchResponse.ERRORS)
-                                                                          : new DataMap();
+        : new DataMap();
 
-    final Set<String> mergedKeys = new HashSet<String>(inputResults.keySet());
+    final Set<String> mergedKeys = new HashSet<>(inputResults.keySet());
     mergedKeys.addAll(inputErrors.keySet());
 
     for (String key : mergedKeys)
@@ -117,6 +125,6 @@ public class BatchUpdateResponseDecoder<K> extends RestResponseDecoder<BatchKVRe
     responseData.put(BatchKVResponse.RESULTS, mergedResults);
     responseData.put(BatchKVResponse.ERRORS, inputErrors);
 
-    return new BatchKVResponse<K, UpdateStatus>(responseData, _keyType, new TypeSpec<UpdateStatus>(UpdateStatus.class), _keyParts, _complexKeyType, version);
+    return responseData;
   }
 }

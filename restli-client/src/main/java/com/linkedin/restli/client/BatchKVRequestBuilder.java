@@ -17,11 +17,16 @@
 package com.linkedin.restli.client;
 
 
+import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.restli.common.CollectionRequest;
+import com.linkedin.restli.common.KeyValueRecord;
+import com.linkedin.restli.common.KeyValueRecordFactory;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.RestConstants;
 
 import java.util.Collections;
+import java.util.Map;
 
 
 /**
@@ -39,7 +44,35 @@ public abstract class BatchKVRequestBuilder<K, V extends RecordTemplate, R exten
   {
     if (!hasParam(RestConstants.QUERY_BATCH_IDS_PARAM))
     {
-      addKeys(Collections.<K>emptySet());
+      addKeys(Collections.emptySet());
+    }
+  }
+
+  protected <E extends RecordTemplate> CollectionRequest<KeyValueRecord<K, E>> buildReadOnlyInput(
+      Map<K, E> readOnlyInputEntities, Map<K, E> inputMap, KeyValueRecordFactory<K, E> keyValueRecordFactory)
+  {
+    try
+    {
+      DataMap map = new DataMap();
+      @SuppressWarnings({ "unchecked", "rawtypes" })
+      CollectionRequest<KeyValueRecord<K, E>> input = new CollectionRequest(map, KeyValueRecord.class);
+
+      for (Map.Entry<K, E> inputEntityEntry : inputMap.entrySet())
+      {
+        K key = getReadOnlyOrCopyKey(inputEntityEntry.getKey());
+        E entity = getReadOnlyOrCopyDataTemplate(inputEntityEntry.getValue());
+        readOnlyInputEntities.put(key, entity);
+        KeyValueRecord<K, E> keyValueRecord = keyValueRecordFactory.create(key, entity);
+        keyValueRecord.data().setReadOnly();
+        input.getElements().add(keyValueRecord);
+      }
+
+      map.setReadOnly();
+      return input;
+    }
+    catch (CloneNotSupportedException cloneException)
+    {
+      throw new IllegalArgumentException("Entity cannot be copied.", cloneException);
     }
   }
 }
