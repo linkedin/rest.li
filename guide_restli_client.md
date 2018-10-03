@@ -642,7 +642,7 @@ RequestBuilder type.
 | BatchGet           | -      |     | -   |      | -        | -        |          | -       |          | -      |       |        |              |
 | BatchCreate        | -      |     |     |      | -        | -        |          | -       |          |        |       | -      | -\*\*        |
 | BatchDelete        | -      |     | -   |      | -        | -        |          | -       |          |        |       |        |              |
-| BatchPartialUpdate | -      |     |     |      | -        | -        |          | -       |          |        |       | -      |              |
+| BatchPartialUpdate | -      |     |     |      | -        | -        |          | -       |          |        |       | -      | -\*\*        |
 | BatchUpdate        | -      |     |     |      | -        | -        |          | -       |          |        |       | -      |              |
 
 \* It is not supported, if the method is defined on a simple resource.
