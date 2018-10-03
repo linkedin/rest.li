@@ -1,13 +1,11 @@
-25.0.7
+25.0.6
 ------
 
-25.0.6
+25.0.5
 ------
 (RB=1424134)
 Support returning the entities for BATCH_PARTIAL_UPDATE resource methods
 
-25.0.5
-------
 (RB=1427447)
 Support ParSeq task resource method level timeout configuration.
 
