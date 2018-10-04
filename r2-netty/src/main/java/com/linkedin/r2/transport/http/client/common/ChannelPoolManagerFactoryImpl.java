@@ -41,16 +41,19 @@ public class ChannelPoolManagerFactoryImpl implements ChannelPoolManagerFactory
 
   private final NioEventLoopGroup _eventLoopGroup;
   private final ScheduledExecutorService _scheduler;
+  private final boolean _enableSSLSessionResumption;
 
   /**
    * @param eventLoopGroup The NioEventLoopGroup; it is the caller's responsibility to
    *                       shut it down
    * @param scheduler      An executor; it is the caller's responsibility to shut it down
+   * @param enableSSLSessionResumption
    */
-  public ChannelPoolManagerFactoryImpl(NioEventLoopGroup eventLoopGroup, ScheduledExecutorService scheduler)
+  public ChannelPoolManagerFactoryImpl(NioEventLoopGroup eventLoopGroup, ScheduledExecutorService scheduler, boolean enableSSLSessionResumption)
   {
     _eventLoopGroup = eventLoopGroup;
     _scheduler = scheduler;
+    _enableSSLSessionResumption = enableSSLSessionResumption;
   }
 
   @Override
@@ -82,6 +85,7 @@ public class ChannelPoolManagerFactoryImpl implements ChannelPoolManagerFactory
         (int) channelPoolManagerKey.getMaxResponseSize(),
         _scheduler,
         channelPoolManagerKey.getMaxConcurrentConnectionInitializations(),
+        _enableSSLSessionResumption,
         channelGroup),
       channelPoolManagerKey.getName(),
       channelGroup,
@@ -108,8 +112,10 @@ public class ChannelPoolManagerFactoryImpl implements ChannelPoolManagerFactory
         channelPoolManagerKey.getMaxHeaderSize(),
         channelPoolManagerKey.getMaxChunkSize(),
         channelPoolManagerKey.getMaxResponseSize(),
+        _enableSSLSessionResumption,
         _eventLoopGroup,
-        channelGroup),
+        channelGroup
+      ),
       channelPoolManagerKey.getName() + "-Stream",
       channelGroup,
       _scheduler);
@@ -133,6 +139,7 @@ public class ChannelPoolManagerFactoryImpl implements ChannelPoolManagerFactory
         channelPoolManagerKey.getMaxHeaderSize(),
         channelPoolManagerKey.getMaxChunkSize(),
         channelPoolManagerKey.getMaxResponseSize(),
+        _enableSSLSessionResumption,
         _eventLoopGroup,
         channelGroup),
       channelPoolManagerKey.getName() + "-HTTP/2-Stream",

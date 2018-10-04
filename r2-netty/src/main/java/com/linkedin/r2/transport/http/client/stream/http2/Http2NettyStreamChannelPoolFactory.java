@@ -61,11 +61,12 @@ public class Http2NettyStreamChannelPoolFactory implements ChannelPoolFactory
     int maxHeaderSize,
     int maxChunkSize,
     long maxResponseSize,
+    boolean enableSSLSessionResumption,
     EventLoopGroup eventLoopGroup,
     ChannelGroup channelGroup)
   {
     ChannelInitializer<NioSocketChannel> initializer = new Http2ClientPipelineInitializer(
-      sslContext, sslParameters, maxHeaderSize, maxChunkSize, maxResponseSize, gracefulShutdownTimeout);
+      sslContext, sslParameters, maxHeaderSize, maxChunkSize, maxResponseSize, gracefulShutdownTimeout, enableSSLSessionResumption);
 
     _bootstrap = new Bootstrap().group(eventLoopGroup).channel(NioSocketChannel.class).handler(initializer);
     _idleTimeout = idleTimeout;

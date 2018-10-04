@@ -49,7 +49,7 @@ public class SslHandlerUtil
     return getSslHandler(sslContext, sslParameters, false);
   }
 
-  private static SslHandler getSslHandler(SSLContext sslContext, SSLParameters sslParameters, boolean clientMode)
+  public static SslHandler getSslHandler(SSLContext sslContext, SSLParameters sslParameters, boolean clientMode)
   {
     return getSslHandler(sslContext, sslParameters, clientMode, null, -1);
   }

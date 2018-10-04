@@ -56,17 +56,22 @@ public class SessionResumptionSslHandler extends ChannelOutboundHandlerAdapter
   /**
    * @param sslContext note that the type is SslContext (netty implementation) and not SSLContext (JDK implementation)
    */
-  public SessionResumptionSslHandler(SslContext sslContext)
+  public SessionResumptionSslHandler(SslContext sslContext, boolean enableResumption)
   {
-    _hostPortToSslHandler = (ctx, host, port) -> sslContext.newHandler(ctx.alloc(), host, port);
+    _hostPortToSslHandler = enableResumption ?
+      (ctx, host, port) -> sslContext.newHandler(ctx.alloc(), host, port) :
+      (ctx, host, port) -> sslContext.newHandler(ctx.alloc());
+
   }
 
   /**
    * @param sslContext note that the type is SSLContext (JDK implementation) and not SslContext (netty implementation)
    */
-  public SessionResumptionSslHandler(SSLContext sslContext, SSLParameters sslParameters)
+  public SessionResumptionSslHandler(SSLContext sslContext, SSLParameters sslParameters, boolean enableResumption)
   {
-    _hostPortToSslHandler = (ctx, host, port) -> SslHandlerUtil.getClientSslHandler(sslContext, sslParameters, host, port);
+    _hostPortToSslHandler = enableResumption ?
+      (ctx, host, port) -> SslHandlerUtil.getClientSslHandler(sslContext, sslParameters, host, port) :
+      (ctx, host, port) -> SslHandlerUtil.getSslHandler(sslContext, sslParameters, true);
   }
 
   @Override

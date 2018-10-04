@@ -41,10 +41,10 @@ public class RAPStreamClientPipelineInitializer extends ChannelInitializer<NioSo
   private final int _maxHeaderSize;
   private final int _maxChunkSize;
   private final long _maxResponseSize;
+  private final boolean _enableSSLSessionResumption;
 
   /**
    * Creates new instance.
-   *
    * @param sslContext {@link SSLContext} to be used for TLS-enabled channel pipeline.
    * @param sslParameters {@link SSLParameters} to configure {@link javax.net.ssl.SSLEngine}s created
    *          from sslContext. This is somewhat redundant to
@@ -53,7 +53,7 @@ public class RAPStreamClientPipelineInitializer extends ChannelInitializer<NioSo
    *          configuration in sslContext.
    */
   RAPStreamClientPipelineInitializer(SSLContext sslContext, SSLParameters sslParameters, int maxHeaderSize,
-      int maxChunkSize, long maxResponseSize)
+                                     int maxChunkSize, long maxResponseSize, boolean enableSSLSessionResumption)
   {
     // Check if requested parameters are present in the supported params of the context.
     // Log warning for those not present. Throw an exception if none present.
@@ -85,6 +85,7 @@ public class RAPStreamClientPipelineInitializer extends ChannelInitializer<NioSo
     _maxHeaderSize = maxHeaderSize;
     _maxChunkSize = maxChunkSize;
     _maxResponseSize = maxResponseSize;
+    _enableSSLSessionResumption = enableSSLSessionResumption;
   }
 
   /**
@@ -126,7 +127,7 @@ public class RAPStreamClientPipelineInitializer extends ChannelInitializer<NioSo
     if (_sslContext != null)
     {
       ch.pipeline().addLast(SessionResumptionSslHandler.PIPELINE_SESSION_RESUMPTION_HANDLER,
-        new SessionResumptionSslHandler(_sslContext, _sslParameters));
+        new SessionResumptionSslHandler(_sslContext, _sslParameters, _enableSSLSessionResumption));
     }
     ch.pipeline().addLast("codec", new HttpClientCodec(4096, _maxHeaderSize, _maxChunkSize));
     ch.pipeline().addLast("rapFullRequestEncoder", new RAPStreamFullRequestEncoder());

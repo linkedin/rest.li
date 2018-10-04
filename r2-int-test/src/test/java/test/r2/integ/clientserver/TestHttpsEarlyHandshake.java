@@ -64,7 +64,7 @@ public class TestHttpsEarlyHandshake extends AbstractEchoServiceTest
     ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
     ChannelPoolManagerFactoryImpl channelPoolManagerFactory =
-        new ChannelPoolManagerFactoryImpl(eventLoopGroup, scheduler);
+        new ChannelPoolManagerFactoryImpl(eventLoopGroup, scheduler, true);
     SSLContext context = SslContextUtil.getContext();
 
     ChannelPoolManagerKey key = new ChannelPoolManagerKeyBuilder()

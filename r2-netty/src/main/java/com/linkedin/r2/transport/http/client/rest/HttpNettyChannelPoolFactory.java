@@ -56,9 +56,9 @@ public class HttpNettyChannelPoolFactory implements ChannelPoolFactory
   private final int _maxConcurrentConnectionInitializations;
 
   public HttpNettyChannelPoolFactory(int maxPoolSize, long idleTimeout, int maxPoolWaiterSize, AsyncPoolImpl.Strategy strategy,
-      int minPoolSize, EventLoopGroup eventLoopGroup, SSLContext sslContext, SSLParameters sslParameters, int maxHeaderSize,
-      int maxChunkSize, int maxResponseSize, ScheduledExecutorService scheduler, int maxConcurrentConnectionInitializations,
-      ChannelGroup allChannels)
+                                     int minPoolSize, EventLoopGroup eventLoopGroup, SSLContext sslContext, SSLParameters sslParameters, int maxHeaderSize,
+                                     int maxChunkSize, int maxResponseSize, ScheduledExecutorService scheduler, int maxConcurrentConnectionInitializations,
+                                     boolean enableSSLSessionResumption, ChannelGroup allChannels)
   {
 
     _allChannels = allChannels;
@@ -66,7 +66,7 @@ public class HttpNettyChannelPoolFactory implements ChannelPoolFactory
     _maxConcurrentConnectionInitializations = maxConcurrentConnectionInitializations;
     Bootstrap bootstrap = new Bootstrap().group(eventLoopGroup)
       .channel(NioSocketChannel.class)
-      .handler(new HttpClientPipelineInitializer(sslContext, sslParameters, maxHeaderSize, maxChunkSize, maxResponseSize));
+      .handler(new HttpClientPipelineInitializer(sslContext, sslParameters, maxHeaderSize, maxChunkSize, maxResponseSize, enableSSLSessionResumption));
 
     _bootstrap = bootstrap;
     _maxPoolSize = maxPoolSize;
@@ -111,12 +111,12 @@ public class HttpNettyChannelPoolFactory implements ChannelPoolFactory
     private final int _maxHeaderSize;
     private final int _maxChunkSize;
     private final int _maxResponseSize;
+    private final boolean _enableSSLSessionResumption;
 
     /**
      * Creates new instance. If sslParameters is present the PipelineInitializer
      * will produce channels that support only https connections
-     *
-     * @param sslContext {@link SSLContext} to be used for TLS-enabled channel pipeline.
+     *  @param sslContext {@link SSLContext} to be used for TLS-enabled channel pipeline.
      * @param sslParameters {@link SSLParameters} to configure {@link SSLEngine}s created
      *          from sslContext. This is somewhat redundant to
      *          SSLContext.getDefaultSSLParameters(), but those turned out to be
@@ -124,12 +124,15 @@ public class HttpNettyChannelPoolFactory implements ChannelPoolFactory
      * @param maxHeaderSize
      * @param maxChunkSize
      * @param maxResponseSize
+     * @param enableSSLSessionResumption
      */
-    public HttpClientPipelineInitializer(SSLContext sslContext, SSLParameters sslParameters, int maxHeaderSize, int maxChunkSize, int maxResponseSize)
+    public HttpClientPipelineInitializer(SSLContext sslContext, SSLParameters sslParameters, int maxHeaderSize,
+                                         int maxChunkSize, int maxResponseSize, boolean enableSSLSessionResumption)
     {
       _maxHeaderSize = maxHeaderSize;
       _maxChunkSize = maxChunkSize;
       _maxResponseSize = maxResponseSize;
+      _enableSSLSessionResumption = enableSSLSessionResumption;
       SslHandlerUtil.validateSslParameters(sslContext, sslParameters);
       _sslContext = sslContext;
       _sslParameters = sslParameters;
@@ -141,7 +144,7 @@ public class HttpNettyChannelPoolFactory implements ChannelPoolFactory
       if (_sslContext != null)
       {
         ch.pipeline().addLast(SessionResumptionSslHandler.PIPELINE_SESSION_RESUMPTION_HANDLER,
-          new SessionResumptionSslHandler(_sslContext, _sslParameters));
+          new SessionResumptionSslHandler(_sslContext, _sslParameters, _enableSSLSessionResumption));
       }
       ch.pipeline().addLast("codec", new HttpClientCodec(4096, _maxHeaderSize, _maxChunkSize));
       ch.pipeline().addLast("dechunker", new HttpObjectAggregator(_maxResponseSize));

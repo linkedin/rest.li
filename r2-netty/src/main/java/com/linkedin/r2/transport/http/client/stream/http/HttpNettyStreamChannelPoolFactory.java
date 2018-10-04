@@ -53,23 +53,24 @@ public class HttpNettyStreamChannelPoolFactory implements ChannelPoolFactory
   private final int _maxConcurrentConnectionInitializations;
 
   public HttpNettyStreamChannelPoolFactory(int maxPoolSize,
-                                        long idleTimeout,
-                                        int maxPoolWaiterSize,
-                                        AsyncPoolImpl.Strategy strategy,
-                                        int minPoolSize,
-                                        boolean tcpNoDelay,
-                                        ScheduledExecutorService scheduler,
-                                        int maxConcurrentConnectionInitializations,
-                                        SSLContext sslContext,
-                                        SSLParameters sslParameters,
-                                        int maxHeaderSize,
-                                        int maxChunkSize,
-                                        long maxResponseSize,
-                                        EventLoopGroup eventLoopGroup,
-                                        ChannelGroup channelGroup)
+                                           long idleTimeout,
+                                           int maxPoolWaiterSize,
+                                           AsyncPoolImpl.Strategy strategy,
+                                           int minPoolSize,
+                                           boolean tcpNoDelay,
+                                           ScheduledExecutorService scheduler,
+                                           int maxConcurrentConnectionInitializations,
+                                           SSLContext sslContext,
+                                           SSLParameters sslParameters,
+                                           int maxHeaderSize,
+                                           int maxChunkSize,
+                                           long maxResponseSize,
+                                           boolean enableSSLSessionResumption,
+                                           EventLoopGroup eventLoopGroup,
+                                           ChannelGroup channelGroup)
   {
     ChannelInitializer<NioSocketChannel> initializer =
-      new RAPStreamClientPipelineInitializer(sslContext, sslParameters, maxHeaderSize, maxChunkSize, maxResponseSize);
+      new RAPStreamClientPipelineInitializer(sslContext, sslParameters, maxHeaderSize, maxChunkSize, maxResponseSize, enableSSLSessionResumption);
 
     Bootstrap bootstrap = new Bootstrap().group(eventLoopGroup)
       .channel(NioSocketChannel.class)

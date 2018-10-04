@@ -67,7 +67,7 @@ public class TestEarlyUpgrade
   public void testEarlyUpgrade() throws Exception
   {
     ChannelPoolManagerFactoryImpl channelPoolManagerFactory =
-        new ChannelPoolManagerFactoryImpl(_eventLoopGroup, _scheduler);
+        new ChannelPoolManagerFactoryImpl(_eventLoopGroup, _scheduler, true);
 
     ChannelPoolManagerKey key = new ChannelPoolManagerKeyBuilder()
       // min pool set to one in such a way a connection is opened before the request

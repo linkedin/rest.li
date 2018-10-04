@@ -56,14 +56,16 @@ class Http2AlpnHandler extends ChannelDuplexHandler
   private final Http2StreamCodec _http2Handler;
 
   private ChannelPromise _alpnPromise;
+  private final boolean _enableSSLSessionResumption;
 
-  public Http2AlpnHandler(SslContext sslContext, Http2StreamCodec http2Handler)
+  public Http2AlpnHandler(SslContext sslContext, Http2StreamCodec http2Handler, boolean enableSSLSessionResumption)
   {
     ObjectUtil.checkNotNull(sslContext, "sslContext");
     ObjectUtil.checkNotNull(http2Handler, "http2Handler");
 
     _sslContext = sslContext;
     _http2Handler = http2Handler;
+    _enableSSLSessionResumption = enableSSLSessionResumption;
   }
 
   @Override
@@ -73,7 +75,7 @@ class Http2AlpnHandler extends ChannelDuplexHandler
 
     // the class will take care of establishing the SSL connection
     ctx.pipeline().addFirst(SessionResumptionSslHandler.PIPELINE_SESSION_RESUMPTION_HANDLER,
-      new SessionResumptionSslHandler(_sslContext));
+      new SessionResumptionSslHandler(_sslContext, _enableSSLSessionResumption));
 
     // Fail the ALPN promise when channel is closed
     ctx.channel().closeFuture().addListener(future -> {

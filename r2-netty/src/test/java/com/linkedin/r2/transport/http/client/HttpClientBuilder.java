@@ -57,7 +57,7 @@ public class HttpClientBuilder
     _scheduler = scheduler;
     _channelPoolManagerKeyBuilder = new ChannelPoolManagerKeyBuilder();
     _sslChannelPoolManagerKeyBuilder = new ChannelPoolManagerKeyBuilder();
-    _channelPoolManagerFactory = new ChannelPoolManagerFactoryImpl(_eventLoopGroup, _scheduler);
+    _channelPoolManagerFactory = new ChannelPoolManagerFactoryImpl(_eventLoopGroup, _scheduler, true);
   }
 
   public HttpClientBuilder setCallbackExecutors(ExecutorService callbackExecutors)

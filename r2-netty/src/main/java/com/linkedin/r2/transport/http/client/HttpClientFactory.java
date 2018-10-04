@@ -502,26 +502,30 @@ public class HttpClientFactory implements TransportClientFactory
    */
   @Deprecated
   public HttpClientFactory(FilterChain filters,
-                          NioEventLoopGroup eventLoopGroup,
-                          boolean shutdownFactory,
-                          ScheduledExecutorService executor,
-                          boolean shutdownExecutor,
-                          ExecutorService callbackExecutorGroup,
-                          boolean shutdownCallbackExecutor,
-                          AbstractJmxManager jmxManager,
-                          final int requestCompressionThresholdDefault,
-                          final Map<String, CompressionConfig> requestCompressionConfigs,
-                          final Map<String, CompressionConfig> responseCompressionConfigs,
-                          Executor compressionExecutor,
-                          HttpProtocolVersion defaultHttpVersion,
-                          boolean shareConnection)
+                           NioEventLoopGroup eventLoopGroup,
+                           boolean shutdownFactory,
+                           ScheduledExecutorService executor,
+                           boolean shutdownExecutor,
+                           ExecutorService callbackExecutorGroup,
+                           boolean shutdownCallbackExecutor,
+                           AbstractJmxManager jmxManager,
+                           final int requestCompressionThresholdDefault,
+                           final Map<String, CompressionConfig> requestCompressionConfigs,
+                           final Map<String, CompressionConfig> responseCompressionConfigs,
+                           Executor compressionExecutor,
+                           HttpProtocolVersion defaultHttpVersion,
+                           boolean shareConnection)
   {
     this(filters, eventLoopGroup, shutdownFactory, executor, shutdownExecutor, callbackExecutorGroup, shutdownCallbackExecutor,
-        jmxManager, requestCompressionThresholdDefault, requestCompressionConfigs, responseCompressionConfigs,
-        compressionExecutor, defaultHttpVersion, shareConnection, new EventProviderRegistry());
+      jmxManager, requestCompressionThresholdDefault, requestCompressionConfigs, responseCompressionConfigs,
+      compressionExecutor, defaultHttpVersion, shareConnection, new EventProviderRegistry());
   }
 
-  private HttpClientFactory(FilterChain filters,
+  /**
+   * @deprecated Use {@link Builder} instead.
+   */
+  @Deprecated
+  public HttpClientFactory(FilterChain filters,
                            NioEventLoopGroup eventLoopGroup,
                            boolean shutdownFactory,
                            ScheduledExecutorService executor,
@@ -536,6 +540,28 @@ public class HttpClientFactory implements TransportClientFactory
                            HttpProtocolVersion defaultHttpVersion,
                            boolean shareConnection,
                            EventProviderRegistry eventProviderRegistry)
+  {
+    this(filters, eventLoopGroup, shutdownFactory, executor, shutdownExecutor, callbackExecutorGroup, shutdownCallbackExecutor,
+      jmxManager, requestCompressionThresholdDefault, requestCompressionConfigs, responseCompressionConfigs,
+      compressionExecutor, defaultHttpVersion, shareConnection, eventProviderRegistry, false);
+  }
+
+  private HttpClientFactory(FilterChain filters,
+                            NioEventLoopGroup eventLoopGroup,
+                            boolean shutdownFactory,
+                            ScheduledExecutorService executor,
+                            boolean shutdownExecutor,
+                            ExecutorService callbackExecutorGroup,
+                            boolean shutdownCallbackExecutor,
+                            AbstractJmxManager jmxManager,
+                            final int requestCompressionThresholdDefault,
+                            final Map<String, CompressionConfig> requestCompressionConfigs,
+                            final Map<String, CompressionConfig> responseCompressionConfigs,
+                            Executor compressionExecutor,
+                            HttpProtocolVersion defaultHttpVersion,
+                            boolean shareConnection,
+                            EventProviderRegistry eventProviderRegistry,
+                            boolean enableSSLSessionResumption)
   {
     _filters = filters;
     _eventLoopGroup = eventLoopGroup;
@@ -559,7 +585,7 @@ public class HttpClientFactory implements TransportClientFactory
     _compressionExecutor = compressionExecutor;
     _useClientCompression = _compressionExecutor != null;
     _defaultHttpVersion = defaultHttpVersion;
-    _channelPoolManagerFactory = new ChannelPoolManagerFactoryImpl(_eventLoopGroup, _executor);
+    _channelPoolManagerFactory = new ChannelPoolManagerFactoryImpl(_eventLoopGroup, _executor, enableSSLSessionResumption);
 
     if (eventProviderRegistry != null)
     {
@@ -590,8 +616,9 @@ public class HttpClientFactory implements TransportClientFactory
     private int                        _requestCompressionThresholdDefault = Integer.MAX_VALUE;
     private Map<String, CompressionConfig> _requestCompressionConfigs = Collections.emptyMap();
     private Map<String, CompressionConfig> _responseCompressionConfigs = Collections.emptyMap();
-    private HttpProtocolVersion        _defaultHttpVersion = HttpProtocolVersion.HTTP_1_1;
+    private HttpProtocolVersion _defaultHttpVersion = HttpProtocolVersion.HTTP_1_1;
     private EventProviderRegistry _eventProviderRegistry = null;
+    private boolean _enableSSLSessionResumption;
 
     /**
      * @param nioEventLoopGroup the {@link NioEventLoopGroup} that all Clients created by this
@@ -726,6 +753,12 @@ public class HttpClientFactory implements TransportClientFactory
       return this;
     }
 
+    public Builder setSSLSessionResumption(boolean enableSSLSessionResumption)
+    {
+      _enableSSLSessionResumption = enableSSLSessionResumption;
+      return this;
+    }
+
     public HttpClientFactory build()
     {
       NioEventLoopGroup eventLoopGroup = _eventLoopGroup != null ? _eventLoopGroup
@@ -745,8 +778,9 @@ public class HttpClientFactory implements TransportClientFactory
       return new HttpClientFactory(_filters, eventLoopGroup, _shutdownFactory, scheduledExecutorService,
         _shutdownExecutor, _callbackExecutorGroup, _shutdownCallbackExecutor, _jmxManager,
         _requestCompressionThresholdDefault, _requestCompressionConfigs, _responseCompressionConfigs,
-        compressionExecutor, _defaultHttpVersion, _shareConnection, eventProviderRegistry);
+        compressionExecutor, _defaultHttpVersion, _shareConnection, eventProviderRegistry, _enableSSLSessionResumption);
     }
+
   }
 
   @Override
