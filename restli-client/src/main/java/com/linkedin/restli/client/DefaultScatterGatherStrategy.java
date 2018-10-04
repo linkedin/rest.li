@@ -40,6 +40,7 @@ import com.linkedin.restli.internal.client.ResponseImpl;
 
 
 import com.linkedin.restli.internal.client.response.BatchEntityResponse;
+import com.linkedin.restli.internal.client.response.BatchUpdateEntityResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -141,7 +142,8 @@ public class DefaultScatterGatherStrategy implements ScatterGatherStrategy
   {
     checkBatchRequest(batchRequest);
 
-    if (batchRequest instanceof BatchGetRequest || batchRequest instanceof BatchGetEntityRequest)
+    if (batchRequest instanceof BatchGetRequest || batchRequest instanceof BatchGetEntityRequest
+            || batchRequest instanceof BatchGetKVRequest)
     {
       return new GetRequestBuilder(batchRequest.getBaseUriTemplate(),
           batchRequest.getResourceSpec().getValueClass(),
@@ -168,6 +170,13 @@ public class DefaultScatterGatherStrategy implements ScatterGatherStrategy
           batchRequest.getResourceSpec().getValueClass(),
           batchRequest.getResourceSpec(),
           batchRequest.getRequestOptions());
+    }
+    else if (batchRequest instanceof BatchPartialUpdateEntityRequest)
+    {
+      return new PartialUpdateEntityRequestBuilder(batchRequest.getBaseUriTemplate(),
+              batchRequest.getResourceSpec().getValueClass(),
+              batchRequest.getResourceSpec(),
+              batchRequest.getRequestOptions());
     }
     else
     {
@@ -227,12 +236,15 @@ public class DefaultScatterGatherStrategy implements ScatterGatherStrategy
   private BatchKVRequestBuilder getBatchBuilder(BatchRequest<?> batchRequest, Set<?> keys, Map<?, ?> body)
   {
     checkBatchRequest(batchRequest);
-    if (batchRequest instanceof BatchGetRequest)
+    if (batchRequest instanceof BatchGetRequest || batchRequest instanceof BatchGetKVRequest )
     {
       if (keys == null)
       {
-        throw new IllegalArgumentException("Missing keys for BatchGetRequest or BatchGetEntityRequest!");
+        throw new IllegalArgumentException("Missing keys for BatchGetRequest or BatchGetKVRequest!");
       }
+      // both BatchGetRequest and BatchGetKVRequest are built from BatchGetRequestBuilder, through
+      // build() and buildKV() respectively. BatchGetKVRequest is used to adapt rest.li 1.0.0
+      // batch_get response to use new BatchKVResponse class introduced in rest.li 2.0.0
       return new BatchGetRequestBuilder(batchRequest.getBaseUriTemplate(),
             batchRequest.getResourceSpec().getValueClass(),
             batchRequest.getResourceSpec(),
@@ -242,7 +254,7 @@ public class DefaultScatterGatherStrategy implements ScatterGatherStrategy
     {
       if (keys == null)
       {
-        throw new IllegalArgumentException("Missing keys for BatchGetEntityRequest or BatchGetEntityRequest!");
+        throw new IllegalArgumentException("Missing keys for BatchGetEntityRequest!");
       }
       return new BatchGetEntityRequestBuilder(batchRequest.getBaseUriTemplate(),
               batchRequest.getResourceSpec(),
@@ -281,6 +293,17 @@ public class DefaultScatterGatherStrategy implements ScatterGatherStrategy
           batchRequest.getResourceSpec(),
           batchRequest.getRequestOptions()).inputs(body);
     }
+    else if (batchRequest instanceof BatchPartialUpdateEntityRequest)
+    {
+      if (body == null)
+      {
+        throw new IllegalArgumentException("Missing body for BatchPartialUpdateEntityRequest!");
+      }
+      return new BatchPartialUpdateEntityRequestBuilder(batchRequest.getBaseUriTemplate(),
+              batchRequest.getResourceSpec().getValueClass(),
+              batchRequest.getResourceSpec(),
+              batchRequest.getRequestOptions()).inputs(body);
+    }
     else
     {
       throw new UnsupportedOperationException("Unsupported batch request for scatter-gather: " + batchRequest.getClass());
@@ -306,7 +329,16 @@ public class DefaultScatterGatherStrategy implements ScatterGatherStrategy
         .forEach(queryParam -> builder.setParam(queryParam.getKey(), queryParam.getValue()));
     // keep all headers
     batchRequest.getHeaders().forEach(builder::setHeader);
-    return builder.build();
+    if (batchRequest instanceof BatchGetKVRequest)
+    {
+      // this is very special BATCH_GET request
+      assert builder instanceof BatchGetRequestBuilder;
+      return ((BatchGetRequestBuilder)builder).buildKV();
+    }
+    else
+    {
+      return builder.build();
+    }
   }
 
   /**
@@ -321,26 +353,41 @@ public class DefaultScatterGatherStrategy implements ScatterGatherStrategy
   @SuppressWarnings("rawtypes")
   private <K> Map<K, ?> keyMapToInput(BatchRequest<?> batchRequest, Set<K> keys)
   {
-    if (!(batchRequest instanceof BatchUpdateRequest) && !(batchRequest instanceof BatchPartialUpdateRequest))
+    if (!(batchRequest instanceof BatchUpdateRequest) &&
+            !(batchRequest instanceof BatchPartialUpdateRequest) &&
+            !(batchRequest instanceof BatchPartialUpdateEntityRequest))
     {
       throw new IllegalArgumentException("There shouldn't be request body for batch request: " + batchRequest.getClass());
     }
 
-    final Map inputMap = (batchRequest instanceof BatchUpdateRequest) ?
-        ((BatchUpdateRequest)batchRequest).getUpdateInputMap() :
-        ((BatchPartialUpdateRequest)batchRequest).getPartialUpdateInputMap();
+    Map inputMap = null;
+    if (batchRequest instanceof BatchUpdateRequest)
+    {
+      inputMap = ((BatchUpdateRequest)batchRequest).getUpdateInputMap();
+    }
+    else if (batchRequest instanceof BatchPartialUpdateRequest)
+    {
+      inputMap = ((BatchPartialUpdateRequest)batchRequest).getPartialUpdateInputMap();
+    }
+    else if (batchRequest instanceof BatchPartialUpdateEntityRequest)
+    {
+      inputMap = ((BatchPartialUpdateEntityRequest)batchRequest).getPartialUpdateInputMap();
+    }
 
     if (inputMap == null)
     {
-      throw new IllegalArgumentException("BatchUpdateRequest or BatchPartialUpdateRequest is missing input data!");
+      throw new IllegalArgumentException("BatchUpdateRequest, BatchPartialUpdateRequest or " +
+              "BatchPartialUpdateEntityRequest is missing input data!");
     }
 
+    final Map finalInputMap = inputMap;
     return keys.stream().collect(Collectors.toMap(key -> key, key ->
     {
-      Object record = inputMap.get(key);
+      Object record = finalInputMap.get(key);
       if (record == null)
       {
-        throw new IllegalArgumentException("BatchUpdateRequest or BatchPartialUpdateRequest is missing input for key: " + key);
+        throw new IllegalArgumentException("BatchUpdateRequest, BatchPartialUpdateRequest or" +
+                "BatchPartialUpdateEntityRequest is missing input for key: " + key);
       }
       else
       {
@@ -368,13 +415,15 @@ public class DefaultScatterGatherStrategy implements ScatterGatherStrategy
         // we only scatter batched requests when D2 host mapping result contains keys, empty key indicates
         // custom partition id specified in ScatterGatherStrategy.getUris method.
         if (request instanceof BatchGetRequest ||
+                request instanceof BatchGetKVRequest ||
                 request instanceof BatchGetEntityRequest ||
                 request instanceof BatchDeleteRequest)
         {
           scatteredRequest = buildScatterBatchRequestByKeys((BatchRequest) request, entry.getValue(), null);
         }
         else if (request instanceof BatchUpdateRequest ||
-                request instanceof BatchPartialUpdateRequest)
+                request instanceof BatchPartialUpdateRequest ||
+                request instanceof BatchPartialUpdateEntityRequest )
         {
           scatteredRequest = buildScatterBatchRequestByKeys((BatchRequest) request, null,
                   keyMapToInput((BatchRequest) request, entry.getValue()));
@@ -424,24 +473,46 @@ public class DefaultScatterGatherStrategy implements ScatterGatherStrategy
   private <T> T constructResponseFromDataMap(BatchRequest<T> request, ProtocolVersion protocolVersion, DataMap data) {
     if (request instanceof BatchGetRequest)
     {
+      // BATCH_GET request built from rest.li 2.0.0 request builder.
       return (T) new BatchResponse(data,
               request.getResponseDecoder().getEntityClass());
     }
     else if (request instanceof BatchGetEntityRequest)
     {
+      // BATCH_GET request built from rest.li 1.0.0 request builder.
       return (T) new BatchEntityResponse<>(data,
+              request.getResourceSpec().getKeyType(),
+              request.getResourceSpec().getValueType(), request.getResourceSpec().getKeyParts(),
+              request.getResourceSpec().getComplexKeyType(), protocolVersion);
+    }
+    else if (request instanceof BatchGetKVRequest)
+    {
+      // Special BATCH_GET request built from 1.0.0 BatchGetRequestBuilder to use 2.0.0 BatchKVResponse.
+      return (T) new BatchKVResponse<>(data,
               request.getResourceSpec().getKeyType(),
               request.getResourceSpec().getValueType(), request.getResourceSpec().getKeyParts(),
               request.getResourceSpec().getComplexKeyType(), protocolVersion);
     }
     else
     {
-      // BatchKVResponse results map contains all entries including both success and failure.
+      // BATCH_UPDATE, BATCH_PARTIAL_UPDATE, BATCH_DELETE requests with BatchKVResponse<?, UpdateStatus> as response
+      // Also unlike BATCH_GET cases above where response "results" data map only contains successful entries, here
+      // "results" data map contains all entries including both success and failure.
       DataMap mergedData = ResponseDecoderUtil.mergeUpdateStatusResponseData(data);
-      return (T) new BatchKVResponse(mergedData,
-              request.getResourceSpec().getKeyType(),
-              new TypeSpec<UpdateStatus>(UpdateStatus.class), request.getResourceSpec().getKeyParts(),
-              request.getResourceSpec().getComplexKeyType(), protocolVersion);
+      if (request instanceof BatchPartialUpdateEntityRequest)
+      {
+        return (T) new BatchUpdateEntityResponse<>(mergedData,
+                request.getResourceSpec().getKeyType(),
+                request.getResourceSpec().getValueType(), request.getResourceSpec().getKeyParts(),
+                request.getResourceSpec().getComplexKeyType(), protocolVersion);
+      }
+      else
+      {
+        return (T) new BatchKVResponse(mergedData,
+                request.getResourceSpec().getKeyType(),
+                new TypeSpec<UpdateStatus>(UpdateStatus.class), request.getResourceSpec().getKeyParts(),
+                request.getResourceSpec().getComplexKeyType(), protocolVersion);
+      }
     }
   }
 

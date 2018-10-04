@@ -1,5 +1,10 @@
+25.0.9
+------
+
 25.0.8
 ------
+(RB=1442238)
+Support BatchGetKVRequest and BatchPartialUpdateEntityRequest in scatter-gather
 
 25.0.7
 ------

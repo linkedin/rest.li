@@ -37,10 +37,12 @@ import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.ResourceSpecImpl;
 import com.linkedin.restli.common.TypeSpec;
+import com.linkedin.restli.common.UpdateEntityStatus;
 import com.linkedin.restli.common.UpdateStatus;
 import com.linkedin.restli.internal.client.ResponseDecoderUtil;
 import com.linkedin.restli.internal.client.ResponseImpl;
 import com.linkedin.restli.internal.client.response.BatchEntityResponse;
+import com.linkedin.restli.internal.client.response.BatchUpdateEntityResponse;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.TestConstants;
 
@@ -77,9 +79,11 @@ public class TestDefaultScatterGatherStrategy
   // sample batch requests
   private static BatchGetRequest<TestRecord> _batchGetRequest;
   private static BatchGetEntityRequest<Long, TestRecord> _batchGetEntityRequest;
+  private static BatchGetKVRequest<Long, TestRecord> _batchGetKVRequest;
   private static BatchDeleteRequest<Long, TestRecord> _batchDeleteRequest;
   private static BatchUpdateRequest<Long, TestRecord> _batchUpdateRequest;
   private static BatchPartialUpdateRequest<Long, TestRecord> _batchPartialUpdateRequest;
+  private static BatchPartialUpdateEntityRequest<Long, TestRecord> _batchPartialUpdateEntityRequest;
   private static List<URIKeyPair<Long>> _batchToUris;
   private static Map<URI, Set<Long>> _mappedKeys;
   private static Map<Integer, Set<Long>> _unmappedKeys;
@@ -96,9 +100,11 @@ public class TestDefaultScatterGatherStrategy
     _sgStrategy = new DefaultScatterGatherStrategy(_uriMapper);
     _batchGetRequest = createBatchGetRequest(1L, 2L, 3L, 4L);
     _batchGetEntityRequest = createBatchGetEntityRequest(1L, 2L, 3L, 4L);
+    _batchGetKVRequest = createBatchGetKVRequest(1L, 2L, 3L, 4L);
     _batchDeleteRequest = createBatchDeleteRequest(1L, 2L, 3L, 4L);
     _batchUpdateRequest = createBatchUpdateRequest(1L, 2L, 3L, 4L);
     _batchPartialUpdateRequest = createBatchPartialUpdateRequest(1L, 2L, 3L, 4L);
+    _batchPartialUpdateEntityRequest = createBatchPartialUpdateEntityRequest(1L, 2L, 3L, 4L);
     // batch to individual URIs
     _batchToUris = new ArrayList<>();
     _batchToUris.add(new URIKeyPair<>(1L,  URI.create("d2://" + TEST_URI + "/1?foo=bar")));
@@ -195,11 +201,13 @@ public class TestDefaultScatterGatherStrategy
     return new Object[][] {
             { _batchGetRequest, AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), _batchToUris},
             { _batchGetEntityRequest, AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), _batchToUris},
+            { _batchGetKVRequest, AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), _batchToUris},
             { _batchDeleteRequest, AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), _batchToUris},
             { _batchUpdateRequest, AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), _batchToUris},
             { _batchPartialUpdateRequest, AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), _batchToUris},
             { _batchGetRequest, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), _batchToUris},
             { _batchGetEntityRequest, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), _batchToUris},
+            { _batchGetKVRequest, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), _batchToUris},
             { _batchDeleteRequest, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), _batchToUris},
             { _batchUpdateRequest, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), _batchToUris},
             { _batchPartialUpdateRequest, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), _batchToUris}
@@ -233,12 +241,17 @@ public class TestDefaultScatterGatherStrategy
                     createBatchGetRequest(3L), _host2URI},
             { _batchGetEntityRequest, createBatchGetEntityRequest(1L, 2L), _host1URI,
                     createBatchGetEntityRequest(3L), _host2URI},
+            { _batchGetKVRequest, createBatchGetKVRequest(1L, 2L), _host1URI,
+                    createBatchGetKVRequest(3L), _host2URI},
             { _batchDeleteRequest, createBatchDeleteRequest(1L, 2L), _host1URI,
                     createBatchDeleteRequest(3L), _host2URI},
             { _batchUpdateRequest, createBatchUpdateRequest(1L, 2L), _host1URI,
                     createBatchUpdateRequest(3L), _host2URI},
             { _batchPartialUpdateRequest, createBatchPartialUpdateRequest(1L, 2L), _host1URI,
                     createBatchPartialUpdateRequest(3L), _host2URI},
+            { _batchPartialUpdateEntityRequest, createBatchPartialUpdateEntityRequest(1L, 2L), _host1URI,
+                    createBatchPartialUpdateEntityRequest(3L), _host2URI},
+
     };
   }
 
@@ -332,21 +345,29 @@ public class TestDefaultScatterGatherStrategy
     Set<Long> errorKeys = Collections.singleton(2L);
     return new Object[][] {
             { _batchGetEntityRequest, v1, createBatchGetEntityRequest(1L, 2L), _host1URI,
-                    createBatchEntityResponse(v1, resultKeys, errorKeys), createBatchGetEntityRequest(3L), _host2URI, 1},
+                    createBatchEntityResponse(v1, resultKeys, errorKeys), createBatchGetEntityRequest(3L), _host2URI, 1, 4},
+            { _batchGetKVRequest, v1, createBatchGetKVRequest(1L, 2L), _host1URI,
+                    createBatchGetKVResponse(v1, resultKeys, errorKeys), createBatchGetKVRequest(3L), _host2URI, 1, 1},
             { _batchDeleteRequest, v1, createBatchDeleteRequest(1L, 2L), _host1URI,
-                    createBatchKVResponse(v1, resultKeys, errorKeys), createBatchDeleteRequest(3L), _host2URI, 4},
+                    createBatchKVResponse(v1, resultKeys, errorKeys), createBatchDeleteRequest(3L), _host2URI, 4, 4},
             { _batchUpdateRequest, v1, createBatchUpdateRequest(1L, 2L), _host1URI,
-                    createBatchKVResponse(v1, resultKeys, errorKeys), createBatchUpdateRequest(3L), _host2URI, 4},
+                    createBatchKVResponse(v1, resultKeys, errorKeys), createBatchUpdateRequest(3L), _host2URI, 4, 4},
             { _batchPartialUpdateRequest, v1, createBatchPartialUpdateRequest(1L), _host1URI,
-                    createBatchKVResponse(v1, resultKeys, errorKeys), createBatchPartialUpdateRequest(3L), _host2URI, 4},
+                    createBatchKVResponse(v1, resultKeys, errorKeys), createBatchPartialUpdateRequest(3L), _host2URI, 4, 4},
+            { _batchPartialUpdateEntityRequest, v1, createBatchPartialUpdateEntityRequest(1L), _host1URI,
+                    createBatchUpdateEntityResponse(v1, resultKeys, errorKeys), createBatchPartialUpdateEntityRequest(3L), _host2URI, 4, 4},
             { _batchGetEntityRequest, v2, createBatchGetEntityRequest(1L, 2L), _host1URI,
-                    createBatchEntityResponse(v1, resultKeys, errorKeys), createBatchGetEntityRequest(3L), _host2URI, 1},
+                    createBatchEntityResponse(v1, resultKeys, errorKeys), createBatchGetEntityRequest(3L), _host2URI, 1, 4},
+            { _batchGetKVRequest, v2, createBatchGetKVRequest(1L, 2L), _host1URI,
+                    createBatchGetKVResponse(v1, resultKeys, errorKeys), createBatchGetKVRequest(3L), _host2URI, 1, 1},
             { _batchDeleteRequest, v2, createBatchDeleteRequest(1L, 2L), _host1URI,
-                    createBatchKVResponse(v2, resultKeys, errorKeys), createBatchDeleteRequest(3L), _host2URI, 4},
+                    createBatchKVResponse(v2, resultKeys, errorKeys), createBatchDeleteRequest(3L), _host2URI, 4, 4},
             { _batchUpdateRequest, v2, createBatchUpdateRequest(1L, 2L), _host1URI,
-                    createBatchKVResponse(v2, resultKeys, errorKeys), createBatchUpdateRequest(3L), _host2URI, 4},
+                    createBatchKVResponse(v2, resultKeys, errorKeys), createBatchUpdateRequest(3L), _host2URI, 4, 4},
             { _batchPartialUpdateRequest, v2, createBatchPartialUpdateRequest(1L, 2L), _host1URI,
-                    createBatchKVResponse(v2, resultKeys, errorKeys), createBatchPartialUpdateRequest(3L), _host2URI, 4},
+                    createBatchKVResponse(v2, resultKeys, errorKeys), createBatchPartialUpdateRequest(3L), _host2URI, 4, 4},
+            { _batchPartialUpdateEntityRequest, v2, createBatchPartialUpdateEntityRequest(1L), _host1URI,
+                    createBatchUpdateEntityResponse(v2, resultKeys, errorKeys), createBatchPartialUpdateEntityRequest(3L), _host2URI, 4, 4}
     };
   }
 
@@ -359,7 +380,8 @@ public class TestDefaultScatterGatherStrategy
                                         Response successResponse,
                                         Request<?> failRequest,
                                         URI failHost,
-                                        int resultDataMapSize)
+                                        int resultDataMapSize,
+                                        int resultSize)
   {
     Map<RequestInfo, Response<BatchKVResponse<Long, ?>>> successResponses = new HashMap<>();
     successResponses.put(
@@ -385,7 +407,7 @@ public class TestDefaultScatterGatherStrategy
                 Assert.assertEquals(result.getStatus(), HttpStatus.S_200_OK.getCode());
                 Assert.assertTrue(result.getEntity().data().getDataMap(BatchResponse.RESULTS).size() == resultDataMapSize);
                 // BatchKVResponse.getResults() contains all entries including both successful and failed ones.
-                Assert.assertTrue(result.getEntity().getResults().size() == 4);
+                Assert.assertTrue(result.getEntity().getResults().size() == resultSize);
                 Assert.assertTrue(result.getEntity().getResults().containsKey(1L));
                 // merged error can come from 3 cases:
                 // - errored keys in successfully returned scattered batch response
@@ -420,6 +442,13 @@ public class TestDefaultScatterGatherStrategy
     return builder.ids(ids).setParam("foo", "bar").addHeader("a", "b").build();
   }
 
+  private static BatchGetKVRequest<Long, TestRecord> createBatchGetKVRequest(Long... ids)
+  {
+    BatchGetRequestBuilder<Long, TestRecord> builder =
+            new BatchGetRequestBuilder<>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
+    return builder.ids(ids).setParam("foo", "bar").addHeader("a", "b").buildKV();
+  }
+
   private static BatchDeleteRequest<Long, TestRecord> createBatchDeleteRequest(Long... ids)
   {
     BatchDeleteRequestBuilder<Long, TestRecord> builder =
@@ -450,24 +479,65 @@ public class TestDefaultScatterGatherStrategy
     return builder.setParam("foo", "bar").addHeader("a", "b").build();
   }
 
+  private static BatchPartialUpdateEntityRequest<Long, TestRecord> createBatchPartialUpdateEntityRequest(Long... ids)
+  {
+    BatchPartialUpdateEntityRequestBuilder<Long, TestRecord> builder =
+            new BatchPartialUpdateEntityRequestBuilder<>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
+    for (Long id: ids)
+    {
+      builder.input(id, new PatchRequest<>());
+    }
+    return builder.setParam("foo", "bar").addHeader("a", "b").returnEntity(true).build();
+  }
 
   private static Response<BatchResponse<TestRecord>> createBatchResponse(Set<Long> resultKeys, Set<Long> errorKeys)
   {
-    BatchResponse<TestRecord> response = new BatchResponse<>(new DataMap(), TestRecord.class);
+    DataMap resultMap = new DataMap();
     for (Long id: resultKeys)
     {
-      response.getResults().put(id.toString(), new TestRecord().setId(id));
+      resultMap.put(id.toString(), new TestRecord().setId(id).data());
     }
+    DataMap errorMap = new DataMap();
     for (Long id: errorKeys)
     {
-      response.getErrors().put(id.toString(),
-              new ErrorResponse().setStatus(HttpStatus.S_404_NOT_FOUND.getCode()));
+      errorMap.put(id.toString(),
+              new ErrorResponse().setStatus(HttpStatus.S_404_NOT_FOUND.getCode()).data());
     }
-
+    DataMap responseMap = new DataMap();
+    responseMap.put(BatchResponse.RESULTS, resultMap);
+    responseMap.put(BatchResponse.ERRORS, errorMap);
+    BatchResponse<TestRecord> response = new BatchResponse<>(responseMap, TestRecord.class);
     return new ResponseImpl<>(HttpStatus.S_200_OK.getCode(),
             Collections.emptyMap(), Collections.emptyList(), response, null);
   }
 
+  private static Response<BatchKVResponse<Long, TestRecord>> createBatchGetKVResponse(ProtocolVersion version,
+                                                                                      Set<Long> resultKeys,
+                                                                                      Set<Long> errorKeys)
+  {
+    DataMap resultMap = new DataMap();
+    for (Long id: resultKeys)
+    {
+      resultMap.put(id.toString(), new TestRecord().setId(id).data());
+    }
+    DataMap errorMap = new DataMap();
+    for (Long id: errorKeys)
+    {
+      errorMap.put(id.toString(),
+              new ErrorResponse().setStatus(HttpStatus.S_404_NOT_FOUND.getCode()).data());
+    }
+    DataMap responseMap = new DataMap();
+    responseMap.put(BatchResponse.RESULTS, resultMap);
+    responseMap.put(BatchResponse.ERRORS, errorMap);
+    BatchKVResponse<Long, TestRecord> response = new BatchKVResponse<>(responseMap,
+            new TypeSpec<>(Long.class),
+            new TypeSpec<>(TestRecord.class),
+            Collections.emptyMap(),
+            null,
+            version);
+    return new ResponseImpl<>(HttpStatus.S_200_OK.getCode(),
+            Collections.emptyMap(), Collections.emptyList(), response, null);
+  }
 
   private static Response<BatchKVResponse<Long, EntityResponse<TestRecord>>>
   createBatchEntityResponse(ProtocolVersion version, Set<Long> resultKeys, Set<Long> errorKeys)
@@ -522,6 +592,36 @@ public class TestDefaultScatterGatherStrategy
             new TypeSpec<>(Long.class),
             new TypeSpec<>(UpdateStatus.class),
             Collections.emptyMap(),
+            version);
+    return new ResponseImpl<>(HttpStatus.S_200_OK.getCode(),
+            Collections.emptyMap(), Collections.emptyList(), response, null);
+  }
+
+  private static Response<BatchKVResponse<Long, UpdateEntityStatus<TestRecord>>> createBatchUpdateEntityResponse(ProtocolVersion version,
+                                                                                                     Set<Long> resultKeys,
+                                                                                                     Set<Long> errorKeys)
+  {
+    DataMap resultMap = new DataMap();
+    DataMap errorMap = new DataMap();
+
+    for (Long id: resultKeys)
+    {
+      resultMap.put(id.toString(), new UpdateEntityStatus(HttpStatus.S_200_OK.getCode(), new TestRecord().setId(id)).data());
+    }
+    for (Long id: errorKeys)
+    {
+      ErrorResponse err = new ErrorResponse().setStatus(HttpStatus.S_404_NOT_FOUND.getCode());
+      errorMap.put(id.toString(), err.data());
+    }
+    DataMap responseMap = new DataMap();
+    responseMap.put(BatchResponse.RESULTS, resultMap);
+    responseMap.put(BatchResponse.ERRORS, errorMap);
+    DataMap mergedMap = ResponseDecoderUtil.mergeUpdateStatusResponseData(responseMap);
+    BatchUpdateEntityResponse<Long, TestRecord> response = new BatchUpdateEntityResponse<>(mergedMap,
+            new TypeSpec<>(Long.class),
+            new TypeSpec<>(TestRecord.class),
+            Collections.emptyMap(),
+            null,
             version);
     return new ResponseImpl<>(HttpStatus.S_200_OK.getCode(),
             Collections.emptyMap(), Collections.emptyList(), response, null);

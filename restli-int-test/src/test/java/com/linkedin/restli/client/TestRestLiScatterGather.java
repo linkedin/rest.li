@@ -33,18 +33,19 @@ import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CreateIdStatus;
 import com.linkedin.restli.common.EntityResponse;
 import com.linkedin.restli.common.PatchRequest;
+import com.linkedin.restli.common.UpdateEntityStatus;
 import com.linkedin.restli.common.UpdateStatus;
 import com.linkedin.restli.examples.RestLiIntegrationTest;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.client.GreetingsBuilders;
 import com.linkedin.restli.examples.greetings.client.GreetingsRequestBuilders;
+import com.linkedin.restli.examples.greetings.client.PartialUpdateGreetingRequestBuilders;
 import com.linkedin.restli.internal.common.TestConstants;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -67,9 +68,10 @@ import static com.linkedin.d2.balancer.util.hashing.URIMapperTestUtil.createHash
 public class TestRestLiScatterGather extends RestLiIntegrationTest
 {
   private static final Client CLIENT = new TransportClientAdapter(new HttpClientFactory.Builder().build().getClient(
-    Collections.<String, String>emptyMap()));
+          Collections.<String, String>emptyMap()));
   private static final String URI_PREFIX = "http://localhost:1338/";
   private static final String GREETING_URI_REG = "greetings/(.*)\\?";
+  private static final String PU_GREETING_URI_REG = "partialUpdateGreeting/(.*)\\?";
 
   private static class AlwaysD2RestClient extends RestClient
   {
@@ -100,7 +102,7 @@ public class TestRestLiScatterGather extends RestLiIntegrationTest
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "scatterGatherDataProvider")
   public static void testSendScatterGatherRequest(URIMapper mapper, RootBuilderWrapper<Long, Greeting> builders)
-    throws RemoteInvocationException
+          throws RemoteInvocationException
   {
     RestLiClientConfig config = new RestLiClientConfig();
     config.setScatterGatherStrategy(new DefaultScatterGatherStrategy(mapper));
@@ -111,8 +113,9 @@ public class TestRestLiScatterGather extends RestLiIntegrationTest
     Long[] requestIds = prepareData(restClient, entities);
 
     // BATCH_GET
-    testSendGetSGRequests(restClient, requestIds);
-    testSendGetKVSGRequests(restClient, requestIds);
+    testSendSGGetRequests(restClient, requestIds);
+    testSendSGGetEntityRequests(restClient, requestIds);
+    testSendSGGetKVRequests(restClient, requestIds);
 
     // BATCH_UPDATE
     Map<Long, Greeting> input = generateUpdates(requestIds);
@@ -126,8 +129,22 @@ public class TestRestLiScatterGather extends RestLiIntegrationTest
     testSendSGDeleteRequests(restClient, requestIds, builders);
   }
 
+  @Test(dataProvider = "scatterGatherPartialUpdateEntityDataProvider")
+  public static void testSendScatterGatherPartialUpdateEntityRequest(URIMapper mapper) throws RemoteInvocationException
+  {
+    RestLiClientConfig config = new RestLiClientConfig();
+    config.setScatterGatherStrategy(new DefaultScatterGatherStrategy(mapper));
+    RestClient restClient = new AlwaysD2RestClient(CLIENT, URI_PREFIX, config);
+
+    // Note that PartialUpdateGreeting resource only supports ids up to 20.
+    Long[] requestIds = new Long[] {0L, 1L, 2L, 3L, 4L, 5L};
+
+    Map<Long, PatchRequest<Greeting>> patch = generatePartialUpdates(requestIds);
+    testSendSGPartialUpdateEntityRequests(restClient, patch);
+  }
+
   private static Long[] prepareData(RestClient restClient, List<Greeting> entities)
-    throws RemoteInvocationException
+          throws RemoteInvocationException
   {
     GreetingsRequestBuilders builders = new GreetingsRequestBuilders();
     BatchCreateIdRequest<Long, Greeting> request = builders.batchCreate().inputs(entities).build();
@@ -143,40 +160,78 @@ public class TestRestLiScatterGather extends RestLiIntegrationTest
     return requestIds;
   }
 
-  private static void testSendGetSGRequests(RestClient restClient, Long[] requestIds) throws RemoteInvocationException
+  // BatchGetRequest
+  private static void testSendSGGetRequests(RestClient restClient, Long[] requestIds) throws RemoteInvocationException
   {
     BatchGetRequest<Greeting> request =
             new GreetingsBuilders().batchGet().ids(requestIds).fields(Greeting.fields().message()).setParam("foo", "bar").build();
     BatchResponse<Greeting> result = restClient.sendRequest(request).getResponse().getEntity();
     Assert.assertEquals(result.getResults().size(), requestIds.length);
-    Assert.assertTrue(result.getResults().values().iterator().next() instanceof Greeting);
+    Greeting item = result.getResults().values().iterator().next();
+    Assert.assertNotNull(item);
+    Assert.assertNotNull(item.getMessage());
     Assert.assertEquals(result.getErrors().size(), 0);
   }
 
-  private static void testSendGetKVSGRequests(RestClient restClient, Long[] requestIds) throws RemoteInvocationException
+  // BatchGetEntityRequest
+  private static void testSendSGGetEntityRequests(RestClient restClient, Long[] requestIds) throws RemoteInvocationException
   {
     BatchGetEntityRequest<Long, Greeting> request =
             new GreetingsRequestBuilders().batchGet().ids(requestIds).fields(Greeting.fields().message()).setParam("foo", "bar").build();
     BatchKVResponse<Long, EntityResponse<Greeting>> result = restClient.sendRequest(request).getResponse().getEntity();
     Assert.assertEquals(result.getResults().size(), requestIds.length);
+    EntityResponse<Greeting> item = result.getResults().values().iterator().next();
+    Assert.assertNotNull(item.getEntity());
+    Assert.assertNotNull(item.getEntity().getMessage());
     Assert.assertTrue(result.getResults().values().iterator().next().getEntity() instanceof Greeting);
     Assert.assertEquals(result.getErrors().size(), 0);
   }
 
+  // BatchGetKVRequest
+  private static void testSendSGGetKVRequests(RestClient restClient, Long[] requestIds) throws RemoteInvocationException
+  {
+    BatchGetKVRequest<Long, Greeting> request =
+            new GreetingsBuilders().batchGet().ids(requestIds).fields(Greeting.fields().message()).setParam("foo", "bar").buildKV();
+    BatchKVResponse<Long, Greeting> result = restClient.sendRequest(request).getResponse().getEntity();
+    Assert.assertEquals(result.getResults().size(), requestIds.length);
+    Greeting item = result.getResults().values().iterator().next();
+    Assert.assertNotNull(item);
+    Assert.assertNotNull(item.getMessage());
+    Assert.assertEquals(result.getErrors().size(), 0);
+  }
+
+  // BatchPartialUpdateEntityRequest
+  private static void testSendSGPartialUpdateEntityRequests(RestClient restClient,
+                                                            Map<Long, PatchRequest<Greeting>> inputs)
+          throws RemoteInvocationException
+  {
+    BatchPartialUpdateEntityRequest<Long, Greeting> request = new PartialUpdateGreetingRequestBuilders().batchPartialUpdateAndGet()
+            .inputs(inputs).setParam("foo", "bar").returnEntity(true).build();
+    BatchKVResponse<Long, UpdateEntityStatus<Greeting>> result = restClient.sendRequest(request).getResponse().getEntity();
+    Assert.assertEquals(result.getResults().size(), inputs.size());
+    UpdateEntityStatus<Greeting> item = result.getResults().values().iterator().next();
+    Assert.assertNotNull(item.getEntity());
+    Assert.assertFalse(item.hasError());
+    Assert.assertEquals(result.getErrors().size(), 0);
+  }
+
+  // BatchUpdateRequest
   private static void testSendSGUpdateRequests(RestClient restClient,
                                                Map<Long, Greeting> inputs,
                                                RootBuilderWrapper<Long, Greeting> builders)
-    throws RemoteInvocationException
+          throws RemoteInvocationException
   {
     @SuppressWarnings("unchecked")
     BatchUpdateRequest<Long, Greeting> request =
             (BatchUpdateRequest<Long, Greeting>) builders.batchUpdate().inputs(inputs).setParam("foo", "bar").build();
     BatchKVResponse<Long, UpdateStatus> result = restClient.sendRequest(request).getResponse().getEntity();
     Assert.assertEquals(result.getResults().size(), inputs.size());
-    Assert.assertFalse(result.getResults().values().iterator().next().hasError());
+    UpdateStatus item = result.getResults().values().iterator().next();
+    Assert.assertFalse(item.hasError());
     Assert.assertEquals(result.getErrors().size(), 0);
   }
 
+  // BatchPartialUpdateRequest
   private static void testSendSGPartialUpdateRequests(RestClient restClient,
                                                       Map<Long, PatchRequest<Greeting>> inputs,
                                                       RootBuilderWrapper<Long, Greeting> builders)
@@ -187,21 +242,24 @@ public class TestRestLiScatterGather extends RestLiIntegrationTest
             (BatchPartialUpdateRequest<Long, Greeting>) builders.batchPartialUpdate().patchInputs(inputs).setParam("foo", "bar").build();
     BatchKVResponse<Long, UpdateStatus> result = restClient.sendRequest(request).getResponse().getEntity();
     Assert.assertEquals(result.getResults().size(), inputs.size());
-    Assert.assertFalse(result.getResults().values().iterator().next().hasError());
+    UpdateStatus item = result.getResults().values().iterator().next();
+    Assert.assertFalse(item.hasError());
     Assert.assertEquals(result.getErrors().size(), 0);
   }
 
+  // BatchDeleteRequest
   private static void testSendSGDeleteRequests(RestClient restClient,
                                                Long[] requestIds,
                                                RootBuilderWrapper<Long, Greeting> builders)
-    throws RemoteInvocationException
+          throws RemoteInvocationException
   {
     @SuppressWarnings("unchecked")
     BatchDeleteRequest<Long, Greeting> request =
             (BatchDeleteRequest<Long, Greeting>) builders.batchDelete().ids(requestIds).setParam("foo", "bar").build();
     BatchKVResponse<Long, UpdateStatus> result = restClient.sendRequest(request).getResponse().getEntity();
     Assert.assertEquals(result.getResults().size(), requestIds.length);
-    Assert.assertFalse(result.getResults().values().iterator().next().hasError());
+    UpdateStatus item = result.getResults().values().iterator().next();
+    Assert.assertFalse(item.hasError());
     Assert.assertEquals(result.getErrors().size(), 0);
   }
 
@@ -224,7 +282,7 @@ public class TestRestLiScatterGather extends RestLiIntegrationTest
     {
       Greeting greeting = new Greeting();
       greeting.setId(l).setMessage("update message").setTone(Tone.SINCERE);
-      updates.put(l,greeting);
+      updates.put(l, greeting);
     }
     return updates;
   }
@@ -239,33 +297,48 @@ public class TestRestLiScatterGather extends RestLiIntegrationTest
     return patches;
   }
 
-  private static URIMapper getURIMapper(boolean sticky, boolean partitioned) throws ServiceUnavailableException
+  private static URIMapper getURIMapper(boolean sticky, boolean partitioned, String regex) throws ServiceUnavailableException
   {
     int partitionCount = partitioned ? 10 : 1;
     int totalHostCount = 100;
 
     HashRingProvider ringProvider =
             createStaticHashRingProvider(totalHostCount, partitionCount, getHashFunction(sticky));
-    PartitionInfoProvider infoProvider = createHashBasedPartitionInfoProvider(partitionCount, GREETING_URI_REG);
+    PartitionInfoProvider infoProvider = createHashBasedPartitionInfoProvider(partitionCount, regex);
     return new RingBasedUriMapper(ringProvider, infoProvider);
   }
 
-  @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "scatterGatherDataProvider", parallel=true)
+  @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "scatterGatherDataProvider", parallel = true)
   private static Object[][] scatterGatherDataProvider() throws ServiceUnavailableException
   {
-    return new Object[][] {
+    return new Object[][]{
             // partition Only
-            { getURIMapper(false, true), new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()) },
-            { getURIMapper(false, true), new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()) },
+            {getURIMapper(false, true, GREETING_URI_REG), new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders())},
+            {getURIMapper(false, true, GREETING_URI_REG), new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders())},
             // sticky Only
-            { getURIMapper(true, false), new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()) },
-            { getURIMapper(true, false), new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()) },
+            {getURIMapper(true, false, GREETING_URI_REG), new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders())},
+            {getURIMapper(true, false, GREETING_URI_REG), new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders())},
             // both sticky and partition
-            { getURIMapper(true, true), new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()) },
-            { getURIMapper(true, true), new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()) },
+            {getURIMapper(true, true, GREETING_URI_REG), new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders())},
+            {getURIMapper(true, true, GREETING_URI_REG), new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders())},
             // neither sticky nor partition
-            { getURIMapper(false, false), new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()) },
-            { getURIMapper(false, false), new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders())}
+            {getURIMapper(false, false, GREETING_URI_REG), new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders())},
+            {getURIMapper(false, false, GREETING_URI_REG), new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders())}
+    };
+  }
+
+  @DataProvider(name = "scatterGatherPartialUpdateEntityDataProvider", parallel = true)
+  private static Object[][] scatterGatherPartialUpdateEntityDataProvider() throws ServiceUnavailableException
+  {
+    return new Object[][]{
+            // partition Only
+            {getURIMapper(false, true, PU_GREETING_URI_REG)},
+            // sticky Only
+            {getURIMapper(true, false, PU_GREETING_URI_REG)},
+            // both sticky and partition
+            {getURIMapper(true, true, PU_GREETING_URI_REG)},
+            // neither sticky nor partition
+            {getURIMapper(false, false, PU_GREETING_URI_REG)},
     };
   }
 }
