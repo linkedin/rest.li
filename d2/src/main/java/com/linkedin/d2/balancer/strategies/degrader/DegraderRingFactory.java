@@ -39,7 +39,21 @@ public class DegraderRingFactory<T> implements RingFactory<T>
   public DegraderRingFactory(DegraderLoadBalancerStrategyConfig config)
   {
     String consistentHashAlgorithm = config.getConsistentHashAlgorithm();
-    if (consistentHashAlgorithm == null || consistentHashAlgorithm.equalsIgnoreCase(POINT_BASED_CONSISTENT_HASH))
+    if (consistentHashAlgorithm == null)
+    {
+      // Choose the right algorithm if consistentHashAlgorithm is not specified
+      if (isAffinityRoutingEnabled(config))
+      {
+        _log.info("URI Regex hash is specified, use multiProbe algorithm for consistent hashing");
+        _ringFactory = new MPConsistentHashRingFactory<>(config.getNumProbes(), config.getPointsPerHost());
+      }
+      else
+      {
+        _log.info("DistributionBased algorithm is used for consistent hashing");
+        _ringFactory = new DistributionNonDiscreteRingFactory<>();
+      }
+    }
+    else if (consistentHashAlgorithm.equalsIgnoreCase(POINT_BASED_CONSISTENT_HASH))
     {
       _ringFactory = new PointBasedConsistentHashRingFactory<>(config);
     }
@@ -48,7 +62,7 @@ public class DegraderRingFactory<T> implements RingFactory<T>
       _ringFactory = new MPConsistentHashRingFactory<>(config.getNumProbes(), config.getPointsPerHost());
     }
     else if (DISTRIBUTION_NON_HASH.equalsIgnoreCase(consistentHashAlgorithm)) {
-      if (config.getHashMethod() != null && config.getHashMethod().equalsIgnoreCase(DegraderLoadBalancerStrategyV3.HASH_METHOD_URI_REGEX))
+      if (isAffinityRoutingEnabled((config)))
       {
         _log.warn("URI Regex hash is specified but distribution based ring is picked, falling back to multiProbe ring");
         _ringFactory = new MPConsistentHashRingFactory<>(config.getNumProbes(), config.getPointsPerHost());
@@ -68,5 +82,9 @@ public class DegraderRingFactory<T> implements RingFactory<T>
   @Override
   public Ring<T> createRing(Map<T, Integer> points) {
     return _ringFactory.createRing(points);
+  }
+
+  private boolean isAffinityRoutingEnabled(DegraderLoadBalancerStrategyConfig config) {
+    return config.getHashMethod() != null && config.getHashMethod().equalsIgnoreCase(DegraderLoadBalancerStrategyV3.HASH_METHOD_URI_REGEX);
   }
 }

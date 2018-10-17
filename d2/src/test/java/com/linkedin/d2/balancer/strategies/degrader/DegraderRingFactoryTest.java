@@ -17,11 +17,16 @@
 package com.linkedin.d2.balancer.strategies.degrader;
 
 
+import com.linkedin.d2.balancer.util.hashing.ConsistentHashRing;
 import com.linkedin.d2.balancer.util.hashing.ConsistentHashRing.Point;
+import com.linkedin.d2.balancer.util.hashing.DistributionNonDiscreteRing;
+import com.linkedin.d2.balancer.util.hashing.MPConsistentHashRing;
 import com.linkedin.d2.balancer.util.hashing.Ring;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 
+import com.linkedin.util.degrader.DegraderImpl;
 import java.net.URISyntaxException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,8 +34,10 @@ import java.util.Map;
 import java.util.Random;
 import org.testng.annotations.Test;
 
+import static com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyConfig.*;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
 
 
 public class DegraderRingFactoryTest
@@ -56,6 +63,17 @@ public class DegraderRingFactoryTest
       newMap.put(baseUri + 1000 + i, 100);
     }
     return newMap;
+  }
+
+  private DegraderLoadBalancerStrategyConfig configBuilder(String hashAlgorithm, String hashMethod)
+  {
+    return new DegraderLoadBalancerStrategyConfig(5000, DEFAULT_UPDATE_ONLY_AT_INTERVAL, 100, hashMethod,
+        Collections.emptyMap(), DEFAULT_CLOCK, DEFAULT_INITIAL_RECOVERY_LEVEL, DEFAULT_RAMP_FACTOR, DEFAULT_HIGH_WATER_MARK,
+        DEFAULT_LOW_WATER_MARK, DEFAULT_GLOBAL_STEP_UP, DEFAULT_GLOBAL_STEP_DOWN,
+        DEFAULT_CLUSTER_MIN_CALL_COUNT_HIGH_WATER_MARK, DEFAULT_CLUSTER_MIN_CALL_COUNT_LOW_WATER_MARK,
+        DEFAULT_HASHRING_POINT_CLEANUP_RATE, hashAlgorithm, DEFAULT_NUM_PROBES, DEFAULT_POINTS_PER_HOST, null,
+        DEFAULT_QUARANTINE_MAXPERCENT, null, null, DEFAULT_QUARANTINE_METHOD, null, DegraderImpl.DEFAULT_LOW_LATENCY,
+        null, DEFAULT_LOW_EVENT_EMITTING_INTERVAL, DEFAULT_HIGH_EVENT_EMITTING_INTERVAL, DEFAULT_CLUSTER_NAME);
   }
 
   @Test(groups = { "small", "back-end" })
@@ -154,5 +172,62 @@ public class DegraderRingFactoryTest
       }
     }
   }
+
+  @Test(groups = { "small", "back-end" })
+  public void testFactoryWithNoneHashConfig() {
+    RingFactory<String> factory = new DegraderRingFactory<>(configBuilder(null, null));
+    Ring<String> ring = factory.createRing(buildPointsMap(10));
+
+    assertTrue(ring instanceof DistributionNonDiscreteRing);
+  }
+
+  @Test(groups = { "small", "back-end" })
+  public void testFactoryWithHashMethod() {
+    RingFactory<String> factory = new DegraderRingFactory<>(configBuilder(null, "uriRegex"));
+    Ring<String> ring = factory.createRing(buildPointsMap(10));
+
+    assertTrue(ring instanceof MPConsistentHashRing);
+  }
+
+  @Test(groups = { "small", "back-end" })
+  public void testFactoryWithMultiProbe() {
+    RingFactory<String> factory = new DegraderRingFactory<>(configBuilder("multiProbe", null));
+    Ring<String> ring = factory.createRing(buildPointsMap(10));
+
+    assertTrue(ring instanceof MPConsistentHashRing);
+  }
+
+  @Test(groups = { "small", "back-end" })
+  public void testFactoryWithMultiProbeAndHashMethod() {
+    RingFactory<String> factory = new DegraderRingFactory<>(configBuilder("multiProbe", "uriRegex"));
+    Ring<String> ring = factory.createRing(buildPointsMap(10));
+
+    assertTrue(ring instanceof MPConsistentHashRing);
+  }
+
+  @Test(groups = { "small", "back-end" })
+  public void testFactoryWithPointBased() {
+    RingFactory<String> factory = new DegraderRingFactory<>(configBuilder("pointBased", "uriRegex"));
+    Ring<String> ring = factory.createRing(buildPointsMap(10));
+
+    assertTrue(ring instanceof ConsistentHashRing);
+  }
+
+  @Test(groups = { "small", "back-end" })
+  public void testFactoryWithDistributionBasedAndRegix() {
+    RingFactory<String> factory = new DegraderRingFactory<>(configBuilder("distributionBased", "uriRegex"));
+    Ring<String> ring = factory.createRing(buildPointsMap(10));
+
+    assertTrue(ring instanceof MPConsistentHashRing);
+  }
+
+  @Test(groups = { "small", "back-end" })
+  public void testFactoryWithDistributionBased() {
+    RingFactory<String> factory = new DegraderRingFactory<>(configBuilder("distributionBased", null));
+    Ring<String> ring = factory.createRing(buildPointsMap(10));
+
+    assertTrue(ring instanceof DistributionNonDiscreteRing);
+  }
+
 }
 

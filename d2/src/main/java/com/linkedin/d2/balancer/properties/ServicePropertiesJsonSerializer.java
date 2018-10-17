@@ -233,14 +233,6 @@ public class ServicePropertiesJsonSerializer implements
       metadataProperties.putAll(publishedMetadataProperties);
     }
 
-    // make sure we don't use initial drop rate if multiProbe hashing is not configured
-    if (degraderProperties.containsKey(PropertyKeys.DEGRADER_INITIAL_DROP_RATE) &&
-        !"multiProbe".equalsIgnoreCase(mapGet(loadBalancerStrategyProperties,
-            PropertyKeys.HTTP_LB_CONSISTENT_HASH_ALGORITHM)))
-    {
-      degraderProperties.remove(PropertyKeys.DEGRADER_INITIAL_DROP_RATE);
-    }
-
     @SuppressWarnings("unchecked")
     List<Map<String, Object>> backupRequests = (List<Map<String, Object>>) map.get(PropertyKeys.BACKUP_REQUESTS);
     if (backupRequests == null)

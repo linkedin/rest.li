@@ -69,7 +69,7 @@ public class ServicePropertiesSerializerTest
     assertEquals(serializer.fromBytes(serializer.toBytes(property)), property);
   }
 
-  @Test(groups = { "small", "back-end" })
+  @Test(groups = { "small", "back-end" }, enabled = false)
   public void testBadConfigInServiceProperties() throws PropertySerializationException
   {
     ServicePropertiesJsonSerializer serializer = new ServicePropertiesJsonSerializer();

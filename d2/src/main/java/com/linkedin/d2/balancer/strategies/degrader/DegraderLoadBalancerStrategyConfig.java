@@ -132,6 +132,7 @@ public class DegraderLoadBalancerStrategyConfig
 
   public static final String DEFAULT_CLUSTER_NAME = "UNDEFINED_CLUSTER";
 
+  // For testing only
   public DegraderLoadBalancerStrategyConfig(long updateIntervalMs)
   {
     this(updateIntervalMs, DEFAULT_UPDATE_ONLY_AT_INTERVAL, 100, null, Collections.<String, Object>emptyMap(),
@@ -139,7 +140,7 @@ public class DegraderLoadBalancerStrategyConfig
          DEFAULT_GLOBAL_STEP_UP, DEFAULT_GLOBAL_STEP_DOWN,
          DEFAULT_CLUSTER_MIN_CALL_COUNT_HIGH_WATER_MARK,
          DEFAULT_CLUSTER_MIN_CALL_COUNT_LOW_WATER_MARK,
-         DEFAULT_HASHRING_POINT_CLEANUP_RATE, null,
+         DEFAULT_HASHRING_POINT_CLEANUP_RATE, "pointBased",
          DEFAULT_NUM_PROBES, DEFAULT_POINTS_PER_HOST, null,
          DEFAULT_QUARANTINE_MAXPERCENT,
          null, null, DEFAULT_QUARANTINE_METHOD, null, DegraderImpl.DEFAULT_LOW_LATENCY,

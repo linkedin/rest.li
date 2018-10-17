@@ -3656,6 +3656,7 @@ public class DegraderLoadBalancerTest
     lbProperties.put(PropertyKeys.HTTP_LB_HIGH_WATER_MARK, "3000");
     lbProperties.put(PropertyKeys.HTTP_LB_LOW_WATER_MARK, "500");
     lbProperties.put(PropertyKeys.HTTP_LB_RING_RAMP_FACTOR, "1.0");
+    lbProperties.put(PropertyKeys.HTTP_LB_CONSISTENT_HASH_ALGORITHM, "pointBased");
 
     return lbProperties;
   }

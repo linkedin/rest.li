@@ -65,7 +65,6 @@ import com.linkedin.d2.discovery.stores.PropertyStore;
 import com.linkedin.d2.discovery.stores.file.FileStore;
 import com.linkedin.d2.discovery.stores.file.FileStoreTest;
 import com.linkedin.d2.discovery.stores.mock.MockStore;
-import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
@@ -771,7 +770,7 @@ public class SimpleLoadBalancerTest
                                                         "cluster-1",
                                                         "/foo",
                                                         Arrays.asList("degrader"),
-                                                        Collections.<String,Object>emptyMap(),
+                                                        Collections.singletonMap(PropertyKeys.HTTP_LB_CONSISTENT_HASH_ALGORITHM, "pointBased"),
                                                         null,
                                                         null,
                                                         prioritizedSchemes,
