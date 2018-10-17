@@ -18,7 +18,6 @@
 package com.linkedin.data;
 
 
-import com.fasterxml.jackson.core.async.ByteArrayFeeder;
 import com.linkedin.util.ArgumentUtil;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -530,24 +529,6 @@ public final class ByteString
     }
 
     return slice(0, prefixBytes.length).equals(new ByteString(prefixBytes));
-  }
-
-  /**
-   * Feed this ByteString to the given non blocking byte array feeder.
-   *
-   * @param   feeder the given {@link ByteArrayFeeder} instance.
-   *
-   * @throws IOException if an exception occurred when feeding data to the feeder.
-   *
-   * <p>This method is useful to parse ByteString instances using non blocking asynchronous parsers without
-   * copying the underlying data.</p>
-   */
-  public void feedToNonBlockingFeeder(ByteArrayFeeder feeder) throws IOException
-  {
-    for (ByteArray byteArray : _byteArrays._byteArrays)
-    {
-      feeder.feedInput(byteArray._bytes, byteArray._offset, byteArray._length);
-    }
   }
 
   //Private class to abstract away iteration over bytes in a compound ByteString. Note that we don't implement

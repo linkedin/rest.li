@@ -128,9 +128,18 @@ class AbstractJacksonDataDecoder<T extends DataComplex> implements DataDecoder<T
   @Override
   public void onDataAvailable(ByteString data)
   {
+    byte[] bytes = data.copyBytes(); // TODO: Avoid copying bytes?
     try
     {
-      data.feedToNonBlockingFeeder(_byteArrayFeeder);
+      /**
+       * Method that can be called to feed more data, if (and only if)
+       * {@link #needMoreInput} returns true.
+       * --Copied from ByteArrayFeeder--
+       **/
+      if (_byteArrayFeeder.needMoreInput())
+      {
+        _byteArrayFeeder.feedInput(bytes, 0, bytes.length);
+      }
     }
     catch (IOException e)
     {

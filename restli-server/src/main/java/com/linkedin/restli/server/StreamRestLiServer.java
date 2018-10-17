@@ -193,6 +193,7 @@ class StreamRestLiServer extends BaseRestLiServer implements StreamRequestHandle
 
             if (error != null)
             {
+              log.error("Fail to handle structured stream request", error);
               callback.onError(error);
             }
 
@@ -220,6 +221,7 @@ class StreamRestLiServer extends BaseRestLiServer implements StreamRequestHandle
 
             if (e != null)
             {
+              log.error("Fail to handle structured toRest request", e);
               callback.onError(e);
             }
 
