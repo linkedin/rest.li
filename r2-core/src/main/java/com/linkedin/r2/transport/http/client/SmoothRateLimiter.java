@@ -21,7 +21,6 @@ import com.linkedin.common.util.None;
 import com.linkedin.util.ArgumentUtil;
 import com.linkedin.util.clock.Clock;
 import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
@@ -129,7 +128,7 @@ public class SmoothRateLimiter implements AsyncRateLimiter
   }
 
   /**
-   * An immutable implementation of rate as number of events per period of time in microseconds.
+   * An immutable implementation of rate as number of events per period of time in milliseconds.
    * In addition, a {@code burst} parameter is used to indicate the maximum number of permits can
    * be issued at a time. To satisfy the burst requirement, {@code period} might adjusted if
    * necessary. The minimal period is one millisecond. If the specified events per period cannot
@@ -152,7 +151,7 @@ public class SmoothRateLimiter implements AsyncRateLimiter
     {
       if (burst < events)
       {
-        long newPeriod = Math.round(TimeUnit.MICROSECONDS.toMicros(period) * (burst / (events * 1.0D)));
+        long newPeriod = Math.round(period * burst / (events * 1.0D));
         if (newPeriod == 0)
         {
           String message = String.format(
@@ -176,10 +175,11 @@ public class SmoothRateLimiter implements AsyncRateLimiter
     }
 
     /**
-     * Gets period in microseconds.
-     * @return Period in microseconds.
+     * Gets period in Milliseconds.
+     * @return Period in milliseconds.
      */
-    long getPeriod() {
+    long getPeriod()
+    {
       return _period;
     }
   }
@@ -268,7 +268,7 @@ public class SmoothRateLimiter implements AsyncRateLimiter
       try
       {
         _scheduler.schedule(this::loop, Math.max(0, _permitTime + rate.getPeriod() - _clock.currentTimeMillis()),
-            TimeUnit.MICROSECONDS);
+            TimeUnit.MILLISECONDS);
       }
       catch (Throwable throwable)
       {

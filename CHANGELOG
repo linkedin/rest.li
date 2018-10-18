@@ -1,5 +1,14 @@
+25.0.12
+-------
+
+
 25.0.11
 ------
+(RB=1457429)
+Keep time unit consistent for SmoothRateLimtter
+
+(RB=1456168)
+Choose right algorithm automatically when consistentHashAlgorithm is not specified
 
 25.0.10
 ------
