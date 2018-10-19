@@ -140,6 +140,10 @@ class AbstractJacksonDataDecoder<T extends DataComplex> implements DataDecoder<T
       {
         _byteArrayFeeder.feedInput(bytes, 0, bytes.length);
       }
+      else
+      {
+        handleException(new Exception("Byte Array Feeder is not ok to feed more data."));
+      }
     }
     catch (IOException e)
     {
