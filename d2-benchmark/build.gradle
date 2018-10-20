@@ -15,3 +15,5 @@ dependencies {
   jmh externalDependency.jmhCore
   jmh externalDependency.jmhAnnotations
 }
+
+tasks.getByPath(':d2-benchmark:compileJmhJava').dependsOn(':d2:compileTestJava')
