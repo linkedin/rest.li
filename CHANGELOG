@@ -1,7 +1,14 @@
+25.0.13
+-------
+
+
 25.0.12
 -------
 (RB=1458449)
 Have d2-benchmark compilation task depend on d2's tests compilatoin task
+
+(RB=1459522)
+Adding default value to enableSSLSessionResumption
 
 25.0.11
 ------
