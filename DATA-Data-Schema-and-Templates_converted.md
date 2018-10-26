@@ -4,7 +4,9 @@ title: DATA-Data-Schema-and-Templates
 permalink: /DATA-Data-Schema-and-Templates
 ---
 
-# Contents
+# Data schema and template
+
+This page contains the following sections
 
   - [Introduction](#introduction)
   - [Schema Definition](#schema-definition)
@@ -15,7 +17,7 @@ permalink: /DATA-Data-Schema-and-Templates
   - [Java Binding](#java-binding)
   - [Avro Translation](#avro-translation)
 
-# Introduction
+## Introduction
 
 The Pegasus Data layer includes the following:
 
@@ -26,7 +28,7 @@ The Pegasus Data layer includes the following:
   - The generic and type-safe Java API’s for manipulating data. These
     generated Java classes are referred to as the ‘data templates’.
 
-# Schema Definition
+## Schema Definition
 
 The Pegasus schema definition language is inspired by the [Avro 1.4.1
 specification](http://avro.apache.org/docs/1.4.1/spec.html).
@@ -72,7 +74,7 @@ The Pegasus schema differs from Avro in the following ways:
     binding namespace override will not change how data is transported
     over the wire.**
 
-## Creating a Schema
+### Creating a Schema
 
 Each schema should be stored in its own file with a `.pdsc` extension.
 The Pegasus code generator implements a resolver that is similar to Java
@@ -114,174 +116,180 @@ The following are a few example schemas and their file names.
 
 com/linkedin/pegasus/generator/examples/Foo.pdsc
 
-    ```{
-      "type" : "record",
-      "name" : "Foo",
-      "namespace" : "com.linkedin.pegasus.generator.examples",
-      "doc" : "A foo record",
-      "fields" : [
-        { "name" : "intField",       "type" : "int" },
-        { "name" : "longField",      "type" : "long" },
-        { "name" : "floatField",     "type" : "float" },
-        { "name" : "doubleField",    "type" : "double" },
-        { "name" : "bytesField",     "type" : "bytes" },
-        { "name" : "stringField",    "type" : "string" },
-        { "name" : "fruitsField",    "type" : "Fruits" },
-        { "name" : "intArrayField",  "type" : { "type" : "array", "items" : "int" } },
-        { "name" : "stringMapField", "type" : { "type" : "map", "values" : "string" } },
-        {
-          "name" : "unionField",
-          "type" : [
-            "int",
-            "string",
-            "Fruits",
-            "Foo",
-            { "type" : "array", "items" : "string" },
-            { "type" : "map", "values" : "long" },
-            "null"
-          ]
-        }
-      ]
-    }
-    ```
+  ```
+  {
+    "type" : "record",
+    "name" : "Foo",
+    "namespace" : "com.linkedin.pegasus.generator.examples",
+    "doc" : "A foo record",
+    "fields" : [
+      { "name" : "intField",       "type" : "int" },
+      { "name" : "longField",      "type" : "long" },
+      { "name" : "floatField",     "type" : "float" },
+      { "name" : "doubleField",    "type" : "double" },
+      { "name" : "bytesField",     "type" : "bytes" },
+      { "name" : "stringField",    "type" : "string" },
+      { "name" : "fruitsField",    "type" : "Fruits" },
+      { "name" : "intArrayField",  "type" : { "type" : "array", "items" : "int" } },
+      { "name" : "stringMapField", "type" : { "type" : "map", "values" : "string" } },
+      {
+        "name" : "unionField",
+        "type" : [
+          "int",
+          "string",
+          "Fruits",
+          "Foo",
+          { "type" : "array", "items" : "string" },
+          { "type" : "map", "values" : "long" },
+          "null"
+        ]
+      }
+    ]
+  }
+  ```
 
 com/linkedin/pegasus/generator/examples/FooWithNamespaceOverride.pdsc
 (please see Java Binding section to see how this “package” affects
 generated java class.)
 
-    ```{
-      "type" : "record",
-      "name" : "FooWithNamespaceOverride",
-      "namespace" : "com.linkedin.pegasus.generator.examples",
-      "package" : "com.linkedin.pegasus.generator.examples.record",
-      "doc" : "A foo record",
-      "fields" : [
-        { "name" : "intField",       "type" : "int" },
-        { "name" : "longField",      "type" : "long" },
-        { "name" : "floatField",     "type" : "float" },
-        { "name" : "doubleField",    "type" : "double" },
-        { "name" : "bytesField",     "type" : "bytes" },
-        { "name" : "stringField",    "type" : "string" },
-        { "name" : "fruitsField",    "type" : "Fruits" },
-        { "name" : "intArrayField",  "type" : { "type" : "array", "items" : "int" } },
-        { "name" : "stringMapField", "type" : { "type" : "map", "values" : "string" } },
-        {
-          "name" : "unionField",
-          "type" : [
-            "int",
-            "string",
-            "Fruits",
-            "Foo",
-            { "type" : "array", "items" : "string" },
-            { "type" : "map", "values" : "long" },
-            "null"
-          ]
-        }
-      ]
-    }
-    ```
+  ```
+  {
+    "type" : "record",
+    "name" : "FooWithNamespaceOverride",
+    "namespace" : "com.linkedin.pegasus.generator.examples",
+    "package" : "com.linkedin.pegasus.generator.examples.record",
+    "doc" : "A foo record",
+    "fields" : [
+      { "name" : "intField",       "type" : "int" },
+      { "name" : "longField",      "type" : "long" },
+      { "name" : "floatField",     "type" : "float" },
+      { "name" : "doubleField",    "type" : "double" },
+      { "name" : "bytesField",     "type" : "bytes" },
+      { "name" : "stringField",    "type" : "string" },
+      { "name" : "fruitsField",    "type" : "Fruits" },
+      { "name" : "intArrayField",  "type" : { "type" : "array", "items" : "int" } },
+      { "name" : "stringMapField", "type" : { "type" : "map", "values" : "string" } },
+      {
+        "name" : "unionField",
+        "type" : [
+          "int",
+          "string",
+          "Fruits",
+          "Foo",
+          { "type" : "array", "items" : "string" },
+          { "type" : "map", "values" : "long" },
+          "null"
+        ]
+      }
+    ]
+  }
+  ```
 
 com/linkedin/pegasus/generator/examples/Fruits.pdsc
 
-    ```{
-      "type" : "enum",
-      "name" : "Fruits",
-      "namespace" : "com.linkedin.pegasus.generator.examples",
-      "doc" : "A fruit",
-      "symbols" : [ "APPLE", "BANANA", "ORANGE", "PINEAPPLE" ],
-      "symbolDocs" : { "APPLE":"A red, yellow or green fruit.", "BANANA":"A yellow fruit.", "ORANGE":"An orange fruit.", "PINEAPPLE":"A yellow fruit."} 
-    }
-    ```
+  ```
+  {
+    "type" : "enum",
+    "name" : "Fruits",
+    "namespace" : "com.linkedin.pegasus.generator.examples",
+    "doc" : "A fruit",
+    "symbols" : [ "APPLE", "BANANA", "ORANGE", "PINEAPPLE" ],
+    "symbolDocs" : { "APPLE":"A red, yellow or green fruit.", "BANANA":"A yellow fruit.", "ORANGE":"An orange fruit.", "PINEAPPLE":"A yellow fruit."} 
+  }
+  ```
 
 com/linkedin/pegasus/generator/examples/MD5.pdsc
 
-    ```{
-      "type" : "fixed",
-      "name" : "MD5",
-      "namespace" : "com.linkedin.pegasus.generator.examples",
-      "doc" : "MD5",
-      "size" : 16
-    }
-    ```
+  ```
+  {
+    "type" : "fixed",
+    "name" : "MD5",
+    "namespace" : "com.linkedin.pegasus.generator.examples",
+    "doc" : "MD5",
+    "size" : 16
+  }
+  ```
 
 com/linkedin/pegasus/generator/examples/StringList.pdsc
 
-    ```{
-      "type" : "record",
-      "name" : "StringList",
-      "namespace" : "com.linkedin.pegasus.generator.examples",
-      "doc" : "A list of strings",
-      "fields" : [
-        { "name" : "element", "type" : "string" },
-        { "name" : "next"   , "type" : "StringList", "optional" : true }
-      ]
-    
-    }
-    ```
+  ```
+  {
+    "type" : "record",
+    "name" : "StringList",
+    "namespace" : "com.linkedin.pegasus.generator.examples",
+    "doc" : "A list of strings",
+    "fields" : [
+      { "name" : "element", "type" : "string" },
+      { "name" : "next"   , "type" : "StringList", "optional" : true }
+    ]
+  
+  }
+  ```
 
 com/linkedin/pegasus/generator/examples/InlinedExample.pdsc
 
-    ```{
-      "type": "record",
-      "name": "InlinedExample",
-      "namespace": "com.linkedin.pegasus.generator.examples",
-      "doc": "Example on how you can declare an enum and a record inside another record",
-      "fields": [
-        {
-          "name": "myEnumField",
-          "type": {
-          "type" : "enum",
-          "name" : "EnumDeclarationInTheSameFile",
-          "symbols" : ["FOO", "BAR", "BAZ"]
+  ```
+  {
+    "type": "record",
+    "name": "InlinedExample",
+    "namespace": "com.linkedin.pegasus.generator.examples",
+    "doc": "Example on how you can declare an enum and a record inside another record",
+    "fields": [
+      {
+        "name": "myEnumField",
+        "type": {
+        "type" : "enum",
+        "name" : "EnumDeclarationInTheSameFile",
+        "symbols" : ["FOO", "BAR", "BAZ"]
+        },
+        "doc": "This is how we inline enum declaration without creating a new pdsc file",
+        "symbolDocs": {"FOO":"It's a foo!", "HASH":"It's a bar!", "NONE":"It's a baz!"}
+      },
+      {
+        "name": "stringField",
+        "type": "string",
+        "doc": "A regular string"
+      },
+      {
+        "name": "intField",
+        "type": "int",
+        "doc": "A regular int"
+      },
+      {
+        "name": "UnionFieldWithInlineRecordAndEnum",
+        "doc": "In this example we will declare a record and an enum inside a union",
+        "type": [
+          {
+            "type" : "record",
+            "name" : "myRecord",
+            "fields": [
+              {
+                "name": "foo1",
+                "type": "int",
+                "doc": "random int field"
+              },
+              {
+                "name": "foo2",
+                "type": "int",
+                "doc": "random int field"
+              }
+            ]
           },
-          "doc": "This is how we inline enum declaration without creating a new pdsc file",
-          "symbolDocs": {"FOO":"It's a foo!", "HASH":"It's a bar!", "NONE":"It's a baz!"}
-        },
-        {
-          "name": "stringField",
-          "type": "string",
-          "doc": "A regular string"
-        },
-        {
-          "name": "intField",
-          "type": "int",
-          "doc": "A regular int"
-        },
-        {
-          "name": "UnionFieldWithInlineRecordAndEnum",
-          "doc": "In this example we will declare a record and an enum inside a union",
-          "type": [
-            {
-              "type" : "record",
-              "name" : "myRecord",
-              "fields": [
-                {
-                  "name": "foo1",
-                  "type": "int",
-                  "doc": "random int field"
-                },
-                {
-                  "name": "foo2",
-                  "type": "int",
-                  "doc": "random int field"
-                }
-              ]
-            },
-            {
-              "name": "anotherEnum",
-              "type" : "enum",
-              "symbols" : ["FOOFOO", "BARBAR"],
-              "doc": "Random enum",
-              "symbolDocs": {"FOOFOO":"description about FOOFOO", "BARBAR":"description about BARBAR"}
-            }
-          ],
-          "optional": true
-        }
-      ]
-    }
-    ```
+          {
+            "name": "anotherEnum",
+            "type" : "enum",
+            "symbols" : ["FOOFOO", "BARBAR"],
+            "doc": "Random enum",
+            "symbolDocs": {"FOOFOO":"description about FOOFOO", "BARBAR":"description about BARBAR"}
+          }
+        ],
+        "optional": true
+      }
+    ]
+  }
+  ```
 
-## Typeref
+### Typeref
 
 Pegasus supports a new schema type known as a typeref. A typeref is like
 a typedef in C. It does not declare a new type but declares an alias to
@@ -326,31 +334,31 @@ Here are a few examples:
 
 Differentiate URN from string
 
-    ```
-    {
-      "type" : "typeref",
-      "name" : "URN",
-      "ref"  : "string",
-      "doc"  : "A URN, the format is defined by RFC 2141"
-    }
-    ```
+  ```
+  {
+    "type" : "typeref",
+    "name" : "URN",
+    "ref"  : "string",
+    "doc"  : "A URN, the format is defined by RFC 2141"
+  }
+  ```
 
 Differentiate time from long
 
-    ```
-    {
-      "type" : "typeref",
-      "name" : "time",
-      "ref"  : "long",
-      "doc"  : "Time in milliseconds since Jan 1, 1970 UTC"
-    }
-    ```
+  ```
+  {
+    "type" : "typeref",
+    "name" : "time",
+    "ref"  : "long",
+    "doc"  : "Time in milliseconds since Jan 1, 1970 UTC"
+  }
+  ```
 
   
 Typerefs (by default) do not alter the serialization format or in-memory
 representation.
 
-## Record Field Attributes
+### Record Field Attributes
 
 You can use the following record field attributes to annotate fields
 with metadata.
@@ -360,7 +368,7 @@ with metadata.
 
 <a name="OptionalFields"></a>
 
-## Optional Fields
+### Optional Fields
 
 Pegasus supports optional fields implicitly through the “optional” flag
 in the field definition. A field is required unless the field is
@@ -375,41 +383,41 @@ whether the default value or null should be returned when an absent
 optional field is accessed. The has field accessor may also be used to
 determine if an optional field is present.
 
-    ```
-    {
-      "type" : "record",
-      "name" : "Optional",
-      "namespace" : "com.linkedin.pegasus.generator.examples",
-      "fields" :
-      [
-        {
-          "name"     : "foo",
-          "type"     : "string",
-          "optional" : true
-        }
-      ]
-    }
-    ```
+  ```
+  {
+    "type" : "record",
+    "name" : "Optional",
+    "namespace" : "com.linkedin.pegasus.generator.examples",
+    "fields" :
+    [
+      {
+        "name"     : "foo",
+        "type"     : "string",
+        "optional" : true
+      }
+    ]
+  }
+  ```
 
 Optional field present
 
-    ```
-    {
-      "foo" : "abcd"
-    }
-    ```
+  ```
+  {
+    "foo" : "abcd"
+  }
+  ```
 
 Optional field absent
 
-    ```
-    {
-    }
-    ```
+  ```
+  {
+  }
+  ```
 
 See [GetMode](#GetMode) for more detailed information on how the code
 generated data stubs access optional/default fields.
 
-### Avro’s Approach to Declaring Optional Fields
+#### Avro’s Approach to Declaring Optional Fields
 
 DO NOT USE UNION WITH NULL TO DECLARE AN OPTIONAL FIELD IN PEGASUS.
 
@@ -422,41 +430,41 @@ present in the underlying in-memory data structure and serialized data.
 Absence of a value is represented by a null value. Presence of a value
 is represented by a value in the union of the value’s type.
 
-    ```
-    {
-      "type" : "record",
-      "name" : "OptionalWithUnion",
-      "namespace" : "com.linkedin.pegasus.generator.examples",
-      "fields" :
-      [
-        {
-          "name"    : "foo",
-          "type"    : ["string", "null"]
-        }
-      ]
-    }
-    ```
+  ```
+  {
+    "type" : "record",
+    "name" : "OptionalWithUnion",
+    "namespace" : "com.linkedin.pegasus.generator.examples",
+    "fields" :
+    [
+      {
+        "name"    : "foo",
+        "type"    : ["string", "null"]
+      }
+    ]
+  }
+  ```
 
 optional field present
 
-    ```
-    {
-      "foo" : { "string" : "abcd" }
-    }
-    ```
+  ```
+  {
+    "foo" : { "string" : "abcd" }
+  }
+  ```
 
 optional field absent
 
-    ```
-    {
-      "foo" : null
-    }
-    ```
+  ```
+  {
+    "foo" : null
+  }
+  ```
 
 Note Avro uses the union approach because Avro serialization is
 optimized to not include a field identifier in the serialized data.
 
-## Union
+### Union
 
 Union is a powerful way to model data that can be of different types at
 different scenarios. Record fields that have this behavior can be
@@ -464,28 +472,28 @@ defined as a Union type with the expected value types as its members.
 Here is an example of a record field defined an a union with `string`
 and `array` as its members.
 
-    ```
-    {
-      "type" : "record",
-      "name" : "RecordWithUnion",
-      "namespace" : "com.linkedin.pegasus.examples",
-      "fields" :
-      [
-        {
-          "name" : "result",
-          "type" : [
-            "string",
-            {
-              "type" : "array",
-              "items" : "Result"
-            }
-          ]
-        }
-      ]
-    }
-    ```
+  ```
+  {
+    "type" : "record",
+    "name" : "RecordWithUnion",
+    "namespace" : "com.linkedin.pegasus.examples",
+    "fields" :
+    [
+      {
+        "name" : "result",
+        "type" : [
+          "string",
+          {
+            "type" : "array",
+            "items" : "Result"
+          }
+        ]
+      }
+    ]
+  }
+  ```
 
-### Union With Members Of The Same Type
+#### Union With Members Of The Same Type
 
 In addition to the unions with disparate member types, Pegasus unions
 can have more than one member of the same type inside a single union
@@ -505,39 +513,39 @@ discriminator unlike the member type name on the standard unions
 In the example below, the union definition has a `string` and two
 `array` members with unique aliases for each of them.
 
-    ```
-    {
-      "type" : "record",
-      "name" : "RecordWithAliasedUnion",
-      "namespace" : "com.linkedin.pegasus.examples",
-      "fields" :
-      [
-        {
-          "name" : "result",
-          "type" : [
-            {
-              "type" : "string",
-              "alias" : "message"
+  ```
+  {
+    "type" : "record",
+    "name" : "RecordWithAliasedUnion",
+    "namespace" : "com.linkedin.pegasus.examples",
+    "fields" :
+    [
+      {
+        "name" : "result",
+        "type" : [
+          {
+            "type" : "string",
+            "alias" : "message"
+          },
+          {
+            "type": {
+              "type" : "array",
+              "items" : "Result"
             },
-            {
-              "type": {
-                "type" : "array",
-                "items" : "Result"
-              },
-              "alias" : "successResults"
+            "alias" : "successResults"
+          },
+          {
+            "type": {
+              "type" : "array",
+              "items" : "Result"
             },
-            {
-              "type": {
-                "type" : "array",
-                "items" : "Result"
-              },
-              "alias" : "failureResults"
-            }
-          ]
-        }
-      ]
-    }
-    ```
+            "alias" : "failureResults"
+          }
+        ]
+      }
+    ]
+  }
+  ```
 
 There are few constraints that must be taken in consideration while
 specifying aliases for union members,
@@ -548,7 +556,7 @@ specifying aliases for union members,
 3.  Aliases cannot be specified for `null` member types which means
     there can only be one null member inside a union definition.
 
-## Default Values
+### Default Values
 
 A field may be declared to have a default value. The default value will
 be validated against the schema type of the field. For example, if the
@@ -566,88 +574,88 @@ doesn’t fail even if the field is absent. However, in this case, [data
 validation](#data-to-schema-validation) may fail if
 [RequiredMode](#requiredmode) is set to `MUST_BE_PRESENT`.
 
-    ```
-    {
-      "type" : "record",
-      "name" : "Default",
-      "namespace" : "com.linkedin.pegasus.generator.examples",
-      "fields" :
-      [
-        {
-          "name"     : "mandatoryWithDefault",
-          "type"     : "string",
-          "default"  : "this is the default string"
-        },
-        {
-          "name"     : "optionalWithDefault",
-          "type"     : "string",
-          "optional" : true,
-          "default"  : "this is the default string"
-        }
-      ]
-    }
-    ```
+  ```
+  {
+    "type" : "record",
+    "name" : "Default",
+    "namespace" : "com.linkedin.pegasus.generator.examples",
+    "fields" :
+    [
+      {
+        "name"     : "mandatoryWithDefault",
+        "type"     : "string",
+        "default"  : "this is the default string"
+      },
+      {
+        "name"     : "optionalWithDefault",
+        "type"     : "string",
+        "optional" : true,
+        "default"  : "this is the default string"
+      }
+    ]
+  }
+  ```
 
 See [GetMode](#GetMode) for more detailed information on how the code
 generated data stubs access optional/default fields.
 
-### Default Values for Union Types
+#### Default Values for Union Types
 
 An Avro default value for a union type does not include the member
 discriminator and the type of the default value must be the first member
 type in the list of member types.
 
-    ```
-    {
-      ...
-      "fields" :
-      [
-        {
-          "name"     : "foo",
-          "type"     : [ "int", "string" ],
-          "default"  : 42
-        }
-      ]
-    }
-    ```
+  ```
+  {
+    ...
+    "fields" :
+    [
+      {
+        "name"     : "foo",
+        "type"     : [ "int", "string" ],
+        "default"  : 42
+      }
+    ]
+  }
+  ```
 
 A Pegasus default value for a union type must include the member
 discriminator. This allows the same typeref’ed union to have default
 values of different member types.
 
-    ```
-    {
-      ...
-      "fields" :
-      [
-        {
-          "name"     : "foo",
-          "type"     : [ "int", "string" ]
-          "default"  : { "int" : 42 }
-        }
-      ]
-    }
-    ```
+  ```
+  {
+    ...
+    "fields" :
+    [
+      {
+        "name"     : "foo",
+        "type"     : [ "int", "string" ]
+        "default"  : { "int" : 42 }
+      }
+    ]
+  }
+  ```
 
 For unions with aliased members, the specified alias is used as member
 discriminator instead of the type name.
 
-    ```
-    {
-      ...
-      "fields" :
-      [
-        {
-          "name"     : "foo",
-          "type"     : [
-            { "type" : "int", "alias" : "count" },
-            { "type" : "string", "alias" : "message" }
-          ],
-          "default"  : { "count" : 42 }
-        }
-      ]
-    }
-    ```
+  ```
+  {
+    ...
+    "fields" :
+    [
+      {
+        "name"     : "foo",
+        "type"     : [
+          { "type" : "int", "alias" : "count" },
+          { "type" : "string", "alias" : "message" }
+        ],
+        "default"  : { "count" : 42 }
+      }
+    ]
+  }
+  ```
 
 Note the Avro syntax optimizes the most common union with null pattern
 that is used to represent optional fields to be less verbose. However,
@@ -660,7 +668,7 @@ for the union type must be of the first member type in the list of
 member types. This restriction is because Avro requires default values
 of a union type to be of the first member type of the union.
 
-## Including Fields from Another Record
+### Including Fields from Another Record
 
 Pegasus implements the “include” attribute. It is used to include all
 fields from another record into the current record. It does not include
@@ -672,33 +680,33 @@ The value of the “include” attribute should be a list of records or
 typerefs of records. It is an error to specify non-record types in this
 list.
 
-    ```
-    {
-      "doc"  : "Bar includes fields of Foo, Bar will have fields f1 from itself and b1 from Bar",
-      "type" : "record",
-      "name" : "Bar",
-      "include" : [ "Foo" ],
-      "fields" : [
-        {
-          "name"     : "b1",
-          "type"     : "string",
-        }
-      ]
-    }
-    
-    {
-      "type" : "record",
-      "name" : "Foo",
-      "fields" : [
-        {
-          "name"     : "f1",
-          "type"     : "string",
-        }
-      ]
-    }
-    ```
+  ```
+  {
+    "doc"  : "Bar includes fields of Foo, Bar will have fields f1 from itself and b1 from Bar",
+    "type" : "record",
+    "name" : "Bar",
+    "include" : [ "Foo" ],
+    "fields" : [
+      {
+        "name"     : "b1",
+        "type"     : "string",
+      }
+    ]
+  }
+  
+  {
+    "type" : "record",
+    "name" : "Foo",
+    "fields" : [
+      {
+        "name"     : "f1",
+        "type"     : "string",
+      }
+    ]
+  }
+  ```
 
-## Deprecation
+### Deprecation
 
 Named schema, record field, and enum symbol can be deprecated using
 `deprecated` property or `deprecatedSymbols` property in enum
@@ -708,64 +716,64 @@ schema element is deprecated or an alternative, or simply boolean
 future. The Java binding generated for these elements will be marked as
 deprecated.
 
-### Named Schema
+#### Named Schema
 
 To deprecate a named schema, add `deprecated` property to its
 declaration.
 
-    ```
-    {
-      "type" : "record",
-      "name" : "Deprecated",
-      "namespace" : "com.linkedin.pegasus.generator.test",
-      "deprecated": "Use Foo instead.",
-      "fields" : [
-        ...
-      ]
-    }
-    ```
+  ```
+  {
+    "type" : "record",
+    "name" : "Deprecated",
+    "namespace" : "com.linkedin.pegasus.generator.test",
+    "deprecated": "Use Foo instead.",
+    "fields" : [
+      ...
+    ]
+  }
+  ```
 
-### Record Field
+#### Record Field
 
 To deprecate a record field, add `deprecated` property to its
 declaration.
 
-    ```
-    {
-      "type" : "record",
-      "name" : "Foo",
-      "namespace" : "com.linkedin.pegasus.generator.test",
-      "fields" : [
-        {
-          "name" : "deprecatedInt",
-          "type" : "int",
-          "deprecated": "Reason for int deprecation."
-        }
-      ]
-    }
-    ```
+  ```
+  {
+    "type" : "record",
+    "name" : "Foo",
+    "namespace" : "com.linkedin.pegasus.generator.test",
+    "fields" : [
+      {
+        "name" : "deprecatedInt",
+        "type" : "int",
+        "deprecated": "Reason for int deprecation."
+      }
+    ]
+  }
+  ```
 
-### Enum Symbol
+#### Enum Symbol
 
 To deprecate an enum symbol, add `deprecatedSymbols` property to the
 enum declaration. The value of the property is a map from the symbol
 name to a string description.
 
-    ```
-    {
-      "name" : "Planet",
-      "namespace" : "com.linkedin.pegasus.generator.test",
-      "type" : "enum",
-      "symbols" : [ "MERCURY", "VENUS", "EARTH", "MARS", "JUPITER", "SATURN", "URANUS", "NEPTUNE", "PLUTO" ],
-      "deprecatedSymbols": {
-        "PLUTO": "Reclassified as dwarf planet."
-      }
+  ```
+  {
+    "name" : "Planet",
+    "namespace" : "com.linkedin.pegasus.generator.test",
+    "type" : "enum",
+    "symbols" : [ "MERCURY", "VENUS", "EARTH", "MARS", "JUPITER", "SATURN", "URANUS", "NEPTUNE", "PLUTO" ],
+    "deprecatedSymbols": {
+      "PLUTO": "Reclassified as dwarf planet."
     }
-    ```
+  }
+  ```
 
 <a name="HowDataisSerializedforTransport"></a>
 
-# How Data is Serialized for Transport
+## How Data is Serialized for Transport
 
 The data is serialized for transport using JSON encoding in following
 the Avro 1.4.1 specification. This JSON encoding is also the same as the
@@ -867,14 +875,15 @@ object if member value is not null with only one name/value pair in the object. 
 If a union schema has a typeref member, then the key for that member is
 the dereferenced type. E.g. for union
 
-    ```{
-      "name" : "unionField",
-      "type" : [
-        "int",
-        { "type" : "typeref", "name" : "a.b.c.d.Foo", "ref"  : "string" }
-      ]
-    }
-    ```
+  ```
+  {
+    "name" : "unionField",
+    "type" : [
+      "int",
+      { "type" : "typeref", "name" : "a.b.c.d.Foo", "ref"  : "string" }
+    ]
+  }
+  ```
 
 the JSON encoding for the typeref member should look like
 
@@ -887,62 +896,63 @@ NOT
 Similarly, for a union with aliased members the key for the members will
 be its corresponding alias. For example,
 
-    ```{
-      "name" : "unionField",
-      "type" : [
-        { "type" : "int", "alias" : "count" },
-        { "type" : { "type" : "typeref", "name" : "a.b.c.d.Foo", "ref"  : "string" }, "alias" : "foo" }
-      ]
-    }
-    ```
+  ```
+  {
+    "name" : "unionField",
+    "type" : [
+      { "type" : "int", "alias" : "count" },
+      { "type" : { "type" : "typeref", "name" : "a.b.c.d.Foo", "ref"  : "string" }, "alias" : "foo" }
+    ]
+  }
+  ```
 
 the JSON encoding for the typeref member should look like
 
 ```{ “foo” : “Correct key” }```
 
-#### How to serialize data to JSON
+##### How to serialize data to JSON
 
 `DataMapUtils` provides convenience methods to serialize and deserialize
 between data and JSON using `JacksonDataCodec`.
 
 To serialize from a DataMap to JSON:
 
-    ```
-    DataMap dataMap = new DataMap();
-    dataMap.put("message", "Hi!");
-    byte[] jsonBytes = DataMapUtils.mapToBytes(dataMap);
-    String json = new String(jsonBytes, "UTF-8");
+  ```java
+  DataMap dataMap = new DataMap();
+  dataMap.put("message", "Hi!");
+  byte[] jsonBytes = DataMapUtils.mapToBytes(dataMap);
+  String json = new String(jsonBytes, "UTF-8");
 
-```
+  ```
 
 To serialize from a RecordTemplate instance to JSON:
 
-    ```
-    Greeting greeting = new Greeting().setMessage("Hi!"); // Where Greeting is class extending RecordTemplate
-    byte[] jsonBytes = DataMapUtils.dataTemplateToBytes(greeting, true);
-    String json = new String(jsonBytes, "UTF-8");
+  ```java
+  Greeting greeting = new Greeting().setMessage("Hi!"); // Where Greeting is class extending RecordTemplate
+  byte[] jsonBytes = DataMapUtils.dataTemplateToBytes(greeting, true);
+  String json = new String(jsonBytes, "UTF-8");
 
-```
+  ```
 
-#### How to Deserialize JSON to Data
+##### How to Deserialize JSON to Data
 
 To deserialize from JSON to a DataMap:
 
-    ```
-    InputStream in = IOUtils.toInputStream("{'message':'Hi!'}");
-    DataMap dataMap = DataMapUtils.readMap(in);
+  ```java
+  InputStream in = IOUtils.toInputStream("{'message':'Hi!'}");
+  DataMap dataMap = DataMapUtils.readMap(in);
 
-```
+  ```
 
 To deserialize from JSON to a RecordTemplate:
 
-    ```
-    InputStream in = IOUtils.toInputStream("{'message':'Hi!'}");
-    Greeting deserialized = DataMapUtils.read(in, Greeting.class); // Where Greeting is class extending RecordTemplate
+  ```java
+  InputStream in = IOUtils.toInputStream("{'message':'Hi!'}");
+  Greeting deserialized = DataMapUtils.read(in, Greeting.class); // Where Greeting is class extending RecordTemplate
 
-```
+  ```
 
-#### How to Serialize Data to PSON
+##### How to Serialize Data to PSON
 
 PSON is a binary format that can represent any JSON data but is more
 compact, requires less computation to serialize and deserialize, and can
@@ -951,12 +961,12 @@ transmit byte strings directly.
 PSON serialization/deserialization works similar to JSON (as described
 above) but uses these two methods:
 
-    ```
-    DataMapUtils.readMapPson()
-    DataMapUtils.mapToPsonBytes()
-    ```
+  ```
+  DataMapUtils.readMapPson()
+  DataMapUtils.mapToPsonBytes()
+  ```
 
-# How Data is Represented in Memory
+## How Data is Represented in Memory
 
 There are three architectural layers that define how data is stored
 in-memory and provide the API’s used to access this data.
@@ -968,7 +978,7 @@ in-memory and provide the API’s used to access this data.
   - The third layer is the Data Template layer. This layer provides Java
     type-safe access to data stored by the Data layer.
 
-## The Data Layer
+### The Data Layer
 
 At the conceptual level, the Data layer provides generic in-memory
 representations of JSON objects and arrays. A `DataMap` and a `DataList`
@@ -996,7 +1006,7 @@ The main motivations behind the Data layer are:
   - To permit some Java Virtual Machine service calls to be optimized by
     avoiding serialization.
 
-### Constraints
+#### Constraints
 
 The Data layer implements the following constraints:
 
@@ -1014,7 +1024,7 @@ The Data layer implements the following constraints:
     objects connected by DataMaps and DataLists.
   - The key type for a `DataMap` is always `java.lang.String`.
 
-### Additional Features
+#### Additional Features
 
 The Data layer provides the following additional features (above and
 beyond what the Java library provides.)
@@ -1029,7 +1039,7 @@ beyond what the Java library provides.)
     isomorphic with the source, i.e. the copy will retain the directed
     acyclic graph structure of the source.
 
-### Allowed Value Types
+#### Allowed Value Types
 
   - `java.lang.Integer`
   - `java.lang.Long`
@@ -1044,92 +1054,35 @@ beyond what the Java library provides.)
 Note Enum types are not allowed because enum types are not generic and
 portable. Enum values are stored as a string.
 
-### DataComplex
+#### DataComplex
 
 Both `DataMap` and `DataList` implement the
 `com.linkedin.data.DataComplex` interface. This interface declares the
 methods that supports the additional features common to a `DataMap` and
 a `DataList`. These methods are:
 
-<table>
-<thead>
-<tr class="header">
-<th>Method</th>
-<th>Declared by <br /></th>
-<th>Description <br /></th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>```DataComplex clone()``` <br /></td>
-<td>```DataComplex``` <br /></td>
-<td>A shallow copy of the instance. <br /><br />
-The read-only state is not copied, the clone will be mutable. <br /><br />
-The instrumentation state is also not copied. <br /><br />
-Although ```java.lang.CloneNotSupportedException``` is declared in the throws clause, the method should not throw this exception. <br /></td>
-</tr>
-<tr class="even">
-<td>```DataComplex copy()``` <br /></td>
-<td>```DataComplex``` <br /></td>
-<td>A deep copy of the object graph rooted at the instance. The copy will be isomorphic to the original. <br /><br />
-The read-only state is not deep copied, and the new ```DataComplex``` copies will be mutable. <br /><br />
-The instrumentation state is also not copied. <br /><br />
-Although ```java.lang.CloneNotSupportedException``` is declared in the throws clause, the method should not throw this exception.</td>
-</tr>
-<tr class="odd">
-<td>```void setReadOnly()``` <br /></td>
-<td>```CowCommon``` <br /></td>
-<td>Make the instance read-only. It does not affect the read-only state of contained ```DataComplex``` values. <br /></td>
-</tr>
-<tr class="even">
-<td>```boolean isReadOnly()``` <br /></td>
-<td>```CowCommon``` <br /></td>
-<td>Whether the instance is in read-only state. <br /></td>
-</tr>
-<tr class="odd">
-<td>```void makeReadOnly()``` <br /></td>
-<td>```DataComplex``` <br /></td>
-<td>Make the object graph rooted at this instance read-only. <br /></td>
-</tr>
-<tr class="even">
-<td>void ```isMadeReadOnly()``` <br /></td>
-<td>```DataComplex``` <br /></td>
-<td>Whether the object graph rooted at this instance has been made read-only. <br /></td>
-</tr>
-<tr class="odd">
-<td>```Collection&lt;Object&gt; values()``` <br /></td>
-<td>```DataComplex``` <br /></td>
-<td>Returns the values stored in the ```DataComplex``` instance, i.e. returns the values of a ```DataMap``` or the elements of a ```DataList```. <br /></td>
-</tr>
-<tr class="even">
-<td>```void startInstrumentatingAccess()``` <br /></td>
-<td>```Instrumentable``` <br /></td>
-<td>Starts instrumenting access. <br /></td>
-</tr>
-<tr class="odd">
-<td>```void stopInstrumentingAccess()``` <br /></td>
-<td>```Instrumentable``` <br /></td>
-<td>Stops instrumenting access. <br /></td>
-</tr>
-<tr class="even">
-<td>```void clearInstrumentedData()``` <br /></td>
-<td>```Instrumentable``` <br /></td>
-<td>Clears instrumentation data collected. <br /></td>
-</tr>
-<tr class="odd">
-<td>```void collectInstrumentedData(...)``` <br /></td>
-<td>```Instrumentable``` <br /></td>
-<td>Collect data gathered when instrumentation was enabled. <br /></td>
-</tr>
-</tbody>
-</table>
+
+|Method |Declared by|Description|
+| --- | --- |--- |
+| `DataComplex clone()` | `DataComplex` | A shallow copy of the instance. <br />The read-only state is not copied, the clone will be mutable. <br />The instrumentation state is also not copied. <br />Although `java.lang.CloneNotSupportedException` is declared in the throws clause, the method should not throw this exception.|
+| `DataComplex copy()` <br /> | `DataComplex` <br /> | A deep copy of the object graph rooted at the instance. The copy will be isomorphic to the original. <br />The read-only state is not deep copied, and the new `DataComplex` copies will be mutable. <br />The instrumentation state is also not copied. <br />Although `java.lang.CloneNotSupportedException` is declared in the throws clause, the method should not throw this exception. |
+| `void setReadOnly()` <br /> | `CowCommon` <br /> | Make the instance read-only. It does not affect the read-only state of contained `DataComplex` values. <br /> |
+| `boolean isReadOnly()` <br /> | `CowCommon` <br /> | Whether the instance is in read-only state. <br /> |
+| `void makeReadOnly()` <br /> | `DataComplex` <br /> | Make the object graph rooted at this instance read-only. <br /> |
+| `void isMadeReadOnly()` <br /> | `DataComplex` <br /> | Whether the object graph rooted at this instance has been made read-only. <br /> |
+| `Collection<Object> values()` <br /> | `DataComplex` <br /> | Returns the values stored in the `DataComplex` instance, i.e. returns the values of a `DataMap` or the elements of a `DataList`. <br /> |
+| `void startInstrumentatingAccess()` <br /> | `Instrumentable` <br /> | Starts instrumenting access. <br /> |
+| `void stopInstrumentingAccess()` <br /> | `Instrumentable` <br /> | Stops instrumenting access. <br /> |
+| `void clearInstrumentedData()` <br /> | `Instrumentable` <br /> | Clears instrumentation data collected. <br /> |
+| `void collectInstrumentedData(...)` <br /> | `Instrumentable` <br /> | Collect data gathered when instrumentation was enabled. <br /> |
+
 
 Note: Details on `CowCommon`, `CowMap`, and `CowList` have been omitted
 or covered under `DataComplex`. Cow provides copy-on-write
 functionality. The semantics of `CowMap` and `CowList` is similar to
 `HashMap` and `ArrayList`.
 
-### DataMap
+#### DataMap
 
 The `com.linkedin.data.DataMap` class has the following characteristics:
 
@@ -1138,7 +1091,7 @@ The `com.linkedin.data.DataMap` class has the following characteristics:
     unmodifiable set and collection views.
   - Its `clone()` and `copy()` methods returns a `DataMap`.
 
-### DataList
+#### DataList
 
 The `com.linkedin.data.DataList` class has the following
 characteristics.
@@ -1146,7 +1099,7 @@ characteristics.
   - `DataList` implements `java.util.List<Object>`.
   - Its `clone()` and `copy()` method return a `DataList`.
 
-## The Data Schema Layer
+### The Data Schema Layer
 
 The Data Schema layer provides the in-memory representation of the data
 schema. The Data Schema Layer provides the following main features:
@@ -1158,131 +1111,40 @@ schema. The Data Schema Layer provides the following main features:
 Their common base class for Data Schema classes is
 `com.linkedin.data.schema.DataSchema`. It defines the following methods:
 
-|*. Method <br /> |*. Description <br /> |  
-| `Type getType()` <br /> | Provide the type of the schema, can be
-`BOOLEAN`, `INT`, `LONG`, `FLOAT`, `DOUBLE`, `BYTES`, `STRING`, `FIXED`,
-`ENUM`, `NULL`, `ARRAY`, `RECORD`, `MAP`, `UNION`. <br /> |  
-| `boolean hasError()` <br /> | Whether the schema definition contains
-at least one error. <br /> |  
-| `boolean isPrimitive()` <br /> | Whether the schema type is a
-primitive schema type. <br /> |  
-| `boolean isComplex()` <br /> | Whether the schema type is a complex
-schema type, i.e. not primitive type. <br /> |  
-| `Map<String,Object> getProperties()` <br /> | Return the properties of
-the schema. These properties are the keys and values from the JSON
-fields in complex schema definitions that are not processed and
-interpreted by the schema parser. For primitive types, this method
-always return an immutable empty map. <br /> |  
-| `String getUnionMemberKey()` <br /> | If this type is used as a member
-of a union without an alias, this will be the key that uniquely
-identifies/selects this type within the union. This value of this key is
-as defined by the Avro 1.4.1 specification for JSON serialization.
-<br /> |  
-| `String toString()` <br /> | A more human consumable formatting of the
-schema in JSON encoding. Space will added between fields, items, names,
-values, … etc. <br /> |  
-| `Type getDereferencedType` <br /> | If the type is a typeref, it will
-follow the typeref reference chain and return the type referenced at the
-end of the typeref chain. <br /> |  
-| `DataSchema getDereferencedSchema` <br /> | If the type is a typeref,
-it will follow the typeref reference chain and return the DataSchema
-referenced at the end of the typeref chain. <br /> |  
+| Method | Description |
+| ---    | ---  |
+| `Type getType()` <br /> | Provide the type of the schema, can be `BOOLEAN`, `INT`, `LONG`, `FLOAT`, `DOUBLE`, `BYTES`, `STRING`, `FIXED`, `ENUM`, `NULL`, `ARRAY`, `RECORD`, `MAP`, `UNION`. <br /> |
+| `boolean hasError()` <br /> | Whether the schema definition contains at least one error. <br /> |
+| `boolean isPrimitive()` <br /> | Whether the schema type is a primitive schema type. <br /> |
+| `boolean isComplex()` <br /> | Whether the schema type is a complex schema type, i.e. not primitive type. <br /> |
+| `Map<String,Object> getProperties()` <br /> | Return the properties of the schema. These properties are the keys and values from the JSON fields in complex schema definitions that are not processed and interpreted by the schema parser. For primitive types, this method always return an immutable empty map. <br /> |
+| `String getUnionMemberKey()` <br /> | If this type is used as a member of a union without an alias, this will be the key that uniquely identifies/selects this type within the union. This value of this key is as defined by the Avro 1.4.1 specification for JSON serialization. <br /> |
+| `String toString()` <br /> | A more human consumable formatting of the schema in JSON encoding. Space will added between fields, items, names, values, ... etc. <br /> |
+| `Type getDereferencedType` <br /> | If the type is a typeref, it will follow the typeref reference chain and return the type referenced at the end of the typeref chain. <br /> |
+| `DataSchema getDereferencedSchema` <br /> | If the type is a typeref, it will follow the typeref reference chain and return the DataSchema referenced at the end of the typeref chain. <br /> |
+
 The following table shows the mapping of schema types to Data Schema
 classes.
 
-<table>
-<thead>
-<tr class="header">
-<th>Schema Type <br /></th>
-<th>Data Schema class <br /></th>
-<th>Relevant Specific Attributes <br /></th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>int <br /></td>
-<td>```IntegerDataSchema``` <br /></td>
-<td></td>
-</tr>
-<tr class="even">
-<td>long <br /></td>
-<td>```LongDataSchema``` <br /></td>
-<td></td>
-</tr>
-<tr class="odd">
-<td>float <br /></td>
-<td>```FloatDataSchema``` <br /></td>
-<td></td>
-</tr>
-<tr class="even">
-<td>double <br /></td>
-<td>```DoubleDataSchema``` <br /></td>
-<td></td>
-</tr>
-<tr class="odd">
-<td>boolean <br /></td>
-<td>```BooleanDataSchema``` <br /></td>
-<td></td>
-</tr>
-<tr class="even">
-<td>string <br /></td>
-<td>```StringDataSchema``` <br /></td>
-<td></td>
-</tr>
-<tr class="odd">
-<td>bytes <br /></td>
-<td>```BytesDataSchema``` <br /></td>
-<td></td>
-</tr>
-<tr class="even">
-<td>enum <br /></td>
-<td>```EnumDataSchema``` <br /></td>
-<td>```List&lt;String&gt; getSymbols()``` <br /><br />
-```int index(String symbol)``` <br /><br />
-```boolean contains(String symbol)``` <br /></td>
-</tr>
-<tr class="odd">
-<td>array <br /></td>
-<td>```ArrayDataSchema``` <br /></td>
-<td>```DataSchema getItems()``` <br /></td>
-</tr>
-<tr class="even">
-<td>map <br /></td>
-<td>```MapDataSchema``` <br /></td>
-<td>```DataSchema getValues()```</td>
-</tr>
-<tr class="odd">
-<td>fixed <br /></td>
-<td>```FixedDataSchema``` <br /></td>
-<td>```int getSize()``` <br /></td>
-</tr>
-<tr class="even">
-<td>record, error <br /></td>
-<td>```RecordDataSchema``` <br /></td>
-<td>```RecordType recordType()``` (record or error) <br /><br />
-```boolean isErrorRecord()``` <br /><br />
-```List&lt;Field&gt; getFields()``` <br /><br />
-```int index(String fieldName)``` <br /><br />
-```boolean contains(String fieldName)``` <br /><br />
-```Field getField(String fieldName)``` <br /></td>
-</tr>
-<tr class="odd">
-<td>union <br /></td>
-<td>```UnionDataSchema``` <br /></td>
-<td>```List&lt;Member&gt; getMembers()``` <br /><br />
-```boolean contains(String memberKey)``` <br /><br />
-```DataSchema getTypeByMemberKey(String memberKey)``` <br /><br />
-```boolean areMembersAliased()``` <br /></td>
-</tr>
-<tr class="even">
-<td>null <br /></td>
-<td>```NullDataSchema``` <br /></td>
-<td></td>
-</tr>
-</tbody>
-</table>
+|Schema Type <br /> |Data Schema class <br /> |Relevant Specific Attributes <br /> |
+| --- | --- | --- |
+| int <br /> | `IntegerDataSchema` <br /> | |
+| long <br /> | `LongDataSchema` <br /> | |
+| float <br /> | `FloatDataSchema` <br /> | |
+| double <br /> | `DoubleDataSchema` <br /> | |
+| boolean <br /> | `BooleanDataSchema` <br /> | |
+| string <br /> | `StringDataSchema` <br /> | |
+| bytes <br /> | `BytesDataSchema` <br /> | |
+| enum <br /> | `EnumDataSchema` <br /> | `List<String> getSymbols()` <br />`int index(String symbol)` <br />`boolean contains(String symbol)` <br /> |
+| array <br /> | `ArrayDataSchema` <br /> | `DataSchema getItems()` <br /> |
+| map <br /> | `MapDataSchema` <br /> | `DataSchema getValues()` |
+| fixed <br /> | `FixedDataSchema` <br /> | `int getSize()` <br /> |
+| record, error <br /> | `RecordDataSchema` <br /> | `RecordType recordType()` (record or error) <br />`boolean isErrorRecord()` <br />`List<Field> getFields()` <br />`int index(String fieldName)` <br />`boolean contains(String fieldName)` <br />`Field getField(String fieldName)` <br /> |
+| union <br /> | `UnionDataSchema` <br /> | `List<Member> getMembers()` <br />`boolean contains(String memberKey)` <br />`DataSchema getTypeByMemberKey(String memberKey)` <br />`boolean areMembersAliased()` <br /> |
+| null <br /> | `NullDataSchema` <br /> | |
 
-## Data to Schema Validation
+
+### Data to Schema Validation
 
 The `ValidateDataAgainstSchema` class provides methods for validating
 Data layer instances with a Data Schema. The `ValidationOption` class is
@@ -1297,17 +1159,17 @@ independently configuration options:
 
 Example Usage:
 
-```java  
-ValidationResult validationResult =
-ValidateDataAgainstSchema.validate(dataTemplate, dataTemplate.schema(),
-new ValidationOptions());  
-if (\!validationResult.isValid())  
-{  
-// do something  
-}  
-```
+  ```java  
+  ValidationResult validationResult =
+  ValidateDataAgainstSchema.validate(dataTemplate, dataTemplate.schema(),
+  new ValidationOptions());  
+  if (!validationResult.isValid())  
+  {  
+  // do something  
+  }  
+  ```
 
-### RequiredMode
+#### RequiredMode
 
 The available RequiredModes are:
 
@@ -1334,7 +1196,7 @@ The available RequiredModes are:
     containing the field cannot be modified because it is read-only.  
     The provided default value will be read-only.
 
-### CoercionMode
+#### CoercionMode
 
 Since JSON does not have or encode enough information on the actual
 types of primitives, and schema types like bytes and fixed are not
@@ -1374,118 +1236,26 @@ available CoercionModes are:
 
 <a name="NormalMode"></a>
 
-#### `NORMAL` Coercion Mode
+##### `NORMAL` Coercion Mode
 
 The following table provides additional details on the `NORMAL`
 validation and coercion mode.
 
-<table>
-<thead>
-<tr class="header">
-<th>Schema Type <br /></th>
-<th>Post-coercion Java Type <br /></th>
-<th>Pre-coercion Input Java Types <br /></th>
-<th>Validation Performed <br /></th>
-<th>Coercion Method</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>int <br /></td>
-<td>```java.lang.Integer``` <br /></td>
-<td>```java.lang.Number``` (1) <br /></td>
-<td>Value must be a ```Number```. <br /></td>
-<td>```Number.intValue()``` <br /></td>
-</tr>
-<tr class="even">
-<td>long <br /></td>
-<td>```java.lang.Long``` <br /></td>
-<td>```java.lang.Number``` (1)</td>
-<td>Value must be a ```Number```. <br /></td>
-<td>```Number.longValue()``` <br /></td>
-</tr>
-<tr class="odd">
-<td>float <br /></td>
-<td>```java.lang.Float``` <br /></td>
-<td>```java.lang.Number``` (1)</td>
-<td>Value must be a ```Number```.</td>
-<td>```Number.floatValue()``` <br /></td>
-</tr>
-<tr class="even">
-<td>double <br /></td>
-<td>```java.lang.Double``` <br /></td>
-<td>```java.lang.Number``` (1)</td>
-<td>Value must be a ```Number```.</td>
-<td>```Number.doubleValue()``` <br /></td>
-</tr>
-<tr class="odd">
-<td>boolean <br /></td>
-<td>```java.lang.Boolean``` <br /></td>
-<td>```java.lang.Boolean``` (2) <br /></td>
-<td>Value must be a ```Boolean```. <br /></td>
-<td></td>
-</tr>
-<tr class="even">
-<td>string <br /></td>
-<td>```java.lang.String``` <br /></td>
-<td>```java.lang.String``` (2) <br /></td>
-<td>Value must be a ```String```. <br /></td>
-<td></td>
-</tr>
-<tr class="odd">
-<td>bytes <br /></td>
-<td>```com.linkedin.data.ByteString``` <br /></td>
-<td>```com.linkedin.data.ByteString```, ```java.lang.String``` (3) <br /></td>
-<td>If the value is a ```String```, the ```String``` must be a valid encoding of binary data as specified by the Avro specification for encoding bytes into a JSON string. <br /></td>
-<td>```ByteString.copyFromAvroString()``` <br /></td>
-</tr>
-<tr class="even">
-<td>enum <br /></td>
-<td>```java.lang.String``` <br /></td>
-<td>```java.lang.String``` <br /></td>
-<td>The value must be a symbol defined by the enum schema. <br /></td>
-<td></td>
-</tr>
-<tr class="odd">
-<td>array <br /></td>
-<td>```com.linkedin.data.DataList``` <br /></td>
-<td>```com.linkedin.data.DataList``` (2) <br /></td>
-<td>Each element in the ```DataList``` must be a valid Java type for the schema’s item type. For example, if the schema is an array of longs, then every element in the ```DataList``` must be a ```Number```. <br /></td>
-<td></td>
-</tr>
-<tr class="even">
-<td>map <br /></td>
-<td>```com.linkedin.data.DataMap``` <br /></td>
-<td>```com.linkedin.data.DataMap``` (2) <br /></td>
-<td>Each value in the ```DataMap``` must be a valid Java type for the schema’s value type. For example, if the schema is a map of longs, then every value in the ```DataMap``` must be a ```Number```.</td>
-<td></td>
-</tr>
-<tr class="odd">
-<td>fixed <br /></td>
-<td>```com.linkedin.data.ByteString``` <br /></td>
-<td>```com.linked.data.ByteString``` (2), ```java.lang.String``` (3) <br /></td>
-<td>If the value is a ```String```, the ```String``` must be a valid encoding of binary data as specified by the Avro specification for encoding bytes into a JSON string and the correct size for the fixed schema type. <br /><br />
-If the value is a ```ByteString```, the ```ByteString``` must be the correct size for the fixed schema type. <br /></td>
-<td>```ByteString.copyFromAvroString()```</td>
-</tr>
-<tr class="even">
-<td>record <br /></td>
-<td>```com.linkedin.data.DataMap``` <br /></td>
-<td>```com.linkedin.data.DataMap``` (2) <br /></td>
-<td>Each key in the ```DataMap``` will be used lookup a field in the record schema. The value associated with this key must be a valid Java type for the field’s type. <br /><br />
-If the required validation option is enabled, then all required fields must also be present. <br /></td>
-<td></td>
-</tr>
-<tr class="odd">
-<td>union <br /></td>
-<td>```com.linkedin.data.DataMap``` <br /></td>
-<td>```java.lang.String```, ```com.linkedin.data.DataMap``` (2) <br /></td>
-<td>f the value is a ```String```, the value must be ```Data.NULL```. <br /><br />
-If the value is a ```DataMap```, then the ```DataMap``` must have exactly one entry. The key of the entry must identify a member of the union schema, and the value must be a valid type for the identified union member’s type. <br /></td>
-<td></td>
-</tr>
-</tbody>
-</table>
+|Schema Type <br /> |Post-coercion Java Type <br /> |Pre-coercion Input Java Types <br /> |Validation Performed <br /> |Coercion Method |
+| --- | --- | --- | ----- | --- |
+| int <br /> | `java.lang.Integer` <br /> | `java.lang.Number` (1) <br /> | Value must be a `Number`. <br /> | `Number.intValue()` <br /> |
+| long <br /> | `java.lang.Long` <br /> | `java.lang.Number` (1) | Value must be a `Number`. <br /> | `Number.longValue()` <br /> |
+| float <br /> | `java.lang.Float` <br /> | `java.lang.Number` (1) | Value must be a `Number`. | `Number.floatValue()` <br /> |
+| double <br /> | `java.lang.Double` <br /> | `java.lang.Number` (1) | Value must be a `Number`. | `Number.doubleValue()` <br /> |
+| boolean <br /> | `java.lang.Boolean` <br /> | `java.lang.Boolean` (2) <br /> | Value must be a `Boolean`. <br /> | |
+| string <br /> | `java.lang.String` <br /> | `java.lang.String` (2) <br /> | Value must be a `String`. <br /> | |
+| bytes <br /> | `com.linkedin.data.ByteString` <br /> | `com.linkedin.data.ByteString`, `java.lang.String` (3) <br /> | If the value is a `String`, the `String` must be a valid encoding of binary data as specified by the Avro specification for encoding bytes into a JSON string. <br /> | `ByteString.copyFromAvroString()` <br /> |
+| enum <br /> | `java.lang.String` <br /> | `java.lang.String` <br /> | The value must be a symbol defined by the enum schema. <br /> | |
+| array <br /> | `com.linkedin.data.DataList` <br /> | `com.linkedin.data.DataList` (2) <br /> | Each element in the `DataList` must be a valid Java type for the schema's item type. For example, if the schema is an array of longs, then every element in the `DataList` must be a `Number`. <br /> | |
+| map <br /> | `com.linkedin.data.DataMap` <br /> | `com.linkedin.data.DataMap` (2) <br /> | Each value in the `DataMap` must be a valid Java type for the schema's value type. For example, if the schema is a map of longs, then every value in the `DataMap` must be a `Number`. | |
+| fixed <br /> | `com.linkedin.data.ByteString` <br /> | `com.linked.data.ByteString` (2), `java.lang.String` (3) <br /> | If the value is a `String`, the `String` must be a valid encoding of binary data as specified by the Avro specification for encoding bytes into a JSON string and the correct size for the fixed schema type. <br />If the value is a `ByteString`, the `ByteString` must be the correct size for the fixed schema type. <br /> | `ByteString.copyFromAvroString()` |
+| record <br /> | `com.linkedin.data.DataMap` <br /> | `com.linkedin.data.DataMap` (2) <br /> | Each key in the `DataMap` will be used lookup a field in the record schema. The value associated with this key must be a valid Java type for the field's type. <br />If the required validation option is enabled, then all required fields must also be present. <br /> | |
+| union <br /> | `com.linkedin.data.DataMap` <br /> | `java.lang.String`, `com.linkedin.data.DataMap` (2) <br /> | f the value is a `String`, the value must be `Data.NULL`. <br />If the value is a `DataMap`, then the `DataMap` must have exactly one entry. The key of the entry must identify a member of the union schema, and the value must be a valid type for the identified union member's type. <br /> | |
 
 (1) Even though `Number` type is allowed and used for fixing up to the
 desired type, the Data layer only allows `Integer`, `Long`, `Float`, and
@@ -1494,90 +1264,40 @@ desired type, the Data layer only allows `Integer`, `Long`, `Float`, and
 (3) the `String` must be a valid encoding of binary data as specified by
 the Avro specification for encoding bytes into a JSON string.
 
-#### `STRING_TO_PRIMITIVE` Coercion Mode
+##### `STRING_TO_PRIMITIVE` Coercion Mode
 
 This mode includes allowed input types and associated validation and
 coercion’s of `NORMAL`. In addition, it allows the following additional
 input types and performs the following coercions on these additional
 allowed input types.
 
-|*. Schema Type <br /> |*. Post-coercion Java Type <br /> |*.
-Pre-coercion Input Java Types <br /> |*. Validation Performed <br />
-|_. Coercion Method <br /> |  
-| int <br /> | `java.lang.Integer` <br /> | `java.lang.String` <br /> |
-If value is a `String`, it must be acceptable to `BigDecimal(String
-val)`, else it has to be a `Number` (see [`NORMAL`](#NormalMode.\))
-<br /> | `(new BigDecimal(value)).intValue()` <br /> |  
-| long <br /> | `java.lang.Long` <br /> | `java.lang.String` | If value
-is a `String`, it must be acceptable to `BigDecimal(String val)`, else
-it has to be a `Number` (see [`NORMAL`](#NormalMode.\)) | `(new
-BigDecimal(value)).longValue()` |  
-| float <br /> | `java.lang.Float` <br /> | `java.lang.String` | If
-value is a `String`, it must be acceptable to `BigDecimal(String val)`,
-else it has to be a `Number` (see [`NORMAL`](#NormalMode.\)) <br /> |
-`(new BigDecimal(value)).floatValue()` |  
-| double <br /> | `java.lang.Double` <br /> | `java.lang.String` | If
-value is a `String`, it must be acceptable to `BigDecimal(String val)`,
-else it has to be a `Number` (see [`NORMAL`](#NormalMode.\)) <br /> |
-`(new BigDecimal(value)).doubleValue()` |  
-| boolean <br /> | `java.lang.Boolean` <br /> | `java.lang.String` | if
-value is a `String`, its value must be either `"true"` or `"false"`
-ignoring case, else it has to be a `Boolean` (see
-[`NORMAL`](#NormalMode.\)) <br /> |
+|Schema Type <br /> |Post-coercion Java Type <br /> |Pre-coercion Input Java Types <br /> |Validation Performed <br /> |_. Coercion Method <br /> |
+| --- | --- | --- | --- | --- |
+| int <br /> | `java.lang.Integer` <br /> | `java.lang.String` <br /> | If value is a `String`, it must be acceptable to `BigDecimal(String val)`, else it has to be a `Number` (see "[`NORMAL`](#normal-coercion-mode)") <br /> | `(new BigDecimal(value)).intValue()` <br /> |
+| long <br /> | `java.lang.Long` <br /> | `java.lang.String` | If value is a `String`, it must be acceptable to `BigDecimal(String val)`, else it has to be a `Number` (see "[`NORMAL`](#normal-coercion-mode)") | `(new BigDecimal(value)).longValue()` |
+| float <br /> | `java.lang.Float` <br /> | `java.lang.String` | If value is a `String`, it must be acceptable to `BigDecimal(String val)`, else it has to be a `Number` (see "[`NORMAL`](#normal-coercion-mode)") <br /> | `(new BigDecimal(value)).floatValue()` |
+| double <br /> | `java.lang.Double` <br /> | `java.lang.String` | If value is a `String`, it must be acceptable to `BigDecimal(String val)`, else it has to be a `Number` (see "[`NORMAL`](#normal-coercion-mode)") <br /> | `(new BigDecimal(value)).doubleValue()` |
+| boolean <br /> | `java.lang.Boolean` <br /> | `java.lang.String` | if value is a `String`, its value must be either `"true"` or `"false"` ignoring case, else it has to be a `Boolean` (see "[`NORMAL`](#normal-coercion-mode)") <br /> |<pre><code>if ("true".equalsIgnoreCase(value))<br /> return Boolean.TRUE;<br />else if ("false".equalsIgnoreCase(value))<br />  return Boolean.FALSE;<br />else <br />  // invalid string representation<br />  // of boolean </code></pre>|
 
-    ```if ("true".equalsIgnoreCase(value))
-        return Boolean.TRUE;
-    else if ("false".equalsIgnoreCase(value))
-        return Boolean.FALSE;
-    else 
-         // invalid string representation
-         // of boolean ```
-
-|
-
-### ValidationResult
+#### ValidationResult
 
 The result of validation is returned through an instance of the
 `ValidationResult` class. This class has the following methods:
 
-<table>
-<thead>
-<tr class="header">
-<th>Method</th>
-<th>Description <br /></th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>```boolean hasFix()``` <br /></td>
-<td>Whether any fix-ups (i.e., modification or replacement of input Data layer objects) have been proposed. Fixes may be proposed but not applied because fixes cannot be applied to read-only complex objects. <br /></td>
-</tr>
-<tr class="even">
-<td>```boolean hasFixupReadOnlyError()``` <br /></td>
-<td>Whether any fix-ups could not be applied because of read-only complex objects. <br /></td>
-</tr>
-<tr class="odd">
-<td>```Object getFixed()``` <br /></td>
-<td>Return a fixed object. In-place fixes may or may not be possible because some objects are immutable. For example, if the schema type is “fixed” and String object is provided as the Data object, the fixed-up object that would be returned will be a ByteString. Since String and ByteString are both immutable and have different types, the fixed object will be a different object, i.e. the fix-up cannot be done in-place. <br /><br />
-<br /><br />
-For complex objects, the fix-ups can be applied in place. This is because the new values can replace the old values in a ```DataMap``` or ```DataList```. <br /></td>
-</tr>
-<tr class="even">
-<td>```boolean isValid()``` <br /></td>
-<td>Whether the fixed object returns by ```getFixed()``` contains any errors. If it returns ```false```, then the fixed object and its dependents are fixed up according to the provided schema. <br /></td>
-</tr>
-<tr class="odd">
-<td>```String getMessage()``` <br /></td>
-<td>Provides details on validation and fix-up failures. Returns empty string if ```isValid()``` is ```true``` and fix-ups/validation have occurred without problems. <br /></td>
-</tr>
-</tbody>
-</table>
+|Method |Description <br /> |
+| --- | --- |
+| `boolean hasFix()` <br /> | Whether any fix-ups (i.e., modification or replacement of input Data layer objects) have been proposed. Fixes may be proposed but not applied because fixes cannot be applied to read-only complex objects. <br /> |
+| `boolean hasFixupReadOnlyError()` <br /> | Whether any fix-ups could not be applied because of read-only complex objects. <br /> |
+| `Object getFixed()` <br /> | Return a fixed object. In-place fixes may or may not be possible because some objects are immutable. For example, if the schema type is "fixed" and String object is provided as the Data object, the fixed-up object that would be returned will be a ByteString. Since String and ByteString are both immutable and have different types, the fixed object will be a different object, i.e. the fix-up cannot be done in-place. <br /><br />For complex objects, the fix-ups can be applied in place. This is because the new values can replace the old values in a `DataMap` or `DataList`. <br /> |
+| `boolean isValid()` <br /> | Whether the fixed object returns by `getFixed()` contains any errors. If it returns `false`, then the fixed object and its dependents are fixed up according to the provided schema. <br /> |
+| `String getMessage()` <br /> | Provides details on validation and fix-up failures. Returns empty string if `isValid()` is `true` and fix-ups/validation have occurred without problems. <br /> |
+
 
 Note: Schema validation and coercion are currently explicit operations.
 They are not implicitly performed when data are de-serialized as part of
 remote invocations.
 
-## The Data Template Layer
+### The Data Template Layer
 
 The Data Template layer provides Java type-safe access to the underlying
 data stored in the Data layer. It has explicit knowledge of the schema
@@ -1668,266 +1388,239 @@ known for bytes and fixed. Values of bytes and fixed types are stored as
 strings as serialized representation is a string. However, `ByteString`
 is an equally valid Java type for these schema types.
 
-# Java Binding
+## Java Binding
 
 This section describes the details of the Java classes (dataModels)
 generated by the code generator. These bindings are built on the classes
 provided by the Data Template layer described above.
 
-## Package and Class Names
+### Package and Class Names
 
 The Java binding determines the package and class names of the generated
 and/or built-in classes using the following rules.
 
-|*. Schema Type <br /> |*. Java Package and Class Name <br /> |  
-| maps and arrays of primitive types <br /> | Package name is
-`com.linkedin.data.template`. <br />  
-Class name is computed by appending “Map” or “Array” to the
-corresponding boxed type’s class name. <br />  
-For multi-dimensional maps and arrays, a “Map” or “Array” is appended
-for each dimension starting with the inner most dimension first.
-<br />  
-<br />  
-**Example Schema**
-
-    ```
-    { "type" : "map", "values" : "boolean" }
-    { "type" : "array", "items" : { "type" : "map" : "values" : "string" } }
-    ```
-
-  
-**Java package and class**
-
-    ```
-    package com.linkedin.data.templates;
-    public class BooleanMap extends DirectArrayTemplate<Boolean> ...
-    public class StringMapArray extends DirectArrayTemplate<StringMap> ...
-    ```
-
-<br /> |  
-| enum, fixed, record types <br /> (named schema types) | Package name
-is the package of the named schema type if it is specified, otherwise
-package name will use the namespace of the named schema type by default.
-<br />  
-Class name is the name of the named schema type. <br />  
-<br />  
-**Example Schema**
-
-    ```
-    { "type" : "record", "name" : "a.b.c.d.Foo", "fields" : ... }
-    { "type" : "enum", "name" : "Bar", "namespace" : "x.y.z", "package": "x.y.z.test", symbols" : ... }
-    ```
-
-  
-**Java package and class**
-
-    ```
-    package a.b.c.d;
-    public class Foo extends RecordTemplate ...
-    
-    package x.y.z.test;
-    public enum class Bar ...
-    ```
-
-|  
-| maps and arrays of enum, fixed, record <br />  
-(maps and arrays of named schema types) <br /> | Package name is the
-package name of the named schema type, which follows the rule documented
-in this table for named schema. <br />  
-Class name is computed by appending “Map” or “Array” to name of
-generated class for the named schema type. <br />  
-For multi-dimensional maps and arrays, a “Map” or “Array” is appended
-for each dimension starting with the inner most dimension first.
-<br />  
-<br />  
-**Example Schema**
-
-    ```
-    { "type" : "map", "values" : "a.b.c.d.Foo" }
-    { "type" : "map", "values" : { "type" : "array", "items" : "a.b.c.d.Foo" } }
-    
-    { "type" : "array", "items" : "x.y.z.Bar" }
-    { "type" : "array", "items" : { "type" : "map", "values" : "x.y.z.Bar" } }
-    ```
-
-  
-**Java package and class**
-
-    ```
-    package a.b.c.d;
-    
-    public class FooMap extends WrappingMapTemplate<Foo> ...
-    public class FooArrayMap extends WrappingMapTemplate<Foo> ...
-    
-    package x.y.z.test;
-    public class BarArray extends DirectArrayTemplate<Bar> ...
-    public class BarMapArray extends DirectArrayTemplate<Bar> ...```
-
-|  
-| unions <br /> | The name of the union class is determined in two ways.
-<br />  
-<br />  
-**1. Union without typeref** <br />  
-If there is no typeref for the union, the code generator makes up the
-class name from the name of the closest enclosing field that declared
-the union type. <br />  
-Package name is the package name of the closest outer record type, which
-follows the rule documented in this table for that closest outer record
-type. <br />  
-The generated union class will be declared in the generated class of the
-closest outer record type. <br />  
-Class name will be name of the field in the closest outer record that
-declared the union with the first character capitalized. <br />  
-<br />  
-**Example Schema**
-
-    ```
-    {
-      "type" : "record",
-      "name" : "a.b.c.d.Foo",
-      "fields" : [ { "name" : "bar", "type" : [ "int", "string" ] } ]
-    }
-    ```
-
-  
-**Java package and class**
-
-    ```
-    package a.b.c.d;
-    public class Foo extends RecordTemplate {
-      public class Bar extends UnionTemplate ...
-    }
-    ```
-
-**2. Union with typeref** <br />  
-If there is a typeref for the union, the code generator will use the
-name of typeref for the generated union class. <br />  
-Package name is the package of the typeref if it is specified, otherwise
-package name is the namespace of the typeref by default. <br />  
-Class name is the name of the typeref.  
-<br />  
-**Example Schema**
-
-    ```
-    {
-      "type" : "typeref",
-      "name" : "a.b.c.d.Bar",
-      "package" : "a.b.c.d.test",
-      "ref"  : [ "int", "string" ] 
-    }
-    ```
-
-**Java package and class** <br />  
+<table>
+<thead>
+<tr class="header">
+<th>Schema Type <br /></th>
+<th>Java Package and Class Name<br /></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>
+maps and arrays of primitive types
+</td>
+<td>
+Package name is <code>com.linkedin.data.template</code>. <br />
+Class name is computed by appending "Map" or "Array" to the corresponding boxed type's class name. <br />
+For multi-dimensional maps and arrays, a "Map" or "Array" is appended for each dimension starting with the inner most dimension first. <br />
 <br />
-
-    ```
-    package a.b.c.d.test;
-    public class Bar extends UnionTemplate implements HasTyperefInfo {
-      ...
-      public TyperefInfo typerefInfo() 
-      {
-        ... 
-      }
-    }
-    ```
-
-  
-When the typeref provides the name of the generated union class. The
-generated class will also implement the `HasTyperefInfo` interface. This
-interface declares the `typerefInfo()` method that will be implemented
-by the generated class.
-
-To avoid generating duplicate classes for the duplicate declarations of
-unions, it is a good practice to declare unions with a typeref when the
-same union type is used more than once.<br /> |  
-| maps and arrays of unions <br /> | Package name is the package name of
-the union, which follows the rule documented in this table for unions.
-<br />  
-The generated class will be declared in the same outer class (for unions
-without typeref) or same package (for unions with typeref) as the
-generated class for the union. <br />  
-Class name is computed by appending “Map” or “Array” to the name of the
-generated class for the union. <br />  
-For multi-dimensional maps and arrays, a “Map” or “Array” is appended
-for each dimension starting the inner most dimension first. <br />  
-<br />  
-**1. Union without typeref** <br />  
-<br />  
-**Example Schema**
-
-    ```
-    {
-      "type" : "record",
-      "name" : "a.b.c.d.Foo",
-      "fields" : [
-        { "name" : "members", "type" : { "type" : "array", "items" : [ "int", "string" ] } }
-        { "name" : "locations", "type" : { "type" : "map", "values" : [ "int", "string" ]  } }
-      ]
-    }
-    ```
-
-  
-**Java package and class**
-
-    ```
-    package a.b.c.d;
-    public class Foo extends RecordTemplate {
-      public class Members extends UnionTemplate ...
-      public class MembersArray extends WrappingArrayTemplate<Members> ...
-      public class Locations extends UnionTemplate ...
-      public class LocationsMap extends WrappingMapTemplate<Locations> ...
-    
-      public MembersArray getMembers() ...
-      public LocationsMap getLocations() ...
-    }
-    ```
-
-**2. Union with typeref**  
-**Example Schema** <br />
-
-    ```
-    {
-      "type" : "typeref",
-      "name" : "a.b.c.d.Bar",
-      "package": "a.b.c.d.test",
-      "ref"  : [ "int", "string" ] 
-    }
-    
-    {
-      "type" : "record",
-      "name" : "a.b.c.d.Foo",
-      "package" : "a.b.c.d.test",
-      "fields" : [
-        { "name" : "members", "type" : { "type" : "array", "items" : "Bar" } }
-        { "name" : "locations", "type" : { "type" : "map", "values" : "Bar" } }
-      ]
-    }
-    ```
-
-**Java package and class** <br />  
+<b>Example Schema</b><pre><code>
+{ "type" : "map", "values" : "boolean" }
+{ "type" : "array", "items" : { "type" : "map" : "values" : "string" } }
+</code></pre>
+<b>Java package and class</b><pre><code>
+package com.linkedin.data.template;
+public class BooleanMap extends DirectArrayTemplate&ltBoolean&gt ...
+public class StringMapArray extends DirectArrayTemplate&ltStringMap&gt ...
+</code></pre>
+</td>
+</tr>
+<tr class="even">
+<td>
+enum, fixed, record types <br /> (named schema types)
+</td>
+<td>
+Package name is the package of the named schema type if it is specified, otherwise package name will use the namespace of the named schema type by default. <br />
+Class name is the name of the named schema type. <br />
 <br />
+<b>Example Schema</b> 
+<pre><code>
+{ "type" : "record", "name" : "a.b.c.d.Foo", "fields" : ... }
+{ "type" : "enum", "name" : "Bar", "namespace" : "x.y.z", "package": "x.y.z.test", symbols" : ... }
+</code></pre>
+<b>Java package and class</b>
+<pre><code>
+package a.b.c.d;
+public class Foo extends RecordTemplate ...
+<br />
+package x.y.z.test;
+public enum class Bar ...
+</code></pre>
+</td>
+</tr>
+<tr class="odd">
+<td>
+maps and arrays of enum, fixed, record <br />
+(maps and arrays of named schema types) <br />
+</td>
+<td>
+Package name is the package name of the named schema type, which follows the rule documented in this table for named schema. <br />
+Class name is computed by appending "Map" or "Array" to name of generated class for the named schema type. <br />
+For multi-dimensional maps and arrays, a "Map" or "Array" is appended for each dimension starting with the inner most dimension first. <br />
+<br />
+<b>Example Schema</b> 
+<pre><code>
+{ "type" : "map", "values" : "a.b.c.d.Foo" }
+{ "type" : "map", "values" : { "type" : "array", "items" : "a.b.c.d.Foo" } }
+<br />
+{ "type" : "array", "items" : "x.y.z.Bar" }
+{ "type" : "array", "items" : { "type" : "map", "values" : "x.y.z.Bar" } }
+</code></pre>
 
-    ```
-    package a.b.c.d.test;
-    
-    public class Bar extends UnionTemplate ...
-    public class BarArray extends WrappingArrayTemplate<Bar> ...
-    public class BarMap extends WrappingMapTemplate<Bar> ...
-    
-    public class Foo extends RecordTemplate
-    {
-      public BarArray getMembers() ...
-      public BarMap getLocations() ...
-    }
-    ```
+<b>Java package and class</b> 
+<pre><code>
+package a.b.c.d;
+ 
+public class FooMap extends WrappingMapTemplate&lt;Foo&gt; ...
+public class FooArrayMap extends WrappingMapTemplate&lt;Foo&gt ...
+ 
+package x.y.z.test;
+public class BarArray extends DirectArrayTemplate&lt;Bar&gt ...
+public class BarMapArray extends DirectArrayTemplate&lt;Bar&gt ...
+</code></pre>
+</td>
+</tr>
+<tr class="even">
+<td>
+unions <br />
+</td>
+<td>
+The name of the union class is determined in two ways. <br />
+<br />
+<b>1. Union without typeref</b> <br />
+If there is no typeref for the union, the code generator makes up the class name from the name of the closest enclosing field that declared the union type. <br />
+Package name is the package name of the closest outer record type, which follows the rule documented in this table for that closest outer record type. <br />
+The generated union class will be declared in the generated class of the closest outer record type. <br />
+Class name will be name of the field in the closest outer record that declared the union with the first character capitalized. <br />
+<br />
+<b>Example Schema</b> <pre><code>
+{
+  "type" : "record",
+  "name" : "a.b.c.d.Foo",
+  "fields" : [ { "name" : "bar", "type" : [ "int", "string" ] } ]
+}
+</code></pre>
+<b>Java package and class</b> <pre><code>
+package a.b.c.d;
+public class Foo extends RecordTemplate {
+  public class Bar extends UnionTemplate ...
+}
+</code></pre>
+<b>2. Union with typeref</b> <br />
+If there is a typeref for the union, the code generator will use the name of typeref for the generated union class. <br />
+Package name is the package of the typeref if it is specified, otherwise package name is the namespace of the typeref by default. <br />
+Class name is the name of the typeref.<br />
+<br />
+<b>Example Schema</b> 
+<pre><code>
+{
+  "type" : "typeref",
+  "name" : "a.b.c.d.Bar",
+  "package" : "a.b.c.d.test",
+  "ref"  : [ "int", "string" ] 
+}
+</code></pre><b>Java package and class</b>
+<pre><code>
+package a.b.c.d.test;
+public class Bar extends UnionTemplate implements HasTyperefInfo {
+  ...
+  public TyperefInfo typerefInfo() 
+  {
+    ... 
+  }
+}
+</code></pre>
+When the typeref provides the name of the generated union class.   The generated class will also implement the <code>HasTyperefInfo</code> interface.  This interface declares the <code>typerefInfo()</code> method that will be implemented by the generated class.<br />
+To avoid generating duplicate classes for the duplicate declarations of unions, it is a good practice to declare unions with a typeref when the same union type is used more than once.<br />
+</td>
+</tr>
+<tr class="odd">
+<td>
+maps and arrays of unions <br />
+</td>
+<td>
+Package name is the package name of the union, which follows the rule documented in this table for unions.  <br />
+The generated class will be declared in the same outer class (for unions without typeref) or same package (for unions with typeref) as the generated class for the union. <br />
+Class name is computed by appending "Map" or "Array" to the name of the generated class for the union. <br />
+For multi-dimensional maps and arrays, a "Map" or "Array" is appended for each dimension starting the inner most dimension first. <br />
+<br />
+<b>1. Union without typeref</b><br />
+<br />
+<b>Example Schema</b> 
+<pre>
+<code>
+{
+  "type" : "record",
+  "name" : "a.b.c.d.Foo",
+  "fields" : [
+    { "name" : "members", "type" : { "type" : "array", "items" : [ "int", "string" ] } }
+    { "name" : "locations", "type" : { "type" : "map", "values" : [ "int", "string" ]  } }
+  ]
+}
+</code>
+</pre>
 
-<br /> |
+<b>Java package and class</b> 
+<pre><code>
+package a.b.c.d;
+public class Foo extends RecordTemplate {
+  public class Members extends UnionTemplate ...
+  public class MembersArray extends WrappingArrayTemplate&lt;Members&gt; ...
+  public class Locations extends UnionTemplate ...
+  public class LocationsMap extends WrappingMapTemplate&lt;Locations&t; ...
+ <br />
+  public MembersArray getMembers() ...
+  public LocationsMap getLocations() ...
+}
 
-## Primitive Types
+</code></pre>
+
+<b>2. Union with typeref</b><br />
+<b>Example Schema</b> 
+<pre><code>
+{
+  "type" : "typeref",
+  "name" : "a.b.c.d.Bar",
+  "package": "a.b.c.d.test",
+  "ref"  : [ "int", "string" ] 
+}
+<br /> 
+{
+  "type" : "record",
+  "name" : "a.b.c.d.Foo",
+  "package" : "a.b.c.d.test",
+  "fields" : [
+    { "name" : "members", "type" : { "type" : "array", "items" : "Bar" } }
+    { "name" : "locations", "type" : { "type" : "map", "values" : "Bar" } }
+  ]
+}
+</code></pre><b>Java package and class</b> <br />
+<pre><code>
+package a.b.c.d.test;
+<br /> 
+public class Bar extends UnionTemplate ...
+public class BarArray extends WrappingArrayTemplate&lt;Bar&gt; ...
+public class BarMap extends WrappingMapTemplate&lt;Bar&gt; ...
+<br /> 
+public class Foo extends RecordTemplate
+{
+  public BarArray getMembers() ...
+  public BarMap getLocations() ...
+}
+</code></pre><br /> 
+</td>
+</tr>
+</tbody>
+</table>
+
+
+### Primitive Types
 
 The Java binding for primitive schema types are as follows:
 
-| Schema Type <br /> | Java Type <br />                            |
+| Schema Type  | Java Type                            |
 | ------------------ | ------------------------------------------- |
 | int <br />         | `java.lang.Integer` or `int` (1) <br />     |
 | long <br />        | `java.lang.Long` or `long` (1) <br />       |
@@ -1946,7 +1639,7 @@ for the standard Java class bindings. For additional details, see
 [Custom Java Class Binding for Primitive
 Types](#CustomJavaClassBindingforPrimitiveTypes).
 
-## Enum Type
+### Enum Type
 
 The code generator generates a Java enum class. There will be a
 corresponding symbol in the Java enum class for each symbol in the enum
@@ -1960,50 +1653,51 @@ that has not been updated with the new enum schema.
 Enums also supports a symbolDocs attribute to provide documentation for
 each enum symbol. E.g.
 
-    ```
-    ...
-      "symbols" : [ "APPLE", "BANANA", ... ],
-      "symbolDocs" : { "APPLE":"A red, yellow or green fruit.", "BANANA":"A yellow fruit.", ... } 
-    ...
+  ```
+  ...
+    "symbols" : [ "APPLE", "BANANA", ... ],
+    "symbolDocs" : { "APPLE":"A red, yellow or green fruit.", "BANANA":"A yellow fruit.", ... } 
+  ...
 
-```
+  ```
+    
 
-    ```
-    package com.linkedin.pegasus.generator.examples;
-    
-    ...
-    /**
-    * A fruit
-    *
-    */
-    public enum Fruits {
-    
-        /**
-         * A red, yellow or green fruit.
-         * 
-         */
-        APPLE,
-    
-        /**
-         * A yellow fruit.
-         * 
-         */
-        BANANA,
-    
-        /**
-         * An orange fruit.
-         * 
-         */
-        ORANGE,
-    
-        /**
-         * A yellow fruit.
-         * 
-         */
-        PINEAPPLE,
-        $UNKNOWN;
-    }
-    ```
+  ```java
+  package com.linkedin.pegasus.generator.examples;
+  
+  ...
+  /**
+  * A fruit
+  *
+  */
+  public enum Fruits {
+  
+      /**
+       * A red, yellow or green fruit.
+       * 
+       */
+      APPLE,
+  
+      /**
+       * A yellow fruit.
+       * 
+       */
+      BANANA,
+  
+      /**
+       * An orange fruit.
+       * 
+       */
+      ORANGE,
+  
+      /**
+       * A yellow fruit.
+       * 
+       */
+      PINEAPPLE,
+      $UNKNOWN;
+  }
+  ```
 
 **Note:** Due to the addition of doclint in JDK8, anything under the
 `symbolDocs` attribute must be W3C HTML 4.01 compliant. This is because
@@ -2011,7 +1705,7 @@ the contents of this string will appear as Javadocs in the generated
 Java ‘data template’ classes later. Please take this into consideration
 when writing your documentation.
 
-## Fixed Type
+### Fixed Type
 
 The code generator generates a class that extends
 `com.linkedin.data.template.FixedTemplate`. This class provides the
@@ -2029,7 +1723,7 @@ methods:
 
 A fixed instance is immutable once constructed.
 
-## Array Type
+### Array Type
 
 The code generator generates a class that extends
 `com.linkedin.data.template.DirectArrayTemplate<E>` or
@@ -2064,7 +1758,7 @@ below.
 | `String toString()` <br />             | Base class <br />      | Returns the result of calling `toString()` on the underlying `DataList` wrapped by this instance. <br />                                                                                                                                          |
 | *java.util.List methods*               | Base class <br />      | See `java.util.List`. <br />                                                                                                                                                                                                                      |
 
-## Map Type
+### Map Type
 
 The code generator generates a class that extends
 `com.linkedin.data.template.DirectMapTemplate<E>` or
@@ -2100,7 +1794,7 @@ below.
 | String toString() <br />                             | Base class <br />      | Returns the result of calling `toString()` on the underlying `DataMap` wrapped by this instance. <br />                                                                                                                                     |
 | *java.util.Map methods*                              | Base class <br />      | See `java.util.Map`. <br />                                                                                                                                                                                                                 |
 
-## Record Type
+### Record Type
 
 The code generator generates a class that extends
 `com.linkedin.data.template.RecordTemplate`. This class provides the
@@ -2132,7 +1826,7 @@ capitalized.
 
 <a name="GetMode"></a>
 
-### GetMode
+#### GetMode
 
 When getting a field from a record, the caller must specify the behavior
 of the function in case the requested field does not exist in the
@@ -2159,7 +1853,7 @@ The available GetModes are:
     If the field is not present and the field is optional, then return
     null.
 
-### SetMode
+#### SetMode
 
 When setting a field in a record, the caller must specify the behavior
 of the function in case the field is attempted to be set to `null`.
@@ -2183,90 +1877,90 @@ The available SetModes are:
 
 <!-- end list -->
 
-    ```
-    package com.linkedin.pegasus.generator.examples;
-    
-    ...
-    
-    public class Foo extends RecordTemplate
-    {
-        public Foo() ...
-        public Foo(DataMap data) ...
-        ...
-    
-        // intField - field of int type
-        public boolean hasIntField() ...
-        public void removeIntField() ...
-        public Integer getIntField(GetMode mode) ...
-        public Integer getIntField() { return getIntField(GetMode.STRICT); }
-        public Foo setIntField(int value) { ... ; return this; }
-        public Foo setIntField(Integer value, SetMode mode { ... ; return this; }
-        ...
-    
-        // bytesField - field of bytes, Java binding for bytes is ByteString
-        public boolean hasBytesField() ...
-        public void removeBytesField() ...
-        public ByteString getBytesField(GetMode mode) { return getBytesField(GetMode.STRICT); }
-        public ByteString getBytesField() ...
-        public Foo setBytesField(ByteString value) { ... ; return this; }
-        public Foo setBytesField(ByteString value, SetMode mode) { ... ; return this; }
-        ...
-    
-        // fruitsField - field of enum
-        public boolean hasFruitsField() ...
-        public void removeFruitsField() ...
-        public Fruits getFruitsField(GetMode mode) ...
-        public Fruits getFruitsField() { return getFruitsField(GetMode.STRICT); }
-        public Foo setFruitsField(Fruits value) { ... ; return this; }
-        public Foo setFruitsField(Fruits value, SetMode mode) { ... ; return this; }
-        ...
-    
-        // intArrayField - field of { "type" : "array", "items" : "int" }
-        public boolean hasIntArrayField() ...
-        public void removeIntArrayField() ...
-        public IntegerArray getIntArrayField(GetMode mode) ...
-        public IntegerArray getIntArrayField() { return getIntArrayField(GetMode.STRICT); }
-        public Foo setIntArrayField(IntegerArray value) { ... ; return this; }
-        public Foo setIntArrayField(IntegerArray value, SetMode mode) { ... ; return this; }
-    
-        // stringMapField - field of { "type" : "map", "values" : "string" }
-        public boolean hasStringMapField() ...
-        public void removeStringMapField() ...
-        public StringMap getStringMapField(GetMode mode) ...
-        public StringMap getStringMapField() { return getIntStringMapField(GetMode.STRICT); }
-        public Foo setStringMapField(StringMap value) { ... ; return this; }
-        public Foo setStringMapField(StringMap value, SetMode mode) { ... ; return this; }
-        ...
-    
-        // unionField - field of union
-        public boolean hasUnionField() ...
-        public void removeUnionField() ...
-        public Foo.UnionField getUnionField(GetMode mode) ...
-        public Foo.UnionField getUnionField() { return getUnionField(GetMode.STRICT); }
-        public Foo setUnionField(Foo.UnionField value) { ... ; return this; }
-        public Foo setUnionField(Foo.UnionField value, SetMode mode) { ... ; return this; }
-    
-        // get fields
-        public static Foo.Fields fields() {
-            ...;
-        }
-    
-        public static class Fields
-            extends PathSpec
-        {
-            ...
-            public PathSpec intField() { ... }
-            public PathSpec longField() { ... }
-            public PathSpec bytesField() { ... }
-            public PathSpec fruitsField() { ... }
-            public PathSpec intArrayField() { ... }
-            public PathSpec stringMapField() { ... }
-            public Foo.UnionField.Fields unionField() { ... }
-        }
-    }
-    ```
+  ```java
+  package com.linkedin.pegasus.generator.examples;
+  
+  ...
+  
+  public class Foo extends RecordTemplate
+  {
+      public Foo() ...
+      public Foo(DataMap data) ...
+      ...
+  
+      // intField - field of int type
+      public boolean hasIntField() ...
+      public void removeIntField() ...
+      public Integer getIntField(GetMode mode) ...
+      public Integer getIntField() { return getIntField(GetMode.STRICT); }
+      public Foo setIntField(int value) { ... ; return this; }
+      public Foo setIntField(Integer value, SetMode mode { ... ; return this; }
+      ...
+  
+      // bytesField - field of bytes, Java binding for bytes is ByteString
+      public boolean hasBytesField() ...
+      public void removeBytesField() ...
+      public ByteString getBytesField(GetMode mode) { return getBytesField(GetMode.STRICT); }
+      public ByteString getBytesField() ...
+      public Foo setBytesField(ByteString value) { ... ; return this; }
+      public Foo setBytesField(ByteString value, SetMode mode) { ... ; return this; }
+      ...
+  
+      // fruitsField - field of enum
+      public boolean hasFruitsField() ...
+      public void removeFruitsField() ...
+      public Fruits getFruitsField(GetMode mode) ...
+      public Fruits getFruitsField() { return getFruitsField(GetMode.STRICT); }
+      public Foo setFruitsField(Fruits value) { ... ; return this; }
+      public Foo setFruitsField(Fruits value, SetMode mode) { ... ; return this; }
+      ...
+  
+      // intArrayField - field of { "type" : "array", "items" : "int" }
+      public boolean hasIntArrayField() ...
+      public void removeIntArrayField() ...
+      public IntegerArray getIntArrayField(GetMode mode) ...
+      public IntegerArray getIntArrayField() { return getIntArrayField(GetMode.STRICT); }
+      public Foo setIntArrayField(IntegerArray value) { ... ; return this; }
+      public Foo setIntArrayField(IntegerArray value, SetMode mode) { ... ; return this; }
+  
+      // stringMapField - field of { "type" : "map", "values" : "string" }
+      public boolean hasStringMapField() ...
+      public void removeStringMapField() ...
+      public StringMap getStringMapField(GetMode mode) ...
+      public StringMap getStringMapField() { return getIntStringMapField(GetMode.STRICT); }
+      public Foo setStringMapField(StringMap value) { ... ; return this; }
+      public Foo setStringMapField(StringMap value, SetMode mode) { ... ; return this; }
+      ...
+  
+      // unionField - field of union
+      public boolean hasUnionField() ...
+      public void removeUnionField() ...
+      public Foo.UnionField getUnionField(GetMode mode) ...
+      public Foo.UnionField getUnionField() { return getUnionField(GetMode.STRICT); }
+      public Foo setUnionField(Foo.UnionField value) { ... ; return this; }
+      public Foo setUnionField(Foo.UnionField value, SetMode mode) { ... ; return this; }
+  
+      // get fields
+      public static Foo.Fields fields() {
+          ...;
+      }
+  
+      public static class Fields
+          extends PathSpec
+      {
+          ...
+          public PathSpec intField() { ... }
+          public PathSpec longField() { ... }
+          public PathSpec bytesField() { ... }
+          public PathSpec fruitsField() { ... }
+          public PathSpec intArrayField() { ... }
+          public PathSpec stringMapField() { ... }
+          public Foo.UnionField.Fields unionField() { ... }
+      }
+  }
+  ```
 
-## Error Type
+### Error Type
 
 Error types are specialized record types. The code generator generates a
 class that extends `com.linkedin.data.template.ExceptionTemplate`. The
@@ -2275,68 +1969,22 @@ with the same fields. Unlike `RecordTemplate` instances,
 `ExceptionTemplate` instances can be thrown and caught.
 `ExceptionTemplate` extends `java.lang.Exception`.
 
-## Union Type
+### Union Type
 
 The code generator generates a class that extends
 `com.linkedin.data.template.UnionTemplate`. This class provides the
 following methods:
 
-<table>
-<thead>
-<tr class="header">
-<th>Method <br /></th>
-<th>Implemented by <br /></th>
-<th>Description <br /></th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><em>Constructor</em>() <br /></td>
-<td>Generated class <br /></td>
-<td>Construct a union with null as it value. An instance with null as its value cannot be assigned another value. <br /></td>
-</tr>
-<tr class="even">
-<td><em>Constructor</em>(DataMap map) <br /></td>
-<td>Generated class</td>
-<td>If the argument is null or ```Data.NULL```, then construct a union with a null value. <br /><br />
-If the argument is not null, then construct a union whose value is provided by the ```DataMap```. Method invocations on the ```UnionTemplate``` translates to accesses to the underlying ```DataMap```. <br /><br />
-An instance with null as its value cannot be assigned another value. <br /><br />
-An instance that has a non-null value cannot be later assigned a null value. <br /><br />
-Note: This limitation is because the underlying data types that back the union for null verus non-null values are different. For non-null values, the underlying data type is a ```DataMap```. For null values, the underlying data type is a string. <br /></td>
-</tr>
-<tr class="odd">
-<td>```UnionDataSchema schema()``` <br /></td>
-<td>Generated class</td>
-<td>Returns the ```DataSchema``` of the instance. The members of the union can be obtained from this schema. <br /></td>
-</tr>
-<tr class="even">
-<td>```DataScheme memberType()``` <br /></td>
-<td>Base class <br /></td>
-<td>Returns ```DataSchemaConstants.NULL_TYPE``` if the union has a null value, else return the schema for the value. <br /><br />
-If the schema cannot be determined, then throw ```TemplateOutputCastException```. The schema cannot be determined if the content of the underlying ```DataMap``` cannot be resolved to a known member type of the union schema. See serialization format for details. This exception is thrown if the ```DataMap``` has more than one entry and the key of the only entry does not identify one of the member types of the union. <br /></td>
-</tr>
-<tr class="odd">
-<td>```boolean memberIs(String key)``` <br /></td>
-<td>Base class <br /></td>
-<td>Returns whether the union member key of the current value is equal the specified key. The type of the current value is identified by the specified key if the underlying ```DataMap``` has a single entry and the entry’s key equals the specified key. <br /></td>
-</tr>
-<tr class="even">
-<td>```boolean isNull()``` <br /></td>
-<td>Base class <br /></td>
-<td>Returns whether the value of the union is null. <br /></td>
-</tr>
-<tr class="odd">
-<td>```Object data()``` <br /></td>
-<td>Base class</td>
-<td>Returns ```Data.NULL``` if the union has a null value, else return the underlying ```DataMap``` fronted by the instance. <br /></td>
-</tr>
-<tr class="even">
-<td>```String toString()``` <br /></td>
-<td>Base class</td>
-<td>Equivalent to ```data().toString()```. <br /></td>
-</tr>
-</tbody>
-</table>
+|Method <br /> |Implemented by <br /> |Description <br /> |
+| --- | --- | --- |
+| `Constructor()` <br /> | Generated class <br /> | Construct a union with null as it value. An instance with null as its value cannot be assigned another value. <br /> |
+| `Constructor(DataMap map)` <br /> | Generated class | If the argument is null or `Data.NULL`, then construct a union with a null value. <br />If the argument is not null, then construct a union whose value is provided by the `DataMap`. Method invocations on the `UnionTemplate` translates to accesses to the underlying `DataMap`. <br />An instance with null as its value cannot be assigned another value. <br />An instance that has a non-null value cannot be later assigned a null value. <br />Note: This limitation is because the underlying data types that back the union for null verus non-null values are different. For non-null values, the underlying data type is a `DataMap`. For null values, the underlying data type is a string. <br /> |
+| `UnionDataSchema schema()` <br /> | Generated class | Returns the `DataSchema` of the instance. The members of the union can be obtained from this schema. <br /> |
+| `DataScheme memberType()` <br /> | Base class <br /> | Returns `DataSchemaConstants.NULL_TYPE` if the union has a null value, else return the schema for the value. <br />If the schema cannot be determined, then throw `TemplateOutputCastException`. The schema cannot be determined if the content of the underlying `DataMap` cannot be resolved to a known member type of the union schema. See serialization format for details. This exception is thrown if the `DataMap` has more than one entry and the key of the only entry does not identify one of the member types of the union. <br /> |
+| `boolean memberIs(String key)` <br /> | Base class <br /> | Returns whether the union member key of the current value is equal the specified key. The type of the current value is identified by the specified key if the underlying `DataMap` has a single entry and the entry's key equals the specified key. <br /> |
+| `boolean isNull()` <br /> | Base class <br /> | Returns whether the value of the union is null. <br /> |
+| `Object data()` <br /> | Base class | Returns `Data.NULL` if the union has a null value, else return the underlying `DataMap` fronted by the instance. <br /> |
+| `String toString()` <br /> | Base class | Equivalent to `data().toString()`. <br /> |
 
 The code generator generates the following methods in the generated
 class for each member type of the union. In the following table,
@@ -2354,100 +2002,100 @@ capitalized.
 Here is an example generated class for a union who’s members are not
 aliased.
 
-    ```
-    package com.linkedin.pegasus.examples;
-    
-    ...
-    public class Foo extends RecordTemplate
-    {
-        ...
-        public final static class UnionField extends UnionTemplate
-        {
-            public UnionField() ...
-            public UnionField(Object data) ...
-    
-            // int value
-            public boolean isInt() ...
-            public Integer getInt() ...
-            public void setInt(Integer value) ...
-    
-            // string value
-            public boolean isString() ...
-            public String getString() ...
-            public void setString(String value) ...
-    
-            // com.linkedin.pegasus.generator.examples.Fruits enum value
-            public boolean isFruits() ...
-            public Fruits getFruits() ...
-            public void setFruits(Fruits value) ...
-    
-            // com.linkedin.pegasus.generator.examples.Foo record value
-            public boolean isFoo() ...
-            public Foo getFoo() ...
-            public void setFoo(Foo value) ...
-    
-            // array value ({ "type" : "array", "items" : "string" })
-            public boolean isArray() ...
-            public StringArray getArray() ...
-            public void setArray(StringArray value) ...
-    
-            // map value ({ "type" : "map", "values" : "long" })
-            public boolean isMap() ...
-            public LongMap getMap() ...
-            public void setMap(LongMap value) ...
-        }
-    
-        public static class Fields extends PathSpec
-        {
-            ...
-            public Foo.Fields Foo() { ... }
-        }
-    }
-    ```
+  ```java
+  package com.linkedin.pegasus.examples;
+  
+  ...
+  public class Foo extends RecordTemplate
+  {
+      ...
+      public final static class UnionField extends UnionTemplate
+      {
+          public UnionField() ...
+          public UnionField(Object data) ...
+  
+          // int value
+          public boolean isInt() ...
+          public Integer getInt() ...
+          public void setInt(Integer value) ...
+  
+          // string value
+          public boolean isString() ...
+          public String getString() ...
+          public void setString(String value) ...
+  
+          // com.linkedin.pegasus.generator.examples.Fruits enum value
+          public boolean isFruits() ...
+          public Fruits getFruits() ...
+          public void setFruits(Fruits value) ...
+  
+          // com.linkedin.pegasus.generator.examples.Foo record value
+          public boolean isFoo() ...
+          public Foo getFoo() ...
+          public void setFoo(Foo value) ...
+  
+          // array value ({ "type" : "array", "items" : "string" })
+          public boolean isArray() ...
+          public StringArray getArray() ...
+          public void setArray(StringArray value) ...
+  
+          // map value ({ "type" : "map", "values" : "long" })
+          public boolean isMap() ...
+          public LongMap getMap() ...
+          public void setMap(LongMap value) ...
+      }
+  
+      public static class Fields extends PathSpec
+      {
+          ...
+          public Foo.Fields Foo() { ... }
+      }
+  }
+  ```
 
 For a union who’s members are aliased, the generated methods will use
 the alias instead of the member’s type name like illustrated below.
 
-    ```
-    package com.linkedin.pegasus.examples;
-    
-    ...
-    public class Foo extends RecordTemplate
-    {
-        ...
-        public final static class UnionField extends UnionTemplate
-        {
-            public UnionField() ...
-            public UnionField(Object data) ...
-    
-            // int with alias ({ "type" : "int", "alias" : "count" })
-            public UnionField createWithCount(Integer value) ...
-            public boolean isCount() ...
-            public Integer getCount() ...
-            public void setCount(Integer value) ...
-    
-            // string with alias ({ "type" : "string", "alias" : "message" })
-            public UnionField createWithMessage(String value) ...
-            public boolean isMessage() ...
-            public String getMessage() ...
-            public void setMessage(String value) ...
-    
-            // another string with alias ({ "type" : "string", "alias" : "greeting" })
-            public UnionField createWithGreeting(String value) ...
-            public boolean isGreeting() ...
-            public String getGreeting() ...
-            public void setGreeting(String value) ...
-        }
-    
-        public static class Fields extends PathSpec
-        {
-            ...
-            public Foo.Fields Foo() { ... }
-        }
-    }
-    ```
+  ```java
+  package com.linkedin.pegasus.examples;
+  
+  ...
+  public class Foo extends RecordTemplate
+  {
+      ...
+      public final static class UnionField extends UnionTemplate
+      {
+          public UnionField() ...
+          public UnionField(Object data) ...
+  
+          // int with alias ({ "type" : "int", "alias" : "count" })
+          public UnionField createWithCount(Integer value) ...
+          public boolean isCount() ...
+          public Integer getCount() ...
+          public void setCount(Integer value) ...
+  
+          // string with alias ({ "type" : "string", "alias" : "message" })
+          public UnionField createWithMessage(String value) ...
+          public boolean isMessage() ...
+          public String getMessage() ...
+          public void setMessage(String value) ...
+  
+          // another string with alias ({ "type" : "string", "alias" : "greeting" })
+          public UnionField createWithGreeting(String value) ...
+          public boolean isGreeting() ...
+          public String getGreeting() ...
+          public void setGreeting(String value) ...
+      }
+  
+      public static class Fields extends PathSpec
+      {
+          ...
+          public Foo.Fields Foo() { ... }
+      }
+  }
+  ```
 
-## Custom Java Class Binding for Primitive Types
+### Custom Java Class Binding for Primitive Types
 
 A typeref can also be used to define a custom Java class binding for a
 primitive type. The primary intended use is to provide a more developer
@@ -2486,89 +2134,89 @@ A custom class must meet the following requirements:
 
 <!-- end list -->
 
-    ```
-    {
-      "type" : "typeref",
-      "name" : "CustomPoint",
-      "ref"  : "string",
-      "java" : {
-        "class" : "CustomPoint"
-      }
+  ```
+  {
+    "type" : "typeref",
+    "name" : "CustomPoint",
+    "ref"  : "string",
+    "java" : {
+      "class" : "CustomPoint"
     }
-    ```
+  }
+  ```
 
-    ```
-    /
-    // The custom class
-    // It has to be immutable.
+  ```java
+  //
+  // The custom class
+  // It has to be immutable.
+  //
+  public class CustomPoint
+  {
+    private int _x;
+    private int _y;
+  
+    public CustomPoint(String s)
+    {
+      String parts[] = s.split(",");
+      _x = Integer.parseInt(parts"0":0);
+      _y = Integer.parseInt(parts"1":1);
+    }
+  
+    public CustomPoint(int x, int y)
+    {
+      _x = x;
+      _y = y;
+    }
+  
+    public int getX()
+    {
+      return _x;
+    }
+  
+    public int getY()
+    {
+      return _y;
+    }
+  
+    // Implement equals, hashCode, toString, ...
+  
     //
-    public class CustomPoint
+    // The custom class's DirectCoercer.
+    //
+    public static class CustomPointCoercer implements DirectCoercer<CustomPoint>
     {
-      private int _x;
-      private int _y;
-    
-      public CustomPoint(String s)
+      @Override
+      public Object coerceInput(CustomPoint object)
+        throws ClassCastException
       {
-        String parts[] = s.split(",");
-        _x = Integer.parseInt(parts"0":0);
-        _y = Integer.parseInt(parts"1":1);
+        return object.toString();
       }
-    
-      public CustomPoint(int x, int y)
+  
+      @Override
+      public CustomPoint coerceOutput(Object object)
+        throws TemplateOutputCastException
       {
-        _x = x;
-        _y = y;
-      }
-    
-      public int getX()
-      {
-        return _x;
-      }
-    
-      public int getY()
-      {
-        return _y;
-      }
-    
-      // Implement equals, hashCode, toString, ...
-    
-      //
-      // The custom class's DirectCoercer.
-      //
-      public static class CustomPointCoercer implements DirectCoercer<CustomPoint>
-      {
-        @Override
-        public Object coerceInput(CustomPoint object)
-          throws ClassCastException
+        if (object instanceof String == false)
         {
-          return object.toString();
+          throw new TemplateOutputCastException("Output " + object + 
+                                                " is not a string, and cannot be coerced to " + 
+                                                CustomPoint.class.getName());
         }
-    
-        @Override
-        public CustomPoint coerceOutput(Object object)
-          throws TemplateOutputCastException
-        {
-          if (object instanceof String == false)
-          {
-            throw new TemplateOutputCastException("Output " + object + 
-                                                  " is not a string, and cannot be coerced to " + 
-                                                  CustomPoint.class.getName());
-          }
-          return new CustomPoint((String) object);
-        }
-      }
-    
-      //
-      // Automatically register Java custom class and its coercer.
-      //
-      static
-      {
-        Custom.registerCoercer(CustomPoint.class, new CustomPointCoercer());
+        return new CustomPoint((String) object);
       }
     }
-    ```
+  
+    //
+    // Automatically register Java custom class and its coercer.
+    //
+    static
+    {
+      Custom.registerCoercer(CustomPoint.class, new CustomPointCoercer());
+    }
+  }
+  ```
 
-## Fields class
+### Fields class
 
 The code generator also generates a `Fields` class within the generated
 class for certain complex types. The primary use case for the `Fields`
@@ -2594,21 +2242,21 @@ class.
 | array <br />        | A `Fields` class will be generated if the array directly or indirectly contains a nested record or union. <br /> | An `items()` method returning a `PathSpec` will be generated for the array. <br />     |
 | map <br />          | A `Fields` class will be generated if the map directly or indirectly contains a nested record or union. <br />   | A `values()` method returning a `PathSpec` will be generated for the map.              |
 
-## Clone Method
+### Clone Method
 
 For the classes that wrap `DataMap` or `DataList`, their clone method
 will clone the underlying `DataMap` or `DataList` and then create and
 return a new `DataTemplate` of the same class to wrap the clone. This
 clone operation performs a shallow copy.
 
-## Escaping for Reserved Words
+### Escaping for Reserved Words
 
 When symbols such as schema names or enum symbol names are the same as
 one of the reserved words in Java, the code generator will escape these
 symbols by appending an underscore (“_”) to the name to obtain the Java
 name of the symbol.
 
-## Exceptions
+### Exceptions
 
 The Data layer can throw two exceptions:
 
@@ -2621,7 +2269,7 @@ The Data layer can throw two exceptions:
 
 <a name="RunningtheCodeGenerator"></a>
 
-## Running the Code Generator
+### Running the Code Generator
 
 The code generator that generates the Java bindings is the
 `com.linkedin.pegasus.generator.PegasusDataTemplateGenerator` class.
@@ -2659,17 +2307,17 @@ The dependencies of the code generator are:
   - `com.linkedin.pegasus:r2`
   - `com.linkedin.pegasus:generator`
 
-### Running the Code Generator from Command Line
+#### Running the Code Generator from Command Line
 
-### Running the Code Generator with Gradle
+#### Running the Code Generator with Gradle
 
 A `dataTemplate.gradle` script is available in the `build_script/`
 directory of pegasus. To use it, add the script to your project, then
 add this to your `build.gradle` file:
 
-    ```
-    apply from: "${buildScriptDirPath}/dataTemplate.gradle"
-    ```
+  ```
+  apply from: "${buildScriptDirPath}/dataTemplate.gradle"
+  ```
 
 and put the `.pdsc` files in a directory structure of the form:
 ‘src/\\\<sourceset\\\>/pegasus’, where typically it would be
@@ -2685,9 +2333,9 @@ compileJava task, so that other classes can refer to it.
 Note this will only generate the data templates, but further steps will
 be needed to generate the rest.li IDL and the clientModel.
 
-# Avro Translation
+## Avro Translation
 
-## Translating Schemas to and from Avro
+### Translating Schemas to and from Avro
 
 The schema and data translators inspect your classpath to determine
 which version of avro you are using and require you have the matching
@@ -2720,7 +2368,7 @@ Schema avroSchema = SchemaTranslator.dataToAvroSchema(pegasusDataSchema,
 options);  
 ```
 
-## Translating Data to and from Avro
+### Translating Data to and from Avro
 
 Data translation is implemented by the
 \`com.linkedin.data.avro.DataTranslator\` class. Translating data
