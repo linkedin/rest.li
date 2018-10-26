@@ -94,7 +94,7 @@ public class ServicePropertiesJsonSerializer implements
 
   private Map<String, Object> getTransportClientPropertiesWithClientOverrides(String serviceName, Map<String, Object> transportClientProperties)
   {
-    Object allowedClientOverrideKeysObj = transportClientProperties.remove(PropertyKeys.ALLOWED_CLIENT_OVERRIDE_KEYS);
+    Object allowedClientOverrideKeysObj = transportClientProperties.get(PropertyKeys.ALLOWED_CLIENT_OVERRIDE_KEYS);
     Set<String> allowedClientOverrideKeys = new HashSet<>(ConfigValueExtractor.buildList(allowedClientOverrideKeysObj, LIST_SEPARATOR));
 
     Map<String, Object> clientSuppliedServiceProperties = _clientServicesConfig.get(serviceName);
@@ -123,6 +123,11 @@ public class ServicePropertiesJsonSerializer implements
                 clientSuppliedServiceProperties.get(clientSuppliedKey),
                 serviceName});
           }
+        }
+        else
+        {
+          LOG.warn("Client failed to override config property {} that is disallowed by service {}. Continuing without override.",
+              clientSuppliedKey, serviceName);
         }
       }
     }

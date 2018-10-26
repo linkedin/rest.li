@@ -1,6 +1,11 @@
-25.0.13
+25.0.14
 -------
 
+
+25.0.13
+-------
+(RB=1464698)
+Keep ALLOWED_CLIENT_OVERRIDE_KEYS property when invoke #getTransportClientPropertiesWithClientOverrides
 
 25.0.12
 -------

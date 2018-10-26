@@ -145,5 +145,8 @@ public class ServicePropertiesSerializerTest
 
     Assert.assertTrue(atLeastOneConfigFromCfg2);
     Assert.assertTrue(atLeastOneConfigFromZk);
+
+    Map<String, Object> transportProperties = servicePropertiesWithClientCfg.getTransportClientProperties();
+    Assert.assertTrue(transportProperties != null && transportProperties.containsKey(PropertyKeys.ALLOWED_CLIENT_OVERRIDE_KEYS));
   }
 }
