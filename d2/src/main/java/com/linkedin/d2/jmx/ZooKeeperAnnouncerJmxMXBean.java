@@ -40,6 +40,13 @@ public interface ZooKeeperAnnouncerJmxMXBean
 
   void markDown() throws PropertyStoreException;
 
+  /**
+   * Change the weight of an existing host.
+   *
+   * @param doNotSlowStart Flag to let clients know if slow start should be avoided for a host.
+   */
+  void changeWeight(boolean doNotSlowStart) throws PropertyStoreException;
+
   String getCluster();
 
   void setCluster(String cluster);

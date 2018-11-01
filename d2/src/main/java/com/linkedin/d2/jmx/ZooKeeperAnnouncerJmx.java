@@ -91,6 +91,21 @@ public class ZooKeeperAnnouncerJmx implements ZooKeeperAnnouncerJmxMXBean
   }
 
   @Override
+  public void changeWeight(boolean doNotSlowStart) throws PropertyStoreException
+  {
+    FutureCallback<None> callback = new FutureCallback<>();
+    _announcer.changeWeight(callback, doNotSlowStart);
+    try
+    {
+      callback.get(10, TimeUnit.SECONDS);
+    }
+    catch (Exception e)
+    {
+      throw new PropertyStoreException(e);
+    }
+  }
+
+  @Override
   public String getCluster()
   {
     return _announcer.getCluster();

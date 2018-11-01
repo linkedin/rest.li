@@ -20,7 +20,9 @@ import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.LoadBalancerServer;
+import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.properties.PartitionData;
+import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
 import java.net.URI;
@@ -39,8 +41,7 @@ import static com.linkedin.d2.discovery.util.LogUtil.warn;
 public class
         ZooKeeperServer implements LoadBalancerServer
 {
-  private static final Logger                             _log =
-                                                                   LoggerFactory.getLogger(ZooKeeperServer.class);
+  private static final Logger _log = LoggerFactory.getLogger(ZooKeeperServer.class);
 
   private volatile ZooKeeperEphemeralStore<UriProperties> _store;
 
@@ -194,6 +195,73 @@ public class
           _store.removePartial(clusterName, new UriProperties(clusterName, partitionData), callback);
         }
 
+      }
+
+      @Override
+      public void onError(Throwable e)
+      {
+        callback.onError(e);
+      }
+    };
+
+    storeGet(clusterName, getCallback);
+  }
+
+  /**
+   * 1. Gets existing {@link UriProperties} for given cluster and add doNotSlowStart property
+   * for given uri.
+   * 2. Mark down existing node.
+   * 3. Mark up new node for uri with modified UriProperties and given partitionDataMap.
+   *
+   * @param doNotSlowStart Flag to let clients know if slow start should be avoided for a host.
+   */
+  @Override
+  public void changeWeight(String clusterName,
+                           URI uri,
+                           Map<Integer, PartitionData> partitionDataMap,
+                           boolean doNotSlowStart,
+                           Callback<None> callback)
+  {
+    Callback<UriProperties> getCallback = new Callback<UriProperties>()
+    {
+      @Override
+      public void onSuccess(UriProperties uriProperties)
+      {
+        if (uriProperties == null)
+        {
+          warn(_log, "changeWeight called on a cluster that doesn't exist in zookeeper: ", clusterName);
+          callback.onError(new ServiceUnavailableException("cluster: " + clusterName, "Cluster does not exist in zookeeper."));
+        }
+        else if (!uriProperties.Uris().contains(uri))
+        {
+          warn(_log,
+              "changeWeight called on a uri that doesn't exist in cluster ",
+              clusterName,
+              ": ",
+              uri);
+          callback.onError(new ServiceUnavailableException(String.format("cluster: %s, uri: %s", clusterName, uri), "Uri does not exist in cluster."));
+        }
+        else
+        {
+          Map<String, Object> uriSpecificProperties = uriProperties.getUriSpecificProperties().getOrDefault(uri, new HashMap<>());
+          uriSpecificProperties.put(PropertyKeys.DO_NOT_SLOW_START, doNotSlowStart);
+
+          Callback<None> markUpCallback = new Callback<None>()
+          {
+            @Override
+            public void onError(Throwable e)
+            {
+              callback.onError(e);
+            }
+
+            @Override
+            public void onSuccess(None result)
+            {
+              markUp(clusterName, uri, partitionDataMap, uriSpecificProperties, callback);
+            }
+          };
+          markDown(clusterName, uri, markUpCallback);
+        }
       }
 
       @Override

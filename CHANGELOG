@@ -1,6 +1,10 @@
-25.0.14
+25.0.15
 -------
 
+25.0.14
+-------
+(RB=1466148)
+Server-side: expose changeWeight method in JMX and add "doNotSlowStart" UriProperty
 
 25.0.13
 -------

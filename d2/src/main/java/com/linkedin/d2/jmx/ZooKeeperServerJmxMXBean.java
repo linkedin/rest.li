@@ -19,9 +19,7 @@ package com.linkedin.d2.jmx;
 import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.discovery.stores.PropertyStoreException;
 
-import java.net.URI;
 import java.util.Map;
-import java.util.Set;
 
 public interface ZooKeeperServerJmxMXBean
 {
@@ -33,4 +31,11 @@ public interface ZooKeeperServerJmxMXBean
   void setMarkup(String clusterName, String uri, Map<Integer, PartitionData> partitionDataMap, Map<String, Object> uriSpecificProperties) throws PropertyStoreException;
 
   void setMarkDown(String clusterName, String uri) throws PropertyStoreException;
+
+  /**
+   * Change the weight of an existing host based on the given partitionDataMap.
+   *
+   * @param doNotSlowStart Flag to let clients know if slow start should be avoided for a host.
+   */
+  void setChangeWeight(String clusterName, String uri, Map<Integer, PartitionData> partitionDataMap, boolean doNotSlowStart) throws PropertyStoreException;
 }

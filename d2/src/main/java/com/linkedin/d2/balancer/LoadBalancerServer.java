@@ -19,7 +19,7 @@ package com.linkedin.d2.balancer;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.properties.PartitionData;
-
+import com.linkedin.d2.balancer.properties.UriProperties;
 import java.net.URI;
 import java.util.Map;
 
@@ -34,6 +34,20 @@ public interface LoadBalancerServer
               Callback<None> callback);
 
   void markDown(String clusterName, URI uri, Callback<None> callback);
+
+  /**
+   * 1. Gets existing {@link UriProperties} for given cluster and add doNotSlowStart property
+   * for given uri.
+   * 2. Mark down existing node.
+   * 3. Mark up new node for uri with modified UriProperties and given partitionDataMap.
+   *
+   * @param doNotSlowStart Flag to let clients know if slow start should be avoided for a host.
+   */
+  void changeWeight(String clusterName,
+                    URI uri,
+                    Map<Integer, PartitionData> partitionDataMap,
+                    boolean doNotSlowStart,
+                    Callback<None> callback);
 
   void start(Callback<None> callback);
 

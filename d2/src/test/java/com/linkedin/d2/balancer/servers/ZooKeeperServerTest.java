@@ -20,6 +20,7 @@ package com.linkedin.d2.balancer.servers;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.properties.PartitionData;
+import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.balancer.properties.UriPropertiesJsonSerializer;
 import com.linkedin.d2.balancer.properties.UriPropertiesMerger;
@@ -30,7 +31,6 @@ import com.linkedin.d2.discovery.stores.zk.ZKServer;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -44,17 +44,18 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
 public class ZooKeeperServerTest
 {
-  public static final int PORT = 11711;
+  private static final int    PORT = 11711;
+  private static final String BAD_CLUSTER = "BAD CLUSTER";
 
-  protected ZKServer      _zkServer;
+  private ZKServer            _zkServer;
 
   @Test(groups = { "small", "back-end" })
   public void testZkServer() throws InterruptedException,
-      URISyntaxException,
       IOException,
       PropertyStoreException,
       ExecutionException
@@ -128,7 +129,7 @@ public class ZooKeeperServerTest
     assertEquals(properties.Uris().size(), 0);
 
     // test bad cluster doesn't exist
-    markDown(server, "BAD CLUSTER", uri1);
+    markDown(server, BAD_CLUSTER, uri1);
 
     properties = store.get("BAD CLUSTER");
     assertNull(properties);
@@ -196,6 +197,69 @@ public class ZooKeeperServerTest
     uriSet.remove(uri1);
 
     assertEquals(properties.getUriBySchemeAndPartition("http", 10), uriSet);
+
+    // reset uri1 and changeWeight of uri1 with no preexisting uri properties
+    markDown(server, cluster, uri1);
+    markUp(server, cluster, uri1, 0.5d);
+
+    changeWeight(server, cluster, uri1, true, 1d);
+
+    uri1SpecificProperties.clear();
+    uri1SpecificProperties.put(PropertyKeys.DO_NOT_SLOW_START, true);
+
+    properties = store.get(cluster);
+    assertNotNull(properties);
+    assertEquals(properties.getPartitionDataMap(uri1).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(), 1d);
+    assertEquals(properties.getUriSpecificProperties().get(uri1), uri1SpecificProperties);
+
+    // changeWeight of uri2 with preexisting uri properties
+    changeWeight(server, cluster, uri2, true, 0.9d);
+
+    uri2SpecificProperties.put(PropertyKeys.DO_NOT_SLOW_START, true);
+
+    properties = store.get(cluster);
+    assertNotNull(properties);
+    assertEquals(properties.getPartitionDataMap(uri2).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(), 0.9d);
+    assertEquals(properties.getUriSpecificProperties().get(uri2), uri2SpecificProperties);
+
+    // changeWeight on uri1 using partitionData
+    changeWeight(server, cluster, uri1, true, partitionWeight);
+    properties = store.get(cluster);
+    assertNotNull(properties);
+    assertEquals(properties.getPartitionDataMap(uri1), partitionWeight);
+    assertEquals(properties.getUriSpecificProperties().get(uri1).get(PropertyKeys.DO_NOT_SLOW_START), true);
+
+    // changeWeight on a cluster that doesn't exist
+    try
+    {
+      changeWeight(server, BAD_CLUSTER, uri1, true, 0.5d);
+    }
+    catch (RuntimeException e)
+    {
+
+    }
+    properties = store.get(BAD_CLUSTER);
+    assertNull(properties);
+
+    // changeWeight on a uri that doesn't exist
+    markDown(server, cluster, uri2);
+    try
+    {
+      changeWeight(server, cluster, uri2, true, 0.5d);
+    }
+    catch (RuntimeException e)
+    {
+
+    }
+    properties = store.get(cluster);
+    assertTrue(!properties.Uris().contains(uri2));
+
+    // changeWeight properly changes existing doNotSlowStart from true to false
+    properties = store.get(cluster);
+    assertEquals(properties.getUriSpecificProperties().get(uri1).get(PropertyKeys.DO_NOT_SLOW_START), true);
+    changeWeight(server, cluster, uri1, false, 1.0d);
+    properties = store.get(cluster);
+    assertEquals(properties.getUriSpecificProperties().get(uri1).get(PropertyKeys.DO_NOT_SLOW_START), false);
   }
 
   private void markUp(ZooKeeperServer server, String cluster, URI uri, double weight)
@@ -241,6 +305,35 @@ public class ZooKeeperServerTest
     catch (Exception e)
     {
       fail("Failed to mark server down", e);
+    }
+  }
+
+  private void changeWeight(ZooKeeperServer server,
+                            String cluster,
+                            URI uri,
+                            boolean doNotSlowStart,
+                            double weight)
+  {
+    Map<Integer, PartitionData> partitionWeight = new HashMap<Integer, PartitionData>();
+    partitionWeight.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(weight));
+    changeWeight(server, cluster, uri, doNotSlowStart, partitionWeight);
+  }
+
+  private void changeWeight(ZooKeeperServer server,
+                            String cluster,
+                            URI uri,
+                            boolean doNotSlowStart,
+                            Map<Integer, PartitionData> partitionDataMap)
+  {
+    FutureCallback<None> callback = new FutureCallback<>();
+    server.changeWeight(cluster, uri, partitionDataMap, doNotSlowStart, callback);
+    try
+    {
+      callback.get(10, TimeUnit.SECONDS);
+    }
+    catch (Exception e)
+    {
+      throw new RuntimeException(e);
     }
   }
 

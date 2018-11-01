@@ -85,4 +85,23 @@ public class ZooKeeperServerJmx implements ZooKeeperServerJmxMXBean
       throw new PropertyStoreException(e);
     }
   }
+
+  @Override
+  public void setChangeWeight(String clusterName,
+                           String uri,
+                           Map<Integer, PartitionData> partitionDataMap,
+                           boolean doNotSlowStart)
+      throws PropertyStoreException
+  {
+    FutureCallback<None> callback = new FutureCallback<>();
+    _server.changeWeight(clusterName, URI.create(uri), partitionDataMap, doNotSlowStart, callback);
+    try
+    {
+      callback.get(10, TimeUnit.SECONDS);
+    }
+    catch (Exception e)
+    {
+      throw new PropertyStoreException(e);
+    }
+  }
 }

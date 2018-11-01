@@ -167,4 +167,7 @@ public class PropertyKeys
   public static final String PROPERTIES = "properties";
   public static final String STRATEGY = "strategy";
   public static final String OPERATION = "operation";
+
+  // used by uri specific properties
+  public static final String DO_NOT_SLOW_START = "doNotSlowStart";
 }

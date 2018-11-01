@@ -248,6 +248,27 @@ public class ZooKeeperAnnouncer
     }
   }
 
+  public synchronized void changeWeight(final Callback<None> callback, boolean doNotSlowStart)
+  {
+    _server.changeWeight(_cluster, _uri, _partitionDataMap, doNotSlowStart, new Callback<None>()
+    {
+      @Override
+      public void onError(Throwable e)
+      {
+        _log.warn("changeWeight for uri = {} failed.", _uri);
+        callback.onError(e);
+      }
+
+      @Override
+      public void onSuccess(None result)
+      {
+        _log.info("changeWeight for uri = {} succeeded.", _uri);
+        callback.onSuccess(result);
+      }
+    });
+    _log.info("changeWeight called for uri = {}.", _uri);
+  }
+
   public String getCluster()
   {
     return _cluster;
@@ -297,7 +318,7 @@ public class ZooKeeperAnnouncer
       try
       {
         @SuppressWarnings("unchecked")
-        Map<Integer, PartitionData> partitionDataMap = (Map<Integer, PartitionData>)data;
+        Map<Integer, PartitionData> partitionDataMap = (Map<Integer, PartitionData>) data;
         setPartitionData(partitionDataMap);
       }
       catch (ClassCastException e)
