@@ -4,6 +4,18 @@ title: Validation-in-Rest.li
 permalink: /Validation-in-Rest_li
 ---
 
+# Validation
+
+## Contents
+
+  - [Specifying Validation Rules](#specifying-validation-rules)
+  - [Custom Validation Rules](#custom-validation-rules)
+  - [Rest.li Validation Annotations](#restli-validation-annotations)
+  - [Using the Rest.li Data Validator For Servers](#using-the-restli-data-validator-for-servers)
+  - [Using the Rest.li Data Validator For Clients](#using-the-restli-data-validator-for-clients)
+  - [Validating Data Without Rest.li Context](#validating-data-without-restli-context)
+  - [Backwards Compatibility](#backwards-compatibility)
+
 There are many situations in which incoming or outgoing data should be
 validated. For example, when creating a record which stores user
 information, you may want to check that the username field doesn’t
@@ -29,9 +41,7 @@ Rest.li validates using three types of rules:
     presence of required fields)
 2.  Custom validation rules (checking whether a number is in some range,
     matching a string to a regular expression, etc)
-3.  Rest.li validation annotations (
-    <span style="text-align:left;">code\>`ReadOnly```% and
-    %````CreateOnly```</span>)
+3.  Rest.li validation annotations (`@ReadOnly` and `@CreateOnly`)
 
 The first two rules are specified in the data schema (.pdsc file), and
 the third one is specified in the resource implementation. This is
@@ -62,24 +72,24 @@ For example, to use “strlen” to validate a string between 1 and 20 chars
 long, we add it to the “validate” map of the field in the schema, for
 example:
 
-```  
-{  
-“name”: “Fortune”,  
-“namespace”: “com.example”,  
-“type”: “record”,  
-“fields”: \[  
-{  
-“name”: “message”,  
-“type”: “string”,  
-“validate”: {  
-“strlen”: {  
-“min”: 1,  
-“max”: 20  
-}  
-}  
-}  
-\]  
-}  
+```
+{
+  "name": "Fortune",
+  "namespace": "com.example",
+  "type": "record",
+  "fields": [
+    {
+      "name": "message",
+      "type": "string",
+      "validate": {
+        "strlen": {
+          "min": 1,  
+          "max": 20
+        }
+      }
+    }
+  ]
+}
 ```
 
 Validator names are case sensitive and must have a matching validator
@@ -101,12 +111,10 @@ expressive enough. For example, a client shouldn’t send a
 server-generated id in a create request (i.e. id is optional), but the
 server must send the id when responding to a get request (i.e. id is
 required). To cover cases like this, we introduce two new Rest.li
-validation annotations:
-<span style="text-align:left;">code\>`ReadOnly```% and
-%````CreateOnly```</span>.
+validation annotations: `@ReadOnly` and `@CreateOnly`.
 
-A @`ReadOnly` field cannot be set or changed by the client, ex.
-server-generated ID field. A @`CreateOnly` field can be set the client
+A `@ReadOnly` field cannot be set or changed by the client, ex.
+server-generated ID field. A `@CreateOnly` field can be set the client
 when creating the entity, but cannot be changed by the client
 afterwards. This annotation implies that the field is immutable, ex. a
 purchase price. The client will send the price to the CREATE method
@@ -114,7 +122,7 @@ while creating a purchase entry.
 
 As a best practice, Rest.li validation annotation should not conflict
 with schema validation rules and custom validation rules specified in
-the schema. For example, @`ReadOnly` should only be used to enforce that
+the schema. For example, `@ReadOnly` should only be used to enforce that
 an optional field is not present. It should not be specified for a
 required field, making missing required field value valid.
 
@@ -125,8 +133,8 @@ annotation:
 
 |                          | Create                                | Partial Update      |
 | ------------------------ | ------------------------------------- | ------------------- |
-| ```@ReadOnly```   | Must not be present (See notes below) | Must not be present |
-| ```@CreateOnly``` | N/A                                   | Must not be present |
+| `@ReadOnly`   | Must not be present (See notes below) | Must not be present |
+| `@CreateOnly` | N/A                                   | Must not be present |
 
 Batch create, batch update, and batch partial update are treated the
 same as create, update, and partial update respectively. Note that
@@ -135,19 +143,17 @@ call the validator or use the validation filter.
 
 ### Notes on @ReadOnly Validation Rules for Create Request
 
-If @`ReadOnly` is specified to a field that is required in schema, the
+If `@ReadOnly` is specified to a field that is required in schema, the
 field is treated as optional and the validation rule enforces that the
-field is not present in the Create request data. While tolerated in the
-current implementation, such use doesn’t follow best practice and may
-cause error in the future.
+field is not present in the Create request data.
 
 ### Validation for Update Requests
 
-@`ReadOnly` and @`CreateOnly` does not affect input data validation for
+`@ReadOnly` and `@CreateOnly` does not affect input data validation for
 Rest.li update requests. This is because update is a PUT method and
 should contain the whole entity, unlike partial update where
 non-modified fields can be omitted. In the update request, the
-@`ReadOnly` or @`CreateOnly` field is expected to have the same value as
+`@ReadOnly` or `@CreateOnly` field is expected to have the same value as
 the original entity (if the field was missing from the original entity,
 it should be missing in the update request too). *However, this is not
 checked by the Rest.li framework and should be checked manually in the
@@ -158,14 +164,13 @@ resource implementation.*
 Rest.li validation annotations are specified on top of the resource. For
 example,  
 ```java  
-`RestLiCollection(name = "photos", namespace =
-"com.linkedin.restli.example.photos")
-`ReadOnly(“urn”)  
-`CreateOnly({"/id", "/EXIF"})
-public class PhotoResource extends CollectionResourceTemplate<Long,
-Photo>
+@RestLiCollection(name = "photos", namespace = "com.linkedin.restli.example.photos")
+@ReadOnly(“urn”)  
+@CreateOnly({"/id", "/EXIF"})
+public class PhotoResource extends CollectionResourceTemplate<Long, Photo>
 {
-...
+  ...
+}
 ```
 Every path should correspond to a field in a record, and not an enum
 constant, a member of a union, etc. Paths should be specified in the
@@ -177,41 +182,37 @@ calling toString(). For example, if the ValidationDemo record contains
 an array field like this:
 ```
 {
-"name": "ArrayWithInlineRecord",
-"type": {
-"type": "array",
-"items": {
-"type": "record",
-"name": "myItem",
-"fields": [
-{
-"name": "bar1",
-"type": "string"
-},
-{
-"name": "bar2",
-"type": "string"
-}
-]
-}
-},
-"optional": true
+  "name": "ArrayWithInlineRecord",
+  "type": {
+    "type": "array",
+    "items": {
+      "type": "record",
+      "name": "myItem",
+      "fields": [
+        {
+          "name": "bar1",
+          "type": "string"
+        },
+        {
+          "name": "bar2",
+          "type": "string"
+        }
+      ]
+    }
+  },
+  "optional": true
 }
 ```
-`ValidationDemo.fields().ArrayWithInlineRecord().items().bar1().toString()@
+`ValidationDemo.fields().ArrayWithInlineRecord().items().bar1().toString()`
 will return `/ArrayWithInlineRecord/*/bar1`.
 
 You can also refer to these rules:  
-For a non-nested field, put the field name. e.g. “stringA”  
-For a nested field, put the full path separated by / characters. e.g.
+- For a non-nested field, put the field name. e.g. “stringA”  
+- For a nested field, put the full path separated by / characters. e.g.
 “location/latitude”  
-For a field of an array item, specify the array name followed by the
-wildcard and the field name. e.g. “ArrayWithInlineRecord/\*/bar1”  
-Similarly, for a field of a map value, specify the map name followed by
-the wildcard and the field name.  
-For a field of a record inside a union, specify the union name, followed
-by the fully qualified record schema name, and then the field name. e.g.
-“UnionFieldWithInlineRecord/com.linkedin.restli.examples.greetings.api.myRecord/foo2”
+- For a field of an array item, specify the array name followed by the wildcard and the field name. e.g. “ArrayWithInlineRecord/\*/bar1”  
+- Similarly, for a field of a map value, specify the map name followed by the wildcard and the field name.  
+- For a field of a record inside a union, specify the union name, followed by the fully qualified record schema name, and then the field name. e.g. “UnionFieldWithInlineRecord/com.linkedin.restli.examples.greetings.api.myRecord/foo2”
 
 Because full paths are listed, different rules can be specified for
 records that have the same schema. For example, if the schema contains
@@ -235,15 +236,13 @@ you need to call the validator directly.
 
 ### Request validation before resource handling
 
-The
-[RestLiValidationFilter](https://github.com/linkedin/rest.li/blob/master/restli-server/src/main/java/com/linkedin/restli/server/validation/RestLiValidationFilter.java)
+The [RestLiValidationFilter](https://github.com/linkedin/rest.li/blob/master/restli-server/src/main/java/com/linkedin/restli/server/validation/RestLiValidationFilter.java)
 rejects all invalid requests automatically. It sends a 422
 (Unprocessable Entity) error response back to the client if the data is
 invalid. A sample error message is:  
 ```  
-ERROR :: /stringA :: ReadOnly field present in a create request  
-ERROR :: /stringB :: field is required but not found and has no default
-value  
+ERROR :: /stringA :: ReadOnly field present in a create request
+ERROR :: /stringB :: field is required but not found and has no default value
 ```
 
 ### Response validation after resource handling
@@ -252,65 +251,55 @@ The RestLiValidationFilter also discards all invalid responses. The
 filter sends a 500 error response back to the client if the response is
 invalid. A sample error message is:  
 ```  
-ERROR :: /stringA :: length of “Lorem ipsum dolor sit amet” is out of
-range 1…10  
-ERROR :: /stringB :: field is required but not found and has no default
-value  
+ERROR :: /stringA :: length of “Lorem ipsum dolor sit amet” is out of range 1...10
+ERROR :: /stringB :: field is required but not found and has no default value
 ```
 
-[Rest.li Filters -
-Configuration](Rest.li-Filters#configuring-filters)
-explains how to install the filter.
+[Rest.li Filters - Configuration](Rest.li-Filters#configuring-filters) explains how to install the filter.
 
 ### Request validation during resource handling
 
 To use the Rest.li data validator explicitly, it needs to be declared as
-a method parameter using the %````ValidatorParam```% annotation.
+a method parameter using the `@ValidatorParam` annotation.
 For example, to validate the input of a create request,
 ```java
-`RestMethod.Create  
-public CreateResponse create(final Fortune entity, @ValidatorParam
-RestLiDataValidator validator)  
-{  
-ValidationResult result = validator.validateInput(entity);  
-if (\!result.isValid())  
-{  
-throw new
-RestLiServiceException(HttpStatus.S_422_UNPROCESSABLE_ENTITY,
-result.getMessages().toString());  
-}  
-…  
+@RestMethod.Create  
+public CreateResponse create(final Fortune entity, @ValidatorParam RestLiDataValidator validator)
+{
+  ValidationResult result = validator.validateInput(entity);  
+  if (!result.isValid())  
+  {  
+    throw new RestLiServiceException(HttpStatus.S_422_UNPROCESSABLE_ENTITY, result.getMessages().toString());  
+  }  
+  ...
+}
 ```
 
 Batch requests have to be validated one by one:  
-```java  
-`RestMethod.BatchPartialUpdate
-public BatchUpdateResult<Integer, Fortune>
-batchUpdate(BatchPatchRequest<Integer, Fortune> updates, `ValidatorParam
-RestLiDataValidator validator)  
-{  
-for (Map.Entry\<Integer, PatchRequest<Fortune>\> entry :
-entityUpdates.getData().entrySet())  
-{  
-Integer key = entry.getKey();  
-PatchRequest<Fortune> patch = entry.getValue();  
-ValidationResult result = validator.validateInput(patch);  
-if (result.isValid())  
-{  
-// update entity  
-}  
-else  
-{  
-errors.put(key, new
-RestLiServiceException(HttpStatus.S_422_UNPROCESSABLE_ENTITY,
-result.getMessages().toString()));  
-}  
-}  
-…  
+```java
+@RestMethod.BatchPartialUpdate
+public BatchUpdateResult<Integer, Fortune> batchUpdate(BatchPatchRequest<Integer, Fortune> updates, @ValidatorParam
+RestLiDataValidator validator)
+{
+  for (Map.Entry<Integer, PatchRequest<Fortune>> entry : entityUpdates.getData().entrySet())
+  {
+    Integer key = entry.getKey();
+    PatchRequest<Fortune> patch = entry.getValue();
+    ValidationResult result = validator.validateInput(patch);
+    if (result.isValid())
+    {
+      // update entity
+    }
+    else
+    {
+      errors.put(key, new RestLiServiceException(HttpStatus.S_422_UNPROCESSABLE_ENTITY, result.getMessages().toString()));
+    }
+  }
+  ...
+}
 ```
 
-The
-[ValidationDemoResource](https://github.com/linkedin/rest.li/blob/master/restli-int-test-server/src/main/java/com/linkedin/restli/examples/greetings/server/ValidationDemoResource.java)
+The [ValidationDemoResource](https://github.com/linkedin/rest.li/blob/master/restli-int-test-server/src/main/java/com/linkedin/restli/examples/greetings/server/ValidationDemoResource.java)
 class shows how to use the validator for each resource method type.
 
 ### Response validation during resource handling
@@ -318,22 +307,22 @@ class shows how to use the validator for each resource method type.
 Similar to request validation, the Rest.li data validator needs to be
 declared as a method parameter.  
 For example:  
-```java  
-`RestMethod.BatchGet
-public Map<Integer, Fortune> batchGet(Set<Integer> ids, `ValidatorParam
-RestLiDataValidator validator)  
-{  
-Map\<Integer, Fortune\> resultMap = new HashMap\<Integer, Fortune\>();  
-…  
-for (Fortune entity : resultMap.values())  
-{  
-ValidationResult result = validator.validateOutput(entity);  
-if (\!result.isValid())  
-{  
-// fix the entity  
-}  
-}  
-…  
+```java
+@RestMethod.BatchGet
+public Map<Integer, Fortune> batchGet(Set<Integer> ids, @ValidatorParam RestLiDataValidator validator)
+{
+  Map<Integer, Fortune> resultMap = new HashMap<Integer, Fortune>();
+  ...
+  for (Fortune entity : resultMap.values())
+  {
+    ValidationResult result = validator.validateOutput(entity);
+    if (!result.isValid())
+    {
+      // fix the entity
+    }
+  }  
+  ...
+}
 ```
 
 ## Using the Rest.li Data Validator For Clients
@@ -345,40 +334,36 @@ that the request wouldn’t be rejected by the server. Request builders
 for create, update, partial update and their respective batch operations
 have validateInput() methods.
 
-```java  
-Photo newPhoto = new Photo().setTitle(“New
-Photo”).setFormat(PhotoFormats.PNG)  
-.setExif(newExif);  
-ValidationResult validationResult =
-PhotosCreateRequestBuilder.validateInput(newPhoto);  
-if (validationResult.isValid())  
-{  
-// send request  
-}  
-else  
-{  
-// fix photo  
-}  
+```java
+Photo newPhoto = new Photo().setTitle(“New Photo”).setFormat(PhotoFormats.PNG).setExif(newExif);
+ValidationResult validationResult = PhotosCreateRequestBuilder.validateInput(newPhoto);
+if (validationResult.isValid())
+{
+  // send request
+}
+else
+{
+  // fix photo
+}
 ```
 
 Input data for batch requests have to be validated one by one:
 
 ```java  
-for (PatchRequest<Photo> patch : patches)  
-{  
-ValidationResult validationResult =
-PhotosPartialUpdateRequestBuilder.validateInput(patch);  
-if (\!validationResult.isValid())  
-{  
-// fix patch  
-}  
-…  
+for (PatchRequest<Photo> patch : patches)
+{
+  ValidationResult validationResult = PhotosPartialUpdateRequestBuilder.validateInput(patch);
+  if (!validationResult.isValid())
+  {
+    // fix patch
+  }
+  ...
+}
 ```
 
 ### Response validation
 
-When validating data returned by the server, clients have to use the
-`ValidateDataAgainstSchema` class as explained below.
+When validating data returned by the server, clients have to use the `ValidateDataAgainstSchema` class as explained below.
 
 ## Validating Data Without Rest.li Context
 
@@ -393,26 +378,17 @@ Validation
 Rules](Validation-in-Rest.li#specifying-validation-rules).
 
 For example:  
-```java  
-// Send the request to the server and get the response  
-final Photo photo =
-restClient.sendRequest(request).getResponse().getEntity();  
-DataSchemaAnnotationValidator validator = new
-DataSchemaAnnotationValidator(photo.schema());  
-ValidationResult result =
-ValidateDataAgainstSchema.validate(photo.data(), photo.schema(), new
-ValidationOptions(), validator);  
-if (\!result.isValid())  
-{  
-// handle the error  
-}  
+```java
+// Send the request to the server and get the response
+final Photo photo = restClient.sendRequest(request).getResponse().getEntity();
+DataSchemaAnnotationValidator validator = new DataSchemaAnnotationValidator(photo.schema());
+ValidationResult result = ValidateDataAgainstSchema.validate(photo.data(), photo.schema(), new ValidationOptions(), validator);
+if (!result.isValid())
+{
+  // handle the error
+} 
 ```
 
 ## Backwards Compatibility
 
-Adding or removing a ReadOnly or CreateOnly annotation for a field is
-considered backwards incompatible. When an annotation is added, old
-clients’ create or partial update requests may fail validation because
-they still contain the field in the request. When an annotation is
-removed, clients may have to send fields that they didn’t have to
-before.
+Adding or removing a `@ReadOnly` or `@CreateOnly` annotation for a field is considered backwards incompatible. When an annotation is added, old client's create or partial update requests may fail validation because they still contain the field in the request. When an annotation is removed, clients may have to send fields that they didn’t have to before.
