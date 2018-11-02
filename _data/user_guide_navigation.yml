@@ -7,6 +7,8 @@ toc:
         url: /rest.li/user_guide/restli_server
       - page: Rest.li Client Framework
         url: /rest.li/user_guide/restli_client
+      - page: Unstructured Data
+        url: /rest.li/user_guide/unstructured_data
       - page: Components
         url: /rest.li/Components
       - page: Asynchronous in Rest.li
