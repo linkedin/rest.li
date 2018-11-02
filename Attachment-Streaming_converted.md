@@ -4,6 +4,8 @@ title: Attachment-Streaming
 permalink: /Attachment-Streaming
 ---
 
+# Attachment streaming
+
 **This is an experimental feature at this point. Please consult Rest.li
 team before using it.**
 
@@ -103,22 +105,26 @@ justification of ```multipart/related``` is explained
 
 For reference, here are examples of sample regular Rest.li payloads.
 
-    ```POST /widgets?action=purge HTTP/1.1
-    Content-Type: application/json
-    {
-      "reason": "spam",
-      "purgedByAdminId": 1
-    }```
+```
+POST /widgets?action=purge HTTP/1.1
+Content-Type: application/json
+{
+  "reason": "spam",
+  "purgedByAdminId": 1
+}
+```
 
-    ```POST /widgets?ids=List(1,2) HTTP/1.1
-    Content-Type: application/json
-    X-RestLi-Method: BATCH_PARTIAL_UPDATE
-    {
-      "entities": {
-        "1": {"patch": { "$set": { "name":"Sam"}}},
-        "2": {"patch": { "$delete": ["name"]}}
-       }
-    }```
+```
+POST /widgets?ids=List(1,2) HTTP/1.1
+Content-Type: application/json
+X-RestLi-Method: BATCH_PARTIAL_UPDATE
+{
+  "entities": {
+    "1": {"patch": { "$set": { "name":"Sam"}}},
+    "2": {"patch": { "$delete": ["name"]}}
+  }
+}
+```
 
 ### Wire Format for Attachment Streaming
 
@@ -136,7 +142,8 @@ header.
 
 For example:
 
-    ```PUT /widgets?ids=List(1,2,3)   
+    
+    PUT /widgets?ids=List(1,2,3)   
     HTTP/1.1 X-RestLi-Method: BATCH_UPDATE
     Content-Type: multipart/related; boundary=--km6cltxBQgkYRIwT8lAgFGfNV0AmQFwDB
     Accept: multipart/related; application/json
@@ -165,7 +172,7 @@ For example:
     Content-ID: <a4d4133b-0546-4f7b-8104-ffdd644168c6>
     binary data…..
     --km6cltxBQgkYRIwT8lAgFGfNV0AmQFwDB--
-    ```
+    
 
 Note that the regular Rest.li payload becomes the first part in a
 ```multipart/related``` envelope. Each attachment then becomes
@@ -194,13 +201,12 @@ processing of a streaming request or response.
 
 Our recommendation is that anytime you have a field in a PDSC
 referencing an attachment, that a key value pair of
-```[attachment](true\</code\>) is present. This should further be
+```"attachment":true``` is present. This should further be
 expanded to include documentation mentioning that this field represents
 a pointer to an attachment. Once again it is important to note that the
 purpose of these fields is simply to convey that an attachment could be
 present.
 
-    ```
     {
       "type" : "record",
       "name" : "Greeting",
@@ -220,7 +226,6 @@ present.
        ]
     }
 
-```
 
 In terms of the actual data supplied at runtime we suggest using Type 1
 UUIDs.
@@ -238,7 +243,6 @@ different machines/services which may lead to an identifier collision.
 In order to create an attachment, developers must implement the
 following interface(s):
 
-    ```
     /**
      * Represents a custom data source that can serve as an attachment.
      */
@@ -254,12 +258,10 @@ following interface(s):
        */
       public String getAttachmentID();
     }
-    ```
 
 You’ll notice this extends ```Writer``` which is defined as the
 following:
 
-    ```
     /**
      * Writer is the producer of data for an EntityStream.
      */
@@ -290,12 +292,10 @@ following:
       void onAbort(Throwable e);
     }
 
-```
 
 The ```Writer``` class leverages an interface called
 ```WriteHandle``` which is defined as follows:
 
-    ```
     /**
      * This is the handle to write data to an EntityStream.
      */
@@ -330,7 +330,6 @@ The ```Writer``` class leverages an interface called
        */
       int remaining();
     }
-    ```
 
 These are the essential interfaces to keep in mind when defining an
 attachment as they represent how your custom data source will be asked
@@ -383,7 +382,6 @@ There are two callbacks involved, one for the
 ```SingleRestLiAttachmentReader```. The relevant interfaces are
 as follows:
 
-    ```
     /**
      * Used to register with {@link com.linkedin.restli.common.attachments.RestLiAttachmentReader} to asynchronously
      * drive through the reading of multiple attachments.
@@ -417,9 +415,8 @@ as follows:
        */
       public void onStreamError(Throwable throwable);
     }
-    ```
 
-    ```
+
     /**
      * Used to register with {@link com.linkedin.restli.common.attachments.RestLiAttachmentReader.SingleRestLiAttachmentReader}
      * to asynchronously drive through the reading of a single attachment.
@@ -450,7 +447,6 @@ as follows:
        */
       public void onAttachmentError(Throwable throwable);
     }
-    ```
 
 The process begins by registering a callback of type
 ```RestLiAttachmentReaderCallback``` as shown above with the
@@ -523,9 +519,7 @@ append multiple attachments (as defined by the
 Here is sample code on the client side on what attachment creation would
 look like when constructing a request:
 
-    ```
-    .
-    ..
+
     ...
     final byte[] clientSuppliedBytes = "ClientSupplied".getBytes();
     final GreetingWriter greetingAttachment = new GreetingWriter(ByteString.copy(clientSuppliedBytes));
@@ -543,9 +537,6 @@ look like when constructing a request:
       Assert.fail("We should not reach here!", responseException);
     }
     ...
-    ..
-    .
-    ```
 
 The implementation of ```GreetingWriter``` has not been provided
 but it is a trivial implementation of
@@ -559,9 +550,6 @@ attachments to come back, developers will need to use
 ```RestLiRequestOptions``` as follows when constructing the
 request builders:
 
-    ```
-    .
-    ..
     ...
     final RestliRequestOptions defaultOptions =
             new RestliRequestOptionsBuilder().setProtocolVersionOption(ProtocolVersionOption.USE_LATEST_IF_AVAILABLE)
@@ -569,9 +557,6 @@ request builders:
                 .build();
     final StreamingGreetingsBuilders builders = new StreamingGreetingsBuilders(defaultOptions);
     ...
-    ..
-    .
-    ```
 
 Without specifying this explicitly, a server will not be able to send
 any attachments back. This is because by default the
@@ -597,12 +582,11 @@ Even before assigning response attachments, the resource method should
 first check to see if the client can handle any response attachments.
 This is done via:
 
-    ```
+
     if (getContext().responseAttachmentsSupported())
     {
        //Client can handle response attachments
     }
-    ```
 
 Since the server does not have response builders or any opposite
 equivalent of the client side, resource methods must assign response
@@ -610,9 +594,6 @@ attachments using an instance of ```RestLiResponseAttachments```.
 The APIs exposed by ```RestLiResponseAttachments``` are very
 similar to the client side request builders:
 
-    ```
-    .
-    ..
     ...
     /**
          * Append a {@link com.linkedin.restli.common.attachments.RestLiAttachmentDataSourceWriter} to be placed as an attachment.
@@ -641,9 +622,6 @@ similar to the client side request builders:
           return this;
         }
     ...
-    ..
-    .
-    ```
 
 Once this is created, the ```RestLiResponseAttachments``` can be
 assigned to the response via
@@ -652,7 +630,6 @@ assigned to the response via
 Here is a complete example on how a server might respond with
 attachments:
 
-    ```
     if (getContext().responseAttachmentsSupported())
     {
        final GreetingWriter greetingWriter = new GreetingWriter(ByteString.copy(greetingBytes));
@@ -662,7 +639,6 @@ attachments:
           callback.onSuccess(new Greeting().setMessage("Your greeting has an attachment since you were kind and "
                   + "decided you wanted to read it!").setId(key));
     }
-    ```
 
 Once again, the implementation of ```GreetingWriter``` has not
 been provided but it is a trivial implementation of
@@ -673,17 +649,16 @@ been provided but it is a trivial implementation of
 A resource method expresses that it can accept request attachments by
 declaring ```RestLiAttachmentReader``` as a parameter in it’s
 method signature. This parameter must be accompanied by the presence of
-a new annotation: ````RestLiAttachmentsParam```. Note that only
+a new annotation: ```RestLiAttachmentsParam```. Note that only
 one parameter of this type can be declared and the
-````RestLiAttachmentsParam``` cannot be used with any other
+```RestLiAttachmentsParam``` cannot be used with any other
 parameter type.
 
 Here is an example of what a method signature may look like:
 
-    ```
+
     public void create(Greeting greeting, @CallbackParam Callback<CreateResponse> callback,
                        @RestLiAttachmentsParam RestLiAttachmentReader attachmentReader)
-    ```
 
 If the provided ```RestLiAttachmentReader``` is not null, the
 resource method may walk through it absorbing attachment data as
