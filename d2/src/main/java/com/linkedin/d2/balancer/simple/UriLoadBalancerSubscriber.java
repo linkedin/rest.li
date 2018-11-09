@@ -79,12 +79,13 @@ class UriLoadBalancerSubscriber extends
             trackerClients = new ConcurrentHashMap<URI, TrackerClient>();
             _simpleLoadBalancerState.getTrackerClients().put(serviceName, trackerClients);
           }
-          LoadBalancerStateItem<ServiceProperties> serviceProperties = _simpleLoadBalancerState.getServiceProperties().get(serviceName);
+          LoadBalancerStateItem<ServiceProperties> servicePropertiesItem = _simpleLoadBalancerState.getServiceProperties().get(serviceName);
+          ServiceProperties serviceProperties = servicePropertiesItem == null ? null : servicePropertiesItem.getProperty();
           DegraderImpl.Config config = null;
           Clock clk = SystemClock.instance();
 
-          if (serviceProperties == null || serviceProperties.getProperty() == null ||
-            serviceProperties.getProperty().getDegraderProperties() == null)
+          if (servicePropertiesItem == null || serviceProperties == null ||
+            serviceProperties.getDegraderProperties() == null)
           {
             debug(_log, "trying to see if there's a special degraderImpl properties but serviceInfo is null " +
               "for serviceName = " + serviceName + " so we'll set config to default");
@@ -92,19 +93,20 @@ class UriLoadBalancerSubscriber extends
           else
           {
             Map<String, String> degraderImplProperties =
-              serviceProperties.getProperty().getDegraderProperties();
+              serviceProperties.getDegraderProperties();
             config = DegraderConfigFactory.toDegraderConfig(degraderImplProperties);
           }
-          if (serviceProperties != null && serviceProperties.getProperty() != null &&
-            serviceProperties.getProperty().getLoadBalancerStrategyProperties() != null)
+          if (servicePropertiesItem != null && serviceProperties != null &&
+            serviceProperties.getLoadBalancerStrategyProperties() != null)
           {
             Map<String, Object> loadBalancerStrategyProperties =
-              serviceProperties.getProperty().getLoadBalancerStrategyProperties();
+              serviceProperties.getLoadBalancerStrategyProperties();
             clk = MapUtil.getWithDefault(loadBalancerStrategyProperties, PropertyKeys.CLOCK, SystemClock.instance(), Clock.class);
           }
 
-          long trackerClientInterval = SimpleLoadBalancerState.getTrackerClientInterval(serviceProperties.getProperty());
-          String errorStatusPattern = SimpleLoadBalancerState.getErrorStatusPattern(serviceProperties.getProperty());
+          long trackerClientInterval = SimpleLoadBalancerState.getTrackerClientInterval(serviceProperties);
+          String errorStatusPattern = SimpleLoadBalancerState.getErrorStatusPattern(serviceProperties);
+
           for (URI uri : discoveryProperties.Uris())
           {
             Map<Integer, PartitionData> partitionDataMap = discoveryProperties.getPartitionDataMap(uri);
@@ -114,10 +116,11 @@ class UriLoadBalancerSubscriber extends
               client = _simpleLoadBalancerState.getTrackerClient(serviceName,
                 uri,
                 partitionDataMap,
-                config,
+                new DegraderImpl.Config(config),
                 clk,
                 trackerClientInterval,
-                errorStatusPattern);
+                errorStatusPattern,
+                discoveryProperties.getUriSpecificProperties().get(uri));
 
               if (client != null)
               {

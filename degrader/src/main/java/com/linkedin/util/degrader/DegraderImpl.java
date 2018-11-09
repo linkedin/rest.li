@@ -141,6 +141,7 @@ public class DegraderImpl implements Degrader
   public static final Integer  DEFAULT_MIN_OUTSTANDING_COUNT = 5;
   public static final Integer  DEFAULT_OVERRIDE_MIN_CALL_COUNT = -1;
   public static final double   DEFAULT_INITIAL_DROP_RATE = 0.0d;
+  public static final double   DEFAULT_DO_NOT_SLOW_START_INITIAL_DROP_RATE = 0.0d;
   public static final double   DEFAULT_SLOW_START_THRESHOLD = 0.0d;
   public static final double   DEFAULT_LOG_THRESHOLD = 0.5d;
   public static final double   DEFAULT_PREEMPTIVE_REQUEST_TIMEOUT_RATE = 1.0d;

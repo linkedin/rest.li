@@ -21,6 +21,7 @@ import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.LoadBalancerClient;
 import com.linkedin.d2.balancer.properties.PartitionData;
+import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyConfig;
 import com.linkedin.d2.balancer.util.LoadBalancerUtil;
 import com.linkedin.data.ByteString;
@@ -93,7 +94,14 @@ public class TrackerClient implements LoadBalancerClient
   }
 
   public TrackerClient(URI uri, Map<Integer, PartitionData> partitionDataMap, TransportClient wrappedClient,
-                       Clock clock, Config config, long interval, String errorStatusRegex)
+      Clock clock, Config config, long interval, String errorStatusRegex)
+  {
+    this(uri, partitionDataMap, wrappedClient, clock, config, interval, errorStatusRegex, null);
+  }
+
+  public TrackerClient(URI uri, Map<Integer, PartitionData> partitionDataMap, TransportClient wrappedClient,
+                       Clock clock, Config config, long interval, String errorStatusRegex,
+                       Map<String, Object> uriSpecificProperties)
   {
     _uri = uri;
     _wrappedClient = wrappedClient;
@@ -119,6 +127,16 @@ public class TrackerClient implements LoadBalancerClient
     config.setClock(clock);
     // The overrideDropRate will be globally determined by the DegraderLoadBalancerStrategy.
     config.setOverrideDropRate(0.0);
+
+    if (uriSpecificProperties == null)
+    {
+      uriSpecificProperties = new HashMap<>();
+    }
+    if (uriSpecificProperties.containsKey(PropertyKeys.DO_NOT_SLOW_START)
+        && Boolean.parseBoolean(uriSpecificProperties.get(PropertyKeys.DO_NOT_SLOW_START).toString()))
+    {
+      config.setInitialDropRate(DegraderImpl.DEFAULT_DO_NOT_SLOW_START_INITIAL_DROP_RATE);
+    }
 
       /* TrackerClient contains state for each partition, but they actually share the same DegraderImpl
        *

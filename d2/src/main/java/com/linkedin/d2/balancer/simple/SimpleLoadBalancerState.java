@@ -753,7 +753,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
 
   TrackerClient getTrackerClient(String serviceName, URI uri, Map<Integer, PartitionData> partitionDataMap,
                                  DegraderImpl.Config config, Clock clk, long callTrackerInterval,
-                                 String errorStatusPattern)
+                                 String errorStatusPattern, Map<String, Object> uriSpecificProperties)
   {
     Map<String,TransportClient> clientsByScheme = _serviceClients.get(serviceName);
     if (clientsByScheme == null)
@@ -772,7 +772,8 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
             new Object[]{uri.getScheme(), serviceName, uri, partitionDataMap });
       return null;
     }
-    TrackerClient trackerClient = new TrackerClient(uri, partitionDataMap, client, clk, config, callTrackerInterval, errorStatusPattern);
+    TrackerClient trackerClient = new TrackerClient(uri, partitionDataMap, client, clk, config, callTrackerInterval,
+                                                    errorStatusPattern, uriSpecificProperties);
     return trackerClient;
   }
 
@@ -846,7 +847,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   static long getTrackerClientInterval(ServiceProperties serviceProperties)
   {
     long trackerClientInterval = DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS;
-    if (serviceProperties.getLoadBalancerStrategyProperties() != null)
+    if (serviceProperties != null && serviceProperties.getLoadBalancerStrategyProperties() != null)
     {
       trackerClientInterval = MapUtil.getWithDefault(serviceProperties.getLoadBalancerStrategyProperties(),
                              PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS,
@@ -859,7 +860,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   static String getErrorStatusPattern(ServiceProperties serviceProperties)
   {
     String pattern = TrackerClient.DEFAULT_ERROR_STATUS_REGEX;
-    if (serviceProperties.getLoadBalancerStrategyProperties() != null)
+    if (serviceProperties != null && serviceProperties.getLoadBalancerStrategyProperties() != null)
     {
       pattern = MapUtil.getWithDefault(serviceProperties.getLoadBalancerStrategyProperties(),
           PropertyKeys.HTTP_LB_ERROR_STATUS_REGEX, TrackerClient.DEFAULT_ERROR_STATUS_REGEX, String.class);
@@ -918,7 +919,8 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
       for (URI uri : uris)
       {
         TrackerClient trackerClient = getTrackerClient(serviceName, uri, uriProperties.getPartitionDataMap(uri),
-                                                       config, clk, trackerClientInterval, errorStatusPattern);
+                                                       config, clk, trackerClientInterval, errorStatusPattern,
+                                                       uriProperties.getUriSpecificProperties().get(uri));
         if (trackerClient != null)
         {
           newTrackerClients.put(uri, trackerClient);

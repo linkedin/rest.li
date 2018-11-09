@@ -19,6 +19,8 @@ package com.linkedin.d2.balancer.clients;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.properties.PartitionData;
+import com.linkedin.d2.balancer.properties.PropertyKeys;
+import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyConfig;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import com.linkedin.data.ByteString;
 import com.linkedin.r2.RemoteInvocationException;
@@ -71,8 +73,7 @@ public class TrackerClientTest
     double weight = 3d;
     TestClient wrappedClient = new TestClient(true);
     Clock clock = new SettableClock();
-    Map<Integer, PartitionData> partitionDataMap = new HashMap<Integer, PartitionData>(2);
-    partitionDataMap.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(3d));
+    Map<Integer, PartitionData> partitionDataMap = createDefaultPartitionData(3d);
     TrackerClient client = new TrackerClient(uri, partitionDataMap, wrappedClient, clock, null);
 
     assertEquals(client.getUri(), uri);
@@ -99,8 +100,7 @@ public class TrackerClientTest
     double weight = 3d;
     TestClient wrappedClient = new TestClient();
     Clock clock = new SettableClock();
-    Map<Integer, PartitionData> partitionDataMap = new HashMap<Integer, PartitionData>(2);
-    partitionDataMap.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(3d));
+    Map<Integer, PartitionData> partitionDataMap = createDefaultPartitionData(3d);
     TrackerClient client = new TrackerClient(uri, partitionDataMap, wrappedClient, clock, null);
 
     assertEquals(client.getUri(), uri);
@@ -297,11 +297,56 @@ public class TrackerClientTest
     Assert.assertEquals(degraderControl.getCurrentComputedDropRate(), 0.2, 0.001);
   }
 
+  @Test
+  public void testDoNotSlowStartWhenTrue()
+  {
+    Map<String, Object> uriSpecificProperties = new HashMap<>();
+    uriSpecificProperties.put(PropertyKeys.DO_NOT_SLOW_START, true);
+
+    Map<Integer, PartitionData> partitionDataMap = createDefaultPartitionData(1d);
+
+    DegraderImpl.Config config = new DegraderImpl.Config();
+    double initialDropRate = 0.99d;
+    config.setInitialDropRate(initialDropRate);
+
+    TrackerClient client = new TrackerClient(URI.create("http://test.qa.com:1234/foo"), partitionDataMap,
+        new TestClient(), new SettableClock(), config, DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS,
+        TrackerClient.DEFAULT_ERROR_STATUS_REGEX, uriSpecificProperties);
+    DegraderControl degraderControl = client.getDegraderControl(DefaultPartitionAccessor.DEFAULT_PARTITION_ID);
+    Assert.assertEquals(degraderControl.getInitialDropRate(), DegraderImpl.DEFAULT_DO_NOT_SLOW_START_INITIAL_DROP_RATE,
+        "Initial drop rate in config should have been overridden by doNotSlowStart uri property.");
+  }
+
+  @Test
+  public void testDoNotSlowStartWhenFalse()
+  {
+    Map<String, Object> uriSpecificProperties = new HashMap<>();
+    uriSpecificProperties.put(PropertyKeys.DO_NOT_SLOW_START, false);
+
+    Map<Integer, PartitionData> partitionDataMap = createDefaultPartitionData(1d);
+
+    DegraderImpl.Config config = new DegraderImpl.Config();
+    double initialDropRate = 0.99d;
+    config.setInitialDropRate(initialDropRate);
+
+    TrackerClient client = new TrackerClient(URI.create("http://test.qa.com:1234/foo"), partitionDataMap,
+        new TestClient(), new SettableClock(), config, DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS,
+        TrackerClient.DEFAULT_ERROR_STATUS_REGEX, uriSpecificProperties);
+    DegraderControl degraderControl = client.getDegraderControl(DefaultPartitionAccessor.DEFAULT_PARTITION_ID);
+    Assert.assertEquals(degraderControl.getInitialDropRate(), initialDropRate,
+        "Initial drop rate in config should not have been overridden by doNotSlowStart uri property.");
+  }
+
+  private Map<Integer, PartitionData> createDefaultPartitionData(double weight)
+  {
+    Map<Integer, PartitionData> partitionDataMap = new HashMap<>();
+    partitionDataMap.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(weight));
+    return partitionDataMap;
+  }
+
   private TrackerClient createTrackerClient(TransportClient tc, Clock clock, URI uri)
   {
-    double weight = 3d;
-    Map<Integer, PartitionData> partitionDataMap = new HashMap<Integer, PartitionData>(2);
-    partitionDataMap.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(3d));
+    Map<Integer, PartitionData> partitionDataMap = createDefaultPartitionData(3d);
     DegraderImpl.Config config = new DegraderImpl.Config();
     config.setHighErrorRate(0.1);
     config.setLowErrorRate(0.0);

@@ -1,5 +1,10 @@
+25.0.16
+-------
+
 25.0.15
 -------
+(RB=1475100)
+Zookeeper client-side: recognize and apply "doNotSlowStart" UriProperty when a node is marked up.
 
 25.0.14
 -------
