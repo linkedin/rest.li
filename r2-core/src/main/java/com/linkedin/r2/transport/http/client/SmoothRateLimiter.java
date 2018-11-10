@@ -243,6 +243,7 @@ public class SmoothRateLimiter implements AsyncRateLimiter
           // executor is busy.
           try
           {
+            LOG.warn("Task is run on the scheduler thread instead of executor.", e);
             task.run();
           }
           catch (Throwable throwable)
