@@ -1,5 +1,11 @@
+25.0.17
+-------
+
+
 25.0.16
 -------
+(RB=1481378)
+Add error logging to SmoothRateLimiter
 
 25.0.15
 -------
