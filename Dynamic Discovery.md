@@ -49,18 +49,19 @@ permalink: /Dynamic_Discovery
     and fault tolerant.
 </p>
 <p>
-    When a client is about to send a request, the D2 client library extract the <em>service</em> name from the d2 URI.
+    When a client is about to send a request, the D2 client library extracts the <em>service</em> name from the d2 URI.
     Then the d2 client library queries zookeeper for the <em>cluster</em> that owns that <em>service</em>.
-    Once d2 client know the cluster, it will then queries zookeeper for the available <em>URIs</em> for that cluster.
-
-    Given a list of URIs, D2 client can select which URI to send the request to.
-    The D2 client will listen for any updates related to the cluster and service it previously contacted. So if there's
+    Once the d2 client knows the cluster, it then queries zookeeper for the available <em>URIs</em> for that cluster.
+</p>
+<p>
+    Given a list of URIs, the D2 client can select which URI to send the request to.
+    The D2 client listens for any updates related to the cluster and service it previously contacted. So if there's
     any changes happening either because the server membership changes, or there are new services in a cluster,
     the d2 client can pick up the changes immediately
 </p>
 <p>
-    Sometimes D2 client's connection to zookeeper might be interrupted. When this happens, D2 will not know
-    what is the latest state so it will assume the state is the same as before. D2 keep backup of the state
+    Sometimes the D2 client's connection to zookeeper might be interrupted. When this happens, D2 will not know
+    what is the latest state so it will assume the state is the same as before. D2 keeps a backup of the state
     in the filesystem. If the zookeeper connection interruption happened for a long period of time (configurable), D2
     will discard the state and will fail to work.
 </p>
@@ -78,7 +79,7 @@ permalink: /Dynamic_Discovery
 
 ## D2 Load Balancer
 
-As we said above, all the load balancing happened in the client side. D2 client keep tracks of the health of the cluster.
+As we said above, all the load balancing happened in the client side. The D2 client keeps track of the health of the cluster.
 
 There are 2 types of mode that we can use to load balance traffic.
 <ul>
@@ -91,7 +92,7 @@ So how do we choose between CALL_DROPPING and LOAD_BALANCING?
 
 We measure 2 different things for health. One is the *cluster* health and the other one is the *client* health.
 
-For cluster health, we only measure the average cluster latency. If the average cluster latency is higher than LoadBalancer's high water mark, we'll increment the drop rate by 20%. Drop rate means all traffic to this cluster will be dropped 20% of the time. So obviously cluster health is relevant only to CALL_DROPPING mode. If the cluster latency exceeds high water mark 5 times in a row, we'll reach 100% drop rate. We have some measure of "recovery mode" to prevent the cluster from getting stuck in perpetual "drop everything" mode. During this mode, we'll still allow traffic to pass by to calibrate our cluster latency once in a while.
+For cluster health, we only measure the average cluster latency. If the average cluster latency is higher than LoadBalancer's high water mark, we'll increment the drop rate by 20%. Drop rate means all traffic to this cluster will be dropped 20% of the time. So obviously cluster health is relevant only to CALL_DROPPING mode. If the cluster latency exceeds the high water mark 5 times in a row, we'll reach 100% drop rate. We have some measure of "recovery mode" to prevent the cluster from getting stuck in perpetual "drop everything" mode. During this mode, we'll still allow traffic to pass by to calibrate our cluster latency once in a while.
 
 On the other hand, client health is tracked per client. We tracked many things per client e.g. error rate, number of calls, latency of calls, etc. We use this measurement to compute the "computed drop rate" of the client. Healthy client is a client whose latency is lower than client's high water mark (NOTE that there's client's high water mark and there's also load balancer's high water mark). For healthy client the computed drop rate should be 0. The computed drop is inversely proportional to the number of virtual points the client gets in a hash ring.
 
@@ -125,7 +126,7 @@ Like its name, ServiceProperties defines anything related to a service. The most
 
 <h4> ClusterProperties</h4>
 
-ClusterProperties define's a cluster's name, partioning, preferred schemes, banned nodes, and connection properties.
+ClusterProperties defines a cluster's name, partioning, preferred schemes, banned nodes, and connection properties.
 <ul>
 <li> The schemes are defined in their priority. That is, if a cluster supports both HTTP and Spring RPC, for instance, the order of the schemes defines in which order the load balancer will try to find a client. </li>
 <li> The banned nodes are a list of nodes (URIs) that belong to the cluster, but should not be called. </li>
@@ -137,13 +138,13 @@ ClusterProperties define's a cluster's name, partioning, preferred schemes, bann
 
 UriProperties define a cluster name and asset of URIs associated with the cluster. Each URI is also given a weight, which will be passed to the load balancer strategy.
 
-<h3> D2 Client: what are D2 Client anyway? </h3>
+<h3> D2 Client: what is D2 Client anyway? </h3>
 
-D2 Client is a wrapper over other simpler clients. The real implementation of D2 Client is DynamicClient.java. But underneath we use R2 client to shove bits from client to server. So DynamicClient wraps r2 clients with three classes: TrackerClient, RewriteClient, and LazyClient. The underlying R2 clients are: HttpNettyClient, FilterChainClient and FactoryClient.
+D2 Client is a wrapper over other simpler clients. The real implementation of D2 Client is DynamicClient.java. But underneath we use R2 client to shove bits from client to server. So DynamicClient wraps R2 clients with three classes: TrackerClient, RewriteClient, and LazyClient. The underlying R2 clients are: HttpNettyClient, FilterChainClient and FactoryClient.
 
 <h4> TrackerClient </h4>
 
-The TrackerClient attaches a CallTracker and Degrader to a URI. When a call is made to this client, it will use call tracker to track it, and then forward all calls to the r2 client. CallTracker keeps track of call statistics like call count, error count, latency, etc.
+The TrackerClient attaches a CallTracker and Degrader to a URI. When a call is made to this client, it will use call tracker to track it, and then forward all calls to the R2 client. CallTracker keeps track of call statistics like call count, error count, latency, etc.
 
 <h4> RewriteClient </h4>
 
@@ -202,7 +203,7 @@ TODO: add "Partitioning Support for Dynamic Discovery"
 
 <center><img src="/rest.li/images/LoadBalancerFlow.png"></center>
 
-Here is an example of the code flow when a request comes in. For the sake of this example, we'll a fictional widget service. Let's also say that in order to get the data for a widget resource, we need to contact 3 different services: WidgetX, WidgetY, and WidgetZ backend.
+Here is an example of the code flow when a request comes in. For the sake of this example, we'll call a fictional widget service. Let's also say that in order to get the data for a widget resource, we need to contact 3 different services: WidgetX, WidgetY, and WidgetZ backend.
 
 On the server side:
         <ul>
