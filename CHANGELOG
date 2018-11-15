@@ -3,6 +3,9 @@
 (RB=1487328)
 Add comment to indicate the supplied queue implementation to SmoothRateLimiter must be non-blocking as well
 
+(RB=1487109)
+Scope restli-tools-scala dependency in a few places.
+
 25.0.17
 -------
 (RB=1484849)

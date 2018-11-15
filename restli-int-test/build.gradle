@@ -3,7 +3,6 @@ apply plugin: 'pegasus'
 ext.apiProject = null
 
 dependencies {
-  compile project(':restli-int-test-server')
   compile project(':data')
   compile project(':pegasus-common')
   compile project(':r2-core')
@@ -19,6 +18,7 @@ dependencies {
   compile externalDependency.javaxInject
   compile externalDependency.parseq
   testCompile project(path: ':restli-common', configuration: 'testArtifacts')
+  testCompile project(path: ':restli-int-test-server')
   testCompile project(path: ':restli-internal-testutils', configuration: 'testArtifacts')
   testCompile project(path: ':restli-client', configuration: 'testArtifacts')
   testCompile project(path: ':restli-client-parseq')
