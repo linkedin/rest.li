@@ -58,6 +58,7 @@ public class SmoothRateLimiter implements AsyncRateLimiter
    * @param scheduler Scheduler used to execute the internal non-blocking event loop
    * @param executor Executes the tasks for invoking #onSuccess and #onError (only during #callAll)
    * @param clock Clock implementation that supports getting the current time accurate to milliseconds
+   * @param pendingCallbacks THREAD SAFE implementation of callback queue
    * @param maxBuffered Maximum number of tasks kept in the queue before execution
    * @param permitsPerPeriod Number of permits to run tasks per period of time
    * @param periodMilliseconds Period of time in milliseconds used to calculate {@code permitsPerPeriod}
@@ -217,63 +218,88 @@ public class SmoothRateLimiter implements AsyncRateLimiter
         _permitCount = rate.getEvents();
       }
 
-      int permitCount = _permitCount;
-      for (int i = 0; i < permitCount; i++)
+      if (_permitCount > 0)
       {
-        Callback<None> callback = _pendingCallbacks.poll();
-        Runnable task = () -> {
-          Throwable throwable = _invocationError.get();
-          if (throwable == null)
-          {
-            callback.onSuccess(None.none());
-          }
-          else
-          {
-            callback.onError(throwable);
-          }
-        };
+        _permitCount--;
+        Callback<None> callback = null;
         try
         {
-          _executor.execute(task);
+          callback = _pendingCallbacks.poll();
+          _executor.execute(new Task(callback, _invocationError.get()));
         }
         catch (Throwable e)
         {
-          // Invoke the callback on the current thread as the last resort. Executing the callback
-          // on the current thread also prevents the scheduler from polling another callback while the
-          // executor is busy.
-          try
+          // Invoke the callback#onError on the current thread as the last resort. Executing the callback on the
+          // current thread also prevents the scheduler from polling another callback while the executor is busy.
+          if (callback == null)
           {
-            LOG.warn("Task is run on the scheduler thread instead of executor.", e);
-            task.run();
+            LOG.error("Unrecoverable exception occurred while executing a null callback in executor.", e);
           }
-          catch (Throwable throwable)
+          else
           {
-            // Log error because we cannot not recover at this point
-            throwable.addSuppressed(e);
-            LOG.error("Unexpected exception while executing a callback.", throwable);
-            return;
+            LOG.warn("Unexpected exception while executing a callback in executor. Invoking callback with scheduler.", e);
+            callback.onError(e);
           }
         }
         finally
         {
-          _permitCount--;
-          if (_pendingCount.decrementAndGet() == 0)
+          if (_pendingCount.decrementAndGet() > 0)
           {
-            return;
+            _scheduler.execute(this::loop);
           }
         }
       }
+      else
+      {
+        try
+        {
+          _scheduler.schedule(this::loop, Math.max(0, _permitTime + rate.getPeriod() - _clock.currentTimeMillis()),
+              TimeUnit.MILLISECONDS);
+        }
+        catch (Throwable throwable)
+        {
+          LOG.error("An unrecoverable exception occurred while scheduling the event loop causing the rate limiter"
+              + "to stop processing submitted tasks.", throwable);
+        }
+      }
+    }
+  }
 
-      // Exhausted all permits in the current time and schedules event loop to run later when
-      // more permits are supposed to be issued.
+  /**
+   * An implementation of {@link Runnable} that invokes the given {@link Callback}. If a
+   * {@link Throwable} is provided, Callback#onError is invoked. Otherwise, Callback#onSuccess
+   * is invoked.
+   */
+  private static class Task implements Runnable
+  {
+    private final Callback<None> _callback;
+    private final Throwable _invocationError;
+
+    public Task(Callback<None> callback, Throwable invocationError)
+    {
+      ArgumentUtil.notNull(callback, "callback");
+
+      _callback = callback;
+      _invocationError = invocationError;
+    }
+
+    @Override
+    public void run()
+    {
       try
       {
-        _scheduler.schedule(this::loop, Math.max(0, _permitTime + rate.getPeriod() - _clock.currentTimeMillis()),
-            TimeUnit.MILLISECONDS);
+        if (_invocationError == null)
+        {
+          _callback.onSuccess(None.none());
+        }
+        else
+        {
+          _callback.onError(_invocationError);
+        }
       }
       catch (Throwable throwable)
       {
-        LOG.error("Unexpected exception while scheduling the event loop.", throwable);
+        _callback.onError(throwable);
       }
     }
   }

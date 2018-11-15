@@ -1,6 +1,7 @@
 25.0.17
 -------
-
+(RB=1484849)
+Simplify SmoothRateLimiter event loop logic
 
 25.0.16
 -------

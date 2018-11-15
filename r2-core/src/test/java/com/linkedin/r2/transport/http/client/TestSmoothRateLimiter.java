@@ -26,13 +26,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.IntStream;
+import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
@@ -42,11 +46,15 @@ import static org.testng.Assert.*;
 public class TestSmoothRateLimiter
 {
   private static final int TEST_TIMEOUT = 1000;
+  private static final int TEST_TIMEOUT_LONG = 10000;
   private static final int MAX_BUFFERED_CALLBACKS = 1024;
   private static final int ONE_PERMIT_PER_PERIOD = 1;
   private static final long ONE_SECOND_PERIOD = TimeUnit.SECONDS.toMillis(1);
   private static final long ONE_MILLISECOND_PERIOD = TimeUnit.MILLISECONDS.toMillis(1);
   private static final int UNLIMITED_BURST = Integer.MAX_VALUE;
+  private static final int UNLIMITED_PERMITS = Integer.MAX_VALUE;
+  private static final int CONCURRENT_THREADS = 32;
+  private static final int CONCURRENT_SUBMITS = 1024;
 
   private static final ScheduledExecutorService SCHEDULER = Executors.newSingleThreadScheduledExecutor();
   private static final ExecutorService EXECUTOR = Executors.newCachedThreadPool();
@@ -261,5 +269,39 @@ public class TestSmoothRateLimiter
         ONE_PERMIT_PER_PERIOD, ONE_SECOND_PERIOD, UNLIMITED_BURST);
     rateLimiter.cancelAll(new Throwable());
     rateLimiter.cancelAll(new Throwable());
+  }
+
+  @Test(timeOut = TEST_TIMEOUT_LONG)
+  public void testConcurrentSubmits() throws Exception
+  {
+    Executor executor = Executors.newFixedThreadPool(CONCURRENT_THREADS);
+    SmoothRateLimiter rateLimiter = new SmoothRateLimiter(
+        SCHEDULER, EXECUTOR, CLOCK, QUEUE, MAX_BUFFERED_CALLBACKS,
+        UNLIMITED_PERMITS, ONE_SECOND_PERIOD, UNLIMITED_BURST);
+
+    CountDownLatch countDownLatch = new CountDownLatch(CONCURRENT_SUBMITS);
+    LongAdder successCount = new LongAdder();
+    LongAdder failureCount = new LongAdder();
+    for (int i = 0; i < CONCURRENT_SUBMITS; i++) {
+      executor.execute(() ->
+        rateLimiter.submit(new Callback<None>() {
+          @Override
+          public void onError(Throwable e) {
+            failureCount.increment();
+            countDownLatch.countDown();
+          }
+
+          @Override
+          public void onSuccess(None result) {
+            successCount.increment();
+            countDownLatch.countDown();
+          }
+        })
+      );
+    }
+
+    countDownLatch.await(TEST_TIMEOUT, TimeUnit.MILLISECONDS);
+    Assert.assertEquals(successCount.longValue(), CONCURRENT_SUBMITS);
+    Assert.assertEquals(failureCount.longValue(), 0L);
   }
 }
