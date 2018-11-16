@@ -58,7 +58,7 @@ public class SmoothRateLimiter implements AsyncRateLimiter
    * @param scheduler Scheduler used to execute the internal non-blocking event loop
    * @param executor Executes the tasks for invoking #onSuccess and #onError (only during #callAll)
    * @param clock Clock implementation that supports getting the current time accurate to milliseconds
-   * @param pendingCallbacks THREAD SAFE implementation of callback queue
+   * @param pendingCallbacks THREAD SAFE and NON-BLOCKING implementation of callback queue
    * @param maxBuffered Maximum number of tasks kept in the queue before execution
    * @param permitsPerPeriod Number of permits to run tasks per period of time
    * @param periodMilliseconds Period of time in milliseconds used to calculate {@code permitsPerPeriod}

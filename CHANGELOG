@@ -1,6 +1,7 @@
 25.0.18
 -------
-
+(RB=1487328)
+Add comment to indicate the supplied queue implementation to SmoothRateLimiter must be non-blocking as well
 
 25.0.17
 -------
