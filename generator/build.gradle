@@ -6,6 +6,7 @@ dependencies {
   compile externalDependency.codemodel
   compile externalDependency.jsr305
 
+  testCompile externalDependency.guava
   testCompile externalDependency.testng
   testCompile externalDependency.mockito
 }

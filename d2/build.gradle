@@ -18,6 +18,8 @@ dependencies {
   compile externalDependency.jacksonDataBind
   compile externalDependency.jdkTools
   compile externalDependency.zero_allocation_hashing
+
+  testCompile externalDependency.guava
   testCompile externalDependency.testng
   testCompile externalDependency.commonsIo
   testCompile externalDependency.easymock

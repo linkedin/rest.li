@@ -8,6 +8,7 @@ dependencies {
   compile externalDependency.jacksonSmile
 
   testCompile project(':data-testutils')
+  testCompile externalDependency.guava
   testCompile externalDependency.commonsIo
   testCompile externalDependency.testng
 
