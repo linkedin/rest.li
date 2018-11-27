@@ -4,9 +4,9 @@ title: DATA-Data-Schema-and-Templates
 permalink: /DATA-Data-Schema-and-Templates
 ---
 
-# Data schema and template
+# Data Schema and Templates
 
-This page contains the following sections
+## Contents
 
   - [Introduction](#introduction)
   - [Schema Definition](#schema-definition)
