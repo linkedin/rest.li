@@ -26,8 +26,8 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.Name;
 import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.template.DynamicRecordArray;
 import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.data.template.WrappingArrayTemplate;
 
 import java.util.Arrays;
 import java.util.List;
@@ -49,13 +49,6 @@ public class CollectionRequest<T extends RecordTemplate> extends RecordTemplate
   private static final Name _COLLECTION_REQUEST_NAME = new Name(CollectionRequest.class.getSimpleName());
   private DynamicRecordArray<T> _templatedCollection;
 
-  private static class DynamicRecordArray<R extends RecordTemplate> extends WrappingArrayTemplate<R>
-  {
-    public DynamicRecordArray(DataList list, ArrayDataSchema arraySchema, Class<R> elementClass)
-    {
-      super(list, arraySchema, elementClass);
-    }
-  }
 
   /**
    * Initialize a CollectionRequest based on the given elementClass.

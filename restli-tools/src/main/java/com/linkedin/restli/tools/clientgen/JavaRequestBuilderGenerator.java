@@ -48,6 +48,7 @@ import com.linkedin.restli.client.base.ActionRequestBuilderBase;
 import com.linkedin.restli.client.base.BatchCreateIdEntityRequestBuilderBase;
 import com.linkedin.restli.client.base.BatchCreateIdRequestBuilderBase;
 import com.linkedin.restli.client.base.BatchDeleteRequestBuilderBase;
+import com.linkedin.restli.client.base.BatchFindRequestBuilderBase;
 import com.linkedin.restli.client.base.BatchGetEntityRequestBuilderBase;
 import com.linkedin.restli.client.base.BatchPartialUpdateEntityRequestBuilderBase;
 import com.linkedin.restli.client.base.BatchPartialUpdateRequestBuilderBase;
@@ -80,6 +81,8 @@ import com.linkedin.restli.restspec.ActionSchemaArray;
 import com.linkedin.restli.restspec.ActionsSetSchema;
 import com.linkedin.restli.restspec.AssocKeySchema;
 import com.linkedin.restli.restspec.AssociationSchema;
+import com.linkedin.restli.restspec.BatchFinderSchema;
+import com.linkedin.restli.restspec.BatchFinderSchemaArray;
 import com.linkedin.restli.restspec.CollectionSchema;
 import com.linkedin.restli.restspec.FinderSchema;
 import com.linkedin.restli.restspec.FinderSchemaArray;
@@ -650,6 +653,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
     StringArray supportsList = null;
     RestMethodSchemaArray restMethods = null;
     FinderSchemaArray finders = null;
+    BatchFinderSchemaArray batchFinders = null;
     ResourceSchemaArray subresources = null;
     ActionSchemaArray resourceActions = null;
     ActionSchemaArray entityActions = null;
@@ -681,6 +685,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
       supportsList = collection.getSupports();
       restMethods = collection.getMethods();
       finders = collection.getFinders();
+      batchFinders = collection.getBatchFinders();
       subresources = collection.getEntity().getSubresources();
       resourceActions = collection.getActions();
       entityActions = collection.getEntity().getActions();
@@ -693,6 +698,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
       supportsList = association.getSupports();
       restMethods = association.getMethods();
       finders = association.getFinders();
+      batchFinders = association.getBatchFinders();
       subresources = association.getEntity().getSubresources();
       resourceActions = association.getActions();
       entityActions = association.getEntity().getActions();
@@ -817,6 +823,21 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
                         pathToAssocKeys,
                         requestOptionsGetter,
                         rootPath);
+
+        generateBatchFinders(facadeClass,
+                            baseUriGetter,
+                            batchFinders,
+                            keyClass,
+                            schemaClass,
+                            assocKeyTypeInfos,
+                            resourceSpecField,
+                            resourceName,
+                            pathKeys,
+                            pathKeyTypes,
+                            assocKeyTypes,
+                            pathToAssocKeys,
+                            requestOptionsGetter,
+                            rootPath);
       }
 
       generateSubResources(sourceFile, subresources, pathKeyTypes, assocKeyTypes, pathToAssocKeys, rootPath);
@@ -1065,7 +1086,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
 
         if (finder.getParameters() != null)
         {
-          generateQueryParamBindingMethods(facadeClass, finder.getParameters(), finderBuilderClass);
+          generateQueryParamBindingMethods(facadeClass, finder.getParameters(), finderBuilderClass, finder);
         }
 
         //process the metadata schema file
@@ -1081,7 +1102,81 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
     }
   }
 
-  private void generateQueryParamBindingMethods(JDefinedClass facadeClass, ParameterSchemaArray parameters, JDefinedClass derivedBuilderClass)
+  private void generateBatchFinders(JDefinedClass facadeClass,
+                                  JExpression baseUriExpr,
+                                  BatchFinderSchemaArray batchFinderSchemas,
+                                  JClass keyClass,
+                                  JClass valueClass,
+                                  Map<String, AssocKeyTypeInfo> assocKeys,
+                                  JVar resourceSpecField,
+                                  String resourceName,
+                                  List<String> pathKeys,
+                                  Map<String, JClass> pathKeyTypes,
+                                  Map<String, JClass> assocKeyTypes,
+                                  Map<String, List<String>> pathToAssocKeys,
+                                  JExpression requestOptionsExpr,
+                                  String rootPath)
+      throws JClassAlreadyExistsException
+  {
+    if (batchFinderSchemas != null)
+    {
+      final JClass baseBuilderClass = getCodeModel().ref(BatchFindRequestBuilderBase.class).narrow(keyClass, valueClass);
+
+      for (BatchFinderSchema batchFinder : batchFinderSchemas)
+      {
+        final String batchFinderName = batchFinder.getName();
+
+        final String builderName = CodeUtil.capitalize(resourceName) + "BatchFindBy" + CodeUtil.capitalize(batchFinderName) + METHOD_BUILDER_SUFFIX.get(_version);
+        JDefinedClass batchFinderBuilderClass = generateDerivedBuilder(baseBuilderClass,
+                                                                      valueClass,
+                                                                      batchFinderName,
+                                                                      builderName,
+                                                                      facadeClass.getPackage(),
+                                                                      ResourceMethod.BATCH_FINDER,
+                                                                      null,
+                                                                      rootPath);
+
+        final JMethod batchFinderMethod = facadeClass.method(JMod.PUBLIC, batchFinderBuilderClass, "batchFindBy" + CodeUtil.capitalize(batchFinderName));
+
+        batchFinderMethod.body()._return(JExpr._new(batchFinderBuilderClass).arg(baseUriExpr).arg(resourceSpecField).arg(requestOptionsExpr));
+
+        final Set<String> batchFinderKeys = new HashSet<String>();
+        if (batchFinder.getAssocKey() != null)
+        {
+          batchFinderKeys.add(batchFinder.getAssocKey());
+        }
+        if (batchFinder.getAssocKeys() != null)
+        {
+          for (String assocKey : batchFinder.getAssocKeys())
+          {
+            batchFinderKeys.add(assocKey);
+          }
+        }
+
+        generatePathKeyBindingMethods(pathKeys, batchFinderBuilderClass, pathKeyTypes, assocKeyTypes, pathToAssocKeys);
+
+        generateAssocKeyBindingMethods(assocKeys, batchFinderBuilderClass, batchFinderKeys);
+
+        if (batchFinder.getParameters() != null)
+        {
+          generateQueryParamBindingMethods(facadeClass, batchFinder.getParameters(), batchFinderBuilderClass, batchFinder);
+        }
+
+
+        //process the metadata schema file
+        if (batchFinder.getMetadata() != null)
+        {
+          final String metadataClass = batchFinder.getMetadata().getType();
+          getJavaBindingType(metadataClass, facadeClass);
+        }
+
+        generateClassJavadoc(batchFinderBuilderClass, batchFinder);
+        generateFactoryMethodJavadoc(batchFinderMethod, batchFinder);
+      }
+    }
+  }
+
+  private void generateQueryParamBindingMethods(JDefinedClass facadeClass, ParameterSchemaArray parameters, JDefinedClass derivedBuilderClass, RecordTemplate methodSchema)
   {
     for (ParameterSchema param : parameters)
     {
@@ -1094,9 +1189,17 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
       }
       else
       {
+
         final DataSchema typeSchema = RestSpecCodec.textToSchema(param.getType(), _schemaResolver);
         final JClass paramClass = getJavaBindingType(typeSchema, facadeClass).valueClass;
-        generateQueryParamSetMethod(derivedBuilderClass, param, paramClass, paramClass);
+
+        // for batchFinder parameter, we do not use the standard way to represent SearchCriteraArray as an input of the set parameter method
+        // since we can not guarantee that SearchCriteraArray is generated
+        if (!(methodSchema instanceof BatchFinderSchema
+            && ((BatchFinderSchema) methodSchema).getBatchParam().equals(param.getName())))
+        {
+          generateQueryParamSetMethod(derivedBuilderClass, param, paramClass, paramClass);
+        }
 
         // we deprecate the "items" field from ParameterSchema, which generates Iterable<Foo> in the builder
         // instead, we use the standard way to represent arrays, which generates FooArray
@@ -1514,7 +1617,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
     {
       if (schema.hasParameters())
       {
-        generateQueryParamBindingMethods(facadeClass, schema.getParameters(), derivedBuilder);
+        generateQueryParamBindingMethods(facadeClass, schema.getParameters(), derivedBuilder, schema);
       }
       generateClassJavadoc(derivedBuilder, schema);
       generateFactoryMethodJavadoc(factoryMethod, schema);

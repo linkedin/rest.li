@@ -17,12 +17,12 @@
       }
     } ],
     "batchFinders" : [ {
-      "name" : "findUsers",
+      "name" : "searchGreetings",
       "parameters" : [ {
         "name" : "criteria",
         "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.greetings.api.GreetingCriteria\" }"
       }, {
-        "name" : "first_name",
+        "name" : "message",
         "type" : "string"
       } ],
       "pagingSupported" : true,

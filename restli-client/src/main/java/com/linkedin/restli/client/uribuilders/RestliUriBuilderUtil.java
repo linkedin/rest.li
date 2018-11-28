@@ -22,6 +22,7 @@ import com.linkedin.restli.client.BatchCreateIdRequest;
 import com.linkedin.restli.client.BatchCreateIdEntityRequest;
 import com.linkedin.restli.client.BatchCreateRequest;
 import com.linkedin.restli.client.BatchDeleteRequest;
+import com.linkedin.restli.client.BatchFindRequest;
 import com.linkedin.restli.client.BatchGetEntityRequest;
 import com.linkedin.restli.client.BatchGetKVRequest;
 import com.linkedin.restli.client.BatchGetRequest;
@@ -87,6 +88,8 @@ public class RestliUriBuilderUtil
         }
       case FINDER:
         return new FindRequestUriBuilder((FindRequest)request, uriPrefix, version);
+      case BATCH_FINDER:
+        return new BatchFindRequestUriBuilder((BatchFindRequest)request, uriPrefix, version);
       case CREATE:
         if (request instanceof CreateRequest)
         {

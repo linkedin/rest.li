@@ -4,6 +4,7 @@ import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.collections.CheckedUtil;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.restli.common.BatchFinderCriteriaResult;
 import com.linkedin.restli.common.CollectionMetadata;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.HttpStatus;
@@ -209,28 +210,34 @@ public class BatchFinderResponseEnvelope extends RestLiResponseEnvelope
      * @param errorResponseBuilder The builder to use to build the response for the error
      */
     public DataMap toResponse(ErrorResponseBuilder errorResponseBuilder) {
+      BatchFinderCriteriaResult<AnyRecord> batchFinderCriteriaResult = new BatchFinderCriteriaResult<>(new DataMap(), AnyRecord.class);
+
       if (_exception != null) {
-        return errorResponseBuilder.buildErrorResponse(this._exception).data();
+        // error case
+        batchFinderCriteriaResult.setIsError(true);
+        batchFinderCriteriaResult.setError(errorResponseBuilder.buildErrorResponse(this._exception));
       }
       else
       {
+        // success case
         CollectionResponse<AnyRecord> item = new CollectionResponse<>(AnyRecord.class);
         DataList itemsMap = (DataList) item.data().get(CollectionResponse.ELEMENTS);
         for (int i = 0; i < _elements.size(); i++) {
           CheckedUtil.addWithoutChecking(itemsMap, _elements.get(i).data());
         }
 
-        DataMap result = new DataMap();
         //elements
-        result.put(CollectionResponse.ELEMENTS, itemsMap);
+        batchFinderCriteriaResult.setElements(item);
+
         //metadata
         if (_customMetadata != null) {
-          result.put(CollectionResponse.METADATA, _customMetadata.data());
+          batchFinderCriteriaResult.setMetadataRaw(_customMetadata.data());
         }
+
         //paging
-        result.put(CollectionResponse.PAGING, _paging.data());
-        return result;
+        batchFinderCriteriaResult.setPaging(_paging);
       }
+      return batchFinderCriteriaResult.data();
     }
   }
 }

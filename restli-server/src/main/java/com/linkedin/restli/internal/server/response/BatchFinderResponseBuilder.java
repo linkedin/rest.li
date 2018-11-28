@@ -20,13 +20,11 @@ import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.collections.CheckedUtil;
 import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.r2.message.Request;
 import com.linkedin.restli.common.BatchCollectionResponse;
 import com.linkedin.restli.common.CollectionMetadata;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.HttpStatus;
-import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.URIParamUtils;
 import com.linkedin.restli.internal.server.ResourceContextImpl;
 import com.linkedin.restli.internal.server.RoutingResult;
@@ -40,6 +38,7 @@ import com.linkedin.restli.server.ProjectionMode;
 import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.annotations.BatchFinder;
+
 import java.net.HttpCookie;
 import java.net.URI;
 import java.util.ArrayList;
@@ -67,18 +66,20 @@ public class BatchFinderResponseBuilder
   }
 
   @Override
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "rawtypes"})
   public RestLiResponse buildResponse(RoutingResult routingResult,
       RestLiResponseData<BatchFinderResponseEnvelope> responseData)
   {
     BatchFinderResponseEnvelope response = responseData.getResponseEnvelope();
-    BatchCollectionResponse<AnyRecord> collectionResponse = new BatchCollectionResponse<>(AnyRecord.class);
-    DataList elementsMap = (DataList) collectionResponse.data().get(CollectionResponse.ELEMENTS);
+
+    DataMap dataMap = new DataMap();
+    DataList elementsMap = new DataList();
     for (BatchFinderEntry entry : response.getItems())
     {
       CheckedUtil.addWithoutChecking(elementsMap, entry.toResponse(_errorResponseBuilder));
     }
-
+    CheckedUtil.putWithoutChecking(dataMap, CollectionResponse.ELEMENTS, elementsMap);
+    BatchCollectionResponse<?> collectionResponse = new BatchCollectionResponse<>(dataMap, null);
     RestLiResponse.Builder builder = new RestLiResponse.Builder();
     return builder.entity(collectionResponse)
                   .headers(responseData.getHeaders())

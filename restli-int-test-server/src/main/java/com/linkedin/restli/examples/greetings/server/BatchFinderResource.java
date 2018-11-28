@@ -17,19 +17,25 @@
 package com.linkedin.restli.examples.greetings.server;
 
 import com.linkedin.restli.common.EmptyRecord;
+import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.GreetingCriteria;
 import com.linkedin.restli.examples.greetings.api.SearchMetadata;
+import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.server.BatchFinderResult;
 import com.linkedin.restli.server.CollectionResult;
 import com.linkedin.restli.server.PagingContext;
+import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.annotations.BatchFinder;
 import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.PagingContextParam;
 import com.linkedin.restli.server.annotations.QueryParam;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.resources.CollectionResourceTemplate;
+
+import java.util.Arrays;
 import java.util.Collections;
+
 
 
 /**
@@ -40,13 +46,31 @@ import java.util.Collections;
 @RestLiCollection(name = "batchfinders", namespace = "com.linkedin.restli.examples.greetings.client")
 public class BatchFinderResource extends CollectionResourceTemplate<Long, Greeting>
 {
+  private static final Greeting g1 = new Greeting().setId(1).setTone(Tone.SINCERE);
+  private static final Greeting g2 = new Greeting().setId(2).setTone(Tone.FRIENDLY);
 
-  @BatchFinder(value = "findUsers", batchParam = "criteria")
-  public BatchFinderResult<GreetingCriteria, Greeting, EmptyRecord> findUsers(@PagingContextParam PagingContext context,
+  @BatchFinder(value = "searchGreetings", batchParam = "criteria")
+  public BatchFinderResult<GreetingCriteria, Greeting, EmptyRecord> searchGreetings(@PagingContextParam PagingContext context,
                                                                 @QueryParam("criteria") GreetingCriteria[] criteria,
-                                                                @QueryParam("first_name") String firstName)
+                                                                @QueryParam("message") String message)
   {
-    return new BatchFinderResult<GreetingCriteria, Greeting, EmptyRecord>();
+    BatchFinderResult<GreetingCriteria, Greeting, EmptyRecord> batchFinderResult = new BatchFinderResult<>();
+
+    for (GreetingCriteria currentCriteria: criteria) {
+      if (currentCriteria.getId() == 1L) {
+        // on success
+        CollectionResult<Greeting, EmptyRecord> c1 = new CollectionResult<Greeting, EmptyRecord>(Arrays.asList(g1), 1);
+        batchFinderResult.putResult(currentCriteria, c1);
+      } else if (currentCriteria.getId() == 2L) {
+        CollectionResult<Greeting, EmptyRecord> c2 = new CollectionResult<Greeting, EmptyRecord>(Arrays.asList(g2), 1);
+        batchFinderResult.putResult(currentCriteria, c2);
+      } else if (currentCriteria.getId() == 100L){
+        // on error: to construct error response for test
+        batchFinderResult.putError(currentCriteria, new RestLiServiceException(HttpStatus.S_404_NOT_FOUND, "Fail to find Greeting!"));
+      }
+    }
+
+    return batchFinderResult;
   }
 
   @Finder("searchWithMetadata")

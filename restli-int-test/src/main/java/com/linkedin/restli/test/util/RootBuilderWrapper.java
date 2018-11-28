@@ -24,6 +24,7 @@ import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.RequestBuilder;
 import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.client.response.BatchKVResponse;
+import com.linkedin.restli.common.BatchCollectionResponse;
 import com.linkedin.restli.common.BatchCreateIdEntityResponse;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.CreateStatus;
@@ -429,6 +430,11 @@ public class RootBuilderWrapper<K, V extends RecordTemplate>
   public MethodBuilderWrapper<K, V, CollectionResponse<V>> findBy(String name)
   {
     return invoke("findBy" + capitalize(name));
+  }
+
+  public MethodBuilderWrapper<K, V, BatchCollectionResponse<V>> batchFindBy(String name)
+  {
+    return invoke("batchFindBy" + capitalize(name));
   }
 
   public <R> MethodBuilderWrapper<K, V, R> action(String name)
