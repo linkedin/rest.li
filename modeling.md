@@ -18,11 +18,9 @@ index: 2
   - [When All Else Fails: Non-Uniform
     Interfaces](#when-all-else-fails-non-uniform-interfaces)
 
-This page will help you model your resource using Rest.li. Before
+This document will help you model your resource using Rest.li. Before
 reading this page, you may want to get a feel for how to write and build
-code with Rest.li by reading the  
-[Rest.li Quick Start
-Guide](Quickstart:-A-Tutorial-Introduction-to-Rest.li).
+code with Rest.li by reading the [Tutorial to Create a Server and Client](/rest.li/start/step_by_step).
 
 ## Rest.li’s Uniform Interface
 

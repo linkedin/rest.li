@@ -93,10 +93,7 @@ There are several server implementations:
 -   Embedded Jetty --- Primarily for integration testing as it's trivial
     to spin up as part of a test suite
 
-See [Asynchronous
-Resources](Rest.li-User-Guide#asynchronous-resources)
-for more details on how to handle requests using non-blocking request
-processing.
+See [Asynchronous Resources](/rest.li/user_guide/restli_server#asynchronous-resources) for more details on how to handle requests using non-blocking request processing.
 
 The remainder of this guide will assume use of the servlet server
 implementation.
@@ -135,7 +132,7 @@ When writing resource classes, it is important to understand that
 Rest.li constructs a new instance of the appropriate resource class to
 handle each request. This means that resource objects cannot store state
 across multiple requests. Any long-lived resources should be managed
-separately. See [Dependency Injection](/rest.li/user_guide/restli_server/#dependency-injection).
+separately. See [Dependency Injection](/rest.li/user_guide/restli_server#dependency-injection).
 
 <a id="wiki-ClientDataFlow"></a>
 

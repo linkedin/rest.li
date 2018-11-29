@@ -3,11 +3,12 @@ layout: guide
 title: Compression
 permalink: /Compression
 ---
+# Compression
 
-Contents:
-* [Supported Algorithms](Compression#supported-algorithms)
-* [Using Guice](Compression#using-guice)
-* [Using Spring](Compression#using-spring)
+## Contents
+* [Supported Algorithms](#supported-algorithms)
+* [Using Guice](#using-guice)
+* [Using Spring](#using-spring)
 
 ## Supported Algorithms
 

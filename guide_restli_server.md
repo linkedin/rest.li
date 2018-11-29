@@ -7,7 +7,7 @@ index: 2
 
 # Rest.li Server
 
-This section describes Rest.li support for implementing servers:
+## Contents
 
 -   [Runtimes](#runtimes)
 -   [R2 Filter Configuration](#r2-filter-configuration)
@@ -22,7 +22,8 @@ This section describes Rest.li support for implementing servers:
     -  [Create](#create)
     -  [Update](#update)
     -  [Partial Update](#partial_update)
-    -  [Delete](#partial_update)
+    -  [Delete](#delete)
+    -  [Batch Delete](#batch_delete)
     -  [Action](#action)
 -   [ResourceContext](#resourcecontext)
 -   [Resource Templates](#resource-templates)
@@ -34,35 +35,31 @@ This section describes Rest.li support for implementing servers:
 -   [Asynchronous Resources](#asynchronous-resources)
 -   [Online Documentation](#online-documentation)
 
+This document describes Rest.li support for implementing servers. 
+
 ## Runtimes
 
 Rest.li supports the following runtimes:
 
-1.  [Servlet
-    containers](Rest.li-with-Servlet-Containers)
-    (for example, Jetty)
-2.  [Netty](Rest.li-with-Netty)
+1.  [Servlet containers](/rest.li/Rest_li-with-Servlet-Containers) (for example, Jetty)
+2.  [Netty](/rest.li/Rest_li-with-Netty)
 
 ## R2 Filter Configuration
 
 Rest.li servers can be configured with different R2 filters, according
 to your use case. How the filters are configured depends on which
-dependency injection framework (if any) you are using. For example, take
-a look at
-<a href="Compression">the
-compression wiki page</a> to see how we can configure a server for
+dependency injection framework (if any) you are using. For example, see [Compression](/rest.li/Compression) to understand how to configure a server for
 compression. Another example is to add a
 `SimpleLoggingFilter` with Spring, which requires you to do
 the following (full file
 <a href="https://github.com/linkedin/rest.li/blob/master/examples/spring-server/server/src/main/webapp/WEB-INF/beans.xml">here</a>):
 
 ```
-<!-- Example of how to add filters,  here we'll enable logging and snappy compression support -->
+<!-- Example of how to add filters; here we'll enable logging and snappy compression support -->
 <bean id="loggingFilter" class="com.linkedin.r2.filter.logging.SimpleLoggingFilter" />
 ```
 
-[Other R2
-filters](https://github.com/linkedin/rest.li/tree/master/r2-core/src/main/java/com/linkedin/r2/filter)
+[Other R2 filters](https://github.com/linkedin/rest.li/tree/master/r2-core/src/main/java/com/linkedin/r2/filter)
 can also be configured in a similar way.
 
 <a id="wiki-DefiningDataModels"></a>
@@ -70,14 +67,10 @@ can also be configured in a similar way.
 ## Defining Data Models
 
 The first step in building a Rest.li application is to define your data
-schema using [Pegasus Data
-Schemas](/linkedin/rest.li/wiki/DATA-Data-Schema-and-Templates). The
+schema using [Pegasus Data Schemas](/rest.li/DATA-Data-Schema-and-Templates). The
 Pegasus Data Schema format uses a simple Avro-like syntax to define your
 data model in a language-independent way. Rest.li provides code
-generators to create Java classes that implement your data model. See
-[Pegasus Data
-Schemas](/linkedin/rest.li/wiki/DATA-Data-Schema-and-Templates) for full
-details.
+generators to create Java classes that implement your data model.
 
 <a id="wiki-WritingResources"></a>
 
@@ -180,8 +173,7 @@ Rest.li APIs.
 
 Resource annotations are used to mark and register a class as providing
 as Rest.li resource. One of a number of annotations may be used,
-depending on the [Interface
-Pattern](Modeling-Resources-with-Rest.li)
+depending on the [Interface Pattern](/rest.li/modeling/modeling)
 the resource is intended to implement. Briefly, here are the options:
 
 <a id="wiki-ResourceTypes"></a>
@@ -199,9 +191,9 @@ the resource is intended to implement. Briefly, here are the options:
 The @`RestLiCollection` annotation is applied to classes to mark them as
 providing a Rest.li collection resource. Collection resources model a
 collection of entities, where each entity is referenced by a key. See
-[Collection Resource
-Pattern](Modeling-Resources-with-Rest.li#wiki-Collection)
-for more details.
+[Collection Resource Pattern](/rest.li/modeling/modeling/#collection) for more details.
+
+
 
 The supported annotation parameters are:
 
