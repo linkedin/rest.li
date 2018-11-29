@@ -16,26 +16,33 @@
 
 package com.linkedin.r2.message.timing;
 
-import com.linkedin.r2.message.RequestContext;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import com.linkedin.r2.message.RequestContext;
 
 
 /**
  * A timing key uniquely identifies a timing record, which will be saved in {@link RequestContext}.
  *
- * @see TimingContextUtil
  * @author Xialin Zhu
+ * @see TimingContextUtil
  */
 public class TimingKey
 {
   private static final Map<String, TimingKey> _pool = new ConcurrentHashMap<>();
 
   private final String _name;
+  private final String _type;
 
-  private TimingKey(String name)
+  /**
+   * @param name Name of the key
+   * @param type String that defines the type of the key
+   */
+  private TimingKey(String name, String type)
   {
     _name = name;
+    _type = type;
   }
 
   public String getName()
@@ -43,19 +50,40 @@ public class TimingKey
     return _name;
   }
 
+  public String getType()
+  {
+    return _type;
+  }
+
+  private static TimingKey registerNewKey(TimingKey timingKey)
+  {
+    if (_pool.putIfAbsent(timingKey.getName(), timingKey) != null)
+    {
+      throw new IllegalStateException("Timing key " + timingKey.getName() + " has already been registered!");
+    }
+    return timingKey;
+  }
+
   /**
    * Register a new timing key for future use.
-   * @param name Name of the key
+   *
+   * @param uniqueNameAndType Name of the key (should be unique)
    * @return A new timing key
    */
-  public static TimingKey registerNewKey(String name)
+  public static TimingKey registerNewKey(String uniqueNameAndType)
   {
-    if (_pool.containsKey(name))
-    {
-      throw new IllegalStateException("Timing key " + name + " has already been registered!");
-    }
-    TimingKey timingKey = new TimingKey(name);
-    _pool.put(name, timingKey);
-    return timingKey;
+    return registerNewKey(new TimingKey(uniqueNameAndType, uniqueNameAndType));
+  }
+
+  /**
+   * Register a new timing key for future use.
+   *
+   * @param uniqueName Name of the key (should be unique)
+   * @param type       String that defines the type of the key
+   * @return A new timing key
+   */
+  public static TimingKey registerNewKey(String uniqueName, String type)
+  {
+    return registerNewKey(new TimingKey(uniqueName, type));
   }
 }
