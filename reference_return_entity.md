@@ -7,14 +7,6 @@ index: 2
 
 # Return Entity
 
-This page describes returning the entity for resource methods that are not originally intended to return the entity.
-For example, returning the entity is normal behavior for GET and FINDER, so this page does not apply to them.
-
-For methods such as CREATE, however, the created entity is not returned in the response because the client
-already has the entity when sending the request. Despite this, there are use cases where the server will
-attach additional data to the new entity. Returning the entity in the CREATE response saves the client
-from having to make an extra GET request.
-
 ## Contents
 
 -   [Supported Methods](#supported-methods)
@@ -23,6 +15,14 @@ from having to make an extra GET request.
     -   [Query Parameter](#query-parameter)
     -   [Access from Resource Method](#access-from-resource-method)
     -   [Optimizations](#optimizations)
+
+This page describes returning the entity for resource methods that are not originally intended to return the entity.
+For example, returning the entity is normal behavior for GET and FINDER, so this page does not apply to them.
+
+For methods such as CREATE, however, the created entity is not returned in the response because the client
+already has the entity when sending the request. Despite this, there are use cases where the server will
+attach additional data to the new entity. Returning the entity in the CREATE response saves the client
+from having to make an extra GET request.
 
 ## Supported Methods
 

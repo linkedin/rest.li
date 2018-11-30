@@ -229,11 +229,11 @@ The key type for a collection resource must be one of:
 The value type for a collection resource must be a pegasus record, any
 subclass of `RecordTemplate` generated from a `.pdsc` schema.
 
-For convenience, Collection resources may extend
+For convenience, collection resources may extend
 `CollectionResourceTemplate` rather than directly implementing the
 `CollectionResource` interface.
 
-For example:
+Example:
 
 ```
 @RestLiCollection(name = "fortunes", namespace = "com.example.fortune",
@@ -247,7 +247,7 @@ Fortune>
 
 ## Sub-Resources
 
-Sub-resources may be defined by setting the "parent" field on
+Sub-resources may be defined by setting the `parent` field on
 <code>@RestLiCollection</code> to the class of the parent resource of
 the sub-resource.
 
@@ -343,7 +343,7 @@ dataModel spec.product.pegasus.restliCommon
 }
 ```
 
-Where `WidgetKey.pdsc` is defined by the schema:
+where `WidgetKey.pdsc` is defined by the schema:
 
     
     {
@@ -372,7 +372,7 @@ Example request:
     curl "http://<hostname:port>/widgets/number=1&thing.make=adruino&thing.model=uno
     
 
-If params are added, they are represented in the url under the
+If params are added, they are represented in the URL under the
 "$params" prefix like this:
 
     
@@ -386,18 +386,15 @@ The implementation of complex key collection is identical to the regular
 key type, key parameter type, and value type --- each extending
 @RecordTemplate.
 
-For details on how a complex key is represented in a request URL see
-[Rest.li Protocol: Complex
-Types](/linkedin/rest.li/wiki/Rest.li-Protocol#complex-types)
+For details on how a complex key is represented in a request URL, see
+[Rest.li Protocol: Complex Types](/rest.li/spec/protocol#complex-types)
 
 #### @RestLiSimpleResource
 
 The @`RestLiSimpleResource` annotation is applied to classes to mark
 them as providing a Rest.li simple resource. Simple resources model an
 entity which is a singleton in a particular scope. See the description
-of the [Simple Resource
-Pattern](Modeling-Resources-with-Rest.li#wiki-Simple)
-for more details.
+of the [Simple Resource Pattern](/rest.li/modeling/modeling#simple) for more details.
 
 The supported annotation parameters are:
 
@@ -683,7 +680,7 @@ public List<V> getAll(@Context PagingContext pagingContext);
 overriding the getAll method of a base class.
 
 To directly control the total and metadata returned by a get all method,
-do not override getAll, instead create a new method with the
+do not override getAll. Instead, create a new method with the
 @`RestMethod.GetAll` annotation and return a `CollectionResult` rather
 than a list, for example:
 
@@ -699,7 +696,7 @@ PagingContext pagingContext)
 ```
 
 When returning a CollectionResult from GetAll, the behavior is identical
-to a finder. See the below finder documentation for additional details
+to a finder. See the finder documentation below for additional details
 about CollectionResult.
 
 <a id="FINDER"></a>
@@ -805,21 +802,19 @@ public CollectionResult<V, MyMetaData> complexFinder(Context(defaultStart
 #### Typerefs (Custom Types)
 
 Custom types can be any Java type, as long as it has a coercer and a
-typeref schema, even java classes from libraries such as Date. To create
+typeref schema, even Java classes from libraries such as Date. To create
 a query parameter that uses a custom type, you will need to write a
 coercer and a typeref schema for the type you want to use. See the
-[typeref
-documentation](DATA-Data-Schema-and-Templates)
-for details.
+[typeref documentation](/rest.li/DATA-Data-Schema-and-Templates#typeref) for details.
 
-First, for the coercer you will need to write an implementation of
+First for the coercer, you will need to write an implementation of
 DirectCoercer that converts between your custom type and some simpler
 underlying type, like String or Double. By convention, the coercer
 should be an internal class of the custom type it coerces. Additionally,
 the custom type should register its own coercer in a static code block.
 
-If this is not possible (for example, if you want to use a java built-in
-class like Date or URI as a custom type) then you can write a separate
+If this is not possible (for example, if you want to use a Java built-in
+class like Date or URI as a custom type), then you can write a separate
 coercer class and register the coercer with the private variable
 declaration:
 
@@ -861,7 +856,7 @@ This typeref can then be referenced in other schemas:
       ]
     }
 
-And the generated Java data templates will automatically coerce from
+The generated Java data templates will automatically coerce from
 CustomObjectRef to CustomObject when accessing the member field:
 
 ```
@@ -869,7 +864,7 @@ CustomObject o = exampleRecord.getMember();
 ```
 
 Once Java data templates are generated, the typeref may also be used in
-Keys, query parameters, or action parameters:
+Keys, query parameters, or action parameters.
 
 Keys:
 
@@ -1244,7 +1239,7 @@ The partial update to change just the street field is:
     }
 
 
-For the service code to selectively update just the street field (e.g.
+For the service code to selectively update just the street field (e.g.,
 UPDATE addresses SET street=:street WHERE key=:key). The partial update
 can be inspected and the selective update if only the street field is
 changed:
@@ -1632,7 +1627,7 @@ emailAddress)
 
 <a id="ActionParamVQueryParam"></a>
 
-#### `ActionParam vs. `QueryParam
+#### ActionParam vs. QueryParam
 
 @`ActionParam` and @`QueryParam` are used in different methods.
 @`ActionParam` is only allowed in Action methods, while @`QueryParam` is
@@ -1702,8 +1697,7 @@ classes by extending them. Subclasses may selectively override relevant
 methods and for methods that are not overridden, the framework will
 recognize that your resource does not support this method and will
 return a 404 if clients attempt to invoke it. Note that unsupported
-methods will be omitted from your resources IDL (see [Restspec
-IDL](Rest.li-User-Guide#wiki-RestspecIDL)
+methods will be omitted from your resources IDL (see [Restspec IDL](/rest.li/user_guide/restli_client#restspec-idl)
 for details).
 
 #### CollectionResourceTemplate
@@ -1861,22 +1855,22 @@ public GetResult<V> getWithStatus(K key);
 ```
 
 Note that each resource may only provide one implementation of each CRUD
-method, e.g., it is invalid to annotate two different methods with
-@`RestMethod.Get`.
+method (for exampoe, it is invalid to annotate two different methods with
+@`RestMethod.Get`).
 
 ### Things to Remember about Free-Form Resources
 
 -   Free-form resources allow you to add query parameters to CRUD
-    methods
--   Resource Templates should be used whenever possible
+    methods.
+-   Resource Templates should be used whenever possible.
 -   Free-form resources must implement one of the `KeyValueResource` and
-    `SingleObjectResource` marker interfaces
+    `SingleObjectResource` marker interfaces.
 -   Methods in free-form resources must be annotated with appropriate
     @`RestMethod.*` annotations.
 -   Methods in free-form resources must use the same return type and
-    initial signature as the corresponding Resource Template method
+    initial signature as the corresponding Resource Template method.
 -   Methods in free-form resources may add additional parameters
-    **after** the fixed parameters
+    **after** the fixed parameters.
 -   Free-form resources may not define multiple implementations of the
     same resource method.
 
@@ -2059,13 +2053,11 @@ later.");
 ## Field Projection
 
 Rest.li provides built-in support for field projections, for example the
-structural filtering of responses. The support includes [Java Projection
-Bindings](How-to-use-projections-in-Java)
-and a [JSON Projection wire
-protocol](Projections). The
-projection is applied separately to each entity object in the response,
-i.e., to the value-type of the CollectionResource or
-AssociationResource. If the invoked method is a FINDER that returns a
+structural filtering of responses. The support includes [Java Projection Bindings](/rest.li/How-to-use-projections-in-Java)
+and a [JSON Projection wire protocol](/rest.li/Projections). The
+projection is applied separately to each entity object in the response
+(i.e., to the value-type of the CollectionResource or
+AssociationResource). If the invoked method is a FINDER that returns a
 List, the projection is applied to each element of the list
 individually. Likewise, if the invoked method is a BATCH_GET that
 returns a Map<K, V>, the projection is applied to each value in the
@@ -2077,7 +2069,7 @@ also provides the ability to project the Metadata and as well as the
 Paging that is sent back to the client. More info on Collection
 Pagination is provided below.
 
-The Rest.li server framework recognizes the "fields", "metadataFields"
+The Rest.li server framework recognizes the "fields", "metadataFields",
 or "pagingFields" query parameters in the request. If available, the
 Rest.li framework then parses each of these as individual `MaskTrees`.
 The resulting `MaskTrees` are available through the ResourceContext (see
@@ -2087,8 +2079,7 @@ Projection can also be toggled between `AUTOMATIC` and `MANUAL`. The
 latter precludes the Rest.li framework from performing any projection
 while the former forces the Rest.li framework to perform the projection.
 
-Additional details are described in [How to use projections in
-Java](How-to-use-projections-in-Java)
+Additional details are described in [How to Use Projections in Java](/rest.li/How-to-use-projections-in-Java)
 
 <a id="wiki-Pagination"></a>
 
@@ -2126,7 +2117,7 @@ framework to automatically construct `Link` objects to the previous page
 (if start > 0) and the next page (if the response includes count
 results).
 
-Example request illustrating use of start & count pagination parameters,
+Here is an example request illustrating the use of start & count pagination parameters,
 and resulting links in CollectionMetadata:
 
     $ curl "http://localhost:1338/greetings?q=search&start=4&count=2"
@@ -2143,9 +2134,9 @@ and resulting links in CollectionMetadata:
         }
     }
 
-NOTE that "start" and "count" returned in CollectionMetadata is REQUEST
-start and REQUEST count, that is​, the paging parameter passed from
-incoming REQUEST, not metadata for the returned response. If start and
+Note that "start" and "count" returned in CollectionMetadata is REQUEST
+start and REQUEST count (that is​, the paging parameter passed from
+incoming REQUEST, not metadata for the returned response). If start and
 count is not passed in Finder or GetAll request, it will return default
 0 for start and 10 for count.The rationale behind this is to make it
 easier for a client to subsequently construct requests for additional
@@ -2164,14 +2155,10 @@ It is therefore frequently necessary/desirable for resources to use a
 dependency-injection mechanism to obtain the objects they depend upon,
 for example, database connections or other resources.
 
-Rest.li includes direct support for the following dependency injection
-frameworks:
+Rest.li includes direct support for the following dependency injection frameworks:
 
--   [Spring](http://www.springsource.org/) via the [rest.li/spring
-    bridge](Spring-Dependency-Injection)
--   [Guice](https://code.google.com/p/google-guice/) via the
-    [rest.li/guice
-    bridge](Guice-Dependency-Injection)
+-   [Spring](http://www.springsource.org/) using the [rest.li/spring bridge](/rest.li/Spring-Dependency-Injection)
+-   [Guice](https://code.google.com/p/google-guice/) using the [rest.li/guicebridge](/rest.li/Guice-Dependency-Injection)
 
 Other dependency injection frameworks can be used as well. Rest.li
 provides an extensible dependency-injection mechanism, through the
