@@ -311,8 +311,7 @@ an existing type.
     inconsistencies if future changes are not propagated correctly to
     all copies.
 
-Typerefs use the type name “typeref” and support the following
-attributes:
+Typerefs use the type name `typeref` and support the following attributes:
 
   - `name` a JSON string providing the name of the typeref (required).
   - `namespace` a JSON string that qualifies the name;

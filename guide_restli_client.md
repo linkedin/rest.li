@@ -6,7 +6,8 @@ index: 2
 ---
 
 # Rest.li Client Framework
-------------------------
+
+## Contents
 
 -   [Introduction](#introduction)
 -   [Depending on a Service's Client
