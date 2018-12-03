@@ -23,12 +23,13 @@ final public class AdditionalDocProvidersUtil
       try
       {
         providers.add(
-            (ResourceModelEncoder.DocsProvider) Class.forName("com.linkedin.restli.tools.scala.ScalaDocsProvider").newInstance());
+            (ResourceModelEncoder.DocsProvider) Class.forName("com.linkedin.sbtrestli.tools.scala.ScalaDocsProvider").newInstance());
       }
       catch (ClassNotFoundException | InstantiationException | IllegalAccessException ignored)
       {
         log.warn(
-            "Attempted to load ScalaDocsProvider but it was not found. Please add 'com.linkedin.pegasus:restli-tools-scala_<scala-version>:<pegasus-version>' to your classpath.");
+            "Attempted to load ScalaDocsProvider but it was not found. Please add 'com.linkedin.sbt-restli:restli-tools-scala_<scala-version>:<package-version>' to your classpath.\n"
+            + "For more information, see: https://linkedin.github.io/rest.li/Scala-Integration#scaladoc");
       }
       catch (Throwable t)
       {

@@ -1,5 +1,7 @@
-25.0.22
--------
+26.0.0
+------
+(RB=1500413)
+Delete restli-tools-scala module. Dependencies should be updated to `com.linkedin.sbt-restli:restli-tools-scala:0.3.9`.
 
 25.0.21
 -------
