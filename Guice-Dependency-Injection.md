@@ -3,6 +3,7 @@ layout: api_reference
 title: Guice-Dependency-Injection
 permalink: /Guice-Dependency-Injection
 ---
+# Guice Dependency Injection
 
 Guice dependency injection may be used with Rest.li by using the [restli-guice-bridge](https://github.com/linkedin/rest.li/tree/master/restli-guice-bridge) module.
 

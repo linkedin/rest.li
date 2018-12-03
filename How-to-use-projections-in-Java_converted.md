@@ -3,6 +3,7 @@ layout: guide
 title: How-to-use-projections-in-Java
 permalink: /How-to-use-projections-in-Java
 ---
+# How to Use Projections in Java
 
 ## Contents
 
