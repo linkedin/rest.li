@@ -2112,10 +2112,18 @@ FINDER methods that can provide the `total` number of matching results
 should do so by returning an appropriate `CollectionResult` or
 `BasicCollectionResult` object.
 
-`total` value must be set in your resources in order for Rest.li
-framework to automatically construct `Link` objects to the previous page
-(if start > 0) and the next page (if the response includes count
-results).
+In order for the Rest.li framework to automatically construct `Link` objects,
+certain conditions must be met. For both previous and next links, the `count`
+in the request must be greater than `0`. For links to the previous page,
+`start` must be greater than `0`. For links to the next page, the sum
+of `start` and `count` must be less than the `total` number of results.
+It's possible for the `total` property to be unspecified, but in this case
+the `PageIncrement` property of the `CollectionResult` must be `RELATIVE`
+and the amount of results returned by the resource method must match the
+`count` desired in the request. The reasoning here is that the only way
+for Rest.li to know that you're reaching the end of a collection of
+results is if the amount of results returned differs from the amount
+requested.
 
 Here is an example request illustrating the use of start & count pagination parameters,
 and resulting links in CollectionMetadata:
