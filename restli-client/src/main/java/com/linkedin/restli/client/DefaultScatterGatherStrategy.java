@@ -58,8 +58,9 @@ import java.util.stream.Collectors;
 public class DefaultScatterGatherStrategy implements ScatterGatherStrategy
 {
   private static final Logger log = LoggerFactory.getLogger(DefaultScatterGatherStrategy.class);
-  // batch method that supporting partition or sticky routing thus this default batching strategy can be applied.
-  private static final Set<ResourceMethod> BATCHING_STRATEGY_METHODS = EnumSet.of(ResourceMethod.BATCH_GET, ResourceMethod.BATCH_DELETE,
+  // rest.li request method that supporting partition or sticky routing thus this default scatter gather
+  // strategy can be applied.
+  private static final Set<ResourceMethod> SG_STRATEGY_METHODS = EnumSet.of(ResourceMethod.BATCH_GET, ResourceMethod.BATCH_DELETE,
           ResourceMethod.BATCH_PARTIAL_UPDATE, ResourceMethod.BATCH_UPDATE);
   private final URIMapper _uriMapper;
 
@@ -69,11 +70,24 @@ public class DefaultScatterGatherStrategy implements ScatterGatherStrategy
   }
 
   /**
+   * Check if the given request is supported by this scatter gather strategy. By default, ScatterGather is only
+   * supported for rest.li BATCH request. Custom scatter gather strategy can override this to handle its customized
+   * requests.
+   * @param request rest.li request.
+   * @return true if the given request can be handled by this scatter gather strategy
+   */
+  protected <T> boolean isSupportedScatterGatherRequest(Request<T> request)
+  {
+      return SG_STRATEGY_METHODS.contains(request.getMethod());
+  }
+
+  /**
    * {@inheritDoc}
    */
   @Override
-  public <T> boolean needScatterGather(Request<T> request) {
-    if (!BATCHING_STRATEGY_METHODS.contains(request.getMethod()))
+  public <T> boolean needScatterGather(Request<T> request)
+  {
+    if (!isSupportedScatterGatherRequest(request))
     {
       return false;
     }
@@ -401,9 +415,10 @@ public class DefaultScatterGatherStrategy implements ScatterGatherStrategy
   public <K, T> List<RequestInfo> scatterRequest(Request<T> request, RequestContext requestContext,
                                                  Map<URI, Set<K>> mappedKeys)
   {
-    if (request.getMethod() == ResourceMethod.BATCH_CREATE)
+    if (!isSupportedScatterGatherRequest(request))
     {
-      throw new IllegalArgumentException("Batch create is not supported for scatter-gather!");
+      throw new IllegalArgumentException(request.getMethod() +
+          " request is not supported by current ScatterGatherStrategy!");
     }
     return mappedKeys.entrySet().stream().map((Map.Entry<URI, Set<K>> entry) ->
     {
@@ -429,16 +444,24 @@ public class DefaultScatterGatherStrategy implements ScatterGatherStrategy
                   keyMapToInput((BatchRequest) request, entry.getValue()));
         }
       }
-      return new RequestInfo(scatteredRequest, updateRequestContextTarget(requestContext, entry.getKey()));
+      return new RequestInfo(scatteredRequest, createRequestContextWithTargetHint(requestContext, entry.getKey()));
     }).collect(Collectors.toList());
   }
 
-  private RequestContext updateRequestContextTarget(RequestContext requestContext, URI targetHost)
+  /**
+   * Update request context with D2 Target host hint and flag whether to accept other hosts. Note that the
+   * incoming request context will not be modified since it will be shared by scattered requests, this will
+   * clone a new request context.
+   * @param readOnlyContext request context (Read only).
+   * @param targetHost target host URI.
+   * @return a new request context with D2 Target host hint and flag whether to accept other hosts set.
+   */
+  protected RequestContext createRequestContextWithTargetHint(RequestContext readOnlyContext, URI targetHost)
   {
     // we cannot update the give request context since that will be shared by scattered request.
-    RequestContext context = requestContext.clone();
+    RequestContext context = readOnlyContext.clone();
     KeyMapper.TargetHostHints.setRequestContextTargetHost(context, targetHost);
-    Boolean OtherHostAcceptable = KeyMapper.TargetHostHints.getRequestContextOtherHostAcceptable(requestContext);
+    Boolean OtherHostAcceptable = KeyMapper.TargetHostHints.getRequestContextOtherHostAcceptable(readOnlyContext);
     if (OtherHostAcceptable == null)
     {
       // only enable backup request if user does not disable it explicitly for this request
@@ -608,7 +631,8 @@ public class DefaultScatterGatherStrategy implements ScatterGatherStrategy
     }
     else
     {
-      // all scattered requests are failing
+      // all scattered requests are failing, we still return 200 for original request, but body will contain
+      // failed response for each key.
       callback.onSuccess(new ResponseImpl<>(HttpStatus.S_200_OK.getCode(),
               Collections.emptyMap(), Collections.emptyList(), gatheredResponse, null));
     }

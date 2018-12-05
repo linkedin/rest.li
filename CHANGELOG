@@ -1,7 +1,13 @@
+25.0.20
+-------
+
 25.0.19
 -------
 (RB=1489722)
 Use temporary directory in TestIOUtil test.
+
+(RB=1503120)
+Make some methods in DefaultScatterGatherStrategy protected for easy override in custom strategy.
 
 25.0.18
 -------
