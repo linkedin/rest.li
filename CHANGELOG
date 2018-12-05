@@ -1,5 +1,8 @@
 25.0.20
 -------
+(RB=1502671)
+Fix NPE issue when d2Server announces without scheme
+
 
 25.0.19
 -------

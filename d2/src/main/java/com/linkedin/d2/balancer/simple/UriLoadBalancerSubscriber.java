@@ -113,7 +113,7 @@ class UriLoadBalancerSubscriber extends
             TrackerClient client = trackerClients.get(uri);
             if (client == null || !client.getParttitionDataMap().equals(partitionDataMap))
             {
-              client = _simpleLoadBalancerState.getTrackerClient(serviceName,
+              client = _simpleLoadBalancerState.buildTrackerClient(serviceName,
                 uri,
                 partitionDataMap,
                 new DegraderImpl.Config(config),

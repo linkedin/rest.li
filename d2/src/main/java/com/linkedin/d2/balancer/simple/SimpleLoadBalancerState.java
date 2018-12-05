@@ -751,15 +751,20 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     }
   }
 
-  TrackerClient getTrackerClient(String serviceName, URI uri, Map<Integer, PartitionData> partitionDataMap,
+  TrackerClient buildTrackerClient(String serviceName, URI uri, Map<Integer, PartitionData> partitionDataMap,
                                  DegraderImpl.Config config, Clock clk, long callTrackerInterval,
                                  String errorStatusPattern, Map<String, Object> uriSpecificProperties)
   {
     Map<String,TransportClient> clientsByScheme = _serviceClients.get(serviceName);
     if (clientsByScheme == null)
     {
-      _log.error("getTrackerClient: unknown service name {} for URI {} and partitionDataMap {}",
+      _log.error("buildTrackerClient: unknown service name {} for URI {} and partitionDataMap {}",
           new Object[]{ serviceName, uri, partitionDataMap });
+      return null;
+    }
+    if (uri == null || uri.getScheme() == null)
+    {
+      _log.error("Error: could not extract scheme from URI: {}", uri);
       return null;
     }
     TransportClient client = clientsByScheme.get(uri.getScheme().toLowerCase());
@@ -816,7 +821,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
           else
           {
             // don't create this transport client if ssl isn't enabled. If the https transport client
-            // is requested later on, getTrackerClient will catch this situation and log an error.
+            // is requested later on, buildTrackerClient will catch this situation and log an error.
             continue;
           }
         }
@@ -918,7 +923,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
       String errorStatusPattern = getErrorStatusPattern(serviceProperties);
       for (URI uri : uris)
       {
-        TrackerClient trackerClient = getTrackerClient(serviceName, uri, uriProperties.getPartitionDataMap(uri),
+        TrackerClient trackerClient = buildTrackerClient(serviceName, uri, uriProperties.getPartitionDataMap(uri),
                                                        config, clk, trackerClientInterval, errorStatusPattern,
                                                        uriProperties.getUriSpecificProperties().get(uri));
         if (trackerClient != null)
