@@ -499,11 +499,10 @@ class PegasusPlugin implements Plugin<Project>
 
   public static final String DATA_TEMPLATE_FILE_SUFFIX = '.pdsc'
   public static final String PDL_FILE_SUFFIX = '.pdl'
-  public static final Collection<String> DATA_TEMPLATE_FILE_SUFFIXES = [
-      DATA_TEMPLATE_FILE_SUFFIX
-      // TODO(jbetz): Enable once we are ready to use PDL.
-      // PDL_FILE_SUFFIX
-  ]
+  // gradle property to opt in for PDL, by default it is disabled.
+  private static final String PDL_ENABLE = 'enablePDL'
+  public static final Collection<String> DATA_TEMPLATE_FILE_SUFFIXES = new ArrayList<String>()
+
   public static final String IDL_FILE_SUFFIX = '.restspec.json'
   public static final String SNAPSHOT_FILE_SUFFIX = '.snapshot.json'
   public static final String SNAPSHOT_COMPAT_REQUIREMENT = 'rest.model.compatibility'
@@ -579,6 +578,13 @@ class PegasusPlugin implements Plugin<Project>
 
         // Re-initialze the static variables as they might have stale values from previous run. With Gradle 3.0 and
         // gradle daemon enabled, the plugin class might not be loaded for every run.
+        DATA_TEMPLATE_FILE_SUFFIXES.clear();
+        DATA_TEMPLATE_FILE_SUFFIXES.add(DATA_TEMPLATE_FILE_SUFFIX);
+        if (isPropertyTrue(project, PDL_ENABLE))
+        {
+          DATA_TEMPLATE_FILE_SUFFIXES.add(PDL_FILE_SUFFIX);
+        }
+
         _restModelCompatMessage = new StringBuffer()
         _needCheckinFiles.clear()
         _needBuildFolders.clear()
@@ -749,8 +755,11 @@ class PegasusPlugin implements Plugin<Project>
       // if it can fail, fail it early
       configureRestModelGeneration(project, sourceSet)
 
-      // TODO (jbetz): Enable once https://rb.corp.linkedin.com/r/940808/ issues are resolved.
-      //configureConversionUtilities(project, sourceSet)
+      if (isPropertyTrue(project, PDL_ENABLE))
+      {
+        // TODO: Globally enable once https://rb.corp.linkedin.com/r/940808/ issues are resolved.
+        configureConversionUtilities(project, sourceSet)
+      }
 
       configureDataTemplateGeneration(project, sourceSet)
 
@@ -1360,20 +1369,6 @@ class PegasusPlugin implements Plugin<Project>
     final Task compileTask = project.tasks[targetSourceSet.compileJavaTaskName]
     compileTask.dependsOn(generateDataTemplatesTask)
 
-    // Convert all PDL files back to PDSC for publication
-    // TODO (jbetz): Enable once https://rb.corp.linkedin.com/r/940808/ issues are resolved and make dataTemplateJarTask depend on this.
-    // TODO (jbetz): Remove this conversion permanently when we're ready to publish PDL files directly into dataTemplate jars.
-    /*Task preparePdlSchemasForPublishTask = project.task(
-        sourceSet.name + 'TranslateSchemas',
-        type: TranslateSchemasTask) {
-      inputDir = dataSchemaDir
-      destinationDir = publishableSchemasBuildDir
-      resolverPath = getDataModelConfig(project, sourceSet)
-      codegenClasspath = project.configurations.pegasusPlugin
-      sourceFormat = SchemaFileType.PDL
-      destinationFormat = SchemaFileType.PDSC
-    }*/
-
     // Copy all PDSC files directly over for publication
     Task preparePdscSchemasForPublishTask = project.task(
         sourceSet.name + 'CopyPdscSchemas',
@@ -1384,10 +1379,30 @@ class PegasusPlugin implements Plugin<Project>
       into publishableSchemasBuildDir
     }
 
+    Collection<Task> dataTemplateJarDepends = new ArrayList<Task>()
+    dataTemplateJarDepends.addAll(compileTask, preparePdscSchemasForPublishTask)
+
+    if (isPropertyTrue(project, PDL_ENABLE)) {
+      // Convert all PDL files back to PDSC for publication
+      // TODO: Globally enable once https://rb.corp.linkedin.com/r/940808/ issues are resolved.
+      // TODO: Remove this conversion permanently when we're ready to publish PDL files directly into dataTemplate jars.
+      Task preparePdlSchemasForPublishTask = project.task(
+          sourceSet.name + 'TranslateSchemas',
+          type: TranslateSchemasTask) {
+        inputDir = dataSchemaDir
+        destinationDir = publishableSchemasBuildDir
+        resolverPath = getDataModelConfig(project, sourceSet)
+        codegenClasspath = project.configurations.pegasusPlugin
+        sourceFormat = SchemaFileType.PDL
+        destinationFormat = SchemaFileType.PDSC
+      }
+      dataTemplateJarDepends.add(preparePdlSchemasForPublishTask)
+    }
+
     // create data template jar file
     Task dataTemplateJarTask = project.task(sourceSet.name + 'DataTemplateJar',
                                             type: Jar,
-                                            dependsOn: [compileTask, preparePdscSchemasForPublishTask]) {
+                                            dependsOn: dataTemplateJarDepends) {
       from (publishableSchemasBuildDir) {
         eachFile {
           it.path = 'pegasus' + File.separatorChar + it.path.toString()

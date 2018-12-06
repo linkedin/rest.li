@@ -3,6 +3,7 @@ package com.linkedin.data.schema;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.Null;
 import com.linkedin.data.codec.JacksonDataCodec;
 import java.io.IOException;
 import java.io.Writer;
@@ -448,6 +449,11 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
     else if (value instanceof ByteString)
     {
       return ((ByteString) value).asAvroString();
+    }
+    else if (value instanceof Null)
+    {
+      // some legacy PDSC use union[null, xxx] to represent an optional field
+      return "null";
     }
     else
     {

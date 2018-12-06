@@ -1,5 +1,10 @@
+25.0.22
+-------
+
 25.0.21
 -------
+(RB=1506735)
+Enable PDL in pegasus plugin through gradle config.
 
 25.0.20
 -------
