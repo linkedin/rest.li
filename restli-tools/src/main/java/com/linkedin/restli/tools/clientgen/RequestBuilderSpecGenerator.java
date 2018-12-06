@@ -219,7 +219,8 @@ public class RequestBuilderSpecGenerator
     }
     else
     {
-      throw new IllegalArgumentException("unsupported resource type for resource: '" + resourceName + '\'');
+      log.warn("Ignoring unsupported association resource: " + resourceName);
+      return null;
     }
     rootBuilderSpec.setNamespace(packageName);
     rootBuilderSpec.setClassName(className);
@@ -420,7 +421,10 @@ public class RequestBuilderSpecGenerator
       for (ResourceSchema resource : subresources)
       {
         RootBuilderSpec resourceSpec = generateRootRequestBuilder(parentRootBuilder, resource, sourceFile, pathKeyTypes);
-        subSpecList.add(resourceSpec);
+        if (resourceSpec != null)
+        {
+          subSpecList.add(resourceSpec);
+        }
       }
     }
     return subSpecList;

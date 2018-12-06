@@ -3,6 +3,8 @@
 (RB=1502671)
 Fix NPE issue when d2Server announces without scheme
 
+(RB=1505013)
+Log warning instead of exception for unsupported association resource in build spec generator.
 
 25.0.19
 -------
