@@ -706,8 +706,7 @@ The IDL generator is available as part of the restli-tools JAR, as the
 `com.linkedin.restli.tools.idlgen.RestLiResourceModelExporterCmdLineApp`
 class.
 
-For details on how to use the IDL Generator, see [Gradle build
-integration](Gradle-build-integration).
+For details on how to use the IDL Generator, see [Gradle build integration](/rest.li/setup/gradle).
 
 <a id="Client"></a>
 <a id="RestClient"></a>
@@ -719,8 +718,7 @@ integration](Gradle-build-integration).
 `RestClient` encapsulates the communication with the remote resource.
 `RestClient` accepts a `Request` object as input and provides a
 `Response` object as output. The `Request` objects should usually be
-built using the [generated type-safe client
-builders](./Rest.li-User-Guide#type-safe-builders). Since the
+built using the [generated type-safe client builders](#type-safe-builders). Since the
 `RestClient` interface is fundamentally asynchronous, the `Response`
 must be obtained through either a `ResponseFuture` or a `Callback` (both
 options are supported).
@@ -841,7 +839,9 @@ The following diagram illustrates the request/response flow for a
 client/server interaction. The call may fail at any point during this
 flow, as described below.
 
-![Rest.li Request Flow]("/rest.li/images/RequestFlow.png" "Rest.li Request Flow")
+<center>
+<b>Rest.li Request Flow</b><br><img src="/rest.li/images/RequestFlow.png">
+</center>
 
 The following list describes the failures scenarios as observed by a
 client calling `ResponseFuture.getResponse()`
@@ -1100,8 +1100,7 @@ In addition, the generator recognizes the following system properties:
     "Data Template Generator" for more details.
 
 The Rest.li client code generator is integrated as part of the `pegasus`
-gradle plugin. For details, see [Gradle build
-integration](Gradle-build-integration).
+gradle plugin. For details, see [Gradle build integration](/rest.li/setup/gradle).
 
 <a id="wiki-Extras"></a>
 

@@ -6,17 +6,19 @@ permalink: /Asynchronous-Servers-and-Clients-in-Rest_li
 
 # Asynchronous Servers and Clients in Rest.li
 
-This page contains the following sections and assumes that the reader is familiar with [ParSeq](https://github.com/linkedin/parseq) and its [key concepts](https://github.com/linkedin/parseq/wiki/User's-Guide#key-concepts):
+## Contents
 
 * [Introduction](#introduction)
 * [Async Server Implementations](#async-server-implementations)
 * [Async Client Implementations](#async-client-implementations)
 
+This section assumes you are familiar with [ParSeq](https://github.com/linkedin/parseq) and its [key concepts](https://github.com/linkedin/parseq/wiki/User's-Guide#key-concepts).
+
 ## Introduction
 
 Rest.li is asynchronous and non-blocking under the hood:
 
-* **R2** - On the client side, R2 uses a [Netty](http://netty.io/) based asynchronous client. On the server side if you are using our experimental Netty server, it is async and non-blocking. If you are using [Jetty](http://www.eclipse.org/jetty/), you need to [configure it](Asynchronous-Servers-and-Clients-in-Rest.li#server-configuration) to run in async mode.
+* **R2** - On the client side, R2 uses a [Netty](http://netty.io/) based asynchronous client. On the server side if you are using our experimental Netty server, it is async and non-blocking. If you are using [Jetty](http://www.eclipse.org/jetty/), you need to [configure it](#server-configuration) to run in async mode.
 * **D2** - All communication with [ZooKeeper](http://zookeeper.apache.org/) uses the async APIs.
 * **Rest.li** - Rest.li does not handle I/O. All I/O work is done by R2, which is async and non-blocking as explained above. Rest.li uses [ParSeq](https://github.com/linkedin/parseq) to interact with and delegate to server application code. The `RestClient` used to make Rest.li requests on the client-side has several options in order to write async non-blocking code.
 
@@ -194,7 +196,7 @@ One thing to keep in mind is that if you are returning a `Task` from your method
 
 If you are using ParSeq, you can return either a `Promise` or a `Task` from your resource method implementation. In general, if you are using an async API, for example an async database API, create a `SettablePromise` to wrap the result you get back from the async API and return this `Promise` from your resource method. You should return a `Task` otherwise. 
 
-The [callback example above](Asynchronous-Servers-and-Clients-in-Rest.li#using-callbacks) would be a great scenario to return a `Promise` instead. Here is the same example implemented using a `Promise` - 
+The [callback example above](#using-callbacks) would be a great scenario to return a `Promise` instead. Here is the same example implemented using a `Promise` - 
 
 ```java
 @RestMethod.Get
