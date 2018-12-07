@@ -3,19 +3,20 @@ layout: guide
 title: Writing-unit-tests-for-Rest.li-clients-and-servers
 permalink: /Writing-unit-tests-for-Rest_li-clients-and-servers
 ---
+# Writing Unit Tests for Rest.li
 
-### Contents
+## Contents
 
-* [Introduction](Writing-unit-tests-for-Rest.li-clients-and-servers#introduction)
-* [Writing Unit Tests for Rest.li Clients](Writing-unit-tests-for-Rest.li-clients-and-servers#writing-unit-tests-for-restli-clients)
-* [Writing Unit Tests for Rest.li Servers](Writing-unit-tests-for-Rest.li-clients-and-servers#writing-unit-tests-for-restli-servers)
-* [Writing Unit Tests for Rest.li Data (RecordTemplates and DataMaps)](Writing-unit-tests-for-Rest.li-clients-and-servers#writing-unit-tests-for-restli-data-recordtemplates-and-datamaps)
+* [Introduction](#introduction)
+* [Writing Unit Tests for Rest.li Clients](#writing-unit-tests-for-restli-clients)
+* [Writing Unit Tests for Rest.li Servers](#writing-unit-tests-for-restli-servers)
+* [Writing Unit Tests for Rest.li Data (RecordTemplates and DataMaps)](#writing-unit-tests-for-restli-data-recordtemplates-and-datamaps)
 
-### Introduction
+## Introduction
 
 The Rest.li team added classes to Rest.li (starting with Rest.li 1.14.7) to make writing unit tests for Rest.li clients and servers easier. These classes are spread across three modules: `restli-client-testutils`, `restli-common-testutils`, and `restli-server-testutils`.
 
-### Writing Unit Tests for Rest.li Clients
+## Writing Unit Tests for Rest.li Clients
 
 The classes that help writing unit tests for Rest.li clients are present in `restli-client-testutils`. These classes are mainly builders and factories that help in creating different types of `com.linkedin.restli.client.Response` objects. The expected use case for these classes is where you want to test that your code is able to process a `Response` object that it receives from making a Rest.li request. 
 
@@ -83,7 +84,7 @@ MockSuccessfulResponseFutureBuilder<CollectionResponse<Greeting>> responseFuture
 // use the ResponseFuture that you will get from the builder in tests
 ``` 
 
-### Writing Unit Tests for Rest.li Servers
+## Writing Unit Tests for Rest.li Servers
 
 #### MockHttpServerFactory
 
@@ -141,7 +142,7 @@ public class TestGreetingsResource
 
 ```
 
-### Writing Unit Tests for Rest.li Data (RecordTemplates and DataMaps)
+## Writing Unit Tests for Rest.li Data (RecordTemplates and DataMaps)
 
 The `restli-common-testutils` module contains `DataAssert`, a class which allows you to compare `DataMap`s and `RecordTemplate`s.
 

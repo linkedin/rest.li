@@ -4,8 +4,17 @@ title: Test Suite
 permalink: /test_suite
 ---
 
-Rest.li Cross-Language Test Suite Framework
-=========================
+# Rest.li Cross-Language Test Suite Framework
+
+## Contents
+  - [Introduction](#introduction)
+  - [Motivation](#motivation)
+  - [Getting Started](#getting-started)  
+  - [Design and Code Structure](#design-and-code-structure)
+  - [Next Steps](#next-steps)
+  - [Troubleshooting](#troubleshooting)
+
+## Introduction
 
 The Rest.li Cross-Language Test Suite is a framework for testing and comparing Rest.li implementations.
 The framework contains the Rest.li Test Suite Specification, which provides test data
@@ -17,8 +26,8 @@ The test suite also includes Java tests that follow the [Rest.li Test Suite Spec
 can be used to test the Java implementation of Rest.li client. 
 
 
-Motivation
-----
+## Motivation
+
 The Rest.li Test Suite Specification will help us achieve consistency and quality across multiple Rest.li client
 language bindings by:
 
@@ -31,8 +40,8 @@ We have leveraged this Rest.li Test Suite Specification to implement tests for J
 respectively. With this sharable test suite spec, we have identified their coverage and feature parity in this 
 [Compatibility Matrix](testsuite_compatibility_matrix.md).
 
-Getting Started
-----
+## Getting Started
+
 ### How to Download Project
 Make sure you have installed [gradle](https://gradle.org/), which is used for building the test suite.
  
@@ -53,8 +62,8 @@ This is a more involved process that requires understanding the spec. It will be
 Structure section of this document first.
 
 
-Design and Code Structure
-----
+## Design and Code Structure
+
 ### Background
 This documentation assumes a background in [Rest.li](https://github.com/linkedin/rest.li). Specifically, test developers should be familar with Rest.li data
 schema, IDL, and wire protocol format as demonstrated by the following links: 
@@ -163,8 +172,8 @@ other Rest.li implementations can generate request builders without modifying se
 When adding a new test, you may want to update or add a resource to ```restli-testsuite-server/src/main/java/testsuite```.
 See the section on wire protocol tests in [How To Run the Java TestNG Tests and Expand the Test Suite Specification](testsuite_how_to.md).
 
-Rest.li Test Suite Specification Coverage
-------------------
+## Rest.li Test Suite Specification Coverage
+
 The test suite spec is intended to cover three categories of Rest.li client behavior: **JSON serialization, data template
 generation, and wire protocol**. Each test category is described in more detail below. 
   
@@ -261,8 +270,8 @@ the correct values. We compare the response's status and error message with the 
 | Subresource | Collection, Association | get |
 | Projection | Collection, Association, ComplexKeyResource | get | 
 
-Next Steps
-------------------
+## Next Steps
+
 ### Improvements to Test Suite Specification
 * Add test for record with lowercase name 
 * Add test for tunneled query params
@@ -276,6 +285,6 @@ Next Steps
 ### Future Work
 * Expand reference implementations of spec to different languages, such as mobile.
 
-Troubleshooting
-------------------
+## Troubleshooting
+
 For questions or troubleshooting, refer to [Test Suite Troubleshooting](testsuite_troubleshooting.md). 

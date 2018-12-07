@@ -4,12 +4,20 @@ title: Multi-language Compatibility Matrix
 permalink: /multi_language_compatibility_matrix
 ---
 
-Rest.li Multi-language Compatibility Matrix
---------------------------
-Following [Rest.li Test Suite Specification](testsuite_overview.md), we've added test suites for Python and Java.
+# Rest.li Multi-language Compatibility Matrix
+
+## Contents
+
+  - [Supported Resources](#supported-resources)
+  - [Resource Keys and Parameters](#resource-keys-and-parameters)
+  - [Supported Data Templates in Test Suite Spec](#supported-data-templates-in-test-suite-spec)
+  - [Supported HTTP Headers ](#supported-http-headers )
+  - [Request Format Differences](#request-format-differences)
+
+Following [Rest.li Test Suite Specification](/rest.li/test_suite), we've added test suites for Python and Java.
 Based on these test suites, we've made the following compatibility matrices:
 
-### Supported Resources
+## Supported Resources
 
 | Resource | Java | Python | Additional Information |
 |--------|------|----------------|----------------|
@@ -19,7 +27,7 @@ Based on these test suites, we've made the following compatibility matrices:
 | Simple | x | x | Python requires a top-level "namespace", which is optional according to Rest.li protocol |
 
 
-### Resource Keys and Parameters
+## Resource Keys and Parameters
 
 | Key Feature | Java | Python | Additional Information |
 |--------|-----|-----|----------------|
@@ -28,7 +36,7 @@ Based on these test suites, we've made the following compatibility matrices:
 | Query&nbsp;Parameters | x | x | Integer, string, long, string array, message array, string map, primitive union, complex types union, optional string, url typeref |
 
 
-### Supported Data Templates in Test Suite Spec
+## Supported Data Templates in Test Suite Spec
 
 | Template | Java | Python | Additional Information |
 |--------|------|------|----------------|
@@ -60,7 +68,7 @@ Based on these test suites, we've made the following compatibility matrices:
 | Url | x | x | |
 
 
-### Supported HTTP Headers 
+## Supported HTTP Headers 
 
 | Header | Java | Python | Additional Information |
 |--------|------|----------------|----------------|
@@ -69,7 +77,7 @@ Based on these test suites, we've made the following compatibility matrices:
 | User&#8209;Agent | | x | This header is optional as per RFC. Java does not use it, while Python uses it| 
 | X&#8209;RestLi&#8209;Method | x | x | According to Rest.li protocol, X-RestLi-Method is only required for BATCH_CREATE and BATCH_PARTIAL_UPDATE. Java always includes it for all POST requests, and Python uses the header only when required.|
 
-### Request Format Differences
+## Request Format Differences
 
 | Request Feature | Java | Python |
 |--------|------|----------------|
