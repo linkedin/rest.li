@@ -1,10 +1,10 @@
 ---
 layout: guide
-title: Attachment-Streaming
+title: Attachment Streaming
 permalink: /Attachment-Streaming
 ---
 
-# Attachment streaming
+# Attachment Streaming
 
 **This is an experimental feature at this point. Please consult Rest.li
 team before using it.**

@@ -3,25 +3,26 @@ layout: guide
 title: Rest.li-Filters
 permalink: /Rest_li-Filters
 ---
+# Filters
 
-# Contents
+## Contents
 
-* [Introduction](Rest.li-Filters#introduction)
-* [How Filters Work](Rest.li-Filters#how-filters-work)
-* [Using Filters](Rest.li-Filters#using-filters)
-* [Filter Chaining](Rest.li-Filters#filter-chaining)
-* [Transferring State Between Filters](Rest.li-Filters#transferring-state-between-filters)
-* [Exception Handing and Filter Chains](Rest.li-Filters#exception-handling-and-filter-chains)
-* [Making Asynchronous Blocking Calls from Filters](Rest.li-Filters#making-asynchronous-blocking-calls-from-filters)
+* [Introduction](#introduction)
+* [How Filters Work](#how-filters-work)
+* [Using Filters](#using-filters)
+* [Filter Chaining](#filter-chaining)
+* [Transferring State Between Filters](#transferring-state-between-filters)
+* [Exception Handing and Filter Chains](#exception-handling-and-filter-chains)
+* [Making Asynchronous Blocking Calls from Filters](#making-asynchronous-blocking-calls-from-filters)
 
-# Introduction
+## Introduction
 On the server side, Rest.li provides a mechanism to intercept incoming requests and outgoing responses via filters. Each Rest.li filter contains methods that handle both requests and responses.
 
 On the request side, filters can be used for a wide range of use cases, including request validation, admission control, and throttling.
 
 Similarly on the response side, filters can be used for a wide range of use cases, including augmentation of response body and encrypting sensitive information in the response payload.
 
-# How Filters Work
+## How Filters Work
 When using a filter, you have the option of implementing the interface’s `onRequest`, `onResponse`, and `onError` methods - here is where you specify what the filter will do. onRequest is invoked on the request before the actual resource method is invoked. `onResponse` is invoked on the response after the resource method is invoked but before being passed to the R2 stack. `onError` is invoked when an exception occurs in one of the filter’s methods or if it receives a response error from the previous filter’s `onResponse` method. `onError` of the first filter in the response filter chain will also be invoked if the REST resource method returns an error.
 
 If you do not implement these methods, the default behavior for each method is to do nothing. For example, you can choose to only implement the onRequest method. This way, on responses or errors, the filter will simply pass the response/error to the next filter.
@@ -34,11 +35,11 @@ When `onError` is invoked, by default it will pass the error response to the nex
 
 When a Rest.li server is configured to use filters, the filters will be invoked for all incoming requests and outgoing responses of all resources hosted by that server. Therefore, when implementing filters, please keep in mind that filters are cross-cutting and should be applicable to all resources that are hosted by the given Rest.li server.
 
-# Using Filters
+## Using Filters
 Creating a concrete filter is simple. All you need to do is implement the `com.linkedin.restli.server.filter.Filter` interface.
 Rest.li guarantees that for a given request-response pair, the same instance of `FilterRequestContext` is made available to both the request filter and response filter.
 
-## Filter Return Type
+### Filter Return Type
 Each filter method returns a `CompletableFuture<Void>`. A `CompletableFuture` represents the status result of filter execution and has 3 states - completed, completed with exception, and incomplete. The next filter will not be invoked until the previous filter has completed (either successfully or exceptionally).
 
 If the filter does not call any asynchronous methods, you can simply return `CompletableFuture.completedFuture(null)` - this returns an already completed future, and it will cause the filter chain to invoke the next filter. 
@@ -49,21 +50,21 @@ If the filter calls an asynchronous method, you can instantiate an incomplete Co
 
 Not completing a future, whether successfully or exceptionally, will cause the filter chain processing to hang indefinitely.
 
-## Filter Requests
+### Filter Requests
 The implementation of the `onRequest` method is free to modify the incoming request. Additionally, it can also reject the incoming request by throwing an exception or completing the future exceptionally - in this case, a response error is automatically passed into the filter’s `onError` method.
 
 The onRequest method has access to the `FilterRequestContext`. `FilterRequestContext` is an interface that abstracts information regarding the incoming request, including the request URI, projection mask, request query parameters, and request headers. Please see documentation of `FilterRequestContext` for more info.
 
 After all the filters’ `onRequest` method have been successfully invoked, the filter chain passes the request to the Rest.li resource.
 
-## Filter Responses
+### Filter Responses
 The implementation of the `onResponse` method can inspect and modify the outgoing response body, HTTP status, and headers. Throwing an exception causes the response to be converted into an error response and passed into the next filter’s `onError` method.
 
 The `onResponse` method has access to the `FilterRequestContext` and `FilterResponseContext`. The `FilterResponseContext` is an interface that abstracts information regarding the outgoing response, including the response HTTP status, response body, and response headers. Please see documentation of `FilterResponseContext` for more info.
 
 After the last filter’s `onResponse` method has been invoked successfully, the filter chain passes the outgoing response to the underlying R2 stack. If the last filter’s `onResponse` method’s future completes exceptionally, the response is converted into an error response and is passed into the R2 stack.
 
-## Filter Errors
+### Filter Errors
 The implementation of the `onError` method handles errors, and has the capability to alter the response body, HTTP status, and headers. The onError method has access to the exception that caused the error, `FilterRequestContext`, and `FilterResponseContext`. 
 
 The `CompletableFuture` that is returned by this method should be completed exceptionally unless this filter fixes the error, whereupon the future should be completed successfully. The paradigm is that if an error exists in the response at the end of the filter, the future should be completed exceptionally.
@@ -72,7 +73,7 @@ If an exception occurs within the `onError` method itself, the next filter’s `
 
 After the last filter’s `onError` method has been invoked, the filter chain passes the outgoing response error to the underlying R2 stack. If the last filter’s onError method’s future completes successfully (i.e. the error was fixed), the error response is converted into a success response and passed to the R2 stack.
 
-## Example Filter
+### Example Filter
 ```java
 import com.linkedin.restli.server.filter.FilterRequestContext;
 import com.linkedin.restli.server.filter.FilterResponseContext;
@@ -120,10 +121,10 @@ When a response is sent, this filter prints the HTTP response code along with re
 
 When there is an error, this filter logs the exception that caused it. Notice how the filter has the ability to either fix the error or propagate the error (complete normally vs. complete exceptionally).
 
-## Response Data API
+### Response Data API
 The `FilterResponseContext` has access to a `RestLiResponseData` object. This object contains the response data as a `RestLiResponseEnvelope`, which also includes the HTTP status (if success) and the error exception (if error). Besides, it contains headers and cookies, as well as indicators for response type and the resource method.
 
-## Response Envelope API
+### Response Envelope API
 The `RestLiResponseEnvelope` contains the actual data from the response, as well as HTTP status (if success) and the error exception (if error). For example, a GET response would store the retrieved resource data in the envelope.
 
 If there is an error, the exception will never be null but the data stored inside of `RestLiResponseEnvelope` will always be null (the envelope itself will not be null, only the data inside of it). The opposite is true if there is no error.
@@ -201,7 +202,7 @@ public class RestliExampleFilter implements Filter
 }
 ```
 
-# Filter Chaining
+## Filter Chaining
 Rest.li supports chaining of filters. When a Rest.li server is configured to use multiple filters, the filters are ordered in the same order specified in the `RestLiConfig`. On requests, filters that are declared closer to the beginning are invoked first. On responses, filters that are declared closer to the end are invoked first. See diagram at top of document for visualization.
 
 Approach 1 to chain three filters.
@@ -237,20 +238,20 @@ Approach 4 to chain three filters
 </bean>
 ```
 
-# Transferring State Between Filters
+## Transferring State Between Filters
 It is recommended that Rest.li filters be stateless. To facilitate transfer of state between filters, Rest.li provides a scratch pad in the form of a Java Map. This scratch pad can be accessed via the `getFilterScratchpad` method on the `FilterRequestContext`. See below for an example Rest.li filter that computes the request processing time and print it to standard out.
 
-# Exception Handling and Filter Chains
+## Exception Handling and Filter Chains
 The manner in which exceptions are handled in the filter’s request vs. response methods are different.
 
 There are 2 ways a filter can invoke an exception:
 1. The filter throws an exception from within one of its methods
 2. The filter completes its future exceptionally - i.e. `future.completeExceptionally(throwable)`
 
-## Requests
+### Requests
 If an exception is thrown while processing a request or if the future is completed exceptionally, further processing of the request is terminated and the filter’s onError method is invoked. In other words, in order for the incoming request to reach the resource implementation, invocation of all filters’ `onRequest` methods needs to be successful.
 
-## Responses
+### Responses
 Exception/error handling in the context of response filters is a little more involved than in the case of request filters. Response filters are applied to both successful responses as well as all types of errors.
 
 Such errors can include:
@@ -272,7 +273,7 @@ It is recommended that filters throw a `RestLiServiceException`.
 
 Note that response headers will be maintained if an exception is thrown, however some new headers signifying an error may be added.
 
-# Making Asynchronous Blocking Calls from Filters
+## Making Asynchronous Blocking Calls from Filters
 Situations may arise where you may need to make external calls within your filter code. Say for example, there’s an external Auth service that your service integrates with. Every call that comes to your service should be first routed to the Auth service for approval, and only if the Auth service give you a green light, can your resource process the request. Let’s say you have a RestLi filter that abstracts away the invocation of the Auth service. One way to implement this Auth filter is as follows:
 
 ```java

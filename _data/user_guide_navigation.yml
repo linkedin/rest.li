@@ -15,7 +15,7 @@ toc:
         url: /rest.li/Asynchronous-Servers-and-Clients-in-Rest_li
   - title: Modeling Resources
     subfolderitems:
-      - page: Data schema and templates
+      - page: Data Schema and Templates
         url: /rest.li/DATA-Data-Schema-and-Templates
       - page: Modeling Resources
         url: /rest.li/modeling/modeling
@@ -39,19 +39,19 @@ toc:
         url: /rest.li/test_suite
       - page: C#
         url: https://github.com/mchen07/restli-csharp
-      - page: Scala integration
+      - page: Scala Integration
         url: /rest.li/Scala-Integration
   - title: Testing
     subfolderitems:
-      - page: Writing unit tests
+      - page: Writing Unit Tests
         url: /rest.li/Writing-unit-tests-for-Rest_li-clients-and-servers
   - title: How to
     subfolderitems:    
-      - page: Send request query in the body
+      - page: Send Request Query in the Body
         url: /rest.li/Send-Rest_li-Request-Query-In-Request-Body
-      - page: Use projections
+      - page: Use Projections
         url: /rest.li/How-to-use-projections-in-Java
-      - page: Avro conversion
+      - page: Avro Conversion
         url: /rest.li/Rest_li_Avro_conversions
       - page: Compression
         url: /rest.li/Compression
@@ -59,11 +59,11 @@ toc:
         url: /rest.li/Rest_li-2_x-upgrade-instructions
       - page: Test Suite
         url: /rest.li/testsuite_how_to
-      - page: Test suite - Add new language
+      - page: Test Suite - Add New Language
         url: /rest.li/howto_add_new_language
   - title: FAQ
     subfolderitems:    
       - page: Rest.li - FAQ
         url: /rest.li/Data-FAQ
-      - page: Test suite - Troubleshooting
+      - page: Test Suite - Troubleshooting
         url: /rest.li/testsuite_troubleshooting
