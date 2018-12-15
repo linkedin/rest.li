@@ -4,15 +4,10 @@ title: Data-FAQ
 permalink: /Data-FAQ
 ---
 
+# Rest.li FAQ
 
 
-# FAQ
-
-* Toc
-{:toc}
-
-
-## **How do I validate a record with default values filled in?**
+## How do I validate a record with default values filled in?
 
 ```java  
 Foo foo = new Foo();  
@@ -28,7 +23,7 @@ cannot be set for absent fields.
 This will also work for partially filled in records. It will only add
 default values to fields that are absent.
 
-## How do I convert a Pegasus data schema to an Avro data schema
+## How do I convert a Pegasus data schema to an Avro data schema?
 
 It requires the data-avro module, or data-avro-\*.jar.
 
@@ -45,12 +40,13 @@ String avsoSchemaInJson = avroSchema.toString();
 From the command line, to create text files with Avro schema from pdsc
 files (version 0.17.1 or higher):
 
-    ```# syntax:
-    # java [-Dgenerator.resolver.path=<path>] com.linkedin.data.avro.AvroSchemaGenerator <targetDir> [<pdscFile|schemaFullName>]...
-    java -Dgenerator.resolver.path=src/main/pegasus com.linkedin.data.avro.generator.AvroSchemaGenerator ../build/main/codegen/avro src/main/pegasus/com/linkedin/foo/*.pdsc
-    # or
-    java -Dgenerator.resolver.path=src/main/pegasus com.linkedin.data.avro.generator.AvroSchemaGenerator ../build/main/codegen/avro com.linkedin.foo.Foo
-    ```
+```
+# syntax:
+# java [-Dgenerator.resolver.path=<path>] com.linkedin.data.avro.AvroSchemaGenerator <targetDir> [<pdscFile|schemaFullName>]...
+java -Dgenerator.resolver.path=src/main/pegasus com.linkedin.data.avro.generator.AvroSchemaGenerator ../build/main/codegen/avro src/main/pegasus/com/linkedin/foo/*.pdsc
+# or
+java -Dgenerator.resolver.path=src/main/pegasus com.linkedin.data.avro.generator.AvroSchemaGenerator ../build/main/codegen/avro com.linkedin.foo.Foo
+```
 
 Classpath must be setup to include data-avro.jar and its dependencies.
 
@@ -59,7 +55,7 @@ Classpath must be setup to include data-avro.jar and its dependencies.
 You may experience errors, such as the
     following:
 
-    ```Type cannot be resolved: 1,1: "a.b.D" cannot be resolved.```
+```Type cannot be resolved: 1,1: "a.b.D" cannot be resolved.```
 
 when ```a.b.D```’s definition is embedded in another type, for
 example, ```a.b.C```.
@@ -70,23 +66,23 @@ not be referenced externally. To change this behavior, pull out the
 definition of the internal type to a separate pdsc file.
 
 Internally, this behavior is due to reason that the schema parser
-references the data types by filenames. pdsc file for ```a.b.C```
-should be expected at ```pegasus/a/b/C.pdsc```. Since Rest.li
+references the data types by filenames. pdsc file for `a.b.C`
+should be expected at `pegasus/a/b/C.pdsc`. Since Rest.li
 does not prefix the containing data type’s name to the embedded type’s
-name, when code\>a.b.D``` is embedded in ```C.pdsc```, the
-schema parser will not be able to find
-```pegasus/a/b/D.pdsc```.
+name, when code `a.b.D` is embedded in `C.pdsc`, the
+schema parser will not be able to find `pegasus/a/b/D.pdsc`.
 
 ## Why is my Java 8 build generating all sorts of Javadoc warnings/errors due to doclint?
 
 When using Java 8, you may experience build failures due to the
 following:
 
-    ```[error] /home/myuser/data-template/src/main/codegen/com/linkedin/PegasusFormSchema.java:192: error: malformed HTML
-    * return type: java.util.Set<java.lang.Integer>
-    [error] /home/myuser/data-template/src/main/codegen/com/linkedin/PegasusFormSchema.java:192: error: bad use of '>'
-    * return type: java.util.Set<java.lang.Integer>
-    ```
+```
+[error] /home/myuser/data-template/src/main/codegen/com/linkedin/PegasusFormSchema.java:192: error: malformed HTML
+* return type: java.util.Set<java.lang.Integer>
+[error] /home/myuser/data-template/src/main/codegen/com/linkedin/PegasusFormSchema.java:192: error: bad use of '>'
+* return type: java.util.Set<java.lang.Integer>
+```
 
 The root cause is incorrectly formatted string values for anything
 within the `doc` or `symbolDocs` attributes within your pdscs. Due to
@@ -98,22 +94,20 @@ writing your documentation.
 
 The alternative is to disable doclint altogether:
 
-    ```  
-    if (JavaVersion.current().isJava8Compatible()) {
-      allprojects {
-        tasks.withType(Javadoc) {
-          options.addStringOption('Xdoclint:none', '-quiet')
-        }
-      }
+```  
+if (JavaVersion.current().isJava8Compatible()) {
+  allprojects {
+    tasks.withType(Javadoc) {
+      options.addStringOption('Xdoclint:none', '-quiet')
     }
-    ```
+  }
+}
+```
 
 More details on doclint can be found here: [Javadoc has become very
 strict](http://stackoverflow.com/questions/22528767/jdk8-and-javadoc-has-become-very-strict)
 
-More details on `doc` and `symbolDocs` can be found here: [Data Schemas
-and
-Templates](DATA-Data-Schema-and-Templates)
+More details on `doc` and `symbolDocs` are at [Data Schemas and Templates](/rest.li/DATA-Data-Schema-and-Templates).
 
 ## How does rest.li full update method work with schema evolution?
 

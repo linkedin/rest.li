@@ -21,12 +21,12 @@ toc:
         url: /rest.li/spec/return_entity
   - title: R2D2
     subfolderitems:
+      - page: Dynamic Discovery
+        url: /rest.li/Dynamic_Discovery
       - page: D2 Zookeeper properties
         url: /rest.li/D2-Zookeeper-Properties
       - page: Request-Response API
         url: /rest.li/Request-Response-API-(R2)
-      - page: Dynamic Discovery
-        url: /rest.li/Dynamic_Discovery
       - page: Request-Response framework
         url: /rest.li/Request-Response-Framework
   - title: HTTP Frameworks

@@ -1,8 +1,15 @@
 ---
 layout: api_reference
-title: Request-Response-API-(R2)
+title: Rest.li Request Response API (R2)
 permalink: /Request-Response-API-(R2)
 ---
+# Rest.li Request Response API (R2)
+
+## Contents
+
+- [Introduction](#introduction)
+- [Layers](#layers)
+- [Requests and Responses](#requests-and-responses)
 
 ## Introduction	
 
@@ -10,11 +17,8 @@ R2 is the request / response API underlying Rest.li.  It includes abstractions f
 
 R2 can be used independently, with D2 (our Dynamic Discovery system), or with both D2 and Rest.li. 
 
-## Contents
-
 ## Layers
 The following diagram shows the layers involved in the R2 system. Each layer will be described in detail below.
-
 
 <p><img src="/rest.li/images/r2.png"></p>
 
@@ -111,6 +115,7 @@ RestResponses add a status property, which matches the semantics of a REST statu
 
 ByteStrings
 Entities are stored as ByteStrings in R2. ByteStrings provide a mechanism to ensure that the byte data is immutable and not copied unless absolutely necessary. The ByteString interface looks like the following:
+
 <pre><code>public final class ByteString
 {
   /**
@@ -158,7 +163,7 @@ Entities are stored as ByteStrings in R2. ByteStrings provide a mechanism to ens
  
   /**
    * Returns a copy of the bytes in this {@link ByteString}. Changes to the returned byte[] will not be
-   * reflected in this {@link ByteString}.<p>
+   * reflected in this {@link ByteString}.
    *
    * Where possible prefer other methods for accessing the underlying bytes, such as
    * {@link #asByteBuffer()}, {@link #write(java.io.OutputStream)}, or {@link #asString(Charset)}.
@@ -216,11 +221,13 @@ Entities are stored as ByteStrings in R2. ByteStrings provide a mechanism to ens
 </code></pre>
 
 ### Builders
+
 As mentioned previously, builders provide the following basic functionality:
-Create a new message
-Copy a message, modify it, and create a new immutable copy
-To create a new message, use RestRequestBuilder / RestResponseBuilder as appropriate.
-Builder methods are designed to be chained. Here is an example of chaining:
+
+- Create a new message
+- Copy a message, modify it, and create a new immutable copy
+
+To create a new message, use RestRequestBuilder / RestResponseBuilder as appropriate. Builder methods are designed to be chained. Here is an example of chaining:
 
 <pre><code>final RestResponse res = new RestResponseBuilder()
         .setEntity(new byte[] {1,2,3,4})
@@ -228,8 +235,10 @@ Builder methods are designed to be chained. Here is an example of chaining:
         .setStatus(300)
         .build()
 </code></pre>
+
 To copy a message, it is sufficient to ask the message for its builder. Typically this can be done with the builder method, but in some cases a special builder method must be used (when working with abstract messages).
 Here is an example of copying and modifying a message:
+
 <pre><code>final RestRequest req = ...;
 final RestRequest newReq = req.builder()
                              .setEntity(new byte[] {5,6,7,8})
@@ -243,10 +252,13 @@ final Request newReq = req.requestBuilder()
                           .setURI(URI.create("anotherURI"))
                           .build();
 </code></pre>
+
 ### Callbacks
+
 R2 is, by design, asynchronous in nature. As will be shown below, R2 provides two mechanisms to wait for an asynchronous operation to complete: callbacks and Futures. Futures should be familiar to most Java developers, so we will not discuss them further in this document. Callbacks are less common in Java and warrant some quick discussion.
 In R2, the Callback interface looks like:
-<pre><code>public interface Callback<T>
+
+<pre><code>public interface Callback
 {
   /**
    * Called if the asynchronous operation completed with a successful result.
@@ -263,14 +275,19 @@ In R2, the Callback interface looks like:
   void onError(Exception e);
 }
 </code></pre>
+
 In some cases it is only possible to invoke an asynchronous operation with a callback (and not a Future). In those cases, which are not common for external users, it is possible to use a FutureCallback as shown in this example:
-<pre><code>final FutureCallback<RestResponse> future = new FutureCallback<RestResponse>();
+
+<pre><code>final FutureCallback future = new FutureCallback();
 asyncOp(..., future);
 return future.get();
 </code></pre>
+
 In some cases, code does not need to wait for completion of an event. In the case of the future, simply do not call get(). In the case of callbacks, use Callbacks.empty(), as shown in this example:
+
 <pre><code>asyncOp(..., Callbacks.empty());
 </code></pre>
+
 Keep in mind that it will not be possible to know when the operation completed - or even if it completed successfully.
 Sometimes code will want to know when an operation has completed, but is not concerned with the result. In this case, a SimpleCallback can be used or adapted to a Callback with Callbacks.adaptSimple(...).
 
@@ -278,6 +295,7 @@ Sometimes code will want to know when an operation has completed, but is not con
 The R2 client API provides the mechanism for sending request and responses to a remote service or resource handler. The diagram below shows where the client sits in the R2 stack.
 
 The main interface in this layer is the Client interface, shown here:
+
 <pre><code>public interface Client
 {
   /**
@@ -287,7 +305,7 @@ The main interface in this layer is the Client interface, shown here:
    * @param request the request to issue
    * @return a future to wait for the response
    */
-  Future<RestResponse> restRequest(RestRequest request);
+  Future restRequest(RestRequest request);
  
   /**
    * Asynchronously issues the given request. The given callback is invoked when the response is
@@ -297,16 +315,17 @@ The main interface in this layer is the Client interface, shown here:
    * @param request the request to issue
    * @param callback the callback to invoke with the response
    */
-  void restRequest(RestRequest request, Callback<RestResponse> callback);
+  void restRequest(RestRequest request, Callback callback);
  
   /**
    * Starts asynchronous shutdown of the client. This method should block minimally, if at all.
    *
    * @param callback a callback to invoke when the shutdown is complete
    */
-  void shutdown(Callback<None> callback);
+  void shutdown(Callback callback);
 }
 </code></pre>
+
 Requests are made asynchronously using either Futures or Callbacks (see Callback section for details).
 
 ### Request Handler API
@@ -317,9 +336,10 @@ Determining the rules for dispatching a request to a service / resource manager 
 Handling a request (as a service or a resource manager)
 
 The REST Request Handler interface looks like:
+
 <pre><code>public interface RestRequestHandler
 {
-  void handleRequest(RestRequest request, Callback<RestResponse> callback);
+  void handleRequest(RestRequest request, Callback callback);
 }
 </code></pre>
 
@@ -348,7 +368,7 @@ Messages filters can be used to handle messages in an abstract way (as Requests 
 #### ClientQueryTunnelFilter / ServerQueryTunnelFilter
 One notable set of filters is the ClientQueryTunnelFilter and the ServerQueryTunnelFilter. These filters allow long queries to be transformed by moving the query parameters into the body, and reformulating the request as a POST. The original method is specified by the X-HTTP-Method-Override header. See QueryTunnelUtil.java for more details.
 
-###Wire Attributes
+### Wire Attributes
 Wire attributes provide a mechanism to send "side-band" data to a remote endpoint along with a request or response. They are exposed at the filter chain layer and can be queried or modified by filters. They are not made available at the request / response layer because the entity (and headers, for REST) should supply all of the data necessary to process a request or response.
 Wire attributes are sent as headers with the R2 HTTP transport.
 
@@ -363,4 +383,4 @@ In the HTTP transport there is a standard transformation of our REST messages to
 Wire attributes are transported as headers, using the attribute name.
 
 ### Transport Protocol
-Under the hood, request will be encoded based on [Rest.li protocol](Rest.li-Protocol), and sent over the wire to the server.
+Under the hood, the request will be encoded based on the [Rest.li protocol](/rest.li/spec/protocol) and sent over the wire to the server.

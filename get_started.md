@@ -1,6 +1,6 @@
 ---
 layout: get_started
-title: Get Started
+title: Rest.li Quick Start Guide
 permalink: /get_started/quick_start
 index: 1
 ---

@@ -3,7 +3,7 @@ layout: guide
 title: Components
 permalink: /Components
 ---
-# Components
+# Rest.li Components
 
 ## Contents
 
