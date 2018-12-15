@@ -1,15 +1,15 @@
 ---
 layout: guide
-title: Avro Conversions
+title: Rest.li Avro Conversions
 permalink: /Rest_li_Avro_conversions
 ---
 
-# Rest.li to Avro conversions
+# Rest.li to Avro Conversions
 
 ## Contents
-* [Converting Schemas](How-To%3A-rest.li-Avro-conversions#converting-schemas)
-* [Converting Data](How-To%3A-rest.li-Avro-conversions#converting-data)
-* [FAQ](How-To%3A-rest.li-Avro-conversions#faq)
+* [Converting Schemas](#converting-schemas)
+* [Converting Data](#converting-data)
+* [FAQ](#faq)
 
 Sometimes it is necessary to convert between Avro and Rest.li formats. That is, either converting schemas (Rest.li `DataSchema`s to Avro `Schema`s and vice versa) or converting data (Rest.li `DataMap`s to Avro `GenericRecord`s and vice versa). Rest.li provides ways to do this using the data-avro module.
 

@@ -1,11 +1,11 @@
 ---
 layout: get_started
-title: Step by step tutorial
+title: Tutorial to Create a Rest.li Server and Client
 permalink: /start/step_by_step
 index: 1
 ---
 
-# Tutorial to Create a Server and Client
+# Tutorial to Create a Rest.li Server and Client
 
 ## Contents
 

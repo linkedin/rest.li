@@ -846,3 +846,5 @@ features of D2 examples like the following:
 
 To do so, check out the examples in the Res.tli source code. Go to
 [/example/d2-advanced-examples](https://github.com/linkedin/rest.li/tree/master/examples/d2-advanced-example).
+
+See also [Dynamic Discovery](/rest.li/Dynamic_Discovery).

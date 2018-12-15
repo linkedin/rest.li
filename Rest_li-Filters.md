@@ -1,9 +1,9 @@
 ---
 layout: guide
-title: Rest.li-Filters
+title: Rest.li Filters
 permalink: /Rest_li-Filters
 ---
-# Filters
+# Rest.li Filters
 
 ## Contents
 

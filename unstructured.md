@@ -1,6 +1,6 @@
 ---
 layout: get_started
-title: Unstructured data
+title: Unstructured Data in Rest.li Quick Start
 permalink: /start/unstructured
 index: 1
 ---
