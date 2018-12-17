@@ -4,7 +4,20 @@ title: D2 Zookeeper Properties
 permalink: /D2-Zookeeper-Properties
 ---
 
-<h3>D2 configuration properties</h3>
+# D2 Configuration Properties
+
+## Contents
+
+* [Tiers of Configuration](#tiers-of-configuration)
+* [Cluster Level Properties](#cluster-level-properties)
+* [partitionProperties Level Properties](#partitionproperties-level-properties)
+* [Service Level Properties](#service-level-properties)
+* [transportClient Level Properties](#transportclient-level-properties)
+* [degraderProperties Level Properties](#degraderproperties-level-properties)
+* [loadBalancerStrategy Level Properties](#loadbalancerstrategy-level-properties)
+
+## Tiers of Configuration
+
 <p>
     There are tiers of configuration in D2. This is how we structure our
     configuration.
@@ -78,7 +91,8 @@ permalink: /D2-Zookeeper-Properties
 As you can see, there are multiple tiers for configuration. Next we'll enumerate all the
 levels and the configurations that belong to that level.
 </p>
-<h3>Cluster Level Properties</h3>
+
+## Cluster Level Properties
 <table>
 <tbody>
 <tr>
@@ -108,7 +122,8 @@ levels and the configurations that belong to that level.
 </tbody>
 </table>
 
-<h3>"partitionProperties" Level Properties</h3>
+## partitionProperties Level Properties
+
 <table>
 <tbody>
 <tr>
@@ -170,7 +185,8 @@ levels and the configurations that belong to that level.
 </tbody>
 </table>
 
-<h3>Service Level Properties</h3>
+## Service Level Properties
+
 <table>
 <tbody>
 <tr>
@@ -238,7 +254,7 @@ levels and the configurations that belong to that level.
 </tbody>
 </table>
 
-<h3>"transportClient" Level Properties</h3>
+## transportClient Level Properties
 
 Properties used to create a client to talk to a server.
 
@@ -303,106 +319,10 @@ Properties used to create a client to talk to a server.
 </tbody>
 </table>
 
-<h3>"loadBalancerStrategy" Level Properties</h3>
-
-Properties for load balancers. This affects all servers in a cluster.
-<table>
-    <tbody>
-    <tr>
-        <th>
-            <p>Property Name</p>
-        </th>
-        <th>
-            <p>Description</p>
-        </th>
-    </tr>
-    <tr>
-<tr>
-    <td>
-        <p>http.loadBalancer.hashMethod</p>
-    </td>
-    <td>
-        <p>What kind of hash method we should use (this is relevant to stickiness). Valid values are none or uriRegex </p>
-    </td>
-</tr>
-<tr>
-    <td>
-        <p>http.loadBalancer.hashConfig</p>
-    </td>
-    <td>
-        <p>If you declare this, you need to define the regexes list that we need to use to parse the URL</p>
-    </td>
-</tr>
-<tr>
-    <td>
-        <p>http.loadBalancer.updateIntervalMs</p>
-    </td>
-    <td>
-        <p>Time interval that the load balancer will update the state (meaning should load balancer, rebalance the traffic, should it increase the drop rate, etc). Default value is 5000.</p>
-    </td>
-</tr>
-<tr>
-    <td>
-        <p>http.loadBalancer.pointsPerWeight</p>
-    </td>
-    <td>
-        <p>The max number of points a client get in a hashring per 1.0 of weight. Default is 100. Increasing this number will increase the computation needed to create a hashring but lead to more even-ness in the hashring.</p>
-    </td>
-</tr>
-<tr>
-    <td>
-        <p>http.loadBalancer.lowWaterMark</p>
-    </td>
-    <td>
-        <p>If the cluster average latency, in ms, is lower than this, we'll reduce the entire cluster drop rate. (This will affect all the clients in the same cluster regardless whether they are healthy or not). Default value is 500. </p>
-    </td>
-</tr>
-<tr>
-    <td>
-        <p>http.loadBalancer.highWaterMark</p>
-    </td>
-    <td>
-        <p>If the cluster average latency is higher than this, in ms, we'll increase the cluster drop rate.(This will affect all the clients in the same cluster regardless whether they are healthy or not). Default value is 3000.</p>
-    </td>
-</tr>
-<tr>
-    <td>
-        <p>http.loadBalancer.initialRecoveryLevel</p>
-    </td>
-    <td>
-        <p>Once a cluster gets totally degraded, this is the baseline that the cluster use to start recovering. Let's say a healthy client has 100 points in a hashring. At a complete degraded state, it has 0 point. Let's say the initial recovery level is 0.005, that means the client get 0.5 point not enough to be reintroduced (because a client need at least 1 point). Default value is 0.01.</p>
-    </td>
-</tr>
-<tr>
-    <td>
-        <p>http.loadBalancer.ringRampFactor</p>
-    </td>
-    <td>
-        <p>Once a cluster is in the recovery mode, this is the multiplication factor that we use to increase the number of point for a client in the ring. For example: a healthy client has 100 points in a hashring. It's completely degraded now with 0 points. The initialRecoveryLevel is set to 0.005 and ringRampFactor is set to 2. So during the #1 turn of recovery we get 0.5 point. Not enough to be reintroduced into the ring. But at #2 turn, because ringRampFactor is 2, then we get 1 point. Turn #3 we get 2 points, etc. Default value is 1.</p>
-    </td>
-</tr>
-<tr>
-    <td>
-        <p>http.loadBalancer.globalStepUp</p>
-    </td>
-    <td>
-        <p>The size of step function when incrementing drop rate in the cluster. Default value is 0.2. Example if globalStepUp = 0.2 <br class="atl-forced-newline"/> drop rate is 0.0 then becomes 0.2 then becomes 0.4 etc as the cluster gets more degraded</p>
-    </td>
-</tr>
-<tr>
-    <td>
-        <p>http.loadBalancer.globalStepDown</p>
-    </td>
-    <td>
-        <p>Same as http.loadBalancer.globalStepUp except this is for decrementing drop rate</p>
-    </td>
-</tr>
-</tbody>
-</table>
-
-<h3>"degraderProperties" Level Properties</h3>
+## degraderProperties Level Properties
 
 Note that each degrader is used to represent a server among many servers in a cluster.
+
 <table>
 <tbody>
 <tr>
@@ -560,3 +480,103 @@ Note that each degrader is used to represent a server among many servers in a cl
 </tr>
 </tbody>
 </table>
+
+## loadBalancerStrategy Level Properties
+
+Properties for load balancers. This affects all servers in a cluster.
+
+<table>
+<tbody>
+    <tr>
+        <th>
+            <p>Property Name</p>
+        </th>
+        <th>
+            <p>Description</p>
+        </th>
+    </tr>
+    
+<tr>
+    <td>
+        <p>http.loadBalancer.hashMethod</p>
+    </td>
+    <td>
+        <p>What kind of hash method we should use (this is relevant to stickiness). Valid values are none or uriRegex </p>
+    </td>
+</tr>
+<tr>
+    <td>
+        <p>http.loadBalancer.hashConfig</p>
+    </td>
+    <td>
+        <p>If you declare this, you need to define the regexes list that we need to use to parse the URL</p>
+    </td>
+</tr>
+<tr>
+    <td>
+        <p>http.loadBalancer.updateIntervalMs</p>
+    </td>
+    <td>
+        <p>Time interval that the load balancer will update the state (meaning should load balancer, rebalance the traffic, should it increase the drop rate, etc). Default value is 5000.</p>
+    </td>
+</tr>
+<tr>
+    <td>
+        <p>http.loadBalancer.pointsPerWeight</p>
+    </td>
+    <td>
+        <p>The max number of points a client get in a hashring per 1.0 of weight. Default is 100. Increasing this number will increase the computation needed to create a hashring but lead to more even-ness in the hashring.</p>
+    </td>
+</tr>
+<tr>
+    <td>
+        <p>http.loadBalancer.lowWaterMark</p>
+    </td>
+    <td>
+        <p>If the cluster average latency, in ms, is lower than this, we'll reduce the entire cluster drop rate. (This will affect all the clients in the same cluster regardless whether they are healthy or not). Default value is 500. </p>
+    </td>
+</tr>
+<tr>
+    <td>
+        <p>http.loadBalancer.highWaterMark</p>
+    </td>
+    <td>
+        <p>If the cluster average latency is higher than this, in ms, we'll increase the cluster drop rate.(This will affect all the clients in the same cluster regardless whether they are healthy or not). Default value is 3000.</p>
+    </td>
+</tr>
+<tr>
+    <td>
+        <p>http.loadBalancer.initialRecoveryLevel</p>
+    </td>
+    <td>
+        <p>Once a cluster gets totally degraded, this is the baseline that the cluster use to start recovering. Let's say a healthy client has 100 points in a hashring. At a complete degraded state, it has 0 point. Let's say the initial recovery level is 0.005, that means the client get 0.5 point not enough to be reintroduced (because a client need at least 1 point). Default value is 0.01.</p>
+    </td>
+</tr>
+<tr>
+    <td>
+        <p>http.loadBalancer.ringRampFactor</p>
+    </td>
+    <td>
+        <p>Once a cluster is in the recovery mode, this is the multiplication factor that we use to increase the number of point for a client in the ring. For example: a healthy client has 100 points in a hashring. It's completely degraded now with 0 points. The initialRecoveryLevel is set to 0.005 and ringRampFactor is set to 2. So during the #1 turn of recovery we get 0.5 point. Not enough to be reintroduced into the ring. But at #2 turn, because ringRampFactor is 2, then we get 1 point. Turn #3 we get 2 points, etc. Default value is 1.</p>
+    </td>
+</tr>
+<tr>
+    <td>
+        <p>http.loadBalancer.globalStepUp</p>
+    </td>
+    <td>
+        <p>The size of step function when incrementing drop rate in the cluster. Default value is 0.2. Example if globalStepUp = 0.2 <br class="atl-forced-newline"/> drop rate is 0.0 then becomes 0.2 then becomes 0.4 etc as the cluster gets more degraded</p>
+    </td>
+</tr>
+<tr>
+    <td>
+        <p>http.loadBalancer.globalStepDown</p>
+    </td>
+    <td>
+        <p>Same as http.loadBalancer.globalStepUp except this is for decrementing drop rate</p>
+    </td>
+</tr>
+</tbody>
+</table>
+
+

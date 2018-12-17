@@ -3,7 +3,7 @@ layout: guide
 title: Compression
 permalink: /Compression
 ---
-# Compression
+# Rest.li Compression
 
 ## Contents
 * [Supported Algorithms](#supported-algorithms)

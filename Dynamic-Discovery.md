@@ -4,6 +4,8 @@ title: Dynamic_Discovery
 permalink: /Dynamic_Discovery
 ---
 
+# Dynamic Discovery
+
 ## Contents
 
 * [What is D2](Dynamic-Discovery#what-is-d2)
@@ -190,13 +192,11 @@ The load balancer strategy that attempts to do degradation is the DegraderLoadBa
 <li> The Degrader uses the CallTracker to try and figure out whether to drop traffic, how much traffic to drop, the health of the node, etc. This is boiled down to a "drop rate" score between 0 and 1. </li>
 <li> If the cluster's average latency per node is less than the max cluster latency, all calls will go through. The probability of selecting a node in the cluster will depend on its computed drop rate (nodes with lower drop rates will be weighted higher), but no messages will be dropped.</li>
 <li> If the cluster's average latency per node is greater than the max cluster latency, the balancer will begin allowing the nodes to drop traffic (using the degrader's checkDrop method).</li>
-        </ul>
+        
 
 <h4> Partitioning </h4>
 
 D2 currently support range-based and hash-based partitioning.
-
-TODO: add "Partitioning Support for Dynamic Discovery"
 
 <h3> Load Balancer Flow </h3>
 
@@ -205,13 +205,13 @@ TODO: add "Partitioning Support for Dynamic Discovery"
 Here is an example of the code flow when a request comes in. For the sake of this example, we'll a fictional widget service. Let's also say that in order to get the data for a widget resource, we need to contact 3 different services: WidgetX, WidgetY, and WidgetZ backend.
 
 On the server side:
-        <ul>
+
 <li> When a machine joins a *cluster*, let's say we add a new machine to Widget Server Cluster. Let's say that is machine number #24. Then discovery server code in machine #24 will "announce" to D2 zookeeper that there is another machine joining the widget server cluster. </li>
 <li> It will tell zookeeper about the machine #24 *URI*. </li>
 <li> All the "listeners" for "widget server" *service* will be notified (these are all the clients for example widget front-end) and since the load balancer client side has the load balancing strategy, the client will determine which machine gets the new request. </li>
-        </ul>
+
 On the client side:
-        <ul>
+
 <li> A request comes to @http://example.com/widget/1@  </li>
 <li> The HTTP load balancer knows that /widget/ is redirected to widget service (this is not the D2 load balancer) </li>
 <li> One of the machines in widget front-end gets the request and processes it. </li>
@@ -219,7 +219,6 @@ On the client side:
 <li> In this case we assume that widget front-end needs a resource from WidgetX, WidgetY and WidgetZ backend. So the D2 client code in widget front-end is listening to these 3 services in zookeeper.  </li>
 <li> In the example, the D2 client code in widget front-end chooses machine #14 for WidgetX backend, machine #5 for WidgetY and machine #33 for WidgetZ backend. </li>
 <li> Then the requests get dispersed to each corresponding machine. </li>
-        </ul>
 
 ## Stores
 

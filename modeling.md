@@ -1,6 +1,6 @@
 ---
 layout: guide
-title: User guide
+title: Modeling Resources with Rest.li
 permalink: /modeling/modeling
 index: 2
 ---

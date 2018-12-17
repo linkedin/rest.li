@@ -1,6 +1,6 @@
 ---
 layout: guide
-title: How-to-use-projections-in-Java
+title: Rest.li Projections in Java
 permalink: /How-to-use-projections-in-Java
 ---
 # How to Use Projections in Java
@@ -23,7 +23,7 @@ an object instead of the entire object. Using projections when you only
 need a few fields from an object is a good way to self-document your
 code, reduce payload of responses, and even allow the server to relax an
 otherwise time consuming computation or IO operation. You can read more
-about projections at [Projections](Projections)
+about projections at [Projections](Projections).
 
 ## What Can Be Projected
 
