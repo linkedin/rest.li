@@ -17,23 +17,30 @@
 package com.linkedin.restli.examples.greetings.server;
 
 
+import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.validation.CreateOnly;
 import com.linkedin.restli.common.validation.ReadOnly;
 import com.linkedin.restli.examples.greetings.api.ValidationDemo;
+import com.linkedin.restli.examples.greetings.api.ValidationDemoCriteria;
 import com.linkedin.restli.examples.greetings.api.myEnum;
 import com.linkedin.restli.examples.greetings.api.myRecord;
 import com.linkedin.restli.server.BatchCreateKVResult;
 import com.linkedin.restli.server.BatchCreateRequest;
+import com.linkedin.restli.server.BatchFinderResult;
 import com.linkedin.restli.server.BatchPatchRequest;
 import com.linkedin.restli.server.BatchResult;
 import com.linkedin.restli.server.BatchUpdateRequest;
 import com.linkedin.restli.server.BatchUpdateResult;
+import com.linkedin.restli.server.CollectionResult;
 import com.linkedin.restli.server.CreateKVResponse;
+import com.linkedin.restli.server.PagingContext;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.UpdateResponse;
+import com.linkedin.restli.server.annotations.BatchFinder;
 import com.linkedin.restli.server.annotations.Finder;
+import com.linkedin.restli.server.annotations.PagingContextParam;
 import com.linkedin.restli.server.annotations.QueryParam;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.annotations.RestMethod;
@@ -233,5 +240,59 @@ public class AutomaticValidationDemoResource implements KeyValueResource<Integer
       validationDemos.add(new ValidationDemo().setStringA("valueA").setIntA(intA).setUnionFieldWithInlineRecord(union));
     }
     return validationDemos;
+  }
+
+  @BatchFinder(value = "searchValidationDemos", batchParam = "criteria")
+  public BatchFinderResult<ValidationDemoCriteria, ValidationDemo, EmptyRecord> searchValidationDemos(@PagingContextParam PagingContext context,
+      @QueryParam("criteria") ValidationDemoCriteria[] criteria)
+  {
+    BatchFinderResult<ValidationDemoCriteria, ValidationDemo, EmptyRecord> batchFinderResult = new BatchFinderResult<>();
+
+    for (ValidationDemoCriteria currentCriteria : criteria) {
+      List<ValidationDemo> validationDemos = new ArrayList<ValidationDemo>();
+      if (currentCriteria.getIntA() == 1111) {
+        // Generate entities that are missing stringB fields
+        for (int i = 0; i < 3; i++)
+        {
+          ValidationDemo.UnionFieldWithInlineRecord union = new ValidationDemo.UnionFieldWithInlineRecord();
+          union.setMyEnum(myEnum.FOOFOO);
+          validationDemos.add(new ValidationDemo().setStringA("valueA").setIntA(currentCriteria.getIntA()).setUnionFieldWithInlineRecord(union));
+        }
+      } else if (currentCriteria.getIntA() == 2222) {
+        // Generate entities that their stringA field has a value over the length limitation
+        for (int i = 0; i < 3; i++)
+        {
+          ValidationDemo.UnionFieldWithInlineRecord union = new ValidationDemo.UnionFieldWithInlineRecord();
+          union.setMyEnum(myEnum.FOOFOO);
+          validationDemos.add(new ValidationDemo().setStringA("longLengthValueA").setIntA(currentCriteria.getIntA()).setStringB("valueB").setUnionFieldWithInlineRecord(union));
+        }
+      } else if (currentCriteria.getIntA() == 3333) {
+        // Generate entities that have multiple errors
+        // the stringA field has a value over the length limitation and miss stringB fields
+        for (int i = 0; i < 3; i++)
+        {
+          ValidationDemo.UnionFieldWithInlineRecord union = new ValidationDemo.UnionFieldWithInlineRecord();
+          union.setMyEnum(myEnum.FOOFOO);
+          validationDemos.add(new ValidationDemo().setStringA("longLengthValueA").setIntA(currentCriteria.getIntA()).setUnionFieldWithInlineRecord(union));
+        }
+      } else if (currentCriteria.getIntA() == 4444) {
+        // entities without errors
+        for (int i = 0; i < 3; i++)
+        {
+          ValidationDemo.UnionFieldWithInlineRecord union = new ValidationDemo.UnionFieldWithInlineRecord();
+          union.setMyEnum(myEnum.FOOFOO);
+          validationDemos.add(new ValidationDemo().setStringA("valueA").setIntA(currentCriteria.getIntA()).setStringB("valueB").setUnionFieldWithInlineRecord(union));
+        }
+      } else {
+        // on errorResponse
+        batchFinderResult.putError(currentCriteria, new RestLiServiceException(HttpStatus.S_404_NOT_FOUND, "Fail to find Validation Demo!"));
+        continue;
+      }
+
+      CollectionResult<ValidationDemo, EmptyRecord> cr = new CollectionResult<>(validationDemos, validationDemos.size());
+      batchFinderResult.putResult(currentCriteria, cr);
+    }
+
+    return batchFinderResult;
   }
 }

@@ -125,6 +125,18 @@
       "type" : "ValidationDemo",
       "optional" : true
     } ]
+  }, {
+    "type" : "record",
+    "name" : "ValidationDemoCriteria",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "doc" : "A search criteria to filter validation demo.",
+    "fields" : [ {
+      "name" : "intA",
+      "type" : "int"
+    }, {
+      "name" : "stringB",
+      "type" : "string"
+    } ]
   }, "com.linkedin.restli.examples.greetings.api.myEnum", "com.linkedin.restli.examples.greetings.api.myGreeting", "com.linkedin.restli.examples.greetings.api.myItem", "com.linkedin.restli.examples.greetings.api.myRecord" ],
   "schema" : {
     "annotations" : {
@@ -177,6 +189,15 @@
           "name" : "intA",
           "type" : "int"
         } ]
+      } ],
+      "batchFinders" : [ {
+        "name" : "searchValidationDemos",
+        "parameters" : [ {
+          "name" : "criteria",
+          "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.greetings.api.ValidationDemoCriteria\" }"
+        } ],
+        "pagingSupported" : true,
+        "batchParam" : "criteria"
       } ],
       "entity" : {
         "path" : "/autoValidationDemos/{autoValidationDemosId}"

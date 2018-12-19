@@ -202,6 +202,15 @@ public class BatchFinderResponseEnvelope extends RestLiResponseEnvelope
       _exception = exception;
     }
 
+    /**
+     * Determines if the entry is a failure.
+     *
+     * @return true if the entry contains an exception, false otherwise.
+     */
+    public boolean isErrorResponse()
+    {
+      return _exception != null;
+    }
 
     /**
      * <tt>toResponse</tt> build a DataMap from the current instance.

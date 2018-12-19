@@ -1,8 +1,17 @@
-26.0.0
+26.0.2
 ------
+
+
+26.0.1
+------
+(RB=1515224)
+Provide the validation filter for BatchFinder
+
 (RB=1496424)
 Add client-side support for Batch Finder
 
+26.0.0
+------
 (RB=1500413)
 Delete restli-tools-scala module. Dependencies should be updated to `com.linkedin.sbt-restli:restli-tools-scala:0.3.9`.
 

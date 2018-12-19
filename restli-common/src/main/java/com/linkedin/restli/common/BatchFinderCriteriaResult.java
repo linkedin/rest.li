@@ -24,9 +24,9 @@ import com.linkedin.data.schema.BooleanDataSchema;
 import com.linkedin.data.schema.Name;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.template.DataTemplateUtil;
-import com.linkedin.data.template.DynamicRecordArray;
 import com.linkedin.data.template.GetMode;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.data.template.DynamicRecordArray;
 
 import java.util.Arrays;
 import java.util.List;

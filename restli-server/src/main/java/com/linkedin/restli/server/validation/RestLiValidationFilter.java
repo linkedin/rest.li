@@ -32,6 +32,7 @@ import com.linkedin.restli.common.util.ProjectionMaskApplier.InvalidProjectionEx
 import com.linkedin.restli.common.validation.RestLiDataSchemaDataValidator;
 import com.linkedin.restli.common.validation.RestLiDataValidator;
 import com.linkedin.restli.internal.server.response.BatchCreateResponseEnvelope;
+import com.linkedin.restli.internal.server.response.BatchFinderResponseEnvelope;
 import com.linkedin.restli.internal.server.response.BatchGetResponseEnvelope;
 import com.linkedin.restli.internal.server.response.BatchPartialUpdateResponseEnvelope;
 import com.linkedin.restli.internal.server.response.BatchResponseEnvelope;
@@ -227,6 +228,9 @@ public class RestLiValidationFilter implements Filter
         case FINDER:
           validateCollectionResponse(validator, ((FinderResponseEnvelope) responseData.getResponseEnvelope()).getCollectionResponse());
           break;
+        case BATCH_FINDER:
+          validateBatchCollectionResponse(validator, ((BatchFinderResponseEnvelope) responseData.getResponseEnvelope()).getItems());
+          break;
         case BATCH_GET:
           validateBatchResponse(validator, ((BatchGetResponseEnvelope) responseData.getResponseEnvelope()).getBatchResponseMap());
           break;
@@ -268,6 +272,34 @@ public class RestLiValidationFilter implements Filter
         sb.append(result.getMessages().toString());
       }
     }
+    if (sb.length() > 0)
+    {
+      throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, sb.toString());
+    }
+  }
+
+  private void validateBatchCollectionResponse(RestLiDataValidator validator, List<BatchFinderResponseEnvelope.BatchFinderEntry> responses)
+  {
+    StringBuilder sb = new StringBuilder();
+
+    for (int i = 0; i < responses.size(); i++) {
+      BatchFinderResponseEnvelope.BatchFinderEntry entry = responses.get(i);
+      // on error case
+      if (entry.isErrorResponse()) {
+        continue;
+      }
+
+      // on success case
+      for (int j = 0; j < entry.getElements().size(); j++) {
+        RecordTemplate entity = entry.getElements().get(j);
+        ValidationResult result = validator.validateOutput(entity);
+        if (!result.isValid())
+        {
+          sb.append("BatchCriteria: ").append(i + " ").append("Element: ").append(j + " ").append(result.getMessages().toString());
+        }
+      }
+    }
+
     if (sb.length() > 0)
     {
       throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, sb.toString());

@@ -33,6 +33,7 @@ import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.client.response.BatchKVResponse;
 import com.linkedin.restli.client.response.CreateResponse;
+import com.linkedin.restli.common.BatchCollectionResponse;
 import com.linkedin.restli.common.BatchCreateIdResponse;
 import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CollectionResponse;
@@ -52,6 +53,7 @@ import com.linkedin.restli.examples.greetings.api.GreetingMap;
 import com.linkedin.restli.examples.greetings.api.MyItemArray;
 import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.api.ValidationDemo;
+import com.linkedin.restli.examples.greetings.api.ValidationDemoCriteria;
 import com.linkedin.restli.examples.greetings.api.myEnum;
 import com.linkedin.restli.examples.greetings.api.myItem;
 import com.linkedin.restli.examples.greetings.api.myRecord;
@@ -773,6 +775,19 @@ public class TestRestLiValidation extends RestLiIntegrationTest
     Assert.assertEquals(response.getStatus(), HttpStatus.S_200_OK.getCode());
   }
 
+  @Test(dataProvider = "manualBuilders")
+  public void testBatchFinder(Object builder) throws RemoteInvocationException
+  {
+    ValidationDemoCriteria c1 = new ValidationDemoCriteria().setIntA(1111).setStringB("hello");
+    ValidationDemoCriteria c2 = new ValidationDemoCriteria().setIntA(1111).setStringB("world");
+
+    Request<BatchCollectionResponse<ValidationDemo>> request = new RootBuilderWrapper<Integer, ValidationDemo>(builder)
+        .batchFindBy("searchValidationDemos").setQueryParam("criteria", Arrays.asList(c1, c2)).build();
+    Response<BatchCollectionResponse<ValidationDemo>> response = _restClientManual.sendRequest(request).getResponse();
+
+    Assert.assertEquals(response.getStatus(), HttpStatus.S_200_OK.getCode());
+  }
+
   @Test(dataProvider = "autoBuilders")
   public void testGetAuto(Object builder) throws RemoteInvocationException
   {
@@ -858,6 +873,87 @@ public class TestRestLiValidation extends RestLiIntegrationTest
           "ERROR :: /stringB :: field is required but not found and has no default value\n");
     }
   }
+
+  @Test(dataProvider = "autoBuilders")
+  public void testBatchFinderAutoWithMissingField(Object builder) throws RemoteInvocationException
+  {
+    try
+    {
+      ValidationDemoCriteria c1 = new ValidationDemoCriteria().setIntA(1111).setStringB("hello");
+      ValidationDemoCriteria c2 = new ValidationDemoCriteria().setIntA(4444).setStringB("world");
+
+      Request<BatchCollectionResponse<ValidationDemo>> request = new RootBuilderWrapper<Integer, ValidationDemo>(builder)
+          .batchFindBy("searchValidationDemos").setQueryParam("criteria", Arrays.asList(c1, c2)).build();
+      _restClientAuto.sendRequest(request).getResponse();
+      Assert.fail("Expected RestLiResponseException");
+    }
+    catch (RestLiResponseException e)
+    {
+      Assert.assertEquals(e.getServiceErrorMessage(), "BatchCriteria: 0 Element: 0 ERROR :: /stringB :: field is required but not found and has no default value\n" +
+          "BatchCriteria: 0 Element: 1 ERROR :: /stringB :: field is required but not found and has no default value\n" +
+          "BatchCriteria: 0 Element: 2 ERROR :: /stringB :: field is required but not found and has no default value\n");
+    }
+  }
+
+  @Test(dataProvider = "autoBuilders")
+  public void testBatchFinderAutoWithOverLengthField(Object builder) throws RemoteInvocationException
+  {
+    try
+    {
+      ValidationDemoCriteria c1 = new ValidationDemoCriteria().setIntA(2222).setStringB("hello");
+      ValidationDemoCriteria c2 = new ValidationDemoCriteria().setIntA(4444).setStringB("world");
+
+      Request<BatchCollectionResponse<ValidationDemo>> request = new RootBuilderWrapper<Integer, ValidationDemo>(builder)
+          .batchFindBy("searchValidationDemos").setQueryParam("criteria", Arrays.asList(c1, c2)).build();
+      _restClientAuto.sendRequest(request).getResponse();
+      Assert.fail("Expected RestLiResponseException");
+    }
+    catch (RestLiResponseException e)
+    {
+      Assert.assertEquals(e.getServiceErrorMessage(), "BatchCriteria: 0 Element: 0 ERROR :: /stringA :: length of \"longLengthValueA\" is out of range 1...10\n" +
+          "BatchCriteria: 0 Element: 1 ERROR :: /stringA :: length of \"longLengthValueA\" is out of range 1...10\n" +
+          "BatchCriteria: 0 Element: 2 ERROR :: /stringA :: length of \"longLengthValueA\" is out of range 1...10\n");
+    }
+  }
+
+  @Test(dataProvider = "autoBuilders")
+  public void testBatchFinderAutoWithMultipleErrorFields(Object builder) throws RemoteInvocationException
+  {
+    try
+    {
+      ValidationDemoCriteria c1 = new ValidationDemoCriteria().setIntA(3333).setStringB("hello");
+      ValidationDemoCriteria c2 = new ValidationDemoCriteria().setIntA(4444).setStringB("world");
+
+      Request<BatchCollectionResponse<ValidationDemo>> request = new RootBuilderWrapper<Integer, ValidationDemo>(builder)
+          .batchFindBy("searchValidationDemos").setQueryParam("criteria", Arrays.asList(c1, c2)).build();
+      _restClientAuto.sendRequest(request).getResponse();
+      Assert.fail("Expected RestLiResponseException");
+    }
+    catch (RestLiResponseException e)
+    {
+      Assert.assertEquals(e.getServiceErrorMessage(), "BatchCriteria: 0 Element: 0 ERROR :: /stringA :: length of \"longLengthValueA\" is out of range 1...10\n" +
+          "ERROR :: /stringB :: field is required but not found and has no default value\n" +
+          "BatchCriteria: 0 Element: 1 ERROR :: /stringA :: length of \"longLengthValueA\" is out of range 1...10\n" +
+          "ERROR :: /stringB :: field is required but not found and has no default value\n" +
+          "BatchCriteria: 0 Element: 2 ERROR :: /stringA :: length of \"longLengthValueA\" is out of range 1...10\n" +
+          "ERROR :: /stringB :: field is required but not found and has no default value\n");
+    }
+  }
+
+
+  @Test(dataProvider = "autoBuilders")
+  public void testBatchFinderAutoWithErrorCriteriaResult(Object builder) throws RemoteInvocationException
+  {
+    ValidationDemoCriteria c1 = new ValidationDemoCriteria().setIntA(5555).setStringB("hello");
+    ValidationDemoCriteria c2 = new ValidationDemoCriteria().setIntA(4444).setStringB("world");
+
+    Request<BatchCollectionResponse<ValidationDemo>> request = new RootBuilderWrapper<Integer, ValidationDemo>(builder)
+        .batchFindBy("searchValidationDemos").setQueryParam("criteria", Arrays.asList(c1, c2)).build();
+    _restClientAuto.sendRequest(request).getResponse();
+    Response<BatchCollectionResponse<ValidationDemo>> response = _restClientAuto.sendRequest(request).getResponse();
+    Assert.assertEquals(response.getStatus(), HttpStatus.S_200_OK.getCode());
+  }
+
 
   // Tests for output validation filter handling exceptions from the resource
   @Test(dataProvider = "autoBuilders")

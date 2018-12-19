@@ -1,0 +1,16 @@
+{
+  "type" : "record",
+  "name" : "ValidationDemoCriteria",
+  "namespace" : "com.linkedin.restli.examples.greetings.api",
+  "doc" : "A search criteria to filter validation demo.",
+  "fields" : [
+    {
+      "name": "intA",
+      "type": "int"
+    },
+    {
+      "name": "stringB",
+      "type": "string"
+    }
+  ]
+}

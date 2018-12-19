@@ -19,23 +19,30 @@ package com.linkedin.restli.examples.greetings.server;
 
 import com.linkedin.data.message.Message;
 import com.linkedin.data.schema.validation.ValidationResult;
+import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.validation.CreateOnly;
 import com.linkedin.restli.common.validation.ReadOnly;
 import com.linkedin.restli.common.validation.RestLiDataValidator;
 import com.linkedin.restli.examples.greetings.api.ValidationDemo;
+import com.linkedin.restli.examples.greetings.api.ValidationDemoCriteria;
 import com.linkedin.restli.examples.greetings.api.myEnum;
 import com.linkedin.restli.examples.greetings.api.myRecord;
 import com.linkedin.restli.server.BatchCreateRequest;
 import com.linkedin.restli.server.BatchCreateResult;
+import com.linkedin.restli.server.BatchFinderResult;
 import com.linkedin.restli.server.BatchPatchRequest;
 import com.linkedin.restli.server.BatchUpdateRequest;
 import com.linkedin.restli.server.BatchUpdateResult;
+import com.linkedin.restli.server.CollectionResult;
 import com.linkedin.restli.server.CreateResponse;
+import com.linkedin.restli.server.PagingContext;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.UpdateResponse;
+import com.linkedin.restli.server.annotations.BatchFinder;
 import com.linkedin.restli.server.annotations.Finder;
+import com.linkedin.restli.server.annotations.PagingContextParam;
 import com.linkedin.restli.server.annotations.QueryParam;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.annotations.RestMethod;
@@ -312,5 +319,52 @@ public class ValidationDemoResource implements KeyValueResource<Integer, Validat
     }
 
     return validationDemos;
+  }
+
+
+  @BatchFinder(value = "searchValidationDemos", batchParam = "criteria")
+  public BatchFinderResult<ValidationDemoCriteria, ValidationDemo, EmptyRecord> searchValidationDemos(@PagingContextParam PagingContext context,
+      @QueryParam("criteria") ValidationDemoCriteria[] criteria, @ValidatorParam RestLiDataValidator validator)
+  {
+    BatchFinderResult<ValidationDemoCriteria, ValidationDemo, EmptyRecord> batchFinderResult = new BatchFinderResult<>();
+
+
+    for (ValidationDemoCriteria currentCriteria : criteria) {
+      List<ValidationDemo> validationDemos = new ArrayList<ValidationDemo>();
+
+      // Generate entities that are missing stringB fields
+      for (int i = 0; i < 3; i++)
+      {
+        ValidationDemo.UnionFieldWithInlineRecord union = new ValidationDemo.UnionFieldWithInlineRecord();
+        union.setMyEnum(myEnum.FOOFOO);
+        validationDemos.add(new ValidationDemo().setStringA("valueA").setIntA(currentCriteria.getIntA()).setUnionFieldWithInlineRecord(union));
+      }
+
+      // Validate outgoing data
+      for (ValidationDemo entity : validationDemos)
+      {
+        ValidationResult result = validator.validateOutput(entity);
+        check(!result.isValid());
+        check(result.getMessages().toString().contains("/stringB :: field is required but not found"));
+      }
+
+      // Fix entities
+      for (ValidationDemo validationDemo : validationDemos)
+      {
+        validationDemo.setStringB("valueB");
+      }
+
+      // Validate again
+      for (ValidationDemo entity : validationDemos)
+      {
+        ValidationResult result = validator.validateOutput(entity);
+        check(result.isValid());
+      }
+
+      CollectionResult<ValidationDemo, EmptyRecord> cr = new CollectionResult<>(validationDemos, validationDemos.size());
+      batchFinderResult.putResult(currentCriteria, cr);
+    }
+
+    return batchFinderResult;
   }
 }

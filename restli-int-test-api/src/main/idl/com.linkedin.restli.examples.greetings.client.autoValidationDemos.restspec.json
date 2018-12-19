@@ -50,6 +50,15 @@
         "type" : "int"
       } ]
     } ],
+    "batchFinders" : [ {
+      "name" : "searchValidationDemos",
+      "parameters" : [ {
+        "name" : "criteria",
+        "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.greetings.api.ValidationDemoCriteria\" }"
+      } ],
+      "pagingSupported" : true,
+      "batchParam" : "criteria"
+    } ],
     "entity" : {
       "path" : "/autoValidationDemos/{autoValidationDemosId}"
     }
