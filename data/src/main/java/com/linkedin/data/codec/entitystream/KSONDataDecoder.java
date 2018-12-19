@@ -17,11 +17,14 @@
 package com.linkedin.data.codec.entitystream;
 
 import com.fasterxml.jackson.core.async.ByteArrayFeeder;
+import com.fasterxml.jackson.dataformat.smile.async.NonBlockingByteArrayParser;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.Data;
 import com.linkedin.data.DataComplex;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.codec.DataDecodingException;
+import com.linkedin.data.codec.symbol.SymbolTable;
 import com.linkedin.entitystream.ReadHandle;
 
 import com.fasterxml.jackson.core.JsonFactory;
@@ -36,35 +39,31 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 
-import static com.linkedin.data.codec.entitystream.AbstractJacksonDataDecoder.Token.END_ARRAY;
-import static com.linkedin.data.codec.entitystream.AbstractJacksonDataDecoder.Token.END_OBJECT;
-import static com.linkedin.data.codec.entitystream.AbstractJacksonDataDecoder.Token.FIELD_NAME;
-import static com.linkedin.data.codec.entitystream.AbstractJacksonDataDecoder.Token.SIMPLE_VALUE;
-import static com.linkedin.data.codec.entitystream.AbstractJacksonDataDecoder.Token.START_ARRAY;
-import static com.linkedin.data.codec.entitystream.AbstractJacksonDataDecoder.Token.START_OBJECT;
-
+import static com.linkedin.data.codec.entitystream.KSONDataDecoder.Token.*;
 
 /**
- * A JSON or JSON-like format decoder for a {@link DataComplex} object implemented as a
- * {@link com.linkedin.entitystream.Reader} reading from an {@link com.linkedin.entitystream.EntityStream} of
- * ByteString. The implementation is backed by a non blocking {@link JsonParser}. Because the raw bytes are
- * pushed to the decoder, it keeps the partially built data structure in a stack.
+ * A KSON decoder for a {@link DataComplex} object implemented as a {@link com.linkedin.entitystream.Reader} reading
+ * from an {@link com.linkedin.entitystream.EntityStream} of ByteString. The implementation is backed by Jackson's
+ * {@link NonBlockingByteArrayParser}. Because the raw bytes are pushed to the decoder, it keeps the partially built
+ * data structure in a stack.
  *
- * @author kramgopa, xma
+ * <p>KSON is a tweaked version of JSON that serializes maps as lists, and has support for serializing field IDs
+ * in lieu of field names using an optional symbol table.</p>
+ *
+ * @author kramgopa
  */
-class AbstractJacksonDataDecoder<T extends DataComplex> implements DataDecoder<T>
+class KSONDataDecoder<T extends DataComplex> implements DataDecoder<T>
 {
   /**
    * Internal tokens. Each token is presented by a bit in a byte.
    */
   enum Token
   {
-    START_OBJECT(0b00000001),
-    END_OBJECT  (0b00000010),
-    START_ARRAY (0b00000100),
-    END_ARRAY   (0b00001000),
-    FIELD_NAME  (0b00010000),
-    SIMPLE_VALUE(0b00100000);
+    START_ARRAY  (0b00000001),
+    END_ARRAY    (0b00000010),
+    SIMPLE_VALUE (0b00000100),
+    FIELD_NAME   (0b00001000),
+    STRUCT_MARKER(0b00010000);
 
     final byte bitPattern;
 
@@ -74,11 +73,12 @@ class AbstractJacksonDataDecoder<T extends DataComplex> implements DataDecoder<T
     }
   }
 
-  private static final byte VALUE = (byte) (SIMPLE_VALUE.bitPattern | START_OBJECT.bitPattern | START_ARRAY.bitPattern);
-  private static final byte NEXT_OBJECT_FIELD = (byte) (FIELD_NAME.bitPattern | END_OBJECT.bitPattern);
+  private static final byte VALUE = (byte) (SIMPLE_VALUE.bitPattern | START_ARRAY.bitPattern);
   private static final byte NEXT_ARRAY_ITEM = (byte) (VALUE | END_ARRAY.bitPattern);
+  private static final byte NEXT_MAP_KEY = (byte) (FIELD_NAME.bitPattern | END_ARRAY.bitPattern);
 
   private final JsonFactory _jsonFactory;
+  private final SymbolTable _symbolTable;
 
   private CompletableFuture<T> _completable;
   private T _result;
@@ -89,22 +89,30 @@ class AbstractJacksonDataDecoder<T extends DataComplex> implements DataDecoder<T
 
   private Deque<DataComplex> _stack;
   private String _currField;
+  private Byte _expectedStartMarker;
   // Expected tokens represented by a bit pattern. Every bit represents a token.
   private byte _expectedTokens;
   private boolean _isCurrList;
+  private boolean _isFieldNameExpected;
+  private boolean _isStructStart;
+  private ByteString _currentChunk;
+  private int _currentChunkIndex = -1;
 
-  protected AbstractJacksonDataDecoder(JsonFactory jsonFactory, byte expectedFirstToken)
+  public KSONDataDecoder(boolean decodeBinary)
   {
-    _jsonFactory = jsonFactory;
+    this(decodeBinary, false, null);
+    _expectedStartMarker = null;
+  }
+
+  public KSONDataDecoder(boolean decodeBinary, boolean isDataList, SymbolTable symbolTable)
+  {
+    _jsonFactory = KSONStreamDataCodec.getFactory(decodeBinary);
     _completable = new CompletableFuture<>();
     _result = null;
     _stack = new ArrayDeque<>();
-    _expectedTokens = expectedFirstToken;
-  }
-
-  protected AbstractJacksonDataDecoder(JsonFactory jsonFactory)
-  {
-    this(jsonFactory, (byte) (START_OBJECT.bitPattern | START_ARRAY.bitPattern));
+    _expectedTokens = START_ARRAY.bitPattern;
+    _expectedStartMarker = isDataList ? KSONStreamDataCodec.LIST_ORDINAL : KSONStreamDataCodec.MAP_ORDINAL;
+    _symbolTable = symbolTable;
   }
 
   @Override
@@ -122,35 +130,40 @@ class AbstractJacksonDataDecoder<T extends DataComplex> implements DataDecoder<T
       handleException(e);
     }
 
-    _readHandle.request(1);
+    readNextChunk();
   }
 
   @Override
   public void onDataAvailable(ByteString data)
   {
-    byte[] bytes = data.copyBytes(); // TODO: Avoid copying bytes?
+    _currentChunk = data;
+    _currentChunkIndex = 0;
+
+    processCurrentChunk();
+  }
+
+  private void readNextChunk()
+  {
+    if (_currentChunkIndex == -1)
+    {
+      _readHandle.request(1);
+      return;
+    }
+
+    processCurrentChunk();
+  }
+
+  private void processCurrentChunk()
+  {
     try
     {
-      /**
-       * Method that can be called to feed more data, if (and only if)
-       * {@link #needMoreInput} returns true.
-       * --Copied from ByteArrayFeeder--
-       **/
-      if (_byteArrayFeeder.needMoreInput())
-      {
-        _byteArrayFeeder.feedInput(bytes, 0, bytes.length);
-      }
-      else
-      {
-        handleException(new Exception("Byte Array Feeder is not ok to feed more data."));
-      }
+      _currentChunkIndex = _currentChunk.feed(_byteArrayFeeder, _currentChunkIndex);
+      processTokens();
     }
     catch (IOException e)
     {
       handleException(e);
     }
-
-    processTokens();
   }
 
   private void processTokens()
@@ -162,47 +175,94 @@ class AbstractJacksonDataDecoder<T extends DataComplex> implements DataDecoder<T
       {
         switch (token)
         {
-          case START_OBJECT:
-            validate(START_OBJECT);
-            push(new DataMap(), false);
-            break;
-          case END_OBJECT:
-            validate(END_OBJECT);
-            pop();
-            break;
           case START_ARRAY:
             validate(START_ARRAY);
-            push(new DataList(), true);
+            _isStructStart = true;
+            _expectedTokens = STRUCT_MARKER.bitPattern;
             break;
           case END_ARRAY:
             validate(END_ARRAY);
             pop();
             break;
-          case FIELD_NAME:
-            validate(FIELD_NAME);
-            _currField = _jsonParser.getCurrentName();
-            _expectedTokens = VALUE;
-            break;
           case VALUE_STRING:
-            validate(SIMPLE_VALUE);
-            addValue(_jsonParser.getText());
+            if (_isFieldNameExpected)
+            {
+              validate(FIELD_NAME);
+              _isFieldNameExpected = false;
+              _currField = _jsonParser.getText();
+              _expectedTokens = VALUE;
+            }
+            else
+            {
+              validate(SIMPLE_VALUE);
+              addValue(_jsonParser.getText());
+            }
             break;
           case VALUE_NUMBER_INT:
           case VALUE_NUMBER_FLOAT:
-            validate(SIMPLE_VALUE);
             JsonParser.NumberType numberType = _jsonParser.getNumberType();
             switch (numberType)
             {
               case INT:
-                addValue(_jsonParser.getIntValue());
+                if (_isStructStart)
+                {
+                  _isStructStart = false;
+                  validate(STRUCT_MARKER);
+                  byte marker = _jsonParser.getByteValue();
+                  if (_expectedStartMarker != null && marker != _expectedStartMarker)
+                  {
+                    marker = -1;
+                  }
+                  else
+                  {
+                    _expectedStartMarker = null;
+                  }
+
+                  switch (marker)
+                  {
+                    case KSONStreamDataCodec.LIST_ORDINAL:
+                    {
+                      push(new DataList(), true);
+                      break;
+                    }
+                    case KSONStreamDataCodec.MAP_ORDINAL:
+                    {
+                      push(new DataMap(), false);
+                      break;
+                    }
+                    default:
+                    {
+                      throw new DataDecodingException("Unexpected marker: " + marker + " " + _jsonParser.getText());
+                    }
+                  }
+                }
+                else if (_isFieldNameExpected)
+                {
+                  validate(FIELD_NAME);
+                  _isFieldNameExpected = false;
+                  int sid = _jsonParser.getIntValue();
+                  if (_symbolTable == null || (_currField = _symbolTable.getSymbolName(sid)) == null)
+                  {
+                    throw new DataDecodingException("Did not find mapping for symbol: " + sid);
+                  }
+                  _expectedTokens = VALUE;
+                }
+                else
+                {
+                  validate(SIMPLE_VALUE);
+                  addValue(_jsonParser.getIntValue());
+                }
                 break;
               case LONG:
+                validate(SIMPLE_VALUE);
                 addValue(_jsonParser.getLongValue());
                 break;
               case FLOAT:
+                validate(SIMPLE_VALUE);
                 addValue(_jsonParser.getFloatValue());
                 break;
               case DOUBLE:
+                validate(SIMPLE_VALUE);
                 addValue(_jsonParser.getDoubleValue());
                 break;
               case BIG_INTEGER:
@@ -225,7 +285,7 @@ class AbstractJacksonDataDecoder<T extends DataComplex> implements DataDecoder<T
             addValue(Data.NULL);
             break;
           case NOT_AVAILABLE:
-            _readHandle.request(1);
+            readNextChunk();
             return;
           default:
             handleException(new Exception("Unexpected token " + token + " at " + _jsonParser.getTokenLocation()));
@@ -238,11 +298,11 @@ class AbstractJacksonDataDecoder<T extends DataComplex> implements DataDecoder<T
     }
   }
 
-  protected final void validate(Token token)
+  private void validate(Token token)
   {
     if ((_expectedTokens & token.bitPattern) == 0)
     {
-      handleException(new Exception("Expecting " + joinTokens(_expectedTokens) + " but get " + token
+      handleException(new Exception("Expecting " + joinTokens(_expectedTokens) + " but got " + token
           + " at " + _jsonParser.getTokenLocation()));
     }
   }
@@ -252,7 +312,8 @@ class AbstractJacksonDataDecoder<T extends DataComplex> implements DataDecoder<T
     addValue(dataComplex);
     _stack.push(dataComplex);
     _isCurrList = isList;
-    updateExpected();
+    _isFieldNameExpected = !_isCurrList;
+    _expectedTokens = _isFieldNameExpected ? NEXT_MAP_KEY : NEXT_ARRAY_ITEM;
   }
 
   @SuppressWarnings("unchecked")
@@ -271,11 +332,12 @@ class AbstractJacksonDataDecoder<T extends DataComplex> implements DataDecoder<T
     else
     {
       _isCurrList = _stack.peek() instanceof DataList;
-      updateExpected();
+      _isFieldNameExpected = !_isCurrList;
+      _expectedTokens = _isFieldNameExpected ? NEXT_MAP_KEY : NEXT_ARRAY_ITEM;
     }
   }
 
-  protected void addValue(Object value)
+  private void addValue(Object value)
   {
     if (!_stack.isEmpty())
     {
@@ -283,19 +345,15 @@ class AbstractJacksonDataDecoder<T extends DataComplex> implements DataDecoder<T
       if (_isCurrList)
       {
         ((DataList) currItem).add(value);
+        _expectedTokens = NEXT_ARRAY_ITEM;
       }
       else
       {
         ((DataMap) currItem).put(_currField, value);
+        _isFieldNameExpected = true;
+        _expectedTokens = NEXT_MAP_KEY;
       }
-
-      updateExpected();
     }
-  }
-
-  protected void updateExpected()
-  {
-    _expectedTokens = _isCurrList ? NEXT_ARRAY_ITEM : NEXT_OBJECT_FIELD;
   }
 
   @Override
@@ -327,7 +385,7 @@ class AbstractJacksonDataDecoder<T extends DataComplex> implements DataDecoder<T
     return _completable;
   }
 
-  protected void handleException(Throwable e)
+  private void handleException(Throwable e)
   {
     _readHandle.cancel();
     _completable.completeExceptionally(e);
@@ -340,9 +398,9 @@ class AbstractJacksonDataDecoder<T extends DataComplex> implements DataDecoder<T
   {
     return tokens == 0
         ? "no tokens"
-        : Arrays.stream(Token.values())
+        : Arrays.stream(KSONDataDecoder.Token.values())
             .filter(token -> (tokens & token.bitPattern) > 0)
-            .map(Token::name)
+            .map(KSONDataDecoder.Token::name)
             .collect(Collectors.joining(", "));
   }
 }

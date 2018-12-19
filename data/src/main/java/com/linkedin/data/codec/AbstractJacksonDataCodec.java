@@ -221,7 +221,7 @@ public abstract class AbstractJacksonDataCodec implements DataCodec
 
   public static class JacksonTraverseCallback implements Data.TraverseCallback
   {
-    private final JsonGenerator _generator;
+    protected final JsonGenerator _generator;
 
     protected JacksonTraverseCallback(JsonGenerator generator)
     {
@@ -528,6 +528,12 @@ public abstract class AbstractJacksonDataCodec implements DataCodec
         case VALUE_NUMBER_INT:
         case VALUE_NUMBER_FLOAT:
           numberType = _parser.getNumberType();
+          if (numberType == null)
+          {
+            error(token, null);
+            object = null;
+            break;
+          }
           switch (numberType) {
             case INT:
               object = _parser.getIntValue();
@@ -629,7 +635,7 @@ public abstract class AbstractJacksonDataCodec implements DataCodec
     }
   }
 
-  private static void closeQuietly(Closeable closeable)
+  protected static void closeQuietly(Closeable closeable)
   {
     if (closeable != null)
     {

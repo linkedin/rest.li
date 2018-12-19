@@ -27,6 +27,7 @@ import com.linkedin.d2.balancer.util.URIKeyPair;
 import com.linkedin.d2.balancer.util.URIMappingResult;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.codec.symbol.SymbolTable;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.multipart.MultiPartMIMEUtils;
 import com.linkedin.multipart.MultiPartMIMEWriter;
@@ -131,6 +132,12 @@ public class RestClient implements Client {
   private static final ContentType DEFAULT_CONTENT_TYPE = ContentType.JSON;
   private static final Random RANDOM_INSTANCE = new Random();
   private final com.linkedin.r2.transport.common.Client _client;
+
+  /**
+   * The symbol table to use when encoding request payloads from this client. This is useful for codecs like KSON
+   * which compress the payload using symbol tables.
+   */
+  public static String CLIENT_SYMBOL_TABLE_NAME = null;
 
   private final String _uriPrefix;
   private final List<ContentType> _acceptTypes;
@@ -672,7 +679,13 @@ public class RestClient implements Client {
         requestBuilder, multiplexedPayload, multiplexedRequest.getRequestOptions().getContentType());
     assert (type != null);
     requestBuilder.setHeader(RestConstants.HEADER_CONTENT_TYPE, type.getHeaderKey());
-    requestBuilder.setEntity(type.getCodec().mapToBytes(multiplexedPayload));
+
+    final String clientSymbolTableName = CLIENT_SYMBOL_TABLE_NAME;
+    if (clientSymbolTableName != null)
+    {
+      requestBuilder.setHeader(RestConstants.HEADER_RESTLI_SYMBOL_TABLE_NAME, clientSymbolTableName);
+    }
+    requestBuilder.setEntity(type.getCodec(requestBuilder.getHeaders()).mapToBytes(multiplexedPayload));
 
     requestBuilder.setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION,
                              AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion().toString());
@@ -798,8 +811,13 @@ public class RestClient implements Client {
     if (type != null)
     {
       requestBuilder.setHeader(RestConstants.HEADER_CONTENT_TYPE, type.getHeaderKey());
+      final String clientSymbolTableName = CLIENT_SYMBOL_TABLE_NAME;
+      if (clientSymbolTableName != null)
+      {
+        requestBuilder.setHeader(RestConstants.HEADER_RESTLI_SYMBOL_TABLE_NAME, clientSymbolTableName);
+      }
       // Use unsafe wrap to avoid copying the bytes when request builder creates ByteString.
-      requestBuilder.setEntity(ByteString.unsafeWrap(type.getCodec().mapToBytes(dataMap)));
+      requestBuilder.setEntity(ByteString.unsafeWrap(type.getCodec(requestBuilder.getHeaders()).mapToBytes(dataMap)));
     }
 
     addProtocolVersionHeader(requestBuilder, protocolVersion);
@@ -847,7 +865,12 @@ public class RestClient implements Client {
       //eligible to have attachments. This is because all such requests are POST or PUTs. Even an action request
       //with empty action parameters will have an empty JSON ({}) as the body.
       assert (type != null);
-      firstPartWriter = new ByteStringWriter(ByteString.copy(type.getCodec().mapToBytes(dataMap)));
+      final String clientSymbolTableName = CLIENT_SYMBOL_TABLE_NAME;
+      if (clientSymbolTableName != null)
+      {
+        requestBuilder.setHeader(RestConstants.HEADER_RESTLI_SYMBOL_TABLE_NAME, clientSymbolTableName);
+      }
+      firstPartWriter = new ByteStringWriter(ByteString.copy(type.getCodec(requestBuilder.getHeaders()).mapToBytes(dataMap)));
 
       //Our protocol does not use an epilogue or a preamble.
       final MultiPartMIMEWriter.Builder attachmentsBuilder = new MultiPartMIMEWriter.Builder();
@@ -880,7 +903,13 @@ public class RestClient implements Client {
     {
       if (dataMap != null && type != null && type.getStreamCodec() != null)
       {
-        return requestBuilder.build(EntityStreamAdapters.fromGenericEntityStream(type.getStreamCodec().encodeMap(dataMap)));
+        final String clientSymbolTableName = CLIENT_SYMBOL_TABLE_NAME;
+        if (clientSymbolTableName != null)
+        {
+          requestBuilder.setHeader(RestConstants.HEADER_RESTLI_SYMBOL_TABLE_NAME, clientSymbolTableName);
+        }
+        return requestBuilder.build(EntityStreamAdapters.fromGenericEntityStream(
+            type.getStreamCodec(requestBuilder.getHeaders()).encodeMap(dataMap)));
       }
       else
       {

@@ -18,6 +18,7 @@
 package com.linkedin.data;
 
 
+import com.fasterxml.jackson.core.async.ByteArrayFeeder;
 import com.linkedin.util.ArgumentUtil;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -428,6 +429,32 @@ public final class ByteString
   public InputStream asInputStream()
   {
     return new ByteArrayVectorInputStream(_byteArrays);
+  }
+
+  /**
+   * Feeds a chunk of this {@link ByteString} to a {@link ByteArrayFeeder} without copying the underlying byte[].
+   *
+   * @param feeder the feeder to feed the bytes to
+   * @param index the index of the chunk to feed
+   *
+   * @throws IOException if an error occurs while writing to the feeder
+   *
+   * @return The next index to feed or -1 if no more indices are left to feed.
+   */
+  public int feed(ByteArrayFeeder feeder, int index) throws IOException
+  {
+    ByteArray byteArray = _byteArrays.get(index);
+    if (feeder.needMoreInput())
+    {
+      feeder.feedInput(byteArray.getArray(), byteArray.getOffset(), byteArray.getLength());
+    }
+    else
+    {
+      throw new IOException("Byte Array Feeder is not ok to feed more data.");
+    }
+
+    int returnIndex = index + 1;
+    return returnIndex < _byteArrays.getArraySize() ? returnIndex : -1;
   }
 
   /**

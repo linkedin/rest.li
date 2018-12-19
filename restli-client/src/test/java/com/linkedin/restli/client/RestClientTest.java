@@ -24,7 +24,6 @@ import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
 import com.linkedin.data.DataMap;
-import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.message.RequestContext;
@@ -166,10 +165,12 @@ public class RestClientTest
   private enum ContentTypeOption
   {
     JSON(ContentType.JSON),
+    KSON_TEXT(ContentType.KSON_TEXT),
+    KSON_BINARY(ContentType.KSON_BINARY),
     PSON(ContentType.PSON),
     SMILE(ContentType.SMILE);
 
-    private ContentTypeOption(ContentType contentType)
+    ContentTypeOption(ContentType contentType)
     {
       _contentType = contentType;
     }

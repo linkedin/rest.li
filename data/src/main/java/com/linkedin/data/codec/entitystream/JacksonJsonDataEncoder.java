@@ -45,7 +45,7 @@ import java.util.Map;
  */
 public class JacksonJsonDataEncoder extends AbstractJacksonDataEncoder implements JsonDataEncoder
 {
-  private static final JsonFactory JSON_FACTORY = new JsonFactory();
+  protected static final JsonFactory JSON_FACTORY = new JsonFactory();
 
   public JacksonJsonDataEncoder(DataMap dataMap, int bufferSize)
   {

@@ -30,13 +30,7 @@ public class JacksonSmileDataCodec extends AbstractJacksonDataCodec
 {
   public JacksonSmileDataCodec()
   {
-    this(new SmileFactory());
-
-    SmileFactory smileFactory = (SmileFactory) _factory;
-
-    // Enable field name and string value sharing by default.
-    smileFactory.enable(SmileGenerator.Feature.CHECK_SHARED_NAMES);
-    smileFactory.enable(SmileGenerator.Feature.CHECK_SHARED_STRING_VALUES);
+    this(createDefaultSmileFactory());
   }
 
   public JacksonSmileDataCodec(SmileFactory smileFactory)
@@ -45,5 +39,16 @@ public class JacksonSmileDataCodec extends AbstractJacksonDataCodec
 
     // Always disable field name interning.
     smileFactory.disable(SmileFactory.Feature.INTERN_FIELD_NAMES);
+  }
+
+  private static SmileFactory createDefaultSmileFactory()
+  {
+    SmileFactory factory = new SmileFactory();
+
+    // Enable field name and string value sharing by default.
+    factory.enable(SmileGenerator.Feature.CHECK_SHARED_NAMES);
+    factory.enable(SmileGenerator.Feature.CHECK_SHARED_STRING_VALUES);
+
+    return factory;
   }
 }

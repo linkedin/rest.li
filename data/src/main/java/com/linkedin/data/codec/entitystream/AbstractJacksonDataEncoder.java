@@ -49,8 +49,8 @@ abstract class AbstractJacksonDataEncoder implements DataEncoder
   private static final Object MAP = new Object();
   private static final Object LIST = new Object();
 
-  private JsonFactory _jsonFactory;
-  private JsonGenerator _generator;
+  protected JsonFactory _jsonFactory;
+  protected JsonGenerator _generator;
   private QueueBufferedOutputStream _out;
   private Deque<Iterator<?>> _stack;
   private Deque<Object> _typeStack;
@@ -92,17 +92,48 @@ abstract class AbstractJacksonDataEncoder implements DataEncoder
       _generator = _jsonFactory.createGenerator(_out);
       if (_typeStack.peek() == MAP)
       {
-        _generator.writeStartObject();
+        writeStartObject();
       }
       else
       {
-        _generator.writeStartArray();
+        writeStartArray();
       }
     }
     catch (IOException e)
     {
       _writeHandle.error(e);
     }
+  }
+
+  protected void writeStartObject() throws IOException
+  {
+    _generator.writeStartObject();
+  }
+
+  protected void writeStartArray() throws IOException
+  {
+    _generator.writeStartArray();
+  }
+
+  protected void writeFieldName(String name) throws IOException
+  {
+    _generator.writeFieldName(name);
+  }
+
+  protected void writeEndObject() throws IOException
+  {
+    _generator.writeEndObject();
+  }
+
+  protected void writeEndArray() throws IOException
+  {
+    _generator.writeEndArray();
+  }
+
+  protected void writeByteString(ByteString value) throws IOException
+  {
+    char[] charArray = value.asAvroCharArray();
+    _generator.writeString(charArray, 0, charArray.length);
   }
 
   @Override
@@ -155,7 +186,7 @@ abstract class AbstractJacksonDataEncoder implements DataEncoder
         if (_typeStack.peek() == MAP)
         {
           Map.Entry<String, ?> entry = (Map.Entry<String, ?>) currItem;
-          _generator.writeFieldName(entry.getKey());
+          writeFieldName(entry.getKey());
           writeValue(entry.getValue());
         }
         else
@@ -170,11 +201,11 @@ abstract class AbstractJacksonDataEncoder implements DataEncoder
 
         if (type == MAP)
         {
-          _generator.writeEndObject();
+          writeEndObject();
         }
         else
         {
-          _generator.writeEndArray();
+          writeEndArray();
         }
 
         _done = _stack.isEmpty();
@@ -187,45 +218,47 @@ abstract class AbstractJacksonDataEncoder implements DataEncoder
     }
   }
 
-  private void writeValue(Object value)
-      throws Exception
+  private void writeValue(Object value) throws Exception
   {
+    if (value == null || value == Data.NULL)
+    {
+      _generator.writeNull();
+      return;
+    }
+
     switch (Data.TYPE_MAP.get(value.getClass()))
     {
       case 1:
         _generator.writeString((String) value);
         break;
       case 2:
-        _generator.writeNumber((Integer) value);
+        _generator.writeNumber((int) value);
         break;
       case 3:
         _stack.push(((DataMap) value).entrySet().iterator());
         _typeStack.push(MAP);
-        _generator.writeStartObject();
+        writeStartObject();
         break;
       case 4:
         _stack.push(((DataList) value).iterator());
         _typeStack.push(LIST);
-        _generator.writeStartArray();
+        writeStartArray();
         break;
       case 5:
-        _generator.writeBoolean((Boolean) value);
+        _generator.writeBoolean((boolean) value);
         break;
       case 6:
-        _generator.writeNumber((Long) value);
+        _generator.writeNumber((long) value);
         break;
       case 7:
-        _generator.writeNumber((Float) value);
+        _generator.writeNumber((float) value);
         break;
       case 8:
-        _generator.writeNumber((Double) value);
+        _generator.writeNumber((double) value);
         break;
       case 9:
-      {
-        char[] charArray = ((ByteString) value).asAvroCharArray();
-        _generator.writeString(charArray, 0, charArray.length);
+        writeByteString((ByteString) value);
         break;
-      }
       default:
         throw new Exception("Unexpected value type " + value.getClass() + " for value " + value);
     }

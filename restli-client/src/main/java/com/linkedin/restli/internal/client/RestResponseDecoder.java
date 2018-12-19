@@ -102,7 +102,9 @@ public abstract class RestResponseDecoder<T>
     StreamDataCodec streamDataCodec = null;
     try
     {
-       streamDataCodec = getContentType(streamResponse.getHeaders().get(RestConstants.HEADER_CONTENT_TYPE)).orElse(JSON).getStreamCodec();
+       streamDataCodec =
+           getContentType(streamResponse.getHeaders().get(RestConstants.HEADER_CONTENT_TYPE)).orElse(JSON)
+               .getStreamCodec(streamResponse.getHeaders());
     }
     catch (MimeTypeParseException e)
     {

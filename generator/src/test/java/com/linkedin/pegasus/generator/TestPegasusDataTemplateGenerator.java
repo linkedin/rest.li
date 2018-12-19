@@ -1,10 +1,12 @@
 package com.linkedin.pegasus.generator;
 
 import com.google.common.io.Files;
+import com.linkedin.data.codec.symbol.InMemorySymbolTable;
 import java.io.File;
 import java.io.IOException;
 import org.apache.commons.io.FileUtils;
 import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -32,6 +34,12 @@ public class TestPegasusDataTemplateGenerator {
     String generatedSource = FileUtils.readFileToString(generated);
     assertTrue(generatedSource.contains("class " + pegasusTypeName));
     assertTrue(generatedSource.contains("Generated from " + pegasusDir + FS + pegasusFilename));
+
+    File symbolFileName = new File(generated.getParentFile(), "symbols");
+    assertTrue(symbolFileName.exists());
+    InMemorySymbolTable symbolTable = new InMemorySymbolTable(symbolFileName.getAbsolutePath());
+    assertEquals(0, symbolTable.getSymbolId("reference"));
+    assertEquals(1, symbolTable.getSymbolId("inlineRecord"));
   }
 
   @Test(dataProvider = "withoutResolverCases")
@@ -43,11 +51,23 @@ public class TestPegasusDataTemplateGenerator {
     String generatedSource = FileUtils.readFileToString(generated);
     assertTrue(generatedSource.contains("class " + pegasusTypeName));
     assertTrue(generatedSource.contains("Generated from resources" + FS + "generator" + FS + pegasusFilename));
+
+    File symbolFileName = new File(generated.getParentFile(), "symbols");
+    assertTrue(symbolFileName.exists());
+    InMemorySymbolTable symbolTable = new InMemorySymbolTable(symbolFileName.getAbsolutePath());
+    assertEquals(0, symbolTable.getSymbolId("reference"));
+    assertEquals(1, symbolTable.getSymbolId("inlineRecord"));
+  }
+
+  @BeforeTest
+  public void beforeTest() {
+    System.setProperty(PegasusDataTemplateGenerator.GENERATOR_GENERATE_SYMBOL_TABLE, String.valueOf(true));
   }
 
   @AfterTest
   public void afterTest() {
     System.clearProperty("root.path");
+    System.clearProperty(PegasusDataTemplateGenerator.GENERATOR_GENERATE_SYMBOL_TABLE);
   }
 
   private File generatePegasusDataTemplate(String pegasusFilename, String generatedFilename) throws IOException {

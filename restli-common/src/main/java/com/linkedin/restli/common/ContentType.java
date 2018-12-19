@@ -17,11 +17,14 @@
 package com.linkedin.restli.common;
 
 import com.linkedin.data.codec.DataCodec;
+import com.linkedin.data.codec.HeaderBasedCodecProvider;
 import com.linkedin.data.codec.JacksonDataCodec;
+import com.linkedin.data.codec.KSONDataCodec;
 import com.linkedin.data.codec.PsonDataCodec;
 import com.linkedin.data.codec.JacksonSmileDataCodec;
 import com.linkedin.data.codec.entitystream.JacksonStreamDataCodec;
 import com.linkedin.data.codec.entitystream.JacksonSmileStreamDataCodec;
+import com.linkedin.data.codec.entitystream.KSONStreamDataCodec;
 import com.linkedin.data.codec.entitystream.StreamDataCodec;
 import com.linkedin.r2.filter.R2Constants;
 
@@ -42,19 +45,47 @@ public class ContentType
 {
   private static final JacksonDataCodec JACKSON_DATA_CODEC = new JacksonDataCodec();
   private static final JacksonStreamDataCodec JACKSON_STREAM_DATA_CODEC = new JacksonStreamDataCodec(R2Constants.DEFAULT_DATA_CHUNK_SIZE);
+  private static final KSONDataCodec KSON_TEXT_DATA_CODEC = new KSONDataCodec(false);
+  private static final KSONStreamDataCodec KSON_TEXT_STREAM_DATA_CODEC = new KSONStreamDataCodec(R2Constants.DEFAULT_DATA_CHUNK_SIZE, false);
+  private static final KSONDataCodec KSON_BINARY_DATA_CODEC = new KSONDataCodec(true);
+  private static final KSONStreamDataCodec KSON_BINARY_STREAM_DATA_CODEC = new KSONStreamDataCodec(R2Constants.DEFAULT_DATA_CHUNK_SIZE, true);
   private static final PsonDataCodec PSON_DATA_CODEC = new PsonDataCodec();
   private static final JacksonSmileDataCodec SMILE_DATA_CODEC = new JacksonSmileDataCodec();
   private static final JacksonSmileStreamDataCodec SMILE_STREAM_DATA_CODEC = new JacksonSmileStreamDataCodec(R2Constants.DEFAULT_DATA_CHUNK_SIZE);
 
   public static final ContentType PSON =
-      new ContentType(RestConstants.HEADER_VALUE_APPLICATION_PSON, PSON_DATA_CODEC, null);
+      new ContentType(RestConstants.HEADER_VALUE_APPLICATION_PSON, PSON_DATA_CODEC, null, null);
   public static final ContentType JSON =
-      new ContentType(RestConstants.HEADER_VALUE_APPLICATION_JSON, JACKSON_DATA_CODEC, JACKSON_STREAM_DATA_CODEC);
+      new ContentType(RestConstants.HEADER_VALUE_APPLICATION_JSON, JACKSON_DATA_CODEC, JACKSON_STREAM_DATA_CODEC, null);
+  public static final ContentType KSON_TEXT =
+      new ContentType(RestConstants.HEADER_VALUE_APPLICATION_KSON_TEXT, KSON_TEXT_DATA_CODEC, KSON_TEXT_STREAM_DATA_CODEC, new HeaderBasedCodecProvider() {
+        @Override
+        public DataCodec getCodec(Map<String, String> requestHeaders) {
+          return new KSONDataCodec(false, requestHeaders.get(RestConstants.HEADER_RESTLI_SYMBOL_TABLE_NAME));
+        }
+
+        @Override
+        public StreamDataCodec getStreamCodec(Map<String, String> requestHeaders) {
+          return new KSONStreamDataCodec(R2Constants.DEFAULT_DATA_CHUNK_SIZE, false, requestHeaders.get(RestConstants.HEADER_RESTLI_SYMBOL_TABLE_NAME));
+        }
+      });
+  public static final ContentType KSON_BINARY =
+      new ContentType(RestConstants.HEADER_VALUE_APPLICATION_KSON_BINARY, KSON_BINARY_DATA_CODEC, KSON_BINARY_STREAM_DATA_CODEC, new HeaderBasedCodecProvider() {
+        @Override
+        public DataCodec getCodec(Map<String, String> requestHeaders) {
+          return new KSONDataCodec(true, requestHeaders.get(RestConstants.HEADER_RESTLI_SYMBOL_TABLE_NAME));
+        }
+
+        @Override
+        public StreamDataCodec getStreamCodec(Map<String, String> requestHeaders) {
+          return new KSONStreamDataCodec(R2Constants.DEFAULT_DATA_CHUNK_SIZE, true, requestHeaders.get(RestConstants.HEADER_RESTLI_SYMBOL_TABLE_NAME));
+        }
+      });
   public static final ContentType SMILE =
-      new ContentType(RestConstants.HEADER_VALUE_APPLICATION_SMILE, SMILE_DATA_CODEC, SMILE_STREAM_DATA_CODEC);
+      new ContentType(RestConstants.HEADER_VALUE_APPLICATION_SMILE, SMILE_DATA_CODEC, SMILE_STREAM_DATA_CODEC, null);
   // Content type to be used only as an accept type.
   public static final ContentType ACCEPT_TYPE_ANY =
-      new ContentType(RestConstants.HEADER_VALUE_ACCEPT_ANY, JACKSON_DATA_CODEC, null);
+      new ContentType(RestConstants.HEADER_VALUE_ACCEPT_ANY, JACKSON_DATA_CODEC, null, null);
 
   private static final Map<String, ContentType> SUPPORTED_TYPES = new ConcurrentHashMap<>();
   static
@@ -62,6 +93,8 @@ public class ContentType
     // Include content types supported by Rest.Li by default.
     SUPPORTED_TYPES.put(PSON.getHeaderKey(), PSON);
     SUPPORTED_TYPES.put(JSON.getHeaderKey(), JSON);
+    SUPPORTED_TYPES.put(KSON_TEXT.getHeaderKey(), KSON_TEXT);
+    SUPPORTED_TYPES.put(KSON_BINARY.getHeaderKey(), KSON_BINARY);
     SUPPORTED_TYPES.put(SMILE.getHeaderKey(), SMILE);
   }
 
@@ -89,7 +122,7 @@ public class ContentType
   {
     assert headerKey != null : "Header key for custom content type cannot be null";
     assert codec != null : "Codec for custom content type cannot be null";
-    ContentType customType = new ContentType(headerKey, codec, streamCodec);
+    ContentType customType = new ContentType(headerKey, codec, streamCodec, null);
     SUPPORTED_TYPES.put(headerKey.toLowerCase(), customType);
     return customType;
   }
@@ -115,13 +148,16 @@ public class ContentType
   private final String _headerKey;
   private final DataCodec _codec;
   private final StreamDataCodec _streamCodec;
+  private final HeaderBasedCodecProvider _headerBasedCodecProvider;
 
   /** Constructable only through {@link ContentType#createContentType(String, DataCodec)} */
-  private ContentType(String headerKey, DataCodec codec, StreamDataCodec streamCodec)
+  private ContentType(String headerKey, DataCodec codec, StreamDataCodec streamCodec,
+      HeaderBasedCodecProvider headerBasedCodecProvider)
   {
     _headerKey = headerKey;
     _codec = codec;
     _streamCodec = streamCodec;
+    _headerBasedCodecProvider = headerBasedCodecProvider;
   }
 
   public String getHeaderKey()
@@ -134,9 +170,33 @@ public class ContentType
     return _codec;
   }
 
+  public DataCodec getCodec(Map<String, String> requestHeaders)
+  {
+    if (_headerBasedCodecProvider != null)
+    {
+      return _headerBasedCodecProvider.getCodec(requestHeaders);
+    }
+    else
+    {
+      return _codec;
+    }
+  }
+
   public StreamDataCodec getStreamCodec()
   {
     return _streamCodec;
+  }
+
+  public StreamDataCodec getStreamCodec(Map<String, String> requestHeaders)
+  {
+    if (_headerBasedCodecProvider != null)
+    {
+      return _headerBasedCodecProvider.getStreamCodec(requestHeaders);
+    }
+    else
+    {
+      return _streamCodec;
+    }
   }
 
   @Override

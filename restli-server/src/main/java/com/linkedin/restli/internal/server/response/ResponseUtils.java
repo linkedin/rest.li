@@ -44,6 +44,7 @@ import com.linkedin.restli.server.RestLiServiceException;
 
 import java.io.ByteArrayOutputStream;
 import java.util.List;
+import java.util.Map;
 import javax.activation.MimeTypeParseException;
 
 
@@ -97,12 +98,15 @@ public class ResponseUtils
     {
       DataMap dataMap = restLiResponse.getDataMap();
       String mimeType = context.getResponseMimeType();
-      builder = encodeResult(mimeType, builder, dataMap);
+      builder = encodeResult(mimeType, context.getRequestHeaders(), builder, dataMap);
     }
     return builder.build();
   }
 
-  private static RestResponseBuilder encodeResult(String mimeType, RestResponseBuilder builder, DataMap dataMap)
+  private static RestResponseBuilder encodeResult(String mimeType,
+      Map<String, String> requestHeaders,
+      RestResponseBuilder builder,
+      DataMap dataMap)
   {
     try
     {
@@ -112,7 +116,7 @@ public class ResponseUtils
       assert type != null;
       builder.setHeader(RestConstants.HEADER_CONTENT_TYPE, type.getHeaderKey());
       // Use unsafe wrap to avoid copying the bytes when request builder creates ByteString.
-      builder.setEntity(ByteString.unsafeWrap(DataMapUtils.mapToBytes(dataMap, type.getCodec())));
+      builder.setEntity(ByteString.unsafeWrap(DataMapUtils.mapToBytes(dataMap, type.getCodec(requestHeaders))));
     }
     catch (MimeTypeParseException e)
     {

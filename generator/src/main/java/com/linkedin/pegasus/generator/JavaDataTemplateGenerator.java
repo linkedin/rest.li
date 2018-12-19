@@ -21,7 +21,6 @@ import com.linkedin.data.ByteString;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
-import com.linkedin.data.schema.DataSchemaConstants;
 import com.linkedin.data.schema.EnumDataSchema;
 import com.linkedin.data.schema.JsonBuilder;
 import com.linkedin.data.schema.MapDataSchema;
@@ -65,8 +64,8 @@ import com.linkedin.pegasus.generator.spec.RecordTemplateSpec;
 import com.linkedin.pegasus.generator.spec.TyperefTemplateSpec;
 import com.linkedin.pegasus.generator.spec.UnionTemplateSpec;
 
-import com.sun.codemodel.JStatement;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -158,6 +157,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
   private final boolean _pathSpecMethods;
   private final boolean _copierMethods;
   private final String _rootPath;
+  private final Set<String> _generatedSymbols;
 
   private JavaDataTemplateGenerator(String defaultPackage,
                                     boolean recordFieldAccessorWithMode,
@@ -180,6 +180,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     _pathSpecMethods = pathSpecMethods;
     _copierMethods = copierMethods;
     _rootPath = rootPath;
+    _generatedSymbols = new HashSet<>();
   }
 
   public JavaDataTemplateGenerator(Config config)
@@ -218,6 +219,11 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
   public Map<JDefinedClass, ClassTemplateSpec> getGeneratedClasses()
   {
     return _generatedClasses;
+  }
+
+  public Set<String> getGeneratedSymbols()
+  {
+    return _generatedSymbols;
   }
 
   public JClass generate(ClassTemplateSpec classTemplateSpec)
@@ -667,6 +673,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     for (RecordTemplateSpec.Field field : recordSpec.getFields())
     {
       generateRecordFieldAccessors(templateClass, field, generate(field.getType()), schemaFieldVar);
+      _generatedSymbols.add(field.getSchemaField().getName());
     }
 
     recordSpec.getFields().stream()
@@ -882,6 +889,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
       {
         generateUnionMemberAccessors(unionClass, member, generate(member.getClassTemplateSpec()), generate(member.getDataClass()), schemaField);
       }
+      _generatedSymbols.add(member.getUnionMemberKey());
     }
 
     unionSpec.getMembers().stream()

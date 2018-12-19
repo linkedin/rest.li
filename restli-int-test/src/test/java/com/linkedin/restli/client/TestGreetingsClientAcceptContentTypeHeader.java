@@ -124,6 +124,16 @@ public class TestGreetingsClientAcceptContentTypeHeader extends RestLiIntegratio
             new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(new RestliRequestOptionsBuilder().setAcceptTypes(Arrays.asList(
                 ContentType.JSON, ContentType.PSON)).build())),
             RestConstants.HEADER_VALUE_APPLICATION_JSON
+        },
+        {
+            new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(new RestliRequestOptionsBuilder().setAcceptTypes(Collections.singletonList(
+                ContentType.KSON_TEXT)).build())),
+            RestConstants.HEADER_VALUE_APPLICATION_KSON_TEXT
+        },
+        {
+            new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(new RestliRequestOptionsBuilder().setAcceptTypes(Collections.singletonList(
+                ContentType.KSON_BINARY)).build())),
+            RestConstants.HEADER_VALUE_APPLICATION_KSON_BINARY
         }
     };
   }
@@ -132,10 +142,11 @@ public class TestGreetingsClientAcceptContentTypeHeader extends RestLiIntegratio
   public void testAcceptContentTypeHeaderRoundtrip(RootBuilderWrapper<Long, Greeting> builder, String expectedContentType)
       throws RemoteInvocationException
   {
-    final Request<Greeting> getRequest = builder.get().id(1L).build();
+    final Request<Greeting> getRequest = builder.get().id(10L).build();
     ResponseFuture<Greeting> responseFuture = REST_CLIENT.sendRequest(getRequest);
-    Assert.assertEquals(responseFuture.getResponse().getHeader(RestConstants.HEADER_CONTENT_TYPE),
-        expectedContentType.toString());
+    Response<Greeting> response = responseFuture.getResponse();
+    Assert.assertEquals(response.getHeader(RestConstants.HEADER_CONTENT_TYPE), expectedContentType.toString());
+    Assert.assertTrue(response.getEntity().getId() == 10L);
   }
 
 }

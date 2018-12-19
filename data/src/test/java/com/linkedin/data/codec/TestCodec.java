@@ -24,6 +24,8 @@ import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.TestUtil;
 
+import com.linkedin.data.codec.symbol.InMemorySymbolTable;
+import com.linkedin.data.codec.symbol.SymbolTable;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileDescriptor;
@@ -33,7 +35,10 @@ import java.io.PrintStream;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import org.testng.annotations.Test;
 
@@ -236,13 +241,26 @@ public class TestCodec
 
   private void perfTest(int count, DataMap map) throws IOException
   {
-    List<DataCodec> codecs = new ArrayList<DataCodec>();
+    List<DataCodec> codecs = new ArrayList<>();
     codecs.add(new JacksonDataCodec());
     codecs.add(new BsonDataCodec());
     codecs.add(new JacksonSmileDataCodec());
-    codecs.add(new JacksonSmileStringShareOffDataCodec());
-    codecs.add(new JacksonSmileNameShareOffDataCodec());
-    codecs.add(new JacksonSmileNameStringShareOffDataCodec());
+    Set<String> symbols = new HashSet<>();
+
+    collectSymbols(symbols, map);
+    final String sharedSymbolTableName = "SHARED";
+    SymbolTable symbolTable = new InMemorySymbolTable(new ArrayList<>(symbols));
+
+    KSONDataCodec.setSymbolTableProvider(symbolTableName -> {
+      if (sharedSymbolTableName.equals(symbolTableName))
+      {
+        return symbolTable;
+      }
+
+      return null;
+    });
+    codecs.add(new KSONBinaryDataCodec(sharedSymbolTableName));
+    codecs.add(new KSONTextDataCodec(sharedSymbolTableName));
 
     for (DataCodec codec : codecs)
     {
@@ -262,43 +280,52 @@ public class TestCodec
     }
   }
 
-  private static class JacksonSmileStringShareOffDataCodec extends JacksonSmileDataCodec
+  private static void collectSymbols(Set<String> symbols, DataMap map)
   {
-    public JacksonSmileStringShareOffDataCodec()
+    for (Map.Entry<String, Object> entry : map.entrySet())
     {
-      super();
+      symbols.add(entry.getKey());
 
-      SmileFactory smileFactory = (SmileFactory)_factory;
-
-      // Disable string sharing
-      smileFactory.disable(SmileGenerator.Feature.CHECK_SHARED_STRING_VALUES);
+      Object value = entry.getValue();
+      if (value instanceof DataMap)
+      {
+        collectSymbols(symbols, (DataMap) value);
+      }
+      else if (value instanceof DataList)
+      {
+        collectSymbols(symbols, (DataList) value);
+      }
     }
   }
 
-  private static class JacksonSmileNameShareOffDataCodec extends JacksonSmileDataCodec
+  private static void collectSymbols(Set<String> symbols, DataList list)
   {
-    public JacksonSmileNameShareOffDataCodec()
+    for (Object element : list)
     {
-      super();
-
-      SmileFactory smileFactory = (SmileFactory)_factory;
-
-      // Disable name sharing
-      smileFactory.disable(SmileGenerator.Feature.CHECK_SHARED_NAMES);
+      if (element instanceof DataMap)
+      {
+        collectSymbols(symbols, (DataMap) element);
+      }
+      else if (element instanceof DataList)
+      {
+        collectSymbols(symbols, (DataList) element);
+      }
     }
   }
 
-  private static class JacksonSmileNameStringShareOffDataCodec extends JacksonSmileDataCodec
+  private static class KSONTextDataCodec extends KSONDataCodec
   {
-    public JacksonSmileNameStringShareOffDataCodec()
+    KSONTextDataCodec(String symbolTableName)
     {
-      super();
+      super(false, symbolTableName);
+    }
+  }
 
-      SmileFactory smileFactory = (SmileFactory)_factory;
-
-      // Disable name and string sharing
-      smileFactory.disable(SmileGenerator.Feature.CHECK_SHARED_NAMES);
-      smileFactory.disable(SmileGenerator.Feature.CHECK_SHARED_STRING_VALUES);
+  private static class KSONBinaryDataCodec extends KSONDataCodec
+  {
+    KSONBinaryDataCodec(String symbolTableName)
+    {
+      super(true, symbolTableName);
     }
   }
 

@@ -164,8 +164,8 @@ class StreamRestLiServer extends BaseRestLiServer implements StreamRequestHandle
       callback.onError(e);
       return;
     }
-    StreamDataCodec reqCodec = reqContentType.getStreamCodec();
-    StreamDataCodec respCodec = respContentType.getStreamCodec();
+    StreamDataCodec reqCodec = reqContentType.getStreamCodec(request.getHeaders());
+    StreamDataCodec respCodec = respContentType.getStreamCodec(routingResult.getContext().getResponseHeaders());
 
     if (_useStreamCodec && reqCodec != null && respCodec != null)
     {
@@ -260,7 +260,7 @@ class StreamRestLiServer extends BaseRestLiServer implements StreamRequestHandle
       if (restLiResponse.hasData())
       {
         responseBuilder.setHeader(RestConstants.HEADER_CONTENT_TYPE, _contentType.getHeaderKey());
-        entityStream = _contentType.getStreamCodec().encodeMap(restLiResponse.getDataMap());
+        entityStream = _contentType.getStreamCodec(restLiResponse.getHeaders()).encodeMap(restLiResponse.getDataMap());
       }
       else
       {
@@ -275,7 +275,10 @@ class StreamRestLiServer extends BaseRestLiServer implements StreamRequestHandle
     {
       if (e instanceof RestLiResponseException)
       {
-        return ResponseUtils.buildStreamException((RestLiResponseException) e, _contentType.getStreamCodec());
+        RestLiResponseException responseException = (RestLiResponseException) e;
+        StreamDataCodec streamDataCodec =
+            _contentType.getStreamCodec(responseException.getRestLiResponse().getHeaders());
+        return ResponseUtils.buildStreamException(responseException, streamDataCodec);
       }
       else
       {

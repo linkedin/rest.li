@@ -41,16 +41,24 @@ public interface RestConstants
   String HEADER_CONTENT_TYPE = "Content-Type";
   String HEADER_CONTENT_DISPOSITION = "Content-Disposition";
   String HEADER_VALUE_APPLICATION_JSON = "application/json";
+  String HEADER_VALUE_APPLICATION_KSON_TEXT = "application/kson";
+  String HEADER_VALUE_APPLICATION_KSON_BINARY = "application/x-kson";
   String HEADER_VALUE_APPLICATION_PSON = "application/x-pson";
   String HEADER_VALUE_APPLICATION_SMILE = "application/x-smile";
   String HEADER_VALUE_MULTIPART_RELATED = "multipart/related";
   String HEADER_VALUE_ACCEPT_ANY = "*/*";
   String HEADER_RESTLI_PROTOCOL_VERSION = "X-RestLi-Protocol-Version";
+  String HEADER_RESTLI_SYMBOL_TABLE_NAME = "X-RestLi-Symbol-Table-Name";
   String HEADER_CONTENT_ID = "Content-ID";
 
   // Default supported mime types.
   Set<String> SUPPORTED_MIME_TYPES = new LinkedHashSet<>(
-      Arrays.asList(HEADER_VALUE_APPLICATION_SMILE, HEADER_VALUE_APPLICATION_PSON, HEADER_VALUE_APPLICATION_JSON));
+      Arrays.asList(
+          HEADER_VALUE_APPLICATION_KSON_TEXT,
+          HEADER_VALUE_APPLICATION_KSON_BINARY,
+          HEADER_VALUE_APPLICATION_SMILE,
+          HEADER_VALUE_APPLICATION_PSON,
+          HEADER_VALUE_APPLICATION_JSON));
 
   String START_PARAM = "start";
   String COUNT_PARAM = "count";

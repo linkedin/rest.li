@@ -1,0 +1,299 @@
+/*
+   Copyright (c) 2018 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
+package com.linkedin.data.codec;
+
+import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.dataformat.smile.SmileFactory;
+import com.linkedin.data.Data;
+import com.linkedin.data.DataComplex;
+import com.linkedin.data.DataList;
+import com.linkedin.data.DataMap;
+
+import com.linkedin.data.codec.symbol.SymbolTable;
+import com.linkedin.data.codec.symbol.SymbolTableProvider;
+import com.linkedin.data.collections.CheckedUtil;
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
+
+/**
+ * A codec that serializes to and deserializes from KSON encoded data. The payload is serialized as JSON or SMILE
+ * depending on whether the codec is configured to use binary or not.
+ *
+ * <p>KSON is a tweaked version of JSON that serializes maps as lists, and has support for serializing field IDs
+ * in lieu of field names using an optional symbol table.</p>
+ *
+ * @author kramgopa
+ */
+public class KSONDataCodec extends AbstractJacksonDataCodec
+{
+  private static final JsonFactory TEXT_FACTORY = new JsonFactory();
+  private static final JsonFactory BINARY_FACTORY = new SmileFactory();
+  private static final byte MAP_ORDINAL = 0;
+  private static final byte LIST_ORDINAL = 1;
+
+  private static volatile SymbolTableProvider _symbolTableProvider;
+
+  private final SymbolTable _symbolTable;
+
+  /**
+   * Set the symbol table provider. This will be used by all codec instances.
+   *
+   * <p>It is the responsibility of the application to set this provider if it wants shared symbol
+   * tables to be used.</p>
+   *
+   * @param symbolTableProvider The provider to set.
+   */
+  public static void setSymbolTableProvider(SymbolTableProvider symbolTableProvider)
+  {
+    _symbolTableProvider = symbolTableProvider;
+  }
+
+  public KSONDataCodec(boolean useBinary)
+  {
+    this(useBinary, null);
+  }
+
+  public KSONDataCodec(boolean useBinary, String symbolTableName)
+  {
+    super(getFactory(useBinary));
+
+    if (symbolTableName != null && _symbolTableProvider != null)
+    {
+      _symbolTable = _symbolTableProvider.getSymbolTable(symbolTableName);
+    }
+    else
+    {
+      _symbolTable = null;
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  @Override
+  protected <T extends DataComplex> T parse(JsonParser jsonParser, Class<T> expectType) throws IOException
+  {
+    try
+    {
+      Object object = new KSONParser(jsonParser, _symbolTable).parse(true);
+      if (expectType == DataMap.class && (object instanceof DataMap))
+      {
+        return (T)object;
+      }
+      else if (expectType == DataList.class && (object instanceof DataList))
+      {
+        return (T)object;
+      }
+      else
+      {
+        throw new DataDecodingException("Unexpected object type: " + object.getClass() + ", expected " + expectType);
+      }
+    }
+    finally
+    {
+      closeQuietly(jsonParser);
+    }
+  }
+
+  @Override
+  protected List<Object> parse(JsonParser jsonParser, StringBuilder mesg, Map<Object, DataLocation> locationMap)
+      throws IOException
+  {
+    throw new UnsupportedOperationException("Debug mode is not supported with KSON");
+  }
+
+  @Override
+  protected Data.TraverseCallback createTraverseCallback(JsonGenerator generator)
+  {
+    return new KSONTraverseCallback(generator, _symbolTable);
+  }
+
+  private static JsonFactory getFactory(boolean encodeBinary)
+  {
+    return encodeBinary ? BINARY_FACTORY : TEXT_FACTORY;
+  }
+
+  private static class KSONParser
+  {
+    private final JsonParser _parser;
+    private final SymbolTable _symbolTable;
+
+    KSONParser(JsonParser jsonParser, SymbolTable symbolTable)
+    {
+      _parser = jsonParser;
+      _symbolTable = symbolTable;
+    }
+
+    Object parse(boolean moveToNext) throws IOException
+    {
+      final JsonToken token = moveToNext ? _parser.nextToken() : _parser.currentToken();
+      if (token == null)
+      {
+        return null;
+      }
+
+      switch(token) {
+        case START_ARRAY:
+        {
+          _parser.nextToken();
+          byte marker = _parser.getByteValue();
+          switch (marker)
+          {
+            case MAP_ORDINAL: {
+              DataMap dataMap = new DataMap();
+              while (_parser.nextToken() != JsonToken.END_ARRAY)
+              {
+                String key;
+                switch (_parser.currentToken())
+                {
+                  case VALUE_STRING: {
+                    key = _parser.getValueAsString();
+                    break;
+                  }
+                  case VALUE_NUMBER_INT: {
+                    int symbol = _parser.getIntValue();
+                    if (_symbolTable == null || (key = _symbolTable.getSymbolName(symbol)) == null) {
+                      throw new DataDecodingException("No mapping found for symbol " + symbol);
+                    }
+                    break;
+                  }
+                  default:
+                    throw new DataDecodingException("Unexpected token: " + _parser.currentToken().asString());
+                }
+                JsonToken valueType = _parser.nextToken();
+                if (valueType == null)
+                {
+                  throw new DataDecodingException("Found key: " + key + " without corresponding value");
+                }
+                Object value = parse(false);
+                CheckedUtil.putWithoutChecking(dataMap, key, value);
+              }
+              return dataMap;
+            }
+            case LIST_ORDINAL: {
+              DataList dataList = new DataList();
+
+              do {
+                JsonToken elementType = _parser.nextToken();
+                if (elementType == JsonToken.END_ARRAY)
+                {
+                  return dataList;
+                }
+                Object listElement = parse(false);
+                if (listElement != null)
+                {
+                  CheckedUtil.addWithoutChecking(dataList, listElement);
+                }
+              } while(true);
+            }
+            default: {
+              throw new DataDecodingException("Unexpected marker: " + marker);
+            }
+          }
+        }
+        case VALUE_STRING:
+          return _parser.getValueAsString();
+        case VALUE_NUMBER_INT:
+        case VALUE_NUMBER_FLOAT:
+          JsonParser.NumberType numberType = _parser.getNumberType();
+          if (numberType == null)
+          {
+            throw new DataDecodingException("Unexpected Number Type: " + token.asString());
+          }
+          switch (numberType) {
+            case INT:
+              return _parser.getIntValue();
+            case LONG:
+              return _parser.getLongValue();
+            case FLOAT:
+              return _parser.getFloatValue();
+            case DOUBLE:
+              return _parser.getDoubleValue();
+            case BIG_INTEGER:
+            case BIG_DECIMAL:
+            default:
+              throw new DataDecodingException("Unexpected Number Type: " + token.asString());
+          }
+        case VALUE_TRUE:
+          return Boolean.TRUE;
+        case VALUE_FALSE:
+          return Boolean.FALSE;
+        case VALUE_NULL:
+          return Data.NULL;
+      }
+
+      throw new DataDecodingException("Unexpected JSON Type: " + token.asString());
+    }
+  }
+
+
+  private static class KSONTraverseCallback extends JacksonTraverseCallback
+  {
+    private final SymbolTable _symbolTable;
+
+    KSONTraverseCallback(JsonGenerator generator, SymbolTable symbolTable)
+    {
+      super(generator);
+      _symbolTable = symbolTable;
+    }
+
+    @Override
+    public void key(String key) throws IOException {
+      int token;
+      if (_symbolTable != null && (token = _symbolTable.getSymbolId(key)) != SymbolTable.UNKNOWN_SYMBOL_ID)
+      {
+        _generator.writeNumber(token);
+      }
+      else
+      {
+        _generator.writeString(key);
+      }
+    }
+
+    @Override
+    public void startList(DataList list) throws IOException {
+      _generator.writeStartArray();
+      _generator.writeNumber(LIST_ORDINAL);
+    }
+
+    @Override
+    public void startMap(DataMap map) throws IOException {
+      _generator.writeStartArray();
+      _generator.writeNumber(MAP_ORDINAL);
+    }
+
+    @Override
+    public void emptyList() throws IOException {
+      startList(null);
+      endList();
+    }
+
+    @Override
+    public void emptyMap() throws IOException {
+      startMap(null);
+      endMap();
+    }
+
+    @Override
+    public void endMap() throws IOException {
+      _generator.writeEndArray();
+    }
+  }
+}

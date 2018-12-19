@@ -103,7 +103,7 @@ public class MaskCreator
     {
       if (entry.getValue() instanceof DataMap)
       {
-        if (((DataMap) entry.getValue()).size() == 0)
+        if (((DataMap) entry.getValue()).isEmpty())
         {
           // Replace the empty mask with positive integer mask
           mask.put(entry.getKey(), MaskOperation.POSITIVE_MASK_OP.getRepresentation());
