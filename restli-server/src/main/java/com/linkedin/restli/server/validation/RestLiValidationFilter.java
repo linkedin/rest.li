@@ -17,6 +17,7 @@
 package com.linkedin.restli.server.validation;
 
 import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.schema.validation.ValidationResult;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
@@ -48,6 +49,8 @@ import com.linkedin.restli.server.filter.Filter;
 import com.linkedin.restli.server.filter.FilterRequestContext;
 import com.linkedin.restli.server.filter.FilterResponseContext;
 import com.linkedin.restli.server.util.UnstructuredDataUtil;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -66,6 +69,18 @@ public class RestLiValidationFilter implements Filter
 
   private static final String TEMPLATE_RUNTIME_EXCEPTION_MESSAGE = "Could not find schema for entity during validation";
 
+  private final Collection<String> _nonSchemaFieldsToAllowInProjectionMask;
+
+  public RestLiValidationFilter()
+  {
+    this(Collections.emptyList());
+  }
+
+  public RestLiValidationFilter(Collection<String> nonSchemaFieldsToAllowInProjectionMask)
+  {
+    _nonSchemaFieldsToAllowInProjectionMask = nonSchemaFieldsToAllowInProjectionMask;
+  }
+
   @Override
   public CompletableFuture<Void> onRequest(final FilterRequestContext requestContext)
   {
@@ -82,7 +97,7 @@ public class RestLiValidationFilter implements Filter
           // Schema from the record template itself should not be used.
           DataSchema originalSchema = DataTemplateUtil.getSchema(requestContext.getFilterResourceModel().getValueClass());
 
-          DataSchema validatingSchema = ProjectionMaskApplier.buildSchemaByProjection(originalSchema, projectionMask.getDataMap());
+          DataSchema validatingSchema = ProjectionMaskApplier.buildSchemaByProjection(originalSchema, projectionMask.getDataMap(), _nonSchemaFieldsToAllowInProjectionMask);
 
           // Put validating schema in scratchpad for use in onResponse
           requestContext.getFilterScratchpad().put(VALIDATING_SCHEMA_KEY, validatingSchema);

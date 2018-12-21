@@ -20,13 +20,16 @@ import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.template.DataTemplateUtil;
+import com.linkedin.data.transform.Escaper;
 import com.linkedin.data.transform.filter.request.MaskOperation;
+import com.linkedin.restli.common.test.RecordTemplateWithComplexKey;
 import com.linkedin.restli.common.test.RecordTemplateWithPrimitiveKey;
 import java.util.HashMap;
 import java.util.Map;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+import org.testng.collections.Lists;
 
 import static com.linkedin.restli.common.util.ProjectionMaskApplier.*;
 
@@ -91,6 +94,24 @@ public class TestProjectionMaskApplier
   }
 
   @Test
+  public void testBuildSchemaByProjectionAllowWhitelistedFields()
+  {
+    final String whiteListedFieldName = "$URN";
+    RecordDataSchema schema = (RecordDataSchema) DataTemplateUtil.getSchema(RecordTemplateWithComplexKey.class);
+    DataMap projectionMask = buildProjectionMaskDataMap("body", whiteListedFieldName);
+    DataMap nestedMask = buildProjectionMaskDataMap("a", whiteListedFieldName);
+    projectionMask.put("id", nestedMask);
+
+    RecordDataSchema validatingSchema = (RecordDataSchema) buildSchemaByProjection(schema, projectionMask,
+        Lists.newArrayList(whiteListedFieldName));
+    Assert.assertTrue(validatingSchema.contains("id"));
+    Assert.assertTrue(validatingSchema.contains("body"));
+    Assert.assertFalse(validatingSchema.contains(whiteListedFieldName));
+    Assert.assertTrue(((RecordDataSchema) validatingSchema.getField("id").getType()).contains("a"));
+    Assert.assertFalse(((RecordDataSchema) validatingSchema.getField("id").getType()).contains(whiteListedFieldName));
+  }
+
+  @Test
   public void testBuildSchemaByEmptyProjection()
   {
     DataSchema schema = DataTemplateUtil.getSchema(RecordTemplateWithPrimitiveKey.class);
@@ -119,7 +140,7 @@ public class TestProjectionMaskApplier
     Map<String, Object> map = new HashMap<>();
     for (String fieldName : fieldNames)
     {
-      map.put(fieldName, MaskOperation.POSITIVE_MASK_OP.getRepresentation());
+      map.put(Escaper.escapePathSegment(fieldName), MaskOperation.POSITIVE_MASK_OP.getRepresentation());
     }
     return new DataMap(map);
   }

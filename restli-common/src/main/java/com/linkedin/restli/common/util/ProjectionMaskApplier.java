@@ -24,9 +24,12 @@ import com.linkedin.data.schema.Name;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.schema.UnionDataSchema;
+import com.linkedin.data.transform.Escaper;
 import com.linkedin.data.transform.filter.FilterConstants;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -53,6 +56,22 @@ public class ProjectionMaskApplier
    */
   public static DataSchema buildSchemaByProjection(DataSchema schema, DataMap maskMap)
   {
+    return buildSchemaByProjection(schema, maskMap, Collections.emptyList());
+  }
+
+  /**
+   * Build a new schema that contains only the projected fields from the original schema recursively.
+   * @param schema schema to build from
+   * @param maskMap projection mask data map
+   * @param nonSchemaFieldsToAllowInProjectionMask Field names to allow in the projection mask even if the field is not
+   *                                               present in the Schema. These fields will be ignored and the new
+   *                                               schema will not have a corresponding field.
+   * @return new schema containing only projected fields
+   * @throws InvalidProjectionException if a field specified in the projection mask is not present in the source schema.
+   */
+  public static DataSchema buildSchemaByProjection(DataSchema schema, DataMap maskMap,
+      Collection<String> nonSchemaFieldsToAllowInProjectionMask)
+  {
     if (maskMap == null || maskMap.isEmpty())
     {
       throw new IllegalArgumentException("Invalid projection masks.");
@@ -60,19 +79,19 @@ public class ProjectionMaskApplier
 
     if (schema instanceof RecordDataSchema)
     {
-      return buildRecordDataSchemaByProjection((RecordDataSchema) schema, maskMap);
+      return buildRecordDataSchemaByProjection((RecordDataSchema) schema, maskMap, nonSchemaFieldsToAllowInProjectionMask);
     }
     else if (schema instanceof UnionDataSchema)
     {
-      return buildUnionDataSchemaByProjection((UnionDataSchema) schema, maskMap);
+      return buildUnionDataSchemaByProjection((UnionDataSchema) schema, maskMap, nonSchemaFieldsToAllowInProjectionMask);
     }
     else if (schema instanceof ArrayDataSchema)
     {
-      return buildArrayDataSchemaByProjection((ArrayDataSchema) schema, maskMap);
+      return buildArrayDataSchemaByProjection((ArrayDataSchema) schema, maskMap, nonSchemaFieldsToAllowInProjectionMask);
     }
     else if (schema instanceof MapDataSchema)
     {
-      return buildMapDataSchemaByProjection((MapDataSchema) schema, maskMap);
+      return buildMapDataSchemaByProjection((MapDataSchema) schema, maskMap, nonSchemaFieldsToAllowInProjectionMask);
     }
     else if (schema instanceof TyperefDataSchema)
     {
@@ -108,11 +127,13 @@ public class ProjectionMaskApplier
   /**
    * Build a new {@link MapDataSchema} schema that contains only the masked fields.
    */
-  private static MapDataSchema buildMapDataSchemaByProjection(MapDataSchema originalSchema, DataMap maskMap)
+  private static MapDataSchema buildMapDataSchemaByProjection(MapDataSchema originalSchema, DataMap maskMap,
+      Collection<String> nonSchemaFieldsToAllowInProjectionMask)
   {
     if (maskMap.containsKey(FilterConstants.WILDCARD))
     {
-      DataSchema newValuesSchema = reuseOrBuildDataSchema(originalSchema.getValues(), maskMap.get(FilterConstants.WILDCARD));
+      DataSchema newValuesSchema = reuseOrBuildDataSchema(
+          originalSchema.getValues(), maskMap.get(FilterConstants.WILDCARD), nonSchemaFieldsToAllowInProjectionMask);
       MapDataSchema newSchema = new MapDataSchema(newValuesSchema);
       if (originalSchema.getProperties() != null)
       {
@@ -127,11 +148,13 @@ public class ProjectionMaskApplier
   /**
    * Build a new {@link ArrayDataSchema} schema that contains only the masked fields.
    */
-  private static ArrayDataSchema buildArrayDataSchemaByProjection(ArrayDataSchema originalSchema, DataMap maskMap)
+  private static ArrayDataSchema buildArrayDataSchemaByProjection(ArrayDataSchema originalSchema, DataMap maskMap,
+      Collection<String> nonSchemaFieldsToAllowInProjectionMask)
   {
     if (maskMap.containsKey(FilterConstants.WILDCARD))
     {
-      DataSchema newItemsSchema = reuseOrBuildDataSchema(originalSchema.getItems(), maskMap.get(FilterConstants.WILDCARD));
+      DataSchema newItemsSchema = reuseOrBuildDataSchema(
+          originalSchema.getItems(), maskMap.get(FilterConstants.WILDCARD), nonSchemaFieldsToAllowInProjectionMask);
       ArrayDataSchema newSchema = new ArrayDataSchema(newItemsSchema);
       if (originalSchema.getProperties() != null)
       {
@@ -151,7 +174,8 @@ public class ProjectionMaskApplier
   /**
    * Build a new {@link UnionDataSchema} schema that contains only the masked fields.
    */
-  private static UnionDataSchema buildUnionDataSchemaByProjection(UnionDataSchema unionDataSchema, DataMap maskMap)
+  private static UnionDataSchema buildUnionDataSchemaByProjection(UnionDataSchema unionDataSchema, DataMap maskMap,
+      Collection<String> nonSchemaFieldsToAllowInProjectionMask)
   {
     List<UnionDataSchema.Member> newUnionMembers = new ArrayList<>();
 
@@ -161,17 +185,19 @@ public class ProjectionMaskApplier
 
     for (UnionDataSchema.Member member: unionDataSchema.getMembers())
     {
-      Object maskValue = maskMap.get(member.getUnionMemberKey());
+      Object maskValue = maskMap.get(Escaper.escape(member.getUnionMemberKey()));
 
       // If a mask is available for this specific member use that, else use the wildcard mask if that is available
       UnionDataSchema.Member newMember = null;
       if (maskValue != null)
       {
-        newMember = new UnionDataSchema.Member(reuseOrBuildDataSchema(member.getType(), maskValue));
+        newMember = new UnionDataSchema.Member(
+            reuseOrBuildDataSchema(member.getType(), maskValue, nonSchemaFieldsToAllowInProjectionMask));
       }
       else if (wildcardMask != null)
       {
-        newMember = new UnionDataSchema.Member(reuseOrBuildDataSchema(member.getType(), wildcardMask));
+        newMember = new UnionDataSchema.Member(
+            reuseOrBuildDataSchema(member.getType(), wildcardMask, nonSchemaFieldsToAllowInProjectionMask));
       }
 
       if (newMember != null)
@@ -199,24 +225,29 @@ public class ProjectionMaskApplier
   /**
    * Build a new {@link RecordDataSchema} schema that contains only the masked fields.
    */
-  private static RecordDataSchema buildRecordDataSchemaByProjection(RecordDataSchema originalSchema, DataMap maskMap)
+  private static RecordDataSchema buildRecordDataSchemaByProjection(RecordDataSchema originalSchema, DataMap maskMap,
+      Collection<String> nonSchemaFieldsToAllowInProjectionMask)
   {
     RecordDataSchema newRecordSchema = new RecordDataSchema(new Name(originalSchema.getFullName()), RecordDataSchema.RecordType.RECORD);
     List<RecordDataSchema.Field> newFields = new ArrayList<RecordDataSchema.Field>();
     for (Map.Entry<String, Object> maskEntry : maskMap.entrySet())
     {
-      String maskFieldName = maskEntry.getKey();
+      String maskFieldName = Escaper.unescapePathSegment(maskEntry.getKey());
 
-      if (!originalSchema.contains(maskFieldName))
+      if (originalSchema.contains(maskFieldName))
       {
-        throw new InvalidProjectionException("Projected field \"" + maskFieldName + "\" not present in schema \"" + originalSchema.getFullName() + "\"");
+        RecordDataSchema.Field originalField = originalSchema.getField(maskFieldName);
+
+        DataSchema fieldSchemaToUse = reuseOrBuildDataSchema(originalField.getType(), maskEntry.getValue(),
+            nonSchemaFieldsToAllowInProjectionMask);
+        RecordDataSchema.Field newField = buildRecordField(originalField, fieldSchemaToUse, newRecordSchema);
+        newFields.add(newField);
       }
-
-      RecordDataSchema.Field originalField = originalSchema.getField(maskFieldName);
-
-      DataSchema fieldSchemaToUse = reuseOrBuildDataSchema(originalField.getType(), maskEntry.getValue());
-      RecordDataSchema.Field newField = buildRecordField(originalField, fieldSchemaToUse, newRecordSchema);
-      newFields.add(newField);
+      else if (!nonSchemaFieldsToAllowInProjectionMask.contains(maskFieldName))
+      {
+        throw new InvalidProjectionException(
+            "Projected field \"" + maskFieldName + "\" not present in schema \"" + originalSchema.getFullName() + "\"");
+      }
     }
 
     // Fields from 'include' are no difference from other fields from original schema,
@@ -242,7 +273,8 @@ public class ProjectionMaskApplier
    * 1) Integer that has value 1, which means all fields in the original schema are projected (negative projection not supported)
    * 2) DataMap, which means only selected fields in the original schema are projected
    */
-  private static DataSchema reuseOrBuildDataSchema(DataSchema originalSchema, Object maskValue)
+  private static DataSchema reuseOrBuildDataSchema(DataSchema originalSchema, Object maskValue,
+      Collection<String> nonSchemaFieldsToAllowInProjectionMask)
   {
     if (maskValue instanceof Integer && maskValue.equals(FilterConstants.POSITIVE))
     {
@@ -250,7 +282,7 @@ public class ProjectionMaskApplier
     }
     else if (maskValue instanceof DataMap)
     {
-      return buildSchemaByProjection(originalSchema, (DataMap) maskValue);
+      return buildSchemaByProjection(originalSchema, (DataMap) maskValue, nonSchemaFieldsToAllowInProjectionMask);
     }
     throw new IllegalArgumentException("Expected mask value to be either positive mask op or DataMap: " + maskValue);
   }

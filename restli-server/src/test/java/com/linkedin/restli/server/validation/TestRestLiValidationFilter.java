@@ -60,6 +60,7 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+import org.testng.collections.Lists;
 
 import static com.linkedin.restli.common.ResourceMethod.*;
 import static org.mockito.Mockito.*;
@@ -72,6 +73,7 @@ import static org.mockito.Mockito.*;
  */
 public class TestRestLiValidationFilter
 {
+  private static final String WHITELISTED_FIELD_NAME = "$URN";
   @Mock
   private FilterRequestContext filterRequestContext;
 
@@ -144,7 +146,7 @@ public class TestRestLiValidationFilter
       }
       else
       {
-        Assert.fail("An unexpected exception was thrown on request in the validation filter.");
+        Assert.fail("An unexpected exception was thrown on request in the validation filter.", e);
       }
     }
 
@@ -189,6 +191,59 @@ public class TestRestLiValidationFilter
         { RestLiAnnotationReader.processResource(AssociationResource.class),  actionResponseData,   null,                                  false },
         { RestLiAnnotationReader.processResource(AssociationResource.class),  actionResponseData,   new MaskTree(),                        false },
         { RestLiAnnotationReader.processResource(AssociationResource.class),  actionResponseData,   makeMask("ignoreMePlease"),   false }
+    };
+  }
+
+  @Test(dataProvider = "projectionDataWithWhitelistFields")
+  @SuppressWarnings({"unchecked"})
+  public void testAllowWhitelistedFieldsInMask(ResourceModel resourceModel, RestLiResponseData<RestLiResponseEnvelope> responseData, MaskTree projectionMask, boolean expectError)
+  {
+    ResourceMethod resourceMethod = responseData.getResourceMethod();
+
+    when(filterRequestContext.getRequestData()).thenReturn(new RestLiRequestDataImpl.Builder().entity(makeTestRecord()).build());
+    when(filterRequestContext.getMethodType()).thenReturn(resourceMethod);
+    when(filterRequestContext.getFilterResourceModel()).thenReturn(new FilterResourceModelImpl(resourceModel));
+    when(filterRequestContext.getProjectionMask()).thenReturn(projectionMask);
+    when(filterResponseContext.getResponseData()).thenReturn((RestLiResponseData) responseData);
+
+    RestLiValidationFilter validationFilter = new RestLiValidationFilter(
+        Lists.newArrayList(WHITELISTED_FIELD_NAME));
+
+    try
+    {
+      validationFilter.onRequest(filterRequestContext);
+
+      if (expectError)
+      {
+        Assert.fail("Expected an error to be thrown on request in the validation filter, but none was thrown.");
+      }
+    }
+    catch (RestLiServiceException e)
+    {
+      if (expectError)
+      {
+        Assert.assertEquals(e.getStatus(), HttpStatus.S_400_BAD_REQUEST);
+        return;
+      }
+      else
+      {
+        Assert.fail("An unexpected exception was thrown on request in the validation filter.", e);
+      }
+    }
+    validationFilter.onResponse(filterRequestContext, filterResponseContext);
+  }
+
+  @DataProvider(name = "projectionDataWithWhitelistFields")
+  public Object[][] projectionDataWithWhitelistFields()
+  {
+    RestLiResponseData<GetResponseEnvelope> getResponseData = ResponseDataBuilderUtil.buildGetResponseData(HttpStatus.S_200_OK, makeTestRecord());
+
+    return new Object[][]
+    {
+        // Resource model                                                     Response data         Projection mask                                                   Expect error?
+        { RestLiAnnotationReader.processResource(CollectionResource.class),   getResponseData,      makeMask(WHITELISTED_FIELD_NAME),                                 false },
+        { RestLiAnnotationReader.processResource(CollectionResource.class),   getResponseData,      makeMask(WHITELISTED_FIELD_NAME, "nonexistentField"), true  },
+        { RestLiAnnotationReader.processResource(CollectionResource.class),   getResponseData,      makeMask(WHITELISTED_FIELD_NAME, "intField"),         false }
     };
   }
 
@@ -271,8 +326,13 @@ public class TestRestLiValidationFilter
     return new TestRecord(dataMap);
   }
 
-  private MaskTree makeMask(String segment)
+  private MaskTree makeMask(String... segments)
   {
-    return MaskCreator.createPositiveMask(new PathSpec(segment));
+    PathSpec[] pathSpecs = new PathSpec[segments.length];
+    for (int i = 0; i < segments.length; i++)
+    {
+      pathSpecs[i] = new PathSpec(segments[i]);
+    }
+    return MaskCreator.createPositiveMask(pathSpecs);
   }
 }

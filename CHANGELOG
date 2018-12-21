@@ -1,6 +1,10 @@
-26.0.2
+26.0.3
 ------
 
+26.0.2
+------
+(RB=1517698)
+Allow RestLiValidation filter to accept a list of non-schema fields that should be ignored in the projection mask. Also fixes bug in the ProjectionMask applier that was not unescaping field names from masktree correctly.
 
 26.0.1
 ------
