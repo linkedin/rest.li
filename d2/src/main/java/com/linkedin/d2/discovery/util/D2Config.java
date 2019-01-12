@@ -672,7 +672,7 @@ public class D2Config
       for (String serviceName : services)
       {
         FutureCallback<None> callback = new FutureCallback<>();
-        _zkConnection.ensurePersistentNodeExists(D2Utils.getServicePathAsChildOfCluster(clusterName, serviceName), callback);
+        _zkConnection.ensurePersistentNodeExists(D2Utils.getServicePathAsChildOfCluster(clusterName, serviceName, _basePath), callback);
         callback.get(_timeout, TimeUnit.MILLISECONDS);
       }
     }

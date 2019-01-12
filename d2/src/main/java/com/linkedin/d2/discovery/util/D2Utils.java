@@ -7,6 +7,8 @@ package com.linkedin.d2.discovery.util;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.zkfs.ZKFSUtil;
 import com.linkedin.d2.discovery.stores.zk.SymlinkUtil;
+import javax.annotation.Nonnull;
+
 
 /**
  * @author David Hoa
@@ -49,8 +51,8 @@ public class D2Utils
     return SymlinkUtil.SYMLINK_PREFIX + clusterName + PropertyKeys.MASTER_SUFFIX;
   }
 
-  public static String getServicePathAsChildOfCluster(String clusterName, String serviceName)
+  public static String getServicePathAsChildOfCluster(String clusterName, String serviceName, @Nonnull String basePath)
   {
-    return ZKFSUtil.clusterPath("/d2") + "/" + clusterName + "/" + serviceName;
+    return ZKFSUtil.clusterPath(basePath) + "/" + clusterName + "/" + serviceName;
   }
 }

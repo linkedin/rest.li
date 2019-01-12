@@ -1,5 +1,10 @@
+26.0.5
+------
+
 26.0.4
 ------
+(RB=1527956)
+Allow configurable basePath for d2 service znode under cluster path
 
 26.0.3
 ------

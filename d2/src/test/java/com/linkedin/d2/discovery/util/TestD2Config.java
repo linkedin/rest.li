@@ -1366,7 +1366,7 @@ public class TestD2Config
   public static void verifyServiceAsChildOfCluster(String cluster, String service)
       throws KeeperException, InterruptedException
   {
-    Stat stat = _zkclient.getZooKeeper().exists(D2Utils.getServicePathAsChildOfCluster(cluster, service), false);
+    Stat stat = _zkclient.getZooKeeper().exists(D2Utils.getServicePathAsChildOfCluster(cluster, service, "/d2"), false);
     Assert.assertNotNull(stat);
   }
 
